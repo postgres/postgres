@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict_syn.c,v 1.9 2006/03/11 04:38:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_syn.c,v 1.10 2006/11/20 14:03:30 teodor Exp $ */
 
 /*
  * ISpell interface
@@ -132,8 +132,8 @@ syn_init(PG_FUNCTION_ARGS)
 			continue;
 		*end = '\0';
 
-		d->syn[cur].in = strdup(lowerstr(starti));
-		d->syn[cur].out = strdup(lowerstr(starto));
+		d->syn[cur].in = lowerstr(starti);
+		d->syn[cur].out = lowerstr(starto);
 		if (!(d->syn[cur].in && d->syn[cur].out))
 		{
 			fclose(fin);
@@ -163,12 +163,15 @@ syn_lexize(PG_FUNCTION_ARGS)
 	Syn			key,
 			   *found;
 	TSLexeme   *res = NULL;
+	char	   *wrd;
 
 	if (!PG_GETARG_INT32(2))
 		PG_RETURN_POINTER(NULL);
 
 	key.out = NULL;
-	key.in = lowerstr(pnstrdup(in, PG_GETARG_INT32(2)));
+	wrd = pnstrdup(in, PG_GETARG_INT32(2));
+	key.in = lowerstr(wrd);
+	pfree(wrd);
 
 	found = (Syn *) bsearch(&key, d->syn, d->len, sizeof(Syn), compareSyn);
 	pfree(key.in);

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict_ex.c,v 1.8 2006/03/11 04:38:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_ex.c,v 1.9 2006/11/20 14:03:30 teodor Exp $ */
 
 /*
  * example of dictionary
@@ -52,9 +52,11 @@ dex_lexize(PG_FUNCTION_ARGS)
 {
 	DictExample *d = (DictExample *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
-	char	   *txt = pnstrdup(in, PG_GETARG_INT32(2));
+	char	   *utxt = pnstrdup(in, PG_GETARG_INT32(2));
 	TSLexeme   *res = palloc(sizeof(TSLexeme) * 2);
+	char	   *txt = lowerstr(utxt);
 
+	pfree(utxt);
 	memset(res, 0, sizeof(TSLexeme) * 2);
 
 	if (*txt == '\0' || searchstoplist(&(d->stoplist), txt))

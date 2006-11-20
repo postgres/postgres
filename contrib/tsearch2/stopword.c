@@ -36,7 +36,7 @@ readstoplist(text *in, StopList * s)
 	{
 		char	   *filename = to_absfilename(text2char(in));
 		FILE	   *hin;
-		char		buf[STOPBUFLEN];
+		char		buf[STOPBUFLEN], *pbuf;
 		int			reallen = 0;
 
 		if ((hin = fopen(filename, "r")) == NULL)
@@ -49,7 +49,6 @@ readstoplist(text *in, StopList * s)
 		{
 			buf[strlen(buf) - 1] = '\0';
 			pg_verifymbstr(buf, strlen(buf), false);
-			lowerstr(buf);
 			if (*buf == '\0')
 				continue;
 
@@ -70,7 +69,14 @@ readstoplist(text *in, StopList * s)
 				stop = tmp;
 			}
 
-			stop[s->len] = strdup(buf);
+			if (s->wordop) 
+			{
+				pbuf = s->wordop(buf);
+				stop[s->len] = strdup(pbuf);
+				pfree(pbuf);
+			} else
+				stop[s->len] = strdup(buf);
+
 			if (!stop[s->len])
 			{
 				freestoplist(s);
@@ -79,8 +85,6 @@ readstoplist(text *in, StopList * s)
 						(errcode(ERRCODE_OUT_OF_MEMORY),
 						 errmsg("out of memory")));
 			}
-			if (s->wordop)
-				stop[s->len] = (s->wordop) (stop[s->len]);
 
 			(s->len)++;
 		}
@@ -106,7 +110,5 @@ sortstoplist(StopList * s)
 bool
 searchstoplist(StopList * s, char *key)
 {
-	if (s->wordop)
-		key = (*(s->wordop)) (key);
 	return (s->stop && s->len > 0 && bsearch(&key, s->stop, s->len, sizeof(char *), comparestr)) ? true : false;
 }

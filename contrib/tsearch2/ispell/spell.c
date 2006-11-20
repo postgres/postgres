@@ -147,7 +147,7 @@ NIAddSpell(IspellDict * Conf, const char *word, const char *flag)
 int
 NIImportDictionary(IspellDict * Conf, const char *filename)
 {
-	char		str[BUFSIZ];
+	char		str[BUFSIZ], *pstr;
 	FILE	   *dict;
 
 	if (!(dict = fopen(filename, "r")))
@@ -190,9 +190,10 @@ NIImportDictionary(IspellDict * Conf, const char *filename)
 			}
 			s += pg_mblen(s);
 		}
-		lowerstr(str);
+		pstr = lowerstr(str);
 
-		NIAddSpell(Conf, str, flag);
+		NIAddSpell(Conf, pstr, flag);
+		pfree(pstr);
 	}
 	fclose(dict);
 	return (0);
@@ -418,8 +419,7 @@ parse_affentry(char *str, char *mask, char *find, char *repl, int line)
 int
 NIImportAffixes(IspellDict * Conf, const char *filename)
 {
-	char		str[BUFSIZ];
-	char		tmpstr[BUFSIZ];
+	char		str[BUFSIZ], *pstr = NULL;
 	char		mask[BUFSIZ];
 	char		find[BUFSIZ];
 	char		repl[BUFSIZ];
@@ -439,11 +439,14 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 	while (fgets(str, sizeof(str), affix))
 	{
 		line++;
+		if ( *str == '#' || *str == '\n' )
+			continue;
+
 		pg_verifymbstr(str, strlen(str), false);
-		memcpy(tmpstr, str, 32);	/* compoundwords... */
-		tmpstr[32] = '\0';
-		lowerstr(tmpstr);
-		if (STRNCMP(tmpstr, "compoundwords") == 0)
+		if ( pstr )
+			pfree( pstr );
+		pstr = lowerstr(str);
+		if (STRNCMP(pstr, "compoundwords") == 0)
 		{
 			s = findchar(str, 'l');
 			if (s)
@@ -458,21 +461,21 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 				continue;
 			}
 		}
-		if (STRNCMP(tmpstr, "suffixes") == 0)
+		if (STRNCMP(pstr, "suffixes") == 0)
 		{
 			suffixes = 1;
 			prefixes = 0;
 			oldformat++;
 			continue;
 		}
-		if (STRNCMP(tmpstr, "prefixes") == 0)
+		if (STRNCMP(pstr, "prefixes") == 0)
 		{
 			suffixes = 0;
 			prefixes = 1;
 			oldformat++;
 			continue;
 		}
-		if (STRNCMP(tmpstr, "flag") == 0)
+		if (STRNCMP(pstr, "flag") == 0)
 		{
 			s = str + 4;
 			flagflags = 0;
@@ -523,13 +526,15 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 		if ((!suffixes) && (!prefixes))
 			continue;
 
-		lowerstr(str);
-		if (!parse_affentry(str, mask, find, repl, line))
+		if (!parse_affentry(pstr, mask, find, repl, line)) 
 			continue;
 
 		NIAddAffix(Conf, flag, flagflags, mask, find, repl, suffixes ? FF_SUFFIX : FF_PREFIX);
 	}
 	fclose(affix);
+
+	if ( pstr )
+		pfree( pstr );
 
 	return (0);
 }
@@ -538,11 +543,11 @@ int
 NIImportOOAffixes(IspellDict * Conf, const char *filename)
 {
 	char		str[BUFSIZ];
-	char		type[BUFSIZ];
+	char		type[BUFSIZ], *ptype = NULL;
 	char		sflag[BUFSIZ];
-	char		mask[BUFSIZ];
-	char		find[BUFSIZ];
-	char		repl[BUFSIZ];
+	char		mask[BUFSIZ], *pmask;
+	char		find[BUFSIZ], *pfind;
+	char		repl[BUFSIZ], *prepl;
 	bool		isSuffix = false;
 	int			flag = 0;
 	char		flagflags = 0;
@@ -577,8 +582,10 @@ NIImportOOAffixes(IspellDict * Conf, const char *filename)
 
 		scanread = sscanf(str, scanbuf, type, sflag, find, repl, mask);
 
-		lowerstr(type);
-		if (scanread < 4 || (STRNCMP(type, "sfx") && STRNCMP(type, "pfx")))
+		if (ptype)
+			pfree(ptype);
+		ptype = lowerstr(type);
+		if (scanread < 4 || (STRNCMP(ptype, "sfx") && STRNCMP(ptype, "pfx")))
 			continue;
 
 		if (scanread == 4)
@@ -586,29 +593,35 @@ NIImportOOAffixes(IspellDict * Conf, const char *filename)
 			if (strlen(sflag) != 1)
 				continue;
 			flag = *sflag;
-			isSuffix = (STRNCMP(type, "sfx") == 0) ? true : false;
-			lowerstr(find);
+			isSuffix = (STRNCMP(ptype, "sfx") == 0) ? true : false;
+			pfind = lowerstr(find);
 			if (t_iseq(find, 'y'))
 				flagflags |= FF_CROSSPRODUCT;
 			else
 				flagflags = 0;
+			pfree(pfind);
 		}
 		else
 		{
 			if (strlen(sflag) != 1 || flag != *sflag || flag == 0)
 				continue;
-			lowerstr(repl);
-			lowerstr(find);
-			lowerstr(mask);
+			prepl = lowerstr(repl);
+			pfind = lowerstr(find);
+			pmask = lowerstr(mask);
 			if (t_iseq(find, '0'))
 				*find = '\0';
 			if (t_iseq(repl, '0'))
 				*repl = '\0';
 
 			NIAddAffix(Conf, flag, flagflags, mask, find, repl, isSuffix ? FF_SUFFIX : FF_PREFIX);
+			pfree(prepl);
+			pfree(pfind);
+			pfree(pmask);
 		}
 	}
 
+	if (ptype)
+		pfree(ptype);
 	fclose(affix);
 
 	return 0;
@@ -1053,7 +1066,6 @@ NormalizeSubWord(IspellDict * Conf, char *word, char flag)
 
 	if (wrdlen > MAXNORMLEN)
 		return NULL;
-	lowerstr(word);
 	cur = forms = (char **) palloc(MAX_NORM * sizeof(char *));
 	*cur = NULL;
 
@@ -1354,12 +1366,16 @@ SplitToVariants(IspellDict * Conf, SPNode * snode, SplitVar * orig, char *word, 
 }
 
 TSLexeme *
-NINormalizeWord(IspellDict * Conf, char *word)
+NINormalizeWord(IspellDict * Conf, char *uword)
 {
-	char	  **res = NormalizeSubWord(Conf, word, 0);
+	char	  **res;
+	char	   *word;
 	TSLexeme   *lcur = NULL,
 			   *lres = NULL;
 	uint16		NVariant = 1;
+
+	word = lowerstr(uword);
+	res = NormalizeSubWord(Conf, word, 0);
 
 	if (res)
 	{
@@ -1431,6 +1447,9 @@ NINormalizeWord(IspellDict * Conf, char *word)
 			var = ptr;
 		}
 	}
+
+	pfree(word);
+
 	return lres;
 }
 

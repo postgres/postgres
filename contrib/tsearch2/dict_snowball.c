@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict_snowball.c,v 1.12 2006/07/11 16:35:31 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_snowball.c,v 1.13 2006/11/20 14:03:30 teodor Exp $ */
 
 /*
  * example of Snowball dictionary
@@ -142,9 +142,11 @@ snb_lexize(PG_FUNCTION_ARGS)
 {
 	DictSnowball *d = (DictSnowball *) PG_GETARG_POINTER(0);
 	char	   *in = (char *) PG_GETARG_POINTER(1);
-	char	   *txt = pnstrdup(in, PG_GETARG_INT32(2));
+	char	   *utxt = pnstrdup(in, PG_GETARG_INT32(2));
 	TSLexeme   *res = palloc(sizeof(TSLexeme) * 2);
-
+	char	   *txt = lowerstr(utxt);
+	
+	pfree(utxt);
 	memset(res, 0, sizeof(TSLexeme) * 2);
 	if (*txt == '\0' || searchstoplist(&(d->stoplist), txt))
 	{

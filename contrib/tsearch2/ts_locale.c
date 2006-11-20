@@ -14,21 +14,12 @@ wchar2char(char *to, const wchar_t *from, size_t len)
 {
 	if (GetDatabaseEncoding() == PG_UTF8)
 	{
-		int			r,
-					nbytes;
+		int			r;
 
 		if (len == 0)
 			return 0;
 
-		/* in any case, *to should be allocated with enough space */
-		nbytes = WideCharToMultiByte(CP_UTF8, 0, from, len, NULL, 0, NULL, NULL);
-		if (nbytes == 0)
-			ereport(ERROR,
-					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-					 errmsg("UTF-16 to UTF-8 translation failed: %lu",
-							GetLastError())));
-
-		r = WideCharToMultiByte(CP_UTF8, 0, from, len, to, nbytes,
+		r = WideCharToMultiByte(CP_UTF8, 0, from, -1, to, len,
 								NULL, NULL);
 
 		if (r == 0)
@@ -36,6 +27,8 @@ wchar2char(char *to, const wchar_t *from, size_t len)
 					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
 					 errmsg("UTF-16 to UTF-8 translation failed: %lu",
 							GetLastError())));
+		Assert(r <= len);
+
 		return r;
 	}
 
@@ -56,7 +49,7 @@ char2wchar(wchar_t *to, const char *from, size_t len)
 
 		if (!r)
 		{
-			pg_verifymbstr(from, len, false);
+			pg_verifymbstr(from, strlen(from), false);
 			ereport(ERROR,
 					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
 					 errmsg("invalid multibyte character for locale"),
@@ -97,6 +90,11 @@ char *
 lowerstr(char *str)
 {
 	char	   *ptr = str;
+	char	   *out;
+	int			len = strlen(str);
+
+	if ( len == 0 )
+		return pstrdup("");
 
 #ifdef TS_USE_WIDE
 
@@ -110,24 +108,67 @@ lowerstr(char *str)
 	{
 		wchar_t    *wstr,
 				   *wptr;
-		int			len = strlen(str);
+		int		    wlen;
 
-		wptr = wstr = (wchar_t *) palloc(sizeof(wchar_t) * (len + 1));
-		char2wchar(wstr, str, len + 1);
+		/* 
+		 *alloc number of wchar_t for worst case, len contains
+		 * number of bytes <= number of characters and
+		 * alloc 1 wchar_t for 0, because wchar2char(wcstombs in really)
+		 * wants zero-terminated string
+		 */
+		wptr = wstr = (wchar_t *) palloc(sizeof(wchar_t) * (len+1));
+
+		/*
+		 * str SHOULD be cstring, so wlen contains number
+		 * of converted character
+		 */
+		wlen = char2wchar(wstr, str, len);
+		if ( wlen < 0 )
+			ereport(ERROR,
+					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+					 errmsg("transalation failed from server encoding to wchar_t")));
+
+		Assert(wlen<=len);
+		wstr[wlen] = 0;
+
 		while (*wptr)
 		{
 			*wptr = towlower((wint_t) *wptr);
 			wptr++;
 		}
-		wchar2char(str, wstr, len);
+
+		/*
+		 * Alloc result string for worst case + '\0'
+		 */
+		len = sizeof(char)*pg_database_encoding_max_length()*(wlen+1);
+		out = (char*)palloc(len);
+
+		/*
+		 * wlen now is number of bytes which is always >= number of characters
+		 */
+		wlen = wchar2char(out, wstr, len);
 		pfree(wstr);
+
+		if ( wlen < 0 )
+			ereport(ERROR,
+					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
+					 errmsg("transalation failed from wchar_t to server encoding %d", errno)));
+		Assert(wlen<=len);
+		out[wlen]='\0';
 	}
 	else
 #endif
+	{
+		char *outptr;
+
+		outptr = out = (char*)palloc( sizeof(char) * (len+1) );
 		while (*ptr)
 		{
-			*ptr = tolower(*(unsigned char *) ptr);
+			*outptr++ = tolower(*(unsigned char *) ptr);
 			ptr++;
 		}
-	return str;
+		*outptr = '\0';
+	}
+
+	return out;
 }
