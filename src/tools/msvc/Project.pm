@@ -18,7 +18,8 @@ sub new {
         guid            => Win32::GuidGen(),
         files           => {},
         references      => [],
-        libraries       => '',
+        libraries       => [],
+        suffixlib       => [],
         includes        => '',
         defines         => ';',
 		solution        => $solution,
@@ -86,12 +87,12 @@ sub AddReference {
 }
 
 sub AddLibrary {
-	my ($self, $lib) = @_;
+	my ($self, $lib, $dbgsuffix) = @_;
 
-	if ($self->{libraries} ne '') {
-		$self->{libraries} .= ' ';
+	push @{$self->{libraries}}, $lib;
+	if ($dbgsuffix) {
+		push @{$self->{suffixlib}}, $lib;
 	}
-	$self->{libraries} .= $lib;
 }
 
 sub AddIncludeDir {
@@ -351,7 +352,19 @@ sub WriteConfiguration
 {
 	my ($self, $f, $cfgname, $p) = @_;
 	my $cfgtype = ($self->{type} eq "exe")?1:($self->{type} eq "dll"?2:4);
-	my $libs = $self->{libraries};
+	my $libcfg = (uc $cfgname eq "RELEASE")?"MD":"MDd";
+	my $libs = '';
+	foreach my $lib (@{$self->{libraries}}) {
+		my $xlib = $lib;
+		foreach my $slib (@{$self->{suffixlib}}) {
+			if ($slib eq $lib) {
+				$xlib =~ s/\.lib$/$libcfg.lib/;
+				last;
+			}
+		}
+		$libs .= $xlib . " ";
+	}
+	$libs =~ s/ $//;
 	$libs =~ s/__CFGNAME__/$cfgname/g;
 	print $f <<EOF;
   <Configuration Name="$cfgname|Win32" OutputDirectory=".\\$cfgname\\$self->{name}" IntermediateDirectory=".\\$cfgname\\$self->{name}"

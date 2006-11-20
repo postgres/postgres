@@ -6,7 +6,7 @@ our $config = {
 	asserts=>1,			# --enable-cassert
 	nls=>undef,				# --enable-nls=<path>
 	tcl=>'c:\tcl',		# --with-tls=<path>
-	perl=>1, 			# --with-perl
+	perl=>'c:\perl', 			# --with-perl
 	python=>'c:\python24', # --with-python=<path>
 	krb5=>'c:\prog\pgsql\depend\krb5', # --with-krb5=<path>
 	ldap=>1,			# --with-ldap

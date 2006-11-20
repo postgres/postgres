@@ -47,24 +47,23 @@ $plpgsql->AddFiles('src\pl\plpgsql\src','scan.l','gram.y');
 $plpgsql->AddReference($postgres);
 
 if ($solution->{options}->{perl}) {
-# Already running in perl, so use the version that we already have information for.
-	use Config;
 	my $plperl = $solution->AddProject('plperl','dll','PLs','src\pl\plperl');
-	$plperl->AddIncludeDir($Config{archlibexp} . '\CORE');
+	$plperl->AddIncludeDir($solution->{options}->{perl} . '/lib/CORE');
 	$plperl->AddDefine('PLPERL_HAVE_UID_GID');
 	if (Solution::IsNewer('src\pl\plperl\SPI.c','src\pl\plperl\SPI.xs')) {
 		print 'Building src\pl\plperl\SPI.c...' . "\n";
-		system('perl ' . $Config{privlibexp} . '/ExtUtils/xsubpp -typemap ' . $Config{privlibexp} . '/ExtUtils/typemap src\pl\plperl\SPI.xs >src\pl\plperl\SPI.c');
+		system($solution->{options}->{perl} . '/bin/perl ' . $solution->{options}->{perl} . '/lib/COREExtUtils/xsubpp -typemap ' . $solution->{options}->{perl} . '/lib/CORE/ExtUtils/typemap src\pl\plperl\SPI.xs >src\pl\plperl\SPI.c');
 		die 'Failed to create SPI.c' . "\n" if ((!(-f 'src\pl\plperl\SPI.c')) || -z 'src\pl\plperl\SPI.c');
 	}
 	$plperl->AddReference($postgres);
-	$plperl->AddLibrary($Config{archlibexp} . '\CORE\perl58.lib');
+	$plperl->AddLibrary($solution->{options}->{perl} . '\lib\CORE\perl58.lib');
 }
 
 if ($solution->{options}->{python}) {
 	my $plpython = $solution->AddProject('plpython','dll','PLs','src\pl\plpython');
 	$plpython->AddIncludeDir($solution->{options}->{python} . '\include');
-	$plpython->AddLibrary($solution->{options}->{python} . '\Libs\python24.lib');
+	$solution->{options}->{python} =~ /\\Python(\d{2})/i || croak "Could not determine python version from path";
+	$plpython->AddLibrary($solution->{options}->{python} . "\\Libs\\python$1.lib");
 	$plpython->AddReference($postgres);
 }
 
@@ -125,6 +124,8 @@ my $pgreset = AddSimpleFrontend('pg_resetxlog');
 
 my $pgevent = $solution->AddProject('pgevent','dll','bin');
 $pgevent->AddFiles('src\bin\pgevent','pgevent.c','pgmsgevent.rc');
+$pgevent->AddResourceFile('src\bin\pgevent','Eventlog message formatter');
+$pgevent->RemoveFile('src\bin\pgevent\win32ver.rc');
 $pgevent->UseDef('src\bin\pgevent\pgevent.def');
 
 my $psql = AddSimpleFrontend('psql', 1);
