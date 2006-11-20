@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.31 2006/09/16 00:30:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.32 2006/11/20 17:42:16 neilc Exp $ -->
 
  <chapter id="xplang">
   <title id="xplang-title">Procedural Languages</title>
@@ -31,15 +31,11 @@
    <application>PL/Tcl</application> (<xref linkend="pltcl">),
    <application>PL/Perl</application> (<xref linkend="plperl">), and
    <application>PL/Python</application> (<xref linkend="plpython">).
-   Other languages can be defined by users.
-   The basics of developing a new procedural language are covered in <xref
-   linkend="plhandler">.
-  </para>
-
-  <para>
    There are additional procedural languages available that are not
    included in the core distribution. <xref linkend="external-projects">
-   has information about finding them.
+   has information about finding them. In addition other languages can 
+   be defined by users; the basics of developing a new procedural 
+   language are covered in <xref linkend="plhandler">.
   </para>
 
   <sect1 id="xplang-install">
