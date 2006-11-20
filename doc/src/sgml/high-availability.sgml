@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.3 2006/11/20 21:26:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.4 2006/11/20 22:07:56 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability and Load Balancing</title>
@@ -143,14 +143,15 @@
  </varlistentry>
 
  <varlistentry>
-  <term>Statement-Based Replication</term>
+  <term>Statement-Based Replication Middleware</term>
   <listitem>
 
    <para>
-    In statement-based replication, a program intercepts every SQL
-    query and sends it to all servers.  Each server operates
-    independently.  Read-only queries can be sent to a single server
-    because there is no need for all servers to process it.
+    With statement-based replication middleware, a program intercepts
+    every SQL query and sends it to all servers.  Each server
+    operates independently.  Read-only queries can be sent to a
+    single server because there is no need for all servers to
+    process it.
    </para>
 
    <para>
