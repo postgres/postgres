@@ -13,24 +13,23 @@
    
    The native Win32 port is built from source using MinGW tools.  There
    is also a precompiled binary installer called pginstaller which you
-   can download from http://pgfoundry.org/projects/pginstaller.  It is a
-   fully native build and uses no additional software like MinGW.
+   can find at from http://pgfoundry.org/projects/pginstaller.  It is a
+   fully native build and uses no additional software like MinGW. The
+   ready-made instlaler files are available on the main PostgreSQL ftp
+   servers in the binary/win32 directory.
    
 Tools for Building Binaries
 
    The native Win32 port requires a 32-bit NT-based Microsoft operating
-   system, like Windows NT 4, Windows 2000/2003, or Windows XP. (NT 4
-   doesn't support tablespaces because it doesn't support the junction
-   points needed for symlinks.)  Earlier operating systems do not have
-   sufficient infrastructure. Building the port also requires MinGW and
-   Msys, which can be downloaded from http://www.mingw.org/. MinGW is a
-   Unix-like build environment for Microsoft operating systems. Msys is a
-   collection of unix tools required to run shell scripts like
-   configure.  Neither is required to run the resulting binaries;  they
-   are needed only for creating the binaries.  We have no intention of
-   supporting Visual C; their build environment is just too different
-   from Unix, and maintenance of such a build environment would be too
-   burdensome.
+   system, like Windows NT 4, Windows 2000/2003, or Windows XP. (NT 4 is
+   no longer supported since version 8.2)  Earlier operating systems do
+   not have sufficient infrastructure. Building the port also requires
+   MinGW and Msys, which can be downloaded from http://www.mingw.org/.
+   MinGW is a Unix-like build environment for Microsoft operating
+   systems. Msys is a collection of unix tools required to run shell
+   scripts like configure.  Neither is required to run the resulting
+   binaries;  they are needed only for creating the binaries.  Work is in
+   progress to support building using Visual C++ in a future version.
    
 Steps For Building Binaries
 
@@ -45,12 +44,6 @@ Steps For Building Binaries
    console has buffering issues.
    If you make a change that you want to contribute, make a context diff
    and send it to the mailing list.
-   
-Access
-
-   The mailing list for discussion is pgsql-hackers-win32@postgresql.org.
-   You can subscribe by sending an email body containing the word
-   subscribe to pgsql-hackers-win32-request@postgresql.org.
    
 Resources
 

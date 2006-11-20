@@ -23,17 +23,19 @@ http://pginstaller.projects.postgresql.org/FAQ_windows.html</A>.</P>
 
 <p>The native Win32 port is built from source using MinGW tools.&nbsp;
 There is also a precompiled binary installer called <span
- style="font-style: italic;">pginstaller</span> which you can download
+ style="font-style: italic;">pginstaller</span> which you can find at
 from <a href="http://pgfoundry.org/projects/pginstaller">http://pgfoundry.org/projects/pginstaller</a>.&nbsp;
-It is a fully native build and uses no additional software like MinGW.<br>
+It is a fully native build and uses no additional software like MinGW.
+The ready-made instlaler files are available on the main PostgreSQL ftp servers
+in the binary/win32 directory.
+<br>
 </p>
 <h2>Tools for Building Binaries<br>
 </h2>
 <p> The native Win32 port requires a 32-bit NT-based Microsoft
 operating
 system, like Windows NT 4, Windows 2000/2003, or Windows XP. (NT 4
-doesn't support tablespaces because it doesn't support the junction
-points needed for symlinks.)&nbsp; Earlier
+is no longer supported since version 8.2)&nbsp; Earlier
 operating systems do not have sufficient infrastructure. Building the
 port also
 requires MinGW and Msys, which can be downloaded from <a
@@ -41,10 +43,8 @@ requires MinGW and Msys, which can be downloaded from <a
 a Unix-like build environment for Microsoft operating systems.
 Msys is a collection of unix tools required to run shell scripts like <i>configure.&nbsp;
 </i>Neither is required to run the resulting binaries;&nbsp; they are
-needed only for creating the binaries.&nbsp; We have no intention
-of supporting Visual C; their build environment is just too different
-from Unix, and maintenance of such a build environment would be too
-burdensome.<br>
+needed only for creating the binaries.&nbsp; Work is in progress to support
+building using Visual C++ in a future version.<br>
 </p>
 <h2>Steps For Building Binaries<br>
 </h2>
@@ -66,11 +66,6 @@ as the Msys console has buffering issues.<br>
 If you make a change that you want to contribute, make a context diff
 and send
 it to the mailing list. <br>
-<h2>Access</h2>
-The mailing list for discussion is
-<i>pgsql-hackers-win32@postgresql.org</i>. You can subscribe by sending
-an email body containing the word <i>subscribe</i> to <i><a
- href="mailto:pgsql-hackers-win32-request@postgresql.org">pgsql-hackers-win32-request@postgresql.org</a></i>.<br>
 <h2>Resources</h2>
 There are several resources that helped us complete this port:<br>
 <ul>
