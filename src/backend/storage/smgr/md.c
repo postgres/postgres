@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.122 2006/10/04 00:29:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.123 2006/11/20 01:07:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,23 +35,44 @@
  *	descriptors in its own descriptor pool.  This is done to make it
  *	easier to support relations that are larger than the operating
  *	system's file size limit (often 2GBytes).  In order to do that,
- *	we break relations up into chunks of < 2GBytes and store one chunk
- *	in each of several files that represent the relation.  See the
- *	BLCKSZ and RELSEG_SIZE configuration constants in pg_config_manual.h.
- *	All chunks except the last MUST have size exactly equal to RELSEG_SIZE
- *	blocks --- see mdnblocks() and mdtruncate().
+ *	we break relations up into "segment" files that are each shorter than
+ *	the OS file size limit.  The segment size is set by the RELSEG_SIZE
+ *	configuration constant in pg_config_manual.h.
+ *
+ *	On disk, a relation must consist of consecutively numbered segment
+ *	files in the pattern
+ *		-- Zero or more full segments of exactly RELSEG_SIZE blocks each
+ *		-- Exactly one partial segment of size 0 <= size < RELSEG_SIZE blocks
+ *		-- Optionally, any number of inactive segments of size 0 blocks.
+ *	The full and partial segments are collectively the "active" segments.
+ *	Inactive segments are those that once contained data but are currently
+ *	not needed because of an mdtruncate() operation.  The reason for leaving
+ *	them present at size zero, rather than unlinking them, is that other
+ *	backends and/or the bgwriter might be holding open file references to
+ *	such segments.  If the relation expands again after mdtruncate(), such
+ *	that a deactivated segment becomes active again, it is important that
+ *	such file references still be valid --- else data might get written
+ *	out to an unlinked old copy of a segment file that will eventually
+ *	disappear.
  *
  *	The file descriptor pointer (md_fd field) stored in the SMgrRelation
- *	cache is, therefore, just the head of a list of MdfdVec objects.
- *	But note the md_fd pointer can be NULL, indicating relation not open.
+ *	cache is, therefore, just the head of a list of MdfdVec objects, one
+ *	per segment.  But note the md_fd pointer can be NULL, indicating
+ *	relation not open.
  *
- *	Note that mdfd_chain == NULL does not necessarily mean the relation
+ *	Also note that mdfd_chain == NULL does not necessarily mean the relation
  *	doesn't have another segment after this one; we may just not have
  *	opened the next segment yet.  (We could not have "all segments are
  *	in the chain" as an invariant anyway, since another backend could
- *	extend the relation when we weren't looking.)
+ *	extend the relation when we weren't looking.)  We do not make chain
+ *	entries for inactive segments, however; as soon as we find a partial
+ *	segment, we assume that any subsequent segments are inactive.
  *
  *	All MdfdVec objects are palloc'd in the MdCxt memory context.
+ *
+ *	Defining LET_OS_MANAGE_FILESIZE disables the segmentation logic,
+ *	for use on machines that support large files.  Beware that that
+ *	code has not been tested in a long time and is probably bit-rotted.
  */
 
 typedef struct _MdfdVec
@@ -77,8 +98,6 @@ static MemoryContext MdCxt;		/* context for all md.c allocations */
  *
  * (Regular backends do not track pending operations locally, but forward
  * them to the bgwriter.)
- *
- * XXX for WIN32, may want to expand this to track pending deletes, too.
  */
 typedef struct
 {
@@ -222,12 +241,16 @@ mdunlink(RelFileNode rnode, bool isRedo)
 	}
 
 #ifndef LET_OS_MANAGE_FILESIZE
-	/* Get the additional segments, if any */
+	/* Delete the additional segments, if any */
 	if (status)
 	{
 		char	   *segpath = (char *) palloc(strlen(path) + 12);
 		BlockNumber segno;
 
+		/*
+		 * Note that because we loop until getting ENOENT, we will
+		 * correctly remove all inactive segments as well as active ones.
+		 */
 		for (segno = 1;; segno++)
 		{
 			sprintf(segpath, "%s.%u", path, segno);
@@ -257,15 +280,10 @@ mdunlink(RelFileNode rnode, bool isRedo)
  *
  *		The semantics are basically the same as mdwrite(): write at the
  *		specified position.  However, we are expecting to extend the
- *		relation (ie, blocknum is the current EOF), and so in case of
+ *		relation (ie, blocknum is >= the current EOF), and so in case of
  *		failure we clean up by truncating.
  *
  *		This routine returns true or false, with errno set as appropriate.
- *
- * Note: this routine used to call mdnblocks() to get the block position
- * to write at, but that's pretty silly since the caller needs to know where
- * the block will be written, and accordingly must have done mdnblocks()
- * already.  Might as well pass in the position and save a seek.
  */
 bool
 mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
@@ -498,10 +516,10 @@ mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 /*
  *	mdnblocks() -- Get the number of blocks stored in a relation.
  *
- *		Important side effect: all segments of the relation are opened
+ *		Important side effect: all active segments of the relation are opened
  *		and added to the mdfd_chain list.  If this routine has not been
  *		called, then only segments up to the last one actually touched
- *		are present in the chain...
+ *		are present in the chain.
  *
  *		Returns # of blocks, or InvalidBlockNumber on error.
  */
@@ -518,9 +536,13 @@ mdnblocks(SMgrRelation reln)
 	 * Skip through any segments that aren't the last one, to avoid redundant
 	 * seeks on them.  We have previously verified that these segments are
 	 * exactly RELSEG_SIZE long, and it's useless to recheck that each time.
-	 * (NOTE: this assumption could only be wrong if another backend has
+	 *
+	 * NOTE: this assumption could only be wrong if another backend has
 	 * truncated the relation.	We rely on higher code levels to handle that
-	 * scenario by closing and re-opening the md fd.)
+	 * scenario by closing and re-opening the md fd, which is handled via
+	 * relcache flush.  (Since the bgwriter doesn't participate in relcache
+	 * flush, it could have segment chain entries for inactive segments;
+	 * that's OK because the bgwriter never needs to compute relation size.)
 	 */
 	while (v->mdfd_chain != NULL)
 	{
@@ -546,8 +568,8 @@ mdnblocks(SMgrRelation reln)
 			/*
 			 * Because we pass O_CREAT, we will create the next segment (with
 			 * zero length) immediately, if the last segment is of length
-			 * REL_SEGSIZE.  This is unnecessary but harmless, and testing for
-			 * the case would take more cycles than it seems worth.
+			 * RELSEG_SIZE.  While perhaps not strictly necessary, this keeps
+			 * the logic simple.
 			 */
 			v->mdfd_chain = _mdfd_openseg(reln, segno, O_CREAT);
 			if (v->mdfd_chain == NULL)
@@ -577,8 +599,8 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 #endif
 
 	/*
-	 * NOTE: mdnblocks makes sure we have opened all existing segments, so
-	 * that truncate/delete loop will get them all!
+	 * NOTE: mdnblocks makes sure we have opened all active segments, so
+	 * that truncation loop will get them all!
 	 */
 	curnblk = mdnblocks(reln);
 	if (curnblk == InvalidBlockNumber)
@@ -599,14 +621,17 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 		if (priorblocks > nblocks)
 		{
 			/*
-			 * This segment is no longer wanted at all (and has already been
-			 * unlinked from the mdfd_chain). We truncate the file before
-			 * deleting it because if other backends are holding the file
-			 * open, the unlink will fail on some platforms. Better a
-			 * zero-size file gets left around than a big file...
+			 * This segment is no longer active (and has already been
+			 * unlinked from the mdfd_chain). We truncate the file, but do
+			 * not delete it, for reasons explained in the header comments.
 			 */
-			FileTruncate(v->mdfd_vfd, 0);
-			FileUnlink(v->mdfd_vfd);
+			if (FileTruncate(v->mdfd_vfd, 0) < 0)
+				return InvalidBlockNumber;
+			if (!isTemp)
+			{
+				if (!register_dirty_segment(reln, v))
+					return InvalidBlockNumber;
+			}
 			v = v->mdfd_chain;
 			Assert(ov != reln->md_fd);	/* we never drop the 1st segment */
 			pfree(ov);
@@ -618,8 +643,8 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 			 * the right length, and clear chain link that points to any
 			 * remaining segments (which we shall zap). NOTE: if nblocks is
 			 * exactly a multiple K of RELSEG_SIZE, we will truncate the K+1st
-			 * segment to 0 length but keep it. This is mainly so that the
-			 * right thing happens if nblocks==0.
+			 * segment to 0 length but keep it. This adheres to the invariant
+			 * given in the header comments.
 			 */
 			BlockNumber lastsegblocks = nblocks - priorblocks;
 
@@ -669,7 +694,7 @@ mdimmedsync(SMgrRelation reln)
 	BlockNumber curnblk;
 
 	/*
-	 * NOTE: mdnblocks makes sure we have opened all existing segments, so
+	 * NOTE: mdnblocks makes sure we have opened all active segments, so
 	 * that fsync loop will get them all!
 	 */
 	curnblk = mdnblocks(reln);
