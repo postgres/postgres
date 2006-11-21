@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.122 2006/11/13 17:13:57 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.123 2006/11/21 16:59:02 adunstan Exp $
  *
  **********************************************************************/
 
@@ -119,7 +119,6 @@ static bool plperl_safe_init_done = false;
 static PerlInterpreter *plperl_trusted_interp = NULL;
 static PerlInterpreter *plperl_untrusted_interp = NULL;
 static PerlInterpreter *plperl_held_interp = NULL;
-static bool can_run_two;
 static bool trusted_context;
 static HTAB  *plperl_proc_hash = NULL;
 static HTAB  *plperl_query_hash = NULL;
