@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.67 2006/10/23 18:10:30 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.68 2006/11/21 03:44:55 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2657,36 +2657,6 @@ ALTER TABLE measurement_y2006m02 INHERIT measurement;
     </para>
    </sect2>
 
-   <sect2 id="ddl-partitioning-caveats">
-   <title>Caveats</title>
- 
-   <para>
-    The following caveats apply to partitioned tables:
-   <itemizedlist>
-    <listitem>
-     <para>
-      There is currently no way to verify that all of the
-      <literal>CHECK</literal> constraints are mutually
-      exclusive. Care is required by the database designer.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      There is currently no simple way to specify that rows must not be
-      inserted into the master table. A <literal>CHECK (false)</literal>
-      constraint on the master table would be inherited by all child
-      tables, so that cannot be used for this purpose.  One possibility is
-      to set up an <literal>ON INSERT</> trigger on the master table that
-      always raises an error.  (Alternatively, such a trigger could be
-      used to redirect the data into the proper child table, instead of
-      using a set of rules as suggested above.)
-     </para>
-    </listitem>
-   </itemizedlist>
-   </para>
-   </sect2>
-
    <sect2 id="ddl-partitioning-constraint-exclusion">
    <title>Partitioning and Constraint Exclusion</title>
 
@@ -2768,9 +2738,39 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
     a large part of the partition or just a small part.  An index will
     be helpful in the latter case but not the former.
    </para>
+   </sect2>
+
+   <sect2 id="ddl-partitioning-caveats">
+   <title>Caveats</title>
+ 
+   <para>
+    The following caveats apply to partitioned tables:
+   <itemizedlist>
+    <listitem>
+     <para>
+      There is currently no way to verify that all of the
+      <literal>CHECK</literal> constraints are mutually
+      exclusive. Care is required by the database designer.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      There is currently no simple way to specify that rows must not be
+      inserted into the master table. A <literal>CHECK (false)</literal>
+      constraint on the master table would be inherited by all child
+      tables, so that cannot be used for this purpose.  One possibility is
+      to set up an <literal>ON INSERT</> trigger on the master table that
+      always raises an error.  (Alternatively, such a trigger could be
+      used to redirect the data into the proper child table, instead of
+      using a set of rules as suggested above.)
+     </para>
+    </listitem>
+   </itemizedlist>
+   </para>
 
    <para>
-    The following caveats apply:
+    The following caveats apply to constraint exclusion:
 
    <itemizedlist>
     <listitem>
