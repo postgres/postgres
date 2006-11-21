@@ -181,7 +181,7 @@ RS_execute(Regis * r, char *str)
 	}
 
 	if (len < r->nchar)
-		return 0;
+		return false;
 
 	c = str;
 	if (r->issuffix)
