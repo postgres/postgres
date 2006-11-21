@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.89 2006/10/04 00:30:14 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.90 2006/11/21 21:51:05 tgl Exp $
  *
  *********************************************************************
  */
@@ -1981,7 +1981,7 @@ static PyTypeObject PLy_PlanType = {
 	0,							/* tp_getattro */
 	0,							/* tp_setattro */
 	0,							/* tp_as_buffer */
-	0,							/* tp_xxx4 */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,	/* tp_flags */
 	PLy_plan_doc,				/* tp_doc */
 };
 
@@ -2026,7 +2026,7 @@ static PyTypeObject PLy_ResultType = {
 	0,							/* tp_getattro */
 	0,							/* tp_setattro */
 	0,							/* tp_as_buffer */
-	0,							/* tp_xxx4 */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,	/* tp_flags */
 	PLy_result_doc,				/* tp_doc */
 };
 
@@ -2098,7 +2098,7 @@ PLy_plan_dealloc(PyObject * arg)
 		PLy_free(ob->args);
 	}
 
-	PyMem_DEL(arg);
+	arg->ob_type->tp_free(arg);
 }
 
 
@@ -2152,7 +2152,7 @@ PLy_result_dealloc(PyObject * arg)
 	Py_XDECREF(ob->rows);
 	Py_XDECREF(ob->status);
 
-	PyMem_DEL(ob);
+	arg->ob_type->tp_free(arg);
 }
 
 static PyObject *
@@ -2701,7 +2701,11 @@ PLy_init_plpy(void)
 	/*
 	 * initialize plpy module
 	 */
-	PLy_PlanType.ob_type = PLy_ResultType.ob_type = &PyType_Type;
+	if (PyType_Ready(&PLy_PlanType) < 0)
+		elog(ERROR, "could not init PLy_PlanType");
+	if (PyType_Ready(&PLy_ResultType) < 0)
+		elog(ERROR, "could not init PLy_ResultType");
+
 	plpy = Py_InitModule("plpy", PLy_methods);
 	plpy_dict = PyModule_GetDict(plpy);
 
