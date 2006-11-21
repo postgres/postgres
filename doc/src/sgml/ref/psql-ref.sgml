@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.174 2006/10/31 02:29:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.175 2006/11/21 17:01:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -2677,6 +2677,14 @@ $endif
     </listitem>
    </varlistentry>
   </variablelist>
+
+  <para>
+   Because <application>psql</application> uses <application>libpq</application>
+   internally, all <application>libpq</application> environment variables are
+   also honored by <application>psql</application>.  For a complete list of those
+   variables, see <xref linkend="libpq-envars">.
+  </para>
+
  </refsect1>
 
 
@@ -2894,14 +2902,6 @@ second | four
 </programlisting>
   </para>
 
- </refsect1>
-
- <refsect1>
-  <title>See Also</title>
-
-  <simplelist type="inline">
-   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
-  </simplelist>
  </refsect1>
 
 </refentry>
