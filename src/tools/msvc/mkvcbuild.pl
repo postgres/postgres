@@ -52,8 +52,11 @@ if ($solution->{options}->{perl}) {
 	$plperl->AddDefine('PLPERL_HAVE_UID_GID');
 	if (Solution::IsNewer('src\pl\plperl\SPI.c','src\pl\plperl\SPI.xs')) {
 		print 'Building src\pl\plperl\SPI.c...' . "\n";
-		system($solution->{options}->{perl} . '/bin/perl ' . $solution->{options}->{perl} . '/lib/COREExtUtils/xsubpp -typemap ' . $solution->{options}->{perl} . '/lib/CORE/ExtUtils/typemap src\pl\plperl\SPI.xs >src\pl\plperl\SPI.c');
-		die 'Failed to create SPI.c' . "\n" if ((!(-f 'src\pl\plperl\SPI.c')) || -z 'src\pl\plperl\SPI.c');
+		system($solution->{options}->{perl} . '/bin/perl ' . $solution->{options}->{perl} . '/lib/ExtUtils/xsubpp -typemap ' . $solution->{options}->{perl} . '/lib/ExtUtils/typemap src\pl\plperl\SPI.xs >src\pl\plperl\SPI.c');
+		if ((!(-f 'src\pl\plperl\SPI.c')) || -z 'src\pl\plperl\SPI.c') {
+			unlink('src\pl\plperl\SPI.c'); # if zero size
+			die 'Failed to create SPI.c' . "\n";
+		}
 	}
 	$plperl->AddReference($postgres);
 	$plperl->AddLibrary($solution->{options}->{perl} . '\lib\CORE\perl58.lib');
