@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.137 2006/10/14 23:07:22 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.138 2006/11/21 22:19:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2780,6 +2780,18 @@ dumpTimestamp(ArchiveHandle *AH, const char *msg, time_t tim)
 {
 	char		buf[256];
 
-	if (strftime(buf, 256, "%Y-%m-%d %H:%M:%S %Z", localtime(&tim)) != 0)
+	/*
+	 * We don't print the timezone on Win32, because the names are long and
+	 * localized, which means they may contain characters in various random
+	 * encodings; this has been seen to cause encoding errors when reading
+	 * the dump script.
+	 */
+	if (strftime(buf, sizeof(buf),
+#ifndef WIN32
+				 "%Y-%m-%d %H:%M:%S %Z",
+#else
+				 "%Y-%m-%d %H:%M:%S",
+#endif
+				 localtime(&tim)) != 0)
 		ahprintf(AH, "-- %s %s\n\n", msg, buf);
 }
