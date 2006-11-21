@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.139 2006/10/04 00:29:56 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.140 2006/11/21 20:59:52 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1612,6 +1612,17 @@ PgstatCollectorMain(int argc, char *argv[])
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
 	MyProcPid = getpid();		/* reset MyProcPid */
+
+	/*
+	 * If possible, make this process a group leader, so that the postmaster
+	 * can signal any child processes too.  (pgstat probably never has
+	 * any child processes, but for consistency we make all postmaster
+	 * child processes do this.)
+	 */
+#ifdef HAVE_SETSID
+	if (setsid() < 0)
+		elog(FATAL, "setsid() failed: %m");
+#endif
 
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster,

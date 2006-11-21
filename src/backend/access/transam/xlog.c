@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.256 2006/11/16 14:28:41 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.257 2006/11/21 20:59:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,10 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <time.h>
-#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 #include "access/clog.h"
 #include "access/heapam.h"
@@ -2373,6 +2374,7 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	char	   *endp;
 	const char *sp;
 	int			rc;
+	bool		signaled;
 	struct stat stat_buf;
 
 	/*
@@ -2516,13 +2518,28 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 	}
 
 	/*
-	 * remember, we rollforward UNTIL the restore fails so failure here is
+	 * Remember, we rollforward UNTIL the restore fails so failure here is
 	 * just part of the process... that makes it difficult to determine
 	 * whether the restore failed because there isn't an archive to restore,
 	 * or because the administrator has specified the restore program
 	 * incorrectly.  We have to assume the former.
+	 *
+	 * However, if the failure was due to any sort of signal, it's best to
+	 * punt and abort recovery.  (If we "return false" here, upper levels
+	 * will assume that recovery is complete and start up the database!)
+	 * It's essential to abort on child SIGINT and SIGQUIT, because per spec
+	 * system() ignores SIGINT and SIGQUIT while waiting; if we see one of
+	 * those it's a good bet we should have gotten it too.  Aborting on other
+	 * signals such as SIGTERM seems a good idea as well.
+	 *
+	 * Per the Single Unix Spec, shells report exit status > 128 when
+	 * a called command died on a signal.  Also, 126 and 127 are used to
+	 * report problems such as an unfindable command; treat those as fatal
+	 * errors too.
 	 */
-	ereport(DEBUG2,
+	signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 125;
+
+	ereport(signaled ? FATAL : DEBUG2,
 		(errmsg("could not restore file \"%s\" from archive: return code %d",
 				xlogfname, rc)));
 

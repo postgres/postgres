@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.226 2006/11/21 00:49:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.227 2006/11/21 20:59:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -500,6 +500,15 @@ bootstrap_signals(void)
 {
 	if (IsUnderPostmaster)
 	{
+		/*
+		 * If possible, make this process a group leader, so that the
+		 * postmaster can signal any child processes too.
+		 */
+#ifdef HAVE_SETSID
+		if (setsid() < 0)
+			elog(FATAL, "setsid() failed: %m");
+#endif
+
 		/*
 		 * Properly accept or ignore signals the postmaster might send us
 		 */

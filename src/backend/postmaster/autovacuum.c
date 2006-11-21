@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.28 2006/11/05 22:42:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.29 2006/11/21 20:59:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,6 +242,17 @@ AutoVacMain(int argc, char *argv[])
 	init_ps_display("autovacuum process", "", "", "");
 
 	SetProcessingMode(InitProcessing);
+
+	/*
+	 * If possible, make this process a group leader, so that the postmaster
+	 * can signal any child processes too.  (autovacuum probably never has
+	 * any child processes, but for consistency we make all postmaster
+	 * child processes do this.)
+	 */
+#ifdef HAVE_SETSID
+	if (setsid() < 0)
+		elog(FATAL, "setsid() failed: %m");
+#endif
 
 	/*
 	 * Set up signal handlers.	We operate on databases much like a regular

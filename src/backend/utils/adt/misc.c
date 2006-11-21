@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.54 2006/10/04 00:29:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/misc.c,v 1.55 2006/11/21 20:59:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,12 @@ pg_signal_backend(int pid, int sig)
 		return false;
 	}
 
+	/* If we have setsid(), signal the backend's whole process group */
+#ifdef HAVE_SETSID
+	if (kill(-pid, sig))
+#else
 	if (kill(pid, sig))
+#endif
 	{
 		/* Again, just a warning to allow loops */
 		ereport(WARNING,

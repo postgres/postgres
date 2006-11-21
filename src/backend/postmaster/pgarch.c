@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.26 2006/11/10 22:32:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.27 2006/11/21 20:59:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include <signal.h>
 #include <time.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <unistd.h>
 
 #include "access/xlog_internal.h"
@@ -221,6 +222,15 @@ PgArchiverMain(int argc, char *argv[])
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
 	MyProcPid = getpid();		/* reset MyProcPid */
+
+	/*
+	 * If possible, make this process a group leader, so that the postmaster
+	 * can signal any child processes too.
+	 */
+#ifdef HAVE_SETSID
+	if (setsid() < 0)
+		elog(FATAL, "setsid() failed: %m");
+#endif
 
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster,
@@ -456,9 +466,22 @@ pgarch_archiveXlog(char *xlog)
 	rc = system(xlogarchcmd);
 	if (rc != 0)
 	{
-		ereport(LOG,
+		/*
+		 * If either the shell itself, or a called command, died on a signal,
+		 * abort the archiver.  We do this because system() ignores SIGINT and
+		 * SIGQUIT while waiting; so a signal is very likely something that
+		 * should have interrupted us too.  If we overreact it's no big deal,
+		 * the postmaster will just start the archiver again.
+		 *
+		 * Per the Single Unix Spec, shells report exit status > 128 when
+		 * a called command died on a signal.
+		 */
+		bool	signaled = WIFSIGNALED(rc) || WEXITSTATUS(rc) > 128;
+
+		ereport(signaled ? FATAL : LOG,
 				(errmsg("archive command \"%s\" failed: return code %d",
 						xlogarchcmd, rc)));
+
 		return false;
 	}
 	ereport(LOG,

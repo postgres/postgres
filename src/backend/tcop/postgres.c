@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.517 2006/11/21 00:49:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.518 2006/11/21 20:59:52 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2988,6 +2988,11 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	if (PostAuthDelay)
 		pg_usleep(PostAuthDelay * 1000000L);
+
+	/*
+	 * You might expect to see a setsid() call here, but it's not needed,
+	 * because if we are under a postmaster then BackendInitialize() did it.
+	 */
 
 	/*
 	 * Set up signal handlers and masks.
