@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.7 2006/11/21 21:37:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.8 2006/11/21 22:48:33 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability and Load Balancing</title>
@@ -197,8 +197,8 @@ protocol to make nodes agree on a serializable transactional order.
     is best for mostly read workloads, though its big advantage
     is that any server can accept write requests &mdash; there is
     no need to partition workloads between master and slave servers,
-    and because the changes are sent from one server to another,
-    there is not a problem with non-deterministic functions like
+    and because the data changes are sent from one server to another,
+    there is no problem with non-deterministic functions like
     <function>random()</>.
    </para>
 
