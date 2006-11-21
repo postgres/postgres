@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.6 2006/11/21 18:31:57 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.7 2006/11/21 21:37:33 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability and Load Balancing</title>
@@ -252,8 +252,7 @@ protocol to make nodes agree on a serializable transactional order.
     query.  One possible way this could work is for the data to be
     split among servers and for each server to execute its part of
     the query and results sent to a central server to be combined
-    and returned to the user.  There currently is no
-    <productname>PostgreSQL</> open source solution for this.
+    and returned to the user.  Pgpool-II has this capability.
    </para>
   </listitem>
  </varlistentry>
