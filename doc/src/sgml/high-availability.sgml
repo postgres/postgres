@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.4 2006/11/20 22:07:56 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.5 2006/11/21 18:15:45 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability and Load Balancing</title>
@@ -45,16 +45,17 @@
  </para>
 
  <para>
-  Some failover and load balancing solutions are synchronous, meaning that
-  a data-modifying transaction is not considered committed until all
-  servers have committed the transaction.  This guarantees that a failover
-  will not lose any data and that all load-balanced servers will return
-  consistent results with no propagation delay. Asynchronous updating has
-  a small delay between the time of commit and its propagation to the
-  other servers, opening the possibility that some transactions might be
-  lost in the switch to a backup server, and that load balanced servers
-  might return slightly stale results.  Asynchronous communication is used
-  when synchronous would be too slow.
+  Some failover and load balancing solutions are synchronous,
+  meaning that a data-modifying transaction is not considered
+  committed until all servers have committed the transaction.  This
+  guarantees that a failover will not lose any data and that all
+  load-balanced servers will return consistent results with little
+  propagation delay. Asynchronous updating has a delay between the
+  time of commit and its propagation to the other servers, opening
+  the possibility that some transactions might be lost in the switch
+  to a backup server, and that load balanced servers might return
+  slightly stale results.  Asynchronous communication is used when
+  synchronous would be too slow.
  </para>
 
  <para>
@@ -103,6 +104,16 @@
     current, but the mirroring must be done in a way that the
     standby server has a consistent copy of the file system.
    </para>
+
+<!--
+https://forge.continuent.org/pipermail/sequoia/2006-November/004070.html
+
+Oracle RAC is a shared disk approach and just send cache invalidations
+to other nodes but not actual data. As the disk is shared, data is
+only commited once to disk and there is a distributed locking
+protocol to make nodes agree on a serializable transactional order.
+-->
+
   </listitem>
  </varlistentry>
 
@@ -173,7 +184,7 @@
  </varlistentry>
 
  <varlistentry>
-  <term>Multi-Master Replication Using Clustering</term>
+  <term>Multi-Master Clustering</term>
   <listitem>
 
    <para>
@@ -192,14 +203,26 @@
    </para>
 
    <para>
-    Clustering is implemented by <productname>Oracle</> in their
-    <productname><acronym>RAC</></> product.  <productname>PostgreSQL</>
-    does not offer this type of load balancing, though
-    <productname>PostgreSQL</> two-phase commit (<xref
-    linkend="sql-prepare-transaction"
+    <productname>PostgreSQL</> does not offer this type of load
+    balancing, though <productname>PostgreSQL</> two-phase commit
+    (<xref linkend="sql-prepare-transaction"
     endterm="sql-prepare-transaction-title"> and <xref
     linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">)
     can be used to implement this in application code or middleware.
+   </para>
+  </listitem>
+ </varlistentry>
+
+ <varlistentry>
+  <term>Multi-Master With Conflict Resolution</term>
+  <listitem>
+
+   <para>
+    For servers that are not regularly connected, like laptops or
+    remote servers, keeping data consistent among servers is a
+    challenge.  One simple solution is to allow each server to
+    modify the data, and have periodic communication compare
+    databases and ask users to resolve any conflicts.
    </para>
   </listitem>
  </varlistentry>
