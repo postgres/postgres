@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.358 2006/11/05 22:42:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.359 2006/11/21 01:23:37 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -176,7 +176,7 @@ bool		SQL_inheritance = true;
 
 bool		Password_encryption = true;
 
-int			log_min_error_statement = PANIC;
+int			log_min_error_statement = ERROR;
 int			log_min_messages = NOTICE;
 int			client_min_messages = NOTICE;
 int			log_min_duration_statement = -1;
@@ -1853,7 +1853,7 @@ static struct config_string ConfigureNamesString[] =
 						 "specified level or a higher level are logged.")
 		},
 		&log_min_error_statement_str,
-		"panic", assign_min_error_statement, NULL
+		"error", assign_min_error_statement, NULL
 	},
 
 	{

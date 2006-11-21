@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.95 2006/11/12 05:12:42 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.96 2006/11/21 01:23:37 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2474,20 +2474,19 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Controls whether or not the SQL statement that causes an error
-        condition will also be recorded in the server log. All SQL
-        statements that cause an error of the specified level or
-        higher are logged.  The default is
-        <literal>PANIC</literal> (effectively turning this feature
-        off for normal use). Valid values are <literal>DEBUG5</literal>,
+        condition will be recorded in the server log.  The current
+        SQL statement is included in the log entry for any message of
+        the specified severity or higher.
+        Valid values are <literal>DEBUG5</literal>,
         <literal>DEBUG4</literal>, <literal>DEBUG3</literal>,
         <literal>DEBUG2</literal>, <literal>DEBUG1</literal>,
         <literal>INFO</literal>, <literal>NOTICE</literal>,
         <literal>WARNING</literal>, <literal>ERROR</literal>,
-        <literal>FATAL</literal>, and <literal>PANIC</literal>.  For
-        example, if you set this to <literal>ERROR</literal> then all
-        SQL statements causing errors, fatal errors, or panics will be
-        logged. Enabling this parameter can be helpful in tracking down
-        the source of any errors that appear in the server log.
+        <literal>FATAL</literal>, and <literal>PANIC</literal>.
+        The default is <literal>ERROR</literal>, which means statements
+        causing errors, fatal errors, or panics will be logged.
+        To effectively turn off logging of failing statements,
+        set this parameter to <literal>PANIC</literal>.
         Only superusers can change this setting.
        </para>
       </listitem>
@@ -2898,7 +2897,7 @@ SELECT * FROM parent WHERE key = 2400;
          query protocol, this setting likewise does not log statements that
          fail before the Execute phase (i.e., during parse analysis or
          planning).  Set <varname>log_min_error_statement</> to
-         <literal>error</> to log such statements.      
+         <literal>ERROR</> (or lower) to log such statements.      
         </para>
        </note>
       </listitem>

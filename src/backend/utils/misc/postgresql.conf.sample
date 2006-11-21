@@ -284,7 +284,7 @@
 
 #log_error_verbosity = default		# terse, default, or verbose messages
 
-#log_min_error_statement = panic	# Values in order of increasing severity:
+#log_min_error_statement = error	# Values in order of increasing severity:
 				 	#   debug5
 					#   debug4
 					#   debug3
@@ -294,7 +294,8 @@
 					#   notice
 					#   warning
 					#   error
-					#   panic(off)
+					#   fatal
+					#   panic (effectively off)
 
 #log_min_duration_statement = -1	# -1 is disabled, 0 logs all statements
 					# and their durations.
