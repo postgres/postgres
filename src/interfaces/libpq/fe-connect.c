@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.338 2006/10/06 17:14:00 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.339 2006/11/21 16:28:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1399,6 +1399,25 @@ keep_going:						/* We will come back to here until there is
 					/* SSL handshake done, ready to send startup packet */
 					conn->status = CONNECTION_MADE;
 					return PGRES_POLLING_WRITING;
+				}
+				if (pollres == PGRES_POLLING_FAILED)
+				{
+					/*
+					 * Failed ... if sslmode is "prefer" then do a non-SSL
+					 * retry
+					 */
+					if (conn->sslmode[0] == 'p' /* "prefer" */
+						&& conn->allow_ssl_try	/* redundant? */
+						&& !conn->wait_ssl_try) /* redundant? */
+					{
+						/* only retry once */
+						conn->allow_ssl_try = false;
+						/* Must drop the old connection */
+						closesocket(conn->sock);
+						conn->sock = -1;
+						conn->status = CONNECTION_NEEDED;
+						goto keep_going;
+					}
 				}
 				return pollres;
 #else							/* !USE_SSL */
