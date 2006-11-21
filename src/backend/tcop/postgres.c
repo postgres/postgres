@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.516 2006/10/19 19:52:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.517 2006/11/21 00:49:55 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2327,12 +2327,12 @@ quickdie(SIGNAL_ARGS)
 	 * corrupted, so we don't want to try to clean up our transaction. Just
 	 * nail the windows shut and get out of town.
 	 *
-	 * Note we do exit(1) not exit(0).	This is to force the postmaster into a
+	 * Note we do exit(2) not exit(0).	This is to force the postmaster into a
 	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
 	 * backend.  This is necessary precisely because we don't clean up our
 	 * shared memory state.
 	 */
-	exit(1);
+	exit(2);
 }
 
 /*
@@ -2374,7 +2374,7 @@ die(SIGNAL_ARGS)
 
 /*
  * Timeout or shutdown signal from postmaster during client authentication.
- * Simply exit(0).
+ * Simply exit(1).
  *
  * XXX: possible future improvement: try to send a message indicating
  * why we are disconnecting.  Problem is to be sure we don't block while
@@ -2383,7 +2383,7 @@ die(SIGNAL_ARGS)
 void
 authdie(SIGNAL_ARGS)
 {
-	exit(0);
+	exit(1);
 }
 
 /*

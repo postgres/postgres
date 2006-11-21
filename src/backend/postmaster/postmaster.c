@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.501 2006/11/05 22:42:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.502 2006/11/21 00:49:55 tgl Exp $
  *
  * NOTES
  *
@@ -357,6 +357,10 @@ static void ShmemBackendArrayRemove(pid_t pid);
 
 #define StartupDataBase()		StartChildProcess(BS_XLOG_STARTUP)
 #define StartBackgroundWriter() StartChildProcess(BS_XLOG_BGWRITER)
+
+/* Macros to check exit status of a child process */
+#define EXIT_STATUS_0(st)  ((st) == 0)
+#define EXIT_STATUS_1(st)  (WIFEXITED(st) && WEXITSTATUS(st) == 1)
 
 
 /*
@@ -2025,7 +2029,8 @@ reaper(SIGNAL_ARGS)
 		if (StartupPID != 0 && pid == StartupPID)
 		{
 			StartupPID = 0;
-			if (exitstatus != 0)
+			/* Note: FATAL exit of startup is treated as catastrophic */
+			if (!EXIT_STATUS_0(exitstatus))
 			{
 				LogChildExit(LOG, _("startup process"),
 							 pid, exitstatus);
@@ -2078,7 +2083,8 @@ reaper(SIGNAL_ARGS)
 		if (BgWriterPID != 0 && pid == BgWriterPID)
 		{
 			BgWriterPID = 0;
-			if (exitstatus == 0 && Shutdown > NoShutdown && !FatalError &&
+			if (EXIT_STATUS_0(exitstatus) &&
+				Shutdown > NoShutdown && !FatalError &&
 				!DLGetHead(BackendList) && AutoVacPID == 0)
 			{
 				/*
@@ -2096,7 +2102,8 @@ reaper(SIGNAL_ARGS)
 			}
 
 			/*
-			 * Any unexpected exit of the bgwriter is treated as a crash.
+			 * Any unexpected exit of the bgwriter (including FATAL exit)
+			 * is treated as a crash.
 			 */
 			HandleChildCrash(pid, exitstatus,
 							 _("background writer process"));
@@ -2104,15 +2111,16 @@ reaper(SIGNAL_ARGS)
 		}
 
 		/*
-		 * Was it the autovacuum process?  Normal exit can be ignored; we'll
-		 * start a new one at the next iteration of the postmaster's main
-		 * loop, if necessary.  An unexpected exit is treated as a crash.
+		 * Was it the autovacuum process?  Normal or FATAL exit can be
+		 * ignored; we'll start a new one at the next iteration of the
+		 * postmaster's main loop, if necessary.  Any other exit condition
+		 * is treated as a crash.
 		 */
 		if (AutoVacPID != 0 && pid == AutoVacPID)
 		{
 			AutoVacPID = 0;
 			autovac_stopped();
-			if (exitstatus != 0)
+			if (!EXIT_STATUS_0(exitstatus) && !EXIT_STATUS_1(exitstatus))
 				HandleChildCrash(pid, exitstatus,
 								 _("autovacuum process"));
 			continue;
@@ -2126,7 +2134,7 @@ reaper(SIGNAL_ARGS)
 		if (PgArchPID != 0 && pid == PgArchPID)
 		{
 			PgArchPID = 0;
-			if (exitstatus != 0)
+			if (!EXIT_STATUS_0(exitstatus))
 				LogChildExit(LOG, _("archiver process"),
 							 pid, exitstatus);
 			if (XLogArchivingActive() &&
@@ -2143,7 +2151,7 @@ reaper(SIGNAL_ARGS)
 		if (PgStatPID != 0 && pid == PgStatPID)
 		{
 			PgStatPID = 0;
-			if (exitstatus != 0)
+			if (!EXIT_STATUS_0(exitstatus))
 				LogChildExit(LOG, _("statistics collector process"),
 							 pid, exitstatus);
 			if (StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
@@ -2157,7 +2165,7 @@ reaper(SIGNAL_ARGS)
 			SysLoggerPID = 0;
 			/* for safety's sake, launch new logger *first* */
 			SysLoggerPID = SysLogger_Start();
-			if (exitstatus != 0)
+			if (!EXIT_STATUS_0(exitstatus))
 				LogChildExit(LOG, _("system logger process"),
 							 pid, exitstatus);
 			continue;
@@ -2229,12 +2237,12 @@ CleanupBackend(int pid,
 	LogChildExit(DEBUG2, _("server process"), pid, exitstatus);
 
 	/*
-	 * If a backend dies in an ugly way (i.e. exit status not 0) then we must
-	 * signal all other backends to quickdie.  If exit status is zero we
-	 * assume everything is hunky dory and simply remove the backend from the
+	 * If a backend dies in an ugly way then we must signal all other backends
+	 * to quickdie.  If exit status is zero (normal) or one (FATAL exit), we
+	 * assume everything is all right and simply remove the backend from the
 	 * active backend list.
 	 */
-	if (exitstatus != 0)
+	if (!EXIT_STATUS_0(exitstatus) && !EXIT_STATUS_1(exitstatus))
 	{
 		HandleChildCrash(pid, exitstatus, _("server process"));
 		return;
