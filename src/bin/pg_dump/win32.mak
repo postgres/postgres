@@ -32,7 +32,7 @@ CPP_PROJ=/nologo $(OPT) /W3 /EHsc /D "WIN32" $(DEBUGDEF) /D "_CONSOLE" /D\
  "_MBCS" /Fp"$(INTDIR)\pg_dump.pch" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
  /I ..\..\include /I ..\..\interfaces\libpq /I ..\..\include\port\win32 \
  /I ..\..\include\port\win32_msvc /I ..\..\backend \
- /D "HAVE_STRDUP" /D "FRONTEND" /D "_CRT_SECURE_NO_DEPRECATE"
+ /D "FRONTEND" /D "_CRT_SECURE_NO_DEPRECATE"
 
 CPP_OBJS=$(INTDIR)/
 CPP_SBRS=.

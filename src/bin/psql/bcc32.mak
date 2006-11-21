@@ -82,7 +82,7 @@ LIBRARIES	= cw32mt.lib ..\..\interfaces\libpq\$(LIBPG_DIR)\blibpq.lib
 
 .path.obj = $(INTDIR)
 
-USERDEFINES = WIN32;_CONSOLE;_MBCS;HAVE_STRDUP
+USERDEFINES = WIN32;_CONSOLE;_MBCS
 
 ALL : sql_help.h psqlscan.c "..\..\port\pg_config_paths.h" "$(OUTDIR)\psql.exe"
 

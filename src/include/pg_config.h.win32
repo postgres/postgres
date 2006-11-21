@@ -529,7 +529,7 @@
 #define HAVE_UTIME_H 1
 
 /* Define to 1 if you have the `vsnprintf' function. */
-/* #undef HAVE_VSNPRINTF */
+#define HAVE_VSNPRINTF 1
 
 /* Define to 1 if you have the `waitpid' function. */
 /* #undef HAVE_WAITPID */

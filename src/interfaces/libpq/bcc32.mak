@@ -59,7 +59,7 @@ INTDIR=.\Release
 
 OUTFILENAME=blibpq
 
-USERDEFINES=FRONTEND;NDEBUG;WIN32;_WINDOWS;HAVE_VSNPRINTF;HAVE_STRDUP;
+USERDEFINES=FRONTEND;NDEBUG;WIN32;_WINDOWS
 
 CPP=bcc32.exe
 CPP_PROJ = -I$(BCB)\include;..\..\include;..\..\include\port\win32;..\..\include\port\win32_msvc;..\..\port -n"$(INTDIR)" -WD -c -D$(USERDEFINES) -tWM \
