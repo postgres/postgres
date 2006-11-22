@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.12 2006/11/22 17:36:52 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.13 2006/11/22 18:14:26 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability and Load Balancing</title>
@@ -205,9 +205,9 @@ protocol to make nodes agree on a serializable transactional order.
    </para>
 
    <para>
-    <productname>PostgreSQL</> does not offer this type of load
-    balancing, though <productname>PostgreSQL</> two-phase commit
-    (<xref linkend="sql-prepare-transaction"
+    <productname>PostgreSQL</> does not offer this type of replication,
+    though <productname>PostgreSQL</> two-phase commit (<xref
+    linkend="sql-prepare-transaction"
     endterm="sql-prepare-transaction-title"> and <xref
     linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">)
     can be used to implement this in application code or middleware.
@@ -252,7 +252,8 @@ protocol to make nodes agree on a serializable transactional order.
   <listitem>
 
    <para>
-    This allows multiple servers to work concurrently on a single
+    Many of the above solutions allow multiple servers handle multiple sessions, but none allow a single query to use
+multiple server to complete fas to This allows multiple servers to work concurrently on a single
     query.  One possible way this could work is for the data to be
     split among servers and for each server to execute its part of
     the query and results sent to a central server to be combined
