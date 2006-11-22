@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.76.2.1 2003/11/12 22:55:42 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.76.2.2 2006/11/22 21:13:11 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -556,7 +556,7 @@ PrintQueryResults(PGresult *results)
 
 		case PGRES_COMMAND_OK:
 			{
-				char		buf[10];
+				char		buf[16];
 
 				success = true;
 				sprintf(buf, "%u", (unsigned int) PQoidValue(results));
