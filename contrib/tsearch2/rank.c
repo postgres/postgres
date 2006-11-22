@@ -667,6 +667,7 @@ calc_rank_cd(float4 *arrdata, tsvector * txt, QUERYTYPE * query, int method)
 	{
 		double		Cpos = 0.0;
 		double		InvSum = 0.0;
+		int			nNoise;
 		DocRepresentation *ptr = ext.begin;
 
 		while (ptr <= ext.end)
@@ -676,7 +677,16 @@ calc_rank_cd(float4 *arrdata, tsvector * txt, QUERYTYPE * query, int method)
 		}
 
 		Cpos = ((double) (ext.end - ext.begin + 1)) / InvSum;
-		Wdoc += Cpos / ((double) ((1 + (ext.q - ext.p) - (ext.end - ext.begin))));
+		/*
+		 * if doc are big enough then ext.q may be equal to ext.p
+		 * due to limit of posional information. In this case we 
+		 * approximate number of noise word as half cover's
+		 * length
+		 */
+		nNoise = (ext.q - ext.p) - (ext.end - ext.begin);
+		if ( nNoise < 0 )
+			nNoise = (ext.end - ext.begin) / 2;
+		Wdoc += Cpos / ((double) (1 + nNoise));
 
 		CurExtPos = ((double) (ext.q + ext.p)) / 2.0;
 		if (NExtent > 0 && CurExtPos > PrevExtPos		/* prevent devision by
