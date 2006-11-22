@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Nov 21 10:37:54 EST 2006
+   Last updated: Tue Nov 21 23:16:54 EST 2006
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -728,11 +728,11 @@
    
   4.12) What is an OID? What is a CTID?
   
-   Every row that is created in PostgreSQL gets a unique OID unless
-   created WITHOUT OIDS. OIDs are automatically assigned unique 4-byte
-   integers that are unique across the entire installation. However, they
-   overflow at 4 billion, and then the OIDs start being duplicated.
-   PostgreSQL uses OIDs to link its internal system tables together.
+   If a table is created WITH OIDS, each row gets a unique a OID. OIDs
+   are automatically assigned unique 4-byte integers that are unique
+   across the entire installation. However, they overflow at 4 billion,
+   and then the OIDs start being duplicated. PostgreSQL uses OIDs to link
+   its internal system tables together.
    
    To uniquely number rows in user tables, it is best to use SERIAL
    rather than OIDs because SERIAL sequences are unique only within a

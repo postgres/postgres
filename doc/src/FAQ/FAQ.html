@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Tue Nov 21 10:37:54 EST 2006</P>
+    <P>Last updated: Tue Nov 21 23:16:54 EST 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -956,13 +956,13 @@ length</TD></TR>
     <H3 id="item4.12">4.12) What is an <SMALL>OID</SMALL>? What is
     a <SMALL>CTID</SMALL>?</H3>
 
-    <P>Every row that is created in PostgreSQL gets a unique
-    <SMALL>OID</SMALL> unless created <SMALL>WITHOUT OIDS</SMALL>.
-    O<SMALL>ID</SMALL>s are automatically assigned unique 4-byte
-    integers that are unique across the entire installation.  However,
-    they overflow at 4 billion, and then the O<SMALL>ID</SMALL>s start
-    being duplicated. PostgreSQL uses <SMALL>OID</SMALL>s to link its
-    internal system tables together.</P>
+    <P>If a table is created <SMALL>WITH OIDS</SMALL>, each row
+    gets a unique a <SMALL>OID</SMALL>.  O<SMALL>ID</SMALL>s are
+    automatically assigned unique 4-byte integers that are unique
+    across the entire installation.  However, they overflow at 4
+    billion, and then the O<SMALL>ID</SMALL>s start being duplicated.
+    PostgreSQL uses <SMALL>OID</SMALL>s to link its internal system
+    tables together.</P>
 
     <P>To uniquely number rows in user tables, it is best to use
     <SMALL>SERIAL</SMALL> rather than O<SMALL>ID</SMALL>s because
