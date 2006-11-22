@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.11 2006/11/22 04:01:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.12 2006/11/22 17:36:52 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability and Load Balancing</title>
@@ -49,13 +49,13 @@
   meaning that a data-modifying transaction is not considered
   committed until all servers have committed the transaction.  This
   guarantees that a failover will not lose any data and that all
-  load-balanced servers will return consistent results with little
-  propagation delay. Asynchronous updating has a delay between the
-  time of commit and its propagation to the other servers, opening
-  the possibility that some transactions might be lost in the switch
-  to a backup server, and that load balanced servers might return
-  slightly stale results.  Asynchronous communication is used when
-  synchronous would be too slow.
+  load-balanced servers will return consistent results no matter
+  which server is queried. Asynchronous updating has a delay between
+  the time of commit and its propagation to the other servers,
+  opening the possibility that some transactions might be lost in
+  the switch to a backup server, and that load balanced servers
+  might return slightly stale results.  Asynchronous communication
+  is used when synchronous would be too slow.
  </para>
 
  <para>
@@ -110,7 +110,7 @@ https://forge.continuent.org/pipermail/sequoia/2006-November/004070.html
 
 Oracle RAC is a shared disk approach and just send cache invalidations
 to other nodes but not actual data. As the disk is shared, data is
-only commited once to disk and there is a distributed locking
+only committed once to disk and there is a distributed locking
 protocol to make nodes agree on a serializable transactional order.
 -->
 
@@ -178,29 +178,29 @@ protocol to make nodes agree on a serializable transactional order.
     using two-phase commit (<xref linkend="sql-prepare-transaction"
     endterm="sql-prepare-transaction-title"> and <xref
     linkend="sql-commit-prepared" endterm="sql-commit-prepared-title">.
-    Pgpool is an example of this type of replication.
+    Pgpool and Sequoia are an example of this type of replication.
    </para>
   </listitem>
  </varlistentry>
 
  <varlistentry>
-  <term>Synchonous Multi-Master Replication</term>
+  <term>Synchronous Multi-Master Replication</term>
   <listitem>
 
    <para>
-    In synchonous multi-master replication, each server can accept
+    In synchronous multi-master replication, each server can accept
     write requests, and modified data is transmitted from the
     original server to every other server before each transaction
     commits.  Heavy write activity can cause excessive locking,
     leading to poor performance.  In fact, write performance is
     often worse than that of a single server.  Read requests can
-    be sent to any server.  Some implementations use cluster-wide
-    shared memory or shared disk to reduce the communication
-    overhead.  Clustering is best for mostly read workloads, though
-    its big advantage is that any server can accept write requests
-    &mdash; there is no need to partition workloads between master
-    and slave servers, and because the data changes are sent from
-    one server to another, there is no problem with non-deterministic
+    be sent to any server.  Some implementations use shared disk
+    to reduce the communication overhead.  Synchronous multi-master
+    replication is best for mostly read workloads, though its big
+    advantage is that any server can accept write requests &mdash;
+    there is no need to partition workloads between master and
+    slave servers, and because the data changes are sent from one
+    server to another, there is no problem with non-deterministic
     functions like <function>random()</>.
    </para>
 
@@ -222,9 +222,11 @@ protocol to make nodes agree on a serializable transactional order.
    <para>
     For servers that are not regularly connected, like laptops or
     remote servers, keeping data consistent among servers is a
-    challenge.  One simple solution is to allow each server to
-    modify the data, and have periodic communication compare
-    databases and ask users to resolve any conflicts.
+    challenge.  Using asynchronous multi-master replication, each
+    server works independently, and periodically communicates with
+    the other servers to identify conflicting transactions.  The
+    conflicts can be resolved by users or conflict resolution rules.
+    rules.
    </para>
   </listitem>
  </varlistentry>
