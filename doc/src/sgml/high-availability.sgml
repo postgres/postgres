@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.8 2006/11/21 22:48:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.9 2006/11/22 03:44:52 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability and Load Balancing</title>
@@ -193,11 +193,13 @@ protocol to make nodes agree on a serializable transactional order.
     other server before each transaction commits.  Heavy write
     activity can cause excessive locking, leading to poor performance.
     In fact, write performance is often worse than that of a single
-    server.  Read requests can be sent to any server.  Clustering
-    is best for mostly read workloads, though its big advantage
-    is that any server can accept write requests &mdash; there is
-    no need to partition workloads between master and slave servers,
-    and because the data changes are sent from one server to another,
+    server.  Read requests can be sent to any server.  Some
+    implementations use cluster-wide shared memory or shared disk
+    to reduce the communication overhead.  Clustering is best for
+    mostly read workloads, though its big advantage is that any
+    server can accept write requests &mdash; there is no need to
+    partition workloads between master and slave servers, and
+    because the data changes are sent from one server to another,
     there is no problem with non-deterministic functions like
     <function>random()</>.
    </para>
