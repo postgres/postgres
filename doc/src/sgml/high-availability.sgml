@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.13 2006/11/22 18:14:26 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.14 2006/11/22 18:15:34 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability and Load Balancing</title>
@@ -226,7 +226,6 @@ protocol to make nodes agree on a serializable transactional order.
     server works independently, and periodically communicates with
     the other servers to identify conflicting transactions.  The
     conflicts can be resolved by users or conflict resolution rules.
-    rules.
    </para>
   </listitem>
  </varlistentry>
@@ -252,12 +251,14 @@ protocol to make nodes agree on a serializable transactional order.
   <listitem>
 
    <para>
-    Many of the above solutions allow multiple servers handle multiple sessions, but none allow a single query to use
-multiple server to complete fas to This allows multiple servers to work concurrently on a single
-    query.  One possible way this could work is for the data to be
-    split among servers and for each server to execute its part of
-    the query and results sent to a central server to be combined
-    and returned to the user.  Pgpool-II has this capability.
+    Many of the above solutions allow multiple servers to handle
+    multiple queries, but none allow a single query to use multiple
+    servers to complete faster.  This solution allows multiple
+    servers to work concurrently on a single query.  This is usually
+    accomplished by splitting the data among servers and having
+    each server execute its part of the query and return results
+    to a central server where they are combined and returned to
+    the user.  Pgpool-II has this capability.
    </para>
   </listitem>
  </varlistentry>
