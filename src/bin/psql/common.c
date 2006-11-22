@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.51 2002/10/29 19:35:33 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.51.2.1 2006/11/22 21:13:16 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -439,7 +439,7 @@ SendQuery(const char *query)
 				break;
 			case PGRES_COMMAND_OK:
 				{
-					char		buf[10];
+					char		buf[16];
 
 					success = true;
 					sprintf(buf, "%u", (unsigned int) PQoidValue(results));
