@@ -14,7 +14,6 @@
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <string.h>
 
 #ifdef WIN32
 #define FSYNC_FILENAME	"./test_fsync.out"
@@ -22,33 +21,20 @@
 #define FSYNC_FILENAME	"/var/tmp/test_fsync.out"
 #endif
 
-/* This logic comes from src/backend/access/transam/xlog.c where it's
-   better documented */
-#ifdef O_DIRECT
-#define PG_O_DIRECT                             O_DIRECT
-#else
-#define PG_O_DIRECT                             0
-#endif
-
+/* O_SYNC and O_FSYNC are the same */
 #if defined(O_SYNC)
-#define BARE_OPEN_SYNC_FLAG             O_SYNC
+#define OPEN_SYNC_FLAG		O_SYNC
 #elif defined(O_FSYNC)
-#define BARE_OPEN_SYNC_FLAG             O_FSYNC
-#endif
-#ifdef BARE_OPEN_SYNC_FLAG
-#define OPEN_SYNC_FLAG                  (BARE_OPEN_SYNC_FLAG | PG_O_DIRECT)
+#define OPEN_SYNC_FLAG		O_FSYNC
+#elif defined(O_DSYNC)
+#define OPEN_DATASYNC_FLAG	O_DSYNC
 #endif
 
-#if defined(O_DSYNC)
 #if defined(OPEN_SYNC_FLAG)
-#if O_DSYNC != BARE_OPEN_SYNC_FLAG
-#define OPEN_DATASYNC_FLAG              (O_DSYNC | PG_O_DIRECT)
-#endif
-#else
-#define OPEN_DATASYNC_FLAG              (O_DSYNC | PG_O_DIRECT)
+#if defined(O_DSYNC) && (O_DSYNC != OPEN_SYNC_FLAG)
+#define OPEN_DATASYNC_FLAG	O_DSYNC
 #endif
 #endif
-
 
 #define WAL_FILE_SIZE	(16 * 1024 * 1024)
 
