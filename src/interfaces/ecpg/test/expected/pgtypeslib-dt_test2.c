@@ -47,7 +47,8 @@ char *dates[] = { "19990108foobar",
 				  "January 8, 99 BC",
 				  NULL };
 
-char *times[] = { "0:04",
+/* do not conflict with libc "times" symbol */
+static char *times[] = { "0:04",
 				  "1:59 PDT",
 				  "13:24:40 -8:00",
 				  "13:24:40.495+3",
@@ -72,22 +73,22 @@ main(void)
 		 
 		 
 	
-#line 51 "dt_test2.pgc"
+#line 52 "dt_test2.pgc"
  date  date1    ;
  
-#line 52 "dt_test2.pgc"
+#line 53 "dt_test2.pgc"
  timestamp  ts1    ,  ts2    ;
  
-#line 53 "dt_test2.pgc"
+#line 54 "dt_test2.pgc"
  char * text    ;
  
-#line 54 "dt_test2.pgc"
+#line 55 "dt_test2.pgc"
  interval * i1    ;
  
-#line 55 "dt_test2.pgc"
+#line 56 "dt_test2.pgc"
  date * dc    ;
 /* exec sql end declare section */
-#line 56 "dt_test2.pgc"
+#line 57 "dt_test2.pgc"
 
 
 	int i, j;
