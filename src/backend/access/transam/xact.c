@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.228 2006/11/05 22:42:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.229 2006/11/23 01:14:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,12 @@ static TimestampTz stmtStartTimestamp;
  */
 static char *prepareGID;
 
+/*
+ * Private context for transaction-abort work --- we reserve space for this
+ * at startup to ensure that AbortTransaction and AbortSubTransaction can work
+ * when we've run out of memory.
+ */
+static MemoryContext TransactionAbortContext = NULL;
 
 /*
  * List of add-on start- and end-of-xact callbacks
@@ -554,6 +560,21 @@ static void
 AtStart_Memory(void)
 {
 	TransactionState s = CurrentTransactionState;
+
+	/*
+	 * If this is the first time through, create a private context for
+	 * AbortTransaction to work in.  By reserving some space now, we can
+	 * insulate AbortTransaction from out-of-memory scenarios.  Like
+	 * ErrorContext, we set it up with slow growth rate and a nonzero
+	 * minimum size, so that space will be reserved immediately.
+	 */
+	if (TransactionAbortContext == NULL)
+		TransactionAbortContext =
+			AllocSetContextCreate(TopMemoryContext,
+								  "TransactionAbortContext",
+								  32 * 1024,
+								  32 * 1024,
+								  32 * 1024);
 
 	/*
 	 * We shouldn't have a transaction context already.
@@ -1086,20 +1107,15 @@ static void
 AtAbort_Memory(void)
 {
 	/*
-	 * Make sure we are in a valid context (not a child of
-	 * TopTransactionContext...).  Note that it is possible for this code to
-	 * be called when we aren't in a transaction at all; go directly to
-	 * TopMemoryContext in that case.
+	 * Switch into TransactionAbortContext, which should have some free
+	 * space even if nothing else does.  We'll work in this context until
+	 * we've finished cleaning up.
+	 *
+	 * It is barely possible to get here when we've not been able to create
+	 * TransactionAbortContext yet; if so use TopMemoryContext.
 	 */
-	if (TopTransactionContext != NULL)
-	{
-		MemoryContextSwitchTo(TopTransactionContext);
-
-		/*
-		 * We do not want to destroy the transaction's global state yet, so we
-		 * can't free any memory here.
-		 */
-	}
+	if (TransactionAbortContext != NULL)
+		MemoryContextSwitchTo(TransactionAbortContext);
 	else
 		MemoryContextSwitchTo(TopMemoryContext);
 }
@@ -1110,9 +1126,9 @@ AtAbort_Memory(void)
 static void
 AtSubAbort_Memory(void)
 {
-	Assert(TopTransactionContext != NULL);
+	Assert(TransactionAbortContext != NULL);
 
-	MemoryContextSwitchTo(TopTransactionContext);
+	MemoryContextSwitchTo(TransactionAbortContext);
 }
 
 
@@ -1272,13 +1288,19 @@ RecordSubTransactionAbort(void)
 static void
 AtCleanup_Memory(void)
 {
+	Assert(CurrentTransactionState->parent == NULL);
+
 	/*
 	 * Now that we're "out" of a transaction, have the system allocate things
 	 * in the top memory context instead of per-transaction contexts.
 	 */
 	MemoryContextSwitchTo(TopMemoryContext);
 
-	Assert(CurrentTransactionState->parent == NULL);
+	/*
+	 * Clear the special abort context for next time.
+	 */
+	if (TransactionAbortContext != NULL)
+		MemoryContextResetAndDeleteChildren(TransactionAbortContext);
 
 	/*
 	 * Release all transaction-local memory.
@@ -1309,6 +1331,12 @@ AtSubCleanup_Memory(void)
 	/* Make sure we're not in an about-to-be-deleted context */
 	MemoryContextSwitchTo(s->parent->curTransactionContext);
 	CurTransactionContext = s->parent->curTransactionContext;
+
+	/*
+	 * Clear the special abort context for next time.
+	 */
+	if (TransactionAbortContext != NULL)
+		MemoryContextResetAndDeleteChildren(TransactionAbortContext);
 
 	/*
 	 * Delete the subxact local memory contexts. Its CurTransactionContext can
@@ -1849,6 +1877,10 @@ AbortTransaction(void)
 	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
+	/* Make sure we have a valid memory context and resource owner */
+	AtAbort_Memory();
+	AtAbort_ResourceOwner();
+
 	/*
 	 * Release any LW locks we might be holding as quickly as possible.
 	 * (Regular locks, however, must be held till we finish aborting.)
@@ -1880,10 +1912,6 @@ AbortTransaction(void)
 	 * abort processing
 	 */
 	s->state = TRANS_ABORT;
-
-	/* Make sure we have a valid memory context and resource owner */
-	AtAbort_Memory();
-	AtAbort_ResourceOwner();
 
 	/*
 	 * Reset user id which might have been changed transiently.  We cannot use
@@ -3704,15 +3732,12 @@ AbortSubTransaction(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	ShowTransactionState("AbortSubTransaction");
-
-	if (s->state != TRANS_INPROGRESS)
-		elog(WARNING, "AbortSubTransaction while in %s state",
-			 TransStateAsString(s->state));
-
+	/* Prevent cancel/die interrupt while cleaning up */
 	HOLD_INTERRUPTS();
 
-	s->state = TRANS_ABORT;
+	/* Make sure we have a valid memory context and resource owner */
+	AtSubAbort_Memory();
+	AtSubAbort_ResourceOwner();
 
 	/*
 	 * Release any LW locks we might be holding as quickly as possible.
@@ -3731,10 +3756,15 @@ AbortSubTransaction(void)
 	LockWaitCancel();
 
 	/*
-	 * do abort processing
+	 * check the current transaction state
 	 */
-	AtSubAbort_Memory();
-	AtSubAbort_ResourceOwner();
+	ShowTransactionState("AbortSubTransaction");
+
+	if (s->state != TRANS_INPROGRESS)
+		elog(WARNING, "AbortSubTransaction while in %s state",
+			 TransStateAsString(s->state));
+
+	s->state = TRANS_ABORT;
 
 	/*
 	 * We can skip all this stuff if the subxact failed before creating a

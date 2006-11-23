@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.96 2006/10/04 00:30:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.97 2006/11/23 01:14:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -586,7 +586,7 @@ AtCommit_Portals(void)
  * Abort processing for portals.
  *
  * At this point we reset "active" status and run the cleanup hook if
- * present, but we can't release memory until the cleanup call.
+ * present, but we can't release the portal's memory until the cleanup call.
  *
  * The reason we need to reset active is so that we can replace the unnamed
  * portal, else we'll fail to execute ROLLBACK when it arrives.
@@ -625,6 +625,14 @@ AtAbort_Portals(void)
 		 * PortalDrop.
 		 */
 		portal->resowner = NULL;
+
+		/*
+		 * Although we can't delete the portal data structure proper, we can
+		 * release any memory in subsidiary contexts, such as executor state.
+		 * The cleanup hook was the last thing that might have needed data
+		 * there.
+		 */
+		MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 	}
 }
 
@@ -756,6 +764,14 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 			 * run PortalDrop.
 			 */
 			portal->resowner = NULL;
+
+			/*
+			 * Although we can't delete the portal data structure proper, we
+			 * can release any memory in subsidiary contexts, such as executor
+			 * state.  The cleanup hook was the last thing that might have
+			 * needed data there.
+			 */
+			MemoryContextDeleteChildren(PortalGetHeapMemory(portal));
 		}
 	}
 }
