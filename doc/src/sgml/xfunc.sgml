@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.117 2006/09/16 00:30:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.118 2006/11/23 03:52:05 momjian Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -2906,6 +2906,54 @@ make_array(PG_FUNCTION_ARGS)
 CREATE FUNCTION make_array(anyelement) RETURNS anyarray
     AS '<replaceable>DIRECTORY</replaceable>/funcs', 'make_array'
     LANGUAGE C IMMUTABLE;
+</programlisting>
+    </para>
+   </sect2>
+   <sect2>
+    <title>Shared Memory and LWLocks in C-Language Functions</title>
+
+    <para>
+     Add-ins may reserve LWLocks and an allocation of shared memory on server
+     startup.  The add-in's shared library must be preloaded, by specifying
+     it in 
+     <xref linkend="guc-shared-preload-libraries"><indexterm><primary>shared-preload-libraries</></>,
+     and the shared memory must be reserved by calling:
+<programlisting>
+void RequestAddinShmemSpace(int size)
+</programlisting>
+     from your <literal>_PG_init</> function.
+    </para>
+    <para>
+      LWLocks are reserved by calling:
+<programlisting>
+void RequestAddinLWLocks(int n)
+</programlisting>
+      from <literal>_PG_init</>. 
+    </para>	
+    <para>
+      To avoid possible race-conditions, each backend should use the LWLock
+      <literal>AddinShmemInitLock</> when connecting to and intializing 
+      its allocation of shared memory, as shown here:
+      
+<programlisting>
+        static mystruct *ptr = NULL;
+
+        if (!ptr)
+        {
+                bool    found;
+
+                LWLockAcquire(AddinShmemInitLock, LW_EXCLUSIVE);
+                ptr = ShmemInitStruct("my struct name", size, &amp;found);
+                if (!ptr)
+                        elog(ERROR, "out of shared memory");
+                if (!found)
+                {
+                        initialize contents of shmem area;
+                        acquire any requested LWLocks using:
+                        ptr->mylockid = LWLockAssign();
+                }
+                LWLockRelease(AddinShmemInitLock);
+        }
 </programlisting>
     </para>
    </sect2>
