@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.111 2006/10/04 00:29:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.112 2006/11/23 05:27:18 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -631,6 +631,9 @@ heap_copytuple(HeapTuple tuple)
  *		heap_copytuple_with_tuple
  *
  *		copy a tuple into a caller-supplied HeapTuple management struct
+ *
+ * Note that after calling this function, the "dest" HeapTuple will not be
+ * allocated as a single palloc() block (unlike with heap_copytuple()).
  * ----------------
  */
 void
