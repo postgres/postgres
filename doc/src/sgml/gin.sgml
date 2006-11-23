@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.4 2006/09/18 12:11:36 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.5 2006/11/23 05:58:01 neilc Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -31,14 +31,13 @@
   This is much the same advantage as using <acronym>GiST</acronym>.
  </para>
 
-  <para>
-   The <acronym>GIN</acronym>
-    implementation in <productname>PostgreSQL</productname> is primarily
-    maintained by Teodor Sigaev and Oleg Bartunov, and there is more
-    information on their
-    <ulink url="http://www.sai.msu.su/~megera/oddmuse/index.cgi/Gin">website</ulink>.
-  </para>
-
+ <para>
+  The <acronym>GIN</acronym>
+  implementation in <productname>PostgreSQL</productname> is primarily
+  maintained by Teodor Sigaev and Oleg Bartunov. There is more
+  information about <acronym>GIN</acronym> on their
+  <ulink url="http://www.sai.msu.su/~megera/oddmuse/index.cgi/Gin">website</ulink>.
+ </para>
 </sect1>
 
 <sect1 id="gin-extensibility">
@@ -78,7 +77,7 @@
 
  <variablelist>
     <varlistentry>
-     <term>int compare( Datum a, Datum b )</term>
+     <term>int compare(Datum a, Datum b)</term>
      <listitem>
       <para>
 	   Compares keys (not indexed values!) and returns an integer less than 
@@ -103,22 +102,22 @@
 		StrategyNumber n)</term>
      <listitem>
       <para>
-	   Returns an array of keys of the query to be executed. n contains
-	   the strategy number of the operation 
-	   (see <xref linkend="xindex-strategies">).
-	   Depending on n, query may be different type.
+	   Returns an array of keys of the query to be executed. n contains the
+	   strategy number of the operation (see <xref
+	   linkend="xindex-strategies">).  Depending on n, query may be
+	   different type.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>bool consistent( bool check[], StrategyNumber n, Datum query)</term>
+     <term>bool consistent(bool check[], StrategyNumber n, Datum query)</term>
      <listitem>
       <para>
 	   Returns TRUE if the indexed value satisfies the query qualifier with 
 	   strategy n (or may satisfy in case of RECHECK mark in operator class). 
 	   Each element of the check array is TRUE if the indexed value has a 
-	   corresponding key in the query: if (check[i] == TRUE ) the i-th key of 
+	   corresponding key in the query: if (check[i] == TRUE) the i-th key of 
 	   the query is present in the indexed value.
       </para>
      </listitem>
@@ -129,14 +128,14 @@
 </sect1>
 
 <sect1 id="gin-tips">
-<title>GIN tips and trics</title>
+<title>GIN tips and tricks</title>
 
  <variablelist>
   <varlistentry>
    <term>Create vs insert</term>
    <listitem>
 	<para>
-	 In most cases, insertion into <acronym>GIN</acronym> index is slow
+	 In most cases, insertion into a <acronym>GIN</acronym> index is slow
 	 due to the likelihood of many keys being inserted for each value.
 	 So, for bulk insertions into a table it is advisable to to drop the GIN 
 	 index and recreate it after finishing bulk insertion.
@@ -169,9 +168,9 @@
 	 the whole result set, chosen at random.
 	</para>
 	<para>
-	 "Soft" means that the actual number of returned results could slightly 
-	 differ from the specified limit, depending on the query and the quality 
-	 of the system's random number generator.
+	 <quote>Soft</quote> means that the actual number of returned results
+	 could slightly differ from the specified limit, depending on the query
+	 and the quality of the system's random number generator.
 	</para>
    </listitem>
   </varlistentry>
@@ -184,16 +183,16 @@
 
  <para>
   <acronym>GIN</acronym> doesn't support full index scans due to their
-  extremely inefficiency: because there are often many keys per value,
+  extreme inefficiency: because there are often many keys per value,
   each heap pointer will returned several times.
  </para>
 
  <para>
-  When extractQuery returns zero keys, <acronym>GIN</acronym> will emit a 
-  error: for different opclasses and strategies the semantic meaning of a void
-  query may be different (for example, any array contains the void array,
-  but they don't overlap the void array), and <acronym>GIN</acronym> can't
-  suggest reasonable answer.
+  When <function>extractQuery</function> returns zero keys,
+  <acronym>GIN</acronym> will emit an error: for different opclasses and
+  strategies the semantic meaning of a void query may be different (for
+  example, any array contains the void array, but they don't overlap the
+  void array), and <acronym>GIN</acronym> can't suggest a reasonable answer.
  </para>
 
  <para>
