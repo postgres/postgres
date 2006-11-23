@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.483 2006/11/13 17:13:56 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.484 2006/11/23 03:30:49 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -2612,6 +2612,7 @@ units on Win32 (Bruce)</para>
 compilers (Hiroshi Saito)</para></listitem>
 <listitem><para>Fixes for <systemitem class="osname">AIX</> and
 <productname>Intel</> compilers (Tom)</para></listitem>
+<listitem><para>Fix rare bug in continuous archiving (Tom)</para></listitem>
 </itemizedlist>
 
    </sect2>
