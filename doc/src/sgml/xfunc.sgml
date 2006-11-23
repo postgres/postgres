@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.119 2006/11/23 05:28:18 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.120 2006/11/23 05:43:32 neilc Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1587,7 +1587,7 @@ memcpy(destination-&gt;data, buffer, 40);
    </sect2>
 
    <sect2>
-    <title>Calling Conventions Version 0 for C-Language Functions</title>
+    <title>Version 0 Calling Conventions</title>
 
     <para>
      We present the <quote>old style</quote> calling convention first &mdash; although
@@ -1651,7 +1651,7 @@ copytext(text *t)
      */
     memcpy((void *) VARDATA(new_t), /* destination */
            (void *) VARDATA(t),     /* source */
-           VARSIZE(t)-VARHDRSZ);    /* how many bytes */
+           VARSIZE(t) - VARHDRSZ);  /* how many bytes */
     return new_t;
 }
 
@@ -1662,9 +1662,9 @@ concat_text(text *arg1, text *arg2)
     text *new_text = (text *) palloc(new_text_size);
 
     VARATT_SIZEP(new_text) = new_text_size;
-    memcpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
-    memcpy(VARDATA(new_text) + (VARSIZE(arg1)-VARHDRSZ),
-           VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
+    memcpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1) - VARHDRSZ);
+    memcpy(VARDATA(new_text) + (VARSIZE(arg1) - VARHDRSZ),
+           VARDATA(arg2), VARSIZE(arg2) - VARHDRSZ);
     return new_text;
 }
 </programlisting>
@@ -1735,7 +1735,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
    </sect2>
 
    <sect2>
-    <title>Calling Conventions Version 1 for C-Language Functions</title>
+    <title>Version 1 Calling Conventions</title>
 
     <para>
      The version-1 calling convention relies on macros to suppress most
@@ -1837,7 +1837,7 @@ copytext(PG_FUNCTION_ARGS)
      */
     memcpy((void *) VARDATA(new_t), /* destination */
            (void *) VARDATA(t),     /* source */
-           VARSIZE(t)-VARHDRSZ);    /* how many bytes */
+           VARSIZE(t) - VARHDRSZ);  /* how many bytes */
     PG_RETURN_TEXT_P(new_t);
 }
 
@@ -1852,9 +1852,9 @@ concat_text(PG_FUNCTION_ARGS)
     text *new_text = (text *) palloc(new_text_size);
 
     VARATT_SIZEP(new_text) = new_text_size;
-    memcpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1)-VARHDRSZ);
-    memcpy(VARDATA(new_text) + (VARSIZE(arg1)-VARHDRSZ),
-           VARDATA(arg2), VARSIZE(arg2)-VARHDRSZ);
+    memcpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1) - VARHDRSZ);
+    memcpy(VARDATA(new_text) + (VARSIZE(arg1) - VARHDRSZ),
+           VARDATA(arg2), VARSIZE(arg2) - VARHDRSZ);
     PG_RETURN_TEXT_P(new_text);
 }
 </programlisting>
@@ -2261,7 +2261,7 @@ include $(PGXS)
 
 
    <sect2>
-    <title>Composite-Type Arguments in C-Language Functions</title>
+    <title>Composite-Type Arguments</title>
 
     <para>
      Composite types do not have a fixed layout like C structures.
@@ -2366,7 +2366,7 @@ CREATE FUNCTION c_overpaid(emp, integer) RETURNS boolean
    </sect2>
 
    <sect2>
-    <title>Returning Rows (Composite Types) from C-Language Functions</title>
+    <title>Returning Rows (Composite Types)</title>
 
     <para>
      To return a row or composite-type value from a C-language
@@ -2517,7 +2517,7 @@ HeapTupleGetDatum(HeapTuple tuple)
    </sect2>
 
    <sect2 id="xfunc-c-return-set">
-    <title>Returning Sets from C-Language Functions</title>
+    <title>Returning Sets</title>
 
     <para>
      There is also a special API that provides support for returning
@@ -2910,30 +2910,30 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
     </para>
    </sect2>
    <sect2>
-    <title>Shared Memory and LWLocks in C-Language Functions</title>
+    <title>Shared Memory and LWLocks</title>
 
     <para>
      Add-ins may reserve LWLocks and an allocation of shared memory on server
-     startup.  The add-in's shared library must be preloaded, by specifying
+     startup.  The add-in's shared library must be preloaded by specifying
      it in 
-     <xref linkend="guc-shared-preload-libraries"><indexterm><primary>shared-preload-libraries</></>,
-     and the shared memory must be reserved by calling:
+     <xref linkend="guc-shared-preload-libraries"><indexterm><primary>shared-preload-libraries</></>.
+     Shared memory is reserved by calling:
 <programlisting>
 void RequestAddinShmemSpace(int size)
 </programlisting>
      from your <function>_PG_init</> function.
     </para>
     <para>
-      LWLocks are reserved by calling:
+     LWLocks are reserved by calling:
 <programlisting>
 void RequestAddinLWLocks(int n)
 </programlisting>
-      from <function>_PG_init</>. 
+     from <function>_PG_init</>. 
     </para>	
     <para>
-      To avoid possible race-conditions, each backend should use the LWLock
-      <function>AddinShmemInitLock</> when connecting to and initializing 
-      its allocation of shared memory, as shown here:
+     To avoid possible race-conditions, each backend should use the LWLock
+     <function>AddinShmemInitLock</> when connecting to and initializing 
+     its allocation of shared memory, as shown here:
 <programlisting>
         static mystruct *ptr = NULL;
 
