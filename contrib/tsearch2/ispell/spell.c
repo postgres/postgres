@@ -609,11 +609,11 @@ NIImportOOAffixes(IspellDict * Conf, const char *filename)
 			pfind = lowerstr(find);
 			pmask = lowerstr(mask);
 			if (t_iseq(find, '0'))
-				*find = '\0';
+				*pfind = '\0';
 			if (t_iseq(repl, '0'))
-				*repl = '\0';
+				*prepl = '\0';
 
-			NIAddAffix(Conf, flag, flagflags, mask, find, repl, isSuffix ? FF_SUFFIX : FF_PREFIX);
+			NIAddAffix(Conf, flag, flagflags, pmask, pfind, prepl, isSuffix ? FF_SUFFIX : FF_PREFIX);
 			pfree(prepl);
 			pfree(pfind);
 			pfree(pmask);
