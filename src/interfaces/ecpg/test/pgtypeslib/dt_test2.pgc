@@ -29,7 +29,8 @@ char *dates[] = { "19990108foobar",
 				  "January 8, 99 BC",
 				  NULL };
 
-char *times[] = { "0:04",
+/* do not conflict with libc "times" symbol */
+static char *times[] = { "0:04",
 				  "1:59 PDT",
 				  "13:24:40 -8:00",
 				  "13:24:40.495+3",
