@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.118 2006/11/23 03:52:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.119 2006/11/23 05:28:18 neilc Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1234,12 +1234,12 @@ PG_MODULE_MAGIC;
    <para>
     Optionally, a dynamically loaded file can contain initialization and
     finalization functions.  If the file includes a function named
-    <literal>_PG_init</>, that function will be called immediately after
+    <function>_PG_init</>, that function will be called immediately after
     loading the file.  The function receives no parameters and should
     return void.  If the file includes a function named
-    <literal>_PG_fini</>, that function will be called immediately before
+    <function>_PG_fini</>, that function will be called immediately before
     unloading the file.  Likewise, the function receives no parameters and
-    should return void.  Note that <literal>_PG_fini</> will only be called
+    should return void.  Note that <function>_PG_fini</> will only be called
     during an unload of the file, not during process termination.
     (Presently, an unload only happens in the context of re-loading
     the file due to an explicit <command>LOAD</> command.)
@@ -2921,20 +2921,19 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
 <programlisting>
 void RequestAddinShmemSpace(int size)
 </programlisting>
-     from your <literal>_PG_init</> function.
+     from your <function>_PG_init</> function.
     </para>
     <para>
       LWLocks are reserved by calling:
 <programlisting>
 void RequestAddinLWLocks(int n)
 </programlisting>
-      from <literal>_PG_init</>. 
+      from <function>_PG_init</>. 
     </para>	
     <para>
       To avoid possible race-conditions, each backend should use the LWLock
-      <literal>AddinShmemInitLock</> when connecting to and intializing 
+      <function>AddinShmemInitLock</> when connecting to and initializing 
       its allocation of shared memory, as shown here:
-      
 <programlisting>
         static mystruct *ptr = NULL;
 
