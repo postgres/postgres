@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.180 2006/10/23 18:10:30 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.181 2006/11/23 04:27:33 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1097,15 +1097,17 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
    <para>
-    When entering <type>bytea</type> values, octets of certain values
-    <emphasis>must</emphasis> be escaped (but all octet values
-    <emphasis>can</emphasis> be escaped) when used as part of a string
-    literal in an <acronym>SQL</acronym> statement. In general, to
-    escape an octet, it is converted into the three-digit octal number
-    equivalent of its decimal octet value, and preceded by two
-    backslashes. <xref linkend="datatype-binary-sqlesc"> shows the
-    characters that must be escaped, and gives the alternate escape
-    sequences where applicable.
+    When entering <type>bytea</type> values, octets of certain
+    values <emphasis>must</emphasis> be escaped (but all octet
+    values <emphasis>can</emphasis> be escaped) when used as part
+    of a string literal in an <acronym>SQL</acronym> statement. In
+    general, to escape an octet, it is converted into the three-digit
+    octal number equivalent of its decimal octet value, and preceded
+    by two backslashes (or one backslash if
+    <varname>standard_conforming_strings</> is <literal>off</>).
+    <xref linkend="datatype-binary-sqlesc"> shows the characters
+    that must be escaped, and gives the alternate escape sequences
+    where applicable.
    </para>
 
    <table id="datatype-binary-sqlesc">
@@ -1168,24 +1170,25 @@ SELECT b, char_length(b) FROM test2;
    </para>
 
    <para>
-    The reason that you have to write so many backslashes, as shown in
-    <xref linkend="datatype-binary-sqlesc">, is that an input string
-    written as a string literal must pass through two parse phases in
-    the <productname>PostgreSQL</productname> server.  The first
-    backslash of each pair is interpreted as an escape character by
-    the string-literal parser and is therefore consumed, leaving the
-    second backslash of the pair.  The remaining backslash is then
-    recognized by the <type>bytea</type> input function as starting
-    either a three digit octal value or escaping another backslash.
-    For example, a string literal passed to the server as
-    <literal>'\\001'</literal> becomes <literal>\001</literal> after
-    passing through the string-literal parser. The
-    <literal>\001</literal> is then sent to the <type>bytea</type>
-    input function, where it is converted to a single octet with a
-    decimal value of 1.  Note that the apostrophe character is not
-    treated specially by <type>bytea</type>, so it follows the normal
-    rules for string literals.  (See also <xref
-    linkend="sql-syntax-strings">.)
+    The reason that you have to write so many backslashes, as shown
+    in <xref linkend="datatype-binary-sqlesc">, is that an input
+    string written as a string literal must pass through two parse
+    phases in the <productname>PostgreSQL</productname> server.
+    The first backslash of each pair is interpreted as an escape
+    character by the string-literal parser (assuming
+    <varname>standard_conforming_strings</> is <literal>off</>)
+    and is therefore consumed, leaving the second backslash of the
+    pair.  The remaining backslash is then recognized by the
+    <type>bytea</type> input function as starting either a three
+    digit octal value or escaping another backslash.  For example,
+    a string literal passed to the server as <literal>'\\001'</literal>
+    becomes <literal>\001</literal> after passing through the
+    string-literal parser. The <literal>\001</literal> is then sent
+    to the <type>bytea</type> input function, where it is converted
+    to a single octet with a decimal value of 1.  Note that the
+    apostrophe character is not treated specially by <type>bytea</type>,
+    so it follows the normal rules for string literals.  (See also
+    <xref linkend="sql-syntax-strings">.)
    </para>
 
    <para>
