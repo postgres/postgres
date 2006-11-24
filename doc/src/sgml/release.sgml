@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.484 2006/11/23 03:30:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.485 2006/11/24 23:31:55 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -19,7 +19,7 @@ non-ASCII characters            convert to HTML4 entity (&) escapes
                        http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
                        http://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
 
-        we cannot use UTF8 because SGML Docbook 
+        we cannot use UTF8 because SGML Docbook
         does not support it
           http://www.pemberley.com/janeinfo/latin1.html#latexta
 
@@ -40,12 +40,12 @@ links to the main documentation.
    <note>
     <title>Release date</title>
     <simpara>2006-1?-??</simpara>
-    <para>CURRENT AS OF 2006-11-05</>
+    <para>CURRENT AS OF 2006-11-24</>
    </note>
 
    <sect2>
     <title>Overview</title>
- 
+
     <para>
      This release adds many functionality and performance improvements that
      were requested by users, including:
@@ -156,16 +156,16 @@ links to the main documentation.
     </para>
 
    </sect2>
- 
+
    <sect2>
     <title>Migration to version 8.2</title>
-                                       
+
     <para>
      A dump/restore using <application>pg_dump</application> is
      required for those wishing to migrate data from any previous
      release.
     </para>
-    
+
     <para>
      Observe the following incompatibilities:
     </para>
@@ -407,19 +407,22 @@ links to the main documentation.
        </para>
       </listitem>
 
-	  <listitem>
-	    <para>
-		  Data can no longer be shared between a PL/Perl function and a 
-		  PL/PerlU function, and modules used by a /PerlU function are no 
-		  longer available to PL/Perl functions.
-		</para>
-		<para>
-		  Some perl installations have not been compiled with the correct flags
-		  to allow multiple interpreters to exist within a single process.
-		  In this situation PL/Perl and PL/PerlU cannot both be used in a 
-		  single backend. The solution is to get a Perl installation which 
-		  supports multiple interpreters. (Andrew)  
- 	    </para>
+      <listitem>
+       <para>
+        For security's sake, modules used by a PL/PerlU function are no
+        longer available to PL/Perl functions (Andrew)
+       </para>
+       <note>
+        <para>
+         This also implies that data can no longer be shared between a PL/Perl
+         function and a PL/PerlU function.
+         Some perl installations have not been compiled with the correct flags
+         to allow multiple interpreters to exist within a single process.
+         In this situation PL/Perl and PL/PerlU cannot both be used in a
+         single backend. The solution is to get a Perl installation which
+         supports multiple interpreters.
+        </para>
+       </note>
       </listitem>
 
       <listitem>
@@ -469,16 +472,16 @@ links to the main documentation.
 
     </itemizedlist>
    </sect2>
- 
+
    <sect2>
     <title>Changes</title>
- 
+
     <para>
      Below you will find a detailed account of the
      changes between <productname>PostgreSQL</productname> 8.2 and
      the previous major release.
     </para>
- 
+
     <sect3>
      <title>Performance Improvements</title>
      <itemizedlist>
@@ -935,6 +938,36 @@ links to the main documentation.
        <para>
         This avoids a hazard that the cache files might contain stale
         data after PITR recovery.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix race condition for truncation of a large relation across a
+        gigabyte boundary by <command>VACUUM</> (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix bug causing needless deadlock errors on row-level locks (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix bugs affecting multi-gigabyte hash indexes (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Each backend process is now its own process group leader (Tom)
+       </para>
+
+       <para>
+        This allows query cancel to abort subprocesses invoked from a
+        backend or archive/recovery process.
        </para>
       </listitem>
 
@@ -1758,21 +1791,21 @@ links to the main documentation.
        <para>
         Previously, it was lexical, which caused unexpected sharing
         violations.
-       </para>	   
+       </para>
       </listitem>
 
-	  <listitem>
-	    <para>
-		  Run PL/Perl and PL/PerlU in separate interpreters, for security 
-		  reasons.
-		</para>
-		<para>
-		  In consequence, they can no longer share data nor loaded modules.
-		  Also, if Perl has not been compiled with the requisite flags to
-		  allow multiple interpreters, only one of these lamguages can be used
-		  in any given backend process. (Andrew)
-	    </para>
-	  </listitem>
+      <listitem>
+       <para>
+        Run PL/Perl and PL/PerlU in separate interpreters, for security
+        reasons (Andrew)
+       </para>
+       <para>
+        In consequence, they can no longer share data nor loaded modules.
+        Also, if Perl has not been compiled with the requisite flags to
+        allow multiple interpreters, only one of these languages can be used
+        in any given backend process.
+       </para>
+      </listitem>
 
      </itemizedlist>
 
@@ -1812,6 +1845,12 @@ links to the main documentation.
       <listitem>
        <para>
         Allow functions to return <literal>void</> (Neil)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Python 2.5 is now supported (Tom)
        </para>
       </listitem>
 
@@ -2106,7 +2145,7 @@ links to the main documentation.
 
       <listitem>
        <para>
-        Drop privileges on startup, so that the server can be started from 
+        Drop privileges on startup, so that the server can be started from
         an administrative account (Magnus)
        </para>
       </listitem>
@@ -2483,7 +2522,7 @@ links to the main documentation.
         </listitem>
         <listitem>
          <para>
-          New function gen_random_bytes() that returns cryptographically strong 
+          New function gen_random_bytes() that returns cryptographically strong
           randomness.  Useful for generating encryption keys.
          </para>
         </listitem>
