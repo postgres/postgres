@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.56 2006/10/04 00:29:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/freespace/freespace.c,v 1.57 2006/11/24 09:20:12 petere Exp $
  *
  *
  * NOTES:
@@ -625,7 +625,7 @@ PrintFreeSpaceMapStatistics(int elevel)
 					storedPages, numRels),
 	errdetail("A total of %.0f page slots are in use (including overhead).\n"
 			  "%.0f page slots are required to track all free space.\n"
-		  "Current limits are:  %d page slots, %d relations, using %.0f KB.",
+		  "Current limits are:  %d page slots, %d relations, using %.0f kB.",
 			  Min(needed, MaxFSMPages),
 			  needed,
 			  MaxFSMPages, MaxFSMRelations,
