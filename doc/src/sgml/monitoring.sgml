@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.38 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.39 2006/11/24 21:18:42 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -270,14 +270,16 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      <row>
       <entry><structname>pg_stat_all_tables</></entry>
       <entry>For each table in the current database (including TOAST tables),
-      the table OID, schema and table name, the last time the table was
-      vacuumed by the user and the autovacuum daemon, the last time the table
-      was analyzed by the user and the autovacuum daemon, number of sequential
+      the table OID, schema and table name, number of sequential
       scans initiated, number of live rows fetched by sequential
       scans, number of index scans initiated (over all indexes
       belonging to the table), number of live rows fetched by index
-      scans,
-      and numbers of row insertions, updates, and deletions.</entry>
+      scans, numbers of row insertions, updates, and deletions,
+      the last time the table was vacuumed manually,
+      the last time it was vacuumed by the autovacuum daemon,
+      the last time it was analyzed manually,
+      and the last time it was analyzed by the autovacuum daemon.
+      </entry>
      </row>
 
      <row>

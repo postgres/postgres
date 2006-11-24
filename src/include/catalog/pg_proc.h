@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.427 2006/10/04 00:30:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.428 2006/11/24 21:18:42 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3123,7 +3123,7 @@ DESCR("Reload configuration files");
 DATA(insert OID = 2622 ( pg_rotate_logfile		PGNSP PGUID 12 f f t f v 0 16 "" _null_ _null_ _null_ pg_rotate_logfile - _null_ ));
 DESCR("Rotate log file");
 
-DATA(insert OID = 2623 ( pg_stat_file		PGNSP PGUID 12 f f t f v 1 2249 "25" _null_ _null_ _null_ pg_stat_file - _null_ ));
+DATA(insert OID = 2623 ( pg_stat_file		PGNSP PGUID 12 f f t f v 1 2249 "25" "{25,20,1184,1184,1184,1184,16}" "{i,o,o,o,o,o,o}" "{filename,size,access,modification,change,creation,isdir}" pg_stat_file - _null_ ));
 DESCR("Return file information");
 DATA(insert OID = 2624 ( pg_read_file		PGNSP PGUID 12 f f t f v 3 25 "25 20 20" _null_ _null_ _null_ pg_read_file - _null_ ));
 DESCR("Read text from a file");

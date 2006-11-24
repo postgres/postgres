@@ -9,7 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.12 2006/11/06 03:06:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.13 2006/11/24 21:18:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,7 +171,7 @@ pg_stat_file(PG_FUNCTION_ARGS)
 
 	/*
 	 * This record type had better match the output parameters declared for me
-	 * in pg_proc.h (actually, in system_views.sql at the moment).
+	 * in pg_proc.h.
 	 */
 	tupdesc = CreateTemplateTupleDesc(6, false);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 1,

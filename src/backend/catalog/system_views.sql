@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.31 2006/09/16 20:14:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.32 2006/11/24 21:18:42 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -199,10 +199,6 @@ CREATE VIEW pg_stat_all_tables AS
             C.oid AS relid, 
             N.nspname AS schemaname, 
             C.relname AS relname, 
-            pg_stat_get_last_vacuum_time(C.oid) as last_vacuum,
-            pg_stat_get_last_autovacuum_time(C.oid) as last_autovacuum,
-            pg_stat_get_last_analyze_time(C.oid) as last_analyze,
-            pg_stat_get_last_autoanalyze_time(C.oid) as last_autoanalyze,
             pg_stat_get_numscans(C.oid) AS seq_scan, 
             pg_stat_get_tuples_returned(C.oid) AS seq_tup_read, 
             sum(pg_stat_get_numscans(I.indexrelid))::bigint AS idx_scan, 
@@ -210,7 +206,11 @@ CREATE VIEW pg_stat_all_tables AS
                     pg_stat_get_tuples_fetched(C.oid) AS idx_tup_fetch, 
             pg_stat_get_tuples_inserted(C.oid) AS n_tup_ins, 
             pg_stat_get_tuples_updated(C.oid) AS n_tup_upd, 
-            pg_stat_get_tuples_deleted(C.oid) AS n_tup_del 
+            pg_stat_get_tuples_deleted(C.oid) AS n_tup_del,
+            pg_stat_get_last_vacuum_time(C.oid) as last_vacuum,
+            pg_stat_get_last_autovacuum_time(C.oid) as last_autovacuum,
+            pg_stat_get_last_analyze_time(C.oid) as last_analyze,
+            pg_stat_get_last_autoanalyze_time(C.oid) as last_autoanalyze
     FROM pg_class C LEFT JOIN 
          pg_index I ON C.oid = I.indrelid 
          LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) 
@@ -356,24 +356,3 @@ CREATE VIEW pg_stat_database AS
                     pg_stat_get_db_blocks_hit(D.oid) AS blks_read, 
             pg_stat_get_db_blocks_hit(D.oid) AS blks_hit 
     FROM pg_database D;
-
---
--- Fix up built-in functions that make use of OUT parameters.
--- We can't currently fill these values in during bootstrap, because
--- array_in doesn't work in bootstrap mode.  Eventually that should be
--- fixed, but for now the path of least resistance is to patch their
--- pg_proc entries later during initdb.
---
-
-UPDATE pg_proc SET
-  proallargtypes = ARRAY['text'::regtype,
-                         'int8',
-                         'timestamptz',
-                         'timestamptz',
-                         'timestamptz',
-                         'timestamptz',
-                         'bool'],
-  proargmodes = ARRAY['i'::"char", 'o', 'o', 'o', 'o', 'o', 'o'],
-  proargnames = ARRAY['filename'::text, 'size', 'access', 'modification',
-                      'change', 'creation', 'isdir']
-WHERE oid = 'pg_stat_file(text)'::regprocedure;
