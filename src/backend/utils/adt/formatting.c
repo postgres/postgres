@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.113 2006/10/04 00:29:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.114 2006/11/24 15:26:18 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2006, PostgreSQL Global Development Group
@@ -73,7 +73,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <float.h>
-#include <locale.h>
+#include <time.h>
 
 #include "utils/builtins.h"
 #include "utils/date.h"
@@ -82,8 +82,6 @@
 #include "utils/int8.h"
 #include "utils/numeric.h"
 #include "utils/pg_locale.h"
-
-#define _(x)	gettext((x))
 
 /* ----------
  * Routines type
@@ -163,7 +161,6 @@ struct FormatNode
 
 /* ----------
  * Full months
- *	This needs to be NLS-localized someday.
  * ----------
  */
 static char *months_full[] = {
@@ -942,10 +939,6 @@ static NUMCacheEntry *NUM_cache_search(char *str);
 static NUMCacheEntry *NUM_cache_getnew(char *str);
 static void NUM_cache_remove(NUMCacheEntry *ent);
 
-static char *localize_month_full(int index);
-static char *localize_month(int index);
-static char *localize_day_full(int index);
-static char *localize_day(int index);
 
 /* ----------
  * Fast sequential search, use index for data selection which
@@ -2074,6 +2067,17 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 	struct pg_tm *tm = NULL;
 	TmFromChar *tmfc = NULL;
 	TmToChar   *tmtc = NULL;
+	char       *save_loc = NULL;
+
+	/*
+	 * Set the LC_TIME only to do some operation (strftime) and then 
+	 * set it back. See pg_locale.c for explanations.
+	 */
+	if (S_TM(suf))
+	{
+		save_loc = setlocale(LC_TIME, NULL);
+		setlocale(LC_TIME, locale_time);
+	}
 
 	if (is_to_char)
 	{
@@ -2189,9 +2193,20 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			if (!tm->tm_mon)
 				return -1;
 			if (S_TM(suf))
-				strcpy(workbuff, localize_month_full(tm->tm_mon - 1));
+			{
+				/*
+				 * tm_mon in 'pg_tm struct' based on one, but rather POSIX 'tm struct' based on zero.
+				 * See notes at the top of this file.
+				 */
+				tm->tm_mon = tm->tm_mon - 1;
+				strftime(workbuff, sizeof(workbuff), "%B", (struct tm *) tm);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				strcpy(workbuff, months_full[tm->tm_mon - 1]);
+			}
 			sprintf(inout, "%*s", (S_FM(suf) || S_TM(suf)) ? 0 : -9, str_toupper(workbuff));
 			return strlen(p_inout);
 
@@ -2200,9 +2215,22 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			if (!tm->tm_mon)
 				return -1;
 			if (S_TM(suf))
-				sprintf(inout, "%*s", 0, localize_month_full(tm->tm_mon - 1));
+			{
+				/*
+				 * tm_mon in 'pg_tm struct' based on one, but rather POSIX 'tm struct' based on zero.
+				 * See notes at the top of this file.
+				 */
+				tm->tm_mon = tm->tm_mon - 1;
+				strftime(inout, 32, "%B", (struct tm *) tm);
+				/* capitalize output */
+				inout[0] = pg_toupper((unsigned char) inout[0]);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
+			}
 			return strlen(p_inout);
 
 		case DCH_month:
@@ -2210,9 +2238,20 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			if (!tm->tm_mon)
 				return -1;
 			if (S_TM(suf))
-				sprintf(inout, "%*s", 0, localize_month_full(tm->tm_mon - 1));
+			{
+				/*
+				 * tm_mon in 'pg_tm struct' based on one, but rather POSIX 'tm struct' based on zero.
+				 * See notes at the top of this file.
+				 */
+				tm->tm_mon = tm->tm_mon - 1;
+				strftime(inout, 32, "%B", (struct tm *) tm);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
+			}
 			*inout = pg_tolower((unsigned char) *inout);
 			return strlen(p_inout);
 
@@ -2221,9 +2260,20 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			if (!tm->tm_mon)
 				return -1;
 			if (S_TM(suf))
-				strcpy(inout, localize_month(tm->tm_mon - 1));
+			{
+				/*
+				 * tm_mon in 'pg_tm struct' based on one, but rather POSIX 'tm struct' based on zero.
+				 * See notes at the top of this file.
+				 */
+				tm->tm_mon = tm->tm_mon - 1;
+				strftime(inout, 32, "%b", (struct tm *) tm);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				strcpy(inout, months[tm->tm_mon - 1]);
+			}
 			str_toupper(inout);
 			return strlen(p_inout);
 
@@ -2232,9 +2282,22 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			if (!tm->tm_mon)
 				return -1;
 			if (S_TM(suf))
-				strcpy(inout, localize_month(tm->tm_mon - 1));
+			{
+				/*
+				 * tm_mon in 'pg_tm struct' based on one, but rather POSIX 'tm struct' based on zero.
+				 * See notes at the top of this file.
+				 */
+				tm->tm_mon = tm->tm_mon - 1;
+				strftime(inout, 32, "%b", (struct tm *) tm);
+				/* capitalize output */
+				inout[0] = pg_toupper((unsigned char) inout[0]);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				strcpy(inout, months[tm->tm_mon - 1]);
+			}
 			return strlen(p_inout);
 
 		case DCH_mon:
@@ -2242,9 +2305,20 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			if (!tm->tm_mon)
 				return -1;
 			if (S_TM(suf))
-				strcpy(inout, localize_month(tm->tm_mon - 1));
+			{
+				/*
+				 * tm_mon in 'pg_tm struct' based on one, but rather POSIX 'tm struct' based on zero.
+				 * See notes at the top of this file.
+				 */
+				tm->tm_mon = tm->tm_mon - 1;
+				strftime(inout, 32, "%b", (struct tm *) tm);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				strcpy(inout, months[tm->tm_mon - 1]);
+			}
 			*inout = pg_tolower((unsigned char) *inout);
 			return strlen(p_inout);
 
@@ -2273,52 +2347,92 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		case DCH_DAY:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
-				strcpy(workbuff, localize_day_full(tm->tm_wday));
+			{
+				strftime(workbuff, sizeof(workbuff), "%A", (struct tm *) tm);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				strcpy(workbuff, days[tm->tm_wday]);
+			}
 			sprintf(inout, "%*s", (S_FM(suf) || S_TM(suf)) ? 0 : -9, str_toupper(workbuff));
 			return strlen(p_inout);
 
 		case DCH_Day:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
-				sprintf(inout, "%*s", 0, localize_day_full(tm->tm_wday));
+			{
+				strftime(inout, 32, "%A", (struct tm *) tm);
+				/* capitalize output */
+				inout[0] = pg_toupper((unsigned char) inout[0]);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[tm->tm_wday]);
+			}
 			return strlen(p_inout);
 
 		case DCH_day:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
-				sprintf(inout, "%*s", 0, localize_day_full(tm->tm_wday));
+			{
+				strftime(inout, 32, "%A", (struct tm *) tm);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[tm->tm_wday]);
+			}
 			*inout = pg_tolower((unsigned char) *inout);
 			return strlen(p_inout);
 
 		case DCH_DY:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
-				strcpy(inout, localize_day(tm->tm_wday));
+			{
+				strftime(inout, 32, "%a", (struct tm *) tm);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				strcpy(inout, days_short[tm->tm_wday]);
+			}
 			str_toupper(inout);
 			return strlen(p_inout);
 
 		case DCH_Dy:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
-				strcpy(inout, localize_day(tm->tm_wday));
+			{
+				strftime(inout, 32, "%a", (struct tm *) tm);
+				/* capitalize output */
+				inout[0] = pg_toupper((unsigned char) inout[0]);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				strcpy(inout, days_short[tm->tm_wday]);
+			}
 			return strlen(p_inout);
 
 		case DCH_dy:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
-				strcpy(inout, localize_day(tm->tm_wday));
+			{
+				strftime(inout, 32, "%a", (struct tm *) tm);
+				/* set it back; see comments in pg_locale.c */
+				setlocale(LC_TIME, save_loc);
+			}
 			else
+			{
 				strcpy(inout, days_short[tm->tm_wday]);
+			}
 			*inout = pg_tolower((unsigned char) *inout);
 			return strlen(p_inout);
 
@@ -2860,167 +2974,6 @@ datetime_to_char_body(TmToChar *tmtc, text *fmt, bool is_interval)
 	return res;
 }
 
-static char *
-localize_month_full(int index)
-{
-	char	   *m = NULL;
-
-	switch (index)
-	{
-		case 0:
-			m = _("January");
-			break;
-		case 1:
-			m = _("February");
-			break;
-		case 2:
-			m = _("March");
-			break;
-		case 3:
-			m = _("April");
-			break;
-		case 4:
-			m = _("May");
-			break;
-		case 5:
-			m = _("June");
-			break;
-		case 6:
-			m = _("July");
-			break;
-		case 7:
-			m = _("August");
-			break;
-		case 8:
-			m = _("September");
-			break;
-		case 9:
-			m = _("October");
-			break;
-		case 10:
-			m = _("November");
-			break;
-		case 11:
-			m = _("December");
-			break;
-	}
-
-	return m;
-}
-
-static char *
-localize_month(int index)
-{
-	char	   *m = NULL;
-
-	switch (index)
-	{
-		case 0:
-			m = _("Jan");
-			break;
-		case 1:
-			m = _("Feb");
-			break;
-		case 2:
-			m = _("Mar");
-			break;
-		case 3:
-			m = _("Apr");
-			break;
-		case 4:
-			m = _("May");
-			break;
-		case 5:
-			m = _("Jun");
-			break;
-		case 6:
-			m = _("Jul");
-			break;
-		case 7:
-			m = _("Aug");
-			break;
-		case 8:
-			m = _("Sep");
-			break;
-		case 9:
-			m = _("Oct");
-			break;
-		case 10:
-			m = _("Nov");
-			break;
-		case 11:
-			m = _("Dec");
-			break;
-	}
-
-	return m;
-}
-
-static char *
-localize_day_full(int index)
-{
-	char	   *d = NULL;
-
-	switch (index)
-	{
-		case 0:
-			d = _("Sunday");
-			break;
-		case 1:
-			d = _("Monday");
-			break;
-		case 2:
-			d = _("Tuesday");
-			break;
-		case 3:
-			d = _("Wednesday");
-			break;
-		case 4:
-			d = _("Thursday");
-			break;
-		case 5:
-			d = _("Friday");
-			break;
-		case 6:
-			d = _("Saturday");
-			break;
-	}
-
-	return d;
-}
-
-static char *
-localize_day(int index)
-{
-	char	   *d = NULL;
-
-	switch (index)
-	{
-		case 0:
-			d = _("Sun");
-			break;
-		case 1:
-			d = _("Mon");
-			break;
-		case 2:
-			d = _("Tue");
-			break;
-		case 3:
-			d = _("Wed");
-			break;
-		case 4:
-			d = _("Thu");
-			break;
-		case 5:
-			d = _("Fri");
-			break;
-		case 6:
-			d = _("Sat");
-			break;
-	}
-
-	return d;
-}
 
 /****************************************************************************
  *				Public routines
