@@ -2,7 +2,7 @@
 --	PostgreSQL code for ISNs (ISBN, ISMN, ISSN, EAN13, UPC)
 --  Copyright (c) 2004-2006, German Mendez Bravo (Kronuz)
 --
---	$PostgreSQL: pgsql/contrib/isn/isn.sql.in,v 1.3 2006/10/01 18:37:53 tgl Exp $
+--	$PostgreSQL: pgsql/contrib/isn/isn.sql.in,v 1.4 2006/11/24 18:44:37 tgl Exp $
 --
 -- Example:
 --   create table test ( id isbn );
@@ -500,6 +500,37 @@ CREATE FUNCTION isnne(isbn13, isbn)
 	LANGUAGE 'internal' 
 	IMMUTABLE STRICT;
 
+CREATE FUNCTION isnlt(isbn13, ean13)
+	RETURNS boolean
+	AS 'int8lt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnle(isbn13, ean13)
+	RETURNS boolean
+	AS 'int8le'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isneq(isbn13, ean13)
+	RETURNS boolean
+	AS 'int8eq'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnge(isbn13, ean13)
+	RETURNS boolean
+	AS 'int8ge'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isngt(isbn13, ean13)
+	RETURNS boolean
+	AS 'int8gt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnne(isbn13, ean13)
+	RETURNS boolean
+	AS 'int8ne'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+
 ---------------------------------------------------
 -- ISBN:
 CREATE FUNCTION isnlt(isbn, isbn)
@@ -528,6 +559,68 @@ CREATE FUNCTION isngt(isbn, isbn)
 	LANGUAGE 'internal' 
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(isbn, isbn)
+	RETURNS boolean
+	AS 'int8ne'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+
+CREATE FUNCTION isnlt(isbn, isbn13)
+	RETURNS boolean
+	AS 'int8lt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnle(isbn, isbn13)
+	RETURNS boolean
+	AS 'int8le'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isneq(isbn, isbn13)
+	RETURNS boolean
+	AS 'int8eq'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnge(isbn, isbn13)
+	RETURNS boolean
+	AS 'int8ge'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isngt(isbn, isbn13)
+	RETURNS boolean
+	AS 'int8gt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnne(isbn, isbn13)
+	RETURNS boolean
+	AS 'int8ne'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+
+CREATE FUNCTION isnlt(isbn, ean13)
+	RETURNS boolean
+	AS 'int8lt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnle(isbn, ean13)
+	RETURNS boolean
+	AS 'int8le'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isneq(isbn, ean13)
+	RETURNS boolean
+	AS 'int8eq'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnge(isbn, ean13)
+	RETURNS boolean
+	AS 'int8ge'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isngt(isbn, ean13)
+	RETURNS boolean
+	AS 'int8gt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnne(isbn, ean13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal' 
@@ -597,6 +690,37 @@ CREATE FUNCTION isnne(ismn13, ismn)
 	LANGUAGE 'internal' 
 	IMMUTABLE STRICT;
 
+CREATE FUNCTION isnlt(ismn13, ean13)
+	RETURNS boolean
+	AS 'int8lt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnle(ismn13, ean13)
+	RETURNS boolean
+	AS 'int8le'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isneq(ismn13, ean13)
+	RETURNS boolean
+	AS 'int8eq'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnge(ismn13, ean13)
+	RETURNS boolean
+	AS 'int8ge'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isngt(ismn13, ean13)
+	RETURNS boolean
+	AS 'int8gt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnne(ismn13, ean13)
+	RETURNS boolean
+	AS 'int8ne'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+
 ---------------------------------------------------
 -- ISMN:
 CREATE FUNCTION isnlt(ismn, ismn)
@@ -625,6 +749,68 @@ CREATE FUNCTION isngt(ismn, ismn)
 	LANGUAGE 'internal' 
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ismn, ismn)
+	RETURNS boolean
+	AS 'int8ne'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+
+CREATE FUNCTION isnlt(ismn, ismn13)
+	RETURNS boolean
+	AS 'int8lt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnle(ismn, ismn13)
+	RETURNS boolean
+	AS 'int8le'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isneq(ismn, ismn13)
+	RETURNS boolean
+	AS 'int8eq'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnge(ismn, ismn13)
+	RETURNS boolean
+	AS 'int8ge'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isngt(ismn, ismn13)
+	RETURNS boolean
+	AS 'int8gt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnne(ismn, ismn13)
+	RETURNS boolean
+	AS 'int8ne'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+
+CREATE FUNCTION isnlt(ismn, ean13)
+	RETURNS boolean
+	AS 'int8lt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnle(ismn, ean13)
+	RETURNS boolean
+	AS 'int8le'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isneq(ismn, ean13)
+	RETURNS boolean
+	AS 'int8eq'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnge(ismn, ean13)
+	RETURNS boolean
+	AS 'int8ge'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isngt(ismn, ean13)
+	RETURNS boolean
+	AS 'int8gt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnne(ismn, ean13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal' 
@@ -694,6 +880,37 @@ CREATE FUNCTION isnne(issn13, issn)
 	LANGUAGE 'internal' 
 	IMMUTABLE STRICT;
 
+CREATE FUNCTION isnlt(issn13, ean13)
+	RETURNS boolean
+	AS 'int8lt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnle(issn13, ean13)
+	RETURNS boolean
+	AS 'int8le'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isneq(issn13, ean13)
+	RETURNS boolean
+	AS 'int8eq'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnge(issn13, ean13)
+	RETURNS boolean
+	AS 'int8ge'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isngt(issn13, ean13)
+	RETURNS boolean
+	AS 'int8gt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnne(issn13, ean13)
+	RETURNS boolean
+	AS 'int8ne'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+
 ---------------------------------------------------
 -- ISSN:
 CREATE FUNCTION isnlt(issn, issn)
@@ -722,6 +939,68 @@ CREATE FUNCTION isngt(issn, issn)
 	LANGUAGE 'internal' 
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(issn, issn)
+	RETURNS boolean
+	AS 'int8ne'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+
+CREATE FUNCTION isnlt(issn, issn13)
+	RETURNS boolean
+	AS 'int8lt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnle(issn, issn13)
+	RETURNS boolean
+	AS 'int8le'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isneq(issn, issn13)
+	RETURNS boolean
+	AS 'int8eq'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnge(issn, issn13)
+	RETURNS boolean
+	AS 'int8ge'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isngt(issn, issn13)
+	RETURNS boolean
+	AS 'int8gt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnne(issn, issn13)
+	RETURNS boolean
+	AS 'int8ne'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+
+CREATE FUNCTION isnlt(issn, ean13)
+	RETURNS boolean
+	AS 'int8lt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnle(issn, ean13)
+	RETURNS boolean
+	AS 'int8le'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isneq(issn, ean13)
+	RETURNS boolean
+	AS 'int8eq'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnge(issn, ean13)
+	RETURNS boolean
+	AS 'int8ge'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isngt(issn, ean13)
+	RETURNS boolean
+	AS 'int8gt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnne(issn, ean13)
 	RETURNS boolean
 	AS 'int8ne'
 	LANGUAGE 'internal' 
@@ -760,11 +1039,39 @@ CREATE FUNCTION isnne(upc, upc)
 	LANGUAGE 'internal' 
 	IMMUTABLE STRICT;
 
+CREATE FUNCTION isnlt(upc, ean13)
+	RETURNS boolean
+	AS 'int8lt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnle(upc, ean13)
+	RETURNS boolean
+	AS 'int8le'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isneq(upc, ean13)
+	RETURNS boolean
+	AS 'int8eq'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnge(upc, ean13)
+	RETURNS boolean
+	AS 'int8ge'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isngt(upc, ean13)
+	RETURNS boolean
+	AS 'int8gt'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+CREATE FUNCTION isnne(upc, ean13)
+	RETURNS boolean
+	AS 'int8ne'
+	LANGUAGE 'internal' 
+	IMMUTABLE STRICT;
+
 --
---	Now the operators.  Note how some of the parameters to some
---	of the 'CREATE OPERATOR' commands are commented out.  This
---	is because they reference as yet undefined operators, and
---	will be implicitly defined when those are, further down.
+-- Now the operators:
 --
 
 --
@@ -794,7 +1101,8 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ean13,
@@ -871,6 +1179,55 @@ CREATE OPERATOR <> (
 
 CREATE OPERATOR < (
 	PROCEDURE = isnlt,
+	LEFTARG = isbn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = >,
+	NEGATOR = >=,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR <= (
+	PROCEDURE = isnle,
+	LEFTARG = isbn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = >=,
+	NEGATOR = >,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR = (
+	PROCEDURE = isneq,
+	LEFTARG = isbn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = =,
+	NEGATOR = <>,
+	RESTRICT = eqsel,
+	JOIN = eqjoinsel);
+CREATE OPERATOR >= (
+	PROCEDURE = isnge,
+	LEFTARG = isbn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = <=,
+	NEGATOR = <,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR > (
+	PROCEDURE = isngt,
+	LEFTARG = isbn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = <,
+	NEGATOR = <=,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR <> (
+	PROCEDURE = isnne,
+	LEFTARG = isbn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = <>,
+	NEGATOR = =,
+	RESTRICT = neqsel,
+	JOIN = neqjoinsel);
+
+CREATE OPERATOR < (
+	PROCEDURE = isnlt,
 	LEFTARG = ean13,
 	RIGHTARG = ismn13,
 	COMMUTATOR = >,
@@ -913,6 +1270,55 @@ CREATE OPERATOR <> (
 	PROCEDURE = isnne,
 	LEFTARG = ean13,
 	RIGHTARG = ismn13,
+	COMMUTATOR = <>,
+	NEGATOR = =,
+	RESTRICT = neqsel,
+	JOIN = neqjoinsel);
+
+CREATE OPERATOR < (
+	PROCEDURE = isnlt,
+	LEFTARG = ismn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = >,
+	NEGATOR = >=,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR <= (
+	PROCEDURE = isnle,
+	LEFTARG = ismn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = >=,
+	NEGATOR = >,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR = (
+	PROCEDURE = isneq,
+	LEFTARG = ismn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = =,
+	NEGATOR = <>,
+	RESTRICT = eqsel,
+	JOIN = eqjoinsel);
+CREATE OPERATOR >= (
+	PROCEDURE = isnge,
+	LEFTARG = ismn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = <=,
+	NEGATOR = <,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR > (
+	PROCEDURE = isngt,
+	LEFTARG = ismn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = <,
+	NEGATOR = <=,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR <> (
+	PROCEDURE = isnne,
+	LEFTARG = ismn13,
+	RIGHTARG = ean13,
 	COMMUTATOR = <>,
 	NEGATOR = =,
 	RESTRICT = neqsel,
@@ -1190,7 +1596,8 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = isbn13,
@@ -1292,7 +1699,8 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = isbn,
@@ -1313,6 +1721,104 @@ CREATE OPERATOR <> (
 	PROCEDURE = isnne,
 	LEFTARG = isbn,
 	RIGHTARG = isbn,
+	COMMUTATOR = <>,
+	NEGATOR = =,
+	RESTRICT = neqsel,
+	JOIN = neqjoinsel);
+
+CREATE OPERATOR < (
+	PROCEDURE = isnlt,
+	LEFTARG = isbn,
+	RIGHTARG = isbn13,
+	COMMUTATOR = >,
+	NEGATOR = >=,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR <= (
+	PROCEDURE = isnle,
+	LEFTARG = isbn,
+	RIGHTARG = isbn13,
+	COMMUTATOR = >=,
+	NEGATOR = >,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR = (
+	PROCEDURE = isneq,
+	LEFTARG = isbn,
+	RIGHTARG = isbn13,
+	COMMUTATOR = =,
+	NEGATOR = <>,
+	RESTRICT = eqsel,
+	JOIN = eqjoinsel);
+CREATE OPERATOR >= (
+	PROCEDURE = isnge,
+	LEFTARG = isbn,
+	RIGHTARG = isbn13,
+	COMMUTATOR = <=,
+	NEGATOR = <,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR > (
+	PROCEDURE = isngt,
+	LEFTARG = isbn,
+	RIGHTARG = isbn13,
+	COMMUTATOR = <,
+	NEGATOR = <=,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR <> (
+	PROCEDURE = isnne,
+	LEFTARG = isbn,
+	RIGHTARG = isbn13,
+	COMMUTATOR = <>,
+	NEGATOR = =,
+	RESTRICT = neqsel,
+	JOIN = neqjoinsel);
+
+CREATE OPERATOR < (
+	PROCEDURE = isnlt,
+	LEFTARG = isbn,
+	RIGHTARG = ean13,
+	COMMUTATOR = >,
+	NEGATOR = >=,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR <= (
+	PROCEDURE = isnle,
+	LEFTARG = isbn,
+	RIGHTARG = ean13,
+	COMMUTATOR = >=,
+	NEGATOR = >,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR = (
+	PROCEDURE = isneq,
+	LEFTARG = isbn,
+	RIGHTARG = ean13,
+	COMMUTATOR = =,
+	NEGATOR = <>,
+	RESTRICT = eqsel,
+	JOIN = eqjoinsel);
+CREATE OPERATOR >= (
+	PROCEDURE = isnge,
+	LEFTARG = isbn,
+	RIGHTARG = ean13,
+	COMMUTATOR = <=,
+	NEGATOR = <,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR > (
+	PROCEDURE = isngt,
+	LEFTARG = isbn,
+	RIGHTARG = ean13,
+	COMMUTATOR = <,
+	NEGATOR = <=,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR <> (
+	PROCEDURE = isnne,
+	LEFTARG = isbn,
+	RIGHTARG = ean13,
 	COMMUTATOR = <>,
 	NEGATOR = =,
 	RESTRICT = neqsel,
@@ -1345,7 +1851,8 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ismn13,
@@ -1447,7 +1954,8 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ismn,
@@ -1468,6 +1976,104 @@ CREATE OPERATOR <> (
 	PROCEDURE = isnne,
 	LEFTARG = ismn,
 	RIGHTARG = ismn,
+	COMMUTATOR = <>,
+	NEGATOR = =,
+	RESTRICT = neqsel,
+	JOIN = neqjoinsel);
+
+CREATE OPERATOR < (
+	PROCEDURE = isnlt,
+	LEFTARG = ismn,
+	RIGHTARG = ismn13,
+	COMMUTATOR = >,
+	NEGATOR = >=,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR <= (
+	PROCEDURE = isnle,
+	LEFTARG = ismn,
+	RIGHTARG = ismn13,
+	COMMUTATOR = >=,
+	NEGATOR = >,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR = (
+	PROCEDURE = isneq,
+	LEFTARG = ismn,
+	RIGHTARG = ismn13,
+	COMMUTATOR = =,
+	NEGATOR = <>,
+	RESTRICT = eqsel,
+	JOIN = eqjoinsel);
+CREATE OPERATOR >= (
+	PROCEDURE = isnge,
+	LEFTARG = ismn,
+	RIGHTARG = ismn13,
+	COMMUTATOR = <=,
+	NEGATOR = <,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR > (
+	PROCEDURE = isngt,
+	LEFTARG = ismn,
+	RIGHTARG = ismn13,
+	COMMUTATOR = <,
+	NEGATOR = <=,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR <> (
+	PROCEDURE = isnne,
+	LEFTARG = ismn,
+	RIGHTARG = ismn13,
+	COMMUTATOR = <>,
+	NEGATOR = =,
+	RESTRICT = neqsel,
+	JOIN = neqjoinsel);
+
+CREATE OPERATOR < (
+	PROCEDURE = isnlt,
+	LEFTARG = ismn,
+	RIGHTARG = ean13,
+	COMMUTATOR = >,
+	NEGATOR = >=,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR <= (
+	PROCEDURE = isnle,
+	LEFTARG = ismn,
+	RIGHTARG = ean13,
+	COMMUTATOR = >=,
+	NEGATOR = >,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR = (
+	PROCEDURE = isneq,
+	LEFTARG = ismn,
+	RIGHTARG = ean13,
+	COMMUTATOR = =,
+	NEGATOR = <>,
+	RESTRICT = eqsel,
+	JOIN = eqjoinsel);
+CREATE OPERATOR >= (
+	PROCEDURE = isnge,
+	LEFTARG = ismn,
+	RIGHTARG = ean13,
+	COMMUTATOR = <=,
+	NEGATOR = <,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR > (
+	PROCEDURE = isngt,
+	LEFTARG = ismn,
+	RIGHTARG = ean13,
+	COMMUTATOR = <,
+	NEGATOR = <=,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR <> (
+	PROCEDURE = isnne,
+	LEFTARG = ismn,
+	RIGHTARG = ean13,
 	COMMUTATOR = <>,
 	NEGATOR = =,
 	RESTRICT = neqsel,
@@ -1500,7 +2106,8 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = issn13,
@@ -1570,6 +2177,55 @@ CREATE OPERATOR <> (
 	PROCEDURE = isnne,
 	LEFTARG = issn13,
 	RIGHTARG = issn,
+	COMMUTATOR = <>,
+	NEGATOR = =,
+	RESTRICT = neqsel,
+	JOIN = neqjoinsel);
+
+CREATE OPERATOR < (
+	PROCEDURE = isnlt,
+	LEFTARG = issn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = >,
+	NEGATOR = >=,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR <= (
+	PROCEDURE = isnle,
+	LEFTARG = issn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = >=,
+	NEGATOR = >,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR = (
+	PROCEDURE = isneq,
+	LEFTARG = issn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = =,
+	NEGATOR = <>,
+	RESTRICT = eqsel,
+	JOIN = eqjoinsel);
+CREATE OPERATOR >= (
+	PROCEDURE = isnge,
+	LEFTARG = issn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = <=,
+	NEGATOR = <,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR > (
+	PROCEDURE = isngt,
+	LEFTARG = issn13,
+	RIGHTARG = ean13,
+	COMMUTATOR = <,
+	NEGATOR = <=,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR <> (
+	PROCEDURE = isnne,
+	LEFTARG = issn13,
+	RIGHTARG = ean13,
 	COMMUTATOR = <>,
 	NEGATOR = =,
 	RESTRICT = neqsel,
@@ -1602,7 +2258,8 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = issn,
@@ -1623,6 +2280,104 @@ CREATE OPERATOR <> (
 	PROCEDURE = isnne,
 	LEFTARG = issn,
 	RIGHTARG = issn,
+	COMMUTATOR = <>,
+	NEGATOR = =,
+	RESTRICT = neqsel,
+	JOIN = neqjoinsel);
+
+CREATE OPERATOR < (
+	PROCEDURE = isnlt,
+	LEFTARG = issn,
+	RIGHTARG = issn13,
+	COMMUTATOR = >,
+	NEGATOR = >=,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR <= (
+	PROCEDURE = isnle,
+	LEFTARG = issn,
+	RIGHTARG = issn13,
+	COMMUTATOR = >=,
+	NEGATOR = >,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR = (
+	PROCEDURE = isneq,
+	LEFTARG = issn,
+	RIGHTARG = issn13,
+	COMMUTATOR = =,
+	NEGATOR = <>,
+	RESTRICT = eqsel,
+	JOIN = eqjoinsel);
+CREATE OPERATOR >= (
+	PROCEDURE = isnge,
+	LEFTARG = issn,
+	RIGHTARG = issn13,
+	COMMUTATOR = <=,
+	NEGATOR = <,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR > (
+	PROCEDURE = isngt,
+	LEFTARG = issn,
+	RIGHTARG = issn13,
+	COMMUTATOR = <,
+	NEGATOR = <=,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR <> (
+	PROCEDURE = isnne,
+	LEFTARG = issn,
+	RIGHTARG = issn13,
+	COMMUTATOR = <>,
+	NEGATOR = =,
+	RESTRICT = neqsel,
+	JOIN = neqjoinsel);
+
+CREATE OPERATOR < (
+	PROCEDURE = isnlt,
+	LEFTARG = issn,
+	RIGHTARG = ean13,
+	COMMUTATOR = >,
+	NEGATOR = >=,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR <= (
+	PROCEDURE = isnle,
+	LEFTARG = issn,
+	RIGHTARG = ean13,
+	COMMUTATOR = >=,
+	NEGATOR = >,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR = (
+	PROCEDURE = isneq,
+	LEFTARG = issn,
+	RIGHTARG = ean13,
+	COMMUTATOR = =,
+	NEGATOR = <>,
+	RESTRICT = eqsel,
+	JOIN = eqjoinsel);
+CREATE OPERATOR >= (
+	PROCEDURE = isnge,
+	LEFTARG = issn,
+	RIGHTARG = ean13,
+	COMMUTATOR = <=,
+	NEGATOR = <,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR > (
+	PROCEDURE = isngt,
+	LEFTARG = issn,
+	RIGHTARG = ean13,
+	COMMUTATOR = <,
+	NEGATOR = <=,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR <> (
+	PROCEDURE = isnne,
+	LEFTARG = issn,
+	RIGHTARG = ean13,
 	COMMUTATOR = <>,
 	NEGATOR = =,
 	RESTRICT = neqsel,
@@ -1655,7 +2410,8 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = upc,
@@ -1676,6 +2432,55 @@ CREATE OPERATOR <> (
 	PROCEDURE = isnne,
 	LEFTARG = upc,
 	RIGHTARG = upc,
+	COMMUTATOR = <>,
+	NEGATOR = =,
+	RESTRICT = neqsel,
+	JOIN = neqjoinsel);
+
+CREATE OPERATOR < (
+	PROCEDURE = isnlt,
+	LEFTARG = upc,
+	RIGHTARG = ean13,
+	COMMUTATOR = >,
+	NEGATOR = >=,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR <= (
+	PROCEDURE = isnle,
+	LEFTARG = upc,
+	RIGHTARG = ean13,
+	COMMUTATOR = >=,
+	NEGATOR = >,
+	RESTRICT = scalarltsel,
+	JOIN = scalarltjoinsel);
+CREATE OPERATOR = (
+	PROCEDURE = isneq,
+	LEFTARG = upc,
+	RIGHTARG = ean13,
+	COMMUTATOR = =,
+	NEGATOR = <>,
+	RESTRICT = eqsel,
+	JOIN = eqjoinsel);
+CREATE OPERATOR >= (
+	PROCEDURE = isnge,
+	LEFTARG = upc,
+	RIGHTARG = ean13,
+	COMMUTATOR = <=,
+	NEGATOR = <,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR > (
+	PROCEDURE = isngt,
+	LEFTARG = upc,
+	RIGHTARG = ean13,
+	COMMUTATOR = <,
+	NEGATOR = <=,
+	RESTRICT = scalargtsel,
+	JOIN = scalargtjoinsel );
+CREATE OPERATOR <> (
+	PROCEDURE = isnne,
+	LEFTARG = upc,
+	RIGHTARG = ean13,
 	COMMUTATOR = <>,
 	NEGATOR = =,
 	RESTRICT = neqsel,
@@ -1808,22 +2613,22 @@ CREATE FUNCTION btisbn13cmp(isbn13, isbn)
 
 CREATE OPERATOR CLASS isbn13_ops DEFAULT
 	FOR TYPE isbn13 USING btree AS
---	OPERATOR 1  < (isbn13, ean13),
+	OPERATOR 1  < (isbn13, ean13),
 	OPERATOR 1  < (isbn13, isbn),
 	OPERATOR 1  <,
---	OPERATOR 2  <= (isbn13, ean13),
+	OPERATOR 2  <= (isbn13, ean13),
 	OPERATOR 2  <= (isbn13, isbn),
 	OPERATOR 2  <=,
---	OPERATOR 3  = (isbn13, ean13), 
+	OPERATOR 3  = (isbn13, ean13), 
 	OPERATOR 3  = (isbn13, isbn),  
 	OPERATOR 3  =,
---	OPERATOR 4  >= (isbn13, ean13), 
+	OPERATOR 4  >= (isbn13, ean13), 
 	OPERATOR 4  >= (isbn13, isbn),  
 	OPERATOR 4  >=,
---	OPERATOR 5  > (isbn13, ean13), 
+	OPERATOR 5  > (isbn13, ean13), 
 	OPERATOR 5  > (isbn13, isbn),  
 	OPERATOR 5  >,
---	FUNCTION 1  btisbn13cmp(isbn13, ean13),
+	FUNCTION 1  btisbn13cmp(isbn13, ean13),
 	FUNCTION 1  btisbn13cmp(isbn13, isbn),
 	FUNCTION 1  btisbn13cmp(isbn13, isbn13);
 
@@ -1858,23 +2663,23 @@ CREATE FUNCTION btisbncmp(isbn, isbn13)
 
 CREATE OPERATOR CLASS isbn_ops DEFAULT
 	FOR TYPE isbn USING btree AS
---	OPERATOR 1  < (isbn, ean13),
---	OPERATOR 1  < (isbn, isbn13),
+	OPERATOR 1  < (isbn, ean13),
+	OPERATOR 1  < (isbn, isbn13),
 	OPERATOR 1  <,
---	OPERATOR 2  <= (isbn, ean13),  
---	OPERATOR 2  <= (isbn, isbn13), 
+	OPERATOR 2  <= (isbn, ean13),  
+	OPERATOR 2  <= (isbn, isbn13), 
 	OPERATOR 2  <=,
---	OPERATOR 3  = (isbn, ean13),  
---	OPERATOR 3  = (isbn, isbn13), 
+	OPERATOR 3  = (isbn, ean13),  
+	OPERATOR 3  = (isbn, isbn13), 
 	OPERATOR 3  =,
---	OPERATOR 4  >= (isbn, ean13),  
---	OPERATOR 4  >= (isbn, isbn13), 
+	OPERATOR 4  >= (isbn, ean13),  
+	OPERATOR 4  >= (isbn, isbn13), 
 	OPERATOR 4  >=,
---	OPERATOR 5  > (isbn, ean13),  
---	OPERATOR 5  > (isbn, isbn13), 
+	OPERATOR 5  > (isbn, ean13),  
+	OPERATOR 5  > (isbn, isbn13), 
 	OPERATOR 5  >,
---	FUNCTION 1  btisbncmp(isbn, ean13),
---	FUNCTION 1  btisbncmp(isbn, isbn13),
+	FUNCTION 1  btisbncmp(isbn, ean13),
+	FUNCTION 1  btisbncmp(isbn, isbn13),
 	FUNCTION 1  btisbncmp(isbn, isbn);
 
 CREATE FUNCTION hashisbn(isbn)
@@ -1908,22 +2713,22 @@ CREATE FUNCTION btismn13cmp(ismn13, ismn)
 
 CREATE OPERATOR CLASS ismn13_ops DEFAULT
 	FOR TYPE ismn13 USING btree AS
---	OPERATOR 1  < (ismn13, ean13),
+	OPERATOR 1  < (ismn13, ean13),
 	OPERATOR 1  < (ismn13, ismn),
 	OPERATOR 1  <,
---	OPERATOR 2  <= (ismn13, ean13),
+	OPERATOR 2  <= (ismn13, ean13),
 	OPERATOR 2  <= (ismn13, ismn),
 	OPERATOR 2  <=,
---	OPERATOR 3  = (ismn13, ean13), 
+	OPERATOR 3  = (ismn13, ean13), 
 	OPERATOR 3  = (ismn13, ismn),  
 	OPERATOR 3  =,
---	OPERATOR 4  >= (ismn13, ean13), 
+	OPERATOR 4  >= (ismn13, ean13), 
 	OPERATOR 4  >= (ismn13, ismn),  
 	OPERATOR 4  >=,
---	OPERATOR 5  > (ismn13, ean13), 
+	OPERATOR 5  > (ismn13, ean13), 
 	OPERATOR 5  > (ismn13, ismn),  
 	OPERATOR 5  >,
---	FUNCTION 1  btismn13cmp(ismn13, ean13),
+	FUNCTION 1  btismn13cmp(ismn13, ean13),
 	FUNCTION 1  btismn13cmp(ismn13, ismn),
 	FUNCTION 1  btismn13cmp(ismn13, ismn13);
 
@@ -1958,23 +2763,23 @@ CREATE FUNCTION btismncmp(ismn, ismn13)
 
 CREATE OPERATOR CLASS ismn_ops DEFAULT
 	FOR TYPE ismn USING btree AS
---	OPERATOR 1  < (ismn, ean13),
---	OPERATOR 1  < (ismn, ismn13),
+	OPERATOR 1  < (ismn, ean13),
+	OPERATOR 1  < (ismn, ismn13),
 	OPERATOR 1  <,
---	OPERATOR 2  <= (ismn, ean13),  
---	OPERATOR 2  <= (ismn, ismn13), 
+	OPERATOR 2  <= (ismn, ean13),  
+	OPERATOR 2  <= (ismn, ismn13), 
 	OPERATOR 2  <=,
---	OPERATOR 3  = (ismn, ean13),  
---	OPERATOR 3  = (ismn, ismn13), 
+	OPERATOR 3  = (ismn, ean13),  
+	OPERATOR 3  = (ismn, ismn13), 
 	OPERATOR 3  =,
---	OPERATOR 4  >= (ismn, ean13),  
---	OPERATOR 4  >= (ismn, ismn13), 
+	OPERATOR 4  >= (ismn, ean13),  
+	OPERATOR 4  >= (ismn, ismn13), 
 	OPERATOR 4  >=,
---	OPERATOR 5  > (ismn, ean13),  
---	OPERATOR 5  > (ismn, ismn13), 
+	OPERATOR 5  > (ismn, ean13),  
+	OPERATOR 5  > (ismn, ismn13), 
 	OPERATOR 5  >,
---	FUNCTION 1  btismncmp(ismn, ean13),
---	FUNCTION 1  btismncmp(ismn, ismn13),
+	FUNCTION 1  btismncmp(ismn, ean13),
+	FUNCTION 1  btismncmp(ismn, ismn13),
 	FUNCTION 1  btismncmp(ismn, ismn);
 
 CREATE FUNCTION hashismn(ismn)
@@ -2008,22 +2813,22 @@ CREATE FUNCTION btissn13cmp(issn13, issn)
 
 CREATE OPERATOR CLASS issn13_ops DEFAULT
 	FOR TYPE issn13 USING btree AS
---	OPERATOR 1  < (issn13, ean13),
+	OPERATOR 1  < (issn13, ean13),
 	OPERATOR 1  < (issn13, issn),
 	OPERATOR 1  <,
---	OPERATOR 2  <= (issn13, ean13),
+	OPERATOR 2  <= (issn13, ean13),
 	OPERATOR 2  <= (issn13, issn),
 	OPERATOR 2  <=,
---	OPERATOR 3  = (issn13, ean13), 
+	OPERATOR 3  = (issn13, ean13), 
 	OPERATOR 3  = (issn13, issn),  
 	OPERATOR 3  =,
---	OPERATOR 4  >= (issn13, ean13), 
+	OPERATOR 4  >= (issn13, ean13), 
 	OPERATOR 4  >= (issn13, issn),  
 	OPERATOR 4  >=,
---	OPERATOR 5  > (issn13, ean13), 
+	OPERATOR 5  > (issn13, ean13), 
 	OPERATOR 5  > (issn13, issn),  
 	OPERATOR 5  >,
---	FUNCTION 1  btissn13cmp(issn13, ean13),
+	FUNCTION 1  btissn13cmp(issn13, ean13),
 	FUNCTION 1  btissn13cmp(issn13, issn),
 	FUNCTION 1  btissn13cmp(issn13, issn13);
 
@@ -2058,23 +2863,23 @@ CREATE FUNCTION btissncmp(issn, issn13)
 
 CREATE OPERATOR CLASS issn_ops DEFAULT
 	FOR TYPE issn USING btree AS
---	OPERATOR 1  < (issn, ean13),
---	OPERATOR 1  < (issn, issn13),
+	OPERATOR 1  < (issn, ean13),
+	OPERATOR 1  < (issn, issn13),
 	OPERATOR 1  <,
---	OPERATOR 2  <= (issn, ean13),  
---	OPERATOR 2  <= (issn, issn13), 
+	OPERATOR 2  <= (issn, ean13),  
+	OPERATOR 2  <= (issn, issn13), 
 	OPERATOR 2  <=,
---	OPERATOR 3  = (issn, ean13),  
---	OPERATOR 3  = (issn, issn13), 
+	OPERATOR 3  = (issn, ean13),  
+	OPERATOR 3  = (issn, issn13), 
 	OPERATOR 3  =,
---	OPERATOR 4  >= (issn, ean13),  
---	OPERATOR 4  >= (issn, issn13), 
+	OPERATOR 4  >= (issn, ean13),  
+	OPERATOR 4  >= (issn, issn13), 
 	OPERATOR 4  >=,
---	OPERATOR 5  > (issn, ean13),  
---	OPERATOR 5  > (issn, issn13), 
+	OPERATOR 5  > (issn, ean13),  
+	OPERATOR 5  > (issn, issn13), 
 	OPERATOR 5  >,
---	FUNCTION 1  btissncmp(issn, ean13),
---	FUNCTION 1  btissncmp(issn, issn13),
+	FUNCTION 1  btissncmp(issn, ean13),
+	FUNCTION 1  btissncmp(issn, issn13),
 	FUNCTION 1  btissncmp(issn, issn);
 
 CREATE FUNCTION hashissn(issn)
@@ -2103,17 +2908,17 @@ CREATE FUNCTION btupccmp(upc, ean13)
 
 CREATE OPERATOR CLASS upc_ops DEFAULT
 	FOR TYPE upc USING btree AS
---	OPERATOR 1  < (upc, ean13),
+	OPERATOR 1  < (upc, ean13),
 	OPERATOR 1  <,
---	OPERATOR 2  <= (upc, ean13),  
+	OPERATOR 2  <= (upc, ean13),  
 	OPERATOR 2  <=,
---	OPERATOR 3  = (upc, ean13),  
+	OPERATOR 3  = (upc, ean13),  
 	OPERATOR 3  =,
---	OPERATOR 4  >= (upc, ean13),  
+	OPERATOR 4  >= (upc, ean13),  
 	OPERATOR 4  >=,
---	OPERATOR 5  > (upc, ean13),  
+	OPERATOR 5  > (upc, ean13),  
 	OPERATOR 5  >,
---	FUNCTION 1  btupccmp(upc, ean13),
+	FUNCTION 1  btupccmp(upc, ean13),
 	FUNCTION 1  btupccmp(upc, upc);
 
 CREATE FUNCTION hashupc(upc)
