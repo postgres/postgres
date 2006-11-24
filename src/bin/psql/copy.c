@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.33.4.1 2004/08/14 22:24:49 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.33.4.2 2006/11/24 23:07:07 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -415,6 +415,18 @@ do_copy(const char *args)
 	}
 
 	PQclear(result);
+
+	/*
+	 * Make sure we have pumped libpq dry of results; else it may still be
+	 * in ASYNC_BUSY state, leading to false readings in, eg, get_prompt().
+	 */
+	while ((result = PQgetResult(pset.db)) != NULL)
+	{
+		success = false;
+		psql_error("\\copy: unexpected response (%d)\n",
+				   PQresultStatus(result));
+		PQclear(result);
+	}
 
 	if (copystream != stdout && copystream != stdin)
 		fclose(copystream);
