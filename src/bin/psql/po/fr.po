@@ -4,7 +4,7 @@
 # translation of psql-fr.po to FR_fr
 # French message translation file for psql
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.17 2006/10/21 21:03:03 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.18 2006/11/24 17:11:56 petere Exp $
 #
 # Use these quotes: «%s»
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -14,8 +14,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: psql-fr-81\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-16 01:16-0300\n"
-"PO-Revision-Date: 2006-10-17 23:10+0100\n"
+"POT-Creation-Date: 2006-11-07 19:11-0400\n"
+"PO-Revision-Date: 2006-11-10 01:06+0100\n"
 "Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
 "Language-Team:  <pgsql-fr-general@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -36,7 +36,7 @@ msgstr "commande non valable \\%s\n"
 #: command.c:134
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
-msgstr "\\%s : argument supplémentaire «%s» ignoré\n"
+msgstr "\\%s : argument supplémentaire « % s» ignoré\n"
 
 #: command.c:273
 #, c-format
@@ -46,7 +46,7 @@ msgstr "n'a pas pu obtenir le répertoire de l'utilisateur : %s\n"
 #: command.c:289
 #, c-format
 msgid "\\%s: could not change directory to \"%s\": %s\n"
-msgstr "\\%s : n'a pas pu changer le répertoire courant en «%s» : %s\n"
+msgstr "\\%s : n'a pas pu changer le répertoire courant en « %s » : %s\n"
 
 #: command.c:409
 #: command.c:850
@@ -98,7 +98,7 @@ msgstr "Le tampon de requête a été effacé."
 #: command.c:739
 #, c-format
 msgid "Wrote history to file \"%s/%s\".\n"
-msgstr "Historique sauvegardé dans le fichier «%s/%s».\n"
+msgstr "Historique sauvegardé dans le fichier « %s/%s ».\n"
 
 #: command.c:777
 #: common.c:75
@@ -193,7 +193,7 @@ msgstr "en tant que l'utilisateur « %s »"
 #: command.c:1208
 #, c-format
 msgid "could not start editor \"%s\"\n"
-msgstr "n'a pas pu exécuter l'éditeur «%s»\n"
+msgstr "n'a pas pu exécuter l'éditeur « %s »\n"
 
 #: command.c:1210
 msgid "could not start /bin/sh\n"
@@ -207,7 +207,7 @@ msgstr "n'a pas pu localiser le répertoire temporaire : %s"
 #: command.c:1274
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
-msgstr "n'a pas pu ouvrir le fichier temporaire «%s»: %s\n"
+msgstr "n'a pas pu ouvrir le fichier temporaire « %s »: %s\n"
 
 #: command.c:1464
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex, troff-ms\n"
@@ -244,12 +244,12 @@ msgstr "La locale-ajustée à la sortie numérique est désactivée."
 #: command.c:1514
 #, c-format
 msgid "Null display is \"%s\".\n"
-msgstr "L'affichage de null est «%s».\n"
+msgstr "L'affichage de null est « %s ».\n"
 
 #: command.c:1526
 #, c-format
 msgid "Field separator is \"%s\".\n"
-msgstr "Le séparateur de champs est «%s».\n"
+msgstr "Le séparateur de champs est « %s ».\n"
 
 #: command.c:1540
 #, c-format
@@ -259,7 +259,7 @@ msgstr "Le séparateur d'enregistrements est <saut de ligne>."
 #: command.c:1542
 #, c-format
 msgid "Record separator is \"%s\".\n"
-msgstr "Le séparateur d'enregistrements est «%s».\n"
+msgstr "Le séparateur d'enregistrements est « %s ».\n"
 
 #: command.c:1553
 msgid "Showing only tuples."
@@ -272,7 +272,7 @@ msgstr "L'affichage des tuples seuls est désactivé."
 #: command.c:1571
 #, c-format
 msgid "Title is \"%s\".\n"
-msgstr "Le titre est «%s».\n"
+msgstr "Le titre est « %s ».\n"
 
 #: command.c:1573
 #, c-format
@@ -282,7 +282,7 @@ msgstr "Le titre n'est pas défini.\n"
 #: command.c:1589
 #, c-format
 msgid "Table attribute is \"%s\".\n"
-msgstr "L'attribut de la table est «%s».\n"
+msgstr "L'attribut de la table est « %s ».\n"
 
 #: command.c:1591
 #, c-format
@@ -366,7 +366,7 @@ msgstr ""
 #: common.c:581
 #, c-format
 msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
-msgstr "Notification asynchrone «%s» reçue, provenant du processus serveur de PID %d.\n"
+msgstr "Notification asynchrone « %s » reçue, provenant du processus serveur de PID %d.\n"
 
 #: common.c:799
 #, c-format
@@ -396,7 +396,7 @@ msgstr "\\copy : arguments requis\n"
 #: copy.c:431
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
-msgstr "\\copy : erreur de syntaxe sur «%s»\n"
+msgstr "\\copy : erreur de syntaxe sur « %s »\n"
 
 #: copy.c:433
 msgid "\\copy: parse error at end of line\n"
@@ -479,23 +479,23 @@ msgstr "Options générales:"
 #: help.c:89
 #, c-format
 msgid "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
-msgstr "  -d NOM_BASE        spécifiez le nom de la base de données à laquelle vous souhaitez vous connecter (par défaut: %s)\n"
+msgstr "  -d NOM_BASE     spécifie le nom de la base de données à laquelle vous souhaitez vous connecter (par défaut: %s)\n"
 
 #: help.c:90
 msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
-msgstr "  -c COMMANDE     Exécute une seule commande (SQL ou interne), puis quitte"
+msgstr "  -c COMMANDE     exécute une seule commande (SQL ou interne), puis quitte"
 
 #: help.c:91
 msgid "  -f FILENAME     execute commands from file, then exit"
-msgstr "  -f FICHIER      Exécute les commandes du fichier, puis quitte"
+msgstr "  -f FICHIER      exécute les commandes du fichier, puis quitte"
 
 #: help.c:92
 msgid "  -1 (\"one\")      execute command file as a single transaction"
-msgstr "  -1 (« un »)       exécute un fichier de commande dans une seule transaction"
+msgstr "  -1 (« un »)     exécute un fichier de commande dans une seule transaction"
 
 #: help.c:93
 msgid "  -l              list available databases, then exit"
-msgstr "  -l              Afficher les bases de données disponibles, puis quitter"
+msgstr "  -l              affiche les bases de données disponibles, puis quitter"
 
 #: help.c:94
 msgid "  -v NAME=VALUE   set psql variable NAME to VALUE"
@@ -503,15 +503,15 @@ msgstr "  -v NOM=VALEUR   initialise la variable psql NOM avec VALEUR"
 
 #: help.c:95
 msgid "  -X              do not read startup file (~/.psqlrc)"
-msgstr "  -X              ne pas lire le fichier de démarrage (~/.psqlrc)"
+msgstr "  -X              ne lit pas le fichier de démarrage (~/.psqlrc)"
 
 #: help.c:96
 msgid "  --help          show this help, then exit"
-msgstr "  --help          afficher cette aide, puis quitter"
+msgstr "  --help          affiche cette aide, puis quitter"
 
 #: help.c:97
 msgid "  --version       output version information, then exit"
-msgstr "  -V              afficher la version du programme, puis quitter"
+msgstr "  -V              affiche la version du programme, puis quitter"
 
 #: help.c:99
 msgid ""
@@ -523,15 +523,15 @@ msgstr ""
 
 #: help.c:100
 msgid "  -a              echo all input from script"
-msgstr "  -a              afficher les lignes du script"
+msgstr "  -a              affiche les lignes du script"
 
 #: help.c:101
 msgid "  -e              echo commands sent to server"
-msgstr "  -e              afficher les commandes envoyées au serveur"
+msgstr "  -e              affiche les commandes envoyées au serveur"
 
 #: help.c:102
 msgid "  -E              display queries that internal commands generate"
-msgstr "  -E              afficher les requêtes générées par les commandes internes"
+msgstr "  -E              affiche les requêtes générées par les commandes internes"
 
 #: help.c:103
 msgid "  -q              run quietly (no messages, only query output)"
@@ -539,7 +539,7 @@ msgstr "  -q              s'exécute silencieusement (pas de messages, seulement 
 
 #: help.c:104
 msgid "  -o FILENAME     send query results to file (or |pipe)"
-msgstr "  -o FICHIER      écrire les résultats des requêtes dans un fichier (ou |tube)"
+msgstr "  -o FICHIER      écrit les résultats des requêtes dans un fichier (ou |tube)"
 
 #: help.c:105
 msgid "  -n              disable enhanced command line editing (readline)"
@@ -547,15 +547,15 @@ msgstr "  -n              désactive l'édition avancée de la ligne de commande (r
 
 #: help.c:106
 msgid "  -s              single-step mode (confirm each query)"
-msgstr "  -s              mode étape par étape (confirmation pour chaque requête)"
+msgstr "  -s              active le mode étape par étape (confirmation pour chaque requête)"
 
 #: help.c:107
 msgid "  -S              single-line mode (end of line terminates SQL command)"
-msgstr "  -S              mode ligne par ligne (EOL termine la commande SQL)"
+msgstr "  -S              active le mode ligne par ligne (EOL termine la commande SQL)"
 
 #: help.c:108
 msgid "  -L FILENAME     send session log to file"
-msgstr "  -L NOMFICHIER   envoit les traces dans le fichier"
+msgstr "  -L NOMFICHIER   envoie les traces dans le fichier"
 
 #: help.c:110
 msgid ""
@@ -567,37 +567,37 @@ msgstr ""
 
 #: help.c:111
 msgid "  -A              unaligned table output mode (-P format=unaligned)"
-msgstr "  -A              mode d'affichage non aligné des tables (-P format=unaligned)"
+msgstr "  -A              active le mode d'affichage non aligné des tables (-P format=unaligned)"
 
 #: help.c:112
 msgid "  -H              HTML table output mode (-P format=html)"
-msgstr "  -H              mode d'affichage HTML des tables (-P format=html)"
+msgstr "  -H              active le mode d'affichage HTML des tables (-P format=html)"
 
 #: help.c:113
 msgid "  -t              print rows only (-P tuples_only)"
-msgstr "  -t              afficher seulement les lignes (-P tuples_only)"
+msgstr "  -t              affiche seulement les lignes (-P tuples_only)"
 
 #: help.c:114
 msgid "  -T TEXT         set HTML table tag attributes (width, border) (-P tableattr=)"
-msgstr "  -T TEXT         initialiser les attributs des balises HTML de table (largeur, bordure) (-P tableattr=)"
+msgstr "  -T TEXT         initialise les attributs des balises HTML de table (largeur, bordure) (-P tableattr=)"
 
 #: help.c:115
 msgid "  -x              turn on expanded table output (-P expanded)"
-msgstr "  -x              activer l'affichage étendu des tables (-P expanded)"
+msgstr "  -x              active l'affichage étendu des tables (-P expanded)"
 
 #: help.c:116
 msgid "  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"
-msgstr "  -P VAR[=ARG]    initialiser l'option d'impression VAR avec ARG (voir la commande \\pset)"
+msgstr "  -P VAR[=ARG]    initialise l'option d'impression VAR avec ARG (voir la commande \\pset)"
 
 #: help.c:117
 #, c-format
 msgid "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
-msgstr "  -F CHAINE       initialiser le séparateur de champs (par défaut: «%s») (-P fieldsep=)\n"
+msgstr "  -F CHAINE       initialise le séparateur de champs (par défaut: « %s ») (-P fieldsep=)\n"
 
 #: help.c:119
 msgid "  -R STRING       set record separator (default: newline) (-P recordsep=)"
 msgstr ""
-"  -R CHAINE       initialiser le séparateur d'enregistrements (par défaut: saut\n"
+"  -R CHAINE       initialise le séparateur d'enregistrements (par défaut: saut\n"
 "                  de ligne) (-P recordsep=)"
 
 #: help.c:121
@@ -612,7 +612,7 @@ msgstr ""
 #, c-format
 msgid "  -h HOSTNAME     database server host or socket directory (default: \"%s\")\n"
 msgstr ""
-"  -h HOTE         le nom d'hôte du serveur de la base de données ou le\n"
+"  -h HOTE         nom d'hôte du serveur de la base de données ou\n"
 "                  répertoire de la socket (par défaut: %s)\n"
 
 #: help.c:125
@@ -622,16 +622,16 @@ msgstr "socket local"
 #: help.c:128
 #, c-format
 msgid "  -p PORT         database server port (default: \"%s\")\n"
-msgstr "  -p PORT         port du serveur de la base de données (par défaut: «%s»)\n"
+msgstr "  -p PORT         port du serveur de la base de données (par défaut: « %s »)\n"
 
 #: help.c:134
 #, c-format
 msgid "  -U NAME         database user name (default: \"%s\")\n"
-msgstr "  -U NOM          nom d'utilisateur de la base de données (par défaut: «%s»)\n"
+msgstr "  -U NOM          nom d'utilisateur de la base de données (par défaut: « %s »)\n"
 
 #: help.c:135
 msgid "  -W              prompt for password (should happen automatically)"
-msgstr "  -W              demander le mot de passe (devrait survenir automatiquement)"
+msgstr "  -W              active la demande du mot de passe (devrait survenir automatiquement)"
 
 #: help.c:138
 msgid ""
@@ -643,8 +643,8 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
 "\n"
-"Pour en savoir davantage, tapez «\\?» (pour des commandes internes) ou\n"
-"«\\help» (pour des commandes SQL) une fois dans psql, ou consultez la\n"
+"Pour en savoir davantage, tapez « \\? » (pour des commandes internes) ou\n"
+"« \\help » (pour des commandes SQL) une fois dans psql, ou consultez la\n"
 "section de psql dans la documentation de PostgreSQL.\n"
 "\n"
 "Rapporter les bogues à <pgsql-bugs@postgresql.org>."
@@ -661,7 +661,7 @@ msgid ""
 "                 connect to new database (currently \"%s\")\n"
 msgstr ""
 "  \\c[onnect] [NOM_BASE|- UTILISATEUR|- HOTE|- PORT|-]\n"
-"                   se connecter à une autre base de données (actuellement «%s»)\n"
+"                   se connecter à une autre base de données (actuellement « %s »)\n"
 
 #: help.c:176
 #, c-format
@@ -811,7 +811,7 @@ msgstr "  \\da [MODELE]    afficher la liste des fonctions d'aggrégation\n"
 #: help.c:214
 #, c-format
 msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
-msgstr "  \\db [MODELE]    affiche la liste des espaces logiques (ajoutez «+» pour plus de détails)\n"
+msgstr "  \\db [MODELE]    affiche la liste des espaces logiques (ajoutez « + » pour plus de détails)\n"
 
 #: help.c:215
 #, c-format
@@ -836,7 +836,7 @@ msgstr "  \\dD [MODELE]    afficher la liste des domaines\n"
 #: help.c:219
 #, c-format
 msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
-msgstr "  \\df [MODELE]    afficher la liste des fonctions (ajoutez «+» pour plus de détails)\n"
+msgstr "  \\df [MODELE]    afficher la liste des fonctions (ajoutez « + » pour plus de détails)\n"
 
 #: help.c:220
 #, c-format
@@ -846,7 +846,7 @@ msgstr "  \\dg [MODELE]    afficher la liste des groupes\n"
 #: help.c:221
 #, c-format
 msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
-msgstr "  \\dn [MODELE]    afficher la liste des schémas (ajoutez «+» pour plus de détails)\n"
+msgstr "  \\dn [MODELE]    afficher la liste des schémas (ajoutez « + » pour plus de détails)\n"
 
 #: help.c:222
 #, c-format
@@ -867,7 +867,7 @@ msgstr "  \\dp [MODÈLE]    affiche la liste des privilèges d'accès aux tables, v
 #, c-format
 msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
 msgstr ""
-"  \\dT [MODELE]    afficher la liste des types de données (ajoutez «+» \n"
+"  \\dT [MODELE]    afficher la liste des types de données (ajoutez « + » \n"
 "                   pour plus de détails)\n"
 
 #: help.c:226
@@ -878,7 +878,7 @@ msgstr "  \\du [MODELE]    afficher la liste des utilisateurs\n"
 #: help.c:227
 #, c-format
 msgid "  \\l             list all databases (add \"+\" for more detail)\n"
-msgstr "  \\l              afficher toutes les bases de données (ajoutez «+» pour plus de détails)\n"
+msgstr "  \\l              afficher toutes les bases de données (ajoutez « + » pour plus de détails)\n"
 
 #: help.c:228
 #, c-format
@@ -990,7 +990,7 @@ msgid ""
 "No help available for \"%-.*s\".\n"
 "Try \\h with no arguments to see available help.\n"
 msgstr ""
-"Aucun aide-mémoire disponible pour «%-.*s».\n"
+"Aucun aide-mémoire disponible pour « %-.*s ».\n"
 "Tapez \\h sans arguments pour afficher l'aide-mémoire disponible.\n"
 
 #: input.c:333
@@ -1039,7 +1039,7 @@ msgstr "Gros objets"
 #: mainloop.c:150
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
-msgstr "Tapez «\\q» pour quitter %s.\n"
+msgstr "Tapez « \\q » pour quitter %s.\n"
 
 #: print.c:773
 #, c-format
@@ -1079,7 +1079,7 @@ msgstr "Mot de passe pour l'utilisateur %s : "
 #: startup.c:252
 #, c-format
 msgid "%s: could not open log file \"%s\": %s\n"
-msgstr "%s : n'a pas pu ouvrir le journal des traces «%s» : %s\n"
+msgstr "%s : n'a pas pu ouvrir le journal des traces « %s » : %s\n"
 
 #: startup.c:333
 #, c-format
@@ -1131,28 +1131,28 @@ msgstr ""
 #: startup.c:530
 #, c-format
 msgid "%s: could not set printing parameter \"%s\"\n"
-msgstr "%s : n'a pas pu configurer le paramètre d'impression «%s»\n"
+msgstr "%s : n'a pas pu configurer le paramètre d'impression « %s »\n"
 
 #: startup.c:576
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
-msgstr "%s : impossible d'effacer la variable «%s»\n"
+msgstr "%s : impossible d'effacer la variable « %s »\n"
 
 #: startup.c:586
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
-msgstr "%s : impossible d'initialiser la variable «%s»\n"
+msgstr "%s : impossible d'initialiser la variable « %s »\n"
 
 #: startup.c:620
 #: startup.c:626
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez l'option «%s --help» pour plus d'informations.\n"
+msgstr "Essayez l'option « %s --help » pour plus d'informations.\n"
 
 #: startup.c:643
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
-msgstr "%s : Attention: option supplémentaire «%s» ignorée\n"
+msgstr "%s : Attention: option supplémentaire « %s » ignorée\n"
 
 #: startup.c:650
 #, c-format
@@ -1182,7 +1182,7 @@ msgid ""
 msgstr ""
 "Attention : la page de code console (%u) diffère de la page de code Windows (%u)\n"
 "         les caractères 8 bits pourraient ne pas fonctionner correctement. Voir la page\n"
-"         référence de psql «Notes pour les utilisateurs Windows» pour les détails.\n"
+"         référence de psql « Notes pour les utilisateurs Windows » pour les détails.\n"
 "\n"
 
 #: describe.c:79
@@ -1332,7 +1332,7 @@ msgstr "Type"
 #: describe.c:467
 #, c-format
 msgid "Access privileges for database \"%s\""
-msgstr "Privilèges d'accès de la base de données «%s»"
+msgstr "Privilèges d'accès de la base de données « %s »"
 
 #: describe.c:499
 msgid "Object"
@@ -1374,12 +1374,12 @@ msgstr "Descriptions des objets"
 #: describe.c:673
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
-msgstr "Aucune relation nommée «%s» n'a été trouvée.\n"
+msgstr "Aucune relation nommée « %s » n'a été trouvée.\n"
 
 #: describe.c:768
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
-msgstr "Aucune relation avec l'OID «%s» n'a été trouvée.\n"
+msgstr "Aucune relation avec l'OID « %s » n'a été trouvée.\n"
 
 #: describe.c:784
 msgid "Column"
@@ -1392,42 +1392,42 @@ msgstr "Modificateurs"
 #: describe.c:900
 #, c-format
 msgid "Table \"%s.%s\""
-msgstr "Table «%s.%s»"
+msgstr "Table « %s.%s »"
 
 #: describe.c:904
 #, c-format
 msgid "View \"%s.%s\""
-msgstr "Vue «%s.%s»"
+msgstr "Vue « %s.%s »"
 
 #: describe.c:908
 #, c-format
 msgid "Sequence \"%s.%s\""
-msgstr "Séquence «%s.%s»"
+msgstr "Séquence « %s.%s »"
 
 #: describe.c:912
 #, c-format
 msgid "Index \"%s.%s\""
-msgstr "Index «%s.%s»"
+msgstr "Index « %s.%s »"
 
 #: describe.c:917
 #, c-format
 msgid "Special relation \"%s.%s\""
-msgstr "Relation spéciale «%s.%s»"
+msgstr "Relation spéciale « %s.%s »"
 
 #: describe.c:921
 #, c-format
 msgid "TOAST table \"%s.%s\""
-msgstr "Table TOAST «%s.%s»"
+msgstr "Table TOAST « %s.%s »"
 
 #: describe.c:925
 #, c-format
 msgid "Composite type \"%s.%s\""
-msgstr "Type composé «%s.%s»"
+msgstr "Type composé « %s.%s »"
 
 #: describe.c:929
 #, c-format
 msgid "?%c? \"%s.%s\""
-msgstr "?%c? «%s.%s»"
+msgstr "?%c? « %s.%s »"
 
 #: describe.c:968
 msgid "primary key, "
@@ -1440,7 +1440,7 @@ msgstr "unique, "
 #: describe.c:976
 #, c-format
 msgid "for table \"%s.%s\""
-msgstr "pour la table «%s.%s»"
+msgstr "pour la table « %s.%s »"
 
 #: describe.c:980
 #, c-format
@@ -1476,7 +1476,7 @@ msgstr "Index :"
 #: describe.c:1193
 #, c-format
 msgid "    \"%s\""
-msgstr "    «%s»"
+msgstr "    « %s »"
 
 #: describe.c:1240
 msgid "Check constraints:"
@@ -1486,7 +1486,7 @@ msgstr "Contraintes :"
 #: describe.c:1259
 #, c-format
 msgid "    \"%s\" %s"
-msgstr "    «%s» %s"
+msgstr "    « %s » %s"
 
 #: describe.c:1255
 msgid "Foreign-key constraints:"
@@ -1525,12 +1525,12 @@ msgstr "non"
 #: describe.c:1413
 #, c-format
 msgid "Tablespace: \"%s\""
-msgstr "Espace logique «%s»"
+msgstr "Tablespace « %s »"
 
 #: describe.c:1413
 #, c-format
 msgid "tablespace \"%s\""
-msgstr "espace logique «%s»"
+msgstr "tablespace «%s»"
 
 #: describe.c:1450
 msgid "Role name"
@@ -2323,14 +2323,20 @@ msgstr "définir une nouvelle contrainte de déclenchement"
 #: sql_help.h:146
 msgid ""
 "CREATE CONSTRAINT TRIGGER name\n"
-"    AFTER events ON\n"
-"    tablename constraint attributes\n"
-"    FOR EACH ROW EXECUTE PROCEDURE funcname ( args )"
+"    AFTER event [ OR ... ]\n"
+"    ON table_name\n"
+"    [ FROM referenced_table_name ]\n"
+"    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }\n"
+"    FOR EACH ROW\n"
+"    EXECUTE PROCEDURE funcname ( arguments )"
 msgstr ""
 "CREATE CONSTRAINT TRIGGER nom\n"
-"    AFTER événements ON\n"
-"    nom_table attributs_contrainte\n"
-"    FOR EACH ROW EXECUTE PROCEDURE nom_fontion ( args )"
+"    AFTER événement [ OR ... ]\n"
+"    ON table\n"
+"    [ FROM table_référencée ]\n"
+"    { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }\n"
+"    FOR EACH ROW\n"
+"    EXECUTE PROCEDURE nom_fonction ( arguments )"
 
 #: sql_help.h:149
 msgid "define a new encoding conversion"
@@ -3657,11 +3663,11 @@ msgstr "collecte des fragments avec en option la possibilité d'analyser une base
 
 #: sql_help.h:466
 msgid ""
-"VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ table ]\n"
-"VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
 msgstr ""
-"VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ table ]\n"
-"VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ table [ (colonne [, ...] ) ] ]"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
+"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (colonne [, ...] ) ] ]"
 
 #: sql_help.h:469
 msgid "compute a set of rows"
@@ -3689,28 +3695,28 @@ msgstr "n'a pas pu identifier le répertoire courant : %s"
 #: ../../port/exec.c:210
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "binaire invalide «%s»"
+msgstr "binaire invalide « %s »"
 
 #: ../../port/exec.c:259
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "n'a pas pu lire le binaire «%s»"
+msgstr "n'a pas pu lire le binaire « %s »"
 
 #: ../../port/exec.c:266
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "n'a pas pu trouver un «%s» pour exécuter"
+msgstr "n'a pas pu trouver un « %s » pour exécuter"
 
 #: ../../port/exec.c:321
 #: ../../port/exec.c:357
 #, c-format
 msgid "could not change directory to \"%s\""
-msgstr "n'a pas pu accéder au répertoire «%s»"
+msgstr "n'a pas pu accéder au répertoire « %s »"
 
 #: ../../port/exec.c:336
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "n'a pas pu lire le lien symbolique «%s»"
+msgstr "n'a pas pu lire le lien symbolique « %s »"
 
 #: ../../port/exec.c:582
 #, c-format
@@ -3727,6 +3733,16 @@ msgstr "le processus fils a été terminé par le signal %d"
 msgid "child process exited with unrecognized status %d"
 msgstr "le processus fils a quitté avec le statut %d non reconnu"
 
+#~ msgid ""
+#~ "CREATE CONSTRAINT TRIGGER name\n"
+#~ "    AFTER events ON\n"
+#~ "    tablename constraint attributes\n"
+#~ "    FOR EACH ROW EXECUTE PROCEDURE funcname ( args )"
+#~ msgstr ""
+#~ "CREATE CONSTRAINT TRIGGER nom\n"
+#~ "    AFTER événements ON\n"
+#~ "    nom_table attributs_contrainte\n"
+#~ "    FOR EACH ROW EXECUTE PROCEDURE nom_fontion ( args )"
 #~ msgid "You are now connected as new user \"%s\".\n"
 #~ msgstr "Vous êtes maintenant connecté en tant qu'utilisateur «%s».\n"
 #~ msgid "You are now connected to database \"%s\" as user \"%s\".\n"

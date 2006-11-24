@@ -11,7 +11,7 @@ msgstr ""
 "Project-Id-Version: pg_ctl-fr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-10-16 01:15-0300\n"
-"PO-Revision-Date: 2006-10-16 22:21+0100\n"
+"PO-Revision-Date: 2006-11-04 17:03+0100\n"
 "Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
 "Language-Team:  <pgsql-fr-general@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -24,17 +24,17 @@ msgstr ""
 #: pg_ctl.c:1620
 #, c-format
 msgid "%s: out of memory\n"
-msgstr "%s : mémoire épuisée\n"
+msgstr "%s : mémoire insuffisante\n"
 
 #: pg_ctl.c:259
 #, c-format
 msgid "%s: could not open PID file \"%s\": %s\n"
-msgstr "%s : impossible d'ouvrir le fichier PID «%s» : %s\n"
+msgstr "%s : impossible d'ouvrir le fichier PID « %s » : %s\n"
 
 #: pg_ctl.c:266
 #, c-format
 msgid "%s: invalid data in PID file \"%s\"\n"
-msgstr "%s: données invalides dans le fichier PID «%s»\n"
+msgstr "%s: données invalides dans le fichier PID « %s »\n"
 
 #: pg_ctl.c:494
 #, c-format
@@ -44,12 +44,12 @@ msgstr "%s : un autre serveur pourrait être en cours d'exécution ; néanmoins, je
 #: pg_ctl.c:512
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
-msgstr "%s : impossible de lire le fichier «%s»\n"
+msgstr "%s : impossible de lire le fichier « %s »\n"
 
 #: pg_ctl.c:518
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
-msgstr "%s : le fichier d'option «%s» doit avoir exactement une ligne\n"
+msgstr "%s : le fichier d'options « %s » doit avoir une seule ligne\n"
 
 #: pg_ctl.c:569
 #, c-format
@@ -84,7 +84,7 @@ msgid ""
 "%s: could not start server\n"
 "Examine the log output.\n"
 msgstr ""
-"%s : impossible de lancer le serveur\n"
+"%s : impossible d'exécuter le serveur\n"
 "Examinez le journal des traces.\n"
 
 #: pg_ctl.c:607
@@ -94,7 +94,7 @@ msgstr "en attente du lancement du serveur..."
 #: pg_ctl.c:611
 #, c-format
 msgid "could not start server\n"
-msgstr "impossible d'exécuter le serveur\n"
+msgstr "n'a pas pu exécuter le serveur\n"
 
 #: pg_ctl.c:616
 #: pg_ctl.c:682
@@ -115,7 +115,7 @@ msgstr "serveur en cours de démarrage\n"
 #: pg_ctl.c:777
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
-msgstr "%s : le fichier PID «%s» n'existe pas\n"
+msgstr "%s : le fichier PID « %s » n'existe pas\n"
 
 #: pg_ctl.c:636
 #: pg_ctl.c:705
@@ -233,37 +233,37 @@ msgstr "%s : impossible d'ouvrir le gestionnaire de services\n"
 #: pg_ctl.c:979
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
-msgstr "%s : le service «%s» est déjà enregistré\n"
+msgstr "%s : le service « %s » est déjà enregistré\n"
 
 #: pg_ctl.c:990
 #, c-format
 msgid "%s: could not register service \"%s\": error code %d\n"
-msgstr "%s : impossible d'enregistrer le service «%s» : code d'erreur %d\n"
+msgstr "%s : impossible d'enregistrer le service « %s » : code d'erreur %d\n"
 
 #: pg_ctl.c:1011
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
-msgstr "%s : le service «%s» n'est pas enregistré\n"
+msgstr "%s : le service « %s » n'est pas enregistré\n"
 
 #: pg_ctl.c:1018
 #, c-format
 msgid "%s: could not open service \"%s\": error code %d\n"
-msgstr "%s : impossible d'ouvrir le service «%s» : code d'erreur %d\n"
+msgstr "%s : impossible d'ouvrir le service « %s » : code d'erreur %d\n"
 
 #: pg_ctl.c:1025
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %d\n"
-msgstr "%s : impossible de supprimer le service «%s» : code d'erreur %d\n"
+msgstr "%s : impossible de supprimer le service « %s » : code d'erreur %d\n"
 
 #: pg_ctl.c:1154
 #, c-format
 msgid "%s: could not start service \"%s\": error code %d\n"
-msgstr "%s : impossible de démarrer le service «%s» : code d'erreur %d\n"
+msgstr "%s : impossible de démarrer le service « %s » : code d'erreur %d\n"
 
 #: pg_ctl.c:1366
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez «%s --help» pour plus d'informations.\n"
+msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
 #: pg_ctl.c:1374
 #, c-format
@@ -273,8 +273,7 @@ msgid ""
 "\n"
 msgstr ""
 "%s est un outil pour lancer, arrêter, relancer, recharger les fichiers de configuration,\n"
-"rapporter le statut d'un serveur PostgreSQL\n"
-"ou de lancer un signal à un processus PostgreSQL\n"
+"indiquer le statut d'un serveur PostgreSQL ou de lancer un signal à un processus PostgreSQL\n"
 "\n"
 
 #: pg_ctl.c:1376
@@ -338,32 +337,32 @@ msgstr ""
 #: pg_ctl.c:1390
 #, c-format
 msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata RÉP_DONNÉES emplacement du stockage de la base de données\n"
+msgstr "  -D, --pgdata RÉP_DONNÉES emplacement du cluster\n"
 
 #: pg_ctl.c:1391
 #, c-format
 msgid "  -s, --silent           only print errors, no informational messages\n"
-msgstr "  -s, --silent           affiche seulement les erreurs, aucun message d'informations\n"
+msgstr "  -s, --silent             affiche seulement les erreurs, aucun message d'informations\n"
 
 #: pg_ctl.c:1392
 #, c-format
 msgid "  -w                     wait until operation completes\n"
-msgstr "  -w                     attend la fin de l'opération\n"
+msgstr "  -w                       attend la fin de l'opération\n"
 
 #: pg_ctl.c:1393
 #, c-format
 msgid "  -W                     do not wait until operation completes\n"
-msgstr "  -W                     n'attend pas la fin de l'opération\n"
+msgstr "  -W                       n'attend pas la fin de l'opération\n"
 
 #: pg_ctl.c:1394
 #, c-format
 msgid "  --help                 show this help, then exit\n"
-msgstr "  --help                 affiche cette aide puis quitte\n"
+msgstr "  --help                   affiche cette aide puis quitte\n"
 
 #: pg_ctl.c:1395
 #, c-format
 msgid "  --version              output version information, then exit\n"
-msgstr "  --version              affiche la version puis quitte\n"
+msgstr "  --version                affiche la version puis quitte\n"
 
 #: pg_ctl.c:1396
 #, c-format
@@ -391,7 +390,7 @@ msgstr ""
 #: pg_ctl.c:1400
 #, c-format
 msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
-msgstr "  -l, --log NOMFICHIER   écrit (ou ajoute) le journal de traces du serveur dans NOMFICHIER.\n"
+msgstr "  -l, --log NOM_FICHIER    écrit (ou ajoute) le journal des traces du serveur dans NOM_FICHIER.\n"
 
 #: pg_ctl.c:1401
 #, c-format
@@ -399,13 +398,13 @@ msgid ""
 "  -o OPTIONS             command line options to pass to postgres\n"
 "                         (PostgreSQL server executable)\n"
 msgstr ""
-"  -o OPTIONS             options en ligne de commande à passer à postgres\n"
-"                         (exécutable du serveur PostgreSQL)\n"
+"  -o OPTIONS               options en ligne de commande à passer à postgres\n"
+"                           (exécutable du serveur PostgreSQL)\n"
 
 #: pg_ctl.c:1403
 #, c-format
 msgid "  -p PATH-TO-POSTGRES    normally not necessary\n"
-msgstr "  -p CHEMIN-POSTGRES     normalement pas nécessaire\n"
+msgstr "  -p CHEMIN_POSTGRES       normalement pas nécessaire\n"
 
 #: pg_ctl.c:1405
 #, c-format
@@ -419,7 +418,7 @@ msgstr ""
 #: pg_ctl.c:1406
 #, c-format
 msgid "  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr "  -m MODE_ARRET      soit «smart», soit «fast», soit «immediate»\n"
+msgstr "  -m MODE_ARRET            soit « smart », soit « fast », soit « immediate »\n"
 
 #: pg_ctl.c:1408
 #, c-format
@@ -433,17 +432,17 @@ msgstr ""
 #: pg_ctl.c:1409
 #, c-format
 msgid "  smart       quit after all clients have disconnected\n"
-msgstr "  smart       quitte après que tous les clients se soient déconnectés\n"
+msgstr "  smart                    quitte après que tous les clients se soient déconnectés\n"
 
 #: pg_ctl.c:1410
 #, c-format
 msgid "  fast        quit directly, with proper shutdown\n"
-msgstr "  fast        quitte directement, mais proprement\n"
+msgstr "  fast                     quitte directement, mais proprement\n"
 
 #: pg_ctl.c:1411
 #, c-format
 msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
-msgstr "  immediate   quitte sans un arrêt complet ; amènera une restauration au prochain lancement\n"
+msgstr "  immediate                quitte sans un arrêt complet ; amènera une restauration au prochain lancement\n"
 
 #: pg_ctl.c:1413
 #, c-format
@@ -490,12 +489,12 @@ msgstr ""
 #: pg_ctl.c:1448
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
-msgstr "%s : mode d'arrêt non reconnu «%s»\n"
+msgstr "%s : mode d'arrêt non reconnu « %s »\n"
 
 #: pg_ctl.c:1481
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
-msgstr "%s : signal non reconnu «%s»\n"
+msgstr "%s : signal non reconnu « %s »\n"
 
 #: pg_ctl.c:1544
 #, c-format
@@ -504,14 +503,14 @@ msgid ""
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
 msgstr ""
-"%s : ne peut être lancé en tant que root\n"
-"Merci de vous connecter (avec l'aide de «su») comme utilisateur (non privilégié)\n"
+"%s : n'a pas pu être exécuté en tant que root\n"
+"Merci de vous connecter (avec l'aide de « su ») comme utilisateur (non privilégié)\n"
 "qui sera le propriétaire du processus serveur.\n"
 
 #: pg_ctl.c:1647
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s : trop d'arguments en ligne de commande (le premier est «%s»)\n"
+msgstr "%s : trop d'arguments en ligne de commande (le premier est « %s »)\n"
 
 #: pg_ctl.c:1666
 #, c-format
@@ -521,7 +520,7 @@ msgstr "%s : arguments manquants pour le mode kill\n"
 #: pg_ctl.c:1684
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
-msgstr "%s : mode d'opération non reconnu «%s»\n"
+msgstr "%s : mode d'opération « %s » non reconnu\n"
 
 #: pg_ctl.c:1694
 #, c-format
@@ -543,28 +542,28 @@ msgstr "n'a pas pu identifier le répertoire courant : %s"
 #: ../../port/exec.c:210
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "binaire invalide «%s»"
+msgstr "binaire invalide « %s »"
 
 #: ../../port/exec.c:259
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "n'a pas pu lire le binaire «%s»"
+msgstr "n'a pas pu lire le binaire « %s »"
 
 #: ../../port/exec.c:266
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "impossible de trouver un «%s» pour exécuter"
+msgstr "n'a pas pu trouver un « %s » pour exécuter"
 
 #: ../../port/exec.c:321
 #: ../../port/exec.c:357
 #, c-format
 msgid "could not change directory to \"%s\""
-msgstr "n'a pas pu accéder au répertoire «%s»"
+msgstr "n'a pas pu accéder au répertoire « %s »"
 
 #: ../../port/exec.c:336
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "n'a pas pu lire le lien symbolique «%s»"
+msgstr "n'a pas pu lire le lien symbolique « %s »"
 
 #: ../../port/exec.c:582
 #, c-format

@@ -1,16 +1,16 @@
 # German message translation file for pg_config
-# Peter Eisentraut <peter_e@gmx.net>, 2004 - 2006.
+# Peter Eisentraut <peter_e@gmx.net>, 2004, 2005.
 #
-# pgtranslation Id: pg_config.po,v 1.3 2006/10/21 11:48:36 petere Exp $
+# pgtranslation Id: pg_config.po,v 1.4 2006/10/27 13:07:50 petere Exp $
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 8.2\n"
+"Project-Id-Version: PostgreSQL 8.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-21 01:16-0300\n"
-"PO-Revision-Date: 2006-10-21 11:43+0200\n"
+"POT-Creation-Date: 2006-10-20 01:37-0300\n"
+"PO-Revision-Date: 2006-10-27 14:54+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: Peter Eisentraut <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -63,8 +63,7 @@ msgstr ""
 #: pg_config.c:403
 #, c-format
 msgid "  --docdir              show location of documentation files\n"
-msgstr ""
-"  --bindir              zeige Installationsverzeichnis der Dokumentation\n"
+msgstr "  --docdir              zeige Installationsverzeichnis der Dokumentation\n"
 
 #: pg_config.c:404
 #, c-format
@@ -79,9 +78,7 @@ msgstr ""
 #: pg_config.c:406
 #, c-format
 msgid "  --pkgincludedir       show location of other C header files\n"
-msgstr ""
-"  --includedir-server   zeige Installationsverzeichnis von weiteren "
-"Headerdateien\n"
+msgstr "  --pkgincludedir       zeige Installationsverzeichnis von weiteren Headerdateien\n"
 
 #: pg_config.c:407
 #, c-format
@@ -109,13 +106,12 @@ msgstr ""
 #: pg_config.c:410
 #, c-format
 msgid "  --localedir           show location of locale support files\n"
-msgstr ""
-"  --libdir              zeige Installationsverzeichnis der Locale-Dateien\n"
+msgstr "  --localedir           zeige Installationsverzeichnis der Locale-Dateien\n"
 
 #: pg_config.c:411
 #, c-format
 msgid "  --mandir              show location of manual pages\n"
-msgstr "  --bindir              zeige Installationsverzeichnis der Manpages\n"
+msgstr "  --mandir              zeige Installationsverzeichnis der Manpages\n"
 
 #: pg_config.c:412
 #, c-format
@@ -123,7 +119,7 @@ msgid ""
 "  --sharedir            show location of architecture-independent support "
 "files\n"
 msgstr ""
-"  --bindir              zeige Installationsverzeichnis der architektur-\n"
+"  --sharedir            zeige Installationsverzeichnis der architektur-\n"
 "                        unabhängigen Datendateien\n"
 
 #: pg_config.c:413
@@ -131,7 +127,7 @@ msgstr ""
 msgid ""
 "  --sysconfdir          show location of system-wide configuration files\n"
 msgstr ""
-"  --bindir              zeige Installationsverzeichnis der systemweiten\n"
+"  --sysconfdir          zeige Installationsverzeichnis der systemweiten\n"
 "                        Konfigurationsdateien\n"
 
 #: pg_config.c:414
@@ -241,47 +237,47 @@ msgstr "%s: konnte eigene Programmdatei nicht finden\n"
 msgid "%s: invalid argument: %s\n"
 msgstr "%s: ungültiges Argument: %s\n"
 
-#: ../../port/exec.c:191 ../../port/exec.c:305 ../../port/exec.c:348
+#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "konnte aktuelles Verzeichnis nicht ermitteln: %s"
 
-#: ../../port/exec.c:210
+#: ../../port/exec.c:212
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "ungültige Programmdatei »%s«"
 
-#: ../../port/exec.c:259
+#: ../../port/exec.c:261
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "konnte Programmdatei »%s« nicht lesen"
 
-#: ../../port/exec.c:266
+#: ../../port/exec.c:268
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "konnte kein »%s« zum Ausführen finden"
 
-#: ../../port/exec.c:321 ../../port/exec.c:357
+#: ../../port/exec.c:323 ../../port/exec.c:359
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "konnte nicht in Verzeichnis »%s« wechseln"
 
-#: ../../port/exec.c:336
+#: ../../port/exec.c:338
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "konnte symbolischen Link »%s« nicht lesen"
 
-#: ../../port/exec.c:582
+#: ../../port/exec.c:584
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "Kindprozess hat mit Code %d beendet"
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "Kindprozess wurde von Signal %d beendet"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"

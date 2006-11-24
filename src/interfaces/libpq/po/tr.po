@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: libpq-tr\n"
 "POT-Creation-Date: 2005-04-02 07:16+0100\n"
-"PO-Revision-Date: 2006-10-05 22:20+0200\n"
+"PO-Revision-Date: 2006-11-08 20:54+0200\n"
 "Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -38,12 +38,12 @@ msgstr "SCM_CRED yetkilendirme yöntemi desteklenmiyor.\n"
 #: fe-auth.c:398
 #: fe-connect.c:1276
 #: fe-connect.c:2418
-#: fe-connect.c:2637
-#: fe-connect.c:2967
-#: fe-connect.c:2976
-#: fe-connect.c:3113
-#: fe-connect.c:3153
-#: fe-connect.c:3171
+#: fe-connect.c:2635
+#: fe-connect.c:2965
+#: fe-connect.c:2974
+#: fe-connect.c:3111
+#: fe-connect.c:3151
+#: fe-connect.c:3169
 #: fe-exec.c:2751
 #: fe-lobj.c:616
 #: fe-protocol2.c:1027
@@ -177,103 +177,103 @@ msgstr "%c - geçersiz bağlantı durumu, bellek zarar görmüş olabilir\n"
 
 #: fe-connect.c:2431
 #, c-format
-msgid "bad LDAP URL \"%s\": scheme must be ldap://\n"
-msgstr "geçersiz LDAP URL \"%s\": şema, ldap olmalı://\n"
+msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
+msgstr "geçersiz LDAP URL \"%s\": şema, ldap:// ile başlamalıdir\n"
 
 #: fe-connect.c:2446
 #, c-format
-msgid "bad LDAP URL \"%s\": missing distinguished name\n"
+msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
 msgstr "geçersiz LDAP URL \"%s\": distinguished name eksik\n"
 
 #: fe-connect.c:2457
-#: fe-connect.c:2511
+#: fe-connect.c:2510
 #, c-format
-msgid "bad LDAP URL \"%s\": must have exactly one attribute\n"
-msgstr "geçersiz LDAP URL \"%s\": sadece bir attribute olmalı\n"
+msgid "invalid LDAP URL \"%s\": must have exactly one attribute\n"
+msgstr "geçersiz LDAP URL \"%s\": tam bir attribute içermelidir\n"
 
-#: fe-connect.c:2468
-#: fe-connect.c:2526
+#: fe-connect.c:2467
+#: fe-connect.c:2524
 #, c-format
-msgid "bad LDAP URL \"%s\": must have search scope (base/one/sub)\n"
+msgid "invalid LDAP URL \"%s\": must have search scope (base/one/sub)\n"
 msgstr "geçersiz LDAP URL \"%s\": arama kapsamı içermelidir (base/one/sub)\n"
 
-#: fe-connect.c:2479
+#: fe-connect.c:2478
 #, c-format
-msgid "bad LDAP URL \"%s\": no filter\n"
+msgid "invalid LDAP URL \"%s\": no filter\n"
 msgstr "geçersiz LDAP URL \"%s\": filtere eksik\n"
 
-#: fe-connect.c:2500
+#: fe-connect.c:2499
 #, c-format
-msgid "bad LDAP URL \"%s\": invalid port number\n"
+msgid "invalid LDAP URL \"%s\": invalid port number\n"
 msgstr "geçersiz LDAP URL \"%s\": geçersiz port numarası\n"
 
-#: fe-connect.c:2535
-msgid "error creating LDAP structure\n"
-msgstr "LDAP yapısını oluşturma hatası\n"
+#: fe-connect.c:2533
+msgid "could not create LDAP structure\n"
+msgstr "LDAP yapısı oluşturma hatası\n"
 
-#: fe-connect.c:2577
+#: fe-connect.c:2575
 #, c-format
 msgid "lookup on LDAP server failed: %s\n"
 msgstr "LDAP sonucunda sorgulama hatası: %s\n"
 
-#: fe-connect.c:2588
+#: fe-connect.c:2586
 msgid "more than one entry found on LDAP lookup\n"
 msgstr "LDAP sorgusu sonucunda birden fazla giriş bulundu\n"
 
-#: fe-connect.c:2589
-#: fe-connect.c:2601
+#: fe-connect.c:2587
+#: fe-connect.c:2599
 msgid "no entry found on LDAP lookup\n"
 msgstr "LDAP sorgusu sonucunda hiçbir giriş bulunamadı\n"
 
-#: fe-connect.c:2612
-#: fe-connect.c:2625
+#: fe-connect.c:2610
+#: fe-connect.c:2623
 msgid "attribute has no values on LDAP lookup\n"
 msgstr "LDAP sorgusu sonucunda bulunan attribute, hiçbir değer içermiyor\n"
 
-#: fe-connect.c:2676
-#: fe-connect.c:2694
-#: fe-connect.c:3015
+#: fe-connect.c:2674
+#: fe-connect.c:2692
+#: fe-connect.c:3013
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "bağlantı bilgi katarında \"%s\" bilgisinden sonra \"=\" işareti eksik\n"
 
-#: fe-connect.c:2757
-#: fe-connect.c:3097
+#: fe-connect.c:2755
+#: fe-connect.c:3095
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "geçersiz bağlantı seçeneği \"%s\"\n"
 
-#: fe-connect.c:2770
-#: fe-connect.c:3064
+#: fe-connect.c:2768
+#: fe-connect.c:3062
 msgid "unterminated quoted string in connection info string\n"
 msgstr "bağlantı bilgi katarında sonlandırılmamış tırnaklı katar\n"
 
-#: fe-connect.c:2813
+#: fe-connect.c:2811
 #, c-format
 msgid "ERROR: service file \"%s\" not found\n"
 msgstr "HATA: \"%s\" servis dosyası bulunamadı\n"
 
-#: fe-connect.c:2826
+#: fe-connect.c:2824
 #, c-format
 msgid "ERROR: line %d too long in service file \"%s\"\n"
 msgstr "HATA: \"%2$s\" servis dosyasında %1$d no'lu satır çok uzun \n"
 
-#: fe-connect.c:2898
-#: fe-connect.c:2925
+#: fe-connect.c:2896
+#: fe-connect.c:2923
 #, c-format
 msgid "ERROR: syntax error in service file \"%s\", line %d\n"
 msgstr "ERROR: \"%s\" servis dosyasında yazım hatası, satır no %d\n"
 
-#: fe-connect.c:3340
+#: fe-connect.c:3338
 msgid "connection pointer is NULL\n"
 msgstr "bağlantı belirteci NULL'dur\n"
 
-#: fe-connect.c:3601
+#: fe-connect.c:3599
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
 msgstr "UYARI: \"%s\" password dosyası düz metin dosyası değildir\n"
 
-#: fe-connect.c:3611
+#: fe-connect.c:3609
 #, c-format
 msgid "WARNING: password file \"%s\" has world or group read access; permission should be u=rw (0600)\n"
 msgstr "UYARI: \"%s\" şifre dosyası herkes ya da grup tarafından erişilebilir durumda; dosyanın izinleri u=rw olmalı (0600)\n"
@@ -714,8 +714,8 @@ msgstr "\"%s\"kök sertifika dosyası okunamadı: %s\n"
 
 #: fe-secure.c:811
 #, c-format
-msgid "Installed SSL library does not support CRL certificates, file \"%s\"\n"
-msgstr "Kurulu SSL kütüphanesi CRL sertifikaları desteklemiyor, dosya \"%s\"\n"
+msgid "SSL library does not support CRL certificates (file \"%s\")\n"
+msgstr "Kurulu SSL kütüphanesi CRL sertifikaları desteklemiyor (dosya adı \"%s\")\n"
 
 #: fe-secure.c:922
 #, c-format
