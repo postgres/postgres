@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.486 2006/11/25 07:03:57 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.487 2006/11/25 22:55:59 petere Exp $ -->
 <!--
 
 Typical markup:
@@ -12078,7 +12078,7 @@ On some platforms, building with -fstrict-aliasing causes bugs.
 </para></listitem>
 <listitem><para>Make pg_restore handle 64-bit off_t correctly</para>
 <para>
-This bug prevented proper restoration from archive files exceeding 4Gb.
+This bug prevented proper restoration from archive files exceeding 4 GB.
 </para></listitem>
 <listitem><para>Make contrib/dblink not assume that local and remote type OIDs
 match (Joe)</para></listitem>
