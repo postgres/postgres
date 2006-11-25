@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.373 2006/09/16 00:30:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.374 2006/11/25 22:44:48 petere Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -680,7 +680,7 @@ psql: could not connect to server: No such file or directory
 options "SHMALL=8192"
 options "SHMMAX=\(SHMALL*PAGE_SIZE\)"
 </programlisting>
-         <varname>SHMALL</> is measured in 4KB pages, so a value of
+         <varname>SHMALL</> is measured in 4 kB pages, so a value of
          1024 represents 4 MB of shared memory. Therefore the above increases
          the maximum shared memory area to 32 MB.
          For those running 4.3 or later, you will probably also need to increase
@@ -921,7 +921,7 @@ kern.sysv.shmall=1024
        </para>
 
        <para>
-        <varname>SHMALL</> is measured in 4KB pages on this platform.
+        <varname>SHMALL</> is measured in 4 kB pages on this platform.
        </para>
 
        <para>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.96 2006/11/21 01:23:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.97 2006/11/25 22:44:48 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -847,7 +847,7 @@ SET ENABLE_SEQSCAN TO OFF;
         margin is needed because the stack depth is not checked in every
         routine in the server, but only in key potentially-recursive routines
         such as expression evaluation.  The default setting is
-        2048 KB (two megabytes), which is conservatively small and unlikely
+        2048 kB (two megabytes), which is conservatively small and unlikely
         to risk crashes.  However, it may be too small to allow execution
         of complex functions.
         Only superusers can change this setting.
