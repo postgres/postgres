@@ -1,10 +1,12 @@
 /*
  *	test_fsync.c
- *		tests if fsync can be done from another process than the original write
+ *		test various fsync() methods
  */
 
-#include "../../include/pg_config.h"
-#include "../../include/pg_config_os.h"
+#include "postgres.h"
+
+#include "access/xlog_internal.h"
+#include "access/xlog.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -14,29 +16,94 @@
 #include <time.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <string.h>
+
+/* ---------------------------------------------------------------
+ *	Copied from xlog.c.  Some day this should be moved an include file.
+ */
+ 
+/*
+ *	Because O_DIRECT bypasses the kernel buffers, and because we never
+ *	read those buffers except during crash recovery, it is a win to use
+ *	it in all cases where we sync on each write().	We could allow O_DIRECT
+ *	with fsync(), but because skipping the kernel buffer forces writes out
+ *	quickly, it seems best just to use it for O_SYNC.  It is hard to imagine
+ *	how fsync() could be a win for O_DIRECT compared to O_SYNC and O_DIRECT.
+ *	Also, O_DIRECT is never enough to force data to the drives, it merely
+ *	tries to bypass the kernel cache, so we still need O_SYNC or fsync().
+ */
+#ifdef O_DIRECT
+#define PG_O_DIRECT				O_DIRECT
+#else
+#define PG_O_DIRECT				0
+#endif
+
+/*
+ * This chunk of hackery attempts to determine which file sync methods
+ * are available on the current platform, and to choose an appropriate
+ * default method.	We assume that fsync() is always available, and that
+ * configure determined whether fdatasync() is.
+ */
+#if defined(O_SYNC)
+#define BARE_OPEN_SYNC_FLAG		O_SYNC
+#elif defined(O_FSYNC)
+#define BARE_OPEN_SYNC_FLAG		O_FSYNC
+#endif
+#ifdef BARE_OPEN_SYNC_FLAG
+#define OPEN_SYNC_FLAG			(BARE_OPEN_SYNC_FLAG | PG_O_DIRECT)
+#endif
+
+#if defined(O_DSYNC)
+#if defined(OPEN_SYNC_FLAG)
+/* O_DSYNC is distinct? */
+#if O_DSYNC != BARE_OPEN_SYNC_FLAG
+#define OPEN_DATASYNC_FLAG		(O_DSYNC | PG_O_DIRECT)
+#endif
+#else							/* !defined(OPEN_SYNC_FLAG) */
+/* Win32 only has O_DSYNC */
+#define OPEN_DATASYNC_FLAG		(O_DSYNC | PG_O_DIRECT)
+#endif
+#endif
+
+#if defined(OPEN_DATASYNC_FLAG)
+#define DEFAULT_SYNC_METHOD_STR "open_datasync"
+#define DEFAULT_SYNC_METHOD		SYNC_METHOD_OPEN
+#define DEFAULT_SYNC_FLAGBIT	OPEN_DATASYNC_FLAG
+#elif defined(HAVE_FDATASYNC)
+#define DEFAULT_SYNC_METHOD_STR "fdatasync"
+#define DEFAULT_SYNC_METHOD		SYNC_METHOD_FDATASYNC
+#define DEFAULT_SYNC_FLAGBIT	0
+#elif defined(HAVE_FSYNC_WRITETHROUGH_ONLY)
+#define DEFAULT_SYNC_METHOD_STR "fsync_writethrough"
+#define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC_WRITETHROUGH
+#define DEFAULT_SYNC_FLAGBIT	0
+#else
+#define DEFAULT_SYNC_METHOD_STR "fsync"
+#define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC
+#define DEFAULT_SYNC_FLAGBIT	0
+#endif
+
+
+/*
+ * Limitation of buffer-alignment for direct IO depends on OS and filesystem,
+ * but XLOG_BLCKSZ is assumed to be enough for it.
+ */
+#ifdef O_DIRECT
+#define ALIGNOF_XLOG_BUFFER		XLOG_BLCKSZ
+#else
+#define ALIGNOF_XLOG_BUFFER		ALIGNOF_BUFFER
+#endif
+
+/* ------------ from xlog.c --------------- */
 
 #ifdef WIN32
 #define FSYNC_FILENAME	"./test_fsync.out"
 #else
+/* /tmp might be a memory file system */
 #define FSYNC_FILENAME	"/var/tmp/test_fsync.out"
 #endif
 
-/* O_SYNC and O_FSYNC are the same */
-#if defined(O_SYNC)
-#define OPEN_SYNC_FLAG		O_SYNC
-#elif defined(O_FSYNC)
-#define OPEN_SYNC_FLAG		O_FSYNC
-#elif defined(O_DSYNC)
-#define OPEN_DATASYNC_FLAG	O_DSYNC
-#endif
-
-#if defined(OPEN_SYNC_FLAG)
-#if defined(O_DSYNC) && (O_DSYNC != OPEN_SYNC_FLAG)
-#define OPEN_DATASYNC_FLAG	O_DSYNC
-#endif
-#endif
-
-#define WAL_FILE_SIZE	(16 * 1024 * 1024)
+#define WRITE_SIZE	(16 * 1024)
 
 void		die(char *str);
 void		print_elapse(struct timeval start_t, struct timeval elapse_t);
@@ -49,7 +116,7 @@ main(int argc, char *argv[])
 	int			tmpfile,
 				i,
 				loops = 1000;
-	char	   *strout = (char *) malloc(WAL_FILE_SIZE);
+	char	   *full_buf = (char *) malloc(XLOG_SEG_SIZE), *buf;
 	char	   *filename = FSYNC_FILENAME;
 
 	if (argc > 2 && strcmp(argv[1], "-f") == 0)
@@ -62,14 +129,19 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		loops = atoi(argv[1]);
 
-	for (i = 0; i < WAL_FILE_SIZE; i++)
-		strout[i] = 'a';
+	for (i = 0; i < XLOG_SEG_SIZE; i++)
+		full_buf[i] = 'a';
 
 	if ((tmpfile = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)) == -1)
 		die("Cannot open output file.");
-	write(tmpfile, strout, WAL_FILE_SIZE);
-	fsync(tmpfile);				/* fsync so later fsync's don't have to do it */
+	if (write(tmpfile, full_buf, XLOG_SEG_SIZE) != XLOG_SEG_SIZE)
+		die("write failed");
+	/* fsync so later fsync's don't have to do it */
+	if (fsync(tmpfile) != 0)
+		die("fsync failed");
 	close(tmpfile);
+
+	buf = (char *)TYPEALIGN(ALIGNOF_XLOG_BUFFER, full_buf);
 
 	printf("Simple write timing:\n");
 	/* write only */
@@ -78,7 +150,8 @@ main(int argc, char *argv[])
 	{
 		if ((tmpfile = open(filename, O_RDWR)) == -1)
 			die("Cannot open output file.");
-		write(tmpfile, strout, 8192);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
 		close(tmpfile);
 	}
 	gettimeofday(&elapse_t, NULL);
@@ -95,8 +168,10 @@ main(int argc, char *argv[])
 	{
 		if ((tmpfile = open(filename, O_RDWR)) == -1)
 			die("Cannot open output file.");
-		write(tmpfile, strout, 8192);
-		fsync(tmpfile);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
+		if (fsync(tmpfile) != 0)
+			die("fsync failed");
 		close(tmpfile);
 		if ((tmpfile = open(filename, O_RDWR)) == -1)
 			die("Cannot open output file.");
@@ -114,12 +189,14 @@ main(int argc, char *argv[])
 	{
 		if ((tmpfile = open(filename, O_RDWR)) == -1)
 			die("Cannot open output file.");
-		write(tmpfile, strout, 8192);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
 		close(tmpfile);
 		/* reopen file */
 		if ((tmpfile = open(filename, O_RDWR)) == -1)
 			die("Cannot open output file.");
-		fsync(tmpfile);
+		if (fsync(tmpfile) != 0)
+			die("fsync failed");
 		close(tmpfile);
 	}
 	gettimeofday(&elapse_t, NULL);
@@ -135,7 +212,8 @@ main(int argc, char *argv[])
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
-		write(tmpfile, strout, 16384);
+		if (write(tmpfile, buf, WRITE_SIZE) != WRITE_SIZE)
+			die("write failed");
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
 	printf("\tone 16k o_sync write   ");
@@ -148,8 +226,10 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		write(tmpfile, strout, 8192);
-		write(tmpfile, strout, 8192);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -169,7 +249,8 @@ main(int argc, char *argv[])
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
-		write(tmpfile, strout, 8192);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
 	printf("\topen o_dsync, write    ");
@@ -181,7 +262,8 @@ main(int argc, char *argv[])
 		die("Cannot open output file.");
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
-		write(tmpfile, strout, 8192);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
 	printf("\topen o_sync, write     ");
@@ -199,7 +281,8 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		write(tmpfile, strout, 8192);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
 		fdatasync(tmpfile);
 	}
 	gettimeofday(&elapse_t, NULL);
@@ -217,8 +300,10 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		write(tmpfile, strout, 8192);
-		fsync(tmpfile);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
+		if (fsync(tmpfile) != 0)
+			die("fsync failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -235,8 +320,10 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		write(tmpfile, strout, 8192);
-		write(tmpfile, strout, 8192);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -254,8 +341,10 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		write(tmpfile, strout, 8192);
-		write(tmpfile, strout, 8192);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -271,8 +360,10 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		write(tmpfile, strout, 8192);
-		write(tmpfile, strout, 8192);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
 		fdatasync(tmpfile);
 	}
 	gettimeofday(&elapse_t, NULL);
@@ -290,9 +381,12 @@ main(int argc, char *argv[])
 	gettimeofday(&start_t, NULL);
 	for (i = 0; i < loops; i++)
 	{
-		write(tmpfile, strout, 8192);
-		write(tmpfile, strout, 8192);
-		fsync(tmpfile);
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
+		if (write(tmpfile, buf, WRITE_SIZE/2) != WRITE_SIZE/2)
+			die("write failed");
+		if (fsync(tmpfile) != 0)
+			die("fsync failed");
 	}
 	gettimeofday(&elapse_t, NULL);
 	close(tmpfile);
@@ -300,6 +394,7 @@ main(int argc, char *argv[])
 	print_elapse(start_t, elapse_t);
 	printf("\n");
 
+	free(full_buf);
 	unlink(filename);
 
 	return 0;
