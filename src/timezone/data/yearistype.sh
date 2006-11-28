@@ -1,6 +1,9 @@
 #! /bin/sh
 
-: '@(#)yearistype.sh	7.8'
+: 'This file is in the public domain, so clarified as of'
+: '2006-07-17 by Arthur David Olson.'
+
+: '@(#)yearistype.sh	8.2'
 
 case $#-$1 in
 	2-|2-0*|2-*[!0-9]*)
