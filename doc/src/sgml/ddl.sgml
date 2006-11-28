@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.68 2006/11/21 03:44:55 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.69 2006/11/28 01:09:01 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2055,10 +2055,9 @@ VALUES ('New York', NULL, NULL, 'NY');
   </para>
 
   <para>
-   Check constraints can be defined on tables within an inheritance
-   hierarchy. All check constraints on a parent table are
-   automatically inherited by all of its children.  Other types of
-   constraints are not inherited, however.
+   All check constraints and not-null constraints on a parent table are
+   automatically inherited by its children.  Other types of constraints
+   (unique, primary key, and foreign key constraints) are not inherited.
   </para>
 
   <para>
@@ -2070,7 +2069,8 @@ VALUES ('New York', NULL, NULL, 'NY');
    so that there is only one such column in the child table.  To be merged,
    columns must have the same data types, else an error is raised.  The
    merged column will have copies of all the check constraints coming from
-   any one of the column definitions it came from.
+   any one of the column definitions it came from, and will be marked not-null
+   if any of them are.
   </para>
 
   <para>
