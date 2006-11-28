@@ -1,4 +1,4 @@
-# @(#)northamerica	8.9
+# @(#)northamerica	8.10
 # <pre>
 
 # also includes Central America and the Caribbean
@@ -2096,10 +2096,13 @@ Zone America/Costa_Rica	-5:36:20 -	LMT	1890		# San Jose
 # adjustment in Cuba.  We will stay in daylight saving time:
 # http://www.granma.cu/espanol/2005/noviembre/mier9/horario.html
 
-# From Steffen Thorsen (2006-08-17):
-# It is likely that they are not reverting back to standard time this
-# year either, based on the number of responses I have got from users
-# (when my site claimed Cuba will end DST on lastSun/October)
+# From Jesper Norgaard Welen (2006-10-21):
+# An article in GRANMA INTERNACIONAL claims that Cuba will end
+# the 3 years of permanent DST next weekend, see
+# http://www.granma.cu/ingles/2006/octubre/lun16/43horario.html
+# "On Saturday night, October 28 going into Sunday, October 29, at 01:00,
+# watches should be set back one hour -- going back to 00:00 hours -- returning
+# to the normal schedule....
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Cuba	1928	only	-	Jun	10	0:00	1:00	D
@@ -2131,7 +2134,7 @@ Rule	Cuba	1997	only	-	Oct	12	0:00s	0	S
 Rule	Cuba	1998	1999	-	Mar	lastSun	0:00s	1:00	D
 Rule	Cuba	1998	2003	-	Oct	lastSun	0:00s	0	S
 Rule	Cuba	2000	max	-	Apr	Sun>=1	0:00s	1:00	D
-Rule	Cuba	2007	max	-	Oct	lastSun	0:00s	0	S
+Rule	Cuba	2006	max	-	Oct	lastSun	0:00s	0	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Havana	-5:29:28 -	LMT	1890

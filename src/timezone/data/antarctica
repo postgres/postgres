@@ -1,4 +1,4 @@
-# @(#)antarctica	8.2
+# @(#)antarctica	8.3
 # <pre>
 
 # From Paul Eggert (1999-11-15):
@@ -33,19 +33,27 @@ Rule	RussAQ	1996	max	-	Oct	lastSun	 2:00s	0	-
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	ArgAQ	1964	1966	-	Mar	 1	0:00	0	-
 Rule	ArgAQ	1964	1966	-	Oct	15	0:00	1:00	S
-Rule	ArgAQ	1967	only	-	Apr	 1	0:00	0	-
+Rule	ArgAQ	1967	only	-	Apr	 2	0:00	0	-
 Rule	ArgAQ	1967	1968	-	Oct	Sun>=1	0:00	1:00	S
 Rule	ArgAQ	1968	1969	-	Apr	Sun>=1	0:00	0	-
 Rule	ArgAQ	1974	only	-	Jan	23	0:00	1:00	S
 Rule	ArgAQ	1974	only	-	May	 1	0:00	0	-
-Rule	ArgAQ	1974	1976	-	Oct	Sun>=1	0:00	1:00	S
-Rule	ArgAQ	1975	1977	-	Apr	Sun>=1	0:00	0	-
-Rule	ChileAQ	1966	1997	-	Oct	Sun>=9	0:00	1:00	S
-Rule	ChileAQ	1967	1998	-	Mar	Sun>=9	0:00	0	-
-Rule	ChileAQ	1998	only	-	Sep	27	0:00	1:00	S
-Rule	ChileAQ	1999	only	-	Apr	 4	0:00	0	-
-Rule	ChileAQ	1999	max	-	Oct	Sun>=9	0:00	1:00	S
-Rule	ChileAQ	2000	max	-	Mar	Sun>=9	0:00	0	-
+Rule	ChileAQ	1972	1986	-	Mar	Sun>=9	3:00u	0	-
+Rule	ChileAQ	1974	1987	-	Oct	Sun>=9	4:00u	1:00	S
+Rule	ChileAQ	1987	only	-	Apr	12	3:00u	0	-
+Rule	ChileAQ	1988	1989	-	Mar	Sun>=9	3:00u	0	-
+Rule	ChileAQ	1988	only	-	Oct	Sun>=1	4:00u	1:00	S
+Rule	ChileAQ	1989	only	-	Oct	Sun>=9	4:00u	1:00	S
+Rule	ChileAQ	1990	only	-	Mar	18	3:00u	0	-
+Rule	ChileAQ	1990	only	-	Sep	16	4:00u	1:00	S
+Rule	ChileAQ	1991	1996	-	Mar	Sun>=9	3:00u	0	-
+Rule	ChileAQ	1991	1997	-	Oct	Sun>=9	4:00u	1:00	S
+Rule	ChileAQ	1997	only	-	Mar	30	3:00u	0	-
+Rule	ChileAQ	1998	only	-	Mar	Sun>=9	3:00u	0	-
+Rule	ChileAQ	1998	only	-	Sep	27	4:00u	1:00	S
+Rule	ChileAQ	1999	only	-	Apr	 4	3:00u	0	-
+Rule	ChileAQ	1999	max	-	Oct	Sun>=9	4:00u	1:00	S
+Rule	ChileAQ	2000	max	-	Mar	Sun>=9	3:00u	0	-
 
 
 # Argentina - year-round bases

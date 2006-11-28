@@ -1,4 +1,4 @@
-# @(#)zone.tab	8.5
+# @(#)zone.tab	8.6
 #
 # TZ zone descriptions
 #
@@ -212,7 +212,7 @@ IQ	+3321+04425	Asia/Baghdad
 IR	+3540+05126	Asia/Tehran
 IS	+6409-02151	Atlantic/Reykjavik
 IT	+4154+01229	Europe/Rome
-JE	+4912-00237	Europe/Jersey
+JE	+4912-00207	Europe/Jersey
 JM	+1800-07648	America/Jamaica
 JO	+3157+03556	Asia/Amman
 JP	+353916+1394441	Asia/Tokyo
@@ -247,7 +247,7 @@ LY	+3254+01311	Africa/Tripoli
 MA	+3339-00735	Africa/Casablanca
 MC	+4342+00723	Europe/Monaco
 MD	+4700+02850	Europe/Chisinau
-ME	+4247+01928	Europe/Podgorica
+ME	+4226+01916	Europe/Podgorica
 MG	-1855+04731	Indian/Antananarivo
 MH	+0709+17112	Pacific/Majuro	most locations
 MH	+0905+16720	Pacific/Kwajalein	Kwajalein

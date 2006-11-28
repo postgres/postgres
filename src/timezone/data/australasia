@@ -1,4 +1,4 @@
-# @(#)australasia	8.3
+# @(#)australasia	8.4
 # <pre>
 
 # This file also includes Pacific islands.
@@ -29,15 +29,25 @@ Zone Australia/Darwin	 8:43:20 -	LMT	1895 Feb
 			 9:00	-	CST	1899 May
 			 9:30	Aus	CST
 # Western Australia
+#
+# From Christopher Hunt (2006-11-21), after an advance warning
+# from Jesper Norgaard Welen (2006-11-01):
+# WA are trialing DST for three years. 
+# <http://www.parliament.wa.gov.au/parliament/bills.nsf/62D4F7C55EA88993482572110007316A/$File/Bill174-1.pdf>
+#
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
+Rule	AW	1974	only	-	Oct	lastSun	2:00s	1:00	-
+Rule	AW	1975	only	-	Mar	Sun>=1	2:00s	0	-
+Rule	AW	1983	only	-	Oct	lastSun	2:00s	1:00	-
+Rule	AW	1984	only	-	Mar	Sun>=1	2:00s	0	-
+Rule	AW	1991	only	-	Nov	17	2:00s	1:00	-
+Rule	AW	1992	only	-	Mar	Sun>=1	2:00s	0	-
+Rule	AW	2006	only	-	Dec	 3	2:00s	1:00	-
+Rule	AW	2007	2009	-	Mar	lastSun	2:00s	0	-
+Rule	AW	2007	2008	-	Oct	lastSun	2:00s	1:00	-
 Zone Australia/Perth	 7:43:24 -	LMT	1895 Dec
 			 8:00	Aus	WST	1943 Jul
-			 8:00	-	WST	1974 Oct lastSun 2:00s
-			 8:00	1:00	WST	1975 Mar Sun>=1 2:00s
-			 8:00	-	WST	1983 Oct lastSun 2:00s
-			 8:00	1:00	WST	1984 Mar Sun>=1 2:00s
-			 8:00	-	WST	1991 Nov 17 2:00s
-			 8:00	1:00	WST	1992 Mar Sun>=1 2:00s
-			 8:00	-	WST
+			 8:00	AW	WST
 # Queensland
 #
 # From Alex Livingston (1996-11-01):
