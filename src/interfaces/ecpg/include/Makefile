@@ -13,7 +13,7 @@ all: $(top_builddir)/src/interfaces/ecpg/include/ecpg_config.h
 install: all installdirs install-headers
 
 .PHONY: install-headers
-ecpg_headers = ecpgerrno.h ecpglib.h ecpgtype.h sqlca.h sql3types.h ecpg_informix.h \
+ecpg_headers = ecpgerrno.h ecpglib.h ecpgtype.h sqlca.h sql3types.h ecpg_informix.h ecpg_config.h \
 	pgtypes_error.h pgtypes_numeric.h pgtypes_timestamp.h pgtypes_date.h pgtypes_interval.h
 informix_headers = datetime.h decimal.h sqltypes.h sqlda.h
 
