@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.349 2004/12/31 22:03:25 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.349.4.1 2006/11/28 19:19:07 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2554,17 +2554,17 @@ DESCR("(internal)");
 /* formatting */
 DATA(insert OID = 1770 ( to_char			PGNSP PGUID 12 f f t f s 2	25 "1184 25" _null_  timestamptz_to_char - _null_ ));
 DESCR("format timestamp with time zone to text");
-DATA(insert OID = 1772 ( to_char			PGNSP PGUID 12 f f t f i 2	25 "1700 25" _null_  numeric_to_char - _null_ ));
+DATA(insert OID = 1772 ( to_char			PGNSP PGUID 12 f f t f s 2	25 "1700 25" _null_  numeric_to_char - _null_ ));
 DESCR("format numeric to text");
-DATA(insert OID = 1773 ( to_char			PGNSP PGUID 12 f f t f i 2	25 "23 25" _null_	int4_to_char - _null_ ));
+DATA(insert OID = 1773 ( to_char			PGNSP PGUID 12 f f t f s 2	25 "23 25" _null_	int4_to_char - _null_ ));
 DESCR("format int4 to text");
-DATA(insert OID = 1774 ( to_char			PGNSP PGUID 12 f f t f i 2	25 "20 25" _null_	int8_to_char - _null_ ));
+DATA(insert OID = 1774 ( to_char			PGNSP PGUID 12 f f t f s 2	25 "20 25" _null_	int8_to_char - _null_ ));
 DESCR("format int8 to text");
-DATA(insert OID = 1775 ( to_char			PGNSP PGUID 12 f f t f i 2	25 "700 25" _null_	float4_to_char - _null_ ));
+DATA(insert OID = 1775 ( to_char			PGNSP PGUID 12 f f t f s 2	25 "700 25" _null_	float4_to_char - _null_ ));
 DESCR("format float4 to text");
-DATA(insert OID = 1776 ( to_char			PGNSP PGUID 12 f f t f i 2	25 "701 25" _null_	float8_to_char - _null_ ));
+DATA(insert OID = 1776 ( to_char			PGNSP PGUID 12 f f t f s 2	25 "701 25" _null_	float8_to_char - _null_ ));
 DESCR("format float8 to text");
-DATA(insert OID = 1777 ( to_number			PGNSP PGUID 12 f f t f i 2	1700 "25 25" _null_  numeric_to_number - _null_ ));
+DATA(insert OID = 1777 ( to_number			PGNSP PGUID 12 f f t f s 2	1700 "25 25" _null_  numeric_to_number - _null_ ));
 DESCR("convert text to numeric");
 DATA(insert OID = 1778 ( to_timestamp		PGNSP PGUID 12 f f t f s 2	1184 "25 25" _null_  to_timestamp - _null_ ));
 DESCR("convert text to timestamp with time zone");
