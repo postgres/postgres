@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.158 2006/10/04 00:29:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.159 2006/11/28 12:54:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1229,10 +1229,8 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 							ereport(ERROR,
 									(errcode(ERRCODE_AMBIGUOUS_COLUMN),
 
-							/*
-							 * translator: first %s is name of a SQL
-							 * construct, eg ORDER BY
-							 */
+							/*------
+							  translator: first %s is name of a SQL construct, eg ORDER BY */
 									 errmsg("%s \"%s\" is ambiguous",
 											clauseText[clause], name),
 									 parser_errposition(pstate, location)));

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.503 2006/11/21 20:59:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.504 2006/11/28 12:54:41 petere Exp $
  *
  * NOTES
  *
@@ -2390,28 +2390,25 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 	if (WIFEXITED(exitstatus))
 		ereport(lev,
 
-		/*
-		 * translator: %s is a noun phrase describing a child process, such as
-		 * "server process"
-		 */
+		/*------
+		  translator: %s is a noun phrase describing a child process, such as
+		  "server process" */
 				(errmsg("%s (PID %d) exited with exit code %d",
 						procname, pid, WEXITSTATUS(exitstatus))));
 	else if (WIFSIGNALED(exitstatus))
 		ereport(lev,
 
-		/*
-		 * translator: %s is a noun phrase describing a child process, such as
-		 * "server process"
-		 */
+		/*------
+		  translator: %s is a noun phrase describing a child process, such as
+		  "server process" */
 				(errmsg("%s (PID %d) was terminated by signal %d",
 						procname, pid, WTERMSIG(exitstatus))));
 	else
 		ereport(lev,
 
-		/*
-		 * translator: %s is a noun phrase describing a child process, such as
-		 * "server process"
-		 */
+		/*------
+		  translator: %s is a noun phrase describing a child process, such as
+		  "server process" */
 				(errmsg("%s (PID %d) exited with unexpected status %d",
 						procname, pid, exitstatus)));
 }

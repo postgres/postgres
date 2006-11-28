@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.177 2006/11/21 22:19:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.178 2006/11/28 12:54:42 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1957,11 +1957,10 @@ useful_strerror(int errnum)
 	 */
 	if (str == NULL || *str == '\0')
 	{
-		/*
-		 * translator: This string will be truncated at 47 characters
-		 * expanded.
-		 */
 		snprintf(errorstr_buf, sizeof(errorstr_buf),
+				 /*------
+				   translator: This string will be truncated at 47
+				   characters expanded. */
 				 _("operating system error %d"), errnum);
 		str = errorstr_buf;
 	}
