@@ -1,4 +1,5 @@
-# @(#)antarctica	7.25
+# @(#)antarctica	8.3
+# <pre>
 
 # From Paul Eggert (1999-11-15):
 # To keep things manageable, we list only locations occupied year-round; see
@@ -32,19 +33,27 @@ Rule	RussAQ	1996	max	-	Oct	lastSun	 2:00s	0	-
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	ArgAQ	1964	1966	-	Mar	 1	0:00	0	-
 Rule	ArgAQ	1964	1966	-	Oct	15	0:00	1:00	S
-Rule	ArgAQ	1967	only	-	Apr	 1	0:00	0	-
-Rule	ArgAQ	1967	1968	-	Oct	Sun<=7	0:00	1:00	S
-Rule	ArgAQ	1968	1969	-	Apr	Sun<=7	0:00	0	-
+Rule	ArgAQ	1967	only	-	Apr	 2	0:00	0	-
+Rule	ArgAQ	1967	1968	-	Oct	Sun>=1	0:00	1:00	S
+Rule	ArgAQ	1968	1969	-	Apr	Sun>=1	0:00	0	-
 Rule	ArgAQ	1974	only	-	Jan	23	0:00	1:00	S
 Rule	ArgAQ	1974	only	-	May	 1	0:00	0	-
-Rule	ArgAQ	1974	1976	-	Oct	Sun<=7	0:00	1:00	S
-Rule	ArgAQ	1975	1977	-	Apr	Sun<=7	0:00	0	-
-Rule	ChileAQ	1966	1997	-	Oct	Sun>=9	0:00	1:00	S
-Rule	ChileAQ	1967	1998	-	Mar	Sun>=9	0:00	0	-
-Rule	ChileAQ	1998	only	-	Sep	27	0:00	1:00	S
-Rule	ChileAQ	1999	only	-	Apr	 4	0:00	0	-
-Rule	ChileAQ	1999	max	-	Oct	Sun>=9	0:00	1:00	S
-Rule	ChileAQ	2000	max	-	Mar	Sun>=9	0:00	0	-
+Rule	ChileAQ	1972	1986	-	Mar	Sun>=9	3:00u	0	-
+Rule	ChileAQ	1974	1987	-	Oct	Sun>=9	4:00u	1:00	S
+Rule	ChileAQ	1987	only	-	Apr	12	3:00u	0	-
+Rule	ChileAQ	1988	1989	-	Mar	Sun>=9	3:00u	0	-
+Rule	ChileAQ	1988	only	-	Oct	Sun>=1	4:00u	1:00	S
+Rule	ChileAQ	1989	only	-	Oct	Sun>=9	4:00u	1:00	S
+Rule	ChileAQ	1990	only	-	Mar	18	3:00u	0	-
+Rule	ChileAQ	1990	only	-	Sep	16	4:00u	1:00	S
+Rule	ChileAQ	1991	1996	-	Mar	Sun>=9	3:00u	0	-
+Rule	ChileAQ	1991	1997	-	Oct	Sun>=9	4:00u	1:00	S
+Rule	ChileAQ	1997	only	-	Mar	30	3:00u	0	-
+Rule	ChileAQ	1998	only	-	Mar	Sun>=9	3:00u	0	-
+Rule	ChileAQ	1998	only	-	Sep	27	4:00u	1:00	S
+Rule	ChileAQ	1999	only	-	Apr	 4	3:00u	0	-
+Rule	ChileAQ	1999	max	-	Oct	Sun>=9	4:00u	1:00	S
+Rule	ChileAQ	2000	max	-	Mar	Sun>=9	3:00u	0	-
 
 
 # Argentina - year-round bases
@@ -59,7 +68,7 @@ Rule	ChileAQ	2000	max	-	Mar	Sun>=9	0:00	0	-
 # Australia - territories
 # Heard Island, McDonald Islands (uninhabited)
 #	previously sealers and scientific personnel wintered
-#	<a href="http://www.dstc.qut.edu.au/DST/marg/daylight.html">
+#	<a href="http://web.archive.org/web/20021204222245/http://www.dstc.qut.edu.au/DST/marg/daylight.html">
 #	Margaret Turner reports
 #	</a> (1999-09-30) that they're UTC+5, with no DST;
 #	presumably this is when they have visitors.
@@ -106,7 +115,7 @@ Zone Antarctica/Mawson	0	-	zzz	1954 Feb 13
 
 # France - year-round bases
 #
-# From Antoine Leca <Antoine.Leca@Renault.FR> (1997-01-20):
+# From Antoine Leca (1997-01-20):
 # Time data are from Nicole Pailleau at the IFRTP
 # (French Institute for Polar Research and Technology).
 # She confirms that French Southern Territories and Terre Adelie bases
@@ -139,10 +148,9 @@ Zone Antarctica/DumontDUrville 0 -	zzz	1947
 			0	-	zzz	1956 Nov
 			10:00	-	DDUT	# Dumont-d'Urville Time
 # Reference:
-# <a href="http://www.icair.iac.org.nz/science/reports/fr/IFRTP.html">
-# Support and Development of Polar Research and Technology (1997-02-03)
+# <a href="http://en.wikipedia.org/wiki/Dumont_d'Urville_Station">
+# Dumont d'Urville Station (2005-12-05)
 # </a>
-
 
 # Germany - year-round base
 # Georg von Neumayer, -7039-00815
@@ -155,9 +163,7 @@ Zone Antarctica/DumontDUrville 0 -	zzz	1947
 # Syowa, -690022+0393524
 #
 # From Hideyuki Suzuki (1999-02-06):
-# In all Japanese stations, +0300 is used as the standard time.  [See]
-# <a href="http://www.crl.go.jp/uk/uk201/basyo.htm">[reference in Japanese]</a>
-# and information from KAMO Hiroyasu.
+# In all Japanese stations, +0300 is used as the standard time.
 #
 # Syowa station, which is the first antarctic station of Japan,
 # was established on 1957-01-29.  Since Syowa station is still the main
@@ -296,7 +302,7 @@ Zone Antarctica/McMurdo	0	-	zzz	1956
 # Normally it wouldn't have a separate entry, since it's like the
 # larger Antarctica/McMurdo since 1970, but it's too famous to omit.
 #
-# From Chris Carrier <72157.3334@CompuServe.COM> (1996-06-27):
+# From Chris Carrier (1996-06-27):
 # Siple, the first commander of the South Pole station,
 # stated that he would have liked to have kept GMT at the station,
 # but that he found it more convenient to keep GMT+12
