@@ -31,7 +31,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.32 2006/10/04 00:30:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/snprintf.c,v 1.33 2006/11/28 01:12:34 adunstan Exp $
  */
 
 #include "c.h"
@@ -99,6 +99,7 @@
 #undef	vsnprintf
 #undef	snprintf
 #undef	sprintf
+#undef	vfprintf
 #undef	fprintf
 #undef	printf
 
@@ -209,7 +210,7 @@ pg_sprintf(char *str, const char *fmt,...)
 	return len;
 }
 
-static int
+int
 pg_vfprintf(FILE *stream, const char *fmt, va_list args)
 {
 	PrintfTarget target;

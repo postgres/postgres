@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.105 2006/10/19 20:56:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.106 2006/11/28 01:12:33 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,9 @@ extern unsigned char pg_tolower(unsigned char ch);
 #ifdef sprintf
 #undef sprintf
 #endif
+#ifdef vfprintf
+#undef vfprintf
+#endif
 #ifdef fprintf
 #undef fprintf
 #endif
@@ -161,6 +164,7 @@ extern int
 pg_sprintf(char *str, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 2, 3)));
+extern int	pg_vfprintf(FILE * stream, const char *fmt, va_list args);
 extern int
 pg_fprintf(FILE *stream, const char *fmt,...)
 /* This extension allows gcc to check the format string */
@@ -179,12 +183,14 @@ __attribute__((format(printf, 1, 2)));
 #define vsnprintf(...)	pg_vsnprintf(__VA_ARGS__)
 #define snprintf(...)	pg_snprintf(__VA_ARGS__)
 #define sprintf(...)	pg_sprintf(__VA_ARGS__)
+#define vfprintf(...)	pg_vfprintf(__VA_ARGS__)
 #define fprintf(...)	pg_fprintf(__VA_ARGS__)
 #define printf(...)		pg_printf(__VA_ARGS__)
 #else
 #define vsnprintf		pg_vsnprintf
 #define snprintf		pg_snprintf
 #define sprintf			pg_sprintf
+#define vfprintf		pg_vfprintf
 #define fprintf			pg_fprintf
 #define printf			pg_printf
 #endif
