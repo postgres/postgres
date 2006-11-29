@@ -14509,6 +14509,11 @@ done
 
 fi
 
+# Some versions of libedit contain strlcpy(); so disregard that library while
+# checking for these standard libc functions.
+pgac_save_LIBS="$LIBS"
+LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
+
 
 
 
@@ -14634,6 +14639,8 @@ fi
 done
 
 
+
+LIBS="$pgac_save_LIBS"
 
 # System's version of getaddrinfo(), if any, may be used only if we found
 # a definition for struct addrinfo; see notes in src/include/getaddrinfo.h.
