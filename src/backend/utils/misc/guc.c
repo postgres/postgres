@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.359 2006/11/21 01:23:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.360 2006/11/29 14:50:07 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1588,7 +1588,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		/* see varsup.c for why this is PGC_POSTMASTER not PGC_SIGHUP */
 		{"autovacuum_freeze_max_age", PGC_POSTMASTER, AUTOVACUUM,
-			gettext_noop("Age at which to autovacuum a table to prevent transacion ID wraparound."),
+			gettext_noop("Age at which to autovacuum a table to prevent transaction ID wraparound."),
 			NULL
 		},
 		&autovacuum_freeze_max_age,
