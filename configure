@@ -24413,7 +24413,7 @@ for pgac_var in `set | sed 's/=.*//' | $EGREP 'with_|enable_'`; do
       continue 2
     fi
   done
-  pgac_txt=`echo $pgac_var | tr '_' '-'`
+  pgac_txt=`echo $pgac_var | tr 'a_b' 'a-b'`
   { echo "$as_me:$LINENO: WARNING: option ignored: --$pgac_txt" >&5
 echo "$as_me: WARNING: option ignored: --$pgac_txt" >&2;}
 done
