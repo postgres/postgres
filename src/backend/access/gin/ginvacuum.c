@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.8 2006/11/12 06:55:53 neilc Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.9 2006/11/30 16:22:32 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -265,6 +265,12 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	}
 
 	parentPage = BufferGetPage(pBuffer);
+#ifdef USE_ASSERT_CHECKING
+	do {
+		PostingItem *tod=(PostingItem *) GinDataPageGetItem(parentPage, myoff);
+		Assert( PostingItemGetBlockNumber(tod) == deleteBlkno );
+	} while(0);
+#endif
 	PageDeletePostingItem(parentPage, myoff);
 
 	page = BufferGetPage(dBuffer);
@@ -351,7 +357,8 @@ typedef struct DataPageDeleteStack
 	struct DataPageDeleteStack *child;
 	struct DataPageDeleteStack *parent;
 
-	BlockNumber blkno;
+	BlockNumber blkno; /* current block number */
+	BlockNumber leftBlkno; /* rightest non-deleted page on left */
 	bool		isRoot;
 } DataPageDeleteStack;
 
@@ -377,7 +384,7 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, DataPageDel
 			me = (DataPageDeleteStack *) palloc0(sizeof(DataPageDeleteStack));
 			me->parent = parent;
 			parent->child = me;
-			me->blkno = InvalidBlockNumber;
+			me->leftBlkno = InvalidBlockNumber;
 		}
 		else
 			me = parent->child;
@@ -392,6 +399,7 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, DataPageDel
 	{
 		OffsetNumber i;
 
+		me->blkno = blkno;
 		for (i = FirstOffsetNumber; i <= GinPageGetOpaque(page)->maxoff; i++)
 		{
 			PostingItem *pitem = (PostingItem *) GinDataPageGetItem(page, i);
@@ -403,13 +411,13 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, DataPageDel
 
 	if (GinPageGetOpaque(page)->maxoff < FirstOffsetNumber)
 	{
-		if (!(me->blkno == InvalidBlockNumber && GinPageRightMost(page)))
+		if (!(me->leftBlkno == InvalidBlockNumber && GinPageRightMost(page)))
 		{
 			/* we never delete right most branch */
 			Assert(!isRoot);
 			if (GinPageGetOpaque(page)->maxoff < FirstOffsetNumber)
 			{
-				ginDeletePage(gvs, blkno, me->blkno, me->parent->blkno, myoff, me->parent->isRoot);
+				ginDeletePage(gvs, blkno, me->leftBlkno, me->parent->blkno, myoff, me->parent->isRoot);
 				meDelete = TRUE;
 			}
 		}
@@ -418,7 +426,7 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, DataPageDel
 	ReleaseBuffer(buffer);
 
 	if (!meDelete)
-		me->blkno = blkno;
+		me->leftBlkno = blkno;
 
 	return meDelete;
 }
@@ -438,7 +446,7 @@ ginVacuumPostingTree(GinVacuumState *gvs, BlockNumber rootBlkno)
 	}
 
 	memset(&root, 0, sizeof(DataPageDeleteStack));
-	root.blkno = rootBlkno;
+	root.leftBlkno = InvalidBlockNumber;
 	root.isRoot = TRUE;
 
 	vacuum_delay_point();
