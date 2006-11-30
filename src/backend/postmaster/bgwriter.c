@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.31 2006/11/21 20:59:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.32 2006/11/30 18:29:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,6 +350,12 @@ BackgroundWriterMain(void)
 		}
 		if (shutdown_requested)
 		{
+			/*
+			 * From here on, elog(ERROR) should end with exit(1), not send
+			 * control back to the sigsetjmp block above
+			 */
+			ExitOnAnyError = true;
+			/* Close down the database */
 			ShutdownXLOG(0, 0);
 			DumpFreeSpaceMap(0, 0);
 			/* Normal exit from the bgwriter is here */

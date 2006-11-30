@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.257 2006/11/21 20:59:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.258 2006/11/30 18:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4651,8 +4651,6 @@ StartupXLOG(void)
 	uint32		freespace;
 	TransactionId oldestActiveXID;
 
-	CritSectionCount++;
-
 	/*
 	 * Read control file and check XLOG status looks valid.
 	 *
@@ -5188,7 +5186,6 @@ StartupXLOG(void)
 
 	ereport(LOG,
 			(errmsg("database system is ready")));
-	CritSectionCount--;
 
 	/* Shut down readFile facility, free space */
 	if (readFile >= 0)
@@ -5426,12 +5423,10 @@ ShutdownXLOG(int code, Datum arg)
 	ereport(LOG,
 			(errmsg("shutting down")));
 
-	CritSectionCount++;
 	CreateCheckPoint(true, true);
 	ShutdownCLOG();
 	ShutdownSUBTRANS();
 	ShutdownMultiXact();
-	CritSectionCount--;
 
 	ereport(LOG,
 			(errmsg("database system is shut down")));
@@ -5605,10 +5600,7 @@ CreateCheckPoint(bool shutdown, bool force)
 	 *
 	 * This I/O could fail for various reasons.  If so, we will fail to
 	 * complete the checkpoint, but there is no reason to force a system
-	 * panic. Accordingly, exit critical section while doing it.  (If we are
-	 * doing a shutdown checkpoint, we probably *should* panic --- but that
-	 * will happen anyway because we'll still be inside the critical section
-	 * established by ShutdownXLOG.)
+	 * panic. Accordingly, exit critical section while doing it.
 	 */
 	END_CRIT_SECTION();
 
