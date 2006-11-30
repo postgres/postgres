@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.5 2006/11/23 05:58:01 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.6 2006/11/30 20:50:44 petere Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -184,7 +184,7 @@
  <para>
   <acronym>GIN</acronym> doesn't support full index scans due to their
   extreme inefficiency: because there are often many keys per value,
-  each heap pointer will returned several times.
+  each heap pointer will be returned several times.
  </para>
 
  <para>
