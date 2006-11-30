@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/config/general.m4,v 1.8 2006/11/30 21:44:12 tgl Exp $
+# $PostgreSQL: pgsql/config/general.m4,v 1.9 2006/11/30 22:21:23 tgl Exp $
 
 # This file defines new macros to process configure command line
 # arguments, to replace the brain-dead AC_ARG_WITH and AC_ARG_ENABLE.
@@ -82,7 +82,7 @@ AC_DEFUN([PGAC_ARG_CHECK],
       continue 2
     fi
   done
-  pgac_txt=`echo $pgac_var | tr 'a_b' 'a-b'`
+  pgac_txt=`echo $pgac_var | sed 's/_/-/g'`
   AC_MSG_WARN([option ignored: --$pgac_txt])
 done])# PGAC_ARG_CHECK
 
