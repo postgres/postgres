@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.265 2006/10/23 14:13:43 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.266 2006/11/30 21:30:22 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1657,7 +1657,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
    platform generally means that <productname>PostgreSQL</> builds and
    installs according to these instructions and that the regression
    tests pass.  <quote>Build farm</quote> entries refer to active test
-   machines in the <ulink url="http://www.pgbuildfarm.org/">
+   machines in the <ulink url="http://buildfarm.postgresql.org/">
    PostgreSQL Build Farm</ulink>.
    Platform entries that show an older version of
    PostgreSQL are those that did not receive explicit testing at the
@@ -1689,8 +1689,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">AIX</></entry>
         <entry><systemitem>PowerPC</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm
+         <systemitem class="systemname">grebe</systemitem> (5.3, gcc 4.0.1); 
          <systemitem class="systemname">kookaburra</systemitem> (5.2, cc 6.0); 
          <systemitem class="systemname">asp</systemitem> (5.2, gcc 3.3.2)</entry>
         <entry>see <filename>doc/FAQ_AIX</filename>,
@@ -1720,8 +1721,11 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>AMD64</></entry>
-        <entry>8.1.0</entry>
-        <entry>Build farm <systemitem class="systemname">panda</systemitem> (sid, gcc 3.3.5)</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm
+         <systemitem class="systemname">shad</systemitem> (4.0, gcc 4.1.2);
+         <systemitem class="systemname">kite</systemitem> (3.1, gcc 4.0);
+         <systemitem class="systemname">panda</systemitem> (sid, gcc 3.3.5)</entry>
         <entry></entry>
        </row>
        <row>
@@ -1734,15 +1738,15 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>Athlon XP</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm <systemitem class="systemname">rook</systemitem> (3.1, gcc 3.3.5)</entry>
         <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>IA64</></entry>
-        <entry>7.4</entry>
-        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2003-10-25</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm <systemitem class="systemname">dugong</systemitem> (unstable, icc 9.1.045)</entry>
         <entry></entry>
        </row>
        <row>
@@ -1755,7 +1759,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>MIPS</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm
          <systemitem class="systemname">otter</systemitem> (3.1, gcc 3.3.4)</entry>
         <entry></entry>
@@ -1763,7 +1767,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>MIPSEL</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm
          <systemitem class="systemname">lionfish</systemitem> (3.1, gcc 3.3.4);
          <systemitem class="systemname">corgi</systemitem> (3.1, gcc 3.3.4)</entry>
@@ -1772,9 +1776,10 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>PA-RISC</></entry>
-        <entry>8.1.0</entry>
-        <entry>Build farm <systemitem
-         class="systemname">kingfisher</systemitem> (3.1, gcc 3.3.5)</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm
+         <systemitem class="systemname">manatee</systemitem> (3.1, gcc 4.0.1);
+         <systemitem class="systemname">kingfisher</systemitem> (3.1, gcc 3.3.5)</entry>
         <entry></entry>
      </row>
        <row>
@@ -1783,13 +1788,6 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>8.0.0</entry>
         <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2004-12-15</entry>
         <entry>sid</entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">Debian GNU/Linux</></entry>
-        <entry><systemitem>S/390</></entry>
-        <entry>7.4</entry>
-        <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2003-10-25</entry>
-        <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
@@ -1802,47 +1800,53 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.0.0</entry>
-        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2004-12-06</entry>
-        <entry>3.1 (sarge), kernel 2.6</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm <systemitem class="systemname">wildebeest</systemitem> (3.1, gcc 3.3.5)</entry>
        </row>
        <row>
-        <entry><systemitem class="osname">Fedora</></entry>
+        <entry><systemitem class="osname">Fedora Linux</></entry>
         <entry><systemitem>AMD64</></entry>
-        <entry>8.1.0</entry>
-        <entry>Build farm <systemitem class="systemname">viper</systemitem> (FC3, gcc 3.4.2)</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm
+         <systemitem class="systemname">impala</systemitem> (FC6, gcc 4.1.1);
+         <systemitem class="systemname">bustard</systemitem> (FC5, gcc 4.1.0);
+         <systemitem class="systemname">wasp</systemitem> (FC5, gcc 4.1.0);
+         <systemitem class="systemname">viper</systemitem> (FC3, gcc 3.4.4)</entry>
         <entry></entry>
        </row>
        <row>
-        <entry><systemitem class="osname">Fedora</></entry>
+        <entry><systemitem class="osname">Fedora Linux</></entry>
+        <entry><systemitem>PowerPC</></entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm
+         <systemitem class="systemname">sponge</systemitem> (FC5, gcc 4.1.0)</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Fedora Linux</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.1.0</entry>
-        <entry>Build farm <systemitem class="systemname">thrush</systemitem> (FC1, gcc 3.3.2)</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm
+         <systemitem class="systemname">agouti</systemitem> (FC5, gcc 4.1.1);
+         <systemitem class="systemname">thrush</systemitem> (FC1, gcc 3.3.2)</entry>
         <entry></entry>
-       </row>
-       <row>
-        <entry><systemitem class="osname">FreeBSD</></entry>
-        <entry><systemitem>Alpha</></entry>
-        <entry>7.4</entry>
-        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-10-25</entry>
-        <entry>4.8</entry>
        </row>
        <row>
         <entry><systemitem class="osname">FreeBSD</></entry>
         <entry><systemitem>AMD64</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm
-         <systemitem class="systemname">platypus</systemitem> (5.2.1, gcc 3.3.3);
-         <systemitem class="systemname">dove</systemitem> (5.4, gcc 3.4.2)</entry>
+         <systemitem class="systemname">platypus</systemitem> (6, gcc 3.4.4);
+         <systemitem class="systemname">dove</systemitem> (6.1, gcc 3.4.4);
+         <systemitem class="systemname">ermine</systemitem> (6.1, gcc 3.4.4)</entry>
         <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">FreeBSD</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm
-         <systemitem class="systemname">octopus</systemitem> (4.11, gcc 2.95.4);
-         <systemitem class="systemname">flatworm</systemitem> (5.3, gcc 3.4.2);
+         <systemitem class="systemname">minnow</systemitem> (6.1, gcc 3.4.4);
          <systemitem class="systemname">echidna</systemitem> (6, gcc 3.4.2);
          <systemitem class="systemname">herring</systemitem> (6, Intel cc 7.1)</entry>
         <entry></entry>
@@ -1857,36 +1861,36 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Gentoo Linux</></entry>
         <entry><systemitem>IA64</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm <systemitem class="systemname">stoat</systemitem> (2.6, gcc 3.3)</entry>
         <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Gentoo Linux</></entry>
         <entry><systemitem>PowerPC 64</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm <systemitem class="systemname">cobra</systemitem> (1.4.16, gcc 3.4.3)</entry>
         <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Gentoo Linux</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.0.0</entry>
-        <entry>Paul Bort (<email>pbort@tmwsystems.com</email>), 2004-12-07</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm <systemitem class="systemname">mongoose</systemitem> (1.6.14, icc 9.0.032)</entry>
         <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">HP-UX</></entry>
         <entry><systemitem>IA64</></entry>
-        <entry>8.1.0</entry>
-        <entry>Tom Lane (<email>tgl@sss.pgh.pa.us</email>), 2005-10-15</entry>
+        <entry>8.2.0</entry>
+        <entry>Tom Lane (<email>tgl@sss.pgh.pa.us</email>), 2006-10-23</entry>
         <entry>11.23, <command>gcc</> and <command>cc</>; see <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">HP-UX</></entry>
         <entry><systemitem>PA-RISC</></entry>
-        <entry>8.1.0</entry>
-        <entry>Tom Lane (<email>tgl@sss.pgh.pa.us</email>), 2005-10-15</entry>
+        <entry>8.2.0</entry>
+        <entry>Tom Lane (<email>tgl@sss.pgh.pa.us</email>), 2006-10-23</entry>
         <entry>10.20 and 11.23, <command>gcc</> and <command>cc</>; see <filename>doc/FAQ_HPUX</filename></entry>
        </row>
        <row>
@@ -1897,49 +1901,56 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>6.5, <command>cc</command> only</entry>
        </row>
        <row>
+        <entry><systemitem class="osname">Kubuntu Linux</></entry>
+        <entry><systemitem>AMD64</></entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm <systemitem class="systemname">rosella</systemitem> (5.10 <quote>Breezy</>, gcc 4.0)</entry>
+        <entry></entry>
+       </row>
+       <row>
         <entry><systemitem class="osname">Mac OS X</></entry>
         <entry><systemitem>PowerPC</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm
-         <systemitem class="systemname">tuna</systemitem> (10.4.2, gcc 4.0);
-         <systemitem class="systemname">cuckoo</systemitem> (10.3.9, gcc 3.3);
-         <systemitem class="systemname">wallaroo</systemitem> (10.3.8, gcc 3.3)</entry>
+         <systemitem class="systemname">tuna</systemitem> (10.4.2, gcc 4.0)</entry>
         <entry></entry>
        </row>
        <row>
-        <entry><systemitem class="osname">Mandrake Linux</></entry>
+        <entry><systemitem class="osname">Mac OS X</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.1.0</entry>
-        <entry>Build farm <systemitem class="systemname">shrew</systemitem> (10.0, gcc 3.3.2)</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm
+         <systemitem class="systemname">jackal</systemitem> (10.4.8, gcc 4.0.1)</entry>
         <entry></entry>
        </row>
        <row>
-        <entry><systemitem class="osname">NetBSD</></entry>
-        <entry><systemitem>arm32</></entry>
-        <entry>7.4</entry>
-        <entry>Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>), 2003-11-12</entry>
-        <entry>1.6ZE/acorn32</entry>
+        <entry><systemitem class="osname">Mandriva Linux</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm <systemitem class="systemname">gopher</systemitem> (Mandriva 2006, gcc 4.0.1)</entry>
+        <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">NetBSD</></entry>
         <entry><systemitem>m68k</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm <systemitem class="systemname">osprey</systemitem> (2.0, gcc 3.3.3)</entry>
         <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">NetBSD</></entry>
-        <entry><systemitem>Sparc</></entry>
-        <entry>7.4.1</entry>
-        <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-11-26</entry>
-        <entry>1.6.1, 32-bit</entry>
+        <entry><systemitem>x86</></entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm
+         <systemitem class="systemname">gazelle</systemitem> (3.0, gcc 3.3.3);
+         <systemitem class="systemname">canary</systemitem> (1.6, gcc 2.95.3)</entry>
        </row>
        <row>
-        <entry><systemitem class="osname">NetBSD</></entry>
-        <entry><systemitem>x86</></entry>
-        <entry>8.0.0</entry>
-        <entry>Build farm <systemitem class="systemname">canary</systemitem>, snapshot 2004-12-06 03:30:00</entry>
-        <entry>1.6</entry>
+        <entry><systemitem class="osname">OpenBSD</></entry>
+        <entry><systemitem>AMD64</></entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm
+         <systemitem class="systemname">zebra</systemitem> (4.0, gcc 3.3.5)</entry>
        </row>
        <row>
         <entry><systemitem class="osname">OpenBSD</></entry>
@@ -1951,17 +1962,16 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">OpenBSD</></entry>
         <entry><systemitem>Sparc64</></entry>
-        <entry>8.1.0</entry>
-        <entry>Build farm <systemitem
-        class="systemname">spoonbill</systemitem> (3.6, gcc 3.3.2)</entry>
-        <entry>compiler bug affects <filename>contrib/seg</></entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm <systemitem class="systemname">spoonbill</systemitem> (3.9, gcc 3.3.5)</entry>
        </row>
        <row>
         <entry><systemitem class="osname">OpenBSD</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.0.0</entry>
-        <entry>Build farm <systemitem class="systemname">emu</systemitem>, snapshot 2004-12-06 11:35:03</entry>
-        <entry>3.6</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm
+         <systemitem class="systemname">emu</systemitem> (4.0, gcc 3.3.5);
+         <systemitem class="systemname">guppy</systemitem> (3.8, gcc 3.3.5)</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Red Hat Linux</></entry>
@@ -2022,21 +2032,18 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Solaris</></entry>
         <entry><systemitem>Sparc</></entry>
-        <entry>8.1.0</entry>
-        <entry>Build farm <systemitem class="systemname">buzzard</systemitem>
-        (Solaris 10, gcc 3.3.2);
-        Robert Lor (<email>Robert.Lor@sun.com</email>), 2005-11-04
-        (Solaris 9);
-        Kenneth Marshall (<email>ktm@is.rice.edu</email>), 2005-10-28
-        (Solaris 8, gcc 3.4.3)</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm
+         <systemitem class="systemname">hyena</systemitem> (Solaris 10, gcc 3.4.3)</entry>
         <entry>see <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Solaris</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.1.0</entry>
-        <entry>Robert Lor (<email>Robert.Lor@sun.com</email>), 2005-11-04
-        (Solaris 10)</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm
+         <systemitem class="systemname">dragonfly</systemitem> (Solaris 9, gcc 3.2.3);
+         <systemitem class="systemname">kudu</systemitem> (Solaris 9, cc 5.3)</entry>
         <entry>see <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
@@ -2096,28 +2103,36 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>5.0, <command>cc</> 6.1-011</entry>
        </row>
        <row>
+        <entry><systemitem class="osname">Ubuntu Linux</></entry>
+        <entry><systemitem>x86</></entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm <systemitem class="systemname">caracara</systemitem> (6.06, gcc 4.0.3)</entry>
+       </row>
+       <row>
         <entry><systemitem class="osname">UnixWare</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.1.0</entry>
-        <entry>Build farm <systemitem class="systemname">firefly</systemitem>
+        <entry>8.2.0</entry>
+        <entry>Build farm <systemitem class="systemname">warthog</systemitem>
          (7.1.4, <command>cc</command> 4.2)</entry>
         <entry>see <filename>doc/FAQ_SCO</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Windows</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm
-         <systemitem class="systemname">loris</systemitem> (XP Pro, gcc 3.2.3);
-         <systemitem class="systemname">snake</systemitem> (Windows Server 2003, gcc 3.4.2)</entry>
+         <systemitem class="systemname">yak</systemitem> (XP SP2, gcc 3.4.2);
+         <systemitem class="systemname">bandicoot</systemitem> (Windows 2000 Pro, gcc 3.4.2);
+         <systemitem class="systemname">snake</systemitem> (Windows Server 2003 SP1, gcc 3.4.2);
+         <systemitem class="systemname">trout</systemitem> (Windows Server 2000 SP4, gcc 3.4.2)</entry>
         <entry>see <filename>doc/FAQ_MINGW</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Windows with <application>Cygwin</application></></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.1.0</entry>
-        <entry>Build farm <systemitem class="systemname">ferret</systemitem>
-         (XP Pro, gcc 3.3.3)</entry>
+        <entry>8.2.0</entry>
+        <entry>Build farm <systemitem class="systemname">eel</systemitem>
+         (W2K Server SP4, gcc 3.4.4)</entry>
         <entry>see <filename>doc/FAQ_CYGWIN</filename></entry>
        </row>
        <row>
@@ -2134,10 +2149,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
   <formalpara>
    <title>Unsupported Platforms:</title>
    <para>
-    The following platforms are either known not to work, or they used
-    to work in a fairly distant previous release.  We include these
-    here to let you know that these platforms <emphasis>could</> be
-    supported if given some attention.
+    The following platforms used to work but have not been tested recently.
+    We include these here to let you know that these platforms
+    <emphasis>could</> be supported if given some attention.
    </para>
   </formalpara>
 
@@ -2155,11 +2169,25 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
 
     <tbody>
      <row>
+      <entry><systemitem class="osname">Debian GNU/Linux</></entry>
+      <entry><systemitem>S/390</></entry>
+      <entry>7.4</entry>
+      <entry>No&egrave;l K&ouml;the (<email>noel@debian.org</email>), 2003-10-25</entry>
+      <entry></entry>
+     </row>
+     <row>
+      <entry><systemitem class="osname">FreeBSD</></entry>
+      <entry><systemitem>Alpha</></entry>
+      <entry>7.4</entry>
+      <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-10-25</entry>
+      <entry>4.8</entry>
+     </row>
+     <row>
       <entry><systemitem class="osname">Linux</></entry>
       <entry><systemitem>PlayStation 2</></entry>
       <entry>8.0.0</entry>
       <entry>Chris Mair (<email>list@1006.org</email>), 2005-01-09</entry>
-      <entry>requires <option>--disable-spinlocks</option> (works, but slow)</entry>
+      <entry>requires <option>--disable-spinlocks</option> (works, but very slow)</entry>
      </row>
      <row>
       <entry><systemitem class="osname">NetBSD</></entry>
@@ -2167,6 +2195,13 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       <entry>7.2</entry>
       <entry>Thomas Thai (<email>tom@minnesota.com</email>), 2001-11-20</entry>
       <entry>1.5W</entry>
+     </row>
+     <row>
+      <entry><systemitem class="osname">NetBSD</></entry>
+      <entry><systemitem>arm32</></entry>
+      <entry>7.4</entry>
+      <entry>Patrick Welche (<email>prlw1@newn.cam.ac.uk</email>), 2003-11-12</entry>
+      <entry>1.6ZE/acorn32</entry>
      </row>
      <row>
       <entry><systemitem class="osname">NetBSD</></entry>
@@ -2181,6 +2216,13 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       <entry>7.2</entry>
       <entry>Bill Studenmund (<email>wrstuden@netbsd.org</email>), 2001-11-28</entry>
       <entry>1.5</entry>
+     </row>
+     <row>
+      <entry><systemitem class="osname">NetBSD</></entry>
+      <entry><systemitem>Sparc</></entry>
+      <entry>7.4.1</entry>
+      <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2003-11-26</entry>
+      <entry>1.6.1, 32-bit</entry>
      </row>
      <row>
       <entry><systemitem class="osname">NetBSD</></entry>
