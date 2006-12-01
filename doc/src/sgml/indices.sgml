@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.65 2006/10/23 18:10:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.66 2006/12/01 23:46:46 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -116,7 +116,7 @@ CREATE INDEX test1_id_index ON test1 (id);
 
   <para>
    <productname>PostgreSQL</productname> provides several index types:
-   B-tree, Hash, GIN and GiST.  Each index type uses a different
+   B-tree, Hash, GiST and GIN.  Each index type uses a different
    algorithm that is best suited to different types of queries.
    By default, the <command>CREATE INDEX</command> command will create a
    B-tree index, which fits the most common situations.
@@ -247,8 +247,8 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
     <primary>GIN</primary>
     <see>index</see>
    </indexterm>
-   GIN is a inverted index and it's usable for values which have more
-   than one key, arrays for example. Like GiST, GIN may support
+   GIN indexes are inverted indexes which can handle values that contain more
+   than one key, arrays for example. Like GiST, GIN can support
    many different user-defined indexing strategies and the particular 
    operators with which a GIN index can be used vary depending on the 
    indexing strategy.  
@@ -267,7 +267,8 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    (See <xref linkend="functions-array"> for the meaning of
    these operators.)
    Other GIN operator classes are available in the <literal>contrib</>
-   <literal>tsearch2</literal> and <literal>intarray</literal> modules. For more information see <xref linkend="GIN">.
+   <literal>tsearch2</literal> and <literal>intarray</literal> modules.
+   For more information see <xref linkend="GIN">.
   </para>
  </sect1>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.52 2006/10/23 18:10:32 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.53 2006/12/01 23:46:46 tgl Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -243,15 +243,16 @@
    </table>
 
   <para>
-   GIN indexes are similar to GiST's in flexibility: they don't have a fixed
-   et of strategies. Instead, the <quote>consistency</> support routine
-   interprets the strategy numbers accordingly with operator class
-   definition. As an example, strategies of operator class over arrays
-   is shown in <xref linkend="xindex-gin-array-strat-table">.
+   GIN indexes are similar to GiST indexes in flexibility: they don't have a
+   fixed set of strategies. Instead the support routines of each operator
+   class interpret the strategy numbers according to the operator class's
+   definition. As an example, the strategy numbers used by the built-in
+   operator classes for arrays are
+   shown in <xref linkend="xindex-gin-array-strat-table">.
   </para>
 
    <table tocentry="1" id="xindex-gin-array-strat-table">
-    <title>GIN Array's Strategies</title>
+    <title>GIN Array Strategies</title>
     <tgroup cols="2">
      <thead>
       <row>
@@ -388,36 +389,35 @@
      <tbody>
       <row>
        <entry>consistent - determine whether key satisfies the 
-		query qualifier</entry>
+        query qualifier</entry>
        <entry>1</entry>
       </row>
       <row>
-       <entry>union - compute union of of a set of given keys</entry>
+       <entry>union - compute union of a set of keys</entry>
        <entry>2</entry>
       </row>
       <row>
-       <entry>compress - computes a compressed representation of a key or value
-		to be indexed</entry>
+       <entry>compress - compute a compressed representation of a key or value
+        to be indexed</entry>
        <entry>3</entry>
       </row>
       <row>
-       <entry>decompress - computes a decompressed representation of a 
-	   compressed key </entry>
+       <entry>decompress - compute a decompressed representation of a 
+        compressed key</entry>
        <entry>4</entry>
       </row>
       <row>
        <entry>penalty - compute penalty for inserting new key into subtree 
-	   with given subtree's key</entry>
+       with given subtree's key</entry>
        <entry>5</entry>
       </row>
       <row>
        <entry>picksplit - determine which entries of a page are to be moved
-	   to the new page and compute the union keys for resulting pages </entry>
+       to the new page and compute the union keys for resulting pages</entry>
        <entry>6</entry>
       </row>
       <row>
-       <entry>equal - compare two keys and returns true if they are equal 
-		</entry>
+       <entry>equal - compare two keys and return true if they are equal</entry>
        <entry>7</entry>
       </row>
      </tbody>
@@ -441,23 +441,22 @@
      <tbody>
       <row>
        <entry>
-   compare - Compare two keys and return an integer less than zero, zero, or
-   greater than zero, indicating whether the first key is less than, equal to,
-   or greater than the second.
-	   </entry>
+        compare - compare two keys and return an integer less than zero, zero,
+        or greater than zero, indicating whether the first key is less than,
+        equal to, or greater than the second
+       </entry>
        <entry>1</entry>
       </row>
       <row>
-       <entry>extractValue - extract keys from value to be indexed</entry>
+       <entry>extractValue - extract keys from a value to be indexed</entry>
        <entry>2</entry>
       </row>
       <row>
-       <entry>extractQuery - extract keys from query</entry>
+       <entry>extractQuery - extract keys from a query condition</entry>
        <entry>3</entry>
       </row>
       <row>
-       <entry>consistent - determine whether value matches by the
-			   query</entry>
+       <entry>consistent - determine whether value matches query condition</entry>
        <entry>4</entry>
       </row>
      </tbody>
@@ -822,12 +821,16 @@ CREATE OPERATOR CLASS polygon_ops
         STORAGE box;
 </programlisting>
 
-   At present, only the GiST and GIN index method supports a
+   At present, only the GiST and GIN index methods support a
    <literal>STORAGE</> type that's different from the column data type.
-   The GiST <literal>compress</> and <literal>decompress</> support
+   The GiST <function>compress</> and <function>decompress</> support
    routines must deal with data-type conversion when <literal>STORAGE</>
-   is used. Functions named <literal>extractValue</> and <literal>extractQuery</>
-   do conversation into internally used types for GIN.
+   is used.  In GIN, the <literal>STORAGE</> type identifies the type of
+   the <quote>key</> values, which normally is different from the type
+   of the indexed column &mdash; for example, an operator class for
+   integer array columns might have keys that are just integers.  The
+   GIN <function>extractValue</> and <function>extractQuery</> support
+   routines are responsible for extracting keys from indexed values.
   </para>
  </sect2>
 

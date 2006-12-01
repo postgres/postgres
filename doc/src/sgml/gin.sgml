@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.6 2006/11/30 20:50:44 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.7 2006/12/01 23:46:46 tgl Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -14,8 +14,9 @@
  <para>
    <acronym>GIN</acronym> stands for Generalized Inverted Index.  It is
    an index structure storing a set of (key, posting list) pairs, where
-   'posting list' is a set of rows in which the key occurs. Each
-   row may contain many keys.
+   a <quote>posting list</> is a set of rows in which the key occurs. Each
+   indexed value may contain many keys, so the same row ID may appear in
+   multiple posting lists.
  </para>
 
  <para>
@@ -45,7 +46,7 @@
 
  <para>
    The <acronym>GIN</acronym> interface has a high level of abstraction,
-   requiring the access method implementer to only implement the semantics of
+   requiring the access method implementer only to implement the semantics of
    the data type being accessed.  The <acronym>GIN</acronym> layer itself
    takes care of concurrency, logging and searching the tree structure.
  </para>
@@ -53,26 +54,14 @@
  <para>
    All it takes to get a <acronym>GIN</acronym> access method working
    is to implement four user-defined methods, which define the behavior of
-   keys in the tree. In short, <acronym>GIN</acronym> combines extensibility
-   along with generality, code reuse, and a clean interface.
- </para>
-
-</sect1>
-
-<sect1 id="gin-implementation">
- <title>Implementation</title>
-
- <para>
-  Internally, <acronym>GIN</acronym> consists of a B-tree index constructed 
-  over keys, where each key is an element of the indexed value 
-  (element of array, for example) and where each tuple in a leaf page is 
-  either a pointer to a B-tree over heap pointers (PT, posting tree), or a 
-  list of heap pointers (PL, posting list) if the tuple is small enough.
+   keys in the tree and the relationships between keys, indexed values,
+   and indexable queries. In short, <acronym>GIN</acronym> combines
+   extensibility with generality, code reuse, and a clean interface.
  </para>
 
  <para>
-   There are four methods that an index operator class for
-   <acronym>GIN</acronym> must provide (prototypes are in pseudocode):
+   The four methods that an index operator class for
+   <acronym>GIN</acronym> must provide are:
  </para>
 
  <variablelist>
@@ -80,9 +69,9 @@
      <term>int compare(Datum a, Datum b)</term>
      <listitem>
       <para>
-	   Compares keys (not indexed values!) and returns an integer less than 
-	   zero, zero, or greater than zero, indicating whether the first key is 
-	   less than, equal to, or greater than the second.
+       Compares keys (not indexed values!) and returns an integer less than
+       zero, zero, or greater than zero, indicating whether the first key is
+       less than, equal to, or greater than the second.
       </para>
      </listitem>
     </varlistentry>
@@ -91,21 +80,26 @@
      <term>Datum* extractValue(Datum inputValue, uint32 *nkeys)</term>
      <listitem>
       <para>
-	   Returns an array of keys of value to be indexed, nkeys should
-	   contain the number of returned keys.
+       Returns an array of keys given a value to be indexed.  The
+       number of returned keys must be stored into <literal>*nkeys</>.
       </para>
      </listitem>
     </varlistentry>
 
     <varlistentry>
-     <term>Datum* extractQuery(Datum query, uint32 nkeys, 
-		StrategyNumber n)</term>
+     <term>Datum* extractQuery(Datum query, uint32 *nkeys,
+        StrategyNumber n)</term>
      <listitem>
       <para>
-	   Returns an array of keys of the query to be executed. n contains the
-	   strategy number of the operation (see <xref
-	   linkend="xindex-strategies">).  Depending on n, query may be
-	   different type.
+       Returns an array of keys given a value to be queried; that is,
+       <literal>query</> is the value on the right-hand side of an
+       indexable operator whose left-hand side is the indexed column.
+       <literal>n</> is the strategy number of the operator within the
+       operator class (see <xref linkend="xindex-strategies">).
+       Often, <function>extractQuery</> will need
+       to consult <literal>n</> to determine the data type of
+       <literal>query</> and the key values that need to be extracted.
+       The number of returned keys must be stored into <literal>*nkeys</>.
       </para>
      </listitem>
     </varlistentry>
@@ -114,16 +108,34 @@
      <term>bool consistent(bool check[], StrategyNumber n, Datum query)</term>
      <listitem>
       <para>
-	   Returns TRUE if the indexed value satisfies the query qualifier with 
-	   strategy n (or may satisfy in case of RECHECK mark in operator class). 
-	   Each element of the check array is TRUE if the indexed value has a 
-	   corresponding key in the query: if (check[i] == TRUE) the i-th key of 
-	   the query is present in the indexed value.
+       Returns TRUE if the indexed value satisfies the query operator with
+       strategy number <literal>n</> (or may satisfy, if the operator is
+       marked RECHECK in the operator class).  The <literal>check</> array has
+       the same length as the number of keys previously returned by
+       <function>extractQuery</> for this query.  Each element of the
+       <literal>check</> array is TRUE if the indexed value contains the
+       corresponding query key, ie, if (check[i] == TRUE) the i-th key of the
+       <function>extractQuery</> result array is present in the indexed value.
+       The original <literal>query</> datum (not the extracted key array!) is
+       passed in case the <function>consistent</> method needs to consult it.
       </para>
      </listitem>
     </varlistentry>
 
   </variablelist>
+
+</sect1>
+
+<sect1 id="gin-implementation">
+ <title>Implementation</title>
+
+ <para>
+  Internally, a <acronym>GIN</acronym> index contains a B-tree index
+  constructed over keys, where each key is an element of the indexed value
+  (a member of an array, for example) and where each tuple in a leaf page is
+  either a pointer to a B-tree over heap pointers (PT, posting tree), or a
+  list of heap pointers (PL, posting list) if the list is small enough.
+ </para>
 
 </sect1>
 
@@ -134,44 +146,43 @@
   <varlistentry>
    <term>Create vs insert</term>
    <listitem>
-	<para>
-	 In most cases, insertion into a <acronym>GIN</acronym> index is slow
-	 due to the likelihood of many keys being inserted for each value.
-	 So, for bulk insertions into a table it is advisable to to drop the GIN 
-	 index and recreate it after finishing bulk insertion.
-	</para>
+    <para>
+     In most cases, insertion into a <acronym>GIN</acronym> index is slow
+     due to the likelihood of many keys being inserted for each value.
+     So, for bulk insertions into a table it is advisable to drop the GIN
+     index and recreate it after finishing bulk insertion.
+    </para>
    </listitem>
   </varlistentry>
 
   <varlistentry>
-   <term>gin_fuzzy_search_limit</term>
+   <term><xref linkend="guc-gin-fuzzy-search-limit"></term>
    <listitem>
-	<para>
-	 The primary goal of developing <acronym>GIN</acronym> indices was 
-	 support for highly scalable, full-text search in 
-	 <productname>PostgreSQL</productname> and there are often situations when 
-	 a full-text search returns a very large set of results.  Since reading 
-	 tuples from the disk and sorting them could take a lot of time, this is 
-	 unacceptable for production.  (Note that the index search itself is very 
-	 fast.) 
+    <para>
+     The primary goal of developing <acronym>GIN</acronym> indexes was
+     to create support for highly scalable, full-text search in
+     <productname>PostgreSQL</productname>, and there are often situations when
+     a full-text search returns a very large set of results.  Moreover, this
+     often happens when the query contains very frequent words, so that the
+     large result set is not even useful.  Since reading many
+     tuples from the disk and sorting them could take a lot of time, this is
+     unacceptable for production.  (Note that the index search itself is very
+     fast.)
     </para>
-	<para>
-	 Such queries usually contain very frequent words, so the results are not 
-	 very helpful. To facilitate execution of such queries 
-	 <acronym>GIN</acronym> has a configurable soft upper limit of the size 
-	 of the returned set, determined by the 
-	 <varname>gin_fuzzy_search_limit</varname> GUC variable.  It is set to 0 by
-	 default (no limit).
-	</para>
-	<para>
-	 If a non-zero search limit is set, then the returned set is a subset of 
-	 the whole result set, chosen at random.
-	</para>
-	<para>
-	 <quote>Soft</quote> means that the actual number of returned results
-	 could slightly differ from the specified limit, depending on the query
-	 and the quality of the system's random number generator.
-	</para>
+    <para>
+     To facilitate controlled execution of such queries
+     <acronym>GIN</acronym> has a configurable soft upper limit on the size
+     of the returned set, the
+     <varname>gin_fuzzy_search_limit</varname> configuration parameter.
+     It is set to 0 (meaning no limit) by default.
+     If a non-zero limit is set, then the returned set is a subset of
+     the whole result set, chosen at random.
+    </para>
+    <para>
+     <quote>Soft</quote> means that the actual number of returned results
+     could differ slightly from the specified limit, depending on the query
+     and the quality of the system's random number generator.
+    </para>
    </listitem>
   </varlistentry>
  </variablelist>
@@ -182,21 +193,30 @@
  <title>Limitations</title>
 
  <para>
-  <acronym>GIN</acronym> doesn't support full index scans due to their
-  extreme inefficiency: because there are often many keys per value,
-  each heap pointer will be returned several times.
+  <acronym>GIN</acronym> doesn't support full index scans: because there are
+  often many keys per value, each heap pointer would be returned many times,
+  and there is no easy way to prevent this.
  </para>
 
  <para>
   When <function>extractQuery</function> returns zero keys,
-  <acronym>GIN</acronym> will emit an error: for different opclasses and
-  strategies the semantic meaning of a void query may be different (for
-  example, any array contains the void array, but they don't overlap the
-  void array), and <acronym>GIN</acronym> can't suggest a reasonable answer.
+  <acronym>GIN</acronym> will emit an error.  Depending on the operator,
+  a void query might match all, some, or none of the indexed values (for
+  example, every array contains the empty array, but does not overlap the
+  empty array), and <acronym>GIN</acronym> can't determine the correct
+  answer, nor produce a full-index-scan result if it could determine that
+  that was correct.
  </para>
 
  <para>
-  <acronym>GIN</acronym> searches keys only by equality matching.  This may 
+  It is not an error for <function>extractValue</> to return zero keys,
+  but in this case the indexed value will be unrepresented in the index.
+  This is another reason why full index scan is not useful &mdash; it would
+  miss such rows.
+ </para>
+
+ <para>
+  <acronym>GIN</acronym> searches keys only by equality matching.  This may
   be improved in future.
  </para>
 </sect1>
@@ -206,12 +226,12 @@
 
  <para>
   The <productname>PostgreSQL</productname> source distribution includes
-  <acronym>GIN</acronym> classes for one-dimensional arrays of all internal 
+  <acronym>GIN</acronym> classes for one-dimensional arrays of all internal
   types.  The following
   <filename>contrib</> modules also contain <acronym>GIN</acronym>
-  operator classes: 
+  operator classes:
  </para>
- 
+
  <variablelist>
   <varlistentry>
    <term>intarray</term>
