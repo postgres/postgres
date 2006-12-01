@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.266 2006/11/30 21:30:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.267 2006/12/01 21:17:51 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1714,7 +1714,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>Alpha</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm <systemitem class="systemname">hare</systemitem> (3.1, gcc 3.3.4)</entry>
         <entry></entry>
        </row>
@@ -1731,7 +1731,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Debian GNU/Linux</></entry>
         <entry><systemitem>ARM</></entry>
-        <entry>8.1.0</entry>
+        <entry>8.2.0</entry>
         <entry>Build farm <systemitem class="systemname">penguin</systemitem> (3.1, gcc 3.3.4)</entry>
         <entry></entry>
        </row>
@@ -1972,6 +1972,7 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>Build farm
          <systemitem class="systemname">emu</systemitem> (4.0, gcc 3.3.5);
          <systemitem class="systemname">guppy</systemitem> (3.8, gcc 3.3.5)</entry>
+        <entry>minor ecpg test failure on 3.8</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Red Hat Linux</></entry>
