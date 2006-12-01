@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.94 2006/11/10 22:32:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.95 2006/12/01 03:29:15 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -18,7 +18,7 @@
   <itemizedlist>
    <listitem><para><acronym>SQL</> dump</para></listitem>
    <listitem><para>File system level backup</para></listitem>
-   <listitem><para>Continuous Archiving</para></listitem>
+   <listitem><para>Continuous archiving</para></listitem>
   </itemizedlist>
   Each has its own strengths and weaknesses.
  </para>
@@ -180,12 +180,14 @@ pg_dump -h <replaceable>host1</> <replaceable>dbname</> | psql -h <replaceable>h
    <title>Using <application>pg_dumpall</></title>
 
    <para>
-    The above mechanism is cumbersome and inappropriate when backing
-    up an entire database cluster. For this reason the <xref
-    linkend="app-pg-dumpall"> program is provided.
+    <application>pg_dump</> dumps only a single database at a time,
+    and it does not dump information about roles or tablespaces
+    (because those are cluster-wide rather than per-database).
+    To support convenient dumping of the entire contents of a database
+    cluster, the <xref linkend="app-pg-dumpall"> program is provided.
     <application>pg_dumpall</> backs up each database in a given
-    cluster, and also preserves cluster-wide data such as users and
-    groups. The basic usage of this command is:
+    cluster, and also preserves cluster-wide data such as role and
+    tablespace definitions. The basic usage of this command is:
 <synopsis>
 pg_dumpall &gt; <replaceable>outfile</>
 </synopsis>
@@ -197,7 +199,9 @@ psql -f <replaceable class="parameter">infile</replaceable> postgres
     but if you are reloading in an empty cluster then <literal>postgres</>
     should generally be used.)  It is always necessary to have
     database superuser access when restoring a <application>pg_dumpall</>
-    dump, as that is required to restore the user and group information.
+    dump, as that is required to restore the role and tablespace information.
+    If you use tablespaces, be careful that the tablespace paths in the
+    dump are appropriate for the new installation.
    </para>
   </sect2>
 
@@ -210,7 +214,7 @@ psql -f <replaceable class="parameter">infile</replaceable> postgres
     to dump such a table to a file, since the resulting file will likely
     be larger than the maximum size allowed by your system. Since
     <application>pg_dump</> can write to the standard output, you can
-    just use standard Unix tools to work around this possible problem.
+    use standard Unix tools to work around this possible problem.
    </para>
 
    <formalpara>
@@ -284,7 +288,7 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> &gt; <replaceabl
  </sect1>
 
  <sect1 id="backup-file">
-  <title>File system level backup</title>
+  <title>File System Level Backup</title>
 
   <para>
    An alternative backup strategy is to directly copy the files that
@@ -450,7 +454,7 @@ tar -cf backup.tar /usr/local/pgsql/data
     <para>
      If we continuously feed the series of WAL files to another
      machine that has been loaded with the same base backup file, we
-     have a <quote>hot standby</> system: at any point we can bring up
+     have a <firstterm>warm standby</> system: at any point we can bring up
      the second machine and it will have a nearly-current copy of the
      database.
     </para>
@@ -502,7 +506,7 @@ tar -cf backup.tar /usr/local/pgsql/data
     available hardware, there could be many different ways of <quote>saving
     the data somewhere</>: we could copy the segment files to an NFS-mounted
     directory on another machine, write them onto a tape drive (ensuring that
-    you have a way of restoring the file with its original file name), or batch
+    you have a way of identifying the original name of each file), or batch
     them together and burn them onto CDs, or something else entirely.  To
     provide the database administrator with as much flexibility as possible,
     <productname>PostgreSQL</> tries not to make any assumptions about how 
@@ -605,7 +609,7 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
 
    <para>
     Note that although WAL archiving will allow you to restore any
-    modifications made to the data in your <productname>PostgreSQL</> database
+    modifications made to the data in your <productname>PostgreSQL</> database,
     it will not restore changes made to configuration files (that is,
     <filename>postgresql.conf</>, <filename>pg_hba.conf</> and
     <filename>pg_ident.conf</>), since those are edited manually rather
@@ -685,10 +689,10 @@ SELECT pg_start_backup('label');
 <programlisting>
 SELECT pg_stop_backup();
 </programlisting>
-     This should return successfully; however, the backup is not yet fully
-     valid.  An automatic switch to the next WAL segment occurs, so all
-     WAL segment files that relate to the backup will now be marked ready for
-     archiving.
+     This terminates the backup mode and performs an automatic switch to
+     the next WAL segment.  The reason for the switch is to arrange that
+     the last WAL segment file written during the backup interval is
+     immediately ready to archive.
     </para>
    </listitem>
    <listitem>
@@ -700,7 +704,7 @@ SELECT pg_stop_backup();
      already configured <varname>archive_command</>. In many cases, this
      happens fairly quickly, but you are advised to monitor your archival
      system to ensure this has taken place so that you can be certain you
-     have a valid backup.  
+     have a complete backup.  
     </para>
    </listitem>
   </orderedlist>
@@ -727,15 +731,13 @@ SELECT pg_stop_backup();
     It is not necessary to be very concerned about the amount of time elapsed
     between <function>pg_start_backup</> and the start of the actual backup,
     nor between the end of the backup and <function>pg_stop_backup</>; a
-    few minutes' delay won't hurt anything.  However, if you normally run the
+    few minutes' delay won't hurt anything.  (However, if you normally run the
     server with <varname>full_page_writes</> disabled, you may notice a drop
     in performance between <function>pg_start_backup</> and 
-    <function>pg_stop_backup</>.  You must ensure that these backup operations
-    are carried out in sequence without any possible overlap, or you will
-    invalidate the backup.
-   </para>
-
-   <para>
+    <function>pg_stop_backup</>, since <varname>full_page_writes</> is
+    effectively forced on during backup mode.)  You must ensure that these
+    steps are carried out in sequence without any possible
+    overlap, or you will invalidate the backup.
    </para>
 
    <para>
@@ -758,7 +760,7 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
-    To make use of this backup, you will need to keep around all the WAL
+    To make use of the backup, you will need to keep around all the WAL
     segment files generated during and after the file system backup.
     To aid you in doing this, the <function>pg_stop_backup</> function
     creates a <firstterm>backup history file</> that is immediately
@@ -855,7 +857,7 @@ SELECT pg_stop_backup();
      Restore the database files from your backup dump.  Be careful that they
      are restored with the right ownership (the database system user, not
      root!) and with the right permissions.  If you are using tablespaces,
-     you may want to verify that the symbolic links in <filename>pg_tblspc/</>
+     you should verify that the symbolic links in <filename>pg_tblspc/</>
      were correctly restored.
     </para>
    </listitem>
@@ -975,15 +977,17 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
 
    <para>
     If recovery finds a corruption in the WAL data then recovery will
-    complete at that point and the server will not start. The recovery 
-    process could be re-run from the beginning, specifying a 
-    <quote>recovery target</> so that recovery can complete normally.
+    complete at that point and the server will not start. In such a case the
+    recovery process could be re-run from the beginning, specifying a 
+    <quote>recovery target</> before the point of corruption so that recovery
+    can complete normally.
     If recovery fails for an external reason, such as a system crash or
-    the WAL archive has become inaccessible, then the recovery can be
-    simply restarted and it will restart almost from where it failed.
-    Restartable recovery works by writing a restart-point record to the control
-    file at the first safely usable checkpoint record found after 
-    <varname>checkpoint_timeout</> seconds. 
+    if the WAL archive has become inaccessible, then the recovery can simply
+    be restarted and it will restart almost from where it failed.
+    Recovery restart works much like checkpointing in normal operation:
+    the server periodically forces all its state to disk, and then updates
+    the <filename>pg_control</> file to indicate that the already-processed
+    WAL data need not be scanned again.
    </para>
 
 
@@ -1173,48 +1177,6 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
    </para>
   </sect2>
 
-  <sect2 id="backup-incremental-updated">
-   <title>Incrementally Updated Backups</title>
-
-  <indexterm zone="backup">
-   <primary>incrementally updated backups</primary>
-  </indexterm>
-
-  <indexterm zone="backup">
-   <primary>change accumulation</primary>
-  </indexterm>
-
-   <para>
-    Restartable Recovery can also be utilised to offload the expense of
-    taking periodic base backups from a main server, by instead backing
-    up a Standby server's files.  This concept is also generally known as 
-    incrementally updated backups, log change accumulation or more simply,
-    change accumulation.
-   </para>
-
-   <para>
-    If we take a backup of the server files whilst a recovery is in progress,
-    we will be able to restart the recovery from the last restart point. 
-    That backup now has many of the changes from previous WAL archive files,
-    so this version is now an updated version of the original base backup.
-    If we need to recover, it will be faster to recover from the 
-    incrementally updated backup than from the base backup.
-   </para>
-
-   <para>
-    To make use of this capability you will need to setup a Standby database
-    on a second system, as described in <xref linkend="warm-standby">. By
-    taking a backup of the Standby server while it is running you will
-    have produced an incrementally updated backup. Once this configuration
-    has been implemented you will no longer need to produce regular base 
-    backups of the Primary server: all base backups can be performed on the 
-    Standby server. If you wish to do this, it is not a requirement that you
-    also implement the failover features of a Warm Standby configuration,
-    though you may find it desirable to do both.
-   </para>
-
-  </sect2>
-
   <sect2 id="continuous-archiving-caveats">
    <title>Caveats</title>
 
@@ -1287,23 +1249,23 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
   <title>Warm Standby Servers for High Availability</title>
 
   <indexterm zone="backup">
-   <primary>Warm Standby</primary>
+   <primary>warm standby</primary>
   </indexterm>
 
   <indexterm zone="backup">
-   <primary>PITR Standby</primary>
+   <primary>PITR standby</primary>
   </indexterm>
 
   <indexterm zone="backup">
-   <primary>Standby Server</primary>
+   <primary>standby server</primary>
   </indexterm>
 
   <indexterm zone="backup">
-   <primary>Log Shipping</primary>
+   <primary>log shipping</primary>
   </indexterm>
 
   <indexterm zone="backup">
-   <primary>Witness Server</primary>
+   <primary>witness server</primary>
   </indexterm>
 
   <indexterm zone="backup">
@@ -1311,132 +1273,131 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
   </indexterm>
 
   <indexterm zone="backup">
-   <primary>High Availability</primary>
+   <primary>high availability</primary>
   </indexterm>
 
   <para>
-   Continuous Archiving can be used to create a High Availability (HA)
-   cluster configuration with one or more Standby Servers ready to take
-   over operations in the case that the Primary Server fails. This
-   capability is more widely known as Warm Standby Log Shipping.
+   Continuous archiving can be used to create a <firstterm>high
+   availability</> (HA) cluster configuration with one or more
+   <firstterm>standby servers</> ready to take 
+   over operations if the primary server fails. This
+   capability is widely referred to as <firstterm>warm standby</>
+   or <firstterm>log shipping</>.
   </para>
 
   <para>
-   The Primary and Standby Server work together to provide this capability,
-   though the servers are only loosely coupled. The Primary Server operates
-   in Continuous Archiving mode, while the Standby Server operates in a
-   continuous Recovery mode, reading the WAL files from the Primary. No
+   The primary and standby server work together to provide this capability,
+   though the servers are only loosely coupled. The primary server operates
+   in continuous archiving mode, while each standby server operates in
+   continuous recovery mode, reading the WAL files from the primary. No
    changes to the database tables are required to enable this capability,
-   so it offers a low administration overhead in comparison with other
-   replication approaches. This configuration also has a very low
-   performance impact on the Primary server.
+   so it offers low administration overhead in comparison with some other
+   replication approaches. This configuration also has relatively low
+   performance impact on the primary server.
   </para>
 
   <para>
    Directly moving WAL or "log" records from one database server to another
-   is typically described as Log Shipping. <productname>PostgreSQL</>
-   implements file-based log shipping, which means that WAL records are batched one file at a time. WAL
+   is typically described as log shipping. <productname>PostgreSQL</>
+   implements file-based log shipping, which means that WAL records are
+   transferred one file (WAL segment) at a time. WAL
    files can be shipped easily and cheaply over any distance, whether it be
    to an adjacent system, another system on the same site or another system
    on the far side of the globe. The bandwidth required for this technique
-   varies according to the transaction rate of the Primary Server.
-   Record-based Log Shipping is also possible with custom-developed
-   procedures, discussed in a later section. Future developments are likely
-   to include options for synchronous and/or integrated record-based log
-   shipping.
+   varies according to the transaction rate of the primary server.
+   Record-based log shipping is also possible with custom-developed
+   procedures, as discussed in <xref linkend="warm-standby-record">.
   </para>
 
   <para>
    It should be noted that the log shipping is asynchronous, i.e. the
    WAL records are shipped after transaction commit. As a result there
-   can be a small window of data loss, should the Primary Server
-   suffer a catastrophic failure. The window of data loss is minimised
-   by the use of the <varname>archive_timeout</varname> parameter,
-   which can be set as low as a few seconds if required. A very low
-   setting can increase the bandwidth requirements for file shipping.
+   is a window for data loss should the primary server
+   suffer a catastrophic failure: transactions not yet shipped will be lost.
+   The length of the window of data loss
+   can be limited by use of the <varname>archive_timeout</varname> parameter,
+   which can be set as low as a few seconds if required.  However such low
+   settings will substantially increase the bandwidth requirements for file
+   shipping.  If you need a window of less than a minute or so, it's probably
+   better to look into record-based log shipping.
   </para>
 
   <para>
-   The Standby server is not available for access, since it is continually
+   The standby server is not available for access, since it is continually
    performing recovery processing. Recovery performance is sufficiently
-   good that the Standby will typically be only minutes away from full
+   good that the standby will typically be only moments away from full
    availability once it has been activated. As a result, we refer to this
-   capability as a Warm Standby configuration that offers High
-   Availability. Restoring a server from an archived base backup and
-   rollforward can take considerably longer and so that technique only
-   really offers a solution for Disaster Recovery, not HA.
-  </para>
-
-   <para>
-    When running a Standby Server, backups can be performed on the Standby
-    rather than the Primary, thereby offloading the expense of
-    taking periodic base backups. (See 
-    <xref linkend="backup-incremental-updated">)
-   </para>
-
-
-  <para>
-   Other mechanisms for High Availability replication are available, both
-   commercially and as open-source software.  
-  </para>
-
-  <para>
-   In general, log shipping between servers running different release
-   levels will not be possible. It is the policy of the PostgreSQL Global
-   Development Group not to make changes to disk formats during minor release
-   upgrades, so it is likely that running different minor release levels 
-   on Primary and Standby servers will work successfully. However, no
-   formal support for that is offered and you are advised not to allow this
-   to occur over long periods.
+   capability as a warm standby configuration that offers high
+   availability. Restoring a server from an archived base backup and
+   rollforward will take considerably longer, so that technique only
+   really offers a solution for disaster recovery, not HA.
   </para>
 
   <sect2 id="warm-standby-planning">
    <title>Planning</title>
 
    <para>
-    On the Standby server all tablespaces and paths will refer to similarly
-    named mount points, so it is important to create the Primary and Standby
-    servers so that they are as similar as possible, at least from the
-    perspective of the database server. Furthermore, any <xref
-    linkend="sql-createtablespace" endterm="sql-createtablespace-title">
-    commands will be passed across as-is, so any new mount points must be
-    created on both servers before they are used on the Primary. Hardware
-    need not be the same, but experience shows that maintaining two
-    identical systems is easier than maintaining two dissimilar ones over
-    the whole lifetime of the application and system.
+    It is usually wise to create the primary and standby servers
+    so that they are as similar as possible, at least from the
+    perspective of the database server.  In particular, the path names
+    associated with tablespaces will be passed across as-is, so both
+    primary and standby servers must have the same mount paths for
+    tablespaces if that feature is used.  Keep in mind that if
+    <xref linkend="sql-createtablespace" endterm="sql-createtablespace-title">
+    is executed on the primary, any new mount point needed for it must
+    be created on both the primary and all standby servers before the command
+    is executed. Hardware need not be exactly the same, but experience shows
+    that maintaining two identical systems is easier than maintaining two
+    dissimilar ones over the lifetime of the application and system.
+    In any case the hardware architecture must be the same &mdash; shipping
+    from, say, a 32-bit to a 64-bit system will not work.
    </para>
 
    <para>
-    There is no special mode required to enable a Standby server. The
-    operations that occur on both Primary and Standby servers are entirely
-    normal continuous archiving and recovery tasks. The primary point of
+    In general, log shipping between servers running different major release
+    levels will not be possible. It is the policy of the PostgreSQL Global
+    Development Group not to make changes to disk formats during minor release
+    upgrades, so it is likely that running different minor release levels 
+    on primary and standby servers will work successfully. However, no
+    formal support for that is offered and you are advised to keep primary
+    and standby servers at the same release level as much as possible.
+    When updating to a new minor release, the safest policy is to update
+    the standby servers first &mdash; a new minor release is more likely
+    to be able to read WAL files from a previous minor release than vice
+    versa.
+   </para>
+
+   <para>
+    There is no special mode required to enable a standby server. The
+    operations that occur on both primary and standby servers are entirely
+    normal continuous archiving and recovery tasks. The only point of
     contact between the two database servers is the archive of WAL files
-    that both share: Primary writing to the archive, Standby reading from
+    that both share: primary writing to the archive, standby reading from
     the archive. Care must be taken to ensure that WAL archives for separate
-    servers do not become mixed together or confused.
+    primary servers do not become mixed together or confused.
    </para>
 
    <para>
     The magic that makes the two loosely coupled servers work together
-    is simply a <varname>restore_command</> that waits for the next
-    WAL file to be archived from the Primary. The <varname>restore_command</>
-    is specified in the <filename>recovery.conf</> file on the Standby
-    Server. Normal recovery processing would request a file from the
-    WAL archive, causing an error if the file was unavailable.  For
-    Standby processing it is normal for the next file to be
+    is simply a <varname>restore_command</> used on the standby that waits for
+    the next WAL file to become available from the primary. The
+    <varname>restore_command</> is specified in the <filename>recovery.conf</>
+    file on the standby 
+    server. Normal recovery processing would request a file from the
+    WAL archive, reporting failure if the file was unavailable.  For
+    standby processing it is normal for the next file to be
     unavailable, so we must be patient and wait for it to appear. A
     waiting <varname>restore_command</> can be written as a custom
     script that loops after polling for the existence of the next WAL
     file. There must also be some way to trigger failover, which
     should interrupt the <varname>restore_command</>, break the loop
-    and return a file not found error to the Standby Server. This then
-    ends recovery and the Standby will then come up as a normal
+    and return a file-not-found error to the standby server. This
+    ends recovery and the standby will then come up as a normal
     server.
    </para>
 
    <para>
-    Sample code for the C version of the <varname>restore_command</>
-    would be:
+    Pseudocode for a suitable <varname>restore_command</> is:
 <programlisting>
 triggered = false;
 while (!NextWALFileReady() && !triggered)
@@ -1452,14 +1413,14 @@ if (!triggered)
 
    <para>
     <productname>PostgreSQL</productname> does not provide the system
-    software required to identify a failure on the Primary and notify
-    the Standby system and then the Standby database server. Many such
-    tools exist and are well integrated with other aspects of a system
-    failover, such as IP address migration.
+    software required to identify a failure on the primary and notify
+    the standby system and then the standby database server. Many such
+    tools exist and are well integrated with other aspects required for
+    successful failover, such as IP address migration.
    </para>
 
    <para>
-    Triggering failover is an important part of planning and
+    The means for triggering failover is an important part of planning and
     design. The <varname>restore_command</> is executed in full once
     for each WAL file. The process running the <varname>restore_command</>
     is therefore created and dies for each file, so there is no daemon
@@ -1467,8 +1428,8 @@ if (!triggered)
     handler. A more permanent notification is required to trigger the
     failover. It is possible to use a simple timeout facility,
     especially if used in conjunction with a known
-    <varname>archive_timeout</> setting on the Primary. This is
-    somewhat error prone since a network or busy Primary server might
+    <varname>archive_timeout</> setting on the primary. This is
+    somewhat error prone since a network problem or busy primary server might
     be sufficient to initiate failover. A notification mechanism such
     as the explicit creation of a trigger file is less error prone, if
     this can be arranged.
@@ -1479,54 +1440,55 @@ if (!triggered)
    <title>Implementation</title>
 
    <para>
-    The short procedure for configuring a Standby Server is as follows. For
+    The short procedure for configuring a standby server is as follows. For
     full details of each step, refer to previous sections as noted.
     <orderedlist>
      <listitem>
       <para>
-       Setup Primary and Standby systems as near identically as
+       Set up primary and standby systems as near identically as
        possible, including two identical copies of
        <productname>PostgreSQL</> at the same release level.
       </para>
      </listitem>
      <listitem>
       <para>
-       Setup Continuous Archiving from the Primary to a WAL archive located
-       in a directory on the Standby Server. Ensure that both <xref
+       Set up continuous archiving from the primary to a WAL archive located
+       in a directory on the standby server. Ensure that <xref
        linkend="guc-archive-command"> and <xref linkend="guc-archive-timeout">
-       are set. (See <xref linkend="backup-archiving-wal">)
+       are set appropriately on the primary
+       (see <xref linkend="backup-archiving-wal">).
       </para>
      </listitem>
      <listitem>
       <para>
-       Make a Base Backup of the Primary Server. (See <xref
-       linkend="backup-base-backup">)
+       Make a base backup of the primary server (see <xref
+       linkend="backup-base-backup">), and load this data onto the standby.
       </para>
      </listitem>
      <listitem>
       <para>
-       Begin recovery on the Standby Server from the local WAL
+       Begin recovery on the standby server from the local WAL
        archive, using a <filename>recovery.conf</> that specifies a
        <varname>restore_command</> that waits as described
-       previously. (See <xref linkend="backup-pitr-recovery">)
+       previously (see <xref linkend="backup-pitr-recovery">).
       </para>
      </listitem>
     </orderedlist>
    </para>
 
    <para>
-    Recovery treats the WAL Archive as read-only, so once a WAL file has
-    been copied to the Standby system it can be copied to tape at the same
-    time as it is being used by the Standby database server to recover.
-    Thus, running a Standby Server for High Availability can be performed at
-    the same time as files are stored for longer term Disaster Recovery
+    Recovery treats the WAL archive as read-only, so once a WAL file has
+    been copied to the standby system it can be copied to tape at the same
+    time as it is being read by the standby database server.
+    Thus, running a standby server for high availability can be performed at
+    the same time as files are stored for longer term disaster recovery
     purposes. 
    </para>
 
    <para>
-    For testing purposes, it is possible to run both Primary and Standby
+    For testing purposes, it is possible to run both primary and standby
     servers on the same system. This does not provide any worthwhile
-    improvement on server robustness, nor would it be described as HA.
+    improvement in server robustness, nor would it be described as HA.
    </para>
   </sect2>
 
@@ -1534,78 +1496,127 @@ if (!triggered)
    <title>Failover</title>
 
    <para>
-    If the Primary Server fails then the Standby Server should begin
+    If the primary server fails then the standby server should begin
     failover procedures.
    </para>
 
    <para>
-    If the Standby Server fails then no failover need take place. If the
-    Standby Server can be restarted, even some time later, then the recovery
+    If the standby server fails then no failover need take place. If the
+    standby server can be restarted, even some time later, then the recovery
     process can also be immediately restarted, taking advantage of 
-    Restartable Recovery. If the Standby Server cannot be restarted, then a
-    full new Standby Server should be created.
+    restartable recovery. If the standby server cannot be restarted, then a
+    full new standby server should be created.
    </para>
 
    <para>
-    If the Primary Server fails and then immediately restarts, you must have
-    a mechanism for informing it that it is no longer the Primary. This is
+    If the primary server fails and then immediately restarts, you must have
+    a mechanism for informing it that it is no longer the primary. This is
     sometimes known as STONITH (Shoot the Other Node In The Head), which is
     necessary to avoid situations where both systems think they are the
-    Primary, which can lead to confusion and ultimately data loss.
+    primary, which can lead to confusion and ultimately data loss.
    </para>
 
    <para>
-    Many failover systems use just two systems, the Primary and the Standby,
+    Many failover systems use just two systems, the primary and the standby,
     connected by some kind of heartbeat mechanism to continually verify the
-    connectivity between the two and the viability of the Primary. It is
-    also possible to use a third system, known as a Witness Server to avoid
+    connectivity between the two and the viability of the primary. It is
+    also possible to use a third system (called a witness server) to avoid
     some problems of inappropriate failover, but the additional complexity
     may not be worthwhile unless it is set-up with sufficient care and
     rigorous testing.
    </para>
 
    <para>
-    At the instant that failover takes place to the Standby, we have only a
+    Once failover to the standby occurs, we have only a
     single server in operation. This is known as a degenerate state.
-    The former Standby is now the Primary, but the former Primary is down 
-    and may stay down. We must now fully recreate a Standby server, 
-    either on the former Primary system when it comes up, or on a third, 
-    possibly new, system. Once complete the Primary and Standby can be 
+    The former standby is now the primary, but the former primary is down 
+    and may stay down.  To return to normal operation we must
+    fully recreate a standby server, 
+    either on the former primary system when it comes up, or on a third, 
+    possibly new, system. Once complete the primary and standby can be 
     considered to have switched roles. Some people choose to use a third 
-    server to provide additional protection across the failover interval, 
+    server to provide backup to the new primary until the new standby
+    server is recreated,
     though clearly this complicates the system configuration and 
-    operational processes (and this can also act as a Witness Server).
+    operational processes.
    </para>
 
    <para>
-    So, switching from Primary to Standby Server can be fast but requires
+    So, switching from primary to standby server can be fast but requires
     some time to re-prepare the failover cluster. Regular switching from
-    Primary to Standby is encouraged, since it allows the regular downtime
-    that each system requires to maintain HA. This also acts as a test of the
-    failover mechanism so that it definitely works when you really need it. 
+    primary to standby is encouraged, since it allows regular downtime on
+    each system for maintenance. This also acts as a test of the
+    failover mechanism to ensure that it will really work when you need it. 
     Written administration procedures are advised.
    </para>
   </sect2>
 
   <sect2 id="warm-standby-record">
-   <title>Implementing Record-based Log Shipping</title>
+   <title>Record-based Log Shipping</title>
 
    <para>
-    The main features for Log Shipping in this release are based
-    around the file-based Log Shipping described above. It is also
-    possible to implement record-based Log Shipping using the
-    <function>pg_xlogfile_name_offset()</function> function (see <xref
-    linkend="functions-admin">), though this requires custom
-    development.
+    <productname>PostgreSQL</productname> directly supports file-based
+    log shipping as described above. It is also possible to implement
+    record-based log shipping, though this requires custom development.
    </para>
 
    <para>
-    An external program can call <function>pg_xlogfile_name_offset()</>
+    An external program can call the <function>pg_xlogfile_name_offset()</>
+    function (see <xref linkend="functions-admin">)
     to find out the file name and the exact byte offset within it of
-    the latest WAL pointer.  If the external program regularly polls
-    the server it can find out how far forward the pointer has
-    moved. It can then access the WAL file directly and copy those
-    bytes across to a less up-to-date copy on a Standby Server.
+    the current end of WAL.  It can then access the WAL file directly
+    and copy the data from the last known end of WAL through the current end
+    over to the standby server(s).  With this approach, the window for data
+    loss is the polling cycle time of the copying program, which can be very
+    small, but there is no wasted bandwidth from forcing partially-used
+    segment files to be archived.  Note that the standby servers' 
+    <varname>restore_command</> scripts still deal in whole WAL files,
+    so the incrementally copied data is not ordinarily made available to
+    the standby servers.  It is of use only when the primary dies &mdash;
+    then the last partial WAL file is fed to the standby before allowing
+    it to come up.  So correct implementation of this process requires
+    cooperation of the <varname>restore_command</> script with the data
+    copying program.
+   </para>
+  </sect2>
+
+  <sect2 id="backup-incremental-updated">
+   <title>Incrementally Updated Backups</title>
+
+  <indexterm zone="backup">
+   <primary>incrementally updated backups</primary>
+  </indexterm>
+
+  <indexterm zone="backup">
+   <primary>change accumulation</primary>
+  </indexterm>
+
+   <para>
+    In a warm standby configuration, it is possible to offload the expense of
+    taking periodic base backups from the primary server; instead base backups
+    can be made by backing
+    up a standby server's files.  This concept is generally known as 
+    incrementally updated backups, log change accumulation or more simply,
+    change accumulation.
+   </para>
+
+   <para>
+    If we take a backup of the standby server's files while it is following
+    logs shipped from the primary, we will be able to reload that data and
+    restart the standby's recovery process from the last restart point.
+    We no longer need to keep WAL files from before the restart point.
+    If we need to recover, it will be faster to recover from the incrementally
+    updated backup than from the original base backup.
+   </para>
+
+   <para>
+    Since the standby server is not <quote>live</>, it is not possible to
+    use <function>pg_start_backup()</> and <function>pg_stop_backup()</>
+    to manage the backup process; it will be up to you to determine how
+    far back you need to keep WAL segment files to have a recoverable
+    backup.  You can do this by running <application>pg_controldata</>
+    on the standby server to inspect the control file and determine the
+    current checkpoint WAL location.
    </para>
   </sect2>
  </sect1>
