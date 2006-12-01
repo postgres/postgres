@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.14 2006/11/22 18:15:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.15 2006/12/01 03:19:48 tgl Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability and Load Balancing</title>
@@ -12,7 +12,7 @@
 
  <para>
   Database servers can work together to allow a second server to
-  quickly take over quickly if the primary server fails (high
+  take over quickly if the primary server fails (high
   availability), or to allow several computers to serve the same
   data (load balancing).  Ideally, database servers could work
   together seamlessly.  Web servers serving static web pages can
@@ -50,8 +50,8 @@
   committed until all servers have committed the transaction.  This
   guarantees that a failover will not lose any data and that all
   load-balanced servers will return consistent results no matter
-  which server is queried. Asynchronous updating has a delay between
-  the time of commit and its propagation to the other servers,
+  which server is queried. In contrast, asynchronous solutions allow some
+  delay between the time of a commit and its propagation to the other servers,
   opening the possibility that some transactions might be lost in
   the switch to a backup server, and that load balanced servers
   might return slightly stale results.  Asynchronous communication
@@ -101,7 +101,7 @@
     standby server should never access the shared storage while
     the primary server is running.  It is also possible to use
     some type of file system mirroring to keep the standby server
-    current, but the mirroring must be done in a way that the
+    current, but the mirroring must be done in a way that ensures the
     standby server has a consistent copy of the file system.
    </para>
 
@@ -159,10 +159,10 @@ protocol to make nodes agree on a serializable transactional order.
 
    <para>
     With statement-based replication middleware, a program intercepts
-    every SQL query and sends it to all servers.  Each server
-    operates independently.  Read-only queries can be sent to a
-    single server because there is no need for all servers to
-    process it.
+    every SQL query and sends it to one or all servers.  Each server
+    operates independently.  Read-write queries are sent to all servers,
+    while read-only queries can be sent to just one server, allowing
+    the read workload to be distributed.
    </para>
 
    <para>
