@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.93 2006/09/18 19:54:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.94 2006/12/01 20:49:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -883,6 +883,31 @@ FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
     individual table rows; for example they can't be used with aggregation.
    </para>
 
+  <caution>
+   <para>
+    Avoid locking a row and then modifying it within a later savepoint or
+    <application>PL/pgSQL</application> exception block.  A subsequent
+    rollback would cause the lock to be lost.  For example,
+<programlisting>
+BEGIN;
+SELECT * FROM mytable WHERE key = 1 FOR UPDATE;
+SAVEPOINT s;
+UPDATE mytable SET ... WHERE key = 1;
+ROLLBACK TO s;
+</programlisting>
+    After the <command>ROLLBACK</>, the row is effectively unlocked, rather
+    than returned to its pre-savepoint state of being locked but not modified.
+    This hazard occurs if a row locked in the current transaction is updated
+    or deleted, or if a shared lock is upgraded to exclusive: in all these
+    cases, the former lock state is forgotten.  If the transaction is then
+    rolled back to a state between the original locking command and the
+    subsequent change, the row will appear not to be locked at all.  This is
+    an implementation deficiency which will be addressed in a future release
+    of <productname>PostgreSQL</productname>.
+   </para>
+  </caution>
+
+  <caution>
    <para>
     It is possible for a <command>SELECT</> command using both
     <literal>LIMIT</literal> and  <literal>FOR UPDATE/SHARE</literal>
@@ -894,6 +919,7 @@ FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
     or updated so that it does not meet the query <literal>WHERE</> condition
     anymore, in which case it will not be returned.
    </para>
+  </caution>
   </refsect2>
  </refsect1>
 
