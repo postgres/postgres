@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.32 2006/11/30 18:29:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.33 2006/12/01 19:55:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -304,6 +304,13 @@ BackgroundWriterMain(void)
 		 * fast as we can.
 		 */
 		pg_usleep(1000000L);
+
+		/*
+		 * Close all open files after any error.  This is helpful on Windows,
+		 * where holding deleted files open causes various strange errors.
+		 * It's not clear we need it elsewhere, but shouldn't hurt.
+		 */
+		smgrcloseall();
 	}
 
 	/* We can now handle ereport(ERROR) */
