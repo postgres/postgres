@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.64 2006/10/20 20:35:13 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.65 2006/12/01 01:04:36 tgl Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -504,16 +504,17 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     most <productname>PostgreSQL</productname> commands automatically
     acquire locks of appropriate modes to ensure that referenced
     tables are not dropped or modified in incompatible ways while the
-    command executes.  (For example, <command>ALTER TABLE</> cannot be
-    executed concurrently with other operations on the same table.)
+    command executes.  (For example, <command>ALTER TABLE</> cannot safely be
+    executed concurrently with other operations on the same table, so it
+    obtains an exclusive lock on the table to enforce that.)
    </para>
 
    <para>
     To examine a list of the currently outstanding locks in a database
-    server, use the <structname>pg_locks</structname> system view
-    (<xref linkend="view-pg-locks">). For more
-    information on monitoring the status of the lock manager
-    subsystem, refer to <xref linkend="monitoring">.
+    server, use the
+    <link linkend="view-pg-locks"><structname>pg_locks</structname></link>
+    system view. For more information on monitoring the status of the lock
+    manager subsystem, refer to <xref linkend="monitoring">.
    </para>
 
   <sect2 id="locking-tables">
@@ -545,7 +546,6 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     an <literal>ACCESS EXCLUSIVE</literal> lock cannot be held by more than one
     transaction at a time) while others are not self-conflicting (for example,
     an <literal>ACCESS SHARE</literal> lock can be held by multiple transactions).
-    Once acquired, a lock is held till end of transaction.
    </para>
 
      <variablelist>
@@ -731,6 +731,16 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
       </para>
      </tip>
 
+   <para>
+    Once acquired, a lock is normally held till end of transaction.  But if a
+    lock is acquired after establishing a savepoint, the lock is released
+    immediately if the savepoint is rolled back to.  This is consistent with
+    the principle that <command>ROLLBACK</> cancels all effects of the
+    commands since the savepoint.  The same holds for locks acquired within a
+    <application>PL/pgSQL</> exception block: an error escape from the block
+    releases locks acquired within it.
+   </para>
+
    </sect2>
 
    <sect2 id="locking-rows">
@@ -741,8 +751,9 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
      can be exclusive or shared locks.  An exclusive row-level lock on a
      specific row is automatically acquired when the row is updated or
      deleted.  The lock is held until the transaction commits or rolls
-     back.  Row-level locks do not affect data querying; they block
-     <emphasis>writers to the same row</emphasis> only.
+     back, in just the same way as for table-level locks.  Row-level locks do
+     not affect data querying; they block <emphasis>writers to the same
+     row</emphasis> only.
     </para>
 
     <para>
@@ -759,7 +770,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
      other transactions from acquiring the same shared lock.  However,
      no transaction is allowed to update, delete, or exclusively lock a
      row on which any other transaction holds a shared lock.  Any attempt
-     to do so will block until the shared locks have been released.
+     to do so will block until the shared lock(s) have been released.
     </para>
 
     <para>
@@ -882,10 +893,11 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
      that are an awkward fit for the MVCC model.  Once acquired, an
      advisory lock is held until explicitly released or the session ends.
      Unlike standard locks, advisory locks do not
-     honor transaction semantics.  For example, a lock acquired during a
+     honor transaction semantics: a lock acquired during a
      transaction that is later rolled back will still be held following the
-     rollback.  The same lock can be acquired multiple times by its
-     owning process: for each lock request there must be a corresponding
+     rollback, and likewise an unlock is effective even if the calling
+     transaction fails later.  The same lock can be acquired multiple times by
+     its owning process: for each lock request there must be a corresponding
      unlock request before the lock is actually released.  (If a session
      already holds a given lock, additional requests will always succeed, even
      if other sessions are awaiting the lock.)  Like all locks in
