@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.40 2006/12/02 00:42:54 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.41 2006/12/02 09:29:51 petere Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -824,29 +824,14 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
   </para>
 
   <sect2 id="compiling-for-trace">
-   <title>Compiling for Dynamic Trace</title>
+   <title>Compiling for Dynamic Tracing</title>
 
   <para>
    By default, trace points are disabled, so you will need to
    explicitly tell the configure script to make the probes available
    in <productname>PostgreSQL</productname>. To include DTrace support
-   in a 32-bit binary, specify <option>--enable-dtrace</> to configure.
-   For example:
-<programlisting>
-      $ ./configure --enable-dtrace ...
-</programlisting>
-   To include DTrace support in a 64-bit binary, specify 
-   <option>--enable-dtrace</>
-   and <literal>DTRACEFLAGS="-64"</> to configure. For example,
-   using the gcc compiler:
-<programlisting>
-      $ ./configure CC='gcc -m64' --enable-dtrace DTRACEFLAGS='-64' ...
-</programlisting>            
-   Using Sun's compiler:
-<programlisting>            
-      $ ./configure CC='/path_to_sun_compiler/cc -xtarget=native64' --enable-dtrace DTRACEFLAGS='-64' ...
-</programlisting>
-  </para>
+   specify <option>--enable-dtrace</> to configure.  See <xref
+   linkend="install-procedure"> for further information.
   </sect2>
 
   <sect2 id="trace-points">
@@ -855,7 +840,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
   <para>
    A few standard trace points are provided in the source code
    (of course, more can be added as needed for a particular problem).
-   These are:
+   These are shown in <xref linkend="trace-point-table">.
   </para>
 
  <table id="trace-point-table">
@@ -974,15 +959,14 @@ postgresql$1:::transaction-commit
    Note how the double underline in trace point names needs to
    be replaced by a hyphen when using D script.
    When executed, the example D script gives output such as:
-<programlisting>
+<screen>
 # ./txn_count.d `pgrep -n postgres`
 ^C
 
 Start                                          71
 Commit                                         70
-Abort                                           1
 Total time (ns)                        2312105013
-</programlisting>
+</screen>
   </para>
   <para>
    You should remember that trace programs need to be carefully written and
@@ -999,7 +983,7 @@ Total time (ns)                        2312105013
 
   <para>
    New trace points can be defined within the code wherever the developer
-   desires, though this will require a re-compile.
+   desires, though this will require a recompilation.
   </para>
 
   <para>
@@ -1009,14 +993,14 @@ Total time (ns)                        2312105013
    occurrence of an event can be achieved with a single line, using
    just the trace point name, e.g.
 <programlisting>
-      PG_TRACE (my__new__trace__point);
+PG_TRACE (my__new__trace__point);
 </programlisting>
    More complex trace points can be provided with one or more variables
    for inspection by the dynamic tracing utility by using the
    <literal>PG_TRACE</><replaceable>n</> macro that corresponds to the number
    of parameters after the trace point name:
 <programlisting>
-      PG_TRACE3 (my__complex__event, varX, varY, varZ);
+PG_TRACE3 (my__complex__event, varX, varY, varZ);
 </programlisting>
    The definition of the transaction__start trace point is shown below:
 <programlisting>
@@ -1055,7 +1039,7 @@ provider postgresql {
   </para>
 
   <para>
-   You should take care that the datatypes specified for the probe arguments
+   You should take care that the data types specified for the probe arguments
    match the datatypes of the variables used in the <literal>PG_TRACE</>
    macro. This is not checked at compile time. You can check that your newly
    added trace point is available by recompiling, then running the new binary,

@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 Sun Solaris specific
 To be read in conjunction with the installation instructions.
 ============================================================
-Last updated:        $Date: 2006/10/10 22:19:08 $
+Last updated:        $Date: 2006/12/02 09:29:51 $
 
 
 Contents:
@@ -142,18 +142,8 @@ recommendations are also useful on other hardware with Solaris.
 
 8) Can I use DTrace for tracing PostgreSQL?
 
-PostgreSQL 8.2 has implemented DTrace support.  You can enable it by
-the --enable-dtrace configure switch.  If you want to build 64-bit
-binaries with DTrace you must specify DTRACEFLAGS='-64', e.g.,
-
-Using GCC compiler:
-
-	$ ./configure CC='gcc -m64' --enable-dtrace DTRACEFLAGS='-64' ...
-            
-Using Sun compiler:
-
-	$ ./configure CC='/opt/SUNWspro/bin/cc -xtarget=native64' --enable-dtrace DTRACEFLAGS='-64'
-
+Yes, see the chapter "Monitoring Database Activity" in the documentation
+for further information.
 
 If you see the linking of the postgres executable abort with an error
 message like
