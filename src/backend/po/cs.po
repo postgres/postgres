@@ -9580,6 +9580,163 @@ msgstr ""
 msgid "to_char(): Unable to convert timestamp to tm"
 msgstr ""
 
+#: utils/adt/formatting.c:2870
+msgid "January"
+msgstr "Leden"
+
+#: utils/adt/formatting.c:2873
+msgid "February"
+msgstr "Únor"
+
+#: utils/adt/formatting.c:2876
+msgid "March"
+msgstr "Bøezen"
+
+#: utils/adt/formatting.c:2879
+msgid "April"
+msgstr "Duben"
+
+#: utils/adt/formatting.c:2882
+msgid "May"
+msgstr "Kvìten"
+
+#: utils/adt/formatting.c:2885
+msgid "June"
+msgstr "Èerven"
+
+#: utils/adt/formatting.c:2888
+msgid "July"
+msgstr "Èervenec"
+
+#: utils/adt/formatting.c:2891
+msgid "August"
+msgstr "Srpen"
+
+#: utils/adt/formatting.c:2894
+msgid "September"
+msgstr "Záøí"
+
+#: utils/adt/formatting.c:2897
+msgid "October"
+msgstr "Øíjen"
+
+#: utils/adt/formatting.c:2900
+msgid "November"
+msgstr "Listopad"
+
+#: utils/adt/formatting.c:2903
+msgid "December"
+msgstr "Prosinec"
+
+#: utils/adt/formatting.c:2918
+msgid "Jan"
+msgstr "Led"
+
+#: utils/adt/formatting.c:2921
+msgid "Feb"
+msgstr "Úno"
+
+#: utils/adt/formatting.c:2924
+msgid "Mar"
+msgstr "Bøe"
+
+#: utils/adt/formatting.c:2927
+msgid "Apr"
+msgstr "Dub"
+
+#. translator: Translate this as the abbreviation of "May".
+#. In English, it is both the full month name and the
+#. abbreviation, so this hack is needed to distinguish
+#. them.  The translation also needs to start with S:,
+#. which will be stripped at run time.
+#: utils/adt/formatting.c:2936
+msgid "S:May"
+msgstr "S:Kvì"
+
+#: utils/adt/formatting.c:2939
+msgid "Jun"
+msgstr "Èen"
+
+#: utils/adt/formatting.c:2942
+msgid "Jul"
+msgstr "Èec"
+
+#: utils/adt/formatting.c:2945
+msgid "Aug"
+msgstr "Srp"
+
+#: utils/adt/formatting.c:2948
+msgid "Sep"
+msgstr "Záø"
+
+#: utils/adt/formatting.c:2951
+msgid "Oct"
+msgstr "Øíj"
+
+#: utils/adt/formatting.c:2954
+msgid "Nov"
+msgstr "Lis"
+
+#: utils/adt/formatting.c:2957
+msgid "Dec"
+msgstr "Pro"
+
+#: utils/adt/formatting.c:2972
+msgid "Sunday"
+msgstr "Nedìle"
+
+#: utils/adt/formatting.c:2975
+msgid "Monday"
+msgstr "Pondìlí"
+
+#: utils/adt/formatting.c:2978
+msgid "Tuesday"
+msgstr "Úterý"
+
+#: utils/adt/formatting.c:2981
+msgid "Wednesday"
+msgstr "Støeda"
+
+#: utils/adt/formatting.c:2984
+msgid "Thursday"
+msgstr "Ètvrtek"
+
+#: utils/adt/formatting.c:2987
+msgid "Friday"
+msgstr "Pátek"
+
+#: utils/adt/formatting.c:2990
+msgid "Saturday"
+msgstr "Sobota"
+
+#: utils/adt/formatting.c:3005
+msgid "Sun"
+msgstr "Ne"
+
+#: utils/adt/formatting.c:3008
+msgid "Mon"
+msgstr "Po"
+
+#: utils/adt/formatting.c:3011
+msgid "Tue"
+msgstr "Ut"
+
+#: utils/adt/formatting.c:3014
+msgid "Wed"
+msgstr "St"
+
+#: utils/adt/formatting.c:3017
+msgid "Thu"
+msgstr "Èt"
+
+#: utils/adt/formatting.c:3020
+msgid "Fri"
+msgstr "Pá"
+
+#: utils/adt/formatting.c:3023
+msgid "Sat"
+msgstr "So"
+
 #: ../utils/adt/formatting.c:2976
 msgid "to_timestamp(): AM/PM hour must be between 1 and 12"
 msgstr ""

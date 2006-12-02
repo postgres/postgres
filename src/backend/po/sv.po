@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-11-11 01:00-0400\n"
+"POT-Creation-Date: 2006-11-28 13:01-0400\n"
 "PO-Revision-Date: 2006-11-17 21:20+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
@@ -23,8 +23,8 @@ msgstr "antalet indexerade kolumner (%d) överskrider gränsen (%d)"
 msgid "index row requires %lu bytes, maximum size is %lu"
 msgstr "indexrad kräver %lu bytes, maximal storlek är %lu"
 
-#: access/common/heaptuple.c:676 access/common/heaptuple.c:783
-#: access/common/heaptuple.c:1548
+#: access/common/heaptuple.c:679 access/common/heaptuple.c:786
+#: access/common/heaptuple.c:1551
 #, c-format
 msgid "number of columns (%d) exceeds limit (%d)"
 msgstr "antalet kolumner (%d) överskrider gränsen (%d)"
@@ -116,7 +116,7 @@ msgstr "Värden större än en buffert-sida kan inte indexeras."
 msgid "hash indexes do not support whole-index scans"
 msgstr "hash-index stöder inte hela-index-scans"
 
-#: access/hash/hashovfl.c:520
+#: access/hash/hashovfl.c:546
 #, c-format
 msgid "out of overflow pages in hash index \"%s\""
 msgstr "slut på överspillsidor i hash-index \"%s\""
@@ -151,8 +151,8 @@ msgstr "\"%s\" är ett index"
 msgid "\"%s\" is a composite type"
 msgstr "\"%s\" är en sammansatt typ"
 
-#: access/heap/heapam.c:2414 access/heap/heapam.c:2445
-#: access/heap/heapam.c:2480
+#: access/heap/heapam.c:2435 access/heap/heapam.c:2466
+#: access/heap/heapam.c:2501
 #, c-format
 msgid "could not obtain lock on row in relation \"%s\""
 msgstr "kunde inte låsa rad i relationen \"%s\""
@@ -376,87 +376,87 @@ msgstr "tar bort död två-fas statusfil \"%s\""
 msgid "recovering prepared transaction %u"
 msgstr "återskapar förberedd transaktion %u"
 
-#: access/transam/xlog.c:1200
+#: access/transam/xlog.c:1201
 #, c-format
 msgid "could not create archive status file \"%s\": %m"
 msgstr "kunde inte skapa arkiveringsstatusfil \"%s\": %m"
 
-#: access/transam/xlog.c:1208
+#: access/transam/xlog.c:1209
 #, c-format
 msgid "could not write archive status file \"%s\": %m"
 msgstr "kunde inte skriva arkiveringsstatusfil \"%s\": %m"
 
-#: access/transam/xlog.c:1631 access/transam/xlog.c:2950
+#: access/transam/xlog.c:1632 access/transam/xlog.c:2967
 #, c-format
 msgid "could not seek in log file %u, segment %u to offset %u: %m"
 msgstr "kunde inte söka i loggfil %u, segment %u till offset %u: %m"
 
-#: access/transam/xlog.c:1648
+#: access/transam/xlog.c:1649
 #, c-format
 msgid "could not write to log file %u, segment %u at offset %u, length %lu: %m"
 msgstr ""
 "kunde inte skriva till loggfil %u, segment %u på offset %u, längd %lu: %m"
 
-#: access/transam/xlog.c:1917 access/transam/xlog.c:2010
-#: access/transam/xlog.c:2243 access/transam/xlog.c:2297
-#: access/transam/xlog.c:2306
+#: access/transam/xlog.c:1918 access/transam/xlog.c:2011
+#: access/transam/xlog.c:2244 access/transam/xlog.c:2298
+#: access/transam/xlog.c:2307
 #, c-format
 msgid "could not open file \"%s\" (log file %u, segment %u): %m"
 msgstr "kunde inte öppna fil \"%s\" (loggfil %u, segment %u): %m"
 
-#: access/transam/xlog.c:1940 access/transam/xlog.c:2062
-#: access/transam/xlog.c:3530 access/transam/xlog.c:6230
-#: access/transam/xlog.c:6361 postmaster/postmaster.c:2939
+#: access/transam/xlog.c:1941 access/transam/xlog.c:2063
+#: access/transam/xlog.c:3547 access/transam/xlog.c:6247
+#: access/transam/xlog.c:6378 postmaster/postmaster.c:2992
 #: ../port/copydir.c:126
 #, c-format
 msgid "could not create file \"%s\": %m"
 msgstr "kan inte skapa fil \"%s\": %m"
 
-#: access/transam/xlog.c:1968 access/transam/xlog.c:2094
-#: access/transam/xlog.c:3582 access/transam/xlog.c:3620 commands/copy.c:1273
+#: access/transam/xlog.c:1969 access/transam/xlog.c:2095
+#: access/transam/xlog.c:3599 access/transam/xlog.c:3637 commands/copy.c:1273
 #: commands/tablespace.c:663 commands/tablespace.c:669
-#: postmaster/postmaster.c:2949 postmaster/postmaster.c:2959
+#: postmaster/postmaster.c:3002 postmaster/postmaster.c:3012
 #: utils/init/miscinit.c:1014 utils/init/miscinit.c:1023 utils/misc/guc.c:5497
 #: utils/misc/guc.c:5560 ../port/copydir.c:148
 #, c-format
 msgid "could not write to file \"%s\": %m"
 msgstr "kunde inte skriva till fil \"%s\": %m"
 
-#: access/transam/xlog.c:1975 access/transam/xlog.c:2101
-#: access/transam/xlog.c:3626 ../port/copydir.c:158
+#: access/transam/xlog.c:1976 access/transam/xlog.c:2102
+#: access/transam/xlog.c:3643 ../port/copydir.c:158
 #, c-format
 msgid "could not fsync file \"%s\": %m"
 msgstr "kunde inte fsync:a fil \"%s\": %m"
 
-#: access/transam/xlog.c:1980 access/transam/xlog.c:2106
-#: access/transam/xlog.c:3631 ../port/copydir.c:163
+#: access/transam/xlog.c:1981 access/transam/xlog.c:2107
+#: access/transam/xlog.c:3648 ../port/copydir.c:163
 #, c-format
 msgid "could not close file \"%s\": %m"
 msgstr "kunde inte stänga fil \"%s\": %m"
 
-#: access/transam/xlog.c:2047 access/transam/xlog.c:3361
-#: access/transam/xlog.c:3451 access/transam/xlog.c:3549 libpq/hba.c:950
-#: postmaster/autovacuum.c:451 utils/error/elog.c:1125
+#: access/transam/xlog.c:2048 access/transam/xlog.c:3378
+#: access/transam/xlog.c:3468 access/transam/xlog.c:3566 libpq/hba.c:950
+#: postmaster/autovacuum.c:462 utils/error/elog.c:1123
 #: utils/init/postinit.c:87 utils/init/miscinit.c:965
 #: utils/init/miscinit.c:1071 ../port/copydir.c:119
 #, c-format
 msgid "could not open file \"%s\": %m"
 msgstr "kunde inte öppna fil \"%s\": %m"
 
-#: access/transam/xlog.c:2075 access/transam/xlog.c:3561
-#: access/transam/xlog.c:6333 access/transam/xlog.c:6383
-#: access/transam/xlog.c:6658 access/transam/xlog.c:6683
-#: access/transam/xlog.c:6721 utils/adt/genfile.c:136 ../port/copydir.c:137
+#: access/transam/xlog.c:2076 access/transam/xlog.c:3578
+#: access/transam/xlog.c:6350 access/transam/xlog.c:6400
+#: access/transam/xlog.c:6675 access/transam/xlog.c:6700
+#: access/transam/xlog.c:6738 utils/adt/genfile.c:136 ../port/copydir.c:137
 #, c-format
 msgid "could not read file \"%s\": %m"
 msgstr "kunde inte läsa fil \"%s\": %m"
 
-#: access/transam/xlog.c:2078
+#: access/transam/xlog.c:2079
 #, c-format
 msgid "not enough data in file \"%s\""
 msgstr "otillräckligt med data i fil \"%s\""
 
-#: access/transam/xlog.c:2195
+#: access/transam/xlog.c:2196
 #, c-format
 msgid ""
 "could not link file \"%s\" to \"%s\" (initialization of log file %u, segment "
@@ -465,7 +465,7 @@ msgstr ""
 "kunde inte länka fil \"%s\" till \"%s\" (initiering av loggfil %u, segment %"
 "u): %m"
 
-#: access/transam/xlog.c:2216
+#: access/transam/xlog.c:2217
 #, c-format
 msgid ""
 "could not rename file \"%s\" to \"%s\" (initialization of log file %u, "
@@ -474,174 +474,174 @@ msgstr ""
 "kunde inte döpa om fil \"%s\" till \"%s\" (initiering av loggfil %u, segment "
 "%u): %m"
 
-#: access/transam/xlog.c:2347
+#: access/transam/xlog.c:2348
 #, c-format
 msgid "could not close log file %u, segment %u: %m"
 msgstr "kunde inte stänga loggfil %u, segment %u: %m"
 
-#: access/transam/xlog.c:2411 access/transam/xlog.c:2513
-#: access/transam/xlog.c:6213 utils/adt/dbsize.c:57 utils/adt/dbsize.c:179
+#: access/transam/xlog.c:2413 access/transam/xlog.c:2515
+#: access/transam/xlog.c:6230 utils/adt/dbsize.c:57 utils/adt/dbsize.c:179
 #: utils/adt/dbsize.c:247 utils/adt/genfile.c:170 ../port/copydir.c:81
 #, c-format
 msgid "could not stat file \"%s\": %m"
 msgstr "kunde inte göra stat() på fil \"%s\": %m"
 
-#: access/transam/xlog.c:2419 access/transam/xlog.c:6388
+#: access/transam/xlog.c:2421 access/transam/xlog.c:6405
 #: commands/tablespace.c:588
 #, c-format
 msgid "could not remove file \"%s\": %m"
 msgstr "kunde inte ta bort fil \"%s\": %m"
 
-#: access/transam/xlog.c:2494
+#: access/transam/xlog.c:2496
 #, c-format
 msgid "archive file \"%s\" has wrong size: %lu instead of %lu"
 msgstr "arkivfil \"%s\" har fel storlek: %lu istället för %lu"
 
-#: access/transam/xlog.c:2501
+#: access/transam/xlog.c:2503
 #, c-format
 msgid "restored log file \"%s\" from archive"
 msgstr "återställd logfil \"%s\" från arkiv"
 
-#: access/transam/xlog.c:2526
+#: access/transam/xlog.c:2543
 #, c-format
 msgid "could not restore file \"%s\" from archive: return code %d"
 msgstr "kunde inte återställa fil \"%s\" från arkiv: returkod %d"
 
-#: access/transam/xlog.c:2599 access/transam/xlog.c:2678
+#: access/transam/xlog.c:2616 access/transam/xlog.c:2695
 #, c-format
 msgid "could not open transaction log directory \"%s\": %m"
 msgstr "kunde inte öppna katalog för transaktionslogg \"%s\": %m"
 
-#: access/transam/xlog.c:2634
+#: access/transam/xlog.c:2651
 #, c-format
 msgid "recycled transaction log file \"%s\""
 msgstr "återanvände transaktionsloggfil \"%s\""
 
-#: access/transam/xlog.c:2648
+#: access/transam/xlog.c:2665
 #, c-format
 msgid "removing transaction log file \"%s\""
 msgstr "tar bort transaktionsloggfil \"%s\""
 
-#: access/transam/xlog.c:2691
+#: access/transam/xlog.c:2708
 #, c-format
 msgid "removing transaction log backup history file \"%s\""
 msgstr "tar bort transaktionsloggens history-fil-backup \"%s\""
 
-#: access/transam/xlog.c:2797
+#: access/transam/xlog.c:2814
 #, c-format
 msgid "incorrect hole size in record at %X/%X"
 msgstr "inkorrekt hålstorlek i post vid %X/%X"
 
-#: access/transam/xlog.c:2810
+#: access/transam/xlog.c:2827
 #, c-format
 msgid "incorrect total length in record at %X/%X"
 msgstr "inkorrekt totallängd i post vid %X/%X"
 
-#: access/transam/xlog.c:2823
+#: access/transam/xlog.c:2840
 #, c-format
 msgid "incorrect resource manager data checksum in record at %X/%X"
 msgstr "felaktig resurshanterardatakontrollsumma i post vid %X/%X"
 
-#: access/transam/xlog.c:2892 access/transam/xlog.c:2980
+#: access/transam/xlog.c:2909 access/transam/xlog.c:2997
 #, c-format
 msgid "invalid record offset at %X/%X"
 msgstr "ogiltig postoffset vid %X/%X"
 
-#: access/transam/xlog.c:2934 access/transam/xlog.c:3123
+#: access/transam/xlog.c:2951 access/transam/xlog.c:3140
 #, c-format
 msgid "could not read from log file %u, segment %u, offset %u: %m"
 msgstr "kunde inte läsa från loggfil %u, segment %u, offset %u: %m"
 
-#: access/transam/xlog.c:2958
+#: access/transam/xlog.c:2975
 #, c-format
 msgid "could not read from log file %u, segment %u at offset %u: %m"
 msgstr "kunde inte läsa från loggfil %u, segment %u vid offset %u: %m"
 
-#: access/transam/xlog.c:2988
+#: access/transam/xlog.c:3005
 #, c-format
 msgid "contrecord is requested by %X/%X"
 msgstr "contrecord är begärd vid %X/%X"
 
-#: access/transam/xlog.c:3005
+#: access/transam/xlog.c:3022
 #, fuzzy, c-format
 msgid "invalid xlog switch record at %X/%X"
 msgstr "ogiltig postoffset vid %X/%X"
 
-#: access/transam/xlog.c:3013
+#: access/transam/xlog.c:3030
 #, c-format
 msgid "record with zero length at %X/%X"
 msgstr "post med nollstorlek vid %X/%X"
 
-#: access/transam/xlog.c:3022
+#: access/transam/xlog.c:3039
 #, c-format
 msgid "invalid record length at %X/%X"
 msgstr "ogiltig postlängd vid %X/%X"
 
-#: access/transam/xlog.c:3029
+#: access/transam/xlog.c:3046
 #, c-format
 msgid "invalid resource manager ID %u at %X/%X"
 msgstr "ogiltigt resurshanterar-ID %u vid %X/%X"
 
-#: access/transam/xlog.c:3042 access/transam/xlog.c:3058
+#: access/transam/xlog.c:3059 access/transam/xlog.c:3075
 #, c-format
 msgid "record with incorrect prev-link %X/%X at %X/%X"
 msgstr "post med inkorrekt prev-link %X/%X vid %X/%X"
 
-#: access/transam/xlog.c:3087
+#: access/transam/xlog.c:3104
 #, c-format
 msgid "record length %u at %X/%X too long"
 msgstr "postlängd %u vid %X/%X är för lång"
 
-#: access/transam/xlog.c:3132
+#: access/transam/xlog.c:3149
 #, c-format
 msgid "there is no contrecord flag in log file %u, segment %u, offset %u"
 msgstr "det finns ingen contrecord-flagga i loggfil %u, segment %u, offset %u"
 
-#: access/transam/xlog.c:3142
+#: access/transam/xlog.c:3159
 #, c-format
 msgid "invalid contrecord length %u in log file %u, segment %u, offset %u"
 msgstr "ogiltig contrecord-längd %u i loggfil %u, segment %u, offset %u"
 
-#: access/transam/xlog.c:3228
+#: access/transam/xlog.c:3245
 #, c-format
 msgid "invalid magic number %04X in log file %u, segment %u, offset %u"
 msgstr "felaktigt magiskt nummer %04X i loggfil %u, segment %u, offset %u"
 
-#: access/transam/xlog.c:3235 access/transam/xlog.c:3281
+#: access/transam/xlog.c:3252 access/transam/xlog.c:3298
 #, c-format
 msgid "invalid info bits %04X in log file %u, segment %u, offset %u"
 msgstr "ogiltiga infobitar %04X i loggfil %u, segment %u, offset %u"
 
-#: access/transam/xlog.c:3257 access/transam/xlog.c:3265
-#: access/transam/xlog.c:3272
+#: access/transam/xlog.c:3274 access/transam/xlog.c:3282
+#: access/transam/xlog.c:3289
 msgid "WAL file is from different system"
 msgstr "WAL-fil är från ett annat system"
 
-#: access/transam/xlog.c:3258
+#: access/transam/xlog.c:3275
 #, c-format
 msgid "WAL file SYSID is %s, pg_control SYSID is %s"
 msgstr "WAL-fil-SYSID är %s, pg_control-SYSID är %s"
 
-#: access/transam/xlog.c:3266
+#: access/transam/xlog.c:3283
 msgid "Incorrect XLOG_SEG_SIZE in page header."
 msgstr "Felaktig XLOG_SEG_SIZE i sidhuvud."
 
-#: access/transam/xlog.c:3273
+#: access/transam/xlog.c:3290
 msgid "Incorrect XLOG_BLCKSZ in page header."
 msgstr "Felaktig XLOG_BLCKSZ i sidhuvud."
 
-#: access/transam/xlog.c:3291
+#: access/transam/xlog.c:3308
 #, c-format
 msgid "unexpected pageaddr %X/%X in log file %u, segment %u, offset %u"
 msgstr "oväntad sidadress %X/%X i loggfil %u, segment %u, offset %u"
 
-#: access/transam/xlog.c:3303
+#: access/transam/xlog.c:3320
 #, c-format
 msgid "unexpected timeline ID %u in log file %u, segment %u, offset %u"
 msgstr "oväntad tidslinje ID %u i loggfil %u, segment %u, offset %u"
 
 # FIXME
-#: access/transam/xlog.c:3321
+#: access/transam/xlog.c:3338
 #, c-format
 msgid ""
 "out-of-sequence timeline ID %u (after %u) in log file %u, segment %u, offset "
@@ -650,95 +650,95 @@ msgstr ""
 "\"ej i sekvens\"-fel på tidslinje-ID %u (efter %u) i loggfil %u, segment %u, "
 "offset %u"
 
-#: access/transam/xlog.c:3390
+#: access/transam/xlog.c:3407
 #, c-format
 msgid "syntax error in history file: %s"
 msgstr "syntaxfel i history-fil: %s"
 
-#: access/transam/xlog.c:3391
+#: access/transam/xlog.c:3408
 msgid "Expected a numeric timeline ID."
 msgstr "Förväntade ett numeriskt tidslinje-ID."
 
-#: access/transam/xlog.c:3396
+#: access/transam/xlog.c:3413
 #, c-format
 msgid "invalid data in history file: %s"
 msgstr "felaktig data i history-fil: %s"
 
-#: access/transam/xlog.c:3397
+#: access/transam/xlog.c:3414
 msgid "Timeline IDs must be in increasing sequence."
 msgstr "Tidslinje-ID måste komma i en stigande sekvens."
 
-#: access/transam/xlog.c:3410
+#: access/transam/xlog.c:3427
 #, c-format
 msgid "invalid data in history file \"%s\""
 msgstr "felaktig data i history-fil \"%s\""
 
-#: access/transam/xlog.c:3411
+#: access/transam/xlog.c:3428
 msgid "Timeline IDs must be less than child timeline's ID."
 msgstr "Tidslinje-ID:er måste vara mindre än barnens tidslinje-ID:er."
 
-#: access/transam/xlog.c:3648
+#: access/transam/xlog.c:3665
 #, c-format
 msgid "could not link file \"%s\" to \"%s\": %m"
 msgstr "kunde inte länka fil \"%s\" till \"%s\": %m"
 
-#: access/transam/xlog.c:3655 access/transam/xlog.c:4463
-#: access/transam/xlog.c:4504 access/transam/xlog.c:4873
-#: postmaster/pgarch.c:565 utils/init/flatfiles.c:285
+#: access/transam/xlog.c:3672 access/transam/xlog.c:4480
+#: access/transam/xlog.c:4521 access/transam/xlog.c:4890
+#: postmaster/pgarch.c:588 utils/init/flatfiles.c:285
 #: utils/init/flatfiles.c:672
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "kunde inte döpa om fil \"%s\" till \"%s\": %m"
 
-#: access/transam/xlog.c:3712
+#: access/transam/xlog.c:3729
 msgid "invalid LC_COLLATE setting"
 msgstr "ogiltig inställning av LC_COLLATE"
 
-#: access/transam/xlog.c:3717
+#: access/transam/xlog.c:3734
 msgid "invalid LC_CTYPE setting"
 msgstr "ogiltig inställning av LC_CTYPE"
 
-#: access/transam/xlog.c:3746
+#: access/transam/xlog.c:3763
 #, c-format
 msgid "could not create control file \"%s\": %m"
 msgstr "kunde inte skapa kontrollfil \"%s\": %m"
 
-#: access/transam/xlog.c:3757 access/transam/xlog.c:3966
+#: access/transam/xlog.c:3774 access/transam/xlog.c:3983
 #, c-format
 msgid "could not write to control file: %m"
 msgstr "kunde inte skriva till kontrollfil: %m"
 
-#: access/transam/xlog.c:3763 access/transam/xlog.c:3972
+#: access/transam/xlog.c:3780 access/transam/xlog.c:3989
 #, c-format
 msgid "could not fsync control file: %m"
 msgstr "kunde inte fsync:a kontrollfil: %m"
 
-#: access/transam/xlog.c:3768 access/transam/xlog.c:3977
+#: access/transam/xlog.c:3785 access/transam/xlog.c:3994
 #, c-format
 msgid "could not close control file: %m"
 msgstr "kunde inte stänga kontrollfil: %m"
 
-#: access/transam/xlog.c:3786 access/transam/xlog.c:3955
+#: access/transam/xlog.c:3803 access/transam/xlog.c:3972
 #, c-format
 msgid "could not open control file \"%s\": %m"
 msgstr "kunde inte öppna kontrollfil \"%s\": %m"
 
-#: access/transam/xlog.c:3792
+#: access/transam/xlog.c:3809
 #, c-format
 msgid "could not read from control file: %m"
 msgstr "kunde inte läsa från kontrollfil: %m"
 
-#: access/transam/xlog.c:3804 access/transam/xlog.c:3833
-#: access/transam/xlog.c:3840 access/transam/xlog.c:3847
-#: access/transam/xlog.c:3852 access/transam/xlog.c:3859
-#: access/transam/xlog.c:3866 access/transam/xlog.c:3873
-#: access/transam/xlog.c:3880 access/transam/xlog.c:3887
-#: access/transam/xlog.c:3896 access/transam/xlog.c:3903
-#: access/transam/xlog.c:3911 utils/init/miscinit.c:1089
+#: access/transam/xlog.c:3821 access/transam/xlog.c:3850
+#: access/transam/xlog.c:3857 access/transam/xlog.c:3864
+#: access/transam/xlog.c:3869 access/transam/xlog.c:3876
+#: access/transam/xlog.c:3883 access/transam/xlog.c:3890
+#: access/transam/xlog.c:3897 access/transam/xlog.c:3904
+#: access/transam/xlog.c:3913 access/transam/xlog.c:3920
+#: access/transam/xlog.c:3928 utils/init/miscinit.c:1089
 msgid "database files are incompatible with server"
 msgstr "databasfilerna är inkompatibla med servern"
 
-#: access/transam/xlog.c:3805
+#: access/transam/xlog.c:3822
 #, c-format
 msgid ""
 "The database cluster was initialized with PG_CONTROL_VERSION %d, but the "
@@ -747,16 +747,16 @@ msgstr ""
 "Databasklustret initierades med PG_CONTROL_VERSION %d, men servern "
 "kompilerades med PG_CONTROL_VERSION %d."
 
-#: access/transam/xlog.c:3808 access/transam/xlog.c:3837
-#: access/transam/xlog.c:3844 access/transam/xlog.c:3849
+#: access/transam/xlog.c:3825 access/transam/xlog.c:3854
+#: access/transam/xlog.c:3861 access/transam/xlog.c:3866
 msgid "It looks like you need to initdb."
 msgstr "Det verkar som om du behöver köra initdb."
 
-#: access/transam/xlog.c:3818
+#: access/transam/xlog.c:3835
 msgid "incorrect checksum in control file"
 msgstr "ogiltig kontrollsumma kontrollfil"
 
-#: access/transam/xlog.c:3834
+#: access/transam/xlog.c:3851
 #, c-format
 msgid ""
 "The database cluster was initialized with CATALOG_VERSION_NO %d, but the "
@@ -765,7 +765,7 @@ msgstr ""
 "Databasklustret initierades med CATALOG_VERSION_NO %d, men servern "
 "kompilerades med CATALOG_VERSION_NO %d."
 
-#: access/transam/xlog.c:3841
+#: access/transam/xlog.c:3858
 #, c-format
 msgid ""
 "The database cluster was initialized with MAXALIGN %d, but the server was "
@@ -774,7 +774,7 @@ msgstr ""
 "Databasklustret initierades med MAXALIGN %d, men servern kompilerades med "
 "MAXALIGN %d."
 
-#: access/transam/xlog.c:3848
+#: access/transam/xlog.c:3865
 msgid ""
 "The database cluster appears to use a different floating-point number format "
 "than the server executable."
@@ -782,7 +782,7 @@ msgstr ""
 "Databasklustret verkar använda en annan flyttalsrepresentation än vad "
 "serverprogrammet gör."
 
-#: access/transam/xlog.c:3853
+#: access/transam/xlog.c:3870
 #, c-format
 msgid ""
 "The database cluster was initialized with BLCKSZ %d, but the server was "
@@ -791,15 +791,15 @@ msgstr ""
 "Databasklustret initierades med BLCKSZ %d, men servern kompilerades med "
 "BLCKSZ %d."
 
-#: access/transam/xlog.c:3856 access/transam/xlog.c:3863
-#: access/transam/xlog.c:3870 access/transam/xlog.c:3877
-#: access/transam/xlog.c:3884 access/transam/xlog.c:3891
-#: access/transam/xlog.c:3899 access/transam/xlog.c:3906
-#: access/transam/xlog.c:3915
+#: access/transam/xlog.c:3873 access/transam/xlog.c:3880
+#: access/transam/xlog.c:3887 access/transam/xlog.c:3894
+#: access/transam/xlog.c:3901 access/transam/xlog.c:3908
+#: access/transam/xlog.c:3916 access/transam/xlog.c:3923
+#: access/transam/xlog.c:3932
 msgid "It looks like you need to recompile or initdb."
 msgstr "Det verkar som om du måste kompilera om eller köra initdb."
 
-#: access/transam/xlog.c:3860
+#: access/transam/xlog.c:3877
 #, c-format
 msgid ""
 "The database cluster was initialized with RELSEG_SIZE %d, but the server was "
@@ -808,7 +808,7 @@ msgstr ""
 "Databasklustret initierades med RELSEG_SIZE %d, men servern kompilerades med "
 "RELSEG_SIZE %d."
 
-#: access/transam/xlog.c:3867
+#: access/transam/xlog.c:3884
 #, fuzzy, c-format
 msgid ""
 "The database cluster was initialized with XLOG_BLCKSZ %d, but the server was "
@@ -817,7 +817,7 @@ msgstr ""
 "Databasklustret initierades med XLOG_BLCKSZ %d, men servern kompilerades med "
 "XLOG_BLCKSZ %d."
 
-#: access/transam/xlog.c:3874
+#: access/transam/xlog.c:3891
 #, c-format
 msgid ""
 "The database cluster was initialized with XLOG_SEG_SIZE %d, but the server "
@@ -826,7 +826,7 @@ msgstr ""
 "Databasklustret initierades med XLOG_SEG_SIZE %d, men servern kompilerades "
 "med XLOG_SEG_SIZE %d."
 
-#: access/transam/xlog.c:3881
+#: access/transam/xlog.c:3898
 #, c-format
 msgid ""
 "The database cluster was initialized with NAMEDATALEN %d, but the server was "
@@ -835,7 +835,7 @@ msgstr ""
 "Databasklustret initierades med NAMEDATALEN %d, men servern kompilerades med "
 "NAMEDATALEN %d."
 
-#: access/transam/xlog.c:3888
+#: access/transam/xlog.c:3905
 #, c-format
 msgid ""
 "The database cluster was initialized with INDEX_MAX_KEYS %d, but the server "
@@ -844,7 +844,7 @@ msgstr ""
 "Databasklustret initierades med INDEX_MAX_KEYS %d, men servern kompilerades "
 "med INDEX_MAX_KEYS %d."
 
-#: access/transam/xlog.c:3897
+#: access/transam/xlog.c:3914
 msgid ""
 "The database cluster was initialized without HAVE_INT64_TIMESTAMP but the "
 "server was compiled with HAVE_INT64_TIMESTAMP."
@@ -852,7 +852,7 @@ msgstr ""
 "Databasklustret initierades utan HAVE_INT64_TIMESTAMP, men servern "
 "kompilerades med HAVE_INT64_TIMESTAMP."
 
-#: access/transam/xlog.c:3904
+#: access/transam/xlog.c:3921
 msgid ""
 "The database cluster was initialized with HAVE_INT64_TIMESTAMP but the "
 "server was compiled without HAVE_INT64_TIMESTAMP."
@@ -860,7 +860,7 @@ msgstr ""
 "Databasklustret initierades med HAVE_INT64_TIMESTAMP, men servern "
 "kompilerades utan HAVE_INT64_TIMESTAMP."
 
-#: access/transam/xlog.c:3912
+#: access/transam/xlog.c:3929
 #, c-format
 msgid ""
 "The database cluster was initialized with LOCALE_NAME_BUFLEN %d, but the "
@@ -869,11 +869,11 @@ msgstr ""
 "Databasklustret initierades med LOCALE_NAME_BUFLEN %d, men servern "
 "kompilerades med LOCALE_NAME_BUFLEN %d."
 
-#: access/transam/xlog.c:3918 access/transam/xlog.c:3925
+#: access/transam/xlog.c:3935 access/transam/xlog.c:3942
 msgid "database files are incompatible with operating system"
 msgstr "databasfilerna är inte kompatibla med operativsystemet"
 
-#: access/transam/xlog.c:3919
+#: access/transam/xlog.c:3936
 #, c-format
 msgid ""
 "The database cluster was initialized with LC_COLLATE \"%s\", which is not "
@@ -882,11 +882,11 @@ msgstr ""
 "Databasklustret initierades med LC_COLLATE \"%s\", vilket inte känns igen av "
 "setlocale()."
 
-#: access/transam/xlog.c:3922 access/transam/xlog.c:3929
+#: access/transam/xlog.c:3939 access/transam/xlog.c:3946
 msgid "It looks like you need to initdb or install locale support."
 msgstr "Det verkar som om du behöver köra initdb eller installera lokal-stöd."
 
-#: access/transam/xlog.c:3926
+#: access/transam/xlog.c:3943
 #, c-format
 msgid ""
 "The database cluster was initialized with LC_CTYPE \"%s\", which is not "
@@ -895,137 +895,137 @@ msgstr ""
 "Databasklustret initierades med LC_CTYPE \"%s\", vilket inte känns igen av "
 "setlocale()."
 
-#: access/transam/xlog.c:4163
+#: access/transam/xlog.c:4180
 #, c-format
 msgid "could not write bootstrap transaction log file: %m"
 msgstr "kunde inte skriva bootstrap-transaktionslogg: %m"
 
-#: access/transam/xlog.c:4169
+#: access/transam/xlog.c:4186
 #, c-format
 msgid "could not fsync bootstrap transaction log file: %m"
 msgstr "kunde inte fsync:a bootstrap-transaktionslogg: %m"
 
-#: access/transam/xlog.c:4174
+#: access/transam/xlog.c:4191
 #, c-format
 msgid "could not close bootstrap transaction log file: %m"
 msgstr "kunde inte stänga bootstrap-transaktionslogg: %m"
 
-#: access/transam/xlog.c:4237
+#: access/transam/xlog.c:4254
 #, c-format
 msgid "could not open recovery command file \"%s\": %m"
 msgstr "kunde inte öppna återställningskommandofil \"%s\": %m"
 
-#: access/transam/xlog.c:4242
+#: access/transam/xlog.c:4259
 msgid "starting archive recovery"
 msgstr "Startar arkivåterställning"
 
-#: access/transam/xlog.c:4287
+#: access/transam/xlog.c:4304
 #, c-format
 msgid "restore_command = \"%s\""
 msgstr "restore_command = \"%s\""
 
-#: access/transam/xlog.c:4301
+#: access/transam/xlog.c:4318
 #, c-format
 msgid "recovery_target_timeline is not a valid number: \"%s\""
 msgstr "recovery_target_timeline är inte ett giltigt nummer: \"%s\""
 
-#: access/transam/xlog.c:4306
+#: access/transam/xlog.c:4323
 #, c-format
 msgid "recovery_target_timeline = %u"
 msgstr "recovery_target_timeline = %u"
 
-#: access/transam/xlog.c:4309
+#: access/transam/xlog.c:4326
 msgid "recovery_target_timeline = latest"
 msgstr "recovery_target_timeline = latest"
 
-#: access/transam/xlog.c:4317
+#: access/transam/xlog.c:4334
 #, c-format
 msgid "recovery_target_xid is not a valid number: \"%s\""
 msgstr "recovery_target_xid är inte ett giltigt nummer: \"%s\""
 
-#: access/transam/xlog.c:4320
+#: access/transam/xlog.c:4337
 #, c-format
 msgid "recovery_target_xid = %u"
 msgstr "recovery_target_xid = %u"
 
-#: access/transam/xlog.c:4345
+#: access/transam/xlog.c:4362
 #, c-format
 msgid "recovery_target_time = %s"
 msgstr "recovery_target_time = %s"
 
-#: access/transam/xlog.c:4362
+#: access/transam/xlog.c:4379
 #, c-format
 msgid "recovery_target_inclusive = %s"
 msgstr "recovery_target_inclusive = %s"
 
-#: access/transam/xlog.c:4366
+#: access/transam/xlog.c:4383
 #, c-format
 msgid "unrecognized recovery parameter \"%s\""
 msgstr "okänd återställningsparameter \"%s\""
 
-#: access/transam/xlog.c:4374
+#: access/transam/xlog.c:4391
 #, c-format
 msgid "syntax error in recovery command file: %s"
 msgstr "syntaxfel i återställningskommandofil: %s"
 
-#: access/transam/xlog.c:4376
+#: access/transam/xlog.c:4393
 msgid "Lines should have the format parameter = 'value'."
 msgstr "Raderna skall vara på formatet parameter = 'värde'."
 
-#: access/transam/xlog.c:4381
+#: access/transam/xlog.c:4398
 #, c-format
 msgid "recovery command file \"%s\" did not specify restore_command"
 msgstr "återställningskommandofil \"%s\" angav inte något restore_command"
 
-#: access/transam/xlog.c:4400
+#: access/transam/xlog.c:4417
 #, c-format
 msgid "recovery_target_timeline %u does not exist"
 msgstr "recovery_target_timeline %u finns inte"
 
-#: access/transam/xlog.c:4508
+#: access/transam/xlog.c:4525
 msgid "archive recovery complete"
 msgstr "arkivåterställning klar"
 
-#: access/transam/xlog.c:4592
+#: access/transam/xlog.c:4609
 #, c-format
 msgid "recovery stopping after commit of transaction %u, time %s"
 msgstr "återställning stoppad efter commit av transaktion %u, tid %s"
 
-#: access/transam/xlog.c:4596
+#: access/transam/xlog.c:4613
 #, c-format
 msgid "recovery stopping before commit of transaction %u, time %s"
 msgstr "återställning stoppad före commit av transaktion %u, tid %s"
 
-#: access/transam/xlog.c:4603
+#: access/transam/xlog.c:4620
 #, c-format
 msgid "recovery stopping after abort of transaction %u, time %s"
 msgstr "återställning stoppad efter abort av transaktion %u, tid %s"
 
-#: access/transam/xlog.c:4607
+#: access/transam/xlog.c:4624
 #, c-format
 msgid "recovery stopping before abort of transaction %u, time %s"
 msgstr "återställning stoppad före abort av transaktion %u, tid %s"
 
-#: access/transam/xlog.c:4652
+#: access/transam/xlog.c:4669
 msgid "control file contains invalid data"
 msgstr "kontrollfil innehåller ogiltig data"
 
-#: access/transam/xlog.c:4656
+#: access/transam/xlog.c:4673
 #, c-format
 msgid "database system was shut down at %s"
 msgstr "databassystemet stängdes ner vid %s"
 
-#: access/transam/xlog.c:4660
+#: access/transam/xlog.c:4677
 #, c-format
 msgid "database system shutdown was interrupted at %s"
 msgstr "nedstängning av databasen avbröts vid %s"
 
-#: access/transam/xlog.c:4664
+#: access/transam/xlog.c:4681
 #, c-format
 msgid "database system was interrupted while in recovery at %s"
 msgstr "databassystemet avbröts under återställning vid %s"
 
-#: access/transam/xlog.c:4666
+#: access/transam/xlog.c:4683
 msgid ""
 "This probably means that some data is corrupted and you will have to use the "
 "last backup for recovery."
@@ -1033,12 +1033,12 @@ msgstr ""
 "Det betyder troligen att en del data är förstörd och du behöver återställa "
 "databasen från den senaste backup:en."
 
-#: access/transam/xlog.c:4670
+#: access/transam/xlog.c:4687
 #, fuzzy, c-format
 msgid "database system was interrupted while in recovery at log time %s"
 msgstr "databassystemet avbröts under återställning vid %s"
 
-#: access/transam/xlog.c:4672
+#: access/transam/xlog.c:4689
 msgid ""
 "If this has occurred more than once some data may be corrupted and you may "
 "need to choose an earlier recovery target."
@@ -1046,27 +1046,27 @@ msgstr ""
 "Om detta har hänt mer än en gång så kan data vara korrupt och du kanske\n"
 "måste återställa till ett tidigare återställningsmål."
 
-#: access/transam/xlog.c:4676
+#: access/transam/xlog.c:4693
 #, c-format
 msgid "database system was interrupted at %s"
 msgstr "databassystemet avbröts vid %s"
 
-#: access/transam/xlog.c:4708
+#: access/transam/xlog.c:4725
 #, c-format
 msgid "requested timeline %u is not a child of database system timeline %u"
 msgstr ""
 "efterfrågad tidslinje %u är inte ett barn till databasens systemtidslinje %u"
 
-#: access/transam/xlog.c:4722 access/transam/xlog.c:4746
+#: access/transam/xlog.c:4739 access/transam/xlog.c:4763
 #, c-format
 msgid "checkpoint record is at %X/%X"
 msgstr "checkpoint-posten är vid %X/%X"
 
-#: access/transam/xlog.c:4729
+#: access/transam/xlog.c:4746
 msgid "could not locate required checkpoint record"
 msgstr "kunde inte hitta den checkpoint-post som krävs"
 
-#: access/transam/xlog.c:4730
+#: access/transam/xlog.c:4747
 #, c-format
 msgid ""
 "If you are not restoring from a backup, try removing the file \"%s/"
@@ -1075,257 +1075,259 @@ msgstr ""
 "Om du inte hålller på att återställa från en backup, försök med att ta bort "
 "filen \"%s/backup_label\"."
 
-#: access/transam/xlog.c:4756
+#: access/transam/xlog.c:4773
 #, c-format
 msgid "using previous checkpoint record at %X/%X"
 msgstr "använder tidigare checkpoint-post vid %X/%X"
 
-#: access/transam/xlog.c:4762
+#: access/transam/xlog.c:4779
 msgid "could not locate a valid checkpoint record"
 msgstr "kunde inte hitta en giltig checkpoint-post"
 
-#: access/transam/xlog.c:4771
+#: access/transam/xlog.c:4788
 #, c-format
 msgid "redo record is at %X/%X; undo record is at %X/%X; shutdown %s"
 msgstr "redo-posten är vid %X/%X; undo-posten är vid %X/%X; nedstängning %s"
 
-#: access/transam/xlog.c:4776
+#: access/transam/xlog.c:4793
 #, c-format
 msgid "next transaction ID: %u/%u; next OID: %u"
 msgstr "nästa transaktions-ID: %u/%u; nästa OID: %u"
 
-#: access/transam/xlog.c:4780
+#: access/transam/xlog.c:4797
 #, c-format
 msgid "next MultiXactId: %u; next MultiXactOffset: %u"
 msgstr "nästa MultiXactId: %u; nästa MultiXactOffset: %u"
 
-#: access/transam/xlog.c:4784
+#: access/transam/xlog.c:4801
 msgid "invalid next transaction ID"
 msgstr "nästa transaktions-ID ogiltig"
 
-#: access/transam/xlog.c:4802
+#: access/transam/xlog.c:4819
 msgid "invalid redo in checkpoint record"
 msgstr "ogiltig redo i checkpoint-post"
 
-#: access/transam/xlog.c:4816
+#: access/transam/xlog.c:4833
 msgid "invalid redo/undo record in shutdown checkpoint"
 msgstr "ogiltig redo/undo-post i nedstängnings-checkpoint"
 
-#: access/transam/xlog.c:4841
+#: access/transam/xlog.c:4858
 msgid "automatic recovery in progress"
 msgstr "automatisk återställning pågår"
 
-#: access/transam/xlog.c:4847
+#: access/transam/xlog.c:4864
 msgid ""
 "database system was not properly shut down; automatic recovery in progress"
 msgstr ""
 "databassystemet stängdes inte ned korrekt; automatisk återställning pågår"
 
-#: access/transam/xlog.c:4909
+#: access/transam/xlog.c:4926
 #, c-format
 msgid "redo starts at %X/%X"
 msgstr "redo startar vid %X/%X"
 
-#: access/transam/xlog.c:4979
+#: access/transam/xlog.c:4996
 #, c-format
 msgid "redo done at %X/%X"
 msgstr "redo gjord vid %X/%X"
 
-#: access/transam/xlog.c:4987
+#: access/transam/xlog.c:5004
 msgid "redo is not required"
 msgstr "redo behövs inte"
 
-#: access/transam/xlog.c:5007
+#: access/transam/xlog.c:5024
 msgid "requested recovery stop point is before end time of backup dump"
-msgstr "efterfrågad stopptidpunkt av återställning är före sluttiden av backup-dumpen"
+msgstr ""
+"efterfrågad stopptidpunkt av återställning är före sluttiden av backup-dumpen"
 
-#: access/transam/xlog.c:5011
+#: access/transam/xlog.c:5028
 msgid "WAL ends before end time of backup dump"
 msgstr "WAL slutar före sluttiden av backup-dumpen"
 
-#: access/transam/xlog.c:5026
+#: access/transam/xlog.c:5043
 #, c-format
 msgid "selected new timeline ID: %u"
 msgstr "valt nytt tidslinje-ID: %u"
 
-#: access/transam/xlog.c:5173
+#: access/transam/xlog.c:5190
 msgid "database system is ready"
 msgstr "databassystemet är redo"
 
-#: access/transam/xlog.c:5212
+#: access/transam/xlog.c:5229
 msgid "invalid primary checkpoint link in control file"
 msgstr "ogiltig primär checkpoint-länk i kontrollfil"
 
-#: access/transam/xlog.c:5216
+#: access/transam/xlog.c:5233
 msgid "invalid secondary checkpoint link in control file"
 msgstr "ogiltig sekondär checkpoint-länk i kontrollfil"
 
-#: access/transam/xlog.c:5220
+#: access/transam/xlog.c:5237
 msgid "invalid checkpoint link in backup_label file"
 msgstr "ogiltig checkpoint-länk i \"backup_label\"-fil"
 
-#: access/transam/xlog.c:5234
+#: access/transam/xlog.c:5251
 msgid "invalid primary checkpoint record"
 msgstr "ogiltig primär checkpoint-post"
 
-#: access/transam/xlog.c:5238
+#: access/transam/xlog.c:5255
 msgid "invalid secondary checkpoint record"
 msgstr "ogiltig sekundär checkpoint-post"
 
-#: access/transam/xlog.c:5242
+#: access/transam/xlog.c:5259
 msgid "invalid checkpoint record"
 msgstr "ogiltig checkpoint-post"
 
-#: access/transam/xlog.c:5253
+#: access/transam/xlog.c:5270
 msgid "invalid resource manager ID in primary checkpoint record"
 msgstr "ogiltig resurshanterar-ID i primär checkpoint-post"
 
-#: access/transam/xlog.c:5257
+#: access/transam/xlog.c:5274
 msgid "invalid resource manager ID in secondary checkpoint record"
 msgstr "ogiltig resurshanterar-ID i sekundär checkpoint-post"
 
-#: access/transam/xlog.c:5261
+#: access/transam/xlog.c:5278
 msgid "invalid resource manager ID in checkpoint record"
 msgstr "ogiltig resurshanterar-ID i checkpoint-post"
 
-#: access/transam/xlog.c:5273
+#: access/transam/xlog.c:5290
 msgid "invalid xl_info in primary checkpoint record"
 msgstr "ogiltig xl_info i primär checkpoint-post"
 
-#: access/transam/xlog.c:5277
+#: access/transam/xlog.c:5294
 msgid "invalid xl_info in secondary checkpoint record"
 msgstr "ogiltig xl_info i sekundär checkpoint-post"
 
-#: access/transam/xlog.c:5281
+#: access/transam/xlog.c:5298
 msgid "invalid xl_info in checkpoint record"
 msgstr "ogiltig xl_info i checkpoint-post"
 
-#: access/transam/xlog.c:5293
+#: access/transam/xlog.c:5310
 msgid "invalid length of primary checkpoint record"
 msgstr "ogiltig längd i primär checkpoint-post"
 
-#: access/transam/xlog.c:5297
+#: access/transam/xlog.c:5314
 msgid "invalid length of secondary checkpoint record"
 msgstr "ogiltig längd i sekundär checkpoint-post"
 
-#: access/transam/xlog.c:5301
+#: access/transam/xlog.c:5318
 msgid "invalid length of checkpoint record"
 msgstr "ogiltig längd på checkpoint-post"
 
-#: access/transam/xlog.c:5410
+#: access/transam/xlog.c:5427
 msgid "shutting down"
 msgstr "stänger ner"
 
-#: access/transam/xlog.c:5420
+#: access/transam/xlog.c:5437
 msgid "database system is shut down"
 msgstr "databassystemet är nedstängt"
 
-#: access/transam/xlog.c:5561
+#: access/transam/xlog.c:5578
 msgid "checkpoint starting"
 msgstr "checkpoint startar"
 
-#: access/transam/xlog.c:5623
+#: access/transam/xlog.c:5640
 msgid ""
 "concurrent transaction log activity while database system is shutting down"
 msgstr "samtidig transaktionsloggaktivitet när databassystemet stängs ner"
 
-#: access/transam/xlog.c:5691
+#: access/transam/xlog.c:5708
 #, c-format
 msgid ""
 "checkpoint complete; %d transaction log file(s) added, %d removed, %d "
 "recycled"
-msgstr "checkpoint klar; %d transaktionsloggfil(er) adderade, %d borttagna, %d återanvända"
+msgstr ""
+"checkpoint klar; %d transaktionsloggfil(er) adderade, %d borttagna, %d "
+"återanvända"
 
-#: access/transam/xlog.c:5772
+#: access/transam/xlog.c:5789
 #, c-format
 msgid "recovery restart point at %X/%X"
 msgstr "återställningens omstartspunkt vid %X/%X"
 
-#: access/transam/xlog.c:5881
+#: access/transam/xlog.c:5898
 #, c-format
 msgid "unexpected timeline ID %u (after %u) in checkpoint record"
 msgstr "oväntad tidslinje-ID %u (efter %u) i checkpoint-post"
 
-#: access/transam/xlog.c:5913
+#: access/transam/xlog.c:5930
 #, c-format
 msgid "unexpected timeline ID %u (should be %u) in checkpoint record"
 msgstr "oväntad tidslinje-ID %u (skall vara %u) i checkpoint-post"
 
-#: access/transam/xlog.c:6043 access/transam/xlog.c:6068
+#: access/transam/xlog.c:6060 access/transam/xlog.c:6085
 #, c-format
 msgid "could not fsync log file %u, segment %u: %m"
 msgstr "kunde inte fsync:a loggfil %u, segment %u: %m"
 
-#: access/transam/xlog.c:6076
+#: access/transam/xlog.c:6093
 #, c-format
 msgid "could not fsync write-through log file %u, segment %u: %m"
 msgstr "kunde inte fsync:a skriv-igenom-loggfil %u, segment %u: %m"
 
-#: access/transam/xlog.c:6085
+#: access/transam/xlog.c:6102
 #, c-format
 msgid "could not fdatasync log file %u, segment %u: %m"
 msgstr "kunde inte fdatasync:a loggfil %u, segment %u: %m"
 
-#: access/transam/xlog.c:6127 access/transam/xlog.c:6294
+#: access/transam/xlog.c:6144 access/transam/xlog.c:6311
 msgid "must be superuser to run a backup"
 msgstr "måste vara superanvändare för göra en backup"
 
-#: access/transam/xlog.c:6132
+#: access/transam/xlog.c:6149
 msgid "WAL archiving is not active"
 msgstr "WAL-arkivering är inte aktiv"
 
-#: access/transam/xlog.c:6133
+#: access/transam/xlog.c:6150
 msgid ""
 "archive_command must be defined before online backups can be made safely."
-msgstr "archive_command måste definieras innan online-backup:er kan utföras på ett säkert sätt."
+msgstr ""
+"archive_command måste definieras innan online-backup:er kan utföras på ett "
+"säkert sätt."
 
-#: access/transam/xlog.c:6162 access/transam/xlog.c:6219
+#: access/transam/xlog.c:6179 access/transam/xlog.c:6236
 msgid "a backup is already in progress"
 msgstr "en backup är redan på gång"
 
-#: access/transam/xlog.c:6163
+#: access/transam/xlog.c:6180
 msgid "Run pg_stop_backup() and try again."
 msgstr "Kör pg_stop_backup() och försök igen."
 
-#: access/transam/xlog.c:6220
+#: access/transam/xlog.c:6237
 #, c-format
 msgid ""
 "If you're sure there is no backup in progress, remove file \"%s\" and try "
 "again."
-msgstr "Om du är säker på att det inte pågår någon backup så ta bort filen \"%s\" och försök igen."
+msgstr ""
+"Om du är säker på att det inte pågår någon backup så ta bort filen \"%s\" "
+"och försök igen."
 
-#: access/transam/xlog.c:6241 access/transam/xlog.c:6374
+#: access/transam/xlog.c:6258 access/transam/xlog.c:6391
 #, c-format
 msgid "could not write file \"%s\": %m"
 msgstr "kunde inte skriva fil \"%s\": %m"
 
-#: access/transam/xlog.c:6337
+#: access/transam/xlog.c:6354
 msgid "a backup is not in progress"
 msgstr "ingen backup är på gång"
 
-#: access/transam/xlog.c:6349 access/transam/xlog.c:6673
-#: access/transam/xlog.c:6679 access/transam/xlog.c:6710
-#: access/transam/xlog.c:6716
+#: access/transam/xlog.c:6366 access/transam/xlog.c:6690
+#: access/transam/xlog.c:6696 access/transam/xlog.c:6727
+#: access/transam/xlog.c:6733
 #, c-format
 msgid "invalid data in file \"%s\""
 msgstr "felaktig data i fil \"%s\""
 
-#: access/transam/xlog.c:6421
+#: access/transam/xlog.c:6438
 #, fuzzy
 msgid "must be superuser to switch transaction log files"
 msgstr "måste vara superanvändare för att skapa grupper"
 
-#: access/transam/xlog.c:6529
+#: access/transam/xlog.c:6546 access/transam/xlog.c:6615
 #, c-format
 msgid "could not parse transaction log location \"%s\""
 msgstr "kunde inte tolka transaktionsloggposition \"%s\""
 
-#: access/transam/xlog.c:6598
-#, c-format
-msgid "could not parse xlog location \"%s\""
-msgstr "kunde inte tolka xlog position \"%s\""
-
-#: access/transam/xlog.c:6744
+#: access/transam/xlog.c:6761
 #, c-format
 msgid "xlog redo %s"
 msgstr "xlog redo %s"
@@ -1363,49 +1365,49 @@ msgstr ""
 msgid "transaction ID wrap limit is %u, limited by database \"%s\""
 msgstr "transaktions-ID wrap-gräns är %u, begränsad av databas \"%s\""
 
-#: access/transam/xact.c:519
+#: access/transam/xact.c:525
 msgid "cannot have more than 2^32-1 commands in a transaction"
 msgstr "kan inte ha mer än 2^32-1 kommandon i en transaktion"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2481
+#: access/transam/xact.c:2509
 #, c-format
 msgid "%s cannot run inside a transaction block"
 msgstr "%s kan inte köras i ett transaktionsblock"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2491
+#: access/transam/xact.c:2519
 #, c-format
 msgid "%s cannot run inside a subtransaction"
 msgstr "%s kan inte köras i ett undertransaktionsblock"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2503
+#: access/transam/xact.c:2531
 #, c-format
 msgid "%s cannot be executed from a function"
 msgstr "%s kan inte utföras från en funktion"
 
 #. translator: %s represents an SQL statement name
-#: access/transam/xact.c:2554
+#: access/transam/xact.c:2582
 #, c-format
 msgid "%s may only be used in transaction blocks"
 msgstr "%s kan bara användas i ett transaktionsblock"
 
-#: access/transam/xact.c:2736
+#: access/transam/xact.c:2764
 msgid "there is already a transaction in progress"
 msgstr "det är redan en transaktion igång"
 
-#: access/transam/xact.c:2903 access/transam/xact.c:2995
+#: access/transam/xact.c:2931 access/transam/xact.c:3023
 msgid "there is no transaction in progress"
 msgstr "ingen transaktion pågår"
 
-#: access/transam/xact.c:3089 access/transam/xact.c:3139
-#: access/transam/xact.c:3145 access/transam/xact.c:3189
-#: access/transam/xact.c:3237 access/transam/xact.c:3243
+#: access/transam/xact.c:3117 access/transam/xact.c:3167
+#: access/transam/xact.c:3173 access/transam/xact.c:3217
+#: access/transam/xact.c:3265 access/transam/xact.c:3271
 msgid "no such savepoint"
 msgstr "ingen sådan savepoint"
 
-#: access/transam/xact.c:3883
+#: access/transam/xact.c:3913
 msgid "cannot have more than 2^32-1 subtransactions in a transaction"
 msgstr "kan inte ha mer än 2^32-1 subtransaktioner i en transaktion"
 
@@ -1421,18 +1423,18 @@ msgstr "GIN-index stöder inte hela-index-scan"
 msgid "GIN index does not support search with void query"
 msgstr "GIN index stöder inte sökning med tom fråga"
 
-#: bootstrap/bootstrap.c:298 postmaster/postmaster.c:557 tcop/postgres.c:2923
+#: bootstrap/bootstrap.c:298 postmaster/postmaster.c:562 tcop/postgres.c:2923
 #, c-format
 msgid "--%s requires a value"
 msgstr "--%s kräver ett värde"
 
-#: bootstrap/bootstrap.c:303 postmaster/postmaster.c:562 tcop/postgres.c:2928
+#: bootstrap/bootstrap.c:303 postmaster/postmaster.c:567 tcop/postgres.c:2928
 #, c-format
 msgid "-c %s requires a value"
 msgstr "-c %s kräver ett värde"
 
-#: bootstrap/bootstrap.c:314 postmaster/postmaster.c:574
-#: postmaster/postmaster.c:587
+#: bootstrap/bootstrap.c:314 postmaster/postmaster.c:579
+#: postmaster/postmaster.c:592
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
@@ -1677,9 +1679,9 @@ msgid "invalid privilege type %s for language"
 msgstr "ogiltig privilegietyp %s för språk"
 
 #: catalog/aclchk.c:314
-#, c-format
-msgid "invalid privilege type %s for namespace"
-msgstr "ogiltig privilegietyp %s för namnutrymme"
+#, fuzzy, c-format
+msgid "invalid privilege type %s for schema"
+msgstr "ogiltig privilegietyp %s för sekvens"
 
 #: catalog/aclchk.c:318
 #, c-format
@@ -2112,7 +2114,7 @@ msgstr "delade index kan inte skapas efter initdb"
 msgid "shared index \"%s\" can only be reindexed in stand-alone mode"
 msgstr "delat index \"%s\" kan bara reindexeras i ensamt körningsläge"
 
-#: catalog/namespace.c:172 catalog/namespace.c:227 commands/trigger.c:2942
+#: catalog/namespace.c:172 catalog/namespace.c:227 commands/trigger.c:2982
 #, c-format
 msgid "cross-database references are not implemented: \"%s.%s.%s\""
 msgstr "referenser till andra databaser är inte implementerat: \"%s.%s.%s\""
@@ -2440,8 +2442,8 @@ msgid "inherited column \"%s\" has a type conflict"
 msgstr "ärvd kolumn \"%s\" har en typkonflikt"
 
 #: commands/tablecmds.c:906 commands/tablecmds.c:1047
-#: parser/parse_coerce.c:261 parser/parse_coerce.c:1195
-#: parser/parse_coerce.c:1212 parser/parse_coerce.c:1257
+#: parser/parse_coerce.c:261 parser/parse_coerce.c:1194
+#: parser/parse_coerce.c:1211 parser/parse_coerce.c:1256
 #, c-format
 msgid "%s versus %s"
 msgstr "%s kontra %s"
@@ -2664,7 +2666,7 @@ msgstr ""
 "finns inget unique-villkor som matchar de givna nycklarna i den refererade "
 "tabellen \"%s\""
 
-#: commands/tablecmds.c:4855 commands/trigger.c:3062
+#: commands/tablecmds.c:4855 commands/trigger.c:3102
 #, c-format
 msgid "constraint \"%s\" does not exist"
 msgstr "integritetsvillkor \"%s\" existerar inte"
@@ -2920,7 +2922,7 @@ msgid "role \"%s\" cannot be dropped because some objects depend on it"
 msgstr "rollen \"%s\" kan inte tas bort eftersom andra objekt beror på den"
 
 #: commands/user.c:893 nodes/print.c:84 storage/lmgr/deadlock.c:942
-#: tcop/postgres.c:3796
+#: tcop/postgres.c:3801
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -2998,7 +3000,8 @@ msgstr "aggregatfunktionens indatatype måste anges"
 
 #: commands/aggregatecmds.c:159
 msgid "basetype is redundant with aggregate input type specification"
-msgstr "basetypen är redundant tillsammans med aggregatets indata-typ-specifikation"
+msgstr ""
+"basetypen är redundant tillsammans med aggregatets indata-typ-specifikation"
 
 #: commands/aggregatecmds.c:184
 #, c-format
@@ -3082,12 +3085,16 @@ msgid ""
 "You may be able to work around this by marking column \"%s\" NOT NULL, or "
 "use ALTER TABLE ... SET WITHOUT CLUSTER to remove the cluster specification "
 "from the table."
-msgstr "Du kanske kan gå runt det genom att markera kolumn \"%s\" NOT NULL, eller använda ALTER TABLE ... SET WITHOUT CLUSTER för att ta bort kluster-specifikationen från tabellen."
+msgstr ""
+"Du kanske kan gå runt det genom att markera kolumn \"%s\" NOT NULL, eller "
+"använda ALTER TABLE ... SET WITHOUT CLUSTER för att ta bort kluster-"
+"specifikationen från tabellen."
 
 #: commands/cluster.c:381
 #, c-format
 msgid "You may be able to work around this by marking column \"%s\" NOT NULL."
-msgstr "Du kanske kan gå runt detta genom att markera kolumn \"%s\" som NOT NULL."
+msgstr ""
+"Du kanske kan gå runt detta genom att markera kolumn \"%s\" som NOT NULL."
 
 #: commands/cluster.c:392
 #, c-format
@@ -3281,7 +3288,9 @@ msgstr "COPY-avdelaren kan inte vara nyradstecken eller vagnretur"
 
 #: commands/copy.c:875
 msgid "COPY null representation cannot use newline or carriage return"
-msgstr "null-representationen för COPY kan inte använda tecknen för nyrad eller vagnretur"
+msgstr ""
+"null-representationen för COPY kan inte använda tecknen för nyrad eller "
+"vagnretur"
 
 #: commands/copy.c:881
 msgid "COPY delimiter cannot be backslash"
@@ -4235,8 +4244,8 @@ msgstr ""
 "setval: värdet %s är utanför sitt intervall för sekvensen \"%s\" (%s..%s)"
 
 #: commands/sequence.c:892 lib/dllist.c:43 lib/dllist.c:88 libpq/auth.c:597
-#: postmaster/postmaster.c:843 postmaster/postmaster.c:1697
-#: postmaster/postmaster.c:2456 storage/buffer/buf_init.c:162
+#: postmaster/postmaster.c:848 postmaster/postmaster.c:1702
+#: postmaster/postmaster.c:2499 storage/buffer/buf_init.c:162
 #: storage/buffer/localbuf.c:301 storage/file/fd.c:317 storage/file/fd.c:676
 #: storage/file/fd.c:811 storage/ipc/procarray.c:537
 #: storage/ipc/procarray.c:544 utils/adt/oracle_compat.c:74
@@ -4588,12 +4597,12 @@ msgstr "BEFORE STATEMENT-utlösare kan inte returnera ett värde"
 msgid "could not serialize access due to concurrent update"
 msgstr "kunde inte serialisera åtkomst på grund av samtidig uppdatering"
 
-#: commands/trigger.c:3036
+#: commands/trigger.c:3076
 #, c-format
 msgid "constraint \"%s\" is not deferrable"
 msgstr "integritetsvillkor \"%s\" är inte \"deferrable\""
 
-#: commands/trigger.c:3164 commands/trigger.c:3185
+#: commands/trigger.c:3204 commands/trigger.c:3225
 #, fuzzy, c-format
 msgid "cannot truncate table \"%s\" because it has pending trigger events"
 msgstr ""
@@ -4805,7 +4814,9 @@ msgstr ""
 msgid ""
 "Consider compacting this relation or increasing the configuration parameter "
 "\"max_fsm_pages\"."
-msgstr "Överväg att kompakta denna relation eller öka konfigurationsparametern \"max_fsm_pages\"."
+msgstr ""
+"Överväg att kompakta denna relation eller öka konfigurationsparametern "
+"\"max_fsm_pages\"."
 
 #: commands/vacuumlazy.c:563
 #, c-format
@@ -4926,13 +4937,9 @@ msgstr "ny rad för relation \"%s\" bryter mot check-villkor \"%s\""
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr "antalet array-dimensioner (%d) överskrider det maximalt tillåtna (%d)"
 
-#: executor/execQual.c:277
+#: executor/execQual.c:277 executor/execQual.c:305
 msgid "array subscript in assignment must not be null"
 msgstr "array-index i tilldelning kan inte vara null"
-
-#: executor/execQual.c:305
-msgid "array subscript in assignment must not be NULL"
-msgstr "array-index i tilldelning kan inte vara NULL"
 
 #: executor/execQual.c:651
 #, c-format
@@ -4952,11 +4959,14 @@ msgstr "funktioner och operatorer kan ta som mest ett argument av mängd-typ"
 #: executor/execQual.c:3992 executor/functions.c:680 executor/functions.c:719
 #: utils/fmgr/funcapi.c:59
 msgid "set-valued function called in context that cannot accept a set"
-msgstr "funktion som returnerar en mängd anropas i ett kontext som inte accepterar en mängd"
+msgstr ""
+"funktion som returnerar en mängd anropas i ett kontext som inte accepterar "
+"en mängd"
 
 #: executor/execQual.c:1393
 msgid "function returning set of rows cannot return null value"
-msgstr "funktion som returnerar en mängd av rader kan inte returnera värdet null"
+msgstr ""
+"funktion som returnerar en mängd av rader kan inte returnera värdet null"
 
 #: executor/execQual.c:1471
 msgid "table-function protocol for materialize mode was not followed"
@@ -4984,13 +4994,16 @@ msgstr "kan inte göra merge på inkompatibla arrayer"
 msgid ""
 "Array with element type %s cannot be included in ARRAY construct with "
 "element type %s."
-msgstr "Array med elementtyp %s kan inte inkluderas i ARRAY-konstruktion med elementtyp %s."
+msgstr ""
+"Array med elementtyp %s kan inte inkluderas i ARRAY-konstruktion med "
+"elementtyp %s."
 
 #: executor/execQual.c:2359 executor/execQual.c:2386
 #: utils/adt/arrayfuncs.c:489
 msgid ""
 "multidimensional arrays must have array expressions with matching dimensions"
-msgstr "multidimensionella arrayer måste ha array-uttryck med matchande dimensioner"
+msgstr ""
+"multidimensionella arrayer måste ha array-uttryck med matchande dimensioner"
 
 #: executor/execQual.c:2681
 msgid "NULLIF does not support set arguments"
@@ -5027,7 +5040,7 @@ msgid "%s is not allowed in a SQL function"
 msgstr "%s är inte tillåtet i en SQL-funktion"
 
 #. translator: %s is a SQL statement name
-#: executor/functions.c:124 executor/spi.c:1425
+#: executor/functions.c:124 executor/spi.c:1438
 #, c-format
 msgid "%s is not allowed in a non-volatile function"
 msgstr "%s tillåts inte i en icke-volatile-funktion"
@@ -5037,7 +5050,9 @@ msgstr "%s tillåts inte i en icke-volatile-funktion"
 msgid ""
 "could not determine actual result type for function declared to return type %"
 "s"
-msgstr "kunde inte bestämma den verkliga typen för funktion deklarerad att returnera typen %s"
+msgstr ""
+"kunde inte bestämma den verkliga typen för funktion deklarerad att returnera "
+"typen %s"
 
 #: executor/functions.c:244
 #, c-format
@@ -5165,21 +5180,21 @@ msgstr ""
 msgid "subtransaction left non-empty SPI stack"
 msgstr "undertransaktion lämnade en icke-tom SPI-stack"
 
-#: executor/spi.c:841
+#: executor/spi.c:854
 msgid "cannot open multi-query plan as cursor"
 msgstr ""
 
-#: executor/spi.c:846
+#: executor/spi.c:859
 msgid "cannot open empty query as cursor"
 msgstr "kan inte öppna tom fråga som markör"
 
 #. translator: %s is name of a SQL command, eg INSERT
-#: executor/spi.c:850
+#: executor/spi.c:863
 #, c-format
 msgid "cannot open %s query as cursor"
 msgstr "kan inte öppna %s-fråga som markör"
 
-#: executor/spi.c:1634
+#: executor/spi.c:1647
 #, c-format
 msgid "SQL statement \"%s\""
 msgstr "SQL-sats: \"%s\""
@@ -5999,14 +6014,18 @@ msgstr "  -T              skicka SIGSTOP till alla serverprocesser om en dör\n"
 #: main/main.c:300
 #, c-format
 msgid "  -W NUM          wait NUM seconds to allow attach from a debugger\n"
-msgstr "  -W NUM          wänta NUM sekunder för att tillåta att en debugger kopplas in\n"
+msgstr ""
+"  -W NUM          wänta NUM sekunder för att tillåta att en debugger kopplas "
+"in\n"
 
 #: main/main.c:302
 #, c-format
 msgid ""
 "\n"
 "Options for single-user mode:\n"
-msgstr "\nFlaggor för enanvändarläge:\n"
+msgstr ""
+"\n"
+"Flaggor för enanvändarläge:\n"
 
 #: main/main.c:303
 #, c-format
@@ -6238,28 +6257,29 @@ msgstr ""
 msgid "argument of %s must not contain subqueries"
 msgstr "argumentet till %s får inte innehålla underfrågor"
 
-#: parser/parse_clause.c:1236
+#. translator: first %s is name of a SQL construct, eg ORDER BY
+#: parser/parse_clause.c:1234
 #, c-format
 msgid "%s \"%s\" is ambiguous"
 msgstr "%s \"%s\" är tvetydig"
 
 #. translator: %s is name of a SQL construct, eg ORDER BY
-#: parser/parse_clause.c:1259
+#: parser/parse_clause.c:1257
 #, c-format
 msgid "non-integer constant in %s"
 msgstr ""
 
 #. translator: %s is name of a SQL construct, eg ORDER BY
-#: parser/parse_clause.c:1275
+#: parser/parse_clause.c:1273
 #, c-format
 msgid "%s position %d is not in select list"
 msgstr ""
 
-#: parser/parse_clause.c:1510
+#: parser/parse_clause.c:1508
 msgid "for SELECT DISTINCT, ORDER BY expressions must appear in select list"
 msgstr ""
 
-#: parser/parse_clause.c:1550
+#: parser/parse_clause.c:1548
 msgid "SELECT DISTINCT ON expressions must match initial ORDER BY expressions"
 msgstr ""
 
@@ -6702,45 +6722,46 @@ msgstr "argumentet till %s måste vara av typ integer, inte av typ %s"
 msgid "argument of %s must be type bigint, not type %s"
 msgstr "argumentet till %s måste vara av typ integer, inte av typ %s"
 
-#: parser/parse_coerce.c:960
+#. translator: first %s is name of a SQL construct, eg CASE
+#: parser/parse_coerce.c:959
 #, c-format
 msgid "%s types %s and %s cannot be matched"
 msgstr ""
 
 #. translator: first %s is name of a SQL construct, eg CASE
-#: parser/parse_coerce.c:1021
+#: parser/parse_coerce.c:1020
 #, c-format
 msgid "%s could not convert type %s to %s"
 msgstr "%s kan inte konvertera typ %s till %s"
 
-#: parser/parse_coerce.c:1194
+#: parser/parse_coerce.c:1193
 msgid "arguments declared \"anyelement\" are not all alike"
 msgstr ""
 
-#: parser/parse_coerce.c:1211
+#: parser/parse_coerce.c:1210
 msgid "arguments declared \"anyarray\" are not all alike"
 msgstr ""
 
-#: parser/parse_coerce.c:1240 parser/parse_coerce.c:1351
-#: parser/parse_coerce.c:1378
+#: parser/parse_coerce.c:1239 parser/parse_coerce.c:1350
+#: parser/parse_coerce.c:1377
 #, c-format
 msgid "argument declared \"anyarray\" is not an array but type %s"
 msgstr ""
 
-#: parser/parse_coerce.c:1256
+#: parser/parse_coerce.c:1255
 msgid ""
 "argument declared \"anyarray\" is not consistent with argument declared "
 "\"anyelement\""
 msgstr ""
 
-#: parser/parse_coerce.c:1267
+#: parser/parse_coerce.c:1266
 msgid ""
 "could not determine anyarray/anyelement type because input has type \"unknown"
 "\""
 msgstr ""
 
-#: parser/parse_coerce.c:1292 parser/parse_coerce.c:1309
-#: parser/parse_coerce.c:1363 parser/parse_expr.c:1269
+#: parser/parse_coerce.c:1291 parser/parse_coerce.c:1308
+#: parser/parse_coerce.c:1362 parser/parse_expr.c:1269
 #: parser/parse_expr.c:1577 parser/parse_expr.c:1613 parser/parse_oper.c:920
 #, c-format
 msgid "could not find array type for data type %s"
@@ -7464,69 +7485,69 @@ msgstr "kunde inte utföra \"try-lock\" på semafor: felkod %d"
 msgid "could not fork autovacuum process: %m"
 msgstr "kunde inte starta autovacuum-processen: %m"
 
-#: postmaster/autovacuum.c:410
+#: postmaster/autovacuum.c:421
 #, c-format
 msgid "autovacuum: processing database \"%s\""
 msgstr "autovacuum: processar databas \"%s\""
 
-#: postmaster/autovacuum.c:982
+#: postmaster/autovacuum.c:993
 msgid "autovacuum not started because of misconfiguration"
 msgstr ""
 
-#: postmaster/autovacuum.c:983
+#: postmaster/autovacuum.c:994
 msgid "Enable options \"stats_start_collector\" and \"stats_row_level\"."
 msgstr ""
 
-#: postmaster/bgwriter.c:372
+#: postmaster/bgwriter.c:384
 #, c-format
 msgid "checkpoints are occurring too frequently (%d seconds apart)"
 msgstr ""
 
-#: postmaster/bgwriter.c:374
+#: postmaster/bgwriter.c:386
 msgid ""
 "Consider increasing the configuration parameter \"checkpoint_segments\"."
 msgstr ""
 
-#: postmaster/bgwriter.c:440
+#: postmaster/bgwriter.c:452
 #, c-format
 msgid "transaction log switch forced (archive_timeout=%d)"
 msgstr ""
 
-#: postmaster/bgwriter.c:576
+#: postmaster/bgwriter.c:588
 #, fuzzy
 msgid "not enough shared memory for background writer"
 msgstr "otillräckligt delat minne för bgwriter"
 
-#: postmaster/bgwriter.c:664
+#: postmaster/bgwriter.c:676
 msgid "checkpoint request failed"
 msgstr ""
 
-#: postmaster/bgwriter.c:665
+#: postmaster/bgwriter.c:677
 #, fuzzy
 msgid "Consult recent messages in the server log for details."
 msgstr "Kör servern tyst."
 
-#: postmaster/postmaster.c:448
+#: postmaster/postmaster.c:453
 #, c-format
 msgid "%s: invalid argument for option -f: \"%s\"\n"
 msgstr "%s: ogiltigt argument till flagga -f: \"%s\"\n"
 
-#: postmaster/postmaster.c:534
+#: postmaster/postmaster.c:539
 #, c-format
 msgid "%s: invalid argument for option -t: \"%s\"\n"
 msgstr "%s: ogiltigt argument till flagga -t: \"%s\"\n"
 
-#: postmaster/postmaster.c:585
+#: postmaster/postmaster.c:590
 #, c-format
 msgid "%s: invalid argument: \"%s\"\n"
 msgstr "%s: ogiltigt argument: \"%s\"\n"
 
-#: postmaster/postmaster.c:597
+#: postmaster/postmaster.c:602
 #, c-format
 msgid "%s: could not locate matching postgres executable"
 msgstr ""
 
-#: postmaster/postmaster.c:623
+#: postmaster/postmaster.c:628
 #, c-format
 msgid ""
 "%s: the number of buffers (-B) must be at least twice the number of allowed "
@@ -7535,71 +7556,71 @@ msgstr ""
 "%s: antalet buffertar (-B) måste vara minst dubbelt så stor som antalet "
 "tillåtna uppkopplingar (-N) och minst 16\n"
 
-#: postmaster/postmaster.c:629
+#: postmaster/postmaster.c:634
 #, c-format
 msgid "%s: superuser_reserved_connections must be less than max_connections\n"
 msgstr ""
 
-#: postmaster/postmaster.c:639
+#: postmaster/postmaster.c:644
 #, c-format
 msgid "%s: invalid datetoken tables, please fix\n"
 msgstr ""
 
-#: postmaster/postmaster.c:745
+#: postmaster/postmaster.c:750
 msgid "invalid list syntax for \"listen_addresses\""
 msgstr "ogiltigt listsyntax för \"listen_addresses\""
 
-#: postmaster/postmaster.c:766
+#: postmaster/postmaster.c:771
 #, c-format
 msgid "could not create listen socket for \"%s\""
 msgstr ""
 
-#: postmaster/postmaster.c:772
+#: postmaster/postmaster.c:777
 msgid "could not create any TCP/IP sockets"
 msgstr "kunde inte skapa TCP/IP-uttag (socket)"
 
-#: postmaster/postmaster.c:799
+#: postmaster/postmaster.c:804
 msgid "could not create Unix-domain socket"
 msgstr "kunde inte skapa unix-domän-uttag (socket)"
 
-#: postmaster/postmaster.c:807
+#: postmaster/postmaster.c:812
 msgid "no socket created for listening"
 msgstr ""
 
-#: postmaster/postmaster.c:886
+#: postmaster/postmaster.c:891
 #, c-format
 msgid "%s: could not write external PID file \"%s\": %s\n"
 msgstr "%s: kunde inte skriva extern PID-fil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:981
+#: postmaster/postmaster.c:986
 #, c-format
 msgid "data directory \"%s\" does not exist"
 msgstr "databaskatalogen \"%s\" existerar inte"
 
-#: postmaster/postmaster.c:986
+#: postmaster/postmaster.c:991
 #, c-format
 msgid "could not read permissions of directory \"%s\": %m"
 msgstr ""
 
-#: postmaster/postmaster.c:1003
+#: postmaster/postmaster.c:1008
 #, c-format
 msgid "data directory \"%s\" has wrong ownership"
 msgstr "datakatalogen \"%s\" har fel ägare"
 
-#: postmaster/postmaster.c:1005
+#: postmaster/postmaster.c:1010
 msgid "The server must be started by the user that owns the data directory."
 msgstr "Servern måste startas av den användare som äger datakatalogen."
 
-#: postmaster/postmaster.c:1025
+#: postmaster/postmaster.c:1030
 #, c-format
 msgid "data directory \"%s\" has group or world access"
 msgstr "datakatalogen \"%s\" har grupp eller världsaccess"
 
-#: postmaster/postmaster.c:1027
+#: postmaster/postmaster.c:1032
 msgid "Permissions should be u=rwx (0700)."
 msgstr "Rättigheterna skall vara u=rwx (0700)."
 
-#: postmaster/postmaster.c:1038
+#: postmaster/postmaster.c:1043
 #, c-format
 msgid ""
 "%s: could not find the database system\n"
@@ -7610,240 +7631,246 @@ msgstr ""
 "Förväntade mig att hitta det i katalogen \"%s\",\n"
 "men kunde inte öppna filen \"%s\": %s\n"
 
-#: postmaster/postmaster.c:1074
+#: postmaster/postmaster.c:1079
 #, c-format
 msgid "%s: could not fork background process: %s\n"
 msgstr "%s: kunde inte starta bakgrundsprocessen: %s\n"
 
-#: postmaster/postmaster.c:1092
+#: postmaster/postmaster.c:1097
 #, c-format
 msgid "%s: could not dissociate from controlling TTY: %s\n"
 msgstr "%s: kunde inte koppla loss från TTY:en: %s\n"
 
-#: postmaster/postmaster.c:1163
+#: postmaster/postmaster.c:1168
 #, c-format
 msgid "select() failed in postmaster: %m"
 msgstr "select() misslyckades i postmaster: %m"
 
-#: postmaster/postmaster.c:1326 postmaster/postmaster.c:1357
+#: postmaster/postmaster.c:1331 postmaster/postmaster.c:1362
 msgid "incomplete startup packet"
 msgstr "ofullständigt startuppaket"
 
-#: postmaster/postmaster.c:1338
+#: postmaster/postmaster.c:1343
 msgid "invalid length of startup packet"
 msgstr "ogiltig längd på startuppaket"
 
-#: postmaster/postmaster.c:1394
+#: postmaster/postmaster.c:1399
 #, c-format
 msgid "failed to send SSL negotiation response: %m"
 msgstr ""
 
-#: postmaster/postmaster.c:1423
+#: postmaster/postmaster.c:1428
 #, c-format
 msgid "unsupported frontend protocol %u.%u: server supports %u.0 to %u.%u"
 msgstr ""
 "inget stöd för framändans protokoll %u.%u: servern stödjer %u.0 till %u.%u"
 
-#: postmaster/postmaster.c:1487
+#: postmaster/postmaster.c:1492
 msgid "invalid startup packet layout: expected terminator as last byte"
 msgstr ""
 
-#: postmaster/postmaster.c:1515
+#: postmaster/postmaster.c:1520
 msgid "no PostgreSQL user name specified in startup packet"
 msgstr "inget PostgreSQL-användarnamn angivet i startuppaketet"
 
-#: postmaster/postmaster.c:1568
+#: postmaster/postmaster.c:1573
 msgid "the database system is starting up"
 msgstr "databassystemet startar upp"
 
-#: postmaster/postmaster.c:1573
+#: postmaster/postmaster.c:1578
 msgid "the database system is shutting down"
 msgstr "databassystemet stänger ner"
 
-#: postmaster/postmaster.c:1578
+#: postmaster/postmaster.c:1583
 msgid "the database system is in recovery mode"
 msgstr "databassystemet är räddningsläge"
 
-#: postmaster/postmaster.c:1583 storage/ipc/procarray.c:137
+#: postmaster/postmaster.c:1588 storage/ipc/procarray.c:137
 #: storage/ipc/sinval.c:80 storage/lmgr/proc.c:245
 msgid "sorry, too many clients already"
 msgstr "ledsen, för många klienter"
 
-#: postmaster/postmaster.c:1808
+#: postmaster/postmaster.c:1813
 msgid "received SIGHUP, reloading configuration files"
 msgstr "mottog SIGHUP, läser om konfigurationsfiler"
 
-#: postmaster/postmaster.c:1864
+#: postmaster/postmaster.c:1869
 msgid "received smart shutdown request"
 msgstr "tog emot förfrågan om att stänga ner smart"
 
-#: postmaster/postmaster.c:1910
+#: postmaster/postmaster.c:1915
 msgid "received fast shutdown request"
 msgstr "tog emot förfrågan om att stänga ner snabbt"
 
-#: postmaster/postmaster.c:1917
+#: postmaster/postmaster.c:1922
 msgid "aborting any active transactions"
 msgstr "avbryter aktiva transaktioner"
 
-#: postmaster/postmaster.c:1957
+#: postmaster/postmaster.c:1962
 msgid "received immediate shutdown request"
 msgstr ""
 
-#: postmaster/postmaster.c:2030
+#: postmaster/postmaster.c:2036
 msgid "startup process"
 msgstr "startprocess"
 
-#: postmaster/postmaster.c:2033
+#: postmaster/postmaster.c:2039
 msgid "aborting startup due to startup process failure"
 msgstr "avbryter uppstart på grund av fel i startprocessen"
 
-#: postmaster/postmaster.c:2102
+#: postmaster/postmaster.c:2110
 msgid "background writer process"
 msgstr "bakgrundsskrivarprocess"
 
-#: postmaster/postmaster.c:2117
+#: postmaster/postmaster.c:2126
 msgid "autovacuum process"
 msgstr "autovacuum-process"
 
-#: postmaster/postmaster.c:2130
+#: postmaster/postmaster.c:2139
 msgid "archiver process"
 msgstr "akriveringsprocess"
 
-#: postmaster/postmaster.c:2147
+#: postmaster/postmaster.c:2156
 msgid "statistics collector process"
 msgstr "statistikinsamlingsprocess"
 
-#: postmaster/postmaster.c:2161
+#: postmaster/postmaster.c:2170
 msgid "system logger process"
 msgstr "system-logg-process"
 
-#: postmaster/postmaster.c:2183
+#: postmaster/postmaster.c:2192
 msgid "all server processes terminated; reinitializing"
 msgstr "alla serverprocesser är avslutade; initierar på nytt"
 
-#: postmaster/postmaster.c:2229 postmaster/postmaster.c:2239
+#: postmaster/postmaster.c:2238 postmaster/postmaster.c:2248
 msgid "server process"
 msgstr "serverprocess"
 
-#: postmaster/postmaster.c:2281
+#: postmaster/postmaster.c:2290
 msgid "terminating any other active server processes"
 msgstr "avslutar andra aktiva serverprocesser"
 
-#: postmaster/postmaster.c:2388
+#. translator: %s is a noun phrase describing a child process, such as
+#. "server process"
+#: postmaster/postmaster.c:2396
 #, c-format
 msgid "%s (PID %d) exited with exit code %d"
 msgstr "%s (PID %d) avslutade med felkod %d"
 
-#: postmaster/postmaster.c:2397
+#. translator: %s is a noun phrase describing a child process, such as
+#. "server process"
+#: postmaster/postmaster.c:2404
 #, c-format
 msgid "%s (PID %d) was terminated by signal %d"
 msgstr "%s (PID %d) terminerades av signal %d"
 
-#: postmaster/postmaster.c:2406
+#. translator: %s is a noun phrase describing a child process, such as
+#. "server process"
+#: postmaster/postmaster.c:2412
 #, c-format
 msgid "%s (PID %d) exited with unexpected status %d"
 msgstr "%s (PID %d) avslutade med oväntad status %d"
 
-#: postmaster/postmaster.c:2502
+#: postmaster/postmaster.c:2545
 #, c-format
 msgid "could not fork new process for connection: %m"
 msgstr "kunde inte fork():a ny process for uppkoppling: %m"
 
-#: postmaster/postmaster.c:2542
+#: postmaster/postmaster.c:2585
 msgid "could not fork new process for connection: "
 msgstr "kunde inte fork():a ny process for uppkoppling: "
 
-#: postmaster/postmaster.c:2672
+#: postmaster/postmaster.c:2725
 #, c-format
 msgid "connection received: host=%s%s%s"
 msgstr "ansluting mottagen: värd=%s%s%s"
 
-#: postmaster/postmaster.c:2743
+#: postmaster/postmaster.c:2796
 #, c-format
 msgid "connection authorized: user=%s database=%s"
 msgstr ""
 
-#: postmaster/postmaster.c:2978
+#: postmaster/postmaster.c:3031
 #, c-format
 msgid "could not execute server process \"%s\": %m"
 msgstr "kunde inte köra serverprocess \"%s\": %m"
 
-#: postmaster/postmaster.c:3619
+#: postmaster/postmaster.c:3672
 #, c-format
 msgid "could not fork startup process: %m"
 msgstr "kunde inte starta startup-processen: %m"
 
-#: postmaster/postmaster.c:3623
+#: postmaster/postmaster.c:3676
 #, c-format
 msgid "could not fork background writer process: %m"
 msgstr "kunde inte starta process för bakgrundsskrivare: %m"
 
-#: postmaster/postmaster.c:3627
+#: postmaster/postmaster.c:3680
 #, c-format
 msgid "could not fork process: %m"
 msgstr "kunde inte starta process: %m"
 
-#: postmaster/postmaster.c:3800
+#: postmaster/postmaster.c:3853
 #, fuzzy, c-format
 msgid "could not duplicate socket %d for use in backend: error code %d"
 msgstr "kunde inte återställa \"%s\" från arkiv: returkod %d"
 
-#: postmaster/postmaster.c:3829
+#: postmaster/postmaster.c:3882
 #, fuzzy, c-format
 msgid "could not create inherited socket: error code %d\n"
 msgstr "kunde inte skapa uttag (socket) %s: %m"
 
-#: postmaster/postmaster.c:3858 postmaster/postmaster.c:3865
+#: postmaster/postmaster.c:3911 postmaster/postmaster.c:3918
 #, c-format
 msgid "could not read from backend variables file \"%s\": %s\n"
 msgstr "kunde inte läsa från backändans variabelfil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:3874
+#: postmaster/postmaster.c:3927
 #, c-format
 msgid "could not remove file \"%s\": %s\n"
 msgstr "kunde inte ta bort fil \"%s\": %s\n"
 
-#: postmaster/postmaster.c:3887
+#: postmaster/postmaster.c:3940
 #, fuzzy, c-format
 msgid "could not map view of backend variables: error code %d\n"
 msgstr "kunde inte läsa från backändans variabelfil \"%s\": %m"
 
-#: postmaster/postmaster.c:3896
+#: postmaster/postmaster.c:3949
 #, fuzzy, c-format
 msgid "could not unmap view of backend variables: error code %d\n"
 msgstr "kunde inte läsa från backändans variabelfil \"%s\": %m"
 
-#: postmaster/postmaster.c:3903
+#: postmaster/postmaster.c:3956
 #, fuzzy, c-format
 msgid "could not close handle to backend parameter variables: error code %d\n"
 msgstr "kunde inte läsa från backändans variabelfil \"%s\": %m"
 
-#: postmaster/postmaster.c:4145
+#: postmaster/postmaster.c:4198
 #, fuzzy, c-format
 msgid "could not wait on child process handle: error code %d\n"
 msgstr "kunde inte skriva till kontrollfil: %m"
 
-#: postmaster/pgarch.c:152
+#: postmaster/pgarch.c:153
 #, c-format
 msgid "could not fork archiver: %m"
 msgstr "kunde inte fork():a arkiveraren: %m"
 
-#: postmaster/pgarch.c:377
+#: postmaster/pgarch.c:387
 #, c-format
 msgid "transaction log file \"%s\" could not be archived: too many failures"
 msgstr "transaktionsloggfil \"%s\" kunde inte arkiveras: för många fel"
 
-#: postmaster/pgarch.c:460
+#: postmaster/pgarch.c:482
 #, c-format
 msgid "archive command \"%s\" failed: return code %d"
 msgstr "arkiveringskommando \"%s\" misslyckades: returkod %d"
 
-#: postmaster/pgarch.c:465
+#: postmaster/pgarch.c:488
 #, c-format
 msgid "archived transaction log file \"%s\""
 msgstr "arkiverad transaktionsloggfil \"%s\""
 
-#: postmaster/pgarch.c:511
+#: postmaster/pgarch.c:534
 #, fuzzy, c-format
 msgid "could not open archive status directory \"%s\": %m"
 msgstr "kunde inte komma åt katalog \"%s\": %m"
@@ -7885,7 +7912,7 @@ msgstr ""
 "kunde inte skicka testmeddelande till uttag (socket) för "
 "statistikinsamlaren: %m"
 
-#: postmaster/pgstat.c:359 postmaster/pgstat.c:1742
+#: postmaster/pgstat.c:359 postmaster/pgstat.c:1753
 #, c-format
 msgid "select() failed in statistics collector: %m"
 msgstr "select() misslyckades i statistikinsamlaren: %m"
@@ -7927,100 +7954,100 @@ msgstr "kunde inte fork():a statistikinsamlaren: %m"
 msgid "must be superuser to reset statistics counters"
 msgstr ""
 
-#: postmaster/pgstat.c:1721
+#: postmaster/pgstat.c:1732
 #, c-format
 msgid "poll() failed in statistics collector: %m"
 msgstr "poll() misslyckades i statistikinsamlaren: %m"
 
-#: postmaster/pgstat.c:1762
+#: postmaster/pgstat.c:1773
 #, c-format
 msgid "could not read statistics message: %m"
 msgstr "kunde inte läsa statistikmeddelande: %m"
 
-#: postmaster/pgstat.c:1827
+#: postmaster/pgstat.c:1838
 #, fuzzy, c-format
 msgid "could not set statistics collector timer: %m"
 msgstr "kunde inte läsa från statistikinsamlarröret: %m"
 
-#: postmaster/pgstat.c:1936
+#: postmaster/pgstat.c:1947
 #, c-format
 msgid "could not open temporary statistics file \"%s\": %m"
 msgstr "kunde inte öppna temporär statistikfil \"%s\": %m"
 
-#: postmaster/pgstat.c:1988
+#: postmaster/pgstat.c:1999
 #, fuzzy, c-format
 msgid "could not write temporary statistics file \"%s\": %m"
 msgstr "kunde inte öppna temporär statistikfil \"%s\": %m"
 
-#: postmaster/pgstat.c:1997
+#: postmaster/pgstat.c:2008
 #, c-format
 msgid "could not close temporary statistics file \"%s\": %m"
 msgstr "kunde inte stänga temporär statistikfil \"%s\": %m"
 
-#: postmaster/pgstat.c:2005
+#: postmaster/pgstat.c:2016
 #, c-format
 msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
 msgstr "kunde inte döpa om temporär statistikfil \"%s\" till \"%s\": %m"
 
-#: postmaster/pgstat.c:2078 postmaster/pgstat.c:2100 postmaster/pgstat.c:2114
-#: postmaster/pgstat.c:2164 postmaster/pgstat.c:2181 postmaster/pgstat.c:2196
+#: postmaster/pgstat.c:2089 postmaster/pgstat.c:2111 postmaster/pgstat.c:2125
+#: postmaster/pgstat.c:2175 postmaster/pgstat.c:2192 postmaster/pgstat.c:2207
 msgid "corrupted pgstat.stat file"
 msgstr "korrupt fil pgstat.stat"
 
-#: postmaster/pgstat.c:2389
+#: postmaster/pgstat.c:2400
 msgid "database hash table corrupted during cleanup --- abort"
 msgstr ""
 
-#: postmaster/syslogger.c:314
+#: postmaster/syslogger.c:325
 #, c-format
 msgid "select() failed in logger process: %m"
 msgstr "select() misslyckades i loggprocess: %m"
 
-#: postmaster/syslogger.c:326 postmaster/syslogger.c:705
+#: postmaster/syslogger.c:337 postmaster/syslogger.c:716
 #, c-format
 msgid "could not read from logger pipe: %m"
 msgstr "kunde inte läsa från loggrör (pipe): %m"
 
-#: postmaster/syslogger.c:357
+#: postmaster/syslogger.c:368
 msgid "logger shutting down"
 msgstr "loggaren stänger ner"
 
-#: postmaster/syslogger.c:401 postmaster/syslogger.c:415
+#: postmaster/syslogger.c:412 postmaster/syslogger.c:426
 #, c-format
 msgid "could not create pipe for syslog: %m"
 msgstr "kunde inte skapa rör (pipe) för syslog: %m"
 
-#: postmaster/syslogger.c:435
+#: postmaster/syslogger.c:446
 #, c-format
 msgid "could not create log file \"%s\": %m"
 msgstr "kunde inte skapa loggfil \"%s\": %m"
 
-#: postmaster/syslogger.c:450
+#: postmaster/syslogger.c:461
 #, c-format
 msgid "could not fork system logger: %m"
 msgstr "kunde inte fork:a systemloggaren: %m"
 
-#: postmaster/syslogger.c:481
+#: postmaster/syslogger.c:492
 #, c-format
 msgid "could not redirect stdout: %m"
 msgstr "kunde inte omdirigera stdout: %m"
 
-#: postmaster/syslogger.c:486 postmaster/syslogger.c:499
+#: postmaster/syslogger.c:497 postmaster/syslogger.c:510
 #, c-format
 msgid "could not redirect stderr: %m"
 msgstr "kunde inte omdirigera stderr: %m"
 
-#: postmaster/syslogger.c:674
+#: postmaster/syslogger.c:685
 #, c-format
 msgid "could not write to log file: %s\n"
 msgstr "kunde inte skriva till loggfil: %s\n"
 
-#: postmaster/syslogger.c:763
+#: postmaster/syslogger.c:774
 #, c-format
 msgid "could not open new log file \"%s\": %m"
 msgstr "kunde inte öppna ny loggfil \"%s\": %m"
 
-#: postmaster/syslogger.c:775
+#: postmaster/syslogger.c:786
 msgid "disabling automatic rotation (use SIGHUP to reenable)"
 msgstr "stänger av automatisk rotation (använd SIGHUP för att slå på igen)"
 
@@ -8277,7 +8304,9 @@ msgstr ""
 
 #: storage/file/fd.c:429
 msgid "insufficient file descriptors available to start server process"
-msgstr "otillräckligt antal fildeskriptorer tillgängligt för att starta serverprocessen"
+msgstr ""
+"otillräckligt antal fildeskriptorer tillgängligt för att starta "
+"serverprocessen"
 
 #: storage/file/fd.c:430
 #, c-format
@@ -8289,7 +8318,7 @@ msgstr "Systemet tillåter %d, vi behöver minst %d."
 msgid "out of file descriptors: %m; release and retry"
 msgstr "slut på fildeskriptorer: %m; frigör och försök igen"
 
-#: storage/file/fd.c:1428 utils/adt/genfile.c:244 utils/adt/misc.c:214
+#: storage/file/fd.c:1428 utils/adt/genfile.c:244 utils/adt/misc.c:219
 #: ../port/copydir.c:65
 #, c-format
 msgid "could not open directory \"%s\": %m"
@@ -8320,7 +8349,7 @@ msgstr ""
 msgid ""
 "A total of %.0f page slots are in use (including overhead).\n"
 "%.0f page slots are required to track all free space.\n"
-"Current limits are:  %d page slots, %d relations, using %.0f KB."
+"Current limits are:  %d page slots, %d relations, using %.0f kB."
 msgstr ""
 
 #: storage/freespace/freespace.c:644
@@ -8455,17 +8484,17 @@ msgstr ""
 msgid "corrupted item pointer: offset = %u, size = %u"
 msgstr ""
 
-#: storage/smgr/md.c:363
+#: storage/smgr/md.c:381
 #, c-format
 msgid "could not open relation %u/%u/%u: %m"
 msgstr "kunde inte öppna reletionen %u/%u/%u: %m"
 
-#: storage/smgr/md.c:781
+#: storage/smgr/md.c:806
 #, c-format
 msgid "could not fsync segment %u of relation %u/%u/%u: %m"
 msgstr "kunde inte fsync:a segment %u i relation %u/%u/%u: %m"
 
-#: storage/smgr/md.c:966
+#: storage/smgr/md.c:991
 #, c-format
 msgid "could not open segment %u of relation %u/%u/%u (target block %u): %m"
 msgstr "kunde inte öppna segment %u i relation %u/%u/%u (målblock %u): %m"
@@ -8635,7 +8664,7 @@ msgid "incorrect binary data format in function argument %d"
 msgstr ""
 
 #: tcop/postgres.c:357 tcop/postgres.c:369 tcop/postgres.c:380
-#: tcop/postgres.c:392 tcop/postgres.c:3645
+#: tcop/postgres.c:392 tcop/postgres.c:3650
 #, c-format
 msgid "invalid frontend message type %d"
 msgstr ""
@@ -8788,36 +8817,36 @@ msgid ""
 "equivalent."
 msgstr ""
 
-#: tcop/postgres.c:3046
+#: tcop/postgres.c:3051
 msgid "invalid command-line arguments for server process"
 msgstr "ogiltigt kommandoradsargument för serverprocess"
 
-#: tcop/postgres.c:3047 tcop/postgres.c:3061
+#: tcop/postgres.c:3052 tcop/postgres.c:3066
 #, c-format
 msgid "Try \"%s --help\" for more information."
 msgstr "Försök med \"%s --help\" för mer information."
 
-#: tcop/postgres.c:3059
+#: tcop/postgres.c:3064
 #, c-format
 msgid "%s: invalid command-line arguments"
 msgstr "%s: ogiltigt kommandoradsargument"
 
-#: tcop/postgres.c:3069
+#: tcop/postgres.c:3074
 #, c-format
 msgid "%s: no database nor user name specified"
 msgstr "%s: ingen databas eller användarnamn angivet"
 
-#: tcop/postgres.c:3555
+#: tcop/postgres.c:3560
 #, c-format
 msgid "invalid CLOSE message subtype %d"
 msgstr ""
 
-#: tcop/postgres.c:3588
+#: tcop/postgres.c:3593
 #, c-format
 msgid "invalid DESCRIBE message subtype %d"
 msgstr ""
 
-#: tcop/postgres.c:3826
+#: tcop/postgres.c:3831
 #, c-format
 msgid ""
 "disconnection: session time: %d:%02d:%02d.%03d user=%s database=%s host=%s%s%"
@@ -9160,8 +9189,8 @@ msgid "date out of range: \"%s\""
 msgstr "smallint utanför sitt intervall"
 
 #: utils/adt/date.c:734 utils/adt/date.c:777 utils/adt/date.c:1348
-#: utils/adt/date.c:1385 utils/adt/date.c:2284 utils/adt/formatting.c:3052
-#: utils/adt/formatting.c:3084 utils/adt/formatting.c:3152
+#: utils/adt/date.c:1385 utils/adt/date.c:2284 utils/adt/formatting.c:3057
+#: utils/adt/formatting.c:3089 utils/adt/formatting.c:3157
 #: utils/adt/nabstime.c:484 utils/adt/nabstime.c:527 utils/adt/nabstime.c:557
 #: utils/adt/nabstime.c:600 utils/adt/timestamp.c:155
 #: utils/adt/timestamp.c:193 utils/adt/timestamp.c:399
@@ -9224,7 +9253,7 @@ msgid "\"interval\" time zone \"%s\" not valid"
 msgstr ""
 
 #: utils/adt/datetime.c:1238 utils/adt/datetime.c:2156
-#: utils/adt/formatting.c:3370
+#: utils/adt/formatting.c:3375
 #, c-format
 msgid "inconsistent use of year %04d and \"BC\""
 msgstr "ej konsekvent användning av år %04d och \"BC\""
@@ -9369,233 +9398,242 @@ msgstr "kan inte ta logaritmen av ett negativt tal"
 msgid "input is out of range"
 msgstr ""
 
-#: utils/adt/formatting.c:454
+#: utils/adt/formatting.c:453
 msgid "invalid format specification for an interval value"
 msgstr ""
 
-#: utils/adt/formatting.c:455
+#: utils/adt/formatting.c:454
 msgid "Intervals are not tied to specific calendar dates."
 msgstr ""
 
-#: utils/adt/formatting.c:1015
+#: utils/adt/formatting.c:1014
 msgid "\"9\" must be ahead of \"PR\""
 msgstr "\"9\" måste vara före \"PR\""
 
-#: utils/adt/formatting.c:1034
+#: utils/adt/formatting.c:1033
 msgid "\"0\" must be ahead of \"PR\""
 msgstr "\"0\" måste vara före \"PR\""
 
-#: utils/adt/formatting.c:1063
+#: utils/adt/formatting.c:1062
 msgid "multiple decimal points"
 msgstr "multipla decimalpunkter"
 
-#: utils/adt/formatting.c:1070 utils/adt/formatting.c:1174
+#: utils/adt/formatting.c:1069 utils/adt/formatting.c:1173
 msgid "cannot use \"V\" and decimal point together"
 msgstr "kan inte använda \"V\" ach decimalpunkt tillsammans"
 
-#: utils/adt/formatting.c:1085
+#: utils/adt/formatting.c:1084
 msgid "not unique \"S\""
 msgstr "inte unik \"S\""
 
-#: utils/adt/formatting.c:1092
+#: utils/adt/formatting.c:1091
 msgid "cannot use \"S\" and \"PL\"/\"MI\"/\"SG\"/\"PR\" together"
 msgstr "kan inte använda \"S\" och \"PL\"/\"MI\"/\"SG\"/\"PR\" tillsammans"
 
-#: utils/adt/formatting.c:1115
+#: utils/adt/formatting.c:1114
 msgid "cannot use \"S\" and \"MI\" together"
 msgstr "kan inte använda \"S\" och \"MI\" tillsammans."
 
-#: utils/adt/formatting.c:1128
+#: utils/adt/formatting.c:1127
 msgid "cannot use \"S\" and \"PL\" together"
 msgstr "kan inte använda \"S\" och \"PL\" tillsammans."
 
-#: utils/adt/formatting.c:1141
+#: utils/adt/formatting.c:1140
 msgid "cannot use \"S\" and \"SG\" together"
 msgstr "kan inte använda \"S\" och \"SG\" tillsammans."
 
-#: utils/adt/formatting.c:1153
+#: utils/adt/formatting.c:1152
 msgid "cannot use \"PR\" and \"S\"/\"PL\"/\"MI\"/\"SG\" together"
 msgstr "kan inte använda \"PR\" och \"S\"/\"PL\"/\"MI\"/\"SG\" tillsammans."
 
-#: utils/adt/formatting.c:1183
+#: utils/adt/formatting.c:1182
 msgid "\"E\" is not supported"
 msgstr "\"E\" stöds inte ännu"
 
-#: utils/adt/formatting.c:1442
+#: utils/adt/formatting.c:1441
 #, c-format
 msgid "\"%s\" is not a number"
 msgstr "\"%s\" är inte ett nummer"
 
-#: utils/adt/formatting.c:1722
+#: utils/adt/formatting.c:1721
 msgid "invalid AM/PM string"
 msgstr "ogiltig AM/PM-sträng"
 
-#: utils/adt/formatting.c:2044
+#: utils/adt/formatting.c:2043
 msgid "\"TZ\"/\"tz\" not supported"
 msgstr "\"TZ\"/\"tz\" stöds inte"
 
-#: utils/adt/formatting.c:2054
+#: utils/adt/formatting.c:2053
 #, c-format
 msgid "invalid value for %s"
 msgstr "ogiltigt värde för %s"
 
-#: utils/adt/formatting.c:2871
+#: utils/adt/formatting.c:2870
 msgid "January"
 msgstr "Januari"
 
-#: utils/adt/formatting.c:2874
+#: utils/adt/formatting.c:2873
 msgid "February"
 msgstr "Februari"
 
-#: utils/adt/formatting.c:2877
+#: utils/adt/formatting.c:2876
 msgid "March"
 msgstr "Mars"
 
-#: utils/adt/formatting.c:2880
+#: utils/adt/formatting.c:2879
 msgid "April"
 msgstr "April"
 
-#: utils/adt/formatting.c:2883 utils/adt/formatting.c:2931
+#: utils/adt/formatting.c:2882
 msgid "May"
 msgstr "Maj"
 
-#: utils/adt/formatting.c:2886
+#: utils/adt/formatting.c:2885
 msgid "June"
 msgstr "Juni"
 
-#: utils/adt/formatting.c:2889
+#: utils/adt/formatting.c:2888
 msgid "July"
 msgstr "Juli"
 
-#: utils/adt/formatting.c:2892
+#: utils/adt/formatting.c:2891
 msgid "August"
 msgstr "Augusti"
 
-#: utils/adt/formatting.c:2895
+#: utils/adt/formatting.c:2894
 msgid "September"
 msgstr "September"
 
-#: utils/adt/formatting.c:2898
+#: utils/adt/formatting.c:2897
 msgid "October"
 msgstr "Oktober"
 
-#: utils/adt/formatting.c:2901
+#: utils/adt/formatting.c:2900
 msgid "November"
 msgstr "November"
 
-#: utils/adt/formatting.c:2904
+#: utils/adt/formatting.c:2903
 msgid "December"
 msgstr "December"
 
-#: utils/adt/formatting.c:2919
+#: utils/adt/formatting.c:2918
 msgid "Jan"
 msgstr "Jan"
 
-#: utils/adt/formatting.c:2922
+#: utils/adt/formatting.c:2921
 msgid "Feb"
 msgstr "Feb"
 
-#: utils/adt/formatting.c:2925
+#: utils/adt/formatting.c:2924
 msgid "Mar"
 msgstr "Mar"
 
-#: utils/adt/formatting.c:2928
+#: utils/adt/formatting.c:2927
 msgid "Apr"
 msgstr "Apr"
 
-#: utils/adt/formatting.c:2934
+#. translator: Translate this as the abbreviation of "May".
+#. In English, it is both the full month name and the
+#. abbreviation, so this hack is needed to distinguish
+#. them.  The translation also needs to start with S:,
+#. which will be stripped at run time.
+#: utils/adt/formatting.c:2936
+msgid "S:May"
+msgstr "S:Maj"
+
+#: utils/adt/formatting.c:2939
 msgid "Jun"
 msgstr "Jun"
 
-#: utils/adt/formatting.c:2937
+#: utils/adt/formatting.c:2942
 msgid "Jul"
 msgstr "Jul"
 
-#: utils/adt/formatting.c:2940
+#: utils/adt/formatting.c:2945
 msgid "Aug"
 msgstr "Aug"
 
-#: utils/adt/formatting.c:2943
+#: utils/adt/formatting.c:2948
 msgid "Sep"
 msgstr "Sep"
 
-#: utils/adt/formatting.c:2946
+#: utils/adt/formatting.c:2951
 msgid "Oct"
 msgstr "Okt"
 
-#: utils/adt/formatting.c:2949
+#: utils/adt/formatting.c:2954
 msgid "Nov"
 msgstr "Nov"
 
-#: utils/adt/formatting.c:2952
+#: utils/adt/formatting.c:2957
 msgid "Dec"
 msgstr "Dec"
 
-#: utils/adt/formatting.c:2967
+#: utils/adt/formatting.c:2972
 msgid "Sunday"
 msgstr "Söndag"
 
-#: utils/adt/formatting.c:2970
+#: utils/adt/formatting.c:2975
 msgid "Monday"
 msgstr "Måndag"
 
-#: utils/adt/formatting.c:2973
+#: utils/adt/formatting.c:2978
 msgid "Tuesday"
 msgstr "Tisdag"
 
-#: utils/adt/formatting.c:2976
+#: utils/adt/formatting.c:2981
 msgid "Wednesday"
 msgstr "Onsdag"
 
-#: utils/adt/formatting.c:2979
+#: utils/adt/formatting.c:2984
 msgid "Thursday"
 msgstr "Torsdag"
 
-#: utils/adt/formatting.c:2982
+#: utils/adt/formatting.c:2987
 msgid "Friday"
 msgstr "Fredag"
 
-#: utils/adt/formatting.c:2985
+#: utils/adt/formatting.c:2990
 msgid "Saturday"
 msgstr "Lördag"
 
-#: utils/adt/formatting.c:3000
+#: utils/adt/formatting.c:3005
 msgid "Sun"
 msgstr "Sön"
 
-#: utils/adt/formatting.c:3003
+#: utils/adt/formatting.c:3008
 msgid "Mon"
 msgstr "Mån"
 
-#: utils/adt/formatting.c:3006
+#: utils/adt/formatting.c:3011
 msgid "Tue"
 msgstr "Tis"
 
-#: utils/adt/formatting.c:3009
+#: utils/adt/formatting.c:3014
 msgid "Wed"
 msgstr "Ons"
 
-#: utils/adt/formatting.c:3012
+#: utils/adt/formatting.c:3017
 msgid "Thu"
 msgstr "Tor"
 
-#: utils/adt/formatting.c:3015
+#: utils/adt/formatting.c:3020
 msgid "Fri"
 msgstr "Fre"
 
-#: utils/adt/formatting.c:3018
+#: utils/adt/formatting.c:3023
 msgid "Sat"
 msgstr "Lör"
 
-#: utils/adt/formatting.c:3314
+#: utils/adt/formatting.c:3319
 msgid "AM/PM hour must be between 1 and 12"
 msgstr "AM/PM-timme måste vara mellan 1 och 12"
 
-#: utils/adt/formatting.c:3405
+#: utils/adt/formatting.c:3410
 msgid "cannot calculate day of year without year information"
 msgstr ""
 
-#: utils/adt/formatting.c:4252
+#: utils/adt/formatting.c:4257
 msgid "\"RN\" not supported"
 msgstr "\"RN\" stöds inte"
 
@@ -9803,33 +9841,33 @@ msgstr "måste vara superanvändare för att ändra grupper"
 msgid "PID %d is not a PostgreSQL server process"
 msgstr "PID %d är inte en PostgreSQL serverprocess"
 
-#: utils/adt/misc.c:100
+#: utils/adt/misc.c:105
 #, c-format
 msgid "could not send signal to process %d: %m"
 msgstr "kunde inte skicka signal till process %d: %m"
 
-#: utils/adt/misc.c:118
+#: utils/adt/misc.c:123
 msgid "must be superuser to signal the postmaster"
 msgstr "måste vara superanvändare för att signalera till postmaster"
 
-#: utils/adt/misc.c:123
+#: utils/adt/misc.c:128
 #, c-format
 msgid "failed to send signal to postmaster: %m"
 msgstr "misslyckades med att sända en signal till postmaster: %m"
 
-#: utils/adt/misc.c:140
+#: utils/adt/misc.c:145
 msgid "must be superuser to rotate log files"
 msgstr "måste vara superanvändare för att rotera loggfiler"
 
-#: utils/adt/misc.c:145
+#: utils/adt/misc.c:150
 msgid "rotation not possible because log redirection not active"
 msgstr ""
 
-#: utils/adt/misc.c:197
+#: utils/adt/misc.c:202
 msgid "global tablespace never has databases"
 msgstr ""
 
-#: utils/adt/misc.c:217
+#: utils/adt/misc.c:222
 #, c-format
 msgid "%u is not a tablespace OID"
 msgstr "%u är inte ett tabellutrymme-OID"
@@ -10035,7 +10073,9 @@ msgstr "ogiltigt multibyte-tecken för lokalen"
 msgid ""
 "The server's LC_CTYPE locale is probably incompatible with the database "
 "encoding."
-msgstr "Serverns LC_CTYPE-lokal är troligen inkompatibel med databasens teckenkodning."
+msgstr ""
+"Serverns LC_CTYPE-lokal är troligen inkompatibel med databasens "
+"teckenkodning."
 
 #: utils/adt/oracle_compat.c:217 utils/adt/oracle_compat.c:227
 #, c-format
@@ -10509,94 +10549,96 @@ msgstr "typen %s är inte sammansatt"
 msgid "record type has not been registered"
 msgstr ""
 
-#: utils/error/elog.c:1135
+#: utils/error/elog.c:1133
 #, c-format
 msgid "could not reopen file \"%s\" as stderr: %m"
 msgstr "kunde inte återöppna filen \"%s\" som stderr: %m"
 
-#: utils/error/elog.c:1148
+#: utils/error/elog.c:1146
 #, c-format
 msgid "could not reopen file \"%s\" as stdout: %m"
 msgstr "kunde inte återöppna filen \"%s\" som stdout: %m"
 
-#: utils/error/elog.c:1405 utils/error/elog.c:1415
+#: utils/error/elog.c:1403 utils/error/elog.c:1413
 msgid "[unknown]"
 msgstr "[okänd]"
 
-#: utils/error/elog.c:1586 utils/error/elog.c:1770 utils/error/elog.c:1846
+#: utils/error/elog.c:1589 utils/error/elog.c:1773 utils/error/elog.c:1849
 msgid "missing error text"
 msgstr "saknar feltext"
 
-#: utils/error/elog.c:1589 utils/error/elog.c:1592 utils/error/elog.c:1849
-#: utils/error/elog.c:1852
+#: utils/error/elog.c:1592 utils/error/elog.c:1595 utils/error/elog.c:1852
+#: utils/error/elog.c:1855
 #, c-format
 msgid " at character %d"
 msgstr " vid tecken %d"
 
-#: utils/error/elog.c:1602
+#: utils/error/elog.c:1605
 msgid "DETAIL:  "
 msgstr "DETALJ:  "
 
-#: utils/error/elog.c:1609
+#: utils/error/elog.c:1612
 msgid "HINT:  "
 msgstr "TIPS:  "
 
-#: utils/error/elog.c:1616
+#: utils/error/elog.c:1619
 msgid "QUERY:  "
 msgstr "FRÅGA:  "
 
-#: utils/error/elog.c:1623
+#: utils/error/elog.c:1626
 msgid "CONTEXT:  "
 msgstr "KONTEXT:  "
 
-#: utils/error/elog.c:1633
+#: utils/error/elog.c:1636
 #, c-format
 msgid "LOCATION:  %s, %s:%d\n"
 msgstr "PLATS:  %s, %s:%d\n"
 
-#: utils/error/elog.c:1640
+#: utils/error/elog.c:1643
 #, c-format
 msgid "LOCATION:  %s:%d\n"
 msgstr "PLATS:  %s:%d\n"
 
-#: utils/error/elog.c:1652
+#: utils/error/elog.c:1655
 msgid "STATEMENT:  "
 msgstr "SATS:  "
 
-#: utils/error/elog.c:1962
+#. translator: This string will be truncated at 47
+#. characters expanded.
+#: utils/error/elog.c:1964
 #, c-format
 msgid "operating system error %d"
 msgstr "operativsystemfel %d"
 
-#: utils/error/elog.c:1985
+#: utils/error/elog.c:1987
 msgid "DEBUG"
 msgstr "DEBUG"
 
-#: utils/error/elog.c:1989
+#: utils/error/elog.c:1991
 msgid "LOG"
 msgstr "LOGG"
 
-#: utils/error/elog.c:1992
+#: utils/error/elog.c:1994
 msgid "INFO"
 msgstr "INFO"
 
-#: utils/error/elog.c:1995
+#: utils/error/elog.c:1997
 msgid "NOTICE"
 msgstr "NOTIS"
 
-#: utils/error/elog.c:1998
+#: utils/error/elog.c:2000
 msgid "WARNING"
 msgstr "VARNING"
 
-#: utils/error/elog.c:2001
+#: utils/error/elog.c:2003
 msgid "ERROR"
 msgstr "FEL"
 
-#: utils/error/elog.c:2004
+#: utils/error/elog.c:2006
 msgid "FATAL"
 msgstr "FATALT"
 
-#: utils/error/elog.c:2007
+#: utils/error/elog.c:2009
 msgid "PANIC"
 msgstr "PANIK"
 
@@ -10687,7 +10729,9 @@ msgstr "funktionen %u har för många argument (%d, max är %d)"
 msgid ""
 "could not determine actual result type for function \"%s\" declared to "
 "return type %s"
-msgstr "kunde inte bestämma resultattyp för funktion \"%s\" som deklarerats att returnera typ %s"
+msgstr ""
+"kunde inte bestämma resultattyp för funktion \"%s\" som deklarerats att "
+"returnera typ %s"
 
 #: utils/fmgr/funcapi.c:1066 utils/fmgr/funcapi.c:1097
 msgid "number of aliases does not match number of columns"
@@ -10916,24 +10960,16 @@ msgid "loaded library \"%s\""
 msgstr "kunde inte ladda bibliotek \"%s\": %s"
 
 #: utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c:137
+#: utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c:165
 #, c-format
 msgid "unexpected encoding ID %d for ISO 8859 character sets"
 msgstr "oväntat teckenkodnings-ID %d för teckenuppsättningenarna ISO 8859"
 
-#: utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c:165
-#, c-format
-msgid "unexpected encoding id %d for ISO-8859 charsets"
-msgstr "oväntat teckenkodnings-id %d för teckenuppsättningenarna ISO 8859"
-
 #: utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c:127
+#: utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c:155
 #, c-format
 msgid "unexpected encoding ID %d for WIN character sets"
 msgstr "<oväntat teckenkodnings-ID %d för teckenuppsättningenarna WIN"
-
-#: utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c:155
-#, c-format
-msgid "unexpected encoding id %d for WIN charsets"
-msgstr "oväntat teckenkodnings-id %d för teckenuppsättningenarna WIN"
 
 #: utils/mb/conv.c:371
 #, c-format
@@ -10949,12 +10985,15 @@ msgstr "ogiltigt byte-sekvens för kodning \"%s\": 0x%s\""
 msgid ""
 "This error can also happen if the byte sequence does not match the encoding "
 "expected by the server, which is controlled by \"client_encoding\"."
-msgstr "Felet kan också uppstå om byte-sekvensen inte matchar teckenkodningen som servern förväntar sig, detta styrs av inställningen \"client_encoding\"."
+msgstr ""
+"Felet kan också uppstå om byte-sekvensen inte matchar teckenkodningen som "
+"servern förväntar sig, detta styrs av inställningen \"client_encoding\"."
 
 #: utils/mb/wchar.c:1535
 #, c-format
 msgid "character 0x%s of encoding \"%s\" has no equivalent in \"%s\""
-msgstr "tecken 0x%s i teckenkodning \"%s\" har inget motsvarande tecken i \"%s\""
+msgstr ""
+"tecken 0x%s i teckenkodning \"%s\" har inget motsvarande tecken i \"%s\""
 
 #: utils/mb/encnames.c:493
 msgid "encoding name too long"
@@ -11923,7 +11962,10 @@ msgid ""
 "Valid values are DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE, "
 "WARNING, ERROR, LOG, FATAL, and PANIC. Each level includes all the levels "
 "that follow it."
-msgstr "Giltiga värden är DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE, WARNING, ERROR, LOG, FATAL och PANIC. Varje nivå ikluderar de nivåer som följer därefter."
+msgstr ""
+"Giltiga värden är DEBUG5, DEBUG4, DEBUG3, DEBUG2, DEBUG1, INFO, NOTICE, "
+"WARNING, ERROR, LOG, FATAL och PANIC. Varje nivå ikluderar de nivåer som "
+"följer därefter."
 
 #: utils/misc/guc.c:1834
 msgid "Sets the verbosity of logged messages."
@@ -12147,7 +12189,6 @@ msgid "Selects the method used for forcing WAL updates out to disk."
 msgstr ""
 
 #: utils/misc/guc.c:2211
-#, fuzzy
 msgid "Sets the list of known custom variable classes."
 msgstr ""
 
@@ -12207,7 +12248,8 @@ msgid ""
 "option, or by the PGDATA environment variable.\n"
 msgstr ""
 "%s vet inte var den kan hitta \"hba\"-konfigurationsfilen.\n"
-"Detta kan angers som \"hba_file\" i \"%s\", eller genom flaggan -D eller genom omgivningsvariabeln PGDATA.\n"
+"Detta kan angers som \"hba_file\" i \"%s\", eller genom flaggan -D eller "
+"genom omgivningsvariabeln PGDATA.\n"
 
 #: utils/misc/guc.c:3017
 #, c-format
@@ -12353,30 +12395,38 @@ msgstr "kan inte slå på parameter när \"log_statement_stats\" är satt."
 msgid ""
 "cannot enable \"log_statement_stats\" when \"log_parser_stats\", "
 "\"log_planner_stats\", or \"log_executor_stats\" is true"
-msgstr "kan inte slå på \"log_statement_stats\" när \"log_parser_stats\", \"log_planner_stats\", eller \"log_executor_stats\" är satta."
+msgstr ""
+"kan inte slå på \"log_statement_stats\" när \"log_parser_stats\", "
+"\"log_planner_stats\", eller \"log_executor_stats\" är satta."
 
 #: utils/misc/guc.c:6356
 msgid "cannot set transaction read-write mode inside a read-only transaction"
-msgstr "kan inte sätta transaktionens läge till läs-skriv i en enbart-läs-transaktion"
+msgstr ""
+"kan inte sätta transaktionens läge till läs-skriv i en enbart-läs-transaktion"
 
 #: utils/misc/tzparser.c:63
 #, c-format
 msgid ""
 "time zone abbreviation \"%s\" is too long (maximum %d characters) in time "
 "zone file \"%s\", line %d"
-msgstr "tidszonförkortningen \"%s\" är för lång (max %d tecken) i tidszonfilen \"%s\", rad %d"
+msgstr ""
+"tidszonförkortningen \"%s\" är för lång (max %d tecken) i tidszonfilen \"%s"
+"\", rad %d"
 
 #: utils/misc/tzparser.c:72
 #, c-format
 msgid ""
 "time zone offset %d is not a multiple of 900 sec (15 min) in time zone file "
 "\"%s\", line %d"
-msgstr "tidszonoffset %d är inte en multipel av 900 sek (15 min) i tidszonfil \"%s\", rad %d"
+msgstr ""
+"tidszonoffset %d är inte en multipel av 900 sek (15 min) i tidszonfil \"%s"
+"\", rad %d"
 
 #: utils/misc/tzparser.c:86
 #, c-format
 msgid "time zone offset %d is out of range in time zone file \"%s\", line %d"
-msgstr "tidszonoffset %d är otanför giltigt intervall i tidszonfilen \"%s\", rad %d"
+msgstr ""
+"tidszonoffset %d är otanför giltigt intervall i tidszonfilen \"%s\", rad %d"
 
 #: utils/misc/tzparser.c:123
 #, c-format
@@ -12408,7 +12458,9 @@ msgstr "tidszonförkortningen \"%s\" är definierad flera gånger"
 msgid ""
 "Entry in time zone file \"%s\", line %d, conflicts with entry in file \"%s"
 "\", line %d."
-msgstr "Post i tidszonfilen \"%s\", rad %d, står i konflikt med post i filen \"%s\", rad %d."
+msgstr ""
+"Post i tidszonfilen \"%s\", rad %d, står i konflikt med post i filen \"%s\", "
+"rad %d."
 
 #: utils/misc/tzparser.c:303
 #, c-format
@@ -12439,7 +12491,8 @@ msgstr "@INCLUDE utan filnamn i tidszonfil \"%s\", rad %d"
 #, c-format
 msgid ""
 "could not open configuration file \"%s\": maximum nesting depth exceeded"
-msgstr "kunde inte öppna konfigureringsfil \"%s\": maximalt nästlingsdjup överskridet"
+msgstr ""
+"kunde inte öppna konfigureringsfil \"%s\": maximalt nästlingsdjup överskridet"
 
 #: guc-file.l:350
 #, c-format
@@ -12587,3 +12640,17 @@ msgstr "omvandlade win32-felkod %lu till %d"
 msgid "unrecognized win32 error code: %lu"
 msgstr "okänd win32-felkod: %lu"
 
+#~ msgid "could not parse xlog location \"%s\""
+#~ msgstr "kunde inte tolka xlog position \"%s\""
+
+#~ msgid "invalid privilege type %s for namespace"
+#~ msgstr "ogiltig privilegietyp %s för namnutrymme"
+
+#~ msgid "array subscript in assignment must not be NULL"
+#~ msgstr "array-index i tilldelning kan inte vara NULL"
+
+#~ msgid "unexpected encoding id %d for ISO-8859 charsets"
+#~ msgstr "oväntat teckenkodnings-id %d för teckenuppsättningenarna ISO 8859"
+
+#~ msgid "unexpected encoding id %d for WIN charsets"
+#~ msgstr "oväntat teckenkodnings-id %d för teckenuppsättningenarna WIN"
