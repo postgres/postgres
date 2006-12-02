@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.39 2006/11/24 21:18:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.40 2006/12/02 00:42:54 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -791,4 +791,281 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
    <productname>PostgreSQL</productname>, refer to <xref linkend="mvcc">.
   </para>
  </sect1>
+
+ <sect1 id="dynamic-trace">
+  <title>Dynamic Tracing</title>
+
+ <indexterm zone="dynamic-trace">
+  <primary>DTrace</primary>
+ </indexterm>
+
+  <para>
+   <productname>PostgreSQL</productname> provides facilities to support
+   dynamic tracing of the database server. This allows an external
+   utility to be called at specific points in the code and thereby trace
+   execution.  Currently, this facility is primarily intended for use by
+   database developers, as it requires substantial familiarity with the code.
+  </para>
+
+  <para>
+   A number of trace points, often called probes, are already inserted
+   into the source code.  By default these probes are disabled, and
+   the user needs to explicitly tell the configure script to make the
+   probes available in <productname>PostgreSQL</productname>.
+  </para>
+
+  <para> 
+   Currently, only the DTrace utility is supported, which is only available
+   on Solaris Express and Solaris 10+. It is expected that DTrace will
+   be available in the future on FreeBSD and Mac OS X.
+   Supporting other dynamic tracing utilities is theoretically possible by
+   changing the definitions for the <literal>PG_TRACE</> macros in
+   <filename>src/include/pg_trace.h</>.
+  </para>
+
+  <sect2 id="compiling-for-trace">
+   <title>Compiling for Dynamic Trace</title>
+
+  <para>
+   By default, trace points are disabled, so you will need to
+   explicitly tell the configure script to make the probes available
+   in <productname>PostgreSQL</productname>. To include DTrace support
+   in a 32-bit binary, specify <option>--enable-dtrace</> to configure.
+   For example:
+<programlisting>
+      $ ./configure --enable-dtrace ...
+</programlisting>
+   To include DTrace support in a 64-bit binary, specify 
+   <option>--enable-dtrace</>
+   and <literal>DTRACEFLAGS="-64"</> to configure. For example,
+   using the gcc compiler:
+<programlisting>
+      $ ./configure CC='gcc -m64' --enable-dtrace DTRACEFLAGS='-64' ...
+</programlisting>            
+   Using Sun's compiler:
+<programlisting>            
+      $ ./configure CC='/path_to_sun_compiler/cc -xtarget=native64' --enable-dtrace DTRACEFLAGS='-64' ...
+</programlisting>
+  </para>
+  </sect2>
+
+  <sect2 id="trace-points">
+   <title>Built-in Trace Points</title>
+
+  <para>
+   A few standard trace points are provided in the source code
+   (of course, more can be added as needed for a particular problem).
+   These are:
+  </para>
+
+ <table id="trace-point-table">
+  <title>Built-in Trace Points</title>
+  <tgroup cols="3">
+   <thead>
+    <row>
+     <entry>Name</entry>
+     <entry>Parameters</entry>
+     <entry>Overview</entry>
+    </row>
+   </thead>
+
+   <tbody>
+    <row>
+     <entry>transaction__start</entry>
+     <entry>(int transactionId)</entry>
+     <entry>The start of a new transaction.</entry>
+    </row>
+    <row>
+     <entry>transaction__commit</entry>
+     <entry>(int transactionId)</entry>
+     <entry>The successful completion of a transaction.</entry>
+    </row>
+    <row>
+     <entry>transaction__abort</entry>
+     <entry>(int transactionId)</entry>
+     <entry>The unsuccessful completion of a transaction.</entry>
+    </row>
+             
+    <row>
+     <entry>lwlock__acquire</entry>
+     <entry>(int lockid, int mode)</entry>
+     <entry>An LWLock has been acquired.</entry>
+    </row>
+    <row>
+     <entry>lwlock__release</entry>
+     <entry>(int lockid, int mode)</entry>
+     <entry>An LWLock has been released.</entry>
+    </row>
+    <row>
+     <entry>lwlock__startwait</entry>
+     <entry>(int lockid, int mode)</entry>
+     <entry>An LWLock was not immediately available and a backend
+       has begun to wait for the lock to become available.
+     </entry>
+    </row>    
+    <row>
+     <entry>lwlock__endwait</entry>
+     <entry>(int lockid, int mode)</entry>
+     <entry>A backend has been released from its wait for an LWLock.
+     </entry>
+    </row>
+    <row>
+     <entry>lwlock__condacquire</entry>
+     <entry>(int lockid, int mode)</entry>
+     <entry>An LWLock was successfully acquired when the caller specified no
+      waiting.
+     </entry>
+    </row> 
+    <row>
+     <entry>lwlock__condacquire__fail</entry>
+     <entry>(int lockid, int mode)</entry>
+     <entry>An LWLock was not successfully acquired when the caller specified
+      no waiting.
+     </entry>
+    </row>
+    <row>
+     <entry>lock__startwait</entry>
+     <entry>(int locktag_field2, int lockmode)</entry>
+     <entry>A request for a heavyweight lock (lmgr lock) has begun to wait
+      because the lock is not available.
+     </entry>
+    </row>
+    <row>
+     <entry>lock__endwait</entry>
+     <entry>(int locktag_field2, int lockmode)</entry>
+     <entry>A request for a heavyweight lock (lmgr lock) has finished waiting
+      (i.e., has acquired the lock).
+     </entry>
+    </row>
+   </tbody>
+   </tgroup>
+  </table>
+  </sect2>
+
+  <sect2 id="using-trace-points">
+   <title>Using Trace Points</title>
+
+  <para>
+   The example below shows a DTrace script for analyzing transaction
+   counts on the system, as an alternative to snapshotting 
+   <structname>pg_stat_database</> before and after a performance test.
+<programlisting>
+#!/usr/sbin/dtrace -qs 
+
+postgresql$1:::transaction-start
+{
+      @start["Start"] = count();
+      self->ts  = timestamp;
+}
+
+postgresql$1:::transaction-abort
+{
+      @abort["Abort"] = count();
+}
+
+postgresql$1:::transaction-commit
+/self->ts/
+{
+      @commit["Commit"] = count();
+      @time["Total time (ns)"] = sum(timestamp - self->ts);
+      self->ts=0;
+}
+</programlisting>
+   Note how the double underline in trace point names needs to
+   be replaced by a hyphen when using D script.
+   When executed, the example D script gives output such as:
+<programlisting>
+# ./txn_count.d `pgrep -n postgres`
+^C
+
+Start                                          71
+Commit                                         70
+Abort                                           1
+Total time (ns)                        2312105013
+</programlisting>
+  </para>
+  <para>
+   You should remember that trace programs need to be carefully written and
+   debugged prior to their use, otherwise the trace information collected may
+   be meaningless. In most cases where problems are found it is the 
+   instrumentation that is at fault, not the underlying system. When 
+   discussing information found using dynamic tracing, be sure to enclose
+   the script used to allow that too to be checked and discussed.
+  </para>
+  </sect2>
+
+  <sect2 id="defining-trace-points">
+   <title>Defining Trace Points</title>
+
+  <para>
+   New trace points can be defined within the code wherever the developer
+   desires, though this will require a re-compile.
+  </para>
+
+  <para>
+   A trace point can be inserted by using one of the
+   trace macros. These are chosen according to how many variables will
+   be made available for inspection at that trace point. Tracing the
+   occurrence of an event can be achieved with a single line, using
+   just the trace point name, e.g.
+<programlisting>
+      PG_TRACE (my__new__trace__point);
+</programlisting>
+   More complex trace points can be provided with one or more variables
+   for inspection by the dynamic tracing utility by using the
+   <literal>PG_TRACE</><replaceable>n</> macro that corresponds to the number
+   of parameters after the trace point name:
+<programlisting>
+      PG_TRACE3 (my__complex__event, varX, varY, varZ);
+</programlisting>
+   The definition of the transaction__start trace point is shown below:
+<programlisting>
+static void
+StartTransaction(void)
+{
+    ...
+
+    /*
+     * generate a new transaction id
+     */
+    s->transactionId = GetNewTransactionId(false);
+
+    XactLockTableInsert(s->transactionId);
+
+    PG_TRACE1(transaction__start, s->transactionId);
+
+    ...
+}    
+</programlisting>
+   Note how the transaction ID is made available to the dynamic tracing
+   utility.
+  </para>
+
+  <para>
+   The dynamic tracing utility may require you to further define these trace
+   points.  For example, DTrace requires you to add new probes to the file
+   <filename>src/backend/utils/probes.d</> as shown here:
+<programlisting>
+provider postgresql {
+      ...
+      probe transaction__start(int);
+      ...
+ };
+</programlisting>
+  </para>
+
+  <para>
+   You should take care that the datatypes specified for the probe arguments
+   match the datatypes of the variables used in the <literal>PG_TRACE</>
+   macro. This is not checked at compile time. You can check that your newly
+   added trace point is available by recompiling, then running the new binary,
+   and as root, executing a DTrace command such as:
+<programlisting>
+dtrace -l -n transaction-start
+</programlisting>
+  </para>
+  </sect2>
+
+ </sect1>
+
 </chapter>
