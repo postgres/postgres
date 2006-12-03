@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.27 2006/07/26 19:31:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.28 2006/12/03 21:40:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,20 +225,24 @@ static void
 recompute_limits(LimitState *node)
 {
 	ExprContext *econtext = node->ps.ps_ExprContext;
+	Datum		val;
 	bool		isNull;
 
 	if (node->limitOffset)
 	{
-		node->offset =
-			DatumGetInt64(ExecEvalExprSwitchContext(node->limitOffset,
-													econtext,
-													&isNull,
-													NULL));
+		val = ExecEvalExprSwitchContext(node->limitOffset,
+										econtext,
+										&isNull,
+										NULL);
 		/* Interpret NULL offset as no offset */
 		if (isNull)
 			node->offset = 0;
-		else if (node->offset < 0)
-			node->offset = 0;
+		else
+		{
+			node->offset = DatumGetInt64(val);
+			if (node->offset < 0)
+				node->offset = 0;
+		}
 	}
 	else
 	{
@@ -248,17 +252,23 @@ recompute_limits(LimitState *node)
 
 	if (node->limitCount)
 	{
-		node->noCount = false;
-		node->count =
-			DatumGetInt64(ExecEvalExprSwitchContext(node->limitCount,
-													econtext,
-													&isNull,
-													NULL));
+		val = ExecEvalExprSwitchContext(node->limitCount,
+										econtext,
+										&isNull,
+										NULL);
 		/* Interpret NULL count as no count (LIMIT ALL) */
 		if (isNull)
-			node->noCount = true;
-		else if (node->count < 0)
+		{
 			node->count = 0;
+			node->noCount = true;
+		}
+		else
+		{
+			node->count = DatumGetInt64(val);
+			if (node->count < 0)
+				node->count = 0;
+			node->noCount = false;
+		}
 	}
 	else
 	{
