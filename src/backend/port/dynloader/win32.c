@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/backend/port/dynloader/win32.c,v 1.8 2006/06/07 22:24:43 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/backend/port/dynloader/win32.c,v 1.9 2006/12/04 22:23:40 momjian Exp $ */
 
 #include "postgres.h"
 
@@ -18,7 +18,7 @@ set_dl_error(void)
 					  FORMAT_MESSAGE_FROM_SYSTEM,
 					  NULL,
 					  err,
-					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					  MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
 					  last_dyn_error,
 					  sizeof(last_dyn_error) - 1,
 					  NULL) == 0)

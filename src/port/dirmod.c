@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.44 2006/11/08 20:12:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.45 2006/12/04 22:23:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,7 +254,7 @@ pgsymlink(const char *oldpath, const char *newpath)
 		errno = 0;
 		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
 					  NULL, GetLastError(),
-					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					  MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
 					  (LPSTR) & msg, 0, NULL);
 #ifndef FRONTEND
 		ereport(ERROR,
