@@ -1528,7 +1528,7 @@ NIFree(IspellDict * Conf)
 	if (Conf->Spell)
 	{
 		for (i = 0; i < Conf->nspell; i++)
-			pfree(Conf->Spell[i]->word);
+			pfree(Conf->Spell[i]);
 		pfree(Conf->Spell);
 	}
 

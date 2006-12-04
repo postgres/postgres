@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict_syn.c,v 1.10 2006/11/20 14:03:30 teodor Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_syn.c,v 1.11 2006/12/04 09:26:57 teodor Exp $ */
 
 /*
  * ISpell interface
@@ -132,8 +132,8 @@ syn_init(PG_FUNCTION_ARGS)
 			continue;
 		*end = '\0';
 
-		d->syn[cur].in = lowerstr(starti);
-		d->syn[cur].out = lowerstr(starto);
+		d->syn[cur].in = strdup(lowerstr(starti));
+		d->syn[cur].out = strdup(lowerstr(starto));
 		if (!(d->syn[cur].in && d->syn[cur].out))
 		{
 			fclose(fin);
