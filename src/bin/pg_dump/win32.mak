@@ -59,6 +59,7 @@ CLEAN :
 	-@erase "$(INTDIR)\pgstrcasecmp.obj"
 	-@erase "$(INTDIR)\sprompt.obj"
 	-@erase "$(INTDIR)\snprintf.obj"
+	-@erase "$(INTDIR)\qsort.obj"
 #	-@erase "$(INTDIR)\pg_dump.pch"
 	-@erase "$(OUTDIR)\pg_dump.obj"
 	-@erase "$(OUTDIR)\pg_dump.exe"
@@ -97,7 +98,8 @@ LINK32_OBJS= \
 	"$(INTDIR)\strlcpy.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
 	"$(INTDIR)\sprompt.obj" \
-	"$(INTDIR)\snprintf.obj"
+	"$(INTDIR)\snprintf.obj" \
+	"$(INTDIR)\qsort.obj"
 
 LINK32_OBJS_DMP= \
 	"$(INTDIR)\common.obj" \
@@ -186,6 +188,11 @@ LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Release\libpqdll.lib"
 "$(INTDIR)\snprintf.obj" : "$(INTDIR)" ..\..\port\snprintf.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\snprintf.c
+<<
+
+"$(INTDIR)\qsort.obj" : "$(INTDIR)" ..\..\port\qsort.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\qsort.c
 <<
 
 ..\..\backend\parser\parse.h : ..\..\backend\parser\gram.y
