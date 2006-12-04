@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.130 2006/10/04 00:30:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.131 2006/12/04 02:06:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,8 +110,10 @@ extern JunkFilter *ExecInitJunkFilter(List *targetList, bool hasoid,
 extern JunkFilter *ExecInitJunkFilterConversion(List *targetList,
 							 TupleDesc cleanTupType,
 							 TupleTableSlot *slot);
-extern bool ExecGetJunkAttribute(JunkFilter *junkfilter, TupleTableSlot *slot,
-					 char *attrName, Datum *value, bool *isNull);
+extern AttrNumber ExecFindJunkAttribute(JunkFilter *junkfilter,
+										const char *attrName);
+extern Datum ExecGetJunkAttribute(TupleTableSlot *slot, AttrNumber attno,
+								  bool *isNull);
 extern TupleTableSlot *ExecFilterJunk(JunkFilter *junkfilter,
 			   TupleTableSlot *slot);
 extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);

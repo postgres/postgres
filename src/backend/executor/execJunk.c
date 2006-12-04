@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.54 2006/07/14 14:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execJunk.c,v 1.55 2006/12/04 02:06:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,24 +26,25 @@
  * never make it out of the executor, i.e. they are never printed,
  * returned or stored on disk. Their only purpose in life is to
  * store some information useful only to the executor, mainly the values
- * of some system attributes like "ctid" or rule locks.
+ * of system attributes like "ctid", or sort key columns that are not to
+ * be output.
  *
  * The general idea is the following: A target list consists of a list of
  * TargetEntry nodes containing expressions. Each TargetEntry has a field
  * called 'resjunk'. If the value of this field is true then the
  * corresponding attribute is a "junk" attribute.
  *
- * When we initialize a plan we call 'ExecInitJunkFilter' to create
- * and store the appropriate information in the 'es_junkFilter' attribute of
+ * When we initialize a plan we call ExecInitJunkFilter to create
+ * and store the appropriate information in the es_junkFilter attribute of
  * EState.
  *
- * We then execute the plan ignoring the "resjunk" attributes.
+ * We then execute the plan, treating the resjunk attributes like any others.
  *
  * Finally, when at the top level we get back a tuple, we can call
- * ExecGetJunkAttribute to retrieve the value of the junk attributes we
- * are interested in, and ExecFilterJunk or ExecRemoveJunk to remove all
- * the junk attributes from a tuple. This new "clean" tuple is then printed,
- * replaced, deleted or inserted.
+ * ExecFindJunkAttribute/ExecGetJunkAttribute to retrieve the values of the
+ * junk attributes we are interested in, and ExecFilterJunk or ExecRemoveJunk
+ * to remove all the junk attributes from a tuple. This new "clean" tuple is
+ * then printed, replaced, deleted or inserted.
  *
  *-------------------------------------------------------------------------
  */
@@ -201,26 +202,16 @@ ExecInitJunkFilterConversion(List *targetList,
 }
 
 /*
- * ExecGetJunkAttribute
+ * ExecFindJunkAttribute
  *
- * Given a tuple (slot), the junk filter and a junk attribute's name,
- * extract & return the value and isNull flag of this attribute.
- *
- * It returns false iff no junk attribute with such name was found.
+ * Locate the specified junk attribute in the junk filter's targetlist,
+ * and return its resno.  Returns InvalidAttrNumber if not found.
  */
-bool
-ExecGetJunkAttribute(JunkFilter *junkfilter,
-					 TupleTableSlot *slot,
-					 char *attrName,
-					 Datum *value,
-					 bool *isNull)
+AttrNumber
+ExecFindJunkAttribute(JunkFilter *junkfilter, const char *attrName)
 {
 	ListCell   *t;
 
-	/*
-	 * Look in the junkfilter's target list for an attribute with the given
-	 * name
-	 */
 	foreach(t, junkfilter->jf_targetList)
 	{
 		TargetEntry *tle = lfirst(t);
@@ -229,13 +220,27 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 			(strcmp(tle->resname, attrName) == 0))
 		{
 			/* We found it ! */
-			*value = slot_getattr(slot, tle->resno, isNull);
-			return true;
+			return tle->resno;
 		}
 	}
 
-	/* Ooops! We couldn't find this attribute... */
-	return false;
+	return InvalidAttrNumber;
+}
+
+/*
+ * ExecGetJunkAttribute
+ *
+ * Given a junk filter's input tuple (slot) and a junk attribute's number
+ * previously found by ExecFindJunkAttribute, extract & return the value and
+ * isNull flag of the attribute.
+ */
+Datum
+ExecGetJunkAttribute(TupleTableSlot *slot, AttrNumber attno,
+					 bool *isNull)
+{
+	Assert(attno > 0);
+
+	return slot_getattr(slot, attno, isNull);
 }
 
 /*

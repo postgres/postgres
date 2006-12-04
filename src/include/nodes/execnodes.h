@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.161 2006/09/28 20:51:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.162 2006/12/04 02:06:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -226,7 +226,8 @@ typedef struct ProjectionInfo
  *	  the tuple to be updated.	This is needed to do the update, but we
  *	  don't want the ctid to be part of the stored new tuple!  So, we
  *	  apply a "junk filter" to remove the junk attributes and form the
- *	  real output tuple.
+ *	  real output tuple.  The junkfilter code also provides routines to
+ *	  extract the values of the junk attribute(s) from the input tuple.
  *
  *	  targetList:		the original target list (including junk attributes).
  *	  cleanTupType:		the tuple descriptor for the "clean" tuple (with
@@ -235,6 +236,9 @@ typedef struct ProjectionInfo
  *						attribute numbers of the "original" tuple and the
  *						attribute numbers of the "clean" tuple.
  *	  resultSlot:		tuple slot used to hold cleaned tuple.
+ *	  junkAttNo:		not used by junkfilter code.  Can be used by caller
+ *						to remember the attno of a specific junk attribute
+ *						(execMain.c stores the "ctid" attno here).
  * ----------------
  */
 typedef struct JunkFilter
@@ -244,6 +248,7 @@ typedef struct JunkFilter
 	TupleDesc	jf_cleanTupType;
 	AttrNumber *jf_cleanMap;
 	TupleTableSlot *jf_resultSlot;
+	AttrNumber	jf_junkAttNo;
 } JunkFilter;
 
 /* ----------------
@@ -352,7 +357,7 @@ typedef struct ExecRowMark
 	Index		rti;			/* its range table index */
 	bool		forUpdate;		/* true = FOR UPDATE, false = FOR SHARE */
 	bool		noWait;			/* NOWAIT option */
-	char		resname[32];	/* name for its ctid junk attribute */
+	AttrNumber	ctidAttNo;		/* resno of its ctid junk attribute */
 } ExecRowMark;
 
 

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.280 2006/10/04 00:29:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.281 2006/12/04 02:06:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -567,7 +567,9 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	/*
-	 * Have to lock relations selected FOR UPDATE/FOR SHARE
+	 * Have to lock relations selected FOR UPDATE/FOR SHARE before we
+	 * initialize the plan tree, else we'd be doing a lock upgrade.
+	 * While we are at it, build the ExecRowMark list.
 	 */
 	estate->es_rowMarks = NIL;
 	foreach(l, parseTree->rowMarks)
@@ -583,7 +585,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		erm->rti = rc->rti;
 		erm->forUpdate = rc->forUpdate;
 		erm->noWait = rc->noWait;
-		snprintf(erm->resname, sizeof(erm->resname), "ctid%u", rc->rti);
+		/* We'll set up ctidAttno below */
+		erm->ctidAttNo = InvalidAttrNumber;
 		estate->es_rowMarks = lappend(estate->es_rowMarks, erm);
 	}
 
@@ -703,6 +706,16 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 					j = ExecInitJunkFilter(subplan->plan->targetlist,
 							resultRelInfo->ri_RelationDesc->rd_att->tdhasoid,
 								  ExecAllocTableSlot(estate->es_tupleTable));
+					/*
+					 * Since it must be UPDATE/DELETE, there had better be
+					 * a "ctid" junk attribute in the tlist ... but ctid could
+					 * be at a different resno for each result relation.
+					 * We look up the ctid resnos now and save them in the
+					 * junkfilters.
+					 */
+					j->jf_junkAttNo = ExecFindJunkAttribute(j, "ctid");
+					if (!AttributeNumberIsValid(j->jf_junkAttNo))
+						elog(ERROR, "could not find junk ctid column");
 					resultRelInfo->ri_junkFilter = j;
 					resultRelInfo++;
 				}
@@ -726,9 +739,30 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 				if (estate->es_result_relation_info)
 					estate->es_result_relation_info->ri_junkFilter = j;
 
-				/* For SELECT, want to return the cleaned tuple type */
 				if (operation == CMD_SELECT)
+				{
+					/* For SELECT, want to return the cleaned tuple type */
 					tupType = j->jf_cleanTupType;
+					/* For SELECT FOR UPDATE/SHARE, find the ctid attrs now */
+					foreach(l, estate->es_rowMarks)
+					{
+						ExecRowMark *erm = (ExecRowMark *) lfirst(l);
+						char		resname[32];
+
+						snprintf(resname, sizeof(resname), "ctid%u", erm->rti);
+						erm->ctidAttNo = ExecFindJunkAttribute(j, resname);
+						if (!AttributeNumberIsValid(erm->ctidAttNo))
+							elog(ERROR, "could not find junk \"%s\" column",
+								 resname);
+					}
+				}
+				else if (operation == CMD_UPDATE || operation == CMD_DELETE)
+				{
+					/* For UPDATE/DELETE, find the ctid junk attr now */
+					j->jf_junkAttNo = ExecFindJunkAttribute(j, "ctid");
+					if (!AttributeNumberIsValid(j->jf_junkAttNo))
+						elog(ERROR, "could not find junk ctid column");
+				}
 			}
 		}
 		else
@@ -1111,13 +1145,8 @@ lnext:	;
 			 */
 			if (operation == CMD_UPDATE || operation == CMD_DELETE)
 			{
-				if (!ExecGetJunkAttribute(junkfilter,
-										  slot,
-										  "ctid",
-										  &datum,
-										  &isNull))
-					elog(ERROR, "could not find junk ctid column");
-
+				datum = ExecGetJunkAttribute(slot, junkfilter->jf_junkAttNo,
+											 &isNull);
 				/* shouldn't ever get a null result... */
 				if (isNull)
 					elog(ERROR, "ctid is NULL");
@@ -1146,17 +1175,12 @@ lnext:	;
 					LockTupleMode lockmode;
 					HTSU_Result test;
 
-					if (!ExecGetJunkAttribute(junkfilter,
-											  slot,
-											  erm->resname,
-											  &datum,
-											  &isNull))
-						elog(ERROR, "could not find junk \"%s\" column",
-							 erm->resname);
-
+					datum = ExecGetJunkAttribute(slot,
+												 erm->ctidAttNo,
+												 &isNull);
 					/* shouldn't ever get a null result... */
 					if (isNull)
-						elog(ERROR, "\"%s\" is NULL", erm->resname);
+						elog(ERROR, "ctid is NULL");
 
 					tuple.t_self = *((ItemPointer) DatumGetPointer(datum));
 
