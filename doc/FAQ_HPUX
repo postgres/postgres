@@ -1,9 +1,9 @@
 =======================================================
-Frequently Asked Questions (FAQ) for PostgreSQL 7.3
+Frequently Asked Questions (FAQ) for PostgreSQL
 HP-UX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2006/07/19 02:37:00 $
+last updated:           $Date: 2006/12/05 14:47:34 $
 
 current maintainer:     Tom Lane (tgl@sss.pgh.pa.us)
 original author:        Tom Lane (tgl@sss.pgh.pa.us)
@@ -21,10 +21,15 @@ Section 1:      Installing PostgreSQL
 
 1.1)	What do I need to install PostgreSQL on HP-UX?
 
-PostgreSQL 7.3 should work on Series 700/800 PA-RISC machines running
+PostgreSQL 7.3+ should work on Series 700/800 PA-RISC machines running
 HP-UX 10.X or 11.X, given appropriate system patch levels and build
 tools.  At least one developer routinely tests on HPUX 10.20 and we
 have reports of successful installations on HPUX 11.00 and 11.11.
+
+Recent port reports for PostgreSQL 8.2.0 are
+  - on IA64,    HP-UX 11.23,           gcc and cc
+  - on PA-RISC, HP-UX 10.20 and 11.23, gcc and cc
+Tested on 2006-10-23
 
 Aside from the PostgreSQL source distribution, you will need GNU make
 (HP's make will not do), and either GNU gcc or HP's full ANSI C compiler.

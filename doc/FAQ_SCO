@@ -1,13 +1,15 @@
-============================================================
-Frequently Asked Questions (FAQ) for PostgreSQL 7.3
-SCO UnixWare and OpenServer specific
-to be read in conjunction with the installation instructions
-============================================================
-last updated:           $Date: 2004/08/04 21:33:39 $
+=======================================================
+Frequently Asked Questions (FAQ) for PostgreSQL
+IRIX Specific
+TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
+=======================================================
+last updated:           $Date: 2006/12/05 14:47:34 $
 
 current maintainer:     Billy G. Allie (Bill.Allie@mug.org)
 original author:        Andrew Merrill (andrew@compclass.com)
 
+
+Consult http://buildfarm.postgresql.org/ for latest information.
 
 PostgreSQL 8.0 can be built on SCO UnixWare 7 and SCO OpenServer 5.
 On OpenServer, you can use either the OpenServer Development Kit or 

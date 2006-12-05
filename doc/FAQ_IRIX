@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 IRIX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2002/11/11 20:04:05 $
+last updated:           $Date: 2006/12/05 14:47:34 $
 
 current maintainer:     Luis Amigo (lamigo@atc.unican.es)
 original author:        Luis Amigo (lamigo@atc.unican.es)
@@ -24,6 +24,9 @@ Section 1:      Installing PostgreSQL
 PostgreSQL 7.2 has been run on MIPS r8000, r10000(both ip25 and ip27)
 and r12000(ip35) processors, running IRIX 6.5.5m, 6.5.12 and 6.5.13 with
 MIPSPro compilers version 7.30, 7.3.1.2m and 7.3. 
+
+PostgreSQL 8.1.0 has been reported as compiling successfully on IRIX 6.5
+on MIPS using cc by Kenneth Marshall (<ktm@is.rice.edu>), 2005-11-04
 
 Aside from the PostgreSQL source distribution, you will need GNU make
 (SGI's make will not do), and the MIPSPro full ANSI C compiler.
