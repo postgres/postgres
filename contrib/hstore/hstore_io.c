@@ -143,7 +143,7 @@ get_val(HSParser * state, bool ignoreeq, bool *escaped)
 			st = GV_INESCVAL;
 		}
 		else
-			elog(ERROR, "Unknown state %d at postion line %d in file '%s'", st, __LINE__, __FILE__);
+			elog(ERROR, "Unknown state %d at position line %d in file '%s'", st, __LINE__, __FILE__);
 
 		state->ptr++;
 	}
@@ -195,11 +195,11 @@ parse_hstore(HSParser * state)
 			}
 			else if (*(state->ptr) == '\0')
 			{
-				elog(ERROR, "Unexpectd end of string");
+				elog(ERROR, "Unexpected end of string");
 			}
 			else if (!isspace((unsigned char) *(state->ptr)))
 			{
-				elog(ERROR, "Syntax error near '%c' at postion %d", *(state->ptr), (int4) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int4) (state->ptr - state->begin));
 			}
 		}
 		else if (st == WGT)
@@ -210,11 +210,11 @@ parse_hstore(HSParser * state)
 			}
 			else if (*(state->ptr) == '\0')
 			{
-				elog(ERROR, "Unexpectd end of string");
+				elog(ERROR, "Unexpected end of string");
 			}
 			else
 			{
-				elog(ERROR, "Syntax error near '%c' at postion %d", *(state->ptr), (int4) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int4) (state->ptr - state->begin));
 			}
 		}
 		else if (st == WVAL)
@@ -247,7 +247,7 @@ parse_hstore(HSParser * state)
 			}
 			else if (!isspace((unsigned char) *(state->ptr)))
 			{
-				elog(ERROR, "Syntax error near '%c' at postion %d", *(state->ptr), (int4) (state->ptr - state->begin));
+				elog(ERROR, "Syntax error near '%c' at position %d", *(state->ptr), (int4) (state->ptr - state->begin));
 			}
 		}
 		else
@@ -271,7 +271,7 @@ comparePairs(const void *a, const void *b)
 		if (res)
 			return res;
 
-		/* guarantee that neddfree willl be later */
+		/* guarantee that needfree will be later */
 		if (((Pairs *) b)->needfree == ((Pairs *) a)->needfree)
 			return 0;
 		else if (((Pairs *) a)->needfree)

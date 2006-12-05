@@ -112,7 +112,7 @@ delete(PG_FUNCTION_ARGS)
 			   *ed;
 
 	out->len = hs->len;
-	out->size = hs->size;		/* temprorary! */
+	out->size = hs->size;		/* temporary! */
 
 	ptrs = STRPTR(hs);
 	es = ARRPTR(hs);
