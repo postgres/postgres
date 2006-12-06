@@ -3,11 +3,10 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 AIX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-Last updated:        $Date: 2006/12/05 14:47:33 $
+Last updated:        $Date: 2006/12/06 15:45:30 $
 
 Topics
 
-- Known Working Ports
 - AIX 4.3.2 Port Report
 - AIX 5.3 Additional Information
 - AIX, readline, and postgres 8.1.x:
@@ -16,22 +15,8 @@ Topics
 
 -----
 
-Working Ports
--------------
-Consult http://buildfarm.postgresql.org/ for latest information.
-
-At time of writing the following builds work on 8.0, 8.1 and 8.2
-
-    AIX 5.3 using gcc 4.0.1 on PowerPC
-    AIX 5.2 using gcc 3.3.2 on PowerPC
-    AIX 5.2 using cc 6.0 on PowerPC
-
-plus port report below for AIX 4.3.2
-
------
-
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2006/12/05 14:47:33 $
+$Date: 2006/12/06 15:45:30 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
