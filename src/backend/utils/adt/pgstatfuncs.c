@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.34 2006/10/04 00:29:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.35 2006/12/06 18:06:47 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ extern Datum pg_stat_get_backend_userid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_activity(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_waiting(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_backend_txn_start(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_start(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_client_port(PG_FUNCTION_ARGS);
@@ -421,6 +422,29 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TIMESTAMPTZ(result);
 }
+
+
+Datum
+pg_stat_get_backend_txn_start(PG_FUNCTION_ARGS)
+{
+	int32		beid = PG_GETARG_INT32(0);
+	TimestampTz result;
+	PgBackendStatus *beentry;
+
+	if ((beentry = pgstat_fetch_stat_beentry(beid)) == NULL)
+		PG_RETURN_NULL();
+
+	if (!superuser() && beentry->st_userid != GetUserId())
+		PG_RETURN_NULL();
+
+	result = beentry->st_txn_start_timestamp;
+
+	if (result == 0)			/* not in a transaction */
+		PG_RETURN_NULL();
+
+	PG_RETURN_TIMESTAMPTZ(result);
+}
+
 
 Datum
 pg_stat_get_backend_start(PG_FUNCTION_ARGS)

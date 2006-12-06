@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.50 2006/10/04 00:30:06 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.51 2006/12/06 18:06:47 neilc Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -325,8 +325,9 @@ typedef struct PgBackendStatus
 	/* The entry is valid iff st_procpid > 0, unused if st_procpid == 0 */
 	int			st_procpid;
 
-	/* Times of backend process start and current activity start */
+	/* Times when current backend, transaction, and activity started */
 	TimestampTz st_proc_start_timestamp;
+	TimestampTz st_txn_start_timestamp;
 	TimestampTz st_activity_start_timestamp;
 
 	/* Database OID, owning user's OID, connection client address */
@@ -390,6 +391,7 @@ extern void pgstat_report_analyze(Oid tableoid, bool shared,
 
 extern void pgstat_bestart(void);
 extern void pgstat_report_activity(const char *what);
+extern void pgstat_report_txn_timestamp(TimestampTz tstamp);
 extern void pgstat_report_waiting(bool waiting);
 
 extern void pgstat_initstats(PgStat_Info *stats, Relation rel);
