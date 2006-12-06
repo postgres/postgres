@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.177 2006/12/06 15:40:11 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.178 2006/12/06 15:47:22 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -89,7 +89,7 @@ PostgreSQL documentation
       <acronym>SQL</acronym> and <application>psql</application>
       meta-commands with this option. To achieve that, you could
       pipe the string into <application>psql</application>, like
-      this: <literal>echo "\x \\ SELECT * FROM foo;" | psql</literal>.
+      this: <literal>echo '\x \\ SELECT * FROM foo;' | psql</literal>.
       (<literal>\\</> is the separator meta-command.)
       </para>
       <para>
