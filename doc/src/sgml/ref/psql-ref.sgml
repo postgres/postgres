@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.176 2006/12/05 17:40:55 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.177 2006/12/06 15:40:11 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -87,9 +87,10 @@ PostgreSQL documentation
       it contains no <application>psql</application> specific features),
       or a single backslash command. Thus you cannot mix
       <acronym>SQL</acronym> and <application>psql</application>
-      meta-commands. To achieve that, you could pipe the string into
-      <application>psql</application>, like this: <literal>echo -e
-      "\\x\nSELECT * FROM foo;" | psql</literal>.
+      meta-commands with this option. To achieve that, you could
+      pipe the string into <application>psql</application>, like
+      this: <literal>echo "\x \\ SELECT * FROM foo;" | psql</literal>.
+      (<literal>\\</> is the separator meta-command.)
       </para>
       <para>
        If the command string contains multiple SQL commands, they are
