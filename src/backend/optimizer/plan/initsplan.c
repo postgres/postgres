@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.123 2006/10/04 00:29:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.124 2006/12/07 19:33:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -735,30 +735,69 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 * For a non-outer-join qual, we can evaluate the qual as soon as (1)
 		 * we have all the rels it mentions, and (2) we are at or above any
 		 * outer joins that can null any of these rels and are below the
-		 * syntactic location of the given qual. To enforce the latter, scan
-		 * the oj_info_list and merge the required-relid sets of any such OJs
-		 * into the clause's own reference list.  At the time we are called,
-		 * the oj_info_list contains only outer joins below this qual.
+		 * syntactic location of the given qual.  We must enforce (2) because
+		 * pushing down such a clause below the OJ might cause the OJ to emit
+		 * null-extended rows that should not have been formed, or that should
+		 * have been rejected by the clause.  (This is only an issue for
+		 * non-strict quals, since if we can prove a qual mentioning only
+		 * nullable rels is strict, we'd have reduced the outer join to an
+		 * inner join in reduce_outer_joins().)
+		 *
+		 * To enforce (2), scan the oj_info_list and merge the required-relid
+		 * sets of any such OJs into the clause's own reference list.  At the
+		 * time we are called, the oj_info_list contains only outer joins
+		 * below this qual.  We have to repeat the scan until no new relids
+		 * get added; this ensures that the qual is suitably delayed regardless
+		 * of the order in which OJs get executed.  As an example, if we have
+		 * one OJ with LHS=A, RHS=B, and one with LHS=B, RHS=C, it is implied
+		 * that these can be done in either order; if the B/C join is done
+		 * first then the join to A can null C, so a qual actually mentioning
+		 * only C cannot be applied below the join to A.
 		 */
-		Relids		addrelids = NULL;
-		ListCell   *l;
+		bool		found_some;
 
 		outerjoin_delayed = false;
-		foreach(l, root->oj_info_list)
-		{
-			OuterJoinInfo *ojinfo = (OuterJoinInfo *) lfirst(l);
+		do {
+			ListCell   *l;
 
-			if (bms_overlap(relids, ojinfo->min_righthand) ||
-				(ojinfo->is_full_join &&
-				 bms_overlap(relids, ojinfo->min_lefthand)))
+			found_some = false;
+			foreach(l, root->oj_info_list)
 			{
-				addrelids = bms_add_members(addrelids, ojinfo->min_lefthand);
-				addrelids = bms_add_members(addrelids, ojinfo->min_righthand);
-				outerjoin_delayed = true;
-			}
-		}
+				OuterJoinInfo *ojinfo = (OuterJoinInfo *) lfirst(l);
 
-		if (bms_is_subset(addrelids, relids))
+				/* do we have any nullable rels of this OJ? */
+				if (bms_overlap(relids, ojinfo->min_righthand) ||
+					(ojinfo->is_full_join &&
+					 bms_overlap(relids, ojinfo->min_lefthand)))
+				{
+					/* yes; do we have all its rels? */
+					if (!bms_is_subset(ojinfo->min_lefthand, relids) ||
+						!bms_is_subset(ojinfo->min_righthand, relids))
+					{
+						/* no, so add them in */
+						relids = bms_add_members(relids,
+												 ojinfo->min_lefthand);
+						relids = bms_add_members(relids,
+												 ojinfo->min_righthand);
+						outerjoin_delayed = true;
+						/* we'll need another iteration */
+						found_some = true;
+					}
+				}
+			}
+		} while (found_some);
+
+		if (outerjoin_delayed)
+		{
+			/* Should still be a subset of current scope ... */
+			Assert(bms_is_subset(relids, qualscope));
+			/*
+			 * Because application of the qual will be delayed by outer join,
+			 * we mustn't assume its vars are equal everywhere.
+			 */
+			maybe_equijoin = false;
+		}
+		else
 		{
 			/*
 			 * Qual is not delayed by any lower outer-join restriction. If it
@@ -774,19 +813,8 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 			else
 				maybe_equijoin = false;
 		}
-		else
-		{
-			relids = bms_union(relids, addrelids);
-			/* Should still be a subset of current scope ... */
-			Assert(bms_is_subset(relids, qualscope));
 
-			/*
-			 * Because application of the qual will be delayed by outer join,
-			 * we mustn't assume its vars are equal everywhere.
-			 */
-			maybe_equijoin = false;
-		}
-		bms_free(addrelids);
+		/* Since it doesn't mention the LHS, it's certainly not an OJ clause */
 		maybe_outer_join = false;
 	}
 
