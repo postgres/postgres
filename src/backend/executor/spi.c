@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.165 2006/11/21 22:35:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.166 2006/12/08 00:40:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1543,6 +1543,9 @@ fail:
 	SPI_lastoid = my_lastoid;
 	SPI_tuptable = my_tuptable;
 
+	/* tuptable now is caller's responsibility, not SPI's */
+	_SPI_current->tuptable = NULL;
+
 	return my_res;
 }
 
@@ -1694,6 +1697,9 @@ _SPI_cursor_operation(Portal portal, bool forward, long count,
 	/* Put the result into place for access by caller */
 	SPI_processed = _SPI_current->processed;
 	SPI_tuptable = _SPI_current->tuptable;
+
+	/* tuptable now is caller's responsibility, not SPI's */
+	_SPI_current->tuptable = NULL;
 
 	/* Pop the SPI stack */
 	_SPI_end_call(true);
