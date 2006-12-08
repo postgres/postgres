@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.42 2006/12/06 18:06:46 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.43 2006/12/08 19:16:17 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -832,6 +832,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
    in <productname>PostgreSQL</productname>. To include DTrace support
    specify <option>--enable-dtrace</> to configure.  See <xref
    linkend="install-procedure"> for further information.
+  </para>
   </sect2>
 
   <sect2 id="trace-points">
