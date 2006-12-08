@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.518 2006/11/21 20:59:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.519 2006/12/08 02:15:07 neilc Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2233,8 +2233,7 @@ finish_xact_command(void)
 
 #ifdef SHOW_MEMORY_STATS
 		/* Print mem stats after each commit for leak tracking */
-		if (ShowStats)
-			MemoryContextStats(TopMemoryContext);
+		MemoryContextStats(TopMemoryContext);
 #endif
 
 		xact_started = false;
