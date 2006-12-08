@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.33 2006/10/04 00:30:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.34 2006/12/08 19:50:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	822
+#define PG_CONTROL_VERSION	831
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -102,8 +102,6 @@ typedef struct ControlFileData
 	 */
 	DBState		state;			/* see enum above */
 	time_t		time;			/* time stamp of last pg_control update */
-	uint32		logId;			/* current log file id */
-	uint32		logSeg;			/* current log file segment, + 1 */
 	XLogRecPtr	checkPoint;		/* last check point record ptr */
 	XLogRecPtr	prevCheckPoint; /* previous check point record ptr */
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.18 2006/09/16 00:30:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.19 2006/12/08 19:50:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -72,7 +72,7 @@ PostgreSQL documentation
    <literal>-f</> can still be used, but
    the recovered database must be treated with even more suspicion than
    usual: an immediate dump and reload is imperative.  <emphasis>Do not</>
-   execute any data-modifying operations in the database before you dump;
+   execute any data-modifying operations in the database before you dump,
    as any such action is likely to make the corruption worse.
   </para>
 
@@ -127,7 +127,7 @@ PostgreSQL documentation
     <listitem>
      <para>
       The WAL starting address (<literal>-l</>) should be
-      larger than any file name currently existing in
+      larger than any WAL segment file name currently existing in
       the directory <filename>pg_xlog</> under the data directory.
       These names are also in hexadecimal and have three parts.  The first
       part is the <quote>timeline ID</> and should usually be kept the same.
@@ -139,6 +139,18 @@ PostgreSQL documentation
       <filename>000000010000003A000000FF</>, choose <literal>-l 0x1,0x3B,0x0</>
       or more.
      </para>
+
+     <note>
+      <para>
+       <command>pg_resetxlog</command> itself looks at the files in
+       <filename>pg_xlog</> and chooses a default <literal>-l</> setting
+       beyond the last existing file name.  Therefore, manual adjustment of
+       <literal>-l</> should only be needed if you are aware of WAL segment
+       files that are not currently present in <filename>pg_xlog</>, such as
+       entries in an offline archive; or if the contents of
+       <filename>pg_xlog</> have been lost entirely.
+      </para>
+     </note>
     </listitem>
 
     <listitem>

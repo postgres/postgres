@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.53 2006/10/04 00:30:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.54 2006/12/08 19:50:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ static bool ReadControlFile(void);
 static void GuessControlValues(void);
 static void PrintControlValues(bool guessed);
 static void RewriteControlFile(void);
+static void FindEndOfXLOG(void);
 static void KillExistingXLOG(void);
 static void WriteEmptyXLOG(void);
 static void usage(void);
@@ -284,6 +285,11 @@ main(int argc, char *argv[])
 		GuessControlValues();
 
 	/*
+	 * Also look at existing segment files to set up newXlogId/newXlogSeg
+	 */
+	FindEndOfXLOG();
+
+	/*
 	 * Adjust fields if required by switches.  (Do this now so that printout,
 	 * if any, includes these values.)
 	 */
@@ -305,12 +311,12 @@ main(int argc, char *argv[])
 	if (minXlogTli > ControlFile.checkPointCopy.ThisTimeLineID)
 		ControlFile.checkPointCopy.ThisTimeLineID = minXlogTli;
 
-	if (minXlogId > ControlFile.logId ||
-		(minXlogId == ControlFile.logId &&
-		 minXlogSeg > ControlFile.logSeg))
+	if (minXlogId > newXlogId ||
+		(minXlogId == newXlogId &&
+		 minXlogSeg > newXlogSeg))
 	{
-		ControlFile.logId = minXlogId;
-		ControlFile.logSeg = minXlogSeg;
+		newXlogId = minXlogId;
+		newXlogSeg = minXlogSeg;
 	}
 
 	/*
@@ -469,8 +475,6 @@ GuessControlValues(void)
 
 	ControlFile.state = DB_SHUTDOWNED;
 	ControlFile.time = time(NULL);
-	ControlFile.logId = 0;
-	ControlFile.logSeg = 1;
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
 
 	ControlFile.maxAlign = MAXIMUM_ALIGNOF;
@@ -533,16 +537,16 @@ PrintControlValues(bool guessed)
 	snprintf(sysident_str, sizeof(sysident_str), UINT64_FORMAT,
 			 ControlFile.system_identifier);
 
+	printf(_("First log file ID for new XLOG:       %u\n"),
+		   newXlogId);
+	printf(_("First log file segment for new XLOG:  %u\n"),
+		   newXlogSeg);
 	printf(_("pg_control version number:            %u\n"),
 		   ControlFile.pg_control_version);
 	printf(_("Catalog version number:               %u\n"),
 		   ControlFile.catalog_version_no);
 	printf(_("Database system identifier:           %s\n"),
 		   sysident_str);
-	printf(_("Current log file ID:                  %u\n"),
-		   ControlFile.logId);
-	printf(_("Next log file segment:                %u\n"),
-		   ControlFile.logSeg);
 	printf(_("Latest checkpoint's TimeLineID:       %u\n"),
 		   ControlFile.checkPointCopy.ThisTimeLineID);
 	printf(_("Latest checkpoint's NextXID:          %u/%u\n"),
@@ -590,22 +594,9 @@ RewriteControlFile(void)
 	char		buffer[PG_CONTROL_SIZE];		/* need not be aligned */
 
 	/*
-	 * Adjust fields as needed to force an empty XLOG starting at the next
-	 * available segment.
+	 * Adjust fields as needed to force an empty XLOG starting at
+	 * newXlogId/newXlogSeg.
 	 */
-	newXlogId = ControlFile.logId;
-	newXlogSeg = ControlFile.logSeg;
-
-	/* adjust in case we are changing segment size */
-	newXlogSeg *= ControlFile.xlog_seg_size;
-	newXlogSeg = (newXlogSeg + XLogSegSize - 1) / XLogSegSize;
-
-	/* be sure we wrap around correctly at end of a logfile */
-	NextLogSeg(newXlogId, newXlogSeg);
-
-	/* Now we can force the recorded xlog seg size to the right thing. */
-	ControlFile.xlog_seg_size = XLogSegSize;
-
 	ControlFile.checkPointCopy.redo.xlogid = newXlogId;
 	ControlFile.checkPointCopy.redo.xrecoff =
 		newXlogSeg * XLogSegSize + SizeOfXLogLongPHD;
@@ -614,13 +605,14 @@ RewriteControlFile(void)
 
 	ControlFile.state = DB_SHUTDOWNED;
 	ControlFile.time = time(NULL);
-	ControlFile.logId = newXlogId;
-	ControlFile.logSeg = newXlogSeg + 1;
 	ControlFile.checkPoint = ControlFile.checkPointCopy.redo;
 	ControlFile.prevCheckPoint.xlogid = 0;
 	ControlFile.prevCheckPoint.xrecoff = 0;
 	ControlFile.minRecoveryPoint.xlogid = 0;
 	ControlFile.minRecoveryPoint.xrecoff = 0;
+
+	/* Now we can force the recorded xlog seg size to the right thing. */
+	ControlFile.xlog_seg_size = XLogSegSize;
 
 	/* Contents are protected with a CRC */
 	INIT_CRC32(ControlFile.crc);
@@ -677,6 +669,97 @@ RewriteControlFile(void)
 	}
 
 	close(fd);
+}
+
+
+/*
+ * Scan existing XLOG files and determine the highest existing WAL address
+ *
+ * On entry, ControlFile.checkPointCopy.redo and ControlFile.xlog_seg_size
+ * are assumed valid (note that we allow the old xlog seg size to differ
+ * from what we're using).  On exit, newXlogId and newXlogSeg are set to
+ * suitable values for the beginning of replacement WAL (in our seg size).
+ */
+static void
+FindEndOfXLOG(void)
+{
+	DIR		   *xldir;
+	struct dirent *xlde;
+
+	/*
+	 * Initialize the max() computation using the last checkpoint address
+	 * from old pg_control.  Note that for the moment we are working with
+	 * segment numbering according to the old xlog seg size.
+	 */
+	newXlogId = ControlFile.checkPointCopy.redo.xlogid;
+	newXlogSeg = ControlFile.checkPointCopy.redo.xrecoff / ControlFile.xlog_seg_size;
+
+	/*
+	 * Scan the pg_xlog directory to find existing WAL segment files.
+	 * We assume any present have been used; in most scenarios this should
+	 * be conservative, because of xlog.c's attempts to pre-create files.
+	 */
+	xldir = opendir(XLOGDIR);
+	if (xldir == NULL)
+	{
+		fprintf(stderr, _("%s: could not open directory \"%s\": %s\n"),
+				progname, XLOGDIR, strerror(errno));
+		exit(1);
+	}
+
+	errno = 0;
+	while ((xlde = readdir(xldir)) != NULL)
+	{
+		if (strlen(xlde->d_name) == 24 &&
+			strspn(xlde->d_name, "0123456789ABCDEF") == 24)
+		{
+			unsigned int	tli,
+							log,
+							seg;
+
+			sscanf(xlde->d_name, "%08X%08X%08X", &tli, &log, &seg);
+			/*
+			 * Note: we take the max of all files found, regardless of their
+			 * timelines.  Another possibility would be to ignore files of
+			 * timelines other than the target TLI, but this seems safer.
+			 * Better too large a result than too small...
+			 */
+			if (log > newXlogId ||
+				(log == newXlogId && seg > newXlogSeg))
+			{
+				newXlogId = log;
+				newXlogSeg = seg;
+			}
+		}
+		errno = 0;
+	}
+#ifdef WIN32
+
+	/*
+	 * This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4), but not in
+	 * released version
+	 */
+	if (GetLastError() == ERROR_NO_MORE_FILES)
+		errno = 0;
+#endif
+
+	if (errno)
+	{
+		fprintf(stderr, _("%s: could not read from directory \"%s\": %s\n"),
+				progname, XLOGDIR, strerror(errno));
+		exit(1);
+	}
+	closedir(xldir);
+
+	/*
+	 * Finally, convert to new xlog seg size, and advance by one to ensure
+	 * we are in virgin territory.
+	 */
+	newXlogSeg *= ControlFile.xlog_seg_size;
+	newXlogSeg = (newXlogSeg + XLogSegSize - 1) / XLogSegSize;
+
+	/* be sure we wrap around correctly at end of a logfile */
+	NextLogSeg(newXlogId, newXlogSeg);
 }
 
 

@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.31 2006/08/21 16:16:31 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.32 2006/12/08 19:50:53 tgl Exp $
  */
 #include "postgres.h"
 
@@ -159,10 +159,6 @@ main(int argc, char *argv[])
 		   dbState(ControlFile.state));
 	printf(_("pg_control last modified:             %s\n"),
 		   pgctime_str);
-	printf(_("Current log file ID:                  %u\n"),
-		   ControlFile.logId);
-	printf(_("Next log file segment:                %u\n"),
-		   ControlFile.logSeg);
 	printf(_("Latest checkpoint location:           %X/%X\n"),
 		   ControlFile.checkPoint.xlogid,
 		   ControlFile.checkPoint.xrecoff);
