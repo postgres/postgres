@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.117 2006/10/04 00:30:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.118 2006/12/10 22:13:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,7 @@ typedef struct Var
 								 * table (could also be INNER or OUTER) */
 	AttrNumber	varattno;		/* attribute number of this var, or zero for
 								 * all */
-	Oid			vartype;		/* pg_type tuple OID for the type of this var */
+	Oid			vartype;		/* pg_type OID for the type of this var */
 	int32		vartypmod;		/* pg_attribute typmod value */
 	Index		varlevelsup;
 
@@ -159,6 +159,11 @@ typedef struct Const
  *				node's sub-select.  The column number is contained in the
  *				`paramid' field.  (This type of Param is converted to
  *				PARAM_EXEC during planning.)
+ *
+ * Note: currently, paramtypmod is valid for PARAM_SUBLINK Params, and for
+ * PARAM_EXEC Params generated from them; it is always -1 for PARAM_EXTERN
+ * params, since the APIs that supply values for such parameters don't carry
+ * any typmod info.
  * ----------------
  */
 typedef enum ParamKind
@@ -173,7 +178,8 @@ typedef struct Param
 	Expr		xpr;
 	ParamKind	paramkind;		/* kind of parameter. See above */
 	int			paramid;		/* numeric ID for parameter */
-	Oid			paramtype;		/* PG_TYPE OID of parameter's datatype */
+	Oid			paramtype;		/* pg_type OID of parameter's datatype */
+	int32		paramtypmod;	/* typmod value, if known */
 } Param;
 
 /*

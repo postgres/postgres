@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.146 2006/11/28 12:54:41 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.147 2006/12/10 22:13:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,6 +264,14 @@ coerce_type(ParseState *pstate, Node *node,
 		}
 
 		param->paramtype = targetTypeId;
+		/*
+		 * Note: it is tempting here to set the Param's paramtypmod to
+		 * targetTypeMod, but that is probably unwise because we have no
+		 * infrastructure that enforces that the value delivered for a
+		 * Param will match any particular typmod.  Leaving it -1 ensures
+		 * that a run-time length check/coercion will occur if needed.
+		 */
+		param->paramtypmod = -1;
 
 		return (Node *) param;
 	}

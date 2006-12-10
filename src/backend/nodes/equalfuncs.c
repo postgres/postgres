@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.287 2006/11/05 22:42:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.288 2006/12/10 22:13:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,6 +147,7 @@ _equalParam(Param *a, Param *b)
 	COMPARE_SCALAR_FIELD(paramkind);
 	COMPARE_SCALAR_FIELD(paramid);
 	COMPARE_SCALAR_FIELD(paramtype);
+	COMPARE_SCALAR_FIELD(paramtypmod);
 
 	return true;
 }
