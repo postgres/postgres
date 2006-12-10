@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.59 2006/10/23 18:10:30 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.60 2006/12/10 02:37:40 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -20,7 +20,7 @@
    </listitem>
    <listitem>
     <para>
-     PDF or Postscript, for printing
+     PDF or PostScript, for printing
     </para>
    </listitem>
    <listitem>
@@ -38,7 +38,7 @@
  <para>
   <acronym>HTML</acronym> documentation and man pages are part of a
   standard distribution and are installed by default.  PDF and
-  Postscript format documentation is available separately for
+  PostScript format documentation is available separately for
   download.
  </para>
 
@@ -149,7 +149,7 @@
        <productname>JadeTeX</productname> to use
        <productname>TeX</productname> as a formatting backend for
        <productname>Jade</productname>.
-       <application>JadeTeX</application> can create Postscript or
+       <application>JadeTeX</application> can create PostScript or
        <acronym>PDF</acronym> files (the latter with bookmarks).
       </para>
 
@@ -250,10 +250,12 @@ CATALOG "/usr/local/share/sgml/docbook/4.2/docbook.cat"
     available for <productname>Debian GNU/Linux</productname>.
     To install, simply use:
 <programlisting>
-apt-get install jade
+apt-get install openjade1.3
 apt-get install docbook
-apt-get install docbook-stylesheets
+apt-get install docbook-dsssl
 </programlisting>
+    (The plain <literal>openjade</literal> package installs
+    OpenJade 1.4, which seems not to work.)
    </para>
   </sect2>
 
@@ -449,7 +451,7 @@ CATALOG "docbook-dsssl-1.<replaceable>xx</>/catalog"
      <productname>url</productname> and
      <productname>ot2enc</productname>.  All of these can be found on
      your friendly neighborhood <ulink url="http://www.ctan.org">
-     <acronym>CTAN site</acronym></ulink>.
+     <acronym>CTAN</acronym> site</ulink>.
      The installation of the <application>TeX</application> base
      system is far beyond the scope of this introduction.  Binary
      packages should be available for any system that can run
@@ -589,7 +591,7 @@ gmake man.tar.gz
  </sect2>
 
   <sect2>
-   <title>Print Output via <application>JadeTex</application></title>
+   <title>Print Output via <application>JadeTeX</application></title>
 
    <para>
     If you want to use <application>JadeTex</application> to produce a
@@ -608,7 +610,7 @@ gmake man.tar.gz
 
      <listitem>
       <para>
-       To generate Postscript from the <acronym>DVI</acronym>:
+       To generate PostScript from the <acronym>DVI</acronym>:
 <screen>
 <prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.ps</userinput>
 </screen>
@@ -622,11 +624,30 @@ gmake man.tar.gz
 <prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.pdf</userinput>
 </screen>
        (Of course you can also make a <acronym>PDF</acronym> version
-       from the Postscript, but if you generate <acronym>PDF</acronym>
+       from the PostScript, but if you generate <acronym>PDF</acronym>
        directly, it will have hyperlinks and other enhanced features.)
       </para>
      </listitem>
     </itemizedlist>
+   </para>
+
+   <para>
+    When using JadeTeX to build the PostgreSQL documentation, you will
+    probably need to increase some of TeX's internal parameters.  These
+    can be set in the file <filename>texmf.cnf</filename>.  The following
+    settings worked at the time of this writing:
+<programlisting>
+hash_extra.jadetex  = 200000
+hash_extra.pdfjadetex  = 200000
+pool_size.jadetex = 2000000
+pool_size.pdfjadetex = 2000000
+string_vacancies.jadetex = 150000
+string_vacancies.pdfjadetex = 150000
+max_strings.jadetex = 300000
+max_strings.pdfjadetex = 300000
+save_size.jadetex = 10000
+save_size.pdfjadetex = 10000
+</programlisting>
    </para>
   </sect2>
 
@@ -638,7 +659,7 @@ gmake man.tar.gz
     documentation by converting it to <acronym>RTF</acronym> and
     applying minor formatting corrections using an office suite.
     Depending on the capabilities of the particular office suite, you
-    can then convert the documentation to Postscript of
+    can then convert the documentation to PostScript of
     <acronym>PDF</acronym>.  The procedure below illustrates this
     process using <productname>Applixware</productname>.
    </para>
@@ -861,7 +882,7 @@ gmake man.tar.gz
     <step performance="required">
      <para>
       <quote>Print</quote> the document
-      to a file in Postscript format.
+      to a file in PostScript format.
      </para>
     </step>
    </procedure>
