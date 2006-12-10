@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.82 2006/12/10 01:53:15 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.83 2006/12/10 16:01:06 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -207,7 +207,7 @@ regress_README.html: regress.sgml
 
 
 ##
-## Experimental XML stuff
+## XSLT processing
 ##
 
 OSX = osx # (may be called sx or sgml2xml on some systems)
@@ -219,11 +219,16 @@ postgres.xml: postgres.sgml $(GENERATED_SGML)
 	      -e '1a\' -e '<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">' \
 	  >$@
 
-testxml: stylesheet.xsl postgres.xml
-	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam pg.version '$(VERSION)' $^
+override XSLTPROCFLAGS += --stringparam pg.version '$(VERSION)'
+
+xslthtml: stylesheet.xsl postgres.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) $^
 
 htmlhelp: stylesheet-hh.xsl postgres.xml
-	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam pg.version '$(VERSION)' $^
+	$(XSLTPROC) $(XSLTPROCFLAGS) $^
+
+%.fo: stylesheet-fo.xsl %.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) -o $@ $^
 
 
 ##
@@ -271,7 +276,7 @@ clean distclean maintainer-clean:
 	rm -f HTML.index $(GENERATED_SGML)
 # text
 	rm -f INSTALL HISTORY regress_README
-# XML
-	rm -f postgres.xml htmlhelp.hhp toc.hhc index.hhk
+# XSLT
+	rm -f postgres.xml htmlhelp.hhp toc.hhc index.hhk *.fo
 # Texinfo
 	rm -f *.texixml *.texi *.info db2texi.refs
