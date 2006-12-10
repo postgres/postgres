@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.83 2006/12/10 16:01:06 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.84 2006/12/10 20:46:03 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -124,6 +124,7 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 ## Print
 ##
 
+
 # RTF to allow minor editing for hardcopy
 
 %.rtf: %.sgml $(ALLSGML) stylesheet.dsl
@@ -133,11 +134,19 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 # Regular TeX and pdfTeX have slightly differing requirements, so we
 # need to distinguish the path we're taking.
 
-%.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ $<
+JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/stylesheet.dsl -t tex -V tex-backend -i output-print
 
-%.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ $<
+%-A4.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=A4 -o $@ $<
+
+%-US.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=USletter -o $@ $<
+
+%-A4.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=A4 -o $@ $<
+
+%-US.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
+	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=USletter -o $@ $<
 
 %.dvi: %.tex-ps
 	@rm -f $*.aux $*.log
@@ -145,7 +154,7 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 	jadetex $<
 	jadetex $<
 
-# Postscript from TeX
+# PostScript from TeX
 %.ps: %.dvi
 	dvips -o $@ $<
 
@@ -218,6 +227,7 @@ postgres.xml: postgres.sgml $(GENERATED_SGML)
 	  sed -e 's/\[\(amp\|copy\|egrave\|gt\|lt\|mdash\|nbsp\|ouml\|pi\|quot\|uuml\) *\]/\&\1;/g' \
 	      -e '1a\' -e '<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN" "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd">' \
 	  >$@
+# ' hello Emacs
 
 override XSLTPROCFLAGS += --stringparam pg.version '$(VERSION)'
 
@@ -227,8 +237,11 @@ xslthtml: stylesheet.xsl postgres.xml
 htmlhelp: stylesheet-hh.xsl postgres.xml
 	$(XSLTPROC) $(XSLTPROCFLAGS) $^
 
-%.fo: stylesheet-fo.xsl %.xml
-	$(XSLTPROC) $(XSLTPROCFLAGS) -o $@ $^
+%-A4.fo: stylesheet-fo.xsl %.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type A4 -o $@ $^
+
+%-US.fo: stylesheet-fo.xsl %.xml
+	$(XSLTPROC) $(XSLTPROCFLAGS) --stringparam paper.type USletter -o $@ $^
 
 
 ##

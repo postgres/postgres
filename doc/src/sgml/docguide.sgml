@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.60 2006/12/10 02:37:40 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.61 2006/12/10 20:46:03 petere Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -601,18 +601,13 @@ gmake man.tar.gz
     <itemizedlist>
      <listitem>
       <para>
-       To make a <acronym>DVI</acronym> version:
+       To generate PostScript via <acronym>DVI</acronym> in A4 format:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.dvi</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres-A4.ps</userinput>
 </screen>
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       To generate PostScript from the <acronym>DVI</acronym>:
+       In U.S. letter format:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.ps</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres-US.ps</userinput>
 </screen>
       </para>
      </listitem>
@@ -621,7 +616,11 @@ gmake man.tar.gz
       <para>
        To make a <acronym>PDF</acronym>:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres.pdf</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres-A4.pdf</userinput>
+</screen>
+       or
+<screen>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake postgres-US.pdf</userinput>
 </screen>
        (Of course you can also make a <acronym>PDF</acronym> version
        from the PostScript, but if you generate <acronym>PDF</acronym>
