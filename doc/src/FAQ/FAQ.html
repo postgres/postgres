@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Tue Dec  5 18:13:32 EST 2006</P>
+    <P>Last updated: Mon Dec 11 17:44:33 EST 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -86,8 +86,8 @@
     searches and case-insensitive regular expression searches? How do I
     use an index for case-insensitive searches?<BR>
      <A href="#item4.9">4.9</A>) In a query, how do I detect if a field
-    is <SMALL>NULL</SMALL>?  How can I sort on whether a field is <SMALL>
-    NULL</SMALL> or not?<BR>
+    is <SMALL>NULL</SMALL>?  How do I concatenate possible <SMALL>NULL</SMALL>s?
+    How can I sort on whether a field is <SMALL> NULL</SMALL> or not?<BR>
      <A href="#item4.10">4.10</A>) What is the difference between the
     various character types?<BR>
      <A href="#item4.11.1">4.11.1</A>) How do I create a
@@ -823,10 +823,14 @@ table?</TD><TD>unlimited</TD></TR>
     identical values that differ only in case. To force a particular
     case to be stored in the column, use a <SMALL>CHECK</SMALL>
     constraint or a trigger.</P>
-					 
+
+     <A href="#item4.9">4.9</A>) In a query, how do I detect if a field
+    is <SMALL>NULL</SMALL>?  How do I concatenate possible <SMALL>NULL</SMALL>s?
+    How can I sort on whether a field is <SMALL> NULL</SMALL> or not?<BR>
+
     <H3 id="item4.9">4.9) In a query, how do I detect if a field
-    is <SMALL>NULL</SMALL>?  How can I sort on whether a field is <SMALL>
-    NULL</SMALL> or not?</H3>
+    is <SMALL>NULL</SMALL>?  How do I concatenate possible <SMALL>NULL</SMALL>s?
+    How can I sort on whether a field is <SMALL> NULL</SMALL> or not?</H3>
 
     <P>You test the column with <SMALL>IS NULL</SMALL> and <SMALL>IS
     NOT NULL</SMALL>, like this:</P>
@@ -837,6 +841,13 @@ table?</TD><TD>unlimited</TD></TR>
    WHERE col IS NULL;
 </PRE>
 
+   <P>To concatentate with possible <SMALL>NULL</SMALL>s, use <I>COALESCE()</I>,
+   like this:</P>
+<PRE>
+   SELECT COALESCE(col1, '') || COALESCE(col2, '')
+   FROM tab
+</PRE>
+   
    <P>To sort by the <SMALL>NULL</SMALL> status, use the <SMALL>IS NULL</SMALL>
    and <SMALL>IS NOT NULL</SMALL> modifiers in your <SMALL>ORDER BY</SMALL> clause.
    Things that are <I>true</I> will sort higher than things that are <I>false</I>,

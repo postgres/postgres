@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Dec 5 18:13:32 EST 2006
+   Last updated: Mon Dec 11 17:44:33 EST 2006
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -59,8 +59,9 @@
    4.8) How do I perform regular expression searches and case-insensitive
    regular expression searches? How do I use an index for
    case-insensitive searches?
-   4.9) In a query, how do I detect if a field is NULL? How can I sort on
-   whether a field is NULL or not?
+   4.9) In a query, how do I detect if a field is NULL? How do I
+   concatenate possible NULLs? How can I sort on whether a field is NULL
+   or not?
    4.10) What is the difference between the various character types?
    4.11.1) How do I create a serial/auto-incrementing field?
    4.11.2) How do I get the value of a SERIAL insert?
@@ -631,14 +632,21 @@
    upper and lowercase characters, it can not have identical values that
    differ only in case. To force a particular case to be stored in the
    column, use a CHECK constraint or a trigger.
+   4.9) In a query, how do I detect if a field is NULL? How do I
+   concatenate possible NULLs? How can I sort on whether a field is NULL
+   or not?
    
-  4.9) In a query, how do I detect if a field is NULL? How can I sort on
-  whether a field is NULL or not?
+  4.9) In a query, how do I detect if a field is NULL? How do I concatenate
+  possible NULLs? How can I sort on whether a field is NULL or not?
   
    You test the column with IS NULL and IS NOT NULL, like this:
    SELECT *
    FROM tab
    WHERE col IS NULL;
+
+   To concatentate with possible NULLs, use COALESCE(), like this:
+   SELECT COALESCE(col1, '') || COALESCE(col2, '')
+   FROM tab
 
    To sort by the NULL status, use the IS NULL and IS NOT NULL modifiers
    in your ORDER BY clause. Things that are true will sort higher than
