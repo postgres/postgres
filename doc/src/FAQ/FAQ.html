@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Dec 11 17:44:33 EST 2006</P>
+    <P>Last updated: Mon Dec 11 17:45:54 EST 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -42,7 +42,7 @@
      development team?<BR>
      <A href="#item1.13">1.13</A>) How does PostgreSQL compare to other
     <SMALL>DBMS</SMALL>s?<BR>
-     
+
 
     <H2 align="center">User Client Questions</H2>
     <A href="#item2.1">2.1</A>) What interfaces are available for
@@ -51,7 +51,7 @@
     PostgreSQL with Web pages?<BR>
      <A href="#item2.3">2.3</A>) Does PostgreSQL have a graphical user
     interface?<BR>
-     
+
 
     <H2 align="center">Administrative Questions</H2>
     <A href="#item3.1">3.1</A>) How do I install PostgreSQL somewhere other
@@ -281,7 +281,7 @@
 	</ul>
     </li>
     </ul>
-	
+
     <H3 id="item1.9">1.9) How do I find out about known bugs or
     missing features?</H3>
 
@@ -307,7 +307,7 @@
     <li>The new feature is added to the
     <A href="http://www.postgresql.org/docs/faqs.TODO.html">TODO</A> list</li>
     </ul>
-    
+
     <P>PostgreSQL does not use a bug tracking system because we find
     it more efficient to respond directly to email and keep the
     <A href="http://www.postgresql.org/docs/faqs.TODO.html">TODO</A>
@@ -318,7 +318,7 @@
     <a href="http://www.postgresql.org/developer/sourcecode/">CVS</a>
     log messages.  Even the release notes do not list every change
     made to the software.</P>
-    
+
     <H3 id="item1.10">1.10) What documentation is available?</H3>
 
     <P>PostgreSQL includes extensive documentation, including a large
@@ -370,7 +370,7 @@
     "http://mysite.verizon.net/Graeme_Birchall/id1.html">http://mysite.verizon.net/Graeme_Birchall/id1.html</A>
     </LI>
     </UL>
-    
+
     <H3 id="item1.12">1.12) How do I submit a patch or join the development
     team?</H3>
 
@@ -503,7 +503,7 @@
 
     <P>There are three major areas for potential performance
     improvement:</P>
-    
+
     <DL>
     <DT><B>Query Changes</B></DT>
 
@@ -583,7 +583,7 @@
     PostgreSQL minor releases are designed to fix only common bugs
     with the least risk.  The community considers <i>not</i> upgrading
     more risky that upgrading.</P>
-    
+
     <P>Major releases (e.g. from 7.3 to 7.4) often change the internal
     format of system tables and data files. These changes are often complex,
     so we don't maintain backward compatibility for data files. A dump/reload
@@ -638,7 +638,7 @@
 
     <P>There are also system tables beginning with <I>pg_</I> that describe
     these too.</P>
-    
+
     <P>Use <I>psql -l</I> will list all databases.</P>
 
     <P>Also try the file <I>pgsql/src/tutorial/syscat.source</I>. It
@@ -660,7 +660,7 @@
 </PRE>
     <P>You might then want to do <I>VACUUM FULL tab</I> to reclaim the
     disk space used by the expired rows.</P>
-    
+
     <H3 id="item4.4">4.4) What is the maximum size for a row, a
     table, and a database?</H3>
 
@@ -735,7 +735,7 @@ table?</TD><TD>unlimited</TD></TR>
 
     <P><SMALL>NULL</SMALL>s are stored as bitmaps, so they
     use very little space.</P>
-    
+
     <H3 id="item4.6">4.6) Why are my queries slow?  Why don't they
     use my indexes?</H3>
 
@@ -760,7 +760,7 @@ table?</TD><TD>unlimited</TD></TR>
     However, <SMALL>LIMIT</SMALL> combined with <SMALL>ORDER BY</SMALL>
     often will use an index because only a small portion of the table
     is returned.</P>
-    
+
     <P>If you believe the optimizer is incorrect in choosing a
     sequential scan, use <CODE>SET enable_seqscan TO 'off'</CODE> and
     run query again to see if an index scan is indeed faster.</P>
@@ -847,7 +847,7 @@ table?</TD><TD>unlimited</TD></TR>
    SELECT COALESCE(col1, '') || COALESCE(col2, '')
    FROM tab
 </PRE>
-   
+
    <P>To sort by the <SMALL>NULL</SMALL> status, use the <SMALL>IS NULL</SMALL>
    and <SMALL>IS NOT NULL</SMALL> modifiers in your <SMALL>ORDER BY</SMALL> clause.
    Things that are <I>true</I> will sort higher than things that are <I>false</I>,
@@ -948,7 +948,7 @@ length</TD></TR>
     execute("INSERT INTO person (name) VALUES ('Blaise Pascal')");
     new_id = execute("SELECT currval('person_id_seq')");
 </PRE>
-    
+
     <H3 id="item4.11.3">4.11.3) Doesn't <I>currval()</I>
     lead to a race condition with other users?</H3>
 
