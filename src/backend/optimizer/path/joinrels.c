@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.81 2006/10/24 17:50:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.82 2006/12/12 21:31:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,8 +147,13 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 			ListCell   *other_rels;
 			ListCell   *r2;
 
-			if (old_rel->joininfo == NIL)
-				continue;		/* we ignore clauseless joins here */
+			/*
+			 * We can ignore clauseless joins here, *except* when there are
+			 * outer joins --- then we might have to force a bushy outer
+			 * join.  See have_relevant_joinclause().
+			 */
+			if (old_rel->joininfo == NIL && root->oj_info_list == NIL)
+				continue;
 
 			if (k == other_level)
 				other_rels = lnext(r);	/* only consider remaining rels */
@@ -166,7 +171,7 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 					 * pair of rels.  Do so if there is at least one usable
 					 * join clause.
 					 */
-					if (have_relevant_joinclause(old_rel, new_rel))
+					if (have_relevant_joinclause(root, old_rel, new_rel))
 					{
 						RelOptInfo *jrel;
 
@@ -270,7 +275,7 @@ make_rels_by_clause_joins(PlannerInfo *root,
 		RelOptInfo *other_rel = (RelOptInfo *) lfirst(l);
 
 		if (!bms_overlap(old_rel->relids, other_rel->relids) &&
-			have_relevant_joinclause(old_rel, other_rel))
+			have_relevant_joinclause(root, old_rel, other_rel))
 		{
 			RelOptInfo *jrel;
 
