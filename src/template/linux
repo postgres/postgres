@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/template/linux,v 1.28 2006/03/11 04:38:41 momjian Exp $
+# $PostgreSQL: pgsql/src/template/linux,v 1.29 2006/12/12 19:43:19 petere Exp $
 
 # Force _GNU_SOURCE on; plperl is broken with Perl 5.8.0 otherwise
-CPPFLAGS="-D_GNU_SOURCE"
+CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
