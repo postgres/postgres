@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.361 2006/12/06 17:35:49 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.362 2006/12/13 05:54:48 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 
 
 #include "access/gin.h"
+#include "access/transam.h"
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
