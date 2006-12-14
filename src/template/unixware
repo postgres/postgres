@@ -32,3 +32,6 @@ __EOF__
 # per report from Olivier PRENANT <ohp@pyrenet.fr>
 
 fi
+
+# Unixware's ldap library reportedly needs these too
+EXTRA_LDAP_LIBS="-llber -lresolv"
