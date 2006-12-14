@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.491 2006/12/02 16:43:12 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.492 2006/12/14 21:49:54 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1122,16 +1122,18 @@ AC_SUBST(PTHREAD_LIBS)
 if test "$with_ldap" = yes ; then
   _LIBS="$LIBS"
   if test "$PORTNAME" != "win32"; then
-    AC_CHECK_LIB(ldap, ldap_bind, [], [AC_MSG_ERROR([library 'ldap' is required for LDAP])])
-    LDAP_LIBS_BE="-lldap"
+    AC_CHECK_LIB(ldap, ldap_bind, [],
+		 [AC_MSG_ERROR([library 'ldap' is required for LDAP])],
+		 [$EXTRA_LDAP_LIBS])
+    LDAP_LIBS_BE="-lldap $EXTRA_LDAP_LIBS"
     if test "$enable_thread_safety" = yes; then
       # on some platforms ldap_r fails to link without PTHREAD_LIBS
       AC_CHECK_LIB(ldap_r, ldap_simple_bind, [],
 		   [AC_MSG_ERROR([library 'ldap_r' is required for LDAP])],
-		   [$PTHREAD_LIBS])
-      LDAP_LIBS_FE="-lldap_r"
+		   [$PTHREAD_LIBS $EXTRA_LDAP_LIBS])
+      LDAP_LIBS_FE="-lldap_r $EXTRA_LDAP_LIBS"
     else
-      LDAP_LIBS_FE="-lldap"
+      LDAP_LIBS_FE="-lldap $EXTRA_LDAP_LIBS"
     fi
   else
     AC_CHECK_LIB(wldap32, ldap_bind, [], [AC_MSG_ERROR([library 'wldap32' is required for LDAP])])

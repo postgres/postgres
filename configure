@@ -17185,7 +17185,7 @@ if test "${ac_cv_lib_ldap_ldap_bind+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lldap  $LIBS"
+LIBS="-lldap $EXTRA_LDAP_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -17256,7 +17256,7 @@ echo "$as_me: error: library 'ldap' is required for LDAP" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-    LDAP_LIBS_BE="-lldap"
+    LDAP_LIBS_BE="-lldap $EXTRA_LDAP_LIBS"
     if test "$enable_thread_safety" = yes; then
       # on some platforms ldap_r fails to link without PTHREAD_LIBS
 
@@ -17266,7 +17266,7 @@ if test "${ac_cv_lib_ldap_r_ldap_simple_bind+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lldap_r $PTHREAD_LIBS $LIBS"
+LIBS="-lldap_r $PTHREAD_LIBS $EXTRA_LDAP_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -17337,9 +17337,9 @@ echo "$as_me: error: library 'ldap_r' is required for LDAP" >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-      LDAP_LIBS_FE="-lldap_r"
+      LDAP_LIBS_FE="-lldap_r $EXTRA_LDAP_LIBS"
     else
-      LDAP_LIBS_FE="-lldap"
+      LDAP_LIBS_FE="-lldap $EXTRA_LDAP_LIBS"
     fi
   else
 
