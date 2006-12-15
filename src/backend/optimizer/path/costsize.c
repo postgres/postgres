@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.169 2006/11/11 01:14:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.170 2006/12/15 18:42:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,13 +276,12 @@ cost_index(IndexPath *path, PlannerInfo *root,
 	if (outer_rel != NULL && outer_rel->rows > 1)
 	{
 		/*
-		 * For repeated indexscans, scale up the number of tuples fetched in
+		 * For repeated indexscans, the appropriate estimate for the
+		 * uncorrelated case is to scale up the number of tuples fetched in
 		 * the Mackert and Lohman formula by the number of scans, so that we
-		 * estimate the number of pages fetched by all the scans. Then
+		 * estimate the number of pages fetched by all the scans; then
 		 * pro-rate the costs for one scan.  In this case we assume all the
-		 * fetches are random accesses.  XXX it'd be good to include
-		 * correlation in this model, but it's not clear how to do that
-		 * without double-counting cache effects.
+		 * fetches are random accesses.
 		 */
 		double		num_scans = outer_rel->rows;
 
@@ -291,7 +290,27 @@ cost_index(IndexPath *path, PlannerInfo *root,
 											(double) index->pages,
 											root);
 
-		run_cost += (pages_fetched * random_page_cost) / num_scans;
+		max_IO_cost = (pages_fetched * random_page_cost) / num_scans;
+
+		/*
+		 * In the perfectly correlated case, the number of pages touched
+		 * by each scan is selectivity * table_size, and we can use the
+		 * Mackert and Lohman formula at the page level to estimate how
+		 * much work is saved by caching across scans.  We still assume
+		 * all the fetches are random, though, which is an overestimate
+		 * that's hard to correct for without double-counting the cache
+		 * effects.  (But in most cases where such a plan is actually
+		 * interesting, only one page would get fetched per scan anyway,
+		 * so it shouldn't matter much.)
+		 */
+		pages_fetched = ceil(indexSelectivity * (double) baserel->pages);
+
+		pages_fetched = index_pages_fetched(pages_fetched * num_scans,
+											baserel->pages,
+											(double) index->pages,
+											root);
+
+		min_IO_cost = (pages_fetched * random_page_cost) / num_scans;
 	}
 	else
 	{
@@ -312,15 +331,15 @@ cost_index(IndexPath *path, PlannerInfo *root,
 		min_IO_cost = random_page_cost;
 		if (pages_fetched > 1)
 			min_IO_cost += (pages_fetched - 1) * seq_page_cost;
-
-		/*
-		 * Now interpolate based on estimated index order correlation to get
-		 * total disk I/O cost for main table accesses.
-		 */
-		csquared = indexCorrelation * indexCorrelation;
-
-		run_cost += max_IO_cost + csquared * (min_IO_cost - max_IO_cost);
 	}
+
+	/*
+	 * Now interpolate based on estimated index order correlation to get
+	 * total disk I/O cost for main table accesses.
+	 */
+	csquared = indexCorrelation * indexCorrelation;
+
+	run_cost += max_IO_cost + csquared * (min_IO_cost - max_IO_cost);
 
 	/*
 	 * Estimate CPU costs per tuple.
@@ -614,6 +633,13 @@ cost_bitmap_tree_node(Path *path, Cost *cost, Selectivity *selec)
 	{
 		*cost = ((IndexPath *) path)->indextotalcost;
 		*selec = ((IndexPath *) path)->indexselectivity;
+		/*
+		 * Charge a small amount per retrieved tuple to reflect the costs of
+		 * manipulating the bitmap.  This is mostly to make sure that a bitmap
+		 * scan doesn't look to be the same cost as an indexscan to retrieve
+		 * a single tuple.
+		 */
+		*cost += 0.1 * cpu_operator_cost * ((IndexPath *) path)->rows;
 	}
 	else if (IsA(path, BitmapAndPath))
 	{

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.214 2006/10/04 00:29:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.215 2006/12/15 18:42:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4673,14 +4673,18 @@ genericcostestimate(PlannerInfo *root,
 	 * way in order to get the right answer for partial indexes.
 	 */
 	if (numIndexTuples <= 0.0)
+	{
 		numIndexTuples = *indexSelectivity * index->rel->tuples;
 
-	/*
-	 * The estimate obtained so far counts all the tuples returned by all
-	 * scans of ScalarArrayOpExpr calls.  We want to consider the per-scan
-	 * number, so adjust.  This is a handy place to round to integer, too.
-	 */
-	numIndexTuples = rint(numIndexTuples / num_sa_scans);
+		/*
+		 * The above calculation counts all the tuples visited across all
+		 * scans induced by ScalarArrayOpExpr nodes.  We want to consider the
+		 * average per-indexscan number, so adjust.  This is a handy place to
+		 * round to integer, too.  (If caller supplied tuple estimate, it's
+		 * responsible for handling these considerations.)
+		 */
+		numIndexTuples = rint(numIndexTuples / num_sa_scans);
+	}
 
 	/*
 	 * We can bound the number of tuples by the index size in any case. Also,
@@ -4786,7 +4790,9 @@ genericcostestimate(PlannerInfo *root,
 	 * evaluated once at the start of the scan to reduce them to runtime keys
 	 * to pass to the index AM (see nodeIndexscan.c).  We model the per-tuple
 	 * CPU costs as cpu_index_tuple_cost plus one cpu_operator_cost per
-	 * indexqual operator.
+	 * indexqual operator.  Because we have numIndexTuples as a per-scan
+	 * number, we have to multiply by num_sa_scans to get the correct result
+	 * for ScalarArrayOpExpr cases.
 	 *
 	 * Note: this neglects the possible costs of rechecking lossy operators
 	 * and OR-clause expressions.  Detecting that that might be needed seems
@@ -4801,7 +4807,22 @@ genericcostestimate(PlannerInfo *root,
 		qual_arg_cost = 0;
 	*indexStartupCost = qual_arg_cost;
 	*indexTotalCost += qual_arg_cost;
-	*indexTotalCost += numIndexTuples * (cpu_index_tuple_cost + qual_op_cost);
+	*indexTotalCost += numIndexTuples * num_sa_scans * (cpu_index_tuple_cost + qual_op_cost);
+
+	/*
+	 * We also add a CPU-cost component to represent the general costs of 
+	 * starting an indexscan, such as analysis of btree index keys and
+	 * initial tree descent.  This is estimated at 100x cpu_operator_cost,
+	 * which is a bit arbitrary but seems the right order of magnitude.
+	 * (As noted above, we don't charge any I/O for touching upper tree
+	 * levels, but charging nothing at all has been found too optimistic.)
+	 *
+	 * Although this is startup cost with respect to any one scan, we add
+	 * it to the "total" cost component because it's only very interesting
+	 * in the many-ScalarArrayOpExpr-scan case, and there it will be paid
+	 * over the life of the scan node.
+	 */
+	*indexTotalCost += num_sa_scans * 100.0 * cpu_operator_cost;
 
 	/*
 	 * Generic assumption about index correlation: there isn't any.
@@ -4829,6 +4850,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	int			indexcol;
 	bool		eqQualHere;
 	bool		found_saop;
+	double		num_sa_scans;
 	ListCell   *l;
 
 	/*
@@ -4852,6 +4874,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	indexcol = 0;
 	eqQualHere = false;
 	found_saop = false;
+	num_sa_scans = 1;
 	foreach(l, indexQuals)
 	{
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
@@ -4928,6 +4951,15 @@ btcostestimate(PG_FUNCTION_ARGS)
 		Assert(op_strategy != 0);		/* not a member of opclass?? */
 		if (op_strategy == BTEqualStrategyNumber)
 			eqQualHere = true;
+		/* count up number of SA scans induced by indexBoundQuals only */
+		if (IsA(clause, ScalarArrayOpExpr))
+		{
+			ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) clause;
+			int			alength = estimate_array_length(lsecond(saop->args));
+
+			if (alength > 1)
+				num_sa_scans *= alength;
+		}
 		indexBoundQuals = lappend(indexBoundQuals, rinfo);
 	}
 
@@ -4949,6 +4981,12 @@ btcostestimate(PG_FUNCTION_ARGS)
 												  index->rel->relid,
 												  JOIN_INNER);
 		numIndexTuples = btreeSelectivity * index->rel->tuples;
+		/*
+		 * As in genericcostestimate(), we have to adjust for any
+		 * ScalarArrayOpExpr quals included in indexBoundQuals, and then
+		 * round to integer.
+		 */
+		numIndexTuples = rint(numIndexTuples / num_sa_scans);
 	}
 
 	genericcostestimate(root, index, indexQuals, outer_rel, numIndexTuples,
