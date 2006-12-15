@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.81 2006/12/02 01:26:19 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.81.2.1 2006/12/15 01:21:08 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -134,13 +134,18 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 # need to distinguish the path we're taking.
 
 %.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
+	# multiple runs are necessary to create proper index entries
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ $<
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ $<
 
 %.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
+	# multiple runs are necessary to create proper index entries
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ $<
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ $<
 
 %.dvi: %.tex-ps
 	@rm -f $*.aux $*.log
+	# multiple runs are necessary to create proper index entries
 	jadetex $<
 	jadetex $<
 	jadetex $<
@@ -151,6 +156,7 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 
 %.pdf: %.tex-pdf
 	@rm -f $*.aux $*.log $*.out
+	# multiple runs are necessary to create proper index entries
 	pdfjadetex $<
 	pdfjadetex $<
 	pdfjadetex $<
