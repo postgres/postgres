@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.84 2006/12/10 20:46:03 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.85 2006/12/15 01:20:59 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -137,19 +137,28 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/stylesheet.dsl -t tex -V tex-backend -i output-print
 
 %-A4.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
+	# multiple runs are necessary to create proper index entries
+	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=A4 -o $@ $<
 	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=A4 -o $@ $<
 
 %-US.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
+	# multiple runs are necessary to create proper index entries
+	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=USletter -o $@ $<
 	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=USletter -o $@ $<
 
 %-A4.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
+	# multiple runs are necessary to create proper index entries
+	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=A4 -o $@ $<
 	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=A4 -o $@ $<
 
 %-US.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
+	# multiple runs are necessary to create proper index entries
+	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=USletter -o $@ $<
 	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=USletter -o $@ $<
 
 %.dvi: %.tex-ps
 	@rm -f $*.aux $*.log
+	# multiple runs are necessary to create proper index entries
 	jadetex $<
 	jadetex $<
 	jadetex $<
@@ -160,6 +169,7 @@ JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/styl
 
 %.pdf: %.tex-pdf
 	@rm -f $*.aux $*.log $*.out
+	# multiple runs are necessary to create proper index entries
 	pdfjadetex $<
 	pdfjadetex $<
 	pdfjadetex $<
