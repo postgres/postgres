@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.31 2006/12/10 01:55:29 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/stylesheet.dsl,v 1.32 2006/12/15 16:50:07 momjian Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -279,6 +279,14 @@
 
 (define %refentry-new-page%     #t)
 (define %refentry-keep%         #f)
+
+;; Indentation of verbatim environments.  (This should really be done
+;; with start-indent in DSSSL.)
+;; Use of indentation in this area exposes a bug in openjade,
+;; http://archives.postgresql.org/pgsql-docs/2006-12/msg00064.php
+;; (define %indent-programlisting-lines% "    ")
+;; (define %indent-screen-lines% "    ")
+;; (define %indent-synopsis-lines% "    ")
 
 
 ;; Default graphic format: Jadetex wants eps, pdfjadetex wants pdf.

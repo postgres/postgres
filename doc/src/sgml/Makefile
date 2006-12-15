@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.85 2006/12/15 01:20:59 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.86 2006/12/15 16:50:07 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -99,6 +99,9 @@ endif
 
 COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
 
+# If HTML.index does not exist, create a dummy bookindex.sgml.  During the
+# next build, create bookindex.sgml with the proper index contents.  A proper
+# bookindex.sgml is required to have an index in the output.
 ifeq (,$(wildcard HTML.index))
 bookindex.sgml:
 	$(COLLATEINDEX) -o $@ -N
@@ -136,29 +139,21 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 
 JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/stylesheet.dsl -t tex -V tex-backend -i output-print
 
-%-A4.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
-	# multiple runs are necessary to create proper index entries
-	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=A4 -o $@ $<
+%-A4.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=A4 -o $@ $<
 
-%-US.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
-	# multiple runs are necessary to create proper index entries
-	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=USletter -o $@ $<
+%-US.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=USletter -o $@ $<
 
-%-A4.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
-	# multiple runs are necessary to create proper index entries
-	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=A4 -o $@ $<
+%-A4.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=A4 -o $@ $<
 
-%-US.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
-	# multiple runs are necessary to create proper index entries
-	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=USletter -o $@ $<
+%-US.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=USletter -o $@ $<
 
 %.dvi: %.tex-ps
 	@rm -f $*.aux $*.log
-	# multiple runs are necessary to create proper index entries
+	# multiple runs are necessary to create proper intra-document links
 	jadetex $<
 	jadetex $<
 	jadetex $<
@@ -169,7 +164,7 @@ JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/styl
 
 %.pdf: %.tex-pdf
 	@rm -f $*.aux $*.log $*.out
-	# multiple runs are necessary to create proper index entries
+	# multiple runs are necessary to create proper intra-document links
 	pdfjadetex $<
 	pdfjadetex $<
 	pdfjadetex $<
