@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.120 2006/11/23 05:43:32 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.121 2006/12/15 02:19:21 momjian Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -2929,7 +2929,7 @@ void RequestAddinShmemSpace(int size)
 void RequestAddinLWLocks(int n)
 </programlisting>
      from <function>_PG_init</>. 
-    </para>	
+    </para>
     <para>
      To avoid possible race-conditions, each backend should use the LWLock
      <function>AddinShmemInitLock</> when connecting to and initializing 
