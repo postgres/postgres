@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.81.2.1 2006/12/15 01:21:08 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.81.2.2 2006/12/15 16:50:10 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -99,6 +99,9 @@ endif
 
 COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
 
+# If HTML.index does not exist, create a dummy bookindex.sgml.  During the
+# next build, create bookindex.sgml with the proper index contents.  A proper
+# bookindex.sgml is required to have an index in the output.
 ifeq (,$(wildcard HTML.index))
 bookindex.sgml:
 	$(COLLATEINDEX) -o $@ -N
@@ -136,16 +139,14 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 %.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
 	# multiple runs are necessary to create proper index entries
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ $<
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ $<
 
 %.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
 	# multiple runs are necessary to create proper index entries
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ $<
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ $<
 
 %.dvi: %.tex-ps
 	@rm -f $*.aux $*.log
-	# multiple runs are necessary to create proper index entries
+	# multiple runs are necessary to create proper intra-document links
 	jadetex $<
 	jadetex $<
 	jadetex $<
@@ -156,7 +157,7 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 
 %.pdf: %.tex-pdf
 	@rm -f $*.aux $*.log $*.out
-	# multiple runs are necessary to create proper index entries
+	# multiple runs are necessary to create proper intra-document links
 	pdfjadetex $<
 	pdfjadetex $<
 	pdfjadetex $<
