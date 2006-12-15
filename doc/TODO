@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri Dec 15 08:28:38 EST 2006
+Last updated:		Fri Dec 15 10:40:41 EST 2006
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1399,6 +1399,14 @@ Features We Do _Not_ Want
   Because we support postfix operators, it isn't possible to make AS
   optional and continue to use bison.
   http://archives.postgresql.org/pgsql-sql/2006-08/msg00164.php
+
+* Embedded server (not wanted)
+
+  While PostgreSQL clients runs fine limited-resource environments, the
+  server requires multiple processes and a stable pool of resources to
+  run reliabily and efficiently.  Stripping down the PostgreSQL server 
+  to run in the same process address space as the client application 
+  would add too much complexity and failure cases.
 
 
 ---------------------------------------------------------------------------

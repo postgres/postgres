@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Fri Dec 15 08:28:38 EST 2006
+Last updated:           Fri Dec 15 10:40:41 EST 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1262,6 +1262,13 @@ first.
 <p>  Because we support postfix operators, it isn't possible to make AS
   optional and continue to use bison.
   <a href="http://archives.postgresql.org/pgsql-sql/2006-08/msg00164.php">http://archives.postgresql.org/pgsql-sql/2006-08/msg00164.php</a>
+</p>
+  </li><li>Embedded server (not wanted)
+<p>  While PostgreSQL clients runs fine limited-resource environments, the
+  server requires multiple processes and a stable pool of resources to
+  run reliabily and efficiently.  Stripping down the PostgreSQL server 
+  to run in the same process address space as the client application 
+  would add too much complexity and failure cases.
 </p>
 </li></ul>
 <hr/>
