@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.51 2006/10/04 00:30:05 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.52 2006/12/16 00:38:43 adunstan Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -62,5 +62,32 @@ extern bool standard_strings(void);
 extern const char *session_username(void);
 
 extern char *expand_tilde(char **filename);
+
+/* Workarounds for Windows */
+/* Probably to be moved up the source tree in the future, perhaps to be replaced by
+ * more specific checks like configure-style HAVE_GETTIMEOFDAY macros.
+ */
+#ifndef WIN32
+
+#include <sys/time.h>
+
+typedef struct timeval TimevalStruct;
+
+#define GETTIMEOFDAY(T) gettimeofday(T, NULL)
+#define DIFF_MSEC(T, U) \
+	((((int) ((T)->tv_sec - (U)->tv_sec)) * 1000000.0 + \
+	  ((int) ((T)->tv_usec - (U)->tv_usec))) / 1000.0)
+#else
+
+typedef struct _timeb TimevalStruct;
+
+#include <sys/types.h>
+#include <sys/timeb.h>
+
+#define GETTIMEOFDAY(T) _ftime(T)
+#define DIFF_MSEC(T, U) \
+	(((T)->time - (U)->time) * 1000.0 + \
+	 ((T)->millitm - (U)->millitm))
+#endif
 
 #endif   /* COMMON_H */

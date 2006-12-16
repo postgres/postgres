@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.174 2006/10/06 17:14:00 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.175 2006/12/16 00:38:43 adunstan Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -303,10 +303,26 @@ exec_command(const char *cmd,
 	/* \copy */
 	else if (pg_strcasecmp(cmd, "copy") == 0)
 	{
+		/* Default fetch-it-all-and-print mode */
+		TimevalStruct before,
+					after;
+		double		elapsed_msec = 0;
+
 		char	   *opt = psql_scan_slash_option(scan_state,
 												 OT_WHOLE_LINE, NULL, false);
-
+		if (pset.timing)
+			GETTIMEOFDAY(&before);
+		
 		success = do_copy(opt);
+
+		if (pset.timing && success)
+		{
+			GETTIMEOFDAY(&after);
+			elapsed_msec = DIFF_MSEC(&after, &before);
+			printf(_("Time: %.3f ms\n"), elapsed_msec);
+
+		}
+
 		free(opt);
 	}
 
