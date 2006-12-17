@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Fri Dec 15 10:40:41 EST 2006
+Last updated:           Sat Dec 16 22:55:11 EST 2006
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -441,7 +441,6 @@ first.
   </li><li>Allow COMMENT ON to accept an expression rather than just a string
   </li><li>Allow the count returned by SELECT, etc to be to represent as an int64
   to allow a higher range of values
-  </li><li>Make CLUSTER preserve recently-dead tuples per MVCC requirements
   </li><li>Add SQL99 WITH clause to SELECT
   </li><li>Add SQL:2003 WITH RECURSIVE (hierarchical) queries to SELECT
   </li><li>Add DEFAULT .. AS OWNER so permission checks are done as the table
@@ -492,7 +491,8 @@ first.
   </li></ul>
   </li><li>CLUSTER
   <ul>
-    <li>Automatically maintain clustering on a table
+    <li>Make CLUSTER preserve recently-dead tuples per MVCC requirements
+    </li><li>Automatically maintain clustering on a table
 <p>          This might require some background daemon to maintain clustering
           during periods of low usage. It might also require tables to be only
           partially filled for easier reorganization.  Another idea would
