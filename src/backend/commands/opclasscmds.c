@@ -9,11 +9,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.49 2006/10/04 00:29:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/opclasscmds.c,v 1.50 2006/12/18 18:56:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#include <limits.h>
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -73,8 +75,8 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				storageoid,		/* storage datatype oid, if any */
 				namespaceoid,	/* namespace to create opclass in */
 				opclassoid;		/* oid of opclass we create */
-	int			numOperators,	/* amstrategies value */
-				numProcs;		/* amsupport value */
+	int			maxOpNumber,	/* amstrategies value */
+				maxProcNumber;	/* amsupport value */
 	bool		amstorage;		/* amstorage flag */
 	List	   *operators;		/* OpClassMember list for operators */
 	List	   *procedures;		/* OpClassMember list for support procs */
@@ -112,8 +114,11 @@ DefineOpClass(CreateOpClassStmt *stmt)
 
 	amoid = HeapTupleGetOid(tup);
 	pg_am = (Form_pg_am) GETSTRUCT(tup);
-	numOperators = pg_am->amstrategies;
-	numProcs = pg_am->amsupport;
+	maxOpNumber = pg_am->amstrategies;
+	/* if amstrategies is zero, just enforce that op numbers fit in int16 */
+	if (maxOpNumber <= 0)
+		maxOpNumber = SHRT_MAX;
+	maxProcNumber = pg_am->amsupport;
 	amstorage = pg_am->amstorage;
 
 	/* XXX Should we make any privilege check against the AM? */
@@ -176,12 +181,12 @@ DefineOpClass(CreateOpClassStmt *stmt)
 		switch (item->itemtype)
 		{
 			case OPCLASS_ITEM_OPERATOR:
-				if (item->number <= 0 || item->number > numOperators)
+				if (item->number <= 0 || item->number > maxOpNumber)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 							 errmsg("invalid operator number %d,"
 									" must be between 1 and %d",
-									item->number, numOperators)));
+									item->number, maxOpNumber)));
 				if (item->args != NIL)
 				{
 					TypeName   *typeName1 = (TypeName *) linitial(item->args);
@@ -220,12 +225,12 @@ DefineOpClass(CreateOpClassStmt *stmt)
 				addClassMember(&operators, member, false);
 				break;
 			case OPCLASS_ITEM_FUNCTION:
-				if (item->number <= 0 || item->number > numProcs)
+				if (item->number <= 0 || item->number > maxProcNumber)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 							 errmsg("invalid procedure number %d,"
 									" must be between 1 and %d",
-									item->number, numProcs)));
+									item->number, maxProcNumber)));
 				funcOid = LookupFuncNameTypeNames(item->name, item->args,
 												  false);
 #ifdef NOT_USED

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.137 2006/11/12 06:25:37 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.138 2006/12/18 18:56:28 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -347,7 +347,9 @@
       <entry><structfield>amstrategies</structfield></entry>
       <entry><type>int2</type></entry>
       <entry></entry>
-      <entry>Number of operator strategies for this access method</entry>
+      <entry>Number of operator strategies for this access method,
+       or zero if access method does not have a fixed set of operator
+       strategies</entry>
      </row>
 
      <row>
