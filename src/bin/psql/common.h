@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.52 2006/12/16 00:38:43 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.h,v 1.53 2006/12/18 14:17:41 adunstan Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -79,10 +79,10 @@ typedef struct timeval TimevalStruct;
 	  ((int) ((T)->tv_usec - (U)->tv_usec))) / 1000.0)
 #else
 
-typedef struct _timeb TimevalStruct;
-
 #include <sys/types.h>
 #include <sys/timeb.h>
+
+typedef struct _timeb TimevalStruct;
 
 #define GETTIMEOFDAY(T) _ftime(T)
 #define DIFF_MSEC(T, U) \
