@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.339 2006/11/21 16:28:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.340 2006/12/19 01:53:36 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -574,16 +574,36 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 	conn = makeEmptyPGconn();
 	if (conn == NULL)
 		return NULL;
+    /*
+     * If the dbName parameter contains '=', assume it's a conninfo
+     * string.
+     */
+    if (dbName && strchr(dbName,'='))
+    {
+        if (!connectOptions1(conn, dbName))
+            return conn;
+    }
+    else
+    {
+        /*
+         * Old-style path: first, parse an empty conninfo string in
+         * order to set up the same defaults that PQconnectdb() would use.
+         */
+        if (!connectOptions1(conn, ""))
+            return conn;
 
-	/*
-	 * Parse an empty conninfo string in order to set up the same defaults
-	 * that PQconnectdb() would use.
-	 */
-	if (!connectOptions1(conn, ""))
-		return conn;
+        /* Insert dbName parameter value into struct */
+        if (dbName && dbName[0] != '\0')
+        {
+            if (conn->dbName)
+                free(conn->dbName);
+            conn->dbName = strdup(dbName);
+        }
+    }
 
-	/*
-	 * Absorb specified options into conn structure, overriding defaults
+    /*
+     * Insert remaining parameters into struct, overriding defaults
+     * (as well as any conflicting data from dbName taken as a conninfo).
 	 */
 	if (pghost && pghost[0] != '\0')
 	{
@@ -611,13 +631,6 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 		if (conn->pgtty)
 			free(conn->pgtty);
 		conn->pgtty = strdup(pgtty);
-	}
-
-	if (dbName && dbName[0] != '\0')
-	{
-		if (conn->dbName)
-			free(conn->dbName);
-		conn->dbName = strdup(dbName);
 	}
 
 	if (login && login[0] != '\0')

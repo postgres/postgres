@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.178 2006/12/06 15:47:22 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.179 2006/12/19 01:53:36 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -113,6 +113,10 @@ PostgreSQL documentation
       class="parameter">dbname</replaceable> as the first non-option
       argument on the command line.
       </para>
+	  <para>
+	  If this parameter contains an <symbol>=</symbol> sign, it it treated as a
+	  <parameter>conninfo</parameter> string. See <xref linkend="libpq-connect"> for more information.
+	  </para>
       </listitem>
     </varlistentry>
 
@@ -554,6 +558,18 @@ PostgreSQL documentation
     <filename>~/.pgpass</> file to avoid regularly having to type in
     passwords. See <xref linkend="libpq-pgpass"> for more information.
     </para>
+
+	<para>
+    An alternative way to specify connection parameters is in a
+	<parameter>conninfo</parameter>	string, which is used instead of a 
+	database name. This mechanism give you very wide control over the 
+	connection. For example,
+<programlisting>
+$ <userinput>psql "service=myservice sslmode=require"</userinput>
+</programlisting>
+    See <xref linkend="libpq-connect"> for more information on all the
+	available connection options.
+	</para>
 
     <para>
     If the connection could not be made for any reason (e.g., insufficient

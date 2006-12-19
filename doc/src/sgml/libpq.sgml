@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.220 2006/11/10 22:15:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.221 2006/12/19 01:53:36 adunstan Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -324,13 +324,19 @@ PGconn *PQsetdbLogin(const char *pghost,
                      const char *login,
                      const char *pwd);
 </synopsis>
-</para>
+    </para>
 
-<para>
-   This is the predecessor of <function>PQconnectdb</function> with a fixed
-   set of parameters.  It has the same functionality except that the
-   missing parameters will always take on default values.  Write <symbol>NULL</symbol> or an
-   empty string for any one of the fixed parameters that is to be defaulted.
+    <para>
+     This is the predecessor of <function>PQconnectdb</function> with a fixed
+     set of parameters.  It has the same functionality except that the
+     missing parameters will always take on default values.  Write <symbol>NULL</symbol> or an
+     empty string for any one of the fixed parameters that is to be defaulted.
+   </para>
+   <para>
+     If the <parameter>dbName</parameter> contains an <symbol>=</symbol> sign, it
+	 is taken as a <parameter>conninfo</parameter> string in exactly the same way as
+	 if it had been passed to <function>PQconnectdb</function>, and the remaining
+	 parameters are then applied as above.
    </para>
   </listitem>
  </varlistentry>
