@@ -1062,8 +1062,6 @@ Vacuum
 	o Use free-space map information to guide refilling
 	o %Issue log message to suggest VACUUM FULL if a table is nearly
 	  empty?
-	o Improve xid wraparound detection by recording per-table rather
-	  than per-database
 	o Consider logging activity either to the logs or a system view
 	o Turn on by default
 
