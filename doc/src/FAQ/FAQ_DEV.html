@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Mon Nov 13 23:18:46 EST 2006</P>
+    <P>Last updated: Tue Dec 19 17:37:24 EST 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)<BR>
@@ -55,6 +55,8 @@
     assistance?<BR>
      <A href="#item1.18">1.18</A>) How do I get involved in PostgreSQL web
     site development?<BR>
+     <A href="#item1.19">1.19</A>) What is the timeline for the next major
+    PostgreSQL release?<BR>
      
 
       <H2>Technical Questions</H2>
@@ -937,57 +939,78 @@
 
     <H3 id="item2.7">2.7) What is CommandCounterIncrement()?</H3>
 
-    <P>Normally, transactions can not see the rows they modify. This
-    allows <CODE>UPDATE foo SET x = x + 1</CODE> to work correctly.</P>
+    <P>Normally, transactions can not see the rows they modify.
+    This allows <CODE>UPDATE foo SET x = x + 1</CODE> to work
+    correctly.</P>
 
-    <P>However, there are cases where a transactions needs to see rows
-    affected in previous parts of the transaction. This is accomplished
-    using a Command Counter. Incrementing the counter allows
-    transactions to be broken into pieces so each piece can see rows
-    modified by previous pieces. <I>CommandCounterIncrement()</I>
+    <P>However, there are cases where a transactions needs to see
+    rows affected in previous parts of the transaction. This is
+    accomplished using a Command Counter. Incrementing the counter
+    allows transactions to be broken into pieces so each piece can
+    see rows modified by previous pieces. <I>CommandCounterIncrement()</I>
     increments the Command Counter, creating a new part of the
     transaction.</P>
 
-    <H3 id="item2.8">2.8) What debugging features are
-    available?</H3>
+    <H3 id="item2.8">2.8) What debugging features are available?</H3>
 
     <P>First, try running <I>configure</I> with the --enable-cassert
-    option, many <I>assert()</I>s monitor the progress of the backend
-    and halt the program when something unexpected occurs.</P>
+    option, many <I>assert()</I>s monitor the progress of the
+    backend and halt the program when something unexpected occurs.</P>
 
-    <P>The <I>postmaster</I> has a <I>-d</I> option that allows even more
-    detailed information to be reported. The <I>-d</I> option takes a
-    number that specifies the debug level. Be warned that high debug
-    level values generate large log files.</P>
+    <P>The <I>postmaster</I> has a <I>-d</I> option that allows
+    even more detailed information to be reported. The <I>-d</I>
+    option takes a number that specifies the debug level. Be warned
+    that high debug level values generate large log files.</P>
 
-    <P>If the <I>postmaster</I> is not running, you can actually run the
-    <I>postgres</I> backend from the command line, and type your
-    <SMALL>SQL</SMALL> statement directly. This is recommended
-    <B>only</B> for debugging purposes. If you have compiled with debugging
-    symbols, you can use a debugger to see what is happening. Because
-    the backend was not started from <I>postmaster</I>, it is not
-    running in an identical environment and locking/backend interaction
-    problems might not be duplicated.</P>
+    <P>If the <I>postmaster</I> is not running, you can actually
+    run the <I>postgres</I> backend from the command line, and type
+    your <SMALL>SQL</SMALL> statement directly. This is recommended
+    <B>only</B> for debugging purposes. If you have compiled with
+    debugging symbols, you can use a debugger to see what is
+    happening. Because the backend was not started from <I>postmaster</I>,
+    it is not running in an identical environment and locking/backend
+    interaction problems might not be duplicated.</P>
 
-    <P>If the <I>postmaster</I> is running, start <I>psql</I> in one
-    window, then find the <SMALL>PID</SMALL> of the <I>postgres</I>
+    <P>If the <I>postmaster</I> is running, start <I>psql</I> in
+    one window, then find the <SMALL>PID</SMALL> of the <I>postgres</I>
     process used by <I>psql</I> using <CODE>SELECT pg_backend_pid()</CODE>.
     Use a debugger to attach to the <I>postgres</I> <SMALL>PID</SMALL>.
-    You can set breakpoints in the debugger and issue queries from the
-    other.  If you are looking to find the location that is generating
-    an error or log message, set a breakpoint at <I>errfinish</I>.
+    You can set breakpoints in the debugger and issue queries from
+    the other.  If you are looking to find the location that is
+    generating an error or log message, set a breakpoint at
+    <I>errfinish</I>.
 
-    <I>psql</I>. If you are debugging <I>postgres</I> startup, you can
-    set PGOPTIONS="-W n", then start <I>psql</I>. This will cause startup
-    to delay for <I>n</I> seconds so you can attach to the process with
-    the debugger, set any breakpoints, and continue through the startup
-    sequence.</P>
+    <I>psql</I>. If you are debugging <I>postgres</I> startup, you
+    can set PGOPTIONS="-W n", then start <I>psql</I>. This will
+    cause startup to delay for <I>n</I> seconds so you can attach
+    to the process with the debugger, set any breakpoints, and
+    continue through the startup sequence.</P>
 
-    <P>You can also compile with profiling to see what functions are
-    taking execution time. The backend profile files will be deposited
-    in the <I>pgsql/data</I> directory. The client profile file will be
-    put in the client's current directory. Linux requires a compile with
-    <I>-DLINUX_PROFILE</I> for proper profiling.</P>
+    <P>You can also compile with profiling to see what functions
+    are taking execution time. The backend profile files will be
+    deposited in the <I>pgsql/data</I> directory. The client profile
+    file will be put in the client's current directory. Linux
+    requires a compile with <I>-DLINUX_PROFILE</I> for proper
+    profiling.</P>
+
+    <H3 id="item2.9">2.9) What is the timeline for the next major
+    PostgreSQL release?<BR>
+
+    <P>The development schedule for the 8.3 release is:</P>
+    <DL>
+    <DD>March 1, 2006</DD>
+    <DT>Initial community review of all major feature patches</DT>
+    <DD>April 1, 2006</DD>
+    <DT>Feature freeze, all patches must be submitted for review and application</DT>
+    <DD>mid-May, 2006</DD>
+    <DT>All patches applied, beta testing begins</DT>
+    <DD>July, 2006</DD>
+    <DT>Release of 8.3.0</DT>
+    </DL>
+
+    <P>Patches that appear after appropriate dates are typically
+    not applied but held for the next major release.</P>
+
   </BODY>
 </HTML>
 
