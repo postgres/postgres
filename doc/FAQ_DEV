@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Dec 19 17:37:24 EST 2006
+   Last updated: Wed Dec 20 11:21:55 EST 2006
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -802,17 +802,17 @@ typedef struct nameData
   
    The development schedule for the 8.3 release is:
    
-          March 1, 2006
+          March 1, 2007
           
    Initial community review of all major feature patches
-          April 1, 2006
+          April 1, 2007
           
    Feature freeze, all patches must be submitted for review and
           application
-          mid-May, 2006
+          mid-May, 2007
           
    All patches applied, beta testing begins
-          July, 2006
+          July, 2007
           
    Release of 8.3.0
           
