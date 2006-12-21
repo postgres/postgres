@@ -70,6 +70,11 @@ SELECT xmlroot (
   standalone yes
 );
 ERROR:  no XML support in this installation
+SELECT xmlserialize(content data as character varying) FROM xmltest;
+ data 
+------
+(0 rows)
+
 -- Check mapping SQL identifier to XML name
 SELECT xmlpi(name ":::_xml_abc135.%-&_");
 ERROR:  no XML support in this installation
