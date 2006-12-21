@@ -34,7 +34,7 @@ $(LANGUAGE).aff: $(ZIPFILE).aff
 	 | perl -pi \
 		-e 's/^COMPOUNDFLAG\s+(\S+)/compoundwords controlled $$1/;' \
 	        -e 's/^COMPOUNDMIN\s+(\d+)/compoundmin $$1/;' \
-	        -e 's/^PFX\s+(\S+)\s+Y\s+\d+.*$$/ if ( !$$wasprf ) { $$wasprf=1; "prefixes\n\nflag $$1:" } else { "flag $$1:" } /e;' \
+	        -e 's/^PFX\s+(\S+)\s+([YN])\s+\d+.*$$/ if ( !$$wasprf ) { $$wasprf=1; "prefixes\n\nflag $$1:" } else { "flag $$1:" } /e;' \
 	        -e 's/^PFX\s+\S+\s+(\S+)\s+(\S+)\s+(\S+)/ uc("   $$3    > $$2")/e;' \
 	        -e 's/^(.*)SFX\s+(\S+)\s+([YN])\s+\d+.*$$/ $$flg=($$3 eq "Y") ? "*" : ""; $$flg="~$$flg" if length $$1; $$q=$$2; $$q="\\$$q" if $$q!~m#[a-zA-Z]#; if ( !$$wassfx ) { $$wassfx=1; "suffixes\n\nflag $$flg$$q:" } else { "flag $$flg$$q:" } /e;' \
 	        -e 's/^.*SFX\s+\S+\s+(\S+)\s+(\S+)\s+(\S+)/ uc("   $$3    > ".( ($$1 eq "0") ? "" : "-$$1,").( ($$2 eq "0") ? "" : "$$2") )/e;' \
