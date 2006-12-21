@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.59 2006/10/04 00:30:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.60 2006/12/21 16:05:15 petere Exp $
  */
 #include "postgres.h"
 
@@ -599,7 +599,7 @@ void
 SetDatabaseEncoding(int encoding)
 {
 	if (!PG_VALID_BE_ENCODING(encoding))
-		elog(ERROR, "invalid database encoding");
+		elog(ERROR, "invalid database encoding: %d", encoding);
 
 	DatabaseEncoding = &pg_enc2name_tbl[encoding];
 	Assert(DatabaseEncoding->encoding == encoding);

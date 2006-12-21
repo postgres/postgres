@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.196 2006/12/10 22:13:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.197 2006/12/21 16:05:13 petere Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -765,6 +765,22 @@ _readBooleanTest(void)
 }
 
 /*
+ * _readXmlExpr
+ */
+static XmlExpr *
+_readXmlExpr(void)
+{
+	READ_LOCALS(XmlExpr);
+
+	READ_ENUM_FIELD(op, XmlExprOp);
+	READ_STRING_FIELD(name);
+	READ_NODE_FIELD(named_args);
+	READ_NODE_FIELD(args);
+
+	READ_DONE();
+}
+
+/*
  * _readCoerceToDomain
  */
 static CoerceToDomain *
@@ -1014,6 +1030,8 @@ parseNodeString(void)
 		return_value = _readNullTest();
 	else if (MATCH("BOOLEANTEST", 11))
 		return_value = _readBooleanTest();
+	else if (MATCH("XMLEXPR", 7))
+		return_value = _readXmlExpr();
 	else if (MATCH("COERCETODOMAIN", 14))
 		return_value = _readCoerceToDomain();
 	else if (MATCH("COERCETODOMAINVALUE", 19))

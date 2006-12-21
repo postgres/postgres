@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.199 2006/11/17 16:46:27 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.200 2006/12/21 16:05:13 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,6 +52,7 @@
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/typcache.h"
+#include "utils/xml.h"
 
 
 /* static function decls */
@@ -119,6 +120,8 @@ static Datum ExecEvalMinMax(MinMaxExprState *minmaxExpr,
 static Datum ExecEvalNullIf(FuncExprState *nullIfExpr,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
+						 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullTest(NullTestState *nstate,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
@@ -2878,6 +2881,120 @@ ExecEvalBooleanTest(GenericExprState *bstate,
 	}
 }
 
+/* ----------------------------------------------------------------
+ *		ExecEvalXml
+ * ----------------------------------------------------------------
+ */
+ 
+static Datum
+ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
+			bool *isNull, ExprDoneCond *isDone)
+{
+	StringInfoData 	buf;
+	bool 			isnull;
+	ListCell 	   *arg;
+	text 		   *result = NULL;
+	int 			len;
+
+	initStringInfo(&buf);
+
+	*isNull = false;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+
+	switch (xmlExpr->op)
+	{
+		case IS_XMLCONCAT:
+			*isNull = true;
+
+			foreach(arg, xmlExpr->args)
+			{
+				ExprState 	*e = (ExprState *) lfirst(arg);
+				Datum 		value = ExecEvalExpr(e, econtext, &isnull, NULL);
+
+				if (!isnull)
+				{
+					appendStringInfoString(&buf, DatumGetCString(OidFunctionCall1(xmlExpr->arg_typeout, value)));
+					*isNull = false;
+				}
+			}
+			break;
+
+		case IS_XMLELEMENT:
+			{
+				int state = 0, i = 0;
+				appendStringInfo(&buf, "<%s", xmlExpr->name);
+				foreach(arg, xmlExpr->named_args)
+				{
+					GenericExprState *gstate = (GenericExprState *) lfirst(arg);
+					Datum value = ExecEvalExpr(gstate->arg, econtext, &isnull, NULL);
+					if (!isnull)
+					{
+						char *outstr = DatumGetCString(OidFunctionCall1(xmlExpr->named_args_tcache[i], value));
+						appendStringInfo(&buf, " %s=\"%s\"", xmlExpr->named_args_ncache[i], outstr);
+						pfree(outstr);
+					}
+					i++;
+				}
+				if (xmlExpr->args)
+				{
+					ExprState 	*expr = linitial(xmlExpr->args);
+					Datum 		value = ExecEvalExpr(expr, econtext, &isnull, NULL);
+
+					if (!isnull)
+					{
+						char *outstr = DatumGetCString(OidFunctionCall1(xmlExpr->arg_typeout, value));
+						if (state == 0)
+						{
+							appendStringInfoChar(&buf, '>');
+							state = 1;
+						}
+						appendStringInfo(&buf, "%s", outstr);
+						pfree(outstr);
+					}
+			 	}
+
+				if (state == 0)
+					appendStringInfo(&buf, "/>");
+			 	else if (state == 1)
+					appendStringInfo(&buf, "</%s>", xmlExpr->name);		
+
+			}
+			break;
+
+		case IS_XMLFOREST:
+			{
+				/* only if all argumets are null returns null */
+				int i = 0; 
+				*isNull = true;
+				foreach(arg, xmlExpr->named_args)
+			 	{
+					GenericExprState *gstate = (GenericExprState *) lfirst(arg);
+					Datum value = ExecEvalExpr(gstate->arg, econtext, &isnull, NULL);
+					if (!isnull)
+					{
+						char *outstr = DatumGetCString(OidFunctionCall1(xmlExpr->named_args_tcache[i], value));
+						appendStringInfo(&buf, "<%s>%s</%s>", xmlExpr->named_args_ncache[i], outstr, xmlExpr->named_args_ncache[i]);
+						pfree(outstr);
+						*isNull = false;
+					}
+					i += 1;
+				}		
+			}
+			break;
+		default:
+			break;
+	}
+
+	len = buf.len + VARHDRSZ;
+	result = palloc(len);
+	VARATT_SIZEP(result) = len;
+	memcpy(VARDATA(result), buf.data, buf.len);
+	pfree(buf.data);
+	PG_RETURN_TEXT_P(result);
+}
+
 /*
  * ExecEvalCoerceToDomain
  *
@@ -3666,6 +3783,64 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				 */
 				fmgr_info(typentry->cmp_proc, &(mstate->cfunc));
 				state = (ExprState *) mstate;
+			}
+			break;
+		case T_XmlExpr:
+			{
+				List			*outlist; 
+				ListCell		*arg;
+				XmlExpr			*xexpr = (XmlExpr *) node;
+				XmlExprState	*xstate = makeNode(XmlExprState);
+				int				i = 0; 
+				Oid				typeout;
+		
+				xstate->name = xexpr->name;
+								
+				xstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalXml;
+				xstate->op = xexpr->op;
+				
+				outlist = NIL;
+				if (xexpr->named_args)
+				{
+					xstate->named_args_tcache = (Oid *) palloc(list_length(xexpr->named_args) * sizeof(int));
+					xstate->named_args_ncache = (char **) palloc(list_length(xexpr->named_args) * sizeof(char *));
+					
+					i = 0;
+					foreach(arg, xexpr->named_args)
+					{
+						bool		tpisvarlena;
+						Expr		*e = (Expr *) lfirst(arg);
+						ExprState	*estate = ExecInitExpr(e, parent);
+						TargetEntry	*tle;
+						outlist = lappend(outlist, estate);					
+						tle = (TargetEntry *) ((GenericExprState *) estate)->xprstate.expr;
+						getTypeOutputInfo(exprType((Node *)tle->expr), &typeout, &tpisvarlena);
+						xstate->named_args_ncache[i] = tle->resname;
+						xstate->named_args_tcache[i] = typeout;
+						i++;
+					}	
+				}
+				else
+				{
+					xstate->named_args_tcache = NULL;
+					xstate->named_args_ncache = NULL;
+				}
+				xstate->named_args = outlist;
+
+				outlist = NIL;				
+				foreach(arg, xexpr->args)
+				{
+					bool 		tpisvarlena;
+					ExprState 	*estate;
+					Expr 		*e = (Expr *) lfirst(arg);
+					getTypeOutputInfo(exprType((Node *)e), &typeout, &tpisvarlena);
+					estate = ExecInitExpr(e, parent);
+					outlist = lappend(outlist, estate);
+				}
+				xstate->arg_typeout = typeout;
+				xstate->args = outlist;
+				
+				state = (ExprState *) xstate;
 			}
 			break;
 		case T_NullIfExpr:

@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.235 2006/11/10 22:59:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.236 2006/12/21 16:05:15 petere Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -2988,6 +2988,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 		case T_CoalesceExpr:
 		case T_MinMaxExpr:
 		case T_NullIfExpr:
+		case T_XmlExpr:
 		case T_Aggref:
 		case T_FuncExpr:
 			/* function-like: name(..) or name[..] */
@@ -3096,6 +3097,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_MinMaxExpr:		/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
+				case T_XmlExpr:			/* own parentheses */
 				case T_Aggref:	/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
@@ -3144,6 +3146,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_MinMaxExpr:		/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
+				case T_XmlExpr:			/* own parentheses */
 				case T_Aggref:	/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
@@ -3842,6 +3845,28 @@ get_rule_expr(Node *node, deparse_context *context,
 				}
 				if (!PRETTY_PAREN(context))
 					appendStringInfoChar(buf, ')');
+			}
+			break;
+
+		case T_XmlExpr:
+			{
+				XmlExpr *xexpr = (XmlExpr *) node;
+
+				switch (xexpr->op)
+				{
+					case IS_XMLCONCAT:
+						appendStringInfo(buf, "XMLCONCAT(");
+						break;
+					case IS_XMLELEMENT:
+						appendStringInfo(buf, "XMLELEMENT(");
+						break;
+					case IS_XMLFOREST:
+						appendStringInfo(buf, "XMLFOREST(");
+						break;
+				}
+				get_rule_expr((Node *) xexpr->named_args, context, true);
+				get_rule_expr((Node *) xexpr->args, context, true);
+				appendStringInfoChar(buf, ')');
 			}
 			break;
 

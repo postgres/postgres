@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.181 2006/11/23 04:27:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.182 2006/12/21 16:05:12 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -233,6 +233,12 @@
        <entry><type>timestamptz</type></entry>
        <entry>date and time, including time zone</entry>
       </row>
+
+      <row>
+       <entry><type>xml</type></entry>
+       <entry></entry>
+       <entry>XML data</entry>
+      </row>
      </tbody>
     </tgroup>
    </table>
@@ -248,7 +254,8 @@
     precision</type>, <type>integer</type>, <type>interval</type>,
     <type>numeric</type>, <type>decimal</type>, <type>real</type>,
     <type>smallint</type>, <type>time</type> (with or without time zone),
-    <type>timestamp</type> (with or without time zone).
+    <type>timestamp</type> (with or without time zone),
+    <type>xml</type>.
    </para>
   </note>
 
@@ -3358,11 +3365,20 @@ SELECT * FROM pg_attribute
   </sect1>
 
   <sect1 id="datatype-xml">
-   <title><acronym>XML</> Document Support</title>
+   <title><acronym>XML</> Type</title>
 
-   <indexterm zone="datatype">
-    <primary>xml</primary>
+   <indexterm zone="datatype-xml">
+    <primary>XML</primary>
    </indexterm>
+
+   <para>
+    The data type <type>xml</type> can be used to store XML data.  Its
+    advantage over storing XML data in, say, a text field is that it
+    checks the input values for well-formedness, and there are support
+    functions to perform type-safe operations on it; see <xref
+    linkend="functions-xml">.  Currently, there is no support for
+    validation against a specific <acronym>XML</> schema.
+   </para>
 
    <para>
     <acronym>XML</> (Extensible Markup Language) support is not one
@@ -3378,22 +3394,6 @@ SELECT * FROM pg_attribute
    </para>
 
    <variablelist>
-
-   <varlistentry>
-    <term>Storage</term>
-    <listitem>
-
-     <para>
-      PostgreSQL does not have a specialized <acronym>XML</> data type.
-      Users should store <acronym>XML</> documents in ordinary
-      <type>TEXT</> fields. If you need the document split apart into
-      its component parts so each element is stored separately, you must
-      use a middle-ware solution to do that, but once done, the data
-      becomes relational and has to be processed accordingly.
-     </para>
-    </listitem>
-   </varlistentry>
-
    <varlistentry>
     <term>Import/Export</term>
     <listitem>
@@ -3409,21 +3409,6 @@ SELECT * FROM pg_attribute
    </varlistentry>
 
    <varlistentry>
-    <term>Validation</term>
-    <listitem>
-
-     <para>
-      <filename>/contrib/xml2</> has a function called
-      <function>xml_is_well_formed()</> that can be used in a <literal>CHECK</>
-      constraint to enforce that a field contains well-formed <acronym>XML</>.
-      It does not support validation against a specific <acronym>XML</>
-      schema. A server-side language with <acronym>XML</> capabilities
-      could be used to do schema-specific <acronym>XML</> checks.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
     <term>Indexing</term>
     <listitem>
 
@@ -3434,20 +3419,6 @@ SELECT * FROM pg_attribute
       tool <filename>/contrib/tsearch2</> can be used. Of course,
       Tsearch2 indexes have no <acronym>XML</> awareness so additional
       <filename>/contrib/xml2</> checks should be added to queries.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>Modification</term>
-    <listitem>
-
-     <para>
-      If an <command>UPDATE</> does not modify an <acronym>XML</> field,
-      the <acronym>XML</> data is shared between the old and new rows.
-      However, if the <command>UPDATE</> modifies an <acronym>XML</>
-      field, a full modified copy of the <acronym>XML</> field must be
-      created internally.
      </para>
     </listitem>
    </varlistentry>
@@ -3487,19 +3458,6 @@ SELECT * FROM pg_attribute
      </para>
     </listitem>
    </varlistentry>
-
-   <varlistentry>
-    <term>Missing Features</term>
-    <listitem>
-
-     <para>
-      Missing features include XQuery, SQL/XML syntax (ISO/IEC
-      9075-14), and an <acronym>XML</> data type optimized for
-      <acronym>XML</> storage.
-     </para>
-    </listitem>
-   </varlistentry>
-
    </variablelist>
 
   </sect1>

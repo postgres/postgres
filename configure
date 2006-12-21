@@ -894,6 +894,7 @@ Optional Packages:
   --with-openssl          build with OpenSSL support
   --without-readline      do not use GNU Readline nor BSD Libedit for editing
   --with-libedit-preferred  prefer BSD Libedit over GNU Readline
+  --with-libxml           build with XML support
   --without-zlib          do not use Zlib
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
 
@@ -4161,6 +4162,42 @@ fi;
 
 
 #
+# XML
+#
+
+pgac_args="$pgac_args with_libxml"
+
+
+# Check whether --with-libxml or --without-libxml was given.
+if test "${with_libxml+set}" = set; then
+  withval="$with_libxml"
+
+  case $withval in
+    yes)
+
+cat >>confdefs.h <<\_ACEOF
+#define USE_LIBXML 1
+_ACEOF
+
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --with-libxml option" >&5
+echo "$as_me: error: no argument expected for --with-libxml option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  with_libxml=no
+
+fi;
+
+
+
+#
 # Zlib
 #
 
@@ -7268,6 +7305,87 @@ fi
 
 fi
 
+if test "$with_libxml" = yes ; then
+
+echo "$as_me:$LINENO: checking for xmlInitParser in -lxml2" >&5
+echo $ECHO_N "checking for xmlInitParser in -lxml2... $ECHO_C" >&6
+if test "${ac_cv_lib_xml2_xmlInitParser+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lxml2  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char xmlInitParser ();
+int
+main ()
+{
+xmlInitParser ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_xml2_xmlInitParser=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_xml2_xmlInitParser=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_xml2_xmlInitParser" >&5
+echo "${ECHO_T}$ac_cv_lib_xml2_xmlInitParser" >&6
+if test $ac_cv_lib_xml2_xmlInitParser = yes; then
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBXML2 1
+_ACEOF
+
+  LIBS="-lxml2 $LIBS"
+
+else
+  { { echo "$as_me:$LINENO: error: library 'xml2' is required for XML support" >&5
+echo "$as_me: error: library 'xml2' is required for XML support" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
+fi
+
 
 ##
 ## Header files
@@ -10358,6 +10476,155 @@ done
 fi
 
 done
+
+fi
+
+if test "$with_libxml" = yes ; then
+  if test "${ac_cv_header_libxml_parser_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for libxml/parser.h" >&5
+echo $ECHO_N "checking for libxml/parser.h... $ECHO_C" >&6
+if test "${ac_cv_header_libxml_parser_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_libxml_parser_h" >&5
+echo "${ECHO_T}$ac_cv_header_libxml_parser_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking libxml/parser.h usability" >&5
+echo $ECHO_N "checking libxml/parser.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <libxml/parser.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking libxml/parser.h presence" >&5
+echo $ECHO_N "checking libxml/parser.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <libxml/parser.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+    ac_cpp_err=$ac_cpp_err$ac_c_werror_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in
+  yes:no: )
+    { echo "$as_me:$LINENO: WARNING: libxml/parser.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: libxml/parser.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: libxml/parser.h: proceeding with the compiler's result" >&5
+echo "$as_me: WARNING: libxml/parser.h: proceeding with the compiler's result" >&2;}
+    ac_header_preproc=yes
+    ;;
+  no:yes:* )
+    { echo "$as_me:$LINENO: WARNING: libxml/parser.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: libxml/parser.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: libxml/parser.h:     check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: libxml/parser.h:     check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: libxml/parser.h: see the Autoconf documentation" >&5
+echo "$as_me: WARNING: libxml/parser.h: see the Autoconf documentation" >&2;}
+    { echo "$as_me:$LINENO: WARNING: libxml/parser.h:     section \"Present But Cannot Be Compiled\"" >&5
+echo "$as_me: WARNING: libxml/parser.h:     section \"Present But Cannot Be Compiled\"" >&2;}
+    { echo "$as_me:$LINENO: WARNING: libxml/parser.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: libxml/parser.h: proceeding with the preprocessor's result" >&2;}
+    { echo "$as_me:$LINENO: WARNING: libxml/parser.h: in the future, the compiler will take precedence" >&5
+echo "$as_me: WARNING: libxml/parser.h: in the future, the compiler will take precedence" >&2;}
+    (
+      cat <<\_ASBOX
+## ---------------------------------------- ##
+## Report this to pgsql-bugs@postgresql.org ##
+## ---------------------------------------- ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for libxml/parser.h" >&5
+echo $ECHO_N "checking for libxml/parser.h... $ECHO_C" >&6
+if test "${ac_cv_header_libxml_parser_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_libxml_parser_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_libxml_parser_h" >&5
+echo "${ECHO_T}$ac_cv_header_libxml_parser_h" >&6
+
+fi
+if test $ac_cv_header_libxml_parser_h = yes; then
+  :
+else
+  { { echo "$as_me:$LINENO: error: header file <libxml/parser.h> is required for XML support" >&5
+echo "$as_me: error: header file <libxml/parser.h> is required for XML support" >&2;}
+   { (exit 1); exit 1; }; }
+fi
+
 
 fi
 

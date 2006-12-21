@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.177 2006/10/07 21:51:02 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.178 2006/12/21 16:05:14 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,6 +89,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"connection", CONNECTION},
 	{"constraint", CONSTRAINT},
 	{"constraints", CONSTRAINTS},
+	{"content", CONTENT},
 	{"conversion", CONVERSION_P},
 	{"convert", CONVERT},
 	{"copy", COPY},
@@ -123,6 +124,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"disable", DISABLE_P},
 	{"distinct", DISTINCT},
 	{"do", DO},
+	{"document", DOCUMENT},
 	{"domain", DOMAIN_P},
 	{"double", DOUBLE_P},
 	{"drop", DROP},
@@ -218,6 +220,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"mode", MODE},
 	{"month", MONTH_P},
 	{"move", MOVE},
+	{"name", NAME},
 	{"names", NAMES},
 	{"national", NATIONAL},
 	{"natural", NATURAL},
@@ -314,6 +317,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"smallint", SMALLINT},
 	{"some", SOME},
 	{"stable", STABLE},
+	{"standalone", STANDALONE},
 	{"start", START},
 	{"statement", STATEMENT},
 	{"statistics", STATISTICS},
@@ -321,6 +325,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"stdout", STDOUT},
 	{"storage", STORAGE},
 	{"strict", STRICT_P},
+	{"strip", STRIP},
 	{"substring", SUBSTRING},
 	{"superuser", SUPERUSER_P},
 	{"symmetric", SYMMETRIC},
@@ -357,19 +362,31 @@ static const ScanKeyword ScanKeywords[] = {
 	{"vacuum", VACUUM},
 	{"valid", VALID},
 	{"validator", VALIDATOR},
+	{"value", VALUE},
 	{"values", VALUES},
 	{"varchar", VARCHAR},
 	{"varying", VARYING},
 	{"verbose", VERBOSE},
+	{"version", VERSION},
 	{"view", VIEW},
 	{"volatile", VOLATILE},
 	{"when", WHEN},
 	{"where", WHERE},
+	{"whitespace", WHITESPACE},
 	{"with", WITH},
 	{"without", WITHOUT},
 	{"work", WORK},
 	{"write", WRITE},
+	{"xmlattributes", XMLATTRIBUTES},
+	{"xmlconcat", XMLCONCAT},
+	{"xmlelement", XMLELEMENT},
+	{"xmlforest", XMLFOREST},
+	{"xmlparse", XMLPARSE},
+	{"xmlpi", XMLPI},
+	{"xmlroot", XMLROOT},
+	{"xmlserialize", XMLSERIALIZE},
 	{"year", YEAR_P},
+	{"yes", YES},
 	{"zone", ZONE},
 };
 

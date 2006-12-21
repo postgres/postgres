@@ -1,0 +1,145 @@
+CREATE TABLE xmltest (
+    id int,
+    data xml
+);
+INSERT INTO xmltest VALUES (1, '<value>one</value>');
+INSERT INTO xmltest VALUES (2, '<value>two</value>');
+INSERT INTO xmltest VALUES (3, '<wrong');
+ERROR:  could not parse XML data
+DETAIL:  Expected '>'
+SELECT * FROM xmltest;
+ id |        data        
+----+--------------------
+  1 | <value>one</value>
+  2 | <value>two</value>
+(2 rows)
+
+SELECT xmlcomment('test');
+ xmlcomment  
+-------------
+ <!--test-->
+(1 row)
+
+SELECT xmlcomment('-test');
+  xmlcomment  
+--------------
+ <!---test-->
+(1 row)
+
+SELECT xmlcomment('test-');
+ERROR:  invalid XML comment
+SELECT xmlcomment('--test');
+ERROR:  invalid XML comment
+SELECT xmlcomment('te st');
+  xmlcomment  
+--------------
+ <!--te st-->
+(1 row)
+
+SELECT xmlconcat(xmlcomment('hello'),
+                 xmlelement(NAME qux, 'foo'),
+                 xmlcomment('world'));
+               xmlconcat                
+----------------------------------------
+ <!--hello--><qux>foo</qux><!--world-->
+(1 row)
+
+SELECT xmlconcat('hello', 'you');
+ xmlconcat 
+-----------
+ helloyou
+(1 row)
+
+SELECT xmlconcat(1, 2);
+ERROR:  argument of XMLCONCAT must be type xml, not type integer
+SELECT xmlconcat('bad', '<syntax');
+ERROR:  could not parse XML data
+DETAIL:  Expected '>'
+SELECT xmlelement(name element,
+                  xmlattributes (1 as one, 'deuce' as two),
+                  'content');
+                   xmlelement                   
+------------------------------------------------
+ <element one="1" two="deuce">content</element>
+(1 row)
+
+SELECT xmlelement(name element,
+                  xmlattributes ('unnamed and wrong'));
+ERROR:  unnamed attribute value must be a column reference
+SELECT xmlelement(name element, xmlelement(name nested, 'stuff'));
+                xmlelement                 
+-------------------------------------------
+ <element><nested>stuff</nested></element>
+(1 row)
+
+SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
+                              xmlelement                              
+----------------------------------------------------------------------
+ <employee><name>sharon</name><age>25</age><pay>1000</pay></employee>
+ <employee><name>sam</name><age>30</age><pay>2000</pay></employee>
+ <employee><name>bill</name><age>20</age><pay>1000</pay></employee>
+ <employee><name>jeff</name><age>23</age><pay>600</pay></employee>
+ <employee><name>cim</name><age>30</age><pay>400</pay></employee>
+ <employee><name>linda</name><age>19</age><pay>100</pay></employee>
+(6 rows)
+
+SELECT xmlelement(name wrong, 37);
+ERROR:  argument of XMLELEMENT must be type xml, not type integer
+SELECT xmlpi(name foo);
+  xmlpi  
+---------
+ <?foo?>
+(1 row)
+
+SELECT xmlpi(name xmlstuff);
+ERROR:  invalid XML processing instruction
+DETAIL:  XML processing instruction target name cannot start with "xml".
+SELECT xmlpi(name foo, 'bar');
+    xmlpi    
+-------------
+ <?foo bar?>
+(1 row)
+
+SELECT xmlpi(name foo, 'in?>valid');
+ERROR:  invalid XML processing instruction
+DETAIL:  XML processing instruction cannot contain "?>".
+SELECT xmlroot (
+  xmlelement (
+    name gazonk,
+    xmlattributes (
+      'val' AS name,
+      1 + 1 AS num
+    ),
+    xmlelement (
+      NAME qux,
+      'foo'
+    )
+  ),
+  version '1.0',
+  standalone yes
+);
+                                         xmlroot                                          
+------------------------------------------------------------------------------------------
+ <?xml version="1.0" standalone="yes"?><gazonk name="val" num="2"><qux>foo</qux></gazonk>
+(1 row)
+
+SELECT xmlserialize(content data as character varying) FROM xmltest;
+        data        
+--------------------
+ <value>one</value>
+ <value>two</value>
+(2 rows)
+
+-- Check mapping SQL identifier to XML name
+SELECT xmlpi(name ":::_xml_abc135.%-&_");
+                      xmlpi                      
+-------------------------------------------------
+ <?_x003A_::_x005F_xml_abc135._x0025_-_x0026__?>
+(1 row)
+
+SELECT xmlpi(name "123");
+     xmlpi     
+---------------
+ <?_x0031_23?>
+(1 row)
+

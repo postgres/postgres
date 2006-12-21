@@ -1,0 +1,77 @@
+CREATE TABLE xmltest (
+    id int,
+    data xml
+);
+INSERT INTO xmltest VALUES (1, '<value>one</value>');
+ERROR:  no XML support in this installation
+INSERT INTO xmltest VALUES (2, '<value>two</value>');
+ERROR:  no XML support in this installation
+INSERT INTO xmltest VALUES (3, '<wrong');
+ERROR:  no XML support in this installation
+SELECT * FROM xmltest;
+ id | data 
+----+------
+(0 rows)
+
+SELECT xmlcomment('test');
+ERROR:  no XML support in this installation
+SELECT xmlcomment('-test');
+ERROR:  no XML support in this installation
+SELECT xmlcomment('test-');
+ERROR:  no XML support in this installation
+SELECT xmlcomment('--test');
+ERROR:  no XML support in this installation
+SELECT xmlcomment('te st');
+ERROR:  no XML support in this installation
+SELECT xmlconcat(xmlcomment('hello'),
+                 xmlelement(NAME qux, 'foo'),
+                 xmlcomment('world'));
+ERROR:  no XML support in this installation
+SELECT xmlconcat('hello', 'you');
+ERROR:  no XML support in this installation
+SELECT xmlconcat(1, 2);
+ERROR:  argument of XMLCONCAT must be type xml, not type integer
+SELECT xmlconcat('bad', '<syntax');
+ERROR:  no XML support in this installation
+SELECT xmlelement(name element,
+                  xmlattributes (1 as one, 'deuce' as two),
+                  'content');
+ERROR:  no XML support in this installation
+SELECT xmlelement(name element,
+                  xmlattributes ('unnamed and wrong'));
+ERROR:  no XML support in this installation
+SELECT xmlelement(name element, xmlelement(name nested, 'stuff'));
+ERROR:  no XML support in this installation
+SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
+ERROR:  no XML support in this installation
+SELECT xmlelement(name wrong, 37);
+ERROR:  no XML support in this installation
+SELECT xmlpi(name foo);
+ERROR:  no XML support in this installation
+SELECT xmlpi(name xmlstuff);
+ERROR:  no XML support in this installation
+SELECT xmlpi(name foo, 'bar');
+ERROR:  no XML support in this installation
+SELECT xmlpi(name foo, 'in?>valid');
+ERROR:  no XML support in this installation
+SELECT xmlroot (
+  xmlelement (
+    name gazonk,
+    xmlattributes (
+      'val' AS name,
+      1 + 1 AS num
+    ),
+    xmlelement (
+      NAME qux,
+      'foo'
+    )
+  ),
+  version '1.0',
+  standalone yes
+);
+ERROR:  no XML support in this installation
+-- Check mapping SQL identifier to XML name
+SELECT xmlpi(name ":::_xml_abc135.%-&_");
+ERROR:  no XML support in this installation
+SELECT xmlpi(name "123");
+ERROR:  no XML support in this installation

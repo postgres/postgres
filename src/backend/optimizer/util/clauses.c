@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.223 2006/10/25 22:11:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.224 2006/12/21 16:05:13 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -559,6 +559,8 @@ expression_returns_set_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, NullIfExpr))
 		return false;
+	if (IsA(node, XmlExpr))
+		return false;
 
 	return expression_tree_walker(node, expression_returns_set_walker,
 								  context);
@@ -875,6 +877,8 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	if (IsA(node, NullTest))
 		return true;
 	if (IsA(node, BooleanTest))
+		return true;
+	if (IsA(node, XmlExpr))
 		return true;
 	return expression_tree_walker(node, contain_nonstrict_functions_walker,
 								  context);
@@ -3334,6 +3338,16 @@ expression_tree_walker(Node *node,
 			return walker(((NullTest *) node)->arg, context);
 		case T_BooleanTest:
 			return walker(((BooleanTest *) node)->arg, context);
+		case T_XmlExpr:
+			{
+				XmlExpr *xexpr = (XmlExpr *) node;
+				
+				if (walker(xexpr->named_args, context))
+					return true;
+				if (walker(xexpr->args, context))
+					return true;
+			}
+			break;
 		case T_CoerceToDomain:
 			return walker(((CoerceToDomain *) node)->arg, context);
 		case T_TargetEntry:
@@ -3854,6 +3868,17 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, minmaxexpr, MinMaxExpr);
 				MUTATE(newnode->args, minmaxexpr->args, List *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_XmlExpr:
+			{
+				XmlExpr *xexpr = (XmlExpr *) node;
+				XmlExpr *newnode;
+
+				FLATCOPY(newnode, xexpr, XmlExpr);
+				MUTATE(newnode->named_args, xexpr->named_args, List *);
+				MUTATE(newnode->args, xexpr->args, List *);
 				return (Node *) newnode;
 			}
 			break;

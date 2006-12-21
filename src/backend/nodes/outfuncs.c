@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.286 2006/12/10 22:13:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.287 2006/12/21 16:05:13 petere Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -918,6 +918,17 @@ _outBooleanTest(StringInfo str, BooleanTest *node)
 
 	WRITE_NODE_FIELD(arg);
 	WRITE_ENUM_FIELD(booltesttype, BoolTestType);
+}
+
+static void
+_outXmlExpr(StringInfo str, XmlExpr *node)
+{
+	WRITE_NODE_TYPE("XMLEXPR");
+	
+	WRITE_ENUM_FIELD(op, XmlExprOp);
+	WRITE_STRING_FIELD(name);
+	WRITE_NODE_FIELD(named_args);
+	WRITE_NODE_FIELD(args);
 }
 
 static void
@@ -2018,6 +2029,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_BooleanTest:
 				_outBooleanTest(str, obj);
+				break;
+			case T_XmlExpr:
+				_outXmlExpr(str, obj);
 				break;
 			case T_CoerceToDomain:
 				_outCoerceToDomain(str, obj);

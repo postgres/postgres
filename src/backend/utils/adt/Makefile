@@ -1,7 +1,7 @@
 #
 # Makefile for utils/adt
 #
-# $PostgreSQL: pgsql/src/backend/utils/adt/Makefile,v 1.60 2006/04/05 22:11:55 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/utils/adt/Makefile,v 1.61 2006/12/21 16:05:15 petere Exp $
 #
 
 subdir = src/backend/utils/adt
@@ -25,7 +25,7 @@ OBJS = acl.o arrayfuncs.o array_userfuncs.o arrayutils.o bool.o \
 	tid.o timestamp.o varbit.o varchar.o varlena.o version.o xid.o \
 	network.o mac.o inet_net_ntop.o inet_net_pton.o \
 	ri_triggers.o pg_lzcompress.o pg_locale.o formatting.o \
-	ascii.o quote.o pgstatfuncs.o encode.o dbsize.o genfile.o
+	ascii.o quote.o pgstatfuncs.o encode.o dbsize.o genfile.o xml.o
 
 like.o: like.c like_match.c
 

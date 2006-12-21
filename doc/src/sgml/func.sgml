@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.347 2006/11/25 00:38:53 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.348 2006/12/21 16:05:12 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10741,4 +10741,113 @@ SELECT (pg_stat_file('filename')).modification;
    </para>
 
   </sect1>
+
+  <sect1 id="functions-xml">
+   <title>XML Functions</title>
+
+   <para>
+    The functions and function-like expressions described in this
+    section operate on values of type <type>xml</type>.
+   </para>
+
+   <sect2>
+    <title><literal>xmlcomment</literal></title>
+ 
+   <indexterm>
+    <primary>xmlcomment</primary>
+   </indexterm>
+ 
+ <synopsis>
+ <function>xmlcomment</function>(<replaceable>text</replaceable>)
+ </synopsis>
+ 
+    <para>
+     Creates an XML comment.
+    </para>
+    </sect2>
+ 
+   <sect2>
+    <title><literal>xmlconcat</literal></title>
+ 
+   <indexterm>
+    <primary>xmlconcat</primary>
+   </indexterm>
+ 
+ <synopsis>
+ <function>xmlconcat</function>(<replaceable>xml</replaceable><optional>, xml, ...</optional>)
+ </synopsis>
+ 
+    <para>
+     Combines a list of individual XML values to create a
+     single value containing an XML forest.
+    </para>
+    </sect2>
+ 
+   <sect2>
+    <title><literal>xmlelement</literal></title>
+ 
+   <indexterm>
+    <primary>xmlelement</primary>
+   </indexterm>
+ 
+ <synopsis>
+ <function>xmlelement</function>(name <replaceable>name</replaceable><optional>, xmlattribytes(<replaceable>value</replaceable> <optional>AS <replaceable>label</replaceable></optional><optional>, ... </optional>)</optional>
+ <optional><replaceable>, content, ...</replaceable></optional>)
+ </synopsis>
+ 
+    <para>
+     Creates an XML element, allowing the name to be specified.
+    </para>
+    </sect2>
+ 
+   <sect2>
+    <title><literal>xmlforest</literal></title>
+ 
+   <indexterm>
+    <primary>xmlforest</primary>
+   </indexterm>
+ 
+ <synopsis>
+ <function>xmlforest</function>(<replaceable>value</replaceable> <optional>AS <replaceable>label</replaceable></optional><optional>, ...</optional>)
+ </synopsis>
+ 
+    <para>
+     Creates XML elements from columns, using the name of each
+     column as the name of the corresponding element.
+    </para>
+    </sect2>
+ 
+   <sect2>
+    <title><literal>xmlpi</literal></title>
+ 
+   <indexterm>
+    <primary>xmlpi</primary>
+   </indexterm>
+ 
+ <synopsis>
+ <function>xmlpi</function>(name <replaceable>target</replaceable> <optional>, <replaceable>content</replaceable></optional>)
+ </synopsis>
+ 
+    <para>
+     Creates an XML processing instruction.
+    </para>
+    </sect2>
+ 
+   <sect2>
+    <title><literal>xmlroot</literal></title>
+ 
+   <indexterm>
+    <primary>xmlroot</primary>
+   </indexterm>
+ 
+ <synopsis>
+ <function>xmlroot</function>(<replaceable>xml</replaceable>, version <replaceable>text</replaceable> <optional>, standalone yes|no|no value</optional>)
+ </synopsis>
+ 
+    <para>
+     Creates the root node of an XML document.
+    </para>
+  </sect2>
+ 
+ </sect1>
 </chapter>

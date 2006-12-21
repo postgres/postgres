@@ -251,6 +251,9 @@
 /* Define to 1 if you have the `wldap32' library (-lwldap32). */
 #undef HAVE_LIBWLDAP32
 
+/* Define to 1 if you have the `xml2' library (-lxml2). */
+#undef HAVE_LIBXML2
+
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
 
@@ -626,6 +629,9 @@
 
 /* Define to 1 to build with LDAP support. (--with-ldap) */
 #undef USE_LDAP
+
+/* Define to 1 to build with XML support. (--with-libxml) */
+#undef USE_LIBXML
 
 /* Define to select named POSIX semaphores. */
 #undef USE_NAMED_POSIX_SEMAPHORES

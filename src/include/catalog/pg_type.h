@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.172 2006/10/04 00:30:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.173 2006/12/21 16:05:15 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -316,6 +316,10 @@ DATA(insert OID = 83 (	pg_class		PGNSP PGUID -1 f c t \054 1259 0 record_in reco
 #define PG_CLASS_RELTYPE_OID 83
 
 /* OIDS 100 - 199 */
+DATA(insert OID = 142 ( xml		   PGNSP PGUID -1 f b t \054 0 0 xml_in xml_out - - - i x f 0 -1 0 _null_ _null_ ));
+DESCR("XML content");
+#define XMLOID 142
+DATA(insert OID = 143 ( _xml	   PGNSP PGUID -1 f b t \054 0 142 array_in array_out array_recv array_send - i x f 0 -1 0 _null_ _null_ ));
 
 /* OIDS 200 - 299 */
 

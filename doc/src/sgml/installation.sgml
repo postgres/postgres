@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.268 2006/12/02 09:29:51 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.269 2006/12/21 16:05:13 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -901,6 +901,15 @@ su - postgres
         <para>
          Build with Bonjour support.  This requires Bonjour support
          in your operating system.  Recommended on Mac OS X.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-libxml</option></term>
+       <listitem>
+        <para>
+         Build with libxml, required for SQL/XML support.
         </para>
        </listitem>
       </varlistentry>

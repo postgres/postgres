@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.492 2006/12/14 21:49:54 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.493 2006/12/21 16:05:12 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -532,6 +532,13 @@ PGAC_ARG_BOOL(with, libedit-preferred, no,
 
 
 #
+# XML
+#
+PGAC_ARG_BOOL(with, libxml, no, [  --with-libxml           build with XML support],
+              [AC_DEFINE([USE_LIBXML], 1, [Define to 1 to build with XML support. (--with-libxml)])])
+
+
+#
 # Zlib
 #
 PGAC_ARG_BOOL(with, zlib, yes,
@@ -716,6 +723,10 @@ if test "$with_pam" = yes ; then
   AC_CHECK_LIB(pam,    pam_start, [], [AC_MSG_ERROR([library 'pam' is required for PAM])])
 fi
 
+if test "$with_libxml" = yes ; then
+  AC_CHECK_LIB(xml2, xmlInitParser, [], [AC_MSG_ERROR([library 'xml2' is required for XML support])])
+fi
+
 
 ##
 ## Header files
@@ -789,6 +800,10 @@ if test "$with_pam" = yes ; then
   AC_CHECK_HEADERS(security/pam_appl.h, [],
                    [AC_CHECK_HEADERS(pam/pam_appl.h, [],
                                      [AC_MSG_ERROR([header file <security/pam_appl.h> or <pam/pam_appl.h> is required for PAM.])])])
+fi
+
+if test "$with_libxml" = yes ; then
+  AC_CHECK_HEADER(libxml/parser.h, [], [AC_MSG_ERROR([header file <libxml/parser.h> is required for XML support])])
 fi
 
 if test "$with_ldap" = yes ; then

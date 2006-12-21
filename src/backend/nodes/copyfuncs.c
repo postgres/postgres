@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.354 2006/12/10 22:13:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.355 2006/12/21 16:05:13 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1132,6 +1132,22 @@ _copyBooleanTest(BooleanTest *from)
 
 	COPY_NODE_FIELD(arg);
 	COPY_SCALAR_FIELD(booltesttype);
+
+	return newnode;
+}
+
+/*
+ * _copyXmlExpr
+ */
+static XmlExpr *
+_copyXmlExpr(XmlExpr *from)
+{
+	XmlExpr *newnode = makeNode(XmlExpr);
+
+	COPY_SCALAR_FIELD(op);
+	COPY_STRING_FIELD(name);
+	COPY_NODE_FIELD(named_args);
+	COPY_NODE_FIELD(args);
 
 	return newnode;
 }
@@ -2965,6 +2981,9 @@ copyObject(void *from)
 			break;
 		case T_BooleanTest:
 			retval = _copyBooleanTest(from);
+			break;
+		case T_XmlExpr:
+			retval = _copyXmlExpr(from);
 			break;
 		case T_CoerceToDomain:
 			retval = _copyCoerceToDomain(from);
