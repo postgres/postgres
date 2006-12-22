@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.182 2006/12/21 16:05:12 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.183 2006/12/22 22:09:31 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3373,7 +3373,7 @@ SELECT * FROM pg_attribute
 
    <para>
     The data type <type>xml</type> can be used to store XML data.  Its
-    advantage over storing XML data in, say, a text field is that it
+    advantage over storing XML data in a <type>text</type> field is that it
     checks the input values for well-formedness, and there are support
     functions to perform type-safe operations on it; see <xref
     linkend="functions-xml">.  Currently, there is no support for
@@ -3381,15 +3381,14 @@ SELECT * FROM pg_attribute
    </para>
 
    <para>
-    <acronym>XML</> (Extensible Markup Language) support is not one
-    capability, but a variety of features supported by a database
-    system. These capabilities include storage, import/export,
-    validation, indexing, efficiency of modification, searching,
+    <acronym>XML</> (Extensible Markup Language) support is not
+    just the existance of an <type>xml</type> data type, but a
+    variety of features supported by a database system. These
+    capabilities include import/export, indexing, searching,
     transforming, and <acronym>XML</> to <acronym>SQL</> mapping.
     <productname>PostgreSQL</> supports some but not all of these
-    <acronym>XML</> capabilities. Future releases of
-    <productname>PostgreSQL</> will continue to improve <acronym>XML</>
-    support. For an overview of <acronym>XML</> use in databases, see <ulink
+    <acronym>XML</> capabilities.  For an overview of <acronym>XML</>
+    use in databases, see <ulink
     url="http://www.rpbourret.com/xml/XMLAndDatabases.htm"></>.
    </para>
 
