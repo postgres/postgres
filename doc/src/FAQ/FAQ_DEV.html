@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Wed Dec 20 11:21:55 EST 2006</P>
+    <P>Last updated: Fri Dec 22 17:41:41 EST 2006</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)<BR>
@@ -24,7 +24,7 @@
     "http://www.postgresql.org/docs/faqs.FAQ_DEV.html">http://www.postgresql.org/docs/faqs.FAQ_DEV.html</A>.</P>
     <HR>
     <BR>
-     
+
 
       <H2>General Questions</H2>
     <A href="#item1.1">1.1</A>) How do I get involved in PostgreSQL
@@ -57,7 +57,7 @@
     site development?<BR>
      <A href="#item1.19">1.19</A>) What is the timeline for the next major
     PostgreSQL release?<BR>
-     
+
 
       <H2>Technical Questions</H2>
     <A href="#item2.1">2.1</A>) How do I efficiently access information in
@@ -76,7 +76,7 @@
      <A href="#item2.8">2.8</A>) What debugging features are available?<BR>
 
      <BR>
-     
+
     <HR>
 
     <H2>General Questions</H2>
@@ -130,7 +130,7 @@
     in <I>doc/TODO</I> in the source distribution or at <A href=
     "http://www.postgresql.org/docs/faqs.TODO.html">
     http://www.postgresql.org/docs/faqs.TODO.html</A>.
-    
+
 
     <P>You can learn more about these features by consulting the
     archives, the SQL standards and the recommend texts (see <A href=
@@ -147,7 +147,9 @@
     use, and any user-visible changes (new syntax, etc). For complex
     patches, it is important to get community feeback on your proposal
     before starting work. Failure to do so might mean your patch is
-    rejected.</P>
+    rejected.  If your work is being sponsored by a company, read this
+    <a href="http://momjian.us/main/writings/pgsql/company_contributions/">
+    article</a> for tips on being more effective.</P>
 
     <P>A web site is maintained for patches awaiting review,
     <a href="http://momjian.postgresql.org/cgi-bin/pgpatches">
@@ -155,7 +157,7 @@
     those that are being kept for the next release,
     <a href="http://momjian.postgresql.org/cgi-bin/pgpatches_hold">
     http://momjian.postgresql.org/cgi-bin/pgpatches_hold</a>.</P>
-    
+
     <H3 id="item1.5">1.5) I've developed a patch, what next?</H3>
 
     <P>You will need to submit the patch to pgsql-patches@postgresql.org. It
@@ -182,7 +184,7 @@
     <I>src/tools/make_diff/difforig</I> useful. (Unified diffs are only
     preferable if the file changes are single-line changes and do not
     rely on surrounding lines.)</li>
-    
+
     <li>PostgreSQL is licensed under a BSD license, so any submissions must 
     conform to the BSD license to be included. If you use code that is 
     available under some other license that is BSD compatible (eg. public 
@@ -525,7 +527,7 @@
    <P>We try to build on as many different canonical distributions as we can. 
    Currently we are able to build on Red Hat Linux 9, RHEL 3 and above, 
    and all Fedora Core Linux releases.</P>
-   
+
    <P>To test the binaries, we install them on our local machines and run
    regression tests. If the package builders uses postgres user to build the
    rpms, then it is possible to run regression tests during RPM builds.</P>
@@ -547,14 +549,14 @@
    is possible. Only the standard released 'official to that release'
    compiler is used -- and only the standard official kernel is used as
    well.</P>
-   
+
    <P>PGDG RPM Building Project does not build RPMs for Mandrake .</P>
 
    <P>We usually have only one SRPM for all platforms. This is because of our 
    limited resources. However, on some cases, we may distribute different 
    SRPMs for different platforms, depending on possible compilation problems,
    especially on older distros.</P>
-   
+
    <P>Please note that this is a volunteered job -- We are doing our best to 
    keep  packages up to date. We, at least, provide SRPMs for all platforms. 
    For example, if you do not find a RHEL 4 x86_64 RPM in our FTP site, it 
@@ -836,7 +838,7 @@
 <PRE>
 <CODE> List                *list;
     ListCell    *i;
-    
+
     foreach(i, list)
     {
         Var *var = lfirst(i);
