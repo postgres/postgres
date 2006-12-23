@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.1 2006/12/21 16:05:15 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.2 2006/12/23 04:56:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,12 +112,12 @@ xml_out(PG_FUNCTION_ARGS)
 	xmltype		*s = PG_GETARG_XML_P(0);
 	char		*result;
 	int32		len;
-	
+
 	len = VARSIZE(s) - VARHDRSZ;
 	result = palloc(len + 1);
 	memcpy(result, VARDATA(s), len);
 	result[len] = '\0';
-	
+
 	PG_RETURN_CSTRING(result);
 }
 
@@ -344,7 +344,7 @@ xmlvalidate(PG_FUNCTION_ARGS)
 	ctxt = xmlNewParserCtxt();
 	if (ctxt == NULL)
 		xml_ereport(ERROR, "could not allocate parser context", ctxt);
-	doc = xmlCtxtReadMemory(ctxt, (char *) VARDATA(data), 
+	doc = xmlCtxtReadMemory(ctxt, (char *) VARDATA(data),
 							VARSIZE(data) - VARHDRSZ, PG_XML_DEFAULT_URI, NULL, 0);
 	if (doc == NULL)
 		xml_ereport(ERROR, "could not parse XML data", ctxt);
@@ -371,7 +371,7 @@ xmlvalidate(PG_FUNCTION_ARGS)
 
 	if (xmlValidateDtd(xmlNewValidCtxt(), doc, dtd) == 1)
 		result = TRUE;
-	
+
 #if 0
 	xmlFreeURI(uri);
 	xmlFreeDtd(dtd);
@@ -379,7 +379,7 @@ xmlvalidate(PG_FUNCTION_ARGS)
 	xmlFreeParserCtxt(ctxt);
 	xmlCleanupParser();
 #endif
-	
+
 	if (!result)
 		xml_ereport(NOTICE, "validation against DTD failed", ctxt);
 
@@ -405,15 +405,15 @@ xml_init(void)
 	 * if we can work.
 	 */
 	if (sizeof (char) != sizeof (xmlChar))
-		ereport(ERROR, 
-				(errmsg("cannot initialize XML library"),
-				 errdetail("libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u.", 
-						   sizeof(char), sizeof(xmlChar))));
-	
+		ereport(ERROR,
+				(errmsg("could not initialize XML library"),
+				 errdetail("libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u.",
+						   (int) sizeof(char), (int) sizeof(xmlChar))));
+
 	xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
 	xmlInitParser();
 	LIBXML_TEST_VERSION;
-	/* do not flood PG's logfile with libxml error messages - reset error handler*/ 
+	/* do not flood PG's logfile with libxml error messages - reset error handler*/
 	xmlSetGenericErrorFunc(NULL, xml_errorHandler);
 	xml_errmsg = NULL;
 	xml_errbuf = palloc(XML_ERRBUF_SIZE);
@@ -446,20 +446,21 @@ xml_parse(text *data, int opts, bool is_document)
 #endif
 
 	xml_init();
-	
+
 	len = VARSIZE(data) - VARHDRSZ; /* will be useful later */
 	string = xml_text2xmlChar(data);
-	
+
 	ctxt = xmlNewParserCtxt();
 	if (ctxt == NULL)
 		xml_ereport(ERROR, "could not allocate parser context", ctxt);
-	
-	/* first, we try to parse the string as it is XML doc, then, as XML chunk */
+
+	/* first, we try to parse the string as XML doc, then, as XML chunk */
 	ereport(DEBUG3, (errmsg("string to parse: %s", string)));
 	if (len > 4 && CMP5(string, '<', '?', 'x', 'm', 'l'))
 	{
 		/* consider it as DOCUMENT */
-		doc = xmlCtxtReadMemory(ctxt, string, len, PG_XML_DEFAULT_URI, NULL, opts);
+		doc = xmlCtxtReadMemory(ctxt, (char *) string, len,
+								PG_XML_DEFAULT_URI, NULL, opts);
 		if (doc == NULL)
 		{
 			xml_ereport(ERROR, "could not parse XML data", ctxt);
@@ -509,38 +510,38 @@ xml_parse(text *data, int opts, bool is_document)
 			validationFailed = TRUE;
 		}
 	}
-	
+
 	if (validationFailed)
 		xml_ereport(WARNING, "validation against DTD failed", ctxt);
-	
-	/* TODO encoding issues 
+
+	/* TODO encoding issues
 	 * (thoughts:
 	 * 		CASE:
 	 *   		- XML data has explicit encoding attribute in its prolog
 	 *   		- if not, assume that enc. of XML data is the same as client's one
-	 * 
+	 *
 	 * 		The common rule is to accept the XML data only if its encoding
 	 * 		is the same as encoding of the storage (server's). The other possible
 	 * 		option is to accept all the docs, but DO TRANSFORMATION and, if needed,
 	 * 		change the prolog.
-	 * 
-	 * 		I think I'd stick the first way (for the 1st version), 
+	 *
+	 * 		I think I'd stick the first way (for the 1st version),
 	 * 		it's much simplier (less errors...)
 	 * ) */
 	/* ... */
-	
+
 	xmlFreeParserCtxt(ctxt);
 	xmlCleanupParser();
-	
-	ereport(DEBUG3, (errmsg("XML data successfully parsed, encoding: %s", 
+
+	ereport(DEBUG3, (errmsg("XML data successfully parsed, encoding: %s",
 		(char *) doc->encoding)));
-	
+
 	return doc;
 }
 
 
-/* 
- * xmlChar<->text convertions 
+/*
+ * xmlChar<->text convertions
  */
 static xmlChar *
 xml_text2xmlChar(text *in)
@@ -551,13 +552,13 @@ xml_text2xmlChar(text *in)
 	res = palloc(len + 1);
 	memcpy(res, VARDATA(in), len);
 	res[len] = '\0';
-	
+
 	return(res);
 }
 
 
-/* 
- * Wrappers for memory management functions 
+/*
+ * Wrappers for memory management functions
  */
 static void *
 xml_palloc(size_t size)
@@ -588,7 +589,7 @@ xml_pstrdup(const char *string)
 
 
 /*
- * Wrapper for "ereport" function. 
+ * Wrapper for "ereport" function.
  * Adds detail - libxml's native error message, if any.
  */
 static void
@@ -597,16 +598,16 @@ xml_ereport(int level, char *msg, void *ctxt)
 	char *xmlErrDetail;
 	int xmlErrLen, i;
 	xmlErrorPtr libxmlErr = NULL;
-	
+
 	if (xml_errmsg != NULL)
 	{
 		ereport(DEBUG1, (errmsg("%s", xml_errmsg)));
 		pfree(xml_errmsg);
 	}
-	
+
 	if (ctxt != NULL)
 		libxmlErr = xmlCtxtGetLastError(ctxt);
-	
+
 	if (libxmlErr == NULL)
 	{
 		if (level == ERROR)
@@ -645,7 +646,7 @@ static void
 xml_errorHandler(void *ctxt, const char *msg,...)
 {
 	va_list		args;
-	
+
 	va_start(args, msg);
 	vsnprintf(xml_errbuf, XML_ERRBUF_SIZE, msg, args);
 	va_end(args);
@@ -841,13 +842,13 @@ xml_ereport_by_code(int level, char *msg, int code)
             det = "Unregistered error (libxml error code: %d)";
             ereport(DEBUG1, (errmsg("Check out \"libxml/xmlerror.h\" and bring errcode \"%d\" processing to \"xml.c\".", code)));
     }
-    
+
 	if (xml_errmsg != NULL)
 	{
 		ereport(DEBUG1, (errmsg("%s", xml_errmsg)));
 		pfree(xml_errmsg);
 	}
-    
+
 	ereport(level, (errmsg(msg), errdetail(det, code)));
 }
 
@@ -857,11 +858,16 @@ xml_ereport_by_code(int level, char *msg, int code)
  * codepoint.
  */
 static pg_wchar
-sqlchar_to_unicode(unsigned char *s)
+sqlchar_to_unicode(char *s)
 {
 	int save_enc;
 	pg_wchar ret;
-	char *utf8string = pg_do_encoding_conversion(s, pg_mblen(s), GetDatabaseEncoding(), PG_UTF8);
+	char *utf8string;
+
+	utf8string = (char *) pg_do_encoding_conversion((unsigned char *) s,
+													pg_mblen(s),
+													GetDatabaseEncoding(),
+													PG_UTF8);
 
 	save_enc = GetDatabaseEncoding();
 	SetDatabaseEncoding(PG_UTF8);
@@ -898,11 +904,11 @@ is_valid_xml_namechar(pg_wchar c)
  * Map SQL identifier to XML name; see SQL/XML:2003 section 9.1.
  */
 char *
-map_sql_identifier_to_xml_name(unsigned char *ident, bool fully_escaped)
+map_sql_identifier_to_xml_name(char *ident, bool fully_escaped)
 {
 #ifdef USE_LIBXML
 	StringInfoData buf;
-	unsigned char *p;
+	char *p;
 
 	initStringInfo(&buf);
 
