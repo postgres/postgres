@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.130 2006/10/05 01:40:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.131 2006/12/23 02:13:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1157,7 +1157,7 @@ dtoi4(PG_FUNCTION_ARGS)
 	float8		num = PG_GETARG_FLOAT8(0);
 	int32		result;
 
-	if ((num < INT_MIN) || (num > INT_MAX))
+	if (num < INT_MIN || num > INT_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
@@ -1176,7 +1176,7 @@ dtoi2(PG_FUNCTION_ARGS)
 	float8		num = PG_GETARG_FLOAT8(0);
 	int16		result;
 
-	if ((num < SHRT_MIN) || (num > SHRT_MAX))
+	if (num < SHRT_MIN || num > SHRT_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
@@ -1223,7 +1223,7 @@ ftoi4(PG_FUNCTION_ARGS)
 	float4		num = PG_GETARG_FLOAT4(0);
 	int32		result;
 
-	if ((num < INT_MIN) || (num > INT_MAX))
+	if (num < INT_MIN || num > INT_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("integer out of range")));
@@ -1242,7 +1242,7 @@ ftoi2(PG_FUNCTION_ARGS)
 	float4		num = PG_GETARG_FLOAT4(0);
 	int16		result;
 
-	if ((num < SHRT_MIN) || (num > SHRT_MAX))
+	if (num < SHRT_MIN || num > SHRT_MAX)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("smallint out of range")));
