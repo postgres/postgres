@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.64 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.65 2006/12/23 01:28:09 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -452,8 +452,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   <title>Notes</title>
 
   <para>
-   User-defined type names cannot begin with the underscore character
-   (<literal>_</literal>) and can only be 62 characters
+   User-defined type names should not begin with the underscore character
+   (<literal>_</literal>) and should only be 62 characters
    long (or in general <symbol>NAMEDATALEN</symbol> - 2, rather than
    the <symbol>NAMEDATALEN</symbol> - 1 characters allowed for other
    names).  Type names beginning with underscore are reserved for
