@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.48 2006/10/04 00:29:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.49 2006/12/23 00:43:08 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -46,11 +46,11 @@ hashint8(PG_FUNCTION_ARGS)
 {
 	/*
 	 * The idea here is to produce a hash value compatible with the values
-	 * produced by hashint4 and hashint2 for logically equivalent inputs; this
-	 * is necessary if we ever hope to support cross-type hash joins across
-	 * these input types.  Since all three types are signed, we can xor the
-	 * high half of the int8 value if the sign is positive, or the complement
-	 * of the high half when the sign is negative.
+	 * produced by hashint4 and hashint2 for logically equal inputs; this is
+	 * necessary to support cross-type hash joins across these input types.
+	 * Since all three types are signed, we can xor the high half of the int8
+	 * value if the sign is positive, or the complement of the high half when
+	 * the sign is negative.
 	 */
 #ifndef INT64_IS_BUSTED
 	int64		val = PG_GETARG_INT64(0);
@@ -76,16 +76,26 @@ Datum
 hashfloat4(PG_FUNCTION_ARGS)
 {
 	float4		key = PG_GETARG_FLOAT4(0);
+	float8		key8;
 
 	/*
 	 * On IEEE-float machines, minus zero and zero have different bit patterns
 	 * but should compare as equal.  We must ensure that they have the same
-	 * hash value, which is most easily done this way:
+	 * hash value, which is most reliably done this way:
 	 */
 	if (key == (float4) 0)
 		PG_RETURN_UINT32(0);
 
-	return hash_any((unsigned char *) &key, sizeof(key));
+	/*
+	 * To support cross-type hashing of float8 and float4, we want to return
+	 * the same hash value hashfloat8 would produce for an equal float8 value.
+	 * So, widen the value to float8 and hash that.  (We must do this rather
+	 * than have hashfloat8 try to narrow its value to float4; that could
+	 * fail on overflow.)
+	 */
+	key8 = key;
+
+	return hash_any((unsigned char *) &key8, sizeof(key8));
 }
 
 Datum
@@ -96,7 +106,7 @@ hashfloat8(PG_FUNCTION_ARGS)
 	/*
 	 * On IEEE-float machines, minus zero and zero have different bit patterns
 	 * but should compare as equal.  We must ensure that they have the same
-	 * hash value, which is most easily done this way:
+	 * hash value, which is most reliably done this way:
 	 */
 	if (key == (float8) 0)
 		PG_RETURN_UINT32(0);

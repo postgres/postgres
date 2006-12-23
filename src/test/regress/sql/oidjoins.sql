@@ -69,26 +69,42 @@ SELECT	ctid, amcostestimate
 FROM	pg_catalog.pg_am fk 
 WHERE	amcostestimate != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amcostestimate);
-SELECT	ctid, amopclaid 
+SELECT	ctid, amoptions 
+FROM	pg_catalog.pg_am fk 
+WHERE	amoptions != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.amoptions);
+SELECT	ctid, amopfamily 
 FROM	pg_catalog.pg_amop fk 
-WHERE	amopclaid != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opclass pk WHERE pk.oid = fk.amopclaid);
-SELECT	ctid, amopsubtype 
+WHERE	amopfamily != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opfamily pk WHERE pk.oid = fk.amopfamily);
+SELECT	ctid, amoplefttype 
 FROM	pg_catalog.pg_amop fk 
-WHERE	amopsubtype != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.amopsubtype);
+WHERE	amoplefttype != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.amoplefttype);
+SELECT	ctid, amoprighttype 
+FROM	pg_catalog.pg_amop fk 
+WHERE	amoprighttype != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.amoprighttype);
 SELECT	ctid, amopopr 
 FROM	pg_catalog.pg_amop fk 
 WHERE	amopopr != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.amopopr);
-SELECT	ctid, amopclaid 
+SELECT	ctid, amopmethod 
+FROM	pg_catalog.pg_amop fk 
+WHERE	amopmethod != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_am pk WHERE pk.oid = fk.amopmethod);
+SELECT	ctid, amprocfamily 
 FROM	pg_catalog.pg_amproc fk 
-WHERE	amopclaid != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opclass pk WHERE pk.oid = fk.amopclaid);
-SELECT	ctid, amprocsubtype 
+WHERE	amprocfamily != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opfamily pk WHERE pk.oid = fk.amprocfamily);
+SELECT	ctid, amproclefttype 
 FROM	pg_catalog.pg_amproc fk 
-WHERE	amprocsubtype != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.amprocsubtype);
+WHERE	amproclefttype != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.amproclefttype);
+SELECT	ctid, amprocrighttype 
+FROM	pg_catalog.pg_amproc fk 
+WHERE	amprocrighttype != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.amprocrighttype);
 SELECT	ctid, amproc 
 FROM	pg_catalog.pg_amproc fk 
 WHERE	amproc != 0 AND 
@@ -121,6 +137,10 @@ SELECT	ctid, reltype
 FROM	pg_catalog.pg_class fk 
 WHERE	reltype != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.reltype);
+SELECT	ctid, relowner 
+FROM	pg_catalog.pg_class fk 
+WHERE	relowner != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.relowner);
 SELECT	ctid, relam 
 FROM	pg_catalog.pg_class fk 
 WHERE	relam != 0 AND 
@@ -149,10 +169,18 @@ SELECT	ctid, connamespace
 FROM	pg_catalog.pg_conversion fk 
 WHERE	connamespace != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.connamespace);
+SELECT	ctid, conowner 
+FROM	pg_catalog.pg_conversion fk 
+WHERE	conowner != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.conowner);
 SELECT	ctid, conproc 
 FROM	pg_catalog.pg_conversion fk 
 WHERE	conproc != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.conproc);
+SELECT	ctid, datdba 
+FROM	pg_catalog.pg_database fk 
+WHERE	datdba != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.datdba);
 SELECT	ctid, dattablespace 
 FROM	pg_catalog.pg_database fk 
 WHERE	dattablespace != 0 AND 
@@ -181,22 +209,42 @@ SELECT	ctid, lanvalidator
 FROM	pg_catalog.pg_language fk 
 WHERE	lanvalidator != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.lanvalidator);
-SELECT	ctid, opcamid 
+SELECT	ctid, nspowner 
+FROM	pg_catalog.pg_namespace fk 
+WHERE	nspowner != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.nspowner);
+SELECT	ctid, opcmethod 
 FROM	pg_catalog.pg_opclass fk 
-WHERE	opcamid != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_am pk WHERE pk.oid = fk.opcamid);
+WHERE	opcmethod != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_am pk WHERE pk.oid = fk.opcmethod);
 SELECT	ctid, opcnamespace 
 FROM	pg_catalog.pg_opclass fk 
 WHERE	opcnamespace != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.opcnamespace);
+SELECT	ctid, opcowner 
+FROM	pg_catalog.pg_opclass fk 
+WHERE	opcowner != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.opcowner);
+SELECT	ctid, opcfamily 
+FROM	pg_catalog.pg_opclass fk 
+WHERE	opcfamily != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_opfamily pk WHERE pk.oid = fk.opcfamily);
 SELECT	ctid, opcintype 
 FROM	pg_catalog.pg_opclass fk 
 WHERE	opcintype != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.opcintype);
+SELECT	ctid, opckeytype 
+FROM	pg_catalog.pg_opclass fk 
+WHERE	opckeytype != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.opckeytype);
 SELECT	ctid, oprnamespace 
 FROM	pg_catalog.pg_operator fk 
 WHERE	oprnamespace != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.oprnamespace);
+SELECT	ctid, oprowner 
+FROM	pg_catalog.pg_operator fk 
+WHERE	oprowner != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.oprowner);
 SELECT	ctid, oprleft 
 FROM	pg_catalog.pg_operator fk 
 WHERE	oprleft != 0 AND 
@@ -217,22 +265,6 @@ SELECT	ctid, oprnegate
 FROM	pg_catalog.pg_operator fk 
 WHERE	oprnegate != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.oprnegate);
-SELECT	ctid, oprlsortop 
-FROM	pg_catalog.pg_operator fk 
-WHERE	oprlsortop != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.oprlsortop);
-SELECT	ctid, oprrsortop 
-FROM	pg_catalog.pg_operator fk 
-WHERE	oprrsortop != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.oprrsortop);
-SELECT	ctid, oprltcmpop 
-FROM	pg_catalog.pg_operator fk 
-WHERE	oprltcmpop != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.oprltcmpop);
-SELECT	ctid, oprgtcmpop 
-FROM	pg_catalog.pg_operator fk 
-WHERE	oprgtcmpop != 0 AND 
-	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.oprgtcmpop);
 SELECT	ctid, oprcode 
 FROM	pg_catalog.pg_operator fk 
 WHERE	oprcode != 0 AND 
@@ -245,10 +277,26 @@ SELECT	ctid, oprjoin
 FROM	pg_catalog.pg_operator fk 
 WHERE	oprjoin != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_proc pk WHERE pk.oid = fk.oprjoin);
+SELECT	ctid, opfmethod 
+FROM	pg_catalog.pg_opfamily fk 
+WHERE	opfmethod != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_am pk WHERE pk.oid = fk.opfmethod);
+SELECT	ctid, opfnamespace 
+FROM	pg_catalog.pg_opfamily fk 
+WHERE	opfnamespace != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.opfnamespace);
+SELECT	ctid, opfowner 
+FROM	pg_catalog.pg_opfamily fk 
+WHERE	opfowner != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.opfowner);
 SELECT	ctid, pronamespace 
 FROM	pg_catalog.pg_proc fk 
 WHERE	pronamespace != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.pronamespace);
+SELECT	ctid, proowner 
+FROM	pg_catalog.pg_proc fk 
+WHERE	proowner != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.proowner);
 SELECT	ctid, prolang 
 FROM	pg_catalog.pg_proc fk 
 WHERE	prolang != 0 AND 
@@ -261,6 +309,14 @@ SELECT	ctid, ev_class
 FROM	pg_catalog.pg_rewrite fk 
 WHERE	ev_class != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.ev_class);
+SELECT	ctid, refclassid 
+FROM	pg_catalog.pg_shdepend fk 
+WHERE	refclassid != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.refclassid);
+SELECT	ctid, classoid 
+FROM	pg_catalog.pg_shdescription fk 
+WHERE	classoid != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.classoid);
 SELECT	ctid, starelid 
 FROM	pg_catalog.pg_statistic fk 
 WHERE	starelid != 0 AND 
@@ -277,6 +333,10 @@ SELECT	ctid, staop3
 FROM	pg_catalog.pg_statistic fk 
 WHERE	staop3 != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_operator pk WHERE pk.oid = fk.staop3);
+SELECT	ctid, spcowner 
+FROM	pg_catalog.pg_tablespace fk 
+WHERE	spcowner != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.spcowner);
 SELECT	ctid, tgrelid 
 FROM	pg_catalog.pg_trigger fk 
 WHERE	tgrelid != 0 AND 
@@ -289,6 +349,10 @@ SELECT	ctid, typnamespace
 FROM	pg_catalog.pg_type fk 
 WHERE	typnamespace != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_namespace pk WHERE pk.oid = fk.typnamespace);
+SELECT	ctid, typowner 
+FROM	pg_catalog.pg_type fk 
+WHERE	typowner != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.typowner);
 SELECT	ctid, typrelid 
 FROM	pg_catalog.pg_type fk 
 WHERE	typrelid != 0 AND 

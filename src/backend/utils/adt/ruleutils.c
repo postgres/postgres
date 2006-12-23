@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.236 2006/12/21 16:05:15 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.237 2006/12/23 00:43:11 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -19,6 +19,7 @@
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_trigger.h"
+#include "commands/defrem.h"
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
@@ -4717,11 +4718,6 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 	Form_pg_opclass opcrec;
 	char	   *opcname;
 	char	   *nspname;
-	bool		isvisible;
-
-	/* Domains use their base type's default opclass */
-	if (OidIsValid(actual_datatype))
-		actual_datatype = getBaseType(actual_datatype);
 
 	ht_opc = SearchSysCache(CLAOID,
 							ObjectIdGetDatum(opclass),
@@ -4730,25 +4726,12 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 		elog(ERROR, "cache lookup failed for opclass %u", opclass);
 	opcrec = (Form_pg_opclass) GETSTRUCT(ht_opc);
 
-	/*
-	 * Special case for ARRAY_OPS: pretend it is default for any array type
-	 */
-	if (OidIsValid(actual_datatype))
-	{
-		if (opcrec->opcintype == ANYARRAYOID &&
-			OidIsValid(get_element_type(actual_datatype)))
-			actual_datatype = opcrec->opcintype;
-	}
-
-	/* Must force use of opclass name if not in search path */
-	isvisible = OpclassIsVisible(opclass);
-
-	if (actual_datatype != opcrec->opcintype || !opcrec->opcdefault ||
-		!isvisible)
+	if (!OidIsValid(actual_datatype) ||
+		GetDefaultOpClass(actual_datatype, opcrec->opcmethod) != opclass)
 	{
 		/* Okay, we need the opclass name.	Do we need to qualify it? */
 		opcname = NameStr(opcrec->opcname);
-		if (isvisible)
+		if (OpclassIsVisible(opclass))
 			appendStringInfo(buf, " %s", quote_identifier(opcname));
 		else
 		{

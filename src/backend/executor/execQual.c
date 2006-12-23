@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.200 2006/12/21 16:05:13 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.201 2006/12/23 00:43:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3700,21 +3700,28 @@ ExecInitExpr(Expr *node, PlanState *parent)
 					outlist = lappend(outlist, estate);
 				}
 				rstate->rargs = outlist;
-				Assert(list_length(rcexpr->opclasses) == nopers);
+				Assert(list_length(rcexpr->opfamilies) == nopers);
 				rstate->funcs = (FmgrInfo *) palloc(nopers * sizeof(FmgrInfo));
 				i = 0;
-				forboth(l, rcexpr->opnos, l2, rcexpr->opclasses)
+				forboth(l, rcexpr->opnos, l2, rcexpr->opfamilies)
 				{
 					Oid			opno = lfirst_oid(l);
-					Oid			opclass = lfirst_oid(l2);
+					Oid			opfamily = lfirst_oid(l2);
 					int			strategy;
-					Oid			subtype;
+					Oid			lefttype;
+					Oid			righttype;
 					bool		recheck;
 					Oid			proc;
 
-					get_op_opclass_properties(opno, opclass,
-											  &strategy, &subtype, &recheck);
-					proc = get_opclass_proc(opclass, subtype, BTORDER_PROC);
+					get_op_opfamily_properties(opno, opfamily,
+											   &strategy,
+											   &lefttype,
+											   &righttype,
+											   &recheck);
+					proc = get_opfamily_proc(opfamily,
+											 lefttype,
+											 righttype,
+											 BTORDER_PROC);
 
 					/*
 					 * If we enforced permissions checks on index support

@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.70 2006/10/04 00:30:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.71 2006/12/23 00:43:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2104,15 +2104,16 @@ SelectSortFunction(Oid sortOperator,
 	int			i;
 	HeapTuple	tuple;
 	Form_pg_operator optup;
-	Oid			opclass = InvalidOid;
+	Oid			opfamily = InvalidOid;
+	Oid			opinputtype = InvalidOid;
 
 	/*
-	 * Search pg_amop to see if the target operator is registered as the "<"
-	 * or ">" operator of any btree opclass.  It's possible that it might be
+	 * Search pg_amop to see if the target operator is registered as a "<"
+	 * or ">" operator of any btree opfamily.  It's possible that it might be
 	 * registered both ways (eg, if someone were to build a "reverse sort"
-	 * opclass for some reason); prefer the "<" case if so. If the operator is
-	 * registered the same way in multiple opclasses, assume we can use the
-	 * associated comparator function from any one.
+	 * opfamily); prefer the "<" case if so. If the operator is registered the
+	 * same way in multiple opfamilies, assume we can use the associated
+	 * comparator function from any one.
 	 */
 	catlist = SearchSysCacheList(AMOPOPID, 1,
 								 ObjectIdGetDatum(sortOperator),
@@ -2125,21 +2126,24 @@ SelectSortFunction(Oid sortOperator,
 		tuple = &catlist->members[i]->tuple;
 		aform = (Form_pg_amop) GETSTRUCT(tuple);
 
-		if (!opclass_is_btree(aform->amopclaid))
+		/* must be btree */
+		if (aform->amopmethod != BTREE_AM_OID)
 			continue;
-		/* must be of default subtype, too */
-		if (aform->amopsubtype != InvalidOid)
+		/* mustn't be cross-datatype, either */
+		if (aform->amoplefttype != aform->amoprighttype)
 			continue;
 
 		if (aform->amopstrategy == BTLessStrategyNumber)
 		{
-			opclass = aform->amopclaid;
+			opfamily = aform->amopfamily;
+			opinputtype = aform->amoplefttype;
 			*kind = SORTFUNC_CMP;
 			break;				/* done looking */
 		}
 		else if (aform->amopstrategy == BTGreaterStrategyNumber)
 		{
-			opclass = aform->amopclaid;
+			opfamily = aform->amopfamily;
+			opinputtype = aform->amoplefttype;
 			*kind = SORTFUNC_REVCMP;
 			/* keep scanning in hopes of finding a BTLess entry */
 		}
@@ -2147,10 +2151,13 @@ SelectSortFunction(Oid sortOperator,
 
 	ReleaseSysCacheList(catlist);
 
-	if (OidIsValid(opclass))
+	if (OidIsValid(opfamily))
 	{
-		/* Found a suitable opclass, get its default comparator function */
-		*sortFunction = get_opclass_proc(opclass, InvalidOid, BTORDER_PROC);
+		/* Found a suitable opfamily, get the matching comparator function */
+		*sortFunction = get_opfamily_proc(opfamily,
+										  opinputtype,
+										  opinputtype,
+										  BTORDER_PROC);
 		Assert(RegProcedureIsValid(*sortFunction));
 		return;
 	}

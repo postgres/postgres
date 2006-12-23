@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.18 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.19 2006/12/23 00:43:08 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -63,13 +63,15 @@
 
   <para>
    To be useful, an index access method must also have one or more
+   <firstterm>operator families</> and
    <firstterm>operator classes</> defined in
+   <link linkend="catalog-pg-opfamily"><structname>pg_opfamily</structname></link>,
    <link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>,
    <link linkend="catalog-pg-amop"><structname>pg_amop</structname></link>, and
    <link linkend="catalog-pg-amproc"><structname>pg_amproc</structname></link>.
    These entries allow the planner
    to determine what kinds of query qualifications can be used with
-   indexes of this access method.  Operator classes are described
+   indexes of this access method.  Operator families and classes are described
    in <xref linkend="xindex">, which is prerequisite material for reading
    this chapter.
   </para>
@@ -409,14 +411,14 @@ amrestrpos (IndexScanDesc scan);
    A scan key is the internal representation of a <literal>WHERE</> clause of
    the form <replaceable>index_key</> <replaceable>operator</>
    <replaceable>constant</>, where the index key is one of the columns of the
-   index and the operator is one of the members of the operator class
+   index and the operator is one of the members of the operator family
    associated with that index column.  An index scan has zero or more scan
    keys, which are implicitly ANDed &mdash; the returned tuples are expected
    to satisfy all the indicated conditions.
   </para>
 
   <para>
-   The operator class may indicate that the index is <firstterm>lossy</> for a
+   The operator family may indicate that the index is <firstterm>lossy</> for a
    particular operator; this implies that the index scan will return all the
    entries that pass the scan key, plus possibly additional entries that do
    not.  The core system's index-scan machinery will then apply that operator
@@ -429,7 +431,7 @@ amrestrpos (IndexScanDesc scan);
    Note that it is entirely up to the access method to ensure that it
    correctly finds all and only the entries passing all the given scan keys.
    Also, the core system will simply hand off all the <literal>WHERE</>
-   clauses that match the index keys and operator classes, without any
+   clauses that match the index keys and operator families, without any
    semantic analysis to determine whether they are redundant or
    contradictory.  As an example, given
    <literal>WHERE x &gt; 4 AND x &gt; 14</> where <literal>x</> is a b-tree

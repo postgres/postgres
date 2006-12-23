@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.114 2006/12/10 22:13:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.115 2006/12/23 00:43:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -689,11 +689,11 @@ convert_IN_to_join(PlannerInfo *root, SubLink *sublink)
 		return NULL;
 	if (sublink->testexpr && IsA(sublink->testexpr, OpExpr))
 	{
-		List	   *opclasses;
+		List	   *opfamilies;
 		List	   *opstrats;
 
 		get_op_btree_interpretation(((OpExpr *) sublink->testexpr)->opno,
-									&opclasses, &opstrats);
+									&opfamilies, &opstrats);
 		if (!list_member_int(opstrats, ROWCOMPARE_EQ))
 			return NULL;
 	}

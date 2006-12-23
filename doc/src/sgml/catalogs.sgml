@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.138 2006/12/18 18:56:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.139 2006/12/23 00:43:08 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -160,12 +160,17 @@
 
      <row>
       <entry><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link></entry>
-      <entry>index access method operator classes</entry>
+      <entry>access method operator classes</entry>
      </row>
 
      <row>
       <entry><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link></entry>
       <entry>operators</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-opfamily"><structname>pg_opfamily</structname></link></entry>
+      <entry>access method operator families</entry>
      </row>
 
      <row>
@@ -516,9 +521,11 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_amop</structname> stores information about operators
-   associated with index access method operator classes.  There is one
-   row for each operator that is a member of an operator class.
+   The catalog <structname>pg_amop</structname> stores information about
+   operators associated with access method operator families.  There is one
+   row for each operator that is a member of an operator family.  An operator
+   can appear in more than one family, but may not appear in more than one
+   position within a family.
   </para>
 
   <table>
@@ -536,18 +543,24 @@
     <tbody>
 
      <row>
-      <entry><structfield>amopclaid</structfield></entry>
+      <entry><structfield>amopfamily</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
-      <entry>The index operator class this entry is for</entry>
+      <entry><literal><link linkend="catalog-pg-opfamily"><structname>pg_opfamily</structname></link>.oid</literal></entry>
+      <entry>The operator family this entry is for</entry>
      </row>
 
      <row>
-      <entry><structfield>amopsubtype</structfield></entry>
+      <entry><structfield>amoplefttype</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>Subtype to distinguish multiple entries for one strategy;
-             zero for default</entry>
+      <entry>Left-hand input data type of operator</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amoprighttype</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>Right-hand input data type of operator</entry>
      </row>
 
      <row>
@@ -571,9 +584,26 @@
       <entry>OID of the operator</entry>
      </row>
 
+     <row>
+      <entry><structfield>amopmethod</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-am"><structname>pg_am</structname></link>.oid</literal></entry>
+      <entry>Index access method operator family is for</entry>
+     </row>
+
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   An entry's <structfield>amopmethod</> must match the
+   <structname>opfmethod</> of its containing operator family (including
+   <structfield>amopmethod</> here is an intentional denormalization of the
+   catalog structure for performance reasons).  Also,
+   <structfield>amoplefttype</> and <structfield>amoprighttype</> must match
+   the <structfield>oprleft</> and <structfield>oprright</> fields of the
+   referenced <structname>pg_operator</> entry.
+  </para>
 
  </sect1>
 
@@ -586,10 +616,9 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_amproc</structname> stores information about support
-   procedures
-   associated with index access method operator classes.  There is one
-   row for each support procedure belonging to an operator class.
+   The catalog <structname>pg_amproc</structname> stores information about
+   support procedures associated with access method operator families.  There
+   is one row for each support procedure belonging to an operator family.
   </para>
 
   <table>
@@ -607,17 +636,24 @@
     <tbody>
 
      <row>
-      <entry><structfield>amopclaid</structfield></entry>
+      <entry><structfield>amprocfamily</structfield></entry>
       <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.oid</literal></entry>
-      <entry>The index operator class this entry is for</entry>
+      <entry><literal><link linkend="catalog-pg-opfamily"><structname>pg_opfamily</structname></link>.oid</literal></entry>
+      <entry>The operator family this entry is for</entry>
      </row>
 
      <row>
-      <entry><structfield>amprocsubtype</structfield></entry>
+      <entry><structfield>amproclefttype</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
-      <entry>Subtype, if cross-type routine, else zero</entry>
+      <entry>Left-hand input data type of associated operator</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amprocrighttype</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>Right-hand input data type of associated operator</entry>
      </row>
 
      <row>
@@ -637,6 +673,18 @@
     </tbody>
    </tgroup>
   </table>
+
+  <para>
+   The usual interpretation of the
+   <structfield>amproclefttype</> and <structfield>amprocrighttype</> fields
+   is that they identify the left and right input types of the operator(s)
+   that a particular support procedure supports.  For some access methods
+   these match the input data type(s) of the support procedure itself, for
+   others not.  There is a notion of <quote>default</> support procedures for
+   an index, which are those with <structfield>amproclefttype</> and
+   <structfield>amprocrighttype</> both equal to the index opclass's
+   <structfield>opcintype</>.
+  </para>
 
  </sect1>
 
@@ -2843,9 +2891,11 @@
    The catalog <structname>pg_opclass</structname> defines
    index access method operator classes.  Each operator class defines
    semantics for index columns of a particular data type and a particular
-   index access method.  Note that there can be multiple operator classes
-   for a given data type/access method combination, thus supporting multiple
-   behaviors.
+   index access method.  An operator class essentially specifies that a
+   particular operator family is applicable to a particular indexable column
+   data type.  The set of operators from the family that are actually usable
+   with the indexed column are whichever ones accept the column's data type
+   as their lefthand input.
   </para>
 
   <para>
@@ -2867,7 +2917,7 @@
     <tbody>
 
      <row>
-      <entry><structfield>opcamid</structfield></entry>
+      <entry><structfield>opcmethod</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-am"><structname>pg_am</structname></link>.oid</literal></entry>
       <entry>Index access method operator class is for</entry>
@@ -2892,6 +2942,13 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
       <entry>Owner of the operator class</entry>
+     </row>
+
+     <row>
+      <entry><structfield>opcfamily</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-opfamily"><structname>pg_opfamily</structname></link>.oid</literal></entry>
+      <entry>Operator family containing the operator class</entry>
      </row>
 
      <row>
@@ -2920,14 +2977,11 @@
   </table>
 
   <para>
-   The majority of the information defining an operator class is actually
-   not in its <structname>pg_opclass</structname> row, but in the associated
-   rows in <structname>pg_amop</structname> and
-   <structname>pg_amproc</structname>.  Those rows are considered to be
-   part of the operator class definition &mdash; this is not unlike the way
-   that a relation is defined by a single <structname>pg_class</structname>
-   row plus associated rows in <structname>pg_attribute</structname> and
-   other tables.
+   An operator class's <structfield>opcmethod</> must match the
+   <structname>opfmethod</> of its containing operator family.
+   Also, there must be no more than one <structname>pg_opclass</structname>
+   row having <structname>opcdefault</> true for any given combination of
+   <structname>opcmethod</> and <structname>opcintype</>.
   </para>
 
  </sect1>
@@ -2994,6 +3048,13 @@
      </row>
 
      <row>
+      <entry><structfield>oprcanmerge</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>This operator supports merge joins</entry>
+     </row>
+
+     <row>
       <entry><structfield>oprcanhash</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -3036,46 +3097,6 @@
      </row>
 
      <row>
-      <entry><structfield>oprlsortop</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
-      <entry>
-       If this operator supports merge joins, the operator that sorts
-       the type of the left-hand operand (<literal>L&lt;L</>)
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>oprrsortop</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
-      <entry>
-       If this operator supports merge joins, the operator that sorts
-       the type of the right-hand operand (<literal>R&lt;R</>)
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>oprltcmpop</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
-      <entry>
-       If this operator supports merge joins, the less-than operator that
-       compares the left and right operand types (<literal>L&lt;R</>)
-      </entry>
-     </row>
-
-     <row>
-      <entry><structfield>oprgtcmpop</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</literal></entry>
-      <entry>
-       If this operator supports merge joins, the greater-than operator that
-       compares the left and right operand types (<literal>L&gt;R</>)
-      </entry>
-     </row>
-
-     <row>
       <entry><structfield>oprcode</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
@@ -3102,6 +3123,86 @@
   <para>
    Unused column contain zeroes. For example, <structfield>oprleft</structfield>
    is zero for a prefix operator.
+  </para>
+
+ </sect1>
+
+
+ <sect1 id="catalog-pg-opfamily">
+  <title><structname>pg_opfamily</structname></title>
+
+  <indexterm zone="catalog-pg-opfamily">
+   <primary>pg_opfamily</primary>
+  </indexterm>
+
+  <para>
+   The catalog <structname>pg_opfamily</structname> defines operator families.
+   Each operator family is a collection of operators and associated
+   support routines that implement the semantics specified for a particular
+   index access method.  Furthermore, the operators in a family are all
+   <quote>compatible</>, in a way that depends on the access method.
+   The operator family concept allows cross-data-type operators to be used
+   with indexes and to be reasoned about using knowledge of access method
+   semantics.
+  </para>
+
+  <para>
+   Operator families are described at length in <xref linkend="xindex">.
+  </para>
+
+  <table>
+   <title><structname>pg_opfamily</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+    <tbody>
+
+     <row>
+      <entry><structfield>opfmethod</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-am"><structname>pg_am</structname></link>.oid</literal></entry>
+      <entry>Index access method operator family is for</entry>
+     </row>
+
+     <row>
+      <entry><structfield>opfname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of this operator family</entry>
+     </row>
+
+     <row>
+      <entry><structfield>opfnamespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
+      <entry>Namespace of this operator family</entry>
+     </row>
+
+     <row>
+      <entry><structfield>opfowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the operator family</entry>
+     </row>
+
+    </tbody>
+   </tgroup>
+  </table>
+
+  <para>
+   The majority of the information defining an operator family is not in its
+   <structname>pg_opfamily</structname> row, but in the associated rows in
+   <link linkend="catalog-pg-amop"><structname>pg_amop</structname></link>,
+   <link linkend="catalog-pg-amproc"><structname>pg_amproc</structname></link>,
+   and
+   <link linkend="catalog-pg-opclass"><structname>pg_opclass</structname></link>.
   </para>
 
  </sect1>

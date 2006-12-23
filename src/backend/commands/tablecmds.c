@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.206 2006/10/13 21:43:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.207 2006/12/23 00:43:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4145,7 +4145,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		 * generate a warning if not, since otherwise costly seqscans will be
 		 * incurred to check FK validity.
 		 */
-		if (!op_in_opclass(oprid(o), opclasses[i]))
+		if (!op_in_opfamily(oprid(o), get_opclass_family(opclasses[i])))
 			ereport(WARNING,
 					(errmsg("foreign key constraint \"%s\" "
 							"will require costly sequential scans",

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.66 2006/12/01 23:46:46 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.67 2006/12/23 00:43:08 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -784,10 +784,14 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
 
 
  <sect1 id="indexes-opclass">
-  <title>Operator Classes</title>
+  <title>Operator Classes and Operator Families</title>
 
   <indexterm zone="indexes-opclass">
    <primary>operator class</primary>
+  </indexterm>
+
+  <indexterm zone="indexes-opclass">
+   <primary>operator family</primary>
   </indexterm>
 
   <para>
@@ -854,20 +858,32 @@ CREATE INDEX test_index ON test_table (col varchar_pattern_ops);
 SELECT am.amname AS index_method,
        opc.opcname AS opclass_name
     FROM pg_am am, pg_opclass opc
-    WHERE opc.opcamid = am.oid
+    WHERE opc.opcmethod = am.oid
     ORDER BY index_method, opclass_name;
 </programlisting>
+  </para>
 
-    It can be extended to show all the operators included in each class:
+  <para>
+   An operator class is actually just a subset of a larger structure called an
+   <firstterm>operator family</>.  In cases where several data types have
+   similar behaviors, it is frequently useful to define cross-data-type
+   operators and allow these to work with indexes.  To do this, the operator
+   classes for each of the types must be grouped into the same operator
+   family.  The cross-type operators are members of the family, but are not
+   associated with any single class within the family.
+  </para>
+
+  <para>
+    This query shows all defined operator families and all
+    the operators included in each family:
 <programlisting>
 SELECT am.amname AS index_method,
-       opc.opcname AS opclass_name,
-       opr.oid::regoperator AS opclass_operator
-    FROM pg_am am, pg_opclass opc, pg_amop amop, pg_operator opr
-    WHERE opc.opcamid = am.oid AND
-          amop.amopclaid = opc.oid AND
-          amop.amopopr = opr.oid
-    ORDER BY index_method, opclass_name, opclass_operator;
+       opf.opfname AS opfamily_name,
+       amop.amopopr::regoperator AS opfamily_operator
+    FROM pg_am am, pg_opfamily opf, pg_amop amop
+    WHERE opf.opfmethod = am.oid AND
+          amop.amopfamily = opf.oid
+    ORDER BY index_method, opfamily_name, opfamily_operator;
 </programlisting>
   </para>
  </sect1>

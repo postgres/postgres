@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.355 2006/12/21 16:05:13 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.356 2006/12/23 00:43:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,6 +449,8 @@ _copyMergeJoin(MergeJoin *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(mergeclauses);
+	COPY_NODE_FIELD(mergefamilies);
+	COPY_NODE_FIELD(mergestrategies);
 
 	return newnode;
 }
@@ -1055,7 +1057,7 @@ _copyRowCompareExpr(RowCompareExpr *from)
 
 	COPY_SCALAR_FIELD(rctype);
 	COPY_NODE_FIELD(opnos);
-	COPY_NODE_FIELD(opclasses);
+	COPY_NODE_FIELD(opfamilies);
 	COPY_NODE_FIELD(largs);
 	COPY_NODE_FIELD(rargs);
 
@@ -1307,6 +1309,7 @@ _copyRestrictInfo(RestrictInfo *from)
 	COPY_SCALAR_FIELD(mergejoinoperator);
 	COPY_SCALAR_FIELD(left_sortop);
 	COPY_SCALAR_FIELD(right_sortop);
+	COPY_SCALAR_FIELD(mergeopfamily);
 
 	/*
 	 * Do not copy pathkeys, since they'd not be canonical in a copied query
@@ -2291,6 +2294,7 @@ _copyCreateOpClassStmt(CreateOpClassStmt *from)
 	CreateOpClassStmt *newnode = makeNode(CreateOpClassStmt);
 
 	COPY_NODE_FIELD(opclassname);
+	COPY_NODE_FIELD(opfamilyname);
 	COPY_STRING_FIELD(amname);
 	COPY_NODE_FIELD(datatype);
 	COPY_NODE_FIELD(items);

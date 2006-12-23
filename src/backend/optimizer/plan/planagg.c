@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.22 2006/10/04 00:29:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.23 2006/12/23 00:43:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,8 +340,8 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 
 				Assert(is_opclause(rinfo->clause));
 				strategy =
-					get_op_opclass_strategy(((OpExpr *) rinfo->clause)->opno,
-											index->classlist[prevcol]);
+					get_op_opfamily_strategy(((OpExpr *) rinfo->clause)->opno,
+											 index->opfamily[prevcol]);
 				if (strategy == BTEqualStrategyNumber)
 					break;
 			}
@@ -390,10 +390,10 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
  *		Does an aggregate match an index column?
  *
  * It matches if its argument is equal to the index column's data and its
- * sortop is either the LessThan or GreaterThan member of the column's opclass.
+ * sortop is either a LessThan or GreaterThan member of the column's opfamily.
  *
- * We return ForwardScanDirection if match the LessThan member,
- * BackwardScanDirection if match the GreaterThan member,
+ * We return ForwardScanDirection if match a LessThan member,
+ * BackwardScanDirection if match a GreaterThan member,
  * and NoMovementScanDirection if there's no match.
  */
 static ScanDirection
@@ -405,9 +405,9 @@ match_agg_to_index_col(MinMaxAggInfo *info, IndexOptInfo *index, int indexcol)
 	if (!match_index_to_operand((Node *) info->target, indexcol, index))
 		return NoMovementScanDirection;
 
-	/* Look up the operator in the opclass */
-	strategy = get_op_opclass_strategy(info->aggsortop,
-									   index->classlist[indexcol]);
+	/* Look up the operator in the opfamily */
+	strategy = get_op_opfamily_strategy(info->aggsortop,
+										index->opfamily[indexcol]);
 	if (strategy == BTLessStrategyNumber)
 		return ForwardScanDirection;
 	if (strategy == BTGreaterStrategyNumber)

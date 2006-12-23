@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.200 2006/12/21 16:05:14 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.201 2006/12/23 00:43:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2014,10 +2014,10 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	RowCompareType rctype;
 	List	   *opexprs;
 	List	   *opnos;
-	List	   *opclasses;
+	List	   *opfamilies;
 	ListCell   *l,
 			   *r;
-	List	  **opclass_lists;
+	List	  **opfamily_lists;
 	List	  **opstrat_lists;
 	Bitmapset  *strats;
 	int			nopers;
@@ -2057,7 +2057,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		/*
 		 * We don't use coerce_to_boolean here because we insist on the
 		 * operator yielding boolean directly, not via coercion.  If it
-		 * doesn't yield bool it won't be in any index opclasses...
+		 * doesn't yield bool it won't be in any index opfamilies...
 		 */
 		if (cmp->opresulttype != BOOLOID)
 			ereport(ERROR,
@@ -2084,21 +2084,22 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 
 	/*
 	 * Now we must determine which row comparison semantics (= <> < <= > >=)
-	 * apply to this set of operators.	We look for btree opclasses containing
+	 * apply to this set of operators.	We look for btree opfamilies containing
 	 * the operators, and see which interpretations (strategy numbers) exist
 	 * for each operator.
 	 */
-	opclass_lists = (List **) palloc(nopers * sizeof(List *));
+	opfamily_lists = (List **) palloc(nopers * sizeof(List *));
 	opstrat_lists = (List **) palloc(nopers * sizeof(List *));
 	strats = NULL;
 	i = 0;
 	foreach(l, opexprs)
 	{
+		Oid			opno = ((OpExpr *) lfirst(l))->opno;
 		Bitmapset  *this_strats;
 		ListCell   *j;
 
-		get_op_btree_interpretation(((OpExpr *) lfirst(l))->opno,
-									&opclass_lists[i], &opstrat_lists[i]);
+		get_op_btree_interpretation(opno,
+									&opfamily_lists[i], &opstrat_lists[i]);
 
 		/*
 		 * convert strategy number list to a Bitmapset to make the
@@ -2116,68 +2117,23 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		i++;
 	}
 
-	switch (bms_membership(strats))
+	/*
+	 * If there are multiple common interpretations, we may use any one of
+	 * them ... this coding arbitrarily picks the lowest btree strategy
+	 * number.
+	 */
+	i = bms_first_member(strats);
+	if (i < 0)
 	{
-		case BMS_EMPTY_SET:
-			/* No common interpretation, so fail */
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("could not determine interpretation of row comparison operator %s",
-							strVal(llast(opname))),
-					 errhint("Row comparison operators must be associated with btree operator classes."),
-					 parser_errposition(pstate, location)));
-			rctype = 0;			/* keep compiler quiet */
-			break;
-		case BMS_SINGLETON:
-			/* Simple case: just one possible interpretation */
-			rctype = bms_singleton_member(strats);
-			break;
-		case BMS_MULTIPLE:
-		default:				/* keep compiler quiet */
-			{
-				/*
-				 * Prefer the interpretation with the most default opclasses.
-				 */
-				int			best_defaults = 0;
-				bool		multiple_best = false;
-				int			this_rctype;
-
-				rctype = 0;		/* keep compiler quiet */
-				while ((this_rctype = bms_first_member(strats)) >= 0)
-				{
-					int			ndefaults = 0;
-
-					for (i = 0; i < nopers; i++)
-					{
-						forboth(l, opclass_lists[i], r, opstrat_lists[i])
-						{
-							Oid			opclass = lfirst_oid(l);
-							int			opstrat = lfirst_int(r);
-
-							if (opstrat == this_rctype &&
-								opclass_is_default(opclass))
-								ndefaults++;
-						}
-					}
-					if (ndefaults > best_defaults)
-					{
-						best_defaults = ndefaults;
-						rctype = this_rctype;
-						multiple_best = false;
-					}
-					else if (ndefaults == best_defaults)
-						multiple_best = true;
-				}
-				if (best_defaults == 0 || multiple_best)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("could not determine interpretation of row comparison operator %s",
-									strVal(llast(opname))),
-							 errdetail("There are multiple equally-plausible candidates."),
-							 parser_errposition(pstate, location)));
-				break;
-			}
+		/* No common interpretation, so fail */
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("could not determine interpretation of row comparison operator %s",
+						strVal(llast(opname))),
+				 errhint("Row comparison operators must be associated with btree operator families."),
+				 parser_errposition(pstate, location)));
 	}
+	rctype = (RowCompareType) i;
 
 	/*
 	 * For = and <> cases, we just combine the pairwise operators with AND or
@@ -2193,34 +2149,27 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 		return (Node *) makeBoolExpr(OR_EXPR, opexprs);
 
 	/*
-	 * Otherwise we need to determine exactly which opclass to associate with
+	 * Otherwise we need to choose exactly which opfamily to associate with
 	 * each operator.
 	 */
-	opclasses = NIL;
+	opfamilies = NIL;
 	for (i = 0; i < nopers; i++)
 	{
-		Oid			best_opclass = 0;
-		int			ndefault = 0;
-		int			nmatch = 0;
+		Oid			opfamily = InvalidOid;
 
-		forboth(l, opclass_lists[i], r, opstrat_lists[i])
+		forboth(l, opfamily_lists[i], r, opstrat_lists[i])
 		{
-			Oid			opclass = lfirst_oid(l);
 			int			opstrat = lfirst_int(r);
 
 			if (opstrat == rctype)
 			{
-				if (ndefault == 0)
-					best_opclass = opclass;
-				if (opclass_is_default(opclass))
-					ndefault++;
-				else
-					nmatch++;
+				opfamily = lfirst_oid(l);
+				break;
 			}
 		}
-		if (ndefault == 1 || (ndefault == 0 && nmatch == 1))
-			opclasses = lappend_oid(opclasses, best_opclass);
-		else
+		if (OidIsValid(opfamily))
+			opfamilies = lappend_oid(opfamilies, opfamily);
+		else					/* should not happen */
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("could not determine interpretation of row comparison operator %s",
@@ -2250,7 +2199,7 @@ make_row_comparison_op(ParseState *pstate, List *opname,
 	rcexpr = makeNode(RowCompareExpr);
 	rcexpr->rctype = rctype;
 	rcexpr->opnos = opnos;
-	rcexpr->opclasses = opclasses;
+	rcexpr->opfamilies = opfamilies;
 	rcexpr->largs = largs;
 	rcexpr->rargs = rargs;
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.215 2006/12/15 18:42:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.216 2006/12/23 00:43:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@
 #include <ctype.h>
 #include <math.h>
 
-#include "catalog/pg_opclass.h"
+#include "catalog/pg_opfamily.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
@@ -128,7 +128,7 @@ static double convert_timevalue_to_scalar(Datum value, Oid typid);
 static bool get_variable_maximum(PlannerInfo *root, VariableStatData *vardata,
 					 Oid sortop, Datum *max);
 static Selectivity prefix_selectivity(VariableStatData *vardata,
-				   Oid opclass, Const *prefixcon);
+				   Oid vartype, Oid opfamily, Const *prefixcon);
 static Selectivity pattern_selectivity(Const *patt, Pattern_Type ptype);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
@@ -911,7 +911,7 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	Datum		constval;
 	Oid			consttype;
 	Oid			vartype;
-	Oid			opclass;
+	Oid			opfamily;
 	Pattern_Prefix_Status pstatus;
 	Const	   *patt = NULL;
 	Const	   *prefix = NULL;
@@ -960,9 +960,9 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	 * Similarly, the exposed type of the left-hand side should be one of
 	 * those we know.  (Do not look at vardata.atttype, which might be
 	 * something binary-compatible but different.)	We can use it to choose
-	 * the index opclass from which we must draw the comparison operators.
+	 * the index opfamily from which we must draw the comparison operators.
 	 *
-	 * NOTE: It would be more correct to use the PATTERN opclasses than the
+	 * NOTE: It would be more correct to use the PATTERN opfamilies than the
 	 * simple ones, but at the moment ANALYZE will not generate statistics for
 	 * the PATTERN operators.  But our results are so approximate anyway that
 	 * it probably hardly matters.
@@ -972,19 +972,16 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 	switch (vartype)
 	{
 		case TEXTOID:
-			opclass = TEXT_BTREE_OPS_OID;
-			break;
-		case VARCHAROID:
-			opclass = VARCHAR_BTREE_OPS_OID;
+			opfamily = TEXT_BTREE_FAM_OID;
 			break;
 		case BPCHAROID:
-			opclass = BPCHAR_BTREE_OPS_OID;
+			opfamily = BPCHAR_BTREE_FAM_OID;
 			break;
 		case NAMEOID:
-			opclass = NAME_BTREE_OPS_OID;
+			opfamily = NAME_BTREE_FAM_OID;
 			break;
 		case BYTEAOID:
-			opclass = BYTEA_BTREE_OPS_OID;
+			opfamily = BYTEA_BTREE_FAM_OID;
 			break;
 		default:
 			ReleaseVariableStats(vardata);
@@ -1028,12 +1025,12 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 		/*
 		 * Pattern specifies an exact match, so pretend operator is '='
 		 */
-		Oid			eqopr = get_opclass_member(opclass, InvalidOid,
-											   BTEqualStrategyNumber);
+		Oid			eqopr = get_opfamily_member(opfamily, vartype, vartype,
+												BTEqualStrategyNumber);
 		List	   *eqargs;
 
 		if (eqopr == InvalidOid)
-			elog(ERROR, "no = operator for opclass %u", opclass);
+			elog(ERROR, "no = operator for opfamily %u", opfamily);
 		eqargs = list_make2(variable, prefix);
 		result = DatumGetFloat8(DirectFunctionCall4(eqsel,
 													PointerGetDatum(root),
@@ -1074,7 +1071,8 @@ patternsel(PG_FUNCTION_ARGS, Pattern_Type ptype)
 			Selectivity restsel;
 
 			if (pstatus == Pattern_Prefix_Partial)
-				prefixsel = prefix_selectivity(&vardata, opclass, prefix);
+				prefixsel = prefix_selectivity(&vardata, vartype,
+											   opfamily, prefix);
 			else
 				prefixsel = 1.0;
 			restsel = pattern_selectivity(rest, ptype);
@@ -2114,7 +2112,8 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  * we can estimate how much of the input will actually be read.  This
  * can have a considerable impact on the cost when using indexscans.
  *
- * clause should be a clause already known to be mergejoinable.
+ * clause should be a clause already known to be mergejoinable.  opfamily and
+ * strategy specify the sort ordering being used.
  *
  * *leftscan is set to the fraction of the left-hand variable expected
  * to be scanned (0 to 1), and similarly *rightscan for the right-hand
@@ -2122,6 +2121,7 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  */
 void
 mergejoinscansel(PlannerInfo *root, Node *clause,
+				 Oid opfamily, int strategy,
 				 Selectivity *leftscan,
 				 Selectivity *rightscan)
 {
@@ -2129,15 +2129,14 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 			   *right;
 	VariableStatData leftvar,
 				rightvar;
-	Oid			lefttype,
-				righttype;
+	int			op_strategy;
+	Oid			op_lefttype;
+	Oid			op_righttype;
+	bool		op_recheck;
 	Oid			opno,
 				lsortop,
 				rsortop,
-				ltop,
-				gtop,
 				leop,
-				revgtop,
 				revleop;
 	Datum		leftmax,
 				rightmax;
@@ -2159,15 +2158,51 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	examine_variable(root, left, 0, &leftvar);
 	examine_variable(root, right, 0, &rightvar);
 
-	/* Get the direct input types of the operator */
-	lefttype = exprType(left);
-	righttype = exprType(right);
+	/* Extract the operator's declared left/right datatypes */
+	get_op_opfamily_properties(opno, opfamily,
+							   &op_strategy,
+							   &op_lefttype,
+							   &op_righttype,
+							   &op_recheck);
+	Assert(op_strategy == BTEqualStrategyNumber);
+	Assert(!op_recheck);
 
-	/* Verify mergejoinability and get left and right "<" operators */
-	if (!op_mergejoinable(opno,
-						  &lsortop,
-						  &rsortop))
-		goto fail;				/* shouldn't happen */
+	/*
+	 * Look up the various operators we need.  If we don't find them all,
+	 * it probably means the opfamily is broken, but we cope anyway.
+	 */
+	switch (strategy)
+	{
+		case BTLessStrategyNumber:
+			lsortop = get_opfamily_member(opfamily, op_lefttype, op_lefttype,
+										  BTLessStrategyNumber);
+			rsortop = get_opfamily_member(opfamily, op_righttype, op_righttype,
+										  BTLessStrategyNumber);
+			leop = get_opfamily_member(opfamily, op_lefttype, op_righttype,
+									   BTLessEqualStrategyNumber);
+			revleop = get_opfamily_member(opfamily, op_righttype, op_lefttype,
+										  BTLessEqualStrategyNumber);
+			break;
+		case BTGreaterStrategyNumber:
+			/* descending-order case */
+			lsortop = get_opfamily_member(opfamily, op_lefttype, op_lefttype,
+										  BTGreaterStrategyNumber);
+			rsortop = get_opfamily_member(opfamily, op_righttype, op_righttype,
+										  BTGreaterStrategyNumber);
+			leop = get_opfamily_member(opfamily, op_lefttype, op_righttype,
+									   BTGreaterEqualStrategyNumber);
+			revleop = get_opfamily_member(opfamily, op_righttype, op_lefttype,
+										  BTGreaterEqualStrategyNumber);
+			break;
+		default:
+			goto fail;			/* shouldn't get here */
+	}
+
+	if (!OidIsValid(lsortop) ||
+		!OidIsValid(rsortop) ||
+		!OidIsValid(leop) ||
+		!OidIsValid(revleop))
+		goto fail;				/* insufficient info in catalogs */
 
 	/* Try to get maximum values of both inputs */
 	if (!get_variable_maximum(root, &leftvar, lsortop, &leftmax))
@@ -2176,37 +2211,19 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	if (!get_variable_maximum(root, &rightvar, rsortop, &rightmax))
 		goto fail;				/* no max available from stats */
 
-	/* Look up the "left < right" and "left > right" operators */
-	op_mergejoin_crossops(opno, &ltop, &gtop, NULL, NULL);
-
-	/* Look up the "left <= right" operator */
-	leop = get_negator(gtop);
-	if (!OidIsValid(leop))
-		goto fail;				/* insufficient info in catalogs */
-
-	/* Look up the "right > left" operator */
-	revgtop = get_commutator(ltop);
-	if (!OidIsValid(revgtop))
-		goto fail;				/* insufficient info in catalogs */
-
-	/* Look up the "right <= left" operator */
-	revleop = get_negator(revgtop);
-	if (!OidIsValid(revleop))
-		goto fail;				/* insufficient info in catalogs */
-
 	/*
 	 * Now, the fraction of the left variable that will be scanned is the
 	 * fraction that's <= the right-side maximum value.  But only believe
 	 * non-default estimates, else stick with our 1.0.
 	 */
 	selec = scalarineqsel(root, leop, false, &leftvar,
-						  rightmax, righttype);
+						  rightmax, op_righttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*leftscan = selec;
 
 	/* And similarly for the right variable. */
 	selec = scalarineqsel(root, revleop, false, &rightvar,
-						  leftmax, lefttype);
+						  leftmax, op_lefttype);
 	if (selec != DEFAULT_INEQ_SEL)
 		*rightscan = selec;
 
@@ -3486,7 +3503,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		 * statistics.
 		 *
 		 * XXX it's conceivable that there are multiple matches with different
-		 * index opclasses; if so, we need to pick one that matches the
+		 * index opfamilies; if so, we need to pick one that matches the
 		 * operator we are estimating for.	FIXME later.
 		 */
 		ListCell   *ilist;
@@ -4100,7 +4117,7 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
  * population represented by the histogram --- the caller must fold this
  * together with info about MCVs and NULLs.
  *
- * We use the >= and < operators from the specified btree opclass to do the
+ * We use the >= and < operators from the specified btree opfamily to do the
  * estimation.	The given variable and Const must be of the associated
  * datatype.
  *
@@ -4110,17 +4127,18 @@ pattern_fixed_prefix(Const *patt, Pattern_Type ptype,
  * more useful to use the upper-bound code than not.
  */
 static Selectivity
-prefix_selectivity(VariableStatData *vardata, Oid opclass, Const *prefixcon)
+prefix_selectivity(VariableStatData *vardata,
+				   Oid vartype, Oid opfamily, Const *prefixcon)
 {
 	Selectivity prefixsel;
 	Oid			cmpopr;
 	FmgrInfo	opproc;
 	Const	   *greaterstrcon;
 
-	cmpopr = get_opclass_member(opclass, InvalidOid,
-								BTGreaterEqualStrategyNumber);
+	cmpopr = get_opfamily_member(opfamily, vartype, vartype,
+								 BTGreaterEqualStrategyNumber);
 	if (cmpopr == InvalidOid)
-		elog(ERROR, "no >= operator for opclass %u", opclass);
+		elog(ERROR, "no >= operator for opfamily %u", opfamily);
 	fmgr_info(get_opcode(cmpopr), &opproc);
 
 	prefixsel = ineq_histogram_selectivity(vardata, &opproc, true,
@@ -4143,10 +4161,10 @@ prefix_selectivity(VariableStatData *vardata, Oid opclass, Const *prefixcon)
 	{
 		Selectivity topsel;
 
-		cmpopr = get_opclass_member(opclass, InvalidOid,
-									BTLessStrategyNumber);
+		cmpopr = get_opfamily_member(opfamily, vartype, vartype,
+									 BTLessStrategyNumber);
 		if (cmpopr == InvalidOid)
-			elog(ERROR, "no < operator for opclass %u", opclass);
+			elog(ERROR, "no < operator for opfamily %u", opfamily);
 		fmgr_info(get_opcode(cmpopr), &opproc);
 
 		topsel = ineq_histogram_selectivity(vardata, &opproc, false,
@@ -4921,7 +4939,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 		}
 		else if (match_index_to_operand(rightop, indexcol, index))
 		{
-			/* Must flip operator to get the opclass member */
+			/* Must flip operator to get the opfamily member */
 			clause_op = get_commutator(clause_op);
 		}
 		else
@@ -4937,7 +4955,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 			}
 			else if (match_index_to_operand(rightop, indexcol, index))
 			{
-				/* Must flip operator to get the opclass member */
+				/* Must flip operator to get the opfamily member */
 				clause_op = get_commutator(clause_op);
 			}
 			else
@@ -4946,9 +4964,9 @@ btcostestimate(PG_FUNCTION_ARGS)
 				break;
 			}
 		}
-		op_strategy = get_op_opclass_strategy(clause_op,
-											  index->classlist[indexcol]);
-		Assert(op_strategy != 0);		/* not a member of opclass?? */
+		op_strategy = get_op_opfamily_strategy(clause_op,
+											   index->opfamily[indexcol]);
+		Assert(op_strategy != 0);		/* not a member of opfamily?? */
 		if (op_strategy == BTEqualStrategyNumber)
 			eqQualHere = true;
 		/* count up number of SA scans induced by indexBoundQuals only */

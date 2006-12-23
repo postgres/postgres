@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.33 2006/10/04 00:29:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.34 2006/12/23 00:43:09 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -64,8 +64,8 @@ DefineOperator(List *names, List *parameters)
 	char	   *oprName;
 	Oid			oprNamespace;
 	AclResult	aclresult;
-	bool		canHash = false;	/* operator hashes */
 	bool		canMerge = false;		/* operator merges */
+	bool		canHash = false;		/* operator hashes */
 	List	   *functionName = NIL;		/* function for operator */
 	TypeName   *typeName1 = NULL;		/* first type name */
 	TypeName   *typeName2 = NULL;		/* second type name */
@@ -75,10 +75,6 @@ DefineOperator(List *names, List *parameters)
 	List	   *negatorName = NIL;		/* optional negator operator name */
 	List	   *restrictionName = NIL;	/* optional restrict. sel. procedure */
 	List	   *joinName = NIL; /* optional join sel. procedure */
-	List	   *leftSortName = NIL;		/* optional left sort operator */
-	List	   *rightSortName = NIL;	/* optional right sort operator */
-	List	   *ltCompareName = NIL;	/* optional < compare operator */
-	List	   *gtCompareName = NIL;	/* optional > compare operator */
 	ListCell   *pl;
 
 	/* Convert list of names to a name and namespace */
@@ -127,14 +123,15 @@ DefineOperator(List *names, List *parameters)
 			canHash = defGetBoolean(defel);
 		else if (pg_strcasecmp(defel->defname, "merges") == 0)
 			canMerge = defGetBoolean(defel);
+		/* These obsolete options are taken as meaning canMerge */
 		else if (pg_strcasecmp(defel->defname, "sort1") == 0)
-			leftSortName = defGetQualifiedName(defel);
+			canMerge = true;
 		else if (pg_strcasecmp(defel->defname, "sort2") == 0)
-			rightSortName = defGetQualifiedName(defel);
+			canMerge = true;
 		else if (pg_strcasecmp(defel->defname, "ltcmp") == 0)
-			ltCompareName = defGetQualifiedName(defel);
+			canMerge = true;
 		else if (pg_strcasecmp(defel->defname, "gtcmp") == 0)
-			gtCompareName = defGetQualifiedName(defel);
+			canMerge = true;
 		else
 			ereport(WARNING,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -157,26 +154,6 @@ DefineOperator(List *names, List *parameters)
 		typeId2 = typenameTypeId(NULL, typeName2);
 
 	/*
-	 * If any of the mergejoin support operators were given, then canMerge is
-	 * implicit.  If canMerge is specified or implicit, fill in default
-	 * operator names for any missing mergejoin support operators.
-	 */
-	if (leftSortName || rightSortName || ltCompareName || gtCompareName)
-		canMerge = true;
-
-	if (canMerge)
-	{
-		if (!leftSortName)
-			leftSortName = list_make1(makeString("<"));
-		if (!rightSortName)
-			rightSortName = list_make1(makeString("<"));
-		if (!ltCompareName)
-			ltCompareName = list_make1(makeString("<"));
-		if (!gtCompareName)
-			gtCompareName = list_make1(makeString(">"));
-	}
-
-	/*
 	 * now have OperatorCreate do all the work..
 	 */
 	OperatorCreate(oprName,		/* operator name */
@@ -188,11 +165,8 @@ DefineOperator(List *names, List *parameters)
 				   negatorName, /* optional negator operator name */
 				   restrictionName,		/* optional restrict. sel. procedure */
 				   joinName,	/* optional join sel. procedure name */
-				   canHash,		/* operator hashes */
-				   leftSortName,	/* optional left sort operator */
-				   rightSortName,		/* optional right sort operator */
-				   ltCompareName,		/* optional < comparison op */
-				   gtCompareName);		/* optional < comparison op */
+				   canMerge,	/* operator merges */
+				   canHash);	/* operator hashes */
 }
 
 

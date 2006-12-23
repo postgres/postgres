@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.124 2006/12/07 19:33:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.125 2006/12/23 00:43:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1109,10 +1109,10 @@ process_implied_equality(PlannerInfo *root,
 
 	/*
 	 * Let's just make sure this appears to be a compatible operator.
+	 *
+	 * XXX needs work
 	 */
-	if (pgopform->oprlsortop != sortop1 ||
-		pgopform->oprrsortop != sortop2 ||
-		pgopform->oprresult != BOOLOID)
+	if (pgopform->oprresult != BOOLOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("equality operator for types %s and %s should be merge-joinable, but isn't",
@@ -1276,6 +1276,7 @@ check_mergejoinable(RestrictInfo *restrictinfo)
 	Oid			opno,
 				leftOp,
 				rightOp;
+	Oid			opfamily;
 
 	if (restrictinfo->pseudoconstant)
 		return;
@@ -1286,14 +1287,17 @@ check_mergejoinable(RestrictInfo *restrictinfo)
 
 	opno = ((OpExpr *) clause)->opno;
 
-	if (op_mergejoinable(opno,
-						 &leftOp,
-						 &rightOp) &&
+	if (op_mergejoinable(opno) &&
 		!contain_volatile_functions((Node *) clause))
 	{
-		restrictinfo->mergejoinoperator = opno;
-		restrictinfo->left_sortop = leftOp;
-		restrictinfo->right_sortop = rightOp;
+		/* XXX for the moment, continue to force use of particular sortops */
+		if (get_op_mergejoin_info(opno, &leftOp, &rightOp, &opfamily))
+		{
+			restrictinfo->mergejoinoperator = opno;
+			restrictinfo->left_sortop = leftOp;
+			restrictinfo->right_sortop = rightOp;
+			restrictinfo->mergeopfamily = opfamily;
+		}
 	}
 }
 

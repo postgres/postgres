@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.95 2006/10/04 00:29:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/index/indexam.c,v 1.96 2006/12/23 00:43:08 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -608,17 +608,27 @@ index_vacuum_cleanup(IndexVacuumInfo *info,
 /* ----------------
  *		index_getprocid
  *
- *		Some indexed access methods may require support routines that are
- *		not in the operator class/operator model imposed by pg_am.	These
- *		access methods may store the OIDs of registered procedures they
- *		need in pg_amproc.	These registered procedure OIDs are ordered in
- *		a way that makes sense to the access method, and used only by the
- *		access method.	The general index code doesn't know anything about
- *		the routines involved; it just builds an ordered list of them for
+ *		Index access methods typically require support routines that are
+ *		not directly the implementation of any WHERE-clause query operator
+ *		and so cannot be kept in pg_amop.  Instead, such routines are kept
+ *		in pg_amproc.  These registered procedure OIDs are assigned numbers
+ *		according to a convention established by the access method.
+ *		The general index code doesn't know anything about the routines
+ *		involved; it just builds an ordered list of them for
  *		each attribute on which an index is defined.
  *
- *		This routine returns the requested procedure OID for a particular
- *		indexed attribute.
+ *		As of Postgres 8.3, support routines within an operator family
+ *		are further subdivided by the "left type" and "right type" of the
+ *		query operator(s) that they support.  The "default" functions for a
+ *		particular indexed attribute are those with both types equal to
+ *		the index opclass' opcintype (note that this is subtly different
+ *		from the indexed attribute's own type: it may be a binary-compatible
+ *		type instead).  Only the default functions are stored in relcache
+ *		entries --- access methods can use the syscache to look up non-default
+ *		functions.
+ *
+ *		This routine returns the requested default procedure OID for a
+ *		particular indexed attribute.
  * ----------------
  */
 RegProcedure
@@ -647,7 +657,8 @@ index_getprocid(Relation irel,
  *		index_getprocinfo
  *
  *		This routine allows index AMs to keep fmgr lookup info for
- *		support procs in the relcache.
+ *		support procs in the relcache.  As above, only the "default"
+ *		functions for any particular indexed attribute are cached.
  *
  * Note: the return value points into cached data that will be lost during
  * any relcache rebuild!  Therefore, either use the callinfo right away,

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.107 2006/10/04 00:29:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.108 2006/12/23 00:43:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -658,11 +658,14 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * to an insertion scan key by replacing the sk_func with the
 			 * appropriate btree comparison function.
 			 *
-			 * If scankey operator is of default subtype, we can use the
-			 * cached comparison function; otherwise gotta look it up in the
-			 * catalogs.
+			 * If scankey operator is of the default type for the index, we
+			 * can use the cached comparison function; otherwise gotta look it
+			 * up in the catalogs.  Also, we support the convention that
+			 * sk_subtype == 0 means the default type; this is a hack to
+			 * simplify life for ScanKeyInit().
 			 */
-			if (cur->sk_subtype == InvalidOid)
+			if (cur->sk_subtype == rel->rd_opcintype[i] ||
+				cur->sk_subtype == InvalidOid)
 			{
 				FmgrInfo   *procinfo;
 
@@ -671,7 +674,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 											   cur->sk_flags,
 											   cur->sk_attno,
 											   InvalidStrategy,
-											   InvalidOid,
+											   cur->sk_subtype,
 											   procinfo,
 											   cur->sk_argument);
 			}
@@ -679,9 +682,14 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			{
 				RegProcedure cmp_proc;
 
-				cmp_proc = get_opclass_proc(rel->rd_indclass->values[i],
-											cur->sk_subtype,
-											BTORDER_PROC);
+				cmp_proc = get_opfamily_proc(rel->rd_opfamily[i],
+											 rel->rd_opcintype[i],
+											 cur->sk_subtype,
+											 BTORDER_PROC);
+				if (!RegProcedureIsValid(cmp_proc))
+					elog(ERROR, "missing support function %d(%u,%u) for attribute %d of index \"%s\"",
+						 BTORDER_PROC, rel->rd_opcintype[i], cur->sk_subtype,
+						 cur->sk_attno, RelationGetRelationName(rel));
 				ScanKeyEntryInitialize(scankeys + i,
 									   cur->sk_flags,
 									   cur->sk_attno,

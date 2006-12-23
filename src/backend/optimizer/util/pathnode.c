@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.133 2006/10/04 00:29:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.134 2006/12/23 00:43:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1152,6 +1152,10 @@ create_nestloop_path(PlannerInfo *root,
  * 'pathkeys' are the path keys of the new join path
  * 'mergeclauses' are the RestrictInfo nodes to use as merge clauses
  *		(this should be a subset of the restrict_clauses list)
+ * 'mergefamilies' are the btree opfamily OIDs identifying the merge
+ *		ordering for each merge clause
+ * 'mergestrategies' are the btree operator strategies identifying the merge
+ *		ordering for each merge clause
  * 'outersortkeys' are the sort varkeys for the outer relation
  * 'innersortkeys' are the sort varkeys for the inner relation
  */
@@ -1164,6 +1168,8 @@ create_mergejoin_path(PlannerInfo *root,
 					  List *restrict_clauses,
 					  List *pathkeys,
 					  List *mergeclauses,
+					  List *mergefamilies,
+					  List *mergestrategies,
 					  List *outersortkeys,
 					  List *innersortkeys)
 {
@@ -1204,6 +1210,8 @@ create_mergejoin_path(PlannerInfo *root,
 	pathnode->jpath.joinrestrictinfo = restrict_clauses;
 	pathnode->jpath.path.pathkeys = pathkeys;
 	pathnode->path_mergeclauses = mergeclauses;
+	pathnode->path_mergefamilies = mergefamilies;
+	pathnode->path_mergestrategies = mergestrategies;
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
 

@@ -1,7 +1,8 @@
 --
 -- OPR_SANITY
 -- Sanity checks for common errors in making operator/procedure system tables:
--- pg_operator, pg_proc, pg_cast, pg_aggregate, pg_am, pg_amop, pg_amproc, pg_opclass.
+-- pg_operator, pg_proc, pg_cast, pg_aggregate, pg_am,
+-- pg_amop, pg_amproc, pg_opclass, pg_opfamily.
 --
 -- None of the SELECTs here should ever find any matching entries,
 -- so the expected output is easy to maintain ;-).
@@ -307,135 +308,48 @@ WHERE p1.oprnegate = p2.oid AND
      p1.oid != p2.oprnegate OR
      p1.oid = p2.oid);
 
--- Look for mergejoin operators that don't match their links.
--- An lsortop/rsortop link leads from an '=' operator to the
--- sort operator ('<' operator) that's appropriate for
--- its left-side or right-side data type.
--- An ltcmpop/gtcmpop link leads from an '=' operator to the
--- '<' or '>' operator of the same input datatypes.
--- (If the '=' operator has identical L and R input datatypes,
--- then lsortop, rsortop, and ltcmpop are all the same operator.)
-
-SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
-FROM pg_operator AS p1, pg_operator AS p2
-WHERE p1.oprlsortop = p2.oid AND
-    (p1.oprname NOT IN ('=', '~=~') OR p2.oprname NOT IN ('<', '~<~') OR
-     p1.oprkind != 'b' OR p2.oprkind != 'b' OR
-     p1.oprleft != p2.oprleft OR
-     p1.oprleft != p2.oprright OR
-     p1.oprresult != 'bool'::regtype OR
-     p2.oprresult != 'bool'::regtype);
-
-SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
-FROM pg_operator AS p1, pg_operator AS p2
-WHERE p1.oprrsortop = p2.oid AND
-    (p1.oprname NOT IN ('=', '~=~') OR p2.oprname NOT IN ('<', '~<~') OR
-     p1.oprkind != 'b' OR p2.oprkind != 'b' OR
-     p1.oprright != p2.oprleft OR
-     p1.oprright != p2.oprright OR
-     p1.oprresult != 'bool'::regtype OR
-     p2.oprresult != 'bool'::regtype);
-
-SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
-FROM pg_operator AS p1, pg_operator AS p2
-WHERE p1.oprltcmpop = p2.oid AND
-    (p1.oprname NOT IN ('=', '~=~') OR p2.oprname NOT IN ('<', '~<~') OR
-     p1.oprkind != 'b' OR p2.oprkind != 'b' OR
-     p1.oprleft != p2.oprleft OR
-     p1.oprright != p2.oprright OR
-     p1.oprresult != 'bool'::regtype OR
-     p2.oprresult != 'bool'::regtype);
-
-SELECT p1.oid, p1.oprcode, p2.oid, p2.oprcode
-FROM pg_operator AS p1, pg_operator AS p2
-WHERE p1.oprgtcmpop = p2.oid AND
-    (p1.oprname NOT IN ('=', '~=~') OR p2.oprname NOT IN ('>', '~>~') OR
-     p1.oprkind != 'b' OR p2.oprkind != 'b' OR
-     p1.oprleft != p2.oprleft OR
-     p1.oprright != p2.oprright OR
-     p1.oprresult != 'bool'::regtype OR
-     p2.oprresult != 'bool'::regtype);
-
--- Make sure all four links are specified if any are.
-
-SELECT p1.oid, p1.oprcode
-FROM pg_operator AS p1
-WHERE NOT ((oprlsortop = 0 AND oprrsortop = 0 AND
-            oprltcmpop = 0 AND oprgtcmpop = 0) OR
-           (oprlsortop != 0 AND oprrsortop != 0 AND
-            oprltcmpop != 0 AND oprgtcmpop != 0));
-
--- A mergejoinable = operator must have a commutator (usually itself).
+-- A mergejoinable or hashjoinable operator must be binary, must return
+-- boolean, and must have a commutator (itself, unless it's a cross-type
+-- operator).
 
 SELECT p1.oid, p1.oprname FROM pg_operator AS p1
-WHERE p1.oprlsortop != 0 AND
-      p1.oprcom = 0;
+WHERE (p1.oprcanmerge OR p1.oprcanhash) AND NOT
+    (p1.oprkind = 'b' AND p1.oprresult = 'bool'::regtype AND p1.oprcom != 0);
 
--- Mergejoinable operators across datatypes must come in closed sets, that
--- is if you provide int2 = int4 and int4 = int8 then you must also provide
--- int2 = int8 (and commutators of all these).  This is necessary because
--- the planner tries to deduce additional qual clauses from transitivity
--- of mergejoinable operators.  If there are clauses int2var = int4var and
--- int4var = int8var, the planner will deduce int2var = int8var ... and it
--- had better have a way to represent it.
-
-SELECT p1.oid, p2.oid FROM pg_operator AS p1, pg_operator AS p2
-WHERE p1.oprlsortop != p1.oprrsortop AND
-      p1.oprrsortop = p2.oprlsortop AND
-      p2.oprlsortop != p2.oprrsortop AND
-      NOT EXISTS (SELECT 1 FROM pg_operator p3 WHERE
-      p3.oprlsortop = p1.oprlsortop AND p3.oprrsortop = p2.oprrsortop);
-
-
--- Hashing only works on simple equality operators "type = sametype",
--- since the hash itself depends on the bitwise representation of the type.
--- Check that allegedly hashable operators look like they might be "=".
+-- Mergejoinable operators should appear as equality members of btree index
+-- opfamilies.
 
 SELECT p1.oid, p1.oprname
 FROM pg_operator AS p1
-WHERE p1.oprcanhash AND NOT
-    (p1.oprkind = 'b' AND p1.oprresult = 'bool'::regtype AND
-     p1.oprleft = p1.oprright AND p1.oprname IN ('=', '~=~') AND
-     p1.oprcom = p1.oid);
+WHERE p1.oprcanmerge AND NOT EXISTS
+  (SELECT 1 FROM pg_amop
+   WHERE amopmethod = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
+         amopopr = p1.oid AND amopstrategy = 3);
 
--- In 6.5 we accepted hashable array equality operators when the array element
--- type is hashable.  However, what we actually need to make hashjoin work on
--- an array is a hashable element type *and* no padding between elements in
--- the array storage (or, perhaps, guaranteed-zero padding).  Currently,
--- since the padding code in arrayfuncs.c is pretty bogus, it seems safest
--- to just forbid hashjoin on array equality ops.
--- This should be reconsidered someday.
+-- And the converse.
 
--- -- Look for array equality operators that are hashable when the underlying
--- -- type is not, or vice versa.  This is presumably bogus.
--- 
--- SELECT p1.oid, p1.oprcanhash, p2.oid, p2.oprcanhash, t1.typname, t2.typname
--- FROM pg_operator AS p1, pg_operator AS p2, pg_type AS t1, pg_type AS t2
--- WHERE p1.oprname = '=' AND p1.oprleft = p1.oprright AND 
---     p2.oprname = '=' AND p2.oprleft = p2.oprright AND
---     p1.oprleft = t1.oid AND p2.oprleft = t2.oid AND t1.typelem = t2.oid AND
---     p1.oprcanhash != p2.oprcanhash;
+SELECT p1.oid, p1.oprname, p.amopfamily
+FROM pg_operator AS p1, pg_amop p
+WHERE amopopr = p1.oid
+  AND amopmethod = (SELECT oid FROM pg_am WHERE amname = 'btree')
+  AND amopstrategy = 3
+  AND NOT p1.oprcanmerge;
 
--- Substitute check: forbid hashable array ops, period.
-SELECT p1.oid, p1.oprname
-FROM pg_operator AS p1, pg_proc AS p2
-WHERE p1.oprcanhash AND p1.oprcode = p2.oid AND p2.proname = 'array_eq';
-
--- Hashable operators should appear as members of hash index opclasses.
+-- Hashable operators should appear as members of hash index opfamilies.
 
 SELECT p1.oid, p1.oprname
 FROM pg_operator AS p1
 WHERE p1.oprcanhash AND NOT EXISTS
-  (SELECT 1 FROM pg_opclass op JOIN pg_amop p ON op.oid = amopclaid
-   WHERE opcamid = (SELECT oid FROM pg_am WHERE amname = 'hash') AND
-         amopopr = p1.oid);
+  (SELECT 1 FROM pg_amop
+   WHERE amopmethod = (SELECT oid FROM pg_am WHERE amname = 'hash') AND
+         amopopr = p1.oid AND amopstrategy = 1);
 
 -- And the converse.
 
-SELECT p1.oid, p1.oprname, op.opcname
-FROM pg_operator AS p1, pg_opclass op, pg_amop p
-WHERE amopopr = p1.oid AND amopclaid = op.oid
-  AND opcamid = (SELECT oid FROM pg_am WHERE amname = 'hash')
+SELECT p1.oid, p1.oprname, p.amopfamily
+FROM pg_operator AS p1, pg_amop p
+WHERE amopopr = p1.oid
+  AND amopmethod = (SELECT oid FROM pg_am WHERE amname = 'hash')
   AND NOT p1.oprcanhash;
 
 -- Check that each operator defined in pg_operator matches its oprcode entry
@@ -474,7 +388,7 @@ WHERE p1.oprcode = p2.oid AND
 SELECT p1.oid, p1.oprname, p2.oid, p2.proname
 FROM pg_operator AS p1, pg_proc AS p2
 WHERE p1.oprcode = p2.oid AND
-    (p1.oprlsortop != 0 OR p1.oprcanhash) AND
+    (p1.oprcanmerge OR p1.oprcanhash) AND
     p2.provolatile = 'v';
 
 -- If oprrest is set, the operator must return boolean,
@@ -596,74 +510,105 @@ WHERE a.aggfnoid = p.oid AND a.aggsortop = o.oid AND
     (oprkind != 'b' OR oprresult != 'boolean'::regtype
      OR oprleft != p.proargtypes[0] OR oprright != p.proargtypes[0]);
 
--- Check operator is a suitable btree opclass member
+-- Check operator is a suitable btree opfamily member
 
 SELECT a.aggfnoid::oid, o.oid
 FROM pg_operator AS o, pg_aggregate AS a, pg_proc AS p
 WHERE a.aggfnoid = p.oid AND a.aggsortop = o.oid AND
-    NOT EXISTS(SELECT 1 FROM pg_amop ao, pg_opclass oc
-               WHERE amopclaid = oc.oid AND amopsubtype = 0
-                     AND amopopr = o.oid AND opcamid = 403
-                     AND opcintype = o.oprleft AND opcdefault);
+    NOT EXISTS(SELECT 1 FROM pg_amop
+               WHERE amopmethod = (SELECT oid FROM pg_am WHERE amname = 'btree')
+                     AND amopopr = o.oid
+                     AND amoplefttype = o.oprleft
+                     AND amoprighttype = o.oprright);
 
 -- Check correspondence of btree strategies and names
 
 SELECT DISTINCT proname, oprname, amopstrategy
 FROM pg_operator AS o, pg_aggregate AS a, pg_proc AS p,
-     pg_amop as ao, pg_opclass oc
+     pg_amop as ao
 WHERE a.aggfnoid = p.oid AND a.aggsortop = o.oid AND
-    amopclaid = oc.oid AND amopopr = o.oid AND opcamid = 403
-ORDER BY 1;
+    amopopr = o.oid AND
+    amopmethod = (SELECT oid FROM pg_am WHERE amname = 'btree')
+ORDER BY 1, 2;
+
+-- **************** pg_opfamily ****************
+
+-- Look for illegal values in pg_opfamily fields
+
+SELECT p1.oid
+FROM pg_opfamily as p1
+WHERE p1.opfmethod = 0 OR p1.opfnamespace = 0;
 
 -- **************** pg_opclass ****************
 
 -- Look for illegal values in pg_opclass fields
 
 SELECT p1.oid
-FROM pg_opclass as p1
-WHERE p1.opcamid = 0 OR p1.opcintype = 0;
+FROM pg_opclass AS p1
+WHERE p1.opcmethod = 0 OR p1.opcnamespace = 0 OR p1.opcfamily = 0
+    OR p1.opcintype = 0;
+
+-- opcmethod must match owning opfamily's opfmethod
+
+SELECT p1.oid, p2.oid
+FROM pg_opclass AS p1, pg_opfamily AS p2
+WHERE p1.opcfamily = p2.oid AND p1.opcmethod != p2.opfmethod;
 
 -- There should not be multiple entries in pg_opclass with opcdefault true
--- and the same opcamid/opcintype combination.
+-- and the same opcmethod/opcintype combination.
 
 SELECT p1.oid, p2.oid
 FROM pg_opclass AS p1, pg_opclass AS p2
 WHERE p1.oid != p2.oid AND
-    p1.opcamid = p2.opcamid AND p1.opcintype = p2.opcintype AND
+    p1.opcmethod = p2.opcmethod AND p1.opcintype = p2.opcintype AND
     p1.opcdefault AND p2.opcdefault;
 
 -- **************** pg_amop ****************
 
 -- Look for illegal values in pg_amop fields
 
-SELECT p1.amopclaid, p1.amopstrategy
+SELECT p1.amopfamily, p1.amopstrategy
 FROM pg_amop as p1
-WHERE p1.amopclaid = 0 OR p1.amopstrategy <= 0 OR p1.amopopr = 0;
+WHERE p1.amopfamily = 0 OR p1.amoplefttype = 0 OR p1.amoprighttype = 0
+    OR p1.amopopr = 0 OR p1.amopmethod = 0 OR p1.amopstrategy < 1;
+
+-- amoplefttype/amoprighttype must match the operator
+
+SELECT p1.oid, p2.oid
+FROM pg_amop AS p1, pg_operator AS p2
+WHERE p1.amopopr = p2.oid AND NOT
+    (p1.amoplefttype = p2.oprleft AND p1.amoprighttype = p2.oprright);
+
+-- amopmethod must match owning opfamily's opfmethod
+
+SELECT p1.oid, p2.oid
+FROM pg_amop AS p1, pg_opfamily AS p2
+WHERE p1.amopfamily = p2.oid AND p1.amopmethod != p2.opfmethod;
 
 -- Cross-check amopstrategy index against parent AM
 
-SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.amname
-FROM pg_amop AS p1, pg_am AS p2, pg_opclass AS p3
-WHERE p1.amopclaid = p3.oid AND p3.opcamid = p2.oid AND
+SELECT p1.amopfamily, p1.amopopr, p2.oid, p2.amname
+FROM pg_amop AS p1, pg_am AS p2
+WHERE p1.amopmethod = p2.oid AND
     p1.amopstrategy > p2.amstrategies AND p2.amstrategies <> 0;
 
 -- Detect missing pg_amop entries: should have as many strategy operators
--- as AM expects for each opclass for the AM.  When nondefault subtypes are
--- present, enforce condition separately for each subtype.
+-- as AM expects for each datatype combination supported by the opfamily.
 -- We can't check this for AMs with variable strategy sets.
 
-SELECT p1.oid, p1.amname, p2.oid, p2.opcname, p3.amopsubtype
-FROM pg_am AS p1, pg_opclass AS p2, pg_amop AS p3
-WHERE p2.opcamid = p1.oid AND p3.amopclaid = p2.oid AND
+SELECT p1.amname, p2.amoplefttype, p2.amoprighttype
+FROM pg_am AS p1, pg_amop AS p2
+WHERE p2.amopmethod = p1.oid AND
     p1.amstrategies <> 0 AND
-    p1.amstrategies != (SELECT count(*) FROM pg_amop AS p4
-                        WHERE p4.amopclaid = p2.oid AND
-                              p4.amopsubtype = p3.amopsubtype);
+    p1.amstrategies != (SELECT count(*) FROM pg_amop AS p3
+                        WHERE p3.amopfamily = p2.amopfamily AND
+                              p3.amoplefttype = p2.amoplefttype AND
+                              p3.amoprighttype = p2.amoprighttype);
 
 -- Check that amopopr points at a reasonable-looking operator, ie a binary
 -- operator yielding boolean.
 
-SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname
+SELECT p1.amopfamily, p1.amopopr, p2.oid, p2.oprname
 FROM pg_amop AS p1, pg_operator AS p2
 WHERE p1.amopopr = p2.oid AND
     (p2.oprkind != 'b' OR p2.oprresult != 'bool'::regtype);
@@ -671,86 +616,109 @@ WHERE p1.amopopr = p2.oid AND
 -- Make a list of all the distinct operator names being used in particular
 -- strategy slots.  This is a bit hokey, since the list might need to change
 -- in future releases, but it's an effective way of spotting mistakes such as
--- swapping two operators within a class.
+-- swapping two operators within a family.
 
-SELECT DISTINCT opcamid, amopstrategy, oprname
-FROM pg_amop p1 LEFT JOIN pg_opclass p2 ON amopclaid = p2.oid
-                LEFT JOIN pg_operator p3 ON amopopr = p3.oid
+SELECT DISTINCT amopmethod, amopstrategy, oprname
+FROM pg_amop p1 LEFT JOIN pg_operator p2 ON amopopr = p2.oid
 ORDER BY 1, 2, 3;
 
 -- Check that all operators linked to by opclass entries have selectivity
 -- estimators.  This is not absolutely required, but it seems a reasonable
 -- thing to insist on for all standard datatypes.
 
-SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname
+SELECT p1.amopfamily, p1.amopopr, p2.oid, p2.oprname
 FROM pg_amop AS p1, pg_operator AS p2
 WHERE p1.amopopr = p2.oid AND
     (p2.oprrest = 0 OR p2.oprjoin = 0);
 
--- Check that operator input types match the opclass
--- For 8.0, we require that oprleft match opcintype (possibly by coercion).
--- When amopsubtype is zero (default), oprright must equal oprleft;
--- when amopsubtype is not zero, oprright must equal amopsubtype.
+-- Check that each opclass in an opfamily has associated operators, that is
+-- ones whose oprleft matches opcintype (possibly by coercion).
 
-SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname, p3.opcname
-FROM pg_amop AS p1, pg_operator AS p2, pg_opclass AS p3
-WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
-    NOT binary_coercible(p3.opcintype, p2.oprleft);
-
-SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname, p3.opcname
-FROM pg_amop AS p1, pg_operator AS p2, pg_opclass AS p3
-WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
-    p1.amopsubtype = 0 AND
-    p2.oprleft != p2.oprright;
-
-SELECT p1.amopclaid, p1.amopopr, p2.oid, p2.oprname, p3.opcname
-FROM pg_amop AS p1, pg_operator AS p2, pg_opclass AS p3
-WHERE p1.amopopr = p2.oid AND p1.amopclaid = p3.oid AND
-    p1.amopsubtype != 0 AND
-    p1.amopsubtype != p2.oprright;
+SELECT p1.opcname, p1.opcfamily
+FROM pg_opclass AS p1
+WHERE NOT EXISTS(SELECT 1 FROM pg_amop AS p2
+                 WHERE p2.amopfamily = p1.opcfamily
+                   AND binary_coercible(p1.opcintype, p2.amoplefttype));
 
 -- Operators that are primary members of opclasses must be immutable (else
 -- it suggests that the index ordering isn't fixed).  Operators that are
 -- cross-type members need only be stable, since they are just shorthands
 -- for index probe queries.
 
-SELECT p1.amopclaid, p1.amopopr, p2.oprname, p3.prosrc
+SELECT p1.amopfamily, p1.amopopr, p2.oprname, p3.prosrc
 FROM pg_amop AS p1, pg_operator AS p2, pg_proc AS p3
 WHERE p1.amopopr = p2.oid AND p2.oprcode = p3.oid AND
-    p1.amopsubtype = 0 AND
+    p1.amoplefttype = p1.amoprighttype AND
     p3.provolatile != 'i';
 
-SELECT p1.amopclaid, p1.amopopr, p2.oprname, p3.prosrc
+SELECT p1.amopfamily, p1.amopopr, p2.oprname, p3.prosrc
 FROM pg_amop AS p1, pg_operator AS p2, pg_proc AS p3
 WHERE p1.amopopr = p2.oid AND p2.oprcode = p3.oid AND
-    p1.amopsubtype != 0 AND
+    p1.amoplefttype != p1.amoprighttype AND
     p3.provolatile = 'v';
+
+-- Multiple-datatype btree opclasses should provide closed sets of equality
+-- operators; that is if you provide int2 = int4 and int4 = int8 then you
+-- must also provide int2 = int8 (and commutators of all these).  This is
+-- necessary because the planner tries to deduce additional qual clauses from
+-- transitivity of mergejoinable operators.  If there are clauses
+-- int2var = int4var and int4var = int8var, the planner will deduce
+-- int2var = int8var ... and it had better have a way to represent it.
+
+-- check commutative closure
+SELECT p1.amoplefttype, p1.amoprighttype
+FROM pg_amop AS p1
+WHERE p1.amopmethod = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
+    p1.amopstrategy = 3 AND
+    p1.amoplefttype != p1.amoprighttype AND
+    NOT EXISTS(SELECT 1 FROM pg_amop p2 WHERE
+                 p2.amopfamily = p1.amopfamily AND
+                 p2.amoplefttype = p1.amoprighttype AND
+                 p2.amoprighttype = p1.amoplefttype AND
+                 p2.amopstrategy = 3);
+
+-- check transitive closure
+SELECT p1.amoplefttype, p1.amoprighttype, p2.amoprighttype
+FROM pg_amop AS p1, pg_amop AS p2
+WHERE p1.amopfamily = p2.amopfamily AND
+    p1.amoprighttype = p2.amoplefttype AND
+    p1.amopmethod = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
+    p2.amopmethod = (SELECT oid FROM pg_am WHERE amname = 'btree') AND
+    p1.amopstrategy = 3 AND p2.amopstrategy = 3 AND
+    p1.amoplefttype != p1.amoprighttype AND
+    p2.amoplefttype != p2.amoprighttype AND
+    NOT EXISTS(SELECT 1 FROM pg_amop p3 WHERE
+                 p3.amopfamily = p1.amopfamily AND
+                 p3.amoplefttype = p1.amoplefttype AND
+                 p3.amoprighttype = p2.amoprighttype AND
+                 p3.amopstrategy = 3);
 
 -- **************** pg_amproc ****************
 
 -- Look for illegal values in pg_amproc fields
 
-SELECT p1.amopclaid, p1.amprocnum
+SELECT p1.amprocfamily, p1.amprocnum
 FROM pg_amproc as p1
-WHERE p1.amopclaid = 0 OR p1.amprocnum <= 0 OR p1.amproc = 0;
+WHERE p1.amprocfamily = 0 OR p1.amproclefttype = 0 OR p1.amprocrighttype = 0
+    OR p1.amprocnum < 1 OR p1.amproc = 0;
 
 -- Cross-check amprocnum index against parent AM
 
-SELECT p1.amopclaid, p1.amprocnum, p2.oid, p2.amname
-FROM pg_amproc AS p1, pg_am AS p2, pg_opclass AS p3
-WHERE p1.amopclaid = p3.oid AND p3.opcamid = p2.oid AND
+SELECT p1.amprocfamily, p1.amprocnum, p2.oid, p2.amname
+FROM pg_amproc AS p1, pg_am AS p2, pg_opfamily AS p3
+WHERE p1.amprocfamily = p3.oid AND p3.opfmethod = p2.oid AND
     p1.amprocnum > p2.amsupport;
 
 -- Detect missing pg_amproc entries: should have as many support functions
--- as AM expects for each opclass for the AM.  When nondefault subtypes are
--- present, enforce condition separately for each subtype.
+-- as AM expects for each datatype combination supported by the opfamily.
 
-SELECT p1.oid, p1.amname, p2.oid, p2.opcname, p3.amprocsubtype
-FROM pg_am AS p1, pg_opclass AS p2, pg_amproc AS p3
-WHERE p2.opcamid = p1.oid AND p3.amopclaid = p2.oid AND
+SELECT p1.amname, p2.opfname, p3.amproclefttype, p3.amprocrighttype
+FROM pg_am AS p1, pg_opfamily AS p2, pg_amproc AS p3
+WHERE p2.opfmethod = p1.oid AND p3.amprocfamily = p2.oid AND
     p1.amsupport != (SELECT count(*) FROM pg_amproc AS p4
-                     WHERE p4.amopclaid = p2.oid AND
-                           p4.amprocsubtype = p3.amprocsubtype);
+                     WHERE p4.amprocfamily = p2.oid AND
+                           p4.amproclefttype = p3.amproclefttype AND
+                           p4.amprocrighttype = p3.amprocrighttype);
 
 -- Unfortunately, we can't check the amproc link very well because the
 -- signature of the function may be different for different support routines
@@ -759,85 +727,66 @@ WHERE p2.opcamid = p1.oid AND p3.amopclaid = p2.oid AND
 -- routine number take the same number of parameters, but that's about it
 -- for a general check...
 
-SELECT p1.amopclaid, p1.amprocnum,
+SELECT p1.amprocfamily, p1.amprocnum,
 	p2.oid, p2.proname,
-	p3.opcname,
-	p4.amopclaid, p4.amprocnum,
+	p3.opfname,
+	p4.amprocfamily, p4.amprocnum,
 	p5.oid, p5.proname,
-	p6.opcname
-FROM pg_amproc AS p1, pg_proc AS p2, pg_opclass AS p3,
-     pg_amproc AS p4, pg_proc AS p5, pg_opclass AS p6
-WHERE p1.amopclaid = p3.oid AND p4.amopclaid = p6.oid AND
-    p3.opcamid = p6.opcamid AND p1.amprocnum = p4.amprocnum AND
+	p6.opfname
+FROM pg_amproc AS p1, pg_proc AS p2, pg_opfamily AS p3,
+     pg_amproc AS p4, pg_proc AS p5, pg_opfamily AS p6
+WHERE p1.amprocfamily = p3.oid AND p4.amprocfamily = p6.oid AND
+    p3.opfmethod = p6.opfmethod AND p1.amprocnum = p4.amprocnum AND
     p1.amproc = p2.oid AND p4.amproc = p5.oid AND
     (p2.proretset OR p5.proretset OR p2.pronargs != p5.pronargs);
 
 -- For btree, though, we can do better since we know the support routines
--- must be of the form cmp(input, input) returns int4 in the default case
--- (subtype = 0), and cmp(input, subtype) returns int4 when subtype != 0.
+-- must be of the form cmp(lefttype, righttype) returns int4.
 
-SELECT p1.amopclaid, p1.amprocnum,
+SELECT p1.amprocfamily, p1.amprocnum,
 	p2.oid, p2.proname,
-	p3.opcname
-FROM pg_amproc AS p1, pg_proc AS p2, pg_opclass AS p3
-WHERE p3.opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
-    AND p1.amopclaid = p3.oid AND p1.amproc = p2.oid AND
-    amprocsubtype = 0 AND
-    (opckeytype != 0
-     OR amprocnum != 1
+	p3.opfname
+FROM pg_amproc AS p1, pg_proc AS p2, pg_opfamily AS p3
+WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'btree')
+    AND p1.amprocfamily = p3.oid AND p1.amproc = p2.oid AND
+    (amprocnum != 1
      OR proretset
-     OR prorettype != 23
+     OR prorettype != 'int4'::regtype
      OR pronargs != 2
-     OR NOT binary_coercible(opcintype, proargtypes[0])
-     OR proargtypes[0] != proargtypes[1]);
-
-SELECT p1.amopclaid, p1.amprocnum,
-	p2.oid, p2.proname,
-	p3.opcname
-FROM pg_amproc AS p1, pg_proc AS p2, pg_opclass AS p3
-WHERE p3.opcamid = (SELECT oid FROM pg_am WHERE amname = 'btree')
-    AND p1.amopclaid = p3.oid AND p1.amproc = p2.oid AND
-    amprocsubtype != 0 AND
-    (opckeytype != 0
-     OR amprocnum != 1
-     OR proretset
-     OR prorettype != 23
-     OR pronargs != 2
-     OR NOT binary_coercible(opcintype, proargtypes[0])
-     OR proargtypes[1] != amprocsubtype);
+     OR proargtypes[0] != amproclefttype
+     OR proargtypes[1] != amprocrighttype);
 
 -- For hash we can also do a little better: the support routines must be
--- of the form hash(something) returns int4.  Ideally we'd check that the
--- opcintype is binary-coercible to the function's input, but there are
--- enough cases where that fails that I'll just leave out the check for now.
+-- of the form hash(lefttype) returns int4.  There are several cases where
+-- we cheat and use a hash function that is physically compatible with the
+-- datatype even though there's no cast, so for now we can't check that.
 
-SELECT p1.amopclaid, p1.amprocnum,
+SELECT p1.amprocfamily, p1.amprocnum,
 	p2.oid, p2.proname,
-	p3.opcname
-FROM pg_amproc AS p1, pg_proc AS p2, pg_opclass AS p3
-WHERE p3.opcamid = (SELECT oid FROM pg_am WHERE amname = 'hash')
-    AND p1.amopclaid = p3.oid AND p1.amproc = p2.oid AND
-    (opckeytype != 0
-     OR amprocnum != 1
+	p3.opfname
+FROM pg_amproc AS p1, pg_proc AS p2, pg_opfamily AS p3
+WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'hash')
+    AND p1.amprocfamily = p3.oid AND p1.amproc = p2.oid AND
+    (amprocnum != 1
      OR proretset
-     OR prorettype != 23
+     OR prorettype != 'int4'::regtype
      OR pronargs != 1
---   OR NOT physically_coercible(opcintype, proargtypes[0])
-);
+--   OR NOT physically_coercible(amproclefttype, proargtypes[0])
+     OR amproclefttype != amprocrighttype);
 
--- Support routines that are primary members of opclasses must be immutable
+-- Support routines that are primary members of opfamilies must be immutable
 -- (else it suggests that the index ordering isn't fixed).  But cross-type
 -- members need only be stable, since they are just shorthands
 -- for index probe queries.
 
-SELECT p1.amopclaid, p1.amproc, p2.prosrc
+SELECT p1.amprocfamily, p1.amproc, p2.prosrc
 FROM pg_amproc AS p1, pg_proc AS p2
 WHERE p1.amproc = p2.oid AND
-    p1.amprocsubtype = 0 AND
+    p1.amproclefttype = p1.amprocrighttype AND
     p2.provolatile != 'i';
 
-SELECT p1.amopclaid, p1.amproc, p2.prosrc
+SELECT p1.amprocfamily, p1.amproc, p2.prosrc
 FROM pg_amproc AS p1, pg_proc AS p2
 WHERE p1.amproc = p2.oid AND
-    p1.amprocsubtype != 0 AND
+    p1.amproclefttype != p1.amprocrighttype AND
     p2.provolatile = 'v';

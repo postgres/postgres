@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.45 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.46 2006/12/23 00:43:08 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -26,8 +26,6 @@ CREATE OPERATOR <replaceable>name</replaceable> (
     [, COMMUTATOR = <replaceable class="parameter">com_op</replaceable> ] [, NEGATOR = <replaceable class="parameter">neg_op</replaceable> ]
     [, RESTRICT = <replaceable class="parameter">res_proc</replaceable> ] [, JOIN = <replaceable class="parameter">join_proc</replaceable> ]
     [, HASHES ] [, MERGES ]
-    [, SORT1 = <replaceable class="parameter">left_sort_op</replaceable> ] [, SORT2 = <replaceable class="parameter">right_sort_op</replaceable> ]
-    [, LTCMP = <replaceable class="parameter">less_than_op</replaceable> ] [, GTCMP = <replaceable class="parameter">greater_than_op</replaceable> ]
 )
 </synopsis>
  </refsynopsisdiv>
@@ -202,46 +200,6 @@ CREATE OPERATOR <replaceable>name</replaceable> (
        </para>
       </listitem>
      </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">left_sort_op</replaceable></term>
-      <listitem>
-       <para>
-        If this operator can support a merge join, the less-than
-        operator that sorts the left-hand data type of this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">right_sort_op</replaceable></term>
-      <listitem>
-       <para>
-        If this operator can support a merge join, the less-than
-        operator that sorts the right-hand data type of this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">less_than_op</replaceable></term>
-      <listitem>
-       <para>
-        If this operator can support a merge join, the less-than
-        operator that compares the input data types of this operator.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><replaceable class="parameter">greater_than_op</replaceable></term>
-      <listitem>
-       <para>
-        If this operator can support a merge join, the greater-than
-        operator that compares the input data types of this operator.
-       </para>
-      </listitem>
-     </varlistentry>
     </variablelist>
 
   <para>
@@ -259,6 +217,16 @@ COMMUTATOR = OPERATOR(myschema.===) ,
 
   <para>
    Refer to <xref linkend="xoper"> for further information.
+  </para>
+
+  <para>
+   The obsolete options <literal>SORT1</>, <literal>SORT2</>,
+   <literal>LTCMP</>, and <literal>GTCMP</> were formerly used to
+   specify the names of sort operators associated with a mergejoinable
+   operator.  This is no longer necessary, since information about
+   associated operators is found by looking at btree operator families
+   instead.  If one of these options is given, it is ignored except
+   for implicitly setting <literal>MERGES</> true.
   </para>
 
   <para>
@@ -285,11 +253,7 @@ CREATE OPERATOR === (
     NEGATOR = !==,
     RESTRICT = area_restriction_procedure,
     JOIN = area_join_procedure,
-    HASHES,
-    SORT1 = &lt;&lt;&lt;,
-    SORT2 = &lt;&lt;&lt;
-    -- Since sort operators were given, MERGES is implied.
-    -- LTCMP and GTCMP are assumed to be &lt; and &gt; respectively
+    HASHES, MERGES
 );
 </programlisting>  
   </para>

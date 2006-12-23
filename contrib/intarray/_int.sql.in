@@ -459,9 +459,9 @@ AS
 
 --GIN
 --mark built-in gin's _int4_ops as non default
-update pg_opclass set opcdefault = 'f' where 
-	pg_opclass.opcamid = (select pg_am.oid from pg_am where amname='gin') and
-	opcname = '_int4_ops';
+update pg_catalog.pg_opclass set opcdefault = 'f'
+where opcmethod = (select oid from pg_catalog.pg_am where amname='gin') and
+      opcname = '_int4_ops';
 
 CREATE FUNCTION ginint4_queryextract(internal, internal, int2)
 RETURNS internal

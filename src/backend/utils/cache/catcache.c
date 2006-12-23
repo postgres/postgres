@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.134 2006/10/06 18:23:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.135 2006/12/23 00:43:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1033,9 +1033,10 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 	if (cache->id == INDEXRELID)
 	{
 		/*
-		 * Since the OIDs of indexes aren't hardwired, it's painful to figure
-		 * out which is which.	Just force all pg_index searches to be heap
-		 * scans while building the relcaches.
+		 * Rather than tracking exactly which indexes have to be loaded
+		 * before we can use indexscans (which changes from time to time),
+		 * just force all pg_index searches to be heap scans until we've
+		 * built the critical relcaches.
 		 */
 		if (!criticalRelcachesBuilt)
 			return false;
@@ -1050,17 +1051,6 @@ IndexScanOK(CatCache *cache, ScanKey cur_skey)
 		 * just always do it.
 		 */
 		return false;
-	}
-	else if (cache->id == OPEROID)
-	{
-		if (!criticalRelcachesBuilt)
-		{
-			/* Looking for an OID comparison function? */
-			Oid			lookup_oid = DatumGetObjectId(cur_skey[0].sk_argument);
-
-			if (lookup_oid >= MIN_OIDCMP && lookup_oid <= MAX_OIDCMP)
-				return false;
-		}
 	}
 
 	/* Normal case, allow index scan */

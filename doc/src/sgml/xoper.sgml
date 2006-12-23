@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.36 2006/09/16 00:30:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.37 2006/12/23 00:43:08 tgl Exp $ -->
 
  <sect1 id="xoper">
   <title>User-Defined Operators</title>
@@ -342,13 +342,13 @@ table1.column1 OP table2.column2
 
     <para>
      To be marked <literal>HASHES</literal>, the join operator must appear
-     in a hash index operator class.  This is not enforced when you create
-     the operator, since of course the referencing operator class couldn't
+     in a hash index operator family.  This is not enforced when you create
+     the operator, since of course the referencing operator family couldn't
      exist yet.  But attempts to use the operator in hash joins will fail
-     at run time if no such operator class exists.  The system needs the
-     operator class to find the data-type-specific hash function for the
+     at run time if no such operator family exists.  The system needs the
+     operator family to find the data-type-specific hash function for the
      operator's input data type.  Of course, you must also supply a suitable
-     hash function before you can create the operator class.
+     hash function before you can create the operator family.
     </para>
 
     <para>
@@ -390,7 +390,7 @@ table1.column1 OP table2.column2
    </sect2>
 
    <sect2>
-    <title><literal>MERGES</> (<literal>SORT1</>, <literal>SORT2</>, <literal>LTCMP</>, <literal>GTCMP</>)</title>
+    <title><literal>MERGES</></title>
 
     <para>
      The <literal>MERGES</literal> clause, if present, tells the system that
@@ -418,36 +418,13 @@ table1.column1 OP table2.column2
     </para>
 
     <para>
-     Execution of a merge join requires that the system be able to identify
-     four operators related to the merge-join equality operator: less-than
-     comparison for the left operand data type, less-than comparison for the
-     right operand data type, less-than comparison between the two data types, and
-     greater-than comparison between the two data types.  (These are actually
-     four distinct operators if the merge-joinable operator has two different
-     operand data types; but when the operand types are the same the three
-     less-than operators are all the same operator.)
-     It is possible to
-     specify these operators individually by name, as the <literal>SORT1</>,
-     <literal>SORT2</>, <literal>LTCMP</>, and <literal>GTCMP</> options
-     respectively.  The system will fill in the default names
-     <literal>&lt;</>, <literal>&lt;</>, <literal>&lt;</>, <literal>&gt;</>
-     respectively if any of these are omitted when <literal>MERGES</> is
-     specified.  Also, <literal>MERGES</> will be assumed to be implied if any
-     of these four operator options appear, so it is possible to specify
-     just some of them and let the system fill in the rest.
-    </para>
-
-    <para>
-     The operand data types of the four comparison operators can be deduced
-     from the operand types of the merge-joinable operator, so just as with
-     <literal>COMMUTATOR</>, only the operator names need be given in these
-     clauses.  Unless you are using peculiar choices of operator names,
-     it's sufficient to write <literal>MERGES</> and let the system fill in
-     the details.
-     (As with <literal>COMMUTATOR</> and <literal>NEGATOR</>, the system is
-     able to make dummy
-     operator entries if you happen to define the equality operator before
-     the other ones.)
+     To be marked <literal>MERGES</literal>, the join operator must appear
+     in a btree index operator family.  This is not enforced when you create
+     the operator, since of course the referencing operator family couldn't
+     exist yet.  But the operator will not actually be used for merge joins
+     unless a matching operator family can be found.  The
+     <literal>MERGES</literal> flag thus acts as a hint to the planner that
+     it's worth looking for a matching operator family.
     </para>
 
     <para>
@@ -474,13 +451,6 @@ table1.column1 OP table2.column2
 	be transitive.
        </para>
       </listitem>
-
-      <listitem>
-       <para>
-        Bizarre results will ensue at run time if the four comparison
-	operators you name do not sort the data values compatibly.
-       </para>
-      </listitem>
      </itemizedlist>
     </para>
 
@@ -489,18 +459,6 @@ table1.column1 OP table2.column2
      The function underlying a merge-joinable operator must be marked
      immutable or stable.  If it is volatile, the system will never
      attempt to use the operator for a merge join.
-    </para>
-    </note>
-
-    <note>
-    <para>
-     In <productname>PostgreSQL</productname> versions before 7.3,
-     the <literal>MERGES</> shorthand was not available: to make a
-     merge-joinable operator one had to write both <literal>SORT1</> and
-     <literal>SORT2</> explicitly.  Also, the <literal>LTCMP</> and
-     <literal>GTCMP</>
-     options did not exist; the names of those operators were hardwired as
-     <literal>&lt;</> and <literal>&gt;</> respectively.
     </para>
     </note>
    </sect2>

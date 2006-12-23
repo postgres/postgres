@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.22 2006/10/04 00:30:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.23 2006/12/23 00:43:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,17 +165,30 @@ lookup_type_cache(Oid type_id, int flags)
 	/* If we haven't already found the opclass, try to do so */
 	if ((flags & (TYPECACHE_EQ_OPR | TYPECACHE_LT_OPR | TYPECACHE_GT_OPR |
 				  TYPECACHE_CMP_PROC |
-				  TYPECACHE_EQ_OPR_FINFO | TYPECACHE_CMP_PROC_FINFO)) &&
-		typentry->btree_opc == InvalidOid)
+				  TYPECACHE_EQ_OPR_FINFO | TYPECACHE_CMP_PROC_FINFO |
+				  TYPECACHE_BTREE_OPFAMILY)) &&
+		typentry->btree_opf == InvalidOid)
 	{
-		typentry->btree_opc = GetDefaultOpClass(type_id,
-												BTREE_AM_OID);
-		/* Only care about hash opclass if no btree opclass... */
-		if (typentry->btree_opc == InvalidOid)
+		Oid		opclass;
+
+		opclass = GetDefaultOpClass(type_id, BTREE_AM_OID);
+		if (OidIsValid(opclass))
 		{
-			if (typentry->hash_opc == InvalidOid)
-				typentry->hash_opc = GetDefaultOpClass(type_id,
-													   HASH_AM_OID);
+			typentry->btree_opf = get_opclass_family(opclass);
+			typentry->btree_opintype = get_opclass_input_type(opclass);
+		}
+		/* Only care about hash opclass if no btree opclass... */
+		if (typentry->btree_opf == InvalidOid)
+		{
+			if (typentry->hash_opf == InvalidOid)
+			{
+				opclass = GetDefaultOpClass(type_id, HASH_AM_OID);
+				if (OidIsValid(opclass))
+				{
+					typentry->hash_opf = get_opclass_family(opclass);
+					typentry->hash_opintype = get_opclass_input_type(opclass);
+				}
+			}
 		}
 		else
 		{
@@ -193,37 +206,42 @@ lookup_type_cache(Oid type_id, int flags)
 	if ((flags & (TYPECACHE_EQ_OPR | TYPECACHE_EQ_OPR_FINFO)) &&
 		typentry->eq_opr == InvalidOid)
 	{
-		if (typentry->btree_opc != InvalidOid)
-			typentry->eq_opr = get_opclass_member(typentry->btree_opc,
-												  InvalidOid,
-												  BTEqualStrategyNumber);
+		if (typentry->btree_opf != InvalidOid)
+			typentry->eq_opr = get_opfamily_member(typentry->btree_opf,
+												   typentry->btree_opintype,
+												   typentry->btree_opintype,
+												   BTEqualStrategyNumber);
 		if (typentry->eq_opr == InvalidOid &&
-			typentry->hash_opc != InvalidOid)
-			typentry->eq_opr = get_opclass_member(typentry->hash_opc,
-												  InvalidOid,
-												  HTEqualStrategyNumber);
+			typentry->hash_opf != InvalidOid)
+			typentry->eq_opr = get_opfamily_member(typentry->hash_opf,
+												   typentry->hash_opintype,
+												   typentry->hash_opintype,
+												   HTEqualStrategyNumber);
 	}
 	if ((flags & TYPECACHE_LT_OPR) && typentry->lt_opr == InvalidOid)
 	{
-		if (typentry->btree_opc != InvalidOid)
-			typentry->lt_opr = get_opclass_member(typentry->btree_opc,
-												  InvalidOid,
-												  BTLessStrategyNumber);
+		if (typentry->btree_opf != InvalidOid)
+			typentry->lt_opr = get_opfamily_member(typentry->btree_opf,
+												   typentry->btree_opintype,
+												   typentry->btree_opintype,
+												   BTLessStrategyNumber);
 	}
 	if ((flags & TYPECACHE_GT_OPR) && typentry->gt_opr == InvalidOid)
 	{
-		if (typentry->btree_opc != InvalidOid)
-			typentry->gt_opr = get_opclass_member(typentry->btree_opc,
-												  InvalidOid,
-												  BTGreaterStrategyNumber);
+		if (typentry->btree_opf != InvalidOid)
+			typentry->gt_opr = get_opfamily_member(typentry->btree_opf,
+												   typentry->btree_opintype,
+												   typentry->btree_opintype,
+												   BTGreaterStrategyNumber);
 	}
 	if ((flags & (TYPECACHE_CMP_PROC | TYPECACHE_CMP_PROC_FINFO)) &&
 		typentry->cmp_proc == InvalidOid)
 	{
-		if (typentry->btree_opc != InvalidOid)
-			typentry->cmp_proc = get_opclass_proc(typentry->btree_opc,
-												  InvalidOid,
-												  BTORDER_PROC);
+		if (typentry->btree_opf != InvalidOid)
+			typentry->cmp_proc = get_opfamily_proc(typentry->btree_opf,
+												   typentry->btree_opintype,
+												   typentry->btree_opintype,
+												   BTORDER_PROC);
 	}
 
 	/*

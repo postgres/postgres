@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.95 2006/07/13 17:47:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.96 2006/12/23 00:43:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,13 +65,17 @@ DECLARE_UNIQUE_INDEX(pg_am_name_index, 2651, on pg_am using btree(amname name_op
 DECLARE_UNIQUE_INDEX(pg_am_oid_index, 2652, on pg_am using btree(oid oid_ops));
 #define AmOidIndexId  2652
 
-DECLARE_UNIQUE_INDEX(pg_amop_opc_strat_index, 2653, on pg_amop using btree(amopclaid oid_ops, amopsubtype oid_ops, amopstrategy int2_ops));
+DECLARE_UNIQUE_INDEX(pg_amop_fam_strat_index, 2653, on pg_amop using btree(amopfamily oid_ops, amoplefttype oid_ops, amoprighttype oid_ops, amopstrategy int2_ops));
 #define AccessMethodStrategyIndexId  2653
-DECLARE_UNIQUE_INDEX(pg_amop_opr_opc_index, 2654, on pg_amop using btree(amopopr oid_ops, amopclaid oid_ops));
+DECLARE_UNIQUE_INDEX(pg_amop_opr_fam_index, 2654, on pg_amop using btree(amopopr oid_ops, amopfamily oid_ops));
 #define AccessMethodOperatorIndexId  2654
+DECLARE_UNIQUE_INDEX(pg_amop_oid_index, 2756, on pg_amop using btree(oid oid_ops));
+#define AccessMethodOperatorOidIndexId  2756
 
-DECLARE_UNIQUE_INDEX(pg_amproc_opc_proc_index, 2655, on pg_amproc using btree(amopclaid oid_ops, amprocsubtype oid_ops, amprocnum int2_ops));
+DECLARE_UNIQUE_INDEX(pg_amproc_fam_proc_index, 2655, on pg_amproc using btree(amprocfamily oid_ops, amproclefttype oid_ops, amprocrighttype oid_ops, amprocnum int2_ops));
 #define AccessMethodProcedureIndexId  2655
+DECLARE_UNIQUE_INDEX(pg_amproc_oid_index, 2757, on pg_amproc using btree(oid oid_ops));
+#define AccessMethodProcedureOidIndexId  2757
 
 DECLARE_UNIQUE_INDEX(pg_attrdef_adrelid_adnum_index, 2656, on pg_attrdef using btree(adrelid oid_ops, adnum int2_ops));
 #define AttrDefaultIndexId	2656
@@ -164,7 +168,7 @@ DECLARE_UNIQUE_INDEX(pg_namespace_nspname_index, 2684, on pg_namespace using btr
 DECLARE_UNIQUE_INDEX(pg_namespace_oid_index, 2685, on pg_namespace using btree(oid oid_ops));
 #define NamespaceOidIndexId  2685
 
-DECLARE_UNIQUE_INDEX(pg_opclass_am_name_nsp_index, 2686, on pg_opclass using btree(opcamid oid_ops, opcname name_ops, opcnamespace oid_ops));
+DECLARE_UNIQUE_INDEX(pg_opclass_am_name_nsp_index, 2686, on pg_opclass using btree(opcmethod oid_ops, opcname name_ops, opcnamespace oid_ops));
 #define OpclassAmNameNspIndexId  2686
 DECLARE_UNIQUE_INDEX(pg_opclass_oid_index, 2687, on pg_opclass using btree(oid oid_ops));
 #define OpclassOidIndexId  2687
@@ -173,6 +177,11 @@ DECLARE_UNIQUE_INDEX(pg_operator_oid_index, 2688, on pg_operator using btree(oid
 #define OperatorOidIndexId	2688
 DECLARE_UNIQUE_INDEX(pg_operator_oprname_l_r_n_index, 2689, on pg_operator using btree(oprname name_ops, oprleft oid_ops, oprright oid_ops, oprnamespace oid_ops));
 #define OperatorNameNspIndexId	2689
+
+DECLARE_UNIQUE_INDEX(pg_opfamily_am_name_nsp_index, 2754, on pg_opfamily using btree(opfmethod oid_ops, opfname name_ops, opfnamespace oid_ops));
+#define OpfamilyAmNameNspIndexId  2754
+DECLARE_UNIQUE_INDEX(pg_opfamily_oid_index, 2755, on pg_opfamily using btree(oid oid_ops));
+#define OpfamilyOidIndexId  2755
 
 DECLARE_UNIQUE_INDEX(pg_pltemplate_name_index, 1137, on pg_pltemplate using btree(tmplname name_ops));
 #define PLTemplateNameIndexId  1137

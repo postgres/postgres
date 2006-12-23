@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.128 2006/10/04 00:30:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.129 2006/12/23 00:43:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,11 +300,11 @@ typedef struct RelOptInfo
  *		and indexes, but that created confusion without actually doing anything
  *		useful.  So now we have a separate IndexOptInfo struct for indexes.
  *
- *		classlist[], indexkeys[], and ordering[] have ncolumns entries.
+ *		opfamily[], indexkeys[], and ordering[] have ncolumns entries.
  *		Zeroes in the indexkeys[] array indicate index columns that are
  *		expressions; there is one element in indexprs for each such column.
  *
- *		Note: for historical reasons, the classlist and ordering arrays have
+ *		Note: for historical reasons, the opfamily and ordering arrays have
  *		an extra entry that is always zero.  Some code scans until it sees a
  *		zero entry, rather than looking at ncolumns.
  *
@@ -326,7 +326,7 @@ typedef struct IndexOptInfo
 
 	/* index descriptor information */
 	int			ncolumns;		/* number of columns in index */
-	Oid		   *classlist;		/* OIDs of operator classes for columns */
+	Oid		   *opfamily;		/* OIDs of operator families for columns */
 	int		   *indexkeys;		/* column numbers of index's keys, or 0 */
 	Oid		   *ordering;		/* OIDs of sort operators for each column */
 	Oid			relam;			/* OID of the access method (in pg_am) */
@@ -611,7 +611,9 @@ typedef JoinPath NestPath;
  * A mergejoin path has these fields.
  *
  * path_mergeclauses lists the clauses (in the form of RestrictInfos)
- * that will be used in the merge.
+ * that will be used in the merge.  The parallel lists path_mergefamilies
+ * and path_mergestrategies specify the merge semantics for each clause
+ * (in effect, defining the relevant sort ordering for each clause).
  *
  * Note that the mergeclauses are a subset of the parent relation's
  * restriction-clause list.  Any join clauses that are not mergejoinable
@@ -628,6 +630,8 @@ typedef struct MergePath
 {
 	JoinPath	jpath;
 	List	   *path_mergeclauses;		/* join clauses to be used for merge */
+	List	   *path_mergefamilies;		/* OID list of btree opfamilies */
+	List	   *path_mergestrategies;	/* integer list of btree strategies */
 	List	   *outersortkeys;	/* keys for explicit sort, if any */
 	List	   *innersortkeys;	/* keys for explicit sort, if any */
 } MergePath;
@@ -780,6 +784,7 @@ typedef struct RestrictInfo
 	Oid			mergejoinoperator;		/* copy of clause operator */
 	Oid			left_sortop;	/* leftside sortop needed for mergejoin */
 	Oid			right_sortop;	/* rightside sortop needed for mergejoin */
+	Oid			mergeopfamily;	/* btree opfamily relating these ops */
 
 	/* cache space for mergeclause processing; NIL if not yet set */
 	List	   *left_pathkey;	/* canonical pathkey for left side */

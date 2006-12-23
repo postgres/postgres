@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.107 2006/10/04 00:30:10 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.108 2006/12/23 00:43:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,16 +26,22 @@ typedef enum IOFuncSelector
 	IOFunc_send
 } IOFuncSelector;
 
-extern bool op_in_opclass(Oid opno, Oid opclass);
-extern int	get_op_opclass_strategy(Oid opno, Oid opclass);
-extern void get_op_opclass_properties(Oid opno, Oid opclass,
-						  int *strategy, Oid *subtype,
+extern bool op_in_opfamily(Oid opno, Oid opfamily);
+extern int	get_op_opfamily_strategy(Oid opno, Oid opfamily);
+extern void get_op_opfamily_properties(Oid opno, Oid opfamily,
+						  int *strategy,
+						  Oid *lefttype,
+						  Oid *righttype,
 						  bool *recheck);
-extern Oid	get_opclass_member(Oid opclass, Oid subtype, int16 strategy);
+extern Oid	get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
+								int16 strategy);
+extern bool get_op_mergejoin_info(Oid eq_op, Oid *left_sortop,
+					  Oid *right_sortop, Oid *opfamily);
 extern Oid	get_op_hash_function(Oid opno);
 extern void get_op_btree_interpretation(Oid opno,
-							List **opclasses, List **opstrats);
-extern Oid	get_opclass_proc(Oid opclass, Oid subtype, int16 procnum);
+							List **opfamilies, List **opstrats);
+extern Oid	get_opfamily_proc(Oid opfamily, Oid lefttype, Oid righttype,
+							  int16 procnum);
 extern char *get_attname(Oid relid, AttrNumber attnum);
 extern char *get_relid_attribute_name(Oid relid, AttrNumber attnum);
 extern AttrNumber get_attnum(Oid relid, const char *attname);
@@ -43,16 +49,12 @@ extern Oid	get_atttype(Oid relid, AttrNumber attnum);
 extern int32 get_atttypmod(Oid relid, AttrNumber attnum);
 extern void get_atttypetypmod(Oid relid, AttrNumber attnum,
 				  Oid *typid, int32 *typmod);
-extern bool opclass_is_btree(Oid opclass);
-extern bool opclass_is_hash(Oid opclass);
-extern bool opclass_is_default(Oid opclass);
+extern Oid	get_opclass_family(Oid opclass);
 extern Oid	get_opclass_input_type(Oid opclass);
 extern RegProcedure get_opcode(Oid opno);
 extern char *get_opname(Oid opno);
 extern void op_input_types(Oid opno, Oid *lefttype, Oid *righttype);
-extern bool op_mergejoinable(Oid opno, Oid *leftOp, Oid *rightOp);
-extern void op_mergejoin_crossops(Oid opno, Oid *ltop, Oid *gtop,
-					  RegProcedure *ltproc, RegProcedure *gtproc);
+extern bool op_mergejoinable(Oid opno);
 extern bool op_hashjoinable(Oid opno);
 extern bool op_strict(Oid opno);
 extern char op_volatile(Oid opno);

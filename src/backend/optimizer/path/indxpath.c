@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.212 2006/10/04 00:29:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.213 2006/12/23 00:43:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +19,8 @@
 
 #include "access/skey.h"
 #include "catalog/pg_am.h"
-#include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_opfamily.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
@@ -40,10 +40,10 @@
 /*
  * DoneMatchingIndexKeys() - MACRO
  */
-#define DoneMatchingIndexKeys(classes)	(classes[0] == InvalidOid)
+#define DoneMatchingIndexKeys(families)	(families[0] == InvalidOid)
 
-#define IsBooleanOpclass(opclass) \
-	((opclass) == BOOL_BTREE_OPS_OID || (opclass) == BOOL_HASH_OPS_OID)
+#define IsBooleanOpfamily(opfamily) \
+	((opfamily) == BOOL_BTREE_FAM_OID || (opfamily) == BOOL_HASH_FAM_OID)
 
 
 static List *find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
@@ -61,15 +61,15 @@ static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel,
 static List *pull_indexpath_quals(Path *bitmapqual);
 static bool lists_intersect_ptr(List *list1, List *list2);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
-						 int indexcol, Oid opclass,
+						 int indexcol, Oid opfamily,
 						 RestrictInfo *rinfo,
 						 Relids outer_relids,
 						 SaOpControl saop_control);
-static bool is_indexable_operator(Oid expr_op, Oid opclass,
+static bool is_indexable_operator(Oid expr_op, Oid opfamily,
 					  bool indexkey_on_left);
 static bool match_rowcompare_to_indexcol(IndexOptInfo *index,
 							 int indexcol,
-							 Oid opclass,
+							 Oid opfamily,
 							 RowCompareExpr *clause,
 							 Relids outer_relids);
 static Relids indexable_outerrelids(RelOptInfo *rel);
@@ -89,17 +89,17 @@ static bool match_index_to_query_keys(PlannerInfo *root,
 						  List *ignorables);
 static bool match_boolean_index_clause(Node *clause, int indexcol,
 						   IndexOptInfo *index);
-static bool match_special_index_operator(Expr *clause, Oid opclass,
+static bool match_special_index_operator(Expr *clause, Oid opfamily,
 							 bool indexkey_on_left);
 static Expr *expand_boolean_index_clause(Node *clause, int indexcol,
 							IndexOptInfo *index);
-static List *expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass);
+static List *expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily);
 static RestrictInfo *expand_indexqual_rowcompare(RestrictInfo *rinfo,
 							IndexOptInfo *index,
 							int indexcol);
-static List *prefix_quals(Node *leftop, Oid opclass,
+static List *prefix_quals(Node *leftop, Oid opfamily,
 			 Const *prefix, Pattern_Prefix_Status pstatus);
-static List *network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass,
+static List *network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily,
 					 Datum rightop);
 static Datum string_to_datum(const char *str, Oid datatype);
 static Const *string_to_const(const char *str, Oid datatype);
@@ -858,7 +858,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 	List	   *clausegroup_list = NIL;
 	bool		found_outer_clause = false;
 	int			indexcol = 0;
-	Oid		   *classes = index->classlist;
+	Oid		   *families = index->opfamily;
 
 	*found_clause = false;		/* default result */
 
@@ -867,7 +867,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 
 	do
 	{
-		Oid			curClass = classes[0];
+		Oid			curFamily = families[0];
 		List	   *clausegroup = NIL;
 		ListCell   *l;
 
@@ -879,7 +879,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 			Assert(IsA(rinfo, RestrictInfo));
 			if (match_clause_to_indexcol(index,
 										 indexcol,
-										 curClass,
+										 curFamily,
 										 rinfo,
 										 outer_relids,
 										 saop_control))
@@ -899,7 +899,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 			Assert(IsA(rinfo, RestrictInfo));
 			if (match_clause_to_indexcol(index,
 										 indexcol,
-										 curClass,
+										 curFamily,
 										 rinfo,
 										 outer_relids,
 										 saop_control))
@@ -918,9 +918,9 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 		clausegroup_list = lappend(clausegroup_list, clausegroup);
 
 		indexcol++;
-		classes++;
+		families++;
 
-	} while (!DoneMatchingIndexKeys(classes));
+	} while (!DoneMatchingIndexKeys(families));
 
 	if (!*found_clause && !found_outer_clause)
 		return NIL;				/* no indexable clauses anywhere */
@@ -937,7 +937,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
  *
  *	  (1)  must be in the form (indexkey op const) or (const op indexkey);
  *		   and
- *	  (2)  must contain an operator which is in the same class as the index
+ *	  (2)  must contain an operator which is in the same family as the index
  *		   operator for this column, or is a "special" operator as recognized
  *		   by match_special_index_operator().
  *
@@ -978,7 +978,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
  *
  * 'index' is the index of interest.
  * 'indexcol' is a column number of 'index' (counting from 0).
- * 'opclass' is the corresponding operator class.
+ * 'opfamily' is the corresponding operator family.
  * 'rinfo' is the clause to be tested (as a RestrictInfo node).
  * 'saop_control' indicates whether ScalarArrayOpExpr clauses can be used.
  *
@@ -990,7 +990,7 @@ group_clauses_by_indexkey(IndexOptInfo *index,
 static bool
 match_clause_to_indexcol(IndexOptInfo *index,
 						 int indexcol,
-						 Oid opclass,
+						 Oid opfamily,
 						 RestrictInfo *rinfo,
 						 Relids outer_relids,
 						 SaOpControl saop_control)
@@ -1013,7 +1013,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		return false;
 
 	/* First check for boolean-index cases. */
-	if (IsBooleanOpclass(opclass))
+	if (IsBooleanOpfamily(opfamily))
 	{
 		if (match_boolean_index_clause((Node *) clause, indexcol, index))
 			return true;
@@ -1052,7 +1052,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 	}
 	else if (clause && IsA(clause, RowCompareExpr))
 	{
-		return match_rowcompare_to_indexcol(index, indexcol, opclass,
+		return match_rowcompare_to_indexcol(index, indexcol, opfamily,
 											(RowCompareExpr *) clause,
 											outer_relids);
 	}
@@ -1067,15 +1067,15 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		bms_is_subset(right_relids, outer_relids) &&
 		!contain_volatile_functions(rightop))
 	{
-		if (is_indexable_operator(expr_op, opclass, true))
+		if (is_indexable_operator(expr_op, opfamily, true))
 			return true;
 
 		/*
-		 * If we didn't find a member of the index's opclass, see whether it
+		 * If we didn't find a member of the index's opfamily, see whether it
 		 * is a "special" indexable operator.
 		 */
 		if (plain_op &&
-			match_special_index_operator(clause, opclass, true))
+			match_special_index_operator(clause, opfamily, true))
 			return true;
 		return false;
 	}
@@ -1085,14 +1085,14 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		bms_is_subset(left_relids, outer_relids) &&
 		!contain_volatile_functions(leftop))
 	{
-		if (is_indexable_operator(expr_op, opclass, false))
+		if (is_indexable_operator(expr_op, opfamily, false))
 			return true;
 
 		/*
-		 * If we didn't find a member of the index's opclass, see whether it
+		 * If we didn't find a member of the index's opfamily, see whether it
 		 * is a "special" indexable operator.
 		 */
-		if (match_special_index_operator(clause, opclass, false))
+		if (match_special_index_operator(clause, opfamily, false))
 			return true;
 		return false;
 	}
@@ -1102,14 +1102,14 @@ match_clause_to_indexcol(IndexOptInfo *index,
 
 /*
  * is_indexable_operator
- *	  Does the operator match the specified index opclass?
+ *	  Does the operator match the specified index opfamily?
  *
  * If the indexkey is on the right, what we actually want to know
  * is whether the operator has a commutator operator that matches
- * the opclass.
+ * the opfamily.
  */
 static bool
-is_indexable_operator(Oid expr_op, Oid opclass, bool indexkey_on_left)
+is_indexable_operator(Oid expr_op, Oid opfamily, bool indexkey_on_left)
 {
 	/* Get the commuted operator if necessary */
 	if (!indexkey_on_left)
@@ -1119,8 +1119,8 @@ is_indexable_operator(Oid expr_op, Oid opclass, bool indexkey_on_left)
 			return false;
 	}
 
-	/* OK if the (commuted) operator is a member of the index's opclass */
-	return op_in_opclass(expr_op, opclass);
+	/* OK if the (commuted) operator is a member of the index's opfamily */
+	return op_in_opfamily(expr_op, opfamily);
 }
 
 /*
@@ -1131,7 +1131,7 @@ is_indexable_operator(Oid expr_op, Oid opclass, bool indexkey_on_left)
 static bool
 match_rowcompare_to_indexcol(IndexOptInfo *index,
 							 int indexcol,
-							 Oid opclass,
+							 Oid opfamily,
 							 RowCompareExpr *clause,
 							 Relids outer_relids)
 {
@@ -1144,13 +1144,14 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 		return false;
 
 	/*
-	 * We could do the matching on the basis of insisting that the opclass
-	 * shown in the RowCompareExpr be the same as the index column's opclass,
-	 * but that does not work well for cross-type comparisons (the opclass
-	 * could be for the other datatype).  Also it would fail to handle indexes
-	 * using reverse-sort opclasses.  Instead, match if the operator listed in
-	 * the RowCompareExpr is the < <= > or >= member of the index opclass
-	 * (after commutation, if the indexkey is on the right).
+	 * We could do the matching on the basis of insisting that the opfamily
+	 * shown in the RowCompareExpr be the same as the index column's opfamily,
+	 * but that could fail in the presence of reverse-sort opfamilies: it'd
+	 * be a matter of chance whether RowCompareExpr had picked the forward
+	 * or reverse-sort family.  So look only at the operator, and match
+	 * if it is a member of the index's opfamily (after commutation, if the
+	 * indexkey is on the right).  We'll worry later about whether any
+	 * additional operators are matchable to the index.
 	 */
 	leftop = (Node *) linitial(clause->largs);
 	rightop = (Node *) linitial(clause->rargs);
@@ -1177,8 +1178,8 @@ match_rowcompare_to_indexcol(IndexOptInfo *index,
 	else
 		return false;
 
-	/* We're good if the operator is the right type of opclass member */
-	switch (get_op_opclass_strategy(expr_op, opclass))
+	/* We're good if the operator is the right type of opfamily member */
+	switch (get_op_opfamily_strategy(expr_op, opfamily))
 	{
 		case BTLessStrategyNumber:
 		case BTLessEqualStrategyNumber:
@@ -1316,23 +1317,23 @@ matches_any_index(RestrictInfo *rinfo, RelOptInfo *rel, Relids outer_relids)
 	{
 		IndexOptInfo *index = (IndexOptInfo *) lfirst(l);
 		int			indexcol = 0;
-		Oid		   *classes = index->classlist;
+		Oid		   *families = index->opfamily;
 
 		do
 		{
-			Oid			curClass = classes[0];
+			Oid			curFamily = families[0];
 
 			if (match_clause_to_indexcol(index,
 										 indexcol,
-										 curClass,
+										 curFamily,
 										 rinfo,
 										 outer_relids,
 										 SAOP_ALLOW))
 				return true;
 
 			indexcol++;
-			classes++;
-		} while (!DoneMatchingIndexKeys(classes));
+			families++;
+		} while (!DoneMatchingIndexKeys(families));
 	}
 
 	return false;
@@ -1601,11 +1602,11 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
  * Note: it would be possible to similarly ignore useless ORDER BY items;
  * that is, an index on just y could be considered to match the ordering of
  *		... WHERE x = 42 ORDER BY x, y;
- * But proving that this is safe would require finding a btree opclass
+ * But proving that this is safe would require finding a btree opfamily
  * containing both the = operator and the < or > operator in the ORDER BY
  * item.  That's significantly more expensive than what we do here, since
  * we'd have to look at restriction clauses unrelated to the current index
- * and search for opclasses without any hint from the index.  The practical
+ * and search for opfamilies without any hint from the index.  The practical
  * use-cases seem to be mostly covered by ignoring index columns, so that's
  * all we do for now.
  *
@@ -1627,7 +1628,7 @@ match_variant_ordering(PlannerInfo *root,
 
 	/*
 	 * Forget the whole thing if not a btree index; our check for ignorable
-	 * columns assumes we are dealing with btree opclasses.  (It'd be possible
+	 * columns assumes we are dealing with btree opfamilies.  (It'd be possible
 	 * to factor out just the try for backwards indexscan, but considering
 	 * that we presently have no orderable indexes except btrees anyway, it's
 	 * hardly worth contorting this code for that case.)
@@ -1685,7 +1686,7 @@ identify_ignorable_ordering_cols(PlannerInfo *root,
 	foreach(l, restrictclauses)
 	{
 		List	   *sublist = (List *) lfirst(l);
-		Oid			opclass = index->classlist[indexcol];
+		Oid			opfamily = index->opfamily[indexcol];
 		ListCell   *l2;
 
 		foreach(l2, sublist)
@@ -1698,7 +1699,7 @@ identify_ignorable_ordering_cols(PlannerInfo *root,
 			bool		ispc;
 
 			/* First check for boolean-index cases. */
-			if (IsBooleanOpclass(opclass))
+			if (IsBooleanOpfamily(opfamily))
 			{
 				if (match_boolean_index_clause((Node *) clause, indexcol,
 											   index))
@@ -1729,18 +1730,18 @@ identify_ignorable_ordering_cols(PlannerInfo *root,
 			{
 				Assert(match_index_to_operand(lsecond(clause->args), indexcol,
 											  index));
-				/* Must flip operator to get the opclass member */
+				/* Must flip operator to get the opfamily member */
 				clause_op = get_commutator(clause_op);
 				varonleft = false;
 			}
 			if (!OidIsValid(clause_op))
 				continue;		/* ignore non match, per next comment */
-			op_strategy = get_op_opclass_strategy(clause_op, opclass);
+			op_strategy = get_op_opfamily_strategy(clause_op, opfamily);
 
 			/*
 			 * You might expect to see Assert(op_strategy != 0) here, but you
 			 * won't: the clause might contain a special indexable operator
-			 * rather than an ordinary opclass member.	Currently none of the
+			 * rather than an ordinary opfamily member.	Currently none of the
 			 * special operators are very likely to expand to an equality
 			 * operator; we do not bother to check, but just assume no match.
 			 */
@@ -1968,7 +1969,7 @@ match_index_to_operand(Node *operand,
  *
  * match_special_index_operator() is just an auxiliary function for
  * match_clause_to_indexcol(); after the latter fails to recognize a
- * restriction opclause's operator as a member of an index's opclass,
+ * restriction opclause's operator as a member of an index's opfamily,
  * it asks match_special_index_operator() whether the clause should be
  * considered an indexqual anyway.
  *
@@ -1978,7 +1979,7 @@ match_index_to_operand(Node *operand,
  * expand_indexqual_conditions() converts a list of lists of RestrictInfo
  * nodes (with implicit AND semantics across list elements) into
  * a list of clauses that the executor can actually handle.  For operators
- * that are members of the index's opclass this transformation is a no-op,
+ * that are members of the index's opfamily this transformation is a no-op,
  * but clauses recognized by match_special_index_operator() or
  * match_boolean_index_clause() must be converted into one or more "regular"
  * indexqual conditions.
@@ -1989,8 +1990,8 @@ match_index_to_operand(Node *operand,
  * match_boolean_index_clause
  *	  Recognize restriction clauses that can be matched to a boolean index.
  *
- * This should be called only when IsBooleanOpclass() recognizes the
- * index's operator class.  We check to see if the clause matches the
+ * This should be called only when IsBooleanOpfamily() recognizes the
+ * index's operator family.  We check to see if the clause matches the
  * index's key.
  */
 static bool
@@ -2034,11 +2035,11 @@ match_boolean_index_clause(Node *clause,
  *
  * The given clause is already known to be a binary opclause having
  * the form (indexkey OP pseudoconst) or (pseudoconst OP indexkey),
- * but the OP proved not to be one of the index's opclass operators.
+ * but the OP proved not to be one of the index's opfamily operators.
  * Return 'true' if we can do something with it anyway.
  */
 static bool
-match_special_index_operator(Expr *clause, Oid opclass,
+match_special_index_operator(Expr *clause, Oid opfamily,
 							 bool indexkey_on_left)
 {
 	bool		isIndexable = false;
@@ -2122,12 +2123,12 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		return false;
 
 	/*
-	 * Must also check that index's opclass supports the operators we will
+	 * Must also check that index's opfamily supports the operators we will
 	 * want to apply.  (A hash index, for example, will not support ">=".)
 	 * Currently, only btree supports the operators we need.
 	 *
-	 * We insist on the opclass being the specific one we expect, else we'd do
-	 * the wrong thing if someone were to make a reverse-sort opclass with the
+	 * We insist on the opfamily being the specific one we expect, else we'd do
+	 * the wrong thing if someone were to make a reverse-sort opfamily with the
 	 * same operators.
 	 */
 	switch (expr_op)
@@ -2136,12 +2137,9 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_TEXT_ICLIKE_OP:
 		case OID_TEXT_REGEXEQ_OP:
 		case OID_TEXT_ICREGEXEQ_OP:
-			/* text operators will be used for varchar inputs, too */
 			isIndexable =
-				(opclass == TEXT_PATTERN_BTREE_OPS_OID) ||
-				(opclass == TEXT_BTREE_OPS_OID && lc_collate_is_c()) ||
-				(opclass == VARCHAR_PATTERN_BTREE_OPS_OID) ||
-				(opclass == VARCHAR_BTREE_OPS_OID && lc_collate_is_c());
+				(opfamily == TEXT_PATTERN_BTREE_FAM_OID) ||
+				(opfamily == TEXT_BTREE_FAM_OID && lc_collate_is_c());
 			break;
 
 		case OID_BPCHAR_LIKE_OP:
@@ -2149,8 +2147,8 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_BPCHAR_REGEXEQ_OP:
 		case OID_BPCHAR_ICREGEXEQ_OP:
 			isIndexable =
-				(opclass == BPCHAR_PATTERN_BTREE_OPS_OID) ||
-				(opclass == BPCHAR_BTREE_OPS_OID && lc_collate_is_c());
+				(opfamily == BPCHAR_PATTERN_BTREE_FAM_OID) ||
+				(opfamily == BPCHAR_BTREE_FAM_OID && lc_collate_is_c());
 			break;
 
 		case OID_NAME_LIKE_OP:
@@ -2158,18 +2156,17 @@ match_special_index_operator(Expr *clause, Oid opclass,
 		case OID_NAME_REGEXEQ_OP:
 		case OID_NAME_ICREGEXEQ_OP:
 			isIndexable =
-				(opclass == NAME_PATTERN_BTREE_OPS_OID) ||
-				(opclass == NAME_BTREE_OPS_OID && lc_collate_is_c());
+				(opfamily == NAME_PATTERN_BTREE_FAM_OID) ||
+				(opfamily == NAME_BTREE_FAM_OID && lc_collate_is_c());
 			break;
 
 		case OID_BYTEA_LIKE_OP:
-			isIndexable = (opclass == BYTEA_BTREE_OPS_OID);
+			isIndexable = (opfamily == BYTEA_BTREE_FAM_OID);
 			break;
 
 		case OID_INET_SUB_OP:
 		case OID_INET_SUBEQ_OP:
-			isIndexable = (opclass == INET_BTREE_OPS_OID ||
-						   opclass == CIDR_BTREE_OPS_OID);
+			isIndexable = (opfamily == NETWORK_BTREE_FAM_OID);
 			break;
 	}
 
@@ -2180,7 +2177,7 @@ match_special_index_operator(Expr *clause, Oid opclass,
  * expand_indexqual_conditions
  *	  Given a list of sublists of RestrictInfo nodes, produce a flat list
  *	  of index qual clauses.  Standard qual clauses (those in the index's
- *	  opclass) are passed through unchanged.  Boolean clauses and "special"
+ *	  opfamily) are passed through unchanged.  Boolean clauses and "special"
  *	  index operators are expanded into clauses that the indexscan machinery
  *	  will know what to do with.  RowCompare clauses are simplified if
  *	  necessary to create a clause that is fully checkable by the index.
@@ -2196,7 +2193,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 	List	   *resultquals = NIL;
 	ListCell   *clausegroup_item;
 	int			indexcol = 0;
-	Oid		   *classes = index->classlist;
+	Oid		   *families = index->opfamily;
 
 	if (clausegroups == NIL)
 		return NIL;
@@ -2204,7 +2201,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 	clausegroup_item = list_head(clausegroups);
 	do
 	{
-		Oid			curClass = classes[0];
+		Oid			curFamily = families[0];
 		ListCell   *l;
 
 		foreach(l, (List *) lfirst(clausegroup_item))
@@ -2213,7 +2210,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 			Expr	   *clause = rinfo->clause;
 
 			/* First check for boolean cases */
-			if (IsBooleanOpclass(curClass))
+			if (IsBooleanOpfamily(curFamily))
 			{
 				Expr	   *boolqual;
 
@@ -2240,7 +2237,7 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 			{
 				resultquals = list_concat(resultquals,
 										  expand_indexqual_opclause(rinfo,
-																  curClass));
+																  curFamily));
 			}
 			else if (IsA(clause, ScalarArrayOpExpr))
 			{
@@ -2262,8 +2259,8 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 		clausegroup_item = lnext(clausegroup_item);
 
 		indexcol++;
-		classes++;
-	} while (clausegroup_item != NULL && !DoneMatchingIndexKeys(classes));
+		families++;
+	} while (clausegroup_item != NULL && !DoneMatchingIndexKeys(families));
 
 	Assert(clausegroup_item == NULL);	/* else more groups than indexkeys */
 
@@ -2337,7 +2334,7 @@ expand_boolean_index_clause(Node *clause,
  * The input is a single RestrictInfo, the output a list of RestrictInfos
  */
 static List *
-expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass)
+expand_indexqual_opclause(RestrictInfo *rinfo, Oid opfamily)
 {
 	Expr	   *clause = rinfo->clause;
 
@@ -2354,7 +2351,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass)
 	switch (expr_op)
 	{
 			/*
-			 * LIKE and regex operators are not members of any index opclass,
+			 * LIKE and regex operators are not members of any index opfamily,
 			 * so if we find one in an indexqual list we can assume that it
 			 * was accepted by match_special_index_operator().
 			 */
@@ -2364,7 +2361,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass)
 		case OID_BYTEA_LIKE_OP:
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like,
 										   &prefix, &rest);
-			result = prefix_quals(leftop, opclass, prefix, pstatus);
+			result = prefix_quals(leftop, opfamily, prefix, pstatus);
 			break;
 
 		case OID_TEXT_ICLIKE_OP:
@@ -2373,7 +2370,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass)
 			/* the right-hand const is type text for all of these */
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Like_IC,
 										   &prefix, &rest);
-			result = prefix_quals(leftop, opclass, prefix, pstatus);
+			result = prefix_quals(leftop, opfamily, prefix, pstatus);
 			break;
 
 		case OID_TEXT_REGEXEQ_OP:
@@ -2382,7 +2379,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass)
 			/* the right-hand const is type text for all of these */
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex,
 										   &prefix, &rest);
-			result = prefix_quals(leftop, opclass, prefix, pstatus);
+			result = prefix_quals(leftop, opfamily, prefix, pstatus);
 			break;
 
 		case OID_TEXT_ICREGEXEQ_OP:
@@ -2391,12 +2388,12 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass)
 			/* the right-hand const is type text for all of these */
 			pstatus = pattern_fixed_prefix(patt, Pattern_Type_Regex_IC,
 										   &prefix, &rest);
-			result = prefix_quals(leftop, opclass, prefix, pstatus);
+			result = prefix_quals(leftop, opfamily, prefix, pstatus);
 			break;
 
 		case OID_INET_SUB_OP:
 		case OID_INET_SUBEQ_OP:
-			result = network_prefix_quals(leftop, expr_op, opclass,
+			result = network_prefix_quals(leftop, expr_op, opfamily,
 										  patt->constvalue);
 			break;
 
@@ -2416,7 +2413,7 @@ expand_indexqual_opclause(RestrictInfo *rinfo, Oid opclass)
  * the specified column of the index.  We can use additional columns of the
  * row comparison as index qualifications, so long as they match the index
  * in the "same direction", ie, the indexkeys are all on the same side of the
- * clause and the operators are all the same-type members of the opclasses.
+ * clause and the operators are all the same-type members of the opfamilies.
  * If all the columns of the RowCompareExpr match in this way, we just use it
  * as-is.  Otherwise, we build a shortened RowCompareExpr (if more than one
  * column matches) or a simple OpExpr (if the first-column match is all
@@ -2433,12 +2430,14 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	RowCompareExpr *clause = (RowCompareExpr *) rinfo->clause;
 	bool		var_on_left;
 	int			op_strategy;
-	Oid			op_subtype;
+	Oid			op_lefttype;
+	Oid			op_righttype;
 	bool		op_recheck;
 	int			matching_cols;
 	Oid			expr_op;
-	List	   *opclasses;
-	List	   *subtypes;
+	List	   *opfamilies;
+	List	   *lefttypes;
+	List	   *righttypes;
 	List	   *new_ops;
 	ListCell   *largs_cell;
 	ListCell   *rargs_cell;
@@ -2453,11 +2452,15 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	expr_op = linitial_oid(clause->opnos);
 	if (!var_on_left)
 		expr_op = get_commutator(expr_op);
-	get_op_opclass_properties(expr_op, index->classlist[indexcol],
-							  &op_strategy, &op_subtype, &op_recheck);
-	/* Build lists of the opclasses and operator subtypes in case needed */
-	opclasses = list_make1_oid(index->classlist[indexcol]);
-	subtypes = list_make1_oid(op_subtype);
+	get_op_opfamily_properties(expr_op, index->opfamily[indexcol],
+							   &op_strategy,
+							   &op_lefttype,
+							   &op_righttype,
+							   &op_recheck);
+	/* Build lists of the opfamilies and operator datatypes in case needed */
+	opfamilies = list_make1_oid(index->opfamily[indexcol]);
+	lefttypes = list_make1_oid(op_lefttype);
+	righttypes = list_make1_oid(op_righttype);
 
 	/*
 	 * See how many of the remaining columns match some index column in the
@@ -2513,15 +2516,19 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 			break;				/* no match found */
 
 		/* Now, do we have the right operator for this column? */
-		if (get_op_opclass_strategy(expr_op, index->classlist[i])
+		if (get_op_opfamily_strategy(expr_op, index->opfamily[i])
 			!= op_strategy)
 			break;
 
-		/* Add opclass and subtype to lists */
-		get_op_opclass_properties(expr_op, index->classlist[i],
-								  &op_strategy, &op_subtype, &op_recheck);
-		opclasses = lappend_oid(opclasses, index->classlist[i]);
-		subtypes = lappend_oid(subtypes, op_subtype);
+		/* Add opfamily and datatypes to lists */
+		get_op_opfamily_properties(expr_op, index->opfamily[i],
+								   &op_strategy,
+								   &op_lefttype,
+								   &op_righttype,
+								   &op_recheck);
+		opfamilies = lappend_oid(opfamilies, index->opfamily[i]);
+		lefttypes = lappend_oid(lefttypes, op_lefttype);
+		righttypes = lappend_oid(righttypes, op_righttype);
 
 		/* This column matches, keep scanning */
 		matching_cols++;
@@ -2547,8 +2554,9 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 	}
 	else
 	{
-		ListCell   *opclasses_cell;
-		ListCell   *subtypes_cell;
+		ListCell   *opfamilies_cell;
+		ListCell   *lefttypes_cell;
+		ListCell   *righttypes_cell;
 
 		if (op_strategy == BTLessStrategyNumber)
 			op_strategy = BTLessEqualStrategyNumber;
@@ -2557,23 +2565,30 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 		else
 			elog(ERROR, "unexpected strategy number %d", op_strategy);
 		new_ops = NIL;
-		forboth(opclasses_cell, opclasses, subtypes_cell, subtypes)
+		lefttypes_cell = list_head(lefttypes);
+		righttypes_cell = list_head(righttypes);
+		foreach(opfamilies_cell, opfamilies)
 		{
-			expr_op = get_opclass_member(lfirst_oid(opclasses_cell),
-										 lfirst_oid(subtypes_cell),
-										 op_strategy);
+			Oid		opfam = lfirst_oid(opfamilies_cell);
+			Oid		lefttype = lfirst_oid(lefttypes_cell);
+			Oid		righttype = lfirst_oid(righttypes_cell);
+
+			expr_op = get_opfamily_member(opfam, lefttype, righttype,
+										  op_strategy);
 			if (!OidIsValid(expr_op))	/* should not happen */
-				elog(ERROR, "could not find member %d of opclass %u",
-					 op_strategy, lfirst_oid(opclasses_cell));
+				elog(ERROR, "could not find member %d(%u,%u) of opfamily %u",
+					 op_strategy, lefttype, righttype, opfam);
 			if (!var_on_left)
 			{
 				expr_op = get_commutator(expr_op);
 				if (!OidIsValid(expr_op))		/* should not happen */
-					elog(ERROR, "could not find commutator of member %d of opclass %u",
-						 op_strategy, lfirst_oid(opclasses_cell));
+					elog(ERROR, "could not find commutator of member %d(%u,%u) of opfamily %u",
+						 op_strategy, lefttype, righttype, opfam);
 			}
 			new_ops = lappend_oid(new_ops, expr_op);
 		}
+		lefttypes_cell = lnext(lefttypes_cell);
+		righttypes_cell = lnext(righttypes_cell);
 	}
 
 	/* If we have more than one matching col, create a subset rowcompare */
@@ -2587,8 +2602,8 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 			rc->rctype = (op_strategy == BTLessEqualStrategyNumber) ?
 				ROWCOMPARE_GE : ROWCOMPARE_LE;
 		rc->opnos = new_ops;
-		rc->opclasses = list_truncate(list_copy(clause->opclasses),
-									  matching_cols);
+		rc->opfamilies = list_truncate(list_copy(clause->opfamilies),
+									   matching_cols);
 		rc->largs = list_truncate((List *) copyObject(clause->largs),
 								  matching_cols);
 		rc->rargs = list_truncate((List *) copyObject(clause->rargs),
@@ -2608,12 +2623,12 @@ expand_indexqual_rowcompare(RestrictInfo *rinfo,
 
 /*
  * Given a fixed prefix that all the "leftop" values must have,
- * generate suitable indexqual condition(s).  opclass is the index
- * operator class; we use it to deduce the appropriate comparison
+ * generate suitable indexqual condition(s).  opfamily is the index
+ * operator family; we use it to deduce the appropriate comparison
  * operators and operand datatypes.
  */
 static List *
-prefix_quals(Node *leftop, Oid opclass,
+prefix_quals(Node *leftop, Oid opfamily,
 			 Const *prefix_const, Pattern_Prefix_Status pstatus)
 {
 	List	   *result;
@@ -2624,35 +2639,30 @@ prefix_quals(Node *leftop, Oid opclass,
 
 	Assert(pstatus != Pattern_Prefix_None);
 
-	switch (opclass)
+	switch (opfamily)
 	{
-		case TEXT_BTREE_OPS_OID:
-		case TEXT_PATTERN_BTREE_OPS_OID:
+		case TEXT_BTREE_FAM_OID:
+		case TEXT_PATTERN_BTREE_FAM_OID:
 			datatype = TEXTOID;
 			break;
 
-		case VARCHAR_BTREE_OPS_OID:
-		case VARCHAR_PATTERN_BTREE_OPS_OID:
-			datatype = VARCHAROID;
-			break;
-
-		case BPCHAR_BTREE_OPS_OID:
-		case BPCHAR_PATTERN_BTREE_OPS_OID:
+		case BPCHAR_BTREE_FAM_OID:
+		case BPCHAR_PATTERN_BTREE_FAM_OID:
 			datatype = BPCHAROID;
 			break;
 
-		case NAME_BTREE_OPS_OID:
-		case NAME_PATTERN_BTREE_OPS_OID:
+		case NAME_BTREE_FAM_OID:
+		case NAME_PATTERN_BTREE_FAM_OID:
 			datatype = NAMEOID;
 			break;
 
-		case BYTEA_BTREE_OPS_OID:
+		case BYTEA_BTREE_FAM_OID:
 			datatype = BYTEAOID;
 			break;
 
 		default:
 			/* shouldn't get here */
-			elog(ERROR, "unexpected opclass: %u", opclass);
+			elog(ERROR, "unexpected opfamily: %u", opfamily);
 			return NIL;
 	}
 
@@ -2688,10 +2698,10 @@ prefix_quals(Node *leftop, Oid opclass,
 	 */
 	if (pstatus == Pattern_Prefix_Exact)
 	{
-		oproid = get_opclass_member(opclass, InvalidOid,
-									BTEqualStrategyNumber);
+		oproid = get_opfamily_member(opfamily, datatype, datatype,
+									 BTEqualStrategyNumber);
 		if (oproid == InvalidOid)
-			elog(ERROR, "no = operator for opclass %u", opclass);
+			elog(ERROR, "no = operator for opfamily %u", opfamily);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) prefix_const);
 		result = list_make1(make_restrictinfo(expr, true, false, false, NULL));
@@ -2703,10 +2713,10 @@ prefix_quals(Node *leftop, Oid opclass,
 	 *
 	 * We can always say "x >= prefix".
 	 */
-	oproid = get_opclass_member(opclass, InvalidOid,
-								BTGreaterEqualStrategyNumber);
+	oproid = get_opfamily_member(opfamily, datatype, datatype,
+								 BTGreaterEqualStrategyNumber);
 	if (oproid == InvalidOid)
-		elog(ERROR, "no >= operator for opclass %u", opclass);
+		elog(ERROR, "no >= operator for opfamily %u", opfamily);
 	expr = make_opclause(oproid, BOOLOID, false,
 						 (Expr *) leftop, (Expr *) prefix_const);
 	result = list_make1(make_restrictinfo(expr, true, false, false, NULL));
@@ -2719,10 +2729,10 @@ prefix_quals(Node *leftop, Oid opclass,
 	greaterstr = make_greater_string(prefix_const);
 	if (greaterstr)
 	{
-		oproid = get_opclass_member(opclass, InvalidOid,
-									BTLessStrategyNumber);
+		oproid = get_opfamily_member(opfamily, datatype, datatype,
+									 BTLessStrategyNumber);
 		if (oproid == InvalidOid)
-			elog(ERROR, "no < operator for opclass %u", opclass);
+			elog(ERROR, "no < operator for opfamily %u", opfamily);
 		expr = make_opclause(oproid, BOOLOID, false,
 							 (Expr *) leftop, (Expr *) greaterstr);
 		result = lappend(result,
@@ -2733,12 +2743,12 @@ prefix_quals(Node *leftop, Oid opclass,
 }
 
 /*
- * Given a leftop and a rightop, and a inet-class sup/sub operator,
+ * Given a leftop and a rightop, and a inet-family sup/sub operator,
  * generate suitable indexqual condition(s).  expr_op is the original
- * operator, and opclass is the index opclass.
+ * operator, and opfamily is the index opfamily.
  */
 static List *
-network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
+network_prefix_quals(Node *leftop, Oid expr_op, Oid opfamily, Datum rightop)
 {
 	bool		is_eq;
 	Oid			datatype;
@@ -2770,17 +2780,17 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 	 */
 	if (is_eq)
 	{
-		opr1oid = get_opclass_member(opclass, InvalidOid,
-									 BTGreaterEqualStrategyNumber);
+		opr1oid = get_opfamily_member(opfamily, datatype, datatype,
+									  BTGreaterEqualStrategyNumber);
 		if (opr1oid == InvalidOid)
-			elog(ERROR, "no >= operator for opclass %u", opclass);
+			elog(ERROR, "no >= operator for opfamily %u", opfamily);
 	}
 	else
 	{
-		opr1oid = get_opclass_member(opclass, InvalidOid,
-									 BTGreaterStrategyNumber);
+		opr1oid = get_opfamily_member(opfamily, datatype, datatype,
+									  BTGreaterStrategyNumber);
 		if (opr1oid == InvalidOid)
-			elog(ERROR, "no > operator for opclass %u", opclass);
+			elog(ERROR, "no > operator for opfamily %u", opfamily);
 	}
 
 	opr1right = network_scan_first(rightop);
@@ -2793,10 +2803,10 @@ network_prefix_quals(Node *leftop, Oid expr_op, Oid opclass, Datum rightop)
 
 	/* create clause "key <= network_scan_last( rightop )" */
 
-	opr2oid = get_opclass_member(opclass, InvalidOid,
-								 BTLessEqualStrategyNumber);
+	opr2oid = get_opfamily_member(opfamily, datatype, datatype,
+								  BTLessEqualStrategyNumber);
 	if (opr2oid == InvalidOid)
-		elog(ERROR, "no <= operator for opclass %u", opclass);
+		elog(ERROR, "no <= operator for opfamily %u", opfamily);
 
 	opr2right = network_scan_last(rightop);
 

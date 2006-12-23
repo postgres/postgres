@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.224 2006/12/21 16:05:13 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.225 2006/12/23 00:43:10 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1294,13 +1294,9 @@ CommuteRowCompareExpr(RowCompareExpr *clause)
 	clause->opnos = newops;
 
 	/*
-	 * Note: we don't bother to update the opclasses list, but just set it to
-	 * empty.  This is OK since this routine is currently only used for index
-	 * quals, and the index machinery won't use the opclass information.  The
-	 * original opclass list is NOT valid if we have commuted any cross-type
-	 * comparisons, so don't leave it in place.
+	 * Note: we need not change the opfamilies list; we assume any btree
+	 * opfamily containing an operator will also contain its commutator.
 	 */
-	clause->opclasses = NIL;	/* XXX */
 
 	temp = clause->largs;
 	clause->largs = clause->rargs;
