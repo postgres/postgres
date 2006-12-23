@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.43 2006/11/05 22:42:07 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.44 2006/12/23 01:58:40 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -29,7 +29,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
   <title>Description</title>
 
   <para>
-   <command>VACUUM</command> reclaims storage occupied by deleted tuples.
+   <command>VACUUM</command> reclaims storage occupied by expired tuples.
    In normal <productname>PostgreSQL</productname> operation, tuples that
    are deleted or obsoleted by an update are not physically removed from
    their table; they remain present until a <command>VACUUM</command> is
