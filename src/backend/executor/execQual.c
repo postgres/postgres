@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.201 2006/12/23 00:43:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.202 2006/12/24 00:29:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,11 +117,11 @@ static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
 static Datum ExecEvalMinMax(MinMaxExprState *minmaxExpr,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
+						 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullIf(FuncExprState *nullIfExpr,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
-static Datum ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
-						 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalNullTest(NullTestState *nstate,
 				 ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone);
@@ -2639,6 +2639,237 @@ ExecEvalMinMax(MinMaxExprState *minmaxExpr, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalXml
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
+			bool *isNull, ExprDoneCond *isDone)
+{
+	XmlExpr		   *xexpr = (XmlExpr *) xmlExpr->xprstate.expr;
+	text 		   *result;
+	StringInfoData 	buf;
+	Datum			value;
+	bool 			isnull;
+	char		   *str;
+	ListCell 	   *arg;
+	ListCell   *narg;
+	bool	found_arg;
+	int 			i;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+	*isNull = true;				/* until we get a result */
+
+	switch (xexpr->op)
+	{
+		case IS_XMLCONCAT:
+			initStringInfo(&buf);
+			foreach(arg, xmlExpr->args)
+			{
+				ExprState 	*e = (ExprState *) lfirst(arg);
+
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (!isnull)
+				{
+					/* we know the value is XML type */
+					str = DatumGetCString(DirectFunctionCall1(xml_out,
+															  value));
+					appendStringInfoString(&buf, str);
+					pfree(str);
+					*isNull = false;
+				}
+			}
+			break;
+
+		case IS_XMLELEMENT:
+			initStringInfo(&buf);
+			*isNull = false;
+			appendStringInfo(&buf, "<%s", xexpr->name);
+			i = 0;
+			forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
+			{
+				ExprState 	*e = (ExprState *) lfirst(arg);
+				char	*argname = strVal(lfirst(narg));
+
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (!isnull)
+				{
+					str = OutputFunctionCall(&xmlExpr->named_outfuncs[i],
+											 value);
+					appendStringInfo(&buf, " %s=\"%s\"", argname, str);
+					pfree(str);
+				}
+				i++;
+			}
+
+			found_arg = false;
+			foreach(arg, xmlExpr->args)
+			{
+				ExprState 	*e = (ExprState *) lfirst(arg);
+
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (!isnull)
+				{
+					if (!found_arg)
+					{
+						appendStringInfoChar(&buf, '>');
+						found_arg = true;
+					}
+
+					/* we know the value is XML type */
+					str = DatumGetCString(DirectFunctionCall1(xml_out,
+															  value));
+					appendStringInfoString(&buf, str);
+					pfree(str);
+				}
+			}
+
+			if (!found_arg)
+				appendStringInfo(&buf, "/>");
+			else
+				appendStringInfo(&buf, "</%s>", xexpr->name);
+			break;
+
+		case IS_XMLFOREST:
+			initStringInfo(&buf);
+			i = 0;
+			forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
+			{
+				ExprState 	*e = (ExprState *) lfirst(arg);
+				char	*argname = strVal(lfirst(narg));
+
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (!isnull)
+				{
+					str = OutputFunctionCall(&xmlExpr->named_outfuncs[i],
+											 value);
+					appendStringInfo(&buf, "<%s>%s</%s>",
+									 argname, str, argname);
+					pfree(str);
+					*isNull = false;
+				}
+				i++;
+			}
+			break;
+
+			/* The remaining cases don't need to set up buf */
+		case IS_XMLPARSE:
+			{
+				ExprState 	*e;
+				text	    *data;
+				bool		is_document;
+				bool		preserve_whitespace;
+
+				/* arguments are known to be text, bool, bool */
+				Assert(list_length(xmlExpr->args) == 3);
+
+				e = (ExprState *) linitial(xmlExpr->args);
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (isnull)
+					return (Datum) 0;
+				data = DatumGetTextP(value);
+
+				e = (ExprState *) lsecond(xmlExpr->args);
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (isnull)		/* probably can't happen */
+					return (Datum) 0;
+				is_document = DatumGetBool(value);
+
+				e = (ExprState *) lthird(xmlExpr->args);
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (isnull)		/* probably can't happen */
+					return (Datum) 0;
+				preserve_whitespace = DatumGetBool(value);
+
+				*isNull = false;
+
+				return PointerGetDatum(xmlparse(data,
+												is_document,
+												preserve_whitespace));
+			}
+			break;
+
+		case IS_XMLPI:
+			{
+				ExprState 	*e;
+				text	    *arg;
+
+				/* optional argument is known to be text */
+				Assert(list_length(xmlExpr->args) <= 1);
+
+				if (xmlExpr->args)
+				{
+					e = (ExprState *) linitial(xmlExpr->args);
+					value = ExecEvalExpr(e, econtext, &isnull, NULL);
+					if (isnull)
+						return (Datum) 0;
+					arg = DatumGetTextP(value);
+				}
+				else
+					arg = NULL;
+
+				*isNull = false;
+
+				return PointerGetDatum(xmlpi(xexpr->name, arg));
+			}
+			break;
+
+		case IS_XMLROOT:
+			{
+				ExprState 	*e;
+				xmltype		*data;
+				text		*version;
+				int			standalone;
+
+				/* arguments are known to be xml, text, bool */
+				Assert(list_length(xmlExpr->args) == 3);
+
+				e = (ExprState *) linitial(xmlExpr->args);
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (isnull)
+					return (Datum) 0;
+				data = DatumGetXmlP(value);
+
+				e = (ExprState *) lsecond(xmlExpr->args);
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (isnull)
+					version = NULL;
+				else
+					version = DatumGetTextP(value);
+
+				e = (ExprState *) lthird(xmlExpr->args);
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (isnull)
+					standalone = 0;
+				else
+					standalone = (DatumGetBool(value) ? 1 : -1);
+
+				*isNull = false;
+
+				return PointerGetDatum(xmlroot(data,
+											   version,
+											   standalone));
+			}
+			break;
+	}
+
+	if (*isNull)
+		result = NULL;
+	else
+	{
+		int		len = buf.len + VARHDRSZ;
+
+		result = palloc(len);
+		VARATT_SIZEP(result) = len;
+		memcpy(VARDATA(result), buf.data, buf.len);
+	}
+
+	pfree(buf.data);
+	return PointerGetDatum(result);
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalNullIf
  *
  * Note that this is *always* derived from the equals operator,
@@ -2879,120 +3110,6 @@ ExecEvalBooleanTest(GenericExprState *bstate,
 				 (int) btest->booltesttype);
 			return (Datum) 0;	/* keep compiler quiet */
 	}
-}
-
-/* ----------------------------------------------------------------
- *		ExecEvalXml
- * ----------------------------------------------------------------
- */
- 
-static Datum
-ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
-			bool *isNull, ExprDoneCond *isDone)
-{
-	StringInfoData 	buf;
-	bool 			isnull;
-	ListCell 	   *arg;
-	text 		   *result = NULL;
-	int 			len;
-
-	initStringInfo(&buf);
-
-	*isNull = false;
-
-	if (isDone)
-		*isDone = ExprSingleResult;
-
-	switch (xmlExpr->op)
-	{
-		case IS_XMLCONCAT:
-			*isNull = true;
-
-			foreach(arg, xmlExpr->args)
-			{
-				ExprState 	*e = (ExprState *) lfirst(arg);
-				Datum 		value = ExecEvalExpr(e, econtext, &isnull, NULL);
-
-				if (!isnull)
-				{
-					appendStringInfoString(&buf, DatumGetCString(OidFunctionCall1(xmlExpr->arg_typeout, value)));
-					*isNull = false;
-				}
-			}
-			break;
-
-		case IS_XMLELEMENT:
-			{
-				int state = 0, i = 0;
-				appendStringInfo(&buf, "<%s", xmlExpr->name);
-				foreach(arg, xmlExpr->named_args)
-				{
-					GenericExprState *gstate = (GenericExprState *) lfirst(arg);
-					Datum value = ExecEvalExpr(gstate->arg, econtext, &isnull, NULL);
-					if (!isnull)
-					{
-						char *outstr = DatumGetCString(OidFunctionCall1(xmlExpr->named_args_tcache[i], value));
-						appendStringInfo(&buf, " %s=\"%s\"", xmlExpr->named_args_ncache[i], outstr);
-						pfree(outstr);
-					}
-					i++;
-				}
-				if (xmlExpr->args)
-				{
-					ExprState 	*expr = linitial(xmlExpr->args);
-					Datum 		value = ExecEvalExpr(expr, econtext, &isnull, NULL);
-
-					if (!isnull)
-					{
-						char *outstr = DatumGetCString(OidFunctionCall1(xmlExpr->arg_typeout, value));
-						if (state == 0)
-						{
-							appendStringInfoChar(&buf, '>');
-							state = 1;
-						}
-						appendStringInfo(&buf, "%s", outstr);
-						pfree(outstr);
-					}
-			 	}
-
-				if (state == 0)
-					appendStringInfo(&buf, "/>");
-			 	else if (state == 1)
-					appendStringInfo(&buf, "</%s>", xmlExpr->name);		
-
-			}
-			break;
-
-		case IS_XMLFOREST:
-			{
-				/* only if all argumets are null returns null */
-				int i = 0; 
-				*isNull = true;
-				foreach(arg, xmlExpr->named_args)
-			 	{
-					GenericExprState *gstate = (GenericExprState *) lfirst(arg);
-					Datum value = ExecEvalExpr(gstate->arg, econtext, &isnull, NULL);
-					if (!isnull)
-					{
-						char *outstr = DatumGetCString(OidFunctionCall1(xmlExpr->named_args_tcache[i], value));
-						appendStringInfo(&buf, "<%s>%s</%s>", xmlExpr->named_args_ncache[i], outstr, xmlExpr->named_args_ncache[i]);
-						pfree(outstr);
-						*isNull = false;
-					}
-					i += 1;
-				}		
-			}
-			break;
-		default:
-			break;
-	}
-
-	len = buf.len + VARHDRSZ;
-	result = palloc(len);
-	VARATT_SIZEP(result) = len;
-	memcpy(VARDATA(result), buf.data, buf.len);
-	pfree(buf.data);
-	PG_RETURN_TEXT_P(result);
 }
 
 /*
@@ -3794,59 +3911,45 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			break;
 		case T_XmlExpr:
 			{
-				List			*outlist; 
-				ListCell		*arg;
 				XmlExpr			*xexpr = (XmlExpr *) node;
 				XmlExprState	*xstate = makeNode(XmlExprState);
-				int				i = 0; 
-				Oid				typeout;
-		
-				xstate->name = xexpr->name;
-								
+				List			*outlist;
+				ListCell		*arg;
+				int				i;
+
 				xstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalXml;
-				xstate->op = xexpr->op;
-				
+				xstate->named_outfuncs = (FmgrInfo *)
+					palloc0(list_length(xexpr->named_args) * sizeof(FmgrInfo));
 				outlist = NIL;
-				if (xexpr->named_args)
+				i = 0;
+				foreach(arg, xexpr->named_args)
 				{
-					xstate->named_args_tcache = (Oid *) palloc(list_length(xexpr->named_args) * sizeof(int));
-					xstate->named_args_ncache = (char **) palloc(list_length(xexpr->named_args) * sizeof(char *));
-					
-					i = 0;
-					foreach(arg, xexpr->named_args)
-					{
-						bool		tpisvarlena;
-						Expr		*e = (Expr *) lfirst(arg);
-						ExprState	*estate = ExecInitExpr(e, parent);
-						TargetEntry	*tle;
-						outlist = lappend(outlist, estate);					
-						tle = (TargetEntry *) ((GenericExprState *) estate)->xprstate.expr;
-						getTypeOutputInfo(exprType((Node *)tle->expr), &typeout, &tpisvarlena);
-						xstate->named_args_ncache[i] = tle->resname;
-						xstate->named_args_tcache[i] = typeout;
-						i++;
-					}	
-				}
-				else
-				{
-					xstate->named_args_tcache = NULL;
-					xstate->named_args_ncache = NULL;
+					Expr		*e = (Expr *) lfirst(arg);
+					ExprState	*estate;
+					Oid			typOutFunc;
+					bool		typIsVarlena;
+
+					estate = ExecInitExpr(e, parent);
+					outlist = lappend(outlist, estate);
+
+					getTypeOutputInfo(exprType((Node *) e),
+									  &typOutFunc, &typIsVarlena);
+					fmgr_info(typOutFunc, &xstate->named_outfuncs[i]);
+					i++;
 				}
 				xstate->named_args = outlist;
 
-				outlist = NIL;				
+				outlist = NIL;
 				foreach(arg, xexpr->args)
 				{
-					bool 		tpisvarlena;
-					ExprState 	*estate;
-					Expr 		*e = (Expr *) lfirst(arg);
-					getTypeOutputInfo(exprType((Node *)e), &typeout, &tpisvarlena);
+					Expr		*e = (Expr *) lfirst(arg);
+					ExprState	*estate;
+
 					estate = ExecInitExpr(e, parent);
 					outlist = lappend(outlist, estate);
 				}
-				xstate->arg_typeout = typeout;
 				xstate->args = outlist;
-				
+
 				state = (ExprState *) xstate;
 			}
 			break;

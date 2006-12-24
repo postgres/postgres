@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.290 2006/12/23 00:43:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.291 2006/12/24 00:29:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -455,6 +455,18 @@ _equalMinMaxExpr(MinMaxExpr *a, MinMaxExpr *b)
 }
 
 static bool
+_equalXmlExpr(XmlExpr *a, XmlExpr *b)
+{
+	COMPARE_SCALAR_FIELD(op);
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(named_args);
+	COMPARE_NODE_FIELD(arg_names);
+	COMPARE_NODE_FIELD(args);
+
+	return true;
+}
+
+static bool
 _equalNullIfExpr(NullIfExpr *a, NullIfExpr *b)
 {
 	COMPARE_SCALAR_FIELD(opno);
@@ -491,17 +503,6 @@ _equalBooleanTest(BooleanTest *a, BooleanTest *b)
 {
 	COMPARE_NODE_FIELD(arg);
 	COMPARE_SCALAR_FIELD(booltesttype);
-
-	return true;
-}
-
-static bool
-_equalXmlExpr(XmlExpr *a, XmlExpr *b)
-{
-	COMPARE_SCALAR_FIELD(op);
-	COMPARE_STRING_FIELD(name);
-	COMPARE_NODE_FIELD(named_args);
-	COMPARE_NODE_FIELD(args);
 
 	return true;
 }
@@ -1971,6 +1972,9 @@ equal(void *a, void *b)
 		case T_MinMaxExpr:
 			retval = _equalMinMaxExpr(a, b);
 			break;
+		case T_XmlExpr:
+			retval = _equalXmlExpr(a, b);
+			break;
 		case T_NullIfExpr:
 			retval = _equalNullIfExpr(a, b);
 			break;
@@ -1979,9 +1983,6 @@ equal(void *a, void *b)
 			break;
 		case T_BooleanTest:
 			retval = _equalBooleanTest(a, b);
-			break;
-		case T_XmlExpr:
-			retval = _equalXmlExpr(a, b);
 			break;
 		case T_CoerceToDomain:
 			retval = _equalCoerceToDomain(a, b);

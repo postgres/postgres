@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.237 2006/12/23 00:43:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.238 2006/12/24 00:29:19 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -2988,8 +2988,8 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 		case T_RowExpr:
 		case T_CoalesceExpr:
 		case T_MinMaxExpr:
-		case T_NullIfExpr:
 		case T_XmlExpr:
+		case T_NullIfExpr:
 		case T_Aggref:
 		case T_FuncExpr:
 			/* function-like: name(..) or name[..] */
@@ -3097,8 +3097,8 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_RowExpr:	/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_MinMaxExpr:		/* own parentheses */
-				case T_NullIfExpr:		/* other separators */
 				case T_XmlExpr:			/* own parentheses */
+				case T_NullIfExpr:		/* other separators */
 				case T_Aggref:	/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
@@ -3146,8 +3146,8 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_RowExpr:	/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_MinMaxExpr:		/* own parentheses */
-				case T_NullIfExpr:		/* other separators */
 				case T_XmlExpr:			/* own parentheses */
+				case T_NullIfExpr:		/* other separators */
 				case T_Aggref:	/* own parentheses */
 				case T_CaseExpr:		/* other separators */
 					return true;
@@ -3779,6 +3779,140 @@ get_rule_expr(Node *node, deparse_context *context,
 			}
 			break;
 
+		case T_XmlExpr:
+			{
+				XmlExpr *xexpr = (XmlExpr *) node;
+				bool	needcomma = false;
+				ListCell   *arg;
+				ListCell   *narg;
+				Const	   *con;
+
+				switch (xexpr->op)
+				{
+					case IS_XMLCONCAT:
+						appendStringInfoString(buf, "XMLCONCAT(");
+						break;
+					case IS_XMLELEMENT:
+						appendStringInfoString(buf, "XMLELEMENT(");
+						break;
+					case IS_XMLFOREST:
+						appendStringInfoString(buf, "XMLFOREST(");
+						break;
+					case IS_XMLPARSE:
+						appendStringInfoString(buf, "XMLPARSE(");
+						break;
+					case IS_XMLPI:
+						appendStringInfoString(buf, "XMLPI(");
+						break;
+					case IS_XMLROOT:
+						appendStringInfoString(buf, "XMLROOT(");
+						break;
+				}
+				if (xexpr->name)
+				{
+					/*
+					 * XXX need to de-escape the name
+					 */
+					appendStringInfo(buf, "NAME %s",
+									 quote_identifier(xexpr->name));
+					needcomma = true;
+				}
+				if (xexpr->named_args)
+				{
+					if (xexpr->op != IS_XMLFOREST)
+					{
+						if (needcomma)
+							appendStringInfoString(buf, ", ");
+						appendStringInfoString(buf, "XMLATTRIBUTES(");
+						needcomma = false;
+					}
+					forboth(arg, xexpr->named_args, narg, xexpr->arg_names)
+					{
+						Node 	*e = (Node *) lfirst(arg);
+						char	*argname = strVal(lfirst(narg));
+
+						if (needcomma)
+							appendStringInfoString(buf, ", ");
+						get_rule_expr((Node *) e, context, true);
+						/*
+						 * XXX need to de-escape the name
+						 */
+						appendStringInfo(buf, " AS %s",
+										 quote_identifier(argname));
+						needcomma = true;
+					}
+					if (xexpr->op != IS_XMLFOREST)
+						appendStringInfoChar(buf, ')');
+				}
+				if (xexpr->args)
+				{
+					if (needcomma)
+						appendStringInfoString(buf, ", ");
+					switch (xexpr->op)
+					{
+						case IS_XMLCONCAT:
+						case IS_XMLELEMENT:
+						case IS_XMLFOREST:
+						case IS_XMLPI:
+							/* no extra decoration needed */
+							get_rule_expr((Node *) xexpr->args, context, true);
+							break;
+						case IS_XMLPARSE:
+							Assert(list_length(xexpr->args) == 3);
+
+							con = (Const *) lsecond(xexpr->args);
+							Assert(IsA(con, Const));
+							Assert(!con->constisnull);
+							if (DatumGetBool(con->constvalue))
+								appendStringInfoString(buf, "DOCUMENT ");
+							else
+								appendStringInfoString(buf, "CONTENT ");
+
+							get_rule_expr((Node *) linitial(xexpr->args),
+										  context, true);
+
+							con = (Const *) lthird(xexpr->args);
+							Assert(IsA(con, Const));
+							Assert(!con->constisnull);
+							if (DatumGetBool(con->constvalue))
+								appendStringInfoString(buf,
+													   " PRESERVE WHITESPACE");
+							else
+								appendStringInfoString(buf,
+													   " STRIP WHITESPACE");
+							break;
+						case IS_XMLROOT:
+							Assert(list_length(xexpr->args) == 3);
+
+							get_rule_expr((Node *) linitial(xexpr->args),
+										  context, true);
+
+							appendStringInfoString(buf, ", VERSION ");
+							con = (Const *) lsecond(xexpr->args);
+							if (IsA(con, Const) &&
+								con->constisnull)
+								appendStringInfoString(buf, "NO VALUE");
+							else
+								get_rule_expr((Node *) con, context, false);
+
+							con = (Const *) lthird(xexpr->args);
+							Assert(IsA(con, Const));
+							if (con->constisnull)
+								/* suppress STANDALONE NO VALUE */ ;
+							else if (DatumGetBool(con->constvalue))
+								appendStringInfoString(buf,
+													   ", STANDALONE YES");
+							else
+								appendStringInfoString(buf,
+													   ", STANDALONE NO");
+							break;
+					}
+
+				}
+				appendStringInfoChar(buf, ')');
+			}
+			break;
+
 		case T_NullIfExpr:
 			{
 				NullIfExpr *nullifexpr = (NullIfExpr *) node;
@@ -3846,28 +3980,6 @@ get_rule_expr(Node *node, deparse_context *context,
 				}
 				if (!PRETTY_PAREN(context))
 					appendStringInfoChar(buf, ')');
-			}
-			break;
-
-		case T_XmlExpr:
-			{
-				XmlExpr *xexpr = (XmlExpr *) node;
-
-				switch (xexpr->op)
-				{
-					case IS_XMLCONCAT:
-						appendStringInfo(buf, "XMLCONCAT(");
-						break;
-					case IS_XMLELEMENT:
-						appendStringInfo(buf, "XMLELEMENT(");
-						break;
-					case IS_XMLFOREST:
-						appendStringInfo(buf, "XMLFOREST(");
-						break;
-				}
-				get_rule_expr((Node *) xexpr->named_args, context, true);
-				get_rule_expr((Node *) xexpr->args, context, true);
-				appendStringInfoChar(buf, ')');
 			}
 			break;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.198 2006/12/23 00:43:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.199 2006/12/24 00:29:18 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -709,6 +709,23 @@ _readMinMaxExpr(void)
 }
 
 /*
+ * _readXmlExpr
+ */
+static XmlExpr *
+_readXmlExpr(void)
+{
+	READ_LOCALS(XmlExpr);
+
+	READ_ENUM_FIELD(op, XmlExprOp);
+	READ_STRING_FIELD(name);
+	READ_NODE_FIELD(named_args);
+	READ_NODE_FIELD(arg_names);
+	READ_NODE_FIELD(args);
+
+	READ_DONE();
+}
+
+/*
  * _readNullIfExpr
  */
 static NullIfExpr *
@@ -760,22 +777,6 @@ _readBooleanTest(void)
 
 	READ_NODE_FIELD(arg);
 	READ_ENUM_FIELD(booltesttype, BoolTestType);
-
-	READ_DONE();
-}
-
-/*
- * _readXmlExpr
- */
-static XmlExpr *
-_readXmlExpr(void)
-{
-	READ_LOCALS(XmlExpr);
-
-	READ_ENUM_FIELD(op, XmlExprOp);
-	READ_STRING_FIELD(name);
-	READ_NODE_FIELD(named_args);
-	READ_NODE_FIELD(args);
 
 	READ_DONE();
 }
@@ -1024,14 +1025,14 @@ parseNodeString(void)
 		return_value = _readCoalesceExpr();
 	else if (MATCH("MINMAX", 6))
 		return_value = _readMinMaxExpr();
+	else if (MATCH("XMLEXPR", 7))
+		return_value = _readXmlExpr();
 	else if (MATCH("NULLIFEXPR", 10))
 		return_value = _readNullIfExpr();
 	else if (MATCH("NULLTEST", 8))
 		return_value = _readNullTest();
 	else if (MATCH("BOOLEANTEST", 11))
 		return_value = _readBooleanTest();
-	else if (MATCH("XMLEXPR", 7))
-		return_value = _readXmlExpr();
 	else if (MATCH("COERCETODOMAIN", 14))
 		return_value = _readCoerceToDomain();
 	else if (MATCH("COERCETODOMAINVALUE", 19))

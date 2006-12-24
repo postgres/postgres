@@ -74,7 +74,7 @@ WHERE p1.oid != p2.oid AND
 SELECT p1.oid, p1.proname, p2.oid, p2.proname
 FROM pg_proc AS p1, pg_proc AS p2
 WHERE p1.oid < p2.oid AND
-    p1.prosrc = p2.prosrc AND p1.prosrc NOT IN ('xmlparse', 'xmlpi') AND
+    p1.prosrc = p2.prosrc AND
     p1.prolang = 12 AND p2.prolang = 12 AND
     (p1.proisagg = false OR p2.proisagg = false) AND
     (p1.prolang != p2.prolang OR

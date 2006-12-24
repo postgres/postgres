@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.431 2006/12/21 16:05:15 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.432 2006/12/24 00:29:19 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3983,17 +3983,9 @@ DATA(insert OID = 2894 (  xml_out		   PGNSP PGUID 12 f f t f i 1 2275 "142" _nul
 DESCR("I/O");
 DATA(insert OID = 2895 (  xmlcomment	   PGNSP PGUID 12 f f t f i 1 142 "25" _null_ _null_ _null_ xmlcomment - _null_ ));
 DESCR("generate an XML comment");
-DATA(insert OID = 2896 (  xmlparse		   PGNSP PGUID 12 f f t f i 1 142 "25" _null_ _null_ _null_ xmlparse - _null_ ));
+DATA(insert OID = 2896 (  xml			   PGNSP PGUID 12 f f t f i 1 142 "25" _null_ _null_ _null_ texttoxml - _null_ ));
 DESCR("perform a non-validating parse of a character string to produce an XML value");
-DATA(insert OID = 2897 (  xmlparse		   PGNSP PGUID 12 f f t f i 3 142 "25 16 16" _null_ _null_ _null_ xmlparse - _null_ ));
-DESCR("perform a non-validating parse of a character string to produce an XML value");
-DATA(insert OID = 2898 (  xmlpi			   PGNSP PGUID 12 f f t f i 1 142 "19" _null_ _null_ _null_ xmlpi - _null_ ));
-DESCR("generate an XML processing instruction");
-DATA(insert OID = 2899 (  xmlpi			   PGNSP PGUID 12 f f t f i 2 142 "19 25" _null_ _null_ _null_ xmlpi - _null_ ));
-DESCR("generate an XML processing instruction");
-DATA(insert OID = 2900 (  xmlroot		   PGNSP PGUID 12 f f f f i 3 142 "142 25 16" _null_ _null_ _null_ xmlroot - _null_ ));
-DESCR("create an XML value by modifying the properties of the XML root information item of another XML value");
-DATA(insert OID = 2901 (  xmlvalidate 	   PGNSP PGUID 12 f f t f i 2 16 "142 25" _null_ _null_ _null_ xmlvalidate - _null_ ));
+DATA(insert OID = 2897 (  xmlvalidate 	   PGNSP PGUID 12 f f t f i 2 16 "142 25" _null_ _null_ _null_ xmlvalidate - _null_ ));
 DESCR("validate an XML value");
 
 /*

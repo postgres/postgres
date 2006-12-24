@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.569 2006/12/21 16:05:14 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.570 2006/12/24 00:29:18 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -348,8 +348,8 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 
 %type <target>	xml_attribute_el
 %type <list>	xml_attribute_list xml_attributes
-%type <node>	xml_root_version
-%type <ival>	opt_xml_root_standalone document_or_content xml_whitespace_option
+%type <node>	xml_root_version opt_xml_root_standalone
+%type <boolean>	document_or_content xml_whitespace_option
 
 
 /*
@@ -371,13 +371,13 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONCURRENTLY CONNECTION CONSTRAINT CONSTRAINTS
-	CONTENT CONVERSION_P CONVERT COPY CREATE CREATEDB
+	CONTENT_P CONVERSION_P CONVERT COPY CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_DATE CURRENT_ROLE CURRENT_TIME
 	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
 	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
-	DESC DISABLE_P DISTINCT DO DOCUMENT DOMAIN_P DOUBLE_P DROP
+	DESC DISABLE_P DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
 
 	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ESCAPE EXCEPT EXCLUDING
 	EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
@@ -404,7 +404,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 
 	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
-	NAME NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
+	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
 	NOCREATEROLE NOCREATEUSER NOINHERIT NOLOGIN_P NONE NOSUPERUSER
 	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF NUMERIC
 
@@ -423,9 +423,9 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 
 	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
 	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
-	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE STANDALONE START STATEMENT
-	STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP SUBSTRING SUPERUSER_P SYMMETRIC
-	SYSID SYSTEM_P
+	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE STANDALONE_P START STATEMENT
+	STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING SUPERUSER_P
+	SYMMETRIC SYSID SYSTEM_P
 
 	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP
 	TO TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
@@ -434,15 +434,15 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL
 	UPDATE USER USING
 
-	VACUUM VALID VALIDATOR VALUE VALUES VARCHAR VARYING
-	VERBOSE VERSION VIEW VOLATILE
+	VACUUM VALID VALIDATOR VALUE_P VALUES VARCHAR VARYING
+	VERBOSE VERSION_P VIEW VOLATILE
 
-	WHEN WHERE WHITESPACE WITH WITHOUT WORK WRITE
+	WHEN WHERE WHITESPACE_P WITH WITHOUT WORK WRITE
 
 	XMLATTRIBUTES XMLCONCAT XMLELEMENT XMLFOREST XMLPARSE
 	XMLPI XMLROOT XMLSERIALIZE
 
-	YEAR_P YES
+	YEAR_P YES_P
 
 	ZONE
 
@@ -493,7 +493,8 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
  * left-associativity among the JOIN rules themselves.
  */
 %left		JOIN CROSS LEFT FULL RIGHT INNER_P NATURAL
-%right		PRESERVE STRIP
+/* kluge to keep xml_whitespace_option from causing shift/reduce conflicts */
+%right		PRESERVE STRIP_P
 %%
 
 /*
@@ -7880,95 +7881,54 @@ func_expr:	func_name '(' ')'
 				}
 			| XMLCONCAT '(' expr_list ')'
 				{		
-					$$ = makeXmlExpr(IS_XMLCONCAT, NULL, NULL, $3);
+					$$ = makeXmlExpr(IS_XMLCONCAT, NULL, NIL, $3);
 				}
-			| XMLELEMENT '(' NAME ColLabel ')'
+			| XMLELEMENT '(' NAME_P ColLabel ')'
 				{
-					$$ = makeXmlExpr(IS_XMLELEMENT, $4, NULL, NULL);
+					$$ = makeXmlExpr(IS_XMLELEMENT, $4, NIL, NIL);
 				}
-			| XMLELEMENT '(' NAME ColLabel ',' xml_attributes ')'
+			| XMLELEMENT '(' NAME_P ColLabel ',' xml_attributes ')'
 				{
-					$$ = makeXmlExpr(IS_XMLELEMENT, $4, $6, NULL);
+					$$ = makeXmlExpr(IS_XMLELEMENT, $4, $6, NIL);
 				}
-			| XMLELEMENT '(' NAME ColLabel ',' expr_list ')'
+			| XMLELEMENT '(' NAME_P ColLabel ',' expr_list ')'
 				{
-					$$ = makeXmlExpr(IS_XMLELEMENT, $4, NULL, $6);
+					$$ = makeXmlExpr(IS_XMLELEMENT, $4, NIL, $6);
 				}
-			| XMLELEMENT '(' NAME ColLabel ',' xml_attributes ',' expr_list ')'
+			| XMLELEMENT '(' NAME_P ColLabel ',' xml_attributes ',' expr_list ')'
 				{
 					$$ = makeXmlExpr(IS_XMLELEMENT, $4, $6, $8);
 				}
 			| XMLFOREST '(' xml_attribute_list ')'
 				{
-					$$ = makeXmlExpr(IS_XMLFOREST, NULL, $3, NULL);
+					$$ = makeXmlExpr(IS_XMLFOREST, NULL, $3, NIL);
 				}
 			| XMLPARSE '(' document_or_content a_expr xml_whitespace_option ')'
 				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = SystemFuncName("xmlparse");
-					n->args = list_make3(makeBoolAConst($3 == DOCUMENT), $4, makeBoolAConst($5 == PRESERVE));
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->location = @1;
-					$$ = (Node *)n;
+					$$ = makeXmlExpr(IS_XMLPARSE, NULL, NIL,
+									 list_make3($4,
+												makeBoolAConst($3),
+												makeBoolAConst($5)));
 				}
-			| XMLPI '(' NAME ColLabel ')'
+			| XMLPI '(' NAME_P ColLabel ')'
 				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = SystemFuncName("xmlpi");
-					n->args = list_make1(makeStringConst($4, NULL));
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->location = @1;
-					$$ = (Node *)n;
+					$$ = makeXmlExpr(IS_XMLPI, $4, NULL, NIL);
 				}
-			| XMLPI '(' NAME ColLabel ',' a_expr ')'
+			| XMLPI '(' NAME_P ColLabel ',' a_expr ')'
 				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = SystemFuncName("xmlpi");
-					n->args = list_make2(makeStringConst($4, NULL), $6);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->location = @1;
-					$$ = (Node *)n;
+					$$ = makeXmlExpr(IS_XMLPI, $4, NULL, list_make1($6));
 				}
 			| XMLROOT '(' a_expr ',' xml_root_version opt_xml_root_standalone ')'
 				{
-					FuncCall *n = makeNode(FuncCall);
-					Node *ver;
-					A_Const *sa;
-
-					if ($5)
-						ver = $5;
-					else
-					{
-						A_Const *val;
-
-						val = makeNode(A_Const);
-						val->val.type = T_Null;
-						ver = (Node *) val;
-					}
-
-					if ($6)
-						sa = makeBoolAConst($6 == 1);
-					else
-					{
-						sa = makeNode(A_Const);
-						sa->val.type = T_Null;
-					}
-
-					n->funcname = SystemFuncName("xmlroot");
-					n->args = list_make3($3, ver, sa);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->location = @1;
-					$$ = (Node *)n;
+					$$ = makeXmlExpr(IS_XMLROOT, NULL, NIL,
+									 list_make3($3, $5, $6));
 				}
 			| XMLSERIALIZE '(' document_or_content a_expr AS Typename ')'
 				{
 					/*
 					 * FIXME: This should be made distinguishable from
-					 * CAST (for reverse compilation at least).
+					 * CAST (for reverse compilation at least).  Also,
+					 * what about the document/content option??
 					 */
 					$$ = makeTypeCast($4, $6);
 				}
@@ -7977,17 +7937,35 @@ func_expr:	func_name '(' ')'
 /*
  * SQL/XML support
  */
-xml_root_version: VERSION a_expr	{ $$ = $2; }
-			| VERSION NO VALUE		{ $$ = NULL; }
+xml_root_version: VERSION_P a_expr
+				{ $$ = $2; }
+			| VERSION_P NO VALUE_P
+				{
+					A_Const *val = makeNode(A_Const);
+					val->val.type = T_Null;
+					$$ = (Node *) val;
+				}
 		;
 
-opt_xml_root_standalone: ',' STANDALONE YES	{ $$ = 1; }
-			| ',' STANDALONE NO				{ $$ = -1; }
-			| ',' STANDALONE NO VALUE		{ $$ = 0; }
-			| /*EMPTY*/						{ $$ = 0; }
+opt_xml_root_standalone: ',' STANDALONE_P YES_P
+				{ $$ = (Node *) makeBoolAConst(true); }
+			| ',' STANDALONE_P NO
+				{ $$ = (Node *) makeBoolAConst(false); }
+			| ',' STANDALONE_P NO VALUE_P
+				{
+					A_Const *val = makeNode(A_Const);
+					val->val.type = T_Null;
+					$$ = (Node *) val;
+				}
+			| /*EMPTY*/
+				{
+					A_Const *val = makeNode(A_Const);
+					val->val.type = T_Null;
+					$$ = (Node *) val;
+				}
 		;
 
-xml_attributes: XMLATTRIBUTES '(' xml_attribute_list ')' { $$ = $3; }
+xml_attributes: XMLATTRIBUTES '(' xml_attribute_list ')'	{ $$ = $3; }
 		;
 
 xml_attribute_list:	xml_attribute_el					{ $$ = list_make1($1); }
@@ -8000,7 +7978,7 @@ xml_attribute_el: a_expr AS ColLabel
 					$$->name = $3;
 					$$->indirection = NULL;
 					$$->val = (Node *) $1;
-
+					$$->location = @1;
 				}
 			| a_expr
 				{
@@ -8008,16 +7986,21 @@ xml_attribute_el: a_expr AS ColLabel
 					$$->name = NULL;
 					$$->indirection = NULL;
 					$$->val = (Node *) $1;				
+					$$->location = @1;
 				}
 		;
 
-document_or_content: DOCUMENT { $$ = DOCUMENT; }
-			| CONTENT { $$ = CONTENT; }
+document_or_content: DOCUMENT_P						{ $$ = TRUE; }
+			| CONTENT_P								{ $$ = FALSE; }
 		;
 
-xml_whitespace_option: PRESERVE WHITESPACE { $$ = PRESERVE; }
-			| STRIP WHITESPACE { $$ = STRIP; }
-			| /*EMPTY*/ { $$ = STRIP; }
+/*
+ * XXX per SQL spec, the default should be STRIP WHITESPACE, but since we
+ * haven't implemented that yet, temporarily default to PRESERVE.
+ */
+xml_whitespace_option: PRESERVE WHITESPACE_P		{ $$ = TRUE; }
+			| STRIP_P WHITESPACE_P					{ $$ = FALSE; }
+			| /*EMPTY*/								{ $$ = TRUE; }
 		;
 
 /*
@@ -8712,7 +8695,7 @@ unreserved_keyword:
 			| CONCURRENTLY
 			| CONNECTION
 			| CONSTRAINTS
-			| CONTENT
+			| CONTENT_P
 			| CONVERSION_P
 			| COPY
 			| CREATEDB
@@ -8732,7 +8715,7 @@ unreserved_keyword:
 			| DELIMITER
 			| DELIMITERS
 			| DISABLE_P
-			| DOCUMENT
+			| DOCUMENT_P
 			| DOMAIN_P
 			| DOUBLE_P
 			| DROP
@@ -8792,7 +8775,7 @@ unreserved_keyword:
 			| MODE
 			| MONTH_P
 			| MOVE
-			| NAME
+			| NAME_P
 			| NAMES
 			| NEXT
 			| NO
@@ -8853,18 +8836,18 @@ unreserved_keyword:
 			| SHOW
 			| SIMPLE
 			| STABLE
-			| STANDALONE
+			| STANDALONE_P
 			| START
 			| STATEMENT
 			| STATISTICS
 			| STDIN
 			| STDOUT
 			| STORAGE
-			| STRIP
+			| STRICT_P
+			| STRIP_P
 			| SUPERUSER_P
 			| SYSID
 			| SYSTEM_P
-			| STRICT_P
 			| TABLESPACE
 			| TEMP
 			| TEMPLATE
@@ -8883,18 +8866,18 @@ unreserved_keyword:
 			| VACUUM
 			| VALID
 			| VALIDATOR
+			| VALUE_P
 			| VARYING
-			| VERSION
+			| VERSION_P
 			| VIEW
-			| VALUE
 			| VOLATILE
-			| WHITESPACE
+			| WHITESPACE_P
 			| WITH
 			| WITHOUT
 			| WORK
 			| WRITE
 			| YEAR_P
-			| YES
+			| YES_P
 			| ZONE
 		;
 
@@ -8948,8 +8931,8 @@ col_name_keyword:
 			| VALUES
 			| VARCHAR
 			| XMLATTRIBUTES
-			| XMLELEMENT
 			| XMLCONCAT
+			| XMLELEMENT
 			| XMLFOREST
 			| XMLPARSE
 			| XMLPI
@@ -9492,10 +9475,16 @@ doNegateFloat(Value *v)
 static Node *
 makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 {
-	XmlExpr *x = makeNode(XmlExpr);
+	XmlExpr    *x = makeNode(XmlExpr);
+
 	x->op = op;
 	x->name = name;
+	/*
+	 * named_args is a list of ResTarget; it'll be split apart into separate
+	 * expression and name lists in transformXmlExpr().
+	 */
 	x->named_args = named_args;
+	x->arg_names = NIL;
 	x->args = args;
 	return (Node *) x;
 }

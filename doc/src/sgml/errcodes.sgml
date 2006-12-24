@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.20 2006/06/16 23:29:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.21 2006/12/24 00:29:17 tgl Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -541,6 +541,29 @@
 <entry>untranslatable_character</entry>
 </row>
 
+<row>
+<entry><literal>2200M</literal></entry>
+<entry>INVALID XML DOCUMENT</entry>
+<entry>invalid_xml_document</entry>
+</row>
+
+<row>
+<entry><literal>2200N</literal></entry>
+<entry>INVALID XML CONTENT</entry>
+<entry>invalid_xml_content</entry>
+</row>
+
+<row>
+<entry><literal>2200S</literal></entry>
+<entry>INVALID XML COMMENT</entry>
+<entry>invalid_xml_comment</entry>
+</row>
+
+<row>
+<entry><literal>2200T</literal></entry>
+<entry>INVALID XML PROCESSING INSTRUCTION</entry>
+<entry>invalid_xml_processing_instruction</entry>
+</row>
 
 <row>
 <entry spanname="span13"><emphasis role="bold">Class 23 &mdash; Integrity Constraint Violation</></entry>

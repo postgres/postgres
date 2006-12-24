@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.288 2006/12/23 00:43:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.289 2006/12/24 00:29:18 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -893,6 +893,18 @@ _outMinMaxExpr(StringInfo str, MinMaxExpr *node)
 }
 
 static void
+_outXmlExpr(StringInfo str, XmlExpr *node)
+{
+	WRITE_NODE_TYPE("XMLEXPR");
+	
+	WRITE_ENUM_FIELD(op, XmlExprOp);
+	WRITE_STRING_FIELD(name);
+	WRITE_NODE_FIELD(named_args);
+	WRITE_NODE_FIELD(arg_names);
+	WRITE_NODE_FIELD(args);
+}
+
+static void
 _outNullIfExpr(StringInfo str, NullIfExpr *node)
 {
 	WRITE_NODE_TYPE("NULLIFEXPR");
@@ -920,17 +932,6 @@ _outBooleanTest(StringInfo str, BooleanTest *node)
 
 	WRITE_NODE_FIELD(arg);
 	WRITE_ENUM_FIELD(booltesttype, BoolTestType);
-}
-
-static void
-_outXmlExpr(StringInfo str, XmlExpr *node)
-{
-	WRITE_NODE_TYPE("XMLEXPR");
-	
-	WRITE_ENUM_FIELD(op, XmlExprOp);
-	WRITE_STRING_FIELD(name);
-	WRITE_NODE_FIELD(named_args);
-	WRITE_NODE_FIELD(args);
 }
 
 static void
@@ -2026,6 +2027,9 @@ _outNode(StringInfo str, void *obj)
 			case T_MinMaxExpr:
 				_outMinMaxExpr(str, obj);
 				break;
+			case T_XmlExpr:
+				_outXmlExpr(str, obj);
+				break;
 			case T_NullIfExpr:
 				_outNullIfExpr(str, obj);
 				break;
@@ -2034,9 +2038,6 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_BooleanTest:
 				_outBooleanTest(str, obj);
-				break;
-			case T_XmlExpr:
-				_outXmlExpr(str, obj);
 				break;
 			case T_CoerceToDomain:
 				_outCoerceToDomain(str, obj);

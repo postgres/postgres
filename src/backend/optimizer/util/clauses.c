@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.225 2006/12/23 00:43:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.226 2006/12/24 00:29:18 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -557,9 +557,9 @@ expression_returns_set_walker(Node *node, void *context)
 		return false;
 	if (IsA(node, MinMaxExpr))
 		return false;
-	if (IsA(node, NullIfExpr))
-		return false;
 	if (IsA(node, XmlExpr))
+		return false;
+	if (IsA(node, NullIfExpr))
 		return false;
 
 	return expression_tree_walker(node, expression_returns_set_walker,
@@ -872,13 +872,13 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		return true;
 	if (IsA(node, MinMaxExpr))
 		return true;
+	if (IsA(node, XmlExpr))
+		return true;
 	if (IsA(node, NullIfExpr))
 		return true;
 	if (IsA(node, NullTest))
 		return true;
 	if (IsA(node, BooleanTest))
-		return true;
-	if (IsA(node, XmlExpr))
 		return true;
 	return expression_tree_walker(node, contain_nonstrict_functions_walker,
 								  context);
@@ -3328,22 +3328,23 @@ expression_tree_walker(Node *node,
 			return walker(((CoalesceExpr *) node)->args, context);
 		case T_MinMaxExpr:
 			return walker(((MinMaxExpr *) node)->args, context);
-		case T_NullIfExpr:
-			return walker(((NullIfExpr *) node)->args, context);
-		case T_NullTest:
-			return walker(((NullTest *) node)->arg, context);
-		case T_BooleanTest:
-			return walker(((BooleanTest *) node)->arg, context);
 		case T_XmlExpr:
 			{
 				XmlExpr *xexpr = (XmlExpr *) node;
 				
 				if (walker(xexpr->named_args, context))
 					return true;
+				/* we assume walker doesn't care about arg_names */
 				if (walker(xexpr->args, context))
 					return true;
 			}
 			break;
+		case T_NullIfExpr:
+			return walker(((NullIfExpr *) node)->args, context);
+		case T_NullTest:
+			return walker(((NullTest *) node)->arg, context);
+		case T_BooleanTest:
+			return walker(((BooleanTest *) node)->arg, context);
 		case T_CoerceToDomain:
 			return walker(((CoerceToDomain *) node)->arg, context);
 		case T_TargetEntry:
@@ -3874,6 +3875,7 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, xexpr, XmlExpr);
 				MUTATE(newnode->named_args, xexpr->named_args, List *);
+				/* assume mutator does not care about arg_names */
 				MUTATE(newnode->args, xexpr->args, List *);
 				return (Node *) newnode;
 			}

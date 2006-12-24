@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.120 2006/12/23 00:43:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.121 2006/12/24 00:29:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -712,6 +712,33 @@ typedef struct MinMaxExpr
 } MinMaxExpr;
 
 /*
+ * XmlExpr - various SQL/XML functions requiring special grammar productions
+ *
+ * 'name' carries the "NAME foo" argument (already XML-escaped).
+ * 'named_args' and 'arg_names' represent an xml_attribute list.
+ * 'args' carries all other arguments.
+ */
+typedef enum XmlExprOp
+{
+	IS_XMLCONCAT,				/* XMLCONCAT(args) */
+	IS_XMLELEMENT,				/* XMLELEMENT(name, xml_attributes, args) */
+	IS_XMLFOREST,				/* XMLFOREST(xml_attributes) */
+	IS_XMLPARSE,				/* XMLPARSE(text, is_doc, preserve_ws) */
+	IS_XMLPI,					/* XMLPI(name [, args]) */
+	IS_XMLROOT					/* XMLROOT(xml, version, standalone) */
+} XmlExprOp;
+
+typedef struct XmlExpr
+{
+	Expr		xpr;
+	XmlExprOp	op;				/* xml function ID */
+	char	   *name;			/* name in xml(NAME foo ...) syntaxes */
+	List	   *named_args;		/* non-XML expressions for xml_attributes */
+	List	   *arg_names;		/* parallel list of Value strings */
+	List	   *args;			/* list of expressions */
+} XmlExpr;
+
+/*
  * NullIfExpr - a NULLIF expression
  *
  * Like DistinctExpr, this is represented the same as an OpExpr referencing
@@ -764,26 +791,6 @@ typedef struct BooleanTest
 	Expr	   *arg;			/* input expression */
 	BoolTestType booltesttype;	/* test type */
 } BooleanTest;
-
-/*
- * XmlExpr - holder for SQL/XML functions XMLCONCAT,
- * XMLELEMENT, XMLFOREST
- */
-typedef enum XmlExprOp
-{
-	IS_XMLCONCAT,
-	IS_XMLELEMENT,
-	IS_XMLFOREST,
-} XmlExprOp;
-
-typedef struct XmlExpr
-{
-	Expr		xpr;
-	XmlExprOp	op;				/* xml expression type */
-	char	   *name;			/* element name */
-	List	   *named_args;
-	List	   *args;
-} XmlExpr;
 
 /*
  * CoerceToDomain

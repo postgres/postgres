@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.201 2006/12/23 00:43:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.202 2006/12/24 00:29:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,6 +220,10 @@ transformExpr(ParseState *pstate, Node *expr)
 			result = transformMinMaxExpr(pstate, (MinMaxExpr *) expr);
 			break;
 
+		case T_XmlExpr:
+			result = transformXmlExpr(pstate, (XmlExpr *) expr);
+			break;
+
 		case T_NullTest:
 			{
 				NullTest   *n = (NullTest *) expr;
@@ -232,10 +236,6 @@ transformExpr(ParseState *pstate, Node *expr)
 
 		case T_BooleanTest:
 			result = transformBooleanTest(pstate, (BooleanTest *) expr);
-			break;
-
-		case T_XmlExpr:
-			result = transformXmlExpr(pstate, (XmlExpr *) expr);
 			break;
 
 			/*********************************************
@@ -1376,6 +1376,107 @@ transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m)
 }
 
 static Node *
+transformXmlExpr(ParseState *pstate, XmlExpr *x)
+{
+	XmlExpr *newx = makeNode(XmlExpr);
+	ListCell	*lc;
+	int			i;
+
+	newx->op = x->op;
+	if (x->name)
+		newx->name = map_sql_identifier_to_xml_name(x->name, false);
+	else
+		newx->name = NULL;
+
+	/*
+	 * gram.y built the named args as a list of ResTarget.  Transform each,
+	 * and break the names out as a separate list.
+	 */
+	newx->named_args = NIL;
+	newx->arg_names = NIL;
+
+	foreach(lc, x->named_args)
+	{
+		ResTarget 	*r = (ResTarget *) lfirst(lc);
+		Node 		*expr;
+		char 		*argname;
+
+		Assert(IsA(r, ResTarget));
+
+		expr = transformExpr(pstate, r->val);
+
+		if (r->name)
+			argname = map_sql_identifier_to_xml_name(r->name, false);
+		else if (IsA(r->val, ColumnRef))
+			argname = map_sql_identifier_to_xml_name(FigureColname(r->val),
+													 true);
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 x->op == IS_XMLELEMENT
+					 ? errmsg("unnamed attribute value must be a column reference")
+					 : errmsg("unnamed element value must be a column reference")));
+			argname = NULL;		/* keep compiler quiet */
+		}
+
+		newx->named_args = lappend(newx->named_args, expr);
+		newx->arg_names = lappend(newx->arg_names, makeString(argname));
+	}
+
+	/* The other arguments are of varying types depending on the function */
+	newx->args = NIL;
+	i = 0;
+	foreach(lc, x->args)
+	{
+		Node	   *e = (Node *) lfirst(lc);
+		Node	   *newe;
+
+		newe = transformExpr(pstate, e);
+		switch (x->op)
+		{
+			case IS_XMLCONCAT:
+				newe = coerce_to_specific_type(pstate, newe, XMLOID,
+											   "XMLCONCAT");
+				break;
+			case IS_XMLELEMENT:
+				newe = coerce_to_specific_type(pstate, newe, XMLOID,
+											   "XMLELEMENT");
+				break;
+			case IS_XMLFOREST:
+				newe = coerce_to_specific_type(pstate, newe, XMLOID,
+											   "XMLFOREST");
+				break;
+			case IS_XMLPARSE:
+				if (i == 0)
+					newe = coerce_to_specific_type(pstate, newe, TEXTOID,
+												   "XMLPARSE");
+				else
+					newe = coerce_to_boolean(pstate, newe, "XMLPARSE");
+				break;
+			case IS_XMLPI:
+				newe = coerce_to_specific_type(pstate, newe, TEXTOID,
+											   "XMLPI");
+				break;
+			case IS_XMLROOT:
+				if (i == 0)
+					newe = coerce_to_specific_type(pstate, newe, XMLOID,
+												   "XMLROOT");
+				else if (i == 1)
+					newe = coerce_to_specific_type(pstate, newe, TEXTOID,
+												   "XMLROOT");
+				else
+					newe = coerce_to_boolean(pstate, newe, "XMLROOT");
+				break;
+		}
+		newx->args = lappend(newx->args, newe);
+		i++;
+	}
+		
+	return (Node *) newx;
+}
+
+static Node *
 transformBooleanTest(ParseState *pstate, BooleanTest *b)
 {
 	const char *clausename;
@@ -1413,56 +1514,6 @@ transformBooleanTest(ParseState *pstate, BooleanTest *b)
 										clausename);
 
 	return (Node *) b;
-}
-
-static Node *
-transformXmlExpr(ParseState *pstate, XmlExpr *x)
-{
-	ListCell	*lc;
-	XmlExpr *newx = makeNode(XmlExpr);
-
-	newx->op = x->op;
-	if (x->name)
-		newx->name = map_sql_identifier_to_xml_name(x->name, false);
-	else
-		newx->name = NULL;
-
-	foreach(lc, x->named_args)
-	{
-		ResTarget 	*r = (ResTarget *) lfirst(lc);
-		Node 		*expr = transformExpr(pstate, r->val);
-		char 		*argname = NULL;
-
-		if (r->name)
-			argname = map_sql_identifier_to_xml_name(r->name, false);
-		else if (IsA(r->val, ColumnRef))
-			argname = map_sql_identifier_to_xml_name(FigureColname(r->val), true);
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 x->op == IS_XMLELEMENT
-					 ? errmsg("unnamed attribute value must be a column reference")
-					 : errmsg("unnamed element value must be a column reference")));
-
-		newx->named_args = lappend(newx->named_args, 
-								   makeTargetEntry((Expr *) expr, 0, argname, false)); 
-	}
-
-	foreach(lc, x->args)
-	{
-		Node	   *e = (Node *) lfirst(lc);
-		Node	   *newe;
-
-		newe = coerce_to_xml(pstate, transformExpr(pstate, e),
-							 (x->op == IS_XMLCONCAT 
-							  ? "XMLCONCAT"
-							  : (x->op == IS_XMLELEMENT
-								 ? "XMLELEMENT"
-								 : "XMLFOREST")));
-		newx->args = lappend(newx->args, newe);
-	}
-		
-	return (Node *) newx;
 }
 
 /*
@@ -1715,6 +1766,9 @@ exprType(Node *expr)
 		case T_MinMaxExpr:
 			type = ((MinMaxExpr *) expr)->minmaxtype;
 			break;
+		case T_XmlExpr:
+			type = XMLOID;
+			break;
 		case T_NullIfExpr:
 			type = exprType((Node *) linitial(((NullIfExpr *) expr)->args));
 			break;
@@ -1723,9 +1777,6 @@ exprType(Node *expr)
 			break;
 		case T_BooleanTest:
 			type = BOOLOID;
-			break;
-		case T_XmlExpr:
-			type = XMLOID;
 			break;
 		case T_CoerceToDomain:
 			type = ((CoerceToDomain *) expr)->resulttype;

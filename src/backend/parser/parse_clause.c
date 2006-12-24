@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.159 2006/11/28 12:54:41 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.160 2006/12/24 00:29:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1094,7 +1094,7 @@ transformLimitClause(ParseState *pstate, Node *clause,
 
 	qual = transformExpr(pstate, clause);
 
-	qual = coerce_to_bigint(pstate, qual, constructName);
+	qual = coerce_to_specific_type(pstate, qual, INT8OID, constructName);
 
 	/*
 	 * LIMIT can't refer to any vars or aggregates of the current query; we

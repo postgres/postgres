@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.2 2006/12/23 04:56:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.3 2006/12/24 00:29:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,15 +40,6 @@
 
 
 #ifdef USE_LIBXML
-
-/*
- * A couple of useful macros (similar to ones from libxml/parse.c)
- */
-#define CMP4( s, c1, c2, c3, c4 ) \
-  ( ((unsigned char *) s)[ 0 ] == c1 && ((unsigned char *) s)[ 1 ] == c2 && \
-    ((unsigned char *) s)[ 2 ] == c3 && ((unsigned char *) s)[ 3 ] == c4 )
-#define CMP5( s, c1, c2, c3, c4, c5 ) \
-  ( CMP4( s, c1, c2, c3, c4 ) && ((unsigned char *) s)[ 4 ] == c5 )
 
 #define PG_XML_DEFAULT_URI "dummy.xml"
 #define XML_ERRBUF_SIZE 200
@@ -177,31 +168,18 @@ xmlcomment(PG_FUNCTION_ARGS)
 
 
 Datum
-xmlparse(PG_FUNCTION_ARGS)
+texttoxml(PG_FUNCTION_ARGS)
+{
+	text	   *data = PG_GETARG_TEXT_P(0);
+
+	PG_RETURN_XML_P(xmlparse(data, false, true));
+}
+
+
+xmltype *
+xmlparse(text *data, bool is_document, bool preserve_whitespace)
 {
 #ifdef USE_LIBXML
-	text	   *data;
-	bool		is_document;
-	bool		preserve_whitespace;
-
-	data = PG_GETARG_TEXT_P(0);
-
-	if (PG_NARGS() >= 2)
-		is_document = PG_GETARG_BOOL(1);
-	else
-		is_document = false;
-
-	if (PG_NARGS() >= 3)
-		preserve_whitespace = PG_GETARG_BOOL(2);
-	else
-		/*
-		 * Since the XMLPARSE grammar makes STRIP WHITESPACE the
-		 * default, this argument should really default to false.  But
-		 * until we have actually implemented whitespace stripping,
-		 * this would be annoying.
-		 */
-		preserve_whitespace = true;
-
 	if (!preserve_whitespace)
 		ereport(WARNING,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -213,111 +191,93 @@ xmlparse(PG_FUNCTION_ARGS)
 	 * valies defined by internal DTD are applied'.  As for external
 	 * DTDs, we try to support them too, (see SQL/XML:10.16.7.e)
 	 */
-	xml_parse(data, XML_PARSE_DTDATTR, is_document); /* assume that ERROR occurred if parsing failed */
+	xml_parse(data, XML_PARSE_DTDATTR, is_document);
 
-	PG_RETURN_XML_P(data);
+	return (xmltype *) data;
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return NULL;
 #endif
 }
 
 
-Datum
-xmlpi(PG_FUNCTION_ARGS)
+xmltype *
+xmlpi(char *target, text *arg)
 {
 #ifdef USE_LIBXML
-	char	   *target = NameStr(*PG_GETARG_NAME(0));
+	xmltype *result;
 	StringInfoData buf;
 
-	if (strlen(target) >= 3
-		&& (target[0] == 'x' || target[0] == 'X')
-		&& (target[1] == 'm' || target[1] == 'M')
-		&& (target[2] == 'l' || target[2] == 'L'))
-	{
+	if (pg_strncasecmp(target, "xml", 3) == 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
 				 errmsg("invalid XML processing instruction"),
 				 errdetail("XML processing instruction target name cannot start with \"xml\".")));
-	}
 
 	initStringInfo(&buf);
 
-	appendStringInfo(&buf, "<?");
-	appendStringInfoString(&buf, map_sql_identifier_to_xml_name(target, false));
-	if (PG_NARGS() > 1)
+	appendStringInfo(&buf, "<?%s", target);
+
+	if (arg != NULL)
 	{
-		text *arg = PG_GETARG_TEXT_P(1);
 		char *string;
 
-		string = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(arg)));
-		if (strstr(string, "?>"))
+		string = DatumGetCString(DirectFunctionCall1(textout,
+													 PointerGetDatum(arg)));
+		if (strstr(string, "?>") != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
 				 errmsg("invalid XML processing instruction"),
 				 errdetail("XML processing instruction cannot contain \"?>\".")));
 
-		appendStringInfoString(&buf, " ");
+		appendStringInfoChar(&buf, ' ');
 		appendStringInfoString(&buf, string);
+		pfree(string);
 	}
 	appendStringInfoString(&buf, "?>");
 
-	PG_RETURN_XML_P(stringinfo_to_xmltype(&buf));
+	result = stringinfo_to_xmltype(&buf);
+	pfree(buf.data);
+	return result;
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return NULL;
 #endif
 }
 
 
-Datum
-xmlroot(PG_FUNCTION_ARGS)
+xmltype *
+xmlroot(xmltype *data, text *version, int standalone)
 {
 #ifdef USE_LIBXML
-	xmltype	   *data;
-	text	   *version;
-	int			standalone;
+	xmltype *result;
 	StringInfoData buf;
 
-	if (PG_ARGISNULL(0))
-		PG_RETURN_NULL();
-	else
-		data = PG_GETARG_XML_P(0);
-
-	if (PG_ARGISNULL(1))
-		version = NULL;
-	else
-		version = PG_GETARG_TEXT_P(1);
-
-	if (PG_ARGISNULL(2))
-		standalone = 0;
-	else
-	{
-		bool tmp = PG_GETARG_BOOL(2);
-		standalone = (tmp ? 1 : -1);
-	}
+	initStringInfo(&buf);
 
 	/*
 	 * FIXME: This is probably supposed to be cleverer if there
 	 * already is an XML preamble.
 	 */
-	initStringInfo(&buf);
-
 	appendStringInfo(&buf,"<?xml");
-	if (version) {
+	if (version)
+	{
 		appendStringInfo(&buf, " version=\"");
 		appendStringInfoText(&buf, version);
 		appendStringInfo(&buf, "\"");
 	}
 	if (standalone)
-		appendStringInfo(&buf, " standalone=\"%s\"", (standalone == 1 ? "yes" : "no"));
+		appendStringInfo(&buf, " standalone=\"%s\"",
+						 (standalone == 1 ? "yes" : "no"));
 	appendStringInfo(&buf, "?>");
 	appendStringInfoText(&buf, (text *) data);
 
-	PG_RETURN_XML_P(stringinfo_to_xmltype(&buf));
+	result = stringinfo_to_xmltype(&buf);
+	pfree(buf.data);
+	return result;
 #else
 	NO_XML_SUPPORT();
-	return 0;
+	return NULL;
 #endif
 }
 
@@ -456,7 +416,7 @@ xml_parse(text *data, int opts, bool is_document)
 
 	/* first, we try to parse the string as XML doc, then, as XML chunk */
 	ereport(DEBUG3, (errmsg("string to parse: %s", string)));
-	if (len > 4 && CMP5(string, '<', '?', 'x', 'm', 'l'))
+	if (len >= 5 && strncmp((char *) string, "<?xml", 5) == 0)
 	{
 		/* consider it as DOCUMENT */
 		doc = xmlCtxtReadMemory(ctxt, (char *) string, len,
@@ -918,10 +878,8 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped)
 			appendStringInfo(&buf, "_x003A_");
 		else if (*p == '_' && *(p+1) == 'x')
 			appendStringInfo(&buf, "_x005F_");
-		else if (fully_escaped && p == ident
-				 && ( *p == 'x' || *p == 'X')
-				 && ( *(p+1) == 'm' || *(p+1) == 'M')
-				 && ( *(p+2) == 'l' || *(p+2) == 'L'))
+		else if (fully_escaped && p == ident &&
+				 pg_strncasecmp(p, "xml", 3) == 0)
 		{
 			if (*p == 'x')
 				appendStringInfo(&buf, "_x0078_");
@@ -932,9 +890,10 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped)
 		{
 			pg_wchar u = sqlchar_to_unicode(p);
 
-			if (!is_valid_xml_namechar(u)
-				|| (p == ident && !is_valid_xml_namefirst(u)))
-			appendStringInfo(&buf, "_x%04X_", (unsigned int) u);
+			if ((p == ident)
+				? !is_valid_xml_namefirst(u)
+				: !is_valid_xml_namechar(u))
+				appendStringInfo(&buf, "_x%04X_", (unsigned int) u);
 			else
 				appendBinaryStringInfo(&buf, p, pg_mblen(p));
 		}
