@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.4 2006/12/24 00:57:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.5 2006/12/24 18:25:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,8 @@
  * fail.  For one thing, this avoids having to manage variant catalog
  * installations.  But it also has nice effects such as that you can
  * dump a database containing XML type data even if the server is not
- * linked with libxml.
+ * linked with libxml.  Thus, make sure xml_out() works even if nothing
+ * else does.
  */
 
 #include "postgres.h"
@@ -36,6 +37,7 @@
 #include "mb/pg_wchar.h"
 #include "nodes/execnodes.h"
 #include "utils/builtins.h"
+#include "utils/memutils.h"
 #include "utils/xml.h"
 
 
@@ -43,28 +45,27 @@
 
 #define PG_XML_DEFAULT_URI "dummy.xml"
 
+static StringInfo xml_err_buf = NULL;
 
 static void 	xml_init(void);
 static void    *xml_palloc(size_t size);
 static void    *xml_repalloc(void *ptr, size_t size);
 static void 	xml_pfree(void *ptr);
 static char    *xml_pstrdup(const char *string);
-static void 	xml_ereport(int level, char *msg, void *ctxt);
+static void 	xml_ereport(int level, int sqlcode,
+							const char *msg, void *ctxt);
 static void 	xml_errorHandler(void *ctxt, const char *msg, ...);
-static void 	xml_ereport_by_code(int level, char *msg, int errcode);
+static void 	xml_ereport_by_code(int level, int sqlcode,
+									const char *msg, int errcode);
 static xmlChar *xml_text2xmlChar(text *in);
 static xmlDocPtr xml_parse(text *data, int opts, bool is_document);
 
-
-/* Global variables */
-/* taken from contrib/xml2 */
-/* FIXME: DO NOT USE global vars !!! */
-static char	   *xml_errmsg = NULL;		/* overall error message */
-
 #endif /* USE_LIBXML */
 
-
-#define NO_XML_SUPPORT() ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED), errmsg("no XML support in this installation")))
+#define NO_XML_SUPPORT() \
+	ereport(ERROR, \
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
+			 errmsg("no XML support in this installation")))
 
 
 Datum
@@ -292,54 +293,80 @@ xmlvalidate(PG_FUNCTION_ARGS)
 #ifdef USE_LIBXML
 	text				*data = PG_GETARG_TEXT_P(0);
 	text				*dtdOrUri = PG_GETARG_TEXT_P(1);
-	bool				result = FALSE;
-	xmlParserCtxtPtr	ctxt; /* the parser context */
-	xmlDocPtr 			doc; /* the resulting document tree */
-	xmlDtdPtr			dtd;
+	bool				result = false;
+	xmlParserCtxtPtr	ctxt = NULL;
+	xmlDocPtr 			doc = NULL;
+	xmlDtdPtr			dtd = NULL;
 
 	xml_init();
 
-	ctxt = xmlNewParserCtxt();
-	if (ctxt == NULL)
-		xml_ereport(ERROR, "could not allocate parser context", ctxt);
-	doc = xmlCtxtReadMemory(ctxt, (char *) VARDATA(data),
-							VARSIZE(data) - VARHDRSZ, PG_XML_DEFAULT_URI, NULL, 0);
-	if (doc == NULL)
-		xml_ereport(ERROR, "could not parse XML data", ctxt);
+	/* We use a PG_TRY block to ensure libxml is cleaned up on error */
+	PG_TRY();
+	{
+		ctxt = xmlNewParserCtxt();
+		if (ctxt == NULL)
+			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+						"could not allocate parser context", ctxt);
+
+		doc = xmlCtxtReadMemory(ctxt, (char *) VARDATA(data),
+								VARSIZE(data) - VARHDRSZ,
+								PG_XML_DEFAULT_URI, NULL, 0);
+		if (doc == NULL)
+			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+						"could not parse XML data", ctxt);
 
 #if 0
-	uri = xmlCreateURI();
-	ereport(NOTICE, (errcode(0),errmsg(" dtd - %s", dtdOrUri)));
-	dtd = palloc(sizeof(xmlDtdPtr));
-	uri = xmlParseURI(dtdOrUri);
-	if (uri == NULL)
-		xml_ereport(ERROR, "not implemented yet... (TODO)", ctxt);
-	else
+		uri = xmlCreateURI();
+		elog(NOTICE, "dtd - %s", dtdOrUri);
+		dtd = palloc(sizeof(xmlDtdPtr));
+		uri = xmlParseURI(dtdOrUri);
+		if (uri == NULL)
+			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+						"not implemented yet... (TODO)", ctxt);
+		else
 #endif
-		dtd = xmlParseDTD(NULL, xml_text2xmlChar(dtdOrUri));
+			dtd = xmlParseDTD(NULL, xml_text2xmlChar(dtdOrUri));
 
-	if (dtd == NULL)
+		if (dtd == NULL)
+			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+						"could not load DTD", ctxt);
+
+		if (xmlValidateDtd(xmlNewValidCtxt(), doc, dtd) == 1)
+			result = true;
+
+		if (!result)
+			xml_ereport(NOTICE, ERRCODE_INVALID_XML_DOCUMENT,
+						"validation against DTD failed", ctxt);
+
+#if 0
+		if (uri)
+			xmlFreeURI(uri);
+#endif
+		if (dtd)
+			xmlFreeDtd(dtd);
+		if (doc)
+			xmlFreeDoc(doc);
+		if (ctxt)
+			xmlFreeParserCtxt(ctxt);
+		xmlCleanupParser();
+	}
+	PG_CATCH();
 	{
 #if 0
-		xmlFreeDoc(doc);
-		xmlFreeParserCtxt(ctxt);
+		if (uri)
+			xmlFreeURI(uri);
 #endif
-		xml_ereport(ERROR, "could not load DTD", ctxt);
+		if (dtd)
+			xmlFreeDtd(dtd);
+		if (doc)
+			xmlFreeDoc(doc);
+		if (ctxt)
+			xmlFreeParserCtxt(ctxt);
+		xmlCleanupParser();
+
+		PG_RE_THROW();
 	}
-
-	if (xmlValidateDtd(xmlNewValidCtxt(), doc, dtd) == 1)
-		result = TRUE;
-
-#if 0
-	xmlFreeURI(uri);
-	xmlFreeDtd(dtd);
-	xmlFreeDoc(doc);
-	xmlFreeParserCtxt(ctxt);
-	xmlCleanupParser();
-#endif
-
-	if (!result)
-		xml_ereport(NOTICE, "validation against DTD failed", ctxt);
+	PG_END_TRY();
 
 	PG_RETURN_BOOL(result);
 #else /* not USE_LIBXML */
@@ -368,12 +395,27 @@ xml_init(void)
 				 errdetail("libxml2 has incompatible char type: sizeof(char)=%u, sizeof(xmlChar)=%u.",
 						   (int) sizeof(char), (int) sizeof(xmlChar))));
 
+	if (xml_err_buf == NULL)
+	{
+		/* First time through: create error buffer in permanent context */
+		MemoryContext oldcontext;
+
+		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+		xml_err_buf = makeStringInfo();
+		MemoryContextSwitchTo(oldcontext);
+	}
+	else
+	{
+		/* Reset pre-existing buffer to empty */
+		xml_err_buf->data[0] = '\0';
+		xml_err_buf->len = 0;
+	}
+	/* Now that xml_err_buf exists, safe to call xml_errorHandler */
+	xmlSetGenericErrorFunc(NULL, xml_errorHandler);
+
 	xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
 	xmlInitParser();
 	LIBXML_TEST_VERSION;
-	/* do not flood PG's logfile with libxml error messages - reset error handler*/
-	xmlSetGenericErrorFunc(NULL, xml_errorHandler);
-	xml_errmsg = NULL;
 }
 
 
@@ -391,106 +433,115 @@ xml_init(void)
 static xmlDocPtr
 xml_parse(text *data, int opts, bool is_document)
 {
-	bool				validationFailed = FALSE;
-	xmlParserCtxtPtr 	ctxt; /* the parser context */
-	xmlDocPtr 			doc; /* the resulting document tree */
+	bool				validationFailed = false;
 	int					res_code;
 	int32				len;
 	xmlChar				*string;
+	xmlParserCtxtPtr 	ctxt = NULL;
+	xmlDocPtr 			doc = NULL;
 #ifdef XML_DEBUG_DTD_CONST
-	xmlDtdPtr			dtd; /* pointer to DTD */
+	xmlDtdPtr			dtd = NULL;
 #endif
-
-	xml_init();
 
 	len = VARSIZE(data) - VARHDRSZ; /* will be useful later */
 	string = xml_text2xmlChar(data);
 
-	ctxt = xmlNewParserCtxt();
-	if (ctxt == NULL)
-		xml_ereport(ERROR, "could not allocate parser context", ctxt);
+	xml_init();
 
-	/* first, we try to parse the string as XML doc, then, as XML chunk */
-	ereport(DEBUG3, (errmsg("string to parse: %s", string)));
-	if (len >= 5 && strncmp((char *) string, "<?xml", 5) == 0)
+	/* We use a PG_TRY block to ensure libxml is cleaned up on error */
+	PG_TRY();
 	{
-		/* consider it as DOCUMENT */
-		doc = xmlCtxtReadMemory(ctxt, (char *) string, len,
-								PG_XML_DEFAULT_URI, NULL, opts);
-		if (doc == NULL)
+		ctxt = xmlNewParserCtxt();
+		if (ctxt == NULL)
+			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+						"could not allocate parser context", ctxt);
+
+		/* first, we try to parse the string as XML doc, then, as XML chunk */
+		if (len >= 5 && strncmp((char *) string, "<?xml", 5) == 0)
 		{
-			xml_ereport(ERROR, "could not parse XML data", ctxt);
-#if 0
-			xmlFreeParserCtxt(ctxt);
-			xmlCleanupParser();
-			ereport(ERROR, (errmsg("could not parse XML data")));
-#endif
+			/* consider it as DOCUMENT */
+			doc = xmlCtxtReadMemory(ctxt, (char *) string, len,
+									PG_XML_DEFAULT_URI, NULL, opts);
+			if (doc == NULL)
+				xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+							"could not parse XML data", ctxt);
 		}
-	}
-	else
-	{
-		/* attempt to parse the string as if it is an XML fragment */
-		ereport(DEBUG3, (errmsg("the string is not an XML doc, trying to parse as a CHUNK")));
-		doc = xmlNewDoc(NULL);
-		/* TODO resolve: xmlParseBalancedChunkMemory assumes that string is UTF8 encoded! */
-		res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0, string, NULL);
-		if (res_code != 0)
+		else
 		{
-			xmlFreeParserCtxt(ctxt);
-			xmlCleanupParser();
-			xml_ereport_by_code(ERROR, "could not parse XML data", res_code);
+			/* attempt to parse the string as if it is an XML fragment */
+			doc = xmlNewDoc(NULL);
+			/* TODO resolve: xmlParseBalancedChunkMemory assumes that string is UTF8 encoded! */
+			res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0, string, NULL);
+			if (res_code != 0)
+				xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+									"could not parse XML data", res_code);
 		}
-	}
 
 #ifdef XML_DEBUG_DTD_CONST
-	dtd = xmlParseDTD(NULL, (xmlChar *) XML_DEBUG_DTD_CONST);
-	xml_ereport(DEBUG3, "solid path to DTD was defined for debugging purposes", ctxt);
-	if (dtd == NULL)
-	{
-		xml_ereport(ERROR, "could not parse DTD data", ctxt);
-	}
-	else
-#else
-	/* if dtd for our xml data is detected... */
-	if ((doc->intSubset != NULL) || (doc->extSubset != NULL))
-#endif
-	{
-		/* assume that inline DTD exists - validation should be performed */
-#ifdef XML_DEBUG_DTD_CONST
+		dtd = xmlParseDTD(NULL, (xmlChar *) XML_DEBUG_DTD_CONST);
+		if (dtd == NULL)
+			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+						"could not parse DTD data", ctxt);
 		if (xmlValidateDtd(xmlNewValidCtxt(), doc, dtd) != 1)
+			validationFailed = true;
 #else
-		if (ctxt->valid == 0)
-#endif
+		/* if dtd for our xml data is detected... */
+		if ((doc->intSubset != NULL) || (doc->extSubset != NULL))
 		{
-			/* DTD exists, but validator reported 'validation failed' */
-			validationFailed = TRUE;
+			/* assume inline DTD exists - validation should be performed */
+			if (ctxt->valid == 0)
+			{
+				/* DTD exists, but validator reported 'validation failed' */
+				validationFailed = true;
+			}
 		}
+#endif
+
+		if (validationFailed)
+			xml_ereport(WARNING, ERRCODE_INVALID_XML_DOCUMENT,
+						"validation against DTD failed", ctxt);
+
+		/* TODO encoding issues
+		 * (thoughts:
+		 * 		CASE:
+		 *   		- XML data has explicit encoding attribute in its prolog
+		 *   		- if not, assume that enc. of XML data is the same as client's one
+		 *
+		 * 		The common rule is to accept the XML data only if its encoding
+		 * 		is the same as encoding of the storage (server's). The other possible
+		 * 		option is to accept all the docs, but DO TRANSFORMATION and, if needed,
+		 * 		change the prolog.
+		 *
+		 * 		I think I'd stick the first way (for the 1st version),
+		 * 		it's much simplier (less errors...)
+		 * ) */
+		/* ... */
+
+#ifdef XML_DEBUG_DTD_CONST
+		if (dtd)
+			xmlFreeDtd(dtd);
+#endif
+		if (doc)
+			xmlFreeDoc(doc);
+		if (ctxt)
+			xmlFreeParserCtxt(ctxt);
+		xmlCleanupParser();
 	}
+	PG_CATCH();
+	{
+#ifdef XML_DEBUG_DTD_CONST
+		if (dtd)
+			xmlFreeDtd(dtd);
+#endif
+		if (doc)
+			xmlFreeDoc(doc);
+		if (ctxt)
+			xmlFreeParserCtxt(ctxt);
+		xmlCleanupParser();
 
-	if (validationFailed)
-		xml_ereport(WARNING, "validation against DTD failed", ctxt);
-
-	/* TODO encoding issues
-	 * (thoughts:
-	 * 		CASE:
-	 *   		- XML data has explicit encoding attribute in its prolog
-	 *   		- if not, assume that enc. of XML data is the same as client's one
-	 *
-	 * 		The common rule is to accept the XML data only if its encoding
-	 * 		is the same as encoding of the storage (server's). The other possible
-	 * 		option is to accept all the docs, but DO TRANSFORMATION and, if needed,
-	 * 		change the prolog.
-	 *
-	 * 		I think I'd stick the first way (for the 1st version),
-	 * 		it's much simplier (less errors...)
-	 * ) */
-	/* ... */
-
-	xmlFreeParserCtxt(ctxt);
-	xmlCleanupParser();
-
-	ereport(DEBUG3, (errmsg("XML data successfully parsed, encoding: %s",
-		(char *) doc->encoding)));
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	return doc;
 }
@@ -549,17 +600,17 @@ xml_pstrdup(const char *string)
  * Adds detail - libxml's native error message, if any.
  */
 static void
-xml_ereport(int level, char *msg, void *ctxt)
+xml_ereport(int level, int sqlcode,
+			const char *msg, void *ctxt)
 {
-	char *xmlErrDetail;
-	int xmlErrLen, i;
 	xmlErrorPtr libxmlErr = NULL;
 
-	if (xml_errmsg != NULL)
+	if (xml_err_buf->len > 0)
 	{
-		ereport(DEBUG1, (errmsg("%s", xml_errmsg)));
-		pfree(xml_errmsg);
-		xml_errmsg = NULL;
+		ereport(DEBUG1,
+				(errmsg("%s", xml_err_buf->data)));
+		xml_err_buf->data[0] = '\0';
+		xml_err_buf->len = 0;
 	}
 
 	if (ctxt != NULL)
@@ -567,31 +618,27 @@ xml_ereport(int level, char *msg, void *ctxt)
 
 	if (libxmlErr == NULL)
 	{
-		if (level == ERROR)
-		{
-			xmlFreeParserCtxt(ctxt);
-			xmlCleanupParser();
-		}
-		ereport(level, (errmsg(msg)));
+		ereport(level,
+				(errcode(sqlcode),
+				 errmsg("%s", msg)));
 	}
 	else
 	{
 		/* as usual, libxml error message contains '\n'; get rid of it */
-		xmlErrLen = strlen(libxmlErr->message); /* - 1; */
-		xmlErrDetail = (char *) palloc(xmlErrLen);
+		char *xmlErrDetail;
+		int xmlErrLen, i;
+
+		xmlErrDetail = pstrdup(libxmlErr->message);
+		xmlErrLen = strlen(xmlErrDetail);
 		for (i = 0; i < xmlErrLen; i++)
 		{
-			if (libxmlErr->message[i] == '\n')
+			if (xmlErrDetail[i] == '\n')
 				xmlErrDetail[i] = '.';
-			else
-				xmlErrDetail[i] = libxmlErr->message[i];
 		}
-		if (level == ERROR)
-		{
-			xmlFreeParserCtxt(ctxt);
-			xmlCleanupParser();
-		}
-		ereport(level, (errmsg(msg), errdetail("%s", xmlErrDetail)));
+		ereport(level,
+				(errcode(sqlcode),
+				 errmsg("%s", msg),
+				 errdetail("%s", xmlErrDetail)));
 	}
 }
 
@@ -602,25 +649,22 @@ xml_ereport(int level, char *msg, void *ctxt)
 static void
 xml_errorHandler(void *ctxt, const char *msg,...)
 {
-	char		xml_errbuf[256];
-	va_list		args;
-
-	/* Format this message ... */
-	va_start(args, msg);
-	vsnprintf(xml_errbuf, sizeof(xml_errbuf)-1, msg, args);
-	va_end(args);
-	xml_errbuf[sizeof(xml_errbuf)-1] = '\0';
-
-	/* ... and append to xml_errbuf */
-	if (xml_errmsg == NULL)
-		xml_errmsg = pstrdup(xml_errbuf);
-	else
+	/* Append the formatted text to xml_err_buf */
+	for (;;)
 	{
-		int32		xsize = strlen(xml_errmsg);
+		va_list		args;
+		bool		success;
 
-		xml_errmsg = repalloc(xml_errmsg,
-							  (size_t) (xsize + strlen(xml_errbuf) + 1));
-		strcpy(&xml_errmsg[xsize - 1], xml_errbuf);
+		/* Try to format the data. */
+		va_start(args, msg);
+		success = appendStringInfoVA(xml_err_buf, msg, args);
+		va_end(args);
+
+		if (success)
+			break;
+
+		/* Double the buffer size and try again. */
+		enlargeStringInfo(xml_err_buf, xml_err_buf->maxlen);
 	}
 }
 
@@ -630,17 +674,21 @@ xml_errorHandler(void *ctxt, const char *msg,...)
  * TODO make them closer to recommendations from Postgres manual
  */
 static void
-xml_ereport_by_code(int level, char *msg, int code)
+xml_ereport_by_code(int level, int sqlcode,
+					const char *msg, int code)
 {
     const char *det;
 
-	if (code < 0)
+	if (xml_err_buf->len > 0)
 	{
-		ereport(level, (errmsg(msg)));
-		return;
+		ereport(DEBUG1,
+				(errmsg("%s", xml_err_buf->data)));
+		xml_err_buf->data[0] = '\0';
+		xml_err_buf->len = 0;
 	}
 
-    switch (code) {
+    switch (code)
+	{
         case XML_ERR_INTERNAL_ERROR:
             det = "libxml internal error";
             break;
@@ -799,19 +847,14 @@ xml_ereport_by_code(int level, char *msg, int code)
             det = "Closing tag not found";
             break;
         default:
-            det = "Unregistered error (libxml error code: %d)";
-            ereport(DEBUG1,
-					(errmsg_internal("Check out \"libxml/xmlerror.h\" and bring errcode \"%d\" processing to \"xml.c\".", code)));
-    }
-
-	if (xml_errmsg != NULL)
-	{
-		ereport(DEBUG1, (errmsg("%s", xml_errmsg)));
-		pfree(xml_errmsg);
-		xml_errmsg = NULL;
+            det = "Unrecognized libxml error code: %d";
+			break;
 	}
 
-	ereport(level, (errmsg(msg), errdetail(det, code)));
+	ereport(level,
+			(errcode(sqlcode),
+			 errmsg("%s", msg),
+			 errdetail(det, code)));
 }
 
 
