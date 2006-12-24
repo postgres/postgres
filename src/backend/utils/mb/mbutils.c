@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.60 2006/12/21 16:05:15 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.61 2006/12/24 00:57:48 tgl Exp $
  */
 #include "postgres.h"
 
@@ -481,6 +481,14 @@ int
 pg_mb2wchar_with_len(const char *from, pg_wchar *to, int len)
 {
 	return (*pg_wchar_table[DatabaseEncoding->encoding].mb2wchar_with_len) ((const unsigned char *) from, to, len);
+}
+
+/* same, with any encoding */
+int
+pg_encoding_mb2wchar_with_len(int encoding,
+							  const char *from, pg_wchar *to, int len)
+{
+	return (*pg_wchar_table[encoding].mb2wchar_with_len) ((const unsigned char *) from, to, len);
 }
 
 /* returns the byte length of a multibyte word */

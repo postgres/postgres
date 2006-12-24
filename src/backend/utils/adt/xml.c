@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.3 2006/12/24 00:29:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.4 2006/12/24 00:57:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,6 @@
 #ifdef USE_LIBXML
 
 #define PG_XML_DEFAULT_URI "dummy.xml"
-#define XML_ERRBUF_SIZE 200
 
 
 static void 	xml_init(void);
@@ -60,8 +59,7 @@ static xmlDocPtr xml_parse(text *data, int opts, bool is_document);
 /* Global variables */
 /* taken from contrib/xml2 */
 /* FIXME: DO NOT USE global vars !!! */
-char	   *xml_errbuf;				/* per line error buffer */
-char	   *xml_errmsg = NULL;		/* overall error message */
+static char	   *xml_errmsg = NULL;		/* overall error message */
 
 #endif /* USE_LIBXML */
 
@@ -376,8 +374,6 @@ xml_init(void)
 	/* do not flood PG's logfile with libxml error messages - reset error handler*/
 	xmlSetGenericErrorFunc(NULL, xml_errorHandler);
 	xml_errmsg = NULL;
-	xml_errbuf = palloc(XML_ERRBUF_SIZE);
-	memset(xml_errbuf, 0, XML_ERRBUF_SIZE);
 }
 
 
@@ -563,6 +559,7 @@ xml_ereport(int level, char *msg, void *ctxt)
 	{
 		ereport(DEBUG1, (errmsg("%s", xml_errmsg)));
 		pfree(xml_errmsg);
+		xml_errmsg = NULL;
 	}
 
 	if (ctxt != NULL)
@@ -605,23 +602,26 @@ xml_ereport(int level, char *msg, void *ctxt)
 static void
 xml_errorHandler(void *ctxt, const char *msg,...)
 {
+	char		xml_errbuf[256];
 	va_list		args;
 
+	/* Format this message ... */
 	va_start(args, msg);
-	vsnprintf(xml_errbuf, XML_ERRBUF_SIZE, msg, args);
+	vsnprintf(xml_errbuf, sizeof(xml_errbuf)-1, msg, args);
 	va_end(args);
-	/* Now copy the argument across */
+	xml_errbuf[sizeof(xml_errbuf)-1] = '\0';
+
+	/* ... and append to xml_errbuf */
 	if (xml_errmsg == NULL)
 		xml_errmsg = pstrdup(xml_errbuf);
 	else
 	{
 		int32		xsize = strlen(xml_errmsg);
 
-		xml_errmsg = repalloc(xml_errmsg, (size_t) (xsize + strlen(xml_errbuf) + 1));
-		strncpy(&xml_errmsg[xsize - 1], xml_errbuf, strlen(xml_errbuf));
-		xml_errmsg[xsize + strlen(xml_errbuf) - 1] = '\0';
+		xml_errmsg = repalloc(xml_errmsg,
+							  (size_t) (xsize + strlen(xml_errbuf) + 1));
+		strcpy(&xml_errmsg[xsize - 1], xml_errbuf);
 	}
-	memset(xml_errbuf, 0, XML_ERRBUF_SIZE);
 }
 
 
@@ -800,13 +800,15 @@ xml_ereport_by_code(int level, char *msg, int code)
             break;
         default:
             det = "Unregistered error (libxml error code: %d)";
-            ereport(DEBUG1, (errmsg("Check out \"libxml/xmlerror.h\" and bring errcode \"%d\" processing to \"xml.c\".", code)));
+            ereport(DEBUG1,
+					(errmsg_internal("Check out \"libxml/xmlerror.h\" and bring errcode \"%d\" processing to \"xml.c\".", code)));
     }
 
 	if (xml_errmsg != NULL)
 	{
 		ereport(DEBUG1, (errmsg("%s", xml_errmsg)));
 		pfree(xml_errmsg);
+		xml_errmsg = NULL;
 	}
 
 	ereport(level, (errmsg(msg), errdetail(det, code)));
@@ -820,21 +822,17 @@ xml_ereport_by_code(int level, char *msg, int code)
 static pg_wchar
 sqlchar_to_unicode(char *s)
 {
-	int save_enc;
-	pg_wchar ret;
 	char *utf8string;
+	pg_wchar ret[2];			/* need space for trailing zero */
 
 	utf8string = (char *) pg_do_encoding_conversion((unsigned char *) s,
 													pg_mblen(s),
 													GetDatabaseEncoding(),
 													PG_UTF8);
 
-	save_enc = GetDatabaseEncoding();
-	SetDatabaseEncoding(PG_UTF8);
-	pg_mb2wchar_with_len(utf8string, &ret, pg_mblen(s));
-	SetDatabaseEncoding(save_enc);
+	pg_encoding_mb2wchar_with_len(PG_UTF8, utf8string, ret, pg_mblen(s));
 
-	return ret;
+	return ret[0];
 }
 
 
