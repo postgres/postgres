@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.37 2002/09/04 20:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.37.2.1 2006/12/26 19:27:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,6 +317,8 @@ ExecSeqReScan(SeqScan *node, ExprContext *exprCtxt, Plan *parent)
 
 	scanstate = node->scanstate;
 	estate = node->plan.state;
+
+	scanstate->cstate.cs_TupFromTlist = false;
 
 	/* If this is re-scanning of PlanQual ... */
 	if (estate->es_evTuple != NULL &&

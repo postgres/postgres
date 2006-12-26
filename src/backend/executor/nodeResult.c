@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.21 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeResult.c,v 1.21.2.1 2006/12/26 19:27:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,6 +201,8 @@ ExecInitResult(Result *node, EState *estate, Plan *parent)
 	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &resstate->cstate);
+
+	resstate->cstate.cs_TupFromTlist = false;
 
 #define RESULT_NSLOTS 1
 

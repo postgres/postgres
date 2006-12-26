@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.13 2002/06/20 20:29:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.13.2.1 2006/12/26 19:27:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,4 +259,5 @@ ExecSubqueryReScan(SubqueryScan *node, ExprContext *exprCtxt, Plan *parent)
 		ExecReScan(node->subplan, NULL, (Plan *) node);
 
 	subquerystate->csstate.css_ScanTupleSlot = NULL;
+	subquerystate->csstate.cstate.cs_TupFromTlist = false;
 }

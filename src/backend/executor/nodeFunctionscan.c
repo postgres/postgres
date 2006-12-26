@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.12 2002/09/04 20:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeFunctionscan.c,v 1.12.2.1 2006/12/26 19:27:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -361,6 +361,7 @@ ExecFunctionReScan(FunctionScan *node, ExprContext *exprCtxt, Plan *parent)
 	scanstate = (FunctionScanState *) node->scan.scanstate;
 
 	ExecClearTuple(scanstate->csstate.cstate.cs_ResultTupleSlot);
+	scanstate->csstate.cstate.cs_TupFromTlist = false;
 
 	/*
 	 * If we haven't materialized yet, just return.
