@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.4.2.1 2005/12/02 01:30:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.4.2.2 2006/12/26 19:27:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,6 +306,8 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	estate = node->ss.ps.state;
 	scanrelid = ((BitmapHeapScan *) node->ss.ps.plan)->scan.scanrelid;
 
+	node->ss.ps.ps_TupFromTlist = false;
+
 	/*
 	 * If we are being passed an outer tuple, link it into the "regular"
 	 * per-tuple econtext for possible qual eval.
@@ -428,6 +430,8 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate)
 	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &scanstate->ss.ps);
+
+	scanstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * initialize child expressions
