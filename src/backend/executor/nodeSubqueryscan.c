@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.25 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.25.4.1 2006/12/26 19:27:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,4 +278,5 @@ ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
 	MemoryContextSwitchTo(oldcontext);
 
 	node->ss.ss_ScanTupleSlot = NULL;
+	node->ss.ps.ps_TupFromTlist = false;
 }

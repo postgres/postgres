@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.29 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.29.4.1 2006/12/26 19:27:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -326,6 +326,7 @@ void
 ExecFunctionReScan(FunctionScanState *node, ExprContext *exprCtxt)
 {
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
+	node->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * If we haven't materialized yet, just return.

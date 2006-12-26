@@ -34,7 +34,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.29 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.29.4.1 2006/12/26 19:27:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,6 +193,8 @@ ExecInitResult(Result *node, EState *estate)
 	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &resstate->ps);
+
+	resstate->ps.ps_TupFromTlist = false;
 
 #define RESULT_NSLOTS 1
 

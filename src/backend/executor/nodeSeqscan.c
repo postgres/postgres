@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.51 2004/12/31 21:59:45 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSeqscan.c,v 1.51.4.1 2006/12/26 19:27:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,6 +318,8 @@ ExecSeqReScan(SeqScanState *node, ExprContext *exprCtxt)
 
 	estate = node->ps.state;
 	scanrelid = ((SeqScan *) node->ps.plan)->scanrelid;
+
+	node->ps.ps_TupFromTlist = false;
 
 	/* If this is re-scanning of PlanQual ... */
 	if (estate->es_evTuple != NULL &&
