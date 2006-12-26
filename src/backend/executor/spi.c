@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.166 2006/12/08 00:40:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.167 2006/12/26 16:56:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1341,6 +1341,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 	volatile uint32 my_processed = 0;
 	volatile Oid my_lastoid = InvalidOid;
 	SPITupleTable *volatile my_tuptable = NULL;
+	volatile int res = 0;
 	Snapshot	saveActiveSnapshot;
 
 	/* Be sure to restore ActiveSnapshot on error exit */
@@ -1396,7 +1397,6 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				Plan	   *planTree;
 				QueryDesc  *qdesc;
 				DestReceiver *dest;
-				int			res;
 
 				planTree = lfirst(plan_list_item);
 				plan_list_item = lnext(plan_list_item);
@@ -1545,6 +1545,13 @@ fail:
 
 	/* tuptable now is caller's responsibility, not SPI's */
 	_SPI_current->tuptable = NULL;
+
+	/*
+	 * If none of the queries had canSetTag, we return the last query's result
+	 * code, but not its auxiliary results (for backwards compatibility).
+	 */
+	if (my_res == 0)
+		my_res = res;
 
 	return my_res;
 }
