@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict_thesaurus.c,v 1.6 2006/10/04 00:29:46 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_thesaurus.c,v 1.7 2006/12/26 14:54:24 teodor Exp $ */
 
 /*
  * thesaurus
@@ -118,7 +118,7 @@ addWrd(DictThesaurus * d, char *b, char *e, uint16 idsubst, uint16 nwrd, uint16 
 	{
 		nres = ntres = 0;
 
-		if (idsubst <= d->nsubst)
+		if (idsubst >= d->nsubst)
 		{
 			if (d->nsubst == 0)
 			{
