@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.51 2006/10/04 00:29:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.52 2006/12/26 19:26:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,6 +376,8 @@ ExecTidReScan(TidScanState *node, ExprContext *exprCtxt)
 	estate = node->ss.ps.state;
 	scanrelid = ((TidScan *) node->ss.ps.plan)->scan.scanrelid;
 
+	node->ss.ps.ps_TupFromTlist = false;
+
 	/* If we are being passed an outer tuple, save it for runtime key calc */
 	if (exprCtxt != NULL)
 		node->ss.ps.ps_ExprContext->ecxt_outertuple =
@@ -481,6 +483,8 @@ ExecInitTidScan(TidScan *node, EState *estate, int eflags)
 	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &tidstate->ss.ps);
+
+	tidstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * initialize child expressions
