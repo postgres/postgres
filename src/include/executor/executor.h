@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.130 2006/10/04 00:30:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.130.2.1 2006/12/26 21:37:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,6 +223,7 @@ extern void end_tup_output(TupOutputState *tstate);
  * prototypes from functions in execUtils.c
  */
 extern EState *CreateExecutorState(void);
+extern EState *CreateSubExecutorState(EState *parent_estate);
 extern void FreeExecutorState(EState *estate);
 extern ExprContext *CreateExprContext(EState *estate);
 extern ExprContext *CreateStandaloneExprContext(void);
