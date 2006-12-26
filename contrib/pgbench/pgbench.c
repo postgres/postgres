@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.58 2006/10/21 06:31:28 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.59 2006/12/26 01:02:05 ishii Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -1500,7 +1500,7 @@ main(int argc, char **argv)
 
 	/* set random seed */
 	gettimeofday(&tv1, NULL);
-	srand((unsigned int) tv1.tv_usec);
+	srandom((unsigned int) tv1.tv_usec);
 
 	/* get start up time */
 	gettimeofday(&tv1, NULL);
