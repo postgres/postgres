@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.281 2006/12/04 02:06:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.282 2006/12/26 21:37:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2247,6 +2247,10 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 
 	rtsize = list_length(estate->es_range_table);
 
+	/*
+	 * It's tempting to think about using CreateSubExecutorState here, but
+	 * at present we can't because of memory leakage concerns ...
+	 */
 	epq->estate = epqstate = CreateExecutorState();
 
 	oldcontext = MemoryContextSwitchTo(epqstate->es_query_cxt);

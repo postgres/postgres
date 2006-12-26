@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.140 2006/10/04 00:29:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.141 2006/12/26 21:37:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  * INTERFACE ROUTINES
  *		CreateExecutorState		Create/delete executor working state
+ *		CreateSubExecutorState
  *		FreeExecutorState
  *		CreateExprContext
  *		CreateStandaloneExprContext
@@ -65,6 +66,8 @@ int			NIndexTupleInserted;
 int			NIndexTupleProcessed;
 
 
+static EState *InternalCreateExecutorState(MemoryContext qcontext,
+										   bool is_subquery);
 static void ShutdownExprContext(ExprContext *econtext);
 
 
@@ -149,9 +152,7 @@ DisplayTupleCount(FILE *statfp)
 EState *
 CreateExecutorState(void)
 {
-	EState	   *estate;
 	MemoryContext qcontext;
-	MemoryContext oldcontext;
 
 	/*
 	 * Create the per-query context for this Executor run.
@@ -161,6 +162,37 @@ CreateExecutorState(void)
 									 ALLOCSET_DEFAULT_MINSIZE,
 									 ALLOCSET_DEFAULT_INITSIZE,
 									 ALLOCSET_DEFAULT_MAXSIZE);
+
+	return InternalCreateExecutorState(qcontext, false);
+}
+
+/* ----------------
+ *		CreateSubExecutorState
+ *
+ *		Create and initialize an EState node for a sub-query.
+ *
+ * Ideally, sub-queries probably shouldn't have their own EState at all,
+ * but right now this is necessary because they have their own rangetables
+ * and we access the rangetable via the EState.  It is critical that a
+ * sub-query share the parent's es_query_cxt, else structures allocated by
+ * the sub-query (especially its result tuple descriptor) may disappear
+ * too soon during executor shutdown.
+ * ----------------
+ */
+EState *
+CreateSubExecutorState(EState *parent_estate)
+{
+	return InternalCreateExecutorState(parent_estate->es_query_cxt, true);
+}
+
+/*
+ * Guts of CreateExecutorState/CreateSubExecutorState
+ */
+static EState *
+InternalCreateExecutorState(MemoryContext qcontext, bool is_subquery)
+{
+	EState	   *estate;
+	MemoryContext oldcontext;
 
 	/*
 	 * Make the EState node within the per-query context.  This way, we don't
@@ -199,6 +231,8 @@ CreateExecutorState(void)
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
 	estate->es_rowMarks = NIL;
+
+	estate->es_is_subquery = is_subquery;
 
 	estate->es_instrument = false;
 	estate->es_select_into = false;
@@ -258,9 +292,12 @@ FreeExecutorState(EState *estate)
 
 	/*
 	 * Free the per-query memory context, thereby releasing all working
-	 * memory, including the EState node itself.
+	 * memory, including the EState node itself.  In a subquery, we don't
+	 * do this, leaving the memory cleanup to happen when the topmost query
+	 * is closed down.
 	 */
-	MemoryContextDelete(estate->es_query_cxt);
+	if (!estate->es_is_subquery)
+		MemoryContextDelete(estate->es_query_cxt);
 }
 
 /* ----------------

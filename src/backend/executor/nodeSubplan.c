@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.80 2006/10/04 00:29:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.81 2006/12/26 21:37:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -635,7 +635,6 @@ ExecInitSubPlan(SubPlanState *node, EState *estate, int eflags)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
 	EState	   *sp_estate;
-	MemoryContext oldcontext;
 
 	/*
 	 * Do access checking on the rangetable entries in the subquery.
@@ -661,14 +660,12 @@ ExecInitSubPlan(SubPlanState *node, EState *estate, int eflags)
 	 * create an EState for the subplan
 	 *
 	 * The subquery needs its own EState because it has its own rangetable. It
-	 * shares our Param ID space, however.	XXX if rangetable access were done
-	 * differently, the subquery could share our EState, which would eliminate
-	 * some thrashing about in this module...
+	 * shares our Param ID space and es_query_cxt, however.  XXX if rangetable
+	 * access were done differently, the subquery could share our EState,
+	 * which would eliminate some thrashing about in this module...
 	 */
-	sp_estate = CreateExecutorState();
+	sp_estate = CreateSubExecutorState(estate);
 	node->sub_estate = sp_estate;
-
-	oldcontext = MemoryContextSwitchTo(sp_estate->es_query_cxt);
 
 	sp_estate->es_range_table = subplan->rtable;
 	sp_estate->es_param_list_info = estate->es_param_list_info;
@@ -693,8 +690,6 @@ ExecInitSubPlan(SubPlanState *node, EState *estate, int eflags)
 	node->planstate = ExecInitNode(subplan->plan, sp_estate, eflags);
 
 	node->needShutdown = true;	/* now we need to shutdown the subplan */
-
-	MemoryContextSwitchTo(oldcontext);
 
 	/*
 	 * If this plan is un-correlated or undirect correlated one and want to
@@ -1036,11 +1031,7 @@ ExecEndSubPlan(SubPlanState *node)
 {
 	if (node->needShutdown)
 	{
-		MemoryContext oldcontext;
-
-		oldcontext = MemoryContextSwitchTo(node->sub_estate->es_query_cxt);
 		ExecEndPlan(node->planstate, node->sub_estate);
-		MemoryContextSwitchTo(oldcontext);
 		FreeExecutorState(node->sub_estate);
 		node->sub_estate = NULL;
 		node->planstate = NULL;
