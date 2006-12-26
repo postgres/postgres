@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.22 2003/10/01 21:30:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.22.2.1 2006/12/26 19:27:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,4 +278,5 @@ ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
 	MemoryContextSwitchTo(oldcontext);
 
 	node->ss.ss_ScanTupleSlot = NULL;
+	node->ss.ps.ps_TupFromTlist = false;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.84.2.2 2006/05/19 16:31:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.84.2.3 2006/12/26 19:27:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -375,6 +375,8 @@ ExecIndexReScan(IndexScanState *node, ExprContext *exprCtxt)
 	numScanKeys = node->iss_NumScanKeys;
 	scanrelid = ((IndexScan *) node->ss.ps.plan)->scan.scanrelid;
 
+	node->ss.ps.ps_TupFromTlist = false;
+
 	if (econtext)
 	{
 		/*
@@ -646,6 +648,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 * create expression context for node
 	 */
 	ExecAssignExprContext(estate, &indexstate->ss.ps);
+
+	indexstate->ss.ps.ps_TupFromTlist = false;
 
 	/*
 	 * initialize child expressions
