@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.23 2006/10/04 00:30:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/mbprint.c,v 1.24 2006/12/27 19:45:36 tgl Exp $
  */
 
 #include "postgres_fe.h"
@@ -196,7 +196,7 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding, int *result_width,
 			break;
 		w = PQdsplen((char *) pwcs, encoding);
 
-		if (chlen == 1)			/* ASCII char */
+		if (chlen == 1)			/* single-byte char */
 		{
 			if (*pwcs == '\n')	/* Newline */
 			{
@@ -211,25 +211,23 @@ pg_wcssize(unsigned char *pwcs, size_t len, int encoding, int *result_width,
 				linewidth += 2;
 				format_size += 2;
 			}
-			else if (w <= 0)	/* Other control char */
+			else if (w < 0)		/* Other control char */
 			{
 				linewidth += 4;
 				format_size += 4;
 			}
-			else
-				/* Output itself */
+			else				/* Output it as-is */
 			{
-				linewidth++;
+				linewidth += w;
 				format_size += 1;
 			}
 		}
-		else if (w <= 0)		/* Non-ascii control char */
+		else if (w < 0)			/* Non-ascii control char */
 		{
 			linewidth += 6;		/* \u0000 */
 			format_size += 6;
 		}
-		else
-			/* All other chars */
+		else					/* All other chars */
 		{
 			linewidth += w;
 			format_size += chlen;
@@ -267,11 +265,11 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 			break;
 		w = PQdsplen((char *) pwcs, encoding);
 
-		if (chlen == 1)			/* single byte char char */
+		if (chlen == 1)			/* single-byte char */
 		{
 			if (*pwcs == '\n')	/* Newline */
 			{
-				*ptr++ = 0;		/* NULL char */
+				*ptr++ = '\0';
 				lines->width = linewidth;
 				linewidth = 0;
 				lines++;
@@ -287,20 +285,19 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 				linewidth += 2;
 				ptr += 2;
 			}
-			else if (w <= 0)	/* Other control char */
+			else if (w < 0)		/* Other control char */
 			{
 				sprintf((char *) ptr, "\\x%02X", *pwcs);
 				linewidth += 4;
 				ptr += 4;
 			}
-			else
-				/* Output itself */
+			else				/* Output it as-is */
 			{
-				linewidth++;
+				linewidth += w;
 				*ptr++ = *pwcs;
 			}
 		}
-		else if (w <= 0)		/* Non-ascii control char */
+		else if (w < 0)			/* Non-ascii control char */
 		{
 			if (encoding == PG_UTF8)
 				sprintf((char *) ptr, "\\u%04X", utf2ucs(pwcs));
@@ -316,8 +313,7 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 			ptr += 6;
 			linewidth += 6;
 		}
-		else
-			/* All other chars */
+		else					/* All other chars */
 		{
 			int			i;
 
@@ -327,13 +323,12 @@ pg_wcsformat(unsigned char *pwcs, size_t len, int encoding,
 		}
 		len -= chlen;
 	}
-	*ptr++ = 0;
+	*ptr++ = '\0';
 	lines->width = linewidth;
 	lines++;
 	count--;
 	if (count > 0)
 		lines->ptr = NULL;
-	return;
 }
 
 unsigned char *
