@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.74 2006/03/31 23:32:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.75 2006/12/27 22:31:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@ static HTAB *LocalBufHash = NULL;
 
 
 static void InitLocalBuffers(void);
+static Block GetLocalBufferStorage(void);
 
 
 /*
@@ -167,12 +168,8 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	 */
 	if (LocalBufHdrGetBlock(bufHdr) == NULL)
 	{
-		char	   *data;
-
-		data = (char *) MemoryContextAlloc(TopMemoryContext, BLCKSZ);
-
 		/* Set pointer for use by BufferGetBlock() macro */
-		LocalBufHdrGetBlock(bufHdr) = (Block) data;
+		LocalBufHdrGetBlock(bufHdr) = GetLocalBufferStorage();
 	}
 
 	/*
@@ -332,6 +329,54 @@ InitLocalBuffers(void)
 
 	/* Initialization done, mark buffers allocated */
 	NLocBuffer = nbufs;
+}
+
+/*
+ * GetLocalBufferStorage - allocate memory for a local buffer
+ *
+ * The idea of this function is to aggregate our requests for storage
+ * so that the memory manager doesn't see a whole lot of relatively small
+ * requests.  Since we'll never give back a local buffer once it's created
+ * within a particular process, no point in burdening memmgr with separately
+ * managed chunks.
+ */
+static Block
+GetLocalBufferStorage(void)
+{
+	static char *cur_block = NULL;
+	static int	next_buf_in_block = 0;
+	static int	num_bufs_in_block = 0;
+	static int	total_bufs_allocated = 0;
+
+	char	   *this_buf;
+
+	Assert(total_bufs_allocated < NLocBuffer);
+
+	if (next_buf_in_block >= num_bufs_in_block)
+	{
+		/* Need to make a new request to memmgr */
+		int		num_bufs;
+
+		/* Start with a 16-buffer request; subsequent ones double each time */
+		num_bufs = Max(num_bufs_in_block * 2, 16);
+		/* But not more than what we need for all remaining local bufs */
+		num_bufs = Min(num_bufs, NLocBuffer - total_bufs_allocated);
+		/* And don't overflow MaxAllocSize, either */
+		num_bufs = Min(num_bufs, MaxAllocSize / BLCKSZ);
+
+		/* Allocate space from TopMemoryContext so it never goes away */
+		cur_block = (char *) MemoryContextAlloc(TopMemoryContext,
+												num_bufs * BLCKSZ);
+		next_buf_in_block = 0;
+		num_bufs_in_block = num_bufs;
+	}
+
+	/* Allocate next buffer in current memory block */
+	this_buf = cur_block + next_buf_in_block * BLCKSZ;
+	next_buf_in_block++;
+	total_bufs_allocated++;
+
+	return (Block) this_buf;
 }
 
 /*
