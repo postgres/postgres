@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.89 2006/10/04 00:02:10 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgindent/pgindent,v 1.90 2006/12/27 23:03:52 momjian Exp $
 
 # Known bugs:
 #
@@ -40,9 +40,12 @@ do
 # mark some comments for special treatment later
 	sed 's;/\*  *---;/*---X_X;g' |
 # workaround for indent bug with 'else' handling
-# indent comment so BSD indent will move it
-	sed 's;\([} 	]\)else[ 	]*\(/\*.*\)$;\1else\
-    \2;g' | 
+# trim trailing space after single-line after-'else' comment
+# so next test can be done easily
+	sed 's;\([} 	]\)else[ 	]*\(/\*.*\*/\)[ 	]*$;\1else	\2;g' |
+# indent multi-line after-'else' comment so BSD indent will move it properly
+	sed 's;\([} 	]\)else[ 	]*\(/\*.*[^\*][^/]\)$;\1else\
+    \2;g' |
 	detab -t4 -qc |
 # work around bug where function that defines no local variables misindents
 # switch() case lines and line after #else.  Do not do for struct/enum.
@@ -1890,9 +1893,12 @@ do
 	sed 's;^/\* Open extern \"C\" \*/$;{;' |
 	sed 's;^/\* Close extern \"C\" \*/$;};' |
 	sed 's;/\*---X_X;/* ---;g' |
-# workaround indent bug
+# workaround indent bug for 'static'
 	sed 's;^static[ 	][ 	]*;static ;g' |
+# remove too much indenting after closing brace
 	sed 's;^}	[ 	]*;}	;' |
+# indent single-line after-'else' comment by only one tab
+	sed 's;\([} 	]\)else[ 	]*\(/\*.*\*/\)[ 	]*$;\1else	\2;g' |
 # pull in #endif comments
 	sed 's;^#endif[ 	][ 	]*/\*;#endif   /*;' |
 # work around #else indenting next line if #ifdef defines variables at top
