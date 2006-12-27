@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.47 2006/09/16 00:30:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.48 2006/12/27 16:07:36 tgl Exp $ -->
 
 <chapter id="rules">
 <title>The Rule System</title>
@@ -649,21 +649,6 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
     collapsing the query tree is an optimization that the rewrite
     system doesn't have to concern itself with.
    </para>
-
-   <note>
-    <para>
-    There is currently no recursion stopping mechanism for view rules
-    in the rule system (only for the other kinds of rules).  This
-    doesn't hurt much, because the only way to push this into an
-    endless loop (bloating up the server process until it reaches the memory
-    limit) is to create tables and then setup the view rules by hand
-    with <command>CREATE RULE</command> in such a way, that one
-    selects from the other that selects from the one.  This could
-    never happen if <command>CREATE VIEW</command> is used because for
-    the first <command>CREATE VIEW</command>, the second relation does
-    not exist and thus the first view cannot select from the second.
-    </para>
-   </note>
 </sect2>
 
 <sect2>
@@ -688,7 +673,7 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
 <programlisting>
 SELECT t2.b FROM t1, t2 WHERE t1.a = t2.a;
 
-UPDATE t1 SET b = t2.b WHERE t1.a = t2.a;
+UPDATE t1 SET b = t2.b FROM t2 WHERE t1.a = t2.a;
 </programlisting>
 
     are nearly identical.  In particular:
@@ -730,7 +715,7 @@ UPDATE t1 SET b = t2.b WHERE t1.a = t2.a;
     as
 
 <programlisting>
-UPDATE t1 SET a = t1.a, b = t2.b WHERE t1.a = t2.a;
+UPDATE t1 SET a = t1.a, b = t2.b FROM t2 WHERE t1.a = t2.a;
 </programlisting>
 
     and thus the executor run over the join will produce exactly the
@@ -756,11 +741,12 @@ SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
     To resolve this problem, another entry is added to the target list
     in <command>UPDATE</command> (and also in
     <command>DELETE</command>) statements: the current tuple ID
-    (<acronym>CTID</>).<indexterm><primary>CTID</></>  This is a system column containing the
+    (<acronym>CTID</>).<indexterm><primary>CTID</></>
+    This is a system column containing the
     file block number and position in the block for the row. Knowing
     the table, the <acronym>CTID</> can be used to retrieve the
-    original row of <literal>t1</> to be updated.  After adding the <acronym>CTID</>
-    to the target list, the query actually looks like
+    original row of <literal>t1</> to be updated.  After adding the
+    <acronym>CTID</> to the target list, the query actually looks like
 
 <programlisting>
 SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
@@ -774,8 +760,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
     <acronym>CTID</> pointed to, the <literal>cmax</> and
     <literal>xmax</> entries are set to the current command counter
     and current transaction ID. Thus the old row is hidden, and after
-    the transaction committed the vacuum cleaner can really move it
-    out.
+    the transaction commits the vacuum cleaner can really remove it.
 </para>
 
 <para>
