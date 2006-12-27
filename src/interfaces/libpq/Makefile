@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.149 2006/09/27 21:29:17 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.150 2006/12/27 23:53:13 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -140,7 +140,7 @@ ifeq ($(PORTNAME), linux)
 $(shlib): exports.list
 
 exports.list: exports.txt
-	echo '{ global:' >$@
+	echo 'VERSION { global:' >$@
 	$(AWK) '/^[^#]/ {printf "%s;\n",$$1}' $< >>$@
 	echo ' local: *; };' >>$@
 
