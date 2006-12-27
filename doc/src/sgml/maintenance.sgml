@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.64 2006/11/05 22:42:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.65 2006/12/27 14:55:17 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -142,9 +142,9 @@
    <para>
     There are two variants of the <command>VACUUM</command>
     command. The first form, known as <quote>lazy vacuum</quote> or
-    just <command>VACUUM</command>, marks expired data in tables and
+    just <command>VACUUM</command>, marks dead data in tables and
     indexes for future reuse; it does <emphasis>not</emphasis> attempt
-    to reclaim the space used by this expired data unless the space is
+    to reclaim the space used by this dead data unless the space is
     at the end of the table and an exclusive table lock can be easily 
     obtained. Unused space at the start or middle of the file does
     not result in the file being shortened and space returned to the
@@ -155,7 +155,7 @@
    <para>
     The second form is the <command>VACUUM FULL</command>
     command. This uses a more aggressive algorithm for reclaiming the
-    space consumed by expired row versions. Any space that is freed by
+    space consumed by dead row versions. Any space that is freed by
     <command>VACUUM FULL</command> is immediately returned to the
     operating system. Unfortunately, this variant of the
     <command>VACUUM</command> command acquires an exclusive lock on

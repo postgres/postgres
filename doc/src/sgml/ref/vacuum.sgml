@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.44 2006/12/23 01:58:40 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.45 2006/12/27 14:55:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -29,7 +29,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
   <title>Description</title>
 
   <para>
-   <command>VACUUM</command> reclaims storage occupied by expired tuples.
+   <command>VACUUM</command> reclaims storage occupied by dead tuples.
    In normal <productname>PostgreSQL</productname> operation, tuples that
    are deleted or obsoleted by an update are not physically removed from
    their table; they remain present until a <command>VACUUM</command> is
@@ -152,7 +152,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
    <para>
     We recommend that active production databases be
     vacuumed frequently (at least nightly), in order to
-    remove expired rows. After adding or deleting a large number
+    remove dead rows. After adding or deleting a large number
     of rows, it may be a good idea to issue a <command>VACUUM
     ANALYZE</command> command for the affected table. This will update the
     system catalogs with
