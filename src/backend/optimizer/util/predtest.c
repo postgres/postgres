@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.11 2006/12/23 00:43:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.12 2006/12/28 19:53:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1131,7 +1131,7 @@ static const StrategyNumber BT_refute_table[6][6] = {
 };
 
 
-/*----------
+/*
  * btree_predicate_proof
  *	  Does the predicate implication or refutation test for a "simple clause"
  *	  predicate and a "simple clause" restriction, when both are simple
@@ -1152,7 +1152,6 @@ static const StrategyNumber BT_refute_table[6][6] = {
  * the operators are too.  As of 8.0 it's possible for opfamilies to contain
  * operators that are merely stable, and we dare not make deductions with
  * these.)
- *----------
  */
 static bool
 btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
@@ -1274,15 +1273,9 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 	/*
 	 * Try to find a btree opfamily containing the needed operators.
 	 *
-	 * XXX this needs work!!!!!!!!!!!!!!!!!!!!!!!
-	 *
 	 * We must find a btree opfamily that contains both operators, else the
-	 * implication can't be determined.  Also, the pred_op has to be of
-	 * default subtype (implying left and right input datatypes are the same);
-	 * otherwise it's unsafe to put the pred_const on the left side of the
-	 * test.  Also, the opfamily must contain a suitable test operator matching
-	 * the clause_const's type (which we take to mean that it has the same
-	 * subtype as the original clause_operator).
+	 * implication can't be determined.  Also, the opfamily must contain a
+	 * suitable test operator taking the pred_const and clause_const datatypes.
 	 *
 	 * If there are multiple matching opfamilies, assume we can use any one to
 	 * determine the logical relationship of the two operators and the correct
@@ -1321,11 +1314,8 @@ btree_predicate_proof(Expr *predicate, Node *clause, bool refute_it)
 		Form_pg_amop pred_form = (Form_pg_amop) GETSTRUCT(pred_tuple);
 		HeapTuple	clause_tuple;
 
-		/* must be btree */
+		/* Must be btree */
 		if (pred_form->amopmethod != BTREE_AM_OID)
-			continue;
-		/* predicate operator must be default within this opfamily */
-		if (pred_form->amoplefttype != pred_form->amoprighttype)
 			continue;
 
 		/* Get the predicate operator's btree strategy number */
