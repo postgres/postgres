@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.6 2006/12/28 03:17:38 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.7 2006/12/28 14:28:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #endif /* USE_LIBXML */
 
 #include "fmgr.h"
+#include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "nodes/execnodes.h"
 #include "utils/builtins.h"
@@ -83,8 +84,7 @@ xml_in(PG_FUNCTION_ARGS)
 
 	/*
 	 * Parse the data to check if it is well-formed XML data.  Assume
-	 * that ERROR occurred if parsing failed.  Do we need DTD
-	 * validation (if DTD exists)?
+	 * that ERROR occurred if parsing failed.
 	 */
 	xml_parse(vardata, false, true);
 
@@ -109,6 +109,48 @@ xml_out(PG_FUNCTION_ARGS)
 	result[len] = '\0';
 
 	PG_RETURN_CSTRING(result);
+}
+
+
+Datum
+xml_recv(PG_FUNCTION_ARGS)
+{
+#ifdef USE_LIBXML
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	xmltype	   *result;
+	char	   *str;
+	int			nbytes;
+
+	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+
+	result = (xmltype *) palloc(nbytes + VARHDRSZ);
+	VARATT_SIZEP(result) = nbytes + VARHDRSZ;
+	memcpy(VARDATA(result), str, nbytes);
+	pfree(str);
+
+	/*
+	 * Parse the data to check if it is well-formed XML data.  Assume
+	 * that ERROR occurred if parsing failed.
+	 */
+	xml_parse(result, false, true);
+
+	PG_RETURN_XML_P(result);
+#else
+	NO_XML_SUPPORT();
+	return 0;
+#endif
+}
+
+
+Datum
+xml_send(PG_FUNCTION_ARGS)
+{
+	xmltype	   *x = PG_GETARG_XML_P(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendbytes(&buf, VARDATA(x), VARSIZE(x) - VARHDRSZ);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 
