@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.69 2006/11/28 01:09:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.70 2006/12/28 20:02:38 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2781,29 +2781,6 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
       parameter value might select at run time.  For the same reason,
       <quote>stable</> functions such as <function>CURRENT_DATE</function>
       must be avoided.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      Avoid cross-data type comparisons in the <literal>CHECK</>
-      constraints, as the planner will currently fail to prove such
-      conditions false.  For example, the following constraint
-      will work if <varname>x</varname> is an <type>integer</type>
-      column, but not if <varname>x</varname> is a
-      <type>bigint</type>:
-<programlisting>
-CHECK ( x = 1 )
-</programlisting>
-      For a <type>bigint</type> column we must use a constraint like:
-<programlisting>
-CHECK ( x = 1::bigint )
-</programlisting>
-      The problem is not limited to the <type>bigint</type> data type
-      &mdash; it can occur whenever the default data type of the
-      constant does not match the data type of the column to which it
-      is being compared.  Cross-data type comparisons in the supplied
-      queries are usually OK, just not in the <literal>CHECK</> conditions.
      </para>
     </listitem>
 
