@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.108 2006/12/23 00:43:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.109 2006/12/28 23:16:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -476,16 +476,16 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 * attributes to its right, because it would break our simplistic notion
 	 * of what initial positioning strategy to use.
 	 *
-	 * When the scan keys include non-default operators, _bt_preprocess_keys
+	 * When the scan keys include cross-type operators, _bt_preprocess_keys
 	 * may not be able to eliminate redundant keys; in such cases we will
 	 * arbitrarily pick a usable one for each attribute.  This is correct
 	 * but possibly not optimal behavior.  (For example, with keys like
 	 * "x >= 4 AND x >= 5" we would elect to scan starting at x=4 when
-	 * x=5 would be more efficient.)  Since the situation only arises in
-	 * hokily-worded queries, live with it.
+	 * x=5 would be more efficient.)  Since the situation only arises given
+	 * a poorly-worded query plus an incomplete opfamily, live with it.
 	 *
 	 * When both equality and inequality keys appear for a single attribute
-	 * (again, only possible when non-default operators appear), we *must*
+	 * (again, only possible when cross-type operators appear), we *must*
 	 * select one of the equality keys for the starting point, because
 	 * _bt_checkkeys() will stop the scan as soon as an equality qual fails.
 	 * For example, if we have keys like "x >= 4 AND x = 10" and we elect to
@@ -658,11 +658,15 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * to an insertion scan key by replacing the sk_func with the
 			 * appropriate btree comparison function.
 			 *
-			 * If scankey operator is of the default type for the index, we
-			 * can use the cached comparison function; otherwise gotta look it
-			 * up in the catalogs.  Also, we support the convention that
-			 * sk_subtype == 0 means the default type; this is a hack to
-			 * simplify life for ScanKeyInit().
+			 * If scankey operator is not a cross-type comparison, we can use
+			 * the cached comparison function; otherwise gotta look it up in
+			 * the catalogs.  (That can't lead to infinite recursion, since no
+			 * indexscan initiated by syscache lookup will use cross-data-type
+			 * operators.)
+			 *
+			 * We support the convention that sk_subtype == InvalidOid means
+			 * the opclass input type; this is a hack to simplify life for
+			 * ScanKeyInit().
 			 */
 			if (cur->sk_subtype == rel->rd_opcintype[i] ||
 				cur->sk_subtype == InvalidOid)
