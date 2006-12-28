@@ -46,6 +46,14 @@ SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
 ERROR:  no XML support in this installation
 SELECT xmlelement(name wrong, 37);
 ERROR:  no XML support in this installation
+SELECT xmlparse(content 'abc');
+ERROR:  no XML support in this installation
+SELECT xmlparse(content '<abc>x</abc>');
+ERROR:  no XML support in this installation
+SELECT xmlparse(document 'abc');
+ERROR:  no XML support in this installation
+SELECT xmlparse(document '<abc>x</abc>');
+ERROR:  no XML support in this installation
 SELECT xmlpi(name foo);
 ERROR:  no XML support in this installation
 SELECT xmlpi(name xmlstuff);

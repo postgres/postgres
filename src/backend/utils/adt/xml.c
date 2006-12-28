@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.5 2006/12/24 18:25:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.6 2006/12/28 03:17:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ static void 	xml_errorHandler(void *ctxt, const char *msg, ...);
 static void 	xml_ereport_by_code(int level, int sqlcode,
 									const char *msg, int errcode);
 static xmlChar *xml_text2xmlChar(text *in);
-static xmlDocPtr xml_parse(text *data, int opts, bool is_document);
+static xmlDocPtr xml_parse(text *data, bool is_document, bool preserve_whitespace);
 
 #endif /* USE_LIBXML */
 
@@ -86,7 +86,7 @@ xml_in(PG_FUNCTION_ARGS)
 	 * that ERROR occurred if parsing failed.  Do we need DTD
 	 * validation (if DTD exists)?
 	 */
-	xml_parse(vardata, XML_PARSE_DTDATTR | XML_PARSE_DTDVALID, false);
+	xml_parse(vardata, false, true);
 
 	PG_RETURN_XML_P(vardata);
 #else
@@ -179,18 +179,7 @@ xmltype *
 xmlparse(text *data, bool is_document, bool preserve_whitespace)
 {
 #ifdef USE_LIBXML
-	if (!preserve_whitespace)
-		ereport(WARNING,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("XMLPARSE with STRIP WHITESPACE is not implemented")));
-
-	/*
-	 * Note, that here we try to apply DTD defaults
-	 * (XML_PARSE_DTDATTR) according to SQL/XML:10.16.7.d: 'Default
-	 * valies defined by internal DTD are applied'.  As for external
-	 * DTDs, we try to support them too, (see SQL/XML:10.16.7.e)
-	 */
-	xml_parse(data, XML_PARSE_DTDATTR, is_document);
+	xml_parse(data, is_document, preserve_whitespace);
 
 	return (xmltype *) data;
 #else
@@ -421,27 +410,18 @@ xml_init(void)
 
 /*
  * Convert a C string to XML internal representation
- * (same things as for TEXT, but with checking the data for well-formedness
- * and, moreover, validation against DTD, if needed).
- * NOTICE: We use TEXT type as internal storage type. In the future,
- * we plan to create own storage type (maybe several types/strategies)
- * TODO predefined DTDs / XSDs and validation
- * TODO validation against XML Schema
+ *
  * TODO maybe, libxml2's xmlreader is better? (do not construct DOM, yet do not use SAX - see xml_reader.c)
  * TODO what about internal URI for docs? (see PG_XML_DEFAULT_URI below)
  */
 static xmlDocPtr
-xml_parse(text *data, int opts, bool is_document)
+xml_parse(text *data, bool is_document, bool preserve_whitespace)
 {
-	bool				validationFailed = false;
 	int					res_code;
 	int32				len;
 	xmlChar				*string;
 	xmlParserCtxtPtr 	ctxt = NULL;
 	xmlDocPtr 			doc = NULL;
-#ifdef XML_DEBUG_DTD_CONST
-	xmlDtdPtr			dtd = NULL;
-#endif
 
 	len = VARSIZE(data) - VARHDRSZ; /* will be useful later */
 	string = xml_text2xmlChar(data);
@@ -456,50 +436,39 @@ xml_parse(text *data, int opts, bool is_document)
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
 						"could not allocate parser context", ctxt);
 
-		/* first, we try to parse the string as XML doc, then, as XML chunk */
-		if (len >= 5 && strncmp((char *) string, "<?xml", 5) == 0)
+		if (is_document)
 		{
-			/* consider it as DOCUMENT */
+			/*
+			 * Note, that here we try to apply DTD defaults
+			 * (XML_PARSE_DTDATTR) according to SQL/XML:10.16.7.d:
+			 * 'Default valies defined by internal DTD are applied'.
+			 * As for external DTDs, we try to support them too, (see
+			 * SQL/XML:10.16.7.e)
+			 */
 			doc = xmlCtxtReadMemory(ctxt, (char *) string, len,
-									PG_XML_DEFAULT_URI, NULL, opts);
+									PG_XML_DEFAULT_URI, NULL,
+									XML_PARSE_NOENT | XML_PARSE_DTDATTR
+									| (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
 			if (doc == NULL)
 				xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-							"could not parse XML data", ctxt);
+							"invalid XML document", ctxt);
 		}
 		else
 		{
-			/* attempt to parse the string as if it is an XML fragment */
 			doc = xmlNewDoc(NULL);
+
+			/*
+			 * FIXME: An XMLDecl is supposed to be accepted before the
+			 * content, but libxml doesn't allow this.  Parse that
+			 * ourselves?
+			 */
+
 			/* TODO resolve: xmlParseBalancedChunkMemory assumes that string is UTF8 encoded! */
 			res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0, string, NULL);
 			if (res_code != 0)
-				xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-									"could not parse XML data", res_code);
+				xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_CONTENT,
+									"invalid XML content", res_code);
 		}
-
-#ifdef XML_DEBUG_DTD_CONST
-		dtd = xmlParseDTD(NULL, (xmlChar *) XML_DEBUG_DTD_CONST);
-		if (dtd == NULL)
-			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-						"could not parse DTD data", ctxt);
-		if (xmlValidateDtd(xmlNewValidCtxt(), doc, dtd) != 1)
-			validationFailed = true;
-#else
-		/* if dtd for our xml data is detected... */
-		if ((doc->intSubset != NULL) || (doc->extSubset != NULL))
-		{
-			/* assume inline DTD exists - validation should be performed */
-			if (ctxt->valid == 0)
-			{
-				/* DTD exists, but validator reported 'validation failed' */
-				validationFailed = true;
-			}
-		}
-#endif
-
-		if (validationFailed)
-			xml_ereport(WARNING, ERRCODE_INVALID_XML_DOCUMENT,
-						"validation against DTD failed", ctxt);
 
 		/* TODO encoding issues
 		 * (thoughts:
@@ -517,10 +486,6 @@ xml_parse(text *data, int opts, bool is_document)
 		 * ) */
 		/* ... */
 
-#ifdef XML_DEBUG_DTD_CONST
-		if (dtd)
-			xmlFreeDtd(dtd);
-#endif
 		if (doc)
 			xmlFreeDoc(doc);
 		if (ctxt)
@@ -529,10 +494,6 @@ xml_parse(text *data, int opts, bool is_document)
 	}
 	PG_CATCH();
 	{
-#ifdef XML_DEBUG_DTD_CONST
-		if (dtd)
-			xmlFreeDtd(dtd);
-#endif
 		if (doc)
 			xmlFreeDoc(doc);
 		if (ctxt)

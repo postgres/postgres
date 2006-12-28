@@ -40,6 +40,13 @@ SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
 SELECT xmlelement(name wrong, 37);
 
 
+SELECT xmlparse(content 'abc');
+SELECT xmlparse(content '<abc>x</abc>');
+
+SELECT xmlparse(document 'abc');
+SELECT xmlparse(document '<abc>x</abc>');
+
+
 SELECT xmlpi(name foo);
 SELECT xmlpi(name xmlstuff);
 SELECT xmlpi(name foo, 'bar');

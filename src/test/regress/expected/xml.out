@@ -5,7 +5,7 @@ CREATE TABLE xmltest (
 INSERT INTO xmltest VALUES (1, '<value>one</value>');
 INSERT INTO xmltest VALUES (2, '<value>two</value>');
 INSERT INTO xmltest VALUES (3, '<wrong');
-ERROR:  could not parse XML data
+ERROR:  invalid XML content
 DETAIL:  Expected '>'
 SELECT * FROM xmltest;
  id |        data        
@@ -53,7 +53,7 @@ SELECT xmlconcat('hello', 'you');
 SELECT xmlconcat(1, 2);
 ERROR:  argument of XMLCONCAT must be type xml, not type integer
 SELECT xmlconcat('bad', '<syntax');
-ERROR:  could not parse XML data
+ERROR:  invalid XML content
 DETAIL:  Expected '>'
 SELECT xmlelement(name element,
                   xmlattributes (1 as one, 'deuce' as two),
@@ -85,6 +85,27 @@ SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
 
 SELECT xmlelement(name wrong, 37);
 ERROR:  argument of XMLELEMENT must be type xml, not type integer
+SELECT xmlparse(content 'abc');
+ xmlparse 
+----------
+ abc
+(1 row)
+
+SELECT xmlparse(content '<abc>x</abc>');
+   xmlparse   
+--------------
+ <abc>x</abc>
+(1 row)
+
+SELECT xmlparse(document 'abc');
+ERROR:  invalid XML document
+DETAIL:  Start tag expected, '<' not found.
+SELECT xmlparse(document '<abc>x</abc>');
+   xmlparse   
+--------------
+ <abc>x</abc>
+(1 row)
+
 SELECT xmlpi(name foo);
   xmlpi  
 ---------
