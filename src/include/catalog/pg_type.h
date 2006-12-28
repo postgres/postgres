@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.173 2006/12/21 16:05:15 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.174 2006/12/28 01:09:01 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -422,6 +422,7 @@ DATA(insert OID = 1018 (  _lseg		 PGNSP PGUID -1 f b t \054 0 601 array_in array
 DATA(insert OID = 1019 (  _path		 PGNSP PGUID -1 f b t \054 0 602 array_in array_out array_recv array_send - d x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1020 (  _box		 PGNSP PGUID -1 f b t \073 0 603 array_in array_out array_recv array_send - d x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1021 (  _float4	 PGNSP PGUID -1 f b t \054 0 700 array_in array_out array_recv array_send - i x f 0 -1 0 _null_ _null_ ));
+#define FLOAT4ARRAYOID 1021
 DATA(insert OID = 1022 (  _float8	 PGNSP PGUID -1 f b t \054 0 701 array_in array_out array_recv array_send - d x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1023 (  _abstime	 PGNSP PGUID -1 f b t \054 0 702 array_in array_out array_recv array_send - i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1024 (  _reltime	 PGNSP PGUID -1 f b t \054 0 703 array_in array_out array_recv array_send - i x f 0 -1 0 _null_ _null_ ));

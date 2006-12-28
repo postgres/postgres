@@ -728,11 +728,27 @@ calc_rank_cd(float4 *arrdata, tsvector * txt, QUERYTYPE * query, int method)
 Datum
 rank_cd(PG_FUNCTION_ARGS)
 {
-	ArrayType  *win = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
+	ArrayType  *win;
 	tsvector   *txt = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(1));
 	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM_COPY(PG_GETARG_DATUM(2));
 	int			method = DEF_NORM_METHOD;
 	float4		res;
+
+	/*
+	 * Pre-8.2, rank_cd took just a plain int as its first argument.
+	 * It was a mistake to keep the same C function name while changing the
+	 * signature, but it's too late to fix that.  Instead, do a runtime test
+	 * to make sure the expected datatype has been passed.  This is needed
+	 * to prevent core dumps if tsearch2 function definitions from an old
+	 * database are loaded into an 8.2 server.
+	 */
+	if (get_fn_expr_argtype(fcinfo->flinfo, 0) != FLOAT4ARRAYOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				 errmsg("rank_cd() now takes real[] as its first argument, not integer")));
+
+	/* now safe to dereference the first arg */
+	win = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 
 	if (ARR_NDIM(win) != 1)
 		ereport(ERROR,
