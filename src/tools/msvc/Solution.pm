@@ -84,6 +84,10 @@ sub GenerateFiles {
 		print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
 		print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
 		print O "#define LOCALEDIR \"/usr/local/pgsql/share/locale\"\n" if ($self->{options}->{nls});
+		if ($self->{options}->{xml}) {
+         print O "#define HAVE_LIBXML2\n";
+         print O "#define USE_LIBXML\n";
+      }
 		if ($self->{options}->{krb5}) {
 			print O "#define KRB5 1\n";
 			print O "#define HAVE_KRB5_ERROR_TEXT_DATA 1\n";
@@ -246,6 +250,11 @@ sub AddProject {
 		$proj->AddLibrary($self->{options}->{krb5} . '\lib\i386\krb5_32.lib');
 		$proj->AddLibrary($self->{options}->{krb5} . '\lib\i386\comerr32.lib');
 	}
+	if ($self->{options}->{xml}) {
+      $proj->AddIncludeDir($self->{options}->{xml} . '\include');
+      $proj->AddIncludeDir($self->{options}->{iconv} . '\include');
+      $proj->AddLibrary($self->{options}->{xml} . '\lib\libxml2.lib');
+   }
 	return $proj;
 }
 
