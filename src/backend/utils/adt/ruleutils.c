@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.239 2006/12/29 10:50:22 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.240 2006/12/29 16:44:28 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -37,6 +37,7 @@
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
+#include "utils/xml.h"
 
 
 /* ----------

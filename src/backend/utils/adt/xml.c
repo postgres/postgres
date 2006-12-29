@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.8 2006/12/29 10:50:22 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.9 2006/12/29 16:44:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -862,8 +862,7 @@ xml_ereport_by_code(int level, int sqlcode,
 
 
 /*
- * Convert one char in the current server encoding to a Unicode
- * codepoint.
+ * Convert one char in the current server encoding to a Unicode codepoint.
  */
 static pg_wchar
 sqlchar_to_unicode(char *s)
@@ -879,42 +878,6 @@ sqlchar_to_unicode(char *s)
 	pg_encoding_mb2wchar_with_len(PG_UTF8, utf8string, ret, pg_mblen(s));
 
 	return ret[0];
-}
-
-
-static char *
-unicode_to_sqlchar(pg_wchar c)
-{
-	char utf8string[4] = { '\0', '\0', '\0', '\0' };
-
-	if (c <= 0x7F)
-	{
-		utf8string[0] = c;
-	}
-	else if (c <= 0x7FF)
-	{
-		utf8string[0] = 0xC0 | ((c >> 6) & 0x1F);
-		utf8string[1] = 0x80 | (c & 0x3F);
-	}
-	else if (c <= 0xFFFF)
-	{
-		utf8string[0] = 0xE0 | ((c >> 12) & 0x0F);
-		utf8string[1] = 0x80 | ((c >> 6) & 0x3F);
-		utf8string[2] = 0x80 | (c & 0x3F);
-	}
-	else
-	{
-		utf8string[0] = 0xF0 | ((c >> 18) & 0x07);
-		utf8string[1] = 0x80 | ((c >> 12) & 0x3F);
-		utf8string[2] = 0x80 | ((c >> 6) & 0x3F);
-		utf8string[3] = 0x80 | (c & 0x3F);
-
-	}
-
-	return  (char *) pg_do_encoding_conversion((unsigned char *) utf8string,
-											   pg_mblen(utf8string),
-											   PG_UTF8,
-											   GetDatabaseEncoding());
 }
 
 
@@ -988,7 +951,45 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped)
 
 
 /*
- * The inverse; see SQL/XML:2003 section 9.17.
+ * Map a Unicode codepoint into the current server encoding.
+ */
+static char *
+unicode_to_sqlchar(pg_wchar c)
+{
+	static unsigned char utf8string[4];
+
+	if (c <= 0x7F)
+	{
+		utf8string[0] = c;
+	}
+	else if (c <= 0x7FF)
+	{
+		utf8string[0] = 0xC0 | ((c >> 6) & 0x1F);
+		utf8string[1] = 0x80 | (c & 0x3F);
+	}
+	else if (c <= 0xFFFF)
+	{
+		utf8string[0] = 0xE0 | ((c >> 12) & 0x0F);
+		utf8string[1] = 0x80 | ((c >> 6) & 0x3F);
+		utf8string[2] = 0x80 | (c & 0x3F);
+	}
+	else
+	{
+		utf8string[0] = 0xF0 | ((c >> 18) & 0x07);
+		utf8string[1] = 0x80 | ((c >> 12) & 0x3F);
+		utf8string[2] = 0x80 | ((c >> 6) & 0x3F);
+		utf8string[3] = 0x80 | (c & 0x3F);
+	}
+
+	return (char *) pg_do_encoding_conversion(utf8string,
+											  pg_mblen((char *) utf8string),
+											  PG_UTF8,
+											  GetDatabaseEncoding());
+}
+
+
+/*
+ * Map XML name to SQL identifier; see SQL/XML:2003 section 9.17.
  */
 char *
 map_xml_name_to_sql_identifier(char *name)
