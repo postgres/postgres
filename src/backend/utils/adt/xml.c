@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.7 2006/12/28 14:28:36 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.8 2006/12/29 10:50:22 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -882,6 +882,42 @@ sqlchar_to_unicode(char *s)
 }
 
 
+static char *
+unicode_to_sqlchar(pg_wchar c)
+{
+	char utf8string[4] = { '\0', '\0', '\0', '\0' };
+
+	if (c <= 0x7F)
+	{
+		utf8string[0] = c;
+	}
+	else if (c <= 0x7FF)
+	{
+		utf8string[0] = 0xC0 | ((c >> 6) & 0x1F);
+		utf8string[1] = 0x80 | (c & 0x3F);
+	}
+	else if (c <= 0xFFFF)
+	{
+		utf8string[0] = 0xE0 | ((c >> 12) & 0x0F);
+		utf8string[1] = 0x80 | ((c >> 6) & 0x3F);
+		utf8string[2] = 0x80 | (c & 0x3F);
+	}
+	else
+	{
+		utf8string[0] = 0xF0 | ((c >> 18) & 0x07);
+		utf8string[1] = 0x80 | ((c >> 12) & 0x3F);
+		utf8string[2] = 0x80 | ((c >> 6) & 0x3F);
+		utf8string[3] = 0x80 | (c & 0x3F);
+
+	}
+
+	return  (char *) pg_do_encoding_conversion((unsigned char *) utf8string,
+											   pg_mblen(utf8string),
+											   PG_UTF8,
+											   GetDatabaseEncoding());
+}
+
+
 static bool
 is_valid_xml_namefirst(pg_wchar c)
 {
@@ -948,4 +984,38 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped)
 	NO_XML_SUPPORT();
 	return NULL;
 #endif /* not USE_LIBXML */
+}
+
+
+/*
+ * The inverse; see SQL/XML:2003 section 9.17.
+ */
+char *
+map_xml_name_to_sql_identifier(char *name)
+{
+	StringInfoData buf;
+	char *p;
+
+	initStringInfo(&buf);
+
+	for (p = name; *p; p += pg_mblen(p))
+	{
+		if (*p == '_' && *(p+1) == 'x'
+			&& isxdigit((unsigned char) *(p+2))
+			&& isxdigit((unsigned char) *(p+3))
+			&& isxdigit((unsigned char) *(p+4))
+			&& isxdigit((unsigned char) *(p+5))
+			&& *(p+6) == '_')
+		{
+			unsigned int u;
+
+			sscanf(p + 2, "%X", &u);
+			appendStringInfoString(&buf, unicode_to_sqlchar(u));
+			p += 6;
+		}
+		else
+			appendBinaryStringInfo(&buf, p, pg_mblen(p));
+	}
+
+	return buf.data;
 }
