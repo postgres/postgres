@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.570 2006/12/24 00:29:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.571 2006/12/30 21:21:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -206,7 +206,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 
 %type <str>		relation_name copy_file_name
 				database_name access_method_clause access_method attr_name
-				index_name name function_name file_name
+				index_name name file_name
 
 %type <list>	func_name handler_name qual_Op qual_all_Op subquery_Op
 				opt_class opt_validator
@@ -242,7 +242,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 				group_clause TriggerFuncArgs select_limit
 				opt_select_limit opclass_item_list
 				transaction_mode_list_or_empty
-				TableFuncElementList
+				TableFuncElementList opt_type_modifiers
 				prep_type_clause prep_type_list
 				execute_param_clause using_clause returning_clause
 
@@ -319,20 +319,19 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 %type <str>		character
 %type <str>		extract_arg
 %type <str>		opt_charset
-%type <ival>	opt_numeric opt_decimal
 %type <boolean> opt_varying opt_timezone
 
 %type <ival>	Iconst SignedIconst
 %type <str>		Sconst comment_text
 %type <str>		RoleId opt_granted_by opt_boolean ColId_or_Sconst
 %type <list>	var_list var_list_or_default
-%type <str>		ColId ColLabel var_name type_name param_name
+%type <str>		ColId ColLabel var_name type_function_name param_name
 %type <node>	var_value zone_value
 
-%type <keyword> unreserved_keyword func_name_keyword
+%type <keyword> unreserved_keyword type_func_name_keyword
 %type <keyword> col_name_keyword reserved_keyword
 
-%type <node>	TableConstraint TableLikeClause 
+%type <node>	TableConstraint TableLikeClause
 %type <list>	TableLikeOptionList
 %type <ival>	TableLikeOption
 %type <list>	ColQualList
@@ -1180,35 +1179,20 @@ zone_value:
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("time zone interval must be HOUR or HOUR TO MINUTE")));
-						n->typename->typmod = INTERVAL_TYPMOD(INTERVAL_FULL_PRECISION, $3);
+						n->typename->typmods = list_make1(makeIntConst($3));
 					}
 					$$ = (Node *)n;
 				}
 			| ConstInterval '(' Iconst ')' Sconst opt_interval
 				{
 					A_Const *n = (A_Const *) makeStringConst($5, $1);
-					if ($3 < 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("INTERVAL(%d) precision must not be negative",
-										$3)));
-					if ($3 > MAX_INTERVAL_PRECISION)
-					{
-						ereport(WARNING,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("INTERVAL(%d) precision reduced to maximum allowed, %d",
-										$3, MAX_INTERVAL_PRECISION)));
-						$3 = MAX_INTERVAL_PRECISION;
-					}
-
 					if (($6 != INTERVAL_FULL_RANGE)
 						&& (($6 & ~(INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE))) != 0))
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("time zone interval must be HOUR or HOUR TO MINUTE")));
-
-					n->typename->typmod = INTERVAL_TYPMOD($3, $6);
-
+					n->typename->typmods = list_make2(makeIntConst($6),
+													  makeIntConst($3));
 					$$ = (Node *)n;
 				}
 			| NumericOnly							{ $$ = makeAConst($1); }
@@ -2823,7 +2807,7 @@ DefineStmt:
 					n->definition = $4;
 					$$ = (Node *)n;
 				}
-			| CREATE TYPE_P any_name 
+			| CREATE TYPE_P any_name
 				{
 					/* Shell type (identified by lack of definition) */
 					DefineStmt *n = makeNode(DefineStmt);
@@ -2889,7 +2873,6 @@ def_elem:  ColLabel '=' def_arg
 
 /* Note: any simple identifier will be returned as a type name! */
 def_arg:	func_type						{ $$ = (Node *)$1; }
-			| func_name_keyword				{ $$ = (Node *)makeString(pstrdup($1)); }
 			| reserved_keyword				{ $$ = (Node *)makeString(pstrdup($1)); }
 			| qual_all_Op					{ $$ = (Node *)$1; }
 			| NumericOnly					{ $$ = (Node *)$1; }
@@ -3047,7 +3030,7 @@ ReassignOwnedStmt:
  *
  *		QUERY:
  *
- *		DROP itemtype [ IF EXISTS ] itemname [, itemname ...] 
+ *		DROP itemtype [ IF EXISTS ] itemname [, itemname ...]
  *           [ RESTRICT | CASCADE ]
  *
  *****************************************************************************/
@@ -3872,7 +3855,7 @@ arg_class:	IN_P									{ $$ = FUNC_PARAM_IN; }
 /*
  * Ideally param_name should be ColId, but that causes too many conflicts.
  */
-param_name:	function_name
+param_name:	type_function_name
 		;
 
 func_return:
@@ -3888,23 +3871,20 @@ func_return:
 
 /*
  * We would like to make the %TYPE productions here be ColId attrs etc,
- * but that causes reduce/reduce conflicts.  type_name is next best choice.
+ * but that causes reduce/reduce conflicts.  type_function_name
+ * is next best choice.
  */
 func_type:	Typename								{ $$ = $1; }
-			| type_name attrs '%' TYPE_P
+			| type_function_name attrs '%' TYPE_P
 				{
-					$$ = makeNode(TypeName);
-					$$->names = lcons(makeString($1), $2);
+					$$ = makeTypeNameFromNameList(lcons(makeString($1), $2));
 					$$->pct_type = true;
-					$$->typmod = -1;
 					$$->location = @1;
 				}
-			| SETOF type_name attrs '%' TYPE_P
+			| SETOF type_function_name attrs '%' TYPE_P
 				{
-					$$ = makeNode(TypeName);
-					$$->names = lcons(makeString($2), $3);
+					$$ = makeTypeNameFromNameList(lcons(makeString($2), $3));
 					$$->pct_type = true;
-					$$->typmod = -1;
 					$$->setof = TRUE;
 					$$->location = @2;
 				}
@@ -5552,7 +5532,7 @@ multiple_set_clause:
 
 						res_col->val = res_val;
 					}
-				    
+
 					$$ = $2;
 				}
 		;
@@ -6363,14 +6343,6 @@ opt_array_bounds:
 					{  $$ = NIL; }
 		;
 
-/*
- * XXX ideally, the production for a qualified typename should be ColId attrs
- * (there's no obvious reason why the first name should need to be restricted)
- * and should be an alternative of GenericType (so that it can be used to
- * specify a type for a literal in AExprConst).  However doing either causes
- * reduce/reduce conflicts that I haven't been able to find a workaround
- * for.  FIXME later.
- */
 SimpleTypename:
 			GenericType								{ $$ = $1; }
 			| Numeric								{ $$ = $1; }
@@ -6381,32 +6353,13 @@ SimpleTypename:
 				{
 					$$ = $1;
 					if ($2 != INTERVAL_FULL_RANGE)
-						$$->typmod = INTERVAL_TYPMOD(INTERVAL_FULL_PRECISION, $2);
+						$$->typmods = list_make1(makeIntConst($2));
 				}
 			| ConstInterval '(' Iconst ')' opt_interval
 				{
 					$$ = $1;
-					if ($3 < 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("INTERVAL(%d) precision must not be negative",
-										$3)));
-					if ($3 > MAX_INTERVAL_PRECISION)
-					{
-						ereport(WARNING,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("INTERVAL(%d) precision reduced to maximum allowed, %d",
-										$3, MAX_INTERVAL_PRECISION)));
-						$3 = MAX_INTERVAL_PRECISION;
-					}
-					$$->typmod = INTERVAL_TYPMOD($3, $5);
-				}
-			| type_name attrs
-				{
-					$$ = makeNode(TypeName);
-					$$->names = lcons(makeString($1), $2);
-					$$->typmod = -1;
-					$$->location = @1;
+					$$->typmods = list_make2(makeIntConst($5),
+											 makeIntConst($3));
 				}
 		;
 
@@ -6417,80 +6370,112 @@ SimpleTypename:
  * where there is an obvious better choice to make.
  * Note that ConstInterval is not included here since it must
  * be pushed up higher in the rules to accomodate the postfix
- * options (e.g. INTERVAL '1' YEAR).
+ * options (e.g. INTERVAL '1' YEAR). Likewise, we have to handle
+ * the generic-type-name case in AExprConst to avoid premature
+ * reduce/reduce conflicts against function names.
  */
 ConstTypename:
-			GenericType								{ $$ = $1; }
-			| Numeric								{ $$ = $1; }
+			Numeric									{ $$ = $1; }
 			| ConstBit								{ $$ = $1; }
 			| ConstCharacter						{ $$ = $1; }
 			| ConstDatetime							{ $$ = $1; }
 		;
 
+/*
+ * GenericType covers all type names that don't have special syntax mandated
+ * by the standard, including qualified names.  We also allow type modifiers.
+ * To avoid parsing conflicts against function invocations, the modifiers
+ * have to be shown as expr_list here, but parse analysis will only accept
+ * integer constants for them.
+ */
 GenericType:
-			type_name
+			type_function_name opt_type_modifiers
 				{
 					$$ = makeTypeName($1);
+					$$->typmods = $2;
+					$$->location = @1;
+				}
+			| type_function_name attrs opt_type_modifiers
+				{
+					$$ = makeTypeNameFromNameList(lcons(makeString($1), $2));
+					$$->typmods = $3;
 					$$->location = @1;
 				}
 		;
 
-/* SQL92 numeric data types
- * Check FLOAT() precision limits assuming IEEE floating types.
- * - thomas 1997-09-18
- * Provide real DECIMAL() and NUMERIC() implementations now - Jan 1998-12-30
+opt_type_modifiers: '(' expr_list ')'				{ $$ = $2; }
+					| /* EMPTY */					{ $$ = NIL; }
+		;
+
+/*
+ * SQL92 numeric data types
  */
 Numeric:	INT_P
 				{
 					$$ = SystemTypeName("int4");
+					$$->location = @1;
 				}
 			| INTEGER
 				{
 					$$ = SystemTypeName("int4");
+					$$->location = @1;
 				}
 			| SMALLINT
 				{
 					$$ = SystemTypeName("int2");
+					$$->location = @1;
 				}
 			| BIGINT
 				{
 					$$ = SystemTypeName("int8");
+					$$->location = @1;
 				}
 			| REAL
 				{
 					$$ = SystemTypeName("float4");
+					$$->location = @1;
 				}
 			| FLOAT_P opt_float
 				{
 					$$ = $2;
+					$$->location = @1;
 				}
 			| DOUBLE_P PRECISION
 				{
 					$$ = SystemTypeName("float8");
+					$$->location = @1;
 				}
-			| DECIMAL_P opt_decimal
+			| DECIMAL_P opt_type_modifiers
 				{
 					$$ = SystemTypeName("numeric");
-					$$->typmod = $2;
+					$$->typmods = $2;
+					$$->location = @1;
 				}
-			| DEC opt_decimal
+			| DEC opt_type_modifiers
 				{
 					$$ = SystemTypeName("numeric");
-					$$->typmod = $2;
+					$$->typmods = $2;
+					$$->location = @1;
 				}
-			| NUMERIC opt_numeric
+			| NUMERIC opt_type_modifiers
 				{
 					$$ = SystemTypeName("numeric");
-					$$->typmod = $2;
+					$$->typmods = $2;
+					$$->location = @1;
 				}
 			| BOOLEAN_P
 				{
 					$$ = SystemTypeName("bool");
+					$$->location = @1;
 				}
 		;
 
 opt_float:	'(' Iconst ')'
 				{
+					/*
+					 * Check FLOAT() precision limits assuming IEEE floating
+					 * types - thomas 1997-09-18
+					 */
 					if ($2 < 1)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -6509,73 +6494,6 @@ opt_float:	'(' Iconst ')'
 					$$ = SystemTypeName("float8");
 				}
 		;
-
-opt_numeric:
-			'(' Iconst ',' Iconst ')'
-				{
-					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("NUMERIC precision %d must be between 1 and %d",
-										$2, NUMERIC_MAX_PRECISION)));
-					if ($4 < 0 || $4 > $2)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("NUMERIC scale %d must be between 0 and precision %d",
-										$4, $2)));
-
-					$$ = (($2 << 16) | $4) + VARHDRSZ;
-				}
-			| '(' Iconst ')'
-				{
-					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("NUMERIC precision %d must be between 1 and %d",
-										$2, NUMERIC_MAX_PRECISION)));
-
-					$$ = ($2 << 16) + VARHDRSZ;
-				}
-			| /*EMPTY*/
-				{
-					/* Insert "-1" meaning "no limit" */
-					$$ = -1;
-				}
-		;
-
-opt_decimal:
-			'(' Iconst ',' Iconst ')'
-				{
-					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("DECIMAL precision %d must be between 1 and %d",
-										$2, NUMERIC_MAX_PRECISION)));
-					if ($4 < 0 || $4 > $2)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("DECIMAL scale %d must be between 0 and precision %d",
-										$4, $2)));
-
-					$$ = (($2 << 16) | $4) + VARHDRSZ;
-				}
-			| '(' Iconst ')'
-				{
-					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("DECIMAL precision %d must be between 1 and %d",
-										$2, NUMERIC_MAX_PRECISION)));
-
-					$$ = ($2 << 16) + VARHDRSZ;
-				}
-			| /*EMPTY*/
-				{
-					/* Insert "-1" meaning "no limit" */
-					$$ = -1;
-				}
-		;
-
 
 /*
  * SQL92 bit-field data types
@@ -6600,28 +6518,19 @@ ConstBit:	BitWithLength
 			| BitWithoutLength
 				{
 					$$ = $1;
-					$$->typmod = -1;
+					$$->typmods = NIL;
 				}
 		;
 
 BitWithLength:
-			BIT opt_varying '(' Iconst ')'
+			BIT opt_varying '(' expr_list ')'
 				{
 					char *typname;
 
 					typname = $2 ? "varbit" : "bit";
 					$$ = SystemTypeName(typname);
-					if ($4 < 1)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("length for type %s must be at least 1",
-										typname)));
-					else if ($4 > (MaxAttrSize * BITS_PER_BYTE))
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("length for type %s cannot exceed %d",
-										typname, MaxAttrSize * BITS_PER_BYTE)));
-					$$->typmod = $4;
+					$$->typmods = $4;
+					$$->location = @1;
 				}
 		;
 
@@ -6632,13 +6541,13 @@ BitWithoutLength:
 					if ($2)
 					{
 						$$ = SystemTypeName("varbit");
-						$$->typmod = -1;
 					}
 					else
 					{
 						$$ = SystemTypeName("bit");
-						$$->typmod = 1;
+						$$->typmods = list_make1(makeIntConst(1));
 					}
+					$$->location = @1;
 				}
 		;
 
@@ -6670,7 +6579,7 @@ ConstCharacter:  CharacterWithLength
 					 * was not specified.
 					 */
 					$$ = $1;
-					$$->typmod = -1;
+					$$->typmods = NIL;
 				}
 		;
 
@@ -6688,24 +6597,8 @@ CharacterWithLength:  character '(' Iconst ')' opt_charset
 					}
 
 					$$ = SystemTypeName($1);
-
-					if ($3 < 1)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("length for type %s must be at least 1",
-										$1)));
-					else if ($3 > MaxAttrSize)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("length for type %s cannot exceed %d",
-										$1, MaxAttrSize)));
-
-					/* we actually implement these like a varlen, so
-					 * the first 4 bytes is the length. (the difference
-					 * between these and "text" is that we blank-pad and
-					 * truncate where necessary)
-					 */
-					$$->typmod = VARHDRSZ + $3;
+					$$->typmods = list_make1(makeIntConst($3));
+					$$->location = @1;
 				}
 		;
 
@@ -6726,9 +6619,9 @@ CharacterWithoutLength:	 character opt_charset
 
 					/* char defaults to char(1), varchar to no limit */
 					if (strcmp($1, "bpchar") == 0)
-						$$->typmod = VARHDRSZ + 1;
-					else
-						$$->typmod = -1;
+						$$->typmods = list_make1(makeIntConst(1));
+
+					$$->location = @1;
 				}
 		;
 
@@ -6756,6 +6649,9 @@ opt_charset:
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
+/*
+ * SQL92 date/time types
+ */
 ConstDatetime:
 			TIMESTAMP '(' Iconst ')' opt_timezone
 				{
@@ -6767,21 +6663,8 @@ ConstDatetime:
 					 * - thomas 2001-09-06
 					 */
 					$$->timezone = $5;
-					if ($3 < 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("TIMESTAMP(%d)%s precision must not be negative",
-										$3, ($5 ? " WITH TIME ZONE": ""))));
-					if ($3 > MAX_TIMESTAMP_PRECISION)
-					{
-						ereport(WARNING,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("TIMESTAMP(%d)%s precision reduced to maximum allowed, %d",
-										$3, ($5 ? " WITH TIME ZONE": ""),
-										MAX_TIMESTAMP_PRECISION)));
-						$3 = MAX_TIMESTAMP_PRECISION;
-					}
-					$$->typmod = $3;
+					$$->typmods = list_make1(makeIntConst($3));
+					$$->location = @1;
 				}
 			| TIMESTAMP opt_timezone
 				{
@@ -6793,6 +6676,7 @@ ConstDatetime:
 					 * - thomas 2001-09-06
 					 */
 					$$->timezone = $2;
+					$$->location = @1;
 				}
 			| TIME '(' Iconst ')' opt_timezone
 				{
@@ -6800,21 +6684,8 @@ ConstDatetime:
 						$$ = SystemTypeName("timetz");
 					else
 						$$ = SystemTypeName("time");
-					if ($3 < 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("TIME(%d)%s precision must not be negative",
-										$3, ($5 ? " WITH TIME ZONE": ""))));
-					if ($3 > MAX_TIME_PRECISION)
-					{
-						ereport(WARNING,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("TIME(%d)%s precision reduced to maximum allowed, %d",
-										$3, ($5 ? " WITH TIME ZONE": ""),
-										MAX_TIME_PRECISION)));
-						$3 = MAX_TIME_PRECISION;
-					}
-					$$->typmod = $3;
+					$$->typmods = list_make1(makeIntConst($3));
+					$$->location = @1;
 				}
 			| TIME opt_timezone
 				{
@@ -6822,11 +6693,16 @@ ConstDatetime:
 						$$ = SystemTypeName("timetz");
 					else
 						$$ = SystemTypeName("time");
+					$$->location = @1;
 				}
 		;
 
 ConstInterval:
-			INTERVAL								{ $$ = SystemTypeName("interval"); }
+			INTERVAL
+				{
+					$$ = SystemTypeName("interval");
+					$$->location = @1;
+				}
 		;
 
 opt_timezone:
@@ -7520,20 +7396,7 @@ func_expr:	func_name '(' ')'
 					s->val.val.str = "now";
 					s->typename = SystemTypeName("text");
 					d = SystemTypeName("timetz");
-					if ($3 < 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("CURRENT_TIME(%d) precision must not be negative",
-										$3)));
-					if ($3 > MAX_TIME_PRECISION)
-					{
-						ereport(WARNING,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("CURRENT_TIME(%d) precision reduced to maximum allowed, %d",
-										$3, MAX_TIME_PRECISION)));
-						$3 = MAX_TIME_PRECISION;
-					}
-					d->typmod = $3;
+					d->typmods = list_make1(makeIntConst($3));
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -7565,20 +7428,7 @@ func_expr:	func_name '(' ')'
 					s->typename = SystemTypeName("text");
 
 					d = SystemTypeName("timestamptz");
-					if ($3 < 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("CURRENT_TIMESTAMP(%d) precision must not be negative",
-										$3)));
-					if ($3 > MAX_TIMESTAMP_PRECISION)
-					{
-						ereport(WARNING,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("CURRENT_TIMESTAMP(%d) precision reduced to maximum allowed, %d",
-										$3, MAX_TIMESTAMP_PRECISION)));
-						$3 = MAX_TIMESTAMP_PRECISION;
-					}
-					d->typmod = $3;
+					d->typmods = list_make1(makeIntConst($3));
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -7612,20 +7462,7 @@ func_expr:	func_name '(' ')'
 					s->val.val.str = "now";
 					s->typename = SystemTypeName("text");
 					d = SystemTypeName("time");
-					if ($3 < 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("LOCALTIME(%d) precision must not be negative",
-										$3)));
-					if ($3 > MAX_TIME_PRECISION)
-					{
-						ereport(WARNING,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("LOCALTIME(%d) precision reduced to maximum allowed, %d",
-										$3, MAX_TIME_PRECISION)));
-						$3 = MAX_TIME_PRECISION;
-					}
-					d->typmod = $3;
+					d->typmods = list_make1(makeIntConst($3));
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -7660,20 +7497,7 @@ func_expr:	func_name '(' ')'
 					s->typename = SystemTypeName("text");
 
 					d = SystemTypeName("timestamp");
-					if ($3 < 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("LOCALTIMESTAMP(%d) precision must not be negative",
-										$3)));
-					if ($3 > MAX_TIMESTAMP_PRECISION)
-					{
-						ereport(WARNING,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("LOCALTIMESTAMP(%d) precision reduced to maximum allowed, %d",
-										$3, MAX_TIMESTAMP_PRECISION)));
-						$3 = MAX_TIMESTAMP_PRECISION;
-					}
-					d->typmod = $3;
+					d->typmods = list_make1(makeIntConst($3));
 
 					$$ = (Node *)makeTypeCast((Node *)s, d);
 				}
@@ -7880,7 +7704,7 @@ func_expr:	func_name '(' ')'
 					$$ = (Node *)v;
 				}
 			| XMLCONCAT '(' expr_list ')'
-				{		
+				{
 					$$ = makeXmlExpr(IS_XMLCONCAT, NULL, NIL, $3);
 				}
 			| XMLELEMENT '(' NAME_P ColLabel ')'
@@ -7985,7 +7809,7 @@ xml_attribute_el: a_expr AS ColLabel
 					$$ = makeNode(ResTarget);
 					$$->name = NULL;
 					$$->indirection = NULL;
-					$$->val = (Node *) $1;				
+					$$->val = (Node *) $1;
 					$$->location = @1;
 				}
 		;
@@ -8486,12 +8310,12 @@ file_name:	Sconst									{ $$ = $1; };
 /*
  * The production for a qualified func_name has to exactly match the
  * production for a qualified columnref, because we cannot tell which we
- * are parsing until we see what comes after it ('(' for a func_name,
+ * are parsing until we see what comes after it ('(' or Sconst for a func_name,
  * anything else for a columnref).  Therefore we allow 'indirection' which
  * may contain subscripts, and reject that case in the C code.  (If we
  * ever implement SQL99-like methods, such syntax may actually become legal!)
  */
-func_name:	function_name
+func_name:	type_function_name
 					{ $$ = list_make1(makeString($1)); }
 			| relation_name indirection
 					{ $$ = check_func_name(lcons(makeString($1), $2)); }
@@ -8541,6 +8365,27 @@ AexprConst: Iconst
 					n->val.val.str = $1;
 					$$ = (Node *)n;
 				}
+			| func_name Sconst
+				{
+					/* generic type 'literal' syntax */
+					A_Const *n = makeNode(A_Const);
+					n->typename = makeTypeNameFromNameList($1);
+					n->typename->location = @1;
+					n->val.type = T_String;
+					n->val.val.str = $2;
+					$$ = (Node *)n;
+				}
+			| func_name '(' expr_list ')' Sconst
+				{
+					/* generic syntax with a type modifier */
+					A_Const *n = makeNode(A_Const);
+					n->typename = makeTypeNameFromNameList($1);
+					n->typename->typmods = $3;
+					n->typename->location = @1;
+					n->val.type = T_String;
+					n->val.val.str = $5;
+					$$ = (Node *)n;
+				}
 			| ConstTypename Sconst
 				{
 					A_Const *n = makeNode(A_Const);
@@ -8557,7 +8402,7 @@ AexprConst: Iconst
 					n->val.val.str = $2;
 					/* precision is not specified, but fields may be... */
 					if ($3 != INTERVAL_FULL_RANGE)
-						n->typename->typmod = INTERVAL_TYPMOD(INTERVAL_FULL_PRECISION, $3);
+						n->typename->typmods = list_make1(makeIntConst($3));
 					$$ = (Node *)n;
 				}
 			| ConstInterval '(' Iconst ')' Sconst opt_interval
@@ -8566,21 +8411,8 @@ AexprConst: Iconst
 					n->typename = $1;
 					n->val.type = T_String;
 					n->val.val.str = $5;
-					/* precision specified, and fields may be... */
-					if ($3 < 0)
-						ereport(ERROR,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("INTERVAL(%d) precision must not be negative",
-										$3)));
-					if ($3 > MAX_INTERVAL_PRECISION)
-					{
-						ereport(WARNING,
-								(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-								 errmsg("INTERVAL(%d) precision reduced to maximum allowed, %d",
-										$3, MAX_INTERVAL_PRECISION)));
-						$3 = MAX_INTERVAL_PRECISION;
-					}
-					n->typename->typmod = INTERVAL_TYPMOD($3, $6);
+					n->typename->typmods = list_make2(makeIntConst($6),
+													  makeIntConst($3));
 					$$ = (Node *)n;
 				}
 			| TRUE_P
@@ -8625,18 +8457,11 @@ ColId:		IDENT									{ $$ = $1; }
 			| col_name_keyword						{ $$ = pstrdup($1); }
 		;
 
-/* Type identifier --- names that can be type names.
+/* Type/function identifier --- names that can be type or function names.
  */
-type_name:	IDENT									{ $$ = $1; }
+type_function_name:	IDENT							{ $$ = $1; }
 			| unreserved_keyword					{ $$ = pstrdup($1); }
-		;
-
-/* Function identifier --- names that can be function names.
- */
-function_name:
-			IDENT									{ $$ = $1; }
-			| unreserved_keyword					{ $$ = pstrdup($1); }
-			| func_name_keyword						{ $$ = pstrdup($1); }
+			| type_func_name_keyword				{ $$ = pstrdup($1); }
 		;
 
 /* Column label --- allowed labels in "AS" clauses.
@@ -8645,7 +8470,7 @@ function_name:
 ColLabel:	IDENT									{ $$ = $1; }
 			| unreserved_keyword					{ $$ = pstrdup($1); }
 			| col_name_keyword						{ $$ = pstrdup($1); }
-			| func_name_keyword						{ $$ = pstrdup($1); }
+			| type_func_name_keyword				{ $$ = pstrdup($1); }
 			| reserved_keyword						{ $$ = pstrdup($1); }
 		;
 
@@ -8940,7 +8765,7 @@ col_name_keyword:
 			| XMLSERIALIZE
 		;
 
-/* Function identifier --- keywords that can be function names.
+/* Type/function identifier --- keywords that can be type or function names.
  *
  * Most of these are keywords that are used as operators in expressions;
  * in general such keywords can't be column names because they would be
@@ -8950,7 +8775,7 @@ col_name_keyword:
  * productions in a_expr to support the goofy SQL9x argument syntax.
  * - thomas 2000-11-28
  */
-func_name_keyword:
+type_func_name_keyword:
 			  AUTHORIZATION
 			| BETWEEN
 			| BINARY
@@ -9383,12 +9208,8 @@ SystemFuncName(char *name)
 TypeName *
 SystemTypeName(char *name)
 {
-	TypeName   *n = makeNode(TypeName);
-
-	n->names = list_make2(makeString("pg_catalog"), makeString(name));
-	n->typmod = -1;
-	n->location = -1;
-	return n;
+	return makeTypeNameFromNameList(list_make2(makeString("pg_catalog"),
+											   makeString(name)));
 }
 
 /* parser_init()

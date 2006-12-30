@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.202 2006/12/24 00:29:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.203 2006/12/30 21:21:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1810,29 +1810,6 @@ exprTypmod(Node *expr)
 	{
 		case T_Var:
 			return ((Var *) expr)->vartypmod;
-		case T_Const:
-			{
-				/* Be smart about string constants... */
-				Const	   *con = (Const *) expr;
-
-				switch (con->consttype)
-				{
-					case BPCHAROID:
-						if (!con->constisnull)
-						{
-							int32		len = VARSIZE(DatumGetPointer(con->constvalue)) - VARHDRSZ;
-
-							/* if multi-byte, take len and find # characters */
-							if (pg_database_encoding_max_length() > 1)
-								len = pg_mbstrlen_with_len(VARDATA(DatumGetPointer(con->constvalue)), len);
-							return len + VARHDRSZ;
-						}
-						break;
-					default:
-						break;
-				}
-			}
-			break;
 		case T_Param:
 			return ((Param *) expr)->paramtypmod;
 		case T_FuncExpr:
@@ -2024,14 +2001,16 @@ typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
 {
 	Oid			inputType = exprType(expr);
 	Oid			targetType;
+	int32		targetTypmod;
 
 	targetType = typenameTypeId(pstate, typename);
+	targetTypmod = typenameTypeMod(pstate, typename, targetType);
 
 	if (inputType == InvalidOid)
 		return expr;			/* do nothing if NULL input */
 
 	expr = coerce_to_target_type(pstate, expr, inputType,
-								 targetType, typename->typmod,
+								 targetType, targetTypmod,
 								 COERCION_EXPLICIT,
 								 COERCE_EXPLICIT_CAST);
 	if (expr == NULL)

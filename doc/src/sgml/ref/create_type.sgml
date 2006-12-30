@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.65 2006/12/23 01:28:09 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.66 2006/12/30 21:21:52 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -28,6 +28,8 @@ CREATE TYPE <replaceable class="parameter">name</replaceable> (
     OUTPUT = <replaceable class="parameter">output_function</replaceable>
     [ , RECEIVE = <replaceable class="parameter">receive_function</replaceable> ]
     [ , SEND = <replaceable class="parameter">send_function</replaceable> ]
+    [ , TYPMOD_IN = <replaceable class="parameter">type_modifier_input_function</replaceable> ]
+    [ , TYPMOD_OUT = <replaceable class="parameter">type_modifier_output_function</replaceable> ]
     [ , ANALYZE = <replaceable class="parameter">analyze_function</replaceable> ]
     [ , INTERNALLENGTH = { <replaceable class="parameter">internallength</replaceable> | VARIABLE } ]
     [ , PASSEDBYVALUE ]
@@ -83,12 +85,14 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    (scalar type).  The parameters may appear in any order, not only that
    illustrated above, and most are optional.  You must register
    two or more functions (using <command>CREATE FUNCTION</command>) before
-   defining the type.  The support functions 
+   defining the type.  The support functions
    <replaceable class="parameter">input_function</replaceable> and
    <replaceable class="parameter">output_function</replaceable>
    are required, while the functions
    <replaceable class="parameter">receive_function</replaceable>,
-   <replaceable class="parameter">send_function</replaceable> and
+   <replaceable class="parameter">send_function</replaceable>,
+   <replaceable class="parameter">type_modifier_input_function</replaceable>,
+   <replaceable class="parameter">type_modifier_output_function</replaceable> and
    <replaceable class="parameter">analyze_function</replaceable>
    are optional.  Generally these functions have to be coded in C
    or another low-level language.
@@ -167,6 +171,34 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    <command>CREATE TYPE</> with a full definition replaces the shell entry
    with a complete, valid type definition, after which the new type can be
    used normally.
+  </para>
+
+  <para>
+   The optional
+   <replaceable class="parameter">type_modifier_input_function</replaceable>
+   and <replaceable class="parameter">type_modifier_output_function</replaceable>
+   are needed if the type supports modifiers, that is optional constraints
+   attached to a type declaration, such as <literal>char(5)</> or
+   <literal>numeric(30,2)</>.  <productname>PostgreSQL</productname> allows
+   user-defined types to take one or more integer constants as modifiers;
+   however, this information must be capable of being packed into a single
+   non-negative integer value for storage in the system catalogs.  The
+   <replaceable class="parameter">type_modifier_input_function</replaceable>
+   is passed the declared modifier(s) in the form of an <type>integer</>
+   array.  It must check the values for validity (throwing an error if they
+   are wrong), and if they are correct, return a single non-negative
+   <type>integer</> value that will be stored as the column <quote>typmod</>.
+   Type modifiers will be rejected if the type does not have a
+   <replaceable class="parameter">type_modifier_input_function</replaceable>.
+   The <replaceable class="parameter">type_modifier_output_function</replaceable>
+   converts the internal integer typmod value back to the correct form for
+   user display.  It must return a <type>cstring</> value that is the exact
+   string to append to the type name; for example <type>numeric</>'s
+   function might return <literal>(30,2)</>.
+   It is allowed to omit the
+   <replaceable class="parameter">type_modifier_output_function</replaceable>,
+   in which case the default display format is just the stored typmod value
+   enclosed in parentheses.
   </para>
 
   <para>
@@ -265,7 +297,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    <title>Array Types</title>
 
    <para>
-    Whenever a user-defined base data type is created, 
+    Whenever a user-defined base data type is created,
     <productname>PostgreSQL</productname> automatically creates an
     associated array type, whose name consists of the base type's
     name prepended with an underscore.  The parser understands this
@@ -298,7 +330,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    </para>
   </refsect2>
  </refsect1>
-  
+
  <refsect1>
   <title>Parameters</title>
 
@@ -367,6 +399,26 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
      <para>
       The name of a function that converts data from the type's
       internal form to its external binary form.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">type_modifier_input_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of a function that converts numeric modifier(s) for the type
+      into internal form.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">type_modifier_output_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of a function that converts the internal form of the type's
+      modifier(s) to external textual form.
      </para>
     </listitem>
    </varlistentry>
@@ -499,7 +551,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   </para>
 
  </refsect1>
- 
+
  <refsect1>
   <title>Examples</title>
 

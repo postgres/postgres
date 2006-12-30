@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.169 2006/11/11 01:14:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.170 2006/12/30 21:21:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,60 @@ static Timestamp dt2local(Timestamp dt, int timezone);
 static void AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
 static void AdjustIntervalForTypmod(Interval *interval, int32 typmod);
 static TimestampTz timestamp2timestamptz(Timestamp timestamp);
+
+
+/* common code for timestamptypmodin and timestamptztypmodin */
+static int32
+anytimestamp_typmodin(bool istz, ArrayType *ta)
+{
+    int32    typmod;
+	int32    *tl;
+	int		n;
+
+	tl = ArrayGetTypmods(ta, &n);
+
+	/*
+	 * we're not too tense about good error message here because grammar
+	 * shouldn't allow wrong number of modifiers for TIMESTAMP
+	 */
+	if (n != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid type modifier")));
+
+	if (*tl < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("TIMESTAMP(%d)%s precision must not be negative",
+						*tl, (istz ? " WITH TIME ZONE" : ""))));
+	if (*tl > MAX_TIMESTAMP_PRECISION)
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("TIMESTAMP(%d)%s precision reduced to maximum allowed, %d",
+						*tl, (istz ? " WITH TIME ZONE" : ""),
+						MAX_TIMESTAMP_PRECISION)));
+		typmod = MAX_TIMESTAMP_PRECISION;
+	} else
+		typmod = *tl;
+
+	return typmod;
+}
+
+/* common code for timestamptypmodout and timestamptztypmodout */
+static char *
+anytimestamp_typmodout(bool istz, int32 typmod)
+{
+	char    *res = (char *) palloc(64);
+	const char *tz = istz ? " with time zone" : " without time zone";
+
+	if (typmod >= 0)
+		snprintf(res, 64, "(%d)%s", (int) typmod, tz);
+	else
+		snprintf(res, 64, "%s", tz);
+
+	return res;
+}
 
 
 /*****************************************************************************
@@ -213,6 +267,22 @@ timestamp_send(PG_FUNCTION_ARGS)
 	pq_sendfloat8(&buf, timestamp);
 #endif
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+Datum
+timestamptypmodin(PG_FUNCTION_ARGS)
+{
+	ArrayType    *ta = PG_GETARG_ARRAYTYPE_P(0);
+
+	PG_RETURN_INT32(anytimestamp_typmodin(false, ta));
+}
+
+Datum
+timestamptypmodout(PG_FUNCTION_ARGS)
+{
+	int32 typmod = PG_GETARG_INT32(0);
+
+	PG_RETURN_CSTRING(anytimestamp_typmodout(false, typmod));
 }
 
 
@@ -461,6 +531,22 @@ timestamptz_send(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
+Datum
+timestamptztypmodin(PG_FUNCTION_ARGS)
+{
+	ArrayType    *ta = PG_GETARG_ARRAYTYPE_P(0);
+
+	PG_RETURN_INT32(anytimestamp_typmodin(true, ta));
+}
+
+Datum
+timestamptztypmodout(PG_FUNCTION_ARGS)
+{
+	int32 typmod = PG_GETARG_INT32(0);
+
+	PG_RETURN_CSTRING(anytimestamp_typmodout(true, typmod));
+}
+
 
 /* timestamptz_scale()
  * Adjust time type for specified scale factor.
@@ -623,6 +709,162 @@ interval_send(PG_FUNCTION_ARGS)
 	pq_sendint(&buf, interval->day, sizeof(interval->day));
 	pq_sendint(&buf, interval->month, sizeof(interval->month));
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+Datum
+intervaltypmodin(PG_FUNCTION_ARGS)
+{
+	ArrayType	*ta = PG_GETARG_ARRAYTYPE_P(0);
+	int32    	*tl;
+    int    		n;
+	int32		typmod;
+
+	tl = ArrayGetTypmods(ta, &n);
+
+	/*
+	 * tl[0] - opt_interval
+	 * tl[1] - Iconst (optional)
+	 *
+	 * Note we must validate tl[0] even though it's normally guaranteed
+	 * correct by the grammar --- consider SELECT 'foo'::"interval"(1000).
+	 */
+	if (n > 0)
+	{
+		switch (tl[0])
+		{
+			case INTERVAL_MASK(YEAR):
+			case INTERVAL_MASK(MONTH):
+			case INTERVAL_MASK(DAY):
+			case INTERVAL_MASK(HOUR):
+			case INTERVAL_MASK(MINUTE):
+			case INTERVAL_MASK(SECOND):
+			case INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH):
+			case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR):
+			case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
+			case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+			case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
+			case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+			case INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+			case INTERVAL_FULL_RANGE:
+				/* all OK */
+				break;
+			default:
+				ereport(ERROR,
+						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						 errmsg("invalid INTERVAL type modifier")));
+		}
+	}
+
+	if (n == 1)
+	{
+		if (tl[0] != INTERVAL_FULL_RANGE)
+			typmod = INTERVAL_TYPMOD(INTERVAL_FULL_PRECISION, tl[0]);
+		else
+			typmod = -1;
+	}
+	else if (n == 2)
+	{
+		if (tl[1] < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("INTERVAL(%d) precision must not be negative",
+							 tl[1])));
+		if (tl[1] > MAX_INTERVAL_PRECISION)
+		{
+			ereport(WARNING,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("INTERVAL(%d) precision reduced to maximum allowed, %d",
+					tl[1], MAX_INTERVAL_PRECISION)));
+			typmod = INTERVAL_TYPMOD(MAX_INTERVAL_PRECISION, tl[0]);
+		}
+		else
+			typmod = INTERVAL_TYPMOD(tl[1], tl[0]);
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("invalid INTERVAL type modifier")));
+		typmod = 0;				/* keep compiler quiet */
+	}
+
+	PG_RETURN_INT32(typmod);
+}
+
+Datum
+intervaltypmodout(PG_FUNCTION_ARGS)
+{
+	int32 typmod = PG_GETARG_INT32(0);
+	char	   *res = (char *) palloc(64);
+	int         fields;
+	int         precision;
+	const char *fieldstr;
+
+	if (typmod < 0)
+	{
+		*res = '\0';
+		PG_RETURN_CSTRING(res);
+	}
+
+	fields = INTERVAL_RANGE(typmod);
+	precision = INTERVAL_PRECISION(typmod);
+
+	switch (fields)
+	{
+		case INTERVAL_MASK(YEAR):
+			fieldstr = " year";
+			break;
+		case INTERVAL_MASK(MONTH):
+			fieldstr = " month";
+			break;
+		case INTERVAL_MASK(DAY):
+			fieldstr = " day";
+			break;
+		case INTERVAL_MASK(HOUR):
+			fieldstr = " hour";
+			break;
+		case INTERVAL_MASK(MINUTE):
+			fieldstr = " minute";
+			break;
+		case INTERVAL_MASK(SECOND):
+			fieldstr = " second";
+			break;
+		case INTERVAL_MASK(YEAR) | INTERVAL_MASK(MONTH):
+			fieldstr = " year to month";
+			break;
+		case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR):
+			fieldstr = " day to hour";
+			break;
+		case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
+			fieldstr = " day to minute";
+			break;
+		case INTERVAL_MASK(DAY) | INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+			fieldstr = " day to second";
+			break;
+		case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE):
+			fieldstr = " hour to minute";
+			break;
+		case INTERVAL_MASK(HOUR) | INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+			fieldstr = " hour to second";
+			break;
+		case INTERVAL_MASK(MINUTE) | INTERVAL_MASK(SECOND):
+			fieldstr = " minute to second";
+			break;
+		case INTERVAL_FULL_RANGE:
+			fieldstr = "";
+			break;
+		default:
+			elog(ERROR, "invalid INTERVAL typmod: 0x%x", typmod);
+			fieldstr = "";
+			break;
+	}
+
+	if (precision != INTERVAL_FULL_PRECISION)
+		snprintf(res, 64, "(%d)%s", precision, fieldstr);
+	else
+		snprintf(res, 64, "%s", fieldstr);
+
+	PG_RETURN_CSTRING(res);
 }
 
 

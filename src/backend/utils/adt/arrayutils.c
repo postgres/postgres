@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayutils.c,v 1.21 2006/03/05 15:58:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayutils.c,v 1.22 2006/12/30 21:21:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "catalog/pg_type.h"
 #include "utils/array.h"
 #include "utils/memutils.h"
 
@@ -187,4 +188,31 @@ mda_next_tuple(int n, int *curr, const int *span)
 		return 0;
 
 	return -1;
+}
+
+/*
+ * ArrayGetTypmods: verify that argument is a 1-D integer array,
+ * return its length and a pointer to the first contained integer.
+ */
+int32 *
+ArrayGetTypmods(ArrayType *arr, int *n)
+{
+	if (ARR_ELEMTYPE(arr) != INT4OID)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
+				 errmsg("typmod array must be type integer[]")));
+
+	if (ARR_NDIM(arr) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_ARRAY_SUBSCRIPT_ERROR),
+				 errmsg("typmod array must be one-dimensional")));
+
+	if (ARR_HASNULL(arr))
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("typmod array must not contain nulls")));
+
+	*n = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+
+	return (int32 *) ARR_DATA_PTR(arr);
 }

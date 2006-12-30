@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.34 2006/07/13 16:49:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.35 2006/12/30 21:21:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,6 +140,8 @@ extern Datum time_in(PG_FUNCTION_ARGS);
 extern Datum time_out(PG_FUNCTION_ARGS);
 extern Datum time_recv(PG_FUNCTION_ARGS);
 extern Datum time_send(PG_FUNCTION_ARGS);
+extern Datum timetypmodin(PG_FUNCTION_ARGS);
+extern Datum timetypmodout(PG_FUNCTION_ARGS);
 extern Datum time_scale(PG_FUNCTION_ARGS);
 extern Datum time_eq(PG_FUNCTION_ARGS);
 extern Datum time_ne(PG_FUNCTION_ARGS);
@@ -166,6 +168,8 @@ extern Datum timetz_in(PG_FUNCTION_ARGS);
 extern Datum timetz_out(PG_FUNCTION_ARGS);
 extern Datum timetz_recv(PG_FUNCTION_ARGS);
 extern Datum timetz_send(PG_FUNCTION_ARGS);
+extern Datum timetztypmodin(PG_FUNCTION_ARGS);
+extern Datum timetztypmodout(PG_FUNCTION_ARGS);
 extern Datum timetz_scale(PG_FUNCTION_ARGS);
 extern Datum timetz_eq(PG_FUNCTION_ARGS);
 extern Datum timetz_ne(PG_FUNCTION_ARGS);

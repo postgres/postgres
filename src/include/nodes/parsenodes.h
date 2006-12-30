@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.335 2006/12/23 00:43:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.336 2006/12/30 21:21:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,6 +167,8 @@ typedef struct Query
  * For TypeName structures generated internally, it is often easier to
  * specify the type by OID than by name.  If "names" is NIL then the
  * actual type OID is given by typeid, otherwise typeid is unused.
+ * Similarly, if "typmods" is NIL then the actual typmod is expected to
+ * be prespecified in typemod, otherwise typemod is unused.
  *
  * If pct_type is TRUE, then names is actually a field name and we look up
  * the type of that field.	Otherwise (the normal case), names is a type
@@ -180,7 +182,8 @@ typedef struct TypeName
 	bool		timezone;		/* timezone specified? */
 	bool		setof;			/* is a set? */
 	bool		pct_type;		/* %TYPE specified? */
-	int32		typmod;			/* type modifier */
+	List	   *typmods;		/* type modifier expression(s) */
+	int32		typemod;		/* prespecified type modifier */
 	List	   *arrayBounds;	/* array bounds */
 	int			location;		/* token location, or -1 if unknown */
 } TypeName;

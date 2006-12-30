@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.139 2006/12/23 00:43:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.140 2006/12/30 21:21:54 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -2015,6 +2015,60 @@ getTypeBinaryOutputInfo(Oid type, Oid *typSend, bool *typIsVarlena)
 
 	ReleaseSysCache(typeTuple);
 }
+
+/*
+ * get_typmodin
+ *
+ *		Given the type OID, return the type's typmodin procedure, if any.
+ */
+Oid
+get_typmodin(Oid typid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		Oid			result;
+
+		result = typtup->typmodin;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
+}
+
+#ifdef NOT_USED
+/*
+ * get_typmodout
+ *
+ *		Given the type OID, return the type's typmodout procedure, if any.
+ */
+Oid
+get_typmodout(Oid typid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		Oid			result;
+
+		result = typtup->typmodout;
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return InvalidOid;
+}
+#endif /* NOT_USED */
 
 
 /*				---------- STATISTICS CACHE ----------					 */

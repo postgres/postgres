@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.126 2006/11/05 22:42:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.127 2006/12/30 21:21:55 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -236,15 +236,17 @@ typedef FormData_pg_attribute *Form_pg_attribute;
 { 1247, {"typoutput"},	   24, -1,	4, 12, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1247, {"typreceive"},    24, -1,	4, 13, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
 { 1247, {"typsend"},	   24, -1,	4, 14, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1247, {"typanalyze"},    24, -1,	4, 15, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1247, {"typalign"},	   18, -1,	1, 16, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1247, {"typstorage"},    18, -1,	1, 17, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1247, {"typnotnull"},    16, -1,	1, 18, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
-{ 1247, {"typbasetype"},   26, -1,	4, 19, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1247, {"typtypmod"},	   23, -1,	4, 20, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1247, {"typndims"},	   23, -1,	4, 21, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
-{ 1247, {"typdefaultbin"}, 25, -1, -1, 22, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
-{ 1247, {"typdefault"},    25, -1, -1, 23, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
+{ 1247, {"typmodin"},	   24, -1,	4, 15, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1247, {"typmodout"},	   24, -1,	4, 16, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1247, {"typanalyze"},    24, -1,	4, 17, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1247, {"typalign"},	   18, -1,	1, 18, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
+{ 1247, {"typstorage"},    18, -1,	1, 19, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
+{ 1247, {"typnotnull"},    16, -1,	1, 20, 0, -1, -1, true, 'p', 'c', true, false, false, true, 0 }, \
+{ 1247, {"typbasetype"},   26, -1,	4, 21, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1247, {"typtypmod"},	   23, -1,	4, 22, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1247, {"typndims"},	   23, -1,	4, 23, 0, -1, -1, true, 'p', 'i', true, false, false, true, 0 }, \
+{ 1247, {"typdefaultbin"}, 25, -1, -1, 24, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }, \
+{ 1247, {"typdefault"},    25, -1, -1, 25, 0, -1, -1, false, 'x', 'i', false, false, false, true, 0 }
 
 DATA(insert ( 1247 typname			19 -1 NAMEDATALEN	1 0 -1 -1 f p i t f f t 0));
 DATA(insert ( 1247 typnamespace		26 -1 4   2 0 -1 -1 t p i t f f t 0));
@@ -260,15 +262,17 @@ DATA(insert ( 1247 typinput			24 -1 4  11 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 typoutput		24 -1 4  12 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 typreceive		24 -1 4  13 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 typsend			24 -1 4  14 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1247 typanalyze		24 -1 4  15 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1247 typalign			18 -1 1  16 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1247 typstorage		18 -1 1  17 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1247 typnotnull		16 -1 1  18 0 -1 -1 t p c t f f t 0));
-DATA(insert ( 1247 typbasetype		26 -1 4  19 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1247 typtypmod		23 -1 4  20 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1247 typndims			23 -1 4  21 0 -1 -1 t p i t f f t 0));
-DATA(insert ( 1247 typdefaultbin	25 -1 -1 22 0 -1 -1 f x i f f f t 0));
-DATA(insert ( 1247 typdefault		25 -1 -1 23 0 -1 -1 f x i f f f t 0));
+DATA(insert ( 1247 typmodin			24 -1 4  15 0 -1 -1 t p i t f f t 0));
+DATA(insert ( 1247 typmodout		24 -1 4  16 0 -1 -1 t p i t f f t 0));
+DATA(insert ( 1247 typanalyze		24 -1 4  17 0 -1 -1 t p i t f f t 0));
+DATA(insert ( 1247 typalign			18 -1 1  18 0 -1 -1 t p c t f f t 0));
+DATA(insert ( 1247 typstorage		18 -1 1  19 0 -1 -1 t p c t f f t 0));
+DATA(insert ( 1247 typnotnull		16 -1 1  20 0 -1 -1 t p c t f f t 0));
+DATA(insert ( 1247 typbasetype		26 -1 4  21 0 -1 -1 t p i t f f t 0));
+DATA(insert ( 1247 typtypmod		23 -1 4  22 0 -1 -1 t p i t f f t 0));
+DATA(insert ( 1247 typndims			23 -1 4  23 0 -1 -1 t p i t f f t 0));
+DATA(insert ( 1247 typdefaultbin	25 -1 -1 24 0 -1 -1 f x i f f f t 0));
+DATA(insert ( 1247 typdefault		25 -1 -1 25 0 -1 -1 f x i f f f t 0));
 DATA(insert ( 1247 ctid				27 0  6  -1 0 -1 -1 f p s t f f t 0));
 DATA(insert ( 1247 oid				26 0  4  -2 0 -1 -1 t p i t f f t 0));
 DATA(insert ( 1247 xmin				28 0  4  -3 0 -1 -1 t p i t f f t 0));

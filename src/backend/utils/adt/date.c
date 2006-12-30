@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.125 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.126 2006/12/30 21:21:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/nabstime.h"
@@ -42,6 +43,60 @@ static int	timetz2tm(TimeTzADT *time, struct pg_tm * tm, fsec_t *fsec, int *tzp)
 static int	tm2time(struct pg_tm * tm, fsec_t fsec, TimeADT *result);
 static int	tm2timetz(struct pg_tm * tm, fsec_t fsec, int tz, TimeTzADT *result);
 static void AdjustTimeForTypmod(TimeADT *time, int32 typmod);
+
+
+/* common code for timetypmodin and timetztypmodin */
+static int32
+anytime_typmodin(bool istz, ArrayType *ta)
+{
+	int32	typmod;
+	int32	*tl;
+	int		n;
+
+	tl = ArrayGetTypmods(ta, &n);
+
+	/*
+	 * we're not too tense about good error message here because grammar
+	 * shouldn't allow wrong number of modifiers for TIME
+	 */
+	if (n != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid type modifier")));
+
+	if (*tl < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("TIME(%d)%s precision must not be negative",
+						*tl, (istz ? " WITH TIME ZONE" : ""))));
+	if (*tl > MAX_TIME_PRECISION)
+	{
+		ereport(WARNING,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("TIME(%d)%s precision reduced to maximum allowed, %d",
+						*tl, (istz ? " WITH TIME ZONE" : "" ),
+						MAX_TIME_PRECISION)));
+		typmod = MAX_TIME_PRECISION;
+	} else
+		typmod = *tl;
+
+	return typmod;
+}
+
+/* common code for timetypmodout and timetztypmodout */
+static char *
+anytime_typmodout(bool istz, int32 typmod)
+{
+	char    *res = (char *) palloc(64);
+	const char *tz = istz ? " with time zone" : " without time zone";
+
+	if (typmod >= 0)
+		snprintf(res, 64, "(%d)%s", (int) typmod, tz);
+	else
+		snprintf(res, 64, "%s", tz);
+	return res;
+}
+
 
 /*****************************************************************************
  *	 Date ADT
@@ -1029,6 +1084,22 @@ time_send(PG_FUNCTION_ARGS)
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
+Datum
+timetypmodin(PG_FUNCTION_ARGS)
+{
+	ArrayType *ta = PG_GETARG_ARRAYTYPE_P(0);
+
+	PG_RETURN_INT32(anytime_typmodin(false, ta));
+}
+
+Datum
+timetypmodout(PG_FUNCTION_ARGS)
+{
+	int32 typmod = PG_GETARG_INT32(0);
+
+	PG_RETURN_CSTRING(anytime_typmodout(false, typmod));
+}
+
 
 /* time_scale()
  * Adjust time type for specified scale factor.
@@ -1828,6 +1899,22 @@ timetz_send(PG_FUNCTION_ARGS)
 #endif
 	pq_sendint(&buf, time->zone, sizeof(time->zone));
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+Datum
+timetztypmodin(PG_FUNCTION_ARGS)
+{
+	ArrayType *ta = PG_GETARG_ARRAYTYPE_P(0);
+
+	PG_RETURN_INT32(anytime_typmodin(true, ta));
+}
+
+Datum
+timetztypmodout(PG_FUNCTION_ARGS)
+{
+	int32 typmod = PG_GETARG_INT32(0);
+
+	PG_RETURN_CSTRING(anytime_typmodout(true, typmod));
 }
 
 

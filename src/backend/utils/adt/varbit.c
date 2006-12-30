@@ -9,17 +9,69 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.50 2006/07/14 14:52:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.51 2006/12/30 21:21:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/htup.h"
 #include "libpq/pqformat.h"
+#include "utils/array.h"
 #include "utils/varbit.h"
 
 #define HEXDIG(z)	 ((z)<10 ? ((z)+'0') : ((z)-10+'A'))
+
+
+/* common code for bittypmodin and varbittypmodin */
+static int32
+anybit_typmodin(ArrayType *ta, const char *typename)
+{
+	int32    typmod;
+	int32	*tl;
+	int		n;
+
+	tl = ArrayGetTypmods(ta, &n);
+
+	/*
+	 * we're not too tense about good error message here because grammar
+	 * shouldn't allow wrong number of modifiers for BIT
+	 */
+	if (n != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid type modifier")));
+
+	if (*tl < 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("length for type %s must be at least 1",
+						typename)));
+	if (*tl > (MaxAttrSize * BITS_PER_BYTE))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("length for type %s cannot exceed %d",
+						typename, MaxAttrSize * BITS_PER_BYTE)));
+
+	typmod = *tl;
+
+	return typmod;
+}
+
+/* common code for bittypmodout and varbittypmodout */
+static char *
+anybit_typmodout(int32 typmod)
+{
+	char    *res = (char *) palloc(64);
+
+	if (typmod >= 0)
+		snprintf(res, 64, "(%d)", typmod);
+	else
+		*res = '\0';
+
+	return res;
+}
 
 
 /*----------
@@ -325,6 +377,23 @@ bit(PG_FUNCTION_ARGS)
 	PG_RETURN_VARBIT_P(result);
 }
 
+Datum
+bittypmodin(PG_FUNCTION_ARGS)
+{
+	ArrayType    *ta = PG_GETARG_ARRAYTYPE_P(0);
+
+	PG_RETURN_INT32(anybit_typmodin(ta, "bit"));
+}
+
+Datum
+bittypmodout(PG_FUNCTION_ARGS)
+{
+	int32 typmod = PG_GETARG_INT32(0);
+
+	PG_RETURN_CSTRING(anybit_typmodout(typmod));
+}
+
+
 /*
  * varbit_in -
  *	  converts a string to the internal representation of a bitstring.
@@ -601,6 +670,22 @@ varbit(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_VARBIT_P(result);
+}
+
+Datum
+varbittypmodin(PG_FUNCTION_ARGS)
+{
+	ArrayType    *ta = PG_GETARG_ARRAYTYPE_P(0);
+
+	PG_RETURN_INT32(anybit_typmodin(ta, "varbit"));
+}
+
+Datum
+varbittypmodout(PG_FUNCTION_ARGS)
+{
+	int32 typmod = PG_GETARG_INT32(0);
+
+	PG_RETURN_CSTRING(anybit_typmodout(typmod));
 }
 
 

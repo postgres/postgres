@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.44 2006/07/14 14:52:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.45 2006/12/30 21:21:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
-#include "utils/datetime.h"
 #include "utils/lsyscache.h"
 #include "utils/numeric.h"
 #include "utils/syscache.h"
@@ -31,6 +30,7 @@
 
 static char *format_type_internal(Oid type_oid, int32 typemod,
 					 bool typemod_given, bool allow_invalid);
+static char *printTypmod(const char *typname, int32 typmod, Oid typmodout);
 static char *
 psnprintf(size_t len, const char *fmt,...)
 /* This lets gcc check the format string for consistency. */
@@ -186,8 +186,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 	{
 		case BITOID:
 			if (with_typemod)
-				buf = psnprintf(5 + MAX_INT32_LEN + 1, "bit(%d)",
-								(int) typemod);
+				buf = printTypmod("bit", typemod, typeform->typmodout);
 			else if (typemod_given)
 			{
 				/*
@@ -206,8 +205,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 
 		case BPCHAROID:
 			if (with_typemod)
-				buf = psnprintf(11 + MAX_INT32_LEN + 1, "character(%d)",
-								(int) (typemod - VARHDRSZ));
+				buf = printTypmod("character", typemod, typeform->typmodout);
 			else if (typemod_given)
 			{
 				/*
@@ -242,136 +240,56 @@ format_type_internal(Oid type_oid, int32 typemod,
 
 		case NUMERICOID:
 			if (with_typemod)
-				buf = psnprintf(10 + 2 * MAX_INT32_LEN + 1, "numeric(%d,%d)",
-								((typemod - VARHDRSZ) >> 16) & 0xffff,
-								(typemod - VARHDRSZ) & 0xffff);
+				buf = printTypmod("numeric", typemod, typeform->typmodout);
 			else
 				buf = pstrdup("numeric");
 			break;
 
 		case INTERVALOID:
 			if (with_typemod)
-			{
-				int			fields = INTERVAL_RANGE(typemod);
-				int			precision = INTERVAL_PRECISION(typemod);
-				const char *fieldstr;
-
-				switch (fields)
-				{
-					case INTERVAL_MASK(YEAR):
-						fieldstr = " year";
-						break;
-					case INTERVAL_MASK(MONTH):
-						fieldstr = " month";
-						break;
-					case INTERVAL_MASK(DAY):
-						fieldstr = " day";
-						break;
-					case INTERVAL_MASK(HOUR):
-						fieldstr = " hour";
-						break;
-					case INTERVAL_MASK(MINUTE):
-						fieldstr = " minute";
-						break;
-					case INTERVAL_MASK(SECOND):
-						fieldstr = " second";
-						break;
-						case INTERVAL_MASK(YEAR)
-					| INTERVAL_MASK(MONTH):
-						fieldstr = " year to month";
-						break;
-						case INTERVAL_MASK(DAY)
-					| INTERVAL_MASK(HOUR):
-						fieldstr = " day to hour";
-						break;
-						case INTERVAL_MASK(DAY)
-							| INTERVAL_MASK(HOUR)
-					| INTERVAL_MASK(MINUTE):
-						fieldstr = " day to minute";
-						break;
-						case INTERVAL_MASK(DAY)
-							| INTERVAL_MASK(HOUR)
-							| INTERVAL_MASK(MINUTE)
-					| INTERVAL_MASK(SECOND):
-						fieldstr = " day to second";
-						break;
-						case INTERVAL_MASK(HOUR)
-					| INTERVAL_MASK(MINUTE):
-						fieldstr = " hour to minute";
-						break;
-						case INTERVAL_MASK(HOUR)
-							| INTERVAL_MASK(MINUTE)
-					| INTERVAL_MASK(SECOND):
-						fieldstr = " hour to second";
-						break;
-						case INTERVAL_MASK(MINUTE)
-					| INTERVAL_MASK(SECOND):
-						fieldstr = " minute to second";
-						break;
-					case INTERVAL_FULL_RANGE:
-						fieldstr = "";
-						break;
-					default:
-						elog(ERROR, "invalid INTERVAL typmod: 0x%x", typemod);
-						fieldstr = "";
-						break;
-				}
-				if (precision != INTERVAL_FULL_PRECISION)
-					buf = psnprintf(100, "interval(%d)%s",
-									precision, fieldstr);
-				else
-					buf = psnprintf(100, "interval%s",
-									fieldstr);
-			}
+				buf = printTypmod("interval", typemod, typeform->typmodout);
 			else
 				buf = pstrdup("interval");
 			break;
 
 		case TIMEOID:
 			if (with_typemod)
-				buf = psnprintf(50, "time(%d) without time zone",
-								typemod);
+				buf = printTypmod("time", typemod, typeform->typmodout);
 			else
 				buf = pstrdup("time without time zone");
 			break;
 
 		case TIMETZOID:
 			if (with_typemod)
-				buf = psnprintf(50, "time(%d) with time zone",
-								typemod);
+				buf = printTypmod("time", typemod, typeform->typmodout);
 			else
 				buf = pstrdup("time with time zone");
 			break;
 
 		case TIMESTAMPOID:
 			if (with_typemod)
-				buf = psnprintf(50, "timestamp(%d) without time zone",
-								typemod);
+				buf = printTypmod("timestamp", typemod, typeform->typmodout);
 			else
 				buf = pstrdup("timestamp without time zone");
 			break;
 
 		case TIMESTAMPTZOID:
 			if (with_typemod)
-				buf = psnprintf(50, "timestamp(%d) with time zone",
-								typemod);
+				buf = printTypmod("timestamp", typemod, typeform->typmodout);
 			else
 				buf = pstrdup("timestamp with time zone");
 			break;
 
 		case VARBITOID:
 			if (with_typemod)
-				buf = psnprintf(13 + MAX_INT32_LEN + 1, "bit varying(%d)",
-								(int) typemod);
+				buf = printTypmod("bit varying", typemod, typeform->typmodout);
 			else
 				buf = pstrdup("bit varying");
 			break;
 
 		case VARCHAROID:
 			if (with_typemod)
-				buf = psnprintf(19 + MAX_INT32_LEN + 1,
-								"character varying(%d)",
-								(int) (typemod - VARHDRSZ));
+				buf = printTypmod("character varying", typemod, typeform->typmodout);
 			else
 				buf = pstrdup("character varying");
 			break;
@@ -396,6 +314,9 @@ format_type_internal(Oid type_oid, int32 typemod,
 		typname = NameStr(typeform->typname);
 
 		buf = quote_qualified_identifier(nspname, typname);
+
+		if (with_typemod)
+			buf = printTypmod(buf, typemod, typeform->typmodout);
 	}
 
 	if (is_array)
@@ -404,6 +325,38 @@ format_type_internal(Oid type_oid, int32 typemod,
 	ReleaseSysCache(tuple);
 
 	return buf;
+}
+
+
+/*
+ * Add typmod decoration to the basic type name
+ */
+static char *
+printTypmod(const char *typname, int32 typmod, Oid typmodout)
+{
+	char	*res;
+
+	/* Shouldn't be called if typmod is -1 */
+	Assert(typmod >= 0);
+
+	if (typmodout == InvalidOid)
+	{
+		/* Default behavior: just print the integer typmod with parens */
+		res = psnprintf(strlen(typname) + MAX_INT32_LEN + 3, "%s(%d)",
+						typname, (int) typmod);
+	}
+	else
+	{
+		/* Use the type-specific typmodout procedure */
+		char *tmstr;
+
+		tmstr = DatumGetCString(OidFunctionCall1(typmodout,
+												 Int32GetDatum(typmod)));
+		res = psnprintf(strlen(typname) + strlen(tmstr) + 1, "%s%s",
+						typname, tmstr);
+	}
+
+	return res;
 }
 
 
@@ -417,7 +370,9 @@ format_type_internal(Oid type_oid, int32 typemod,
  *
  * This may appear unrelated to format_type(), but in fact the two routines
  * share knowledge of the encoding of typmod for different types, so it's
- * convenient to keep them together.
+ * convenient to keep them together.  (XXX now that most of this knowledge
+ * has been pushed out of format_type into the typmodout functions, it's
+ * interesting to wonder if it's worth trying to factor this code too...)
  */
 int32
 type_maximum_size(Oid type_oid, int32 typemod)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.125 2006/10/04 00:29:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.126 2006/12/30 21:21:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -901,9 +901,9 @@ addRangeTableEntryForFunction(ParseState *pstate,
 						(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 						 errmsg("column \"%s\" cannot be declared SETOF",
 								attrname)));
-			eref->colnames = lappend(eref->colnames, makeString(attrname));
 			attrtype = typenameTypeId(pstate, n->typename);
-			attrtypmod = n->typename->typmod;
+			attrtypmod = typenameTypeMod(pstate, n->typename, attrtype);
+			eref->colnames = lappend(eref->colnames, makeString(attrname));
 			rte->funccoltypes = lappend_oid(rte->funccoltypes, attrtype);
 			rte->funccoltypmods = lappend_int(rte->funccoltypmods, attrtypmod);
 		}

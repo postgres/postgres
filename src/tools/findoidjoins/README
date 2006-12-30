@@ -130,6 +130,8 @@ Join pg_catalog.pg_type.typinput => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_type.typoutput => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_type.typreceive => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_type.typsend => pg_catalog.pg_proc.oid
+Join pg_catalog.pg_type.typmodin => pg_catalog.pg_proc.oid
+Join pg_catalog.pg_type.typmodout => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_type.typbasetype => pg_catalog.pg_type.oid
 
 ---------------------------------------------------------------------------

@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.96 2006/10/04 00:29:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.97 2006/12/30 21:21:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,7 +470,7 @@ numeric_send(PG_FUNCTION_ARGS)
  *	scale of the attribute have to be applied on the value.
  */
 Datum
-numeric		(PG_FUNCTION_ARGS)
+numeric(PG_FUNCTION_ARGS)
 {
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	int32		typmod = PG_GETARG_INT32(1);
@@ -535,6 +535,67 @@ numeric		(PG_FUNCTION_ARGS)
 	free_var(&var);
 
 	PG_RETURN_NUMERIC(new);
+}
+
+Datum
+numerictypmodin(PG_FUNCTION_ARGS)
+{
+	ArrayType   *ta = PG_GETARG_ARRAYTYPE_P(0);
+	int32    	*tl;
+	int			n;
+	int32		typmod;
+
+	tl = ArrayGetTypmods(ta, &n);
+
+	if (n == 2)
+	{
+		if (tl[0] < 1 || tl[0] > NUMERIC_MAX_PRECISION)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("NUMERIC precision %d must be between 1 and %d",
+							tl[0], NUMERIC_MAX_PRECISION)));
+		if (tl[1] < 0 || tl[1] > tl[0])
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("NUMERIC scale %d must be between 0 and precision %d",
+							tl[1], tl[0])));
+		typmod = ((tl[0] << 16) | tl[1]) + VARHDRSZ;
+	}
+	else if (n == 1)
+	{
+		if (tl[0] < 1 || tl[0] > NUMERIC_MAX_PRECISION)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("NUMERIC precision %d must be between 1 and %d",
+							tl[0], NUMERIC_MAX_PRECISION)));
+		/* scale defaults to zero */
+		typmod = (tl[0] << 16) + VARHDRSZ;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+						errmsg("invalid NUMERIC type modifier")));
+		typmod = 0;				/* keep compiler quiet */
+	}
+
+	PG_RETURN_INT32(typmod);
+}
+
+Datum
+numerictypmodout(PG_FUNCTION_ARGS)
+{
+	int32	typmod = PG_GETARG_INT32(0);
+	char   *res = (char *) palloc(64);
+
+	if (typmod >= 0)
+		snprintf(res, 64, "(%d,%d)",
+				 ((typmod - VARHDRSZ) >> 16) & 0xffff,
+				 (typmod - VARHDRSZ) & 0xffff);
+	else
+		*res = '\0';
+
+	PG_RETURN_CSTRING(res);
 }
 
 

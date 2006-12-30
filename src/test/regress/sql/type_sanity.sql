@@ -163,6 +163,40 @@ FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typsend = p2.oid AND p1.typtype in ('b', 'p') AND NOT
     (p2.prorettype = 'bytea'::regtype AND NOT p2.proretset);
 
+-- Check for bogus typmodin routines
+
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typmodin = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+    (p2.pronargs = 1 AND
+     p2.proargtypes[0] = 'int4[]'::regtype AND
+     p2.prorettype = 'int4'::regtype AND NOT p2.proretset);
+
+-- Check for bogus typmodout routines
+
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typmodout = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+    (p2.pronargs = 1 AND
+     p2.proargtypes[0] = 'int4'::regtype AND
+     p2.prorettype = 'cstring'::regtype AND NOT p2.proretset);
+
+-- Array types should have same typmodin/out as their element types
+
+SELECT p1.oid, p1.typname, p2.oid, p2.typname
+FROM pg_type AS p1, pg_type AS p2
+WHERE p1.typelem = p2.oid AND NOT
+    (p1.typmodin = p2.typmodin AND p1.typmodout = p2.typmodout);
+
+-- Check for bogus typanalyze routines
+
+SELECT p1.oid, p1.typname, p2.oid, p2.proname
+FROM pg_type AS p1, pg_proc AS p2
+WHERE p1.typanalyze = p2.oid AND p1.typtype in ('b', 'p') AND NOT
+    (p2.pronargs = 1 AND
+     p2.proargtypes[0] = 'internal'::regtype AND
+     p2.prorettype = 'bool'::regtype AND NOT p2.proretset);
+
 -- **************** pg_class ****************
 
 -- Look for illegal values in pg_class fields

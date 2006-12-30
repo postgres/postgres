@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.85 2006/10/04 00:29:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.86 2006/12/30 21:21:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "nodes/makefuncs.h"
 #include "parser/parser.h"
 #include "parser/parse_type.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -245,7 +246,79 @@ typenameTypeId(ParseState *pstate, const TypeName *typename)
 				 errmsg("type \"%s\" is only a shell",
 						TypeNameToString(typename)),
 				 parser_errposition(pstate, typename->location)));
+
 	return typoid;
+}
+
+/*
+ * typenameTypeMod - given a TypeName, return the internal typmod value
+ *
+ * This will throw an error if the TypeName includes type modifiers that are
+ * illegal for the data type.
+ *
+ * The actual type OID represented by the TypeName must already have been
+ * determined (usually by typenameTypeId()), and is passed as typeId.
+ *
+ * pstate is only used for error location info, and may be NULL.
+ */
+int32
+typenameTypeMod(ParseState *pstate, const TypeName *typename,
+				Oid typeId)
+{
+	int32		result;
+	Oid			typmodin;
+	Datum	   *datums;
+	int			n;
+	ListCell   *l;
+	ArrayType  *arrtypmod;
+
+	Assert(OidIsValid(typeId));
+
+	/* Return prespecified typmod if no typmod expressions */
+	if (typename->typmods == NIL)
+		return typename->typemod;
+
+	/* Else, type had better accept typmods */
+	typmodin = get_typmodin(typeId);
+
+	if (typmodin == InvalidOid)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("type modifier is not allowed for type \"%s\"",
+						TypeNameToString(typename)),
+				 parser_errposition(pstate, typename->location)));
+
+	/*
+	 * Convert the list of (raw grammar output) expressions to an integer
+	 * array.  Currently, we only allow simple integer constants, though
+	 * possibly this could be extended.
+	 */
+	datums = (Datum *) palloc(list_length(typename->typmods) * sizeof(Datum));
+	n = 0;
+	foreach(l, typename->typmods)
+	{
+		A_Const	*ac = (A_Const *) lfirst(l);
+
+		if (!IsA(ac, A_Const) ||
+			!IsA(&ac->val, Integer))
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("type modifiers must be integer constants"),
+					 parser_errposition(pstate, typename->location)));
+		datums[n++] = Int32GetDatum(ac->val.val.ival);
+	}
+
+	/* hardwired knowledge about int4's representation details here */
+	arrtypmod = construct_array(datums, n, INT4OID,
+								sizeof(int4), true, 'i');
+
+	result = DatumGetInt32(OidFunctionCall1(typmodin,
+											PointerGetDatum(arrtypmod)));
+
+	pfree(datums);
+	pfree(arrtypmod);
+
+	return result;
 }
 
 /*
@@ -490,7 +563,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 		goto fail;
 
 	*type_id = typenameTypeId(NULL, typename);
-	*typmod = typename->typmod;
+	*typmod = typenameTypeMod(NULL, typename, *type_id);
 
 	pfree(buf.data);
 

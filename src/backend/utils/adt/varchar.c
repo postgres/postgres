@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.119 2006/10/04 00:30:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.120 2006/12/30 21:21:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,63 @@
 
 #include "access/hash.h"
 #include "libpq/pqformat.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
 #include "mb/pg_wchar.h"
+
+
+/* common code for bpchartypmodin and varchartypmodin */
+static int32
+anychar_typmodin(ArrayType *ta, const char *typename)
+{
+	int32 	typmod;
+	int32	*tl;
+	int		n;
+
+	tl = ArrayGetTypmods(ta, &n);
+
+	/*
+	 * we're not too tense about good error message here because grammar
+	 * shouldn't allow wrong number of modifiers for CHAR
+	 */
+	if (n != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid type modifier")));
+
+	if (*tl < 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("length for type %s must be at least 1", typename)));
+	if (*tl > MaxAttrSize)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("length for type %s cannot exceed %d",
+						typename, MaxAttrSize)));
+
+	/*
+	 * For largely historical reasons, the typmod is VARHDRSZ plus the
+	 * number of characters; there is enough client-side code that knows
+	 * about that that we'd better not change it.
+	 */
+	typmod = VARHDRSZ + *tl;
+
+	return typmod;
+}
+
+/* common code for bpchartypmodout and varchartypmodout */
+static char *
+anychar_typmodout(int32 typmod)
+{
+	char	*res = (char *) palloc(64);
+
+	if (typmod > VARHDRSZ)
+		snprintf(res, 64, "(%d)", (int) (typmod - VARHDRSZ));
+	else
+		*res = '\0';
+
+	return res;
+}
 
 
 /*
@@ -359,6 +414,22 @@ name_bpchar(PG_FUNCTION_ARGS)
 	PG_RETURN_BPCHAR_P(result);
 }
 
+Datum
+bpchartypmodin(PG_FUNCTION_ARGS)
+{
+	ArrayType	*ta = PG_GETARG_ARRAYTYPE_P(0);
+
+	PG_RETURN_INT32(anychar_typmodin(ta, "char"));
+}
+
+Datum
+bpchartypmodout(PG_FUNCTION_ARGS)
+{
+	int32 typmod = PG_GETARG_INT32(0);
+
+	PG_RETURN_CSTRING(anychar_typmodout(typmod));
+}
+
 
 /*****************************************************************************
  *	 varchar - varchar(n)
@@ -534,6 +605,22 @@ varchar(PG_FUNCTION_ARGS)
 	memcpy(VARDATA(result), VARDATA(source), len - VARHDRSZ);
 
 	PG_RETURN_VARCHAR_P(result);
+}
+
+Datum
+varchartypmodin(PG_FUNCTION_ARGS)
+{
+	ArrayType	*ta = PG_GETARG_ARRAYTYPE_P(0);
+
+	PG_RETURN_INT32(anychar_typmodin(ta, "varchar"));
+}
+
+Datum
+varchartypmodout(PG_FUNCTION_ARGS)
+{
+	int32 typmod = PG_GETARG_INT32(0);
+
+	PG_RETURN_CSTRING(anychar_typmodout(typmod));
 }
 
 

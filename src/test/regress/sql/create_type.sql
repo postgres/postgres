@@ -11,6 +11,8 @@ CREATE TYPE widget (
    internallength = 24, 
    input = widget_in,
    output = widget_out,
+   typmod_in = numerictypmodin,
+   typmod_out = numerictypmodout,
    alignment = double
 );
 
@@ -98,3 +100,12 @@ CREATE TYPE text_w_default;		-- should fail
 DROP TYPE default_test_row CASCADE;
 
 DROP TABLE default_test;
+
+-- Check usage of typmod with a user-defined type
+-- (we have borrowed numeric's typmod functions)
+
+CREATE TEMP TABLE mytab (foo widget(42,13,7));     -- should fail
+CREATE TEMP TABLE mytab (foo widget(42,13));
+
+SELECT format_type(atttypid,atttypmod) FROM pg_attribute
+WHERE attrelid = 'mytab'::regclass AND attnum > 0;

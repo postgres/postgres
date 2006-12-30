@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.314 2006/11/05 22:42:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.315 2006/12/30 21:21:52 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -724,6 +724,8 @@ AddNewRelationType(const char *typeName,
 				   F_RECORD_OUT,	/* output procedure */
 				   F_RECORD_RECV,		/* receive procedure */
 				   F_RECORD_SEND,		/* send procedure */
+				   InvalidOid,	/* typmodin procedure - none */
+				   InvalidOid,	/* typmodout procedure - none */
 				   InvalidOid,	/* analyze procedure - default */
 				   InvalidOid,	/* array element type - irrelevant */
 				   InvalidOid,	/* domain base type - irrelevant */
