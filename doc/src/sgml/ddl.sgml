@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.70 2006/12/28 20:02:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.71 2006/12/30 20:31:11 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -974,7 +974,7 @@ CREATE TABLE order_items (
       The physical location of the row version within its table.  Note that
       although the <structfield>ctid</structfield> can be used to
       locate the row version very quickly, a row's
-      <structfield>ctid</structfield> will change each time it is
+      <structfield>ctid</structfield> will change if it is
       updated or moved by <command>VACUUM FULL</>.  Therefore
       <structfield>ctid</structfield> is useless as a long-term row
       identifier.  The OID, or even better a user-defined serial
