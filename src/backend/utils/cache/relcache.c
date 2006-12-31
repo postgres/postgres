@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.251 2006/12/23 00:43:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.252 2006/12/31 20:32:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2402,8 +2402,8 @@ RelationCacheInitializePhase2(void)
 
 	/*
 	 * If we didn't get the critical system indexes loaded into relcache, do
-	 * so now.	These are critical because the catcache depends on them for
-	 * catcache fetches that are done during relcache load.  Thus, we have an
+	 * so now.	These are critical because the catcache and/or opclass cache
+	 * depend on them for fetches done during relcache load.  Thus, we have an
 	 * infinite-recursion problem.	We can break the recursion by doing
 	 * heapscans instead of indexscans at certain key spots. To avoid hobbling
 	 * performance, we only want to do that until we have the critical indexes
@@ -2439,13 +2439,14 @@ RelationCacheInitializePhase2(void)
 		LOAD_CRIT_INDEX(ClassOidIndexId);
 		LOAD_CRIT_INDEX(AttributeRelidNumIndexId);
 		LOAD_CRIT_INDEX(IndexRelidIndexId);
+		LOAD_CRIT_INDEX(OpclassOidIndexId);
 		LOAD_CRIT_INDEX(AccessMethodStrategyIndexId);
 		LOAD_CRIT_INDEX(AccessMethodProcedureIndexId);
 		LOAD_CRIT_INDEX(OperatorOidIndexId);
 		LOAD_CRIT_INDEX(RewriteRelRulenameIndexId);
 		LOAD_CRIT_INDEX(TriggerRelidNameIndexId);
 
-#define NUM_CRITICAL_INDEXES	8		/* fix if you change list above */
+#define NUM_CRITICAL_INDEXES	9		/* fix if you change list above */
 
 		criticalRelcachesBuilt = true;
 	}
