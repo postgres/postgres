@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.33 2006/12/06 18:06:47 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.34 2007/01/02 20:59:31 momjian Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -203,10 +203,12 @@ CREATE VIEW pg_stat_all_tables AS
             pg_stat_get_tuples_returned(C.oid) AS seq_tup_read, 
             sum(pg_stat_get_numscans(I.indexrelid))::bigint AS idx_scan, 
             sum(pg_stat_get_tuples_fetched(I.indexrelid))::bigint +
-                    pg_stat_get_tuples_fetched(C.oid) AS idx_tup_fetch, 
+            pg_stat_get_tuples_fetched(C.oid) AS idx_tup_fetch, 
             pg_stat_get_tuples_inserted(C.oid) AS n_tup_ins, 
             pg_stat_get_tuples_updated(C.oid) AS n_tup_upd, 
             pg_stat_get_tuples_deleted(C.oid) AS n_tup_del,
+            pg_stat_get_live_tuples(C.oid) AS n_live_tup, 
+            pg_stat_get_dead_tuples(C.oid) AS n_dead_tup,
             pg_stat_get_last_vacuum_time(C.oid) as last_vacuum,
             pg_stat_get_last_autovacuum_time(C.oid) as last_autovacuum,
             pg_stat_get_last_analyze_time(C.oid) as last_analyze,

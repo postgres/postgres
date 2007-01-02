@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.434 2006/12/30 21:21:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.435 2007/01/02 20:59:32 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2912,6 +2912,10 @@ DATA(insert OID = 1932 (  pg_stat_get_tuples_updated	PGNSP PGUID 12 f f t f s 1 
 DESCR("Statistics: Number of tuples updated");
 DATA(insert OID = 1933 (  pg_stat_get_tuples_deleted	PGNSP PGUID 12 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_tuples_deleted - _null_ ));
 DESCR("Statistics: Number of tuples deleted");
+DATA(insert OID = 2878 (  pg_stat_get_live_tuples	PGNSP PGUID 12 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_live_tuples - _null_ ));
+DESCR("Statistics: Number of live tuples");
+DATA(insert OID = 2879 (  pg_stat_get_dead_tuples	PGNSP PGUID 12 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_dead_tuples - _null_ ));
+DESCR("Statistics: Number of dead tuples");
 DATA(insert OID = 1934 (  pg_stat_get_blocks_fetched	PGNSP PGUID 12 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_blocks_fetched - _null_ ));
 DESCR("Statistics: Number of blocks fetched");
 DATA(insert OID = 1935 (  pg_stat_get_blocks_hit		PGNSP PGUID 12 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_blocks_hit - _null_ ));

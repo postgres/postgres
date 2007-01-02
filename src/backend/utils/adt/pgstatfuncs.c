@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.35 2006/12/06 18:06:47 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.36 2007/01/02 20:59:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,8 @@ extern Datum pg_stat_get_tuples_fetched(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_tuples_inserted(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_tuples_updated(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_tuples_deleted(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_live_tuples(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_dead_tuples(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_blocks_fetched(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_blocks_hit(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_last_vacuum_time(PG_FUNCTION_ARGS);
@@ -148,6 +150,38 @@ pg_stat_get_tuples_deleted(PG_FUNCTION_ARGS)
 	else
 		result = (int64) (tabentry->tuples_deleted);
 
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_live_tuples(PG_FUNCTION_ARGS)
+{ 
+	Oid		relid = PG_GETARG_OID(0);
+	int64	result;
+	PgStat_StatTabEntry	*tabentry;
+ 
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->n_live_tuples);
+        
+	PG_RETURN_INT64(result);
+}
+
+        
+Datum
+pg_stat_get_dead_tuples(PG_FUNCTION_ARGS)
+{
+	Oid		relid = PG_GETARG_OID(0);
+	int64	result;
+	PgStat_StatTabEntry	*tabentry;
+
+	if ((tabentry = pgstat_fetch_stat_tabentry(relid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (tabentry->n_dead_tuples);
+        
 	PG_RETURN_INT64(result);
 }
 
