@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.134 2007/01/02 21:25:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.135 2007/01/02 22:19:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1444,7 +1444,7 @@ dpow(PG_FUNCTION_ARGS)
 	 */
 	errno = 0;
 	result = pow(arg1, arg2);
-	if (errno != 0)
+	if (errno != 0 && !isinf(result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("result is out of range")));
@@ -1469,7 +1469,7 @@ dexp(PG_FUNCTION_ARGS)
 	 */
 	errno = 0;
 	result = exp(arg1);
-	if (errno != 0)
+	if (errno != 0 && !isinf(result))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("result is out of range")));
