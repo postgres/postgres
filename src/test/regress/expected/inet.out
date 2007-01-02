@@ -425,13 +425,13 @@ SELECT '127::2'::inet  - ('127::2'::inet - 500);
 
 -- these should give overflow errors:
 SELECT '127.0.0.1'::inet + 10000000000;
-ERROR:  result out of range
+ERROR:  result is out of range
 SELECT '127.0.0.1'::inet - 10000000000;
-ERROR:  result out of range
+ERROR:  result is out of range
 SELECT '126::1'::inet - '127::2'::inet;
-ERROR:  result out of range
+ERROR:  result is out of range
 SELECT '127::1'::inet - '126::2'::inet;
-ERROR:  result out of range
+ERROR:  result is out of range
 -- but not these
 SELECT '127::1'::inet + 10000000000;
      ?column?     
