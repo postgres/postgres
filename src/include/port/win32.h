@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.63 2006/10/19 20:03:08 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.64 2007/01/02 21:25:50 momjian Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -287,7 +287,6 @@ typedef unsigned short mode_t;
 
 #define isinf(x) ((_fpclass(x) == _FPCLASS_PINF) || (_fpclass(x) == _FPCLASS_NINF))
 #define isnan(x) _isnan(x)
-#define finite(x) _finite(x)
 
 #ifndef			BIG_ENDIAN
 #define			BIG_ENDIAN		4321

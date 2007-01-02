@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.133 2007/01/02 20:50:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.134 2007/01/02 21:25:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,10 +18,6 @@
 #include <float.h>
 #include <math.h>
 #include <limits.h>
-/* for finite() on Solaris */
-#ifdef HAVE_IEEEFP_H
-#include <ieeefp.h>
-#endif
 
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
@@ -32,12 +28,6 @@
 #ifndef M_PI
 /* from my RH5.2 gcc math.h file - thomas 2000-04-03 */
 #define M_PI 3.14159265358979323846
-#endif
-
-/* Recent HPUXen have isfinite() macro in place of more standard finite() */
-#if !defined(HAVE_FINITE) && defined(isfinite)
-#define finite(x) isfinite(x)
-#define HAVE_FINITE 1
 #endif
 
 /* Visual C++ etc lacks NAN, and won't accept 0.0/0.0.  NAN definition from
@@ -167,11 +157,10 @@ is_infinite(double val)
 
 	if (inf == 0)
 		return 0;
-
-	if (val > 0)
+	else if (val > 0)
 		return 1;
-
-	return -1;
+	else
+		return -1;
 }
 
 
@@ -1709,11 +1698,7 @@ dtan(PG_FUNCTION_ARGS)
 
 	errno = 0;
 	result = tan(arg1);
-	if (errno != 0
-#ifdef HAVE_FINITE
-		|| !finite(result)
-#endif
-		)
+	if (errno != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("input is out of range")));

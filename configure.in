@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.493 2006/12/21 16:05:12 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.494 2007/01/02 21:25:50 momjian Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -1032,17 +1032,6 @@ if test "$with_readline" = yes; then
   AC_CHECK_FUNCS([replace_history_entry])
 fi
 
-
-dnl Cannot use AC_CHECK_FUNC because finite may be a macro
-AC_MSG_CHECKING(for finite)
-AC_TRY_LINK([
-#include <math.h>
-double glob_double;
-],
-            [return finite(glob_double) ? 0 : 1;],
-            [AC_DEFINE(HAVE_FINITE, 1, [Define to 1 if you have finite().])
-AC_MSG_RESULT(yes)],
-            [AC_MSG_RESULT(no)])
 
 dnl Cannot use AC_CHECK_FUNC because sigsetjmp may be a macro
 dnl (especially on GNU libc)
