@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.66 2006/10/04 00:29:59 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.67 2007/01/02 22:21:08 momjian Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -1389,7 +1389,7 @@ internal_inetpl(inet *ip, int64 addend)
 			  (addend == -1 && carry == 1)))
 			ereport(ERROR,
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-					 errmsg("result out of range")));
+					 errmsg("result is out of range")));
 	}
 	ip_bits(dst) = ip_bits(ip);
 
@@ -1467,7 +1467,7 @@ inetmi(PG_FUNCTION_ARGS)
 				if ((res < 0) ? (lobyte != 0xFF) : (lobyte != 0))
 					ereport(ERROR,
 							(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-							 errmsg("result out of range")));
+							 errmsg("result is out of range")));
 			}
 			carry >>= 8;
 			byte++;
