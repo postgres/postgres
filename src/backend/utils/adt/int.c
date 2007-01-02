@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.75 2006/10/04 00:29:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.76 2007/01/02 20:00:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1124,6 +1124,11 @@ int4mod(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_DIVISION_BY_ZERO),
 				 errmsg("division by zero")));
+
+	/* SELECT ((-2147483648)::int4) % (-1); causes a floating point exception */
+	if (arg1 == INT_MIN && arg2 == -1)
+		PG_RETURN_INT32(0);
+
 	/* No overflow is possible */
 
 	PG_RETURN_INT32(arg1 % arg2);

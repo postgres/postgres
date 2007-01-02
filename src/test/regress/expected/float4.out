@@ -8,14 +8,14 @@ INSERT INTO FLOAT4_TBL(f1) VALUES ('     -34.84    ');
 INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e+20');
 INSERT INTO FLOAT4_TBL(f1) VALUES ('1.2345678901234e-20');
 -- test for over and under flow 
-INSERT INTO FLOAT4_TBL(f1) VALUES ('10e40');
-ERROR:  type "real" value out of range: overflow
-INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e40');
-ERROR:  type "real" value out of range: overflow
-INSERT INTO FLOAT4_TBL(f1) VALUES ('10e-40');
-ERROR:  type "real" value out of range: underflow
-INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-40');
-ERROR:  type "real" value out of range: underflow
+INSERT INTO FLOAT4_TBL(f1) VALUES ('10e70');
+ERROR:  value out of range: overflow
+INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e70');
+ERROR:  value out of range: overflow
+INSERT INTO FLOAT4_TBL(f1) VALUES ('10e-70');
+ERROR:  value out of range: underflow
+INSERT INTO FLOAT4_TBL(f1) VALUES ('-10e-70');
+ERROR:  value out of range: underflow
 -- bad input
 INSERT INTO FLOAT4_TBL(f1) VALUES ('');
 ERROR:  invalid input syntax for type real: ""
@@ -72,7 +72,11 @@ ERROR:  invalid input syntax for type real: "NaN x"
 SELECT ' INFINITY    x'::float4;
 ERROR:  invalid input syntax for type real: " INFINITY    x"
 SELECT 'Infinity'::float4 + 100.0;
-ERROR:  type "double precision" value out of range: overflow
+ ?column? 
+----------
+ Infinity
+(1 row)
+
 SELECT 'Infinity'::float4 / 'Infinity'::float4;
  ?column? 
 ----------

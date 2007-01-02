@@ -72,7 +72,11 @@ ERROR:  invalid input syntax for type double precision: "NaN x"
 SELECT ' INFINITY    x'::float8;
 ERROR:  invalid input syntax for type double precision: " INFINITY    x"
 SELECT 'Infinity'::float8 + 100.0;
-ERROR:  type "double precision" value out of range: overflow
+ ?column? 
+----------
+ Infinity
+(1 row)
+
 SELECT 'Infinity'::float8 / 'Infinity'::float8;
  ?column? 
 ----------
@@ -342,15 +346,15 @@ UPDATE FLOAT8_TBL
    SET f1 = FLOAT8_TBL.f1 * '-1'
    WHERE FLOAT8_TBL.f1 > '0.0';
 SELECT '' AS bad, f.f1 * '1e200' from FLOAT8_TBL f;
-ERROR:  type "double precision" value out of range: overflow
+ERROR:  value out of range: overflow
 SELECT '' AS bad, f.f1 ^ '1e200' from FLOAT8_TBL f;
-ERROR:  result is out of range
+ERROR:  value out of range: overflow
 SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 = '0.0' ;
 ERROR:  cannot take logarithm of zero
 SELECT '' AS bad, ln(f.f1) from FLOAT8_TBL f where f.f1 < '0.0' ;
 ERROR:  cannot take logarithm of a negative number
 SELECT '' AS bad, exp(f.f1) from FLOAT8_TBL f;
-ERROR:  result is out of range
+ERROR:  value out of range: underflow
 SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
 ERROR:  division by zero
 SELECT '' AS five, * FROM FLOAT8_TBL;
