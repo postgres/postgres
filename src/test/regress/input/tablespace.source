@@ -28,6 +28,17 @@ CREATE INDEX foo_idx on testschema.foo(i) TABLESPACE testspace;
 SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
     where c.reltablespace = t.oid AND c.relname = 'foo_idx';
 
+-- let's try moving a table from one place to another
+CREATE TABLE testschema.atable AS VALUES (1), (2);
+CREATE UNIQUE INDEX anindex ON testschema.atable(column1);
+
+ALTER TABLE testschema.atable SET TABLESPACE testspace;
+ALTER INDEX testschema.anindex SET TABLESPACE testspace;
+
+INSERT INTO testschema.atable VALUES(3);	-- ok
+INSERT INTO testschema.atable VALUES(1);	-- fail (checks index)
+SELECT COUNT(*) FROM testschema.atable;		-- checks heap
+
 -- Will fail with bad path
 CREATE TABLESPACE badspace LOCATION '/no/such/location';
 

@@ -41,6 +41,20 @@ SELECT relname, spcname FROM pg_catalog.pg_tablespace t, pg_catalog.pg_class c
  foo_idx | testspace
 (1 row)
 
+-- let's try moving a table from one place to another
+CREATE TABLE testschema.atable AS VALUES (1), (2);
+CREATE UNIQUE INDEX anindex ON testschema.atable(column1);
+ALTER TABLE testschema.atable SET TABLESPACE testspace;
+ALTER INDEX testschema.anindex SET TABLESPACE testspace;
+INSERT INTO testschema.atable VALUES(3);	-- ok
+INSERT INTO testschema.atable VALUES(1);	-- fail (checks index)
+ERROR:  duplicate key violates unique constraint "anindex"
+SELECT COUNT(*) FROM testschema.atable;		-- checks heap
+ count 
+-------
+     3
+(1 row)
+
 -- Will fail with bad path
 CREATE TABLESPACE badspace LOCATION '/no/such/location';
 ERROR:  could not set permissions on directory "/no/such/location": No such file or directory
@@ -51,6 +65,7 @@ ERROR:  tablespace "nosuchspace" does not exist
 DROP TABLESPACE testspace;
 ERROR:  tablespace "testspace" is not empty
 DROP SCHEMA testschema CASCADE;
+NOTICE:  drop cascades to table testschema.atable
 NOTICE:  drop cascades to table testschema.asexecute
 NOTICE:  drop cascades to table testschema.asselect
 NOTICE:  drop cascades to table testschema.foo
