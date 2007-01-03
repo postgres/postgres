@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.61 2006/11/19 21:33:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.62 2007/01/03 18:11:01 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -533,10 +533,8 @@ fail:
  *
  * This does not need to initialize the new bucket pages; we'll do that as
  * each one is used by _hash_expandtable().  But we have to extend the logical
- * EOF to the end of the splitpoint; otherwise the first overflow page
- * allocated beyond the splitpoint will represent a noncontiguous access,
- * which can confuse md.c (and will probably be forbidden by future changes
- * to md.c).
+ * EOF to the end of the splitpoint; this keeps smgr's idea of the EOF in
+ * sync with ours, so that overflow-page allocation works correctly.
  *
  * We do this by writing a page of zeroes at the end of the splitpoint range.
  * We expect that the filesystem will ensure that the intervening pages read
@@ -559,7 +557,6 @@ _hash_alloc_buckets(Relation rel, uint32 nblocks)
 {
 	BlockNumber	firstblock;
 	BlockNumber	lastblock;
-	BlockNumber	endblock;
 	char		zerobuf[BLCKSZ];
 
 	/*
@@ -577,24 +574,9 @@ _hash_alloc_buckets(Relation rel, uint32 nblocks)
 	if (lastblock < firstblock || lastblock == InvalidBlockNumber)
 		return InvalidBlockNumber;
 
-	/* Note: we assume RelationGetNumberOfBlocks did RelationOpenSmgr for us */
-
 	MemSet(zerobuf, 0, sizeof(zerobuf));
 
-	/*
-	 * XXX If the extension results in creation of new segment files,
-	 * we have to make sure that each non-last file is correctly filled out to
-	 * RELSEG_SIZE blocks.  This ought to be done inside mdextend, but
-	 * changing the smgr API seems best left for development cycle not late
-	 * beta.  Temporary fix for bug #2737.
-	 */
-#ifndef LET_OS_MANAGE_FILESIZE
-	for (endblock = firstblock | (RELSEG_SIZE - 1);
-		 endblock < lastblock;
-		 endblock += RELSEG_SIZE)
-		smgrextend(rel->rd_smgr, endblock, zerobuf, rel->rd_istemp);
-#endif
-
+	/* Note: we assume RelationGetNumberOfBlocks did RelationOpenSmgr for us */
 	smgrextend(rel->rd_smgr, lastblock, zerobuf, rel->rd_istemp);
 
 	return firstblock;

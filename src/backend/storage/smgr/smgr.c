@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.101 2006/10/04 00:29:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.102 2007/01/03 18:11:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,30 +31,33 @@
 /*
  * This struct of function pointers defines the API between smgr.c and
  * any individual storage manager module.  Note that smgr subfunctions are
- * generally expected to return TRUE on success, FALSE on error.  (For
- * nblocks and truncate we instead say that returning InvalidBlockNumber
- * indicates an error.)
+ * generally expected to report problems via elog(ERROR).  An exception is
+ * that smgr_unlink should use elog(WARNING), rather than erroring out,
+ * because we normally unlink relations during post-commit/abort cleanup,
+ * and so it's too late to raise an error.  Also, various conditions that
+ * would normally be errors should be allowed during bootstrap and/or WAL
+ * recovery --- see comments in md.c for details.
  */
 typedef struct f_smgr
 {
-	bool		(*smgr_init) (void);	/* may be NULL */
-	bool		(*smgr_shutdown) (void);		/* may be NULL */
-	bool		(*smgr_close) (SMgrRelation reln);
-	bool		(*smgr_create) (SMgrRelation reln, bool isRedo);
-	bool		(*smgr_unlink) (RelFileNode rnode, bool isRedo);
-	bool		(*smgr_extend) (SMgrRelation reln, BlockNumber blocknum,
+	void		(*smgr_init) (void);	/* may be NULL */
+	void		(*smgr_shutdown) (void);		/* may be NULL */
+	void		(*smgr_close) (SMgrRelation reln);
+	void		(*smgr_create) (SMgrRelation reln, bool isRedo);
+	void		(*smgr_unlink) (RelFileNode rnode, bool isRedo);
+	void		(*smgr_extend) (SMgrRelation reln, BlockNumber blocknum,
 											char *buffer, bool isTemp);
-	bool		(*smgr_read) (SMgrRelation reln, BlockNumber blocknum,
+	void		(*smgr_read) (SMgrRelation reln, BlockNumber blocknum,
 										  char *buffer);
-	bool		(*smgr_write) (SMgrRelation reln, BlockNumber blocknum,
+	void		(*smgr_write) (SMgrRelation reln, BlockNumber blocknum,
 										   char *buffer, bool isTemp);
 	BlockNumber (*smgr_nblocks) (SMgrRelation reln);
-	BlockNumber (*smgr_truncate) (SMgrRelation reln, BlockNumber nblocks,
-											  bool isTemp);
-	bool		(*smgr_immedsync) (SMgrRelation reln);
-	bool		(*smgr_commit) (void);	/* may be NULL */
-	bool		(*smgr_abort) (void);	/* may be NULL */
-	bool		(*smgr_sync) (void);	/* may be NULL */
+	void		(*smgr_truncate) (SMgrRelation reln, BlockNumber nblocks,
+								  bool isTemp);
+	void		(*smgr_immedsync) (SMgrRelation reln);
+	void		(*smgr_commit) (void);	/* may be NULL */
+	void		(*smgr_abort) (void);	/* may be NULL */
+	void		(*smgr_sync) (void);	/* may be NULL */
 } f_smgr;
 
 
@@ -152,12 +155,7 @@ smgrinit(void)
 	for (i = 0; i < NSmgr; i++)
 	{
 		if (smgrsw[i].smgr_init)
-		{
-			if (!(*(smgrsw[i].smgr_init)) ())
-				elog(FATAL, "smgr initialization failed on %s: %m",
-					 DatumGetCString(DirectFunctionCall1(smgrout,
-														 Int16GetDatum(i))));
-		}
+			(*(smgrsw[i].smgr_init)) ();
 	}
 
 	/* register the shutdown proc */
@@ -175,12 +173,7 @@ smgrshutdown(int code, Datum arg)
 	for (i = 0; i < NSmgr; i++)
 	{
 		if (smgrsw[i].smgr_shutdown)
-		{
-			if (!(*(smgrsw[i].smgr_shutdown)) ())
-				elog(FATAL, "smgr shutdown failed on %s: %m",
-					 DatumGetCString(DirectFunctionCall1(smgrout,
-														 Int16GetDatum(i))));
-		}
+			(*(smgrsw[i].smgr_shutdown)) ();
 	}
 }
 
@@ -256,13 +249,7 @@ smgrclose(SMgrRelation reln)
 {
 	SMgrRelation *owner;
 
-	if (!(*(smgrsw[reln->smgr_which].smgr_close)) (reln))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not close relation %u/%u/%u: %m",
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode)));
+	(*(smgrsw[reln->smgr_which].smgr_close)) (reln);
 
 	owner = reln->smgr_owner;
 
@@ -354,13 +341,7 @@ smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
 							reln->smgr_rnode.dbNode,
 							isRedo);
 
-	if (!(*(smgrsw[reln->smgr_which].smgr_create)) (reln, isRedo))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not create relation %u/%u/%u: %m",
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode)));
+	(*(smgrsw[reln->smgr_which].smgr_create)) (reln, isRedo);
 
 	if (isRedo)
 		return;
@@ -482,38 +463,26 @@ smgr_internal_unlink(RelFileNode rnode, int which, bool isTemp, bool isRedo)
 	/*
 	 * And delete the physical files.
 	 *
-	 * Note: we treat deletion failure as a WARNING, not an error, because
-	 * we've already decided to commit or abort the current xact.
+	 * Note: smgr_unlink must treat deletion failure as a WARNING, not an
+	 * ERROR, because we've already decided to commit or abort the current
+	 * xact.
 	 */
-	if (!(*(smgrsw[which].smgr_unlink)) (rnode, isRedo))
-		ereport(WARNING,
-				(errcode_for_file_access(),
-				 errmsg("could not remove relation %u/%u/%u: %m",
-						rnode.spcNode,
-						rnode.dbNode,
-						rnode.relNode)));
+	(*(smgrsw[which].smgr_unlink)) (rnode, isRedo);
 }
 
 /*
  *	smgrextend() -- Add a new block to a file.
  *
- *		The semantics are basically the same as smgrwrite(): write at the
- *		specified position.  However, we are expecting to extend the
- *		relation (ie, blocknum is the current EOF), and so in case of
- *		failure we clean up by truncating.
+ *		The semantics are nearly the same as smgrwrite(): write at the
+ *		specified position.  However, this is to be used for the case of
+ *		extending a relation (i.e., blocknum is at or beyond the current
+ *		EOF).  Note that we assume writing a block beyond current EOF
+ *		causes intervening file space to become filled with zeroes.
  */
 void
 smgrextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 {
-	if (!(*(smgrsw[reln->smgr_which].smgr_extend)) (reln, blocknum, buffer,
-													isTemp))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not extend relation %u/%u/%u: %m",
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode),
-				 errhint("Check free disk space.")));
+	(*(smgrsw[reln->smgr_which].smgr_extend)) (reln, blocknum, buffer, isTemp);
 }
 
 /*
@@ -527,18 +496,15 @@ smgrextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 void
 smgrread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 {
-	if (!(*(smgrsw[reln->smgr_which].smgr_read)) (reln, blocknum, buffer))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not read block %u of relation %u/%u/%u: %m",
-						blocknum,
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode)));
+	(*(smgrsw[reln->smgr_which].smgr_read)) (reln, blocknum, buffer);
 }
 
 /*
  *	smgrwrite() -- Write the supplied buffer out.
+ *
+ *		This is to be used only for updating already-existing blocks of a
+ *		relation (ie, those before the current EOF).  To extend a relation,
+ *		use smgrextend().
  *
  *		This is not a synchronous write -- the block is not necessarily
  *		on disk at return, only dumped out to the kernel.  However,
@@ -551,60 +517,26 @@ smgrread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 void
 smgrwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 {
-	if (!(*(smgrsw[reln->smgr_which].smgr_write)) (reln, blocknum, buffer,
-												   isTemp))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not write block %u of relation %u/%u/%u: %m",
-						blocknum,
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode)));
+	(*(smgrsw[reln->smgr_which].smgr_write)) (reln, blocknum, buffer, isTemp);
 }
 
 /*
  *	smgrnblocks() -- Calculate the number of blocks in the
  *					 supplied relation.
- *
- *		Returns the number of blocks on success, aborts the current
- *		transaction on failure.
  */
 BlockNumber
 smgrnblocks(SMgrRelation reln)
 {
-	BlockNumber nblocks;
-
-	nblocks = (*(smgrsw[reln->smgr_which].smgr_nblocks)) (reln);
-
-	/*
-	 * NOTE: if a relation ever did grow to 2^32-1 blocks, this code would
-	 * fail --- but that's a good thing, because it would stop us from
-	 * extending the rel another block and having a block whose number
-	 * actually is InvalidBlockNumber.
-	 */
-	if (nblocks == InvalidBlockNumber)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not count blocks of relation %u/%u/%u: %m",
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode)));
-
-	return nblocks;
+	return (*(smgrsw[reln->smgr_which].smgr_nblocks)) (reln);
 }
 
 /*
  *	smgrtruncate() -- Truncate supplied relation to the specified number
  *					  of blocks
- *
- *		Returns the number of blocks on success, aborts the current
- *		transaction on failure.
  */
-BlockNumber
+void
 smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 {
-	BlockNumber newblks;
-
 	/*
 	 * Get rid of any buffers for the about-to-be-deleted blocks. bufmgr will
 	 * just drop them without bothering to write the contents.
@@ -619,16 +551,7 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 	FreeSpaceMapTruncateRel(&reln->smgr_rnode, nblocks);
 
 	/* Do the truncation */
-	newblks = (*(smgrsw[reln->smgr_which].smgr_truncate)) (reln, nblocks,
-														   isTemp);
-	if (newblks == InvalidBlockNumber)
-		ereport(ERROR,
-				(errcode_for_file_access(),
-			  errmsg("could not truncate relation %u/%u/%u to %u blocks: %m",
-					 reln->smgr_rnode.spcNode,
-					 reln->smgr_rnode.dbNode,
-					 reln->smgr_rnode.relNode,
-					 nblocks)));
+	(*(smgrsw[reln->smgr_which].smgr_truncate)) (reln, nblocks, isTemp);
 
 	if (!isTemp)
 	{
@@ -642,7 +565,7 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 		XLogRecData rdata;
 		xl_smgr_truncate xlrec;
 
-		xlrec.blkno = newblks;
+		xlrec.blkno = nblocks;
 		xlrec.rnode = reln->smgr_rnode;
 
 		rdata.data = (char *) &xlrec;
@@ -653,8 +576,6 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 		lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_TRUNCATE | XLOG_NO_TRAN,
 						 &rdata);
 	}
-
-	return newblks;
 }
 
 /*
@@ -683,13 +604,7 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 void
 smgrimmedsync(SMgrRelation reln)
 {
-	if (!(*(smgrsw[reln->smgr_which].smgr_immedsync)) (reln))
-		ereport(ERROR,
-				(errcode_for_file_access(),
-				 errmsg("could not sync relation %u/%u/%u: %m",
-						reln->smgr_rnode.spcNode,
-						reln->smgr_rnode.dbNode,
-						reln->smgr_rnode.relNode)));
+	(*(smgrsw[reln->smgr_which].smgr_immedsync)) (reln);
 }
 
 
@@ -843,12 +758,7 @@ smgrcommit(void)
 	for (i = 0; i < NSmgr; i++)
 	{
 		if (smgrsw[i].smgr_commit)
-		{
-			if (!(*(smgrsw[i].smgr_commit)) ())
-				elog(ERROR, "transaction commit failed on %s: %m",
-					 DatumGetCString(DirectFunctionCall1(smgrout,
-														 Int16GetDatum(i))));
-		}
+			(*(smgrsw[i].smgr_commit)) ();
 	}
 }
 
@@ -863,12 +773,7 @@ smgrabort(void)
 	for (i = 0; i < NSmgr; i++)
 	{
 		if (smgrsw[i].smgr_abort)
-		{
-			if (!(*(smgrsw[i].smgr_abort)) ())
-				elog(ERROR, "transaction abort failed on %s: %m",
-					 DatumGetCString(DirectFunctionCall1(smgrout,
-														 Int16GetDatum(i))));
-		}
+			(*(smgrsw[i].smgr_abort)) ();
 	}
 }
 
@@ -883,12 +788,7 @@ smgrsync(void)
 	for (i = 0; i < NSmgr; i++)
 	{
 		if (smgrsw[i].smgr_sync)
-		{
-			if (!(*(smgrsw[i].smgr_sync)) ())
-				elog(ERROR, "storage sync failed on %s: %m",
-					 DatumGetCString(DirectFunctionCall1(smgrout,
-														 Int16GetDatum(i))));
-		}
+			(*(smgrsw[i].smgr_sync)) ();
 	}
 }
 
@@ -910,7 +810,6 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 	{
 		xl_smgr_truncate *xlrec = (xl_smgr_truncate *) XLogRecGetData(record);
 		SMgrRelation reln;
-		BlockNumber newblks;
 
 		reln = smgropen(xlrec->rnode);
 
@@ -931,17 +830,9 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 		FreeSpaceMapTruncateRel(&reln->smgr_rnode, xlrec->blkno);
 
 		/* Do the truncation */
-		newblks = (*(smgrsw[reln->smgr_which].smgr_truncate)) (reln,
-															   xlrec->blkno,
-															   false);
-		if (newblks == InvalidBlockNumber)
-			ereport(WARNING,
-					(errcode_for_file_access(),
-			  errmsg("could not truncate relation %u/%u/%u to %u blocks: %m",
-					 reln->smgr_rnode.spcNode,
-					 reln->smgr_rnode.dbNode,
-					 reln->smgr_rnode.relNode,
-					 xlrec->blkno)));
+		(*(smgrsw[reln->smgr_which].smgr_truncate)) (reln,
+													 xlrec->blkno,
+													 false);
 
 		/* Also tell xlogutils.c about it */
 		XLogTruncateRelation(xlrec->rnode, xlrec->blkno);
