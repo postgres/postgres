@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.138 2007/01/03 19:34:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.139 2007/01/03 22:05:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1440,17 +1440,24 @@ dpow(PG_FUNCTION_ARGS)
 
 	/*
 	 * pow() sets errno only on some platforms, depending on whether it
-	 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, and some return Nan,
-	 * so we check and set result properly.
+	 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, so we try to avoid
+	 * using errno.  However, some platform/CPU combinations return
+	 * errno == EDOM and result == Nan, so we have to check for that and
+	 * set result properly.  For example, Linux on Pentium, pre-Xeon
+	 * hardware returns EDOM/Nan for (-1) ^ 1e19, but (-1) ^ 1e18 retuns
+	 * 1 -- basically a negative base raised to a very high power causes
+	 * it on some CPUs.
 	 */
 	errno = 0;
 	result = pow(arg1, arg2);
-	if (errno == ERANGE || isnan(result))
+	if (errno == EDOM && isnan(result))
 	{
 		if ((fabs(arg1) > 1 && arg2 >= 0) || (fabs(arg1) < 1 && arg2 < 0))
 			result = (arg1 >= 0) ? get_float8_infinity() : -get_float8_infinity();
-		else
+		else if (fabs(arg1) != 1)
 			result = 0;
+		else
+			result = 1;
 	}
 	
 	CHECKFLOATVAL(result, isinf(arg1) || isinf(arg2), arg1 == 0);
@@ -1467,20 +1474,7 @@ dexp(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
-	/*
-	 * exp() sets errno only on some platforms, depending on whether it
-	 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, and some return Nan,
-	 * so we check and set result properly.
-	 */
-	errno = 0;
 	result = exp(arg1);
-	if (errno == ERANGE || isnan(result))
-	{
-		if (arg1 >= 0)
-			result = get_float8_infinity();
-		else
-			result = 0;
-	}
 
 	CHECKFLOATVAL(result, isinf(arg1), false);
 	PG_RETURN_FLOAT8(result);
