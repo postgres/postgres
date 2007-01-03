@@ -3,7 +3,7 @@
  * Written by D'Arcy J.M. Cain
  *
  * Functions to allow input and output of money normally but store
- *	and handle it as int4.
+ *	and handle it as 64 bit integer.
  */
 
 #ifndef CASH_H
@@ -11,8 +11,7 @@
 
 #include "fmgr.h"
 
-/* if we store this as 4 bytes, we better make it int, not long, bjm */
-typedef int32 Cash;
+typedef int64 Cash;
 
 extern Datum cash_in(PG_FUNCTION_ARGS);
 extern Datum cash_out(PG_FUNCTION_ARGS);
@@ -31,16 +30,20 @@ extern Datum cash_pl(PG_FUNCTION_ARGS);
 extern Datum cash_mi(PG_FUNCTION_ARGS);
 
 extern Datum cash_mul_flt8(PG_FUNCTION_ARGS);
-extern Datum cash_div_flt8(PG_FUNCTION_ARGS);
 extern Datum flt8_mul_cash(PG_FUNCTION_ARGS);
+extern Datum cash_div_flt8(PG_FUNCTION_ARGS);
 
 extern Datum cash_mul_flt4(PG_FUNCTION_ARGS);
-extern Datum cash_div_flt4(PG_FUNCTION_ARGS);
 extern Datum flt4_mul_cash(PG_FUNCTION_ARGS);
+extern Datum cash_div_flt4(PG_FUNCTION_ARGS);
+
+extern Datum cash_mul_int8(PG_FUNCTION_ARGS);
+extern Datum int8_mul_cash(PG_FUNCTION_ARGS);
+extern Datum cash_div_int8(PG_FUNCTION_ARGS);
 
 extern Datum cash_mul_int4(PG_FUNCTION_ARGS);
-extern Datum cash_div_int4(PG_FUNCTION_ARGS);
 extern Datum int4_mul_cash(PG_FUNCTION_ARGS);
+extern Datum cash_div_int4(PG_FUNCTION_ARGS);
 
 extern Datum cash_mul_int2(PG_FUNCTION_ARGS);
 extern Datum int2_mul_cash(PG_FUNCTION_ARGS);

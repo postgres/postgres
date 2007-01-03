@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.176 2006/12/30 21:21:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.177 2007/01/03 01:19:51 darcy Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -388,10 +388,10 @@ DATA(insert OID = 718 (  circle    PGNSP PGUID	24 f b t \054 0 0 circle_in circl
 DESCR("geometric circle '(center,radius)'");
 #define CIRCLEOID		718
 DATA(insert OID = 719 (  _circle   PGNSP PGUID	-1 f b t \054 0  718 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 790 (  money	   PGNSP PGUID	 4 f b t \054 0 0 cash_in cash_out cash_recv cash_send - - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 790 (  money	   PGNSP PGUID	 8 f b t \054 0 0 cash_in cash_out cash_recv cash_send - - - d p f 0 -1 0 _null_ _null_ ));
 DESCR("monetary amounts, $d,ddd.cc");
 #define CASHOID 790
-DATA(insert OID = 791 (  _money    PGNSP PGUID	-1 f b t \054 0  790 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 791 (  _money    PGNSP PGUID	-1 f b t \054 0  790 array_in array_out array_recv array_send - - - d x f 0 -1 0 _null_ _null_ ));
 
 /* OIDS 800 - 899 */
 DATA(insert OID = 829 ( macaddr    PGNSP PGUID	6 f b t \054 0 0 macaddr_in macaddr_out macaddr_recv macaddr_send - - - i p f 0 -1 0 _null_ _null_ ));
