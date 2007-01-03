@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119.2.9 2006/05/21 20:07:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.119.2.10 2007/01/03 22:40:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2735,7 +2735,10 @@ get_join_vars(List *args, Var **var1, Var **var2)
  * These routines support analysis of LIKE and regular-expression patterns
  * by the planner/optimizer.  It's important that they agree with the
  * regular-expression code in backend/regex/ and the LIKE code in
- * backend/utils/adt/like.c.
+ * backend/utils/adt/like.c.  Also, the computation of the fixed prefix
+ * must be conservative: if we report a string longer than the true fixed
+ * prefix, the query may produce actually wrong answers, rather than just
+ * getting a bad selectivity estimate!
  *
  * Note that the prefix-analysis functions are called from
  * backend/optimizer/path/indxpath.c as well as from routines in this file.
@@ -2764,6 +2767,7 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 	Oid			typeid = patt_const->consttype;
 	int			pos,
 				match_pos;
+	bool		is_multibyte = (pg_database_encoding_max_length() > 1);
 
 	/* the right-hand const is type text or bytea */
 	Assert(typeid == BYTEAOID || typeid == TEXTOID);
@@ -2811,11 +2815,16 @@ like_fixed_prefix(Const *patt_const, bool case_insensitive,
 		}
 
 		/*
-		 * XXX I suspect isalpha() is not an adequately locale-sensitive
-		 * test for characters that can vary under case folding?
+		 * XXX In multibyte character sets, we can't trust isalpha, so assume
+		 * any multibyte char is potentially case-varying.
 		 */
-		if (case_insensitive && isalpha((unsigned char) patt[pos]))
-			break;
+		if (case_insensitive)
+		{
+			if (is_multibyte && (unsigned char) patt[pos] >= 0x80)
+				break;
+			if (isalpha((unsigned char) patt[pos]))
+				break;
+		}
 
 		/*
 		 * NOTE: this code used to think that %% meant a literal %, but
@@ -2861,11 +2870,13 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	char	   *match;
 	int			pos,
 				match_pos,
-				paren_depth;
+				prev_pos,
+				prev_match_pos;
+	bool		have_leading_paren;
 	char	   *patt;
-	char	   *prefix;
 	char	   *rest;
 	Oid			typeid = patt_const->consttype;
+	bool		is_multibyte = (pg_database_encoding_max_length() > 1);
 
 	/*
 	 * Should be unnecessary, there are no bytea regex operators defined.
@@ -2879,7 +2890,25 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 	patt = DatumGetCString(DirectFunctionCall1(textout, patt_const->constvalue));
 
 	/* Pattern must be anchored left */
-	if (patt[0] != '^')
+	pos = 0;
+	if (patt[pos] != '^')
+	{
+		rest = patt;
+
+		*prefix_const = NULL;
+		*rest_const = string_to_const(rest, typeid);
+
+		return Pattern_Prefix_None;
+	}
+	pos++;
+
+	/*
+	 * If '|' is present in pattern, then there may be multiple alternatives
+	 * for the start of the string.  (There are cases where this isn't so,
+	 * for instance if the '|' is inside parens, but detecting that reliably
+	 * is too hard.)
+	 */
+	if (strchr(patt + pos, '|') != NULL)
 	{
 		rest = patt;
 
@@ -2889,103 +2918,112 @@ regex_fixed_prefix(Const *patt_const, bool case_insensitive,
 		return Pattern_Prefix_None;
 	}
 
+	/* OK, allocate space for pattern */
+	match = palloc(strlen(patt) + 1);
+	prev_match_pos = match_pos = 0;
+
 	/*
-	 * If unquoted | is present at paren level 0 in pattern, then there
-	 * are multiple alternatives for the start of the string.
+	 * We special-case the syntax '^(...)$' because psql uses it.  But beware:
+	 * sequences beginning "(?" are not what they seem.
 	 */
-	paren_depth = 0;
-	for (pos = 1; patt[pos]; pos++)
+	have_leading_paren = false;
+	if (patt[pos] == '(' && patt[pos + 1] != '?')
 	{
-		if (patt[pos] == '|' && paren_depth == 0)
-		{
-			rest = patt;
-
-			*prefix_const = NULL;
-			*rest_const = string_to_const(rest, typeid);
-
-			return Pattern_Prefix_None;
-		}
-		else if (patt[pos] == '(')
-			paren_depth++;
-		else if (patt[pos] == ')' && paren_depth > 0)
-			paren_depth--;
-		else if (patt[pos] == '\\')
-		{
-			/* backslash quotes the next character */
-			pos++;
-			if (patt[pos] == '\0')
-				break;
-		}
+		have_leading_paren = true;
+		pos++;
 	}
 
-	/* OK, allocate space for pattern */
-	prefix = match = palloc(strlen(patt) + 1);
-	match_pos = 0;
-
-	/* note start at pos 1 to skip leading ^ */
-	for (pos = 1; patt[pos]; pos++)
+	/* Scan remainder of pattern */
+	prev_pos = pos;
+	while (patt[pos])
 	{
+		int			len;
+
 		/*
-		 * Check for characters that indicate multiple possible matches
-		 * here. XXX I suspect isalpha() is not an adequately
-		 * locale-sensitive test for characters that can vary under case
-		 * folding?
+		 * Check for characters that indicate multiple possible matches here.
+		 * Also, drop out at ')' or '$' so the termination test works right.
 		 */
 		if (patt[pos] == '.' ||
 			patt[pos] == '(' ||
+			patt[pos] == ')' ||
 			patt[pos] == '[' ||
-			patt[pos] == '$' ||
-			(case_insensitive && isalpha((unsigned char) patt[pos])))
+			patt[pos] == '^' ||
+			patt[pos] == '$')
 			break;
 
 		/*
+		 * XXX In multibyte character sets, we can't trust isalpha, so assume
+		 * any multibyte char is potentially case-varying.
+		 */
+		if (case_insensitive)
+		{
+			if (is_multibyte && (unsigned char) patt[pos] >= 0x80)
+				break;
+			if (isalpha((unsigned char) patt[pos]))
+				break;
+		}
+
+		/*
 		 * Check for quantifiers.  Except for +, this means the preceding
-		 * character is optional, so we must remove it from the prefix
-		 * too!
+		 * character is optional, so we must remove it from the prefix too!
 		 */
 		if (patt[pos] == '*' ||
 			patt[pos] == '?' ||
 			patt[pos] == '{')
 		{
-			if (match_pos > 0)
-				match_pos--;
-			pos--;
+			match_pos = prev_match_pos;
+			pos = prev_pos;
 			break;
 		}
 		if (patt[pos] == '+')
 		{
-			pos--;
+			pos = prev_pos;
 			break;
 		}
+
+		/*
+		 * backslash quotes the next character.
+		 */
 		if (patt[pos] == '\\')
 		{
-			/* backslash quotes the next character */
 			pos++;
 			if (patt[pos] == '\0')
 				break;
 		}
-		match[match_pos++] = patt[pos];
+		/* save position in case we need to back up on next loop cycle */
+		prev_match_pos = match_pos;
+		prev_pos = pos;
+		/* must use encoding-aware processing here */
+		len = pg_mblen(&patt[pos]);
+		memcpy(&match[match_pos], &patt[pos], len);
+		match_pos += len;
+		pos += len;
 	}
 
 	match[match_pos] = '\0';
 	rest = &patt[pos];
 
+	if (have_leading_paren && patt[pos] == ')')
+		pos++;
+
 	if (patt[pos] == '$' && patt[pos + 1] == '\0')
 	{
 		rest = &patt[pos + 1];
 
-		*prefix_const = string_to_const(prefix, typeid);
+		*prefix_const = string_to_const(match, typeid);
 		*rest_const = string_to_const(rest, typeid);
+
+		pfree(patt);
+		pfree(match);
 
 		return Pattern_Prefix_Exact;	/* pattern specifies exact match */
 	}
 
-	*prefix_const = string_to_const(prefix, typeid);
+	*prefix_const = string_to_const(match, typeid);
 	*rest_const = string_to_const(rest, typeid);
 
 	pfree(patt);
 	pfree(match);
-	prefix = NULL;
 
 	if (match_pos > 0)
 		return Pattern_Prefix_Partial;
