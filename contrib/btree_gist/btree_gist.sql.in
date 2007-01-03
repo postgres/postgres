@@ -778,7 +778,7 @@ AS
 	FUNCTION	5	gbt_cash_penalty (internal, internal, internal),
 	FUNCTION	6	gbt_cash_picksplit (internal, internal),
 	FUNCTION	7	gbt_cash_same (internal, internal, internal),
-	STORAGE		gbtreekey8;
+	STORAGE		gbtreekey16;
 
 --
 --
