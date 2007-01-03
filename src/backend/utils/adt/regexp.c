@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.60.2.2 2006/04/13 18:01:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.60.2.3 2007/01/03 22:39:42 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -624,4 +624,13 @@ similar_escape(PG_FUNCTION_ARGS)
 	VARATT_SIZEP(result) = r - ((char *) result);
 
 	PG_RETURN_TEXT_P(result);
+}
+
+/*
+ * report whether regex_flavor is currently BASIC
+ */
+bool
+regex_flavor_is_basic(void)
+{
+	return (regex_flavor == REG_BASIC);
 }
