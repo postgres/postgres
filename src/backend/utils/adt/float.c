@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.135 2007/01/02 22:19:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.136 2007/01/03 04:21:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1439,15 +1439,11 @@ dpow(PG_FUNCTION_ARGS)
 				 errmsg("invalid argument for power function")));
 
 	/*
-	 * We must check both for errno getting set and for a NaN result, in order
-	 * to deal with the vagaries of different platforms...
+	 * pow() sets errno only on some platforms, depending on whether it
+	 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, so, for consistency,
+	 * we don't consult it and just do our check below.
 	 */
-	errno = 0;
 	result = pow(arg1, arg2);
-	if (errno != 0 && !isinf(result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("result is out of range")));
 
 	CHECKFLOATVAL(result, isinf(arg1) || isinf(arg2), arg1 == 0);
 	PG_RETURN_FLOAT8(result);
@@ -1464,15 +1460,11 @@ dexp(PG_FUNCTION_ARGS)
 	float8		result;
 
 	/*
-	 * We must check both for errno getting set and for a NaN result, in order
-	 * to deal with the vagaries of different platforms.
+	 * exp() sets errno only on some platforms, depending on whether it
+	 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, so, for consistency,
+	 * we don't consult it and just do our check below.
 	 */
-	errno = 0;
 	result = exp(arg1);
-	if (errno != 0 && !isinf(result))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("result is out of range")));
 
 	CHECKFLOATVAL(result, isinf(arg1), false);
 	PG_RETURN_FLOAT8(result);
@@ -1547,6 +1539,10 @@ dacos(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
+	/*
+	 *	We use errno here because the trigonometric functions are cyclic
+	 *	and hard to check for underflow.
+	 */
 	errno = 0;
 	result = acos(arg1);
 	if (errno != 0)
