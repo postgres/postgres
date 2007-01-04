@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.9 2006/11/30 16:22:32 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.10 2007/01/04 16:29:41 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -34,8 +34,8 @@ typedef struct
 /*
  * Cleans array of ItemPointer (removes dead pointers)
  * Results are always stored in *cleaned, which will be allocated
- * if its needed. In case of *cleaned!=NULL caller is responsible to
- * enough space. *cleaned and items may point to the same
+ * if it's needed. In case of *cleaned!=NULL caller is responsible to
+ * have allocated enough space. *cleaned and items may point to the same
  * memory address.
  */
 
