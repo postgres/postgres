@@ -107,6 +107,7 @@ sub AddIncludeDir {
 sub AddDefine {
 	my ($self, $def) = @_;
 
+	$def =~ s/"/&quot;&quot;/g;
 	$self->{defines} .= $def . ';';
 }
 
