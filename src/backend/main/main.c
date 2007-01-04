@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.105 2006/10/04 00:29:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.106 2007/01/04 00:57:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,7 +258,10 @@ startup_hacks(const char *progname)
 }
 
 
-
+/*
+ * Help display should match the options accepted by PostmasterMain()
+ * and PostgresMain().
+ */
 static void
 help(const char *progname)
 {

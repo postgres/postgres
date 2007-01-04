@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.47 2006/06/18 15:38:36 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.48 2007/01/04 00:57:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -51,15 +51,14 @@ PostgreSQL documentation
    <option>-D</option> option or the <envar>PGDATA</envar> environment
    variable; there is no default.  Typically, <option>-D</option> or
    <envar>PGDATA</envar> points directly to the data area directory
-   created by <application>initdb</>.  Other possible file layouts are
-   discussed in <xref linkend="runtime-config-file-locations">.  A
-   data area is created with <xref linkend="app-initdb">.
+   created by <xref linkend="app-initdb">.  Other possible file layouts are
+   discussed in <xref linkend="runtime-config-file-locations">.
   </para>
 
   <para>
    By default <command>postgres</command> starts in the
    foreground and prints log messages to the standard error stream.  In
-   practical applications the <command>postgres</command>
+   practical applications <command>postgres</command>
    should be started as a background process, perhaps at boot time.
   </para>
 
@@ -67,18 +66,18 @@ PostgreSQL documentation
    The <command>postgres</command> command can also be called in
    single-user mode.  The primary use for this mode is during
    bootstrapping by <xref linkend="app-initdb">.  Sometimes it is used
-   for debugging or disaster recovery.  When invoked in interactive
+   for debugging or disaster recovery (but note that running a single-user
+   server is not truly suitable for debugging the server, since no
+   realistic interprocess communication and locking will happen).
+   When invoked in single-user
    mode from the shell, the user can enter queries and the results
    will be printed to the screen, but in a form that is more useful
-   for developers than end users.  But note that running a single-user
-   server is not truly suitable for debugging the server since no
-   realistic interprocess communication and locking will happen.  When
-   running a stand-alone server, the session user will be set to the
-   user with ID 1.  This user does not actually have to exist, so a
-   stand-alone server can be used to manually recover from certain
-   kinds of accidental damage to the system catalogs.  Implicit
-   superuser powers are granted to the user with ID 1 in single-user
-   mode.
+   for developers than end users.  In the single-user mode,
+   the session user will be set to the user with ID 1, and implicit
+   superuser powers are granted to this user.
+   This user does not actually have to exist, so the single-user mode
+   can be used to manually recover from certain
+   kinds of accidental damage to the system catalogs.
   </para>
  </refsect1>
 
@@ -118,10 +117,10 @@ PostgreSQL documentation
       <term><option>-B <replaceable class="parameter">nbuffers</replaceable></option></term>
       <listitem>
        <para>
-	Sets the number of shared buffers for use by the server
-	processes.  The default value of this parameter is chosen
-	automatically by <application>initdb</application>; refer to <xref
-	linkend="runtime-config-resource-memory"> for more information.
+        Sets the number of shared buffers for use by the server
+        processes.  The default value of this parameter is chosen
+        automatically by <application>initdb</application>; refer to <xref
+        linkend="runtime-config-resource-memory"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -148,7 +147,7 @@ PostgreSQL documentation
         debugging output is written to the server log.  Values are
         from 1 to 5.  It is also possible to pass <literal>-d
         0</literal> for a specific session, which will prevent the
-        server log level of the <command>postgres</> from being
+        server log level of the parent <command>postgres</> process from being
         propagated to this session.
        </para>
       </listitem>
@@ -170,9 +169,9 @@ PostgreSQL documentation
       <listitem>
        <para>
         Sets the default date style to <quote>European</quote>, that is
-	<literal>DMY</> ordering of input date fields.  This also causes
-	the day to be printed before the month in certain date output formats.
-	See <xref linkend="datatype-datetime"> for more information.
+        <literal>DMY</> ordering of input date fields.  This also causes
+        the day to be printed before the month in certain date output formats.
+        See <xref linkend="datatype-datetime"> for more information.
        </para>
       </listitem>
      </varlistentry>
@@ -186,11 +185,6 @@ PostgreSQL documentation
         system crash.  Specifying this option is equivalent to
         disabling the <xref linkend="guc-fsync"> configuration
         parameter. Read the detailed documentation before using this!
-       </para>
-
-       <para>
-        <option>--fsync=true</option> has the opposite effect
-        of this option.
        </para>
       </listitem>
      </varlistentry>
@@ -206,7 +200,7 @@ PostgreSQL documentation
         listening on all available interfaces.  An empty value
         specifies not listening on any IP addresses, in which case
         only Unix-domain sockets can be used to connect to the
-        <command>postgres</command>.  Defaults to listening only on
+        server.  Defaults to listening only on
         <systemitem class="systemname">localhost</systemitem>.
         Specifying this option is equivalent to setting the <xref
         linkend="guc-listen-addresses"> configuration parameter.
@@ -236,10 +230,10 @@ PostgreSQL documentation
       <term><option>-k <replaceable class="parameter">directory</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the directory of the Unix-domain socket on which
-	<command>postgres</command> is to listen for
-	connections from client applications.  The default is normally
-	<filename>/tmp</filename>, but can be changed at build time.
+        Specifies the directory of the Unix-domain socket on which
+        <command>postgres</command> is to listen for
+        connections from client applications.  The default is normally
+        <filename>/tmp</filename>, but can be changed at build time.
        </para>
       </listitem>
      </varlistentry>
@@ -248,11 +242,11 @@ PostgreSQL documentation
       <term><option>-l</option></term>
       <listitem>
        <para>
-	Enables secure connections using <acronym>SSL</acronym>.
-	<productname>PostgreSQL</productname> must have been compiled with
-	support for <acronym>SSL</acronym> for this option to be
-	available. For more information on using <acronym>SSL</acronym>,
-	refer to <xref linkend="ssl-tcp">.
+        Enables secure connections using <acronym>SSL</acronym>.
+        <productname>PostgreSQL</productname> must have been compiled with
+        support for <acronym>SSL</acronym> for this option to be
+        available. For more information on using <acronym>SSL</acronym>,
+        refer to <xref linkend="ssl-tcp">.
        </para>
       </listitem>
      </varlistentry>
@@ -261,15 +255,15 @@ PostgreSQL documentation
       <term><option>-N <replaceable class="parameter">max-connections</replaceable></option></term>
       <listitem>
        <para>
-	Sets the maximum number of client connections that this
-	<command>postgres</command> will accept.  By
-	default, this value is 32, but it can be set as high as your
-	system will support.  (Note that
-	<option>-B</option> is required to be at least twice
-	<option>-N</option>.  See <xref linkend="kernel-resources"> for a discussion of
-	system resource requirements for large numbers of client
-	connections.) Specifying this option is equivalent to setting the
-	<xref linkend="guc-max-connections"> configuration parameter.
+        Sets the maximum number of client connections that this
+        server will accept.  By
+        default, this value is 32, but it can be set as high as your
+        system will support.  (Note that
+        <option>-B</option> is required to be at least twice
+        <option>-N</option>.  See <xref linkend="kernel-resources"> for a discussion of
+        system resource requirements for large numbers of client
+        connections.) Specifying this option is equivalent to setting the
+        <xref linkend="guc-max-connections"> configuration parameter.
        </para>
       </listitem>
      </varlistentry>
@@ -278,17 +272,17 @@ PostgreSQL documentation
       <term><option>-o <replaceable class="parameter">extra-options</replaceable></option></term>
       <listitem>
        <para>
-	The command line-style options specified in <replaceable
-	class="parameter">extra-options</replaceable> are passed to
-	all server processes started by this
-	<command>postgres</command>.  If the option string contains
-	any spaces, the entire string must be quoted.
+        The command line-style options specified in <replaceable
+        class="parameter">extra-options</replaceable> are passed to
+        all server processes started by this
+        <command>postgres</command> process.  If the option string contains
+        any spaces, the entire string must be quoted.
        </para>
 
        <para>
         The use of this option is obsolete; all command-line options
         for server processes can be specified directly on the
-        <command>postgres</command> command line
+        <command>postgres</command> command line.
        </para>
       </listitem>
      </varlistentry>
@@ -297,15 +291,15 @@ PostgreSQL documentation
       <term><option>-p <replaceable class="parameter">port</replaceable></option></term>
       <listitem>
        <para>
-	Specifies the TCP/IP port or local Unix domain socket file
-	extension on which <command>postgres</command>
-	is to listen for connections from client applications.
-	Defaults to the value of the <envar>PGPORT</envar> environment
-	variable, or if <envar>PGPORT</envar> is not set, then
-	defaults to the value established during compilation (normally
-	5432).  If you specify a port other than the default port,
-	then all client applications must specify the same port using
-	either command-line options or <envar>PGPORT</envar>.
+        Specifies the TCP/IP port or local Unix domain socket file
+        extension on which <command>postgres</command>
+        is to listen for connections from client applications.
+        Defaults to the value of the <envar>PGPORT</envar> environment
+        variable, or if <envar>PGPORT</envar> is not set, then
+        defaults to the value established during compilation (normally
+        5432).  If you specify a port other than the default port,
+        then all client applications must specify the same port using
+        either command-line options or <envar>PGPORT</envar>.
        </para>
       </listitem>
      </varlistentry>
@@ -314,32 +308,21 @@ PostgreSQL documentation
       <term><option>-s</option></term>
       <listitem>
        <para>
-	Print time information and other statistics at the end of each command.
-	This is useful for benchmarking or for use in tuning the number of
-	buffers.
+        Print time information and other statistics at the end of each command.
+        This is useful for benchmarking or for use in tuning the number of
+        buffers.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
-      <term><option>-S</option></term>
+      <term><option>-S</option> <replaceable class="parameter">work-mem</replaceable></term>
       <listitem>
        <para>
-	Specifies that the <command>postgres</command>
-	process should start up in silent mode.  That is, it will
-	disassociate from the user's (controlling) terminal, start its
-	own process group, and redirect its standard output and
-	standard error to <filename>/dev/null</filename>.
-       </para>
-       <para>
-        Using this switch discards all logging output, which is
-	probably not what you want, since it makes it very difficult
-	to troubleshoot problems.  See below for a better way to start
-	<command>postgres</command> in the background.
-       </para>
-       <para>
-        <option>--silent-mode=false</option> has the opposite effect
-        of this option.
+        Specifies the amount of memory to be used by internal sorts and hashes
+        before resorting to temporary disk files.  See the description of the
+        <varname>work_mem</> configuration parameter in <xref
+        linkend="runtime-config-resource-memory">.
        </para>
       </listitem>
      </varlistentry>
@@ -385,13 +368,13 @@ PostgreSQL documentation
       <term><option>-f</option> <literal>{ s | i | m | n | h }</literal></term>
       <listitem>
        <para>
-	Forbids the use of particular scan and join methods:
-	<literal>s</literal> and <literal>i</literal>
-	disable sequential and index scans respectively, while
-	<literal>n</literal>, <literal>m</literal>, and <literal>h</literal>
-	disable nested-loop, merge and hash joins respectively.
+        Forbids the use of particular scan and join methods:
+        <literal>s</literal> and <literal>i</literal>
+        disable sequential and index scans respectively, while
+        <literal>n</literal>, <literal>m</literal>, and <literal>h</literal>
+        disable nested-loop, merge and hash joins respectively.
        </para>
-	
+        
        <para>
         Neither sequential scans nor nested-loop joins can be disabled
         completely; the <literal>-fs</literal> and
@@ -423,8 +406,8 @@ PostgreSQL documentation
       <term><option>-O</option></term>
       <listitem>
        <para>
-	Allows the structure of system tables to be modified.  This is
-	used by <command>initdb</command>.
+        Allows the structure of system tables to be modified.  This is
+        used by <command>initdb</command>.
        </para>
       </listitem>
      </varlistentry>
@@ -433,9 +416,9 @@ PostgreSQL documentation
       <term><option>-P</option></term>
       <listitem>
        <para>
-	Ignore system indexes when reading system tables (but still update
-	the indexes when modifying the tables).  This is useful when
-	recovering from damaged system indexes.
+        Ignore system indexes when reading system tables (but still update
+        the indexes when modifying the tables).  This is useful when
+        recovering from damaged system indexes.
        </para>
       </listitem>
      </varlistentry>
@@ -444,9 +427,9 @@ PostgreSQL documentation
       <term><option>-t</option> <literal>pa[rser] | pl[anner] | e[xecutor]</literal></term>
       <listitem>
        <para>
-	Print timing statistics for each query relating to each of the
-	major system modules.  This option cannot be used together
-	with the <option>-s</option> option.
+        Print timing statistics for each query relating to each of the
+        major system modules.  This option cannot be used together
+        with the <option>-s</option> option.
        </para>
       </listitem>
      </varlistentry>
@@ -474,9 +457,9 @@ PostgreSQL documentation
       <term><option>-v</option> <replaceable class="parameter">protocol</replaceable></term>
       <listitem>
        <para>
-	Specifies the version number of the frontend/backend protocol
-	to be used for a particular session.  This option is for
-	internal use only.
+        Specifies the version number of the frontend/backend protocol
+        to be used for a particular session.  This option is for
+        internal use only.
        </para>
       </listitem>
      </varlistentry>
@@ -497,9 +480,9 @@ PostgreSQL documentation
       <term><option>-y</option> <replaceable class="parameter">database</replaceable></term>
       <listitem>
        <para>
-	Indicates that this is a subprocess started by
-	<command>postgres</command> and specifies the database to
-	use.  This option is for internal use only.
+        Indicates that this is a subprocess started by a parent
+        <command>postgres</command> process, and specifies the database to
+        use.  This option is for internal use only.
        </para>
       </listitem>
      </varlistentry>
@@ -518,8 +501,8 @@ PostgreSQL documentation
       <term><option>--single</option></term>
       <listitem>
        <para>
-	Selects the single-user mode.  This must be the first argument
-	on the command line.
+        Selects the single-user mode.  This must be the first argument
+        on the command line.
        </para>
       </listitem>
      </varlistentry>
@@ -528,8 +511,8 @@ PostgreSQL documentation
       <term><replaceable class="parameter">database</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the database to be accessed.  If it is
-	omitted it defaults to the user name.	
+        Specifies the name of the database to be accessed.  If it is
+        omitted it defaults to the user name.   
        </para>
       </listitem>
      </varlistentry>
@@ -538,7 +521,7 @@ PostgreSQL documentation
       <term><option>-E</option></term>
       <listitem>
        <para>
-	Echo all commands.
+        Echo all commands.
        </para>
       </listitem>
      </varlistentry>
@@ -547,7 +530,7 @@ PostgreSQL documentation
       <term><option>-j</option></term>
       <listitem>
        <para>
-	Disables use of newline as a statement delimiter.
+        Disables use of newline as a statement delimiter.
        </para>
       </listitem>
      </varlistentry>
@@ -556,10 +539,10 @@ PostgreSQL documentation
       <term><option>-r</option> <replaceable class="parameter">filename</replaceable></term>
       <listitem>
        <para>
-	Send all server log output to <replaceable
-	class="parameter">filename</replaceable>.  In normal multiuser
-	mode, this option is ignored, and <systemitem>stderr</> is
-	used by all processes.
+        Send all server log output to <replaceable
+        class="parameter">filename</replaceable>.  In normal multiuser
+        mode, this option is ignored, and <systemitem>stderr</> is
+        used by all processes.
        </para>
       </listitem>
      </varlistentry>
@@ -795,8 +778,7 @@ PostgreSQL documentation
 </screen>
    This command will start up <command>postgres</command>
    communicating through the port 1234. In order to connect to this
-   <command>postgres</command> using <application>psql</>, you would need to
-   run it as
+   server using <application>psql</>, you would need to run it as
 <screen>
 <prompt>$</prompt> <userinput>psql -p 1234</userinput>
 </screen>
