@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Sat Oct 14 19:08:19 EDT 2006</p>
+<p>原文最終更新日:		Mon Dec 11 17:45:54 EST 2006</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -83,7 +83,10 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <a href="#item4.6">4.6</a>) クエリが遅いのはなぜでしょう？ なぜ、インデックスが使われないのでしょうか？<br />
 <a href="#item4.7">4.7</a>) クエリオプティマイザが、どのようにクエリを評価していかを、見るにはどうしますか？<br />
 <a href="#item4.8">4.8</a>) 正規表現での検索や大文字と小文字とを区別しない正規表現検索はどのように実現しますか？大文字と小文字とを区別しない検索のためのインデックスはどのように使いますか？<br />
-<a href="#item4.9">4.9</a>) クエリの中で、フィールドが<small>NULL</small> であることを検出するにはどうしますか？ フィールドが<small>NULL</small>かどうかでどのようにソートができますか？<br />
+<a href="#item4.9">4.9</a>) クエリの中で、フィールドが
+<small>NULL</small> であることを検出するにはどうしますか？
+<small>NULL</small>の可能性のあるものをどのようすれば連結できますか? 
+フィールドが<small>NULL</small>かどうかでどのようにソートができますか？<br />
 <a href="#item4.10">4.10</a>) いろいろな文字型のそれぞれの違いは何ですか？<br />
 <a href="#item4.11.1">4.11.1</a>) 通番(serial)／自動増分フィールドはどのようにつくりますか？<br />
 <a href="#item4.11.2">4.11.2</a>) <small>SERIAL</small>データ型に挿入される値は、どうすれば得られますか？<br />
@@ -98,7 +101,8 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <a href="#item4.18">4.18</a>) 関数から複数のロウまたはカラムを返すにはどうしますか？<br />
 <a href="#item4.19">4.19</a>)  PL/PgSQL の関数の中で一時テーブルにアクセスするとき、どうして "relation with OID ##### does not exist" というエラーを受け取るのでしょうか？<br />
 <a href="#item4.20">4.20</a>) どのようなレプリケーションのソリューションがありますか？<br />
-<a href="#item4.21">4.21</a>) テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？<br />
+<a href="#item4.21">4.21</a>) テーブルとカラムの名前がクエリーの中で認識
+されないのはなぜですか？ なぜ大文字化(キャピタライズ)は温存されないのですか?<br />
 
 <h2 align="center">日本語に関する質問</h2>
 
@@ -210,7 +214,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
     [訳注：
 	著作権に関する正文は上記の英語による表記です。日本語訳はあくまで
-	参考です。
+	参考程度としてください。
     ]
     </pre></small>
 
@@ -257,7 +261,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
 <h4 id="item1.6">1.6</a>) 最新のリリースはどれですか？</h4>
 
-    <p>PostgreSQL の最新版はバージョン 8.1.5 です。</p>
+    <p>PostgreSQL の最新版はバージョン 8.2.0 です。</p>
     <p>我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを
     行なうことを計画しています。</p>
 
@@ -338,14 +342,14 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     リストです</li>
     <li>次のような機能は目論まれていません。それは：
         <ul>
-        <li>既にSQL企画に従った既存の機能性と重複するもの</li>
-        <li>コードの複雑性ばかり高めて、得るものが少ない機能</li>
-        <li>安全性が確かめられない機能</li>
+        <li>SQL規格に準ずる既存の機能と重複するもの</li>
+        <li>コードの複雑性ばかりを高めて、得るものが少ない機能</li>
+        <li>安全性が確められない機能</li>
         </ul>
     </li>
-    <li>新しい機能は
+    <li>新しい機能は、
     <a href="http://www.postgresql.org/docs/faqs.TODO.html">TODO</a>
-    リストに</li>加えられられます。
+    のリストに</li>加えられられます。
     </ul>
     
     <p>我々は、PostgreSQL に関して、電子メールで直接対応して
@@ -366,14 +370,14 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     アル・ページ)およびいくつかの小さなテスト例題が含まれます。
     <i>/doc</i>ディレクトリをごらんください。また、マニュアルは、<A
     href="http://www.PostgreSQL.org/docs/">
-    http://www.PostgreSQL.org/docs/</a>でオンラインでも閲覧できます。
+http://www.PostgreSQL.org/docs/</a>でオンラインでも閲覧できます。
     </p>
 
 
     <p><small><pre>
     [訳注:
 	JPUG 文書・書籍関連分科会で翻訳されたマニュアルもあります。
-		<a href="http://www.postgresql.jp/document/pg803doc/">
+		<a href="http://www.postgresql.jp/document/pg820doc/">
 	http://www.postgresql.jp/document/pg803doc/</a>
 	インプレスから、
 	<a href="http://home.impress.co.jp/reference/2108.htm">
@@ -422,9 +426,9 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
     ]
     </pre></small></p>
 
-    <p> コマンドラインのクライアントプログラム<i>psql</i> も、型、演算子、
-    関数、集約、その他の情報をお見せする、いくつかの素晴らしい \d コマン
-    ドを持ちます。 - \? を使うと利用可能なコマンドが表示されます。</p>
+    <p> コマンドラインのクライアントプログラム<i>psql</i> にも、型、
+    演算子、関数、集約、その他の情報を調べるために、素晴らしい \d コマンド
+    がいくつかあります。  \? を入力すると利用可能なコマンドが表示されます。</p>
 
     <p> 我々の Web サイトには、さらに沢山の文書があります。</p>
 
@@ -943,7 +947,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
 
 
-<h4 id="item4.9">4.9</a>) クエリの中で、フィールドが<small>NULL</small> であることを検出するにはどうしますか？ フィールドが<small>NULL</small>かどうかでどのようにソートができますか？</h4>
+<h4 id="item4.9">4.9</a>) クエリの中で、フィールドが<small>NULL</small> であることを検出するにはどうしますか？ <small>NULL</small> であることを検出するにはどうしますか？ フィールドが<small>NULL</small>かどうかでどのようにソートができますか？</h4>
 
     <p>以下のように、<small>IS NULL</small> と <small>IS NOT
     NULL</small>で、そのカラムをテストしてみます：</p> 
@@ -952,6 +956,14 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
    SELECT *
    FROM tab
    WHERE col IS NULL;
+</pre>
+
+<small>NULL</small>の可能性のあるものを連結するには、<i>COALESCE()</i>を
+次のように使います。
+
+<pre>
+   SELECT COALESCE(col1, '') || COALESCE(col2, '')
+   FROM tab
 </pre>
 
    <p><small>NULL</small>状態でソートするには、<small>IS NULL</small> と
@@ -1076,8 +1088,8 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
 <h4 id="item4.12">4.12</a>) <small>OID</small> とは何ですか？ <small>CTID</small> とは何ですか？</h4>
 
-    <p>PostgreSQLでつくられるすべてのロウは、<small>WITHOUT OIDS</small>
-    でつくられないかぎり一意の<small>OID</small>を得ます。
+    <p>テーブルが<small>WITH OIDS</small>でつくられた場合は、それぞれの
+    ロウに一意な<small>OID</small>が取られます。
     <small>OID</small>は自動的に4バイトの整数で与えられ、それは、全イン
     ストレーションを通して一意な値となります。しかし、約40億でオーバーフ
     ローし、そして、<small>OID</small>は重複をしはじめます。PostgreSQLは
@@ -1200,11 +1212,11 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     <p>この他にも、商用やハードウェア−ベースのレプリケーションソリュー
     ションがいろいろなレプリケーションモデルをサポートしています。</p>
   
-<h3 id="item4.21">4.21</a>)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？</h3>
+<h3 id="item4.21">4.21</a>)テーブルとカラムの名前がクエリーの中で認識されないのはなぜですか？なぜ大文字化(キャピタライズ)は温存されないのですか?</h3>
 
-    <p>もっとも一般的な原因は、テーブルを作成する際に、テーブルやカラムを
-    囲う二重引用符の使用です。二重引用符を使うと、テーブルとカラムの名前
-    （識別子と呼びます）は<a
+    <p>認識された名前のもっとも一般的な原因は、テーブルを作成する際に、
+    テーブルやカラムを囲う二重引用符の使用です。
+    二重引用符を使うと、テーブルとカラムの名前（識別子といいます）は<a
     href="http://www.postgresql.org/docs/8.0/static/sql-syntax.html#SQL-SYNTAX-IDENTIFIERS">大文字と小文字の区別</a>
     をして格納されます。したがって、pgAdminのようにテーブル作成のときに
     自動的に二重引用符を使うものはクエリの中でそれらの名前を使うときに
@@ -1254,7 +1266,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2006年10月15日
+  最終更新日:	2006年12月25日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
