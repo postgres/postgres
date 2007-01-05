@@ -1,5 +1,5 @@
 x<!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.45 2007/01/05 20:02:55 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.46 2007/01/05 22:35:13 tgl Exp $
 -->
 
 <appendix id="release">
@@ -44,24 +44,23 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.45 2007/01/05 20:02:
       </para>
      </listitem>
 
-     <listitem>
-      <para>
-       Fix <link linkend="SQL-VACUUM"><command>VACUUM</></link> to recover from
-       a rare problem during index page deletion/split (Tom)
-      </para>
-     </listitem>
+      <listitem>
+       <para>
+        Fix <quote>failed to re-find parent key</> errors in
+        <command>VACUUM</> (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix bugs affecting multi-gigabyte hash indexes (Tom)
+       </para>
+      </listitem>
 
      <listitem>
       <para>
-       Fix error when constructing an <literal>ARRAY[]</> made up of multiple empty
-       elements (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Fix problem with extending hash indexes that span multiple 1-gigabyte
-       segments (Tom)
+       Fix error when constructing an <literal>ARRAY[]</> made up of multiple
+       empty elements (Tom)
       </para>
      </listitem>
 
@@ -76,7 +75,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.45 2007/01/05 20:02:
       <para>
        This is because <link
        linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
-       change the output of the functions.
+       change the output of these functions.
       </para>
      </listitem>
 
@@ -3093,7 +3092,7 @@ DROP SCHEMA information_schema CASCADE;
       <para>
        This is because <link
        linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
-       change the output of the functions.
+       change the output of these functions.
       </para>
      </listitem>
 
