@@ -6,6 +6,7 @@ For All Releases (major, minor, beta, RC)
 	o bump Win32 interface version numbers
 		- src/include/pg_config.h.win32
 		- src/interfaces/libpq/libpq.rc.in
+		  (pre-8.0 had just libpq.rc)
 		- src/port/win32ver.rc
 	o update doc/FAQ and doc/src/FAQ/FAQ.html
 	o copy FAQs from HEAD to top-most branch

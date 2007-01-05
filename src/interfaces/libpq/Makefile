@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.151 2006/12/28 00:01:05 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.152 2007/01/05 20:54:40 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ include $(top_builddir)/src/Makefile.global
 # shared library parameters
 NAME= pq
 SO_MAJOR_VERSION= 5
-SO_MINOR_VERSION= 0
+SO_MINOR_VERSION= 1
 DLTYPE= library
 
 override CPPFLAGS :=  -DFRONTEND -I$(srcdir) $(CPPFLAGS) -I$(top_builddir)/src/port
