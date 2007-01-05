@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.34 2006/10/31 01:52:31 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.35 2007/01/05 01:18:59 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -202,7 +202,8 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
    <structname>pg_auth_members</structname>,
    <structname>pg_database</structname>,
    <structname>pg_pltemplate</structname>,
-   <structname>pg_shdepend</structname>, and
+   <structname>pg_shdepend</structname>,
+   <structname>pg_shdescription</structname>, and
    <structname>pg_tablespace</structname>), then a standalone server
    must be used to repair it.  <command>REINDEX</> will not process
    shared catalogs in multiuser mode.
