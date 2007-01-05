@@ -1,10 +1,68 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.34 2006/10/11 20:56:31 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.35 2007/01/05 20:02:22 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
 
+  <sect1 id="release-7-3-17">
+   <title>Release 7.3.17</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-01-08</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.16.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.17</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       <function>to_number()</> and <function>to_char(numeric)</>
+       are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
+       new <link linkend="APP-INITDB"><application>initdb</></link>
+       installs (Tom)
+      </para>
+
+      <para>
+       This is because <link
+       linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
+       change the output of the functions.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Improve index usage of regular expressions that use parentheses (Tom)
+      </para>
+
+      <para>
+       This improves <application>psql</> <literal>\d</> performance also.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-3-16">
    <title>Release 7.3.16</title>
 
