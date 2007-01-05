@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.34 2007/01/05 20:03:46 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.35 2007/01/05 22:34:54 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -60,29 +60,59 @@ For new features, add links to the documentation sections.
 
      <listitem>
       <para>
-       Fix <application>pg_restore</> so it can restore a tar-format backup
-       that contains large object comments (Tom)
+       Fix <application>pg_restore</> to handle a tar-format backup
+       that contains large objects (blobs) with comments (Tom)
+      </para>
+     </listitem>
+
+      <listitem>
+       <para>
+        Fix <quote>failed to re-find parent key</> errors in
+        <command>VACUUM</> (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Clean out <filename>pg_internal.init</> cache files during server
+        restart (Simon)
+       </para>
+
+       <para>
+        This avoids a hazard that the cache files might contain stale
+        data after PITR recovery.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix race condition for truncation of a large relation across a
+        gigabyte boundary by <command>VACUUM</> (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix bug causing needless deadlock errors on row-level locks (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix bugs affecting multi-gigabyte hash indexes (Tom)
+       </para>
+      </listitem>
+
+     <listitem>
+      <para>
+       Fix possible deadlock in Windows signal handling (Teodor)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Fix <link linkend="SQL-VACUUM"><command>VACUUM</></link> to recover from
-       a rare problem during index page deletion/split (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Fix point-in-time-recovery bug where stale status files could prevent
-       restore (Simon, Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Fix error when constructing an <literal>ARRAY[]</> made up of multiple empty
-       elements (Tom)
+       Fix error when constructing an <literal>ARRAY[]</> made up of multiple
+       empty elements (Tom)
       </para>
      </listitem>
 
@@ -94,28 +124,7 @@ For new features, add links to the documentation sections.
 
      <listitem>
       <para>
-       Improve savepoint and multi-transction row locking algorithms to avoid
-       erroneous deadlock cases (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Fix problem with extending hash indexes that span multiple 1-gigabyte
-       segments (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Fix problem where truncation of a multi-gigabyte table might cause
-       consistency problems with other backends (Tom)
-      </para>
-      </listitem>
-
-     <listitem>
-      <para>
-       Fix for Darwin/OS-X compiles (Tom)
+       Fix for Darwin (OS X) compilation (Tom)
       </para>
      </listitem>
 
@@ -130,22 +139,7 @@ For new features, add links to the documentation sections.
       <para>
        This is because <link
        linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
-       change the output of the functions.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Update timezone database, particularly for Western Australia,
-       which has a new daylight savings date  (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Document a risk that if a row is locked inside multiple sub-transactions
-       in the same transaction, and a sub-transaction is rolled back, the row
-       lock is lost (Tom)
+       change the output of these functions.
       </para>
      </listitem>
 
@@ -156,6 +150,17 @@ For new features, add links to the documentation sections.
 
       <para>
        This improves <application>psql</> <literal>\d</> performance also.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Update timezone database
+      </para>
+
+      <para>
+       This affects Australian and Canadian daylight-savings rules in
+       particular.
       </para>
      </listitem>
 
@@ -349,7 +354,7 @@ MIN/MAX optimization (Tom)</para></listitem>
 <listitem><para>Fix crash from using and modifying a plpgsql function in the
 same transaction</para></listitem>
 
-<listitem><para>Fix WAL replay for case where a btree index has been
+<listitem><para>Fix WAL replay for case where a B-Tree index has been
 truncated</para></listitem>
 
 <listitem><para>Fix <literal>SIMILAR TO</> for patterns involving
@@ -1472,7 +1477,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
        </para>
        <para>
         This prevents a large number of <filename>*.backup</> files from
-        existing in <filename>/pg_xlog</>.
+        existing in <filename>pg_xlog/</>.
        </para>
       </listitem>
 
@@ -2858,15 +2863,34 @@ psql -t -f fixseq.sql db1 | psql -e db1
       </para>
 
       <para>
-       This is intended to fix problems with starting the statistics
-       collector, among other things.
+       This fixes a problem with starting the statistics collector,
+       among other things.
       </para>
      </listitem>
 
+      <listitem>
+       <para>
+        Fix <quote>failed to re-find parent key</> errors in
+        <command>VACUUM</> (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix race condition for truncation of a large relation across a
+        gigabyte boundary by <command>VACUUM</> (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix bugs affecting multi-gigabyte hash indexes (Tom)
+       </para>
+      </listitem>
+
      <listitem>
       <para>
-       Fix <link linkend="SQL-VACUUM"><command>VACUUM</></link> to recover from
-       a rare problem during index page deletion/split (Tom)
+       Fix possible deadlock in Windows signal handling (Teodor)
       </para>
      </listitem>
 
@@ -2885,20 +2909,6 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
      <listitem>
       <para>
-       Fix problem with extending hash indexes that span multiple 1-gigabyte
-       segments (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Fix problem where truncation of a multi-gigabyte table might cause
-       consistency problems with other backends (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
        <function>to_number()</> and <function>to_char(numeric)</>
        are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
        new <link linkend="APP-INITDB"><application>initdb</></link>
@@ -2908,22 +2918,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
       <para>
        This is because <link
        linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
-       change the output of the functions.
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Update timezone database, particularly for Western Australia,
-       which has a new daylight savings date  (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Document a risk that if a row is locked inside multiple sub-transactions
-       in the same transaction, and a sub-transaction is rolled back, the row
-       lock is lost (Tom)
+       change the output of these functions.
       </para>
      </listitem>
 
@@ -2934,6 +2929,17 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
       <para>
        This improves <application>psql</> <literal>\d</> performance also.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Update timezone database
+      </para>
+
+      <para>
+       This affects Australian and Canadian daylight-savings rules in
+       particular.
       </para>
      </listitem>
 
@@ -6188,24 +6194,23 @@ typedefs (Michael)</para></listitem>
       </para>
      </listitem>
 
-     <listitem>
-      <para>
-       Fix <link linkend="SQL-VACUUM"><command>VACUUM</></link> to recover from
-       a rare problem during index page deletion/split (Tom)
-      </para>
-     </listitem>
+      <listitem>
+       <para>
+        Fix <quote>failed to re-find parent key</> errors in
+        <command>VACUUM</> (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix bugs affecting multi-gigabyte hash indexes (Tom)
+       </para>
+      </listitem>
 
      <listitem>
       <para>
-       Fix error when constructing an <literal>ARRAY[]</> made up of multiple empty
-       elements (Tom)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Fix problem with extending hash indexes that span multiple 1-gigabyte
-       segments (Tom)
+       Fix error when constructing an <literal>ARRAY[]</> made up of multiple
+       empty elements (Tom)
       </para>
      </listitem>
 
@@ -6220,7 +6225,7 @@ typedefs (Michael)</para></listitem>
       <para>
        This is because <link
        linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
-       change the output of the functions.
+       change the output of these functions.
       </para>
      </listitem>
 
@@ -9237,7 +9242,7 @@ DROP SCHEMA information_schema CASCADE;
       <para>
        This is because <link
        linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
-       change the output of the functions.
+       change the output of these functions.
       </para>
      </listitem>
 
@@ -9926,7 +9931,7 @@ On some platforms, building with -fstrict-aliasing causes bugs.
 </para></listitem>
 <listitem><para>Make pg_restore handle 64-bit off_t correctly</para>
 <para>
-This bug prevented proper restoration from archive files exceeding 4Gb.
+This bug prevented proper restoration from archive files exceeding 4 GB.
 </para></listitem>
 <listitem><para>Make contrib/dblink not assume that local and remote type OIDs
 match (Joe)</para></listitem>
