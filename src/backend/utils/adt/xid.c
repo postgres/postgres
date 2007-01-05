@@ -3,12 +3,12 @@
  * xid.c
  *	  POSTGRES transaction identifier and command identifier datatypes.
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/xid.c,v 1.9 2006/07/13 16:49:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/xid.c,v 1.10 2007/01/05 22:19:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

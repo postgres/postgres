@@ -3,12 +3,12 @@
  * joininfo.c
  *	  joininfo list manipulation routines
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.45 2006/12/12 21:31:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.46 2007/01/05 22:19:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

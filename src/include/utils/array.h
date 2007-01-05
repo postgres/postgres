@@ -46,10 +46,10 @@
  * only work with varlena arrays.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.61 2006/12/30 21:21:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.62 2007/01/05 22:19:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

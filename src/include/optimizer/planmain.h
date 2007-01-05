@@ -4,10 +4,10 @@
  *	  prototypes for various files in optimizer/plan
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.95 2006/08/12 02:52:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.96 2007/01/05 22:19:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

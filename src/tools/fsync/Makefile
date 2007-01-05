@@ -2,9 +2,9 @@
 #
 # Makefile for src/tools/fsync
 #
-# Copyright (c) 2003-2006, PostgreSQL Global Development Group
+# Copyright (c) 2003-2007, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/tools/fsync/Makefile,v 1.3 2006/10/13 14:19:29 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/fsync/Makefile,v 1.4 2007/01/05 22:20:05 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

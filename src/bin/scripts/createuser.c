@@ -2,10 +2,10 @@
  *
  * createuser
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.34 2006/10/04 00:30:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.35 2007/01/05 22:19:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

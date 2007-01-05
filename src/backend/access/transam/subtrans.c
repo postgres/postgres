@@ -19,10 +19,10 @@
  * data across crashes.  During database startup, we simply force the
  * currently-active page of SUBTRANS to zeroes.
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.17 2006/07/13 16:49:13 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/subtrans.c,v 1.18 2007/01/05 22:19:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

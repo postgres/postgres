@@ -2,10 +2,10 @@
 #
 # Makefile for src/bin/scripts
 #
-# Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+# Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.36 2006/03/05 15:58:52 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/Makefile,v 1.37 2007/01/05 22:19:50 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

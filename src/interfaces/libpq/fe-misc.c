@@ -19,11 +19,11 @@
  * routines.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.130 2006/10/04 00:30:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.131 2007/01/05 22:20:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

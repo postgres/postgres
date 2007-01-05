@@ -2,9 +2,9 @@
 #
 # Makefile for src/bin/pg_resetxlog
 #
-# Copyright (c) 1998-2006, PostgreSQL Global Development Group
+# Copyright (c) 1998-2007, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.16 2006/03/05 15:58:51 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_resetxlog/Makefile,v 1.17 2007/01/05 22:19:48 momjian Exp $
 #
 #-------------------------------------------------------------------------
 

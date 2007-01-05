@@ -31,10 +31,10 @@
  * freeing the larger object!
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/lib/dllist.h,v 1.26 2006/03/05 15:58:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/lib/dllist.h,v 1.27 2007/01/05 22:19:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

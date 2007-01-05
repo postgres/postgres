@@ -4,10 +4,10 @@
  *	  Declarations for routines exported from lexer and parser files.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.37 2006/05/27 17:38:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/gramparse.h,v 1.38 2007/01/05 22:19:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

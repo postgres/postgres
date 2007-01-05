@@ -3,10 +3,10 @@
  * user.c
  *	  Commands for manipulating roles (formerly called users).
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.174 2006/10/04 00:29:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.175 2007/01/05 22:19:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

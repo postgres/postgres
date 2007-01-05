@@ -76,11 +76,11 @@
  *	simplicity we keep the controlling list-of-lists in TopTransactionContext.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.78 2006/10/04 00:30:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.79 2007/01/05 22:19:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

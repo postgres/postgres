@@ -3,12 +3,12 @@
  * pg_aggregate.c
  *	  routines to support manipulation of the pg_aggregate relation
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.83 2006/10/04 00:29:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.84 2007/01/05 22:19:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

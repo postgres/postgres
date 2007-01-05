@@ -3,12 +3,12 @@
  * fe-protocol2.c
  *	  functions that are specific to frontend/backend protocol version 2
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.26 2006/07/14 14:52:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.27 2007/01/05 22:20:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

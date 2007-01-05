@@ -4,12 +4,12 @@
  * gram.y				- Parser for the PL/pgSQL
  *						  procedural language
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.95 2006/08/14 21:14:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.96 2007/01/05 22:20:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

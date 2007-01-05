@@ -9,12 +9,12 @@
  * shorn of features like subselects, inheritance, aggregates, grouping,
  * and so on.  (Those are the things planner.c deals with.)
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.97 2006/10/04 00:29:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.98 2007/01/05 22:19:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

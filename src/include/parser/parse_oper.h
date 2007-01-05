@@ -4,10 +4,10 @@
  *		handle operator things for parser
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_oper.h,v 1.40 2006/10/04 00:30:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_oper.h,v 1.41 2007/01/05 22:19:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

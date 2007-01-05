@@ -2,11 +2,11 @@
  *
  * pg_dumpall.c
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.85 2006/11/21 22:19:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.86 2007/01/05 22:19:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

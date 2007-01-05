@@ -11,9 +11,9 @@
  *			- Add a pgstat config column to pg_database, so this
  *			  entire thing can be enabled/disabled on a per db basis.
  *
- *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
+ *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.141 2006/12/06 18:06:47 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.142 2007/01/05 22:19:36 momjian Exp $
  * ----------
  */
 #include "postgres.h"

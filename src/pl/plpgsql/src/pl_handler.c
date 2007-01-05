@@ -3,12 +3,12 @@
  * pl_handler.c		- Handler for the PL/pgSQL
  *			  procedural language
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.33 2006/10/19 18:32:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.34 2007/01/05 22:20:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

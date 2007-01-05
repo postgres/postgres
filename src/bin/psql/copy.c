@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2006, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.71 2006/11/24 23:06:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.72 2007/01/05 22:19:49 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"

@@ -4,9 +4,9 @@
  *	  POSTGRES definitions for external and compressed storage
  *	  of variable size attributes.
  *
- * Copyright (c) 2000-2006, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.28 2006/07/13 17:47:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.29 2007/01/05 22:19:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

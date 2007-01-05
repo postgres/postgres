@@ -7,9 +7,9 @@
  * with some sort of sed hackery, but no time for that now.  It's likely
  * that an exact mapping will not be what's wanted anyhow ...
  *
- * Copyright (c) 2003-2006, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/pl/plpgsql/src/plerrcodes.h,v 1.10 2006/12/24 00:29:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/pl/plpgsql/src/plerrcodes.h,v 1.11 2007/01/05 22:20:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

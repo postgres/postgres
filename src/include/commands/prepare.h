@@ -4,9 +4,9 @@
  *	  PREPARE, EXECUTE and DEALLOCATE commands, and prepared-stmt storage
  *
  *
- * Copyright (c) 2002-2006, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.22 2006/10/04 00:30:08 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.23 2007/01/05 22:19:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

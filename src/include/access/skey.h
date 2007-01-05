@@ -4,10 +4,10 @@
  *	  POSTGRES scan key definitions.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/skey.h,v 1.33 2006/10/04 00:30:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/skey.h,v 1.34 2007/01/05 22:19:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -16,12 +16,12 @@
  *	   the parallel regression tests for a more complete test.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.21 2006/07/14 05:28:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/ipc_test.c,v 1.22 2007/01/05 22:19:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

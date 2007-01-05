@@ -3,12 +3,12 @@
  * pg_shdepend.c
  *	  routines to support manipulation of the pg_shdepend relation
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.15 2006/10/04 00:29:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.16 2007/01/05 22:19:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

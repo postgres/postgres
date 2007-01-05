@@ -14,12 +14,12 @@
  *
  *	Initial author: Simon Riggs		simon@2ndquadrant.com
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.27 2006/11/21 20:59:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.28 2007/01/05 22:19:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

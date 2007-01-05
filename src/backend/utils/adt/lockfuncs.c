@@ -3,10 +3,10 @@
  * lockfuncs.c
  *		Functions for SQL access to various lock-manager capabilities.
  *
- * Copyright (c) 2002-2006, PostgreSQL Global Development Group
+ * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.27 2006/10/04 00:29:59 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.28 2007/01/05 22:19:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

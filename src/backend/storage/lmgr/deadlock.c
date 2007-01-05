@@ -7,12 +7,12 @@
  * detection and resolution algorithms.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.43 2006/09/22 23:20:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.44 2007/01/05 22:19:38 momjian Exp $
  *
  *	Interface:
  *

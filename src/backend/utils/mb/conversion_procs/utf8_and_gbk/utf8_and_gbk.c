@@ -2,11 +2,11 @@
  *
  *	  GBK <--> UTF8
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gbk/utf8_and_gbk.c,v 1.14 2006/05/30 22:12:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_gbk/utf8_and_gbk.c,v 1.15 2007/01/05 22:19:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

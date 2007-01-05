@@ -34,11 +34,11 @@
  *		plan normally and pass back the results.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.35 2006/12/26 19:26:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.36 2007/01/05 22:19:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

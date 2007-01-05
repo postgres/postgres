@@ -4,10 +4,10 @@
  *		External interface to query rewriter.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/rewrite/rewriteHandler.h,v 1.27 2006/07/11 13:54:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/rewrite/rewriteHandler.h,v 1.28 2007/01/05 22:19:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

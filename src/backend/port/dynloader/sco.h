@@ -4,10 +4,10 @@
  *	  port-specific prototypes for SCO 3.2v5.2
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/port/dynloader/sco.h,v 1.18 2006/03/05 15:58:35 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/sco.h,v 1.19 2007/01/05 22:19:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

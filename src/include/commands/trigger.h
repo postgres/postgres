@@ -3,10 +3,10 @@
  * trigger.h
  *	  Declarations for trigger handling.
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.59 2006/09/04 21:15:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.60 2007/01/05 22:19:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

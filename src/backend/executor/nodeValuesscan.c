@@ -4,12 +4,12 @@
  *	  Support routines for scanning Values lists
  *	  ("VALUES (...), (...), ..." in rangetable).
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeValuesscan.c,v 1.4 2006/12/26 19:26:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeValuesscan.c,v 1.5 2007/01/05 22:19:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

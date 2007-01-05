@@ -3,12 +3,12 @@
  * getrusage.c
  *	  get information about resource utilisation
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/getrusage.c,v 1.12 2006/03/05 15:59:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/getrusage.c,v 1.13 2007/01/05 22:20:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

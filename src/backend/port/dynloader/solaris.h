@@ -4,10 +4,10 @@
  *	  port-specific prototypes for Solaris
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/port/dynloader/solaris.h,v 1.14 2006/03/05 15:58:35 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/port/dynloader/solaris.h,v 1.15 2007/01/05 22:19:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

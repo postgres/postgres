@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright (c) 2000-2006, PostgreSQL Global Development Group
+ * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.32 2006/08/29 22:25:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/print.h,v 1.33 2007/01/05 22:19:49 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H

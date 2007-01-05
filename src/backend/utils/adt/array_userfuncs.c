@@ -3,10 +3,10 @@
  * array_userfuncs.c
  *	  Misc user-visible array support functions
  *
- * Copyright (c) 2003-2006, PostgreSQL Global Development Group
+ * Copyright (c) 2003-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.20 2006/07/14 14:52:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.21 2007/01/05 22:19:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,10 +4,10 @@
  *	  prototypes for plancat.c.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/plancat.h,v 1.42 2006/10/04 00:30:09 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/plancat.h,v 1.43 2007/01/05 22:19:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,10 +4,10 @@
  *	  prototypes for joininfo.c.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/joininfo.h,v 1.32 2006/12/12 21:31:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/joininfo.h,v 1.33 2007/01/05 22:19:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

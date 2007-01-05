@@ -3,10 +3,10 @@
  * crypt.h
  *	  Interface to libpq/crypt.c
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/crypt.h,v 1.35 2006/06/20 19:56:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/crypt.h,v 1.36 2007/01/05 22:19:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

@@ -4,10 +4,10 @@
  *
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/be-fsstubs.h,v 1.27 2006/09/07 15:37:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/be-fsstubs.h,v 1.28 2007/01/05 22:19:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

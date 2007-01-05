@@ -3,12 +3,12 @@
  * hashpage.c
  *	  Hash table page management code for the Postgres hash access method
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.62 2007/01/03 18:11:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.63 2007/01/05 22:19:22 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque

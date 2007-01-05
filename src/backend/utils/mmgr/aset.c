@@ -7,11 +7,11 @@
  * type.
  *
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.70 2006/12/27 22:30:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.71 2007/01/05 22:19:47 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set

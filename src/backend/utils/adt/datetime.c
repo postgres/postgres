@@ -3,12 +3,12 @@
  * datetime.c
  *	  Support functions for date/time types.
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.174 2006/10/18 16:43:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.175 2007/01/05 22:19:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

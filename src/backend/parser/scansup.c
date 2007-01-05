@@ -4,12 +4,12 @@
  *	  support routines for the lex/flex scanner, used by both the normal
  * backend as well as the bootstrap backend
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.34 2006/09/22 21:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scansup.c,v 1.35 2007/01/05 22:19:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

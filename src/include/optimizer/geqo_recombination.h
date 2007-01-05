@@ -3,10 +3,10 @@
  * geqo_recombination.h
  *	  prototypes for recombination in the genetic query optimizer
  *
- * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/geqo_recombination.h,v 1.17 2006/03/05 15:58:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/geqo_recombination.h,v 1.18 2007/01/05 22:19:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
