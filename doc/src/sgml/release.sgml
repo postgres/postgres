@@ -1,10 +1,128 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.26 2006/10/12 19:25:32 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.27 2007/01/05 20:03:19 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
 
+  <sect1 id="release-8-0-10">
+   <title>Release 8.0.10</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-01-08</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.9.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.10</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.6, see the release
+     notes for 8.0.6.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Improve handling of <function>getaddrinfo()</> on AIX (Tom)
+      </para>
+
+      <para>
+       This fixes a problem with starting the statistics collector,
+       among other things.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix <link linkend="SQL-VACUUM"><command>VACUUM</></link> to recover from
+       a rare problem during index page deletion/split (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix error when constructing an <literal>ARRAY[]</> made up of multiple
+       empty elements (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix ecpg memory leak during connection (Michael)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix problem with extending hash indexes that span multiple 1-gigabyte
+       segments (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix problem where truncation of a multi-gigabyte table might cause
+       consistency problems with other backends (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <function>to_number()</> and <function>to_char(numeric)</>
+       are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
+       new <link linkend="APP-INITDB"><application>initdb</></link>
+       installs (Tom)
+      </para>
+
+      <para>
+       This is because <link
+       linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
+       change the output of the functions.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Update timezone database, particularly for Western Australia,
+       which has a new daylight savings date  (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Document a risk that if a row is locked inside multiple sub-transactions
+       in the same transaction, and a sub-transaction is rolled back, the row
+       lock is lost (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Improve index usage of regular expressions that use parentheses (Tom)
+      </para>
+
+      <para>
+       This improves <application>psql</> <literal>\d</> performance also.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-8-0-9">
    <title>Release 8.0.9</title>
 
@@ -3212,6 +3330,96 @@ typedefs (Michael)</para></listitem>
    </sect2>
   </sect1>
 
+  <sect1 id="release-7-4-15">
+   <title>Release 7.4.15</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-01-08</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.14.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.15</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.11, see the release
+     notes for 7.4.11.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Improve handling of <function>getaddrinfo()</> on AIX (Tom)
+      </para>
+
+      <para>
+       This fixes a problem with starting the statistics collector,
+       among other things.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix <link linkend="SQL-VACUUM"><command>VACUUM</></link> to recover from
+       a rare problem during index page deletion/split (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix error when constructing an <literal>ARRAY[]</> made up of multiple empty
+       elements (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix problem with extending hash indexes that span multiple 1-gigabyte
+       segments (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       <function>to_number()</> and <function>to_char(numeric)</>
+       are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
+       new <link linkend="APP-INITDB"><application>initdb</></link>
+       installs (Tom)
+      </para>
+
+      <para>
+       This is because <link
+       linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
+       change the output of the functions.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Improve index usage of regular expressions that use parentheses (Tom)
+      </para>
+
+      <para>
+       This improves <application>psql</> <literal>\d</> performance also.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-4-14">
    <title>Release 7.4.14</title>
 
@@ -6171,6 +6379,64 @@ DROP SCHEMA information_schema CASCADE;
   </sect2>
  </sect1>
 
+  <sect1 id="release-7-3-17">
+   <title>Release 7.3.17</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-01-08</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.16.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.17</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       <function>to_number()</> and <function>to_char(numeric)</>
+       are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
+       new <link linkend="APP-INITDB"><application>initdb</></link>
+       installs (Tom)
+      </para>
+
+      <para>
+       This is because <link
+       linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
+       change the output of the functions.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Improve index usage of regular expressions that use parentheses (Tom)
+      </para>
+
+      <para>
+       This improves <application>psql</> <literal>\d</> performance also.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-3-16">
    <title>Release 7.3.16</title>
 
