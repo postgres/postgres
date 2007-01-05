@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.35 2007/01/05 20:02:22 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.36 2007/01/05 22:35:22 tgl Exp $
 -->
 
 <appendix id="release">
@@ -44,7 +44,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.35 2007/01/05 20:02:
       <para>
        This is because <link
        linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
-       change the output of the functions.
+       change the output of these functions.
       </para>
      </listitem>
 
