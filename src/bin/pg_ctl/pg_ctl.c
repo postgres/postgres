@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.74 2006/10/12 05:14:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.75 2007/01/05 16:17:55 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
 
 #include "libpq/pqsignal.h"
 #include "getopt_long.h"
@@ -90,6 +95,7 @@ static char *register_servicename = "PostgreSQL";		/* FIXME: + version ID? */
 static char *register_username = NULL;
 static char *register_password = NULL;
 static char *argv0 = NULL;
+static bool allow_core_files = false;
 
 static void
 write_stderr(const char *fmt,...)
@@ -131,6 +137,10 @@ static char def_postopts_file[MAXPGPATH];
 static char postopts_file[MAXPGPATH];
 static char pid_file[MAXPGPATH];
 static char conf_file[MAXPGPATH];
+
+#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
+static void unlimit_core_size(void);
+#endif
 
 
 #if defined(WIN32) || defined(__CYGWIN__)
@@ -478,6 +488,27 @@ test_postmaster_connection(void)
 }
 
 
+#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
+static void 
+unlimit_core_size(void)
+{
+	struct rlimit lim;
+	getrlimit(RLIMIT_CORE,&lim);
+	if (lim.rlim_max == 0)
+	{
+			write_stderr(_("%s: cannot set core size, disallowed by hard limit.\n"), 
+						 progname);
+			return;
+	}
+	else if (lim.rlim_max == RLIM_INFINITY || lim.rlim_cur < lim.rlim_max)
+	{
+		lim.rlim_cur = lim.rlim_max;
+		setrlimit(RLIMIT_CORE,&lim);
+	}	
+}
+#endif
+
+
 
 static void
 do_start(void)
@@ -580,6 +611,11 @@ do_start(void)
 		}
 		postgres_path = postmaster_path;
 	}
+
+#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
+	if (allow_core_files)
+		unlimit_core_size();
+#endif
 
 	exitcode = start_postmaster();
 	if (exitcode != 0)
@@ -1401,7 +1437,11 @@ do_help(void)
 	printf(_("  -o OPTIONS             command line options to pass to postgres\n"
 			 "                         (PostgreSQL server executable)\n"));
 	printf(_("  -p PATH-TO-POSTGRES    normally not necessary\n"));
-
+#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
+	printf(_("  -c, --core-files       allow postgres to produce core files\n"));
+#else
+	printf(_("  -c, --core-files       not applicable on this platform\n"));
+#endif
 	printf(_("\nOptions for stop or restart:\n"));
 	printf(_("  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n"));
 
@@ -1497,6 +1537,7 @@ main(int argc, char **argv)
 		{"mode", required_argument, NULL, 'm'},
 		{"pgdata", required_argument, NULL, 'D'},
 		{"silent", no_argument, NULL, 's'},
+		{"core-files", no_argument, NULL, 'c'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -1561,7 +1602,7 @@ main(int argc, char **argv)
 	/* process command-line options */
 	while (optind < argc)
 	{
-		while ((c = getopt_long(argc, argv, "D:l:m:N:o:p:P:sU:wW", long_options, &option_index)) != -1)
+		while ((c = getopt_long(argc, argv, "cD:l:m:N:o:p:P:sU:wW", long_options, &option_index)) != -1)
 		{
 			switch (c)
 			{
@@ -1631,6 +1672,9 @@ main(int argc, char **argv)
 				case 'W':
 					do_wait = false;
 					wait_set = true;
+					break;
+				case 'c':
+					allow_core_files = true;
 					break;
 				default:
 					/* getopt_long already issued a suitable error message */

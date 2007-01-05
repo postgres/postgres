@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.23 2006/10/04 00:30:14 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.24 2007/01/05 16:17:55 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,11 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
+
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/time.h>
+#include <sys/resource.h>
+#endif
 
 #include "getopt_long.h"
 #include "pg_config_paths.h"
@@ -121,6 +126,30 @@ psql_command(const char *database, const char *query,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 2, 3)));
+
+/*
+ * allow core files if possible.
+ */
+#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
+static void 
+unlimit_core_size(void)
+{
+	struct rlimit lim;
+	getrlimit(RLIMIT_CORE,&lim);
+	if (lim.rlim_max == 0)
+	{
+		fprintf(stderr,
+				_("%s: cannot set core size,: disallowed by hard limit.\n"), 
+				progname);
+		return;
+	}
+	else if (lim.rlim_max == RLIM_INFINITY || lim.rlim_cur < lim.rlim_max)
+	{
+		lim.rlim_cur = lim.rlim_max;
+		setrlimit(RLIMIT_CORE,&lim);
+	}	
+}
+#endif
 
 
 /*
@@ -1458,6 +1487,10 @@ main(int argc, char *argv[])
 	open_result_files();
 
 	initialize_environment();
+
+#if defined(HAVE_GETRLIMIT) && defined(RLIMIT_CORE)
+	unlimit_core_size();
+#endif
 
 	if (temp_install)
 	{

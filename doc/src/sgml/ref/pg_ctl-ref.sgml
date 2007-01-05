@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.35 2006/12/02 00:34:52 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.36 2007/01/05 16:17:54 adunstan Exp $
 PostgreSQL documentation
 -->
 
@@ -29,6 +29,7 @@ PostgreSQL documentation
    <arg>-l <replaceable>filename</replaceable></arg>
    <arg>-o <replaceable>options</replaceable></arg>
    <arg>-p <replaceable>path</replaceable></arg>
+   <arg>-c</arg>
    <sbr>
    <command>pg_ctl</command>
    <arg choice="plain">stop</arg>
@@ -48,6 +49,7 @@ PostgreSQL documentation
    <arg>-w</arg>
    <arg>-s</arg>
    <arg>-D <replaceable>datadir</replaceable></arg>
+   <arg>-c</arg>
    <arg>-m
      <group choice="plain">
        <arg>s[mart]</arg>
@@ -241,6 +243,19 @@ PostgreSQL documentation
       <listitem>
        <para>
         Only print errors, no informational messages.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-c</option></term>
+      <listitem>
+       <para>
+        Attempt to allow server crashes to produce core files, on platforms
+        where this available, by lifting any soft resource limit placed on 
+		them. 
+		This is useful in debugging or diagnosing problems by allowing a 
+		stack trace to be obtained from a failed server process.
        </para>
       </listitem>
      </varlistentry>
