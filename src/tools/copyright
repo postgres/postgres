@@ -1,6 +1,8 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/copyright,v 1.12 2007/01/05 21:09:53 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/copyright,v 1.13 2007/01/05 21:29:20 momjian Exp $
+
+echo "Using current year:  `date '+%Y'`"
 
 rgrep -l 'Copyright.*PostgreSQL Global Development Group' | while read FILE
 do
