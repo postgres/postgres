@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.140 2007/01/04 05:18:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.141 2007/01/05 03:19:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1443,8 +1443,8 @@ dpow(PG_FUNCTION_ARGS)
 	 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, so we try to avoid
 	 * using errno.  However, some platform/CPU combinations return
 	 * errno == EDOM and result == Nan, so we have to check for that and
-	 * set result properly.  For example, Linux on Pentium, pre-Xeon
-	 * hardware returns EDOM/Nan for (-1) ^ 1e19, but (-1) ^ 1e18 retuns
+	 * set result properly.  For example, Linux on 32-bit x86 hardware
+	 * returns EDOM/Nan for (-1) ^ 1e19, but (-1) ^ 1e18 returns
 	 * 1 -- basically a negative base raised to a very high power causes
 	 * it on some CPUs.
 	 */
