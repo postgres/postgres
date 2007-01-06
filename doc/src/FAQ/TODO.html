@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sat Jan  6 16:33:48 EST 2007
+Last updated:           Sat Jan  6 17:18:21 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -642,6 +642,9 @@ first.
   allow pg_ctl to read and understand postgresql.conf to find the
   data_directory value.
 </p>
+  </li><li>Make consistent use of long/short command options --- pg_ctl needs
+  long ones, pg_config doesn't have short ones, postgres doesn't have
+  enough long ones, etc.
   </li><li>psql
   <ul>
     <li>Have psql show current values for a sequence
