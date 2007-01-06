@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sat Jan  6 14:41:18 EST 2007
+Last updated:           Sat Jan  6 14:59:54 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -776,16 +776,7 @@ first.
 <h1><a name="section_12">Indexes</a></h1>
 
 <ul>
-  <li>Allow inherited tables to inherit index, UNIQUE constraint, and primary
-  key, foreign key
-  </li><li>UNIQUE INDEX on base column not honored on INSERTs/UPDATEs from
-  inherited table:  INSERT INTO inherit_table (unique_index_col) VALUES
-  (dup) should fail
-<p>  The main difficulty with this item is the problem of creating an index
-  that can span more than one table.
-</p>
-  </li><li>Allow SELECT ... FOR UPDATE on inherited tables
-  </li><li>Add UNIQUE capability to non-btree indexes
+  <li>Add UNIQUE capability to non-btree indexes
   </li><li>Prevent index uniqueness checks when UPDATE does not modify the column
 <p>  Uniqueness (index) checks are done when updating a column even if the
   column is not modified by the UPDATE.
@@ -818,6 +809,18 @@ first.
   several rows as a single index entry
 <p>  This is difficult because it requires datatype-specific knowledge.
 </p>
+  </li><li>Inheritance
+  <ul>
+    <li>Allow inherited tables to inherit indexes, UNIQUE constraints,
+          and primary/foreign keys
+    </li><li>Honor UNIQUE INDEX on base column in INSERTs/UPDATEs
+          on inherited table, e.g.  INSERT INTO inherit_table
+          (unique_index_col) VALUES (dup) should fail
+<p>          The main difficulty with this item is the problem of
+          creating an index that can span multiple tables.
+</p>
+    </li><li>Allow SELECT ... FOR UPDATE on inherited tables
+  </li></ul>
   </li><li>GIST
   <ul>
     <li>Add more GIST index support for geometric data types

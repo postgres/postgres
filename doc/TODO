@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat Jan  6 14:41:18 EST 2007
+Last updated:		Sat Jan  6 14:59:54 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -855,16 +855,6 @@ Dependency Checking
 Indexes
 =======
 
-* Allow inherited tables to inherit index, UNIQUE constraint, and primary
-  key, foreign key
-* UNIQUE INDEX on base column not honored on INSERTs/UPDATEs from
-  inherited table:  INSERT INTO inherit_table (unique_index_col) VALUES
-  (dup) should fail
-
-  The main difficulty with this item is the problem of creating an index
-  that can span more than one table.
-
-* Allow SELECT ... FOR UPDATE on inherited tables
 * Add UNIQUE capability to non-btree indexes
 * Prevent index uniqueness checks when UPDATE does not modify the column
 
@@ -904,11 +894,26 @@ Indexes
   This is difficult because it requires datatype-specific knowledge.
 
 
+* Inheritance
+
+	o Allow inherited tables to inherit indexes, UNIQUE constraints,
+	  and primary/foreign keys
+	o Honor UNIQUE INDEX on base column in INSERTs/UPDATEs
+	  on inherited table, e.g.  INSERT INTO inherit_table
+	  (unique_index_col) VALUES (dup) should fail
+
+	  The main difficulty with this item is the problem of
+	  creating an index that can span multiple tables.
+
+	o Allow SELECT ... FOR UPDATE on inherited tables
+
+
 * GIST
 
 	o Add more GIST index support for geometric data types
 	o Allow GIST indexes to create certain complex index types, like
 	  digital trees (see Aoki)
+
 
 * Hash
 
