@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sat Jan  6 14:59:54 EST 2007
+Last updated:           Sat Jan  6 15:00:41 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -803,8 +803,6 @@ first.
   </li><li>Allow constraint_exclusion to work for UNIONs like it does for
   inheritance, allow it to work for UPDATE and DELETE statements, and allow
   it to be used for all statements with little performance impact
-  </li><li>Allow CREATE INDEX to take an additional parameter for use with
-  special index types
   </li><li>Consider compressing indexes by storing key values duplicated in
   several rows as a single index entry
 <p>  This is difficult because it requires datatype-specific knowledge.
