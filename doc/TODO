@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat Jan  6 17:19:41 EST 2007
+Last updated:		Sat Jan  6 17:24:00 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -168,12 +168,10 @@ Monitoring
 Data Types
 ==========
 
-* Improve the MONEY data type
+* -Make 64-bit version of the MONEY data type
+* Add locale-aware MONEY type, and support multiple currencies
 
-  Change the MONEY data type to use DECIMAL internally, with special
-  locale-aware output formatting.
   http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php
-  http://archives.postgresql.org/pgsql-hackers/2006-09/msg01107.php
 
 * Change NUMERIC to enforce the maximum precision
 * Add NUMERIC division operator that doesn't round?
