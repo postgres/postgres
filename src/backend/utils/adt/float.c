@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.142 2007/01/05 22:19:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.143 2007/01/06 02:28:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1442,23 +1442,26 @@ dpow(PG_FUNCTION_ARGS)
 	 * pow() sets errno only on some platforms, depending on whether it
 	 * follows _IEEE_, _POSIX_, _XOPEN_, or _SVID_, so we try to avoid
 	 * using errno.  However, some platform/CPU combinations return
-	 * errno == EDOM and result == Nan, so we have to check for that and
-	 * set result properly.  For example, Linux on 32-bit x86 hardware
-	 * returns EDOM/Nan for (-1) ^ 1e19, but (-1) ^ 1e18 returns
-	 * 1 -- basically a negative base raised to a very high power causes
-	 * it on some CPUs.
+	 * errno == EDOM and result == Nan for negative arg1 and very large arg2
+	 * (they must be using something different from our floor() test to
+	 * decide it's invalid).  Other platforms return errno == ERANGE and a
+	 * large but finite result to signal overflow.
 	 */
 	errno = 0;
 	result = pow(arg1, arg2);
 	if (errno == EDOM && isnan(result))
 	{
 		if ((fabs(arg1) > 1 && arg2 >= 0) || (fabs(arg1) < 1 && arg2 < 0))
-			/* The sign if Inf is not significant in this case. */
+			/* The sign of Inf is not significant in this case. */
 			result = get_float8_infinity();
 		else if (fabs(arg1) != 1)
 			result = 0;
 		else
 			result = 1;
+	}
+	else if (errno == ERANGE)
+	{
+		result = (arg1 >= 0) ? get_float8_infinity() : -get_float8_infinity();
 	}
 	
 	CHECKFLOATVAL(result, isinf(arg1) || isinf(arg2), arg1 == 0);
