@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.37 2007/01/06 03:14:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.38 2007/01/06 04:15:43 momjian Exp $
 -->
 
 <appendix id="release">
@@ -37,8 +37,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.37 2007/01/06 03:14:
       <para>
        <function>to_number()</> and <function>to_char(numeric)</>
        are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
-       new <link linkend="APP-INITDB"><application>initdb</></link>
-       installs (Tom)
+       new <application>initdb</> installs (Tom)
       </para>
 
       <para>
