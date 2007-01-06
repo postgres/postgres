@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat Jan  6 15:00:41 EST 2007
+Last updated:		Sat Jan  6 16:33:48 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -738,6 +738,9 @@ Clients
 	  because setting the transaction isolation level must be the
 	  first statement of a transaction.
 
+	o Consider parsing the -c string into individual queries so each
+	  is run in its own transaction
+
 
 * pg_dump
 
@@ -795,8 +798,10 @@ Clients
 	  held on the server waiting for them to be requested by libpq.
 	  One complexity is that a statement like SELECT 1/col could error
 	  out mid-way through the result set.
-	* Fix SSL retry to avoid useless repeated connection attempts and
+	o Fix SSL retry to avoid useless repeated connection attempts and
 	  ensuing misleading error messages
+	o Consider disallowing multiple queries in PQexec() as an
+	  additional barrier to SQL injection attacks
 
 
 Triggers
