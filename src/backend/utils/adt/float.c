@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.145 2007/01/06 15:18:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.146 2007/01/06 20:21:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1459,7 +1459,7 @@ dpow(PG_FUNCTION_ARGS)
 		else
 			result = 1;
 	}
-	else if (errno == ERANGE && !isinf(result))
+	else if (errno == ERANGE && result != 0 && !isinf(result))
 		result = get_float8_infinity();
 	
 	CHECKFLOATVAL(result, isinf(arg1) || isinf(arg2), arg1 == 0);
@@ -1478,7 +1478,7 @@ dexp(PG_FUNCTION_ARGS)
 
 	errno = 0;
 	result = exp(arg1);
-	if (errno == ERANGE && !isinf(result))
+	if (errno == ERANGE && result != 0 && !isinf(result))
 		result = get_float8_infinity();
 
 	CHECKFLOATVAL(result, isinf(arg1), false);
