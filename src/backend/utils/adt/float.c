@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.144 2007/01/06 04:14:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.145 2007/01/06 15:18:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1444,8 +1444,8 @@ dpow(PG_FUNCTION_ARGS)
 	 * using errno.  However, some platform/CPU combinations return
 	 * errno == EDOM and result == Nan for negative arg1 and very large arg2
 	 * (they must be using something different from our floor() test to
-	 * decide it's invalid).  Other platforms return errno == ERANGE and a
-	 * large but finite result to signal overflow.
+	 * decide it's invalid).  Other platforms (HPPA) return errno == ERANGE
+	 * and a large (HUGE_VAL) but finite result to signal overflow.
 	 */
 	errno = 0;
 	result = pow(arg1, arg2);
@@ -1459,7 +1459,6 @@ dpow(PG_FUNCTION_ARGS)
 		else
 			result = 1;
 	}
-	/* Some platoforms, e.g. HPPA, return ERANGE, but HUGE_VAL, not Inf */
 	else if (errno == ERANGE && !isinf(result))
 		result = get_float8_infinity();
 	
@@ -1477,7 +1476,10 @@ dexp(PG_FUNCTION_ARGS)
 	float8		arg1 = PG_GETARG_FLOAT8(0);
 	float8		result;
 
+	errno = 0;
 	result = exp(arg1);
+	if (errno == ERANGE && !isinf(result))
+		result = get_float8_infinity();
 
 	CHECKFLOATVAL(result, isinf(arg1), false);
 	PG_RETURN_FLOAT8(result);
