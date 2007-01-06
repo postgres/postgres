@@ -52,6 +52,9 @@ SELECT xmlpi(name xmlstuff);
 SELECT xmlpi(name foo, 'bar');
 SELECT xmlpi(name foo, 'in?>valid');
 
+SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
+SELECT xmlroot(xml '<foo/>', version '2.0');
+SELECT xmlroot(xmlroot(xml '<foo/>', version '1.0'), version '1.1', standalone no);
 
 SELECT xmlroot (
   xmlelement (

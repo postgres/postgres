@@ -124,6 +124,30 @@ SELECT xmlpi(name foo, 'bar');
 SELECT xmlpi(name foo, 'in?>valid');
 ERROR:  invalid XML processing instruction
 DETAIL:  XML processing instruction cannot contain "?>".
+SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
+        xmlroot        
+-----------------------
+ <?xml version="1.0"?>
+ <foo/>
+ 
+(1 row)
+
+SELECT xmlroot(xml '<foo/>', version '2.0');
+        xmlroot        
+-----------------------
+ <?xml version="2.0"?>
+ <foo/>
+ 
+(1 row)
+
+SELECT xmlroot(xmlroot(xml '<foo/>', version '1.0'), version '1.1', standalone no);
+                xmlroot                
+---------------------------------------
+ <?xml version="1.1" standalone="no"?>
+ <foo/>
+ 
+(1 row)
+
 SELECT xmlroot (
   xmlelement (
     name gazonk,
@@ -139,9 +163,11 @@ SELECT xmlroot (
   version '1.0',
   standalone yes
 );
-                                         xmlroot                                          
-------------------------------------------------------------------------------------------
- <?xml version="1.0" standalone="yes"?><gazonk name="val" num="2"><qux>foo</qux></gazonk>
+                      xmlroot                       
+----------------------------------------------------
+ <?xml version="1.0" standalone="yes"?>
+ <gazonk name="val" num="2"><qux>foo</qux></gazonk>
+ 
 (1 row)
 
 SELECT xmlserialize(content data as character varying) FROM xmltest;

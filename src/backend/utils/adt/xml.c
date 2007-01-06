@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.10 2007/01/05 22:19:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.11 2007/01/06 19:18:36 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include <libxml/tree.h>
 #include <libxml/uri.h>
 #include <libxml/xmlerror.h>
+#include <libxml/xmlsave.h>
 #endif /* USE_LIBXML */
 
 #include "fmgr.h"
@@ -49,10 +50,12 @@
 static StringInfo xml_err_buf = NULL;
 
 static void 	xml_init(void);
+#ifdef NOT_USED
 static void    *xml_palloc(size_t size);
 static void    *xml_repalloc(void *ptr, size_t size);
 static void 	xml_pfree(void *ptr);
 static char    *xml_pstrdup(const char *string);
+#endif
 static void 	xml_ereport(int level, int sqlcode,
 							const char *msg, void *ctxt);
 static void 	xml_errorHandler(void *ctxt, const char *msg, ...);
@@ -76,6 +79,7 @@ xml_in(PG_FUNCTION_ARGS)
 	char		*s = PG_GETARG_CSTRING(0);
 	size_t		len;
 	xmltype		*vardata;
+	xmlDocPtr	 doc;
 
 	len = strlen(s);
 	vardata = palloc(len + VARHDRSZ);
@@ -86,7 +90,8 @@ xml_in(PG_FUNCTION_ARGS)
 	 * Parse the data to check if it is well-formed XML data.  Assume
 	 * that ERROR occurred if parsing failed.
 	 */
-	xml_parse(vardata, false, true);
+	doc = xml_parse(vardata, false, true);
+	xmlFreeDoc(doc);
 
 	PG_RETURN_XML_P(vardata);
 #else
@@ -120,6 +125,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	xmltype	   *result;
 	char	   *str;
 	int			nbytes;
+	xmlDocPtr	doc;
 
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
@@ -132,7 +138,8 @@ xml_recv(PG_FUNCTION_ARGS)
 	 * Parse the data to check if it is well-formed XML data.  Assume
 	 * that ERROR occurred if parsing failed.
 	 */
-	xml_parse(result, false, true);
+	doc = xml_parse(result, false, true);
+	xmlFreeDoc(doc);
 
 	PG_RETURN_XML_P(result);
 #else
@@ -172,6 +179,21 @@ stringinfo_to_xmltype(StringInfo buf)
 	result = palloc(len);
 	VARATT_SIZEP(result) = len;
 	memcpy(VARDATA(result), buf->data, buf->len);
+
+	return result;
+}
+
+
+static xmltype *
+xmlBuffer_to_xmltype(xmlBufferPtr buf)
+{
+	int32		len;
+	xmltype	   *result;
+
+	len = xmlBufferLength(buf) + VARHDRSZ;
+	result = palloc(len);
+	VARATT_SIZEP(result) = len;
+	memcpy(VARDATA(result), xmlBufferContent(buf), len - VARHDRSZ);
 
 	return result;
 }
@@ -221,7 +243,10 @@ xmltype *
 xmlparse(text *data, bool is_document, bool preserve_whitespace)
 {
 #ifdef USE_LIBXML
-	xml_parse(data, is_document, preserve_whitespace);
+	xmlDocPtr	doc;
+
+	doc = xml_parse(data, is_document, preserve_whitespace);
+	xmlFreeDoc(doc);
 
 	return (xmltype *) data;
 #else
@@ -280,31 +305,38 @@ xmltype *
 xmlroot(xmltype *data, text *version, int standalone)
 {
 #ifdef USE_LIBXML
-	xmltype *result;
-	StringInfoData buf;
+	xmlDocPtr	doc;
+	xmlBufferPtr buffer;
+	xmlSaveCtxtPtr save;
 
-	initStringInfo(&buf);
+	doc = xml_parse((text *) data, true, true);
 
-	/*
-	 * FIXME: This is probably supposed to be cleverer if there
-	 * already is an XML preamble.
-	 */
-	appendStringInfo(&buf,"<?xml");
 	if (version)
-	{
-		appendStringInfo(&buf, " version=\"");
-		appendStringInfoText(&buf, version);
-		appendStringInfo(&buf, "\"");
-	}
-	if (standalone)
-		appendStringInfo(&buf, " standalone=\"%s\"",
-						 (standalone == 1 ? "yes" : "no"));
-	appendStringInfo(&buf, "?>");
-	appendStringInfoText(&buf, (text *) data);
+		doc->version = xmlStrdup(xml_text2xmlChar(version));
+	else
+		doc->version = NULL;
 
-	result = stringinfo_to_xmltype(&buf);
-	pfree(buf.data);
-	return result;
+	switch (standalone)
+	{
+		case 1:
+			doc->standalone = 1;
+			break;
+		case -1:
+			doc->standalone = 0;
+			break;
+		default:
+			doc->standalone = -1;
+			break;
+	}
+
+	buffer = xmlBufferCreate();
+	save = xmlSaveToBuffer(buffer, NULL, 0);
+	xmlSaveDoc(save, doc);
+	xmlSaveClose(save);
+
+	xmlFreeDoc(doc);
+
+	return xmlBuffer_to_xmltype(buffer);
 #else
 	NO_XML_SUPPORT();
 	return NULL;
@@ -444,7 +476,14 @@ xml_init(void)
 	/* Now that xml_err_buf exists, safe to call xml_errorHandler */
 	xmlSetGenericErrorFunc(NULL, xml_errorHandler);
 
+#ifdef NOT_USED
+	/*
+	 * FIXME: This doesn't work because libxml assumes that whatever
+	 * libxml allocates, only libxml will free, so we can't just drop
+	 * memory contexts behind it.  This needs to be refined.
+	 */
 	xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
+#endif
 	xmlInitParser();
 	LIBXML_TEST_VERSION;
 }
@@ -528,8 +567,6 @@ xml_parse(text *data, bool is_document, bool preserve_whitespace)
 		 * ) */
 		/* ... */
 
-		if (doc)
-			xmlFreeDoc(doc);
 		if (ctxt)
 			xmlFreeParserCtxt(ctxt);
 		xmlCleanupParser();
@@ -538,6 +575,7 @@ xml_parse(text *data, bool is_document, bool preserve_whitespace)
 	{
 		if (doc)
 			xmlFreeDoc(doc);
+		doc = NULL;
 		if (ctxt)
 			xmlFreeParserCtxt(ctxt);
 		xmlCleanupParser();
@@ -567,6 +605,7 @@ xml_text2xmlChar(text *in)
 }
 
 
+#ifdef NOT_USED
 /*
  * Wrappers for memory management functions
  */
@@ -596,6 +635,7 @@ xml_pstrdup(const char *string)
 {
 	return pstrdup(string);
 }
+#endif /* NOT_USED */
 
 
 /*
