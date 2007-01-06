@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.127 2007/01/05 22:19:47 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.128 2007/01/06 19:40:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,7 @@ static char *authmethod = "";
 static bool debug = false;
 static bool noclean = false;
 static bool show_setting = false;
+static char *xlog_dir = "";
 
 
 /* internal vars */
@@ -112,6 +113,8 @@ static char *features_file;
 static char *system_views_file;
 static bool made_new_pgdata = false;
 static bool found_existing_pgdata = false;
+static bool made_new_xlogdir = false;
+static bool found_existing_xlogdir = false;
 static char infoversion[100];
 static bool caught_signal = false;
 static bool output_failed = false;
@@ -163,7 +166,7 @@ static void exit_nicely(void);
 static char *get_id(void);
 static char *get_encoding_id(char *encoding_name);
 static char *get_short_version(void);
-static int	check_data_dir(void);
+static int  check_data_dir(char *dir);
 static bool mkdatadir(const char *subdir);
 static void set_input(char **dest, char *filename);
 static void check_input(char *path);
@@ -610,6 +613,24 @@ exit_nicely(void)
 				fprintf(stderr, _("%s: failed to remove contents of data directory\n"),
 						progname);
 		}
+
+		if (made_new_xlogdir)
+		{
+			fprintf(stderr, _("%s: removing transaction log directory \"%s\"\n"),
+					progname, xlog_dir);
+			if (!rmtree(xlog_dir, true))
+				fprintf(stderr, _("%s: failed to remove transaction log directory\n"),
+						progname);
+		}
+		else if (found_existing_xlogdir)
+		{
+			fprintf(stderr,
+					_("%s: removing contents of transaction log directory \"%s\"\n"),
+					progname, xlog_dir);
+			if (!rmtree(xlog_dir, false))
+				fprintf(stderr, _("%s: failed to remove contents of transaction log directory\n"),
+						progname);
+		}
 		/* otherwise died during startup, do nothing! */
 	}
 	else
@@ -618,6 +639,11 @@ exit_nicely(void)
 			fprintf(stderr,
 			  _("%s: data directory \"%s\" not removed at user's request\n"),
 					progname, pg_data);
+
+		if (made_new_xlogdir || found_existing_xlogdir)
+			fprintf(stderr,
+			  _("%s: transaction log directory \"%s\" not removed at user's request\n"),
+					progname, xlog_dir);
 	}
 
 	exit(1);
@@ -919,13 +945,13 @@ get_short_version(void)
 }
 
 /*
- * make sure the data directory either doesn't exist or is empty
+ * make sure the directory either doesn't exist or is empty
  *
  * Returns 0 if nonexistent, 1 if exists and empty, 2 if not empty,
  * or -1 if trouble accessing directory
  */
 static int
-check_data_dir(void)
+check_data_dir(char *dir)
 {
 	DIR		   *chkdir;
 	struct dirent *file;
@@ -933,7 +959,7 @@ check_data_dir(void)
 
 	errno = 0;
 
-	chkdir = opendir(pg_data);
+	chkdir = opendir(dir);
 
 	if (!chkdir)
 		return (errno == ENOENT) ? 0 : -1;
@@ -2354,6 +2380,7 @@ usage(const char *progname)
 			 "                            in the respective category (default taken from\n"
 			 "                            environment)\n"));
 	printf(_("  --no-locale               equivalent to --locale=C\n"));
+	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
 	printf(_("  -A, --auth=METHOD         default authentication method for local connections\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
 	printf(_("  -W, --pwprompt            prompt for a password for the new superuser\n"));
@@ -2397,6 +2424,7 @@ main(int argc, char *argv[])
 		{"debug", no_argument, NULL, 'd'},
 		{"show", no_argument, NULL, 's'},
 		{"noclean", no_argument, NULL, 'n'},
+		{"xlogdir", required_argument, NULL, 'X'},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -2447,7 +2475,7 @@ main(int argc, char *argv[])
 
 	/* process command-line options */
 
-	while ((c = getopt_long(argc, argv, "dD:E:L:nU:WA:s", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "dD:E:L:nU:WA:sX:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -2506,6 +2534,9 @@ main(int argc, char *argv[])
 				break;
 			case 's':
 				show_setting = true;
+				break;
+			case 'X':
+				xlog_dir = xstrdup(optarg);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
@@ -2836,7 +2867,7 @@ main(int argc, char *argv[])
 	pqsignal(SIGPIPE, SIG_IGN);
 #endif
 
-	switch (check_data_dir())
+	switch (check_data_dir(pg_data))
 	{
 		case 0:
 			/* PGDATA not there, must create it */
@@ -2885,6 +2916,82 @@ main(int argc, char *argv[])
 			fprintf(stderr, _("%s: could not access directory \"%s\": %s\n"),
 					progname, pg_data, strerror(errno));
 			exit_nicely();
+	}
+
+	/* Create transaction log symlink, if required */
+	if (strcmp(xlog_dir, "") != 0)
+	{
+		char	*linkloc;
+
+		linkloc = (char *) palloc(strlen(pg_data) + 8 + 2);
+		sprintf(linkloc, "%s/pg_xlog", pg_data);
+
+		/* check if the specified xlog directory is empty */
+		switch (check_data_dir(xlog_dir))
+		{
+			case 0:
+				/* xlog directory not there, must create it */
+				printf(_("creating directory %s ... "),
+					   xlog_dir);
+				fflush(stdout);
+
+				if (mkdir_p(xlog_dir, 0700) != 0)
+				{
+					fprintf(stderr, _("%s: could not create directory \"%s\": %s\n"),
+							progname, xlog_dir, strerror(errno));
+					exit_nicely();
+				}
+				else
+				{
+					check_ok();
+				}
+
+				made_new_xlogdir = true;
+				break;
+			case 1:
+				/* Present but empty, fix permissions and use it */
+				printf(_("fixing permissions on existing directory %s ... "),
+					   xlog_dir);
+				fflush(stdout);
+
+				if (chmod(xlog_dir, 0700) != 0)
+				{
+					fprintf(stderr, _("%s: could not change permissions of directory \"%s\": %s\n"),
+							progname, xlog_dir, strerror(errno));
+					exit_nicely();
+				}
+				else
+					check_ok();
+
+				found_existing_xlogdir = true;
+				break;
+			case 2:
+				/* Present and not empty */
+				fprintf(stderr,
+						_("%s: directory \"%s\" exists but is not empty\n"
+						  "If you want to store the transaction log there, either\n"
+						  "remove or empty the directory \"%s\".\n"),
+						progname, xlog_dir, xlog_dir);
+				exit(1);			/* no further message needed */
+
+			default:
+				/* Trouble accessing directory */
+				fprintf(stderr, _("%s: could not access directory \"%s\": %s\n"),
+						progname, xlog_dir, strerror(errno));
+				exit_nicely();
+		}
+
+#ifdef HAVE_SYMLINK
+		if (symlink(xlog_dir, linkloc) != 0)
+		{
+			fprintf(stderr, _("%s: could not create symbolic link \"%s\": %s\n"),
+						progname, linkloc, strerror(errno));
+			exit_nicely();
+		}
+#else
+		fprintf(stderr, _("%s: symlinks are not supported on this plataform"));
+		exit_nicely();
+#endif
 	}
 
 	/* Create required subdirectories */

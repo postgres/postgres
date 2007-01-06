@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.37 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.38 2007/01/06 19:40:00 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -172,6 +172,17 @@ PostgreSQL documentation
        <para>
         Like <option>--locale</option>, but only sets the locale in
         the specified category.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-X <replaceable class="parameter">directory</replaceable></option></term>
+      <term><option>--xlogdir=<replaceable class="parameter">directory</replaceable></option></term>
+      <listitem>
+       <para>
+        This option specifies the directory where the transaction log
+        should be stored.
        </para>
       </listitem>
      </varlistentry>
