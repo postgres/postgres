@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.107 2006/10/04 00:29:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.107.2.1 2007/01/07 01:56:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -617,11 +617,12 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * in the first row member makes the condition unmatchable, just
 			 * like qual_ok = false.
 			 */
-			cur = (ScanKey) DatumGetPointer(cur->sk_argument);
-			Assert(cur->sk_flags & SK_ROW_MEMBER);
-			if (cur->sk_flags & SK_ISNULL)
+			ScanKey		subkey = (ScanKey) DatumGetPointer(cur->sk_argument);
+
+			Assert(subkey->sk_flags & SK_ROW_MEMBER);
+			if (subkey->sk_flags & SK_ISNULL)
 				return false;
-			memcpy(scankeys + i, cur, sizeof(ScanKeyData));
+			memcpy(scankeys + i, subkey, sizeof(ScanKeyData));
 
 			/*
 			 * If the row comparison is the last positioning key we accepted,
@@ -632,21 +633,46 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			 * even if the row comparison is of ">" or "<" type, because the
 			 * condition applied to all but the last row member is effectively
 			 * ">=" or "<=", and so the extra keys don't break the positioning
-			 * scheme.
+			 * scheme.  But, by the same token, if we aren't able to use all
+			 * the row members, then the part of the row comparison that we
+			 * did use has to be treated as just a ">=" or "<=" condition,
+			 * and so we'd better adjust strat_total accordingly.
 			 */
 			if (i == keysCount - 1)
 			{
-				while (!(cur->sk_flags & SK_ROW_END))
+				bool		used_all_subkeys = false;
+
+				Assert(!(subkey->sk_flags & SK_ROW_END));
+				for(;;)
 				{
-					cur++;
-					Assert(cur->sk_flags & SK_ROW_MEMBER);
-					if (cur->sk_attno != keysCount + 1)
+					subkey++;
+					Assert(subkey->sk_flags & SK_ROW_MEMBER);
+					if (subkey->sk_attno != keysCount + 1)
 						break;	/* out-of-sequence, can't use it */
-					if (cur->sk_flags & SK_ISNULL)
+					if (subkey->sk_strategy != cur->sk_strategy)
+						break;	/* wrong direction, can't use it */
+					if (subkey->sk_flags & SK_ISNULL)
 						break;	/* can't use null keys */
 					Assert(keysCount < INDEX_MAX_KEYS);
-					memcpy(scankeys + keysCount, cur, sizeof(ScanKeyData));
+					memcpy(scankeys + keysCount, subkey, sizeof(ScanKeyData));
 					keysCount++;
+					if (subkey->sk_flags & SK_ROW_END)
+					{
+						used_all_subkeys = true;
+						break;
+					}
+				}
+				if (!used_all_subkeys)
+				{
+					switch (strat_total)
+					{
+						case BTLessStrategyNumber:
+							strat_total = BTLessEqualStrategyNumber;
+							break;
+						case BTGreaterStrategyNumber:
+							strat_total = BTGreaterEqualStrategyNumber;
+							break;
+					}
 				}
 				break;			/* done with outer loop */
 			}
