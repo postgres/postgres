@@ -124,6 +124,21 @@ SELECT xmlpi(name foo, 'bar');
 SELECT xmlpi(name foo, 'in?>valid');
 ERROR:  invalid XML processing instruction
 DETAIL:  XML processing instruction cannot contain "?>".
+SELECT xmlpi(name foo, null);
+ xmlpi 
+-------
+ 
+(1 row)
+
+SELECT xmlpi(name xmlstuff, null);
+ERROR:  invalid XML processing instruction
+DETAIL:  XML processing instruction target name cannot start with "xml".
+SELECT xmlpi(name foo, '   bar');
+    xmlpi    
+-------------
+ <?foo bar?>
+(1 row)
+
 SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
         xmlroot        
 -----------------------

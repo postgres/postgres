@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.12 2007/01/07 00:13:55 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.13 2007/01/07 22:49:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,7 +257,7 @@ xmlparse(text *data, bool is_document, bool preserve_whitespace)
 
 
 xmltype *
-xmlpi(char *target, text *arg)
+xmlpi(char *target, text *arg, bool arg_is_null, bool *result_is_null)
 {
 #ifdef USE_LIBXML
 	xmltype *result;
@@ -265,9 +265,17 @@ xmlpi(char *target, text *arg)
 
 	if (pg_strncasecmp(target, "xml", 3) == 0)
 		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_XML_PROCESSING_INSTRUCTION),
+				(errcode(ERRCODE_SYNTAX_ERROR),	/* really */
 				 errmsg("invalid XML processing instruction"),
 				 errdetail("XML processing instruction target name cannot start with \"xml\".")));
+
+	/*
+	 * Following the SQL standard, the null check comes after the
+	 * syntax check above.
+	 */
+	*result_is_null = arg_is_null;
+	if (*result_is_null)
+		return NULL;		
 
 	initStringInfo(&buf);
 
@@ -286,7 +294,7 @@ xmlpi(char *target, text *arg)
 				 errdetail("XML processing instruction cannot contain \"?>\".")));
 
 		appendStringInfoChar(&buf, ' ');
-		appendStringInfoString(&buf, string);
+		appendStringInfoString(&buf, string + strspn(string, " "));
 		pfree(string);
 	}
 	appendStringInfoString(&buf, "?>");

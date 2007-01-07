@@ -62,6 +62,12 @@ SELECT xmlpi(name foo, 'bar');
 ERROR:  no XML support in this installation
 SELECT xmlpi(name foo, 'in?>valid');
 ERROR:  no XML support in this installation
+SELECT xmlpi(name foo, null);
+ERROR:  no XML support in this installation
+SELECT xmlpi(name xmlstuff, null);
+ERROR:  no XML support in this installation
+SELECT xmlpi(name foo, '   bar');
+ERROR:  no XML support in this installation
 SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
 ERROR:  no XML support in this installation
 SELECT xmlroot(xml '<foo/>', version '2.0');
