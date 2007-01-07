@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.11 2007/01/06 19:18:36 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.12 2007/01/07 00:13:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -490,6 +490,122 @@ xml_init(void)
 
 
 /*
+ * SQL/XML allows storing "XML documents" or "XML content".  "XML
+ * documents" are specified by the XML specification and are parsed
+ * easily by libxml.  "XML content" is specified by SQL/XML as the
+ * production "XMLDecl? content".  But libxml can only parse the
+ * "content" part, so we have to parse the XML declaration ourselves
+ * to complete this.
+ */
+
+#define CHECK_XML_SPACE(p) if (!xmlIsBlank_ch(*(p))) return XML_ERR_SPACE_REQUIRED
+#define SKIP_XML_SPACE(p) while (xmlIsBlank_ch(*(p))) (p)++
+
+static int
+parse_xml_decl(const xmlChar *str, size_t *len, xmlChar **encoding, int *standalone)
+{
+	const xmlChar *p;
+	const xmlChar *save_p;
+
+	p = str;
+
+	if (xmlStrncmp(p, (xmlChar *)"<?xml", 5) != 0)
+		goto finished;
+
+	p += 5;
+
+	/* version */
+	CHECK_XML_SPACE(p);
+	SKIP_XML_SPACE(p);
+	if (xmlStrncmp(p, (xmlChar *)"version", 7) != 0)
+		return XML_ERR_VERSION_MISSING;
+	p += 7;
+	SKIP_XML_SPACE(p);
+	if (*p != '=')
+		return XML_ERR_VERSION_MISSING;
+	p += 1;
+	SKIP_XML_SPACE(p);
+	if (xmlStrncmp(p, (xmlChar *)"'1.0'", 5) != 0 && xmlStrncmp(p, (xmlChar *)"\"1.0\"", 5) != 0)
+		return XML_ERR_VERSION_MISSING;
+	p += 5;
+
+	/* encoding */
+	save_p = p;
+	SKIP_XML_SPACE(p);
+	if (xmlStrncmp(p, (xmlChar *)"encoding", 8) == 0)
+	{
+		CHECK_XML_SPACE(save_p);
+		p += 8;
+		SKIP_XML_SPACE(p);
+		if (*p != '=')
+			return XML_ERR_MISSING_ENCODING;
+		p += 1;
+		SKIP_XML_SPACE(p);
+
+		if (*p == '\'' || *p == '"')
+		{
+			const xmlChar *q;
+
+			q = xmlStrchr(p + 1, *p);
+			if (!q)
+				return XML_ERR_MISSING_ENCODING;
+
+			*encoding = xmlStrndup(p + 1, q - p - 1);
+			p = q + 1;
+		}
+		else
+			return XML_ERR_MISSING_ENCODING;
+	}
+	else
+	{
+		p = save_p;
+		*encoding = NULL;
+	}
+
+	/* standalone */
+	save_p = p;
+	SKIP_XML_SPACE(p);
+	if (xmlStrncmp(p, (xmlChar *)"standalone", 10) == 0)
+	{
+		CHECK_XML_SPACE(save_p);
+		p += 10;
+		SKIP_XML_SPACE(p);
+		if (*p != '=')
+			return XML_ERR_STANDALONE_VALUE;
+		p += 1;
+		SKIP_XML_SPACE(p);
+		if (xmlStrncmp(p, (xmlChar *)"'yes'", 5) == 0 || xmlStrncmp(p, (xmlChar *)"\"yes\"", 5) == 0)
+		{
+			*standalone = 1;
+			p += 5;
+		}
+		else if (xmlStrncmp(p, (xmlChar *)"'no'", 4) == 0 || xmlStrncmp(p, (xmlChar *)"\"no\"", 4) == 0)
+		{
+			*standalone = 0;
+			p += 4;
+		}
+		else
+			return XML_ERR_STANDALONE_VALUE;
+	}
+	else
+	{
+		p = save_p;
+		*standalone = -1;
+	}
+
+	SKIP_XML_SPACE(p);
+	if (xmlStrncmp(p, (xmlChar *)"?>", 2) != 0)
+		return XML_ERR_XMLDECL_NOT_FINISHED;
+	p += 2;
+
+finished:
+	if (len)
+		*len = (p - str);
+	return XML_ERR_OK;
+}
+
+
+/*
  * Convert a C string to XML internal representation
  *
  * TODO maybe, libxml2's xmlreader is better? (do not construct DOM, yet do not use SAX - see xml_reader.c)
@@ -536,19 +652,23 @@ xml_parse(text *data, bool is_document, bool preserve_whitespace)
 		}
 		else
 		{
+			size_t count;
+			xmlChar *encoding = NULL;
+			int standalone = -1;
+
 			doc = xmlNewDoc(NULL);
 
-			/*
-			 * FIXME: An XMLDecl is supposed to be accepted before the
-			 * content, but libxml doesn't allow this.  Parse that
-			 * ourselves?
-			 */
+			res_code = parse_xml_decl(string, &count, &encoding, &standalone);
 
 			/* TODO resolve: xmlParseBalancedChunkMemory assumes that string is UTF8 encoded! */
-			res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0, string, NULL);
+			if (res_code == 0)
+				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0, string + count, NULL);
 			if (res_code != 0)
 				xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_CONTENT,
 									"invalid XML content", res_code);
+
+			doc->encoding = encoding;
+			doc->standalone = standalone;
 		}
 
 		/* TODO encoding issues
