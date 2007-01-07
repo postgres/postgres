@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.105 2006/09/19 15:36:07 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.106 2007/01/07 08:49:31 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -193,7 +193,8 @@ ifeq ($(PORTNAME), solaris)
   ifeq ($(GCC), yes)
     LINK.shared		= $(CC) -shared
   else
-    LINK.shared		= $(CC) -G $(CFLAGS)	# CFLAGS added for X86_64
+# CFLAGS added for X86_64
+    LINK.shared		= $(CC) -G $(CFLAGS)
   endif
   ifeq ($(with_gnu_ld), yes)
     LINK.shared		+= -Wl,-soname,$(soname)
@@ -354,7 +355,8 @@ endif
 
 ifeq ($(enable_shared), yes)
 install-lib-shared: $(shlib)
-ifneq ($(PORTNAME), aix)		# we don't install $(shlib) on AIX
+# we don't install $(shlib) on AIX
+ifneq ($(PORTNAME), aix)
 	$(INSTALL_SHLIB) $< '$(DESTDIR)$(libdir)/$(shlib)'
 ifneq ($(PORTNAME), cygwin)
 ifneq ($(PORTNAME), win32)
