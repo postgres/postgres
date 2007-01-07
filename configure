@@ -7307,9 +7307,9 @@ fi
 
 if test "$with_libxml" = yes ; then
 
-echo "$as_me:$LINENO: checking for xmlInitParser in -lxml2" >&5
-echo $ECHO_N "checking for xmlInitParser in -lxml2... $ECHO_C" >&6
-if test "${ac_cv_lib_xml2_xmlInitParser+set}" = set; then
+echo "$as_me:$LINENO: checking for xmlSaveToBuffer in -lxml2" >&5
+echo $ECHO_N "checking for xmlSaveToBuffer in -lxml2... $ECHO_C" >&6
+if test "${ac_cv_lib_xml2_xmlSaveToBuffer+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -7327,11 +7327,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char xmlInitParser ();
+char xmlSaveToBuffer ();
 int
 main ()
 {
-xmlInitParser ();
+xmlSaveToBuffer ();
   ;
   return 0;
 }
@@ -7358,20 +7358,20 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_xml2_xmlInitParser=yes
+  ac_cv_lib_xml2_xmlSaveToBuffer=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_xml2_xmlInitParser=no
+ac_cv_lib_xml2_xmlSaveToBuffer=no
 fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_xml2_xmlInitParser" >&5
-echo "${ECHO_T}$ac_cv_lib_xml2_xmlInitParser" >&6
-if test $ac_cv_lib_xml2_xmlInitParser = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_xml2_xmlSaveToBuffer" >&5
+echo "${ECHO_T}$ac_cv_lib_xml2_xmlSaveToBuffer" >&6
+if test $ac_cv_lib_xml2_xmlSaveToBuffer = yes; then
   cat >>confdefs.h <<_ACEOF
 #define HAVE_LIBXML2 1
 _ACEOF
@@ -7379,8 +7379,8 @@ _ACEOF
   LIBS="-lxml2 $LIBS"
 
 else
-  { { echo "$as_me:$LINENO: error: library 'xml2' is required for XML support" >&5
-echo "$as_me: error: library 'xml2' is required for XML support" >&2;}
+  { { echo "$as_me:$LINENO: error: library 'xml2' (version >= 2.6.23) is required for XML support" >&5
+echo "$as_me: error: library 'xml2' (version >= 2.6.23) is required for XML support" >&2;}
    { (exit 1); exit 1; }; }
 fi
 

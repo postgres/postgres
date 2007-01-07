@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.495 2007/01/05 22:19:17 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.496 2007/01/07 21:10:40 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -724,7 +724,7 @@ if test "$with_pam" = yes ; then
 fi
 
 if test "$with_libxml" = yes ; then
-  AC_CHECK_LIB(xml2, xmlInitParser, [], [AC_MSG_ERROR([library 'xml2' is required for XML support])])
+  AC_CHECK_LIB(xml2, xmlSaveToBuffer, [], [AC_MSG_ERROR([library 'xml2' (version >= 2.6.23) is required for XML support])])
 fi
 
 

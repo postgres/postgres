@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.270 2006/12/24 00:29:17 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.271 2007/01/07 21:10:41 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -909,7 +909,8 @@ su - postgres
        <term><option>--with-libxml</option></term>
        <listitem>
         <para>
-         Build with libxml (enables SQL/XML support).
+         Build with libxml (enables SQL/XML support).  Libxml version 2.6.23 or
+         later is required for this feature.
         </para>
        </listitem>
       </varlistentry>
