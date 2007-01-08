@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.172 2007/01/05 22:19:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.173 2007/01/08 16:09:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1498,10 +1498,6 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
 	double		hashjointuples;
 	double		outer_path_rows = PATH_ROWS(outer_path);
 	double		inner_path_rows = PATH_ROWS(inner_path);
-	double		outerbytes = relation_byte_size(outer_path_rows,
-												outer_path->parent->width);
-	double		innerbytes = relation_byte_size(inner_path_rows,
-												inner_path->parent->width);
 	int			num_hashclauses = list_length(hashclauses);
 	int			numbuckets;
 	int			numbatches;
@@ -1538,13 +1534,16 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
 
 	/*
 	 * Cost of computing hash function: must do it once per input tuple. We
-	 * charge one cpu_operator_cost for each column's hash function.
+	 * charge one cpu_operator_cost for each column's hash function.  Also,
+	 * tack on one cpu_tuple_cost per inner row, to model the costs of
+	 * inserting the row into the hashtable.
 	 *
 	 * XXX when a hashclause is more complex than a single operator, we really
 	 * should charge the extra eval costs of the left or right side, as
 	 * appropriate, here.  This seems more work than it's worth at the moment.
 	 */
-	startup_cost += cpu_operator_cost * num_hashclauses * inner_path_rows;
+	startup_cost += (cpu_operator_cost * num_hashclauses + cpu_tuple_cost)
+		* inner_path_rows;
 	run_cost += cpu_operator_cost * num_hashclauses * outer_path_rows;
 
 	/* Get hash table size that executor would use for inner relation */
@@ -1624,8 +1623,8 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
 	/*
 	 * If inner relation is too big then we will need to "batch" the join,
 	 * which implies writing and reading most of the tuples to disk an extra
-	 * time.  Charge one cost unit per page of I/O (correct since it should be
-	 * nice and sequential...).  Writing the inner rel counts as startup cost,
+	 * time.  Charge seq_page_cost per page, since the I/O should be nice and
+	 * sequential.  Writing the inner rel counts as startup cost,
 	 * all the rest as run cost.
 	 */
 	if (numbatches > 1)
@@ -1635,8 +1634,8 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
 		double		innerpages = page_size(inner_path_rows,
 										   inner_path->parent->width);
 
-		startup_cost += innerpages;
-		run_cost += innerpages + 2 * outerpages;
+		startup_cost += seq_page_cost * innerpages;
+		run_cost += seq_page_cost * (innerpages + 2 * outerpages);
 	}
 
 	/* CPU costs */
@@ -1654,14 +1653,15 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
 	 * The number of tuple comparisons needed is the number of outer tuples
 	 * times the typical number of tuples in a hash bucket, which is the inner
 	 * relation size times its bucketsize fraction.  At each one, we need to
-	 * evaluate the hashjoin quals.  (Note: charging the full qual eval cost
-	 * at each tuple is pessimistic, since we don't evaluate the quals unless
-	 * the hash values match exactly.)
+	 * evaluate the hashjoin quals.  But actually, charging the full qual eval
+	 * cost at each tuple is pessimistic, since we don't evaluate the quals
+	 * unless the hash values match exactly.  For lack of a better idea, halve
+	 * the cost estimate to allow for that.
 	 */
 	startup_cost += hash_qual_cost.startup;
 	run_cost += hash_qual_cost.per_tuple *
 		outer_path_rows * clamp_row_est(inner_path_rows * innerbucketsize) *
-		joininfactor;
+		joininfactor * 0.5;
 
 	/*
 	 * For each tuple that gets through the hashjoin proper, we charge
@@ -1672,22 +1672,6 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
 	startup_cost += qp_qual_cost.startup;
 	cpu_per_tuple = cpu_tuple_cost + qp_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * hashjointuples * joininfactor;
-
-	/*
-	 * Bias against putting larger relation on inside.	We don't want an
-	 * absolute prohibition, though, since larger relation might have better
-	 * bucketsize --- and we can't trust the size estimates unreservedly,
-	 * anyway.	Instead, inflate the run cost by the square root of the size
-	 * ratio.  (Why square root?  No real good reason, but it seems
-	 * reasonable...)
-	 *
-	 * Note: before 7.4 we implemented this by inflating startup cost; but if
-	 * there's a disable_cost component in the input paths' startup cost, that
-	 * unfairly penalizes the hash.  Probably it'd be better to keep track of
-	 * disable penalty separately from cost.
-	 */
-	if (innerbytes > outerbytes && outerbytes > 0)
-		run_cost *= sqrt(innerbytes / outerbytes);
 
 	path->jpath.path.startup_cost = startup_cost;
 	path->jpath.path.total_cost = startup_cost + run_cost;
