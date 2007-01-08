@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.126 2007/01/05 22:19:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.127 2007/01/08 16:47:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,13 +402,34 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		 * except at a FULL JOIN or where join_collapse_limit would be
 		 * exceeded.
 		 */
-		if (j->jointype != JOIN_FULL &&
-			(list_length(leftjoinlist) + list_length(rightjoinlist) <=
-			 join_collapse_limit))
-			joinlist = list_concat(leftjoinlist, rightjoinlist);
-		else
-			/* force the join order at this node */
+		if (j->jointype == JOIN_FULL)
+		{
+			/* force the join order exactly at this node */
 			joinlist = list_make1(list_make2(leftjoinlist, rightjoinlist));
+		}
+		else if (list_length(leftjoinlist) + list_length(rightjoinlist) <=
+				 join_collapse_limit)
+		{
+			/* OK to combine subproblems */
+			joinlist = list_concat(leftjoinlist, rightjoinlist);
+		}
+		else
+		{
+			/* can't combine, but needn't force join order above here */
+			Node   *leftpart,
+				   *rightpart;
+
+			/* avoid creating useless 1-element sublists */
+			if (list_length(leftjoinlist) == 1)
+				leftpart = (Node *) linitial(leftjoinlist);
+			else
+				leftpart = (Node *) leftjoinlist;
+			if (list_length(rightjoinlist) == 1)
+				rightpart = (Node *) linitial(rightjoinlist);
+			else
+				rightpart = (Node *) rightjoinlist;
+			joinlist = list_make2(leftpart, rightpart);
+		}
 	}
 	else
 	{
