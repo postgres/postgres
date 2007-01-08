@@ -65,7 +65,7 @@ SELECT xmlelement(name element,
 
 SELECT xmlelement(name element,
                   xmlattributes ('unnamed and wrong'));
-ERROR:  unnamed attribute value must be a column reference
+ERROR:  unnamed XML attribute value must be a column reference
 SELECT xmlelement(name element, xmlelement(name nested, 'stuff'));
                 xmlelement                 
 -------------------------------------------
@@ -85,6 +85,8 @@ SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
 
 SELECT xmlelement(name wrong, 37);
 ERROR:  argument of XMLELEMENT must be type xml, not type integer
+SELECT xmlelement(name duplicate, xmlattributes(1 as a, 2 as b, 3 as a));
+ERROR:  XML attribute name "a" appears more than once
 SELECT xmlparse(content 'abc');
  xmlparse 
 ----------

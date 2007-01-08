@@ -46,6 +46,8 @@ SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
 ERROR:  no XML support in this installation
 SELECT xmlelement(name wrong, 37);
 ERROR:  no XML support in this installation
+SELECT xmlelement(name duplicate, xmlattributes(1 as a, 2 as b, 3 as a));
+ERROR:  no XML support in this installation
 SELECT xmlparse(content 'abc');
 ERROR:  no XML support in this installation
 SELECT xmlparse(content '<abc>x</abc>');

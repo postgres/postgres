@@ -38,6 +38,7 @@ SELECT xmlelement(name element, xmlelement(name nested, 'stuff'));
 SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
 
 SELECT xmlelement(name wrong, 37);
+SELECT xmlelement(name duplicate, xmlattributes(1 as a, 2 as b, 3 as a));
 
 
 SELECT xmlparse(content 'abc');

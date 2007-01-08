@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.204 2007/01/05 22:19:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.205 2007/01/08 23:41:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1415,13 +1415,29 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 x->op == IS_XMLELEMENT
-					 ? errmsg("unnamed attribute value must be a column reference")
-					 : errmsg("unnamed element value must be a column reference")));
+					 ? errmsg("unnamed XML attribute value must be a column reference")
+					 : errmsg("unnamed XML element value must be a column reference")));
 			argname = NULL;		/* keep compiler quiet */
 		}
 
 		newx->named_args = lappend(newx->named_args, expr);
 		newx->arg_names = lappend(newx->arg_names, makeString(argname));
+	}
+
+	if (x->op == IS_XMLELEMENT)
+	{
+		foreach(lc, newx->arg_names)
+		{
+			ListCell	*lc2;
+
+			for_each_cell(lc2, lnext(lc))
+			{
+				if (strcmp(strVal(lfirst(lc)), strVal(lfirst(lc2))) == 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("XML attribute name \"%s\" appears more than once", strVal(lfirst(lc)))));
+			}
+		}
 	}
 
 	/* The other arguments are of varying types depending on the function */
