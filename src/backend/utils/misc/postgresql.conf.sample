@@ -333,6 +333,9 @@
 #log_statement = 'none'			# none, ddl, mod, all
 #log_hostname = off
 
+#log_temp_files = -1			# Log temporary files equal or larger
+					# than the specified number of bytes.  
+					# -1 disables;  0 logs all temp files
 
 #---------------------------------------------------------------------------
 # RUNTIME STATISTICS

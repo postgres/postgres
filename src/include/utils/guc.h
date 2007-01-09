@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.77 2007/01/05 22:19:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.78 2007/01/09 21:31:17 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -123,6 +123,7 @@ extern int	log_min_error_statement;
 extern int	log_min_messages;
 extern int	client_min_messages;
 extern int	log_min_duration_statement;
+extern int	log_temp_files;
 
 extern int	num_temp_buffers;
 

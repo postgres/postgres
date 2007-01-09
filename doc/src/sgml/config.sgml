@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.99 2006/12/12 21:30:33 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.100 2007/01/09 21:31:14 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2916,6 +2916,23 @@ SELECT * FROM parent WHERE key = 2400;
         setup this might impose a non-negligible performance penalty.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-temp-files" xreflabel="log_temp_files">
+      <term><varname>log_temp_files</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>log_temp_files</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Controls whether temporary files are logged when deleted.
+        A value of zero logs all temporary files, and positive
+        values log only files whose size is equal or greater than
+        the specified number of bytes.  Temporary files can be
+        created for sorts, hashes, and temporary results.  The
+        default is <literal>-1</> (off).
        </para>
       </listitem>
      </varlistentry>
