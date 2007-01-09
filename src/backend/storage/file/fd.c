@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.133 2007/01/09 21:31:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.134 2007/01/09 22:03:51 momjian Exp $
  *
  * NOTES:
  *
@@ -970,7 +970,6 @@ FileClose(File file)
 	{
 		/* reset flag so that die() interrupt won't cause problems */
 		vfdP->fdstate &= ~FD_TEMPORARY;
-		PG_TRACE1(temp__file__cleanup, vfdP->fileName);
 		if (log_temp_files >= 0)
 		{
 			if (stat(vfdP->fileName, &filestats) == 0)
