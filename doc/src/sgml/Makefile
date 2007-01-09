@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.87 2007/01/07 08:49:31 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.88 2007/01/09 22:19:36 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -65,7 +65,7 @@ override SPFLAGS += -wall -wno-unused-param -wno-empty
 ## Man pages
 ##
 
-.PHONY: man
+.PHONY: man draft
 
 DEFAULTSECTION := $(sqlmansect_dummy)
 
@@ -95,20 +95,37 @@ html: postgres.sgml $(ALLSGML) stylesheet.dsl
 ifeq ($(vpath_build), yes)
 	@cp $(srcdir)/stylesheet.css .
 endif
+ifndef DRAFT
+	@cmp -s HTML.index.start HTML.index || $(MAKE) $*
+endif
 
 
 COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
 
-# If HTML.index does not exist, create a dummy bookindex.sgml.  During the
-# next build, create bookindex.sgml with the proper index contents.  A proper
-# bookindex.sgml is required to have an index in the output.
-ifeq (,$(wildcard HTML.index))
-bookindex.sgml:
-	$(COLLATEINDEX) -o $@ -N
+draft:
+ifndef DRAFT
+ifneq ($(MAKECMDGOALS), draft)
+# Call ourselves with the DRAFT value set.  This seems to be the only
+# way to set gmake variables in a rule.
+	@$(MAKE) DRAFT="Y" $(MAKECMDGOALS))
 else
-bookindex.sgml: HTML.index
-	$(COLLATEINDEX) -i 'bookindex' -o $@ $<
+# run default 'all' rule
+	@$(MAKE) DRAFT="Y" all
 endif
+endif
+
+bookindex.sgml: HTML.index
+# create a dummy bookindex.html
+	test -s HTML.index || $(COLLATEINDEX) -o $@ -N
+# If HTML.index is valid, create a valid bookindex.sgml.  This 
+# is required so the output has a proper index.
+	test ! -s HTML.index || $(COLLATEINDEX) -i 'bookindex' -o $@ $<
+# save copy of HTML.index for later comparison
+	@cp HTML.index HTML.index.start
+
+HTML.index:
+# create HTML.index if it does not exist
+	@$(if $(wildcard HTML.index), , touch HTML.index)
 
 version.sgml: $(top_builddir)/src/Makefile.global
 	{ \
@@ -141,15 +158,27 @@ JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/styl
 
 %-A4.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=A4 -o $@ $<
+ifndef DRAFT
+	@cmp -s HTML.index.start HTML.index || $(MAKE) $*
+endif
 
 %-US.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=USletter -o $@ $<
+ifndef DRAFT
+	@cmp -s HTML.index.start HTML.index || $(MAKE) $*
+endif
 
 %-A4.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=A4 -o $@ $<
+ifndef DRAFT
+	@cmp -s HTML.index.start HTML.index || $(MAKE) $*
+endif
 
 %-US.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=USletter -o $@ $<
+ifndef DRAFT
+	@cmp -s HTML.index.start HTML.index || $(MAKE) $*
+endif
 
 %.dvi: %.tex-ps
 	@rm -f $*.aux $*.log
@@ -291,7 +320,7 @@ clean distclean maintainer-clean:
 # print
 	rm -f *.rtf *.tex-ps *.tex-pdf *.dvi *.aux *.log *.ps *.pdf *.out *.eps *.fot
 # index
-	rm -f HTML.index $(GENERATED_SGML)
+	rm -f HTML.index HTML.index.start $(GENERATED_SGML)
 # text
 	rm -f INSTALL HISTORY regress_README
 # XSLT
