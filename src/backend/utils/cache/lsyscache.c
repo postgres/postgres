@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.141 2007/01/05 22:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.142 2007/01/09 02:14:14 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/hash.h"
+#include "access/nbtree.h"
 #include "bootstrap/bootstrap.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_amproc.h"
@@ -192,7 +193,7 @@ get_op_mergejoin_info(Oid eq_op, Oid left_sortop,
 		if (op_form->amopstrategy != BTEqualStrategyNumber)
 			continue;
 
-		/* See if sort operator is also in this opclass with OK semantics */
+		/* See if sort operator is also in this opfamily with OK semantics */
 		opfamily_id = op_form->amopfamily;
 		op_strategy = get_op_opfamily_strategy(left_sortop, opfamily_id);
 		if (op_strategy == BTLessStrategyNumber ||
@@ -285,6 +286,78 @@ get_op_mergejoin_info(Oid eq_op, Oid *left_sortop,
 #endif
 
 /*
+ * get_op_compare_function
+ *		Get the OID of the datatype-specific btree comparison function
+ *		associated with an ordering operator (a "<" or ">" operator).
+ *
+ * *cmpfunc receives the comparison function OID.
+ * *reverse is set FALSE if the operator is "<", TRUE if it's ">"
+ * (indicating the comparison result must be negated before use).
+ *
+ * Returns TRUE if successful, FALSE if no btree function can be found.
+ * (This indicates that the operator is not a valid ordering operator.)
+ */
+bool
+get_op_compare_function(Oid opno, Oid *cmpfunc, bool *reverse)
+{
+	bool		result = false;
+	CatCList   *catlist;
+	int			i;
+
+	/* ensure outputs are set on failure */
+	*cmpfunc = InvalidOid;
+	*reverse = false;
+
+	/*
+	 * Search pg_amop to see if the target operator is registered as the "<"
+	 * or ">" operator of any btree opfamily.  It's possible that it might be
+	 * registered both ways (if someone were to build a "reverse sort"
+	 * opfamily); assume we can use either interpretation.  (Note: the
+	 * existence of a reverse-sort opfamily would result in uncertainty as
+	 * to whether "ORDER BY USING op" would default to NULLS FIRST or NULLS
+	 * LAST.  Since there is no longer any particularly good reason to build
+	 * reverse-sort opfamilies, we don't bother expending any extra work to
+	 * make this more determinate.  In practice, because of the way the
+	 * syscache search works, we'll use the interpretation associated with
+	 * the opfamily with smallest OID, which is probably determinate enough.)
+	 */
+	catlist = SearchSysCacheList(AMOPOPID, 1,
+								 ObjectIdGetDatum(opno),
+								 0, 0, 0);
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple	tuple = &catlist->members[i]->tuple;
+		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
+
+		/* must be btree */
+		if (aform->amopmethod != BTREE_AM_OID)
+			continue;
+
+		if (aform->amopstrategy == BTLessStrategyNumber ||
+			aform->amopstrategy == BTGreaterStrategyNumber)
+		{
+			/* Found a suitable opfamily, get matching support function */
+			*reverse = (aform->amopstrategy == BTGreaterStrategyNumber);
+			*cmpfunc = get_opfamily_proc(aform->amopfamily,
+										 aform->amoplefttype,
+										 aform->amoprighttype,
+										 BTORDER_PROC);
+			if (!OidIsValid(*cmpfunc))				/* should not happen */
+				elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
+					 BTORDER_PROC, aform->amoplefttype, aform->amoprighttype,
+					 aform->amopfamily);
+			result = true;
+			break;
+		}
+	}
+
+	ReleaseSysCacheList(catlist);
+
+	return result;
+}
+
+/*
  * get_op_hash_function
  *		Get the OID of the datatype-specific hash function associated with
  *		a hashable equality operator.
@@ -298,9 +371,9 @@ get_op_mergejoin_info(Oid eq_op, Oid *left_sortop,
 Oid
 get_op_hash_function(Oid opno)
 {
+	Oid			result = InvalidOid;
 	CatCList   *catlist;
 	int			i;
-	Oid			result = InvalidOid;
 
 	/*
 	 * Search pg_amop to see if the target operator is registered as the "="

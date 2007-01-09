@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.102 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.103 2007/01/09 02:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1297,7 +1297,7 @@ typedef struct
 typedef struct
 {
 	FmgrInfo   *cmpFn;
-	SortFunctionKind cmpFnKind;
+	int			cmpFlags;
 	int		   *tupnoLink;
 } CompareScalarsContext;
 
@@ -1747,8 +1747,8 @@ compute_scalar_stats(VacAttrStatsP stats,
 	bool		is_varwidth = (!stats->attr->attbyval &&
 							   stats->attr->attlen < 0);
 	double		corr_xysum;
-	RegProcedure cmpFn;
-	SortFunctionKind cmpFnKind;
+	Oid			cmpFn;
+	int			cmpFlags;
 	FmgrInfo	f_cmpfn;
 	ScalarItem *values;
 	int			values_cnt = 0;
@@ -1763,7 +1763,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 	tupnoLink = (int *) palloc(samplerows * sizeof(int));
 	track = (ScalarMCVItem *) palloc(num_mcv * sizeof(ScalarMCVItem));
 
-	SelectSortFunction(mystats->ltopr, &cmpFn, &cmpFnKind);
+	SelectSortFunction(mystats->ltopr, false, &cmpFn, &cmpFlags);
 	fmgr_info(cmpFn, &f_cmpfn);
 
 	/* Initial scan to find sortable values */
@@ -1833,7 +1833,7 @@ compute_scalar_stats(VacAttrStatsP stats,
 
 		/* Sort the collected values */
 		cxt.cmpFn = &f_cmpfn;
-		cxt.cmpFnKind = cmpFnKind;
+		cxt.cmpFlags = cmpFlags;
 		cxt.tupnoLink = tupnoLink;
 		qsort_arg((void *) values, values_cnt, sizeof(ScalarItem),
 				  compare_scalars, (void *) &cxt);
@@ -2203,7 +2203,7 @@ compare_scalars(const void *a, const void *b, void *arg)
 	CompareScalarsContext *cxt = (CompareScalarsContext *) arg;
 	int32		compare;
 
-	compare = ApplySortFunction(cxt->cmpFn, cxt->cmpFnKind,
+	compare = ApplySortFunction(cxt->cmpFn, cxt->cmpFlags,
 								da, false, db, false);
 	if (compare != 0)
 		return compare;

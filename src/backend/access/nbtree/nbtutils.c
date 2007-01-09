@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.81 2007/01/05 22:19:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.82 2007/01/09 02:14:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 static bool _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 						 ScanKey leftarg, ScanKey rightarg,
 						 bool *result);
+static void _bt_mark_scankey_with_indoption(ScanKey skey, int16 *indoption);
 static void _bt_mark_scankey_required(ScanKey skey);
 static bool _bt_check_rowcompare(ScanKey skey,
 					 IndexTuple tuple, TupleDesc tupdesc,
@@ -49,10 +50,12 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	ScanKey		skey;
 	TupleDesc	itupdesc;
 	int			natts;
+	int16	   *indoption;
 	int			i;
 
 	itupdesc = RelationGetDescr(rel);
 	natts = RelationGetNumberOfAttributes(rel);
+	indoption = rel->rd_indoption;
 
 	skey = (ScanKey) palloc(natts * sizeof(ScanKeyData));
 
@@ -61,6 +64,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 		FmgrInfo   *procinfo;
 		Datum		arg;
 		bool		null;
+		int			flags;
 
 		/*
 		 * We can use the cached (default) support procs since no cross-type
@@ -68,8 +72,9 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
 		arg = index_getattr(itup, i + 1, itupdesc, &null);
+		flags = (null ? SK_ISNULL : 0) | (indoption[i] << SK_BT_INDOPTION_SHIFT);
 		ScanKeyEntryInitializeWithInfo(&skey[i],
-									   null ? SK_ISNULL : 0,
+									   flags,
 									   (AttrNumber) (i + 1),
 									   InvalidStrategy,
 									   InvalidOid,
@@ -96,23 +101,27 @@ _bt_mkscankey_nodata(Relation rel)
 {
 	ScanKey		skey;
 	int			natts;
+	int16	   *indoption;
 	int			i;
 
 	natts = RelationGetNumberOfAttributes(rel);
+	indoption = rel->rd_indoption;
 
 	skey = (ScanKey) palloc(natts * sizeof(ScanKeyData));
 
 	for (i = 0; i < natts; i++)
 	{
 		FmgrInfo   *procinfo;
+		int			flags;
 
 		/*
 		 * We can use the cached (default) support procs since no cross-type
 		 * comparison can be needed.
 		 */
 		procinfo = index_getprocinfo(rel, i + 1, BTORDER_PROC);
+		flags = SK_ISNULL | (indoption[i] << SK_BT_INDOPTION_SHIFT);
 		ScanKeyEntryInitializeWithInfo(&skey[i],
-									   SK_ISNULL,
+									   flags,
 									   (AttrNumber) (i + 1),
 									   InvalidStrategy,
 									   InvalidOid,
@@ -157,7 +166,13 @@ _bt_freestack(BTStack stack)
  * the number of input keys, so->numberOfKeys gets the number of output
  * keys (possibly less, never greater).
  *
- * The primary purpose of this routine is to discover how many scan keys
+ * The output keys are marked with additional sk_flag bits beyond the
+ * system-standard bits supplied by the caller.  The DESC and NULLS_FIRST
+ * indoption bits for the relevant index attribute are copied into the flags.
+ * Also, for a DESC column, we commute (flip) all the sk_strategy numbers
+ * so that the index sorts in the desired direction.
+ *
+ * One key purpose of this routine is to discover how many scan keys
  * must be satisfied to continue the scan.	It also attempts to eliminate
  * redundant keys and detect contradictory keys.  (If the index opfamily
  * provides incomplete sets of cross-type operators, we may fail to detect
@@ -219,6 +234,7 @@ _bt_preprocess_keys(IndexScanDesc scan)
 {
 	BTScanOpaque so = (BTScanOpaque) scan->opaque;
 	int			numberOfKeys = scan->numberOfKeys;
+	int16	   *indoption = scan->indexRelation->rd_indoption;
 	int			new_numberOfKeys;
 	int			numberOfEqualCols;
 	ScanKey		inkeys;
@@ -254,7 +270,8 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		 */
 		if (cur->sk_flags & SK_ISNULL)
 			so->qual_ok = false;
-		memcpy(outkeys, inkeys, sizeof(ScanKeyData));
+		_bt_mark_scankey_with_indoption(cur, indoption);
+		memcpy(outkeys, cur, sizeof(ScanKeyData));
 		so->numberOfKeys = 1;
 		/* We can mark the qual as required if it's for first index col */
 		if (cur->sk_attno == 1)
@@ -407,6 +424,9 @@ _bt_preprocess_keys(IndexScanDesc scan)
 			memset(xform, 0, sizeof(xform));
 		}
 
+		/* apply indoption to scankey (might change sk_strategy!) */
+		_bt_mark_scankey_with_indoption(cur, indoption);
+
 		/* check strategy this key's operator corresponds to */
 		j = cur->sk_strategy - 1;
 
@@ -486,6 +506,11 @@ _bt_preprocess_keys(IndexScanDesc scan)
  * Note: op always points at the same ScanKey as either leftarg or rightarg.
  * Since we don't scribble on the scankeys, this aliasing should cause no
  * trouble.
+ *
+ * Note: this routine needs to be insensitive to any DESC option applied
+ * to the index column.  For example, "x < 4" is a tighter constraint than
+ * "x < 5" regardless of which way the index is sorted.  We don't worry about
+ * NULLS FIRST/LAST either, since the given values are never nulls.
  */
 static bool
 _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
@@ -498,6 +523,7 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 				optype,
 				opcintype,
 				cmp_op;
+	StrategyNumber strat;
 
 	/*
 	 * The opfamily we need to worry about is identified by the index column.
@@ -538,11 +564,18 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 	 * operator.  (This cannot result in infinite recursion, since no
 	 * indexscan initiated by syscache lookup will use cross-data-type
 	 * operators.)
+	 *
+	 * If the sk_strategy was flipped by _bt_mark_scankey_with_indoption,
+	 * we have to un-flip it to get the correct opfamily member.
 	 */
+	strat = op->sk_strategy;
+	if (op->sk_flags & SK_BT_DESC)
+		strat = BTCommuteStrategyNumber(strat);
+
 	cmp_op = get_opfamily_member(rel->rd_opfamily[leftarg->sk_attno - 1],
 								 lefttype,
 								 righttype,
-								 op->sk_strategy);
+								 strat);
 	if (OidIsValid(cmp_op))
 	{
 		RegProcedure cmp_proc = get_opcode(cmp_op);
@@ -562,13 +595,56 @@ _bt_compare_scankey_args(IndexScanDesc scan, ScanKey op,
 }
 
 /*
+ * Mark a scankey with info from the index's indoption array.
+ *
+ * We copy the appropriate indoption value into the scankey sk_flags
+ * (shifting to avoid clobbering system-defined flag bits).  Also, if
+ * the DESC option is set, commute (flip) the operator strategy number.
+ *
+ * This function is applied to the *input* scankey structure; therefore
+ * on a rescan we will be looking at already-processed scankeys.  Hence
+ * we have to be careful not to re-commute the strategy if we already did it.
+ * It's a bit ugly to modify the caller's copy of the scankey but in practice
+ * there shouldn't be any problem, since the index's indoptions are certainly
+ * not going to change while the scankey survives.
+ */
+static void
+_bt_mark_scankey_with_indoption(ScanKey skey, int16 *indoption)
+{
+	int		addflags;
+
+	addflags = indoption[skey->sk_attno - 1] << SK_BT_INDOPTION_SHIFT;
+	if ((addflags & SK_BT_DESC) && !(skey->sk_flags & SK_BT_DESC))
+		skey->sk_strategy = BTCommuteStrategyNumber(skey->sk_strategy);
+	skey->sk_flags |= addflags;
+
+	if (skey->sk_flags & SK_ROW_HEADER)
+	{
+		ScanKey		subkey = (ScanKey) DatumGetPointer(skey->sk_argument);
+
+		for (;;)
+		{
+			Assert(subkey->sk_flags & SK_ROW_MEMBER);
+			addflags = indoption[subkey->sk_attno - 1] << SK_BT_INDOPTION_SHIFT;
+			if ((addflags & SK_BT_DESC) && !(subkey->sk_flags & SK_BT_DESC))
+				subkey->sk_strategy = BTCommuteStrategyNumber(subkey->sk_strategy);
+			subkey->sk_flags |= addflags;
+			if (subkey->sk_flags & SK_ROW_END)
+				break;
+			subkey++;
+		}
+	}
+}
+
+/*
  * Mark a scankey as "required to continue the scan".
  *
  * Depending on the operator type, the key may be required for both scan
  * directions or just one.	Also, if the key is a row comparison header,
  * we have to mark the appropriate subsidiary ScanKeys as required.  In
  * such cases, the first subsidiary key is required, but subsequent ones
- * are required only as long as they correspond to successive index columns.
+ * are required only as long as they correspond to successive index columns
+ * and match the leading column as to sort direction.
  * Otherwise the row comparison ordering is different from the index ordering
  * and so we can't stop the scan on the basis of those lower-order columns.
  *
@@ -616,9 +692,10 @@ _bt_mark_scankey_required(ScanKey skey)
 		for (;;)
 		{
 			Assert(subkey->sk_flags & SK_ROW_MEMBER);
-			Assert(subkey->sk_strategy == skey->sk_strategy);
 			if (subkey->sk_attno != attno)
 				break;			/* non-adjacent key, so not required */
+			if (subkey->sk_strategy != skey->sk_strategy)
+				break;			/* wrong direction, so not required */
 			subkey->sk_flags |= addflags;
 			if (subkey->sk_flags & SK_ROW_END)
 				break;
@@ -731,15 +808,32 @@ _bt_checkkeys(IndexScanDesc scan,
 
 		if (isNull)
 		{
-			/*
-			 * Since NULLs are sorted after non-NULLs, we know we have reached
-			 * the upper limit of the range of values for this index attr.	On
-			 * a forward scan, we can stop if this qual is one of the "must
-			 * match" subset.  On a backward scan, however, we should keep
-			 * going.
-			 */
-			if ((key->sk_flags & SK_BT_REQFWD) && ScanDirectionIsForward(dir))
-				*continuescan = false;
+			if (key->sk_flags & SK_BT_NULLS_FIRST)
+			{
+				/*
+				 * Since NULLs are sorted before non-NULLs, we know we have
+				 * reached the lower limit of the range of values for this
+				 * index attr.  On a backward scan, we can stop if this qual is
+				 * one of the "must match" subset.  On a forward scan,
+				 * however, we should keep going.
+				 */
+				if ((key->sk_flags & SK_BT_REQBKWD) &&
+					ScanDirectionIsBackward(dir))
+					*continuescan = false;
+			}
+			else
+			{
+				/*
+				 * Since NULLs are sorted after non-NULLs, we know we have
+				 * reached the upper limit of the range of values for this
+				 * index attr.  On a forward scan, we can stop if this qual is
+				 * one of the "must match" subset.  On a backward scan,
+				 * however, we should keep going.
+				 */
+				if ((key->sk_flags & SK_BT_REQFWD) &&
+					ScanDirectionIsForward(dir))
+					*continuescan = false;
+			}
 
 			/*
 			 * In any case, this indextuple doesn't match the qual.
@@ -809,7 +903,6 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 		bool		isNull;
 
 		Assert(subkey->sk_flags & SK_ROW_MEMBER);
-		Assert(subkey->sk_strategy == skey->sk_strategy);
 
 		datum = index_getattr(tuple,
 							  subkey->sk_attno,
@@ -818,16 +911,32 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 
 		if (isNull)
 		{
-			/*
-			 * Since NULLs are sorted after non-NULLs, we know we have reached
-			 * the upper limit of the range of values for this index attr.	On
-			 * a forward scan, we can stop if this qual is one of the "must
-			 * match" subset.  On a backward scan, however, we should keep
-			 * going.
-			 */
-			if ((subkey->sk_flags & SK_BT_REQFWD) &&
-				ScanDirectionIsForward(dir))
-				*continuescan = false;
+			if (subkey->sk_flags & SK_BT_NULLS_FIRST)
+			{
+				/*
+				 * Since NULLs are sorted before non-NULLs, we know we have
+				 * reached the lower limit of the range of values for this
+				 * index attr. On a backward scan, we can stop if this qual is
+				 * one of the "must match" subset.  On a forward scan,
+				 * however, we should keep going.
+				 */
+				if ((subkey->sk_flags & SK_BT_REQBKWD) &&
+					ScanDirectionIsBackward(dir))
+					*continuescan = false;
+			}
+			else
+			{
+				/*
+				 * Since NULLs are sorted after non-NULLs, we know we have
+				 * reached the upper limit of the range of values for this
+				 * index attr. On a forward scan, we can stop if this qual is
+				 * one of the "must match" subset.  On a backward scan,
+				 * however, we should keep going.
+				 */
+				if ((subkey->sk_flags & SK_BT_REQFWD) &&
+					ScanDirectionIsForward(dir))
+					*continuescan = false;
+			}
 
 			/*
 			 * In any case, this indextuple doesn't match the qual.
@@ -858,6 +967,9 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 		cmpresult = DatumGetInt32(FunctionCall2(&subkey->sk_func,
 												datum,
 												subkey->sk_argument));
+
+		if (subkey->sk_flags & SK_BT_DESC)
+			cmpresult = -cmpresult;
 
 		/* Done comparing if unequal, else advance to next column */
 		if (cmpresult != 0)

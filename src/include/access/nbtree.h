@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.107 2007/01/05 22:19:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.108 2007/01/09 02:14:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,7 +327,11 @@ typedef struct xl_btree_newroot
 /*
  *	Operator strategy numbers for B-tree have been moved to access/skey.h,
  *	because many places need to use them in ScanKeyInit() calls.
+ *
+ *	The strategy numbers are chosen so that we can commute them by
+ *	subtraction, thus:
  */
+#define BTCommuteStrategyNumber(strat)  (BTMaxStrategyNumber + 1 - (strat))
 
 /*
  *	When a new operator class is declared, we require that the user
@@ -458,11 +462,15 @@ typedef struct BTScanOpaqueData
 typedef BTScanOpaqueData *BTScanOpaque;
 
 /*
- * We use these private sk_flags bits in preprocessed scan keys
+ * We use some private sk_flags bits in preprocessed scan keys.  We're allowed
+ * to use bits 16-31 (see skey.h).  The uppermost bits are copied from the
+ * index's indoption[] array entry for the index attribute.
  */
 #define SK_BT_REQFWD	0x00010000		/* required to continue forward scan */
 #define SK_BT_REQBKWD	0x00020000		/* required to continue backward scan */
-
+#define SK_BT_INDOPTION_SHIFT  24		/* must clear the above bits */
+#define SK_BT_DESC			(INDOPTION_DESC << SK_BT_INDOPTION_SHIFT)
+#define SK_BT_NULLS_FIRST	(INDOPTION_NULLS_FIRST << SK_BT_INDOPTION_SHIFT)
 
 /*
  * prototypes for functions in nbtree.c (external entry points for btree)

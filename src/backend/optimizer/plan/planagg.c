@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.24 2007/01/05 22:19:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.25 2007/01/09 02:14:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@ typedef struct
 	Expr	   *target;			/* expression we are aggregating on */
 	IndexPath  *path;			/* access path for index scan */
 	Cost		pathcost;		/* estimated cost to fetch first row */
+	bool		nulls_first;	/* null ordering direction matching index */
 	Param	   *param;			/* param for subplan's output */
 } MinMaxAggInfo;
 
@@ -277,6 +278,7 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 {
 	IndexPath  *best_path = NULL;
 	Cost		best_cost = 0;
+	bool		best_nulls_first = false;
 	ListCell   *l;
 
 	foreach(l, rel->indexlist)
@@ -377,11 +379,16 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
 		{
 			best_path = new_path;
 			best_cost = new_cost;
+			if (ScanDirectionIsForward(indexscandir))
+				best_nulls_first = index->nulls_first[indexcol];
+			else
+				best_nulls_first = !index->nulls_first[indexcol];
 		}
 	}
 
 	info->path = best_path;
 	info->pathcost = best_cost;
+	info->nulls_first = best_nulls_first;
 	return (best_path != NULL);
 }
 
@@ -390,29 +397,30 @@ build_minmax_path(PlannerInfo *root, RelOptInfo *rel, MinMaxAggInfo *info)
  *		Does an aggregate match an index column?
  *
  * It matches if its argument is equal to the index column's data and its
- * sortop is either a LessThan or GreaterThan member of the column's opfamily.
+ * sortop is either the forward or reverse sort operator for the column.
  *
- * We return ForwardScanDirection if match a LessThan member,
- * BackwardScanDirection if match a GreaterThan member,
+ * We return ForwardScanDirection if match the forward sort operator,
+ * BackwardScanDirection if match the reverse sort operator,
  * and NoMovementScanDirection if there's no match.
  */
 static ScanDirection
 match_agg_to_index_col(MinMaxAggInfo *info, IndexOptInfo *index, int indexcol)
 {
-	int			strategy;
+	ScanDirection	result;
+
+	/* Check for operator match first (cheaper) */
+	if (info->aggsortop == index->fwdsortop[indexcol])
+		result = ForwardScanDirection;
+	else if (info->aggsortop == index->revsortop[indexcol])
+		result = BackwardScanDirection;
+	else
+		return NoMovementScanDirection;
 
 	/* Check for data match */
 	if (!match_index_to_operand((Node *) info->target, indexcol, index))
 		return NoMovementScanDirection;
 
-	/* Look up the operator in the opfamily */
-	strategy = get_op_opfamily_strategy(info->aggsortop,
-										index->opfamily[indexcol]);
-	if (strategy == BTLessStrategyNumber)
-		return ForwardScanDirection;
-	if (strategy == BTGreaterStrategyNumber)
-		return BackwardScanDirection;
-	return NoMovementScanDirection;
+	return result;
 }
 
 /*
@@ -458,6 +466,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 	sortcl = makeNode(SortClause);
 	sortcl->tleSortGroupRef = assignSortGroupRef(tle, subparse->targetList);
 	sortcl->sortop = info->aggsortop;
+	sortcl->nulls_first = info->nulls_first;
 	subparse->sortClause = list_make1(sortcl);
 
 	/* set up LIMIT 1 */

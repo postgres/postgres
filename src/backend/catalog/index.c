@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.275 2007/01/05 22:19:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.276 2007/01/09 02:14:11 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -73,6 +73,7 @@ static void AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					IndexInfo *indexInfo,
 					Oid *classOids,
+					int16 *coloptions,
 					bool primary,
 					bool isvalid);
 static void index_update_stats(Relation rel, bool hasindex, bool isprimary,
@@ -336,11 +337,13 @@ UpdateIndexRelation(Oid indexoid,
 					Oid heapoid,
 					IndexInfo *indexInfo,
 					Oid *classOids,
+					int16 *coloptions,
 					bool primary,
 					bool isvalid)
 {
 	int2vector *indkey;
 	oidvector  *indclass;
+	int2vector *indoption;
 	Datum		exprsDatum;
 	Datum		predDatum;
 	Datum		values[Natts_pg_index];
@@ -350,13 +353,14 @@ UpdateIndexRelation(Oid indexoid,
 	int			i;
 
 	/*
-	 * Copy the index key and opclass info into arrays (should we make the
-	 * caller pass them like this to start with?)
+	 * Copy the index key, opclass, and indoption info into arrays (should we
+	 * make the caller pass them like this to start with?)
 	 */
 	indkey = buildint2vector(NULL, indexInfo->ii_NumIndexAttrs);
-	indclass = buildoidvector(classOids, indexInfo->ii_NumIndexAttrs);
 	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 		indkey->values[i] = indexInfo->ii_KeyAttrNumbers[i];
+	indclass = buildoidvector(classOids, indexInfo->ii_NumIndexAttrs);
+	indoption = buildint2vector(coloptions, indexInfo->ii_NumIndexAttrs);
 
 	/*
 	 * Convert the index expressions (if any) to a text datum
@@ -408,6 +412,7 @@ UpdateIndexRelation(Oid indexoid,
 	values[Anum_pg_index_indisvalid - 1] = BoolGetDatum(isvalid);
 	values[Anum_pg_index_indkey - 1] = PointerGetDatum(indkey);
 	values[Anum_pg_index_indclass - 1] = PointerGetDatum(indclass);
+	values[Anum_pg_index_indoption - 1] = PointerGetDatum(indoption);
 	values[Anum_pg_index_indexprs - 1] = exprsDatum;
 	if (exprsDatum == (Datum) 0)
 		nulls[Anum_pg_index_indexprs - 1] = 'n';
@@ -445,6 +450,7 @@ UpdateIndexRelation(Oid indexoid,
  * accessMethodObjectId: OID of index AM to use
  * tableSpaceId: OID of tablespace to use
  * classObjectId: array of index opclass OIDs, one per index column
+ * coloptions: array of per-index-column indoption settings
  * reloptions: AM-specific options
  * isprimary: index is a PRIMARY KEY
  * isconstraint: index is owned by a PRIMARY KEY or UNIQUE constraint
@@ -465,6 +471,7 @@ index_create(Oid heapRelationId,
 			 Oid accessMethodObjectId,
 			 Oid tableSpaceId,
 			 Oid *classObjectId,
+			 int16 *coloptions,
 			 Datum reloptions,
 			 bool isprimary,
 			 bool isconstraint,
@@ -618,7 +625,7 @@ index_create(Oid heapRelationId,
 	 * ----------------
 	 */
 	UpdateIndexRelation(indexRelationId, heapRelationId, indexInfo,
-						classObjectId, isprimary, !concurrent);
+						classObjectId, coloptions, isprimary, !concurrent);
 
 	/*
 	 * Register constraint and dependencies for the index.
@@ -1639,7 +1646,7 @@ validate_index(Oid heapId, Oid indexId, Snapshot snapshot)
 	ivinfo.num_heap_tuples = -1;
 
 	state.tuplesort = tuplesort_begin_datum(TIDOID,
-											TIDLessOperator,
+											TIDLessOperator, false,
 											maintenance_work_mem,
 											false);
 	state.htups = state.itups = state.tups_inserted = 0;

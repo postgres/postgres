@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.130 2007/01/05 22:19:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.131 2007/01/09 02:14:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,19 +300,23 @@ typedef struct RelOptInfo
  *		and indexes, but that created confusion without actually doing anything
  *		useful.  So now we have a separate IndexOptInfo struct for indexes.
  *
- *		opfamily[], indexkeys[], and ordering[] have ncolumns entries.
+ *		opfamily[], indexkeys[], fwdsortop[], revsortop[], and nulls_first[]
+ *		each have ncolumns entries.  Note: for historical reasons, the
+ *		opfamily array has an extra entry that is always zero.  Some code
+ *		scans until it sees a zero entry, rather than looking at ncolumns.
+ *
  *		Zeroes in the indexkeys[] array indicate index columns that are
  *		expressions; there is one element in indexprs for each such column.
  *
- *		Note: for historical reasons, the opfamily and ordering arrays have
- *		an extra entry that is always zero.  Some code scans until it sees a
- *		zero entry, rather than looking at ncolumns.
+ *		For an unordered index, the sortop arrays contains zeroes.  Note that
+ *		fwdsortop[] and nulls_first[] describe the sort ordering of a forward
+ *		indexscan; we can also consider a backward indexscan, which will
+ *		generate sort order described by revsortop/!nulls_first.
  *
  *		The indexprs and indpred expressions have been run through
  *		prepqual.c and eval_const_expressions() for ease of matching to
- *		WHERE clauses.	indpred is in implicit-AND form.
+ *		WHERE clauses. indpred is in implicit-AND form.
  */
-
 typedef struct IndexOptInfo
 {
 	NodeTag		type;
@@ -328,7 +332,9 @@ typedef struct IndexOptInfo
 	int			ncolumns;		/* number of columns in index */
 	Oid		   *opfamily;		/* OIDs of operator families for columns */
 	int		   *indexkeys;		/* column numbers of index's keys, or 0 */
-	Oid		   *ordering;		/* OIDs of sort operators for each column */
+	Oid		   *fwdsortop;		/* OIDs of sort operators for each column */
+	Oid		   *revsortop;		/* OIDs of sort operators for backward scan */
+	bool	   *nulls_first;	/* do NULLs come first in the sort order? */
 	Oid			relam;			/* OID of the access method (in pg_am) */
 
 	RegProcedure amcostestimate;	/* OID of the access method's cost fcn */
@@ -360,6 +366,7 @@ typedef struct PathKeyItem
 
 	Node	   *key;			/* the item that is ordered */
 	Oid			sortop;			/* the ordering operator ('<' op) */
+	bool		nulls_first;	/* do NULLs come before normal values? */
 
 	/*
 	 * key typically points to a Var node, ie a relation attribute, but it can

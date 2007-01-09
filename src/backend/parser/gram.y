@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.572 2007/01/05 22:19:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.573 2007/01/09 02:14:14 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -175,7 +175,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 				simple_select values_clause
 
 %type <node>	alter_column_default opclass_item alter_using
-%type <ival>	add_drop
+%type <ival>	add_drop opt_asc_desc opt_nulls_order
 
 %type <node>	alter_table_cmd alter_rel_cmd
 %type <list>	alter_table_cmds alter_rel_cmds
@@ -397,7 +397,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 
 	KEY
 
-	LANCOMPILER LANGUAGE LARGE_P  LAST_P LEADING LEAST LEFT LEVEL
+	LANCOMPILER LANGUAGE LARGE_P LAST_P LEADING LEAST LEFT LEVEL
 	LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P LOGIN_P
 
@@ -405,7 +405,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 
 	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
 	NOCREATEROLE NOCREATEUSER NOINHERIT NOLOGIN_P NONE NOSUPERUSER
-	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF NUMERIC
+	NOT NOTHING NOTIFY NOTNULL NOWAIT NULL_P NULLIF NULLS_P NUMERIC
 
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
@@ -449,7 +449,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
  * list and so can never be entered directly.  The filter in parser.c
  * creates these tokens when required.
  */
-%token			WITH_CASCADED WITH_LOCAL WITH_CHECK
+%token			NULLS_FIRST NULLS_LAST WITH_CASCADED WITH_LOCAL WITH_CHECK
 
 /* Special token types, not actually keywords - see the "lex" file */
 %token <str>	IDENT FCONST SCONST BCONST XCONST Op
@@ -3712,26 +3712,32 @@ index_params:	index_elem							{ $$ = list_make1($1); }
  * expressions in parens.  For backwards-compatibility reasons, we allow
  * an expression that's just a function call to be written without parens.
  */
-index_elem:	ColId opt_class
+index_elem:	ColId opt_class opt_asc_desc opt_nulls_order
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = $1;
 					$$->expr = NULL;
 					$$->opclass = $2;
+					$$->ordering = $3;
+					$$->nulls_ordering = $4;
 				}
-			| func_expr opt_class
+			| func_expr opt_class opt_asc_desc opt_nulls_order
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = NULL;
 					$$->expr = $1;
 					$$->opclass = $2;
+					$$->ordering = $3;
+					$$->nulls_ordering = $4;
 				}
-			| '(' a_expr ')' opt_class
+			| '(' a_expr ')' opt_class opt_asc_desc opt_nulls_order
 				{
 					$$ = makeNode(IndexElem);
 					$$->name = NULL;
 					$$->expr = $2;
 					$$->opclass = $4;
+					$$->ordering = $5;
+					$$->nulls_ordering = $6;
 				}
 		;
 
@@ -3739,6 +3745,17 @@ opt_class:	any_name								{ $$ = $1; }
 			| USING any_name						{ $$ = $2; }
 			| /*EMPTY*/								{ $$ = NIL; }
 		;
+
+opt_asc_desc: ASC							{ $$ = SORTBY_ASC; }
+			| DESC							{ $$ = SORTBY_DESC; }
+			| /*EMPTY*/						{ $$ = SORTBY_DEFAULT; }
+		;
+
+opt_nulls_order: NULLS_FIRST				{ $$ = SORTBY_NULLS_FIRST; }
+			| NULLS_LAST					{ $$ = SORTBY_NULLS_LAST; }
+			| /*EMPTY*/						{ $$ = SORTBY_NULLS_DEFAULT; }
+		;
+
 
 /*****************************************************************************
  *
@@ -5810,32 +5827,36 @@ sortby_list:
 			| sortby_list ',' sortby				{ $$ = lappend($1, $3); }
 		;
 
-sortby:		a_expr USING qual_all_Op
+sortby:		a_expr USING qual_all_Op opt_nulls_order
 				{
 					$$ = makeNode(SortBy);
 					$$->node = $1;
-					$$->sortby_kind = SORTBY_USING;
+					$$->sortby_dir = SORTBY_USING;
+					$$->sortby_nulls = $4;
 					$$->useOp = $3;
 				}
-			| a_expr ASC
+			| a_expr ASC opt_nulls_order
 				{
 					$$ = makeNode(SortBy);
 					$$->node = $1;
-					$$->sortby_kind = SORTBY_ASC;
+					$$->sortby_dir = SORTBY_ASC;
+					$$->sortby_nulls = $3;
 					$$->useOp = NIL;
 				}
-			| a_expr DESC
+			| a_expr DESC opt_nulls_order
 				{
 					$$ = makeNode(SortBy);
 					$$->node = $1;
-					$$->sortby_kind = SORTBY_DESC;
+					$$->sortby_dir = SORTBY_DESC;
+					$$->sortby_nulls = $3;
 					$$->useOp = NIL;
 				}
-			| a_expr
+			| a_expr opt_nulls_order
 				{
 					$$ = makeNode(SortBy);
 					$$->node = $1;
-					$$->sortby_kind = SORTBY_ASC;	/* default */
+					$$->sortby_dir = SORTBY_DEFAULT;
+					$$->sortby_nulls = $2;
 					$$->useOp = NIL;
 				}
 		;
@@ -8613,6 +8634,7 @@ unreserved_keyword:
 			| NOTHING
 			| NOTIFY
 			| NOWAIT
+			| NULLS_P
 			| OBJECT_P
 			| OF
 			| OIDS

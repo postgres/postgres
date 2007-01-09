@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.72 2007/01/05 22:19:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.73 2007/01/09 02:14:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,7 +315,6 @@ struct Tuplesortstate
 	 */
 	TupleDesc	tupDesc;
 	ScanKey		scanKeys;		/* array of length nKeys */
-	SortFunctionKind *sortFnKinds;		/* array of length nKeys */
 
 	/*
 	 * These variables are specific to the IndexTuple case; they are set by
@@ -330,9 +329,8 @@ struct Tuplesortstate
 	 * tuplesort_begin_datum and used only by the DatumTuple routines.
 	 */
 	Oid			datumType;
-	Oid			sortOperator;
 	FmgrInfo	sortOpFn;		/* cached lookup data for sortOperator */
-	SortFunctionKind sortFnKind;
+	int			sortFnFlags;	/* equivalent to sk_flags */
 	/* we need typelen and byval in order to know how to copy the Datums. */
 	int			datumTypeLen;
 	bool		datumTypeByVal;
@@ -515,8 +513,8 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 
 Tuplesortstate *
 tuplesort_begin_heap(TupleDesc tupDesc,
-					 int nkeys,
-					 Oid *sortOperators, AttrNumber *attNums,
+					 int nkeys, AttrNumber *attNums,
+					 Oid *sortOperators, bool *nullsFirstFlags,
 					 int workMem, bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
@@ -543,19 +541,19 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 
 	state->tupDesc = tupDesc;	/* assume we need not copy tupDesc */
 	state->scanKeys = (ScanKey) palloc0(nkeys * sizeof(ScanKeyData));
-	state->sortFnKinds = (SortFunctionKind *)
-		palloc0(nkeys * sizeof(SortFunctionKind));
 
 	for (i = 0; i < nkeys; i++)
 	{
-		RegProcedure sortFunction;
+		Oid		sortFunction;
+		bool	reverse;
 
-		AssertArg(sortOperators[i] != 0);
 		AssertArg(attNums[i] != 0);
+		AssertArg(sortOperators[i] != 0);
 
-		/* select a function that implements the sort operator */
-		SelectSortFunction(sortOperators[i], &sortFunction,
-						   &state->sortFnKinds[i]);
+		if (!get_op_compare_function(sortOperators[i],
+									 &sortFunction, &reverse))
+			elog(ERROR, "operator %u is not a valid ordering operator",
+				 sortOperators[i]);
 
 		/*
 		 * We needn't fill in sk_strategy or sk_subtype since these scankeys
@@ -566,6 +564,12 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 					InvalidStrategy,
 					sortFunction,
 					(Datum) 0);
+
+		/* However, we use btree's conventions for encoding directionality */
+		if (reverse)
+			state->scanKeys[i].sk_flags |= SK_BT_DESC;
+		if (nullsFirstFlags[i])
+			state->scanKeys[i].sk_flags |= SK_BT_NULLS_FIRST;
 	}
 
 	MemoryContextSwitchTo(oldcontext);
@@ -610,12 +614,13 @@ tuplesort_begin_index(Relation indexRel,
 
 Tuplesortstate *
 tuplesort_begin_datum(Oid datumType,
-					  Oid sortOperator,
+					  Oid sortOperator, bool nullsFirstFlag,
 					  int workMem, bool randomAccess)
 {
 	Tuplesortstate *state = tuplesort_begin_common(workMem, randomAccess);
 	MemoryContext oldcontext;
-	RegProcedure sortFunction;
+	Oid			sortFunction;
+	bool		reverse;
 	int16		typlen;
 	bool		typbyval;
 
@@ -636,12 +641,18 @@ tuplesort_begin_datum(Oid datumType,
 	state->readtup = readtup_datum;
 
 	state->datumType = datumType;
-	state->sortOperator = sortOperator;
 
-	/* select a function that implements the sort operator */
-	SelectSortFunction(sortOperator, &sortFunction, &state->sortFnKind);
-	/* and look up the function */
+	/* lookup the ordering function */
+	if (!get_op_compare_function(sortOperator,
+								 &sortFunction, &reverse))
+		elog(ERROR, "operator %u is not a valid ordering operator",
+			 sortOperator);
 	fmgr_info(sortFunction, &state->sortOpFn);
+
+	/* set ordering flags */
+	state->sortFnFlags = reverse ? SK_BT_DESC : 0;
+	if (nullsFirstFlag)
+		state->sortFnFlags |= SK_BT_NULLS_FIRST;
 
 	/* lookup necessary attributes of the datum type */
 	get_typlenbyval(datumType, &typlen, &typbyval);
@@ -2083,106 +2094,26 @@ markrunend(Tuplesortstate *state, int tapenum)
 
 
 /*
- * This routine selects an appropriate sorting function to implement
- * a sort operator as efficiently as possible.	The straightforward
- * method is to use the operator's implementation proc --- ie, "<"
- * comparison.	However, that way often requires two calls of the function
- * per comparison.	If we can find a btree three-way comparator function
- * associated with the operator, we can use it to do the comparisons
- * more efficiently.  We also support the possibility that the operator
- * is ">" (descending sort), in which case we have to reverse the output
- * of the btree comparator.
- *
- * Possibly this should live somewhere else (backend/catalog/, maybe?).
+ * Set up for an external caller of ApplySortFunction.  This function
+ * basically just exists to localize knowledge of the encoding of sk_flags
+ * used in this module.
  */
 void
 SelectSortFunction(Oid sortOperator,
-				   RegProcedure *sortFunction,
-				   SortFunctionKind *kind)
+				   bool nulls_first,
+				   Oid *sortFunction,
+				   int *sortFlags)
 {
-	CatCList   *catlist;
-	int			i;
-	HeapTuple	tuple;
-	Form_pg_operator optup;
-	Oid			opfamily = InvalidOid;
-	Oid			opinputtype = InvalidOid;
+	bool	reverse;
 
-	/*
-	 * Search pg_amop to see if the target operator is registered as a "<"
-	 * or ">" operator of any btree opfamily.  It's possible that it might be
-	 * registered both ways (eg, if someone were to build a "reverse sort"
-	 * opfamily); prefer the "<" case if so. If the operator is registered the
-	 * same way in multiple opfamilies, assume we can use the associated
-	 * comparator function from any one.
-	 */
-	catlist = SearchSysCacheList(AMOPOPID, 1,
-								 ObjectIdGetDatum(sortOperator),
-								 0, 0, 0);
+	if (!get_op_compare_function(sortOperator,
+								 sortFunction, &reverse))
+		elog(ERROR, "operator %u is not a valid ordering operator",
+			 sortOperator);
 
-	for (i = 0; i < catlist->n_members; i++)
-	{
-		Form_pg_amop aform;
-
-		tuple = &catlist->members[i]->tuple;
-		aform = (Form_pg_amop) GETSTRUCT(tuple);
-
-		/* must be btree */
-		if (aform->amopmethod != BTREE_AM_OID)
-			continue;
-		/* mustn't be cross-datatype, either */
-		if (aform->amoplefttype != aform->amoprighttype)
-			continue;
-
-		if (aform->amopstrategy == BTLessStrategyNumber)
-		{
-			opfamily = aform->amopfamily;
-			opinputtype = aform->amoplefttype;
-			*kind = SORTFUNC_CMP;
-			break;				/* done looking */
-		}
-		else if (aform->amopstrategy == BTGreaterStrategyNumber)
-		{
-			opfamily = aform->amopfamily;
-			opinputtype = aform->amoplefttype;
-			*kind = SORTFUNC_REVCMP;
-			/* keep scanning in hopes of finding a BTLess entry */
-		}
-	}
-
-	ReleaseSysCacheList(catlist);
-
-	if (OidIsValid(opfamily))
-	{
-		/* Found a suitable opfamily, get the matching comparator function */
-		*sortFunction = get_opfamily_proc(opfamily,
-										  opinputtype,
-										  opinputtype,
-										  BTORDER_PROC);
-		Assert(RegProcedureIsValid(*sortFunction));
-		return;
-	}
-
-	/*
-	 * Can't find a comparator, so use the operator as-is.  Decide whether it
-	 * is forward or reverse sort by looking at its name (grotty, but this
-	 * only matters for deciding which end NULLs should get sorted to).  XXX
-	 * possibly better idea: see whether its selectivity function is
-	 * scalargtcmp?
-	 */
-	tuple = SearchSysCache(OPEROID,
-						   ObjectIdGetDatum(sortOperator),
-						   0, 0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "cache lookup failed for operator %u", sortOperator);
-	optup = (Form_pg_operator) GETSTRUCT(tuple);
-	if (strcmp(NameStr(optup->oprname), ">") == 0)
-		*kind = SORTFUNC_REVLT;
-	else
-		*kind = SORTFUNC_LT;
-	*sortFunction = optup->oprcode;
-	ReleaseSysCache(tuple);
-
-	Assert(RegProcedureIsValid(*sortFunction));
+	*sortFlags = reverse ? SK_BT_DESC : 0;
+	if (nulls_first)
+		*sortFlags |= SK_BT_NULLS_FIRST;
 }
 
 /*
@@ -2213,74 +2144,42 @@ myFunctionCall2(FmgrInfo *flinfo, Datum arg1, Datum arg2)
 /*
  * Apply a sort function (by now converted to fmgr lookup form)
  * and return a 3-way comparison result.  This takes care of handling
- * NULLs and sort ordering direction properly.
+ * reverse-sort and NULLs-ordering properly.  We assume that DESC and
+ * NULLS_FIRST options are encoded in sk_flags the same way btree does it.
  */
 static inline int32
-inlineApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
+inlineApplySortFunction(FmgrInfo *sortFunction, int sk_flags,
 						Datum datum1, bool isNull1,
 						Datum datum2, bool isNull2)
 {
-	switch (kind)
+	int32		compare;
+
+	if (isNull1)
 	{
-		case SORTFUNC_LT:
-			if (isNull1)
-			{
-				if (isNull2)
-					return 0;
-				return 1;		/* NULL sorts after non-NULL */
-			}
-			if (isNull2)
-				return -1;
-			if (DatumGetBool(myFunctionCall2(sortFunction, datum1, datum2)))
-				return -1;		/* a < b */
-			if (DatumGetBool(myFunctionCall2(sortFunction, datum2, datum1)))
-				return 1;		/* a > b */
-			return 0;
-
-		case SORTFUNC_REVLT:
-			/* We reverse the ordering of NULLs, but not the operator */
-			if (isNull1)
-			{
-				if (isNull2)
-					return 0;
-				return -1;		/* NULL sorts before non-NULL */
-			}
-			if (isNull2)
-				return 1;
-			if (DatumGetBool(myFunctionCall2(sortFunction, datum1, datum2)))
-				return -1;		/* a < b */
-			if (DatumGetBool(myFunctionCall2(sortFunction, datum2, datum1)))
-				return 1;		/* a > b */
-			return 0;
-
-		case SORTFUNC_CMP:
-			if (isNull1)
-			{
-				if (isNull2)
-					return 0;
-				return 1;		/* NULL sorts after non-NULL */
-			}
-			if (isNull2)
-				return -1;
-			return DatumGetInt32(myFunctionCall2(sortFunction,
-												 datum1, datum2));
-
-		case SORTFUNC_REVCMP:
-			if (isNull1)
-			{
-				if (isNull2)
-					return 0;
-				return -1;		/* NULL sorts before non-NULL */
-			}
-			if (isNull2)
-				return 1;
-			return -DatumGetInt32(myFunctionCall2(sortFunction,
-												  datum1, datum2));
-
-		default:
-			elog(ERROR, "unrecognized SortFunctionKind: %d", (int) kind);
-			return 0;			/* can't get here, but keep compiler quiet */
+		if (isNull2)
+			compare = 0;		/* NULL "=" NULL */
+		else if (sk_flags & SK_BT_NULLS_FIRST)
+			compare = -1;		/* NULL "<" NOT_NULL */
+		else
+			compare = 1;		/* NULL ">" NOT_NULL */
 	}
+	else if (isNull2)
+	{
+		if (sk_flags & SK_BT_NULLS_FIRST)
+			compare = 1;		/* NOT_NULL ">" NULL */
+		else
+			compare = -1;		/* NOT_NULL "<" NULL */
+	}
+	else
+	{
+		compare = DatumGetInt32(myFunctionCall2(sortFunction,
+												datum1, datum2));
+
+		if (sk_flags & SK_BT_DESC)
+			compare = -compare;
+	}
+
+	return compare;
 }
 
 /*
@@ -2288,11 +2187,11 @@ inlineApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
  * C99's brain-dead notions about how to implement inline functions...
  */
 int32
-ApplySortFunction(FmgrInfo *sortFunction, SortFunctionKind kind,
+ApplySortFunction(FmgrInfo *sortFunction, int sortFlags,
 				  Datum datum1, bool isNull1,
 				  Datum datum2, bool isNull2)
 {
-	return inlineApplySortFunction(sortFunction, kind,
+	return inlineApplySortFunction(sortFunction, sortFlags,
 								   datum1, isNull1,
 								   datum2, isNull2);
 }
@@ -2316,8 +2215,7 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	CHECK_FOR_INTERRUPTS();
 
 	/* Compare the leading sort key */
-	compare = inlineApplySortFunction(&scanKey->sk_func,
-									  state->sortFnKinds[0],
+	compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
 									  a->datum1, a->isnull1,
 									  b->datum1, b->isnull1);
 	if (compare != 0)
@@ -2341,8 +2239,7 @@ comparetup_heap(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 		datum1 = heap_getattr(&ltup, attno, tupDesc, &isnull1);
 		datum2 = heap_getattr(&rtup, attno, tupDesc, &isnull2);
 
-		compare = inlineApplySortFunction(&scanKey->sk_func,
-										  state->sortFnKinds[nkey],
+		compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
 										  datum1, isnull1,
 										  datum2, isnull2);
 		if (compare != 0)
@@ -2457,8 +2354,7 @@ comparetup_index(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	CHECK_FOR_INTERRUPTS();
 
 	/* Compare the leading sort key */
-	compare = inlineApplySortFunction(&scanKey->sk_func,
-									  SORTFUNC_CMP,
+	compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
 									  a->datum1, a->isnull1,
 									  b->datum1, b->isnull1);
 	if (compare != 0)
@@ -2484,14 +2380,9 @@ comparetup_index(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 		datum1 = index_getattr(tuple1, nkey, tupDes, &isnull1);
 		datum2 = index_getattr(tuple2, nkey, tupDes, &isnull2);
 
-		/* see comments about NULLs handling in btbuild */
-
-		/* the comparison function is always of CMP type */
-		compare = inlineApplySortFunction(&scanKey->sk_func,
-										  SORTFUNC_CMP,
+		compare = inlineApplySortFunction(&scanKey->sk_func, scanKey->sk_flags,
 										  datum1, isnull1,
 										  datum2, isnull2);
-
 		if (compare != 0)
 			return compare;		/* done when we find unequal attributes */
 
@@ -2617,7 +2508,7 @@ comparetup_datum(const SortTuple *a, const SortTuple *b, Tuplesortstate *state)
 	/* Allow interrupting long sorts */
 	CHECK_FOR_INTERRUPTS();
 
-	return inlineApplySortFunction(&state->sortOpFn, state->sortFnKind,
+	return inlineApplySortFunction(&state->sortOpFn, state->sortFnFlags,
 								   a->datum1, a->isnull1,
 								   b->datum1, b->isnull1);
 }

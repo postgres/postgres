@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.130 2007/01/05 22:19:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.131 2007/01/09 02:14:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,6 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			IndexOptInfo *info;
 			int			ncolumns;
 			int			i;
-			int16		amorderstrategy;
 
 			/*
 			 * Extract info from the relation descriptor for the index.
@@ -169,12 +168,15 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			info->ncolumns = ncolumns = index->indnatts;
 
 			/*
-			 * Need to make opfamily and ordering arrays large enough to put
-			 * a terminating 0 at the end of each one.
+			 * Need to make opfamily array large enough to put a terminating
+			 * zero at the end.
 			 */
 			info->indexkeys = (int *) palloc(sizeof(int) * ncolumns);
 			info->opfamily = (Oid *) palloc0(sizeof(Oid) * (ncolumns + 1));
-			info->ordering = (Oid *) palloc0(sizeof(Oid) * (ncolumns + 1));
+			/* initialize these to zeroes in case index is unordered */
+			info->fwdsortop = (Oid *) palloc0(sizeof(Oid) * ncolumns);
+			info->revsortop = (Oid *) palloc0(sizeof(Oid) * ncolumns);
+			info->nulls_first = (bool *) palloc0(sizeof(bool) * ncolumns);
 
 			for (i = 0; i < ncolumns; i++)
 			{
@@ -189,22 +191,42 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			/*
 			 * Fetch the ordering operators associated with the index, if any.
 			 */
-			amorderstrategy = indexRelation->rd_am->amorderstrategy;
-			if (amorderstrategy > 0)
+			if (indexRelation->rd_am->amorderstrategy > 0)
 			{
-				int			oprindex = amorderstrategy - 1;
-
-				/*
-				 * Index AM must have a fixed set of strategies for it to
-				 * make sense to specify amorderstrategy, so we need not
-				 * allow the case amstrategies == 0.
-				 */
-				Assert(oprindex < indexRelation->rd_am->amstrategies);
+				int			nstrat = indexRelation->rd_am->amstrategies;
 
 				for (i = 0; i < ncolumns; i++)
 				{
-					info->ordering[i] = indexRelation->rd_operator[oprindex];
-					oprindex += indexRelation->rd_am->amstrategies;
+					int16	opt = indexRelation->rd_indoption[i];
+					int		fwdstrat;
+					int		revstrat;
+
+					if (opt & INDOPTION_DESC)
+					{
+						fwdstrat = indexRelation->rd_am->amdescorder;
+						revstrat = indexRelation->rd_am->amorderstrategy;
+					}
+					else
+					{
+						fwdstrat = indexRelation->rd_am->amorderstrategy;
+						revstrat = indexRelation->rd_am->amdescorder;
+					}
+					/*
+					 * Index AM must have a fixed set of strategies for it
+					 * to make sense to specify amorderstrategy, so we
+					 * need not allow the case amstrategies == 0.
+					 */
+					if (fwdstrat > 0)
+					{
+						Assert(fwdstrat <= nstrat);
+						info->fwdsortop[i] = indexRelation->rd_operator[i * nstrat + fwdstrat - 1];
+					}
+					if (revstrat > 0)
+					{
+						Assert(revstrat <= nstrat);
+						info->revsortop[i] = indexRelation->rd_operator[i * nstrat + revstrat - 1];
+					}
+					info->nulls_first[i] = (opt & INDOPTION_NULLS_FIRST) != 0;
 				}
 			}
 

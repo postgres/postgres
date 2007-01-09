@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.94 2006/12/01 20:49:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.95 2007/01/09 02:14:10 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -27,7 +27,7 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="parameter">expression</replac
     [ GROUP BY <replaceable class="parameter">expression</replaceable> [, ...] ]
     [ HAVING <replaceable class="parameter">condition</replaceable> [, ...] ]
     [ { UNION | INTERSECT | EXCEPT } [ ALL ] <replaceable class="parameter">select</replaceable> ]
-    [ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [, ...] ]
+    [ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...] ]
     [ LIMIT { <replaceable class="parameter">count</replaceable> | ALL } ]
     [ OFFSET <replaceable class="parameter">start</replaceable> ]
     [ FOR { UPDATE | SHARE } [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ] [ NOWAIT ] [...] ]
@@ -642,7 +642,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
    <para>
     The optional <literal>ORDER BY</literal> clause has this general form:
 <synopsis>
-ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [, ...]
+ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...]
 </synopsis>
     <replaceable class="parameter">expression</replaceable> can be the
     name or ordinal number of an output column
@@ -652,8 +652,8 @@ ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | 
 
    <para>
     The <literal>ORDER BY</literal> clause causes the result rows to
-    be sorted according to the specified expressions.  If two rows are
-    equal according to the leftmost expression, the are compared
+    be sorted according to the specified expression(s).  If two rows are
+    equal according to the leftmost expression, they are compared
     according to the next expression and so on.  If they are equal
     according to all specified expressions, they are returned in
     an implementation-dependent order.
@@ -697,6 +697,8 @@ SELECT name FROM distributors ORDER BY code;
     <literal>ORDER BY</> clause.  If not specified, <literal>ASC</> is
     assumed by default.  Alternatively, a specific ordering operator
     name may be specified in the <literal>USING</> clause.
+    An ordering operator must be a less-than or greater-than
+    member of some btree operator family.
     <literal>ASC</> is usually equivalent to <literal>USING &lt;</> and
     <literal>DESC</> is usually equivalent to <literal>USING &gt;</>.
     (But the creator of a user-defined data type can define exactly what the
@@ -705,9 +707,14 @@ SELECT name FROM distributors ORDER BY code;
    </para>
 
    <para>
-    The null value sorts higher than any other value. In other words,
-    with ascending sort order, null values sort at the end, and with
-    descending sort order, null values sort at the beginning.
+    If <literal>NULLS LAST</> is specified, null values sort after all
+    non-null values; if <literal>NULLS FIRST</> is specified, null values
+    sort before all non-null values.  If neither is specified, the default
+    behavior is <literal>NULLS LAST</> when <literal>ASC</> is specified
+    or implied, and <literal>NULLS FIRST</> when <literal>DESC</> is specified
+    (thus, the default is to act as though nulls are larger than non-nulls).
+    When <literal>USING</> is specified, the default nulls ordering depends
+    on whether the operator is a less-than or greater-than operator.
    </para>
 
    <para>

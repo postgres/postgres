@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.15 2006/12/28 23:16:39 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.16 2007/01/09 02:14:10 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -483,5 +483,6 @@ Notes to operator class implementors
 With this implementation, we require each supported combination of
 datatypes to supply us with a comparison procedure via pg_amproc.
 This procedure must take two nonnull values A and B and return an int32 < 0,
-0, or > 0 if A < B, A = B, or A > B, respectively.  See nbtcompare.c for
-examples.
+0, or > 0 if A < B, A = B, or A > B, respectively.  The procedure must
+not return INT_MIN for "A < B", since the value may be negated before
+being tested for sign.  See nbtcompare.c for examples.

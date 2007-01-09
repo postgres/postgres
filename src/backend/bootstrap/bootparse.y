@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.85 2007/01/05 22:19:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.86 2007/01/09 02:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,6 +312,8 @@ boot_index_param:
 					n->name = LexIDStr($1);
 					n->expr = NULL;
 					n->opclass = list_make1(makeString(LexIDStr($2)));
+					n->ordering = SORTBY_DEFAULT;
+					n->nulls_ordering = SORTBY_NULLS_DEFAULT;
 					$$ = n;
 				}
 		;

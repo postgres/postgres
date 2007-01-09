@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.70 2007/01/06 19:14:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parser.c,v 1.71 2007/01/09 02:14:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,8 +97,35 @@ filtered_base_yylex(void)
 	/* Do we need to look ahead for a possible multiword token? */
 	switch (cur_token)
 	{
-		case WITH:
+		case NULLS_P:
+			/*
+			 * NULLS FIRST and NULLS LAST must be reduced to one token
+			 */
+			cur_yylval = base_yylval;
+			cur_yylloc = base_yylloc;
+			next_token = base_yylex();
+			switch (next_token)
+			{
+				case FIRST_P:
+					cur_token = NULLS_FIRST;
+					break;
+				case LAST_P:
+					cur_token = NULLS_LAST;
+					break;
+				default:
+					/* save the lookahead token for next time */
+					lookahead_token = next_token;
+					lookahead_yylval = base_yylval;
+					lookahead_yylloc = base_yylloc;
+					have_lookahead = true;
+					/* and back up the output info to cur_token */
+					base_yylval = cur_yylval;
+					base_yylloc = cur_yylloc;
+					break;
+			}
+			break;
 
+		case WITH:
 			/*
 			 * WITH CASCADED, LOCAL, or CHECK must be reduced to one token
 			 *

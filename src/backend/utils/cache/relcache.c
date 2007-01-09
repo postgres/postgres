@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.253 2007/01/05 22:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.254 2007/01/09 02:14:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -925,8 +925,10 @@ RelationInitIndexAccessInfo(Relation relation)
 	HeapTuple	tuple;
 	Form_pg_am	aform;
 	Datum		indclassDatum;
+	Datum		indoptionDatum;
 	bool		isnull;
 	oidvector  *indclass;
+	int2vector  *indoption;
 	MemoryContext indexcxt;
 	MemoryContext oldcontext;
 	int			natts;
@@ -1019,6 +1021,9 @@ RelationInitIndexAccessInfo(Relation relation)
 		relation->rd_supportinfo = NULL;
 	}
 
+	relation->rd_indoption = (int16 *)
+		MemoryContextAllocZero(indexcxt, natts * sizeof(int16));
+
 	/*
 	 * indclass cannot be referenced directly through the C struct, because it
 	 * comes after the variable-width indkey field.  Must extract the
@@ -1040,6 +1045,17 @@ RelationInitIndexAccessInfo(Relation relation)
 						   relation->rd_operator, relation->rd_support,
 						   relation->rd_opfamily, relation->rd_opcintype,
 						   amstrategies, amsupport, natts);
+
+	/*
+	 * Similarly extract indoption and copy it to the cache entry
+	 */
+	indoptionDatum = fastgetattr(relation->rd_indextuple,
+								 Anum_pg_index_indoption,
+								 GetPgIndexDescriptor(),
+								 &isnull);
+	Assert(!isnull);
+	indoption = (int2vector *) DatumGetPointer(indoptionDatum);
+	memcpy(relation->rd_indoption, indoption->values, natts * sizeof(int16));
 
 	/*
 	 * expressions and predicate cache will be filled later
@@ -3237,6 +3253,7 @@ load_relcache_init_file(void)
 			Oid		   *operator;
 			RegProcedure *support;
 			int			nsupport;
+			int16	   *indoption;
 
 			/* Count nailed indexes to ensure we have 'em all */
 			if (rel->rd_isnailed)
@@ -3304,7 +3321,7 @@ load_relcache_init_file(void)
 
 			rel->rd_operator = operator;
 
-			/* finally, read the vector of support procedures */
+			/* next, read the vector of support procedures */
 			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
 				goto read_failed;
 			support = (RegProcedure *) MemoryContextAlloc(indexcxt, len);
@@ -3312,6 +3329,16 @@ load_relcache_init_file(void)
 				goto read_failed;
 
 			rel->rd_support = support;
+
+			/* finally, read the vector of indoption values */
+			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
+				goto read_failed;
+
+			indoption = (int16 *) MemoryContextAlloc(indexcxt, len);
+			if ((nread = fread(indoption, 1, len, fp)) != len)
+				goto read_failed;
+
+			rel->rd_indoption = indoption;
 
 			/* set up zeroed fmgr-info vectors */
 			rel->rd_aminfo = (RelationAmInfo *)
@@ -3336,6 +3363,7 @@ load_relcache_init_file(void)
 			Assert(rel->rd_operator == NULL);
 			Assert(rel->rd_support == NULL);
 			Assert(rel->rd_supportinfo == NULL);
+			Assert(rel->rd_indoption == NULL);
 		}
 
 		/*
@@ -3525,9 +3553,14 @@ write_relcache_init_file(void)
 					   relform->relnatts * (am->amstrategies * sizeof(Oid)),
 					   fp);
 
-			/* finally, write the vector of support procedures */
+			/* next, write the vector of support procedures */
 			write_item(rel->rd_support,
 				  relform->relnatts * (am->amsupport * sizeof(RegProcedure)),
+					   fp);
+
+			/* finally, write the vector of indoption values */
+			write_item(rel->rd_indoption,
+					   relform->relnatts * sizeof(int16),
 					   fp);
 		}
 

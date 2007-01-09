@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.291 2007/01/05 22:19:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.292 2007/01/09 02:14:12 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -510,6 +510,10 @@ _outSort(StringInfo str, Sort *node)
 	appendStringInfo(str, " :sortOperators");
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %u", node->sortOperators[i]);
+
+	appendStringInfo(str, " :nullsFirst");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %s", booltostr(node->nullsFirst[i]));
 }
 
 static void
@@ -1265,6 +1269,7 @@ _outPathKeyItem(StringInfo str, PathKeyItem *node)
 
 	WRITE_NODE_FIELD(key);
 	WRITE_OID_FIELD(sortop);
+	WRITE_BOOL_FIELD(nulls_first);
 }
 
 static void
@@ -1499,6 +1504,8 @@ _outIndexElem(StringInfo str, IndexElem *node)
 	WRITE_STRING_FIELD(name);
 	WRITE_NODE_FIELD(expr);
 	WRITE_NODE_FIELD(opclass);
+	WRITE_ENUM_FIELD(ordering, SortByDir);
+	WRITE_ENUM_FIELD(nulls_ordering, SortByNulls);
 }
 
 static void
@@ -1565,6 +1572,7 @@ _outSortClause(StringInfo str, SortClause *node)
 
 	WRITE_UINT_FIELD(tleSortGroupRef);
 	WRITE_OID_FIELD(sortop);
+	WRITE_BOOL_FIELD(nulls_first);
 }
 
 static void
@@ -1574,6 +1582,7 @@ _outGroupClause(StringInfo str, GroupClause *node)
 
 	WRITE_UINT_FIELD(tleSortGroupRef);
 	WRITE_OID_FIELD(sortop);
+	WRITE_BOOL_FIELD(nulls_first);
 }
 
 static void

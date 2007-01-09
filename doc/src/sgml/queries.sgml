@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.39 2006/10/24 02:24:27 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.40 2007/01/09 02:14:10 tgl Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -1224,7 +1224,8 @@ SELECT DISTINCT ON (<replaceable>expression</replaceable> <optional>, <replaceab
 <synopsis>
 SELECT <replaceable>select_list</replaceable>
     FROM <replaceable>table_expression</replaceable>
-    ORDER BY <replaceable>sort_expression1</replaceable> <optional>ASC | DESC</optional> <optional>, <replaceable>sort_expression2</replaceable> <optional>ASC | DESC</optional> ...</optional>
+    ORDER BY <replaceable>sort_expression1</replaceable> <optional>ASC | DESC</optional> <optional>NULLS { FIRST | LAST }</optional>
+             <optional>, <replaceable>sort_expression2</replaceable> <optional>ASC | DESC</optional> <optional>NULLS { FIRST | LAST }</optional> ...</optional>
 </synopsis>
    The sort expression(s) can be any expression that would be valid in the
    query's select list.  An example is
@@ -1251,6 +1252,14 @@ SELECT a, b FROM table1 ORDER BY a + b, c;
       different.
      </para>
     </footnote>
+  </para>
+
+  <para>
+   The <literal>NULLS FIRST</> and <literal>NULLS LAST</> options can be
+   used to determine whether nulls appear before or after non-null values
+   in the sort ordering.  By default, null values sort as if larger than any
+   non-null value; that is, <literal>NULLS FIRST</> is the default for
+   <literal>DESC</> order, and <literal>NULLS LAST</> otherwise.
   </para>
 
   <para>
@@ -1301,7 +1310,7 @@ SELECT a + b AS sum, c FROM table1 ORDER BY sum + c;          -- wrong
 <synopsis>
 SELECT <replaceable>select_list</replaceable>
     FROM <replaceable>table_expression</replaceable>
-    <optional> ORDER BY <replaceable>sort_expression1</replaceable> <optional>ASC | DESC</optional> <optional>, <replaceable>sort_expression2</replaceable> <optional>ASC | DESC</optional> ...</optional> </optional>
+    <optional> ORDER BY ... </optional>
     <optional> LIMIT { <replaceable>number</replaceable> | ALL } </optional> <optional> OFFSET <replaceable>number</replaceable> </optional>
 </synopsis>
   </para>

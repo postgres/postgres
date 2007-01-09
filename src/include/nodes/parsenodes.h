@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.337 2007/01/05 22:19:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.338 2007/01/09 02:14:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,22 @@ typedef enum OnCommitAction
 	ONCOMMIT_DELETE_ROWS,		/* ON COMMIT DELETE ROWS */
 	ONCOMMIT_DROP				/* ON COMMIT DROP */
 } OnCommitAction;
+
+/* Sort ordering options for ORDER BY and CREATE INDEX */
+typedef enum SortByDir
+{
+	SORTBY_DEFAULT,
+	SORTBY_ASC,
+	SORTBY_DESC,
+	SORTBY_USING				/* not allowed in CREATE INDEX ... */
+} SortByDir;
+
+typedef enum SortByNulls
+{
+	SORTBY_NULLS_DEFAULT,
+	SORTBY_NULLS_FIRST,
+	SORTBY_NULLS_LAST
+} SortByNulls;
 
 
 /*
@@ -348,14 +364,11 @@ typedef struct ResTarget
 /*
  * SortBy - for ORDER BY clause
  */
-#define SORTBY_ASC		1
-#define SORTBY_DESC		2
-#define SORTBY_USING	3
-
 typedef struct SortBy
 {
 	NodeTag		type;
-	int			sortby_kind;	/* see codes above */
+	SortByDir	sortby_dir;		/* ASC/DESC/USING */
+	SortByNulls	sortby_nulls;	/* NULLS FIRST/LAST */
 	List	   *useOp;			/* name of op to use, if SORTBY_USING */
 	Node	   *node;			/* expression to sort on */
 } SortBy;
@@ -443,6 +456,8 @@ typedef struct IndexElem
 	char	   *name;			/* name of attribute to index, or NULL */
 	Node	   *expr;			/* expression to index, or NULL */
 	List	   *opclass;		/* name of desired opclass; NIL = default */
+	SortByDir	ordering;		/* ASC/DESC/default */
+	SortByNulls	nulls_ordering;	/* FIRST/LAST/default */
 } IndexElem;
 
 /*
@@ -614,7 +629,8 @@ typedef struct RangeTblEntry
  *
  * tleSortGroupRef must match ressortgroupref of exactly one entry of the
  * associated targetlist; that is the expression to be sorted (or grouped) by.
- * sortop is the OID of the ordering operator.
+ * sortop is the OID of the ordering operator (a "<" or ">" operator).
+ * nulls_first does about what you'd expect.
  *
  * SortClauses are also used to identify targets that we will do a "Unique"
  * filter step on (for SELECT DISTINCT and SELECT DISTINCT ON).  The
@@ -627,16 +643,21 @@ typedef struct SortClause
 {
 	NodeTag		type;
 	Index		tleSortGroupRef;	/* reference into targetlist */
-	Oid			sortop;			/* the sort operator to use */
+	Oid			sortop;				/* the ordering operator ('<' op) */
+	bool		nulls_first;		/* do NULLs come before normal values? */
 } SortClause;
 
 /*
  * GroupClause -
  *	   representation of GROUP BY clauses
  *
- * GroupClause is exactly like SortClause except for the nodetag value
- * (it's probably not even really necessary to have two different
- * nodetags...).  We have routines that operate interchangeably on both.
+ * GroupClause is exactly like SortClause except for the nodetag value.
+ * We have routines that operate interchangeably on both.
+ *
+ * XXX SortClause overspecifies the semantics so far as GROUP BY is concerned
+ * (ditto for DISTINCT).  It'd be better to specify an equality operator not
+ * an ordering operator.  However, the two implementations are tightly entwined
+ * at the moment ... breaking them apart is work for another day.
  */
 typedef SortClause GroupClause;
 

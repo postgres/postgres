@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.58 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.59 2007/01/09 02:14:10 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</replaceable> ON <replaceable class="parameter">table</replaceable> [ USING <replaceable class="parameter">method</replaceable> ]
-    ( { <replaceable class="parameter">column</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [, ...] )
+    ( { <replaceable class="parameter">column</replaceable> | ( <replaceable class="parameter">expression</replaceable> ) } [ <replaceable class="parameter">opclass</replaceable> ] [ ASC | DESC ] [ NULLS { FIRST | LAST } ] [, ...] )
     [ WITH ( <replaceable class="PARAMETER">storage_parameter</replaceable> = <replaceable class="PARAMETER">value</replaceable> [, ... ] ) ]
     [ TABLESPACE <replaceable class="parameter">tablespace</replaceable> ]
     [ WHERE <replaceable class="parameter">predicate</replaceable> ]
@@ -183,6 +183,44 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
       <listitem>
        <para>
         The name of an operator class. See below for details.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>ASC</></term>
+      <listitem>
+       <para>
+        Specifies ascending sort order (which is the default).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>DESC</></term>
+      <listitem>
+       <para>
+        Specifies descending sort order.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>NULLS FIRST</></term>
+      <listitem>
+       <para>
+        Specifies that nulls sort before non-nulls.  This is the default
+        when <literal>DESC</> is specified.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>NULLS LAST</></term>
+      <listitem>
+       <para>
+        Specifies that nulls sort after non-nulls.  This is the default
+        when <literal>DESC</> is not specified.
        </para>
       </listitem>
      </varlistentry>
@@ -364,6 +402,21 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
   </para>
 
   <para>
+   For index methods that support ordered scans (currently, only B-tree),
+   the optional clauses <literal>ASC</>, <literal>DESC</>, <literal>NULLS
+   FIRST</>, and/or <literal>NULLS LAST</> can be specified to reverse
+   the normal sort direction of the index.  Since an ordered index can be
+   scanned either forward or backward, it is not normally useful to create a 
+   single-column <literal>DESC</> index &mdash; that sort ordering is already
+   available with a regular index.  The value of these options is that
+   multicolumn indexes can be created that match the sort ordering requested
+   by a mixed-ordering query, such as <literal>SELECT ... ORDER BY x ASC, y
+   DESC</>.  The <literal>NULLS</> options are useful if you need to support
+   <quote>nulls sort low</> behavior, rather than the default <quote>nulls
+   sort high</>, in queries that depend on indexes to avoid sorting steps.
+  </para>
+
+  <para>
    Use <xref linkend="sql-dropindex" endterm="sql-dropindex-title">
    to remove an index.
   </para>
@@ -400,6 +453,13 @@ CREATE UNIQUE INDEX title_idx ON films (title);
    allowing efficient case-insensitive searches:
 <programlisting>
 CREATE INDEX lower_title_idx ON films ((lower(title)));
+</programlisting>
+  </para>
+
+  <para>
+   To create an index with non-default sort ordering of nulls:
+<programlisting>
+CREATE INDEX title_idx_nulls_low ON films (title NULLS FIRST);
 </programlisting>
   </para>
 

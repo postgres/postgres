@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.151 2007/01/05 22:19:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.152 2007/01/09 02:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,10 +49,13 @@
 
 /* non-export function prototypes */
 static void CheckPredicate(Expr *predicate);
-static void ComputeIndexAttrs(IndexInfo *indexInfo, Oid *classOidP,
+static void ComputeIndexAttrs(IndexInfo *indexInfo,
+				  Oid *classOidP,
+				  int16 *colOptionP,
 				  List *attList,
 				  Oid relId,
 				  char *accessMethodName, Oid accessMethodId,
+				  bool amcanorder,
 				  bool isconstraint);
 static Oid GetIndexOpClass(List *opclass, Oid attrType,
 				char *accessMethodName, Oid accessMethodId);
@@ -115,8 +118,10 @@ DefineIndex(RangeVar *heapRelation,
 	Relation	rel;
 	HeapTuple	tuple;
 	Form_pg_am	accessMethodForm;
+	bool		amcanorder;
 	RegProcedure amoptions;
 	Datum		reloptions;
+	int16	   *coloptions;
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
 	List	   *old_xact_list;
@@ -290,6 +295,8 @@ DefineIndex(RangeVar *heapRelation,
 		  errmsg("access method \"%s\" does not support multicolumn indexes",
 				 accessMethodName)));
 
+	amcanorder = (accessMethodForm->amorderstrategy > 0);
+
 	amoptions = accessMethodForm->amoptions;
 
 	ReleaseSysCache(tuple);
@@ -419,9 +426,10 @@ DefineIndex(RangeVar *heapRelation,
 	indexInfo->ii_Concurrent = concurrent;
 
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
-	ComputeIndexAttrs(indexInfo, classObjectId, attributeList,
+	coloptions = (int16 *) palloc(numberOfAttributes * sizeof(int16));
+	ComputeIndexAttrs(indexInfo, classObjectId, coloptions, attributeList,
 					  relationId, accessMethodName, accessMethodId,
-					  isconstraint);
+					  amcanorder, isconstraint);
 
 	heap_close(rel, NoLock);
 
@@ -439,7 +447,7 @@ DefineIndex(RangeVar *heapRelation,
 	indexRelationId =
 		index_create(relationId, indexRelationName, indexRelationId,
 					 indexInfo, accessMethodId, tablespaceId, classObjectId,
-					 reloptions, primary, isconstraint,
+					 coloptions, reloptions, primary, isconstraint,
 					 allowSystemTableMods, skip_build, concurrent);
 
 	if (!concurrent)
@@ -585,13 +593,19 @@ CheckPredicate(Expr *predicate)
 		   errmsg("functions in index predicate must be marked IMMUTABLE")));
 }
 
+/*
+ * Compute per-index-column information, including indexed column numbers
+ * or index expressions, opclasses, and indoptions.
+ */
 static void
 ComputeIndexAttrs(IndexInfo *indexInfo,
 				  Oid *classOidP,
+				  int16 *colOptionP,
 				  List *attList,	/* list of IndexElem's */
 				  Oid relId,
 				  char *accessMethodName,
 				  Oid accessMethodId,
+				  bool amcanorder,
 				  bool isconstraint)
 {
 	ListCell   *rest;
@@ -605,6 +619,9 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 		IndexElem  *attribute = (IndexElem *) lfirst(rest);
 		Oid			atttype;
 
+		/*
+		 * Process the column-or-expression to be indexed.
+		 */
 		if (attribute->name != NULL)
 		{
 			/* Simple index attribute */
@@ -674,10 +691,49 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 						 errmsg("functions in index expression must be marked IMMUTABLE")));
 		}
 
+		/*
+		 * Identify the opclass to use.
+		 */
 		classOidP[attn] = GetIndexOpClass(attribute->opclass,
 										  atttype,
 										  accessMethodName,
 										  accessMethodId);
+
+		/*
+		 * Set up the per-column options (indoption field).  For now, this
+		 * is zero for any un-ordered index, while ordered indexes have DESC
+		 * and NULLS FIRST/LAST options.
+		 */
+		colOptionP[attn] = 0;
+		if (amcanorder)
+		{
+			/* default ordering is ASC */
+			if (attribute->ordering == SORTBY_DESC)
+				colOptionP[attn] |= INDOPTION_DESC;
+			/* default null ordering is LAST for ASC, FIRST for DESC */
+			if (attribute->nulls_ordering == SORTBY_NULLS_DEFAULT)
+			{
+				if (attribute->ordering == SORTBY_DESC)
+					colOptionP[attn] |= INDOPTION_NULLS_FIRST;
+			}
+			else if (attribute->nulls_ordering == SORTBY_NULLS_FIRST)
+				colOptionP[attn] |= INDOPTION_NULLS_FIRST;
+		}
+		else
+		{
+			/* index AM does not support ordering */
+			if (attribute->ordering != SORTBY_DEFAULT)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("access method \"%s\" does not support ASC/DESC options",
+								accessMethodName)));
+			if (attribute->nulls_ordering != SORTBY_NULLS_DEFAULT)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("access method \"%s\" does not support NULLS FIRST/LAST options",
+								accessMethodName)));
+		}
+
 		attn++;
 	}
 }

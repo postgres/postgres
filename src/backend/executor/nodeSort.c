@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.59 2007/01/05 22:19:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.60 2007/01/09 02:14:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,8 +84,9 @@ ExecSort(SortState *node)
 
 		tuplesortstate = tuplesort_begin_heap(tupDesc,
 											  plannode->numCols,
-											  plannode->sortOperators,
 											  plannode->sortColIdx,
+											  plannode->sortOperators,
+											  plannode->nullsFirst,
 											  work_mem,
 											  node->randomAccess);
 		node->tuplesortstate = (void *) tuplesortstate;

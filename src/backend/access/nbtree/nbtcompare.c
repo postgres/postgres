@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.53 2007/01/05 22:19:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.54 2007/01/09 02:14:10 tgl Exp $
  *
  * NOTES
  *
@@ -22,10 +22,10 @@
  *
  *	The result is always an int32 regardless of the input datatype.
  *
- *	NOTE: although any negative int32 is acceptable for reporting "<",
- *	and any positive int32 is acceptable for reporting ">", routines
+ *	Although any negative int32 (except INT_MIN) is acceptable for reporting
+ *	"<", and any positive int32 is acceptable for reporting ">", routines
  *	that work on 32-bit or wider datatypes can't just return "a - b".
- *	That could overflow and give the wrong answer.	Also, one should not
+ *	That could overflow and give the wrong answer.	Also, one must not
  *	return INT_MIN to report "<", since some callers will negate the result.
  *
  *	NOTE: it is critical that the comparison function impose a total order

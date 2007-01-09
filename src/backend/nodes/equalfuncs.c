@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.293 2007/01/05 22:19:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.294 2007/01/09 02:14:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -600,6 +600,7 @@ _equalPathKeyItem(PathKeyItem *a, PathKeyItem *b)
 {
 	COMPARE_NODE_FIELD(key);
 	COMPARE_SCALAR_FIELD(sortop);
+	COMPARE_SCALAR_FIELD(nulls_first);
 
 	return true;
 }
@@ -1634,7 +1635,8 @@ _equalTypeCast(TypeCast *a, TypeCast *b)
 static bool
 _equalSortBy(SortBy *a, SortBy *b)
 {
-	COMPARE_SCALAR_FIELD(sortby_kind);
+	COMPARE_SCALAR_FIELD(sortby_dir);
+	COMPARE_SCALAR_FIELD(sortby_nulls);
 	COMPARE_NODE_FIELD(useOp);
 	COMPARE_NODE_FIELD(node);
 
@@ -1666,6 +1668,8 @@ _equalIndexElem(IndexElem *a, IndexElem *b)
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(expr);
 	COMPARE_NODE_FIELD(opclass);
+	COMPARE_SCALAR_FIELD(ordering);
+	COMPARE_SCALAR_FIELD(nulls_ordering);
 
 	return true;
 }
@@ -1745,6 +1749,7 @@ _equalSortClause(SortClause *a, SortClause *b)
 {
 	COMPARE_SCALAR_FIELD(tleSortGroupRef);
 	COMPARE_SCALAR_FIELD(sortop);
+	COMPARE_SCALAR_FIELD(nulls_first);
 
 	return true;
 }

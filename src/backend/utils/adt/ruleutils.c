@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.240 2006/12/29 16:44:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.241 2007/01/09 02:14:14 tgl Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -615,8 +615,10 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 	int			keyno;
 	Oid			keycoltype;
 	Datum		indclassDatum;
+	Datum		indoptionDatum;
 	bool		isnull;
 	oidvector  *indclass;
+	int2vector *indoption;
 	StringInfoData buf;
 	char	   *str;
 	char	   *sep;
@@ -634,11 +636,15 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 	indrelid = idxrec->indrelid;
 	Assert(indexrelid == idxrec->indexrelid);
 
-	/* Must get indclass the hard way */
+	/* Must get indclass and indoption the hard way */
 	indclassDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
 									Anum_pg_index_indclass, &isnull);
 	Assert(!isnull);
 	indclass = (oidvector *) DatumGetPointer(indclassDatum);
+	indoptionDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
+									 Anum_pg_index_indoption, &isnull);
+	Assert(!isnull);
+	indoption = (int2vector *) DatumGetPointer(indoptionDatum);
 
 	/*
 	 * Fetch the pg_class tuple of the index relation
@@ -707,6 +713,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 	for (keyno = 0; keyno < idxrec->indnatts; keyno++)
 	{
 		AttrNumber	attnum = idxrec->indkey.values[keyno];
+		int16		opt = indoption->values[keyno];
 
 		if (!colno)
 			appendStringInfoString(&buf, sep);
@@ -746,12 +753,28 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 			keycoltype = exprType(indexkey);
 		}
 
-		/*
-		 * Add the operator class name
-		 */
+		/* Add the operator class name */
 		if (!colno)
 			get_opclass_name(indclass->values[keyno], keycoltype,
 							 &buf);
+
+		/* Add options if relevant */
+		if (amrec->amorderstrategy > 0)
+		{
+			/* if it supports sort ordering, report DESC and NULLS opts */
+			if (opt & INDOPTION_DESC)
+			{
+				appendStringInfo(&buf, " DESC");
+				/* NULLS FIRST is the default in this case */
+				if (!(opt & INDOPTION_NULLS_FIRST))
+					appendStringInfo(&buf, " NULLS LAST");
+			}
+			else
+			{
+				if (opt & INDOPTION_NULLS_FIRST)
+					appendStringInfo(&buf, " NULLS FIRST");
+			}
+		}
 	}
 
 	if (!colno)
@@ -1905,14 +1928,30 @@ get_select_query_def(Query *query, deparse_context *context,
 			typentry = lookup_type_cache(sortcoltype,
 										 TYPECACHE_LT_OPR | TYPECACHE_GT_OPR);
 			if (srt->sortop == typentry->lt_opr)
-				 /* ASC is default, so emit nothing */ ;
+			{
+				 /* ASC is default, so emit nothing for it */
+				if (srt->nulls_first)
+					appendStringInfo(buf, " NULLS FIRST");
+			}
 			else if (srt->sortop == typentry->gt_opr)
+			{
 				appendStringInfo(buf, " DESC");
+				/* DESC defaults to NULLS FIRST */
+				if (!srt->nulls_first)
+					appendStringInfo(buf, " NULLS LAST");
+			}
 			else
+			{
 				appendStringInfo(buf, " USING %s",
 								 generate_operator_name(srt->sortop,
 														sortcoltype,
 														sortcoltype));
+				/* be specific to eliminate ambiguity */
+				if (srt->nulls_first)
+					appendStringInfo(buf, " NULLS FIRST");
+				else
+					appendStringInfo(buf, " NULLS LAST");
+			}
 			sep = ", ";
 		}
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.227 2007/01/05 22:19:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.228 2007/01/09 02:14:13 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1147,7 +1147,7 @@ has_distinct_on_clause(Query *query)
 				continue;		/* we can ignore unsorted junk cols */
 			return true;		/* definitely not in DISTINCT list */
 		}
-		if (targetIsInSortList(tle, query->distinctClause))
+		if (targetIsInSortList(tle, InvalidOid, query->distinctClause))
 		{
 			if (tle->resjunk)
 				return true;	/* junk TLE in DISTINCT means DISTINCT ON */
@@ -1158,7 +1158,7 @@ has_distinct_on_clause(Query *query)
 			/* This TLE is not in DISTINCT list */
 			if (!tle->resjunk)
 				return true;	/* non-junk, non-DISTINCT, so DISTINCT ON */
-			if (targetIsInSortList(tle, query->sortClause))
+			if (targetIsInSortList(tle, InvalidOid, query->sortClause))
 				return true;	/* sorted, non-distinct junk */
 			/* unsorted junk is okay, keep looking */
 		}

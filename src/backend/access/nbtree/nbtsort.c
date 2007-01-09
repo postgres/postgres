@@ -57,7 +57,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.109 2007/01/05 22:19:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.110 2007/01/09 02:14:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -728,39 +728,45 @@ _bt_load(BTWriteState *wstate, BTSpool *btspool, BTSpool *btspool2)
 					ScanKey		entry;
 					Datum		attrDatum1,
 								attrDatum2;
-					bool		isFirstNull,
-								isSecondNull;
+					bool		isNull1,
+								isNull2;
+					int32		compare;
 
 					entry = indexScanKey + i - 1;
-					attrDatum1 = index_getattr(itup, i, tupdes,
-											   &isFirstNull);
-					attrDatum2 = index_getattr(itup2, i, tupdes,
-											   &isSecondNull);
-					if (isFirstNull)
+					attrDatum1 = index_getattr(itup, i, tupdes, &isNull1);
+					attrDatum2 = index_getattr(itup2, i, tupdes, &isNull2);
+					if (isNull1)
 					{
-						if (!isSecondNull)
-						{
-							load1 = false;
-							break;
-						}
+						if (isNull2)
+							compare = 0;		/* NULL "=" NULL */
+						else if (entry->sk_flags & SK_BT_NULLS_FIRST)
+							compare = -1;		/* NULL "<" NOT_NULL */
+						else
+							compare = 1;		/* NULL ">" NOT_NULL */
 					}
-					else if (isSecondNull)
-						break;
+					else if (isNull2)
+					{
+						if (entry->sk_flags & SK_BT_NULLS_FIRST)
+							compare = 1;		/* NOT_NULL ">" NULL */
+						else
+							compare = -1;		/* NOT_NULL "<" NULL */
+					}
 					else
 					{
-						int32		compare;
-
 						compare = DatumGetInt32(FunctionCall2(&entry->sk_func,
 															  attrDatum1,
 															  attrDatum2));
-						if (compare > 0)
-						{
-							load1 = false;
-							break;
-						}
-						else if (compare < 0)
-							break;
+
+						if (entry->sk_flags & SK_BT_DESC)
+							compare = -compare;
 					}
+					if (compare > 0)
+					{
+						load1 = false;
+						break;
+					}
+					else if (compare < 0)
+						break;
 				}
 			}
 			else
