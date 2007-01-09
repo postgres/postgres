@@ -1,0 +1,56 @@
+This directory contains the tools required to build PostgreSQL using
+Microsoft Visual Studio 2005.
+
+
+Note that PostgreSQL builds natively with Visual C++. You must therefore
+make sure that you do *NOT* have any tools from Cygwin or Mingw present
+in the system PATH. Also, make sure you don't have any Cygwin/Mingw
+environment variables "leaking" through.
+
+First, edit config.pl to reflect what "configure options" you want set.
+
+Then, to build all of PostgreSQL in debug configuration, run the command
+	build
+from a Visual Studio Command Prompt (to get all environment
+variables set correctly).
+
+To build all of PostgreSQL in release configuration, run
+	build RELEASE
+
+To build just a single project, for example psql, run
+	build psql
+or
+	build RELEASE psql
+
+
+Dependencies
+------------
+
+The following packages are needed for the different config options:
+
+pthreads - always required
+Download from ftp://sources.redhat.com/pub/pthreads-win32
+
+perl - always required
+Get ActiveState Perl from www.activestate.com
+
+flex & bison - required to build from CVS (as opposed to a release tarball)
+Download from http://gnuwin32.sourceforge.net.  Note that bison version 2.0
+will not work.  Use either version 1.875, or version 2.1 or newer.
+For flex, use version 2.5.4.
+
+python - required for pl/python
+Get from www.python.org
+
+tcl - required for pl/tcl
+Get ActiveState TCL from www.activestate.com
+
+openssl - required for SSL support
+Get from http://www.slproweb.com/products/Win32OpenSSL.html, or build
+from source from www.openssl.org.
+
+Kerberos - required for Kerberos support
+Get from http://web.mit.edu/Kerberos/dist/index.html
+
+zlib - required for compression support in pg_dump/pg_restore
+Get from http://www.zlib.net
