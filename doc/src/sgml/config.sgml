@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.100 2007/01/09 21:31:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.101 2007/01/09 22:16:46 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2930,7 +2930,7 @@ SELECT * FROM parent WHERE key = 2400;
         Controls whether temporary files are logged when deleted.
         A value of zero logs all temporary files, and positive
         values log only files whose size is equal or greater than
-        the specified number of bytes.  Temporary files can be
+        the specified number of kilobytes.  Temporary files can be
         created for sorts, hashes, and temporary results.  The
         default is <literal>-1</> (off).
        </para>

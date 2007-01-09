@@ -334,7 +334,7 @@
 #log_hostname = off
 
 #log_temp_files = -1			# Log temporary files equal or larger
-					# than the specified number of bytes.  
+					# than the specified number of kilobytes.
 					# -1 disables;  0 logs all temp files
 
 #---------------------------------------------------------------------------
