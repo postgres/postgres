@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.223 2007/01/05 22:19:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.224 2007/01/09 22:00:59 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1455,7 +1455,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 		rdata[0].buffer = InvalidBuffer;
 		rdata[0].next = &(rdata[1]);
 
-		xlhdr.t_natts = heaptup->t_data->t_natts;
+		xlhdr.t_infomask2 = heaptup->t_data->t_infomask2;
 		xlhdr.t_infomask = heaptup->t_data->t_infomask;
 		xlhdr.t_hoff = heaptup->t_data->t_hoff;
 
@@ -3204,7 +3204,7 @@ log_heap_update(Relation reln, Buffer oldbuf, ItemPointerData from,
 	rdata[1].buffer_std = true;
 	rdata[1].next = &(rdata[2]);
 
-	xlhdr.hdr.t_natts = newtup->t_data->t_natts;
+	xlhdr.hdr.t_infomask2 = newtup->t_data->t_infomask2;
 	xlhdr.hdr.t_infomask = newtup->t_data->t_infomask;
 	xlhdr.hdr.t_hoff = newtup->t_data->t_hoff;
 	if (move)					/* remember xmax & xmin */
@@ -3503,7 +3503,7 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 		   (char *) xlrec + SizeOfHeapInsert + SizeOfHeapHeader,
 		   newlen);
 	newlen += offsetof(HeapTupleHeaderData, t_bits);
-	htup->t_natts = xlhdr.t_natts;
+	htup->t_infomask2 = xlhdr.t_infomask2;
 	htup->t_infomask = xlhdr.t_infomask;
 	htup->t_hoff = xlhdr.t_hoff;
 	HeapTupleHeaderSetXmin(htup, record->xl_xid);
@@ -3666,7 +3666,7 @@ newsame:;
 		   (char *) xlrec + hsize,
 		   newlen);
 	newlen += offsetof(HeapTupleHeaderData, t_bits);
-	htup->t_natts = xlhdr.t_natts;
+	htup->t_infomask2 = xlhdr.t_infomask2;
 	htup->t_infomask = xlhdr.t_infomask;
 	htup->t_hoff = xlhdr.t_hoff;
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.88 2007/01/05 22:19:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.89 2007/01/09 22:01:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ typedef struct HeapTupleHeaderData
 
 	/* Fields below here must match MinimalTupleData! */
 
-	int16		t_natts;		/* number of attributes */
+	uint16		t_infomask2;	/* number of attributes + various flags */
 
 	uint16		t_infomask;		/* various flag bits, see below */
 
@@ -182,6 +182,15 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 
 #define HEAP_XACT_MASK			0xFFC0	/* visibility-related bits */
 
+/* information stored in t_infomask2, and accessor macros */
+#define HEAP_NATTS_MASK			0x7FF	/* 11 bits for number of attributes */
+/* bits 0xF800 are unused */
+
+#define HeapTupleHeaderGetNatts(tup) ((tup)->t_infomask2 & HEAP_NATTS_MASK)
+#define HeapTupleHeaderSetNatts(tup, natts) \
+( \
+	(tup)->t_infomask2 = ((tup)->t_infomask2 & ~HEAP_NATTS_MASK) | (natts) \
+)
 
 /*
  * HeapTupleHeader accessor macros
@@ -367,8 +376,8 @@ do { \
  * and thereby prevent accidental use of the nonexistent fields.
  *
  * MinimalTupleData contains a length word, some padding, and fields matching
- * HeapTupleHeaderData beginning with t_natts.	The padding is chosen so that
- * offsetof(t_natts) is the same modulo MAXIMUM_ALIGNOF in both structs.
+ * HeapTupleHeaderData beginning with t_infomask2. The padding is chosen so that
+ * offsetof(t_infomask2) is the same modulo MAXIMUM_ALIGNOF in both structs.
  * This makes data alignment rules equivalent in both cases.
  *
  * When a minimal tuple is accessed via a HeapTupleData pointer, t_data is
@@ -380,9 +389,9 @@ do { \
  * the MINIMAL_TUPLE_OFFSET distance.  t_len does not include that, however.
  */
 #define MINIMAL_TUPLE_OFFSET \
-	((offsetof(HeapTupleHeaderData, t_natts) - sizeof(uint32)) / MAXIMUM_ALIGNOF * MAXIMUM_ALIGNOF)
+	((offsetof(HeapTupleHeaderData, t_infomask2) - sizeof(uint32)) / MAXIMUM_ALIGNOF * MAXIMUM_ALIGNOF)
 #define MINIMAL_TUPLE_PADDING \
-	((offsetof(HeapTupleHeaderData, t_natts) - sizeof(uint32)) % MAXIMUM_ALIGNOF)
+	((offsetof(HeapTupleHeaderData, t_infomask2) - sizeof(uint32)) % MAXIMUM_ALIGNOF)
 
 typedef struct MinimalTupleData
 {
@@ -392,7 +401,7 @@ typedef struct MinimalTupleData
 
 	/* Fields below here must match HeapTupleHeaderData! */
 
-	int16		t_natts;		/* number of attributes */
+	uint16		t_infomask2;	/* number of attributes + various flags */
 
 	uint16		t_infomask;		/* various flag bits, see below */
 
@@ -552,7 +561,7 @@ typedef struct xl_heap_delete
  */
 typedef struct xl_heap_header
 {
-	int16		t_natts;
+	uint16		t_infomask2;
 	uint16		t_infomask;
 	uint8		t_hoff;
 } xl_heap_header;

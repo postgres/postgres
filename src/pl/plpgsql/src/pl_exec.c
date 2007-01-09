@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.182 2007/01/05 22:20:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.183 2007/01/09 22:01:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4092,7 +4092,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 	 * Row is a bit more complicated in that we assign the individual
 	 * attributes of the tuple to the variables the row points to.
 	 *
-	 * NOTE: this code used to demand row->nfields == tup->t_data->t_natts,
+	 * NOTE: this code used to demand row->nfields == HeapTupleHeaderGetNatts(tup->t_data,
 	 * but that's wrong.  The tuple might have more fields than we expected if
 	 * it's from an inheritance-child table of the current table, or it might
 	 * have fewer if the table has had columns added by ALTER TABLE. Ignore
@@ -4110,7 +4110,7 @@ exec_move_row(PLpgSQL_execstate *estate,
 		int			anum;
 
 		if (HeapTupleIsValid(tup))
-			t_natts = tup->t_data->t_natts;
+			t_natts = HeapTupleHeaderGetNatts(tup->t_data);
 		else
 			t_natts = 0;
 
