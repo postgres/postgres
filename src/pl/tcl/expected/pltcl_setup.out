@@ -434,8 +434,69 @@ create function tcl_int4lt(int4,int4) returns bool as '
     }
     return f
 ' language pltcl;
+create function tcl_int4le(int4,int4) returns bool as '
+    if {$1 <= $2} {
+        return t
+    }
+    return f
+' language pltcl;
+create function tcl_int4eq(int4,int4) returns bool as '
+    if {$1 == $2} {
+        return t
+    }
+    return f
+' language pltcl;
+create function tcl_int4ge(int4,int4) returns bool as '
+    if {$1 >= $2} {
+        return t
+    }
+    return f
+' language pltcl;
+create function tcl_int4gt(int4,int4) returns bool as '
+    if {$1 > $2} {
+        return t
+    }
+    return f
+' language pltcl;
 create operator @< (
 		leftarg = int4,
 		rightarg = int4,
 		procedure = tcl_int4lt
 	);
+create operator @<= (
+		leftarg = int4,
+		rightarg = int4,
+		procedure = tcl_int4le
+	);
+create operator @= (
+		leftarg = int4,
+		rightarg = int4,
+		procedure = tcl_int4eq
+	);
+create operator @>= (
+		leftarg = int4,
+		rightarg = int4,
+		procedure = tcl_int4ge
+	);
+create operator @> (
+		leftarg = int4,
+		rightarg = int4,
+		procedure = tcl_int4gt
+	);
+create function tcl_int4cmp(int4,int4) returns int4 as '
+    if {$1 < $2} {
+        return -1
+    }
+    if {$1 > $2} {
+        return 1
+    }
+    return 0
+' language pltcl;
+CREATE OPERATOR CLASS tcl_int4_ops
+	FOR TYPE int4 USING btree AS
+	OPERATOR 1  @<,
+	OPERATOR 2  @<=,
+	OPERATOR 3  @=,
+	OPERATOR 4  @>=,
+	OPERATOR 5  @>,
+	FUNCTION 1  tcl_int4cmp(int4,int4) ;
