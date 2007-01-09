@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.79 2006/09/16 00:30:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.80 2007/01/09 22:22:55 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -1223,7 +1223,7 @@ RESET client_encoding;
       </varlistentry>
 
       <varlistentry>
-       <term>RFC 2044</term>
+       <term>RFC 3629</term>
 
        <listitem>
         <para>
