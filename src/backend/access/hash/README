@@ -1,6 +1,11 @@
-$PostgreSQL: pgsql/src/backend/access/hash/README,v 1.4 2003/11/29 19:51:40 pgsql Exp $
+$PostgreSQL: pgsql/src/backend/access/hash/README,v 1.5 2007/01/09 07:30:49 tgl Exp $
 
-This directory contains an implementation of hash indexing for Postgres.
+This directory contains an implementation of hash indexing for Postgres.  Most
+of the core ideas are taken from Margo Seltzer and Ozan Yigit, A New Hashing
+Package for UNIX, Proceedings of the Winter USENIX Conference, January 1991.
+(Our in-memory hashtable implementation, src/backend/utils/hash/dynahash.c,
+also relies on some of the same concepts; it is derived from code written by
+Esmond Pitt and later improved by Margo among others.)
 
 A hash index consists of two or more "buckets", into which tuples are
 placed whenever their hash key maps to the bucket number.  The
