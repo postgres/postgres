@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue Jan  9 16:33:10 EST 2007
+Last updated:           Tue Jan  9 17:43:27 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1078,6 +1078,10 @@ first.
   different from the number of rows actually found?
   </li><li>Consider compressed annealing to search for query plans
 <p>  This might replace GEQO, <a href="http://sixdemonbag.org/Djinni">http://sixdemonbag.org/Djinni</a>.
+</p>
+  </li><li>Improve merge join performance by allowing mark/restore of 
+  tuple sources
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00096.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00096.php</a>
 </p>
 </li></ul>
 <h1><a name="section_20">Miscellaneous Performance</a></h1>
