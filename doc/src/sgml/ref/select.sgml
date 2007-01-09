@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.95 2007/01/09 02:14:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.96 2007/01/09 16:59:20 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -644,19 +644,19 @@ HAVING <replaceable class="parameter">condition</replaceable>
 <synopsis>
 ORDER BY <replaceable class="parameter">expression</replaceable> [ ASC | DESC | USING <replaceable class="parameter">operator</replaceable> ] [ NULLS { FIRST | LAST } ] [, ...]
 </synopsis>
-    <replaceable class="parameter">expression</replaceable> can be the
-    name or ordinal number of an output column
-    (<command>SELECT</command> list item), or it can be an arbitrary
-    expression formed from input-column values.
-   </para>
-
-   <para>
     The <literal>ORDER BY</literal> clause causes the result rows to
     be sorted according to the specified expression(s).  If two rows are
     equal according to the leftmost expression, they are compared
     according to the next expression and so on.  If they are equal
     according to all specified expressions, they are returned in
     an implementation-dependent order.
+   </para>
+
+   <para>
+    Each <replaceable class="parameter">expression</replaceable> can be the
+    name or ordinal number of an output column
+    (<command>SELECT</command> list item), or it can be an arbitrary
+    expression formed from input-column values.
    </para>
 
    <para>
@@ -715,6 +715,12 @@ SELECT name FROM distributors ORDER BY code;
     (thus, the default is to act as though nulls are larger than non-nulls).
     When <literal>USING</> is specified, the default nulls ordering depends
     on whether the operator is a less-than or greater-than operator.
+   </para>
+
+   <para>
+    Note that ordering options apply only to the expression they follow;
+    for example <literal>ORDER BY x, y DESC</> does not mean
+    the same thing as <literal>ORDER BY x DESC, y DESC</>.
    </para>
 
    <para>
