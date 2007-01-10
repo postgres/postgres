@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.88 2007/01/09 22:19:36 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.89 2007/01/10 01:57:15 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -96,7 +96,7 @@ ifeq ($(vpath_build), yes)
 	@cp $(srcdir)/stylesheet.css .
 endif
 ifndef DRAFT
-	@cmp -s HTML.index.start HTML.index || $(MAKE) $*
+	@cmp -s HTML.index.start HTML.index || $(MAKE) $(MAKECMDGOALS)
 endif
 
 
@@ -107,7 +107,7 @@ ifndef DRAFT
 ifneq ($(MAKECMDGOALS), draft)
 # Call ourselves with the DRAFT value set.  This seems to be the only
 # way to set gmake variables in a rule.
-	@$(MAKE) DRAFT="Y" $(MAKECMDGOALS))
+	@$(MAKE) DRAFT="Y" $(MAKECMDGOALS)
 else
 # run default 'all' rule
 	@$(MAKE) DRAFT="Y" all
@@ -159,25 +159,25 @@ JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/styl
 %-A4.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=A4 -o $@ $<
 ifndef DRAFT
-	@cmp -s HTML.index.start HTML.index || $(MAKE) $*
+	@cmp -s HTML.index.start HTML.index || $(MAKE) $@
 endif
 
 %-US.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texdvi-output -V '%paper-type%'=USletter -o $@ $<
 ifndef DRAFT
-	@cmp -s HTML.index.start HTML.index || $(MAKE) $*
+	@cmp -s HTML.index.start HTML.index || $(MAKE) $@
 endif
 
 %-A4.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=A4 -o $@ $<
 ifndef DRAFT
-	@cmp -s HTML.index.start HTML.index || $(MAKE) $*
+	@cmp -s HTML.index.start HTML.index || $(MAKE) $@
 endif
 
 %-US.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl bookindex.sgml
 	$(JADE.tex.call) -V texpdf-output -V '%paper-type%'=USletter -o $@ $<
 ifndef DRAFT
-	@cmp -s HTML.index.start HTML.index || $(MAKE) $*
+	@cmp -s HTML.index.start HTML.index || $(MAKE) $@
 endif
 
 %.dvi: %.tex-ps
