@@ -12,7 +12,7 @@ if "%CONFIG%" == "" if "%1" == "RELEASE" set CONFIG=Release
 if not "%CONFIG%" == "" shift
 if "%CONFIG%" == "" set CONFIG=Debug
 
-if "%1" == "" msbuild pgsql.sln /p:Configuration=%CONFIG%
+if "%1" == "" msbuild pgsql.sln /verbosity:detailed /p:Configuration=%CONFIG%
 if not "%1" == "" vcbuild %1.vcproj %CONFIG%
 
 cd %STARTDIR%
