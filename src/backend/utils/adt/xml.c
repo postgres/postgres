@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.13 2007/01/07 22:49:56 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.14 2007/01/10 20:33:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,10 @@
 #include <libxml/uri.h>
 #include <libxml/xmlerror.h>
 #include <libxml/xmlsave.h>
+#include <libxml/xmlwriter.h>
 #endif /* USE_LIBXML */
 
+#include "executor/executor.h"
 #include "fmgr.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
@@ -240,6 +242,71 @@ texttoxml(PG_FUNCTION_ARGS)
 
 
 xmltype *
+xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
+{
+#ifdef USE_LIBXML
+	XmlExpr	   *xexpr = (XmlExpr *) xmlExpr->xprstate.expr;
+	int			i;
+	ListCell   *arg;
+	ListCell   *narg;
+	bool		isnull;
+	xmltype	   *result;
+	Datum		value;
+	char	   *str;
+
+	xmlBufferPtr buf;
+	xmlTextWriterPtr writer;
+
+	buf = xmlBufferCreate();
+	writer = xmlNewTextWriterMemory(buf, 0);
+
+	xmlTextWriterStartElement(writer, (xmlChar *) xexpr->name);
+
+	i = 0;
+	forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
+	{
+		ExprState 	*e = (ExprState *) lfirst(arg);
+		char	*argname = strVal(lfirst(narg));
+
+		value = ExecEvalExpr(e, econtext, &isnull, NULL);
+		if (!isnull)
+		{
+			str = OutputFunctionCall(&xmlExpr->named_outfuncs[i], value);
+			xmlTextWriterWriteAttribute(writer, (xmlChar *) argname, (xmlChar *) str);
+			pfree(str);
+		}
+		i++;
+	}
+
+	foreach(arg, xmlExpr->args)
+	{
+		ExprState 	*e = (ExprState *) lfirst(arg);
+
+		value = ExecEvalExpr(e, econtext, &isnull, NULL);
+		if (!isnull)
+		{
+			/* we know the value is XML type */
+			str = DatumGetCString(DirectFunctionCall1(xml_out,
+													  value));
+			xmlTextWriterWriteRaw(writer, (xmlChar *) str);
+			pfree(str);
+		}
+	}
+
+	xmlTextWriterEndElement(writer);
+	xmlFreeTextWriter(writer);
+
+	result = xmlBuffer_to_xmltype(buf);
+	xmlBufferFree(buf);
+	return result;
+#else
+	NO_XML_SUPPORT();
+	return NULL;
+#endif
+}
+
+
+xmltype *
 xmlparse(text *data, bool is_document, bool preserve_whitespace)
 {
 #ifdef USE_LIBXML
@@ -313,6 +380,7 @@ xmltype *
 xmlroot(xmltype *data, text *version, int standalone)
 {
 #ifdef USE_LIBXML
+	xmltype	   *result;
 	xmlDocPtr	doc;
 	xmlBufferPtr buffer;
 	xmlSaveCtxtPtr save;
@@ -344,7 +412,9 @@ xmlroot(xmltype *data, text *version, int standalone)
 
 	xmlFreeDoc(doc);
 
-	return xmlBuffer_to_xmltype(buffer);
+	result = xmlBuffer_to_xmltype(buffer);
+	xmlBufferFree(buffer);
+	return result;
 #else
 	NO_XML_SUPPORT();
 	return NULL;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.7 2007/01/07 22:49:56 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.8 2007/01/10 20:33:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #define XML_H
 
 #include "fmgr.h"
+#include "nodes/execnodes.h"
 
 typedef struct varlena xmltype;
 
@@ -32,6 +33,7 @@ extern Datum xmlcomment(PG_FUNCTION_ARGS);
 extern Datum texttoxml(PG_FUNCTION_ARGS);
 extern Datum xmlvalidate(PG_FUNCTION_ARGS);
 
+extern xmltype *xmlelement(XmlExprState *xmlExpr, ExprContext *econtext);
 extern xmltype *xmlparse(text *data, bool is_doc, bool preserve_whitespace);
 extern xmltype *xmlpi(char *target, text *arg, bool arg_is_null, bool *result_is_null);
 extern xmltype *xmlroot(xmltype *data, text *version, int standalone);

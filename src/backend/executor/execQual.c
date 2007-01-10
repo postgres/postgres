@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.204 2007/01/07 22:49:55 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.205 2007/01/10 20:33:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2654,7 +2654,6 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 	char		   *str;
 	ListCell 	   *arg;
 	ListCell   *narg;
-	bool	found_arg;
 	int 			i;
 
 	if (isDone)
@@ -2682,55 +2681,6 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			}
 			break;
 
-		case IS_XMLELEMENT:
-			initStringInfo(&buf);
-			*isNull = false;
-			appendStringInfo(&buf, "<%s", xexpr->name);
-			i = 0;
-			forboth(arg, xmlExpr->named_args, narg, xexpr->arg_names)
-			{
-				ExprState 	*e = (ExprState *) lfirst(arg);
-				char	*argname = strVal(lfirst(narg));
-
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (!isnull)
-				{
-					str = OutputFunctionCall(&xmlExpr->named_outfuncs[i],
-											 value);
-					appendStringInfo(&buf, " %s=\"%s\"", argname, str);
-					pfree(str);
-				}
-				i++;
-			}
-
-			found_arg = false;
-			foreach(arg, xmlExpr->args)
-			{
-				ExprState 	*e = (ExprState *) lfirst(arg);
-
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (!isnull)
-				{
-					if (!found_arg)
-					{
-						appendStringInfoChar(&buf, '>');
-						found_arg = true;
-					}
-
-					/* we know the value is XML type */
-					str = DatumGetCString(DirectFunctionCall1(xml_out,
-															  value));
-					appendStringInfoString(&buf, str);
-					pfree(str);
-				}
-			}
-
-			if (!found_arg)
-				appendStringInfo(&buf, "/>");
-			else
-				appendStringInfo(&buf, "</%s>", xexpr->name);
-			break;
-
 		case IS_XMLFOREST:
 			initStringInfo(&buf);
 			i = 0;
@@ -2754,6 +2704,11 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			break;
 
 			/* The remaining cases don't need to set up buf */
+		case IS_XMLELEMENT:
+			*isNull = false;
+			return PointerGetDatum(xmlelement(xmlExpr, econtext));
+			break;
+
 		case IS_XMLPARSE:
 			{
 				ExprState 	*e;
