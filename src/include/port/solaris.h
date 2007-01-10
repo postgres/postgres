@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.14 2006/10/04 22:49:44 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.15 2007/01/10 18:22:50 tgl Exp $ */
 
 /*
  * Sort this out for all operating systems some time.  The __xxx
@@ -7,6 +7,14 @@
  */
 #if defined(__i386) && !defined(__i386__)
 #define __i386__
+#endif
+
+#if defined(__amd64) && !defined(__amd64__)
+#define __amd64__
+#endif
+
+#if defined(__x86_64) && !defined(__x86_64__)
+#define __x86_64__
 #endif
 
 #if defined(__sparc) && !defined(__sparc__)
@@ -32,6 +40,9 @@
 #define		  BYTE_ORDER	  BIG_ENDIAN
 #endif
 #ifdef __i386__
+#define		 BYTE_ORDER		 LITTLE_ENDIAN
+#endif
+#if defined(__amd64___) || defined(__x86_64__)
 #define		 BYTE_ORDER		 LITTLE_ENDIAN
 #endif
 #endif
