@@ -10,9 +10,10 @@ if (-f "$ARGV[0]/$defname.def") {
 
 print "Generating $defname.DEF from directory $ARGV[0]\n";
 
-while (<$ARGV[0]/*>) {
+while (<$ARGV[0]/*.obj>) {
     print ".";
-	open(F,"dumpbin /symbols $_|") || die "Could not open $_\n";
+	system("dumpbin /symbols /out:symbols.out $_ >NUL") && die "Could not call dumpbin";
+	open(F, "<symbols.out") || die "Could not open symbols.out for $_\n";
 	while (<F>) {
 		s/\(\)//g;
 		next unless /^\d/;
@@ -31,6 +32,7 @@ while (<$ARGV[0]/*>) {
 		push @def, $pieces[6];
 	}
 	close(F);
+	unlink("symbols.out");
 }
 print "\n";
 
