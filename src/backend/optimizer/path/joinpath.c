@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.109 2007/01/05 22:19:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.110 2007/01/10 18:06:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,10 @@ static List *select_mergejoin_clauses(RelOptInfo *joinrel,
 						 RelOptInfo *innerrel,
 						 List *restrictlist,
 						 JoinType jointype);
-static void build_mergejoin_strat_lists(List *mergeclauses,
-							List **mergefamilies, List **mergestrategies);
+static void build_mergejoin_strat_arrays(List *mergeclauses,
+										 Oid **mergefamilies,
+										 int **mergestrategies,
+										 bool **mergenullsfirst);
 
 
 /*
@@ -228,8 +230,9 @@ sort_inner_and_outer(PlannerInfo *root,
 		List	   *front_pathkey = (List *) lfirst(l);
 		List	   *cur_pathkeys;
 		List	   *cur_mergeclauses;
-		List	   *mergefamilies;
-		List	   *mergestrategies;
+		Oid		   *mergefamilies;
+		int		   *mergestrategies;
+		bool	   *mergenullsfirst;
 		List	   *outerkeys;
 		List	   *innerkeys;
 		List	   *merge_pathkeys;
@@ -275,8 +278,10 @@ sort_inner_and_outer(PlannerInfo *root,
 											 outerkeys);
 
 		/* Build opfamily info for execution */
-		build_mergejoin_strat_lists(cur_mergeclauses,
-									&mergefamilies, &mergestrategies);
+		build_mergejoin_strat_arrays(cur_mergeclauses,
+									 &mergefamilies,
+									 &mergestrategies,
+									 &mergenullsfirst);
 
 		/*
 		 * And now we can make the path.
@@ -292,6 +297,7 @@ sort_inner_and_outer(PlannerInfo *root,
 									   cur_mergeclauses,
 									   mergefamilies,
 									   mergestrategies,
+									   mergenullsfirst,
 									   outerkeys,
 									   innerkeys));
 	}
@@ -421,8 +427,9 @@ match_unsorted_outer(PlannerInfo *root,
 		Path	   *outerpath = (Path *) lfirst(l);
 		List	   *merge_pathkeys;
 		List	   *mergeclauses;
-		List	   *mergefamilies;
-		List	   *mergestrategies;
+		Oid		   *mergefamilies;
+		int		   *mergestrategies;
+		bool	   *mergenullsfirst;
 		List	   *innersortkeys;
 		List	   *trialsortkeys;
 		Path	   *cheapest_startup_inner;
@@ -530,8 +537,10 @@ match_unsorted_outer(PlannerInfo *root,
 													   innerrel);
 
 		/* Build opfamily info for execution */
-		build_mergejoin_strat_lists(mergeclauses,
-									&mergefamilies, &mergestrategies);
+		build_mergejoin_strat_arrays(mergeclauses,
+									 &mergefamilies,
+									 &mergestrategies,
+									 &mergenullsfirst);
 
 		/*
 		 * Generate a mergejoin on the basis of sorting the cheapest inner.
@@ -550,6 +559,7 @@ match_unsorted_outer(PlannerInfo *root,
 									   mergeclauses,
 									   mergefamilies,
 									   mergestrategies,
+									   mergenullsfirst,
 									   NIL,
 									   innersortkeys));
 
@@ -610,8 +620,10 @@ match_unsorted_outer(PlannerInfo *root,
 					newclauses = mergeclauses;
 
 				/* Build opfamily info for execution */
-				build_mergejoin_strat_lists(newclauses,
-											&mergefamilies, &mergestrategies);
+				build_mergejoin_strat_arrays(newclauses,
+											 &mergefamilies,
+											 &mergestrategies,
+											 &mergenullsfirst);
 
 				add_path(joinrel, (Path *)
 						 create_mergejoin_path(root,
@@ -624,6 +636,7 @@ match_unsorted_outer(PlannerInfo *root,
 											   newclauses,
 											   mergefamilies,
 											   mergestrategies,
+											   mergenullsfirst,
 											   NIL,
 											   NIL));
 				cheapest_total_inner = innerpath;
@@ -661,8 +674,10 @@ match_unsorted_outer(PlannerInfo *root,
 					}
 
 					/* Build opfamily info for execution */
-					build_mergejoin_strat_lists(newclauses,
-												&mergefamilies, &mergestrategies);
+					build_mergejoin_strat_arrays(newclauses,
+												 &mergefamilies,
+												 &mergestrategies,
+												 &mergenullsfirst);
 
 					add_path(joinrel, (Path *)
 							 create_mergejoin_path(root,
@@ -675,6 +690,7 @@ match_unsorted_outer(PlannerInfo *root,
 												   newclauses,
 												   mergefamilies,
 												   mergestrategies,
+												   mergenullsfirst,
 												   NIL,
 												   NIL));
 				}
@@ -981,20 +997,26 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 }
 
 /*
- * Temporary hack to build opfamily and strategy lists needed for mergejoin
+ * Temporary hack to build opfamily and strategy info needed for mergejoin
  * by the executor.  We need to rethink the planner's handling of merge
  * planning so that it can deal with multiple possible merge orders, but
  * that's not done yet.
  */
 static void
-build_mergejoin_strat_lists(List *mergeclauses,
-							List **mergefamilies, List **mergestrategies)
+build_mergejoin_strat_arrays(List *mergeclauses,
+							 Oid **mergefamilies,
+							 int **mergestrategies,
+							 bool **mergenullsfirst)
 {
+	int			nClauses = list_length(mergeclauses);
+	int			i;
 	ListCell   *l;
 
-	*mergefamilies = NIL;
-	*mergestrategies = NIL;
+	*mergefamilies = (Oid *) palloc(nClauses * sizeof(Oid));
+	*mergestrategies = (int *) palloc(nClauses * sizeof(int));
+	*mergenullsfirst = (bool *) palloc(nClauses * sizeof(bool));
 
+	i = 0;
 	foreach(l, mergeclauses)
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
@@ -1003,11 +1025,16 @@ build_mergejoin_strat_lists(List *mergeclauses,
 		 * We do not need to worry about whether the mergeclause will be
 		 * commuted at runtime --- it's the same opfamily either way.
 		 */
-		*mergefamilies = lappend_oid(*mergefamilies, restrictinfo->mergeopfamily);
+		(*mergefamilies)[i] = restrictinfo->mergeopfamily;
 		/*
 		 * For the moment, strategy must always be LessThan --- see
 		 * hack version of get_op_mergejoin_info
 		 */
-		*mergestrategies = lappend_int(*mergestrategies, BTLessStrategyNumber);
+		(*mergestrategies)[i] = BTLessStrategyNumber;
+
+		/* And we only allow NULLS LAST, too */
+		(*mergenullsfirst)[i] = false;
+
+		i++;
 	}
 }

@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.73 2007/01/09 02:14:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.74 2007/01/10 18:06:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -550,8 +550,8 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 		AssertArg(attNums[i] != 0);
 		AssertArg(sortOperators[i] != 0);
 
-		if (!get_op_compare_function(sortOperators[i],
-									 &sortFunction, &reverse))
+		if (!get_compare_function_for_ordering_op(sortOperators[i],
+												  &sortFunction, &reverse))
 			elog(ERROR, "operator %u is not a valid ordering operator",
 				 sortOperators[i]);
 
@@ -643,8 +643,8 @@ tuplesort_begin_datum(Oid datumType,
 	state->datumType = datumType;
 
 	/* lookup the ordering function */
-	if (!get_op_compare_function(sortOperator,
-								 &sortFunction, &reverse))
+	if (!get_compare_function_for_ordering_op(sortOperator,
+											  &sortFunction, &reverse))
 		elog(ERROR, "operator %u is not a valid ordering operator",
 			 sortOperator);
 	fmgr_info(sortFunction, &state->sortOpFn);
@@ -2106,8 +2106,8 @@ SelectSortFunction(Oid sortOperator,
 {
 	bool	reverse;
 
-	if (!get_op_compare_function(sortOperator,
-								 sortFunction, &reverse))
+	if (!get_compare_function_for_ordering_op(sortOperator,
+											  sortFunction, &reverse))
 		elog(ERROR, "operator %u is not a valid ordering operator",
 			 sortOperator);
 

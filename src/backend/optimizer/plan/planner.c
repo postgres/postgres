@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.210 2007/01/05 22:19:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.211 2007/01/10 18:06:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parsetree.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -62,10 +63,11 @@ static bool is_dummy_plan(Plan *plan);
 static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
+static Oid *extract_grouping_ops(List *groupClause);
 static bool choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 					   Path *cheapest_path, Path *sorted_path,
-					   double dNumGroups, AggClauseCounts *agg_counts);
-static bool hash_safe_grouping(PlannerInfo *root);
+					   Oid *groupOperators, double dNumGroups,
+					   AggClauseCounts *agg_counts);
 static List *make_subplanTargetList(PlannerInfo *root, List *tlist,
 					   AttrNumber **groupColIdx, bool *need_tlist_eval);
 static void locate_grouping_columns(PlannerInfo *root,
@@ -750,6 +752,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		List	   *sub_tlist;
 		List	   *group_pathkeys;
 		AttrNumber *groupColIdx = NULL;
+		Oid		   *groupOperators = NULL;
 		bool		need_tlist_eval = true;
 		QualCost	tlist_cost;
 		Path	   *cheapest_path;
@@ -829,14 +832,17 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		sort_pathkeys = root->sort_pathkeys;
 
 		/*
-		 * If grouping, decide whether we want to use hashed grouping.
+		 * If grouping, extract the grouping operators and decide whether we
+		 * want to use hashed grouping.
 		 */
 		if (parse->groupClause)
 		{
+			groupOperators = extract_grouping_ops(parse->groupClause);
 			use_hashed_grouping =
 				choose_hashed_grouping(root, tuple_fraction,
 									   cheapest_path, sorted_path,
-									   dNumGroups, &agg_counts);
+									   groupOperators, dNumGroups,
+									   &agg_counts);
 
 			/* Also convert # groups to long int --- but 'ware overflow! */
 			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
@@ -956,6 +962,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												AGG_HASHED,
 												numGroupCols,
 												groupColIdx,
+												groupOperators,
 												numGroups,
 												agg_counts.numAggs,
 												result_plan);
@@ -999,6 +1006,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												aggstrategy,
 												numGroupCols,
 												groupColIdx,
+												groupOperators,
 												numGroups,
 												agg_counts.numAggs,
 												result_plan);
@@ -1027,6 +1035,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 												  (List *) parse->havingQual,
 												  numGroupCols,
 												  groupColIdx,
+												  groupOperators,
 												  dNumGroups,
 												  result_plan);
 				/* The Group node won't change sort ordering */
@@ -1338,12 +1347,41 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 }
 
 /*
+ * extract_grouping_ops - make an array of the equality operator OIDs
+ *		for the GROUP BY clause
+ */
+static Oid *
+extract_grouping_ops(List *groupClause)
+{
+	int			numCols = list_length(groupClause);
+	int			colno = 0;
+	Oid		   *groupOperators;
+	ListCell   *glitem;
+
+	groupOperators = (Oid *) palloc(sizeof(Oid) * numCols);
+
+	foreach(glitem, groupClause)
+	{
+		GroupClause *groupcl = (GroupClause *) lfirst(glitem);
+
+		groupOperators[colno] = get_equality_op_for_ordering_op(groupcl->sortop);
+		if (!OidIsValid(groupOperators[colno]))		/* shouldn't happen */
+			elog(ERROR, "could not find equality operator for ordering operator %u",
+				 groupcl->sortop);
+		colno++;
+	}
+
+	return groupOperators;
+}
+
+/*
  * choose_hashed_grouping - should we use hashed grouping?
  */
 static bool
 choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 					   Path *cheapest_path, Path *sorted_path,
-					   double dNumGroups, AggClauseCounts *agg_counts)
+					   Oid *groupOperators, double dNumGroups,
+					   AggClauseCounts *agg_counts)
 {
 	int			numGroupCols = list_length(root->parse->groupClause);
 	double		cheapest_path_rows;
@@ -1352,10 +1390,13 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 	List	   *current_pathkeys;
 	Path		hashed_p;
 	Path		sorted_p;
+	int			i;
 
 	/*
 	 * Check can't-do-it conditions, including whether the grouping operators
-	 * are hashjoinable.
+	 * are hashjoinable.  (We assume hashing is OK if they are marked
+	 * oprcanhash.  If there isn't actually a supporting hash function,
+	 * the executor will complain at runtime.)
 	 *
 	 * Executor doesn't support hashed aggregation with DISTINCT aggregates.
 	 * (Doing so would imply storing *all* the input values in the hash table,
@@ -1365,8 +1406,11 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 		return false;
 	if (agg_counts->numDistinctAggs != 0)
 		return false;
-	if (!hash_safe_grouping(root))
-		return false;
+	for (i = 0; i < numGroupCols; i++)
+	{
+		if (!op_hashjoinable(groupOperators[i]))
+			return false;
+	}
 
 	/*
 	 * Don't do it if it doesn't look like the hashtable will fit into
@@ -1469,36 +1513,6 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 		return true;
 	}
 	return false;
-}
-
-/*
- * hash_safe_grouping - are grouping operators hashable?
- *
- * We assume hashed aggregation will work if the datatype's equality operator
- * is marked hashjoinable.
- */
-static bool
-hash_safe_grouping(PlannerInfo *root)
-{
-	ListCell   *gl;
-
-	foreach(gl, root->parse->groupClause)
-	{
-		GroupClause *grpcl = (GroupClause *) lfirst(gl);
-		TargetEntry *tle = get_sortgroupclause_tle(grpcl,
-												   root->parse->targetList);
-		Operator	optup;
-		bool		oprcanhash;
-
-		optup = equality_oper(exprType((Node *) tle->expr), true);
-		if (!optup)
-			return false;
-		oprcanhash = ((Form_pg_operator) GETSTRUCT(optup))->oprcanhash;
-		ReleaseSysCache(optup);
-		if (!oprcanhash)
-			return false;
-	}
-	return true;
 }
 
 /*---------------

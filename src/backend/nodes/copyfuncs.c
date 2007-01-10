@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.360 2007/01/09 02:14:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.361 2007/01/10 18:06:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -439,6 +439,7 @@ static MergeJoin *
 _copyMergeJoin(MergeJoin *from)
 {
 	MergeJoin  *newnode = makeNode(MergeJoin);
+	int			numCols;
 
 	/*
 	 * copy node superclass fields
@@ -449,8 +450,10 @@ _copyMergeJoin(MergeJoin *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(mergeclauses);
-	COPY_NODE_FIELD(mergefamilies);
-	COPY_NODE_FIELD(mergestrategies);
+	numCols = list_length(from->mergeclauses);
+	COPY_POINTER_FIELD(mergeFamilies, numCols * sizeof(Oid));
+	COPY_POINTER_FIELD(mergeStrategies, numCols * sizeof(int));
+	COPY_POINTER_FIELD(mergeNullsFirst, numCols * sizeof(bool));
 
 	return newnode;
 }
@@ -528,6 +531,7 @@ _copyGroup(Group *from)
 
 	COPY_SCALAR_FIELD(numCols);
 	COPY_POINTER_FIELD(grpColIdx, from->numCols * sizeof(AttrNumber));
+	COPY_POINTER_FIELD(grpOperators, from->numCols * sizeof(Oid));
 
 	return newnode;
 }
@@ -545,7 +549,10 @@ _copyAgg(Agg *from)
 	COPY_SCALAR_FIELD(aggstrategy);
 	COPY_SCALAR_FIELD(numCols);
 	if (from->numCols > 0)
+	{
 		COPY_POINTER_FIELD(grpColIdx, from->numCols * sizeof(AttrNumber));
+		COPY_POINTER_FIELD(grpOperators, from->numCols * sizeof(Oid));
+	}
 	COPY_SCALAR_FIELD(numGroups);
 
 	return newnode;
@@ -569,6 +576,7 @@ _copyUnique(Unique *from)
 	 */
 	COPY_SCALAR_FIELD(numCols);
 	COPY_POINTER_FIELD(uniqColIdx, from->numCols * sizeof(AttrNumber));
+	COPY_POINTER_FIELD(uniqOperators, from->numCols * sizeof(Oid));
 
 	return newnode;
 }
@@ -612,6 +620,7 @@ _copySetOp(SetOp *from)
 	COPY_SCALAR_FIELD(cmd);
 	COPY_SCALAR_FIELD(numCols);
 	COPY_POINTER_FIELD(dupColIdx, from->numCols * sizeof(AttrNumber));
+	COPY_POINTER_FIELD(dupOperators, from->numCols * sizeof(Oid));
 	COPY_SCALAR_FIELD(flagColIdx);
 
 	return newnode;
@@ -1356,6 +1365,7 @@ _copyInClauseInfo(InClauseInfo *from)
 	COPY_BITMAPSET_FIELD(lefthand);
 	COPY_BITMAPSET_FIELD(righthand);
 	COPY_NODE_FIELD(sub_targetlist);
+	COPY_NODE_FIELD(in_operators);
 
 	return newnode;
 }

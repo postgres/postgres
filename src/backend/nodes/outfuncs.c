@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.292 2007/01/09 02:14:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.293 2007/01/10 18:06:03 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -437,13 +437,28 @@ _outNestLoop(StringInfo str, NestLoop *node)
 static void
 _outMergeJoin(StringInfo str, MergeJoin *node)
 {
+	int			numCols;
+	int			i;
+
 	WRITE_NODE_TYPE("MERGEJOIN");
 
 	_outJoinPlanInfo(str, (Join *) node);
 
 	WRITE_NODE_FIELD(mergeclauses);
-	WRITE_NODE_FIELD(mergefamilies);
-	WRITE_NODE_FIELD(mergestrategies);
+
+	numCols = list_length(node->mergeclauses);
+
+	appendStringInfo(str, " :mergeFamilies");
+	for (i = 0; i < numCols; i++)
+		appendStringInfo(str, " %u", node->mergeFamilies[i]);
+
+	appendStringInfo(str, " :mergeStrategies");
+	for (i = 0; i < numCols; i++)
+		appendStringInfo(str, " %d", node->mergeStrategies[i]);
+
+	appendStringInfo(str, " :mergeNullsFirst");
+	for (i = 0; i < numCols; i++)
+		appendStringInfo(str, " %d", (int) node->mergeNullsFirst[i]);
 }
 
 static void
@@ -482,6 +497,10 @@ _outGroup(StringInfo str, Group *node)
 	appendStringInfo(str, " :grpColIdx");
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %d", node->grpColIdx[i]);
+
+	appendStringInfo(str, " :grpOperators");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %u", node->grpOperators[i]);
 }
 
 static void
@@ -530,6 +549,10 @@ _outUnique(StringInfo str, Unique *node)
 	appendStringInfo(str, " :uniqColIdx");
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %d", node->uniqColIdx[i]);
+
+	appendStringInfo(str, " :uniqOperators");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %u", node->uniqOperators[i]);
 }
 
 static void
@@ -547,6 +570,10 @@ _outSetOp(StringInfo str, SetOp *node)
 	appendStringInfo(str, " :dupColIdx");
 	for (i = 0; i < node->numCols; i++)
 		appendStringInfo(str, " %d", node->dupColIdx[i]);
+
+	appendStringInfo(str, " :dupOperators");
+	for (i = 0; i < node->numCols; i++)
+		appendStringInfo(str, " %d", node->dupOperators[i]);
 
 	WRITE_INT_FIELD(flagColIdx);
 }
@@ -1169,13 +1196,29 @@ _outNestPath(StringInfo str, NestPath *node)
 static void
 _outMergePath(StringInfo str, MergePath *node)
 {
+	int			numCols;
+	int			i;
+
 	WRITE_NODE_TYPE("MERGEPATH");
 
 	_outJoinPathInfo(str, (JoinPath *) node);
 
 	WRITE_NODE_FIELD(path_mergeclauses);
-	WRITE_NODE_FIELD(path_mergefamilies);
-	WRITE_NODE_FIELD(path_mergestrategies);
+
+	numCols = list_length(node->path_mergeclauses);
+
+	appendStringInfo(str, " :path_mergeFamilies");
+	for (i = 0; i < numCols; i++)
+		appendStringInfo(str, " %u", node->path_mergeFamilies[i]);
+
+	appendStringInfo(str, " :path_mergeStrategies");
+	for (i = 0; i < numCols; i++)
+		appendStringInfo(str, " %d", node->path_mergeStrategies[i]);
+
+	appendStringInfo(str, " :path_mergeNullsFirst");
+	for (i = 0; i < numCols; i++)
+		appendStringInfo(str, " %d", (int) node->path_mergeNullsFirst[i]);
+
 	WRITE_NODE_FIELD(outersortkeys);
 	WRITE_NODE_FIELD(innersortkeys);
 }
@@ -1325,6 +1368,7 @@ _outInClauseInfo(StringInfo str, InClauseInfo *node)
 	WRITE_BITMAPSET_FIELD(lefthand);
 	WRITE_BITMAPSET_FIELD(righthand);
 	WRITE_NODE_FIELD(sub_targetlist);
+	WRITE_NODE_FIELD(in_operators);
 }
 
 static void

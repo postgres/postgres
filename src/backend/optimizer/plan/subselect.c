@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.116 2007/01/05 22:19:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.117 2007/01/10 18:06:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -671,11 +671,13 @@ convert_IN_to_join(PlannerInfo *root, SubLink *sublink)
 {
 	Query	   *parse = root->parse;
 	Query	   *subselect = (Query *) sublink->subselect;
+	List	   *in_operators;
 	Relids		left_varnos;
 	int			rtindex;
 	RangeTblEntry *rte;
 	RangeTblRef *rtr;
 	InClauseInfo *ininfo;
+	Node	   *result;
 
 	/*
 	 * The sublink type must be "= ANY" --- that is, an IN operator.  We
@@ -689,15 +691,31 @@ convert_IN_to_join(PlannerInfo *root, SubLink *sublink)
 		return NULL;
 	if (sublink->testexpr && IsA(sublink->testexpr, OpExpr))
 	{
+		Oid			opno = ((OpExpr *) sublink->testexpr)->opno;
 		List	   *opfamilies;
 		List	   *opstrats;
 
-		get_op_btree_interpretation(((OpExpr *) sublink->testexpr)->opno,
-									&opfamilies, &opstrats);
+		get_op_btree_interpretation(opno, &opfamilies, &opstrats);
 		if (!list_member_int(opstrats, ROWCOMPARE_EQ))
 			return NULL;
+		in_operators = list_make1_oid(opno);
 	}
-	else if (!and_clause(sublink->testexpr))
+	else if (and_clause(sublink->testexpr))
+	{
+		ListCell   *lc;
+
+		/* OK, but we need to extract the per-column operator OIDs */
+		in_operators = NIL;
+		foreach(lc, ((BoolExpr *) sublink->testexpr)->args)
+		{
+			OpExpr *op = (OpExpr *) lfirst(lc);
+
+			if (!IsA(op, OpExpr))		/* probably shouldn't happen */
+				return NULL;
+			in_operators = lappend_oid(in_operators, op->opno);
+		}
+	}
+	else
 		return NULL;
 
 	/*
@@ -745,16 +763,23 @@ convert_IN_to_join(PlannerInfo *root, SubLink *sublink)
 	ininfo = makeNode(InClauseInfo);
 	ininfo->lefthand = left_varnos;
 	ininfo->righthand = bms_make_singleton(rtindex);
-	root->in_info_list = lappend(root->in_info_list, ininfo);
+	ininfo->in_operators = in_operators;
 
 	/*
 	 * Build the result qual expression.  As a side effect,
 	 * ininfo->sub_targetlist is filled with a list of Vars representing the
 	 * subselect outputs.
 	 */
-	return convert_testexpr(sublink->testexpr,
-							rtindex,
-							&ininfo->sub_targetlist);
+	result = convert_testexpr(sublink->testexpr,
+							  rtindex,
+							  &ininfo->sub_targetlist);
+
+	Assert(list_length(in_operators) == list_length(ininfo->sub_targetlist));
+
+	/* Add the completed node to the query's list */
+	root->in_info_list = lappend(root->in_info_list, ininfo);
+
+	return result;
 }
 
 /*

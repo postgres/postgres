@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.173 2007/01/08 16:09:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.174 2007/01/10 18:06:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1258,8 +1258,8 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	Path	   *outer_path = path->jpath.outerjoinpath;
 	Path	   *inner_path = path->jpath.innerjoinpath;
 	List	   *mergeclauses = path->path_mergeclauses;
-	List	   *mergefamilies = path->path_mergefamilies;
-	List	   *mergestrategies = path->path_mergestrategies;
+	Oid		   *mergeFamilies = path->path_mergeFamilies;
+	int		   *mergeStrategies = path->path_mergeStrategies;
 	List	   *outersortkeys = path->outersortkeys;
 	List	   *innersortkeys = path->innersortkeys;
 	Cost		startup_cost = 0;
@@ -1357,8 +1357,8 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 		firstclause = (RestrictInfo *) linitial(mergeclauses);
 		if (firstclause->left_mergescansel < 0) /* not computed yet? */
 			mergejoinscansel(root, (Node *) firstclause->clause,
-							 linitial_oid(mergefamilies),
-							 linitial_int(mergestrategies),
+							 mergeFamilies[0],
+							 mergeStrategies[0],
 							 &firstclause->left_mergescansel,
 							 &firstclause->right_mergescansel);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.162 2007/01/09 02:14:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.163 2007/01/10 18:06:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1676,7 +1676,8 @@ addTargetToSortList(ParseState *pstate, TargetEntry *tle,
 			 * Verify it's a valid ordering operator, and determine
 			 * whether to consider it like ASC or DESC.
 			 */
-			if (!get_op_compare_function(sortop, &cmpfunc, &reverse))
+			if (!get_compare_function_for_ordering_op(sortop,
+													  &cmpfunc, &reverse))
 				ereport(ERROR,
 						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 						 errmsg("operator %s is not a valid ordering operator",

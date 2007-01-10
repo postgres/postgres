@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.22 2007/01/05 22:19:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.23 2007/01/10 18:06:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,24 +183,22 @@ execTuplesUnequal(TupleTableSlot *slot1,
  * The result is a palloc'd array.
  */
 FmgrInfo *
-execTuplesMatchPrepare(TupleDesc tupdesc,
-					   int numCols,
-					   AttrNumber *matchColIdx)
+execTuplesMatchPrepare(int numCols,
+					   Oid *eqOperators)
 {
-	FmgrInfo   *eqfunctions = (FmgrInfo *) palloc(numCols * sizeof(FmgrInfo));
+	FmgrInfo   *eqFunctions = (FmgrInfo *) palloc(numCols * sizeof(FmgrInfo));
 	int			i;
 
 	for (i = 0; i < numCols; i++)
 	{
-		AttrNumber	att = matchColIdx[i];
-		Oid			typid = tupdesc->attrs[att - 1]->atttypid;
+		Oid			eq_opr = eqOperators[i];
 		Oid			eq_function;
 
-		eq_function = equality_oper_funcid(typid);
-		fmgr_info(eq_function, &eqfunctions[i]);
+		eq_function = get_opcode(eq_opr);
+		fmgr_info(eq_function, &eqFunctions[i]);
 	}
 
-	return eqfunctions;
+	return eqFunctions;
 }
 
 /*
@@ -208,40 +206,33 @@ execTuplesMatchPrepare(TupleDesc tupdesc,
  *		Look up the equality and hashing functions needed for a TupleHashTable.
  *
  * This is similar to execTuplesMatchPrepare, but we also need to find the
- * hash functions associated with the equality operators.  *eqfunctions and
- * *hashfunctions receive the palloc'd result arrays.
+ * hash functions associated with the equality operators.  *eqFunctions and
+ * *hashFunctions receive the palloc'd result arrays.
  */
 void
-execTuplesHashPrepare(TupleDesc tupdesc,
-					  int numCols,
-					  AttrNumber *matchColIdx,
-					  FmgrInfo **eqfunctions,
-					  FmgrInfo **hashfunctions)
+execTuplesHashPrepare(int numCols,
+					  Oid *eqOperators,
+					  FmgrInfo **eqFunctions,
+					  FmgrInfo **hashFunctions)
 {
 	int			i;
 
-	*eqfunctions = (FmgrInfo *) palloc(numCols * sizeof(FmgrInfo));
-	*hashfunctions = (FmgrInfo *) palloc(numCols * sizeof(FmgrInfo));
+	*eqFunctions = (FmgrInfo *) palloc(numCols * sizeof(FmgrInfo));
+	*hashFunctions = (FmgrInfo *) palloc(numCols * sizeof(FmgrInfo));
 
 	for (i = 0; i < numCols; i++)
 	{
-		AttrNumber	att = matchColIdx[i];
-		Oid			typid = tupdesc->attrs[att - 1]->atttypid;
-		Operator	optup;
-		Oid			eq_opr;
+		Oid			eq_opr = eqOperators[i];
 		Oid			eq_function;
 		Oid			hash_function;
 
-		optup = equality_oper(typid, false);
-		eq_opr = oprid(optup);
-		eq_function = oprfuncid(optup);
-		ReleaseSysCache(optup);
+		eq_function = get_opcode(eq_opr);
 		hash_function = get_op_hash_function(eq_opr);
 		if (!OidIsValid(hash_function)) /* should not happen */
 			elog(ERROR, "could not find hash function for hash operator %u",
 				 eq_opr);
-		fmgr_info(eq_function, &(*eqfunctions)[i]);
-		fmgr_info(hash_function, &(*hashfunctions)[i]);
+		fmgr_info(eq_function, &(*eqFunctions)[i]);
+		fmgr_info(hash_function, &(*hashFunctions)[i]);
 	}
 }
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.131 2007/01/09 02:14:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.132 2007/01/10 18:06:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -618,9 +618,11 @@ typedef JoinPath NestPath;
  * A mergejoin path has these fields.
  *
  * path_mergeclauses lists the clauses (in the form of RestrictInfos)
- * that will be used in the merge.  The parallel lists path_mergefamilies
- * and path_mergestrategies specify the merge semantics for each clause
- * (in effect, defining the relevant sort ordering for each clause).
+ * that will be used in the merge.  The parallel arrays path_mergeFamilies,
+ * path_mergeStrategies, and path_mergeNullsFirst specify the merge semantics
+ * for each clause (i.e., define the relevant sort ordering for each clause).
+ * (XXX is this the most reasonable path-time representation?  It's at least
+ * partially redundant with the pathkeys of the input paths.)
  *
  * Note that the mergeclauses are a subset of the parent relation's
  * restriction-clause list.  Any join clauses that are not mergejoinable
@@ -637,8 +639,10 @@ typedef struct MergePath
 {
 	JoinPath	jpath;
 	List	   *path_mergeclauses;		/* join clauses to be used for merge */
-	List	   *path_mergefamilies;		/* OID list of btree opfamilies */
-	List	   *path_mergestrategies;	/* integer list of btree strategies */
+	/* these are arrays, but have the same length as the mergeclauses list: */
+	Oid		   *path_mergeFamilies;		/* per-clause OIDs of opfamilies */
+	int		   *path_mergeStrategies;	/* per-clause ordering (ASC or DESC) */
+	bool	   *path_mergeNullsFirst;	/* per-clause nulls ordering */
 	List	   *outersortkeys;	/* keys for explicit sort, if any */
 	List	   *innersortkeys;	/* keys for explicit sort, if any */
 } MergePath;
@@ -885,6 +889,9 @@ typedef struct OuterJoinInfo
  * the order of joining and use special join methods at some join points.
  * We record information about each such IN clause in an InClauseInfo struct.
  * These structs are kept in the PlannerInfo node's in_info_list.
+ *
+ * Note: sub_targetlist is just a list of Vars or expressions; it does not
+ * contain TargetEntry nodes.
  */
 
 typedef struct InClauseInfo
@@ -893,11 +900,7 @@ typedef struct InClauseInfo
 	Relids		lefthand;		/* base relids in lefthand expressions */
 	Relids		righthand;		/* base relids coming from the subselect */
 	List	   *sub_targetlist; /* targetlist of original RHS subquery */
-
-	/*
-	 * Note: sub_targetlist is just a list of Vars or expressions; it does not
-	 * contain TargetEntry nodes.
-	 */
+	List	   *in_operators;	/* OIDs of the IN's equality operator(s) */
 } InClauseInfo;
 
 /*

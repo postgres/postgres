@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.148 2007/01/09 02:14:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.149 2007/01/10 18:06:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1270,16 +1270,14 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	if (node->numCols > 0)
 	{
 		if (node->aggstrategy == AGG_HASHED)
-			execTuplesHashPrepare(ExecGetScanType(&aggstate->ss),
-								  node->numCols,
-								  node->grpColIdx,
+			execTuplesHashPrepare(node->numCols,
+								  node->grpOperators,
 								  &aggstate->eqfunctions,
 								  &aggstate->hashfunctions);
 		else
 			aggstate->eqfunctions =
-				execTuplesMatchPrepare(ExecGetScanType(&aggstate->ss),
-									   node->numCols,
-									   node->grpColIdx);
+				execTuplesMatchPrepare(node->numCols,
+									   node->grpOperators);
 	}
 
 	/*
@@ -1519,6 +1517,13 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 							&peraggstate->inputtypeLen,
 							&peraggstate->inputtypeByVal);
 
+			/*
+			 * Look up the sorting and comparison operators to use.  XXX it's
+			 * pretty bletcherous to be making this sort of semantic decision
+			 * in the executor.  Probably the parser should decide this and
+			 * record it in the Aggref node ... or at latest, do it in the
+			 * planner.
+			 */
 			eq_function = equality_oper_funcid(inputTypes[0]);
 			fmgr_info(eq_function, &(peraggstate->equalfn));
 			peraggstate->sortOperator = ordering_oper_opid(inputTypes[0]);

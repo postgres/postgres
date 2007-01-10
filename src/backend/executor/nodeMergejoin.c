@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.84 2007/01/05 22:19:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.85 2007/01/10 18:06:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,35 +156,36 @@ typedef struct MergeJoinClauseData
  * the two expressions from the original clause.
  *
  * In addition to the expressions themselves, the planner passes the btree
- * opfamily OID and btree strategy number (BTLessStrategyNumber or
- * BTGreaterStrategyNumber) that identify the intended merge semantics for
- * each merge key.  The mergejoinable operator is an equality operator in
- * this opfamily, and the two inputs are guaranteed to be ordered in either
- * increasing or decreasing (respectively) order according to this opfamily.
- * This allows us to obtain the needed comparison functions from the opfamily.
+ * opfamily OID, btree strategy number (BTLessStrategyNumber or
+ * BTGreaterStrategyNumber), and nulls-first flag that identify the intended
+ * merge semantics for each merge key.  The mergejoinable operator is an
+ * equality operator in this opfamily, and the two inputs are guaranteed to be
+ * ordered in either increasing or decreasing (respectively) order according
+ * to this opfamily.  This allows us to obtain the needed comparison functions
+ * from the opfamily.
  */
 static MergeJoinClause
-MJExamineQuals(List *mergeclauses, List *mergefamilies, List *mergestrategies,
+MJExamineQuals(List *mergeclauses,
+			   Oid *mergefamilies,
+			   int *mergestrategies,
+			   bool *mergenullsfirst,
 			   PlanState *parent)
 {
 	MergeJoinClause clauses;
 	int			nClauses = list_length(mergeclauses);
 	int			iClause;
 	ListCell   *cl;
-	ListCell   *cf;
-	ListCell   *cs;
 
 	clauses = (MergeJoinClause) palloc0(nClauses * sizeof(MergeJoinClauseData));
 
 	iClause = 0;
-	cf = list_head(mergefamilies);
-	cs = list_head(mergestrategies);
 	foreach(cl, mergeclauses)
 	{
 		OpExpr	   *qual = (OpExpr *) lfirst(cl);
 		MergeJoinClause clause = &clauses[iClause];
-		Oid			opfamily;
-		StrategyNumber opstrategy;
+		Oid			opfamily = mergefamilies[iClause];
+		StrategyNumber opstrategy = mergestrategies[iClause];
+		bool		nulls_first = mergenullsfirst[iClause];
 		int			op_strategy;
 		Oid			op_lefttype;
 		Oid			op_righttype;
@@ -192,14 +193,10 @@ MJExamineQuals(List *mergeclauses, List *mergefamilies, List *mergestrategies,
 		RegProcedure cmpproc;
 		AclResult	aclresult;
 
-		opfamily = lfirst_oid(cf);
-		cf = lnext(cf);
-		opstrategy = lfirst_int(cs);
-		cs = lnext(cs);
-
 		/* Later we'll support both ascending and descending sort... */
 		Assert(opstrategy == BTLessStrategyNumber);
 		clause->cmpstrategy = MERGEFUNC_CMP;
+		Assert(!nulls_first);
 
 		if (!IsA(qual, OpExpr))
 			elog(ERROR, "mergejoin clause is not an OpExpr");
@@ -1525,8 +1522,9 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	 */
 	mergestate->mj_NumClauses = list_length(node->mergeclauses);
 	mergestate->mj_Clauses = MJExamineQuals(node->mergeclauses,
-											node->mergefamilies,
-											node->mergestrategies,
+											node->mergeFamilies,
+											node->mergeStrategies,
+											node->mergeNullsFirst,
 											(PlanState *) mergestate);
 
 	/*

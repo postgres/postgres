@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.220 2007/01/09 02:14:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.221 2007/01/10 18:06:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -113,7 +113,10 @@ static HashJoin *make_hashjoin(List *tlist,
 static Hash *make_hash(Plan *lefttree);
 static MergeJoin *make_mergejoin(List *tlist,
 			   List *joinclauses, List *otherclauses,
-			   List *mergeclauses, List *mergefamilies, List *mergestrategies,
+			   List *mergeclauses,
+			   Oid *mergefamilies,
+			   int *mergestrategies,
+			   bool *mergenullsfirst,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
 static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
@@ -595,6 +598,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	Plan	   *plan;
 	Plan	   *subplan;
 	List	   *uniq_exprs;
+	List	   *in_operators;
 	List	   *newtlist;
 	int			nextresno;
 	bool		newitems;
@@ -626,10 +630,12 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	 * To find the correct list of values to unique-ify, we look in the
 	 * information saved for IN expressions.  If this code is ever used in
 	 * other scenarios, some other way of finding what to unique-ify will
-	 * be needed.
+	 * be needed.  The IN clause's operators are needed too, since they
+	 * determine what the meaning of "unique" is in this context.
 	 *----------
 	 */
 	uniq_exprs = NIL;			/* just to keep compiler quiet */
+	in_operators = NIL;
 	foreach(l, root->in_info_list)
 	{
 		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
@@ -637,6 +643,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		if (bms_equal(ininfo->righthand, best_path->path.parent->relids))
 		{
 			uniq_exprs = ininfo->sub_targetlist;
+			in_operators = ininfo->in_operators;
 			break;
 		}
 	}
@@ -687,8 +694,8 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	newtlist = subplan->targetlist;
 	numGroupCols = list_length(uniq_exprs);
 	groupColIdx = (AttrNumber *) palloc(numGroupCols * sizeof(AttrNumber));
-	groupColPos = 0;
 
+	groupColPos = 0;
 	foreach(l, uniq_exprs)
 	{
 		Node	   *uniqexpr = lfirst(l);
@@ -703,8 +710,29 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	if (best_path->umethod == UNIQUE_PATH_HASH)
 	{
 		long		numGroups;
+		Oid		   *groupOperators;
 
 		numGroups = (long) Min(best_path->rows, (double) LONG_MAX);
+
+		/*
+		 * Get the (presumed hashable) equality operators for the Agg node
+		 * to use.  Normally these are the same as the IN clause operators,
+		 * but if those are cross-type operators then the equality operators
+		 * are the ones for the IN clause operators' RHS datatype.
+		 */
+		groupOperators = (Oid *) palloc(numGroupCols * sizeof(Oid));
+		groupColPos = 0;
+		foreach(l, in_operators)
+		{
+			Oid			in_oper = lfirst_oid(l);
+			Oid			eq_oper;
+
+			eq_oper = get_compatible_hash_operator(in_oper, false);
+			if (!OidIsValid(eq_oper))		/* shouldn't happen */
+				elog(ERROR, "could not find compatible hash operator for operator %u",
+					 in_oper);
+			groupOperators[groupColPos++] = eq_oper;
+		}
 
 		/*
 		 * Since the Agg node is going to project anyway, we can give it the
@@ -717,6 +745,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 								 AGG_HASHED,
 								 numGroupCols,
 								 groupColIdx,
+								 groupOperators,
 								 numGroups,
 								 0,
 								 subplan);
@@ -725,18 +754,29 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 	{
 		List	   *sortList = NIL;
 
-		for (groupColPos = 0; groupColPos < numGroupCols; groupColPos++)
+		/* Create an ORDER BY list to sort the input compatibly */
+		groupColPos = 0;
+		foreach(l, in_operators)
 		{
+			Oid			in_oper = lfirst_oid(l);
+			Oid			sortop;
 			TargetEntry *tle;
+			SortClause *sortcl;
 
+			sortop = get_ordering_op_for_equality_op(in_oper, false);
+			if (!OidIsValid(sortop))		/* shouldn't happen */
+				elog(ERROR, "could not find ordering operator for equality operator %u",
+					 in_oper);
 			tle = get_tle_by_resno(subplan->targetlist,
 								   groupColIdx[groupColPos]);
 			Assert(tle != NULL);
-			sortList = addTargetToSortList(NULL, tle,
-										   sortList, subplan->targetlist,
-										   SORTBY_DEFAULT,
-										   SORTBY_NULLS_DEFAULT,
-										   NIL, false);
+			sortcl = makeNode(SortClause);
+			sortcl->tleSortGroupRef = assignSortGroupRef(tle,
+														 subplan->targetlist);
+			sortcl->sortop = sortop;
+			sortcl->nulls_first = false;
+			sortList = lappend(sortList, sortcl);
+			groupColPos++;
 		}
 		plan = (Plan *) make_sort_from_sortclauses(root, sortList, subplan);
 		plan = (Plan *) make_unique(plan, sortList);
@@ -1542,8 +1582,9 @@ create_mergejoin_plan(PlannerInfo *root,
 							   joinclauses,
 							   otherclauses,
 							   mergeclauses,
-							   best_path->path_mergefamilies,
-							   best_path->path_mergestrategies,
+							   best_path->path_mergeFamilies,
+							   best_path->path_mergeStrategies,
+							   best_path->path_mergeNullsFirst,
 							   outer_plan,
 							   inner_plan,
 							   best_path->jpath.jointype);
@@ -2335,8 +2376,9 @@ make_mergejoin(List *tlist,
 			   List *joinclauses,
 			   List *otherclauses,
 			   List *mergeclauses,
-			   List *mergefamilies,
-			   List *mergestrategies,
+			   Oid *mergefamilies,
+			   int *mergestrategies,
+			   bool *mergenullsfirst,
 			   Plan *lefttree,
 			   Plan *righttree,
 			   JoinType jointype)
@@ -2350,8 +2392,9 @@ make_mergejoin(List *tlist,
 	plan->lefttree = lefttree;
 	plan->righttree = righttree;
 	node->mergeclauses = mergeclauses;
-	node->mergefamilies = mergefamilies;
-	node->mergestrategies = mergestrategies;
+	node->mergeFamilies = mergefamilies;
+	node->mergeStrategies = mergestrategies;
+	node->mergeNullsFirst = mergenullsfirst;
 	node->join.jointype = jointype;
 	node->join.joinqual = joinclauses;
 
@@ -2613,7 +2656,7 @@ make_sort_from_sortclauses(PlannerInfo *root, List *sortcls, Plan *lefttree)
  * This might look like it could be merged with make_sort_from_sortclauses,
  * but presently we *must* use the grpColIdx[] array to locate sort columns,
  * because the child plan's tlist is not marked with ressortgroupref info
- * appropriate to the grouping node.  So, only the sort direction info
+ * appropriate to the grouping node.  So, only the sort ordering info
  * is used from the GroupClause entries.
  */
 Sort *
@@ -2716,7 +2759,7 @@ materialize_finished_plan(Plan *subplan)
 Agg *
 make_agg(PlannerInfo *root, List *tlist, List *qual,
 		 AggStrategy aggstrategy,
-		 int numGroupCols, AttrNumber *grpColIdx,
+		 int numGroupCols, AttrNumber *grpColIdx, Oid *grpOperators,
 		 long numGroups, int numAggs,
 		 Plan *lefttree)
 {
@@ -2728,6 +2771,7 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	node->aggstrategy = aggstrategy;
 	node->numCols = numGroupCols;
 	node->grpColIdx = grpColIdx;
+	node->grpOperators = grpOperators;
 	node->numGroups = numGroups;
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
@@ -2784,6 +2828,7 @@ make_group(PlannerInfo *root,
 		   List *qual,
 		   int numGroupCols,
 		   AttrNumber *grpColIdx,
+		   Oid *grpOperators,
 		   double numGroups,
 		   Plan *lefttree)
 {
@@ -2794,6 +2839,7 @@ make_group(PlannerInfo *root,
 
 	node->numCols = numGroupCols;
 	node->grpColIdx = grpColIdx;
+	node->grpOperators = grpOperators;
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
 	cost_group(&group_path, root,
@@ -2841,7 +2887,8 @@ make_group(PlannerInfo *root,
 
 /*
  * distinctList is a list of SortClauses, identifying the targetlist items
- * that should be considered by the Unique filter.
+ * that should be considered by the Unique filter.  The input path must
+ * already be sorted accordingly.
  */
 Unique *
 make_unique(Plan *lefttree, List *distinctList)
@@ -2851,6 +2898,7 @@ make_unique(Plan *lefttree, List *distinctList)
 	int			numCols = list_length(distinctList);
 	int			keyno = 0;
 	AttrNumber *uniqColIdx;
+	Oid		   *uniqOperators;
 	ListCell   *slitem;
 
 	copy_plan_costsize(plan, lefttree);
@@ -2874,28 +2922,37 @@ make_unique(Plan *lefttree, List *distinctList)
 	plan->righttree = NULL;
 
 	/*
-	 * convert SortClause list into array of attr indexes, as wanted by exec
+	 * convert SortClause list into arrays of attr indexes and equality
+	 * operators, as wanted by executor
 	 */
 	Assert(numCols > 0);
 	uniqColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
+	uniqOperators = (Oid *) palloc(sizeof(Oid) * numCols);
 
 	foreach(slitem, distinctList)
 	{
 		SortClause *sortcl = (SortClause *) lfirst(slitem);
 		TargetEntry *tle = get_sortgroupclause_tle(sortcl, plan->targetlist);
 
-		uniqColIdx[keyno++] = tle->resno;
+		uniqColIdx[keyno] = tle->resno;
+		uniqOperators[keyno] = get_equality_op_for_ordering_op(sortcl->sortop);
+		if (!OidIsValid(uniqOperators[keyno]))		/* shouldn't happen */
+			elog(ERROR, "could not find equality operator for ordering operator %u",
+				 sortcl->sortop);
+		keyno++;
 	}
 
 	node->numCols = numCols;
 	node->uniqColIdx = uniqColIdx;
+	node->uniqOperators = uniqOperators;
 
 	return node;
 }
 
 /*
  * distinctList is a list of SortClauses, identifying the targetlist items
- * that should be considered by the SetOp filter.
+ * that should be considered by the SetOp filter.  The input path must
+ * already be sorted accordingly.
  */
 SetOp *
 make_setop(SetOpCmd cmd, Plan *lefttree,
@@ -2906,6 +2963,7 @@ make_setop(SetOpCmd cmd, Plan *lefttree,
 	int			numCols = list_length(distinctList);
 	int			keyno = 0;
 	AttrNumber *dupColIdx;
+	Oid		   *dupOperators;
 	ListCell   *slitem;
 
 	copy_plan_costsize(plan, lefttree);
@@ -2930,22 +2988,30 @@ make_setop(SetOpCmd cmd, Plan *lefttree,
 	plan->righttree = NULL;
 
 	/*
-	 * convert SortClause list into array of attr indexes, as wanted by exec
+	 * convert SortClause list into arrays of attr indexes and equality
+	 * operators, as wanted by executor
 	 */
 	Assert(numCols > 0);
 	dupColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
+	dupOperators = (Oid *) palloc(sizeof(Oid) * numCols);
 
 	foreach(slitem, distinctList)
 	{
 		SortClause *sortcl = (SortClause *) lfirst(slitem);
 		TargetEntry *tle = get_sortgroupclause_tle(sortcl, plan->targetlist);
 
-		dupColIdx[keyno++] = tle->resno;
+		dupColIdx[keyno] = tle->resno;
+		dupOperators[keyno] = get_equality_op_for_ordering_op(sortcl->sortop);
+		if (!OidIsValid(dupOperators[keyno]))		/* shouldn't happen */
+			elog(ERROR, "could not find equality operator for ordering operator %u",
+				 sortcl->sortop);
+		keyno++;
 	}
 
 	node->cmd = cmd;
 	node->numCols = numCols;
 	node->dupColIdx = dupColIdx;
+	node->dupOperators = dupOperators;
 	node->flagColIdx = flagColIdx;
 
 	return node;

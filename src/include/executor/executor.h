@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.133 2007/01/05 22:19:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.134 2007/01/10 18:06:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,14 +84,12 @@ extern bool execTuplesUnequal(TupleTableSlot *slot1,
 				  AttrNumber *matchColIdx,
 				  FmgrInfo *eqfunctions,
 				  MemoryContext evalContext);
-extern FmgrInfo *execTuplesMatchPrepare(TupleDesc tupdesc,
-					   int numCols,
-					   AttrNumber *matchColIdx);
-extern void execTuplesHashPrepare(TupleDesc tupdesc,
-					  int numCols,
-					  AttrNumber *matchColIdx,
-					  FmgrInfo **eqfunctions,
-					  FmgrInfo **hashfunctions);
+extern FmgrInfo *execTuplesMatchPrepare(int numCols,
+					   Oid *eqOperators);
+extern void execTuplesHashPrepare(int numCols,
+					  Oid *eqOperators,
+					  FmgrInfo **eqFunctions,
+					  FmgrInfo **hashFunctions);
 extern TupleHashTable BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 					FmgrInfo *eqfunctions,
 					FmgrInfo *hashfunctions,
