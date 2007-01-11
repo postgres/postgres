@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.63 2006/03/11 04:38:40 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.64 2007/01/11 15:47:33 meskes Exp $ */
 
 #ifndef _ECPG_PREPROC_EXTERN_H
 #define _ECPG_PREPROC_EXTERN_H
@@ -21,7 +21,8 @@ extern int	braces_open,
 			force_indicator,
 			ret_value,
 			struct_level,
-			ecpg_informix_var;
+			ecpg_informix_var,
+			regression_mode;
 extern char *descriptor_index;
 extern char *descriptor_name;
 extern char *connection;

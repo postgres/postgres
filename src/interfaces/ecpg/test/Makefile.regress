@@ -5,7 +5,7 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 override LDFLAGS := -L../../ecpglib -L../../pgtypeslib $(LDFLAGS)
 override LIBS := -lecpg -lpgtypes $(libpq) $(LIBS) $(PTHREAD_LIBS)
 
-ECPG = ../../preproc/ecpg -I$(srcdir)/../../include
+ECPG = ../../preproc/ecpg --regression -I$(srcdir)/../../include
 
 %: %.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) $^ $(LDFLAGS) $(LIBS) -o $@

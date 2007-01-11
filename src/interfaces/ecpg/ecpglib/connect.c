@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.37 2006/11/08 10:46:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.38 2007/01/11 15:47:33 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -19,6 +19,7 @@ static pthread_once_t actual_connection_key_once = PTHREAD_ONCE_INIT;
 #endif
 static struct connection *actual_connection = NULL;
 static struct connection *all_connections = NULL;
+extern int ecpg_internal_regression_mode;
 
 #ifdef ENABLE_THREAD_SAFETY
 static void
@@ -464,7 +465,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 	ECPGlog("ECPGconnect: opening database %s on %s port %s %s%s%s%s\n",
 			realname ? realname : "<DEFAULT>",
 			host ? host : "<DEFAULT>",
-			port ? port : "<DEFAULT>",
+			port ? (ecpg_internal_regression_mode ? "<REGRESSION_PORT>" : port) : "<DEFAULT>",
 			options ? "with options " : "", options ? options : "",
 			user ? "for user " : "", user ? user : "");
 
@@ -478,7 +479,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		ECPGlog("connect: could not open database %s on %s port %s %s%s%s%s in line %d\n\t%s\n",
 				db,
 				host ? host : "<DEFAULT>",
-				port ? port : "<DEFAULT>",
+				port ? (ecpg_internal_regression_mode ? "<REGRESSION_PORT>" : port) : "<DEFAULT>",
 				options ? "with options " : "", options ? options : "",
 				user ? "for user " : "", user ? user : "",
 				lineno, errmsg);

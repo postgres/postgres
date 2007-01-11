@@ -1,4 +1,5 @@
-/* Processed by ecpg (4.3.1) */
+/* Processed by ecpg (regression mode) */
+int ecpg_internal_regression_mode = 1;
 /* These include files are added by the preprocessor */
 #include <ecpgtype.h>
 #include <ecpglib.h>

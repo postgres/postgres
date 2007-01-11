@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.94 2006/02/08 09:10:04 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.95 2007/01/11 15:47:33 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -8,12 +8,7 @@
 
 #include <unistd.h>
 #include <string.h>
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
-
-extern int	optind;
-extern char *optarg;
+#include "getopt_long.h"
 
 #include "extern.h"
 
@@ -22,7 +17,8 @@ int			ret_value = 0,
 			auto_create_c = false,
 			system_includes = false,
 			force_indicator = true,
-			header_mode = false;
+			header_mode = false,
+			regression_mode = false;
 
 enum COMPAT_MODE compat = ECPG_COMPAT_PGSQL;
 
@@ -56,6 +52,7 @@ help(const char *progname)
 		   "                 OPTION may only be \"no_indicator\"\n");
 	printf("  -t             turn on autocommit of transactions\n");
 	printf("  --help         show this help, then exit\n");
+	printf("  --regression   run in regression testing mode\n");
 	printf("  --version      output version information, then exit\n");
 	printf("\nIf no output file is specified, the name is formed by adding .c to the\n"
 		   "input file name, after stripping off .pgc if present.\n");
@@ -112,9 +109,19 @@ add_preprocessor_define(char *define)
 	defines->next = pd;
 }
 
+#define ECPG_GETOPT_LONG_HELP			1
+#define ECPG_GETOPT_LONG_VERSION		2
+#define ECPG_GETOPT_LONG_REGRESSION		3
 int
 main(int argc, char *const argv[])
 {
+	static struct option ecpg_options[] = {
+		{"help", no_argument, NULL, ECPG_GETOPT_LONG_HELP},
+		{"version", no_argument, NULL, ECPG_GETOPT_LONG_VERSION},
+		{"regression", no_argument, NULL, ECPG_GETOPT_LONG_REGRESSION},
+		{ NULL, 0, NULL, 0}
+	};
+
 	int			fnr,
 				c,
 				verbose = false,
@@ -126,27 +133,35 @@ main(int argc, char *const argv[])
 
 	progname = get_progname(argv[0]);
 
-	if (argc > 1)
-	{
-		if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-?") == 0)
-		{
-			help(progname);
-			exit(0);
-		}
-		else if (strcmp(argv[1], "--version") == 0)
-		{
-			printf("ecpg (PostgreSQL %s) %d.%d.%d\n", PG_VERSION,
-				   MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
-			exit(0);
-		}
-	}
-
 	find_my_exec(argv[0], my_exec_path);
 
-	while ((c = getopt(argc, argv, "vcio:I:tD:dC:r:h")) != -1)
+	while ((c = getopt_long(argc, argv, "vcio:I:tD:dC:r:h?", ecpg_options, NULL)) != -1)
 	{
 		switch (c)
 		{
+			case ECPG_GETOPT_LONG_VERSION:
+				printf("ecpg (PostgreSQL %s) %d.%d.%d\n", PG_VERSION,
+					   MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+				exit(0);
+			case ECPG_GETOPT_LONG_HELP:
+				help(progname);
+				exit(0);
+			/*
+			 *  -? is an alternative spelling of --help. However it is also
+			 *  returned by getopt_long for unknown options. We can distinguish
+			 *  both cases by means of the optopt variable which is set to 0 if
+			 *  it was really -? and not an unknown option character.
+			 */
+			case '?':
+				if (optopt == 0)
+				{
+					help(progname);
+					exit(0);
+				}
+				break;
+			case ECPG_GETOPT_LONG_REGRESSION:
+				regression_mode = true;
+				break;
 			case 'o':
 				if (strcmp(optarg, "-") == 0)
 					yyout = stdout;
@@ -405,8 +420,12 @@ main(int argc, char *const argv[])
 
 				/* we need several includes */
 				/* but not if we are in header mode */
-				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
+				if (regression_mode) 
+					fprintf(yyout, "/* Processed by ecpg (regression mode) */\n");
+				else
+					fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
 
+				fprintf(yyout, "int ecpg_internal_regression_mode = %d;\n", regression_mode);
 				if (header_mode == false)
 				{
 					fprintf(yyout, "/* These include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n#include <ecpgerrno.h>\n#include <sqlca.h>\n");

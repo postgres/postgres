@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.15 2006/09/26 07:56:56 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.16 2007/01/11 15:47:33 meskes Exp $
 
 me=`basename $0`
 
@@ -707,7 +707,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # this variable prevents that the PID gets included in the logfiles
-ECPG_REGRESSION=1; export ECPG_REGRESSION
+#ECPG_REGRESSION=1; export ECPG_REGRESSION
 LD_LIBRARY_PATH=$libdir:$LD_LIBRARY_PATH; export LD_LIBRARY_PATH
 
 DIFFPRETTYFLAGS="$DIFFFLAGS -C3"
@@ -753,19 +753,19 @@ for i in \
 	# so tweak output files and replace the port number (we put a warning
 	# but the price to pay is that we have to tweak the files every time
 	# now not only if the port differs from the standard port).
-	if [ "$i" = "connect/test1.pgc" ]; then
+	#if [ "$i" = "connect/test1.pgc" ]; then
 		# can we use sed -i on all platforms?
-		for f in "$outfile_stderr" "$outfile_stdout" "$outfile_source"; do
-			mv $f $f.tmp
-			echo >> $f
-			echo "THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT" >> $f
-			echo >> $f
+	#	for f in "$outfile_stderr" "$outfile_stdout" "$outfile_source"; do
+	#		mv $f $f.tmp
+	#		echo >> $f
+	#		echo "THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT" >> $f
+	#		echo >> $f
 			# MinGW could return such a line:
 			# "could not connect to server: Connection refused (0x0000274D/10061)"
-			cat $f.tmp | sed -e s,$PGPORT,55432,g | sed -e "s,could not connect to server: Connection refused (0x.*/.*),could not connect to server: Connection refused,g" >> $f
-			rm $f.tmp
-		done
-	fi
+			#cat $f.tmp | sed -e s,$PGPORT,55432,g | sed -e "s,could not connect to server: Connection refused (0x.*/.*),could not connect to server: Connection refused,g" >> $f
+	#		rm $f.tmp
+	#	done
+	#fi
 
 	mv "$outfile_source" "$outfile_source.tmp"
 	cat "$outfile_source.tmp" | sed -e 's,^\(#line [0-9]*\) ".*/\([^/]*\)",\1 "\2",' > "$outfile_source"
