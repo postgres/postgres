@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.356 2007/01/11 18:44:53 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.357 2007/01/11 20:04:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2547,7 +2547,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	if (tllen != list_length(qry->targetList))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("ORDER BY on a UNION/INTERSECT/EXCEPT result must match existing result columns")));
+				 errmsg("A UNION/INTERSECT/EXCEPT ORDER BY cannot use expressions or functions, only result column names")));
 
 	qry->limitOffset = transformLimitClause(pstate, limitOffset,
 											"OFFSET");
