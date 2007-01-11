@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.64 2007/01/02 21:25:50 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.65 2007/01/11 02:42:31 momjian Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -17,7 +17,9 @@
 #include <signal.h>
 #include <errno.h>
 #include <direct.h>
+#ifndef __BORLANDC__
 #include <sys/utime.h>			/* for non-unicode version */
+#endif
 #undef near
 
 /* Must be here to avoid conflicting with prototype in windows.h */
@@ -149,8 +151,10 @@ int			semop(int semId, struct sembuf * sops, int flag);
 #define SIGTTIN				21
 #define SIGTTOU				22	/* Same as SIGABRT -- no problem, I hope */
 #define SIGWINCH			28
+#ifndef __BORLANDC__
 #define SIGUSR1				30
 #define SIGUSR2				31
+#endif
 
 struct timezone
 {
@@ -259,8 +263,10 @@ extern void _dosmaperr(unsigned long);
 
 /* Things that exist in MingW headers, but need to be added to MSVC */
 #ifdef WIN32_ONLY_COMPILER
+#ifndef __BORLANDC__
 typedef long ssize_t;
 typedef unsigned short mode_t;
+#endif
 
 /*
  *	Certain "standard edition" versions of MSVC throw a warning
@@ -271,6 +277,7 @@ typedef unsigned short mode_t;
 #define inline __inline
 #define __inline__ __inline
 
+#ifndef __BORLANDC__
 #define _S_IRWXU	(_S_IREAD | _S_IWRITE | _S_IEXEC)
 #define _S_IXUSR	_S_IEXEC
 #define _S_IWUSR	_S_IWRITE
@@ -280,6 +287,7 @@ typedef unsigned short mode_t;
 #define S_IXUSR		_S_IXUSR
 #define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#endif
 
 #define F_OK 0
 #define W_OK 2
