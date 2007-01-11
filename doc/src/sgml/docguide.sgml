@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.64 2007/01/09 22:19:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.65 2007/01/11 00:02:39 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -543,7 +543,7 @@ checking for sgmlspl... sgmlspl
 
    <para>
     To create a proper index, the build might process several identical
-    stages.  If you do not care about an index, and just want to
+    stages.  If you do not care about the index, and just want to
     proof-read the output, use <literal>draft</>:
 <screen>
 <prompt>doc/src/sgml$ </prompt><userinput>gmake draft html</userinput>
@@ -552,7 +552,7 @@ checking for sgmlspl... sgmlspl
 
    <para>
     To allow for easier handling in the final distribution, the files
-    comprising the HTML documentation are stored in a tar archive that
+    comprising the HTML documentation can be stored in a tar archive that
     is unpacked at installation time.  To create the
     <acronym>HTML</acronym> documentation package, use the commands
 <programlisting>

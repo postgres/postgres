@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.90 2007/01/10 19:06:04 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.91 2007/01/11 00:02:39 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -10,7 +10,6 @@ subdir = doc/src/sgml
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-.SECONDARY:
 .NOTPARALLEL:
 
 ifndef COLLATEINDEX
@@ -97,13 +96,14 @@ ifeq ($(vpath_build), yes)
 	@cp $(srcdir)/stylesheet.css .
 endif
 ifndef DRAFT
+# If not draft, re-run the this rule until HTML.index does not change
 	@cmp -s HTML.index.start HTML.index || $(MAKE) $@
 endif
 
 
 COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
 
-# The draft rule calls $(MAKE) again and sets the DRAFT variable.
+# The draft rule calls gmake again and sets the DRAFT variable.
 # This seems to be the only way to set gmake variables in a rule.
 draft:
 ifndef DRAFT
@@ -148,9 +148,8 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 
 
 # RTF to allow minor editing for hardcopy
-
-%.rtf: %.sgml $(ALLSGML) stylesheet.dsl
-	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print $<
+%.rtf: %.sgml $(ALLSGML) html
+	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t rtf -V rtf-backend -i output-print postgres.sgml
 
 # TeX
 # Regular TeX and pdfTeX have slightly differing requirements, so we
@@ -192,7 +191,7 @@ JADE.tex.call = $(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d $(srcdir)/styl
 # This generates an XML version of the flow-object tree.  It's useful
 # for debugging DSSSL code, and possibly to interface to some other
 # tools that can make use of this.
-%.fot: %.sgml $(ALLSGML) stylesheet.dsl
+%.fot: %.sgml $(ALLSGML) html
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t fot -i output-print -o $@ $<
 
 
