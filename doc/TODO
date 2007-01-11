@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Jan 10 23:41:43 EST 2007
+Last updated:		Wed Jan 10 23:48:02 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -504,6 +504,10 @@ SQL Commands
 	  expressions like SELECT col1 || col2
 	o Use more reliable method for CREATE DATABASE to get a consistent
 	  copy of db?
+	o Fix transaction restriction checks for CREATE DATABASE and
+	  other commands
+
+	  http://archives.postgresql.org/pgsql-hackers/2007-01/msg00133.php
 
 
 * UPDATE
