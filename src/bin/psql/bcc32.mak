@@ -60,7 +60,7 @@ INTDIR=.\Release
 !endif
 REFDOCDIR=../../../doc/src/sgml/ref
 
-CPP_PROJ = -I$(BCB)\include;..\..\include;..\..\interfaces\libpq;..\..\include\port\win32 \
+CPP_PROJ = -I$(BCB)\include;..\..\include;..\..\interfaces\libpq;..\..\include\port\win32;..\..\include\port\win32_msvc;..\pg_dump;..\..\backend \
            -c -D$(USERDEFINES) -DFRONTEND -n"$(INTDIR)" -tWM -tWC -q -5 -a8 -pc -X -w-use \
 	   -w-par -w-pia -w-csu -w-aus -w-ccc
 
@@ -98,6 +98,7 @@ CLEAN :
 	-@erase "$(INTDIR)\mbprint.obj"
 	-@erase "$(INTDIR)\print.obj"
 	-@erase "$(INTDIR)\prompt.obj"
+	-@erase "$(INTDIR)\psqlscan.obj"
 	-@erase "$(INTDIR)\startup.obj"
 	-@erase "$(INTDIR)\stringutils.obj"
 	-@erase "$(INTDIR)\tab-complete.obj"
@@ -105,9 +106,13 @@ CLEAN :
 	-@erase "$(INTDIR)\exec.obj"
 	-@erase "$(INTDIR)\getopt.obj"
 	-@erase "$(INTDIR)\getopt_long.obj"
+	-@erase "$(INTDIR)\snprintf.obj"
 	-@erase "$(INTDIR)\path.obj"
+	-@erase "$(INTDIR)\strlcpy.obj"
 	-@erase "$(INTDIR)\pgstrcasecmp.obj"
 	-@erase "$(INTDIR)\sprompt.obj"
+	-@erase "$(INTDIR)\dumputils.obj"
+	-@erase "$(INTDIR)\keywords.obj"
 	-@erase "$(INTDIR)\psql.ilc"
 	-@erase "$(INTDIR)\psql.ild"
 	-@erase "$(INTDIR)\psql.tds"
@@ -138,9 +143,13 @@ LINK32_OBJS= \
 	"$(INTDIR)\exec.obj" \
 	"$(INTDIR)\getopt.obj" \
 	"$(INTDIR)\getopt_long.obj" \
+	"$(INTDIR)\snprintf.obj" \
 	"$(INTDIR)\path.obj" \
+	"$(INTDIR)\strlcpy.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
-	"$(INTDIR)\sprompt.obj"
+	"$(INTDIR)\sprompt.obj" \
+	"$(INTDIR)\dumputils.obj" \
+	"$(INTDIR)\keywords.obj" 
 
 !IFDEF DEBUG
 LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Debug\blibpqddll.lib"
@@ -149,7 +158,7 @@ LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Release\blibpqdll.lib"
 !ENDIF
 
 # Have to use \# so # isn't treated as a comment, but MSVC doesn't like this
-"..\..\port\pg_config_paths.h": win32.mak
+"..\..\port\pg_config_paths.h": bcc32.mak
 	echo \#define PGBINDIR "" >$@
 	echo \#define PGSHAREDIR "" >>$@
 	echo \#define SYSCONFDIR "" >>$@
@@ -188,9 +197,19 @@ LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Release\blibpqdll.lib"
     $(CPP_PROJ) ..\..\port\getopt_long.c
 <<
 
+"$(INTDIR)\snprintf.obj" : "$(INTDIR)" ..\..\port\snprintf.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\snprintf.c
+<<
+
 "$(INTDIR)\path.obj" : "$(INTDIR)" ..\..\port\path.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\path.c
+<<
+
+"$(INTDIR)\strlcpy.obj" : "$(INTDIR)" ..\..\port\strlcpy.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\strlcpy.c
 <<
 
 "$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c
@@ -201,6 +220,16 @@ LINK32_OBJS	= $(LINK32_OBJS) "..\..\interfaces\libpq\Release\blibpqdll.lib"
 "$(INTDIR)\sprompt.obj" : "$(INTDIR)" ..\..\port\sprompt.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\sprompt.c
+<<
+
+"$(INTDIR)\dumputils.obj" : "$(INTDIR)" ..\pg_dump\dumputils.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\pg_dump\dumputils.c
+<<
+
+"$(INTDIR)\keywords.obj" : "$(INTDIR)" ..\..\backend\parser\keywords.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\backend\parser\keywords.c
 <<
 
 "sql_help.h": create_help.pl 

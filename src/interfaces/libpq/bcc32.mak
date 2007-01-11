@@ -76,7 +76,6 @@ ALL : config "$(OUTDIR)" "$(OUTDIR)\blibpq.dll" "$(OUTDIR)\blibpq.lib"
 CLEAN :
 	-@erase "$(INTDIR)\getaddrinfo.obj"
 	-@erase "$(INTDIR)\pgstrcasecmp.obj"
-	-@erase "$(INTDIR)\strlcpy.obj"
 	-@erase "$(INTDIR)\thread.obj"
 	-@erase "$(INTDIR)\inet_aton.obj"
 	-@erase "$(INTDIR)\crypt.obj"
@@ -99,6 +98,8 @@ CLEAN :
 	-@erase "$(INTDIR)\wchar.obj"
 	-@erase "$(INTDIR)\encnames.obj"
 	-@erase "$(INTDIR)\pthread-win32.obj"
+	-@erase "$(INTDIR)\snprintf.obj"
+	-@erase "$(INTDIR)\strlcpy.obj"
 	-@erase "$(OUTDIR)\$(OUTFILENAME).lib"
 	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.lib"
 	-@erase "$(OUTDIR)\libpq.res"
@@ -113,7 +114,6 @@ LIB32_OBJS= \
 	"$(INTDIR)\win32.obj" \
 	"$(INTDIR)\getaddrinfo.obj" \
 	"$(INTDIR)\pgstrcasecmp.obj" \
-	"$(INTDIR)\strlcpy.obj" \
 	"$(INTDIR)\thread.obj" \
 	"$(INTDIR)\inet_aton.obj" \
 	"$(INTDIR)\crypt.obj" \
@@ -133,6 +133,8 @@ LIB32_OBJS= \
 	"$(INTDIR)\pqsignal.obj" \
 	"$(INTDIR)\wchar.obj" \
 	"$(INTDIR)\encnames.obj" \
+	"$(INTDIR)\snprintf.obj" \
+	"$(INTDIR)\strlcpy.obj" \
 	"$(INTDIR)\pthread-win32.obj"
 
 
@@ -162,7 +164,7 @@ LINK32_OBJS= "$(INTDIR)\libpqdll.obj"
 	$(LINK32_FLAGS) +
 	c0d32.obj $(LINK32_OBJS), +
 	$@,, +
-	"$(OUTDIR)\blibpq.lib" import32.lib cw32mti.lib, +
+	"$(OUTDIR)\blibpq.lib" import32.lib cw32mt.lib, +
 	blibpqdll.def,"$(INTDIR)\libpq.res"
 <<
 	implib -w "$(OUTDIR)\blibpqdll.lib" blibpqdll.def $@
@@ -185,11 +187,6 @@ LINK32_OBJS= "$(INTDIR)\libpqdll.obj"
 "$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c
 	$(CPP) @<<
 	$(CPP_PROJ) ..\..\port\pgstrcasecmp.c
-<<
-
-"$(INTDIR)\strlcpy.obj" : ..\..\port\strlcpy.c
-	$(CPP) @<<
-	$(CPP_PROJ) ..\..\port\strlcpy.c
 <<
 
 "$(INTDIR)\thread.obj" : ..\..\port\thread.c
@@ -232,6 +229,17 @@ LINK32_OBJS= "$(INTDIR)\libpqdll.obj"
 	$(CPP) @<<
 	$(CPP_PROJ) /I"." ..\..\backend\utils\mb\encnames.c
 <<
+
+"$(INTDIR)\snprintf.obj" : ..\..\port\snprintf.c
+	$(CPP) @<<
+	$(CPP_PROJ) /I"." ..\..\port\snprintf.c
+<<
+
+"$(INTDIR)\strlcpy.obj" : ..\..\port\strlcpy.c
+	$(CPP) @<<
+	$(CPP_PROJ) ..\..\port\strlcpy.c
+<<
+
 
 .c.obj:
 	$(CPP) $(CPP_PROJ) $<
