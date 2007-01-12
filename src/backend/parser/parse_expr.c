@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.206 2007/01/12 16:29:24 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.207 2007/01/12 22:09:49 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1454,6 +1454,9 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 			case IS_XMLCONCAT:
 				newe = coerce_to_specific_type(pstate, newe, XMLOID,
 											   "XMLCONCAT");
+				break;
+			case IS_XMLELEMENT:
+				/* no coercion necessary */
 				break;
 			case IS_XMLFOREST:
 				newe = coerce_to_specific_type(pstate, newe, XMLOID,
