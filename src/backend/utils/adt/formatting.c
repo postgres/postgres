@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.117 2007/01/05 22:19:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.118 2007/01/12 23:34:54 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2007, PostgreSQL Global Development Group
@@ -2445,7 +2445,10 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		case DCH_CC:
 			if (is_to_char)
 			{
-				i = tm->tm_year / 100 + ((is_interval) ? 0 : 1);
+				if (is_interval)			/* straight calculation */
+					i = tm->tm_year / 100;
+				else						/* century 21 starts in 2001 */
+					i = (tm->tm_year - 1) / 100 + 1;
 				if (i <= 99 && i >= -99)
 					sprintf(inout, "%0*d", S_FM(suf) ? 0 : 2, i);
 				else
@@ -3295,9 +3298,6 @@ do_to_timestamp(text *date_txt, text *fmt,
 		tm->tm_sec = x;
 	}
 
-	if (tmfc.cc)
-		tm->tm_year = (tmfc.cc - 1) * 100;
-
 	if (tmfc.ww)
 		tmfc.ddd = (tmfc.ww - 1) * 7 + 1;
 
@@ -3347,24 +3347,27 @@ do_to_timestamp(text *date_txt, text *fmt,
 
 	if (tmfc.year)
 	{
-		if (tmfc.yysz == 2 && tmfc.cc)
+		/*
+		 * If CC and YY (or Y) are provided, use YY as 2 low-order digits
+		 * for the year in the given century.  Keep in mind that the 21st
+		 * century runs from 2001-2100, not 2000-2099.
+		 *
+		 * If a 4-digit year is provided, we use that and ignore CC.
+		 */
+		if (tmfc.cc && tmfc.yysz <= 2)
 		{
-			/*
-			 * CC and YY defined why -[2000|1900]? See dch_date() DCH_YY code.
-			 */
-			tm->tm_year = (tmfc.cc - 1) * 100 + (tmfc.year >= 2000 ? tmfc.year - 2000 : tmfc.year - 1900);
-		}
-		else if (tmfc.yysz == 1 && tmfc.cc)
-		{
-			/*
-			 * CC and Y defined
-			 */
-			tm->tm_year = (tmfc.cc - 1) * 100 + tmfc.year - 2000;
+			tm->tm_year = tmfc.year % 100;
+			if (tm->tm_year)
+				tm->tm_year += (tmfc.cc - 1) * 100;
+			else
+				tm->tm_year = tmfc.cc * 100;
 		}
 		else
-			/* set year (and ignore CC if defined) */
 			tm->tm_year = tmfc.year;
 	}
+	else if (tmfc.cc)			/* use first year of century */
+		tm->tm_year = (tmfc.cc - 1) * 100 + 1;
+
 	if (tmfc.bc)
 	{
 		if (tm->tm_year > 0)
