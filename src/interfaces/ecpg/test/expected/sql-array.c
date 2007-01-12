@@ -1,11 +1,11 @@
 /* Processed by ecpg (regression mode) */
-int ecpg_internal_regression_mode = 1;
 /* These include files are added by the preprocessor */
 #include <ecpgtype.h>
 #include <ecpglib.h>
 #include <ecpgerrno.h>
 #include <sqlca.h>
 /* End of automatic include section */
+#define ECPGdebug(X,Y) ECPGdebug((X)+100,(Y))
 
 #line 1 "array.pgc"
 #include <locale.h>

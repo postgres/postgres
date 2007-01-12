@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.16 2007/01/11 15:47:33 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.17 2007/01/12 10:00:13 meskes Exp $
 
 me=`basename $0`
 
@@ -740,6 +740,11 @@ for i in \
 	    *-*-mingw32*)
 		PLATFORM_TAG="-MinGW32"
 		;;
+	    *-*-openbsd3.8)
+		# OpenBSD 3.8 is buggy:
+		# http://archives.postgresql.org/pgsql-hackers/2006-09/msg00593.php
+		PLATFORM_TAG="-OpenBSD3.8.broken"
+		;;
 	esac
 
 	outfile_stderr="$outputdir/$outprg.stderr"
@@ -748,24 +753,6 @@ for i in \
 	cp $runprg.c "$outfile_source"
 	# echo "$runprg > $outfile_stdout 2> $outfile_stderr"
 	$runprg > "$outfile_stdout" 2> "$outfile_stderr"
-
-	# If we don't run on the default port we'll get different output
-	# so tweak output files and replace the port number (we put a warning
-	# but the price to pay is that we have to tweak the files every time
-	# now not only if the port differs from the standard port).
-	#if [ "$i" = "connect/test1.pgc" ]; then
-		# can we use sed -i on all platforms?
-	#	for f in "$outfile_stderr" "$outfile_stdout" "$outfile_source"; do
-	#		mv $f $f.tmp
-	#		echo >> $f
-	#		echo "THE PORT NUMBER MIGHT HAVE BEEN CHANGED BY THE REGRESSION SCRIPT" >> $f
-	#		echo >> $f
-			# MinGW could return such a line:
-			# "could not connect to server: Connection refused (0x0000274D/10061)"
-			#cat $f.tmp | sed -e s,$PGPORT,55432,g | sed -e "s,could not connect to server: Connection refused (0x.*/.*),could not connect to server: Connection refused,g" >> $f
-	#		rm $f.tmp
-	#	done
-	#fi
 
 	mv "$outfile_source" "$outfile_source.tmp"
 	cat "$outfile_source.tmp" | sed -e 's,^\(#line [0-9]*\) ".*/\([^/]*\)",\1 "\2",' > "$outfile_source"

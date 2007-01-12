@@ -1,5 +1,4 @@
 /* Processed by ecpg (regression mode) */
-int ecpg_internal_regression_mode = 1;
 /* These include files are added by the preprocessor */
 #include <ecpgtype.h>
 #include <ecpglib.h>
@@ -8,6 +7,7 @@ int ecpg_internal_regression_mode = 1;
 /* Needed for informix compatibility */
 #include <ecpg_informix.h>
 /* End of automatic include section */
+#define ECPGdebug(X,Y) ECPGdebug((X)+100,(Y))
 
 #line 1 "dec_test.pgc"
 #include <stdio.h>

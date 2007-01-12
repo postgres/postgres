@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.38 2007/01/11 15:47:33 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.39 2007/01/12 10:00:12 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -19,7 +19,6 @@ static pthread_once_t actual_connection_key_once = PTHREAD_ONCE_INIT;
 #endif
 static struct connection *actual_connection = NULL;
 static struct connection *all_connections = NULL;
-extern int ecpg_internal_regression_mode;
 
 #ifdef ENABLE_THREAD_SAFETY
 static void

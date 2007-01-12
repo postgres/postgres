@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.33 2007/01/11 15:47:33 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.34 2007/01/12 10:00:13 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -28,7 +28,7 @@
 #endif
 #endif
 
-extern int ecpg_internal_regression_mode;
+bool ecpg_internal_regression_mode = false;
 
 static struct sqlca_t sqlca_init =
 {
@@ -228,8 +228,16 @@ ECPGdebug(int n, FILE *dbgs)
 	pthread_mutex_lock(&debug_init_mutex);
 #endif
 
-	simple_debug = n;
+	if (n > 100) 
+	{
+		ecpg_internal_regression_mode = true;
+		simple_debug = n-100;
+	}
+	else
+		simple_debug = n;
+
 	debugstream = dbgs;
+
 	ECPGlog("ECPGdebug: set to %d\n", simple_debug);
 
 #ifdef ENABLE_THREAD_SAFETY
