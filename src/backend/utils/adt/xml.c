@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.14 2007/01/10 20:33:54 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.15 2007/01/12 16:29:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,12 +35,16 @@
 #include <libxml/xmlwriter.h>
 #endif /* USE_LIBXML */
 
+#include "catalog/pg_type.h"
 #include "executor/executor.h"
 #include "fmgr.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "nodes/execnodes.h"
+#include "parser/parse_expr.h"
+#include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/xml.h"
 
@@ -65,6 +69,8 @@ static void 	xml_ereport_by_code(int level, int sqlcode,
 									const char *msg, int errcode);
 static xmlChar *xml_text2xmlChar(text *in);
 static xmlDocPtr xml_parse(text *data, bool is_document, bool preserve_whitespace);
+
+static char *map_sql_value_to_xml_value(Datum value, Oid type);
 
 #endif /* USE_LIBXML */
 
@@ -284,13 +290,7 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 
 		value = ExecEvalExpr(e, econtext, &isnull, NULL);
 		if (!isnull)
-		{
-			/* we know the value is XML type */
-			str = DatumGetCString(DirectFunctionCall1(xml_out,
-													  value));
-			xmlTextWriterWriteRaw(writer, (xmlChar *) str);
-			pfree(str);
-		}
+			xmlTextWriterWriteRaw(writer, (xmlChar *) map_sql_value_to_xml_value(value, exprType((Node *) e->expr)));
 	}
 
 	xmlTextWriterEndElement(writer);
@@ -1258,3 +1258,87 @@ map_xml_name_to_sql_identifier(char *name)
 
 	return buf.data;
 }
+
+
+#ifdef USE_LIBXML
+/*
+ * Map SQL value to XML value; see SQL/XML:2003 section 9.16.
+ */
+static char *
+map_sql_value_to_xml_value(Datum value, Oid type)
+{
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+
+	if (is_array_type(type))
+	{
+		int i;
+		ArrayType *array;
+		Oid elmtype;
+		int16 elmlen;
+		bool elmbyval;
+		char elmalign;
+
+		array = DatumGetArrayTypeP(value);
+
+		/* TODO: need some code-fu here to remove this limitation */
+		if (ARR_NDIM(array) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("only supported for one-dimensional array")));
+
+		elmtype = ARR_ELEMTYPE(array);
+		get_typlenbyvalalign(elmtype, &elmlen, &elmbyval, &elmalign);
+
+		for (i = ARR_LBOUND(array)[0];
+			 i < ARR_LBOUND(array)[0] + ARR_DIMS(array)[0];
+			 i++)
+		{
+			Datum subval;
+			bool isnull;
+
+			subval = array_ref(array, 1, &i, -1, elmlen, elmbyval, elmalign, &isnull);
+			appendStringInfoString(&buf, "<element>");
+			appendStringInfoString(&buf, map_sql_value_to_xml_value(subval, elmtype));
+			appendStringInfoString(&buf, "</element>");
+		}
+	}
+	else
+	{
+		Oid typeOut;
+		bool isvarlena;
+		char *p, *str;
+
+		getTypeOutputInfo(type, &typeOut, &isvarlena);
+		str = OidOutputFunctionCall(typeOut, value);
+
+		if (type == XMLOID)
+			return str;
+
+		for (p = str; *p; p += pg_mblen(p))
+		{
+			switch (*p)
+			{
+				case '&':
+					appendStringInfo(&buf, "&amp;");
+					break;
+				case '<':
+					appendStringInfo(&buf, "&lt;");
+					break;
+				case '>':
+					appendStringInfo(&buf, "&gt;");
+					break;
+				case '\r':
+					appendStringInfo(&buf, "&#x0d;");
+					break;
+				default:
+					appendBinaryStringInfo(&buf, p, pg_mblen(p));
+					break;
+			}
+		}
+	}
+
+	return buf.data;
+}
+#endif /* USE_LIBXML */

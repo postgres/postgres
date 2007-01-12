@@ -44,9 +44,19 @@ SELECT xmlelement(name element, xmlelement(name nested, 'stuff'));
 ERROR:  no XML support in this installation
 SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
 ERROR:  no XML support in this installation
-SELECT xmlelement(name wrong, 37);
-ERROR:  no XML support in this installation
 SELECT xmlelement(name duplicate, xmlattributes(1 as a, 2 as b, 3 as a));
+ERROR:  no XML support in this installation
+SELECT xmlelement(name num, 37);
+ERROR:  no XML support in this installation
+SELECT xmlelement(name foo, text 'bar');
+ERROR:  no XML support in this installation
+SELECT xmlelement(name foo, xml 'bar');
+ERROR:  no XML support in this installation
+SELECT xmlelement(name foo, text 'b<a/>r');
+ERROR:  no XML support in this installation
+SELECT xmlelement(name foo, xml 'b<a/>r');
+ERROR:  no XML support in this installation
+SELECT xmlelement(name foo, array[1, 2, 3]);
 ERROR:  no XML support in this installation
 SELECT xmlparse(content 'abc');
 ERROR:  no XML support in this installation

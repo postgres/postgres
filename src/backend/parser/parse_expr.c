@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.205 2007/01/08 23:41:56 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.206 2007/01/12 16:29:24 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1455,10 +1455,6 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 				newe = coerce_to_specific_type(pstate, newe, XMLOID,
 											   "XMLCONCAT");
 				break;
-			case IS_XMLELEMENT:
-				newe = coerce_to_specific_type(pstate, newe, XMLOID,
-											   "XMLELEMENT");
-				break;
 			case IS_XMLFOREST:
 				newe = coerce_to_specific_type(pstate, newe, XMLOID,
 											   "XMLFOREST");
@@ -1488,7 +1484,7 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 		newx->args = lappend(newx->args, newe);
 		i++;
 	}
-		
+
 	return (Node *) newx;
 }
 

@@ -83,10 +83,44 @@ SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
  <employee><name>linda</name><age>19</age><pay>100</pay></employee>
 (6 rows)
 
-SELECT xmlelement(name wrong, 37);
-ERROR:  argument of XMLELEMENT must be type xml, not type integer
 SELECT xmlelement(name duplicate, xmlattributes(1 as a, 2 as b, 3 as a));
 ERROR:  XML attribute name "a" appears more than once
+SELECT xmlelement(name num, 37);
+  xmlelement   
+---------------
+ <num>37</num>
+(1 row)
+
+SELECT xmlelement(name foo, text 'bar');
+   xmlelement   
+----------------
+ <foo>bar</foo>
+(1 row)
+
+SELECT xmlelement(name foo, xml 'bar');
+   xmlelement   
+----------------
+ <foo>bar</foo>
+(1 row)
+
+SELECT xmlelement(name foo, text 'b<a/>r');
+       xmlelement        
+-------------------------
+ <foo>b&lt;a/&gt;r</foo>
+(1 row)
+
+SELECT xmlelement(name foo, xml 'b<a/>r');
+    xmlelement     
+-------------------
+ <foo>b<a/>r</foo>
+(1 row)
+
+SELECT xmlelement(name foo, array[1, 2, 3]);
+                               xmlelement                                
+-------------------------------------------------------------------------
+ <foo><element>1</element><element>2</element><element>3</element></foo>
+(1 row)
+
 SELECT xmlparse(content 'abc');
  xmlparse 
 ----------
