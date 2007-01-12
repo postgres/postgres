@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.358 2007/01/12 19:23:38 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.359 2007/01/12 19:34:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2549,7 +2549,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("invalid UNION/INTERSECT/EXCEPT ORDER BY clause"),
 				 errdetail("Only result column names can be used, not expressions or functions."),
-				 errhint("Add the expression/function to every SELECT, or place the query in a FROM clause.")));
+				 errhint("Add the expression/function to every SELECT, or move the UNION into a FROM clause.")));
 
 	qry->limitOffset = transformLimitClause(pstate, limitOffset,
 											"OFFSET");
