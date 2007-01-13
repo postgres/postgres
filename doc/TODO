@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Jan 10 23:48:50 EST 2007
+Last updated:		Sat Jan 13 10:13:24 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -680,10 +680,6 @@ SQL Commands
 
 		  http://archives.postgresql.org/pgsql-patches/2005-11/msg00045.php
 
-		o Fix memory leak from exceptions
-
-		  http://archives.postgresql.org/pgsql-performance/2006-06/msg00305.php
-
 		o Fix problems with RETURN NEXT on tables with
 		  dropped/added columns after function creation
 
@@ -897,9 +893,6 @@ Indexes
   one column or expression indexes, perhaps using per-index statistics
 * -Allow the creation of indexes with mixed ascending/descending
   specifiers
-* Allow constraint_exclusion to work for UNIONs like it does for
-  inheritance, allow it to work for UPDATE and DELETE statements, and allow
-  it to be used for all statements with little performance impact
 * Consider compressing indexes by storing key values duplicated in
   several rows as a single index entry
 
@@ -978,12 +971,6 @@ Cache Usage
   get a count directly from a unique index, but for this to be
   faster than a sequential scan it must avoid access to the heap
   to obtain tuple visibility information.
-
-* Add estimated_count(*) to return an estimate of COUNT(*)
-
-  This would use the planner ANALYZE statistics to return an estimated
-  count.
-  http://archives.postgresql.org/pgsql-hackers/2005-11/msg00943.php
 
 * Allow data to be pulled directly from indexes
 
