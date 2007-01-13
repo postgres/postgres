@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.27.2.2 2003/12/07 19:56:07 tgl Exp $
+ * $Header: /cvsroot/pgsql/contrib/pgbench/pgbench.c,v 1.27.2.3 2007/01/13 03:24:55 ishii Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -935,7 +935,7 @@ main(int argc, char **argv)
 
 	/* set random seed */
 	gettimeofday(&tv1, 0);
-	srand((uint) tv1.tv_usec);
+	srandom((uint) tv1.tv_usec);
 
 	/* get start up time */
 	gettimeofday(&tv1, 0);
