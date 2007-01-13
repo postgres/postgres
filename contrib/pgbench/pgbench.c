@@ -1,10 +1,10 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.35 2004/11/09 06:09:31 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.35.4.1 2007/01/13 03:17:34 ishii Exp $
  *
  * pgbench: a simple TPC-B like benchmark program for PostgreSQL
  * written by Tatsuo Ishii
  *
- * Copyright (c) 2000-2004	Tatsuo Ishii
+ * Copyright (c) 2000-2007	Tatsuo Ishii
  *
  * Permission to use, copy, modify, and distribute this software and
  * its documentation for any purpose and without fee is hereby
@@ -939,7 +939,7 @@ main(int argc, char **argv)
 
 	/* set random seed */
 	gettimeofday(&tv1, NULL);
-	srand((unsigned int) tv1.tv_usec);
+	srandom((unsigned int) tv1.tv_usec);
 
 	/* get start up time */
 	gettimeofday(&tv1, NULL);
