@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-compress.c,v 1.5 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-compress.c,v 1.6 2007/01/14 20:55:14 alvherre Exp $
  */
 
 #include "postgres.h"
@@ -40,7 +40,7 @@
  * Compressed pkt writer
  */
 
-#ifndef DISABLE_ZLIB
+#ifdef HAVE_LIBZ
 
 #include <zlib.h>
 
@@ -312,7 +312,8 @@ pgp_decompress_filter(PullFilter ** res, PGP_Context * ctx, PullFilter * src)
 {
 	return pullf_create(res, &decompress_filter, ctx, src);
 }
-#else							/* DISABLE_ZLIB */
+
+#else							/* !HAVE_ZLIB */
 
 int
 pgp_compress_filter(PushFilter ** res, PGP_Context * ctx, PushFilter * dst)

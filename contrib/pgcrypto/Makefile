@@ -1,5 +1,5 @@
 #
-# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.24 2006/07/13 04:15:24 neilc Exp $
+# $PostgreSQL: pgsql/contrib/pgcrypto/Makefile,v 1.25 2007/01/14 20:55:14 alvherre Exp $
 #
 
 INT_SRCS = md5.c sha1.c sha2.c internal.c internal-sha2.c blf.c rijndael.c \
@@ -9,16 +9,12 @@ INT_TESTS = sha2
 OSSL_SRCS = openssl.c pgp-mpi-openssl.c
 OSSL_TESTS = sha2 des 3des cast5
 
-ZLIB_OFF_CFLAGS = -DDISABLE_ZLIB
 ZLIB_TST = pgp-compression
 ZLIB_OFF_TST = pgp-zlib-DISABLED
 
 CF_SRCS = $(if $(subst no,,$(with_openssl)), $(OSSL_SRCS), $(INT_SRCS))
 CF_TESTS = $(if $(subst no,,$(with_openssl)), $(OSSL_TESTS), $(INT_TESTS))
-CF_CFLAGS = $(if $(subst yes,,$(with_zlib)), $(ZLIB_OFF_CFLAGS))
 CF_PGP_TESTS = $(if $(subst no,,$(with_zlib)), $(ZLIB_TST), $(ZLIB_OFF_TST))
-
-PG_CPPFLAGS	= $(CF_CFLAGS)
 
 SRCS		= pgcrypto.c px.c px-hmac.c px-crypt.c \
 		crypt-gensalt.c crypt-blowfish.c crypt-des.c \
