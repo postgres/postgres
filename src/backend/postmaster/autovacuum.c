@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.5.2.6 2006/05/19 15:15:38 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.5.2.7 2007/01/14 20:18:30 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,30 +482,19 @@ autovac_get_database_list(void)
 }
 
 /*
- * Process a whole database.  If it's a template database or is disallowing
- * connection by means of datallowconn=false, then issue a VACUUM FREEZE.
- * Else use a plain VACUUM.
+ * Return a palloc'ed copy of the pg_database entry for the given database.
+ * Note that no lock is retained on the entry whatsoever, so it may be stale by
+ * the time the caller inspects it.  This is sufficient for our purposes
+ * however.
  */
-static void
-process_whole_db(void)
+static Form_pg_database
+get_pg_database_entry(Oid dbid)
 {
-	Relation	dbRel;
+	Form_pg_database dbForm;
 	ScanKeyData entry[1];
+	Relation	dbRel;
 	SysScanDesc scan;
 	HeapTuple	tup;
-	Form_pg_database dbForm;
-	bool		freeze;
-
-	/* Start a transaction so our commands have one to play into. */
-	StartTransactionCommand();
-
-	 /* functions in indexes may want a snapshot set */
-	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
-
-	/*
-	 * Clean up any dead statistics collector entries for this DB.
-	 */
-	pgstat_vacuum_tabstat();
 
 	dbRel = heap_open(DatabaseRelationId, AccessShareLock);
 
@@ -523,16 +512,43 @@ process_whole_db(void)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "could not find tuple for database %u", MyDatabaseId);
 
-	dbForm = (Form_pg_database) GETSTRUCT(tup);
-
-	if (!dbForm->datallowconn || dbForm->datistemplate)
-		freeze = true;
-	else
-		freeze = false;
+	dbForm = (Form_pg_database) palloc(sizeof(FormData_pg_database));
+	memcpy(dbForm, GETSTRUCT(tup), sizeof(FormData_pg_database));
 
 	systable_endscan(scan);
 
 	heap_close(dbRel, AccessShareLock);
+
+	return dbForm;
+}
+
+/*
+ * Process a whole database.  If it's a template database or is disallowing
+ * connection by means of datallowconn=false, then issue a VACUUM FREEZE.
+ * Else use a plain VACUUM.
+ */
+static void
+process_whole_db(void)
+{
+	Form_pg_database dbForm;
+	bool		freeze;
+
+	/* Start a transaction so our commands have one to play into. */
+	StartTransactionCommand();
+
+	 /* functions in indexes may want a snapshot set */
+	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+
+	/*
+	 * Clean up any dead statistics collector entries for this DB.
+	 */
+	pgstat_vacuum_tabstat();
+
+	dbForm = get_pg_database_entry(MyDatabaseId);
+
+	freeze = (!dbForm->datallowconn || dbForm->datistemplate);
+
+	pfree(dbForm);
 
 	elog(DEBUG2, "autovacuum: VACUUM%s whole database",
 		 (freeze) ? " FREEZE" : "");
@@ -564,6 +580,8 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 	List	   *toast_table_ids = NIL;
 	ListCell   *cell;
 	PgStat_StatDBEntry *shared;
+	Form_pg_database dbForm;
+	bool		istemplate;
 
 	/* Start a transaction so our commands have one to play into. */
 	StartTransactionCommand();
@@ -577,6 +595,14 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 	 * even if we find nothing worth vacuuming in the database.
 	 */
 	pgstat_vacuum_tabstat();
+
+	/*
+	 * In a template database, we need to avoid putting our Xid in any table,
+	 * so disallow analyzes and force use of VACUUM FREEZE.
+	 */
+	dbForm = get_pg_database_entry(MyDatabaseId);
+	istemplate = (!dbForm->datallowconn || dbForm->datistemplate);
+	pfree(dbForm);
 
 	/*
 	 * StartTransactionCommand and CommitTransactionCommand will automatically
@@ -694,10 +720,11 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 		VacuumCostDelay = tab->vacuum_cost_delay;
 		VacuumCostLimit = tab->vacuum_cost_limit;
 
+		/* in a template database, we never analyze and force freezing */
 		autovacuum_do_vac_analyze(list_make1_oid(tab->relid),
 								  tab->dovacuum,
-								  tab->doanalyze,
-								  false);
+								  !istemplate && tab->doanalyze,
+								  istemplate);
 	}
 
 	/* Finally close out the last transaction. */
