@@ -86,6 +86,13 @@ SELECT xmlroot (
 SELECT xmlserialize(content data as character varying) FROM xmltest;
 
 
+SELECT xml '<foo>bar</foo>' IS DOCUMENT;
+SELECT xml '<foo>bar</foo><bar>foo</bar>' IS DOCUMENT;
+SELECT xml '<abc/>' IS NOT DOCUMENT;
+SELECT xml 'abc' IS NOT DOCUMENT;
+SELECT '<>' IS NOT DOCUMENT;
+
+
 -- Check mapping SQL identifier to XML name
 
 SELECT xmlpi(name ":::_xml_abc135.%-&_");

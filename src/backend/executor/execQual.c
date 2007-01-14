@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.206 2007/01/12 21:47:26 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.207 2007/01/14 13:11:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2806,6 +2806,25 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				return PointerGetDatum(xmlroot(data,
 											   version,
 											   standalone));
+			}
+			break;
+
+		case IS_DOCUMENT:
+			{
+				ExprState 	*e;
+
+				/* optional argument is known to be xml */
+				Assert(list_length(xmlExpr->args) == 1);
+
+				e = (ExprState *) linitial(xmlExpr->args);
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (isnull)
+					return (Datum) 0;
+				else
+				{
+					*isNull = false;
+					return BoolGetDatum(xml_is_document(DatumGetXmlP(value)));
+				}
 			}
 			break;
 	}

@@ -228,6 +228,33 @@ SELECT xmlserialize(content data as character varying) FROM xmltest;
  <value>two</value>
 (2 rows)
 
+SELECT xml '<foo>bar</foo>' IS DOCUMENT;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT xml '<foo>bar</foo><bar>foo</bar>' IS DOCUMENT;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT xml '<abc/>' IS NOT DOCUMENT;
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT xml 'abc' IS NOT DOCUMENT;
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT '<>' IS NOT DOCUMENT;
+ERROR:  invalid XML content
+DETAIL:  Element name not found
 -- Check mapping SQL identifier to XML name
 SELECT xmlpi(name ":::_xml_abc135.%-&_");
                       xmlpi                      
