@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.183 2006/12/22 22:09:31 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.184 2007/01/14 22:37:59 neilc Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -438,9 +438,13 @@
    <sect2 id="datatype-numeric-decimal">
     <title>Arbitrary Precision Numbers</title>
 
-    <indexterm zone="datatype-numeric-decimal">
+    <indexterm>
      <primary>numeric (data type)</primary>
     </indexterm>
+
+   <indexterm>
+    <primary>arbitrary precision numbers</primary>
+   </indexterm>
 
     <indexterm>
      <primary>decimal</primary>
@@ -515,6 +519,16 @@ NUMERIC
      plus eight bytes overhead.
     </para>
 
+    <indexterm>
+     <primary>NaN</primary>
+     <see>not a number</see>
+   </indexterm>
+
+    <indexterm>
+     <primary>not a number</primary>
+     <secondary>numeric (data type)</secondary>
+    </indexterm>
+
     <para>
      In addition to ordinary numeric values, the <type>numeric</type>
      type allows the special value <literal>NaN</>, meaning 
@@ -524,6 +538,18 @@ NUMERIC
      for example <literal>UPDATE table SET x = 'NaN'</>.  On input,
      the string <literal>NaN</> is recognized in a case-insensitive manner.
     </para>
+
+    <note>
+     <para>
+      In most implementations of the <quote>not-a-number</> concept,
+      <literal>NaN</> is not considered equal to any other numeric
+      value (including <literal>NaN</>).  In order to allow
+      <type>numeric</> values to be sorted and used in tree-based
+      indexes, <productname>PostgreSQL</> treats <literal>NaN</>
+      values as equal, and greater than all non-<literal>NaN</>
+      values.
+     </para>
+    </note>
 
     <para>
      The types <type>decimal</type> and <type>numeric</type> are
@@ -613,6 +639,11 @@ NUMERIC
      from zero will cause an underflow error.
     </para>
 
+    <indexterm>
+     <primary>not a number</primary>
+     <secondary>double precision</secondary>
+    </indexterm>
+
     <para>
      In addition to ordinary numeric values, the floating-point types
      have several special values:
@@ -630,6 +661,17 @@ NUMERIC
      for example <literal>UPDATE table SET x = 'Infinity'</>.  On input,
      these strings are recognized in a case-insensitive manner.
     </para>
+
+    <note>
+     <para>
+      IEEE754 specifies that <literal>NaN</> should not compare equal
+      to any other floating-point value (including <literal>NaN</>).
+      In order to allow floating-point values to be sorted and used
+      in tree-based indexes, <productname>PostgreSQL</> treats
+      <literal>NaN</> values as equal, and greater than all
+      non-<literal>NaN</> values.
+     </para>
+    </note>
 
     <para>
      <productname>PostgreSQL</productname> also supports the SQL-standard
