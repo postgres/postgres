@@ -30,16 +30,17 @@
 #define TOUCHAR(x)	(*((unsigned char*)(x)))
 
 #ifdef TS_USE_WIDE
+size_t		char2wchar(wchar_t *to, const char *from, size_t len);
 
 #ifdef WIN32
 
 size_t		wchar2char(char *to, const wchar_t *from, size_t len);
-size_t		char2wchar(wchar_t *to, const char *from, size_t len);
+
 #else							/* WIN32 */
 
-/* correct mbstowcs */
-#define char2wchar mbstowcs
+/* correct wcstombs */
 #define wchar2char wcstombs
+
 #endif   /* WIN32 */
 
 #define t_isdigit(x)	( pg_mblen(x)==1 && isdigit( TOUCHAR(x) ) )
@@ -55,10 +56,10 @@ extern int	_t_isprint(const char *ptr);
  */
 #define t_iseq(x,c) ( (pg_mblen(x)==1) ? ( TOUCHAR(x) == ((unsigned char)(c)) ) : false )
 
-#define COPYCHAR(d,s)	do {				\
-	int lll = pg_mblen( s );			\
-							\
-	while( lll-- )					\
+#define COPYCHAR(d,s)	do {					\
+	int lll = pg_mblen( s );					\
+												\
+	while( lll-- )								\
 		TOUCHAR((d)+lll) = TOUCHAR((s)+lll);	\
 } while(0)
 

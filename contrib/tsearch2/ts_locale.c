@@ -12,12 +12,12 @@
 size_t
 wchar2char(char *to, const wchar_t *from, size_t len)
 {
+	if (len == 0)
+		return 0;
+
 	if (GetDatabaseEncoding() == PG_UTF8)
 	{
 		int			r;
-
-		if (len == 0)
-			return 0;
 
 		r = WideCharToMultiByte(CP_UTF8, 0, from, -1, to, len,
 								NULL, NULL);
@@ -34,16 +34,18 @@ wchar2char(char *to, const wchar_t *from, size_t len)
 
 	return wcstombs(to, from, len);
 }
+#endif   /* WIN32 */
 
 size_t
 char2wchar(wchar_t *to, const char *from, size_t len)
 {
+	if (len == 0)
+		return 0;
+
+#ifdef WIN32
 	if (GetDatabaseEncoding() == PG_UTF8)
 	{
 		int			r;
-
-		if (len == 0)
-			return 0;
 
 		r = MultiByteToWideChar(CP_UTF8, 0, from, len, to, len);
 
@@ -60,29 +62,44 @@ char2wchar(wchar_t *to, const char *from, size_t len)
 
 		return r;
 	}
+	else 
+#endif /* WIN32 */
+	if ( lc_ctype_is_c() )
+	{
+		/*
+		 * pg_mb2wchar_with_len always adds trailing '\0', so 
+		 * 'to' should be allocated with sufficient space 
+		 */
+		return pg_mb2wchar_with_len(from, (pg_wchar *)to, len);
+	}
 
 	return mbstowcs(to, from, len);
 }
-#endif   /* WIN32 */
 
 int
 _t_isalpha(const char *ptr)
 {
-	wchar_t		character;
+	wchar_t		character[2];
 
-	char2wchar(&character, ptr, 1);
+	if (lc_ctype_is_c())
+		return isalpha(TOUCHAR(ptr));
 
-	return iswalpha((wint_t) character);
+	char2wchar(character, ptr, 1);
+
+	return iswalpha((wint_t) *character);
 }
 
 int
 _t_isprint(const char *ptr)
 {
-	wchar_t		character;
+	wchar_t		character[2];
 
-	char2wchar(&character, ptr, 1);
+	if (lc_ctype_is_c())
+		return isprint(TOUCHAR(ptr));
 
-	return iswprint((wint_t) character);
+	char2wchar(character, ptr, 1);
+
+	return iswprint((wint_t) *character);
 }
 #endif   /* TS_USE_WIDE */
 
@@ -126,7 +143,7 @@ lowerstr(char *str)
 		if ( wlen < 0 )
 			ereport(ERROR,
 					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-					 errmsg("transalation failed from server encoding to wchar_t")));
+					 errmsg("translation failed from server encoding to wchar_t")));
 
 		Assert(wlen<=len);
 		wstr[wlen] = 0;
@@ -152,7 +169,7 @@ lowerstr(char *str)
 		if ( wlen < 0 )
 			ereport(ERROR,
 					(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-					 errmsg("transalation failed from wchar_t to server encoding %d", errno)));
+					 errmsg("translation failed from wchar_t to server encoding %d", errno)));
 		Assert(wlen<=len);
 		out[wlen]='\0';
 	}
