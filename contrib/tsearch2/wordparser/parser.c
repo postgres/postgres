@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/wordparser/parser.c,v 1.11 2006/10/04 00:29:47 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/wordparser/parser.c,v 1.12 2007/01/15 15:16:28 teodor Exp $ */
 
 #include "postgres.h"
 
@@ -40,16 +40,13 @@ TParserInit(char *str, int len)
 #ifdef TS_USE_WIDE
 
 	/*
-	 * Use wide char code only when max encoding length > 1 and ctype != C.
-	 * Some operating systems fail with multi-byte encodings and a C locale.
-	 * Also, for a C locale there is no need to process as multibyte. From
-	 * backend/utils/adt/oracle_compat.c Teodor
+	 * Use wide char code only when max encoding length > 1.
 	 */
 
-	if (prs->charmaxlen > 1 && !lc_ctype_is_c())
+	if (prs->charmaxlen > 1)
 	{
 		prs->usewide = true;
-		prs->wstr = (wchar_t *) palloc(sizeof(wchar_t) * prs->lenstr);
+		prs->wstr = (wchar_t *) palloc(sizeof(wchar_t) * (prs->lenstr+1));
 		prs->lenwstr = char2wchar(prs->wstr, prs->str, prs->lenstr);
 	}
 	else
@@ -83,25 +80,99 @@ TParserClose(TParser * prs)
 
 /*
  * defining support function, equvalent is* macroses, but
- * working with any possible encodings and locales
+ * working with any possible encodings and locales. Note,
+ * that with multibyte encoding and C-locale isw* function may fail
+ * or give wrong result. Note 2: multibyte encoding and C-locale 
+ * often are used for Asian languages.
  */
 
 #ifdef TS_USE_WIDE
 
-#define p_iswhat(type)										\
-static int											\
-p_is##type(TParser *prs) {									\
-	Assert( prs->state );									\
-	return ( ( prs->usewide ) ? isw##type( (wint_t)*( prs->wstr + prs->state->poschar ) ) : \
-		is##type( (unsigned char)*( prs->str + prs->state->posbyte ) ) );		\
-}	\
-												\
-static int											\
-p_isnot##type(TParser *prs) {									\
-	return !p_is##type(prs);								\
+#define p_iswhat(type)														\
+static int																	\
+p_is##type(TParser *prs) {													\
+	Assert( prs->state );													\
+	if ( prs->usewide )														\
+	{																		\
+		if ( lc_ctype_is_c() )												\
+			return is##type( 0xff & *( prs->wstr + prs->state->poschar) );	\
+																			\
+		return isw##type( *(wint_t*)( prs->wstr + prs->state->poschar ) );	\
+	}																		\
+																			\
+	return is##type( *(unsigned char*)( prs->str + prs->state->posbyte ) );	\
+}																			\
+																			\
+static int																	\
+p_isnot##type(TParser *prs) {												\
+	return !p_is##type(prs);												\
 }
 
+static int 
+p_isalnum(TParser *prs)
+{
+	Assert( prs->state );
 
+	if (prs->usewide)
+	{
+		if (lc_ctype_is_c())
+		{
+			unsigned int c = *(unsigned int*)(prs->wstr + prs->state->poschar);
+
+			/*
+			 * any non-ascii symbol with multibyte encoding
+			 * with C-locale is an alpha character
+			 */
+			if ( c > 0x7f )
+				return 1;
+
+			return isalnum(0xff & c);
+		}
+
+		return iswalnum( (wint_t)*( prs->wstr + prs->state->poschar));
+	}
+
+	return isalnum( *(unsigned char*)( prs->str + prs->state->posbyte ));
+}
+
+static int
+p_isnotalnum(TParser *prs)
+{
+	return !p_isalnum(prs);
+}
+
+static int 
+p_isalpha(TParser *prs)
+{
+	Assert( prs->state );
+
+	if (prs->usewide)
+	{
+		if (lc_ctype_is_c())
+		{
+			unsigned int c = *(prs->wstr + prs->state->poschar);
+
+			/*
+			 * any non-ascii symbol with multibyte encoding
+			 * with C-locale is an alpha character
+			 */
+			if ( c > 0x7f )
+				return 1;
+
+			return isalpha(0xff & c);
+		}
+
+		return iswalpha( (wint_t)*( prs->wstr + prs->state->poschar));
+	}
+
+	return isalpha( *(unsigned char*)( prs->str + prs->state->posbyte ));
+}
+
+static int
+p_isnotalpha(TParser *prs)
+{
+	return !p_isalpha(prs);
+}
 
 /* p_iseq should be used only for ascii symbols */
 
@@ -111,18 +182,19 @@ p_iseq(TParser * prs, char c)
 	Assert(prs->state);
 	return ((prs->state->charlen == 1 && *(prs->str + prs->state->posbyte) == c)) ? 1 : 0;
 }
+
 #else							/* TS_USE_WIDE */
 
-#define p_iswhat(type)										\
-static int											\
-p_is##type(TParser *prs) {									\
-	Assert( prs->state );									\
-	return is##type( (unsigned char)*( prs->str + prs->state->posbyte ) );			\
-}	\
-												\
-static int											\
-p_isnot##type(TParser *prs) {									\
-	return !p_is##type(prs);								\
+#define p_iswhat(type)														\
+static int																	\
+p_is##type(TParser *prs) {													\
+	Assert( prs->state );													\
+	return is##type( (unsigned char)*( prs->str + prs->state->posbyte ) );	\
+}																			\
+																			\
+static int																	\
+p_isnot##type(TParser *prs) {												\
+	return !p_is##type(prs);												\
 }
 
 
@@ -132,10 +204,12 @@ p_iseq(TParser * prs, char c)
 	Assert(prs->state);
 	return (*(prs->str + prs->state->posbyte) == c) ? 1 : 0;
 }
-#endif   /* TS_USE_WIDE */
 
 p_iswhat(alnum)
 p_iswhat(alpha)
+
+#endif   /* TS_USE_WIDE */
+
 p_iswhat(digit)
 p_iswhat(lower)
 p_iswhat(print)
