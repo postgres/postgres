@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.58 2006/10/07 20:59:04 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.59 2007/01/15 17:22:46 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -134,7 +134,7 @@ PostgreSQL documentation
       <term><option>--globals-only</option></term>
       <listitem>
        <para>
-        Dump only global objects (users and groups), no databases.
+        Dump only global objects (roles and tablespaces), no databases.
        </para>
       </listitem>
      </varlistentry>
