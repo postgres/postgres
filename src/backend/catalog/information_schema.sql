@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2003-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.38 2006/11/10 18:10:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.38.2.1 2007/01/16 18:32:32 tgl Exp $
  */
 
 /*
@@ -964,10 +964,10 @@ CREATE VIEW key_column_usage AS
                 AND r.relkind = 'r'
                 AND (NOT pg_is_other_temp_schema(nr.oid))
                 AND (pg_has_role(r.relowner, 'USAGE')
-                     OR has_table_privilege(c.oid, 'SELECT')
-                     OR has_table_privilege(c.oid, 'INSERT')
-                     OR has_table_privilege(c.oid, 'UPDATE')
-                     OR has_table_privilege(c.oid, 'REFERENCES')) ) AS ss
+                     OR has_table_privilege(r.oid, 'SELECT')
+                     OR has_table_privilege(r.oid, 'INSERT')
+                     OR has_table_privilege(r.oid, 'UPDATE')
+                     OR has_table_privilege(r.oid, 'REFERENCES')) ) AS ss
     WHERE ss.roid = a.attrelid
           AND a.attnum = (ss.x).x
           AND NOT a.attisdropped;
