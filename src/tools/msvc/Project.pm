@@ -23,7 +23,7 @@ sub new {
         includes        => '',
         defines         => ';',
 		solution        => $solution,
-        disablewarnings => '4018;4244',
+        disablewarnings => '4018;4244;4273',
     };
 
 	bless $self;

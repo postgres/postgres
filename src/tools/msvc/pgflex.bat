@@ -1,4 +1,6 @@
 @echo off
+if exist src\tools\msvc\buildenv.bat call src\tools\msvc\buildenv.bat
+
 flex -V > NUL
 if errorlevel 1 goto noflex
 

@@ -14,6 +14,11 @@ sub new {
         strver   => '',
     };
 	bless $self;
+	if ($options->{xml}) {
+      if (!($options->{xslt} && $options->{iconv})) {
+         die "XML requires both XSLT and ICONV\n";
+      }   
+   }
 	return $self;
 }
 

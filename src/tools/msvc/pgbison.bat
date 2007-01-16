@@ -1,4 +1,6 @@
 @echo off
+if exist src\tools\msvc\buildenv.bat call src\tools\msvc\buildenv.bat
+
 SET BV=
 for /F "tokens=4 usebackq" %%f in (`bison -V`) do if "!BV!"=="" SET BV=%%f
 if "%BV%"=="" goto novarexp

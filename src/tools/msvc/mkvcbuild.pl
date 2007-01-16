@@ -187,24 +187,21 @@ if (!$solution->{options}->{openssl}) {
 }
 
 # Pgcrypto makefile too complex to parse....
-# Pgcrypto requires zlib
-if ($solution->{options}->{zlib}) {
-   my $pgcrypto = $solution->AddProject('pgcrypto','dll','crypto');
-   $pgcrypto->AddFiles('contrib\pgcrypto','pgcrypto.c','px.c','px-hmac.c','px-crypt.c',
-   		'crypt-gensalt.c','crypt-blowfish.c','crypt-des.c','crypt-md5.c','mbuf.c',
-   		'pgp.c','pgp-armor.c','pgp-cfb.c','pgp-compress.c','pgp-decrypt.c','pgp-encrypt.c',
-   		'pgp-info.c','pgp-mpi.c','pgp-pubdec.c','pgp-pubenc.c','pgp-pubkey.c','pgp-s2k.c',
-   		'pgp-pgsql.c');
-   if ($solution->{options}->{openssl}) {
-   	$pgcrypto->AddFiles('contrib\pgcrypto', 'openssl.c','pgp-mpi-openssl.c');
-   }
-   else {
-   	$pgcrypto->AddFiles('contrib\pgcrypto', 'md5.c','sha1.c','sha2.c','internal.c','internal-sha2.c',
-   			'blf.c','rijndael.c','fortuna.c','random.c','pgp-mpi-internal.c','imath.c');
-   }
-   $pgcrypto->AddReference($postgres);
-   $pgcrypto->AddLibrary('wsock32.lib');
+my $pgcrypto = $solution->AddProject('pgcrypto','dll','crypto');
+$pgcrypto->AddFiles('contrib\pgcrypto','pgcrypto.c','px.c','px-hmac.c','px-crypt.c',
+		'crypt-gensalt.c','crypt-blowfish.c','crypt-des.c','crypt-md5.c','mbuf.c',
+		'pgp.c','pgp-armor.c','pgp-cfb.c','pgp-compress.c','pgp-decrypt.c','pgp-encrypt.c',
+		'pgp-info.c','pgp-mpi.c','pgp-pubdec.c','pgp-pubenc.c','pgp-pubkey.c','pgp-s2k.c',
+		'pgp-pgsql.c');
+if ($solution->{options}->{openssl}) {
+	$pgcrypto->AddFiles('contrib\pgcrypto', 'openssl.c','pgp-mpi-openssl.c');
 }
+else {
+	$pgcrypto->AddFiles('contrib\pgcrypto', 'md5.c','sha1.c','sha2.c','internal.c','internal-sha2.c',
+			'blf.c','rijndael.c','fortuna.c','random.c','pgp-mpi-internal.c','imath.c');
+}
+$pgcrypto->AddReference($postgres);
+$pgcrypto->AddLibrary('wsock32.lib');
 
 my $D;
 opendir($D, 'contrib') || croak "Could not opendir on contrib!\n";

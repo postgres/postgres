@@ -9,6 +9,11 @@ environment variables "leaking" through.
 
 First, edit config.pl to reflect what "configure options" you want set.
 
+If you need to modify the environment for calling external tools, such as
+flex or bison, create a file called "buildenv.bat". This file will be called
+by all scripts before anything is done, so the environment can be set up.
+(for example, include SET PATH=%PATH%;c:\some\where\bison\bin)
+
 Then, to build all of PostgreSQL in debug configuration, run the command
 	build
 from a Visual Studio Command Prompt (to get all environment
@@ -54,3 +59,7 @@ Get from http://web.mit.edu/Kerberos/dist/index.html
 
 zlib - required for compression support in pg_dump/pg_restore
 Get from http://www.zlib.net
+
+libxml2 and libxslt - required for XML support
+Get from http://www.zlatkovic.com/pub/libxml or build from source from
+http://xmlsoft.org. Note that libxml2 requires iconv.
