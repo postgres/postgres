@@ -349,7 +349,7 @@
 #stats_start_collector = on		# needed for block or row stats
 					# (change requires restart)
 #stats_block_level = off
-#stats_row_level = off
+#stats_row_level = on
 #stats_reset_on_server_start = off	# (change requires restart)
 
 
@@ -365,7 +365,7 @@
 # AUTOVACUUM PARAMETERS
 #---------------------------------------------------------------------------
 
-#autovacuum = off			# enable autovacuum subprocess?
+#autovacuum = on			# enable autovacuum subprocess?
 					# 'on' requires stats_start_collector
 					# and stats_row_level to also be on
 #autovacuum_naptime = 1min		# time between autovacuum runs

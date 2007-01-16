@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.65 2006/12/27 14:55:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.66 2007/01/16 18:26:02 alvherre Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -477,7 +477,9 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     linkend="guc-stats-start-collector"> and <xref
     linkend="guc-stats-row-level"> are set to <literal>true</literal>.  Also,
     it's important to allow a slot for the autovacuum process when choosing
-    the value of <xref linkend="guc-superuser-reserved-connections">.
+    the value of <xref linkend="guc-superuser-reserved-connections">.  In
+    the default configuration, autovacuuming is enabled and the related
+    configuration parameters are appropriately set.
    </para>
 
    <para>

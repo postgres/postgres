@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.367 2007/01/09 22:16:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.368 2007/01/16 18:26:02 alvherre Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -711,7 +711,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&pgstat_collect_tuplelevel,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 	{
 		{"stats_block_level", PGC_SUSET, STATS_COLLECTOR,
@@ -748,7 +748,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&autovacuum_start_daemon,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 
 	{
