@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.436 2007/01/05 22:19:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.437 2007/01/16 21:41:13 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -636,6 +636,8 @@ DATA(insert OID = 309 (  float84gt		   PGNSP PGUID 12 f f t f i 2 16 "701 700" _
 DESCR("greater-than");
 DATA(insert OID = 310 (  float84ge		   PGNSP PGUID 12 f f t f i 2 16 "701 700" _null_ _null_ _null_ float84ge - _null_ ));
 DESCR("greater-than-or-equal");
+DATA(insert OID = 320 ( width_bucket	   PGNSP PGUID 12 f f t f i 4 23 "701 701 701 23" _null_ _null_ _null_	width_bucket_float8 - _null_ ));
+DESCR("bucket number of operand in equidepth histogram");
 
 DATA(insert OID = 311 (  float8			   PGNSP PGUID 12 f f t f i 1 701 "700" _null_ _null_ _null_	ftod - _null_ ));
 DESCR("convert float4 to float8");

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.350 2007/01/12 23:34:54 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.351 2007/01/16 21:41:12 neilc Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -847,6 +847,16 @@
 
       <row>
        <entry><literal><function>width_bucket</function>(<parameter>op</parameter> <type>numeric</type>, <parameter>b1</parameter> <type>numeric</type>, <parameter>b2</parameter> <type>numeric</type>, <parameter>count</parameter> <type>int</type>)</literal></entry>
+       <entry><type>int</type></entry>
+       <entry>return the bucket to which <parameter>operand</> would
+       be assigned in an equidepth histogram with <parameter>count</>
+       buckets, in the range <parameter>b1</> to <parameter>b2</></entry>
+       <entry><literal>width_bucket(5.35, 0.024, 10.06, 5)</literal></entry>
+       <entry><literal>3</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal><function>width_bucket</function>(<parameter>op</parameter> <type>dp</type>, <parameter>b1</parameter> <type>dp</type>, <parameter>b2</parameter> <type>dp</type>, <parameter>count</parameter> <type>int</type>)</literal></entry>
        <entry><type>int</type></entry>
        <entry>return the bucket to which <parameter>operand</> would
        be assigned in an equidepth histogram with <parameter>count</>

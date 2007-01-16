@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.146 2007/01/06 20:21:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.147 2007/01/16 21:41:13 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2743,6 +2743,88 @@ float84ge(PG_FUNCTION_ARGS)
 	float4		arg2 = PG_GETARG_FLOAT4(1);
 
 	PG_RETURN_BOOL(float8_cmp_internal(arg1, arg2) >= 0);
+}
+
+/*
+ * Implements the float8 version of the width_bucket() function
+ * defined by SQL2003. See also width_bucket_numeric().
+ *
+ * 'bound1' and 'bound2' are the lower and upper bounds of the
+ * histogram's range, respectively. 'count' is the number of buckets
+ * in the histogram. width_bucket() returns an integer indicating the
+ * bucket number that 'operand' belongs to in an equiwidth histogram
+ * with the specified characteristics. An operand smaller than the
+ * lower bound is assigned to bucket 0. An operand greater than the
+ * upper bound is assigned to an additional bucket (with number
+ * count+1). We don't allow "NaN" for any of the float8 inputs, and we
+ * don't allow either of the histogram bounds to be +/- infinity.
+ */
+Datum
+width_bucket_float8(PG_FUNCTION_ARGS)
+{
+	float8 		operand = PG_GETARG_FLOAT8(0);
+	float8 		bound1 	= PG_GETARG_FLOAT8(1);
+	float8 		bound2 	= PG_GETARG_FLOAT8(2);
+	int32 		count 	= PG_GETARG_INT32(3);
+	int32 		result;
+
+	if (count <= 0.0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
+				 errmsg("count must be greater than zero")));
+
+	if (isnan(operand) || isnan(bound1) || isnan(bound2))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
+				 errmsg("operand, lower bound and upper bound cannot be NaN")));
+
+	/* Note that we allow "operand" to be infinite */
+	if (is_infinite(bound1) || is_infinite(bound2))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
+				 errmsg("lower and upper bounds must be finite")));
+
+	if (bound1 < bound2)
+	{
+		if (operand < bound1)
+			result = 0;
+		else if (operand >= bound2)
+		{
+			result = count + 1;
+			/* check for overflow */
+			if (result < count)
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("integer out of range")));
+		}
+		else
+			result = ((float8) count * (operand - bound1) / (bound2 - bound1)) + 1;
+	}
+	else if (bound1 > bound2)
+	{
+		if (operand > bound1)
+			result = 0;
+		else if (operand <= bound2)
+		{
+			result = count + 1;
+			/* check for overflow */
+			if (result < count)
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("integer out of range")));
+		}
+		else
+			result = ((float8) count * (bound1 - operand) / (bound1 - bound2)) + 1;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
+				 errmsg("lower bound cannot equal upper bound")));
+		result = 0;		/* keep the compiler quiet */
+	}
+
+	PG_RETURN_INT32(result);
 }
 
 /* ========== PRIVATE ROUTINES ========== */

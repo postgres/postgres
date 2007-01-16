@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.98 2007/01/05 22:19:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.99 2007/01/16 21:41:13 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -874,16 +874,17 @@ numeric_floor(PG_FUNCTION_ARGS)
 }
 
 /*
- * width_bucket_numeric() -
+ * Implements the numeric version of the width_bucket() function
+ * defined by SQL2003. See also width_bucket_float8().
  *
  * 'bound1' and 'bound2' are the lower and upper bounds of the
  * histogram's range, respectively. 'count' is the number of buckets
  * in the histogram. width_bucket() returns an integer indicating the
- * bucket number that 'operand' belongs in for an equiwidth histogram
+ * bucket number that 'operand' belongs to in an equiwidth histogram
  * with the specified characteristics. An operand smaller than the
  * lower bound is assigned to bucket 0. An operand greater than the
  * upper bound is assigned to an additional bucket (with number
- * count+1).
+ * count+1). We don't allow "NaN" for any of the numeric arguments.
  */
 Datum
 width_bucket_numeric(PG_FUNCTION_ARGS)
@@ -900,6 +901,13 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
 				 errmsg("count must be greater than zero")));
+
+	if (NUMERIC_IS_NAN(operand) ||
+		NUMERIC_IS_NAN(bound1) ||
+		NUMERIC_IS_NAN(bound2))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_ARGUMENT_FOR_WIDTH_BUCKET_FUNCTION),
+				 errmsg("operand, lower bound and upper bound cannot be NaN")));
 
 	init_var(&result_var);
 	init_var(&count_var);
@@ -937,6 +945,7 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 			break;
 	}
 
+	/* if result exceeds the range of a legal int4, we ereport here */
 	result = numericvar_to_int4(&result_var);
 
 	free_var(&count_var);
@@ -946,8 +955,6 @@ width_bucket_numeric(PG_FUNCTION_ARGS)
 }
 
 /*
- * compute_bucket() -
- *
  * If 'operand' is not outside the bucket range, determine the correct
  * bucket for it to go. The calculations performed by this function
  * are derived directly from the SQL2003 spec.
