@@ -341,7 +341,7 @@ Functions
 * Add ISO day of week format 'ID' to to_char() where Monday = 1
 * Add a field 'isoyear' to extract(), based on the ISO week
 * Add SPI_gettypmod() to return the typemod for a TupleDesc
-* Allow inlining of set-returning functions
+* Implement inlining of set-returning functions defined in SQL
 * Allow SQL-language functions to return results from RETURNING queries
 
 
@@ -928,6 +928,8 @@ Indexes
 	  several hash buckets could be stored on a single page and greater
 	  granularity used for the hash algorithm.
 
+	  http://archives.postgresql.org/pgsql-hackers/2004-06/msg00168.php
+
 	o Consider sorting hash buckets so entries can be found using a
 	  binary search, rather than a linear scan
 
@@ -971,6 +973,13 @@ Cache Usage
   get a count directly from a unique index, but for this to be
   faster than a sequential scan it must avoid access to the heap
   to obtain tuple visibility information.
+
+* Provide a way to calculate an "estimated COUNT(*)"
+
+  Perhaps by using the optimizer's cardinality estimates or random
+  sampling.
+
+  http://archives.postgresql.org/pgsql-hackers/2005-11/msg00943.php
 
 * Allow data to be pulled directly from indexes
 
@@ -1074,6 +1083,9 @@ Locking
 =======
 
 * Fix priority ordering of read and write light-weight locks (Neil)
+
+  http://archives.postgresql.org/pgsql-hackers/2004-11/msg00893.php
+  http://archives.postgresql.org/pgsql-hackers/2004-11/msg00905.php
 
 
 Startup Time Improvements
