@@ -23,11 +23,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.20 2007/01/05 22:19:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.21 2007/01/16 13:28:56 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#include <signal.h>
 
 #include "access/subtrans.h"
 #include "access/transam.h"
@@ -678,7 +680,9 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 }
 
 /*
- * DatabaseHasActiveBackends -- are there any backends running in the given DB
+ * DatabaseCancelAutovacuumActivity -- are there any backends running in the
+ * given DB, apart from autovacuum?  If an autovacuum process is running on the
+ * database, kill it and restart the counting.
  *
  * If 'ignoreMyself' is TRUE, ignore this particular backend while checking
  * for backends in the target database.
@@ -691,11 +695,16 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
  * backend startup.
  */
 bool
-DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself)
+DatabaseCancelAutovacuumActivity(Oid databaseId, bool ignoreMyself)
 {
-	bool		result = false;
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
+	int			num;
+
+restart:
+	num = 0;
+
+	CHECK_FOR_INTERRUPTS();
 
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
@@ -708,14 +717,22 @@ DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself)
 			if (ignoreMyself && proc == MyProc)
 				continue;
 
-			result = true;
-			break;
+			num++;
+
+			if (proc->isAutovacuum)
+			{
+				/* an autovacuum -- kill it and restart */
+				LWLockRelease(ProcArrayLock);
+				kill(proc->pid, SIGINT);
+				pg_usleep(100 * 1000);		/* 100ms */
+				goto restart;
+			}
 		}
 	}
 
 	LWLockRelease(ProcArrayLock);
 
-	return result;
+	return (num != 0);
 }
 
 /*
