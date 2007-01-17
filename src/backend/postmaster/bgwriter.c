@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.35 2007/01/17 00:17:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.36 2007/01/17 16:25:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@
 typedef struct
 {
 	RelFileNode rnode;
-	BlockNumber segno;			/* InvalidBlockNumber means "revoke" */
+	BlockNumber segno;			/* see md.c for special values */
 	/* might add a real request-type field later; not needed yet */
 } BgWriterRequest;
 
@@ -695,15 +695,15 @@ RequestCheckpoint(bool waitforit, bool warnontime)
  * ForwardFsyncRequest
  *		Forward a file-fsync request from a backend to the bgwriter
  *
- * segno specifies which segment (not block!) of the relation needs to be
- * fsync'd.  If segno == InvalidBlockNumber, the meaning is to revoke any
- * pending fsync requests for the entire relation (this message is sent
- * when the relation is about to be deleted).
- *
  * Whenever a backend is compelled to write directly to a relation
  * (which should be seldom, if the bgwriter is getting its job done),
  * the backend calls this routine to pass over knowledge that the relation
  * is dirty and must be fsync'd before next checkpoint.
+ *
+ * segno specifies which segment (not block!) of the relation needs to be
+ * fsync'd.  (Since the valid range is much less than BlockNumber, we can
+ * use high values for special flags; that's all internal to md.c, which
+ * see for details.)
  *
  * If we are unable to pass over the request (at present, this can happen
  * if the shared memory queue is full), we return false.  That forces

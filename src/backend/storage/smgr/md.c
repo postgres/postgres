@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.126 2007/01/17 00:17:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.127 2007/01/17 16:25:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,10 @@
 
 /* interval for calling AbsorbFsyncRequests in mdsync */
 #define FSYNCS_PER_ABSORB		10
+
+/* special values for the segno arg to RememberFsyncRequest */
+#define FORGET_RELATION_FSYNC	(InvalidBlockNumber)
+#define FORGET_DATABASE_FSYNC	(InvalidBlockNumber-1)
 
 /*
  * On Windows, we have to interpret EACCES as possibly meaning the same as
@@ -258,30 +262,7 @@ mdunlink(RelFileNode rnode, bool isRedo)
 	 * We have to clean out any pending fsync requests for the doomed relation,
 	 * else the next mdsync() will fail.
 	 */
-	if (pendingOpsTable)
-	{
-		/* standalone backend or startup process: fsync state is local */
-		RememberFsyncRequest(rnode, InvalidBlockNumber);
-	}
-	else if (IsUnderPostmaster)
-	{
-		/*
-		 * Notify the bgwriter about it.  If we fail to queue the revoke
-		 * message, we have to sleep and try again ... ugly, but hopefully
-		 * won't happen often.
-		 *
-		 * XXX should we CHECK_FOR_INTERRUPTS in this loop?  Escaping with
-		 * an error would leave the no-longer-used file still present on
-		 * disk, which would be bad, so I'm inclined to assume that the
-		 * bgwriter will always empty the queue soon.
-		 */
-		while (!ForwardFsyncRequest(rnode, InvalidBlockNumber))
-			pg_usleep(10000L);	/* 10 msec seems a good number */
-		/*
-		 * Note we don't wait for the bgwriter to actually absorb the
-		 * revoke message; see mdsync() for the implications.
-		 */
-	}
+	ForgetRelationFsyncRequests(rnode);
 
 	path = relpath(rnode);
 
@@ -894,7 +875,8 @@ mdsync(void)
 	 * what we will do is retry the whole process after absorbing fsync
 	 * request messages again.  Since mdunlink() queues a "revoke" message
 	 * before actually unlinking, the fsync request is guaranteed to be gone
-	 * the second time if it really was this case.
+	 * the second time if it really was this case.  DROP DATABASE likewise
+	 * has to tell us to forget fsync requests before it starts deletions.
 	 */
 	do {
 		HASH_SEQ_STATUS hstat;
@@ -1043,17 +1025,58 @@ register_dirty_segment(SMgrRelation reln, MdfdVec *seg)
  * We stuff the fsync request into the local hash table for execution
  * during the bgwriter's next checkpoint.
  *
- * segno == InvalidBlockNumber is a "revoke" request: remove any pending
- * fsync requests for the whole relation.
+ * The range of possible segment numbers is way less than the range of
+ * BlockNumber, so we can reserve high values of segno for special purposes.
+ * We define two: FORGET_RELATION_FSYNC means to drop pending fsyncs for
+ * a relation, and FORGET_DATABASE_FSYNC means to drop pending fsyncs for
+ * a whole database.  (These are a tad slow because the hash table has to be
+ * searched linearly, but it doesn't seem worth rethinking the table structure
+ * for them.)
  */
 void
 RememberFsyncRequest(RelFileNode rnode, BlockNumber segno)
 {
 	Assert(pendingOpsTable);
 
-	if (segno != InvalidBlockNumber)
+	if (segno == FORGET_RELATION_FSYNC)
 	{
-		/* Enter a request to fsync this segment */
+		/* Remove any pending requests for the entire relation */
+		HASH_SEQ_STATUS hstat;
+		PendingOperationEntry *entry;
+
+		hash_seq_init(&hstat, pendingOpsTable);
+		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
+		{
+			if (RelFileNodeEquals(entry->tag.rnode, rnode))
+			{
+				/* Okay, delete this entry */
+				if (hash_search(pendingOpsTable, &entry->tag,
+								HASH_REMOVE, NULL) == NULL)
+					elog(ERROR, "pendingOpsTable corrupted");
+			}
+		}
+	}
+	else if (segno == FORGET_DATABASE_FSYNC)
+	{
+		/* Remove any pending requests for the entire database */
+		HASH_SEQ_STATUS hstat;
+		PendingOperationEntry *entry;
+
+		hash_seq_init(&hstat, pendingOpsTable);
+		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
+		{
+			if (entry->tag.rnode.dbNode == rnode.dbNode)
+			{
+				/* Okay, delete this entry */
+				if (hash_search(pendingOpsTable, &entry->tag,
+								HASH_REMOVE, NULL) == NULL)
+					elog(ERROR, "pendingOpsTable corrupted");
+			}
+		}
+	}
+	else
+	{
+		/* Normal case: enter a request to fsync this segment */
 		PendingOperationTag key;
 		PendingOperationEntry *entry;
 		bool		found;
@@ -1070,28 +1093,65 @@ RememberFsyncRequest(RelFileNode rnode, BlockNumber segno)
 		if (!found)				/* new entry, so initialize it */
 			entry->failures = 0;
 	}
-	else
+}
+
+/*
+ * ForgetRelationFsyncRequests -- ensure any fsyncs for a rel are forgotten
+ */
+void
+ForgetRelationFsyncRequests(RelFileNode rnode)
+{
+	if (pendingOpsTable)
+	{
+		/* standalone backend or startup process: fsync state is local */
+		RememberFsyncRequest(rnode, FORGET_RELATION_FSYNC);
+	}
+	else if (IsUnderPostmaster)
 	{
 		/*
-		 * Remove any pending requests for the entire relation.  (This is a
-		 * tad slow but it doesn't seem worth rethinking the table structure.)
+		 * Notify the bgwriter about it.  If we fail to queue the revoke
+		 * message, we have to sleep and try again ... ugly, but hopefully
+		 * won't happen often.
+		 *
+		 * XXX should we CHECK_FOR_INTERRUPTS in this loop?  Escaping with
+		 * an error would leave the no-longer-used file still present on
+		 * disk, which would be bad, so I'm inclined to assume that the
+		 * bgwriter will always empty the queue soon.
 		 */
-		HASH_SEQ_STATUS hstat;
-		PendingOperationEntry *entry;
-
-		hash_seq_init(&hstat, pendingOpsTable);
-		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
-		{
-			if (RelFileNodeEquals(entry->tag.rnode, rnode))
-			{
-				/* Okay, delete this entry */
-				if (hash_search(pendingOpsTable, &entry->tag,
-								HASH_REMOVE, NULL) == NULL)
-					elog(ERROR, "pendingOpsTable corrupted");
-			}
-		}
+		while (!ForwardFsyncRequest(rnode, FORGET_RELATION_FSYNC))
+			pg_usleep(10000L);	/* 10 msec seems a good number */
+		/*
+		 * Note we don't wait for the bgwriter to actually absorb the
+		 * revoke message; see mdsync() for the implications.
+		 */
 	}
 }
+
+/*
+ * ForgetDatabaseFsyncRequests -- ensure any fsyncs for a DB are forgotten
+ */
+void
+ForgetDatabaseFsyncRequests(Oid dbid)
+{
+	RelFileNode rnode;
+
+	rnode.dbNode = dbid;
+	rnode.spcNode = 0;
+	rnode.relNode = 0;
+
+	if (pendingOpsTable)
+	{
+		/* standalone backend or startup process: fsync state is local */
+		RememberFsyncRequest(rnode, FORGET_DATABASE_FSYNC);
+	}
+	else if (IsUnderPostmaster)
+	{
+		/* see notes in ForgetRelationFsyncRequests */
+		while (!ForwardFsyncRequest(rnode, FORGET_DATABASE_FSYNC))
+			pg_usleep(10000L);	/* 10 msec seems a good number */
+	}
+}
+
 
 /*
  *	_fdvec_alloc() -- Make a MdfdVec object.
