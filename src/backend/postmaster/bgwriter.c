@@ -2,7 +2,7 @@
  *
  * bgwriter.c
  *
- * The background writer (bgwriter) is new in Postgres 8.0.  It attempts
+ * The background writer (bgwriter) is new as of Postgres 8.0.  It attempts
  * to keep regular backends from having to write out dirty shared buffers
  * (which they would only do when needing to free a shared buffer to read in
  * another page).  In the best scenario all writes from shared buffers will
@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.34 2007/01/05 22:19:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.35 2007/01/17 00:17:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,8 +103,8 @@
 typedef struct
 {
 	RelFileNode rnode;
-	BlockNumber segno;
-	/* might add a request-type field later */
+	BlockNumber segno;			/* InvalidBlockNumber means "revoke" */
+	/* might add a real request-type field later; not needed yet */
 } BgWriterRequest;
 
 typedef struct
@@ -694,6 +694,11 @@ RequestCheckpoint(bool waitforit, bool warnontime)
 /*
  * ForwardFsyncRequest
  *		Forward a file-fsync request from a backend to the bgwriter
+ *
+ * segno specifies which segment (not block!) of the relation needs to be
+ * fsync'd.  If segno == InvalidBlockNumber, the meaning is to revoke any
+ * pending fsync requests for the entire relation (this message is sent
+ * when the relation is about to be deleted).
  *
  * Whenever a backend is compelled to write directly to a relation
  * (which should be seldom, if the bgwriter is getting its job done),
