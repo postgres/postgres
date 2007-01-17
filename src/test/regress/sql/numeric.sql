@@ -708,7 +708,7 @@ COPY width_bucket_test (operand_num) FROM stdin;
 UPDATE width_bucket_test SET operand_f8 = operand_num::float8;
 
 SELECT
-    operand_num, operand_f8,
+    operand_num,
     width_bucket(operand_num, 0, 10, 5) AS wb_1,
     width_bucket(operand_f8, 0, 10, 5) AS wb_1f,
     width_bucket(operand_num, 10, 0, 5) AS wb_2,
