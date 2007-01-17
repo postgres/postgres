@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat Jan 13 10:13:24 EST 2007
+Last updated:		Tue Jan 16 22:43:34 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1074,9 +1074,7 @@ Vacuum
 	o %Issue log message to suggest VACUUM FULL if a table is nearly
 	  empty?
 	o Consider logging activity either to the logs or a system view
-	o Turn on by default
-
-	  http://archives.postgresql.org/pgsql-hackers/2006-08/msg01852.php
+	o -Turn on by default
 
 
 Locking
