@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.496 2007/01/07 21:10:40 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.497 2007/01/18 14:07:31 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -536,6 +536,22 @@ PGAC_ARG_BOOL(with, libedit-preferred, no,
 #
 PGAC_ARG_BOOL(with, libxml, no, [  --with-libxml           build with XML support],
               [AC_DEFINE([USE_LIBXML], 1, [Define to 1 to build with XML support. (--with-libxml)])])
+
+if test "$with_libxml" = yes ; then
+  AC_CHECK_PROGS(XML2_CONFIG, xml2-config)
+  if test -n "$XML2_CONFIG"; then
+    for pgac_option in `$XML2_CONFIG --cflags`; do
+      case $pgac_option in
+        -I*|-D*) CPPFLAGS="$CPPFLAGS $pgac_option";;
+      esac
+    done
+    for pgac_option in `$XML2_CONFIG --libs`; do
+      case $pgac_option in
+        -L*) LDFLAGS="$LDFLAGS $pgac_option";;
+      esac
+    done
+  fi
+fi
 
 
 #

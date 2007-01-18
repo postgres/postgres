@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.271 2007/01/07 21:10:41 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.272 2007/01/18 14:07:31 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -912,6 +912,18 @@ su - postgres
          Build with libxml (enables SQL/XML support).  Libxml version 2.6.23 or
          later is required for this feature.
         </para>
+
+        <para>
+         Libxml installs a program <command>xml2-config</command> that
+         can be used to detect the required compiler and linker
+         options.  PostgreSQL will use it automatically if found.  To
+         specify a libxml installation at an unusual location, you can
+         either set the environment variable
+         <envar>XML2_CONFIG</envar> to point to the
+         <command>xml2-config</command> program belonging to the
+         installation, or use the options
+         <option>--with-includes</option> and
+         <option>--with-libraries</option>.
        </listitem>
       </varlistentry>
 
@@ -1198,6 +1210,16 @@ su - postgres
         <para>
          Full path to the Tcl interpreter.  This wil be used to
          determine the dependencies for building PL/Tcl.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><envar>XML2_CONFIG</envar></term>
+       <listitem>
+        <para>
+         <command>xml2-config</command> program used to locate the
+         libxml installation.
         </para>
        </listitem>
       </varlistentry>
