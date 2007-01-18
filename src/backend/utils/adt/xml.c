@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.17 2007/01/14 13:11:54 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.18 2007/01/18 13:59:11 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,8 @@ static void 	xml_errorHandler(void *ctxt, const char *msg, ...);
 static void 	xml_ereport_by_code(int level, int sqlcode,
 									const char *msg, int errcode);
 static xmlChar *xml_text2xmlChar(text *in);
-static xmlDocPtr xml_parse(text *data, bool is_document, bool preserve_whitespace);
+static int		parse_xml_decl(const xmlChar *str, size_t *lenp, xmlChar **version, xmlChar **encoding, int *standalone);
+static xmlDocPtr xml_parse(text *data, bool is_document, bool preserve_whitespace, xmlChar *encoding);
 
 #endif /* USE_LIBXML */
 
@@ -96,7 +97,7 @@ xml_in(PG_FUNCTION_ARGS)
 	 * Parse the data to check if it is well-formed XML data.  Assume
 	 * that ERROR occurred if parsing failed.
 	 */
-	doc = xml_parse(vardata, false, true);
+	doc = xml_parse(vardata, false, true, NULL);
 	xmlFreeDoc(doc);
 
 	PG_RETURN_XML_P(vardata);
@@ -107,19 +108,102 @@ xml_in(PG_FUNCTION_ARGS)
 }
 
 
+#define PG_XML_DEFAULT_VERSION "1.0"
+
+
+static char *
+xml_out_internal(xmltype *x, pg_enc target_encoding)
+{
+	char		*str;
+	size_t		len;
+#ifdef USE_LIBXML
+	xmlChar		*version;
+	xmlChar		*encoding;
+	int			standalone;
+	int			res_code;
+#endif
+
+	len = VARSIZE(x) - VARHDRSZ;
+	str = palloc(len + 1);
+	memcpy(str, VARDATA(x), len);
+	str[len] = '\0';
+
+#ifdef USE_LIBXML
+	/*
+	 * On output, we adjust the XML declaration as follows.  (These
+	 * rules are the moral equivalent of the clause "Serialization of
+	 * an XML value" in the SQL standard.)
+	 *
+	 * We try to avoid generating an XML declaration if possible.
+	 * This is so that you don't get trivial things like xml '<foo/>'
+	 * resulting in '<?xml version="1.0"?><foo/>', which would surely
+	 * be annoying.  We must provide a declaration if the standalone
+	 * property is specified or if we include an encoding
+	 * specification.  If we have a declaration, we must specify a
+	 * version (XML requires this).  Otherwise we only make a
+	 * declaration if the version is not "1.0", which is the default
+	 * version specified in SQL:2003.
+	 */
+	if ((res_code = parse_xml_decl((xmlChar *) str, &len, &version, &encoding, &standalone)) == 0)
+	{
+		StringInfoData buf;
+
+		initStringInfo(&buf);
+
+		if ((version && strcmp((char *) version, PG_XML_DEFAULT_VERSION) != 0)
+			|| (target_encoding && target_encoding != PG_UTF8)
+			|| standalone != -1)
+		{
+			appendStringInfoString(&buf, "<?xml");
+			if (version)
+				appendStringInfo(&buf, " version=\"%s\"", version);
+			else
+				appendStringInfo(&buf, " version=\"%s\"", PG_XML_DEFAULT_VERSION);
+			if (target_encoding && target_encoding != PG_UTF8)
+				/* XXX might be useful to convert this to IANA names
+				 * (ISO-8859-1 instead of LATIN1 etc.); needs field
+				 * experience */
+				appendStringInfo(&buf, " encoding=\"%s\"", pg_encoding_to_char(target_encoding));
+			if (standalone == 1)
+				appendStringInfoString(&buf, " standalone=\"yes\"");
+			else if (standalone == 0)
+				appendStringInfoString(&buf, " standalone=\"no\"");
+			appendStringInfoString(&buf, "?>");
+		}
+		else
+		{
+			/*
+			 * If we are not going to produce an XML declaration, eat
+			 * a single newline in the original string to prevent
+			 * empty first lines in the output.
+			 */
+			if (*(str + len) == '\n')
+				len += 1;
+		}
+		appendStringInfoString(&buf, str + len);
+
+		return buf.data;
+	}
+
+	xml_ereport_by_code(WARNING, ERRCODE_INTERNAL_ERROR,
+						"could not parse XML declaration in stored value", res_code);
+#endif
+	return str;
+}
+
+
 Datum
 xml_out(PG_FUNCTION_ARGS)
 {
-	xmltype		*s = PG_GETARG_XML_P(0);
-	char		*result;
-	int32		len;
+	xmltype	   *x = PG_GETARG_XML_P(0);
 
-	len = VARSIZE(s) - VARHDRSZ;
-	result = palloc(len + 1);
-	memcpy(result, VARDATA(s), len);
-	result[len] = '\0';
-
-	PG_RETURN_CSTRING(result);
+	/*
+	 * xml_out removes the encoding property in all cases.  This is
+	 * because we cannot control from here whether the datum will be
+	 * converted to a different client encoding, so we'd do more harm
+	 * than good by including it.
+	 */
+	PG_RETURN_CSTRING(xml_out_internal(x, 0));
 }
 
 
@@ -130,22 +214,43 @@ xml_recv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	xmltype	   *result;
 	char	   *str;
+	char	   *newstr;
 	int			nbytes;
 	xmlDocPtr	doc;
+	xmlChar	   *encoding = NULL;
 
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
-	result = (xmltype *) palloc(nbytes + VARHDRSZ);
+	result = palloc(nbytes + VARHDRSZ);
 	VARATT_SIZEP(result) = nbytes + VARHDRSZ;
 	memcpy(VARDATA(result), str, nbytes);
-	pfree(str);
+
+	parse_xml_decl((xmlChar *) str, NULL, NULL, &encoding, NULL);
 
 	/*
 	 * Parse the data to check if it is well-formed XML data.  Assume
 	 * that ERROR occurred if parsing failed.
 	 */
-	doc = xml_parse(result, false, true);
+	doc = xml_parse(result, false, true, encoding);
 	xmlFreeDoc(doc);
+
+	newstr = (char *) pg_do_encoding_conversion((unsigned char *) str,
+												nbytes,
+												encoding ? pg_char_to_encoding((char *) encoding) : PG_UTF8,
+												GetDatabaseEncoding());
+
+	pfree(str);
+
+	if (newstr != str)
+	{
+		free(result);
+
+		nbytes = strlen(newstr);
+
+		result = palloc(nbytes + VARHDRSZ);
+		VARATT_SIZEP(result) = nbytes + VARHDRSZ;
+		memcpy(VARDATA(result), newstr, nbytes);
+	}
 
 	PG_RETURN_XML_P(result);
 #else
@@ -159,10 +264,11 @@ Datum
 xml_send(PG_FUNCTION_ARGS)
 {
 	xmltype	   *x = PG_GETARG_XML_P(0);
+	char	   *outval = xml_out_internal(x, pg_get_client_encoding());
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
-	pq_sendbytes(&buf, VARDATA(x), VARSIZE(x) - VARHDRSZ);
+	pq_sendstring(&buf, outval);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
@@ -191,6 +297,21 @@ stringinfo_to_xmltype(StringInfo buf)
 
 
 static xmltype *
+cstring_to_xmltype(const char *string)
+{
+	int32		len;
+	xmltype	   *result;
+
+	len = strlen(string) + VARHDRSZ;
+	result = palloc(len);
+	VARATT_SIZEP(result) = len;
+	memcpy(VARDATA(result), string, len - VARHDRSZ);
+
+	return result;
+}
+
+
+static xmltype *
 xmlBuffer_to_xmltype(xmlBufferPtr buf)
 {
 	int32		len;
@@ -211,7 +332,7 @@ xmlcomment(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
 	text *arg = PG_GETARG_TEXT_P(0);
-	int len =  VARATT_SIZEP(arg) - VARHDRSZ;
+	int len =  VARSIZE(arg) - VARHDRSZ;
 	StringInfoData buf;
 	int i;
 
@@ -310,7 +431,7 @@ xmlparse(text *data, bool is_document, bool preserve_whitespace)
 #ifdef USE_LIBXML
 	xmlDocPtr	doc;
 
-	doc = xml_parse(data, is_document, preserve_whitespace);
+	doc = xml_parse(data, is_document, preserve_whitespace, NULL);
 	xmlFreeDoc(doc);
 
 	return (xmltype *) data;
@@ -383,7 +504,7 @@ xmlroot(xmltype *data, text *version, int standalone)
 	xmlBufferPtr buffer;
 	xmlSaveCtxtPtr save;
 
-	doc = xml_parse((text *) data, true, true);
+	doc = xml_parse((text *) data, true, true, NULL);
 
 	if (version)
 		doc->version = xmlStrdup(xml_text2xmlChar(version));
@@ -404,13 +525,16 @@ xmlroot(xmltype *data, text *version, int standalone)
 	}
 
 	buffer = xmlBufferCreate();
-	save = xmlSaveToBuffer(buffer, NULL, 0);
+	save = xmlSaveToBuffer(buffer, "UTF-8", 0);
 	xmlSaveDoc(save, doc);
 	xmlSaveClose(save);
 
 	xmlFreeDoc(doc);
 
-	result = xmlBuffer_to_xmltype(buffer);
+	result = cstring_to_xmltype((char *) pg_do_encoding_conversion((unsigned char *) xmlBufferContent(buffer),
+																   xmlBufferLength(buffer),
+																   PG_UTF8,
+																   GetDatabaseEncoding()));
 	xmlBufferFree(buffer);
 	return result;
 #else
@@ -525,7 +649,7 @@ xml_is_document(xmltype *arg)
 
 	PG_TRY();
 	{
-		doc = xml_parse((text *) arg, true, true);
+		doc = xml_parse((text *) arg, true, true, NULL);
 		result = true;
 	}
 	PG_CATCH();
@@ -622,12 +746,20 @@ xml_init(void)
 #define SKIP_XML_SPACE(p) while (xmlIsBlank_ch(*(p))) (p)++
 
 static int
-parse_xml_decl(const xmlChar *str, size_t *len, xmlChar **encoding, int *standalone)
+parse_xml_decl(const xmlChar *str, size_t *lenp, xmlChar **version, xmlChar **encoding, int *standalone)
 {
 	const xmlChar *p;
 	const xmlChar *save_p;
+	size_t		len;
 
 	p = str;
+
+	if (version)
+		*version = NULL;
+	if (encoding)
+		*encoding = NULL;
+	if (standalone)
+		*standalone = -1;
 
 	if (xmlStrncmp(p, (xmlChar *)"<?xml", 5) != 0)
 		goto finished;
@@ -645,9 +777,21 @@ parse_xml_decl(const xmlChar *str, size_t *len, xmlChar **encoding, int *standal
 		return XML_ERR_VERSION_MISSING;
 	p += 1;
 	SKIP_XML_SPACE(p);
-	if (xmlStrncmp(p, (xmlChar *)"'1.0'", 5) != 0 && xmlStrncmp(p, (xmlChar *)"\"1.0\"", 5) != 0)
+
+	if (*p == '\'' || *p == '"')
+	{
+		const xmlChar *q;
+
+		q = xmlStrchr(p + 1, *p);
+		if (!q)
+			return XML_ERR_VERSION_MISSING;
+
+		if (version)
+			*version = xmlStrndup(p + 1, q - p - 1);
+		p = q + 1;
+	}
+	else
 		return XML_ERR_VERSION_MISSING;
-	p += 5;
 
 	/* encoding */
 	save_p = p;
@@ -670,6 +814,7 @@ parse_xml_decl(const xmlChar *str, size_t *len, xmlChar **encoding, int *standal
 			if (!q)
 				return XML_ERR_MISSING_ENCODING;
 
+			if (encoding)
 			*encoding = xmlStrndup(p + 1, q - p - 1);
 			p = q + 1;
 		}
@@ -679,7 +824,6 @@ parse_xml_decl(const xmlChar *str, size_t *len, xmlChar **encoding, int *standal
 	else
 	{
 		p = save_p;
-		*encoding = NULL;
 	}
 
 	/* standalone */
@@ -710,7 +854,6 @@ parse_xml_decl(const xmlChar *str, size_t *len, xmlChar **encoding, int *standal
 	else
 	{
 		p = save_p;
-		*standalone = -1;
 	}
 
 	SKIP_XML_SPACE(p);
@@ -719,8 +862,15 @@ parse_xml_decl(const xmlChar *str, size_t *len, xmlChar **encoding, int *standal
 	p += 2;
 
 finished:
-	if (len)
-		*len = (p - str);
+	len = p - str;
+
+	for (p = str; p < str + len; p++)
+		if (*p > 127)
+			return XML_ERR_INVALID_CHAR;
+
+	if (lenp)
+		*lenp = len;
+
 	return XML_ERR_OK;
 }
 
@@ -732,16 +882,23 @@ finished:
  * TODO what about internal URI for docs? (see PG_XML_DEFAULT_URI below)
  */
 static xmlDocPtr
-xml_parse(text *data, bool is_document, bool preserve_whitespace)
+xml_parse(text *data, bool is_document, bool preserve_whitespace, xmlChar *encoding)
 {
-	int					res_code;
 	int32				len;
 	xmlChar				*string;
+	xmlChar				*utf8string;
 	xmlParserCtxtPtr 	ctxt = NULL;
 	xmlDocPtr 			doc = NULL;
 
 	len = VARSIZE(data) - VARHDRSZ; /* will be useful later */
 	string = xml_text2xmlChar(data);
+
+	utf8string = pg_do_encoding_conversion(string,
+										   len,
+										   encoding
+										   ? pg_char_to_encoding((char *) encoding)
+										   : GetDatabaseEncoding(),
+										   PG_UTF8);
 
 	xml_init();
 
@@ -762,8 +919,9 @@ xml_parse(text *data, bool is_document, bool preserve_whitespace)
 			 * As for external DTDs, we try to support them too, (see
 			 * SQL/XML:10.16.7.e)
 			 */
-			doc = xmlCtxtReadMemory(ctxt, (char *) string, len,
-									PG_XML_DEFAULT_URI, NULL,
+			doc = xmlCtxtReadDoc(ctxt, utf8string,
+								 PG_XML_DEFAULT_URI,
+								 "UTF-8",
 									XML_PARSE_NOENT | XML_PARSE_DTDATTR
 									| (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
 			if (doc == NULL)
@@ -772,40 +930,25 @@ xml_parse(text *data, bool is_document, bool preserve_whitespace)
 		}
 		else
 		{
+			int			res_code;
 			size_t count;
-			xmlChar *encoding = NULL;
+			xmlChar	   *version = NULL;
 			int standalone = -1;
 
 			doc = xmlNewDoc(NULL);
 
-			res_code = parse_xml_decl(string, &count, &encoding, &standalone);
+			res_code = parse_xml_decl(utf8string, &count, &version, NULL, &standalone);
 
-			/* TODO resolve: xmlParseBalancedChunkMemory assumes that string is UTF8 encoded! */
 			if (res_code == 0)
-				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0, string + count, NULL);
+				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0, utf8string + count, NULL);
 			if (res_code != 0)
 				xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_CONTENT,
 									"invalid XML content", res_code);
 
-			doc->encoding = encoding;
+			doc->version = xmlStrdup(version);
+			doc->encoding = xmlStrdup((xmlChar *) "UTF-8");
 			doc->standalone = standalone;
 		}
-
-		/* TODO encoding issues
-		 * (thoughts:
-		 * 		CASE:
-		 *   		- XML data has explicit encoding attribute in its prolog
-		 *   		- if not, assume that enc. of XML data is the same as client's one
-		 *
-		 * 		The common rule is to accept the XML data only if its encoding
-		 * 		is the same as encoding of the storage (server's). The other possible
-		 * 		option is to accept all the docs, but DO TRANSFORMATION and, if needed,
-		 * 		change the prolog.
-		 *
-		 * 		I think I'd stick the first way (for the 1st version),
-		 * 		it's much simplier (less errors...)
-		 * ) */
-		/* ... */
 
 		if (ctxt)
 			xmlFreeParserCtxt(ctxt);

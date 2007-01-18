@@ -177,8 +177,7 @@ SELECT xmlpi(name foo, '   bar');
 
 SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
         xmlroot        
------------------------
- <?xml version="1.0"?>
+---------
  <foo/>
  
 (1 row)
