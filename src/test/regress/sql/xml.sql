@@ -45,6 +45,10 @@ SELECT xmlelement(name foo, xml 'bar');
 SELECT xmlelement(name foo, text 'b<a/>r');
 SELECT xmlelement(name foo, xml 'b<a/>r');
 SELECT xmlelement(name foo, array[1, 2, 3]);
+SET xmlbinary TO base64;
+SELECT xmlelement(name foo, bytea 'bar');
+SET xmlbinary TO hex;
+SELECT xmlelement(name foo, bytea 'bar');
 
 
 SELECT xmlparse(content 'abc');

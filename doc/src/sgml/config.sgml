@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.102 2007/01/16 18:26:02 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.103 2007/01/19 16:58:45 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3498,6 +3498,33 @@ SELECT * FROM parent WHERE key = 2400;
         linkend="guc-autovacuum-freeze-max-age">, so that there is not an
         unreasonably short time between forced autovacuums.
         For more information see <xref linkend="vacuum-for-wraparound">.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry id="guc-xmlbinary" xreflabel="xmlbinary">
+      <term><varname>xmlbinary</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>xmlbinary</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets how binary values are to be encoded in XML.  This applies
+        for example when <type>bytea</type> values are converted to
+        XML by the functions <function>xmlelement</function> or
+        <function>xmlforest</function>.  Possible values are
+        <literal>base64</literal> and <literal>hex</literal>, which
+        are both defined in the XML Schema standard.  The default is
+        <literal>base64</literal>.  For further information about
+        XML-related functions, see <xref linkend="functions-xml">.
+       </para>
+
+       <para>
+        The actual choice here is mostly a matter of taste,
+        constrained only by possible restrictions in client
+        applications.  Both methods support all possible values,
+        although the hex encoding will be somewhat larger than the
+        base64 encoding.
        </para>
       </listitem>
      </varlistentry>

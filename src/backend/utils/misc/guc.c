@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.368 2007/01/16 18:26:02 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.369 2007/01/19 16:58:46 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@
 #include "utils/pg_locale.h"
 #include "utils/ps_status.h"
 #include "utils/tzparser.h"
+#include "utils/xml.h"
 
 #ifndef PG_KRB_SRVTAB
 #define PG_KRB_SRVTAB ""
@@ -142,6 +143,7 @@ static bool assign_transaction_read_only(bool newval, bool doit, GucSource sourc
 static const char *assign_canonical_path(const char *newval, bool doit, GucSource source);
 static const char *assign_backslash_quote(const char *newval, bool doit, GucSource source);
 static const char *assign_timezone_abbreviations(const char *newval, bool doit, GucSource source);
+static const char *assign_xmlbinary(const char *newval, bool doit, GucSource source);
 
 static bool assign_tcp_keepalives_idle(int newval, bool doit, GucSource source);
 static bool assign_tcp_keepalives_interval(int newval, bool doit, GucSource source);
@@ -229,6 +231,7 @@ static char *timezone_abbreviations_string;
 static char *XactIsoLevel_string;
 static char *data_directory;
 static char *custom_variable_classes;
+static char *xmlbinary_string;
 static int	max_function_args;
 static int	max_index_keys;
 static int	max_identifier_length;
@@ -2277,6 +2280,15 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&external_pid_file,
 		NULL, assign_canonical_path, NULL
+	},
+
+	{
+		{"xmlbinary", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets how binary values are to be encoded in XML."),
+			gettext_noop("Valid values are BASE64 and HEX.")
+		},
+		&xmlbinary_string,
+		"base64", assign_xmlbinary, NULL
 	},
 
 	/* End-of-list marker */
@@ -6473,6 +6485,24 @@ pg_timezone_abbrev_initialize(void)
 		SetConfigOption("timezone_abbreviations", "Default",
 						PGC_POSTMASTER, PGC_S_ARGV);
 	}
+}
+
+static const char *
+assign_xmlbinary(const char *newval, bool doit, GucSource source)
+{
+	XmlBinaryType xb;
+
+	if (pg_strcasecmp(newval, "base64") == 0)
+		xb = XMLBINARY_BASE64;
+	else if (pg_strcasecmp(newval, "hex") == 0)
+		xb = XMLBINARY_HEX;
+	else
+		return NULL;			/* reject */
+
+	if (doit)
+		xmlbinary = xb;
+
+	return newval;
 }
 
 static bool

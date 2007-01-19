@@ -121,6 +121,20 @@ SELECT xmlelement(name foo, array[1, 2, 3]);
  <foo><element>1</element><element>2</element><element>3</element></foo>
 (1 row)
 
+SET xmlbinary TO base64;
+SELECT xmlelement(name foo, bytea 'bar');
+   xmlelement    
+-----------------
+ <foo>YmFy</foo>
+(1 row)
+
+SET xmlbinary TO hex;
+SELECT xmlelement(name foo, bytea 'bar');
+    xmlelement     
+-------------------
+ <foo>626172</foo>
+(1 row)
+
 SELECT xmlparse(content 'abc');
  xmlparse 
 ----------

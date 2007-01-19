@@ -58,6 +58,12 @@ SELECT xmlelement(name foo, xml 'b<a/>r');
 ERROR:  no XML support in this installation
 SELECT xmlelement(name foo, array[1, 2, 3]);
 ERROR:  no XML support in this installation
+SET xmlbinary TO base64;
+SELECT xmlelement(name foo, bytea 'bar');
+ERROR:  no XML support in this installation
+SET xmlbinary TO hex;
+SELECT xmlelement(name foo, bytea 'bar');
+ERROR:  no XML support in this installation
 SELECT xmlparse(content 'abc');
 ERROR:  no XML support in this installation
 SELECT xmlparse(content '<abc>x</abc>');

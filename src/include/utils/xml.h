@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.10 2007/01/14 13:11:54 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.11 2007/01/19 16:58:46 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,5 +42,13 @@ extern bool xml_is_document(xmltype *arg);
 extern char *map_sql_identifier_to_xml_name(char *ident, bool fully_escaped);
 extern char *map_xml_name_to_sql_identifier(char *name);
 extern char *map_sql_value_to_xml_value(Datum value, Oid type);
+
+typedef enum
+{
+	XMLBINARY_BASE64,
+	XMLBINARY_HEX
+} XmlBinaryType;
+
+extern XmlBinaryType xmlbinary;
 
 #endif /* XML_H */

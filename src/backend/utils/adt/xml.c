@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.18 2007/01/18 13:59:11 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.19 2007/01/19 16:58:46 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,6 +72,8 @@ static int		parse_xml_decl(const xmlChar *str, size_t *lenp, xmlChar **version, 
 static xmlDocPtr xml_parse(text *data, bool is_document, bool preserve_whitespace, xmlChar *encoding);
 
 #endif /* USE_LIBXML */
+
+XmlBinaryType xmlbinary;
 
 #define NO_XML_SUPPORT() \
 	ereport(ERROR, \
@@ -1499,6 +1501,28 @@ map_sql_value_to_xml_value(Datum value, Oid type)
 
 		if (type == XMLOID)
 			return str;
+
+#ifdef USE_LIBXML
+		if (type == BYTEAOID)
+		{
+			xmlBufferPtr buf;
+			xmlTextWriterPtr writer;
+			char *result;
+
+			buf = xmlBufferCreate();
+			writer = xmlNewTextWriterMemory(buf, 0);
+
+			if (xmlbinary == XMLBINARY_BASE64)
+				xmlTextWriterWriteBase64(writer, VARDATA(value), 0, VARSIZE(value) - VARHDRSZ);
+			else
+				xmlTextWriterWriteBinHex(writer, VARDATA(value), 0, VARSIZE(value) - VARHDRSZ);
+
+			xmlFreeTextWriter(writer);
+			result = pstrdup((const char *) xmlBufferContent(buf));
+			xmlBufferFree(buf);
+			return result;
+		}
+#endif /* USE_LIBXML */
 
 		for (p = str; *p; p += pg_mblen(p))
 		{
