@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.26 2007/01/19 16:42:24 alvherre Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.27 2007/01/19 21:21:13 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,11 +478,20 @@ convert_sourcefiles_in(char *source, char *dest, char *suffix)
     pgfnames_cleanup(names);
 }
 
+/* Create the .sql and .out files from the .source files, if any */
 static void
 convert_sourcefiles(void)
 {
-	convert_sourcefiles_in("input", "sql", "sql");
-	convert_sourcefiles_in("output", "expected", "out");
+	struct stat	st;
+	int		ret;
+
+	ret = stat("input", &st);
+	if (ret == 0 && S_ISDIR(st.st_mode))
+		convert_sourcefiles_in("input", "sql", "sql");
+
+	ret = stat("output", &st);
+	if (ret == 0 && S_ISDIR(st.st_mode))
+		convert_sourcefiles_in("output", "expected", "out");
 }
 
 /*
