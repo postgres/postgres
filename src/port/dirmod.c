@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.46 2007/01/05 22:20:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.47 2007/01/19 16:42:24 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,12 +287,14 @@ pgsymlink(const char *oldpath, const char *newpath)
 
 
 /*
- * fnames
+ * pgfnames
  *
- * return a list of the names of objects in the argument directory
+ * return a list of the names of objects in the argument directory.  Caller
+ * must call pgfnames_cleanup later to free the memory allocated by this
+ * function.
  */
-static char **
-fnames(char *path)
+char **
+pgfnames(char *path)
 {
 	DIR		   *dir;
 	struct dirent *file;
@@ -357,12 +359,12 @@ fnames(char *path)
 
 
 /*
- *	fnames_cleanup
+ *	pgfnames_cleanup
  *
  *	deallocate memory used for filenames
  */
-static void
-fnames_cleanup(char **filenames)
+void
+pgfnames_cleanup(char **filenames)
 {
 	char	  **fn;
 
@@ -394,7 +396,7 @@ rmtree(char *path, bool rmtopdir)
 	 * we copy all the names out of the directory before we start modifying
 	 * it.
 	 */
-	filenames = fnames(path);
+	filenames = pgfnames(path);
 
 	if (filenames == NULL)
 		return false;
@@ -415,7 +417,7 @@ rmtree(char *path, bool rmtopdir)
 			if (!rmtree(filepath, true))
 			{
 				/* we already reported the error */
-				fnames_cleanup(filenames);
+				pgfnames_cleanup(filenames);
 				return false;
 			}
 		}
@@ -433,7 +435,7 @@ rmtree(char *path, bool rmtopdir)
 			goto report_and_fail;
 	}
 
-	fnames_cleanup(filenames);
+	pgfnames_cleanup(filenames);
 	return true;
 
 report_and_fail:
@@ -444,6 +446,6 @@ report_and_fail:
 	fprintf(stderr, _("could not remove file or directory \"%s\": %s\n"),
 			filepath, strerror(errno));
 #endif
-	fnames_cleanup(filenames);
+	pgfnames_cleanup(filenames);
 	return false;
 }

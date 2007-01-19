@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.108 2007/01/11 02:39:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.109 2007/01/19 16:42:24 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,10 @@ extern void get_doc_path(const char *my_exec_path, char *ret_path);
 extern void get_man_path(const char *my_exec_path, char *ret_path);
 extern bool get_home_path(char *ret_path);
 extern void get_parent_directory(char *path);
+
+/* port/dirmod.c */
+extern char **pgfnames(char *path);
+extern void pgfnames_cleanup(char **filenames);
 
 /*
  *	is_absolute_path

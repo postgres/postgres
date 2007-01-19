@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.25 2007/01/05 22:20:03 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.26 2007/01/19 16:42:24 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,6 +95,7 @@ static char *psqldir = NULL;
 static char *hostname = NULL;
 static int	port = -1;
 static char *user = NULL;
+static char *srcdir = NULL;
 
 /* internal variables */
 static const char *progname;
@@ -110,6 +111,11 @@ static bool postmaster_running = false;
 static int	success_count = 0;
 static int	fail_count = 0;
 static int	fail_ignore_count = 0;
+
+static bool
+directory_exists(const char *dir);
+static void
+make_directory(const char *dir);
 
 static void
 header(const char *fmt,...)
@@ -328,6 +334,155 @@ string_matches_pattern(const char *str, const char *pattern)
 		return true;			/* end of pattern, so declare match */
 
 	return false;
+}
+
+/*
+ * Replace all occurances of a string in a string with a different string.
+ * NOTE: Assumes there is enough room in the target buffer!
+ */
+static void
+replace_string(char *string, char *replace, char *replacement)
+{
+	char *ptr;
+
+	while ((ptr = strstr(string, replace)) != NULL) 
+	{
+		char *dup = strdup(string);
+
+		strncpy(string, dup, ptr - string);
+		string[ptr - string] = 0;
+		strcat(string, replacement);
+		strcat(string, dup + (ptr - string) + strlen(replace));
+		free(dup);
+	}
+}
+
+/*
+ * Convert *.source found in the "source" directory, replacing certain tokens
+ * in the file contents with their intended values, and put the resulting files
+ * in the "dest" directory, replacing the ".source" prefix in their names with
+ * the given suffix.
+ */
+static void
+convert_sourcefiles_in(char *source, char *dest, char *suffix)
+{
+	char	abs_srcdir[MAXPGPATH];
+	char	abs_builddir[MAXPGPATH];
+	char	testtablespace[MAXPGPATH];
+	char	indir[MAXPGPATH];
+	char  **name;
+	char  **names;
+	int		count = 0;
+#ifdef WIN32
+	char *c;
+#endif
+
+	if (!getcwd(abs_builddir, sizeof(abs_builddir)))
+	{
+		fprintf(stderr, _("%s: could not get current directory: %s\n"),
+			progname, strerror(errno));
+		exit_nicely(2);
+	}
+
+	/*
+	 * in a VPATH build, use the provided source directory; otherwise, use
+	 * the current directory.
+	 */
+	if (srcdir)
+		strcpy(abs_srcdir, srcdir);
+	else
+		strcpy(abs_srcdir, abs_builddir);
+
+	snprintf(indir, MAXPGPATH, "%s/%s", abs_srcdir, source);
+	names = pgfnames(indir);
+	if (!names)
+		/* Error logged in pgfnames */
+		exit_nicely(2);
+
+#ifdef WIN32
+	/* in Win32, replace backslashes with forward slashes */
+	for (c = abs_builddir; *c; c++)
+		if (*c == '\\')
+			*c = '/';
+	for (c = abs_srcdir; *c; c++)
+		if (*c == '\\')
+			*c = '/';
+#endif
+
+	/* try to create the test tablespace dir if it doesn't exist */
+	snprintf(testtablespace, MAXPGPATH, "%s/testtablespace", abs_builddir);
+	if (directory_exists(testtablespace))
+		rmtree(testtablespace, true);
+	make_directory(testtablespace);
+
+	/* finally loop on each file and do the replacement */
+	for (name = names; *name; name++)
+	{
+		char	srcfile[MAXPGPATH];
+		char	destfile[MAXPGPATH];
+		char	prefix[MAXPGPATH];
+		FILE   *infile,
+			   *outfile;
+		char	line[1024];
+
+		/* reject filenames not finishing in ".source" */
+		if (strlen(*name) < 8)
+			continue;
+		if (strcmp(*name + strlen(*name) - 7, ".source") != 0)
+			continue;
+
+		count++;
+
+		/* build the full actual paths to open */
+		snprintf(prefix, strlen(*name) - 6, "%s", *name);
+		snprintf(srcfile, MAXPGPATH, "%s/%s", indir, *name);
+		snprintf(destfile, MAXPGPATH, "%s/%s.%s", dest, prefix, suffix);
+
+		infile = fopen(srcfile, "r");
+		if (!infile)
+		{
+			fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
+					progname, srcfile, strerror(errno));
+			exit_nicely(2);
+		}
+		outfile = fopen(destfile, "w");
+		if (!outfile)
+		{
+			fprintf(stderr, _("%s: could not open file \"%s\" for writing: %s\n"),
+				progname, destfile, strerror(errno));
+			exit_nicely(2);
+		}
+		while (fgets(line, sizeof(line), infile))
+		{
+			replace_string(line, "@abs_srcdir@", abs_srcdir);
+			replace_string(line, "@abs_builddir@", abs_builddir);
+			replace_string(line, "@testtablespace@", testtablespace);
+			replace_string(line, "@DLSUFFIX@", DLSUFFIX);
+			fputs(line, outfile);
+		}
+		fclose(infile);
+		fclose(outfile);
+	}
+
+	/*
+	 * If we didn't process any files, complain because it probably means
+	 * somebody neglected to pass the needed --srcdir argument.
+	 */
+	if (count <= 0)
+	{
+		fprintf(stderr, _("%s: no *.source files found in %s\n"),
+				progname, indir);
+		exit_nicely(2);
+	}
+	
+    pgfnames_cleanup(names);
+}
+
+static void
+convert_sourcefiles(void)
+{
+	convert_sourcefiles_in("input", "sql", "sql");
+	convert_sourcefiles_in("output", "expected", "out");
 }
 
 /*
@@ -593,6 +748,7 @@ initialize_environment(void)
 			printf(_("(using postmaster on Unix socket, default port)\n"));
 	}
 
+	convert_sourcefiles();
 	load_resultmap();
 }
 
@@ -1322,6 +1478,7 @@ help(void)
 	printf(_("  --outputdir=DIR           place output files in DIR (default \".\")\n"));
 	printf(_("  --schedule=FILE           use test ordering schedule from FILE\n"));
 	printf(_("                            (may be used multiple times to concatenate)\n"));
+	printf(_("  --srcdir=DIR              absolute path to source directory (for VPATH builds)\n"));
 	printf(_("  --temp-install=DIR        create a temporary installation in DIR\n"));
 	printf(_("  --no-locale               use C locale\n"));
 	printf(_("\n"));
@@ -1369,6 +1526,7 @@ main(int argc, char *argv[])
 		{"port", required_argument, NULL, 14},
 		{"user", required_argument, NULL, 15},
 		{"psqldir", required_argument, NULL, 16},
+		{"srcdir", required_argument, NULL, 17},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -1460,6 +1618,9 @@ main(int argc, char *argv[])
 				/* "--psqldir=" should mean to use PATH */
 				if (strlen(optarg))
 					psqldir = strdup(optarg);
+				break;
+			case 17:
+				srcdir = strdup(optarg);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
