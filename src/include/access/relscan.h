@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.51 2007/01/05 22:19:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.52 2007/01/20 18:43:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,9 +69,6 @@ typedef struct IndexScanDescData
 
 	/* index access method's private state */
 	void	   *opaque;			/* access-method-specific info */
-	/* these fields are used by some but not all AMs: */
-	ItemPointerData currentItemData;	/* current index pointer */
-	ItemPointerData currentMarkData;	/* marked position, if any */
 
 	/*
 	 * xs_ctup/xs_cbuf are valid after a successful index_getnext. After

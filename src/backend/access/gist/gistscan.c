@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.66 2007/01/05 22:19:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistscan.c,v 1.67 2007/01/20 18:43:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,12 +41,6 @@ gistrescan(PG_FUNCTION_ARGS)
 	ScanKey		key = (ScanKey) PG_GETARG_POINTER(1);
 	GISTScanOpaque so;
 	int			i;
-
-	/*
-	 * Clear all the pointers.
-	 */
-	ItemPointerSetInvalid(&scan->currentItemData);
-	ItemPointerSetInvalid(&scan->currentMarkData);
 
 	so = (GISTScanOpaque) scan->opaque;
 	if (so != NULL)
@@ -82,6 +76,12 @@ gistrescan(PG_FUNCTION_ARGS)
 		scan->opaque = so;
 	}
 
+	/*
+	 * Clear all the pointers.
+	 */
+	ItemPointerSetInvalid(&so->curpos);
+	ItemPointerSetInvalid(&so->markpos);
+
 	/* Update scan key, if a new one is given */
 	if (key && scan->numberOfKeys > 0)
 	{
@@ -111,8 +111,8 @@ gistmarkpos(PG_FUNCTION_ARGS)
 			   *n,
 			   *tmp;
 
-	scan->currentMarkData = scan->currentItemData;
 	so = (GISTScanOpaque) scan->opaque;
+	so->markpos = so->curpos;
 	if (so->flags & GS_CURBEFORE)
 		so->flags |= GS_MRKBEFORE;
 	else
@@ -160,8 +160,8 @@ gistrestrpos(PG_FUNCTION_ARGS)
 			   *n,
 			   *tmp;
 
-	scan->currentItemData = scan->currentMarkData;
 	so = (GISTScanOpaque) scan->opaque;
+	so->curpos = so->markpos;
 	if (so->flags & GS_MRKBEFORE)
 		so->flags |= GS_CURBEFORE;
 	else

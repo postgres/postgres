@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.46 2007/01/05 22:19:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.47 2007/01/20 18:43:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 /*
  *	_hash_next() -- Get the next item in a scan.
  *
- *		On entry, we have a valid currentItemData in the scan, and a
+ *		On entry, we have a valid hashso_curpos in the scan, and a
  *		pin and read lock on the page that contains that item.
  *		We find the next item in the scan, if any.
  *		On success exit, we have the page containing the next item
@@ -49,7 +49,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 		return false;
 
 	/* if we're here, _hash_step found a valid tuple */
-	current = &(scan->currentItemData);
+	current = &(so->hashso_curpos);
 	offnum = ItemPointerGetOffsetNumber(current);
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 	page = BufferGetPage(buf);
@@ -129,7 +129,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 
 	pgstat_count_index_scan(&scan->xs_pgstat_info);
 
-	current = &(scan->currentItemData);
+	current = &(so->hashso_curpos);
 	ItemPointerSetInvalid(current);
 
 	/*
@@ -224,7 +224,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
  *	_hash_step() -- step to the next valid item in a scan in the bucket.
  *
  *		If no valid record exists in the requested direction, return
- *		false.	Else, return true and set the CurrentItemData for the
+ *		false.	Else, return true and set the hashso_curpos for the
  *		scan to the right thing.
  *
  *		'bufP' points to the current buffer, which is pinned and read-locked.
@@ -245,7 +245,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	BlockNumber blkno;
 	IndexTuple	itup;
 
-	current = &(scan->currentItemData);
+	current = &(so->hashso_curpos);
 
 	buf = *bufP;
 	_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);

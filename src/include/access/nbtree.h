@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.108 2007/01/09 02:14:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.109 2007/01/20 18:43:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,9 +390,6 @@ typedef BTStackData *BTStack;
  * items were killed, we re-lock the page to mark them killed, then unlock.
  * Finally we drop the pin and step to the next page in the appropriate
  * direction.
- *
- * NOTE: in this implementation, btree does not use or set the
- * currentItemData and currentMarkData fields of IndexScanDesc at all.
  */
 
 typedef struct BTScanPosItem	/* what we remember about each match */

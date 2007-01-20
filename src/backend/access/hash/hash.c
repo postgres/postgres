@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.92 2007/01/05 22:19:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.93 2007/01/20 18:43:35 neilc Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -185,7 +185,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 	 * appropriate direction.  If we haven't done so yet, we call a routine to
 	 * get the first item in the scan.
 	 */
-	if (ItemPointerIsValid(&(scan->currentItemData)))
+	if (ItemPointerIsValid(&(so->hashso_curpos)))
 	{
 		/*
 		 * Check to see if we should kill the previously-fetched tuple.
@@ -195,7 +195,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 			/*
 			 * Yes, so mark it by setting the LP_DELETE bit in the item flags.
 			 */
-			offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
+			offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
 			page = BufferGetPage(so->hashso_curbuf);
 			PageGetItemId(page, offnum)->lp_flags |= LP_DELETE;
 
@@ -222,7 +222,7 @@ hashgettuple(PG_FUNCTION_ARGS)
 	{
 		while (res)
 		{
-			offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
+			offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
 			page = BufferGetPage(so->hashso_curbuf);
 			if (!ItemIdDeleted(PageGetItemId(page, offnum)))
 				break;
@@ -269,7 +269,7 @@ hashgetmulti(PG_FUNCTION_ARGS)
 		/*
 		 * Start scan, or advance to next tuple.
 		 */
-		if (ItemPointerIsValid(&(scan->currentItemData)))
+		if (ItemPointerIsValid(&(so->hashso_curpos)))
 			res = _hash_next(scan, ForwardScanDirection);
 		else
 			res = _hash_first(scan, ForwardScanDirection);
@@ -284,7 +284,7 @@ hashgetmulti(PG_FUNCTION_ARGS)
 				Page		page;
 				OffsetNumber offnum;
 
-				offnum = ItemPointerGetOffsetNumber(&(scan->currentItemData));
+				offnum = ItemPointerGetOffsetNumber(&(so->hashso_curpos));
 				page = BufferGetPage(so->hashso_curbuf);
 				if (!ItemIdDeleted(PageGetItemId(page, offnum)))
 					break;
@@ -325,6 +325,10 @@ hashbeginscan(PG_FUNCTION_ARGS)
 	so->hashso_bucket_valid = false;
 	so->hashso_bucket_blkno = 0;
 	so->hashso_curbuf = so->hashso_mrkbuf = InvalidBuffer;
+	/* set positions invalid (this will cause _hash_first call) */
+	ItemPointerSetInvalid(&(so->hashso_curpos));
+	ItemPointerSetInvalid(&(so->hashso_mrkpos));
+
 	scan->opaque = so;
 
 	/* register scan in case we change pages it's using */
@@ -360,11 +364,11 @@ hashrescan(PG_FUNCTION_ARGS)
 		if (so->hashso_bucket_blkno)
 			_hash_droplock(rel, so->hashso_bucket_blkno, HASH_SHARE);
 		so->hashso_bucket_blkno = 0;
-	}
 
-	/* set positions invalid (this will cause _hash_first call) */
-	ItemPointerSetInvalid(&(scan->currentItemData));
-	ItemPointerSetInvalid(&(scan->currentMarkData));
+		/* set positions invalid (this will cause _hash_first call) */
+		ItemPointerSetInvalid(&(so->hashso_curpos));
+		ItemPointerSetInvalid(&(so->hashso_mrkpos));
+	}
 
 	/* Update scan key, if a new one is given */
 	if (scankey && scan->numberOfKeys > 0)
@@ -406,10 +410,6 @@ hashendscan(PG_FUNCTION_ARGS)
 		_hash_droplock(rel, so->hashso_bucket_blkno, HASH_SHARE);
 	so->hashso_bucket_blkno = 0;
 
-	/* be tidy */
-	ItemPointerSetInvalid(&(scan->currentItemData));
-	ItemPointerSetInvalid(&(scan->currentMarkData));
-
 	pfree(so);
 	scan->opaque = NULL;
 
@@ -430,14 +430,14 @@ hashmarkpos(PG_FUNCTION_ARGS)
 	if (BufferIsValid(so->hashso_mrkbuf))
 		_hash_dropbuf(rel, so->hashso_mrkbuf);
 	so->hashso_mrkbuf = InvalidBuffer;
-	ItemPointerSetInvalid(&(scan->currentMarkData));
+	ItemPointerSetInvalid(&(so->hashso_mrkpos));
 
-	/* bump pin count on currentItemData and copy to currentMarkData */
-	if (ItemPointerIsValid(&(scan->currentItemData)))
+	/* bump pin count on current buffer and copy to marked buffer */
+	if (ItemPointerIsValid(&(so->hashso_curpos)))
 	{
 		IncrBufferRefCount(so->hashso_curbuf);
 		so->hashso_mrkbuf = so->hashso_curbuf;
-		scan->currentMarkData = scan->currentItemData;
+		so->hashso_mrkpos = so->hashso_curpos;
 	}
 
 	PG_RETURN_VOID();
@@ -457,14 +457,14 @@ hashrestrpos(PG_FUNCTION_ARGS)
 	if (BufferIsValid(so->hashso_curbuf))
 		_hash_dropbuf(rel, so->hashso_curbuf);
 	so->hashso_curbuf = InvalidBuffer;
-	ItemPointerSetInvalid(&(scan->currentItemData));
+	ItemPointerSetInvalid(&(so->hashso_curpos));
 
-	/* bump pin count on currentMarkData and copy to currentItemData */
-	if (ItemPointerIsValid(&(scan->currentMarkData)))
+	/* bump pin count on marked buffer and copy to current buffer */
+	if (ItemPointerIsValid(&(so->hashso_mrkpos)))
 	{
 		IncrBufferRefCount(so->hashso_mrkbuf);
 		so->hashso_curbuf = so->hashso_mrkbuf;
-		scan->currentItemData = scan->currentMarkData;
+		so->hashso_curpos = so->hashso_mrkpos;
 	}
 
 	PG_RETURN_VOID();
