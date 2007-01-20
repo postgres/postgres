@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.149 2007/01/05 22:19:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.150 2007/01/20 21:17:30 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1054,12 +1054,14 @@ describeOneTableDetails(const char *schemaname,
 				   *result3 = NULL,
 				   *result4 = NULL,
 				   *result5 = NULL,
-				   *result6 = NULL;
+				   *result6 = NULL,
+				   *result7 = NULL;
 		int			check_count = 0,
 					index_count = 0,
 					foreignkey_count = 0,
 					rule_count = 0,
 					trigger_count = 0,
+					disabled_trigger_count = 0,
 					inherits_count = 0;
 		int			count_footers = 0;
 
@@ -1125,7 +1127,8 @@ describeOneTableDetails(const char *schemaname,
 					 "SELECT t.tgname, pg_catalog.pg_get_triggerdef(t.oid)\n"
 							  "FROM pg_catalog.pg_trigger t\n"
 							  "WHERE t.tgrelid = '%s' "
-							  "AND (not tgisconstraint "
+							  "AND t.tgenabled "
+							  "AND (NOT t.tgisconstraint "
 							  " OR NOT EXISTS"
 							  "  (SELECT 1 FROM pg_catalog.pg_depend d "
 							  "   JOIN pg_catalog.pg_constraint c ON (d.refclassid = c.tableoid AND d.refobjid = c.oid) "
@@ -1142,6 +1145,31 @@ describeOneTableDetails(const char *schemaname,
 			}
 			else
 				trigger_count = PQntuples(result4);
+
+			/* acquire disabled triggers as a separate list */
+			printfPQExpBuffer(&buf,
+					 "SELECT t.tgname, pg_catalog.pg_get_triggerdef(t.oid)\n"
+							  "FROM pg_catalog.pg_trigger t\n"
+							  "WHERE t.tgrelid = '%s' "
+							  "AND NOT t.tgenabled "
+							  "AND (NOT t.tgisconstraint "
+							  " OR NOT EXISTS"
+							  "  (SELECT 1 FROM pg_catalog.pg_depend d "
+							  "   JOIN pg_catalog.pg_constraint c ON (d.refclassid = c.tableoid AND d.refobjid = c.oid) "
+							  "   WHERE d.classid = t.tableoid AND d.objid = t.oid AND d.deptype = 'i' AND c.contype = 'f'))"
+							  "   ORDER BY 1",
+							  oid);
+			result7 = PSQLexec(buf.data, false);
+			if (!result7)
+			{
+				PQclear(result1);
+				PQclear(result2);
+				PQclear(result3);
+				PQclear(result4);
+				goto error_return;
+			}
+			else
+				disabled_trigger_count = PQntuples(result7);
 		}
 
 		/* count foreign-key constraints (there are none if no triggers) */
@@ -1160,6 +1188,7 @@ describeOneTableDetails(const char *schemaname,
 				PQclear(result2);
 				PQclear(result3);
 				PQclear(result4);
+				PQclear(result7);
 				goto error_return;
 			}
 			else
@@ -1177,6 +1206,7 @@ describeOneTableDetails(const char *schemaname,
 			PQclear(result3);
 			PQclear(result4);
 			PQclear(result5);
+			PQclear(result7);
 			goto error_return;
 		}
 		else
@@ -1312,6 +1342,28 @@ describeOneTableDetails(const char *schemaname,
 			}
 		}
 
+		/* print disabled triggers */
+		if (disabled_trigger_count > 0)
+		{
+			printfPQExpBuffer(&buf, _("Disabled triggers:"));
+			footers[count_footers++] = pg_strdup(buf.data);
+			for (i = 0; i < disabled_trigger_count; i++)
+			{
+				const char *tgdef;
+				const char *usingpos;
+
+				/* Everything after "TRIGGER" is echoed verbatim */
+				tgdef = PQgetvalue(result7, i, 1);
+				usingpos = strstr(tgdef, " TRIGGER ");
+				if (usingpos)
+					tgdef = usingpos + 9;
+
+				printfPQExpBuffer(&buf, "    %s", tgdef);
+
+				footers[count_footers++] = pg_strdup(buf.data);
+			}
+		}
+
 		/* print inherits */
 		for (i = 0; i < inherits_count; i++)
 		{
@@ -1347,6 +1399,7 @@ describeOneTableDetails(const char *schemaname,
 		PQclear(result4);
 		PQclear(result5);
 		PQclear(result6);
+		PQclear(result7);
 	}
 
 	printTable(title.data, headers,
