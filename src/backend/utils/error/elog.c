@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.180 2007/01/20 14:45:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.181 2007/01/20 21:40:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ static char *expand_fmt_string(const char *fmt, ErrorData *edata);
 static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
-static int is_log_level_output(int elevel, int log_min_level);
+static bool is_log_level_output(int elevel, int log_min_level);
 
 
 /*
@@ -2052,8 +2052,8 @@ write_stderr(const char *fmt,...)
 	va_end(ap);
 }
 
-
-static int is_log_level_output(int elevel, int log_min_level)
+static bool
+is_log_level_output(int elevel, int log_min_level)
 {
 	/*
 	 *	Complicated because LOG is sorted out-of-order here, between
