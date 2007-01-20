@@ -24,6 +24,7 @@ SELECT xmlconcat(xmlcomment('hello'),
 SELECT xmlconcat('hello', 'you');
 SELECT xmlconcat(1, 2);
 SELECT xmlconcat('bad', '<syntax');
+SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
 
 
 SELECT xmlelement(name element,
@@ -95,6 +96,11 @@ SELECT xml '<foo>bar</foo><bar>foo</bar>' IS DOCUMENT;
 SELECT xml '<abc/>' IS NOT DOCUMENT;
 SELECT xml 'abc' IS NOT DOCUMENT;
 SELECT '<>' IS NOT DOCUMENT;
+
+
+SELECT xmlagg(data) FROM xmltest;
+SELECT xmlagg(data) FROM xmltest WHERE id > 10;
+SELECT xmlelement(name employees, xmlagg(xmlelement(name name, name))) FROM emp;
 
 
 -- Check mapping SQL identifier to XML name

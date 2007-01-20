@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.19 2007/01/19 16:58:46 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.20 2007/01/20 09:27:19 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,6 +356,102 @@ xmlcomment(PG_FUNCTION_ARGS)
 	NO_XML_SUPPORT();
 	return 0;
 #endif
+}
+
+
+
+/*
+ * TODO: xmlconcat needs to merge the notations and unparsed entities
+ * of the argument values.  Not very important in practice, though.
+ */
+xmltype *
+xmlconcat(List *args)
+{
+#ifdef USE_LIBXML
+	StringInfoData buf;
+	ListCell   *v;
+
+	int			global_standalone = 1;
+	xmlChar	   *global_version = NULL;
+	bool		global_version_no_value = false;
+
+	initStringInfo(&buf);
+	foreach(v, args)
+	{
+		size_t		len;
+		xmlChar	   *version;
+		int			standalone;
+		xmltype	   *x = DatumGetXmlP(PointerGetDatum(lfirst(v)));
+		char	   *str;
+
+		len = VARSIZE(x) - VARHDRSZ;
+		str = palloc(len + 1);
+		memcpy(str, VARDATA(x), len);
+		str[len] = '\0';
+
+		parse_xml_decl((xmlChar *) str, &len, &version, NULL, &standalone);
+
+		if (standalone == 0 && global_standalone == 1)
+			global_standalone = 0;
+		if (standalone < 0)
+			global_standalone = -1;
+
+		if (!global_version)
+			global_version = xmlStrdup(version);
+		else if (version && xmlStrcmp(version, global_version) != 0)
+			global_version_no_value = true;
+
+		appendStringInfoString(&buf, str + len);
+		pfree(str);
+	}
+
+	if (!global_version_no_value || global_standalone >= 0)
+	{
+		StringInfoData buf2;
+
+		initStringInfo(&buf2);
+
+		if (!global_version_no_value && global_version)
+			appendStringInfo(&buf2, "<?xml version=\"%s\"", global_version);
+		else
+			appendStringInfo(&buf2, "<?xml version=\"%s\"", PG_XML_DEFAULT_VERSION);
+
+		if (global_standalone == 1)
+			appendStringInfoString(&buf2, " standalone=\"yes\"");
+		else if (global_standalone == 0)
+			appendStringInfoString(&buf2, " standalone=\"no\"");
+
+		appendStringInfoString(&buf2, "?>");
+
+		appendStringInfoString(&buf2, buf.data);
+		buf = buf2;
+	}
+
+	return stringinfo_to_xmltype(&buf);
+#else
+	NO_XML_SUPPORT();
+	return NULL;
+#endif
+}
+
+
+/*
+ * XMLAGG support
+ */
+Datum
+xmlconcat2(PG_FUNCTION_ARGS)
+{
+	if (PG_ARGISNULL(0))
+	{
+		if (PG_ARGISNULL(1))
+			PG_RETURN_NULL();
+		else
+			PG_RETURN_XML_P(PG_GETARG_XML_P(1));
+	}
+	else if (PG_ARGISNULL(1))
+		PG_RETURN_XML_P(PG_GETARG_XML_P(0));
+	else
+		PG_RETURN_XML_P(xmlconcat(list_make2(PG_GETARG_XML_P(0), PG_GETARG_XML_P(1))));
 }
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.11 2007/01/19 16:58:46 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.12 2007/01/20 09:27:20 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,9 +30,11 @@ extern Datum xml_out(PG_FUNCTION_ARGS);
 extern Datum xml_recv(PG_FUNCTION_ARGS);
 extern Datum xml_send(PG_FUNCTION_ARGS);
 extern Datum xmlcomment(PG_FUNCTION_ARGS);
+extern Datum xmlconcat2(PG_FUNCTION_ARGS);
 extern Datum texttoxml(PG_FUNCTION_ARGS);
 extern Datum xmlvalidate(PG_FUNCTION_ARGS);
 
+extern xmltype *xmlconcat(List *args);
 extern xmltype *xmlelement(XmlExprState *xmlExpr, ExprContext *econtext);
 extern xmltype *xmlparse(text *data, bool is_doc, bool preserve_whitespace);
 extern xmltype *xmlpi(char *target, text *arg, bool arg_is_null, bool *result_is_null);

@@ -55,6 +55,12 @@ ERROR:  argument of XMLCONCAT must be type xml, not type integer
 SELECT xmlconcat('bad', '<syntax');
 ERROR:  invalid XML content
 DETAIL:  Expected '>'
+SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
+                     xmlconcat                     
+---------------------------------------------------
+ <?xml version="1.1" standalone="no"?><foo/><bar/>
+(1 row)
+
 SELECT xmlelement(name element,
                   xmlattributes (1 as one, 'deuce' as two),
                   'content');
@@ -190,7 +196,7 @@ SELECT xmlpi(name foo, '   bar');
 (1 row)
 
 SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
-        xmlroot        
+ xmlroot 
 ---------
  <foo/>
  
@@ -268,6 +274,24 @@ SELECT xml 'abc' IS NOT DOCUMENT;
 SELECT '<>' IS NOT DOCUMENT;
 ERROR:  invalid XML content
 DETAIL:  Element name not found
+SELECT xmlagg(data) FROM xmltest;
+                xmlagg                
+--------------------------------------
+ <value>one</value><value>two</value>
+(1 row)
+
+SELECT xmlagg(data) FROM xmltest WHERE id > 10;
+ xmlagg 
+--------
+ 
+(1 row)
+
+SELECT xmlelement(name employees, xmlagg(xmlelement(name name, name))) FROM emp;
+                                                           xmlelement                                                           
+--------------------------------------------------------------------------------------------------------------------------------
+ <employees><name>sharon</name><name>sam</name><name>bill</name><name>jeff</name><name>cim</name><name>linda</name></employees>
+(1 row)
+
 -- Check mapping SQL identifier to XML name
 SELECT xmlpi(name ":::_xml_abc135.%-&_");
                       xmlpi                      

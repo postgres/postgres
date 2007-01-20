@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.59 2007/01/05 22:19:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.60 2007/01/20 09:27:19 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -220,6 +220,9 @@ DATA(insert ( 2240 int8and		  -					0	20		_null_ ));
 DATA(insert ( 2241 int8or		  -					0	20		_null_ ));
 DATA(insert ( 2242 bitand		  -					0	1560	_null_ ));
 DATA(insert ( 2243 bitor		  -					0	1560	_null_ ));
+
+/* xml */
+DATA(insert ( 2901 xmlconcat2	  -					0	142		_null_ ));
 
 /*
  * prototypes for functions in pg_aggregate.c

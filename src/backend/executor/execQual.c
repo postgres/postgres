@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.207 2007/01/14 13:11:53 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.208 2007/01/20 09:27:19 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2651,7 +2651,6 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 	StringInfoData 	buf;
 	Datum			value;
 	bool 			isnull;
-	char		   *str;
 	ListCell 	   *arg;
 	ListCell   *narg;
 	int 			i;
@@ -2663,20 +2662,22 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 	switch (xexpr->op)
 	{
 		case IS_XMLCONCAT:
-			initStringInfo(&buf);
-			foreach(arg, xmlExpr->args)
 			{
-				ExprState 	*e = (ExprState *) lfirst(arg);
+				List *values = NIL;
 
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (!isnull)
+				foreach(arg, xmlExpr->args)
 				{
-					/* we know the value is XML type */
-					str = DatumGetCString(DirectFunctionCall1(xml_out,
-															  value));
-					appendStringInfoString(&buf, str);
-					pfree(str);
+					ExprState 	*e = (ExprState *) lfirst(arg);
+
+					value = ExecEvalExpr(e, econtext, &isnull, NULL);
+					if (!isnull)
+						values = lappend(values, DatumGetPointer(value));
+				}
+
+				if (list_length(values) > 0)
+				{
 					*isNull = false;
+					return PointerGetDatum(xmlconcat(values));
 				}
 			}
 			break;
