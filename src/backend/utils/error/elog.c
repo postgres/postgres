@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.179 2007/01/05 22:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.180 2007/01/20 14:45:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,6 +121,7 @@ static char *expand_fmt_string(const char *fmt, ErrorData *edata);
 static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
+static int is_log_level_output(int elevel, int log_min_level);
 
 
 /*
@@ -139,7 +140,7 @@ errstart(int elevel, const char *filename, int lineno,
 		 const char *funcname)
 {
 	ErrorData  *edata;
-	bool		output_to_server = false;
+	bool		output_to_server;
 	bool		output_to_client = false;
 	int			i;
 
@@ -196,33 +197,10 @@ errstart(int elevel, const char *filename, int lineno,
 
 	/* Determine whether message is enabled for server log output */
 	if (IsPostmasterEnvironment)
-	{
-		/* Complicated because LOG is sorted out-of-order for this purpose */
-		if (elevel == LOG || elevel == COMMERROR)
-		{
-			if (log_min_messages == LOG)
-				output_to_server = true;
-			else if (log_min_messages < FATAL)
-				output_to_server = true;
-		}
-		else
-		{
-			/* elevel != LOG */
-			if (log_min_messages == LOG)
-			{
-				if (elevel >= FATAL)
-					output_to_server = true;
-			}
-			/* Neither is LOG */
-			else if (elevel >= log_min_messages)
-				output_to_server = true;
-		}
-	}
+		output_to_server = is_log_level_output(elevel, log_min_messages);
 	else
-	{
 		/* In bootstrap/standalone case, do not sort LOG out-of-order */
 		output_to_server = (elevel >= log_min_messages);
-	}
 
 	/* Determine whether message is enabled for client output */
 	if (whereToSendOutput == DestRemote && elevel != COMMERROR)
@@ -2072,4 +2050,29 @@ write_stderr(const char *fmt,...)
 		vfprintf(stderr, fmt, ap);
 #endif
 	va_end(ap);
+}
+
+
+static int is_log_level_output(int elevel, int log_min_level)
+{
+	/*
+	 *	Complicated because LOG is sorted out-of-order here, between
+	 *	ERROR and FATAL.
+	 */
+	if (elevel == LOG || elevel == COMMERROR)
+	{
+		if (log_min_level == LOG || log_min_level <= ERROR)
+			return true;
+	}
+	else if (log_min_level == LOG)
+	{
+		/* elevel != LOG */
+		if (elevel >= FATAL)
+			return true;
+	}
+	/* Neither is LOG */
+	else if (elevel >= log_min_level)
+		return true;
+
+	return false;
 }
