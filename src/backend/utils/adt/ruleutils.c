@@ -1,10 +1,18 @@
-/**********************************************************************
- * ruleutils.c	- Functions to convert stored expressions/querytrees
- *				back to source text
+/*-------------------------------------------------------------------------
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.243 2007/01/14 21:39:24 petere Exp $
- **********************************************************************/
-
+ * ruleutils.c
+ *	  Functions to convert stored expressions/querytrees back to
+ *	  source text
+ *
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.244 2007/01/20 01:08:42 neilc Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 #include "postgres.h"
 
 #include <unistd.h>
