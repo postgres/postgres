@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.438 2007/01/20 09:27:19 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.439 2007/01/20 21:47:10 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2134,7 +2134,7 @@ DESCR("compare");
 
 DATA(insert OID = 1598 (  random			PGNSP PGUID 12 f f t f v 0 701 "" _null_ _null_ _null_	drandom - _null_ ));
 DESCR("random value");
-DATA(insert OID = 1599 (  setseed			PGNSP PGUID 12 f f t f v 1	23 "701" _null_ _null_ _null_ setseed - _null_ ));
+DATA(insert OID = 1599 (  setseed			PGNSP PGUID 12 f f t f v 1 2278 "701" _null_ _null_ _null_ setseed - _null_ ));
 DESCR("set random seed");
 
 /* OIDS 1600 - 1699 */
