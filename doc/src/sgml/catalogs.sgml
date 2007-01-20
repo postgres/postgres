@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.141 2007/01/09 02:14:09 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.142 2007/01/20 23:13:01 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -365,21 +365,10 @@
      </row>
 
      <row>
-      <entry><structfield>amorderstrategy</structfield></entry>
-      <entry><type>int2</type></entry>
+      <entry><structfield>amcanorder</structfield></entry>
+      <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>Zero if the index offers no sort order, otherwise the strategy
-      number of the strategy operator that describes the default
-      (<literal>ASC</>) sort order</entry>
-     </row>
-
-     <row>
-      <entry><structfield>amdescorder</structfield></entry>
-      <entry><type>int2</type></entry>
-      <entry></entry>
-      <entry>Zero if the index offers no sort order, otherwise the strategy
-      number of the strategy operator that describes the <literal>DESC</>
-      sort order</entry>
+      <entry>Does the access method support ordered scans?</entry>
      </row>
 
      <row>

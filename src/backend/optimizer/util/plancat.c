@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.131 2007/01/09 02:14:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.132 2007/01/20 23:13:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,8 +190,10 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 			/*
 			 * Fetch the ordering operators associated with the index, if any.
+			 * We expect that all ordering-capable indexes use btree's
+			 * strategy numbers for the ordering operators.
 			 */
-			if (indexRelation->rd_am->amorderstrategy > 0)
+			if (indexRelation->rd_am->amcanorder)
 			{
 				int			nstrat = indexRelation->rd_am->amstrategies;
 
@@ -203,17 +205,17 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 
 					if (opt & INDOPTION_DESC)
 					{
-						fwdstrat = indexRelation->rd_am->amdescorder;
-						revstrat = indexRelation->rd_am->amorderstrategy;
+						fwdstrat = BTGreaterStrategyNumber;
+						revstrat = BTLessStrategyNumber;
 					}
 					else
 					{
-						fwdstrat = indexRelation->rd_am->amorderstrategy;
-						revstrat = indexRelation->rd_am->amdescorder;
+						fwdstrat = BTLessStrategyNumber;
+						revstrat = BTGreaterStrategyNumber;
 					}
 					/*
 					 * Index AM must have a fixed set of strategies for it
-					 * to make sense to specify amorderstrategy, so we
+					 * to make sense to specify amcanorder, so we
 					 * need not allow the case amstrategies == 0.
 					 */
 					if (fwdstrat > 0)

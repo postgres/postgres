@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.19 2006/12/23 00:43:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.20 2007/01/20 23:13:01 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -443,6 +443,15 @@ amrestrpos (IndexScanDesc scan);
   </para>
 
   <para>
+   Some access methods return index entries in a well-defined order, others
+   do not.  If entries are returned in sorted order, the access method should
+   set <structname>pg_am</>.<structfield>amcanorder</> true to indicate that
+   it supports ordered scans.
+   All such access methods must use btree-compatible strategy numbers for
+   their equality and ordering operators.
+  </para>
+
+  <para>
    The <function>amgettuple</> function has a <literal>direction</> argument,
    which can be either <literal>ForwardScanDirection</> (the normal case)
    or  <literal>BackwardScanDirection</>.  If the first call after
@@ -451,8 +460,7 @@ amrestrpos (IndexScanDesc scan);
    the normal front-to-back direction, so <function>amgettuple</> must return
    the last matching tuple in the index, rather than the first one as it
    normally would.  (This will only occur for access
-   methods that advertise they support ordered scans by setting
-   <structname>pg_am</>.<structfield>amorderstrategy</> nonzero.)  After the
+   methods that advertise they support ordered scans.)  After the
    first call, <function>amgettuple</> must be prepared to advance the scan in
    either direction from the most recently returned entry.
   </para>

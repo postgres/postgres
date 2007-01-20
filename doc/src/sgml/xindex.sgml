@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.54 2007/01/09 02:14:10 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.55 2007/01/20 23:13:01 tgl Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -286,20 +286,6 @@
    practice, all operators defined as index method strategies must
    return type <type>boolean</type>, since they must appear at the top
    level of a <literal>WHERE</> clause to be used with an index.
-  </para>
-
-  <para>
-   By the way, the <structfield>amorderstrategy</structfield> and
-   <structfield>amdescorder</structfield> columns in <classname>pg_am</> tell
-   whether the index method supports ordered scans.  Zeroes mean it doesn't;
-   if it does, <structfield>amorderstrategy</structfield> is the strategy
-   number that corresponds to the default ordering operator, and
-   <structfield>amdescorder</structfield> is the strategy number for the
-   ordering operator of an index column that has the <literal>DESC</> option.
-   For example, B-tree has <structfield>amorderstrategy</structfield> = 1,
-   which is its <quote>less than</quote> strategy number, and
-   <structfield>amdescorder</structfield> = 5, which is its
-   <quote>greater than</quote> strategy number.
   </para>
  </sect2>
 

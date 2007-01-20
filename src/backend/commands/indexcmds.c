@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.152 2007/01/09 02:14:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.153 2007/01/20 23:13:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,8 +295,7 @@ DefineIndex(RangeVar *heapRelation,
 		  errmsg("access method \"%s\" does not support multicolumn indexes",
 				 accessMethodName)));
 
-	amcanorder = (accessMethodForm->amorderstrategy > 0);
-
+	amcanorder = accessMethodForm->amcanorder;
 	amoptions = accessMethodForm->amoptions;
 
 	ReleaseSysCache(tuple);

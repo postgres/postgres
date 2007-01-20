@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.244 2007/01/20 01:08:42 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.245 2007/01/20 23:13:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -767,7 +767,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 							 &buf);
 
 		/* Add options if relevant */
-		if (amrec->amorderstrategy > 0)
+		if (amrec->amcanorder)
 		{
 			/* if it supports sort ordering, report DESC and NULLS opts */
 			if (opt & INDOPTION_DESC)
