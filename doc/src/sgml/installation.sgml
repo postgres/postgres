@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.273 2007/01/20 17:21:29 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.274 2007/01/20 21:30:01 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -924,6 +924,7 @@ su - postgres
          installation, or use the options
          <option>--with-includes</option> and
          <option>--with-libraries</option>.
+        </para>
        </listitem>
       </varlistentry>
 
