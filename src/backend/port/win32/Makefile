@@ -4,7 +4,7 @@
 #    Makefile for backend/port/win32
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/port/win32/Makefile,v 1.8 2006/06/07 22:24:43 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/port/win32/Makefile,v 1.9 2007/01/20 17:16:12 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,12 +19,5 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
 clean: 
 	rm -f SUBSYS.o $(OBJS)
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

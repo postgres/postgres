@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/optimizer/geqo/Makefile,v 1.18 2003/11/29 19:51:50 pgsql Exp $
+# $PostgreSQL: pgsql/src/backend/optimizer/geqo/Makefile,v 1.19 2007/01/20 17:16:11 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,12 +23,5 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
 clean: 
 	rm -f SUBSYS.o $(OBJS)
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

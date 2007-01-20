@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/pl/Makefile,v 1.23 2005/05/14 17:55:20 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/Makefile,v 1.24 2007/01/20 17:16:17 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ ifeq ($(with_tcl), yes)
 DIRS += tcl
 endif
 
-all install installdirs uninstall depend distprep:
+all install installdirs uninstall distprep:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit 1; done
 
 clean distclean maintainer-clean:

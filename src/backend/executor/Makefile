@@ -4,7 +4,7 @@
 #    Makefile for executor
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/executor/Makefile,v 1.24 2006/08/02 01:59:45 joe Exp $
+#    $PostgreSQL: pgsql/src/backend/executor/Makefile,v 1.25 2007/01/20 17:16:11 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -28,12 +28,5 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
 clean: 
 	rm -f SUBSYS.o $(OBJS) 
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

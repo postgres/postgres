@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.120 2006/10/08 17:15:33 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.121 2007/01/20 17:16:10 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -261,6 +261,3 @@ maintainer-clean: distclean
 .PHONY: quick
 quick: $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) $(export_dynamic) $^ $(LIBS) -o postgres
-
-depend dep: $(top_srcdir)/src/include/parser/parse.h $(top_builddir)/src/include/utils/fmgroids.h
-	for i in $(DIRS); do $(MAKE) -C $$i $@; done

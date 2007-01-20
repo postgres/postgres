@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.26 2007/01/05 20:54:39 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.27 2007/01/20 17:16:17 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,10 +39,3 @@ uninstall: uninstall-lib
 
 clean distclean maintainer-clean: clean-lib
 	rm -f $(OBJS)
-
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

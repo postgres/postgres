@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.63 2007/01/12 11:27:28 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.64 2007/01/20 17:16:17 petere Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -23,7 +23,7 @@ else
 abs_builddir := $(shell pwd -W)
 endif
 
-all install installdirs uninstall dep depend distprep:
+all install installdirs uninstall distprep:
 	$(MAKE) -C connect $@
 	$(MAKE) -C expected $@
 	$(MAKE) -C sql $@

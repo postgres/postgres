@@ -1,7 +1,7 @@
 #
 # Makefile for storage/ipc
 #
-# $PostgreSQL: pgsql/src/backend/storage/ipc/Makefile,v 1.19 2005/05/19 21:35:46 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/storage/ipc/Makefile,v 1.20 2007/01/20 17:16:12 petere Exp $
 #
 
 subdir = src/backend/storage/ipc
@@ -23,12 +23,5 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
 clean: 
 	rm -f SUBSYS.o $(OBJS)
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

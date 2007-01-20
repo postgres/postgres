@@ -4,7 +4,7 @@
 #    Makefile for utils/mb
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/mb/Makefile,v 1.22 2003/11/29 19:52:02 pgsql Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/mb/Makefile,v 1.23 2007/01/20 17:16:13 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,10 +25,3 @@ clean distclean maintainer-clean:
 
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) $@ $^
-
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

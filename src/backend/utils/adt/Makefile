@@ -1,7 +1,7 @@
 #
 # Makefile for utils/adt
 #
-# $PostgreSQL: pgsql/src/backend/utils/adt/Makefile,v 1.61 2006/12/21 16:05:15 petere Exp $
+# $PostgreSQL: pgsql/src/backend/utils/adt/Makefile,v 1.62 2007/01/20 17:16:13 petere Exp $
 #
 
 subdir = src/backend/utils/adt
@@ -34,12 +34,5 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
 clean: 
 	rm -f SUBSYS.o $(OBJS)
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

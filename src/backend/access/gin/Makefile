@@ -4,7 +4,7 @@
 #    Makefile for access/gin
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/access/gin/Makefile,v 1.1 2006/05/02 11:28:54 teodor Exp $
+#    $PostgreSQL: pgsql/src/backend/access/gin/Makefile,v 1.2 2007/01/20 17:16:10 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,12 +21,5 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
-depend dep:
-	$(CC) -MM $(CFLAGS) *.c >depend
-
 clean: 
 	rm -f SUBSYS.o $(OBJS)
-
-ifeq (depend,$(wildcard depend))
-include depend
-endif

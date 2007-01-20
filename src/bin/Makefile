@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/Makefile,v 1.48 2007/01/05 22:19:47 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/Makefile,v 1.49 2007/01/20 17:16:15 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,7 +19,7 @@ ifeq ($(PORTNAME), win32)
 DIRS+=pgevent
 endif
 
-all install installdirs uninstall depend distprep:
+all install installdirs uninstall distprep:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done
 
 clean distclean maintainer-clean:

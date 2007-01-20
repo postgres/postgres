@@ -1,7 +1,7 @@
 #
 # Makefile for the access methods module
 #
-# $PostgreSQL: pgsql/src/backend/access/Makefile,v 1.11 2006/05/02 11:28:54 teodor Exp $
+# $PostgreSQL: pgsql/src/backend/access/Makefile,v 1.12 2007/01/20 17:16:10 petere Exp $
 #
 
 subdir = src/backend/access
@@ -25,6 +25,3 @@ $(SUBDIRS:%=%-recursive):
 clean:
 	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
 	rm -f SUBSYS.o
-
-dep depend:
-	for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit; done
