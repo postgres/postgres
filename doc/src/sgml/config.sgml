@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.103 2007/01/19 16:58:45 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.104 2007/01/20 21:30:26 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -29,17 +29,17 @@
    </para>
 
    <para>
-    Some settings specify a memory or time value.  Each of these has
-    an implicit unit, which is either kilobytes, blocks (typically 8
-    kilobytes), milliseconds, seconds, or minutes.  For convenience, a
-    (possibly different) unit can also be specified explicitly.  Valid
-    memory units are <literal>kB</literal> (kilobytes),
-    <literal>MB</literal> (megabytes), and <literal>GB</literal>
-    (gigabytes); valid time units are <literal>ms</literal>
-    (milliseconds), <literal>s</literal> (seconds),
-    <literal>min</literal> (minutes), <literal>h</literal> (hours),
-    and <literal>d</literal> (days).  Note that the multiplier for
-    memory units is 1024, not 1000.
+    Some settings specify a memory or time value.  Each of these has an
+    implicit unit, which is either kilobytes, blocks (typically eight
+    kilobytes), milliseconds, seconds, or minutes.  Default units can be
+    queried by referencing <literal>pg_settings.unit</>. For convenience,
+    a different unit can also be specified explicitly.  Valid memory units
+    are <literal>kB</literal> (kilobytes), <literal>MB</literal>
+    (megabytes), and <literal>GB</literal> (gigabytes); valid time units
+    are <literal>ms</literal> (milliseconds), <literal>s</literal>
+    (seconds), <literal>min</literal> (minutes), <literal>h</literal>
+    (hours), and <literal>d</literal> (days).  Note that the multiplier
+    for memory units is 1024, not 1000.
    </para>
 
    <para>
@@ -347,10 +347,10 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Determines the maximum number of concurrent connections to the
-        database server. The default is typically 100, but may be less
-        if your kernel settings will not support it (as determined
-        during <application>initdb</>).  This parameter can only be
-        set at server start.
+        database server. The default is typically 100 connections, but
+        may be less if your kernel settings will not support it (as
+        determined during <application>initdb</>).  This parameter can
+        only be set at server start.
        </para>
 
        <para>
@@ -383,9 +383,9 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        The default value is 3. The value must be less than the value of
-        <varname>max_connections</varname>. This parameter can only be
-        set at server start.
+        The default value is three connections. The value must be less
+        than the value of <varname>max_connections</varname>. This
+        parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -488,8 +488,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         On systems that support the <symbol>TCP_KEEPIDLE</symbol> socket option, specifies the
         number of seconds between sending keepalives on an otherwise idle
-        connection. A value of 0 uses the system default. If <symbol>TCP_KEEPIDLE</symbol> is
-        not supported, this parameter must be 0. This parameter is ignored for
+        connection. A value of zero uses the system default. If <symbol>TCP_KEEPIDLE</symbol> is
+        not supported, this parameter must be zero. This parameter is ignored for
         connections made via a Unix-domain socket.
        </para>
       </listitem>
@@ -504,8 +504,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         On systems that support the <symbol>TCP_KEEPINTVL</symbol> socket option, specifies how
         long, in seconds, to wait for a response to a keepalive before
-        retransmitting. A value of 0 uses the system default. If <symbol>TCP_KEEPINTVL</symbol>
-        is not supported, this parameter must be 0. This parameter is ignored
+        retransmitting. A value of zero uses the system default. If <symbol>TCP_KEEPINTVL</symbol>
+        is not supported, this parameter must be zero. This parameter is ignored
         for connections made via a Unix-domain socket.
        </para>
       </listitem>
@@ -520,8 +520,8 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         On systems that support the <symbol>TCP_KEEPCNT</symbol> socket option, specifies how
         many keepalives may be lost before the connection is considered dead. 
-        A value of 0 uses the system default. If <symbol>TCP_KEEPCNT</symbol> is not
-        supported, this parameter must be 0. This parameter is ignored
+        A value of zero uses the system default. If <symbol>TCP_KEEPCNT</symbol> is not
+        supported, this parameter must be zero. This parameter is ignored
         for connections made via a Unix-domain socket.
        </para>
       </listitem>
@@ -547,7 +547,7 @@ SET ENABLE_SEQSCAN TO OFF;
         would-be client has not completed the authentication protocol in
         this much time, the server breaks the connection. This prevents
         hung clients from occupying a connection indefinitely.
-        The default is 60.
+        The default is one minute (<literal>1m</>).
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
@@ -702,17 +702,17 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Sets the number of shared memory buffers used by the database
-        server. The default is typically 4000, but may be less if your
-        kernel settings will not support it (as determined during
-        <application>initdb</>).  Each buffer is 8192 bytes, unless a
-        different value of <symbol>BLCKSZ</symbol> was chosen when building
-        the server.  This setting must be at least 16, as well as at
-        least twice the value of <xref linkend="guc-max-connections">;
-        however, settings significantly higher than the minimum are
-        usually needed for good performance.  Values of a few thousand
-        are recommended for production installations.  This parameter can
-        only be set at server start.
+        Sets the amount of memory the database server uses for shared
+        memory buffers.  The default is typically 32 megabytes
+        (<literal>32MB</>), but may be less if your kernel settings will
+        not support it (as determined during <application>initdb</>).
+        This setting must be at least 128 kilobytes and at least 16
+        kilobytes times <xref linkend="guc-max-connections">.  (Non-default
+        values of <symbol>BLCKSZ</symbol> change the minimum.)  However,
+        settings significantly higher than the minimum are usually needed
+        for good performance.  Several tens of megabytes are recommended
+        for production installations.  This parameter can only be set at
+        server start.
        </para>
 
        <para>
@@ -733,11 +733,12 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the maximum number of temporary buffers used by each database
-        session.  These are session-local buffers used only for access
-        to temporary tables.  The default is 1000.  The setting can
-        be changed within individual sessions, but only up until the
-        first use of temporary tables within a session; subsequent
-        attempts to change the value will have no effect on that session.
+        session.  These are session-local buffers used only for access to
+        temporary tables.  The default is eight megabytes
+        (<literal>8MB</>).  The setting can be changed within individual
+        sessions, but only up until the first use of temporary tables
+        within a session; subsequent attempts to change the value will
+        have no effect on that session.
        </para>
 
        <para>
@@ -765,7 +766,7 @@ SET ENABLE_SEQSCAN TO OFF;
         endterm="sql-prepare-transaction-title">).
         Setting this parameter to zero disables the prepared-transaction
         feature.
-        The default is 5.
+        The default is five transactions.
         This parameter can only be set at server start.
        </para>
 
@@ -796,7 +797,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Specifies the amount of memory to be used by internal sort operations
         and hash tables before switching to temporary disk files. The value is
-        specified in kilobytes, and defaults to 1024 kilobytes (1 MB).
+        defaults to one megabyte (<literal>1MB</>).
         Note that for a complex query, several sort or hash operations might be
         running in parallel; each one will be allowed to use as much memory
         as this value specifies before it starts to put data into temporary
@@ -821,14 +822,13 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Specifies the maximum amount of memory to be used in maintenance
         operations, such as <command>VACUUM</command>, <command>CREATE
-        INDEX</>, and <command>ALTER TABLE ADD FOREIGN KEY</>.
-        The value is specified in kilobytes, and defaults to 16384 kilobytes
-        (16 MB).  Since only one of these operations can be executed at 
-        a time by a database session, and an installation normally doesn't
-        have very many of them happening concurrently, it's safe to set this
-        value significantly larger than <varname>work_mem</varname>.  Larger
-        settings may improve performance for vacuuming and for restoring
-        database dumps.
+        INDEX</>, and <command>ALTER TABLE ADD FOREIGN KEY</>.  It defaults
+        to 16 megabytes (<literal>16MB</>).  Since only one of these
+        operations can be executed at a time by a database session, and
+        an installation normally doesn't have many of them running
+        concurrently, it's safe to set this value significantly larger
+        than <varname>work_mem</varname>.  Larger settings may improve
+        performance for vacuuming and for restoring database dumps.
        </para>
       </listitem>
      </varlistentry>
@@ -846,11 +846,11 @@ SET ENABLE_SEQSCAN TO OFF;
         equivalent), less a safety margin of a megabyte or so.  The safety
         margin is needed because the stack depth is not checked in every
         routine in the server, but only in key potentially-recursive routines
-        such as expression evaluation.  The default setting is
-        2048 kB (two megabytes), which is conservatively small and unlikely
-        to risk crashes.  However, it may be too small to allow execution
-        of complex functions.
-        Only superusers can change this setting.
+        such as expression evaluation.  The default setting is two
+        megabytes (<literal>2MB</>), which is conservatively small and
+        unlikely to risk crashes.  However, it may be too small to allow
+        execution of complex functions.  Only superusers can change this
+        setting.
        </para>
 
        <para>
@@ -906,10 +906,10 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the maximum number of disk pages for which free space will
         be tracked in the shared free-space map.  Six bytes of shared memory
-        are consumed for each page slot.  This setting must be more than
+        are consumed for each page slot.  This setting must be at least
         16 * <varname>max_fsm_relations</varname>.  The default is chosen
         by <application>initdb</> depending on the amount of available memory,
-        and can range from 20000 to 200000.
+        and can range from 20k to 200k pages.
         This parameter can only be set at server start.
        </para>
       </listitem>
@@ -925,7 +925,7 @@ SET ENABLE_SEQSCAN TO OFF;
         Sets the maximum number of relations (tables and indexes) for which
         free space will be tracked in the shared free-space map.  Roughly
         seventy bytes of shared memory are consumed for each slot.
-        The default is 1000.
+        The default is one thousand relations.
         This parameter can only be set at server start.
        </para>
       </listitem>
@@ -945,7 +945,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the maximum number of simultaneously open files allowed to each
-        server subprocess. The default is 1000. If the kernel is enforcing
+        server subprocess. The default is one thousand files. If the kernel is enforcing
         a safe per-process limit, you don't need to worry about this setting.
         But on some platforms (notably, most BSD systems), the kernel will
         allow individual processes to open many more files than the system
@@ -1053,7 +1053,7 @@ SET ENABLE_SEQSCAN TO OFF;
         <para>
          The length of time, in milliseconds, that the process will sleep
          when the cost limit has been exceeded.
-         The default value is 0, which disables the cost-based vacuum
+         The default value is zero, which disables the cost-based vacuum
          delay feature.  Positive values enable cost-based vacuuming.
          Note that on many systems, the effective resolution
          of sleep delays is 10 milliseconds; setting
@@ -1074,7 +1074,7 @@ SET ENABLE_SEQSCAN TO OFF;
          The estimated cost for vacuuming a buffer found in the shared buffer
          cache. It represents the cost to lock the buffer pool, lookup
          the shared hash table and scan the content of the page. The
-         default value is 1.
+         default value is one.
         </para>
        </listitem>
       </varlistentry>
@@ -1172,13 +1172,13 @@ SET ENABLE_SEQSCAN TO OFF;
          background writer.  In each round the writer issues writes
          for some number of dirty buffers (controllable by the
          following parameters).  It then sleeps for <varname>bgwriter_delay</>
-         milliseconds, and repeats.  The default value is 200. Note
-         that on many systems, the effective resolution of sleep
-         delays is 10 milliseconds; setting <varname>bgwriter_delay</>
-         to a value that is not a multiple of 10 may have the same
-         results as setting it to the next higher multiple of 10.
-         This parameter can only be set in the <filename>postgresql.conf</>
-         file or on the server command line.
+         milliseconds, and repeats.  The default value is 200 milliseconds
+         (<literal>200ms</>). Note that on many systems, the effective
+         resolution of sleep delays is 10 milliseconds; setting
+         <varname>bgwriter_delay</> to a value that is not a multiple of
+         10 may have the same results as setting it to the next higher
+         multiple of 10.  This parameter can only be set in the
+         <filename>postgresql.conf</> file or on the server command line.
         </para>
        </listitem>
       </varlistentry>
@@ -1195,8 +1195,7 @@ SET ENABLE_SEQSCAN TO OFF;
          are likely to be recycled soon.  In each round, it examines up to
          <varname>bgwriter_lru_percent</> of the buffers that are nearest to
          being recycled, and writes any that are dirty.
-         The default value is 1.0 (this is a percentage of the total number
-         of shared buffers).
+         The default value is 1.0 (1% of the total number of shared buffers).
          This parameter can only be set in the <filename>postgresql.conf</>
          file or on the server command line.
         </para>
@@ -1212,7 +1211,7 @@ SET ENABLE_SEQSCAN TO OFF;
         <para>
          In each round, no more than this many buffers will be written
          as a result of scanning soon-to-be-recycled buffers.
-         The default value is 5.
+         The default value is five buffers.
          This parameter can only be set in the <filename>postgresql.conf</>
          file or on the server command line.
         </para>
@@ -1231,7 +1230,7 @@ SET ENABLE_SEQSCAN TO OFF;
          buffer pool, writing buffers that are found to be dirty.
          In each round, it examines up to
          <varname>bgwriter_all_percent</> of the buffers for this purpose.
-         The default value is 0.333 (this is a percentage of the total number
+         The default value is 0.333 (0.333% of the total number
          of shared buffers).  With the default <varname>bgwriter_delay</>
          setting, this will allow the entire shared buffer pool to be scanned
          about once per minute.
@@ -1252,7 +1251,7 @@ SET ENABLE_SEQSCAN TO OFF;
          as a result of the scan of the entire buffer pool.  (If this
          limit is reached, the scan stops, and resumes at the next buffer
          during the next round.)
-         The default value is 5.
+         The default value is five buffers.
          This parameter can only be set in the <filename>postgresql.conf</>
          file or on the server command line.
         </para>
@@ -1447,11 +1446,12 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Number of disk-page buffers allocated in shared memory for WAL data.
-        The default is 8.  The setting need only be large enough to hold
-        the amount of WAL data generated by one typical transaction, since
-        the data is written out to disk at every transaction commit.
-        This parameter can only be set at server start.
+        The amount of memory used in shared memory for WAL data.  The
+        default is 64 kilobytes (<literal>64kB</>).  The setting need only
+        be large enough to hold the amount of WAL data generated by one
+        typical transaction, since the data is written out to disk at
+        every transaction commit.  This parameter can only be set at server
+        start.
        </para>
 
        <para>
@@ -1497,7 +1497,7 @@ SET ENABLE_SEQSCAN TO OFF;
         before performing the <varname>commit_delay</> delay. A larger
         value makes it more probable that at least one other
         transaction will become ready to commit during the delay
-        interval. The default is five.
+        interval. The default is five transactions.
        </para>
       </listitem>
      </varlistentry>
@@ -1517,7 +1517,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Maximum distance between automatic WAL checkpoints, in log
         file segments (each segment is normally 16 megabytes). The
-        default is three.
+        default is three segments.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
@@ -1532,7 +1532,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Maximum time between automatic WAL checkpoints, in
-        seconds. The default is 300 seconds.
+        seconds. The default is five minutes (<literal>5min</>).
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
@@ -1550,7 +1550,7 @@ SET ENABLE_SEQSCAN TO OFF;
         the filling of checkpoint segment files happen closer together
         than this many seconds (which suggests that
         <varname>checkpoint_segments</> ought to be raised).  The default is
-        30 seconds.  Zero disables the warning.
+        30 seconds (<literal>30s</>).  Zero disables the warning.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
@@ -1925,9 +1925,8 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         tables, since they will have to share the available
         space.  This parameter has no effect on the size of shared
         memory allocated by <productname>PostgreSQL</productname>, nor
-        does it reserve kernel disk cache; it is used only for
-        estimation purposes.  The value is measured in disk pages,
-        which are normally 8192 bytes each. The default is 16384 (128 MB).
+        does it reserve kernel disk cache; it is used only for estimation
+        purposes.  The default is 128 megabytes (<literal>128MB</>).
        </para>
       </listitem>
      </varlistentry>
@@ -1990,7 +1989,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
        <para>
         Controls the trade off between planning time and query plan
         efficiency in GEQO. This variable must be an integer in the
-        range from 1 to 10. The default value is 5. Larger values
+        range from 1 to 10. The default value is five. Larger values
         increase the time spent doing query planning, but also
         increase the likelihood that an efficient query plan will be
         chosen.
@@ -2145,7 +2144,7 @@ SELECT * FROM parent WHERE key = 2400;
         The planner will merge sub-queries into upper queries if the
         resulting <literal>FROM</literal> list would have no more than
         this many items.  Smaller values reduce planning time but may
-        yield inferior query plans.  The default is 8.  It is usually
+        yield inferior query plans.  The default is eight.  It is usually
         wise to keep this less than <xref linkend="guc-geqo-threshold">.
         For more information see <xref linkend="explicit-joins">.
        </para>
@@ -2503,7 +2502,7 @@ SELECT * FROM parent WHERE key = 2400;
          if the statement ran for at least the specified number of
          milliseconds.  Setting this to zero prints all statement durations.
          Minus-one (the default) disables logging statement durations.
-         For example, if you set it to <literal>250</literal>
+         For example, if you set it to <literal>250ms</literal>
          then all SQL statements that run 250ms or longer will be
          logged.  Enabling this parameter can be helpful in tracking down
          unoptimized queries in your applications.
@@ -3151,7 +3150,7 @@ SELECT * FROM parent WHERE key = 2400;
         daemon.  In each round the daemon examines one database
         and issues <command>VACUUM</> and <command>ANALYZE</> commands
         as needed for tables in that database.  The delay is measured
-        in seconds, and the default is 60.
+        in seconds, and the default is one minute (<literal>1m</>).
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
@@ -3167,7 +3166,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Specifies the minimum number of updated or deleted tuples needed
         to trigger a <command>VACUUM</> in any one table.
-        The default is 500.
+        The default is 500 tuples.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3185,7 +3184,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Specifies the minimum number of inserted, updated or deleted tuples
         needed to trigger an <command>ANALYZE</> in any one table.
-        The default is 250.
+        The default is 250 tuples.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3204,7 +3203,7 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies a fraction of the table size to add to
         <varname>autovacuum_vacuum_threshold</varname>
         when deciding whether to trigger a <command>VACUUM</>.
-        The default is 0.2.
+        The default is 0.2 (20% of table size).
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3223,7 +3222,7 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies a fraction of the table size to add to
         <varname>autovacuum_analyze_threshold</varname>
         when deciding whether to trigger an <command>ANALYZE</>.
-        The default is 0.1.
+        The default is 0.1 (10% of table size).
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3245,7 +3244,7 @@ SELECT * FROM parent WHERE key = 2400;
         transaction ID wraparound within the table.  Note that the system
         will launch autovacuum processes to prevent wraparound even when
         autovacuum is otherwise disabled.
-        The default is 200000000 (200 million).
+        The default is 200 million transactions.
         This parameter can only be set at server start, but the setting
         can be reduced for individual tables by entries in
         <structname>pg_autovacuum</>.
@@ -3262,8 +3261,8 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Specifies the cost delay value that will be used in automatic
-        <command>VACUUM</> operations.  If -1 is specified (which is the
-        default), the regular
+        <command>VACUUM</> operations.  If <literal>-1</> is
+        specified (which is the default), the regular
         <xref linkend="guc-vacuum-cost-delay"> value will be used.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
@@ -3281,7 +3280,7 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Specifies the cost limit value that will be used in automatic
-        <command>VACUUM</> operations.  If -1 is specified (which is the
+        <command>VACUUM</> operations.  If <literal>-1</> is specified (which is the
         default), the regular
         <xref linkend="guc-vacuum-cost-limit"> value will be used.
         This parameter can only be set in the <filename>postgresql.conf</>
@@ -3492,12 +3491,13 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies the cutoff age (in transactions) that <command>VACUUM</>
         should use to decide whether to replace transaction IDs with
         <literal>FrozenXID</> while scanning a table.
-        The default is 100000000 (100 million).  Although users can set this
-        value anywhere from zero to 1000000000, <command>VACUUM</> will
-        silently limit the effective value to half the value of <xref
-        linkend="guc-autovacuum-freeze-max-age">, so that there is not an
-        unreasonably short time between forced autovacuums.
-        For more information see <xref linkend="vacuum-for-wraparound">.
+        The default is 100 million transactions.  Although
+        users can set this value anywhere from zero to one billion,
+        <command>VACUUM</> will silently limit the effective value to half
+        the value of <xref linkend="guc-autovacuum-freeze-max-age">, so
+        that there is not an unreasonably short time between forced
+        autovacuums.  For more information see <xref
+        linkend="vacuum-for-wraparound">.
        </para>
       </listitem>
      </varlistentry>
@@ -3571,10 +3571,11 @@ SELECT * FROM parent WHERE key = 2400;
       <indexterm><primary>time zone</></>
       <listitem>
        <para>
-        Sets the time zone for displaying and interpreting time
-        stamps.  The default is 'unknown', which means to use whatever 
+        Sets the time zone for displaying and interpreting time stamps.
+        The default is <literal>'unknown'</>, which means to use whatever
         the system environment specifies as the time zone.  See <xref
-        linkend="datatype-datetime"> for more information.
+        linkend="datatype-datetime"> for more
+        information.
        </para>
       </listitem>
      </varlistentry>
@@ -3588,7 +3589,7 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Sets the collection of time zone abbreviations that will be accepted
-        by the server for datetime input.  The default is 'Default',
+        by the server for datetime input.  The default is <literal>'Default'</>,
         which is a collection that works in most of the world; there are
         also 'Australia' and 'India', and other collections can be defined
         for a particular installation.  See <xref
@@ -3896,7 +3897,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         just wait on the lock for a while before starting the check for a
         deadlock. Increasing this value reduces the amount of time
         wasted in needless deadlock checks, but slows down reporting of
-        real deadlock errors. The default is 1000 (i.e., one second),
+        real deadlock errors. The default is one second (<literal>1s</>),
         which is probably about the smallest value you would want in
         practice. On a heavily loaded server you might want to raise it.
         Ideally the setting should exceed your typical transaction time,
@@ -3913,18 +3914,20 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       </indexterm>
       <listitem>
        <para>
-        The shared lock table is created with room to describe locks on
-        <varname>max_locks_per_transaction</varname> *
-        (<xref linkend="guc-max-connections"> +
-        <xref linkend="guc-max-prepared-transactions">) objects;
-        hence, no more than this many distinct objects can
-        be locked at any one time. (Thus, this parameter's name may be
-        confusing: it is not a hard limit on the number of locks taken
-        by any one transaction, but rather a maximum average value.)
-        The default, 64, has historically
-        proven sufficient, but you might need to raise this value if you
-        have clients that touch many different tables in a single
-        transaction. This parameter can only be set at server start.
+        The shared lock table is created to track locks on
+        <varname>max_locks_per_transaction</varname> * (<xref
+        linkend="guc-max-connections"> + <xref
+        linkend="guc-max-prepared-transactions">) objects (e.g.  tables);
+        hence, no more than this many distinct objects can be locked at
+        any one time.  This parameter controls the average number of object
+        locks allocated for each transaction;  individual transactions
+        can lock more objects as long as the locks of all transactions
+        fit in the lock table.  This is <emphasis>not</> the number of
+        rows that can be locked; that value is unlimited.  The default,
+        64, has historically proven sufficient, but you might need to
+        raise this value if you have clients that touch many different
+        tables in a single transaction. This parameter can only be set at
+        server start.
        </para>
 
        <para>
@@ -4053,7 +4056,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         nor <literal>WITHOUT OIDS</literal> is specified. It also
         determines whether OIDs will be included in tables created by
         <command>SELECT INTO</command>. In <productname>PostgreSQL</>
-        8.1 <varname>default_with_oids</> is disabled by default; in
+        8.1 <varname>default_with_oids</> is <literal>off</> by default; in
         prior versions of <productname>PostgreSQL</productname>, it
         was on by default.
        </para>
@@ -4298,7 +4301,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         Reports the maximum number of function arguments. It is determined by
         the value of <literal>FUNC_MAX_ARGS</> when building the server. The
-        default value is 100.
+        default value is 100 arguments.
        </para>
       </listitem>
      </varlistentry>
@@ -4314,7 +4317,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         less than the value of <literal>NAMEDATALEN</> when building
         the server. The default value of <literal>NAMEDATALEN</> is
         64; therefore the default
-        <varname>max_identifier_length</varname> is 63.
+        <varname>max_identifier_length</varname> is 63 bytes.
        </para>
       </listitem>
      </varlistentry>
@@ -4328,7 +4331,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         Reports the maximum number of index keys. It is determined by
         the value of <literal>INDEX_MAX_KEYS</> when building the server. The
-        default value is 32.
+        default value is 32 keys.
        </para>
       </listitem>
      </varlistentry>
