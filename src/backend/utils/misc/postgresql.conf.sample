@@ -111,7 +111,7 @@
 
 # - Free Space Map -
 
-#max_fsm_pages = 1638400		# min max_fsm_relations*16, 6 bytes each
+#max_fsm_pages = 204800			# min max_fsm_relations*16, 6 bytes each
 					# (change requires restart)
 #max_fsm_relations = 1000		# min 100, ~70 bytes each
 					# (change requires restart)
