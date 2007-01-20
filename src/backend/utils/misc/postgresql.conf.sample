@@ -23,6 +23,9 @@
 # server for the changes to take effect, or use "pg_ctl reload". Some
 # settings, which are marked below, require a server shutdown and restart
 # to take effect.
+#
+# Memory units:  kB = kilobytes MB = megabytes GB = gigabytes
+# Time units:    ms = milliseconds s = seconds min = minutes h = hours d = days
 
 
 #---------------------------------------------------------------------------
