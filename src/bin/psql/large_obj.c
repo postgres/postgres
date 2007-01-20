@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.47 2007/01/05 22:19:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/large_obj.c,v 1.48 2007/01/20 16:57:31 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "large_obj.h"
@@ -11,6 +11,39 @@
 
 #include "settings.h"
 #include "common.h"
+
+static void
+print_lo_result(const char *fmt,...)
+__attribute__((format(printf, 1, 2)));
+
+static void
+print_lo_result(const char *fmt,...)
+{
+	va_list		ap;
+
+	if (!pset.quiet)
+	{
+		if (pset.popt.topt.format == PRINT_HTML)
+			fputs("<p>", pset.queryFout);
+
+		va_start(ap, fmt);
+		vfprintf(pset.queryFout, fmt, ap);
+		va_end(ap);
+
+		if (pset.popt.topt.format == PRINT_HTML)
+			fputs("</p>\n", pset.queryFout);
+		else
+			fputs("\n", pset.queryFout);
+	}
+
+	if (pset.logfile)
+	{
+		va_start(ap, fmt);
+		vfprintf(pset.logfile, fmt, ap);
+		va_end(ap);
+		fputs("\n", pset.logfile);
+	}
+}
 
 
 /*
@@ -129,7 +162,7 @@ do_lo_export(const char *loid_arg, const char *filename_arg)
 	if (!finish_lo_xact("\\lo_export", own_transaction))
 		return false;
 
-	fprintf(pset.queryFout, "lo_export\n");
+	print_lo_result("lo_export");
 
 	return true;
 }
@@ -189,7 +222,8 @@ do_lo_import(const char *filename_arg, const char *comment_arg)
 	if (!finish_lo_xact("\\lo_import", own_transaction))
 		return false;
 
-	fprintf(pset.queryFout, "lo_import %u\n", loid);
+	print_lo_result("lo_import %u", loid);
+
 	sprintf(oidbuf, "%u", loid);
 	SetVariable(pset.vars, "LASTOID", oidbuf);
 
@@ -225,7 +259,7 @@ do_lo_unlink(const char *loid_arg)
 	if (!finish_lo_xact("\\lo_unlink", own_transaction))
 		return false;
 
-	fprintf(pset.queryFout, "lo_unlink %u\n", loid);
+	print_lo_result("lo_unlink %u", loid);
 
 	return true;
 }

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.179 2006/12/19 01:53:36 adunstan Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.180 2007/01/20 16:57:31 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -1329,11 +1329,12 @@ Tue Oct 26 21:40:57 CEST 1999
 foo=&gt; <userinput>\lo_import '/home/peter/pictures/photo.xcf' 'a picture of me'</userinput>
 lo_import 152801
 </programlisting>
-        The response indicates that the large object received object ID
-        152801 which one ought to remember if one wants to access the
-        object ever again. For that reason it is recommended to always
-        associate a human-readable comment with every object. Those can
-        then be seen with the <command>\lo_list</command> command.
+        The response indicates that the large object received object
+        ID 152801, which can be used to access the newly-created large
+        object in the future. For the sake of readability, it is
+        recommended to always associate a human-readable comment with
+        every object. Both OIDs and comments can be viewed with the
+        <command>\lo_list</command> command.
         </para>
 
         <para>
