@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.49 2006/11/05 22:42:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.50 2007/01/20 15:43:54 momjian Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -257,7 +257,8 @@ createdb -T template0 <replaceable>dbname</>
     For example, one could drop <literal>template1</> and recreate it from
     <literal>template0</> without any ill effects.  This course of action
     might be advisable if one has carelessly added a bunch of junk in
-    <literal>template1</>.
+    <literal>template1</>. (To delete <literal>template1</literal>,
+    it must have <literal>datistemplate = false</>.)
    </para>
 
    <para>
