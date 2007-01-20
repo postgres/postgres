@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.83 2007/01/05 22:19:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.84 2007/01/20 20:45:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 			other_rels = list_head(joinrels[1]);		/* consider all initial
 														 * rels */
 
-		if (old_rel->joininfo != NIL)
+		if (old_rel->joininfo != NIL || old_rel->has_eclass_joins)
 		{
 			/*
 			 * Note that if all available join clauses for this rel require
@@ -152,7 +152,8 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 			 * outer joins --- then we might have to force a bushy outer
 			 * join.  See have_relevant_joinclause().
 			 */
-			if (old_rel->joininfo == NIL && root->oj_info_list == NIL)
+			if (old_rel->joininfo == NIL && !old_rel->has_eclass_joins &&
+				root->oj_info_list == NIL)
 				continue;
 
 			if (k == other_level)
@@ -251,8 +252,7 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 /*
  * make_rels_by_clause_joins
  *	  Build joins between the given relation 'old_rel' and other relations
- *	  that are mentioned within old_rel's joininfo list (i.e., relations
- *	  that participate in join clauses that 'old_rel' also participates in).
+ *	  that participate in join clauses that 'old_rel' also participates in.
  *	  The join rel nodes are returned in a list.
  *
  * 'old_rel' is the relation entry for the relation to be joined

@@ -90,21 +90,19 @@ have a list of relations to join.  However, FULL OUTER JOIN clauses are
 never flattened, and other kinds of JOIN might not be either, if the
 flattening process is stopped by join_collapse_limit or from_collapse_limit
 restrictions.  Therefore, we end up with a planning problem that contains
-both lists of relations to be joined in any order, and JOIN nodes that
-force a particular join order.  For each un-flattened JOIN node, we join
-exactly that pair of relations (after recursively planning their inputs,
-if the inputs aren't single base relations).  We generate a Path for each
-feasible join method, and select the cheapest Path.  Note that the JOIN
-clause structure determines the join Path structure, but it doesn't
-constrain the join implementation method at each join (nestloop, merge,
-hash), nor does it say which rel is considered outer or inner at each
-join.  We consider all these possibilities in building Paths.
+lists of relations to be joined in any order, where any individual item
+might be a sub-list that has to be joined together before we can consider
+joining it to its siblings.  We process these sub-problems recursively,
+bottom up.  Note that the join list structure constrains the possible join
+orders, but it doesn't constrain the join implementation method at each
+join (nestloop, merge, hash), nor does it say which rel is considered outer
+or inner at each join.  We consider all these possibilities in building
+Paths. We generate a Path for each feasible join method, and select the
+cheapest Path.
 
-3) At the top level of the FROM clause we will have a list of relations
-that are either base rels or joinrels constructed per un-flattened JOIN
-directives.  (This is also the situation, recursively, when we can flatten
-sub-joins underneath an un-flattenable JOIN into a list of relations to
-join.)  We can join these rels together in any order the planner sees fit.
+For each planning problem, therefore, we will have a list of relations
+that are either base rels or joinrels constructed per sub-join-lists.
+We can join these rels together in any order the planner sees fit.
 The standard (non-GEQO) planner does this as follows:
 
 Consider joining each RelOptInfo to each other RelOptInfo specified in its
@@ -114,17 +112,17 @@ choice but to generate a clauseless Cartesian-product join; so we consider
 joining that rel to each other available rel.  But in the presence of join
 clauses we will only consider joins that use available join clauses.)
 
-If we only had two relations in the FROM list, we are done: we just pick
+If we only had two relations in the list, we are done: we just pick
 the cheapest path for the join RelOptInfo.  If we had more than two, we now
 need to consider ways of joining join RelOptInfos to each other to make
-join RelOptInfos that represent more than two FROM items.
+join RelOptInfos that represent more than two list items.
 
 The join tree is constructed using a "dynamic programming" algorithm:
 in the first pass (already described) we consider ways to create join rels
-representing exactly two FROM items.  The second pass considers ways
-to make join rels that represent exactly three FROM items; the next pass,
+representing exactly two list items.  The second pass considers ways
+to make join rels that represent exactly three list items; the next pass,
 four items, etc.  The last pass considers how to make the final join
-relation that includes all FROM items --- obviously there can be only one
+relation that includes all list items --- obviously there can be only one
 join rel at this top level, whereas there can be more than one join rel
 at lower levels.  At each level we use joins that follow available join
 clauses, if possible, just as described for the first level.
@@ -155,7 +153,7 @@ For example:
     {1 2 3 4}
 
 We consider left-handed plans (the outer rel of an upper join is a joinrel,
-but the inner is always a single FROM item); right-handed plans (outer rel
+but the inner is always a single list item); right-handed plans (outer rel
 is always a single item); and bushy plans (both inner and outer can be
 joins themselves).  For example, when building {1 2 3 4} we consider
 joining {1 2 3} to {4} (left-handed), {4} to {1 2 3} (right-handed), and
@@ -336,7 +334,9 @@ RelOptInfo      - a relation or joined relations
   MergePath     - merge joins
   HashPath      - hash joins
 
- PathKeys       - a data structure representing the ordering of a path
+ EquivalenceClass - a data structure representing a set of values known equal
+
+ PathKey        - a data structure representing the sort ordering of a path
 
 The optimizer spends a good deal of its time worrying about the ordering
 of the tuples returned by a path.  The reason this is useful is that by
@@ -363,213 +363,250 @@ without sorting, since it can pick from any of the paths retained for its
 inputs.
 
 
+EquivalenceClasses
+------------------
+
+During the deconstruct_jointree() scan of the query's qual clauses, we look
+for mergejoinable equality clauses A = B whose applicability is not delayed
+by an outer join; these are called "equivalence clauses".  When we find
+one, we create an EquivalenceClass containing the expressions A and B to
+record this knowledge.  If we later find another equivalence clause B = C,
+we add C to the existing EquivalenceClass for {A B}; this may require
+merging two existing EquivalenceClasses.  At the end of the scan, we have
+sets of values that are known all transitively equal to each other.  We can
+therefore use a comparison of any pair of the values as a restriction or
+join clause (when these values are available at the scan or join, of
+course); furthermore, we need test only one such comparison, not all of
+them.  Therefore, equivalence clauses are removed from the standard qual
+distribution process.  Instead, when preparing a restriction or join clause
+list, we examine each EquivalenceClass to see if it can contribute a
+clause, and if so we select an appropriate pair of values to compare.  For
+example, if we are trying to join A's relation to C's, we can generate the
+clause A = C, even though this appeared nowhere explicitly in the original
+query.  This may allow us to explore join paths that otherwise would have
+been rejected as requiring Cartesian-product joins.
+
+Sometimes an EquivalenceClass may contain a pseudo-constant expression
+(i.e., one not containing Vars or Aggs of the current query level, nor
+volatile functions).  In this case we do not follow the policy of
+dynamically generating join clauses: instead, we dynamically generate
+restriction clauses "var = const" wherever one of the variable members of
+the class can first be computed.  For example, if we have A = B and B = 42,
+we effectively generate the restriction clauses A = 42 and B = 42, and then
+we need not bother with explicitly testing the join clause A = B when the
+relations are joined.  In effect, all the class members can be tested at
+relation-scan level and there's never a need for join tests.
+
+The precise technical interpretation of an EquivalenceClass is that it
+asserts that at any plan node where more than one of its member values
+can be computed, output rows in which the values are not all equal may
+be discarded without affecting the query result.  (We require all levels
+of the plan to enforce EquivalenceClasses, hence a join need not recheck
+equality of values that were computable by one of its children.)  For an
+ordinary EquivalenceClass that is "valid everywhere", we can further infer
+that the values are all non-null, because all mergejoinable operators are
+strict.  However, we also allow equivalence clauses that appear below the
+nullable side of an outer join to form EquivalenceClasses; for these
+classes, the interpretation is that either all the values are equal, or
+all (except pseudo-constants) have gone to null.  (This requires a
+limitation that non-constant members be strict, else they might not go
+to null when the other members do.)  Consider for example
+
+	SELECT *
+	  FROM a LEFT JOIN
+	       (SELECT * FROM b JOIN c ON b.y = c.z WHERE b.y = 10) ss
+	       ON a.x = ss.y
+	  WHERE a.x = 42;
+
+We can form the below-outer-join EquivalenceClass {b.y c.z 10} and thereby
+apply c.z = 10 while scanning c.  (The reason we disallow outerjoin-delayed
+clauses from forming EquivalenceClasses is exactly that we want to be able
+to push any derived clauses as far down as possible.)  But once above the
+outer join it's no longer necessarily the case that b.y = 10, and thus we
+cannot use such EquivalenceClasses to conclude that sorting is unnecessary
+(see discussion of PathKeys below).
+
+In this example, notice also that a.x = ss.y (really a.x = b.y) is not an
+equivalence clause because its applicability to b is delayed by the outer
+join; thus we do not try to insert b.y into the equivalence class {a.x 42}.
+But since we see that a.x has been equated to 42 above the outer join, we
+are able to form a below-outer-join class {b.y 42}; this restriction can be
+added because no b/c row not having b.y = 42 can contribute to the result
+of the outer join, and so we need not compute such rows.  Now this class
+will get merged with {b.y c.z 10}, leading to the contradiction 10 = 42,
+which lets the planner deduce that the b/c join need not be computed at all
+because none of its rows can contribute to the outer join.  (This gets
+implemented as a gating Result filter, since more usually the potential
+contradiction involves Param values rather than just Consts, and thus has
+to be checked at runtime.)
+
+To aid in determining the sort ordering(s) that can work with a mergejoin,
+we mark each mergejoinable clause with the EquivalenceClasses of its left
+and right inputs.  For an equivalence clause, these are of course the same
+EquivalenceClass.  For a non-equivalence mergejoinable clause (such as an
+outer-join qualification), we generate two separate EquivalenceClasses for
+the left and right inputs.  This may result in creating single-item
+equivalence "classes", though of course these are still subject to merging
+if other equivalence clauses are later found to bear on the same
+expressions.
+
+Another way that we may form a single-item EquivalenceClass is in creation
+of a PathKey to represent a desired sort order (see below).  This is a bit
+different from the above cases because such an EquivalenceClass might
+contain an aggregate function or volatile expression.  (A clause containing
+a volatile function will never be considered mergejoinable, even if its top
+operator is mergejoinable, so there is no way for a volatile expression to
+get into EquivalenceClasses otherwise.  Aggregates are disallowed in WHERE
+altogether, so will never be found in a mergejoinable clause.)  This is just
+a convenience to maintain a uniform PathKey representation: such an
+EquivalenceClass will never be merged with any other.
+
+An EquivalenceClass also contains a list of btree opfamily OIDs, which
+determines what the equalities it represents actually "mean".  All the
+equivalence clauses that contribute to an EquivalenceClass must have
+equality operators that belong to the same set of opfamilies.  (Note: most
+of the time, a particular equality operator belongs to only one family, but
+it's possible that it belongs to more than one.  We keep track of all the
+families to ensure that we can make use of an index belonging to any one of
+the families for mergejoin purposes.)
+
+
 PathKeys
 --------
 
 The PathKeys data structure represents what is known about the sort order
-of a particular Path.
+of the tuples generated by a particular Path.  A path's pathkeys field is a
+list of PathKey nodes, where the n'th item represents the n'th sort key of
+the result.  Each PathKey contains these fields:
 
-Path.pathkeys is a List of Lists of PathKeyItem nodes that represent
-the sort order of the result generated by the Path.  The n'th sublist
-represents the n'th sort key of the result.
+	* a reference to an EquivalenceClass
+	* a btree opfamily OID (must match one of those in the EC)
+	* a sort direction (ascending or descending)
+	* a nulls-first-or-last flag
+
+The EquivalenceClass represents the value being sorted on.  Since the
+various members of an EquivalenceClass are known equal according to the
+opfamily, we can consider a path sorted by any one of them to be sorted by
+any other too; this is what justifies referencing the whole
+EquivalenceClass rather than just one member of it.
 
 In single/base relation RelOptInfo's, the Paths represent various ways
 of scanning the relation and the resulting ordering of the tuples.
 Sequential scan Paths have NIL pathkeys, indicating no known ordering.
 Index scans have Path.pathkeys that represent the chosen index's ordering,
-if any.  A single-key index would create a pathkey with a single sublist,
-e.g. ( (tab1.indexkey1/sortop1) ).  A multi-key index generates a sublist
-per key, e.g. ( (tab1.indexkey1/sortop1) (tab1.indexkey2/sortop2) ) which
-shows major sort by indexkey1 (ordering by sortop1) and minor sort by
-indexkey2 with sortop2.
+if any.  A single-key index would create a single-PathKey list, while a
+multi-column index generates a list with one element per index column.
+(Actually, since an index can be scanned either forward or backward, there
+are two possible sort orders and two possible PathKey lists it can
+generate.)
 
-Note that a multi-pass indexscan (OR clause scan) has NIL pathkeys since
-we can say nothing about the overall order of its result.  Also, an
-indexscan on an unordered type of index generates NIL pathkeys.  However,
-we can always create a pathkey by doing an explicit sort.  The pathkeys
-for a Sort plan's output just represent the sort key fields and the
-ordering operators used.
+Note that a bitmap scan or multi-pass indexscan (OR clause scan) has NIL
+pathkeys since we can say nothing about the overall order of its result.
+Also, an indexscan on an unordered type of index generates NIL pathkeys.
+However, we can always create a pathkey by doing an explicit sort.  The
+pathkeys for a Sort plan's output just represent the sort key fields and
+the ordering operators used.
 
 Things get more interesting when we consider joins.  Suppose we do a
 mergejoin between A and B using the mergeclause A.X = B.Y.  The output
-of the mergejoin is sorted by X --- but it is also sorted by Y.  We
-represent this fact by listing both keys in a single pathkey sublist:
-( (A.X/xsortop B.Y/ysortop) ).  This pathkey asserts that the major
-sort order of the Path can be taken to be *either* A.X or B.Y.
-They are equal, so they are both primary sort keys.  By doing this,
-we allow future joins to use either var as a pre-sorted key, so upper
-Mergejoins may be able to avoid having to re-sort the Path.  This is
-why pathkeys is a List of Lists.
+of the mergejoin is sorted by X --- but it is also sorted by Y.  Again,
+this can be represented by a PathKey referencing an EquivalenceClass
+containing both X and Y.
 
-We keep a sortop associated with each PathKeyItem because cross-data-type
-mergejoins are possible; for example int4 = int8 is mergejoinable.
-In this case we need to remember that the left var is ordered by int4lt
-while the right var is ordered by int8lt.  So the different members of
-each sublist could have different sortops.
-
-Note that while the order of the top list is meaningful (primary vs.
-secondary sort key), the order of each sublist is arbitrary.  Each sublist
-should be regarded as a set of equivalent keys, with no significance
-to the list order.
-
-With a little further thought, it becomes apparent that pathkeys for
-joins need not only come from mergejoins.  For example, if we do a
-nestloop join between outer relation A and inner relation B, then any
-pathkeys relevant to A are still valid for the join result: we have
-not altered the order of the tuples from A.  Even more interesting,
-if there was a mergeclause (more formally, an "equijoin clause") A.X=B.Y,
-and A.X was a pathkey for the outer relation A, then we can assert that
-B.Y is a pathkey for the join result; X was ordered before and still is,
-and the joined values of Y are equal to the joined values of X, so Y
+With a little further thought, it becomes apparent that nestloop joins
+can also produce sorted output.  For example, if we do a nestloop join
+between outer relation A and inner relation B, then any pathkeys relevant
+to A are still valid for the join result: we have not altered the order of
+the tuples from A.  Even more interesting, if there was an equivalence clause
+A.X=B.Y, and A.X was a pathkey for the outer relation A, then we can assert
+that B.Y is a pathkey for the join result; X was ordered before and still
+is, and the joined values of Y are equal to the joined values of X, so Y
 must now be ordered too.  This is true even though we used neither an
-explicit sort nor a mergejoin on Y.
+explicit sort nor a mergejoin on Y.  (Note: hash joins cannot be counted
+on to preserve the order of their outer relation, because the executor
+might decide to "batch" the join, so we always set pathkeys to NIL for
+a hashjoin path.)  Exception: a RIGHT or FULL join doesn't preserve the
+ordering of its outer relation, because it might insert nulls at random
+points in the ordering.
 
-More generally, whenever we have an equijoin clause A.X = B.Y and a
-pathkey A.X, we can add B.Y to that pathkey if B is part of the joined
-relation the pathkey is for, *no matter how we formed the join*.  It works
-as long as the clause has been applied at some point while forming the
-join relation.  (In the current implementation, we always apply qual
-clauses as soon as possible, ie, as far down in the plan tree as possible.
-So we can treat the pathkeys as equivalent everywhere.  The exception is
-when the relations A and B are joined inside the nullable side of an
-OUTER JOIN and the equijoin clause comes from above the OUTER JOIN.  In this
-case we cannot apply the qual as soon as A and B are joined, so we do not
-consider the pathkeys to be equivalent.  This could be improved if we wanted
-to go to the trouble of making pathkey equivalence be context-dependent,
-but that seems much more complex than it's worth.)
+In general, we can justify using EquivalenceClasses as the basis for
+pathkeys because, whenever we scan a relation containing multiple
+EquivalenceClass members or join two relations each containing
+EquivalenceClass members, we apply restriction or join clauses derived from
+the EquivalenceClass.  This guarantees that any two values listed in the
+EquivalenceClass are in fact equal in all tuples emitted by the scan or
+join, and therefore that if the tuples are sorted by one of the values,
+they can be considered sorted by any other as well.  It does not matter
+whether the test clause is used as a mergeclause, or merely enforced
+after-the-fact as a qpqual filter.
 
-In short, then: when producing the pathkeys for a merge or nestloop join,
-we can keep all of the keys of the outer path, since the ordering of the
-outer path will be preserved in the result.  Furthermore, we can add to
-each pathkey sublist any inner vars that are equijoined to any of the
-outer vars in the sublist; this works regardless of whether we are
-implementing the join using that equijoin clause as a mergeclause,
-or merely enforcing the clause after-the-fact as a qpqual filter.
-
-Although Hashjoins also work only with equijoin operators, it is *not*
-safe to consider the output of a Hashjoin to be sorted in any particular
-order --- not even the outer path's order.  This is true because the
-executor might have to split the join into multiple batches.  Therefore
-a Hashjoin is always given NIL pathkeys.  (Also, we need to use only
-mergejoinable operators when deducing which inner vars are now sorted,
-because a mergejoin operator tells us which left- and right-datatype
-sortops can be considered equivalent, whereas a hashjoin operator
-doesn't imply anything about sort order.)
+Note that there is no particular difficulty in labeling a path's sort
+order with a PathKey referencing an EquivalenceClass that contains
+variables not yet joined into the path's output.  We can simply ignore
+such entries as not being relevant (yet).  This makes it possible to
+use the same EquivalenceClasses throughout the join planning process.
+In fact, by being careful not to generate multiple identical PathKey
+objects, we can reduce comparison of EquivalenceClasses and PathKeys
+to simple pointer comparison, which is a huge savings because add_path
+has to make a large number of PathKey comparisons in deciding whether
+competing Paths are equivalently sorted.
 
 Pathkeys are also useful to represent an ordering that we wish to achieve,
 since they are easily compared to the pathkeys of a potential candidate
 path.  So, SortClause lists are turned into pathkeys lists for use inside
 the optimizer.
 
-OK, now for how it *really* works:
-
-We did implement pathkeys just as described above, and found that the
-planner spent a huge amount of time comparing pathkeys, because the
-representation of pathkeys as unordered lists made it expensive to decide
-whether two were equal or not.  So, we've modified the representation
-as described next.
-
-If we scan the WHERE clause for equijoin clauses (mergejoinable clauses)
-during planner startup, we can construct lists of equivalent pathkey items
-for the query.  There could be more than two items per equivalence set;
-for example, WHERE A.X = B.Y AND B.Y = C.Z AND D.R = E.S creates the
-equivalence sets { A.X B.Y C.Z } and { D.R E.S } (plus associated sortops).
-Any pathkey item that belongs to an equivalence set implies that all the
-other items in its set apply to the relation too, or at least all the ones
-that are for fields present in the relation.  (Some of the items in the
-set might be for as-yet-unjoined relations.)  Furthermore, any multi-item
-pathkey sublist that appears at any stage of planning the query *must* be
-a subset of one or another of these equivalence sets; there's no way we'd
-have put two items in the same pathkey sublist unless they were equijoined
-in WHERE.
-
-Now suppose that we allow a pathkey sublist to contain pathkey items for
-vars that are not yet part of the pathkey's relation.  This introduces
-no logical difficulty, because such items can easily be seen to be
-irrelevant; we just mandate that they be ignored.  But having allowed
-this, we can declare (by fiat) that any multiple-item pathkey sublist
-must be "equal()" to the appropriate equivalence set.  In effect,
-whenever we make a pathkey sublist that mentions any var appearing in an
-equivalence set, we instantly add all the other vars equivalenced to it,
-whether they appear yet in the pathkey's relation or not.  And we also
-mandate that the pathkey sublist appear in the same order as the
-equivalence set it comes from.
-
-In fact, we can go even further, and say that the canonical representation
-of a pathkey sublist is a pointer directly to the relevant equivalence set,
-which is kept in a list of pathkey equivalence sets for the query.  Then
-pathkey sublist comparison reduces to pointer-equality checking!  To do this
-we also have to add single-element pathkey sublists to the query's list of
-equivalence sets, but that's a small price to pay.
-
-By the way, it's OK and even useful for us to build equivalence sets
-that mention multiple vars from the same relation.  For example, if
-we have WHERE A.X = A.Y and we are scanning A using an index on X,
-we can legitimately conclude that the path is sorted by Y as well;
-and this could be handy if Y is the variable used in other join clauses
-or ORDER BY.  So, any WHERE clause with a mergejoinable operator can
-contribute to an equivalence set, even if it's not a join clause.
-
-As sketched so far, equijoin operators allow us to conclude that
-A.X = B.Y and B.Y = C.Z together imply A.X = C.Z, even when different
-datatypes are involved.  What is not immediately obvious is that to use
-the "canonical pathkey" representation, we *must* make this deduction.
-An example (from a real bug in Postgres 7.0) is a mergejoin for a query
-like
-	SELECT * FROM t1, t2 WHERE t1.f2 = t2.f3 AND t1.f1 = t2.f3;
-The canonical-pathkey mechanism is able to deduce that t1.f1 = t1.f2
-(ie, both appear in the same canonical pathkey set).  If we sort t1
-and then apply a mergejoin, we *must* filter the t1 tuples using the
-implied qualification f1 = f2, because otherwise the output of the sort
-will be ordered by f1 or f2 (whichever we sort on) but not both.  The
-merge will then fail since (depending on which qual clause it applies
-first) it's expecting either ORDER BY f1,f2 or ORDER BY f2,f1, but the
-actual output of the sort has neither of these orderings.  The best fix
-for this is to generate all the implied equality constraints for each
-equijoin set and add these clauses to the query's qualification list.
-In other words, we *explicitly* deduce f1 = f2 and add this to the WHERE
-clause.  The constraint will be applied as a qpqual to the output of the
-scan on t1, resulting in sort output that is indeed ordered by both vars.
-This approach provides more information to the selectivity estimation
-code than it would otherwise have, and reduces the number of tuples
-processed in join stages, so it's a win to make these deductions even
-if we weren't forced to.
-
-When we generate implied equality constraints, we may find ourselves
-adding redundant clauses to specific relations.  For example, consider
-	SELECT * FROM t1, t2, t3 WHERE t1.a = t2.b AND t2.b = t3.c;
-We will generate the implied clause t1.a = t3.c and add it to the tree.
-This is good since it allows us to consider joining t1 and t3 directly,
-which we otherwise wouldn't do.  But when we reach the stage of joining
-all three relations, we will have redundant join clauses --- eg, if we
-join t1 and t2 first, then the path that joins (t1 t2) to t3 will have
-both t2.b = t3.c and t1.a = t3.c as restriction clauses.  This is bad;
-not only is evaluation of the extra clause useless work at runtime,
-but the selectivity estimator routines will underestimate the number
-of tuples produced since they won't know that the two clauses are
-perfectly redundant.  We fix this by detecting and removing redundant
-clauses as the restriction clause list is built for each join.  (We
-can't do it sooner, since which clauses are redundant will vary depending
-on the join order.)
-
-Yet another implication of all this is that mergejoinable operators
-must form closed equivalence sets.  For example, if "int2 = int4"
-and "int4 = int8" are both marked mergejoinable, then there had better
-be a mergejoinable "int2 = int8" operator as well.  Otherwise, when
-we're given WHERE int2var = int4var AND int4var = int8var, we'll fail
-while trying to create a representation of the implied clause
-int2var = int8var.
+Because we have to generate pathkeys lists from the sort clauses before
+we've finished EquivalenceClass merging, we cannot use the pointer-equality
+method of comparing PathKeys in the earliest stages of the planning
+process.  Instead, we generate "non canonical" PathKeys that reference
+single-element EquivalenceClasses that might get merged later.  After we
+complete EquivalenceClass merging, we replace these with "canonical"
+PathKeys that reference only fully-merged classes, and after that we make
+sure we don't generate more than one copy of each "canonical" PathKey.
+Then it is safe to use pointer comparison on canonical PathKeys.
 
 An additional refinement we can make is to insist that canonical pathkey
-lists (sort orderings) do not mention the same pathkey set more than once.
-For example, a pathkey list ((A) (B) (A)) is redundant --- the second
-occurrence of (A) does not change the ordering, since the data must already
-be sorted by A.  Although a user probably wouldn't write ORDER BY A,B,A
-directly, such redundancies are more probable once equijoin equivalences
-have been considered.  Also, the system is likely to generate redundant
-pathkey lists when computing the sort ordering needed for a mergejoin.  By
-eliminating the redundancy, we save time and improve planning, since the
-planner will more easily recognize equivalent orderings as being equivalent.
+lists (sort orderings) do not mention the same EquivalenceClass more than
+once.  For example, in all these cases the second sort column is redundant,
+because it cannot distinguish values that are the same according to the
+first sort column:
+	SELECT ... ORDER BY x, x
+	SELECT ... ORDER BY x, x DESC
+	SELECT ... WHERE x = y ORDER BY x, y
+Although a user probably wouldn't write "ORDER BY x,x" directly, such
+redundancies are more probable once equivalence classes have been
+considered.  Also, the system may generate redundant pathkey lists when
+computing the sort ordering needed for a mergejoin.  By eliminating the
+redundancy, we save time and improve planning, since the planner will more
+easily recognize equivalent orderings as being equivalent.
+
+Another interesting property is that if the underlying EquivalenceClass
+contains a constant and is not below an outer join, then the pathkey is
+completely redundant and need not be sorted by at all!  Every row must
+contain the same constant value, so there's no need to sort.  (If the EC is
+below an outer join, we still have to sort, since some of the rows might
+have gone to null and others not.  In this case we must be careful to pick
+a non-const member to sort by.  The assumption that all the non-const
+members go to null at the same plan level is critical here, else they might
+not produce the same sort order.)  This might seem pointless because users
+are unlikely to write "... WHERE x = 42 ORDER BY x", but it allows us to
+recognize when particular index columns are irrelevant to the sort order:
+if we have "... WHERE x = 42 ORDER BY y", scanning an index on (x,y)
+produces correctly ordered data without a sort step.  We used to have very
+ugly ad-hoc code to recognize that in limited contexts, but discarding
+constant ECs from pathkeys makes it happen cleanly and automatically.
+
+You might object that a below-outer-join EquivalenceClass doesn't always
+represent the same values at every level of the join tree, and so using
+it to uniquely identify a sort order is dubious.  This is true, but we
+can avoid dealing with the fact explicitly because we always consider that
+an outer join destroys any ordering of its nullable inputs.  Thus, even
+if a path was sorted by {a.x} below an outer join, we'll re-sort if that
+sort ordering was important; and so using the same PathKey for both sort
+orderings doesn't create any real problem.
+
+
 
 Though Bob Devine <bob.devine@worldnet.att.net> was not involved in the 
 coding of our optimizer, he is available to field questions about

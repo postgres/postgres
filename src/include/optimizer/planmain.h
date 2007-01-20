@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.97 2007/01/10 18:06:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.98 2007/01/20 20:45:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,8 @@ extern Plan *create_plan(PlannerInfo *root, Path *best_path);
 extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
 				  Index scanrelid, Plan *subplan);
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
+extern Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
+						List *pathkeys);
 extern Sort *make_sort_from_sortclauses(PlannerInfo *root, List *sortcls,
 						   Plan *lefttree);
 extern Sort *make_sort_from_groupcols(PlannerInfo *root, List *groupcls,
@@ -69,12 +71,22 @@ extern int	join_collapse_limit;
 
 extern void add_base_rels_to_query(PlannerInfo *root, Node *jtnode);
 extern void build_base_rel_tlists(PlannerInfo *root, List *final_tlist);
+extern void add_vars_to_targetlist(PlannerInfo *root, List *vars,
+								   Relids where_needed);
 extern List *deconstruct_jointree(PlannerInfo *root);
+extern void distribute_restrictinfo_to_rels(PlannerInfo *root,
+											RestrictInfo *restrictinfo);
 extern void process_implied_equality(PlannerInfo *root,
-						 Node *item1, Node *item2,
-						 Oid sortop1, Oid sortop2,
-						 Relids item1_relids, Relids item2_relids,
-						 bool delete_it);
+									 Oid opno,
+									 Expr *item1,
+									 Expr *item2,
+									 Relids qualscope,
+									 bool below_outer_join,
+									 bool both_const);
+extern RestrictInfo *build_implied_join_equality(Oid opno,
+							Expr *item1,
+							Expr *item2,
+							Relids qualscope);
 
 /*
  * prototypes for plan/setrefs.c

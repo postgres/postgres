@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.174 2007/01/10 18:06:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.175 2007/01/20 20:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1258,8 +1258,6 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	Path	   *outer_path = path->jpath.outerjoinpath;
 	Path	   *inner_path = path->jpath.innerjoinpath;
 	List	   *mergeclauses = path->path_mergeclauses;
-	Oid		   *mergeFamilies = path->path_mergeFamilies;
-	int		   *mergeStrategies = path->path_mergeStrategies;
 	List	   *outersortkeys = path->outersortkeys;
 	List	   *innersortkeys = path->innersortkeys;
 	Cost		startup_cost = 0;
@@ -1268,7 +1266,6 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	Selectivity merge_selec;
 	QualCost	merge_qual_cost;
 	QualCost	qp_qual_cost;
-	RestrictInfo *firstclause;
 	double		outer_path_rows = PATH_ROWS(outer_path);
 	double		inner_path_rows = PATH_ROWS(inner_path);
 	double		outer_rows,
@@ -1347,32 +1344,47 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	 * inputs that will actually need to be scanned. We use only the first
 	 * (most significant) merge clause for this purpose.
 	 *
-	 * Since this calculation is somewhat expensive, and will be the same for
-	 * all mergejoin paths associated with the merge clause, we cache the
-	 * results in the RestrictInfo node.  XXX that won't work anymore once
-	 * we support multiple possible orderings!
+	 * XXX mergejoinscansel is a bit expensive, can we cache its results?
 	 */
 	if (mergeclauses && path->jpath.jointype != JOIN_FULL)
 	{
-		firstclause = (RestrictInfo *) linitial(mergeclauses);
-		if (firstclause->left_mergescansel < 0) /* not computed yet? */
-			mergejoinscansel(root, (Node *) firstclause->clause,
-							 mergeFamilies[0],
-							 mergeStrategies[0],
-							 &firstclause->left_mergescansel,
-							 &firstclause->right_mergescansel);
+		RestrictInfo *firstclause = (RestrictInfo *) linitial(mergeclauses);
+		List	   *opathkeys;
+		List	   *ipathkeys;
+		PathKey	   *opathkey;
+		PathKey	   *ipathkey;
+		Selectivity leftscansel,
+					rightscansel;
 
-		if (bms_is_subset(firstclause->left_relids, outer_path->parent->relids))
+		/* Get the input pathkeys to determine the sort-order details */
+		opathkeys = outersortkeys ? outersortkeys : outer_path->pathkeys;
+		ipathkeys = innersortkeys ? innersortkeys : inner_path->pathkeys;
+		Assert(opathkeys);
+		Assert(ipathkeys);
+		opathkey = (PathKey *) linitial(opathkeys);
+		ipathkey = (PathKey *) linitial(ipathkeys);
+		/* debugging check */
+		if (opathkey->pk_opfamily != ipathkey->pk_opfamily ||
+			opathkey->pk_strategy != ipathkey->pk_strategy ||
+			opathkey->pk_nulls_first != ipathkey->pk_nulls_first)
+			elog(ERROR, "left and right pathkeys do not match in mergejoin");
+
+		mergejoinscansel(root, (Node *) firstclause->clause,
+						 opathkey->pk_opfamily, opathkey->pk_strategy,
+						 &leftscansel, &rightscansel);
+
+		if (bms_is_subset(firstclause->left_relids,
+						  outer_path->parent->relids))
 		{
 			/* left side of clause is outer */
-			outerscansel = firstclause->left_mergescansel;
-			innerscansel = firstclause->right_mergescansel;
+			outerscansel = leftscansel;
+			innerscansel = rightscansel;
 		}
 		else
 		{
 			/* left side of clause is inner */
-			outerscansel = firstclause->right_mergescansel;
-			innerscansel = firstclause->left_mergescansel;
+			outerscansel = rightscansel;
+			innerscansel = leftscansel;
 		}
 		if (path->jpath.jointype == JOIN_LEFT)
 			outerscansel = 1.0;

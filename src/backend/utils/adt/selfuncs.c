@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.219 2007/01/09 02:14:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.220 2007/01/20 20:45:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2345,7 +2345,7 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
  *		expressional index for which we have statistics, then we treat the
  *		whole expression as though it were just a Var.
  *	2.	If the list contains Vars of different relations that are known equal
- *		due to equijoin clauses, then drop all but one of the Vars from each
+ *		due to equivalence classes, then drop all but one of the Vars from each
  *		known-equal set, keeping the one with smallest estimated # of values
  *		(since the extra values of the others can't appear in joined rows).
  *		Note the reason we only consider Vars of different relations is that
@@ -2365,10 +2365,9 @@ add_unique_group_var(PlannerInfo *root, List *varinfos,
  *	4.	If there are Vars from multiple rels, we repeat step 3 for each such
  *		rel, and multiply the results together.
  * Note that rels not containing grouped Vars are ignored completely, as are
- * join clauses other than the equijoin clauses used in step 2.  Such rels
- * cannot increase the number of groups, and we assume such clauses do not
- * reduce the number either (somewhat bogus, but we don't have the info to
- * do better).
+ * join clauses.  Such rels cannot increase the number of groups, and we
+ * assume such clauses do not reduce the number either (somewhat bogus,
+ * but we don't have the info to do better).
  */
 double
 estimate_num_groups(PlannerInfo *root, List *groupExprs, double input_rows)

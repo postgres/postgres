@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.135 2007/01/05 22:19:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.136 2007/01/20 20:45:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1195,10 +1195,8 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 		 */
 		newinfo->eval_cost.startup = -1;
 		newinfo->this_selec = -1;
-		newinfo->left_pathkey = NIL;
-		newinfo->right_pathkey = NIL;
-		newinfo->left_mergescansel = -1;
-		newinfo->right_mergescansel = -1;
+		newinfo->left_ec = NULL;
+		newinfo->right_ec = NULL;
 		newinfo->left_bucketsize = -1;
 		newinfo->right_bucketsize = -1;
 

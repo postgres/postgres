@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.293 2007/01/10 18:06:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.294 2007/01/20 20:45:38 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1196,29 +1196,11 @@ _outNestPath(StringInfo str, NestPath *node)
 static void
 _outMergePath(StringInfo str, MergePath *node)
 {
-	int			numCols;
-	int			i;
-
 	WRITE_NODE_TYPE("MERGEPATH");
 
 	_outJoinPathInfo(str, (JoinPath *) node);
 
 	WRITE_NODE_FIELD(path_mergeclauses);
-
-	numCols = list_length(node->path_mergeclauses);
-
-	appendStringInfo(str, " :path_mergeFamilies");
-	for (i = 0; i < numCols; i++)
-		appendStringInfo(str, " %u", node->path_mergeFamilies[i]);
-
-	appendStringInfo(str, " :path_mergeStrategies");
-	for (i = 0; i < numCols; i++)
-		appendStringInfo(str, " %d", node->path_mergeStrategies[i]);
-
-	appendStringInfo(str, " :path_mergeNullsFirst");
-	for (i = 0; i < numCols; i++)
-		appendStringInfo(str, " %d", (int) node->path_mergeNullsFirst[i]);
-
 	WRITE_NODE_FIELD(outersortkeys);
 	WRITE_NODE_FIELD(innersortkeys);
 }
@@ -1241,7 +1223,8 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	/* NB: this isn't a complete set of fields */
 	WRITE_NODE_FIELD(parse);
 	WRITE_NODE_FIELD(join_rel_list);
-	WRITE_NODE_FIELD(equi_key_list);
+	WRITE_NODE_FIELD(eq_classes);
+	WRITE_NODE_FIELD(canon_pathkeys);
 	WRITE_NODE_FIELD(left_join_clauses);
 	WRITE_NODE_FIELD(right_join_clauses);
 	WRITE_NODE_FIELD(full_join_clauses);
@@ -1284,6 +1267,7 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	WRITE_NODE_FIELD(subplan);
 	WRITE_NODE_FIELD(baserestrictinfo);
 	WRITE_NODE_FIELD(joininfo);
+	WRITE_BOOL_FIELD(has_eclass_joins);
 	WRITE_BITMAPSET_FIELD(index_outer_relids);
 	WRITE_NODE_FIELD(index_inner_paths);
 }
@@ -1306,13 +1290,48 @@ _outIndexOptInfo(StringInfo str, IndexOptInfo *node)
 }
 
 static void
-_outPathKeyItem(StringInfo str, PathKeyItem *node)
+_outEquivalenceClass(StringInfo str, EquivalenceClass *node)
 {
-	WRITE_NODE_TYPE("PATHKEYITEM");
+	/*
+	 * To simplify reading, we just chase up to the topmost merged EC and
+	 * print that, without bothering to show the merge-ees separately.
+	 */
+	while (node->ec_merged)
+		node = node->ec_merged;
 
-	WRITE_NODE_FIELD(key);
-	WRITE_OID_FIELD(sortop);
-	WRITE_BOOL_FIELD(nulls_first);
+	WRITE_NODE_TYPE("EQUIVALENCECLASS");
+
+	WRITE_NODE_FIELD(ec_opfamilies);
+	WRITE_NODE_FIELD(ec_members);
+	WRITE_NODE_FIELD(ec_sources);
+	WRITE_BITMAPSET_FIELD(ec_relids);
+	WRITE_BOOL_FIELD(ec_has_const);
+	WRITE_BOOL_FIELD(ec_has_volatile);
+	WRITE_BOOL_FIELD(ec_below_outer_join);
+	WRITE_BOOL_FIELD(ec_broken);
+}
+
+static void
+_outEquivalenceMember(StringInfo str, EquivalenceMember *node)
+{
+	WRITE_NODE_TYPE("EQUIVALENCEMEMBER");
+
+	WRITE_NODE_FIELD(em_expr);
+	WRITE_BITMAPSET_FIELD(em_relids);
+	WRITE_BOOL_FIELD(em_is_const);
+	WRITE_BOOL_FIELD(em_is_child);
+	WRITE_OID_FIELD(em_datatype);
+}
+
+static void
+_outPathKey(StringInfo str, PathKey *node)
+{
+	WRITE_NODE_TYPE("PATHKEY");
+
+	WRITE_NODE_FIELD(pk_eclass);
+	WRITE_OID_FIELD(pk_opfamily);
+	WRITE_INT_FIELD(pk_strategy);
+	WRITE_BOOL_FIELD(pk_nulls_first);
 }
 
 static void
@@ -1331,12 +1350,11 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	WRITE_BITMAPSET_FIELD(left_relids);
 	WRITE_BITMAPSET_FIELD(right_relids);
 	WRITE_NODE_FIELD(orclause);
-	WRITE_OID_FIELD(mergejoinoperator);
-	WRITE_OID_FIELD(left_sortop);
-	WRITE_OID_FIELD(right_sortop);
-	WRITE_OID_FIELD(mergeopfamily);
-	WRITE_NODE_FIELD(left_pathkey);
-	WRITE_NODE_FIELD(right_pathkey);
+	WRITE_NODE_FIELD(parent_ec);
+	WRITE_NODE_FIELD(mergeopfamilies);
+	WRITE_NODE_FIELD(left_ec);
+	WRITE_NODE_FIELD(right_ec);
+	WRITE_BOOL_FIELD(outer_is_left);
 	WRITE_OID_FIELD(hashjoinoperator);
 }
 
@@ -2163,8 +2181,14 @@ _outNode(StringInfo str, void *obj)
 			case T_IndexOptInfo:
 				_outIndexOptInfo(str, obj);
 				break;
-			case T_PathKeyItem:
-				_outPathKeyItem(str, obj);
+			case T_EquivalenceClass:
+				_outEquivalenceClass(str, obj);
+				break;
+			case T_EquivalenceMember:
+				_outEquivalenceMember(str, obj);
+				break;
+			case T_PathKey:
+				_outPathKey(str, obj);
 				break;
 			case T_RestrictInfo:
 				_outRestrictInfo(str, obj);

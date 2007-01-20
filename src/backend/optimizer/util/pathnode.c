@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.136 2007/01/10 18:06:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.137 2007/01/20 20:45:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,6 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parsetree.h"
-#include "utils/memutils.h"
 #include "utils/selfuncs.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
@@ -747,11 +746,11 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 		return (UniquePath *) rel->cheapest_unique_path;
 
 	/*
-	 * We must ensure path struct is allocated in same context as parent rel;
+	 * We must ensure path struct is allocated in main planning context;
 	 * otherwise GEQO memory management causes trouble.  (Compare
 	 * best_inner_indexscan().)
 	 */
-	oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(rel));
+	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
 
 	pathnode = makeNode(UniquePath);
 
@@ -1198,11 +1197,6 @@ create_nestloop_path(PlannerInfo *root,
  * 'pathkeys' are the path keys of the new join path
  * 'mergeclauses' are the RestrictInfo nodes to use as merge clauses
  *		(this should be a subset of the restrict_clauses list)
- * 'mergefamilies' are the btree opfamily OIDs identifying the merge
- *		ordering for each merge clause
- * 'mergestrategies' are the btree operator strategies identifying the merge
- *		ordering for each merge clause
- * 'mergenullsfirst' are the nulls first/last flags for each merge clause
  * 'outersortkeys' are the sort varkeys for the outer relation
  * 'innersortkeys' are the sort varkeys for the inner relation
  */
@@ -1215,9 +1209,6 @@ create_mergejoin_path(PlannerInfo *root,
 					  List *restrict_clauses,
 					  List *pathkeys,
 					  List *mergeclauses,
-					  Oid *mergefamilies,
-					  int *mergestrategies,
-					  bool *mergenullsfirst,
 					  List *outersortkeys,
 					  List *innersortkeys)
 {
@@ -1258,9 +1249,6 @@ create_mergejoin_path(PlannerInfo *root,
 	pathnode->jpath.joinrestrictinfo = restrict_clauses;
 	pathnode->jpath.path.pathkeys = pathkeys;
 	pathnode->path_mergeclauses = mergeclauses;
-	pathnode->path_mergeFamilies = mergefamilies;
-	pathnode->path_mergeStrategies = mergestrategies;
-	pathnode->path_mergeNullsFirst = mergenullsfirst;
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
 

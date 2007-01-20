@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.156 2007/01/09 02:14:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.157 2007/01/20 20:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,6 +324,16 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		childrel->joininfo = (List *)
 			adjust_appendrel_attrs((Node *) rel->joininfo,
 								   appinfo);
+
+		/*
+		 * We have to make child entries in the EquivalenceClass data
+		 * structures as well.
+		 */
+		if (rel->has_eclass_joins)
+		{
+			add_child_rel_equivalences(root, appinfo, rel, childrel);
+			childrel->has_eclass_joins = true;
+		}
 
 		/*
 		 * Copy the parent's attr_needed data as well, with appropriate

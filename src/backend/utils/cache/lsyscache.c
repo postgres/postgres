@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.143 2007/01/10 18:06:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.144 2007/01/20 20:45:40 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -137,153 +137,6 @@ get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
 	ReleaseSysCache(tp);
 	return result;
 }
-
-/*
- * get_op_mergejoin_info
- *		Given the OIDs of a (putatively) mergejoinable equality operator
- *		and a sortop defining the sort ordering of the lefthand input of
- *		the merge clause, determine whether this sort ordering is actually
- *		usable for merging.  If so, return the required sort ordering op
- *		for the righthand input, as well as the btree opfamily OID containing
- *		these operators and the operator strategy number of the two sortops
- *		(either BTLessStrategyNumber or BTGreaterStrategyNumber).
- *
- * We can mergejoin if we find the two operators in the same opfamily as
- * equality and either less-than or greater-than respectively.  If there
- * are multiple such opfamilies, assume we can use any one.
- */
-#ifdef NOT_YET
-/* eventually should look like this */
-bool
-get_op_mergejoin_info(Oid eq_op, Oid left_sortop,
-					  Oid *right_sortop, Oid *opfamily, int *opstrategy)
-{
-	bool		result = false;
-	Oid			lefttype;
-	Oid			righttype;
-	CatCList   *catlist;
-	int			i;
-
-	/* Make sure output args are initialized even on failure */
-	*right_sortop = InvalidOid;
-	*opfamily = InvalidOid;
-	*opstrategy = 0;
-
-	/* Need the righthand input datatype */
-	op_input_types(eq_op, &lefttype, &righttype);
-
-	/*
-	 * Search through all the pg_amop entries containing the equality operator
-	 */
-	catlist = SearchSysCacheList(AMOPOPID, 1,
-								 ObjectIdGetDatum(eq_op),
-								 0, 0, 0);
-
-	for (i = 0; i < catlist->n_members; i++)
-	{
-		HeapTuple	op_tuple = &catlist->members[i]->tuple;
-		Form_pg_amop op_form = (Form_pg_amop) GETSTRUCT(op_tuple);
-		Oid			opfamily_id;
-		StrategyNumber op_strategy;
-
-		/* must be btree */
-		if (op_form->amopmethod != BTREE_AM_OID)
-			continue;
-		/* must use the operator as equality */
-		if (op_form->amopstrategy != BTEqualStrategyNumber)
-			continue;
-
-		/* See if sort operator is also in this opfamily with OK semantics */
-		opfamily_id = op_form->amopfamily;
-		op_strategy = get_op_opfamily_strategy(left_sortop, opfamily_id);
-		if (op_strategy == BTLessStrategyNumber ||
-			op_strategy == BTGreaterStrategyNumber)
-		{
-			/* Yes, so find the corresponding righthand sortop */
-			*right_sortop = get_opfamily_member(opfamily_id,
-												righttype,
-												righttype,
-												op_strategy);
-			if (OidIsValid(*right_sortop))
-			{
-				/* Found a workable mergejoin semantics */
-				*opfamily = opfamily_id;
-				*opstrategy = op_strategy;
-				result = true;
-				break;
-			}
-		}
-	}
-
-	ReleaseSysCacheList(catlist);
-
-	return result;
-}
-#else
-/* temp implementation until planner gets smarter: left_sortop is output */
-bool
-get_op_mergejoin_info(Oid eq_op, Oid *left_sortop,
-					  Oid *right_sortop, Oid *opfamily)
-{
-	bool		result = false;
-	Oid			lefttype;
-	Oid			righttype;
-	CatCList   *catlist;
-	int			i;
-
-	/* Make sure output args are initialized even on failure */
-	*left_sortop = InvalidOid;
-	*right_sortop = InvalidOid;
-	*opfamily = InvalidOid;
-
-	/* Need the input datatypes */
-	op_input_types(eq_op, &lefttype, &righttype);
-
-	/*
-	 * Search through all the pg_amop entries containing the equality operator
-	 */
-	catlist = SearchSysCacheList(AMOPOPID, 1,
-								 ObjectIdGetDatum(eq_op),
-								 0, 0, 0);
-
-	for (i = 0; i < catlist->n_members; i++)
-	{
-		HeapTuple	op_tuple = &catlist->members[i]->tuple;
-		Form_pg_amop op_form = (Form_pg_amop) GETSTRUCT(op_tuple);
-		Oid			opfamily_id;
-
-		/* must be btree */
-		if (op_form->amopmethod != BTREE_AM_OID)
-			continue;
-		/* must use the operator as equality */
-		if (op_form->amopstrategy != BTEqualStrategyNumber)
-			continue;
-
-		opfamily_id = op_form->amopfamily;
-
-		/* Find the matching sortops */
-		*left_sortop = get_opfamily_member(opfamily_id,
-										   lefttype,
-										   lefttype,
-										   BTLessStrategyNumber);
-		*right_sortop = get_opfamily_member(opfamily_id,
-											righttype,
-											righttype,
-											BTLessStrategyNumber);
-		if (OidIsValid(*left_sortop) && OidIsValid(*right_sortop))
-		{
-			/* Found a workable mergejoin semantics */
-			*opfamily = opfamily_id;
-			result = true;
-			break;
-		}
-	}
-
-	ReleaseSysCacheList(catlist);
-
-	return result;
-}
-#endif
 
 /*
  * get_compare_function_for_ordering_op
@@ -462,6 +315,56 @@ get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type)
 				break;
 			/* failure probably shouldn't happen, but keep looking if so */
 		}
+	}
+
+	ReleaseSysCacheList(catlist);
+
+	return result;
+}
+
+/*
+ * get_mergejoin_opfamilies
+ *		Given a putatively mergejoinable operator, return a list of the OIDs
+ *		of the btree opfamilies in which it represents equality.
+ *
+ * It is possible (though at present unusual) for an operator to be equality
+ * in more than one opfamily, hence the result is a list.  This also lets us
+ * return NIL if the operator is not found in any opfamilies.
+ *
+ * The planner currently uses simple equal() tests to compare the lists
+ * returned by this function, which makes the list order relevant, though
+ * strictly speaking it should not be.  Because of the way syscache list
+ * searches are handled, in normal operation the result will be sorted by OID
+ * so everything works fine.  If running with system index usage disabled,
+ * the result ordering is unspecified and hence the planner might fail to
+ * recognize optimization opportunities ... but that's hardly a scenario in
+ * which performance is good anyway, so there's no point in expending code
+ * or cycles here to guarantee the ordering in that case.
+ */
+List *
+get_mergejoin_opfamilies(Oid opno)
+{
+	List	   *result = NIL;
+	CatCList   *catlist;
+	int			i;
+
+	/*
+	 * Search pg_amop to see if the target operator is registered as the "="
+	 * operator of any btree opfamily.
+	 */
+	catlist = SearchSysCacheList(AMOPOPID, 1,
+								 ObjectIdGetDatum(opno),
+								 0, 0, 0);
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple	tuple = &catlist->members[i]->tuple;
+		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
+
+		/* must be btree equality */
+		if (aform->amopmethod == BTREE_AM_OID &&
+			aform->amopstrategy == BTEqualStrategyNumber)
+			result = lappend_oid(result, aform->amopfamily);
 	}
 
 	ReleaseSysCacheList(catlist);

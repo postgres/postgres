@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.98 2007/01/05 22:19:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.99 2007/01/20 20:45:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,14 +110,14 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	 * for "simple" rels.
 	 *
 	 * NOTE: in_info_list and append_rel_list were set up by subquery_planner,
-	 * do not touch here
+	 * do not touch here; eq_classes may contain data already, too.
 	 */
 	root->simple_rel_array_size = list_length(parse->rtable) + 1;
 	root->simple_rel_array = (RelOptInfo **)
 		palloc0(root->simple_rel_array_size * sizeof(RelOptInfo *));
 	root->join_rel_list = NIL;
 	root->join_rel_hash = NULL;
-	root->equi_key_list = NIL;
+	root->canon_pathkeys = NIL;
 	root->left_join_clauses = NIL;
 	root->right_join_clauses = NIL;
 	root->full_join_clauses = NIL;
@@ -165,8 +165,8 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	 * Examine the targetlist and qualifications, adding entries to baserel
 	 * targetlists for all referenced Vars.  Restrict and join clauses are
 	 * added to appropriate lists belonging to the mentioned relations.  We
-	 * also build lists of equijoined keys for pathkey construction, and form
-	 * a target joinlist for make_one_rel() to work from.
+	 * also build EquivalenceClasses for provably equivalent expressions,
+	 * and form a target joinlist for make_one_rel() to work from.
 	 *
 	 * Note: all subplan nodes will have "flat" (var-only) tlists. This
 	 * implies that all expression evaluations are done at the root of the
@@ -179,16 +179,23 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	joinlist = deconstruct_jointree(root);
 
 	/*
-	 * Use the completed lists of equijoined keys to deduce any implied but
-	 * unstated equalities (for example, A=B and B=C imply A=C).
+	 * Reconsider any postponed outer-join quals now that we have built up
+	 * equivalence classes.  (This could result in further additions or
+	 * mergings of classes.)
 	 */
-	generate_implied_equalities(root);
+	reconsider_outer_join_clauses(root);
 
 	/*
-	 * We should now have all the pathkey equivalence sets built, so it's now
-	 * possible to convert the requested query_pathkeys to canonical form.
-	 * Also canonicalize the groupClause and sortClause pathkeys for use
-	 * later.
+	 * If we formed any equivalence classes, generate additional restriction
+	 * clauses as appropriate.  (Implied join clauses are formed on-the-fly
+	 * later.)
+	 */
+	generate_base_implied_equalities(root);
+
+	/*
+	 * We have completed merging equivalence sets, so it's now possible to
+	 * convert the requested query_pathkeys to canonical form.  Also
+	 * canonicalize the groupClause and sortClause pathkeys for use later.
 	 */
 	root->query_pathkeys = canonicalize_pathkeys(root, root->query_pathkeys);
 	root->group_pathkeys = canonicalize_pathkeys(root, root->group_pathkeys);

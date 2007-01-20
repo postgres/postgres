@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.361 2007/01/10 18:06:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.362 2007/01/20 20:45:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1284,16 +1284,18 @@ _copyFromExpr(FromExpr *from)
  */
 
 /*
- * _copyPathKeyItem
+ * _copyPathKey
  */
-static PathKeyItem *
-_copyPathKeyItem(PathKeyItem *from)
+static PathKey *
+_copyPathKey(PathKey *from)
 {
-	PathKeyItem *newnode = makeNode(PathKeyItem);
+	PathKey *newnode = makeNode(PathKey);
 
-	COPY_NODE_FIELD(key);
-	COPY_SCALAR_FIELD(sortop);
-	COPY_SCALAR_FIELD(nulls_first);
+	/* EquivalenceClasses are never moved, so just shallow-copy the pointer */
+	COPY_SCALAR_FIELD(pk_eclass);
+	COPY_SCALAR_FIELD(pk_opfamily);
+	COPY_SCALAR_FIELD(pk_strategy);
+	COPY_SCALAR_FIELD(pk_nulls_first);
 
 	return newnode;
 }
@@ -1316,21 +1318,15 @@ _copyRestrictInfo(RestrictInfo *from)
 	COPY_BITMAPSET_FIELD(left_relids);
 	COPY_BITMAPSET_FIELD(right_relids);
 	COPY_NODE_FIELD(orclause);
+	/* EquivalenceClasses are never copied, so shallow-copy the pointers */
+	COPY_SCALAR_FIELD(parent_ec);
 	COPY_SCALAR_FIELD(eval_cost);
 	COPY_SCALAR_FIELD(this_selec);
-	COPY_SCALAR_FIELD(mergejoinoperator);
-	COPY_SCALAR_FIELD(left_sortop);
-	COPY_SCALAR_FIELD(right_sortop);
-	COPY_SCALAR_FIELD(mergeopfamily);
-
-	/*
-	 * Do not copy pathkeys, since they'd not be canonical in a copied query
-	 */
-	newnode->left_pathkey = NIL;
-	newnode->right_pathkey = NIL;
-
-	COPY_SCALAR_FIELD(left_mergescansel);
-	COPY_SCALAR_FIELD(right_mergescansel);
+	COPY_NODE_FIELD(mergeopfamilies);
+	/* EquivalenceClasses are never copied, so shallow-copy the pointers */
+	COPY_SCALAR_FIELD(left_ec);
+	COPY_SCALAR_FIELD(right_ec);
+	COPY_SCALAR_FIELD(outer_is_left);
 	COPY_SCALAR_FIELD(hashjoinoperator);
 	COPY_SCALAR_FIELD(left_bucketsize);
 	COPY_SCALAR_FIELD(right_bucketsize);
@@ -3033,8 +3029,8 @@ copyObject(void *from)
 			/*
 			 * RELATION NODES
 			 */
-		case T_PathKeyItem:
-			retval = _copyPathKeyItem(from);
+		case T_PathKey:
+			retval = _copyPathKey(from);
 			break;
 		case T_RestrictInfo:
 			retval = _copyRestrictInfo(from);

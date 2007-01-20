@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.37 2006/12/23 00:43:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.38 2007/01/20 20:45:38 tgl Exp $ -->
 
  <sect1 id="xoper">
   <title>User-Defined Operators</title>
@@ -145,29 +145,29 @@ SELECT (a + b) AS c FROM test_complex;
      <itemizedlist>
       <listitem>
        <para>
-	One way is to omit the <literal>COMMUTATOR</> clause in the first operator that
-	you define, and then provide one in the second operator's definition.
-	Since <productname>PostgreSQL</productname> knows that commutative
-	operators come in pairs, when it sees the second definition it will
-	automatically go back and fill in the missing <literal>COMMUTATOR</> clause in
-	the first definition.
+        One way is to omit the <literal>COMMUTATOR</> clause in the first operator that
+        you define, and then provide one in the second operator's definition.
+        Since <productname>PostgreSQL</productname> knows that commutative
+        operators come in pairs, when it sees the second definition it will
+        automatically go back and fill in the missing <literal>COMMUTATOR</> clause in
+        the first definition.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	The other, more straightforward way is just to include <literal>COMMUTATOR</> clauses
-	in both definitions.  When <productname>PostgreSQL</productname> processes
-	the first definition and realizes that <literal>COMMUTATOR</> refers to a nonexistent
-	operator, the system will make a dummy entry for that operator in the
-	system catalog.  This dummy entry will have valid data only
-	for the operator name, left and right operand types, and result type,
-	since that's all that <productname>PostgreSQL</productname> can deduce
-	at this point.  The first operator's catalog entry will link to this
-	dummy entry.  Later, when you define the second operator, the system
-	updates the dummy entry with the additional information from the second
-	definition.  If you try to use the dummy operator before it's been filled
-	in, you'll just get an error message.
+        The other, more straightforward way is just to include <literal>COMMUTATOR</> clauses
+        in both definitions.  When <productname>PostgreSQL</productname> processes
+        the first definition and realizes that <literal>COMMUTATOR</> refers to a nonexistent
+        operator, the system will make a dummy entry for that operator in the
+        system catalog.  This dummy entry will have valid data only
+        for the operator name, left and right operand types, and result type,
+        since that's all that <productname>PostgreSQL</productname> can deduce
+        at this point.  The first operator's catalog entry will link to this
+        dummy entry.  Later, when you define the second operator, the system
+        updates the dummy entry with the additional information from the second
+        definition.  If you try to use the dummy operator before it's been filled
+        in, you'll just get an error message.
        </para>
       </listitem>
      </itemizedlist>
@@ -240,7 +240,7 @@ column OP constant
     one of the system's standard estimators for many of your own operators.
     These are the standard restriction estimators:
     <simplelist>
-     <member><function>eqsel</>	for <literal>=</></member>
+     <member><function>eqsel</> for <literal>=</></member>
      <member><function>neqsel</> for <literal>&lt;&gt;</></member>
      <member><function>scalarltsel</> for <literal>&lt;</> or <literal>&lt;=</></member>
      <member><function>scalargtsel</> for <literal>&gt;</> or <literal>&gt;=</></member>
@@ -337,7 +337,7 @@ table1.column1 OP table2.column2
      join will never compare them at all, implicitly assuming that the
      result of the join operator must be false.  So it never makes sense
      to specify <literal>HASHES</literal> for operators that do not represent
-     equality.
+     some form of equality.
     </para>
 
     <para>
@@ -347,7 +347,7 @@ table1.column1 OP table2.column2
      exist yet.  But attempts to use the operator in hash joins will fail
      at run time if no such operator family exists.  The system needs the
      operator family to find the data-type-specific hash function for the
-     operator's input data type.  Of course, you must also supply a suitable
+     operator's input data type.  Of course, you must also create a suitable
      hash function before you can create the operator family.
     </para>
 
@@ -382,8 +382,9 @@ table1.column1 OP table2.column2
      false, never null, for any two nonnull inputs.  If this rule is
      not followed, hash-optimization of <literal>IN</> operations may
      generate wrong results.  (Specifically, <literal>IN</> might return
-     false where the correct answer according to the standard would be null; or it might
-     yield an error complaining that it wasn't prepared for a null result.)
+     false where the correct answer according to the standard would be null;
+     or it might yield an error complaining that it wasn't prepared for a
+     null result.)
     </para>
     </note>
 
@@ -407,19 +408,18 @@ table1.column1 OP table2.column2
      that can only succeed for pairs of values that fall at the
      <quote>same place</>
      in the sort order.  In practice this means that the join operator must
-     behave like equality.  But unlike hash join, where the left and right
-     data types had better be the same (or at least bitwise equivalent),
-     it is possible to merge-join two
+     behave like equality.  But it is possible to merge-join two
      distinct data types so long as they are logically compatible.  For
-     example, the <type>smallint</type>-versus-<type>integer</type> equality operator
-     is merge-joinable.
+     example, the <type>smallint</type>-versus-<type>integer</type>
+     equality operator is merge-joinable.
      We only need sorting operators that will bring both data types into a
      logically compatible sequence.
     </para>
 
     <para>
      To be marked <literal>MERGES</literal>, the join operator must appear
-     in a btree index operator family.  This is not enforced when you create
+     as an equality member of a btree index operator family.
+     This is not enforced when you create
      the operator, since of course the referencing operator family couldn't
      exist yet.  But the operator will not actually be used for merge joins
      unless a matching operator family can be found.  The
@@ -428,30 +428,14 @@ table1.column1 OP table2.column2
     </para>
 
     <para>
-     There are additional restrictions on operators that you mark
-     merge-joinable.  These restrictions are not currently checked by
-     <command>CREATE OPERATOR</command>, but errors may occur when
-     the operator is used if any are not true:
-
-     <itemizedlist>
-      <listitem>
-       <para>
-	A merge-joinable equality operator must have a merge-joinable
-        commutator (itself if the two operand data types are the same, or a related
-        equality operator if they are different).
-       </para>
-      </listitem>
-
-      <listitem>
-       <para>
-        If there is a merge-joinable operator relating any two data types
-	A and B, and another merge-joinable operator relating B to any
-	third data type C, then A and C must also have a merge-joinable
-	operator; in other words, having a merge-joinable operator must
-	be transitive.
-       </para>
-      </listitem>
-     </itemizedlist>
+     A merge-joinable operator must have a commutator (itself if the two
+     operand data types are the same, or a related equality operator
+     if they are different) that appears in the same operator family.
+     If this is not the case, planner errors may occur when the operator
+     is used.  Also, it is a good idea (but not strictly required) for
+     a btree operator family that supports multiple datatypes to provide
+     equality operators for every combination of the datatypes; this
+     allows better optimization.
     </para>
 
     <note>
