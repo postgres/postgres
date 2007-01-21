@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.17 2007/01/12 10:00:13 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.18 2007/01/21 09:23:29 petere Exp $
 
 me=`basename $0`
 
@@ -62,14 +62,7 @@ init_vars(){
 	datadir='@datadir@'
 	host_platform='@host_tuple@'
 	enable_shared='@enable_shared@'
-	GCC=@GCC@
 	VERSION=@VERSION@
-
-	if [ "$GCC" = yes ]; then
-	    compiler=gcc
-	else
-	    compiler=cc
-	fi
 
 	unset mode
 	unset schedule

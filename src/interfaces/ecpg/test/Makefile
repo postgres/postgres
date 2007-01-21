@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.64 2007/01/20 17:16:17 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.65 2007/01/21 09:23:29 petere Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -55,7 +55,6 @@ pg_regress: pg_regress.sh $(top_builddir)/src/Makefile.global
 	    -e 's/@host_tuple@/$(host_tuple)/g' \
 	    -e 's,@GMAKE@,$(MAKE),g' \
 	    -e 's/@enable_shared@/$(enable_shared)/g' \
-	    -e 's/@GCC@/$(GCC)/g' \
 	  $< >$@
 
 # When doing a VPATH build, copy over the .pgc, .stdout and .stderr
