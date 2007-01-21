@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.82 2007/01/20 20:45:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.83 2007/01/21 00:57:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,13 +240,11 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 						   bool nulls_first,
 						   bool canonicalize)
 {
+	Oid			opfamily,
+				opcintype;
+	int16		strategy;
 	Oid			equality_op;
 	List	   *opfamilies;
-	Oid			opfamily,
-				lefttype,
-				righttype;
-	int			strategy;
-	ListCell   *lc;
 	EquivalenceClass *eclass;
 
 	/*
@@ -258,7 +256,17 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 	 * easily be bigger.  So, look up the equality operator that goes with
 	 * the ordering operator (this should be unique) and get its membership.
 	 */
-	equality_op = get_equality_op_for_ordering_op(ordering_op);
+
+	/* Find the operator in pg_amop --- failure shouldn't happen */
+	if (!get_ordering_op_properties(ordering_op,
+									&opfamily, &opcintype, &strategy))
+		elog(ERROR, "operator %u is not a valid ordering operator",
+			 ordering_op);
+	/* Get matching equality operator */
+	equality_op = get_opfamily_member(opfamily,
+									  opcintype,
+									  opcintype,
+									  BTEqualStrategyNumber);
 	if (!OidIsValid(equality_op))		/* shouldn't happen */
 		elog(ERROR, "could not find equality operator for ordering operator %u",
 			 ordering_op);
@@ -267,33 +275,8 @@ make_pathkey_from_sortinfo(PlannerInfo *root,
 		elog(ERROR, "could not find opfamilies for ordering operator %u",
 			 ordering_op);
 
-	/*
-	 * Next we have to determine the strategy number to put into the pathkey.
-	 * In the presence of reverse-sort opclasses there might be two answers.
-	 * We prefer the one associated with the first opfamilies member that
-	 * this ordering_op appears in (this will be consistently defined in
-	 * normal system operation; see comments for get_mergejoin_opfamilies()).
-	 */
-	opfamily = InvalidOid;
-	strategy = 0;
-	foreach(lc, opfamilies)
-	{
-		opfamily = lfirst_oid(lc);
-		strategy = get_op_opfamily_strategy(ordering_op, opfamily);
-		if (strategy)
-			break;
-	}
-	if (!(strategy == BTLessStrategyNumber ||
-		  strategy == BTGreaterStrategyNumber))
-		elog(ERROR, "ordering operator %u is has wrong strategy number %d",
-			 ordering_op, strategy);
-
-	/* Need the declared input type of the operator, too */
-	op_input_types(ordering_op, &lefttype, &righttype);
-	Assert(lefttype == righttype);
-
 	/* Now find or create a matching EquivalenceClass */
-	eclass = get_eclass_for_sort_expr(root, expr, lefttype, opfamilies);
+	eclass = get_eclass_for_sort_expr(root, expr, opcintype, opfamilies);
 
 	/* And finally we can find or create a PathKey node */
 	if (canonicalize)

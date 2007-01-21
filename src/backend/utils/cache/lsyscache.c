@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.144 2007/01/20 20:45:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.145 2007/01/21 00:57:15 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -139,6 +139,77 @@ get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
 }
 
 /*
+ * get_ordering_op_properties
+ *		Given the OID of an ordering operator (a btree "<" or ">" operator),
+ *		determine its opfamily, its declared input datatype, and its
+ *		strategy number (BTLessStrategyNumber or BTGreaterStrategyNumber).
+ *
+ * Returns TRUE if successful, FALSE if no matching pg_amop entry exists.
+ * (This indicates that the operator is not a valid ordering operator.)
+ *
+ * Note: the operator could be registered in multiple families, for example
+ * if someone were to build a "reverse sort" opfamily.  This would result in
+ * uncertainty as to whether "ORDER BY USING op" would default to NULLS FIRST
+ * or NULLS LAST, as well as inefficient planning due to failure to match up
+ * pathkeys that should be the same.  So we want a determinate result here.
+ * Because of the way the syscache search works, we'll use the interpretation
+ * associated with the opfamily with smallest OID, which is probably
+ * determinate enough.  Since there is no longer any particularly good reason
+ * to build reverse-sort opfamilies, it doesn't seem worth expending any
+ * additional effort on ensuring consistency.
+ */
+bool
+get_ordering_op_properties(Oid opno,
+						   Oid *opfamily, Oid *opcintype, int16 *strategy)
+{
+	bool		result = false;
+	CatCList   *catlist;
+	int			i;
+
+	/* ensure outputs are initialized on failure */
+	*opfamily = InvalidOid;
+	*opcintype = InvalidOid;
+	*strategy = 0;
+
+	/*
+	 * Search pg_amop to see if the target operator is registered as the "<"
+	 * or ">" operator of any btree opfamily.
+	 */
+	catlist = SearchSysCacheList(AMOPOPID, 1,
+								 ObjectIdGetDatum(opno),
+								 0, 0, 0);
+
+	for (i = 0; i < catlist->n_members; i++)
+	{
+		HeapTuple	tuple = &catlist->members[i]->tuple;
+		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
+
+		/* must be btree */
+		if (aform->amopmethod != BTREE_AM_OID)
+			continue;
+
+		if (aform->amopstrategy == BTLessStrategyNumber ||
+			aform->amopstrategy == BTGreaterStrategyNumber)
+		{
+			/* Found it ... should have consistent input types */
+			if (aform->amoplefttype == aform->amoprighttype)
+			{
+				/* Found a suitable opfamily, return info */
+				*opfamily = aform->amopfamily;
+				*opcintype = aform->amoplefttype;
+				*strategy = aform->amopstrategy;
+				result = true;
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCacheList(catlist);
+
+	return result;
+}
+
+/*
  * get_compare_function_for_ordering_op
  *		Get the OID of the datatype-specific btree comparison function
  *		associated with an ordering operator (a "<" or ">" operator).
@@ -153,61 +224,30 @@ get_opfamily_member(Oid opfamily, Oid lefttype, Oid righttype,
 bool
 get_compare_function_for_ordering_op(Oid opno, Oid *cmpfunc, bool *reverse)
 {
-	bool		result = false;
-	CatCList   *catlist;
-	int			i;
+	Oid			opfamily;
+	Oid			opcintype;
+	int16		strategy;
+
+	/* Find the operator in pg_amop */
+	if (get_ordering_op_properties(opno,
+								   &opfamily, &opcintype, &strategy))
+	{
+		/* Found a suitable opfamily, get matching support function */
+		*cmpfunc = get_opfamily_proc(opfamily,
+									 opcintype,
+									 opcintype,
+									 BTORDER_PROC);
+		if (!OidIsValid(*cmpfunc))				/* should not happen */
+			elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
+				 BTORDER_PROC, opcintype, opcintype, opfamily);
+		*reverse = (strategy == BTGreaterStrategyNumber);
+		return true;
+	}
 
 	/* ensure outputs are set on failure */
 	*cmpfunc = InvalidOid;
 	*reverse = false;
-
-	/*
-	 * Search pg_amop to see if the target operator is registered as the "<"
-	 * or ">" operator of any btree opfamily.  It's possible that it might be
-	 * registered both ways (if someone were to build a "reverse sort"
-	 * opfamily); assume we can use either interpretation.  (Note: the
-	 * existence of a reverse-sort opfamily would result in uncertainty as
-	 * to whether "ORDER BY USING op" would default to NULLS FIRST or NULLS
-	 * LAST.  Since there is no longer any particularly good reason to build
-	 * reverse-sort opfamilies, we don't bother expending any extra work to
-	 * make this more determinate.  In practice, because of the way the
-	 * syscache search works, we'll use the interpretation associated with
-	 * the opfamily with smallest OID, which is probably determinate enough.)
-	 */
-	catlist = SearchSysCacheList(AMOPOPID, 1,
-								 ObjectIdGetDatum(opno),
-								 0, 0, 0);
-
-	for (i = 0; i < catlist->n_members; i++)
-	{
-		HeapTuple	tuple = &catlist->members[i]->tuple;
-		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
-
-		/* must be btree */
-		if (aform->amopmethod != BTREE_AM_OID)
-			continue;
-
-		if (aform->amopstrategy == BTLessStrategyNumber ||
-			aform->amopstrategy == BTGreaterStrategyNumber)
-		{
-			/* Found a suitable opfamily, get matching support function */
-			*reverse = (aform->amopstrategy == BTGreaterStrategyNumber);
-			*cmpfunc = get_opfamily_proc(aform->amopfamily,
-										 aform->amoplefttype,
-										 aform->amoprighttype,
-										 BTORDER_PROC);
-			if (!OidIsValid(*cmpfunc))				/* should not happen */
-				elog(ERROR, "missing support function %d(%u,%u) in opfamily %u",
-					 BTORDER_PROC, aform->amoplefttype, aform->amoprighttype,
-					 aform->amopfamily);
-			result = true;
-			break;
-		}
-	}
-
-	ReleaseSysCacheList(catlist);
-
-	return result;
+	return false;
 }
 
 /*
@@ -222,44 +262,20 @@ Oid
 get_equality_op_for_ordering_op(Oid opno)
 {
 	Oid			result = InvalidOid;
-	CatCList   *catlist;
-	int			i;
+	Oid			opfamily;
+	Oid			opcintype;
+	int16		strategy;
 
-	/*
-	 * Search pg_amop to see if the target operator is registered as the "<"
-	 * or ">" operator of any btree opfamily.  This is exactly like
-	 * get_compare_function_for_ordering_op except we don't care whether the
-	 * ordering op is "<" or ">" ... the equality operator will be the same
-	 * either way.
-	 */
-	catlist = SearchSysCacheList(AMOPOPID, 1,
-								 ObjectIdGetDatum(opno),
-								 0, 0, 0);
-
-	for (i = 0; i < catlist->n_members; i++)
+	/* Find the operator in pg_amop */
+	if (get_ordering_op_properties(opno,
+								   &opfamily, &opcintype, &strategy))
 	{
-		HeapTuple	tuple = &catlist->members[i]->tuple;
-		Form_pg_amop aform = (Form_pg_amop) GETSTRUCT(tuple);
-
-		/* must be btree */
-		if (aform->amopmethod != BTREE_AM_OID)
-			continue;
-
-		if (aform->amopstrategy == BTLessStrategyNumber ||
-			aform->amopstrategy == BTGreaterStrategyNumber)
-		{
-			/* Found a suitable opfamily, get matching equality operator */
-			result = get_opfamily_member(aform->amopfamily,
-										 aform->amoplefttype,
-										 aform->amoprighttype,
-										 BTEqualStrategyNumber);
-			if (OidIsValid(result))
-				break;
-			/* failure probably shouldn't happen, but keep looking if so */
-		}
+		/* Found a suitable opfamily, get matching equality operator */
+		result = get_opfamily_member(opfamily,
+									 opcintype,
+									 opcintype,
+									 BTEqualStrategyNumber);
 	}
-
-	ReleaseSysCacheList(catlist);
 
 	return result;
 }
