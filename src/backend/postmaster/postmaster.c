@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.508 2007/01/16 13:28:56 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.509 2007/01/22 18:31:51 momjian Exp $
  *
  * NOTES
  *
@@ -2421,6 +2421,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 				(errmsg("%s (PID %d) exited with exit code %d",
 						procname, pid, WEXITSTATUS(exitstatus))));
 	else if (WIFSIGNALED(exitstatus))
+#ifndef WIN32
 		ereport(lev,
 
 		/*------
@@ -2428,6 +2429,15 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		  "server process" */
 				(errmsg("%s (PID %d) was terminated by signal %d",
 						procname, pid, WTERMSIG(exitstatus))));
+#else
+		ereport(lev,
+
+		/*------
+		  translator: %s is a noun phrase describing a child process, such as
+		  "server process" */
+				(errmsg("%s (PID %d) was terminated by exception %X\nSee http://source.winehq.org/source/include/ntstatus.h for a description\nof the hex value.",
+						procname, pid, WTERMSIG(exitstatus))));
+#endif
 	else
 		ereport(lev,
 

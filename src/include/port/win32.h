@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.65 2007/01/11 02:42:31 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.66 2007/01/22 18:31:51 momjian Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -115,16 +115,38 @@ int			semop(int semId, struct sembuf * sops, int flag);
 
 /*
  *	Signal stuff
- *	WIN32 doesn't have wait(), so the return value for children
- *	is simply the return value specified by the child, without
- *	any additional information on whether the child terminated
- *	on its own or via a signal.  These macros are also used
- *	to interpret the return value of system().
+ *
+ *	For WIN32, there is no wait() call so there are no wait() macros
+ *	to interpret the return value of system().  Instead, system()
+ *	return values < 0x100 are used for exit() termination, and higher
+ *	values are used to indicated non-exit() termination, which is
+ *	similar to a unix-style signal exit (think SIGSEGV ==
+ *	STATUS_ACCESS_VIOLATION).  Return values are broken up into groups:
+ *
+ *	http://msdn2.microsoft.com/en-gb/library/aa489609.aspx
+ *
+ *		NT_SUCCESS			0 - 0x3FFFFFFF
+ *		NT_INFORMATION		0x40000000 - 0x7FFFFFFF
+ *		NT_WARNING			0x80000000 - 0xBFFFFFFF
+ *		NT_ERROR			0xC0000000 - 0xFFFFFFFF
+ *
+ *	Effectively, we don't care on the severity of the return value from
+ *	system(), we just need to know if it was because of exit() or generated
+ *	by the system, and it seems values >= 0x100 are system-generated.
+ *	See this URL for a list of WIN32 STATUS_* values:
+ *
+ *		Wine (URL used in our error messages) -
+ *			http://source.winehq.org/source/include/ntstatus.h
+ *		Descriptions - http://www.comp.nus.edu.sg/~wuyongzh/my_doc/ntstatus.txt
+ *		MS SDK - http://www.nologs.com/ntstatus.html
+ *
+ *	Some day we might want to print descriptions for the most common
+ *	exceptions, rather than printing a URL.
  */
-#define WEXITSTATUS(w)	(w)
-#define WIFEXITED(w)	(true)
-#define WIFSIGNALED(w)	(false)
-#define WTERMSIG(w)		(0)
+#define WIFEXITED(w)    (((w) & 0xffffff00) == 0)
+#define WIFSIGNALED(w)  (!WIFEXITED(w))
+#define WEXITSTATUS(w)  (w)
+#define WTERMSIG(w)     (w)
 
 #define sigmask(sig) ( 1 << ((sig)-1) )
 
