@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.60 2007/01/10 01:18:40 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.61 2007/01/22 02:17:30 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -243,17 +243,23 @@ discard_response(CState * state)
 
 /* check to see if the SQL result was good */
 static int
-check(CState * state, PGresult *res, int n, int good)
+check(CState *state, PGresult *res, int n)
 {
 	CState	   *st = &state[n];
 
-	if (res && PQresultStatus(res) != good)
+	switch (PQresultStatus(res))
 	{
-		fprintf(stderr, "Client %d aborted in state %d: %s", n, st->state, PQerrorMessage(st->con));
-		remains--;				/* I've aborted */
-		PQfinish(st->con);
-		st->con = NULL;
-		return (-1);
+		case PGRES_COMMAND_OK:
+		case PGRES_TUPLES_OK:
+			/* OK */
+			break;
+		default:
+			fprintf(stderr, "Client %d aborted in state %d: %s",
+					n, st->state, PQerrorMessage(st->con));
+			remains--;				/* I've aborted */
+			PQfinish(st->con);
+			st->con = NULL;
+			return (-1);
 	}
 	return (0);					/* OK */
 }
@@ -461,15 +467,10 @@ top:
 		if (commands[st->state]->type == SQL_COMMAND)
 		{
 			res = PQgetResult(st->con);
-			if (pg_strncasecmp(commands[st->state]->argv[0], "select", 6) != 0)
+			if (check(state, res, n))
 			{
-				if (check(state, res, n, PGRES_COMMAND_OK))
-					return;
-			}
-			else
-			{
-				if (check(state, res, n, PGRES_TUPLES_OK))
-					return;
+				PQclear(res);
+				return;
 			}
 			PQclear(res);
 			discard_response(st);
