@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.176 2007/01/22 01:35:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.177 2007/01/22 20:00:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +108,9 @@ bool		enable_mergejoin = true;
 bool		enable_hashjoin = true;
 
 
+static MergeScanSelCache *cached_scansel(PlannerInfo *root,
+										 RestrictInfo *rinfo,
+										 PathKey *pathkey);
 static bool cost_qual_eval_walker(Node *node, QualCost *total);
 static Selectivity approx_selectivity(PlannerInfo *root, List *quals,
 				   JoinType jointype);
@@ -1349,9 +1352,9 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 	 * (unless it's an outer join, in which case the outer side has to be
 	 * scanned all the way anyway).  Estimate fraction of the left and right
 	 * inputs that will actually need to be scanned. We use only the first
-	 * (most significant) merge clause for this purpose.
-	 *
-	 * XXX mergejoinscansel is a bit expensive, can we cache its results?
+	 * (most significant) merge clause for this purpose.  Since
+	 * mergejoinscansel() is a fairly expensive computation, we cache the
+	 * results in the merge clause RestrictInfo.
 	 */
 	if (mergeclauses && path->jpath.jointype != JOIN_FULL)
 	{
@@ -1360,8 +1363,7 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 		List	   *ipathkeys;
 		PathKey	   *opathkey;
 		PathKey	   *ipathkey;
-		Selectivity leftscansel,
-					rightscansel;
+		MergeScanSelCache *cache;
 
 		/* Get the input pathkeys to determine the sort-order details */
 		opathkeys = outersortkeys ? outersortkeys : outer_path->pathkeys;
@@ -1376,22 +1378,21 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 			opathkey->pk_nulls_first != ipathkey->pk_nulls_first)
 			elog(ERROR, "left and right pathkeys do not match in mergejoin");
 
-		mergejoinscansel(root, (Node *) firstclause->clause,
-						 opathkey->pk_opfamily, opathkey->pk_strategy,
-						 &leftscansel, &rightscansel);
+		/* Get the selectivity with caching */
+		cache = cached_scansel(root, firstclause, opathkey);
 
 		if (bms_is_subset(firstclause->left_relids,
 						  outer_path->parent->relids))
 		{
 			/* left side of clause is outer */
-			outerscansel = leftscansel;
-			innerscansel = rightscansel;
+			outerscansel = cache->leftscansel;
+			innerscansel = cache->rightscansel;
 		}
 		else
 		{
 			/* left side of clause is inner */
-			outerscansel = rightscansel;
-			innerscansel = leftscansel;
+			outerscansel = cache->rightscansel;
+			innerscansel = cache->leftscansel;
 		}
 		if (path->jpath.jointype == JOIN_LEFT)
 			outerscansel = 1.0;
@@ -1491,6 +1492,54 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 
 	path->jpath.path.startup_cost = startup_cost;
 	path->jpath.path.total_cost = startup_cost + run_cost;
+}
+
+/*
+ * run mergejoinscansel() with caching
+ */
+static MergeScanSelCache *
+cached_scansel(PlannerInfo *root, RestrictInfo *rinfo, PathKey *pathkey)
+{
+	MergeScanSelCache *cache;
+	ListCell   *lc;
+	Selectivity leftscansel,
+				rightscansel;
+	MemoryContext oldcontext;
+
+	/* Do we have this result already? */
+	foreach(lc, rinfo->scansel_cache)
+	{
+		cache = (MergeScanSelCache *) lfirst(lc);
+		if (cache->opfamily == pathkey->pk_opfamily &&
+			cache->strategy == pathkey->pk_strategy &&
+			cache->nulls_first == pathkey->pk_nulls_first)
+			return cache;
+	}
+
+	/* Nope, do the computation */
+	mergejoinscansel(root,
+					 (Node *) rinfo->clause,
+					 pathkey->pk_opfamily,
+					 pathkey->pk_strategy,
+					 pathkey->pk_nulls_first,
+					 &leftscansel,
+					 &rightscansel);
+
+	/* Cache the result in suitably long-lived workspace */
+	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
+
+	cache = (MergeScanSelCache *) palloc(sizeof(MergeScanSelCache));
+	cache->opfamily = pathkey->pk_opfamily;
+	cache->strategy = pathkey->pk_strategy;
+	cache->nulls_first = pathkey->pk_nulls_first;
+	cache->leftscansel = leftscansel;
+	cache->rightscansel = rightscansel;
+
+	rinfo->scansel_cache = lappend(rinfo->scansel_cache, cache);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	return cache;
 }
 
 /*

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.1 2007/01/20 20:45:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/equivclass.c,v 1.2 2007/01/22 20:00:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,9 @@
 #include "utils/lsyscache.h"
 
 
-static void add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
-			  bool is_child, Oid datatype);
+static EquivalenceMember *add_eq_member(EquivalenceClass *ec,
+										Expr *expr, Relids relids,
+										bool is_child, Oid datatype);
 static void generate_base_implied_equalities_const(PlannerInfo *root,
 												   EquivalenceClass *ec);
 static void generate_base_implied_equalities_no_const(PlannerInfo *root,
@@ -46,6 +47,11 @@ static List *generate_join_implied_equalities_broken(PlannerInfo *root,
 										RelOptInfo *inner_rel);
 static Oid	select_equality_operator(EquivalenceClass *ec,
 									 Oid lefttype, Oid righttype);
+static RestrictInfo *create_join_clause(PlannerInfo *root,
+										EquivalenceClass *ec, Oid opno,
+										EquivalenceMember *leftem,
+										EquivalenceMember *rightem,
+										EquivalenceClass *parent_ec);
 static void reconsider_outer_join_clause(PlannerInfo *root,
 										 RestrictInfo *rinfo,
 										 bool outer_on_left);
@@ -95,6 +101,8 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 	List	   *opfamilies;
 	EquivalenceClass *ec1,
 			   *ec2;
+	EquivalenceMember *em1,
+			   *em2;
 	ListCell   *lc1;
 
 	/* Extract info from given clause */
@@ -152,6 +160,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 	 * there is no shortcut here for item1 and item2 equal.)
 	 */
 	ec1 = ec2 = NULL;
+	em1 = em2 = NULL;
 	foreach(lc1, root->eq_classes)
 	{
 		EquivalenceClass *cur_ec = (EquivalenceClass *) lfirst(lc1);
@@ -188,6 +197,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 				equal(item1, cur_em->em_expr))
 			{
 				ec1 = cur_ec;
+				em1 = cur_em;
 				if (ec2)
 					break;
 			}
@@ -197,6 +207,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 				equal(item2, cur_em->em_expr))
 			{
 				ec2 = cur_ec;
+				em2 = cur_em;
 				if (ec1)
 					break;
 			}
@@ -215,6 +226,10 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 		{
 			ec1->ec_sources = lappend(ec1->ec_sources, restrictinfo);
 			ec1->ec_below_outer_join |= below_outer_join;
+			/* mark the RI as usable with this pair of EMs */
+			/* NB: can't set left_ec/right_ec until merging is finished */
+			restrictinfo->left_em = em1;
+			restrictinfo->right_em = em2;
 			return true;
 		}
 
@@ -227,6 +242,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 		 */
 		ec1->ec_members = list_concat(ec1->ec_members, ec2->ec_members);
 		ec1->ec_sources = list_concat(ec1->ec_sources, ec2->ec_sources);
+		ec1->ec_derives = list_concat(ec1->ec_derives, ec2->ec_derives);
 		ec1->ec_relids = bms_join(ec1->ec_relids, ec2->ec_relids);
 		ec1->ec_has_const |= ec2->ec_has_const;
 		/* can't need to set has_volatile */
@@ -236,23 +252,33 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 		/* just to avoid debugging confusion w/ dangling pointers: */
 		ec2->ec_members = NIL;
 		ec2->ec_sources = NIL;
+		ec2->ec_derives = NIL;
 		ec2->ec_relids = NULL;
 		ec1->ec_sources = lappend(ec1->ec_sources, restrictinfo);
 		ec1->ec_below_outer_join |= below_outer_join;
+		/* mark the RI as usable with this pair of EMs */
+		restrictinfo->left_em = em1;
+		restrictinfo->right_em = em2;
 	}
 	else if (ec1)
 	{
 		/* Case 3: add item2 to ec1 */
-		add_eq_member(ec1, item2, item2_relids, false, item2_type);
+		em2 = add_eq_member(ec1, item2, item2_relids, false, item2_type);
 		ec1->ec_sources = lappend(ec1->ec_sources, restrictinfo);
 		ec1->ec_below_outer_join |= below_outer_join;
+		/* mark the RI as usable with this pair of EMs */
+		restrictinfo->left_em = em1;
+		restrictinfo->right_em = em2;
 	}
 	else if (ec2)
 	{
 		/* Case 3: add item1 to ec2 */
-		add_eq_member(ec2, item1, item1_relids, false, item1_type);
+		em1 = add_eq_member(ec2, item1, item1_relids, false, item1_type);
 		ec2->ec_sources = lappend(ec2->ec_sources, restrictinfo);
 		ec2->ec_below_outer_join |= below_outer_join;
+		/* mark the RI as usable with this pair of EMs */
+		restrictinfo->left_em = em1;
+		restrictinfo->right_em = em2;
 	}
 	else
 	{
@@ -262,16 +288,21 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 		ec->ec_opfamilies = opfamilies;
 		ec->ec_members = NIL;
 		ec->ec_sources = list_make1(restrictinfo);
+		ec->ec_derives = NIL;
 		ec->ec_relids = NULL;
 		ec->ec_has_const = false;
 		ec->ec_has_volatile = false;
 		ec->ec_below_outer_join = below_outer_join;
 		ec->ec_broken = false;
 		ec->ec_merged = NULL;
-		add_eq_member(ec, item1, item1_relids, false, item1_type);
-		add_eq_member(ec, item2, item2_relids, false, item2_type);
+		em1 = add_eq_member(ec, item1, item1_relids, false, item1_type);
+		em2 = add_eq_member(ec, item2, item2_relids, false, item2_type);
 
 		root->eq_classes = lappend(root->eq_classes, ec);
+
+		/* mark the RI as usable with this pair of EMs */
+		restrictinfo->left_em = em1;
+		restrictinfo->right_em = em2;
 	}
 
 	return true;
@@ -280,7 +311,7 @@ process_equivalence(PlannerInfo *root, RestrictInfo *restrictinfo,
 /*
  * add_eq_member - build a new EquivalenceMember and add it to an EC
  */
-static void
+static EquivalenceMember *
 add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
 			  bool is_child, Oid datatype)
 {
@@ -312,6 +343,8 @@ add_eq_member(EquivalenceClass *ec, Expr *expr, Relids relids,
 		ec->ec_relids = bms_add_members(ec->ec_relids, relids);
 	}
 	ec->ec_members = lappend(ec->ec_members, em);
+
+	return em;
 }
 
 
@@ -337,6 +370,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 						 List *opfamilies)
 {
 	EquivalenceClass *newec;
+	EquivalenceMember *newem;
 	ListCell   *lc1;
 	MemoryContext oldcontext;
 
@@ -383,14 +417,15 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 	newec->ec_opfamilies = list_copy(opfamilies);
 	newec->ec_members = NIL;
 	newec->ec_sources = NIL;
+	newec->ec_derives = NIL;
 	newec->ec_relids = NULL;
 	newec->ec_has_const = false;
 	newec->ec_has_volatile = contain_volatile_functions((Node *) expr);
 	newec->ec_below_outer_join = false;
 	newec->ec_broken = false;
 	newec->ec_merged = NULL;
-	add_eq_member(newec, expr, pull_varnos((Node *) expr),
-				  false, expr_datatype);
+	newem = add_eq_member(newec, expr, pull_varnos((Node *) expr),
+						  false, expr_datatype);
 
 	/*
 	 * add_eq_member doesn't check for volatile functions or aggregates,
@@ -402,7 +437,7 @@ get_eclass_for_sort_expr(PlannerInfo *root,
 		if (newec->ec_has_volatile || contain_agg_clause((Node *) expr))
 		{
 			newec->ec_has_const = false;
-			((EquivalenceMember *) linitial(newec->ec_members))->em_is_const = false;
+			newem->em_is_const = false;
 		}
 	}
 
@@ -455,6 +490,12 @@ get_eclass_for_sort_expr(PlannerInfo *root,
  * process_implied_equality (in plan/initsplan.c) to be inserted into the
  * restrictinfo datastructures.  Note that this must be called after initial
  * scanning of the quals and before Path construction begins.
+ *
+ * We make no attempt to avoid generating duplicate RestrictInfos here: we
+ * don't search ec_sources for matches, nor put the created RestrictInfos
+ * into ec_derives.  Doing so would require some slightly ugly changes in
+ * initsplan.c's API, and there's no real advantage, because the clauses
+ * generated here can't duplicate anything we will generate for joins anyway.
  */
 void
 generate_base_implied_equalities(PlannerInfo *root)
@@ -664,6 +705,13 @@ generate_base_implied_equalities_broken(PlannerInfo *root,
  * for use in a nestloop-with-inner-indexscan join, however.  indxpath.c makes
  * its own selections of clauses to use, and if the ones we pick here are
  * redundant with those, the extras will be eliminated in createplan.c.
+ *
+ * Because the same join clauses are likely to be needed multiple times as
+ * we consider different join paths, we avoid generating multiple copies:
+ * whenever we select a particular pair of EquivalenceMembers to join,
+ * we check to see if the pair matches any original clause (in ec_sources)
+ * or previously-built clause (in ec_derives).  This saves memory and allows
+ * re-use of information cached in RestrictInfos.
  */
 List *
 generate_join_implied_equalities(PlannerInfo *root,
@@ -818,15 +866,13 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 			return NIL;
 		}
 
-		rinfo = build_implied_join_equality(best_eq_op,
-											best_outer_em->em_expr,
-											best_inner_em->em_expr,
-											ec->ec_relids);
-		/* mark restrictinfo as redundant with other joinclauses */
-		rinfo->parent_ec = ec;
-		/* we can set these too, rather than letting them be looked up later */
-		rinfo->left_ec = ec;
-		rinfo->right_ec = ec;
+		/*
+		 * Create clause, setting parent_ec to mark it as redundant with other
+		 * joinclauses
+		 */
+		rinfo = create_join_clause(root, ec, best_eq_op,
+								   best_outer_em, best_inner_em,
+								   ec);
 
 		result = lappend(result, rinfo);
 	}
@@ -867,16 +913,10 @@ generate_join_implied_equalities_normal(PlannerInfo *root,
 					ec->ec_broken = true;
 					return NIL;
 				}
-				rinfo = build_implied_join_equality(eq_op,
-													prev_em->em_expr,
-													cur_em->em_expr,
-													ec->ec_relids);
-
 				/* do NOT set parent_ec, this qual is not redundant! */
-
-				/* we can set these, though */
-				rinfo->left_ec = ec;
-				rinfo->right_ec = ec;
+				rinfo = create_join_clause(root, ec, eq_op,
+										   prev_em, cur_em,
+										   NULL);
 
 				result = lappend(result, rinfo);
 			}
@@ -938,6 +978,86 @@ select_equality_operator(EquivalenceClass *ec, Oid lefttype, Oid righttype)
 			return opno;
 	}
 	return InvalidOid;
+}
+
+
+/*
+ * create_join_clause
+ *	  Find or make a RestrictInfo comparing the two given EC members
+ *	  with the given operator.
+ *
+ * parent_ec is either equal to ec (if the clause is a potentially-redundant
+ * join clause) or NULL (if not).  We have to treat this as part of the
+ * match requirements --- it's possible that a clause comparing the same two
+ * EMs is a join clause in one join path and a restriction clause in another.
+ */
+static RestrictInfo *
+create_join_clause(PlannerInfo *root,
+				   EquivalenceClass *ec, Oid opno,
+				   EquivalenceMember *leftem,
+				   EquivalenceMember *rightem,
+				   EquivalenceClass *parent_ec)
+{
+	RestrictInfo *rinfo;
+	ListCell   *lc;
+	MemoryContext oldcontext;
+
+	/*
+	 * Search to see if we already built a RestrictInfo for this pair of
+	 * EquivalenceMembers.  We can use either original source clauses or
+	 * previously-derived clauses.  The check on opno is probably redundant,
+	 * but be safe ...
+	 */
+	foreach(lc, ec->ec_sources)
+	{
+		rinfo = (RestrictInfo *) lfirst(lc);
+		if (rinfo->left_em == leftem &&
+			rinfo->right_em == rightem &&
+			rinfo->parent_ec == parent_ec &&
+			opno == ((OpExpr *) rinfo->clause)->opno)
+			return rinfo;
+	}
+
+	foreach(lc, ec->ec_derives)
+	{
+		rinfo = (RestrictInfo *) lfirst(lc);
+		if (rinfo->left_em == leftem &&
+			rinfo->right_em == rightem &&
+			rinfo->parent_ec == parent_ec &&
+			opno == ((OpExpr *) rinfo->clause)->opno)
+			return rinfo;
+	}
+
+	/*
+	 * Not there, so build it, in planner context so we can re-use it.
+	 * (Not important in normal planning, but definitely so in GEQO.)
+	 */
+	oldcontext = MemoryContextSwitchTo(root->planner_cxt);
+
+	rinfo = build_implied_join_equality(opno,
+										leftem->em_expr,
+										rightem->em_expr,
+										ec->ec_relids);
+
+	/* Mark the clause as redundant, or not */
+	rinfo->parent_ec = parent_ec;
+
+	/*
+	 * We can set these now, rather than letting them be looked up later,
+	 * since this is only used after EC merging is complete.
+	 */
+	rinfo->left_ec = ec;
+	rinfo->right_ec = ec;
+
+	/* Mark it as usable with these EMs */
+	rinfo->left_em = leftem;
+	rinfo->right_em = rightem;
+	/* and save it for possible re-use */
+	ec->ec_derives = lappend(ec->ec_derives, rinfo);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	return rinfo;
 }
 
 
@@ -1364,8 +1484,8 @@ add_child_rel_equivalences(PlannerInfo *root,
 				child_expr = (Expr *)
 					adjust_appendrel_attrs((Node *) cur_em->em_expr,
 										   appinfo);
-				add_eq_member(cur_ec, child_expr, child_rel->relids,
-							  true, cur_em->em_datatype);
+				(void) add_eq_member(cur_ec, child_expr, child_rel->relids,
+									 true, cur_em->em_datatype);
 			}
 		}
 	}
@@ -1451,15 +1571,10 @@ find_eclass_clauses_for_index_join(PlannerInfo *root, RelOptInfo *rel,
 				/* Found a suitable joinclause */
 				RestrictInfo *rinfo;
 
-				rinfo = build_implied_join_equality(best_eq_op,
-													cur_em->em_expr,
-													best_outer_em->em_expr,
-													cur_ec->ec_relids);
-				/* mark restrictinfo as redundant with other joinclauses */
-				rinfo->parent_ec = cur_ec;
-				/* we can set these too */
-				rinfo->left_ec = cur_ec;
-				rinfo->right_ec = cur_ec;
+				/* set parent_ec to mark as redundant with other joinclauses */
+				rinfo = create_join_clause(root, cur_ec, best_eq_op,
+										   cur_em, best_outer_em,
+										   cur_ec);
 
 				result = lappend(result, rinfo);
 				/*

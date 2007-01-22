@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.133 2007/01/20 20:45:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.134 2007/01/22 20:00:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,6 +397,7 @@ typedef struct EquivalenceClass
 	List	   *ec_opfamilies;		/* btree operator family OIDs */
 	List	   *ec_members;			/* list of EquivalenceMembers */
 	List	   *ec_sources;			/* list of generating RestrictInfos */
+	List	   *ec_derives;			/* list of derived RestrictInfos */
 	Relids		ec_relids;			/* all relids appearing in ec_members */
 	bool		ec_has_const;		/* any pseudoconstants in ec_members? */
 	bool		ec_has_volatile;	/* the (sole) member is a volatile expr */
@@ -890,6 +891,9 @@ typedef struct RestrictInfo
 	/* cache space for mergeclause processing; NULL if not yet set */
 	EquivalenceClass *left_ec;	/* EquivalenceClass containing lefthand */
 	EquivalenceClass *right_ec;	/* EquivalenceClass containing righthand */
+	EquivalenceMember *left_em;		/* EquivalenceMember for lefthand */
+	EquivalenceMember *right_em;	/* EquivalenceMember for righthand */
+	List	   *scansel_cache;	/* list of MergeScanSelCache structs */
 
 	/* transient workspace for use while considering a specific join path */
 	bool		outer_is_left;	/* T = outer var on left, F = on right */
@@ -901,6 +905,24 @@ typedef struct RestrictInfo
 	Selectivity left_bucketsize;	/* avg bucketsize of left side */
 	Selectivity right_bucketsize;		/* avg bucketsize of right side */
 } RestrictInfo;
+
+/*
+ * Since mergejoinscansel() is a relatively expensive function, and would
+ * otherwise be invoked many times while planning a large join tree,
+ * we go out of our way to cache its results.  Each mergejoinable
+ * RestrictInfo carries a list of the specific sort orderings that have
+ * been considered for use with it, and the resulting selectivities.
+ */
+typedef struct MergeScanSelCache
+{
+	/* Ordering details (cache lookup key) */
+	Oid			opfamily;		/* btree opfamily defining the ordering */
+	int			strategy;		/* sort direction (ASC or DESC) */
+	bool		nulls_first;	/* do NULLs come before normal values? */
+	/* Results */
+	Selectivity	leftscansel;	/* scan fraction for clause left side */
+	Selectivity	rightscansel;	/* scan fraction for clause right side */
+} MergeScanSelCache;
 
 /*
  * Inner indexscan info.

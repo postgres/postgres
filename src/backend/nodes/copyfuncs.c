@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.362 2007/01/20 20:45:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.363 2007/01/22 20:00:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1326,6 +1326,10 @@ _copyRestrictInfo(RestrictInfo *from)
 	/* EquivalenceClasses are never copied, so shallow-copy the pointers */
 	COPY_SCALAR_FIELD(left_ec);
 	COPY_SCALAR_FIELD(right_ec);
+	COPY_SCALAR_FIELD(left_em);
+	COPY_SCALAR_FIELD(right_em);
+	/* MergeScanSelCache isn't a Node, so hard to copy; just reset cache */
+	newnode->scansel_cache = NIL;
 	COPY_SCALAR_FIELD(outer_is_left);
 	COPY_SCALAR_FIELD(hashjoinoperator);
 	COPY_SCALAR_FIELD(left_bucketsize);

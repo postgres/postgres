@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.220 2007/01/20 20:45:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.221 2007/01/22 20:00:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2112,8 +2112,8 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  * we can estimate how much of the input will actually be read.  This
  * can have a considerable impact on the cost when using indexscans.
  *
- * clause should be a clause already known to be mergejoinable.  opfamily and
- * strategy specify the sort ordering being used.
+ * clause should be a clause already known to be mergejoinable.  opfamily,
+ * strategy, and nulls_first specify the sort ordering being used.
  *
  * *leftscan is set to the fraction of the left-hand variable expected
  * to be scanned (0 to 1), and similarly *rightscan for the right-hand
@@ -2121,7 +2121,7 @@ icnlikejoinsel(PG_FUNCTION_ARGS)
  */
 void
 mergejoinscansel(PlannerInfo *root, Node *clause,
-				 Oid opfamily, int strategy,
+				 Oid opfamily, int strategy, bool nulls_first,
 				 Selectivity *leftscan,
 				 Selectivity *rightscan)
 {
@@ -2214,18 +2214,39 @@ mergejoinscansel(PlannerInfo *root, Node *clause,
 	/*
 	 * Now, the fraction of the left variable that will be scanned is the
 	 * fraction that's <= the right-side maximum value.  But only believe
-	 * non-default estimates, else stick with our 1.0.
+	 * non-default estimates, else stick with our 1.0.  Also, if the sort
+	 * order is nulls-first, we're going to have to read over any nulls too.
 	 */
 	selec = scalarineqsel(root, leop, false, &leftvar,
 						  rightmax, op_righttype);
 	if (selec != DEFAULT_INEQ_SEL)
+	{
+		if (nulls_first && HeapTupleIsValid(leftvar.statsTuple))
+		{
+			Form_pg_statistic stats;
+
+			stats = (Form_pg_statistic) GETSTRUCT(leftvar.statsTuple);
+			selec += stats->stanullfrac;
+			CLAMP_PROBABILITY(selec);
+		}
 		*leftscan = selec;
+	}
 
 	/* And similarly for the right variable. */
 	selec = scalarineqsel(root, revleop, false, &rightvar,
 						  leftmax, op_lefttype);
 	if (selec != DEFAULT_INEQ_SEL)
+	{
+		if (nulls_first && HeapTupleIsValid(rightvar.statsTuple))
+		{
+			Form_pg_statistic stats;
+
+			stats = (Form_pg_statistic) GETSTRUCT(rightvar.statsTuple);
+			selec += stats->stanullfrac;
+			CLAMP_PROBABILITY(selec);
+		}
 		*rightscan = selec;
+	}
 
 	/*
 	 * Only one of the two fractions can really be less than 1.0; believe the
