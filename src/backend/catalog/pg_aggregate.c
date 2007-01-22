@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.84 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.85 2007/01/22 01:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -214,7 +214,9 @@ AggregateCreate(const char *aggName,
 											 numArgs),	/* paramTypes */
 							  PointerGetDatum(NULL),	/* allParamTypes */
 							  PointerGetDatum(NULL),	/* parameterModes */
-							  PointerGetDatum(NULL));	/* parameterNames */
+							  PointerGetDatum(NULL),	/* parameterNames */
+							  1,				/* procost */
+							  0);				/* prorows */
 
 	/*
 	 * Okay to create the pg_aggregate entry.

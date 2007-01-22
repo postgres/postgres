@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.228 2007/01/05 22:19:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.229 2007/01/22 01:35:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,16 +115,18 @@ static const struct typinfo TypInfo[] = {
 	F_BYTEAIN, F_BYTEAOUT},
 	{"char", CHAROID, 0, 1, true, 'c', 'p',
 	F_CHARIN, F_CHAROUT},
-	{"name", NAMEOID, CHAROID, NAMEDATALEN, false, 'i', 'p',
-	F_NAMEIN, F_NAMEOUT},
 	{"int2", INT2OID, 0, 2, true, 's', 'p',
 	F_INT2IN, F_INT2OUT},
 	{"int4", INT4OID, 0, 4, true, 'i', 'p',
 	F_INT4IN, F_INT4OUT},
-	{"regproc", REGPROCOID, 0, 4, true, 'i', 'p',
-	F_REGPROCIN, F_REGPROCOUT},
+	{"float4", FLOAT4OID, 0, 4, false, 'i', 'p',
+	F_FLOAT4IN, F_FLOAT4OUT},
+	{"name", NAMEOID, CHAROID, NAMEDATALEN, false, 'i', 'p',
+	F_NAMEIN, F_NAMEOUT},
 	{"regclass", REGCLASSOID, 0, 4, true, 'i', 'p',
 	F_REGCLASSIN, F_REGCLASSOUT},
+	{"regproc", REGPROCOID, 0, 4, true, 'i', 'p',
+	F_REGPROCIN, F_REGPROCOUT},
 	{"regtype", REGTYPEOID, 0, 4, true, 'i', 'p',
 	F_REGTYPEIN, F_REGTYPEOUT},
 	{"text", TEXTOID, 0, -1, false, 'i', 'x',

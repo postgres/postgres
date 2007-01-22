@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.456 2007/01/05 22:19:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.457 2007/01/22 01:35:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5837,6 +5837,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	   *provolatile;
 	char	   *proisstrict;
 	char	   *prosecdef;
+	char	   *procost;
+	char	   *prorows;
 	char	   *lanname;
 	char	   *rettypename;
 	int			nallargs;
@@ -5857,12 +5859,25 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	selectSourceSchema(finfo->dobj.namespace->dobj.name);
 
 	/* Fetch function-specific details */
-	if (g_fout->remoteVersion >= 80100)
+	if (g_fout->remoteVersion >= 80300)
 	{
 		appendPQExpBuffer(query,
 						  "SELECT proretset, prosrc, probin, "
 						  "proallargtypes, proargmodes, proargnames, "
 						  "provolatile, proisstrict, prosecdef, "
+						  "procost, prorows, "
+						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
+						  "FROM pg_catalog.pg_proc "
+						  "WHERE oid = '%u'::pg_catalog.oid",
+						  finfo->dobj.catId.oid);
+	}
+	else if (g_fout->remoteVersion >= 80100)
+	{
+		appendPQExpBuffer(query,
+						  "SELECT proretset, prosrc, probin, "
+						  "proallargtypes, proargmodes, proargnames, "
+						  "provolatile, proisstrict, prosecdef, "
+						  "0 as procost, 0 as prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
@@ -5876,6 +5891,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "null as proargmodes, "
 						  "proargnames, "
 						  "provolatile, proisstrict, prosecdef, "
+						  "0 as procost, 0 as prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
@@ -5889,6 +5905,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "null as proargmodes, "
 						  "null as proargnames, "
 						  "provolatile, proisstrict, prosecdef, "
+						  "0 as procost, 0 as prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
@@ -5904,6 +5921,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 			 "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "proisstrict, "
 						  "'f'::boolean as prosecdef, "
+						  "0 as procost, 0 as prorows, "
 		  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_proc "
 						  "WHERE oid = '%u'::oid",
@@ -5919,6 +5937,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 			 "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "'f'::boolean as proisstrict, "
 						  "'f'::boolean as prosecdef, "
+						  "0 as procost, 0 as prorows, "
 		  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_proc "
 						  "WHERE oid = '%u'::oid",
@@ -5946,6 +5965,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	provolatile = PQgetvalue(res, 0, PQfnumber(res, "provolatile"));
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
 	prosecdef = PQgetvalue(res, 0, PQfnumber(res, "prosecdef"));
+	procost = PQgetvalue(res, 0, PQfnumber(res, "procost"));
+	prorows = PQgetvalue(res, 0, PQfnumber(res, "prorows"));
 	lanname = PQgetvalue(res, 0, PQfnumber(res, "lanname"));
 
 	/*
@@ -6071,6 +6092,30 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 
 	if (prosecdef[0] == 't')
 		appendPQExpBuffer(q, " SECURITY DEFINER");
+
+	/*
+	 * COST and ROWS are emitted only if present and not default, so as not to
+	 * break backwards-compatibility of the dump without need.  Keep this code
+	 * in sync with the defaults in functioncmds.c.
+	 */
+	if (strcmp(procost, "0") != 0)
+	{
+		if (strcmp(lanname, "internal") == 0 || strcmp(lanname, "c") == 0)
+		{
+			/* default cost is 1 */
+			if (strcmp(procost, "1") != 0)
+				appendPQExpBuffer(q, " COST %s", procost);
+		}
+		else
+		{
+			/* default cost is 100 */
+			if (strcmp(procost, "100") != 0)
+				appendPQExpBuffer(q, " COST %s", procost);
+		}
+	}
+	if (proretset[0] == 't' &&
+		strcmp(prorows, "0") != 0 && strcmp(prorows, "1000") != 0)
+		appendPQExpBuffer(q, " ROWS %s", prorows);
 
 	appendPQExpBuffer(q, ";\n");
 

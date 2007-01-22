@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.70 2006/11/10 20:52:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.71 2007/01/22 01:35:19 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -26,6 +26,8 @@ CREATE [ OR REPLACE ] FUNCTION
     | IMMUTABLE | STABLE | VOLATILE
     | CALLED ON NULL INPUT | RETURNS NULL ON NULL INPUT | STRICT
     | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
+    | COST <replaceable class="parameter">execution_cost</replaceable>
+    | ROWS <replaceable class="parameter">result_rows</replaceable>
     | AS '<replaceable class="parameter">definition</replaceable>'
     | AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
   } ...
@@ -52,7 +54,7 @@ CREATE [ OR REPLACE ] FUNCTION
   </para>
 
   <para>
-   To update the definition of an existing function, use
+   To replace the current definition of an existing function, use
    <command>CREATE OR REPLACE FUNCTION</command>.  It is not possible
    to change the name or argument types of a function this way (if you
    tried, you would actually be creating a new, distinct function).
@@ -290,6 +292,35 @@ CREATE [ OR REPLACE ] FUNCTION
    </varlistentry>
 
     <varlistentry>
+     <term><replaceable class="parameter">execution_cost</replaceable></term>
+
+     <listitem>
+      <para>
+       A positive number giving the estimated execution cost for the function,
+       in units of <xref linkend="guc-cpu-operator-cost">.  If the function
+       returns a set, this is the cost per returned row.  If the cost is
+       not specified, 1 unit is assumed for C-language and internal functions,
+       and 100 units for functions in all other languages.  Larger values
+       cause the planner to try to avoid evaluating the function more often
+       than necessary.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><replaceable class="parameter">result_rows</replaceable></term>
+
+     <listitem>
+      <para>
+       A positive number giving the estimated number of rows that the planner
+       should expect the function to return.  This is only allowed when the
+       function is declared to return a set.  The default assumption is
+       1000 rows.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><replaceable class="parameter">definition</replaceable></term>
 
      <listitem>
@@ -400,7 +431,8 @@ CREATE FUNCTION foo(int, out text) ...
 
    <para>
     When repeated <command>CREATE FUNCTION</command> calls refer to
-    the same object file, the file is only loaded once.  To unload and
+    the same object file, the file is only loaded once per session.
+    To unload and
     reload the file (perhaps during development), use the <xref
     linkend="sql-load" endterm="sql-load-title"> command.
    </para>

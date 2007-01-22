@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.574 2007/01/14 13:11:53 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.575 2007/01/22 01:35:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -370,7 +370,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONCURRENTLY CONNECTION CONSTRAINT CONSTRAINTS
-	CONTENT_P CONVERSION_P CONVERT COPY CREATE CREATEDB
+	CONTENT_P CONVERSION_P CONVERT COPY COST CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_DATE CURRENT_ROLE CURRENT_TIME
 	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
@@ -3957,6 +3957,14 @@ common_func_opt_item:
 			| SECURITY INVOKER
 				{
 					$$ = makeDefElem("security", (Node *)makeInteger(FALSE));
+				}
+			| COST NumericOnly
+				{
+					$$ = makeDefElem("cost", (Node *)$2);
+				}
+			| ROWS NumericOnly
+				{
+					$$ = makeDefElem("rows", (Node *)$2);
 				}
 		;
 
@@ -8564,6 +8572,7 @@ unreserved_keyword:
 			| CONTENT_P
 			| CONVERSION_P
 			| COPY
+			| COST
 			| CREATEDB
 			| CREATEROLE
 			| CREATEUSER

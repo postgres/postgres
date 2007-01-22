@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.142 2007/01/20 23:13:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.143 2007/01/22 01:35:19 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -3373,6 +3373,22 @@
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-language"><structname>pg_language</structname></link>.oid</literal></entry>
       <entry>Implementation language or call interface of this function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>procost</structfield></entry>
+      <entry><type>float4</type></entry>
+      <entry></entry>
+      <entry>Estimated execution cost (in units of
+       <xref linkend="guc-cpu-operator-cost">); if <structfield>proretset</>,
+       this is cost per row returned</entry>
+     </row>
+
+     <row>
+      <entry><structfield>prorows</structfield></entry>
+      <entry><type>float4</type></entry>
+      <entry></entry>
+      <entry>Estimated number of result rows (zero if not <structfield>proretset</>)</entry>
      </row>
 
      <row>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.142 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.143 2007/01/22 01:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,9 @@ ProcedureCreate(const char *procedureName,
 				oidvector *parameterTypes,
 				Datum allParameterTypes,
 				Datum parameterModes,
-				Datum parameterNames)
+				Datum parameterNames,
+				float4 procost,
+				float4 prorows)
 {
 	Oid			retval;
 	int			parameterCount;
@@ -219,6 +221,8 @@ ProcedureCreate(const char *procedureName,
 	values[Anum_pg_proc_pronamespace - 1] = ObjectIdGetDatum(procNamespace);
 	values[Anum_pg_proc_proowner - 1] = ObjectIdGetDatum(GetUserId());
 	values[Anum_pg_proc_prolang - 1] = ObjectIdGetDatum(languageObjectId);
+	values[Anum_pg_proc_procost - 1] = Float4GetDatum(procost);
+	values[Anum_pg_proc_prorows - 1] = Float4GetDatum(prorows);
 	values[Anum_pg_proc_proisagg - 1] = BoolGetDatum(isAgg);
 	values[Anum_pg_proc_prosecdef - 1] = BoolGetDatum(security_definer);
 	values[Anum_pg_proc_proisstrict - 1] = BoolGetDatum(isStrict);

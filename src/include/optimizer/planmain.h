@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.98 2007/01/20 20:45:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.99 2007/01/22 01:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,5 +97,6 @@ extern List *set_returning_clause_references(List *rlist,
 								Index resultRelation);
 extern void fix_opfuncids(Node *node);
 extern void set_opfuncid(OpExpr *opexpr);
+extern void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 
 #endif   /* PLANMAIN_H */

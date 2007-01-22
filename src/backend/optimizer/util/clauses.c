@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.230 2007/01/17 17:25:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.231 2007/01/22 01:35:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -64,6 +64,7 @@ typedef struct
 static bool contain_agg_clause_walker(Node *node, void *context);
 static bool count_agg_clauses_walker(Node *node, AggClauseCounts *counts);
 static bool expression_returns_set_walker(Node *node, void *context);
+static bool expression_returns_set_rows_walker(Node *node, double *count);
 static bool contain_subplans_walker(Node *node, void *context);
 static bool contain_mutable_functions_walker(Node *node, void *context);
 static bool contain_volatile_functions_walker(Node *node, void *context);
@@ -565,6 +566,78 @@ expression_returns_set_walker(Node *node, void *context)
 	return expression_tree_walker(node, expression_returns_set_walker,
 								  context);
 }
+
+/*
+ * expression_returns_set_rows
+ *	  Estimate the number of rows in a set result.
+ *
+ * We use the product of the rowcount estimates of all the functions in
+ * the given tree.  The result is 1 if there are no set-returning functions.
+ */
+double
+expression_returns_set_rows(Node *clause)
+{
+	double		result = 1;
+
+	(void) expression_returns_set_rows_walker(clause, &result);
+	return result;
+}
+
+static bool
+expression_returns_set_rows_walker(Node *node, double *count)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, FuncExpr))
+	{
+		FuncExpr   *expr = (FuncExpr *) node;
+
+		if (expr->funcretset)
+			*count *= get_func_rows(expr->funcid);
+	}
+	if (IsA(node, OpExpr))
+	{
+		OpExpr	   *expr = (OpExpr *) node;
+
+		if (expr->opretset)
+		{
+			set_opfuncid(expr);
+			*count *= get_func_rows(expr->opfuncid);
+		}
+	}
+
+	/* Avoid recursion for some cases that can't return a set */
+	if (IsA(node, Aggref))
+		return false;
+	if (IsA(node, DistinctExpr))
+		return false;
+	if (IsA(node, ScalarArrayOpExpr))
+		return false;
+	if (IsA(node, BoolExpr))
+		return false;
+	if (IsA(node, SubLink))
+		return false;
+	if (IsA(node, SubPlan))
+		return false;
+	if (IsA(node, ArrayExpr))
+		return false;
+	if (IsA(node, RowExpr))
+		return false;
+	if (IsA(node, RowCompareExpr))
+		return false;
+	if (IsA(node, CoalesceExpr))
+		return false;
+	if (IsA(node, MinMaxExpr))
+		return false;
+	if (IsA(node, XmlExpr))
+		return false;
+	if (IsA(node, NullIfExpr))
+		return false;
+
+	return expression_tree_walker(node, expression_returns_set_rows_walker,
+								  (void *) count);
+}
+
 
 /*****************************************************************************
  *		Subplan clause manipulation

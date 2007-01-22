@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.127 2007/01/05 22:19:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.128 2007/01/22 01:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,6 @@ static Node *replace_vars_with_subplan_refs(Node *node,
 static Node *replace_vars_with_subplan_refs_mutator(Node *node,
 							replace_vars_with_subplan_refs_context *context);
 static bool fix_opfuncids_walker(Node *node, void *context);
-static void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 
 
 /*****************************************************************************
@@ -1433,7 +1432,7 @@ set_opfuncid(OpExpr *opexpr)
  * set_sa_opfuncid
  *		As above, for ScalarArrayOpExpr nodes.
  */
-static void
+void
 set_sa_opfuncid(ScalarArrayOpExpr *opexpr)
 {
 	if (opexpr->opfuncid == InvalidOid)

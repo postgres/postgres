@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.175 2007/01/20 20:45:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.176 2007/01/22 01:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
+#include "optimizer/planmain.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/selfuncs.h"
@@ -842,17 +843,19 @@ cost_functionscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
+	RangeTblEntry *rte;
+	QualCost	exprcost;
 
 	/* Should only be applied to base relations that are functions */
 	Assert(baserel->relid > 0);
-	Assert(baserel->rtekind == RTE_FUNCTION);
+	rte = rt_fetch(baserel->relid, root->parse->rtable);
+	Assert(rte->rtekind == RTE_FUNCTION);
 
-	/*
-	 * For now, estimate function's cost at one operator eval per function
-	 * call.  Someday we should revive the function cost estimate columns in
-	 * pg_proc...
-	 */
-	cpu_per_tuple = cpu_operator_cost;
+	/* Estimate costs of executing the function expression */
+	cost_qual_eval_node(&exprcost, rte->funcexpr);
+
+	startup_cost += exprcost.startup;
+	cpu_per_tuple = exprcost.per_tuple;
 
 	/* Add scanning CPU costs */
 	startup_cost += baserel->baserestrictcost.startup;
@@ -1068,6 +1071,10 @@ cost_agg(Path *path, PlannerInfo *root,
 	 * there's roundoff error we might do the wrong thing.  So be sure that
 	 * the computations below form the same intermediate values in the same
 	 * order.
+	 *
+	 * Note: ideally we should use the pg_proc.procost costs of each
+	 * aggregate's component functions, but for now that seems like an
+	 * excessive amount of work.
 	 */
 	if (aggstrategy == AGG_PLAIN)
 	{
@@ -1694,7 +1701,8 @@ cost_hashjoin(HashPath *path, PlannerInfo *root)
  * cost_qual_eval
  *		Estimate the CPU costs of evaluating a WHERE clause.
  *		The input can be either an implicitly-ANDed list of boolean
- *		expressions, or a list of RestrictInfo nodes.
+ *		expressions, or a list of RestrictInfo nodes.  (The latter is
+ *		preferred since it allows caching of the results.)
  *		The result includes both a one-time (startup) component,
  *		and a per-evaluation component.
  */
@@ -1712,41 +1720,20 @@ cost_qual_eval(QualCost *cost, List *quals)
 	{
 		Node	   *qual = (Node *) lfirst(l);
 
-		/*
-		 * RestrictInfo nodes contain an eval_cost field reserved for this
-		 * routine's use, so that it's not necessary to evaluate the qual
-		 * clause's cost more than once.  If the clause's cost hasn't been
-		 * computed yet, the field's startup value will contain -1.
-		 *
-		 * If the RestrictInfo is marked pseudoconstant, it will be tested
-		 * only once, so treat its cost as all startup cost.
-		 */
-		if (qual && IsA(qual, RestrictInfo))
-		{
-			RestrictInfo *rinfo = (RestrictInfo *) qual;
-
-			if (rinfo->eval_cost.startup < 0)
-			{
-				rinfo->eval_cost.startup = 0;
-				rinfo->eval_cost.per_tuple = 0;
-				cost_qual_eval_walker((Node *) rinfo->clause,
-									  &rinfo->eval_cost);
-				if (rinfo->pseudoconstant)
-				{
-					/* count one execution during startup */
-					rinfo->eval_cost.startup += rinfo->eval_cost.per_tuple;
-					rinfo->eval_cost.per_tuple = 0;
-				}
-			}
-			cost->startup += rinfo->eval_cost.startup;
-			cost->per_tuple += rinfo->eval_cost.per_tuple;
-		}
-		else
-		{
-			/* If it's a bare expression, must always do it the hard way */
-			cost_qual_eval_walker(qual, cost);
-		}
+		cost_qual_eval_walker(qual, cost);
 	}
+}
+
+/*
+ * cost_qual_eval_node
+ *		As above, for a single RestrictInfo or expression.
+ */
+void
+cost_qual_eval_node(QualCost *cost, Node *qual)
+{
+	cost->startup = 0;
+	cost->per_tuple = 0;
+	cost_qual_eval_walker(qual, cost);
 }
 
 static bool
@@ -1756,19 +1743,75 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 		return false;
 
 	/*
-	 * Our basic strategy is to charge one cpu_operator_cost for each operator
-	 * or function node in the given tree.	Vars and Consts are charged zero,
-	 * and so are boolean operators (AND, OR, NOT). Simplistic, but a lot
-	 * better than no model at all.
+	 * RestrictInfo nodes contain an eval_cost field reserved for this
+	 * routine's use, so that it's not necessary to evaluate the qual
+	 * clause's cost more than once.  If the clause's cost hasn't been
+	 * computed yet, the field's startup value will contain -1.
+	 */
+	if (IsA(node, RestrictInfo))
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) node;
+
+		if (rinfo->eval_cost.startup < 0)
+		{
+			rinfo->eval_cost.startup = 0;
+			rinfo->eval_cost.per_tuple = 0;
+			/*
+			 * For an OR clause, recurse into the marked-up tree so that
+			 * we set the eval_cost for contained RestrictInfos too.
+			 */
+			if (rinfo->orclause)
+				cost_qual_eval_walker((Node *) rinfo->orclause,
+									  &rinfo->eval_cost);
+			else
+				cost_qual_eval_walker((Node *) rinfo->clause,
+									  &rinfo->eval_cost);
+			/*
+			 * If the RestrictInfo is marked pseudoconstant, it will be tested
+			 * only once, so treat its cost as all startup cost.
+			 */
+			if (rinfo->pseudoconstant)
+			{
+				/* count one execution during startup */
+				rinfo->eval_cost.startup += rinfo->eval_cost.per_tuple;
+				rinfo->eval_cost.per_tuple = 0;
+			}
+		}
+		total->startup += rinfo->eval_cost.startup;
+		total->per_tuple += rinfo->eval_cost.per_tuple;
+		/* do NOT recurse into children */
+		return false;
+	}
+
+	/*
+	 * For each operator or function node in the given tree, we charge the
+	 * estimated execution cost given by pg_proc.procost (remember to
+	 * multiply this by cpu_operator_cost).
+	 *
+	 * Vars and Consts are charged zero, and so are boolean operators (AND,
+	 * OR, NOT). Simplistic, but a lot better than no model at all.
 	 *
 	 * Should we try to account for the possibility of short-circuit
-	 * evaluation of AND/OR?
+	 * evaluation of AND/OR?  Probably *not*, because that would make the
+	 * results depend on the clause ordering, and we are not in any position
+	 * to expect that the current ordering of the clauses is the one that's
+	 * going to end up being used.  (Is it worth applying order_qual_clauses
+	 * much earlier in the planning process to fix this?)
 	 */
-	if (IsA(node, FuncExpr) ||
-		IsA(node, OpExpr) ||
-		IsA(node, DistinctExpr) ||
-		IsA(node, NullIfExpr))
-		total->per_tuple += cpu_operator_cost;
+	if (IsA(node, FuncExpr))
+	{
+		total->per_tuple += get_func_cost(((FuncExpr *) node)->funcid) *
+			cpu_operator_cost;
+	}
+	else if (IsA(node, OpExpr) ||
+			 IsA(node, DistinctExpr) ||
+			 IsA(node, NullIfExpr))
+	{
+		/* rely on struct equivalence to treat these all alike */
+		set_opfuncid((OpExpr *) node);
+		total->per_tuple += get_func_cost(((OpExpr *) node)->opfuncid) *
+			cpu_operator_cost;
+	}
 	else if (IsA(node, ScalarArrayOpExpr))
 	{
 		/*
@@ -1778,15 +1821,23 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 		ScalarArrayOpExpr *saop = (ScalarArrayOpExpr *) node;
 		Node	   *arraynode = (Node *) lsecond(saop->args);
 
-		total->per_tuple +=
+		set_sa_opfuncid(saop);
+		total->per_tuple += get_func_cost(saop->opfuncid) *
 			cpu_operator_cost * estimate_array_length(arraynode) * 0.5;
 	}
 	else if (IsA(node, RowCompareExpr))
 	{
 		/* Conservatively assume we will check all the columns */
 		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
+		ListCell   *lc;
 
-		total->per_tuple += cpu_operator_cost * list_length(rcexpr->opnos);
+		foreach(lc, rcexpr->opnos)
+		{
+			Oid		opid = lfirst_oid(lc);
+
+			total->per_tuple += get_func_cost(get_opcode(opid)) *
+				cpu_operator_cost;
+		}
 	}
 	else if (IsA(node, SubLink))
 	{
@@ -1873,6 +1924,7 @@ cost_qual_eval_walker(Node *node, QualCost *total)
 		}
 	}
 
+	/* recurse into children */
 	return expression_tree_walker(node, cost_qual_eval_walker,
 								  (void *) total);
 }
@@ -2172,16 +2224,8 @@ set_function_size_estimates(PlannerInfo *root, RelOptInfo *rel)
 	rte = rt_fetch(rel->relid, root->parse->rtable);
 	Assert(rte->rtekind == RTE_FUNCTION);
 
-	/*
-	 * Estimate number of rows the function itself will return.
-	 *
-	 * XXX no idea how to do this yet; but we can at least check whether
-	 * function returns set or not...
-	 */
-	if (expression_returns_set(rte->funcexpr))
-		rel->tuples = 1000;
-	else
-		rel->tuples = 1;
+	/* Estimate number of rows the function itself will return */
+	rel->tuples = clamp_row_est(expression_returns_set_rows(rte->funcexpr));
 
 	/* Now estimate number of output rows, etc */
 	set_baserel_size_estimates(root, rel);

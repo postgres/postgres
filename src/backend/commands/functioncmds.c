@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.81 2007/01/05 22:19:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.82 2007/01/22 01:35:20 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -273,7 +273,9 @@ static bool
 compute_common_attribute(DefElem *defel,
 						 DefElem **volatility_item,
 						 DefElem **strict_item,
-						 DefElem **security_item)
+						 DefElem **security_item,
+						 DefElem **cost_item,
+						 DefElem **rows_item)
 {
 	if (strcmp(defel->defname, "volatility") == 0)
 	{
@@ -295,6 +297,20 @@ compute_common_attribute(DefElem *defel,
 			goto duplicate_error;
 
 		*security_item = defel;
+	}
+	else if (strcmp(defel->defname, "cost") == 0)
+	{
+		if (*cost_item)
+			goto duplicate_error;
+
+		*cost_item = defel;
+	}
+	else if (strcmp(defel->defname, "rows") == 0)
+	{
+		if (*rows_item)
+			goto duplicate_error;
+
+		*rows_item = defel;
 	}
 	else
 		return false;
@@ -337,7 +353,9 @@ compute_attributes_sql_style(List *options,
 							 char **language,
 							 char *volatility_p,
 							 bool *strict_p,
-							 bool *security_definer)
+							 bool *security_definer,
+							 float4 *procost,
+							 float4 *prorows)
 {
 	ListCell   *option;
 	DefElem    *as_item = NULL;
@@ -345,6 +363,8 @@ compute_attributes_sql_style(List *options,
 	DefElem    *volatility_item = NULL;
 	DefElem    *strict_item = NULL;
 	DefElem    *security_item = NULL;
+	DefElem    *cost_item = NULL;
+	DefElem    *rows_item = NULL;
 
 	foreach(option, options)
 	{
@@ -369,7 +389,9 @@ compute_attributes_sql_style(List *options,
 		else if (compute_common_attribute(defel,
 										  &volatility_item,
 										  &strict_item,
-										  &security_item))
+										  &security_item,
+										  &cost_item,
+										  &rows_item))
 		{
 			/* recognized common option */
 			continue;
@@ -407,6 +429,22 @@ compute_attributes_sql_style(List *options,
 		*strict_p = intVal(strict_item->arg);
 	if (security_item)
 		*security_definer = intVal(security_item->arg);
+	if (cost_item)
+	{
+		*procost = defGetNumeric(cost_item);
+		if (*procost <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("COST must be positive")));
+	}
+	if (rows_item)
+	{
+		*prorows = defGetNumeric(rows_item);
+		if (*prorows <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("ROWS must be positive")));
+	}
 }
 
 
@@ -519,6 +557,8 @@ CreateFunction(CreateFunctionStmt *stmt)
 	bool		isStrict,
 				security;
 	char		volatility;
+	float4		procost;
+	float4		prorows;
 	HeapTuple	languageTuple;
 	Form_pg_language languageStruct;
 	List	   *as_clause;
@@ -537,10 +577,14 @@ CreateFunction(CreateFunctionStmt *stmt)
 	isStrict = false;
 	security = false;
 	volatility = PROVOLATILE_VOLATILE;
+	procost = -1;				/* indicates not set */
+	prorows = -1;				/* indicates not set */
 
 	/* override attributes from explicit list */
 	compute_attributes_sql_style(stmt->options,
-				   &as_clause, &language, &volatility, &isStrict, &security);
+								 &as_clause, &language,
+								 &volatility, &isStrict, &security,
+								 &procost, &prorows);
 
 	/* Convert language name to canonical case */
 	languageName = case_translate_language_name(language);
@@ -646,6 +690,32 @@ CreateFunction(CreateFunctionStmt *stmt)
 	}
 
 	/*
+	 * Set default values for COST and ROWS depending on other parameters;
+	 * reject ROWS if it's not returnsSet.  NB: pg_dump knows these default
+	 * values, keep it in sync if you change them.
+	 */
+	if (procost < 0)
+	{
+		/* SQL and PL-language functions are assumed more expensive */
+		if (languageOid == INTERNALlanguageId ||
+			languageOid == ClanguageId)
+			procost = 1;
+		else
+			procost = 100;
+	}
+	if (prorows < 0)
+	{
+		if (returnsSet)
+			prorows = 1000;
+		else
+			prorows = 0;		/* dummy value if not returnsSet */
+	}
+	else if (!returnsSet)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("ROWS is not applicable when function does not return a set")));
+
+	/*
 	 * And now that we have all the parameters, and know we're permitted to do
 	 * so, go ahead and create the function.
 	 */
@@ -665,7 +735,9 @@ CreateFunction(CreateFunctionStmt *stmt)
 					parameterTypes,
 					PointerGetDatum(allParameterTypes),
 					PointerGetDatum(parameterModes),
-					PointerGetDatum(parameterNames));
+					PointerGetDatum(parameterNames),
+					procost,
+					prorows);
 }
 
 
@@ -1012,6 +1084,8 @@ AlterFunction(AlterFunctionStmt *stmt)
 	DefElem    *volatility_item = NULL;
 	DefElem    *strict_item = NULL;
 	DefElem    *security_def_item = NULL;
+	DefElem    *cost_item = NULL;
+	DefElem    *rows_item = NULL;
 
 	rel = heap_open(ProcedureRelationId, RowExclusiveLock);
 
@@ -1046,7 +1120,9 @@ AlterFunction(AlterFunctionStmt *stmt)
 		if (compute_common_attribute(defel,
 									 &volatility_item,
 									 &strict_item,
-									 &security_def_item) == false)
+									 &security_def_item,
+									 &cost_item,
+									 &rows_item) == false)
 			elog(ERROR, "option \"%s\" not recognized", defel->defname);
 	}
 
@@ -1056,6 +1132,26 @@ AlterFunction(AlterFunctionStmt *stmt)
 		procForm->proisstrict = intVal(strict_item->arg);
 	if (security_def_item)
 		procForm->prosecdef = intVal(security_def_item->arg);
+	if (cost_item)
+	{
+		procForm->procost = defGetNumeric(cost_item);
+		if (procForm->procost <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("COST must be positive")));
+	}
+	if (rows_item)
+	{
+		procForm->prorows = defGetNumeric(rows_item);
+		if (procForm->prorows <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("ROWS must be positive")));
+		if (!procForm->proretset)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("ROWS is not applicable when function does not return a set")));
+	}
 
 	/* Do the update */
 	simple_heap_update(rel, &tup->t_self, tup);

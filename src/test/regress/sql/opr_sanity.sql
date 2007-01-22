@@ -53,7 +53,9 @@ WHERE p1.prolang = 0 OR p1.prorettype = 0 OR
        p1.pronargs < 0 OR
        array_lower(p1.proargtypes, 1) != 0 OR
        array_upper(p1.proargtypes, 1) != p1.pronargs-1 OR
-       0::oid = ANY (p1.proargtypes);
+       0::oid = ANY (p1.proargtypes) OR
+       procost <= 0 OR
+       CASE WHEN proretset THEN prorows <= 0 ELSE prorows != 0 END;
 
 -- Look for conflicting proc definitions (same names and input datatypes).
 -- (This test should be dead code now that we have the unique index

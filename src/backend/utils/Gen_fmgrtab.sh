@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.34 2007/01/05 22:19:39 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.35 2007/01/22 01:35:21 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -72,6 +72,8 @@ trap 'echo "Caught signal." ; cleanup ; exit 1' 1 2 15
 #
 # Generate the file containing raw pg_proc tuple data
 # (but only for "internal" language procedures...).
+# Basically we strip off the DATA macro call, leaving procedure OID as $1
+# and all the pg_proc field values as $2, $3, etc on each line.
 #
 # Note assumption here that prolang == $5 and INTERNALlanguageId == 12.
 #
@@ -202,15 +204,15 @@ FuNkYfMgRtAbStUfF
 # may seem tedious, but avoid the temptation to write a quick x?y:z
 # conditional expression instead.  Not all awks have conditional expressions.
 #
-# Note assumptions here that prosrc == $(NF-2), pronargs == $11,
-# proisstrict == $8, proretset == $9
+# Note assumptions here that prosrc == $(NF-2), pronargs == $13,
+# proisstrict == $10, proretset == $11
 
 $AWK 'BEGIN {
     Bool["t"] = "true"
     Bool["f"] = "false"
 }
 { printf ("  { %d, \"%s\", %d, %s, %s, %s },\n"), \
-	$1, $(NF-2), $11, Bool[$8], Bool[$9], $(NF-2)
+	$1, $(NF-2), $13, Bool[$10], Bool[$11], $(NF-2)
 }' $SORTEDFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then
