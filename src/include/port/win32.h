@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.66 2007/01/22 18:31:51 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.67 2007/01/22 18:32:57 momjian Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -143,7 +143,7 @@ int			semop(int semId, struct sembuf * sops, int flag);
  *	Some day we might want to print descriptions for the most common
  *	exceptions, rather than printing a URL.
  */
-#define WIFEXITED(w)    (((w) & 0xffffff00) == 0)
+#define WIFEXITED(w)    (((w) & 0XFFFFFF00) == 0)
 #define WIFSIGNALED(w)  (!WIFEXITED(w))
 #define WEXITSTATUS(w)  (w)
 #define WTERMSIG(w)     (w)
