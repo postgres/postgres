@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.509 2007/01/22 18:31:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.510 2007/01/22 19:38:05 momjian Exp $
  *
  * NOTES
  *
@@ -2435,8 +2435,9 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %d) was terminated by exception %X\nSee http://source.winehq.org/source/include/ntstatus.h for a description\nof the hex value.",
-						procname, pid, WTERMSIG(exitstatus))));
+				(errmsg("%s (PID %d) was terminated by exception %X",
+						procname, pid, WTERMSIG(exitstatus)),
+				 errhint("See http://source.winehq.org/source/include/ntstatus.h for a description of the hex value.")));
 #endif
 	else
 		ereport(lev,
