@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.55 2007/01/20 23:13:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.56 2007/01/23 20:45:28 tgl Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -18,20 +18,14 @@
    complex numbers in ascending absolute value order.
   </para>
 
-  <note>
-   <para>
-    Prior to <productname>PostgreSQL</productname> release 7.3, it was
-    necessary to make manual additions to the system catalogs
-    <classname>pg_amop</>, <classname>pg_amproc</>, and
-    <classname>pg_opclass</> in order to create a user-defined
-    operator class.  That approach is now deprecated in favor of using
-    <xref linkend="sql-createopclass" endterm="sql-createopclass-title">,
-    which is a much simpler and less error-prone way of creating the
-    necessary catalog entries.
-   </para>
-  </note>
+  <para>
+   Operator classes can be grouped into <firstterm>operator families</>
+   to show the relationships between semantically compatible classes.
+   When only a single data type is involved, an operator class is sufficient,
+   so we'll focus on that case first and then return to operator families.
+  </para>
 
- <sect2 id="xindex-im">
+ <sect2 id="xindex-opclass">
   <title>Index Methods and Operator Classes</title>
 
   <para>
@@ -282,7 +276,7 @@
    </table>
 
   <para>
-   Note that all strategy operators return Boolean values.  In
+   Notice that all strategy operators return Boolean values.  In
    practice, all operators defined as index method strategies must
    return type <type>boolean</type>, since they must appear at the top
    level of a <literal>WHERE</> clause to be used with an index.
@@ -309,7 +303,8 @@
    functions should play each of these roles for a given data type and
    semantic interpretation.  The index method defines the set
    of functions it needs, and the operator class identifies the correct
-   functions to use by assigning them to the <quote>support function numbers</>.
+   functions to use by assigning them to the <quote>support function numbers</>
+   specified by the index method.
   </para>
 
   <para>
@@ -329,9 +324,9 @@
      <tbody>
       <row>
        <entry>
-   Compare two keys and return an integer less than zero, zero, or
-   greater than zero, indicating whether the first key is less than, equal to,
-   or greater than the second.
+        Compare two keys and return an integer less than zero, zero, or
+        greater than zero, indicating whether the first key is less than,
+        equal to, or greater than the second.
        </entry>
        <entry>1</entry>
       </row>
@@ -456,7 +451,11 @@
   <para>
    Unlike strategy operators, support functions return whichever data
    type the particular index method expects; for example in the case
-   of the comparison function for B-trees, a signed integer.
+   of the comparison function for B-trees, a signed integer.  The number
+   and types of the arguments to each support function are likewise
+   dependent on the index method.  For B-tree and hash the support functions
+   take the same input data types as do the operators included in the operator
+   class, but this is not the case for most GIN and GiST support functions.
   </para>
  </sect2>
 
@@ -644,37 +643,99 @@ CREATE OPERATOR CLASS complex_abs_ops
   </para>
  </sect2>
 
- <sect2 id="xindex-opclass-crosstype">
-  <title>Cross-Data-Type Operator Classes</title>
+ <sect2 id="xindex-opfamily">
+  <title>Operator Classes and Operator Families</title>
 
   <para>
    So far we have implicitly assumed that an operator class deals with
    only one data type.  While there certainly can be only one data type in
    a particular index column, it is often useful to index operations that
-   compare an indexed column to a value of a different data type.  This is
-   presently supported by the B-tree and GiST index methods.
+   compare an indexed column to a value of a different data type.  Also,
+   if there is use for a cross-data-type operator in connection with an
+   operator class, it is often the case that the other data type has a
+   related operator class of its own.  It is helpful to make the connections
+   between related classes explicit, because this can aid the planner in
+   optimizing SQL queries (particularly for B-tree operator classes, since
+   the planner contains a great deal of knowledge about how to work with them).
   </para>
 
   <para>
-   B-trees require the left-hand operand of each operator to be the indexed
-   data type, but the right-hand operand can be of a different type.  There
-   must be a support function having a matching signature.  For example,
-   the built-in operator class for type <type>bigint</> (<type>int8</>)
-   allows cross-type comparisons to <type>int4</> and <type>int2</>.  It
-   could be duplicated by this definition:
+   To handle these needs, <productname>PostgreSQL</productname>
+   uses the concept of an <firstterm>operator
+   family</><indexterm><primary>operator family</></indexterm>.
+   An operator family contains one or more operator classes, and may also
+   contain indexable operators and corresponding support functions that
+   belong to the family as a whole but not to any single class within the
+   family.  We say that such operators and functions are <quote>loose</>
+   within the family, as opposed to being bound into a specific class.
+   Typically each operator class contains single-data-type operators
+   while cross-data-type operators are loose in the family.
+  </para>
+
+  <para>
+   All the operators and functions in an operator family must have compatible
+   semantics, where the compatibility requirements are set by the index
+   method.  You might therefore wonder why bother to single out particular
+   subsets of the family as operator classes; and indeed for many purposes
+   the class divisions are irrelevant and the family is the only interesting
+   grouping.  The reason for defining operator classes is that they specify
+   how much of the family is needed to support any particular index.
+   If there is an index using an operator class, then that operator class
+   cannot be dropped without dropping the index &mdash; but other parts of
+   the operator family, namely other operator classes and loose operators,
+   could be dropped.  Thus, an operator class should be specified to contain
+   the minimum set of operators and functions that are reasonably needed
+   to work with an index on a specific data type, and then related but
+   non-essential operators can be added as loose members of the operator
+   family.
+  </para>
+
+  <para>
+   As an example, <productname>PostgreSQL</productname> has a built-in
+   B-tree operator family <literal>integer_ops</>, which includes operator
+   classes <literal>int8_ops</>, <literal>int4_ops</>, and
+   <literal>int2_ops</> for indexes on <type>bigint</> (<type>int8</>),
+   <type>integer</> (<type>int4</>), and <type>smallint</> (<type>int2</>)
+   columns respectively.  The family also contains cross-data-type comparison
+   operators allowing any two of these types to be compared, so that an index
+   on one of these types can be searched using a comparison value of another
+   type.  The family could be duplicated by these definitions:
 
 <programlisting>
+CREATE OPERATOR FAMILY integer_ops USING btree;
+
 CREATE OPERATOR CLASS int8_ops
-DEFAULT FOR TYPE int8 USING btree AS
+DEFAULT FOR TYPE int8 USING btree FAMILY integer_ops AS
   -- standard int8 comparisons
   OPERATOR 1 &lt; ,
   OPERATOR 2 &lt;= ,
   OPERATOR 3 = ,
   OPERATOR 4 &gt;= ,
   OPERATOR 5 &gt; ,
-  FUNCTION 1 btint8cmp(int8, int8) ,
+  FUNCTION 1 btint8cmp(int8, int8) ;
 
-  -- cross-type comparisons to int2 (smallint)
+CREATE OPERATOR CLASS int4_ops
+DEFAULT FOR TYPE int4 USING btree FAMILY integer_ops AS
+  -- standard int4 comparisons
+  OPERATOR 1 &lt; ,
+  OPERATOR 2 &lt;= ,
+  OPERATOR 3 = ,
+  OPERATOR 4 &gt;= ,
+  OPERATOR 5 &gt; ,
+  FUNCTION 1 btint4cmp(int4, int4) ;
+
+CREATE OPERATOR CLASS int2_ops
+DEFAULT FOR TYPE int2 USING btree FAMILY integer_ops AS
+  -- standard int2 comparisons
+  OPERATOR 1 &lt; ,
+  OPERATOR 2 &lt;= ,
+  OPERATOR 3 = ,
+  OPERATOR 4 &gt;= ,
+  OPERATOR 5 &gt; ,
+  FUNCTION 1 btint2cmp(int2, int2) ;
+
+ALTER OPERATOR FAMILY integer_ops USING btree ADD
+  -- cross-type comparisons int8 vs int2
   OPERATOR 1 &lt; (int8, int2) ,
   OPERATOR 2 &lt;= (int8, int2) ,
   OPERATOR 3 = (int8, int2) ,
@@ -682,31 +743,92 @@ DEFAULT FOR TYPE int8 USING btree AS
   OPERATOR 5 &gt; (int8, int2) ,
   FUNCTION 1 btint82cmp(int8, int2) ,
 
-  -- cross-type comparisons to int4 (integer)
+  -- cross-type comparisons int8 vs int4
   OPERATOR 1 &lt; (int8, int4) ,
   OPERATOR 2 &lt;= (int8, int4) ,
   OPERATOR 3 = (int8, int4) ,
   OPERATOR 4 &gt;= (int8, int4) ,
   OPERATOR 5 &gt; (int8, int4) ,
-  FUNCTION 1 btint84cmp(int8, int4) ;
+  FUNCTION 1 btint84cmp(int8, int4) ,
+
+  -- cross-type comparisons int4 vs int2
+  OPERATOR 1 &lt; (int4, int2) ,
+  OPERATOR 2 &lt;= (int4, int2) ,
+  OPERATOR 3 = (int4, int2) ,
+  OPERATOR 4 &gt;= (int4, int2) ,
+  OPERATOR 5 &gt; (int4, int2) ,
+  FUNCTION 1 btint42cmp(int4, int2) ,
+
+  -- cross-type comparisons int4 vs int8
+  OPERATOR 1 &lt; (int4, int8) ,
+  OPERATOR 2 &lt;= (int4, int8) ,
+  OPERATOR 3 = (int4, int8) ,
+  OPERATOR 4 &gt;= (int4, int8) ,
+  OPERATOR 5 &gt; (int4, int8) ,
+  FUNCTION 1 btint48cmp(int4, int8) ,
+
+  -- cross-type comparisons int2 vs int8
+  OPERATOR 1 &lt; (int2, int8) ,
+  OPERATOR 2 &lt;= (int2, int8) ,
+  OPERATOR 3 = (int2, int8) ,
+  OPERATOR 4 &gt;= (int2, int8) ,
+  OPERATOR 5 &gt; (int2, int8) ,
+  FUNCTION 1 btint28cmp(int2, int8) ,
+
+  -- cross-type comparisons int2 vs int4
+  OPERATOR 1 &lt; (int2, int4) ,
+  OPERATOR 2 &lt;= (int2, int4) ,
+  OPERATOR 3 = (int2, int4) ,
+  OPERATOR 4 &gt;= (int2, int4) ,
+  OPERATOR 5 &gt; (int2, int4) ,
+  FUNCTION 1 btint24cmp(int2, int4) ;
 </programlisting>
 
    Notice that this definition <quote>overloads</> the operator strategy and
-   support function numbers.  This is allowed (for B-tree operator classes
-   only) so long as each instance of a particular number has a different
-   right-hand data type.  The instances that are not cross-type are the
-   default or primary operators of the operator class.
+   support function numbers: each number occurs multiple times within the
+   family.  This is allowed so long as each instance of a
+   particular number has distinct input data types.  The instances that have
+   both input types equal to an operator class's input type are the
+   primary operators and support functions for that operator class,
+   and in most cases should be declared as part of the operator class rather
+   than as loose members of the family.
   </para>
 
   <para>
-   GiST indexes do not allow overloading of strategy or support function
-   numbers, but it is still possible to get the effect of supporting
-   multiple right-hand data types, by assigning a distinct strategy number
-   to each operator that needs to be supported.  The <literal>consistent</>
-   support function must determine what it needs to do based on the strategy
-   number, and must be prepared to accept comparison values of the appropriate
-   data types.
+   In a B-tree operator family, all the operators in the family must sort
+   compatibly, meaning that the transitive laws hold across all the data types
+   supported by the family: <quote>if A = B and B = C, then A =
+   C</>, and <quote>if A &lt; B and B &lt; C, then A &lt; C</>.  For each
+   operator in the family there must be a support function having the same
+   two input data types as the operator.  It is recommended that a family be
+   complete, i.e., for each combination of data types, all operators are
+   included.  An operator class should include just the non-cross-type
+   operators and support function for its data type.
   </para>
+
+  <para>
+   At this writing, hash indexes do not support cross-type operations,
+   and so there is little use for a hash operator family larger than one
+   operator class.  This is expected to be relaxed in the future.
+  </para>
+
+  <para>
+   GIN and GiST indexes do not have any explicit notion of cross-data-type
+   operations.  The set of operators supported is just whatever the primary
+   support functions for a given operator class can handle.
+  </para>
+
+  <note>
+   <para>
+    Prior to <productname>PostgreSQL</productname> 8.3, there was no concept
+    of operator families, and so any cross-data-type operators intended to be
+    used with an index had to be bound directly into the index's operator
+    class.  While this approach still works, it is deprecated because it
+    makes an index's dependencies too broad, and because the planner can
+    handle cross-data-type comparisons more effectively when both data types
+    have operators in the same operator family.
+   </para>
+  </note>
  </sect2>
 
  <sect2 id="xindex-opclass-dependencies">
@@ -774,7 +896,8 @@ DEFAULT FOR TYPE int8 USING btree AS
   </para>
 
   <para>
-   Normally, declaring an operator as a member of an operator class means
+   Normally, declaring an operator as a member of an operator class
+   (or family) means
    that the index method can retrieve exactly the set of rows
    that satisfy a <literal>WHERE</> condition using the operator.  For example,
 <programlisting>
