@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.20 2007/01/20 09:27:19 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.21 2007/01/23 23:39:16 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,6 @@
 
 #ifdef USE_LIBXML
 
-#define PG_XML_DEFAULT_URI "dummy.xml"
-
 static StringInfo xml_err_buf = NULL;
 
 static void 	xml_init(void);
@@ -63,7 +61,7 @@ static void 	xml_pfree(void *ptr);
 static char    *xml_pstrdup(const char *string);
 #endif
 static void 	xml_ereport(int level, int sqlcode,
-							const char *msg, void *ctxt);
+							const char *msg);
 static void 	xml_errorHandler(void *ctxt, const char *msg, ...);
 static void 	xml_ereport_by_code(int level, int sqlcode,
 									const char *msg, int errcode);
@@ -667,14 +665,14 @@ xmlvalidate(PG_FUNCTION_ARGS)
 		ctxt = xmlNewParserCtxt();
 		if (ctxt == NULL)
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not allocate parser context", ctxt);
+						"could not allocate parser context");
 
 		doc = xmlCtxtReadMemory(ctxt, (char *) VARDATA(data),
 								VARSIZE(data) - VARHDRSZ,
-								PG_XML_DEFAULT_URI, NULL, 0);
+								NULL, NULL, 0);
 		if (doc == NULL)
 			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-						"could not parse XML data", ctxt);
+						"could not parse XML data");
 
 #if 0
 		uri = xmlCreateURI();
@@ -683,21 +681,21 @@ xmlvalidate(PG_FUNCTION_ARGS)
 		uri = xmlParseURI(dtdOrUri);
 		if (uri == NULL)
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"not implemented yet... (TODO)", ctxt);
+						"not implemented yet... (TODO)");
 		else
 #endif
 			dtd = xmlParseDTD(NULL, xml_text2xmlChar(dtdOrUri));
 
 		if (dtd == NULL)
 			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-						"could not load DTD", ctxt);
+						"could not load DTD");
 
 		if (xmlValidateDtd(xmlNewValidCtxt(), doc, dtd) == 1)
 			result = true;
 
 		if (!result)
 			xml_ereport(NOTICE, ERRCODE_INVALID_XML_DOCUMENT,
-						"validation against DTD failed", ctxt);
+						"validation against DTD failed");
 
 #if 0
 		if (uri)
@@ -977,7 +975,6 @@ finished:
  * Convert a C string to XML internal representation
  *
  * TODO maybe, libxml2's xmlreader is better? (do not construct DOM, yet do not use SAX - see xml_reader.c)
- * TODO what about internal URI for docs? (see PG_XML_DEFAULT_URI below)
  */
 static xmlDocPtr
 xml_parse(text *data, bool is_document, bool preserve_whitespace, xmlChar *encoding)
@@ -1006,7 +1003,7 @@ xml_parse(text *data, bool is_document, bool preserve_whitespace, xmlChar *encod
 		ctxt = xmlNewParserCtxt();
 		if (ctxt == NULL)
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not allocate parser context", ctxt);
+						"could not allocate parser context");
 
 		if (is_document)
 		{
@@ -1018,13 +1015,13 @@ xml_parse(text *data, bool is_document, bool preserve_whitespace, xmlChar *encod
 			 * SQL/XML:10.16.7.e)
 			 */
 			doc = xmlCtxtReadDoc(ctxt, utf8string,
-								 PG_XML_DEFAULT_URI,
+								 NULL,
 								 "UTF-8",
-									XML_PARSE_NOENT | XML_PARSE_DTDATTR
-									| (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
+								 XML_PARSE_NOENT | XML_PARSE_DTDATTR
+								 | (preserve_whitespace ? 0 : XML_PARSE_NOBLANKS));
 			if (doc == NULL)
 				xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
-							"invalid XML document", ctxt);
+							"invalid XML document");
 		}
 		else
 		{
@@ -1036,12 +1033,14 @@ xml_parse(text *data, bool is_document, bool preserve_whitespace, xmlChar *encod
 			doc = xmlNewDoc(NULL);
 
 			res_code = parse_xml_decl(utf8string, &count, &version, NULL, &standalone);
-
-			if (res_code == 0)
-				res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0, utf8string + count, NULL);
 			if (res_code != 0)
 				xml_ereport_by_code(ERROR, ERRCODE_INVALID_XML_CONTENT,
-									"invalid XML content", res_code);
+									"invalid XML content: invalid XML declaration", res_code);
+
+			res_code = xmlParseBalancedChunkMemory(doc, NULL, NULL, 0, utf8string + count, NULL);
+			if (res_code != 0)
+				xml_ereport(ERROR, ERRCODE_INVALID_XML_CONTENT,
+							"invalid XML content");
 
 			doc->version = xmlStrdup(version);
 			doc->encoding = xmlStrdup((xmlChar *) "UTF-8");
@@ -1120,49 +1119,45 @@ xml_pstrdup(const char *string)
 
 
 /*
- * Wrapper for "ereport" function.
- * Adds detail - libxml's native error message, if any.
+ * Wrapper for "ereport" function for XML-related errors.  The "msg"
+ * is the SQL-level message; some can be adopted from the SQL/XML
+ * standard.  This function adds libxml's native error messages, if
+ * any, as detail.
  */
 static void
 xml_ereport(int level, int sqlcode,
-			const char *msg, void *ctxt)
+			const char *msg)
 {
-	xmlErrorPtr libxmlErr = NULL;
+	char *detail;
 
 	if (xml_err_buf->len > 0)
 	{
-		ereport(DEBUG1,
-				(errmsg("%s", xml_err_buf->data)));
+		detail = pstrdup(xml_err_buf->data);
 		xml_err_buf->data[0] = '\0';
 		xml_err_buf->len = 0;
 	}
+	else
+		detail = NULL;
 
-	if (ctxt != NULL)
-		libxmlErr = xmlCtxtGetLastError(ctxt);
+	/* libxml error messages end in '\n'; get rid of it */
+	if (detail)
+	{
+		size_t len;
 
-	if (libxmlErr == NULL)
+		len = strlen(detail);
+		if (len > 0 && detail[len-1] == '\n')
+			detail[len-1] = '\0';
+
+		ereport(level,
+				(errcode(sqlcode),
+				 errmsg("%s", msg),
+				 errdetail("%s", detail)));
+	}
+	else
 	{
 		ereport(level,
 				(errcode(sqlcode),
 				 errmsg("%s", msg)));
-	}
-	else
-	{
-		/* as usual, libxml error message contains '\n'; get rid of it */
-		char *xmlErrDetail;
-		int xmlErrLen, i;
-
-		xmlErrDetail = pstrdup(libxmlErr->message);
-		xmlErrLen = strlen(xmlErrDetail);
-		for (i = 0; i < xmlErrLen; i++)
-		{
-			if (xmlErrDetail[i] == '\n')
-				xmlErrDetail[i] = '.';
-		}
-		ereport(level,
-				(errcode(sqlcode),
-				 errmsg("%s", msg),
-				 errdetail("%s", xmlErrDetail)));
 	}
 }
 
@@ -1194,8 +1189,11 @@ xml_errorHandler(void *ctxt, const char *msg,...)
 
 
 /*
- * Return error message by libxml error code
- * TODO make them closer to recommendations from Postgres manual
+ * Wrapper for "ereport" function for XML-related errors.  The "msg"
+ * is the SQL-level message; some can be adopted from the SQL/XML
+ * standard.  This function uses "code" to create a textual detail
+ * message.  At the moment, we only need to cover those codes that we
+ * may raise in this file.
  */
 static void
 xml_ereport_by_code(int level, int sqlcode,
@@ -1203,173 +1201,26 @@ xml_ereport_by_code(int level, int sqlcode,
 {
     const char *det;
 
-	if (xml_err_buf->len > 0)
-	{
-		ereport(DEBUG1,
-				(errmsg("%s", xml_err_buf->data)));
-		xml_err_buf->data[0] = '\0';
-		xml_err_buf->len = 0;
-	}
-
     switch (code)
 	{
-        case XML_ERR_INTERNAL_ERROR:
-            det = "libxml internal error";
-            break;
-        case XML_ERR_ENTITY_LOOP:
-            det = "Detected an entity reference loop";
-            break;
-        case XML_ERR_ENTITY_NOT_STARTED:
-            det = "EntityValue: \" or ' expected";
-            break;
-        case XML_ERR_ENTITY_NOT_FINISHED:
-            det = "EntityValue: \" or ' expected";
-            break;
-        case XML_ERR_ATTRIBUTE_NOT_STARTED:
-            det = "AttValue: \" or ' expected";
-            break;
-        case XML_ERR_LT_IN_ATTRIBUTE:
-            det = "Unescaped '<' not allowed in attributes values";
-            break;
-        case XML_ERR_LITERAL_NOT_STARTED:
-            det = "SystemLiteral \" or ' expected";
-            break;
-        case XML_ERR_LITERAL_NOT_FINISHED:
-            det = "Unfinished System or Public ID \" or ' expected";
-            break;
-        case XML_ERR_MISPLACED_CDATA_END:
-            det = "Sequence ']]>' not allowed in content";
-            break;
-        case XML_ERR_URI_REQUIRED:
-            det = "SYSTEM or PUBLIC, the URI is missing";
-            break;
-        case XML_ERR_PUBID_REQUIRED:
-            det = "PUBLIC, the Public Identifier is missing";
-            break;
-        case XML_ERR_HYPHEN_IN_COMMENT:
-            det = "Comment must not contain '--' (double-hyphen)";
-            break;
-        case XML_ERR_PI_NOT_STARTED:
-            det = "xmlParsePI : no target name";
-            break;
-        case XML_ERR_RESERVED_XML_NAME:
-            det = "Invalid PI name";
-            break;
-        case XML_ERR_NOTATION_NOT_STARTED:
-            det = "NOTATION: Name expected here";
-            break;
-        case XML_ERR_NOTATION_NOT_FINISHED:
-            det = "'>' required to close NOTATION declaration";
-            break;
-        case XML_ERR_VALUE_REQUIRED:
-            det = "Entity value required";
-            break;
-        case XML_ERR_URI_FRAGMENT:
-            det = "Fragment not allowed";
-            break;
-        case XML_ERR_ATTLIST_NOT_STARTED:
-            det = "'(' required to start ATTLIST enumeration";
-            break;
-        case XML_ERR_NMTOKEN_REQUIRED:
-            det = "NmToken expected in ATTLIST enumeration";
-            break;
-        case XML_ERR_ATTLIST_NOT_FINISHED:
-            det = "')' required to finish ATTLIST enumeration";
-            break;
-        case XML_ERR_MIXED_NOT_STARTED:
-            det = "MixedContentDecl : '|' or ')*' expected";
-            break;
-        case XML_ERR_PCDATA_REQUIRED:
-            det = "MixedContentDecl : '#PCDATA' expected";
-            break;
-        case XML_ERR_ELEMCONTENT_NOT_STARTED:
-            det = "ContentDecl : Name or '(' expected";
-            break;
-        case XML_ERR_ELEMCONTENT_NOT_FINISHED:
-            det = "ContentDecl : ',' '|' or ')' expected";
-            break;
-        case XML_ERR_PEREF_IN_INT_SUBSET:
-            det = "PEReference: forbidden within markup decl in internal subset";
-            break;
-        case XML_ERR_GT_REQUIRED:
-            det = "Expected '>'";
-            break;
-        case XML_ERR_CONDSEC_INVALID:
-            det = "XML conditional section '[' expected";
-            break;
-        case XML_ERR_EXT_SUBSET_NOT_FINISHED:
-            det = "Content error in the external subset";
-            break;
-        case XML_ERR_CONDSEC_INVALID_KEYWORD:
-            det = "conditional section INCLUDE or IGNORE keyword expected";
-            break;
-        case XML_ERR_CONDSEC_NOT_FINISHED:
-            det = "XML conditional section not closed";
-            break;
-        case XML_ERR_XMLDECL_NOT_STARTED:
-            det = "Text declaration '<?xml' required";
-            break;
-        case XML_ERR_XMLDECL_NOT_FINISHED:
-            det = "parsing XML declaration: '?>' expected";
-            break;
-        case XML_ERR_EXT_ENTITY_STANDALONE:
-            det = "external parsed entities cannot be standalone";
-            break;
-        case XML_ERR_ENTITYREF_SEMICOL_MISSING:
-            det = "EntityRef: expecting ';'";
-            break;
-        case XML_ERR_DOCTYPE_NOT_FINISHED:
-            det = "DOCTYPE improperly terminated";
-            break;
-        case XML_ERR_LTSLASH_REQUIRED:
-            det = "EndTag: '</' not found";
-            break;
-        case XML_ERR_EQUAL_REQUIRED:
-            det = "Expected '='";
-            break;
-        case XML_ERR_STRING_NOT_CLOSED:
-            det = "String not closed expecting \" or '";
-            break;
-        case XML_ERR_STRING_NOT_STARTED:
-            det = "String not started expecting ' or \"";
-            break;
-        case XML_ERR_ENCODING_NAME:
-            det = "Invalid XML encoding name";
-            break;
-        case XML_ERR_STANDALONE_VALUE:
-            det = "Standalone accepts only 'yes' or 'no'";
-            break;
-        case XML_ERR_DOCUMENT_EMPTY:
-            det = "Document is empty";
-            break;
-        case XML_ERR_DOCUMENT_END:
-            det = "Extra content at the end of the document";
-            break;
-        case XML_ERR_NOT_WELL_BALANCED:
-            det = "Chunk is not well balanced";
-            break;
-        case XML_ERR_EXTRA_CONTENT:
-            det = "Extra content at the end of well balanced chunk";
-            break;
-        case XML_ERR_VERSION_MISSING:
-            det = "Malformed declaration expecting version";
-            break;
-        /* more err codes... Please, keep the order! */
-        case XML_ERR_ATTRIBUTE_WITHOUT_VALUE: /* 41 */
-        	det ="Attribute without value";
-        	break;
-        case XML_ERR_ATTRIBUTE_REDEFINED:
-        	det ="Attribute defined more than once in the same element";
-        	break;
-        case XML_ERR_COMMENT_NOT_FINISHED: /* 45 */
-            det = "Comment is not finished";
-            break;
-        case XML_ERR_NAME_REQUIRED: /* 68 */
-            det = "Element name not found";
-            break;
-        case XML_ERR_TAG_NOT_FINISHED: /* 77 */
-            det = "Closing tag not found";
-            break;
+		case XML_ERR_INVALID_CHAR:
+			det = "Invalid character value";
+			break;
+		case XML_ERR_SPACE_REQUIRED:
+			det = "Space required";
+			break;
+		case XML_ERR_STANDALONE_VALUE:
+			det = "standalone accepts only 'yes' or 'no'";
+			break;
+		case XML_ERR_VERSION_MISSING:
+			det = "Malformed declaration expecting version";
+			break;
+		case XML_ERR_MISSING_ENCODING:
+			det = "Missing encoding in text declaration";
+			break;
+		case XML_ERR_XMLDECL_NOT_FINISHED:
+			det = "Parsing XML declaration: '?>' expected";
+			break;
         default:
             det = "Unrecognized libxml error code: %d";
 			break;

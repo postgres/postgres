@@ -6,7 +6,9 @@ INSERT INTO xmltest VALUES (1, '<value>one</value>');
 INSERT INTO xmltest VALUES (2, '<value>two</value>');
 INSERT INTO xmltest VALUES (3, '<wrong');
 ERROR:  invalid XML content
-DETAIL:  Expected '>'
+DETAIL:  Entity: line 1: parser error : Couldn't find end of Start Tag wrong line 1
+<wrong
+      ^
 SELECT * FROM xmltest;
  id |        data        
 ----+--------------------
@@ -54,7 +56,9 @@ SELECT xmlconcat(1, 2);
 ERROR:  argument of XMLCONCAT must be type xml, not type integer
 SELECT xmlconcat('bad', '<syntax');
 ERROR:  invalid XML content
-DETAIL:  Expected '>'
+DETAIL:  Entity: line 1: parser error : Couldn't find end of Start Tag syntax line 1
+<syntax
+       ^
 SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
              xmlconcat             
 -----------------------------------
@@ -155,7 +159,9 @@ SELECT xmlparse(content '<abc>x</abc>');
 
 SELECT xmlparse(document 'abc');
 ERROR:  invalid XML document
-DETAIL:  Start tag expected, '<' not found.
+DETAIL:  Entity: line 1: parser error : Start tag expected, '<' not found
+abc
+^
 SELECT xmlparse(document '<abc>x</abc>');
    xmlparse   
 --------------
@@ -273,7 +279,9 @@ SELECT xml 'abc' IS NOT DOCUMENT;
 
 SELECT '<>' IS NOT DOCUMENT;
 ERROR:  invalid XML content
-DETAIL:  Element name not found
+DETAIL:  Entity: line 1: parser error : StartTag: invalid element name
+<>
+ ^
 SELECT xmlagg(data) FROM xmltest;
                 xmlagg                
 --------------------------------------
