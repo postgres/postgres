@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.67 2007/01/22 18:32:57 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.68 2007/01/23 01:45:11 momjian Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -140,13 +140,26 @@ int			semop(int semId, struct sembuf * sops, int flag);
  *		Descriptions - http://www.comp.nus.edu.sg/~wuyongzh/my_doc/ntstatus.txt
  *		MS SDK - http://www.nologs.com/ntstatus.html
  *
- *	Some day we might want to print descriptions for the most common
- *	exceptions, rather than printing a URL.
+ *	Because FormatMessage only handles NT_ERROR strings, and assumes they
+ *	do not have the 0xC prefix, we strip it to match this list:
+ *		http://msdn2.microsoft.com/en-us/library/ms681381.aspx
+ *
+ *	When using FormatMessage():
+ *
+ *	On MinGW, system() returns STATUS_* values.  MSVC might be
+ *	different.  To test, create a binary that does *(NULL), and
+ *	then create a second binary that calls it via system(),
+ *	and check the return value of system().  On MinGW, it is
+ *	0xC0000005 == STATUS_ACCESS_VIOLATION, and 0x5 is a value
+ *	FormatMessage() can look up.  GetLastError() does not work;
+ *	always zero.
  */
-#define WIFEXITED(w)    (((w) & 0XFFFFFF00) == 0)
-#define WIFSIGNALED(w)  (!WIFEXITED(w))
-#define WEXITSTATUS(w)  (w)
-#define WTERMSIG(w)     (w)
+#define STATUS_ERROR_MASK	0xC0000000
+#define WIFEXITED(w)		(((w) & 0XFFFFFF00) == 0)
+#define WIFSIGNALED(w)		(!WIFEXITED(w))
+#define WEXITSTATUS(w)		(w)
+#define WERRORCODE(w)		((((w) & STATUS_ERROR_MASK) == STATUS_ERROR_MASK) ? \
+							((w) & ~STATUS_ERROR_MASK) : 0)
 
 #define sigmask(sig) ( 1 << ((sig)-1) )
 
