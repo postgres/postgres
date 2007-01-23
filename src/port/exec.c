@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.46 2007/01/23 01:45:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.47 2007/01/23 03:28:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -586,24 +586,8 @@ pclose_check(FILE *stream)
 		log_error(_("child process was terminated by signal %d"),
 				  WTERMSIG(exitstatus));
 #else
-	{
-		static char last_system_error[512];
-
-		if (WERRORCODE(exitstatus) == 0 ||
-			FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS |
-						  FORMAT_MESSAGE_FROM_SYSTEM,
-						  NULL,
-						  WERRORCODE(exitstatus),
-						  MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
-						  last_system_error,
-						  sizeof(last_system_error) - 1,
-						  NULL) == 0)
-			snprintf(last_system_error, sizeof(last_system_error) - 1,
-					 "Unknown error %X.", WEXITSTATUS(exitstatus));
-
-		log_error(_("child process was terminated by the operating system\n%s"),
-				  last_system_error);
-	}
+		log_error(_("child process was terminated by exception %X\nSee /include/ntstatus.h for a description\nof the hex value."),
+				  WTERMSIG(exitstatus));
 #endif
 	else
 		log_error(_("child process exited with unrecognized status %d"),

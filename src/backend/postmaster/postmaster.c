@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.511 2007/01/23 01:45:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.512 2007/01/23 03:28:49 momjian Exp $
  *
  * NOTES
  *
@@ -2430,30 +2430,14 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 				(errmsg("%s (PID %d) was terminated by signal %d",
 						procname, pid, WTERMSIG(exitstatus))));
 #else
-	{
-		static char last_system_error[512];
-
-		if (WERRORCODE(exitstatus) == 0 ||
-			FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS |
-						  FORMAT_MESSAGE_FROM_SYSTEM,
-						  NULL,
-						  WERRORCODE(exitstatus),
-						  MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT),
-						  last_system_error,
-						  sizeof(last_system_error) - 1,
-						  NULL) == 0)
-			snprintf(last_system_error, sizeof(last_system_error) - 1,
-					 "Unknown error %X.", WEXITSTATUS(exitstatus));
-
 		ereport(lev,
-	
+
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %d) was terminated by the operating system",
-						procname, pid),
-				 errdetail("%s", last_system_error)));
-	}
+				(errmsg("%s (PID %d) was terminated by exception %X",
+						procname, pid, WTERMSIG(exitstatus)),
+				 errhint("See /include/ntstatus.h for a description of the hex value.")));
 #endif
 	else
 		ereport(lev,
