@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.18 2006/10/16 17:28:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.19 2007/01/23 05:07:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,9 +20,10 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAULT ] FOR TYPE <replaceable class="parameter">data_type</replaceable> USING <replaceable class="parameter">index_method</replaceable> AS
+CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAULT ] FOR TYPE <replaceable class="parameter">data_type</replaceable>
+  USING <replaceable class="parameter">index_method</replaceable> [ FAMILY <replaceable class="parameter">family_name</replaceable> ] AS
   {  OPERATOR <replaceable class="parameter">strategy_number</replaceable> <replaceable class="parameter">operator_name</replaceable> [ ( <replaceable class="parameter">op_type</replaceable>, <replaceable class="parameter">op_type</replaceable> ) ] [ RECHECK ]
-   | FUNCTION <replaceable class="parameter">support_number</replaceable> <replaceable class="parameter">funcname</replaceable> ( <replaceable class="parameter">argument_type</replaceable> [, ...] )
+   | FUNCTION <replaceable class="parameter">support_number</replaceable> [ ( <replaceable class="parameter">op_type</replaceable> [ , <replaceable class="parameter">op_type</replaceable> ] ) ] <replaceable class="parameter">funcname</replaceable> ( <replaceable class="parameter">argument_type</replaceable> [, ...] )
    | STORAGE <replaceable class="parameter">storage_type</replaceable>
   } [, ... ]
 </synopsis>
@@ -40,7 +41,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    be used by 
    the index method when the operator class is selected for an
    index column.  All the operators and functions used by an operator
-   class must be defined before the operator class is created.
+   class must be defined before the operator class can be created.
   </para>
 
   <para>
@@ -63,6 +64,15 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    functions required by the index method, nor whether the operators and
    functions form a self-consistent set.  It is the user's
    responsibility to define a valid operator class.
+  </para>
+
+  <para>
+   Related operator classes can be grouped into <firstterm>operator
+   families</>.  To add a new operator class to an existing family,
+   specify the <literal>FAMILY</> option in <command>CREATE OPERATOR
+   CLASS</command>.  Without this option, the new class is placed into
+   a family named the same as the new class (creating that family if
+   it doesn't already exist).
   </para>
 
   <para>
@@ -114,6 +124,17 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
    </varlistentry>
 
    <varlistentry>
+    <term><replaceable class="parameter">family_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the existing operator family to add this operator class to.
+      If not specified, a family named the same as the operator class is
+      used (creating it, if it doesn't already exist).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
     <term><replaceable class="parameter">strategy_number</replaceable></term>
     <listitem>
      <para>
@@ -137,10 +158,23 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
     <term><replaceable class="parameter">op_type</replaceable></term>
     <listitem>
      <para>
-      The operand data type(s) of an operator, or <literal>NONE</> to
+      In an <literal>OPERATOR</> clause,
+      the operand data type(s) of the operator, or <literal>NONE</> to
       signify a left-unary or right-unary operator.  The operand data
       types may be omitted in the normal case where they are the same
       as the operator class's data type.
+     </para>
+
+     <para>
+      In a <literal>FUNCTION</> clause, the operand data type(s) the
+      function is intended to support, if different from
+      the input data type(s) of the function (for B-tree and hash indexes)
+      or the class's data type (for GIN and GiST indexes).  These defaults
+      are always correct, so there is no point in specifying <replaceable
+      class="parameter">op_type</replaceable> in a <literal>FUNCTION</> clause
+      in <command>CREATE OPERATOR CLASS</>, but the option is provided
+      for consistency with the comparable syntax in
+      <command>ALTER OPERATOR FAMILY</>.
      </para>
     </listitem>
    </varlistentry>
@@ -192,7 +226,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
      <para>
       The data type actually stored in the index.  Normally this is
       the same as the column data type, but some index methods
-      (GIN and GiST for now) allow it to be different.  The
+      (currently GIN and GiST) allow it to be different.  The
       <literal>STORAGE</> clause must be omitted unless the index
       method allows a different type to be used.
      </para>
@@ -268,6 +302,8 @@ CREATE OPERATOR CLASS gist__int_ops
   <simplelist type="inline">
    <member><xref linkend="sql-alteropclass" endterm="sql-alteropclass-title"></member>
    <member><xref linkend="sql-dropopclass" endterm="sql-dropopclass-title"></member>
+   <member><xref linkend="sql-createopfamily" endterm="sql-createopfamily-title"></member>
+   <member><xref linkend="sql-alteropfamily" endterm="sql-alteropfamily-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.338 2007/01/09 02:14:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.339 2007/01/23 05:07:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -852,6 +852,7 @@ typedef enum ObjectType
 	OBJECT_LARGEOBJECT,
 	OBJECT_OPCLASS,
 	OBJECT_OPERATOR,
+	OBJECT_OPFAMILY,
 	OBJECT_ROLE,
 	OBJECT_RULE,
 	OBJECT_SCHEMA,
@@ -1194,7 +1195,7 @@ typedef struct DropTableSpaceStmt
 {
 	NodeTag		type;
 	char	   *tablespacename;
-	bool		missing_ok;		/* skip error if a missing? */
+	bool		missing_ok;		/* skip error if missing? */
 } DropTableSpaceStmt;
 
 /* ----------------------
@@ -1362,9 +1363,34 @@ typedef struct CreateOpClassItem
 	List	   *args;			/* argument types */
 	int			number;			/* strategy num or support proc num */
 	bool		recheck;		/* only used for operators */
+	List	   *class_args;		/* only used for functions */
 	/* fields used for a storagetype item: */
 	TypeName   *storedtype;		/* datatype stored in index */
 } CreateOpClassItem;
+
+/* ----------------------
+ *		Create Operator Family Statement
+ * ----------------------
+ */
+typedef struct CreateOpFamilyStmt
+{
+	NodeTag		type;
+	List	   *opfamilyname;	/* qualified name (list of Value strings) */
+	char	   *amname;			/* name of index AM opfamily is for */
+} CreateOpFamilyStmt;
+
+/* ----------------------
+ *		Alter Operator Family Statement
+ * ----------------------
+ */
+typedef struct AlterOpFamilyStmt
+{
+	NodeTag		type;
+	List	   *opfamilyname;	/* qualified name (list of Value strings) */
+	char	   *amname;			/* name of index AM opfamily is for */
+	bool		isDrop;			/* ADD or DROP the items? */
+	List	   *items;			/* List of CreateOpClassItem nodes */
+} AlterOpFamilyStmt;
 
 /* ----------------------
  *		Drop Table|Sequence|View|Index|Type|Domain|Conversion|Schema Statement
@@ -1395,7 +1421,7 @@ typedef struct DropPropertyStmt
 	char	   *property;		/* name of rule, trigger, etc */
 	ObjectType	removeType;		/* OBJECT_RULE or OBJECT_TRIGGER */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
-	bool		missing_ok;		/* skip error if a missing? */
+	bool		missing_ok;		/* skip error if missing? */
 } DropPropertyStmt;
 
 /* ----------------------
@@ -1546,7 +1572,7 @@ typedef struct RemoveFuncStmt
 	List	   *name;			/* qualified name of object to drop */
 	List	   *args;			/* types of the arguments */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
-	bool		missing_ok;		/* skip error if a missing? */
+	bool		missing_ok;		/* skip error if missing? */
 } RemoveFuncStmt;
 
 /* ----------------------
@@ -1559,8 +1585,21 @@ typedef struct RemoveOpClassStmt
 	List	   *opclassname;	/* qualified name (list of Value strings) */
 	char	   *amname;			/* name of index AM opclass is for */
 	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
-	bool		missing_ok;		/* skip error if a missing? */
+	bool		missing_ok;		/* skip error if missing? */
 } RemoveOpClassStmt;
+
+/* ----------------------
+ *		Drop Operator Family Statement
+ * ----------------------
+ */
+typedef struct RemoveOpFamilyStmt
+{
+	NodeTag		type;
+	List	   *opfamilyname;	/* qualified name (list of Value strings) */
+	char	   *amname;			/* name of index AM opfamily is for */
+	DropBehavior behavior;		/* RESTRICT or CASCADE behavior */
+	bool		missing_ok;		/* skip error if missing? */
+} RemoveOpFamilyStmt;
 
 /* ----------------------
  *		Alter Object Rename Statement
@@ -1917,7 +1956,7 @@ typedef struct DropCastStmt
 	TypeName   *sourcetype;
 	TypeName   *targettype;
 	DropBehavior behavior;
-	bool		missing_ok;		/* skip error if a missing? */
+	bool		missing_ok;		/* skip error if missing? */
 } DropCastStmt;
 
 

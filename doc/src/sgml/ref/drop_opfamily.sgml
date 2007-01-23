@@ -1,0 +1,135 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_opfamily.sgml,v 1.1 2007/01/23 05:07:17 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-DROPOPFAMILY">
+ <refmeta>
+  <refentrytitle id="SQL-DROPOPFAMILY-TITLE">DROP OPERATOR FAMILY</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP OPERATOR FAMILY</refname>
+  <refpurpose>remove an operator family</refpurpose>
+ </refnamediv>
+  
+ <indexterm zone="sql-dropopfamily">
+  <primary>DROP OPERATOR FAMILY</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP OPERATOR FAMILY [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> USING <replaceable class="PARAMETER">index_method</replaceable> [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP OPERATOR FAMILY</command> drops an existing operator family.
+   To execute this command you must be the owner of the operator family.
+  </para>
+
+  <para>
+   <command>DROP OPERATOR FAMILY</command> includes dropping any operator
+   classes contained in the family, but it does not drop any of the operators
+   or functions referenced by the family.  If there are any indexes depending
+   on operator classes within the family, you will need to specify
+   <literal>CASCADE</> for the drop to complete.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the operator family does not exist.
+      A notice is issued in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing operator family.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">index_method</replaceable></term>
+    <listitem>
+     <para>
+      The name of the index access method the operator family is for.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the operator family.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the operator family if any objects depend on it.
+      This is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Remove the B-tree operator family <literal>float_ops</literal>:
+
+<programlisting>
+DROP OPERATOR FAMILY float_ops USING btree;
+</programlisting>
+
+   This command will not succeed if there are any existing indexes
+   that use operator classes within the family.  Add <literal>CASCADE</> to
+   drop such indexes along with the operator family.
+  </para>
+ </refsect1>
+ 
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>DROP OPERATOR FAMILY</command> statement in the
+   SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alteropfamily" endterm="sql-alteropfamily-title"></member>
+   <member><xref linkend="sql-createopfamily" endterm="sql-createopfamily-title"></member>
+   <member><xref linkend="sql-alteropclass" endterm="sql-alteropclass-title"></member>
+   <member><xref linkend="sql-createopclass" endterm="sql-createopclass-title"></member>
+   <member><xref linkend="sql-dropopclass" endterm="sql-dropopclass-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

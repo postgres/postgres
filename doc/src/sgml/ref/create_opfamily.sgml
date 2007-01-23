@@ -1,0 +1,125 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opfamily.sgml,v 1.1 2007/01/23 05:07:17 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATEOPFAMILY">
+ <refmeta>
+  <refentrytitle id="sql-createopfamily-title">CREATE OPERATOR FAMILY</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE OPERATOR FAMILY</refname>
+  <refpurpose>define a new operator family</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createopfamily">
+  <primary>CREATE OPERATOR FAMILY</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE OPERATOR FAMILY <replaceable class="parameter">name</replaceable> USING <replaceable class="parameter">index_method</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE OPERATOR FAMILY</command> creates a new operator family.
+   An operator family defines a collection of related operator classes,
+   and perhaps some additional operators and support functions that are
+   compatible with these operator classes but not essential for the
+   functioning of any individual index.  (Operators and functions that
+   are essential to indexes should be grouped within the relevant operator
+   class, rather than being <quote>loose</> in the operator family.
+   Typically, single-data-type operators are bound to operator classes,
+   while cross-data-type operators can be loose in an operator family
+   containing operator classes for both data types.)
+  </para>
+
+  <para>
+   The new operator family is initially empty.  It should be populated
+   by issuing subsequent <command>CREATE OPERATOR CLASS</command> commands
+   to add contained operator classes, and optionally
+   <command>ALTER OPERATOR FAMILY</command> commands to add <quote>loose</>
+   operators and their corresponding support functions.
+  </para>
+
+  <para>
+   If a schema name is given then the operator family is created in the
+   specified schema.  Otherwise it is created in the current schema.
+   Two operator families in the same schema can have the same name only if they
+   are for different index methods.
+  </para>
+
+  <para>
+   The user who defines an operator family becomes its owner.  Presently,
+   the creating user must be a superuser.  (This restriction is made because
+   an erroneous operator family definition could confuse or even crash the
+   server.)
+  </para>
+
+  <para>
+   <command>CREATE OPERATOR FAMILY</command> does not presently check
+   whether the operator family definition includes all the operators and
+   functions required by the index method, nor whether the operators and
+   functions form a self-consistent set.  It is the user's
+   responsibility to define a valid operator family.
+  </para>
+
+  <para>
+   Refer to <xref linkend="xindex"> for further information.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the operator family to be created.  The name may be
+      schema-qualified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">index_method</replaceable></term>
+    <listitem>
+     <para>
+      The name of the index method this operator family is for.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+ 
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>CREATE OPERATOR FAMILY</command> is a
+   <productname>PostgreSQL</productname> extension.  There is no
+   <command>CREATE OPERATOR FAMILY</command> statement in the SQL
+   standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-alteropfamily" endterm="sql-alteropfamily-title"></member>
+   <member><xref linkend="sql-dropopfamily" endterm="sql-dropopfamily-title"></member>
+   <member><xref linkend="sql-createopclass" endterm="sql-createopclass-title"></member>
+   <member><xref linkend="sql-alteropclass" endterm="sql-alteropclass-title"></member>
+   <member><xref linkend="sql-dropopclass" endterm="sql-dropopclass-title"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

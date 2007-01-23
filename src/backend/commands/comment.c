@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.94 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.95 2007/01/23 05:07:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_shdescription.h"
@@ -72,6 +73,7 @@ static void CommentConstraint(List *qualname, char *comment);
 static void CommentConversion(List *qualname, char *comment);
 static void CommentLanguage(List *qualname, char *comment);
 static void CommentOpClass(List *qualname, List *arguments, char *comment);
+static void CommentOpFamily(List *qualname, List *arguments, char *comment);
 static void CommentLargeObject(List *qualname, char *comment);
 static void CommentCast(List *qualname, List *arguments, char *comment);
 static void CommentTablespace(List *qualname, char *comment);
@@ -133,6 +135,9 @@ CommentObject(CommentStmt *stmt)
 			break;
 		case OBJECT_OPCLASS:
 			CommentOpClass(stmt->objname, stmt->objargs, stmt->comment);
+			break;
+		case OBJECT_OPFAMILY:
+			CommentOpFamily(stmt->objname, stmt->objargs, stmt->comment);
 			break;
 		case OBJECT_LARGEOBJECT:
 			CommentLargeObject(stmt->objname, stmt->comment);
@@ -1261,6 +1266,92 @@ CommentOpClass(List *qualname, List *arguments, char *comment)
 
 	/* Call CreateComments() to create/drop the comments */
 	CreateComments(opcID, OperatorClassRelationId, 0, comment);
+}
+
+/*
+ * CommentOpFamily --
+ *
+ * This routine is used to allow a user to provide comments on an
+ * operator family. The operator family for commenting is determined by both
+ * its name and its argument list which defines the index method
+ * the operator family is used for. The argument list is expected to contain
+ * a single name (represented as a string Value node).
+ */
+static void
+CommentOpFamily(List *qualname, List *arguments, char *comment)
+{
+	char	   *amname;
+	char	   *schemaname;
+	char	   *opfname;
+	Oid			amID;
+	Oid			opfID;
+	HeapTuple	tuple;
+
+	Assert(list_length(arguments) == 1);
+	amname = strVal(linitial(arguments));
+
+	/*
+	 * Get the access method's OID.
+	 */
+	amID = GetSysCacheOid(AMNAME,
+						  CStringGetDatum(amname),
+						  0, 0, 0);
+	if (!OidIsValid(amID))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("access method \"%s\" does not exist",
+						amname)));
+
+	/*
+	 * Look up the opfamily.
+	 */
+
+	/* deconstruct the name list */
+	DeconstructQualifiedName(qualname, &schemaname, &opfname);
+
+	if (schemaname)
+	{
+		/* Look in specific schema only */
+		Oid			namespaceId;
+
+		namespaceId = LookupExplicitNamespace(schemaname);
+		tuple = SearchSysCache(OPFAMILYAMNAMENSP,
+							   ObjectIdGetDatum(amID),
+							   PointerGetDatum(opfname),
+							   ObjectIdGetDatum(namespaceId),
+							   0);
+	}
+	else
+	{
+		/* Unqualified opfamily name, so search the search path */
+		opfID = OpfamilynameGetOpfid(amID, opfname);
+		if (!OidIsValid(opfID))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
+							opfname, amname)));
+		tuple = SearchSysCache(OPFAMILYOID,
+							   ObjectIdGetDatum(opfID),
+							   0, 0, 0);
+	}
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("operator family \"%s\" does not exist for access method \"%s\"",
+						NameListToString(qualname), amname)));
+
+	opfID = HeapTupleGetOid(tuple);
+
+	/* Permission check: must own opfamily */
+	if (!pg_opfamily_ownercheck(opfID, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_OPFAMILY,
+					   NameListToString(qualname));
+
+	ReleaseSysCache(tuple);
+
+	/* Call CreateComments() to create/drop the comments */
+	CreateComments(opfID, OperatorFamilyRelationId, 0, comment);
 }
 
 /*

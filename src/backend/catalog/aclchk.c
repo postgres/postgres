@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.134 2007/01/05 22:19:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.135 2007/01/23 05:07:17 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -30,6 +30,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_operator.h"
+#include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
@@ -1413,6 +1414,8 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	gettext_noop("permission denied for schema %s"),
 	/* ACL_KIND_OPCLASS */
 	gettext_noop("permission denied for operator class %s"),
+	/* ACL_KIND_OPFAMILY */
+	gettext_noop("permission denied for operator family %s"),
 	/* ACL_KIND_CONVERSION */
 	gettext_noop("permission denied for conversion %s"),
 	/* ACL_KIND_TABLESPACE */
@@ -1439,6 +1442,8 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	gettext_noop("must be owner of schema %s"),
 	/* ACL_KIND_OPCLASS */
 	gettext_noop("must be owner of operator class %s"),
+	/* ACL_KIND_OPFAMILY */
+	gettext_noop("must be owner of operator family %s"),
 	/* ACL_KIND_CONVERSION */
 	gettext_noop("must be owner of conversion %s"),
 	/* ACL_KIND_TABLESPACE */
@@ -2233,6 +2238,35 @@ pg_opclass_ownercheck(Oid opc_oid, Oid roleid)
 						opc_oid)));
 
 	ownerId = ((Form_pg_opclass) GETSTRUCT(tuple))->opcowner;
+
+	ReleaseSysCache(tuple);
+
+	return has_privs_of_role(roleid, ownerId);
+}
+
+/*
+ * Ownership check for an operator family (specified by OID).
+ */
+bool
+pg_opfamily_ownercheck(Oid opf_oid, Oid roleid)
+{
+	HeapTuple	tuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	tuple = SearchSysCache(OPFAMILYOID,
+						   ObjectIdGetDatum(opf_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("operator family with OID %u does not exist",
+						opf_oid)));
+
+	ownerId = ((Form_pg_opfamily) GETSTRUCT(tuple))->opfowner;
 
 	ReleaseSysCache(tuple);
 

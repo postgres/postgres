@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.60 2006/09/18 19:54:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.61 2007/01/23 05:07:17 tgl Exp $ -->
 
 <part id="reference">
  <title>Reference</title>
@@ -44,6 +44,7 @@
    &alterLanguage;
    &alterOperator;
    &alterOperatorClass;
+   &alterOperatorFamily;
    &alterRole;
    &alterSchema;
    &alterSequence;
@@ -73,6 +74,7 @@
    &createLanguage;
    &createOperator;
    &createOperatorClass;
+   &createOperatorFamily;
    &createRole;
    &createRule;
    &createSchema;
@@ -98,6 +100,7 @@
    &dropLanguage;
    &dropOperator;
    &dropOperatorClass;
+   &dropOperatorFamily;
    &dropOwned;
    &dropRole;
    &dropRule;

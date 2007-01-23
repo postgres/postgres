@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.33 2006/10/23 18:10:32 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.34 2007/01/23 05:07:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -35,6 +35,7 @@ COMMENT ON
   LARGE OBJECT <replaceable class="PARAMETER">large_object_oid</replaceable> |
   OPERATOR <replaceable class="PARAMETER">op</replaceable> (<replaceable class="PARAMETER">leftoperand_type</replaceable>, <replaceable class="PARAMETER">rightoperand_type</replaceable>) |
   OPERATOR CLASS <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
+  OPERATOR FAMILY <replaceable class="PARAMETER">object_name</replaceable> USING <replaceable class="parameter">index_method</replaceable> |
   [ PROCEDURAL ] LANGUAGE <replaceable class="PARAMETER">object_name</replaceable> |
   ROLE <replaceable class="PARAMETER">object_name</replaceable> |
   RULE <replaceable class="PARAMETER">rule_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
@@ -92,7 +93,7 @@ COMMENT ON
      <para>
       The name of the object to be commented.  Names of tables,
       aggregates, domains, functions, indexes, operators, operator classes,
-      sequences, types, and views may be schema-qualified.
+      operator families, sequences, types, and views may be schema-qualified.
      </para>
     </listitem>
    </varlistentry>
@@ -247,6 +248,7 @@ COMMENT ON LARGE OBJECT 346344 IS 'Planning document';
 COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two texts';
 COMMENT ON OPERATOR - (NONE, text) IS 'This is a prefix operator on text';
 COMMENT ON OPERATOR CLASS int4ops USING btree IS '4 byte integer operators for btrees';
+COMMENT ON OPERATOR FAMILY integer_ops USING btree IS 'all integer operators for btrees';
 COMMENT ON ROLE my_role IS 'Administration group for finance tables';
 COMMENT ON RULE my_rule ON my_table IS 'Logs updates of employee records';
 COMMENT ON SCHEMA my_schema IS 'Departmental data';

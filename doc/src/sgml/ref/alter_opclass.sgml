@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.7 2006/09/16 00:30:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opclass.sgml,v 1.8 2007/01/23 05:07:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -102,6 +102,7 @@ ALTER OPERATOR CLASS <replaceable>name</replaceable> USING <replaceable class="p
   <simplelist type="inline">
    <member><xref linkend="sql-createopclass" endterm="sql-createopclass-title"></member>
    <member><xref linkend="sql-dropopclass" endterm="sql-dropopclass-title"></member>
+   <member><xref linkend="sql-alteropfamily" endterm="sql-alteropfamily-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

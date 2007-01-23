@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.10 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.11 2007/01/23 05:07:17 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -30,6 +30,13 @@ DROP OPERATOR CLASS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
   <para>
    <command>DROP OPERATOR CLASS</command> drops an existing operator class.
    To execute this command you must be the owner of the operator class.
+  </para>
+
+  <para>
+   <command>DROP OPERATOR CLASS</command> does not drop any of the operators
+   or functions referenced by the class.  If there are any indexes depending
+   on the operator class, you will need to specify
+   <literal>CASCADE</> for the drop to complete.
   </para>
  </refsect1>
   
@@ -86,6 +93,20 @@ DROP OPERATOR CLASS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    </varlistentry>
   </variablelist>
  </refsect1>
+  
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   <command>DROP OPERATOR CLASS</> will not drop the operator family
+   containing the class, even if there is nothing else left in the
+   family (in particular, in the case where the family was implicitly
+   created by <command>CREATE OPERATOR CLASS</>).  An empty operator
+   family is harmless, but for the sake of tidiness you may wish to
+   remove the family with <command>DROP OPERATOR FAMILY</>; or perhaps
+   better, use <command>DROP OPERATOR FAMILY</> in the first place.
+  </para>
+ </refsect1>
 
  <refsect1>
   <title>Examples</title>
@@ -118,6 +139,7 @@ DROP OPERATOR CLASS widget_ops USING btree;
   <simplelist type="inline">
    <member><xref linkend="sql-alteropclass" endterm="sql-alteropclass-title"></member>
    <member><xref linkend="sql-createopclass" endterm="sql-createopclass-title"></member>
+   <member><xref linkend="sql-dropopfamily" endterm="sql-dropopfamily-title"></member>
   </simplelist>
  </refsect1>
 

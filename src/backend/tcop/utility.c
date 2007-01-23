@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.270 2007/01/05 22:19:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.271 2007/01/23 05:07:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -322,6 +322,8 @@ check_xact_readonly(Node *parsetree)
 		case T_IndexStmt:
 		case T_CreatePLangStmt:
 		case T_CreateOpClassStmt:
+		case T_CreateOpFamilyStmt:
+		case T_AlterOpFamilyStmt:
 		case T_RuleStmt:
 		case T_CreateSchemaStmt:
 		case T_CreateSeqStmt:
@@ -338,6 +340,7 @@ check_xact_readonly(Node *parsetree)
 		case T_DropRoleStmt:
 		case T_DropPLangStmt:
 		case T_RemoveOpClassStmt:
+		case T_RemoveOpFamilyStmt:
 		case T_DropPropertyStmt:
 		case T_GrantStmt:
 		case T_GrantRoleStmt:
@@ -1099,8 +1102,20 @@ ProcessUtility(Node *parsetree,
 			DefineOpClass((CreateOpClassStmt *) parsetree);
 			break;
 
+		case T_CreateOpFamilyStmt:
+			DefineOpFamily((CreateOpFamilyStmt *) parsetree);
+			break;
+
+		case T_AlterOpFamilyStmt:
+			AlterOpFamily((AlterOpFamilyStmt *) parsetree);
+			break;
+
 		case T_RemoveOpClassStmt:
 			RemoveOpClass((RemoveOpClassStmt *) parsetree);
+			break;
+
+		case T_RemoveOpFamilyStmt:
+			RemoveOpFamily((RemoveOpFamilyStmt *) parsetree);
 			break;
 
 		default:
@@ -1445,6 +1460,9 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_OPCLASS:
 					tag = "ALTER OPERATOR CLASS";
 					break;
+				case OBJECT_OPFAMILY:
+					tag = "ALTER OPERATOR FAMILY";
+					break;
 				case OBJECT_ROLE:
 					tag = "ALTER ROLE";
 					break;
@@ -1517,6 +1535,9 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_OPCLASS:
 					tag = "ALTER OPERATOR CLASS";
+					break;
+				case OBJECT_OPFAMILY:
+					tag = "ALTER OPERATOR FAMILY";
 					break;
 				case OBJECT_SCHEMA:
 					tag = "ALTER SCHEMA";
@@ -1777,8 +1798,20 @@ CreateCommandTag(Node *parsetree)
 			tag = "CREATE OPERATOR CLASS";
 			break;
 
+		case T_CreateOpFamilyStmt:
+			tag = "CREATE OPERATOR FAMILY";
+			break;
+
+		case T_AlterOpFamilyStmt:
+			tag = "ALTER OPERATOR FAMILY";
+			break;
+
 		case T_RemoveOpClassStmt:
 			tag = "DROP OPERATOR CLASS";
+			break;
+
+		case T_RemoveOpFamilyStmt:
+			tag = "DROP OPERATOR FAMILY";
 			break;
 
 		case T_PrepareStmt:
@@ -2147,7 +2180,19 @@ GetCommandLogLevel(Node *parsetree)
 			lev = LOGSTMT_DDL;
 			break;
 
+		case T_CreateOpFamilyStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterOpFamilyStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
 		case T_RemoveOpClassStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_RemoveOpFamilyStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

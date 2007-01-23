@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.296 2007/01/20 20:45:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.297 2007/01/23 05:07:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1054,6 +1054,17 @@ _equalRemoveOpClassStmt(RemoveOpClassStmt *a, RemoveOpClassStmt *b)
 }
 
 static bool
+_equalRemoveOpFamilyStmt(RemoveOpFamilyStmt *a, RemoveOpFamilyStmt *b)
+{
+	COMPARE_NODE_FIELD(opfamilyname);
+	COMPARE_STRING_FIELD(amname);
+	COMPARE_SCALAR_FIELD(behavior);
+	COMPARE_SCALAR_FIELD(missing_ok);
+
+	return true;
+}
+
+static bool
 _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 {
 	COMPARE_SCALAR_FIELD(renameType);
@@ -1199,7 +1210,28 @@ _equalCreateOpClassItem(CreateOpClassItem *a, CreateOpClassItem *b)
 	COMPARE_NODE_FIELD(args);
 	COMPARE_SCALAR_FIELD(number);
 	COMPARE_SCALAR_FIELD(recheck);
+	COMPARE_NODE_FIELD(class_args);
 	COMPARE_NODE_FIELD(storedtype);
+
+	return true;
+}
+
+static bool
+_equalCreateOpFamilyStmt(CreateOpFamilyStmt *a, CreateOpFamilyStmt *b)
+{
+	COMPARE_NODE_FIELD(opfamilyname);
+	COMPARE_STRING_FIELD(amname);
+
+	return true;
+}
+
+static bool
+_equalAlterOpFamilyStmt(AlterOpFamilyStmt *a, AlterOpFamilyStmt *b)
+{
+	COMPARE_NODE_FIELD(opfamilyname);
+	COMPARE_STRING_FIELD(amname);
+	COMPARE_SCALAR_FIELD(isDrop);
+	COMPARE_NODE_FIELD(items);
 
 	return true;
 }
@@ -2148,6 +2180,9 @@ equal(void *a, void *b)
 		case T_RemoveOpClassStmt:
 			retval = _equalRemoveOpClassStmt(a, b);
 			break;
+		case T_RemoveOpFamilyStmt:
+			retval = _equalRemoveOpFamilyStmt(a, b);
+			break;
 		case T_RenameStmt:
 			retval = _equalRenameStmt(a, b);
 			break;
@@ -2189,6 +2224,12 @@ equal(void *a, void *b)
 			break;
 		case T_CreateOpClassItem:
 			retval = _equalCreateOpClassItem(a, b);
+			break;
+		case T_CreateOpFamilyStmt:
+			retval = _equalCreateOpFamilyStmt(a, b);
+			break;
+		case T_AlterOpFamilyStmt:
+			retval = _equalAlterOpFamilyStmt(a, b);
 			break;
 		case T_CreatedbStmt:
 			retval = _equalCreatedbStmt(a, b);
