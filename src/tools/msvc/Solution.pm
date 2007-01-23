@@ -133,9 +133,9 @@ sub GenerateFiles {
                 oid     => $p[0],
                 proname => $p[1],
                 prosrc  => $p[$#p-2],
-                nargs   => $p[10],
-                strict  => $p[7],
-                retset  => $p[8],
+                nargs   => $p[12],
+                strict  => $p[9],
+                retset  => $p[10],
             };
 		}
 		close(I);
