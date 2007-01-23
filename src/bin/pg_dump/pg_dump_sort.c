@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.16 2007/01/05 22:19:48 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.17 2007/01/23 17:54:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@ static const int oldObjectTypePriority[] =
 	3,							/* DO_AGG */
 	3,							/* DO_OPERATOR */
 	4,							/* DO_OPCLASS */
+	4,							/* DO_OPFAMILY */
 	5,							/* DO_CONVERSION */
 	6,							/* DO_TABLE */
 	8,							/* DO_ATTRDEF */
@@ -62,6 +63,7 @@ static const int newObjectTypePriority[] =
 	5,							/* DO_AGG */
 	6,							/* DO_OPERATOR */
 	7,							/* DO_OPCLASS */
+	7,							/* DO_OPFAMILY */
 	9,							/* DO_CONVERSION */
 	10,							/* DO_TABLE */
 	12,							/* DO_ATTRDEF */
@@ -994,6 +996,11 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_OPCLASS:
 			snprintf(buf, bufsize,
 					 "OPERATOR CLASS %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_OPFAMILY:
+			snprintf(buf, bufsize,
+					 "OPERATOR FAMILY %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_CONVERSION:
