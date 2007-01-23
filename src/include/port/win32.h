@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.69 2007/01/23 03:28:49 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.70 2007/01/23 16:21:17 momjian Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -140,6 +140,20 @@ int			semop(int semId, struct sembuf * sops, int flag);
  *		Descriptions - http://www.comp.nus.edu.sg/~wuyongzh/my_doc/ntstatus.txt
  *		MS SDK - http://www.nologs.com/ntstatus.html
  *
+ *	It seems the exception lists are in both ntstatus.h and winnt.h, but
+ *	ntstatus.h has a more comprehensive list, and it only contains
+ *	exception values, rather than winnt, which contains lots of other
+ *	things:
+ *
+ *		http://www.microsoft.com/msj/0197/exception/exception.aspx
+ *
+ *		The ExceptionCode parameter is the number that the operating system
+ *		assigned to the exception. You can see a list of various exception codes
+ *		in WINNT.H by searching for #defines that start with "STATUS_". For
+ *		example, the code for the all-too-familiar STATUS_ACCESS_VIOLATION is
+ *		0xC0000005. A more complete set of exception codes can be found in
+ *		NTSTATUS.H from the Windows NT DDK.
+ *                                               
  *	Some day we might want to print descriptions for the most common
  *	exceptions, rather than printing a URL.  FormatMessage() can print
  *	the text of error values, but not exception values.
