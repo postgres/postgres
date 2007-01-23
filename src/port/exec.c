@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.47 2007/01/23 03:28:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.48 2007/01/23 03:31:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -586,7 +586,7 @@ pclose_check(FILE *stream)
 		log_error(_("child process was terminated by signal %d"),
 				  WTERMSIG(exitstatus));
 #else
-		log_error(_("child process was terminated by exception %X\nSee /include/ntstatus.h for a description\nof the hex value."),
+		log_error(_("child process was terminated by exception %X\nSee /include/ntstatus.h for a description of the hex value."),
 				  WTERMSIG(exitstatus));
 #endif
 	else
