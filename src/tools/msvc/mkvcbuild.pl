@@ -90,28 +90,33 @@ $pgtypes->AddDefine('FRONTEND');
 $pgtypes->AddReference($postgres,$libpgport);
 $pgtypes->AddIncludeDir('src\interfaces\ecpg\include');
 
-my $libecpg = $solution->AddProject('libecpg','dll','interfaces','src\interfaces\ecpg\ecpglib');
-$libecpg->AddDefine('FRONTEND');
-$libecpg->AddIncludeDir('src\interfaces\ecpg\include');
-$libecpg->AddIncludeDir('src\interfaces\libpq');
-$libecpg->AddIncludeDir('src\port');
-$libecpg->AddLibrary('wsock32.lib');
-$libecpg->AddLibrary($config->{'pthread'} . '\pthreadVC2.lib');
-$libecpg->AddReference($libpq,$pgtypes);
+if ($config->{pthread}) {
+   my $libecpg = $solution->AddProject('libecpg','dll','interfaces','src\interfaces\ecpg\ecpglib');
+   $libecpg->AddDefine('FRONTEND');
+   $libecpg->AddIncludeDir('src\interfaces\ecpg\include');
+   $libecpg->AddIncludeDir('src\interfaces\libpq');
+   $libecpg->AddIncludeDir('src\port');
+   $libecpg->AddLibrary('wsock32.lib');
+   $libecpg->AddLibrary($config->{'pthread'} . '\pthreadVC2.lib');
+   $libecpg->AddReference($libpq,$pgtypes);
 
-my $libecpgcompat = $solution->AddProject('libecpg_compat','dll','interfaces','src\interfaces\ecpg\compatlib');
-$libecpgcompat->AddIncludeDir('src\interfaces\ecpg\include');
-$libecpgcompat->AddIncludeDir('src\interfaces\libpq');
-$libecpgcompat->AddReference($pgtypes,$libecpg);
+   my $libecpgcompat = $solution->AddProject('libecpg_compat','dll','interfaces','src\interfaces\ecpg\compatlib');
+   $libecpgcompat->AddIncludeDir('src\interfaces\ecpg\include');
+   $libecpgcompat->AddIncludeDir('src\interfaces\libpq');
+   $libecpgcompat->AddReference($pgtypes,$libecpg);
 
-my $ecpg = $solution->AddProject('ecpg','exe','interfaces','src\interfaces\ecpg\preproc');
-$ecpg->AddIncludeDir('src\interfaces\ecpg\include');
-$ecpg->AddIncludeDir('src\interfaces\libpq');
-$ecpg->AddFiles('src\interfaces\ecpg\preproc','pgc.l','preproc.y');
-$ecpg->AddDefine('MAJOR_VERSION=4');
-$ecpg->AddDefine('MINOR_VERSION=2');
-$ecpg->AddDefine('PATCHLEVEL=1');
-$ecpg->AddReference($libpgport);
+   my $ecpg = $solution->AddProject('ecpg','exe','interfaces','src\interfaces\ecpg\preproc');
+   $ecpg->AddIncludeDir('src\interfaces\ecpg\include');
+   $ecpg->AddIncludeDir('src\interfaces\libpq');
+   $ecpg->AddFiles('src\interfaces\ecpg\preproc','pgc.l','preproc.y');
+   $ecpg->AddDefine('MAJOR_VERSION=4');
+   $ecpg->AddDefine('MINOR_VERSION=2');
+   $ecpg->AddDefine('PATCHLEVEL=1');
+   $ecpg->AddReference($libpgport);
+}
+else {
+   print "Not building ecpg due to lack of pthreads.\n";
+}   
 
 
 # src/bin

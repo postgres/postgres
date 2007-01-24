@@ -367,11 +367,13 @@ sub WriteConfiguration
 	}
 	$libs =~ s/ $//;
 	$libs =~ s/__CFGNAME__/$cfgname/g;
+	my $pth = $self->{solution}->{options}->{pthread};
+	$pth = '' unless $pth;
 	print $f <<EOF;
   <Configuration Name="$cfgname|Win32" OutputDirectory=".\\$cfgname\\$self->{name}" IntermediateDirectory=".\\$cfgname\\$self->{name}"
 	ConfigurationType="$cfgtype" UseOfMFC="0" ATLMinimizesCRunTimeLibraryUsage="FALSE" CharacterSet="2" WholeProgramOptimization="$p->{wholeopt}">
 	<Tool Name="VCCLCompilerTool" Optimization="$p->{opt}"
-		AdditionalIncludeDirectories="src/include;src/include/port/win32;src/include/port/win32_msvc;$self->{solution}->{options}->{pthread};$self->{includes}"
+		AdditionalIncludeDirectories="src/include;src/include/port/win32;src/include/port/win32_msvc;$pth;$self->{includes}"
 		PreprocessorDefinitions="WIN32;_WINDOWS;__WINDOWS__;__WIN32__;EXEC_BACKEND;WIN32_STACK_RLIMIT=4194304;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE$self->{defines}$p->{defs}"
 		StringPooling="$p->{strpool}"
 		RuntimeLibrary="$p->{runtime}" DisableSpecificWarnings="$self->{disablewarnings}"

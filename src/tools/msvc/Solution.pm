@@ -6,7 +6,6 @@ use warnings;
 sub new {
 	my $junk = shift;
 	my $options = shift;
-	die "Pthreads is required.\n" unless $options->{pthread};
 	my $self = {
         projects => {},
         options  => $options,
