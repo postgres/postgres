@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.47.2.4 2006/08/22 12:11:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.47.2.5 2007/01/24 17:12:29 tgl Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -345,18 +345,19 @@ pg_johab_dsplen(const unsigned char *s)
 }
 
 /*
- * convert UTF8 string to pg_wchar (UCS-2)
- * caller should allocate enough space for "to"
+ * convert UTF8 string to pg_wchar (UCS-4)
+ * caller must allocate enough space for "to", including a trailing zero!
  * len: length of from.
  * "from" not necessarily null terminated.
  */
 static int
 pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 {
-	unsigned char c1,
-				c2,
-				c3;
 	int			cnt = 0;
+	uint32		c1,
+				c2,
+				c3,
+				c4;
 
 	while (len > 0 && *from)
 	{
@@ -365,26 +366,39 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 			*to = *from++;
 			len--;
 		}
-		else if ((*from & 0xe0) == 0xc0 && len >= 2)
+		else if ((*from & 0xe0) == 0xc0)
 		{
+			if (len < 2)
+				break;			/* drop trailing incomplete char */
 			c1 = *from++ & 0x1f;
 			c2 = *from++ & 0x3f;
-			*to = c1 << 6;
-			*to |= c2;
+			*to = (c1 << 6) | c2;
 			len -= 2;
 		}
-		else if ((*from & 0xe0) == 0xe0 && len >= 3)
+		else if ((*from & 0xf0) == 0xe0)
 		{
+			if (len < 3)
+				break;			/* drop trailing incomplete char */
 			c1 = *from++ & 0x0f;
 			c2 = *from++ & 0x3f;
 			c3 = *from++ & 0x3f;
-			*to = c1 << 12;
-			*to |= c2 << 6;
-			*to |= c3;
+			*to = (c1 << 12) | (c2 << 6) | c3;
 			len -= 3;
+		}
+		else if ((*from & 0xf8) == 0xf0)
+		{
+			if (len < 4)
+				break;			/* drop trailing incomplete char */
+			c1 = *from++ & 0x07;
+			c2 = *from++ & 0x3f;
+			c3 = *from++ & 0x3f;
+			c4 = *from++ & 0x3f;
+			*to = (c1 << 18) | (c2 << 12) | (c3 << 6) | c4;
+			len -= 4;
 		}
 		else
 		{
+			/* treat a bogus char as length 1; not ours to raise error */
 			*to = *from++;
 			len--;
 		}
@@ -396,12 +410,20 @@ pg_utf2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
 }
 
 /*
- * returns the byte length of a UTF8 character pointed to by s
+ * Return the byte length of a UTF8 character pointed to by s
+ *
+ * Note: in the current implementation we do not support UTF8 sequences
+ * of more than 4 bytes; hence do NOT return a value larger than 4.
+ * We return "1" for any leading byte that is either flat-out illegal or
+ * indicates a length larger than we support.
+ *
+ * pg_utf2wchar_with_len(), utf2ucs(), pg_utf8_islegal(), and perhaps
+ * other places would need to be fixed to change this.
  */
 int
 pg_utf_mblen(const unsigned char *s)
 {
-	int			len = 1;
+	int			len;
 
 	if ((*s & 0x80) == 0)
 		len = 1;
@@ -411,11 +433,15 @@ pg_utf_mblen(const unsigned char *s)
 		len = 3;
 	else if ((*s & 0xf8) == 0xf0)
 		len = 4;
+#ifdef NOT_USED
 	else if ((*s & 0xfc) == 0xf8)
 		len = 5;
 	else if ((*s & 0xfe) == 0xfc)
 		len = 6;
-	return (len);
+#endif
+	else
+		len = 1;
+	return len;
 }
 
 static int
