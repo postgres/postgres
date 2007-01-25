@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.59 2006/10/07 20:59:03 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.60 2007/01/25 02:17:25 momjian Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -800,7 +800,9 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     prepared <command>INSERT</command> statement, and then use
     <command>EXECUTE</command> as many times as required.  This avoids
     some of the overhead of repeatedly parsing and planning
-    <command>INSERT</command>.
+    <command>INSERT</command>. Different interfaces provide this facility
+    in different ways; look for Prepared Statements in the interface
+    documentation.
    </para>
 
    <para>
@@ -809,6 +811,20 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     <command>INSERT</command>, even if <command>PREPARE</> is used and
     multiple insertions are batched into a single transaction.
    </para>
+
+   <para>
+    <command>COPY</command> is fastest when used within the same
+    transaction as an earlier <command>CREATE TABLE</command> or
+    <command>TRUNCATE</command> command. In those cases, no WAL
+    needs to be written because in case of an error, the files
+    containing the newly loaded data will be removed automatically.
+    <command>CREATE TABLE AS SELECT</command> is also optimized 
+    to avoid writing WAL. <command>COPY</command> and
+    <command>CREATE TABLE AS SELECT</command> will write WAL 
+    when <xref linkend="guc-archive-command"> is set and will not
+    therefore be optimized in that case.
+   </para>
+
   </sect2>
 
   <sect2 id="populate-rm-indexes">
@@ -877,6 +893,29 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    </para>
   </sect2>
 
+  <sect2 id="populate-pitr">
+   <title>Turn off <varname>archive_command</varname></title>
+
+   <para>
+    When loading large amounts of data you may want to unset the
+    <xref linkend="guc-archive-command"> before loading. It may be
+    faster to take a new base backup once the load has completed
+    than to allow a large archive to accumulate.
+   </para>
+
+   <para>
+    This is particularly important advice because certain commands 
+    will perform more slowly when <varname>archive_command</varname>
+    is set, as a result of their needing to write large amounts of WAL.
+    This applies to the following commands: 
+    <command>CREATE TABLE AS SELECT</command>, 
+    <command>CREATE INDEX</command> and also <command>COPY</command>, when
+    it is executed in the same transaction as a prior 
+    <command>CREATE TABLE</command> or <command>TRUNCATE</command> command.
+   </para>
+
+  </sect2>
+
   <sect2 id="populate-analyze">
    <title>Run <command>ANALYZE</command> Afterwards</title>
 
@@ -914,8 +953,12 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     the first several guidelines are handled automatically.  What is left
     for you to do is to set appropriate (i.e., larger than normal) values
     for <varname>maintenance_work_mem</varname> and
-    <varname>checkpoint_segments</varname> before loading the dump script,
-    and then to run <command>ANALYZE</> afterwards.
+    <varname>checkpoint_segments</varname>, as well as unsetting 
+    <varname>archive_command</varname> before loading the dump script,
+    and then to run <command>ANALYZE</> afterwards and resetting
+    <varname>archive_command</varname> if required. All of the 
+    parameters can be reset once the load has completed without needing
+    to restart the server, as described in <xref linkend="config-setting">.
    </para>
 
    <para>

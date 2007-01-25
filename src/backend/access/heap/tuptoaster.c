@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.68 2007/01/05 22:19:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.69 2007/01/25 02:17:26 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -42,7 +42,7 @@
 #undef TOAST_DEBUG
 
 static void toast_delete_datum(Relation rel, Datum value);
-static Datum toast_save_datum(Relation rel, Datum value);
+static Datum toast_save_datum(Relation rel, Datum value, bool use_wal);
 static varattrib *toast_fetch_datum(varattrib *attr);
 static varattrib *toast_fetch_datum_slice(varattrib *attr,
 						int32 sliceoffset, int32 length);
@@ -342,7 +342,7 @@ toast_delete(Relation rel, HeapTuple oldtup)
  * ----------
  */
 HeapTuple
-toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
+toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup, bool use_wal)
 {
 	HeapTuple	result_tuple;
 	TupleDesc	tupleDesc;
@@ -612,7 +612,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-		toast_values[i] = toast_save_datum(rel, toast_values[i]);
+		toast_values[i] = toast_save_datum(rel, toast_values[i], use_wal);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 
@@ -724,7 +724,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-		toast_values[i] = toast_save_datum(rel, toast_values[i]);
+		toast_values[i] = toast_save_datum(rel, toast_values[i], use_wal);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 
@@ -972,7 +972,7 @@ toast_compress_datum(Datum value)
  * ----------
  */
 static Datum
-toast_save_datum(Relation rel, Datum value)
+toast_save_datum(Relation rel, Datum value, bool use_wal)
 {
 	Relation	toastrel;
 	Relation	toastidx;
@@ -1057,7 +1057,7 @@ toast_save_datum(Relation rel, Datum value)
 		if (!HeapTupleIsValid(toasttup))
 			elog(ERROR, "failed to build TOAST tuple");
 
-		simple_heap_insert(toastrel, toasttup);
+		fast_heap_insert(toastrel, toasttup, use_wal);
 
 		/*
 		 * Create the index entry.	We cheat a little here by not using

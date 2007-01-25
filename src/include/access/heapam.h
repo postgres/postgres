@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.119 2007/01/09 22:01:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.120 2007/01/25 02:17:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,6 +178,9 @@ extern void simple_heap_delete(Relation relation, ItemPointer tid);
 extern void simple_heap_update(Relation relation, ItemPointer otid,
 				   HeapTuple tup);
 
+extern Oid fast_heap_insert(Relation relation, HeapTuple tup, bool use_wal);
+		
+
 extern void heap_markpos(HeapScanDesc scan);
 extern void heap_restrpos(HeapScanDesc scan);
 
@@ -235,5 +238,7 @@ extern HeapTuple heap_tuple_from_minimal_tuple(MinimalTuple mtup);
 extern MinimalTuple minimal_tuple_from_heap_tuple(HeapTuple htup);
 extern HeapTuple heap_addheader(int natts, bool withoid,
 			   Size structlen, void *structure);
+
+extern void heap_sync(Relation relation);
 
 #endif   /* HEAPAM_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.29 2007/01/05 22:19:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.30 2007/01/25 02:17:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@
  * ----------
  */
 extern HeapTuple toast_insert_or_update(Relation rel,
-					   HeapTuple newtup, HeapTuple oldtup);
+					   HeapTuple newtup, HeapTuple oldtup, bool use_wal);
 
 /* ----------
  * toast_delete -

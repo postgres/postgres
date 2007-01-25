@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.274 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.275 2007/01/25 02:17:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1652,6 +1652,7 @@ CopyFrom(CopyState cstate)
 	ExprContext *econtext;		/* used for ExecEvalExpr for default atts */
 	MemoryContext oldcontext = CurrentMemoryContext;
 	ErrorContextCallback errcontext;
+	bool		use_wal = true; /* By default, we use WAL to log db changes */
 
 	Assert(cstate->rel);
 
@@ -1842,6 +1843,28 @@ CopyFrom(CopyState cstate)
 	/* create workspace for CopyReadAttributes results */
 	nfields = file_has_oids ? (attr_count + 1) : attr_count;
 	field_strings = (char **) palloc(nfields * sizeof(char *));
+
+	/*
+	 * Check for performance optimization by avoiding WAL writes
+	 *
+	 * If archive logging is not be enabled *and* either
+	 * - table is created in same transaction as this COPY
+	 * - table data is now being written to new relfilenode
+	 * then we can safely avoid writing WAL. Why? 
+	 * The data files for the table plus toast table/index, plus any indexes
+	 * will all be dropped at the end of the transaction if it fails, so we
+	 * do not need to worry about inconsistent states.
+	 * As mentioned in comments in utils/rel.h, the in-same-transaction test is
+	 * not completely reliable, since rd_createSubId can be reset to zero in
+	 * certain cases before the end of the creating transaction. 
+	 * We are doing this for performance only, so we only need to know: 
+	 * if rd_createSubid != InvalidSubTransactionId then it is *always* just 
+	 * created. If we have PITR enabled, then we *must* use_wal
+	 */
+	if ((cstate->rel->rd_createSubid		 != InvalidSubTransactionId ||
+	     cstate->rel->rd_newRelfilenodeSubid != InvalidSubTransactionId)
+		&& !XLogArchivingActive())
+		use_wal = false;
 
 	/* Initialize state variables */
 	cstate->fe_eof = false;
@@ -2076,7 +2099,7 @@ CopyFrom(CopyState cstate)
 				ExecConstraints(resultRelInfo, slot, estate);
 
 			/* OK, store the tuple and create index entries for it */
-			simple_heap_insert(cstate->rel, tuple);
+			fast_heap_insert(cstate->rel, tuple, use_wal);
 
 			if (resultRelInfo->ri_NumIndices > 0)
 				ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
@@ -2091,6 +2114,32 @@ CopyFrom(CopyState cstate)
 			 */
 			cstate->processed++;
 		}
+	}
+
+	/* 
+	 * If we skipped writing WAL for heaps, then we need to sync
+	 */
+	if (!use_wal)
+	{
+		/* main heap */
+		heap_sync(cstate->rel);
+
+		/* main heap indexes, if any */
+		/* we always use WAL for index inserts, so no need to sync */
+
+		/* toast heap, if any */
+		if (OidIsValid(cstate->rel->rd_rel->reltoastrelid))
+		{
+			 Relation		toastrel;
+
+			 toastrel = heap_open(cstate->rel->rd_rel->reltoastrelid,
+								  AccessShareLock);
+			 heap_sync(toastrel);
+			 heap_close(toastrel, AccessShareLock);
+		}
+
+		/* toast index, if toast heap */
+		/* we always use WAL for index inserts, so no need to sync */
 	}
 
 	/* Done, clean up */

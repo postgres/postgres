@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.254 2007/01/09 02:14:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.255 2007/01/25 02:17:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -836,6 +836,7 @@ RelationBuildDesc(Oid targetRelId, Relation oldrelation)
 	relation->rd_refcnt = 0;
 	relation->rd_isnailed = false;
 	relation->rd_createSubid = InvalidSubTransactionId;
+	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 	relation->rd_istemp = isTempNamespace(relation->rd_rel->relnamespace);
 
 	/*
@@ -1358,6 +1359,7 @@ formrdesc(const char *relationName, Oid relationReltype,
 	 */
 	relation->rd_isnailed = true;
 	relation->rd_createSubid = InvalidSubTransactionId;
+	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 	relation->rd_istemp = false;
 
 	/*
@@ -1769,6 +1771,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		Oid			save_relid = RelationGetRelid(relation);
 		int			old_refcnt = relation->rd_refcnt;
 		SubTransactionId old_createSubid = relation->rd_createSubid;
+		SubTransactionId old_newRelfilenodeSubid = relation->rd_newRelfilenodeSubid;
 		TupleDesc	old_att = relation->rd_att;
 		RuleLock   *old_rules = relation->rd_rules;
 		MemoryContext old_rulescxt = relation->rd_rulescxt;
@@ -1787,6 +1790,8 @@ RelationClearRelation(Relation relation, bool rebuild)
 		}
 		relation->rd_refcnt = old_refcnt;
 		relation->rd_createSubid = old_createSubid;
+		relation->rd_newRelfilenodeSubid = old_newRelfilenodeSubid;
+
 		if (equalTupleDescs(old_att, relation->rd_att))
 		{
 			/* needn't flush typcache here */
@@ -1827,7 +1832,8 @@ RelationFlushRelation(Relation relation)
 {
 	bool		rebuild;
 
-	if (relation->rd_createSubid != InvalidSubTransactionId)
+	if (relation->rd_createSubid != InvalidSubTransactionId ||
+		relation->rd_newRelfilenodeSubid != InvalidSubTransactionId)
 	{
 		/*
 		 * New relcache entries are always rebuilt, not flushed; else we'd
@@ -1909,6 +1915,9 @@ RelationCacheInvalidateEntry(Oid relationId)
  *	 so we do not touch new-in-transaction relations; they cannot be targets
  *	 of cross-backend SI updates (and our own updates now go through a
  *	 separate linked list that isn't limited by the SI message buffer size).
+ *	 We don't do anything special for newRelfilenode-in-transaction relations, 
+ *	 though since we have a lock on the relation nobody else should be 
+ *	 generating cache invalidation messages for it anyhow.
  *
  *	 We do this in two phases: the first pass deletes deletable items, and
  *	 the second one rebuilds the rebuildable items.  This is essential for
@@ -2085,6 +2094,7 @@ AtEOXact_RelationCache(bool isCommit)
 				continue;
 			}
 		}
+		relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 
 		/*
 		 * Flush any temporary index list.
@@ -2145,6 +2155,13 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 				RelationClearRelation(relation, false);
 				continue;
 			}
+		}
+		if (relation->rd_newRelfilenodeSubid == mySubid)
+		{
+			if (isCommit)
+				relation->rd_newRelfilenodeSubid = parentSubid;
+			else
+			 relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 		}
 
 		/*
@@ -2235,6 +2252,7 @@ RelationBuildLocalRelation(const char *relname,
 
 	/* it's being created in this transaction */
 	rel->rd_createSubid = GetCurrentSubTransactionId();
+	rel->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 
 	/* must flag that we have rels created in this transaction */
 	need_eoxact_work = true;
@@ -3392,6 +3410,7 @@ load_relcache_init_file(void)
 		rel->rd_indexlist = NIL;
 		rel->rd_oidindex = InvalidOid;
 		rel->rd_createSubid = InvalidSubTransactionId;
+		rel->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 		rel->rd_amcache = NULL;
 		MemSet(&rel->pgstat_info, 0, sizeof(rel->pgstat_info));
 

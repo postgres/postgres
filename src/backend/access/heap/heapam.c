@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.224 2007/01/09 22:00:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.225 2007/01/25 02:17:25 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -28,6 +28,7 @@
  *		heap_update		- replace a tuple in a relation with another tuple
  *		heap_markpos	- mark scan position
  *		heap_restrpos	- restore position to marked location
+ *		heap_sync		- sync heap, for when no WAL has been written
  *
  * NOTES
  *	  This file contains the heap_ routines which implement
@@ -50,6 +51,7 @@
 #include "miscadmin.h"
 #include "pgstat.h"
 #include "storage/procarray.h"
+#include "storage/smgr.h"
 #include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
@@ -1358,7 +1360,7 @@ heap_get_latest_tid(Relation relation,
  * that all new tuples go into new pages not containing any tuples from other
  * transactions, that the relation gets fsync'd before commit, and that the
  * transaction emits at least one WAL record to ensure RecordTransactionCommit
- * will decide to WAL-log the commit.
+ * will decide to WAL-log the commit. (see heap_sync() comments also)
  *
  * use_fsm is passed directly to RelationGetBufferForTuple, which see for
  * more info.
@@ -1418,7 +1420,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 */
 	if (HeapTupleHasExternal(tup) ||
 		(MAXALIGN(tup->t_len) > TOAST_TUPLE_THRESHOLD))
-		heaptup = toast_insert_or_update(relation, tup, NULL);
+		heaptup = toast_insert_or_update(relation, tup, NULL, use_wal);
 	else
 		heaptup = tup;
 
@@ -1533,6 +1535,18 @@ Oid
 simple_heap_insert(Relation relation, HeapTuple tup)
 {
 	return heap_insert(relation, tup, GetCurrentCommandId(), true, true);
+}
+
+/*
+ *	fast_heap_insert - insert a tuple with options to improve speed
+ *
+ * Currently, this routine allows specifying additional options for speed
+ * in certain cases, such as WAL-avoiding COPY command
+ */
+Oid
+fast_heap_insert(Relation relation, HeapTuple tup, bool use_wal)
+{
+	return heap_insert(relation, tup, GetCurrentCommandId(), use_wal, use_wal);
 }
 
 /*
@@ -2086,11 +2100,11 @@ l2:
 		 *
 		 * Note: below this point, heaptup is the data we actually intend to
 		 * store into the relation; newtup is the caller's original untoasted
-		 * data.
+		 * data. (We always use WAL for toast table updates.)
 		 */
 		if (need_toast)
 		{
-			heaptup = toast_insert_or_update(relation, newtup, &oldtup);
+			heaptup = toast_insert_or_update(relation, newtup, &oldtup, true);
 			newtupsize = MAXALIGN(heaptup->t_len);
 		}
 		else
@@ -3965,4 +3979,25 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 	}
 	else
 		appendStringInfo(buf, "UNKNOWN");
+}
+
+/* ----------------
+ *		heap_sync - sync a heap, for use when no WAL has been written
+ *
+ * ----------------
+ */
+void
+heap_sync(Relation rel)
+{
+	if (!rel->rd_istemp)
+	{
+		/*
+		 * If we skipped using WAL, and it's not a temp relation,
+		 * we must force the relation down to disk before it's
+		 * safe to commit the transaction.  This requires forcing
+		 * out any dirty buffers and then doing a forced fsync.
+		 */
+		FlushRelationBuffers(rel);
+		smgrimmedsync(rel->rd_smgr);
+	}
 }

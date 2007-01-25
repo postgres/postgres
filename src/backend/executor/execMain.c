@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.283 2007/01/05 22:19:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.284 2007/01/25 02:17:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2516,11 +2516,7 @@ CloseIntoRel(QueryDesc *queryDesc)
 		 */
 		if (!estate->es_into_relation_use_wal &&
 			!estate->es_into_relation_descriptor->rd_istemp)
-		{
-			FlushRelationBuffers(estate->es_into_relation_descriptor);
-			/* FlushRelationBuffers will have opened rd_smgr */
-			smgrimmedsync(estate->es_into_relation_descriptor->rd_smgr);
-		}
+			heap_sync(estate->es_into_relation_descriptor);
 
 		/* close rel, but keep lock until commit */
 		heap_close(estate->es_into_relation_descriptor, NoLock);
