@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.88 2007/01/25 02:46:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.89 2007/01/25 03:30:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,23 +68,25 @@ static int	disable_triggers = 0;
 static int	use_setsessauth = 0;
 static int	server_version;
 
+static FILE	*OPF;
+static char	*filename = NULL;
 
 int
 main(int argc, char *argv[])
 {
-	char	   *pghost = NULL;
-	char	   *pgport = NULL;
-	char	   *pguser = NULL;
-	char	   *pgdb = NULL;
+	char		*pghost = NULL;
+	char		*pgport = NULL;
+	char		*pguser = NULL;
+	char		*pgdb = NULL;
 	bool		force_password = false;
 	bool		data_only = false;
 	bool		globals_only = false;
 	bool		roles_only = false;
 	bool		tablespaces_only = false;
 	bool		schema_only = false;
-	PGconn	   *conn;
+	PGconn		*conn;
 	int			encoding;
-	const char *std_strings;
+	const char	*std_strings;
 	int			c,
 				ret;
 
@@ -94,6 +96,7 @@ main(int argc, char *argv[])
 		{"inserts", no_argument, NULL, 'd'},
 		{"attribute-inserts", no_argument, NULL, 'D'},
 		{"column-inserts", no_argument, NULL, 'D'},
+		{"file", required_argument, NULL, 'f'},
 		{"globals-only", no_argument, NULL, 'g'},
 		{"host", required_argument, NULL, 'h'},
 		{"ignore-version", no_argument, NULL, 'i'},
@@ -167,7 +170,7 @@ main(int argc, char *argv[])
 
 	pgdumpopts = createPQExpBuffer();
 
-	while ((c = getopt_long(argc, argv, "acdDgh:il:oOp:rsS:tU:vWxX:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acdDf:gh:il:oOp:rsS:tU:vWxX:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -183,6 +186,16 @@ main(int argc, char *argv[])
 			case 'd':
 			case 'D':
 				appendPQExpBuffer(pgdumpopts, " -%c", c);
+				break;
+				
+			case 'f':
+				filename = optarg;
+#ifndef WIN32
+				appendPQExpBuffer(pgdumpopts, " -f '%s'", filename);
+#else
+				appendPQExpBuffer(pgdumpopts, " -f \"%s\"", filename);
+#endif
+
 				break;
 
 			case 'g':
@@ -377,6 +390,22 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 	}
+	
+	/*
+	 * Open the output file if required, otherwise use stdout
+	 */
+	if (filename)
+	{
+		OPF = fopen(filename, PG_BINARY_W);
+		if (!OPF)
+		{
+			fprintf(stderr, _("%s: could not open the output file \"%s\"\n"),
+					progname, filename);
+			exit(1);
+		}
+	}
+	else
+		OPF = stdout;
 
 	/*
 	 * Get the active encoding and the standard_conforming_strings setting, so
@@ -387,21 +416,21 @@ main(int argc, char *argv[])
 	if (!std_strings)
 		std_strings = "off";
 
-	printf("--\n-- PostgreSQL database cluster dump\n--\n\n");
+	fprintf(OPF, "--\n-- PostgreSQL database cluster dump\n--\n\n");
 	if (verbose)
 		dumpTimestamp("Started on");
 
-	printf("\\connect postgres\n\n");
+	fprintf(OPF, "\\connect postgres\n\n");
 
 	if (!data_only)
 	{
 		/* Replicate encoding and std_strings in output */
-		printf("SET client_encoding = '%s';\n",
+		fprintf(OPF, "SET client_encoding = '%s';\n",
 			   pg_encoding_to_char(encoding));
-		printf("SET standard_conforming_strings = %s;\n", std_strings);
+		fprintf(OPF, "SET standard_conforming_strings = %s;\n", std_strings);
 		if (strcmp(std_strings, "off") == 0)
-			printf("SET escape_string_warning = 'off';\n");
-		printf("\n");
+			fprintf(OPF, "SET escape_string_warning = 'off';\n");
+		fprintf(OPF, "\n");
 
 		if (!tablespaces_only)
 		{
@@ -434,7 +463,10 @@ main(int argc, char *argv[])
 
 	if (verbose)
 		dumpTimestamp("Completed on");
-	printf("--\n-- PostgreSQL database cluster dump complete\n--\n\n");
+	fprintf(OPF, "--\n-- PostgreSQL database cluster dump complete\n--\n\n");
+	
+	if (filename)
+		fclose(OPF);
 
 	exit(0);
 }
@@ -449,6 +481,7 @@ help(void)
 	printf(_("  %s [OPTION]...\n"), progname);
 
 	printf(_("\nGeneral options:\n"));
+	printf(_("  -f, --file=FILENAME      output file name\n"));
 	printf(_("  -i, --ignore-version     proceed even when server version mismatches\n"
 			 "                           pg_dumpall version\n"));
 	printf(_("  --help                   show this help, then exit\n"));
@@ -571,7 +604,7 @@ dumpRoles(PGconn *conn)
 	i_rolcomment = PQfnumber(res, "rolcomment");
 
 	if (PQntuples(res) > 0)
-		printf("--\n-- Roles\n--\n\n");
+		fprintf(OPF, "--\n-- Roles\n--\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -641,7 +674,7 @@ dumpRoles(PGconn *conn)
 			appendPQExpBuffer(buf, ";\n");
 		}
 
-		printf("%s", buf->data);
+		fprintf(OPF, "%s", buf->data);
 
 		if (server_version >= 70300)
 			dumpUserConfig(conn, rolename);
@@ -649,7 +682,7 @@ dumpRoles(PGconn *conn)
 
 	PQclear(res);
 
-	printf("\n\n");
+	fprintf(OPF, "\n\n");
 
 	destroyPQExpBuffer(buf);
 }
@@ -678,7 +711,7 @@ dumpRoleMembership(PGconn *conn)
 					   "ORDER BY 1,2,3");
 
 	if (PQntuples(res) > 0)
-		printf("--\n-- Role memberships\n--\n\n");
+		fprintf(OPF, "--\n-- Role memberships\n--\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -687,16 +720,16 @@ dumpRoleMembership(PGconn *conn)
 		char	   *grantor = PQgetvalue(res, i, 2);
 		char	   *option = PQgetvalue(res, i, 3);
 
-		printf("GRANT %s", fmtId(roleid));
-		printf(" TO %s", fmtId(member));
+		fprintf(OPF, "GRANT %s", fmtId(roleid));
+		fprintf(OPF, " TO %s", fmtId(member));
 		if (*option == 't')
-			printf(" WITH ADMIN OPTION");
-		printf(" GRANTED BY %s;\n", fmtId(grantor));
+			fprintf(OPF, " WITH ADMIN OPTION");
+		fprintf(OPF, " GRANTED BY %s;\n", fmtId(grantor));
 	}
 
 	PQclear(res);
 
-	printf("\n\n");
+	fprintf(OPF, "\n\n");
 }
 
 /*
@@ -718,7 +751,7 @@ dumpGroups(PGconn *conn)
 					   "SELECT groname, grolist FROM pg_group ORDER BY 1");
 
 	if (PQntuples(res) > 0)
-		printf("--\n-- Role memberships\n--\n\n");
+		fprintf(OPF, "--\n-- Role memberships\n--\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -755,8 +788,8 @@ dumpGroups(PGconn *conn)
 			if (strcmp(groname, usename) == 0)
 				continue;
 
-			printf("GRANT %s", fmtId(groname));
-			printf(" TO %s;\n", fmtId(usename));
+			fprintf(OPF, "GRANT %s", fmtId(groname));
+			fprintf(OPF, " TO %s;\n", fmtId(usename));
 		}
 
 		PQclear(res2);
@@ -765,7 +798,7 @@ dumpGroups(PGconn *conn)
 	PQclear(res);
 	destroyPQExpBuffer(buf);
 
-	printf("\n\n");
+	fprintf(OPF, "\n\n");
 }
 
 /*
@@ -799,7 +832,7 @@ dumpTablespaces(PGconn *conn)
 						   "ORDER BY 1");
 
 	if (PQntuples(res) > 0)
-		printf("--\n-- Tablespaces\n--\n\n");
+		fprintf(OPF, "--\n-- Tablespaces\n--\n\n");
 
 	for (i = 0; i < PQntuples(res); i++)
 	{
@@ -841,14 +874,14 @@ dumpTablespaces(PGconn *conn)
 			appendPQExpBuffer(buf, ";\n");
 		}
 
-		printf("%s", buf->data);
+		fprintf(OPF, "%s", buf->data);
 
 		free(fspcname);
 		destroyPQExpBuffer(buf);
 	}
 
 	PQclear(res);
-	printf("\n\n");
+	fprintf(OPF, "\n\n");
 }
 
 /*
@@ -869,7 +902,7 @@ dumpCreateDB(PGconn *conn)
 	PGresult   *res;
 	int			i;
 
-	printf("--\n-- Database creation\n--\n\n");
+	fprintf(OPF, "--\n-- Database creation\n--\n\n");
 
 	if (server_version >= 80100)
 		res = executeQuery(conn,
@@ -998,7 +1031,7 @@ dumpCreateDB(PGconn *conn)
 			exit(1);
 		}
 
-		printf("%s", buf->data);
+		fprintf(OPF, "%s", buf->data);
 
 		if (server_version >= 70300)
 			dumpDatabaseConfig(conn, dbname);
@@ -1009,7 +1042,7 @@ dumpCreateDB(PGconn *conn)
 	PQclear(res);
 	destroyPQExpBuffer(buf);
 
-	printf("\n\n");
+	fprintf(OPF, "\n\n");
 }
 
 
@@ -1121,7 +1154,7 @@ makeAlterConfigCommand(PGconn *conn, const char *arrayitem,
 		appendStringLiteralConn(buf, pos + 1, conn);
 	appendPQExpBuffer(buf, ";\n");
 
-	printf("%s", buf->data);
+	fprintf(OPF, "%s", buf->data);
 	destroyPQExpBuffer(buf);
 	free(mine);
 }
@@ -1151,13 +1184,29 @@ dumpDatabases(PGconn *conn)
 		if (verbose)
 			fprintf(stderr, _("%s: dumping database \"%s\"...\n"), progname, dbname);
 
-		printf("\\connect %s\n\n", fmtId(dbname));
+		fprintf(OPF, "\\connect %s\n\n", fmtId(dbname));
+		
+		if (filename)
+			fclose(OPF);
+			
 		ret = runPgDump(dbname);
 		if (ret != 0)
 		{
 			fprintf(stderr, _("%s: pg_dump failed on database \"%s\", exiting\n"), progname, dbname);
 			exit(1);
 		}
+		
+		if (filename)
+		{
+			OPF = fopen(filename, PG_BINARY_A);
+			if (!OPF)
+			{
+				fprintf(stderr, _("%s: could not re-open the output file \"%s\"\n"),
+						progname, filename);
+				exit(1);
+			}
+		}
+		
 	}
 
 	PQclear(res);
@@ -1179,13 +1228,28 @@ runPgDump(const char *dbname)
 	 * Win32 has to use double-quotes for args, rather than single quotes.
 	 * Strangely enough, this is the only place we pass a database name on the
 	 * command line, except "postgres" which doesn't need quoting.
+	 *
+	 * If we have a filename, use the undocumented plain-append pg_dump format.
 	 */
+	if (filename)
+	{
+#ifndef WIN32
+	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fa '", SYSTEMQUOTE, pg_dump_bin,
+#else
+	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fa \"", SYSTEMQUOTE, pg_dump_bin,
+#endif
+					  pgdumpopts->data);
+	}
+	else
+	{
 #ifndef WIN32
 	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp '", SYSTEMQUOTE, pg_dump_bin,
 #else
 	appendPQExpBuffer(cmd, "%s\"%s\" %s -Fp \"", SYSTEMQUOTE, pg_dump_bin,
 #endif
 					  pgdumpopts->data);
+	}	
+					  
 
 	/* Shell quoting is not quite like SQL quoting, so can't use fmtId */
 	for (p = dbname; *p; p++)
@@ -1413,5 +1477,5 @@ dumpTimestamp(char *msg)
 				 "%Y-%m-%d %H:%M:%S",
 #endif
 				 localtime(&now)) != 0)
-		printf("-- %s %s\n\n", msg, buf);
+		fprintf(OPF, "-- %s %s\n\n", msg, buf);
 }

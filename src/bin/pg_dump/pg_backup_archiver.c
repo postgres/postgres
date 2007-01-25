@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.139 2007/01/23 17:54:50 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.140 2007/01/25 03:30:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,10 +86,10 @@ static void ResetOutput(ArchiveHandle *AH, OutputContext savedContext);
 /* Public */
 Archive *
 CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
-			  const int compression)
+			  const int compression, ArchiveMode mode)
 
 {
-	ArchiveHandle *AH = _allocAH(FileSpec, fmt, compression, archModeWrite);
+	ArchiveHandle *AH = _allocAH(FileSpec, fmt, compression, mode);
 
 	return (Archive *) AH;
 }
@@ -203,7 +203,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 
 	/*
 	 * Setup the output file if necessary.
-	 */
+	 */	
 	if (ropt->filename || ropt->compression)
 		sav = SetOutput(AH, ropt->filename, ropt->compression);
 
@@ -940,10 +940,20 @@ SetOutput(ArchiveHandle *AH, char *filename, int compression)
 	else
 #endif
 	{							/* Use fopen */
-		if (fn >= 0)
-			AH->OF = fdopen(dup(fn), PG_BINARY_W);
+		if (AH->mode == archModeAppend)
+		{
+			if (fn >= 0)
+				AH->OF = fdopen(dup(fn), PG_BINARY_A);
+			else
+				AH->OF = fopen(filename, PG_BINARY_A);
+		}
 		else
-			AH->OF = fopen(filename, PG_BINARY_W);
+		{
+			if (fn >= 0)
+				AH->OF = fdopen(dup(fn), PG_BINARY_W);
+			else
+				AH->OF = fopen(filename, PG_BINARY_W);
+		}
 		AH->gzOut = 0;
 	}
 

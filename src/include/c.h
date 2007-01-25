@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.216 2007/01/11 02:39:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.217 2007/01/25 03:30:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -736,10 +736,12 @@ typedef NameData *Name;
  */
 #if defined(WIN32) || defined(__CYGWIN__)
 #define PG_BINARY	O_BINARY
+#define PG_BINARY_A "ab"
 #define PG_BINARY_R "rb"
 #define PG_BINARY_W "wb"
 #else
 #define PG_BINARY	0
+#define PG_BINARY_A "a"
 #define PG_BINARY_R "r"
 #define PG_BINARY_W "w"
 #endif

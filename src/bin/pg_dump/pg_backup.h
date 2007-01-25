@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.44 2006/10/14 23:07:22 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.45 2007/01/25 03:30:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,13 @@ typedef enum _archiveFormat
 	archTar = 3,
 	archNull = 4
 } ArchiveFormat;
+
+typedef enum _archiveMode
+{
+	archModeAppend,
+	archModeWrite,
+	archModeRead
+} ArchiveMode;
 
 /*
  *	We may want to have some more user-readable data, but in the mean
@@ -166,7 +173,7 @@ extern Archive *OpenArchive(const char *FileSpec, const ArchiveFormat fmt);
 
 /* Create a new archive */
 extern Archive *CreateArchive(const char *FileSpec, const ArchiveFormat fmt,
-			  const int compression);
+			  const int compression, ArchiveMode mode);
 
 /* The --list option */
 extern void PrintTOCSummary(Archive *AH, RestoreOptions *ropt);

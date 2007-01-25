@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.458 2007/01/23 17:54:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.459 2007/01/25 03:30:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,25 +478,31 @@ main(int argc, char **argv)
 	/* open the output file */
 	switch (format[0])
 	{
+		case 'a':
+		case 'A':
+			plainText = 1;
+			g_fout = CreateArchive(filename, archNull, 0, archModeAppend);
+			break;
+			
 		case 'c':
 		case 'C':
-			g_fout = CreateArchive(filename, archCustom, compressLevel);
+			g_fout = CreateArchive(filename, archCustom, compressLevel, archModeWrite);
 			break;
 
 		case 'f':
 		case 'F':
-			g_fout = CreateArchive(filename, archFiles, compressLevel);
+			g_fout = CreateArchive(filename, archFiles, compressLevel, archModeWrite);
 			break;
 
 		case 'p':
 		case 'P':
 			plainText = 1;
-			g_fout = CreateArchive(filename, archNull, 0);
+			g_fout = CreateArchive(filename, archNull, 0, archModeWrite);
 			break;
 
 		case 't':
 		case 'T':
-			g_fout = CreateArchive(filename, archTar, compressLevel);
+			g_fout = CreateArchive(filename, archTar, compressLevel, archModeWrite);
 			break;
 
 		default:

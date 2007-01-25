@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.61 2007/01/25 02:46:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.62 2007/01/25 03:30:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -125,6 +125,18 @@ PostgreSQL documentation
         ...</literal>).  This will make restoration very slow; it is mainly
         useful for making dumps that can be loaded into
         non-<productname>PostgreSQL</productname> databases.
+       </para>
+      </listitem>
+     </varlistentry>
+	 
+     <varlistentry>
+      <term><option>-f <replaceable class="parameter">filename</replaceable></option></term>
+      <term><option>--file=<replaceable class="parameter">filename</replaceable></option></term>
+      <listitem>
+       <para>
+        Write the output to the specified file.  This is particularly useful
+        on Windows because output redirection does not work for child
+        processes.
        </para>
       </listitem>
      </varlistentry>
