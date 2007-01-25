@@ -2,7 +2,7 @@
  * ruleutils.c	- Functions to convert stored expressions/querytrees
  *				back to source text
  *
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.235 2006/11/10 22:59:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.235.2.1 2007/01/25 04:17:56 momjian Exp $
  **********************************************************************/
 
 #include "postgres.h"
@@ -519,8 +519,7 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 		char	   *p;
 		int			i;
 
-		val = (bytea *)
-			DatumGetPointer(fastgetattr(ht_trig,
+		val = DatumGetByteaP(fastgetattr(ht_trig,
 										Anum_pg_trigger_tgargs,
 										tgrel->rd_att, &isnull));
 		if (isnull)
