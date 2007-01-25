@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.40 2007/01/05 22:19:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.41 2007/01/25 04:35:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,9 +65,12 @@
 #include "utils/lsyscache.h"
 
 
-/* GUC variable */
+/* GUC variables */
 char	   *default_tablespace = NULL;
+char       *temp_tablespaces = NULL;
 
+int	   next_temp_tablespace;
+int	   num_temp_tablespaces;
 
 static bool remove_tablespace_directories(Oid tablespaceoid, bool redo);
 static void set_short_version(const char *path);
@@ -930,6 +933,142 @@ GetDefaultTablespace(void)
 	return result;
 }
 
+/*
+ * Routines for handling the GUC variable 'temp_tablespaces'.
+ */
+
+/* assign_hook: validate new temp_tablespaces, do extra actions as needed */
+const char *
+assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
+{
+	char	   *rawname;
+	List	   *namelist;
+	ListCell   *l;
+
+	/* Need a modifiable copy of string */
+	rawname = pstrdup(newval);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawname, ',', &namelist))
+	{
+		/* syntax error in name list */
+		pfree(rawname);
+		list_free(namelist);
+		return NULL;
+	}
+
+	num_temp_tablespaces = 0;
+	foreach(l, namelist)
+	{
+		char	   *curname = (char *) lfirst(l);
+
+		/*
+		 * If we aren't inside a transaction, we cannot do database access so
+		 * cannot verify the individual names.	Must accept the list on faith.
+		 */
+		if (source >= PGC_S_INTERACTIVE && IsTransactionState())
+		{
+			/*
+			 * Verify that all the names are valid tablspace names 
+			 * We do not check for USAGE rights should we?
+			 */
+			if (get_tablespace_oid(curname) == InvalidOid)
+				ereport((source == PGC_S_TEST) ? NOTICE : ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						errmsg("tablespace \"%s\" does not exist", curname)));
+		}
+		num_temp_tablespaces++;
+	}
+
+	/*
+	 * Select the first tablespace to use
+	 */
+	next_temp_tablespace = MyProcPid % num_temp_tablespaces;
+
+	pfree(rawname);
+	list_free(namelist);
+	return newval;
+}
+
+/*
+ * GetTempTablespace -- get the OID of the tablespace for temporary objects
+ *
+ * May return InvalidOid to indicate "use the database's default tablespace"
+ *
+ * This exists to hide the temp_tablespace GUC variable.
+ */
+Oid
+GetTempTablespace(void)
+{
+	Oid			result;
+	char *curname = NULL;
+	char *rawname;
+	List *namelist;
+	ListCell *l;
+	int i = 0;
+	
+	if ( temp_tablespaces == NULL )
+		return InvalidOid;
+
+	/* Need a modifiable version of temp_tablespaces */
+	rawname = pstrdup(temp_tablespaces);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawname, ',', &namelist))
+	{
+		/* syntax error in name list */
+		pfree(rawname);
+		list_free(namelist);
+		return InvalidOid;
+	}
+
+	/* 
+	 * Iterate through the list of namespaces until the one we need 
+	 * (next_temp_tablespace) 
+	 */
+	foreach(l, namelist)
+	{
+		curname = (char *) lfirst(l);
+		if ( i == next_temp_tablespace )
+			break;
+		i++;
+	}
+
+
+	/* Prepare for the next time the function is called */
+	next_temp_tablespace++;
+	if (next_temp_tablespace == num_temp_tablespaces)
+		next_temp_tablespace = 0;
+
+	/* Fast path for temp_tablespaces == "" */
+	if ( curname == NULL || curname[0] == '\0') {
+		list_free(namelist);
+		pfree(rawname);
+		return InvalidOid;
+	}
+
+	/*
+	 * It is tempting to cache this lookup for more speed, but then we would
+	 * fail to detect the case where the tablespace was dropped since the GUC
+	 * variable was set.  Note also that we don't complain if the value fails
+	 * to refer to an existing tablespace; we just silently return InvalidOid,
+	 * causing the new object to be created in the database's tablespace.
+	 */
+	result = get_tablespace_oid(curname);
+
+	/* We don't free rawname before because curname points to a part of it */
+	pfree(rawname);
+
+	/*
+	 * Allow explicit specification of database's default tablespace in
+	 * default_tablespace without triggering permissions checks.
+	 */
+	if (result == MyDatabaseTableSpace)
+		result = InvalidOid;
+	
+	list_free(namelist);
+	return result;
+}
 
 /*
  * get_tablespace_oid - given a tablespace name, look up the OID

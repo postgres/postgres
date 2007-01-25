@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.153 2007/01/20 23:13:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.154 2007/01/25 04:35:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,13 @@ DefineIndex(RangeVar *heapRelation,
 	}
 	else
 	{
-		tablespaceId = GetDefaultTablespace();
+ 		/*
+ 		 * if the target table is temporary then use a temp_tablespace
+ 		 */
+ 		if (!rel->rd_istemp)
+			tablespaceId = GetDefaultTablespace();
+ 		else
+ 			tablespaceId = GetTempTablespace();
 		/* note InvalidOid is OK in this case */
 	}
 

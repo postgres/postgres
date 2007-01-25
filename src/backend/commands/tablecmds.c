@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.211 2007/01/25 04:17:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.212 2007/01/25 04:35:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -333,6 +333,10 @@ DefineRelation(CreateStmt *stmt, char relkind)
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("tablespace \"%s\" does not exist",
 							stmt->tablespacename)));
+	}
+	else if (stmt->relation->istemp)
+	{
+		tablespaceId = GetTempTablespace();
 	}
 	else
 	{

@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.78 2007/01/09 21:31:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.79 2007/01/25 04:35:11 momjian Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -237,5 +237,9 @@ extern const char *assign_search_path(const char *newval,
 /* in access/transam/xlog.c */
 extern const char *assign_xlog_sync_method(const char *method,
 						bool doit, GucSource source);
+
+/* in commands/tablespace.c */
+extern const char *assign_temp_tablespaces(const char *newval,
+						  bool doit, GucSource source);
 
 #endif   /* GUC_H */
