@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Jan 24 23:38:55 EST 2007
+Last updated:		Thu Jan 25 17:25:42 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1062,6 +1062,7 @@ Vacuum
 * Consider shrinking expired tuples to just their headers
 
   http://archives.postgresql.org/pgsql-patches/2006-03/msg00142.php
+  http://archives.postgresql.org/pgsql-hackers/2007-01/msg01025.php
 
 * Allow heap reuse of UPDATEd rows if no indexed columns are changed,
   and old and new versions are on the same heap page?
