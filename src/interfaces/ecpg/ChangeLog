@@ -2155,3 +2155,10 @@ We 8. Nov 10:53:42 CET 2006
 	- Applied patch by Peter Harris to free auto_mem struct in ECPGconnect.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
+
+Th 25. Jan 17:17:01 CET 2007
+
+	- Removed compiler warning due to unneeded unsigned declaration.
+	- Removed regression test that triggers those libc precision bugs on some archs.
+	- Set ecpg library version to 5.3.
+	- Set ecpg version to 4.3.1.

@@ -101,9 +101,16 @@ main(void)
 			free(text);
 		}
 
-		r = PGTYPESnumeric_to_double(num, &d);
-		if (r) check_errno();
-		printf("num[%d,10]: %g (r: %d)\n", i, r?0.0:d, r);
+		if (i != 6)
+		{
+			/* underflow does not work reliable on several archs, so not testing it here */
+			/* this is a libc problem since we only call strtod() */
+
+			r = PGTYPESnumeric_to_double(num, &d);
+			if (r) check_errno();
+			printf("num[%d,10]: %g (r: %d)\n", i, r?0.0:d, r);
+		}
+
 		/* do not test double to numeric because
 		 * - extra digits are different on different architectures
 		 * - PGTYPESnumeric_from_double internally calls PGTYPESnumeric_from_asc anyway

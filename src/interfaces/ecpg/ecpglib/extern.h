@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.21 2007/01/12 10:00:13 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.22 2007/01/25 16:45:25 meskes Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -40,7 +40,7 @@ void		ECPGfree(void *);
 bool		ECPGinit(const struct connection *, const char *, const int);
 char	   *ECPGstrdup(const char *, int);
 const char *ECPGtype_name(enum ECPGttype);
-unsigned int ECPGDynamicType(Oid);
+int ECPGDynamicType(Oid);
 void		ECPGfree_auto_mem(void);
 void		ECPGclear_auto_mem(void);
 
