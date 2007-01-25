@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.70 2007/01/23 16:21:17 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.71 2007/01/25 21:50:49 momjian Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -155,8 +155,10 @@ int			semop(int semId, struct sembuf * sops, int flag);
  *		NTSTATUS.H from the Windows NT DDK.
  *                                               
  *	Some day we might want to print descriptions for the most common
- *	exceptions, rather than printing a URL.  FormatMessage() can print
- *	the text of error values, but not exception values.
+ *	exceptions, rather than printing an include file name.  We could use
+ *	RtlNtStatusToDosError() and pass to FormatMessage(), which can print
+ *	the text of error values, but MinGW does not support
+ *	RtlNtStatusToDosError().
  */
 #define WIFEXITED(w)    (((w) & 0XFFFFFF00) == 0)
 #define WIFSIGNALED(w)  (!WIFEXITED(w))
