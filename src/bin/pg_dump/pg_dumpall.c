@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.86 2007/01/05 22:19:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.87 2007/01/25 02:30:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,8 @@ main(int argc, char *argv[])
 	bool		force_password = false;
 	bool		data_only = false;
 	bool		globals_only = false;
+	bool		roles_only = false;
+	bool		tablespaces_only = false;
 	bool		schema_only = false;
 	PGconn	   *conn;
 	int			encoding;
@@ -97,11 +99,13 @@ main(int argc, char *argv[])
 		{"oids", no_argument, NULL, 'o'},
 		{"no-owner", no_argument, NULL, 'O'},
 		{"port", required_argument, NULL, 'p'},
-		{"password", no_argument, NULL, 'W'},
+		{"roles-only", no_argument, NULL, 'r'},
 		{"schema-only", no_argument, NULL, 's'},
 		{"superuser", required_argument, NULL, 'S'},
+		{"tablespaces-only", no_argument, NULL, 't'},
 		{"username", required_argument, NULL, 'U'},
 		{"verbose", no_argument, NULL, 'v'},
+		{"password", no_argument, NULL, 'W'},
 		{"no-privileges", no_argument, NULL, 'x'},
 		{"no-acl", no_argument, NULL, 'x'},
 
@@ -161,7 +165,7 @@ main(int argc, char *argv[])
 
 	pgdumpopts = createPQExpBuffer();
 
-	while ((c = getopt_long(argc, argv, "acdDgh:ioOp:sS:U:vWxX:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acdDgh:ioOp:rsS:tU:vWxX:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -214,6 +218,10 @@ main(int argc, char *argv[])
 				appendPQExpBuffer(pgdumpopts, " -p \"%s\"", pgport);
 #endif
 				break;
+				
+			case 'r':
+				roles_only = true;
+				break;
 
 			case 's':
 				schema_only = true;
@@ -226,6 +234,10 @@ main(int argc, char *argv[])
 #else
 				appendPQExpBuffer(pgdumpopts, " -S \"%s\"", optarg);
 #endif
+				break;
+				
+			case 't':
+				tablespaces_only = true;
 				break;
 
 			case 'U':
@@ -295,6 +307,34 @@ main(int argc, char *argv[])
 				progname);
 		exit(1);
 	}
+	
+	/* Make sure the user hasn't specified a mix of globals-only options */
+	if (globals_only && roles_only)
+	{
+		fprintf(stderr, _("%s: --globals-only and --roles-only cannot be used together\n"),
+				progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
+	
+	if (globals_only && tablespaces_only)
+	{
+		fprintf(stderr, _("%s: --globals-only and --tablespaces-only cannot be used together\n"),
+				progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
+	
+	if (roles_only && tablespaces_only)
+	{
+		fprintf(stderr, _("%s: --roles-only and --tablespaces-only cannot be used together\n"),
+				progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
+		exit(1);
+	}
 
 	/*
 	 * First try to connect to database "postgres", and failing that
@@ -332,25 +372,31 @@ main(int argc, char *argv[])
 			printf("SET escape_string_warning = 'off';\n");
 		printf("\n");
 
-		/* Dump roles (users) */
-		dumpRoles(conn);
+		if (!tablespaces_only)
+		{
+			/* Dump roles (users) */
+			dumpRoles(conn);
 
-		/* Dump role memberships --- need different method for pre-8.1 */
-		if (server_version >= 80100)
-			dumpRoleMembership(conn);
-		else
-			dumpGroups(conn);
+			/* Dump role memberships --- need different method for pre-8.1 */
+			if (server_version >= 80100)
+				dumpRoleMembership(conn);
+			else
+				dumpGroups(conn);
+		}
 
-		/* Dump tablespaces */
-		if (server_version >= 80000)
-			dumpTablespaces(conn);
+		if (!roles_only)
+		{
+			/* Dump tablespaces */
+			if (server_version >= 80000)
+				dumpTablespaces(conn);
+		}
 
 		/* Dump CREATE DATABASE commands */
-		if (!globals_only)
+		if (!globals_only && !roles_only && !tablespaces_only)
 			dumpCreateDB(conn);
 	}
 
-	if (!globals_only)
+	if (!globals_only && !roles_only && !tablespaces_only)
 		dumpDatabases(conn);
 
 	PQfinish(conn);
@@ -384,8 +430,10 @@ help(void)
 	printf(_("  -g, --globals-only       dump only global objects, no databases\n"));
 	printf(_("  -o, --oids               include OIDs in dump\n"));
 	printf(_("  -O, --no-owner           skip restoration of object ownership\n"));
+	printf(_("  -r, --roles-only         dump only roles, no databases or tablespaces\n"));
 	printf(_("  -s, --schema-only        dump only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"));
+	printf(_("  -t, --tablespaces-only   dump only tablespaces, no databases or roles\n"));
 	printf(_("  -x, --no-privileges      do not dump privileges (grant/revoke)\n"));
 	printf(_("  --disable-dollar-quoting\n"
 			 "                           disable dollar quoting, use SQL standard quoting\n"));

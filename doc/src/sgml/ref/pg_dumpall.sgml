@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.59 2007/01/15 17:22:46 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.60 2007/01/25 02:30:32 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -194,6 +194,16 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
+      <term><option>-r</option></term>
+      <term><option>--roles-only</option></term>
+      <listitem>
+       <para>
+        Dump only roles, no databases or tablespaces.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term><option>-s</option></term>
       <term><option>--schema-only</option></term>
       <listitem>
@@ -212,6 +222,16 @@ PostgreSQL documentation
         This is only relevant if <option>--disable-triggers</> is used.
         (Usually, it's better to leave this out, and instead start the
         resulting script as superuser.)
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-t</option></term>
+      <term><option>--tablespaces-only</option></term>
+      <listitem>
+       <para>
+        Dump only tablespaces, no databases or roles.
        </para>
       </listitem>
      </varlistentry>
