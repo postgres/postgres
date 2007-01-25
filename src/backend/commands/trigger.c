@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.211 2007/01/05 22:19:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.212 2007/01/25 04:17:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -906,8 +906,7 @@ RelationBuildTriggers(Relation relation)
 			char	   *p;
 			int			i;
 
-			val = (bytea *)
-				DatumGetPointer(fastgetattr(htup,
+			val = DatumGetByteaP(fastgetattr(htup,
 											Anum_pg_trigger_tgargs,
 											tgrel->rd_att, &isnull));
 			if (isnull)
