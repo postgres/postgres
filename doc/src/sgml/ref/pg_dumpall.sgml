@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.62 2007/01/25 03:30:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.63 2007/01/25 15:08:06 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -134,9 +134,8 @@ PostgreSQL documentation
       <term><option>--file=<replaceable class="parameter">filename</replaceable></option></term>
       <listitem>
        <para>
-        Write the output to the specified file.  This is particularly useful
-        on Windows because output redirection does not work for child
-        processes.
+        Send output to the specified file.  If this is omitted, the
+        standard output is used.
        </para>
       </listitem>
      </varlistentry>
