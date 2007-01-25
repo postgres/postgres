@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.274 2007/01/20 21:30:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.275 2007/01/25 23:34:28 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1753,8 +1753,8 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">BSD/OS</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>8.1.0</entry>
-        <entry>Bruce Momjian (<email>pgman@candle.pha.pa.us</email>), 2005-10-26</entry>
+        <entry>8.2.0</entry>
+        <entry>Bruce Momjian (<email>bruce@momjian.us</email>), 2007-01-25</entry>
         <entry>4.3.1</entry>
        </row>
        <row>
