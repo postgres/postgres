@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.208 2007/01/20 09:27:19 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.209 2007/01/25 11:53:50 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2797,10 +2797,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 
 				e = (ExprState *) lthird(xmlExpr->args);
 				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)
-					standalone = 0;
-				else
-					standalone = (DatumGetBool(value) ? 1 : -1);
+				standalone = DatumGetInt32(value);
 
 				*isNull = false;
 

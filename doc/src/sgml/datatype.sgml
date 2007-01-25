@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.185 2007/01/18 13:59:11 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.186 2007/01/25 11:53:50 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3472,6 +3472,24 @@ XMLSERIALIZE ( { DOCUMENT | CONTENT } <replaceable>value</replaceable> AS <repla
     to the SQL standard, this is the only way to convert between type
     <type>xml</type> and character types, but PostgreSQL also allows
     you to simply cast the value.
+   </para>
+
+   <para>
+    When character string values are cast to or from type
+    <type>xml</type> without going through <type>XMLPARSE</type> or
+    <type>XMLSERIALIZE</type>, respectively, the choice of
+    <literal>DOCUMENT</literal> versus <literal>CONTENT</literal> is
+    determined by the <quote>XML option</quote> session configuration
+    parameter, which can be set using the standard command
+<synopsis>
+SET XML OPTION { DOCUMENT | CONTENT };
+</synopsis>
+    or the more PostgreSQL-like syntax
+<synopsis>
+SET xmloption TO { DOCUMENT | CONTENT };
+</synopsis>
+    The default is <literal>CONTENT</literal>, so all forms of XML
+    data are allowed.
    </para>
 
    <para>

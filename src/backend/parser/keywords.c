@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.183 2007/01/23 05:07:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.184 2007/01/25 11:53:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,6 +380,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"without", WITHOUT},
 	{"work", WORK},
 	{"write", WRITE},
+	{"xml", XML_P},
 	{"xmlattributes", XMLATTRIBUTES},
 	{"xmlconcat", XMLCONCAT},
 	{"xmlelement", XMLELEMENT},

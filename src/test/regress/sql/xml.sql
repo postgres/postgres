@@ -25,6 +25,7 @@ SELECT xmlconcat('hello', 'you');
 SELECT xmlconcat(1, 2);
 SELECT xmlconcat('bad', '<syntax');
 SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
+SELECT xmlconcat('<?xml version="1.1"?><foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
 
 
 SELECT xmlelement(name element,
@@ -69,7 +70,13 @@ SELECT xmlpi(name foo, '   bar');
 
 SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
 SELECT xmlroot(xml '<foo/>', version '2.0');
+SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
+SELECT xmlroot(xml '<?xml version="1.1"?><foo/>', version no value, standalone yes);
 SELECT xmlroot(xmlroot(xml '<foo/>', version '1.0'), version '1.1', standalone no);
+SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value, standalone no);
+SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value, standalone no value);
+SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value);
+
 
 SELECT xmlroot (
   xmlelement (
@@ -107,3 +114,14 @@ SELECT xmlelement(name employees, xmlagg(xmlelement(name name, name))) FROM emp;
 
 SELECT xmlpi(name ":::_xml_abc135.%-&_");
 SELECT xmlpi(name "123");
+
+
+PREPARE foo (xml) AS SELECT xmlconcat('<foo/>', $1);
+
+SET XML OPTION DOCUMENT;
+EXECUTE foo ('<bar/>');
+EXECUTE foo ('bad');
+
+SET XML OPTION CONTENT;
+EXECUTE foo ('<bar/>');
+EXECUTE foo ('good');

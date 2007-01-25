@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.208 2007/01/14 13:11:53 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.209 2007/01/25 11:53:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1481,7 +1481,8 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 					newe = coerce_to_specific_type(pstate, newe, TEXTOID,
 												   "XMLROOT");
 				else
-					newe = coerce_to_boolean(pstate, newe, "XMLROOT");
+					newe = coerce_to_specific_type(pstate, newe, INT4OID,
+												   "XMLROOT");
 				break;
 			case IS_DOCUMENT:
 				newe = coerce_to_specific_type(pstate, newe, XMLOID,

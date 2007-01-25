@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.105 2007/01/25 04:35:10 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.106 2007/01/25 11:53:50 petere Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3554,6 +3554,38 @@ SELECT * FROM parent WHERE key = 2400;
         applications.  Both methods support all possible values,
         although the hex encoding will be somewhat larger than the
         base64 encoding.
+       </para>
+      </listitem>
+     </varlistentry>
+     
+     <varlistentry id="guc-xmloption" xreflabel="xmloption">
+      <term><varname>xmloption</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>xmloption</> configuration parameter</primary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>SET XML OPTION</></primary>
+      </indexterm>
+      <indexterm>
+       <primary><varname>XML option</></primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets whether <literal>DOCUMENT</literal> or
+        <literal>CONTENT</literal> is implicit when converting between
+        XML and character string values.  See <xref
+        linkend="datatype-xml"> for a description of this.  Valid
+        values are <literal>DOCUMENT</literal> and
+        <literal>CONTENT</literal>.  The default is
+        <literal>CONTENT</literal>.
+       </para>
+
+       <para>
+        According to the SQL standard, the command to set this option is
+<synopsis>
+SET XML OPTION { DOCUMENT | CONTENT };
+</synopsis>
+        This syntax is also available in PostgreSQL.
        </para>
       </listitem>
      </varlistentry>

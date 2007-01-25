@@ -53,13 +53,19 @@ SELECT xmlconcat('hello', 'you');
 (1 row)
 
 SELECT xmlconcat(1, 2);
-ERROR:  argument of XMLCONCAT must be type xml, not type integer
+ERROR:  argument of XMLCONCAT must be type "xml", not type integer
 SELECT xmlconcat('bad', '<syntax');
 ERROR:  invalid XML content
 DETAIL:  Entity: line 1: parser error : Couldn't find end of Start Tag syntax line 1
 <syntax
        ^
 SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
+  xmlconcat   
+--------------
+ <foo/><bar/>
+(1 row)
+
+SELECT xmlconcat('<?xml version="1.1"?><foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
              xmlconcat             
 -----------------------------------
  <?xml version="1.1"?><foo/><bar/>
@@ -205,23 +211,48 @@ SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
  xmlroot 
 ---------
  <foo/>
- 
 (1 row)
 
 SELECT xmlroot(xml '<foo/>', version '2.0');
-        xmlroot        
------------------------
- <?xml version="2.0"?>
- <foo/>
- 
+           xmlroot           
+-----------------------------
+ <?xml version="2.0"?><foo/>
+(1 row)
+
+SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
+                   xmlroot                    
+----------------------------------------------
+ <?xml version="1.0" standalone="yes"?><foo/>
+(1 row)
+
+SELECT xmlroot(xml '<?xml version="1.1"?><foo/>', version no value, standalone yes);
+                   xmlroot                    
+----------------------------------------------
+ <?xml version="1.0" standalone="yes"?><foo/>
 (1 row)
 
 SELECT xmlroot(xmlroot(xml '<foo/>', version '1.0'), version '1.1', standalone no);
-                xmlroot                
----------------------------------------
- <?xml version="1.1" standalone="no"?>
+                   xmlroot                   
+---------------------------------------------
+ <?xml version="1.1" standalone="no"?><foo/>
+(1 row)
+
+SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value, standalone no);
+                   xmlroot                   
+---------------------------------------------
+ <?xml version="1.0" standalone="no"?><foo/>
+(1 row)
+
+SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value, standalone no value);
+ xmlroot 
+---------
  <foo/>
- 
+(1 row)
+
+SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value);
+                   xmlroot                    
+----------------------------------------------
+ <?xml version="1.0" standalone="yes"?><foo/>
 (1 row)
 
 SELECT xmlroot (
@@ -239,11 +270,9 @@ SELECT xmlroot (
   version '1.0',
   standalone yes
 );
-                      xmlroot                       
-----------------------------------------------------
- <?xml version="1.0" standalone="yes"?>
- <gazonk name="val" num="2"><qux>foo</qux></gazonk>
- 
+                                         xmlroot                                          
+------------------------------------------------------------------------------------------
+ <?xml version="1.0" standalone="yes"?><gazonk name="val" num="2"><qux>foo</qux></gazonk>
 (1 row)
 
 SELECT xmlserialize(content data as character varying) FROM xmltest;
@@ -311,5 +340,31 @@ SELECT xmlpi(name "123");
      xmlpi     
 ---------------
  <?_x0031_23?>
+(1 row)
+
+PREPARE foo (xml) AS SELECT xmlconcat('<foo/>', $1);
+SET XML OPTION DOCUMENT;
+EXECUTE foo ('<bar/>');
+  xmlconcat   
+--------------
+ <foo/><bar/>
+(1 row)
+
+EXECUTE foo ('bad');
+ERROR:  invalid XML document
+DETAIL:  Entity: line 1: parser error : Start tag expected, '<' not found
+bad
+^
+SET XML OPTION CONTENT;
+EXECUTE foo ('<bar/>');
+  xmlconcat   
+--------------
+ <foo/><bar/>
+(1 row)
+
+EXECUTE foo ('good');
+ xmlconcat  
+------------
+ <foo/>good
 (1 row)
 

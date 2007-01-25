@@ -30,10 +30,12 @@ ERROR:  no XML support in this installation
 SELECT xmlconcat('hello', 'you');
 ERROR:  no XML support in this installation
 SELECT xmlconcat(1, 2);
-ERROR:  argument of XMLCONCAT must be type xml, not type integer
+ERROR:  argument of XMLCONCAT must be type "xml", not type integer
 SELECT xmlconcat('bad', '<syntax');
 ERROR:  no XML support in this installation
 SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
+ERROR:  no XML support in this installation
+SELECT xmlconcat('<?xml version="1.1"?><foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
 ERROR:  no XML support in this installation
 SELECT xmlelement(name element,
                   xmlattributes (1 as one, 'deuce' as two),
@@ -92,7 +94,17 @@ SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
 ERROR:  no XML support in this installation
 SELECT xmlroot(xml '<foo/>', version '2.0');
 ERROR:  no XML support in this installation
+SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
+ERROR:  no XML support in this installation
+SELECT xmlroot(xml '<?xml version="1.1"?><foo/>', version no value, standalone yes);
+ERROR:  no XML support in this installation
 SELECT xmlroot(xmlroot(xml '<foo/>', version '1.0'), version '1.1', standalone no);
+ERROR:  no XML support in this installation
+SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value, standalone no);
+ERROR:  no XML support in this installation
+SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value, standalone no value);
+ERROR:  no XML support in this installation
+SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value);
 ERROR:  no XML support in this installation
 SELECT xmlroot (
   xmlelement (
@@ -144,3 +156,15 @@ SELECT xmlpi(name ":::_xml_abc135.%-&_");
 ERROR:  no XML support in this installation
 SELECT xmlpi(name "123");
 ERROR:  no XML support in this installation
+PREPARE foo (xml) AS SELECT xmlconcat('<foo/>', $1);
+ERROR:  no XML support in this installation
+SET XML OPTION DOCUMENT;
+EXECUTE foo ('<bar/>');
+ERROR:  prepared statement "foo" does not exist
+EXECUTE foo ('bad');
+ERROR:  prepared statement "foo" does not exist
+SET XML OPTION CONTENT;
+EXECUTE foo ('<bar/>');
+ERROR:  prepared statement "foo" does not exist
+EXECUTE foo ('good');
+ERROR:  prepared statement "foo" does not exist

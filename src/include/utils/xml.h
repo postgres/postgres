@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.12 2007/01/20 09:27:20 petere Exp $
+ * $PostgreSQL: pgsql/src/include/utils/xml.h,v 1.13 2007/01/25 11:53:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,14 @@ extern Datum xmlconcat2(PG_FUNCTION_ARGS);
 extern Datum texttoxml(PG_FUNCTION_ARGS);
 extern Datum xmlvalidate(PG_FUNCTION_ARGS);
 
+typedef enum
+{
+	XML_STANDALONE_YES,
+	XML_STANDALONE_NO,
+	XML_STANDALONE_NO_VALUE,
+	XML_STANDALONE_OMITTED
+} XmlStandaloneType;
+
 extern xmltype *xmlconcat(List *args);
 extern xmltype *xmlelement(XmlExprState *xmlExpr, ExprContext *econtext);
 extern xmltype *xmlparse(text *data, bool is_doc, bool preserve_whitespace);
@@ -52,5 +60,13 @@ typedef enum
 } XmlBinaryType;
 
 extern XmlBinaryType xmlbinary;
+
+typedef enum
+{
+	XMLOPTION_DOCUMENT,
+	XMLOPTION_CONTENT
+} XmlOptionType;
+
+extern XmlOptionType xmloption;
 
 #endif /* XML_H */

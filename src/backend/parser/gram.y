@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.576 2007/01/23 05:07:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.577 2007/01/25 11:53:51 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -60,6 +60,7 @@
 #include "utils/date.h"
 #include "utils/datetime.h"
 #include "utils/numeric.h"
+#include "utils/xml.h"
 
 
 /* Location tracking support --- simpler than bison's default */
@@ -439,7 +440,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 
 	WHEN WHERE WHITESPACE_P WITH WITHOUT WORK WRITE
 
-	XMLATTRIBUTES XMLCONCAT XMLELEMENT XMLFOREST XMLPARSE
+	XML_P XMLATTRIBUTES XMLCONCAT XMLELEMENT XMLFOREST XMLPARSE
 	XMLPI XMLROOT XMLSERIALIZE
 
 	YEAR_P YES_P
@@ -1110,6 +1111,13 @@ set_rest:  var_name TO var_list_or_default
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = "session_authorization";
 					n->args = NIL;
+					$$ = n;
+				}
+			| XML_P OPTION document_or_content
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name = "xmloption";
+					n->args = list_make1(makeStringConst($3 ? "DOCUMENT" : "CONTENT", NULL));
 					$$ = n;
 				}
 		;
@@ -7938,21 +7946,13 @@ xml_root_version: VERSION_P a_expr
 		;
 
 opt_xml_root_standalone: ',' STANDALONE_P YES_P
-				{ $$ = (Node *) makeBoolAConst(true); }
+				{ $$ = (Node *) makeIntConst(XML_STANDALONE_YES); }
 			| ',' STANDALONE_P NO
-				{ $$ = (Node *) makeBoolAConst(false); }
+				{ $$ = (Node *) makeIntConst(XML_STANDALONE_NO); }
 			| ',' STANDALONE_P NO VALUE_P
-				{
-					A_Const *val = makeNode(A_Const);
-					val->val.type = T_Null;
-					$$ = (Node *) val;
-				}
+				{ $$ = (Node *) makeIntConst(XML_STANDALONE_NO_VALUE); }
 			| /*EMPTY*/
-				{
-					A_Const *val = makeNode(A_Const);
-					val->val.type = T_Null;
-					$$ = (Node *) val;
-				}
+				{ $$ = (Node *) makeIntConst(XML_STANDALONE_OMITTED); }
 		;
 
 xml_attributes: XMLATTRIBUTES '(' xml_attribute_list ')'	{ $$ = $3; }
@@ -8864,6 +8864,7 @@ unreserved_keyword:
 			| WITHOUT
 			| WORK
 			| WRITE
+			| XML_P
 			| YEAR_P
 			| YES_P
 			| ZONE

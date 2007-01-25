@@ -406,6 +406,8 @@
 #default_transaction_read_only = off
 #statement_timeout = 0			# 0 is disabled
 #vacuum_freeze_min_age = 100000000
+#xmlbinary = 'base64'
+#xmloption = 'content'
 
 # - Locale and Formatting -
 

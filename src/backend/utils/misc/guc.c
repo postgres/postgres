@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.370 2007/01/25 04:35:11 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.371 2007/01/25 11:53:51 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -145,6 +145,7 @@ static const char *assign_canonical_path(const char *newval, bool doit, GucSourc
 static const char *assign_backslash_quote(const char *newval, bool doit, GucSource source);
 static const char *assign_timezone_abbreviations(const char *newval, bool doit, GucSource source);
 static const char *assign_xmlbinary(const char *newval, bool doit, GucSource source);
+static const char *assign_xmloption(const char *newval, bool doit, GucSource source);
 
 static bool assign_tcp_keepalives_idle(int newval, bool doit, GucSource source);
 static bool assign_tcp_keepalives_interval(int newval, bool doit, GucSource source);
@@ -233,6 +234,7 @@ static char *XactIsoLevel_string;
 static char *data_directory;
 static char *custom_variable_classes;
 static char *xmlbinary_string;
+static char *xmloption_string;
 static int	max_function_args;
 static int	max_index_keys;
 static int	max_identifier_length;
@@ -2290,6 +2292,16 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&xmlbinary_string,
 		"base64", assign_xmlbinary, NULL
+	},
+
+	{
+		{"xmloption", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets whether XML data in implicit parsing and serialization "
+						 "operations is to be considered as documents or content fragments."),
+			gettext_noop("Valid values are DOCUMENT and CONTENT.")
+		},
+		&xmloption_string,
+		"content", assign_xmloption, NULL
 	},
 
 	{
@@ -6512,6 +6524,24 @@ assign_xmlbinary(const char *newval, bool doit, GucSource source)
 
 	if (doit)
 		xmlbinary = xb;
+
+	return newval;
+}
+
+static const char *
+assign_xmloption(const char *newval, bool doit, GucSource source)
+{
+	XmlOptionType xo;
+
+	if (pg_strcasecmp(newval, "document") == 0)
+		xo = XMLOPTION_DOCUMENT;
+	else if (pg_strcasecmp(newval, "content") == 0)
+		xo = XMLOPTION_CONTENT;
+	else
+		return NULL;			/* reject */
+
+	if (doit)
+		xmloption = xo;
 
 	return newval;
 }

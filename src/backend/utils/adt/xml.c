@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.21 2007/01/23 23:39:16 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.22 2007/01/25 11:53:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,11 +67,14 @@ static void 	xml_ereport_by_code(int level, int sqlcode,
 									const char *msg, int errcode);
 static xmlChar *xml_text2xmlChar(text *in);
 static int		parse_xml_decl(const xmlChar *str, size_t *lenp, xmlChar **version, xmlChar **encoding, int *standalone);
+static bool		print_xml_decl(StringInfo buf, const xmlChar *version, pg_enc encoding, int standalone);
 static xmlDocPtr xml_parse(text *data, bool is_document, bool preserve_whitespace, xmlChar *encoding);
 
 #endif /* USE_LIBXML */
 
 XmlBinaryType xmlbinary;
+XmlOptionType xmloption;
+
 
 #define NO_XML_SUPPORT() \
 	ereport(ERROR, \
@@ -97,7 +100,7 @@ xml_in(PG_FUNCTION_ARGS)
 	 * Parse the data to check if it is well-formed XML data.  Assume
 	 * that ERROR occurred if parsing failed.
 	 */
-	doc = xml_parse(vardata, false, true, NULL);
+	doc = xml_parse(vardata, (xmloption == XMLOPTION_DOCUMENT), true, NULL);
 	xmlFreeDoc(doc);
 
 	PG_RETURN_XML_P(vardata);
@@ -129,48 +132,13 @@ xml_out_internal(xmltype *x, pg_enc target_encoding)
 	str[len] = '\0';
 
 #ifdef USE_LIBXML
-	/*
-	 * On output, we adjust the XML declaration as follows.  (These
-	 * rules are the moral equivalent of the clause "Serialization of
-	 * an XML value" in the SQL standard.)
-	 *
-	 * We try to avoid generating an XML declaration if possible.
-	 * This is so that you don't get trivial things like xml '<foo/>'
-	 * resulting in '<?xml version="1.0"?><foo/>', which would surely
-	 * be annoying.  We must provide a declaration if the standalone
-	 * property is specified or if we include an encoding
-	 * specification.  If we have a declaration, we must specify a
-	 * version (XML requires this).  Otherwise we only make a
-	 * declaration if the version is not "1.0", which is the default
-	 * version specified in SQL:2003.
-	 */
 	if ((res_code = parse_xml_decl((xmlChar *) str, &len, &version, &encoding, &standalone)) == 0)
 	{
 		StringInfoData buf;
 
 		initStringInfo(&buf);
 
-		if ((version && strcmp((char *) version, PG_XML_DEFAULT_VERSION) != 0)
-			|| (target_encoding && target_encoding != PG_UTF8)
-			|| standalone != -1)
-		{
-			appendStringInfoString(&buf, "<?xml");
-			if (version)
-				appendStringInfo(&buf, " version=\"%s\"", version);
-			else
-				appendStringInfo(&buf, " version=\"%s\"", PG_XML_DEFAULT_VERSION);
-			if (target_encoding && target_encoding != PG_UTF8)
-				/* XXX might be useful to convert this to IANA names
-				 * (ISO-8859-1 instead of LATIN1 etc.); needs field
-				 * experience */
-				appendStringInfo(&buf, " encoding=\"%s\"", pg_encoding_to_char(target_encoding));
-			if (standalone == 1)
-				appendStringInfoString(&buf, " standalone=\"yes\"");
-			else if (standalone == 0)
-				appendStringInfoString(&buf, " standalone=\"no\"");
-			appendStringInfoString(&buf, "?>");
-		}
-		else
+		if (!print_xml_decl(&buf, version, target_encoding, standalone))
 		{
 			/*
 			 * If we are not going to produce an XML declaration, eat
@@ -231,7 +199,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	 * Parse the data to check if it is well-formed XML data.  Assume
 	 * that ERROR occurred if parsing failed.
 	 */
-	doc = xml_parse(result, false, true, encoding);
+	doc = xml_parse(result, (xmloption == XMLOPTION_DOCUMENT), true, encoding);
 	xmlFreeDoc(doc);
 
 	newstr = (char *) pg_do_encoding_conversion((unsigned char *) str,
@@ -296,6 +264,7 @@ stringinfo_to_xmltype(StringInfo buf)
 }
 
 
+#ifdef NOT_USED
 static xmltype *
 cstring_to_xmltype(const char *string)
 {
@@ -309,6 +278,7 @@ cstring_to_xmltype(const char *string)
 
 	return result;
 }
+#endif
 
 
 static xmltype *
@@ -394,9 +364,11 @@ xmlconcat(List *args)
 		if (standalone < 0)
 			global_standalone = -1;
 
-		if (!global_version)
+		if (!version)
+			global_version_no_value = true;
+		else if (!global_version)
 			global_version = xmlStrdup(version);
-		else if (version && xmlStrcmp(version, global_version) != 0)
+		else if (xmlStrcmp(version, global_version) != 0)
 			global_version_no_value = true;
 
 		appendStringInfoString(&buf, str + len);
@@ -409,17 +381,10 @@ xmlconcat(List *args)
 
 		initStringInfo(&buf2);
 
-		if (!global_version_no_value && global_version)
-			appendStringInfo(&buf2, "<?xml version=\"%s\"", global_version);
-		else
-			appendStringInfo(&buf2, "<?xml version=\"%s\"", PG_XML_DEFAULT_VERSION);
-
-		if (global_standalone == 1)
-			appendStringInfoString(&buf2, " standalone=\"yes\"");
-		else if (global_standalone == 0)
-			appendStringInfoString(&buf2, " standalone=\"no\"");
-
-		appendStringInfoString(&buf2, "?>");
+		print_xml_decl(&buf2,
+					   (!global_version_no_value && global_version) ? global_version : NULL,
+					   0,
+					   global_standalone);
 
 		appendStringInfoString(&buf2, buf.data);
 		buf = buf2;
@@ -458,7 +423,7 @@ texttoxml(PG_FUNCTION_ARGS)
 {
 	text	   *data = PG_GETARG_TEXT_P(0);
 
-	PG_RETURN_XML_P(xmlparse(data, false, true));
+	PG_RETURN_XML_P(xmlparse(data, (xmloption == XMLOPTION_DOCUMENT), true));
 }
 
 
@@ -595,44 +560,45 @@ xmltype *
 xmlroot(xmltype *data, text *version, int standalone)
 {
 #ifdef USE_LIBXML
-	xmltype	   *result;
-	xmlDocPtr	doc;
-	xmlBufferPtr buffer;
-	xmlSaveCtxtPtr save;
+	char	   *str;
+	size_t		len;
+	xmlChar	   *orig_version;
+	int			orig_standalone;
+	StringInfoData buf;
 
-	doc = xml_parse((text *) data, true, true, NULL);
+	len = VARSIZE(data) - VARHDRSZ;
+	str = palloc(len + 1);
+	memcpy(str, VARDATA(data), len);
+	str[len] = '\0';
+
+	parse_xml_decl((xmlChar *) str, &len, &orig_version, NULL, &orig_standalone);
 
 	if (version)
-		doc->version = xmlStrdup(xml_text2xmlChar(version));
+		orig_version = xml_text2xmlChar(version);
 	else
-		doc->version = NULL;
+		orig_version = NULL;
 
 	switch (standalone)
 	{
-		case 1:
-			doc->standalone = 1;
+		case XML_STANDALONE_YES:
+			orig_standalone = 1;
 			break;
-		case -1:
-			doc->standalone = 0;
+		case XML_STANDALONE_NO:
+			orig_standalone = 0;
 			break;
-		default:
-			doc->standalone = -1;
+		case XML_STANDALONE_NO_VALUE:
+			orig_standalone = -1;
+			break;
+		case XML_STANDALONE_OMITTED:
+			/* leave original value */
 			break;
 	}
 
-	buffer = xmlBufferCreate();
-	save = xmlSaveToBuffer(buffer, "UTF-8", 0);
-	xmlSaveDoc(save, doc);
-	xmlSaveClose(save);
+	initStringInfo(&buf);
+	print_xml_decl(&buf, orig_version, 0, orig_standalone);
+	appendStringInfoString(&buf, str + len);
 
-	xmlFreeDoc(doc);
-
-	result = cstring_to_xmltype((char *) pg_do_encoding_conversion((unsigned char *) xmlBufferContent(buffer),
-																   xmlBufferLength(buffer),
-																   PG_UTF8,
-																   GetDatabaseEncoding()));
-	xmlBufferFree(buffer);
-	return result;
+	return stringinfo_to_xmltype(&buf);
 #else
 	NO_XML_SUPPORT();
 	return NULL;
@@ -968,6 +934,53 @@ finished:
 		*lenp = len;
 
 	return XML_ERR_OK;
+}
+
+
+/*
+ * Write an XML declaration.  On output, we adjust the XML declaration
+ * as follows.  (These rules are the moral equivalent of the clause
+ * "Serialization of an XML value" in the SQL standard.)
+ *
+ * We try to avoid generating an XML declaration if possible.  This is
+ * so that you don't get trivial things like xml '<foo/>' resulting in
+ * '<?xml version="1.0"?><foo/>', which would surely be annoying.  We
+ * must provide a declaration if the standalone property is specified
+ * or if we include an encoding declaration.  If we have a
+ * declaration, we must specify a version (XML requires this).
+ * Otherwise we only make a declaration if the version is not "1.0",
+ * which is the default version specified in SQL:2003.
+ */
+static bool
+print_xml_decl(StringInfo buf, const xmlChar *version, pg_enc encoding, int standalone)
+{
+	if ((version && strcmp((char *) version, PG_XML_DEFAULT_VERSION) != 0)
+		|| (encoding && encoding != PG_UTF8)
+		|| standalone != -1)
+	{
+		appendStringInfoString(buf, "<?xml");
+
+		if (version)
+			appendStringInfo(buf, " version=\"%s\"", version);
+		else
+			appendStringInfo(buf, " version=\"%s\"", PG_XML_DEFAULT_VERSION);
+
+		if (encoding && encoding != PG_UTF8)
+			/* XXX might be useful to convert this to IANA names
+			 * (ISO-8859-1 instead of LATIN1 etc.); needs field
+			 * experience */
+			appendStringInfo(buf, " encoding=\"%s\"", pg_encoding_to_char(encoding));
+
+		if (standalone == 1)
+			appendStringInfoString(buf, " standalone=\"yes\"");
+		else if (standalone == 0)
+			appendStringInfoString(buf, " standalone=\"no\"");
+		appendStringInfoString(buf, "?>");
+
+		return true;
+	}
+	else
+		return false;
 }
 
 
