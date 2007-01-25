@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.60 2007/01/25 02:30:32 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.61 2007/01/25 02:46:33 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -313,6 +313,7 @@ PostgreSQL documentation
    <variablelist>
      <varlistentry>
       <term>-h <replaceable>host</replaceable></term>
+      <term>--host=<replaceable>host</replaceable></term>
       <listitem>
        <para>
         Specifies the host name of the machine on which the database
@@ -323,9 +324,23 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
+	 
+     <varlistentry>
+      <term>-l <replaceable>dbname</replaceable></term>
+      <term>--database=<replaceable>dbname</replaceable></term>
+      <listitem>
+       <para>
+         Specifies the name of the database to connect to to dump global
+         objects and discover what other databases should be dumped. If
+         not specified, the <quote>postgres</quote> database will be used,
+         and if that does not exist, <quote>template1</quote> will be used.
+       </para>
+      </listitem>
+     </varlistentry>
 
      <varlistentry>
       <term>-p <replaceable>port</replaceable></term>
+      <term>--port=<replaceable>port</replaceable></term>
       <listitem>
        <para>
         Specifies the TCP port or local Unix domain socket file
@@ -338,6 +353,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term>-U <replaceable>username</replaceable></term>
+      <term>--username=<replaceable>username</replaceable></term>
       <listitem>
        <para>
         Connect as the given user.
@@ -347,6 +363,7 @@ PostgreSQL documentation
 
      <varlistentry>
       <term>-W</term>
+	    <term>--password</term>
       <listitem>
        <para>
         Force a password prompt.  This should happen automatically if

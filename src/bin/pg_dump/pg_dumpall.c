@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.87 2007/01/25 02:30:32 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.88 2007/01/25 02:46:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,7 @@ main(int argc, char *argv[])
 	char	   *pghost = NULL;
 	char	   *pgport = NULL;
 	char	   *pguser = NULL;
+	char	   *pgdb = NULL;
 	bool		force_password = false;
 	bool		data_only = false;
 	bool		globals_only = false;
@@ -96,6 +97,7 @@ main(int argc, char *argv[])
 		{"globals-only", no_argument, NULL, 'g'},
 		{"host", required_argument, NULL, 'h'},
 		{"ignore-version", no_argument, NULL, 'i'},
+		{"database", required_argument, NULL, 'l'},
 		{"oids", no_argument, NULL, 'o'},
 		{"no-owner", no_argument, NULL, 'O'},
 		{"port", required_argument, NULL, 'p'},
@@ -165,7 +167,7 @@ main(int argc, char *argv[])
 
 	pgdumpopts = createPQExpBuffer();
 
-	while ((c = getopt_long(argc, argv, "acdDgh:ioOp:rsS:tU:vWxX:", long_options, &optindex)) != -1)
+	while ((c = getopt_long(argc, argv, "acdDgh:il:oOp:rsS:tU:vWxX:", long_options, &optindex)) != -1)
 	{
 		switch (c)
 		{
@@ -200,6 +202,10 @@ main(int argc, char *argv[])
 			case 'i':
 				ignoreVersion = true;
 				appendPQExpBuffer(pgdumpopts, " -i");
+				break;
+				
+			case 'l':
+				pgdb = optarg;
 				break;
 
 			case 'o':
@@ -337,15 +343,40 @@ main(int argc, char *argv[])
 	}
 
 	/*
-	 * First try to connect to database "postgres", and failing that
+	 * If there was a database specified on the command line, use that,
+	 * otherwise try to connect to database "postgres", and failing that
 	 * "template1".  "postgres" is the preferred choice for 8.1 and later
 	 * servers, but it usually will not exist on older ones.
 	 */
-	conn = connectDatabase("postgres", pghost, pgport, pguser,
+	if (pgdb)
+	{
+		conn = connectDatabase(pgdb, pghost, pgport, pguser,
+								force_password, false);
+								
+		if (!conn)
+		{
+			fprintf(stderr, _("%s: could not connect to database \"%s\"\n"),
+					progname, pgdb);
+			exit(1);
+		}
+	}
+	else
+	{
+		conn = connectDatabase("postgres", pghost, pgport, pguser,
 						   force_password, false);
-	if (!conn)
-		conn = connectDatabase("template1", pghost, pgport, pguser,
-							   force_password, true);
+		if (!conn)
+			conn = connectDatabase("template1", pghost, pgport, pguser,
+									force_password, true);
+				
+		if (!conn)
+		{
+			fprintf(stderr, _("%s: could not connect to databases \"postgres\" or \"template1\". Please specify an alternative database\n"),
+					progname);
+			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+					progname);
+			exit(1);
+		}
+	}
 
 	/*
 	 * Get the active encoding and the standard_conforming_strings setting, so
@@ -444,6 +475,7 @@ help(void)
 
 	printf(_("\nConnection options:\n"));
 	printf(_("  -h, --host=HOSTNAME      database server host or socket directory\n"));
+	printf(_("  -l, --database=dbname    specify an alternate default database\n"));
 	printf(_("  -p, --port=PORT          database server port number\n"));
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
