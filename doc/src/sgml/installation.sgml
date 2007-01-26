@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.275 2007/01/25 23:34:28 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.276 2007/01/26 22:52:50 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -367,36 +367,39 @@ su - postgres
 ]]>
 
  <sect1 id="install-upgrading">
-  <title>If You Are Upgrading</title>
+  <title>Upgrading</title>
 
   <indexterm zone="install-upgrading">
    <primary>upgrading</primary>
   </indexterm>
 
   <para>
-   The internal data storage format changes with new releases of
-   <productname>PostgreSQL</>. Therefore, if you are upgrading an
-   existing installation that does not have a version number
+   These instructions assume that your existing installation is under the
+   <filename>/usr/local/pgsql</> directory, and that the data area is in
+   <filename>/usr/local/pgsql/data</>.  Substitute your paths
+   appropriately.
+  </para>
+
+  <para>
+   The internal data storage format typically changes in every major
+   release of <productname>PostgreSQL</>. Therefore, if you are upgrading
+   an existing installation that does not have a version number of
    <quote>&majorversion;.x</quote>, you must back up and restore your
-   data as shown here. These instructions assume that your existing
-   installation is under the <filename>/usr/local/pgsql</> directory,
-   and that the data area is in <filename>/usr/local/pgsql/data</>.
-   Substitute your paths appropriately.
+   data.  If you are upgrading from the same major version, the new version
+   can use your current data files, so a backup and restore is optional.
+   If you wish to avoid the backup/restore, merely skip those steps below.
   </para>
 
   <procedure>
    <step>
     <para>
-     Make sure that your database is not updated during or after the
-     backup. This does not affect the integrity of the backup, but the
-     changed data would of course not be included. If necessary, edit
-     the permissions in the file
-     <filename>/usr/local/pgsql/data/pg_hba.conf</> (or equivalent) to
-     disallow access from everyone except you.
+     If making a backup, make sure that your database is being updated.
+     This does not affect the integrity of the backup, but the changed
+     data would of course not be included. If necessary, edit the
+     permissions in the file <filename>/usr/local/pgsql/data/pg_hba.conf</>
+     (or equivalent) to disallow access from everyone except you.
     </para>
-   </step>
 
-   <step>
     <para>
      <indexterm>
       <primary>pg_dumpall</primary>
@@ -429,9 +432,7 @@ su - postgres
 
    <step>
     <para>
-     If you are installing the new version at the same location as the
-     old one then shut down the old server, at the latest before you
-     install the new files:
+     Shut down the old server:
 <screen>
 <userinput>pg_ctl stop</>
 </screen>
@@ -448,38 +449,63 @@ su - postgres
 
    <step>
     <para>
-     If you are installing in the same place as the old version then
-     it is also a good idea to move the old installation out of the
-     way, in case you have trouble and need to revert to it.
-     Use a command like this:
-<screen>
+     If restoring from backup, rename or delete the old installation
+     directory.  It is a good idea to rename the directory, rather than
+     delete it, in case you have trouble and need to revert to it.  Keep
+     in mind the directory might consume significant disk space.  To rename
+     the directory, use a command like this:
+<screen> 
 <userinput>mv /usr/local/pgsql /usr/local/pgsql.old</>
 </screen>
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Install the new version of <productname>PostgreSQL</productname> as
+     outlined in <![%standalone-include[the next section.]]>
+     <![%standalone-ignore[<xref linkend="install-procedure">.]]>
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Create a new database cluster if needed.  Remember that you must
+     execute these commands while logged in to the special database user
+     account (which you already have if you are upgrading).
+<programlisting>
+<userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
+</programlisting>
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Start the database server, again from the special database user
+     account:
+<programlisting>
+<userinput>/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data</>
+</programlisting>
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Finally, restore your data from backup with
+<screen>
+<userinput>/usr/local/pgsql/bin/psql -d postgres -f <replaceable>outputfile</></userinput>
+</screen>
+     using the <emphasis>new</> <application>psql</>.
     </para>
    </step>
   </procedure>
 
   <para>
-   After you have installed <productname>PostgreSQL</> &version;, create a new database
-   directory and start the new server. Remember that you must execute
-   these commands while logged in to the special database user account
-   (which you already have if you are upgrading).
-<programlisting>
-<userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
-<userinput>/usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data</>
-</programlisting>
-   Finally, restore your data with
-<screen>
-<userinput>/usr/local/pgsql/bin/psql -d postgres -f <replaceable>outputfile</></userinput>
-</screen>
-   using the <emphasis>new</> <application>psql</>.
-  </para>
-
-  <para>
    Further discussion appears in
    <![%standalone-include[the documentation,]]>
    <![%standalone-ignore[<xref linkend="migration">,]]>
-   which you are encouraged to read in any case.
+   including instructions on how the previous installation can continue
+   running while the new installation is installed.
   </para>
  </sect1>
 
