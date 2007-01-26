@@ -37,7 +37,7 @@ Datum		rank_cd_def(PG_FUNCTION_ARGS);
 PG_FUNCTION_INFO_V1(get_covers);
 Datum		get_covers(PG_FUNCTION_ARGS);
 
-static float weights[] = {0.1, 0.2, 0.4, 1.0};
+static float weights[] = {0.1f, 0.2f, 0.4f, 1.0f};
 
 #define wpos(wep)	( w[ WEP_GETWEIGHT(wep) ] )
 
@@ -59,7 +59,7 @@ static float4
 word_distance(int4 w)
 {
 	if (w > 100)
-		return 1e-30;
+		return (float4)1e-30;
 
 	return 1.0 / (1.005 + 0.05 * exp(((float4) w) / 1.5 - 2));
 }
@@ -331,7 +331,7 @@ calc_rank(float *w, tsvector * t, QUERYTYPE * q, int4 method)
 		calc_rank_and(w, t, q) : calc_rank_or(w, t, q);
 
 	if (res < 0)
-		res = 1e-20;
+		res = (float)1e-20;
 
 	if ((method & RANK_NORM_LOGLENGTH) && t->size > 0)
 		res /= log((double) (cnt_length(t) + 1)) / log(2.0);

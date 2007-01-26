@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/ialloc.c,v 1.7 2005/10/15 02:49:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/ialloc.c,v 1.8 2007/01/26 17:45:42 neilc Exp $
  */
 
 #include "postgres.h"
@@ -14,7 +14,7 @@
 #define nonzero(n)	(((n) == 0) ? 1 : (n))
 
 char *
-imalloc(const int n)
+imalloc(int n)
 {
 	return malloc((size_t) nonzero(n));
 }
@@ -28,7 +28,7 @@ icalloc(int nelem, int elsize)
 }
 
 void *
-irealloc(void *pointer, const int size)
+irealloc(void *pointer, int size)
 {
 	if (pointer == NULL)
 		return imalloc(size);

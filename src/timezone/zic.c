@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.19 2006/10/24 15:11:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.20 2007/01/26 17:45:42 neilc Exp $
  */
 
 #include "postgres.h"
@@ -104,10 +104,10 @@ struct zone
 };
 
 extern int	link(const char *fromname, const char *toname);
-static void addtt(pg_time_t starttime, int type);
+static void addtt(const pg_time_t starttime, int type);
 static int addtype(long gmtoff, const char *abbr, int isdst,
 		int ttisstd, int ttisgmt);
-static void leapadd(pg_time_t t, int positive, int rolling, int count);
+static void leapadd(const pg_time_t t, int positive, int rolling, int count);
 static void adjleap(void);
 static void associate(void);
 static int	ciequal(const char *ap, const char *bp);
@@ -146,7 +146,7 @@ static void rulesub(struct rule * rp,
 		const char *typep, const char *monthp,
 		const char *dayp, const char *timep);
 static void setboundaries(void);
-static pg_time_t tadd(pg_time_t t1, long t2);
+static pg_time_t tadd(const pg_time_t t1, long t2);
 static void usage(void);
 static void writezone(const char *name);
 static int	yearistype(int year, const char *type);

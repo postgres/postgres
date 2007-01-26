@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.90 2007/01/05 22:20:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.91 2007/01/26 17:45:41 neilc Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -575,7 +575,6 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 	char		fnbuf[MAXPGPATH];
 	FILE	   *fp;
 	PGconn	   *conn = (PGconn *) SSL_get_app_data(ssl);
-	int			(*cb) () = NULL;	/* how to read user password */
 	char		sebuf[256];
 
 	if (!pqGetHomeDirectory(homedir, sizeof(homedir)))
@@ -642,7 +641,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		return 0;
 	}
 #endif
-	if (PEM_read_PrivateKey(fp, pkey, cb, NULL) == NULL)
+	if (PEM_read_PrivateKey(fp, pkey, NULL, NULL) == NULL)
 	{
 		char	   *err = SSLerrmessage();
 

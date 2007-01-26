@@ -108,7 +108,7 @@ typedef void (*formfloat) (ArrayType *, float *);
 /*
 ** useful function
 */
-bool		isort(int4 *a, const int len);
+bool		isort(int4 *a, int len);
 ArrayType  *new_intArrayType(int num);
 ArrayType  *copy_intArrayType(ArrayType *a);
 ArrayType  *resize_intArrayType(ArrayType *a, int num);

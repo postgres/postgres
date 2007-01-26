@@ -135,6 +135,7 @@ $pgevent->AddFiles('src\bin\pgevent','pgevent.c','pgmsgevent.rc');
 $pgevent->AddResourceFile('src\bin\pgevent','Eventlog message formatter');
 $pgevent->RemoveFile('src\bin\pgevent\win32ver.rc');
 $pgevent->UseDef('src\bin\pgevent\pgevent.def');
+$pgevent->DisableLinkerWarnings('4104');
 
 my $psql = AddSimpleFrontend('psql', 1);
 $psql->AddIncludeDir('src\bin\pg_dump');

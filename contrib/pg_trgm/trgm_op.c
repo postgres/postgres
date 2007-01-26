@@ -5,7 +5,7 @@
 
 PG_MODULE_MAGIC;
 
-float4		trgm_limit = 0.3;
+float4		trgm_limit = 0.3f;
 
 PG_FUNCTION_INFO_V1(set_limit);
 Datum		set_limit(PG_FUNCTION_ARGS);
