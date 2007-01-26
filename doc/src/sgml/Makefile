@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.92 2007/01/26 22:23:49 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.93 2007/01/26 23:51:39 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -53,7 +53,7 @@ CATALOG = -c $(DOCBOOKSTYLE)/catalog
 endif
 
 # Enable draft mode during development
-ifneq (,$(findstring devel, $(VERSION)))
+ifeq ($(DRAFT), Y)
 override JADEFLAGS += -V draft-mode
 endif
 
