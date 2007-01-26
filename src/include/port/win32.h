@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.63.2.1 2007/01/11 02:40:12 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.63.2.2 2007/01/26 20:07:01 tgl Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -250,7 +250,7 @@ int			pgwin32_recv(SOCKET s, char *buf, int len, int flags);
 int			pgwin32_send(SOCKET s, char *buf, int len, int flags);
 
 const char *pgwin32_socket_strerror(int err);
-int			pgwin32_waitforsinglesocket(SOCKET s, int what);
+int			pgwin32_waitforsinglesocket(SOCKET s, int what, int timeout);
 
 /* in backend/port/win32/security.c */
 extern int	pgwin32_is_admin(void);
