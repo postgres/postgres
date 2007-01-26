@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.143 2007/01/11 23:06:03 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.144 2007/01/26 20:06:52 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1657,11 +1657,13 @@ PgstatCollectorMain(int argc, char *argv[])
 	int			len;
 	PgStat_Msg	msg;
 
+#ifndef WIN32
 #ifdef HAVE_POLL
 	struct pollfd input_fd;
 #else
 	struct timeval sel_timeout;
 	fd_set		rfds;
+#endif
 #endif
 
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
@@ -1724,7 +1726,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 * Setup the descriptor set for select(2).	Since only one bit in the set
 	 * ever changes, we need not repeat FD_ZERO each time.
 	 */
-#ifndef HAVE_POLL
+#if !defined(HAVE_POLL) && !defined(WIN32)
 	FD_ZERO(&rfds);
 #endif
 
@@ -1771,8 +1773,10 @@ PgstatCollectorMain(int argc, char *argv[])
 		 * poll/select call, so this also limits speed of response to SIGQUIT,
 		 * which is more important.)
 		 *
-		 * We use poll(2) if available, otherwise select(2)
+		 * We use poll(2) if available, otherwise select(2).
+		 * Win32 has its own implementation.
 		 */
+#ifndef WIN32
 #ifdef HAVE_POLL
 		input_fd.fd = pgStatSock;
 		input_fd.events = POLLIN | POLLERR;
@@ -1810,6 +1814,10 @@ PgstatCollectorMain(int argc, char *argv[])
 
 		got_data = FD_ISSET(pgStatSock, &rfds);
 #endif   /* HAVE_POLL */
+#else /* WIN32 */
+		got_data = pgwin32_waitforsinglesocket(pgStatSock, FD_READ,
+											   PGSTAT_SELECT_TIMEOUT*1000);
+#endif
 
 		/*
 		 * If there is a message on the socket, read it and check for
