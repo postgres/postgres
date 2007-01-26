@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.91 2007/01/11 00:02:39 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.92 2007/01/26 22:23:49 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -64,7 +64,7 @@ override SPFLAGS += -wall -wno-unused-param -wno-empty
 ## Man pages
 ##
 
-.PHONY: man draft
+.PHONY: html man draft clean
 
 DEFAULTSECTION := $(sqlmansect_dummy)
 
@@ -86,8 +86,6 @@ man: postgres.sgml $(ALLSGML)
 
 all: html
 
-.PHONY: html
-
 # This is run for all output formats because we need bookindex.sgml
 html: postgres.sgml $(ALLSGML) stylesheet.dsl
 	@rm -f *.html
@@ -95,25 +93,13 @@ html: postgres.sgml $(ALLSGML) stylesheet.dsl
 ifeq ($(vpath_build), yes)
 	@cp $(srcdir)/stylesheet.css .
 endif
-ifndef DRAFT
+ifneq ($(DRAFT), Y)
 # If not draft, re-run the this rule until HTML.index does not change
 	@cmp -s HTML.index.start HTML.index || $(MAKE) $@
 endif
 
 
 COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
-
-# The draft rule calls gmake again and sets the DRAFT variable.
-# This seems to be the only way to set gmake variables in a rule.
-draft:
-ifndef DRAFT
-ifneq ($(MAKECMDGOALS), draft)
-	@$(MAKE) DRAFT="Y" $(MAKECMDGOALS)
-else
-# simulate $(MAKE) with no arguments
-	@$(MAKE) DRAFT="Y" all
-endif
-endif
 
 # bookindex.sgml is required so there is a proper index for all output formats
 bookindex.sgml: HTML.index
