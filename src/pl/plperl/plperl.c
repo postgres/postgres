@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.124 2007/01/27 01:55:57 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.125 2007/01/27 16:46:21 adunstan Exp $
  *
  **********************************************************************/
 
@@ -2142,8 +2142,7 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 			getTypeInputInfo(typId, &typInput, &typIOParam);
 
 			qdesc->argtypes[i] = typId;
-			perm_fmgr_info((Form_pg_type) typInput,
-						   &(qdesc->arginfuncs[i]));
+			perm_fmgr_info(typInput, &(qdesc->arginfuncs[i]));
 			qdesc->argtypioparams[i] = typIOParam;
 		}
 
