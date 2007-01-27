@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.23 2007/01/27 11:48:31 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.24 2007/01/27 14:50:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,21 @@
  * else does.
  */
 
+/*
+ * Note on memory management: Via callbacks, libxml is told to use
+ * palloc and friends for memory management.  Sometimes, libxml
+ * allocates global structures in the hope that it can reuse them
+ * later on, but if "later" is much later, the memory context
+ * management of PostgreSQL will have blown those structures away
+ * without telling libxml about it.  Therefore, it is important to
+ * call xmlCleanupParser() or perhaps some other cleanup function
+ * after using such functions, for example something from
+ * libxml/parser.h or libxml/xmlsave.h.  Unfortunately, you cannot
+ * readily tell from the API documentation when that happens, so
+ * careful evaluation is necessary when introducing new libxml APIs
+ * here.
+ */
+
 #include "postgres.h"
 
 #ifdef USE_LIBXML
@@ -31,7 +46,6 @@
 #include <libxml/tree.h>
 #include <libxml/uri.h>
 #include <libxml/xmlerror.h>
-#include <libxml/xmlsave.h>
 #include <libxml/xmlwriter.h>
 #endif /* USE_LIBXML */
 
@@ -54,12 +68,10 @@
 static StringInfo xml_err_buf = NULL;
 
 static void 	xml_init(void);
-#ifdef NOT_USED
 static void    *xml_palloc(size_t size);
 static void    *xml_repalloc(void *ptr, size_t size);
 static void 	xml_pfree(void *ptr);
 static char    *xml_pstrdup(const char *string);
-#endif
 static void 	xml_ereport(int level, int sqlcode,
 							const char *msg);
 static void 	xml_errorHandler(void *ctxt, const char *msg, ...);
@@ -782,14 +794,8 @@ xml_init(void)
 	/* Now that xml_err_buf exists, safe to call xml_errorHandler */
 	xmlSetGenericErrorFunc(NULL, xml_errorHandler);
 
-#ifdef NOT_USED
-	/*
-	 * FIXME: This doesn't work because libxml assumes that whatever
-	 * libxml allocates, only libxml will free, so we can't just drop
-	 * memory contexts behind it.  This needs to be refined.
-	 */
 	xmlMemSetup(xml_pfree, xml_palloc, xml_repalloc, xml_pstrdup);
-#endif
+
 	xmlInitParser();
 	LIBXML_TEST_VERSION;
 }
@@ -1098,7 +1104,6 @@ xml_text2xmlChar(text *in)
 }
 
 
-#ifdef NOT_USED
 /*
  * Wrappers for memory management functions
  */
@@ -1128,7 +1133,6 @@ xml_pstrdup(const char *string)
 {
 	return pstrdup(string);
 }
-#endif /* NOT_USED */
 
 
 /*
