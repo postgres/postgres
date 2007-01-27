@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.123 2006/11/21 16:59:02 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.124 2007/01/27 01:55:57 adunstan Exp $
  *
  **********************************************************************/
 
@@ -2128,23 +2128,23 @@ plperl_spi_prepare(char *query, int argc, SV **argv)
 	PG_TRY();
 	{
 		/************************************************************
-		 * Lookup the argument types by name in the system cache
-		 * and remember the required information for input conversion
+		 * Resolve argument type names and then look them up by oid 
+         * in the system cache, and remember the required information 
+         * for input conversion.
 		 ************************************************************/
 		for (i = 0; i < argc; i++)
 		{
-			List	   *names;
-			HeapTuple	typeTup;
+			Oid         typId, typInput, typIOParam;
+            int32       typmod;
 
-			/* Parse possibly-qualified type name and look it up in pg_type */
-			names = stringToQualifiedNameList(SvPV(argv[i], PL_na),
-											  "plperl_spi_prepare");
-			typeTup = typenameType(NULL, makeTypeNameFromNameList(names));
-			qdesc->argtypes[i] = HeapTupleGetOid(typeTup);
-			perm_fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
+			parseTypeString(SvPV(argv[i], PL_na), &typId, &typmod);
+
+			getTypeInputInfo(typId, &typInput, &typIOParam);
+
+			qdesc->argtypes[i] = typId;
+			perm_fmgr_info((Form_pg_type) typInput,
 						   &(qdesc->arginfuncs[i]));
-			qdesc->argtypioparams[i] = getTypeIOParam(typeTup);
-			ReleaseSysCache(typeTup);
+			qdesc->argtypioparams[i] = typIOParam;
 		}
 
 		/************************************************************
