@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.96.2.2 2005/10/12 17:18:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.96.2.3 2007/01/27 20:53:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1096,7 +1096,12 @@ _bt_findsplitloc(Relation rel,
 			/* need to try it both ways! */
 			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
 							  true, itemsz);
-			/* here we are contemplating newitem as first on right */
+			/*
+			 * Here we are contemplating newitem as first on right.  In this
+			 * case it, not the current item, will become the high key of the
+			 * left page, and so we have to correct the allowance made above.
+			 */
+			leftfree += (int) itemsz - (int) newitemsz;
 			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
 							  false, newitemsz);
 		}
