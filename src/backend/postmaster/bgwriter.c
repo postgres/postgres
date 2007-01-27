@@ -2,7 +2,7 @@
  *
  * bgwriter.c
  *
- * The background writer (bgwriter) is new in Postgres 8.0.  It attempts
+ * The background writer (bgwriter) is new as of Postgres 8.0.  It attempts
  * to keep regular backends from having to write out dirty shared buffers
  * (which they would only do when needing to free a shared buffer to read in
  * another page).  In the best scenario all writes from shared buffers will
@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.21.2.1 2005/12/08 19:19:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.21.2.2 2007/01/27 20:15:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,8 +101,8 @@
 typedef struct
 {
 	RelFileNode rnode;
-	BlockNumber segno;
-	/* might add a request-type field later */
+	BlockNumber segno;			/* see md.c for special values */
+	/* might add a real request-type field later; not needed yet */
 } BgWriterRequest;
 
 typedef struct
@@ -625,6 +625,11 @@ RequestCheckpoint(bool waitforit, bool warnontime)
  * (which should be seldom, if the bgwriter is getting its job done),
  * the backend calls this routine to pass over knowledge that the relation
  * is dirty and must be fsync'd before next checkpoint.
+ *
+ * segno specifies which segment (not block!) of the relation needs to be
+ * fsync'd.  (Since the valid range is much less than BlockNumber, we can
+ * use high values for special flags; that's all internal to md.c, which
+ * see for details.)
  *
  * If we are unable to pass over the request (at present, this can happen
  * if the shared memory queue is full), we return false.  That forces

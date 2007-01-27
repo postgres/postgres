@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.173.2.1 2005/11/22 18:23:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.173.2.2 2007/01/27 20:15:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/procarray.h"
+#include "storage/smgr.h"
 #include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -663,6 +664,12 @@ dropdb(const char *dbname)
 	 * Also, clean out any entries in the shared free space map.
 	 */
 	FreeSpaceMapForgetDatabase(db_id);
+
+	/*
+	 * Tell bgwriter to forget any pending fsync requests for files in the
+	 * database; else it'll fail at next checkpoint.
+	 */
+	ForgetDatabaseFsyncRequests(db_id);
 
 	/*
 	 * On Windows, force a checkpoint so that the bgwriter doesn't hold any

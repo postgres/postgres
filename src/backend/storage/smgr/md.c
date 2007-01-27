@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.118.2.1 2006/11/20 01:08:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.118.2.2 2007/01/27 20:15:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,26 @@
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
 
+
+/* interval for calling AbsorbFsyncRequests in mdsync */
+#define FSYNCS_PER_ABSORB		10
+
+/* special values for the segno arg to RememberFsyncRequest */
+#define FORGET_RELATION_FSYNC	(InvalidBlockNumber)
+#define FORGET_DATABASE_FSYNC	(InvalidBlockNumber-1)
+
+/*
+ * On Windows, we have to interpret EACCES as possibly meaning the same as
+ * ENOENT, because if a file is unlinked-but-not-yet-gone on that platform,
+ * that's what you get.  Ugh.  This code is designed so that we don't
+ * actually believe these cases are okay without further evidence (namely,
+ * a pending fsync request getting revoked ... see mdsync).
+ */
+#ifndef WIN32
+#define FILE_POSSIBLY_DELETED(err)  ((err) == ENOENT)
+#else
+#define FILE_POSSIBLY_DELETED(err)  ((err) == ENOENT || (err) == EACCES)
+#endif
 
 /*
  *	The magnetic disk storage manager keeps track of open file
@@ -90,9 +110,8 @@ static MemoryContext MdCxt;		/* context for all md.c allocations */
  * we keep track of pending fsync operations: we need to remember all relation
  * segments that have been written since the last checkpoint, so that we can
  * fsync them down to disk before completing the next checkpoint.  This hash
- * table remembers the pending operations.	We use a hash table not because
- * we want to look up individual operations, but simply as a convenient way
- * of eliminating duplicate requests.
+ * table remembers the pending operations.	We use a hash table mostly as
+ * a convenient way of eliminating duplicate requests.
  *
  * (Regular backends do not track pending operations locally, but forward
  * them to the bgwriter.)
@@ -101,6 +120,12 @@ typedef struct
 {
 	RelFileNode rnode;			/* the targeted relation */
 	BlockNumber segno;			/* which segment */
+} PendingOperationTag;
+
+typedef struct
+{
+	PendingOperationTag tag;	/* hash table key (must be first!) */
+	int			failures;		/* number of failed attempts to fsync */
 } PendingOperationEntry;
 
 static HTAB *pendingOpsTable = NULL;
@@ -143,7 +168,7 @@ mdinit(void)
 		HASHCTL		hash_ctl;
 
 		MemSet(&hash_ctl, 0, sizeof(hash_ctl));
-		hash_ctl.keysize = sizeof(PendingOperationEntry);
+		hash_ctl.keysize = sizeof(PendingOperationTag);
 		hash_ctl.entrysize = sizeof(PendingOperationEntry);
 		hash_ctl.hash = tag_hash;
 		hash_ctl.hcxt = MdCxt;
@@ -225,6 +250,12 @@ mdunlink(RelFileNode rnode, bool isRedo)
 	bool		status = true;
 	int			save_errno = 0;
 	char	   *path;
+
+	/*
+	 * We have to clean out any pending fsync requests for the doomed relation,
+	 * else the next mdsync() will fail.
+	 */
+	ForgetRelationFsyncRequests(rnode);
 
 	path = relpath(rnode);
 
@@ -372,7 +403,7 @@ mdopen(SMgrRelation reln, bool allowNotFound)
 		if (fd < 0)
 		{
 			pfree(path);
-			if (allowNotFound && errno == ENOENT)
+			if (allowNotFound && FILE_POSSIBLY_DELETED(errno))
 				return NULL;
 			ereport(ERROR,
 					(errcode_for_file_access(),
@@ -725,82 +756,130 @@ mdimmedsync(SMgrRelation reln)
 bool
 mdsync(void)
 {
-	HASH_SEQ_STATUS hstat;
-	PendingOperationEntry *entry;
+	bool		need_retry;
 
 	if (!pendingOpsTable)
 		return false;
 
 	/*
-	 * If we are in the bgwriter, the sync had better include all fsync
-	 * requests that were queued by backends before the checkpoint REDO point
-	 * was determined.	We go that a little better by accepting all requests
-	 * queued up to the point where we start fsync'ing.
+	 * The fsync table could contain requests to fsync relations that have
+	 * been deleted (unlinked) by the time we get to them.  Rather than
+	 * just hoping an ENOENT (or EACCES on Windows) error can be ignored,
+	 * what we will do is retry the whole process after absorbing fsync
+	 * request messages again.  Since mdunlink() queues a "revoke" message
+	 * before actually unlinking, the fsync request is guaranteed to be gone
+	 * the second time if it really was this case.  DROP DATABASE likewise
+	 * has to tell us to forget fsync requests before it starts deletions.
 	 */
-	AbsorbFsyncRequests();
+	do {
+		HASH_SEQ_STATUS hstat;
+		PendingOperationEntry *entry;
+		int			absorb_counter;
 
-	hash_seq_init(&hstat, pendingOpsTable);
-	while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
-	{
+		need_retry = false;
+
 		/*
-		 * If fsync is off then we don't have to bother opening the file at
-		 * all.  (We delay checking until this point so that changing fsync on
-		 * the fly behaves sensibly.)
+		 * If we are in the bgwriter, the sync had better include all fsync
+		 * requests that were queued by backends before the checkpoint REDO
+		 * point was determined. We go that a little better by accepting all
+		 * requests queued up to the point where we start fsync'ing.
 		 */
-		if (enableFsync)
+		AbsorbFsyncRequests();
+
+		absorb_counter = FSYNCS_PER_ABSORB;
+		hash_seq_init(&hstat, pendingOpsTable);
+		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
 		{
-			SMgrRelation reln;
-			MdfdVec    *seg;
-
 			/*
-			 * Find or create an smgr hash entry for this relation. This may
-			 * seem a bit unclean -- md calling smgr?  But it's really the
-			 * best solution.  It ensures that the open file reference isn't
-			 * permanently leaked if we get an error here. (You may say "but
-			 * an unreferenced SMgrRelation is still a leak!" Not really,
-			 * because the only case in which a checkpoint is done by a
-			 * process that isn't about to shut down is in the bgwriter, and
-			 * it will periodically do smgrcloseall().	This fact justifies
-			 * our not closing the reln in the success path either, which is a
-			 * good thing since in non-bgwriter cases we couldn't safely do
-			 * that.)  Furthermore, in many cases the relation will have been
-			 * dirtied through this same smgr relation, and so we can save a
-			 * file open/close cycle.
+			 * If fsync is off then we don't have to bother opening the file
+			 * at all.  (We delay checking until this point so that changing
+			 * fsync on the fly behaves sensibly.)
 			 */
-			reln = smgropen(entry->rnode);
-
-			/*
-			 * It is possible that the relation has been dropped or truncated
-			 * since the fsync request was entered.  Therefore, we have to
-			 * allow file-not-found errors.  This applies both during
-			 * _mdfd_getseg() and during FileSync, since fd.c might have
-			 * closed the file behind our back.
-			 */
-			seg = _mdfd_getseg(reln,
-							   entry->segno * ((BlockNumber) RELSEG_SIZE),
-							   true);
-			if (seg)
+			if (enableFsync)
 			{
-				if (FileSync(seg->mdfd_vfd) < 0 &&
-					errno != ENOENT)
+				SMgrRelation reln;
+				MdfdVec    *seg;
+
+				/*
+				 * If in bgwriter, we want to absorb pending requests every so
+				 * often to prevent overflow of the fsync request queue.  This
+				 * could result in deleting the current entry out from under
+				 * our hashtable scan, so the procedure is to fall out of the
+				 * scan and start over from the top of the function.
+				 */
+				if (--absorb_counter <= 0)
 				{
-					ereport(LOG,
-							(errcode_for_file_access(),
-							 errmsg("could not fsync segment %u of relation %u/%u/%u: %m",
-									entry->segno,
-									entry->rnode.spcNode,
-									entry->rnode.dbNode,
-									entry->rnode.relNode)));
-					return false;
+					need_retry = true;
+					break;
+				}
+
+				/*
+				 * Find or create an smgr hash entry for this relation. This
+				 * may seem a bit unclean -- md calling smgr?  But it's really
+				 * the best solution.  It ensures that the open file reference
+				 * isn't permanently leaked if we get an error here. (You may
+				 * say "but an unreferenced SMgrRelation is still a leak!" Not
+				 * really, because the only case in which a checkpoint is done
+				 * by a process that isn't about to shut down is in the
+				 * bgwriter, and it will periodically do smgrcloseall(). This
+				 * fact justifies our not closing the reln in the success path
+				 * either, which is a good thing since in non-bgwriter cases
+				 * we couldn't safely do that.)  Furthermore, in many cases
+				 * the relation will have been dirtied through this same smgr
+				 * relation, and so we can save a file open/close cycle.
+				 */
+				reln = smgropen(entry->tag.rnode);
+
+				/*
+				 * It is possible that the relation has been dropped or
+				 * truncated since the fsync request was entered.  Therefore,
+				 * allow ENOENT, but only if we didn't fail once already on
+				 * this file.  This applies both during _mdfd_getseg() and
+				 * during FileSync, since fd.c might have closed the file
+				 * behind our back.
+				 */
+				seg = _mdfd_getseg(reln,
+								   entry->tag.segno * ((BlockNumber) RELSEG_SIZE),
+								   true);
+				if (seg == NULL ||
+					FileSync(seg->mdfd_vfd) < 0)
+				{
+					/*
+					 * XXX is there any point in allowing more than one try?
+					 * Don't see one at the moment, but easy to change the
+					 * test here if so.
+					 */
+					if (!FILE_POSSIBLY_DELETED(errno) ||
+						++(entry->failures) > 1)
+					{
+						ereport(LOG,
+								(errcode_for_file_access(),
+								 errmsg("could not fsync segment %u of relation %u/%u/%u: %m",
+										entry->tag.segno,
+										entry->tag.rnode.spcNode,
+										entry->tag.rnode.dbNode,
+										entry->tag.rnode.relNode)));
+						return false;
+					}
+					else
+						ereport(DEBUG1,
+								(errcode_for_file_access(),
+								 errmsg("could not fsync segment %u of relation %u/%u/%u, but retrying: %m",
+										entry->tag.segno,
+										entry->tag.rnode.spcNode,
+										entry->tag.rnode.dbNode,
+										entry->tag.rnode.relNode)));
+					need_retry = true;
+					continue;	/* don't delete the hashtable entry */
 				}
 			}
-		}
 
-		/* Okay, delete this entry */
-		if (hash_search(pendingOpsTable, entry,
-						HASH_REMOVE, NULL) == NULL)
-			elog(ERROR, "pendingOpsTable corrupted");
-	}
+			/* Okay, delete this entry */
+			if (hash_search(pendingOpsTable, &entry->tag,
+							HASH_REMOVE, NULL) == NULL)
+				elog(ERROR, "pendingOpsTable corrupted");
+		}
+	} while (need_retry);
 
 	return true;
 }
@@ -822,14 +901,8 @@ register_dirty_segment(SMgrRelation reln, MdfdVec *seg)
 {
 	if (pendingOpsTable)
 	{
-		PendingOperationEntry entry;
-
-		/* ensure any pad bytes in the struct are zeroed */
-		MemSet(&entry, 0, sizeof(entry));
-		entry.rnode = reln->smgr_rnode;
-		entry.segno = seg->mdfd_segno;
-
-		(void) hash_search(pendingOpsTable, &entry, HASH_ENTER, NULL);
+		/* push it into local pending-ops table */
+		RememberFsyncRequest(reln->smgr_rnode, seg->mdfd_segno);
 		return true;
 	}
 	else
@@ -848,21 +921,134 @@ register_dirty_segment(SMgrRelation reln, MdfdVec *seg)
  *
  * We stuff the fsync request into the local hash table for execution
  * during the bgwriter's next checkpoint.
+ *
+ * The range of possible segment numbers is way less than the range of
+ * BlockNumber, so we can reserve high values of segno for special purposes.
+ * We define two: FORGET_RELATION_FSYNC means to drop pending fsyncs for
+ * a relation, and FORGET_DATABASE_FSYNC means to drop pending fsyncs for
+ * a whole database.  (These are a tad slow because the hash table has to be
+ * searched linearly, but it doesn't seem worth rethinking the table structure
+ * for them.)
  */
 void
 RememberFsyncRequest(RelFileNode rnode, BlockNumber segno)
 {
-	PendingOperationEntry entry;
-
 	Assert(pendingOpsTable);
 
-	/* ensure any pad bytes in the struct are zeroed */
-	MemSet(&entry, 0, sizeof(entry));
-	entry.rnode = rnode;
-	entry.segno = segno;
+	if (segno == FORGET_RELATION_FSYNC)
+	{
+		/* Remove any pending requests for the entire relation */
+		HASH_SEQ_STATUS hstat;
+		PendingOperationEntry *entry;
 
-	(void) hash_search(pendingOpsTable, &entry, HASH_ENTER, NULL);
+		hash_seq_init(&hstat, pendingOpsTable);
+		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
+		{
+			if (RelFileNodeEquals(entry->tag.rnode, rnode))
+			{
+				/* Okay, delete this entry */
+				if (hash_search(pendingOpsTable, &entry->tag,
+								HASH_REMOVE, NULL) == NULL)
+					elog(ERROR, "pendingOpsTable corrupted");
+			}
+		}
+	}
+	else if (segno == FORGET_DATABASE_FSYNC)
+	{
+		/* Remove any pending requests for the entire database */
+		HASH_SEQ_STATUS hstat;
+		PendingOperationEntry *entry;
+
+		hash_seq_init(&hstat, pendingOpsTable);
+		while ((entry = (PendingOperationEntry *) hash_seq_search(&hstat)) != NULL)
+		{
+			if (entry->tag.rnode.dbNode == rnode.dbNode)
+			{
+				/* Okay, delete this entry */
+				if (hash_search(pendingOpsTable, &entry->tag,
+								HASH_REMOVE, NULL) == NULL)
+					elog(ERROR, "pendingOpsTable corrupted");
+			}
+		}
+	}
+	else
+	{
+		/* Normal case: enter a request to fsync this segment */
+		PendingOperationTag key;
+		PendingOperationEntry *entry;
+		bool		found;
+
+		/* ensure any pad bytes in the hash key are zeroed */
+		MemSet(&key, 0, sizeof(key));
+		key.rnode = rnode;
+		key.segno = segno;
+
+		entry = (PendingOperationEntry *) hash_search(pendingOpsTable,
+													  &key,
+													  HASH_ENTER,
+													  &found);
+		if (!found)				/* new entry, so initialize it */
+			entry->failures = 0;
+	}
 }
+
+/*
+ * ForgetRelationFsyncRequests -- ensure any fsyncs for a rel are forgotten
+ */
+void
+ForgetRelationFsyncRequests(RelFileNode rnode)
+{
+	if (pendingOpsTable)
+	{
+		/* standalone backend or startup process: fsync state is local */
+		RememberFsyncRequest(rnode, FORGET_RELATION_FSYNC);
+	}
+	else if (IsUnderPostmaster)
+	{
+		/*
+		 * Notify the bgwriter about it.  If we fail to queue the revoke
+		 * message, we have to sleep and try again ... ugly, but hopefully
+		 * won't happen often.
+		 *
+		 * XXX should we CHECK_FOR_INTERRUPTS in this loop?  Escaping with
+		 * an error would leave the no-longer-used file still present on
+		 * disk, which would be bad, so I'm inclined to assume that the
+		 * bgwriter will always empty the queue soon.
+		 */
+		while (!ForwardFsyncRequest(rnode, FORGET_RELATION_FSYNC))
+			pg_usleep(10000L);	/* 10 msec seems a good number */
+		/*
+		 * Note we don't wait for the bgwriter to actually absorb the
+		 * revoke message; see mdsync() for the implications.
+		 */
+	}
+}
+
+/*
+ * ForgetDatabaseFsyncRequests -- ensure any fsyncs for a DB are forgotten
+ */
+void
+ForgetDatabaseFsyncRequests(Oid dbid)
+{
+	RelFileNode rnode;
+
+	rnode.dbNode = dbid;
+	rnode.spcNode = 0;
+	rnode.relNode = 0;
+
+	if (pendingOpsTable)
+	{
+		/* standalone backend or startup process: fsync state is local */
+		RememberFsyncRequest(rnode, FORGET_DATABASE_FSYNC);
+	}
+	else if (IsUnderPostmaster)
+	{
+		/* see notes in ForgetRelationFsyncRequests */
+		while (!ForwardFsyncRequest(rnode, FORGET_DATABASE_FSYNC))
+			pg_usleep(10000L);	/* 10 msec seems a good number */
+	}
+}
+
 
 /*
  *	_fdvec_alloc() -- Make a MdfdVec object.
@@ -967,7 +1153,7 @@ _mdfd_getseg(SMgrRelation reln, BlockNumber blkno, bool allowNotFound)
 								(segstogo == 1 || InRecovery) ? O_CREAT : 0);
 			if (v->mdfd_chain == NULL)
 			{
-				if (allowNotFound && errno == ENOENT)
+				if (allowNotFound && FILE_POSSIBLY_DELETED(errno))
 					return NULL;
 				ereport(ERROR,
 						(errcode_for_file_access(),
