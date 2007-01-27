@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.276 2007/01/26 22:52:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.277 2007/01/27 01:27:36 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -386,8 +386,8 @@ su - postgres
    an existing installation that does not have a version number of
    <quote>&majorversion;.x</quote>, you must back up and restore your
    data.  If you are upgrading from the same major version, the new version
-   can use your current data files, so a backup and restore is optional.
-   If you wish to avoid the backup/restore, merely skip those steps below.
+   can use your current data files so you should skip the backup and
+   restore steps below because they are unnecessary.
   </para>
 
   <procedure>
