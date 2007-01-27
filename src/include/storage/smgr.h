@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.55 2006/03/24 04:32:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/smgr.h,v 1.55.2.1 2007/01/27 20:15:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,6 +107,8 @@ extern bool mdimmedsync(SMgrRelation reln);
 extern bool mdsync(void);
 
 extern void RememberFsyncRequest(RelFileNode rnode, BlockNumber segno);
+extern void ForgetRelationFsyncRequests(RelFileNode rnode);
+extern void ForgetDatabaseFsyncRequests(Oid dbid);
 
 /* smgrtype.c */
 extern Datum smgrout(PG_FUNCTION_ARGS);
