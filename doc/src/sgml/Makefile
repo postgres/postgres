@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.93 2007/01/26 23:51:39 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.94 2007/01/27 22:44:32 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -97,6 +97,12 @@ ifneq ($(DRAFT), Y)
 # If not draft, re-run the this rule until HTML.index does not change
 	@cmp -s HTML.index.start HTML.index || $(MAKE) $@
 endif
+
+
+# The draft rule calls gmake again and sets the DRAFT variable.
+# This seems to be the only way to set gmake variables in a rule.
+draft:
+	@$(MAKE) DRAFT="Y" html
 
 
 COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g

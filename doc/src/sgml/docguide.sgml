@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.66 2007/01/26 22:23:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.67 2007/01/27 22:44:32 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -546,7 +546,7 @@ checking for sgmlspl... sgmlspl
     stages.  If you do not care about the index, and just want to
     proof-read the output, use <literal>draft</>:
 <screen>
-<prompt>doc/src/sgml$ </prompt><userinput>gmake DRAFT=Y html</userinput>
+<prompt>doc/src/sgml$ </prompt><userinput>gmake draft</userinput>
 </screen>
    </para>
 
