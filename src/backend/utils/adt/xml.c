@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.22 2007/01/25 11:53:51 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.23 2007/01/27 11:48:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1341,7 +1341,7 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped)
 static char *
 unicode_to_sqlchar(pg_wchar c)
 {
-	static unsigned char utf8string[4];
+	static unsigned char utf8string[5];	/* need trailing zero */
 
 	if (c <= 0x7F)
 	{
