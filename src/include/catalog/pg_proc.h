@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.440 2007/01/22 01:35:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.441 2007/01/28 16:16:52 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4046,6 +4046,35 @@ DESCR("aggregate transition function");
 DATA(insert OID = 2901 (  xmlagg           PGNSP PGUID 12 1 0 t f f f i 1 142 "142" _null_ _null_ _null_ aggregate_dummy - _null_ ));
 DESCR("concatenate XML values");
 
+/* uuid */ 
+DATA(insert OID = 2952 (  uuid_in		   PGNSP PGUID 12 1 0 f f t f i 1 2950 "2275" _null_ _null_ _null_ uuid_in - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2953 (  uuid_out		   PGNSP PGUID 12 1 0 f f t f i 1 2275 "2950" _null_ _null_ _null_ uuid_out - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2954 (  uuid_lt		   PGNSP PGUID 12 1 0 f f t f i 2 16 "2950 2950" _null_ _null_ _null_ uuid_lt - _null_ ));
+DESCR("less-than");
+DATA(insert OID = 2955 (  uuid_le		   PGNSP PGUID 12 1 0 f f t f i 2 16 "2950 2950" _null_ _null_ _null_ uuid_le - _null_ ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 2956 (  uuid_eq		   PGNSP PGUID 12 1 0 f f t f i 2 16 "2950 2950" _null_ _null_ _null_ uuid_eq - _null_ ));
+DESCR("equal");
+DATA(insert OID = 2957 (  uuid_ge		   PGNSP PGUID 12 1 0 f f t f i 2 16 "2950 2950" _null_ _null_ _null_ uuid_ge - _null_ ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 2958 (  uuid_gt		   PGNSP PGUID 12 1 0 f f t f i 2 16 "2950 2950" _null_ _null_ _null_ uuid_gt - _null_ ));
+DESCR("greater-than");
+DATA(insert OID = 2959 (  uuid_ne		   PGNSP PGUID 12 1 0 f f t f i 2 16 "2950 2950" _null_ _null_ _null_ uuid_ne - _null_ ));
+DESCR("not-equal");
+DATA(insert OID = 2960 (  uuid_cmp		   PGNSP PGUID 12 1 0 f f t f i 2 23 "2950 2950" _null_ _null_ _null_ uuid_cmp - _null_ ));
+DESCR("btree less-equal-greater");
+DATA(insert OID = 2961 (  uuid_recv		   PGNSP PGUID 12 1 0 f f t f i 1 2950 "2281" _null_ _null_ _null_ uuid_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2962 (  uuid_send		   PGNSP PGUID 12 1 0 f f t f i 1 17 "2950" _null_ _null_ _null_ uuid_send - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2963 (  uuid_hash		   PGNSP PGUID 12 1 0 f f t f i 1 23 "2950" _null_ _null_ _null_ uuid_hash - _null_ ));
+DESCR("hash");
+DATA(insert OID = 2964 (  uuid PGNSP	   PGUID 12 1 0 f f t f i 1 2950 "25" _null_ _null_ _null_ text_uuid - _null_ ));
+DESCR("convert text to uuid");
+DATA(insert OID = 2965 (  text PGNSP	   PGUID 12 1 0 f f t f i 1 25 "2950" _null_ _null_ _null_ uuid_text - _null_ ));
+DESCR("convert uuid to text");
 
 /*
  * Symbolic values for provolatile column: these indicate whether the result

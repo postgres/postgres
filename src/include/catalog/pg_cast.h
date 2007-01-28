@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.28 2007/01/05 22:19:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.29 2007/01/28 16:16:52 neilc Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -396,5 +396,9 @@ DATA(insert ( 1266 1266 1969 i ));
 DATA(insert ( 1560 1560 1685 i ));
 DATA(insert ( 1562 1562 1687 i ));
 DATA(insert ( 1700 1700 1703 i ));
+
+/* casts to and from uuid */ 
+DATA(insert (   25 2950 2964 a ));
+DATA(insert ( 2950   25 2965 a ));
 
 #endif   /* PG_CAST_H */
