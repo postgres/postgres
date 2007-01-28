@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.33 2006/10/19 18:32:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.33.2.1 2007/01/28 16:15:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@ _PG_init(void)
 
 	plpgsql_HashTableInit();
 	RegisterXactCallback(plpgsql_xact_cb, NULL);
+	RegisterSubXactCallback(plpgsql_subxact_cb, NULL);
 
 	/* Set up a rendezvous point with optional instrumentation plugin */
 	plugin_ptr = (PLpgSQL_plugin **) find_rendezvous_variable("PLpgSQL_plugin");
