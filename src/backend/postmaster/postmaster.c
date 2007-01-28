@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.512 2007/01/23 03:28:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.513 2007/01/28 01:12:05 momjian Exp $
  *
  * NOTES
  *
@@ -2421,15 +2421,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 				(errmsg("%s (PID %d) exited with exit code %d",
 						procname, pid, WEXITSTATUS(exitstatus))));
 	else if (WIFSIGNALED(exitstatus))
-#ifndef WIN32
-		ereport(lev,
-
-		/*------
-		  translator: %s is a noun phrase describing a child process, such as
-		  "server process" */
-				(errmsg("%s (PID %d) was terminated by signal %d",
-						procname, pid, WTERMSIG(exitstatus))));
-#else
+#if defined(WIN32)
 		ereport(lev,
 
 		/*------
@@ -2437,7 +2429,25 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		  "server process" */
 				(errmsg("%s (PID %d) was terminated by exception %X",
 						procname, pid, WTERMSIG(exitstatus)),
-				 errhint("See /include/ntstatus.h for a description of the hex value.")));
+				 errhint("See C include file \"ntstatus.h\" for a description of the hex value.")));
+#elif defined(HAVE_SYS_SIGLIST)
+		ereport(lev,
+
+		/*------
+		  translator: %s is a noun phrase describing a child process, such as
+		  "server process" */
+				(errmsg("%s (PID %d) was terminated by signal: %s (%d)",
+						procname, pid, WTERMSIG(exitstatus) < NSIG ?
+						sys_siglist[WTERMSIG(exitstatus)] : "unknown signal",
+						WTERMSIG(exitstatus))));
+#else
+		ereport(lev,
+
+		/*------
+		  translator: %s is a noun phrase describing a child process, such as
+		  "server process" */
+				(errmsg("%s (PID %d) was terminated by signal %d",
+						procname, pid, WTERMSIG(exitstatus))));
 #endif
 	else
 		ereport(lev,
