@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.108 2007/01/05 22:19:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.109 2007/01/28 23:21:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,11 +92,14 @@ MultiExecHash(HashState *node)
 		slot = ExecProcNode(outerNode);
 		if (TupIsNull(slot))
 			break;
-		hashtable->totalTuples += 1;
 		/* We have to compute the hash value */
 		econtext->ecxt_innertuple = slot;
-		hashvalue = ExecHashGetHashValue(hashtable, econtext, hashkeys);
-		ExecHashTableInsert(hashtable, slot, hashvalue);
+		if (ExecHashGetHashValue(hashtable, econtext, hashkeys, false,
+								 &hashvalue))
+		{
+			ExecHashTableInsert(hashtable, slot, hashvalue);
+			hashtable->totalTuples += 1;
+		}
 	}
 
 	/* must provide our own instrumentation support */
@@ -261,19 +264,23 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 
 	/*
 	 * Get info about the hash functions to be used for each hash key.
+	 * Also remember whether the join operators are strict.
 	 */
 	nkeys = list_length(hashOperators);
 	hashtable->hashfunctions = (FmgrInfo *) palloc(nkeys * sizeof(FmgrInfo));
+	hashtable->hashStrict = (bool *) palloc(nkeys * sizeof(bool));
 	i = 0;
 	foreach(ho, hashOperators)
 	{
+		Oid			hashop = lfirst_oid(ho);
 		Oid			hashfn;
 
-		hashfn = get_op_hash_function(lfirst_oid(ho));
+		hashfn = get_op_hash_function(hashop);
 		if (!OidIsValid(hashfn))
 			elog(ERROR, "could not find hash function for hash operator %u",
-				 lfirst_oid(ho));
+				 hashop);
 		fmgr_info(hashfn, &hashtable->hashfunctions[i]);
+		hashtable->hashStrict[i] = op_strict(hashop);
 		i++;
 	}
 
@@ -657,11 +664,18 @@ ExecHashTableInsert(HashJoinTable hashtable,
  * The tuple to be tested must be in either econtext->ecxt_outertuple or
  * econtext->ecxt_innertuple.  Vars in the hashkeys expressions reference
  * either OUTER or INNER.
+ *
+ * A TRUE result means the tuple's hash value has been successfully computed
+ * and stored at *hashvalue.  A FALSE result means the tuple cannot match
+ * because it contains a null attribute, and hence it should be discarded
+ * immediately.  (If keep_nulls is true then FALSE is never returned.)
  */
-uint32
+bool
 ExecHashGetHashValue(HashJoinTable hashtable,
 					 ExprContext *econtext,
-					 List *hashkeys)
+					 List *hashkeys,
+					 bool keep_nulls,
+					 uint32 *hashvalue)
 {
 	uint32		hashkey = 0;
 	ListCell   *hk;
@@ -691,10 +705,27 @@ ExecHashGetHashValue(HashJoinTable hashtable,
 		keyval = ExecEvalExpr(keyexpr, econtext, &isNull, NULL);
 
 		/*
-		 * Compute the hash function
+		 * If the attribute is NULL, and the join operator is strict, then
+		 * this tuple cannot pass the join qual so we can reject it
+		 * immediately (unless we're scanning the outside of an outer join,
+		 * in which case we must not reject it).  Otherwise we act like the
+		 * hashcode of NULL is zero (this will support operators that act like
+		 * IS NOT DISTINCT, though not any more-random behavior).  We treat
+		 * the hash support function as strict even if the operator is not.
+		 *
+		 * Note: currently, all hashjoinable operators must be strict since
+		 * the hash index AM assumes that.  However, it takes so little
+		 * extra code here to allow non-strict that we may as well do it.
 		 */
-		if (!isNull)			/* treat nulls as having hash key 0 */
+		if (isNull)
 		{
+			if (hashtable->hashStrict[i] && !keep_nulls)
+				return false;	/* cannot match */
+			/* else, leave hashkey unmodified, equivalent to hashcode 0 */
+		}
+		else
+		{
+			/* Compute the hash function */
 			uint32		hkey;
 
 			hkey = DatumGetUInt32(FunctionCall1(&hashtable->hashfunctions[i],
@@ -707,7 +738,8 @@ ExecHashGetHashValue(HashJoinTable hashtable,
 
 	MemoryContextSwitchTo(oldContext);
 
-	return hashkey;
+	*hashvalue = hashkey;
+	return true;
 }
 
 /*

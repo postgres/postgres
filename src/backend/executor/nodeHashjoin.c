@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.86 2007/01/05 22:19:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.87 2007/01/28 23:21:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -547,9 +547,8 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 	int			curbatch = hashtable->curbatch;
 	TupleTableSlot *slot;
 
-	if (curbatch == 0)
-	{							/* if it is the first pass */
-
+	if (curbatch == 0)			/* if it is the first pass */
+	{
 		/*
 		 * Check to see if first outer tuple was already fetched by
 		 * ExecHashJoin() and not used yet.
@@ -559,7 +558,8 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 			hjstate->hj_FirstOuterTupleSlot = NULL;
 		else
 			slot = ExecProcNode(outerNode);
-		if (!TupIsNull(slot))
+
+		while (!TupIsNull(slot))
 		{
 			/*
 			 * We have to compute the tuple's hash value.
@@ -567,13 +567,22 @@ ExecHashJoinOuterGetTuple(PlanState *outerNode,
 			ExprContext *econtext = hjstate->js.ps.ps_ExprContext;
 
 			econtext->ecxt_outertuple = slot;
-			*hashvalue = ExecHashGetHashValue(hashtable, econtext,
-											  hjstate->hj_OuterHashKeys);
+			if (ExecHashGetHashValue(hashtable, econtext,
+									 hjstate->hj_OuterHashKeys,
+									 (hjstate->js.jointype == JOIN_LEFT),
+									 hashvalue))
+			{
+				/* remember outer relation is not empty for possible rescan */
+				hjstate->hj_OuterNotEmpty = true;
 
-			/* remember outer relation is not empty for possible rescan */
-			hjstate->hj_OuterNotEmpty = true;
+				return slot;
+			}
 
-			return slot;
+			/*
+			 * That tuple couldn't match because of a NULL, so discard it
+			 * and continue with the next one.
+			 */
+			slot = ExecProcNode(outerNode);
 		}
 
 		/*
