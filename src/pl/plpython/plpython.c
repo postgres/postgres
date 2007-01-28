@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.92 2007/01/25 14:52:23 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.93 2007/01/28 19:36:46 adunstan Exp $
  *
  *********************************************************************
  */
@@ -15,9 +15,14 @@
 #include <Python.h>
 #undef errcode
 #define _DEBUG
+#elif defined (_MSC_VER)
+#define errcode __msvc_errcode
+#include <Python.h>
+#undef errcode
 #else
 #include <Python.h>
 #endif
+
 #include "postgres.h"
 
 /* system stuff */
