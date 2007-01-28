@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.56 2007/01/05 22:20:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.57 2007/01/28 17:58:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -426,43 +426,43 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 	switch (stmt->cmd_type)
 	{
 		case PLPGSQL_STMT_BLOCK:
-			return "block variables initialization";
+			return _("statement block");
 		case PLPGSQL_STMT_ASSIGN:
-			return "assignment";
+			return _("assignment");
 		case PLPGSQL_STMT_IF:
-			return "if";
+			return _("if");
 		case PLPGSQL_STMT_LOOP:
-			return "loop";
+			return _("loop");
 		case PLPGSQL_STMT_WHILE:
-			return "while";
+			return _("while");
 		case PLPGSQL_STMT_FORI:
-			return "for with integer loopvar";
+			return _("for with integer loop variable");
 		case PLPGSQL_STMT_FORS:
-			return "for over select rows";
+			return _("for over select rows");
 		case PLPGSQL_STMT_EXIT:
-			return "exit";
+			return _("exit");
 		case PLPGSQL_STMT_RETURN:
-			return "return";
+			return _("return");
 		case PLPGSQL_STMT_RETURN_NEXT:
-			return "return next";
+			return _("return next");
 		case PLPGSQL_STMT_RAISE:
-			return "raise";
+			return _("raise");
 		case PLPGSQL_STMT_EXECSQL:
-			return "SQL statement";
+			return _("SQL statement");
 		case PLPGSQL_STMT_DYNEXECUTE:
-			return "execute statement";
+			return _("execute statement");
 		case PLPGSQL_STMT_DYNFORS:
-			return "for over execute statement";
+			return _("for over execute statement");
 		case PLPGSQL_STMT_GETDIAG:
-			return "get diagnostics";
+			return _("get diagnostics");
 		case PLPGSQL_STMT_OPEN:
-			return "open";
+			return _("open");
 		case PLPGSQL_STMT_FETCH:
-			return "fetch";
+			return _("fetch");
 		case PLPGSQL_STMT_CLOSE:
-			return "close";
+			return _("close");
 		case PLPGSQL_STMT_PERFORM:
-			return "perform";
+			return _("perform");
 	}
 
 	return "unknown";

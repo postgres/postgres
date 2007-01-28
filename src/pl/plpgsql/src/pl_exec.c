@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.184 2007/01/28 16:15:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.185 2007/01/28 17:58:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,6 +267,8 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 		}
 	}
 
+	estate.err_text = gettext_noop("during function entry");
+
 	/*
 	 * Set the magic variable FOUND to false
 	 */
@@ -413,6 +415,8 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 			}
 		}
 	}
+
+	estate.err_text = gettext_noop("during function exit");
 
 	/*
 	 * Let the instrumentation plugin peek at this function
@@ -608,6 +612,8 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 						   CStringGetDatum(trigdata->tg_trigger->tgargs[i]));
 	}
 
+	estate.err_text = gettext_noop("during function entry");
+
 	/*
 	 * Set the magic variable FOUND to false
 	 */
@@ -643,6 +649,9 @@ plpgsql_exec_trigger(PLpgSQL_function *func,
 			   (errcode(ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT),
 				errmsg("control reached end of trigger procedure without RETURN")));
 	}
+
+	estate.err_stmt = NULL;
+	estate.err_text = gettext_noop("during function exit");
 
 	if (estate.retisset)
 		ereport(ERROR,
@@ -711,30 +720,48 @@ plpgsql_exec_error_callback(void *arg)
 	if (estate->err_text == raise_skip_msg)
 		return;
 
-	if (estate->err_stmt != NULL)
-	{
-		/* translator: last %s is a plpgsql statement type name */
-		errcontext("PL/pgSQL function \"%s\" line %d at %s",
-				   estate->err_func->fn_name,
-				   estate->err_stmt->lineno,
-				   plpgsql_stmt_typename(estate->err_stmt));
-	}
-	else if (estate->err_text != NULL)
+	if (estate->err_text != NULL)
 	{
 		/*
 		 * We don't expend the cycles to run gettext() on err_text unless we
 		 * actually need it.  Therefore, places that set up err_text should
 		 * use gettext_noop() to ensure the strings get recorded in the
 		 * message dictionary.
+		 *
+		 * If both err_text and err_stmt are set, use the err_text as
+		 * description, but report the err_stmt's line number.  When
+		 * err_stmt is not set, we're in function entry/exit, or some such
+		 * place not attached to a specific line number.
 		 */
-
-		/*
-		 * translator: last %s is a phrase such as "while storing call
-		 * arguments into local variables"
-		 */
-		errcontext("PL/pgSQL function \"%s\" %s",
+		if (estate->err_stmt != NULL)
+		{
+			/*
+			 * translator: last %s is a phrase such as "during statement
+			 * block local variable initialization"
+			 */
+			errcontext("PL/pgSQL function \"%s\" line %d %s",
+					   estate->err_func->fn_name,
+					   estate->err_stmt->lineno,
+					   gettext(estate->err_text));
+		}
+		else
+		{
+			/*
+			 * translator: last %s is a phrase such as "while storing call
+			 * arguments into local variables"
+			 */
+			errcontext("PL/pgSQL function \"%s\" %s",
+					   estate->err_func->fn_name,
+					   gettext(estate->err_text));
+		}
+	}
+	else if (estate->err_stmt != NULL)
+	{
+		/* translator: last %s is a plpgsql statement type name */
+		errcontext("PL/pgSQL function \"%s\" line %d at %s",
 				   estate->err_func->fn_name,
-				   gettext(estate->err_text));
+				   estate->err_stmt->lineno,
+				   plpgsql_stmt_typename(estate->err_stmt));
 	}
 	else
 		errcontext("PL/pgSQL function \"%s\"",
@@ -846,6 +873,8 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 	/*
 	 * First initialize all variables declared in this block
 	 */
+	estate->err_text = gettext_noop("during statement block local variable initialization");
+
 	for (i = 0; i < block->n_initvars; i++)
 	{
 		n = block->initvarnos[i];
@@ -915,6 +944,8 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		EState	   *old_eval_estate = estate->eval_estate;
 		long int	old_eval_estate_simple_id = estate->eval_estate_simple_id;
 
+		estate->err_text = gettext_noop("during statement block entry");
+
 		BeginInternalSubTransaction(NULL);
 		/* Want to run statements inside function's memory context */
 		MemoryContextSwitchTo(oldcontext);
@@ -929,8 +960,12 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			 */
 			plpgsql_create_econtext(estate);
 
+			estate->err_text = NULL;
+
 			/* Run the block's statements */
 			rc = exec_stmts(estate, block->body);
+
+			estate->err_text = gettext_noop("during statement block exit");
 
 			/* Commit the inner transaction, return to outer xact context */
 			ReleaseCurrentSubTransaction();
@@ -952,6 +987,8 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		{
 			ErrorData  *edata;
 			ListCell   *e;
+
+			estate->err_text = gettext_noop("during exception cleanup");
 
 			/* Save error info */
 			MemoryContextSwitchTo(oldcontext);
@@ -1004,6 +1041,8 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 					errm_var->freeval = true;
 					errm_var->isnull = false;
 
+					estate->err_text = NULL;
+
 					rc = exec_stmts(estate, exception->action);
 
 					free_var(state_var);
@@ -1025,8 +1064,12 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		/*
 		 * Just execute the statements in the block's body
 		 */
+		estate->err_text = NULL;
+
 		rc = exec_stmts(estate, block->body);
 	}
+
+	estate->err_text = NULL;
 
 	/*
 	 * Handle the return code.
