@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.82 2007/01/05 22:20:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.83 2007/01/28 16:15:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,11 +180,13 @@ typedef struct PLpgSQL_expr
 	Oid			expr_simple_type;
 
 	/*
-	 * if expr is simple AND in use in current xact, expr_simple_state is
-	 * valid.  Test validity by seeing if expr_simple_xid matches current XID.
+	 * if expr is simple AND prepared in current eval_estate,
+	 * expr_simple_state is valid.  Test validity by seeing if expr_simple_id
+	 * matches eval_estate_simple_id.
 	 */
 	ExprState  *expr_simple_state;
-	TransactionId expr_simple_xid;
+	long int	expr_simple_id;
+
 	/* params to pass to expr */
 	int			nparams;
 	int			params[1];		/* VARIABLE SIZE ARRAY ... must be last */
@@ -612,7 +614,9 @@ typedef struct
 	SPITupleTable *eval_tuptable;
 	uint32		eval_processed;
 	Oid			eval_lastoid;
-	ExprContext *eval_econtext;
+	ExprContext *eval_econtext;	/* for executing simple expressions */
+	EState	   *eval_estate;	/* EState containing eval_econtext */
+	long int	eval_estate_simple_id;		/* ID for eval_estate */
 
 	/* status information for error context reporting */
 	PLpgSQL_function *err_func; /* current func */
@@ -738,6 +742,8 @@ extern Datum plpgsql_exec_function(PLpgSQL_function *func,
 extern HeapTuple plpgsql_exec_trigger(PLpgSQL_function *func,
 					 TriggerData *trigdata);
 extern void plpgsql_xact_cb(XactEvent event, void *arg);
+extern void plpgsql_subxact_cb(SubXactEvent event, SubTransactionId mySubid,
+							   SubTransactionId parentSubid, void *arg);
 
 /* ----------
  * Functions for the dynamic string handling in pl_funcs.c
