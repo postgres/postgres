@@ -19,13 +19,15 @@ exit 1
 
 :generate
 SET fn=%1
-bison -d %fn%
+SET cf=%2
+bison.exe -d %fn% -o %cf%
 if errorlevel 1 exit 1
-copy /y %fn:~0,-2%.tab.c %2
-if errorlevel 1 exit 1
-copy /y %fn:~0,-2%.tab.h %3
-if errorlevel 1 exit 1
-del %fn:~0,-2%.tab.*
+SET hf=%cf:~0,-2%.h
+if not "%hf%"=="%3" (
+        copy /y %hf% %3
+        if errorlevel 1 exit 1
+        del %hf%
+)
 exit 0
 
 
