@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.222 2007/01/28 01:37:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.223 2007/01/28 02:53:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1698,6 +1698,9 @@ scalararraysel(PlannerInfo *root,
 int
 estimate_array_length(Node *arrayexpr)
 {
+	/* look through any binary-compatible relabeling of arrayexpr */
+	arrayexpr = strip_array_coercion(arrayexpr);
+
 	if (arrayexpr && IsA(arrayexpr, Const))
 	{
 		Datum		arraydatum = ((Const *) arrayexpr)->constvalue;
