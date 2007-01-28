@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.49 2007/01/28 01:12:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.50 2007/01/28 02:33:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 
 #include <grp.h>
 #include <pwd.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
