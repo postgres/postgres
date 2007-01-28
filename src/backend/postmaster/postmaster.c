@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.514 2007/01/28 03:50:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.515 2007/01/28 06:32:03 tgl Exp $
  *
  * NOTES
  *
@@ -2427,18 +2427,19 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %d) was terminated by exception %X",
+				(errmsg("%s (PID %d) was terminated by exception 0x%X",
 						procname, pid, WTERMSIG(exitstatus)),
 				 errhint("See C include file \"ntstatus.h\" for a description of the hex value.")));
-#elif defined(HAVE_DECL_SYS_SIGLIST)
+#elif defined(HAVE_DECL_SYS_SIGLIST) && HAVE_DECL_SYS_SIGLIST
 		ereport(lev,
 
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %d) was terminated by signal: %s (%d)",
-						procname, pid, WTERMSIG(exitstatus) < NSIG ?
-						sys_siglist[WTERMSIG(exitstatus)] : "unknown signal",
+				(errmsg("%s (PID %d) was terminated by signal %s (%d)",
+						procname, pid,
+						WTERMSIG(exitstatus) < NSIG ?
+						sys_siglist[WTERMSIG(exitstatus)] : "(unknown)",
 						WTERMSIG(exitstatus))));
 #else
 		ereport(lev,
@@ -2455,7 +2456,7 @@ LogChildExit(int lev, const char *procname, int pid, int exitstatus)
 		/*------
 		  translator: %s is a noun phrase describing a child process, such as
 		  "server process" */
-				(errmsg("%s (PID %d) exited with unexpected status %d",
+				(errmsg("%s (PID %d) exited with unrecognized status %d",
 						procname, pid, exitstatus)));
 }
 
