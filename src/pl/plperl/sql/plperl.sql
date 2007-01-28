@@ -1,10 +1,4 @@
 --
--- checkpoint so that if we have a crash in the tests, replay of the
--- just-completed CREATE DATABASE won't discard the core dump file
---
-checkpoint;
-
---
 -- Test result value processing
 --
 
