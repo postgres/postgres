@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.221 2007/01/22 20:00:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.222 2007/01/28 01:37:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,11 +88,13 @@
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/datum.h"
+#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/nabstime.h"
 #include "utils/pg_locale.h"
@@ -1449,6 +1451,63 @@ nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
 }
 
 /*
+ * strip_array_coercion - strip binary-compatible relabeling from an array expr
+ *
+ * For array values, the parser doesn't generate simple RelabelType nodes,
+ * but function calls of array_type_coerce() or array_type_length_coerce().
+ * If we want to cope with binary-compatible situations we have to look
+ * through these calls whenever the element-type coercion is binary-compatible.
+ */
+static Node *
+strip_array_coercion(Node *node)
+{
+	/* could be more than one level, so loop */
+	for (;;)
+	{
+		if (node && IsA(node, RelabelType))
+		{
+			/* We don't really expect this case, but may as well cope */
+			node = (Node *) ((RelabelType *) node)->arg;
+		}
+		else if (node && IsA(node, FuncExpr))
+		{
+			FuncExpr   *fexpr = (FuncExpr *) node;
+			Node	   *arg1;
+			Oid			src_elem_type;
+			Oid			tgt_elem_type;
+			Oid			funcId;
+
+			/* must be the right function(s) */
+			if (!(fexpr->funcid == F_ARRAY_TYPE_COERCE ||
+				  fexpr->funcid == F_ARRAY_TYPE_LENGTH_COERCE))
+				break;
+
+			/* fetch source and destination array element types */
+			arg1 = (Node *) linitial(fexpr->args);
+			src_elem_type = get_element_type(exprType(arg1));
+			if (src_elem_type == InvalidOid)
+				break;			/* probably shouldn't happen */
+			tgt_elem_type = get_element_type(fexpr->funcresulttype);
+			if (tgt_elem_type == InvalidOid)
+				break;			/* probably shouldn't happen */
+
+			/* find out how to coerce */
+			if (!find_coercion_pathway(tgt_elem_type, src_elem_type,
+									   COERCION_EXPLICIT, &funcId))
+				break;			/* definitely shouldn't happen */
+
+			if (OidIsValid(funcId))
+				break;			/* non-binary-compatible coercion */
+
+			node = arg1;		/* OK to look through the node */
+		}
+		else
+			break;
+	}
+	return node;
+}
+
+/*
  *		scalararraysel		- Selectivity of ScalarArrayOpExpr Node.
  */
 Selectivity
@@ -1461,6 +1520,7 @@ scalararraysel(PlannerInfo *root,
 	bool		useOr = clause->useOr;
 	Node	   *leftop;
 	Node	   *rightop;
+	Oid			nominal_element_type;
 	RegProcedure oprsel;
 	FmgrInfo	oprselproc;
 	Datum		selarg4;
@@ -1484,6 +1544,19 @@ scalararraysel(PlannerInfo *root,
 		return (Selectivity) 0.5;
 	fmgr_info(oprsel, &oprselproc);
 
+	/* deconstruct the expression */
+	Assert(list_length(clause->args) == 2);
+	leftop = (Node *) linitial(clause->args);
+	rightop = (Node *) lsecond(clause->args);
+
+	/* get nominal (after relabeling) element type of rightop */
+	nominal_element_type = get_element_type(exprType(rightop));
+	if (!OidIsValid(nominal_element_type))
+		return (Selectivity) 0.5;			/* probably shouldn't happen */
+
+	/* look through any binary-compatible relabeling of rightop */
+	rightop = strip_array_coercion(rightop);
+
 	/*
 	 * We consider three cases:
 	 *
@@ -1496,10 +1569,6 @@ scalararraysel(PlannerInfo *root,
 	 *
 	 * 3. otherwise, make a guess ...
 	 */
-	Assert(list_length(clause->args) == 2);
-	leftop = (Node *) linitial(clause->args);
-	rightop = (Node *) lsecond(clause->args);
-
 	if (rightop && IsA(rightop, Const))
 	{
 		Datum		arraydatum = ((Const *) rightop)->constvalue;
@@ -1529,7 +1598,7 @@ scalararraysel(PlannerInfo *root,
 			Selectivity s2;
 
 			args = list_make2(leftop,
-							  makeConst(ARR_ELEMTYPE(arrayval),
+							  makeConst(nominal_element_type,
 										elmlen,
 										elem_values[i],
 										elem_nulls[i],
@@ -1558,10 +1627,16 @@ scalararraysel(PlannerInfo *root,
 		s1 = useOr ? 0.0 : 1.0;
 		foreach(l, arrayexpr->elements)
 		{
+			Node	   *elem = (Node *) lfirst(l);
 			List	   *args;
 			Selectivity s2;
 
-			args = list_make2(leftop, lfirst(l));
+			/*
+			 * Theoretically, if elem isn't of nominal_element_type we should
+			 * insert a RelabelType, but it seems unlikely that any operator
+			 * estimation function would really care ...
+			 */
+			args = list_make2(leftop, elem);
 			s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
 											  PointerGetDatum(root),
 											  ObjectIdGetDatum(operator),
@@ -1586,7 +1661,7 @@ scalararraysel(PlannerInfo *root,
 		 * constant; CaseTestExpr is a convenient choice.
 		 */
 		dummyexpr = makeNode(CaseTestExpr);
-		dummyexpr->typeId = get_element_type(exprType(rightop));
+		dummyexpr->typeId = nominal_element_type;
 		dummyexpr->typeMod = -1;
 		args = list_make2(leftop, dummyexpr);
 		s2 = DatumGetFloat8(FunctionCall4(&oprselproc,
