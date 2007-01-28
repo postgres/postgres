@@ -11,6 +11,14 @@ SHOW stats_start_collector;  -- must be on
  on
 (1 row)
 
+-- wait to let any prior tests finish dumping out stats;
+-- else our messages might get lost due to contention
+SELECT pg_sleep(2.0);
+ pg_sleep 
+----------
+ 
+(1 row)
+
 -- save counters
 CREATE TEMP TABLE prevstats AS
 SELECT t.seq_scan, t.seq_tup_read, t.idx_scan, t.idx_tup_fetch,
