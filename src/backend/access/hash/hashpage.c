@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.63 2007/01/05 22:19:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.64 2007/01/29 23:22:59 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -275,6 +275,11 @@ _hash_metapinit(Relation rel)
 	metap->hashm_bmshift = i + BYTE_TO_BIT;
 	Assert((1 << BMPG_SHIFT(metap)) == (BMPG_MASK(metap) + 1));
 
+	/*
+	 * Label the index with its primary hash support function's OID.  This is
+	 * pretty useless for normal operation (in fact, hashm_procid is not used
+	 * anywhere), but it might be handy for forensic purposes so we keep it.
+	 */
 	metap->hashm_procid = index_getprocid(rel, 1, HASHPROC);
 
 	/*
