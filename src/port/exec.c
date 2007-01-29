@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.54 2007/01/29 20:17:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.55 2007/01/29 20:22:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -590,7 +590,7 @@ pclose_check(FILE *stream)
 	{
 		char str[256];
 
-		snprintf(str, 256, "%d: %s", WTERMSIG(exitstatus),
+		snprintf(str, sizeof(str), "%d: %s", WTERMSIG(exitstatus),
 			  WTERMSIG(exitstatus) < NSIG ?
 			  sys_siglist[WTERMSIG(exitstatus)] : "(unknown)");
 		log_error(_("child process was terminated by signal %s"), str);
