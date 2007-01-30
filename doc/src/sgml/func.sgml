@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.354 2007/01/30 02:39:27 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.355 2007/01/30 22:29:22 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1339,7 +1339,7 @@
         Encode binary data to <acronym>ASCII</acronym>-only representation.  Supported
         types are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
        </entry>
-       <entry><literal>encode( '123\\000\\001', 'base64')</literal></entry>
+       <entry><literal>encode( E'123\\000\\001', 'base64')</literal></entry>
        <entry><literal>MTIzAAE=</literal></entry>
       </row>       
 
@@ -1439,7 +1439,7 @@
        <entry>
         Return the given string suitably quoted to be used as a string literal
         in an <acronym>SQL</acronym> statement string.
-        Embedded quotes and backslashes are properly doubled.
+        Embedded single-quotes and backslashes are properly doubled.
        </entry>
        <entry><literal>quote_literal( 'O\'Reilly')</literal></entry>
        <entry><literal>'O''Reilly'</literal></entry>
@@ -2393,7 +2393,7 @@
          <secondary>concatenation</secondary>
         </indexterm>
        </entry>
-       <entry><literal>'\\\\Post'::bytea || '\\047gres\\000'::bytea</literal></entry>
+       <entry><literal>E'\\\\Post'::bytea || E'\\047gres\\000'::bytea</literal></entry>
        <entry><literal>\\Post'gres\000</literal></entry>
       </row>
 
@@ -2406,7 +2406,7 @@
          <primary>get_bit</primary>
         </indexterm>
        </entry>
-       <entry><literal>get_bit('Th\\000omas'::bytea, 45)</literal></entry>
+       <entry><literal>get_bit(E'Th\\000omas'::bytea, 45)</literal></entry>
        <entry><literal>1</literal></entry>
       </row>
 
@@ -2419,7 +2419,7 @@
          <primary>get_byte</primary>
         </indexterm>
        </entry>
-       <entry><literal>get_byte('Th\\000omas'::bytea, 4)</literal></entry>
+       <entry><literal>get_byte(E'Th\\000omas'::bytea, 4)</literal></entry>
        <entry><literal>109</literal></entry>
       </row>
 
@@ -2427,7 +2427,7 @@
        <entry><literal><function>octet_length</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>int</type></entry>
        <entry>Number of bytes in binary string</entry>
-       <entry><literal>octet_length( 'jo\\000se'::bytea)</literal></entry>
+       <entry><literal>octet_length( E'jo\\000se'::bytea)</literal></entry>
        <entry><literal>5</literal></entry>
       </row>
 
@@ -2435,7 +2435,7 @@
        <entry><literal><function>position</function>(<parameter>substring</parameter> in <parameter>string</parameter>)</literal></entry>
        <entry><type>int</type></entry>
        <entry>Location of specified substring</entry>
-      <entry><literal>position('\\000om'::bytea in 'Th\\000omas'::bytea)</literal></entry>
+      <entry><literal>position(E'\\000om'::bytea in E'Th\\000omas'::bytea)</literal></entry>
        <entry><literal>3</literal></entry>
       </row>
 
@@ -2449,7 +2449,7 @@
          <primary>set_bit</primary>
         </indexterm>
        </entry>
-       <entry><literal>set_bit('Th\\000omas'::bytea, 45, 0)</literal></entry>
+       <entry><literal>set_bit(E'Th\\000omas'::bytea, 45, 0)</literal></entry>
        <entry><literal>Th\000omAs</literal></entry>
       </row>
 
@@ -2463,7 +2463,7 @@
          <primary>set_byte</primary>
         </indexterm>
        </entry>
-       <entry><literal>set_byte('Th\\000omas'::bytea, 4, 64)</literal></entry>
+       <entry><literal>set_byte(E'Th\\000omas'::bytea, 4, 64)</literal></entry>
        <entry><literal>Th\000o@as</literal></entry>
       </row>
 
@@ -2476,7 +2476,7 @@
          <primary>substring</primary>
         </indexterm>
        </entry>
-       <entry><literal>substring('Th\\000omas'::bytea from 2 for 3)</literal></entry>
+       <entry><literal>substring(E'Th\\000omas'::bytea from 2 for 3)</literal></entry>
        <entry><literal>h\000o</literal></entry>
       </row>
 
@@ -2492,7 +2492,7 @@
         <parameter>bytes</parameter> from the start
         and end of <parameter>string</parameter>
        </entry>
-       <entry><literal>trim('\\000'::bytea from '\\000Tom\\000'::bytea)</literal></entry>
+       <entry><literal>trim(E'\\000'::bytea from E'\\000Tom\\000'::bytea)</literal></entry>
        <entry><literal>Tom</literal></entry>
       </row>
      </tbody>
@@ -2530,7 +2530,7 @@
         in <parameter>bytes</parameter> from the start and end of
         <parameter>string</parameter>
       </entry>
-      <entry><literal>btrim('\\000trim\\000'::bytea, '\\000'::bytea)</literal></entry>
+      <entry><literal>btrim(E'\\000trim\\000'::bytea, E'\\000'::bytea)</literal></entry>
       <entry><literal>trim</literal></entry>
      </row>
 
@@ -2544,7 +2544,7 @@
        Decode binary string from <parameter>string</parameter> previously 
        encoded with <function>encode</>.  Parameter type is same as in <function>encode</>.
       </entry>
-      <entry><literal>decode('123\\000456', 'escape')</literal></entry>
+      <entry><literal>decode(E'123\\000456', 'escape')</literal></entry>
       <entry><literal>123\000456</literal></entry>
      </row>
 
@@ -2558,7 +2558,7 @@
        Encode binary string to <acronym>ASCII</acronym>-only representation.  Supported
        types are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
       </entry>
-      <entry><literal>encode('123\\000456'::bytea, 'escape')</literal></entry>
+      <entry><literal>encode(E'123\\000456'::bytea, 'escape')</literal></entry>
       <entry><literal>123\000456</literal></entry>
      </row>
 
@@ -2577,7 +2577,7 @@
         <see>binary strings, length</see>
        </indexterm>
       </entry>
-      <entry><literal>length('jo\\000se'::bytea)</literal></entry>
+      <entry><literal>length(E'jo\\000se'::bytea)</literal></entry>
       <entry><literal>5</literal></entry>
      </row>
 
@@ -2588,7 +2588,7 @@
        Calculates the MD5 hash of <parameter>string</parameter>,
        returning the result in hexadecimal
       </entry>
-      <entry><literal>md5('Th\\000omas'::bytea)</literal></entry>
+      <entry><literal>md5(E'Th\\000omas'::bytea)</literal></entry>
       <entry><literal>8ab2d3c9689aaf18 b4958c334c82d8b1</literal></entry>
      </row>
     </tbody>
@@ -2812,7 +2812,8 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    <para>
     Note that the backslash already has a special meaning in string
     literals, so to write a pattern constant that contains a backslash
-    you must write two backslashes in an SQL statement.  Thus, writing a pattern
+    you must write two backslashes in an SQL statement (assuming escape
+    string syntax is used).  Thus, writing a pattern
     that actually matches a literal backslash means writing four backslashes
     in the statement.  You can avoid this by selecting a different escape
     character with <literal>ESCAPE</literal>; then a backslash is not special
@@ -3106,7 +3107,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
      substring matching the entire pattern should be inserted.  Write
      <literal>\\</> if you need to put a literal backslash in the replacement
      text.  (As always, remember to double backslashes written in literal
-     constant strings.)
+     constant strings, assuming escape string syntax is used.)
      The <replaceable>flags</> parameter is an optional text
      string containing zero or more single-letter flags that change the
      function's behavior.  Flag <literal>i</> specifies case-insensitive
@@ -3121,7 +3122,7 @@ regexp_replace('foobarbaz', 'b..', 'X')
                                    <lineannotation>fooXbaz</lineannotation>
 regexp_replace('foobarbaz', 'b..', 'X', 'g')
                                    <lineannotation>fooXX</lineannotation>
-regexp_replace('foobarbaz', 'b(..)', 'X\\1Y', 'g')
+regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
                                    <lineannotation>fooXarYXazY</lineannotation>
 </programlisting>
    </para>
@@ -3283,7 +3284,8 @@ regexp_replace('foobarbaz', 'b(..)', 'X\\1Y', 'g')
      Remember that the backslash (<literal>\</literal>) already has a special
      meaning in <productname>PostgreSQL</> string literals.
      To write a pattern constant that contains a backslash,
-     you must write two backslashes in the statement.
+     you must write two backslashes in the statement, assuming escape
+     string syntax is used.
     </para>
    </note>
 
@@ -3594,7 +3596,7 @@ regexp_replace('foobarbaz', 'b(..)', 'X\\1Y', 'g')
      Keep in mind that an escape's leading <literal>\</> will need to be
      doubled when entering the pattern as an SQL string constant.  For example:
 <programlisting>
-'123' ~ '^\\d{3}' <lineannotation>true</lineannotation>
+'123' ~ E'^\\d{3}' <lineannotation>true</lineannotation>
 </programlisting>
     </para>
    </note>
@@ -4756,10 +4758,10 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
      <listitem>
       <para>
        If you want to have a double quote in the output you must
-       precede it with a backslash, for example <literal>'\\"YYYY
+       precede it with a backslash, for example <literal>E'\\"YYYY
        Month\\"'</literal>. <!-- "" font-lock sanity :-) -->
        (Two backslashes are necessary because the backslash already
-       has a special meaning in a string constant.)
+       has a special meaning when using the escape string syntax.)
       </para>
      </listitem>
 

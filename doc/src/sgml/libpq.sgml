@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.221 2006/12/19 01:53:36 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.222 2007/01/30 22:29:22 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -916,7 +916,7 @@ in a numeric form that is much easier to compare against.
 
 <para>
 If no value for <literal>standard_conforming_strings</> is reported,
-applications may assume it is <literal>false</>, that is, backslashes
+applications may assume it is <literal>off</>, that is, backslashes
 are treated as escapes in string literals.  Also, the presence of this
 parameter may be taken as an indication that the escape string syntax
 (<literal>E'...'</>) is accepted.
@@ -2494,7 +2494,7 @@ unsigned char *PQescapeByteaConn(PGconn *conn,
    of a <type>bytea</type> literal in an <acronym>SQL</acronym>
    statement. In general, to escape a byte, it is converted into the
    three digit octal number equal to the octet value, and preceded by
-   one or two backslashes. The single quote (<literal>'</>) and backslash
+   usually two backslashes. The single quote (<literal>'</>) and backslash
    (<literal>\</>) characters have special alternative escape
    sequences. See <xref linkend="datatype-binary"> for more
    information. <function>PQescapeByteaConn</function> performs this

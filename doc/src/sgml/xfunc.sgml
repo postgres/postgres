@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.121 2006/12/15 02:19:21 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.122 2007/01/30 22:29:23 momjian Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -147,9 +147,9 @@ SELECT clean_emp();
     most convenient to use dollar quoting (see <xref
     linkend="sql-syntax-dollar-quoting">) for the string constant.
     If you choose to use regular single-quoted string constant syntax,
-    you must escape single quote marks (<literal>'</>) and backslashes
-    (<literal>\</>) used in the body of the function, typically by
-    doubling them (see <xref linkend="sql-syntax-strings">).
+    you must double single quote marks (<literal>'</>) and backslashes
+    (<literal>\</>) (assuming escape string syntax) in the body of
+    the function (see <xref linkend="sql-syntax-strings">).
    </para>
 
    <para>

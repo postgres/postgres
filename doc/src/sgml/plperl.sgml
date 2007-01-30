@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.59 2006/11/13 17:13:56 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.60 2007/01/30 22:29:23 momjian Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -80,10 +80,10 @@ $$ LANGUAGE plperl;
    the function body to be written as a string constant.  It is usually
    most convenient to use dollar quoting (see <xref
    linkend="sql-syntax-dollar-quoting">) for the string constant.
-   If you choose to use regular single-quoted string constant syntax,
-   you must escape single quote marks (<literal>'</>) and backslashes
-   (<literal>\</>) used in the body of the function, typically by
-   doubling them (see <xref linkend="sql-syntax-strings">).
+   If you choose to use escape string syntax <literal>E''</>,
+   you must double the single quote marks (<literal>'</>) and backslashes
+   (<literal>\</>) used in the body of the function 
+   (see <xref linkend="sql-syntax-strings">).
   </para>
 
   <para>

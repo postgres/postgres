@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.6 2005/11/04 23:14:01 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.7 2007/01/30 22:29:23 momjian Exp $ -->
 
 <sect1 id="rowtypes">
  <title>Composite Types</title>
@@ -294,11 +294,12 @@ INSERT INTO mytab (complex_col.r, complex_col.i) VALUES(1.1, 2.2);
   <para>
    Remember that what you write in an SQL command will first be interpreted
    as a string literal, and then as a composite.  This doubles the number of
-   backslashes you need.  For example, to insert a <type>text</> field
+   backslashes you need (assuming escape string syntax is used).
+   For example, to insert a <type>text</> field
    containing a double quote and a backslash in a composite
    value, you'd need to write
 <programlisting>
-INSERT ... VALUES ('("\\"\\\\")');
+INSERT ... VALUES (E'("\\"\\\\")');
 </programlisting>
    The string-literal processor removes one level of backslashes, so that
    what arrives at the composite-value parser looks like

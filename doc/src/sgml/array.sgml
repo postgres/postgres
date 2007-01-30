@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.52 2006/09/29 21:22:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.53 2007/01/30 22:29:22 momjian Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -597,17 +597,17 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
   </para>
 
   <para>
-   As shown previously, when writing an array value you may write double
+   As shown previously, when writing an array value you can write double
    quotes around any individual array element. You <emphasis>must</> do so
    if the element value would otherwise confuse the array-value parser.
    For example, elements containing curly braces, commas (or whatever the
    delimiter character is), double quotes, backslashes, or leading or trailing
    whitespace must be double-quoted.  Empty strings and strings matching the
    word <literal>NULL</> must be quoted, too.  To put a double quote or
-   backslash in a
-   quoted array element value, precede it with a backslash. Alternatively, you
-   can use backslash-escaping to protect all data characters that would
-   otherwise be taken as array syntax.
+   backslash in a quoted array element value, use escape string syntax
+   and precede it with a backslash. Alternatively, you can use
+   backslash-escaping to protect all data characters that would otherwise
+   be taken as array syntax.
   </para>
 
   <para>
@@ -625,16 +625,16 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
    backslashes you need.  For example, to insert a <type>text</> array
    value containing a backslash and a double quote, you'd need to write
 <programlisting>
-INSERT ... VALUES ('{"\\\\","\\""}');
+INSERT ... VALUES (E'{"\\\\","\\""}');
 </programlisting>
-   The string-literal processor removes one level of backslashes, so that
+   The escape string processor removes one level of backslashes, so that
    what arrives at the array-value parser looks like <literal>{"\\","\""}</>.
    In turn, the strings fed to the <type>text</> data type's input routine
    become <literal>\</> and <literal>"</> respectively.  (If we were working
    with a data type whose input routine also treated backslashes specially,
    <type>bytea</> for example, we might need as many as eight backslashes
    in the command to get one backslash into the stored array element.)
-   Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting">) may be
+   Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting">) can be
    used to avoid the need to double backslashes.
   </para>
  </note>

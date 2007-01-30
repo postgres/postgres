@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.187 2007/01/29 13:24:30 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.188 2007/01/30 22:29:22 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1152,11 +1152,9 @@ SELECT b, char_length(b) FROM test2;
     of a string literal in an <acronym>SQL</acronym> statement. In
     general, to escape an octet, it is converted into the three-digit
     octal number equivalent of its decimal octet value, and preceded
-    by two backslashes (or one backslash if
-    <varname>standard_conforming_strings</> is <literal>off</>).
-    <xref linkend="datatype-binary-sqlesc"> shows the characters
-    that must be escaped, and gives the alternate escape sequences
-    where applicable.
+    by two backslashes.  <xref linkend="datatype-binary-sqlesc">
+    shows the characters that must be escaped, and gives the alternate
+    escape sequences where applicable.
    </para>
 
    <table id="datatype-binary-sqlesc">
@@ -1176,32 +1174,32 @@ SELECT b, char_length(b) FROM test2;
       <row>
        <entry>0</entry>
        <entry>zero octet</entry>
-       <entry><literal>'\\000'</literal></entry>
-       <entry><literal>SELECT '\\000'::bytea;</literal></entry>
+       <entry><literal>E'\\000'</literal></entry>
+       <entry><literal>SELECT E'\\000'::bytea;</literal></entry>
        <entry><literal>\000</literal></entry>
       </row>
 
       <row>
        <entry>39</entry>
        <entry>single quote</entry>
-       <entry><literal>'\''</literal> or <literal>'\\047'</literal></entry>
-       <entry><literal>SELECT '\''::bytea;</literal></entry>
+       <entry><literal>''''</literal> or <literal>E'\\047'</literal></entry>
+       <entry><literal>SELECT E'\''::bytea;</literal></entry>
        <entry><literal>'</literal></entry>
       </row>
 
       <row>
        <entry>92</entry>
        <entry>backslash</entry>
-       <entry><literal>'\\\\'</literal> or <literal>'\\134'</literal></entry>
-       <entry><literal>SELECT '\\\\'::bytea;</literal></entry>
+       <entry><literal>E'\\\\'</literal> or <literal>E'\\134'</literal></entry>
+       <entry><literal>SELECT E'\\\\'::bytea;</literal></entry>
        <entry><literal>\\</literal></entry>
       </row>
 
       <row>
        <entry>0 to 31 and 127 to 255</entry>
        <entry><quote>non-printable</quote> octets</entry>
-       <entry><literal>'\\<replaceable>xxx'</></literal> (octal value)</entry>
-       <entry><literal>SELECT '\\001'::bytea;</literal></entry>
+       <entry><literal>E'\\<replaceable>xxx'</></literal> (octal value)</entry>
+       <entry><literal>SELECT E'\\001'::bytea;</literal></entry>
        <entry><literal>\001</literal></entry>
       </row>
 
@@ -1224,18 +1222,18 @@ SELECT b, char_length(b) FROM test2;
     string written as a string literal must pass through two parse
     phases in the <productname>PostgreSQL</productname> server.
     The first backslash of each pair is interpreted as an escape
-    character by the string-literal parser (assuming
-    <varname>standard_conforming_strings</> is <literal>off</>)
-    and is therefore consumed, leaving the second backslash of the
-    pair.  The remaining backslash is then recognized by the
+    character by the string-literal parser (assuming escape string
+    syntax is used) and is therefore consumed, leaving the second backslash of the
+    pair.  (Dollar-quoted strings can be used to avoid this level
+    of escaping.)  The remaining backslash is then recognized by the
     <type>bytea</type> input function as starting either a three
     digit octal value or escaping another backslash.  For example,
-    a string literal passed to the server as <literal>'\\001'</literal>
+    a string literal passed to the server as <literal>E'\\001'</literal>
     becomes <literal>\001</literal> after passing through the
-    string-literal parser. The <literal>\001</literal> is then sent
+    escape string parser. The <literal>\001</literal> is then sent
     to the <type>bytea</type> input function, where it is converted
     to a single octet with a decimal value of 1.  Note that the
-    apostrophe character is not treated specially by <type>bytea</type>,
+    single-quote character is not treated specially by <type>bytea</type>,
     so it follows the normal rules for string literals.  (See also
     <xref linkend="sql-syntax-strings">.)
    </para>
@@ -1269,7 +1267,7 @@ SELECT b, char_length(b) FROM test2;
        <entry>92</entry>
        <entry>backslash</entry>
        <entry><literal>\\</literal></entry>
-       <entry><literal>SELECT '\\134'::bytea;</literal></entry>
+       <entry><literal>SELECT E'\\134'::bytea;</literal></entry>
        <entry><literal>\\</literal></entry>
       </row>
 
@@ -1277,7 +1275,7 @@ SELECT b, char_length(b) FROM test2;
        <entry>0 to 31 and 127 to 255</entry>
        <entry><quote>non-printable</quote> octets</entry>
        <entry><literal>\<replaceable>xxx</></literal> (octal value)</entry>
-       <entry><literal>SELECT '\\001'::bytea;</literal></entry>
+       <entry><literal>SELECT E'\\001'::bytea;</literal></entry>
        <entry><literal>\001</literal></entry>
       </row>
 
@@ -1285,7 +1283,7 @@ SELECT b, char_length(b) FROM test2;
        <entry>32 to 126</entry>
        <entry><quote>printable</quote> octets</entry>
        <entry>client character set representation</entry>
-       <entry><literal>SELECT '\\176'::bytea;</literal></entry>
+       <entry><literal>SELECT E'\\176'::bytea;</literal></entry>
        <entry><literal>~</literal></entry>
       </row>
 
