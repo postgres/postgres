@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.246 2007/01/25 04:17:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.247 2007/01/30 02:39:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1265,6 +1265,8 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
  * pg_get_serial_sequence
  *		Get the name of the sequence used by a serial column,
  *		formatted suitably for passing to setval, nextval or currval.
+ *		First parameter is not treated as double-quoted, second parameter
+ *		is --- see documentation for reason.
  */
 Datum
 pg_get_serial_sequence(PG_FUNCTION_ARGS)
