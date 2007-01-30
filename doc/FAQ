@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Jan 5 15:40:20 EST 2007
+   Last updated: Tue Jan 30 17:37:01 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -27,6 +27,8 @@
    1.11) How can I learn SQL?
    1.12) How do I submit a patch or join the development team?
    1.13) How does PostgreSQL compare to other DBMSs?
+   1.14) Will PostgreSQL handle recent daylight saving time changes in
+   various countries?
    
                            User Client Questions
                                       
@@ -323,6 +325,13 @@
           We are free for all use, both commercial and non-commercial.
           You can add our code to your product with no limitations,
           except those outlined in our BSD-style license stated above.
+          
+  1.14) Will PostgreSQL handle recent daylight saving time changes in various
+  countries?
+  
+   PostgreSQL versions prior to 8.0 use the operating system's timezone
+   database for daylight saving information. All current versions of
+   PostgreSQL 8.0 and later contain up-to-date timezone information.
      _________________________________________________________________
    
                            User Client Questions

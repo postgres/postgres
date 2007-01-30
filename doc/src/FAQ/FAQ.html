@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Jan  5 15:40:20 EST 2007</P>
+    <P>Last updated: Tue Jan 30 17:37:01 EST 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -41,7 +41,9 @@
      <A href="#item1.12">1.12</A>) How do I submit a patch or join the
      development team?<BR>
      <A href="#item1.13">1.13</A>) How does PostgreSQL compare to other
-    <SMALL>DBMS</SMALL>s?<BR>
+     <SMALL>DBMS</SMALL>s?<BR>
+     <A href="#item1.14">1.14</A>) Will PostgreSQL handle recent daylight
+     saving time changes in various countries?<BR>
 
 
     <H2 align="center">User Client Questions</H2>
@@ -436,6 +438,14 @@
       <BR>
       </DD>
     </DL>
+
+    <H3 id="item1.14">1.14) Will PostgreSQL handle recent daylight
+    saving time changes in various countries?</H3>
+
+    <P>PostgreSQL versions prior to 8.0 use the operating system's
+    timezone database for daylight saving information.  All current
+    versions of PostgreSQL 8.0 and later contain up-to-date timezone
+    information.</P>
 
     <HR>
 
