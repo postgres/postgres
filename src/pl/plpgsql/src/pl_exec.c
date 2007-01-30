@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.180.2.1 2007/01/28 16:15:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.180.2.2 2007/01/30 18:02:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4239,12 +4239,27 @@ make_tuple_from_row(PLpgSQL_execstate *estate,
 static char *
 convert_value_to_string(Datum value, Oid valtype)
 {
+	char	   *str;
 	Oid			typoutput;
 	bool		typIsVarlena;
 
 	getTypeOutputInfo(valtype, &typoutput, &typIsVarlena);
 
-	return OidOutputFunctionCall(typoutput, value);
+	/*
+	 * We do SPI_push to allow the datatype output function to use SPI.
+	 * However we do not mess around with CommandCounterIncrement or advancing
+	 * the snapshot, which means that a stable output function would not see
+	 * updates made so far by our own function.  The use-case for such
+	 * scenarios seems too narrow to justify the cycles that would be
+	 * expended.
+	 */
+	SPI_push();
+
+	str = OidOutputFunctionCall(typoutput, value);
+
+	SPI_pop();
+
+	return str;
 }
 
 /* ----------
@@ -4270,14 +4285,25 @@ exec_cast_value(Datum value, Oid valtype,
 			char	   *extval;
 
 			extval = convert_value_to_string(value, valtype);
+
+			/* Allow input function to use SPI ... see notes above */
+			SPI_push();
+
 			value = InputFunctionCall(reqinput, extval,
 									  reqtypioparam, reqtypmod);
+
+			SPI_pop();
+
 			pfree(extval);
 		}
 		else
 		{
+			SPI_push();
+
 			value = InputFunctionCall(reqinput, NULL,
 									  reqtypioparam, reqtypmod);
+
+			SPI_pop();
 		}
 	}
 
