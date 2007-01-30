@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.23 2007/01/10 18:06:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execGrouping.c,v 1.24 2007/01/30 01:33:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,15 +224,18 @@ execTuplesHashPrepare(int numCols,
 	{
 		Oid			eq_opr = eqOperators[i];
 		Oid			eq_function;
-		Oid			hash_function;
+		Oid			left_hash_function;
+		Oid			right_hash_function;
 
 		eq_function = get_opcode(eq_opr);
-		hash_function = get_op_hash_function(eq_opr);
-		if (!OidIsValid(hash_function)) /* should not happen */
+		if (!get_op_hash_functions(eq_opr,
+								   &left_hash_function, &right_hash_function))
 			elog(ERROR, "could not find hash function for hash operator %u",
 				 eq_opr);
+		/* For the moment, we're not supporting cross-type cases here */
+		Assert(left_hash_function == right_hash_function);
 		fmgr_info(eq_function, &(*eqFunctions)[i]);
-		fmgr_info(hash_function, &(*hashFunctions)[i]);
+		fmgr_info(right_hash_function, &(*hashFunctions)[i]);
 	}
 }
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.146 2007/01/22 01:35:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.147 2007/01/30 01:33:36 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -389,22 +389,33 @@ get_mergejoin_opfamilies(Oid opno)
 }
 
 /*
- * get_compatible_hash_operator
- *		Get the OID of a hash equality operator compatible with the given
- *		operator, but operating on its LHS or RHS datatype as specified.
+ * get_compatible_hash_operators
+ *		Get the OID(s) of hash equality operator(s) compatible with the given
+ *		operator, but operating on its LHS and/or RHS datatype.
  *
- * If the given operator is not cross-type, the result should be the same
- * operator, but in cross-type situations it is different.
+ * An operator for the LHS type is sought and returned into *lhs_opno if
+ * lhs_opno isn't NULL.  Similarly, an operator for the RHS type is sought
+ * and returned into *rhs_opno if rhs_opno isn't NULL.
  *
- * Returns InvalidOid if no compatible operator can be found.  (This indicates
- * that the operator should not have been marked oprcanhash.)
+ * If the given operator is not cross-type, the results should be the same
+ * operator, but in cross-type situations they will be different.
+ *
+ * Returns true if able to find the requested operator(s), false if not.
+ * (This indicates that the operator should not have been marked oprcanhash.)
  */
-Oid
-get_compatible_hash_operator(Oid opno, bool use_lhs_type)
+bool
+get_compatible_hash_operators(Oid opno,
+							  Oid *lhs_opno, Oid *rhs_opno)
 {
-	Oid			result = InvalidOid;
+	bool		result = false;
 	CatCList   *catlist;
 	int			i;
+
+	/* Ensure output args are initialized on failure */
+	if (lhs_opno)
+		*lhs_opno = InvalidOid;
+	if (rhs_opno)
+		*rhs_opno = InvalidOid;
 
 	/*
 	 * Search pg_amop to see if the target operator is registered as the "="
@@ -423,22 +434,53 @@ get_compatible_hash_operator(Oid opno, bool use_lhs_type)
 		if (aform->amopmethod == HASH_AM_OID &&
 			aform->amopstrategy == HTEqualStrategyNumber)
 		{
-			/* Found a suitable opfamily, get matching single-type operator */
-			Oid		typid;
-
 			/* No extra lookup needed if given operator is single-type */
 			if (aform->amoplefttype == aform->amoprighttype)
 			{
-				result = opno;
+				if (lhs_opno)
+					*lhs_opno = opno;
+				if (rhs_opno)
+					*rhs_opno = opno;
+				result = true;
 				break;
 			}
-			typid = use_lhs_type ? aform->amoplefttype : aform->amoprighttype;
-			result = get_opfamily_member(aform->amopfamily,
-										 typid, typid,
-										 HTEqualStrategyNumber);
-			if (OidIsValid(result))
+			/*
+			 * Get the matching single-type operator(s).  Failure probably
+			 * shouldn't happen --- it implies a bogus opfamily --- but
+			 * continue looking if so.
+			 */
+			if (lhs_opno)
+			{
+				*lhs_opno = get_opfamily_member(aform->amopfamily,
+												aform->amoplefttype,
+												aform->amoplefttype,
+												HTEqualStrategyNumber);
+				if (!OidIsValid(*lhs_opno))
+					continue;
+				/* Matching LHS found, done if caller doesn't want RHS */
+				if (!rhs_opno)
+				{
+					result = true;
+					break;
+				}
+			}
+			if (rhs_opno)
+			{
+				*rhs_opno = get_opfamily_member(aform->amopfamily,
+												aform->amoprighttype,
+												aform->amoprighttype,
+												HTEqualStrategyNumber);
+				if (!OidIsValid(*rhs_opno))
+				{
+					/* Forget any LHS operator from this opfamily */
+					if (lhs_opno)
+						*lhs_opno = InvalidOid;
+					continue;
+				}
+				/* Matching RHS found, so done */
+				result = true;
 				break;
-			/* failure probably shouldn't happen, but keep looking if so */
+			}
 		}
 	}
 
@@ -448,28 +490,38 @@ get_compatible_hash_operator(Oid opno, bool use_lhs_type)
 }
 
 /*
- * get_op_hash_function
- *		Get the OID of the datatype-specific hash function associated with
- *		a hashable equality operator.
+ * get_op_hash_functions
+ *		Get the OID(s) of hash support function(s) compatible with the given
+ *		operator, operating on its LHS and/or RHS datatype as required.
  *
- * XXX API needs to be generalized for the case of different left and right
- * datatypes.
+ * A function for the LHS type is sought and returned into *lhs_procno if
+ * lhs_procno isn't NULL.  Similarly, a function for the RHS type is sought
+ * and returned into *rhs_procno if rhs_procno isn't NULL.
  *
- * Returns InvalidOid if no hash function can be found.  (This indicates
- * that the operator should not have been marked oprcanhash.)
+ * If the given operator is not cross-type, the results should be the same
+ * function, but in cross-type situations they will be different.
+ *
+ * Returns true if able to find the requested function(s), false if not.
+ * (This indicates that the operator should not have been marked oprcanhash.)
  */
-Oid
-get_op_hash_function(Oid opno)
+bool
+get_op_hash_functions(Oid opno,
+					  RegProcedure *lhs_procno, RegProcedure *rhs_procno)
 {
-	Oid			result = InvalidOid;
+	bool		result = false;
 	CatCList   *catlist;
 	int			i;
+
+	/* Ensure output args are initialized on failure */
+	if (lhs_procno)
+		*lhs_procno = InvalidOid;
+	if (rhs_procno)
+		*rhs_procno = InvalidOid;
 
 	/*
 	 * Search pg_amop to see if the target operator is registered as the "="
 	 * operator of any hash opfamily.  If the operator is registered in
-	 * multiple opfamilies, assume we can use the associated hash function from
-	 * any one.
+	 * multiple opfamilies, assume we can use any one.
 	 */
 	catlist = SearchSysCacheList(AMOPOPID, 1,
 								 ObjectIdGetDatum(opno),
@@ -483,12 +535,50 @@ get_op_hash_function(Oid opno)
 		if (aform->amopmethod == HASH_AM_OID &&
 			aform->amopstrategy == HTEqualStrategyNumber)
 		{
-			/* Found a suitable opfamily, get matching hash support function */
-			result = get_opfamily_proc(aform->amopfamily,
-									   aform->amoplefttype,
-									   aform->amoprighttype,
-									   HASHPROC);
-			break;
+			/*
+			 * Get the matching support function(s).  Failure probably
+			 * shouldn't happen --- it implies a bogus opfamily --- but
+			 * continue looking if so.
+			 */
+			if (lhs_procno)
+			{
+				*lhs_procno = get_opfamily_proc(aform->amopfamily,
+												aform->amoplefttype,
+												aform->amoplefttype,
+												HASHPROC);
+				if (!OidIsValid(*lhs_procno))
+					continue;
+				/* Matching LHS found, done if caller doesn't want RHS */
+				if (!rhs_procno)
+				{
+					result = true;
+					break;
+				}
+				/* Only one lookup needed if given operator is single-type */
+				if (aform->amoplefttype == aform->amoprighttype)
+				{
+					*rhs_procno = *lhs_procno;
+					result = true;
+					break;
+				}
+			}
+			if (rhs_procno)
+			{
+				*rhs_procno = get_opfamily_proc(aform->amopfamily,
+												aform->amoprighttype,
+												aform->amoprighttype,
+												HASHPROC);
+				if (!OidIsValid(*rhs_procno))
+				{
+					/* Forget any LHS function from this opfamily */
+					if (lhs_procno)
+						*lhs_procno = InvalidOid;
+					continue;
+				}
+				/* Matching RHS found, so done */
+				result = true;
+				break;
+			}
 		}
 	}
 

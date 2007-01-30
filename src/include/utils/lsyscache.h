@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.115 2007/01/22 01:35:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.116 2007/01/30 01:33:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,10 @@ extern bool get_compare_function_for_ordering_op(Oid opno,
 extern Oid	get_equality_op_for_ordering_op(Oid opno);
 extern Oid	get_ordering_op_for_equality_op(Oid opno, bool use_lhs_type);
 extern List *get_mergejoin_opfamilies(Oid opno);
-extern Oid	get_compatible_hash_operator(Oid opno, bool use_lhs_type);
-extern Oid	get_op_hash_function(Oid opno);
+extern bool get_compatible_hash_operators(Oid opno,
+										  Oid *lhs_opno, Oid *rhs_opno);
+extern bool get_op_hash_functions(Oid opno,
+					  RegProcedure *lhs_procno, RegProcedure *rhs_procno);
 extern void get_op_btree_interpretation(Oid opno,
 							List **opfamilies, List **opstrats);
 extern bool ops_in_same_btree_opfamily(Oid opno1, Oid opno2);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.47 2007/01/20 18:43:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.48 2007/01/30 01:33:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 {
 	Relation	rel = scan->indexRelation;
 	HashScanOpaque so = (HashScanOpaque) scan->opaque;
+	ScanKey		cur;
 	uint32		hashkey;
 	Bucket		bucket;
 	BlockNumber blkno;
@@ -143,18 +144,37 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("hash indexes do not support whole-index scans")));
 
+	/* There may be more than one index qual, but we hash only the first */
+	cur = &scan->keyData[0];
+
+	/* We support only single-column hash indexes */
+	Assert(cur->sk_attno == 1);
+	/* And there's only one operator strategy, too */
+	Assert(cur->sk_strategy == HTEqualStrategyNumber);
+
 	/*
 	 * If the constant in the index qual is NULL, assume it cannot match any
 	 * items in the index.
 	 */
-	if (scan->keyData[0].sk_flags & SK_ISNULL)
+	if (cur->sk_flags & SK_ISNULL)
 		return false;
 
 	/*
 	 * Okay to compute the hash key.  We want to do this before acquiring any
 	 * locks, in case a user-defined hash function happens to be slow.
+	 *
+	 * If scankey operator is not a cross-type comparison, we can use the
+	 * cached hash function; otherwise gotta look it up in the catalogs.
+	 *
+	 * We support the convention that sk_subtype == InvalidOid means the
+	 * opclass input type; this is a hack to simplify life for ScanKeyInit().
 	 */
-	hashkey = _hash_datum2hashkey(rel, scan->keyData[0].sk_argument);
+	if (cur->sk_subtype == rel->rd_opcintype[0] ||
+		cur->sk_subtype == InvalidOid)
+		hashkey = _hash_datum2hashkey(rel, cur->sk_argument);
+	else
+		hashkey = _hash_datum2hashkey_type(rel, cur->sk_argument,
+										   cur->sk_subtype);
 
 	/*
 	 * Acquire shared split lock so we can compute the target bucket safely

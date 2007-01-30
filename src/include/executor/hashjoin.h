@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.43 2007/01/28 23:21:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.44 2007/01/30 01:33:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,12 +102,11 @@ typedef struct HashJoinTableData
 
 	/*
 	 * Info about the datatype-specific hash functions for the datatypes being
-	 * hashed.	We assume that the inner and outer sides of each hashclause
-	 * are the same type, or at least share the same hash function. This is an
-	 * array of the same length as the number of hash keys.
+	 * hashed. These are arrays of the same length as the number of hash join
+	 * clauses (hash keys).
 	 */
-	FmgrInfo   *hashfunctions;	/* lookup data for hash functions */
-
+	FmgrInfo   *outer_hashfunctions;	/* lookup data for hash functions */
+	FmgrInfo   *inner_hashfunctions;	/* lookup data for hash functions */
 	bool	   *hashStrict;		/* is each hash join operator strict? */
 
 	Size		spaceUsed;		/* memory space currently used by tuples */

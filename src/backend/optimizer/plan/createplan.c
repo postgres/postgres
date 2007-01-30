@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.223 2007/01/22 01:35:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.224 2007/01/30 01:33:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -716,10 +716,10 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		numGroups = (long) Min(best_path->rows, (double) LONG_MAX);
 
 		/*
-		 * Get the (presumed hashable) equality operators for the Agg node
-		 * to use.  Normally these are the same as the IN clause operators,
-		 * but if those are cross-type operators then the equality operators
-		 * are the ones for the IN clause operators' RHS datatype.
+		 * Get the hashable equality operators for the Agg node to use.
+		 * Normally these are the same as the IN clause operators, but if
+		 * those are cross-type operators then the equality operators are
+		 * the ones for the IN clause operators' RHS datatype.
 		 */
 		groupOperators = (Oid *) palloc(numGroupCols * sizeof(Oid));
 		groupColPos = 0;
@@ -728,8 +728,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 			Oid			in_oper = lfirst_oid(l);
 			Oid			eq_oper;
 
-			eq_oper = get_compatible_hash_operator(in_oper, false);
-			if (!OidIsValid(eq_oper))		/* shouldn't happen */
+			if (!get_compatible_hash_operators(in_oper, NULL, &eq_oper))
 				elog(ERROR, "could not find compatible hash operator for operator %u",
 					 in_oper);
 			groupOperators[groupColPos++] = eq_oper;
