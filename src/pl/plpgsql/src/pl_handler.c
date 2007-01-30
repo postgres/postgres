@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.26 2005/10/15 02:49:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.26.2.1 2007/01/30 22:05:25 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -112,15 +112,30 @@ plpgsql_call_handler(PG_FUNCTION_ARGS)
 	/* Find or compile the function */
 	func = plpgsql_compile(fcinfo, false);
 
-	/*
-	 * Determine if called as function or trigger and call appropriate
-	 * subhandler
-	 */
-	if (CALLED_AS_TRIGGER(fcinfo))
-		retval = PointerGetDatum(plpgsql_exec_trigger(func,
+	/* Mark the function as busy, so it can't be deleted from under us */
+	func->use_count++;
+
+	PG_TRY();
+	{
+		/*
+		 * Determine if called as function or trigger and call appropriate
+		 * subhandler
+		 */
+		if (CALLED_AS_TRIGGER(fcinfo))
+			retval = PointerGetDatum(plpgsql_exec_trigger(func,
 										   (TriggerData *) fcinfo->context));
-	else
-		retval = plpgsql_exec_function(func, fcinfo);
+		else
+			retval = plpgsql_exec_function(func, fcinfo);
+	}
+	PG_CATCH();
+	{
+		/* Decrement use-count and propagate error */
+		func->use_count--;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	func->use_count--;
 
 	/*
 	 * Disconnect from SPI manager
