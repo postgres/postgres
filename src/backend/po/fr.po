@@ -4463,7 +4463,7 @@ msgstr ""
 #: utils/misc/guc.c:2344 utils/misc/guc.c:2357 utils/mmgr/aset.c:345
 #: utils/mmgr/aset.c:525 utils/mmgr/aset.c:710 utils/mmgr/aset.c:905
 msgid "out of memory"
-msgstr "mémoire insuffisante"
+msgstr "mémoire épuisée"
 
 #: commands/sequence.c:1047
 msgid "INCREMENT must not be zero"
@@ -8876,7 +8876,7 @@ msgstr ""
 #: storage/lmgr/lock.c:583 storage/lmgr/lock.c:649 storage/lmgr/lock.c:1992
 #: storage/lmgr/lock.c:2274 storage/lmgr/lock.c:2339 utils/hash/dynahash.c:911
 msgid "out of shared memory"
-msgstr "Mémoire partagée insuffisante"
+msgstr "Mémoire partagée épuisée"
 
 #: storage/ipc/shmem.c:392
 #, c-format
@@ -13380,7 +13380,7 @@ msgstr "La table contient des valeurs dupliquées."
 #: ../port/dirmod.c:75 ../port/dirmod.c:88 ../port/dirmod.c:101
 #, c-format
 msgid "out of memory\n"
-msgstr "mémoire insuffisante\n"
+msgstr "mémoire épuisée\n"
 
 #: ../port/dirmod.c:262
 #, c-format

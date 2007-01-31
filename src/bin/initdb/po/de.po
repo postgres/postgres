@@ -3,7 +3,7 @@
 #
 # Use these quotes: »%s«
 #
-# pgtranslation Id: initdb.po,v 1.3 2006/10/21 11:48:36 petere Exp $
+# pgtranslation Id: initdb.po,v 1.4 2007/01/10 10:36:41 petere Exp $
 #
 msgid ""
 msgstr ""
@@ -688,9 +688,3 @@ msgstr "Kindprozess wurde von Signal %d beendet"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "Kindprozess hat mit unbekanntem Status %d beendet"
-
-#~ msgid "enabling unlimited row size for system tables ... "
-#~ msgstr "schalte unbegrenzte Zeilengröße für Systemtabellen ein ... "
-
-#~ msgid "creating directory %s/%s ... "
-#~ msgstr "erzeuge Verzeichnis %s/%s ... "

@@ -1,8 +1,8 @@
+# translation of libpq.po to
 # translation of libpq-fr.po to
-# translation of libpq-fr.po to FR_fr
 # French message translation file for libpq
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.15 2006/10/21 21:03:04 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.15.2.1 2007/01/31 08:33:34 petere Exp $
 #
 # Use these quotes: «%s»
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -11,21 +11,21 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: libpq-fr\n"
+"Project-Id-Version: libpq\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-10-16 01:19-0300\n"
-"PO-Revision-Date: 2006-10-16 20:49+0100\n"
-"Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
-"Language-Team:  <pgsql-fr-general@postgresql.org>\n"
+"PO-Revision-Date: 2006-12-20 08:50+0100\n"
+"Last-Translator: Stéphane Schildknecht\n"
+"Language-Team:  <fr@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-15\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.10.2\n"
+"X-Generator: KBabel 1.11.4\n"
 
 #: fe-auth.c:258
 #, c-format
 msgid "could not set socket to blocking mode: %s\n"
-msgstr "impossible d'activer le mode bloquant pour le socket : %s\n"
+msgstr "n'a pas pu activer le mode bloquant pour la socket : %s\n"
 
 #: fe-auth.c:276
 #: fe-auth.c:280
@@ -36,7 +36,7 @@ msgstr "authentification Kerberos 5 rejetée : %*s\n"
 #: fe-auth.c:306
 #, c-format
 msgid "could not restore non-blocking mode on socket: %s\n"
-msgstr "impossible de rétablir le mode non-bloquant pour le socket : %s\n"
+msgstr "n'a pas pu rétablir le mode non-bloquant pour la socket : %s\n"
 
 #: fe-auth.c:375
 msgid "SCM_CRED authentication method not supported\n"
@@ -79,12 +79,12 @@ msgstr "valeur sslmode non-valide: «%s»\n"
 #: fe-connect.c:506
 #, c-format
 msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
-msgstr "valeur sslmode «%s» incorrecte car le support SSL n'est pas été compilé initialement\n"
+msgstr "valeur sslmode «%s» invalide si le support SSL n'est pas compilé initialement\n"
 
 #: fe-connect.c:672
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
-msgstr "impossible d'activer le mode sans délai de TCP pour le socket: %s\n"
+msgstr "n'a pas pu activer le mode TCP sans délai pour la socket : %s\n"
 
 #: fe-connect.c:702
 #, c-format
@@ -93,9 +93,9 @@ msgid ""
 "\tIs the server running locally and accepting\n"
 "\tconnections on Unix domain socket \"%s\"?\n"
 msgstr ""
-"impossible de se connecter au serveur: %s\n"
-"\tEst-ce que le serveur tourne sur l'hôte local\n"
-"\tet accepte des connexions au socket Unix «%s»?\n"
+"n'a pas pu se connecter au serveur : %s\n"
+"\tLe serveur est-il actif localement\n"
+"\tet accepte-t-il les connexions sur la socket Unix « %s » ?\n"
 
 #: fe-connect.c:712
 #, c-format
@@ -104,74 +104,74 @@ msgid ""
 "\tIs the server running on host \"%s\" and accepting\n"
 "\tTCP/IP connections on port %s?\n"
 msgstr ""
-"impossible de se connecter au serveur: %s\n"
-"\tEst-ce que le serveur tourne sur l'hôte «%s»\n"
-"\tet accepte des connexions TCP/IP sur le port %s?\n"
+"n'a pas pu se connecter au serveur : %s\n"
+"\tLe serveur est-il actif sur l'hôte « %s »\n"
+"\tet accepte-t-il les connexions TCP/IP sur le port %s ?\n"
 
 #: fe-connect.c:802
 #, c-format
 msgid "could not translate host name \"%s\" to address: %s\n"
-msgstr "impossible de traduire le nom d'hôte %s en adresse: %s\n"
+msgstr "n'a pas pu traduire le nom d'hôte %s en adresse : %s\n"
 
 #: fe-connect.c:806
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
-msgstr "impossible de traduire le chemin de socket du domaine Unix «%s» vers l'adresse : %s\n"
+msgstr "n'a pas pu traduire le chemin de socket du domaine Unix « %s » en adresse : %s\n"
 
 #: fe-connect.c:1007
 msgid "invalid connection state, probably indicative of memory corruption\n"
-msgstr "état non-valable de connexion, probablement une indication de mémoire corrompue\n"
+msgstr "état de connexion invalide, indique probablement une corruption de mémoire\n"
 
 #: fe-connect.c:1050
 #, c-format
 msgid "could not create socket: %s\n"
-msgstr "impossible de créer le socket : %s\n"
+msgstr "n'a pas pu créer la socket : %s\n"
 
 #: fe-connect.c:1073
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
-msgstr "impossible d'activer le mode non-bloquant pour le socket: %s\n"
+msgstr "n'a pas pu activer le mode non-bloquant pour la socket: %s\n"
 
 #: fe-connect.c:1085
 #, c-format
 msgid "could not set socket to close-on-exec mode: %s\n"
-msgstr "impossible de paramétrer le socket pour se fermer sur le mode exec : %s\n"
+msgstr "n'a pas pu paramétrer le socket en mode close-on-exec : %s\n"
 
 #: fe-connect.c:1172
 #, c-format
 msgid "could not get socket error status: %s\n"
-msgstr "impossible de déterminer le statut d'erreur de socket : %s\n"
+msgstr "n'a pas pu déterminer le statut d'erreur de la socket : %s\n"
 
 #: fe-connect.c:1210
 #, c-format
 msgid "could not get client address from socket: %s\n"
-msgstr "impossible d'obtenir l'adresse du client du socket : %s\n"
+msgstr "n'a pas pu obtenir l'adresse du client depuis la socket : %s\n"
 
 #: fe-connect.c:1254
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
-msgstr "impossible de transmettre le paquet de négociation SSL : %s\n"
+msgstr "n'a pas pu transmettre le paquet de négociation SSL : %s\n"
 
 #: fe-connect.c:1289
 #, c-format
 msgid "could not send startup packet: %s\n"
-msgstr "impossible de transmettre le paquet de démarrage : %s\n"
+msgstr "n'a pas pu transmettre le paquet de démarrage : %s\n"
 
 #: fe-connect.c:1354
 #: fe-connect.c:1371
 msgid "server does not support SSL, but SSL was required\n"
-msgstr "le serveur ne supporte pas SSL, mais SSL était exigé\n"
+msgstr "le serveur ne supporte pas SSL, mais SSL était demandé\n"
 
 #: fe-connect.c:1387
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
-msgstr "réponse non valable au négociation SSL a été reçue: %c\n"
+msgstr "a reçu une réponse invalide à la négociation SSL : %c\n"
 
 #: fe-connect.c:1444
 #: fe-connect.c:1476
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
-msgstr "requête d'authentification attendue du serveur, mais %c a été reçu\n"
+msgstr "attendait une requête d'authentification en provenance du serveur, mais a reçu %c\n"
 
 #: fe-connect.c:1708
 msgid "unexpected message from server during startup\n"
@@ -180,17 +180,17 @@ msgstr "message inattendu du serveur lors de démarrage\n"
 #: fe-connect.c:1776
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
-msgstr "état non-valable de connexion (%c), probablement une indication de mémoire corrompue\n"
+msgstr "état de connexion invalide (%c), indique probablement une corruption de mémoire\n"
 
 #: fe-connect.c:2431
 #, c-format
 msgid "invalid LDAP URL \"%s\": scheme must be ldap://\n"
-msgstr "URL LDAP invalide « %s » : le schéma doit être ldap ://\n"
+msgstr "URL LDAP invalide « %s » : le schéma doit être ldap://\n"
 
 #: fe-connect.c:2446
 #, c-format
 msgid "invalid LDAP URL \"%s\": missing distinguished name\n"
-msgstr "URL LDAP invalide « %s » : manque le « distinguished name »\n"
+msgstr "URL LDAP invalide « %s » : le « distinguished name » manque\n"
 
 #: fe-connect.c:2457
 #: fe-connect.c:2510
@@ -225,7 +225,7 @@ msgstr "échec de la recherche sur le serveur LDAP : %s\n"
 
 #: fe-connect.c:2586
 msgid "more than one entry found on LDAP lookup\n"
-msgstr "plus d'une entrée trouvée dans la recherche LDAP\n"
+msgstr "plus d'une entrée trouvées dans la recherche LDAP\n"
 
 #: fe-connect.c:2587
 #: fe-connect.c:2599
@@ -235,55 +235,55 @@ msgstr "aucune entrée trouvée dans la recherche LDAP\n"
 #: fe-connect.c:2610
 #: fe-connect.c:2623
 msgid "attribute has no values on LDAP lookup\n"
-msgstr "l'attribut n'a pas de valeurs sur la recherche LDAP\n"
+msgstr "l'attribut n'a pas de valeurs après recherche LDAP\n"
 
 #: fe-connect.c:2674
 #: fe-connect.c:2692
 #: fe-connect.c:3013
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
-msgstr "«=» manquant après «%s» dans la chaîne de paramètres de connexion\n"
+msgstr "« = » manquant après « %s » dans la chaîne des paramètres de connexion\n"
 
 #: fe-connect.c:2755
 #: fe-connect.c:3095
 #, c-format
 msgid "invalid connection option \"%s\"\n"
-msgstr "option de connexion non-valable «%s»\n"
+msgstr "option de connexion invalide « %s »\n"
 
 #: fe-connect.c:2768
 #: fe-connect.c:3062
 msgid "unterminated quoted string in connection info string\n"
-msgstr "guillemets non refermés dans la chaîne de paramètres de connexion\n"
+msgstr "guillemets non refermés dans la chaîne des paramètres de connexion\n"
 
 #: fe-connect.c:2811
 #, c-format
 msgid "ERROR: service file \"%s\" not found\n"
-msgstr "ERREUR : fichier de service «%s» introuvable\n"
+msgstr "ERREUR : fichier de service « %s » introuvable\n"
 
 #: fe-connect.c:2824
 #, c-format
 msgid "ERROR: line %d too long in service file \"%s\"\n"
-msgstr "ERREUR : ligne %d trop longue dans le fichier service «%s»\n"
+msgstr "ERREUR : ligne %d trop longue dans le fichier service « %s »\n"
 
 #: fe-connect.c:2896
 #: fe-connect.c:2923
 #, c-format
 msgid "ERROR: syntax error in service file \"%s\", line %d\n"
-msgstr "ERREUR : erreur de syntaxe dans le fichier service «%s», ligne %d\n"
+msgstr "ERREUR : erreur de syntaxe dans le fichier service « %s », ligne %d\n"
 
 #: fe-connect.c:3338
 msgid "connection pointer is NULL\n"
-msgstr "le pointeur de connexion a la valeur NULL\n"
+msgstr "le pointeur de connexion est NULL\n"
 
 #: fe-connect.c:3599
 #, c-format
 msgid "WARNING: password file \"%s\" is not a plain file\n"
-msgstr "ATTENTION : le fichier des mots de passe «%s» n'est pas un fichier simple.\n"
+msgstr "ATTENTION : le fichier de mots de passe « %s » n'est pas un fichier texte.\n"
 
 #: fe-connect.c:3609
 #, c-format
 msgid "WARNING: password file \"%s\" has world or group read access; permission should be u=rw (0600)\n"
-msgstr "ATTENTION : le fichier des mots de passe «%s» a des droits d'accès groupe ou universel; les droits devraient être u=rw (0600)\n"
+msgstr "ATTENTION : le fichier de mots de passe « %s » a des droits d'accès en lecture pour le groupe ou universel ; les droits devraient être u=rw (0600)\n"
 
 #: fe-exec.c:498
 msgid "NOTICE"
@@ -293,12 +293,12 @@ msgstr "NOTIFICATION"
 #: fe-exec.c:739
 #: fe-exec.c:779
 msgid "command string is a null pointer\n"
-msgstr "la chaine de commande est un pointeur nul\n"
+msgstr "la chaîne de commande est un pointeur nul\n"
 
 #: fe-exec.c:772
 #: fe-exec.c:867
 msgid "statement name is a null pointer\n"
-msgstr "la chaîne de commande est un pointeur null\n"
+msgstr "le nom de l'instruction est un pointeur null\n"
 
 #: fe-exec.c:787
 #: fe-exec.c:941
@@ -317,12 +317,12 @@ msgstr "une autre commande est déjà en cours\n"
 
 #: fe-exec.c:1015
 msgid "length must be given for binary parameter\n"
-msgstr "la longueur doit être indiquée pour le paramètre binaire\n"
+msgstr "la longueur doit être indiquée pour les paramètres binaires\n"
 
 #: fe-exec.c:1262
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
-msgstr "asyncStatus inattendu: %d\n"
+msgstr "asyncStatus inattendu : %d\n"
 
 #: fe-exec.c:1388
 msgid "COPY terminated by new PQexec"
@@ -346,7 +346,7 @@ msgstr "aucun COPY en cours\n"
 
 #: fe-exec.c:2000
 msgid "connection in wrong state\n"
-msgstr "mauvais état de connexion\n"
+msgstr "connexion dans un état erroné\n"
 
 #: fe-exec.c:2031
 msgid "invalid ExecStatusType code"
@@ -742,17 +742,4 @@ msgstr "aucune erreur SSL reportée"
 #, c-format
 msgid "SSL error code %lu"
 msgstr "erreur SSL : %lu"
-
-#~ msgid "could not create large object for file \"%s\"\n"
-#~ msgstr "impossible de créer le grand objet du fichier «%s»\n"
-#~ msgid "could not open large object %u\n"
-#~ msgstr "impossible d'ouvrir le grand objet %u\n"
-#~ msgid "error while reading file \"%s\"\n"
-#~ msgstr "erreur durant la lecture du fichier «%s»\n"
-#~ msgid "error while writing to file \"%s\"\n"
-#~ msgstr "erreur durant l'écriture du fichier «%s»\n"
-#~ msgid "invalid authentication service name \"%s\", ignored\n"
-#~ msgstr "nom invalide de service d'authentification «%s», ignoré\n"
-#~ msgid "fe_getauthname: invalid authentication system: %d\n"
-#~ msgstr "fe_getauthname: système invalide d'authentification: %d\n"
 
