@@ -6,7 +6,7 @@
  * Copyright (c) 2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.2 2007/01/28 20:25:38 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/uuid.c,v 1.3 2007/01/31 19:33:54 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,35 +18,16 @@
 #include "utils/builtins.h"
 #include "utils/uuid.h"
 
-/* Accepted GUID formats */
-
-/* UUID_FMT1 is the default output format */
-#define UUID_FMT1 "%02hhx%02hhx%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx"
-#define UUID_FMT2 "{%02hhx%02hhx%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx-%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx}"
-#define UUID_FMT3 "%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx"
-
-/* UUIDs are accepted in any of the following textual input formats. */
-#define UUID_CHK_FMT1 "00000000-0000-0000-0000-000000000000"
-#define UUID_CHK_FMT2 "{00000000-0000-0000-0000-000000000000}"
-#define UUID_CHK_FMT3 "00000000000000000000000000000000"
-
-#define PRINT_SIZE 40
-
 /* uuid size in bytes */
 #define UUID_LEN 16
 
 /* pg_uuid_t is declared to be struct pg_uuid_t in uuid.h */
 struct pg_uuid_t
 {
-    char  data[UUID_LEN];
+    unsigned char  data[UUID_LEN];
 };
 
 static void string_to_uuid(const char *source, pg_uuid_t *uuid);
-static void uuid_to_string(const char *fmt, const pg_uuid_t *uuid,
-						   char *uuid_str);
-static bool parse_uuid_string(const char *fmt, const char *chk_fmt,
-							  const char *source, char *data);
-static bool is_valid_format(const char *source, const char *fmt);
 static int uuid_internal_cmp(const pg_uuid_t *arg1, const pg_uuid_t *arg2);
 
 Datum
@@ -63,96 +44,105 @@ uuid_in(PG_FUNCTION_ARGS)
 Datum
 uuid_out(PG_FUNCTION_ARGS)
 {
-	pg_uuid_t 	*uuid = PG_GETARG_UUID_P(0);
-	char 		*uuid_str;
+	pg_uuid_t 			*uuid = PG_GETARG_UUID_P(0);
+	static const char hex_chars[] = "0123456789abcdef";
+	StringInfoData 		 buf;
+	int 				 i;
 
-	uuid_str = (char *) palloc(PRINT_SIZE);
-	uuid_to_string(UUID_FMT1, uuid, uuid_str);
-	PG_RETURN_CSTRING(uuid_str);
+	initStringInfo(&buf);
+	for (i = 0; i < UUID_LEN; i++)
+	{
+		int hi;
+		int lo;
+
+		/*
+		 * We print uuid values as a string of 8, 4, 4, 4, and then 12
+		 * hexadecimal characters, with each group is separated by a
+		 * hyphen ("-"). Therefore, add the hyphens at the appropriate
+		 * places here.
+		 */
+		if (i == 4 || i == 6 || i == 8 || i == 10)
+			appendStringInfoChar(&buf, '-');
+
+		hi = uuid->data[i] >> 4;
+		lo = uuid->data[i] & 0x0F;
+
+		appendStringInfoChar(&buf, hex_chars[hi]);
+		appendStringInfoChar(&buf, hex_chars[lo]);
+	}
+
+	PG_RETURN_CSTRING(buf.data);
 }
 
-/* string to uuid convertor by various format types */
+/*
+ * We allow UUIDs in three input formats: 8x-4x-4x-4x-12x,
+ * {8x-4x-4x-4x-12x}, and 32x, where "nx" means n hexadecimal digits
+ * (only the first format is used for output). We convert the first
+ * two formats into the latter format before further processing.
+ */
 static void
 string_to_uuid(const char *source, pg_uuid_t *uuid)
 {
-	if (!parse_uuid_string(UUID_FMT1, UUID_CHK_FMT1, source, uuid->data) &&
-		!parse_uuid_string(UUID_FMT2, UUID_CHK_FMT2, source, uuid->data) &&
-		!parse_uuid_string(UUID_FMT3, UUID_CHK_FMT3, source, uuid->data))
+	char 		hex_buf[32];	/* not NUL terminated */
+	int 		i;
+	int 		src_len;
+
+	src_len = strlen(source);
+	if (src_len != 32 && src_len != 36 && src_len != 38)
+		goto syntax_error;
+
+	if (src_len == 32)
+		memcpy(hex_buf, source, src_len);
+	else
 	{
+		const char *str = source;
+
+		if (src_len == 38)
+		{
+			if (str[0] != '{' || str[37] != '}')
+				goto syntax_error;
+
+			str++;	/* skip the first character */
+		}
+
+		if (str[8] != '-' || str[13] != '-' ||
+			str[18] != '-' || str[23] != '-')
+			goto syntax_error;
+
+		memcpy(hex_buf, str, 8);
+		memcpy(hex_buf + 8, str + 9, 4);
+		memcpy(hex_buf + 12, str + 14, 4);
+		memcpy(hex_buf + 16, str + 19, 4);
+		memcpy(hex_buf + 20, str + 24, 12);
+	}
+
+	for (i = 0; i < UUID_LEN; i++)
+	{
+		char str_buf[3];
+
+		memcpy(str_buf, &hex_buf[i * 2], 2);
+		if (!isxdigit((unsigned char) str_buf[0]) ||
+			!isxdigit((unsigned char) str_buf[1]))
+			goto syntax_error;
+
+		str_buf[2] = '\0';
+		uuid->data[i] = (unsigned char) strtoul(str_buf, NULL, 16);
+	}
+
+	return;
+
+syntax_error:
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
 				 errmsg("invalid input syntax for uuid: \"%s\"",
 						source)));
-	}
-}
-
-/* check the validity of a uuid string by a given format */
-static bool
-is_valid_format(const char *source, const char *fmt)
-{
-	int i;
-	int fmtlen = strlen(fmt);
-
-	/* check length first */
-	if (fmtlen != strlen(source))
-		return false;
-
-	for (i = 0; i < fmtlen; i++)
-	{
-		int 	fc;
-		int 	sc;
-		bool 	valid_chr;
-
-		fc = fmt[i];
-		sc = source[i];
-
-		/* false if format chr is { or - and source is not */
-		if (fc != '0' && fc != sc)
-			return false;
-
-		/* check for valid char in source */
-		valid_chr = (sc >= '0' && sc <= '9') ||
-					(sc >= 'a' && sc <= 'f' ) ||
-					(sc >= 'A' && sc <= 'F' );
-		
-		if (fc == '0' && !valid_chr)
-			return false;
-	}
-
-	return true;
-}
-
-/* parse the uuid string to a format and return true if okay */
-static bool
-parse_uuid_string(const char *fmt, const char *chk_fmt,
-				  const char *source, char *data)
-{
-	int result = sscanf(source, fmt,
-						&data[0], &data[1], &data[2], &data[3], &data[4],
-						&data[5], &data[6], &data[7], &data[8], &data[9],
-						&data[10], &data[11], &data[12], &data[13],
-						&data[14], &data[15]);
-
-	return (result == 16) && is_valid_format(source, chk_fmt);
-}
-
-/* create a string representation of the uuid */
-static void
-uuid_to_string(const char *fmt, const pg_uuid_t *uuid, char *uuid_str)
-{
-	const char *data = uuid->data;
-    snprintf(uuid_str, PRINT_SIZE, fmt,
-			 data[0], data[1], data[2], data[3], data[4],
-			 data[5], data[6], data[7], data[8], data[9],
-			 data[10], data[11], data[12], data[13],
-			 data[14], data[15]);
 }
 
 Datum
 uuid_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo 	 buffer = (StringInfo) PG_GETARG_POINTER(0);
-	pg_uuid_t 		*uuid;
+	pg_uuid_t 	*uuid;
 
 	uuid = (pg_uuid_t *) palloc(UUID_LEN);
 	memcpy(uuid->data, pq_getmsgbytes(buffer, UUID_LEN), UUID_LEN);
@@ -166,7 +156,7 @@ uuid_send(PG_FUNCTION_ARGS)
 	StringInfoData 		 buffer;
 
 	pq_begintypsend(&buffer);
-	pq_sendbytes(&buffer, uuid->data, UUID_LEN);
+	pq_sendbytes(&buffer, (char *) uuid->data, UUID_LEN);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buffer));
 }
 
@@ -246,7 +236,7 @@ Datum
 uuid_hash(PG_FUNCTION_ARGS)
 {
 	pg_uuid_t	*key = PG_GETARG_UUID_P(0);
-	return hash_any((unsigned char *) key, sizeof(pg_uuid_t));
+	return hash_any(key->data, UUID_LEN);
 }
 
 /* cast text to uuid */
