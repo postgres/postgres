@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.180 2007/01/20 16:57:31 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.181 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -601,7 +601,7 @@ testdb=&gt;
     </para>
 
     <para>
-    At the prompt, the user may type in <acronym>SQL</acronym> commands.
+    At the prompt, the user can type in <acronym>SQL</acronym> commands.
     Ordinarily, input lines are sent to the server when a
     command-terminating semicolon is reached. An end of line does not
     terminate a command.  Thus commands can be spread over several lines for
@@ -638,7 +638,7 @@ testdb=&gt;
     </para>
 
     <para>
-    To include whitespace into an argument you may quote it with a
+    To include whitespace into an argument you can quote it with a
     single quote. To include a single quote into such an argument,
     use two single quotes. Anything contained in single quotes is
     furthermore subject to C-like substitutions for
@@ -819,7 +819,7 @@ testdb=&gt;
         This operation is not as efficient as the <acronym>SQL</acronym>
         <command>COPY</command> command because all data must pass
         through the client/server connection. For large
-        amounts of data the <acronym>SQL</acronym> command may be preferable.
+        amounts of data the <acronym>SQL</acronym> command might be preferable.
         </para>
         </tip>
 
@@ -1172,7 +1172,7 @@ Tue Oct 26 21:40:57 CEST 1999
         <tip>
         <para>
         If you use the <command>\o</command> command to redirect your
-        query output you may wish to use <command>\qecho</command>
+        query output you might wish to use <command>\qecho</command>
         instead of this command.
         </para>
         </tip>
@@ -1566,8 +1566,8 @@ lo_import 152801
           <term><literal>tuples_only</literal> (or <literal>t</literal>)</term>
           <listitem>
           <para>
-          Toggles between tuples only and full display. Full display may
-          show extra information such as column headers, titles, and
+          Toggles between tuples only and full display. Full display
+          shows extra information such as column headers, titles, and
           various footers. In tuples only mode, only actual table data
           is shown.
           </para>
@@ -2022,7 +2022,7 @@ bar
         <para>
          The autocommit-on mode is <productname>PostgreSQL</>'s traditional
          behavior, but autocommit-off is closer to the SQL spec.  If you
-         prefer autocommit-off, you may wish to set it in the system-wide
+         prefer autocommit-off, you might wish to set it in the system-wide
          <filename>psqlrc</filename> file or your
          <filename>~/.psqlrc</filename> file.
         </para>
@@ -2093,7 +2093,7 @@ bar
         limited amount of memory is used, regardless of the size of
         the result set.  Settings of 100 to 1000 are commonly used
         when enabling this feature.
-        Keep in mind that when using this feature, a query may
+        Keep in mind that when using this feature, a query might
         fail after having already displayed some rows.
         </para>
         <tip>
@@ -2387,7 +2387,7 @@ testdb=&gt; <userinput>\set content '''' `sed -e "s/'/''/g" -e 's/\\/\\\\/g' &lt
     </para>
 
     <para>
-    Since colons may legally appear in SQL commands, the following rule
+    Since colons can legally appear in SQL commands, the following rule
     applies: the character sequence
     <quote>:name</quote> is not changed unless <quote>name</> is the name
     of a variable that is currently set. In any case you can escape
@@ -2559,13 +2559,13 @@ testdb=&gt; <userinput>\set content '''' `sed -e "s/'/''/g" -e 's/\\/\\\\/g' &lt
         <term><literal>%[</literal> ... <literal>%]</literal></term>
         <listitem>
          <para>
-         Prompts may contain terminal control characters which, for
+         Prompts can contain terminal control characters which, for
          example, change the color, background, or style of the prompt
          text, or change the title of the terminal window. In order for
          the line editing features of <application>Readline</application> to work properly, these
          non-printing control characters must be designated as invisible
          by surrounding them with <literal>%[</literal> and
-         <literal>%]</literal>. Multiple pairs of these may occur within
+         <literal>%]</literal>. Multiple pairs of these can occur within
          the prompt.  For example,
 <programlisting>
 testdb=&gt; \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%]%# '

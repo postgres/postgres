@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.23 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.24 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -54,7 +54,7 @@ DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="PARAMETER">name</
     <listitem>
      <para>
       The name of an existing procedural language.  For backward
-      compatibility, the name may be enclosed by single quotes.
+      compatibility, the name can be enclosed by single quotes.
      </para>
     </listitem>
    </varlistentry>

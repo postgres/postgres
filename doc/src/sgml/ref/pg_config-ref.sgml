@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.25 2006/10/23 18:10:32 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.26 2007/01/31 23:26:04 momjian Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -106,7 +106,7 @@
       <para>
        Print the location of dynamically loadable modules, or where
        the server would search for them.  (Other
-       architecture-dependent data files may also be installed in this
+       architecture-dependent data files might also be installed in this
        directory.)
       </para>
      </listitem>

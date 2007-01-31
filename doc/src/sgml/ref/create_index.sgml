@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.59 2007/01/09 02:14:10 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.60 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -75,7 +75,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
   </para>
 
   <para>
-    The expression used in the <literal>WHERE</literal> clause may refer
+    The expression used in the <literal>WHERE</literal> clause can refer
     only to columns of the underlying table, but it can use all columns,
     not just the ones being indexed.  Presently, subqueries and
     aggregate expressions are also forbidden in <literal>WHERE</literal>.
@@ -172,7 +172,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
        <para>
         An expression based on one or more columns of the table.  The
         expression usually must be written with surrounding parentheses,
-        as shown in the syntax.  However, the parentheses may be omitted
+        as shown in the syntax.  However, the parentheses can be omitted
         if the expression has the form of a function call.
        </para>
       </listitem>
@@ -324,14 +324,14 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
     significantly longer to complete.  However, since it allows normal
     operations to continue while the index is built, this method is useful for
     adding new indexes in a production environment.  Of course, the extra CPU
-    and I/O load imposed by the index creation may slow other operations.
+    and I/O load imposed by the index creation might slow other operations.
    </para>
 
    <para>
     If a problem arises during the second scan of the table, such as a
     uniqueness violation in a unique index, the <command>CREATE INDEX</>
     command will fail but leave behind an <quote>invalid</> index. This index
-    will be ignored for querying purposes because it may be incomplete;
+    will be ignored for querying purposes because it might be incomplete;
     however it will still consume update overhead.  The recommended recovery
     method in such cases is to drop the index and try again to perform
     <command>CREATE INDEX CONCURRENTLY</>.  (Another possibility is to rebuild
@@ -378,7 +378,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
 
   <para>
    Currently, only the B-tree and GiST index methods support
-   multicolumn indexes. Up to 32 fields may be specified by default.
+   multicolumn indexes. Up to 32 fields can be specified by default.
    (This limit can be altered when building
    <productname>PostgreSQL</productname>.)  Only B-tree currently
    supports unique indexes.

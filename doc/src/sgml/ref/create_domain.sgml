@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.29 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.30 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -76,7 +76,7 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
       <term><replaceable class="PARAMETER">data_type</replaceable></term>
       <listitem>
        <para>
-        The underlying data type of the domain. This may include array
+        The underlying data type of the domain. This can include array
         specifiers.
        </para>
       </listitem>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.18 2006/09/16 00:30:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_conversion.sgml,v 1.19 2007/01/31 23:26:03 momjian Exp $ -->
 
 <refentry id="SQL-CREATECONVERSION">
  <refmeta>
@@ -27,7 +27,7 @@ CREATE [ DEFAULT ] CONVERSION <replaceable>name</replaceable>
 
   <para>
    <command>CREATE CONVERSION</command> defines a new conversion between
-   character set encodings.  Conversion names may be used in the
+   character set encodings.  Conversion names can be used in the
    <function>convert</function> function
    to specify a particular encoding conversion.  Also, conversions that
    are marked <literal>DEFAULT</> can be used for automatic encoding
@@ -65,7 +65,7 @@ CREATE [ DEFAULT ] CONVERSION <replaceable>name</replaceable>
 
      <listitem>
       <para>
-       The name of the conversion. The conversion name may be
+       The name of the conversion. The conversion name can be
        schema-qualified. If it is not, the conversion is defined in the
        current schema. The conversion name must be unique within a
        schema.
@@ -98,7 +98,7 @@ CREATE [ DEFAULT ] CONVERSION <replaceable>name</replaceable>
 
      <listitem>
       <para>
-       The function used to perform the conversion.  The function name may
+       The function used to perform the conversion.  The function name can
        be schema-qualified.  If it is not, the function will be looked
        up in the path.
       </para>
@@ -129,7 +129,7 @@ conv_proc(
   </para>
 
   <para>
-   The privileges required to create a conversion may be changed in a future
+   The privileges required to create a conversion might be changed in a future
    release.
   </para>
  </refsect1>

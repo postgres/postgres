@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tablespace.sgml,v 1.5 2006/10/31 01:52:31 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tablespace.sgml,v 1.6 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -34,7 +34,7 @@ DROP TABLESPACE [ IF EXISTS ] <replaceable class="PARAMETER">tablespacename</rep
   <para>
    A tablespace can only be dropped by its owner or a superuser.
    The tablespace must be empty of all database objects before it can be
-   dropped. It is possible that objects in other databases may still reside
+   dropped. It is possible that objects in other databases might still reside
    in the tablespace even if no objects in the current database are using
    the tablespace.
   </para>

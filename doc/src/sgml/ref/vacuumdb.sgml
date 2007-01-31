@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.37 2006/09/16 00:30:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.38 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -130,7 +130,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Clean or analyze <replaceable class="parameter">table</replaceable> only.
-        Column names may be specified only in conjunction with
+        Column names can be specified only in conjunction with
         the <option>--analyze</option> option.
        </para>
        <tip>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.15 2006/09/16 00:30:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.16 2007/01/31 23:26:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -136,7 +136,7 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <rep
       <term><literal>CYCLE</literal></term>
       <listitem>
        <para>
-        The optional <literal>CYCLE</literal> key word may be used to enable
+        The optional <literal>CYCLE</literal> key word can be used to enable
         the sequence to wrap around when the
         <replaceable class="parameter">maxvalue</replaceable> or
         <replaceable class="parameter">minvalue</replaceable> has been

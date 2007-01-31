@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.33 2006/09/18 19:54:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.34 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -45,7 +45,7 @@ CREATE [ OR REPLACE ] [ TEMP | TEMPORARY ] VIEW <replaceable class="PARAMETER">n
    If a schema name is given (for example, <literal>CREATE VIEW
    myschema.myview ...</>) then the view is created in the specified
    schema.  Otherwise it is created in the current schema.  Temporary
-   views exist in a special schema, so a schema name may not be given
+   views exist in a special schema, so a schema name cannot be given
    when creating a temporary view. The name of the view must be
    distinct from the name of any other view, table, sequence, or index
    in the same schema.

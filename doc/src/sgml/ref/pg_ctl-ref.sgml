@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.37 2007/01/11 02:30:01 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.38 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -203,7 +203,7 @@ PostgreSQL documentation
       <listitem>
        <para>
 	Specifies the shutdown mode.  <replaceable>mode</replaceable>
-	may be <literal>smart</literal>, <literal>fast</literal>, or
+	can be <literal>smart</literal>, <literal>fast</literal>, or
 	<literal>immediate</literal>, or the first letter of one of
 	these three.
        </para>
@@ -425,7 +425,7 @@ PostgreSQL documentation
   <title>Notes</title>
 
   <para>
-   Waiting for complete start is not a well-defined operation and may
+   Waiting for complete start is not a well-defined operation and might
    fail if access control is set up so that a local client cannot
    connect without manual interaction (e.g., password authentication).  For
    additional connection variables, see <xref linkend="libpq-envars">,

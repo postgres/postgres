@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.96 2007/01/09 16:59:20 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.97 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -242,7 +242,7 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
         result sets, but any function can be used.)  This acts as
         though its output were created as a temporary table for the
         duration of this single <command>SELECT</command> command. An
-        alias may also be used. If an alias is written, a column alias
+        alias can also be used. If an alias is written, a column alias
         list can also be written to provide substitute names for one
         or more attributes of the function's composite return type. If
         the function has been defined as returning the <type>record</>
@@ -287,7 +287,7 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
         <literal>USING (<replaceable
         class="parameter">join_column</replaceable> [, ...])</literal>.
         See below for the meaning.  For <literal>CROSS JOIN</literal>,
-        none of these clauses may appear.
+        none of these clauses can appear.
        </para>
 
        <para>
@@ -542,7 +542,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
    </para>
     
    <para>
-    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> may not be
+    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> cannot be
     specified either for a <literal>UNION</> result or for any input of a
     <literal>UNION</>.
    </para>
@@ -588,7 +588,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
    </para>
     
    <para>
-    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> may not be
+    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> cannot be
     specified either for an <literal>INTERSECT</> result or for any input of
     an <literal>INTERSECT</>.
    </para>
@@ -630,7 +630,7 @@ HAVING <replaceable class="parameter">condition</replaceable>
    </para>
     
    <para>
-    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> may not be
+    Currently, <literal>FOR UPDATE</> and <literal>FOR SHARE</> cannot be
     specified either for an <literal>EXCEPT</> result or for any input of
     an <literal>EXCEPT</>.
    </para>
@@ -678,7 +678,7 @@ SELECT name FROM distributors ORDER BY code;
 </programlisting>
     A limitation of this feature is that an <literal>ORDER BY</>
     clause applying to the result of a <literal>UNION</>,
-    <literal>INTERSECT</>, or <literal>EXCEPT</> clause may only
+    <literal>INTERSECT</>, or <literal>EXCEPT</> clause can only
     specify an output column name or number, not an expression.
    </para>
 
@@ -692,11 +692,11 @@ SELECT name FROM distributors ORDER BY code;
    </para>
     
    <para>
-    Optionally one may add the key word <literal>ASC</> (ascending) or
+    Optionally one can add the key word <literal>ASC</> (ascending) or
     <literal>DESC</> (descending) after any expression in the
     <literal>ORDER BY</> clause.  If not specified, <literal>ASC</> is
     assumed by default.  Alternatively, a specific ordering operator
-    name may be specified in the <literal>USING</> clause.
+    name can be specified in the <literal>USING</> clause.
     An ordering operator must be a less-than or greater-than
     member of some btree operator family.
     <literal>ASC</> is usually equivalent to <literal>USING &lt;</> and
@@ -792,7 +792,7 @@ OFFSET <replaceable class="parameter">start</replaceable>
     When using <literal>LIMIT</>, it is a good idea to use an
     <literal>ORDER BY</> clause that constrains the result rows into a
     unique order.  Otherwise you will get an unpredictable subset of
-    the query's rows &mdash; you may be asking for the tenth through
+    the query's rows &mdash; you might be asking for the tenth through
     twentieth rows, but tenth through twentieth in what ordering?  You
     don't know what ordering unless you specify <literal>ORDER BY</>.
    </para>
@@ -1144,9 +1144,9 @@ SELECT distributors.* WHERE distributors.name = 'Westward';
    <title>Namespace Available to <literal>GROUP BY</literal> and <literal>ORDER BY</literal></title>
 
    <para>
-    In the SQL-92 standard, an <literal>ORDER BY</literal> clause may
+    In the SQL-92 standard, an <literal>ORDER BY</literal> clause can
     only use result column names or numbers, while a <literal>GROUP
-    BY</literal> clause may only use expressions based on input column
+    BY</literal> clause can only use expressions based on input column
     names.  <productname>PostgreSQL</productname> extends each of
     these clauses to allow the other choice as well (but it uses the
     standard's interpretation if there is ambiguity).

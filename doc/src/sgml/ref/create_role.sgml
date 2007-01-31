@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.8 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_role.sgml,v 1.9 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -217,7 +217,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
        </para>
 
        <para>
-        Note that older clients may lack support for the MD5
+        Note that older clients might lack support for the MD5
         authentication mechanism that is needed to work with passwords
         that are stored encrypted.
        </para>

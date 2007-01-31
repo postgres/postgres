@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.42 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.43 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -107,7 +107,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
       </para>
 
       <para>
-       For backward compatibility, the name may be enclosed by single
+       For backward compatibility, the name can be enclosed by single
        quotes.
       </para>
      </listitem>
@@ -192,7 +192,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
    To create functions in a procedural language, a user must have the
    <literal>USAGE</literal> privilege for the language.  By default,
    <literal>USAGE</> is granted to <literal>PUBLIC</> (i.e., everyone)
-   for trusted languages.  This may be revoked if desired.
+   for trusted languages.  This can be revoked if desired.
   </para>
 
   <para>
@@ -208,7 +208,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
    in <structname>pg_pltemplate</>.  But when there is an entry,
    the functions need not already exist;
    they will be automatically defined if not present in the database.
-   (This can result in <command>CREATE LANGUAGE</> failing, if the
+   (This might result in <command>CREATE LANGUAGE</> failing, if the
    shared library that implements the language is not available in
    the installation.)
   </para>

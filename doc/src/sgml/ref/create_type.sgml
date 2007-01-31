@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.66 2006/12/30 21:21:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.67 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -82,7 +82,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
 
   <para>
    The second form of <command>CREATE TYPE</command> creates a new base type
-   (scalar type).  The parameters may appear in any order, not only that
+   (scalar type).  The parameters can appear in any order, not only that
    illustrated above, and most are optional.  You must register
    two or more functions (using <command>CREATE FUNCTION</command>) before
    defining the type.  The support functions
@@ -103,7 +103,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    converts the type's external textual representation to the internal
    representation used by the operators and functions defined for the type.
    <replaceable class="parameter">output_function</replaceable>
-   performs the reverse transformation.  The input function may be
+   performs the reverse transformation.  The input function can be
    declared as taking one argument of type <type>cstring</type>,
    or as taking three arguments of types
    <type>cstring</type>, <type>oid</type>, <type>integer</type>.
@@ -118,7 +118,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    input value.  The function must still return NULL in this case, unless
    it raises an error.
    (This case is mainly meant to support domain input functions, which
-   may need to reject NULL inputs.)
+   might need to reject NULL inputs.)
    The output function must be
    declared as taking one argument of the new data type.
    The output function must return type <type>cstring</type>.
@@ -136,7 +136,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    representation is in the machine's native byte order.)  The receive
    function should perform adequate checking to ensure that the value is
    valid.
-   The receive function may be declared as taking one argument of type
+   The receive function can be declared as taking one argument of type
    <type>internal</type>, or as taking three arguments of types
    <type>internal</type>, <type>oid</type>, <type>integer</type>.
    The first argument is a pointer to a <type>StringInfo</type> buffer
@@ -148,7 +148,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    input value.  The function must still return NULL in this case, unless
    it raises an error.
    (This case is mainly meant to support domain receive functions, which
-   may need to reject NULL inputs.)
+   might need to reject NULL inputs.)
    Similarly, the optional
    <replaceable class="parameter">send_function</replaceable> converts
    from the internal representation to the external binary representation.
@@ -234,7 +234,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   <para>
    The optional flag <literal>PASSEDBYVALUE</literal> indicates that
    values of this data type are passed by value, rather than by
-   reference.  You may not pass by value types whose internal
+   reference.  You cannot pass by value types whose internal
    representation is larger than the size of the <type>Datum</> type
    (4 bytes on most machines, 8 bytes on a few).
   </para>
@@ -260,17 +260,17 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    main table, but the system will not try to compress it.
    <literal>main</literal> allows compression, but discourages moving
    the value out of the main table.  (Data items with this storage
-   strategy may still be moved out of the main table if there is no
+   strategy might still be moved out of the main table if there is no
    other way to make a row fit, but they will be kept in the main
    table preferentially over <literal>extended</literal> and
    <literal>external</literal> items.)
   </para>
 
   <para>
-   A default value may be specified, in case a user wants columns of the
+   A default value can be specified, in case a user wants columns of the
    data type to default to something other than the null value.
    Specify the default with the <literal>DEFAULT</literal> key word.
-   (Such a default may be overridden by an explicit <literal>DEFAULT</literal>
+   (Such a default can be overridden by an explicit <literal>DEFAULT</literal>
    clause attached to a particular column.)
   </para>
 
@@ -531,7 +531,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    the name of the new data type as the return type of the input function.
    The shell type is implicitly created in this situation, and then it
    can be referenced in the definitions of the remaining I/O functions.
-   This approach still works, but is deprecated and may be disallowed in
+   This approach still works, but is deprecated and might be disallowed in
    some future release.  Also, to avoid accidentally cluttering
    the catalogs with shell types as a result of simple typos in function
    definitions, a shell type will only be made this way when the input

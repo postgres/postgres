@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.15 2006/09/16 00:30:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.16 2007/01/31 23:26:04 momjian Exp $ -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
  <refmeta>
   <refentrytitle id="sql-set-session-authorization-title">SET SESSION AUTHORIZATION</refentrytitle>
@@ -28,7 +28,7 @@ RESET SESSION AUTHORIZATION
   <para>
    This command sets the session user identifier and the current user
    identifier of the current SQL-session context to be <replaceable
-   class="parameter">username</replaceable>.  The user name may be
+   class="parameter">username</replaceable>.  The user name can be
    written as either an identifier or a string literal.  Using this
    command, it is possible, for example, to temporarily become an
    unprivileged user and later switch back to being a superuser.
@@ -38,14 +38,14 @@ RESET SESSION AUTHORIZATION
    The session user identifier is initially set to be the (possibly
    authenticated) user name provided by the client.  The current user
    identifier is normally equal to the session user identifier, but
-   may change temporarily in the context of <quote>setuid</quote>
+   might change temporarily in the context of <quote>setuid</quote>
    functions and similar mechanisms; it can also be changed by
    <xref linkend="sql-set-role" endterm="sql-set-role-title">.
    The current user identifier is relevant for permission checking.
   </para>
 
   <para>
-   The session user identifier may be changed only if the initial session
+   The session user identifier can be changed only if the initial session
    user (the <firstterm>authenticated user</firstterm>) had the
    superuser privilege.  Otherwise, the command is accepted only if it
    specifies the authenticated user name.
@@ -60,7 +60,7 @@ RESET SESSION AUTHORIZATION
   <para>
    The <literal>DEFAULT</> and <literal>RESET</> forms reset the session
    and current user identifiers to be the originally authenticated user
-   name.  These forms may be executed by any user.
+   name.  These forms can be executed by any user.
   </para>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/values.sgml,v 1.2 2006/10/23 18:10:32 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/values.sgml,v 1.3 2007/01/31 23:26:05 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -78,7 +78,7 @@ VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ..
     <listitem>
      <para>
       An expression or integer constant indicating how to sort the result
-      rows.  This expression may refer to the columns of the
+      rows.  This expression can refer to the columns of the
       <command>VALUES</> result as <literal>column1</>, <literal>column2</>,
       etc.  For more details see
       <xref linkend="sql-orderby" endterm="sql-orderby-title">.
@@ -124,7 +124,7 @@ VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ..
 
   <para>
    <command>VALUES</> lists with very large numbers of rows should be avoided,
-   as you may encounter out-of-memory failures or poor performance.
+   as you might encounter out-of-memory failures or poor performance.
    <command>VALUES</> appearing within <command>INSERT</> is a special case
    (because the desired column types are known from the <command>INSERT</>'s
    target table, and need not be inferred by scanning the <command>VALUES</>
@@ -203,7 +203,7 @@ UPDATE employees SET salary = salary * v.increase
   <para>
    When <command>VALUES</> is used in <command>INSERT</>, the values are all
    automatically coerced to the data type of the corresponding destination
-   column.  When it's used in other contexts, it may be necessary to specify
+   column.  When it's used in other contexts, it might be necessary to specify
    the correct data type.  If the entries are all quoted literal constants,
    coercing the first is sufficient to determine the assumed type for all:
 

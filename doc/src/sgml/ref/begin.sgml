@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.34 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.35 2007/01/31 23:26:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -109,7 +109,7 @@ where <replaceable class="parameter">transaction_mode</replaceable> is one of:
 
   <para>
    For reasons of backwards compatibility, the commas between successive
-   <replaceable class="parameter">transaction_modes</replaceable> may be
+   <replaceable class="parameter">transaction_modes</replaceable> can be
    omitted.
   </para>
  </refsect1>

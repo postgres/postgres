@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.77 2006/09/18 19:54:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.78 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -358,9 +358,9 @@ COPY <replaceable class="parameter">count</replaceable>
     should not lead to problems in the event of a <command>COPY
     TO</command>, but the target table will already have received
     earlier rows in a <command>COPY FROM</command>. These rows will not
-    be visible or accessible, but they still occupy disk space. This may
+    be visible or accessible, but they still occupy disk space. This might
     amount to a considerable amount of wasted disk space if the failure
-    happened well into a large copy operation. You may wish to invoke
+    happened well into a large copy operation. You might wish to invoke
     <command>VACUUM</command> to recover the wasted space.
    </para>
  </refsect1>
@@ -395,7 +395,7 @@ COPY <replaceable class="parameter">count</replaceable>
    </para>
 
    <para>
-    Backslash characters (<literal>\</>) may be used in the
+    Backslash characters (<literal>\</>) can be used in the
     <command>COPY</command> data to quote data characters that might
     otherwise be taken as row or column delimiters. In particular, the
     following characters <emphasis>must</> be preceded by a backslash if
@@ -694,7 +694,7 @@ There is no alignment padding or any other extra data between fields.
     <para>
 Presently, all data values in a <command>COPY BINARY</command> file are
 assumed to be in binary format (format code one).  It is anticipated that a
-future extension may add a header field that allows per-column format codes
+future extension might add a header field that allows per-column format codes
 to be specified.
     </para>
 

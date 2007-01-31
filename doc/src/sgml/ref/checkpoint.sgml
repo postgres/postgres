@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.14 2006/09/16 00:30:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.15 2007/01/31 23:26:02 momjian Exp $ -->
 
 <refentry id="sql-checkpoint">
  <refmeta>
@@ -42,7 +42,7 @@ CHECKPOINT
   </para>
 
   <para>
-   Only superusers may call <command>CHECKPOINT</command>.  The command is
+   Only superusers can call <command>CHECKPOINT</command>.  The command is
    not intended for use during normal operation.
   </para>
  </refsect1>

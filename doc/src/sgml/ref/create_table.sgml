@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.105 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.106 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -74,7 +74,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
    If a schema name is given (for example, <literal>CREATE TABLE
    myschema.mytable ...</>) then the table is created in the specified
    schema.  Otherwise it is created in the current schema.  Temporary
-   tables exist in a special schema, so a schema name may not be given
+   tables exist in a special schema, so a schema name cannot be given
    when creating a temporary table.  The name of the table must be
    distinct from the name of any other table, sequence, index, or view
    in the same schema.
@@ -156,7 +156,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <term><replaceable class="PARAMETER">data_type</replaceable></term>
     <listitem>
      <para>
-      The data type of the column. This may include array
+      The data type of the column. This can include array
       specifiers. For more information on the data types supported by
       <productname>PostgreSQL</productname>, refer to <xref
       linkend="datatype">.
@@ -319,7 +319,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <listitem>
      <para>
       The <literal>UNIQUE</literal> constraint specifies that a
-      group of one or more columns of a table may contain
+      group of one or more columns of a table can contain
       only unique values. The behavior of the unique table constraint
       is the same as that for column constraints, with the additional
       capability to span multiple columns.
@@ -345,13 +345,13 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
     <listitem>
      <para>
       The primary key constraint specifies that a column or columns of a table
-      may contain only unique (non-duplicate), nonnull values.
+      can contain only unique (non-duplicate), nonnull values.
       Technically, <literal>PRIMARY KEY</literal> is merely a
       combination of <literal>UNIQUE</> and <literal>NOT NULL</>, but
       identifying a set of columns as primary key also provides
       metadata about the design of the schema, as a primary key
       implies that other tables
-      may rely on this set of columns as a unique identifier for rows.
+      can rely on this set of columns as a unique identifier for rows.
      </para>
 
      <para>
@@ -379,7 +379,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       raised and the insert or update does not alter the database.  A
       check constraint specified as a column constraint should
       reference that column's value only, while an expression
-      appearing in a table constraint may reference multiple columns.
+      appearing in a table constraint can reference multiple columns.
      </para>
 
      <para>
@@ -412,7 +412,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       class="parameter">reftable</replaceable> is used.  The
       referenced columns must be the columns of a unique or primary
       key constraint in the referenced table.  Note that foreign key
-      constraints may not be defined between temporary tables and
+      constraints cannot be defined between temporary tables and
       permanent tables.
      </para>
 
@@ -501,7 +501,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
      </para>
 
      <para>
-      If the referenced column(s) are changed frequently, it may be wise to
+      If the referenced column(s) are changed frequently, it might be wise to
       add an index to the foreign key column so that referential actions
       associated with the foreign key column can be performed more
       efficiently.
@@ -517,7 +517,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       This controls whether the constraint can be deferred.  A
       constraint that is not deferrable will be checked immediately
       after every command.  Checking of constraints that are
-      deferrable may be postponed until the end of the transaction
+      deferrable can be postponed until the end of the transaction
       (using the <xref linkend="sql-set-constraints" endterm="sql-set-constraints-title"> command).
       <literal>NOT DEFERRABLE</literal> is the default.  Only foreign
       key constraints currently accept this clause.  All other
@@ -1005,8 +1005,8 @@ CREATE TABLE cinemas (
 
    <para>
     The SQL standard says that <literal>CHECK</> column constraints
-    may only refer to the column they apply to; only <literal>CHECK</>
-    table constraints may refer to multiple columns.
+    can only refer to the column they apply to; only <literal>CHECK</>
+    table constraints can refer to multiple columns.
     <productname>PostgreSQL</productname> does not enforce this
     restriction; it treats column and table check constraints alike.
    </para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.41 2006/09/16 00:30:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.42 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -111,7 +111,7 @@ REVOKE [ ADMIN OPTION FOR ]
    will fail.  This recursive revocation only affects privileges that
    were granted through a chain of users that is traceable to the user
    that is the subject of this <literal>REVOKE</literal> command.
-   Thus, the affected users may effectively keep the privilege if it
+   Thus, the affected users might effectively keep the privilege if it
    was also granted through other users.
   </para>
 
@@ -163,7 +163,7 @@ REVOKE [ ADMIN OPTION FOR ]
     command, the command is performed as though it were issued by the
     owner of the affected object.  Since all privileges ultimately come
     from the object owner (possibly indirectly via chains of grant options),
-    it is possible for a superuser to revoke all privileges, but this may
+    it is possible for a superuser to revoke all privileges, but this might
     require use of <literal>CASCADE</literal> as stated above.
    </para>
 
@@ -187,7 +187,7 @@ REVOKE [ ADMIN OPTION FOR ]
     indirectly via more than one role membership path, it is unspecified
     which containing role will be used to perform the command.  In such cases
     it is best practice to use <command>SET ROLE</> to become the specific
-    role you want to do the <command>REVOKE</> as.  Failure to do so may
+    role you want to do the <command>REVOKE</> as.  Failure to do so might
     lead to revoking privileges other than the ones you intended, or not
     revoking anything at all.
    </para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.38 2006/09/18 19:54:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.39 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -147,7 +147,7 @@ ROLLBACK;
    distribution of the data in the table has changed significantly
    since the last time <command>ANALYZE</command> was run), the
    estimated costs are unlikely to conform to the real properties of
-   the query, and consequently an inferior query plan may be chosen.
+   the query, and consequently an inferior query plan might be chosen.
   </para>
 
   <para>
@@ -233,7 +233,7 @@ EXPLAIN ANALYZE EXECUTE query(100, 200);
   <para>
    Of course, the specific numbers shown here depend on the actual
    contents of the tables involved.  Also note that the numbers, and
-   even the selected query strategy, may vary between
+   even the selected query strategy, might vary between
    <productname>PostgreSQL</productname> releases due to planner
    improvements. In addition, the <command>ANALYZE</command> command
    uses random sampling to estimate data statistics; therefore, it is

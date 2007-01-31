@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.18 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.19 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -38,7 +38,7 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
   <para>
    A schema is essentially a namespace:
    it contains named objects (tables, data types, functions, and operators)
-   whose names may duplicate those of other objects existing in other
+   whose names can duplicate those of other objects existing in other
    schemas.  Named objects are accessed either by <quote>qualifying</>
    their names with the schema name as a prefix, or by setting a search
    path that includes the desired schema(s).  A <literal>CREATE</> command
@@ -78,7 +78,7 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
        <para>
         The name of the user who will own the schema.  If omitted,
         defaults to the user executing the command.  Only superusers
-        may create schemas owned by users other than themselves.
+        can create schemas owned by users other than themselves.
        </para>
       </listitem>
      </varlistentry>
@@ -163,9 +163,9 @@ CREATE VIEW hollywood.winners AS
 
   <para>
    The SQL standard specifies that the subcommands in <command>CREATE
-   SCHEMA</command> may appear in any order.  The present
+   SCHEMA</command> can appear in any order.  The present
    <productname>PostgreSQL</productname> implementation does not
-   handle all cases of forward references in subcommands; it may
+   handle all cases of forward references in subcommands; it might
    sometimes be necessary to reorder the subcommands in order to avoid
    forward references.
   </para>

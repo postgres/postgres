@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/release_savepoint.sgml,v 1.6 2006/09/16 00:30:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/release_savepoint.sgml,v 1.7 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -43,7 +43,7 @@ RELEASE [ SAVEPOINT ] <replaceable>savepoint_name</replaceable>
    effects of commands executed after the savepoint was established.
    (To do that, see <xref linkend="sql-rollback-to"
    endterm="sql-rollback-to-title">.)  Destroying a savepoint when
-   it is no longer needed may allow the system to reclaim some resources
+   it is no longer needed allows the system to reclaim some resources
    earlier than transaction end.
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.92 2006/10/23 18:10:32 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.93 2007/01/31 23:26:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -110,7 +110,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       These forms set or remove the default value for a column.
       The default values only apply to subsequent <command>INSERT</command>
       commands; they do not cause rows already in the table to change.
-      Defaults may also be created for views, in which case they are
+      Defaults can also be created for views, in which case they are
       inserted into <command>INSERT</> statements on the view before
       the view's <literal>ON INSERT</literal> rule is applied.
      </para>
@@ -200,7 +200,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       A disabled trigger is still known to the system, but is not executed
       when its triggering event occurs.  For a deferred trigger, the enable
       status is checked when the event occurs, not when the trigger function
-      is actually executed.  One may disable or enable a single
+      is actually executed.  One can disable or enable a single
       trigger specified by name, or all triggers on the table, or only
       user triggers (this option excludes triggers that are used to implement
       foreign key constraints).  Disabling or enabling constraint triggers
@@ -261,7 +261,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <xref linkend="SQL-CREATETABLE" endterm="sql-createtable-title">
       for details on the available parameters.  Note that the table contents
       will not be modified immediately by this command; depending on the
-      parameter you may need to rewrite the table to get the desired effects.
+      parameter you might need to rewrite the table to get the desired effects.
       That can be done with <xref linkend="SQL-CLUSTER"
       endterm="sql-cluster-title"> or one of the forms of <command>ALTER
       TABLE</> that forces a table rewrite.
@@ -284,7 +284,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     <listitem>
      <para>
       This form resets one or more storage parameters to their
-      defaults.  As with <literal>SET</>, a table rewrite may be
+      defaults.  As with <literal>SET</>, a table rewrite might be
       needed to update the table entirely.
      </para>
     </listitem>
@@ -309,7 +309,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       <literal>CHECK</literal> constraints of the parent. Currently
       <literal>UNIQUE</literal>, <literal>PRIMARY KEY</literal>, and
       <literal>FOREIGN KEY</literal> constraints are not considered, but
-      this may change in the future.
+      this might change in the future.
      </para>
     </listitem>
    </varlistentry>
@@ -607,7 +607,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    <para>
     Adding a column with a non-null default or changing the type of an
     existing column will require the entire table to be rewritten.  This
-    may take a significant amount of time for a large table; and it will
+    might take a significant amount of time for a large table; and it will
     temporarily require double the disk space.
    </para>
 
@@ -656,7 +656,7 @@ ALTER TABLE table ALTER COLUMN anycol TYPE anytype;
     expression is not applied to the column's default value (if any); the
     result might not be a constant expression as required for a default.
     This means that when there is no implicit or assignment cast from old to
-    new type, <literal>ALTER TYPE</> may fail to convert the default even
+    new type, <literal>ALTER TYPE</> might fail to convert the default even
     though a <literal>USING</literal> clause is supplied.  In such cases,
     drop the default with <literal>DROP DEFAULT</>, perform the <literal>ALTER
     TYPE</>, and then use <literal>SET DEFAULT</> to add a suitable new

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_opfamily.sgml,v 1.1 2007/01/23 05:07:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opfamily.sgml,v 1.2 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -83,7 +83,7 @@ CREATE OPERATOR FAMILY <replaceable class="parameter">name</replaceable> USING <
     <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
-      The name of the operator family to be created.  The name may be
+      The name of the operator family to be created.  The name can be
       schema-qualified.
      </para>
     </listitem>

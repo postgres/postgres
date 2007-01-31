@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.39 2006/09/18 19:54:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.40 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -47,10 +47,10 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
    <command>SELECT</> would produce.  Since data is stored natively in
    binary format, the system must do a conversion to produce the text
    format.  Once the information comes back in text form, the client
-   application may need to convert it to a binary format to manipulate
+   application might need to convert it to a binary format to manipulate
    it.  In addition, data in the text format is often larger in size
    than in the binary format.  Binary cursors return the data in a
-   binary representation that may be more easily manipulated.
+   binary representation that might be more easily manipulated.
    Nevertheless, if you intend to display the data as text anyway,
    retrieving it in text form will
    save you some effort on the client side.
@@ -123,10 +123,10 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <term><literal>NO SCROLL</literal></term>
     <listitem>
      <para>
-      <literal>SCROLL</literal> specifies that the cursor may be used
+      <literal>SCROLL</literal> specifies that the cursor can be used
       to retrieve rows in a nonsequential fashion (e.g.,
       backward). Depending upon the complexity of the query's
-      execution plan, specifying <literal>SCROLL</literal> may impose
+      execution plan, specifying <literal>SCROLL</literal> might impose
       a performance penalty on the query's execution time.
       <literal>NO SCROLL</literal> specifies that the cursor cannot be
       used to retrieve rows in a nonsequential fashion.  The default is to
@@ -142,7 +142,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <term><literal>WITHOUT HOLD</literal></term>
     <listitem>
      <para>
-      <literal>WITH HOLD</literal> specifies that the cursor may
+      <literal>WITH HOLD</literal> specifies that the cursor can
       continue to be used after the transaction that created it
       successfully commits.  <literal>WITHOUT HOLD</literal> specifies
       that the cursor cannot be used outside of the transaction that
@@ -195,7 +195,7 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
 
   <para>
    The key words <literal>BINARY</literal>,
-   <literal>INSENSITIVE</literal>, and <literal>SCROLL</literal> may
+   <literal>INSENSITIVE</literal>, and <literal>SCROLL</literal> can
    appear in any order.
   </para>
  </refsect1>

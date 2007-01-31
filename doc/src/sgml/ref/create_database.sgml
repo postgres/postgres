@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.46 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.47 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -60,7 +60,7 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    database containing only the standard objects predefined by your
    version of <productname>PostgreSQL</productname>.  This is useful
    if you wish to avoid copying
-   any installation-local objects that may have been added to
+   any installation-local objects that might have been added to
    <literal>template1</>.
   </para>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_controldata.sgml,v 1.8 2006/09/16 00:30:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_controldata.sgml,v 1.9 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,7 @@ PostgreSQL documentation
   </para>
 
   <para>
-   This utility may only be run by the user who initialized the cluster because
+   This utility can only be run by the user who initialized the cluster because
    it requires read access to the data directory.
    You can specify the data directory on the command line, or use 
    the environment variable <envar>PGDATA</>.

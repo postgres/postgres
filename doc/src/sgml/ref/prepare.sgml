@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.21 2006/09/18 19:54:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare.sgml,v 1.22 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -138,7 +138,7 @@ PREPARE <replaceable class="PARAMETER">name</replaceable> [ (<replaceable class=
    constant values in a statement to make guesses about the likely
    result of executing the statement. Since this data is unavailable
    when planning prepared statements with parameters, the chosen plan
-   may be suboptimal. To examine the query plan
+   might be suboptimal. To examine the query plan
    <productname>PostgreSQL</productname> has chosen for a prepared
    statement, use <xref linkend="sql-explain"
    endterm="sql-explain-title">.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.20 2006/09/16 00:30:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.21 2007/01/31 23:26:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -109,7 +109,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
    The statistics collected by <command>ANALYZE</command> usually
    include a list of some of the most common values in each column and
    a histogram showing the approximate data distribution in each
-   column.  One or both of these may be omitted if
+   column.  One or both of these can be omitted if
    <command>ANALYZE</command> deems them uninteresting (for example,
    in a unique-key column, there are no common values) or if the
    column data type does not support the appropriate operators.  There
@@ -123,7 +123,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
    allows even very large tables to be analyzed in a small amount of
    time.  Note, however, that the statistics are only approximate, and
    will change slightly each time <command>ANALYZE</command> is run,
-   even if the actual table contents did not change.  This may result
+   even if the actual table contents did not change.  This might result
    in small changes in the planner's estimated costs shown by
    <command>EXPLAIN</command>. In rare situations, this
    non-determinism will cause the query optimizer to choose a
@@ -146,7 +146,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
    <command>ANALYZE</command> and the amount of space occupied in
    <literal>pg_statistic</literal>.  In particular, setting the
    statistics target to zero disables collection of statistics for
-   that column.  It may be useful to do that for columns that are
+   that column.  It might be useful to do that for columns that are
    never used as part of the <literal>WHERE</>, <literal>GROUP BY</>,
    or <literal>ORDER BY</> clauses of queries, since the planner will
    have no use for statistics on such columns.

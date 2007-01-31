@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.11 2007/01/23 05:07:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_opclass.sgml,v 1.12 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -102,7 +102,7 @@ DROP OPERATOR CLASS [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceab
    containing the class, even if there is nothing else left in the
    family (in particular, in the case where the family was implicitly
    created by <command>CREATE OPERATOR CLASS</>).  An empty operator
-   family is harmless, but for the sake of tidiness you may wish to
+   family is harmless, but for the sake of tidiness you might wish to
    remove the family with <command>DROP OPERATOR FAMILY</>; or perhaps
    better, use <command>DROP OPERATOR FAMILY</> in the first place.
   </para>

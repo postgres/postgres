@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.46 2007/01/31 04:13:22 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.47 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -72,7 +72,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
     <term><literal>FULL</literal></term>
     <listitem>
      <para>
-      Selects <quote>full</quote> vacuum, which may reclaim more
+      Selects <quote>full</quote> vacuum, which can reclaim more
       space, but takes much longer and exclusively locks the table.
      </para>
     </listitem>
@@ -153,7 +153,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
     We recommend that active production databases be
     vacuumed frequently (at least nightly), in order to
     remove dead rows. After adding or deleting a large number
-    of rows, it may be a good idea to issue a <command>VACUUM
+    of rows, it might be a good idea to issue a <command>VACUUM
     ANALYZE</command> command for the affected table. This will update the
     system catalogs with
     the results of all recent changes, and allow the
@@ -163,7 +163,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
 
    <para>
     The <option>FULL</option> option is not recommended for routine use,
-    but may be useful in special cases.  An example is when you have deleted
+    but might be useful in special cases.  An example is when you have deleted
     most of the rows in a table and would like the table to physically shrink
     to occupy less disk space.  <command>VACUUM FULL</command> will usually
     shrink the table more than a plain <command>VACUUM</command> would.
@@ -174,7 +174,7 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
 
    <para>
     <command>VACUUM</command> causes a substantial increase in I/O traffic,
-    which can cause poor performance for other active sessions.  Therefore,
+    which might cause poor performance for other active sessions.  Therefore,
     it is sometimes advisable to use the cost-based vacuum delay feature.
     See <xref linkend="runtime-config-resource-vacuum-cost"> for details.
    </para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set_role.sgml,v 1.3 2006/09/16 00:30:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set_role.sgml,v 1.4 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -32,7 +32,7 @@ RESET ROLE
   <para>
    This command sets the current user
    identifier of the current SQL-session context to be <replaceable
-   class="parameter">rolename</replaceable>.  The role name may be
+   class="parameter">rolename</replaceable>.  The role name can be
    written as either an identifier or a string literal.
    After <command>SET ROLE</>, permissions checking for SQL commands
    is carried out as though the named role were the one that had logged
@@ -54,7 +54,7 @@ RESET ROLE
   <para>
    The <literal>NONE</> and <literal>RESET</> forms reset the current
    user identifier to be the current session user identifier.
-   These forms may be executed by any user.
+   These forms can be executed by any user.
   </para>
  </refsect1>
 

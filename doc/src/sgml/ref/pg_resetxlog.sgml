@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.19 2006/12/08 19:50:52 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_resetxlog.sgml,v 1.20 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -42,7 +42,7 @@ PostgreSQL documentation
 
   <para>
    After running this command, it should be possible to start the server,
-   but bear in mind that the database may contain inconsistent data due to
+   but bear in mind that the database might contain inconsistent data due to
    partially-committed transactions.  You should immediately dump your data,
    run <command>initdb</>, and reload.  After reload, check for
    inconsistencies and repair as needed.
@@ -61,7 +61,7 @@ PostgreSQL documentation
    valid data for <filename>pg_control</>, you can force it to proceed anyway
    by specifying the <literal>-f</> (force) switch.  In this case plausible
    values will be substituted for the missing data.  Most of the fields can be
-   expected to match, but manual assistance may be needed for the next OID,
+   expected to match, but manual assistance might be needed for the next OID,
    next transaction ID and epoch, next multitransaction ID and offset,
    WAL starting address, and database locale fields.
    The first six of these can be set using the switches discussed below.
@@ -84,14 +84,14 @@ PostgreSQL documentation
    epoch, next multitransaction ID, next multitransaction offset, and WAL
    starting address values to be set manually.  These are only needed when
    <command>pg_resetxlog</command> is unable to determine appropriate values
-   by reading <filename>pg_control</>.  Safe values may be determined as
+   by reading <filename>pg_control</>.  Safe values can be determined as
    follows:
 
    <itemizedlist>
     <listitem>
      <para>
       A safe value for the next transaction ID (<literal>-x</>)
-      may be determined by looking for the numerically largest
+      can be determined by looking for the numerically largest
       file name in the directory <filename>pg_clog</> under the data directory,
       adding one,
       and then multiplying by 1048576.  Note that the file names are in
@@ -105,7 +105,7 @@ PostgreSQL documentation
     <listitem>
      <para>
       A safe value for the next multitransaction ID (<literal>-m</>)
-      may be determined by looking for the numerically largest
+      can be determined by looking for the numerically largest
       file name in the directory <filename>pg_multixact/offsets</> under the
       data directory, adding one, and then multiplying by 65536.  As above,
       the file names are in hexadecimal, so the easiest way to do this is to
@@ -116,7 +116,7 @@ PostgreSQL documentation
     <listitem>
      <para>
       A safe value for the next multitransaction offset (<literal>-O</>)
-      may be determined by looking for the numerically largest
+      can be determined by looking for the numerically largest
       file name in the directory <filename>pg_multixact/members</> under the
       data directory, adding one, and then multiplying by 65536.  As above,
       the file names are in hexadecimal, so the easiest way to do this is to
@@ -179,7 +179,7 @@ PostgreSQL documentation
    The <literal>-n</> (no operation) switch instructs
    <command>pg_resetxlog</command> to print the values reconstructed from
    <filename>pg_control</> and then exit without modifying anything.
-   This is mainly a debugging tool, but may be useful as a sanity check
+   This is mainly a debugging tool, but can be useful as a sanity check
    before allowing <command>pg_resetxlog</command> to proceed for real.
   </para>
  </refsect1>
@@ -191,7 +191,7 @@ PostgreSQL documentation
    This command must not be used when the server is 
    running.  <command>pg_resetxlog</command> will refuse to start up if
    it finds a server lock file in the data directory.  If the
-   server crashed then a lock file may have been left
+   server crashed then a lock file might have been left
    behind; in that case you can remove the lock file to allow
    <command>pg_resetxlog</command> to run.  But before you do
    so, make doubly certain that there is no server process still alive.

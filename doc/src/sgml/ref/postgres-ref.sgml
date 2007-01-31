@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.48 2007/01/04 00:57:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.49 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -354,13 +354,13 @@ PostgreSQL documentation
     <title>Semi-internal Options</title>
 
     <para>
-     There are several other options that may be specified, used
+     There are several other options that can be specified, used
      mainly for debugging purposes and in some cases to assist with
      recovery of severely damaged databases. There should be no reason
      to use them in a production database setup.  These are listed
      here only for the use by <productname>PostgreSQL</productname>
-     system developers.  Furthermore, any of these options may
-     disappear or change in a future release without notice.
+     system developers.  Furthermore, these options might
+     change or be removed in a future release without notice.
     </para>
 
     <variablelist>
@@ -559,7 +559,7 @@ PostgreSQL documentation
 
     <listitem>
      <para>
-      Default character encoding used by clients.  (The clients may
+      Default character encoding used by clients.  (The clients can
       override this individually.)  This value can also be set in the
       configuration file.
      </para>
@@ -617,7 +617,7 @@ PostgreSQL documentation
     A failure message mentioning <literal>semget</> or
     <literal>shmget</> probably indicates you need to configure your
     kernel to provide adequate shared memory and semaphores.  For more
-    discussion see <xref linkend="kernel-resources">.  You may be able
+    discussion see <xref linkend="kernel-resources">.  You might be able
     to postpone reconfiguring your kernel by decreasing <xref
     linkend="guc-shared-buffers"> to reduce the shared memory
     consumption of <productname>PostgreSQL</>, and/or by reducing
@@ -636,18 +636,18 @@ PostgreSQL documentation
 <prompt>$</prompt> <userinput>ps -ef | grep postgres</userinput>
 </screen>
     depending on your system.  If you are certain that no conflicting
-    server is running, you may remove the lock file mentioned in the
+    server is running, you can remove the lock file mentioned in the
     message and try again.
    </para>
 
    <para>
-    A failure message indicating inability to bind to a port may
+    A failure message indicating inability to bind to a port might
     indicate that that port is already in use by some
-    non-<productname>PostgreSQL</productname> process.  You may also
+    non-<productname>PostgreSQL</productname> process.  You might also
     get this error if you terminate <command>postgres</command>
     and immediately restart it using the same port; in this case, you
     must simply wait a few seconds until the operating system closes
-    the port before trying again.  Finally, you may get this error if
+    the port before trying again.  Finally, you might get this error if
     you specify a port number that your operating system considers to
     be reserved.  For example, many versions of Unix consider port
     numbers under 1024 to be <quote>trusted</quote> and only permit
@@ -665,7 +665,7 @@ PostgreSQL documentation
    <command>postgres</command> server.  Doing so will prevent
    <command>postgres</command> from freeing the system
    resources (e.g., shared memory and semaphores) that it holds before
-   terminating.  This may cause problems for starting a fresh
+   terminating.  This might cause problems for starting a fresh
    <command>postgres</command> run.
   </para>
 

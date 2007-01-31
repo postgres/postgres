@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.38 2006/11/04 19:03:51 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.39 2007/01/31 23:26:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -132,7 +132,7 @@ CLUSTER
     Because the planner records statistics about the ordering of
     tables, it is advisable to run <xref linkend="sql-analyze"
     endterm="sql-analyze-title"> on the newly clustered table.
-    Otherwise, the planner may make poor choices of query plans.
+    Otherwise, the planner might make poor choices of query plans.
    </para>
 
    <para>

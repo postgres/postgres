@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.36 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.37 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -96,7 +96,7 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> (
   </para>
   
   <para>
-   An aggregate function may provide an initial condition,
+   An aggregate function can provide an initial condition,
    that is, an initial value for the internal state value.
    This is specified and stored in the database as a value of type
    <type>text</type>, but it must be a valid external representation

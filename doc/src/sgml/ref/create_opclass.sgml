@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.19 2007/01/23 05:07:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_opclass.sgml,v 1.20 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -88,7 +88,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
     <term><replaceable class="parameter">name</replaceable></term>
     <listitem>
      <para>
-      The name of the operator class to be created.  The name may be
+      The name of the operator class to be created.  The name can be
       schema-qualified.
      </para>
     </listitem>
@@ -161,7 +161,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
       In an <literal>OPERATOR</> clause,
       the operand data type(s) of the operator, or <literal>NONE</> to
       signify a left-unary or right-unary operator.  The operand data
-      types may be omitted in the normal case where they are the same
+      types can be omitted in the normal case where they are the same
       as the operator class's data type.
      </para>
 
@@ -236,7 +236,7 @@ CREATE OPERATOR CLASS <replaceable class="parameter">name</replaceable> [ DEFAUL
 
   <para>
    The <literal>OPERATOR</>, <literal>FUNCTION</>, and <literal>STORAGE</>
-   clauses may appear in any order.
+   clauses can appear in any order.
   </para>
  </refsect1>
   

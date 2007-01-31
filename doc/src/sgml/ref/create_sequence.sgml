@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.45 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.46 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -41,7 +41,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">name</replac
   <para>
    If a schema name is given then the sequence is created in the
    specified schema.  Otherwise it is created in the current schema.
-   Temporary sequences exist in a special schema, so a schema name may not be
+   Temporary sequences exist in a special schema, so a schema name cannot be
    given when creating a temporary sequence.
    The sequence name must be distinct from the name of any other sequence,
    table, index, or view in the same schema.
@@ -65,7 +65,7 @@ SELECT * FROM <replaceable>name</replaceable>;
 
    to examine the parameters and current state of a sequence.  In particular,
    the <literal>last_value</> field of the sequence shows the last value
-   allocated by any session.  (Of course, this value may be obsolete
+   allocated by any session.  (Of course, this value might be obsolete
    by the time it's printed, if other sessions are actively doing
    <function>nextval</> calls.)
   </para>
@@ -224,13 +224,13 @@ SELECT * FROM <replaceable>name</replaceable>;
    Sequences are based on <type>bigint</> arithmetic, so the range
    cannot exceed the range of an eight-byte integer
    (-9223372036854775808 to 9223372036854775807).  On some older
-   platforms, there may be no compiler support for eight-byte
+   platforms, there might be no compiler support for eight-byte
    integers, in which case sequences use regular <type>integer</>
    arithmetic (range -2147483648 to +2147483647).
   </para>
 
   <para>
-   Unexpected results may be obtained if a <replaceable
+   Unexpected results might be obtained if a <replaceable
    class="parameter">cache</replaceable> setting greater than one is
    used for a sequence object that will be used concurrently by
    multiple sessions.  Each session will allocate and cache successive
@@ -246,7 +246,7 @@ SELECT * FROM <replaceable>name</replaceable>;
 
   <para>
    Furthermore, although multiple sessions are guaranteed to allocate
-   distinct sequence values, the values may be generated out of
+   distinct sequence values, the values might be generated out of
    sequence when all the sessions are considered.  For example, with
    a <replaceable class="parameter">cache</replaceable> setting of 10,
    session A might reserve values 1..10 and return

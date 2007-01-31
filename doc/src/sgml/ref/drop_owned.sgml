@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_owned.sgml,v 1.4 2006/09/18 21:19:29 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_owned.sgml,v 1.5 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -81,7 +81,7 @@ DROP OWNED BY <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCAD
   </para>
 
   <para>
-   Using the <literal>CASCADE</literal> option may make the command
+   Using the <literal>CASCADE</literal> option might make the command
    recurse to objects owned by other users.
   </para>
 

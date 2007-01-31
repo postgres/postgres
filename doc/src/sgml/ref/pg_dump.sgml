@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.92 2006/11/28 22:54:18 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.93 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -120,7 +120,7 @@ PostgreSQL documentation
 
        <para>
         This option is only meaningful for the plain-text format.  For
-        the archive formats, you may specify the option when you
+        the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
@@ -150,7 +150,7 @@ PostgreSQL documentation
 
        <para>
         This option is only meaningful for the plain-text format.  For
-        the archive formats, you may specify the option when you
+        the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
@@ -169,7 +169,7 @@ PostgreSQL documentation
 
        <para>
         This option is only meaningful for the plain-text format.  For
-        the archive formats, you may specify the option when you
+        the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
@@ -188,7 +188,7 @@ PostgreSQL documentation
         an error in reloading a row causes only that row to be lost rather
         than the entire table contents.
         Note that
-        the restore may fail altogether if you have rearranged column order.
+        the restore might fail altogether if you have rearranged column order.
         The <option>-D</option> option is safe against column order changes,
         though even slower.
        </para>
@@ -337,7 +337,7 @@ PostgreSQL documentation
         <para>
          When <option>-n</> is specified, <application>pg_dump</application>
          makes no attempt to dump any other database objects that the selected
-         schema(s) may depend upon. Therefore, there is no guarantee
+         schema(s) might depend upon. Therefore, there is no guarantee
          that the results of a specific-schema dump can be successfully
          restored by themselves into a clean database.
         </para>
@@ -410,7 +410,7 @@ PostgreSQL documentation
 
        <para>
         This option is only meaningful for the plain-text format.  For
-        the archive formats, you may specify the option when you
+        the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
@@ -478,7 +478,7 @@ PostgreSQL documentation
         <para>
          When <option>-t</> is specified, <application>pg_dump</application>
          makes no attempt to dump any other database objects that the selected
-         table(s) may depend upon. Therefore, there is no guarantee
+         table(s) might depend upon. Therefore, there is no guarantee
          that the results of a specific-table dump can be successfully
          restored by themselves into a clean database.
         </para>
@@ -576,7 +576,7 @@ PostgreSQL documentation
 
        <para>
         This option is only meaningful for the plain-text format.  For
-        the archive formats, you may specify the option when you
+        the archive formats, you can specify the option when you
         call <command>pg_restore</command>.
        </para>
       </listitem>
@@ -589,7 +589,7 @@ PostgreSQL documentation
         Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
         instead of <command>ALTER OWNER</> commands to determine object
         ownership.  This makes the dump more standards compatible, but
-        depending on the history of the objects in the dump, may not restore
+        depending on the history of the objects in the dump, might not restore
         properly.  Also, a dump using <command>SET SESSION AUTHORIZATION</>
         will certainly require superuser privileges to restore correctly,
         whereas <command>ALTER OWNER</> requires lesser privileges.
@@ -722,7 +722,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
       <application>pg_dump</application> emits commands to disable
       triggers on user tables before inserting the data and commands
       to re-enable them after the data has been inserted.  If the
-      restore is stopped in the middle, the system catalogs may be
+      restore is stopped in the middle, the system catalogs might be
       left in the wrong state.
      </para>
     </listitem>

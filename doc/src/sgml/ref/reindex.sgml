@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.35 2007/01/05 01:18:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reindex.sgml,v 1.36 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
      <para>
       An index has become corrupted, and no longer contains valid
       data. Although in theory this should never happen, in
-      practice indexes may become corrupted due to software bugs or
+      practice indexes can become corrupted due to software bugs or
       hardware failures.  <command>REINDEX</command> provides a
       recovery method.
      </para>
@@ -130,7 +130,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
     <listitem>
      <para>
       The name of the specific index, table, or database to be
-      reindexed.  Index and table names may be schema-qualified.
+      reindexed.  Index and table names can be schema-qualified.
       Presently, <command>REINDEX DATABASE</> and <command>REINDEX SYSTEM</>
       can only reindex the current database, so their parameter must match
       the current database's name. 
@@ -162,7 +162,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
    Things are more difficult if you need to recover from corruption of
    an index on a system table.  In this case it's important for the
    system to not have used any of the suspect indexes itself.
-   (Indeed, in this sort of scenario you may find that server
+   (Indeed, in this sort of scenario you might find that server
    processes are crashing immediately at start-up, due to reliance on
    the corrupted indexes.)  To recover safely, the server must be started
    with the <option>-P</option> option, which prevents it from using
@@ -191,7 +191,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
    <application>libpq</>-based clients, it is possible to set
    the <envar>PGOPTIONS</envar> environment variable to <literal>-P</>
    before starting the client.  Note that while this method does not
-   require locking out other clients, it may still be wise to prevent
+   require locking out other clients, it might still be wise to prevent
    other users from connecting to the damaged database until repairs
    have been completed.
   </para>
@@ -230,7 +230,7 @@ REINDEX { INDEX | TABLE | DATABASE | SYSTEM } <replaceable class="PARAMETER">nam
    exclusive lock on the parent table, blocking both writes and reads.  The
    subsequent <command>CREATE INDEX</> locks out writes but not reads; since
    the index is not there, no read will attempt to use it, meaning that there
-   will be no blocking but reads may be forced into expensive sequential
+   will be no blocking but reads might be forced into expensive sequential
    scans.  Another important point is that the drop/create approach
    invalidates any cached query plans that use the index, while
    <command>REINDEX</> does not.

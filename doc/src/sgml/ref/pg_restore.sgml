@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.64 2006/11/26 18:11:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.65 2007/01/31 23:26:04 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -233,7 +233,7 @@
        <para>
         Restore elements in <replaceable class="PARAMETER">
         list-file</replaceable> only, and in the
-        order they appear in the file. Lines can be moved and may also
+        order they appear in the file. Lines can be moved and can also
         be commented out by placing a <literal>;</literal> at the
         start of the line.  (See below for examples.)
        </para>
@@ -389,7 +389,7 @@
         Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
         instead of <command>ALTER OWNER</> commands to determine object
         ownership.  This makes the dump more standards compatible, but
-        depending on the history of the objects in the dump, may not restore
+        depending on the history of the objects in the dump, might not restore
         properly.
        </para>
       </listitem>
@@ -402,10 +402,10 @@
         By default, table data is restored even if the creation command
         for the table failed (e.g., because it already exists).
         With this option, data for such a table is skipped.
-        This behavior is useful when the target database may already
-        contain the desired table contents.  For example,
+        This behavior is useful if the target database already
+        contains the desired table contents.  For example,
         auxiliary tables for <productname>PostgreSQL</> extensions
-        such as <productname>PostGIS</> may already be loaded in
+        such as <productname>PostGIS</> might already be loaded in
         the target database; specifying this option prevents duplicate
         or obsolete data from being loaded into them.
        </para>
@@ -549,7 +549,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
       <application>pg_restore</application> emits commands
       to disable triggers on user tables before inserting the data then emits commands to
       re-enable them after the data has been inserted.  If the restore is stopped in the
-      middle, the system catalogs may be left in the wrong state.
+      middle, the system catalogs might be left in the wrong state.
      </para>
     </listitem>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.28 2006/09/16 00:30:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/unlisten.sgml,v 1.29 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -74,7 +74,7 @@ UNLISTEN { <replaceable class="PARAMETER">name</replaceable> | * }
   <title>Notes</title>
 
   <para>
-   You may unlisten something you were not listening for; no warning or error
+   You can unlisten something you were not listening for; no warning or error
    will appear.
   </para>
 

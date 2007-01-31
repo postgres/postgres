@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opfamily.sgml,v 1.1 2007/01/23 05:07:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_opfamily.sgml,v 1.2 2007/01/31 23:26:02 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -202,7 +202,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
 
   <para>
    The <literal>OPERATOR</> and <literal>FUNCTION</>
-   clauses may appear in any order.
+   clauses can appear in any order.
   </para>
 
  </refsect1>
@@ -216,7 +216,7 @@ ALTER OPERATOR FAMILY <replaceable>name</replaceable> USING <replaceable class="
    type(s).  The name of the operator or function occupying the slot is not
    mentioned.  Also, for <literal>DROP FUNCTION</> the type(s) to specify
    are the input data type(s) the function is intended to support; for
-   GIN and GiST indexes this may have nothing to do with the actual input
+   GIN and GiST indexes this might have nothing to do with the actual input
    argument types of the function.
   </para>
 

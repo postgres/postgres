@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.34 2007/01/23 05:07:17 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.35 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -93,7 +93,7 @@ COMMENT ON
      <para>
       The name of the object to be commented.  Names of tables,
       aggregates, domains, functions, indexes, operators, operator classes,
-      operator families, sequences, types, and views may be schema-qualified.
+      operator families, sequences, types, and views can be schema-qualified.
      </para>
     </listitem>
    </varlistentry>

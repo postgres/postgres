@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.71 2007/01/22 01:35:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.72 2007/01/31 23:26:03 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -49,7 +49,7 @@ CREATE [ OR REPLACE ] FUNCTION
    specified schema.  Otherwise it is created in the current schema.
    The name of the new function must not match any existing function
    with the same argument types in the same schema.  However,
-   functions of different argument types may share a name (this is
+   functions of different argument types can share a name (this is
    called <firstterm>overloading</>).
   </para>
 
@@ -125,11 +125,11 @@ CREATE [ OR REPLACE ] FUNCTION
      <listitem>
       <para>
        The data type(s) of the function's arguments (optionally 
-       schema-qualified), if any. The argument types may be base, composite,
-       or domain types, or may reference the type of a table column.
+       schema-qualified), if any. The argument types can be base, composite,
+       or domain types, or can reference the type of a table column.
       </para>
       <para>
-       Depending on the implementation language it may also be allowed
+       Depending on the implementation language it might also be allowed
        to specify <quote>pseudotypes</> such as <type>cstring</>.
        Pseudotypes indicate that the actual argument type is either
        incompletely specified, or outside the set of ordinary SQL data types.
@@ -151,16 +151,16 @@ CREATE [ OR REPLACE ] FUNCTION
      <listitem>
       <para>
        The return data type (optionally schema-qualified). The return type 
-       may be a base, composite, or domain type,
-       or may reference the type of a table column.
-       Depending on the implementation language it may also be allowed
+       can be a base, composite, or domain type,
+       or can reference the type of a table column.
+       Depending on the implementation language it might also be allowed
        to specify <quote>pseudotypes</> such as <type>cstring</>.
        If the function is not supposed to return a value, specify
        <type>void</> as the return type.
       </para>
       <para>
        When there are <literal>OUT</> or <literal>INOUT</> parameters,
-       the <literal>RETURNS</> clause may be omitted.  If present, it
+       the <literal>RETURNS</> clause can be omitted.  If present, it
        must agree with the result type implied by the output parameters:
        <literal>RECORD</> if there are multiple output parameters, or
        the same type as the single output parameter.
@@ -185,10 +185,10 @@ CREATE [ OR REPLACE ] FUNCTION
      <listitem>
       <para>
        The name of the language that the function is implemented in.
-       May be <literal>SQL</literal>, <literal>C</literal>,
+       Can be <literal>SQL</literal>, <literal>C</literal>,
        <literal>internal</literal>, or the name of a user-defined
        procedural language.  For backward compatibility,
-       the name may be enclosed by single quotes.
+       the name can be enclosed by single quotes.
       </para>
      </listitem>
     </varlistentry>
@@ -202,7 +202,7 @@ CREATE [ OR REPLACE ] FUNCTION
       <para>
        These attributes inform the query optimizer about the behavior
        of the function.  At most one choice
-       may be specified.  If none of these appear,
+       can be specified.  If none of these appear,
        <literal>VOLATILE</literal> is the default assumption.
       </para>
 
@@ -326,7 +326,7 @@ CREATE [ OR REPLACE ] FUNCTION
      <listitem>
       <para>
        A string constant defining the function; the meaning depends on the
-       language.  It may be an internal function name, the path to an
+       language.  It can be an internal function name, the path to an
        object file, an SQL command, or text in a procedural language.
       </para>
      </listitem>
@@ -357,7 +357,7 @@ CREATE [ OR REPLACE ] FUNCTION
      <listitem>
       <para>
        The historical way to specify optional pieces of information
-       about the function.  The following attributes may appear here:
+       about the function.  The following attributes can appear here:
 
       <variablelist>
        <varlistentry>

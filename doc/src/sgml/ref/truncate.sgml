@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.21 2006/09/16 00:30:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.22 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -75,7 +75,7 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
   <title>Notes</title>
 
   <para>
-   Only the owner of a table may <command>TRUNCATE</> it.
+   Only the owner of a table can <command>TRUNCATE</> it.
   </para>
 
   <para>

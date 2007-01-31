@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.38 2007/01/06 19:40:00 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.39 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -69,7 +69,7 @@ PostgreSQL documentation
    <command>initdb</command> must be run as the user that will own the
    server process, because the server needs to have access to the
    files and directories that <command>initdb</command> creates.
-   Since the server may not be run as root, you must not run
+   Since the server cannot be run as root, you must not run
    <command>initdb</command> as root either.  (It will in fact refuse
    to do so.)
   </para>
@@ -265,7 +265,7 @@ PostgreSQL documentation
        <para>
 	By default, when <command>initdb</command>
 	determines that an error prevented it from completely creating the database
-	cluster, it removes any files it may have created before discovering
+	cluster, it removes any files it might have created before discovering
 	that it can't finish the job. This option inhibits tidying-up and is
 	thus useful for debugging.
        </para>
@@ -286,7 +286,7 @@ PostgreSQL documentation
     <listitem>
      <para>
       Specifies the directory where the database cluster is to be
-      stored; may be overridden using the <option>-D</option> option.
+      stored; can be overridden using the <option>-D</option> option.
      </para>
     </listitem>
    </varlistentry>

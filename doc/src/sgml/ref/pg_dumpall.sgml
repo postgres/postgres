@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.63 2007/01/25 15:08:06 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.64 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -106,7 +106,7 @@ PostgreSQL documentation
         than <command>COPY</command>).  This will make restoration very slow;
         it is mainly useful for making dumps that can be loaded into
         non-<productname>PostgreSQL</productname> databases.  Note that
-        the restore may fail altogether if you have rearranged column order.
+        the restore might fail altogether if you have rearranged column order.
         The <option>-D</option> option is safer, though even slower.
        </para>
       </listitem>
@@ -309,7 +309,7 @@ PostgreSQL documentation
         Output SQL-standard <command>SET SESSION AUTHORIZATION</> commands
         instead of <command>ALTER OWNER</> commands to determine object
         ownership.  This makes the dump more standards compatible, but
-        depending on the history of the objects in the dump, may not restore
+        depending on the history of the objects in the dump, might not restore
         properly.
        </para>
       </listitem>

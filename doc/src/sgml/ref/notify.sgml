@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.28 2006/09/16 00:30:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.29 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -90,7 +90,7 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
   <para>
    <command>NOTIFY</command> behaves like Unix signals in one important
    respect: if the same notification name is signaled multiple times in quick
-   succession, recipients may get only one notification event for several executions
+   succession, recipients might get only one notification event for several executions
    of <command>NOTIFY</command>.  So it is a bad idea to depend on the number
    of notifications received.  Instead, use <command>NOTIFY</command> to wake up
    applications that need to pay attention to something, and use a database

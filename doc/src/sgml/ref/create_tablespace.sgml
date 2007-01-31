@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_tablespace.sgml,v 1.7 2006/10/31 01:52:31 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tablespace.sgml,v 1.8 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -36,7 +36,7 @@ CREATE TABLESPACE <replaceable class="parameter">tablespacename</replaceable> [ 
   <para>
    A tablespace allows superusers to define an alternative location on
    the file system where the data files containing database objects
-   (such as tables and indexes) may reside.
+   (such as tables and indexes) can reside.
   </para>
 
   <para>
@@ -69,7 +69,7 @@ CREATE TABLESPACE <replaceable class="parameter">tablespacename</replaceable> [ 
        <para>
         The name of the user who will own the tablespace.  If omitted,
         defaults to the user executing the command.  Only superusers
-        may create tablespaces, but they can assign ownership of tablespaces
+        can create tablespaces, but they can assign ownership of tablespaces
         to non-superusers.
        </para>
       </listitem>

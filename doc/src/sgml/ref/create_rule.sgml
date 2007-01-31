@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.48 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.49 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -136,9 +136,9 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
     <listitem>
      <para>
       Any <acronym>SQL</acronym> conditional expression (returning
-      <type>boolean</type>).  The condition expression may not refer
+      <type>boolean</type>).  The condition expression cannot refer
       to any tables except <literal>NEW</> and <literal>OLD</>, and
-      may not contain aggregate functions.
+      can not contain aggregate functions.
      </para>
     </listitem>
    </varlistentry>
@@ -186,7 +186,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
   <para>
    Within <replaceable class="parameter">condition</replaceable> and
    <replaceable class="parameter">command</replaceable>, the special
-   table names <literal>NEW</literal> and <literal>OLD</literal> may
+   table names <literal>NEW</literal> and <literal>OLD</literal> can
    be used to refer to values in the referenced table.
    <literal>NEW</literal> is valid in <literal>ON INSERT</literal> and
    <literal>ON UPDATE</literal> rules to refer to the new row being
@@ -257,7 +257,7 @@ UPDATE mytable SET name = 'foo' WHERE id = 42;
    one <command>NOTIFY</command> event will be sent during the
    <command>UPDATE</command>, whether or not there are any rows that
    match the condition <literal>id = 42</literal>.  This is an
-   implementation restriction that may be fixed in future releases.
+   implementation restriction that might be fixed in future releases.
   </para>
  </refsect1>
 

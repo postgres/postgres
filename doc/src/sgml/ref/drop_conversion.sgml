@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.10 2006/09/16 00:30:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/drop_conversion.sgml,v 1.11 2007/01/31 23:26:03 momjian Exp $ -->
 
 <refentry id="SQL-DROPCONVERSION">
  <refmeta>
@@ -49,7 +49,7 @@ DROP CONVERSION [ IF EXISTS ] <replaceable>name</replaceable> [ CASCADE | RESTRI
 
      <listitem>
       <para>
-       The name of the conversion. The conversion name may be
+       The name of the conversion. The conversion name can be
        schema-qualified.
       </para>
      </listitem>

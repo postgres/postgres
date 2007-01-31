@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.23 2006/09/16 00:30:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.24 2007/01/31 23:26:03 momjian Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -44,7 +44,7 @@ SELECT CAST(42 AS text);
   </para>
 
   <para>
-   Two types may be <firstterm>binary compatible</firstterm>, which
+   Two types can be <firstterm>binary compatible</firstterm>, which
    means that they can be converted into one another <quote>for
    free</quote> without invoking any function.  This requires that
    corresponding values use the same internal representation.  For
@@ -145,7 +145,7 @@ SELECT 'The time is ' || CAST(now() AS text);
 
      <listitem>
       <para>
-       The function used to perform the cast.  The function name may
+       The function used to perform the cast.  The function name can
        be schema-qualified.  If it is not, the function will be looked
        up in the schema search path.  The function's result data type must
        match the target type of the cast.   Its arguments are discussed below.
@@ -169,7 +169,7 @@ SELECT 'The time is ' || CAST(now() AS text);
 
      <listitem>
       <para>
-       Indicates that the cast may be invoked implicitly in assignment
+       Indicates that the cast can be invoked implicitly in assignment
        contexts.
       </para>
      </listitem>
@@ -180,14 +180,14 @@ SELECT 'The time is ' || CAST(now() AS text);
 
      <listitem>
       <para>
-       Indicates that the cast may be invoked implicitly in any context.
+       Indicates that the cast can be invoked implicitly in any context.
       </para>
      </listitem>
     </varlistentry>
    </variablelist>
 
   <para>
-   Cast implementation functions may have one to three arguments.
+   Cast implementation functions can have one to three arguments.
    The first argument type must be identical to the cast's source type.
    The second argument,
    if present, must be type <type>integer</>; it receives the type

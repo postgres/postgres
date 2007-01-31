@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.45 2006/10/23 18:10:32 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.46 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -44,7 +44,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
    completed (after constraints are checked and the
    <command>INSERT</command>, <command>UPDATE</command>, or
    <command>DELETE</command> has completed). If the trigger fires
-   before the event, the trigger may skip the operation for the
+   before the event, the trigger can skip the operation for the
    current row, or change the row being inserted (for
    <command>INSERT</command> and <command>UPDATE</command> operations
    only). If the trigger fires after the event, all changes, including
@@ -160,10 +160,10 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       An optional comma-separated list of arguments to be provided to
       the function when the trigger is executed.  The arguments are
       literal string constants.  Simple names and numeric constants
-      may be written here, too, but they will all be converted to
+      can be written here, too, but they will all be converted to
       strings.  Please check the description of the implementation
       language of the trigger function about how the trigger arguments
-      are accessible within the function; it may be different from
+      are accessible within the function; it might be different from
       normal function arguments.
      </para>
     </listitem>

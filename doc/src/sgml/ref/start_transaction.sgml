@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.15 2006/09/16 00:30:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/start_transaction.sgml,v 1.16 2007/01/31 23:26:04 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -61,7 +61,7 @@ where <replaceable class="parameter">transaction_mode</replaceable> is one of:
    issuing a <command>COMMIT</command> after each command that does not
    follow <command>START TRANSACTION</> (or <command>BEGIN</command>),
    and it is therefore often called <quote>autocommit</>.
-   Other relational database systems may offer an autocommit feature
+   Other relational database systems might offer an autocommit feature
    as a convenience.
   </para>
 

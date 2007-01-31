@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.28 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.29 2007/01/31 23:26:03 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -146,7 +146,7 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ]
     <listitem>
      <para>
       An expression to be computed and returned by the <command>DELETE</>
-      command after each row is deleted.  The expression may use any
+      command after each row is deleted.  The expression can use any
       column names of the <replaceable class="PARAMETER">table</replaceable>
       or table(s) listed in <literal>USING</>.
       Write <literal>*</> to return all columns.
@@ -197,7 +197,7 @@ DELETE <replaceable class="parameter">count</replaceable>
    <productname>PostgreSQL</productname> lets you reference columns of
    other tables in the <literal>WHERE</> condition by specifying the
    other tables in the <literal>USING</literal> clause.  For example,
-   to delete all films produced by a given producer, one might do
+   to delete all films produced by a given producer, one can do
 <programlisting>
 DELETE FROM films USING producers
   WHERE producer_id = producers.id AND producers.name = 'foo';
