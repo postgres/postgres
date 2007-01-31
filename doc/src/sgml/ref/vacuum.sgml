@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.45 2006/12/27 14:55:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.46 2007/01/31 04:13:22 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -167,6 +167,9 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
     most of the rows in a table and would like the table to physically shrink
     to occupy less disk space.  <command>VACUUM FULL</command> will usually
     shrink the table more than a plain <command>VACUUM</command> would.
+    The <option>FULL</option> option does not shrink indexes; a periodic
+    <command>REINDEX</> is still recommended.  In fact, it is often faster
+    to drop all indexes, <command>VACUUM FULL</>, and recreate the indexes.
    </para>
 
    <para>
