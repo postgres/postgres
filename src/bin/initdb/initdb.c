@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.129 2007/01/20 17:04:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.130 2007/01/31 18:52:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1041,10 +1041,26 @@ check_input(char *path)
 {
 	struct stat statbuf;
 
-	if (stat(path, &statbuf) != 0 || !S_ISREG(statbuf.st_mode))
+	if (stat(path, &statbuf) != 0)
+	{
+		if (errno == ENOENT)
+			fprintf(stderr,
+					_("%s: file \"%s\" does not exist\n"
+					  "This means you have a corrupted installation or identified\n"
+					  "the wrong directory with the invocation option -L.\n"),
+					progname, path);
+		else
+			fprintf(stderr,
+					_("%s: could not access file \"%s\": %s\n"
+					  "This may mean you have a corrupted installation or identified\n"
+					  "the wrong directory with the invocation option -L.\n"),
+					progname, path, strerror(errno));
+		exit(1);
+	}
+	if (!S_ISREG(statbuf.st_mode))
 	{
 		fprintf(stderr,
-				_("%s: file \"%s\" does not exist\n"
+				_("%s: file \"%s\" is not a regular file\n"
 			   "This means you have a corrupted installation or identified\n"
 				  "the wrong directory with the invocation option -L.\n"),
 				progname, path);
