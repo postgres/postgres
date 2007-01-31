@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.64 2007/01/19 16:42:24 alvherre Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.65 2007/01/31 19:38:50 neilc Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -117,30 +117,29 @@ endif
 
 # And finally some extra C modules...
 
-all: all-spi
+all: all-spi tablespace-setup
 
 .PHONY: all-spi
 all-spi:
 	$(MAKE) -C $(contribdir)/spi refint$(DLSUFFIX) autoinc$(DLSUFFIX)
 
+# Tablespace setup
+.PHONY: tablespace-setup
+tablespace-setup:
+	-rm -rf ./testtablespace
+	mkdir ./testtablespace
 
 ##
 ## Run tests
 ##
 
 check: all
-	-rm -rf ./testtablespace
-	mkdir ./testtablespace
 	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --srcdir=$(abs_srcdir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
 
 installcheck: all
-	-rm -rf ./testtablespace
-	mkdir ./testtablespace
 	./pg_regress --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule --srcdir=$(abs_srcdir) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
 
 installcheck-parallel: all
-	-rm -rf ./testtablespace
-	mkdir ./testtablespace
 	./pg_regress --psqldir=$(PSQLDIR) --schedule=$(srcdir)/parallel_schedule --srcdir=$(abs_srcdir) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
 
 
@@ -150,10 +149,10 @@ runcheck: check
 runtest: installcheck
 runtest-parallel: installcheck-parallel
 
-bigtest:
+bigtest: all
 	./pg_regress --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule --srcdir=$(abs_srcdir) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE) numeric_big 
 
-bigcheck:
+bigcheck: all
 	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --srcdir=$(abs_srcdir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE) numeric_big
 
 
