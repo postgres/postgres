@@ -1,20 +1,26 @@
-# translation of pg_config-ro.po to Romanian
-# translation of pg_config.po to Romanian
-# Alin Vaida <alin.vaida@gmail.com>, 2004, 2005.
+# translation of pg_config-ro.po to Românã
 #
+# Alin Vaida <alin.vaida@gmail.com>, 2004, 2005, 2006.
 msgid ""
 msgstr ""
-"Project-Id-Version: pg_config-ro-8.0\n"
-"POT-Creation-Date: 2005-01-16 01:10+0000\n"
-"PO-Revision-Date: 2005-01-16 10:53+0200\n"
+"Project-Id-Version: pg_config-ro\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2006-01-24 15:25+0100\n"
+"PO-Revision-Date: 2006-02-05 19:10+0200\n"
 "Last-Translator: Alin Vaida <alin.vaida@gmail.com>\n"
-"Language-Team: Romanian <translators@postgresql.org>\n"
+"Language-Team: Românã <en@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-2\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: KBabel 1.10\n"
+"X-Generator: KBabel 1.11.2\n"
 
-#: pg_config.c:36
+#: pg_config.c:241 pg_config.c:257 pg_config.c:273 pg_config.c:289
+#: pg_config.c:305 pg_config.c:321 pg_config.c:337 pg_config.c:353
+#, c-format
+msgid "not recorded\n"
+msgstr "ne-înregistrat\n"
+
+#: pg_config.c:408
 #, c-format
 msgid ""
 "\n"
@@ -25,138 +31,224 @@ msgstr ""
 "%s: furnizeazã informaþii despre versiunea de PostgreSQL instalatã\n"
 "\n"
 
-#: pg_config.c:37
+#: pg_config.c:409
+#, c-format
 msgid "Usage:\n"
 msgstr "Utilizare:\n"
 
-#: pg_config.c:38
+#: pg_config.c:410
 #, c-format
 msgid ""
-"  %s OPTION...\n"
+"  %s [ OPTION ... ]\n"
 "\n"
 msgstr ""
-"  %s OPÞIUNE...\n"
+"  %s [ OPÞIUNE... ]\n"
 "\n"
 
-#: pg_config.c:39
+#: pg_config.c:411
+#, c-format
 msgid "Options:\n"
 msgstr "Opþiuni:\n"
 
-#: pg_config.c:40
+#: pg_config.c:412
+#, c-format
 msgid "  --bindir              show location of user executables\n"
 msgstr "  --bindir              afiºeazã locaþia fiºierelor executabile\n"
 
-#: pg_config.c:41
+#: pg_config.c:413
+#, c-format
+msgid "  --docdir              show location of documentation files\n"
+msgstr "  --docdir              afiºeazã locaþia documentaþiei\n"
+
+#: pg_config.c:414
+#, c-format
 msgid ""
 "  --includedir          show location of C header files of the client\n"
 "                        interfaces\n"
-msgstr "  --includedir          afiºeazã locaþia fiºierelor header C ale interfeþelor client\n"
+msgstr ""
+"  --includedir          afiºeazã locaþia fiºierelor header C ale "
+"interfeþelor client\n"
 
-#: pg_config.c:43
+#: pg_config.c:416
+#, c-format
+msgid "  --pkgincludedir       show location of other C header files\n"
+msgstr "  --pkgincludedir       afiºeazã locaþia celorlalte fiºiere header C\n"
+
+#: pg_config.c:417
+#, c-format
 msgid "  --includedir-server   show location of C header files for the server\n"
 msgstr "  --includedir-server   afiºeazã locaþia fiºierelor header C pentru server\n"
 
-#: pg_config.c:44
+#: pg_config.c:418
+#, c-format
 msgid "  --libdir              show location of object code libraries\n"
 msgstr "  --libdir              afiºeazã locaþia bibliotecilor de cod obiect\n"
 
-#: pg_config.c:45
+#: pg_config.c:419
+#, c-format
 msgid "  --pkglibdir           show location of dynamically loadable modules\n"
 msgstr "  --pkglibdir           afiºeazã locaþia modulelor încãrcabile dinamic\n"
 
-#: pg_config.c:46
-msgid "  --pgxs                show location of extension makefile\n"
-msgstr "  --pgxs                afiºeazã locaþia fiºierului makefile pentru extensii\n"
+#: pg_config.c:420
+#, c-format
+msgid "  --localedir           show location of locale support files\n"
+msgstr "  --localedir           afiºeazã locaþia fiºierelor de suport pentru localizare\n"
 
-#: pg_config.c:47
+#: pg_config.c:421
+#, c-format
+msgid "  --mandir              show location of manual pages\n"
+msgstr "  --mandir              afiºeazã locaþia paginilor de manual\n"
+
+#: pg_config.c:422
+#, c-format
+msgid ""
+"  --sharedir            show location of architecture-independent support "
+"files\n"
+msgstr "  --sharedir            afiºeazã locaþia fiºierelor de suport independent de arhitecturã\n"
+
+#: pg_config.c:423
+#, c-format
+msgid "  --sysconfdir          show location of system-wide configuration files\n"
+msgstr "  --sysconfdir          afiºeazã locaþia fiºierelor de configurare pentru întreg sistemul\n"
+
+#: pg_config.c:424
+#, c-format
+msgid "  --pgxs                show location of extension makefile\n"
+msgstr ""
+"  --pgxs                afiºeazã locaþia fiºierului makefile pentru "
+"extensii\n"
+
+#: pg_config.c:425
+#, c-format
 msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           afiºeazã opþiunile cu care a fost rulat scriptul \"configure\"\n"
+"  --configure           afiºeazã opþiunile cu care a fost rulat scriptul "
+"\"configure\"\n"
 "                        la compilarea PostgreSQL\n"
 
-#: pg_config.c:49
-msgid "  --version             show the PostgreSQL version, then exit\n"
-msgstr "  --version             afiºeazã versiunea PostgreSQL, apoi iese\n"
+#: pg_config.c:427
+#, c-format
+msgid "  --cc                  show CC value used when PostgreSQL was built\n"
+msgstr "  --cc                  afiºeazã valoarea CC folositã la compilarea PostgreSQL\n"
 
-#: pg_config.c:50
+#: pg_config.c:428
+#, c-format
+msgid "  --cppflags            show CPPFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cppflags            afiºeazã valoarea CPPFLAGS folositã la compilarea PostgreSQL\n"
+
+#: pg_config.c:429
+#, c-format
+msgid "  --cflags              show CFLAGS value used when PostgreSQL was built\n"
+msgstr "  --cflags              afiºeazã valoarea CFLAGS folositã la compilarea PostgreSQL\n"
+
+#: pg_config.c:430
+#, c-format
+msgid "  --cflags_sl           show CFLAGS_SL value used when PostgreSQL was built\n"
+msgstr "  --cflags_sl           afiºeazã valoarea CFLAGS_SL folositã la compilarea PostgreSQL\n"
+
+#: pg_config.c:431
+#, c-format
+msgid "  --ldflags             show LDFLAGS value used when PostgreSQL was built\n"
+msgstr "  --ldflags             afiºeazã valoarea LDFLAGS folositã la compilarea PostgreSQL\n"
+
+#: pg_config.c:432
+#, c-format
 msgid ""
-"  --help                show this help, then exit\n"
-"\n"
+"  --ldflags_sl          show LDFLAGS_SL value used when PostgreSQL was "
+"built\n"
+msgstr "  --ldflags_sl          afiºeazã valoarea LDFLAGS_SL folositã la compilarea PostgreSQL\n"
+
+#: pg_config.c:433
+#, c-format
+msgid "  --libs                show LIBS value used when PostgreSQL was built\n"
+msgstr "  --libs                afiºeazã valoarea LIBS folositã la compilarea PostgreSQL\n"
+
+#: pg_config.c:434
+#, c-format
+msgid "  --version             show the PostgreSQL version\n"
+msgstr "  --version             afiºeazã versiunea PostgreSQL\n"
+
+#: pg_config.c:435
+#, c-format
+msgid "  --help                show this help, then exit\n"
 msgstr ""
 "  --help                afiºeazã acest ajutor, apoi iese\n"
 "\n"
 
-#: pg_config.c:51
-msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
-msgstr "Raportaþi erorile la <pgsql-bugs@postgresql.org>.\n"
-
-#: pg_config.c:57
+#: pg_config.c:436
 #, c-format
 msgid ""
 "\n"
-"Try \"%s --help\" for more information\n"
+"With no arguments, all known items are shown.\n"
+"\n"
 msgstr ""
 "\n"
-"Încercaþi \"%s --help\" pentru mai multe informaþii.\n"
+"Fãrã argumente, afiºeazã toate elementele cunoscute\n"
+"\n"
 
-#: pg_config.c:75
+#: pg_config.c:437
 #, c-format
-msgid "%s: argument required\n"
-msgstr "%s: argument necesar\n"
+msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
+msgstr "Raportaþi erorile la <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_config.c:104
+#: pg_config.c:443
 #, c-format
-msgid "%s: invalid argument: %s\n"
-msgstr "%s: argument incorect: %s\n"
+msgid "Try \"%s --help\" for more information.\n"
+msgstr "Încercaþi \"%s --help\" pentru mai multe informaþii.\n"
 
-#: pg_config.c:113
+#: pg_config.c:482
 #, c-format
 msgid "%s: could not find own executable\n"
 msgstr "%s: imposibil de gãsit propriul executabil\n"
 
-#: ../../port/exec.c:194 ../../port/exec.c:308 ../../port/exec.c:351
+#: pg_config.c:505
+#, c-format
+msgid "%s: invalid argument: %s\n"
+msgstr "%s: argument incorect: %s\n"
+
+#: ../../port/exec.c:193 ../../port/exec.c:307 ../../port/exec.c:350
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "imposibil de identificat directorul curent: %s"
 
-#: ../../port/exec.c:213
+#: ../../port/exec.c:212
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "binar incorect \"%s\""
 
-#: ../../port/exec.c:262
+#: ../../port/exec.c:261
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "imposibil de citit binar \"%s\""
 
-#: ../../port/exec.c:269
+#: ../../port/exec.c:268
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "imposibil de gãsit \"%s\" pentru executare"
 
-#: ../../port/exec.c:324 ../../port/exec.c:360
+#: ../../port/exec.c:323 ../../port/exec.c:359
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "imposibil de schimbat directorul în \"%s\""
 
-#: ../../port/exec.c:339
+#: ../../port/exec.c:338
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "imposibil de citit legãtura simbolicã \"%s\""
 
-#: ../../port/exec.c:587
+#: ../../port/exec.c:584
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "procesul fiu a ieºit cu codul %d"
 
-#: ../../port/exec.c:590
+#: ../../port/exec.c:587
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "procesul fiu a fost terminat cu semnalul %d"
 
-#: ../../port/exec.c:593
+#: ../../port/exec.c:590
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "procesul fiu a ieºit cu starea nerecunoscutã %d"

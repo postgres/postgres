@@ -1,24 +1,25 @@
+# SOME DESCRIPTIVE TITLE.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: Postgresql 7.4\n"
+"Project-Id-Version: Farsi\n"
 "POT-Creation-Date: 2004-09-06 23:13+0100\n"
-"PO-Revision-Date: 2004-09-15 09:58+0330\n"
-"Last-Translator: ameen <ameen78101@yahoo.com>\n"
-"Language-Team: Imen Afzar Sahand <postgresql@imenafzar.net>\n"
+"PO-Revision-Date: 2004-08-25 10:53-0800\n"
+"Last-Translator: Javad <salehij@yahoo.com>\n"
+"Language-Team: Imen Afzar Sahand <info@imenafzar.net>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: command.c:154
 msgid "Warning: This syntax is deprecated.\n"
-msgstr "اخطار : شكل دستور غيرقابل قبول است .\n"
+msgstr "اخطار : شکل دستور غیرقابل قبول است .\n"
 
 #: command.c:161
 #, c-format
 msgid "Invalid command \\%s. Try \\? for help.\n"
-msgstr "دستور \\%s نادرست است جهت كمك از \\? استفاده كنيد.\n"
+msgstr "دستور \\%s نادرست است جهت کمک از \\? استفاده کنید.\n"
 
 #: command.c:163
 #, c-format
@@ -28,12 +29,12 @@ msgstr "دستور \\%s نادرست است\n"
 #: command.c:290
 #, c-format
 msgid "could not get home directory: %s\n"
-msgstr "كشوي خانگي :%s قابل دستيابي نيست\n"
+msgstr "کشوی خانگی :%s قابل دستیابی نیست\n"
 
 #: command.c:306
 #, c-format
 msgid "\\%s: could not change directory to \"%s\": %s\n"
-msgstr "\\%s:دايركتوري را نمي‌توان به \"%s\" تغيير داد:%s\n"
+msgstr "\\%s:دایرکتوری را نمی‌توان به \"%s\" تغییر داد:%s\n"
 
 #: command.c:411
 #: command.c:769
@@ -43,7 +44,7 @@ msgstr "بافر درخواست وجود ندارد\n"
 #: command.c:468
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
-msgstr "نام كدينگ %s نامعتبر است و يا روند تبديل وجود ندارد\n"
+msgstr "نام کدینگ %s نامعتبر است و یا روند تبدیل وجود ندارد\n"
 
 #: command.c:530
 #: command.c:561
@@ -54,7 +55,7 @@ msgstr "نام كدينگ %s نامعتبر است و يا روند تبديل �
 #: command.c:778
 #, c-format
 msgid "\\%s: missing required argument\n"
-msgstr "\\%s : آرگومان مورد نياز جاافتاده است\n"
+msgstr "\\%s : آرگومان مورد نیاز جاافتاده است\n"
 
 #: command.c:616
 msgid "Query buffer is empty."
@@ -62,12 +63,12 @@ msgstr "بافر درخواست وجود ندارد."
 
 #: command.c:649
 msgid "Query buffer reset (cleared)."
-msgstr "بافر درخواست خالي شد."
+msgstr "بافر درخواست خالی شد."
 
 #: command.c:660
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
-msgstr "ليست دستورات قبلي(history) در فايل \"%s\" نوشته شد.\n"
+msgstr "لیست دستورات قبلی(history) در فایل \"%s\" نوشته شد.\n"
 
 #: command.c:692
 #: command.c:1149
@@ -80,7 +81,7 @@ msgstr "ليست دستورات قبلي(history) در فايل \"%s\" نوشت�
 #: mainloop.c:78
 #: mainloop.c:338
 msgid "out of memory\n"
-msgstr "كمبود حافظه اصلي\n"
+msgstr "کمبود حافظه اصلی\n"
 
 #: command.c:707
 #: command.c:754
@@ -90,11 +91,11 @@ msgstr "\\%s:خطا\n"
 
 #: command.c:736
 msgid "Timing is on."
-msgstr "زمانبندي فعال است."
+msgstr "زمانبندی فعال است."
 
 #: command.c:738
 msgid "Timing is off."
-msgstr "زمانبندي غيرفعال است."
+msgstr "زمانبندی غیرفعال است."
 
 #: command.c:793
 #: command.c:813
@@ -117,13 +118,13 @@ msgstr "%s: %s\n"
 #: command.c:879
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
-msgstr "\\%s:آرگومان اضافي\"%s\"در نظر گرفته نشد\n"
+msgstr "\\%s:آرگومان اضافی\"%s\"در نظر گرفته نشد\n"
 
 #: command.c:972
 #: command.c:1000
 #: command.c:1122
 msgid "parse error at the end of line\n"
-msgstr "خطاي پارس كردن در انتهاي خط\n"
+msgstr "خطای پارس کردن در انتهای خط\n"
 
 #: command.c:1351
 #: command.c:1375
@@ -143,7 +144,7 @@ msgstr "%s"
 
 #: command.c:1393
 msgid "Previous connection kept\n"
-msgstr "اتصال قبلي نگهداشته شد\n"
+msgstr "اتصال قبلی نگهداشته شد\n"
 
 #: command.c:1405
 #, c-format
@@ -153,40 +154,40 @@ msgstr "\\اتصال به : %s"
 #: command.c:1417
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
-msgstr "هم اكنون به بانك اطلاعاتي \"%s\" متصل هستيد.\n"
+msgstr "هم اکنون به بانک اطلاعاتی \"%s\" متصل هستید.\n"
 
 #: command.c:1419
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
-msgstr "هم‌اكنون به عنوان كاربر جديد \"%s\" متصل هستيد.\n"
+msgstr "هم‌اکنون به عنوان کاربر جدید \"%s\" متصل هستید.\n"
 
 #: command.c:1422
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
-msgstr "هم‌اكنون به بانك اطلاعاتي \"%s\" با كاربر\"%s\" متصل هستيد.\n"
+msgstr "هم‌اکنون به بانک اطلاعاتی \"%s\" با کاربر\"%s\" متصل هستید.\n"
 
 #: command.c:1544
 #, c-format
 msgid "could not start editor \"%s\"\n"
-msgstr "ويرايشگر \"%s\" قابل راه‌اندازي نيست\n"
+msgstr "ویرایشگر \"%s\" قابل راه‌اندازی نیست\n"
 
 #: command.c:1546
 msgid "could not start /bin/sh\n"
-msgstr "/bin/sh اجرا نمي‌شود\n"
+msgstr "/bin/sh اجرا نمی‌شود\n"
 
 #: command.c:1591
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
-msgstr "فايل موقتي \"%s\" را نمي‌توان باز كرد:%s\n"
+msgstr "فایل موقتی \"%s\" را نمی‌توان باز کرد:%s\n"
 
 #: command.c:1783
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
-msgstr "\\pset:فرمت‌هاي مجاز عبارتند از:unaligned, aligned, html, latex\n"
+msgstr "\\pset:فرمت‌های مجاز عبارتند از:unaligned, aligned, html, latex\n"
 
 #: command.c:1788
 #, c-format
 msgid "Output format is %s.\n"
-msgstr "فرمت خروجي عبارت است از %s.\n"
+msgstr "فرمت خروجی عبارت است از %s.\n"
 
 #: command.c:1798
 #, c-format
@@ -195,21 +196,21 @@ msgstr "Border style is %d.\n"
 
 #: command.c:1807
 msgid "Expanded display is on.\n"
-msgstr "نمايش مبسوط فعال است.\n"
+msgstr "نمایش مبسوط فعال است.\n"
 
 #: command.c:1808
 msgid "Expanded display is off.\n"
-msgstr "نمايش مبسوط غيرفعال است.\n"
+msgstr "نمایش مبسوط غیرفعال است.\n"
 
 #: command.c:1820
 #, c-format
 msgid "Null display is \"%s\".\n"
-msgstr "نمايش تهي عبارتست از\"%s\".\n"
+msgstr "نمایش تهی عبارتست از\"%s\".\n"
 
 #: command.c:1832
 #, c-format
 msgid "Field separator is \"%s\".\n"
-msgstr "جداكننده فيلدها \"%s\" است.\n"
+msgstr "جداکننده فیلدها \"%s\" است.\n"
 
 #: command.c:1846
 msgid "Record separator is <newline>."
@@ -218,7 +219,7 @@ msgstr "چدا"
 #: command.c:1848
 #, c-format
 msgid "Record separator is \"%s\".\n"
-msgstr "جدا كننده ركورد \"%s\" است.\n"
+msgstr "جدا کننده رکورد \"%s\" است.\n"
 
 #: command.c:1859
 msgid "Showing only tuples."
@@ -235,7 +236,7 @@ msgstr "عنوان \"%s\" است.\n"
 
 #: command.c:1879
 msgid "Title is unset.\n"
-msgstr "عنوان غير فعال شده است.\n"
+msgstr "عنوان غیر فعال شده است.\n"
 
 #: command.c:1895
 #, c-format
@@ -248,23 +249,23 @@ msgstr "Table attributes unset.\n"
 
 #: command.c:1913
 msgid "Pager is used for long output."
-msgstr "صفحه براي خروجي دراز استفاده مي شود."
+msgstr "صفحه برای خروجی دراز استفاده می شود."
 
 #: command.c:1915
 msgid "Pager is always used."
-msgstr "پيجر هميشه در حال استفاده مي باشد."
+msgstr "پیجر همیشه در حال استفاده می باشد."
 
 #: command.c:1917
 msgid "Pager usage is off."
-msgstr "استفاده از پيجر غير فعال است."
+msgstr "استفاده از پیجر غیر فعال است."
 
 #: command.c:1928
 msgid "Default footer is on."
-msgstr "پاورقي پيش فرض فعال است."
+msgstr "پاورقی پیش فرض فعال است."
 
 #: command.c:1930
 msgid "Default footer is off."
-msgstr "پاورقي پيش فرض غير فعال است."
+msgstr "پاورقی پیش فرض غیر فعال است."
 
 #: command.c:1936
 #, c-format
@@ -278,7 +279,7 @@ msgstr "\\!:ناموفق بود\n"
 #: common.c:79
 #, c-format
 msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
-msgstr "%s:xstrdup:اشاره گر تهي را نمي‌توان همانندسازي كرد(خطاي داخلي)\n"
+msgstr "%s:xstrdup:اشاره گر تهی را نمی‌توان همانندسازی کرد(خطای داخلی)\n"
 
 #: common.c:263
 msgid "connection to server was lost\n"
@@ -286,7 +287,7 @@ msgstr "ارتباط با سرور قطع شد\n"
 
 #: common.c:267
 msgid "The connection to the server was lost. Attempting reset: "
-msgstr "ارتباط با سرور قطع شد. سعي در برقراري مجدد ارتباط:"
+msgstr "ارتباط با سرور قطع شد. سعی در برقراری مجدد ارتباط:"
 
 #: common.c:272
 msgid "Failed.\n"
@@ -294,25 +295,25 @@ msgstr "ناموفق بود.\n"
 
 #: common.c:279
 msgid "Succeeded.\n"
-msgstr "موفقيت‌آميز بود.\n"
+msgstr "موفقیت‌آمیز بود.\n"
 
 #: common.c:382
 #: common.c:621
 msgid "You are currently not connected to a database.\n"
-msgstr "هم‌اكنون به بانك اطلاعاتي متصل نيستيد.\n"
+msgstr "هم‌اکنون به بانک اطلاعاتی متصل نیستید.\n"
 
 #: common.c:437
 #, c-format
 msgid "Asynchronous notification \"%s\" received from server process with PID %d.\n"
-msgstr "اخطار غيرهمزمان\"%s\"از رويه سروري با شماره شناسايي %d.\n"
+msgstr "اخطار غیرهمزمان\"%s\"از رویه سروری با شماره شناسایی %d.\n"
 
 #: common.c:517
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
 msgstr ""
-"اطلاعاتي كه بايد كپي شود را وارد كنيد در ادامه يك خط جديد .\n"
-" در انتها با يك backslashو يك نقطه همه در يك خط كنار هم."
+"اطلاعاتی که باید کپی شود را وارد کنید در ادامه یک خط جدید .\n"
+" در انتها با یک backslashو یک نقطه همه در یک خط کنار هم."
 
 #: common.c:629
 #, c-format
@@ -321,9 +322,9 @@ msgid ""
 "%s\n"
 "***(press return to proceed or enter x and return to cancel)********************\n"
 msgstr ""
-"***(حالت يك‌مرحله‌اي : دستوربازبيني)*******************************************\n"
+"***(حالت یک‌مرحله‌ای : دستوربازبینی)*******************************************\n"
 "%s\n"
-"***(جهت ادامه return را بزنيد و براي خارج شدن كليد xو سپس enter را بزنيد)********************\n"
+"***(جهت ادامه return را بزنید و برای خارج شدن کلید xو سپس enter را بزنید)********************\n"
 
 #: common.c:680
 #, c-format
@@ -332,21 +333,21 @@ msgstr "زمان:%.3f ms\n"
 
 #: copy.c:110
 msgid "\\copy: arguments required\n"
-msgstr "\\copy: آرگومانهاي مورد نياز را وارد كنيد\n"
+msgstr "\\copy: آرگومانهای مورد نیاز را وارد کنید\n"
 
 #: copy.c:289
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
-msgstr "\\copy:خطاي پارس كردن در\"%s\"\n"
+msgstr "\\copy:خطای پارس کردن در\"%s\"\n"
 
 #: copy.c:291
 msgid "\\copy: parse error at end of line\n"
-msgstr "\\copy: خطاي پارس كردن در آخر خط\n"
+msgstr "\\copy: خطای پارس کردن در آخر خط\n"
 
 #: copy.c:389
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
-msgstr "%s: نمي‌توان از / به يك شاخه ديگر كپي كرد\n"
+msgstr "%s: نمی‌توان از / به یک شاخه دیگر کپی کرد\n"
 
 #: copy.c:410
 #, c-format
@@ -356,7 +357,7 @@ msgstr "\\copy: %s"
 #: copy.c:414
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
-msgstr "\\copy: پاسخ غيرمنتظره(%d)\n"
+msgstr "\\copy: پاسخ غیرمنتظره(%d)\n"
 
 #: help.c:48
 msgid "on"
@@ -369,7 +370,7 @@ msgstr "خاموش"
 #: help.c:70
 #, c-format
 msgid "could not get current user name: %s\n"
-msgstr "نمي‌توان نام كاربر جاري را بدست آورد:%s\n"
+msgstr "نمی‌توان نام کاربر جاری را بدست آورد:%s\n"
 
 #: help.c:83
 #, c-format
@@ -377,12 +378,12 @@ msgid ""
 "This is psql %s, the PostgreSQL interactive terminal.\n"
 "\n"
 msgstr ""
-"اين psql %s است, ترمينال محاوره‌اي PostgreSQL.\n"
+"این psql %s است, ترمینال محاوره‌ای PostgreSQL.\n"
 "\n"
 
 #: help.c:85
 msgid "Usage:"
-msgstr "كاربرد:"
+msgstr "کاربرد:"
 
 #: help.c:86
 msgid "  psql [OPTIONS]... [DBNAME [USERNAME]]\n"
@@ -390,40 +391,40 @@ msgstr "  psql [OPTIONS]... [DBNAME [USERNAME]]\n"
 
 #: help.c:88
 msgid "General options:"
-msgstr "پارامترهاي انتخابي عمومي:"
+msgstr "پارامترهای انتخابی عمومی:"
 
 #: help.c:93
 #, c-format
 msgid "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
-msgstr "-d DBNAME       نام بانك اطلاعاتي جهت اتصال (پيش فرض : \"%s\") \n"
+msgstr "-d DBNAME       نام بانک اطلاعاتی جهت اتصال (پیش فرض : \"%s\") \n"
 
 #: help.c:94
 msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
-msgstr "-c COMMAND     تنها يك دستور ( داخلي يا SQL ) را اجرا كن و خارج شو"
+msgstr "-c COMMAND     تنها یک دستور ( داخلی یا SQL ) را اجرا کن و خارج شو"
 
 #: help.c:95
 msgid "  -f FILENAME     execute commands from file, then exit"
-msgstr "-f FILENAME     دستورات را از فايل اجرا كن و خارج شو"
+msgstr "-f FILENAME     دستورات را از فایل اجرا کن و خارج شو"
 
 #: help.c:96
 msgid "  -l              list available databases, then exit"
-msgstr "-l          بانك‌هاي اطلاعاتي موجود را ليست كن و خارج شو"
+msgstr "-l          بانک‌های اطلاعاتی موجود را لیست کن و خارج شو"
 
 #: help.c:97
 msgid "  -v NAME=VALUE   set psql variable NAME to VALUE"
-msgstr "-v NAME=VALUE   متغير NAME را با مقدار VALUE مقداردهي كن"
+msgstr "-v NAME=VALUE   متغیر NAME را با مقدار VALUE مقداردهی کن"
 
 #: help.c:98
 msgid "  -X              do not read startup file (~/.psqlrc)"
-msgstr "-X            فايل شروع اوليه (~/.psqlrc) را نخوان"
+msgstr "-X            فایل شروع اولیه (~/.psqlrc) را نخوان"
 
 #: help.c:99
 msgid "  --help          show this help, then exit"
-msgstr "--help        اين راهنمايي را نمايش بده و خارج شو"
+msgstr "--help        این راهنمایی را نمایش بده و خارج شو"
 
 #: help.c:100
 msgid "  --version       output version information, then exit"
-msgstr "--version       اطلاعات مربوط به نگارش را نمايش بده و خارج شو"
+msgstr "--version       اطلاعات مربوط به نگارش را نمایش بده و خارج شو"
 
 #: help.c:102
 msgid ""
@@ -431,39 +432,39 @@ msgid ""
 "Input and output options:"
 msgstr ""
 "\n"
-"پارامترهاي اختياري ورودي و خروجي"
+"پارامترهای اختیاری ورودی و خروجی"
 
 #: help.c:103
 msgid "  -a              echo all input from script"
-msgstr "-a               تمام ورودي‌هاي اسكريپت را روي صفحه بريز"
+msgstr "-a               تمام ورودی‌های اسکریپت را روی صفحه بریز"
 
 #: help.c:104
 msgid "  -e              echo commands sent to server"
-msgstr "-e               تمام دستوراتي كه به سرور فرستاده مي‌شود روي صفحه بريز"
+msgstr "-e               تمام دستوراتی که به سرور فرستاده می‌شود روی صفحه بریز"
 
 #: help.c:105
 msgid "  -E              display queries that internal commands generate"
-msgstr "-E             درخواست‌هايي كه دستورات داخلي توليد مي‌كنند نمايش بده"
+msgstr "-E             درخواست‌هایی که دستورات داخلی تولید می‌کنند نمایش بده"
 
 #: help.c:106
 msgid "  -q              run quietly (no messages, only query output)"
-msgstr "-q             بصورت بي‌سروصدا اجرا شو (هيچ پيغامي غير از خروجي درخواست‌ها نمايش داده نمي‌شود) "
+msgstr "-q             بصورت بی‌سروصدا اجرا شو (هیچ پیغامی غیر از خروجی درخواست‌ها نمایش داده نمی‌شود) "
 
 #: help.c:107
 msgid "  -o FILENAME     send query results to file (or |pipe)"
-msgstr "-o  FILENAME     نتايج درخواست را به فايل (يا |pipe) بفرست"
+msgstr "-o  FILENAME     نتایج درخواست را به فایل (یا |pipe) بفرست"
 
 #: help.c:108
 msgid "  -n              disable enhanced command line editing (readline)"
-msgstr "-n           حالت پيشرفته خط دستور غير فعال شود"
+msgstr "-n           حالت پیشرفته خط دستور غیر فعال شود"
 
 #: help.c:109
 msgid "  -s              single-step mode (confirm each query)"
-msgstr "-s          حالت تك‌مرحله‌اي (براي هر درخواست تاييديه گرفته مي‌شود)"
+msgstr "-s          حالت تک‌مرحله‌ای (برای هر درخواست تاییدیه گرفته می‌شود)"
 
 #: help.c:110
 msgid "  -S              single-line mode (end of line terminates SQL command)"
-msgstr "-S             حالت تك‌خطي (آخر خط پايان دستور SQL است("
+msgstr "-S             حالت تک‌خطی (آخر خط پایان دستور SQL است("
 
 #: help.c:112
 msgid ""
@@ -471,40 +472,40 @@ msgid ""
 "Output format options:"
 msgstr ""
 "\n"
-"پارامترهاي انتخابي فرمت خروجي"
+"پارامترهای انتخابی فرمت خروجی"
 
 #: help.c:113
 msgid "  -A              unaligned table output mode (-P format=unaligned)"
-msgstr "-A        حالت خروجي جدول بدون تشكل (-P format=unaligned("
+msgstr "-A        حالت خروجی جدول بدون تشکل (-P format=unaligned("
 
 #: help.c:114
 msgid "  -H              HTML table output mode (-P format=html)"
-msgstr "H             حالت خروجي جدول بصورت HTML )-P format=html)"
+msgstr "H             حالت خروجی جدول بصورت HTML )-P format=html)"
 
 #: help.c:115
 msgid "  -t              print rows only (-P tuples_only)"
-msgstr "-t           فقط رديف‌ها را چاپ مي‌كند (-P tuples_only)"
+msgstr "-t           فقط ردیف‌ها را چاپ می‌کند (-P tuples_only)"
 
 #: help.c:116
 msgid "  -T TEXT         set HTML table tag attributes (width, border) (-P tableattr=)"
-msgstr "-T TEXT         مشخصات برچسب HTML جدول )عرض ولبه‌ها) را تنظيم مي‌كند )-P tableattr=( "
+msgstr "-T TEXT         مشخصات برچسب HTML جدول )عرض ولبه‌ها) را تنظیم می‌کند )-P tableattr=( "
 
 #: help.c:117
 msgid "  -x              turn on expanded table output (-P expanded)"
-msgstr "-x              حالت توسعه‌يافته خروجي جدول را فعال مي‌كند )-P expanded("
+msgstr "-x              حالت توسعه‌یافته خروجی جدول را فعال می‌کند )-P expanded("
 
 #: help.c:118
 msgid "  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"
-msgstr "-P VAR[=ARG]   پارامتر انتخابي جاپ  VAR را مساوي ARG قرار مي‌دهد(به دستور \\pset رجوع كنيد("
+msgstr "-P VAR[=ARG]   پارامتر انتخابی جاپ  VAR را مساوی ARG قرار می‌دهد(به دستور \\pset رجوع کنید("
 
 #: help.c:119
 #, c-format
 msgid "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
-msgstr "-F STRING      جداكننده فيلد را تنظيم مي‌كند )پيش فرض :\"%s\"()-P fieldsep=(\n"
+msgstr "-F STRING      جداکننده فیلد را تنظیم می‌کند )پیش فرض :\"%s\"()-P fieldsep=(\n"
 
 #: help.c:121
 msgid "  -R STRING       set record separator (default: newline) (-P recordsep=)"
-msgstr "-R STRING      جداكننده ركورد را تنظيم مي‌كند )default: newline()-P recordsep=("
+msgstr "-R STRING      جداکننده رکورد را تنظیم می‌کند )default: newline()-P recordsep=("
 
 #: help.c:123
 msgid ""
@@ -512,30 +513,30 @@ msgid ""
 "Connection options:"
 msgstr ""
 "\n"
-"پارامترهاي انتخابي اتصال"
+"پارامترهای انتخابی اتصال"
 
 #: help.c:126
 #, c-format
 msgid "  -h HOSTNAME     database server host or socket directory (default: \"%s\")\n"
-msgstr "-h HOSTNAME    كامپيوتر سرويس‌دهنده بانك اطلاعاتي يا فهرست سوكت (پيش‌فرض : \"%s\") \n"
+msgstr "-h HOSTNAME    کامپیوتر سرویس‌دهنده بانک اطلاعاتی یا فهرست سوکت (پیش‌فرض : \"%s\") \n"
 
 #: help.c:127
 msgid "local socket"
-msgstr "سوكت محلي"
+msgstr "سوکت محلی"
 
 #: help.c:130
 #, c-format
 msgid "  -p PORT         database server port (default: \"%s\")\n"
-msgstr "-p PORT       پورت سرور بانك اطلاعاتي (پيش‌فرض : \"%s\") \n"
+msgstr "-p PORT       پورت سرور بانک اطلاعاتی (پیش‌فرض : \"%s\") \n"
 
 #: help.c:136
 #, c-format
 msgid "  -U NAME         database user name (default: \"%s\")\n"
-msgstr "-U NAME       نام كاربري بانك اطلاعاتي (پيش‌فرض : \"%s\") \n"
+msgstr "-U NAME       نام کاربری بانک اطلاعاتی (پیش‌فرض : \"%s\") \n"
 
 #: help.c:137
 msgid "  -W              prompt for password (should happen automatically)"
-msgstr "-W           اعلان براي رمز عبور ( بايد بطور خودكار اتفاق بيفتد) "
+msgstr "-W           اعلان برای رمز عبور ( باید بطور خودکار اتفاق بیفتد) "
 
 #: help.c:140
 msgid ""
@@ -547,13 +548,13 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
 "\n"
-"براي اطلاعات بيشتر تايپ كنيد \"\\?\" (براي دستورات داخلي ) و يا \"\\help\"\n"
-" (براي دستورات SQL ) ويا به مستندات PostgreSQL مراجعه كنيد \n"
-"اشكالات را به آدرس <pgsql-bugs@postgresql.org> گزارش كنيد."
+"برای اطلاعات بیشتر تایپ کنید \"\\?\" (برای دستورات داخلی ) و یا \"\\help\"\n"
+" (برای دستورات SQL ) ویا به مستندات PostgreSQL مراجعه کنید \n"
+"اشکالات را به آدرس <pgsql-bugs@postgresql.org> گزارش کنید."
 
 #: help.c:174
 msgid "General\n"
-msgstr "عمومي \n"
+msgstr "عمومی \n"
 
 #: help.c:175
 #, c-format
@@ -562,15 +563,15 @@ msgid ""
 "                 connect to new database (currently \"%s\")\n"
 msgstr ""
 "  \\c[onnect] [DBNAME|- [USER]]\n"
-"                 اتصال به يك بانك اطلاعاتي جديد (جاري \"%s\") \n"
+"                 اتصال به یک بانک اطلاعاتی جدید (جاری \"%s\") \n"
 
 #: help.c:178
 msgid "  \\cd [DIR]      change the current working directory\n"
-msgstr " \\cd[DIR]       فهرست كاري جاري را تغيير مي‌دهد\n"
+msgstr " \\cd[DIR]       فهرست کاری جاری را تغییر می‌دهد\n"
 
 #: help.c:179
 msgid "  \\copyright     show PostgreSQL usage and distribution terms\n"
-msgstr "  \\copyright     عبارات مربوط به توزيع و استفاده از PostgreSQL را نمايش مي‌دهد \n"
+msgstr "  \\copyright     عبارات مربوط به توزیع و استفاده از PostgreSQL را نمایش می‌دهد \n"
 
 #: help.c:180
 msgid ""
@@ -578,11 +579,11 @@ msgid ""
 "                 show or set client encoding\n"
 msgstr ""
 "  \\encoding [ENCODING]\n"
-"                 نمايش يا تنظيم روش كدگذاري مخدوم \n"
+"                 نمایش یا تنظیم روش کدگذاری مخدوم \n"
 
 #: help.c:182
 msgid "  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
-msgstr "  \\h [NAME]     كمك در زمينه گرامر دستورات SQL , براي تمام دستورات * را وارد كنيد \n"
+msgstr "  \\h [NAME]     کمک در زمینه گرامر دستورات SQL , برای تمام دستورات * را وارد کنید \n"
 
 #: help.c:183
 msgid "  \\q             quit psql\n"
@@ -594,20 +595,20 @@ msgid ""
 "                 set internal variable, or list all if no parameters\n"
 msgstr ""
 "  \\set [NAME [VALUE]]\n"
-"                 تنظيم متغيرهاي داخلي ويا ليست تمام متغيرها در صورتي كه هيچ پارامتري وارد نشود \n"
+"                 تنظیم متغیرهای داخلی ویا لیست تمام متغیرها در صورتی که هیچ پارامتری وارد نشود \n"
 
 #: help.c:186
 #, c-format
 msgid "  \\timing        toggle timing of commands (currently %s)\n"
-msgstr "  \\timing       تغيير وضعيت زمانبندي دستورات (وضعيت جاري %s ) \n"
+msgstr "  \\timing       تغییر وضعیت زمانبندی دستورات (وضعیت جاری %s ) \n"
 
 #: help.c:188
 msgid "  \\unset NAME    unset (delete) internal variable\n"
-msgstr "  \\unset NAME   مقدار متغير داخلي را پاك مي‌كند\n"
+msgstr "  \\unset NAME   مقدار متغیر داخلی را پاک می‌کند\n"
 
 #: help.c:189
 msgid "  \\! [COMMAND]   execute command in shell or start interactive shell\n"
-msgstr "  \\![COMMAND]   دستور را در پوسته اجرا مي‌كند ويا پوسته محاوره‌اي را راه‌اندازي مي‌كند\n"
+msgstr "  \\![COMMAND]   دستور را در پوسته اجرا می‌کند ویا پوسته محاوره‌ای را راه‌اندازی می‌کند\n"
 
 #: help.c:192
 msgid "Query Buffer\n"
@@ -615,43 +616,43 @@ msgstr "بافر درخواست\n"
 
 #: help.c:193
 msgid "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
-msgstr "  \\e [FILE]      بافر درخواست يا يك فايل را با يك ويرايشگر خارجي ويرايش مي‌كند\n"
+msgstr "  \\e [FILE]      بافر درخواست یا یک فایل را با یک ویرایشگر خارجی ویرایش می‌کند\n"
 
 #: help.c:194
 msgid "  \\g [FILE]      send query buffer to server (and results to file or |pipe)\n"
-msgstr "  \\g [FILE]     بافر درخواست را به سرور مي‌فرستد (و نتايج را به فايل يا پايپ ) \n"
+msgstr "  \\g [FILE]     بافر درخواست را به سرور می‌فرستد (و نتایج را به فایل یا پایپ ) \n"
 
 #: help.c:195
 msgid "  \\p             show the contents of the query buffer\n"
-msgstr "  \\p       محتواي بافر درخواست را نمايش مي‌دهد\n"
+msgstr "  \\p       محتوای بافر درخواست را نمایش می‌دهد\n"
 
 #: help.c:196
 msgid "  \\r             reset (clear) the query buffer\n"
-msgstr "  \\r            بافر درخواست را خالي مي‌كند\n"
+msgstr "  \\r            بافر درخواست را خالی می‌کند\n"
 
 #: help.c:197
 msgid "  \\s [FILE]      display history or save it to file\n"
-msgstr "  \\s [FILE]       نمايش ليست دستورات قبلي ويا ذخيره آن در يك فايل\n"
+msgstr "  \\s [FILE]       نمایش لیست دستورات قبلی ویا ذخیره آن در یک فایل\n"
 
 #: help.c:198
 msgid "  \\w [FILE]      write query buffer to file\n"
-msgstr "  \\w [FILE]    محتواي بافر درخواست را در يك فايل مي‌ريزد\n"
+msgstr "  \\w [FILE]    محتوای بافر درخواست را در یک فایل می‌ریزد\n"
 
 #: help.c:201
 msgid "Input/Output\n"
-msgstr "ورودي/خروجي\n"
+msgstr "ورودی/خروجی\n"
 
 #: help.c:202
 msgid "  \\echo [STRING] write string to standard output\n"
-msgstr "  \\echo [STRING] رشته را در خروجي استاندارد نمايش مي‌دهد\n"
+msgstr "  \\echo [STRING] رشته را در خروجی استاندارد نمایش می‌دهد\n"
 
 #: help.c:203
 msgid "  \\i FILE        execute commands from file\n"
-msgstr "  \\i FILE      دستورات را از فايل اجرا مي‌كند\n"
+msgstr "  \\i FILE      دستورات را از فایل اجرا می‌کند\n"
 
 #: help.c:204
 msgid "  \\o [FILE]      send all query results to file or |pipe\n"
-msgstr "  \\o [FILE]     تمام نتايج درخواست را به فايل مي‌فريتد يا پايپ مي‌كند\n"
+msgstr "  \\o [FILE]     تمام نتایج درخواست را به فایل می‌فریتد یا پایپ می‌کند\n"
 
 #: help.c:205
 msgid ""
@@ -659,15 +660,15 @@ msgid ""
 "                 write string to query output stream (see \\o)\n"
 msgstr ""
 "  \\qecho [STRING]\n"
-"                 رشته را در جريان درخواست خروجي مي‌نويسد (\\o را ببينيد) \n"
+"                 رشته را در جریان درخواست خروجی می‌نویسد (\\o را ببینید) \n"
 
 #: help.c:209
 msgid "Informational\n"
-msgstr "اطلاعاتي\n"
+msgstr "اطلاعاتی\n"
 
 #: help.c:210
 msgid "  \\d [NAME]      describe table, index, sequence, or view\n"
-msgstr "  \\d [NAME]     جدول ، ايندكس، ترتيب يا چشم‌انداز را توصيف مي‌كند\n"
+msgstr "  \\d [NAME]     جدول ، ایندکس، ترتیب یا چشم‌انداز را توصیف می‌کند\n"
 
 #: help.c:211
 msgid ""
@@ -675,84 +676,84 @@ msgid ""
 "                 list tables/indexes/sequences/views/system tables\n"
 msgstr ""
 "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
-"                جداول، ايندكس‌ها، ترتيب‌ها، چشم‌اندازهاو جداول سيستمي را ليست مي‌كند\n"
+"                جداول، ایندکس‌ها، ترتیب‌ها، چشم‌اندازهاو جداول سیستمی را لیست می‌کند\n"
 
 #: help.c:213
 msgid "  \\da [PATTERN]  list aggregate functions\n"
-msgstr "  \\da [PATTERN] توابع مجتمع را ليست مي‌كند\n"
+msgstr "  \\da [PATTERN] توابع مجتمع را لیست می‌کند\n"
 
 #: help.c:214
 msgid "  \\dc [PATTERN]  list conversions\n"
-msgstr "  \\dc [PATTERN] تبديلات را ليست مي‌كند\n"
+msgstr "  \\dc [PATTERN] تبدیلات را لیست می‌کند\n"
 
 #: help.c:215
 msgid "  \\dC            list casts\n"
-msgstr "  \\dC        كست ها را ليست مي‌كند\n"
+msgstr "  \\dC        کست ها را لیست می‌کند\n"
 
 #: help.c:216
 msgid "  \\dd [PATTERN]  show comment for object\n"
-msgstr "  \\dd [PATTERN] توضيح يك شي را نمايش مي‌دهد\n"
+msgstr "  \\dd [PATTERN] توضیح یک شی را نمایش می‌دهد\n"
 
 #: help.c:217
 msgid "  \\dD [PATTERN]  list domains\n"
-msgstr "  \\dD [PATTERN] دامنه‌ها را ليست مي‌كند\n"
+msgstr "  \\dD [PATTERN] دامنه‌ها را لیست می‌کند\n"
 
 #: help.c:218
 msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
-msgstr "  \\df [PATTERN] توابع را ليست مي‌كند (جهت ديدن جزييات بيشتر \"+\" را اضافه كنيد\n"
+msgstr "  \\df [PATTERN] توابع را لیست می‌کند (جهت دیدن جزییات بیشتر \"+\" را اضافه کنید\n"
 
 #: help.c:219
 msgid "  \\dn [PATTERN]  list schemas\n"
-msgstr "  \\dn [PATTERN] الگوها را ليست مي‌كند\n"
+msgstr "  \\dn [PATTERN] الگوها را لیست می‌کند\n"
 
 #: help.c:220
 msgid "  \\do [NAME]     list operators\n"
-msgstr "  \\do [NAME]   عملگرها را ليست مي‌كند\n"
+msgstr "  \\do [NAME]   عملگرها را لیست می‌کند\n"
 
 #: help.c:221
 msgid "  \\dl            list large objects, same as \\lo_list\n"
-msgstr "  \\dl        اشياء بزرگ را ليست مي‌كند \n"
+msgstr "  \\dl        اشیاء بزرگ را لیست می‌کند \n"
 
 #: help.c:222
 msgid "  \\dp [PATTERN]  list table access privileges\n"
-msgstr "  \\dp [PATTERN]  امتيازهاي دسترسي به جدول را ليست مي‌كند \n"
+msgstr "  \\dp [PATTERN]  امتیازهای دسترسی به جدول را لیست می‌کند \n"
 
 #: help.c:223
 msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
-msgstr "  \\dT [PATTERN] انواع داده‌ها را ليست مي‌كند (جهت جزييات بيشتر \"+\" را اضافه كنيد)\n"
+msgstr "  \\dT [PATTERN] انواع داده‌ها را لیست می‌کند (جهت جزییات بیشتر \"+\" را اضافه کنید)\n"
 
 #: help.c:224
 msgid "  \\du [PATTERN]  list users\n"
-msgstr "  \\du [PATTERN] ليست كاربران را نشان مي‌دهد\n"
+msgstr "  \\du [PATTERN] لیست کاربران را نشان می‌دهد\n"
 
 #: help.c:225
 msgid "  \\l             list all databases (add \"+\" for more detail)\n"
-msgstr "  \\l            تمام بانك‌هاي اطلاعاتي را ليست مي‌كند (جهت جزييات بيشتر \"+\" را اضافه كنيد\n"
+msgstr "  \\l            تمام بانک‌های اطلاعاتی را لیست می‌کند (جهت جزییات بیشتر \"+\" را اضافه کنید\n"
 
 #: help.c:226
 msgid "  \\z [PATTERN]   list table access privileges (same as \\dp)\n"
-msgstr "  \\z [PATTERN]  امتيازهاي دسترسي به جدول را ليست مي‌كند (مانند \\dp) \n"
+msgstr "  \\z [PATTERN]  امتیازهای دسترسی به جدول را لیست می‌کند (مانند \\dp) \n"
 
 #: help.c:229
 msgid "Formatting\n"
-msgstr "درحال فرمت كردن\n"
+msgstr "درحال فرمت کردن\n"
 
 #: help.c:230
 msgid "  \\a             toggle between unaligned and aligned output mode\n"
-msgstr "  \\a       تغيير حالت خروجي از شكل‌يافته به حالت بدون تشكل و برعكس\n"
+msgstr "  \\a       تغییر حالت خروجی از شکل‌یافته به حالت بدون تشکل و برعکس\n"
 
 #: help.c:231
 msgid "  \\C [STRING]    set table title, or unset if none\n"
-msgstr "  \\C [STRING]  عنوان جدول را تنظيم مي‌كند\n"
+msgstr "  \\C [STRING]  عنوان جدول را تنظیم می‌کند\n"
 
 #: help.c:232
 msgid "  \\f [STRING]    show or set field separator for unaligned query output\n"
-msgstr "  \\f [STRING]  جداكننده فيلد را براي خروجي درخواست بدون تشكل تنظيم كرده يا نمايش مي‌دهد\n"
+msgstr "  \\f [STRING]  جداکننده فیلد را برای خروجی درخواست بدون تشکل تنظیم کرده یا نمایش می‌دهد\n"
 
 #: help.c:233
 #, c-format
 msgid "  \\H             toggle HTML output mode (currently %s)\n"
-msgstr "  \\H       حالت خروجي HTML  را فعال و غيرفعال مي‌كند ( حالت جاري %s) \n"
+msgstr "  \\H       حالت خروجی HTML  را فعال و غیرفعال می‌کند ( حالت جاری %s) \n"
 
 #: help.c:235
 msgid ""
@@ -762,31 +763,31 @@ msgid ""
 "                 recordsep|tuples_only|title|tableattr|pager})\n"
 msgstr ""
 "  \\pset NAME [VALUE]\n"
-"                 پارامتر اختياري خروجي جدول را تنظيم مي‌كند\n"
+"                 پارامتر اختیاری خروجی جدول را تنظیم می‌کند\n"
 "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
 "                 recordsep|tuples_only|title|tableattr|pager})\n"
 
 #: help.c:239
 #, c-format
 msgid "  \\t             show only rows (currently %s)\n"
-msgstr "  \\t         فقط رديف‌ها را نشان مي‌دهد (حالت جاري %s ) \n"
+msgstr "  \\t         فقط ردیف‌ها را نشان می‌دهد (حالت جاری %s ) \n"
 
 #: help.c:241
 msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
-msgstr "  \\T [STRING]   مشخصات برچسب HTML <table> را ست مي‌كند \n"
+msgstr "  \\T [STRING]   مشخصات برچسب HTML <table> را ست می‌کند \n"
 
 #: help.c:242
 #, c-format
 msgid "  \\x             toggle expanded output (currently %s)\n"
-msgstr "  \\x           وضعيت خروجي مبسوط را عوض مي‌كند(وضعيت جاري %s) \n"
+msgstr "  \\x           وضعیت خروجی مبسوط را عوض می‌کند(وضعیت جاری %s) \n"
 
 #: help.c:246
 msgid "Copy, Large Object\n"
-msgstr "كپي ، شي بزرگ\n"
+msgstr "کپی ، شی بزرگ\n"
 
 #: help.c:247
 msgid "  \\copy ...      perform SQL COPY with data stream to the client host\n"
-msgstr "  \\copy ...    اجراي SQL COPY با جريان اطلاعات به كامپيوتر مخدوم\n"
+msgstr "  \\copy ...    اجرای SQL COPY با جریان اطلاعات به کامپیوتر مخدوم\n"
 
 #: help.c:248
 msgid ""
@@ -798,11 +799,11 @@ msgstr ""
 "  \\lo_export\n"
 "  \\lo_import\n"
 "  \\lo_list\n"
-"  \\lo_unlink     عمليات شيء بزرگ\n"
+"  \\lo_unlink     عملیات شیء بزرگ\n"
 
 #: help.c:281
 msgid "Available help:\n"
-msgstr "كمك موجود :\n"
+msgstr "کمک موجود :\n"
 
 #: help.c:340
 #, c-format
@@ -814,7 +815,7 @@ msgid ""
 "\n"
 msgstr ""
 "دستور:     %s\n"
-"توصيف: %s\n"
+"توصیف: %s\n"
 "گرامر:\n"
 "%s\n"
 "\n"
@@ -825,28 +826,28 @@ msgid ""
 "No help available for \"%-.*s\".\n"
 "Try \\h with no arguments to see available help.\n"
 msgstr ""
-"هيچ كمكي براي   \"%-.*s\".\n"
-" وجود نداردجهت ديدن توضيحات كمكي موجود از \\h بدون هيچ آرگوماني استفاده كنيد\n"
+"هیچ کمکی برای   \"%-.*s\".\n"
+" وجود نداردجهت دیدن توضیحات کمکی موجود از \\h بدون هیچ آرگومانی استفاده کنید\n"
 
 #: input.c:217
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
-msgstr "ليست دستورات قبلي را نمي‌توان در فايل \"%s\":%s ذخيره كرد \n"
+msgstr "لیست دستورات قبلی را نمی‌توان در فایل \"%s\":%s ذخیره کرد \n"
 
 #: large_obj.c:39
 #, c-format
 msgid "%s: not connected to a database\n"
-msgstr "%s: اتصال با بانك اطلاعاتي قطع است\n"
+msgstr "%s: اتصال با بانک اطلاعاتی قطع است\n"
 
 #: large_obj.c:58
 #, c-format
 msgid "%s: current transaction is aborted\n"
-msgstr "%s: از تراكنش جاري صرفنظر شد\n"
+msgstr "%s: از تراکنش جاری صرفنظر شد\n"
 
 #: large_obj.c:61
 #, c-format
 msgid "%s: unknown transaction status\n"
-msgstr "%s: حالت تراكنش ناشناخته\n"
+msgstr "%s: حالت تراکنش ناشناخته\n"
 
 #: describe.c:106
 #: describe.c:157
@@ -858,39 +859,39 @@ msgstr "%s: حالت تراكنش ناشناخته\n"
 #: describe.c:1345
 #: large_obj.c:278
 msgid "Description"
-msgstr "توصيف"
+msgstr "توصیف"
 
 #: large_obj.c:286
 msgid "Large objects"
-msgstr "اشياء بزرگ"
+msgstr "اشیاء بزرگ"
 
 #: mainloop.c:203
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
-msgstr "از \"\\q\" جهت ترك %s استفاده كنيد.\n"
+msgstr "از \"\\q\" جهت ترک %s استفاده کنید.\n"
 
 #: print.c:421
 msgid "(No rows)\n"
-msgstr "(هيچ رديفي وجود ندارد) \n"
+msgstr "(هیچ ردیفی وجود ندارد) \n"
 
 #: print.c:1186
 msgid "(1 row)"
-msgstr "( يك رديف)"
+msgstr "( یک ردیف)"
 
 #: print.c:1188
 #, c-format
 msgid "(%d rows)"
-msgstr "(%d رديف)"
+msgstr "(%d ردیف)"
 
 #: startup.c:132
 #: startup.c:574
 #, c-format
 msgid "%s: out of memory\n"
-msgstr "%s: كمبود حافظه\n"
+msgstr "%s: کمبود حافظه\n"
 
 #: startup.c:171
 msgid "User name: "
-msgstr "نام كاربري :"
+msgstr "نام کاربری :"
 
 #: startup.c:267
 #, c-format
@@ -916,44 +917,44 @@ msgstr ""
 #: startup.c:428
 #, c-format
 msgid "%s: couldn't set printing parameter \"%s\"\n"
-msgstr "%s: پارامترهاي چاپ را نمي‌توان تنظيم كرد \"%s\"\n"
+msgstr "%s: پارامترهای چاپ را نمی‌توان تنظیم کرد \"%s\"\n"
 
 #: startup.c:474
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
-msgstr "%s: متغيير \"%s\" را نمي‌توان پاك كرد\n"
+msgstr "%s: متغییر \"%s\" را نمی‌توان پاک کرد\n"
 
 #: startup.c:484
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
-msgstr "%s: متغيير \"%s\" را نمي‌توان تنظيم كرد\n"
+msgstr "%s: متغییر \"%s\" را نمی‌توان تنظیم کرد\n"
 
 #: startup.c:515
 #: startup.c:521
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "جهت اطلاعات بيشتر \"%s --help \" را امتحان كنيد.\n"
+msgstr "جهت اطلاعات بیشتر \"%s --help \" را امتحان کنید.\n"
 
 #: startup.c:539
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
-msgstr "%s: اخطار : ازآرگومان اضافي \"%s\"  صرفنظر شد\n"
+msgstr "%s: اخطار : ازآرگومان اضافی \"%s\"  صرفنظر شد\n"
 
 #: startup.c:546
 #, c-format
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
-msgstr "%s: اخطار : پارامتر اختياري -u بي اعتبار است. از -U استفاده كنيد.\n"
+msgstr "%s: اخطار : پارامتر اختیاری -u بی اعتبار است. از -U استفاده کنید.\n"
 
 #: startup.c:603
 msgid "contains support for command-line editing"
-msgstr "حمايت از ويرايش خط دستور را شامل مي‌شود"
+msgstr "حمایت از ویرایش خط دستور را شامل می‌شود"
 
 #: startup.c:626
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
 "\n"
-msgstr "اتصال SSL (رمز : %s ، بيتها: %i) \n"
+msgstr "اتصال SSL (رمز : %s ، بیتها: %i) \n"
 
 #: describe.c:105
 #: describe.c:147
@@ -990,11 +991,11 @@ msgstr "نوع داده"
 
 #: describe.c:120
 msgid "List of aggregate functions"
-msgstr "ليست توابع مجتمع"
+msgstr "لیست توابع مجتمع"
 
 #: describe.c:147
 msgid "Result data type"
-msgstr "نوع داده نتيجه"
+msgstr "نوع داده نتیجه"
 
 #: describe.c:148
 msgid "Argument data types"
@@ -1013,15 +1014,15 @@ msgstr "زبان"
 
 #: describe.c:157
 msgid "Source code"
-msgstr "كد منبع"
+msgstr "کد منبع"
 
 #: describe.c:191
 msgid "List of functions"
-msgstr "ليست توابع"
+msgstr "لیست توابع"
 
 #: describe.c:227
 msgid "Internal name"
-msgstr "نام داخلي"
+msgstr "نام داخلی"
 
 #: describe.c:227
 msgid "Size"
@@ -1029,7 +1030,7 @@ msgstr "اندازه"
 
 #: describe.c:259
 msgid "List of data types"
-msgstr "ليست انواع داده"
+msgstr "لیست انواع داده"
 
 #: describe.c:291
 msgid "Left arg type"
@@ -1041,19 +1042,19 @@ msgstr "نوع آرگومان سمت راست"
 
 #: describe.c:292
 msgid "Result type"
-msgstr "نوع نتيجه"
+msgstr "نوع نتیجه"
 
 #: describe.c:306
 msgid "List of operators"
-msgstr "ليست عملگرها"
+msgstr "لیست عملگرها"
 
 #: describe.c:335
 msgid "Encoding"
-msgstr "كدگزاري"
+msgstr "کدگزاری"
 
 #: describe.c:351
 msgid "List of databases"
-msgstr "ليست پايگاه‌هاي اطلاعاتي"
+msgstr "لیست پایگاه‌های اطلاعاتی"
 
 #: describe.c:384
 #: describe.c:1355
@@ -1062,16 +1063,16 @@ msgstr "جدول"
 
 #: describe.c:384
 msgid "Access privileges"
-msgstr "امتيازهاي دسترسي"
+msgstr "امتیازهای دسترسی"
 
 #: describe.c:406
 #, c-format
 msgid "Access privileges for database \"%s\""
-msgstr "امتيازهاي دسترسي به بانك اطلاعاتي \"%s\""
+msgstr "امتیازهای دسترسی به بانک اطلاعاتی \"%s\""
 
 #: describe.c:438
 msgid "Object"
-msgstr "شيء"
+msgstr "شیء"
 
 #: describe.c:449
 msgid "aggregate"
@@ -1102,12 +1103,12 @@ msgstr "چشم‌انداز"
 #: describe.c:512
 #: describe.c:1339
 msgid "index"
-msgstr "ايندكس"
+msgstr "ایندکس"
 
 #: describe.c:512
 #: describe.c:1339
 msgid "sequence"
-msgstr "ترتيب"
+msgstr "ترتیب"
 
 #: describe.c:528
 msgid "rule"
@@ -1119,17 +1120,17 @@ msgstr "ماشه"
 
 #: describe.c:562
 msgid "Object descriptions"
-msgstr "توصيفات شيء"
+msgstr "توصیفات شیء"
 
 #: describe.c:608
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
-msgstr "هيچ وابستگي با نام \"%s\" يافت نشد\n"
+msgstr "هیچ وابستگی با نام \"%s\" یافت نشد\n"
 
 #: describe.c:691
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
-msgstr "هيچ وابستگي با OID %s يافت نشد.\n"
+msgstr "هیچ وابستگی با OID %s یافت نشد.\n"
 
 #: describe.c:704
 msgid "Column"
@@ -1143,7 +1144,7 @@ msgstr "نوع"
 
 #: describe.c:712
 msgid "Modifiers"
-msgstr "تعديل‌كننده‌ها"
+msgstr "تعدیل‌کننده‌ها"
 
 #: describe.c:819
 #, c-format
@@ -1153,22 +1154,22 @@ msgstr "جدول \"%s.%s\""
 #: describe.c:823
 #, c-format
 msgid "View \"%s.%s\""
-msgstr "نمايش \"%s.%s\""
+msgstr "نمایش \"%s.%s\""
 
 #: describe.c:827
 #, c-format
 msgid "Sequence \"%s.%s\""
-msgstr "ترتيب \"%s.%s\""
+msgstr "ترتیب \"%s.%s\""
 
 #: describe.c:831
 #, c-format
 msgid "Index \"%s.%s\""
-msgstr "ايندكس \"%s.%s\""
+msgstr "ایندکس \"%s.%s\""
 
 #: describe.c:835
 #, c-format
 msgid "Special relation \"%s.%s\""
-msgstr "وابستگي خاص \"%s.%s\""
+msgstr "وابستگی خاص \"%s.%s\""
 
 #: describe.c:839
 #, c-format
@@ -1178,7 +1179,7 @@ msgstr "جدول TOAST \"%s.%s\""
 #: describe.c:843
 #, c-format
 msgid "Composite type \"%s.%s\""
-msgstr "نوع تركيبي \"%s.%s\""
+msgstr "نوع ترکیبی \"%s.%s\""
 
 #: describe.c:847
 #, c-format
@@ -1187,16 +1188,16 @@ msgstr "?%c? \"%s.%s\""
 
 #: describe.c:883
 msgid "primary key, "
-msgstr "كليد اصلي،"
+msgstr "کلید اصلی،"
 
 #: describe.c:885
 msgid "unique, "
-msgstr "يكتا،"
+msgstr "یکتا،"
 
 #: describe.c:891
 #, c-format
 msgid "for table \"%s.%s\""
-msgstr "براي جدول \"%s.%s\""
+msgstr "برای جدول \"%s.%s\""
 
 #: describe.c:895
 #, c-format
@@ -1209,16 +1210,16 @@ msgid ""
 "View definition:\n"
 "%s"
 msgstr ""
-"تعريف چشم‌انداز : \n"
+"تعریف چشم‌انداز : \n"
 "%s"
 
 #: describe.c:935
 msgid "Rules"
-msgstr "قوانين"
+msgstr "قوانین"
 
 #: describe.c:1086
 msgid "Indexes:"
-msgstr "ايندكس‌ها:"
+msgstr "ایندکس‌ها:"
 
 #: describe.c:1094
 #, c-format
@@ -1227,15 +1228,15 @@ msgstr "    \"%s\""
 
 #: describe.c:1100
 msgid " primary key,"
-msgstr "كليد اصلي،"
+msgstr "کلید اصلی،"
 
 #: describe.c:1102
 msgid " unique,"
-msgstr "يكتا،"
+msgstr "یکتا،"
 
 #: describe.c:1120
 msgid "Check constraints:"
-msgstr "محدوديت ها ي چك:"
+msgstr "محدودیت ها ی چک:"
 
 #: describe.c:1124
 #: describe.c:1139
@@ -1245,11 +1246,11 @@ msgstr "    \"%s\" %s"
 
 #: describe.c:1135
 msgid "Foreign-key constraints:"
-msgstr "محدوديت‌هاي كليد خارجي"
+msgstr "محدودیت‌های کلید خارجی"
 
 #: describe.c:1150
 msgid "Rules:"
-msgstr "قوانين:"
+msgstr "قوانین:"
 
 #: describe.c:1169
 msgid "Triggers:"
@@ -1257,27 +1258,27 @@ msgstr "ماشه‌ها:"
 
 #: describe.c:1191
 msgid "Inherits"
-msgstr "به ارث مي‌برد"
+msgstr "به ارث می‌برد"
 
 #: describe.c:1277
 msgid "User name"
-msgstr "نام كاربر"
+msgstr "نام کاربر"
 
 #: describe.c:1277
 msgid "User ID"
-msgstr "شماره شناسايي كاربر"
+msgstr "شماره شناسایی کاربر"
 
 #: describe.c:1278
 msgid "superuser, create database"
-msgstr "كاربر مافوق ، ايجاد بانك اطلاعاتي"
+msgstr "کاربر مافوق ، ایجاد بانک اطلاعاتی"
 
 #: describe.c:1279
 msgid "superuser"
-msgstr "كاربر مافوق"
+msgstr "کاربر مافوق"
 
 #: describe.c:1279
 msgid "create database"
-msgstr "ايجاد بانك اطلاعاتي"
+msgstr "ایجاد بانک اطلاعاتی"
 
 #: describe.c:1280
 msgid "Attributes"
@@ -1285,7 +1286,7 @@ msgstr "مشخصه‌ها"
 
 #: describe.c:1293
 msgid "List of database users"
-msgstr "ليست كاربران بانك اطلاعاتي"
+msgstr "لیست کاربران بانک اطلاعاتی"
 
 #: describe.c:1340
 msgid "special"
@@ -1293,23 +1294,23 @@ msgstr "مخصوص"
 
 #: describe.c:1401
 msgid "No matching relations found.\n"
-msgstr "هيج وابستگي منطبق يافت نشد.\n"
+msgstr "هیج وابستگی منطبق یافت نشد.\n"
 
 #: describe.c:1403
 msgid "No relations found.\n"
-msgstr "هيچ وابستگي يافت نشد.\n"
+msgstr "هیچ وابستگی یافت نشد.\n"
 
 #: describe.c:1408
 msgid "List of relations"
-msgstr "ليست وابستگي‌ها"
+msgstr "لیست وابستگی‌ها"
 
 #: describe.c:1447
 msgid "Modifier"
-msgstr "تعديل‌كننده"
+msgstr "تعدیل‌کننده"
 
 #: describe.c:1461
 msgid "List of domains"
-msgstr "ليست دامنه‌ها"
+msgstr "لیست دامنه‌ها"
 
 #: describe.c:1494
 msgid "Source"
@@ -1327,15 +1328,15 @@ msgstr "بله"
 #: describe.c:1497
 #: describe.c:1551
 msgid "no"
-msgstr "خير"
+msgstr "خیر"
 
 #: describe.c:1498
 msgid "Default?"
-msgstr "پيش‌فرض؟"
+msgstr "پیش‌فرض؟"
 
 #: describe.c:1512
 msgid "List of conversions"
-msgstr "ليست تبديلات"
+msgstr "لیست تبدیلات"
 
 #: describe.c:1547
 msgid "Source type"
@@ -1347,7 +1348,7 @@ msgstr "نوع هدف"
 
 #: describe.c:1549
 msgid "(binary compatible)"
-msgstr "(منطبق با دودويي)"
+msgstr "(منطبق با دودویی)"
 
 #: describe.c:1550
 msgid "Function"
@@ -1355,24 +1356,24 @@ msgstr "تابع"
 
 #: describe.c:1552
 msgid "in assignment"
-msgstr "مكلف"
+msgstr "مکلف"
 
 #: describe.c:1554
 msgid "Implicit?"
-msgstr "تلويحي؟"
+msgstr "تلویحی؟"
 
 #: describe.c:1562
 msgid "List of casts"
-msgstr "ليست كست‌ها"
+msgstr "لیست کست‌ها"
 
 #: describe.c:1603
 msgid "List of schemas"
-msgstr "ليست الگوها"
+msgstr "لیست الگوها"
 
 #: sql_help.h:25
 #: sql_help.h:345
 msgid "abort the current transaction"
-msgstr "صرفنظر از تراكنش جاري"
+msgstr "صرفنظر از تراکنش جاری"
 
 #: sql_help.h:26
 msgid "ABORT [ WORK | TRANSACTION ]"
@@ -1380,7 +1381,7 @@ msgstr "ABORT [ WORK | TRANSACTION ]"
 
 #: sql_help.h:29
 msgid "change the definition of an aggregate function"
-msgstr "تغيير تعريف يك تابع مجتمع"
+msgstr "تغییر تعریف یک تابع مجتمع"
 
 #: sql_help.h:30
 msgid "ALTER AGGREGATE name ( type ) RENAME TO newname"
@@ -1388,7 +1389,7 @@ msgstr "ALTER AGGREGATE name ( type ) RENAME TO newname"
 
 #: sql_help.h:33
 msgid "change the definition of a conversion"
-msgstr "تغيير تعريف يك تبدل"
+msgstr "تغییر تعریف یک تبدل"
 
 #: sql_help.h:34
 msgid "ALTER CONVERSION name RENAME TO newname"
@@ -1396,7 +1397,7 @@ msgstr "ALTER CONVERSION name RENAME TO newname"
 
 #: sql_help.h:37
 msgid "change a database"
-msgstr "تغيير يك بانك اطلاعاتي"
+msgstr "تغییر یک بانک اطلاعاتی"
 
 #: sql_help.h:38
 msgid ""
@@ -1412,7 +1413,7 @@ msgstr ""
 
 #: sql_help.h:41
 msgid "change the definition of a domain"
-msgstr "تغيير تعريف يك دامنه"
+msgstr "تغییر تعریف یک دامنه"
 
 #: sql_help.h:42
 msgid ""
@@ -1440,7 +1441,7 @@ msgstr ""
 
 #: sql_help.h:45
 msgid "change the definition of a function"
-msgstr "تغيير تعريف يك تابع"
+msgstr "تغییر تعریف یک تابع"
 
 #: sql_help.h:46
 msgid "ALTER FUNCTION name ( [ type [, ...] ] ) RENAME TO newname"
@@ -1448,7 +1449,7 @@ msgstr "ALTER FUNCTION name ( [ type [, ...] ] ) RENAME TO newname"
 
 #: sql_help.h:49
 msgid "change a user group"
-msgstr "تغيير گروه يك كاربر"
+msgstr "تغییر گروه یک کاربر"
 
 #: sql_help.h:50
 msgid ""
@@ -1464,7 +1465,7 @@ msgstr ""
 
 #: sql_help.h:53
 msgid "change the definition of a procedural language"
-msgstr "تغيير تعريف يك زبان رويه‌اي"
+msgstr "تغییر تعریف یک زبان رویه‌ای"
 
 #: sql_help.h:54
 msgid "ALTER LANGUAGE name RENAME TO newname"
@@ -1472,7 +1473,7 @@ msgstr "ALTER LANGUAGE name RENAME TO newname"
 
 #: sql_help.h:57
 msgid "change the definition of an operator class"
-msgstr "تغيير تعريف كلاس يك عملگر"
+msgstr "تغییر تعریف کلاس یک عملگر"
 
 #: sql_help.h:58
 msgid "ALTER OPERATOR CLASS name USING index_method RENAME TO newname"
@@ -1480,7 +1481,7 @@ msgstr "ALTER OPERATOR CLASS name USING index_method RENAME TO newname"
 
 #: sql_help.h:61
 msgid "change the definition of a schema"
-msgstr "تغيير تعريف يك الگو"
+msgstr "تغییر تعریف یک الگو"
 
 #: sql_help.h:62
 msgid "ALTER SCHEMA name RENAME TO newname"
@@ -1488,7 +1489,7 @@ msgstr "ALTER SCHEMA name RENAME TO newname"
 
 #: sql_help.h:65
 msgid "alter the definition of a sequence generator"
-msgstr "تغيير تعريف يك توليدكننده ترتيب"
+msgstr "تغییر تعریف یک تولیدکننده ترتیب"
 
 #: sql_help.h:66
 msgid ""
@@ -1502,7 +1503,7 @@ msgstr ""
 
 #: sql_help.h:69
 msgid "change the definition of a table"
-msgstr "تغيير تعريف يك جدول"
+msgstr "تغییر تعریف یک جدول"
 
 #: sql_help.h:70
 msgid ""
@@ -1562,7 +1563,7 @@ msgstr ""
 
 #: sql_help.h:73
 msgid "change the definition of a trigger"
-msgstr "تغيير تعريف يك ماشه"
+msgstr "تغییر تعریف یک ماشه"
 
 #: sql_help.h:74
 msgid "ALTER TRIGGER name ON table RENAME TO newname"
@@ -1570,7 +1571,7 @@ msgstr "ALTER TRIGGER name ON table RENAME TO newname"
 
 #: sql_help.h:77
 msgid "change a database user account"
-msgstr "تغيير حساب كاربري يك بانك اطلاعاتي"
+msgstr "تغییر حساب کاربری یک بانک اطلاعاتی"
 
 #: sql_help.h:78
 msgid ""
@@ -1578,9 +1579,9 @@ msgid ""
 "\n"
 "where option can be:\n"
 "\n"
-"    CREATEDB | NOCREATEDB\n"
+"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
+"    | CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER \n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
 "    | VALID UNTIL 'abstime'\n"
 "\n"
 "ALTER USER name RENAME TO newname\n"
@@ -1592,9 +1593,9 @@ msgstr ""
 "\n"
 "where option can be:\n"
 "\n"
-"    CREATEDB | NOCREATEDB\n"
+"    [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
+"    | CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER \n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password' \n"
 "    | VALID UNTIL 'abstime'\n"
 "\n"
 "ALTER USER name RENAME TO newname\n"
@@ -1604,7 +1605,7 @@ msgstr ""
 
 #: sql_help.h:81
 msgid "collect statistics about a database"
-msgstr "جمع‌آوري اطلاعات آماري درباره يك بانك اطلاعاتي"
+msgstr "جمع‌آوری اطلاعات آماری درباره یک بانک اطلاعاتی"
 
 #: sql_help.h:82
 msgid "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
@@ -1613,7 +1614,7 @@ msgstr "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
 #: sql_help.h:85
 #: sql_help.h:377
 msgid "start a transaction block"
-msgstr "شروع يك بلوك تراكنش"
+msgstr "شروع یک بلوک تراکنش"
 
 #: sql_help.h:86
 msgid "BEGIN [ WORK | TRANSACTION ]"
@@ -1621,7 +1622,7 @@ msgstr "BEGIN [ WORK | TRANSACTION ]"
 
 #: sql_help.h:89
 msgid "force a transaction log checkpoint"
-msgstr "اجبار براي نقطه ايجاد ثبت وقايع يك تراكنش"
+msgstr "اجبار برای نقطه ایجاد ثبت وقایع یک تراکنش"
 
 #: sql_help.h:90
 msgid "CHECKPOINT"
@@ -1629,7 +1630,7 @@ msgstr "CHECKPOINT"
 
 #: sql_help.h:93
 msgid "close a cursor"
-msgstr "بستن يك مكان‌نما"
+msgstr "بستن یک مکان‌نما"
 
 #: sql_help.h:94
 msgid "CLOSE name"
@@ -1637,7 +1638,7 @@ msgstr "CLOSE name"
 
 #: sql_help.h:97
 msgid "cluster a table according to an index"
-msgstr "دسته‌بندي يك جدول بر اساس يك ايندكس"
+msgstr "دسته‌بندی یک جدول بر اساس یک ایندکس"
 
 #: sql_help.h:98
 msgid ""
@@ -1651,7 +1652,7 @@ msgstr ""
 
 #: sql_help.h:101
 msgid "define or change the comment of an object"
-msgstr "تعريف يا تغيير توضيحات يك شيء"
+msgstr "تعریف یا تغییر توضیحات یک شیء"
 
 #: sql_help.h:102
 msgid ""
@@ -1696,7 +1697,7 @@ msgstr ""
 #: sql_help.h:105
 #: sql_help.h:285
 msgid "commit the current transaction"
-msgstr "اعمال تراكنش جاري"
+msgstr "اعمال تراکنش جاری"
 
 #: sql_help.h:106
 msgid "COMMIT [ WORK | TRANSACTION ]"
@@ -1704,7 +1705,7 @@ msgstr "COMMIT [ WORK | TRANSACTION ]"
 
 #: sql_help.h:109
 msgid "copy data between a file and a table"
-msgstr "كپي كردن اطلاعات بين يك فايل و يك جدول"
+msgstr "کپی کردن اطلاعات بین یک فایل و یک جدول"
 
 #: sql_help.h:110
 msgid ""
@@ -1742,7 +1743,7 @@ msgstr ""
 
 #: sql_help.h:113
 msgid "define a new aggregate function"
-msgstr "تعريف يك تابع مجتمع جديد"
+msgstr "تعریف یک تابع مجتمع جدید"
 
 #: sql_help.h:114
 msgid ""
@@ -1764,7 +1765,7 @@ msgstr ""
 
 #: sql_help.h:117
 msgid "define a new cast"
-msgstr "تعريف يك كست جديد"
+msgstr "تعریف یک کست جدید"
 
 #: sql_help.h:118
 msgid ""
@@ -1786,7 +1787,7 @@ msgstr ""
 
 #: sql_help.h:121
 msgid "define a new constraint trigger"
-msgstr "تعريف يك ماشه محدوديت جديد "
+msgstr "تعریف یک ماشه محدودیت جدید "
 
 #: sql_help.h:122
 msgid ""
@@ -1802,7 +1803,7 @@ msgstr ""
 
 #: sql_help.h:125
 msgid "define a new conversion"
-msgstr "تعريف يك تبديل جديد"
+msgstr "تعریف یک تبدیل جدید"
 
 #: sql_help.h:126
 msgid ""
@@ -1814,7 +1815,7 @@ msgstr ""
 
 #: sql_help.h:129
 msgid "create a new database"
-msgstr "ايجاد يك بانك اطلاعاتي جديد"
+msgstr "ایجاد یک بانک اطلاعاتی جدید"
 
 #: sql_help.h:130
 msgid ""
@@ -1832,7 +1833,7 @@ msgstr ""
 
 #: sql_help.h:133
 msgid "define a new domain"
-msgstr "تعريف يك دامنه جديد"
+msgstr "تعریف یک دامنه جدید"
 
 #: sql_help.h:134
 msgid ""
@@ -1856,7 +1857,7 @@ msgstr ""
 
 #: sql_help.h:137
 msgid "define a new function"
-msgstr "تعريف يك تابع جديد"
+msgstr "تعریف یک تابع جدید"
 
 #: sql_help.h:138
 msgid ""
@@ -1884,7 +1885,7 @@ msgstr ""
 
 #: sql_help.h:141
 msgid "define a new user group"
-msgstr "تعريف يك گروه كاربري جديد"
+msgstr "تعریف یک گروه کاربری جدید"
 
 #: sql_help.h:142
 msgid ""
@@ -1904,7 +1905,7 @@ msgstr ""
 
 #: sql_help.h:145
 msgid "define a new index"
-msgstr "تعريف يك ايندكس جديد"
+msgstr "تعریف یک ایندکس جدید"
 
 #: sql_help.h:146
 msgid ""
@@ -1918,7 +1919,7 @@ msgstr ""
 
 #: sql_help.h:149
 msgid "define a new procedural language"
-msgstr "تعريف يك زبان رويه‌اي جديد"
+msgstr "تعریف یک زبان رویه‌ای جدید"
 
 #: sql_help.h:150
 msgid ""
@@ -1930,7 +1931,7 @@ msgstr ""
 
 #: sql_help.h:153
 msgid "define a new operator class"
-msgstr "تعريف يك كلاس عملگر جديد"
+msgstr "تعریف یک کلاس عملگر جدید"
 
 #: sql_help.h:154
 msgid ""
@@ -1948,7 +1949,7 @@ msgstr ""
 
 #: sql_help.h:157
 msgid "define a new operator"
-msgstr "تعريف يك عملگر جديد"
+msgstr "تعریف یک عملگر جدید"
 
 #: sql_help.h:158
 msgid ""
@@ -1974,7 +1975,7 @@ msgstr ""
 
 #: sql_help.h:161
 msgid "define a new rewrite rule"
-msgstr "تعريف يك قانون بازنويسي جديد"
+msgstr "تعریف یک قانون بازنویسی جدید"
 
 #: sql_help.h:162
 msgid ""
@@ -1988,7 +1989,7 @@ msgstr ""
 
 #: sql_help.h:165
 msgid "define a new schema"
-msgstr "تعريف يك الگوي جديد"
+msgstr "تعریف یک الگوی جدید"
 
 #: sql_help.h:166
 msgid ""
@@ -2000,7 +2001,7 @@ msgstr ""
 
 #: sql_help.h:169
 msgid "define a new sequence generator"
-msgstr "تعريف يك توليدكننده ترتيب جديد"
+msgstr "تعریف یک تولیدکننده ترتیب جدید"
 
 #: sql_help.h:170
 msgid ""
@@ -2014,7 +2015,7 @@ msgstr ""
 
 #: sql_help.h:173
 msgid "define a new table"
-msgstr "تعريف يك جدول جديد"
+msgstr "تعریف یک جدول جدید"
 
 #: sql_help.h:174
 msgid ""
@@ -2077,7 +2078,7 @@ msgstr ""
 #: sql_help.h:177
 #: sql_help.h:353
 msgid "create a new table from the results of a query"
-msgstr "ايجاد يك جدول جديد با استفاده از نتيجه يك درخواست"
+msgstr "ایجاد یک جدول جدید با استفاده از نتیجه یک درخواست"
 
 #: sql_help.h:178
 msgid ""
@@ -2089,7 +2090,7 @@ msgstr ""
 
 #: sql_help.h:181
 msgid "define a new trigger"
-msgstr "تعريف يك ماشه جديد"
+msgstr "تعریف یک ماشه جدید"
 
 #: sql_help.h:182
 msgid ""
@@ -2103,7 +2104,7 @@ msgstr ""
 
 #: sql_help.h:185
 msgid "define a new data type"
-msgstr "تعريف يك نوع داده جديد"
+msgstr "تعریف یک نوع داده جدید"
 
 #: sql_help.h:186
 msgid ""
@@ -2143,7 +2144,7 @@ msgstr ""
 
 #: sql_help.h:189
 msgid "define a new database user account"
-msgstr "تعريف يك حساب كاربري جديد بانك اطلاعاتي"
+msgstr "تعریف یک حساب کاربری جدید بانک اطلاعاتی"
 
 #: sql_help.h:190
 msgid ""
@@ -2152,10 +2153,10 @@ msgid ""
 "where option can be:\n"
 "    \n"
 "      SYSID uid \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
 "    | CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER\n"
 "    | IN GROUP groupname [, ...]\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
 "    | VALID UNTIL 'abstime'"
 msgstr ""
 "CREATE USER name [ [ WITH ] option [ ... ] ]\n"
@@ -2163,15 +2164,15 @@ msgstr ""
 "where option can be:\n"
 "    \n"
 "      SYSID uid \n"
+"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
 "    | CREATEDB | NOCREATEDB\n"
 "    | CREATEUSER | NOCREATEUSER\n"
 "    | IN GROUP groupname [, ...]\n"
-"    | [ ENCRYPTED | UNENCRYPTED ] PASSWORD 'password'\n"
 "    | VALID UNTIL 'abstime'"
 
 #: sql_help.h:193
 msgid "define a new view"
-msgstr "تعريف يك جشم‌انداز جديد"
+msgstr "تعریف یک جشم‌انداز جدید"
 
 #: sql_help.h:194
 msgid "CREATE [ OR REPLACE ] VIEW name [ ( column_name [, ...] ) ] AS query"
@@ -2179,7 +2180,7 @@ msgstr "CREATE [ OR REPLACE ] VIEW name [ ( column_name [, ...] ) ] AS query"
 
 #: sql_help.h:197
 msgid "deallocate a prepared statement"
-msgstr "لغو تخصيص يك بيانيه آماده"
+msgstr "لغو تخصیص یک بیانیه آماده"
 
 #: sql_help.h:198
 msgid "DEALLOCATE [ PREPARE ] plan_name"
@@ -2187,7 +2188,7 @@ msgstr "DEALLOCATE [ PREPARE ] plan_name"
 
 #: sql_help.h:201
 msgid "define a cursor"
-msgstr "تعريف يك مكان‌نما"
+msgstr "تعریف یک مکان‌نما"
 
 #: sql_help.h:202
 msgid ""
@@ -2201,7 +2202,7 @@ msgstr ""
 
 #: sql_help.h:205
 msgid "delete rows of a table"
-msgstr "پاك كردن رديف‌هاي يك جدول"
+msgstr "پاک کردن ردیف‌های یک جدول"
 
 #: sql_help.h:206
 msgid "DELETE FROM [ ONLY ] table [ WHERE condition ]"
@@ -2209,7 +2210,7 @@ msgstr "DELETE FROM [ ONLY ] table [ WHERE condition ]"
 
 #: sql_help.h:209
 msgid "remove an aggregate function"
-msgstr "ازبين بردن يك تابع مجتمع"
+msgstr "ازبین بردن یک تابع مجتمع"
 
 #: sql_help.h:210
 msgid "DROP AGGREGATE name ( type ) [ CASCADE | RESTRICT ]"
@@ -2217,7 +2218,7 @@ msgstr "DROP AGGREGATE name ( type ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:213
 msgid "remove a cast"
-msgstr "ازبين بردن يك كست"
+msgstr "ازبین بردن یک کست"
 
 #: sql_help.h:214
 msgid "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
@@ -2225,7 +2226,7 @@ msgstr "DROP CAST (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:217
 msgid "remove a conversion"
-msgstr "ازبين بردن يك تبديل"
+msgstr "ازبین بردن یک تبدیل"
 
 #: sql_help.h:218
 msgid "DROP CONVERSION name [ CASCADE | RESTRICT ]"
@@ -2233,7 +2234,7 @@ msgstr "DROP CONVERSION name [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:221
 msgid "remove a database"
-msgstr "ازبين بردن يك بانك اطلاعاتي"
+msgstr "ازبین بردن یک بانک اطلاعاتی"
 
 #: sql_help.h:222
 msgid "DROP DATABASE name"
@@ -2241,7 +2242,7 @@ msgstr "DROP DATABASE name"
 
 #: sql_help.h:225
 msgid "remove a domain"
-msgstr "ازبين بردن يك دامنه"
+msgstr "ازبین بردن یک دامنه"
 
 #: sql_help.h:226
 msgid "DROP DOMAIN name [, ...]  [ CASCADE | RESTRICT ]"
@@ -2249,7 +2250,7 @@ msgstr "DROP DOMAIN name [, ...]  [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:229
 msgid "remove a function"
-msgstr "ازبين بردن يك تابع"
+msgstr "ازبین بردن یک تابع"
 
 #: sql_help.h:230
 msgid "DROP FUNCTION name ( [ type [, ...] ] ) [ CASCADE | RESTRICT ]"
@@ -2257,7 +2258,7 @@ msgstr "DROP FUNCTION name ( [ type [, ...] ] ) [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:233
 msgid "remove a user group"
-msgstr "ازبين بردن يك گروه كاربري"
+msgstr "ازبین بردن یک گروه کاربری"
 
 #: sql_help.h:234
 msgid "DROP GROUP name"
@@ -2265,7 +2266,7 @@ msgstr "DROP GROUP name"
 
 #: sql_help.h:237
 msgid "remove an index"
-msgstr "ازبين بردن يك ايندكس"
+msgstr "ازبین بردن یک ایندکس"
 
 #: sql_help.h:238
 msgid "DROP INDEX name [, ...] [ CASCADE | RESTRICT ]"
@@ -2273,7 +2274,7 @@ msgstr "DROP INDEX name [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:241
 msgid "remove a procedural language"
-msgstr "ازبين بردن يك زبان رويه‌اي"
+msgstr "ازبین بردن یک زبان رویه‌ای"
 
 #: sql_help.h:242
 msgid "DROP [ PROCEDURAL ] LANGUAGE name [ CASCADE | RESTRICT ]"
@@ -2281,7 +2282,7 @@ msgstr "DROP [ PROCEDURAL ] LANGUAGE name [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:245
 msgid "remove an operator class"
-msgstr "ازبين بردن يك كلاس عملگري"
+msgstr "ازبین بردن یک کلاس عملگری"
 
 #: sql_help.h:246
 msgid "DROP OPERATOR CLASS name USING index_method [ CASCADE | RESTRICT ]"
@@ -2289,7 +2290,7 @@ msgstr "DROP OPERATOR CLASS name USING index_method [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:249
 msgid "remove an operator"
-msgstr "ازبين بردن يك عملگر"
+msgstr "ازبین بردن یک عملگر"
 
 #: sql_help.h:250
 msgid "DROP OPERATOR name ( lefttype | NONE , righttype | NONE ) [ CASCADE | RESTRICT ]"
@@ -2297,7 +2298,7 @@ msgstr "DROP OPERATOR name ( lefttype | NONE , righttype | NONE ) [ CASCADE | RE
 
 #: sql_help.h:253
 msgid "remove a rewrite rule"
-msgstr "ازبين بردن يك قانون بازنويسي"
+msgstr "ازبین بردن یک قانون بازنویسی"
 
 #: sql_help.h:254
 msgid "DROP RULE name ON relation [ CASCADE | RESTRICT ]"
@@ -2305,7 +2306,7 @@ msgstr "DROP RULE name ON relation [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:257
 msgid "remove a schema"
-msgstr "ازبين بردن يك الگو"
+msgstr "ازبین بردن یک الگو"
 
 #: sql_help.h:258
 msgid "DROP SCHEMA name [, ...] [ CASCADE | RESTRICT ]"
@@ -2313,7 +2314,7 @@ msgstr "DROP SCHEMA name [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:261
 msgid "remove a sequence"
-msgstr "ازبين بردن يك ترتيب"
+msgstr "ازبین بردن یک ترتیب"
 
 #: sql_help.h:262
 msgid "DROP SEQUENCE name [, ...] [ CASCADE | RESTRICT ]"
@@ -2321,7 +2322,7 @@ msgstr "DROP SEQUENCE name [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:265
 msgid "remove a table"
-msgstr "ازبين بردن يك جدول"
+msgstr "ازبین بردن یک جدول"
 
 #: sql_help.h:266
 msgid "DROP TABLE name [, ...] [ CASCADE | RESTRICT ]"
@@ -2329,7 +2330,7 @@ msgstr "DROP TABLE name [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:269
 msgid "remove a trigger"
-msgstr "ازبين بردن يك ماشه"
+msgstr "ازبین بردن یک ماشه"
 
 #: sql_help.h:270
 msgid "DROP TRIGGER name ON table [ CASCADE | RESTRICT ]"
@@ -2337,7 +2338,7 @@ msgstr "DROP TRIGGER name ON table [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:273
 msgid "remove a data type"
-msgstr "ازبين بردن يك نوع داده"
+msgstr "ازبین بردن یک نوع داده"
 
 #: sql_help.h:274
 msgid "DROP TYPE name [, ...] [ CASCADE | RESTRICT ]"
@@ -2345,7 +2346,7 @@ msgstr "DROP TYPE name [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:277
 msgid "remove a database user account"
-msgstr "ازبين بردن يك حساب كاربري بانك اطلاعاتي"
+msgstr "ازبین بردن یک حساب کاربری بانک اطلاعاتی"
 
 #: sql_help.h:278
 msgid "DROP USER name"
@@ -2353,7 +2354,7 @@ msgstr "DROP USER name"
 
 #: sql_help.h:281
 msgid "remove a view"
-msgstr "ازبين بردن يك چشم‌انداز"
+msgstr "ازبین بردن یک چشم‌انداز"
 
 #: sql_help.h:282
 msgid "DROP VIEW name [, ...] [ CASCADE | RESTRICT ]"
@@ -2365,7 +2366,7 @@ msgstr "END [ WORK | TRANSACTION ]"
 
 #: sql_help.h:289
 msgid "execute a prepared statement"
-msgstr "اجراي يك حكم آماده"
+msgstr "اجرای یک حکم آماده"
 
 #: sql_help.h:290
 msgid "EXECUTE plan_name [ (parameter [, ...] ) ]"
@@ -2373,7 +2374,7 @@ msgstr "EXECUTE plan_name [ (parameter [, ...] ) ]"
 
 #: sql_help.h:293
 msgid "show the execution plan of a statement"
-msgstr "نمايش طرح اجراي يك حكم"
+msgstr "نمایش طرح اجرای یک حکم"
 
 #: sql_help.h:294
 msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
@@ -2381,7 +2382,7 @@ msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
 
 #: sql_help.h:297
 msgid "retrieve rows from a query using a cursor"
-msgstr "بدست آوردن رديف‌ها از يك درخواست با استفاده از يك مكان‌نما"
+msgstr "بدست آوردن ردیف‌ها از یک درخواست با استفاده از یک مکان‌نما"
 
 #: sql_help.h:298
 msgid ""
@@ -2425,7 +2426,7 @@ msgstr ""
 
 #: sql_help.h:301
 msgid "define access privileges"
-msgstr "تعريف امتيازهاي دسترسي"
+msgstr "تعریف امتیازهای دسترسی"
 
 #: sql_help.h:302
 msgid ""
@@ -2473,7 +2474,7 @@ msgstr ""
 
 #: sql_help.h:305
 msgid "create new rows in a table"
-msgstr "ايجاد رديف‌هاي جديد در جدول"
+msgstr "ایجاد ردیف‌های جدید در جدول"
 
 #: sql_help.h:306
 msgid ""
@@ -2485,7 +2486,7 @@ msgstr ""
 
 #: sql_help.h:309
 msgid "listen for a notification"
-msgstr "گوش دادن به يك اطلاعيه"
+msgstr "گوش دادن به یک اطلاعیه"
 
 #: sql_help.h:310
 msgid "LISTEN name"
@@ -2493,7 +2494,7 @@ msgstr "LISTEN name"
 
 #: sql_help.h:313
 msgid "load or reload a shared library file"
-msgstr "بارگذاري يا بارگذاري مجدد يك فايل كتابخانه‌اي"
+msgstr "بارگذاری یا بارگذاری مجدد یک فایل کتابخانه‌ای"
 
 #: sql_help.h:314
 msgid "LOAD 'filename'"
@@ -2501,7 +2502,7 @@ msgstr "LOAD 'filename'"
 
 #: sql_help.h:317
 msgid "lock a table"
-msgstr "قفل كردن يك جدول"
+msgstr "قفل کردن یک جدول"
 
 #: sql_help.h:318
 msgid ""
@@ -2521,7 +2522,7 @@ msgstr ""
 
 #: sql_help.h:321
 msgid "position a cursor"
-msgstr "جانمايي يك مكان‌نما"
+msgstr "جانمایی یک مکان‌نما"
 
 #: sql_help.h:322
 msgid "MOVE [ direction { FROM | IN } ] cursorname"
@@ -2529,7 +2530,7 @@ msgstr "MOVE [ direction { FROM | IN } ] cursorname"
 
 #: sql_help.h:325
 msgid "generate a notification"
-msgstr "توليد يك اطلاعيه"
+msgstr "تولید یک اطلاعیه"
 
 #: sql_help.h:326
 msgid "NOTIFY name"
@@ -2537,7 +2538,7 @@ msgstr "NOTIFY name"
 
 #: sql_help.h:329
 msgid "prepare a statement for execution"
-msgstr "آماده‌سازي يك حكم جهت اجرا"
+msgstr "آماده‌سازی یک حکم جهت اجرا"
 
 #: sql_help.h:330
 msgid "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
@@ -2545,7 +2546,7 @@ msgstr "PREPARE plan_name [ (datatype [, ...] ) ] AS statement"
 
 #: sql_help.h:333
 msgid "rebuild indexes"
-msgstr "دوباره‌سازي ايندكس‌ها"
+msgstr "دوباره‌سازی ایندکس‌ها"
 
 #: sql_help.h:334
 msgid "REINDEX { DATABASE | TABLE | INDEX } name [ FORCE ]"
@@ -2553,7 +2554,7 @@ msgstr "REINDEX { DATABASE | TABLE | INDEX } name [ FORCE ]"
 
 #: sql_help.h:337
 msgid "restore the value of a run-time parameter to the default value"
-msgstr "مقداردهي يك پارامتر زمان اجرا به مقدار پيش‌فرض"
+msgstr "مقداردهی یک پارامتر زمان اجرا به مقدار پیش‌فرض"
 
 #: sql_help.h:338
 msgid ""
@@ -2565,7 +2566,7 @@ msgstr ""
 
 #: sql_help.h:341
 msgid "remove access privileges"
-msgstr "ازبين بردن يك امتيازهاي دسترسي"
+msgstr "ازبین بردن یک امتیازهای دسترسی"
 
 #: sql_help.h:342
 msgid ""
@@ -2637,7 +2638,7 @@ msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
 #: sql_help.h:349
 msgid "retrieve rows from a table or view"
-msgstr "بدست‌ آوردن رديف‌ها از يك جدول يا چشم‌انداز"
+msgstr "بدست‌ آوردن ردیف‌ها از یک جدول یا چشم‌انداز"
 
 #: sql_help.h:350
 msgid ""
@@ -2711,7 +2712,7 @@ msgstr ""
 
 #: sql_help.h:357
 msgid "change a run-time parameter"
-msgstr "تغيير يك پارامتر زمان اجرا"
+msgstr "تغییر یک پارامتر زمان اجرا"
 
 #: sql_help.h:358
 msgid ""
@@ -2723,7 +2724,7 @@ msgstr ""
 
 #: sql_help.h:361
 msgid "set the constraint mode of the current transaction"
-msgstr "تنظيم حالت محدوديت براي تراكنش جاري"
+msgstr "تنظیم حالت محدودیت برای تراکنش جاری"
 
 #: sql_help.h:362
 msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
@@ -2731,7 +2732,7 @@ msgstr "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
 
 #: sql_help.h:365
 msgid "set the session user identifier and the current user identifier of the current session"
-msgstr "تنظيم شناسه كاربري نشست و شناسه كاربري جاري براي نشست جاري"
+msgstr "تنظیم شناسه کاربری نشست و شناسه کاربری جاری برای نشست جاری"
 
 #: sql_help.h:366
 msgid ""
@@ -2745,7 +2746,7 @@ msgstr ""
 
 #: sql_help.h:369
 msgid "set the characteristics of the current transaction"
-msgstr "تنظيم مشخصات تراكنش جاري"
+msgstr "تنظیم مشخصات تراکنش جاری"
 
 #: sql_help.h:370
 msgid ""
@@ -2761,7 +2762,7 @@ msgstr ""
 
 #: sql_help.h:373
 msgid "show the value of a run-time parameter"
-msgstr "نمايش مقدار يك پارامتر زمان اجرا"
+msgstr "نمایش مقدار یک پارامتر زمان اجرا"
 
 #: sql_help.h:374
 msgid ""
@@ -2777,7 +2778,7 @@ msgstr "START TRANSACTION [ ISOLATION LEVEL { READ COMMITTED | SERIALIZABLE } ] 
 
 #: sql_help.h:381
 msgid "empty a table"
-msgstr "خالي كردن يك جدول"
+msgstr "خالی کردن یک جدول"
 
 #: sql_help.h:382
 msgid "TRUNCATE [ TABLE ] name"
@@ -2785,7 +2786,7 @@ msgstr "TRUNCATE [ TABLE ] name"
 
 #: sql_help.h:385
 msgid "stop listening for a notification"
-msgstr "توقف گوش دادن به يك اطلاعيه"
+msgstr "توقف گوش دادن به یک اطلاعیه"
 
 #: sql_help.h:386
 msgid "UNLISTEN { name | * }"
@@ -2793,7 +2794,7 @@ msgstr "UNLISTEN { name | * }"
 
 #: sql_help.h:389
 msgid "update rows of a table"
-msgstr "بروزآوري رديف‌هاي يك جدول"
+msgstr "بروزآوری ردیف‌های یک جدول"
 
 #: sql_help.h:390
 msgid ""
@@ -2807,7 +2808,7 @@ msgstr ""
 
 #: sql_help.h:393
 msgid "garbage-collect and optionally analyze a database"
-msgstr "آشغال جمع‌كني و تجزيه و تحليل اختياري يك بانك اطلاعاتي"
+msgstr "آشغال جمع‌کنی و تجزیه و تحلیل اختیاری یک بانک اطلاعاتی"
 
 #: sql_help.h:394
 msgid ""
