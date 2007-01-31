@@ -1,7 +1,7 @@
 # translation of psql-fr.po to FR_fr
 # French message translation file for psql
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/po/fr.po,v 1.4.2.5 2005/12/09 22:12:26 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/po/fr.po,v 1.4.2.6 2007/01/31 08:12:55 petere Exp $
 #
 # Use these quotes: «%s»
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
@@ -2191,7 +2191,7 @@ msgstr ""
 
 #: sql_help.h:205
 msgid "delete rows of a table"
-msgstr "supprime des colonnes dans une table"
+msgstr "supprime des lignes dans une table"
 
 #: sql_help.h:206
 msgid "DELETE FROM [ ONLY ] table [ WHERE condition ]"

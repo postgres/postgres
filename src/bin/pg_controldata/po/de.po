@@ -1,15 +1,16 @@
 # German message translation file for pg_controldata
 # Peter Eisentraut <peter_e@gmx.net>, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_controldata/po/de.po,v 1.4 2003/07/23 08:49:28 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_controldata/po/de.po,v 1.4.4.1 2007/01/31 08:12:55 petere Exp $
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-07-23 00:17+0200\n"
-"PO-Revision-Date: 2003-07-23 00:23+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-01-08 11:28-0400\n"
+"PO-Revision-Date: 2007-01-10 11:13+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -46,6 +47,7 @@ msgstr ""
 "  --version      Versionsinformationen anzeigen, dann beenden\n"
 
 #: pg_controldata.c:41
+#, c-format
 msgid ""
 "\n"
 "If no data directory is specified, the environment variable PGDATA\n"
@@ -58,6 +60,7 @@ msgstr ""
 "\n"
 
 #: pg_controldata.c:42
+#, c-format
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Berichten Sie Fehler an <pgsql-bugs@postgresql.org>.\n"
 
@@ -106,6 +109,7 @@ msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: konnte Datei »%s« nicht lesen: %s\n"
 
 #: pg_controldata.c:137
+#, c-format
 msgid ""
 "WARNING: Calculated CRC checksum does not match value stored in file.\n"
 "Either the file is corrupt, or it has a different layout than this program\n"
@@ -235,12 +239,3 @@ msgstr "LC_COLLATE:                           %s\n"
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"
-
-#~ msgid ""
-#~ "Usage:\n"
-#~ "  %s [DATADIR]\n"
-#~ "\n"
-#~ msgstr ""
-#~ "Benutzung:\n"
-#~ "  %s [DATENVERZEICHNIS]\n"
-#~ "\n"

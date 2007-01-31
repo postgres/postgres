@@ -1,15 +1,16 @@
 # German message translation file for libpq
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/po/de.po,v 1.5 2003/10/04 01:07:05 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/po/de.po,v 1.5.2.1 2007/01/31 08:12:56 petere Exp $
 #
 # Use these quotes: »%s«
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
-"POT-Creation-Date: 2003-10-04 01:50+0200\n"
-"PO-Revision-Date: 2003-10-04 01:53+0200\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2007-01-08 11:29-0400\n"
+"PO-Revision-Date: 2007-01-10 10:53+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -38,37 +39,37 @@ msgstr ""
 "konnte den nicht blockierenden Modus auf dem Socket nicht wieder herstellen: "
 "%s\n"
 
-#: fe-auth.c:509
+#: fe-auth.c:508
 msgid "SCM_CRED authentication method not supported\n"
 msgstr "SCM_CRED-Authentifizierungsmethode nicht unterstützt\n"
 
-#: fe-auth.c:600
+#: fe-auth.c:599
 msgid "Kerberos 4 authentication failed\n"
 msgstr "Authentifizierung mit Kerberos 4 schlug fehl\n"
 
-#: fe-auth.c:606
+#: fe-auth.c:605
 msgid "Kerberos 4 authentication not supported\n"
 msgstr "Authentifizierung mit Kerberos 4 nicht unterstützt\n"
 
-#: fe-auth.c:616
+#: fe-auth.c:615
 msgid "Kerberos 5 authentication failed\n"
 msgstr "Authentifizierung mit Kerberos 5 schlug fehl\n"
 
-#: fe-auth.c:622
+#: fe-auth.c:621
 msgid "Kerberos 5 authentication not supported\n"
 msgstr "Authentifizierung mit Kerberos 5 nicht unterstützt\n"
 
-#: fe-auth.c:650
+#: fe-auth.c:649
 #, c-format
 msgid "authentication method %u not supported\n"
 msgstr "Authentifizierungsmethode %u nicht unterstützt\n"
 
-#: fe-auth.c:687
+#: fe-auth.c:686
 #, c-format
 msgid "invalid authentication service name \"%s\", ignored\n"
 msgstr "ungültiger Authentifizierungsdienstname »%s«, ignoriert\n"
 
-#: fe-auth.c:758
+#: fe-auth.c:757
 #, c-format
 msgid "fe_getauthname: invalid authentication system: %d\n"
 msgstr "fe_getauthname: ungültiges Authentifizierungssystem: %d\n"
@@ -151,8 +152,8 @@ msgstr "konnte Client-Adresse vom Socket nicht ermitteln: %s\n"
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "konnte Paket zur SSL-Verhandlung nicht senden: %s\n"
 
-#: fe-connect.c:1404 fe-connect.c:2527 fe-connect.c:2536 fe-connect.c:3103
-#: fe-lobj.c:540
+#: fe-connect.c:1404 fe-connect.c:2550 fe-connect.c:2559 fe-connect.c:3132
+#: fe-exec.c:2410 fe-lobj.c:541
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
@@ -191,27 +192,27 @@ msgstr "unerwartete Nachricht vom Server beim Start\n"
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
 msgstr "ungültiger Verbindungszustand %c, möglicherweise ein Speicherproblem\n"
 
-#: fe-connect.c:2575
+#: fe-connect.c:2598
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "fehlendes »=« nach »%s« in der Zeichenkette der Verbindungsdaten\n"
 
-#: fe-connect.c:2624
+#: fe-connect.c:2647
 msgid "unterminated quoted string in connection info string\n"
 msgstr ""
 "fehlendes schließendes Anführungszeichen (\") in der Zeichenkette der "
 "Verbindugsdaten\n"
 
-#: fe-connect.c:2658
+#: fe-connect.c:2681
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "ungültige Verbindungsoption »%s«\n"
 
-#: fe-connect.c:2870
+#: fe-connect.c:2893
 msgid "connection pointer is NULL\n"
 msgstr "Verbindung ist ein NULL-Zeiger\n"
 
-#: fe-connect.c:3121
+#: fe-connect.c:3150
 #, c-format
 msgid ""
 "WARNING: Password file %s has world or group read access; permission should "
@@ -220,73 +221,77 @@ msgstr ""
 "WARNUNG: Passwortdatei %s erlaubt Lesezugriff für Gruppe oder Andere; Rechte "
 "sollten u=rw (0600) sein\n"
 
-#: fe-exec.c:484
+#: fe-exec.c:490
 msgid "NOTICE"
 msgstr "HINWEIS"
 
-#: fe-exec.c:637 fe-exec.c:689
+#: fe-exec.c:670 fe-exec.c:722
 msgid "command string is a null pointer\n"
 msgstr "Befehlszeichenkette ist ein NULL-Zeiger\n"
 
-#: fe-exec.c:724
+#: fe-exec.c:757
 msgid "statement name is a null pointer\n"
 msgstr "Anweisungsname ist ein NULL-Zeiger\n"
 
-#: fe-exec.c:755
+#: fe-exec.c:788
 msgid "no connection to the server\n"
 msgstr "keine Verbindung mit dem Server\n"
 
-#: fe-exec.c:762
+#: fe-exec.c:795
 msgid "another command is already in progress\n"
 msgstr "ein anderer Befehl ist bereits in Ausführung\n"
 
-#: fe-exec.c:798 fe-exec.c:1432
+#: fe-exec.c:831 fe-exec.c:1482
 msgid "function requires at least protocol version 3.0\n"
 msgstr "Funktion erfordert mindestens Protokollversion 3.0\n"
 
-#: fe-exec.c:1100
+#: fe-exec.c:1133
 #, c-format
 msgid "unexpected asyncStatus: %d\n"
 msgstr "unerwarteter asyncStatus: %d\n"
 
-#: fe-exec.c:1205
+#: fe-exec.c:1238
 msgid "COPY terminated by new PQexec"
 msgstr "COPY von neuem PQexec beendet"
 
-#: fe-exec.c:1213
+#: fe-exec.c:1246
 msgid "COPY IN state must be terminated first\n"
 msgstr "COPY-IN-Zustand muss erst beendet werden\n"
 
-#: fe-exec.c:1233
+#: fe-exec.c:1266
 msgid "COPY OUT state must be terminated first\n"
 msgstr "COPY-OUT-Zustand muss erst beendet werden\n"
 
-#: fe-exec.c:1336 fe-exec.c:1390 fe-exec.c:1474
+#: fe-exec.c:1375 fe-exec.c:1440 fe-exec.c:1524
 msgid "no COPY in progress\n"
 msgstr "keine COPY in Ausführung\n"
 
-#: fe-exec.c:1666
+#: fe-exec.c:1716
 msgid "connection in wrong state\n"
 msgstr "Verbindung im falschen Zustand\n"
 
-#: fe-exec.c:1697
+#: fe-exec.c:1747
 msgid "invalid ExecStatusType code"
 msgstr "ungültiger ExecStatusType-Kode"
 
-#: fe-exec.c:1761 fe-exec.c:1784
+#: fe-exec.c:1811 fe-exec.c:1834
 #, c-format
 msgid "column number %d is out of range 0..%d"
 msgstr "Spaltennummer %d ist außerhalb des zulässigem Bereichs 0..%d"
 
-#: fe-exec.c:1777
+#: fe-exec.c:1827
 #, c-format
 msgid "row number %d is out of range 0..%d"
 msgstr "Zeilennummer %d ist außerhalb des zulässigem Bereichs 0..%d"
 
-#: fe-exec.c:2014
+#: fe-exec.c:2112
 #, c-format
 msgid "could not interpret result from server: %s"
 msgstr "konnte Ergebnis vom Server nicht interpretieren: %s"
+
+#: fe-exec.c:2318
+msgid "incomplete multibyte character\n"
+msgstr "unvollständiges Mehrbyte-Zeichen\n"
 
 #: fe-lobj.c:402 fe-lobj.c:487
 #, c-format
@@ -313,40 +318,40 @@ msgstr "Fehler beim Lesen der Datei »%s«\n"
 msgid "error while writing to file \"%s\"\n"
 msgstr "Fehler beim Schreiben der Datei »%s«\n"
 
-#: fe-lobj.c:568
+#: fe-lobj.c:586
 msgid "query to initialize large object functions did not return data\n"
 msgstr ""
 "Abfrage zur Initialisierung der Large-Object-Funktionen ergab keine Daten\n"
 
-#: fe-lobj.c:606
+#: fe-lobj.c:624
 msgid "cannot determine OID of function lo_open\n"
 msgstr "kann OID der Funktion lo_open nicht ermitteln\n"
 
-#: fe-lobj.c:613
+#: fe-lobj.c:631
 msgid "cannot determine OID of function lo_close\n"
 msgstr "kann OID der Funktion lo_close nicht ermitteln\n"
 
-#: fe-lobj.c:620
+#: fe-lobj.c:638
 msgid "cannot determine OID of function lo_creat\n"
 msgstr "kann OID der Funktion lo_open nicht ermitteln\n"
 
-#: fe-lobj.c:627
+#: fe-lobj.c:645
 msgid "cannot determine OID of function lo_unlink\n"
 msgstr "kann OID der Funktion lo_unlink nicht ermitteln\n"
 
-#: fe-lobj.c:634
+#: fe-lobj.c:652
 msgid "cannot determine OID of function lo_lseek\n"
 msgstr "kann OID der Funktion lo_lseek nicht ermitteln\n"
 
-#: fe-lobj.c:641
+#: fe-lobj.c:659
 msgid "cannot determine OID of function lo_tell\n"
 msgstr "kann OID der Funktion lo_tell nicht ermitteln\n"
 
-#: fe-lobj.c:648
+#: fe-lobj.c:666
 msgid "cannot determine OID of function loread\n"
 msgstr "kann OID der Funktion loread nicht ermitteln\n"
 
-#: fe-lobj.c:655
+#: fe-lobj.c:673
 msgid "cannot determine OID of function lowrite\n"
 msgstr "kann OID der Funktion lowrite nicht ermitteln\n"
 
@@ -384,15 +389,15 @@ msgstr ""
 msgid "could not send data to server: %s\n"
 msgstr "konnte keine Daten an den Server senden: %s\n"
 
-#: fe-misc.c:905
+#: fe-misc.c:922
 msgid "timeout expired\n"
 msgstr "Timeout abgelaufen\n"
 
-#: fe-misc.c:950
+#: fe-misc.c:967
 msgid "socket not open\n"
 msgstr "Socket ist nicht offen\n"
 
-#: fe-misc.c:973
+#: fe-misc.c:990
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() fehlgeschlagen: %s\n"

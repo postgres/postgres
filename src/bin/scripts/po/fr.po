@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts\n"
 "POT-Creation-Date: 2004-03-02 17:41-0400\n"
-"PO-Revision-Date: 2004-03-05 09:31+0100\n"
+"PO-Revision-Date: 2006-07-20 23:02+0100\n"
 "Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
 "Language-Team: français <pgsql-fr@tuxfamily.org>\n"
 "MIME-Version: 1.0\n"
@@ -15,17 +15,37 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.3\n"
 
-#: clusterdb.c:96 clusterdb.c:111 createdb.c:101 createdb.c:120
-#: createlang.c:94 createlang.c:115 createlang.c:157 createuser.c:116
-#: createuser.c:131 dropdb.c:83 dropdb.c:92 dropdb.c:100 droplang.c:88
-#: droplang.c:109 droplang.c:151 dropuser.c:83 dropuser.c:98 vacuumdb.c:113
+#: clusterdb.c:96
+#: clusterdb.c:111
+#: createdb.c:101
+#: createdb.c:120
+#: createlang.c:94
+#: createlang.c:115
+#: createlang.c:157
+#: createuser.c:116
+#: createuser.c:131
+#: dropdb.c:83
+#: dropdb.c:92
+#: dropdb.c:100
+#: droplang.c:88
+#: droplang.c:109
+#: droplang.c:151
+#: dropuser.c:83
+#: dropuser.c:98
+#: vacuumdb.c:113
 #: vacuumdb.c:128
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Essayez \"%s --help\" pour plus d'informations.\n"
 
-#: clusterdb.c:109 createdb.c:118 createlang.c:113 createuser.c:129
-#: dropdb.c:98 droplang.c:107 dropuser.c:96 vacuumdb.c:126
+#: clusterdb.c:109
+#: createdb.c:118
+#: createlang.c:113
+#: createuser.c:129
+#: dropdb.c:98
+#: droplang.c:107
+#: dropuser.c:96
+#: vacuumdb.c:126
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: trop d'arguments en ligne de commande (le premier étant \"%s\")\n"
@@ -54,8 +74,14 @@ msgstr ""
 "%s crée une base de données PostgreSQL.\n"
 "\n"
 
-#: clusterdb.c:235 createdb.c:220 createlang.c:272 createuser.c:239
-#: dropdb.c:146 droplang.c:242 dropuser.c:146 vacuumdb.c:261
+#: clusterdb.c:235
+#: createdb.c:220
+#: createlang.c:272
+#: createuser.c:239
+#: dropdb.c:146
+#: droplang.c:242
+#: dropuser.c:146
+#: vacuumdb.c:261
 msgid "Usage:\n"
 msgstr "Usage:\n"
 
@@ -64,8 +90,14 @@ msgstr "Usage:\n"
 msgid "  %s [OPTION]... [DBNAME] [DESCRIPTION]\n"
 msgstr "  %s [OPTION]... [NOMBASE] [DESCRIPTION]\n"
 
-#: clusterdb.c:237 createdb.c:222 createlang.c:274 createuser.c:241
-#: dropdb.c:148 droplang.c:244 dropuser.c:148 vacuumdb.c:263
+#: clusterdb.c:237
+#: createdb.c:222
+#: createlang.c:274
+#: createuser.c:241
+#: dropdb.c:148
+#: droplang.c:244
+#: dropuser.c:148
+#: vacuumdb.c:263
 msgid ""
 "\n"
 "Options:\n"
@@ -89,26 +121,48 @@ msgstr "  -O, --owner=PROPRIETAIRE  nom de l'utilisateur possédant cette nouvell
 msgid "  -T, --template=TEMPLATE   template database to copy\n"
 msgstr "  -T, --template=MODELE     base de données modèle à copier\n"
 
-#: clusterdb.c:241 createdb.c:227 createlang.c:276 createuser.c:250
-#: dropdb.c:149 droplang.c:246 dropuser.c:149
+#: clusterdb.c:241
+#: createdb.c:227
+#: createlang.c:276
+#: createuser.c:250
+#: dropdb.c:149
+#: droplang.c:246
+#: dropuser.c:149
 msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                affiche les commandes envoyées au serveur\n"
 
-#: clusterdb.c:242 createdb.c:228 createuser.c:251 dropdb.c:151 dropuser.c:151
+#: clusterdb.c:242
+#: createdb.c:228
+#: createuser.c:251
+#: dropdb.c:151
+#: dropuser.c:151
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet               n'écrit aucun message\n"
 
-#: clusterdb.c:243 createdb.c:229 createlang.c:283 createuser.c:252
-#: dropdb.c:156 droplang.c:252 dropuser.c:156
+#: clusterdb.c:243
+#: createdb.c:229
+#: createlang.c:283
+#: createuser.c:252
+#: dropdb.c:156
+#: droplang.c:252
+#: dropuser.c:156
 msgid "  --help                    show this help, then exit\n"
 msgstr "  --help                    affiche cette aide puis quitte\n"
 
-#: clusterdb.c:244 createdb.c:230 createlang.c:284 createuser.c:253
-#: dropdb.c:157 droplang.c:253 dropuser.c:157
+#: clusterdb.c:244
+#: createdb.c:230
+#: createlang.c:284
+#: createuser.c:253
+#: dropdb.c:157
+#: droplang.c:253
+#: dropuser.c:157
 msgid "  --version                 output version information, then exit\n"
 msgstr "  --version                 affiche les informations de version, puis quitte\n"
 
-#: clusterdb.c:245 createdb.c:231 createuser.c:254 vacuumdb.c:274
+#: clusterdb.c:245
+#: createdb.c:231
+#: createuser.c:254
+#: vacuumdb.c:274
 msgid ""
 "\n"
 "Connection options:\n"
@@ -116,22 +170,42 @@ msgstr ""
 "\n"
 "Options de connexion :\n"
 
-#: clusterdb.c:246 createdb.c:232 createlang.c:279 createuser.c:255
-#: dropdb.c:152 droplang.c:248 dropuser.c:152 vacuumdb.c:275
+#: clusterdb.c:246
+#: createdb.c:232
+#: createlang.c:279
+#: createuser.c:255
+#: dropdb.c:152
+#: droplang.c:248
+#: dropuser.c:152
+#: vacuumdb.c:275
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOTE           hôte du serveur de bases de données ou répertoire des sockets\n"
 
-#: clusterdb.c:247 createdb.c:233 createlang.c:280 createuser.c:256
-#: dropdb.c:153 droplang.c:249 dropuser.c:153 vacuumdb.c:276
+#: clusterdb.c:247
+#: createdb.c:233
+#: createlang.c:280
+#: createuser.c:256
+#: dropdb.c:153
+#: droplang.c:249
+#: dropuser.c:153
+#: vacuumdb.c:276
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           port du serveur de bases de données\n"
 
-#: clusterdb.c:248 createdb.c:234 createlang.c:281 dropdb.c:154 droplang.c:250
+#: clusterdb.c:248
+#: createdb.c:234
+#: createlang.c:281
+#: dropdb.c:154
+#: droplang.c:250
 #: vacuumdb.c:277
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=NOMUTILISATEUR nom d'utilisateur pour la connexion\n"
 
-#: clusterdb.c:249 createdb.c:235 createlang.c:282 dropdb.c:155 droplang.c:251
+#: clusterdb.c:249
+#: createdb.c:235
+#: createlang.c:282
+#: dropdb.c:155
+#: droplang.c:251
 #: vacuumdb.c:278
 msgid "  -W, --password            prompt for password\n"
 msgstr "  -W, --password            exige un mot de passe\n"
@@ -144,8 +218,14 @@ msgstr ""
 "\n"
 "Par défaut, le nom de la base de donnée créée correspond à celui de l'utilisateur.\n"
 
-#: clusterdb.c:251 createdb.c:237 createlang.c:285 createuser.c:261
-#: dropdb.c:158 droplang.c:254 dropuser.c:158 vacuumdb.c:280
+#: clusterdb.c:251
+#: createdb.c:237
+#: createlang.c:285
+#: createuser.c:261
+#: dropdb.c:158
+#: droplang.c:254
+#: dropuser.c:158
+#: vacuumdb.c:280
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
@@ -153,27 +233,33 @@ msgstr ""
 "\n"
 "Indiquez les bogues à <pgsql-bugs@postgresql.org>.\n"
 
-#: createlang.c:140 droplang.c:134
+#: createlang.c:140
+#: droplang.c:134
 msgid "Name"
 msgstr "Nom"
 
-#: createlang.c:140 droplang.c:134
+#: createlang.c:140
+#: droplang.c:134
 msgid "yes"
 msgstr "oui"
 
-#: createlang.c:140 droplang.c:134
+#: createlang.c:140
+#: droplang.c:134
 msgid "no"
 msgstr "non"
 
-#: createlang.c:140 droplang.c:134
+#: createlang.c:140
+#: droplang.c:134
 msgid "Trusted?"
 msgstr "Confiance (trusted) ?"
 
-#: createlang.c:147 droplang.c:141
+#: createlang.c:147
+#: droplang.c:141
 msgid "Procedural Languages"
 msgstr "Langages procéduraux"
 
-#: createlang.c:156 droplang.c:150
+#: createlang.c:156
+#: droplang.c:150
 #, c-format
 msgid "%s: missing required argument language name\n"
 msgstr "%s: argument du nom du langage requis et manquant\n"
@@ -184,12 +270,8 @@ msgid "%s: unsupported language \"%s\"\n"
 msgstr "%s: langage non supporté \"%s\"\n"
 
 #: createlang.c:207
-msgid ""
-"Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and "
-"plpythonu.\n"
-msgstr ""
-"Les langages supportés sont plpgsql, pltcl, pltclu, plperl, plperlu et"
-"plpythonu.\n"
+msgid "Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and plpythonu.\n"
+msgstr "Les langages supportés sont plpgsql, pltcl, pltclu, plperl, plperlu etplpythonu.\n"
 
 #: createlang.c:222
 #, c-format
@@ -210,7 +292,8 @@ msgstr ""
 "%s installe un langage procédural dans une base de données PostgreSQL.\n"
 "\n"
 
-#: createlang.c:273 droplang.c:243
+#: createlang.c:273
+#: droplang.c:243
 #, c-format
 msgid "  %s [OPTION]... LANGNAME [DBNAME]\n"
 msgstr "  %s [OPTION]... NOMLANGAGE [NOMBASE]\n"
@@ -219,7 +302,8 @@ msgstr "  %s [OPTION]... NOMLANGAGE [NOMBASE]\n"
 msgid "  -d, --dbname=DBNAME       database to install language in\n"
 msgstr "  -d, --dbname=NOMBASE      database où installer le langage\n"
 
-#: createlang.c:277 droplang.c:247
+#: createlang.c:277
+#: droplang.c:247
 msgid "  -l, --list                show a list of currently installed languages\n"
 msgstr "  -l, --list                affiche une liste des langages déjà installés\n"
 
@@ -250,11 +334,11 @@ msgstr "Les mots de passe ne sont pas identiques.\n"
 
 #: createuser.c:169
 msgid "Shall the new user be allowed to create databases? (y/n) "
-msgstr "Le nouvel utilisateur a-t'il le droit de créer des bases de données ? (y/n) "
+msgstr "Le nouvel utilisateur a-t'il le droit de créer des bases de données ? (o/n) "
 
 #: createuser.c:180
 msgid "Shall the new user be allowed to create more new users? (y/n) "
-msgstr "Le nouvel utilisateur a-t'il le droit de créer des utilisateurs ? (y/n) "
+msgstr "Le nouvel utilisateur a-t'il le droit de créer des utilisateurs ? (o/n) "
 
 #: createuser.c:219
 #, c-format
@@ -270,7 +354,8 @@ msgstr ""
 "%s crée un nouvel utilisateur PostgreSQL.\n"
 "\n"
 
-#: createuser.c:240 dropuser.c:147
+#: createuser.c:240
+#: dropuser.c:147
 #, c-format
 msgid "  %s [OPTION]... [USERNAME]\n"
 msgstr "  %s [OPTION]... [NOMUTILISATEUR]\n"
@@ -311,7 +396,8 @@ msgstr "  -i, --sysid=SYSID         indique l'identifiant système du nouvel util
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to create)\n"
 msgstr "  -U, --username=NOMUTILISATEUR nom de l'utilisateur par lequel se connecter (et non pas celui à créer)\n"
 
-#: createuser.c:258 dropuser.c:155
+#: createuser.c:258
+#: dropuser.c:155
 msgid "  -W, --password            prompt for password to connect\n"
 msgstr "  -W, --password            demander un mot de passe pour la connexion\n"
 
@@ -335,7 +421,8 @@ msgstr "%s: argument requis du nom de la base de données manquant\n"
 msgid "Database \"%s\" will be permanently removed.\n"
 msgstr "La base de données \"%s\" sera supprimée sans retour en arrière possible.\n"
 
-#: dropdb.c:109 dropuser.c:110
+#: dropdb.c:109
+#: dropuser.c:110
 msgid "Are you sure? (y/n) "
 msgstr "Etes vous sûr? (o/n) "
 
@@ -358,7 +445,8 @@ msgstr ""
 msgid "  %s [OPTION]... DBNAME\n"
 msgstr "  %s [OPTION]... NOMBASE\n"
 
-#: dropdb.c:150 dropuser.c:150
+#: dropdb.c:150
+#: dropuser.c:150
 msgid "  -i, --interactive         prompt before deleting anything\n"
 msgstr "  -i, --interactive         demande une confirmation avant de supprimer quoi que ce soit\n"
 
@@ -451,7 +539,8 @@ msgstr ""
 "%s crée un cluster de toutes les tables déjà en cluster pour une base de données.\n"
 "\n"
 
-#: clusterdb.c:236 vacuumdb.c:262
+#: clusterdb.c:236
+#: vacuumdb.c:262
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [OPTION]... [NOMBASE]\n"
@@ -535,9 +624,7 @@ msgid "  -z, --analyze                   update optimizer hints\n"
 msgstr "  -z, --analyze                   met à jour les conseils de l'optimiseur\n"
 
 #: vacuumdb.c:269
-msgid ""
-"  -e, --echo                      show the commands being sent to the "
-"server\n"
+msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                affiche les commandes envoyées au serveur\n"
 
 #: vacuumdb.c:270
@@ -564,7 +651,8 @@ msgstr ""
 "\n"
 "Lire la description de la commande SQL VACUUM pour plus de détails.\n"
 
-#: common.c:95 common.c:121
+#: common.c:95
+#: common.c:121
 msgid "Password: "
 msgstr "Mot de passe : "
 
