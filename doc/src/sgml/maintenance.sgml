@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.64 2006/11/05 22:42:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.64.2.1 2007/01/31 04:13:28 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -613,9 +613,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    for inefficient use of space: if all but a few index keys on a page have
    been deleted, the page remains allocated.  So a usage pattern in which all
    but a few keys in each range are eventually deleted will see poor use of
-   space.  The potential for bloat is not indefinite &mdash; at worst there
-   will be one key per page &mdash; but it may still be worthwhile to schedule
-   periodic reindexing for indexes that have such usage patterns.
+   space.  For such usage patterns, periodic reindexing is recommended.
   </para>
 
   <para>
