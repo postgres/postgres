@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.53 2007/01/30 22:29:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.54 2007/01/31 04:12:01 momjian Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -243,7 +243,7 @@ SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
 (1 row)
 </programlisting>
 
-  We could also have written
+  We could also have written:
 
 <programlisting>
 SELECT schedule[1:2][1] FROM sal_emp WHERE name = 'Bill';
