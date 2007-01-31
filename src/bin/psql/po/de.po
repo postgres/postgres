@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.15 2005/01/17 10:00:06 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.15.4.1 2007/01/31 08:20:42 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2005-01-17 10:41+0100\n"
-"PO-Revision-Date: 2005-01-17 10:47+0100\n"
+"POT-Creation-Date: 2007-01-06 03:23-0400\n"
+"PO-Revision-Date: 2007-01-06 18:49+0100\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -46,7 +46,7 @@ msgstr "konnte Home-Verzeichnis nicht ermitteln: %s\n"
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: konnte nicht in das Verzeichnis »%s« wechseln: %s\n"
 
-#: command.c:384 command.c:776
+#: command.c:384 command.c:775
 msgid "no query buffer\n"
 msgstr "kein Anfragepuffer\n"
 
@@ -57,7 +57,7 @@ msgstr ""
 "%s: ungültiger Kodierungsname oder Umwandlungsprozedur nicht gefunden\n"
 
 #: command.c:515 command.c:549 command.c:563 command.c:580 command.c:626
-#: command.c:756 command.c:787
+#: command.c:755 command.c:786
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: notwendiges Argument fehlt\n"
@@ -70,86 +70,86 @@ msgstr "Anfragepuffer ist leer."
 msgid "Query buffer reset (cleared)."
 msgstr "Anfragepuffer wurde gelöscht."
 
-#: command.c:660
+#: command.c:659
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Befehlsgeschichte in Datei »%s« geschrieben.\n"
 
-#: command.c:697 common.c:85 common.c:99 mainloop.c:71 print.c:230 print.c:237
+#: command.c:696 common.c:85 common.c:99 mainloop.c:71 print.c:230 print.c:237
 #: print.c:256 print.c:440 print.c:464 print.c:488 print.c:517 print.c:535
 #: print.c:1156 print.c:1168 print.c:1189 print.c:1196 print.c:1211
 #, c-format
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
-#: command.c:712 command.c:761
+#: command.c:711 command.c:760
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: Fehler\n"
 
-#: command.c:742
+#: command.c:741
 msgid "Timing is on."
 msgstr "Zeitmessung ist an."
 
-#: command.c:744
+#: command.c:743
 msgid "Timing is off."
 msgstr "Zeitmessung ist aus."
 
-#: command.c:804 command.c:824 command.c:1209 command.c:1216 command.c:1226
-#: command.c:1238 command.c:1251 command.c:1265 command.c:1287 command.c:1318
-#: common.c:170 copy.c:530 copy.c:575
+#: command.c:803 command.c:823 command.c:1208 command.c:1215 command.c:1225
+#: command.c:1237 command.c:1250 command.c:1264 command.c:1286 command.c:1318
+#: common.c:170 copy.c:530 copy.c:587
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:931 command.c:955 startup.c:188 startup.c:206
+#: command.c:930 command.c:954 startup.c:188 startup.c:206
 msgid "Password: "
 msgstr "Passwort: "
 
-#: command.c:969 common.c:216 common.c:685 common.c:740 common.c:983
+#: command.c:968 common.c:216 common.c:692 common.c:747 common.c:990
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:973
+#: command.c:972
 msgid "Previous connection kept\n"
 msgstr "Vorherige Verbindung wurde behalten\n"
 
-#: command.c:985
+#: command.c:984
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:997
+#: command.c:996
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Sie sind jetzt mit der Datenbank »%s« verbunden.\n"
 
-#: command.c:999
+#: command.c:998
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Sie sind jetzt als neuer Benutzer »%s« verbunden.\n"
 
-#: command.c:1002
+#: command.c:1001
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Sie sind jetzt mit der Datenbank »%s« als Benutzer »%s« verbunden.\n"
 
-#: command.c:1127
+#: command.c:1126
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "konnte Editor »%s« nicht starten\n"
 
-#: command.c:1129
+#: command.c:1128
 msgid "could not start /bin/sh\n"
 msgstr "konnte /bin/sh nicht starten\n"
 
-#: command.c:1168
+#: command.c:1167
 #, c-format
 msgid "cannot locate temporary directory: %s"
 msgstr "konnte temporäres Verzeichnis nicht finden: %s"
 
-#: command.c:1194
+#: command.c:1193
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "konnte temporäre Datei »%s« nicht öffnen: %s\n"
@@ -264,49 +264,49 @@ msgstr "%s: xstrdup: Versuch NULL-Zeiger zu kopieren (interner Fehler)\n"
 msgid "out of memory"
 msgstr "Speicher aufgebraucht"
 
-#: common.c:356
+#: common.c:363
 msgid "connection to server was lost\n"
 msgstr "Verbindung zum Server wurde verloren\n"
 
-#: common.c:360
+#: common.c:367
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "Die Verbindung zum Server wurde verloren.  Versuche Reset: "
 
-#: common.c:365
+#: common.c:372
 msgid "Failed.\n"
 msgstr "Fehlgeschlagen.\n"
 
-#: common.c:372
+#: common.c:379
 msgid "Succeeded.\n"
 msgstr "Erfolgreich.\n"
 
-#: common.c:471
+#: common.c:478
 #, c-format
 msgid "INTERNAL ERROR: unexpected statement position \"%s\"\n"
 msgstr "INTERNER FEHLER: unerwartete Befehlsposition »%s«\n"
 
-#: common.c:607
+#: common.c:614
 #, c-format
 msgid "LINE %d: "
 msgstr "ZEILE %d: "
 
-#: common.c:624 common.c:633
+#: common.c:631 common.c:640
 #, c-format
 msgid "%s\n"
 msgstr "%s\n"
 
-#: common.c:716 common.c:951
+#: common.c:723 common.c:958
 msgid "You are currently not connected to a database.\n"
 msgstr "Sie sind gegenwärtig nicht mit einer Datenbank verbunden.\n"
 
-#: common.c:771
+#: common.c:778
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr ""
 "Asynchrone Benachrichtigung »%s« vom Serverprozess mit PID %d empfangen.\n"
 
-#: common.c:959
+#: common.c:966
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -321,7 +321,7 @@ msgstr ""
 "***(Drücken Sie die Eingabetaste um fortzufahren oder »x« um abzubrechen)"
 "*******\n"
 
-#: common.c:1010
+#: common.c:1017
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Zeit: %.3f ms\n"
@@ -349,12 +349,12 @@ msgstr "%s: ein Verzeichnis kann nicht kopiert werden\n"
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:566
+#: copy.c:566 copy.c:578
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: unerwartete Antwort (%d)\n"
 
-#: copy.c:668
+#: copy.c:680
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -2034,8 +2034,8 @@ msgstr ""
 "    FOR EACH ROW EXECUTE PROCEDURE funktionsname ( argumente )"
 
 #: sql_help.h:141
-msgid "define a new conversion"
-msgstr "definiert eine neue Zeichensatzkonversion"
+msgid "define a new encoding conversion"
+msgstr "definiert eine neue Kodierungskonversion"
 
 #: sql_help.h:142
 msgid ""
