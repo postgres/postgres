@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgcvslog,v 1.32 2006/10/08 01:39:59 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgcvslog,v 1.33 2007/01/31 22:17:03 momjian Exp $
 
 # This utility is used to generate a compact list of changes
 # for each release, bjm 2000-02-22
@@ -8,7 +8,7 @@
 # Usage $0 file
 
 # All branches:	
-# cvs log -d '>1999-06-14 00:00:00 GMT' . > log
+# cvs log -d'>1999-06-14 00:00:00 GMT' . > log
 #
 # HEAD:
 # cvs log -d'>2000-05-29 00:00:00 GMT' -b .
