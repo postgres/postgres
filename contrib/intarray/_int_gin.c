@@ -6,7 +6,7 @@ Datum		ginint4_queryextract(PG_FUNCTION_ARGS);
 Datum
 ginint4_queryextract(PG_FUNCTION_ARGS)
 {
-	uint32	   *nentries = (uint32 *) PG_GETARG_POINTER(1);
+	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	StrategyNumber strategy = PG_GETARG_UINT16(2);
 	Datum	   *res = NULL;
 
@@ -54,6 +54,19 @@ ginint4_queryextract(PG_FUNCTION_ARGS)
 			arr = ARRPTR(query);
 			for (i = 0; i < *nentries; i++)
 				res[i] = Int32GetDatum(arr[i]);
+		}
+	}
+
+	if ( nentries == 0 )
+	{
+		switch( strategy )
+		{
+			case BooleanSearchStrategy:
+			case RTOverlapStrategyNumber:
+					*nentries = -1; /* nobody can be found */
+					break;
+			default:   /* require fullscan: GIN can't find void arrays */
+			break;
 		}
 	}
 

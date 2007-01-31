@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.7 2006/12/01 23:46:46 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.8 2007/01/31 15:09:45 teodor Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -77,7 +77,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>Datum* extractValue(Datum inputValue, uint32 *nkeys)</term>
+     <term>Datum* extractValue(Datum inputValue, int32 *nkeys)</term>
      <listitem>
       <para>
        Returns an array of keys given a value to be indexed.  The
@@ -87,7 +87,7 @@
     </varlistentry>
 
     <varlistentry>
-     <term>Datum* extractQuery(Datum query, uint32 *nkeys,
+     <term>Datum* extractQuery(Datum query, int32 *nkeys,
         StrategyNumber n)</term>
      <listitem>
       <para>
@@ -100,6 +100,12 @@
        to consult <literal>n</> to determine the data type of
        <literal>query</> and the key values that need to be extracted.
        The number of returned keys must be stored into <literal>*nkeys</>.
+	   If number of keys is equal to zero then <function>extractQuery</> 
+	   should store 0 or -1 into <literal>*nkeys</>. 0 means that any 
+	   row matches the <literal>query</> and sequence scan should be 
+	   produced. -1 means nothing can satisfy <literal>query</>. 
+	   Choice of value should be based on semantics meaning of operation with 
+	   given strategy number.
       </para>
      </listitem>
     </varlistentry>

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.9 2007/01/05 22:19:21 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginutil.c,v 1.10 2007/01/31 15:09:45 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -148,7 +148,7 @@ cmpEntries(const Datum *a, const Datum *b, cmpEntriesData *arg)
 }
 
 Datum *
-extractEntriesS(GinState *ginstate, Datum value, uint32 *nentries,
+extractEntriesS(GinState *ginstate, Datum value, int32 *nentries,
 				bool *needUnique)
 {
 	Datum	   *entries;
@@ -178,7 +178,7 @@ extractEntriesS(GinState *ginstate, Datum value, uint32 *nentries,
 
 
 Datum *
-extractEntriesSU(GinState *ginstate, Datum value, uint32 *nentries)
+extractEntriesSU(GinState *ginstate, Datum value, int32 *nentries)
 {
 	bool		needUnique;
 	Datum	   *entries = extractEntriesS(ginstate, value, nentries,

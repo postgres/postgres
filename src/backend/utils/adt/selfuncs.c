@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.223 2007/01/28 02:53:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.224 2007/01/31 15:09:45 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +76,7 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "access/gin.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
@@ -5286,7 +5287,120 @@ gincostestimate(PG_FUNCTION_ARGS)
 	Cost	   *indexTotalCost = (Cost *) PG_GETARG_POINTER(5);
 	Selectivity *indexSelectivity = (Selectivity *) PG_GETARG_POINTER(6);
 	double	   *indexCorrelation = (double *) PG_GETARG_POINTER(7);
+	ListCell   *l;
+	int32		nfullscan = 0;
 
+	/*
+	 * GIN doesn't support full index scan.
+	 * If quals require full index scan then we should
+	 * return cost big as possible to forbid full index scan.
+	 */
+
+	foreach(l, indexQuals)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
+		Expr	   *clause;
+		Node	   *leftop,
+				   *rightop,
+				   *operand;
+		Oid			extractProcOid;
+		Oid			clause_op;
+		int			strategy_op;
+		Oid		   	lefttype, 
+				   	righttype;
+		bool	    recheck;
+		int32		nentries;
+
+		/*
+		 * For each clause it's needed to check operand
+		 * for values to search in GIN. So, we should find 
+		 * extractQuery method to get values from operand
+		 */
+
+		Assert(IsA(rinfo, RestrictInfo));
+		clause = rinfo->clause;
+		Assert( IsA(clause, OpExpr) );
+		leftop = get_leftop(clause);
+		rightop = get_rightop(clause);
+		clause_op = ((OpExpr *) clause)->opno;
+
+		if (match_index_to_operand(leftop, 0 /* GiN has only one column */, index))
+		{
+			operand = rightop;
+		}
+		else if (match_index_to_operand(rightop, 0, index))
+		{
+			operand = leftop;
+			clause_op = get_commutator(clause_op);
+		}
+
+		if ( IsA(operand, RelabelType) )
+			operand = (Node *) ((RelabelType *) operand)->arg;
+
+		/*
+		 * It's impossible to call extractQuery method for not yet
+		 * known operand (taken from table, for example). In this
+		 * case we can't do anything useful...
+		 */
+		if ( !IsA(operand, Const) )
+			continue;
+
+		if (!op_in_opfamily(clause_op, index->opfamily[0]))
+			continue;
+
+		/*
+		 * lefttype is a type of index column, righttype is a
+		 * type of operand (query)
+		 */
+		get_op_opfamily_properties(	clause_op, index->opfamily[0],
+									&strategy_op, &lefttype, &righttype, &recheck);
+
+		/* 
+		 * GIN (as GiST) always has lefttype == righttype in pg_amproc
+		 * and they are equal to type Oid on which index was created/designed
+		 */
+		extractProcOid = get_opfamily_proc( index->opfamily[0],
+											lefttype, lefttype, 
+											GIN_EXTRACTQUERY_PROC );
+
+		if ( !OidIsValid(extractProcOid) )
+			continue; /* should not be */
+
+		OidFunctionCall3( extractProcOid,
+							((Const*)operand)->constvalue,
+							PointerGetDatum(&nentries),
+							UInt16GetDatum(strategy_op));
+
+		if ( nentries == 0 )
+			nfullscan++;
+		else if ( nentries < 0 )
+		{
+			/*
+			 * GIN_EXTRACTQUERY_PROC guarantees that nothing will be found
+			 */
+			*indexStartupCost = 0;
+			*indexTotalCost = 0;
+			*indexSelectivity = 0;
+			*indexCorrelation = 0;
+			PG_RETURN_VOID();
+		}
+	}
+
+	if ( nfullscan == list_length(indexQuals) )
+	{
+		/*
+		 * All quals are void and require full scan. So
+		 * set max possible cost to prevent index scan.
+		 */
+		*indexStartupCost = disable_cost;
+		*indexTotalCost = disable_cost;
+		*indexSelectivity = 1.0;
+		*indexCorrelation = 0;
+
+		PG_RETURN_VOID();
+	}
+
+	
 	genericcostestimate(root, index, indexQuals, outer_rel, 0.0,
 						indexStartupCost, indexTotalCost,
 						indexSelectivity, indexCorrelation);

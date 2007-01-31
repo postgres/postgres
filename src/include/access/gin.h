@@ -3,7 +3,7 @@
  *	  header file for postgres inverted index access method implementation.
  *
  *	Copyright (c) 2006, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.9 2006/10/05 17:57:40 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.10 2007/01/31 15:09:45 teodor Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -233,8 +233,8 @@ extern void GinInitBuffer(Buffer b, uint32 f);
 extern void GinInitPage(Page page, uint32 f, Size pageSize);
 extern int	compareEntries(GinState *ginstate, Datum a, Datum b);
 extern Datum *extractEntriesS(GinState *ginstate, Datum value,
-							  uint32 *nentries, bool *needUnique);
-extern Datum *extractEntriesSU(GinState *ginstate, Datum value, uint32 *nentries);
+							  int32 *nentries, bool *needUnique);
+extern Datum *extractEntriesSU(GinState *ginstate, Datum value, int32 *nentries);
 extern Page GinPageGetCopyPage(Page page);
 
 /* gininsert.c */
@@ -399,6 +399,8 @@ typedef struct GinScanOpaqueData
 
 	GinScanKey	keys;
 	uint32		nkeys;
+	bool		isVoidRes; /* true if ginstate.extractQueryFn 
+							  guarantees that nothing will be found */
 
 	GinScanKey	markPos;
 } GinScanOpaqueData;
@@ -458,7 +460,7 @@ typedef struct
 
 extern void ginInitBA(BuildAccumulator *accum);
 extern void ginInsertRecordBA(BuildAccumulator *accum,
-				  ItemPointer heapptr, Datum *entries, uint32 nentry);
+				  ItemPointer heapptr, Datum *entries, int32 nentry);
 extern ItemPointerData *ginGetEntry(BuildAccumulator *accum, Datum *entry, uint32 *n);
 
 #endif

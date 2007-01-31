@@ -21,7 +21,7 @@ Datum
 gin_extract_tsvector(PG_FUNCTION_ARGS)
 {
 	tsvector   *vector = (tsvector *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
-	uint32	   *nentries = (uint32 *) PG_GETARG_POINTER(1);
+	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	Datum	   *entries = NULL;
 
 	*nentries = 0;
@@ -30,7 +30,7 @@ gin_extract_tsvector(PG_FUNCTION_ARGS)
 		int			i;
 		WordEntry  *we = ARRPTR(vector);
 
-		*nentries = (uint32) vector->size;
+		*nentries = (int32) vector->size;
 		entries = (Datum *) palloc(sizeof(Datum) * vector->size);
 
 		for (i = 0; i < vector->size; i++)
@@ -58,7 +58,7 @@ Datum
 gin_extract_tsquery(PG_FUNCTION_ARGS)
 {
 	QUERYTYPE  *query = (QUERYTYPE *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
-	uint32	   *nentries = (uint32 *) PG_GETARG_POINTER(1);
+	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	StrategyNumber strategy = DatumGetUInt16(PG_GETARG_DATUM(2));
 	Datum	   *entries = NULL;
 
@@ -99,6 +99,8 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 			}
 
 	}
+	else
+		*nentries = -1; /* nothing can be found */
 
 	PG_FREE_IF_COPY(query, 0);
 	PG_RETURN_POINTER(entries);

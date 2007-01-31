@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.5 2007/01/05 22:19:21 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.6 2007/01/31 15:09:45 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -420,6 +420,7 @@ scanGetItem(IndexScanDesc scan, ItemPointerData *item)
 }
 
 #define GinIsNewKey(s)		( ((GinScanOpaque) scan->opaque)->keys == NULL )
+#define GinIsVoidRes(s)		( ((GinScanOpaque) scan->opaque)->isVoidRes == true )
 
 Datum
 gingetmulti(PG_FUNCTION_ARGS)
@@ -432,9 +433,12 @@ gingetmulti(PG_FUNCTION_ARGS)
 	if (GinIsNewKey(scan))
 		newScanKey(scan);
 
-	startScan(scan);
-
 	*returned_tids = 0;
+
+	if (GinIsVoidRes(scan))
+		PG_RETURN_BOOL(false);
+
+	startScan(scan);
 
 	do
 	{
@@ -461,6 +465,9 @@ gingettuple(PG_FUNCTION_ARGS)
 
 	if (GinIsNewKey(scan))
 		newScanKey(scan);
+
+	if (GinIsVoidRes(scan))
+		PG_RETURN_BOOL(false);
 
 	startScan(scan);
 	res = scanGetItem(scan, &scan->xs_ctup.t_self);

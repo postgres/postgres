@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.6 2007/01/05 22:19:21 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.7 2007/01/31 15:09:45 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -203,7 +203,7 @@ static uint32
 ginHeapTupleBulkInsert(GinBuildState *buildstate, Datum value, ItemPointer heapptr)
 {
 	Datum	   *entries;
-	uint32		nentries;
+	int32		nentries;
 	MemoryContext oldCtx;
 
 	oldCtx = MemoryContextSwitchTo(buildstate->funcCtx);
@@ -356,7 +356,7 @@ static uint32
 ginHeapTupleInsert(Relation index, GinState *ginstate, Datum value, ItemPointer item)
 {
 	Datum	   *entries;
-	uint32		i,
+	int32		i,
 				nentries;
 
 	entries = extractEntriesSU(ginstate, value, &nentries);

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.8 2007/01/05 22:19:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gin/ginarrayproc.c,v 1.9 2007/01/31 15:09:45 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -38,7 +38,7 @@ Datum
 ginarrayextract(PG_FUNCTION_ARGS)
 {
 	ArrayType  *array;
-	uint32	   *nentries = (uint32 *) PG_GETARG_POINTER(1);
+	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	Datum	   *entries = NULL;
 	int16		elmlen;
 	bool		elmbyval;
@@ -59,6 +59,21 @@ ginarrayextract(PG_FUNCTION_ARGS)
 					  ARR_ELEMTYPE(array),
 					  elmlen, elmbyval, elmalign,
 					  &entries, NULL, (int *) nentries);
+
+	if ( *nentries == 0 && PG_NARGS() == 3 )
+	{
+		switch( PG_GETARG_UINT16(2) )
+		{
+			case GinOverlapStrategy:
+					*nentries = -1; /* nobody can be found */
+					break;
+			case GinContainsStrategy:
+			case GinContainedStrategy:
+			case GinEqualStrategy:
+			default:	/* require fullscan: GIN can't find void arrays */
+				break;
+		}
+	}
 
 	/* we should not free array, entries[i] points into it */
 	PG_RETURN_POINTER(entries);
