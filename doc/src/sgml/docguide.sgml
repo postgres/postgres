@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.67 2007/01/27 22:44:32 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.68 2007/01/31 15:23:28 teodor Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -212,9 +212,10 @@
      <listitem>
       <para><filename>textproc/dsssl-docbook-modular</filename></para>
      </listitem>
+     <listitem>
+      <para><filename>textproc/docbook-420</filename></para>
+     </listitem>
     </itemizedlist>
-    Apparently, there is no port for the DocBook V4.2 SGML DTD
-    available right now.  You will need to install it manually.
    </para>
 
    <para>
@@ -225,10 +226,13 @@
 
    <para>
     It's possible that the ports do not update the main catalog file
-    in <filename>/usr/local/share/sgml/catalog</filename>.  Be sure to
-    have the following line in there:
+    in <filename>/usr/local/share/sgml/catalog.ports</filename> or order 
+	isn't proper .  Be sure to have the following lines in begining of file:
 <programlisting>
-CATALOG "/usr/local/share/sgml/docbook/4.2/docbook.cat"
+CATALOG "openjade/catalog"
+CATALOG "iso8879/catalog"
+CATALOG "docbook/dsssl/modular/catalog"
+CATALOG "docbook/4.2/catalog"
 </programlisting>
     If you do not want to edit the file you can also set the
     environment variable <envar>SGML_CATALOG_FILES</envar> to a
