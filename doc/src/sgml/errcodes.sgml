@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.21 2006/12/24 00:29:17 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/errcodes.sgml,v 1.22 2007/01/31 20:56:17 momjian Exp $ -->
 
 <appendix id="errcodes-appendix">
  <title><productname>PostgreSQL</productname> Error Codes</title>
@@ -27,7 +27,7 @@
   According to the standard, the first two characters of an error code
   denote a class of errors, while the last three characters indicate
   a specific condition within that class.  Thus, an application that
-  does not recognize the specific error code may still be able to infer
+  does not recognize the specific error code can still be able to infer
   what to do from the error class.
  </para>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.37 2006/09/05 21:08:34 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.38 2007/01/31 20:56:19 momjian Exp $ -->
 
 <chapter id="user-manag">
  <title>Database Roles and Privileges</title>
@@ -126,7 +126,7 @@ SELECT rolname FROM pg_roles;
   </para>
 
   <para>
-   The set of database roles a given client connection may connect as
+   The set of database roles a given client connection can connect as
    is determined by the client authentication setup, as explained in
    <xref linkend="client-authentication">. (Thus, a client is not
    necessarily limited to connect as the role with the same name as
@@ -142,7 +142,7 @@ SELECT rolname FROM pg_roles;
   <title>Role Attributes</title>
 
    <para>
-    A database role may have a number of attributes that define its
+    A database role can have a number of attributes that define its
     privileges and interact with the client authentication system.
 
     <variablelist>
@@ -482,7 +482,7 @@ DROP ROLE <replaceable>name</replaceable>;
 
   <para>
    Functions and triggers allow users to insert code into the backend
-   server that other users may execute unintentionally. Hence, both
+   server that other users might execute unintentionally. Hence, both
    mechanisms permit users to <quote>Trojan horse</quote>
    others with relative ease. The only real protection is tight
    control over who can define functions.

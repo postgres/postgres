@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.65 2006/12/01 01:04:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.66 2007/01/31 20:56:18 momjian Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -215,7 +215,7 @@
     Committed and Serializable.  When you select the level Read
     Uncommitted you really get Read Committed, and when you select
     Repeatable Read you really get Serializable, so the actual
-    isolation level may be stricter than what you select.  This is
+    isolation level might be stricter than what you select.  This is
     permitted by the SQL standard: the four isolation levels only
     define which phenomena must not happen, they do not define which
     phenomena must happen.  The reason that <productname>PostgreSQL</>
@@ -261,7 +261,7 @@
     behave the same as <command>SELECT</command>
     in terms of searching for target rows: they will only find target rows
     that were committed as of the command start time.  However, such a target
-    row may have already been updated (or deleted or locked) by
+    row might have already been updated (or deleted or locked) by
     another concurrent transaction by the time it is found.  In this case, the
     would-be updater will wait for the first updating transaction to commit or
     roll back (if it is still in progress).  If the first updater rolls back,
@@ -314,7 +314,7 @@ COMMIT;
    <para>
     The partial transaction isolation provided by Read Committed mode is
     adequate for many applications, and this mode is fast and simple to use.
-    However, for applications that do complex queries and updates, it may
+    However, for applications that do complex queries and updates, it might
     be necessary to guarantee a more rigorously consistent view of the
     database than the Read Committed mode provides.
    </para>
@@ -359,7 +359,7 @@ COMMIT;
     in terms of searching for target rows: they will only find target rows
     that were committed as of the transaction start time.  However, such a
     target
-    row may have already been updated (or deleted or locked) by
+    row might have already been updated (or deleted or locked) by
     another concurrent transaction by the time it is found.  In this case, the
     serializable transaction will wait for the first updating transaction to commit or
     roll back (if it is still in progress).  If the first updater rolls back,
@@ -386,7 +386,7 @@ ERROR:  could not serialize access due to concurrent update
    </para>
 
    <para>
-    Note that only updating transactions may need to be retried; read-only
+    Note that only updating transactions might need to be retried; read-only
     transactions will never have serialization conflicts.
    </para>
 
@@ -395,9 +395,9 @@ ERROR:  could not serialize access due to concurrent update
     transaction sees a wholly consistent view of the database.  However,
     the application has to be prepared to retry transactions when concurrent
     updates make it impossible to sustain the illusion of serial execution.
-    Since the cost of redoing complex transactions may be significant,
+    Since the cost of redoing complex transactions might be significant,
     this mode is recommended only when updating transactions contain logic
-    sufficiently complex that they may give wrong answers in Read
+    sufficiently complex that they might give wrong answers in Read
     Committed mode.  Most commonly, Serializable mode is necessary when
     a transaction executes several successive commands that must see
     identical views of the database.
@@ -418,7 +418,7 @@ ERROR:  could not serialize access due to concurrent update
     The intuitive meaning (and mathematical definition) of
     <quote>serializable</> execution is that any two successfully committed
     concurrent transactions will appear to have executed strictly serially,
-    one after the other &mdash; although which one appeared to occur first may
+    one after the other &mdash; although which one appeared to occur first might
     not be predictable in advance.  It is important to realize that forbidding
     the undesirable behaviors listed in <xref linkend="mvcc-isolevel-table">
     is not sufficient to guarantee true serializability, and in fact
@@ -538,10 +538,10 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     between one lock mode and another is the set of lock modes with
     which each conflicts.  Two transactions cannot hold locks of conflicting
     modes on the same table at the same time.  (However, a transaction
-    never conflicts with itself.  For example, it may acquire
+    never conflicts with itself.  For example, it might acquire
     <literal>ACCESS EXCLUSIVE</literal> lock and later acquire
     <literal>ACCESS SHARE</literal> lock on the same table.)  Non-conflicting
-    lock modes may be held concurrently by many transactions.  Notice in
+    lock modes can be held concurrently by many transactions.  Notice in
     particular that some lock modes are self-conflicting (for example,
     an <literal>ACCESS EXCLUSIVE</literal> lock cannot be held by more than one
     transaction at a time) while others are not self-conflicting (for example,
@@ -760,7 +760,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
      To acquire an exclusive row-level lock on a row without actually
      modifying the row, select the row with <command>SELECT FOR
      UPDATE</command>.  Note that once the row-level lock is acquired,
-     the transaction may update the row multiple times without
+     the transaction can update the row multiple times without
      fear of conflicts.
     </para>
 
@@ -777,7 +777,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
      <productname>PostgreSQL</productname> doesn't remember any
      information about modified rows in memory, so it has no limit to
      the number of rows locked at one time.  However, locking a row
-     may cause a disk write; thus, for example, <command>SELECT FOR
+     might cause a disk write; thus, for example, <command>SELECT FOR
      UPDATE</command> will modify selected rows to mark them locked, and so
      will result in disk writes.
     </para>
@@ -863,7 +863,7 @@ UPDATE accounts SET balance = balance - 100.00 WHERE acctnum = 22222;
      occurred. One should also ensure that the first lock acquired on
      an object in a transaction is the highest mode that will be
      needed for that object.  If it is not feasible to verify this in
-     advance, then deadlocks may be handled on-the-fly by retrying
+     advance, then deadlocks can be handled on-the-fly by retrying
      transactions that are aborted due to deadlock.
     </para>
 
@@ -977,12 +977,12 @@ SELECT pg_advisory_lock(q.id) FROM
    <para>
     Another way to think about it is that each
     transaction sees a snapshot of the database contents, and concurrently
-    executing transactions may very well see different snapshots.  So the
+    executing transactions might very well see different snapshots.  So the
     whole concept of <quote>now</quote> is somewhat ill-defined anyway.
     This is not normally
     a big problem if the client applications are isolated from each other,
     but if the clients can communicate via channels outside the database
-    then serious confusion may ensue.
+    then serious confusion might ensue.
    </para>
 
    <para>
@@ -1026,7 +1026,7 @@ SELECT pg_advisory_lock(q.id) FROM
     lock(s) before performing queries.  A lock obtained by a
     serializable transaction guarantees that no other transactions modifying
     the table are still running, but if the snapshot seen by the
-    transaction predates obtaining the lock, it may predate some now-committed
+    transaction predates obtaining the lock, it might predate some now-committed
     changes in the table.  A serializable transaction's snapshot is actually
     frozen at the start of its first query or data-modification command
     (<literal>SELECT</>, <literal>INSERT</>,
@@ -1092,7 +1092,7 @@ SELECT pg_advisory_lock(q.id) FROM
         read/write access. Locks are released immediately after each
         index row is fetched or inserted. But note that a GIN-indexed
         value insertion usually produces several index key insertions
-        per row, so GIN may do substantial work for a single value's
+        per row, so GIN might do substantial work for a single value's
         insertion.
        </para>
       </listitem>

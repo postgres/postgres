@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.19 2006/09/16 00:30:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.20 2007/01/31 20:56:16 momjian Exp $ -->
 
 <chapter id="bki">
  <title><acronym>BKI</acronym> Backend Interface</title>
@@ -29,7 +29,7 @@
  </para>
 
  <para>
-  Related information may be found in the documentation for
+  Related information can be found in the documentation for
   <application>initdb</application>.
  </para>
 

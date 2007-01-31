@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.56 2007/01/23 20:45:28 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.57 2007/01/31 20:56:20 momjian Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -49,7 +49,7 @@
    called because one thing they specify is the set of
    <literal>WHERE</>-clause operators that can be used with an index
    (i.e., can be converted into an index-scan qualification).  An
-   operator class may also specify some <firstterm>support
+   operator class can also specify some <firstterm>support
    procedures</> that are needed by the internal operations of the
    index method, but do not directly correspond to any
    <literal>WHERE</>-clause operator that can be used with the index.
@@ -663,7 +663,7 @@ CREATE OPERATOR CLASS complex_abs_ops
    To handle these needs, <productname>PostgreSQL</productname>
    uses the concept of an <firstterm>operator
    family</><indexterm><primary>operator family</></indexterm>.
-   An operator family contains one or more operator classes, and may also
+   An operator family contains one or more operator classes, and can also
    contain indexable operators and corresponding support functions that
    belong to the family as a whole but not to any single class within the
    family.  We say that such operators and functions are <quote>loose</>
@@ -923,7 +923,7 @@ SELECT * FROM table WHERE integer_column &lt; 4;
    Consider again the situation where we are storing in the index only
    the bounding box of a complex object such as a polygon.  In this
    case there's not much value in storing the whole polygon in the index
-   entry &mdash; we may as well store just a simpler object of type
+   entry &mdash; we might as well store just a simpler object of type
    <type>box</>.  This situation is expressed by the <literal>STORAGE</>
    option in <command>CREATE OPERATOR CLASS</>: we'd write something like
 

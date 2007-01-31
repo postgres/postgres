@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.48 2006/12/27 16:07:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.49 2007/01/31 20:56:18 momjian Exp $ -->
 
 <chapter id="rules">
 <title>The Rule System</title>
@@ -1807,7 +1807,7 @@ GRANT SELECT ON phone_number TO secretary;
        the originally given query will be executed, and its command
        status will be returned as usual.  (But note that if there were
        any conditional <literal>INSTEAD</> rules, the negation of their qualifications
-       will have been added to the original query.  This may reduce the
+       will have been added to the original query.  This might reduce the
        number of rows it processes, and if so the reported status will
        be affected.)
       </para>

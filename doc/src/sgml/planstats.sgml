@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.7 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/planstats.sgml,v 1.8 2007/01/31 20:56:18 momjian Exp $ -->
 
 <chapter id="planner-stats-details">
  <title>How the Planner Uses Statistics</title>
@@ -21,7 +21,7 @@
 
   <para>
    The outputs and algorithms shown below are taken from version 8.0. 
-   The behavior of earlier (or later) versions may vary.
+   The behavior of earlier (or later) versions might vary.
   </para>
 
  <sect1 id="row-estimation-examples">
@@ -56,7 +56,7 @@ SELECT reltuples, relpages FROM pg_class WHERE relname = 'tenk1';
       345 |     10000
 </programlisting>
     The planner will check the <structfield>relpages</structfield>
-    estimate (this is a cheap operation) and if incorrect may scale
+    estimate (this is a cheap operation) and if incorrect might scale
     <structfield>reltuples</structfield> to obtain a row estimate. In this
     case it does not, thus:
 

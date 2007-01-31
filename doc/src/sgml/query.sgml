@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.48 2006/10/21 23:12:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.49 2007/01/31 20:56:18 momjian Exp $ -->
 
  <chapter id="tutorial-sql">
   <title>The <acronym>SQL</acronym> Language</title>
@@ -134,7 +134,7 @@ CREATE TABLE weather (
    </para>
 
    <para>
-    White space (i.e., spaces, tabs, and newlines) may be used freely
+    White space (i.e., spaces, tabs, and newlines) can be used freely
     in SQL commands.  That means you can type the command aligned
     differently than above, or even all on one line.  Two dashes
     (<quote><literal>--</literal></quote>) introduce comments.
@@ -151,7 +151,7 @@ CREATE TABLE weather (
     a type for storing single precision floating-point numbers.
     <type>date</type> should be self-explanatory.  (Yes, the column of
     type <type>date</type> is also named <literal>date</literal>.
-    This may be convenient or confusing &mdash; you choose.)
+    This might be convenient or confusing &mdash; you choose.)
    </para>
 
    <para>
@@ -817,7 +817,7 @@ SELECT city, max(temp_lo)
     You can update existing rows using the
     <command>UPDATE</command> command. 
     Suppose you discover the temperature readings are
-    all off by 2 degrees after November 28.  You may correct the
+    all off by 2 degrees after November 28.  You can correct the
     data as follows:
 
 <programlisting>

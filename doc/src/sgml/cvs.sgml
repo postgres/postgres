@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.39 2006/11/17 05:29:46 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.40 2007/01/31 20:56:16 momjian Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -88,7 +88,7 @@ cvs -z3 -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot co -P pgsql
 
      <note>
       <para>
-       If you have a fast link to the Internet, you may not need
+       If you have a fast link to the Internet, you might not need
        <option>-z3</option>, which instructs
        <productname>CVS</productname> to use <command>gzip</command> compression for transferred data.  But
        on a modem-speed link, it's a very substantial win.

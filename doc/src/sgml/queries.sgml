@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.41 2007/01/09 16:59:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.42 2007/01/31 20:56:18 momjian Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -116,11 +116,11 @@ SELECT random();
 FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_reference</replaceable> <optional>, ...</optional></optional>
 </synopsis>
 
-    A table reference may be a table name (possibly schema-qualified),
+    A table reference can be a table name (possibly schema-qualified),
     or a derived table such as a subquery, a table join, or complex
     combinations of these.  If more than one table reference is listed
     in the <literal>FROM</> clause they are cross-joined (see below)
-    to form the intermediate virtual table that may then be subject to
+    to form the intermediate virtual table that can then be subject to
     transformations by the <literal>WHERE</>, <literal>GROUP BY</>,
     and <literal>HAVING</> clauses and is finally the result of the
     overall table expression.
@@ -350,8 +350,8 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     <para>
      Joins of all types can be chained together or nested: either or
      both of <replaceable>T1</replaceable> and
-     <replaceable>T2</replaceable> may be joined tables.  Parentheses
-     may be used around <literal>JOIN</> clauses to control the join
+     <replaceable>T2</replaceable> might be joined tables.  Parentheses
+     can be used around <literal>JOIN</> clauses to control the join
      order.  In the absence of parentheses, <literal>JOIN</> clauses
      nest left-to-right.
     </para>
@@ -623,7 +623,7 @@ FROM (VALUES ('anne', 'smith'), ('bob', 'jones'), ('joe', 'blow'))
      of either base data types (scalar types) or composite data types
      (table rows).  They are used like a table, view, or subquery in
      the <literal>FROM</> clause of a query. Columns returned by table
-     functions may be included in <literal>SELECT</>,
+     functions can be included in <literal>SELECT</>,
      <literal>JOIN</>, or <literal>WHERE</> clauses in the same manner
      as a table, view, or subquery column.
     </para>
@@ -636,8 +636,8 @@ FROM (VALUES ('anne', 'smith'), ('bob', 'jones'), ('joe', 'blow'))
     </para>
 
     <para>
-     A table function may be aliased in the <literal>FROM</> clause,
-     but it also may be left unaliased. If a function is used in the
+     A table function can be aliased in the <literal>FROM</> clause,
+     but it also can be left unaliased. If a function is used in the
      <literal>FROM</> clause with no alias, the function name is used
      as the resulting table name.
     </para>
@@ -788,7 +788,7 @@ SELECT ... FROM fdt WHERE EXISTS (SELECT c1 FROM t2 WHERE c2 &gt; fdt.c1)
 
    <para>
     After passing the <literal>WHERE</> filter, the derived input
-    table may be subject to grouping, using the <literal>GROUP BY</>
+    table might be subject to grouping, using the <literal>GROUP BY</>
     clause, and elimination of group rows using the <literal>HAVING</>
     clause.
    </para>
@@ -877,7 +877,7 @@ SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
     <literal>p.name</literal>, and <literal>p.price</literal> must be
     in the <literal>GROUP BY</> clause since they are referenced in
     the query select list.  (Depending on how exactly the products
-    table is set up, name and price may be fully dependent on the
+    table is set up, name and price might be fully dependent on the
     product ID, so the additional groupings could theoretically be
     unnecessary, but this is not implemented yet.)  The column
     <literal>s.units</> does not have to be in the <literal>GROUP
@@ -1070,7 +1070,7 @@ SELECT a AS value, b + c AS sum FROM ...
    </indexterm>
 
    <para>
-    After the select list has been processed, the result table may
+    After the select list has been processed, the result table can
     optionally be subject to the elimination of duplicate rows.  The
     <literal>DISTINCT</literal> key word is written directly after
     <literal>SELECT</literal> to specify this:
@@ -1234,7 +1234,7 @@ SELECT a, b FROM table1 ORDER BY a + b, c;
 </programlisting>
    When more than one expression is specified,
    the later values are used to sort rows that are equal according to the
-   earlier values.  Each expression may be followed by an optional
+   earlier values.  Each expression can be followed by an optional
    <literal>ASC</> or <literal>DESC</> keyword to set the sort direction to
    ascending or descending.  <literal>ASC</> order is the default.
    Ascending order puts smaller values first, where
@@ -1342,7 +1342,7 @@ SELECT <replaceable>select_list</replaceable>
    When using <literal>LIMIT</>, it is important to use an
    <literal>ORDER BY</> clause that constrains the result rows into a
    unique order.  Otherwise you will get an unpredictable subset of
-   the query's rows. You may be asking for the tenth through
+   the query's rows. You might be asking for the tenth through
    twentieth rows, but tenth through twentieth in what ordering?  The
    ordering is unknown, unless you specified <literal>ORDER BY</>.
   </para>
@@ -1364,7 +1364,7 @@ SELECT <replaceable>select_list</replaceable>
   <para>
    The rows skipped by an <literal>OFFSET</> clause still have to be
    computed inside the server; therefore a large <literal>OFFSET</>
-   can be inefficient.
+   might be inefficient.
   </para>
  </sect1>
 

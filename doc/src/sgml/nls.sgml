@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.14 2006/03/10 19:10:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.15 2007/01/31 20:56:18 momjian Exp $ -->
 
 <chapter id="nls">
  <chapterinfo>
@@ -108,7 +108,7 @@ msgstr "another translated"
    <para>
     The # character introduces a comment.  If whitespace immediately
     follows the # character, then this is a comment maintained by the
-    translator.  There may also be automatic comments, which have a
+    translator.  There can also be automatic comments, which have a
     non-whitespace character immediately following the #.  These are
     maintained by the various tools that operate on the PO files and
     are intended to aid the translator.
@@ -157,7 +157,7 @@ msgstr "another translated"
     ISO 639-1 two-letter language code (in lower case)</ulink>, e.g.,
     <filename>fr.po</filename> for French.  If there is really a need
     for more than one translation effort per language then the files
-    may also be named
+    can also be named
     <filename><replaceable>language</replaceable>_<replaceable>region</replaceable>.po</filename>
     where <replaceable>region</replaceable> is the
     <ulink url="http://www.din.de/gremien/nas/nabd/iso3166ma/codlstp1/en_listp1.html">
@@ -187,11 +187,11 @@ gmake init-po
 <programlisting>
 AVAIL_LANGUAGES := de fr
 </programlisting>
-    (Other languages may appear, of course.)
+    (Other languages can appear, of course.)
    </para>
 
    <para>
-    As the underlying program or library changes, messages may be
+    As the underlying program or library changes, messages might be
     changed or added by the programmers.  In this case you do not need
     to start from scratch.  Instead, run the command
 <programlisting>
@@ -212,7 +212,7 @@ gmake update-po
    <para>
     The PO files can be edited with a regular text editor.  The
     translator should only change the area between the quotes after
-    the msgstr directive, may add comments and alter the fuzzy flag.
+    the msgstr directive, add comments, and alter the fuzzy flag.
     There is (unsurprisingly) a PO mode for Emacs, which I find quite
     useful.
    </para>
@@ -255,7 +255,7 @@ msgstr "Die Datei %2$s hat %1$u Zeichen."
        <literal><replaceable>digits</replaceable>$</literal> needs to
        follow the % immediately, before any other format manipulators.
        (This feature really exists in the <function>printf</function>
-       family of functions.  You may not have heard of it before because
+       family of functions.  You might not have heard of it before because
        there is little use for it outside of message
        internationalization.)
       </para>
@@ -268,7 +268,7 @@ msgstr "Die Datei %2$s hat %1$u Zeichen."
        normally.  The corrected string can be merged in when the
        program sources have been updated.  If the original string
        contains a factual mistake, report that (or fix it yourself)
-       and do not translate it.  Instead, you may mark the string with
+       and do not translate it.  Instead, you can mark the string with
        a comment in the PO file.
       </para>
      </listitem>
@@ -280,7 +280,7 @@ msgstr "Die Datei %2$s hat %1$u Zeichen."
        open file %s</literal>) should probably not start with a
        capital letter (if your language distinguishes letter case) or
        end with a period (if your language uses punctuation marks).
-       It may help to read <xref linkend="error-style-guide">.
+       It might help to read <xref linkend="error-style-guide">.
       </para>
      </listitem>
 
@@ -353,7 +353,7 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
     </para>
 
     <para>
-     This may tend to add a lot of clutter.  One common shortcut is to use
+     This tends to add a lot of clutter.  One common shortcut is to use
 <programlisting>
 #define _(x) gettext(x)
 </programlisting>
@@ -451,9 +451,9 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
 <programlisting>
 printf("Files were %s.\n", flag ? "copied" : "removed");
 </programlisting>
-      The word order within the sentence may be different in other
+      The word order within the sentence might be different in other
       languages.  Also, even if you remember to call gettext() on each
-      fragment, the fragments may not translate well separately.  It's
+      fragment, the fragments might not translate well separately.  It's
       better to duplicate a little code so that each message to be
       translated is a coherent whole.  Only numbers, file names, and
       such-like run-time variables should be inserted at run time into
@@ -476,7 +476,7 @@ else
     printf("copied %d files", n):
 </programlisting>
       then be disappointed.  Some languages have more than two forms,
-      with some peculiar rules.  We may have a solution for this in
+      with some peculiar rules.  We might have a solution for this in
       the future, but for now the matter is best avoided altogether.
       You could write:
 <programlisting>

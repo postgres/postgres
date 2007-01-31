@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.27 2006/09/16 00:30:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/problems.sgml,v 2.28 2007/01/31 20:56:18 momjian Exp $ -->
 
 <sect1 id="bug-reporting">
  <title>Bug Reporting Guidelines</title>
@@ -228,7 +228,7 @@
       If the function or the options do not exist then your version is
       more than old enough to warrant an upgrade.
       If you run a prepackaged version, such as RPMs, say so, including any
-      subversion the package may have. If you are talking about a CVS
+      subversion the package might have. If you are talking about a CVS
       snapshot, mention that, including its date and time.
      </para>
 

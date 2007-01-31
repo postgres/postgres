@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.355 2007/01/30 22:29:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.356 2007/01/31 20:56:17 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -324,7 +324,7 @@
 
   <tip>
    <para>
-    Some applications may expect that
+    Some applications might expect that
     <literal><replaceable>expression</replaceable> = NULL</literal>
     returns true if <replaceable>expression</replaceable> evaluates to
     the null value.  It is highly recommended that these applications
@@ -582,7 +582,7 @@
    data type as its argument.
    The functions working with <type>double precision</type> data are mostly
    implemented on top of the host system's C library; accuracy and behavior in
-   boundary cases may therefore vary depending on the host system.
+   boundary cases can therefore vary depending on the host system.
   </para>
 
    <indexterm>
@@ -2804,7 +2804,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     other characters, the respective character in
     <replaceable>pattern</replaceable> must be 
     preceded by the escape character.  The default escape
-    character is the backslash but a different one may be selected by
+    character is the backslash but a different one can be selected by
     using the <literal>ESCAPE</literal> clause.  To match the escape
     character itself, write two escape characters.
    </para>
@@ -2884,7 +2884,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
      Like <function>LIKE</function>, the  <function>SIMILAR TO</function>
      operator succeeds only if its pattern matches the entire string;
      this is unlike common regular expression practice, wherein the pattern
-     may match any part of the string.
+     can match any part of the string.
      Also like
      <function>LIKE</function>, <function>SIMILAR TO</function> uses
      <literal>_</> and <literal>%</> as wildcard characters denoting
@@ -2918,7 +2918,7 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
      </listitem>
      <listitem>
       <para>
-       Parentheses <literal>()</literal> may be used to group items into
+       Parentheses <literal>()</literal> can be used to group items into
        a single logical item.
       </para>
      </listitem>
@@ -3198,7 +3198,7 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
    <para>
     A <firstterm>constraint</> matches an empty string, but matches only when
     specific conditions are met.  A constraint can be used where an atom
-    could be used, except it may not be followed by a quantifier.
+    could be used, except it cannot be followed by a quantifier.
     The simple constraints are shown in
     <xref linkend="posix-constraints-table">;
     some more constraints are described later.
@@ -3276,7 +3276,7 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
     </table>
 
    <para>
-    An RE may not end with <literal>\</>.
+    An RE cannot end with <literal>\</>.
    </para>
 
    <note>
@@ -3330,7 +3330,7 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
        <entry>
        <literal>{</><replaceable>m</><literal>,</><replaceable>n</><literal>}</> </entry>
        <entry> a sequence of <replaceable>m</> through <replaceable>n</>
-       (inclusive) matches of the atom; <replaceable>m</> may not exceed
+       (inclusive) matches of the atom; <replaceable>m</> cannot exceed
        <replaceable>n</> </entry>
        </row>
 
@@ -3432,7 +3432,7 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
     </table>
 
    <para>
-    Lookahead constraints may not contain <firstterm>back references</>
+    Lookahead constraints cannot contain <firstterm>back references</>
     (see <xref linkend="posix-escape-sequences">),
     and all parentheses within them are considered non-capturing.
    </para>
@@ -3506,7 +3506,7 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
     <literal>^</literal> are the members of an equivalence class, then
     <literal>[[=o=]]</literal>, <literal>[[=^=]]</literal>, and
     <literal>[o^]</literal> are all synonymous.  An equivalence class
-    may not be an endpoint of a range.
+    cannot be an endpoint of a range.
    </para>
 
    <para>
@@ -3522,7 +3522,7 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
     <literal>xdigit</literal>.  These stand for the character classes
     defined in
     <citerefentry><refentrytitle>ctype</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
-    A locale may provide others.  A character class may not be used as
+    A locale can provide others.  A character class cannot be used as
     an endpoint of a range.
    </para>
 
@@ -3909,7 +3909,7 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
    </para>
 
    <para>
-    An ARE may begin with <firstterm>embedded options</>:
+    An ARE can begin with <firstterm>embedded options</>:
     a sequence <literal>(?</><replaceable>xyz</><literal>)</>
     (where <replaceable>xyz</> is one or more alphabetic characters)
     specifies options affecting the rest of the RE.
@@ -4001,7 +4001,7 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
 
    <para>
     Embedded options take effect at the <literal>)</> terminating the sequence.
-    They may appear only at the start of an ARE (after the
+    They can appear only at the start of an ARE (after the
     <literal>***:</> director if any).
    </para>
 
@@ -4660,7 +4660,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
     </table>
 
    <para>
-    Certain modifiers may be applied to any template pattern to alter its
+    Certain modifiers can be applied to any template pattern to alter its
     behavior.  For example, <literal>FMMonth</literal>
     is the <literal>Month</literal> pattern with the
     <literal>FM</literal> modifier.
@@ -6121,7 +6121,7 @@ SELECT date_trunc('year', TIMESTAMP '2001-02-16 20:38:40');
     In these expressions, the desired time zone <replaceable>zone</> can be
     specified either as a text string (e.g., <literal>'PST'</literal>)
     or as an interval (e.g., <literal>INTERVAL '-08:00'</literal>).
-    In the text case, a time zone name may be specified in any of the ways
+    In the text case, a time zone name can be specified in any of the ways
     described in <xref linkend="datatype-timezones">.
    </para>
 
@@ -6228,7 +6228,7 @@ SELECT LOCALTIMESTAMP;
 
    <note>
     <para>
-     Other database systems may advance these values more
+     Other database systems might advance these values more
      frequently.
     </para>
    </note>
@@ -6257,7 +6257,7 @@ timeofday()
     statement (more specifically, the time of receipt of the latest command
     message from the client).
     <function>statement_timestamp()</> and <function>transaction_timestamp()</>
-    return the same value during the first command of a transaction, but may
+    return the same value during the first command of a transaction, but might
     differ during subsequent commands.
     <function>clock_timestamp()</> returns the actual current time, and
     therefore its value changes even within a single SQL command.
@@ -6329,7 +6329,7 @@ SELECT pg_sleep(1.5);
      <para>
       The effective resolution of the sleep interval is platform-specific;
       0.01 seconds is a common value.  The sleep delay will be at least as long
-      as specified. It may be longer depending on factors such as server load.
+      as specified. It might be longer depending on factors such as server load.
      </para>
    </note>
 
@@ -6821,7 +6821,7 @@ SELECT pg_sleep(1.5);
      <literal>t.p</> is a <type>point</> column then
      <literal>SELECT p[0] FROM t</> retrieves the X coordinate and
      <literal>UPDATE t SET p[1] = ...</> changes the Y coordinate.
-     In the same way, a value of type <type>box</> or <type>lseg</> may be treated
+     In the same way, a value of type <type>box</> or <type>lseg</> can be treated
      as an array of two <type>point</> values.
     </para>
 
@@ -7236,7 +7236,7 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
 </programlisting>
     Note that late binding was the only behavior supported in
     <productname>PostgreSQL</productname> releases before 8.1, so you
-    may need to do this to preserve the semantics of old applications.
+    might need to do this to preserve the semantics of old applications.
    </para>
 
    <para>
@@ -7302,7 +7302,7 @@ nextval('foo'::text)      <lineannotation><literal>foo</literal> is looked up at
         value and sets its <literal>is_called</literal> field to <literal>true</literal>,
         meaning that the next <function>nextval</function> will advance the sequence
         before returning a value.  In the three-parameter form,
-        <literal>is_called</literal> may be set either <literal>true</literal> or
+        <literal>is_called</literal> can be set either <literal>true</literal> or
         <literal>false</literal>.  If it's set to <literal>false</literal>,
         the next <function>nextval</function> will return exactly the specified
         value, and sequence advancement commences with the following
@@ -7336,7 +7336,7 @@ SELECT setval('foo', 42, false);    <lineannotation>Next <function>nextval</> wi
     same sequence, a <function>nextval</function> operation is never rolled back;
     that is, once a value has been fetched it is considered used, even if the
     transaction that did the <function>nextval</function> later aborts.  This means
-    that aborted transactions may leave unused <quote>holes</quote> in the
+    that aborted transactions might leave unused <quote>holes</quote> in the
     sequence of assigned values.  <function>setval</function> operations are never
     rolled back, either.
    </para>
@@ -8026,7 +8026,7 @@ SELECT NULLIF(value, '(none)') ...
    It should be noted that except for <function>count</function>,
    these functions return a null value when no rows are selected.  In
    particular, <function>sum</function> of no rows returns null, not
-   zero as one might expect.  The <function>coalesce</function> function may be
+   zero as one might expect.  The <function>coalesce</function> function can be
    used to substitute zero for null when necessary.
   </para>
 
@@ -8056,7 +8056,7 @@ SELECT b1 = ANY((SELECT b2 FROM t2 ...)) FROM t1 ...;
   <note>
    <para>
     Users accustomed to working with other SQL database management
-    systems may be surprised by the performance of the
+    systems might be surprised by the performance of the
     <function>count</function> aggregate when it is applied to the
     entire table. A query like:
 <programlisting>
@@ -8484,7 +8484,7 @@ EXISTS (<replaceable>subquery</replaceable>)
    whether at least one row is returned, not all the way to completion.
    It is unwise to write a subquery that has any side effects (such as
    calling sequence functions); whether the side effects occur or not
-   may be difficult to predict.
+   might be difficult to predict.
   </para>
 
   <para>
@@ -9296,7 +9296,7 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
 
    <note>
     <para>
-     The search path may be altered at run time.  The command is:
+     The search path can be altered at run time.  The command is:
 <programlisting>
 SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ...</optional>
 </programlisting>
@@ -9881,7 +9881,7 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    creating command for a constraint, index, rule, or trigger. (Note that this
    is a decompiled reconstruction, not the original text of the command.)
    <function>pg_get_expr</function> decompiles the internal form of an
-   individual expression, such as the default value for a column.  It may be
+   individual expression, such as the default value for a column.  It can be
    useful when examining the contents of system catalogs.
    <function>pg_get_viewdef</function> reconstructs the <command>SELECT</>
    query that defines a view. Most of these functions come in two variants,
@@ -10294,7 +10294,7 @@ postgres=# select pg_start_backup('label_goes_here');
     the transaction log archive area.  The history file includes the label given to
     <function>pg_start_backup</>, the starting and ending transaction log locations for
     the backup, and the starting and ending times of the backup.  The return
-    value is the backup's ending transaction log location (which again may be of little
+    value is the backup's ending transaction log location (which again might be of little
     interest).  After noting the ending location, the current transaction log insertion
     point is automatically advanced to the next transaction log file, so that the
     ending transaction log file can be archived immediately to complete the backup.
@@ -10413,7 +10413,7 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
        <entry><type>bigint</type></entry>
        <entry>
         Disk space used by the table or index with the specified name.
-        The table name may be qualified with a schema name
+        The table name can be qualified with a schema name
        </entry>
       </row>
       <row>
@@ -10454,7 +10454,7 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
        <entry><type>bigint</type></entry>
        <entry>
         Total disk space used by the table with the specified name,
-        including indexes and toasted data.  The table name may be
+        including indexes and toasted data.  The table name can be
         qualified with a schema name
        </entry>
       </row>
@@ -10494,7 +10494,7 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
     The functions shown in <xref
     linkend="functions-admin-genfile"> provide native file access to
     files on the machine hosting the server. Only files within the
-    database cluster directory and the <varname>log_directory</> may be
+    database cluster directory and the <varname>log_directory</> can be
     accessed.  Use a relative path for files within the cluster directory,
     and a path matching the <varname>log_directory</> configuration setting
     for log files.  Use of these functions is restricted to superusers.
@@ -10690,7 +10690,7 @@ SELECT (pg_stat_file('filename')).modification;
    </indexterm>
    <para>
     <function>pg_advisory_lock</> locks an application-defined resource,
-    which may be identified either by a single 64-bit key value or two
+    which can be identified either by a single 64-bit key value or two
     32-bit key values (note that these two key spaces do not overlap).  If
     another session already holds a lock on the same resource, the
     function will wait until the resource becomes available.  The lock
@@ -10796,7 +10796,7 @@ SELECT (pg_stat_file('filename')).modification;
     <para>
      The function <function>xmlcomment</function> creates an XML value
      containing an XML comment with the specified text as content.
-     The text may not contain <literal>--</literal> or end with a
+     The text cannot contain <literal>--</literal> or end with a
      <literal>-</literal> so that the resulting construct is a valid
      XML comment.  If the argument is null, the result is null.
     </para>

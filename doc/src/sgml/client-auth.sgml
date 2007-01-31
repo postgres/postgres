@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.96 2006/11/23 05:39:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.97 2007/01/31 20:56:16 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -48,7 +48,7 @@
   runs. If all the users of a particular server also have accounts on
   the server's machine, it makes sense to assign database user names
   that match their operating system user names. However, a server that
-  accepts remote connections may have many database users who have no local operating system
+  accepts remote connections might have many database users who have no local operating system
   account, and in such cases there need be no connection between
   database user names and OS user names.
  </para>
@@ -94,7 +94,7 @@
   </para>
 
   <para>
-   A record may have one of the seven formats
+   A record can have one of the seven formats
 <synopsis>
 local      <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
 host       <replaceable>database</replaceable>  <replaceable>user</replaceable>  <replaceable>CIDR-address</replaceable>  <replaceable>auth-method</replaceable>  <optional><replaceable>auth-option</replaceable></optional>
@@ -256,7 +256,7 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
      <term><replaceable>IP-mask</replaceable></term>
      <listitem>
       <para>
-       These fields may be used as an alternative to the
+       These fields can be used as an alternative to the
        <replaceable>CIDR-address</replaceable> notation. Instead of
        specifying the mask length, the actual mask is specified in a
        separate column. For example, <literal>255.0.0.0</> represents an IPv4
@@ -517,7 +517,7 @@ host    all         all         192.168.0.0/16        ident omicron
 # If these are the only three lines for local connections, they will
 # allow local users to connect only to their own databases (databases
 # with the same name as their database user name) except for administrators
-# and members of role "support", who may connect to all databases.  The file
+# and members of role "support", who can connect to all databases.  The file
 # $PGDATA/admins contains a list of names of administrators.  Passwords
 # are required in all cases.
 #
@@ -559,7 +559,7 @@ local   db1,db2,@demodbs  all                         md5
     <literal>trust</> authentication is appropriate and very
     convenient for local connections on a single-user workstation.  It
     is usually <emphasis>not</> appropriate by itself on a multiuser
-    machine.  However, you may be able to use <literal>trust</> even
+    machine.  However, you might be able to use <literal>trust</> even
     on a multiuser machine, if you restrict access to the server's
     Unix-domain socket file using file-system permissions.  To do this, set the
     <varname>unix_socket_permissions</varname> (and possibly
@@ -679,7 +679,7 @@ local   db1,db2,@demodbs  all                         md5
     <literal>./configure --with-krb-srvnam=whatever</>. In most environments,
     this parameter never needs to be changed. However, to support multiple
     <productname>PostgreSQL</> installations on the same host it is necessary.
-    Some Kerberos implementations may also require a different service name,
+    Some Kerberos implementations might also require a different service name,
     such as Microsoft Active Directory which requires the service name
     to be in uppercase (<literal>POSTGRES</literal>).
    </para>
@@ -865,7 +865,7 @@ local   db1,db2,@demodbs  all                         md5
     as which database user. The same <replaceable>map-name</> can be
     used repeatedly to specify more user-mappings within a single map.
     There is no restriction regarding how many database users a given
-    operating system user may correspond to, nor vice versa.
+    operating system user can correspond to, nor vice versa.
    </para>
 
   <para>
@@ -941,7 +941,7 @@ ldap://ldap.example.net/dc=example,dc=net;EXAMPLE\
     will encrypt only the connection between the PostgreSQL server
     and the LDAP server. The connection between the client and the
     PostgreSQL server is not affected by this setting. To make use of
-    TLS encryption, you may need to configure the LDAP library prior
+    TLS encryption, you might need to configure the LDAP library prior
     to configuring PostgreSQL. Note that encrypted LDAP is available only
     if the platform's LDAP library supports it.
    </para>
@@ -1030,12 +1030,12 @@ FATAL:  database "testdb" does not exist
 </programlisting>
     The database you are trying to connect to does not exist. Note that
     if you do not specify a database name, it defaults to the database
-    user name, which may or may not be the right thing.
+    user name, which might or might not be the right thing.
    </para>
 
    <tip>
    <para>
-    The server log may contain more information about an
+    The server log might contain more information about an
     authentication failure than is reported to the client. If you are
     confused about the reason for a failure, check the log.
    </para>

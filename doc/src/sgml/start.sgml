@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.43 2006/10/21 23:12:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.44 2007/01/31 20:56:19 momjian Exp $ -->
 
  <chapter id="tutorial-start">
   <title>Getting Started</title>
@@ -38,11 +38,11 @@
 
    <para>
     If your site administrator has not set things up in the default
-    way, you may have some more work to do.  For example, if the
+    way, you might have some more work to do.  For example, if the
     database server machine is a remote machine, you will need to set
     the <envar>PGHOST</envar> environment variable to the name of the
     database server machine.  The environment variable
-    <envar>PGPORT</envar> may also have to be set.  The bottom line is
+    <envar>PGPORT</envar> might also have to be set.  The bottom line is
     this: if you try to start an application program and it complains
     that it cannot connect to the database, you should consult your
     site administrator or, if that is you, the documentation to make
@@ -272,7 +272,7 @@ createdb: database creation failed: ERROR:  permission denied to create database
    </para>
 
    <para>
-    More about <command>createdb</command> and <command>dropdb</command> may
+    More about <command>createdb</command> and <command>dropdb</command> can
     be found in <xref linkend="APP-CREATEDB"> and <xref linkend="APP-DROPDB">
     respectively.
    </para>

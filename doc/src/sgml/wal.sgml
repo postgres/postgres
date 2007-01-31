@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.42 2006/11/25 22:44:48 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.43 2007/01/31 20:56:19 momjian Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -40,7 +40,7 @@
   </para>
 
   <para>
-   Next, there may be a cache in the disk drive controller; this is
+   Next, there might be a cache in the disk drive controller; this is
    particularly common on <acronym>RAID</> controller cards. Some of
    these caches are <firstterm>write-through</>, meaning writes are passed
    along to the drive as soon as they arrive. Others are
@@ -106,7 +106,7 @@
    <para>
     <firstterm>Write-Ahead Logging</firstterm> (<acronym>WAL</acronym>)
     is a standard approach to transaction logging.  Its detailed
-    description may be found in most (if not all) books about
+    description can be found in most (if not all) books about
     transaction processing. Briefly, <acronym>WAL</acronym>'s central
     concept is that changes to data files (where tables and indexes
     reside) must be written only after those changes have been logged,
@@ -125,7 +125,7 @@
     file needs to be flushed to disk at the time of transaction
     commit, rather than every data file changed by the transaction.
     In multiuser environments, commits of many transactions
-    may be accomplished with a single <function>fsync</function> of
+    can be accomplished with a single <function>fsync</function> of
     the log file. Furthermore, the log file is written sequentially,
     and so the cost of syncing the log is much less than the cost of
     flushing the data pages.   This is especially true for servers
@@ -211,7 +211,7 @@
    <varname>checkpoint_segments</varname>.  Occasional appearance of such
    a message is not cause for alarm, but if it appears often then the
    checkpoint control parameters should be increased. Bulk operations such
-   as large <command>COPY</> transfers may cause a number of such warnings
+   as large <command>COPY</> transfers might cause a number of such warnings
    to appear if you have not set <varname>checkpoint_segments</> high
    enough.
   </para>
@@ -241,13 +241,13 @@
    is used on every database low level modification (for example, row
    insertion) at a time when an exclusive lock is held on affected
    data pages, so the operation needs to be as fast as possible.  What
-   is worse, writing <acronym>WAL</acronym> buffers may also force the
+   is worse, writing <acronym>WAL</acronym> buffers might also force the
    creation of a new log segment, which takes even more
    time. Normally, <acronym>WAL</acronym> buffers should be written
    and flushed by a <function>LogFlush</function> request, which is
    made, for the most part, at transaction commit time to ensure that
    transaction records are flushed to permanent storage. On systems
-   with high log output, <function>LogFlush</function> requests may
+   with high log output, <function>LogFlush</function> requests might
    not occur often enough to prevent <function>LogInsert</function>
    from having to do writes.  On such systems
    one should increase the number of <acronym>WAL</acronym> buffers by
@@ -294,7 +294,7 @@
    compiled with support for it) will result in each
    <function>LogInsert</function> and <function>LogFlush</function>
    <acronym>WAL</acronym> call being logged to the server log. This
-   option may be replaced by a more general mechanism in the future.
+   option might be replaced by a more general mechanism in the future.
   </para>
  </sect1>
 
@@ -324,7 +324,7 @@
 
   <para>
    It is of advantage if the log is located on another disk than the
-   main database files.  This may be achieved by moving the directory
+   main database files.  This can be achieved by moving the directory
    <filename>pg_xlog</filename> to another location (while the server
    is shut down, of course) and creating a symbolic link from the
    original location in the main data directory to the new location.
@@ -332,11 +332,11 @@
 
   <para>
    The aim of <acronym>WAL</acronym>, to ensure that the log is
-   written before database records are altered, may be subverted by
+   written before database records are altered, can be subverted by
    disk drives<indexterm><primary>disk drive</></> that falsely report a
    successful write to the kernel, 
    when in fact they have only cached the data and not yet stored it
-   on the disk.  A power failure in such a situation may still lead to
+   on the disk.  A power failure in such a situation might still lead to
    irrecoverable data corruption.  Administrators should try to ensure
    that disks holding <productname>PostgreSQL</productname>'s
    <acronym>WAL</acronym> log files do not make such false reports.

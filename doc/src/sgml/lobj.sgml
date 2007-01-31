@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.42 2006/10/23 18:10:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.43 2007/01/31 20:56:17 momjian Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -20,7 +20,7 @@
     large object data.  We use the <application>libpq</application> C
     library for the examples in this chapter, but most programming
     interfaces native to <productname>PostgreSQL</productname> support
-    equivalent functionality.  Other interfaces may use the large
+    equivalent functionality.  Other interfaces might use the large
     object interface internally to provide generic support for large
     values.  This is not described here.
    </para>
@@ -305,7 +305,7 @@ int lo_tell(PGconn *conn, int fd);
 <title>Closing a Large Object Descriptor</title>
 
 <para>
-     A large object descriptor may be closed by calling
+     A large object descriptor can be closed by calling
 <synopsis>
 int lo_close(PGconn *conn, int fd);
 </synopsis>
@@ -392,7 +392,7 @@ SELECT lo_export(image.raster, '/tmp/motd') FROM image
 <para>
      <xref linkend="lo-example"> is a sample program which shows how the large object  
      interface
-     in  <application>libpq</>  can  be used.  Parts of the program are 
+     in <application>libpq</> can be used.  Parts of the program are 
      commented out but are left in the source for  the  reader's
      benefit.  This program can also be found in
      <filename>src/test/examples/testlo.c</filename> in the source distribution.

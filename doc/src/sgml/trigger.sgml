@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.47 2006/09/16 00:30:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/trigger.sgml,v 1.48 2007/01/31 20:56:19 momjian Exp $ -->
 
  <chapter id="triggers">
   <title>Triggers</title>
@@ -122,7 +122,7 @@
 
    <para>
     The return value is ignored for row-level triggers fired after an
-    operation, and so they may as well return <symbol>NULL</>.
+    operation, and so they can return <symbol>NULL</>.
    </para>
 
    <para>
@@ -152,7 +152,7 @@
 
    <para>
     If a trigger function executes SQL commands then these
-    commands may fire triggers again. This is known as cascading
+    commands might fire triggers again. This is known as cascading
     triggers.  There is no direct limitation on the number of cascade
     levels.  It is possible for cascades to cause a recursive invocation
     of the same trigger; for example, an <command>INSERT</command>
@@ -233,7 +233,7 @@
        changes for rows previously processed in the same outer
        command.  This requires caution, since the ordering of these
        change events is not in general predictable; a SQL command that
-       affects multiple rows may visit the rows in any order.
+       affects multiple rows can visit the rows in any order.
       </para>
      </listitem>
 
@@ -332,7 +332,7 @@ typedef struct TriggerData
       <term><structfield>tg_event</></term>
       <listitem>
        <para>
-        Describes the event for which the function is called. You may use the
+        Describes the event for which the function is called. You can use the
         following macros to examine <literal>tg_event</literal>:
 
         <variablelist>
@@ -524,7 +524,7 @@ typedef struct Trigger
 
    <para>
     Here is a very simple example of a trigger function written in C.
-    (Examples of triggers written in procedural languages may be found
+    (Examples of triggers written in procedural languages can be found
     in the documentation of the procedural languages.)
    </para>
 

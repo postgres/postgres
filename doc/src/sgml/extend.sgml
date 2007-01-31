@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.32 2006/09/16 00:30:13 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.33 2007/01/31 20:56:17 momjian Exp $ -->
 
  <chapter id="extend">
   <title>Extending <acronym>SQL</acronym></title>
@@ -145,7 +145,7 @@
 
     <para>
      A domain is based on a particular base type and for many purposes
-     is interchangeable with its base type.  However, a domain may
+     is interchangeable with its base type.  However, a domain can
      have constraints that restrict its valid values to a subset of
      what the underlying base type would allow.
     </para>

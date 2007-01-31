@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.188 2007/01/30 22:29:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.189 2007/01/31 20:56:16 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -14,7 +14,7 @@
 
   <para>
    <productname>PostgreSQL</productname> has a rich set of native data
-   types available to users.  Users may add new types to
+   types available to users.  Users can add new types to
    <productname>PostgreSQL</productname> using the <xref
    linkend="sql-createtype" endterm="sql-createtype-title"> command.
   </para>
@@ -267,7 +267,7 @@
    paths, or have several possibilities for formats, such as the date
    and time types.
    Some of the input and output functions are not invertible.  That is,
-   the result of an output function may lose accuracy when compared to
+   the result of an output function might lose accuracy when compared to
    the original input.
   </para>
 
@@ -416,7 +416,7 @@
     </para>
 
     <para>
-     The <type>bigint</type> type may not function correctly on all
+     The <type>bigint</type> type might not function correctly on all
      platforms, since it relies on compiler support for eight-byte
      integers.  On a machine without such support, <type>bigint</type>
      acts the same as <type>integer</type> (but still takes up eight
@@ -597,7 +597,7 @@ NUMERIC
     <para>
      Inexact means that some values cannot be converted exactly to the
      internal format and are stored as approximations, so that storing
-     and printing back out a value may show slight discrepancies.
+     and printing back out a value might show slight discrepancies.
      Managing these errors and how they propagate through calculations
      is the subject of an entire branch of mathematics and computer
      science and will not be discussed further here, except for the
@@ -621,7 +621,7 @@ NUMERIC
 
       <listitem>
        <para>
-        Comparing two floating-point values for equality may or may
+        Comparing two floating-point values for equality might or might
         not work as expected.
        </para>
       </listitem>
@@ -633,7 +633,7 @@ NUMERIC
      1E-37 to 1E+37 with a precision of at least 6 decimal digits.  The
      <type>double precision</type> type typically has a range of around
      1E-307 to 1E+308 with a precision of at least 15 digits.  Values that
-     are too large or too small will cause an error.  Rounding may
+     are too large or too small will cause an error.  Rounding might
      take place if the precision of an input number is too high.
      Numbers too close to zero that are not representable as distinct
      from zero will cause an underflow error.
@@ -698,7 +698,7 @@ NUMERIC
       digits.  The assumption that <type>real</type> and
       <type>double precision</type> have exactly 24 and 53 bits in the
       mantissa respectively is correct for IEEE-standard floating point
-      implementations.  On non-IEEE platforms it may be off a little, but
+      implementations.  On non-IEEE platforms it might be off a little, but
       for simplicity the same ranges of <replaceable>p</replaceable> are used
       on all platforms.
      </para>
@@ -978,7 +978,7 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
     The storage requirement for data of these types is 4 bytes plus the
     actual string, and in case of <type>character</type> plus the
     padding. Long strings are compressed by the system automatically, so
-    the physical requirement on disk may be less. Long values are also
+    the physical requirement on disk might be less. Long values are also
     stored in background tables so they do not interfere with rapid
     access to the shorter column values. In any case, the longest
     possible character string that can be stored is about 1 GB. (The
@@ -1060,7 +1060,7 @@ SELECT b, char_length(b) FROM test2;
     terminator) but should be referenced using the constant
     <symbol>NAMEDATALEN</symbol>. The length is set at compile time (and
     is therefore adjustable for special uses); the default maximum
-    length may change in a future release. The type <type>"char"</type>
+    length might change in a future release. The type <type>"char"</type>
     (note the quotes) is different from <type>char(1)</type> in that it
     only uses one byte of storage. It is internally used in the system
     catalogs as a poor-man's enumeration type.
@@ -1293,8 +1293,8 @@ SELECT b, char_length(b) FROM test2;
 
    <para>
     Depending on the front end to <productname>PostgreSQL</> you use,
-    you may have additional work to do in terms of escaping and
-    unescaping <type>bytea</type> strings. For example, you may also
+    you might have additional work to do in terms of escaping and
+    unescaping <type>bytea</type> strings. For example, you might also
     have to escape line feeds and carriage returns if your interface
     automatically translates these.
    </para>
@@ -1436,7 +1436,7 @@ SELECT b, char_length(b) FROM test2;
    <para>
     When <type>timestamp</> values are stored as double precision floating-point
     numbers (currently the default), the effective limit of precision
-    may be less than 6. <type>timestamp</type> values are stored as seconds
+    might be less than 6. <type>timestamp</type> values are stored as seconds
     before or after midnight 2000-01-01.  Microsecond precision is achieved for
     dates within a few years of 2000-01-01, but the precision degrades for
     dates further away.  When <type>timestamp</type> values are stored as
@@ -2166,7 +2166,7 @@ January 8 04:05:06 1999 PST
         <type>time</type> type can.
         Time zones in the real world have little meaning unless 
         associated with a date as well as a time,
-        since the offset may vary through the year with daylight-saving
+        since the offset can vary through the year with daylight-saving
         time boundaries.
        </para>
       </listitem>
@@ -2220,7 +2220,7 @@ January 8 04:05:06 1999 PST
        <para>
         A time zone abbreviation, for example <literal>PST</>.  Such a
         specification merely defines a particular offset from UTC, in
-        contrast to full time zone names which may imply a set of daylight
+        contrast to full time zone names which might imply a set of daylight
         savings transition-date rules as well.  The recognized abbreviations
         are listed in the <literal>pg_timezone_abbrevs</> view (see <xref
         linkend="view-pg-timezone-abbrevs">).  You cannot set the
@@ -3374,14 +3374,14 @@ SELECT * FROM pg_attribute
     </table>
 
    <para>
-    Functions coded in C (whether built-in or dynamically loaded) may be
+    Functions coded in C (whether built-in or dynamically loaded) can be
     declared to accept or return any of these pseudo data types.  It is up to
     the function author to ensure that the function will behave safely
     when a pseudo-type is used as an argument type.
    </para>
 
    <para>
-    Functions coded in procedural languages may use pseudo-types only as
+    Functions coded in procedural languages can use pseudo-types only as
     allowed by their implementation languages.  At present the procedural
     languages all forbid use of a pseudo-type as argument type, and allow
     only <type>void</> and <type>record</> as a result type (plus

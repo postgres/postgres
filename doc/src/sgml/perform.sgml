@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.60 2007/01/25 02:17:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.61 2007/01/31 20:56:18 momjian Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -90,7 +90,7 @@ EXPLAIN SELECT * FROM tenk1;
 
      <listitem>
       <para>
-       Estimated total cost (If all rows were to be retrieved, which they may
+       Estimated total cost (If all rows were to be retrieved, though they might
        not be: for example, a query with a <literal>LIMIT</> clause will stop
        short of paying the total cost of the <literal>Limit</> plan node's
        input node.)
@@ -230,7 +230,7 @@ EXPLAIN SELECT * FROM tenk1 WHERE unique1 &lt; 100;
    </para>
 
    <para>
-    If the <literal>WHERE</> condition is selective enough, the planner may
+    If the <literal>WHERE</> condition is selective enough, the planner might
     switch to a <quote>simple</> index scan plan:
 
 <programlisting>
@@ -426,7 +426,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t
     run time will normally be just a little larger than the total time
     reported for the top-level plan node.  For <command>INSERT</>,
     <command>UPDATE</>, and <command>DELETE</> commands, the total run time
-    may be considerably larger, because it includes the time spent processing
+    might be considerably larger, because it includes the time spent processing
     the result rows.  In these commands, the time for the top plan node
     essentially is the time spent computing the new rows and/or locating the
     old ones, but it doesn't include the time spent applying the changes.
@@ -438,7 +438,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t
     It is worth noting that <command>EXPLAIN</> results should not be extrapolated
     to situations other than the one you are actually testing; for example,
     results on a toy-sized table can't be assumed to apply to large tables.
-    The planner's cost estimates are not linear and so it may well choose
+    The planner's cost estimates are not linear and so it might choose
     a different plan for a larger or smaller table.  An extreme example
     is that on a table that only occupies one disk page, you'll nearly
     always get a sequential scan plan whether indexes are available or not.
@@ -564,10 +564,10 @@ SELECT attname, n_distinct, most_common_vals FROM pg_stats WHERE tablename = 'ro
    command, or globally by setting the
    <xref linkend="guc-default-statistics-target"> configuration variable.
    The default limit is presently 10 entries.  Raising the limit
-   may allow more accurate planner estimates to be made, particularly for
+   might allow more accurate planner estimates to be made, particularly for
    columns with irregular data distributions, at the price of consuming
    more space in <structname>pg_statistic</structname> and slightly more
-   time to compute the estimates.  Conversely, a lower limit may be
+   time to compute the estimates.  Conversely, a lower limit might be
    appropriate for columns with simple data distributions.
   </para>
 
@@ -605,7 +605,7 @@ SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
    between two input tables, so it's necessary to build up the result
    in one or another of these fashions.)  The important point is that
    these different join possibilities give semantically equivalent
-   results but may have hugely different execution costs.  Therefore,
+   results but might have hugely different execution costs.  Therefore,
    the planner will explore all of them to try to find the most
    efficient query plan.
   </para>
@@ -615,7 +615,7 @@ SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
    orders to worry about.  But the number of possible join orders grows
    exponentially as the number of tables expands.  Beyond ten or so input
    tables it's no longer practical to do an exhaustive search of all the
-   possibilities, and even for six or seven tables planning may take an
+   possibilities, and even for six or seven tables planning might take an
    annoyingly long time.  When there are too many input tables, the
    <productname>PostgreSQL</productname> planner will switch from exhaustive
    search to a <firstterm>genetic</firstterm> probabilistic search
@@ -638,7 +638,7 @@ SELECT * FROM a LEFT JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
    Therefore the planner has no choice of join order here: it must join
    B to C and then join A to that result.  Accordingly, this query takes
    less time to plan than the previous query.  In other cases, the planner
-   may be able to determine that more than one join order is safe.
+   might be able to determine that more than one join order is safe.
    For example, given
 <programlisting>
 SELECT * FROM a LEFT JOIN b ON (a.bid = b.id) LEFT JOIN c ON (a.cid = c.id);
@@ -751,7 +751,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
   <title>Populating a Database</title>
 
   <para>
-   One may need to insert a large amount of data when first populating
+   One might need to insert a large amount of data when first populating
    a database. This section contains some suggestions on how to make
    this process as efficient as possible.
   </para>
@@ -767,7 +767,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <para>
     Turn off autocommit and just do one commit at the end.  (In plain
     SQL, this means issuing <command>BEGIN</command> at the start and
-    <command>COMMIT</command> at the end.  Some client libraries may
+    <command>COMMIT</command> at the end.  Some client libraries might
     do this behind your back, in which case you need to make sure the
     library does it when you want it done.)  If you allow each
     insertion to be committed separately,
@@ -795,7 +795,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    </para>
 
    <para>
-    If you cannot use <command>COPY</command>, it may help to use <xref
+    If you cannot use <command>COPY</command>, it might help to use <xref
     linkend="sql-prepare" endterm="sql-prepare-title"> to create a
     prepared <command>INSERT</command> statement, and then use
     <command>EXECUTE</command> as many times as required.  This avoids
@@ -840,9 +840,9 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
    <para>
     If you are adding large amounts of data to an existing table,
-    it may be a win to drop the index,
+    it might be a win to drop the index,
     load the table, and then recreate the index.  Of course, the
-    database performance for other users may be adversely affected
+    database performance for other users might be adversely affected
     during the time that the index is missing.  One should also think
     twice before dropping unique indexes, since the error checking
     afforded by the unique constraint will be lost while the index is
@@ -855,7 +855,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 
    <para>
     Just as with indexes, a foreign key constraint can be checked
-    <quote>in bulk</> more efficiently than row-by-row.  So it may be
+    <quote>in bulk</> more efficiently than row-by-row.  So it might be
     useful to drop foreign key constraints, load data, and re-create
     the constraints.  Again, there is a trade-off between data load
     speed and loss of error checking while the constraint is missing.
@@ -897,8 +897,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <title>Turn off <varname>archive_command</varname></title>
 
    <para>
-    When loading large amounts of data you may want to unset the
-    <xref linkend="guc-archive-command"> before loading. It may be
+    When loading large amounts of data you might want to unset the
+    <xref linkend="guc-archive-command"> before loading. It might be
     faster to take a new base backup once the load has completed
     than to allow a large archive to accumulate.
    </para>
@@ -926,7 +926,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     includes bulk loading large amounts of data into the table.  Running
     <command>ANALYZE</command> (or <command>VACUUM ANALYZE</command>)
     ensures that the planner has up-to-date statistics about the
-    table.  With no statistics or obsolete statistics, the planner may
+    table.  With no statistics or obsolete statistics, the planner might
     make poor decisions during query planning, leading to poor
     performance on any tables with inaccurate or nonexistent
     statistics.

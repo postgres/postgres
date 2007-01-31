@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.491 2007/01/06 15:19:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.492 2007/01/31 20:56:18 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -504,7 +504,7 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        This may eliminate the need to set unrealistically small
+        This might eliminate the need to set unrealistically small
         values of <link
         linkend="guc-random-page-cost"><varname>random_page_cost</></link>.
         If you have been using a very small <varname>random_page_cost</>,
@@ -989,7 +989,7 @@ do it for earlier branch release files.
 
        <para>
         On platforms where it is expensive to update the <application>ps</>
-        display, it may be worthwhile to turn this off and rely solely on
+        display, it might be worthwhile to turn this off and rely solely on
         <structname>pg_stat_activity</> for status information.
        </para>
       </listitem>
@@ -1270,7 +1270,7 @@ do it for earlier branch release files.
        <para>
         This prevents surprising behavior due to multiple evaluation
         of a <literal>volatile</> function (such as <function>random()</>
-        or <function>nextval()</>).  It may cause performance
+        or <function>nextval()</>).  It might cause performance
         degradation in the presence of functions that are unnecessarily
         marked as <literal>volatile</>.
        </para>
@@ -2966,7 +2966,7 @@ compilers (Hiroshi Saito)</para></listitem>
 
     <para>
      Full security against the SQL-injection attacks described in
-     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     CVE-2006-2313 and CVE-2006-2314 might require changes in application
      code.  If you have applications that embed untrustworthy strings
      into SQL commands, you should examine them as soon as possible to
      ensure that they are using recommended escaping techniques.  In
@@ -2998,7 +2998,7 @@ literals.  By default, <literal>\'</> is rejected only when
 GB18030, or UHC), which is the scenario in which SQL injection is possible.
 A new configuration parameter <varname>backslash_quote</> is available to
 adjust this behavior when needed.  Note that full security against
-CVE-2006-2314 may require client-side changes; the purpose of
+CVE-2006-2314 might require client-side changes; the purpose of
 <varname>backslash_quote</> is in part to make it obvious that insecure
 clients are insecure.
 </para></listitem>
@@ -3265,7 +3265,7 @@ to ensure that <application>plperl</> won't change the locale later</para>
 <para>This fixes a problem that occurred if the <application>postmaster</> was
 started with environment variables specifying a different locale than what
 <application>initdb</> had been told.  Under these conditions, any use of
-<application>plperl</> was likely to lead to corrupt indexes.  You may need
+<application>plperl</> was likely to lead to corrupt indexes.  You might need
 <command>REINDEX</> to fix existing indexes on
 textual columns if this has happened to you.</para></listitem>
 
@@ -3663,7 +3663,7 @@ DISTINCT query</para></listitem>
       </para>
 
       <para>
-       It may be necessary to set <varname>add_missing_from</> to true
+       It might be necessary to set <varname>add_missing_from</> to true
        in order to load an existing dump file, if the dump contains any
        views or rules created using the implicit-<literal>FROM</> syntax.
        This should be a one-time annoyance, because
@@ -3885,7 +3885,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
      <listitem>
       <para>
-       <command>CREATE LANGUAGE</> may ignore the provided arguments
+       <command>CREATE LANGUAGE</> can ignore the provided arguments
        in favor of information from <structname>pg_pltemplate</>
        (Tom)
       </para>
@@ -5724,7 +5724,7 @@ Wieland)</para></listitem>
 
     <para>
      Full security against the SQL-injection attacks described in
-     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     CVE-2006-2313 and CVE-2006-2314 might require changes in application
      code.  If you have applications that embed untrustworthy strings
      into SQL commands, you should examine them as soon as possible to
      ensure that they are using recommended escaping techniques.  In
@@ -5756,7 +5756,7 @@ literals.  By default, <literal>\'</> is rejected only when
 GB18030, or UHC), which is the scenario in which SQL injection is possible.
 A new configuration parameter <varname>backslash_quote</> is available to
 adjust this behavior when needed.  Note that full security against
-CVE-2006-2314 may require client-side changes; the purpose of
+CVE-2006-2314 might require client-side changes; the purpose of
 <varname>backslash_quote</> is in part to make it obvious that insecure
 clients are insecure.
 </para></listitem>
@@ -5962,7 +5962,7 @@ to ensure that <application>plperl</> won't change the locale later</para>
 <para>This fixes a problem that occurred if the <application>postmaster</> was
 started with environment variables specifying a different locale than what
 <application>initdb</> had been told.  Under these conditions, any use of
-<application>plperl</> was likely to lead to corrupt indexes.  You may need
+<application>plperl</> was likely to lead to corrupt indexes.  You might need
 <command>REINDEX</> to fix existing indexes on
 textual columns if this has happened to you.</para></listitem>
 
@@ -6213,7 +6213,7 @@ code</para></listitem>
      It is strongly recommended that all installations repair these errors,
      either by initdb or by following the manual repair procedure given
      below.  The errors at least allow unprivileged database users to crash
-     their server process, and may allow unprivileged users to gain the
+     their server process, and might allow unprivileged users to gain the
      privileges of a database superuser.
     </para>
 
@@ -6882,8 +6882,7 @@ typedefs (Michael)</para></listitem>
        behavior across all platforms.  In most cases, there should be
        little noticeable difference in time zone behavior, except that
        the time zone names used by <command>SET</>/<command>SHOW</>
-       <varname>TimeZone</> may
-       be different from what your platform provides.
+       <varname>TimeZone</> might be different from what your platform provides.
       </para>
      </listitem>
 
@@ -7312,7 +7311,7 @@ typedefs (Michael)</para></listitem>
         Some logging-related configuration parameters could formerly be adjusted
         by ordinary users, but only in the <quote>more verbose</> direction.
         They are now treated more strictly: only superusers can set them.
-        However, a superuser may use <command>ALTER USER</> to provide per-user
+        However, a superuser can use <command>ALTER USER</> to provide per-user
         settings of these values for non-superusers.  Also, it is now possible
         for superusers to set values of superuser-only configuration parameters
         via <literal>PGOPTIONS</>.
@@ -9011,7 +9010,7 @@ ANYARRAY</para></listitem>
 
     <para>
      Full security against the SQL-injection attacks described in
-     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     CVE-2006-2313 and CVE-2006-2314 might require changes in application
      code.  If you have applications that embed untrustworthy strings
      into SQL commands, you should examine them as soon as possible to
      ensure that they are using recommended escaping techniques.  In
@@ -9043,7 +9042,7 @@ literals.  By default, <literal>\'</> is rejected only when
 GB18030, or UHC), which is the scenario in which SQL injection is possible.
 A new configuration parameter <varname>backslash_quote</> is available to
 adjust this behavior when needed.  Note that full security against
-CVE-2006-2314 may require client-side changes; the purpose of
+CVE-2006-2314 might require client-side changes; the purpose of
 <varname>backslash_quote</> is in part to make it obvious that insecure
 clients are insecure.
 </para></listitem>
@@ -9196,7 +9195,7 @@ to ensure that <application>plperl</> won't change the locale later</para>
 <para>This fixes a problem that occurred if the <application>postmaster</> was
 started with environment variables specifying a different locale than what
 <application>initdb</> had been told.  Under these conditions, any use of
-<application>plperl</> was likely to lead to corrupt indexes.  You may need
+<application>plperl</> was likely to lead to corrupt indexes.  You might need
 <command>REINDEX</> to fix existing indexes on
 textual columns if this has happened to you.</para></listitem>
 
@@ -9382,7 +9381,7 @@ code</para></listitem>
      It is strongly recommended that all installations repair these errors,
      either by initdb or by following the manual repair procedures given
      below.  The errors at least allow unprivileged database users to crash
-     their server process, and may allow unprivileged users to gain the
+     their server process, and might allow unprivileged users to gain the
      privileges of a database superuser.
     </para>
 
@@ -9806,7 +9805,7 @@ names from outer query levels.
 
     <para>
      A dump/restore is not required for those running 7.4.X.  However,
-     it may be advisable as the easiest method of incorporating fixes for
+     it might be advisable as the easiest method of incorporating fixes for
      two errors that have been found in the initial contents of 7.4.X system
      catalogs.  A dump/initdb/reload sequence using 7.4.2's initdb will
      automatically correct these problems.
@@ -10360,7 +10359,7 @@ DROP SCHEMA information_schema CASCADE;
     <listitem>
      <para>
       Inner joins using the explicit <literal>JOIN</literal> syntax
-      may behave differently because they are now better
+      might behave differently because they are now better
       optimized.
      </para>
     </listitem>
@@ -11327,7 +11326,7 @@ DROP SCHEMA information_schema CASCADE;
 
     <listitem>
      <para>
-      Arrays may now be specified as <literal>ARRAY[1,2,3]</literal>,
+      Arrays can now be specified as <literal>ARRAY[1,2,3]</literal>,
       <literal>ARRAY[['a','b'],['c','d']]</literal>, or
       <literal>ARRAY[ARRAY[ARRAY[2]]]</literal> (Joe)
      </para>
@@ -12025,7 +12024,7 @@ DROP SCHEMA information_schema CASCADE;
 
     <para>
      Full security against the SQL-injection attacks described in
-     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     CVE-2006-2313 and CVE-2006-2314 might require changes in application
      code.  If you have applications that embed untrustworthy strings
      into SQL commands, you should examine them as soon as possible to
      ensure that they are using recommended escaping techniques.  In
@@ -12057,7 +12056,7 @@ literals.  By default, <literal>\'</> is rejected only when
 GB18030, or UHC), which is the scenario in which SQL injection is possible.
 A new configuration parameter <varname>backslash_quote</> is available to
 adjust this behavior when needed.  Note that full security against
-CVE-2006-2314 may require client-side changes; the purpose of
+CVE-2006-2314 might require client-side changes; the purpose of
 <varname>backslash_quote</> is in part to make it obvious that insecure
 clients are insecure.
 </para></listitem>
@@ -12190,7 +12189,7 @@ to ensure that <application>plperl</> won't change the locale later</para>
 <para>This fixes a problem that occurred if the <application>postmaster</> was
 started with environment variables specifying a different locale than what
 <application>initdb</> had been told.  Under these conditions, any use of
-<application>plperl</> was likely to lead to corrupt indexes.  You may need
+<application>plperl</> was likely to lead to corrupt indexes.  You might need
 <command>REINDEX</> to fix existing indexes on
 textual columns if this has happened to you.</para></listitem>
 
@@ -12345,7 +12344,7 @@ the variable is of pass-by-reference type</para></listitem>
      It is strongly recommended that all installations repair this error,
      either by initdb or by following the manual repair procedure given
      below.  The error at least allows unprivileged database users to crash
-     their server process, and may allow unprivileged users to gain the
+     their server process, and might allow unprivileged users to gain the
      privileges of a database superuser.
     </para>
 
@@ -12929,7 +12928,7 @@ operations on bytea columns (Joe)</para></listitem>
     A dump/restore is <emphasis>not</emphasis> required for those
     running version 7.3. However, it should be noted that the main
     <productname>PostgreSQL</productname> interface library, libpq,
-    has a new major version number for this release, which may require
+    has a new major version number for this release, which might require
     recompilation of client code in certain cases.
    </para>
   </sect2>
@@ -13165,7 +13164,7 @@ operations on bytea columns (Joe)</para></listitem>
      <para>
       <command>COPY</command> no longer considers missing trailing
       columns to be null.  All columns need to be specified.
-      (However, one may achieve a similar effect by specifying a
+      (However, one can achieve a similar effect by specifying a
       column list in the <command>COPY</command> command.)
      </para>
     </listitem>
@@ -14066,7 +14065,7 @@ since <productname>PostgreSQL</productname> 7.1.
     <listitem>
      <para>
       The semantics of the <command>VACUUM</command> command have
-      changed in this release.  You may wish to update your
+      changed in this release.  You might wish to update your
       maintenance procedures accordingly.
      </para>
     </listitem>
@@ -14661,7 +14660,7 @@ previous releases of <productname>PostgreSQL</productname> have forced
 all data modifications to disk before each transaction commit.  With
 WAL, only one log file must be flushed to disk, greatly improving
 performance.  If you have been using -F in previous releases to
-disable disk flushes, you may want to consider discontinuing its use.
+disable disk flushes, you might want to consider discontinuing its use.
       </para>
      </listitem>
     </varlistentry>
@@ -14702,7 +14701,7 @@ outer join syntax.
 The previous C function manager did not
 handle null values properly, nor did it support 64-bit <acronym>CPU</acronym>'s (Alpha).  The new
 function manager does.  You can continue using your old custom
-functions, but you may want to rewrite them in the future to use the new
+functions, but you might want to rewrite them in the future to use the new
 function manager call interface.
       </para>
      </listitem>
@@ -15175,7 +15174,7 @@ ecpg changes (Michael)
      A dump/restore using <application>pg_dump</application>
      is required for those wishing to migrate data from any
      previous release of <productname>PostgreSQL</productname>.
-     For those upgrading from 6.5.*, you may instead use 
+     For those upgrading from 6.5.*, you can instead use 
      <application>pg_upgrade</application> to upgrade to this
      release; however, a full dump/reload installation is always the
      most robust method for upgrades.
@@ -15196,7 +15195,7 @@ ecpg changes (Michael)
        ease the transition by allowing
        <productname>PostgreSQL</productname> to recognize
        the deprecated type names and translate them to the new type
-       names, this mechanism may not be completely transparent to
+       names, this mechanism cannot be completely transparent to
        your existing application.
       </para>
      </listitem>
@@ -15208,8 +15207,8 @@ ecpg changes (Michael)
        decreased query times as the optimizer makes a better choice
        for the preferred plan. However, in a small number of cases,
        usually involving pathological distributions of data, your
-       query times may go up. If you are dealing with large amounts
-       of data, you may want to check your queries to verify
+       query times might go up. If you are dealing with large amounts
+       of data, you might want to check your queries to verify
        performance.
       </para>
      </listitem>
@@ -16690,7 +16689,7 @@ Better identify tcl and tk libs and includes(Bruce)
      <listitem>
       <para>
        Socket interface for client/server connection. This is the default now
-       so you may need to start <application>postmaster</application> with the
+       so you might need to start <application>postmaster</application> with the
        <option>-i</option> flag.
       </para>
      </listitem>
@@ -16726,7 +16725,7 @@ Better identify tcl and tk libs and includes(Bruce)
     mention that without subselects, SQL is a very limited language.
     Subselects are a major feature, and you should review your code for
     places where subselects provide a better solution for your queries.  I
-    think you will find that there are more uses for subselects than you may
+    think you will find that there are more uses for subselects than you might
     think.  Vadim has put us on the big SQL map with subselects, and fully
     functional ones too.  The only thing you can't do with subselects is to
     use them in the target list.
@@ -16741,7 +16740,7 @@ Better identify tcl and tk libs and includes(Bruce)
     Third, <type>char()</type> fields will now allow faster access than <type>varchar()</type> or
     <type>text</type>. Specifically, the <type>text</> and <type>varchar()</type> have a penalty for access to
     any columns after the first column of this type.  <type>char()</type> used to also
-    have this access penalty, but it no longer does.  This may suggest that
+    have this access penalty, but it no longer does.  This might suggest that
     you redesign some of your tables, especially if you have short character
     columns that you have defined as <type>varchar()</type> or <type>text</type>.  This and other
     changes make 6.3 even faster than earlier releases.
@@ -17290,7 +17289,7 @@ optimizer which uses <firstterm>genetic</firstterm>
   The interpretation of array specifiers (the curly braces around atomic
   values) appears to have changed sometime after the original regression
   tests were generated. The current <filename>./expected/*.out</filename> files reflect this
-  new interpretation, which may not be correct!
+  new interpretation, which might not be correct!
 </para>
 
 <para>
@@ -18004,7 +18003,7 @@ Incompatible changes:
  * float literals (eg. 3.14) are now of type float4 (instead of float8 in
    previous releases); you might have to do typecasting if you depend on it
    being of type float8.  If you neglect to do the typecasting and you assign
-   a float literal to a field of type float8, you may get incorrect values
+   a float literal to a field of type float8, you might get incorrect values
    stored!
  * LIBPQ has been totally revamped so that frontend applications
    can connect to multiple backends

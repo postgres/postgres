@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.222 2007/01/30 22:29:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.223 2007/01/31 20:56:17 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -130,7 +130,7 @@ PGconn *PQconnectdb(const char *conninfo);
      </para>
      <para>
       Using <literal>hostaddr</> instead of <literal>host</> allows the
-      application to avoid a host name look-up, which may be important in
+      application to avoid a host name look-up, which might be important in
       applications with time constraints. However, Kerberos authentication
       requires the host name. The following therefore applies: If
       <literal>host</> is specified without <literal>hostaddr</>, a host name
@@ -429,7 +429,7 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
   </para>
   <para>
    If <function>PQconnectStart</> succeeds, the next stage is to poll
-   <application>libpq</> so that it may proceed with the connection sequence.
+   <application>libpq</> so that it can proceed with the connection sequence.
    Use <function>PQsocket(conn)</function> to obtain the descriptor of the
    socket underlying the database connection.
    Loop thus: If <function>PQconnectPoll(conn)</function> last returned
@@ -451,13 +451,13 @@ PostgresPollingStatusType PQconnectPoll(PGconn *conn);
   </para>
 
   <para>
-    At any time during connection, the status of the connection may be
+    At any time during connection, the status of the connection can be
     checked by calling <function>PQstatus</>. If this gives <symbol>CONNECTION_BAD</>, then the
     connection procedure has failed; if it gives <function>CONNECTION_OK</>, then the
     connection is ready.  Both of these states are equally detectable
-    from the return value of <function>PQconnectPoll</>, described above. Other states may also occur
+    from the return value of <function>PQconnectPoll</>, described above. Other states might also occur
     during (and only during) an asynchronous connection procedure. These
-    indicate the current stage of the connection procedure and may be useful
+    indicate the current stage of the connection procedure and might be useful
     to provide feedback to the user for example. These statuses are:
 
     <variablelist>
@@ -583,7 +583,7 @@ typedef struct
 </para>
 
 <para>
-   Returns a connection options array.  This may be used to determine
+   Returns a connection options array.  This can be used to determine
    all possible <function>PQconnectdb</function> options and their
    current default values.  The return value points to an array of
    <structname>PQconninfoOption</structname> structures, which ends
@@ -638,7 +638,7 @@ void PQreset(PGconn *conn);
    This function will close the connection
    to the server and attempt to  reestablish  a  new
    connection to the same server, using all the same
-   parameters previously used.  This may be useful for
+   parameters previously used.  This might be useful for
    error recovery if a working connection is lost.
    </para>
   </listitem>
@@ -661,7 +661,7 @@ PostgresPollingStatusType PQresetPoll(PGconn *conn);
 <para>
     These functions will close the connection to the server and attempt to
     reestablish a new connection to the same server, using all the same
-    parameters previously used. This may be useful for error recovery if a
+    parameters previously used. This can be useful for error recovery if a
     working connection is lost. They differ from <function>PQreset</function> (above) in that they
     act in a nonblocking manner. These functions suffer from the same
     restrictions as <function>PQconnectStart</> and <function>PQconnectPoll</>.
@@ -682,7 +682,7 @@ PostgresPollingStatusType PQresetPoll(PGconn *conn);
 <title>Connection Status Functions</title>
 
   <para>
-   These functions may be used to interrogate the status
+   These functions can be used to interrogate the status
    of an existing database connection object.
   </para>
 
@@ -916,9 +916,9 @@ in a numeric form that is much easier to compare against.
 
 <para>
 If no value for <literal>standard_conforming_strings</> is reported,
-applications may assume it is <literal>off</>, that is, backslashes
+applications can assume it is <literal>off</>, that is, backslashes
 are treated as escapes in string literals.  Also, the presence of this
-parameter may be taken as an indication that the escape string syntax
+parameter can be taken as an indication that the escape string syntax
 (<literal>E'...'</>) is accepted.
 </para>
 
@@ -938,7 +938,7 @@ It is unwise to assume the pointer will remain valid across queries.
 <synopsis>
 int PQprotocolVersion(const PGconn *conn);
 </synopsis>
-Applications may wish to use this to determine whether certain features
+Applications might wish to use this to determine whether certain features
 are supported.
 Currently, the possible values are 2 (2.0 protocol), 3 (3.0 protocol),
 or zero (connection bad).  This will not change after connection
@@ -958,7 +958,7 @@ only protocol 2.0.  (Protocol 1.0 is obsolete and not supported by <application>
 <synopsis>
 int PQserverVersion(const PGconn *conn);
 </synopsis>
-Applications may use this to determine the version of the database server they
+Applications might use this to determine the version of the database server they
 are connected to. The number is formed by converting the major, minor, and
 revision numbers into two-decimal-digit numbers and appending them
 together. For example, version 8.1.5 will be returned as 80105, and version
@@ -1174,7 +1174,7 @@ The function arguments are:
        The number of parameters supplied; it is the length of the arrays
        <parameter>paramTypes[]</>, <parameter>paramValues[]</>,
        <parameter>paramLengths[]</>, and <parameter>paramFormats[]</>. (The
-       array pointers may be <symbol>NULL</symbol> when <parameter>nParams</>
+       array pointers can be <symbol>NULL</symbol> when <parameter>nParams</>
        is zero.)
       </para>
     </listitem>
@@ -1212,7 +1212,7 @@ The function arguments are:
       <para>
        Specifies the actual data lengths of binary-format parameters.
        It is ignored for null parameters and text-format parameters.
-       The array pointer may be null when there are no binary parameters.
+       The array pointer can be null when there are no binary parameters.
       </para>
     </listitem>
   </varlistentry>
@@ -1249,7 +1249,7 @@ The function arguments are:
 
 <para>
 The primary advantage of <function>PQexecParams</> over <function>PQexec</>
-is that parameter values may be separated from the command string, thus
+is that parameter values can be separated from the command string, thus
 avoiding the need for tedious and error-prone quoting and escaping.
 </para>
 
@@ -1310,7 +1310,7 @@ connections; it will fail when using protocol 2.0.
 <para>
 The function creates a prepared statement named <parameter>stmtName</>
 from the <parameter>query</> string, which must contain a single SQL command.
-<parameter>stmtName</> may be <literal>""</> to create an unnamed statement,
+<parameter>stmtName</> can be <literal>""</> to create an unnamed statement,
 in which case any pre-existing unnamed statement is automatically replaced;
 otherwise it is an error if the statement name is already defined in the
 current session.
@@ -1318,12 +1318,12 @@ If any parameters are used, they are referred
 to in the query as <literal>$1</>, <literal>$2</>, etc.
 <parameter>nParams</> is the number of parameters for which types are
 pre-specified in the array <parameter>paramTypes[]</>.  (The array pointer
-may be <symbol>NULL</symbol> when <parameter>nParams</> is zero.)
+can be <symbol>NULL</symbol> when <parameter>nParams</> is zero.)
 <parameter>paramTypes[]</> specifies, by OID, the data types to be assigned to
 the parameter symbols.  If <parameter>paramTypes</> is <symbol>NULL</symbol>,
 or any particular element in the array is zero, the server assigns a data type
 to the parameter symbol in the same way it would do for an untyped literal
-string.  Also, the query may use parameter symbols with numbers higher than
+string.  Also, the query can use parameter symbols with numbers higher than
 <parameter>nParams</>; data types will be inferred for these symbols as
 well.  (See <function>PQdescribePrepared</function> for a means to find out
 what data types were inferred.)
@@ -1410,12 +1410,12 @@ connections; it will fail when using protocol 2.0.
 </para>
 
 <para>
-<parameter>stmtName</> may be <literal>""</> or NULL to reference the unnamed
+<parameter>stmtName</> can be <literal>""</> or NULL to reference the unnamed
 statement, otherwise it must be the name of an existing prepared statement.
 On success, a <structname>PGresult</> with status
 <literal>PGRES_COMMAND_OK</literal> is returned.  The functions
 <function>PQnparams</function> and <function>PQparamtype</function>
-may be applied to this <structname>PGresult</> to obtain information
+can be applied to this <structname>PGresult</> to obtain information
 about the parameters of the prepared statement, and the functions
 <function>PQnfields</function>, <function>PQfname</function>,
 <function>PQftype</function>, etc provide information about the result
@@ -1445,12 +1445,12 @@ connections; it will fail when using protocol 2.0.
 </para>
 
 <para>
-<parameter>portalName</> may be <literal>""</> or NULL to reference the unnamed
+<parameter>portalName</> can be <literal>""</> or NULL to reference the unnamed
 portal, otherwise it must be the name of an existing portal.
 On success, a <structname>PGresult</> with status
 <literal>PGRES_COMMAND_OK</literal> is returned.  The functions
 <function>PQnfields</function>, <function>PQfname</function>,
-<function>PQftype</function>, etc may be applied to the
+<function>PQftype</function>, etc can be applied to the
 <structname>PGresult</> to obtain information about the result
 columns (if any) of the portal.
 </para>
@@ -1549,7 +1549,7 @@ the query.  Note that a <command>SELECT</command> command that happens
 to retrieve zero rows still shows <literal>PGRES_TUPLES_OK</literal>.
 <literal>PGRES_COMMAND_OK</literal> is for commands that can never
 return rows (<command>INSERT</command>, <command>UPDATE</command>,
-etc.). A response of <literal>PGRES_EMPTY_QUERY</literal> may indicate
+etc.). A response of <literal>PGRES_EMPTY_QUERY</literal> might indicate
 a bug in the client software.
 </para>
 
@@ -1673,7 +1673,7 @@ present.
 <listitem>
 <para>
 Detail: an optional secondary error message carrying more detail about
-the problem.  May run to multiple lines.
+the problem.  Might run to multiple lines.
 </para>
 </listitem>
 </varlistentry>
@@ -1684,7 +1684,7 @@ the problem.  May run to multiple lines.
 <para>
 Hint: an optional suggestion what to do about the problem.  This is
 intended to differ from detail in that it offers advice (potentially
-inappropriate) rather than hard facts.  May run to multiple lines.
+inappropriate) rather than hard facts.  Might run to multiple lines.
 </para>
 </listitem>
 </varlistentry>
@@ -2278,7 +2278,7 @@ char *PQcmdStatus(PGresult *res);
 </synopsis>
 </para>
 <para>
-Commonly this is just the name of the command, but it may include additional
+Commonly this is just the name of the command, but it might include additional
 data such as the number of rows processed. The caller should
 not free the result directly. It will be freed when the
 associated <structname>PGresult</> handle is passed to
@@ -2451,7 +2451,7 @@ size_t PQescapeString (char *to, const char *from, size_t length);
 <function>PQescapeStringConn</>; the difference is that it does not
 take <parameter>conn</> or <parameter>error</> parameters.  Because of this,
 it cannot adjust its behavior depending on the connection properties (such as
-character encoding) and therefore <emphasis>it may give the wrong results</>.
+character encoding) and therefore <emphasis>it might give the wrong results</>.
 Also, it has no way to report error conditions.
 </para>
 <para>
@@ -2552,7 +2552,7 @@ unsigned char *PQescapeBytea(const unsigned char *from,
    take a <structname>PGconn</> parameter.  Because of this, it cannot adjust
    its behavior depending on the connection properties (in particular,
    whether standard-conforming strings are enabled)
-   and therefore <emphasis>it may give the wrong results</>.  Also, it
+   and therefore <emphasis>it might give the wrong results</>.  Also, it
    has no way to return an error message on failure.
   </para>
 
@@ -2641,7 +2641,7 @@ applications.  It has a couple of deficiencies, however, that can be of importan
 <itemizedlist>
 <listitem>
 <para>
-<function>PQexec</function> waits for the command to be completed.  The application may have other
+<function>PQexec</function> waits for the command to be completed.  The application might have other
 work to do (such as maintaining a user interface), in which case it won't
 want to block waiting for the response.
 </para>
@@ -2698,7 +2698,7 @@ int PQsendQuery(PGconn *conn, const char *command);
 
           After successfully calling <function>PQsendQuery</function>, call
           <function>PQgetResult</function> one or more
-          times to obtain the results.  <function>PQsendQuery</function> may not be called
+          times to obtain the results.  <function>PQsendQuery</function> cannot be called
           again (on the same connection) until <function>PQgetResult</function> has returned a null pointer,
           indicating that the command is done.
 </para>
@@ -2890,12 +2890,12 @@ but returns 0 if there was some kind of trouble (in which case
 <function>PQerrorMessage</function> can be consulted).  Note that the result
 does not say 
 whether any input data was actually collected. After calling
-<function>PQconsumeInput</function>, the application may check
+<function>PQconsumeInput</function>, the application can check
 <function>PQisBusy</function> and/or <function>PQnotifies</function> to see if
 their state has changed.
 </para>
 <para>
-<function>PQconsumeInput</function> may be called even if the application is not
+<function>PQconsumeInput</function> can be called even if the application is not
 prepared to deal with a result or notification just yet.  The
 function will read available data and save it in a buffer, thereby
 causing a <function>select()</function> read-ready indication to go away.  The
@@ -2960,7 +2960,7 @@ server.  This is relatively uncommon but can happen if very long SQL commands
 or data values are sent.  (It is much more probable if the application
 sends data via <command>COPY IN</command>, however.)  To prevent this possibility and achieve
 completely nonblocking database operation, the following additional
-functions may be used.
+functions can be used.
 
 <variablelist>
 <varlistentry>
@@ -3168,7 +3168,7 @@ simple function calls to the server.
 
 <tip>
 <para>
-This interface is somewhat obsolete, as one may achieve similar performance
+This interface is somewhat obsolete, as one can achieve similar performance
 and greater functionality by setting up a prepared statement to define the
 function call.  Then, executing the statement with binary transmission of
 parameters and results substitutes for a fast-path function call.
@@ -3357,7 +3357,7 @@ if any notifications came in during the processing of the command.
  is returned to indicate success or failure of the transfer.  Its status
  will be <literal>PGRES_COMMAND_OK</literal> for success or
  <literal>PGRES_FATAL_ERROR</literal> if some problem was encountered.
- At this point further SQL commands may be issued via
+ At this point further SQL commands can be issued via
  <function>PQexec</function>.  (It is not possible to execute other SQL
  commands using the same connection while the <command>COPY</command>
  operation is in progress.)
@@ -3466,7 +3466,7 @@ value is -1.  If the value is zero, wait for write-ready and try again.)
 </para>
 
 <para>
-The application may divide the <command>COPY</command> data stream into buffer loads of any
+The application can divide the <command>COPY</command> data stream into buffer loads of any
 convenient size.  Buffer-load boundaries have no semantic significance when
 sending.  The contents of the data stream must match the data format expected
 by the <command>COPY</> command; see
@@ -3507,7 +3507,7 @@ value is -1.  If the value is zero, wait for write-ready and try again.)
 <para>
 After successfully calling <function>PQputCopyEnd</>, call
 <function>PQgetResult</> to obtain the final result status of the
-<command>COPY</> command.  One may wait for
+<command>COPY</> command.  One can wait for
 this result to be available in the usual way.  Then return to normal
 operation.
 </para>
@@ -3575,7 +3575,7 @@ or the operation completes.
 <para>
 After <function>PQgetCopyData</> returns -1, call
 <function>PQgetResult</> to obtain the final result status of the
-<command>COPY</> command.  One may wait for
+<command>COPY</> command.  One can wait for
 this result to be available in the usual way.  Then return to normal
 operation.
 </para>
@@ -3818,7 +3818,7 @@ the connection's previous setting.  In <firstterm>TERSE</> mode,
 returned messages include severity, primary text, and position only;
 this will normally fit on a single line.  The default mode produces
 messages that include the above plus any detail, hint, or context
-fields (these may span multiple lines).  The <firstterm>VERBOSE</>
+fields (these might span multiple lines).  The <firstterm>VERBOSE</>
 mode includes all available fields.  Changing the verbosity does not
 affect the messages available from already-existing
 <structname>PGresult</> objects, only subsequently-created ones.
@@ -3888,7 +3888,7 @@ and so on.  Instead, use this function to convert the password to encrypted
 form before it is sent.  The arguments are the cleartext password, and the SQL
 name of the user it is for.  The return value is a string allocated by
 <function>malloc</function>, or <symbol>NULL</symbol> if out of memory.
-The caller may assume the string doesn't contain any special
+The caller can assume the string doesn't contain any special
 characters that would require escaping.  Use <function>PQfreemem</> to free
 the result when done with it.
 </para>
@@ -4308,7 +4308,7 @@ This file should contain lines of the following format:
 <synopsis>
 <replaceable>hostname</replaceable>:<replaceable>port</replaceable>:<replaceable>database</replaceable>:<replaceable>username</replaceable>:<replaceable>password</replaceable>
 </synopsis>
-Each of the first four fields may be a literal value, or <literal>*</literal>,
+Each of the first four fields can be a literal value, or <literal>*</literal>,
 which matches anything.  The password field from the first line that matches the
 current connection parameters will be used.  (Therefore, put more-specific
 entries first when you are using wildcards.)

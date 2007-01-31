@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.43 2006/12/08 19:16:17 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.44 2007/01/31 20:56:18 momjian Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -26,7 +26,7 @@
    but one should not neglect regular Unix monitoring programs such as
    <command>ps</>, <command>top</>, <command>iostat</>, and <command>vmstat</>.
    Also, once one has identified a
-   poorly-performing query, further investigation may be needed using
+   poorly-performing query, further investigation might be needed using
    <productname>PostgreSQL</productname>'s <xref linkend="sql-explain"
    endterm="sql-explain-title"> command.
    <xref linkend="using-explain"> discusses <command>EXPLAIN</>
@@ -75,7 +75,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
 
   The user, database, and connection source host items remain the same for
   the life of the client connection, but the activity indicator changes.
-  The activity may be <literal>idle</> (i.e., waiting for a client command),
+  The activity can be <literal>idle</> (i.e., waiting for a client command),
   <literal>idle in transaction</> (waiting for client inside a <command>BEGIN</> block),
   or a command type name such as <literal>SELECT</>.  Also,
   <literal>waiting</> is attached if the server process is presently waiting
@@ -141,7 +141,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   <para>
    The parameter <xref linkend="guc-stats-start-collector"> must be
    set to <literal>true</> for the statistics collector to be launched
-   at all.  This is the default and recommended setting, but it may be
+   at all.  This is the default and recommended setting, but it can be
    turned off if you have no interest in statistics and want to
    squeeze out every last drop of overhead.  (The savings is likely to
    be small, however.)  Note that this option cannot be changed while
@@ -423,8 +423,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    invoking a kernel call. However, these statistics do not give the
    entire story: due to the way in which <productname>PostgreSQL</>
    handles disk I/O, data that is not in the
-   <productname>PostgreSQL</> buffer cache may still reside in the
-   kernel's I/O cache, and may therefore still be fetched without
+   <productname>PostgreSQL</> buffer cache might still reside in the
+   kernel's I/O cache, and might therefore still be fetched without
    requiring a physical read. Users interested in obtaining more
    detailed information on <productname>PostgreSQL</> I/O behavior are
    advised to use the <productname>PostgreSQL</> statistics collector
@@ -971,7 +971,7 @@ Total time (ns)                        2312105013
   </para>
   <para>
    You should remember that trace programs need to be carefully written and
-   debugged prior to their use, otherwise the trace information collected may
+   debugged prior to their use, otherwise the trace information collected might
    be meaningless. In most cases where problems are found it is the 
    instrumentation that is at fault, not the underlying system. When 
    discussing information found using dynamic tracing, be sure to enclose
@@ -1027,7 +1027,7 @@ StartTransaction(void)
   </para>
 
   <para>
-   The dynamic tracing utility may require you to further define these trace
+   The dynamic tracing utility might require you to further define these trace
    points.  For example, DTrace requires you to add new probes to the file
    <filename>src/backend/utils/probes.d</> as shown here:
 <programlisting>

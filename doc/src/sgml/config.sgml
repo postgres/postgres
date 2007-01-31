@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.106 2007/01/25 11:53:50 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.107 2007/01/31 20:56:16 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -21,7 +21,7 @@
    <para>
     All parameter names are case-insensitive. Every parameter takes a
     value of one of four types: Boolean, integer, floating point,
-    or string. Boolean values may be written as <literal>ON</literal>,
+    or string. Boolean values can be written as <literal>ON</literal>,
     <literal>OFF</literal>, <literal>TRUE</literal>,
     <literal>FALSE</literal>, <literal>YES</literal>,
     <literal>NO</literal>, <literal>1</literal>, <literal>0</literal>
@@ -105,7 +105,7 @@ postgres -c log_connections=yes -c log_destination='syslog'
     <filename>postgresql.conf</filename>.  Note that this means you won't
     be able to change the value on-the-fly by editing
     <filename>postgresql.conf</filename>, so while the command-line
-    method may be convenient, it can cost you flexibility later.
+    method might be convenient, it can cost you flexibility later.
    </para>
 
    <para>
@@ -348,13 +348,13 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Determines the maximum number of concurrent connections to the
         database server. The default is typically 100 connections, but
-        may be less if your kernel settings will not support it (as
+        might be less if your kernel settings will not support it (as
         determined during <application>initdb</>).  This parameter can
         only be set at server start.
        </para>
 
        <para>
-        Increasing this parameter may cause <productname>PostgreSQL</>
+        Increasing this parameter might cause <productname>PostgreSQL</>
         to request more <systemitem class="osname">System V</> shared
         memory or semaphores than your operating system's default configuration
         allows. See <xref linkend="sysvipc"> for information on how to
@@ -519,7 +519,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         On systems that support the <symbol>TCP_KEEPCNT</symbol> socket option, specifies how
-        many keepalives may be lost before the connection is considered dead. 
+        many keepalives can be lost before the connection is considered dead. 
         A value of zero uses the system default. If <symbol>TCP_KEEPCNT</symbol> is not
         supported, this parameter must be zero. This parameter is ignored
         for connections made via a Unix-domain socket.
@@ -704,7 +704,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Sets the amount of memory the database server uses for shared
         memory buffers.  The default is typically 32 megabytes
-        (<literal>32MB</>), but may be less if your kernel settings will
+        (<literal>32MB</>), but might be less if your kernel settings will
         not support it (as determined during <application>initdb</>).
         This setting must be at least 128 kilobytes and at least 16
         kilobytes times <xref linkend="guc-max-connections">.  (Non-default
@@ -716,7 +716,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        Increasing this parameter may cause <productname>PostgreSQL</>
+        Increasing this parameter might cause <productname>PostgreSQL</>
         to request more <systemitem class="osname">System V</> shared
         memory than your operating system's default configuration
         allows. See <xref linkend="sysvipc"> for information on how to
@@ -779,7 +779,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        Increasing this parameter may cause <productname>PostgreSQL</>
+        Increasing this parameter might cause <productname>PostgreSQL</>
         to request more <systemitem class="osname">System V</> shared
         memory than your operating system's default configuration
         allows. See <xref linkend="sysvipc"> for information on how to
@@ -827,7 +827,7 @@ SET ENABLE_SEQSCAN TO OFF;
         operations can be executed at a time by a database session, and
         an installation normally doesn't have many of them running
         concurrently, it's safe to set this value significantly larger
-        than <varname>work_mem</varname>.  Larger settings may improve
+        than <varname>work_mem</varname>.  Larger settings might improve
         performance for vacuuming and for restoring database dumps.
        </para>
       </listitem>
@@ -848,7 +848,7 @@ SET ENABLE_SEQSCAN TO OFF;
         routine in the server, but only in key potentially-recursive routines
         such as expression evaluation.  The default setting is two
         megabytes (<literal>2MB</>), which is conservatively small and
-        unlikely to risk crashes.  However, it may be too small to allow
+        unlikely to risk crashes.  However, it might be too small to allow
         execution of complex functions.  Only superusers can change this
         setting.
        </para>
@@ -877,7 +877,7 @@ SET ENABLE_SEQSCAN TO OFF;
      <para>
       These parameters control the size of the shared <firstterm>free space
       map</>, which tracks the locations of unused space in the database.
-      An undersized free space map may cause the database to consume
+      An undersized free space map can cause the database to consume
       increasing amounts of disk space over time, because free space that
       is not in the map cannot be re-used; instead <productname>PostgreSQL</>
       will request more disk space from the operating system when it needs
@@ -889,7 +889,7 @@ SET ENABLE_SEQSCAN TO OFF;
      </para>
 
      <para>
-      Increasing these parameters may cause <productname>PostgreSQL</>
+      Increasing these parameters might cause <productname>PostgreSQL</>
       to request more <systemitem class="osname">System V</> shared
       memory than your operating system's default configuration
       allows. See <xref linkend="sysvipc"> for information on how to
@@ -985,7 +985,7 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         By preloading a shared library, the library startup time is avoided
         when the library is first used.  However, the time to start each new
-        server process may increase slightly, even if that process never
+        server process might increase slightly, even if that process never
         uses the library.  So this parameter is recommended only for
         libraries that will be used in most sessions. 
        </para>
@@ -1058,7 +1058,7 @@ SET ENABLE_SEQSCAN TO OFF;
          Note that on many systems, the effective resolution
          of sleep delays is 10 milliseconds; setting
          <varname>vacuum_cost_delay</varname> to a value that is
-         not a multiple of 10 may have the same results as setting it
+         not a multiple of 10 might have the same results as setting it
          to the next higher multiple of 10.
         </para>
        </listitem>
@@ -1176,7 +1176,7 @@ SET ENABLE_SEQSCAN TO OFF;
          (<literal>200ms</>). Note that on many systems, the effective
          resolution of sleep delays is 10 milliseconds; setting
          <varname>bgwriter_delay</> to a value that is not a multiple of
-         10 may have the same results as setting it to the next higher
+         10 might have the same results as setting it to the next higher
          multiple of 10.  This parameter can only be set in the
          <filename>postgresql.conf</> file or on the server command line.
         </para>
@@ -1313,8 +1313,8 @@ SET ENABLE_SEQSCAN TO OFF;
         allowed to do its best in buffering, ordering, and delaying
         writes. This can result in significantly improved performance.
         However, if the system crashes, the results of the last few
-        committed transactions may be lost in part or whole. In the
-        worst case, unrecoverable data corruption may occur.
+        committed transactions might be lost in part or whole. In the
+        worst case, unrecoverable data corruption might occur.
         (Crashes of the database software itself are <emphasis>not</>
         a risk factor here.  Only an operating-system-level crash
         creates a risk of corruption.)
@@ -1419,7 +1419,7 @@ SET ENABLE_SEQSCAN TO OFF;
         Turning this parameter off speeds normal operation, but
         might lead to a corrupt database after an operating system crash
         or power failure. The risks are similar to turning off
-        <varname>fsync</>, though smaller.  It may be safe to turn off
+        <varname>fsync</>, though smaller.  It might be safe to turn off
         this parameter if you have hardware (such as a battery-backed disk
         controller) or file-system software that reduces
         the risk of partial page writes to an acceptably low level (e.g., ReiserFS 4).
@@ -1455,7 +1455,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        Increasing this parameter may cause <productname>PostgreSQL</>
+        Increasing this parameter might cause <productname>PostgreSQL</>
         to request more <systemitem class="osname">System V</> shared
         memory than your operating system's default configuration
         allows. See <xref linkend="sysvipc"> for information on how to
@@ -1635,7 +1635,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
        These configuration parameters provide a crude method of
        influencing the query plans chosen by the query optimizer. If
        the default plan chosen by the optimizer for a particular query
-       is not optimal, a temporary solution may be found by using one
+       is not optimal, a temporary solution can be found by using one
        of these configuration parameters to force the optimizer to
        choose a different plan.  Turning one of these settings off
        permanently is seldom a good idea, however.
@@ -2070,7 +2070,7 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Windows
         Sets the default statistics target for table columns that have
         not had a column-specific target set via <command>ALTER TABLE
         SET STATISTICS</>.  Larger values increase the time needed to
-        do <command>ANALYZE</>, but may improve the quality of the
+        do <command>ANALYZE</>, but might improve the quality of the
         planner's estimates. The default is 10. For more information
         on the use of statistics by the <productname>PostgreSQL</>
         query planner, refer to <xref linkend="planner-stats">.
@@ -2143,7 +2143,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         The planner will merge sub-queries into upper queries if the
         resulting <literal>FROM</literal> list would have no more than
-        this many items.  Smaller values reduce planning time but may
+        this many items.  Smaller values reduce planning time but might
         yield inferior query plans.  The default is eight.  It is usually
         wise to keep this less than <xref linkend="guc-geqo-threshold">.
         For more information see <xref linkend="explicit-joins">.
@@ -2161,7 +2161,7 @@ SELECT * FROM parent WHERE key = 2400;
         The planner will rewrite explicit <literal>JOIN</>
         constructs (except <literal>FULL JOIN</>s) into lists of
         <literal>FROM</> items whenever a list of no more than this many items
-        would result.  Smaller values reduce planning time but may
+        would result.  Smaller values reduce planning time but might
         yield inferior query plans.
        </para>
 
@@ -2172,7 +2172,7 @@ SELECT * FROM parent WHERE key = 2400;
         explicit <literal>JOIN</>s. Thus, the explicit join order
         specified in the query will be the actual order in which the
         relations are joined. The query planner does not always choose
-        the optimal join order; advanced users may elect to
+        the optimal join order; advanced users can elect to
         temporarily set this variable to 1, and then specify the join
         order they desire explicitly.
         For more information see <xref linkend="explicit-joins">.
@@ -2233,7 +2233,7 @@ SELECT * FROM parent WHERE key = 2400;
          This method, in combination with logging to <application>stderr</>,
          is often more useful than
          logging to <application>syslog</>, since some types of messages
-         may not appear in <application>syslog</> output (a common example
+         might not appear in <application>syslog</> output (a common example
          is dynamic-linker failure messages).
          This parameter can only be set at server start.
        </para>
@@ -2249,7 +2249,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         When <varname>redirect_stderr</> is enabled, this parameter
         determines the directory in which log files will be created.
-        It may be specified as an absolute path, or relative to the
+        It can be specified as an absolute path, or relative to the
         cluster data directory.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
@@ -2353,7 +2353,7 @@ SELECT * FROM parent WHERE key = 2400;
         <varname>log_rotation_age</varname> to <literal>60</literal>, and 
         <varname>log_rotation_size</varname> to <literal>1000000</literal>.
         Including <literal>%M</> in <varname>log_filename</varname> allows
-        any size-driven rotations that may occur to select a file name
+        any size-driven rotations that might occur to select a file name
         different from the hour's initial file name.
        </para>
       </listitem>
@@ -2368,7 +2368,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         When logging to <application>syslog</> is enabled, this parameter
         determines the <application>syslog</application>
-        <quote>facility</quote> to be used.  You may choose
+        <quote>facility</quote> to be used.  You can choose
         from <literal>LOCAL0</>, <literal>LOCAL1</>,
         <literal>LOCAL2</>, <literal>LOCAL3</>, <literal>LOCAL4</>,
         <literal>LOCAL5</>, <literal>LOCAL6</>, <literal>LOCAL7</>;
@@ -2580,7 +2580,7 @@ SELECT * FROM parent WHERE key = 2400;
           <term><literal>NOTICE</literal></term>
           <listitem>
            <para>
-            Provides information that may be helpful to users, e.g.,
+            Provides information that might be helpful to users, e.g.,
             truncation of long identifiers and the creation of indexes as part
             of primary keys.
            </para>
@@ -3010,7 +3010,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Controls whether the server should start the
         statistics-collection subprocess.  This is on by default, but
-        may be turned off if you know you have no interest in
+        can be turned off if you know you have no interest in
         collecting statistics or running autovacuum.
         This parameter can only be set at server start, because the collection
         subprocess cannot be started or stopped on-the-fly.  (However, the
@@ -3773,7 +3773,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
       <listitem>
        <para>
         Sets the locale to use for formatting date and time values.
-        (Currently, this setting does nothing, but it may in the
+        (Currently, this setting does nothing, but it might in the
         future.)  Acceptable values are system-dependent; see <xref
         linkend="locale"> for more information.  If this variable is
         set to the empty string (which is the default) then the value
@@ -3992,7 +3992,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
 
        <para>
-        Increasing this parameter may cause <productname>PostgreSQL</>
+        Increasing this parameter might cause <productname>PostgreSQL</>
         to request more <systemitem class="osname">System V</> shared
         memory than your operating system's default configuration
         allows. See <xref linkend="sysvipc"> for information on how to
@@ -4167,7 +4167,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         The regular expression <quote>flavor</> can be set to
         <literal>advanced</>, <literal>extended</>, or <literal>basic</>.
         The default is <literal>advanced</>.  The <literal>extended</>
-        setting may be useful for exact backwards compatibility with
+        setting might be useful for exact backwards compatibility with
         pre-7.4 releases of <productname>PostgreSQL</>.  See
         <xref linkend="posix-syntax-details"> for details.
        </para>
@@ -4207,7 +4207,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         behavior of treating backslashes as escape characters.
         The default will change to <literal>on</> in a future release
         to improve compatibility with the standard.
-        Applications may check this
+        Applications can check this
         parameter to determine how string literals will be processed.
         The presence of this parameter can also be taken as an indication
         that the escape string syntax (<literal>E'...'</>) is supported.
@@ -4284,7 +4284,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
      installed. As such, they have been excluded from the sample
      <filename>postgresql.conf</> file.  These options report
      various aspects of <productname>PostgreSQL</productname> behavior
-     that may be of interest to certain applications, particularly
+     that might be of interest to certain applications, particularly
      administrative front-ends.
     </para>
 
@@ -4677,7 +4677,7 @@ plruby.use_strict = true        # generates error: unknown class name
         the system to instead report a warning, zero out the damaged page,
         and continue processing.  This behavior <emphasis>will destroy data</>,
         namely all the rows on the damaged page.  But it allows you to get
-        past the error and retrieve rows from any undamaged pages that may
+        past the error and retrieve rows from any undamaged pages that might
         be present in the table.  So it is useful for recovering data if
         corruption has occurred due to hardware or software error.  You should
         generally not set this on until you have given up hope of recovering

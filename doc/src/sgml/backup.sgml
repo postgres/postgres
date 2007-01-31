@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.95 2006/12/01 03:29:15 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.96 2007/01/31 20:56:16 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -124,7 +124,7 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
 
    <para>
     By default, the <application>psql</> script will continue to
-    execute after an SQL error is encountered. You may wish to use the
+    execute after an SQL error is encountered. You might wish to use the
     following command at the top of the script to alter that
     behaviour and have <application>psql</application> exit with an
     exit status of 3 if an SQL error occurs:
@@ -138,7 +138,7 @@ psql <replaceable class="parameter">dbname</replaceable> &lt; <replaceable class
     passing the <option>-1</> or <option>--single-transaction</>
     command-line options to <application>psql</>. When using this
     mode, be aware that even the smallest of errors can rollback a
-    restore that has already run for many hours. However, that may
+    restore that has already run for many hours. However, that might
     still be preferable to manually cleaning up a complex database
     after a partially restored dump.
    </para>
@@ -325,7 +325,7 @@ tar -cf backup.tar /usr/local/pgsql/data
     <listitem>
      <para>
       If you have dug into the details of the file system layout of the
-      database, you may be tempted to try to back up or restore only certain
+      database, you might be tempted to try to back up or restore only certain
       individual tables or databases from their respective files or
       directories. This will <emphasis>not</> work because the
       information contained in these files contains only half the
@@ -360,7 +360,7 @@ tar -cf backup.tar /usr/local/pgsql/data
   </para>
 
   <para>
-   If your database is spread across multiple file systems, there may not 
+   If your database is spread across multiple file systems, there might not 
    be any way to obtain exactly-simultaneous frozen snapshots of all 
    the volumes.  For example, if your data files and WAL log are on different
    disks, or if tablespaces are on different file systems, it might
@@ -437,7 +437,7 @@ tar -cf backup.tar /usr/local/pgsql/data
      Since we can string together an indefinitely long sequence of WAL files
      for replay, continuous backup can be achieved simply by continuing to archive
      the WAL files.  This is particularly valuable for large databases, where
-     it may not be convenient to take a full backup frequently.
+     it might not be convenient to take a full backup frequently.
     </para>
    </listitem>
    <listitem>
@@ -465,7 +465,7 @@ tar -cf backup.tar /usr/local/pgsql/data
   <para>
    As with the plain file-system-backup technique, this method can only
    support restoration of an entire database cluster, not a subset.
-   Also, it requires a lot of archival storage: the base backup may be bulky,
+   Also, it requires a lot of archival storage: the base backup might be bulky,
    and a busy system will generate many megabytes of WAL traffic that
    have to be archived.  Still, it is the preferred backup technique in
    many situations where high reliability is needed.
@@ -534,7 +534,7 @@ archive_command = 'cp -i %p /mnt/server/archivedir/%f &lt;/dev/null'
 </programlisting>
     which will copy archivable WAL segments to the directory
     <filename>/mnt/server/archivedir</>.  (This is an example, not a 
-    recommendation, and may not work on all platforms.)
+    recommendation, and might not work on all platforms.)
    </para>
 
    <para>
@@ -601,7 +601,7 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
 
    <para>
     In writing your archive command, you should assume that the file names to
-    be archived may be up to 64 characters long and may contain any
+    be archived can be up to 64 characters long and can contain any
     combination of ASCII letters, digits, and dots.  It is not necessary to
     remember the original relative path (<literal>%p</>) but it is necessary to
     remember the file name (<literal>%f</>).
@@ -614,7 +614,7 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
     <filename>postgresql.conf</>, <filename>pg_hba.conf</> and
     <filename>pg_ident.conf</>), since those are edited manually rather
     than through SQL operations.
-    You may wish to keep the configuration files in a location that will
+    You might wish to keep the configuration files in a location that will
     be backed up by your regular file system backup procedures.  See
     <xref linkend="runtime-config-file-locations"> for how to relocate the
     configuration files.
@@ -732,7 +732,7 @@ SELECT pg_stop_backup();
     between <function>pg_start_backup</> and the start of the actual backup,
     nor between the end of the backup and <function>pg_stop_backup</>; a
     few minutes' delay won't hurt anything.  (However, if you normally run the
-    server with <varname>full_page_writes</> disabled, you may notice a drop
+    server with <varname>full_page_writes</> disabled, you might notice a drop
     in performance between <function>pg_start_backup</> and 
     <function>pg_stop_backup</>, since <varname>full_page_writes</> is
     effectively forced on during backup mode.)  You must ensure that these
@@ -750,7 +750,7 @@ SELECT pg_stop_backup();
    </para>
 
    <para>
-    You may, however, omit from the backup dump the files within the
+    You can, however, omit from the backup dump the files within the
     <filename>pg_xlog/</> subdirectory of the cluster directory.  This
     slight complication is worthwhile because it reduces the risk
     of mistakes when restoring.  This is easy to arrange if
@@ -775,7 +775,7 @@ SELECT pg_stop_backup();
     the file system backup and the WAL segment files used during the
     backup (as specified in the backup history file), all archived WAL
     segments with names numerically less are no longer needed to recover
-    the file system backup and may be deleted. However, you should
+    the file system backup and can be deleted. However, you should
     consider keeping several backup sets to be absolutely certain that
     you can recover your data.
    </para>
@@ -842,7 +842,7 @@ SELECT pg_stop_backup();
      require that you have enough free space on your system to hold two
      copies of your existing database. If you do not have enough space, 
      you need at the least to copy the contents of the <filename>pg_xlog</>
-     subdirectory of the cluster data directory, as it may contain logs which
+     subdirectory of the cluster data directory, as it might contain logs which
      were not archived before the system went down.
     </para>
    </listitem>
@@ -881,7 +881,7 @@ SELECT pg_stop_backup();
    <listitem>
     <para>
      Create a recovery command file <filename>recovery.conf</> in the cluster
-     data directory (see <xref linkend="recovery-config-settings">). You may 
+     data directory (see <xref linkend="recovery-config-settings">). You might
      also want to temporarily modify <filename>pg_hba.conf</> to prevent 
      ordinary users from connecting until you are sure the recovery has worked.
     </para>
@@ -917,7 +917,7 @@ SELECT pg_stop_backup();
     <filename>recovery.conf</> is the <varname>restore_command</>,
     which tells <productname>PostgreSQL</> how to get back archived
     WAL file segments.  Like the <varname>archive_command</>, this is
-    a shell command string.  It may contain <literal>%f</>, which is
+    a shell command string.  It can contain <literal>%f</>, which is
     replaced by the name of the desired log file, and <literal>%p</>,
     which is replaced by the path name to copy the log file to.
     (The path name is relative to the working directory of the server,
@@ -1228,8 +1228,8 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
     It should also be noted that the default <acronym>WAL</acronym>
     format is fairly bulky since it includes many disk page snapshots.
     These page snapshots are designed to support crash recovery, since
-    we may need to fix partially-written disk pages.  Depending on
-    your system hardware and software, the risk of partial writes may
+    we might need to fix partially-written disk pages.  Depending on
+    your system hardware and software, the risk of partial writes might
     be small enough to ignore, in which case you can significantly
     reduce the total volume of archived logs by turning off page
     snapshots using the <xref linkend="guc-full-page-writes">
@@ -1238,7 +1238,7 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
     use of the logs for PITR operations.  An area for future
     development is to compress archived WAL data by removing
     unnecessary page copies even when <varname>full_page_writes</> is
-    on.  In the meantime, administrators may wish to reduce the number
+    on.  In the meantime, administrators might wish to reduce the number
     of page snapshots included in WAL by increasing the checkpoint
     interval parameters as much as feasible.
    </para>
@@ -1522,7 +1522,7 @@ if (!triggered)
     connectivity between the two and the viability of the primary. It is
     also possible to use a third system (called a witness server) to avoid
     some problems of inappropriate failover, but the additional complexity
-    may not be worthwhile unless it is set-up with sufficient care and
+    might not be worthwhile unless it is set-up with sufficient care and
     rigorous testing.
    </para>
 
@@ -1530,7 +1530,7 @@ if (!triggered)
     Once failover to the standby occurs, we have only a
     single server in operation. This is known as a degenerate state.
     The former standby is now the primary, but the former primary is down 
-    and may stay down.  To return to normal operation we must
+    and might stay down.  To return to normal operation we must
     fully recreate a standby server, 
     either on the former primary system when it comes up, or on a third, 
     possibly new, system. Once complete the primary and standby can be 
@@ -1662,7 +1662,7 @@ if (!triggered)
    It is recommended that you use the <application>pg_dump</> and
    <application>pg_dumpall</> programs from the newer version of
    <productname>PostgreSQL</>, to take advantage of any enhancements
-   that may have been made in these programs.  Current releases of the
+   that might have been made in these programs.  Current releases of the
    dump programs can read data from any server version back to 7.0.
   </para>
 
@@ -1716,7 +1716,7 @@ psql -f backup postgres
   <note>
    <para>
     When you <quote>move the old installation out of the way</quote>
-    it may no longer be perfectly usable. Some of the executable programs
+    it might no longer be perfectly usable. Some of the executable programs
     contain absolute paths to various installed programs and data files.
     This is usually not a big problem but if you plan on using two
     installations in parallel for a while you should assign them

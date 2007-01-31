@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.80 2006/11/17 16:38:44 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/postgres.sgml,v 1.81 2007/01/31 20:56:18 momjian Exp $ -->
 
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook V4.2//EN" [
 
@@ -223,7 +223,7 @@
 
   <partintro>
    <para>
-    This part contains assorted information that can be of use to
+    This part contains assorted information that might be of use to
     <productname>PostgreSQL</> developers.
    </para>
   </partintro>

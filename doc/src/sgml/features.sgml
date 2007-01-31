@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/features.sgml,v 2.25 2006/09/16 00:30:13 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/features.sgml,v 2.26 2007/01/31 20:56:17 momjian Exp $ -->
 
 <appendix id="features">
  <title>SQL Conformance</title>
@@ -26,7 +26,7 @@
   9075 Working Group during the preparation of SQL:2003.  Even so,
   many of the features required by SQL:2003 are already supported,
   though sometimes with slightly differing syntax or function.
-  Further moves towards conformance may be expected in later releases.
+  Further moves towards conformance should be expected in later releases.
  </para>
 
  <para>
@@ -80,7 +80,7 @@
   PostgreSQL supports most of the major features of SQL:2003.  Out of
   164 mandatory features required for full Core conformance,
   PostgreSQL conforms to at least 150.  In addition, there is a long
-  list of supported optional features.  It may be worth noting that at
+  list of supported optional features.  It might be worth noting that at
   the time of writing, no current version of any database management
   system claims full conformance to Core SQL:2003.
  </para>
@@ -90,9 +90,9 @@
   that <productname>PostgreSQL</productname> supports, followed by a
   list of the features defined in <acronym>SQL:2003</acronym> which
   are not yet supported in <productname>PostgreSQL</productname>.
-  Both of these lists are approximate: There may be minor details that
+  Both of these lists are approximate: There might be minor details that
   are nonconforming for a feature that is listed as supported, and
-  large parts of an unsupported feature may in fact be implemented.
+  large parts of an unsupported feature might in fact be implemented.
   The main body of the documentation always contains the most accurate
   information about what does and does not work.
  </para>

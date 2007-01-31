@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.51 2007/01/22 02:47:56 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.52 2007/01/31 20:56:17 momjian Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -143,7 +143,7 @@ createdb <replaceable class="parameter">dbname</replaceable>
    exactly as described above.
    The <xref linkend="app-createdb"> reference page contains the invocation
    details. Note that <command>createdb</> without any arguments will create
-   a database with the current user name, which may or may not be what
+   a database with the current user name, which might or might not be what
    you want.
   </para>
 
@@ -204,7 +204,7 @@ createdb -O <replaceable>rolename</> <replaceable>dbname</>
    <literal>pg_dump</> dump: the dump script should be restored in a
    virgin database to ensure that one recreates the correct contents
    of the dumped database, without any conflicts with additions that
-   may now be present in <literal>template1</>.
+   can now be present in <literal>template1</>.
   </para>
 
   <para>
@@ -221,7 +221,7 @@ createdb -T template0 <replaceable>dbname</>
 
   <para>
    It is possible to create additional template databases, and indeed
-   one may copy any database in a cluster by specifying its name
+   one can copy any database in a cluster by specifying its name
    as the template for <command>CREATE DATABASE</>.  It is important to
    understand, however, that this is not (yet) intended as
    a general-purpose <quote><command>COPY DATABASE</command></quote> facility.
@@ -236,11 +236,11 @@ createdb -T template0 <replaceable>dbname</>
    Two useful flags exist in <literal>pg_database</literal><indexterm><primary>pg_database</></> for each
    database: the columns <literal>datistemplate</literal> and
    <literal>datallowconn</literal>.  <literal>datistemplate</literal>
-   may be set to indicate that a database is intended as a template for
-   <command>CREATE DATABASE</>.  If this flag is set, the database may be
+   can be set to indicate that a database is intended as a template for
+   <command>CREATE DATABASE</>.  If this flag is set, the database can be
    cloned by 
    any user with <literal>CREATEDB</> privileges; if it is not set, only superusers
-   and the owner of the database may clone it.
+   and the owner of the database can clone it.
    If <literal>datallowconn</literal> is false, then no new connections
    to that database will be allowed (but existing sessions are not killed
    simply by setting the flag false).  The <literal>template0</literal>
@@ -265,7 +265,7 @@ createdb -T template0 <replaceable>dbname</>
     The <literal>postgres</> database is also created when a database
     cluster is initialized.  This database is meant as a default database for
     users and applications to connect to. It is simply a copy of
-    <literal>template1</> and may be dropped and recreated if required.
+    <literal>template1</> and can be dropped and recreated if required.
    </para>
   </note>
  </sect1>

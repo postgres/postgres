@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.374 2006/11/25 22:44:48 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.375 2007/01/31 20:56:19 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -338,9 +338,9 @@ FATAL:  could not create TCP/IP listen socket
      This usually means just what it suggests: you tried to start
      another server on the same port where one is already running.
      However, if the kernel error message is not <computeroutput>Address
-     already in use</computeroutput> or some variant of that, there may
+     already in use</computeroutput> or some variant of that, there might
      be a different problem. For example, trying to start a server
-     on a reserved port number may draw something like:
+     on a reserved port number might draw something like:
 <screen>
 $ <userinput>postgres -p 666</userinput>
 LOG:  could not bind IPv4 socket: Permission denied
@@ -363,7 +363,7 @@ DETAIL:  Failed system call was shmget(key=5440001, size=4011376640, 03600).
      can try starting the server with a smaller-than-normal number of
      buffers (<xref linkend="guc-shared-buffers">). You will eventually want
      to reconfigure your kernel to increase the allowed shared memory
-     size. You may also see this message when trying to start multiple
+     size. You might also see this message when trying to start multiple
      servers on the same machine, if their total space requested
      exceeds the kernel limit.
     </para>
@@ -378,7 +378,7 @@ DETAIL:  Failed system call was semget(5440126, 17, 03600).
      space. It means your kernel's limit on the number of <systemitem
      class="osname">System V</> semaphores is smaller than the number
      <productname>PostgreSQL</productname> wants to create. As above,
-     you may be able to work around the problem by starting the
+     you might be able to work around the problem by starting the
      server with a reduced number of allowed connections
      (<xref linkend="guc-max-connections">), but you'll eventually want to
      increase the kernel limit.
@@ -442,7 +442,7 @@ psql: could not connect to server: No such file or directory
      connection request and rejected it. That case will produce a
      different message, as shown in <xref
      linkend="client-authentication-problems">.) Other error messages
-     such as <computeroutput>Connection timed out</computeroutput> may
+     such as <computeroutput>Connection timed out</computeroutput> might
      indicate more fundamental problems, like lack of network
      connectivity.
     </para>
@@ -861,7 +861,7 @@ options        SEMMAP=256
        </para>
 
        <para>
-        Older distributions may not have the <command>sysctl</command> program,
+        Older distributions might not have the <command>sysctl</command> program,
         but equivalent changes can be made by manipulating the 
         <filename>/proc</filename> file system:
 <screen>
@@ -900,7 +900,7 @@ sysctl -w kern.sysv.shmall
 
        <para>
         In OS X 10.3.9 and later, instead of editing <filename>/etc/rc</>
-        you may create a file named <filename>/etc/sysctl.conf</>,
+        you can create a file named <filename>/etc/sysctl.conf</>,
         containing variable assignments such as
 <programlisting>
 kern.sysv.shmmax=4194304
@@ -970,11 +970,11 @@ kern.sysv.shmall=1024
         sort of configuration commonly used for other databases such
         as <application>DB/2</application>.</para>
 
-       <para> It may, however, be necessary to modify the global
+       <para> It might , however, be necessary to modify the global
        <command>ulimit</command> information in
        <filename>/etc/security/limits</filename>, as the default hard
        limits for file sizes (<varname>fsize</varname>) and numbers of
-       files (<varname>nofiles</varname>) may be too low.
+       files (<varname>nofiles</varname>) might be too low.
        </para>
       </listitem>
      </varlistentry>      
@@ -1158,7 +1158,7 @@ default:\
     <quote>socially friendly</quote> values that allow many users to
     coexist on a machine without using an inappropriate fraction of
     the system resources.  If you run many servers on a machine this
-    is perhaps what you want, but on dedicated servers you may want to
+    is perhaps what you want, but on dedicated servers you might want to
     raise this limit.
    </para>
 
@@ -1179,7 +1179,7 @@ default:\
    <para>
     In Linux 2.4 and later, the default virtual memory behavior is not
     optimal for <productname>PostgreSQL</productname>. Because of the
-    way that the kernel implements memory overcommit, the kernel may
+    way that the kernel implements memory overcommit, the kernel might
     terminate the <productname>PostgreSQL</productname> server (the
     master server process) if the memory demands of
     another process cause the system to run out of virtual memory.
@@ -1214,7 +1214,7 @@ Out of Memory: Killed process 12345 (postgres).
 sysctl -w vm.overcommit_memory=2
 </programlisting>
     or placing an equivalent entry in <filename>/etc/sysctl.conf</>.
-    You may also wish to modify the related setting 
+    You might also wish to modify the related setting 
     <literal>vm.overcommit_ratio</>.  For details see the kernel documentation
     file <filename>Documentation/vm/overcommit-accounting</>.
    </para>
@@ -1314,7 +1314,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
     <para>
      It is best not to use <systemitem>SIGKILL</systemitem> to shut down
      the server.  Doing so will prevent the server from releasing
-     shared memory and semaphores, which may then have to be done
+     shared memory and semaphores, which might then have to be done
      manually before a new server can be started.  Furthermore,
      <systemitem>SIGKILL</systemitem> kills the <command>postgres</command>
      process without letting it relay the signal to its subprocesses,

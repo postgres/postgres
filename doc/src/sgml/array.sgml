@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.54 2007/01/31 04:12:01 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.55 2007/01/31 20:56:16 momjian Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -63,7 +63,7 @@ CREATE TABLE tictactoe (
  </para>
 
  <para>
-  An alternative syntax, which conforms to the SQL standard, may
+  An alternative syntax, which conforms to the SQL standard, can
   be used for one-dimensional arrays.
   <structfield>pay_by_quarter</structfield> could have been defined
   as:
@@ -88,7 +88,7 @@ CREATE TABLE tictactoe (
    To write an array value as a literal constant, enclose the element
    values within curly braces and separate them by commas.  (If you
    know C, this is not unlike the C syntax for initializing
-   structures.)  You may put double quotes around any element value,
+   structures.)  You can put double quotes around any element value,
    and must do so if it contains commas or curly braces.  (More
    details appear below.)  Thus, the general format of an array
    constant is the following:
@@ -155,7 +155,7 @@ SELECT * FROM sal_emp;
  </para>
 
  <para>
-  The <literal>ARRAY</> constructor syntax may also be used:
+  The <literal>ARRAY</> constructor syntax can also be used:
 <programlisting>
 INSERT INTO sal_emp
     VALUES ('Bill',
@@ -333,7 +333,7 @@ UPDATE sal_emp SET pay_by_quarter = ARRAY[25000,25000,27000,27000]
     WHERE name = 'Carol';
 </programlisting>
 
-  An array may also be updated at a single element:
+  An array can also be updated at a single element:
 
 <programlisting>
 UPDATE sal_emp SET pay_by_quarter[4] = 15000
@@ -453,7 +453,7 @@ SELECT array_dims(ARRAY[1,2] || ARRAY[[3,4],[5,6]]);
 
   Note that the concatenation operator discussed above is preferred over
   direct use of these functions. In fact, the functions exist primarily for use
-  in implementing the concatenation operator. However, they may be directly
+  in implementing the concatenation operator. However, they might be directly
   useful in the creation of user-defined aggregates. Some examples:
 
 <programlisting>
@@ -525,7 +525,7 @@ SELECT * FROM sal_emp WHERE 10000 = ALL (pay_by_quarter);
  <tip>
   <para>
    Arrays are not sets; searching for specific array elements
-   may be a sign of database misdesign.  Consider
+   can be a sign of database misdesign.  Consider
    using a separate table with a row for each item that would be an
    array element.  This will be easier to search, and is likely to
    scale up better to large numbers of elements.
@@ -592,7 +592,7 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
    or backslashes disables this and allows the literal string value
    <quote>NULL</> to be entered.  Also, for backwards compatibility with
    pre-8.2 versions of <productname>PostgreSQL</>, the <xref
-   linkend="guc-array-nulls"> configuration parameter may be turned
+   linkend="guc-array-nulls"> configuration parameter might be turned
    <literal>off</> to suppress recognition of <literal>NULL</> as a NULL.
   </para>
 
@@ -611,8 +611,8 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
   </para>
 
   <para>
-   You may write whitespace before a left brace or after a right
-   brace. You may also write whitespace before or after any individual item
+   You can write whitespace before a left brace or after a right
+   brace. You can also write whitespace before or after any individual item
    string. In all of these cases the whitespace will be ignored. However,
    whitespace within double-quoted elements, or surrounded on both sides by
    non-whitespace characters of an element, is not ignored.

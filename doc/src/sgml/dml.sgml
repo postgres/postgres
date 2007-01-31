@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.14 2006/09/18 19:54:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dml.sgml,v 1.15 2007/01/31 20:56:16 momjian Exp $ -->
 
 <chapter id="dml">
  <title>Data Manipulation</title>
@@ -168,14 +168,14 @@ INSERT INTO products (product_no, name, price) VALUES
 <programlisting>
 UPDATE products SET price = 10 WHERE price = 5;
 </programlisting>
-    This may cause zero, one, or many rows to be updated.  It is not
+    This might cause zero, one, or many rows to be updated.  It is not
     an error to attempt an update that does not match any rows.
   </para>
 
   <para>
    Let's look at that command in detail. First is the key word
    <literal>UPDATE</literal> followed by the table name.  As usual,
-   the table name may be schema-qualified, otherwise it is looked up
+   the table name can be schema-qualified, otherwise it is looked up
    in the path.  Next is the key word <literal>SET</literal> followed
    by the column name, an equals sign and the new column value.  The
    new column value can be any scalar expression, not just a constant.

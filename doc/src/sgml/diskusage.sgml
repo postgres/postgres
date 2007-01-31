@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.17 2006/09/16 00:30:12 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/diskusage.sgml,v 1.18 2007/01/31 20:56:16 momjian Exp $ -->
 
 <chapter id="diskusage">
  <title>Monitoring Disk Usage</title>
@@ -21,7 +21,7 @@
    there is also a <acronym>TOAST</> file associated with the table,
    which is used to store values too wide to fit comfortably in the main
    table (see <xref linkend="storage-toast">).  There will be one index on the
-   <acronym>TOAST</> table, if present. There may also be indexes associated
+   <acronym>TOAST</> table, if present. There might also be indexes associated
    with the base table.  Each table and index is stored in a separate disk
    file &mdash; possibly more than one file, if the file would exceed one
    gigabyte.  Naming conventions for these files are described in <xref
@@ -117,9 +117,9 @@ SELECT relname, relpages FROM pg_class ORDER BY relpages DESC;
   <para>
    The most important disk monitoring task of a database administrator
    is to make sure the disk doesn't grow full.  A filled data disk will
-   not result in data corruption, but it may well prevent useful activity
+   not result in data corruption, but it might prevent useful activity
    from occurring. If the disk holding the WAL files grows full, database
-   server panic and consequent shutdown may occur.
+   server panic and consequent shutdown might occur.
   </para>
 
   <para>

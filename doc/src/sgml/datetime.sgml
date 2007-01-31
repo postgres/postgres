@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.55 2006/10/17 21:03:20 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datetime.sgml,v 2.56 2007/01/31 20:56:16 momjian Exp $ -->
 
  <appendix id="datetime-appendix">
   <title>Date/Time Support</title>
@@ -7,7 +7,7 @@
    <productname>PostgreSQL</productname> uses an internal heuristic
    parser for all date/time input support. Dates and times are input as
    strings, and are broken up into distinct fields with a preliminary
-   determination of what kind of information may be in the
+   determination of what kind of information can be in the
    field. Each field is interpreted and either assigned a numeric
    value, ignored, or rejected.
    The parser contains internal lookup tables for all textual fields,
@@ -46,7 +46,7 @@
        <para>
         If the numeric token contains a dash (<literal>-</>), slash
         (<literal>/</>), or two or more dots (<literal>.</>), this is
-        a date string which may have a text month.  If a date token has
+        a date string which might have a text month.  If a date token has
         already been seen, it is instead interpreted as a time zone
         name (e.g., <literal>America/New_York</>).
        </para>
@@ -166,7 +166,7 @@
 
       <tip>
        <para>
-        Gregorian years AD 1-99 may be entered by using 4 digits with leading
+        Gregorian years AD 1-99 can be entered by using 4 digits with leading
         zeros (e.g., <literal>0099</> is AD 99).
        </para>
       </tip>
@@ -382,7 +382,7 @@
    </para>
 
    <para>
-    A timezone abbreviation file may contain blank lines and comments
+    A timezone abbreviation file can contain blank lines and comments
     beginning with <literal>#</>.  Non-comment lines must have one of
     these formats:
 
@@ -413,7 +413,7 @@
 
    <para>
     The <literal>@OVERRIDE</> syntax indicates that subsequent entries in the
-    file may override previous entries (i.e., entries obtained from included
+    file can override previous entries (i.e., entries obtained from included
     files).  Without this, conflicting definitions of the same timezone
     abbreviation are considered an error.
    </para>

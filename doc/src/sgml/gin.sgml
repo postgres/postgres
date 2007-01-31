@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.8 2007/01/31 15:09:45 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.9 2007/01/31 20:56:17 momjian Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -15,7 +15,7 @@
    <acronym>GIN</acronym> stands for Generalized Inverted Index.  It is
    an index structure storing a set of (key, posting list) pairs, where
    a <quote>posting list</> is a set of rows in which the key occurs. Each
-   indexed value may contain many keys, so the same row ID may appear in
+   indexed value can contain many keys, so the same row ID can appear in
    multiple posting lists.
  </para>
 
@@ -115,7 +115,7 @@
      <listitem>
       <para>
        Returns TRUE if the indexed value satisfies the query operator with
-       strategy number <literal>n</> (or may satisfy, if the operator is
+       strategy number <literal>n</> (or would satisfy, if the operator is
        marked RECHECK in the operator class).  The <literal>check</> array has
        the same length as the number of keys previously returned by
        <function>extractQuery</> for this query.  Each element of the
@@ -222,7 +222,7 @@
  </para>
 
  <para>
-  <acronym>GIN</acronym> searches keys only by equality matching.  This may
+  <acronym>GIN</acronym> searches keys only by equality matching.  This might
   be improved in future.
  </para>
 </sect1>

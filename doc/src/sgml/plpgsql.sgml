@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.103 2007/01/30 22:29:23 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.104 2007/01/31 20:56:18 momjian Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -84,7 +84,7 @@
     substantially reduce the total amount of time required to parse
     and generate execution plans for the statements in a
     <application>PL/pgSQL</> function. A disadvantage is that errors
-    in a specific expression or command may not be detected until that
+    in a specific expression or command cannot be detected until that
     part of the function is reached in execution.
    </para>
 
@@ -208,7 +208,7 @@ $$ LANGUAGE plpgsql;
     </para>
 
     <para>
-     <application>PL/pgSQL</> functions may also be declared to accept
+     <application>PL/pgSQL</> functions can also be declared to accept
      and return the polymorphic types
      <type>anyelement</type> and <type>anyarray</type>.  The actual
      data types handled by a polymorphic function can vary from call to
@@ -224,7 +224,7 @@ $$ LANGUAGE plpgsql;
     </para>
 
     <para>
-     Finally, a <application>PL/pgSQL</> function may be declared to return
+     Finally, a <application>PL/pgSQL</> function can be declared to return
      <type>void</> if it has no useful return value.
     </para>
 
@@ -313,7 +313,7 @@ $PROC$ LANGUAGE plpgsql;
 
    <para>
     The following chart shows what you have to do when writing quote
-    marks without dollar quoting.  It may be useful when translating
+    marks without dollar quoting.  It might be useful when translating
     pre-dollar quoting code into something more comprehensible.
   </para>
 
@@ -766,13 +766,13 @@ user_id users.user_id%TYPE;
     type of the structure you are referencing, and most importantly,
     if the data type of the referenced item changes in the future (for
     instance: you change the type of <literal>user_id</>
-    from <type>integer</type> to <type>real</type>), you may not need
+    from <type>integer</type> to <type>real</type>), you might not need
     to change your function definition.
    </para>
 
    <para>
     <literal>%TYPE</literal> is particularly valuable in polymorphic
-    functions, since the data types needed for internal variables may
+    functions, since the data types needed for internal variables can
     change from one call to the next.  Appropriate variables can be
     created by applying <literal>%TYPE</literal> to the function's
     arguments or result placeholders.
@@ -866,7 +866,7 @@ SELECT merge_fields(t.*) FROM table1 t WHERE ... ;
     Note that <literal>RECORD</> is not a true data type, only a placeholder.
     One should also realize that when a <application>PL/pgSQL</application>
     function is declared to return type <type>record</>, this is not quite the
-    same concept as a record variable, even though such a function may well
+    same concept as a record variable, even though such a function might
     use a record variable to hold its result.  In both cases the actual row
     structure is unknown when the function is written, but for a function
     returning <type>record</> the actual structure is determined when the
@@ -1530,7 +1530,7 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
                 loops). <literal>FOUND</literal> is set this way when the
                 <command>FOR</> loop exits; inside the execution of the loop,
                 <literal>FOUND</literal> is not modified by the
-                <command>FOR</> statement, although it may be changed by the
+                <command>FOR</> statement, although it might be changed by the
                 execution of other statements within the loop body.
            </para>
           </listitem>
@@ -1671,10 +1671,10 @@ SELECT * FROM some_func();
        for <application>PL/pgSQL</> stores the entire result set
        before returning from the function, as discussed above.  That
        means that if a <application>PL/pgSQL</> function produces a
-       very large result set, performance may be poor: data will be
+       very large result set, performance might be poor: data will be
        written to disk to avoid memory exhaustion, but the function
        itself will not return until the entire result set has been
-       generated.  A future version of <application>PL/pgSQL</> may
+       generated.  A future version of <application>PL/pgSQL</> might
        allow users to define set-returning functions
        that do not have this limitation.  Currently, the point at
        which data begins being written to disk is controlled by the
@@ -2364,7 +2364,7 @@ SELECT merge_db(1, 'dennis');
 <synopsis>
 <replaceable>name</replaceable> CURSOR <optional> ( <replaceable>arguments</replaceable> ) </optional> FOR <replaceable>query</replaceable>;
 </synopsis>
-     (<literal>FOR</> may be replaced by <literal>IS</> for
+     (<literal>FOR</> can be replaced by <literal>IS</> for
      <productname>Oracle</productname> compatibility.)
      <replaceable>arguments</replaceable>, if specified, is a
      comma-separated list of pairs <literal><replaceable>name</replaceable>
@@ -2382,7 +2382,7 @@ DECLARE
     curs3 CURSOR (key integer) IS SELECT * FROM tenk1 WHERE unique1 = key;
 </programlisting>
      All three of these variables have the data type <type>refcursor</>,
-     but the first may be used with any query, while the second has
+     but the first can be used with any query, while the second has
      a fully specified query already <firstterm>bound</> to it, and the last
      has a parameterized query bound to it.  (<literal>key</> will be
      replaced by an integer parameter value when the cursor is opened.)
@@ -2516,10 +2516,10 @@ FETCH <replaceable>cursor</replaceable> INTO <replaceable>target</replaceable>;
 
          <para>
           <command>FETCH</command> retrieves the next row from the
-          cursor into a target, which may be a row variable, a record
+          cursor into a target, which might be a row variable, a record
           variable, or a comma-separated list of simple variables, just like
           <command>SELECT INTO</command>.  As with <command>SELECT
-           INTO</command>, the special variable <literal>FOUND</literal> may
+          INTO</command>, the special variable <literal>FOUND</literal> can
           be checked to see whether a row was obtained or not.
          </para>
 
@@ -2902,7 +2902,7 @@ RAISE EXCEPTION 'Nonexistent ID --> %', user_id;
    </para>
 
    <para>
-    Row-level triggers fired <literal>BEFORE</> may return null to signal the
+    Row-level triggers fired <literal>BEFORE</> can return null to signal the
     trigger manager to skip the rest of the operation for this row
     (i.e., subsequent triggers are not fired, and the
     <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> does not occur
@@ -2919,8 +2919,8 @@ RAISE EXCEPTION 'Nonexistent ID --> %', user_id;
    <para>
     The return value of a <literal>BEFORE</> or <literal>AFTER</>
     statement-level trigger or an <literal>AFTER</> row-level trigger is
-    always ignored; it may as well be null. However, any of these types of
-    triggers can still abort the entire operation by raising an error.
+    always ignored; it might as well be null. However, any of these types of
+    triggers might still abort the entire operation by raising an error.
    </para>
 
    <para>
@@ -3037,7 +3037,7 @@ AFTER INSERT OR UPDATE OR DELETE ON emp
     original table for certain queries &mdash; often with vastly reduced run 
     times.
     This technique is commonly used in Data Warehousing, where the tables
-    of measured or observed data (called fact tables) can be extremely large.
+    of measured or observed data (called fact tables) might be extremely large.
     <xref linkend="plpgsql-trigger-summary-example"> shows an example of a
     trigger procedure in <application>PL/pgSQL</application> that maintains
     a summary table for a fact table in a data warehouse.

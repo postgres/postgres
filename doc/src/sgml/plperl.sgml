@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.60 2007/01/30 22:29:23 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.61 2007/01/31 20:56:18 momjian Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -20,7 +20,7 @@
   <para> The usual advantage to using PL/Perl is that this allows use,
    within stored functions, of the manyfold <quote>string
     munging</quote> operators and functions available for Perl.  Parsing
-   complex strings may be be easier using Perl than it is with the
+   complex strings might be be easier using Perl than it is with the
    string functions and control structures provided in PL/pgSQL.</para>
   
   <para>
@@ -382,7 +382,7 @@ SELECT * FROM test_munge();
     </para>
     <para>
     <literal>spi_query</literal> and <literal>spi_fetchrow</literal>
-    work together as a pair for row sets which may be large, or for cases
+    work together as a pair for row sets which might be large, or for cases
     where you wish to return rows as they arrive.
     <literal>spi_fetchrow</literal> works <emphasis>only</emphasis> with
     <literal>spi_query</literal>. The following example illustrates how
@@ -429,7 +429,7 @@ SELECT * from lotsa_md5(500);
     
     <para>
     The advantage of prepared queries is that is it possible to use one prepared plan for more
-    than one query execution. After the plan is not needed anymore, it may be freed with 
+    than one query execution. After the plan is not needed anymore, it can be freed with 
     <literal>spi_freeplan</literal>:
     </para>
 
@@ -601,7 +601,7 @@ $$ LANGUAGE plperl;
    external modules).  There is no way to access internals of the
    database server process or to gain OS-level access with the
    permissions of the server process,
-   as a C function can do.  Thus, any unprivileged database user may
+   as a C function can do.  Thus, any unprivileged database user can
    be permitted to use this language.
   </para>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.32 2006/11/20 17:42:16 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.33 2007/01/31 20:56:20 momjian Exp $ -->
 
  <chapter id="xplang">
   <title id="xplang-title">Procedural Languages</title>
@@ -57,7 +57,7 @@
     only necessary to execute <command>CREATE LANGUAGE</>
     <replaceable>language_name</> to install the language into the
     current database.  Alternatively, the program <xref
-    linkend="app-createlang"> may be used to do this from the shell
+    linkend="app-createlang"> can be used to do this from the shell
     command line.  For example, to install the language
     <application>PL/pgSQL</application> into the database
     <literal>template1</>, use
@@ -111,7 +111,7 @@ CREATE FUNCTION <replaceable>handler_function_name</replaceable>()
 
     <step performance="optional" id="xplang-install-cr3">
      <para>
-      Optionally, the language handler may provide a <quote>validator</>
+      Optionally, the language handler can provide a <quote>validator</>
       function that checks a function definition for correctness without
       actually executing it.  The validator function is called by
       <command>CREATE FUNCTION</> if it exists.  If a validator function

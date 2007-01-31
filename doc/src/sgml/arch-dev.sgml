@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.28 2006/09/16 00:30:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.29 2007/01/31 20:56:16 momjian Exp $ -->
 
  <chapter id="overview">
   <title>Overview of PostgreSQL Internals</title>
@@ -272,7 +272,7 @@
      similar to the raw parse tree in most places, but it has many differences
      in detail.  For example, a <structname>FuncCall</> node in the
      parse tree represents something that looks syntactically like a function
-     call.  This may be transformed to either a <structname>FuncExpr</>
+     call.  This might be transformed to either a <structname>FuncExpr</>
      or <structname>Aggref</> node depending on whether the referenced
      name turns out to be an ordinary function or an aggregate function.
      Also, information about the actual data types of columns and expression
@@ -342,7 +342,7 @@
    <note>
     <para>
      In some situations, examining each possible way in which a query
-     may be executed would take an excessive amount of time and memory
+     can be executed would take an excessive amount of time and memory
      space. In particular, this occurs when executing queries
      involving large numbers of join operations. In order to determine
      a reasonable (not optimal) query plan in a reasonable amount of
@@ -414,7 +414,7 @@
         scanned in parallel, and matching rows are combined to form
         join rows. This kind of join is more
         attractive because each relation has to be scanned only once.
-        The required sorting may be achieved either by an explicit sort
+        The required sorting might be achieved either by an explicit sort
         step, or by scanning the relation in the proper order using an
         index on the join key.
        </para>
@@ -502,7 +502,7 @@
    </para>
 
    <para>
-    Complex queries may involve many levels of plan nodes, but the general
+    Complex queries can involve many levels of plan nodes, but the general
     approach is the same: each node computes and returns its next output
     row each time it is called.  Each node is also responsible for applying
     any selection or projection expressions that were assigned to it by
@@ -518,7 +518,7 @@
     into the target table specified for the <command>INSERT</>.  (A simple
     <command>INSERT ... VALUES</> command creates a trivial plan tree
     consisting of a single <literal>Result</> node, which computes just one
-    result row.  But <command>INSERT ... SELECT</> may demand the full power
+    result row.  But <command>INSERT ... SELECT</> can demand the full power
     of the executor mechanism.)  For <command>UPDATE</>, the planner arranges
     that each computed row includes all the updated column values, plus
     the <firstterm>TID</> (tuple ID, or row ID) of the original target row;

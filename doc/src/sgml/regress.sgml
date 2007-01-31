@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.55 2006/09/16 00:30:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.56 2007/01/31 20:56:18 momjian Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -84,7 +84,7 @@ gmake check
     If you have configured <productname>PostgreSQL</productname> to install
     into a location where an older <productname>PostgreSQL</productname>
     installation already exists, and you perform <literal>gmake check</>
-    before installing the new version, you may find that the tests fail
+    before installing the new version, you might find that the tests fail
     because the new programs try to use the already-installed shared
     libraries.  (Typical symptoms are complaints about undefined symbols.)
     If you wish to run the tests before overwriting the old installation,
@@ -99,7 +99,7 @@ gmake check
     scripts, which means forty processes: there's a server process and a
     <application>psql</> process for each test script.
     So if your system enforces a per-user limit on the number of processes,
-    make sure this limit is at least fifty or so, else you may get
+    make sure this limit is at least fifty or so, else you might get
     random-seeming failures in the parallel test.  If you are not in
     a position to raise the limit, you can cut down the degree of parallelism
     by setting the <literal>MAX_CONNECTIONS</> parameter.  For example,
@@ -161,7 +161,7 @@ gmake installcheck
     generated on a reference system, so the results are sensitive to
     small system differences.  When a test is reported as
     <quote>failed</quote>, always examine the differences between
-    expected and actual results; you may well find that the
+    expected and actual results; you might find that the
     differences are not significant.  Nonetheless, we still strive to
     maintain accurate reference files across all supported platforms,
     so it can be expected that all tests pass.
@@ -193,7 +193,7 @@ gmake installcheck
      Some of the regression tests involve intentional invalid input
      values.  Error messages can come from either the
      <productname>PostgreSQL</productname> code or from the host
-     platform system routines. In the latter case, the messages may
+     platform system routines. In the latter case, the messages can
      vary between platforms, but should reflect similar
      information. These differences in messages will result in a
      <quote>failed</quote> regression test that can be validated by
@@ -207,7 +207,7 @@ gmake installcheck
     <para>
      If you run the tests against an already-installed server that was
      initialized with a collation-order locale other than C, then
-     there may be differences due to sort order and follow-up
+     there might be differences due to sort order and follow-up
      failures.  The regression test suite is set up to handle this
      problem by providing alternative result files that together are
      known to handle a large number of locales.

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.48 2006/09/18 19:54:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.49 2007/01/31 20:56:19 momjian Exp $ -->
 
 <chapter Id="typeconv">
 <title>Type Conversion</title>
@@ -447,7 +447,7 @@ try a similar case with <literal>~</>, we get:
 SELECT ~ '20' AS "negation";
 
 ERROR:  operator is not unique: ~ "unknown"
-HINT:  Could not choose a best candidate operator. You may need to add explicit
+HINT:  Could not choose a best candidate operator. You might need to add explicit
 type casts.
 </screen>
 This happens because the system can't decide which of the several
@@ -619,7 +619,7 @@ SELECT round(CAST (4 AS numeric), 4);
 <para>
 Since numeric constants with decimal points are initially assigned the
 type <type>numeric</type>, the following query will require no type
-conversion and may therefore be slightly more efficient:
+conversion and might therefore be slightly more efficient:
 <screen>
 SELECT round(4.0, 4);
 </screen>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.20 2006/10/23 18:10:32 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.21 2007/01/31 20:56:19 momjian Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -95,7 +95,7 @@ ereport(ERROR,
                 func_signature_string(funcname, nargs,
                                       actual_arg_types)),
          errhint("Unable to choose a best candidate function. "
-                 "You may need to add explicit typecasts.")));
+                 "You might need to add explicit typecasts.")));
 </programlisting>
     This illustrates the use of format codes to embed run-time values into
     a message text.  Also, an optional <quote>hint</> message is provided.
@@ -276,7 +276,7 @@ Hint:       the addendum
    <para>
     Rationale: keeping the primary message short helps keep it to the point,
     and lets clients lay out screen space on the assumption that one line is
-    enough for error messages.  Detail and hint messages may be relegated to a
+    enough for error messages.  Detail and hint messages can be relegated to a
     verbose mode, or perhaps a pop-up error-details window.  Also, details and
     hints would normally be suppressed from the server log to save
     space. Reference to implementation details is best avoided since users
@@ -291,7 +291,7 @@ Hint:       the addendum
    <para>
     Don't put any specific assumptions about formatting into the message
     texts.  Expect clients and the server log to wrap lines to fit their own
-    needs.  In long messages, newline characters (\n) may be used to indicate
+    needs.  In long messages, newline characters (\n) can be used to indicate
     suggested paragraph breaks.  Don't end a message with a newline.  Don't
     use tabs or other formatting characters.  (In error context displays,
     newlines are automatically added to separate levels of context such as
@@ -376,7 +376,7 @@ Hint:       the addendum
     messages are not grammatically complete sentences anyway.  (And if they're
     long enough to be more than one sentence, they should be split into
     primary and detail parts.)  However, detail and hint messages are longer
-    and may need to include multiple sentences.  For consistency, they should
+    and might need to include multiple sentences.  For consistency, they should
     follow complete-sentence style even when there's only one sentence. 
    </para>
 
@@ -435,7 +435,7 @@ cannot open file "%s"
     The first one means that the attempt to open the file failed.  The
     message should give a reason, such as <quote>disk full</quote> or
     <quote>file doesn't exist</quote>.  The past tense is appropriate because
-    next time the disk might not be full anymore or the file in question may
+    next time the disk might not be full anymore or the file in question might
     exist. 
    </para>
 

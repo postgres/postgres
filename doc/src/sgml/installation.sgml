@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.278 2007/01/29 21:49:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.279 2007/01/31 20:56:17 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1027,7 +1027,7 @@ su - postgres
          executables considerably, and on non-GCC compilers it usually
          also disables compiler optimization, causing slowdowns. However,
          having the symbols available is extremely helpful for dealing
-         with any problems that may arise.  Currently, this option is
+         with any problems that might arise.  Currently, this option is
          recommended for production installations only if you use GCC.
          But you should always have it on if you are doing development work
          or running a beta version.
@@ -1414,7 +1414,7 @@ All of PostgreSQL is successfully made. Ready to install.
    investigates (for example, software upgrades), then it's a good
    idea to do <command>gmake distclean</> before reconfiguring and
    rebuilding.  Without this, your changes in configuration choices
-   may not propagate everywhere they need to.
+   might not propagate everywhere they need to.
   </para>
  </sect1>
 
@@ -1636,7 +1636,7 @@ nohup /usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data \
     </para>
 
     <para>
-     To stop a server running in the background you can type
+     To stop a server running in the background you can type:
 <programlisting>
 kill `cat /usr/local/pgsql/data/postmaster.pid`
 </programlisting>

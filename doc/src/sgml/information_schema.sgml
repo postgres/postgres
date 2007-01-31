@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.29 2006/10/23 18:10:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.30 2007/01/31 20:56:17 momjian Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -170,7 +170,7 @@
       <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       Name of the role to which this role membership was granted (may
+       Name of the role to which this role membership was granted (can
        be the current user, or a different role in case of nested role
        memberships)
       </entry>
@@ -222,7 +222,7 @@
       <entry><literal>grantee</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
-       Name of the role to which this role membership was granted (may
+       Name of the role to which this role membership was granted (can
        be the current user, or a different role in case of nested role
        memberships)
       </entry>
@@ -357,7 +357,7 @@
        If <literal>data_type</literal> identifies a numeric type, this
        column contains the (declared or implicit) precision of the
        type for this attribute.  The precision indicates the number of
-       significant digits.  It may be expressed in decimal (base 10)
+       significant digits.  It can be expressed in decimal (base 10)
        or binary (base 2) terms, as specified in the column
        <literal>numeric_precision_radix</literal>.  For all other data
        types, this column is null.
@@ -383,7 +383,7 @@
        If <literal>data_type</literal> identifies an exact numeric
        type, this column contains the (declared or implicit) scale of
        the type for this attribute.  The scale indicates the number of
-       significant digits to the right of the decimal point.  It may
+       significant digits to the right of the decimal point.  It can
        be expressed in decimal (base 10) or binary (base 2) terms, as
        specified in the column
        <literal>numeric_precision_radix</literal>.  For all other data
@@ -916,7 +916,7 @@
        <literal>YES</literal> if the column is possibly nullable,
        <literal>NO</literal> if it is known not nullable.  A not-null
        constraint is one way a column can be known not nullable, but
-       there may be others.
+       there can be others.
       </entry>
      </row>
 
@@ -964,7 +964,7 @@
        If <literal>data_type</literal> identifies a numeric type, this
        column contains the (declared or implicit) precision of the
        type for this column.  The precision indicates the number of
-       significant digits.  It may be expressed in decimal (base 10)
+       significant digits.  It can be expressed in decimal (base 10)
        or binary (base 2) terms, as specified in the column
        <literal>numeric_precision_radix</literal>.  For all other data
        types, this column is null.
@@ -990,7 +990,7 @@
        If <literal>data_type</literal> identifies an exact numeric
        type, this column contains the (declared or implicit) scale of
        the type for this column.  The scale indicates the number of
-       significant digits to the right of the decimal point.  It may
+       significant digits to the right of the decimal point.  It can
        be expressed in decimal (base 10) or binary (base 2) terms, as
        specified in the column
        <literal>numeric_precision_radix</literal>.  For all other data
@@ -1227,7 +1227,7 @@
    is supposed to identify the underlying built-in type of the column.
    In <productname>PostgreSQL</productname>, this means that the type
    is defined in the system catalog schema
-   <literal>pg_catalog</literal>.  This column may be useful if the
+   <literal>pg_catalog</literal>.  This column might be useful if the
    application can handle the well-known built-in types specially (for
    example, format the numeric types differently or use the data in
    the precision columns).  The columns <literal>udt_name</literal>,
@@ -1738,7 +1738,7 @@
        If the domain has a numeric type, this column contains the
        (declared or implicit) precision of the type for this column.
        The precision indicates the number of significant digits.  It
-       may be expressed in decimal (base 10) or binary (base 2) terms,
+       can be expressed in decimal (base 10) or binary (base 2) terms,
        as specified in the column
        <literal>numeric_precision_radix</literal>.  For all other data
        types, this column is null.
@@ -1764,7 +1764,7 @@
        If the domain has an exact numeric type, this column contains
        the (declared or implicit) scale of the type for this column.
        The scale indicates the number of significant digits to the
-       right of the decimal point.  It may be expressed in decimal
+       right of the decimal point.  It can be expressed in decimal
        (base 10) or binary (base 2) terms, as specified in the column
        <literal>numeric_precision_radix</literal>.  For all other data
        types, this column is null.
@@ -2126,7 +2126,7 @@ ORDER BY c.ordinal_position;
 
   <para>
    For permission checking, the set of <quote>applicable roles</quote>
-   is applied, which may be broader than the set of enabled roles.  So
+   is applied, which can be broader than the set of enabled roles.  So
    generally, it is better to use the view
    <literal>applicable_roles</literal> instead of this one; see also
    there.
@@ -2753,7 +2753,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>routine_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the function (may be duplicated in case of overloading)</entry>
+      <entry>Name of the function (might be duplicated in case of overloading)</entry>
      </row>
 
      <row>
@@ -2863,7 +2863,7 @@ ORDER BY c.ordinal_position;
    applies to domains, and since domains do not have real privileges
    in <productname>PostgreSQL</productname>, this view is empty.
    Further information can be found under
-   <literal>usage_privileges</literal>.  In the future, this view may
+   <literal>usage_privileges</literal>.  In the future, this view might
    contain more useful information.
   </para>
 
@@ -3003,7 +3003,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>routine_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the function (may be duplicated in case of overloading)</entry>
+      <entry>Name of the function (might be duplicated in case of overloading)</entry>
      </row>
 
      <row>
@@ -3084,7 +3084,7 @@ ORDER BY c.ordinal_position;
      <row>
       <entry><literal>routine_name</literal></entry>
       <entry><type>sql_identifier</type></entry>
-      <entry>Name of the function (may be duplicated in case of overloading)</entry>
+      <entry>Name of the function (might be duplicated in case of overloading)</entry>
      </row>
 
      <row>
@@ -3737,7 +3737,7 @@ ORDER BY c.ordinal_position;
       <entry>
        This column contains the (declared or implicit) precision of
        the sequence data type (see above).  The precision indicates
-       the number of significant digits.  It may be expressed in
+       the number of significant digits.  It can be expressed in
        decimal (base 10) or binary (base 2) terms, as specified in the
        column <literal>numeric_precision_radix</literal>.
       </entry>
@@ -3761,7 +3761,7 @@ ORDER BY c.ordinal_position;
        This column contains the (declared or implicit) scale of the
        sequence data type (see above).  The scale indicates the number
        of significant digits to the right of the decimal point.  It
-       may be expressed in decimal (base 10) or binary (base 2) terms,
+       can be expressed in decimal (base 10) or binary (base 2) terms,
        as specified in the column
        <literal>numeric_precision_radix</literal>.
       </entry>
@@ -4700,7 +4700,7 @@ ORDER BY c.ordinal_position;
    incompatibilities with the SQL standard that affect the
    representation in the information schema.  First, trigger names are
    local to the table in <productname>PostgreSQL</productname>, rather
-   than being independent schema objects.  Therefore there may be duplicate
+   than being independent schema objects.  Therefore there can be duplicate
    trigger names defined in one schema, as long as they belong to
    different tables.  (<literal>trigger_catalog</literal> and
    <literal>trigger_schema</literal> are really the values pertaining
@@ -4734,7 +4734,7 @@ ORDER BY c.ordinal_position;
    in <productname>PostgreSQL</productname>, this view shows implicit
    <literal>USAGE</literal> privileges granted to
    <literal>PUBLIC</literal> for all domains.  In the future, this
-   view may contain more useful information.
+   view might contain more useful information.
   </para>
 
   <table>

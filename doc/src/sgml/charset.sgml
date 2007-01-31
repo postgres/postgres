@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.80 2007/01/09 22:22:55 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.81 2007/01/31 20:56:16 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -155,7 +155,7 @@ initdb --locale=sv_SE
     environment variables seen by the server, not by the environment
     of any client.  Therefore, be careful to configure the correct locale settings
     before starting the server.  A consequence of this is that if
-    client and server are set up in different locales, messages may
+    client and server are set up in different locales, messages might
     appear in different languages depending on where they originated.
    </para>
 
@@ -252,7 +252,7 @@ initdb --locale=sv_SE
     If locale support doesn't work in spite of the explanation above,
     check that the locale support in your operating system is
     correctly configured.  To check what locales are installed on your
-    system, you may use the command <literal>locale -a</literal> if
+    system, you can use the command <literal>locale -a</literal> if
     your operating system provides it.
    </para>
 

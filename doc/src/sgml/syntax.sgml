@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.111 2006/10/22 03:03:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.112 2007/01/31 20:56:19 momjian Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -120,7 +120,7 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
     key word can be letters, underscores, digits
     (<literal>0</literal>-<literal>9</literal>), or dollar signs
     (<literal>$</>).  Note that dollar signs are not allowed in identifiers
-    according to the letter of the SQL standard, so their use may render
+    according to the letter of the SQL standard, so their use might render
     applications less portable.
     The SQL standard will not define a key word that contains
     digits or starts or ends with an underscore, so identifiers of this
@@ -466,7 +466,7 @@ $function$
      digits (0 through 9).  At least one digit must be before or after the
      decimal point, if one is used.  At least one digit must follow the
      exponent marker (<literal>e</literal>), if one is present.
-     There may not be any spaces or other characters embedded in the
+     There cannot be any spaces or other characters embedded in the
      constant.  Note that any leading plus or minus sign is not actually
      considered part of the constant; it is an operator applied to the
      constant.
@@ -537,7 +537,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      The string constant's text is passed to the input conversion
      routine for the type called <replaceable>type</replaceable>. The
      result is a constant of the indicated type.  The explicit type
-     cast may be omitted if there is no ambiguity as to the type the
+     cast can be omitted if there is no ambiguity as to the type the
      constant must be (for example, when it is assigned directly to a
      table column), in which case it is automatically coerced.
     </para>
@@ -553,7 +553,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
 <synopsis>
 <replaceable>typename</replaceable> ( '<replaceable>string</replaceable>' )
 </synopsis>
-     but not all type names may be used in this way; see <xref
+     but not all type names can be used in this way; see <xref
      linkend="sql-syntax-type-casts"> for details.
     </para>
 
@@ -650,7 +650,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
       A dollar sign (<literal>$</literal>) followed by digits is used
       to represent a positional parameter in the body of a function
       definition or a prepared statement.  In other contexts the
-      dollar sign may be part of an identifier or a dollar-quoted string
+      dollar sign can be part of an identifier or a dollar-quoted string
       constant.
      </para>
     </listitem>
@@ -743,7 +743,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     where the comment begins with <literal>/*</literal> and extends to
     the matching occurrence of <literal>*/</literal>. These block
     comments nest, as specified in the SQL standard but unlike C, so that one can
-    comment out larger blocks of code that may contain existing block
+    comment out larger blocks of code that might contain existing block
     comments.
    </para>
 
@@ -766,7 +766,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     associativity of the operators in <productname>PostgreSQL</>.
     Most operators have the same precedence and are left-associative.
     The precedence and associativity of the operators is hard-wired
-    into the parser.  This may lead to non-intuitive behavior; for
+    into the parser.  This can lead to non-intuitive behavior; for
     example the Boolean operators <literal>&lt;</> and
     <literal>&gt;</> have a different precedence than the Boolean
     operators <literal>&lt;=</> and <literal>&gt;=</>.  Also, you will
@@ -1101,7 +1101,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
     the key words <literal>NEW</literal> or <literal>OLD</literal>.
     (<literal>NEW</literal> and <literal>OLD</literal> can only appear in rewrite rules,
     while other correlation names can be used in any SQL statement.)
-    The correlation name and separating dot may be omitted if the column name
+    The correlation name and separating dot can be omitted if the column name
     is unique across all the tables being used in the current query.  (See also <xref linkend="queries">.)
    </para>
   </sect2>
@@ -1171,7 +1171,7 @@ CREATE FUNCTION dept(text) RETURNS dept
 
    <para>
     In general the array <replaceable>expression</replaceable> must be
-    parenthesized, but the parentheses may be omitted when the expression
+    parenthesized, but the parentheses can be omitted when the expression
     to be subscripted is just a column reference or positional parameter.
     Also, multiple subscripts can be concatenated when the original array
     is multidimensional.
@@ -1206,7 +1206,7 @@ $1[10:42]
 
    <para>
     In general the row <replaceable>expression</replaceable> must be
-    parenthesized, but the parentheses may be omitted when the expression
+    parenthesized, but the parentheses can be omitted when the expression
     to be selected from is just a table reference or positional parameter.
     For example,
 
@@ -1277,7 +1277,7 @@ sqrt(2)
 
    <para>
     The list of built-in functions is in <xref linkend="functions">.
-    Other functions may be added by the user.
+    Other functions can be added by the user.
    </para>
   </sect2>
 
@@ -1334,12 +1334,12 @@ sqrt(2)
 
    <para>
     The predefined aggregate functions are described in <xref
-    linkend="functions-aggregate">.  Other aggregate functions may be added
+    linkend="functions-aggregate">.  Other aggregate functions can be added
     by the user. 
    </para>
 
    <para>
-    An aggregate expression may only appear in the result list or
+    An aggregate expression can only appear in the result list or
     <literal>HAVING</> clause of a <command>SELECT</> command.
     It is forbidden in other clauses, such as <literal>WHERE</>,
     because those clauses are logically evaluated before the results
@@ -1407,7 +1407,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
    </para>
 
    <para>
-    An explicit type cast may usually be omitted if there is no ambiguity as
+    An explicit type cast can usually be omitted if there is no ambiguity as
     to the type that a value expression must produce (for example, when it is
     assigned to a table column); the system will automatically apply a
     type cast in such cases.  However, automatic casting is only done for
@@ -1510,7 +1510,7 @@ SELECT ARRAY[1,2,3+4];
    <para>
     Multidimensional array values can be built by nesting array
     constructors.
-    In the inner constructors, the key word <literal>ARRAY</literal> may
+    In the inner constructors, the key word <literal>ARRAY</literal> can
     be omitted.  For example, these produce the same result:
 
 <programlisting>
@@ -1634,7 +1634,7 @@ SELECT ROW(t.f1, t.f2, 42) FROM t;
     By default, the value created by a <literal>ROW</> expression is of
     an anonymous record type.  If necessary, it can be cast to a named
     composite type &mdash; either the row type of a table, or a composite type
-    created with <command>CREATE TYPE AS</>.  An explicit cast may be needed
+    created with <command>CREATE TYPE AS</>.  An explicit cast might be needed
     to avoid ambiguity.  For example:
 <programlisting>
 CREATE TABLE mytable(f1 int, f2 float, f3 text);
@@ -1725,13 +1725,13 @@ SELECT somefunc() OR true;
     rely on side effects or evaluation order in <literal>WHERE</> and <literal>HAVING</> clauses,
     since those clauses are extensively reprocessed as part of
     developing an execution plan.  Boolean
-    expressions (<literal>AND</>/<literal>OR</>/<literal>NOT</> combinations) in those clauses may be reorganized
+    expressions (<literal>AND</>/<literal>OR</>/<literal>NOT</> combinations) in those clauses can be reorganized
     in any manner allowed by the laws of Boolean algebra.
    </para>
 
    <para>
     When it is essential to force evaluation order, a <literal>CASE</>
-    construct (see <xref linkend="functions-conditional">) may be
+    construct (see <xref linkend="functions-conditional">) can be
     used.  For example, this is an untrustworthy way of trying to
     avoid division by zero in a <literal>WHERE</> clause:
 <programlisting>

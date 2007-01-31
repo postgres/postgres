@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.67 2007/01/31 04:13:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.68 2007/01/31 20:56:17 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -131,7 +131,7 @@
    <para>
     Clearly, a table that receives frequent updates or deletes will need
     to be vacuumed more often than tables that are seldom updated. It
-    may be useful to set up periodic <application>cron</> tasks that
+    might be useful to set up periodic <application>cron</> tasks that
     <command>VACUUM</command> only selected tables, skipping tables that are known not to
     change often. This is only likely to be helpful if you have both
     large heavily-updated tables and large seldom-updated tables &mdash; the
@@ -185,7 +185,7 @@
     If you have multiple databases
     in a cluster, don't forget to <command>VACUUM</command> each one;
     the program <xref linkend="app-vacuumdb" endterm="app-vacuumdb-title">
-    may be helpful.
+    might be helpful.
    </para>
 
    <para>
@@ -226,14 +226,14 @@
     generate good plans for queries.  These statistics are gathered by
     the <command>ANALYZE</> command, which can be invoked by itself or
     as an optional step in <command>VACUUM</>.  It is important to have
-    reasonably accurate statistics, otherwise poor choices of plans may
+    reasonably accurate statistics, otherwise poor choices of plans might
     degrade database performance.
    </para>
 
    <para>
     As with vacuuming for space recovery, frequent updates of statistics
     are more useful for heavily-updated tables than for seldom-updated
-    ones. But even for a heavily-updated table, there may be no need for
+    ones. But even for a heavily-updated table, there might be no need for
     statistics updates if the statistical distribution of the data is
     not changing much. A simple rule of thumb is to think about how much
     the minimum and maximum values of the columns in the table change.
@@ -241,7 +241,7 @@
     of row update will have a constantly-increasing maximum value as
     rows are added and updated; such a column will probably need more
     frequent statistics updates than, say, a column containing URLs for
-    pages accessed on a website. The URL column may receive changes just
+    pages accessed on a website. The URL column might receive changes just
     as often, but the statistical distribution of its values probably
     changes relatively slowly.
    </para>
@@ -257,11 +257,11 @@
 
    <tip>
     <para>
-     Although per-column tweaking of <command>ANALYZE</> frequency may not be
-     very productive, you may well find it worthwhile to do per-column
+     Although per-column tweaking of <command>ANALYZE</> frequency might not be
+     very productive, you might well find it worthwhile to do per-column
      adjustment of the level of detail of the statistics collected by
      <command>ANALYZE</>.  Columns that are heavily used in <literal>WHERE</> clauses
-     and have highly irregular data distributions may require a finer-grain
+     and have highly irregular data distributions might require a finer-grain
      data histogram than other columns.  See <command>ALTER TABLE SET
      STATISTICS</>.
     </para>
@@ -271,7 +271,7 @@
     Recommended practice for most sites is to schedule a database-wide
     <command>ANALYZE</> once a day at a low-usage time of day; this can
     usefully be combined with a nightly <command>VACUUM</>.  However,
-    sites with relatively slowly changing table statistics may find that
+    sites with relatively slowly changing table statistics might find that
     this is overkill, and that less-frequent <command>ANALYZE</> runs
     are sufficient.
    </para>
@@ -381,7 +381,7 @@
 
    <para>
     One disadvantage of decreasing <varname>vacuum_freeze_min_age</> is that
-    it may cause <command>VACUUM</> to do useless work: changing a table row's
+    it might cause <command>VACUUM</> to do useless work: changing a table row's
     XID to <literal>FrozenXID</> is a waste of time if the row is modified
     soon thereafter (causing it to acquire a new XID).  So the setting should
     be large enough that rows are not frozen until they are unlikely to change
@@ -510,7 +510,7 @@ vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuple
     The number of obsolete tuples is obtained from the statistics
     collector; it is a semi-accurate count updated by each
     <command>UPDATE</command> and <command>DELETE</command> operation.  (It
-    is only semi-accurate because some information may be lost under heavy
+    is only semi-accurate because some information might be lost under heavy
     load.)  For analyze, a similar condition is used: the threshold, defined as
 <programlisting>
 analyze threshold = analyze base threshold + analyze scale factor * number of tuples
@@ -658,7 +658,7 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    <command>postgres</command> into a
    file, you will have log output, but
    the only way to truncate the log file is to stop and restart
-   the server. This may be OK if you are using
+   the server. This might be OK if you are using
    <productname>PostgreSQL</productname> in a development environment,
    but few production servers would find this behavior acceptable.
   </para>
@@ -707,7 +707,7 @@ pg_ctl start | rotatelogs /var/log/pgsql_log 86400
 
   <para>
    On many systems, however, <application>syslog</> is not very reliable,
-   particularly with large log messages; it may truncate or drop messages
+   particularly with large log messages; it might truncate or drop messages
    just when you need them the most.  Also, on <productname>Linux</>,
    <application>syslog</> will sync each message to disk, yielding poor
    performance.  (You can use a <literal>-</> at the start of the file name

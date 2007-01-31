@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.122 2007/01/30 22:29:23 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.123 2007/01/31 20:56:20 momjian Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -44,7 +44,7 @@
    of  function  can take base types, composite types, or
    combinations of these as arguments (parameters). In addition,
    every kind of function can return a base type or
-   a composite type.  Functions may also be defined to return
+   a composite type.  Functions can also be defined to return
    sets of base or composite values.
   </para>
 
@@ -95,7 +95,7 @@
 
    <para>
     <indexterm><primary>SETOF</><seealso>function</></> Alternatively,
-    an SQL function may be declared to return a set, by specifying the
+    an SQL function can be declared to return a set, by specifying the
     function's return type as <literal>SETOF
     <replaceable>sometype</></literal>.  In this case all rows of the
     last query's result are returned.  Further details appear below.
@@ -157,7 +157,7 @@ SELECT clean_emp();
     body using the syntax <literal>$<replaceable>n</></>: <literal>$1</>
     refers to the first argument, <literal>$2</> to the second, and so on.
     If an argument is of a composite type, then the dot notation,
-    e.g., <literal>$1.name</literal>, may be used to access attributes
+    e.g., <literal>$1.name</literal>, can be used to access attributes
     of the argument.  The arguments can only be used as data values,
     not as identifiers.  Thus for example this is reasonable:
 <programlisting>
@@ -588,7 +588,7 @@ DROP FUNCTION sum_n_product (int, int);
     <title><acronym>SQL</acronym> Functions as Table Sources</title>
 
     <para>
-     All SQL functions may be used in the <literal>FROM</> clause of a query,
+     All SQL functions can be used in the <literal>FROM</> clause of a query,
      but it is particularly useful for functions returning composite types.
      If the function is defined to return a base type, the table function
      produces a one-column table.  If the function is defined to return
@@ -662,11 +662,11 @@ SELECT * FROM getfoo(1) AS t1;
     </para>
 
     <para>
-     Currently, functions returning sets may also be called in the select list
+     Currently, functions returning sets can also be called in the select list
      of a query.  For each row that the query
      generates by itself, the function returning set is invoked, and an output
      row is generated for each element of the function's result set. Note,
-     however, that this capability is deprecated and may be removed in future
+     however, that this capability is deprecated and might be removed in future
      releases. The following is an example function returning a set from the
      select list:
 
@@ -716,7 +716,7 @@ SELECT name, listchildren(name) FROM nodes;
     <title>Polymorphic <acronym>SQL</acronym> Functions</title>
 
     <para>
-     <acronym>SQL</acronym> functions may be declared to accept and
+     <acronym>SQL</acronym> functions can be declared to accept and
      return the polymorphic types <type>anyelement</type> and
      <type>anyarray</type>.  See <xref
      linkend="extend-types-polymorphic"> for a more detailed
@@ -799,7 +799,7 @@ SELECT * FROM dup(22);
    </indexterm>
 
    <para>
-    More than one function may be defined with the same SQL name, so long
+    More than one function can be defined with the same SQL name, so long
     as the arguments they take are different.  In other words,
     function names can be <firstterm>overloaded</firstterm>.  When a
     query is executed, the server will determine which function to
@@ -941,7 +941,7 @@ CREATE FUNCTION test(int, int) RETURNS int
     a lot whether a function is executed once during planning or once during
     query execution startup.  But there is a big difference if the plan is
     saved and reused later.  Labeling a function <literal>IMMUTABLE</> when
-    it really isn't may allow it to be prematurely folded to a constant during
+    it really isn't might allow it to be prematurely folded to a constant during
     planning, resulting in a stale value being re-used during subsequent uses
     of the plan.  This is a hazard when using prepared statements or when
     using function languages that cache plans (such as
@@ -1310,7 +1310,7 @@ typedef int int4;
     </para>
 
     <para>
-     On  the  other hand, fixed-length types of any size may
+     On  the  other hand, fixed-length types of any size can
      be passed by-reference.  For example, here is a  sample
      implementation of a <productname>PostgreSQL</productname> type:
      
@@ -1347,7 +1347,7 @@ typedef struct
      <para>
       <emphasis>Never</> modify the contents of a pass-by-reference input
       value.  If you do so you are likely to corrupt on-disk data, since
-      the pointer you are given may well point directly into a disk buffer.
+      the pointer you are given might point directly into a disk buffer.
       The sole exception to this rule is explained in
       <xref linkend="xaggr">.
      </para>
@@ -1402,7 +1402,7 @@ memcpy(destination-&gt;data, buffer, 40);
      that uses a built-in type of <productname>PostgreSQL</>.
      The <quote>Defined In</quote> column gives the header file that
      needs to be included to get the type definition.  (The actual
-     definition may be in a different file that is included by the
+     definition might be in a different file that is included by the
      listed file.  It is recommended that users stick to the defined
      interface.)  Note that you should always include
      <filename>postgres.h</filename> first in any source file, because
@@ -1708,7 +1708,7 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
      (Better style would be to use just <literal>'funcs'</> in the
      <literal>AS</> clause, after having added
      <replaceable>DIRECTORY</replaceable> to the search path.  In any
-     case, we may omit the system-specific extension for a shared
+     case, we can omit the system-specific extension for a shared
      library, commonly <literal>.so</literal> or
      <literal>.sl</literal>.)
     </para>
@@ -1866,7 +1866,7 @@ concat_text(PG_FUNCTION_ARGS)
     </para>
 
     <para>
-     At first glance, the version-1 coding conventions may appear to
+     At first glance, the version-1 coding conventions might appear to
      be just pointless obscurantism.  They do, however, offer a number
      of improvements, because the macros can hide unnecessary detail.
      An example is that in coding <function>add_one_float8</>, we no longer need to
@@ -1938,7 +1938,7 @@ concat_text(PG_FUNCTION_ARGS)
     <para>
      Before we turn to the more advanced topics, we should discuss
      some coding rules for <productname>PostgreSQL</productname>
-     C-language functions.  While it may be possible to load functions
+     C-language functions.  While it might be possible to load functions
      written in languages other than C into
      <productname>PostgreSQL</productname>, this is usually difficult
      (when it is possible at all) because other languages, such as
@@ -1999,8 +1999,8 @@ concat_text(PG_FUNCTION_ARGS)
         <function>memset</function>.  Without this, it's difficult to
         support hash indexes or hash joins, as you must pick out only
         the significant bits of your data structure to compute a hash.
-        Even if you initialize all fields of your structure, there may be
-        alignment padding (holes in the structure) that may contain
+        Even if you initialize all fields of your structure, there might be
+        alignment padding (holes in the structure) that contain
         garbage values.
        </para>
       </listitem>
@@ -2265,9 +2265,9 @@ include $(PGXS)
 
     <para>
      Composite types do not have a fixed layout like C structures.
-     Instances of a composite type may contain null fields.  In
+     Instances of a composite type can contain null fields.  In
      addition, composite types that are part of an inheritance
-     hierarchy may have different fields than other members of the
+     hierarchy can have different fields than other members of the
      same inheritance hierarchy.  Therefore,
      <productname>PostgreSQL</productname> provides a function
      interface for accessing fields of composite types from C.
@@ -2829,7 +2829,7 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
     <title>Polymorphic Arguments and Return Types</title>
 
     <para>
-     C-language functions may be declared to accept and
+     C-language functions can be declared to accept and
      return the polymorphic types
      <type>anyelement</type> and <type>anyarray</type>.
      See <xref linkend="extend-types-polymorphic"> for a more detailed explanation
@@ -2913,7 +2913,7 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
     <title>Shared Memory and LWLocks</title>
 
     <para>
-     Add-ins may reserve LWLocks and an allocation of shared memory on server
+     Add-ins can reserve LWLocks and an allocation of shared memory on server
      startup.  The add-in's shared library must be preloaded by specifying
      it in 
      <xref linkend="guc-shared-preload-libraries"><indexterm><primary>shared-preload-libraries</></>.

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.49 2006/10/23 18:10:32 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.50 2007/01/31 20:56:19 momjian Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -38,7 +38,7 @@
   Note that if a command invoked via SPI fails, then control will not be
   returned to your procedure.  Rather, the
   transaction or subtransaction in which your procedure executes will be
-  rolled back.  (This may seem surprising given that the SPI functions mostly
+  rolled back.  (This might seem surprising given that the SPI functions mostly
   have documented error-return conventions.  Those conventions only apply
   for errors detected within the SPI functions themselves, however.)
   It is possible to recover control after an error by establishing your own
@@ -87,7 +87,7 @@ int SPI_connect(void)
    <function>SPI_connect</function> opens a connection from a
    procedure invocation to the SPI manager.  You must call this
    function if you want to execute commands through SPI.  Some utility
-   SPI functions may be called from unconnected procedures.
+   SPI functions can be called from unconnected procedures.
   </para>
 
   <para>
@@ -305,7 +305,7 @@ int SPI_execute(const char * <parameter>command</parameter>, bool <parameter>rea
   </para>
 
   <para>
-   This function may only be called from a connected procedure.
+   This function can only be called from a connected procedure.
   </para>
 
   <para>
@@ -321,7 +321,7 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar", false, 5);
   </para>
 
   <para>
-   You may pass multiple commands in one string.
+   You can pass multiple commands in one string.
    <function>SPI_execute</function> returns the
    result for the command executed last.  The <parameter>count</parameter>
    limit applies to each command separately, but it is not applied to
@@ -366,7 +366,7 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar", false, 5);
    <symbol>SPI_OK_INSERT_RETURNING</symbol>,
    <symbol>SPI_OK_DELETE_RETURNING</symbol>, or
    <symbol>SPI_OK_UPDATE_RETURNING</symbol>,
-   then you may use the
+   then you can use the
    global pointer <literal>SPITupleTable *SPI_tuptable</literal> to
    access the result rows.  Some utility commands (such as
    <command>EXPLAIN</>) also return row sets, and <literal>SPI_tuptable</> 
@@ -388,7 +388,7 @@ typedef struct
 </programlisting>
    <structfield>vals</> is an array of pointers to rows.  (The number
    of valid entries is given by <varname>SPI_processed</varname>.)
-   <structfield>tupdesc</> is a row descriptor which you may pass to
+   <structfield>tupdesc</> is a row descriptor which you can pass to
    SPI functions dealing with rows.  <structfield>tuptabcxt</>,
    <structfield>alloced</>, and <structfield>free</> are internal
    fields not intended for use by SPI callers.
@@ -713,7 +713,7 @@ void * SPI_prepare(const char * <parameter>command</parameter>, int <parameter>n
 
   <para>
    When the same or a similar command is to be executed repeatedly, it
-   may be advantageous to perform the planning only once.
+   might be advantageous to perform the planning only once.
    <function>SPI_prepare</function> converts a command string into an
    execution plan that can be executed repeatedly using
    <function>SPI_execute_plan</function>.
@@ -792,7 +792,7 @@ void * SPI_prepare(const char * <parameter>command</parameter>, int <parameter>n
   <para>
    There is a disadvantage to using parameters: since the planner does
    not know the values that will be supplied for the parameters, it
-   may make worse planning choices than it would make for a normal
+   might make worse planning choices than it would make for a normal
    command with all constants visible.
   </para>
  </refsect1>
@@ -1685,7 +1685,7 @@ void * SPI_saveplan(void * <parameter>plan</parameter>)
  </para>
 
  <para>
-  All functions described in this section may be used by both
+  All functions described in this section can be used by both
   connected and unconnected procedures.
  </para>
 
@@ -2311,7 +2311,7 @@ char * SPI_getnspname(Relation <parameter>rel</parameter>)
   </para>
 
   <para>
-   All functions described in this section may be used by both
+   All functions described in this section can be used by both
    connected and unconnected procedures.  In an unconnected procedure,
    they act the same as the underlying ordinary server functions
    (<function>palloc</>, etc.).

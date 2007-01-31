@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.43 2007/01/30 22:29:23 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.44 2007/01/31 20:56:18 momjian Exp $ -->
 
  <chapter id="pltcl">
   <title>PL/Tcl - Tcl Procedural Language</title>
@@ -39,12 +39,12 @@
     provides no way to access internals of the database server or to
     gain OS-level access under the permissions of the
     <productname>PostgreSQL</productname> server process, as a C
-    function can do.  Thus, unprivileged database users may be trusted
+    function can do.  Thus, unprivileged database users can be trusted
     to use this language; it does not give them unlimited authority.
    </para>
    <para>
     The other notable implementation restriction is that Tcl functions
-    may not be used to create input/output functions for new data
+    cannot be used to create input/output functions for new data
     types.
    </para>
    <para>
@@ -325,7 +325,7 @@ spi_exec -array C "SELECT * FROM pg_class" {
         PL/Tcl</></>
        </para>
        <para>
-        The query may use parameters, that is, placeholders for
+        The query can use parameters, that is, placeholders for
         values to be supplied whenever the plan is actually executed.
         In the query string, refer to parameters
         by the symbols <literal>$1</literal> ... <literal>$<replaceable>n</replaceable></literal>.
@@ -417,7 +417,7 @@ $$ LANGUAGE pltcl;
       <listitem>
        <para>
         Doubles all occurrences of single quote and backslash characters
-        in the given string.  This may be used to safely quote strings
+        in the given string.  This can be used to safely quote strings
         that are to be inserted into SQL commands given
         to <function>spi_exec</function> or
         <function>spi_prepare</function>.
@@ -726,9 +726,8 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
     <title>Tcl Procedure Names</title>
 
     <para>
-     In <productname>PostgreSQL</productname>, one and the 
-     same function name can be used for
-     different functions as long as the number of arguments or their types
+     In <productname>PostgreSQL</productname>, the same function name can be used for
+     different function definitions as long as the number of arguments or their types
      differ. Tcl, however, requires all procedure names to be distinct.
      PL/Tcl deals with this by making the internal Tcl procedure names contain
      the object 

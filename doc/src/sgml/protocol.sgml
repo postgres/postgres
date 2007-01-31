@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.66 2006/09/06 20:40:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.67 2007/01/31 20:56:18 momjian Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -9,7 +9,7 @@
   The protocol is supported over <acronym>TCP/IP</acronym> and also over
   Unix-domain sockets.  Port number 5432 has been registered with IANA as
   the customary TCP port number for servers supporting this protocol, but
-  in practice any non-privileged port number may be used.
+  in practice any non-privileged port number can be used.
  </para>
 
  <para>
@@ -104,7 +104,7 @@
    count) before attempting to process its contents.  This allows easy
    recovery if an error is detected while processing the contents.  In
    extreme situations (such as not having enough memory to buffer the
-   message), the receiver may use the byte count to determine how much
+   message), the receiver can use the byte count to determine how much
    input to skip before it resumes reading messages.
   </para>
 
@@ -128,7 +128,7 @@
     <firstterm>portals</>.  A prepared statement represents the result of
     parsing, semantic analysis, and (optionally) planning of a textual query
     string.
-    A prepared statement is not necessarily ready to execute, because it may
+    A prepared statement is not necessarily ready to execute, because it might
     lack specific values for <firstterm>parameters</>.  A portal represents
     a ready-to-execute or already-partially-executed statement, with any
     missing parameter values filled in.  (For <command>SELECT</> statements,
@@ -144,7 +144,7 @@
     <firstterm>execute</> step that runs a portal's query.  In the case of
     a query that returns rows (<command>SELECT</>, <command>SHOW</>, etc),
     the execute step can be told to fetch only
-    a limited number of rows, so that multiple execute steps may be needed
+    a limited number of rows, so that multiple execute steps might be needed
     to complete the operation.
    </para>
 
@@ -170,7 +170,7 @@
     the only supported formats are <quote>text</> and <quote>binary</>,
     but the protocol makes provision for future extensions.  The desired
     format for any value is specified by a <firstterm>format code</>.
-    Clients may specify a format code for each transmitted parameter value
+    Clients can specify a format code for each transmitted parameter value
     and for each column of a query result.  Text has format code zero,
     binary has format code one, and all other format codes are reserved
     for future definition.
@@ -189,7 +189,7 @@
     Binary representations for integers use network byte order (most
     significant byte first).  For other data types consult the documentation
     or source code to learn about the binary representation.  Keep in mind
-    that binary representations for complex data types may change across
+    that binary representations for complex data types might change across
     server versions; the text format is usually the more portable choice.
    </para>
   </sect2>
@@ -379,8 +379,8 @@
        <para>
         This message informs the frontend about the current (initial)
          setting of backend parameters, such as <xref
-          linkend="guc-client-encoding"> or <xref linkend="guc-datestyle">.
-         The frontend may ignore this message, or record the settings
+         linkend="guc-client-encoding"> or <xref linkend="guc-datestyle">.
+         The frontend can ignore this message, or record the settings
          for its future use; see <xref linkend="protocol-async"> for
          more details.  The frontend should not respond to this
          message, but should continue listening for a ReadyForQuery
@@ -393,7 +393,7 @@
       <term>ReadyForQuery</term>
       <listitem>
        <para>
-        Start-up is completed.  The frontend may now issue commands.
+        Start-up is completed.  The frontend can now issue commands.
        </para>
       </listitem>
      </varlistentry>
@@ -440,7 +440,7 @@
     The backend then sends one or more response
     messages depending on the contents of the query command string,
     and finally a ReadyForQuery response message.  ReadyForQuery
-    informs the frontend that it may safely send a new command.
+    informs the frontend that it can safely send a new command.
     (It is not actually necessary for the frontend to wait for
     ReadyForQuery before issuing another command, but the frontend must
     then take responsibility for figuring out what happens if the earlier
@@ -526,7 +526,7 @@
       <listitem>
        <para>
         Processing of the query string is complete.  A separate
-        message is sent to indicate this because the query string may
+        message is sent to indicate this because the query string might
         contain multiple SQL commands.  (CommandComplete marks the
         end of processing one SQL command, not the whole string.)
         ReadyForQuery will always be sent, whether processing
@@ -577,7 +577,7 @@
     In the event of an error, ErrorResponse is issued followed by
     ReadyForQuery.  All further processing of the query string is aborted by
     ErrorResponse (even if more queries remained in it).  Note that this
-    may occur partway through the sequence of messages generated by an
+    might occur partway through the sequence of messages generated by an
     individual query.
    </para>
 
@@ -593,7 +593,7 @@
     A frontend must be prepared to accept ErrorResponse and
     NoticeResponse messages whenever it is expecting any other type of
     message.  See also <xref linkend="protocol-async"> concerning messages
-    that the backend may generate due to outside events.
+    that the backend might generate due to outside events.
    </para>
 
    <para>
@@ -621,7 +621,7 @@
     about data types of parameter placeholders, and the
     name of a destination prepared-statement object (an empty string
     selects the unnamed prepared statement).  The response is
-    either ParseComplete or ErrorResponse.  Parameter data types may be
+    either ParseComplete or ErrorResponse.  Parameter data types can be
     specified by OID; if not given, the parser attempts to infer the
     data types in the same way as it would do for untyped literal string
     constants.
@@ -695,7 +695,7 @@
    <para>
     Query planning for named prepared-statement objects occurs when the Parse
     message is processed. If a query will be repeatedly executed with
-    different parameters, it may be beneficial to send a single Parse message
+    different parameters, it might be beneficial to send a single Parse message
     containing a parameterized query, followed by multiple Bind
     and Execute messages. This will avoid replanning the query on each
     execution.
@@ -711,7 +711,7 @@
 
    <note>
     <para>
-     Query plans generated from a parameterized query may be less
+     Query plans generated from a parameterized query might be less
      efficient than query plans generated from an equivalent query with actual
      parameter values substituted. The query planner cannot make decisions
      based on actual parameter values (for example, index selectivity) when
@@ -877,7 +877,7 @@
     FunctionCall message to the backend.  The backend then sends one
     or more response messages depending on the results of the function
     call, and finally a ReadyForQuery response message.  ReadyForQuery
-    informs the frontend that it may safely send a new query or
+    informs the frontend that it can safely send a new query or
     function call.
    </para>
 
@@ -1080,7 +1080,7 @@
     <para>
      At present, NotificationResponse can only be sent outside a
      transaction, and thus it will not occur in the middle of a
-     command-response series, though it may occur just before ReadyForQuery.
+     command-response series, though it might occur just before ReadyForQuery.
      It is unwise to design frontend logic that assumes that, however.
      Good practice is to be able to accept NotificationResponse at any
      point in the protocol.
@@ -1092,7 +1092,7 @@
    <title>Cancelling Requests in Progress</title>
 
    <para>
-    During the processing of a query, the frontend may request
+    During the processing of a query, the frontend might request
     cancellation of the query.  The cancel request is not sent
     directly on the open connection to the backend for reasons of
     implementation efficiency: we don't want to have the backend
@@ -1122,7 +1122,7 @@
    </para>
 
    <para>
-    The cancellation signal may or may not have any effect &mdash; for
+    The cancellation signal might or might not have any effect &mdash; for
     example, if it arrives after the backend has finished processing
     the query, then it will have no effect.  If the cancellation is
     effective, it results in the current command being terminated
@@ -1144,7 +1144,7 @@
     server and not across the regular frontend/backend communication
     link, it is possible for the cancel request to be issued by any
     process, not just the frontend whose query is to be canceled.
-    This may have some benefits of flexibility in building
+    This might provide additional flexibility when building
     multiple-process applications.  It also introduces a security
     risk, in that unauthorized persons might try to cancel queries.
     The security risk is addressed by requiring a dynamically
@@ -1164,7 +1164,7 @@
 
    <para>
     In rare cases (such as an administrator-commanded database shutdown)
-    the backend may disconnect without any frontend request to do so.
+    the backend might disconnect without any frontend request to do so.
     In such cases the backend will attempt to send an error or notice message
     giving the reason for the disconnection before it closes the connection.
    </para>
@@ -1187,7 +1187,7 @@
     is being processed, the backend will probably finish the query
     before noticing the disconnection.  If the query is outside any
     transaction block (<command>BEGIN</> ... <command>COMMIT</>
-    sequence) then its results may be committed before the
+    sequence) then its results might be committed before the
     disconnection is recognized.
    </para>
   </sect2>
@@ -1211,7 +1211,7 @@
     StartupMessage.  The server then responds with a single byte
     containing <literal>S</> or <literal>N</>, indicating that it is
     willing or unwilling to perform <acronym>SSL</acronym>,
-    respectively.  The frontend may close the connection at this point
+    respectively.  The frontend might close the connection at this point
     if it is dissatisfied with the response.  To continue after
     <literal>S</>, perform an <acronym>SSL</acronym> startup handshake
     (not described here, part of the <acronym>SSL</acronym>
@@ -1228,18 +1228,18 @@
     response to SSLRequest from the server.  This would only occur if
     the server predates the addition of <acronym>SSL</acronym> support
     to <productname>PostgreSQL</>.  In this case the connection must
-    be closed, but the frontend may choose to open a fresh connection
+    be closed, but the frontend might choose to open a fresh connection
     and proceed without requesting <acronym>SSL</acronym>.
    </para>
 
    <para>
-    An initial SSLRequest may also be used in a connection that is being
+    An initial SSLRequest can also be used in a connection that is being
     opened to send a CancelRequest message.
    </para>
 
    <para>
     While the protocol itself does not provide a way for the server to
-    force <acronym>SSL</acronym> encryption, the administrator may
+    force <acronym>SSL</acronym> encryption, the administrator can
     configure the server to reject unencrypted sessions as a byproduct
     of authentication checking.
    </para>
@@ -1333,13 +1333,13 @@ characters that don't fit into your fixed-size buffer.
 
 <para>
 This section describes the detailed format of each message.  Each is marked to
-indicate that it may be sent by a frontend (F), a backend (B), or both
+indicate that it can be sent by a frontend (F), a backend (B), or both
 (F &amp; B).
 Notice that although each message includes a byte count at the beginning,
 the message format is defined so that the message end can be found without
 reference to the byte count.  This aids validity checking.  (The CopyData
 message is an exception, because it forms part of a data stream; the contents
-of any individual CopyData message may not be interpretable on their own.)
+of any individual CopyData message cannot be interpretable on their own.)
 </para>
 
 <variablelist>
@@ -2155,7 +2155,7 @@ CopyData (F &amp; B)
 <para>
                 Data that forms part of a <command>COPY</command> data stream.  Messages sent
                 from the backend will always correspond to single data rows,
-                but messages sent by frontends may divide the data stream
+                but messages sent by frontends might divide the data stream
                 arbitrarily.
 </para>
 </listitem>
@@ -2591,7 +2591,7 @@ ErrorResponse (B)
 </varlistentry>
 </variablelist>
         The message body consists of one or more identified fields,
-        followed by a zero byte as a terminator.  Fields may appear in
+        followed by a zero byte as a terminator.  Fields can appear in
         any order.  For each field there is the following:
 <variablelist>
 <varlistentry>
@@ -2604,7 +2604,7 @@ ErrorResponse (B)
                 the message terminator and no string follows.
                 The presently defined field types are listed in
                 <xref linkend="protocol-error-fields">.
-                Since more field types may be added in future,
+                Since more field types might be added in future,
                 frontends should silently ignore fields of unrecognized
                 type.
 </para>
@@ -2969,7 +2969,7 @@ NoticeResponse (B)
 </varlistentry>
 </variablelist>
         The message body consists of one or more identified fields,
-        followed by a zero byte as a terminator.  Fields may appear in
+        followed by a zero byte as a terminator.  Fields can appear in
         any order.  For each field there is the following:
 <variablelist>
 <varlistentry>
@@ -2982,7 +2982,7 @@ NoticeResponse (B)
                 the message terminator and no string follows.
                 The presently defined field types are listed in
                 <xref linkend="protocol-error-fields">.
-                Since more field types may be added in future,
+                Since more field types might be added in future,
                 frontends should silently ignore fields of unrecognized
                 type.
 </para>
@@ -3107,7 +3107,7 @@ ParameterDescription (B)
 <listitem>
 <para>
                 The number of parameters used by the statement
-                (may be zero).
+                (can be zero).
 </para>
 </listitem>
 </varlistentry>
@@ -3240,7 +3240,7 @@ Parse (F)
 <listitem>
 <para>
                 The number of parameter data types specified
-                (may be zero).  Note that this is not an indication of
+                (can be zero).  Note that this is not an indication of
                 the number of parameters that might appear in the
                 query string, only the number that the frontend wants to
                 prespecify types for.
@@ -3513,7 +3513,7 @@ RowDescription (B)
 </term>
 <listitem>
 <para>
-                Specifies the number of fields in a row (may be zero).
+                Specifies the number of fields in a row (can be zero).
 </para>
 </listitem>
 </varlistentry>
@@ -3726,7 +3726,7 @@ StartupMessage (F)
 </variablelist>
 
                 In addition to the above, any run-time parameter that can be
-                set at backend start time may be listed.  Such settings
+                set at backend start time might be listed.  Such settings
                 will be applied during backend start (after parsing the
                 command-line options if any).  The values will act as
                 session defaults.
@@ -3829,7 +3829,7 @@ Terminate (F)
 <title>Error and Notice Message Fields</title>
 
 <para>
-This section describes the fields that may appear in ErrorResponse and
+This section describes the fields that can appear in ErrorResponse and
 NoticeResponse messages.  Each field type has a single-byte identification
 token.  Note that any given field type should appear at most once per
 message.
@@ -3885,7 +3885,7 @@ message.
 <listitem>
 <para>
         Detail: an optional secondary error message carrying more
-        detail about the problem.  May run to multiple lines.
+        detail about the problem.  Might run to multiple lines.
 </para>
 </listitem>
 </varlistentry>
@@ -3899,7 +3899,7 @@ message.
         Hint: an optional suggestion what to do about the problem.
         This is intended to differ from Detail in that it offers advice
         (potentially inappropriate) rather than hard facts.
-        May run to multiple lines.
+        Might run to multiple lines.
 </para>
 </listitem>
 </varlistentry>
@@ -4030,7 +4030,7 @@ PasswordMessage now has a type byte.
 
 <para>
 ErrorResponse and NoticeResponse ('<literal>E</>' and '<literal>N</>')
-messages now contain multiple fields, from which the client code may
+messages now contain multiple fields, from which the client code can
 assemble an error message of the desired level of verbosity.  Note that
 individual fields will typically not end with a newline, whereas the single
 string sent in the older protocol always did.
@@ -4055,7 +4055,7 @@ message types Parse, Bind, Execute, Describe, Close, Flush, and Sync, and the
 backend message types ParseComplete, BindComplete, PortalSuspended,
 ParameterDescription, NoData, and CloseComplete.  Existing clients do not
 have to concern themselves with this sub-protocol, but making use of it
-may allow improvements in performance or functionality.
+might allow improvements in performance or functionality.
 </para>
 
 <para>
@@ -4098,7 +4098,7 @@ the backend.
 
 <para>
 The NotificationResponse ('<literal>A</>') message has an additional string
-field, which is presently empty but may someday carry additional data passed
+field, which is presently empty but might someday carry additional data passed
 from the <command>NOTIFY</command> event sender.
 </para>
 

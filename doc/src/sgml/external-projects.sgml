@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.14 2006/11/20 17:42:16 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.15 2007/01/31 20:56:17 momjian Exp $ -->
 
  <appendix id="external-projects">
   <title>External Projects</title>
@@ -68,7 +68,7 @@
 
    All other language interfaces are external projects and are distributed
    separately. <xref linkend="language-interface-table"> includes a list of
-   some of these projects. Note that some of these packages may not be
+   some of these projects. Note that some of these packages might not be
    released under the same license as <productname>PostgreSQL</>. For more
    information on each language interface, including licensing terms, refer to
    its website and documentation.
@@ -175,7 +175,7 @@
    In addition, there are a number of procedural languages that are developed
    and maintained outside the core <productname>PostgreSQL</productname>
    distribution. <xref linkend="pl-language-table"> lists some of these
-   packages. Note that some of these projects may not be released under the same
+   packages. Note that some of these projects might not be released under the same
    license as <productname>PostgreSQL</>. For more information on each
    procedural language, including licensing information, refer to its website
    and documentation.

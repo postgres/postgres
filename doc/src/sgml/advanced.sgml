@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.52 2006/10/21 23:12:57 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.53 2007/01/31 20:56:16 momjian Exp $ -->
 
  <chapter id="tutorial-advanced">
   <title>Advanced Features</title>
@@ -57,7 +57,7 @@ SELECT * FROM myview;
    <para>
     Making liberal use of views is a key aspect of good SQL database
     design.  Views allow you to encapsulate the details of the
-    structure of your tables, which may change as your application
+    structure of your tables, which might change as your application
     evolves, behind consistent interfaces.
    </para>
 
@@ -250,7 +250,7 @@ COMMIT;
    <note>
     <para>
      Some client libraries issue <command>BEGIN</> and <command>COMMIT</>
-     commands automatically, so that you may get the effect of transaction
+     commands automatically, so that you might get the effect of transaction
      blocks without asking.  Check the documentation for the interface
      you are using.
     </para>

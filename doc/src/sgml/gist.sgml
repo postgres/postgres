@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.27 2006/10/23 18:10:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gist.sgml,v 1.28 2007/01/31 20:56:17 momjian Exp $ -->
 
 <chapter id="GiST">
 <title>GiST Indexes</title>
@@ -248,7 +248,7 @@
   Usually, replay of the WAL log is sufficient to restore the integrity
   of a GiST index following a database crash.  However, there are some
   corner cases in which the index state is not fully rebuilt.  The index
-  will still be functionally correct, but there may be some performance
+  will still be functionally correct, but there might be some performance
   degradation.  When this occurs, the index can be repaired by
   <command>VACUUM</>ing its table, or by rebuilding the index using
   <command>REINDEX</>.  In some cases a plain <command>VACUUM</> is

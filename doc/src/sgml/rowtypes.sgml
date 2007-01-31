@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.7 2007/01/30 22:29:23 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rowtypes.sgml,v 2.8 2007/01/31 20:56:18 momjian Exp $ -->
 
 <sect1 id="rowtypes">
  <title>Composite Types</title>
@@ -99,7 +99,7 @@ CREATE TABLE inventory_item (
 
   <para>
    To write a composite value as a literal constant, enclose the field
-   values within parentheses and separate them by commas.  You may put double
+   values within parentheses and separate them by commas.  You can put double
    quotes around any field value, and must do so if it contains commas or
    parentheses.  (More details appear below.)  Thus, the general format of a
    composite constant is the following:
@@ -133,7 +133,7 @@ CREATE TABLE inventory_item (
   </para>
 
  <para>
-  The <literal>ROW</literal> expression syntax may also be used to
+  The <literal>ROW</literal> expression syntax can also be used to
   construct composite values.  In most cases this is considerably
   simpler to use than the string-literal syntax, since you don't have
   to worry about multiple layers of quoting.  We already used this
@@ -252,7 +252,7 @@ INSERT INTO mytab (complex_col.r, complex_col.i) VALUES(1.1, 2.2);
    The decoration consists of parentheses (<literal>(</> and <literal>)</>)
    around the whole value, plus commas (<literal>,</>) between adjacent
    items.  Whitespace outside the parentheses is ignored, but within the
-   parentheses it is considered part of the field value, and may or may not be
+   parentheses it is considered part of the field value, and might or might not be
    significant depending on the input conversion rules for the field data type.
    For example, in
 <programlisting>
@@ -263,7 +263,7 @@ INSERT INTO mytab (complex_col.r, complex_col.i) VALUES(1.1, 2.2);
   </para>
 
   <para>
-   As shown previously, when writing a composite value you may write double
+   As shown previously, when writing a composite value you can write double
    quotes around any individual field value.
    You <emphasis>must</> do so if the field value would otherwise
    confuse the composite-value parser.  In particular, fields containing
@@ -309,7 +309,7 @@ INSERT ... VALUES (E'("\\"\\\\")');
    with a data type whose input routine also treated backslashes specially,
    <type>bytea</> for example, we might need as many as eight backslashes
    in the command to get one backslash into the stored composite field.)
-   Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting">) may be
+   Dollar quoting (see <xref linkend="sql-syntax-dollar-quoting">) can be
    used to avoid the need to double backslashes.
   </para>
  </note>

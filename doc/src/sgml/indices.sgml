@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.67 2006/12/23 00:43:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.68 2007/01/31 20:56:17 momjian Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -74,12 +74,12 @@ CREATE INDEX test1_id_index ON test1 (id);
    Once an index is created, no further intervention is required: the
    system will update the index when the table is modified, and it will
    use the index in queries when it thinks this would be more efficient
-   than a sequential table scan.  But you may have to run the
+   than a sequential table scan.  But you might have to run the
    <command>ANALYZE</command> command regularly to update
    statistics to allow the query planner to make educated decisions.
    See <xref linkend="performance-tips"> for information about
    how to find out whether an index is used and when and why the
-   planner may choose <emphasis>not</emphasis> to use an index.
+   planner might choose <emphasis>not</emphasis> to use an index.
   </para>
 
   <para>
@@ -193,7 +193,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
     indexes to perform no better than B-tree indexes, and the
     index size and build time for hash indexes is much worse.
     Furthermore, hash index operations are not presently WAL-logged,
-    so hash indexes may need to be rebuilt with <command>REINDEX</>
+    so hash indexes might need to be rebuilt with <command>REINDEX</>
     after a database crash.
     For these reasons, hash index use is presently discouraged.
    </para>
@@ -296,7 +296,7 @@ CREATE TABLE test2 (
 <programlisting>
 SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> AND minor = <replaceable>constant</replaceable>;
 </programlisting>
-   then it may be appropriate to define an index on the columns
+   then it might be appropriate to define an index on the columns
    <structfield>major</structfield> and
    <structfield>minor</structfield> together, e.g.,
 <programlisting>
@@ -306,7 +306,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
 
   <para>
    Currently, only the B-tree and GiST index types support multicolumn
-   indexes.  Up to 32 columns may be specified.  (This limit can be
+   indexes.  Up to 32 columns can be specified.  (This limit can be
    altered when building <productname>PostgreSQL</productname>; see the
    file <filename>pg_config_manual.h</filename>.)
   </para>
@@ -413,7 +413,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
 
   <para>
    In all but the simplest applications, there are various combinations of
-   indexes that may be useful, and the database developer must make
+   indexes that might be useful, and the database developer must make
    trade-offs to decide which indexes to provide.  Sometimes multicolumn
    indexes are best, but sometimes it's better to create separate indexes
    and rely on the index-combination feature.  For example, if your
@@ -450,7 +450,7 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
   </indexterm>
 
   <para>
-   Indexes may also be used to enforce uniqueness of a column's value,
+   Indexes can also be used to enforce uniqueness of a column's value,
    or the uniqueness of the combined values of more than one column.
 <synopsis>
 CREATE UNIQUE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <optional>, ...</optional>);
@@ -538,7 +538,7 @@ CREATE INDEX people_names ON people ((first_name || ' ' || last_name));
   <para>
    The syntax of the <command>CREATE INDEX</> command normally requires
    writing parentheses around index expressions, as shown in the second
-   example.  The parentheses may be omitted when the expression is just
+   example.  The parentheses can be omitted when the expression is just
    a function call, as in the first example.
   </para>
 
@@ -687,7 +687,7 @@ SELECT * FROM orders WHERE billed is not true AND amount &gt; 5000.00;
 <programlisting>
 SELECT * FROM orders WHERE order_nr = 3501;
 </programlisting>
-    The order 3501 may be among the billed or among the unbilled
+    The order 3501 might be among the billed or among the unbilled
     orders.
    </para>
   </example>
@@ -755,8 +755,8 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
 
   <para>
    Finally, a partial index can also be used to override the system's
-   query plan choices.  It may occur that data sets with peculiar
-   distributions will cause the system to use an index when it really
+   query plan choices.  Also, data sets with peculiar
+   distributions might cause the system to use an index when it really
    should not.  In that case the index can be set up so that it is not
    available for the offending query.  Normally,
    <productname>PostgreSQL</> makes reasonable choices about index
@@ -795,7 +795,7 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
   </indexterm>
 
   <para>
-   An index definition may specify an <firstterm>operator
+   An index definition can specify an <firstterm>operator
    class</firstterm> for each column of an index.
 <synopsis>
 CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <replaceable>opclass</replaceable> <optional>, ...</optional>);
@@ -994,15 +994,15 @@ SELECT am.amname AS index_method,
      via run-time parameters (described in <xref
      linkend="runtime-config-query-constants">).
      An inaccurate selectivity estimate is due to
-     insufficient statistics.  It may be possible to improve this by
+     insufficient statistics.  It might be possible to improve this by
      tuning the statistics-gathering parameters (see
      <xref linkend="sql-altertable" endterm="sql-altertable-title">).
     </para>
 
     <para>
      If you do not succeed in adjusting the costs to be more
-     appropriate, then you may have to resort to forcing index usage
-     explicitly.  You may also want to contact the
+     appropriate, then you might have to resort to forcing index usage
+     explicitly.  You might also want to contact the
      <productname>PostgreSQL</> developers to examine the issue.
     </para>
    </listitem>

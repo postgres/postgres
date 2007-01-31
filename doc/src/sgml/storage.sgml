@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.13 2006/11/25 22:55:59 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.14 2007/01/31 20:56:19 momjian Exp $ -->
 
 <chapter id="storage">
 
@@ -365,7 +365,7 @@ fixed size (usually 8 kB, although a different page size can be selected
 when compiling the server).  In a table, all the pages are logically
 equivalent, so a particular item (row) can be stored in any page.  In
 indexes, the first page is generally reserved as a <firstterm>metapage</>
-holding control information, and there may be different types of pages
+holding control information, and there can be different types of pages
 within the index, depending on the index access method.
 </para>
 
@@ -503,7 +503,7 @@ data. Empty in ordinary tables.</entry>
  </table>
 
  <para>
-  All the details may be found in
+  All the details can be found in
   <filename>src/include/storage/bufpage.h</filename>.
  </para>
 
@@ -519,7 +519,7 @@ data. Empty in ordinary tables.</entry>
   The number of item identifiers present can be determined by looking at
   <structfield>pd_lower</>, which is increased to allocate a new identifier.
   Because an item
-  identifier is never moved until it is freed, its index may be used on a
+  identifier is never moved until it is freed, its index can be used on a
   long-term basis to reference an item, even when the item itself is moved
   around on the page to compact free space.  In fact, every pointer to an
   item (<type>ItemPointer</type>, also known as
@@ -540,8 +540,8 @@ data. Empty in ordinary tables.</entry>
  
  <para>
  
-  The final section is the <quote>special section</quote> which may
-  contain anything the access method wishes to store.  For example,
+  The final section is the <quote>special section</quote> which can
+ contain anything the access method wishes to store.  For example,
   b-tree indexes store links to the page's left and right siblings,
   as well as some other data relevant to the index structure.
   Ordinary tables do not use a special section at all (indicated by setting
@@ -647,7 +647,7 @@ data. Empty in ordinary tables.</entry>
  </table>
 
  <para>
-   All the details may be found in
+   All the details can be found in
    <filename>src/include/access/htup.h</filename>.
  </para>
 
@@ -673,7 +673,7 @@ data. Empty in ordinary tables.</entry>
   variable length field (attlen = -1) then it's a bit more complicated.
   All variable-length datatypes share the common header structure
   <type>varattrib</type>, which includes the total length of the stored
-  value and some flag bits.  Depending on the flags, the data may be either
+  value and some flag bits.  Depending on the flags, the data can be either
   inline or in a <acronym>TOAST</> table;
   it might be compressed, too (see <xref linkend="storage-toast">).
   

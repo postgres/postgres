@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.36 2006/10/23 18:10:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.37 2007/01/31 20:56:18 momjian Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -29,7 +29,7 @@
   available as an <quote>untrusted</> language (meaning it does not
   offer any way of restricting what users can do in it).  It has
   therefore been renamed to <literal>plpythonu</>.  The trusted
-  variant <literal>plpython</> may become available again in future,
+  variant <literal>plpython</> might become available again in future,
   if a new secure execution mechanism is developed in Python.
  </para>
 
@@ -401,7 +401,7 @@ $$ LANGUAGE plpythonu;
   </para>
 
   <para>
-   If <literal>TD["when"]</literal> is <literal>BEFORE</>, you may
+   If <literal>TD["when"]</literal> is <literal>BEFORE</>, you can
    return <literal>None</literal> or <literal>"OK"</literal> from the
    Python function to indicate the row is unmodified,
    <literal>"SKIP"</> to abort the event, or <literal>"MODIFY"</> to

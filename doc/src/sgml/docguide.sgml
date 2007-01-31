@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.68 2007/01/31 15:23:28 teodor Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.69 2007/01/31 20:56:17 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -79,7 +79,7 @@
 
   <para>
    The following tools are used to process the documentation.  Some
-   may be optional, as noted.
+   might be optional, as noted.
 
    <variablelist>
     <varlistentry>
@@ -168,7 +168,7 @@
   <para>
    We have documented experience with several installation methods for
    the various tools that are needed to process the documentation.
-   These will be described below.  There may be some other packaged
+   These will be described below.  There might be some other packaged
    distributions for these tools. Please report package status to the
    documentation mailing list, and we will include that information
    here.
@@ -673,7 +673,7 @@ save_size.pdfjadetex = 10000
      It appears that current versions of the <productname>PostgreSQL</productname> documentation
      trigger some bug in or exceed the size limit of OpenJade.  If the
      build process of the <acronym>RTF</acronym> version hangs for a
-     long time and the output file still has size 0, then you may have
+     long time and the output file still has size 0, then you might have
      hit that problem.  (But keep in mind that a normal build takes 5
      to 10 minutes, so don't abort too soon.)
     </para>
@@ -1010,7 +1010,7 @@ save_size.pdfjadetex = 10000
     <para>
      The <productname>PostgreSQL</productname> distribution includes a
      parsed DTD definitions file <filename>reference.ced</filename>.
-     You may find that when using <productname>PSGML</productname>, a
+     You might find that when using <productname>PSGML</productname>, a
      comfortable way of working with these separate files of book
      parts is to insert a proper <literal>DOCTYPE</literal>
      declaration while you're editing them.  If you are working on
@@ -1073,7 +1073,7 @@ save_size.pdfjadetex = 10000
    <para>
     Reference pages that describe executable commands should contain
     the following sections, in this order.  Sections that do not apply
-    may be omitted.  Additional top-level sections should only be used
+    can be omitted.  Additional top-level sections should only be used
     in special circumstances; often that information belongs in the
     <quote>Usage</quote> section.
 
@@ -1114,7 +1114,7 @@ save_size.pdfjadetex = 10000
       <listitem>
        <para>
         A list describing each command-line option.  If there are a
-        lot of options, subsections may be used.
+        lot of options, subsections can be used.
        </para>
       </listitem>
      </varlistentry>

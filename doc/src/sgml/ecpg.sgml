@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.77 2006/10/23 18:10:31 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.78 2007/01/31 20:56:17 momjian Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -59,7 +59,7 @@
 EXEC SQL ...;
 </programlisting>
    These statements syntactically take the place of a C statement.
-   Depending on the particular statement, they may appear at the
+   Depending on the particular statement, they can appear at the
    global level or within a function.  Embedded
    <acronym>SQL</acronym> statements follow the case-sensitivity rules
    of normal <acronym>SQL</acronym> code, and not those of C.
@@ -127,7 +127,7 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
    (single-quoted) string literal or a variable reference.  The
    connection target <literal>DEFAULT</literal> initiates a connection
    to the default database under the default user name.  No separate
-   user name or connection name may be specified in that case.
+   user name or connection name can be specified in that case.
   </para>
 
   <para>
@@ -160,7 +160,7 @@ EXEC SQL CONNECT TO <replaceable>target</replaceable> <optional>AS <replaceable>
    </itemizedlist>
 
    As above, the parameters <replaceable>username</replaceable> and
-   <replaceable>password</replaceable> may be an SQL identifier, an
+   <replaceable>password</replaceable> can be an SQL identifier, an
    SQL string literal, or a reference to a character variable.
   </para>
 
@@ -694,7 +694,7 @@ EXEC SQL END DECLARE SECTION;
 
 EXEC SQL EXECUTE IMMEDIATE :stmt;
 </programlisting>
-   You may not execute statements that retrieve data (e.g.,
+   You cannot execute statements that retrieve data (e.g.,
    <command>SELECT</command>) this way.
   </para>
 
@@ -728,7 +728,7 @@ EXEC SQL PREPARE mystmt FROM :stmt;
  ...
 EXEC SQL EXECUTE mystmt INTO v1, v2, v3 USING 37;
 </programlisting>
-   An <command>EXECUTE</command> command may have an
+   An <command>EXECUTE</command> command can have an
    <literal>INTO</literal> clause, a <literal>USING</literal> clause,
    both, or neither.
   </para>
@@ -3665,7 +3665,7 @@ risnull(CINTTYPE, (char *) &amp;i);
    <command>FETCH</command> statement.  An SQL descriptor area groups
    the data of one row of data together with metadata items into one
    data structure.  The metadata is particularly useful when executing
-   dynamic SQL statements, where the nature of the result columns may
+   dynamic SQL statements, where the nature of the result columns might
    not be known ahead of time.
   </para>
 
@@ -4310,7 +4310,7 @@ struct
       <para>
        The statement sent to the <productname>PostgreSQL</productname>
        server was empty.  (This cannot normally happen in an embedded
-       SQL program, so it may point to an internal error.)  (SQLSTATE
+       SQL program, so it might point to an internal error.)  (SQLSTATE
        YE002)
       </para>
      </listitem>
@@ -4689,7 +4689,7 @@ cc -o myprog prog1.o prog2.o ... -lecpg
 
   <para>
    If you manage the build process of a larger project using
-   <application>make</application>, it may be convenient to include
+   <application>make</application>, it might be convenient to include
    the following implicit rule to your makefiles:
 <programlisting>
 ECPG = ecpg
@@ -4949,7 +4949,7 @@ EXEC SQL OPEN <replaceable>cursor</replaceable>;
 
    <para>
     Here is a complete example describing the output of the
-    preprocessor of a file <filename>foo.pgc</filename> (details may
+    preprocessor of a file <filename>foo.pgc</filename> (details might
     change with each particular version of the preprocessor):
 <programlisting>
 EXEC SQL BEGIN DECLARE SECTION;

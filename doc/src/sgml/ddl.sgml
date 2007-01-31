@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.71 2006/12/30 20:31:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.72 2007/01/31 20:56:16 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -203,10 +203,10 @@ CREATE TABLE products (
   </para>
 
   <para>
-   The default value may be an expression, which will be
+   The default value can be an expression, which will be
    evaluated whenever the default value is inserted
    (<emphasis>not</emphasis> when the table is created).  A common example
-   is that a <type>timestamp</type> column may have a default of <literal>now()</>,
+   is that a <type>timestamp</type> column can have a default of <literal>now()</>,
    so that it gets set to the time of row insertion.  Another common
    example is generating a <quote>serial number</> for each row.
    In <productname>PostgreSQL</productname> this is typically done by
@@ -457,7 +457,7 @@ CREATE TABLE products (
     The <literal>NOT NULL</literal> constraint has an inverse: the
     <literal>NULL</literal> constraint.  This does not mean that the
     column must be null, which would surely be useless.  Instead, this
-    simply selects the default behavior that the column may be null.
+    simply selects the default behavior that the column might be null.
     The <literal>NULL</literal> constraint is not present in the SQL
     standard and should not be used in portable applications.  (It was
     only added to <productname>PostgreSQL</productname> to be
@@ -558,7 +558,7 @@ CREATE TABLE products (
     unique constraint it is possible to store duplicate
     rows that contain a null value in at least one of the constrained
     columns.  This behavior conforms to the SQL standard, but we have
-    heard that other SQL databases may not follow this rule.  So be
+    heard that other SQL databases might not follow this rule.  So be
     careful when developing applications that are intended to be
     portable.
    </para>
@@ -1004,7 +1004,7 @@ CREATE TABLE order_items (
        (Of course, this is only possible if the table contains fewer
        than 2<superscript>32</> (4 billion) rows, and in practice the
        table size had better be much less than that, or performance
-       may suffer.)
+       might suffer.)
       </para>
      </listitem>
      <listitem>
@@ -1289,7 +1289,7 @@ ALTER TABLE products ALTER COLUMN price TYPE numeric(10,2);
    <para>
     <productname>PostgreSQL</> will attempt to convert the column's
     default value (if any) to the new type, as well as any constraints
-    that involve the column.  But these conversions may fail, or may
+    that involve the column.  But these conversions might fail, or might
     produce surprising results.  It's often best to drop any constraints
     on the column before altering its type, and then add back suitably
     modified constraints afterwards.
@@ -1457,9 +1457,9 @@ REVOKE ALL ON accounts FROM PUBLIC;
    in turn contain tables.  Schemas also contain other kinds of named
    objects, including data types, functions, and operators.  The same
    object name can be used in different schemas without conflict; for
-   example, both <literal>schema1</> and <literal>myschema</> may
+   example, both <literal>schema1</> and <literal>myschema</> can
    contain tables named <literal>mytable</>.  Unlike databases,
-   schemas are not rigidly separated: a user may access objects in any
+   schemas are not rigidly separated: a user can access objects in any
    of the schemas in the database he is connected to, if he has
    privileges to do so.
   </para>
@@ -1586,7 +1586,7 @@ CREATE SCHEMA <replaceable>schemaname</replaceable> AUTHORIZATION <replaceable>u
 
    <para>
     Schema names beginning with <literal>pg_</> are reserved for
-    system purposes and may not be created by users.
+    system purposes and cannot be created by users.
    </para>
   </sect2>
 
@@ -1746,7 +1746,7 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
     own.  To allow that, the owner of the schema needs to grant the
     <literal>USAGE</literal> privilege on the schema.  To allow users
     to make use of the objects in the schema, additional privileges
-    may need to be granted, as appropriate for the object.
+    might need to be granted, as appropriate for the object.
    </para>
 
    <para>
@@ -1786,7 +1786,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
     the search path.  If it is not named explicitly in the path then
     it is implicitly searched <emphasis>before</> searching the path's
     schemas.  This ensures that built-in names will always be
-    findable.  However, you may explicitly place
+    findable.  However, you can explicitly place
     <literal>pg_catalog</> at the end of your search path if you
     prefer to have user-defined names override built-in names.
    </para>
@@ -1794,7 +1794,7 @@ REVOKE CREATE ON SCHEMA public FROM PUBLIC;
    <para>
     In <productname>PostgreSQL</productname> versions before 7.3,
     table names beginning with <literal>pg_</> were reserved.  This is
-    no longer true: you may create such a table name if you wish, in
+    no longer true: you can create such a table name if you wish, in
     any non-system schema.  However, it's best to continue to avoid
     such names, to ensure that you won't suffer a conflict if some
     future version defines a system table named the same as your
@@ -1993,7 +1993,7 @@ SELECT name, altitude
   </para>
 
   <para>
-   In some cases you may wish to know which table a particular row
+   In some cases you might wish to know which table a particular row
    originated from. There is a system column called
    <structfield>tableoid</structfield> in each table which can tell you the
    originating table:
@@ -2242,7 +2242,7 @@ VALUES ('New York', NULL, NULL, 'NY');
 
     <listitem>
      <para>
-      Bulk loads and deletes may be accomplished by adding or removing
+      Bulk loads and deletes can be accomplished by adding or removing
       partitions, if that requirement is planned into the partitioning design.
       <command>ALTER TABLE</> is far faster than a bulk operation.
       It also entirely avoids the <command>VACUUM</command>
@@ -2566,7 +2566,7 @@ DO INSTEAD
     <para>
      As we can see, a complex partitioning scheme could require a
      substantial amount of DDL. In the above example we would be
-     creating a new partition each month, so it may be wise to write a
+     creating a new partition each month, so it might be wise to write a
      script that generates the required DDL automatically.
     </para>
 
@@ -2624,7 +2624,7 @@ ALTER TABLE measurement_y2003m02 NO INHERIT measurement;
      This allows further operations to be performed on the data before
      it is dropped. For example, this is often a useful time to back up
      the data using <command>COPY</>, <application>pg_dump</>, or
-     similar tools. It can also be a useful time to aggregate data
+     similar tools. It might also be a useful time to aggregate data
      into smaller formats, perform other data manipulations, or run
      reports.
    </para>
