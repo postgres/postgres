@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.192 2007/01/31 20:56:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.193 2007/01/31 21:03:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,7 +213,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							func_signature_string(funcname, nargs,
 												  actual_arg_types)),
 					 errhint("Could not choose a best candidate function. "
-							 "You might need to add explicit type casts."),
+							 "You may need to add explicit type casts."),
 					 parser_errposition(pstate, location)));
 		else
 			ereport(ERROR,
@@ -222,7 +222,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 							func_signature_string(funcname, nargs,
 												  actual_arg_types)),
 			errhint("No function matches the given name and argument types. "
-					"You might need to add explicit type casts."),
+					"You may need to add explicit type casts."),
 					 parser_errposition(pstate, location)));
 	}
 

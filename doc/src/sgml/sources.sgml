@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.21 2007/01/31 20:56:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.22 2007/01/31 21:03:37 momjian Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -95,7 +95,7 @@ ereport(ERROR,
                 func_signature_string(funcname, nargs,
                                       actual_arg_types)),
          errhint("Unable to choose a best candidate function. "
-                 "You might need to add explicit typecasts.")));
+                 "You may need to add explicit typecasts.")));
 </programlisting>
     This illustrates the use of format codes to embed run-time values into
     a message text.  Also, an optional <quote>hint</> message is provided.
