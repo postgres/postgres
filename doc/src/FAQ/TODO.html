@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue Jan 30 22:07:21 EST 2007
+Last updated:           Tue Jan 30 22:17:43 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -820,6 +820,12 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Consider compressing indexes by storing key values duplicated in
   several rows as a single index entry
 <p>  This is difficult because it requires datatype-specific knowledge.
+</p>
+  </li><li>Add REINDEX CONCURRENTLY, like CREATE INDEX CONCURRENTLY
+<p>  This is difficult because you must upgrade to an exclusive table lock
+  to replace the existing index file.  CREATE INDEX CONCURRENTLY does not
+  have this complication.  This would allow index compaction without
+  downtime.
 </p>
   </li><li>Inheritance
   <ul>
