@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.24 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.25 2007/02/01 20:28:08 tgl Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -440,7 +440,7 @@ cannot open file "%s"
    </para>
 
    <para>
-    The second form indicates the the functionality of opening the named file
+    The second form indicates that the functionality of opening the named file
     does not exist at all in the program, or that it's conceptually
     impossible.  The present tense is appropriate because the condition will
     persist indefinitely. 
