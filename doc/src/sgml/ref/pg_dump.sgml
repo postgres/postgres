@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.93 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dump.sgml,v 1.94 2007/02/01 04:39:33 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -644,15 +644,17 @@ PostgreSQL documentation
 
      <varlistentry>
       <term><option>-U <replaceable>username</replaceable></option></term>
+      <term><option>--username=<replaceable class="parameter">username</replaceable></option></term>
       <listitem>
        <para>
-        Connect as the given user
+        Connect as the given user.
        </para>
       </listitem>
      </varlistentry>
 
      <varlistentry>
       <term><option>-W</option></term>
+      <term><option>--password</option></term>
       <listitem>
        <para>
         Force a password prompt.  This should happen automatically if
