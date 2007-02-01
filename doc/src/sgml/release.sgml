@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.488.2.2 2007/01/05 22:34:46 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.488.2.3 2007/02/01 05:12:46 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -509,6 +509,15 @@ links to the main documentation.
         If you have been using a very small <varname>random_page_cost</>,
         please recheck your test cases.
        </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Change behavior of <command>pg_dump</> <literal>-n</> and
+        <literal>-t</> options.  (Greg Sabino Mullane)
+       </para>
+       <para>
+        See the <command>pg_dump</> manual page for more details.
       </listitem>
 
       <listitem>
