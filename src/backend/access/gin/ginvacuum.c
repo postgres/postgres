@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.11 2007/01/05 22:19:21 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.12 2007/02/01 04:16:08 neilc Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -466,7 +466,7 @@ ginVacuumPostingTree(GinVacuumState *gvs, BlockNumber rootBlkno)
 
 /*
  * returns modified page or NULL if page isn't modified.
- * Function works with original page until first change is occured,
+ * Function works with original page until first change is occurred,
  * then page is copied into temporary one.
  */
 static Page
