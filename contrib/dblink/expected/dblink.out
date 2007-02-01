@@ -509,7 +509,7 @@ SELECT dblink_close('myconn','rmt_foo_cursor');
 -- this should fail because there is no open transaction
 SELECT dblink_exec('myconn','DECLARE xact_test CURSOR FOR SELECT * FROM foo');
 ERROR:  sql error
-DETAIL:  ERROR:  DECLARE CURSOR may only be used in transaction blocks
+DETAIL:  ERROR:  DECLARE CURSOR can only be used in transaction blocks
 
 -- reset remote transaction state
 SELECT dblink_exec('myconn','ABORT');
@@ -717,7 +717,7 @@ UNION
 (SELECT * from dblink_get_result('dtest3') as t3(f1 int, f2 text, f3 text[]))
 ORDER by f1;
 SELECT dblink_get_connections();
- dblink_get_connections
+ dblink_get_connections 
 ------------------------
  {dtest1,dtest2,dtest3}
 (1 row)
