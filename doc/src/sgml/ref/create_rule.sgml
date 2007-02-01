@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.49 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.50 2007/02/01 00:28:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -248,7 +248,7 @@ SELECT * FROM t1;
    command, the <command>NOTIFY</command> command will be executed
    unconditionally, that is, the <command>NOTIFY</command> will be
    issued even if there are not any rows that the rule should apply
-   to.  For example, in
+   to.  For example, in:
 <programlisting>
 CREATE RULE notify_me AS ON UPDATE TO mytable DO ALSO NOTIFY mytable;
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.65 2007/01/31 23:26:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.66 2007/02/01 00:28:19 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -623,7 +623,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
 <screen>
 <prompt>$</prompt> <userinput>pg_restore -l db.dump &gt; db.list</userinput>
 </screen>
-   The listing file consists of a header and one line for each item, e.g.,
+   The listing file consists of a header and one line for each item, e.g.:
 <programlisting>
 ;
 ; Archive created at Fri Jul 28 22:28:36 2000
@@ -654,7 +654,7 @@ CREATE DATABASE foo WITH TEMPLATE template0;
   </para>
 
   <para>
-   Lines in the file can be commented out, deleted, and reordered. For example,
+   Lines in the file can be commented out, deleted, and reordered. For example:
 <programlisting>
 10; 145433 TABLE map_resolutions postgres
 ;2; 145344 TABLE species postgres

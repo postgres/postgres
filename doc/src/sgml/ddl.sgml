@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.72 2007/01/31 20:56:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.73 2007/02/01 00:28:16 momjian Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -210,7 +210,7 @@ CREATE TABLE products (
    so that it gets set to the time of row insertion.  Another common
    example is generating a <quote>serial number</> for each row.
    In <productname>PostgreSQL</productname> this is typically done by
-   something like
+   something like:
 <programlisting>
 CREATE TABLE products (
     product_no integer <emphasis>DEFAULT nextval('products_product_no_seq')</emphasis>,
@@ -319,7 +319,7 @@ CREATE TABLE products (
    <para>
     A check constraint can also refer to several columns.  Say you
     store a regular price and a discounted price, and you want to
-    ensure that the discounted price is lower than the regular price.
+    ensure that the discounted price is lower than the regular price:
 <programlisting>
 CREATE TABLE products (
     product_no integer,
@@ -348,7 +348,7 @@ CREATE TABLE products (
     column it is attached to.  (<productname>PostgreSQL</productname> doesn't
     enforce that rule, but you should follow it if you want your table
     definitions to work with other database systems.)  The above example could
-    also be written as
+    also be written as:
 <programlisting>
 CREATE TABLE products (
     product_no integer,
@@ -360,7 +360,7 @@ CREATE TABLE products (
     CHECK (price &gt; discounted_price)
 );
 </programlisting>
-    or even
+    or even:
 <programlisting>
 CREATE TABLE products (
     product_no integer,
@@ -463,7 +463,7 @@ CREATE TABLE products (
     only added to <productname>PostgreSQL</productname> to be
     compatible with some other database systems.)  Some users, however,
     like it because it makes it easy to toggle the constraint in a
-    script file.  For example, you could start with
+    script file.  For example, you could start with:
 <programlisting>
 CREATE TABLE products (
     product_no integer NULL,
@@ -497,7 +497,7 @@ CREATE TABLE products (
    <para>
     Unique constraints ensure that the data contained in a column or a
     group of columns is unique with respect to all the rows in the
-    table.  The syntax is
+    table.  The syntax is:
 <programlisting>
 CREATE TABLE products (
     product_no integer <emphasis>UNIQUE</emphasis>,
@@ -505,7 +505,7 @@ CREATE TABLE products (
     price numeric
 );
 </programlisting>
-    when written as a column constraint, and
+    when written as a column constraint, and:
 <programlisting>
 CREATE TABLE products (
     product_no integer,
@@ -691,7 +691,7 @@ CREATE TABLE orders (
    </para>
 
    <para>
-    You can also shorten the above command to
+    You can also shorten the above command to:
 <programlisting>
 CREATE TABLE orders (
     order_id integer PRIMARY KEY,
@@ -781,7 +781,7 @@ CREATE TABLE order_items (
     many-to-many relationship example above: when someone wants to
     remove a product that is still referenced by an order (via
     <literal>order_items</literal>), we disallow it.  If someone
-    removes an order, the order items are removed as well.
+    removes an order, the order items are removed as well:
 <programlisting>
 CREATE TABLE products (
     product_no integer PRIMARY KEY,
@@ -1230,7 +1230,7 @@ ALTER TABLE products DROP CONSTRAINT some_name;
 
    <para>
     This works the same for all constraint types except not-null
-    constraints. To drop a not null constraint use
+    constraints. To drop a not null constraint use:
 <programlisting>
 ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;
 </programlisting>
@@ -1256,7 +1256,7 @@ ALTER TABLE products ALTER COLUMN price SET DEFAULT 7.77;
    </para>
 
    <para>
-    To remove any default value, use
+    To remove any default value, use:
 <programlisting>
 ALTER TABLE products ALTER COLUMN price DROP DEFAULT;
 </programlisting>
@@ -1383,7 +1383,7 @@ ALTER TABLE products RENAME TO items;
    To assign privileges, the <command>GRANT</command> command is
    used. For example, if <literal>joe</literal> is an existing user, and
    <literal>accounts</literal> is an existing table, the privilege to
-   update the table can be granted with
+   update the table can be granted with:
 <programlisting>
 GRANT UPDATE ON accounts TO joe;
 </programlisting>
@@ -1545,7 +1545,7 @@ CREATE SCHEMA myschema;
    </para>
 
    <para>
-    So to create a table in the new schema, use
+    So to create a table in the new schema, use:
 <programlisting>
 CREATE TABLE myschema.mytable (
  ...
@@ -1560,11 +1560,11 @@ CREATE TABLE myschema.mytable (
 
    <para>
     To drop a schema if it's empty (all objects in it have been
-    dropped), use
+    dropped), use:
 <programlisting>
 DROP SCHEMA myschema;
 </programlisting>
-    To drop a schema including all contained objects, use
+    To drop a schema including all contained objects, use:
 <programlisting>
 DROP SCHEMA myschema CASCADE;
 </programlisting>
@@ -1606,7 +1606,7 @@ CREATE SCHEMA <replaceable>schemaname</replaceable> AUTHORIZATION <replaceable>u
 <programlisting>
 CREATE TABLE products ( ... );
 </programlisting>
-    and
+    and:
 <programlisting>
 CREATE TABLE public.products ( ... );
 </programlisting>
@@ -1686,7 +1686,7 @@ SHOW search_path;
    </para>
 
    <para>
-    To put our new schema in the path, we use
+    To put our new schema in the path, we use:
 <programlisting>
 SET search_path TO myschema,public;
 </programlisting>
@@ -1701,7 +1701,7 @@ DROP TABLE mytable;
    </para>
 
    <para>
-    We could also have written
+    We could also have written:
 <programlisting>
 SET search_path TO myschema;
 </programlisting>
@@ -1724,7 +1724,7 @@ SET search_path TO myschema;
 <synopsis>
 <literal>OPERATOR(</><replaceable>schema</><literal>.</><replaceable>operator</><literal>)</>
 </synopsis>
-    This is needed to avoid syntactic ambiguity.  An example is
+    This is needed to avoid syntactic ambiguity.  An example is:
 <programlisting>
 SELECT 3 OPERATOR(pg_catalog.+) 4;
 </programlisting>
@@ -1946,7 +1946,7 @@ CREATE TABLE capitals (
    The latter behavior is the default.
    For example, the following query finds the names of all cities,
    including state capitals, that are located at an altitude over
-   500ft:
+   500 feet:
 
 <programlisting>
 SELECT name, altitude
@@ -1968,7 +1968,7 @@ SELECT name, altitude
 
   <para>
    On the other hand, the following query finds all the cities that
-   are not state capitals and are situated at an altitude over 500ft:
+   are not state capitals and are situated at an altitude over 500 feet:
 
 <programlisting>
 SELECT name, altitude
@@ -2511,7 +2511,7 @@ CREATE INDEX measurement_y2006m01_logdate ON measurement_y2006m01 (logdate);
         If data will be added only to the latest partition, we can
         set up a very simple rule to insert data. We must
         redefine this each month so that it always points to the
-        current partition.
+        current partition:
 
 <programlisting>
 CREATE OR REPLACE RULE measurement_current_partition AS
@@ -2525,7 +2525,7 @@ DO INSTEAD
 
         We might want to insert data and have the server automatically
         locate the partition into which the row should be added. We
-        could do this with a more complex set of rules as shown below.
+        could do this with a more complex set of rules as shown below:
 
 <programlisting>
 CREATE RULE measurement_insert_y2004m02 AS
@@ -2632,7 +2632,7 @@ ALTER TABLE measurement_y2003m02 NO INHERIT measurement;
    <para>
      Similarly we can add a new partition to handle new data. We can create an
      empty partition in the partitioned table just as the original partitions
-     were created above. 
+     were created above:
 
 <programlisting>
 CREATE TABLE measurement_y2006m02 (
@@ -2643,7 +2643,7 @@ CREATE TABLE measurement_y2006m02 (
      As an alternative, it is sometimes more convenient to create the
      new table outside the partition structure, and make it a proper
      partition later. This allows the data to be loaded, checked, and
-     transformed prior to it appearing in the partitioned table.
+     transformed prior to it appearing in the partitioned table:
 
 <programlisting>
 CREATE TABLE measurement_y2006m02
@@ -2795,7 +2795,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
     <listitem>
      <para>
       Don't forget that you still need to run <command>ANALYZE</command>
-      on each partition individually. A command like
+      on each partition individually. A command like:
 <programlisting>
 ANALYZE measurement;
 </programlisting>

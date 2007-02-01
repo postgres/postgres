@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.123 2007/01/31 20:56:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.124 2007/02/01 00:28:18 momjian Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -244,7 +244,7 @@ SELECT tf1(17, 100.0);
     <para>
      In practice one would probably like a more useful result from the
      function than a constant 1, so a more likely definition
-     is
+     is:
 
 <programlisting>
 CREATE FUNCTION tf1 (integer, numeric) RETURNS numeric AS $$
@@ -811,7 +811,7 @@ SELECT * FROM dup(22);
    <para>
     When creating a family of overloaded functions, one should be
     careful not to create ambiguities.  For instance, given the
-    functions
+    functions:
 <programlisting>
 CREATE FUNCTION test(int, real) RETURNS ...
 CREATE FUNCTION test(smallint, double precision) RETURNS ...
@@ -845,7 +845,7 @@ CREATE FUNCTION test(smallint, double precision) RETURNS ...
     (usually the internal one).  The alternative form of the
     <literal>AS</> clause for the SQL <command>CREATE
     FUNCTION</command> command decouples the SQL function name from
-    the function name in the C source code.  For instance,
+    the function name in the C source code.  For instance:
 <programlisting>
 CREATE FUNCTION test(int) RETURNS int
     AS '<replaceable>filename</>', 'test_1arg'
@@ -1740,11 +1740,11 @@ CREATE FUNCTION concat_text(text, text) RETURNS text
     <para>
      The version-1 calling convention relies on macros to suppress most
      of the complexity of passing arguments and results.  The C declaration
-     of a version-1 function is always
+     of a version-1 function is always:
 <programlisting>
 Datum funcname(PG_FUNCTION_ARGS)
 </programlisting>
-     In addition, the macro call
+     In addition, the macro call:
 <programlisting>
 PG_FUNCTION_INFO_V1(funcname);
 </programlisting>
@@ -2274,7 +2274,7 @@ include $(PGXS)
     </para>
 
     <para>
-     Suppose we want to write a function to answer the query
+     Suppose we want to write a function to answer the query:
 
 <programlisting>
 SELECT name, c_overpaid(emp, 1500) AS overpaid
@@ -2397,7 +2397,7 @@ CREATE FUNCTION c_overpaid(emp, integer) RETURNS boolean
     <para>
      Several helper functions are available for setting up the needed
      <structname>TupleDesc</>.  The recommended way to do this in most
-     functions returning composite values is to call
+     functions returning composite values is to call:
 <programlisting>
 TypeFuncClass get_call_result_type(FunctionCallInfo fcinfo,
                                    Oid *resultTypeId,
@@ -2443,12 +2443,12 @@ TypeFuncClass get_call_result_type(FunctionCallInfo fcinfo,
 
     <para>
      Older, now-deprecated functions for obtaining
-     <structname>TupleDesc</>s are
+     <structname>TupleDesc</>s are:
 <programlisting>
 TupleDesc RelationNameGetTupleDesc(const char *relname)
 </programlisting>
      to get a <structname>TupleDesc</> for the row type of a named relation,
-     and
+     and:
 <programlisting>
 TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases)
 </programlisting>
@@ -2460,11 +2460,11 @@ TupleDesc TypeGetTupleDesc(Oid typeoid, List *colaliases)
     </para>
 
     <para>
-     Once you have a <structname>TupleDesc</>, call
+     Once you have a <structname>TupleDesc</>, call:
 <programlisting>
 TupleDesc BlessTupleDesc(TupleDesc tupdesc)
 </programlisting>
-     if you plan to work with Datums, or
+     if you plan to work with Datums, or:
 <programlisting>
 AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc)
 </programlisting>
@@ -2476,7 +2476,7 @@ AttInMetadata *TupleDescGetAttInMetadata(TupleDesc tupdesc)
     </para>
 
     <para>
-     When working with Datums, use
+     When working with Datums, use:
 <programlisting>
 HeapTuple heap_form_tuple(TupleDesc tupdesc, Datum *values, bool *isnull)
 </programlisting>
@@ -2484,7 +2484,7 @@ HeapTuple heap_form_tuple(TupleDesc tupdesc, Datum *values, bool *isnull)
     </para>
 
     <para>
-     When working with C strings, use
+     When working with C strings, use:
 <programlisting>
 HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 </programlisting>
@@ -2500,7 +2500,7 @@ HeapTuple BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 
     <para>
      Once you have built a tuple to return from your function, it
-     must be converted into a <type>Datum</>. Use
+     must be converted into a <type>Datum</>. Use:
 <programlisting>
 HeapTupleGetDatum(HeapTuple tuple)
 </programlisting>
@@ -2610,17 +2610,17 @@ typedef struct
     <para>
      An <acronym>SRF</> uses several functions and macros that
      automatically manipulate the <structname>FuncCallContext</>
-     structure (and expect to find it via <literal>fn_extra</>).  Use
+     structure (and expect to find it via <literal>fn_extra</>).  Use:
 <programlisting>
 SRF_IS_FIRSTCALL()
 </programlisting>
      to determine if your function is being called for the first or a
-     subsequent time. On the first call (only) use
+     subsequent time. On the first call (only) use:
 <programlisting>
 SRF_FIRSTCALL_INIT()
 </programlisting>
      to initialize the <structname>FuncCallContext</>. On every function call,
-     including the first, use
+     including the first, use:
 <programlisting>
 SRF_PERCALL_SETUP()
 </programlisting>
@@ -2630,14 +2630,14 @@ SRF_PERCALL_SETUP()
     </para>
 
     <para>
-     If your function has data to return, use
+     If your function has data to return, use:
 <programlisting>
 SRF_RETURN_NEXT(funcctx, result)
 </programlisting>
      to return it to the caller.  (<literal>result</> must be of type
      <type>Datum</>, either a single value or a tuple prepared as
      described above.)  Finally, when your function is finished
-     returning data, use
+     returning data, use:
 <programlisting>
 SRF_RETURN_DONE(funcctx)
 </programlisting>

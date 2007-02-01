@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.68 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.69 2007/02/01 00:28:17 momjian Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -27,7 +27,7 @@ CREATE TABLE test1 (
     content varchar
 );
 </programlisting>
-   and the application requires a lot of queries of the form
+   and the application requires a lot of queries of the form:
 <programlisting>
 SELECT content FROM test1 WHERE id = <replaceable>constant</replaceable>;
 </programlisting>
@@ -292,13 +292,13 @@ CREATE TABLE test2 (
 );
 </programlisting>
    (say, you keep your <filename class="directory">/dev</filename>
-   directory in a database...) and you frequently make queries like
+   directory in a database...) and you frequently make queries like:
 <programlisting>
 SELECT name FROM test2 WHERE major = <replaceable>constant</replaceable> AND minor = <replaceable>constant</replaceable>;
 </programlisting>
    then it might be appropriate to define an index on the columns
    <structfield>major</structfield> and
-   <structfield>minor</structfield> together, e.g.,
+   <structfield>minor</structfield> together, e.g.:
 <programlisting>
 CREATE INDEX test2_mm_idx ON test2 (major, minor);
 </programlisting>
@@ -666,12 +666,12 @@ CREATE INDEX orders_unbilled_index ON orders (order_nr)
    </para>
 
    <para>
-    A possible query to use this index would be
+    A possible query to use this index would be:
 <programlisting>
 SELECT * FROM orders WHERE billed is not true AND order_nr &lt; 10000;
 </programlisting>
     However, the index can also be used in queries that do not involve
-    <structfield>order_nr</> at all, e.g.,
+    <structfield>order_nr</> at all, e.g.:
 <programlisting>
 SELECT * FROM orders WHERE billed is not true AND amount &gt; 5000.00;
 </programlisting>

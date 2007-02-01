@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.38 2007/01/31 20:56:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/user-manag.sgml,v 1.39 2007/02/01 00:28:18 momjian Exp $ -->
 
 <chapter id="user-manag">
  <title>Database Roles and Privileges</title>
@@ -154,7 +154,7 @@ SELECT rolname FROM pg_roles;
         as the initial role name for a database connection.  A role with
         the <literal>LOGIN</> attribute can be considered the same thing
         as a <quote>database user</>.  To create a role with login privilege,
-        use either
+        use either:
 <programlisting>
 CREATE ROLE <replaceable>name</replaceable> LOGIN;
 CREATE USER <replaceable>name</replaceable>;
@@ -248,7 +248,7 @@ CREATE USER <replaceable>name</replaceable>;
    configuration settings described in <xref
    linkend="runtime-config">.  For example, if for some reason you
    want to disable index scans (hint: not a good idea) anytime you
-   connect, you can use
+   connect, you can use:
 <programlisting>
 ALTER ROLE myname SET enable_indexscan TO off;
 </programlisting>
@@ -305,7 +305,7 @@ ALTER ROLE myname SET enable_indexscan TO off;
    To assign privileges, the <command>GRANT</command> command is
    used. So, if <literal>joe</literal> is an existing role, and
    <literal>accounts</literal> is an existing table, the privilege to
-   update the table can be granted with
+   update the table can be granted with:
 <programlisting>
 GRANT UPDATE ON accounts TO joe;
 </programlisting>
@@ -390,7 +390,7 @@ REVOKE <replaceable>group_role</replaceable> FROM <replaceable>role1</replaceabl
    considered owned by the group role not the login role.  Second, member
    roles that have the <literal>INHERIT</> attribute automatically have use of
    privileges of roles they are members of.  As an example, suppose we have
-   done
+   done:
 <programlisting>
 CREATE ROLE joe LOGIN INHERIT;
 CREATE ROLE admin NOINHERIT;
@@ -405,19 +405,19 @@ GRANT wheel TO admin;
    granted to <literal>wheel</> are not available, because even though
    <literal>joe</> is indirectly a member of <literal>wheel</>, the
    membership is via <literal>admin</> which has the <literal>NOINHERIT</>
-   attribute.  After
+   attribute.  After:
 <programlisting>
 SET ROLE admin;
 </programlisting>
    the session would have use of only those privileges granted to
-   <literal>admin</>, and not those granted to <literal>joe</>.  After
+   <literal>admin</>, and not those granted to <literal>joe</>.  After:
 <programlisting>
 SET ROLE wheel;
 </programlisting>
    the session would have use of only those privileges granted to
    <literal>wheel</>, and not those granted to either <literal>joe</>
    or <literal>admin</>.  The original privilege state can be restored
-   with any of
+   with any of:
 <programlisting>
 SET ROLE joe;
 SET ROLE NONE;

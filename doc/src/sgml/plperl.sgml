@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.61 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.62 2007/02/01 00:28:17 momjian Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -175,7 +175,7 @@ SELECT name, empcomp(employee.*) FROM employee;
   <para>
    A PL/Perl function can return a composite-type result using the same
    approach: return a reference to a hash that has the required attributes.
-   For example,
+   For example:
 
 <programlisting>
 CREATE TYPE testrowperl AS (f1 integer, f2 text, f3 text);
@@ -259,13 +259,13 @@ SELECT * FROM perl_set();
   </para>
 
   <para>
-   Another way to use the <literal>strict</> pragma is to put
+   Another way to use the <literal>strict</> pragma is to put:
 <programlisting>
 use strict;
 </programlisting>
    in the function body.  But this only works in <application>PL/PerlU</>
    functions, since <literal>use</> is not a trusted operation.  In
-   <application>PL/Perl</> functions you can instead do
+   <application>PL/Perl</> functions you can instead do:
 <programlisting>
 BEGIN { strict->import(); }
 </programlisting>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.78 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.79 2007/02/01 00:28:16 momjian Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -54,7 +54,7 @@
    As already stated, programs written for the embedded
    <acronym>SQL</acronym> interface are normal C programs with special
    code inserted to perform database-related actions.  This special
-   code always has the form
+   code always has the form:
 <programlisting>
 EXEC SQL ...;
 </programlisting>
@@ -346,7 +346,7 @@ EXEC SQL COMMIT;
 
   <para>
    The first option is to explicitly choose a connection for each SQL
-   statement, for example
+   statement, for example:
 <programlisting>
 EXEC SQL AT <replaceable>connection-name</replaceable> SELECT ...;
 </programlisting>
@@ -428,16 +428,16 @@ EXEC SQL INSERT INTO sometable VALUES (:v1, 'foo', :v2);
    </para>
 
    <para>
-    This section starts with
+    This section starts with:
 <programlisting>
 EXEC SQL BEGIN DECLARE SECTION;
 </programlisting>
-    and ends with
+    and ends with:
 <programlisting>
 EXEC SQL END DECLARE SECTION;
 </programlisting>
     Between those lines, there must be normal C variable declarations,
-    such as
+    such as:
 <programlisting>
 int   x = 4;
 char  foo[16], bar[16];
@@ -483,7 +483,7 @@ EXEC SQL int i = 4;
       <listitem>
       <para>
        One of the most common uses of an array declaration is probably the
-       allocation of a char array as in
+       allocation of a char array as in:
 <programlisting>
 EXEC SQL BEGIN DECLARE SECTION;
     char str[50];
@@ -508,7 +508,7 @@ EXEC SQL BEGIN DECLARE SECTION;
     typedef long serial_t;
 EXEC SQL END DECLARE SECTION;
 </programlisting>
-       Note that you could also use
+       Note that you could also use:
 <programlisting>
 EXEC SQL TYPE serial_t IS long;
 </programlisting>
@@ -549,11 +549,11 @@ EXEC SQL END DECLARE SECTION;
        <para>
         The special type <type>VARCHAR</type> 
         is converted into a named <type>struct</> for every variable. A
-        declaration like
+        declaration like:
 <programlisting>
 VARCHAR var[180];
 </programlisting>
-         is converted into
+         is converted into:
 <programlisting>
 struct varchar_var { int len; char arr[180]; } var;
 </programlisting>
@@ -2381,7 +2381,7 @@ void PGTYPESdecimal_free(decimal *var);
    this mode is active, it tries to behave as if it were the <productname>Informix</productname>
    precompiler for <productname>Informix</productname> E/SQL. Generally spoken this will allow you to use
    the dollar sign instead of the <literal>EXEC SQL</> primitive to introduce
-   embedded SQL commands.
+   embedded SQL commands.:
 <programlisting>
    $int j = 3;
    $CONNECT TO :dbname;
@@ -2426,7 +2426,7 @@ void PGTYPESdecimal_free(decimal *var);
       <listitem>
        <para>
 	This statement closes the current connection. In fact, this is a
-	synonym for ecpg's <literal>DISCONNECT CURRENT</>.
+	synonym for ecpg's <literal>DISCONNECT CURRENT</>.:
 <programlisting>
     $CLOSE DATABASE;                /* close the current connection */
     EXEC SQL CLOSE DATABASE;
@@ -3991,7 +3991,7 @@ EXEC SQL WHENEVER <replaceable>condition</replaceable> <replaceable>action</repl
    <para>
     Here is an example that you might want to use in a simple program.
     It prints a simple message when a warning occurs and aborts the
-    program when an error happens.
+    program when an error happens:
 <programlisting>
 EXEC SQL WHENEVER SQLWARNING SQLPRINT;
 EXEC SQL WHENEVER SQLERROR STOP;
@@ -4007,7 +4007,7 @@ EXEC SQL WHENEVER SQLERROR STOP;
     <literal>EXEC SQL WHENEVER</literal> and the SQL statement causing
     the condition, regardless of the flow of control in the C program.
     So neither of the two following C program excerpts will have the
-    desired effect.
+    desired effect:
 <programlisting>
 /*
  * WRONG
@@ -4493,7 +4493,7 @@ EXEC SQL INCLUDE <replaceable>filename</replaceable>;
    </para>
 
    <para>
-    Note that this is <emphasis>not</emphasis> the same as
+    Note that this is <emphasis>not</emphasis> the same as:
 <programlisting>
 #include &lt;<replaceable>filename</replaceable>.h&gt;
 </programlisting>
@@ -4654,7 +4654,7 @@ EXEC SQL UPDATE Tbl SET col = MYNUMBER;
    Embedded SQL programs are typically named with an extension
    <filename>.pgc</filename>.  If you have a program file called
    <filename>prog1.pgc</filename>, you can preprocess it by simply
-   calling
+   calling:
 <programlisting>
 ecpg prog1.pgc
 </programlisting>
@@ -4938,7 +4938,7 @@ ECPG = ecpg
 
    <para>
     Note that not all SQL commands are treated in this way.  For
-    instance, an open cursor statement like
+    instance, an open cursor statement like:
 <programlisting>
 EXEC SQL OPEN <replaceable>cursor</replaceable>;
 </programlisting>

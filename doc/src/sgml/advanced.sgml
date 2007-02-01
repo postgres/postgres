@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.53 2007/01/31 20:56:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/advanced.sgml,v 1.54 2007/02/01 00:28:16 momjian Exp $ -->
 
  <chapter id="tutorial-advanced">
   <title>Advanced Features</title>
@@ -42,7 +42,7 @@
     is of particular interest to your application, but you do not want
     to type the query each time you need it.  You can create a
     <firstterm>view</firstterm> over the query, which gives a name to
-    the query that you can refer to like an ordinary table.
+    the query that you can refer to like an ordinary table:
 
 <programlisting>
 CREATE VIEW myview AS
@@ -158,7 +158,7 @@ DETAIL:  Key (city)=(Berkeley) is not present in table "cities".
     customer accounts, as well as total deposit balances for branches.
     Suppose that we want to record a payment of $100.00 from Alice's account
     to Bob's account.  Simplifying outrageously, the SQL commands for this
-    might look like
+    might look like:
 
 <programlisting>
 UPDATE accounts SET balance = balance - 100.00
@@ -219,7 +219,7 @@ UPDATE branches SET balance = balance + 100.00
     In <productname>PostgreSQL</>, a transaction is set up by surrounding
     the SQL commands of the transaction with
     <command>BEGIN</> and <command>COMMIT</> commands.  So our banking
-    transaction would actually look like
+    transaction would actually look like:
 
 <programlisting>
 BEGIN;
@@ -392,7 +392,7 @@ CREATE TABLE capitals (
    <para>
     For example, the  following  query finds the  names  of  all  cities,
     including  state capitals, that are located at an altitude 
-    over 500 ft.:
+    over 500 feet:
 
 <programlisting>
 SELECT name, altitude
@@ -415,7 +415,7 @@ SELECT name, altitude
    <para>
     On the other hand, the  following  query  finds
     all  the cities that are not state capitals and
-    are situated at an altitude of 500 ft. or higher:
+    are situated at an altitude of 500 feet or higher:
 
 <programlisting>
 SELECT name, altitude

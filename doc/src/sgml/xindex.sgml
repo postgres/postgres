@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.57 2007/01/31 20:56:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.58 2007/02/01 00:28:18 momjian Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -490,7 +490,7 @@
    is to write the B-tree comparison support function first, and then write the
    other functions as one-line wrappers around the support function.  This
    reduces the odds of getting inconsistent results for corner cases.
-   Following this approach, we first write
+   Following this approach, we first write:
 
 <programlisting>
 #define Mag(c)  ((c)-&gt;x*(c)-&gt;x + (c)-&gt;y*(c)-&gt;y)
@@ -509,7 +509,7 @@ complex_abs_cmp_internal(Complex *a, Complex *b)
 }
 </programlisting>
 
-   Now the less-than function looks like
+   Now the less-than function looks like:
 
 <programlisting>
 PG_FUNCTION_INFO_V1(complex_abs_lt);
@@ -628,7 +628,7 @@ CREATE OPERATOR CLASS complex_abs_ops
   </para>
 
   <para>
-   We could have written the operator entries more verbosely, as in
+   We could have written the operator entries more verbosely, as in:
 <programlisting>
         OPERATOR        1       &lt; (complex, complex) ,
 </programlisting>
@@ -899,7 +899,7 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
    Normally, declaring an operator as a member of an operator class
    (or family) means
    that the index method can retrieve exactly the set of rows
-   that satisfy a <literal>WHERE</> condition using the operator.  For example,
+   that satisfy a <literal>WHERE</> condition using the operator.  For example:
 <programlisting>
 SELECT * FROM table WHERE integer_column &lt; 4;
 </programlisting>
@@ -925,7 +925,7 @@ SELECT * FROM table WHERE integer_column &lt; 4;
    case there's not much value in storing the whole polygon in the index
    entry &mdash; we might as well store just a simpler object of type
    <type>box</>.  This situation is expressed by the <literal>STORAGE</>
-   option in <command>CREATE OPERATOR CLASS</>: we'd write something like
+   option in <command>CREATE OPERATOR CLASS</>: we'd write something like:
 
 <programlisting>
 CREATE OPERATOR CLASS polygon_ops

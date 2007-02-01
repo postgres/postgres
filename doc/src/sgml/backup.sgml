@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.96 2007/01/31 20:56:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.97 2007/02/01 00:28:16 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -221,20 +221,20 @@ psql -f <replaceable class="parameter">infile</replaceable> postgres
     <title>Use compressed dumps.</title>
     <para>
      You can use your favorite compression program, for example
-     <application>gzip</application>.
+     <application>gzip</application>:
 
 <programlisting>
 pg_dump <replaceable class="parameter">dbname</replaceable> | gzip &gt; <replaceable class="parameter">filename</replaceable>.gz
 </programlisting>
 
-     Reload with
+     Reload with:
 
 <programlisting>
 createdb <replaceable class="parameter">dbname</replaceable>
 gunzip -c <replaceable class="parameter">filename</replaceable>.gz | psql <replaceable class="parameter">dbname</replaceable>
 </programlisting>
 
-     or
+     or:
 
 <programlisting>
 cat <replaceable class="parameter">filename</replaceable>.gz | gunzip | psql <replaceable class="parameter">dbname</replaceable>
@@ -254,7 +254,7 @@ cat <replaceable class="parameter">filename</replaceable>.gz | gunzip | psql <re
 pg_dump <replaceable class="parameter">dbname</replaceable> | split -b 1m - <replaceable class="parameter">filename</replaceable>
 </programlisting>
 
-     Reload with
+     Reload with:
 
 <programlisting>
 createdb <replaceable class="parameter">dbname</replaceable>
@@ -296,7 +296,7 @@ pg_dump -Fc <replaceable class="parameter">dbname</replaceable> &gt; <replaceabl
    <xref linkend="creating-cluster"> it is explained where these files
    are located, but you have probably found them already if you are
    interested in this method. You can use whatever method you prefer
-   for doing usual file system backups, for example
+   for doing usual file system backups, for example:
 
 <programlisting>
 tar -cf backup.tar /usr/local/pgsql/data
@@ -528,7 +528,7 @@ tar -cf backup.tar /usr/local/pgsql/data
     i.e., the cluster's data directory.)
     Write <literal>%%</> if you need to embed an actual <literal>%</>
     character in the command.  The simplest useful command is something
-    like
+    like:
 <programlisting>
 archive_command = 'cp -i %p /mnt/server/archivedir/%f &lt;/dev/null'
 </programlisting>
@@ -568,7 +568,7 @@ archive_command = 'cp -i %p /mnt/server/archivedir/%f &lt;/dev/null'
     this correctly on some platforms but not others.  If the chosen command
     does not itself handle this case correctly, you should add a command
     to test for pre-existence of the archive file.  For example, something
-    like
+    like:
 <programlisting>
 archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
 </programlisting>
@@ -657,7 +657,7 @@ archive_command = 'test ! -f .../%f &amp;&amp; cp %p .../%f'
    </listitem>
    <listitem>
     <para>
-     Connect to the database as a superuser, and issue the command
+     Connect to the database as a superuser, and issue the command:
 <programlisting>
 SELECT pg_start_backup('label');
 </programlisting>
@@ -685,7 +685,7 @@ SELECT pg_start_backup('label');
    </listitem>
    <listitem>
     <para>
-     Again connect to the database as a superuser, and issue the command
+     Again connect to the database as a superuser, and issue the command:
 <programlisting>
 SELECT pg_stop_backup();
 </programlisting>
@@ -924,7 +924,7 @@ SELECT pg_stop_backup();
     i.e., the cluster's data directory.)
     Write <literal>%%</> if you need to embed an actual <literal>%</>
     character in the command.  The simplest useful command is
-    something like
+    something like:
 <programlisting>
 restore_command = 'cp /mnt/server/archivedir/%f %p'
 </programlisting>
@@ -1669,7 +1669,7 @@ if (!triggered)
   <para>
    The least downtime can be achieved by installing the new server in
    a different directory and running both the old and the new servers
-   in parallel, on different ports. Then you can use something like
+   in parallel, on different ports. Then you can use something like:
 
 <programlisting>
 pg_dumpall -p 5432 | psql -d postgres -p 6543

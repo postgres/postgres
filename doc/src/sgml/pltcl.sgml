@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.44 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.45 2007/02/01 00:28:17 momjian Exp $ -->
 
  <chapter id="pltcl">
   <title>PL/Tcl - Tcl Procedural Language</title>
@@ -281,8 +281,7 @@ $$ LANGUAGE pltcl;
         Tcl variables; remaining rows, if any, are ignored.  No storing occurs
         if the 
         query returns no rows.  (This case can be detected by checking the
-        result of <function>spi_exec</function>.)  For example,
-
+        result of <function>spi_exec</function>.)  For example:
 <programlisting>
 spi_exec "SELECT count(*) AS cnt FROM pg_proc"
 </programlisting>
@@ -295,7 +294,7 @@ spi_exec "SELECT count(*) AS cnt FROM pg_proc"
         a piece of Tcl script that is executed once for each row in the
         query result.  (<replaceable>loop-body</> is ignored if the given
         command is not a <command>SELECT</>.)  The values of the current row's columns
-        are stored into Tcl variables before each iteration.  For example,
+        are stored into Tcl variables before each iteration.  For example:
 
 <programlisting>
 spi_exec -array C "SELECT * FROM pg_class" {
@@ -421,7 +420,7 @@ $$ LANGUAGE pltcl;
         that are to be inserted into SQL commands given
         to <function>spi_exec</function> or
         <function>spi_prepare</function>.
-        For example, think about an SQL command string like
+        For example, think about an SQL command string like:
 
 <programlisting>
 "SELECT '$val' AS ret"
@@ -429,7 +428,7 @@ $$ LANGUAGE pltcl;
 
         where the Tcl variable <literal>val</> actually contains
         <literal>doesn't</literal>. This would result
-        in the final command string
+        in the final command string:
 
 <programlisting>
 SELECT 'doesn't' AS ret
@@ -438,13 +437,13 @@ SELECT 'doesn't' AS ret
         which would cause a parse error during
         <function>spi_exec</function> or
         <function>spi_prepare</function>.
-        To work properly, the submitted command should contain
+        To work properly, the submitted command should contain:
 
 <programlisting>
 SELECT 'doesn''t' AS ret
 </programlisting>
 
-        which can be formed in PL/Tcl using
+        which can be formed in PL/Tcl using:
 
 <programlisting>
 "SELECT '[ quote $val ]' AS ret"

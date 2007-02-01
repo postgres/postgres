@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.37 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.38 2007/02/01 00:28:17 momjian Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -83,7 +83,7 @@ $$ LANGUAGE plpythonu;
 </programlisting>
 
    The Python code that is given as the body of the function definition
-   is transformed into a Python function. For example, the above results in
+   is transformed into a Python function. For example, the above results in:
 
 <programlisting>
 def __plpython_procedure_pymax_23456():
@@ -459,13 +459,13 @@ $$ LANGUAGE plpythonu;
   </para>
 
   <para>
-   For example,
+   For example:
 <programlisting>
 rv = plpy.execute("SELECT * FROM my_table", 5)
 </programlisting>
    returns up to 5 rows from <literal>my_table</literal>.  If
    <literal>my_table</literal> has a column
-   <literal>my_column</literal>, it would be accessed as
+   <literal>my_column</literal>, it would be accessed as:
 <programlisting>
 foo = rv[i]["my_column"]
 </programlisting>

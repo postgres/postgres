@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.93 2007/01/31 23:26:02 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.94 2007/02/01 00:28:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -636,7 +636,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     The fact that <literal>ALTER TYPE</> requires rewriting the whole table
     is sometimes an advantage, because the rewriting process eliminates
     any dead space in the table.  For example, to reclaim the space occupied
-    by a dropped column immediately, the fastest way is
+    by a dropped column immediately, the fastest way is:
 <programlisting>
 ALTER TABLE table ALTER COLUMN anycol TYPE anytype;
 </programlisting>

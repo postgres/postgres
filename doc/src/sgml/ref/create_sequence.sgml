@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.46 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.47 2007/02/01 00:28:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -57,7 +57,7 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">name</replac
   </para>
 
   <para>
-   Although you cannot update a sequence directly, you can use a query like
+   Although you cannot update a sequence directly, you can use a query like:
 
 <programlisting>
 SELECT * FROM <replaceable>name</replaceable>;

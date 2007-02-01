@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.56 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.57 2007/02/01 00:28:17 momjian Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -315,7 +315,7 @@ exclusion of those that don't.
     <para>
      The <literal>random</literal> test script is intended to produce 
      random results.   In rare cases, this causes the random regression
-     test to fail.  Typing
+     test to fail.  Typing:
 <programlisting>
 diff results/random.out expected/random.out
 </programlisting>
@@ -370,7 +370,7 @@ testname/platformpattern=comparisonfilename
     <filename>float8-small-is-zero.out</filename>, which includes
     the results to be expected on these systems.  To silence the bogus
     <quote>failure</quote> message on <systemitem>OpenBSD</systemitem>
-    platforms, <filename>resultmap</filename> includes
+    platforms, <filename>resultmap</filename> includes:
 <programlisting>
 float8/i.86-.*-openbsd=float8-small-is-zero
 </programlisting>

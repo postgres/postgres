@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.20 2007/01/31 20:56:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/bki.sgml,v 1.21 2007/02/01 00:28:16 momjian Exp $ -->
 
 <chapter id="bki">
  <title><acronym>BKI</acronym> Backend Interface</title>
@@ -338,7 +338,7 @@
    table <literal>test_table</literal> with OID 420, having two columns
    <literal>cola</literal> and <literal>colb</literal> of type
    <type>int4</type> and <type>text</type>, respectively, and insert
-   two rows into the table.
+   two rows into the table:
 <programlisting>
 create test_table 420 (cola = int4, colb = text)
 open test_table

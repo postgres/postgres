@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.181 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.182 2007/02/01 00:28:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -563,7 +563,7 @@ PostgreSQL documentation
     An alternative way to specify connection parameters is in a
 	<parameter>conninfo</parameter>	string, which is used instead of a 
 	database name. This mechanism give you very wide control over the 
-	connection. For example,
+	connection. For example:
 <programlisting>
 $ <userinput>psql "service=myservice sslmode=require"</userinput>
 </programlisting>
@@ -585,7 +585,7 @@ $ <userinput>psql "service=myservice sslmode=require"</userinput>
     In normal operation, <application>psql</application> provides a
     prompt with the name of the database to which
     <application>psql</application> is currently connected, followed by
-    the string <literal>=&gt;</literal>. For example,
+    the string <literal>=&gt;</literal>. For example:
 <programlisting>
 $ <userinput>psql testdb</userinput>
 Welcome to psql &version;, the PostgreSQL interactive terminal.
@@ -2134,7 +2134,7 @@ bar
         <listitem>
         <para>
         The file name that will be used to store the history list. The default
-        value is <filename>~/.psql_history</filename>.  For example, putting
+        value is <filename>~/.psql_history</filename>.  For example, putting:
 <programlisting>
 \set HISTFILE ~/.psql_history- :DBNAME
 </programlisting>
@@ -2344,7 +2344,7 @@ bar
     variables is that you can substitute (<quote>interpolate</quote>)
     them into regular <acronym>SQL</acronym> statements. The syntax for
     this is again to prepend the variable name with a colon
-    (<literal>:</literal>).
+    (<literal>:</literal>):
 <programlisting>
 testdb=&gt; <userinput>\set foo 'my_table'</userinput>
 testdb=&gt; <userinput>SELECT * FROM :foo;</userinput>
@@ -2361,7 +2361,7 @@ testdb=&gt; <userinput>SELECT * FROM :foo;</userinput>
     inserted <acronym>OID</acronym> in subsequent statements to build a
     foreign key scenario. Another possible use of this mechanism is to
     copy the contents of a file into a table column. First load the file into a
-    variable and then proceed as above.
+    variable and then proceed as above:
 <programlisting>
 testdb=&gt; <userinput>\set content '''' `cat my_file.txt` ''''</userinput>
 testdb=&gt; <userinput>INSERT INTO my_table VALUES (:content);</userinput>
@@ -2566,7 +2566,7 @@ testdb=&gt; <userinput>\set content '''' `sed -e "s/'/''/g" -e 's/\\/\\\\/g' &lt
          non-printing control characters must be designated as invisible
          by surrounding them with <literal>%[</literal> and
          <literal>%]</literal>. Multiple pairs of these can occur within
-         the prompt.  For example,
+         the prompt.  For example:
 <programlisting>
 testdb=&gt; \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%]%# '
 </programlisting>
@@ -2759,7 +2759,7 @@ $endif
       compatibility this is still supported to some extent,
       but we are not going to explain the details here as this use is
       discouraged.  If you get strange messages, keep this in mind.
-      For example
+      For example:
 <programlisting>
 testdb=&gt; <userinput>\foo</userinput>
 Field separator is "oo".

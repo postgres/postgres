@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.104 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.105 2007/02/01 00:28:17 momjian Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -264,7 +264,7 @@ $$ LANGUAGE plpgsql;
 
    <para>
     While running <application>psql</application>, you can load or reload such
-    a function definition file with
+    a function definition file with:
 <programlisting>
 \i filename.sql
 </programlisting>
@@ -299,7 +299,7 @@ $$ LANGUAGE plpgsql;
     approach, you never double any quote marks, but instead take care to
     choose a different dollar-quoting delimiter for each level of
     nesting you need.  For example, you might write the <command>CREATE
-    FUNCTION</command> command as
+    FUNCTION</command> command as:
 <programlisting>
 CREATE OR REPLACE FUNCTION testfunc(integer) RETURNS integer AS $PROC$
           ....
@@ -343,7 +343,7 @@ CREATE FUNCTION foo() RETURNS integer AS '
 a_output := ''Blah'';
 SELECT * FROM users WHERE f_name=''foobar'';
 </programlisting>
-      In the dollar-quoting approach, you'd just write
+      In the dollar-quoting approach, you'd just write:
 <programlisting>
 a_output := 'Blah';
 SELECT * FROM users WHERE f_name='foobar';
@@ -367,7 +367,7 @@ a_output := a_output || '' AND name LIKE ''''foobar'''' AND xyz''
       <literal> AND name LIKE 'foobar' AND xyz</literal>.
      </para>
      <para>
-      In the dollar-quoting approach, you'd write
+      In the dollar-quoting approach, you'd write:
 <programlisting>
 a_output := a_output || $$ AND name LIKE 'foobar' AND xyz$$
 </programlisting>
@@ -390,7 +390,7 @@ a_output := a_output || '' AND name LIKE ''''foobar''''''
       <literal> AND name LIKE 'foobar'</literal>.
      </para>
      <para>
-      In the dollar-quoting approach, this becomes
+      In the dollar-quoting approach, this becomes:
 <programlisting>
 a_output := a_output || $$ AND name LIKE 'foobar'$$
 </programlisting>
@@ -421,7 +421,7 @@ if v_... like ''...'' then return ''...''; end if;
 </programlisting>
      </para>
      <para>
-      In the dollar-quoting approach, this becomes
+      In the dollar-quoting approach, this becomes:
 <programlisting>
 a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
     || referrer_keys.key_string || $$'
@@ -625,7 +625,7 @@ $$ LANGUAGE plpgsql;
 <replaceable>name</replaceable> ALIAS FOR $<replaceable>n</replaceable>;
 </synopsis>
 
-      The same example in this style looks like
+      The same example in this style looks like:
 <programlisting>
 CREATE FUNCTION sales_tax(real) RETURNS real AS $$
 DECLARE
@@ -943,7 +943,7 @@ CREATE FUNCTION logfunc1(logtxt text) RETURNS timestamp AS $$
 $$ LANGUAGE plpgsql;
 </programlisting>
 
-     and
+     and:
 
 <programlisting>
 CREATE FUNCTION logfunc2(logtxt text) RETURNS timestamp AS $$
@@ -1069,7 +1069,7 @@ tax := subtotal * 0.06;
       This two-step process allows
       <application>PL/pgSQL</application> to plan the query just once
       and re-use the plan on subsequent executions.  As an example,
-      if you write
+      if you write:
 <programlisting>
 DECLARE
     key TEXT;
@@ -1078,7 +1078,7 @@ BEGIN
     ...
     UPDATE mytab SET val = val + delta WHERE id = key;
 </programlisting>
-      the query text seen by the main SQL engine will look like
+      the query text seen by the main SQL engine will look like:
 <programlisting>
     UPDATE mytab SET val = val + $1 WHERE id = $2;
 </programlisting>
@@ -1430,7 +1430,7 @@ EXECUTE 'UPDATE tbl SET '
 
     <para>
      Note that dollar quoting is only useful for quoting fixed text.
-     It would be a very bad idea to try to do the above example as
+     It would be a very bad idea to try to do the above example as:
 <programlisting>
 EXECUTE 'UPDATE tbl SET '
         || quote_ident(colname)
@@ -2296,7 +2296,7 @@ END;
     <para>
 
     This example uses exception handling to perform either
-    <command>UPDATE</> or <command>INSERT</>, as appropriate.
+    <command>UPDATE</> or <command>INSERT</>, as appropriate:
 
 <programlisting>
 CREATE TABLE db (a INT PRIMARY KEY, b TEXT);
@@ -3718,7 +3718,7 @@ $$ LANGUAGE plpgsql;
      In <application>PL/pgSQL</>, when an exception is caught by an
      <literal>EXCEPTION</> clause, all database changes since the block's
      <literal>BEGIN</> are automatically rolled back.  That is, the behavior
-     is equivalent to what you'd get in Oracle with
+     is equivalent to what you'd get in Oracle with:
 
 <programlisting>
     BEGIN

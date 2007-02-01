@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.44 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.45 2007/02/01 00:28:17 momjian Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -934,7 +934,7 @@ SELECT pg_stat_get_backend_pid(s.backendid) AS procpid,
   <para>
    The example below shows a DTrace script for analyzing transaction
    counts on the system, as an alternative to snapshotting 
-   <structname>pg_stat_database</> before and after a performance test.
+   <structname>pg_stat_database</> before and after a performance test:
 <programlisting>
 #!/usr/sbin/dtrace -qs 
 
@@ -992,7 +992,7 @@ Total time (ns)                        2312105013
    trace macros. These are chosen according to how many variables will
    be made available for inspection at that trace point. Tracing the
    occurrence of an event can be achieved with a single line, using
-   just the trace point name, e.g.
+   just the trace point name, e.g.:
 <programlisting>
 PG_TRACE (my__new__trace__point);
 </programlisting>

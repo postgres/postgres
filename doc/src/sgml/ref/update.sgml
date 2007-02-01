@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.42 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.43 2007/02/01 00:28:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -295,7 +295,7 @@ UPDATE employees SET sales_count = sales_count + 1 WHERE id =
   <para>
    Attempt to insert a new stock item along with the quantity of stock. If
    the item already exists, instead update the stock count of the existing
-   item. To do this without failing the entire transaction, use savepoints.
+   item. To do this without failing the entire transaction, use savepoints:
 <programlisting>
 BEGIN;
 -- other operations

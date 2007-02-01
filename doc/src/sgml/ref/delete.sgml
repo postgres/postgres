@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.29 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.30 2007/02/01 00:28:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -197,7 +197,7 @@ DELETE <replaceable class="parameter">count</replaceable>
    <productname>PostgreSQL</productname> lets you reference columns of
    other tables in the <literal>WHERE</> condition by specifying the
    other tables in the <literal>USING</literal> clause.  For example,
-   to delete all films produced by a given producer, one can do
+   to delete all films produced by a given producer, one can do:
 <programlisting>
 DELETE FROM films USING producers
   WHERE producer_id = producers.id AND producers.name = 'foo';
@@ -205,7 +205,7 @@ DELETE FROM films USING producers
    What is essentially happening here is a join between <structname>films</>
    and <structname>producers</>, with all successfully joined
    <structname>films</> rows being marked for deletion.
-   This syntax is not standard.  A more standard way to do it is
+   This syntax is not standard.  A more standard way to do it is:
 <programlisting>
 DELETE FROM films
   WHERE producer_id IN (SELECT id FROM producers WHERE name = 'foo');

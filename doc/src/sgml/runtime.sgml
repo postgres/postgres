@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.375 2007/01/31 20:56:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.376 2007/02/01 00:28:18 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -901,7 +901,7 @@ sysctl -w kern.sysv.shmall
        <para>
         In OS X 10.3.9 and later, instead of editing <filename>/etc/rc</>
         you can create a file named <filename>/etc/sysctl.conf</>,
-        containing variable assignments such as
+        containing variable assignments such as:
 <programlisting>
 kern.sysv.shmmax=4194304
 kern.sysv.shmmin=1
@@ -940,11 +940,11 @@ kern.sysv.shmall=1024
         In the default configuration, only 512 kB of shared memory per
         segment is allowed. To increase the setting, first change to the
         directory <filename>/etc/conf/cf.d</>. To display the current value of
-        <varname>SHMMAX</>, run
+        <varname>SHMMAX</>, run:
 <programlisting>
 ./configure -y SHMMAX
 </programlisting>
-        To set a new value for <varname>SHMMAX</>, run
+        To set a new value for <varname>SHMMAX</>, run:
 <programlisting>
 ./configure SHMMAX=<replaceable>value</>
 </programlisting>
@@ -1019,13 +1019,13 @@ set semsys:seminfo_semmsl=32
        <para>
         On <productname>UnixWare</> 7, the maximum size for shared
         memory segments is only 512 kB in the default configuration.
-        To display the current value of <varname>SHMMAX</>, run
+        To display the current value of <varname>SHMMAX</>, run:
 <programlisting>
 /etc/conf/bin/idtune -g SHMMAX
 </programlisting>
         which displays the current, default, minimum, and maximum
         values. To set a new value for <varname>SHMMAX</>,
-        run
+        run:
 <programlisting>
 /etc/conf/bin/idtune SHMMAX <replaceable>value</>
 </programlisting>
@@ -1533,12 +1533,12 @@ openssl req -new -text -out server.req
    password can be left blank. The program will generate a key that is
    passphrase protected; it will not accept a passphrase that is less
    than four characters long. To remove the passphrase (as you must if
-   you want automatic start-up of the server), run the commands
+   you want automatic start-up of the server), run the commands:
 <programlisting>
 openssl rsa -in privkey.pem -out server.key
 rm privkey.pem
 </programlisting>
-   Enter the old passphrase to unlock the existing key. Now do
+   Enter the old passphrase to unlock the existing key. Now do:
 <programlisting>
 openssl req -x509 -in server.req -text -key server.key -out server.crt
 chmod og-rwx server.key

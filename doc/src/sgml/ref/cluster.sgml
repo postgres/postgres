@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.39 2007/01/31 23:26:02 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.40 2007/02/01 00:28:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -144,7 +144,7 @@ CLUSTER
     entries are on random pages, so there is one disk page
     retrieved for every row moved. (<productname>PostgreSQL</productname> has
     a cache, but the majority of a big table will not fit in the cache.)
-    The other way to cluster a table is to use
+    The other way to cluster a table is to use:
 
 <programlisting>
 CREATE TABLE <replaceable class="parameter">newtable</replaceable> AS

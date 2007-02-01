@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.42 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.43 2007/02/01 00:28:17 momjian Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -35,7 +35,7 @@ SELECT <replaceable>select_list</replaceable> FROM <replaceable>table_expression
   </para>
 
   <para>
-   A simple kind of query has the form
+   A simple kind of query has the form:
 <programlisting>
 SELECT * FROM table1;
 </programlisting>
@@ -357,7 +357,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
     </para>
 
     <para>
-     To put this together, assume we have tables <literal>t1</literal>
+     To put this together, assume we have tables <literal>t1</literal>:
 <programlisting>
  num | name
 -----+------
@@ -365,7 +365,7 @@ FROM <replaceable>table_reference</replaceable> <optional>, <replaceable>table_r
    2 | b
    3 | c
 </programlisting>
-     and <literal>t2</literal>
+     and <literal>t2</literal>:
 <programlisting>
  num | value
 -----+-------
@@ -507,7 +507,7 @@ SELECT * FROM some_very_long_table_name s JOIN another_fairly_long_name a ON s.i
     <para>
      The alias becomes the new name of the table reference for the
      current query &mdash; it is no longer possible to refer to the table
-     by the original name.  Thus
+     by the original name.  Thus:
 <programlisting>
 SELECT * FROM my_table AS m WHERE my_table.a &gt; 5;
 </programlisting>
@@ -517,7 +517,7 @@ SELECT * FROM my_table AS m WHERE my_table.a &gt; 5;
      <literal>off</> (as it is by default).  If it is <literal>on</>,
      an implicit table reference will be added to the
      <literal>FROM</literal> clause, so the query is processed as if
-     it were written as
+     it were written as:
 <programlisting>
 SELECT * FROM my_table AS m, my_table AS my_table WHERE my_table.a &gt; 5;
 </programlisting>
@@ -526,7 +526,7 @@ SELECT * FROM my_table AS m, my_table AS my_table WHERE my_table.a &gt; 5;
 
     <para>
      Table aliases are mainly for notational convenience, but it is
-     necessary to use them when joining a table to itself, e.g.,
+     necessary to use them when joining a table to itself, e.g.:
 <programlisting>
 SELECT * FROM people AS mother JOIN people AS child ON mother.id = child.mother_id;
 </programlisting>
@@ -559,11 +559,11 @@ FROM <replaceable>table_reference</replaceable> <optional>AS</optional> <replace
     <para>
      When an alias is applied to the output of a <literal>JOIN</>
      clause, using any of these forms, the alias hides the original
-     names within the <literal>JOIN</>.  For example,
+     names within the <literal>JOIN</>.  For example:
 <programlisting>
 SELECT a.* FROM my_table AS a JOIN your_table AS b ON ...
 </programlisting>
-     is valid SQL, but
+     is valid SQL, but:
 <programlisting>
 SELECT a.* FROM (my_table AS a JOIN your_table AS b ON ...) AS c
 </programlisting>
@@ -724,11 +724,11 @@ WHERE <replaceable>search_condition</replaceable>
 <programlisting>
 FROM a, b WHERE a.id = b.id AND b.val &gt; 5
 </programlisting>
-     and
+     and:
 <programlisting>
 FROM a INNER JOIN b ON (a.id = b.id) WHERE b.val &gt; 5
 </programlisting>
-     or perhaps even
+     or perhaps even:
 <programlisting>
 FROM a NATURAL JOIN b WHERE b.val &gt; 5
 </programlisting>
@@ -867,7 +867,7 @@ SELECT <replaceable>select_list</replaceable>
 
    <para>
     Here is another example:  it calculates the total sales for each
-    product (rather than the total sales on all products).
+    product (rather than the total sales on all products):
 <programlisting>
 SELECT product_id, p.name, (sum(s.units) * p.price) AS sales
     FROM products p LEFT JOIN sales s USING (product_id)
@@ -997,7 +997,7 @@ SELECT a, b, c FROM ...
 
    <para>
     If more than one table has a column of the same name, the table
-    name must also be given, as in
+    name must also be given, as in:
 <programlisting>
 SELECT tbl1.a, tbl2.a, tbl1.b FROM ...
 </programlisting>
@@ -1228,7 +1228,7 @@ SELECT <replaceable>select_list</replaceable>
              <optional>, <replaceable>sort_expression2</replaceable> <optional>ASC | DESC</optional> <optional>NULLS { FIRST | LAST }</optional> ...</optional>
 </synopsis>
    The sort expression(s) can be any expression that would be valid in the
-   query's select list.  An example is
+   query's select list.  An example is:
 <programlisting>
 SELECT a, b FROM table1 ORDER BY a + b, c;
 </programlisting>
@@ -1272,7 +1272,7 @@ SELECT a, b FROM table1 ORDER BY a + b, c;
   <para>
    For backwards compatibility with the SQL92 version of the standard,
    a <replaceable>sort_expression</> can instead be the name or number
-   of an output column, as in
+   of an output column, as in:
 <programlisting>
 SELECT a + b AS sum, c FROM table1 ORDER BY sum;
 SELECT a, max(b) FROM table1 GROUP BY a ORDER BY 1;
@@ -1392,15 +1392,13 @@ VALUES ( <replaceable class="PARAMETER">expression</replaceable> [, ...] ) [, ..
   </para>
 
   <para>
-   As an example,
-
+   As an example:
 <programlisting>
 VALUES (1, 'one'), (2, 'two'), (3, 'three');
 </programlisting>
 
    will return a table of two columns and three rows.  It's effectively
-   equivalent to
-
+   equivalent to:
 <programlisting>
 SELECT 1 AS column1, 'one' AS column2
 UNION ALL

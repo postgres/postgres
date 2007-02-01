@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.40 2007/01/31 20:56:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.41 2007/02/01 00:28:16 momjian Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -109,7 +109,7 @@ cvs -z3 -d :pserver:anoncvs@anoncvs.postgresql.org:/projects/cvsroot co -P pgsql
     <para>
      Whenever you want to update to the latest <productname>CVS</productname> sources,
      <command>cd</command> into
-     the <filename>pgsql</filename> subdirectory, and issue
+     the <filename>pgsql</filename> subdirectory, and issue:
 <programlisting>
 cvs -z3 update -d -P
 </programlisting>
@@ -123,7 +123,7 @@ cvs -z3 update -d -P
    <step>
     <para>
      You can save yourself some typing by making a file <filename>.cvsrc</filename>
-     in your home directory that contains
+     in your home directory that contains:
 
 <programlisting>
 cvs -z3
@@ -132,7 +132,7 @@ update -d -P
 
      This supplies the <option>-z3</option> option to all <command>cvs</> commands, and the
      <option>-d</option> and <option>-P</option> options to <command>cvs update</>.  Then you just have
-     to say
+     to say:
 <programlisting>
 cvs update
 </programlisting>
@@ -252,14 +252,14 @@ cvs checkout -P pgsql
   </para>
 
   <para>
-   After you've done the initial checkout on a branch
+   After you've done the initial checkout on a branch:
 
 <programlisting>
 cvs checkout -r REL6_4
 </programlisting>
 
    anything you do within that directory structure is restricted to that
-   branch.  If you apply a patch to that directory structure and do a
+   branch.  If you apply a patch to that directory structure and do a:
 
 <programlisting>
 cvs commit
@@ -312,7 +312,7 @@ cvs commit
     but had formerly kept it under a
     <productname>PostgreSQL</productname> development tree in
     <filename>/opt/postgres/cvs/</filename>. If you intend to keep your
-    repository in <filename>/home/cvs/</filename>, then put
+    repository in <filename>/home/cvs/</filename>, then put:
 
 <programlisting>
 setenv CVSROOT /home/cvs
@@ -349,7 +349,7 @@ CVSROOT/
    <para>
     Verify that
     <application>cvsup</application> is in your path; on most systems
-    you can do this by typing
+    you can do this by typing:
 
 <programlisting>
 which cvsup

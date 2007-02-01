@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.356 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.357 2007/02/01 00:28:16 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7194,7 +7194,7 @@ SELECT pg_sleep(1.5);
    in single quotes, so that it looks like a literal constant.  To
    achieve some compatibility with the handling of ordinary
    <acronym>SQL</acronym> names, the string will be converted to lowercase
-   unless it contains double quotes around the sequence name.  Thus
+   unless it contains double quotes around the sequence name.  Thus:
 <programlisting>
 nextval('foo')      <lineannotation>operates on sequence <literal>foo</literal></>
 nextval('FOO')      <lineannotation>operates on sequence <literal>foo</literal></>
@@ -9713,7 +9713,7 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
     All these functions require object OIDs to identify the object to be
     checked.  If you want to test an object by name, it is convenient to use
     the OID alias types (<type>regclass</>, <type>regtype</>,
-    <type>regprocedure</>, or <type>regoperator</>), for example
+    <type>regprocedure</>, or <type>regoperator</>), for example:
 <programlisting>
 SELECT pg_type_is_visible('myschema.widget'::regtype);
 </programlisting>

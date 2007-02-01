@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.30 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.31 2007/02/01 00:28:17 momjian Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -1871,7 +1871,7 @@
    <literal>data_type</literal>.  To obtain information on the element
    type of the array, you can join the respective view with this view.
    For example, to show the columns of a table with data types and
-   array element types, if applicable, you could do
+   array element types, if applicable, you could do:
 <programlisting>
 SELECT c.column_name, c.data_type, e.data_type AS element_type
 FROM information_schema.columns c LEFT JOIN information_schema.element_types e

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.52 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.53 2007/02/01 00:28:17 momjian Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -162,7 +162,7 @@ createdb <replaceable class="parameter">dbname</replaceable>
 <programlisting>
 CREATE DATABASE <replaceable>dbname</> OWNER <replaceable>rolename</>;
 </programlisting>
-   from the SQL environment, or
+   from the SQL environment, or:
 <programlisting>
 createdb -O <replaceable>rolename</> <replaceable>dbname</>
 </programlisting>
@@ -208,11 +208,11 @@ createdb -O <replaceable>rolename</> <replaceable>dbname</>
   </para>
 
   <para>
-   To create a database by copying <literal>template0</literal>, use
+   To create a database by copying <literal>template0</literal>, use:
 <programlisting>
 CREATE DATABASE <replaceable>dbname</> TEMPLATE template0;
 </programlisting>
-   from the SQL environment, or
+   from the SQL environment, or:
 <programlisting>
 createdb -T template0 <replaceable>dbname</>
 </programlisting>
@@ -286,7 +286,7 @@ createdb -T template0 <replaceable>dbname</>
    ordinarily have to either disable it for all databases or make sure
    that every connecting client is careful to issue <literal>SET geqo
    TO off;</literal>.  To make this setting the default within a particular
-   database, you can execute the command
+   database, you can execute the command:
 <programlisting>
 ALTER DATABASE mydb SET geqo TO off;
 </programlisting>
@@ -373,7 +373,7 @@ dropdb <replaceable class="parameter">dbname</replaceable>
    <para>
     To define a tablespace, use the <xref
     linkend="sql-createtablespace" endterm="sql-createtablespace-title">
-    command, for example:<indexterm><primary>CREATE TABLESPACE</></>
+    command, for example:<indexterm><primary>CREATE TABLESPACE</></>:
 <programlisting>
 CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
 </programlisting>

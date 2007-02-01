@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.34 2006/09/16 00:30:12 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/dfunc.sgml,v 1.35 2007/02/01 00:28:16 momjian Exp $ -->
 
 <sect2 id="dfunc">
  <title id="dfunc-title">Compiling and Linking Dynamically-Loaded Functions</title>
@@ -99,15 +99,15 @@ gcc -shared -o foo.so foo.o
       The compiler flag of the system compiler to create
       <acronym>PIC</acronym> is <option>+z</option>.  When using
       <application>GCC</application> it's <option>-fpic</option>. The
-      linker flag for shared libraries is <option>-b</option>.  So
+      linker flag for shared libraries is <option>-b</option>.  So:
 <programlisting>
 cc +z -c foo.c
 </programlisting>
-      or
+      or:
 <programlisting>
 gcc -fpic -c foo.c
 </programlisting>
-      and then
+      and then:
 <programlisting>
 ld -b -o foo.sl foo.o
 </programlisting>
@@ -233,7 +233,7 @@ gcc -G -o foo.so foo.o
      <para>
       <acronym>PIC</acronym> is the default, so the compilation command
       is the usual one.  <command>ld</command> with special options is
-      used to do the linking:
+      used to do the linking.
 <programlisting>
 cc -c foo.c
 ld -shared -expect_unresolved '*' -o foo.so foo.o

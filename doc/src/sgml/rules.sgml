@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.49 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/rules.sgml,v 1.50 2007/02/01 00:28:18 momjian Exp $ -->
 
 <chapter id="rules">
 <title>The Rule System</title>
@@ -278,13 +278,13 @@
 <para>
     Views in <productname>PostgreSQL</productname> are implemented
     using the rule system. In fact, there is essentially no difference
-    between
+    between:
 
 <programlisting>
 CREATE VIEW myview AS SELECT * FROM mytab;
 </programlisting>
     
-    compared against the two commands
+    compared against the two commands:
 
 <programlisting>
 CREATE TABLE myview (<replaceable>same column list as mytab</replaceable>);
@@ -340,7 +340,7 @@ CREATE RULE "_RETURN" AS ON SELECT TO myview DO INSTEAD
 
 <para>
 For the example, we need a little <literal>min</literal> function that
-returns the lower of 2 integer values. We create that as
+returns the lower of 2 integer values. We create that as:
 
 <programlisting>
 CREATE FUNCTION min(integer, integer) RETURNS integer AS $$
@@ -381,7 +381,7 @@ CREATE TABLE unit (
 </para>
 
 <para>
-    The views are created as
+    The views are created as:
 
 <programlisting>
 CREATE VIEW shoe AS
@@ -485,7 +485,7 @@ SELECT * FROM shoelace;
     This is the simplest <command>SELECT</command> you can do on our
     views, so we take this opportunity to explain the basics of view
     rules.  The <literal>SELECT * FROM shoelace</literal> was
-    interpreted by the parser and produced the query tree
+    interpreted by the parser and produced the query tree:
 
 <programlisting>
 SELECT shoelace.sl_name, shoelace.sl_avail,
@@ -498,7 +498,7 @@ SELECT shoelace.sl_name, shoelace.sl_avail,
     range table and checks if there are rules
     for any relation. When processing the range table entry for
     <literal>shoelace</literal> (the only one up to now) it finds the
-    <literal>_RETURN</literal> rule with the query tree
+    <literal>_RETURN</literal> rule with the query tree:
 
 <programlisting>
 SELECT s.sl_name, s.sl_avail,
@@ -514,7 +514,7 @@ SELECT s.sl_name, s.sl_avail,
     To expand the view, the rewriter simply creates a subquery range-table
     entry containing the rule's action query tree, and substitutes this
     range table entry for the original one that referenced the view.  The 
-    resulting rewritten query tree is almost the same as if you had typed
+    resulting rewritten query tree is almost the same as if you had typed:
 
 <programlisting>
 SELECT shoelace.sl_name, shoelace.sl_avail,
@@ -569,7 +569,7 @@ SELECT * FROM shoe_ready WHERE total_avail &gt;= 2;
 </para>
 
 <para>
-    The output of the parser this time is the query tree
+    The output of the parser this time is the query tree:
 
 <programlisting>
 SELECT shoe_ready.shoename, shoe_ready.sh_avail,
@@ -581,7 +581,7 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
 
     The first rule applied will be the one for the 
     <literal>shoe_ready</literal> view and it results in the
-    query tree
+    query tree:
 
 <programlisting>
 SELECT shoe_ready.shoename, shoe_ready.sh_avail,
@@ -668,7 +668,7 @@ SELECT shoe_ready.shoename, shoe_ready.sh_avail,
     relation points to the range-table entry where the result should
     go.  Everything else is absolutely the same.  So having two tables
     <literal>t1</> and <literal>t2</> with columns <literal>a</> and
-    <literal>b</>, the query trees for the two statements
+    <literal>b</>, the query trees for the two statements:
 
 <programlisting>
 SELECT t2.b FROM t1, t2 WHERE t1.a = t2.a;
@@ -712,14 +712,14 @@ UPDATE t1 SET b = t2.b FROM t2 WHERE t1.a = t2.a;
     execution plans: They are both joins over the two tables. For the
     <command>UPDATE</command> the missing columns from <literal>t1</> are added to
     the target list by the planner and the final query tree will read
-    as
+    as:
 
 <programlisting>
 UPDATE t1 SET a = t1.a, b = t2.b FROM t2 WHERE t1.a = t2.a;
 </programlisting>
 
     and thus the executor run over the join will produce exactly the
-    same result set as a
+    same result set as a:
 
 <programlisting>
 SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
@@ -746,7 +746,7 @@ SELECT t1.a, t2.b FROM t1, t2 WHERE t1.a = t2.a;
     file block number and position in the block for the row. Knowing
     the table, the <acronym>CTID</> can be used to retrieve the
     original row of <literal>t1</> to be updated.  After adding the
-    <acronym>CTID</> to the target list, the query actually looks like
+    <acronym>CTID</> to the target list, the query actually looks like:
 
 <programlisting>
 SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
@@ -884,7 +884,7 @@ SELECT t1.a, t2.b, t1.ctid FROM t1, t2 WHERE t1.a = t2.a;
 <title>How Update Rules Work</title>
 
 <para>
-    Keep the syntax
+    Keep the syntax:
 
 <programlisting>
 CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS ON <replaceable class="parameter">event</replaceable>
@@ -1054,7 +1054,7 @@ SELECT * FROM shoelace_log;
 
    <para>
     That's what we expected. What happened in the background is the following.
-    The parser created the query tree
+    The parser created the query tree:
 
 <programlisting>
 UPDATE shoelace_data SET sl_avail = 6
@@ -1063,13 +1063,13 @@ UPDATE shoelace_data SET sl_avail = 6
 </programlisting>
 
     There is a rule <literal>log_shoelace</literal> that is <literal>ON UPDATE</> with the rule
-    qualification expression
+    qualification expression:
 
 <programlisting>
 NEW.sl_avail &lt;&gt; OLD.sl_avail
 </programlisting>
 
-    and the action
+    and the action:
 
 <programlisting>
 INSERT INTO shoelace_log VALUES (
@@ -1188,7 +1188,7 @@ UPDATE shoelace_data SET sl_avail = 6
 
    <para>
     The substitutions and the added qualifications
-    ensure that, if the original query would be, say,
+    ensure that, if the original query would be, say:
 
 <programlisting>
 UPDATE shoelace_data SET sl_color = 'green'
@@ -1199,7 +1199,7 @@ UPDATE shoelace_data SET sl_color = 'green'
     tree does not contain a target list entry for
     <literal>sl_avail</>, so <literal>NEW.sl_avail</> will get
     replaced by <literal>shoelace_data.sl_avail</>.  Thus, the extra
-    command generated by the rule is
+    command generated by the rule is:
 
 <programlisting>
 INSERT INTO shoelace_log VALUES (
@@ -1215,7 +1215,7 @@ INSERT INTO shoelace_log VALUES (
 
    <para>
     It will also work if the original query modifies multiple rows. So
-    if someone issued the command
+    if someone issued the command:
 
 <programlisting>
 UPDATE shoelace_data SET sl_avail = 0
@@ -1225,7 +1225,7 @@ UPDATE shoelace_data SET sl_avail = 0
     four rows in fact get updated (<literal>sl1</>, <literal>sl2</>, <literal>sl3</>, and <literal>sl4</>).
     But <literal>sl3</> already has <literal>sl_avail = 0</>.   In this case, the original
     query trees qualification is different and that results
-    in the extra query tree
+    in the extra query tree:
 
 <programlisting>
 INSERT INTO shoelace_log
@@ -1260,7 +1260,7 @@ SELECT shoelace_data.sl_name, 0,
     A simple way to protect view relations from the mentioned
     possibility that someone can try to run <command>INSERT</command>,
     <command>UPDATE</command>, or <command>DELETE</command> on them is
-    to let those query trees get thrown away.  So we could create the rules
+    to let those query trees get thrown away.  So we could create the rules:
 
 <programlisting>
 CREATE RULE shoe_ins_protect AS ON INSERT TO shoe
@@ -1320,7 +1320,7 @@ CREATE RULE shoelace_del AS ON DELETE TO shoelace
     you need to make the rules include <literal>RETURNING</> clauses that
     compute the view rows.  This is usually pretty trivial for views on a
     single table, but it's a bit tedious for join views such as
-    <literal>shoelace</literal>.  An example for the insert case is
+    <literal>shoelace</literal>.  An example for the insert case is:
 
 <programlisting>
 CREATE RULE shoelace_ins AS ON INSERT TO shoelace
@@ -1440,7 +1440,7 @@ SELECT * FROM shoelace_log;
     It's a long way from the one <literal>INSERT ... SELECT</literal>
     to these results. And the description of the query-tree
     transformation will be the last in this chapter.  First, there is
-    the parser's output
+    the parser's output:
 
 <programlisting>
 INSERT INTO shoelace_ok
@@ -1449,7 +1449,7 @@ SELECT shoelace_arrive.arr_name, shoelace_arrive.arr_quant
 </programlisting>
 
     Now the first rule <literal>shoelace_ok_ins</literal> is applied and turns this
-    into
+    into:
 
 <programlisting>
 UPDATE shoelace
@@ -1463,7 +1463,7 @@ UPDATE shoelace
     and throws away the original <command>INSERT</command> on
     <literal>shoelace_ok</literal>.  This rewritten query is passed to
     the rule system again, and the second applied rule
-    <literal>shoelace_upd</literal> produces
+    <literal>shoelace_upd</literal> produces:
 
 <programlisting>
 UPDATE shoelace_data
@@ -1483,7 +1483,7 @@ UPDATE shoelace_data
     Again it's an <literal>INSTEAD</> rule and the previous query tree is trashed.
     Note that this query still uses the view <literal>shoelace</literal>.
     But the rule system isn't finished with this step, so it continues
-    and applies the <literal>_RETURN</literal> rule on it, and we get
+    and applies the <literal>_RETURN</literal> rule on it, and we get:
 
 <programlisting>
 UPDATE shoelace_data
@@ -1503,7 +1503,7 @@ UPDATE shoelace_data
 </programlisting>
 
     Finally, the rule <literal>log_shoelace</literal> gets applied,
-    producing the extra query tree
+    producing the extra query tree:
 
 <programlisting>
 INSERT INTO shoelace_log
@@ -1530,7 +1530,7 @@ SELECT s.sl_name,
 
    <para>
     So we end up with two final query trees that are equivalent to the
-    <acronym>SQL</acronym> statements
+    <acronym>SQL</acronym> statements:
 
 <programlisting>
 INSERT INTO shoelace_log
@@ -1612,7 +1612,7 @@ INSERT INTO shoelace VALUES ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
 
     We would like to make a view to check which
     <literal>shoelace</literal> entries do not fit any shoe in color.
-    The view for this is
+    The view for this is:
 
 <programlisting>
 CREATE VIEW shoelace_mismatch AS
@@ -1620,7 +1620,7 @@ CREATE VIEW shoelace_mismatch AS
         (SELECT shoename FROM shoe WHERE slcolor = sl_color);
 </programlisting>
 
-    Its output is
+    Its output is:
 
 <programlisting>
 SELECT * FROM shoelace_mismatch;
@@ -1636,7 +1636,7 @@ SELECT * FROM shoelace_mismatch;
     Now we want to set it up so that mismatching shoelaces that are
     not in stock are deleted from the database.
     To make it a little harder for <productname>PostgreSQL</productname>,
-    we don't delete it directly. Instead we create one more view
+    we don't delete it directly. Instead we create one more view:
 
 <programlisting>
 CREATE VIEW shoelace_can_delete AS
@@ -1918,7 +1918,7 @@ DELETE FROM software WHERE hostname = $1;
     Since the trigger is called for each individual row deleted from
     <literal>computer</>, it can prepare and save the plan for this
     command and pass the <structfield>hostname</> value in the
-    parameter.  The rule would be written as
+    parameter.  The rule would be written as:
 
 <programlisting>
 CREATE RULE computer_del AS ON DELETE TO computer
@@ -1927,7 +1927,7 @@ CREATE RULE computer_del AS ON DELETE TO computer
    </para>
 
    <para>
-    Now we look at different types of deletes. In the case of a 
+    Now we look at different types of deletes. In the case of a:
     
 <programlisting>
 DELETE FROM computer WHERE hostname = 'mypc.local.net';
@@ -1935,7 +1935,7 @@ DELETE FROM computer WHERE hostname = 'mypc.local.net';
 
     the table <literal>computer</> is scanned by index (fast), and the
     command issued by the trigger would also use an index scan (also fast).
-    The extra command from the rule would be
+    The extra command from the rule would be:
 
 <programlisting>
 DELETE FROM software WHERE computer.hostname = 'mypc.local.net'
@@ -1959,14 +1959,14 @@ Nestloop
     With the next delete we want to get rid of all the 2000 computers
     where the <structfield>hostname</> starts with
     <literal>old</>. There are two possible commands to do that. One
-    is
+    is:
 
 <programlisting>
 DELETE FROM computer WHERE hostname &gt;= 'old'
                        AND hostname &lt;  'ole'
 </programlisting>
 
-    The command added by the rule will be
+    The command added by the rule will be:
 
 <programlisting>
 DELETE FROM software WHERE computer.hostname &gt;= 'old' AND computer.hostname &lt; 'ole'
@@ -1982,7 +1982,7 @@ Hash Join
     -&gt;  Index Scan using comp_hostidx on computer
 </literallayout>
 
-    The other possible command is
+    The other possible command is:
 
 <programlisting>
 DELETE FROM computer WHERE hostname ~ '^old';
@@ -2014,7 +2014,7 @@ Nestloop
 </para>
 
 <para>
-    The last command we look at is
+    The last command we look at is:
 
 <programlisting>
 DELETE FROM computer WHERE manufacturer = 'bim';
@@ -2022,7 +2022,7 @@ DELETE FROM computer WHERE manufacturer = 'bim';
 
     Again this could result in many rows to be deleted from
     <literal>computer</>. So the trigger will again run many commands
-    through the executor.  The command generated by the rule will be
+    through the executor.  The command generated by the rule will be:
 
 <programlisting>
 DELETE FROM software WHERE computer.manufacturer = 'bim'

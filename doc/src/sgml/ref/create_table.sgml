@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.106 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.107 2007/02/01 00:28:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -792,7 +792,7 @@ CREATE TABLE array_int (
   <para>
    Define a unique table constraint for the table
    <literal>films</literal>.  Unique table constraints can be defined
-   on one or more columns of the table.
+   on one or more columns of the table:
 
 <programlisting>
 CREATE TABLE films (

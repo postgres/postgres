@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.30 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.31 2007/02/01 00:28:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -166,7 +166,7 @@ where <replaceable class="PARAMETER">constraint</replaceable> is:
   <para>
    This example creates the <type>us_postal_code</type> data type and
    then uses the type in a table definition.  A regular expression test
-   is used to verify that the value looks like a valid US postal code.
+   is used to verify that the value looks like a valid US postal code:
 
 <programlisting>
 CREATE DOMAIN us_postal_code AS TEXT

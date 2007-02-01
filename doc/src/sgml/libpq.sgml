@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.223 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.224 2007/02/01 00:28:17 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -1267,7 +1267,7 @@ not to hard-wire particular OID values into your program.  However, you can
 avoid doing so even in cases where the server by itself cannot determine the
 type of the parameter, or chooses a different type than you want.  In the
 SQL command text, attach an explicit cast to the parameter symbol to show what
-data type you will send.  For example,
+data type you will send.  For example:
 <programlisting>
 select * from mytable where x = $1::bigint;
 </programlisting>
@@ -1920,7 +1920,7 @@ int PQfnumber(const PGresult *res,
 <para>
         The given name is treated like an identifier in an SQL command,
         that is, it is downcased unless double-quoted.  For example,
-        given a query result generated from the SQL command
+        given a query result generated from the SQL command:
 <programlisting>
 select 1 as FOO, 2 as "BAR";
 </programlisting>
@@ -3982,7 +3982,7 @@ a void pointer that is the same one passed to
 </para>
 
 <para>
-The default notice processor is simply
+The default notice processor is simply:
 <programlisting>
 static void
 defaultNoticeProcessor(void *arg, const char *message)

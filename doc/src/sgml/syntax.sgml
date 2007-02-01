@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.112 2007/01/31 20:56:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.113 2007/02/01 00:28:18 momjian Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -144,16 +144,16 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
      <primary>case sensitivity</primary>
      <secondary>of SQL commands</secondary>
     </indexterm>
-    Identifier and key word names are case insensitive.  Therefore
+    Identifier and key word names are case insensitive.  Therefore:
 <programlisting>
 UPDATE MY_TABLE SET A = 5;
 </programlisting>
-    can equivalently be written as
+    can equivalently be written as:
 <programlisting>
 uPDaTE my_TabLE SeT a = 5;
 </programlisting>
     A convention often used is to write key words in upper
-    case and names in lower case, e.g.,
+    case and names in lower case, e.g.:
 <programlisting>
 UPDATE my_table SET a = 5;
 </programlisting>
@@ -257,11 +257,11 @@ UPDATE "my_table" SET "a" = 5;
 SELECT 'foo'
 'bar';
 </programlisting>
-     is equivalent to
+     is equivalent to:
 <programlisting>
 SELECT 'foobar';
 </programlisting>
-     but
+     but:
 <programlisting>
 SELECT 'foo'      'bar';
 </programlisting>
@@ -506,7 +506,7 @@ $function$
      force a numeric value to be interpreted as a specific data type
      by casting it.<indexterm><primary>type cast</primary></indexterm>
      For example, you can force a numeric value to be treated as type
-     <type>real</> (<type>float4</>) by writing
+     <type>real</> (<type>float4</>) by writing:
 
 <programlisting>
 REAL '1.23'  -- string style
@@ -771,18 +771,18 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
     <literal>&gt;</> have a different precedence than the Boolean
     operators <literal>&lt;=</> and <literal>&gt;=</>.  Also, you will
     sometimes need to add parentheses when using combinations of
-    binary and unary operators.  For instance
+    binary and unary operators.  For instance:
 <programlisting>
 SELECT 5 ! - 6;
 </programlisting>
-   will be parsed as
+   will be parsed as:
 <programlisting>
 SELECT 5 ! (- 6);
 </programlisting>
     because the parser has no idea &mdash; until it is too late
     &mdash; that <token>!</token> is defined as a postfix operator,
     not an infix one.  To get the desired behavior in this case, you
-    must write
+    must write:
 <programlisting>
 SELECT (5 !) - 6;
 </programlisting>
@@ -936,7 +936,7 @@ SELECT (5 !) - 6;
 
    <para>
     When a schema-qualified operator name is used in the
-    <literal>OPERATOR</> syntax, as for example in
+    <literal>OPERATOR</> syntax, as for example in:
 <programlisting>
 SELECT 3 OPERATOR(pg_catalog.+) 4;
 </programlisting>
@@ -1133,7 +1133,7 @@ $<replaceable>number</replaceable>
 
    <para>
     For example, consider the definition of a function,
-    <function>dept</function>, as
+    <function>dept</function>, as:
 
 <programlisting>
 CREATE FUNCTION dept(text) RETURNS dept
@@ -1175,7 +1175,7 @@ CREATE FUNCTION dept(text) RETURNS dept
     to be subscripted is just a column reference or positional parameter.
     Also, multiple subscripts can be concatenated when the original array
     is multidimensional.
-    For example,
+    For example:
 
 <programlisting>
 mytable.arraycolumn[4]
@@ -1208,7 +1208,7 @@ $1[10:42]
     In general the row <replaceable>expression</replaceable> must be
     parenthesized, but the parentheses can be omitted when the expression
     to be selected from is just a table reference or positional parameter.
-    For example,
+    For example:
 
 <programlisting>
 mytable.mycolumn
@@ -1494,7 +1494,7 @@ SELECT name, (SELECT max(pop) FROM cities WHERE cities.state = states.name)
     consists of the key word <literal>ARRAY</literal>, a left square bracket
     <literal>[</>, one or more expressions (separated by commas) for the
     array element values, and finally a right square bracket <literal>]</>.
-    For example,
+    For example:
 <programlisting>
 SELECT ARRAY[1,2,3+4];
   array
@@ -1597,7 +1597,7 @@ SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
     for its member fields.  A row constructor consists of the key word
     <literal>ROW</literal>, a left parenthesis, zero or more
     expressions (separated by commas) for the row field values, and finally
-    a right parenthesis.  For example,
+    a right parenthesis.  For example:
 <programlisting>
 SELECT ROW(1,2.5,'this is a test');
 </programlisting>
@@ -1675,7 +1675,7 @@ SELECT getf1(CAST(ROW(11,'this is a test',2.5) AS myrowtype));
    in a composite-type table column, or to be passed to a function that
    accepts a composite parameter.  Also,
    it is possible to compare two row values or test a row with
-   <literal>IS NULL</> or <literal>IS NOT NULL</>, for example
+   <literal>IS NULL</> or <literal>IS NOT NULL</>, for example:
 <programlisting>
 SELECT ROW(1,2.5,'this is a test') = ROW(1, 3, 'not the same');
 
@@ -1705,12 +1705,12 @@ SELECT ROW(table.*) IS NULL FROM table;  -- detect all-null rows
    <para>
     Furthermore, if the result of an expression can be determined by
     evaluating only some parts of it, then other subexpressions
-    might not be evaluated at all.  For instance, if one wrote
+    might not be evaluated at all.  For instance, if one wrote:
 <programlisting>
 SELECT true OR somefunc();
 </programlisting>
     then <literal>somefunc()</literal> would (probably) not be called
-    at all. The same would be the case if one wrote
+    at all. The same would be the case if one wrote:
 <programlisting>
 SELECT somefunc() OR true;
 </programlisting>

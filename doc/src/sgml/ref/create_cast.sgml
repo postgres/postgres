@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.24 2007/01/31 23:26:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.25 2007/02/01 00:28:18 momjian Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -33,7 +33,7 @@ CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</r
   <para>
    <command>CREATE CAST</command> defines a new cast.  A cast
    specifies how to perform a conversion between
-   two data types.  For example,
+   two data types.  For example:
 <programlisting>
 SELECT CAST(42 AS text);
 </programlisting>
@@ -64,7 +64,7 @@ SELECT CAST(42 AS text);
    If the cast is marked <literal>AS ASSIGNMENT</> then it can be invoked
    implicitly when assigning a value to a column of the target data type.
    For example, supposing that <literal>foo.f1</literal> is a column of
-   type <type>text</type>, then
+   type <type>text</type>, then:
 <programlisting>
 INSERT INTO foo (f1) VALUES (42);
 </programlisting>
@@ -85,7 +85,7 @@ SELECT 'The time is ' || now();
 </programlisting>
    will be allowed only if the cast from type <type>timestamp</> to
    <type>text</type> is marked <literal>AS IMPLICIT</>.  Otherwise it
-   will be necessary to write the cast explicitly, for example
+   will be necessary to write the cast explicitly, for example:
 <programlisting>
 SELECT 'The time is ' || CAST(now() AS text);
 </programlisting>

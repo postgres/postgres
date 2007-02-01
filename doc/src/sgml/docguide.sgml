@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.69 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.70 2007/02/01 00:28:16 momjian Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -558,7 +558,7 @@ checking for sgmlspl... sgmlspl
     To allow for easier handling in the final distribution, the files
     comprising the HTML documentation can be stored in a tar archive that
     is unpacked at installation time.  To create the
-    <acronym>HTML</acronym> documentation package, use the commands
+    <acronym>HTML</acronym> documentation package, use the commands:
 <programlisting>
 cd doc/src
 gmake postgres.tar.gz
@@ -578,7 +578,7 @@ gmake postgres.tar.gz
    <sgmltag>refentry</sgmltag> pages to *roff output suitable for man
    pages.  The man pages are also distributed as a tar archive,
    similar to the <acronym>HTML</acronym> version.  To create the man
-   page package, use the commands
+   page package, use the commands:
 <programlisting>
 cd doc/src
 gmake man.tar.gz

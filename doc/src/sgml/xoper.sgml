@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.39 2007/01/31 20:56:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.40 2007/02/01 00:28:18 momjian Exp $ -->
 
  <sect1 id="xoper">
   <title>User-Defined Operators</title>
@@ -222,7 +222,7 @@ SELECT (a + b) AS c FROM test_complex;
     name, not an operator name.)  <literal>RESTRICT</> clauses only make sense for
     binary operators that return <type>boolean</>.  The idea behind a restriction
     selectivity estimator is to guess what fraction of the rows in a
-    table will satisfy a <literal>WHERE</literal>-clause condition of the form
+    table will satisfy a <literal>WHERE</literal>-clause condition of the form:
 <programlisting>
 column OP constant
 </programlisting>
@@ -294,7 +294,7 @@ column OP constant
      name, not an operator name.)  <literal>JOIN</> clauses only make sense for
      binary operators that return <type>boolean</type>.  The idea behind a join
      selectivity estimator is to guess what fraction of the rows in a
-     pair of tables will satisfy a <literal>WHERE</>-clause condition of the form
+     pair of tables will satisfy a <literal>WHERE</>-clause condition of the form:
 <programlisting>
 table1.column1 OP table2.column2
 </programlisting>

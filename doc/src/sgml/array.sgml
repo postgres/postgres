@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.55 2007/01/31 20:56:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.56 2007/02/01 00:28:16 momjian Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -102,7 +102,7 @@ CREATE TABLE tictactoe (
    <literal>box</> uses a semicolon (<literal>;</>) but all the others
    use comma (<literal>,</>). Each <replaceable>val</replaceable> is
    either a constant of the array element type, or a subarray. An example
-   of an array constant is
+   of an array constant is:
 <programlisting>
 '{{1,2,3},{4,5,6},{7,8,9}}'
 </programlisting>
@@ -126,7 +126,7 @@ CREATE TABLE tictactoe (
   </para>
 
   <para>
-   Now we can show some <command>INSERT</command> statements.
+   Now we can show some <command>INSERT</command> statements:
 
 <programlisting>
 INSERT INTO sal_emp
@@ -302,7 +302,7 @@ SELECT array_dims(schedule) FROM sal_emp WHERE name = 'Carol';
   for programs.  Dimensions can also be retrieved with
   <function>array_upper</function> and <function>array_lower</function>,
   which return the upper and lower bound of a
-  specified array dimension, respectively.
+  specified array dimension, respectively:
 
 <programlisting>
 SELECT array_upper(schedule, 1) FROM sal_emp WHERE name = 'Carol';
@@ -368,7 +368,7 @@ UPDATE sal_emp SET pay_by_quarter[1:2] = '{27000,27000}'
 
  <para>
   New array values can also be constructed by using the concatenation operator,
-  <literal>||</literal>.
+  <literal>||</literal>:
 <programlisting>
 SELECT ARRAY[1,2] || ARRAY[3,4];
  ?column?
@@ -623,7 +623,7 @@ SELECT f1[1][-2][3] AS e1, f1[1][-1][5] AS e2
    Remember that what you write in an SQL command will first be interpreted
    as a string literal, and then as an array.  This doubles the number of
    backslashes you need.  For example, to insert a <type>text</> array
-   value containing a backslash and a double quote, you'd need to write
+   value containing a backslash and a double quote, you'd need to write:
 <programlisting>
 INSERT ... VALUES (E'{"\\\\","\\""}');
 </programlisting>

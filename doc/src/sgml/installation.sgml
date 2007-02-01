@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.279 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.280 2007/02/01 00:28:17 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1446,12 +1446,12 @@ All of PostgreSQL is successfully made. Ready to install.
     The method to set the shared library search path varies between
     platforms, but the most widely usable method is to set the
     environment variable <envar>LD_LIBRARY_PATH</> like so: In Bourne
-    shells (<command>sh</>, <command>ksh</>, <command>bash</>, <command>zsh</>)
+    shells (<command>sh</>, <command>ksh</>, <command>bash</>, <command>zsh</>):
 <programlisting>
 LD_LIBRARY_PATH=/usr/local/pgsql/lib
 export LD_LIBRARY_PATH
 </programlisting>
-    or in <command>csh</> or <command>tcsh</>
+    or in <command>csh</> or <command>tcsh</>:
 <programlisting>
 setenv LD_LIBRARY_PATH /usr/local/pgsql/lib
 </programlisting>
@@ -1494,7 +1494,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
     </indexterm>
     If you are on <systemitem class="osname">BSD/OS</>, <systemitem
     class="osname">Linux</>, or <systemitem class="osname">SunOS 4</>
-    and you have root access you can run
+    and you have root access you can run:
 <programlisting>
 /sbin/ldconfig /usr/local/pgsql/lib
 </programlisting>
@@ -1503,7 +1503,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
     manual page of <command>ldconfig</> for more information.  On
     <systemitem class="osname">FreeBSD</>, <systemitem
     class="osname">NetBSD</>, and <systemitem
-    class="osname">OpenBSD</> the command is
+    class="osname">OpenBSD</> the command is:
 <programlisting>
 /sbin/ldconfig -m /usr/local/pgsql/lib
 </programlisting>
@@ -1550,7 +1550,7 @@ set path = ( /usr/local/pgsql/bin $path )
     To enable your system to find the <application>man</>
     documentation, you need to add lines like the following to a
     shell start-up file unless you installed into a location that is
-    searched by default.
+    searched by default:
 <programlisting>
 MANPATH=/usr/local/pgsql/man:$MANPATH
 export MANPATH
@@ -1623,12 +1623,12 @@ postgres$ <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
     <para>
      The previous step should have told you how to start up the
      database server. Do so now. The command should look something
-     like
+     like:
 <programlisting>
 /usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data
 </programlisting>
      This will start the server in the foreground. To put the server
-     in the background use something like
+     in the background use something like:
 <programlisting>
 nohup /usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data \
     &lt;/dev/null &gt;&gt;server.log 2&gt;&amp;1 &lt;/dev/null &amp;

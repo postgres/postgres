@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.492 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.493 2007/02/01 00:28:17 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -9399,7 +9399,7 @@ WHERE pronamespace = 11 AND pronargs = 5
 COMMIT;
 </programlisting>
 
-     Next, if you have installed <filename>contrib/tsearch2</>, do
+     Next, if you have installed <filename>contrib/tsearch2</>, do:
 
 <programlisting>
 BEGIN;
@@ -9428,12 +9428,12 @@ COMMIT;
      template databases then any subsequently created databases will contain
      the same errors.  <literal>template1</> can be fixed in the same way
      as any other database, but fixing <literal>template0</> requires
-     additional steps.  First, from any database issue
+     additional steps.  First, from any database issue:
 <programlisting>
 UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
 </programlisting>
       Next connect to <literal>template0</> and perform the above repair
-      procedures.  Finally, do
+      procedures.  Finally, do:
 <programlisting>
 -- re-freeze template0:
 VACUUM FREEZE;
@@ -9871,12 +9871,12 @@ GRANT SELECT, UPDATE ON pg_settings TO PUBLIC;
      template databases then any subsequently created databases will contain
      the same errors.  <literal>template1</> can be fixed in the same way
      as any other database, but fixing <literal>template0</> requires
-     additional steps.  First, from any database issue
+     additional steps.  First, from any database issue:
 <programlisting>
 UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
 </programlisting>
       Next connect to <literal>template0</> and perform the above repair
-      procedures.  Finally, do
+      procedures.  Finally, do:
 <programlisting>
 -- re-freeze template0:
 VACUUM FREEZE;
@@ -12370,12 +12370,12 @@ COMMIT;
      template databases then any subsequently created databases will contain
      the same error.  <literal>template1</> can be fixed in the same way
      as any other database, but fixing <literal>template0</> requires
-     additional steps.  First, from any database issue
+     additional steps.  First, from any database issue:
 <programlisting>
 UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
 </programlisting>
       Next connect to <literal>template0</> and perform the above repair
-      procedure.  Finally, do
+      procedure.  Finally, do:
 <programlisting>
 -- re-freeze template0:
 VACUUM FREEZE;
@@ -17777,7 +17777,7 @@ If you do, you must create a file name <literal>pg_hba</literal> in your top-lev
 <step>
 <para>
 If you do not want host-based authentication, you can comment out
-   the line
+   the line:
 <programlisting>
         HBA = 1
 </programlisting>

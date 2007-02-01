@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.47 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.48 2007/02/01 00:28:18 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -205,7 +205,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
   <para>
    To give a schema-qualified operator name in <replaceable
    class="parameter">com_op</replaceable> or the other optional
-   arguments, use the <literal>OPERATOR()</> syntax, for example
+   arguments, use the <literal>OPERATOR()</> syntax, for example:
 <programlisting>
 COMMUTATOR = OPERATOR(myschema.===) ,
 </programlisting>  

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.49 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/query.sgml,v 1.50 2007/02/01 00:28:17 momjian Exp $ -->
 
  <chapter id="tutorial-sql">
   <title>The <acronym>SQL</acronym> Language</title>
@@ -383,7 +383,7 @@ SELECT * FROM weather
 
     In this example, the sort order isn't fully specified, and so you
     might get the San Francisco rows in either order.  But you'd always
-    get the results shown above if you do
+    get the results shown above if you do:
 
 <programlisting>
 SELECT * FROM weather
@@ -663,7 +663,7 @@ SELECT *
 
    <para>
     As an example, we can find the highest low-temperature reading anywhere
-    with
+    with:
 
 <programlisting>
 SELECT max(temp_lo) FROM weather;
@@ -681,7 +681,7 @@ SELECT max(temp_lo) FROM weather;
     <indexterm><primary>subquery</primary></indexterm>
 
     If we wanted to know what city (or cities) that reading occurred in,
-    we might try
+    we might try:
 
 <programlisting>
 SELECT city FROM weather WHERE temp_lo = max(temp_lo);     <lineannotation>WRONG</lineannotation>
@@ -720,7 +720,7 @@ SELECT city FROM weather
 
     Aggregates are also very useful in combination with <literal>GROUP
     BY</literal> clauses.  For example, we can get the maximum low
-    temperature observed in each city with
+    temperature observed in each city with:
 
 <programlisting>
 SELECT city, max(temp_lo)
@@ -758,7 +758,7 @@ SELECT city, max(temp_lo)
     which gives us the same results for only the cities that have all
     <literal>temp_lo</> values below 40.  Finally, if we only care about
     cities whose
-    names begin with <quote><literal>S</literal></quote>, we might do
+    names begin with <quote><literal>S</literal></quote>, we might do:
 
 <programlisting>
 SELECT city, max(temp_lo)

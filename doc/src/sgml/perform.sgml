@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.61 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.62 2007/02/01 00:28:17 momjian Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -157,7 +157,7 @@ EXPLAIN SELECT * FROM tenk1;
    </para>
 
    <para>
-    This is about as straightforward as it gets.  If you do
+    This is about as straightforward as it gets.  If you do:
 
 <programlisting>
 SELECT relpages, reltuples FROM pg_class WHERE relname = 'tenk1';
@@ -588,7 +588,7 @@ SELECT attname, n_distinct, most_common_vals FROM pg_stats WHERE tablename = 'ro
   </para>
 
   <para>
-   In a simple join query, such as
+   In a simple join query, such as:
 <programlisting>
 SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
 </programlisting>
@@ -628,7 +628,7 @@ SELECT * FROM a, b, c WHERE a.id = b.id AND b.ref = c.id;
 
   <para>
    When the query involves outer joins, the planner has less freedom
-   than it does for plain (inner) joins. For example, consider
+   than it does for plain (inner) joins. For example, consider:
 <programlisting>
 SELECT * FROM a LEFT JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
 </programlisting>
@@ -639,7 +639,7 @@ SELECT * FROM a LEFT JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
    B to C and then join A to that result.  Accordingly, this query takes
    less time to plan than the previous query.  In other cases, the planner
    might be able to determine that more than one join order is safe.
-   For example, given
+   For example, given:
 <programlisting>
 SELECT * FROM a LEFT JOIN b ON (a.bid = b.id) LEFT JOIN c ON (a.cid = c.id);
 </programlisting>
@@ -683,7 +683,7 @@ SELECT * FROM a JOIN (b JOIN c ON (b.ref = c.id)) ON (a.id = b.id);
   <para>
    You do not need to constrain the join order completely in order to
    cut search time, because it's OK to use <literal>JOIN</> operators
-   within items of a plain <literal>FROM</> list.  For example, consider
+   within items of a plain <literal>FROM</> list.  For example, consider:
 <programlisting>
 SELECT * FROM a CROSS JOIN b, c, d, e WHERE ...;
 </programlisting>
@@ -704,7 +704,7 @@ SELECT * FROM a CROSS JOIN b, c, d, e WHERE ...;
 
   <para>
    A closely related issue that affects planning time is collapsing of
-   subqueries into their parent query.  For example, consider
+   subqueries into their parent query.  For example, consider:
 <programlisting>
 SELECT *
 FROM x, y,
@@ -714,7 +714,7 @@ WHERE somethingelse;
    This situation might arise from use of a view that contains a join;
    the view's <literal>SELECT</> rule will be inserted in place of the view
    reference, yielding a query much like the above.  Normally, the planner
-   will try to collapse the subquery into the parent, yielding
+   will try to collapse the subquery into the parent, yielding:
 <programlisting>
 SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
 </programlisting>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.15 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/nls.sgml,v 1.16 2007/02/01 00:28:17 momjian Exp $ -->
 
 <chapter id="nls">
  <chapterinfo>
@@ -170,7 +170,7 @@ msgstr "another translated"
 
    <para>
     If you need to start a new translation effort, then first run the
-    command
+    command:
 <programlisting>
 gmake init-po
 </programlisting>
@@ -193,7 +193,7 @@ AVAIL_LANGUAGES := de fr
    <para>
     As the underlying program or library changes, messages might be
     changed or added by the programmers.  In this case you do not need
-    to start from scratch.  Instead, run the command
+    to start from scratch.  Instead, run the command:
 <programlisting>
 gmake update-po
 </programlisting>
@@ -340,11 +340,11 @@ textdomain("<replaceable>progname</replaceable>");
    <step>
     <para>
      Wherever a message that is a candidate for translation is found,
-     a call to <function>gettext()</function> needs to be inserted.  E.g.,
+     a call to <function>gettext()</function> needs to be inserted.  E.g.:
 <programlisting>
 fprintf(stderr, "panic level %d\n", lvl);
 </programlisting>
-     would be changed to
+     would be changed to:
 <programlisting>
 fprintf(stderr, gettext("panic level %d\n"), lvl);
 </programlisting>
@@ -353,7 +353,7 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
     </para>
 
     <para>
-     This tends to add a lot of clutter.  One common shortcut is to use
+     This tends to add a lot of clutter.  One common shortcut is to use:
 <programlisting>
 #define _(x) gettext(x)
 </programlisting>
@@ -447,7 +447,7 @@ fprintf(stderr, gettext("panic level %d\n"), lvl);
    <itemizedlist>
     <listitem>
      <para>
-      Do not construct sentences at run-time, like
+      Do not construct sentences at run-time, like:
 <programlisting>
 printf("Files were %s.\n", flag ? "copied" : "removed");
 </programlisting>
@@ -468,7 +468,7 @@ printf("Files were %s.\n", flag ? "copied" : "removed");
 printf("copied %d file%s", n, n!=1 ? "s" : "");
 </programlisting>
       because it assumes how the plural is formed.  If you figured you
-      could solve it like this
+      could solve it like this:
 <programlisting>
 if (n==1)
     printf("copied 1 file");
@@ -490,7 +490,7 @@ printf("number of copied files: %d", n);
       If you want to communicate something to the translator, such as
       about how a message is intended to line up with other output,
       precede the occurrence of the string with a comment that starts
-      with <literal>translator</literal>, e.g.,
+      with <literal>translator</literal>, e.g.:
 <programlisting>
 /* translator: This message is not what it seems to be. */
 </programlisting>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.33 2007/01/31 20:56:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xplang.sgml,v 1.34 2007/02/01 00:28:18 momjian Exp $ -->
 
  <chapter id="xplang">
   <title id="xplang-title">Procedural Languages</title>
@@ -60,7 +60,7 @@
     linkend="app-createlang"> can be used to do this from the shell
     command line.  For example, to install the language
     <application>PL/pgSQL</application> into the database
-    <literal>template1</>, use
+    <literal>template1</>, use:
 <programlisting>
 createlang plpgsql template1
 </programlisting>
@@ -183,7 +183,7 @@ CREATE FUNCTION plpgsql_validator(oid) RETURNS void AS
      </para>
 
      <para>
-      The command
+      The command:
 <programlisting>
 CREATE TRUSTED PROCEDURAL LANGUAGE plpgsql
     HANDLER plpgsql_call_handler
