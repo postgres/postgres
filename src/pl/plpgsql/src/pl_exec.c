@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.186 2007/01/30 18:02:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.187 2007/02/01 19:22:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -890,8 +890,27 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 					{
 						if (var->default_val == NULL)
 						{
+							/* Initially it contains a NULL */
 							var->value = (Datum) 0;
 							var->isnull = true;
+							/*
+							 * If needed, give the datatype a chance to reject
+							 * NULLs, by assigning a NULL to the variable.
+							 * We claim the value is of type UNKNOWN, not the
+							 * var's datatype, else coercion will be skipped.
+							 * (Do this before the notnull check to be
+							 * consistent with exec_assign_value.)
+							 */
+							if (!var->datatype->typinput.fn_strict)
+							{
+								bool	valIsNull = true;
+
+								exec_assign_value(estate,
+												  (PLpgSQL_datum *) var,
+												  (Datum) 0,
+												  UNKNOWNOID,
+												  &valIsNull);
+							}
 							if (var->notnull)
 								ereport(ERROR,
 									(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
