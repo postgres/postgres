@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 AIX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-Last updated:        $Date: 2007/01/05 20:57:17 $
+Last updated:        $Date: 2007/02/01 04:56:41 $
 
 Topics
 
@@ -16,7 +16,7 @@ Topics
 -----
 
 From: Zeugswetter Andreas <ZeugswetterA@spardat.at>
-$Date: 2007/01/05 20:57:17 $
+$Date: 2007/02/01 04:56:41 $
 
 On AIX 4.3.2 PostgreSQL compiled with the native IBM compiler xlc
 (vac.C 5.0.1) passes all regression tests.  Other versions of OS and
