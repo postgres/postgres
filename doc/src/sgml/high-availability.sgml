@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.15 2006/12/01 03:19:48 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/high-availability.sgml,v 1.16 2007/02/01 21:02:48 momjian Exp $ -->
 
 <chapter id="high-availability">
  <title>High Availability and Load Balancing</title>
@@ -99,10 +99,17 @@
     disk array fails or becomes corrupt, the primary and standby
     servers are both nonfunctional.  Another issue is that the
     standby server should never access the shared storage while
-    the primary server is running.  It is also possible to use
-    some type of file system mirroring to keep the standby server
-    current, but the mirroring must be done in a way that ensures the
-    standby server has a consistent copy of the file system.
+    the primary server is running.
+   </para>
+
+   <para>
+    A modified version of shared hardware functionality is file system
+    replication, where all changes to a file system are mirrored to a file
+    system residing on another computer.  The only restriction is that
+    the mirroring must be done in a way that ensures the standby server
+    has a consistent copy of the file system &mdash; specifically, writes
+    to the standby must be done in the same order as those on the master.
+    DRBD is a popular file system replication solution for Linux.
    </para>
 
 <!--
