@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.495 2007/02/01 07:00:32 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.496 2007/02/01 19:10:24 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -16382,7 +16382,7 @@ Jdbc cleanups(Peter)
 Show backend status on ps command line(only works on some platforms)(Bruce)
 Pg_hba.conf now has a sameuser option in the database field
 Make lo_unlink take oid param, not int4
-New DISABLE_COMPLEX_MACRO for compilers that can't handle our macros(Bruce)
+New DISABLE_COMPLEX_MACRO for compilers that cannot handle our macros(Bruce)
 Libpgtcl now handles NOTIFY as a Tcl event, need not send dummy queries(Tom)
 libpgtcl cleanups(Tom)
 Add -error option to libpgtcl's pg_result command(Tom)
@@ -16737,7 +16737,7 @@ Better identify tcl and tk libs and includes(Bruce)
     places where subselects provide a better solution for your queries.  I
     think you will find that there are more uses for subselects than you might
     think.  Vadim has put us on the big SQL map with subselects, and fully
-    functional ones too.  The only thing you can't do with subselects is to
+    functional ones too.  The only thing you cannot do with subselects is to
     use them in the target list.
    </para>
    <para>

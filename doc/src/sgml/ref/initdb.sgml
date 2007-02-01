@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.39 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.40 2007/02/01 19:10:24 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -79,7 +79,7 @@ PostgreSQL documentation
    locale and character set encoding. The collation order
    (<literal>LC_COLLATE</>) and character set classes
    (<literal>LC_CTYPE</>, e.g. upper, lower, digit) are fixed for all
-   databases and can not be changed. Collation orders other than
+   databases and cannot be changed. Collation orders other than
    <literal>C</> or <literal>POSIX</> also have a performance penalty.
    For these reasons it is important to choose the right locale when
    running <command>initdb</command>. The remaining locale categories
@@ -266,7 +266,7 @@ PostgreSQL documentation
 	By default, when <command>initdb</command>
 	determines that an error prevented it from completely creating the database
 	cluster, it removes any files it might have created before discovering
-	that it can't finish the job. This option inhibits tidying-up and is
+	that it cannot finish the job. This option inhibits tidying-up and is
 	thus useful for debugging.
        </para>
       </listitem>

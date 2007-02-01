@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.124 2007/02/01 00:28:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.125 2007/02/01 19:10:24 momjian Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -114,7 +114,7 @@
      Besides <command>SELECT</command> queries, the commands can include data
      modification queries (<command>INSERT</command>,
      <command>UPDATE</command>, and <command>DELETE</command>), as well as
-     other SQL commands. (The only exception is that you can't put
+     other SQL commands. (The only exception is that you cannot put
      <command>BEGIN</>, <command>COMMIT</>, <command>ROLLBACK</>, or
      <command>SAVEPOINT</> commands into a <acronym>SQL</acronym> function.)
      However, the final command 

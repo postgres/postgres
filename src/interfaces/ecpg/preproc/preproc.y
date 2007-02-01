@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.339 2006/10/23 08:00:48 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.340 2007/02/01 19:10:29 momjian Exp $ */
 
 /* Copyright comment */
 %{
@@ -1673,7 +1673,7 @@ CreateAsStmt:  CREATE OptTemp TABLE qualified_name OptCreateAs OptWith OnCommitO
 		SelectStmt
 		{
 			if (FoundInto == 1)
-				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE / AS SELECT may not specify INTO");
+				mmerror(PARSE_ERROR, ET_ERROR, "CREATE TABLE / AS SELECT cannot specify INTO");
 
 			$$ = cat_str(10, make_str("create"), $2, make_str("table"), $4, $5, $6, $7, $8, make_str("as"), $11);
 		}

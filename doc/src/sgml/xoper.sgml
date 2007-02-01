@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.40 2007/02/01 00:28:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.41 2007/02/01 19:10:24 momjian Exp $ -->
 
  <sect1 id="xoper">
   <title>User-Defined Operators</title>
@@ -355,7 +355,7 @@ table1.column1 OP table2.column2
      Care should be exercised when preparing a hash function, because there
      are machine-dependent ways in which it might fail to do the right thing.
      For example, if your data type is a structure in which there might be
-     uninteresting pad bits, you can't simply pass the whole structure to
+     uninteresting pad bits, you cannot simply pass the whole structure to
      <function>hash_any</>.  (Unless you write your other operators and
      functions to ensure that the unused bits are always zero, which is the
      recommended strategy.)

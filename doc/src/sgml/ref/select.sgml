@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.98 2007/02/01 00:28:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.99 2007/02/01 19:10:25 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -892,8 +892,8 @@ FOR SHARE [ OF <replaceable class="parameter">table_name</replaceable> [, ...] ]
 
    <para>
     <literal>FOR UPDATE</literal> and <literal>FOR SHARE</literal> cannot be
-    used in contexts where returned rows can't be clearly identified with
-    individual table rows; for example they can't be used with aggregation.
+    used in contexts where returned rows cannot be clearly identified with
+    individual table rows; for example they cannot be used with aggregation.
    </para>
 
   <caution>

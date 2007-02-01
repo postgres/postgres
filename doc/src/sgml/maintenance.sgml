@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.69 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.70 2007/02/01 19:10:24 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -296,7 +296,7 @@
     wraparound</>: the XID counter wraps around to zero, and all of a sudden
     transactions that were in the past appear to be in the future &mdash; which
     means their outputs become invisible.  In short, catastrophic data loss.
-    (Actually the data is still there, but that's cold comfort if you can't
+    (Actually the data is still there, but that's cold comfort if you cannot
     get at it.)  To avoid this, it is necessary to vacuum every table
     in every database at least once every two billion transactions.
    </para>

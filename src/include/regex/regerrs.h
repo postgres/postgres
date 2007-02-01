@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/include/regex/regerrs.h,v 1.3 2003/11/29 22:41:10 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regerrs.h,v 1.4 2007/02/01 19:10:29 momjian Exp $
  */
 
 {
@@ -59,7 +59,7 @@
 },
 
 {
-	REG_ASSERT, "REG_ASSERT", "\"can't happen\" -- you found a bug"
+	REG_ASSERT, "REG_ASSERT", "\"cannot happen\" -- you found a bug"
 },
 
 {

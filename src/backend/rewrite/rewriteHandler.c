@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.169 2007/01/05 22:19:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.170 2007/02/01 19:10:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -790,7 +790,7 @@ process_matched_tle(TargetEntry *src_tle,
 	}
 	else
 	{
-		elog(ERROR, "can't happen");
+		elog(ERROR, "cannot happen");
 		newexpr = NULL;
 	}
 

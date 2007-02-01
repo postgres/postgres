@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.42 2007/01/05 22:19:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.43 2007/02/01 19:10:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,7 @@ RemoveSchema(List *names, DropBehavior behavior, bool missing_ok)
 	if (list_length(names) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("schema name may not be qualified")));
+				 errmsg("schema name cannot be qualified")));
 	namespaceName = strVal(linitial(names));
 
 	namespaceId = GetSysCacheOid(NAMESPACENAME,

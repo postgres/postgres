@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.135 2007/01/23 05:07:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.136 2007/02/01 19:10:25 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -998,7 +998,7 @@ ExecGrant_Language(InternalGrant *istmt)
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("language \"%s\" is not trusted",
 							NameStr(pg_language_tuple->lanname)),
-				   errhint("Only superusers may use untrusted languages.")));
+				   errhint("Only superusers can use untrusted languages.")));
 
 		/*
 		 * Get owner ID and working copy of existing ACL. If there's no ACL,

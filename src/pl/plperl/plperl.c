@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.125 2007/01/27 16:46:21 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.126 2007/02/01 19:10:29 momjian Exp $
  *
  **********************************************************************/
 
@@ -350,7 +350,7 @@ check_interp(bool trusted)
 	else
 	{
 		elog(ERROR, 
-			 "can not allocate second Perl interpreter on this platform");
+			 "cannot allocate second Perl interpreter on this platform");
 
 	}
 	
@@ -1538,7 +1538,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("trigger functions may only be called "
+							 errmsg("trigger functions can only be called "
 									"as triggers")));
 				}
 				else

@@ -110,7 +110,7 @@ static struct WSErrorEntry
 		WSAEADDRINUSE, "Address already in use"
 	},
 	{
-		WSAEADDRNOTAVAIL, "Can't assign requested address"
+		WSAEADDRNOTAVAIL, "Cannot assign requested address"
 	},
 	{
 		WSAENETDOWN, "Network is down"
@@ -137,10 +137,10 @@ static struct WSErrorEntry
 		WSAENOTCONN, "Socket is not connected"
 	},
 	{
-		WSAESHUTDOWN, "Can't send after socket shutdown"
+		WSAESHUTDOWN, "Cannot send after socket shutdown"
 	},
 	{
-		WSAETOOMANYREFS, "Too many references, can't splice"
+		WSAETOOMANYREFS, "Too many references, cannot splice"
 	},
 	{
 		WSAETIMEDOUT, "Connection timed out"

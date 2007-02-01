@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.76 2007/01/05 22:19:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.77 2007/02/01 19:10:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -522,7 +522,7 @@ do_start(void)
 	{
 		old_pid = get_pgpid();
 		if (old_pid != 0)
-			write_stderr(_("%s: another server may be running; "
+			write_stderr(_("%s: another server might be running; "
 						   "trying to start server anyway\n"),
 						 progname);
 	}
@@ -1443,7 +1443,7 @@ do_help(void)
 	printf(_("  -c, --core-files       not applicable on this platform\n"));
 #endif
 	printf(_("\nOptions for stop or restart:\n"));
-	printf(_("  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n"));
+	printf(_("  -m SHUTDOWN-MODE   can be \"smart\", \"fast\", or \"immediate\"\n"));
 
 	printf(_("\nShutdown modes are:\n"));
 	printf(_("  smart       quit after all clients have disconnected\n"));

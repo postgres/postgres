@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.44 2007/01/31 20:56:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.45 2007/02/01 19:10:24 momjian Exp $ -->
 
  <chapter id="sql-intro">
   <title>SQL</title>
@@ -1557,7 +1557,7 @@ SELECT *
 
        <para>
         If we want to know the highest average part price among all our
-	suppliers, we can't write MAX(AVG(PRICE)), but we can write:
+	suppliers, we cannot write MAX(AVG(PRICE)), but we can write:
 
 	<programlisting>
 SELECT MAX(subtable.avgprice)

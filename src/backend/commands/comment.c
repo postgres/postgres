@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.95 2007/01/23 05:07:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.96 2007/02/01 19:10:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -584,7 +584,7 @@ CommentDatabase(List *qualname, char *comment)
 	if (list_length(qualname) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("database name may not be qualified")));
+				 errmsg("database name cannot be qualified")));
 	database = strVal(linitial(qualname));
 
 	/*
@@ -632,7 +632,7 @@ CommentTablespace(List *qualname, char *comment)
 	if (list_length(qualname) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("tablespace name may not be qualified")));
+				 errmsg("tablespace name cannot be qualified")));
 	tablespace = strVal(linitial(qualname));
 
 	oid = get_tablespace_oid(tablespace);
@@ -669,7 +669,7 @@ CommentRole(List *qualname, char *comment)
 	if (list_length(qualname) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("role name may not be qualified")));
+				 errmsg("role name cannot be qualified")));
 	role = strVal(linitial(qualname));
 
 	oid = get_roleid_checked(role);
@@ -702,7 +702,7 @@ CommentNamespace(List *qualname, char *comment)
 	if (list_length(qualname) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("schema name may not be qualified")));
+				 errmsg("schema name cannot be qualified")));
 	namespace = strVal(linitial(qualname));
 
 	oid = GetSysCacheOid(NAMESPACENAME,
@@ -1161,7 +1161,7 @@ CommentLanguage(List *qualname, char *comment)
 	if (list_length(qualname) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("language name may not be qualified")));
+				 errmsg("language name cannot be qualified")));
 	language = strVal(linitial(qualname));
 
 	oid = GetSysCacheOid(LANGNAME,

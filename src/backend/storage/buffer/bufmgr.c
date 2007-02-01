@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.214 2007/01/05 22:19:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.215 2007/02/01 19:10:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2126,7 +2126,7 @@ AbortBufferIO(void)
 								buf->tag.rnode.spcNode,
 								buf->tag.rnode.dbNode,
 								buf->tag.rnode.relNode),
-						 errdetail("Multiple failures --- write error may be permanent.")));
+						 errdetail("Multiple failures --- write error might be permanent.")));
 			}
 		}
 		TerminateBufferIO(buf, false, BM_IO_ERROR);

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.29 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/notify.sgml,v 1.30 2007/02/01 19:10:24 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -64,7 +64,7 @@ NOTIFY <replaceable class="PARAMETER">name</replaceable>
    to a particular table, a useful programming technique is to put the
    <command>NOTIFY</command> in a rule that is triggered by table updates.
    In this way, notification happens automatically when the table is changed,
-   and the application programmer can't accidentally forget to do it.
+   and the application programmer cannot accidentally forget to do it.
   </para>
 
   <para>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.50 2007/02/01 00:28:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.51 2007/02/01 19:10:24 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -138,7 +138,7 @@ CREATE [ OR REPLACE ] RULE <replaceable class="parameter">name</replaceable> AS 
       Any <acronym>SQL</acronym> conditional expression (returning
       <type>boolean</type>).  The condition expression cannot refer
       to any tables except <literal>NEW</> and <literal>OLD</>, and
-      can not contain aggregate functions.
+      cannot contain aggregate functions.
      </para>
     </listitem>
    </varlistentry>

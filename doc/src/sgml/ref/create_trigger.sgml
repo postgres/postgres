@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.46 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.47 2007/02/01 19:10:24 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -71,7 +71,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
   </para>
 
   <para>
-   <command>SELECT</command> does not modify any rows so you can not
+   <command>SELECT</command> does not modify any rows so you cannot
    create <command>SELECT</command> triggers. Rules and views are more
    appropriate in such cases.
   </para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.142 2007/01/05 22:19:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.143 2007/02/01 19:10:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1121,7 +1121,7 @@ init_params(List *options, bool isInit,
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->min_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("START value (%s) can't be less than MINVALUE (%s)",
+				 errmsg("START value (%s) cannot be less than MINVALUE (%s)",
 						bufs, bufm)));
 	}
 	if (new->last_value > new->max_value)
@@ -1133,7 +1133,7 @@ init_params(List *options, bool isInit,
 		snprintf(bufm, sizeof(bufm), INT64_FORMAT, new->max_value);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-			   errmsg("START value (%s) can't be greater than MAXVALUE (%s)",
+			   errmsg("START value (%s) cannot be greater than MAXVALUE (%s)",
 					  bufs, bufm)));
 	}
 

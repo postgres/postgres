@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.175 2007/01/05 22:19:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.176 2007/02/01 19:10:28 momjian Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -581,7 +581,7 @@ LockAcquire(const LOCKTAG *locktag,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-			errhint("You may need to increase max_locks_per_transaction.")));
+			errhint("You might need to increase max_locks_per_transaction.")));
 	}
 	locallock->lock = lock;
 
@@ -647,7 +647,7 @@ LockAcquire(const LOCKTAG *locktag,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-			errhint("You may need to increase max_locks_per_transaction.")));
+			errhint("You might need to increase max_locks_per_transaction.")));
 	}
 	locallock->proclock = proclock;
 
@@ -2272,7 +2272,7 @@ lock_twophase_recover(TransactionId xid, uint16 info,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-			errhint("You may need to increase max_locks_per_transaction.")));
+			errhint("You might need to increase max_locks_per_transaction.")));
 	}
 
 	/*
@@ -2337,7 +2337,7 @@ lock_twophase_recover(TransactionId xid, uint16 info,
 		ereport(ERROR,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory"),
-			errhint("You may need to increase max_locks_per_transaction.")));
+			errhint("You might need to increase max_locks_per_transaction.")));
 	}
 
 	/*

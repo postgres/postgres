@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.130 2007/01/31 18:52:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.131 2007/02/01 19:10:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -876,7 +876,7 @@ check_encodings_match(int pg_enc, const char *ctype)
 			_("%s: warning: encoding mismatch\n"), progname);
 	fprintf(stderr,
 	  _("The encoding you selected (%s) and the encoding that the selected\n"
-		"locale uses (%s) are not known to match.  This may lead to\n"
+		"locale uses (%s) are not known to match.  This might lead to\n"
 	"misbehavior in various character string processing functions.  To fix\n"
 		"this situation, rerun %s and either do not specify an encoding\n"
 		"explicitly, or choose a matching combination.\n"),
@@ -1052,7 +1052,7 @@ check_input(char *path)
 		else
 			fprintf(stderr,
 					_("%s: could not access file \"%s\": %s\n"
-					  "This may mean you have a corrupted installation or identified\n"
+					  "This might mean you have a corrupted installation or identified\n"
 					  "the wrong directory with the invocation option -L.\n"),
 					progname, path, strerror(errno));
 		exit(1);
@@ -2580,7 +2580,7 @@ main(int argc, char *argv[])
 
 	if (pwprompt && pwfilename)
 	{
-		fprintf(stderr, _("%s: password prompt and password file may not be specified together\n"), progname);
+		fprintf(stderr, _("%s: password prompt and password file cannot be specified together\n"), progname);
 		exit(1);
 	}
 

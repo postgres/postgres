@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.43 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.44 2007/02/01 19:10:24 momjian Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -437,7 +437,7 @@ importFile(PGconn *conn, char *filename)
     fd = open(filename, O_RDONLY, 0666);
     if (fd &lt; 0)
     {                           /* error */
-        fprintf(stderr, &quot;can't open unix file %s\n&quot;, filename);
+        fprintf(stderr, &quot;cannot open unix file %s\n&quot;, filename);
     }
 
     /*
@@ -445,7 +445,7 @@ importFile(PGconn *conn, char *filename)
      */
     lobjId = lo_creat(conn, INV_READ | INV_WRITE);
     if (lobjId == 0)
-        fprintf(stderr, &quot;can't create large object\n&quot;);
+        fprintf(stderr, &quot;cannot create large object\n&quot;);
 
     lobj_fd = lo_open(conn, lobjId, INV_WRITE);
 
@@ -476,7 +476,7 @@ pickout(PGconn *conn, Oid lobjId, int start, int len)
     lobj_fd = lo_open(conn, lobjId, INV_READ);
     if (lobj_fd &lt; 0)
     {
-        fprintf(stderr, &quot;can't open large object %d\n&quot;,
+        fprintf(stderr, &quot;cannot open large object %d\n&quot;,
                 lobjId);
     }
 
@@ -508,7 +508,7 @@ overwrite(PGconn *conn, Oid lobjId, int start, int len)
     lobj_fd = lo_open(conn, lobjId, INV_WRITE);
     if (lobj_fd &lt; 0)
     {
-        fprintf(stderr, &quot;can't open large object %d\n&quot;,
+        fprintf(stderr, &quot;cannot open large object %d\n&quot;,
                 lobjId);
     }
 
@@ -550,7 +550,7 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
     lobj_fd = lo_open(conn, lobjId, INV_READ);
     if (lobj_fd &lt; 0)
     {
-        fprintf(stderr, &quot;can't open large object %d\n&quot;,
+        fprintf(stderr, &quot;cannot open large object %d\n&quot;,
                 lobjId);
     }
 
@@ -560,7 +560,7 @@ exportFile(PGconn *conn, Oid lobjId, char *filename)
     fd = open(filename, O_CREAT | O_WRONLY, 0666);
     if (fd &lt; 0)
     {                           /* error */
-        fprintf(stderr, &quot;can't open unix file %s\n&quot;,
+        fprintf(stderr, &quot;cannot open unix file %s\n&quot;,
                 filename);
     }
 

@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.108 2006/10/04 00:30:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.109 2007/02/01 19:10:30 momjian Exp $
  *
  **********************************************************************/
 
@@ -1061,7 +1061,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 					free(prodesc);
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("trigger functions may only be called as triggers")));
+							 errmsg("trigger functions can only be called as triggers")));
 				}
 				else
 				{

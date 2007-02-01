@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.155 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.156 2007/02/01 19:10:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -376,9 +376,9 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 						 errmsg("cannot cluster on index \"%s\" because access method does not handle null values",
 								RelationGetRelationName(OldIndex)),
 						 recheck
-						 ? errhint("You may be able to work around this by marking column \"%s\" NOT NULL, or use ALTER TABLE ... SET WITHOUT CLUSTER to remove the cluster specification from the table.",
+						 ? errhint("You might be able to work around this by marking column \"%s\" NOT NULL, or use ALTER TABLE ... SET WITHOUT CLUSTER to remove the cluster specification from the table.",
 						 NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))
-						 : errhint("You may be able to work around this by marking column \"%s\" NOT NULL.",
+						 : errhint("You might be able to work around this by marking column \"%s\" NOT NULL.",
 					  NameStr(OldHeap->rd_att->attrs[colno - 1]->attname))));
 		}
 		else if (colno < 0)

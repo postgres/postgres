@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.62 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.63 2007/02/01 19:10:24 momjian Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -437,7 +437,7 @@ EXPLAIN ANALYZE SELECT * FROM tenk1 t1, tenk2 t2 WHERE t1.unique1 &lt; 100 AND t
    <para>
     It is worth noting that <command>EXPLAIN</> results should not be extrapolated
     to situations other than the one you are actually testing; for example,
-    results on a toy-sized table can't be assumed to apply to large tables.
+    results on a toy-sized table cannot be assumed to apply to large tables.
     The planner's cost estimates are not linear and so it might choose
     a different plan for a larger or smaller table.  An extreme example
     is that on a table that only occupies one disk page, you'll nearly

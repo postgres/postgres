@@ -9,7 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.14 2007/01/05 22:19:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.15 2007/02/01 19:10:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ pg_read_file(PG_FUNCTION_ARGS)
 	if (bytes_to_read < 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("requested length may not be negative")));
+				 errmsg("requested length cannot be negative")));
 
 	/* not sure why anyone thought that int64 length was a good idea */
 	if (bytes_to_read > (MaxAllocSize - VARHDRSZ))

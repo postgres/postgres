@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.63 2007/01/05 22:19:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.64 2007/02/01 19:10:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1209,7 +1209,7 @@ generate_series_step_int8(PG_FUNCTION_ARGS)
 		if (step == 0)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("step size may not equal zero")));
+					 errmsg("step size cannot equal zero")));
 
 		/* create a function context for cross-call persistence */
 		funcctx = SRF_FIRSTCALL_INIT();

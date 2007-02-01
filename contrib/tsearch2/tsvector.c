@@ -859,7 +859,7 @@ tsearch2(PG_FUNCTION_ARGS)
 	trigdata = (TriggerData *) fcinfo->context;
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "TSearch: Can't process STATEMENT events");
+		elog(ERROR, "TSearch: Cannot process STATEMENT events");
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		/* internal error */
 		elog(ERROR, "TSearch: Must be fired BEFORE event");

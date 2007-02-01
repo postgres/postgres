@@ -115,7 +115,7 @@ timetravel(PG_FUNCTION_ARGS)
 
 	/* Should be called for ROW trigger */
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
-		elog(ERROR, "timetravel: can't process STATEMENT events");
+		elog(ERROR, "timetravel: cannot process STATEMENT events");
 
 	/* Should be called BEFORE */
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
@@ -261,7 +261,7 @@ timetravel(PG_FUNCTION_ARGS)
 			elog(ERROR, "timetravel (%s): %s must be NOT NULL", relname, args[a_time_off]);
 
 		if (oldtimeon != newtimeon || oldtimeoff != newtimeoff)
-			elog(ERROR, "timetravel (%s): you can't change %s and/or %s columns (use set_timetravel)",
+			elog(ERROR, "timetravel (%s): you cannot change %s and/or %s columns (use set_timetravel)",
 				 relname, args[a_time_on], args[a_time_off]);
 	}
 	if (oldtimeoff != NOEND_ABSTIME)

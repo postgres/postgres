@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.43 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/queries.sgml,v 1.44 2007/02/01 19:10:24 momjian Exp $ -->
 
 <chapter id="queries">
  <title>Queries</title>
@@ -591,7 +591,7 @@ FROM (SELECT * FROM table1) AS alias_name
 
     <para>
      This example is equivalent to <literal>FROM table1 AS
-     alias_name</literal>.  More interesting cases, which can't be
+     alias_name</literal>.  More interesting cases, which cannot be
      reduced to a plain join, arise when the subquery involves
      grouping or aggregation.
     </para>

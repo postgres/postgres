@@ -77,7 +77,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 	/* Should be called for ROW trigger */
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "check_primary_key: can't process STATEMENT events");
+		elog(ERROR, "check_primary_key: cannot process STATEMENT events");
 
 	/* If INSERTion then must check Tuple to being inserted */
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
@@ -86,7 +86,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 	/* Not should be called for DELETE */
 	else if (TRIGGER_FIRED_BY_DELETE(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "check_primary_key: can't process DELETE events");
+		elog(ERROR, "check_primary_key: cannot process DELETE events");
 
 	/* If UPDATion the must check new Tuple, not old one */
 	else
@@ -277,12 +277,12 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	/* Should be called for ROW trigger */
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "check_foreign_key: can't process STATEMENT events");
+		elog(ERROR, "check_foreign_key: cannot process STATEMENT events");
 
 	/* Not should be called for INSERT */
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "check_foreign_key: can't process INSERT events");
+		elog(ERROR, "check_foreign_key: cannot process INSERT events");
 
 	/* Have to check tg_trigtuple - tuple being deleted */
 	trigtuple = trigdata->tg_trigtuple;

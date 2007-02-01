@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.577 2007/01/25 11:53:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.578 2007/02/01 19:10:27 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2266,7 +2266,7 @@ CreateAsStmt:
 					if (n->into != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
-								 errmsg("CREATE TABLE AS may not specify INTO")));
+								 errmsg("CREATE TABLE AS cannot specify INTO")));
 					$4->istemp = $2;
 					n->into = $4;
 					n->intoColNames = $5;

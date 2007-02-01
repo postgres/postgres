@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.280 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.281 2007/02/01 19:10:24 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1040,7 +1040,7 @@ su - postgres
        <listitem>
         <para>
          Enables <firstterm>assertion</> checks in the server, which test for
-         many <quote>can't happen</> conditions.  This is invaluable for
+         many <quote>cannot happen</> conditions.  This is invaluable for
          code development purposes, but the tests slow things down a little.
          Also, having the tests turned on won't necessarily enhance the
          stability of your server!  The assertion checks are not categorized

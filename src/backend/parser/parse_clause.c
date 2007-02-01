@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.163 2007/01/10 18:06:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.164 2007/02/01 19:10:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -452,7 +452,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	if (query->into != NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("subquery in FROM may not have SELECT INTO")));
+				 errmsg("subquery in FROM cannot have SELECT INTO")));
 
 	/*
 	 * The subquery cannot make use of any variables from FROM items created
@@ -472,7 +472,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 		if (contain_vars_of_level((Node *) query, 1))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("subquery in FROM may not refer to other relations of same query level")));
+					 errmsg("subquery in FROM cannot refer to other relations of same query level")));
 	}
 
 	/*
@@ -521,7 +521,7 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 		if (contain_vars_of_level(funcexpr, 0))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("function expression in FROM may not refer to other relations of same query level")));
+					 errmsg("function expression in FROM cannot refer to other relations of same query level")));
 	}
 
 	/*

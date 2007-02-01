@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.371 2007/01/25 11:53:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.372 2007/02/01 19:10:28 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1196,7 +1196,7 @@ static struct config_int ConfigureNamesInt[] =
 	{
 		{"work_mem", PGC_USERSET, RESOURCES_MEM,
 			gettext_noop("Sets the maximum memory to be used for query workspaces."),
-			gettext_noop("This much memory may be used by each internal "
+			gettext_noop("This much memory can be used by each internal "
 						 "sort operation and hash table before switching to "
 						 "temporary disk files."),
 			GUC_UNIT_KB
@@ -2120,7 +2120,7 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"log_directory", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the destination directory for log files."),
-			gettext_noop("May be specified as relative to the data directory "
+			gettext_noop("Can be specified as relative to the data directory "
 						 "or as absolute path."),
 			GUC_SUPERUSER_ONLY
 		},

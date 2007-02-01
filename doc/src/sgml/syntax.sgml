@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.113 2007/02/01 00:28:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.114 2007/02/01 19:10:24 momjian Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -1425,7 +1425,7 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
 </synopsis>
     However, this only works for types whose names are also valid as
     function names.  For example, <literal>double precision</literal>
-    can't be used this way, but the equivalent <literal>float8</literal>
+    cannot be used this way, but the equivalent <literal>float8</literal>
     can.  Also, the names <literal>interval</>, <literal>time</>, and
     <literal>timestamp</> can only be used in this fashion if they are
     double-quoted, because of syntactic conflicts.  Therefore, the use of

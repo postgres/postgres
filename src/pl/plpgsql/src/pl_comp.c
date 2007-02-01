@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.110 2007/01/30 22:05:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.111 2007/02/01 19:10:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,7 +521,7 @@ do_compile(FunctionCallInfo fcinfo,
 				else if (rettypeid == TRIGGEROID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("trigger functions may only be called as triggers")));
+							 errmsg("trigger functions can only be called as triggers")));
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

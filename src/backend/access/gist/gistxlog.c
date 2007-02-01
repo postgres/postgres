@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.25 2007/01/05 22:19:22 momjian Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gist/gistxlog.c,v 1.26 2007/02/01 19:10:25 momjian Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -687,7 +687,7 @@ gistContinueInsert(gistIncompleteInsert *insert)
 			}
 
 			if (ntodelete == 0)
-				elog(PANIC, "gistContinueInsert: can't find pointer to page(s)");
+				elog(PANIC, "gistContinueInsert: cannot find pointer to page(s)");
 
 			/*
 			 * we check space with subtraction only first tuple to delete,

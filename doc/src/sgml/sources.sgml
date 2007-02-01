@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.23 2007/02/01 00:28:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.24 2007/02/01 19:10:24 momjian Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -95,7 +95,7 @@ ereport(ERROR,
                 func_signature_string(funcname, nargs,
                                       actual_arg_types)),
          errhint("Unable to choose a best candidate function. "
-                 "You may need to add explicit typecasts.")));
+                 "You might need to add explicit typecasts.")));
 </programlisting>
     This illustrates the use of format codes to embed run-time values into
     a message text.  Also, an optional <quote>hint</> message is provided.
@@ -145,7 +145,7 @@ ereport(ERROR,
      <function>errmsg_internal(const char *msg, ...)</function> is the same as
      <function>errmsg</>, except that the message string will not be
      included in the internationalization message dictionary.
-     This should be used for <quote>can't happen</> cases that are probably
+     This should be used for <quote>cannot happen</> cases that are probably
      not worth expending translation effort on.
     </para>
    </listitem>
@@ -224,7 +224,7 @@ ereport(level, (errmsg_internal("format string", ...)));
     Therefore, <function>elog</> should be used only for internal errors and
     low-level debug logging.  Any message that is likely to be of interest to
     ordinary users should go through <function>ereport</>.  Nonetheless,
-    there are enough internal <quote>can't happen</> error checks in the
+    there are enough internal <quote>cannot happen</> error checks in the
     system that <function>elog</> is still widely used; it is preferred for
     those messages for its notational simplicity.
    </para>
@@ -528,7 +528,7 @@ BETTER: could not open file %s (I/O failure)
     not helpful information.  If the error text doesn't make as much sense
     without the function name, reword it. 
 <programlisting>
-BAD:    pg_atoi: error in "z": can't parse "z"
+BAD:    pg_atoi: error in "z": cannot parse "z"
 BETTER: invalid input syntax for integer: "z"
 </programlisting>
    </para>

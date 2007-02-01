@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.32 2007/01/05 22:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.33 2007/02/01 19:10:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 	else
 	{
 		/* second and subsequent calls */
-		elog(ERROR, "init_MultiFuncCall may not be called more than once");
+		elog(ERROR, "init_MultiFuncCall cannot be called more than once");
 
 		/* never reached, but keep compiler happy */
 		retval = NULL;

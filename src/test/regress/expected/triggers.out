@@ -241,7 +241,7 @@ select set_ttdummy(1);
 
 -- we want to correct some "date"
 update tttest set price_on = -1 where price_id = 1;
-ERROR:  ttdummy (tttest): you can't change price_on and/or price_off columns (use set_ttdummy)
+ERROR:  ttdummy (tttest): you cannot change price_on and/or price_off columns (use set_ttdummy)
 -- but this doesn't work
 -- try in this way
 select set_ttdummy(0);

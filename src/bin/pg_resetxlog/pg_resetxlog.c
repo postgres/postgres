@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.55 2007/01/05 22:19:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.56 2007/02/01 19:10:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,7 +341,7 @@ main(int argc, char *argv[])
 	if (ControlFile.state != DB_SHUTDOWNED && !force)
 	{
 		printf(_("The database server was not shut down cleanly.\n"
-				 "Resetting the transaction log may cause data to be lost.\n"
+				 "Resetting the transaction log might cause data to be lost.\n"
 				 "If you want to proceed anyway, use -f to force reset.\n"));
 		exit(1);
 	}

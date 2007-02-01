@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.175 2007/01/05 22:19:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.176 2007/02/01 19:10:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1007,11 +1007,11 @@ RenameRole(const char *oldname, const char *newname)
 	if (roleid == GetSessionUserId())
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("session user may not be renamed")));
+				 errmsg("session user cannot be renamed")));
 	if (roleid == GetOuterUserId())
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("current user may not be renamed")));
+				 errmsg("current user cannot be renamed")));
 
 	/* make sure the new name doesn't exist */
 	if (SearchSysCacheExists(AUTHNAME,

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.72 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.73 2007/02/01 19:10:24 momjian Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -61,7 +61,7 @@ CREATE [ OR REPLACE ] FUNCTION
    Also, <command>CREATE OR REPLACE FUNCTION</command> will not let
    you change the return type of an existing function.  To do that,
    you must drop and recreate the function.  (When using <literal>OUT</>
-   parameters, that means you can't change the names or types of any
+   parameters, that means you cannot change the names or types of any
    <literal>OUT</> parameters except by dropping the function.)
   </para>
 

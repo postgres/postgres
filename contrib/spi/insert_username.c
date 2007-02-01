@@ -1,7 +1,7 @@
 /*
  * insert_username.c
  * $Modified: Thu Oct 16 08:13:42 1997 by brook $
- * $PostgreSQL: pgsql/contrib/spi/insert_username.c,v 1.14 2006/05/30 22:12:13 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/spi/insert_username.c,v 1.15 2007/02/01 19:10:23 momjian Exp $
  *
  * insert user name in response to a trigger
  * usage:  insert_username (column_name)
@@ -37,7 +37,7 @@ insert_username(PG_FUNCTION_ARGS)
 		elog(ERROR, "insert_username: not fired by trigger manager");
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "insert_username: can't process STATEMENT events");
+		elog(ERROR, "insert_username: cannot process STATEMENT events");
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		/* internal error */
 		elog(ERROR, "insert_username: must be fired before event");
@@ -48,7 +48,7 @@ insert_username(PG_FUNCTION_ARGS)
 		rettuple = trigdata->tg_newtuple;
 	else
 		/* internal error */
-		elog(ERROR, "insert_username: can't process DELETE events");
+		elog(ERROR, "insert_username: cannot process DELETE events");
 
 	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);

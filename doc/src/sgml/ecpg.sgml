@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.79 2007/02/01 00:28:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.80 2007/02/01 19:10:24 momjian Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -522,7 +522,7 @@ EXEC SQL TYPE serial_t IS long;
       <listitem>
       <para>
        You can declare pointers to the most common types. Note however that
-       you can not use pointers as target variables of queries without
+       you cannot use pointers as target variables of queries without
        auto-allocation. See <xref linkend="ecpg-descriptors"> for more
        information on auto-allocation.
       </para>
@@ -1084,7 +1084,7 @@ int PGTYPESnumeric_from_decimal(decimal *src, numeric *dst);
        <literal>src</> points to into the numeric variable that
        <literal>dst</> points to. It returns 0 on success and -1 if an error
        occurs. Since the decimal type is implemented as a limited version of
-       the numeric type, overflow can not occur with this conversion.
+       the numeric type, overflow cannot occur with this conversion.
       </para>
      </listitem>
     </varlistentry>
@@ -4548,7 +4548,7 @@ EXEC SQL DEFINE MYNUMBER 12;
 EXEC SQL UPDATE Tbl SET col = MYNUMBER;
 </programlisting>
     then ecpg will already do the substitution and your C compiler will never
-    see any name or identifier <literal>MYNUMBER</>. Note that you can not use
+    see any name or identifier <literal>MYNUMBER</>. Note that you cannot use
     <literal>#define</literal> for a constant that you are going to use in an
     embedded SQL query because in this case the embedded SQL precompiler is not
     able to see this declaration.

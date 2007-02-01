@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.260 2007/01/05 22:19:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.261 2007/02/01 19:10:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4670,8 +4670,8 @@ StartupXLOG(void)
 		ereport(LOG,
 				(errmsg("database system was interrupted while in recovery at log time %s",
 						str_time(ControlFile->checkPointCopy.time)),
-				 errhint("If this has occurred more than once some data may be corrupted"
-				" and you may need to choose an earlier recovery target.")));
+				 errhint("If this has occurred more than once some data might be corrupted"
+				" and you might need to choose an earlier recovery target.")));
 	else if (ControlFile->state == DB_IN_PRODUCTION)
 		ereport(LOG,
 				(errmsg("database system was interrupted; last known up at %s",

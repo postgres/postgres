@@ -285,11 +285,11 @@ SELECT a FROM savepoints WHERE a BETWEEN 18 AND 22;
 DROP TABLE savepoints;
 -- only in a transaction block:
 SAVEPOINT one;
-ERROR:  SAVEPOINT may only be used in transaction blocks
+ERROR:  SAVEPOINT can only be used in transaction blocks
 ROLLBACK TO SAVEPOINT one;
-ERROR:  ROLLBACK TO SAVEPOINT may only be used in transaction blocks
+ERROR:  ROLLBACK TO SAVEPOINT can only be used in transaction blocks
 RELEASE SAVEPOINT one;
-ERROR:  RELEASE SAVEPOINT may only be used in transaction blocks
+ERROR:  RELEASE SAVEPOINT can only be used in transaction blocks
 -- Only "rollback to" allowed in aborted state
 BEGIN;
   SAVEPOINT one;

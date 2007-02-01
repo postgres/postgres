@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.190 2007/01/17 16:25:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.191 2007/02/01 19:10:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -707,7 +707,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	if (db_id == MyDatabaseId)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("current database may not be renamed")));
+				 errmsg("current database cannot be renamed")));
 
 	/*
 	 * Make sure the database does not have active sessions.  This is the same

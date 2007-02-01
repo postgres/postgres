@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.93 2007/01/28 19:36:46 adunstan Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.94 2007/02/01 19:10:30 momjian Exp $
  *
  *********************************************************************
  */
@@ -811,7 +811,7 @@ PLy_function_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 				if (proc->setof == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
-							 errmsg("returned object can not be iterated"),
+							 errmsg("returned object cannot be iterated"),
 					errdetail("SETOF must be returned as iterable object")));
 			}
 
@@ -1191,7 +1191,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 				if (procStruct->prorettype == TRIGGEROID)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("trigger functions may only be called as triggers")));
+							 errmsg("trigger functions can only be called as triggers")));
 				else
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1731,7 +1731,7 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 
 				so = PyObject_Str(value);
 				if (so == NULL)
-					PLy_elog(ERROR, "can't convert mapping type");
+					PLy_elog(ERROR, "cannot convert mapping type");
 				valuestr = PyString_AsString(so);
 
 				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
@@ -1820,7 +1820,7 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 
 				so = PyObject_Str(value);
 				if (so == NULL)
-					PLy_elog(ERROR, "can't convert sequence type");
+					PLy_elog(ERROR, "cannot convert sequence type");
 				valuestr = PyString_AsString(so);
 				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
 											  ,valuestr
@@ -1891,7 +1891,7 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 
 				so = PyObject_Str(value);
 				if (so == NULL)
-					PLy_elog(ERROR, "can't convert object type");
+					PLy_elog(ERROR, "cannot convert object type");
 				valuestr = PyString_AsString(so);
 				values[i] = InputFunctionCall(&info->out.r.atts[i].typfunc
 											  ,valuestr

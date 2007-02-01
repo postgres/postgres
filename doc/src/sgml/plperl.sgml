@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.62 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.63 2007/02/01 19:10:24 momjian Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -397,7 +397,7 @@ CREATE OR REPLACE FUNCTION lotsa_md5 (INTEGER) RETURNS SETOF foo_type AS $$
     my $t = localtime;
     elog(NOTICE, "opening file $file at $t" );
     open my $fh, '&lt;', $file # ooh, it's a file access!
-        or elog(ERROR, "can't open $file for reading: $!");
+        or elog(ERROR, "cannot open $file for reading: $!");
     my @words = &lt;$fh&gt;;
     close $fh;
     $t = localtime;
@@ -541,7 +541,7 @@ CREATE OR REPLACE FUNCTION set_var(name text, val text) RETURNS text AS $$
     if ($_SHARED{$_[0]} = $_[1]) {
         return 'ok';
     } else {
-        return "can't set shared variable $_[0] to $_[1]";
+        return "cannot set shared variable $_[0] to $_[1]";
     }
 $$ LANGUAGE plperl;
 

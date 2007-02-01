@@ -31,7 +31,7 @@ autoinc(PG_FUNCTION_ARGS)
 		elog(ERROR, "not fired by trigger manager");
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "can't process STATEMENT events");
+		elog(ERROR, "cannot process STATEMENT events");
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		/* internal error */
 		elog(ERROR, "must be fired before event");
@@ -42,7 +42,7 @@ autoinc(PG_FUNCTION_ARGS)
 		rettuple = trigdata->tg_newtuple;
 	else
 		/* internal error */
-		elog(ERROR, "can't process DELETE events");
+		elog(ERROR, "cannot process DELETE events");
 
 	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);

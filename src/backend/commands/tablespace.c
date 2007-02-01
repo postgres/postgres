@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.41 2007/01/25 04:35:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.42 2007/02/01 19:10:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,7 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	if (strchr(location, '\''))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_NAME),
-			   errmsg("tablespace location may not contain single quotes")));
+			   errmsg("tablespace location cannot contain single quotes")));
 
 	/*
 	 * Allowing relative paths seems risky

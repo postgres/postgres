@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.68 2006/07/13 16:49:20 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.69 2007/02/01 19:10:30 momjian Exp $
  */
 
 #include "postgres.h"
@@ -483,11 +483,11 @@ ttdummy(PG_FUNCTION_ARGS)
 	if (!CALLED_AS_TRIGGER(fcinfo))
 		elog(ERROR, "ttdummy: not fired by trigger manager");
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
-		elog(ERROR, "ttdummy: can't process STATEMENT events");
+		elog(ERROR, "ttdummy: cannot process STATEMENT events");
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		elog(ERROR, "ttdummy: must be fired before event");
 	if (TRIGGER_FIRED_BY_INSERT(trigdata->tg_event))
-		elog(ERROR, "ttdummy: can't process INSERT event");
+		elog(ERROR, "ttdummy: cannot process INSERT event");
 	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 		newtuple = trigdata->tg_newtuple;
 
@@ -541,7 +541,7 @@ ttdummy(PG_FUNCTION_ARGS)
 			elog(ERROR, "ttdummy (%s): %s must be NOT NULL", relname, args[1]);
 
 		if (oldon != newon || oldoff != newoff)
-			elog(ERROR, "ttdummy (%s): you can't change %s and/or %s columns (use set_ttdummy)",
+			elog(ERROR, "ttdummy (%s): you cannot change %s and/or %s columns (use set_ttdummy)",
 				 relname, args[0], args[1]);
 
 		if (newoff != TTDUMMY_INFINITY)

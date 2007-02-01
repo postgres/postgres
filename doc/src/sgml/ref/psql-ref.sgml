@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.182 2007/02/01 00:28:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.183 2007/02/01 19:10:24 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -543,7 +543,7 @@ PostgreSQL documentation
     determined at compile time.
     Since the database server uses the same default, you will not have
     to specify the port in most cases. The default user name is your
-    Unix user name, as is the default database name. Note that you can't
+    Unix user name, as is the default database name. Note that you cannot
     just connect to any database under any user name. Your database
     administrator should have informed you about your access rights.
     </para>

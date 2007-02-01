@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.40 2007/01/05 22:19:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.41 2007/02/01 19:10:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ _bt_restore_page(Page page, char *from, int len)
 		itemsz = MAXALIGN(itemsz);
 		if (PageAddItem(page, (Item) from, itemsz,
 						FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
-			elog(PANIC, "_bt_restore_page: can't add item to page");
+			elog(PANIC, "_bt_restore_page: cannot add item to page");
 		from += itemsz;
 	}
 }

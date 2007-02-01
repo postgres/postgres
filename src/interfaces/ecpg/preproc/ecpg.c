@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.96 2007/01/12 10:00:13 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.97 2007/02/01 19:10:29 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -39,7 +39,7 @@ help(const char *progname)
 	printf("  -c             automatically generate C code from embedded SQL code;\n"
 		   "                 currently this works for EXEC SQL TYPE\n");
 	printf("  -C MODE        set compatibility mode;\n"
-	  "                 MODE may be one of \"INFORMIX\", \"INFORMIX_SE\"\n");
+	  "                 MODE can be one of \"INFORMIX\", \"INFORMIX_SE\"\n");
 #ifdef YYDEBUG
 	printf("  -d             generate parser debug output\n");
 #endif
@@ -49,7 +49,7 @@ help(const char *progname)
 	printf("  -I DIRECTORY   search DIRECTORY for include files\n");
 	printf("  -o OUTFILE     write result to OUTFILE\n");
 	printf("  -r OPTION      specify runtime behaviour;\n"
-		   "                 OPTION may only be \"no_indicator\"\n");
+		   "                 OPTION can only be \"no_indicator\"\n");
 	printf("  -t             turn on autocommit of transactions\n");
 	printf("  --help         show this help, then exit\n");
 	printf("  --regression   run in regression testing mode\n");

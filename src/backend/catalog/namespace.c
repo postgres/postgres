@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.90 2007/01/05 22:19:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.91 2007/02/01 19:10:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,7 +236,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 		if (newRelation->schemaname)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-				  errmsg("temporary tables may not specify a schema name")));
+				  errmsg("temporary tables cannot specify a schema name")));
 		/* Initialize temp namespace if first time through */
 		if (!OidIsValid(myTempNamespace))
 			InitTempTableNamespace();

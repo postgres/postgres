@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.20 2007/01/26 17:45:42 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.21 2007/02/01 19:10:30 momjian Exp $
  */
 
 #include "postgres.h"
@@ -645,7 +645,7 @@ dolink(const char *fromfile, const char *tofile)
 			const char *e = strerror(errno);
 
 			(void) fprintf(stderr,
-						   _("%s: Can't link from %s to %s: %s\n"),
+						   _("%s: Cannot link from %s to %s: %s\n"),
 						   progname, fromname, toname, e);
 			(void) exit(EXIT_FAILURE);
 		}
@@ -831,7 +831,7 @@ infile(const char *name)
 	{
 		const char *e = strerror(errno);
 
-		(void) fprintf(stderr, _("%s: Can't open %s: %s\n"),
+		(void) fprintf(stderr, _("%s: Cannot open %s: %s\n"),
 					   progname, name, e);
 		(void) exit(EXIT_FAILURE);
 	}
@@ -1566,7 +1566,7 @@ writezone(const char *name)
 	{
 		const char *e = strerror(errno);
 
-		(void) fprintf(stderr, _("%s: Can't remove %s: %s\n"),
+		(void) fprintf(stderr, _("%s: Cannot remove %s: %s\n"),
 					   progname, fullname, e);
 		(void) exit(EXIT_FAILURE);
 	}
@@ -1578,7 +1578,7 @@ writezone(const char *name)
 		{
 			const char *e = strerror(errno);
 
-			(void) fprintf(stderr, _("%s: Can't create %s: %s\n"),
+			(void) fprintf(stderr, _("%s: Cannot create %s: %s\n"),
 						   progname, fullname, e);
 			(void) exit(EXIT_FAILURE);
 		}
@@ -1863,7 +1863,7 @@ outzone(const struct zone * zpfirst, int zonecount)
 				(void) strcpy(startbuf, zp->z_format);
 			eat(zp->z_filename, zp->z_linenum);
 			if (*startbuf == '\0')
-				error(_("can't determine time zone abbreviation to use just after until time"));
+				error(_("cannot determine time zone abbreviation to use just after until time"));
 			else
 				addtt(starttime,
 					  addtype(startoff, startbuf,
@@ -2342,7 +2342,7 @@ mkdirs(char *argname)
 				if (errno != EEXIST || !itsdir(name))
 				{
 					(void) fprintf(stderr,
-								   _("%s: Can't create directory %s: %s\n"),
+								   _("%s: Cannot create directory %s: %s\n"),
 								   progname, name, e);
 					ifree(name);
 					return -1;

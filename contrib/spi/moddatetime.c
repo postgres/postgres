@@ -1,7 +1,7 @@
 /*
 moddatetime.c
 
-$PostgreSQL: pgsql/contrib/spi/moddatetime.c,v 1.13 2006/05/30 22:12:13 tgl Exp $
+$PostgreSQL: pgsql/contrib/spi/moddatetime.c,v 1.14 2007/02/01 19:10:23 momjian Exp $
 
 What is this?
 It is a function to be called from a trigger for the purpose of updating
@@ -43,7 +43,7 @@ moddatetime(PG_FUNCTION_ARGS)
 
 	if (TRIGGER_FIRED_FOR_STATEMENT(trigdata->tg_event))
 		/* internal error */
-		elog(ERROR, "moddatetime: can't process STATEMENT events");
+		elog(ERROR, "moddatetime: cannot process STATEMENT events");
 
 	if (TRIGGER_FIRED_AFTER(trigdata->tg_event))
 		/* internal error */
@@ -56,7 +56,7 @@ moddatetime(PG_FUNCTION_ARGS)
 		rettuple = trigdata->tg_newtuple;
 	else
 		/* internal error */
-		elog(ERROR, "moddatetime: can't process DELETE events");
+		elog(ERROR, "moddatetime: cannot process DELETE events");
 
 	rel = trigdata->tg_relation;
 	relname = SPI_getrelname(rel);
