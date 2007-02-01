@@ -310,6 +310,22 @@ execute s1(NULL); -- should fail
 create function doubledecrement(p1 pos_int) returns pos_int as $$
 declare v pos_int;
 begin
+    return p1;
+end$$ language plpgsql;
+
+select doubledecrement(3); -- fail because of implicit null assignment
+
+create or replace function doubledecrement(p1 pos_int) returns pos_int as $$
+declare v pos_int := 0;
+begin
+    return p1;
+end$$ language plpgsql;
+
+select doubledecrement(3); -- fail at initialization assignment
+
+create or replace function doubledecrement(p1 pos_int) returns pos_int as $$
+declare v pos_int := 1;
+begin
     v := p1 - 1;
     return v - 1;
 end$$ language plpgsql;
