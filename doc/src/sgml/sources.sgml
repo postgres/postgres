@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.25 2007/02/01 20:28:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.26 2007/02/01 21:28:34 momjian Exp $ -->
 
  <chapter id="source">
   <title>PostgreSQL Coding Conventions</title>
@@ -602,6 +602,30 @@ BETTER: unrecognized node type: 42
     expected location of the resource is known but the program cannot access
     it there then say that the resource doesn't <quote>exist</quote>.  Using
     <quote>find</quote> in this case sounds weak and confuses the issue. 
+   </para>
+  </formalpara>
+
+  <formalpara>
+    <title>May/Can/Might</title>
+   <para>
+    <quote>May</quote> suggests permission (e.g. "You may borrow my rake.")
+    and has little use in documentation or error messages.
+    <quote>Can</quote> suggests ability (e.g. "I can lift that log."),
+    and <quote>might</quote> suggests possibility (e.g. "It might rain
+    today.").
+   </para>
+
+   <para>
+    Rationale: Using the proper word clarifies meaning and assists
+    translation.
+   </para>
+  </formalpara>
+
+  <formalpara>
+    <title>Contractions</title>
+   <para>
+    Avoid contractions, like <quote>can't</quote>;  use
+    <quote>cannot</quote> instead.
    </para>
   </formalpara>
 
