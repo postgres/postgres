@@ -38,7 +38,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.32.2.1 2006/12/26 19:27:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.32.2.2 2007/02/02 00:07:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ ExecInitResult(Result *node, EState *estate)
 	 * initialize tuple type and projection info
 	 */
 	ExecAssignResultTypeFromTL(&resstate->ps);
-	ExecAssignProjectionInfo(&resstate->ps);
+	ExecAssignProjectionInfo(&resstate->ps, NULL);
 
 	return resstate;
 }

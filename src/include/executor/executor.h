@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.120.2.2 2006/01/12 21:49:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.120.2.3 2007/02/02 00:07:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,8 +222,10 @@ extern void ExecAssignResultTypeFromTL(PlanState *planstate);
 extern TupleDesc ExecGetResultType(PlanState *planstate);
 extern ProjectionInfo *ExecBuildProjectionInfo(List *targetList,
 						ExprContext *econtext,
-						TupleTableSlot *slot);
-extern void ExecAssignProjectionInfo(PlanState *planstate);
+						TupleTableSlot *slot,
+						TupleDesc inputDesc);
+extern void ExecAssignProjectionInfo(PlanState *planstate,
+									 TupleDesc inputDesc);
 extern void ExecFreeExprContext(PlanState *planstate);
 extern TupleDesc ExecGetScanType(ScanState *scanstate);
 extern void ExecAssignScanType(ScanState *scanstate,

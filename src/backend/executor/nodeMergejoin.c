@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.75.2.2 2006/03/17 19:38:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.75.2.3 2007/02/02 00:07:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1606,7 +1606,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 	 * initialize tuple type and projection info
 	 */
 	ExecAssignResultTypeFromTL(&mergestate->js.ps);
-	ExecAssignProjectionInfo(&mergestate->js.ps);
+	ExecAssignProjectionInfo(&mergestate->js.ps, NULL);
 
 	/*
 	 * preprocess the merge clauses

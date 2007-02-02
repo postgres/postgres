@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.70.2.1 2005/11/22 18:23:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.70.2.2 2007/02/02 00:07:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -882,14 +882,16 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 		ExecSetSlotDescriptor(slot, tupDesc, true);
 		node->projLeft = ExecBuildProjectionInfo(lefttlist,
 												 NULL,
-												 slot);
+												 slot,
+												 NULL);
 
 		tupDesc = ExecTypeFromTL(rightptlist, false);
 		slot = ExecAllocTableSlot(tupTable);
 		ExecSetSlotDescriptor(slot, tupDesc, true);
 		node->projRight = ExecBuildProjectionInfo(righttlist,
 												  node->innerecontext,
-												  slot);
+												  slot,
+												  NULL);
 	}
 }
 

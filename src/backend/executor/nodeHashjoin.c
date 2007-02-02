@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.75.2.3 2005/11/28 23:46:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.75.2.4 2007/02/02 00:07:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -426,7 +426,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	 * initialize tuple type and projection info
 	 */
 	ExecAssignResultTypeFromTL(&hjstate->js.ps);
-	ExecAssignProjectionInfo(&hjstate->js.ps);
+	ExecAssignProjectionInfo(&hjstate->js.ps, NULL);
 
 	ExecSetSlotDescriptor(hjstate->hj_OuterTupleSlot,
 						  ExecGetResultType(outerPlanState(hjstate)),

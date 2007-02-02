@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.39.2.1 2005/11/22 18:23:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeNestloop.c,v 1.39.2.2 2007/02/02 00:07:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,7 +339,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate)
 	 * initialize tuple type and projection info
 	 */
 	ExecAssignResultTypeFromTL(&nlstate->js.ps);
-	ExecAssignProjectionInfo(&nlstate->js.ps);
+	ExecAssignProjectionInfo(&nlstate->js.ps, NULL);
 
 	/*
 	 * finally, wipe the current outer tuple clean.
