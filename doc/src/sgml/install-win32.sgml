@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.29 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.30 2007/02/02 16:10:08 neilc Exp $ -->
 
 <chapter id="install-win32">
  <title>Client-Only Installation on <productname>Windows</productname></title>
@@ -106,10 +106,11 @@
  </para>
 
  <para>
-  The only file that really needs to be installed is the
-  <filename>libpq.dll</filename> library.  This file should in most
-  cases be placed in the <filename>WINNT\SYSTEM32</filename> directory
-  (or in <filename>WINDOWS\SYSTEM</filename> on a Windows 95/98/ME
+  Normally you do not need to install any of the client files. You should
+  place the <filename>libpq.dll</filename> file in the same directory
+  as your applications .EXE-file. Only if this is for some reason not
+  possible should you install it in the <filename>WINNT\SYSTEM32</filename>
+  directory (or in <filename>WINDOWS\SYSTEM</filename> on a Windows 95/98/ME
   system).  If this file is installed using a setup program, it should
   be installed with version checking using the
   <symbol>VERSIONINFO</symbol> resource included in the file, to
