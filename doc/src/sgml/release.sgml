@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.37 2007/01/06 06:01:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.38 2007/02/02 00:10:42 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -18,6 +18,106 @@ For new features, add links to the documentation sections.
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-8-1-7">
+   <title>Release 8.1.7</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-02-05</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.1.6, including
+    a security fix.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.1.7</title>
+
+    <para>
+     A dump/restore is not required for those running 8.1.X.
+     However, if you are upgrading from a version earlier than 8.1.2,
+     see the release notes for 8.1.2.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      Remove security vulnerabilities that allowed connected users
+      to read backend memory (Tom)
+     </para>
+     <para>
+      The vulnerabilities involve suppressing the normal check that a SQL
+      function returns the data type it's declared to, and changing the
+      data type of a table column (CVE-2007-0555, CVE-2007-0556).  These
+      errors can easily be exploited to cause a backend crash, and in
+      principle might be used to read database content that the user
+      should not be able to access.
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix rare bug wherein btree index page splits could fail
+      due to choosing an infeasible split point (Heikki Linnakangas)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Improve <command>VACUUM</> performance for databases with many tables (Tom)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix autovacuum to avoid leaving non-permanent transaction IDs in
+      non-connectable databases (Alvaro)
+     </para>
+
+     <para>
+      This bug affects the 8.1 branch only.
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix for rare Assert() crash triggered by <literal>UNION</> (Tom)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Tighten security of multi-byte character processing for UTF8 sequences
+      over three bytes long (Tom)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix bogus <quote>permission denied</> failures occurring on Windows
+      due to attempts to fsync already-deleted files (Magnus, Tom)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix possible crashes when an already-in-use PL/pgSQL function is
+      updated (Tom)
+     </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-8-1-6">
    <title>Release 8.1.6</title>
@@ -2824,6 +2924,75 @@ psql -t -f fixseq.sql db1 | psql -e db1
      </itemizedlist>
     </sect3>
   
+   </sect2>
+  </sect1>
+
+  <sect1 id="release-8-0-11">
+   <title>Release 8.0.11</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-02-05</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.10, including
+    a security fix.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.11</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.6, see the release
+     notes for 8.0.6.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      Remove security vulnerabilities that allowed connected users
+      to read backend memory (Tom)
+     </para>
+     <para>
+      The vulnerabilities involve suppressing the normal check that a SQL
+      function returns the data type it's declared to, and changing the
+      data type of a table column (CVE-2007-0555, CVE-2007-0556).  These
+      errors can easily be exploited to cause a backend crash, and in
+      principle might be used to read database content that the user
+      should not be able to access.
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix rare bug wherein btree index page splits could fail
+      due to choosing an infeasible split point (Heikki Linnakangas)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix for rare Assert() crash triggered by <literal>UNION</> (Tom)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Tighten security of multi-byte character processing for UTF8 sequences
+      over three bytes long (Tom)
+     </para>
+     </listitem>
+
+    </itemizedlist>
+
    </sect2>
   </sect1>
 
@@ -6151,6 +6320,75 @@ typedefs (Michael)</para></listitem>
    </sect2>
   </sect1>
 
+  <sect1 id="release-7-4-16">
+   <title>Release 7.4.16</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-02-05</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.15, including
+    a security fix.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.16</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.11, see the release
+     notes for 7.4.11.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      Remove security vulnerability that allowed connected users
+      to read backend memory (Tom)
+     </para>
+     <para>
+      The vulnerability involves suppressing the normal check that a SQL
+      function returns the data type it's declared to, or changing the
+      data type of a table column used in a SQL function (CVE-2007-0555).
+      This error can easily be exploited to cause a backend crash, and in
+      principle might be used to read database content that the user
+      should not be able to access.
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix rare bug wherein btree index page splits could fail
+      due to choosing an infeasible split point (Heikki Linnakangas)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix for rare Assert() crash triggered by <literal>UNION</> (Tom)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Tighten security of multi-byte character processing for UTF8 sequences
+      over three bytes long (Tom)
+     </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
+
   <sect1 id="release-7-4-15">
    <title>Release 7.4.15</title>
 
@@ -9196,6 +9434,68 @@ DROP SCHEMA information_schema CASCADE;
   </sect3>
   </sect2>
  </sect1>
+
+  <sect1 id="release-7-3-18">
+   <title>Release 7.3.18</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-02-05</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.17, including
+    a security fix.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.18</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      Remove security vulnerability that allowed connected users
+      to read backend memory (Tom)
+     </para>
+     <para>
+      The vulnerability involves changing the
+      data type of a table column used in a SQL function (CVE-2007-0555).
+      This error can easily be exploited to cause a backend crash, and in
+      principle might be used to read database content that the user
+      should not be able to access.
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix rare bug wherein btree index page splits could fail
+      due to choosing an infeasible split point (Heikki Linnakangas)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Tighten security of multi-byte character processing for UTF8 sequences
+      over three bytes long (Tom)
+     </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-3-17">
    <title>Release 7.3.17</title>
