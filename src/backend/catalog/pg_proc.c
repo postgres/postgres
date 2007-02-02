@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.94 2002/09/18 21:35:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.94.2.1 2007/02/02 00:04:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@
 #include "utils/syscache.h"
 
 
-static void checkretval(Oid rettype, char fn_typtype, List *queryTreeList);
 Datum		fmgr_internal_validator(PG_FUNCTION_ARGS);
 Datum		fmgr_c_validator(PG_FUNCTION_ARGS);
 Datum		fmgr_sql_validator(PG_FUNCTION_ARGS);
@@ -294,15 +293,15 @@ ProcedureCreate(const char *procedureName,
 }
 
 /*
- * checkretval() -- check return value of a list of sql parse trees.
+ * check_sql_fn_retval() -- check return value of a list of sql parse trees.
  *
  * The return value of a sql function is the value returned by
  * the final query in the function.  We do some ad-hoc define-time
  * type checking here to be sure that the user is returning the
  * type he claims.
  */
-static void
-checkretval(Oid rettype, char fn_typtype, List *queryTreeList)
+void
+check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 {
 	Query	   *parse;
 	int			cmd;
@@ -592,7 +591,7 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
 	querytree_list = pg_parse_and_rewrite(prosrc, proc->proargtypes, proc->pronargs);
-	checkretval(proc->prorettype, functyptype, querytree_list);
+	check_sql_fn_retval(proc->prorettype, functyptype, querytree_list);
 
 	ReleaseSysCache(tuple);
 

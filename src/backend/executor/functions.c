@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.57.2.1 2003/06/12 17:29:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.57.2.2 2007/02/02 00:04:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "tcop/tcopprot.h"
 #include "tcop/utility.h"
 #include "utils/builtins.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
 
@@ -53,7 +54,7 @@ typedef struct local_es
 
 typedef struct
 {
-	int			typlen;			/* length of the return type */
+	int16		typlen;			/* length of the return type */
 	bool		typbyval;		/* true if return type is pass by value */
 	bool		returnsTuple;	/* true if return type is a tuple */
 	bool		shutdown_reg;	/* true if registered shutdown callback */
@@ -71,7 +72,8 @@ typedef SQLFunctionCache *SQLFunctionCachePtr;
 
 /* non-export function prototypes */
 static execution_state *init_execution_state(char *src,
-					 Oid *argOidVect, int nargs);
+					 Oid *argOidVect, int nargs,
+					 Oid rettype);
 static void init_sql_fcache(FmgrInfo *finfo);
 static void postquel_start(execution_state *es);
 static TupleTableSlot *postquel_getnext(execution_state *es);
@@ -84,7 +86,8 @@ static void ShutdownSQLFunction(Datum arg);
 
 
 static execution_state *
-init_execution_state(char *src, Oid *argOidVect, int nargs)
+init_execution_state(char *src, Oid *argOidVect, int nargs,
+					 Oid rettype)
 {
 	execution_state *firstes;
 	execution_state *preves;
@@ -92,6 +95,14 @@ init_execution_state(char *src, Oid *argOidVect, int nargs)
 			   *qtl_item;
 
 	queryTree_list = pg_parse_and_rewrite(src, argOidVect, nargs);
+
+	/*
+	 * Check that the function returns the type it claims to.  Although
+	 * this was already done when the function was defined,
+	 * we have to recheck because database objects used in the function's
+	 * queries might have changed type.
+	 */
+	check_sql_fn_retval(rettype, get_typtype(rettype), queryTree_list);
 
 	firstes = NULL;
 	preves = NULL;
@@ -150,6 +161,7 @@ static void
 init_sql_fcache(FmgrInfo *finfo)
 {
 	Oid			foid = finfo->fn_oid;
+	Oid			rettype;
 	HeapTuple	procedureTuple;
 	HeapTuple	typeTuple;
 	Form_pg_proc procedureStruct;
@@ -176,12 +188,14 @@ init_sql_fcache(FmgrInfo *finfo)
 	/*
 	 * get the return type from the procedure tuple
 	 */
+	rettype = procedureStruct->prorettype;
+
 	typeTuple = SearchSysCache(TYPEOID,
-						   ObjectIdGetDatum(procedureStruct->prorettype),
+							   ObjectIdGetDatum(rettype),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "init_sql_fcache: Cache lookup failed for type %u",
-			 procedureStruct->prorettype);
+			 rettype);
 
 	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 
@@ -194,7 +208,7 @@ init_sql_fcache(FmgrInfo *finfo)
 	fcache->typlen = typeStruct->typlen;
 
 	if (typeStruct->typtype != 'c' &&
-		procedureStruct->prorettype != RECORDOID)
+		rettype != RECORDOID)
 	{
 		/* The return type is not a composite type, so just use byval */
 		fcache->typbyval = typeStruct->typbyval;
@@ -243,7 +257,7 @@ init_sql_fcache(FmgrInfo *finfo)
 			 foid);
 	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
-	fcache->func_state = init_execution_state(src, argOidVect, nargs);
+	fcache->func_state = init_execution_state(src, argOidVect, nargs, rettype);
 
 	pfree(src);
 

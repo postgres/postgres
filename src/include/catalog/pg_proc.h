@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.275.2.3 2006/11/28 19:19:25 tgl Exp $
+ * $Id: pg_proc.h,v 1.275.2.4 2007/02/02 00:04:16 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3149,5 +3149,8 @@ extern Oid ProcedureCreate(const char *procedureName,
 				char volatility,
 				int parameterCount,
 				const Oid *parameterTypes);
+
+extern void check_sql_fn_retval(Oid rettype, char fn_typtype,
+					List *queryTreeList);
 
 #endif   /* PG_PROC_H */
