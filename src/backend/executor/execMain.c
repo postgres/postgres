@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.285 2007/01/25 04:35:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.286 2007/02/02 00:07:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -804,7 +804,8 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 
 			rliststate = (List *) ExecInitExpr((Expr *) rlist, planstate);
 			resultRelInfo->ri_projectReturning =
-				ExecBuildProjectionInfo(rliststate, econtext, slot);
+				ExecBuildProjectionInfo(rliststate, econtext, slot,
+									   resultRelInfo->ri_RelationDesc->rd_att);
 			resultRelInfo++;
 		}
 

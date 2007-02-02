@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.212 2007/01/25 04:35:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.213 2007/02/02 00:07:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1964,22 +1964,47 @@ update_ri_trigger_args(Oid relid,
 void
 AlterTable(AlterTableStmt *stmt)
 {
-	ATController(relation_openrv(stmt->relation, AccessExclusiveLock),
-				 stmt->cmds,
-				 interpretInhOption(stmt->relation->inhOpt));
+	Relation rel = relation_openrv(stmt->relation, AccessExclusiveLock);
+	int			expected_refcnt;
+
+	/*
+	 * Disallow ALTER TABLE when the current backend has any open reference
+	 * to it besides the one we just got (such as an open cursor or active
+	 * plan); our AccessExclusiveLock doesn't protect us against stomping on
+	 * our own foot, only other people's feet!
+	 *
+	 * Note: the only case known to cause serious trouble is ALTER COLUMN TYPE,
+	 * and some changes are obviously pretty benign, so this could possibly
+	 * be relaxed to only error out for certain types of alterations.  But
+	 * the use-case for allowing any of these things is not obvious, so we
+	 * won't work hard at it for now.
+	 */
+	expected_refcnt = rel->rd_isnailed ? 2 : 1;
+	if (rel->rd_refcnt != expected_refcnt)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("relation \"%s\" is being used by active queries in this session",
+						RelationGetRelationName(rel))));
+
+	ATController(rel, stmt->cmds, interpretInhOption(stmt->relation->inhOpt));
 }
 
 /*
  * AlterTableInternal
  *
  * ALTER TABLE with target specified by OID
+ *
+ * We do not reject if the relation is already open, because it's quite
+ * likely that one or more layers of caller have it open.  That means it
+ * is unsafe to use this entry point for alterations that could break
+ * existing query plans.
  */
 void
 AlterTableInternal(Oid relid, List *cmds, bool recurse)
 {
-	ATController(relation_open(relid, AccessExclusiveLock),
-				 cmds,
-				 recurse);
+	Relation rel = relation_open(relid, AccessExclusiveLock);
+
+	ATController(rel, cmds, recurse);
 }
 
 static void
@@ -2929,6 +2954,12 @@ ATSimpleRecursion(List **wqueue, Relation rel,
 			if (childrelid == relid)
 				continue;
 			childrel = relation_open(childrelid, AccessExclusiveLock);
+			/* check for child relation in use in this session */
+			if (childrel->rd_refcnt != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_IN_USE),
+						 errmsg("relation \"%s\" is being used by active queries in this session",
+								RelationGetRelationName(childrel))));
 			ATPrepCmd(wqueue, childrel, cmd, false, true);
 			relation_close(childrel, NoLock);
 		}
@@ -2960,6 +2991,12 @@ ATOneLevelRecursion(List **wqueue, Relation rel,
 		Relation	childrel;
 
 		childrel = relation_open(childrelid, AccessExclusiveLock);
+		/* check for child relation in use in this session */
+		if (childrel->rd_refcnt != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_OBJECT_IN_USE),
+					 errmsg("relation \"%s\" is being used by active queries in this session",
+							RelationGetRelationName(childrel))));
 		ATPrepCmd(wqueue, childrel, cmd, true, true);
 		relation_close(childrel, NoLock);
 	}
@@ -3765,6 +3802,12 @@ ATExecDropColumn(Relation rel, const char *colName,
 			Form_pg_attribute childatt;
 
 			childrel = heap_open(childrelid, AccessExclusiveLock);
+			/* check for child relation in use in this session */
+			if (childrel->rd_refcnt != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_OBJECT_IN_USE),
+						 errmsg("relation \"%s\" is being used by active queries in this session",
+								RelationGetRelationName(childrel))));
 
 			tuple = SearchSysCacheCopyAttName(childrelid, colName);
 			if (!HeapTupleIsValid(tuple))		/* shouldn't happen */

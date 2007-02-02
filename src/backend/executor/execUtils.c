@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.142 2007/01/05 22:19:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.143 2007/02/02 00:07:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -578,12 +578,19 @@ ExecGetResultType(PlanState *planstate)
  * econtext, and storing the result into the tuple slot.  (Caller must have
  * ensured that tuple slot has a descriptor matching the tlist!)  Note that
  * the given tlist should be a list of ExprState nodes, not Expr nodes.
+ *
+ * inputDesc can be NULL, but if it is not, we check to see whether simple
+ * Vars in the tlist match the descriptor.  It is important to provide
+ * inputDesc for relation-scan plan nodes, as a cross check that the relation
+ * hasn't been changed since the plan was made.  At higher levels of a plan,
+ * there is no need to recheck.
  * ----------------
  */
 ProjectionInfo *
 ExecBuildProjectionInfo(List *targetList,
 						ExprContext *econtext,
-						TupleTableSlot *slot)
+						TupleTableSlot *slot,
+						TupleDesc inputDesc)
 {
 	ProjectionInfo *projInfo = makeNode(ProjectionInfo);
 	int			len;
@@ -598,18 +605,37 @@ ExecBuildProjectionInfo(List *targetList,
 
 	/*
 	 * Determine whether the target list consists entirely of simple Var
-	 * references (ie, references to non-system attributes).  If so, we can
-	 * use the simpler ExecVariableList instead of ExecTargetList.
+	 * references (ie, references to non-system attributes) that match the
+	 * input.  If so, we can use the simpler ExecVariableList instead of
+	 * ExecTargetList.  (Note: if there is a type mismatch then ExecEvalVar
+	 * will probably throw an error at runtime, but we leave that to it.)
 	 */
 	isVarList = true;
 	foreach(tl, targetList)
 	{
 		GenericExprState *gstate = (GenericExprState *) lfirst(tl);
 		Var		   *variable = (Var *) gstate->arg->expr;
+		Form_pg_attribute attr;
 
 		if (variable == NULL ||
 			!IsA(variable, Var) ||
 			variable->varattno <= 0)
+		{
+			isVarList = false;
+			break;
+		}
+		if (!inputDesc)
+			continue;			/* can't check type, assume OK */
+		if (variable->varattno > inputDesc->natts)
+		{
+			isVarList = false;
+			break;
+		}
+		attr = inputDesc->attrs[variable->varattno - 1];
+		if (attr->attisdropped ||
+			variable->vartype != attr->atttypid ||
+			(variable->vartypmod != attr->atttypmod &&
+			 variable->vartypmod != -1))
 		{
 			isVarList = false;
 			break;
@@ -689,15 +715,20 @@ ExecBuildProjectionInfo(List *targetList,
  *		ExecAssignProjectionInfo
  *
  * forms the projection information from the node's targetlist
+ *
+ * Notes for inputDesc are same as for ExecBuildProjectionInfo: supply it
+ * for a relation-scan node, can pass NULL for upper-level nodes
  * ----------------
  */
 void
-ExecAssignProjectionInfo(PlanState *planstate)
+ExecAssignProjectionInfo(PlanState *planstate,
+						 TupleDesc inputDesc)
 {
 	planstate->ps_ProjInfo =
 		ExecBuildProjectionInfo(planstate->targetlist,
 								planstate->ps_ExprContext,
-								planstate->ps_ResultTupleSlot);
+								planstate->ps_ResultTupleSlot,
+								inputDesc);
 }
 
 
