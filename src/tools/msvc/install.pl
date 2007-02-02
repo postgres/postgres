@@ -21,8 +21,7 @@ print "Installing for $conf\n";
 
 EnsureDirectories ('bin','lib','share','share/timezonesets');
 
-CopySetOfFiles('programs', "$conf\\*.exe", $target . '/bin/');
-CopySetOfFiles('libraries', "$conf\\*.dll", $target . '/lib/');
+CopySolutionOutput($conf, $target);
 copy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
 CopySetOfFiles('config files', "*.sample", $target . '/share/');
 CopySetOfFiles('timezone names', 'src\timezone\tznames\*.txt', $target . '/share/timezonesets/');
@@ -72,10 +71,46 @@ sub CopySetOfFiles {
 		chomp;
 		my $tgt = $target . basename($_);
 		print ".";
-		copy($_, $tgt) || croak "Could not copy $_\n";
+		copy($_, $tgt) || croak "Could not copy $_: $!\n";
 	}
 	close($D);
 	print "\n";
+}
+
+sub CopySolutionOutput {
+   my $conf = shift;
+   my $target = shift;
+   my $rem = qr{Project\("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}"\) = "([^"]+)"};
+
+   my $sln = read_file("pgsql.sln") || croak "Could not open pgsql.sln\n";
+   print "Copying build output files...";
+   while ($sln =~ $rem) {
+      my $pf = $1;
+      my $dir;
+      my $ext;
+
+      $sln =~ s/$rem//;
+
+      my $proj = read_file("$pf.vcproj") || croak "Could not open $pf.vcproj\n";
+      if ($proj !~ qr{ConfigurationType="([^"]+)"}) {
+         croak "Could not parse $pf.vcproj\n";
+      }
+      if ($1 == 1) {
+         $dir = "bin";
+         $ext = "exe";
+      }
+      elsif ($1 == 2) {
+         $dir = "lib";
+         $ext = "dll";
+      }
+      else {
+         # Static lib, such as libpgport, only used internally during build, don't install
+         next;
+      }
+      copy("$conf\\$pf\\$pf.$ext","$target\\$dir\\$pf.$ext") || croak "Could not copy $pf.$ext\n";
+      print ".";
+   }
+   print "\n";
 }
 
 sub GenerateConversionScript {
