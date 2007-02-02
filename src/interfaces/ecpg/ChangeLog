@@ -2164,5 +2164,6 @@ Th 25. Jan 17:17:01 CET 2007
 Fr 2. Feb 09:53:48 CET 2007
 
 	- Cleaned up va_list handling. Hopefully this now works on all archs.
+	- Applied Magnus Hagander's patch to take away some compiler warnings.
 	- Set ecpg library version to 5.3.
 	- Set ecpg version to 4.3.1.
