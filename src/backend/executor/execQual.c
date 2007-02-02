@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.171.4.2 2006/11/06 18:21:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.171.4.3 2007/02/02 00:08:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,8 @@ static Datum ExecEvalAggref(AggrefExprState *aggref,
 			   ExprContext *econtext,
 			   bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
+			bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
@@ -433,6 +435,10 @@ ExecEvalAggref(AggrefExprState *aggref, ExprContext *econtext,
  *
  *		Returns a Datum whose value is the value of a range
  *		variable with respect to given expression context.
+ *
+ * Note: ExecEvalVar is executed only the first time through in a given plan;
+ * it changes the ExprState's function pointer to pass control directly to
+ * ExecEvalScalarVar or ExecEvalWholeRowVar after making one-time checks.
  * ----------------------------------------------------------------
  */
 static Datum
@@ -440,17 +446,15 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone)
 {
 	Var		   *variable = (Var *) exprstate->expr;
-	Datum		result;
 	TupleTableSlot *slot;
 	AttrNumber	attnum;
-	HeapTuple	heapTuple;
-	TupleDesc	tuple_type;
+	TupleDesc	slot_tupdesc;
 
 	if (isDone)
 		*isDone = ExprSingleResult;
 
 	/*
-	 * Get the slot and attribute number we want
+	 * Get the input slot and attribute number we want
 	 *
 	 * The asserts check that references to system attributes only appear at
 	 * the level of a relation scan; at higher levels, system attributes
@@ -480,63 +484,194 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 	/*
 	 * extract tuple information from the slot
 	 */
-	heapTuple = slot->val;
-	tuple_type = slot->ttc_tupleDescriptor;
+	slot_tupdesc = slot->ttc_tupleDescriptor;
 
-	/*
-	 * Some checks that are only applied for user attribute numbers (bogus
-	 * system attnums will be caught inside heap_getattr).
-	 */
-	if (attnum > 0)
+	if (attnum != InvalidAttrNumber)
 	{
 		/*
-		 * This assert checks that the attnum is valid.
+		 * Scalar variable case.
+		 *
+		 * If it's a user attribute, check validity (bogus system attnums will
+		 * be caught inside heap_getattr).  What we have to check for here
+		 * is the possibility of an attribute having been changed in type
+		 * since the plan tree was created.  Ideally the plan would get
+		 * invalidated and not re-used, but until that day arrives, we need
+		 * defenses.  Fortunately it's sufficient to check once on the first
+		 * time through.
+		 *
+		 * Note: we allow a reference to a dropped attribute, and force a
+		 * NULL result.  This path is not fast.
+		 *
+		 * Note: we check typmod, but allow the case that the Var has
+		 * unspecified typmod while the column has a specific typmod.
 		 */
-		Assert(attnum <= tuple_type->natts &&
-			   tuple_type->attrs[attnum - 1] != NULL);
-
-		/*
-		 * If the attribute's column has been dropped, we force a NULL
-		 * result. This case should not happen in normal use, but it could
-		 * happen if we are executing a plan cached before the column was
-		 * dropped.
-		 */
-		if (tuple_type->attrs[attnum - 1]->attisdropped)
+		if (attnum > 0)
 		{
-			*isNull = true;
-			return (Datum) 0;
+			Form_pg_attribute attr;
+
+			if (attnum > slot_tupdesc->natts)	/* should never happen */
+				elog(ERROR, "attribute number %d exceeds number of columns %d",
+					 attnum, slot_tupdesc->natts);
+
+			attr = slot_tupdesc->attrs[attnum - 1];
+
+			/*
+			 * If the attribute's column has been dropped, we force a NULL
+			 * result. This case should not happen in normal use, but it could
+			 * happen if we are executing a plan cached before the column was
+			 * dropped.
+			 *
+			 * Can't check type if dropped, since atttypid is probably 0
+			 */
+			if (attr->attisdropped)
+			{
+				*isNull = true;
+				return (Datum) 0;
+			}
+
+			if (variable->vartype != attr->atttypid ||
+				(variable->vartypmod != attr->atttypmod &&
+				 variable->vartypmod != -1))
+				ereport(ERROR,
+						(errmsg("attribute %d has wrong type", attnum),
+						 errdetail("Table has type %s, but query expects %s.",
+								   format_type_be(attr->atttypid),
+								   format_type_be(variable->vartype))));
 		}
 
+		/* Skip the checking on future executions of node */
+		exprstate->evalfunc = ExecEvalScalarVar;
+
+		/* Fetch the value */
+		return ExecEvalScalarVar(exprstate, econtext, isNull, isDone);
+	}
+	else
+	{
 		/*
-		 * This assert checks that the datatype the plan expects to get
-		 * (as told by our "variable" argument) is in fact the datatype of
-		 * the attribute being fetched (as seen in the current context,
-		 * identified by our "econtext" argument).	Otherwise crashes are
-		 * likely.
+		 * Whole-row variable.
 		 *
-		 * Note that we can't check dropped columns, since their atttypid has
-		 * been zeroed.
+		 * If it's a RECORD Var, we'll use the slot's type ID info.  It's
+		 * likely that the slot's type is also RECORD; if so, make sure it's
+		 * been "blessed", so that the Datum can be interpreted later.
+		 *
+		 * If the Var identifies a named composite type, we must check that
+		 * the actual tuple type is compatible with it.
 		 */
-		Assert(variable->vartype == tuple_type->attrs[attnum - 1]->atttypid);
+		if (variable->vartype == RECORDOID)
+		{
+			if (slot_tupdesc->tdtypeid == RECORDOID &&
+				slot_tupdesc->tdtypmod < 0)
+				assign_record_type_typmod(slot_tupdesc);
+		}
+		else
+		{
+			TupleDesc	var_tupdesc;
+			int			i;
+
+			/*
+			 * We really only care about number of attributes and data type.
+			 * Also, we can ignore type mismatch on columns that are dropped
+			 * in the destination type, so long as the physical storage
+			 * matches.  This is helpful in some cases involving out-of-date
+			 * cached plans.
+			 */
+			var_tupdesc = lookup_rowtype_tupdesc(variable->vartype, -1);
+
+			if (var_tupdesc->natts != slot_tupdesc->natts)
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("table row type and query-specified row type do not match"),
+						 errdetail("Table row contains %d attributes, but query expects %d.",
+								   slot_tupdesc->natts, var_tupdesc->natts)));
+
+			for (i = 0; i < var_tupdesc->natts; i++)
+			{
+				Form_pg_attribute vattr = var_tupdesc->attrs[i];
+				Form_pg_attribute sattr = slot_tupdesc->attrs[i];
+
+				if (vattr->atttypid == sattr->atttypid)
+					continue;			/* no worries */
+				if (!vattr->attisdropped)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("table row type and query-specified row type do not match"),
+							 errdetail("Table has type %s at ordinal position %d, but query expects %s.",
+									   format_type_be(sattr->atttypid),
+									   i + 1,
+									   format_type_be(vattr->atttypid))));
+
+				if (vattr->attlen != sattr->attlen ||
+					vattr->attalign != sattr->attalign)
+					ereport(ERROR,
+							(errcode(ERRCODE_DATATYPE_MISMATCH),
+							 errmsg("table row type and query-specified row type do not match"),
+							 errdetail("Physical storage mismatch on dropped attribute at ordinal position %d.",
+									   i + 1)));
+			}
+		}
+
+		/* Skip the checking on future executions of node */
+		exprstate->evalfunc = ExecEvalWholeRowVar;
+
+		/* Fetch the value */
+		return ExecEvalWholeRowVar(exprstate, econtext, isNull, isDone);
+	}
+}
+
+/* ----------------------------------------------------------------
+ *		ExecEvalScalarVar
+ *
+ *		Returns a Datum for a scalar variable.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
+				  bool *isNull, ExprDoneCond *isDone)
+{
+	Var		   *variable = (Var *) exprstate->expr;
+	TupleTableSlot *slot;
+	AttrNumber	attnum;
+	HeapTuple	heapTuple;
+	TupleDesc	slot_tupdesc;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+
+	/* Get the input slot and attribute number we want */
+	switch (variable->varno)
+	{
+		case INNER:				/* get the tuple from the inner node */
+			slot = econtext->ecxt_innertuple;
+			break;
+
+		case OUTER:				/* get the tuple from the outer node */
+			slot = econtext->ecxt_outertuple;
+			break;
+
+		default:				/* get the tuple from the relation being
+								 * scanned */
+			slot = econtext->ecxt_scantuple;
+			break;
 	}
 
-	result = heap_getattr(heapTuple,	/* tuple containing attribute */
-						  attnum,		/* attribute number of desired
-										 * attribute */
-						  tuple_type,	/* tuple descriptor of tuple */
-						  isNull);		/* return: is attribute null? */
+	attnum = variable->varattno;
 
-	return result;
+	/* extract tuple information from the slot */
+	heapTuple = slot->val;
+	slot_tupdesc = slot->ttc_tupleDescriptor;
+
+	/* Fetch the value from the tuple */
+	return heap_getattr(heapTuple,	/* tuple containing attribute */
+						attnum,		/* attribute number of desired
+									 * attribute */
+						slot_tupdesc,	/* tuple descriptor of tuple */
+						isNull);		/* return: is attribute null? */
 }
 
 /* ----------------------------------------------------------------
  *		ExecEvalWholeRowVar
  *
  *		Returns a Datum for a whole-row variable.
- *
- *		This could be folded into ExecEvalVar, but we make it a separate
- *		routine so as not to slow down ExecEvalVar with tests for this
- *		uncommon case.
  * ----------------------------------------------------------------
  */
 static Datum
@@ -544,7 +679,7 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone)
 {
 	Var		   *variable = (Var *) exprstate->expr;
-	TupleTableSlot *slot;
+	TupleTableSlot *slot = econtext->ecxt_scantuple;
 	HeapTuple	tuple;
 	TupleDesc	tupleDesc;
 	HeapTupleHeader dtuple;
@@ -552,16 +687,6 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 	if (isDone)
 		*isDone = ExprSingleResult;
 	*isNull = false;
-
-	Assert(variable->varattno == InvalidAttrNumber);
-
-	/*
-	 * Whole-row Vars can only appear at the level of a relation scan,
-	 * never in a join.
-	 */
-	Assert(variable->varno != INNER);
-	Assert(variable->varno != OUTER);
-	slot = econtext->ecxt_scantuple;
 
 	tuple = slot->val;
 	tupleDesc = slot->ttc_tupleDescriptor;
@@ -578,10 +703,6 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 	/*
 	 * If the Var identifies a named composite type, label the tuple
 	 * with that type; otherwise use what is in the tupleDesc.
-	 *
-	 * It's likely that the slot's tupleDesc is a record type; if so,
-	 * make sure it's been "blessed", so that the Datum can be interpreted
-	 * later.
 	 */
 	if (variable->vartype != RECORDOID)
 	{
@@ -590,9 +711,6 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 	}
 	else
 	{
-		if (tupleDesc->tdtypeid == RECORDOID &&
-			tupleDesc->tdtypmod < 0)
-			assign_record_type_typmod(tupleDesc);
 		HeapTupleHeaderSetTypeId(dtuple, tupleDesc->tdtypeid);
 		HeapTupleHeaderSetTypMod(dtuple, tupleDesc->tdtypmod);
 	}
@@ -2686,12 +2804,14 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 					ExprDoneCond *isDone)
 {
 	FieldSelect *fselect = (FieldSelect *) fstate->xprstate.expr;
+	AttrNumber	fieldnum = fselect->fieldnum;
 	Datum		result;
 	Datum		tupDatum;
 	HeapTupleHeader tuple;
 	Oid			tupType;
 	int32		tupTypmod;
 	TupleDesc	tupDesc;
+	Form_pg_attribute attr;
 	HeapTupleData tmptup;
 
 	tupDatum = ExecEvalExpr(fstate->arg, econtext, isNull, isDone);
@@ -2723,6 +2843,28 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 		MemoryContextSwitchTo(oldcontext);
 	}
 
+	/* Check for dropped column, and force a NULL result if so */
+	if (fieldnum <= 0 ||
+		fieldnum > tupDesc->natts)	/* should never happen */
+				elog(ERROR, "attribute number %d exceeds number of columns %d",
+					 fieldnum, tupDesc->natts);
+	attr = tupDesc->attrs[fieldnum - 1];
+	if (attr->attisdropped)
+	{
+		*isNull = true;
+		return (Datum) 0;
+	}
+
+	/* Check for type mismatch --- possible after ALTER COLUMN TYPE? */
+	if (fselect->resulttype != attr->atttypid ||
+		(fselect->resulttypmod != attr->atttypmod &&
+		 fselect->resulttypmod != -1))
+		ereport(ERROR,
+				(errmsg("attribute %d has wrong type", fieldnum),
+				 errdetail("Table has type %s, but query expects %s.",
+						   format_type_be(attr->atttypid),
+						   format_type_be(fselect->resulttype))));
+
 	/*
 	 * heap_getattr needs a HeapTuple not a bare HeapTupleHeader.  We set
 	 * all the fields in the struct just in case user tries to inspect
@@ -2734,7 +2876,7 @@ ExecEvalFieldSelect(FieldSelectState *fstate,
 	tmptup.t_data = tuple;
 
 	result = heap_getattr(&tmptup,
-						  fselect->fieldnum,
+						  fieldnum,
 						  tupDesc,
 						  isNull);
 	return result;
@@ -2936,15 +3078,8 @@ ExecInitExpr(Expr *node, PlanState *parent)
 	switch (nodeTag(node))
 	{
 		case T_Var:
-			{
-				Var	   *var = (Var *) node;
-
-				state = (ExprState *) makeNode(ExprState);
-				if (var->varattno != InvalidAttrNumber)
-					state->evalfunc = ExecEvalVar;
-				else
-					state->evalfunc = ExecEvalWholeRowVar;
-			}
+			state = (ExprState *) makeNode(ExprState);
+			state->evalfunc = ExecEvalVar;
 			break;
 		case T_Const:
 			state = (ExprState *) makeNode(ExprState);

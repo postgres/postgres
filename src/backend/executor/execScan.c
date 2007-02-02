@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.34.4.1 2007/01/24 01:26:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.34.4.2 2007/02/02 00:08:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,6 +208,7 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 		var = (Var *) ((TargetEntry *) lfirst(tlist_item))->expr;
 		if (!var || !IsA(var, Var))
 			return false;		/* tlist item not a Var */
+		/* if these Asserts fail, planner messed up */
 		Assert(var->varno == varno);
 		Assert(var->varlevelsup == 0);
 		if (var->varattno != attrno)
@@ -224,8 +225,10 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 		 * projection steps just to convert from specific typmod to typmod -1,
 		 * which is pretty silly.
 		 */
-		Assert(var->vartype == att_tup->atttypid);
-		Assert(var->vartypmod == att_tup->atttypmod || var->vartypmod == -1);
+		if (var->vartype != att_tup->atttypid ||
+			(var->vartypmod != att_tup->atttypmod &&
+			 var->vartypmod != -1))
+			return false;		/* type mismatch */
 
 		tlist_item = lnext(tlist_item);
 	}
