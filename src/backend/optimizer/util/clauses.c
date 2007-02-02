@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.201.2.1 2005/11/22 18:23:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.201.2.2 2007/02/02 00:03:30 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2293,7 +2293,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 				eval_const_expressions_context *context)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-	bool		polymorphic = false;
 	Oid		   *argtypes;
 	char	   *src;
 	Datum		tmp;
@@ -2356,14 +2355,9 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		if (argtypes[i] == ANYARRAYOID ||
 			argtypes[i] == ANYELEMENTOID)
 		{
-			polymorphic = true;
 			argtypes[i] = exprType((Node *) list_nth(args, i));
 		}
 	}
-
-	if (funcform->prorettype == ANYARRAYOID ||
-		funcform->prorettype == ANYELEMENTOID)
-		polymorphic = true;
 
 	/* Fetch and parse the function body */
 	tmp = SysCacheGetAttr(PROCOID,
@@ -2417,15 +2411,13 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	newexpr = (Node *) ((TargetEntry *) linitial(querytree->targetList))->expr;
 
 	/*
-	 * If the function has any arguments declared as polymorphic types, then
-	 * it wasn't type-checked at definition time; must do so now. (This will
+	 * Make sure the function (still) returns what it's declared to.  This will
 	 * raise an error if wrong, but that's okay since the function would fail
 	 * at runtime anyway.  Note we do not try this until we have verified that
 	 * no rewriting was needed; that's probably not important, but let's be
-	 * careful.)
+	 * careful.
 	 */
-	if (polymorphic)
-		(void) check_sql_fn_retval(funcid, result_type, querytree_list, NULL);
+	(void) check_sql_fn_retval(funcid, result_type, querytree_list, NULL);
 
 	/*
 	 * Additional validity checks on the expression.  It mustn't return a set,
