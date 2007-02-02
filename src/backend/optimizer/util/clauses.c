@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.4 2005/04/14 21:44:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.5 2007/02/02 00:04:02 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1758,7 +1758,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 	char		result_typtype;
-	bool		polymorphic = false;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	char	   *src;
 	Datum		tmp;
@@ -1792,10 +1791,8 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	if (result_typtype != 'b' &&
 		result_typtype != 'd')
 	{
-		if (funcform->prorettype == ANYARRAYOID ||
-			funcform->prorettype == ANYELEMENTOID)
-			polymorphic = true;
-		else
+		if (funcform->prorettype != ANYARRAYOID &&
+			funcform->prorettype != ANYELEMENTOID)
 			return NULL;
 	}
 
@@ -1814,7 +1811,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		if (argtypes[i] == ANYARRAYOID ||
 			argtypes[i] == ANYELEMENTOID)
 		{
-			polymorphic = true;
 			argtypes[i] = exprType((Node *) nth(i, args));
 		}
 	}
@@ -1891,16 +1887,14 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	newexpr = (Node *) ((TargetEntry *) lfirst(querytree->targetList))->expr;
 
 	/*
-	 * If the function has any arguments declared as polymorphic types,
-	 * then it wasn't type-checked at definition time; must do so now.
-	 * (This will raise an error if wrong, but that's okay since the
-	 * function would fail at runtime anyway.  Note we do not try this
-	 * until we have verified that no rewriting was needed; that's
-	 * probably not important, but let's be careful.)
+	 * Make sure the function (still) returns what it's declared to.  This will
+	 * raise an error if wrong, but that's okay since the function would fail
+	 * at runtime anyway.  Note we do not try this until we have verified that
+	 * no rewriting was needed; that's probably not important, but let's be
+	 * careful.
 	 */
-	if (polymorphic)
-		check_sql_fn_retval(result_type, get_typtype(result_type),
-							querytree_list);
+	check_sql_fn_retval(result_type, get_typtype(result_type),
+						querytree_list);
 
 	/*
 	 * Additional validity checks on the expression.  It mustn't return a

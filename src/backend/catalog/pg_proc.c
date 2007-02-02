@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.109.2.1 2005/05/03 16:51:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.109.2.2 2007/02/02 00:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,11 +350,10 @@ ProcedureCreate(const char *procedureName,
  * the final query in the function.  We do some ad-hoc type checking here
  * to be sure that the user is returning the type he claims.
  *
- * This is normally applied during function definition, but in the case
- * of a function with polymorphic arguments, we instead apply it during
- * function execution startup.	The rettype is then the actual resolved
- * output type of the function, rather than the declared type.	(Therefore,
- * we should never see ANYARRAY or ANYELEMENT as rettype.)
+ * For a polymorphic function the passed rettype must be the actual resolved
+ * output type of the function; we should never see ANYARRAY or ANYELEMENT
+ * as rettype.  (This means we can't check the type during function definition
+ * of a polymorphic function.)
  */
 void
 check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)

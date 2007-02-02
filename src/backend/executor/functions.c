@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.75.2.1 2004/09/06 18:23:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.75.2.2 2007/02/02 00:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ typedef struct local_es
  */
 typedef struct
 {
-	int			typlen;			/* length of the return type */
+	int16		typlen;			/* length of the return type */
 	bool		typbyval;		/* true if return type is pass by value */
 	bool		returnsTuple;	/* true if return type is a tuple */
 	bool		shutdown_reg;	/* true if registered shutdown callback */
@@ -77,7 +77,7 @@ typedef SQLFunctionCache *SQLFunctionCachePtr;
 /* non-export function prototypes */
 static execution_state *init_execution_state(char *src,
 					 Oid *argOidVect, int nargs,
-					 Oid rettype, bool haspolyarg);
+					 Oid rettype);
 static void init_sql_fcache(FmgrInfo *finfo);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static TupleTableSlot *postquel_getnext(execution_state *es);
@@ -93,7 +93,7 @@ static void ShutdownSQLFunction(Datum arg);
 
 static execution_state *
 init_execution_state(char *src, Oid *argOidVect, int nargs,
-					 Oid rettype, bool haspolyarg)
+					 Oid rettype)
 {
 	execution_state *firstes;
 	execution_state *preves;
@@ -103,11 +103,13 @@ init_execution_state(char *src, Oid *argOidVect, int nargs,
 	queryTree_list = pg_parse_and_rewrite(src, argOidVect, nargs);
 
 	/*
-	 * If the function has any arguments declared as polymorphic types,
-	 * then it wasn't type-checked at definition time; must do so now.
+	 * Check that the function returns the type it claims to.  Although
+	 * in simple cases this was already done when the function was defined,
+	 * we have to recheck because database objects used in the function's
+	 * queries might have changed type.  We'd have to do it anyway if the
+	 * function had any polymorphic arguments.
 	 */
-	if (haspolyarg)
-		check_sql_fn_retval(rettype, get_typtype(rettype), queryTree_list);
+	check_sql_fn_retval(rettype, get_typtype(rettype), queryTree_list);
 
 	firstes = NULL;
 	preves = NULL;
@@ -150,7 +152,6 @@ init_sql_fcache(FmgrInfo *finfo)
 	Form_pg_type typeStruct;
 	SQLFunctionCachePtr fcache;
 	Oid		   *argOidVect;
-	bool		haspolyarg;
 	char	   *src;
 	int			nargs;
 	Datum		tmp;
@@ -226,12 +227,9 @@ init_sql_fcache(FmgrInfo *finfo)
 		fcache->funcSlot = NULL;
 
 	/*
-	 * Parse and plan the queries.	We need the argument type info to pass
-	 * to the parser.
+	 * We need the argument type info to pass to the parser.
 	 */
 	nargs = procedureStruct->pronargs;
-	haspolyarg = false;
-
 	if (nargs > 0)
 	{
 		int			argnum;
@@ -254,13 +252,15 @@ init_sql_fcache(FmgrInfo *finfo)
 							 errmsg("could not determine actual type of argument declared %s",
 									format_type_be(argOidVect[argnum]))));
 				argOidVect[argnum] = argtype;
-				haspolyarg = true;
 			}
 		}
 	}
 	else
 		argOidVect = (Oid *) NULL;
 
+	/*
+	 * Parse and rewrite the queries in the function text.
+	 */
 	tmp = SysCacheGetAttr(PROCOID,
 						  procedureTuple,
 						  Anum_pg_proc_prosrc,
@@ -269,8 +269,7 @@ init_sql_fcache(FmgrInfo *finfo)
 		elog(ERROR, "null prosrc for function %u", foid);
 	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
-	fcache->func_state = init_execution_state(src, argOidVect, nargs,
-											  rettype, haspolyarg);
+	fcache->func_state = init_execution_state(src, argOidVect, nargs, rettype);
 
 	pfree(src);
 
