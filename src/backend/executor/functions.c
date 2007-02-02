@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.109 2007/01/05 22:19:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.110 2007/02/02 00:02:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ typedef struct
 {
 	Oid		   *argtypes;		/* resolved types of arguments */
 	Oid			rettype;		/* actual return type */
-	int			typlen;			/* length of the return type */
+	int16		typlen;			/* length of the return type */
 	bool		typbyval;		/* true if return type is pass by value */
 	bool		returnsTuple;	/* true if returning whole tuple result */
 	bool		shutdown_reg;	/* true if registered shutdown callback */
@@ -151,12 +151,9 @@ init_sql_fcache(FmgrInfo *finfo)
 	Oid			foid = finfo->fn_oid;
 	Oid			rettype;
 	HeapTuple	procedureTuple;
-	HeapTuple	typeTuple;
 	Form_pg_proc procedureStruct;
-	Form_pg_type typeStruct;
 	SQLFunctionCachePtr fcache;
 	Oid		   *argOidVect;
-	bool		haspolyarg;
 	char	   *src;
 	int			nargs;
 	List	   *queryTree_list;
@@ -193,35 +190,17 @@ init_sql_fcache(FmgrInfo *finfo)
 
 	fcache->rettype = rettype;
 
+	/* Fetch the typlen and byval info for the result type */
+	get_typlenbyval(rettype, &fcache->typlen, &fcache->typbyval);
+
 	/* Remember if function is STABLE/IMMUTABLE */
 	fcache->readonly_func =
 		(procedureStruct->provolatile != PROVOLATILE_VOLATILE);
 
-	/* Now look up the actual result type */
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(rettype),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "cache lookup failed for type %u", rettype);
-	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
-
 	/*
-	 * get the type length and by-value flag from the type tuple; also do a
-	 * preliminary check for returnsTuple (this may prove inaccurate, see
-	 * below).
-	 */
-	fcache->typlen = typeStruct->typlen;
-	fcache->typbyval = typeStruct->typbyval;
-	fcache->returnsTuple = (typeStruct->typtype == 'c' ||
-							rettype == RECORDOID);
-
-	/*
-	 * Parse and rewrite the queries.  We need the argument type info to pass
-	 * to the parser.
+	 * We need the actual argument types to pass to the parser.
 	 */
 	nargs = procedureStruct->pronargs;
-	haspolyarg = false;
-
 	if (nargs > 0)
 	{
 		int			argnum;
@@ -244,7 +223,6 @@ init_sql_fcache(FmgrInfo *finfo)
 							 errmsg("could not determine actual type of argument declared %s",
 									format_type_be(argOidVect[argnum]))));
 				argOidVect[argnum] = argtype;
-				haspolyarg = true;
 			}
 		}
 	}
@@ -252,6 +230,9 @@ init_sql_fcache(FmgrInfo *finfo)
 		argOidVect = NULL;
 	fcache->argtypes = argOidVect;
 
+	/*
+	 * Parse and rewrite the queries in the function text.
+	 */
 	tmp = SysCacheGetAttr(PROCOID,
 						  procedureTuple,
 						  Anum_pg_proc_prosrc,
@@ -263,24 +244,25 @@ init_sql_fcache(FmgrInfo *finfo)
 	queryTree_list = pg_parse_and_rewrite(src, argOidVect, nargs);
 
 	/*
-	 * If the function has any arguments declared as polymorphic types, then
-	 * it wasn't type-checked at definition time; must do so now.
+	 * Check that the function returns the type it claims to.  Although
+	 * in simple cases this was already done when the function was defined,
+	 * we have to recheck because database objects used in the function's
+	 * queries might have changed type.  We'd have to do it anyway if the
+	 * function had any polymorphic arguments.
 	 *
-	 * Also, force a type-check if the declared return type is a rowtype; we
-	 * need to find out whether we are actually returning the whole tuple
-	 * result, or just regurgitating a rowtype expression result. In the
+	 * Note: we set fcache->returnsTuple according to whether we are
+	 * returning the whole tuple result or just a single column.  In the
 	 * latter case we clear returnsTuple because we need not act different
-	 * from the scalar result case.
+	 * from the scalar result case, even if it's a rowtype column.
 	 *
 	 * In the returnsTuple case, check_sql_fn_retval will also construct a
 	 * JunkFilter we can use to coerce the returned rowtype to the desired
 	 * form.
 	 */
-	if (haspolyarg || fcache->returnsTuple)
-		fcache->returnsTuple = check_sql_fn_retval(foid,
-												   rettype,
-												   queryTree_list,
-												   &fcache->junkFilter);
+	fcache->returnsTuple = check_sql_fn_retval(foid,
+											   rettype,
+											   queryTree_list,
+											   &fcache->junkFilter);
 
 	/* Finally, plan the queries */
 	fcache->func_state = init_execution_state(queryTree_list,
@@ -288,7 +270,6 @@ init_sql_fcache(FmgrInfo *finfo)
 
 	pfree(src);
 
-	ReleaseSysCache(typeTuple);
 	ReleaseSysCache(procedureTuple);
 
 	finfo->fn_extra = (void *) fcache;
@@ -858,11 +839,10 @@ ShutdownSQLFunction(Datum arg)
  * the final query in the function.  We do some ad-hoc type checking here
  * to be sure that the user is returning the type he claims.
  *
- * This is normally applied during function definition, but in the case
- * of a function with polymorphic arguments, we instead apply it during
- * function execution startup.	The rettype is then the actual resolved
- * output type of the function, rather than the declared type.	(Therefore,
- * we should never see ANYARRAY or ANYELEMENT as rettype.)
+ * For a polymorphic function the passed rettype must be the actual resolved
+ * output type of the function; we should never see ANYARRAY or ANYELEMENT
+ * as rettype.  (This means we can't check the type during function definition
+ * of a polymorphic function.)
  *
  * The return value is true if the function returns the entire tuple result
  * of its final SELECT, and false otherwise.  Note that because we allow
