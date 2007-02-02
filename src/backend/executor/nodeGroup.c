@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.65 2006/07/14 14:52:19 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.65.2.1 2007/02/02 00:07:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -205,7 +205,7 @@ ExecInitGroup(Group *node, EState *estate, int eflags)
 	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL(&grpstate->ss.ps);
-	ExecAssignProjectionInfo(&grpstate->ss.ps);
+	ExecAssignProjectionInfo(&grpstate->ss.ps, NULL);
 
 	/*
 	 * Precompute fmgr lookup data for inner loop

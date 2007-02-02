@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.146 2006/10/04 00:29:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.146.2.1 2007/02/02 00:07:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1243,7 +1243,7 @@ ExecInitAgg(Agg *node, EState *estate, int eflags)
 	 * Initialize result tuple type and projection info.
 	 */
 	ExecAssignResultTypeFromTL(&aggstate->ss.ps);
-	ExecAssignProjectionInfo(&aggstate->ss.ps);
+	ExecAssignProjectionInfo(&aggstate->ss.ps, NULL);
 
 	/*
 	 * get the count of aggregates in targetlist and quals
