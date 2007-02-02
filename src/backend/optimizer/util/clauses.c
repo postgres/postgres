@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.186.4.4 2005/04/14 21:44:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.186.4.5 2007/02/02 00:03:44 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2138,7 +2138,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 				eval_const_expressions_context *context)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-	bool		polymorphic = false;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	char	   *src;
 	Datum		tmp;
@@ -2179,14 +2178,9 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		if (argtypes[i] == ANYARRAYOID ||
 			argtypes[i] == ANYELEMENTOID)
 		{
-			polymorphic = true;
 			argtypes[i] = exprType((Node *) list_nth(args, i));
 		}
 	}
-
-	if (funcform->prorettype == ANYARRAYOID ||
-		funcform->prorettype == ANYELEMENTOID)
-		polymorphic = true;
 
 	/*
 	 * Setup error traceback support for ereport().  This is so that we
@@ -2260,16 +2254,14 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	newexpr = (Node *) ((TargetEntry *) linitial(querytree->targetList))->expr;
 
 	/*
-	 * If the function has any arguments declared as polymorphic types,
-	 * then it wasn't type-checked at definition time; must do so now.
-	 * (This will raise an error if wrong, but that's okay since the
-	 * function would fail at runtime anyway.  Note we do not try this
-	 * until we have verified that no rewriting was needed; that's
-	 * probably not important, but let's be careful.)
+	 * Make sure the function (still) returns what it's declared to.  This will
+	 * raise an error if wrong, but that's okay since the function would fail
+	 * at runtime anyway.  Note we do not try this until we have verified that
+	 * no rewriting was needed; that's probably not important, but let's be
+	 * careful.
 	 */
-	if (polymorphic)
-		(void) check_sql_fn_retval(result_type, get_typtype(result_type),
-								   querytree_list, NULL);
+	(void) check_sql_fn_retval(result_type, get_typtype(result_type),
+							   querytree_list, NULL);
 
 	/*
 	 * Additional validity checks on the expression.  It mustn't return a
