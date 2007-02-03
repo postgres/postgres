@@ -437,3 +437,58 @@ T652	SQL-dynamic statements in SQL routines			NO
 T653	SQL-schema statements in external routines			NO	
 T654	SQL-dynamic statements in external routines			NO	
 T655	Cyclically dependent routines			NO	
+X010	XML type			YES	
+X011	Arrays of XML type			YES	
+X012	Multisets of XML type			NO	
+X013	Distinct types of XML type			NO	
+X014	Attributes of XML type			NO	
+X015	Fields of XML type			NO	
+X016	Persistent XML values			YES	
+X020	XML concatenation			YES	
+X031	XMLElement			YES	
+X032	XMLForest			YES	
+X033	XMLRoot			YES	
+X034	XMLAgg			YES	
+X035	XMLAgg: ORDER BY option			NO	
+X036	XMLComment			YES	
+X037	XMLPI			YES	
+X041	Basic table mapping: nulls absent			NO	
+X042	Basic table mapping: null as nil			NO	
+X043	Basic table mapping: table as forest			NO	
+X044	Basic table mapping: table as element			NO	
+X045	Basic table mapping: with target namespace			NO	
+X046	Basic table mapping: data mapping			NO	
+X047	Basic table mapping: metadata mapping			NO	
+X048	Basic table mapping: base64 encoding of binary strings			NO	
+X049	Basic table mapping: hex encoding of binary strings			NO	
+X051	Advanced table mapping: nulls absent			NO	
+X052	Advanced table mapping: null as nil			NO	
+X053	Advanced table mapping: table as forest			NO	
+X054	Advanced table mapping: table as element			NO	
+X055	Advanced table mapping: target namespace			NO	
+X056	Advanced table mapping: data mapping			NO	
+X057	Advanced table mapping: metadata mapping			NO	
+X058	Advanced table mapping: base64 encoding of binary strings			NO	
+X059	Advanced table mapping: hex encoding of binary strings			NO	
+X060	XMLParse: CONTENT option			YES	
+X061	XMLParse: DOCUMENT option			YES	
+X062	XMLParse: explicit WHITESPACE option			YES	
+X070	XMLSerialize: CONTENT option			YES	
+X071	XMLSerialize: DOCUMENT option			YES	
+X080	Namespaces in XML publishing			NO	
+X081	Query-level XML namespace declarations			NO	
+X082	XML namespace declarations in DML			NO	
+X083	XML namespace declarations in DDL			NO	
+X084	XML namespace declarations in compound statements			NO	
+X090	XML document predicate			YES	
+X100	Host language support for XML: CONTENT option			NO	
+X101	Host language support for XML: DOCUMENT option			NO	
+X110	Host language support for XML: VARCHAR mapping			NO	
+X111	Host language support for XML: CLOB mapping			NO	
+X120	XML parameters in SQL routines			YES	
+X121	XML parameters in external routines			YES	
+X131	Query-level XMLBINARY clause			NO	
+X132	XMLBINARY clause in DML			NO	
+X133	XMLBINARY clause in DDL			NO	
+X134	XMLBINARY clause in compound statements			NO	
+X135	XMLBINARY clause in subqueries			NO	
