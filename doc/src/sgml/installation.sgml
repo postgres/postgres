@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.281 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.282 2007/02/03 23:01:06 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1365,6 +1365,8 @@ All of PostgreSQL is successfully made. Ready to install.
 <userinput>gmake -C src/interfaces install</>
 <userinput>gmake -C doc install</>
 </screen>
+    <filename>src/bin</> has a few binaries for server-only use,
+    but they are small.
     </para>
    </formalpara>
   </step>
