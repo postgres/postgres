@@ -11,7 +11,7 @@
  *
  * Copyright (c) 2003-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.22 2007/01/05 22:19:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/errcodes.h,v 1.23 2007/02/03 14:06:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,6 +148,7 @@
 #define ERRCODE_INVALID_BINARY_REPRESENTATION	MAKE_SQLSTATE('2','2', 'P','0','3')
 #define ERRCODE_BAD_COPY_FILE_FORMAT		MAKE_SQLSTATE('2','2', 'P','0','4')
 #define ERRCODE_UNTRANSLATABLE_CHARACTER	MAKE_SQLSTATE('2','2', 'P','0','5')
+#define ERRCODE_NOT_AN_XML_DOCUMENT			MAKE_SQLSTATE('2', '2', '0', '0', 'L')
 #define ERRCODE_INVALID_XML_DOCUMENT			MAKE_SQLSTATE('2', '2', '0', '0', 'M')
 #define ERRCODE_INVALID_XML_CONTENT			MAKE_SQLSTATE('2', '2', '0', '0', 'N')
 #define ERRCODE_INVALID_XML_COMMENT			MAKE_SQLSTATE('2', '2', '0', '0', 'S')

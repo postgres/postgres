@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.209 2007/01/25 11:53:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.210 2007/02/03 14:06:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@ static Node *transformRowExpr(ParseState *pstate, RowExpr *r);
 static Node *transformCoalesceExpr(ParseState *pstate, CoalesceExpr *c);
 static Node *transformMinMaxExpr(ParseState *pstate, MinMaxExpr *m);
 static Node *transformXmlExpr(ParseState *pstate, XmlExpr *x);
+static Node *transformXmlSerialize(ParseState *pstate, XmlSerialize *xs);
 static Node *transformBooleanTest(ParseState *pstate, BooleanTest *b);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformWholeRowRef(ParseState *pstate, char *schemaname,
@@ -222,6 +223,10 @@ transformExpr(ParseState *pstate, Node *expr)
 
 		case T_XmlExpr:
 			result = transformXmlExpr(pstate, (XmlExpr *) expr);
+			break;
+
+		case T_XmlSerialize:
+			result = transformXmlSerialize(pstate, (XmlSerialize *) expr);
 			break;
 
 		case T_NullTest:
@@ -1424,6 +1429,8 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 		newx->arg_names = lappend(newx->arg_names, makeString(argname));
 	}
 
+	newx->xmloption = x->xmloption;
+
 	if (x->op == IS_XMLELEMENT)
 	{
 		foreach(lc, newx->arg_names)
@@ -1484,6 +1491,9 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 					newe = coerce_to_specific_type(pstate, newe, INT4OID,
 												   "XMLROOT");
 				break;
+			case IS_XMLSERIALIZE:
+				/* not handled here */
+				break;
 			case IS_DOCUMENT:
 				newe = coerce_to_specific_type(pstate, newe, XMLOID,
 											   "IS DOCUMENT");
@@ -1494,6 +1504,38 @@ transformXmlExpr(ParseState *pstate, XmlExpr *x)
 	}
 
 	return (Node *) newx;
+}
+
+static Node *
+transformXmlSerialize(ParseState *pstate, XmlSerialize *xs)
+{
+	Oid			targetType;
+	int32		targetTypmod;
+	XmlExpr	   *xexpr;
+
+	xexpr = makeNode(XmlExpr);
+	xexpr->op = IS_XMLSERIALIZE;
+	xexpr->args = list_make1(coerce_to_specific_type(pstate,
+													 transformExpr(pstate, xs->expr),
+													 XMLOID,
+													 "XMLSERIALIZE"));
+
+	targetType = typenameTypeId(pstate, xs->typename);
+	targetTypmod = typenameTypeMod(pstate, xs->typename, targetType);
+
+	xexpr->xmloption = xs->xmloption;
+	/* We actually only need these to be able to parse back the expression. */
+	xexpr->type = targetType;
+	xexpr->typmod = targetTypmod;
+
+	/*
+	 * The actual target type is determined this way.  SQL allows char
+	 * and varchar as target types.  We allow anything that can be
+	 * cast implicitly from text.  This way, user-defined text-like
+	 * data types automatically fit in.
+	 */
+	return (Node *) coerce_to_target_type(pstate, (Node *) xexpr, TEXTOID, targetType, targetTypmod,
+										  COERCION_IMPLICIT, COERCE_IMPLICIT_CAST);
 }
 
 static Node *
@@ -1789,6 +1831,8 @@ exprType(Node *expr)
 		case T_XmlExpr:
 			if (((XmlExpr *) expr)->op == IS_DOCUMENT)
 				type = BOOLOID;
+			else if (((XmlExpr *) expr)->op == IS_XMLSERIALIZE)
+				type = TEXTOID;
 			else
 				type = XMLOID;
 			break;

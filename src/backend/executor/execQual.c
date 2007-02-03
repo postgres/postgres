@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.211 2007/02/02 00:07:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.212 2007/02/03 14:06:53 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2834,11 +2834,10 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 			{
 				ExprState 	*e;
 				text	    *data;
-				bool		is_document;
 				bool		preserve_whitespace;
 
-				/* arguments are known to be text, bool, bool */
-				Assert(list_length(xmlExpr->args) == 3);
+				/* arguments are known to be text, bool */
+				Assert(list_length(xmlExpr->args) == 2);
 
 				e = (ExprState *) linitial(xmlExpr->args);
 				value = ExecEvalExpr(e, econtext, &isnull, NULL);
@@ -2850,18 +2849,12 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				value = ExecEvalExpr(e, econtext, &isnull, NULL);
 				if (isnull)		/* probably can't happen */
 					return (Datum) 0;
-				is_document = DatumGetBool(value);
-
-				e = (ExprState *) lthird(xmlExpr->args);
-				value = ExecEvalExpr(e, econtext, &isnull, NULL);
-				if (isnull)		/* probably can't happen */
-					return (Datum) 0;
 				preserve_whitespace = DatumGetBool(value);
 
 				*isNull = false;
 
 				return PointerGetDatum(xmlparse(data,
-												is_document,
+												xexpr->xmloption,
 												preserve_whitespace));
 			}
 			break;
@@ -2900,7 +2893,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				text		*version;
 				int			standalone;
 
-				/* arguments are known to be xml, text, bool */
+				/* arguments are known to be xml, text, int */
 				Assert(list_length(xmlExpr->args) == 3);
 
 				e = (ExprState *) linitial(xmlExpr->args);
@@ -2925,6 +2918,24 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 				return PointerGetDatum(xmlroot(data,
 											   version,
 											   standalone));
+			}
+			break;
+
+		case IS_XMLSERIALIZE:
+			{
+				ExprState	*e;
+
+				/* argument type is known to be xml */
+				Assert(list_length(xmlExpr->args) == 1);
+
+				e = (ExprState *) linitial(xmlExpr->args);
+				value = ExecEvalExpr(e, econtext, &isnull, NULL);
+				if (isnull)
+					return (Datum) 0;
+
+				*isNull = false;
+
+				return PointerGetDatum(xmltotext_with_xmloption(DatumGetXmlP(value), xexpr->xmloption));
 			}
 			break;
 

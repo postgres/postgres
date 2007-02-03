@@ -122,11 +122,15 @@ SELECT xmlroot (
   standalone yes
 );
 ERROR:  no XML support in this installation
-SELECT xmlserialize(content data as character varying) FROM xmltest;
- data 
-------
+SELECT xmlserialize(content data as character varying(20)) FROM xmltest;
+ xmlserialize 
+--------------
 (0 rows)
 
+SELECT xmlserialize(content 'good' as char(10));
+ERROR:  no XML support in this installation
+SELECT xmlserialize(document 'bad' as text);
+ERROR:  no XML support in this installation
 SELECT xml '<foo>bar</foo>' IS DOCUMENT;
 ERROR:  no XML support in this installation
 SELECT xml '<foo>bar</foo><bar>foo</bar>' IS DOCUMENT;
@@ -168,3 +172,27 @@ EXECUTE foo ('<bar/>');
 ERROR:  prepared statement "foo" does not exist
 EXECUTE foo ('good');
 ERROR:  prepared statement "foo" does not exist
+-- Test backwards parsing
+CREATE VIEW xmlview1 AS SELECT xmlcomment('test');
+CREATE VIEW xmlview2 AS SELECT xmlconcat('hello', 'you');
+ERROR:  no XML support in this installation
+CREATE VIEW xmlview3 AS SELECT xmlelement(name element, xmlattributes (1 as ":one:", 'deuce' as two), 'content&');
+ERROR:  no XML support in this installation
+CREATE VIEW xmlview4 AS SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
+ERROR:  no XML support in this installation
+CREATE VIEW xmlview5 AS SELECT xmlparse(content '<abc>x</abc>');
+CREATE VIEW xmlview6 AS SELECT xmlpi(name foo, 'bar');
+ERROR:  no XML support in this installation
+CREATE VIEW xmlview7 AS SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
+ERROR:  no XML support in this installation
+CREATE VIEW xmlview8 AS SELECT xmlserialize(content 'good' as char(10));
+ERROR:  no XML support in this installation
+CREATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as text);
+ERROR:  no XML support in this installation
+SELECT table_name, view_definition FROM information_schema.views WHERE table_name LIKE 'xmlview%';
+ table_name |                                view_definition                                
+------------+-------------------------------------------------------------------------------
+ xmlview1   | SELECT xmlcomment('test'::text) AS xmlcomment;
+ xmlview5   | SELECT XMLPARSE(CONTENT '<abc>x</abc>'::text STRIP WHITESPACE) AS "xmlparse";
+(2 rows)
+

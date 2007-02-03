@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.295 2007/01/22 20:00:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.296 2007/02/03 14:06:54 petere Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -933,6 +933,9 @@ _outXmlExpr(StringInfo str, XmlExpr *node)
 	WRITE_NODE_FIELD(named_args);
 	WRITE_NODE_FIELD(arg_names);
 	WRITE_NODE_FIELD(args);
+	WRITE_ENUM_FIELD(xmloption, XmlOptionType);
+	WRITE_OID_FIELD(type);
+	WRITE_INT_FIELD(typmod);
 }
 
 static void
@@ -1519,6 +1522,16 @@ _outLockingClause(StringInfo str, LockingClause *node)
 	WRITE_NODE_FIELD(lockedRels);
 	WRITE_BOOL_FIELD(forUpdate);
 	WRITE_BOOL_FIELD(noWait);
+}
+
+static void
+_outXmlSerialize(StringInfo str, XmlSerialize *node)
+{
+	WRITE_NODE_TYPE("XMLSERIALIZE");
+
+	WRITE_ENUM_FIELD(xmloption, XmlOptionType);
+	WRITE_NODE_FIELD(expr);
+	WRITE_NODE_FIELD(typename);
 }
 
 static void
@@ -2289,6 +2302,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_LockingClause:
 				_outLockingClause(str, obj);
+				break;
+			case T_XmlSerialize:
+				_outXmlSerialize(str, obj);
 				break;
 
 			default:

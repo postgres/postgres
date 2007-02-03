@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.153 2007/01/14 13:11:54 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.154 2007/02/03 14:06:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1337,11 +1337,17 @@ FigureColnameInternal(Node *node, char **name)
 				case IS_XMLROOT:
 					*name = "xmlroot";
 					return 2;
+				case IS_XMLSERIALIZE:
+					*name = "xmlserialize";
+					return 2;
 				case IS_DOCUMENT:
 					/* nothing */
 					break;
 			} 
 			break;
+		case T_XmlSerialize:
+			*name = "xmlserialize";
+			return 2;
 		default:
 			break;
 	}

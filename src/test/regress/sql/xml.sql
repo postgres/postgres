@@ -68,6 +68,7 @@ SELECT xmlpi(name foo, null);
 SELECT xmlpi(name xmlstuff, null);
 SELECT xmlpi(name foo, '   bar');
 
+
 SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
 SELECT xmlroot(xml '<foo/>', version '2.0');
 SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
@@ -95,7 +96,9 @@ SELECT xmlroot (
 );
 
 
-SELECT xmlserialize(content data as character varying) FROM xmltest;
+SELECT xmlserialize(content data as character varying(20)) FROM xmltest;
+SELECT xmlserialize(content 'good' as char(10));
+SELECT xmlserialize(document 'bad' as text);
 
 
 SELECT xml '<foo>bar</foo>' IS DOCUMENT;
@@ -125,3 +128,18 @@ EXECUTE foo ('bad');
 SET XML OPTION CONTENT;
 EXECUTE foo ('<bar/>');
 EXECUTE foo ('good');
+
+
+-- Test backwards parsing
+
+CREATE VIEW xmlview1 AS SELECT xmlcomment('test');
+CREATE VIEW xmlview2 AS SELECT xmlconcat('hello', 'you');
+CREATE VIEW xmlview3 AS SELECT xmlelement(name element, xmlattributes (1 as ":one:", 'deuce' as two), 'content&');
+CREATE VIEW xmlview4 AS SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
+CREATE VIEW xmlview5 AS SELECT xmlparse(content '<abc>x</abc>');
+CREATE VIEW xmlview6 AS SELECT xmlpi(name foo, 'bar');
+CREATE VIEW xmlview7 AS SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
+CREATE VIEW xmlview8 AS SELECT xmlserialize(content 'good' as char(10));
+CREATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as text);
+
+SELECT table_name, view_definition FROM information_schema.views WHERE table_name LIKE 'xmlview%';

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.24 2007/01/27 14:50:51 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.25 2007/02/03 14:06:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ static void 	xml_ereport_by_code(int level, int sqlcode,
 static xmlChar *xml_text2xmlChar(text *in);
 static int		parse_xml_decl(const xmlChar *str, size_t *lenp, xmlChar **version, xmlChar **encoding, int *standalone);
 static bool		print_xml_decl(StringInfo buf, const xmlChar *version, pg_enc encoding, int standalone);
-static xmlDocPtr xml_parse(text *data, bool is_document, bool preserve_whitespace, xmlChar *encoding);
+static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace, xmlChar *encoding);
 
 #endif /* USE_LIBXML */
 
@@ -112,7 +112,7 @@ xml_in(PG_FUNCTION_ARGS)
 	 * Parse the data to check if it is well-formed XML data.  Assume
 	 * that ERROR occurred if parsing failed.
 	 */
-	doc = xml_parse(vardata, (xmloption == XMLOPTION_DOCUMENT), true, NULL);
+	doc = xml_parse(vardata, xmloption, true, NULL);
 	xmlFreeDoc(doc);
 
 	PG_RETURN_XML_P(vardata);
@@ -211,7 +211,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	 * Parse the data to check if it is well-formed XML data.  Assume
 	 * that ERROR occurred if parsing failed.
 	 */
-	doc = xml_parse(result, (xmloption == XMLOPTION_DOCUMENT), true, encoding);
+	doc = xml_parse(result, xmloption, true, encoding);
 	xmlFreeDoc(doc);
 
 	newstr = (char *) pg_do_encoding_conversion((unsigned char *) str,
@@ -435,7 +435,29 @@ texttoxml(PG_FUNCTION_ARGS)
 {
 	text	   *data = PG_GETARG_TEXT_P(0);
 
-	PG_RETURN_XML_P(xmlparse(data, (xmloption == XMLOPTION_DOCUMENT), true));
+	PG_RETURN_XML_P(xmlparse(data, xmloption, true));
+}
+
+
+Datum
+xmltotext(PG_FUNCTION_ARGS)
+{
+	xmltype	   *data = PG_GETARG_XML_P(0);
+
+	PG_RETURN_TEXT_P(xmltotext_with_xmloption(data, xmloption));
+}
+
+
+text *
+xmltotext_with_xmloption(xmltype *data, XmlOptionType xmloption_arg)
+{
+	if (xmloption_arg == XMLOPTION_DOCUMENT && !xml_is_document(data))
+		ereport(ERROR,
+				(errcode(ERRCODE_NOT_AN_XML_DOCUMENT),
+				 errmsg("not an XML document")));
+
+	/* It's actually binary compatible, save for the above check. */
+	return (text *) data;
 }
 
 
@@ -499,12 +521,12 @@ xmlelement(XmlExprState *xmlExpr, ExprContext *econtext)
 
 
 xmltype *
-xmlparse(text *data, bool is_document, bool preserve_whitespace)
+xmlparse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace)
 {
 #ifdef USE_LIBXML
 	xmlDocPtr	doc;
 
-	doc = xml_parse(data, is_document, preserve_whitespace, NULL);
+	doc = xml_parse(data, xmloption_arg, preserve_whitespace, NULL);
 	xmlFreeDoc(doc);
 
 	return (xmltype *) data;
@@ -723,7 +745,7 @@ xml_is_document(xmltype *arg)
 
 	PG_TRY();
 	{
-		doc = xml_parse((text *) arg, true, true, NULL);
+		doc = xml_parse((text *) arg, XMLOPTION_DOCUMENT, true, NULL);
 		result = true;
 	}
 	PG_CATCH();
@@ -996,7 +1018,7 @@ print_xml_decl(StringInfo buf, const xmlChar *version, pg_enc encoding, int stan
  * TODO maybe, libxml2's xmlreader is better? (do not construct DOM, yet do not use SAX - see xml_reader.c)
  */
 static xmlDocPtr
-xml_parse(text *data, bool is_document, bool preserve_whitespace, xmlChar *encoding)
+xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace, xmlChar *encoding)
 {
 	int32				len;
 	xmlChar				*string;
@@ -1024,7 +1046,7 @@ xml_parse(text *data, bool is_document, bool preserve_whitespace, xmlChar *encod
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
 						"could not allocate parser context");
 
-		if (is_document)
+		if (xmloption_arg == XMLOPTION_DOCUMENT)
 		{
 			/*
 			 * Note, that here we try to apply DTD defaults

@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.30 2007/01/31 19:33:54 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.31 2007/02/03 14:06:55 petere Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -300,7 +300,7 @@ DATA(insert ( 1266	 25  939 i ));
 DATA(insert (	25 1266  938 e ));
 DATA(insert ( 1700	 25 1688 i ));
 DATA(insert (	25 1700 1686 e ));
-DATA(insert (  142   25    0 e ));
+DATA(insert (  142   25 2922 e ));
 DATA(insert (   25  142	2896 e ));
 
 /*
@@ -340,7 +340,7 @@ DATA(insert ( 1266 1043  939 a ));
 DATA(insert ( 1043 1266  938 e ));
 DATA(insert ( 1700 1043 1688 a ));
 DATA(insert ( 1043 1700 1686 e ));
-DATA(insert (  142 1043    0 e ));
+DATA(insert (  142 1043 2922 e ));
 DATA(insert ( 1043  142 2896 e ));
 
 /*
@@ -381,7 +381,7 @@ DATA(insert ( 1266 1042  939 a ));
 DATA(insert ( 1042 1266  938 e ));
 DATA(insert ( 1700 1042 1688 a ));
 DATA(insert ( 1042 1700 1686 e ));
-DATA(insert (  142 1042    0 e ));
+DATA(insert (  142 1042 2922 e ));
 
 /*
  * Length-coercion functions

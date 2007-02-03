@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.297 2007/01/23 05:07:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.298 2007/02/03 14:06:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -462,6 +462,9 @@ _equalXmlExpr(XmlExpr *a, XmlExpr *b)
 	COMPARE_NODE_FIELD(named_args);
 	COMPARE_NODE_FIELD(arg_names);
 	COMPARE_NODE_FIELD(args);
+	COMPARE_SCALAR_FIELD(xmloption);
+	COMPARE_SCALAR_FIELD(type);
+	COMPARE_SCALAR_FIELD(typmod);
 
 	return true;
 }
@@ -1830,6 +1833,15 @@ _equalFkConstraint(FkConstraint *a, FkConstraint *b)
 	return true;
 }
 
+static bool
+_equalXmlSerialize(XmlSerialize *a, XmlSerialize *b)
+{
+	COMPARE_SCALAR_FIELD(xmloption);
+	COMPARE_NODE_FIELD(expr);
+	COMPARE_NODE_FIELD(typename);
+
+	return true;
+}
 
 /*
  * Stuff from pg_list.h
@@ -2410,6 +2422,9 @@ equal(void *a, void *b)
 			break;
 		case T_FuncWithArgs:
 			retval = _equalFuncWithArgs(a, b);
+			break;
+		case T_XmlSerialize:
+			retval = _equalXmlSerialize(a, b);
 			break;
 
 		default:

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.247 2007/01/30 02:39:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.248 2007/02/03 14:06:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3856,8 +3856,18 @@ get_rule_expr(Node *node, deparse_context *context,
 					case IS_XMLROOT:
 						appendStringInfoString(buf, "XMLROOT(");
 						break;
+					case IS_XMLSERIALIZE:
+						appendStringInfoString(buf, "XMLSERIALIZE(");
+						break;
 					case IS_DOCUMENT:
 						break;
+				}
+				if (xexpr->op == IS_XMLPARSE || xexpr->op == IS_XMLSERIALIZE)
+				{
+					if (xexpr->xmloption == XMLOPTION_DOCUMENT)
+						appendStringInfoString(buf, "DOCUMENT ");
+					else
+						appendStringInfoString(buf, "CONTENT ");
 				}
 				if (xexpr->name)
 				{
@@ -3899,24 +3909,17 @@ get_rule_expr(Node *node, deparse_context *context,
 						case IS_XMLELEMENT:
 						case IS_XMLFOREST:
 						case IS_XMLPI:
+						case IS_XMLSERIALIZE:
 							/* no extra decoration needed */
 							get_rule_expr((Node *) xexpr->args, context, true);
 							break;
 						case IS_XMLPARSE:
-							Assert(list_length(xexpr->args) == 3);
-
-							con = (Const *) lsecond(xexpr->args);
-							Assert(IsA(con, Const));
-							Assert(!con->constisnull);
-							if (DatumGetBool(con->constvalue))
-								appendStringInfoString(buf, "DOCUMENT ");
-							else
-								appendStringInfoString(buf, "CONTENT ");
+							Assert(list_length(xexpr->args) == 2);
 
 							get_rule_expr((Node *) linitial(xexpr->args),
 										  context, true);
 
-							con = (Const *) lthird(xexpr->args);
+							con = (Const *) lsecond(xexpr->args);
 							Assert(IsA(con, Const));
 							Assert(!con->constisnull);
 							if (DatumGetBool(con->constvalue))
@@ -3944,12 +3947,26 @@ get_rule_expr(Node *node, deparse_context *context,
 							Assert(IsA(con, Const));
 							if (con->constisnull)
 								/* suppress STANDALONE NO VALUE */ ;
-							else if (DatumGetBool(con->constvalue))
-								appendStringInfoString(buf,
-													   ", STANDALONE YES");
 							else
-								appendStringInfoString(buf,
-													   ", STANDALONE NO");
+							{
+								switch (DatumGetInt32(con->constvalue))
+								{
+									case XML_STANDALONE_YES:
+										appendStringInfoString(buf,
+															   ", STANDALONE YES");
+										break;
+									case XML_STANDALONE_NO:
+										appendStringInfoString(buf,
+															   ", STANDALONE NO");
+										break;
+									case XML_STANDALONE_NO_VALUE:
+										appendStringInfoString(buf,
+															   ", STANDALONE NO VALUE");
+										break;
+									default:
+										break;
+								}
+							}
 							break;
 						case IS_DOCUMENT:
 							get_rule_expr_paren((Node *) xexpr->args, context, false, node);
@@ -3957,6 +3974,9 @@ get_rule_expr(Node *node, deparse_context *context,
 					}
 
 				}
+				if (xexpr->op == IS_XMLSERIALIZE)
+					appendStringInfo(buf, " AS %s", format_type_with_typemod(xexpr->type,
+																			 xexpr->typmod));
 				if (xexpr->op == IS_DOCUMENT)
 					appendStringInfoString(buf, " IS DOCUMENT");
 				else

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.578 2007/02/01 19:10:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.579 2007/02/03 14:06:54 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -350,7 +350,8 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 %type <target>	xml_attribute_el
 %type <list>	xml_attribute_list xml_attributes
 %type <node>	xml_root_version opt_xml_root_standalone
-%type <boolean>	document_or_content xml_whitespace_option
+%type <ival>	document_or_content
+%type <boolean> xml_whitespace_option
 
 
 /*
@@ -1117,7 +1118,7 @@ set_rest:  var_name TO var_list_or_default
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name = "xmloption";
-					n->args = list_make1(makeStringConst($3 ? "DOCUMENT" : "CONTENT", NULL));
+					n->args = list_make1(makeStringConst($3 == XMLOPTION_DOCUMENT ? "DOCUMENT" : "CONTENT", NULL));
 					$$ = n;
 				}
 		;
@@ -7903,10 +7904,11 @@ func_expr:	func_name '(' ')'
 				}
 			| XMLPARSE '(' document_or_content a_expr xml_whitespace_option ')'
 				{
-					$$ = makeXmlExpr(IS_XMLPARSE, NULL, NIL,
-									 list_make3($4,
-												makeBoolAConst($3),
-												makeBoolAConst($5)));
+					XmlExpr *x = (XmlExpr *) makeXmlExpr(IS_XMLPARSE, NULL, NIL,
+														 list_make2($4,
+																	makeBoolAConst($5)));
+					x->xmloption = $3;
+					$$ = (Node *)x;
 				}
 			| XMLPI '(' NAME_P ColLabel ')'
 				{
@@ -7921,14 +7923,13 @@ func_expr:	func_name '(' ')'
 					$$ = makeXmlExpr(IS_XMLROOT, NULL, NIL,
 									 list_make3($3, $5, $6));
 				}
-			| XMLSERIALIZE '(' document_or_content a_expr AS Typename ')'
+			| XMLSERIALIZE '(' document_or_content a_expr AS SimpleTypename ')'
 				{
-					/*
-					 * FIXME: This should be made distinguishable from
-					 * CAST (for reverse compilation at least).  Also,
-					 * what about the document/content option??
-					 */
-					$$ = makeTypeCast($4, $6);
+					XmlSerialize *n = makeNode(XmlSerialize);
+					n->xmloption = $3;
+					n->expr = $4;
+					n->typename = $6;
+					$$ = (Node *)n;
 				}
 		;
 
@@ -7980,17 +7981,13 @@ xml_attribute_el: a_expr AS ColLabel
 				}
 		;
 
-document_or_content: DOCUMENT_P						{ $$ = TRUE; }
-			| CONTENT_P								{ $$ = FALSE; }
+document_or_content: DOCUMENT_P						{ $$ = XMLOPTION_DOCUMENT; }
+			| CONTENT_P								{ $$ = XMLOPTION_CONTENT; }
 		;
 
-/*
- * XXX per SQL spec, the default should be STRIP WHITESPACE, but since we
- * haven't implemented that yet, temporarily default to PRESERVE.
- */
 xml_whitespace_option: PRESERVE WHITESPACE_P		{ $$ = TRUE; }
 			| STRIP_P WHITESPACE_P					{ $$ = FALSE; }
-			| /*EMPTY*/								{ $$ = TRUE; }
+			| /*EMPTY*/								{ $$ = FALSE; }
 		;
 
 /*
