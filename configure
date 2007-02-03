@@ -17609,7 +17609,7 @@ if test "${ac_cv_lib_ldap_r_ldap_simple_bind+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lldap_r $PTHREAD_LIBS $EXTRA_LDAP_LIBS $LIBS"
+LIBS="-lldap_r $PTHREAD_CFLAGS $PTHREAD_LIBS $EXTRA_LDAP_LIBS $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
