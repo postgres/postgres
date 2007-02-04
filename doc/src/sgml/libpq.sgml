@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.225 2007/02/04 03:55:51 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.226 2007/02/04 04:00:28 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -4358,7 +4358,7 @@ installs too. The file's location can also be specified by the
 </para>
 
 <para>
-To set environment variables on Windows, from <literal>My Computer</>,
+To set an environment variable on Windows, from <literal>My Computer</>,
 choose <literal>View System Information</>, and from the <literal>Advanced</>
 tab, choose <literal>Environment Variables</>, then add a user or system
 variable.
