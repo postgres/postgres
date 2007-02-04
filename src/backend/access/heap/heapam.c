@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.225 2007/01/25 02:17:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.226 2007/02/04 20:00:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1418,8 +1418,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * Note: below this point, heaptup is the data we actually intend to store
 	 * into the relation; tup is the caller's original untoasted data.
 	 */
-	if (HeapTupleHasExternal(tup) ||
-		(MAXALIGN(tup->t_len) > TOAST_TUPLE_THRESHOLD))
+	if (HeapTupleHasExternal(tup) || tup->t_len > TOAST_TUPLE_THRESHOLD)
 		heaptup = toast_insert_or_update(relation, tup, NULL, use_wal);
 	else
 		heaptup = tup;
@@ -2073,13 +2072,13 @@ l2:
 	 * We need to invoke the toaster if there are already any out-of-line
 	 * toasted values present, or if the new tuple is over-threshold.
 	 */
-	newtupsize = MAXALIGN(newtup->t_len);
-
 	need_toast = (HeapTupleHasExternal(&oldtup) ||
 				  HeapTupleHasExternal(newtup) ||
-				  newtupsize > TOAST_TUPLE_THRESHOLD);
+				  newtup->t_len > TOAST_TUPLE_THRESHOLD);
 
 	pagefree = PageGetFreeSpace((Page) dp);
+
+	newtupsize = MAXALIGN(newtup->t_len);
 
 	if (need_toast || newtupsize > pagefree)
 	{
@@ -2100,7 +2099,7 @@ l2:
 		 *
 		 * Note: below this point, heaptup is the data we actually intend to
 		 * store into the relation; newtup is the caller's original untoasted
-		 * data. (We always use WAL for toast table updates.)
+		 * data.
 		 */
 		if (need_toast)
 		{

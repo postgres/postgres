@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.69 2007/01/25 02:17:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.70 2007/02/04 20:00:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -506,17 +506,23 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup, bool us
 	 *	4: Store attributes with attstorage 'm' external
 	 * ----------
 	 */
+
+	/* compute header overhead --- this should match heap_form_tuple() */
 	maxDataLen = offsetof(HeapTupleHeaderData, t_bits);
 	if (has_nulls)
 		maxDataLen += BITMAPLEN(numAttrs);
-	maxDataLen = TOAST_TUPLE_TARGET - MAXALIGN(maxDataLen);
+	if (newtup->t_data->t_infomask & HEAP_HASOID)
+		maxDataLen += sizeof(Oid);
+	maxDataLen = MAXALIGN(maxDataLen);
+	Assert(maxDataLen == newtup->t_data->t_hoff);
+	/* now convert to a limit on the tuple data size */
+	maxDataLen = TOAST_TUPLE_TARGET - maxDataLen;
 
 	/*
 	 * Look for attributes with attstorage 'x' to compress
 	 */
-	while (MAXALIGN(heap_compute_data_size(tupleDesc,
-										   toast_values, toast_isnull)) >
-		   maxDataLen)
+	while (heap_compute_data_size(tupleDesc,
+								  toast_values, toast_isnull) > maxDataLen)
 	{
 		int			biggest_attno = -1;
 		int32		biggest_size = MAXALIGN(sizeof(varattrib));
@@ -575,9 +581,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup, bool us
 	 * Second we look for attributes of attstorage 'x' or 'e' that are still
 	 * inline.
 	 */
-	while (MAXALIGN(heap_compute_data_size(tupleDesc,
-										   toast_values, toast_isnull)) >
-		   maxDataLen && rel->rd_rel->reltoastrelid != InvalidOid)
+	while (heap_compute_data_size(tupleDesc,
+								  toast_values, toast_isnull) > maxDataLen &&
+		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno = -1;
 		int32		biggest_size = MAXALIGN(sizeof(varattrib));
@@ -627,9 +633,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup, bool us
 	 * Round 3 - this time we take attributes with storage 'm' into
 	 * compression
 	 */
-	while (MAXALIGN(heap_compute_data_size(tupleDesc,
-										   toast_values, toast_isnull)) >
-		   maxDataLen)
+	while (heap_compute_data_size(tupleDesc,
+								  toast_values, toast_isnull) > maxDataLen)
 	{
 		int			biggest_attno = -1;
 		int32		biggest_size = MAXALIGN(sizeof(varattrib));
@@ -687,9 +692,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup, bool us
 	/*
 	 * Finally we store attributes of type 'm' external
 	 */
-	while (MAXALIGN(heap_compute_data_size(tupleDesc,
-										   toast_values, toast_isnull)) >
-		   maxDataLen && rel->rd_rel->reltoastrelid != InvalidOid)
+	while (heap_compute_data_size(tupleDesc,
+								  toast_values, toast_isnull) > maxDataLen &&
+		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno = -1;
 		int32		biggest_size = MAXALIGN(sizeof(varattrib));
