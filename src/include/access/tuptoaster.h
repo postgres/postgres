@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.28 2006/07/13 17:47:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.28.2.1 2007/02/04 20:00:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,8 +26,11 @@
 /*
  * These symbols control toaster activation.  If a tuple is larger than
  * TOAST_TUPLE_THRESHOLD, we will try to toast it down to no more than
- * TOAST_TUPLE_TARGET bytes.  Both numbers include all tuple header and
- * alignment-padding overhead.
+ * TOAST_TUPLE_TARGET bytes.  Both numbers include all tuple header overhead
+ * and between-fields alignment padding, but we do *not* consider any
+ * end-of-tuple alignment padding; hence the values can be compared directly
+ * to a tuple's t_len field.  (Note that the symbol values are not
+ * necessarily MAXALIGN multiples.)
  *
  * The numbers need not be the same, though they currently are.
  */
