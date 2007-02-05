@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.217 2007/01/25 03:30:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.218 2007/02/05 04:22:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -537,12 +537,12 @@ typedef NameData *Name;
 
 /* ----------------
  * Alignment macros: align a length or address appropriately for a given type.
+ * The fooALIGN() macros round up to a multiple of the required alignment,
+ * while the fooALIGN_DOWN() macros round down.  The latter are more useful
+ * for problems like "how many X-sized structures will fit in a page?".
  *
- * There used to be some incredibly crufty platform-dependent hackery here,
- * but now we rely on the configure script to get the info for us. Much nicer.
- *
- * NOTE: TYPEALIGN will not work if ALIGNVAL is not a power of 2.
- * That case seems extremely unlikely to occur in practice, however.
+ * NOTE: TYPEALIGN[_DOWN] will not work if ALIGNVAL is not a power of 2.
+ * That case seems extremely unlikely to be needed in practice, however.
  * ----------------
  */
 
@@ -557,6 +557,14 @@ typedef NameData *Name;
 /* MAXALIGN covers only built-in types, not buffers */
 #define BUFFERALIGN(LEN)		TYPEALIGN(ALIGNOF_BUFFER, (LEN))
 
+#define TYPEALIGN_DOWN(ALIGNVAL,LEN)  \
+	(((long) (LEN)) & ~((long) ((ALIGNVAL) - 1)))
+
+#define SHORTALIGN_DOWN(LEN)	TYPEALIGN_DOWN(ALIGNOF_SHORT, (LEN))
+#define INTALIGN_DOWN(LEN)		TYPEALIGN_DOWN(ALIGNOF_INT, (LEN))
+#define LONGALIGN_DOWN(LEN)		TYPEALIGN_DOWN(ALIGNOF_LONG, (LEN))
+#define DOUBLEALIGN_DOWN(LEN)	TYPEALIGN_DOWN(ALIGNOF_DOUBLE, (LEN))
+#define MAXALIGN_DOWN(LEN)		TYPEALIGN_DOWN(MAXIMUM_ALIGNOF, (LEN))
 
 /* ----------------------------------------------------------------
  *				Section 6:	widely useful macros

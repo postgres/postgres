@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.31 2007/02/04 20:00:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.32 2007/02/05 04:22:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,40 +29,47 @@
  * TOAST_TUPLE_TARGET bytes.  Both numbers include all tuple header overhead
  * and between-fields alignment padding, but we do *not* consider any
  * end-of-tuple alignment padding; hence the values can be compared directly
- * to a tuple's t_len field.  (Note that the symbol values are not
- * necessarily MAXALIGN multiples.)
+ * to a tuple's t_len field.  We choose TOAST_TUPLE_THRESHOLD with the
+ * knowledge that toast-table tuples will be exactly that size, and we'd
+ * like to fit four of them per page with minimal space wastage.
  *
  * The numbers need not be the same, though they currently are.
+ *
+ * Note: sizeof(PageHeaderData) includes the first ItemId, but we have
+ * to allow for 3 more, if we want to fit 4 tuples on a page.
  */
-#define TOAST_TUPLE_THRESHOLD	(MaxTupleSize / 4)
+#define TOAST_TUPLE_THRESHOLD	\
+	MAXALIGN_DOWN((BLCKSZ - \
+				   MAXALIGN(sizeof(PageHeaderData) + 3 * sizeof(ItemIdData))) \
+				  / 4)
 
-#define TOAST_TUPLE_TARGET		(MaxTupleSize / 4)
+#define TOAST_TUPLE_TARGET		TOAST_TUPLE_THRESHOLD
 
 /*
  * If an index value is larger than TOAST_INDEX_TARGET, we will try to
  * compress it (we can't move it out-of-line, however).  Note that this
  * number is per-datum, not per-tuple, for simplicity in index_form_tuple().
  */
-#define TOAST_INDEX_TARGET		(MaxTupleSize / 16)
+#define TOAST_INDEX_TARGET		(MaxHeapTupleSize / 16)
 
 /*
  * When we store an oversize datum externally, we divide it into chunks
  * containing at most TOAST_MAX_CHUNK_SIZE data bytes.	This number *must*
  * be small enough that the completed toast-table tuple (including the
- * ID and sequence fields and all overhead) is no more than MaxTupleSize
+ * ID and sequence fields and all overhead) is no more than MaxHeapTupleSize
  * bytes.  It *should* be small enough to make toast-table tuples no more
  * than TOAST_TUPLE_THRESHOLD bytes, else heapam.c will uselessly invoke
- * the toaster on toast-table tuples.
+ * the toaster on toast-table tuples.  The current coding ensures that the
+ * maximum tuple length is exactly TOAST_TUPLE_THRESHOLD bytes.
  *
  * NB: you cannot change this value without forcing initdb, at least not
  * if your DB contains any multi-chunk toasted values.
  */
 #define TOAST_MAX_CHUNK_SIZE	(TOAST_TUPLE_THRESHOLD -			\
-			MAXALIGN(												\
-				MAXALIGN(offsetof(HeapTupleHeaderData, t_bits)) +	\
-				sizeof(Oid) +										\
-				sizeof(int32) +										\
-				VARHDRSZ))
+				MAXALIGN(offsetof(HeapTupleHeaderData, t_bits)) -	\
+				sizeof(Oid) -										\
+				sizeof(int32) -										\
+				VARHDRSZ)
 
 
 /* ----------

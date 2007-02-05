@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.344 2007/02/01 19:10:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.345 2007/02/05 04:22:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1236,7 +1236,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 				nunused;
 	double		free_space,
 				usable_free_space;
-	Size		min_tlen = MaxTupleSize;
+	Size		min_tlen = MaxHeapTupleSize;
 	Size		max_tlen = 0;
 	bool		do_shrinking = true;
 	VTupleLink	vtlinks = (VTupleLink) palloc(100 * sizeof(VTupleLinkData));
