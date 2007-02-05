@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.72 2007/01/05 22:19:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.73 2007/02/05 15:22:18 adunstan Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -268,7 +268,7 @@ parse_slash_copy(const char *args)
 					0, false, false, pset.encoding);
 
 	/*
-	 * Allows old COPY syntax for backward compatibility 2002-06-19
+	 * Allows old COPY syntax for backward compatibility.
 	 */
 	if (token && pg_strcasecmp(token, "using") == 0)
 	{
@@ -480,18 +480,10 @@ do_copy(const char *args)
 
 	printfPQExpBuffer(&query, "COPY ");
 
-	/* Uses old COPY syntax for backward compatibility 2002-06-19 */
-	if (options->binary)
-		appendPQExpBuffer(&query, "BINARY ");
-
 	appendPQExpBuffer(&query, "%s ", options->table);
 
 	if (options->column_list)
 		appendPQExpBuffer(&query, "%s ", options->column_list);
-
-	/* Uses old COPY syntax for backward compatibility 2002-06-19 */
-	if (options->oids)
-		appendPQExpBuffer(&query, "WITH OIDS ");
 
 	if (options->from)
 		appendPQExpBuffer(&query, "FROM STDIN");
@@ -499,13 +491,17 @@ do_copy(const char *args)
 		appendPQExpBuffer(&query, "TO STDOUT");
 
 
-	/* Uses old COPY syntax for backward compatibility 2002-06-19 */
-	if (options->delim)
-		emit_copy_option(&query, " USING DELIMITERS ", options->delim);
+	if (options->binary)
+		appendPQExpBuffer(&query, " BINARY ");
 
-	/* There is no backward-compatible CSV syntax */
+	if (options->oids)
+		appendPQExpBuffer(&query, " OIDS ");
+
+	if (options->delim)
+		emit_copy_option(&query, " DELIMITER ", options->delim);
+
 	if (options->null)
-		emit_copy_option(&query, " WITH NULL AS ", options->null);
+		emit_copy_option(&query, " NULL AS ", options->null);
 
 	if (options->csv_mode)
 		appendPQExpBuffer(&query, " CSV");
