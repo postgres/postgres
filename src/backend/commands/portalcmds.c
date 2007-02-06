@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.24.2.1 2004/11/28 22:16:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.24.2.2 2007/02/06 22:49:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,7 +363,20 @@ PersistHoldablePortal(Portal portal)
 	 */
 	MemoryContextSwitchTo(portal->holdContext);
 
-	if (!portal->atEnd)
+	if (portal->atEnd)
+	{
+		/* we can handle this case even if posOverflow */
+		HeapTuple	tup;
+		bool		should_free;
+
+		while ((tup = tuplestore_gettuple(portal->holdStore, true,
+										  &should_free)) != NULL)
+		{
+			if (should_free)
+				pfree(tup);
+		}
+	}
+	else
 	{
 		long		store_pos;
 
