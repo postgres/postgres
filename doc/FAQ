@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Feb 6 13:31:07 EST 2007
+   Last updated: Tue Feb 6 13:33:13 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -329,11 +329,11 @@
   1.14) Will PostgreSQL handle recent daylight saving time changes in various
   countries?
   
-   USA saving time changes are included in PostgreSQL release 8.0.[4+],
-   and all later major releases, e.g. 8.1. Canada and Western Australia
-   changes are included in 8.0.[10+], 8.1.[6+], and all later major
-   releases. PostgreSQL releases prior to 8.0 use the operating system's
-   timezone database for daylight saving information.
+   USA daylight saving time changes are included in PostgreSQL release
+   8.0.[4+], and all later major releases, e.g. 8.1. Canada and Western
+   Australia changes are included in 8.0.[10+], 8.1.[6+], and all later
+   major releases. PostgreSQL releases prior to 8.0 use the operating
+   system's timezone database for daylight saving information.
      _________________________________________________________________
    
                            User Client Questions
