@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.43.2.8 2006/08/18 16:33:29 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.43.2.9 2007/02/06 09:41:52 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -120,8 +120,6 @@ ECPGget_variable(va_list APREF, enum ECPGttype type, struct variable * var, bool
 	}
 }
 
-#undef APREF
-
 /*
  * create a list of variables
  * The variables are listed with input variables preceding outputvariables
@@ -141,7 +139,7 @@ ECPGget_variable(va_list APREF, enum ECPGttype type, struct variable * var, bool
  * ind_offset - indicator offset
  */
 static bool
-create_statement(int lineno, int compat, int force_indicator, struct connection * connection, struct statement ** stmt, const char *query, va_list ap)
+create_statement(int lineno, int compat, int force_indicator, struct connection * connection, struct statement ** stmt, const char *query, va_list APREF)
 {
 	struct variable **list = &((*stmt)->inlist);
 	enum ECPGttype type;
@@ -157,7 +155,7 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 
 	list = &((*stmt)->inlist);
 
-	type = va_arg(ap, enum ECPGttype);
+	type = va_arg(APREF, enum ECPGttype);
 
 	while (type != ECPGt_EORT)
 	{
@@ -171,11 +169,7 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 			if (!(var = (struct variable *) ECPGalloc(sizeof(struct variable), lineno)))
 				return false;
 
-#if defined(__GNUC__) && (defined (__powerpc__) || defined(__amd64__) || defined(__x86_64__))
 			ECPGget_variable(ap, type, var, true);
-#else
-			ECPGget_variable(&ap, type, var, true);
-#endif
 
 			/* if variable is NULL, the statement hasn't been prepared */
 			if (var->pointer == NULL)
@@ -193,7 +187,7 @@ create_statement(int lineno, int compat, int force_indicator, struct connection 
 				ptr->next = var;
 		}
 
-		type = va_arg(ap, enum ECPGttype);
+		type = va_arg(APREF, enum ECPGttype);
 	}
 
 	return (true);
@@ -1472,7 +1466,11 @@ ECPGdo(int lineno, int compat, int force_indicator, const char *connection_name,
 
 	/* construct statement in our own structure */
 	va_start(args, query);
+#if defined(__GNUC__) && (defined (__powerpc__) || defined(__amd64__) || defined(__x86_64__))
 	if (create_statement(lineno, compat, force_indicator, con, &stmt, query, args) == false)
+#else
+	if (create_statement(lineno, compat, force_indicator, con, &stmt, query, &args) == false)
+#endif
 	{
 		setlocale(LC_NUMERIC, oldlocale);
 		ECPGfree(oldlocale);
