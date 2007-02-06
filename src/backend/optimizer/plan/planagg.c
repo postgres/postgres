@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.25 2007/01/09 02:14:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.26 2007/02/06 06:50:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,7 @@ Plan *
 optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 {
 	Query	   *parse = root->parse;
+	FromExpr   *jtnode;
 	RangeTblRef *rtr;
 	RangeTblEntry *rte;
 	RelOptInfo *rel;
@@ -102,14 +103,19 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 	 * We also restrict the query to reference exactly one table, since join
 	 * conditions can't be handled reasonably.  (We could perhaps handle a
 	 * query containing cartesian-product joins, but it hardly seems worth the
-	 * trouble.)
+	 * trouble.)  However, the single real table could be buried in several
+	 * levels of FromExpr.
 	 */
-	Assert(parse->jointree != NULL && IsA(parse->jointree, FromExpr));
-	if (list_length(parse->jointree->fromlist) != 1)
+	jtnode = parse->jointree;
+	while (IsA(jtnode, FromExpr))
+	{
+		if (list_length(jtnode->fromlist) != 1)
+			return NULL;
+		jtnode = linitial(jtnode->fromlist);
+	}
+	if (!IsA(jtnode, RangeTblRef))
 		return NULL;
-	rtr = (RangeTblRef *) linitial(parse->jointree->fromlist);
-	if (!IsA(rtr, RangeTblRef))
-		return NULL;
+	rtr = (RangeTblRef *) jtnode;
 	rte = rt_fetch(rtr->rtindex, parse->rtable);
 	if (rte->rtekind != RTE_RELATION || rte->inh)
 		return NULL;
