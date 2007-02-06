@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.48 2007/01/05 22:19:35 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.49 2007/02/06 16:20:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,7 +203,7 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 
 	/*
 	 * We detect whether a shared memory segment is in use by seeing whether
-	 * it (a) exists and (b) has any processes are attached to it.
+	 * it (a) exists and (b) has any processes attached to it.
 	 */
 	if (shmctl(shmId, IPC_STAT, &shmStat) < 0)
 	{
