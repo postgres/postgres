@@ -69,7 +69,6 @@ dec[6,6]: 0 (r: 0)
 dec[6,7]: 0.00 (r: 0 - cmp: 1)
 dec[6,8]: 0 (r: 0)
 dec[6,9]: 0.00 (r: 0 - cmp: 1)
-(errno == PGTYPES_NUM_UNDERFLOW) - dec[6,10]: 0 (r: -1)
 
 dec[7,1]: r: 0, 0.001
 dec[7,2]: r: 0, 0
