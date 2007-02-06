@@ -315,6 +315,14 @@ SELECT p1.oid, p1.oprname FROM pg_operator AS p1
 WHERE (p1.oprcanmerge OR p1.oprcanhash) AND NOT
     (p1.oprkind = 'b' AND p1.oprresult = 'bool'::regtype AND p1.oprcom != 0);
 
+-- What's more, the commutator had better be mergejoinable/hashjoinable too.
+
+SELECT p1.oid, p1.oprname, p2.oid, p2.oprname
+FROM pg_operator AS p1, pg_operator AS p2
+WHERE p1.oprcom = p2.oid AND
+    (p1.oprcanmerge != p2.oprcanmerge OR
+     p1.oprcanhash != p2.oprcanhash);
+
 -- Mergejoinable operators should appear as equality members of btree index
 -- opfamilies.
 

@@ -382,6 +382,16 @@ WHERE (p1.oprcanmerge OR p1.oprcanhash) AND NOT
 -----+---------
 (0 rows)
 
+-- What's more, the commutator had better be mergejoinable/hashjoinable too.
+SELECT p1.oid, p1.oprname, p2.oid, p2.oprname
+FROM pg_operator AS p1, pg_operator AS p2
+WHERE p1.oprcom = p2.oid AND
+    (p1.oprcanmerge != p2.oprcanmerge OR
+     p1.oprcanhash != p2.oprcanhash);
+ oid | oprname | oid | oprname 
+-----+---------+-----+---------
+(0 rows)
+
 -- Mergejoinable operators should appear as equality members of btree index
 -- opfamilies.
 SELECT p1.oid, p1.oprname
