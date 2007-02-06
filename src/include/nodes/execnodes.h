@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.166 2007/01/05 22:19:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.167 2007/02/06 02:59:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,6 +367,16 @@ typedef struct ExecRowMark
  *				 Tuple Hash Tables
  *
  * All-in-memory tuple hash tables are used for a number of purposes.
+ *
+ * Note: tab_hash_funcs are for the key datatype(s) stored in the table,
+ * and tab_eq_funcs are non-cross-type equality operators for those types.
+ * Normally these are the only functions used, but FindTupleHashEntry()
+ * supports searching a hashtable using cross-data-type hashing.  For that,
+ * the caller must supply hash functions for the LHS datatype as well as
+ * the cross-type equality operators to use.  in_hash_funcs and cur_eq_funcs
+ * are set to point to the caller's function arrays while doing such a search.
+ * During LookupTupleHashEntry(), they point to tab_hash_funcs and
+ * tab_eq_funcs respectively.
  * ----------------------------------------------------------------
  */
 typedef struct TupleHashEntryData *TupleHashEntry;
@@ -384,13 +394,16 @@ typedef struct TupleHashTableData
 	HTAB	   *hashtab;		/* underlying dynahash table */
 	int			numCols;		/* number of columns in lookup key */
 	AttrNumber *keyColIdx;		/* attr numbers of key columns */
-	FmgrInfo   *eqfunctions;	/* lookup data for comparison functions */
-	FmgrInfo   *hashfunctions;	/* lookup data for hash functions */
+	FmgrInfo   *tab_hash_funcs;	/* hash functions for table datatype(s) */
+	FmgrInfo   *tab_eq_funcs;	/* equality functions for table datatype(s) */
 	MemoryContext tablecxt;		/* memory context containing table */
 	MemoryContext tempcxt;		/* context for function evaluations */
 	Size		entrysize;		/* actual size to make each hash entry */
 	TupleTableSlot *tableslot;	/* slot for referencing table entries */
+	/* The following fields are set transiently for each table search: */
 	TupleTableSlot *inputslot;	/* current input tuple's slot */
+	FmgrInfo   *in_hash_funcs;	/* hash functions for input datatype(s) */
+	FmgrInfo   *cur_eq_funcs;	/* equality functions for input vs. table */
 } TupleHashTableData;
 
 typedef HASH_SEQ_STATUS TupleHashIterator;
@@ -585,8 +598,10 @@ typedef struct SubPlanState
 	MemoryContext tablecxt;		/* memory context containing tables */
 	ExprContext *innerecontext; /* working context for comparisons */
 	AttrNumber *keyColIdx;		/* control data for hash tables */
-	FmgrInfo   *eqfunctions;	/* comparison functions for hash tables */
-	FmgrInfo   *hashfunctions;	/* lookup data for hash functions */
+	FmgrInfo   *tab_hash_funcs;	/* hash functions for table datatype(s) */
+	FmgrInfo   *tab_eq_funcs;	/* equality functions for table datatype(s) */
+	FmgrInfo   *lhs_hash_funcs;	/* hash functions for lefthand datatype(s) */
+	FmgrInfo   *cur_eq_funcs;	/* equality functions for LHS vs. table */
 } SubPlanState;
 
 /* ----------------

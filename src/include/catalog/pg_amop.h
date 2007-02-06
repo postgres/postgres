@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.78 2007/01/28 16:16:52 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.79 2007/02/06 02:59:12 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -510,12 +510,20 @@ DATA(insert (	435   1082 1082 1 f 1093	405 ));
 /* float_ops */
 DATA(insert (	1971   700 700 1 f  620	405 ));
 DATA(insert (	1971   701 701 1 f  670	405 ));
+DATA(insert (	1971   700 701 1 f 1120	405 ));
+DATA(insert (	1971   701 700 1 f 1130	405 ));
 /* network_ops */
 DATA(insert (	1975   869 869 1 f 1201	405 ));
 /* integer_ops */
 DATA(insert (	1977   21 21 1 f	94	405 ));
 DATA(insert (	1977   23 23 1 f	96	405 ));
 DATA(insert (	1977   20 20 1 f	410	405 ));
+DATA(insert (	1977   21 23 1 f	532	405 ));
+DATA(insert (	1977   21 20 1 f   1862	405 ));
+DATA(insert (	1977   23 21 1 f	533	405 ));
+DATA(insert (	1977   23 20 1 f	15	405 ));
+DATA(insert (	1977   20 21 1 f   1868	405 ));
+DATA(insert (	1977   20 23 1 f	416	405 ));
 /* interval_ops */
 DATA(insert (	1983   1186 1186 1 f 1330	405 ));
 /* macaddr_ops */

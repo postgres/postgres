@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.117 2007/01/10 18:06:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.118 2007/02/06 02:59:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -598,17 +598,13 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 		return false;
 
 	/*
-	 * The combining operators must be hashable, strict, and self-commutative.
+	 * The combining operators must be hashable and strict.
 	 * The need for hashability is obvious, since we want to use hashing.
 	 * Without strictness, behavior in the presence of nulls is too
-	 * unpredictable.  (We actually must assume even more than plain
-	 * strictness, see nodeSubplan.c for details.)	And commutativity ensures
-	 * that the left and right datatypes are the same; this allows us to
-	 * assume that the combining operators are equality for the righthand
-	 * datatype, so that they can be used to compare righthand tuples as well
-	 * as comparing lefthand to righthand tuples.  (This last restriction
-	 * could be relaxed by using two different sets of operators with the hash
-	 * table, but there is no obvious usefulness to that at present.)
+	 * unpredictable.  We actually must assume even more than plain
+	 * strictness: they can't yield NULL for non-null inputs, either
+	 * (see nodeSubplan.c).  However, hash indexes and hash joins assume
+	 * that too.
 	 */
 	if (IsA(slink->testexpr, OpExpr))
 	{
@@ -644,8 +640,7 @@ hash_ok_operator(OpExpr *expr)
 	if (!HeapTupleIsValid(tup))
 		elog(ERROR, "cache lookup failed for operator %u", opid);
 	optup = (Form_pg_operator) GETSTRUCT(tup);
-	if (!optup->oprcanhash || optup->oprcom != opid ||
-		!func_strict(optup->oprcode))
+	if (!optup->oprcanhash || !func_strict(optup->oprcode))
 	{
 		ReleaseSysCache(tup);
 		return false;

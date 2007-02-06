@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.137 2007/01/20 20:45:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.138 2007/02/06 02:59:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1070,7 +1070,7 @@ distinct_col_search(int colno, List *colnos, List *opids)
  * We assume hashed aggregation will work if each IN operator is marked
  * hashjoinable.  If the IN operators are cross-type, this could conceivably
  * fail: the aggregation will need a hashable equality operator for the RHS
- * datatype --- but it's pretty hard to conceive of a hash opclass that has
+ * datatype --- but it's pretty hard to conceive of a hash opfamily that has
  * cross-type hashing without support for hashing the individual types, so
  * we don't expend cycles here to support the case.  We could check
  * get_compatible_hash_operator() instead of just op_hashjoinable(), but the

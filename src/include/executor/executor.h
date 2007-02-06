@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.135 2007/02/02 00:07:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.136 2007/02/06 02:59:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,10 @@ extern TupleHashTable BuildTupleHashTable(int numCols, AttrNumber *keyColIdx,
 extern TupleHashEntry LookupTupleHashEntry(TupleHashTable hashtable,
 					 TupleTableSlot *slot,
 					 bool *isnew);
+extern TupleHashEntry FindTupleHashEntry(TupleHashTable hashtable,
+										 TupleTableSlot *slot,
+										 FmgrInfo *eqfunctions,
+										 FmgrInfo *hashfunctions);
 
 /*
  * prototypes from functions in execJunk.c
