@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.58 2007/02/01 00:28:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.59 2007/02/06 04:38:31 tgl Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -139,7 +139,7 @@
    </table>
 
   <para>
-   Hash indexes express only bitwise equality, and so they use only one
+   Hash indexes support only equality comparisons, and so they use only one
    strategy, shown in <xref linkend="xindex-hash-strat-table">.
   </para>
 
@@ -162,7 +162,7 @@
    </table>
 
   <para>
-   GiST indexes are even more flexible: they do not have a fixed set of
+   GiST indexes are more flexible: they do not have a fixed set of
    strategies at all.  Instead, the <quote>consistency</> support routine
    of each particular GiST operator class interprets the strategy numbers
    however it likes.  As an example, several of the built-in GiST index
@@ -802,14 +802,23 @@ ALTER OPERATOR FAMILY integer_ops USING btree ADD
    operator in the family there must be a support function having the same
    two input data types as the operator.  It is recommended that a family be
    complete, i.e., for each combination of data types, all operators are
-   included.  An operator class should include just the non-cross-type
+   included.  Each operator class should include just the non-cross-type
    operators and support function for its data type.
   </para>
 
   <para>
-   At this writing, hash indexes do not support cross-type operations,
-   and so there is little use for a hash operator family larger than one
-   operator class.  This is expected to be relaxed in the future.
+   To build a multiple-data-type hash operator family, compatible hash
+   support functions must be created for each data type supported by the
+   family.  Here compatibility means that the functions are guaranteed to
+   return the same hash code for any two values that are considered equal
+   by the family's equality operators, even when the values are of different
+   types.  This is usually difficult to accomplish when the types have
+   different physical representations, but it can be done in some cases.
+   Notice that there is only one support function per data type, not one
+   per equality operator.  It is recommended that a family be complete, i.e.,
+   provide an equality operator for each combination of data types.
+   Each operator class should include just the non-cross-type equality
+   operator and the support function for its data type.
   </para>
 
   <para>

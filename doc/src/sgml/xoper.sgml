@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.41 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xoper.sgml,v 1.42 2007/02/06 04:38:31 tgl Exp $ -->
 
  <sect1 id="xoper">
   <title>User-Defined Operators</title>
@@ -85,7 +85,7 @@ SELECT (a + b) AS c FROM test_complex;
     appropriate, because they can make for considerable speedups in execution
     of queries that use the operator.  But if you provide them, you must be
     sure that they are right!  Incorrect use of an optimization clause can
-    result in server process crashes, subtly wrong output, or other Bad Things.
+    result in slow queries, subtly wrong output, or other Bad Things.
     You can always leave out an optimization clause if you are not sure
     about it; the only consequence is that queries might run slower than
     they need to.
@@ -326,8 +326,8 @@ table1.column1 OP table2.column2
      The <literal>HASHES</literal> clause, if present, tells the system that
      it is permissible to use the hash join method for a join based on this
      operator.  <literal>HASHES</> only makes sense for a binary operator that
-     returns <literal>boolean</>, and in practice the operator had better be
-     equality for some data type.
+     returns <literal>boolean</>, and in practice the operator must represent
+     equality for some data type or pair of data types.
     </para>
 
     <para>
@@ -337,7 +337,13 @@ table1.column1 OP table2.column2
      join will never compare them at all, implicitly assuming that the
      result of the join operator must be false.  So it never makes sense
      to specify <literal>HASHES</literal> for operators that do not represent
-     some form of equality.
+     some form of equality.  In most cases it is only practical to support
+     hashing for operators that take the same data type on both sides.
+     However, sometimes it is possible to design compatible hash functions
+     for two or more datatypes; that is, functions that will generate the
+     same hash codes for <quote>equal</> values, even though the values
+     have different representations.  For example, it's fairly simple
+     to arrange this property when hashing integers of different widths.
     </para>
 
     <para>
@@ -346,9 +352,9 @@ table1.column1 OP table2.column2
      the operator, since of course the referencing operator family couldn't
      exist yet.  But attempts to use the operator in hash joins will fail
      at run time if no such operator family exists.  The system needs the
-     operator family to find the data-type-specific hash function for the
-     operator's input data type.  Of course, you must also create a suitable
-     hash function before you can create the operator family.
+     operator family to find the data-type-specific hash function(s) for the
+     operator's input data type(s).  Of course, you must also create suitable
+     hash functions before you can create the operator family.
     </para>
 
     <para>
@@ -364,6 +370,17 @@ table1.column1 OP table2.column2
      values (different bit patterns) but they are defined to compare equal.
      If a float value might contain negative zero then extra steps are needed
      to ensure it generates the same hash value as positive zero.
+    </para>
+
+    <para>
+     A hash-joinable operator must have a commutator (itself if the two
+     operand data types are the same, or a related equality operator
+     if they are different) that appears in the same operator family.
+     If this is not the case, planner errors might occur when the operator
+     is used.  Also, it is a good idea (but not strictly required) for
+     a hash operator family that supports multiple datatypes to provide
+     equality operators for every combination of the datatypes; this
+     allows better optimization.
     </para>
 
     <note>
