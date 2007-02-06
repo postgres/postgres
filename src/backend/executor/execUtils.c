@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.143 2007/02/02 00:07:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.144 2007/02/06 17:35:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -632,10 +632,7 @@ ExecBuildProjectionInfo(List *targetList,
 			break;
 		}
 		attr = inputDesc->attrs[variable->varattno - 1];
-		if (attr->attisdropped ||
-			variable->vartype != attr->atttypid ||
-			(variable->vartypmod != attr->atttypmod &&
-			 variable->vartypmod != -1))
+		if (attr->attisdropped || variable->vartype != attr->atttypid)
 		{
 			isVarList = false;
 			break;
