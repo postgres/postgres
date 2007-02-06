@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.23 2006/09/18 22:40:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.24 2007/02/06 09:16:08 petere Exp $
  *------------------------------------------------------------------------
  */
 
@@ -61,6 +61,15 @@
  * Changing XLOG_SEG_SIZE requires an initdb.
  */
 #define XLOG_SEG_SIZE	(16*1024*1024)
+
+/*
+ * Maximum length for identifiers (e.g. table names, column names,
+ * function names).  It must be a multiple of sizeof(int) (typically
+ * 4).
+ *
+ * Changing this requires an initdb.
+ */
+#define NAMEDATALEN 64
 
 /*
  * Maximum number of arguments to a function.

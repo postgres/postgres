@@ -15,7 +15,7 @@
  *	use header files that are otherwise internal to Postgres to interface
  *	with the backend.
  *
- * $PostgreSQL: pgsql/src/include/postgres_ext.h,v 1.16 2004/08/29 05:06:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/postgres_ext.h,v 1.17 2007/02/06 09:16:08 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,16 +36,6 @@ typedef unsigned int Oid;
 
 #define OID_MAX  UINT_MAX
 /* you will need to include <limits.h> to use the above #define */
-
-
-/*
- * NAMEDATALEN is the max length for system identifiers (e.g. table names,
- * attribute names, function names, etc).  It must be a multiple of
- * sizeof(int) (typically 4).
- *
- * NOTE that databases with different NAMEDATALEN's cannot interoperate!
- */
-#define NAMEDATALEN 64
 
 
 /*

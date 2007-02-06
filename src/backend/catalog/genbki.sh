@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.41 2007/01/05 22:19:24 momjian Exp $
+#    $PostgreSQL: pgsql/src/backend/catalog/genbki.sh,v 1.42 2007/02/06 09:16:08 petere Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -59,7 +59,7 @@ do
             echo "  $CMDNAME [ -I dir ] --set-version=VERSION -o prefix files..."
             echo
             echo "Options:"
-            echo "  -I  path to postgres_ext.h and pg_config_manual.h files"
+            echo "  -I  path to pg_config_manual.h file"
             echo "  -o  prefix of output files"
             echo "  --set-version  PostgreSQL version number for initdb cross-check"
             echo
@@ -106,10 +106,10 @@ TMPFILE="genbkitmp$$.c"
 trap "rm -f $TMPFILE ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.description.$$ ${OUTPUT_PREFIX}.shdescription.$$" 0 1 2 3 15
 
 
-# Get NAMEDATALEN from postgres_ext.h
+# Get NAMEDATALEN from pg_config_manual.h
 for dir in $INCLUDE_DIRS; do
-    if [ -f "$dir/postgres_ext.h" ]; then
-        NAMEDATALEN=`grep '^#define[ 	]*NAMEDATALEN' $dir/postgres_ext.h | $AWK '{ print $3 }'`
+    if [ -f "$dir/pg_config_manual.h" ]; then
+        NAMEDATALEN=`grep '^#define[ 	]*NAMEDATALEN' $dir/pg_config_manual.h | $AWK '{ print $3 }'`
         break
     fi
 done

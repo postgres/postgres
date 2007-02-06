@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/tools/msvc/genbki.pl,v 1.2 2007/01/05 22:20:05 momjian Exp $
+#    $PostgreSQL: pgsql/src/tools/msvc/genbki.pl,v 1.3 2007/02/06 09:16:08 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,8 +24,8 @@ my $prefix = shift || Usage();
 $version =~ /^(\d+\.\d+)/ || die "Bad format verison $version\n";
 my $majorversion = $1;
 
-my $pgext = read_file("src/include/postgres_ext.h");
-$pgext =~ /^#define\s+NAMEDATALEN\s+(\d+)$/mg || die "Could not read NAMEDATALEN from postgres_ext.h\n";
+my $pgext = read_file("src/include/pg_config_manual.h");
+$pgext =~ /^#define\s+NAMEDATALEN\s+(\d+)$/mg || die "Could not read NAMEDATALEN from pg_config_manual.h\n";
 my $namedatalen = $1;
 
 my $pgauthid = read_file("src/include/catalog/pg_authid.h");
