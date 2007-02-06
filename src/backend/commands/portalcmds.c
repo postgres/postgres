@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.57 2006/10/19 19:53:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.57.2.1 2007/02/06 22:49:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,15 +392,23 @@ PersistHoldablePortal(Portal portal)
 		ExecutorEnd(queryDesc);
 
 		/*
-		 * Reset the position in the result set: ideally, this could be
+		 * Set the position in the result set: ideally, this could be
 		 * implemented by just skipping straight to the tuple # that we need
 		 * to be at, but the tuplestore API doesn't support that. So we start
 		 * at the beginning of the tuplestore and iterate through it until we
-		 * reach where we need to be.  FIXME someday?
+		 * reach where we need to be.  FIXME someday?  (Fortunately, the
+		 * typical case is that we're supposed to be at or near the start
+		 * of the result set, so this isn't as bad as it sounds.)
 		 */
 		MemoryContextSwitchTo(portal->holdContext);
 
-		if (!portal->atEnd)
+		if (portal->atEnd)
+		{
+			/* we can handle this case even if posOverflow */
+			while (tuplestore_advance(portal->holdStore, true))
+				/* continue */ ;
+		}
+		else
 		{
 			long		store_pos;
 
