@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.144 2007/01/26 20:06:52 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.145 2007/02/07 23:11:29 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -130,9 +130,8 @@ static TabStatArray SharedTabStat = {0, 0, NULL};
 static int	pgStatXactCommit = 0;
 static int	pgStatXactRollback = 0;
 
-static TransactionId pgStatDBHashXact = InvalidTransactionId;
+static MemoryContext pgStatLocalContext = NULL;
 static HTAB *pgStatDBHash = NULL;
-static TransactionId pgStatLocalStatusXact = InvalidTransactionId;
 static PgBackendStatus *localBackendStatusTable = NULL;
 static int	localNumBackends = 0;
 
@@ -156,10 +155,12 @@ static void pgstat_beshutdown_hook(int code, Datum arg);
 static PgStat_StatDBEntry *pgstat_get_db_entry(Oid databaseid, bool create);
 static void pgstat_drop_database(Oid databaseid);
 static void pgstat_write_statsfile(void);
-static void pgstat_read_statsfile(HTAB **dbhash, Oid onlydb);
+static HTAB *pgstat_read_statsfile(Oid onlydb);
 static void backend_read_statsfile(void);
 static void pgstat_read_current_status(void);
 static HTAB *pgstat_collect_oids(Oid catalogid);
+
+static void pgstat_setup_memcxt(void);
 
 static void pgstat_setheader(PgStat_MsgHdr *hdr, StatMsgType mtype);
 static void pgstat_send(void *msg, int len);
@@ -1535,22 +1536,24 @@ pgstat_report_waiting(bool waiting)
 static void
 pgstat_read_current_status(void)
 {
-	TransactionId topXid = GetTopTransactionId();
 	volatile PgBackendStatus *beentry;
+	PgBackendStatus *localtable;
 	PgBackendStatus *localentry;
 	int			i;
 
 	Assert(!pgStatRunningInCollector);
-	if (TransactionIdEquals(pgStatLocalStatusXact, topXid))
+	if (localBackendStatusTable)
 		return;					/* already done */
 
-	localBackendStatusTable = (PgBackendStatus *)
-		MemoryContextAlloc(TopTransactionContext,
+	pgstat_setup_memcxt();
+
+	localtable = (PgBackendStatus *)
+		MemoryContextAlloc(pgStatLocalContext,
 						   sizeof(PgBackendStatus) * MaxBackends);
 	localNumBackends = 0;
 
 	beentry = BackendStatusArray;
-	localentry = localBackendStatusTable;
+	localentry = localtable;
 	for (i = 1; i <= MaxBackends; i++)
 	{
 		/*
@@ -1587,7 +1590,8 @@ pgstat_read_current_status(void)
 		}
 	}
 
-	pgStatLocalStatusXact = topXid;
+	/* Set the pointer only after completion of a valid table */
+	localBackendStatusTable = localtable;
 }
 
 
@@ -1720,7 +1724,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	 * zero.
 	 */
 	pgStatRunningInCollector = true;
-	pgstat_read_statsfile(&pgStatDBHash, InvalidOid);
+	pgStatDBHash = pgstat_read_statsfile(InvalidOid);
 
 	/*
 	 * Setup the descriptor set for select(2).	Since only one bit in the set
@@ -2090,38 +2094,24 @@ pgstat_write_statsfile(void)
  *	databases' hash table (whose entries point to the tables' hash tables).
  * ----------
  */
-static void
-pgstat_read_statsfile(HTAB **dbhash, Oid onlydb)
+static HTAB *
+pgstat_read_statsfile(Oid onlydb)
 {
 	PgStat_StatDBEntry *dbentry;
 	PgStat_StatDBEntry dbbuf;
 	PgStat_StatTabEntry *tabentry;
 	PgStat_StatTabEntry tabbuf;
 	HASHCTL		hash_ctl;
+	HTAB	   *dbhash;
 	HTAB	   *tabhash = NULL;
 	FILE	   *fpin;
 	int32		format_id;
 	bool		found;
-	MemoryContext use_mcxt;
-	int			mcxt_flags;
 
 	/*
-	 * If running in the collector or the autovacuum process, we use the
-	 * DynaHashCxt memory context.	If running in a backend, we use the
-	 * TopTransactionContext instead, so the caller must only know the last
-	 * XactId when this call happened to know if his tables are still valid or
-	 * already gone!
+	 * The tables will live in pgStatLocalContext.
 	 */
-	if (pgStatRunningInCollector || IsAutoVacuumProcess())
-	{
-		use_mcxt = NULL;
-		mcxt_flags = 0;
-	}
-	else
-	{
-		use_mcxt = TopTransactionContext;
-		mcxt_flags = HASH_CONTEXT;
-	}
+	pgstat_setup_memcxt();
 
 	/*
 	 * Create the DB hashtable
@@ -2130,9 +2120,9 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb)
 	hash_ctl.keysize = sizeof(Oid);
 	hash_ctl.entrysize = sizeof(PgStat_StatDBEntry);
 	hash_ctl.hash = oid_hash;
-	hash_ctl.hcxt = use_mcxt;
-	*dbhash = hash_create("Databases hash", PGSTAT_DB_HASH_SIZE, &hash_ctl,
-						  HASH_ELEM | HASH_FUNCTION | mcxt_flags);
+	hash_ctl.hcxt = pgStatLocalContext;
+	dbhash = hash_create("Databases hash", PGSTAT_DB_HASH_SIZE, &hash_ctl,
+						 HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
 	/*
 	 * Try to open the status file. If it doesn't exist, the backends simply
@@ -2140,7 +2130,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb)
 	 * with empty counters.
 	 */
 	if ((fpin = AllocateFile(PGSTAT_STAT_FILENAME, PG_BINARY_R)) == NULL)
-		return;
+		return dbhash;
 
 	/*
 	 * Verify it's of the expected format.
@@ -2178,7 +2168,7 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb)
 				/*
 				 * Add to the DB hash
 				 */
-				dbentry = (PgStat_StatDBEntry *) hash_search(*dbhash,
+				dbentry = (PgStat_StatDBEntry *) hash_search(dbhash,
 												  (void *) &dbbuf.databaseid,
 															 HASH_ENTER,
 															 &found);
@@ -2207,11 +2197,11 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb)
 				hash_ctl.keysize = sizeof(Oid);
 				hash_ctl.entrysize = sizeof(PgStat_StatTabEntry);
 				hash_ctl.hash = oid_hash;
-				hash_ctl.hcxt = use_mcxt;
+				hash_ctl.hcxt = pgStatLocalContext;
 				dbentry->tables = hash_create("Per-database table",
 											  PGSTAT_TAB_HASH_SIZE,
 											  &hash_ctl,
-									 HASH_ELEM | HASH_FUNCTION | mcxt_flags);
+									 HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
 				/*
 				 * Arrange that following 'T's add entries to this database's
@@ -2274,43 +2264,77 @@ pgstat_read_statsfile(HTAB **dbhash, Oid onlydb)
 
 done:
 	FreeFile(fpin);
+
+	return dbhash;
 }
 
 /*
- * If not done for this transaction, read the statistics collector
- * stats file into some hash tables.
- *
- * Because we store the tables in TopTransactionContext, the result
- * is good for the entire current main transaction.
- *
- * Inside the autovacuum process, the statfile is assumed to be valid
- * "forever", that is one iteration, within one database.  This means
- * we only consider the statistics as they were when the autovacuum
- * iteration started.
+ * If not already done, read the statistics collector stats file into
+ * some hash tables.  The results will be kept until pgstat_clear_snapshot()
+ * is called (typically, at end of transaction).
  */
 static void
 backend_read_statsfile(void)
 {
-	if (IsAutoVacuumProcess())
-	{
-		/* already read it? */
-		if (pgStatDBHash)
-			return;
-		Assert(!pgStatRunningInCollector);
-		pgstat_read_statsfile(&pgStatDBHash, InvalidOid);
-	}
-	else
-	{
-		TransactionId topXid = GetTopTransactionId();
+	/* already read it? */
+	if (pgStatDBHash)
+		return;
+	Assert(!pgStatRunningInCollector);
 
-		if (!TransactionIdEquals(pgStatDBHashXact, topXid))
-		{
-			Assert(!pgStatRunningInCollector);
-			pgstat_read_statsfile(&pgStatDBHash, MyDatabaseId);
-			pgStatDBHashXact = topXid;
-		}
-	}
+	/* Autovacuum wants stats about all databases */
+	if (IsAutoVacuumProcess())
+		pgStatDBHash = pgstat_read_statsfile(InvalidOid);
+	else
+		pgStatDBHash = pgstat_read_statsfile(MyDatabaseId);
 }
+
+
+/* ----------
+ * pgstat_setup_memcxt() -
+ *
+ *	Create pgStatLocalContext, if not already done.
+ * ----------
+ */
+static void
+pgstat_setup_memcxt(void)
+{
+	if (!pgStatLocalContext)
+		pgStatLocalContext = AllocSetContextCreate(TopMemoryContext,
+												   "Statistics snapshot",
+												   ALLOCSET_SMALL_MINSIZE,
+												   ALLOCSET_SMALL_INITSIZE,
+												   ALLOCSET_SMALL_MAXSIZE);
+}
+
+
+/* ----------
+ * pgstat_clear_snapshot() -
+ *
+ *	Discard any data collected in the current transaction.  Any subsequent
+ *	request will cause new snapshots to be read.
+ *
+ *	This is also invoked during transaction commit or abort to discard
+ *	the no-longer-wanted snapshot.
+ * ----------
+ */
+void
+pgstat_clear_snapshot(void)
+{
+	/* In an autovacuum process we keep the stats forever */
+	if (IsAutoVacuumProcess())
+		return;
+
+	/* Release memory, if any was allocated */
+	if (pgStatLocalContext)
+		MemoryContextDelete(pgStatLocalContext);
+
+	/* Reset variables */
+	pgStatLocalContext = NULL;
+	pgStatDBHash = NULL;
+	localBackendStatusTable = NULL;
+	localNumBackends = 0;
+}
+
 
 /* ----------
  * pgstat_recv_tabstat() -

@@ -21,51 +21,27 @@ SELECT t.seq_scan, t.seq_tup_read, t.idx_scan, t.idx_tup_fetch,
        pg_catalog.pg_statio_user_tables AS b
  WHERE t.relname='tenk2' AND b.relname='tenk2';
 
--- enable statistics
-SET stats_block_level = on;
-SET stats_row_level = on;
-
--- do a seqscan
-SELECT count(*) FROM tenk2;
--- do an indexscan
-SELECT count(*) FROM tenk2 WHERE unique1 = 1;
-
--- All of the thrashing here is to wait for the stats collector to update,
--- without waiting too long (in fact, we'd like to try to measure how long
--- we wait).  Watching for change in the stats themselves wouldn't work
--- because the backend only reads them once per transaction.  The stats file
--- mod timestamp isn't too helpful because it may have resolution of only one
--- second, or even worse.  So, we touch a new table and then watch for change
--- in the size of the stats file.  Ugh.
-
--- save current stats-file size
-CREATE TEMP TABLE prevfilesize AS
-  SELECT size FROM pg_stat_file('global/pgstat.stat');
-
--- make and touch a previously nonexistent table
-CREATE TABLE stats_hack (f1 int);
-SELECT * FROM stats_hack;
-
--- wait for stats collector to update
+-- function to wait for counters to advance
 create function wait_for_stats() returns void as $$
 declare
   start_time timestamptz := clock_timestamp();
-  oldsize bigint;
-  newsize bigint;
+  updated bool;
 begin
-  -- fetch previous stats-file size
-  select size into oldsize from prevfilesize;
-
   -- we don't want to wait forever; loop will exit after 30 seconds
   for i in 1 .. 300 loop
 
-    -- look for update of stats file
-    select size into newsize from pg_stat_file('global/pgstat.stat');
+    -- check to see if indexscan has been sensed
+    SELECT (st.idx_scan >= pr.idx_scan + 1) INTO updated
+      FROM pg_stat_user_tables AS st, pg_class AS cl, prevstats AS pr
+     WHERE st.relname='tenk2' AND cl.relname='tenk2';
 
-    exit when newsize != oldsize;
+    exit when updated;
 
     -- wait a little
     perform pg_sleep(0.1);
+
+    -- reset stats snapshot so we can test again
+    perform pg_stat_clear_snapshot();
 
   end loop;
 
@@ -75,9 +51,17 @@ begin
 end
 $$ language plpgsql;
 
-SELECT wait_for_stats();
+-- enable statistics
+SET stats_block_level = on;
+SET stats_row_level = on;
 
-DROP TABLE stats_hack;
+-- do a seqscan
+SELECT count(*) FROM tenk2;
+-- do an indexscan
+SELECT count(*) FROM tenk2 WHERE unique1 = 1;
+
+-- wait for stats collector to update
+SELECT wait_for_stats();
 
 -- check effects
 SELECT st.seq_scan >= pr.seq_scan + 1,

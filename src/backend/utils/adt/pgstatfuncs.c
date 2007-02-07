@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.37 2007/01/05 22:19:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.38 2007/02/07 23:11:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@ extern Datum pg_stat_get_last_autoanalyze_time(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_get_backend_idset(PG_FUNCTION_ARGS);
 extern Datum pg_backend_pid(PG_FUNCTION_ARGS);
-extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_pid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_dbid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_userid(PG_FUNCTION_ARGS);
@@ -56,6 +55,9 @@ extern Datum pg_stat_get_db_xact_commit(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_xact_rollback(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_blocks_fetched(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_blocks_hit(PG_FUNCTION_ARGS);
+
+extern Datum pg_stat_clear_snapshot(PG_FUNCTION_ARGS);
+extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
 
 
 Datum
@@ -336,16 +338,6 @@ pg_backend_pid(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(MyProcPid);
 }
 
-/*
- * Built-in function for resetting the counters
- */
-Datum
-pg_stat_reset(PG_FUNCTION_ARGS)
-{
-	pgstat_reset_counters();
-
-	PG_RETURN_BOOL(true);
-}
 
 Datum
 pg_stat_get_backend_pid(PG_FUNCTION_ARGS)
@@ -677,4 +669,24 @@ pg_stat_get_db_blocks_hit(PG_FUNCTION_ARGS)
 		result = (int64) (dbentry->n_blocks_hit);
 
 	PG_RETURN_INT64(result);
+}
+
+
+/* Discard the active statistics snapshot */
+Datum
+pg_stat_clear_snapshot(PG_FUNCTION_ARGS)
+{
+	pgstat_clear_snapshot();
+
+	PG_RETURN_VOID();
+}
+
+
+/* Reset all counters for the current database */
+Datum
+pg_stat_reset(PG_FUNCTION_ARGS)
+{
+	pgstat_reset_counters();
+
+	PG_RETURN_VOID();
 }

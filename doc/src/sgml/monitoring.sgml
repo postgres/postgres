@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.45 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.46 2007/02/07 23:11:29 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -227,7 +227,10 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    queries on the statistics and correlate the results without worrying that
    the numbers are changing underneath you.  But if you want to see new
    results with each query, be sure to do the queries outside any transaction
-   block.
+   block.  Alternatively, you can invoke
+   <function>pg_stat_clear_snapshot</function>(), which will discard the
+   current transaction's statistics snapshot (if any).  The next use of
+   statistical information will cause a new snapshot to be fetched.
   </para>
 
   <table id="monitoring-stats-views-table">
@@ -708,10 +711,19 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><literal><function>pg_stat_reset</function>()</literal></entry>
-      <entry><type>boolean</type></entry>
+      <entry><literal><function>pg_stat_clear_snapshot</function>()</literal></entry>
+      <entry><type>void</type></entry>
       <entry>
-       Reset all block-level and row-level statistics to zero
+       Discard the current statistics snapshot
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_reset</function>()</literal></entry>
+      <entry><type>void</type></entry>
+      <entry>
+       Reset all statistics counters for the current database to zero
+       (requires superuser privileges)
       </entry>
      </row>
     </tbody>
