@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.38 2007/02/02 00:10:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.39 2007/02/07 04:22:25 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -18,6 +18,46 @@ For new features, add links to the documentation sections.
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-8-1-8">
+   <title>Release 8.1.8</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-02-07</simpara>
+   </note>
+
+   <para>
+    This release contains one fix from 8.1.7.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.1.8</title>
+
+    <para>
+     A dump/restore is not required for those running 8.1.X.
+     However, if you are upgrading from a version earlier than 8.1.2,
+     see the release notes for 8.1.2.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      Remove overly-restrictive check for type length in constraints and
+      functional indexes(Tom)
+     </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-8-1-7">
    <title>Release 8.1.7</title>
@@ -2924,6 +2964,46 @@ psql -t -f fixseq.sql db1 | psql -e db1
      </itemizedlist>
     </sect3>
   
+   </sect2>
+  </sect1>
+
+  <sect1 id="release-8-0-12">
+   <title>Release 8.0.12</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-02-07</simpara>
+   </note>
+
+   <para>
+    This release contains one fix from 8.0.11.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.12</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.6, see the release
+     notes for 8.0.6.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      Remove overly-restrictive check for type length in constraints and
+      functional indexes(Tom)
+     </para>
+     </listitem>
+
+    </itemizedlist>
+
    </sect2>
   </sect1>
 
