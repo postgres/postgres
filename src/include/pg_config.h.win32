@@ -577,7 +577,7 @@
 #define PG_VERSION "8.2.3"
 
 /* PostgreSQL version as a number */
-#define PG_VERSION_NUM 80202
+#define PG_VERSION_NUM 80203
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "postgresql"
