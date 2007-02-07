@@ -779,7 +779,7 @@ querytree(PG_FUNCTION_ARGS)
 
 		res = (text *) palloc(nrm.cur - nrm.buf + VARHDRSZ);
 		VARATT_SIZEP(res) = nrm.cur - nrm.buf + VARHDRSZ;
-		strncpy(VARDATA(res), nrm.buf, nrm.cur - nrm.buf);
+		memcpy(VARDATA(res), nrm.buf, nrm.cur - nrm.buf);
 	}
 	pfree(q);
 
