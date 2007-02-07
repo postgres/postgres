@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.261 2007/02/01 19:10:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.262 2007/02/07 16:44:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5167,9 +5167,6 @@ StartupXLOG(void)
 
 	/* Reload shared-memory state for prepared transactions */
 	RecoverPreparedTransactions();
-
-	ereport(LOG,
-			(errmsg("database system is ready")));
 
 	/* Shut down readFile facility, free space */
 	if (readFile >= 0)
