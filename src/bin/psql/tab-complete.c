@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.157 2007/01/05 22:19:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.158 2007/02/07 00:52:35 petere Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -2389,9 +2389,7 @@ previous_word(int point, int skip)
 
 	/* make a copy */
 	s = pg_malloc(end - start + 2);
-
-	strncpy(s, &rl_line_buffer[start], end - start + 1);
-	s[end - start + 1] = '\0';
+	strlcpy(s, &rl_line_buffer[start], end - start + 2);
 
 	return s;
 }
@@ -2460,8 +2458,7 @@ dequote_file_name(char *text, char quote_char)
 
 	length = strlen(text);
 	s = pg_malloc(length - 2 + 1);
-	strncpy(s, text +1, length - 2);
-	s[length] = '\0';
+	strlcpy(s, text +1, length - 2 + 1);
 
 	return s;
 }

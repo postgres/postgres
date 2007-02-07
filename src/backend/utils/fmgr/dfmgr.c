@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.93 2007/01/05 22:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.94 2007/02/07 00:52:35 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -539,8 +539,7 @@ find_in_dynamic_libpath(const char *basename)
 			len = piece - p;
 
 		piece = palloc(len + 1);
-		strncpy(piece, p, len);
-		piece[len] = '\0';
+		strlcpy(piece, p, len + 1);
 
 		mangled = substitute_libpath_macro(piece);
 		pfree(piece);

@@ -1,7 +1,7 @@
 /*
  * functions needed for descriptor handling
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.24 2006/03/11 04:38:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/descriptor.c,v 1.25 2007/02/07 00:52:35 petere Exp $
  *
  * since descriptor might be either a string constant or a string var
  * we need to check for a constant if we expect a constant
@@ -323,7 +323,6 @@ descriptor_variable(const char *name, int input)
 		{descriptor_names[1], (struct ECPGtype *) & descriptor_type, 0, NULL}
 	};
 
-	strncpy(descriptor_names[input], name, MAX_DESCRIPTOR_NAMELEN);
-	descriptor_names[input][MAX_DESCRIPTOR_NAMELEN - 1] = 0;
+	strlcpy(descriptor_names[input], name, sizeof(descriptor_names[input]));
 	return (struct variable *) & varspace[input];
 }

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.76 2007/01/26 20:06:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.77 2007/02/07 00:52:35 petere Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -933,8 +933,8 @@ aloop:
 	port->peer = SSL_get_peer_certificate(port->ssl);
 	if (port->peer == NULL)
 	{
-		strncpy(port->peer_dn, "(anonymous)", sizeof(port->peer_dn));
-		strncpy(port->peer_cn, "(anonymous)", sizeof(port->peer_cn));
+		strlcpy(port->peer_dn, "(anonymous)", sizeof(port->peer_dn));
+		strlcpy(port->peer_cn, "(anonymous)", sizeof(port->peer_cn));
 	}
 	else
 	{
