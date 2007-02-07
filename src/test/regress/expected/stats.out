@@ -30,26 +30,72 @@ SELECT t.seq_scan, t.seq_tup_read, t.idx_scan, t.idx_tup_fetch,
 -- enable statistics
 SET stats_block_level = on;
 SET stats_row_level = on;
--- do something
+-- do a seqscan
 SELECT count(*) FROM tenk2;
  count 
 -------
  10000
 (1 row)
 
+-- do an indexscan
 SELECT count(*) FROM tenk2 WHERE unique1 = 1;
  count 
 -------
      1
 (1 row)
 
--- let stats collector catch up
-SELECT pg_sleep(2.0);
- pg_sleep 
-----------
+-- All of the thrashing here is to wait for the stats collector to update,
+-- without waiting too long (in fact, we'd like to try to measure how long
+-- we wait).  Watching for change in the stats themselves wouldn't work
+-- because the backend only reads them once per transaction.  The stats file
+-- mod timestamp isn't too helpful because it may have resolution of only one
+-- second, or even worse.  So, we touch a new table and then watch for change
+-- in the size of the stats file.  Ugh.
+-- save current stats-file size
+CREATE TEMP TABLE prevfilesize AS
+  SELECT size FROM pg_stat_file('global/pgstat.stat');
+-- make and touch a previously nonexistent table
+CREATE TABLE stats_hack (f1 int);
+SELECT * FROM stats_hack;
+ f1 
+----
+(0 rows)
+
+-- wait for stats collector to update
+create function wait_for_stats() returns void as $$
+declare
+  start_time timestamptz := clock_timestamp();
+  oldsize bigint;
+  newsize bigint;
+begin
+  -- fetch previous stats-file size
+  select size into oldsize from prevfilesize;
+
+  -- we don't want to wait forever; loop will exit after 30 seconds
+  for i in 1 .. 300 loop
+
+    -- look for update of stats file
+    select size into newsize from pg_stat_file('global/pgstat.stat');
+
+    exit when newsize != oldsize;
+
+    -- wait a little
+    perform pg_sleep(0.1);
+
+  end loop;
+
+  -- report time waited in postmaster log (where it won't change test output)
+  raise log 'wait_for_stats delayed % seconds',
+    extract(epoch from clock_timestamp() - start_time);
+end
+$$ language plpgsql;
+SELECT wait_for_stats();
+ wait_for_stats 
+----------------
  
 (1 row)
 
+DROP TABLE stats_hack;
 -- check effects
 SELECT st.seq_scan >= pr.seq_scan + 1,
        st.seq_tup_read >= pr.seq_tup_read + cl.reltuples,
