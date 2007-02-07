@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.497 2007/02/02 00:10:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.498 2007/02/07 04:22:44 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -34,6 +34,50 @@ do it for earlier branch release files.
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-8-2-3">
+   <title>Release 8.2.3</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-02-07</simpara>
+   </note>
+
+   <para>
+    This release contains two fixes from 8.2.2.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.2.3</title>
+
+    <para>
+     A dump/restore is not required for those running 8.2.X.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      Remove overly-restrictive check for type length in constraints and
+      functional indexes(Tom)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix optimization so MIN/MAX in subqueries can again use indexes (Tom)
+     </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-8-2-2">
    <title>Release 8.2.2</title>
@@ -2876,6 +2920,46 @@ do it for earlier branch release files.
      </itemizedlist>
 
     </sect3>
+
+   </sect2>
+  </sect1>
+
+  <sect1 id="release-8-1-8">
+   <title>Release 8.1.8</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-02-07</simpara>
+   </note>
+
+   <para>
+    This release contains one fix from 8.1.7.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.1.8</title>
+
+    <para>
+     A dump/restore is not required for those running 8.1.X.
+     However, if you are upgrading from a version earlier than 8.1.2,
+     see the release notes for 8.1.2.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      Remove overly-restrictive check for type length in constraints and
+      functional indexes(Tom)
+     </para>
+     </listitem>
+
+    </itemizedlist>
 
    </sect2>
   </sect1>
@@ -5786,6 +5870,46 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
      </itemizedlist>
     </sect3>
+
+   </sect2>
+  </sect1>
+
+  <sect1 id="release-8-0-12">
+   <title>Release 8.0.12</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-02-07</simpara>
+   </note>
+
+   <para>
+    This release contains one fix from 8.0.11.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.12</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.6, see the release
+     notes for 8.0.6.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      Remove overly-restrictive check for type length in constraints and
+      functional indexes(Tom)
+     </para>
+     </listitem>
+
+    </itemizedlist>
 
    </sect2>
   </sect1>
