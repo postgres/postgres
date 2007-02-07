@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.109 2007/01/19 16:42:24 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.110 2007/02/07 00:28:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -341,6 +341,10 @@ extern int	inet_aton(const char *cp, struct in_addr * addr);
 
 #ifndef HAVE_STRDUP
 extern char *strdup(const char *str);
+#endif
+
+#if !HAVE_DECL_STRLCAT
+extern size_t strlcat(char *dst, const char *src, size_t siz);
 #endif
 
 #if !HAVE_DECL_STRLCPY

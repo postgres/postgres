@@ -87,6 +87,10 @@
    don't. */
 #undef HAVE_DECL_SNPRINTF
 
+/* Define to 1 if you have the declaration of `strlcat', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRLCAT
+
 /* Define to 1 if you have the declaration of `strlcpy', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRLCPY
@@ -388,6 +392,9 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
+
+/* Define to 1 if you have the `strlcat' function. */
+#undef HAVE_STRLCAT
 
 /* Define to 1 if you have the `strlcpy' function. */
 #undef HAVE_STRLCPY

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.500 2007/02/03 02:43:38 momjian Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.501 2007/02/07 00:28:54 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -905,7 +905,7 @@ AC_CHECK_FUNCS([cbrt dlopen fcvt fdatasync getpeereid getrlimit memmove poll pst
 
 AC_CHECK_DECLS(fdatasync, [], [], [#include <unistd.h>])
 AC_CHECK_DECLS(posix_fadvise, [], [], [#include <fcntl.h>])
-AC_CHECK_DECLS(strlcpy)
+AC_CHECK_DECLS([strlcat, strlcpy])
 # This is probably only present on Darwin, but may as well check always
 AC_CHECK_DECLS(F_FULLFSYNC, [], [], [#include <fcntl.h>])
 
@@ -1002,7 +1002,7 @@ fi
 pgac_save_LIBS="$LIBS"
 LIBS=`echo "$LIBS" | sed -e 's/-ledit//g' -e 's/-lreadline//g'`
 
-AC_REPLACE_FUNCS([crypt fseeko getopt getrusage inet_aton random rint srandom strdup strerror strlcpy strtol strtoul unsetenv])
+AC_REPLACE_FUNCS([crypt fseeko getopt getrusage inet_aton random rint srandom strdup strerror strlcat strlcpy strtol strtoul unsetenv])
 
 LIBS="$pgac_save_LIBS"
 

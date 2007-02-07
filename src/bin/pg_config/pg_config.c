@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.23 2007/01/05 22:19:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.24 2007/02/07 00:28:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -213,7 +213,7 @@ show_pgxs(bool all)
 	if (all)
 		printf("PGXS = ");
 	get_pkglib_path(mypath, path);
-	strncat(path, "/pgxs/src/makefiles/pgxs.mk", MAXPGPATH - 1 - strlen(path));
+	strlcat(path, "/pgxs/src/makefiles/pgxs.mk", sizeof(path));
 	cleanup_path(path);
 	printf("%s\n", path);
 }
