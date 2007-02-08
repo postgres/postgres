@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.29 2007/02/07 00:52:35 petere Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.30 2007/02/08 15:28:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,9 @@ static char *bindir = PGBINDIR;
 static char *libdir = LIBDIR;
 static char *datadir = PGSHAREDIR;
 static char *host_platform = HOST_TUPLE;
+#ifndef WIN32_ONLY_COMPILER
 static char *makeprog = MAKEPROG;
+#endif
 
 #ifndef WIN32					/* not used in WIN32 case */
 static char *shellprog = SHELLPROG;
@@ -132,6 +134,10 @@ psql_command(const char *database, const char *query,...)
 /* This extension allows gcc to check the format string for consistency with
    the supplied arguments. */
 __attribute__((format(printf, 2, 3)));
+
+#ifdef WIN32
+typedef BOOL(WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
+#endif
 
 /*
  * allow core files if possible.
@@ -854,16 +860,74 @@ spawn_process(const char *cmdline)
 	return pid;
 #else
 	char	   *cmdline2;
+	BOOL b;
 	STARTUPINFO si;
 	PROCESS_INFORMATION pi;
+	HANDLE origToken;
+	HANDLE restrictedToken;
+	SID_IDENTIFIER_AUTHORITY NtAuthority = {SECURITY_NT_AUTHORITY};
+	SID_AND_ATTRIBUTES dropSids[2];
+	__CreateRestrictedToken _CreateRestrictedToken = NULL;
+	HANDLE Advapi32Handle;
 
 	ZeroMemory(&si, sizeof(si));
 	si.cb = sizeof(si);
+	
+	Advapi32Handle = LoadLibrary("ADVAPI32.DLL");
+	if (Advapi32Handle != NULL)
+	{
+      _CreateRestrictedToken = (__CreateRestrictedToken) GetProcAddress(Advapi32Handle, "CreateRestrictedToken");
+   }
+   
+   if (_CreateRestrictedToken == NULL)
+   {
+      if (Advapi32Handle != NULL)
+      	FreeLibrary(Advapi32Handle);
+      fprintf(stderr, "ERROR: Unable to create restricted tokens on this platform\n");
+      exit_nicely(2);
+   }
+
+   /* Open the current token to use as base for the restricted one */
+   if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
+   {
+      fprintf(stderr, "Failed to open process token: %lu\n", GetLastError());
+      exit_nicely(2);
+   }
+
+	/* Allocate list of SIDs to remove */
+	ZeroMemory(&dropSids, sizeof(dropSids));
+	if (!AllocateAndInitializeSid(&NtAuthority, 2,
+			SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0, 0, 0, 0, 0, 0, &dropSids[0].Sid) ||
+		 !AllocateAndInitializeSid(&NtAuthority, 2,
+		   SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0, 0, &dropSids[1].Sid))
+   {
+      fprintf(stderr, "Failed to allocate SIDs: %lu\n", GetLastError());
+      exit_nicely(2);
+   }
+	
+	b = _CreateRestrictedToken(origToken,
+          DISABLE_MAX_PRIVILEGE,
+          sizeof(dropSids)/sizeof(dropSids[0]),
+          dropSids,
+          0, NULL,
+          0, NULL,
+          &restrictedToken);
+
+   FreeSid(dropSids[1].Sid);
+   FreeSid(dropSids[0].Sid);
+   CloseHandle(origToken);
+   FreeLibrary(Advapi32Handle);
+   
+   if (!b)
+   {
+      fprintf(stderr, "Failed to create restricted token: %lu\n", GetLastError());
+      exit_nicely(2);
+   }
 
 	cmdline2 = malloc(strlen(cmdline) + 8);
 	sprintf(cmdline2, "cmd /c %s", cmdline);
 
-	if (!CreateProcess(NULL, cmdline2, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+	if (!CreateProcessAsUser(restrictedToken, NULL, cmdline2, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
 	{
 		fprintf(stderr, _("could not start process for \"%s\": %lu\n"),
 				cmdline2, GetLastError());
@@ -1689,9 +1753,15 @@ main(int argc, char *argv[])
 			make_directory(buf);
 
 		/* "make install" */
+#ifndef WIN32_ONLY_COMPILER
 		snprintf(buf, sizeof(buf),
 				 SYSTEMQUOTE "\"%s\" -C \"%s\" DESTDIR=\"%s/install\" install with_perl=no with_python=no > \"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
 				 makeprog, top_builddir, temp_install, outputdir);
+#else
+	   snprintf(buf, sizeof(buf),
+	          SYSTEMQUOTE "perl \"%s/src/tools/msvc/install.pl\" \"%s/install\" >\"%s/log/install.log\" 2>&1" SYSTEMQUOTE,
+             top_builddir, temp_install, outputdir);
+#endif
 		if (system(buf))
 		{
 			fprintf(stderr, _("\n%s: installation failed\nExamine %s/log/install.log for the reason.\nCommand was: %s\n"), progname, outputdir, buf);

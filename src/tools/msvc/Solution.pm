@@ -87,7 +87,7 @@ sub GenerateFiles {
 		print O "#define HAVE_LIBZ 1\n" if ($self->{options}->{zlib});
 		print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
 		print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
-		print O "#define LOCALEDIR \"/usr/local/pgsql/share/locale\"\n" if ($self->{options}->{nls});
+		print O "#define LOCALEDIR \"/share/locale\"\n" if ($self->{options}->{nls});
 		if ($self->{options}->{xml}) {
          print O "#define HAVE_LIBXML2\n";
          print O "#define USE_LIBXML\n";
@@ -201,17 +201,17 @@ EOF
 		print "Generating pg_config_paths.h...\n";
 		open(O,'>', 'src\port\pg_config_paths.h') || confess "Could not open pg_config_paths.h";
 		print O  <<EOF;
-#define PGBINDIR "/usr/local/pgsql/bin"
-#define PGSHAREDIR "/usr/local/pgsql/share"
-#define SYSCONFDIR "/usr/local/pgsql/etc"
-#define INCLUDEDIR "/usr/local/pgsql/include"
-#define PKGINCLUDEDIR "/usr/local/pgsql/include"
-#define INCLUDEDIRSERVER "/usr/local/pgsql/include/server"
-#define LIBDIR "/usr/local/pgsql/lib"
-#define PKGLIBDIR "/usr/local/pgsql/lib"
-#define LOCALEDIR "/usr/local/pgsql/share/locale"
-#define DOCDIR "/usr/local/pgsql/doc"
-#define MANDIR "/usr/local/pgsql/man"
+#define PGBINDIR "/bin"
+#define PGSHAREDIR "/share"
+#define SYSCONFDIR "/etc"
+#define INCLUDEDIR "/include"
+#define PKGINCLUDEDIR "/include"
+#define INCLUDEDIRSERVER "/include/server"
+#define LIBDIR "/lib"
+#define PKGLIBDIR "/lib"
+#define LOCALEDIR "/share/locale"
+#define DOCDIR "/doc"
+#define MANDIR "/man"
 EOF
 		close(O);
 	}

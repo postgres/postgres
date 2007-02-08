@@ -69,6 +69,7 @@ sub CopySetOfFiles {
 	open($D, "dir /b /s $spec |") || croak "Could not list $spec\n";
 	while (<$D>) {
 		chomp;
+		next if /regress/; # Skip temporary install in regression subdir
 		my $tgt = $target . basename($_);
 		print ".";
 		copy($_, $tgt) || croak "Could not copy $_: $!\n";

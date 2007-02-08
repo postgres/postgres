@@ -265,10 +265,17 @@ foreach my $prg (split /\s+/,$1) {
 }
 
 
-# Regression DLLs
+# Regression DLL and EXE
 my $regress = $solution->AddProject('regress','dll','misc');
 $regress->AddFile('src\test\regress\regress.c');
 $regress->AddReference($postgres);
+
+my $pgregress = $solution->AddProject('pg_regress','exe','misc');
+$pgregress->AddFile('src\test\regress\pg_regress.c');
+$pgregress->AddIncludeDir('src\port');
+$pgregress->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
+$pgregress->AddDefine('FRONTEND');
+$pgregress->AddReference($libpgport);
 
 $solution->Save();
 
