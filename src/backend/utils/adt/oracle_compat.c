@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.68 2007/01/05 22:19:41 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.69 2007/02/08 18:19:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,8 @@
  */
 #if defined(HAVE_WCSTOMBS) && defined(HAVE_TOWLOWER)
 #define USE_WIDE_UPPER_LOWER
+char *wstring_lower (char *str);
+char *wstring_upper(char *str);
 #endif
 
 static text *dotrim(const char *string, int stringlen,
@@ -258,6 +260,80 @@ win32_wcstotext(const wchar_t *str, int ncodes)
 #define wcstotext	win32_wcstotext
 #endif   /* WIN32 */
 
+#ifdef USE_WIDE_UPPER_LOWER
+/* 
+ * string_upper and string_lower are used for correct multibyte upper/lower 
+ * transformations localized strings. Returns pointers to transformated
+ * string.
+ */
+char *
+wstring_upper(char *str)
+{
+	wchar_t		*workspace;
+	text		*in_text;
+	text		*out_text;
+	char		*result;    
+	int 	nbytes = strlen(str);
+	int	i;
+	
+	in_text = palloc(nbytes + VARHDRSZ);
+	memcpy(VARDATA(in_text), str, nbytes);
+	VARATT_SIZEP(in_text) = nbytes + VARHDRSZ;
+
+	workspace = texttowcs(in_text);
+
+	for (i = 0; workspace[i] != 0; i++)
+		workspace[i] = towupper(workspace[i]);
+
+	out_text = wcstotext(workspace, i);
+	
+    	nbytes = VARSIZE(out_text) - VARHDRSZ;
+	result = palloc(nbytes + 1);
+	memcpy(result, VARDATA(out_text), nbytes);
+
+	result[nbytes] = '\0';
+
+	pfree(workspace);
+	pfree(in_text);
+	pfree(out_text);
+	
+	return result;
+}
+
+char *
+wstring_lower(char *str)
+{
+	wchar_t		*workspace;
+	text		*in_text;
+	text		*out_text;
+	char		*result;    
+	int 	nbytes = strlen(str);
+	int	i;
+	
+	in_text = palloc(nbytes + VARHDRSZ);
+	memcpy(VARDATA(in_text), str, nbytes);
+	VARATT_SIZEP(in_text) = nbytes + VARHDRSZ;
+
+	workspace = texttowcs(in_text);
+
+	for (i = 0; workspace[i] != 0; i++)
+		workspace[i] = towlower(workspace[i]);
+
+	out_text = wcstotext(workspace, i);
+	
+   	nbytes = VARSIZE(out_text) - VARHDRSZ;
+	result = palloc(nbytes + 1);
+	memcpy(result, VARDATA(out_text), nbytes);
+
+	result[nbytes] = '\0';
+
+	pfree(workspace);
+	pfree(in_text);
+	pfree(out_text);
+	
+	return result;
+}
+#endif	/* USE_WIDE_UPPER_LOWER */
 
 /********************************************************************
  *

@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.119 2007/02/08 03:22:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.120 2007/02/08 18:19:33 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2007, PostgreSQL Global Development Group
@@ -82,6 +82,7 @@
 #include "utils/int8.h"
 #include "utils/numeric.h"
 #include "utils/pg_locale.h"
+#include "mb/pg_wchar.h"
 
 #define _(x)	gettext((x))
 
@@ -112,6 +113,7 @@
  */
 #define MAXFLOATWIDTH	64
 #define MAXDOUBLEWIDTH	128
+
 
 /* ----------
  * External (defined in PgSQL datetime.c (timestamp utils))
@@ -946,6 +948,20 @@ static char *localize_month(int index);
 static char *localize_day_full(int index);
 static char *localize_day(int index);
 
+/*
+ * External (defined in oracle_compat.c 
+ */
+#if defined(HAVE_WCSTOMBS) && defined(HAVE_TOWLOWER)
+#define USE_WIDE_UPPER_LOWER
+extern char *wstring_upper(char *str);
+extern char *wstring_lower(char *str);
+static char *localized_str_toupper(char *buff);
+static char *localized_str_tolower(char *buff);
+#else
+#define localized_str_toupper str_toupper
+#define localized_str_tolower str_tolower
+#endif
+
 /* ----------
  * Fast sequential search, use index for data selection which
  * go to seq. cycle (it is very fast for unwanted strings)
@@ -1500,6 +1516,7 @@ str_toupper(char *buff)
 		*p_buff = pg_toupper((unsigned char) *p_buff);
 		++p_buff;
 	}
+
 	return buff;
 }
 
@@ -1522,6 +1539,61 @@ str_tolower(char *buff)
 	}
 	return buff;
 }
+
+
+#ifdef USE_WIDE_UPPER_LOWER
+/* ----------
+ * Convert localized string to upper string. Input string is modified in place.
+ * ----------
+ */
+static char *
+localized_str_toupper(char *buff)
+{
+	if (!buff)
+		return NULL;
+
+	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
+		return wstring_upper(buff);
+	else
+	{
+		char	   *p_buff = buff;
+
+		while (*p_buff)
+		{
+			*p_buff = pg_toupper((unsigned char) *p_buff);
+			++p_buff;
+		}
+	}
+
+	return buff;
+}
+
+/* ----------
+ * Convert localized string to upper string. Input string is modified in place.
+ * ----------
+ */
+static char *
+localized_str_tolower(char *buff)
+{
+	if (!buff)
+		return NULL;
+
+	if (pg_database_encoding_max_length() > 1 && !lc_ctype_is_c())
+		return wstring_lower(buff);
+	else
+	{
+		char	   *p_buff = buff;
+
+		while (*p_buff)
+		{
+			*p_buff = pg_tolower((unsigned char) *p_buff);
+			++p_buff;
+		}
+	}
+
+	return buff;
+}
+#endif /* USE_WIDE_UPPER_LOWER */
 
 /* ----------
  * Sequential search with to upper/lower conversion
@@ -2182,10 +2254,15 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			if (!tm->tm_mon)
 				return -1;
 			if (S_TM(suf))
+			{
 				strcpy(workbuff, localize_month_full(tm->tm_mon - 1));
+				sprintf(inout, "%*s", 0, localized_str_toupper(workbuff));
+			}
 			else
+			{
 				strcpy(workbuff, months_full[tm->tm_mon - 1]);
-			sprintf(inout, "%*s", (S_FM(suf) || S_TM(suf)) ? 0 : -9, str_toupper(workbuff));
+				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(workbuff));
+			}
 			return strlen(p_inout);
 
 		case DCH_Month:
@@ -2203,10 +2280,15 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			if (!tm->tm_mon)
 				return -1;
 			if (S_TM(suf))
-				sprintf(inout, "%*s", 0, localize_month_full(tm->tm_mon - 1));
+			{
+				strcpy(workbuff, localize_month_full(tm->tm_mon - 1));
+				sprintf(inout, "%*s", 0, localized_str_tolower(workbuff));
+			}
 			else
+			{
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
-			*inout = pg_tolower((unsigned char) *inout);
+				*inout = pg_tolower((unsigned char) *inout);
+			}
 			return strlen(p_inout);
 
 		case DCH_MON:
@@ -2214,10 +2296,15 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			if (!tm->tm_mon)
 				return -1;
 			if (S_TM(suf))
-				strcpy(inout, localize_month(tm->tm_mon - 1));
+			{
+				strcpy(workbuff, localize_month(tm->tm_mon - 1));
+				strcpy(inout, localized_str_toupper(workbuff));
+			}
 			else
+			{
 				strcpy(inout, months[tm->tm_mon - 1]);
-			str_toupper(inout);
+				str_toupper(inout);
+			}
 			return strlen(p_inout);
 
 		case DCH_Mon:
@@ -2235,10 +2322,15 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			if (!tm->tm_mon)
 				return -1;
 			if (S_TM(suf))
-				strcpy(inout, localize_month(tm->tm_mon - 1));
+			{
+				strcpy(workbuff, localize_month(tm->tm_mon - 1));
+				strcpy(inout, localized_str_tolower(workbuff));
+			}
 			else
+			{
 				strcpy(inout, months[tm->tm_mon - 1]);
-			*inout = pg_tolower((unsigned char) *inout);
+				*inout = pg_tolower((unsigned char) *inout);
+			}
 			return strlen(p_inout);
 
 		case DCH_MM:
@@ -2266,16 +2358,21 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		case DCH_DAY:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
+			{
 				strcpy(workbuff, localize_day_full(tm->tm_wday));
+				sprintf(inout, "%*s", 0, localized_str_toupper(workbuff));
+			}
 			else
+			{
 				strcpy(workbuff, days[tm->tm_wday]);
-			sprintf(inout, "%*s", (S_FM(suf) || S_TM(suf)) ? 0 : -9, str_toupper(workbuff));
+				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, str_toupper(workbuff));
+			}
 			return strlen(p_inout);
 
 		case DCH_Day:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
-				sprintf(inout, "%*s", 0, localize_day_full(tm->tm_wday));
+				sprintf(inout, "%*s", 0, localize_day_full(tm->tm_wday));		    
 			else
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[tm->tm_wday]);
 			return strlen(p_inout);
@@ -2283,19 +2380,30 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		case DCH_day:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
-				sprintf(inout, "%*s", 0, localize_day_full(tm->tm_wday));
+			{
+				strcpy(workbuff, localize_day_full(tm->tm_wday));
+				sprintf(inout, "%*s", 0, localized_str_tolower(workbuff));				
+			}
 			else
+			{
 				sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[tm->tm_wday]);
-			*inout = pg_tolower((unsigned char) *inout);
+				*inout = pg_tolower((unsigned char) *inout);
+			}
 			return strlen(p_inout);
 
 		case DCH_DY:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
-				strcpy(inout, localize_day(tm->tm_wday));
+			{
+				strcpy(workbuff, localize_day(tm->tm_wday));
+				strcpy(inout, localized_str_toupper(workbuff));
+			}
 			else
+			{
 				strcpy(inout, days_short[tm->tm_wday]);
-			str_toupper(inout);
+				str_toupper(inout);
+			}
+			
 			return strlen(p_inout);
 
 		case DCH_Dy:
@@ -2309,10 +2417,15 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		case DCH_dy:
 			INVALID_FOR_INTERVAL;
 			if (S_TM(suf))
-				strcpy(inout, localize_day(tm->tm_wday));
+			{
+				strcpy(workbuff, localize_day(tm->tm_wday));
+				strcpy(inout, localized_str_tolower(workbuff));
+			}
 			else
+			{
 				strcpy(inout, days_short[tm->tm_wday]);
-			*inout = pg_tolower((unsigned char) *inout);
+				*inout = pg_tolower((unsigned char) *inout);
+			}
 			return strlen(p_inout);
 
 		case DCH_DDD:
