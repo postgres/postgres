@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.97 2007/02/01 19:10:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.98 2007/02/08 18:37:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,7 +272,6 @@ decl_sect		: opt_block_label
 						$$.label	  = $1;
 						$$.n_initvars = 0;
 						$$.initvarnos = NULL;
-						plpgsql_add_initdatums(NULL);
 					}
 				| opt_block_label decl_start
 					{
@@ -280,7 +279,6 @@ decl_sect		: opt_block_label
 						$$.label	  = $1;
 						$$.n_initvars = 0;
 						$$.initvarnos = NULL;
-						plpgsql_add_initdatums(NULL);
 					}
 				| opt_block_label decl_start decl_stmts
 					{
@@ -289,12 +287,16 @@ decl_sect		: opt_block_label
 							$$.label = $3;
 						else
 							$$.label = $1;
+						/* Remember variables declared in decl_stmts */
 						$$.n_initvars = plpgsql_add_initdatums(&($$.initvarnos));
 					}
 				;
 
 decl_start		: K_DECLARE
 					{
+						/* Forget any variables created before block */
+						plpgsql_add_initdatums(NULL);
+						/* Make variable names be local to block */
 						plpgsql_ns_setlocal(true);
 					}
 				;
@@ -989,9 +991,6 @@ for_control		:
 														   plpgsql_build_datatype(INT4OID,
 																				  -1),
 														   true);
-
-								/* put the for-variable into the local block */
-								plpgsql_add_initdatums(NULL);
 
 								new = palloc0(sizeof(PLpgSQL_stmt_fori));
 								new->cmd_type = PLPGSQL_STMT_FORI;
