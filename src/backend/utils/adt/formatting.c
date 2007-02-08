@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.118 2007/01/12 23:34:54 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.119 2007/02/08 03:22:28 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2007, PostgreSQL Global Development Group
@@ -2093,10 +2093,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		{
 			tmfc->mm = seq_search(inout, months_full, ONE_UPPER, FULL_SIZ, &len) + 1;
 			CHECK_SEQ_SEARCH(len, "MONTH/Month/month");
-			if (S_FM(suf))
-				return len;
-			else
-				return 9;
+			return len;
 		}
 		else if (arg == DCH_MON || arg == DCH_Mon || arg == DCH_mon)
 		{
@@ -2108,10 +2105,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 		{
 			tmfc->d = seq_search(inout, days, ONE_UPPER, FULL_SIZ, &len);
 			CHECK_SEQ_SEARCH(len, "DAY/Day/day");
-			if (S_FM(suf))
-				return len;
-			else
-				return 9;
+			return len;
 		}
 		else if (arg == DCH_DY || arg == DCH_Dy || arg == DCH_dy)
 		{
@@ -2636,10 +2630,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			{
 				tmfc->mm = 12 - seq_search(inout, rm_months_upper, ALL_UPPER, FULL_SIZ, &len);
 				CHECK_SEQ_SEARCH(len, "RM");
-				if (S_FM(suf))
-					return len;
-				else
-					return 4;
+				return len;
 			}
 			break;
 		case DCH_rm:
@@ -2655,10 +2646,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			{
 				tmfc->mm = 12 - seq_search(inout, rm_months_lower, ALL_LOWER, FULL_SIZ, &len);
 				CHECK_SEQ_SEARCH(len, "rm");
-				if (S_FM(suf))
-					return len;
-				else
-					return 4;
+				return len;
 			}
 			break;
 		case DCH_W:
