@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.517 2007/02/07 16:44:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.518 2007/02/08 15:46:04 momjian Exp $
  *
  * NOTES
  *
@@ -3359,6 +3359,15 @@ SubPostmasterMain(int argc, char *argv[])
 		if (EnableSSL)
 			secure_initialize();
 #endif
+
+		/*
+		 * process any libraries that should be preloaded at postmaster start
+		 *
+		 * NOTE: we have to re-load the shared_preload_libraries here because
+		 * 		 this backend is not fork()ed so we can't inherit any shared
+		 *		 libraries / DLL's from our parent (the postmaster).
+		 */
+		process_shared_preload_libraries();
 
 		/*
 		 * Perform additional initialization and client authentication.
