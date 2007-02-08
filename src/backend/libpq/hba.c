@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.158 2007/01/05 22:19:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.159 2007/02/08 04:52:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1589,6 +1589,9 @@ authident(hbaPort *port)
 {
 	char		ident_user[IDENT_USERNAME_MAX + 1];
 
+	if (get_role_line(port->user_name) == NULL)
+		return STATUS_ERROR;
+	
 	switch (port->raddr.addr.ss_family)
 	{
 		case AF_INET:
