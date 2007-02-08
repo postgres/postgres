@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.39.2.3 2006/05/21 19:56:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.39.2.4 2007/02/08 18:38:28 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -263,7 +263,6 @@ decl_sect		: opt_label
 						$$.label	  = $1;
 						$$.n_initvars = 0;
 						$$.initvarnos = NULL;
-						plpgsql_add_initdatums(NULL);
 					}
 				| opt_label decl_start
 					{
@@ -271,7 +270,6 @@ decl_sect		: opt_label
 						$$.label	  = $1;
 						$$.n_initvars = 0;
 						$$.initvarnos = NULL;
-						plpgsql_add_initdatums(NULL);
 					}
 				| opt_label decl_start decl_stmts
 					{
@@ -280,12 +278,16 @@ decl_sect		: opt_label
 							$$.label = $3;
 						else
 							$$.label = $1;
+						/* Remember variables declared in decl_stmts */
 						$$.n_initvars = plpgsql_add_initdatums(&($$.initvarnos));
 					}
 				;
 
 decl_start		: K_DECLARE
 					{
+						/* Forget any variables created before block */
+						plpgsql_add_initdatums(NULL);
+						/* Make variable names be local to block */
 						plpgsql_ns_setlocal(true);
 					}
 				;
@@ -981,8 +983,6 @@ fori_var		: fori_varname
 						plpgsql_adddatum((PLpgSQL_datum *)new);
 						plpgsql_ns_additem(PLPGSQL_NSTYPE_VAR, new->varno,
 												$1.name);
-
-						plpgsql_add_initdatums(NULL);
 
 						$$ = new;
 					}
