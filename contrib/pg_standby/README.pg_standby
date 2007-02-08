@@ -1,0 +1,164 @@
+pg_standby README		2006/12/08 Simon Riggs
+
+o What is pg_standby?
+
+  pg_standby is a production-ready program that can be used to
+  create a Warm Standby server. Other configuration is required
+  as well, all of which is described in the main server manual.
+
+  The program is designed to be a wait-for restore_command, 
+  required to turn a normal archive recovery into a Warm Standby.
+  Within the restore_command of the recovery.conf you could
+  configure pg_standby in the following way:
+
+    restore_command = 'pg_standby archiveDir %f %p'
+
+  which would be sufficient to define that files will be restored
+  from archiveDir. 
+
+o features of pg_standby
+
+  - pg_standby is written in C. So it is very portable
+    and easy to install.
+
+  - supports copy or link from a directory (only)
+
+  - source easy to modify, with specifically designated
+    sections to modify for your own needs, allowing 
+    interfaces to be written for additional Backup Archive Restore
+    (BAR) systems
+
+  - portable: tested on Linux and Windows 
+
+o How to install pg_standby
+
+ $make
+ $make install
+
+o How to use pg_standby?
+
+  pg_standby should be used within the restore_command of the
+  recovery.conf file. See the main PostgreSQL manual for details.
+
+  The basic usage should be like this:
+
+    restore_command = 'pg_standby archiveDir %f %p'
+
+  with the pg_standby command usage as
+
+    pg_standby [OPTION]... [ARCHIVELOCATION] [NEXTWALFILE] [XLOGFILEPATH]
+
+  When used within the restore_command the %f and %p macros
+  will provide the actual file and path required for the restore/recovery.
+  
+o options
+
+  pg_standby has number of options.
+
+	-c
+		use copy/cp command to restore WAL files from archive
+
+	-d
+		debug/logging option.
+
+	-k numfiles
+		Cleanup files in the archive so that we maintain no more
+		than this many files in the archive. 
+
+		You should be wary against setting this number too low,
+		since this may mean you cannot restart the standby. This
+		is because the last restartpoint marked in the WAL files
+		may be many files in the past and can vary considerably.
+		This should be set to a value exceeding the number of WAL
+		files that can be recovered in 2*checkpoint_timeout seconds,
+		according to the value in the warm standby postgresql.conf.
+		It is wholly unrelated to the setting of checkpoint_segments
+		on either primary or standby.
+
+		If in doubt, use a large value or do not set a value at all.
+
+	-l 
+		use ln command to restore WAL files from archive
+		WAL files will remain in archive
+
+		Link is more efficient, but the default is copy to 
+		allow you to maintain the WAL archive for recovery
+		purposes as well as high-availability.
+
+		This option uses the Windows Vista command mklink
+		to provide a file-to-file symbolic link. -l will
+		not work on versions of Windows prior to Vista.
+		Use the -c option instead.
+		see http://en.wikipedia.org/wiki/NTFS_symbolic_link
+
+	-r maxretries
+		the maximum number of times to retry the restore command if it
+		fails. After each failure, we wait for sleeptime * num_retries
+		so that the wait time increases progressively, so by default
+		we will wait 5 secs, 10 secs then 15 secs before reporting
+		the failure back to the database server. This will be
+		interpreted as and end of recovery and the Standby will come
+		up fully as a result.
+		Default=3
+
+	-s sleeptime
+		the number of seconds to sleep between testing to see
+		if the file to be restored is available in the archive yet.
+		The default setting is not necessarily recommended,
+		consult the main database server manual for discussion.
+		Default=5
+
+	-t triggerfile
+		the presence of the triggerfile will cause recovery to end
+		whether or not the next file is available
+		It is recommended that you use a structured filename to 
+		avoid confusion as to which server is being triggered
+		when multiple servers exist on same system.
+		e.g. /tmp/pgsql.trigger.5432
+
+	-w maxwaittime
+		the maximum number of seconds to wait for the next file,
+		after which recovery will end and the Standby will come up.
+		The default setting is not necessarily recommended,
+		consult the main database server manual for discussion.
+		Default=0
+
+	Note: --help is not supported since pg_standby is not intended
+		for interactive use, except during dev/test
+
+o examples
+
+	Linux
+
+	archive_command = 'cp %p ../archive/%f'
+
+    	restore_command = 'pg_standby -l -d -k 255 -r 2 -s 2 -w 0 -t /tmp/pgsql.trigger.5442 $PWD/../archive %f %p 2>> standby.log' 
+
+  	which will
+	- use a ln command to restore WAL files from archive
+	- produce logfile output in standby.log
+	- keep the last 255 full WAL files, plus the current one
+	- sleep for 2 seconds between checks for next WAL file is full
+	- never timeout if file not found
+	- stop waiting when a trigger file called /tmp.pgsql.trigger.5442 appears
+
+	Windows
+	
+	archive_command = 'copy %p ..\\archive\\%f'
+	Note that backslashes need to be doubled in the archive_command, but
+	*not* in the restore_command, in 8.2, 8.1, 8.0 on Windows.
+
+	restore_command = 'pg_standby -c -d -s 5 -w 0 -t C:\pgsql.trigger.5442
+..\archive %f %p 2>> standby.log'
+
+  	which will
+	- use a copy command to restore WAL files from archive
+	- produce logfile output in standby.log
+	- sleep for 5 seconds between checks for next WAL file is full
+	- never timeout if file not found
+	- stop waiting when a trigger file called C:\pgsql.trigger.5442 appears
+
+o reported test success
+
+	SUSE Linux 10.2
+	Windows XP Pro
