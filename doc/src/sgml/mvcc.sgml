@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.66 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.67 2007/02/08 15:32:11 momjian Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -741,6 +741,123 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     releases locks acquired within it.
    </para>
 
+    <table tocentry="1" id="table-lock-compatibility">
+     <title> Compatibility of lock modes</title>
+     <tgroup cols="9">
+      <colspec colnum="1" colwidth="1*">
+      <colspec colnum="2" colwidth="1*">
+      <colspec colnum="3" colwidth="1*">
+      <colspec colnum="4" colwidth="1*">
+      <colspec colnum="5" colwidth="1*">
+      <colspec colnum="6" colwidth="1*">
+      <colspec colnum="7" colwidth="1*">
+      <colspec colnum="8" colwidth="1*">
+      <colspec colnum="9" colwidth="1*">
+      <thead>
+	   <row>
+        <entry>Modes</entry>
+        <entry>AS</entry>
+        <entry>RS</entry>
+        <entry>RE</entry>
+        <entry>SUE</entry>
+        <entry>S</entry>
+        <entry>SRE</entry>
+        <entry>E</entry>
+        <entry>AE</entry>
+	   </row>
+	  </thead>
+	  <tbody>
+	   <row>
+        <entry>AS</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">N</entry>
+	   </row>
+	   <row>
+        <entry>RS</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+	   </row>
+	   <row>
+        <entry>RE</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+	   </row>
+	   <row>
+        <entry>SUE</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+	   </row>
+	   <row>
+        <entry>S</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+	   </row>
+	   <row>
+        <entry>SRE</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+	   </row>
+	   <row>
+        <entry>E</entry>
+        <entry align="center">Y</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+	   </row>
+	   <row>
+        <entry>AE</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+        <entry align="center">N</entry>
+	   </row>
+	  </tbody>
+	 </tgroup>
+	</table>
    </sect2>
 
    <sect2 id="locking-rows">
