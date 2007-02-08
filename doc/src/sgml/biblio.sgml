@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.26 2006/10/02 22:28:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/biblio.sgml,v 1.27 2007/02/08 04:31:37 momjian Exp $ -->
 
  <bibliography id="biblio">
   <title>Bibliography</title>
@@ -326,12 +326,11 @@ ssimkovi@ag.or.at
 
    <biblioentry id="SESHADRI95">
    <biblioset relation="article">
-    <title><ulink url="http://simon.cs.cornell.edu/home/praveen/papers/partindex.de95.ps.Z">
+    <title>Generalized Partial Indexes
+    <ulink url="http://citeseer.ist.psu.edu/seshadri95generalized.html">(cached version)
 <!-- 
-     above URL is invalid, cached copy at
-     http://citeseer.ist.psu.edu/seshadri95generalized.html
+     Original URL:  http://citeseer.ist.psu.edu/seshadri95generalized.html
 -->
-    Generalized Partial Indexes
     </ulink>
     </title>
     <titleabbrev>Seshardri, 1995</titleabbrev>
