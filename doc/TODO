@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Feb  6 11:44:05 EST 2007
+Last updated:		Thu Feb  8 16:51:45 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -221,6 +221,7 @@ Data Types
 * Add support for SQL-standard GENERATED/IDENTITY columns
 
   http://archives.postgresql.org/pgsql-hackers/2006-07/msg00543.php
+  http://archives.postgresql.org/pgsql-hackers/2006-08/msg00038.php
 
 * Support a data type with specific enumerated values (ENUM)
 
