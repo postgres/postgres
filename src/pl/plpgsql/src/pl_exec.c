@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.154.2.5 2007/01/30 18:02:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.154.2.6 2007/02/08 18:37:55 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -822,24 +822,25 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 				{
 					PLpgSQL_var *var = (PLpgSQL_var *) (estate->datums[n]);
 
+					/* free any old value, in case re-entering block */
 					free_var(var);
-					if (!var->isconst || var->isnull)
+
+					/* Initially it contains a NULL */
+					var->value = (Datum) 0;
+					var->isnull = true;
+
+					if (var->default_val == NULL)
 					{
-						if (var->default_val == NULL)
-						{
-							var->value = (Datum) 0;
-							var->isnull = true;
-							if (var->notnull)
-								ereport(ERROR,
+						if (var->notnull)
+							ereport(ERROR,
 									(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 									 errmsg("variable \"%s\" declared NOT NULL cannot default to NULL",
 											var->refname)));
-						}
-						else
-						{
-							exec_assign_expr(estate, (PLpgSQL_datum *) var,
-											 var->default_val);
-						}
+					}
+					else
+					{
+						exec_assign_expr(estate, (PLpgSQL_datum *) var,
+										 var->default_val);
 					}
 				}
 				break;
@@ -951,7 +952,9 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 					rc = exec_stmts(estate, exception->action);
 
 					free_var(state_var);
+					state_var->value = (Datum) 0;
 					free_var(errm_var);
+					errm_var->value = (Datum) 0;
 					break;
 				}
 			}
@@ -4530,6 +4533,12 @@ plpgsql_xact_cb(XactEvent event, void *arg)
 	simple_eval_estate = NULL;
 }
 
+/*
+ * free_var --- pfree any pass-by-reference value of the variable.
+ *
+ * This should always be followed by some assignment to var->value,
+ * as it leaves a dangling pointer.
+ */
 static void
 free_var(PLpgSQL_var *var)
 {
