@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.73 2007/02/05 15:22:18 adunstan Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.74 2007/02/08 11:10:27 petere Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -801,7 +801,7 @@ handleCopyIn(PGconn *conn, FILE *copystream, bool isbinary)
 				/* enable longjmp while waiting for input */
 				sigint_interrupt_enabled = true;
 
-				fgresult = fgets(buf, COPYBUFSIZ, copystream);
+				fgresult = fgets(buf, sizeof(buf), copystream);
 
 				sigint_interrupt_enabled = false;
 

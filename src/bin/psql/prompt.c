@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.49 2007/01/05 22:19:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.50 2007/02/08 11:10:27 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -96,10 +96,10 @@ get_prompt(promptStatus_t status)
 	destination[0] = '\0';
 
 	for (p = prompt_string;
-		 *p && strlen(destination) < MAX_PROMPT_SIZE;
+		 *p && strlen(destination) < sizeof(destination) - 1;
 		 p++)
 	{
-		memset(buf, 0, MAX_PROMPT_SIZE + 1);
+		memset(buf, 0, sizeof(buf));
 		if (esc)
 		{
 			switch (*p)
@@ -107,7 +107,7 @@ get_prompt(promptStatus_t status)
 					/* Current database */
 				case '/':
 					if (pset.db)
-						strncpy(buf, PQdb(pset.db), MAX_PROMPT_SIZE);
+						strlcpy(buf, PQdb(pset.db), sizeof(buf));
 					break;
 				case '~':
 					if (pset.db)
@@ -116,9 +116,9 @@ get_prompt(promptStatus_t status)
 
 						if (strcmp(PQdb(pset.db), PQuser(pset.db)) == 0 ||
 							((var = getenv("PGDATABASE")) && strcmp(var, PQdb(pset.db)) == 0))
-							strcpy(buf, "~");
+							strlcpy(buf, "~", sizeof(buf));
 						else
-							strncpy(buf, PQdb(pset.db), MAX_PROMPT_SIZE);
+							strlcpy(buf, PQdb(pset.db), sizeof(buf));
 					}
 					break;
 
@@ -132,7 +132,7 @@ get_prompt(promptStatus_t status)
 						/* INET socket */
 						if (host && host[0] && !is_absolute_path(host))
 						{
-							strncpy(buf, host, MAX_PROMPT_SIZE);
+							strlcpy(buf, host, sizeof(buf));
 							if (*p == 'm')
 								buf[strcspn(buf, ".")] = '\0';
 						}
@@ -143,9 +143,9 @@ get_prompt(promptStatus_t status)
 							if (!host
 								|| strcmp(host, DEFAULT_PGSOCKET_DIR) == 0
 								|| *p == 'm')
-								strncpy(buf, "[local]", MAX_PROMPT_SIZE);
+								strlcpy(buf, "[local]", sizeof(buf));
 							else
-								snprintf(buf, MAX_PROMPT_SIZE, "[local:%s]", host);
+								snprintf(buf, sizeof(buf), "[local:%s]", host);
 						}
 #endif
 					}
@@ -153,12 +153,12 @@ get_prompt(promptStatus_t status)
 					/* DB server port number */
 				case '>':
 					if (pset.db && PQport(pset.db))
-						strncpy(buf, PQport(pset.db), MAX_PROMPT_SIZE);
+						strlcpy(buf, PQport(pset.db), sizeof(buf));
 					break;
 					/* DB server user name */
 				case 'n':
 					if (pset.db)
-						strncpy(buf, session_username(), MAX_PROMPT_SIZE);
+						strlcpy(buf, session_username(), sizeof(buf));
 					break;
 
 				case '0':
@@ -252,7 +252,7 @@ get_prompt(promptStatus_t status)
 						fd = popen(file, "r");
 						if (fd)
 						{
-							fgets(buf, MAX_PROMPT_SIZE - 1, fd);
+							fgets(buf, sizeof(buf), fd);
 							pclose(fd);
 						}
 						if (strlen(buf) > 0 && buf[strlen(buf) - 1] == '\n')
@@ -274,7 +274,7 @@ get_prompt(promptStatus_t status)
 						name[nameend] = '\0';
 						val = GetVariable(pset.vars, name);
 						if (val)
-							strncpy(buf, val, MAX_PROMPT_SIZE);
+							strlcpy(buf, val, sizeof(buf));
 						free(name);
 						p += nameend + 1;
 						break;
@@ -312,9 +312,8 @@ get_prompt(promptStatus_t status)
 		}
 
 		if (!esc)
-			strncat(destination, buf, MAX_PROMPT_SIZE - strlen(destination));
+			strlcat(destination, buf, sizeof(destination));
 	}
 
-	destination[MAX_PROMPT_SIZE] = '\0';
 	return destination;
 }

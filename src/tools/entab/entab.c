@@ -2,7 +2,7 @@
 **		entab.c			- add tabs to a text file
 **		by Bruce Momjian (root@candle.pha.pa.us)
 **
-** $PostgreSQL: pgsql/src/tools/entab/entab.c,v 1.17 2007/02/01 19:10:30 momjian Exp $
+** $PostgreSQL: pgsql/src/tools/entab/entab.c,v 1.18 2007/02/08 11:10:27 petere Exp $
 **
 **	version 1.3
 **
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 
 		escaped = FALSE;
 
-		while (fgets(in_line, BUFSIZ, in_file) != NULL)
+		while (fgets(in_line, sizeof(in_line), in_file) != NULL)
 		{
 			col_in_tab = 0;
 			prv_spaces = 0;

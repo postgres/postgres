@@ -45,7 +45,7 @@ readstoplist(text *in, StopList * s)
 					 errmsg("could not open file \"%s\": %m",
 							filename)));
 
-		while (fgets(buf, STOPBUFLEN, hin))
+		while (fgets(buf, sizeof(buf), hin))
 		{
 			buf[strlen(buf) - 1] = '\0';
 			pg_verifymbstr(buf, strlen(buf), false);

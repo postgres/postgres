@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.262 2007/02/07 16:44:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.263 2007/02/08 11:10:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3374,7 +3374,7 @@ readTimeLineHistory(TimeLineID targetTLI)
 	/*
 	 * Parse the file...
 	 */
-	while (fgets(fline, MAXPGPATH, fd) != NULL)
+	while (fgets(fline, sizeof(fline), fd) != NULL)
 	{
 		/* skip leading whitespace and check for # comment */
 		char	   *ptr;
@@ -4248,7 +4248,7 @@ readRecoveryCommandFile(void)
 	/*
 	 * Parse the file...
 	 */
-	while (fgets(cmdline, MAXPGPATH, fd) != NULL)
+	while (fgets(cmdline, sizeof(cmdline), fd) != NULL)
 	{
 		/* skip leading whitespace and check for # comment */
 		char	   *ptr;

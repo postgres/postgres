@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.29 2006/07/14 14:52:26 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.30 2007/02/08 11:10:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -321,26 +321,25 @@ _getBlobTocEntry(ArchiveHandle *AH, Oid *oid, char fname[K_STD_BUF_SIZE])
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
 	char		blobTe[K_STD_BUF_SIZE];
-	size_t		fpos;
-	size_t		eos;
 
-	if (fgets(&blobTe[0], K_STD_BUF_SIZE - 1, ctx->blobToc) != NULL)
+	if (fgets(blobTe, sizeof(blobTe), ctx->blobToc) != NULL)
 	{
+		size_t		fpos;
+		size_t		eos;
+
 		*oid = atooid(blobTe);
 
 		fpos = strcspn(blobTe, " ");
 
-		strncpy(fname, &blobTe[fpos + 1], K_STD_BUF_SIZE - 1);
+		strlcpy(fname, &blobTe[fpos + 1], K_STD_BUF_SIZE);
 
 		eos = strlen(fname) - 1;
 
 		if (fname[eos] == '\n')
 			fname[eos] = '\0';
-
 	}
 	else
 	{
-
 		*oid = 0;
 		fname[0] = '\0';
 	}
