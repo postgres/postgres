@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.94.2.3 2007/01/30 22:05:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.94.2.4 2007/02/08 18:37:52 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -681,11 +681,6 @@ do_compile(FunctionCallInfo fcinfo,
 								 plpgsql_build_datatype(BOOLOID, -1),
 								 true);
 	function->found_varno = var->dno;
-
-	/*
-	 * Forget about the above created variables
-	 */
-	plpgsql_add_initdatums(NULL);
 
 	/*
 	 * Now parse the function's text
@@ -2003,11 +1998,17 @@ plpgsql_adddatum(PLpgSQL_datum *new)
 
 
 /* ----------
- * plpgsql_add_initdatums		Put all datum entries created
- *					since the last call into the
- *					finishing code block so the
- *					block knows which variables to
- *					reinitialize when entered.
+ * plpgsql_add_initdatums		Make an array of the datum numbers of
+ *					all the simple VAR datums created since the last call
+ *					to this function.
+ *
+ * If varnos is NULL, we just forget any datum entries created since the
+ * last call.
+ *
+ * This is used around a DECLARE section to create a list of the VARs
+ * that have to be initialized at block entry.  Note that VARs can also
+ * be created elsewhere than DECLARE, eg by a FOR-loop, but it is then
+ * the responsibility of special-purpose code to initialize them.
  * ----------
  */
 int

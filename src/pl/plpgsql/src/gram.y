@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.82.2.2 2006/08/14 00:46:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.82.2.3 2007/02/08 18:37:52 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -284,7 +284,6 @@ decl_sect		: opt_block_label
 						$$.label	  = $1;
 						$$.n_initvars = 0;
 						$$.initvarnos = NULL;
-						plpgsql_add_initdatums(NULL);
 					}
 				| opt_block_label decl_start
 					{
@@ -292,7 +291,6 @@ decl_sect		: opt_block_label
 						$$.label	  = $1;
 						$$.n_initvars = 0;
 						$$.initvarnos = NULL;
-						plpgsql_add_initdatums(NULL);
 					}
 				| opt_block_label decl_start decl_stmts
 					{
@@ -301,12 +299,16 @@ decl_sect		: opt_block_label
 							$$.label = $3;
 						else
 							$$.label = $1;
+						/* Remember variables declared in decl_stmts */
 						$$.n_initvars = plpgsql_add_initdatums(&($$.initvarnos));
 					}
 				;
 
 decl_start		: K_DECLARE
 					{
+						/* Forget any variables created before block */
+						plpgsql_add_initdatums(NULL);
+						/* Make variable names be local to block */
 						plpgsql_ns_setlocal(true);
 					}
 				;
@@ -947,9 +949,6 @@ for_control		:
 														   plpgsql_build_datatype(INT4OID,
 																				  -1),
 														   true);
-
-								/* put the for-variable into the local block */
-								plpgsql_add_initdatums(NULL);
 
 								new = palloc0(sizeof(PLpgSQL_stmt_fori));
 								new->cmd_type = PLPGSQL_STMT_FORI;
