@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.30 2007/02/08 15:28:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.31 2007/02/08 19:48:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,6 +137,9 @@ __attribute__((format(printf, 2, 3)));
 
 #ifdef WIN32
 typedef BOOL(WINAPI * __CreateRestrictedToken) (HANDLE, DWORD, DWORD, PSID_AND_ATTRIBUTES, DWORD, PLUID_AND_ATTRIBUTES, DWORD, PSID_AND_ATTRIBUTES, PHANDLE);
+
+/* Windows API define missing from MingW headers */
+#define DISABLE_MAX_PRIVILEGE	0x1
 #endif
 
 /*
