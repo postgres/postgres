@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.110 2007/02/05 04:22:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.111 2007/02/08 05:05:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,7 +259,8 @@ typedef struct xl_btree_insert
  *
  * Note: the four XLOG_BTREE_SPLIT xl_info codes all use this data record.
  * The _L and _R variants indicate whether the inserted tuple went into the
- * left or right split page (and thus, whether otherblk is the right or left
+ * left or right split page (and thus, whether newitemoff and the new item
+ * are stored or not.
  * page of the split pair).  The _ROOT variants indicate that we are splitting
  * the root page, and thus that a newroot record rather than an insert or
  * split record should follow.	Note that a split record never carries a
@@ -267,17 +268,21 @@ typedef struct xl_btree_insert
  */
 typedef struct xl_btree_split
 {
-	xl_btreetid target;			/* inserted tuple id */
-	BlockNumber otherblk;		/* second block participated in split: */
-	/* first one is stored in target' tid */
-	BlockNumber leftblk;		/* prev/left block */
-	BlockNumber rightblk;		/* next/right block */
-	uint32		level;			/* tree level of page being split */
-	uint16		leftlen;		/* len of left page items below */
-	/* LEFT AND RIGHT PAGES TUPLES FOLLOW AT THE END */
+	RelFileNode node;
+	BlockNumber leftsib;	 /* orig page / new left page */
+	BlockNumber rightsib;	 /* new right page */
+	OffsetNumber firstright; /* first item stored on right page */
+	BlockNumber rnext;		 /* next/right block pointer */
+	uint32		level;		 /* tree level of page being split */
+
+	/* BlockIdData downlink follows if level > 0 */
+	
+	/* OffsetNumber newitemoff follows in the  _L variants. */
+	/* New item follows in the _L variants */
+	/* RIGHT PAGES TUPLES FOLLOW AT THE END */
 } xl_btree_split;
 
-#define SizeOfBtreeSplit	(offsetof(xl_btree_split, leftlen) + sizeof(uint16))
+#define SizeOfBtreeSplit	(offsetof(xl_btree_split, level) + sizeof(uint32))
 
 /*
  * This is what we need to know about delete of individual leaf index tuples.

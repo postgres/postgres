@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.149 2007/02/06 14:55:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.150 2007/02/08 05:05:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -733,6 +733,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 				rightoff;
 	OffsetNumber maxoff;
 	OffsetNumber i;
+	bool		isroot;
 
 	rbuf = _bt_getbuf(rel, P_NEW, BT_WRITE);
 	origpage = BufferGetPage(buf);
@@ -746,6 +747,8 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	oopaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
 	lopaque = (BTPageOpaque) PageGetSpecialPointer(leftpage);
 	ropaque = (BTPageOpaque) PageGetSpecialPointer(rightpage);
+
+	isroot = P_ISROOT(oopaque);
 
 	/* if we're splitting this page, it won't be the root when we're done */
 	/* also, clear the SPLIT_END and HAS_GARBAGE flags in both pages */
@@ -921,61 +924,116 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		MarkBufferDirty(sbuf);
 	}
 
+	/*
+	 * By here, the original data page has been split into two new halves, and
+	 * these are correct.  The algorithm requires that the left page never
+	 * move during a split, so we copy the new left page back on top of the
+	 * original.  Note that this is not a waste of time, since we also require
+	 * (in the page management code) that the center of a page always be
+	 * clean, and the most efficient way to guarantee this is just to compact
+	 * the data by reinserting it into a new left page.  (XXX the latter
+	 * comment is probably obsolete.)
+	 *
+	 * We need to do this before writing the WAL record, so that XLogInsert can
+	 * WAL log an image of the page if necessary.
+	 */
+	PageRestoreTempPage(leftpage, origpage);
+
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
 	{
 		xl_btree_split xlrec;
 		uint8		xlinfo;
 		XLogRecPtr	recptr;
-		XLogRecData rdata[4];
+		XLogRecData rdata[6];
+		XLogRecData *lastrdata;
 
-		xlrec.target.node = rel->rd_node;
-		ItemPointerSet(&(xlrec.target.tid), itup_blkno, itup_off);
-		if (newitemonleft)
-			xlrec.otherblk = BufferGetBlockNumber(rbuf);
-		else
-			xlrec.otherblk = BufferGetBlockNumber(buf);
-		xlrec.leftblk = lopaque->btpo_prev;
-		xlrec.rightblk = ropaque->btpo_next;
+		xlrec.node = rel->rd_node;
+		xlrec.leftsib = BufferGetBlockNumber(buf);
+		xlrec.rightsib = BufferGetBlockNumber(rbuf);
+		xlrec.firstright = firstright;
+		xlrec.rnext = ropaque->btpo_next;
 		xlrec.level = lopaque->btpo.level;
 
-		/*
+		rdata[0].data = (char *) &xlrec;
+		rdata[0].len = SizeOfBtreeSplit;
+		rdata[0].buffer = InvalidBuffer;
+
+		lastrdata = &rdata[0];
+
+		/* Log downlink on non-leaf pages. */
+		if (lopaque->btpo.level > 0)
+		{
+			lastrdata->next = lastrdata + 1;
+			lastrdata++;
+
+			lastrdata->data = (char *) &newitem->t_tid.ip_blkid;
+			lastrdata->len = sizeof(BlockIdData);
+			lastrdata->buffer = InvalidBuffer;
+		}
+
+		/* Log the new item, if it was inserted on the left page. If it was 
+		 * put on the right page, we don't need to explicitly WAL log it 
+		 * because it's included with all the other items on the right page.
+		 */
+		lastrdata->next = lastrdata + 1;
+		lastrdata++;
+		if (newitemonleft)
+		{
+			lastrdata->data = (char *) &newitemoff;
+			lastrdata->len = sizeof(OffsetNumber);
+			lastrdata->buffer = buf;		/* backup block 1 */
+			lastrdata->buffer_std = true;
+
+			lastrdata->next = lastrdata + 1;
+			lastrdata++;
+			lastrdata->data = (char *)newitem;
+			lastrdata->len = newitemsz;
+			lastrdata->buffer = buf;		/* backup block 1 */
+			lastrdata->buffer_std = true;
+		}
+		else
+		{
+			lastrdata->data = NULL;
+			lastrdata->len = 0;
+			lastrdata->buffer = buf;		/* backup block 1 */
+			lastrdata->buffer_std = true;
+		}
+
+		/* Log the contents of the right page in the format understood by
+		 * _bt_restore_page(). We set lastrdata->buffer to InvalidBuffer,
+		 * because we're going to recreate the whole page anyway.
+		 *
 		 * Direct access to page is not good but faster - we should implement
 		 * some new func in page API.  Note we only store the tuples
 		 * themselves, knowing that the item pointers are in the same order
 		 * and can be reconstructed by scanning the tuples.  See comments for
 		 * _bt_restore_page().
 		 */
-		xlrec.leftlen = ((PageHeader) leftpage)->pd_special -
-			((PageHeader) leftpage)->pd_upper;
+		lastrdata->next = lastrdata + 1;
+		lastrdata++;
 
-		rdata[0].data = (char *) &xlrec;
-		rdata[0].len = SizeOfBtreeSplit;
-		rdata[0].buffer = InvalidBuffer;
-		rdata[0].next = &(rdata[1]);
-
-		rdata[1].data = (char *) leftpage + ((PageHeader) leftpage)->pd_upper;
-		rdata[1].len = xlrec.leftlen;
-		rdata[1].buffer = InvalidBuffer;
-		rdata[1].next = &(rdata[2]);
-
-		rdata[2].data = (char *) rightpage + ((PageHeader) rightpage)->pd_upper;
-		rdata[2].len = ((PageHeader) rightpage)->pd_special -
+		lastrdata->data = (char *) rightpage + 
 			((PageHeader) rightpage)->pd_upper;
-		rdata[2].buffer = InvalidBuffer;
-		rdata[2].next = NULL;
+		lastrdata->len = ((PageHeader) rightpage)->pd_special -
+			((PageHeader) rightpage)->pd_upper;
+		lastrdata->buffer = InvalidBuffer;
 
+		/* Log the right sibling, because we've changed it's prev-pointer. */
 		if (!P_RIGHTMOST(ropaque))
 		{
-			rdata[2].next = &(rdata[3]);
-			rdata[3].data = NULL;
-			rdata[3].len = 0;
-			rdata[3].buffer = sbuf;
-			rdata[3].buffer_std = true;
-			rdata[3].next = NULL;
+			lastrdata->next = lastrdata + 1;
+			lastrdata++;
+
+			lastrdata->data = NULL;
+			lastrdata->len = 0;
+			lastrdata->buffer = sbuf;		/* backup block 2 */
+			lastrdata->buffer_std = true;
 		}
 
-		if (P_ISROOT(oopaque))
+		lastrdata->next = NULL;
+
+		if (isroot)
 			xlinfo = newitemonleft ? XLOG_BTREE_SPLIT_L_ROOT : XLOG_BTREE_SPLIT_R_ROOT;
 		else
 			xlinfo = newitemonleft ? XLOG_BTREE_SPLIT_L : XLOG_BTREE_SPLIT_R;
@@ -992,24 +1050,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 			PageSetTLI(spage, ThisTimeLineID);
 		}
 	}
-
-	/*
-	 * By here, the original data page has been split into two new halves, and
-	 * these are correct.  The algorithm requires that the left page never
-	 * move during a split, so we copy the new left page back on top of the
-	 * original.  Note that this is not a waste of time, since we also require
-	 * (in the page management code) that the center of a page always be
-	 * clean, and the most efficient way to guarantee this is just to compact
-	 * the data by reinserting it into a new left page.  (XXX the latter
-	 * comment is probably obsolete.)
-	 *
-	 * It's a bit weird that we don't fill in the left page till after writing
-	 * the XLOG entry, but not really worth changing.  Note that we use the
-	 * origpage data (specifically its BTP_ROOT bit) while preparing the XLOG
-	 * entry, so simply reshuffling the code won't do.
-	 */
-
-	PageRestoreTempPage(leftpage, origpage);
 
 	END_CRIT_SECTION();
 
