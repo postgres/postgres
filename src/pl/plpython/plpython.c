@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.94 2007/02/01 19:10:30 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.95 2007/02/09 03:35:35 tgl Exp $
  *
  *********************************************************************
  */
@@ -123,7 +123,7 @@ typedef struct PLyProcedure
 	char	   *proname;		/* SQL name of procedure */
 	char	   *pyname;			/* Python name of procedure */
 	TransactionId fn_xmin;
-	CommandId	fn_cmin;
+	ItemPointerData fn_tid;
 	bool		fn_readonly;
 	PLyTypeInfo result;			/* also used to store info for trigger tuple
 								 * type */
@@ -1100,7 +1100,7 @@ PLy_procedure_get(FunctionCallInfo fcinfo, Oid tgreloid)
 			elog(FATAL, "proc->me != plproc");
 		/* did we find an up-to-date cache entry? */
 		if (proc->fn_xmin != HeapTupleHeaderGetXmin(procTup->t_data) ||
-			proc->fn_cmin != HeapTupleHeaderGetCmin(procTup->t_data))
+			!ItemPointerEquals(&proc->fn_tid, &procTup->t_self))
 		{
 			Py_DECREF(plproc);
 			proc = NULL;
@@ -1151,7 +1151,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 	proc->proname = PLy_strdup(NameStr(procStruct->proname));
 	proc->pyname = PLy_strdup(procName);
 	proc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
-	proc->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
+	proc->fn_tid = procTup->t_self;
 	/* Remember if function is STABLE/IMMUTABLE */
 	proc->fn_readonly =
 		(procStruct->provolatile != PROVOLATILE_VOLATILE);

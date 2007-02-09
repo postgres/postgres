@@ -5,14 +5,15 @@
 -- This test tries to verify that WITHOUT OIDS actually saves space.
 -- On machines where MAXALIGN is 8, WITHOUT OIDS may or may not save any
 -- space, depending on the size of the tuple header + null bitmap.
--- As of 8.0 we need a 9-bit null bitmap to force the difference to appear.
+-- As of 8.3 we need a null bitmap of 8 or less bits for the difference
+-- to appear.
 --
 CREATE TABLE wi (i INT,
                  n1 int, n2 int, n3 int, n4 int,
-                 n5 int, n6 int, n7 int, n8 int) WITH OIDS;
+                 n5 int, n6 int, n7 int) WITH OIDS;
 CREATE TABLE wo (i INT,
                  n1 int, n2 int, n3 int, n4 int,
-                 n5 int, n6 int, n7 int, n8 int) WITHOUT OIDS;
+                 n5 int, n6 int, n7 int) WITHOUT OIDS;
 INSERT INTO wi VALUES (1);  -- 1
 INSERT INTO wo SELECT i FROM wi;  -- 1
 INSERT INTO wo SELECT i+1 FROM wi;  -- 1+1=2

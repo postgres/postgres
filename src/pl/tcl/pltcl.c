@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.109 2007/02/01 19:10:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.110 2007/02/09 03:35:35 tgl Exp $
  *
  **********************************************************************/
 
@@ -76,7 +76,7 @@ typedef struct pltcl_proc_desc
 {
 	char	   *proname;
 	TransactionId fn_xmin;
-	CommandId	fn_cmin;
+	ItemPointerData fn_tid;
 	bool		fn_readonly;
 	bool		lanpltrusted;
 	FmgrInfo	result_in_func;
@@ -962,7 +962,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		prodesc = (pltcl_proc_desc *) Tcl_GetHashValue(hashent);
 
 		uptodate = (prodesc->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
-				prodesc->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data));
+				ItemPointerEquals(&prodesc->fn_tid, &procTup->t_self));
 
 		if (!uptodate)
 		{
@@ -1004,7 +1004,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		MemSet(prodesc, 0, sizeof(pltcl_proc_desc));
 		prodesc->proname = strdup(internal_proname);
 		prodesc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
-		prodesc->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
+		prodesc->fn_tid = procTup->t_self;
 
 		/* Remember if function is STABLE/IMMUTABLE */
 		prodesc->fn_readonly =

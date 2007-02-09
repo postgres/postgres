@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.233 2007/02/07 23:11:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.234 2007/02/09 03:35:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,11 +38,12 @@
 #include "storage/lmgr.h"
 #include "storage/procarray.h"
 #include "storage/smgr.h"
+#include "utils/combocid.h"
 #include "utils/flatfiles.h"
+#include "utils/guc.h"
 #include "utils/inval.h"
 #include "utils/memutils.h"
 #include "utils/relcache.h"
-#include "utils/guc.h"
 
 
 /*
@@ -1628,6 +1629,7 @@ CommitTransaction(void)
 	AtEOXact_Namespace(true);
 	/* smgrcommit already done */
 	AtEOXact_Files();
+	AtEOXact_ComboCid();
 	pgstat_clear_snapshot();
 	pgstat_count_xact_commit();
 	pgstat_report_txn_timestamp(0);
@@ -1845,6 +1847,7 @@ PrepareTransaction(void)
 	AtEOXact_Namespace(true);
 	/* smgrcommit already done */
 	AtEOXact_Files();
+	AtEOXact_ComboCid();
 	pgstat_clear_snapshot();
 
 	CurrentResourceOwner = NULL;
@@ -1997,6 +2000,7 @@ AbortTransaction(void)
 	AtEOXact_Namespace(false);
 	smgrabort();
 	AtEOXact_Files();
+	AtEOXact_ComboCid();
 	pgstat_clear_snapshot();
 	pgstat_count_xact_rollback();
 	pgstat_report_txn_timestamp(0);

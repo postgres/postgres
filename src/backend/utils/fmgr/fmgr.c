@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.103 2007/01/05 22:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.104 2007/02/09 03:35:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ typedef struct
 	/* fn_oid is the hash key and so must be first! */
 	Oid			fn_oid;			/* OID of an external C function */
 	TransactionId fn_xmin;		/* for checking up-to-dateness */
-	CommandId	fn_cmin;
+	ItemPointerData	fn_tid;
 	PGFunction	user_fn;		/* the function's address */
 	const Pg_finfo_record *inforec;		/* address of its info record */
 } CFuncHashTabEntry;
@@ -483,7 +483,7 @@ lookup_C_func(HeapTuple procedureTuple)
 	if (entry == NULL)
 		return NULL;			/* no such entry */
 	if (entry->fn_xmin == HeapTupleHeaderGetXmin(procedureTuple->t_data) &&
-		entry->fn_cmin == HeapTupleHeaderGetCmin(procedureTuple->t_data))
+		ItemPointerEquals(&entry->fn_tid, &procedureTuple->t_self))
 		return entry;			/* OK */
 	return NULL;				/* entry is out of date */
 }
@@ -521,7 +521,7 @@ record_C_func(HeapTuple procedureTuple,
 					&found);
 	/* OID is already filled in */
 	entry->fn_xmin = HeapTupleHeaderGetXmin(procedureTuple->t_data);
-	entry->fn_cmin = HeapTupleHeaderGetCmin(procedureTuple->t_data);
+	entry->fn_tid = procedureTuple->t_self;
 	entry->user_fn = user_fn;
 	entry->inforec = inforec;
 }

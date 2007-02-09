@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.114 2007/01/09 22:00:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.115 2007/02/09 03:35:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -582,14 +582,18 @@ heap_getsysattr(HeapTuple tup, int attnum, TupleDesc tupleDesc, bool *isnull)
 		case MinTransactionIdAttributeNumber:
 			result = TransactionIdGetDatum(HeapTupleHeaderGetXmin(tup->t_data));
 			break;
-		case MinCommandIdAttributeNumber:
-			result = CommandIdGetDatum(HeapTupleHeaderGetCmin(tup->t_data));
-			break;
 		case MaxTransactionIdAttributeNumber:
 			result = TransactionIdGetDatum(HeapTupleHeaderGetXmax(tup->t_data));
 			break;
+		case MinCommandIdAttributeNumber:
 		case MaxCommandIdAttributeNumber:
-			result = CommandIdGetDatum(HeapTupleHeaderGetCmax(tup->t_data));
+			/*
+			 * cmin and cmax are now both aliases for the same field,
+			 * which can in fact also be a combo command id.  XXX perhaps we
+			 * should return the "real" cmin or cmax if possible, that is
+			 * if we are inside the originating transaction?
+			 */
+			result = CommandIdGetDatum(HeapTupleHeaderGetRawCommandId(tup->t_data));
 			break;
 		case TableOidAttributeNumber:
 			result = ObjectIdGetDatum(tup->t_tableOid);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.112 2007/02/08 18:37:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.113 2007/02/09 03:35:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ recheck:
 	{
 		/* We have a compiled function, but is it still valid? */
 		if (function->fn_xmin == HeapTupleHeaderGetXmin(procTup->t_data) &&
-			function->fn_cmin == HeapTupleHeaderGetCmin(procTup->t_data))
+			ItemPointerEquals(&function->fn_tid, &procTup->t_self))
 			function_valid = true;
 		else
 		{
@@ -355,7 +355,7 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fn_name = pstrdup(NameStr(procStruct->proname));
 	function->fn_oid = fcinfo->flinfo->fn_oid;
 	function->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
-	function->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
+	function->fn_tid = procTup->t_self;
 	function->fn_functype = functype;
 	function->fn_cxt = func_cxt;
 	function->out_param_varno = -1;		/* set up for no OUT param */
