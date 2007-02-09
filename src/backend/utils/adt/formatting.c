@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.120 2007/02/08 18:19:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.121 2007/02/09 03:15:48 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2007, PostgreSQL Global Development Group
@@ -3847,7 +3847,6 @@ NUM_prepare_locale(NUMProc *Np)
 		 */
 		if (lconv->decimal_point && *lconv->decimal_point)
 			Np->decimal = lconv->decimal_point;
-
 		else
 			Np->decimal = ".";
 
