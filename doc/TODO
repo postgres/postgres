@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Thu Feb  8 19:32:09 EST 2007
+Last updated:		Thu Feb  8 19:34:27 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -231,8 +231,7 @@ Data Types
 
   http://developer.postgresql.org/index.php/XML_Support
 
-* Consider placing all sequences in a single table, now that system
-  tables are full transactional
+* Consider placing all sequences in a single table
 * Dates and Times
 
 	o Allow infinite dates and intervals just like infinite timestamps
