@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/seg/Makefile,v 1.17 2006/04/03 18:47:41 petere Exp $
+# $PostgreSQL: pgsql/contrib/seg/Makefile,v 1.18 2007/02/09 17:24:33 petere Exp $
 
 MODULE_big = seg
 OBJS = seg.o segparse.o
@@ -8,8 +8,6 @@ DOCS = README.seg
 REGRESS = seg
 
 EXTRA_CLEAN = y.tab.c y.tab.h
-
-PG_CPPFLAGS = -I.
 
 ifdef USE_PGXS
 PGXS := $(shell pg_config --pgxs)
