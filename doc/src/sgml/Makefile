@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.95 2007/02/09 15:55:57 petere Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.96 2007/02/09 20:40:13 neilc Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -105,7 +105,7 @@ draft:
 	@$(MAKE) DRAFT="Y" html
 
 
-COLLATEINDEX = LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
+COLLATEINDEX := LC_ALL=C $(PERL) $(COLLATEINDEX) -f -g
 
 # bookindex.sgml is required so there is a proper index for all output formats
 bookindex.sgml: HTML.index
