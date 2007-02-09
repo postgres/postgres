@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/doc/Makefile,v 1.28 2005/12/09 21:19:34 petere Exp $
+# $PostgreSQL: pgsql/doc/Makefile,v 1.29 2007/02/09 15:55:57 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -27,14 +27,14 @@ include $(top_builddir)/src/Makefile.global
 
 ifneq ($(wildcard $(srcdir)/postgres.tar.gz),)
 ifneq (,$(docdir))
-found_html := yes
+found_html = yes
 endif
 endif
 
 ifneq ($(wildcard $(srcdir)/man.tar.gz),)
 # SCO OpenServer's man system is sufficiently different to not bother.
 ifneq ($(PORTNAME), sco)
-found_man := yes
+found_man = yes
 endif
 endif
 

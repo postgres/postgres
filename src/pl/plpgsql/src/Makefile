@@ -2,7 +2,7 @@
 #
 # Makefile for the plpgsql shared object
 #
-# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.29 2006/03/07 01:03:12 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plpgsql/src/Makefile,v 1.30 2007/02/09 15:56:00 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,7 @@ SO_MINOR_VERSION= 0
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 SHLIB_LINK = $(filter -lintl, $(LIBS)) $(BE_DLLLIBS)
-rpath :=
+rpath =
 
 OBJS = pl_gram.o pl_handler.o pl_comp.o pl_exec.o pl_funcs.o
 

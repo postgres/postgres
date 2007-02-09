@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.65 2007/01/31 19:38:50 neilc Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.66 2007/02/09 15:56:00 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ subdir = src/test/regress
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-contribdir := $(top_builddir)/contrib
+contribdir = $(top_builddir)/contrib
 
 # port number for temp-installation test postmaster
 TEMP_PORT = 5$(DEF_PGPORT)
@@ -26,13 +26,13 @@ PSQLDIR = $(bindir)
 MULTIBYTE = SQL_ASCII
 
 # maximum simultaneous connections for parallel tests
-MAXCONNOPT :=
+MAXCONNOPT =
 ifdef MAX_CONNECTIONS
 MAXCONNOPT += --max-connections=$(MAX_CONNECTIONS)
 endif
 
 # locale
-NOLOCALE :=
+NOLOCALE =
 ifdef NO_LOCALE
 NOLOCALE += --no-locale
 endif

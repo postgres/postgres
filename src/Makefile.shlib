@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.106 2007/01/07 08:49:31 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.107 2007/02/09 15:55:57 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -77,7 +77,7 @@ ifeq ($(enable_shared), yes)
 SHLIB_LINK := $(filter -L%, $(SHLIB_LINK)) $(filter -L%, $(LDFLAGS)) $(filter-out -L%, $(SHLIB_LINK))
 
 # Need a -L-free version of LDFLAGS to use in combination with SHLIB_LINK
-LDFLAGS_NO_L := $(filter-out -L%, $(LDFLAGS))
+LDFLAGS_NO_L = $(filter-out -L%, $(LDFLAGS))
 
 # Default shlib naming convention used by the majority of platforms
 shlib		= lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
@@ -102,15 +102,15 @@ endif
 
 ifeq ($(PORTNAME), darwin)
   ifneq ($(SO_MAJOR_VERSION), 0)
-    version_link	:= -compatibility_version $(SO_MAJOR_VERSION) -current_version $(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    version_link	= -compatibility_version $(SO_MAJOR_VERSION) -current_version $(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
   endif
   ifeq ($(DLTYPE), library)
     # linkable library
-    DLSUFFIX		:= .dylib
+    DLSUFFIX		= .dylib
     LINK.shared		= $(COMPILER) -dynamiclib -install_name $(libdir)/lib$(NAME).$(SO_MAJOR_VERSION)$(DLSUFFIX) $(version_link) $(exported_symbols_list) -multiply_defined suppress
   else
     # loadable module (default case)
-    DLSUFFIX		:= .so
+    DLSUFFIX		= .so
     LINK.shared		= $(COMPILER) -bundle -multiply_defined suppress
   endif
   shlib			= lib$(NAME).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)$(DLSUFFIX)
@@ -171,7 +171,7 @@ ifeq ($(PORTNAME), hpux)
     # ld can find the same libraries gcc does.  Make sure it goes after any
     # -L switches provided explicitly.
     ifeq ($(GCC), yes)
-      SHLIB_LINK := $(filter -L%, $(SHLIB_LINK)) -L/usr/local/lib $(filter-out -L%, $(SHLIB_LINK))
+      SHLIB_LINK = $(filter -L%, $(SHLIB_LINK)) -L/usr/local/lib $(filter-out -L%, $(SHLIB_LINK))
     endif
   endif
   # do this last so above filtering doesn't pull out -L switches in LDFLAGS

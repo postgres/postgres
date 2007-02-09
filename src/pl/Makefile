@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/pl/Makefile,v 1.24 2007/01/20 17:16:17 petere Exp $
+# $PostgreSQL: pgsql/src/pl/Makefile,v 1.25 2007/02/09 15:55:59 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/pl
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-DIRS := plpgsql
+DIRS = plpgsql
 
 ifeq ($(with_perl), yes)
 DIRS += plperl

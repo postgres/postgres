@@ -1,7 +1,7 @@
 #
 # PostgreSQL top level makefile
 #
-# $PostgreSQL: pgsql/GNUmakefile.in,v 1.45 2006/08/18 19:58:05 adunstan Exp $
+# $PostgreSQL: pgsql/GNUmakefile.in,v 1.46 2007/02/09 15:55:57 petere Exp $
 #
 
 subdir =
@@ -63,9 +63,9 @@ GNUmakefile: GNUmakefile.in $(top_builddir)/config.status
 
 ##########################################################################
 
-distdir	:= postgresql-$(VERSION)
-dummy	:= =install=
-garbage := =*  "#"*  ."#"*  *~*  *.orig  *.rej  core  postgresql-*
+distdir	= postgresql-$(VERSION)
+dummy	= =install=
+garbage = =*  "#"*  ."#"*  *~*  *.orig  *.rej  core  postgresql-*
 
 dist: $(distdir).tar.gz 
 ifeq ($(split-dist), yes)
@@ -77,11 +77,11 @@ dist:
 $(distdir).tar: distdir
 	$(TAR) chf $@ $(distdir)
 
-opt_files := \
+opt_files = \
 	src/tools src/tutorial \
 	$(addprefix src/pl/, plperl plpython tcl)
 
-docs_files := doc/postgres.tar.gz doc/src doc/TODO.detail
+docs_files = doc/postgres.tar.gz doc/src doc/TODO.detail
 
 postgresql-base-$(VERSION).tar: distdir
 	$(TAR) -c $(addprefix --exclude $(distdir)/, $(docs_files) $(opt_files) src/test) \

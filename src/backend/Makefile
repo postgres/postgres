@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.121 2007/01/20 17:16:10 petere Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.122 2007/02/09 15:55:57 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,11 +13,11 @@ subdir = src/backend
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 
-DIRS := access bootstrap catalog parser commands executor lib libpq \
+DIRS = access bootstrap catalog parser commands executor lib libpq \
 	main nodes optimizer port postmaster regex rewrite \
 	storage tcop utils $(top_builddir)/src/timezone
 
-SUBSYSOBJS := $(DIRS:%=%/SUBSYS.o)
+SUBSYSOBJS = $(DIRS:%=%/SUBSYS.o)
 
 ifeq ($(enable_dtrace), yes)
 LOCALOBJS += utils/probes.o

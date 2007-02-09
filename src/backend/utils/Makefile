@@ -1,15 +1,15 @@
 #
 # Makefile for utils
 #
-# $PostgreSQL: pgsql/src/backend/utils/Makefile,v 1.24 2006/07/15 03:33:14 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/utils/Makefile,v 1.25 2007/02/09 15:55:58 petere Exp $
 #
 
 subdir = src/backend/utils
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-SUBDIRS     := adt cache error fmgr hash init mb misc mmgr resowner sort time
-SUBDIROBJS  := $(SUBDIRS:%=%/SUBSYS.o)
+SUBDIRS     = adt cache error fmgr hash init mb misc mmgr resowner sort time
+SUBDIROBJS  = $(SUBDIRS:%=%/SUBSYS.o)
 
 
 all: SUBSYS.o fmgroids.h

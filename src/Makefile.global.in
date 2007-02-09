@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.232 2006/10/08 17:15:33 tgl Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.233 2007/02/09 15:55:57 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -341,7 +341,7 @@ endif
 
 # This macro is for use by libraries linking to libpq.  (Because libpgport
 # isn't created with the same link flags as libpq, it can't be used.)
-libpq := -L$(libpq_builddir) -lpq
+libpq = -L$(libpq_builddir) -lpq
   
 # If doing static linking, shared library dependency info isn't available,
 # so add in the libraries that libpq depends on.
