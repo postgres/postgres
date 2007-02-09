@@ -1,3 +1,5 @@
+# $PostgreSQL: pgsql/contrib/tablefunc/Makefile,v 1.7 2007/02/09 17:04:00 petere Exp $
+
 MODULES = tablefunc
 DATA_built = tablefunc.sql
 DATA = uninstall_tablefunc.sql

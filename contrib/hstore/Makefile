@@ -1,3 +1,5 @@
+# $PostgreSQL: pgsql/contrib/hstore/Makefile,v 1.3 2007/02/09 17:04:00 petere Exp $
+
 subdir = contrib/hstore
 top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
@@ -14,5 +16,3 @@ DOCS = README.hstore
 REGRESS = hstore
 
 include $(top_srcdir)/contrib/contrib-global.mk
-# DO NOT DELETE
-

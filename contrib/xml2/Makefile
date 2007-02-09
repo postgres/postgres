@@ -1,4 +1,4 @@
-# This makefile will build the new XML and XSLT routines.
+# $PostgreSQL: pgsql/contrib/xml2/Makefile,v 1.9 2007/02/09 17:04:00 petere Exp $
 
 MODULE_big = pgxml
 
@@ -23,4 +23,3 @@ top_builddir = ../..
 include $(top_builddir)/src/Makefile.global
 include $(top_srcdir)/contrib/contrib-global.mk
 endif
-

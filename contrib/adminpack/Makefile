@@ -1,3 +1,5 @@
+# $PostgreSQL: pgsql/contrib/adminpack/Makefile,v 1.4 2007/02/09 17:03:59 petere Exp $
+
 MODULE_big = adminpack
 PG_CPPFLAGS = -I$(libpq_srcdir)
 DATA_built = adminpack.sql
