@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.17 2006/10/17 12:53:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_constraint.sgml,v 1.18 2007/02/10 20:43:59 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -15,13 +15,13 @@ PostgreSQL documentation
  </refnamediv>
 
  <indexterm zone="sql-createconstraint">
-  <primary>CREATE CONSTRAINT</primary>
+  <primary>CREATE CONSTRAINT TRIGGER</primary>
  </indexterm>
 
  <refsynopsisdiv>
 <synopsis>
 CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
-    AFTER <replaceable class="parameter">event [ OR ... ]</replaceable>
+    AFTER <replaceable class="parameter">event</replaceable> [ OR ... ]
     ON <replaceable class="parameter">table_name</replaceable>
     [ FROM <replaceable class="parameter">referenced_table_name</replaceable> ]
     { NOT DEFERRABLE | [ DEFERRABLE ] { INITIALLY IMMEDIATE | INITIALLY DEFERRED } }
@@ -34,15 +34,19 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
   <title>Description</title>
 
   <para>
-   <command>CREATE CONSTRAINT TRIGGER</command> is used within
-   <command>CREATE TABLE</command>/<command>ALTER TABLE</command> and by
-   <application>pg_dump</application> to create the special triggers for
-   referential integrity.
-    It is not intended for general use.
-   </para>
-  </refsect1>
+   <command>CREATE CONSTRAINT TRIGGER</command> creates a
+   <firstterm>constraint trigger</>.  This is the same as a regular trigger
+   except that the timing of the trigger firing can be adjusted using
+   <xref linkend="SQL-SET-CONSTRAINTS" endterm="SQL-SET-CONSTRAINTS-TITLE">.
+   Constraint triggers must be <literal>AFTER ROW</> triggers.  They can
+   be fired either at the end of the statement causing the triggering event,
+   or at the end of the containing transaction; in the latter case they are
+   said to be <firstterm>deferred</>.  A pending deferred-trigger firing can
+   also be forced to happen immediately by using <command>SET CONSTRAINTS</>.
+  </para>
+ </refsect1>
 
-  <refsect1>
+ <refsect1>
   <title>Parameters</title>
 
   <variablelist>
@@ -50,11 +54,10 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
     <term><replaceable class="PARAMETER">name</replaceable></term>
     <listitem>
      <para>
-      The name of the constraint trigger. The actual name of the
-      created trigger will be of the form
-      <literal>RI_ConstraintTrigger_0000</literal> (where 0000 is some number
-      assigned by the server).
-      Use this assigned name when dropping the trigger.
+      The name of the constraint trigger.  This is also the name to use
+      when modifying the trigger's behavior using <command>SET CONSTRAINTS</>.
+      The name cannot be schema-qualified &mdash; the trigger inherits the
+      schema of its table.
      </para>
     </listitem>
    </varlistentry>
@@ -84,8 +87,9 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
     <term><replaceable class="PARAMETER">referenced_table_name</replaceable></term>
     <listitem>
      <para>
-      The (possibly schema-qualified) name of the table referenced by the
-      constraint. Used by foreign key constraints triggers.
+      The (possibly schema-qualified) name of another table referenced by the
+      constraint.  This option is used for foreign-key constraints and is not
+      recommended for general use.
      </para>
     </listitem>
    </varlistentry>
@@ -97,6 +101,7 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
     <term><literal>INITIALLY DEFERRED</literal></term>
     <listitem>
      <para>
+      The default timing of the trigger.
       See the <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">
       documentation for details of these constraint options.
      </para>
@@ -104,10 +109,21 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">funcname</replaceable>(<replaceable class="PARAMETER">args</replaceable>)</term>
+    <term><replaceable class="PARAMETER">funcname</replaceable></term>
     <listitem>
      <para>
-      The function to call as part of the trigger processing. See <xref
+      The function to call when the trigger is fired. See <xref
+      linkend="SQL-CREATETRIGGER" endterm="SQL-CREATETRIGGER-TITLE"> for
+      details.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">arguments</replaceable></term>
+    <listitem>
+     <para>
+      Optional argument strings to pass to the trigger function. See <xref
       linkend="SQL-CREATETRIGGER" endterm="SQL-CREATETRIGGER-TITLE"> for
       details.
      </para>
@@ -119,11 +135,19 @@ CREATE CONSTRAINT TRIGGER <replaceable class="parameter">name</replaceable>
  <refsect1>
   <title>Compatibility</title>
   <para>
-   <command>CREATE CONTRAINT TRIGGER</command> is a
+   <command>CREATE CONSTRAINT TRIGGER</command> is a
    <productname>PostgreSQL</productname> extension of the <acronym>SQL</>
    standard.
   </para>
  </refsect1>
 
- </refentry>
+ <refsect1>
+  <title>See Also</title>
 
+  <simplelist type="inline">
+   <member><xref linkend="sql-createtrigger" endterm="sql-createtrigger-title"></member>
+   <member><xref linkend="sql-droptrigger" endterm="sql-droptrigger-title"></member>
+   <member><xref linkend="sql-set-constraints" endterm="sql-set-constraints-title"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

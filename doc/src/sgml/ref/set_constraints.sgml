@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.14 2006/09/16 00:30:20 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/set_constraints.sgml,v 1.15 2007/02/10 20:43:59 tgl Exp $ -->
 <refentry id="SQL-SET-CONSTRAINTS">
  <refmeta>
   <refentrytitle id="SQL-SET-CONSTRAINTS-title">SET CONSTRAINTS</refentrytitle>
@@ -67,7 +67,8 @@ SET CONSTRAINTS { ALL | <replaceable class="parameter">name</replaceable> [, ...
   <para>
    Currently, only foreign key constraints are affected by this
    setting. Check and unique constraints are always effectively
-   not deferrable.
+   not deferrable. Triggers that are declared as <quote>constraint
+   triggers</> are also affected.
   </para>
  </refsect1>
 
