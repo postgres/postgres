@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.56 2007/02/01 19:10:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.57 2007/02/10 14:58:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -498,14 +498,14 @@ GuessControlValues(void)
 		fprintf(stderr, _("%s: invalid LC_COLLATE setting\n"), progname);
 		exit(1);
 	}
-	StrNCpy(ControlFile.lc_collate, localeptr, LOCALE_NAME_BUFLEN);
+	strlcpy(ControlFile.lc_collate, localeptr, sizeof(ControlFile.lc_collate));
 	localeptr = setlocale(LC_CTYPE, "");
 	if (!localeptr)
 	{
 		fprintf(stderr, _("%s: invalid LC_CTYPE setting\n"), progname);
 		exit(1);
 	}
-	StrNCpy(ControlFile.lc_ctype, localeptr, LOCALE_NAME_BUFLEN);
+	strlcpy(ControlFile.lc_ctype, localeptr, sizeof(ControlFile.lc_ctype));
 
 	/*
 	 * XXX eventually, should try to grovel through old XLOG to develop more

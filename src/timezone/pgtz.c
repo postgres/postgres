@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.49 2007/01/05 22:20:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.50 2007/02/10 14:58:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,7 +566,7 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry * tt,
 			if (score > *bestscore)
 			{
 				*bestscore = score;
-				StrNCpy(bestzonename, tzdirsub, TZ_STRLEN_MAX + 1);
+				strlcpy(bestzonename, tzdirsub, TZ_STRLEN_MAX + 1);
 			}
 			else if (score == *bestscore)
 			{
@@ -574,7 +574,7 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry * tt,
 				if (strlen(tzdirsub) < strlen(bestzonename) ||
 					(strlen(tzdirsub) == strlen(bestzonename) &&
 					 strcmp(tzdirsub, bestzonename) < 0))
-					StrNCpy(bestzonename, tzdirsub, TZ_STRLEN_MAX + 1);
+					strlcpy(bestzonename, tzdirsub, TZ_STRLEN_MAX + 1);
 			}
 		}
 

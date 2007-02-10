@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.159 2007/02/08 04:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.160 2007/02/10 14:58:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1463,7 +1463,7 @@ ident_unix(int sock, char *ident_user)
 		return false;
 	}
 
-	StrNCpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
+	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
 
 	return true;
 #elif defined(SO_PEERCRED)
@@ -1493,7 +1493,7 @@ ident_unix(int sock, char *ident_user)
 		return false;
 	}
 
-	StrNCpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
+	strlcpy(ident_user, pass->pw_name, IDENT_USERNAME_MAX + 1);
 
 	return true;
 #elif defined(HAVE_STRUCT_CMSGCRED) || defined(HAVE_STRUCT_FCRED) || (defined(HAVE_STRUCT_SOCKCRED) && defined(LOCAL_CREDS))
@@ -1562,7 +1562,7 @@ ident_unix(int sock, char *ident_user)
 		return false;
 	}
 
-	StrNCpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX + 1);
+	strlcpy(ident_user, pw->pw_name, IDENT_USERNAME_MAX + 1);
 
 	return true;
 #else

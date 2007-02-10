@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.342 2007/02/08 11:10:27 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.343 2007/02/10 14:58:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2208,7 +2208,7 @@ internal_cancel(SockAddr *raddr, int be_pid, int be_key,
 	 */
 	if ((tmpsock = socket(raddr->addr.ss_family, SOCK_STREAM, 0)) < 0)
 	{
-		StrNCpy(errbuf, "PQcancel() -- socket() failed: ", errbufsize);
+		strlcpy(errbuf, "PQcancel() -- socket() failed: ", errbufsize);
 		goto cancel_errReturn;
 	}
 retry3:
@@ -2218,7 +2218,7 @@ retry3:
 		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */
 			goto retry3;
-		StrNCpy(errbuf, "PQcancel() -- connect() failed: ", errbufsize);
+		strlcpy(errbuf, "PQcancel() -- connect() failed: ", errbufsize);
 		goto cancel_errReturn;
 	}
 
@@ -2239,7 +2239,7 @@ retry4:
 		if (SOCK_ERRNO == EINTR)
 			/* Interrupted system call - we'll just try again */
 			goto retry4;
-		StrNCpy(errbuf, "PQcancel() -- send() failed: ", errbufsize);
+		strlcpy(errbuf, "PQcancel() -- send() failed: ", errbufsize);
 		goto cancel_errReturn;
 	}
 
@@ -2297,7 +2297,7 @@ PQcancel(PGcancel *cancel, char *errbuf, int errbufsize)
 {
 	if (!cancel)
 	{
-		StrNCpy(errbuf, "PQcancel() -- no cancel object supplied", errbufsize);
+		strlcpy(errbuf, "PQcancel() -- no cancel object supplied", errbufsize);
 		return FALSE;
 	}
 
@@ -2328,7 +2328,7 @@ PQrequestCancel(PGconn *conn)
 
 	if (conn->sock < 0)
 	{
-		StrNCpy(conn->errorMessage.data,
+		strlcpy(conn->errorMessage.data,
 				"PQrequestCancel() -- connection is not open\n",
 				conn->errorMessage.maxlen);
 		conn->errorMessage.len = strlen(conn->errorMessage.data);
@@ -3609,7 +3609,7 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 
 	if ((passfile_env = getenv("PGPASSFILE")) != NULL)
 		/* use the literal path from the environment, if set */
-		StrNCpy(pgpassfile, passfile_env, MAXPGPATH);
+		strlcpy(pgpassfile, passfile_env, sizeof(pgpassfile));
 	else
 	{
 		char		homedir[MAXPGPATH];
@@ -3700,7 +3700,7 @@ pqGetHomeDirectory(char *buf, int bufsize)
 
 	if (pqGetpwuid(geteuid(), &pwdstr, pwdbuf, sizeof(pwdbuf), &pwd) != 0)
 		return false;
-	StrNCpy(buf, pwd->pw_dir, bufsize);
+	strlcpy(buf, pwd->pw_dir, bufsize);
 	return true;
 #else
 	char		tmppath[MAX_PATH];

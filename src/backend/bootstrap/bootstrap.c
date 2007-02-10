@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.229 2007/01/22 01:35:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.230 2007/02/10 14:58:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,7 +277,7 @@ BootstrapMain(int argc, char *argv[])
 				SetConfigOption("fsync", "false", PGC_POSTMASTER, PGC_S_ARGV);
 				break;
 			case 'r':
-				StrNCpy(OutputFileName, optarg, MAXPGPATH);
+				strlcpy(OutputFileName, optarg, MAXPGPATH);
 				break;
 			case 'x':
 				xlogop = atoi(optarg);

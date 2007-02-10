@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.131 2007/02/01 19:10:28 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.132 2007/02/10 14:58:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2706,7 +2706,7 @@ main(int argc, char *argv[])
 		char		full_path[MAXPGPATH];
 
 		if (find_my_exec(argv[0], full_path) < 0)
-			StrNCpy(full_path, progname, MAXPGPATH);
+			strlcpy(full_path, progname, sizeof(full_path));
 
 		if (ret == -1)
 			fprintf(stderr,

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.518 2007/02/08 15:46:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.519 2007/02/10 14:58:54 petere Exp $
  *
  * NOTES
  *
@@ -3828,7 +3828,7 @@ save_backend_variables(BackendParameters * param, Port *port,
 	memcpy(&param->port, port, sizeof(Port));
 	write_inheritable_socket(&param->portsocket, port->sock, childPid);
 
-	StrNCpy(param->DataDir, DataDir, MAXPGPATH);
+	strlcpy(param->DataDir, DataDir, MAXPGPATH);
 
 	memcpy(&param->ListenSocket, &ListenSocket, sizeof(ListenSocket));
 
@@ -3859,14 +3859,14 @@ save_backend_variables(BackendParameters * param, Port *port,
 
 	memcpy(&param->syslogPipe, &syslogPipe, sizeof(syslogPipe));
 
-	StrNCpy(param->my_exec_path, my_exec_path, MAXPGPATH);
+	strlcpy(param->my_exec_path, my_exec_path, MAXPGPATH);
 
-	StrNCpy(param->pkglib_path, pkglib_path, MAXPGPATH);
+	strlcpy(param->pkglib_path, pkglib_path, MAXPGPATH);
 
-	StrNCpy(param->ExtraOptions, ExtraOptions, MAXPGPATH);
+	strlcpy(param->ExtraOptions, ExtraOptions, MAXPGPATH);
 
-	StrNCpy(param->lc_collate, setlocale(LC_COLLATE, NULL), LOCALE_NAME_BUFLEN);
-	StrNCpy(param->lc_ctype, setlocale(LC_CTYPE, NULL), LOCALE_NAME_BUFLEN);
+	strlcpy(param->lc_collate, setlocale(LC_COLLATE, NULL), LOCALE_NAME_BUFLEN);
+	strlcpy(param->lc_ctype, setlocale(LC_CTYPE, NULL), LOCALE_NAME_BUFLEN);
 
 	return true;
 }
@@ -4060,11 +4060,11 @@ restore_backend_variables(BackendParameters * param, Port *port)
 
 	memcpy(&syslogPipe, &param->syslogPipe, sizeof(syslogPipe));
 
-	StrNCpy(my_exec_path, param->my_exec_path, MAXPGPATH);
+	strlcpy(my_exec_path, param->my_exec_path, MAXPGPATH);
 
-	StrNCpy(pkglib_path, param->pkglib_path, MAXPGPATH);
+	strlcpy(pkglib_path, param->pkglib_path, MAXPGPATH);
 
-	StrNCpy(ExtraOptions, param->ExtraOptions, MAXPGPATH);
+	strlcpy(ExtraOptions, param->ExtraOptions, MAXPGPATH);
 
 	setlocale(LC_COLLATE, param->lc_collate);
 	setlocale(LC_CTYPE, param->lc_ctype);

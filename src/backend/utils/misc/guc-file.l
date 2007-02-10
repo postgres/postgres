@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.46 2007/01/05 22:19:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.47 2007/02/10 14:58:55 petere Exp $
  */
 
 %{
@@ -218,7 +218,7 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 	if (!is_absolute_path(config_file))
 	{
 		Assert(calling_file != NULL);
-		StrNCpy(abs_path, calling_file, MAXPGPATH);
+		strlcpy(abs_path, calling_file, sizeof(abs_path));
 		get_parent_directory(abs_path);
 		join_path_components(abs_path, abs_path, config_file);
 		canonicalize_path(abs_path);

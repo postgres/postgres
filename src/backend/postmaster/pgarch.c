@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.28 2007/01/05 22:19:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.29 2007/02/10 14:58:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,14 +429,14 @@ pgarch_archiveXlog(char *xlog)
 				case 'p':
 					/* %p: relative path of source file */
 					sp++;
-					StrNCpy(dp, pathname, endp - dp);
+					strlcpy(dp, pathname, endp - dp);
 					make_native_path(dp);
 					dp += strlen(dp);
 					break;
 				case 'f':
 					/* %f: filename of source file */
 					sp++;
-					StrNCpy(dp, xlog, endp - dp);
+					strlcpy(dp, xlog, endp - dp);
 					dp += strlen(dp);
 					break;
 				case '%':
