@@ -27,7 +27,6 @@
 #include <signal.h>
 
 #ifdef WIN32
-#include "win32.h"
 int getopt(int argc, char * const argv[], const char *optstring);
 #else
 #include <sys/time.h>

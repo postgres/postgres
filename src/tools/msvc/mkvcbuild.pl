@@ -162,7 +162,7 @@ my $contrib_defines = {
 	'refint' => 'REFINT_VERBOSE'
 };
 my @contrib_uselibpq = ('dblink', 'oid2name', 'pgbench', 'vacuumlo');
-my @contrib_uselibpgport = ('oid2name', 'pgbench', 'vacuumlo');
+my @contrib_uselibpgport = ('oid2name', 'pgbench', 'pg_standby', 'vacuumlo');
 my $contrib_extralibs = {
     'pgbench' => ['wsock32.lib']
 };
