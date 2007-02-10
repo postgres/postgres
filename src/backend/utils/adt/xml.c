@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.25 2007/02/03 14:06:55 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.26 2007/02/10 18:47:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1481,6 +1481,14 @@ map_sql_value_to_xml_value(Datum value, Oid type)
 		Oid typeOut;
 		bool isvarlena;
 		char *p, *str;
+
+		if (type == BOOLOID)
+		{
+			if (DatumGetBool(value))
+				return "true";
+			else
+				return "false";
+		}
 
 		getTypeOutputInfo(type, &typeOut, &isvarlena);
 		str = OidOutputFunctionCall(typeOut, value);
