@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.107 2007/02/09 15:55:57 petere Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.108 2007/02/11 19:31:45 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -171,7 +171,7 @@ ifeq ($(PORTNAME), hpux)
     # ld can find the same libraries gcc does.  Make sure it goes after any
     # -L switches provided explicitly.
     ifeq ($(GCC), yes)
-      SHLIB_LINK = $(filter -L%, $(SHLIB_LINK)) -L/usr/local/lib $(filter-out -L%, $(SHLIB_LINK))
+      SHLIB_LINK := $(filter -L%, $(SHLIB_LINK)) -L/usr/local/lib $(filter-out -L%, $(SHLIB_LINK))
     endif
   endif
   # do this last so above filtering doesn't pull out -L switches in LDFLAGS
