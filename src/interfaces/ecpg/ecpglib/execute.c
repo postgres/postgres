@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.63 2007/02/02 08:58:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.64 2007/02/11 15:18:17 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -38,9 +38,11 @@
 static char *
 quote_postgres(char *arg, bool quote, int lineno)
 {
-	char	   *res;
-	int			i,
-				ri = 0;
+	char	*res;
+	int	error;
+	size_t  length;
+	size_t  escaped_len;
+	size_t  buffer_len;
 
 	/*
 	 * if quote is false we just need to store things in a descriptor they
@@ -50,29 +52,35 @@ quote_postgres(char *arg, bool quote, int lineno)
 		return res = ECPGstrdup(arg, lineno);
 	else
 	{
-		res = (char *) ECPGalloc(2 * strlen(arg) + 3, lineno);
+		length = strlen(arg);
+		buffer_len = 2 * length + 1;
+		res = (char *) ECPGalloc(buffer_len + 3, lineno);
 		if (!res)
 			return (res);
 
-		/*
-		 * We don't know if the target database is using
-		 * standard_conforming_strings, so we always use E'' strings.
-		 */
-		if (strchr(arg, '\\') != NULL)
-			res[ri++] = ESCAPE_STRING_SYNTAX;
-
-		res[ri++] = '\'';
-
-		for (i = 0; arg[i]; i++, ri++)
+		error = 0;
+		escaped_len = PQescapeString(res+1, arg, buffer_len);
+		if (error)
 		{
-			if (SQL_STR_DOUBLE(arg[i], true))
-				res[ri++] = arg[i];
-			res[ri] = arg[i];
+			ECPGfree(res);
+			return NULL;
 		}
-
-		res[ri++] = '\'';
-		res[ri] = '\0';
-
+		if (length == escaped_len)
+		{
+			res[0] = res[escaped_len+1] = '\'';
+			res[escaped_len+2] = '\0';
+		}
+		else
+		{
+			/* 
+			 * We don't know if the target database is using
+			 * standard_conforming_strings, so we always use E'' strings.
+			 */
+			memmove(res+2, res+1, escaped_len);
+			res[0] = ESCAPE_STRING_SYNTAX;
+			res[1] = res[escaped_len+2] = '\'';
+			res[escaped_len+3] = '\0';
+		}
 		ECPGfree(arg);
 		return res;
 	}

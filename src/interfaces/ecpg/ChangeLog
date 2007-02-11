@@ -2165,5 +2165,9 @@ Fr 2. Feb 09:53:48 CET 2007
 
 	- Cleaned up va_list handling. Hopefully this now works on all archs.
 	- Applied Magnus Hagander's patch to take away some compiler warnings.
+
+Su 11. Feb 16:09:31 CET 2007
+
+	- Fixed multibyte handling as reported by <harada.toshi@oss.ntt.co.jp>.
 	- Set ecpg library version to 5.3.
 	- Set ecpg version to 4.3.1.
