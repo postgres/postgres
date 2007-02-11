@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.519 2007/02/10 14:58:54 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.520 2007/02/11 11:59:25 mha Exp $
  *
  * NOTES
  *
@@ -202,8 +202,8 @@ static pid_t StartupPID = 0,
 			BgWriterPID = 0,
 			AutoVacPID = 0,
 			PgArchPID = 0,
-			PgStatPID = 0,
-			SysLoggerPID = 0;
+			PgStatPID = 0;
+pid_t			SysLoggerPID = 0; /* Needs to be accessed from elog.c */
 
 /* Startup/shutdown state */
 #define			NoShutdown		0
