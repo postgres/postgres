@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.26 2007/02/10 18:47:41 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.27 2007/02/11 22:18:15 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1318,8 +1318,14 @@ is_valid_xml_namechar(pg_wchar c)
  * Map SQL identifier to XML name; see SQL/XML:2003 section 9.1.
  */
 char *
-map_sql_identifier_to_xml_name(char *ident, bool fully_escaped)
+map_sql_identifier_to_xml_name(char *ident, bool fully_escaped, bool escape_period)
 {
+	/*
+	 * SQL/XML doesn't make use of this case anywhere, so it's
+	 * probably a mistake.
+	 */
+	Assert(fully_escaped || !escape_period);
+
 #ifdef USE_LIBXML
 	StringInfoData buf;
 	char *p;
@@ -1340,6 +1346,8 @@ map_sql_identifier_to_xml_name(char *ident, bool fully_escaped)
 			else
 				appendStringInfo(&buf, "_x0058_");
 		}
+		else if (escape_period && *p == '.')
+			appendStringInfo(&buf, "_x002E_");
 		else
 		{
 			pg_wchar u = sqlchar_to_unicode(p);
