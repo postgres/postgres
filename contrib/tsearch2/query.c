@@ -159,12 +159,14 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 					(state->buf)++;		/* can safely ++, t_iseq guarantee
 										 * that pg_mblen()==1 */
 					*val = (int4) '!';
+					state->state = WAITOPERAND;
 					return OPR;
 				}
 				else if (t_iseq(state->buf, '('))
 				{
 					state->count++;
 					(state->buf)++;
+					state->state = WAITOPERAND;
 					return OPEN;
 				}
 				else if (t_iseq(state->buf, ':'))
