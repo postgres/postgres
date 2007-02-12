@@ -144,12 +144,14 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval, int2 
 				{
 					(state->buf)++;
 					*val = (int4) '!';
+					state->state = WAITOPERAND;
 					return OPR;
 				}
 				else if (*(state->buf) == '(')
 				{
 					state->count++;
 					(state->buf)++;
+					state->state = WAITOPERAND;
 					return OPEN;
 				}
 				else if (*(state->buf) == ':')
