@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.122 2007/02/09 04:17:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.123 2007/02/13 02:00:55 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2007, PostgreSQL Global Development Group
@@ -3835,20 +3835,27 @@ NUM_prepare_locale(NUMProc *Np)
 			Np->L_positive_sign = "+";
 
 		/*
-		 * Number thousands separator
-		 */
-		if (lconv->thousands_sep && *lconv->thousands_sep)
-			Np->L_thousands_sep = lconv->thousands_sep;
-		else
-			Np->L_thousands_sep = ",";
-
-		/*
 		 * Number decimal point
 		 */
 		if (lconv->decimal_point && *lconv->decimal_point)
 			Np->decimal = lconv->decimal_point;
 		else
 			Np->decimal = ".";
+
+		if (!IS_LDECIMAL(Np->Num))
+			Np->decimal = ".";
+
+		/*
+		 * Number thousands separator
+		 * 
+		 * Some locales (e.g. broken glibc pt_BR), have a comma for
+		 * decimal, but "" for thousands_sep, so we might make the
+		 * thousands_sep comma too.  2007-02-12
+		 */
+		if (lconv->thousands_sep && *lconv->thousands_sep)
+			Np->L_thousands_sep = lconv->thousands_sep;
+		else
+			Np->L_thousands_sep = ",";
 
 		/*
 		 * Currency symbol
@@ -3857,9 +3864,6 @@ NUM_prepare_locale(NUMProc *Np)
 			Np->L_currency_symbol = lconv->currency_symbol;
 		else
 			Np->L_currency_symbol = " ";
-
-		if (!IS_LDECIMAL(Np->Num))
-			Np->decimal = ".";
 	}
 	else
 	{
