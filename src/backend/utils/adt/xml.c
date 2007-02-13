@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.27 2007/02/11 22:18:15 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.28 2007/02/13 15:56:12 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1320,15 +1320,15 @@ is_valid_xml_namechar(pg_wchar c)
 char *
 map_sql_identifier_to_xml_name(char *ident, bool fully_escaped, bool escape_period)
 {
+#ifdef USE_LIBXML
+	StringInfoData buf;
+	char *p;
+
 	/*
 	 * SQL/XML doesn't make use of this case anywhere, so it's
 	 * probably a mistake.
 	 */
 	Assert(fully_escaped || !escape_period);
-
-#ifdef USE_LIBXML
-	StringInfoData buf;
-	char *p;
 
 	initStringInfo(&buf);
 
