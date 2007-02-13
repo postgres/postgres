@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.18 2007/01/05 22:20:02 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/open.c,v 1.19 2007/02/13 02:06:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@ openFlagsToCreateFileFlags(int openFlags)
 {
 	switch (openFlags & (O_CREAT | O_TRUNC | O_EXCL))
 	{
+		/* O_EXCL is meaningless without O_CREAT */
 		case 0:
 		case O_EXCL:
 			return OPEN_EXISTING;
@@ -32,6 +33,7 @@ openFlagsToCreateFileFlags(int openFlags)
 		case O_CREAT:
 			return OPEN_ALWAYS;
 
+		/* O_EXCL is meaningless without O_CREAT */
 		case O_TRUNC:
 		case O_TRUNC | O_EXCL:
 			return TRUNCATE_EXISTING;
@@ -39,6 +41,7 @@ openFlagsToCreateFileFlags(int openFlags)
 		case O_CREAT | O_TRUNC:
 			return CREATE_ALWAYS;
 
+		/* O_TRUNC is meaningless with O_CREAT */
 		case O_CREAT | O_EXCL:
 		case O_CREAT | O_TRUNC | O_EXCL:
 			return CREATE_NEW;
