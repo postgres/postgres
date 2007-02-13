@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.8 2007/01/05 22:19:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.9 2007/02/13 18:06:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ reindex_all_databases(const char *host, const char *port,
 	int			i;
 
 	conn = connectDatabase("postgres", host, port, username, password, progname);
-	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn;", progname, echo);
+	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 
 	for (i = 0; i < PQntuples(result); i++)
