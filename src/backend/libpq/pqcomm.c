@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.189 2007/01/05 22:19:29 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.190 2007/02/13 19:18:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -528,7 +528,7 @@ Setup_AF_UNIX(void)
 
 /*
  * StreamConnection -- create a new connection with client using
- *		server port.
+ *		server port.  Set port->sock to the FD of the new connection.
  *
  * ASSUME: that this doesn't need to be non-blocking because
  *		the Postmaster uses select() to tell when the server master
@@ -548,6 +548,14 @@ StreamConnection(int server_fd, Port *port)
 		ereport(LOG,
 				(errcode_for_socket_access(),
 				 errmsg("could not accept new connection: %m")));
+		/*
+		 * If accept() fails then postmaster.c will still see the server
+		 * socket as read-ready, and will immediately try again.  To avoid
+		 * uselessly sucking lots of CPU, delay a bit before trying again.
+		 * (The most likely reason for failure is being out of kernel file
+		 * table slots; we can do little except hope some will get freed up.)
+		 */
+		pg_usleep(100000L);		/* wait 0.1 sec */
 		return STATUS_ERROR;
 	}
 

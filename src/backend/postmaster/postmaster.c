@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.520 2007/02/11 11:59:25 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.521 2007/02/13 19:18:54 tgl Exp $
  *
  * NOTES
  *
@@ -1710,7 +1710,8 @@ ConnCreate(int serverFd)
 
 	if (StreamConnection(serverFd, port) != STATUS_OK)
 	{
-		StreamClose(port->sock);
+		if (port->sock >= 0)
+			StreamClose(port->sock);
 		ConnFree(port);
 		port = NULL;
 	}
