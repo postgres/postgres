@@ -45,6 +45,10 @@ call :del contrib\cube\cubeparse.h
 call :del contrib\seg\segparse.c
 call :del contrib\seg\segparse.h
 
+if exist src\test\regress\tmp_check rd /s /q src\test\regress\tmp_check
+call :del contrib\spi\refint.dll
+call :del contrib\spi\autoinc.dll
+call :del src\test\regress\regress.dll
 
 cd %D%
 goto :eof
