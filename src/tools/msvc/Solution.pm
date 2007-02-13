@@ -218,7 +218,7 @@ EOF
 
 	my $mf = Project::read_file('src\backend\catalog\Makefile');
 	$mf =~ s{\\s*[\r\n]+}{}mg;
-	$mf =~ /^POSTGRES_BKI_SRCS\s*:=[^,]+,(.*)\)$/gm || croak "Could not find POSTGRES_BKI_SRCS in Makefile\n";
+	$mf =~ /^POSTGRES_BKI_SRCS\s*:?=[^,]+,(.*)\)$/gm || croak "Could not find POSTGRES_BKI_SRCS in Makefile\n";
 	my @allbki = split /\s+/, $1;
     foreach my $bki (@allbki) {
 		next if $bki eq "";
