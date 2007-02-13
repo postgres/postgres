@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Thu Feb  8 22:39:54 EST 2007
+Last updated:		Tue Feb 13 12:03:10 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1393,6 +1393,8 @@ Source Code
 
 * -Move NAMEDATALEN from postgres_ext.h to pg_config_manual.h
 * Consider making NAMEDATALEN more configurable in future releases
+* Update our code to handle 64-bit timezone files to match the zic 
+  source code, which now uses them
 
 
 * Win32
