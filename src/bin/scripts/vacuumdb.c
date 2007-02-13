@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.15 2007/01/05 22:19:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.16 2007/02/13 17:39:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,7 +234,7 @@ vacuum_all_databases(bool full, bool verbose, bool analyze,
 	int			i;
 
 	conn = connectDatabase("postgres", host, port, username, password, progname);
-	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn;", progname, echo);
+	result = executeQuery(conn, "SELECT datname FROM pg_database WHERE datallowconn ORDER BY 1;", progname, echo);
 	PQfinish(conn);
 
 	for (i = 0; i < PQntuples(result); i++)
