@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.84 2007/01/20 20:45:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.85 2007/02/13 02:31:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,8 +350,9 @@ has_join_restriction(PlannerInfo *root, RelOptInfo *rel)
 		/* ignore full joins --- other mechanisms preserve their ordering */
 		if (ojinfo->is_full_join)
 			continue;
-		/* anything inside the RHS is definitely restricted */
-		if (bms_is_subset(rel->relids, ojinfo->min_righthand))
+		/* if it overlaps RHS and isn't yet joined to LHS, it's restricted */
+		if (bms_overlap(rel->relids, ojinfo->min_righthand) &&
+			!bms_overlap(rel->relids, ojinfo->min_lefthand))
 			return true;
 		/* if it's a proper subset of the LHS, it's also restricted */
 		if (bms_is_subset(rel->relids, ojinfo->min_lefthand) &&
@@ -468,16 +469,36 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 			/*----------
 			 * Otherwise, the proposed join overlaps the RHS but isn't
 			 * a valid implementation of this OJ.  It might still be
-			 * a valid implementation of some other OJ, however.  We have
-			 * to allow this to support the associative identity
-			 *	(a LJ b on Pab) LJ c ON Pbc = a LJ (b LJ c ON Pbc) on Pab
+			 * a legal join, however.  If both inputs overlap the RHS,
+			 * assume that it's OK.  Since the inputs presumably got past
+			 * this function's checks previously, they can't overlap the
+			 * LHS and their violations of the RHS boundary must represent
+			 * OJs that have been determined to commute with this one.
+			 * We have to allow this to work correctly in cases like
+			 *		(a LEFT JOIN (b JOIN (c LEFT JOIN d)))
+			 * when the c/d join has been determined to commute with the join
+			 * to a, and hence d is not part of min_righthand for the upper
+			 * join.  It should be legal to join b to c/d but this will appear
+			 * as a violation of the upper join's RHS.
+			 * Furthermore, if one input overlaps the RHS and the other does
+			 * not, we should still allow the join if it is a valid
+			 * implementation of some other OJ.  We have to allow this to
+			 * support the associative identity
+			 *		(a LJ b on Pab) LJ c ON Pbc = a LJ (b LJ c ON Pbc) on Pab
 			 * since joining B directly to C violates the lower OJ's RHS.
 			 * We assume that make_outerjoininfo() set things up correctly
-			 * so that we'll only match to the upper OJ if the transformation
-			 * is valid.  Set flag here to check at bottom of loop.
+			 * so that we'll only match to some OJ if the join is valid.
+			 * Set flag here to check at bottom of loop.
 			 *----------
 			 */
-			is_valid_inner = false;
+			if (bms_overlap(rel1->relids, ojinfo->min_righthand) &&
+				bms_overlap(rel2->relids, ojinfo->min_righthand))
+			{
+				/* seems OK */
+				Assert(!bms_overlap(joinrelids, ojinfo->min_lefthand));
+			}
+			else
+				is_valid_inner = false;
 		}
 	}
 

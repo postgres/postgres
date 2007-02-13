@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.129 2007/02/01 19:10:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.130 2007/02/13 02:31:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,7 +370,9 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 
 		/*
 		 * For an OJ, form the OuterJoinInfo now, because we need the OJ's
-		 * semantic scope (ojscope) to pass to distribute_qual_to_rels.
+		 * semantic scope (ojscope) to pass to distribute_qual_to_rels.  But
+		 * we mustn't add it to oj_info_list just yet, because we don't want
+		 * distribute_qual_to_rels to think it is an outer join below us.
 		 */
 		if (j->jointype != JOIN_INNER)
 		{
@@ -451,8 +453,13 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
  * the caller, so that left_rels is always the nonnullable side.  Hence
  * we need only distinguish the LEFT and FULL cases.
  *
- * The node should eventually be put into root->oj_info_list, but we
+ * The node should eventually be appended to root->oj_info_list, but we
  * do not do that here.
+ *
+ * Note: we assume that this function is invoked bottom-up, so that
+ * root->oj_info_list already contains entries for all outer joins that are
+ * syntactically below this one; and indeed that oj_info_list is ordered
+ * with syntactically lower joins listed first.
  */
 static OuterJoinInfo *
 make_outerjoininfo(PlannerInfo *root,

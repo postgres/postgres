@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.83 2007/01/05 22:19:30 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.84 2007/02/13 02:31:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,7 @@ gimme_tree(Gene *tour, int num_gene, GeqoEvalData *evaldata)
 	 * tour other than the one given.  To the extent that the heuristics are
 	 * helpful, however, this will be a better plan than the raw tour.
 	 *
-	 * Also, when a join attempt fails (because of IN-clause constraints), we
+	 * Also, when a join attempt fails (because of OJ or IN constraints), we
 	 * may be able to recover and produce a workable plan, where the old code
 	 * just had to give up.  This case acts the same as a false result from
 	 * desirable_join().
@@ -262,9 +262,9 @@ desirable_join(PlannerInfo *root,
 		return true;
 
 	/*
-	 * Join if the rels are members of the same outer-join side. This is
-	 * needed to ensure that we can find a valid solution in a case where
-	 * an OJ contains a clauseless join.
+	 * Join if the rels overlap the same outer-join side and don't already
+	 * implement the outer join. This is needed to ensure that we can find a
+	 * valid solution in a case where an OJ contains a clauseless join.
 	 */
 	foreach(l, root->oj_info_list)
 	{
@@ -273,11 +273,15 @@ desirable_join(PlannerInfo *root,
 		/* ignore full joins --- other mechanisms preserve their ordering */
 		if (ojinfo->is_full_join)
 			continue;
-		if (bms_is_subset(outer_rel->relids, ojinfo->min_righthand) &&
-			bms_is_subset(inner_rel->relids, ojinfo->min_righthand))
+		if (bms_overlap(outer_rel->relids, ojinfo->min_righthand) &&
+			bms_overlap(inner_rel->relids, ojinfo->min_righthand) &&
+			!bms_overlap(outer_rel->relids, ojinfo->min_lefthand) &&
+			!bms_overlap(inner_rel->relids, ojinfo->min_lefthand))
 			return true;
-		if (bms_is_subset(outer_rel->relids, ojinfo->min_lefthand) &&
-			bms_is_subset(inner_rel->relids, ojinfo->min_lefthand))
+		if (bms_overlap(outer_rel->relids, ojinfo->min_lefthand) &&
+			bms_overlap(inner_rel->relids, ojinfo->min_lefthand) &&
+			!bms_overlap(outer_rel->relids, ojinfo->min_righthand) &&
+			!bms_overlap(inner_rel->relids, ojinfo->min_righthand))
 			return true;
 	}
 

@@ -223,8 +223,8 @@ rels to the OJ's syntactic rels may be legal.  Per identities 1 and 2,
 non-FULL joins can be freely associated into the lefthand side of an
 OJ, but in general they can't be associated into the righthand side.
 So the restriction enforced by make_join_rel is that a proposed join
-can't join across a RHS boundary (ie, join anything inside the RHS
-to anything else) unless the join validly implements some outer join.
+can't join a rel within or partly within an RHS boundary to one outside
+the boundary, unless the join validly implements some outer join.
 (To support use of identity 3, we have to allow cases where an apparent
 violation of a lower OJ's RHS is committed while forming an upper OJ.
 If this wouldn't in fact be legal, the upper OJ's minimum LHS or RHS
