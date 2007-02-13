@@ -143,7 +143,7 @@ sub GenerateConversionScript {
 sub GenerateTimezoneFiles {
 	my $mf = read_file("src/timezone/Makefile");
 	$mf =~ s{\\\s*[\r\n]+}{}mg;
-	$mf =~ /^TZDATA\s*:=\s*(.*)$/m || die "Could not find TZDATA row in timezone makefile\n";
+	$mf =~ /^TZDATA\s*:?=\s*(.*)$/m || die "Could not find TZDATA row in timezone makefile\n";
 	my @tzfiles = split /\s+/,$1;
 	unshift @tzfiles,'';
 	print "Generating timezone files...";
