@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Feb 13 23:19:33 EST 2007
+Last updated:		Tue Feb 13 23:24:39 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1378,6 +1378,10 @@ Source Code
 * Improve NLS maintenance of libpgport messages linked onto applications
 * Allow ecpg to work with MSVC and BCC
 * Add xpath_array() to /contrib/xml2 to return results as an array
+* Clean up casting in /contrib/isn
+
+  http://archives.postgresql.org/pgsql-hackers/2006-11/msg00245.php
+
 * Allow building in directories containing spaces
 
   This is probably not possible because 'gmake' and other compiler tools
