@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.136 2007/02/01 19:10:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.137 2007/02/14 01:58:56 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -2314,7 +2314,7 @@ pg_conversion_ownercheck(Oid conv_oid, Oid roleid)
 	if (superuser_arg(roleid))
 		return true;
 
-	tuple = SearchSysCache(CONOID,
+	tuple = SearchSysCache(CONVOID,
 						   ObjectIdGetDatum(conv_oid),
 						   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))

@@ -646,7 +646,7 @@ SELECT * from FKTABLE;
 UPDATE PKTABLE set ptest2=5 where ptest2=2;
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
 DETAIL:  Key (ftest1,ftest2,ftest3)=(1,-1,3) is not present in table "pktable".
-CONTEXT:  SQL statement "UPDATE ONLY "public"."fktable" SET "ftest2" = DEFAULT WHERE "ftest1" = $1 AND "ftest2" = $2 AND "ftest3" = $3"
+CONTEXT:  SQL statement "UPDATE ONLY "public"."fktable" SET "ftest2" = DEFAULT WHERE $1 OPERATOR(pg_catalog.=) "ftest1" AND $2 OPERATOR(pg_catalog.=) "ftest2" AND $3 OPERATOR(pg_catalog.=) "ftest3""
 -- Try to update something that will set default
 UPDATE PKTABLE set ptest1=0, ptest2=5, ptest3=10 where ptest2=2;
 UPDATE PKTABLE set ptest2=10 where ptest2=4;
@@ -749,7 +749,8 @@ DROP TABLE PKTABLE;
 -- Basic one column, two table setup 
 CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
 NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
--- This next should fail, because inet=int does not exist
+INSERT INTO PKTABLE VALUES(42);
+-- This next should fail, because int=inet does not exist
 CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable);
 ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: inet and integer.
@@ -758,16 +759,41 @@ DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: inet and i
 CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable(ptest1));
 ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
 DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: inet and integer.
--- This should succeed (with a warning), even though they are different types
--- because int=varchar does exist
-CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable);
-WARNING:  foreign key constraint "fktable_ftest1_fkey" will require costly sequential scans
-DETAIL:  Key columns "ftest1" and "ptest1" are of different types: character varying and integer.
+-- This should succeed, even though they are different types,
+-- because int=int8 exists and is a member of the integer opfamily
+CREATE TABLE FKTABLE (ftest1 int8 REFERENCES pktable);
+-- Check it actually works
+INSERT INTO FKTABLE VALUES(42);		-- should succeed
+INSERT INTO FKTABLE VALUES(43);		-- should fail
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_fkey"
+DETAIL:  Key (ftest1)=(43) is not present in table "pktable".
+UPDATE FKTABLE SET ftest1 = ftest1;	-- should succeed
+UPDATE FKTABLE SET ftest1 = ftest1 + 1;	-- should fail
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_fkey"
+DETAIL:  Key (ftest1)=(43) is not present in table "pktable".
 DROP TABLE FKTABLE;
--- As should this
-CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable(ptest1));
-WARNING:  foreign key constraint "fktable_ftest1_fkey" will require costly sequential scans
-DETAIL:  Key columns "ftest1" and "ptest1" are of different types: character varying and integer.
+-- This should fail, because we'd have to cast numeric to int which is
+-- not an implicit coercion (or use numeric=numeric, but that's not part
+-- of the integer opfamily)
+CREATE TABLE FKTABLE (ftest1 numeric REFERENCES pktable);
+ERROR:  foreign key constraint "fktable_ftest1_fkey" cannot be implemented
+DETAIL:  Key columns "ftest1" and "ptest1" are of incompatible types: numeric and integer.
+DROP TABLE PKTABLE;
+-- On the other hand, this should work because int implicitly promotes to
+-- numeric, and we allow promotion on the FK side
+CREATE TABLE PKTABLE (ptest1 numeric PRIMARY KEY);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
+INSERT INTO PKTABLE VALUES(42);
+CREATE TABLE FKTABLE (ftest1 int REFERENCES pktable);
+-- Check it actually works
+INSERT INTO FKTABLE VALUES(42);		-- should succeed
+INSERT INTO FKTABLE VALUES(43);		-- should fail
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_fkey"
+DETAIL:  Key (ftest1)=(43) is not present in table "pktable".
+UPDATE FKTABLE SET ftest1 = ftest1;	-- should succeed
+UPDATE FKTABLE SET ftest1 = ftest1 + 1;	-- should fail
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_ftest1_fkey"
+DETAIL:  Key (ftest1)=(43) is not present in table "pktable".
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 -- Two columns, two tables
@@ -1083,21 +1109,24 @@ CREATE TEMP TABLE fktable (
         x5      INT2
 );
 -- check individual constraints with alter table.
--- should generate warnings
+-- should fail
+-- varchar does not promote to real
 ALTER TABLE fktable ADD CONSTRAINT fk_2_3
 FOREIGN KEY (x2) REFERENCES pktable(id3);
-WARNING:  foreign key constraint "fk_2_3" will require costly sequential scans
-DETAIL:  Key columns "x2" and "id3" are of different types: character varying and real.
+ERROR:  foreign key constraint "fk_2_3" cannot be implemented
+DETAIL:  Key columns "x2" and "id3" are of incompatible types: character varying and real.
+-- nor to int4
 ALTER TABLE fktable ADD CONSTRAINT fk_2_1
 FOREIGN KEY (x2) REFERENCES pktable(id1);
-WARNING:  foreign key constraint "fk_2_1" will require costly sequential scans
-DETAIL:  Key columns "x2" and "id1" are of different types: character varying and integer.
+ERROR:  foreign key constraint "fk_2_1" cannot be implemented
+DETAIL:  Key columns "x2" and "id1" are of incompatible types: character varying and integer.
+-- real does not promote to int4
 ALTER TABLE fktable ADD CONSTRAINT fk_3_1
 FOREIGN KEY (x3) REFERENCES pktable(id1);
-WARNING:  foreign key constraint "fk_3_1" will require costly sequential scans
-DETAIL:  Key columns "x3" and "id1" are of different types: real and integer.
--- should NOT generate warnings
--- int4 promotes to text, so this is ok
+ERROR:  foreign key constraint "fk_3_1" cannot be implemented
+DETAIL:  Key columns "x3" and "id1" are of incompatible types: real and integer.
+-- should succeed
+-- int4 promotes to text, so this is allowed (though pretty durn debatable)
 ALTER TABLE fktable ADD CONSTRAINT fk_1_2
 FOREIGN KEY (x1) REFERENCES pktable(id2);
 -- int4 promotes to real
@@ -1106,45 +1135,36 @@ FOREIGN KEY (x1) REFERENCES pktable(id3);
 -- text is compatible with varchar
 ALTER TABLE fktable ADD CONSTRAINT fk_4_2
 FOREIGN KEY (x4) REFERENCES pktable(id2);
--- int2 is part of int4 opclass as of 8.0
+-- int2 is part of integer opfamily as of 8.0
 ALTER TABLE fktable ADD CONSTRAINT fk_5_1
 FOREIGN KEY (x5) REFERENCES pktable(id1);
 -- check multikey cases, especially out-of-order column lists
--- no warnings here
+-- these should work
 ALTER TABLE fktable ADD CONSTRAINT fk_123_123
 FOREIGN KEY (x1,x2,x3) REFERENCES pktable(id1,id2,id3);
 ALTER TABLE fktable ADD CONSTRAINT fk_213_213
 FOREIGN KEY (x2,x1,x3) REFERENCES pktable(id2,id1,id3);
 ALTER TABLE fktable ADD CONSTRAINT fk_253_213
 FOREIGN KEY (x2,x5,x3) REFERENCES pktable(id2,id1,id3);
--- warnings here
+-- these should fail
 ALTER TABLE fktable ADD CONSTRAINT fk_123_231
 FOREIGN KEY (x1,x2,x3) REFERENCES pktable(id2,id3,id1);
-WARNING:  foreign key constraint "fk_123_231" will require costly sequential scans
-DETAIL:  Key columns "x2" and "id3" are of different types: character varying and real.
-WARNING:  foreign key constraint "fk_123_231" will require costly sequential scans
-DETAIL:  Key columns "x3" and "id1" are of different types: real and integer.
+ERROR:  foreign key constraint "fk_123_231" cannot be implemented
+DETAIL:  Key columns "x2" and "id3" are of incompatible types: character varying and real.
 ALTER TABLE fktable ADD CONSTRAINT fk_241_132
 FOREIGN KEY (x2,x4,x1) REFERENCES pktable(id1,id3,id2);
-WARNING:  foreign key constraint "fk_241_132" will require costly sequential scans
-DETAIL:  Key columns "x2" and "id1" are of different types: character varying and integer.
-WARNING:  foreign key constraint "fk_241_132" will require costly sequential scans
-DETAIL:  Key columns "x4" and "id3" are of different types: text and real.
+ERROR:  foreign key constraint "fk_241_132" cannot be implemented
+DETAIL:  Key columns "x2" and "id1" are of incompatible types: character varying and integer.
 DROP TABLE pktable, fktable CASCADE;
-NOTICE:  drop cascades to constraint fk_241_132 on table fktable
-NOTICE:  drop cascades to constraint fk_123_231 on table fktable
 NOTICE:  drop cascades to constraint fk_253_213 on table fktable
 NOTICE:  drop cascades to constraint fk_213_213 on table fktable
 NOTICE:  drop cascades to constraint fk_123_123 on table fktable
 NOTICE:  drop cascades to constraint fk_5_1 on table fktable
-NOTICE:  drop cascades to constraint fk_3_1 on table fktable
-NOTICE:  drop cascades to constraint fk_2_1 on table fktable
 NOTICE:  drop cascades to constraint fktable_x1_fkey on table fktable
 NOTICE:  drop cascades to constraint fk_4_2 on table fktable
 NOTICE:  drop cascades to constraint fk_1_2 on table fktable
 NOTICE:  drop cascades to constraint fktable_x2_fkey on table fktable
 NOTICE:  drop cascades to constraint fk_1_3 on table fktable
-NOTICE:  drop cascades to constraint fk_2_3 on table fktable
 NOTICE:  drop cascades to constraint fktable_x3_fkey on table fktable
 -- test a tricky case: we can elide firing the FK check trigger during
 -- an UPDATE if the UPDATE did not change the foreign key

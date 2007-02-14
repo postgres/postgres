@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.153 2007/01/05 22:19:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.154 2007/02/14 01:58:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,8 +327,8 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 				if (instr->ntuples == 0)
 					continue;
 
-				if (trig->tgisconstraint &&
-				(conname = GetConstraintNameForTrigger(trig->tgoid)) != NULL)
+				if (OidIsValid(trig->tgconstraint) &&
+					(conname = get_constraint_name(trig->tgconstraint)) != NULL)
 				{
 					appendStringInfo(&buf, "Trigger for constraint %s",
 									 conname);

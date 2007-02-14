@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.316 2007/01/05 22:19:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.317 2007/02/14 01:58:56 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1462,6 +1462,9 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 						  keycount,		/* # attrs in the constraint */
 						  InvalidOid,	/* not a domain constraint */
 						  InvalidOid,	/* Foreign key fields */
+						  NULL,
+						  NULL,
+						  NULL,
 						  NULL,
 						  0,
 						  ' ',

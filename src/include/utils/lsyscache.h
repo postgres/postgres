@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.116 2007/01/30 01:33:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.117 2007/02/14 01:58:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,7 @@ extern Oid	get_atttype(Oid relid, AttrNumber attnum);
 extern int32 get_atttypmod(Oid relid, AttrNumber attnum);
 extern void get_atttypetypmod(Oid relid, AttrNumber attnum,
 				  Oid *typid, int32 *typmod);
+extern char *get_constraint_name(Oid conoid);
 extern Oid	get_opclass_family(Oid opclass);
 extern Oid	get_opclass_input_type(Oid opclass);
 extern RegProcedure get_opcode(Oid opno);

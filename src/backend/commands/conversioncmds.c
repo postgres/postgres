@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.30 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/conversioncmds.c,v 1.31 2007/02/14 01:58:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ RenameConversion(List *name, const char *newname)
 				 errmsg("conversion \"%s\" does not exist",
 						NameListToString(name))));
 
-	tup = SearchSysCacheCopy(CONOID,
+	tup = SearchSysCacheCopy(CONVOID,
 							 ObjectIdGetDatum(conversionOid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */
@@ -236,7 +236,7 @@ AlterConversionOwner_internal(Relation rel, Oid conversionOid, Oid newOwnerId)
 
 	Assert(RelationGetRelid(rel) == ConversionRelationId);
 
-	tup = SearchSysCacheCopy(CONOID,
+	tup = SearchSysCacheCopy(CONVOID,
 							 ObjectIdGetDatum(conversionOid),
 							 0, 0, 0);
 	if (!HeapTupleIsValid(tup)) /* should not happen */

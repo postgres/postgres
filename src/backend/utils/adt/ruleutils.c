@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.248 2007/02/03 14:06:54 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.249 2007/02/14 01:58:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -875,30 +875,15 @@ static char *
 pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags)
 {
-	StringInfoData buf;
-	Relation	conDesc;
-	SysScanDesc conscan;
-	ScanKeyData skey[1];
 	HeapTuple	tup;
 	Form_pg_constraint conForm;
+	StringInfoData buf;
 
-	/*
-	 * Fetch the pg_constraint row.  There's no syscache for pg_constraint so
-	 * we must do it the hard way.
-	 */
-	conDesc = heap_open(ConstraintRelationId, AccessShareLock);
-
-	ScanKeyInit(&skey[0],
-				ObjectIdAttributeNumber,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(constraintId));
-
-	conscan = systable_beginscan(conDesc, ConstraintOidIndexId, true,
-								 SnapshotNow, 1, skey);
-
-	tup = systable_getnext(conscan);
-	if (!HeapTupleIsValid(tup))
-		elog(ERROR, "could not find tuple for constraint %u", constraintId);
+	tup = SearchSysCache(CONSTROID,
+						 ObjectIdGetDatum(constraintId),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for constraint %u", constraintId);
 	conForm = (Form_pg_constraint) GETSTRUCT(tup);
 
 	initStringInfo(&buf);
@@ -922,8 +907,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				appendStringInfo(&buf, "FOREIGN KEY (");
 
 				/* Fetch and build referencing-column list */
-				val = heap_getattr(tup, Anum_pg_constraint_conkey,
-								   RelationGetDescr(conDesc), &isnull);
+				val = SysCacheGetAttr(CONSTROID, tup,
+									  Anum_pg_constraint_conkey, &isnull);
 				if (isnull)
 					elog(ERROR, "null conkey for constraint %u",
 						 constraintId);
@@ -935,8 +920,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 								 generate_relation_name(conForm->confrelid));
 
 				/* Fetch and build referenced-column list */
-				val = heap_getattr(tup, Anum_pg_constraint_confkey,
-								   RelationGetDescr(conDesc), &isnull);
+				val = SysCacheGetAttr(CONSTROID, tup,
+									  Anum_pg_constraint_confkey, &isnull);
 				if (isnull)
 					elog(ERROR, "null confkey for constraint %u",
 						 constraintId);
@@ -1038,8 +1023,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 					appendStringInfo(&buf, "UNIQUE (");
 
 				/* Fetch and build target column list */
-				val = heap_getattr(tup, Anum_pg_constraint_conkey,
-								   RelationGetDescr(conDesc), &isnull);
+				val = SysCacheGetAttr(CONSTROID, tup,
+									  Anum_pg_constraint_conkey, &isnull);
 				if (isnull)
 					elog(ERROR, "null conkey for constraint %u",
 						 constraintId);
@@ -1071,8 +1056,8 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				List	   *context;
 
 				/* Fetch constraint expression in parsetree form */
-				val = heap_getattr(tup, Anum_pg_constraint_conbin,
-								   RelationGetDescr(conDesc), &isnull);
+				val = SysCacheGetAttr(CONSTROID, tup,
+									  Anum_pg_constraint_conbin, &isnull);
 				if (isnull)
 					elog(ERROR, "null conbin for constraint %u",
 						 constraintId);
@@ -1115,8 +1100,7 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 	}
 
 	/* Cleanup */
-	systable_endscan(conscan);
-	heap_close(conDesc, AccessShareLock);
+	ReleaseSysCache(tup);
 
 	return buf.data;
 }

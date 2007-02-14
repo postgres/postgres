@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.24 2007/01/05 22:19:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_constraint.h,v 1.25 2007/02/14 01:58:58 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -92,6 +92,24 @@ CATALOG(pg_constraint,2606)
 	int2		confkey[1];
 
 	/*
+	 * If a foreign key, the OIDs of the PK = FK equality operators for each
+	 * column of the constraint
+	 */
+	Oid			conpfeqop[1];
+
+	/*
+	 * If a foreign key, the OIDs of the PK = PK equality operators for each
+	 * column of the constraint (i.e., equality for the referenced columns)
+	 */
+	Oid			conppeqop[1];
+
+	/*
+	 * If a foreign key, the OIDs of the FK = FK equality operators for each
+	 * column of the constraint (i.e., equality for the referencing columns)
+	 */
+	Oid			conffeqop[1];
+
+	/*
 	 * If a check constraint, nodeToString representation of expression
 	 */
 	text		conbin;
@@ -113,7 +131,7 @@ typedef FormData_pg_constraint *Form_pg_constraint;
  *		compiler constants for pg_constraint
  * ----------------
  */
-#define Natts_pg_constraint					15
+#define Natts_pg_constraint					18
 #define Anum_pg_constraint_conname			1
 #define Anum_pg_constraint_connamespace		2
 #define Anum_pg_constraint_contype			3
@@ -127,8 +145,11 @@ typedef FormData_pg_constraint *Form_pg_constraint;
 #define Anum_pg_constraint_confmatchtype	11
 #define Anum_pg_constraint_conkey			12
 #define Anum_pg_constraint_confkey			13
-#define Anum_pg_constraint_conbin			14
-#define Anum_pg_constraint_consrc			15
+#define Anum_pg_constraint_conpfeqop		14
+#define Anum_pg_constraint_conppeqop		15
+#define Anum_pg_constraint_conffeqop		16
+#define Anum_pg_constraint_conbin			17
+#define Anum_pg_constraint_consrc			18
 
 
 /* Valid values for contype */
@@ -167,6 +188,9 @@ extern Oid CreateConstraintEntry(const char *constraintName,
 					  Oid domainId,
 					  Oid foreignRelId,
 					  const int16 *foreignKey,
+					  const Oid *pfEqOp,
+					  const Oid *ppEqOp,
+					  const Oid *ffEqOp,
 					  int foreignNKeys,
 					  char foreignUpdateType,
 					  char foreignDeleteType,
@@ -183,8 +207,6 @@ extern bool ConstraintNameIsUsed(ConstraintCategory conCat, Oid objId,
 extern char *ChooseConstraintName(const char *name1, const char *name2,
 					 const char *label, Oid namespace,
 					 List *others);
-
-extern char *GetConstraintNameForTrigger(Oid triggerId);
 
 extern void AlterConstraintNamespaces(Oid ownerId, Oid oldNspId,
 						  Oid newNspId, bool isType);

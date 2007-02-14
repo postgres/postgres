@@ -241,21 +241,40 @@ DROP TABLE tmp2;
 -- is run in parallel with foreign_key.sql.
 
 CREATE TEMP TABLE PKTABLE (ptest1 int PRIMARY KEY);
+INSERT INTO PKTABLE VALUES(42);
 CREATE TEMP TABLE FKTABLE (ftest1 inet);
--- This next should fail, because inet=int does not exist
+-- This next should fail, because int=inet does not exist
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
 -- This should also fail for the same reason, but here we
 -- give the column name
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
--- This should succeed, even though they are different types
--- because varchar=int does exist
 DROP TABLE FKTABLE;
-CREATE TEMP TABLE FKTABLE (ftest1 varchar);
+-- This should succeed, even though they are different types,
+-- because int=int8 exists and is a member of the integer opfamily
+CREATE TEMP TABLE FKTABLE (ftest1 int8);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
--- As should this
-ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable(ptest1);
-DROP TABLE pktable cascade;
-DROP TABLE fktable;
+-- Check it actually works
+INSERT INTO FKTABLE VALUES(42);		-- should succeed
+INSERT INTO FKTABLE VALUES(43);		-- should fail
+DROP TABLE FKTABLE;
+-- This should fail, because we'd have to cast numeric to int which is
+-- not an implicit coercion (or use numeric=numeric, but that's not part
+-- of the integer opfamily)
+CREATE TEMP TABLE FKTABLE (ftest1 numeric);
+ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
+DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
+-- On the other hand, this should work because int implicitly promotes to
+-- numeric, and we allow promotion on the FK side
+CREATE TEMP TABLE PKTABLE (ptest1 numeric PRIMARY KEY);
+INSERT INTO PKTABLE VALUES(42);
+CREATE TEMP TABLE FKTABLE (ftest1 int);
+ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
+-- Check it actually works
+INSERT INTO FKTABLE VALUES(42);		-- should succeed
+INSERT INTO FKTABLE VALUES(43);		-- should fail
+DROP TABLE FKTABLE;
+DROP TABLE PKTABLE;
 
 CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 inet,
                            PRIMARY KEY(ptest1, ptest2));

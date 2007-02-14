@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.91 2007/02/01 19:10:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.92 2007/02/14 01:58:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1199,7 +1199,7 @@ ConversionIsVisible(Oid conid)
 	Oid			connamespace;
 	bool		visible;
 
-	contup = SearchSysCache(CONOID,
+	contup = SearchSysCache(CONVOID,
 							ObjectIdGetDatum(conid),
 							0, 0, 0);
 	if (!HeapTupleIsValid(contup))

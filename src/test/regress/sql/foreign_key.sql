@@ -444,17 +444,36 @@ DROP TABLE PKTABLE;
 --
 -- Basic one column, two table setup 
 CREATE TABLE PKTABLE (ptest1 int PRIMARY KEY);
--- This next should fail, because inet=int does not exist
+INSERT INTO PKTABLE VALUES(42);
+-- This next should fail, because int=inet does not exist
 CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable);
 -- This should also fail for the same reason, but here we
 -- give the column name
 CREATE TABLE FKTABLE (ftest1 inet REFERENCES pktable(ptest1));
--- This should succeed (with a warning), even though they are different types
--- because int=varchar does exist
-CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable);
+-- This should succeed, even though they are different types,
+-- because int=int8 exists and is a member of the integer opfamily
+CREATE TABLE FKTABLE (ftest1 int8 REFERENCES pktable);
+-- Check it actually works
+INSERT INTO FKTABLE VALUES(42);		-- should succeed
+INSERT INTO FKTABLE VALUES(43);		-- should fail
+UPDATE FKTABLE SET ftest1 = ftest1;	-- should succeed
+UPDATE FKTABLE SET ftest1 = ftest1 + 1;	-- should fail
 DROP TABLE FKTABLE;
--- As should this
-CREATE TABLE FKTABLE (ftest1 varchar REFERENCES pktable(ptest1));
+-- This should fail, because we'd have to cast numeric to int which is
+-- not an implicit coercion (or use numeric=numeric, but that's not part
+-- of the integer opfamily)
+CREATE TABLE FKTABLE (ftest1 numeric REFERENCES pktable);
+DROP TABLE PKTABLE;
+-- On the other hand, this should work because int implicitly promotes to
+-- numeric, and we allow promotion on the FK side
+CREATE TABLE PKTABLE (ptest1 numeric PRIMARY KEY);
+INSERT INTO PKTABLE VALUES(42);
+CREATE TABLE FKTABLE (ftest1 int REFERENCES pktable);
+-- Check it actually works
+INSERT INTO FKTABLE VALUES(42);		-- should succeed
+INSERT INTO FKTABLE VALUES(43);		-- should fail
+UPDATE FKTABLE SET ftest1 = ftest1;	-- should succeed
+UPDATE FKTABLE SET ftest1 = ftest1 + 1;	-- should fail
 DROP TABLE FKTABLE;
 DROP TABLE PKTABLE;
 
@@ -727,20 +746,23 @@ CREATE TEMP TABLE fktable (
 
 -- check individual constraints with alter table.
 
--- should generate warnings
+-- should fail
 
+-- varchar does not promote to real
 ALTER TABLE fktable ADD CONSTRAINT fk_2_3
 FOREIGN KEY (x2) REFERENCES pktable(id3);
 
+-- nor to int4
 ALTER TABLE fktable ADD CONSTRAINT fk_2_1
 FOREIGN KEY (x2) REFERENCES pktable(id1);
 
+-- real does not promote to int4
 ALTER TABLE fktable ADD CONSTRAINT fk_3_1
 FOREIGN KEY (x3) REFERENCES pktable(id1);
 
--- should NOT generate warnings
+-- should succeed
 
--- int4 promotes to text, so this is ok
+-- int4 promotes to text, so this is allowed (though pretty durn debatable)
 ALTER TABLE fktable ADD CONSTRAINT fk_1_2
 FOREIGN KEY (x1) REFERENCES pktable(id2);
 
@@ -752,13 +774,13 @@ FOREIGN KEY (x1) REFERENCES pktable(id3);
 ALTER TABLE fktable ADD CONSTRAINT fk_4_2
 FOREIGN KEY (x4) REFERENCES pktable(id2);
 
--- int2 is part of int4 opclass as of 8.0
+-- int2 is part of integer opfamily as of 8.0
 ALTER TABLE fktable ADD CONSTRAINT fk_5_1
 FOREIGN KEY (x5) REFERENCES pktable(id1);
 
 -- check multikey cases, especially out-of-order column lists
 
--- no warnings here
+-- these should work
 
 ALTER TABLE fktable ADD CONSTRAINT fk_123_123
 FOREIGN KEY (x1,x2,x3) REFERENCES pktable(id1,id2,id3);
@@ -769,7 +791,7 @@ FOREIGN KEY (x2,x1,x3) REFERENCES pktable(id2,id1,id3);
 ALTER TABLE fktable ADD CONSTRAINT fk_253_213
 FOREIGN KEY (x2,x5,x3) REFERENCES pktable(id2,id1,id3);
 
--- warnings here
+-- these should fail
 
 ALTER TABLE fktable ADD CONSTRAINT fk_123_231
 FOREIGN KEY (x1,x2,x3) REFERENCES pktable(id2,id3,id1);

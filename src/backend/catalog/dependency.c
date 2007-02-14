@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.63 2007/02/01 19:10:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.64 2007/02/14 01:58:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1758,29 +1758,16 @@ getObjectDescription(const ObjectAddress *object)
 
 		case OCLASS_CONSTRAINT:
 			{
-				Relation	conDesc;
-				ScanKeyData skey[1];
-				SysScanDesc rcscan;
-				HeapTuple	tup;
+				HeapTuple	conTup;
 				Form_pg_constraint con;
 
-				conDesc = heap_open(ConstraintRelationId, AccessShareLock);
-
-				ScanKeyInit(&skey[0],
-							ObjectIdAttributeNumber,
-							BTEqualStrategyNumber, F_OIDEQ,
-							ObjectIdGetDatum(object->objectId));
-
-				rcscan = systable_beginscan(conDesc, ConstraintOidIndexId, true,
-											SnapshotNow, 1, skey);
-
-				tup = systable_getnext(rcscan);
-
-				if (!HeapTupleIsValid(tup))
-					elog(ERROR, "could not find tuple for constraint %u",
+				conTup = SearchSysCache(CONSTROID,
+										ObjectIdGetDatum(object->objectId),
+										0, 0, 0);
+				if (!HeapTupleIsValid(conTup))
+					elog(ERROR, "cache lookup failed for constraint %u",
 						 object->objectId);
-
-				con = (Form_pg_constraint) GETSTRUCT(tup);
+				con = (Form_pg_constraint) GETSTRUCT(conTup);
 
 				if (OidIsValid(con->conrelid))
 				{
@@ -1794,8 +1781,7 @@ getObjectDescription(const ObjectAddress *object)
 									 NameStr(con->conname));
 				}
 
-				systable_endscan(rcscan);
-				heap_close(conDesc, AccessShareLock);
+				ReleaseSysCache(conTup);
 				break;
 			}
 
@@ -1803,7 +1789,7 @@ getObjectDescription(const ObjectAddress *object)
 			{
 				HeapTuple	conTup;
 
-				conTup = SearchSysCache(CONOID,
+				conTup = SearchSysCache(CONVOID,
 										ObjectIdGetDatum(object->objectId),
 										0, 0, 0);
 				if (!HeapTupleIsValid(conTup))

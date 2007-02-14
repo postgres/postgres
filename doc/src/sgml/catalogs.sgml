@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.144 2007/01/31 20:56:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.145 2007/02/14 01:58:55 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1871,6 +1871,27 @@
      </row>
 
      <row>
+      <entry><structfield>conpfeqop</structfield></entry>
+      <entry><type>oid[]</type></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</></entry>
+      <entry>If a foreign key, list of the equality operators for PK = FK comparisons</entry>
+     </row>
+
+     <row>
+      <entry><structfield>conppeqop</structfield></entry>
+      <entry><type>oid[]</type></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</></entry>
+      <entry>If a foreign key, list of the equality operators for PK = PK comparisons</entry>
+     </row>
+
+     <row>
+      <entry><structfield>conffeqop</structfield></entry>
+      <entry><type>oid[]</type></entry>
+      <entry><literal><link linkend="catalog-pg-operator"><structname>pg_operator</structname></link>.oid</></entry>
+      <entry>If a foreign key, list of the equality operators for FK = FK comparisons</entry>
+     </row>
+
+     <row>
       <entry><structfield>conbin</structfield></entry>
       <entry><type>text</type></entry>
       <entry></entry>
@@ -1899,8 +1920,8 @@
   <note>
    <para>
     <literal>pg_class.relchecks</literal> needs to agree with the
-    number of check-constraint entries found in this table for the
-    given relation.
+    number of check-constraint entries found in this table for each
+    relation.
    </para>
   </note>
 
@@ -4166,35 +4187,42 @@
       <entry><structfield>tgisconstraint</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if trigger implements a referential integrity constraint</entry>
+      <entry>True if trigger is a <quote>constraint trigger</></entry>
      </row>
 
      <row>
       <entry><structfield>tgconstrname</structfield></entry>
       <entry><type>name</type></entry>
       <entry></entry>
-      <entry>Referential integrity constraint name</entry>
+      <entry>Constraint name, if a constraint trigger</entry>
      </row>
 
      <row>
       <entry><structfield>tgconstrrelid</structfield></entry>
       <entry><type>oid</type></entry>
       <entry><literal><link linkend="catalog-pg-class"><structname>pg_class</structname></link>.oid</literal></entry>
-      <entry>The table referenced by an referential integrity constraint</entry>
+      <entry>The table referenced by a referential integrity constraint</entry>
+     </row>
+
+     <row>
+      <entry><structfield>tgconstraint</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-constraint"><structname>pg_constraint</structname></link>.oid</literal></entry>
+      <entry>The <structname>pg_constraint</> entry owning the trigger, if any</entry>
      </row>
 
      <row>
       <entry><structfield>tgdeferrable</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if deferrable</entry>
+      <entry>True if constraint trigger is deferrable</entry>
      </row>
 
      <row>
       <entry><structfield>tginitdeferred</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
-      <entry>True if initially deferred</entry>
+      <entry>True if constraint trigger is initially deferred</entry>
      </row>
 
      <row>
@@ -4223,8 +4251,20 @@
 
   <note>
    <para>
+    When <structfield>tgconstraint</> is nonzero,
+    <structfield>tgisconstraint</> must be true, and
+    <structfield>tgconstrname</>, <structfield>tgconstrrelid</>,
+    <structfield>tgdeferrable</>, <structfield>tginitdeferred</> are redundant
+    with the referenced <structname>pg_constraint</> entry.  The reason we
+    keep these fields is that we support <quote>stand-alone</> constraint
+    triggers with no corresponding <structname>pg_constraint</> entry.
+   </para>
+  </note>
+
+  <note>
+   <para>
     <literal>pg_class.reltriggers</literal> needs to agree with the
-    number of triggers found in this table for the given relation.
+    number of triggers found in this table for each relation.
    </para>
   </note>
 

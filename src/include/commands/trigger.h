@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.60 2007/01/05 22:19:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/trigger.h,v 1.61 2007/02/14 01:58:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,34 +78,8 @@ typedef struct TriggerData
 #define TRIGGER_FIRED_AFTER(event)				\
 		(!TRIGGER_FIRED_BEFORE (event))
 
-/*
- * RI trigger function arguments are stored in pg_trigger.tgargs bytea
- *
- *	 constrname\0fkrel\0pkrel\0matchtype\0fkatt\0pkatt\0fkatt\0pkatt\0...
- *
- * There are one or more pairs of fkatt/pkatt names.
- *
- * The relation names are no longer of much use since they are not
- * guaranteed unique; they are present only for backwards compatibility.
- * Use the tgrelid and tgconstrrelid fields to identify the referenced
- * relations, instead.	(But note that which is which will depend on which
- * trigger you are looking at!)
- */
-#define RI_CONSTRAINT_NAME_ARGNO		0
-#define RI_FK_RELNAME_ARGNO				1
-#define RI_PK_RELNAME_ARGNO				2
-#define RI_MATCH_TYPE_ARGNO				3
-#define RI_FIRST_ATTNAME_ARGNO			4		/* first attname pair starts
-												 * here */
 
-#define RI_KEYPAIR_FK_IDX				0
-#define RI_KEYPAIR_PK_IDX				1
-
-#define RI_MAX_NUMKEYS					INDEX_MAX_KEYS
-#define RI_MAX_ARGUMENTS		(RI_FIRST_ATTNAME_ARGNO + (RI_MAX_NUMKEYS * 2))
-
-
-extern Oid	CreateTrigger(CreateTrigStmt *stmt, bool forConstraint);
+extern Oid	CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid);
 
 extern void DropTrigger(Oid relid, const char *trigname,
 			DropBehavior behavior, bool missing_ok);
@@ -175,10 +149,10 @@ extern bool RI_FKey_keyequal_upd_pk(Trigger *trigger, Relation pk_rel,
 						HeapTuple old_row, HeapTuple new_row);
 extern bool RI_FKey_keyequal_upd_fk(Trigger *trigger, Relation fk_rel,
 						HeapTuple old_row, HeapTuple new_row);
-extern bool RI_Initial_Check(FkConstraint *fkconstraint,
-				 Relation rel,
-				 Relation pkrel);
+extern bool RI_Initial_Check(Trigger *trigger,
+							 Relation fk_rel, Relation pk_rel);
 
+/* result values for RI_FKey_trigger_type: */
 #define RI_TRIGGER_PK	1		/* is a trigger on the PK relation */
 #define RI_TRIGGER_FK	2		/* is a trigger on the FK relation */
 #define RI_TRIGGER_NONE 0		/* is not an RI trigger function */

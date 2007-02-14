@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.212 2007/01/25 04:17:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.213 2007/02/14 01:58:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "catalog/catalog.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
@@ -57,13 +58,12 @@ static void AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 /*
  * Create a trigger.  Returns the OID of the created trigger.
  *
- * forConstraint, if true, says that this trigger is being created to
- * implement a constraint.	The caller will then be expected to make
- * a pg_depend entry linking the trigger to that constraint (and thereby
- * to the owning relation(s)).
+ * constraintOid, if nonzero, says that this trigger is being created to
+ * implement that constraint.  A suitable pg_depend entry will be made
+ * to link the trigger to that constraint.
  */
 Oid
-CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
+CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 {
 	int16		tgtype;
 	int2vector *tgattr;
@@ -91,51 +91,6 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	rel = heap_openrv(stmt->relation, AccessExclusiveLock);
 
-	if (stmt->constrrel != NULL)
-		constrrelid = RangeVarGetRelid(stmt->constrrel, false);
-	else if (stmt->isconstraint)
-	{
-		/*
-		 * If this trigger is a constraint (and a foreign key one) then we
-		 * really need a constrrelid.  Since we don't have one, we'll try to
-		 * generate one from the argument information.
-		 *
-		 * This is really just a workaround for a long-ago pg_dump bug that
-		 * omitted the FROM clause in dumped CREATE CONSTRAINT TRIGGER
-		 * commands.  We don't want to bomb out completely here if we can't
-		 * determine the correct relation, because that would prevent loading
-		 * the dump file.  Instead, NOTICE here and ERROR in the trigger.
-		 */
-		bool		needconstrrelid = false;
-		void	   *elem = NULL;
-
-		if (strncmp(strVal(lfirst(list_tail((stmt->funcname)))), "RI_FKey_check_", 14) == 0)
-		{
-			/* A trigger on FK table. */
-			needconstrrelid = true;
-			if (list_length(stmt->args) > RI_PK_RELNAME_ARGNO)
-				elem = list_nth(stmt->args, RI_PK_RELNAME_ARGNO);
-		}
-		else if (strncmp(strVal(lfirst(list_tail((stmt->funcname)))), "RI_FKey_", 8) == 0)
-		{
-			/* A trigger on PK table. */
-			needconstrrelid = true;
-			if (list_length(stmt->args) > RI_FK_RELNAME_ARGNO)
-				elem = list_nth(stmt->args, RI_FK_RELNAME_ARGNO);
-		}
-		if (elem != NULL)
-		{
-			RangeVar   *rel = makeRangeVar(NULL, strVal(elem));
-
-			constrrelid = RangeVarGetRelid(rel, true);
-		}
-		if (needconstrrelid && constrrelid == InvalidOid)
-			ereport(NOTICE,
-					(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
-					 errmsg("could not determine referenced table for constraint \"%s\"",
-							stmt->trigname)));
-	}
-
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -152,15 +107,17 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	if (stmt->isconstraint)
 	{
-		/* foreign key constraint trigger */
-
+		/* constraint trigger */
 		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 									  ACL_REFERENCES);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_CLASS,
 						   RelationGetRelationName(rel));
-		if (constrrelid != InvalidOid)
+
+		if (stmt->constrrel != NULL)
 		{
+			constrrelid = RangeVarGetRelid(stmt->constrrel, false);
+
 			aclresult = pg_class_aclcheck(constrrelid, GetUserId(),
 										  ACL_REFERENCES);
 			if (aclresult != ACLCHECK_OK)
@@ -170,7 +127,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	}
 	else
 	{
-		/* real trigger */
+		/* regular trigger */
 		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
 									  ACL_TRIGGER);
 		if (aclresult != ACLCHECK_OK)
@@ -187,23 +144,31 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	trigoid = GetNewOid(tgrel);
 
 	/*
-	 * If trigger is an RI constraint, use specified trigger name as
-	 * constraint name and build a unique trigger name instead. This is mainly
-	 * for backwards compatibility with CREATE CONSTRAINT TRIGGER commands.
+	 * If trigger is for an RI constraint, the passed-in name is the
+	 * constraint name; save that and build a unique trigger name to avoid
+	 * collisions with user-selected trigger names.
 	 */
-	if (stmt->isconstraint)
+	if (OidIsValid(constraintOid))
 	{
 		snprintf(constrtrigname, sizeof(constrtrigname),
 				 "RI_ConstraintTrigger_%u", trigoid);
 		trigname = constrtrigname;
 		constrname = stmt->trigname;
 	}
+	else if (stmt->isconstraint)
+	{
+		/* constraint trigger: trigger name is also constraint name */
+		trigname = stmt->trigname;
+		constrname = stmt->trigname;
+	}
 	else
 	{
+		/* regular trigger: use empty constraint name */
 		trigname = stmt->trigname;
 		constrname = "";
 	}
 
+	/* Compute tgtype */
 	TRIGGER_CLEAR_TYPE(tgtype);
 	if (stmt->before)
 		TRIGGER_SETT_BEFORE(tgtype);
@@ -298,7 +263,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	/*
 	 * Build the new pg_trigger tuple.
 	 */
-	MemSet(nulls, ' ', Natts_pg_trigger * sizeof(char));
+	memset(nulls, ' ', Natts_pg_trigger * sizeof(char));
 
 	values[Anum_pg_trigger_tgrelid - 1] = ObjectIdGetDatum(RelationGetRelid(rel));
 	values[Anum_pg_trigger_tgname - 1] = DirectFunctionCall1(namein,
@@ -310,6 +275,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	values[Anum_pg_trigger_tgconstrname - 1] = DirectFunctionCall1(namein,
 												CStringGetDatum(constrname));
 	values[Anum_pg_trigger_tgconstrrelid - 1] = ObjectIdGetDatum(constrrelid);
+	values[Anum_pg_trigger_tgconstraint - 1] = ObjectIdGetDatum(constraintOid);
 	values[Anum_pg_trigger_tgdeferrable - 1] = BoolGetDatum(stmt->deferrable);
 	values[Anum_pg_trigger_tginitdeferred - 1] = BoolGetDatum(stmt->initdeferred);
 
@@ -372,10 +338,6 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	CatalogUpdateIndexes(tgrel, tuple);
 
-	myself.classId = TriggerRelationId;
-	myself.objectId = trigoid;
-	myself.objectSubId = 0;
-
 	heap_freetuple(tuple);
 	heap_close(tgrel, RowExclusiveLock);
 
@@ -412,20 +374,36 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	/*
 	 * Record dependencies for trigger.  Always place a normal dependency on
-	 * the function.  If we are doing this in response to an explicit CREATE
-	 * TRIGGER command, also make trigger be auto-dropped if its relation is
-	 * dropped or if the FK relation is dropped.  (Auto drop is compatible
-	 * with our pre-7.3 behavior.)	If the trigger is being made for a
-	 * constraint, we can skip the relation links; the dependency on the
-	 * constraint will indirectly depend on the relations.
+	 * the function.
 	 */
+	myself.classId = TriggerRelationId;
+	myself.objectId = trigoid;
+	myself.objectSubId = 0;
+
 	referenced.classId = ProcedureRelationId;
 	referenced.objectId = funcoid;
 	referenced.objectSubId = 0;
 	recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-	if (!forConstraint)
+	if (OidIsValid(constraintOid))
 	{
+		/*
+		 * It's for a constraint, so make it an internal dependency of the
+		 * constraint.  We can skip depending on the relations, as there'll
+		 * be an indirect dependency via the constraint.
+		 */
+		referenced.classId = ConstraintRelationId;
+		referenced.objectId = constraintOid;
+		referenced.objectSubId = 0;
+		recordDependencyOn(&myself, &referenced, DEPENDENCY_INTERNAL);
+	}
+	else
+	{
+		/*
+		 * Regular CREATE TRIGGER, so place dependencies.  We make trigger be
+		 * auto-dropped if its relation is dropped or if the FK relation is
+		 * dropped.  (Auto drop is compatible with our pre-7.3 behavior.)
+		 */
 		referenced.classId = RelationRelationId;
 		referenced.objectId = RelationGetRelid(rel);
 		referenced.objectSubId = 0;
@@ -773,7 +751,7 @@ EnableDisableTrigger(Relation rel, const char *tgname,
 	{
 		Form_pg_trigger oldtrig = (Form_pg_trigger) GETSTRUCT(tuple);
 
-		if (oldtrig->tgisconstraint)
+		if (OidIsValid(oldtrig->tgconstraint))
 		{
 			/* system trigger ... ok to process? */
 			if (skip_system)
@@ -886,6 +864,7 @@ RelationBuildTriggers(Relation relation)
 		build->tgenabled = pg_trigger->tgenabled;
 		build->tgisconstraint = pg_trigger->tgisconstraint;
 		build->tgconstrrelid = pg_trigger->tgconstrrelid;
+		build->tgconstraint = pg_trigger->tgconstraint;
 		build->tgdeferrable = pg_trigger->tgdeferrable;
 		build->tginitdeferred = pg_trigger->tginitdeferred;
 		build->tgnargs = pg_trigger->tgnargs;
@@ -1219,6 +1198,8 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 			if (trig1->tgisconstraint != trig2->tgisconstraint)
 				return false;
 			if (trig1->tgconstrrelid != trig2->tgconstrrelid)
+				return false;
+			if (trig1->tgconstraint != trig2->tgconstraint)
 				return false;
 			if (trig1->tgdeferrable != trig2->tgdeferrable)
 				return false;
