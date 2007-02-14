@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.357 2007/02/01 00:28:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.358 2007/02/14 18:46:08 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11037,7 +11037,7 @@ SELECT xmlforest(table_name, column_name) FROM information_schema.columns WHERE 
     <para>
      The <function>xmlpi</function> expression creates an XML
      processing instruction.  The content, if present, must not
-     contain the character sequence <literal>?&lt;</literal>.
+     contain the character sequence <literal>?&gt;</literal>.
     </para>
 
     <para>
