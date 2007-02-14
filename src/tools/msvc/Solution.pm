@@ -83,6 +83,7 @@ sub GenerateFiles {
 		}
 		print O "/* defines added by config steps */\n";
 		print O "#define USE_ASSERT_CHECKING 1\n" if ($self->{options}->{asserts});
+		print O "#define USE_INTEGER_DATETIMES 1\n" if ($self->{options}->{integer_datetimes});
 		print O "#define USE_LDAP 1\n" if ($self->{options}->{ldap});
 		print O "#define HAVE_LIBZ 1\n" if ($self->{options}->{zlib});
 		print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
