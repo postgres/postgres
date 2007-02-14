@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.263 2007/02/08 11:10:27 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.264 2007/02/14 05:00:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
+#include "access/xlogdefs.h"
 #include "access/xlogutils.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
@@ -48,78 +49,6 @@
 #include "utils/nabstime.h"
 #include "utils/pg_locale.h"
 
-
-/*
- *	Because O_DIRECT bypasses the kernel buffers, and because we never
- *	read those buffers except during crash recovery, it is a win to use
- *	it in all cases where we sync on each write().	We could allow O_DIRECT
- *	with fsync(), but because skipping the kernel buffer forces writes out
- *	quickly, it seems best just to use it for O_SYNC.  It is hard to imagine
- *	how fsync() could be a win for O_DIRECT compared to O_SYNC and O_DIRECT.
- *	Also, O_DIRECT is never enough to force data to the drives, it merely
- *	tries to bypass the kernel cache, so we still need O_SYNC or fsync().
- */
-#ifdef O_DIRECT
-#define PG_O_DIRECT				O_DIRECT
-#else
-#define PG_O_DIRECT				0
-#endif
-
-/*
- * This chunk of hackery attempts to determine which file sync methods
- * are available on the current platform, and to choose an appropriate
- * default method.	We assume that fsync() is always available, and that
- * configure determined whether fdatasync() is.
- */
-#if defined(O_SYNC)
-#define BARE_OPEN_SYNC_FLAG		O_SYNC
-#elif defined(O_FSYNC)
-#define BARE_OPEN_SYNC_FLAG		O_FSYNC
-#endif
-#ifdef BARE_OPEN_SYNC_FLAG
-#define OPEN_SYNC_FLAG			(BARE_OPEN_SYNC_FLAG | PG_O_DIRECT)
-#endif
-
-#if defined(O_DSYNC)
-#if defined(OPEN_SYNC_FLAG)
-/* O_DSYNC is distinct? */
-#if O_DSYNC != BARE_OPEN_SYNC_FLAG
-#define OPEN_DATASYNC_FLAG		(O_DSYNC | PG_O_DIRECT)
-#endif
-#else							/* !defined(OPEN_SYNC_FLAG) */
-/* Win32 only has O_DSYNC */
-#define OPEN_DATASYNC_FLAG		(O_DSYNC | PG_O_DIRECT)
-#endif
-#endif
-
-#if defined(OPEN_DATASYNC_FLAG)
-#define DEFAULT_SYNC_METHOD_STR "open_datasync"
-#define DEFAULT_SYNC_METHOD		SYNC_METHOD_OPEN
-#define DEFAULT_SYNC_FLAGBIT	OPEN_DATASYNC_FLAG
-#elif defined(HAVE_FDATASYNC)
-#define DEFAULT_SYNC_METHOD_STR "fdatasync"
-#define DEFAULT_SYNC_METHOD		SYNC_METHOD_FDATASYNC
-#define DEFAULT_SYNC_FLAGBIT	0
-#elif defined(HAVE_FSYNC_WRITETHROUGH_ONLY)
-#define DEFAULT_SYNC_METHOD_STR "fsync_writethrough"
-#define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC_WRITETHROUGH
-#define DEFAULT_SYNC_FLAGBIT	0
-#else
-#define DEFAULT_SYNC_METHOD_STR "fsync"
-#define DEFAULT_SYNC_METHOD		SYNC_METHOD_FSYNC
-#define DEFAULT_SYNC_FLAGBIT	0
-#endif
-
-
-/*
- * Limitation of buffer-alignment for direct IO depends on OS and filesystem,
- * but XLOG_BLCKSZ is assumed to be enough for it.
- */
-#ifdef O_DIRECT
-#define ALIGNOF_XLOG_BUFFER		XLOG_BLCKSZ
-#else
-#define ALIGNOF_XLOG_BUFFER		ALIGNOF_BUFFER
-#endif
 
 
 /* File path names (all relative to $PGDATA) */
