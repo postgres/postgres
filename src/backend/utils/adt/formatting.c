@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.123 2007/02/13 02:00:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.124 2007/02/14 05:10:55 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2007, PostgreSQL Global Development Group
@@ -2484,6 +2484,7 @@ dch_date(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			else
 			{
 				sscanf(inout, "%1d", &tmfc->d);
+				tmfc->d--;
 				return strspace_len(inout) + 1 + SKIP_THth(suf);
 			}
 			break;
