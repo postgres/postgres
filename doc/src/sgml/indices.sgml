@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.69 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.70 2007/02/14 20:47:15 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -355,6 +355,88 @@ CREATE INDEX test2_mm_idx ON test2 (major, minor);
    unless the usage of the table is extremely stylized.  See also
    <xref linkend="indexes-bitmap-scans"> for some discussion of the
    merits of different index setups.
+  </para>
+ </sect1>
+
+
+ <sect1 id="indexes-ordering">
+  <title>Indexes and <literal>ORDER BY</></title>
+
+  <indexterm zone="indexes-ordering">
+   <primary>index</primary>
+   <secondary>and <literal>ORDER BY</></secondary>
+  </indexterm>
+
+  <para>
+   In addition to simply finding the rows to be returned by a query,
+   an index may be able to deliver them in a specific sorted order.
+   This allows a query's <literal>ORDER BY</> specification to be met
+   without a separate sorting step.  Of the index types currently
+   supported by <productname>PostgreSQL</productname>, only B-tree
+   can produce sorted output &mdash; the other index types return
+   matching rows in an unspecified, implementation-dependent order.
+  </para>
+
+  <para>
+   The planner will consider satisfying an <literal>ORDER BY</> specification
+   either by scanning any available index that matches the specification,
+   or by scanning the table in physical order and doing an explicit
+   sort.  For a query that requires scanning a large fraction of the
+   table, the explicit sort is likely to be faster because it requires
+   less disk I/O due to a better-ordered access pattern.  Indexes are
+   more useful when only a few rows need be fetched.  An important
+   special case is <literal>ORDER BY</> in combination with
+   <literal>LIMIT</> <replaceable>n</>: an explicit sort will have to process
+   all the data to identify the first <replaceable>n</> rows, but if there is
+   an index matching the <literal>ORDER BY</> then the first <replaceable>n</>
+   rows can be retrieved directly, without scanning the remainder at all.
+  </para>
+
+  <para>
+   By default, B-tree indexes store their entries in ascending order
+   with nulls last.  This means that a forward scan of an index on a
+   column <literal>x</> produces output satisfying <literal>ORDER BY x</>
+   (or more verbosely, <literal>ORDER BY x ASC NULLS LAST</>).  The
+   index can also be scanned backward, producing output satisfying
+   <literal>ORDER BY x DESC</>
+   (or more verbosely, <literal>ORDER BY x DESC NULLS FIRST</>, since
+   <literal>NULLS FIRST</> is the default for <literal>ORDER BY DESC</>).
+  </para>
+
+  <para>
+   You can adjust the ordering of a B-tree index by including the
+   options <literal>ASC</>, <literal>DESC</>, <literal>NULLS FIRST</>,
+   and/or <literal>NULLS LAST</> when creating the index; for example:
+<programlisting>
+CREATE INDEX test2_info_nulls_low ON test2 (info NULLS FIRST);
+CREATE INDEX test3_desc_index ON test3 (id DESC NULLS LAST);
+</programlisting>
+   An index stored in ascending order with nulls first can satisfy
+   either <literal>ORDER BY x ASC NULLS FIRST</> or
+   <literal>ORDER BY x DESC NULLS LAST</> depending on which direction
+   it is scanned in.
+  </para>
+
+  <para>
+   You might wonder why bother providing all four options, when two
+   options together with the possibility of backward scan would cover
+   all the variants of <literal>ORDER BY</>.  In single-column indexes
+   the options are indeed redundant, but in multicolumn indexes they can be
+   useful.  Consider a two-column index on <literal>(x, y)</>: this can
+   satisfy <literal>ORDER BY x, y</> if we scan forward, or
+   <literal>ORDER BY x DESC, y DESC</> if we scan backward.
+   But it might be that the application frequently needs to use
+   <literal>ORDER BY x ASC, y DESC</>.  There is no way to get that
+   ordering from a regular index, but it is possible if the index is defined
+   as <literal>(x ASC, y DESC)</> or <literal>(x DESC, y ASC)</>.
+  </para>
+
+  <para>
+   Obviously, indexes with non-default sort orderings are a fairly
+   specialized feature, but sometimes they can produce tremendous
+   speedups for certain queries.  Whether it's worth keeping such an
+   index depends on how often you use queries that require a special
+   sort ordering.
   </para>
  </sect1>
 
@@ -798,7 +880,7 @@ CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
    An index definition can specify an <firstterm>operator
    class</firstterm> for each column of an index.
 <synopsis>
-CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <replaceable>opclass</replaceable> <optional>, ...</optional>);
+CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> (<replaceable>column</replaceable> <replaceable>opclass</replaceable> <optional><replaceable>sort options</replaceable></optional> <optional>, ...</optional>);
 </synopsis>
    The operator class identifies the operators to be used by the index
    for that column.  For example, a B-tree index on the type <type>int4</type>
@@ -810,7 +892,10 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
    index behavior.  For example, we might want to sort a complex-number data
    type either by absolute value or by real part.  We could do this by
    defining two operator classes for the data type and then selecting
-   the proper class when making an index.
+   the proper class when making an index.  The operator class determines
+   the basic sort ordering (which can then be modified by adding sort options
+   <literal>ASC</>/<literal>DESC</> and/or
+   <literal>NULLS FIRST</>/<literal>NULLS LAST</>).
   </para>
 
   <para>
