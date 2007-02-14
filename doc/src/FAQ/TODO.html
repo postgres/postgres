@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue Feb 13 21:49:31 EST 2007
+Last updated:           Tue Feb 13 23:19:33 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -414,6 +414,9 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Invalidate prepared queries, like INSERT, when the table definition
   is altered
+  </li><li>Improve logging of prepared statements recovered during startup
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php">http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php</a>
+</p>
   </li><li>Allow LISTEN/NOTIFY to store info in memory rather than tables?
 <p>  Currently LISTEN/NOTIFY information is stored in pg_listener. Storing
   such information in memory would improve performance.

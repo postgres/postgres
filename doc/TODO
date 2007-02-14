@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Feb 13 21:49:31 EST 2007
+Last updated:		Tue Feb 13 23:19:33 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -457,6 +457,10 @@ SQL Commands
 
 * Invalidate prepared queries, like INSERT, when the table definition
   is altered
+* Improve logging of prepared statements recovered during startup
+
+  http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php
+
 * Allow LISTEN/NOTIFY to store info in memory rather than tables?
 
   Currently LISTEN/NOTIFY information is stored in pg_listener. Storing
