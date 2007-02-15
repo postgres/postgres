@@ -38,7 +38,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.37 2007/02/02 00:07:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.38 2007/02/15 03:07:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,6 +167,36 @@ ExecResult(ResultState *node)
 }
 
 /* ----------------------------------------------------------------
+ *		ExecResultMarkPos
+ * ----------------------------------------------------------------
+ */
+void
+ExecResultMarkPos(ResultState *node)
+{
+	PlanState  *outerPlan = outerPlanState(node);
+
+	if (outerPlan != NULL)
+		ExecMarkPos(outerPlan);
+	else
+		elog(DEBUG2, "Result nodes do not support mark/restore");
+}
+
+/* ----------------------------------------------------------------
+ *		ExecResultRestrPos
+ * ----------------------------------------------------------------
+ */
+void
+ExecResultRestrPos(ResultState *node)
+{
+	PlanState  *outerPlan = outerPlanState(node);
+
+	if (outerPlan != NULL)
+		ExecRestrPos(outerPlan);
+	else
+		elog(ERROR, "Result nodes do not support mark/restore");
+}
+
+/* ----------------------------------------------------------------
  *		ExecInitResult
  *
  *		Creates the run-time state information for the result node
@@ -180,8 +210,8 @@ ExecInitResult(Result *node, EState *estate, int eflags)
 	ResultState *resstate;
 
 	/* check for unsupported flags */
-	Assert(!(eflags & EXEC_FLAG_MARK));
-	Assert(!(eflags & EXEC_FLAG_BACKWARD) || outerPlan(node) != NULL);
+	Assert(!(eflags & (EXEC_FLAG_MARK | EXEC_FLAG_BACKWARD)) ||
+		   outerPlan(node) != NULL);
 
 	/*
 	 * create state structure
