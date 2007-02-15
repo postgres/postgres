@@ -142,4 +142,5 @@ CREATE VIEW xmlview7 AS SELECT xmlroot(xml '<foo/>', version no value, standalon
 CREATE VIEW xmlview8 AS SELECT xmlserialize(content 'good' as char(10));
 CREATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as text);
 
-SELECT table_name, view_definition FROM information_schema.views WHERE table_name LIKE 'xmlview%';
+SELECT table_name, view_definition FROM information_schema.views
+  WHERE table_name LIKE 'xmlview%' ORDER BY 1;

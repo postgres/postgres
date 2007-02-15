@@ -386,7 +386,8 @@ CREATE VIEW xmlview6 AS SELECT xmlpi(name foo, 'bar');
 CREATE VIEW xmlview7 AS SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
 CREATE VIEW xmlview8 AS SELECT xmlserialize(content 'good' as char(10));
 CREATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as text);
-SELECT table_name, view_definition FROM information_schema.views WHERE table_name LIKE 'xmlview%';
+SELECT table_name, view_definition FROM information_schema.views
+  WHERE table_name LIKE 'xmlview%' ORDER BY 1;
  table_name |                                                        view_definition                                                         
 ------------+--------------------------------------------------------------------------------------------------------------------------------
  xmlview1   | SELECT xmlcomment('test'::text) AS xmlcomment;
