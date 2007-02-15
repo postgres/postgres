@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.31 2007/01/16 13:28:56 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.32 2007/02/15 23:23:23 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,9 @@
 #include "postmaster/postmaster.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
+#include "storage/pmsignal.h"
 #include "storage/proc.h"
+#include "storage/procarray.h"
 #include "storage/sinval.h"
 #include "tcop/tcopprot.h"
 #include "utils/flatfiles.h"
@@ -49,6 +51,9 @@
 #include "utils/ps_status.h"
 #include "utils/syscache.h"
 
+
+static volatile sig_atomic_t got_SIGHUP = false;
+static volatile sig_atomic_t avlauncher_shutdown_request = false;
 
 /*
  * GUC parameters
@@ -65,11 +70,8 @@ int			autovacuum_vac_cost_delay;
 int			autovacuum_vac_cost_limit;
 
 /* Flag to tell if we are in the autovacuum daemon process */
-static bool am_autovacuum = false;
-
-/* Last time autovac daemon started/stopped (only valid in postmaster) */
-static time_t last_autovac_start_time = 0;
-static time_t last_autovac_stop_time = 0;
+static bool am_autovacuum_launcher = false;
+static bool am_autovacuum_worker = false;
 
 /* Comparison point for determining whether freeze_max_age is exceeded */
 static TransactionId recentXid;
@@ -101,11 +103,21 @@ typedef struct autovac_table
 	int			vacuum_cost_limit;
 } autovac_table;
 
+typedef struct
+{
+	Oid		process_db;			/* OID of database to process */
+	int		worker_pid;			/* PID of the worker process, if any */
+} AutoVacuumShmemStruct;
+
+static AutoVacuumShmemStruct *AutoVacuumShmem;
 
 #ifdef EXEC_BACKEND
-static pid_t autovac_forkexec(void);
+static pid_t avlauncher_forkexec(void);
+static pid_t avworker_forkexec(void);
 #endif
-NON_EXEC_STATIC void AutoVacMain(int argc, char *argv[]);
+NON_EXEC_STATIC void AutoVacWorkerMain(int argc, char *argv[]);
+NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]);
+
 static void do_autovacuum(PgStat_StatDBEntry *dbentry);
 static List *autovac_get_database_list(void);
 static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
@@ -116,47 +128,59 @@ static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 static void autovacuum_do_vac_analyze(Oid relid, bool dovacuum,
 						  bool doanalyze, int freeze_min_age);
 static void autovac_report_activity(VacuumStmt *vacstmt, Oid relid);
+static void avl_sighup_handler(SIGNAL_ARGS);
+static void avlauncher_shutdown(SIGNAL_ARGS);
+static void avl_quickdie(SIGNAL_ARGS);
 
 
-/*
- * Main entry point for autovacuum controller process.
- *
- * This code is heavily based on pgarch.c, q.v.
- */
-int
-autovac_start(void)
-{
-	time_t		curtime;
-	pid_t		AutoVacPID;
 
-	/*
-	 * Do nothing if too soon since last autovacuum exit.  This limits how
-	 * often the daemon runs.  Since the time per iteration can be quite
-	 * variable, it seems more useful to measure/control the time since last
-	 * subprocess exit than since last subprocess launch.
-	 *
-	 * However, we *also* check the time since last subprocess launch; this
-	 * prevents thrashing under fork-failure conditions.
-	 *
-	 * Note that since we will be re-called from the postmaster main loop, we
-	 * will get another chance later if we do nothing now.
-	 *
-	 * XXX todo: implement sleep scale factor that existed in contrib code.
-	 */
-
-	curtime = time(NULL);
-	if ((unsigned int) (curtime - last_autovac_stop_time) <
-		(unsigned int) autovacuum_naptime)
-		return 0;
-
-	if ((unsigned int) (curtime - last_autovac_start_time) <
-		(unsigned int) autovacuum_naptime)
-		return 0;
-
-	last_autovac_start_time = curtime;
+/********************************************************************
+ *                    AUTOVACUUM LAUNCHER CODE
+ ********************************************************************/
 
 #ifdef EXEC_BACKEND
-	switch ((AutoVacPID = autovac_forkexec()))
+/*
+ * forkexec routine for the autovacuum launcher process.
+ *
+ * Format up the arglist, then fork and exec.
+ */
+static pid_t
+avlauncher_forkexec(void)
+{
+	char	   *av[10];
+	int			ac = 0;
+
+	av[ac++] = "postgres";
+	av[ac++] = "--forkavlauncher";
+	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
+	av[ac] = NULL;
+
+	Assert(ac < lengthof(av));
+
+	return postmaster_forkexec(ac, av);
+}
+
+/*
+ * We need this set from the outside, before InitProcess is called
+ */
+void
+AutovacuumLauncherIAm(void)
+{
+	am_autovacuum_launcher = true;
+}
+#endif
+
+/*
+ * Main entry point for autovacuum launcher process, to be called from the
+ * postmaster.
+ */
+int
+StartAutoVacLauncher(void)
+{
+	pid_t		AutoVacPID;
+
+#ifdef EXEC_BACKEND
+	switch ((AutoVacPID = avlauncher_forkexec()))
 #else
 	switch ((AutoVacPID = fork_process()))
 #endif
@@ -175,7 +199,7 @@ autovac_start(void)
 			/* Lose the postmaster's on-exit routines */
 			on_exit_reset();
 
-			AutoVacMain(0, NULL);
+			AutoVacLauncherMain(0, NULL);
 			break;
 #endif
 		default:
@@ -187,28 +211,362 @@ autovac_start(void)
 }
 
 /*
- * autovac_stopped --- called by postmaster when subprocess exit is detected
+ * Main loop for the autovacuum launcher process.
  */
-void
-autovac_stopped(void)
+NON_EXEC_STATIC void
+AutoVacLauncherMain(int argc, char *argv[])
 {
-	last_autovac_stop_time = time(NULL);
+	sigjmp_buf	local_sigjmp_buf;
+	List	   *dblist;
+	bool		for_xid_wrap;
+	autovac_dbase *db;
+	MemoryContext	avlauncher_cxt;
+
+	/* we are a postmaster subprocess now */
+	IsUnderPostmaster = true;
+	am_autovacuum_launcher = true;
+
+	/* reset MyProcPid */
+	MyProcPid = getpid();
+
+	/* Identify myself via ps */
+	init_ps_display("autovacuum launcher process", "", "", "");
+
+	SetProcessingMode(InitProcessing);
+
+	/*
+	 * If possible, make this process a group leader, so that the postmaster
+	 * can signal any child processes too.  (autovacuum probably never has
+	 * any child processes, but for consistency we make all postmaster
+	 * child processes do this.)
+	 */
+#ifdef HAVE_SETSID
+	if (setsid() < 0)
+		elog(FATAL, "setsid() failed: %m");
+#endif
+
+	/*
+	 * Set up signal handlers.	Since this is a "dummy" process, it has
+	 * particular signal requirements -- no deadlock checker or sinval
+	 * catchup, for example.
+	 *
+	 * XXX It may be a good idea to receive signals when an avworker process
+	 * finishes.
+	 */
+	pqsignal(SIGHUP, avl_sighup_handler);
+
+	pqsignal(SIGINT, SIG_IGN);
+	pqsignal(SIGTERM, avlauncher_shutdown);
+	pqsignal(SIGQUIT, avl_quickdie);
+	pqsignal(SIGALRM, SIG_IGN);
+
+	pqsignal(SIGPIPE, SIG_IGN);
+	pqsignal(SIGUSR1, SIG_IGN);
+	/* We don't listen for async notifies */
+	pqsignal(SIGUSR2, SIG_IGN);
+	pqsignal(SIGFPE, FloatExceptionHandler);
+	pqsignal(SIGCHLD, SIG_DFL);
+
+	/* Early initialization */
+	BaseInit();
+
+	/*
+	 * Create a per-backend PGPROC struct in shared memory, except in the
+	 * EXEC_BACKEND case where this was done in SubPostmasterMain. We must do
+	 * this before we can use LWLocks (and in the EXEC_BACKEND case we already
+	 * had to do some stuff with LWLocks).
+	 */
+#ifndef EXEC_BACKEND
+	InitDummyProcess();
+#endif
+
+	/*
+	 * Create a memory context that we will do all our work in.  We do this so
+	 * that we can reset the context during error recovery and thereby avoid
+	 * possible memory leaks.
+	 */
+	avlauncher_cxt = AllocSetContextCreate(TopMemoryContext,
+										   "Autovacuum Launcher",
+										   ALLOCSET_DEFAULT_MINSIZE,
+										   ALLOCSET_DEFAULT_INITSIZE,
+										   ALLOCSET_DEFAULT_MAXSIZE);
+	MemoryContextSwitchTo(avlauncher_cxt);
+
+
+	/*
+	 * If an exception is encountered, processing resumes here.
+	 *
+	 * This code is heavily based on bgwriter.c, q.v.
+	 */
+	if (sigsetjmp(local_sigjmp_buf, 1) != 0)
+	{
+		/* since not using PG_TRY, must reset error stack by hand */
+		error_context_stack = NULL;
+
+		/* Prevents interrupts while cleaning up */
+		HOLD_INTERRUPTS();
+
+		/* Report the error to the server log */
+		EmitErrorReport();
+
+		/*
+		 * These operations are really just a minimal subset of
+		 * AbortTransaction().  We don't have very many resources to worry
+		 * about, but we do have LWLocks.
+		 */
+		LWLockReleaseAll();
+		AtEOXact_Files();
+
+		/*
+		 * Now return to normal top-level context and clear ErrorContext for
+		 * next time.
+		 */
+		MemoryContextSwitchTo(avlauncher_cxt);
+		FlushErrorState();
+
+		/* Flush any leaked data in the top-level context */
+		MemoryContextResetAndDeleteChildren(avlauncher_cxt);
+
+		/* Make sure pgstat also considers our stat data as gone */
+		pgstat_clear_snapshot();
+
+		/* Now we can allow interrupts again */
+		RESUME_INTERRUPTS();
+
+		/*
+		 * Sleep at least 1 second after any error.  We don't want to be
+		 * filling the error logs as fast as we can.
+		 */
+		pg_usleep(1000000L);
+	}
+
+	/* We can now handle ereport(ERROR) */
+	PG_exception_stack = &local_sigjmp_buf;
+
+	ereport(LOG,
+			(errmsg("autovacuum launcher started")));
+
+	PG_SETMASK(&UnBlockSig);
+
+	/*
+	 * take a nap before executing the first iteration, unless we were
+	 * requested an emergency run.
+	 */
+	if (autovacuum_start_daemon)
+		pg_usleep(autovacuum_naptime * 1000000L); 
+
+	for (;;)
+	{
+		TransactionId xidForceLimit;
+		ListCell *cell;
+		int		worker_pid;
+
+		/*
+		 * Emergency bailout if postmaster has died.  This is to avoid the
+		 * necessity for manual cleanup of all postmaster children.
+		 */
+		if (!PostmasterIsAlive(true))
+			exit(1);
+
+		if (avlauncher_shutdown_request)
+			break;
+
+		if (got_SIGHUP)
+		{
+			got_SIGHUP = false;
+			ProcessConfigFile(PGC_SIGHUP);
+		}
+
+		/*
+		 * if there's a worker already running, sleep until it
+		 * disappears.
+		 */
+		LWLockAcquire(AutovacuumLock, LW_SHARED);
+		worker_pid = AutoVacuumShmem->worker_pid;
+		LWLockRelease(AutovacuumLock);
+
+		if (worker_pid != 0)
+		{
+			PGPROC *proc = BackendPidGetProc(worker_pid);
+
+			if (proc != NULL && proc->isAutovacuum)
+				goto sleep;
+			else
+			{
+				/*
+				 * if the worker is not really running (or it's a process
+				 * that's not an autovacuum worker), remove the PID from shmem.
+				 * This should not happen, because either the worker exits
+				 * cleanly, in which case it'll remove the PID, or it dies, in
+				 * which case postmaster will cause a system reset cycle.
+				 */
+				LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
+				worker_pid = 0;
+				LWLockRelease(AutovacuumLock);
+			}
+		}
+
+		/* Get a list of databases */
+		dblist = autovac_get_database_list();
+
+		/*
+		 * Determine the oldest datfrozenxid/relfrozenxid that we will allow
+		 * to pass without forcing a vacuum.  (This limit can be tightened for
+		 * particular tables, but not loosened.)
+		 */
+		recentXid = ReadNewTransactionId();
+		xidForceLimit = recentXid - autovacuum_freeze_max_age;
+		/* ensure it's a "normal" XID, else TransactionIdPrecedes misbehaves */
+		if (xidForceLimit < FirstNormalTransactionId)
+			xidForceLimit -= FirstNormalTransactionId;
+
+		/*
+		 * Choose a database to connect to.  We pick the database that was least
+		 * recently auto-vacuumed, or one that needs vacuuming to prevent Xid
+		 * wraparound-related data loss.  If any db at risk of wraparound is
+		 * found, we pick the one with oldest datfrozenxid, independently of
+		 * autovacuum times.
+		 *
+		 * Note that a database with no stats entry is not considered, except for
+		 * Xid wraparound purposes.  The theory is that if no one has ever
+		 * connected to it since the stats were last initialized, it doesn't need
+		 * vacuuming.
+		 *
+		 * XXX This could be improved if we had more info about whether it needs
+		 * vacuuming before connecting to it.  Perhaps look through the pgstats
+		 * data for the database's tables?  One idea is to keep track of the
+		 * number of new and dead tuples per database in pgstats.  However it
+		 * isn't clear how to construct a metric that measures that and not cause
+		 * starvation for less busy databases.
+		 */
+		db = NULL;
+		for_xid_wrap = false;
+		foreach(cell, dblist)
+		{
+			autovac_dbase *tmp = lfirst(cell);
+
+			/* Find pgstat entry if any */
+			tmp->entry = pgstat_fetch_stat_dbentry(tmp->oid);
+
+			/* Check to see if this one is at risk of wraparound */
+			if (TransactionIdPrecedes(tmp->frozenxid, xidForceLimit))
+			{
+				if (db == NULL ||
+					TransactionIdPrecedes(tmp->frozenxid, db->frozenxid))
+					db = tmp;
+				for_xid_wrap = true;
+				continue;
+			}
+			else if (for_xid_wrap)
+				continue;			/* ignore not-at-risk DBs */
+
+			/*
+			 * Otherwise, skip a database with no pgstat entry; it means it
+			 * hasn't seen any activity.
+			 */
+			if (!tmp->entry)
+				continue;
+
+			/*
+			 * Remember the db with oldest autovac time.  (If we are here,
+			 * both tmp->entry and db->entry must be non-null.)
+			 */
+			if (db == NULL ||
+				tmp->entry->last_autovac_time < db->entry->last_autovac_time)
+				db = tmp;
+		}
+
+		/* Found a database -- process it */
+		if (db != NULL)
+		{
+			LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
+			AutoVacuumShmem->process_db = db->oid;
+			LWLockRelease(AutovacuumLock);
+
+			SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_WORKER);
+		}
+		
+sleep:
+		/*
+		 * in emergency mode, exit immediately so that the postmaster can
+		 * request another run right away if needed.
+		 *
+		 * XXX -- maybe it would be better to handle this inside the launcher
+		 * itself.
+		 */
+		if (!autovacuum_start_daemon)
+			break;
+
+		/* have pgstat read the file again next time */
+		pgstat_clear_snapshot();
+
+		/* now sleep until the next autovac iteration */
+		pg_usleep(autovacuum_naptime * 1000000L); 
+	}
+
+	/* Normal exit from the autovac launcher is here */
+	ereport(LOG,
+			(errmsg("autovacuum launcher shutting down")));
+
+	proc_exit(0);		/* done */
 }
+
+/* SIGHUP: set flag to re-read config file at next convenient time */
+static void
+avl_sighup_handler(SIGNAL_ARGS)
+{
+	got_SIGHUP = true;
+}
+
+static void
+avlauncher_shutdown(SIGNAL_ARGS)
+{
+	avlauncher_shutdown_request = true;
+}
+
+/*
+ * avl_quickdie occurs when signalled SIGQUIT from postmaster.
+ *
+ * Some backend has bought the farm, so we need to stop what we're doing
+ * and exit.
+ */
+static void
+avl_quickdie(SIGNAL_ARGS)
+{
+	PG_SETMASK(&BlockSig);
+
+	/*
+	 * DO NOT proc_exit() -- we're here because shared memory may be
+	 * corrupted, so we don't want to try to clean up our transaction. Just
+	 * nail the windows shut and get out of town.
+	 *
+	 * Note we do exit(2) not exit(0).	This is to force the postmaster into a
+	 * system reset cycle if some idiot DBA sends a manual SIGQUIT to a random
+	 * backend.  This is necessary precisely because we don't clean up our
+	 * shared memory state.
+	 */
+	exit(2);
+}
+
+
+/********************************************************************
+ *                    AUTOVACUUM WORKER CODE
+ ********************************************************************/
 
 #ifdef EXEC_BACKEND
 /*
- * autovac_forkexec()
+ * forkexec routines for the autovacuum worker.
  *
- * Format up the arglist for the autovacuum process, then fork and exec.
+ * Format up the arglist, then fork and exec.
  */
 static pid_t
-autovac_forkexec(void)
+avworker_forkexec(void)
 {
 	char	   *av[10];
 	int			ac = 0;
 
 	av[ac++] = "postgres";
-	av[ac++] = "--forkautovac";
+	av[ac++] = "--forkavworker";
 	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
 	av[ac] = NULL;
 
@@ -221,34 +579,71 @@ autovac_forkexec(void)
  * We need this set from the outside, before InitProcess is called
  */
 void
-AutovacuumIAm(void)
+AutovacuumWorkerIAm(void)
 {
-	am_autovacuum = true;
+	am_autovacuum_worker = true;
 }
-#endif   /* EXEC_BACKEND */
+#endif
 
 /*
- * AutoVacMain
+ * Main entry point for autovacuum worker process.
+ *
+ * This code is heavily based on pgarch.c, q.v.
+ */
+int
+StartAutoVacWorker(void)
+{
+	pid_t		worker_pid;
+
+#ifdef EXEC_BACKEND
+	switch ((worker_pid = avworker_forkexec()))
+#else
+	switch ((worker_pid = fork_process()))
+#endif
+	{
+		case -1:
+			ereport(LOG,
+					(errmsg("could not fork autovacuum process: %m")));
+			return 0;
+
+#ifndef EXEC_BACKEND
+		case 0:
+			/* in postmaster child ... */
+			/* Close the postmaster's sockets */
+			ClosePostmasterPorts(false);
+
+			/* Lose the postmaster's on-exit routines */
+			on_exit_reset();
+
+			AutoVacWorkerMain(0, NULL);
+			break;
+#endif
+		default:
+			return (int) worker_pid;
+	}
+
+	/* shouldn't get here */
+	return 0;
+}
+
+/*
+ * AutoVacWorkerMain
  */
 NON_EXEC_STATIC void
-AutoVacMain(int argc, char *argv[])
+AutoVacWorkerMain(int argc, char *argv[])
 {
-	ListCell   *cell;
-	List	   *dblist;
-	autovac_dbase *db;
-	TransactionId xidForceLimit;
-	bool		for_xid_wrap;
 	sigjmp_buf	local_sigjmp_buf;
+	Oid			dbid;
 
 	/* we are a postmaster subprocess now */
 	IsUnderPostmaster = true;
-	am_autovacuum = true;
+	am_autovacuum_worker = true;
 
 	/* reset MyProcPid */
 	MyProcPid = getpid();
 
 	/* Identify myself via ps */
-	init_ps_display("autovacuum process", "", "", "");
+	init_ps_display("autovacuum worker process", "", "", "");
 
 	SetProcessingMode(InitProcessing);
 
@@ -335,78 +730,24 @@ AutoVacMain(int argc, char *argv[])
 	 */
 	SetConfigOption("zero_damaged_pages", "false", PGC_SUSET, PGC_S_OVERRIDE);
 
-	/* Get a list of databases */
-	dblist = autovac_get_database_list();
-
 	/*
-	 * Determine the oldest datfrozenxid/relfrozenxid that we will allow
-	 * to pass without forcing a vacuum.  (This limit can be tightened for
-	 * particular tables, but not loosened.)
+	 * Get the database Id we're going to work on, and announce our PID
+	 * in the shared memory area.  We remove the database OID immediately
+	 * from the shared memory area.
 	 */
-	recentXid = ReadNewTransactionId();
-	xidForceLimit = recentXid - autovacuum_freeze_max_age;
-	/* ensure it's a "normal" XID, else TransactionIdPrecedes misbehaves */
-	if (xidForceLimit < FirstNormalTransactionId)
-		xidForceLimit -= FirstNormalTransactionId;
+	LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
 
-	/*
-	 * Choose a database to connect to.  We pick the database that was least
-	 * recently auto-vacuumed, or one that needs vacuuming to prevent Xid
-	 * wraparound-related data loss.  If any db at risk of wraparound is
-	 * found, we pick the one with oldest datfrozenxid,
-	 * independently of autovacuum times.
-	 *
-	 * Note that a database with no stats entry is not considered, except for
-	 * Xid wraparound purposes.  The theory is that if no one has ever
-	 * connected to it since the stats were last initialized, it doesn't need
-	 * vacuuming.
-	 *
-	 * XXX This could be improved if we had more info about whether it needs
-	 * vacuuming before connecting to it.  Perhaps look through the pgstats
-	 * data for the database's tables?  One idea is to keep track of the
-	 * number of new and dead tuples per database in pgstats.  However it
-	 * isn't clear how to construct a metric that measures that and not cause
-	 * starvation for less busy databases.
-	 */
-	db = NULL;
-	for_xid_wrap = false;
-	foreach(cell, dblist)
+	dbid = AutoVacuumShmem->process_db;
+	AutoVacuumShmem->process_db = InvalidOid;
+	AutoVacuumShmem->worker_pid = MyProcPid;
+
+	LWLockRelease(AutovacuumLock);
+
+	if (OidIsValid(dbid))
 	{
-		autovac_dbase *tmp = lfirst(cell);
+		char	*dbname;
+		PgStat_StatDBEntry *dbentry;
 
-		/* Find pgstat entry if any */
-		tmp->entry = pgstat_fetch_stat_dbentry(tmp->oid);
-
-		/* Check to see if this one is at risk of wraparound */
-		if (TransactionIdPrecedes(tmp->frozenxid, xidForceLimit))
-		{
-			if (db == NULL ||
-				TransactionIdPrecedes(tmp->frozenxid, db->frozenxid))
-				db = tmp;
-			for_xid_wrap = true;
-			continue;
-		}
-		else if (for_xid_wrap)
-			continue;			/* ignore not-at-risk DBs */
-
-		/*
-		 * Otherwise, skip a database with no pgstat entry; it means it
-		 * hasn't seen any activity.
-		 */
-		if (!tmp->entry)
-			continue;
-
-		/*
-		 * Remember the db with oldest autovac time.  (If we are here,
-		 * both tmp->entry and db->entry must be non-null.)
-		 */
-		if (db == NULL ||
-			tmp->entry->last_autovac_time < db->entry->last_autovac_time)
-			db = tmp;
-	}
-
-	if (db)
-	{
 		/*
 		 * Report autovac startup to the stats collector.  We deliberately do
 		 * this before InitPostgres, so that the last_autovac_time will get
@@ -415,7 +756,7 @@ AutoVacMain(int argc, char *argv[])
 		 * database, rather than making any progress on stuff it can connect
 		 * to.
 		 */
-		pgstat_report_autovac(db->oid);
+		pgstat_report_autovac(dbid);
 
 		/*
 		 * Connect to the selected database
@@ -423,11 +764,11 @@ AutoVacMain(int argc, char *argv[])
 		 * Note: if we have selected a just-deleted database (due to using
 		 * stale stats info), we'll fail and exit here.
 		 */
-		InitPostgres(db->name, NULL);
+		InitPostgres(NULL, dbid, NULL, &dbname);
 		SetProcessingMode(NormalProcessing);
-		set_ps_display(db->name, false);
+		set_ps_display(dbname, false);
 		ereport(DEBUG1,
-				(errmsg("autovacuum: processing database \"%s\"", db->name)));
+				(errmsg("autovacuum: processing database \"%s\"", dbname)));
 
 		/* Create the memory context where cross-transaction state is stored */
 		AutovacMemCxt = AllocSetContextCreate(TopMemoryContext,
@@ -436,13 +777,21 @@ AutoVacMain(int argc, char *argv[])
 											  ALLOCSET_DEFAULT_INITSIZE,
 											  ALLOCSET_DEFAULT_MAXSIZE);
 
-		/*
-		 * And do an appropriate amount of work
-		 */
-		do_autovacuum(db->entry);
+		/* And do an appropriate amount of work */
+		recentXid = ReadNewTransactionId();
+		dbentry = pgstat_fetch_stat_dbentry(dbid);
+		do_autovacuum(dbentry);
 	}
 
-	/* One iteration done, go away */
+	/*
+	 * Now remove our PID from shared memory, so that the launcher can start
+	 * another worker as soon as appropriate.
+	 */
+	LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
+	AutoVacuumShmem->worker_pid = 0;
+	LWLockRelease(AutovacuumLock);
+
+	/* All done, go away */
 	proc_exit(0);
 }
 
@@ -450,7 +799,7 @@ AutoVacMain(int argc, char *argv[])
  * autovac_get_database_list
  *
  *		Return a list of all databases.  Note we cannot use pg_database,
- *		because we aren't connected yet; we use the flat database file.
+ *		because we aren't connected; we use the flat database file.
  */
 static List *
 autovac_get_database_list(void)
@@ -912,7 +1261,7 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 	vacstmt->analyze = doanalyze;
 	vacstmt->freeze_min_age = freeze_min_age;
 	vacstmt->verbose = false;
-	vacstmt->relation = NULL;	/* not used since we pass relids list */
+	vacstmt->relation = NULL;	/* not used since we pass a relids list */
 	vacstmt->va_cols = NIL;
 
 	/* Let pgstat know what we're doing */
@@ -1011,11 +1360,52 @@ autovac_init(void)
 }
 
 /*
- * IsAutoVacuumProcess
- *		Return whether this process is an autovacuum process.
+ * IsAutoVacuum functions
+ *		Return whether this is either a launcher autovacuum process or a worker
+ *		process.
  */
 bool
-IsAutoVacuumProcess(void)
+IsAutoVacuumLauncherProcess(void)
 {
-	return am_autovacuum;
+	return am_autovacuum_launcher;
+}
+
+bool
+IsAutoVacuumWorkerProcess(void)
+{
+	return am_autovacuum_worker;
+}
+
+
+/*
+ * AutoVacuumShmemSize
+ * 		Compute space needed for autovacuum-related shared memory
+ */
+Size
+AutoVacuumShmemSize(void)
+{
+	return sizeof(AutoVacuumShmemStruct);
+}
+
+/*
+ * AutoVacuumShmemInit
+ *		Allocate and initialize autovacuum-related shared memory
+ */
+void
+AutoVacuumShmemInit(void)
+{
+	bool        found;
+
+	AutoVacuumShmem = (AutoVacuumShmemStruct *)
+		ShmemInitStruct("AutoVacuum Data",
+						AutoVacuumShmemSize(),
+						&found);
+	if (AutoVacuumShmem == NULL)
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("not enough shared memory for autovacuum")));
+	if (found)
+		return;                 /* already initialized */
+
+	MemSet(AutoVacuumShmem, 0, sizeof(AutoVacuumShmemStruct));
 }

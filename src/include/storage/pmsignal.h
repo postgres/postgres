@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/pmsignal.h,v 1.16 2007/01/05 22:19:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/pmsignal.h,v 1.17 2007/02/15 23:23:23 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,7 +26,8 @@ typedef enum
 	PMSIGNAL_WAKEN_CHILDREN,	/* send a SIGUSR1 signal to all backends */
 	PMSIGNAL_WAKEN_ARCHIVER,	/* send a NOTIFY signal to xlog archiver */
 	PMSIGNAL_ROTATE_LOGFILE,	/* send SIGUSR1 to syslogger to rotate logfile */
-	PMSIGNAL_START_AUTOVAC,		/* start an autovacuum iteration */
+	PMSIGNAL_START_AUTOVAC_LAUNCHER, /* start an autovacuum launcher */
+	PMSIGNAL_START_AUTOVAC_WORKER, /* start an autovacuum worker */
 
 	NUM_PMSIGNALS				/* Must be last value of enum! */
 } PMSignalReason;

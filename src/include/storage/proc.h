@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.93 2007/01/16 13:28:57 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.94 2007/02/15 23:23:23 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ typedef struct PROC_HDR
  * We set aside some extra PGPROC structures for "dummy" processes,
  * ie things that aren't full-fledged backends but need shmem access.
  */
-#define NUM_DUMMY_PROCS		2
+#define NUM_DUMMY_PROCS		3
 
 
 /* configurable options */

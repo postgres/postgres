@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.230 2007/02/10 14:58:54 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.231 2007/02/15 23:23:22 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -449,7 +449,7 @@ BootstrapMain(int argc, char *argv[])
 	 * Do backend-like initialization for bootstrap mode
 	 */
 	InitProcess();
-	(void) InitPostgres(dbname, NULL);
+	(void) InitPostgres(dbname, InvalidOid, NULL, NULL);
 
 	/*
 	 * In NOP mode, all we really want to do is create shared memory and
