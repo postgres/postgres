@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.125 2007/02/16 03:39:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.126 2007/02/16 10:55:47 petere Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2007, PostgreSQL Global Development Group
@@ -3561,7 +3561,7 @@ do_to_timestamp(text *date_txt, text *fmt,
 		 */
 		if (tmfc.iyear)
 		{
-			int j0;		// zeroth day of the ISO year, in Julian
+			int j0;		/* zeroth day of the ISO year, in Julian */
 			j0 = isoweek2j(tmfc.iyear, 1) - 1;
 
 			j2date(j0 + tmfc.ddd, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
