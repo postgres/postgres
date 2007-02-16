@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.375 2007/02/16 02:59:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.376 2007/02/16 17:07:00 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -105,6 +105,11 @@ extern bool fullPageWrites;
 #ifdef TRACE_SORT
 extern bool trace_sort;
 #endif
+
+#ifdef USE_SSL
+extern char *SSLCipherSuites;
+#endif
+
 
 static const char *assign_log_destination(const char *value,
 					   bool doit, GucSource source);
@@ -2314,6 +2319,7 @@ static struct config_string ConfigureNamesString[] =
 		NULL, assign_temp_tablespaces, NULL
 	},
 
+#ifdef USE_SSL
 	{
 		{"ssl_ciphers", PGC_POSTMASTER, CONN_AUTH_SECURITY,
 			gettext_noop("Sets the list of allowed SSL ciphers."),
@@ -2323,7 +2329,8 @@ static struct config_string ConfigureNamesString[] =
 		&SSLCipherSuites,
 		"ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH", NULL, NULL
 	},
-			
+#endif /* USE_SSL */
+
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, NULL, NULL, NULL

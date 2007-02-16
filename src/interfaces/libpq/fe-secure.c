@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.93 2007/02/16 02:59:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.94 2007/02/16 17:07:00 tgl Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -619,7 +619,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		char	*engine_env = getenv("PGSSLKEY");
 		char	*engine_colon = strchr(engine_env, ':');
 		char	*engine_str;
-		ENGINE	*engine_ptr = NULL;
+		ENGINE	*engine_ptr;
 
 		if (!engine_colon)
 		{
@@ -630,24 +630,28 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 
 		engine_str = malloc(engine_colon - engine_env + 1);
 		strlcpy(engine_str, engine_env, engine_colon - engine_env + 1);
-		if ((engine_ptr = ENGINE_by_id(engine_str)) == NULL)
+		engine_ptr = ENGINE_by_id(engine_str);
+		if (engine_ptr == NULL)
 		{
 			char	  *err = SSLerrmessage();
 
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("could not load SSL engine \"%s\":%s\n"), engine_str, err);
-			free(engine_str);
+				libpq_gettext("could not load SSL engine \"%s\": %s\n"),
+							  engine_str, err);
 			SSLerrfree(err);
+			free(engine_str);
 			return 0;
 		}	
-		if ((*pkey = ENGINE_load_private_key(engine_ptr,
-						engine_colon + 1, NULL, NULL)) == NULL)
+
+		*pkey = ENGINE_load_private_key(engine_ptr, engine_colon + 1,
+										NULL, NULL);
+		if (*pkey == NULL)
 		{
 			char	  *err = SSLerrmessage();
 
 			printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("could not read private SSL key %s from engine \"%s\": %s\n"),
-							engine_colon + 1, engine_str, err);
+				libpq_gettext("could not read private SSL key \"%s\" from engine \"%s\": %s\n"),
+							  engine_colon + 1, engine_str, err);
 			SSLerrfree(err);
 			free(engine_str);
 			return 0;
@@ -655,9 +659,9 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		free(engine_str);
 	}
 	else
-#endif
+#endif /* use PGSSLKEY */
 	{
-		/* read the user key from file*/
+		/* read the user key from file */
 		snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_KEY_FILE);
 		if (stat(fnbuf, &buf) == -1)
 		{
@@ -666,7 +670,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 							fnbuf);
 			return 0;
 		}
-	#ifndef WIN32
+#ifndef WIN32
 		if (!S_ISREG(buf.st_mode) || (buf.st_mode & 0077) ||
 			buf.st_uid != geteuid())
 		{
@@ -675,7 +679,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 							fnbuf);
 			return 0;
 		}
-	#endif
+#endif
 		if ((fp = fopen(fnbuf, "r")) == NULL)
 		{
 			printfPQExpBuffer(&conn->errorMessage,
@@ -683,7 +687,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 							fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
 			return 0;
 		}
-	#ifndef WIN32
+#ifndef WIN32
 		if (fstat(fileno(fp), &buf2) == -1 ||
 			buf.st_dev != buf2.st_dev || buf.st_ino != buf2.st_ino)
 		{
@@ -691,7 +695,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 							libpq_gettext("private key file \"%s\" changed during execution\n"), fnbuf);
 			return 0;
 		}
-	#endif
+#endif
 		if (PEM_read_PrivateKey(fp, pkey, NULL, NULL) == NULL)
 		{
 			char	   *err = SSLerrmessage();
@@ -705,6 +709,7 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 		}
 		fclose(fp);
 	}
+
 	/* verify that the cert and key go together */
 	if (!X509_check_private_key(*x509, *pkey))
 	{
@@ -788,7 +793,7 @@ init_ssl_system(PGconn *conn)
 	{
 		if (pq_initssllib)
 		{
-#if (SSLEAY_VERSION_NUMBER >= 0x00907000L) 
+#if SSLEAY_VERSION_NUMBER >= 0x00907000L
 			OPENSSL_config(NULL);
 #endif			
 			SSL_library_init();

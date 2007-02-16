@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.78 2007/02/16 02:59:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.79 2007/02/16 17:06:59 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -95,8 +95,7 @@
 #if SSLEAY_VERSION_NUMBER >= 0x0907000L
 #include <openssl/conf.h>
 #endif
-
-#endif
+#endif /* USE_SSL */
 
 #include "libpq/libpq.h"
 #include "tcop/tcopprot.h"
@@ -130,8 +129,8 @@ static const char *SSLerrmessage(void);
 
 static SSL_CTX *SSL_context = NULL;
 
-/* GUC variable controlling SSL cipher list*/
-extern char *SSLCipherSuites;
+/* GUC variable controlling SSL cipher list */
+char *SSLCipherSuites = NULL;
 
 #endif
 
