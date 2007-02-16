@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.38 2006/09/16 00:30:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.39 2007/02/16 03:50:29 momjian Exp $ -->
 
  <chapter id="geqo">
   <chapterinfo>
@@ -50,7 +50,7 @@
     <productname>PostgreSQL</productname>) to process individual joins
     and a diversity of <firstterm>indexes</firstterm> (e.g.,
     B-tree, hash, GiST and GIN in <productname>PostgreSQL</productname>) as 
-	access paths for relations.
+    access paths for relations.
    </para>
 
    <para>

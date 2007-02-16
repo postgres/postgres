@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.63 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.64 2007/02/16 03:50:29 momjian Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -649,19 +649,19 @@ $$ LANGUAGE plperl;
 
   <note>
     <para>
-	  For security reasons, to stop a leak of privileged operations from
+      For security reasons, to stop a leak of privileged operations from
       <application>PL/PerlU</> to <application>PL/Perl</>, these two languages
-	  have to run in separate instances of the Perl interpreter. If your
-	  Perl installation has been appropriately compiled, this is not a problem.
-	  However, not all installations are compiled with the requisite flags.
-	  If <productname>PostgreSQL</> detects that this is the case then it will
-	  not start a second interpreter, but instead create an error. In
-	  consequence, in such an installation, you cannot use both 
-	  <application>PL/PerlU</> and <application>PL/Perl</> in the same backend
-	  process. The remedy for this is to obtain a Perl installation created
-	  with the appropriate flags, namely either <literal>usemultiplicity</> or
-	  both <literal>usethreads</> and <literal>useithreads</>. 
-	  For more details,see the <literal>perlembed</> manual page.
+      have to run in separate instances of the Perl interpreter. If your
+      Perl installation has been appropriately compiled, this is not a problem.
+      However, not all installations are compiled with the requisite flags.
+      If <productname>PostgreSQL</> detects that this is the case then it will
+      not start a second interpreter, but instead create an error. In
+      consequence, in such an installation, you cannot use both 
+      <application>PL/PerlU</> and <application>PL/Perl</> in the same backend
+      process. The remedy for this is to obtain a Perl installation created
+      with the appropriate flags, namely either <literal>usemultiplicity</> or
+      both <literal>usethreads</> and <literal>useithreads</>. 
+      For more details,see the <literal>perlembed</> manual page.
     </para>
   </note>
   

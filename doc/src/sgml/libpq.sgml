@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.229 2007/02/16 02:59:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.230 2007/02/16 03:50:29 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -334,9 +334,9 @@ PGconn *PQsetdbLogin(const char *pghost,
    </para>
    <para>
      If the <parameter>dbName</parameter> contains an <symbol>=</symbol> sign, it
-	 is taken as a <parameter>conninfo</parameter> string in exactly the same way as
-	 if it had been passed to <function>PQconnectdb</function>, and the remaining
-	 parameters are then applied as above.
+     is taken as a <parameter>conninfo</parameter> string in exactly the same way as
+     if it had been passed to <function>PQconnectdb</function>, and the remaining
+     parameters are then applied as above.
    </para>
   </listitem>
  </varlistentry>
@@ -4486,8 +4486,8 @@ ldap://ldap.mycompany.com/dc=mycompany,dc=com?uniqueMember?one?(cn=mydatabase)
    do not reveal secret keys to the application. Instead, applications
    delegate all cryptography operations which require the secret key to
    the hardware token.
-  </para>	
-	
+  </para>
+
   <para>
    If the file <filename>~/.postgresql/root.crt</> is present in the user's
    home directory,

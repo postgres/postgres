@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.67 2007/02/08 15:32:11 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.68 2007/02/16 03:50:29 momjian Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -754,7 +754,7 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
       <colspec colnum="8" colwidth="1*">
       <colspec colnum="9" colwidth="1*">
       <thead>
-	   <row>
+       <row>
         <entry>Modes</entry>
         <entry>AS</entry>
         <entry>RS</entry>
@@ -764,10 +764,10 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         <entry>SRE</entry>
         <entry>E</entry>
         <entry>AE</entry>
-	   </row>
-	  </thead>
-	  <tbody>
-	   <row>
+       </row>
+      </thead>
+      <tbody>
+       <row>
         <entry>AS</entry>
         <entry align="center">Y</entry>
         <entry align="center">Y</entry>
@@ -777,8 +777,8 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         <entry align="center">Y</entry>
         <entry align="center">Y</entry>
         <entry align="center">N</entry>
-	   </row>
-	   <row>
+       </row>
+       <row>
         <entry>RS</entry>
         <entry align="center">Y</entry>
         <entry align="center">Y</entry>
@@ -788,8 +788,8 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         <entry align="center">Y</entry>
         <entry align="center">N</entry>
         <entry align="center">N</entry>
-	   </row>
-	   <row>
+       </row>
+       <row>
         <entry>RE</entry>
         <entry align="center">Y</entry>
         <entry align="center">Y</entry>
@@ -799,8 +799,8 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         <entry align="center">N</entry>
         <entry align="center">N</entry>
         <entry align="center">N</entry>
-	   </row>
-	   <row>
+       </row>
+       <row>
         <entry>SUE</entry>
         <entry align="center">Y</entry>
         <entry align="center">Y</entry>
@@ -810,8 +810,8 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         <entry align="center">N</entry>
         <entry align="center">N</entry>
         <entry align="center">N</entry>
-	   </row>
-	   <row>
+       </row>
+       <row>
         <entry>S</entry>
         <entry align="center">Y</entry>
         <entry align="center">Y</entry>
@@ -821,8 +821,8 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         <entry align="center">N</entry>
         <entry align="center">N</entry>
         <entry align="center">N</entry>
-	   </row>
-	   <row>
+       </row>
+       <row>
         <entry>SRE</entry>
         <entry align="center">Y</entry>
         <entry align="center">Y</entry>
@@ -832,8 +832,8 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         <entry align="center">N</entry>
         <entry align="center">N</entry>
         <entry align="center">N</entry>
-	   </row>
-	   <row>
+       </row>
+       <row>
         <entry>E</entry>
         <entry align="center">Y</entry>
         <entry align="center">N</entry>
@@ -843,8 +843,8 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         <entry align="center">N</entry>
         <entry align="center">N</entry>
         <entry align="center">N</entry>
-	   </row>
-	   <row>
+       </row>
+       <row>
         <entry>AE</entry>
         <entry align="center">N</entry>
         <entry align="center">N</entry>
@@ -854,10 +854,10 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
         <entry align="center">N</entry>
         <entry align="center">N</entry>
         <entry align="center">N</entry>
-	   </row>
-	  </tbody>
-	 </tgroup>
-	</table>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
    </sect2>
 
    <sect2 id="locking-rows">

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.45 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/sql.sgml,v 1.46 2007/02/16 03:50:29 momjian Exp $ -->
 
  <chapter id="sql-intro">
   <title>SQL</title>
@@ -414,139 +414,139 @@ attributes are taken from. We often write a relation scheme as
      <itemizedlist>
       <listitem>
        <para>
-	SELECT (&sigma;): extracts <firstterm>tuples</firstterm> from
-	a relation that
-	satisfy a given restriction. Let <parameter>R</parameter> be a 
-	table that contains an attribute
-	<parameter>A</parameter>.
+        SELECT (&sigma;): extracts <firstterm>tuples</firstterm> from
+        a relation that
+        satisfy a given restriction. Let <parameter>R</parameter> be a 
+        table that contains an attribute
+        <parameter>A</parameter>.
 &sigma;<subscript>A=a</subscript>(R) = {t &isin; R &mid; t(A) = a}
-	where <literal>t</literal> denotes a
-	tuple of <parameter>R</parameter> and <literal>t(A)</literal>
-	denotes the value of attribute <parameter>A</parameter> of
-	tuple <literal>t</literal>.
+        where <literal>t</literal> denotes a
+        tuple of <parameter>R</parameter> and <literal>t(A)</literal>
+        denotes the value of attribute <parameter>A</parameter> of
+        tuple <literal>t</literal>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	PROJECT (&pi;): extracts specified
-	<firstterm>attributes</firstterm> (columns) from a
-	relation. Let <classname>R</classname> be a relation
-	that contains an attribute <classname>X</classname>.
-	&pi;<subscript>X</subscript>(<classname>R</classname>) = {t(X) &mid; t &isin; <classname>R</classname>},
-	where <literal>t</literal>(<classname>X</classname>) denotes the value of
-	attribute <classname>X</classname> of tuple <literal>t</literal>.
+        PROJECT (&pi;): extracts specified
+        <firstterm>attributes</firstterm> (columns) from a
+        relation. Let <classname>R</classname> be a relation
+        that contains an attribute <classname>X</classname>.
+        &pi;<subscript>X</subscript>(<classname>R</classname>) = {t(X) &mid; t &isin; <classname>R</classname>},
+        where <literal>t</literal>(<classname>X</classname>) denotes the value of
+        attribute <classname>X</classname> of tuple <literal>t</literal>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	PRODUCT (&times;): builds the Cartesian product of two
-	relations. Let <classname>R</classname> be a table with arity
-	<literal>k</literal><subscript>1</subscript> and let
-	<classname>S</classname> be a table with
-	arity <literal>k</literal><subscript>2</subscript>.
-	<classname>R</classname> &times; <classname>S</classname>
-	is the set of all 
-	<literal>k</literal><subscript>1</subscript>
-	+ <literal>k</literal><subscript>2</subscript>-tuples
-	whose first <literal>k</literal><subscript>1</subscript>
-	components form a tuple in <classname>R</classname> and whose last
-	<literal>k</literal><subscript>2</subscript> components form a
-	tuple in <classname>S</classname>.
+        PRODUCT (&times;): builds the Cartesian product of two
+        relations. Let <classname>R</classname> be a table with arity
+        <literal>k</literal><subscript>1</subscript> and let
+        <classname>S</classname> be a table with
+        arity <literal>k</literal><subscript>2</subscript>.
+        <classname>R</classname> &times; <classname>S</classname>
+        is the set of all 
+        <literal>k</literal><subscript>1</subscript>
+        + <literal>k</literal><subscript>2</subscript>-tuples
+        whose first <literal>k</literal><subscript>1</subscript>
+        components form a tuple in <classname>R</classname> and whose last
+        <literal>k</literal><subscript>2</subscript> components form a
+        tuple in <classname>S</classname>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	UNION (&cup;): builds the set-theoretic union of two
-	tables. Given the tables <classname>R</classname> and
-	<classname>S</classname> (both must have the same arity),
-	the union <classname>R</classname> &cup; <classname>S</classname>
-	is the set of tuples that are in <classname>R</classname>
-	or <classname>S</classname> or both.
+        UNION (&cup;): builds the set-theoretic union of two
+        tables. Given the tables <classname>R</classname> and
+        <classname>S</classname> (both must have the same arity),
+        the union <classname>R</classname> &cup; <classname>S</classname>
+        is the set of tuples that are in <classname>R</classname>
+        or <classname>S</classname> or both.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	INTERSECT (&cap;): builds the set-theoretic intersection of two
-	tables. Given the tables <classname>R</classname> and
-	<classname>S</classname>,
-	<classname>R</classname> &cap; <classname>S</classname> is the
-	set of tuples
-	that are in <classname>R</classname> and in
-	<classname>S</classname>.
-	We again require that <classname>R</classname> and 
-	<classname>S</classname> have the
-	same arity.
+        INTERSECT (&cap;): builds the set-theoretic intersection of two
+        tables. Given the tables <classname>R</classname> and
+        <classname>S</classname>,
+        <classname>R</classname> &cap; <classname>S</classname> is the
+        set of tuples
+        that are in <classname>R</classname> and in
+        <classname>S</classname>.
+        We again require that <classname>R</classname> and 
+        <classname>S</classname> have the
+        same arity.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	DIFFERENCE (&minus; or &setmn;): builds the set difference of
-	two tables. Let <classname>R</classname> and <classname>S</classname>
-	again be two tables with the same
-	arity. <classname>R</classname> - <classname>S</classname>
-	is the set of tuples in <classname>R</classname> but not in
-	<classname>S</classname>.
+        DIFFERENCE (&minus; or &setmn;): builds the set difference of
+        two tables. Let <classname>R</classname> and <classname>S</classname>
+        again be two tables with the same
+        arity. <classname>R</classname> - <classname>S</classname>
+        is the set of tuples in <classname>R</classname> but not in
+        <classname>S</classname>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	JOIN (&prod;): connects two tables by their common
-	attributes. Let <classname>R</classname> be a table with the 
-	attributes <classname>A</classname>,<classname>B</classname> 
-	and <classname>C</classname> and
-	let <classname>S</classname> be a table with the attributes
-	<classname>C</classname>,<classname>D</classname>
-	and <classname>E</classname>. There is one
-	attribute common to both relations,
-	the attribute <classname>C</classname>. 
+        JOIN (&prod;): connects two tables by their common
+        attributes. Let <classname>R</classname> be a table with the 
+        attributes <classname>A</classname>,<classname>B</classname> 
+        and <classname>C</classname> and
+        let <classname>S</classname> be a table with the attributes
+        <classname>C</classname>,<classname>D</classname>
+        and <classname>E</classname>. There is one
+        attribute common to both relations,
+        the attribute <classname>C</classname>. 
 <!--
-	<classname>R</classname> &prod; <classname>S</classname> =
-	&pi;<subscript><classname>R</classname>.<classname>A</classname>,<classname>R</classname>.<classname>B</classname>,<classname>R</classname>.<classname>C</classname>,<classname>S</classname>.<classname>D</classname>,<classname>S</classname>.<classname>E</classname></subscript>(&sigma;<subscript><classname>R</classname>.<classname>C</classname>=<classname>S</classname>.<classname>C</classname></subscript>(<classname>R</classname> &times; <classname>S</classname>)).
+        <classname>R</classname> &prod; <classname>S</classname> =
+        &pi;<subscript><classname>R</classname>.<classname>A</classname>,<classname>R</classname>.<classname>B</classname>,<classname>R</classname>.<classname>C</classname>,<classname>S</classname>.<classname>D</classname>,<classname>S</classname>.<classname>E</classname></subscript>(&sigma;<subscript><classname>R</classname>.<classname>C</classname>=<classname>S</classname>.<classname>C</classname></subscript>(<classname>R</classname> &times; <classname>S</classname>)).
 -->
-	R &prod; S = &pi;<subscript>R.A,R.B,R.C,S.D,S.E</subscript>(&sigma;<subscript>R.C=S.C</subscript>(R &times; S)).
-	What are we doing here? We first calculate the Cartesian
-	product
-	<classname>R</classname> &times; <classname>S</classname>.
-	Then we select those tuples whose values for the common
-	attribute <classname>C</classname> are equal
-	(&sigma;<subscript>R.C = S.C</subscript>).
-	Now we have a table
-	that contains the attribute <classname>C</classname>
-	two times and we correct this by
-	projecting out the duplicate column.
+        R &prod; S = &pi;<subscript>R.A,R.B,R.C,S.D,S.E</subscript>(&sigma;<subscript>R.C=S.C</subscript>(R &times; S)).
+        What are we doing here? We first calculate the Cartesian
+        product
+        <classname>R</classname> &times; <classname>S</classname>.
+        Then we select those tuples whose values for the common
+        attribute <classname>C</classname> are equal
+        (&sigma;<subscript>R.C = S.C</subscript>).
+        Now we have a table
+        that contains the attribute <classname>C</classname>
+        two times and we correct this by
+        projecting out the duplicate column.
        </para>
 
        <example>
-	<title id="join-example">An Inner Join</title>
+        <title id="join-example">An Inner Join</title>
 
-	<para>
-	 Let's have a look at the tables that are produced by evaluating the steps
-	 necessary for a join.
-	 Let the following two tables be given:
+        <para>
+         Let's have a look at the tables that are produced by evaluating the steps
+         necessary for a join.
+         Let the following two tables be given:
 
-	 <programlisting>
+         <programlisting>
 R:                 S:
  A | B | C          C | D | E
 ---+---+---        ---+---+---
  1 | 2 | 3          3 | a | b
  4 | 5 | 6          6 | c | d
  7 | 8 | 9
-	 </programlisting>
-	</para>
+         </programlisting>
+        </para>
        </example>
 
        <para>
-	First we calculate the Cartesian product
-	<classname>R</classname> &times; <classname>S</classname> and
-	get:
+        First we calculate the Cartesian product
+        <classname>R</classname> &times; <classname>S</classname> and
+        get:
 
-	<programlisting>
+        <programlisting>
 R x S:
  A | B | R.C | S.C | D | E
 ---+---+-----+-----+---+---
@@ -556,66 +556,66 @@ R x S:
  4 | 5 |  6  |  6  | c | d
  7 | 8 |  9  |  3  | a | b
  7 | 8 |  9  |  6  | c | d
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	After the selection
-	&sigma;<subscript>R.C=S.C</subscript>(R &times; S)
-	we get:
+        After the selection
+        &sigma;<subscript>R.C=S.C</subscript>(R &times; S)
+        we get:
 
-	<programlisting>
+        <programlisting>
  A | B | R.C | S.C | D | E
 ---+---+-----+-----+---+---
  1 | 2 |  3  |  3  | a | b
  4 | 5 |  6  |  6  | c | d
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	To remove the duplicate column
-	<classname>S</classname>.<classname>C</classname>
-	we project it out by the following operation:
-	&pi;<subscript>R.A,R.B,R.C,S.D,S.E</subscript>(&sigma;<subscript>R.C=S.C</subscript>(R &times; S))
-	and get:
+        To remove the duplicate column
+        <classname>S</classname>.<classname>C</classname>
+        we project it out by the following operation:
+        &pi;<subscript>R.A,R.B,R.C,S.D,S.E</subscript>(&sigma;<subscript>R.C=S.C</subscript>(R &times; S))
+        and get:
 
-	<programlisting>
+        <programlisting>
  A | B | C | D | E
 ---+---+---+---+---
  1 | 2 | 3 | a | b
  4 | 5 | 6 | c | d
-	</programlisting>
+        </programlisting>
        </para>
       </listitem>
 
       <listitem>
        <para>
-	DIVIDE (&divide;): Let <classname>R</classname> be a table
-	with the attributes A, B, C, and D and let
-	<classname>S</classname> be a table with the attributes
-	C and D.
-	Then we define the division as:
+        DIVIDE (&divide;): Let <classname>R</classname> be a table
+        with the attributes A, B, C, and D and let
+        <classname>S</classname> be a table with the attributes
+        C and D.
+        Then we define the division as:
 
-	<programlisting>
+        <programlisting>
 R &divide; S = {t &mid; &forall; t<subscript>s</subscript> &isin; S &exist; t<subscript>r</subscript> &isin; R
-	</programlisting>
+        </programlisting>
 
-	such that
+        such that
 t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>s</subscript>}
-	where
-	t<subscript>r</subscript>(x,y)
-	denotes a
-	tuple of table <classname>R</classname> that consists only of
-	the components <literal>x</literal> and <literal>y</literal>.
-	Note that the tuple <literal>t</literal> only consists of the
-	components <classname>A</classname> and
-	<classname>B</classname> of relation <classname>R</classname>.
+        where
+        t<subscript>r</subscript>(x,y)
+        denotes a
+        tuple of table <classname>R</classname> that consists only of
+        the components <literal>x</literal> and <literal>y</literal>.
+        Note that the tuple <literal>t</literal> only consists of the
+        components <classname>A</classname> and
+        <classname>B</classname> of relation <classname>R</classname>.
        </para>
 
        <para id="divide-example">
-	Given the following tables
+        Given the following tables
 
-	<programlisting>
+        <programlisting>
 R:                    S:
  A | B | C | D         C | D
 ---+---+---+---       ---+---
@@ -625,17 +625,17 @@ R:                    S:
  e | d | c | d
  e | d | e | f
  a | b | d | e
-	</programlisting>
+        </programlisting>
 
-	R &divide; S
-	is derived as
+        R &divide; S
+        is derived as
 
-	<programlisting>
+        <programlisting>
  A | B
 ---+---
  a | b
  e | d
-	</programlisting>
+        </programlisting>
        </para>
       </listitem>
      </itemizedlist>
@@ -691,16 +691,16 @@ R:                    S:
      <itemizedlist>
       <listitem>
        <para>
-	The <firstterm>Domain Relational Calculus</firstterm>
-	(<acronym>DRC</acronym>), where variables
-	stand for components (attributes) of the tuples.
+        The <firstterm>Domain Relational Calculus</firstterm>
+        (<acronym>DRC</acronym>), where variables
+        stand for components (attributes) of the tuples.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	The <firstterm>Tuple Relational Calculus</firstterm>
-	(<acronym>TRC</acronym>), where variables stand for tuples.
+        The <firstterm>Tuple Relational Calculus</firstterm>
+        (<acronym>TRC</acronym>), where variables stand for tuples.
        </para>
       </listitem>
      </itemizedlist>
@@ -883,98 +883,98 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
       <example>
        <title id="simple-query">Simple Query with Qualification</title>
        <para>
-	To retrieve all tuples from table PART where the attribute PRICE is
-	greater than 10 we formulate the following query:
+        To retrieve all tuples from table PART where the attribute PRICE is
+        greater than 10 we formulate the following query:
 
-	<programlisting>
+        <programlisting>
 SELECT * FROM PART
     WHERE PRICE &gt; 10;
-	</programlisting>
+        </programlisting>
 
-	and get the table:
+        and get the table:
 
-	<programlisting>
+        <programlisting>
  PNO |  PNAME  |  PRICE
 -----+---------+--------
   3  |  Bolt   |   15
   4  |  Cam    |   25
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	Using <quote>*</quote> in the <command>SELECT</command> statement
-	will deliver all attributes from the table. If we want to retrieve
-	only the attributes PNAME and PRICE from table PART we use the
-	statement:
+        Using <quote>*</quote> in the <command>SELECT</command> statement
+        will deliver all attributes from the table. If we want to retrieve
+        only the attributes PNAME and PRICE from table PART we use the
+        statement:
 
-	<programlisting>
+        <programlisting>
 SELECT PNAME, PRICE 
     FROM PART
     WHERE PRICE &gt; 10;
-	</programlisting>
+        </programlisting>
 
-	In this case the result is:
+        In this case the result is:
 
-	<programlisting>
+        <programlisting>
                       PNAME  |  PRICE
                      --------+--------
                       Bolt   |   15
                       Cam    |   25
-	</programlisting>
+        </programlisting>
 
-	Note that the <acronym>SQL</acronym> <command>SELECT</command>
-	corresponds to the <quote>projection</quote> in relational algebra
-	not to the <quote>selection</quote> (see <xref linkend="rel-alg"
-	endterm="rel-alg"> for more details).
+        Note that the <acronym>SQL</acronym> <command>SELECT</command>
+        corresponds to the <quote>projection</quote> in relational algebra
+        not to the <quote>selection</quote> (see <xref linkend="rel-alg"
+        endterm="rel-alg"> for more details).
        </para>
 
        <para>
-	The qualifications in the WHERE clause can also be logically connected
-	using the keywords OR, AND, and NOT:
+        The qualifications in the WHERE clause can also be logically connected
+        using the keywords OR, AND, and NOT:
 
-	<programlisting>
+        <programlisting>
 SELECT PNAME, PRICE 
     FROM PART
     WHERE PNAME = 'Bolt' AND
          (PRICE = 0 OR PRICE &lt;= 15);
-	</programlisting>
+        </programlisting>
 
-	will lead to the result:
+        will lead to the result:
 
-	<programlisting>
+        <programlisting>
  PNAME  |  PRICE
 --------+--------
  Bolt   |   15
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	Arithmetic operations can be used in the target list and in the WHERE
-	clause. For example if we want to know how much it would cost if we
-	take two pieces of a part we could use the following query:
+        Arithmetic operations can be used in the target list and in the WHERE
+        clause. For example if we want to know how much it would cost if we
+        take two pieces of a part we could use the following query:
 
-	<programlisting>
+        <programlisting>
 SELECT PNAME, PRICE * 2 AS DOUBLE
     FROM PART
     WHERE PRICE * 2 &lt; 50;
-	</programlisting>
+        </programlisting>
 
-	and we get:
+        and we get:
 
-	<programlisting>
+        <programlisting>
  PNAME  |  DOUBLE
 --------+---------
  Screw  |    20
  Nut    |    16
  Bolt   |    30
-	</programlisting>
+        </programlisting>
 
-	Note that the word DOUBLE after the keyword AS is the new title of the
-	second column. This technique can be used for every element of the
-	target list to assign a new title to the resulting
-	column. This new title
-	is often referred to as alias. The alias cannot be used throughout the
-	rest of the query.
+        Note that the word DOUBLE after the keyword AS is the new title of the
+        second column. This technique can be used for every element of the
+        target list to assign a new title to the resulting
+        column. This new title
+        is often referred to as alias. The alias cannot be used throughout the
+        rest of the query.
        </para>
       </example>
      </para>
@@ -1032,15 +1032,15 @@ SELECT S.SNAME, P.PNAME
       columns but S.SNAME and P.PNAME. 
      </para>
 
-	 <para>
-	 Another way to perform joins is to use the SQL JOIN syntax as follows:
-	 <programlisting>
+     <para>
+     Another way to perform joins is to use the SQL JOIN syntax as follows:
+     <programlisting>
 select sname, pname from supplier
-	JOIN sells USING (sno)
-	JOIN part USING (pno);
-	</programlisting>
-	giving again:
-	<programlisting>
+    JOIN sells USING (sno)
+    JOIN part USING (pno);
+    </programlisting>
+    giving again:
+    <programlisting>
  sname | pname
 -------+-------
  Smith | Screw
@@ -1052,197 +1052,197 @@ select sname, pname from supplier
  Jones | Cam
  Blake | Cam
 (8 rows) 
-	 </programlisting>
-	 </para>
+     </programlisting>
+     </para>
 
-	 <para>
-	 A joined table, created using JOIN syntax, is a table reference list
-	 item that occurs in a FROM clause and before any WHERE, GROUP BY,
-	 or HAVING clause.  Other table references, including table names or
-	 other JOIN clauses, can be included in the FROM clause if separated
-	 by commas.  JOINed tables are logically like any other
-	 table listed in the FROM clause.
-	 </para>
+     <para>
+     A joined table, created using JOIN syntax, is a table reference list
+     item that occurs in a FROM clause and before any WHERE, GROUP BY,
+     or HAVING clause.  Other table references, including table names or
+     other JOIN clauses, can be included in the FROM clause if separated
+     by commas.  JOINed tables are logically like any other
+     table listed in the FROM clause.
+     </para>
 
-	 <para>
-	  SQL JOINs come in two main types, CROSS JOINs (unqualified joins)
-	  and <firstterm>qualified JOINs</>.  Qualified joins can be further
-	  subdivided based on the way in which the <firstterm>join condition</>
-	  is specified (ON, USING, or NATURAL) and the way in which it is
-	  applied (INNER or OUTER join).
-	 </para>
+     <para>
+      SQL JOINs come in two main types, CROSS JOINs (unqualified joins)
+      and <firstterm>qualified JOINs</>.  Qualified joins can be further
+      subdivided based on the way in which the <firstterm>join condition</>
+      is specified (ON, USING, or NATURAL) and the way in which it is
+      applied (INNER or OUTER join).
+     </para>
 
     <variablelist>
         <title>Join Types</title>
         <varlistentry>
             <term>CROSS JOIN</term>
-	        <listitem>
-			<cmdsynopsis>
-			    <arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
-			    <command> CROSS JOIN </command>
-			    <arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
+            <listitem>
+            <cmdsynopsis>
+                <arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
+                <command> CROSS JOIN </command>
+                <arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
             </cmdsynopsis>
 
-			<para>
-			A cross join takes two tables T1 and T2 having N and M rows
-			respectively, and returns a joined table containing all
-			N*M possible joined rows. For each row R1 of T1, each row
-			R2 of T2 is joined with R1 to yield a joined table row JR
-			consisting of all fields in R1 and R2. A CROSS JOIN is
-			equivalent to an INNER JOIN ON TRUE.
-			</para>
-			</listitem>
-		</varlistentry>
+            <para>
+            A cross join takes two tables T1 and T2 having N and M rows
+            respectively, and returns a joined table containing all
+            N*M possible joined rows. For each row R1 of T1, each row
+            R2 of T2 is joined with R1 to yield a joined table row JR
+            consisting of all fields in R1 and R2. A CROSS JOIN is
+            equivalent to an INNER JOIN ON TRUE.
+            </para>
+            </listitem>
+        </varlistentry>
 
-		<varlistentry>
-		    <term>Qualified JOINs</term>
-		    <listitem>
+        <varlistentry>
+            <term>Qualified JOINs</term>
+            <listitem>
 
-			<cmdsynopsis>
-			<arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
-			<arg choice="opt"> NATURAL </arg>
-			<group choice="opt">
-				<arg choice="opt"> INNER </arg>
-				<arg>
-				<group choice="req">
-					<arg choice="plain"> LEFT </arg>
-					<arg choice="plain"> RIGHT </arg>
-					<arg choice="plain"> FULL </arg>
-				</group>
-				<arg choice="opt"> OUTER </arg>
-      				</arg>
-     			</group>
-			<command> JOIN </command>
-			<arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
-			<group choice="req">
-				<arg> ON <replaceable>search condition</replaceable></arg>
-				<arg> USING ( <replaceable>join column list</replaceable> ) </arg>
-			</group>
-			</cmdsynopsis>
+            <cmdsynopsis>
+            <arg choice="req"> <replaceable class="parameter">T1</replaceable> </arg>
+            <arg choice="opt"> NATURAL </arg>
+            <group choice="opt">
+                <arg choice="opt"> INNER </arg>
+                <arg>
+                <group choice="req">
+                    <arg choice="plain"> LEFT </arg>
+                    <arg choice="plain"> RIGHT </arg>
+                    <arg choice="plain"> FULL </arg>
+                </group>
+                <arg choice="opt"> OUTER </arg>
+                    </arg>
+                </group>
+            <command> JOIN </command>
+            <arg choice="req"> <replaceable class="parameter">T2</replaceable> </arg>
+            <group choice="req">
+                <arg> ON <replaceable>search condition</replaceable></arg>
+                <arg> USING ( <replaceable>join column list</replaceable> ) </arg>
+            </group>
+            </cmdsynopsis>
 
-			<para>
-			A qualified JOIN must specify its join condition
-			by providing one (and only one) of NATURAL, ON, or
-			USING.  The ON clause
-			takes a <replaceable>search condition</replaceable>,
-			which is the same as in a WHERE clause.  The USING
-			clause takes a comma-separated list of column names,
-			which the joined tables must have in common, and joins
-			the tables on equality of those columns.  NATURAL is
-			shorthand for a USING clause that lists all the common
-			column names of the two tables.  A side-effect of both
-			USING and NATURAL is that only one copy of each joined
-			column is emitted into the result table (compare the
-			relational-algebra definition of JOIN, shown earlier).
-			</para>
+            <para>
+            A qualified JOIN must specify its join condition
+            by providing one (and only one) of NATURAL, ON, or
+            USING.  The ON clause
+            takes a <replaceable>search condition</replaceable>,
+            which is the same as in a WHERE clause.  The USING
+            clause takes a comma-separated list of column names,
+            which the joined tables must have in common, and joins
+            the tables on equality of those columns.  NATURAL is
+            shorthand for a USING clause that lists all the common
+            column names of the two tables.  A side-effect of both
+            USING and NATURAL is that only one copy of each joined
+            column is emitted into the result table (compare the
+            relational-algebra definition of JOIN, shown earlier).
+            </para>
 
-			<!-- begin join semantics -->
-			<variablelist>
-			<varlistentry>
-				<term>
-					<cmdsynopsis>
-						<arg> INNER </arg>
-						<command> JOIN </command>
-					</cmdsynopsis>
-				</term>
-				<listitem>
-				<para>
-				For each row R1 of T1, the joined table has a row for each row
-				in T2 that satisfies the join condition with R1. 
-				</para>
-				<tip>
-				<para>
-					The words INNER and OUTER are optional for all JOINs.
-					INNER is the default.  LEFT, RIGHT, and FULL imply an
-					OUTER JOIN.
-					</para>
-				</tip>
-				</listitem>
-    		</varlistentry>
-			<varlistentry>
-				<term>
-					<cmdsynopsis>
-						<arg choice="plain"> LEFT </arg>
-						<arg> OUTER </arg>
-						<command> JOIN </command>
-					</cmdsynopsis>
-     			</term>
-				<listitem>
-				<para>
+            <!-- begin join semantics -->
+            <variablelist>
+            <varlistentry>
+                <term>
+                    <cmdsynopsis>
+                        <arg> INNER </arg>
+                        <command> JOIN </command>
+                    </cmdsynopsis>
+                </term>
+                <listitem>
+                <para>
+                For each row R1 of T1, the joined table has a row for each row
+                in T2 that satisfies the join condition with R1. 
+                </para>
+                <tip>
+                <para>
+                    The words INNER and OUTER are optional for all JOINs.
+                    INNER is the default.  LEFT, RIGHT, and FULL imply an
+                    OUTER JOIN.
+                    </para>
+                </tip>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>
+                    <cmdsynopsis>
+                        <arg choice="plain"> LEFT </arg>
+                        <arg> OUTER </arg>
+                        <command> JOIN </command>
+                    </cmdsynopsis>
+                </term>
+                <listitem>
+                <para>
                 First, an INNER JOIN is performed.
                 Then, for each row in T1 that does not satisfy the join
-				condition with any row in T2, an additional joined row is
-				returned with null fields in the columns from T2.
-				</para>
-				<tip>
-					<para>
-					The joined table unconditionally has a row for each row in T1.
-					</para>
-				</tip>
-				</listitem>
-			</varlistentry>
-			<varlistentry>
-				<term>
-					<cmdsynopsis>
-						<arg choice="plain"> RIGHT </arg>
-						<arg> OUTER </arg>
-						<command> JOIN </command>
-      				</cmdsynopsis>
-          		</term>
-				<listitem>
-				<para>
+                condition with any row in T2, an additional joined row is
+                returned with null fields in the columns from T2.
+                </para>
+                <tip>
+                    <para>
+                    The joined table unconditionally has a row for each row in T1.
+                    </para>
+                </tip>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>
+                    <cmdsynopsis>
+                        <arg choice="plain"> RIGHT </arg>
+                        <arg> OUTER </arg>
+                        <command> JOIN </command>
+                    </cmdsynopsis>
+                </term>
+                <listitem>
+                <para>
                 First, an INNER JOIN is performed.
                 Then, for each row in T2 that does not satisfy the join
-				condition with any row in T1, an additional joined row is
-				returned with null fields in the columns from T1.
-				</para>
-				<tip>
-					<para>
-					The joined table unconditionally has a row for each row in T2.
-					</para>
-				</tip>
-				</listitem>
-    		</varlistentry>
-			<varlistentry>
-				<term>
-					<cmdsynopsis>
-						<arg choice="plain"> FULL </arg>
-						<arg> OUTER </arg>
-						<command> JOIN </command>
-      				</cmdsynopsis>
-          		</term>
-            	<listitem>
-				<para>
+                condition with any row in T1, an additional joined row is
+                returned with null fields in the columns from T1.
+                </para>
+                <tip>
+                    <para>
+                    The joined table unconditionally has a row for each row in T2.
+                    </para>
+                </tip>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term>
+                    <cmdsynopsis>
+                        <arg choice="plain"> FULL </arg>
+                        <arg> OUTER </arg>
+                        <command> JOIN </command>
+                    </cmdsynopsis>
+                </term>
+                <listitem>
+                <para>
                 First, an INNER JOIN is performed.
                 Then, for each row in T1 that does not satisfy the join
-				condition with any row in T2, an additional joined row is
-				returned with null fields in the columns from T2.
+                condition with any row in T2, an additional joined row is
+                returned with null fields in the columns from T2.
                 Also, for each row in T2 that does not satisfy the join
-				condition with any row in T1, an additional joined row is
-				returned with null fields in the columns from T1.
-				</para>
-				<tip>
-					<para>
-        			The joined table unconditionally has a row for every row of T1
-					and a row for every row of T2.
-					</para>
-				</tip>
-				</listitem>
-    		</varlistentry>
-			</variablelist>
-			<!-- end join semantics -->
+                condition with any row in T1, an additional joined row is
+                returned with null fields in the columns from T1.
+                </para>
+                <tip>
+                    <para>
+                    The joined table unconditionally has a row for every row of T1
+                    and a row for every row of T2.
+                    </para>
+                </tip>
+                </listitem>
+            </varlistentry>
+            </variablelist>
+            <!-- end join semantics -->
 
-			</listitem>
+            </listitem>
         </varlistentry>
-	 </variablelist>
+     </variablelist>
 
-	 <para>
-	 JOINs of all types can be chained together or nested where either or both of
-	 <replaceable class="parameter">T1</replaceable> and
-	 <replaceable class="parameter">T2</replaceable> can be JOINed tables.
-	 Parenthesis can be used around JOIN clauses to control the order
-	 of JOINs which are otherwise processed left to right.
-	 </para>
+     <para>
+     JOINs of all types can be chained together or nested where either or both of
+     <replaceable class="parameter">T1</replaceable> and
+     <replaceable class="parameter">T2</replaceable> can be JOINed tables.
+     Parenthesis can be used around JOIN clauses to control the order
+     of JOINs which are otherwise processed left to right.
+     </para>
 
     </sect3>
 
@@ -1264,41 +1264,41 @@ select sname, pname from supplier
        <title id="aggregates-example">Aggregates</title>
 
        <para>
-	If we want to know the average cost of all parts in table PART we use
-	the following query:
+        If we want to know the average cost of all parts in table PART we use
+        the following query:
 
-	<programlisting>
+        <programlisting>
 SELECT AVG(PRICE) AS AVG_PRICE
     FROM PART;
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	The result is:
+        The result is:
 
-	<programlisting>
+        <programlisting>
  AVG_PRICE
 -----------
    14.5
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	If we want to know how many parts are defined in table PART we use
-	the statement:
+        If we want to know how many parts are defined in table PART we use
+        the statement:
 
-	<programlisting>
+        <programlisting>
 SELECT COUNT(PNO)
     FROM PART;
-	</programlisting>
+        </programlisting>
 
-	and get:
+        and get:
 
-	<programlisting>
+        <programlisting>
  COUNT
 -------
    4
-	</programlisting>
+        </programlisting>
 
        </para>
       </example>
@@ -1332,34 +1332,34 @@ SELECT COUNT(PNO)
       <example>
        <title id="aggregates-groupby">Aggregates</title>
        <para>
-	If we want to know how many parts are sold by every supplier we
-	formulate the query:
+        If we want to know how many parts are sold by every supplier we
+        formulate the query:
 
-	<programlisting>
+        <programlisting>
 SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
     FROM SUPPLIER S, SELLS SE
     WHERE S.SNO = SE.SNO
     GROUP BY S.SNO, S.SNAME;
-	</programlisting>
+        </programlisting>
 
-	and get:
+        and get:
 
-	<programlisting>
+        <programlisting>
  SNO | SNAME | COUNT
 -----+-------+-------
   1  | Smith |   2
   2  | Jones |   1
   3  | Adams |   2
   4  | Blake |   3
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	Now let's have a look of what is happening here.
-	First the join of the
-	tables SUPPLIER and SELLS is derived:
+        Now let's have a look of what is happening here.
+        First the join of the
+        tables SUPPLIER and SELLS is derived:
 
-	<programlisting>
+        <programlisting>
  S.SNO | S.SNAME | SE.PNO
 -------+---------+--------
    1   |  Smith  |   1
@@ -1370,14 +1370,14 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
    4   |  Blake  |   2
    4   |  Blake  |   3
    4   |  Blake  |   4
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	Next we partition the tuples into groups by putting all tuples
-	together that agree on both attributes S.SNO and S.SNAME:
+        Next we partition the tuples into groups by putting all tuples
+        together that agree on both attributes S.SNO and S.SNAME:
 
-	<programlisting>
+        <programlisting>
  S.SNO | S.SNAME | SE.PNO
 -------+---------+--------
    1   |  Smith  |   1
@@ -1391,13 +1391,13 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
    4   |  Blake  |   2
                  |   3
                  |   4
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	In our example we got four groups and now we can apply the aggregate
-	function COUNT to every group leading to the final result of the query
-	given above.
+        In our example we got four groups and now we can apply the aggregate
+        function COUNT to every group leading to the final result of the query
+        given above.
        </para>
       </example>
      </para>
@@ -1439,26 +1439,26 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
        <title id="having-example">Having</title>
 
        <para>
-	If we want only those suppliers selling more than one part we use the
-	query:
+        If we want only those suppliers selling more than one part we use the
+        query:
 
-	<programlisting>
+        <programlisting>
 SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
     FROM SUPPLIER S, SELLS SE
     WHERE S.SNO = SE.SNO
     GROUP BY S.SNO, S.SNAME
     HAVING COUNT(SE.PNO) &gt; 1;
-	</programlisting>
+        </programlisting>
 
-	and get:
+        and get:
 
-	<programlisting>
+        <programlisting>
  SNO | SNAME | COUNT
 -----+-------+-------
   1  | Smith |   2
   3  | Adams |   2
   4  | Blake |   3
-	</programlisting>
+        </programlisting>
        </para>
       </example>
      </para>
@@ -1478,64 +1478,64 @@ SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
        <title id="subselect-example">Subselect</title>
 
        <para>
-	If we want to know all parts having a greater price than the part
-	named 'Screw' we use the query:
+        If we want to know all parts having a greater price than the part
+        named 'Screw' we use the query:
 
-	<programlisting>
+        <programlisting>
 SELECT * 
     FROM PART 
     WHERE PRICE &gt; (SELECT PRICE FROM PART
                    WHERE PNAME='Screw');
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	The result is:
+        The result is:
 
-	<programlisting>
+        <programlisting>
  PNO |  PNAME  |  PRICE
 -----+---------+--------
   3  |  Bolt   |   15
   4  |  Cam    |   25
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	When we look at the above query we can see the keyword
-	<command>SELECT</command> two times. The first one at the
-	beginning of the query - we will refer to it as outer
-	<command>SELECT</command> - and the one in the WHERE clause which
-	begins a nested query - we will refer to it as inner
-	<command>SELECT</command>. For every tuple of the outer
-	<command>SELECT</command> the inner <command>SELECT</command> has
-	to be evaluated. After every evaluation we know the price of the
-	tuple named 'Screw' and we can check if the price of the actual
-	tuple is greater.  (Actually, in this example the inner query need
-	only be evaluated once, since it does not depend on the state of
-	the outer query.)
+        When we look at the above query we can see the keyword
+        <command>SELECT</command> two times. The first one at the
+        beginning of the query - we will refer to it as outer
+        <command>SELECT</command> - and the one in the WHERE clause which
+        begins a nested query - we will refer to it as inner
+        <command>SELECT</command>. For every tuple of the outer
+        <command>SELECT</command> the inner <command>SELECT</command> has
+        to be evaluated. After every evaluation we know the price of the
+        tuple named 'Screw' and we can check if the price of the actual
+        tuple is greater.  (Actually, in this example the inner query need
+        only be evaluated once, since it does not depend on the state of
+        the outer query.)
        </para>
 
        <para>
-	If we want to know all suppliers that do not sell any part 
-	(e.g. to be able to remove these suppliers from the database) we use:
+        If we want to know all suppliers that do not sell any part 
+        (e.g. to be able to remove these suppliers from the database) we use:
 
-	<programlisting>
+        <programlisting>
 SELECT * 
     FROM SUPPLIER S
     WHERE NOT EXISTS
         (SELECT * FROM SELLS SE
          WHERE SE.SNO = S.SNO);
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	In our example the result will be empty because every supplier
-	sells at least one part. Note that we use S.SNO from the outer
-	<command>SELECT</command> within the WHERE clause of the inner
-	<command>SELECT</command>. Here the subquery must be evaluated
-	afresh for each tuple from the outer query, i.e. the value for
-	S.SNO is always taken from the current tuple of the outer
-	<command>SELECT</command>.
+        In our example the result will be empty because every supplier
+        sells at least one part. Note that we use S.SNO from the outer
+        <command>SELECT</command> within the WHERE clause of the inner
+        <command>SELECT</command>. Here the subquery must be evaluated
+        afresh for each tuple from the outer query, i.e. the value for
+        S.SNO is always taken from the current tuple of the outer
+        <command>SELECT</command>.
        </para>
       </example>
      </para>
@@ -1557,19 +1557,19 @@ SELECT *
 
        <para>
         If we want to know the highest average part price among all our
-	suppliers, we cannot write MAX(AVG(PRICE)), but we can write:
+        suppliers, we cannot write MAX(AVG(PRICE)), but we can write:
 
-	<programlisting>
+        <programlisting>
 SELECT MAX(subtable.avgprice)
     FROM (SELECT AVG(P.PRICE) AS avgprice
           FROM SUPPLIER S, PART P, SELLS SE
           WHERE S.SNO = SE.SNO AND
                 P.PNO = SE.PNO
           GROUP BY S.SNO) subtable;
-	</programlisting>
+        </programlisting>
 
-	The subquery returns one row per supplier (because of its GROUP BY)
-	and then we aggregate over those rows in the outer query.
+        The subquery returns one row per supplier (because of its GROUP BY)
+        and then we aggregate over those rows in the outer query.
        </para>
       </example>
      </para>
@@ -1586,9 +1586,9 @@ SELECT MAX(subtable.avgprice)
        <title id="union-example">Union, Intersect, Except</title>
 
        <para>
-	The following query is an example for UNION:
+        The following query is an example for UNION:
 
-	<programlisting>
+        <programlisting>
 SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNAME = 'Jones'
@@ -1596,22 +1596,22 @@ UNION
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNAME = 'Adams';    
-	</programlisting>
+        </programlisting>
 
 gives the result:
 
-	<programlisting>
+        <programlisting>
  SNO | SNAME |  CITY
 -----+-------+--------
   2  | Jones | Paris
   3  | Adams | Vienna
-	</programlisting>
+        </programlisting>
        </para>
 
        <para>
-	Here is an example for INTERSECT:
+        Here is an example for INTERSECT:
 
-	<programlisting>
+        <programlisting>
 SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO &gt; 1
@@ -1619,23 +1619,23 @@ INTERSECT
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO &lt; 3;
-	</programlisting>
+        </programlisting>
 
-	gives the result:
+        gives the result:
 
-	<programlisting>
+        <programlisting>
  SNO | SNAME |  CITY
 -----+-------+--------
   2  | Jones | Paris
-	</programlisting>
+        </programlisting>
 
-	The only tuple returned by both parts of the query is the one having SNO=2.
+        The only tuple returned by both parts of the query is the one having SNO=2.
        </para>
 
        <para>
-	Finally an example for EXCEPT:
+        Finally an example for EXCEPT:
 
-	<programlisting>
+        <programlisting>
 SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO &gt; 1
@@ -1643,16 +1643,16 @@ EXCEPT
     SELECT S.SNO, S.SNAME, S.CITY
     FROM SUPPLIER S
     WHERE S.SNO &gt; 3;
-	</programlisting>
+        </programlisting>
 
-	gives the result:
+        gives the result:
 
-	<programlisting>
+        <programlisting>
  SNO | SNAME |  CITY
 -----+-------+--------
   2  | Jones | Paris
   3  | Adams | Vienna
-	</programlisting>
+        </programlisting>
        </para>
       </example>
      </para>
@@ -1686,11 +1686,11 @@ CREATE TABLE <replaceable class="parameter">table_name</replaceable>
        <title id="table-create">Table Creation</title>
 
        <para>
-	To create the tables defined in
-	<xref linkend="supplier-fig" endterm="supplier-fig"> the
-	following <acronym>SQL</acronym> statements are used:
+        To create the tables defined in
+        <xref linkend="supplier-fig" endterm="supplier-fig"> the
+        following <acronym>SQL</acronym> statements are used:
 
-	<programlisting>
+        <programlisting>
 CREATE TABLE SUPPLIER
     (SNO   INTEGER,
      SNAME VARCHAR(20),
@@ -1708,7 +1708,7 @@ CREATE TABLE PART
 CREATE TABLE SELLS
     (SNO INTEGER,
      PNO INTEGER);
-	</programlisting>
+        </programlisting>
        </para>
       </example>
      </para>
@@ -1723,50 +1723,50 @@ CREATE TABLE SELLS
 
       <itemizedlist>
        <listitem>
-	<para>
-	 INTEGER: signed fullword binary integer (31 bits precision).
-	</para>
+        <para>
+         INTEGER: signed fullword binary integer (31 bits precision).
+        </para>
        </listitem>
 
        <listitem>
-	<para>
-	 SMALLINT: signed halfword binary integer (15 bits precision).
-	</para>
+        <para>
+         SMALLINT: signed halfword binary integer (15 bits precision).
+        </para>
        </listitem>
 
        <listitem>
-	<para>
-	 DECIMAL (<replaceable class="parameter">p</replaceable>[,<replaceable class="parameter">q</replaceable>]):
-	 signed packed decimal number of up to
-	 <replaceable class="parameter">p</replaceable>
-	 digits, with
-	 <replaceable class="parameter">q</replaceable>
-	 digits to the right of the decimal point.
-	 If <replaceable class="parameter">q</replaceable>
-	 is omitted it is assumed to be 0.
-	</para>
+        <para>
+         DECIMAL (<replaceable class="parameter">p</replaceable>[,<replaceable class="parameter">q</replaceable>]):
+         signed packed decimal number of up to
+         <replaceable class="parameter">p</replaceable>
+         digits, with
+         <replaceable class="parameter">q</replaceable>
+         digits to the right of the decimal point.
+         If <replaceable class="parameter">q</replaceable>
+         is omitted it is assumed to be 0.
+        </para>
        </listitem>
 
        <listitem>
-	<para>
-	 FLOAT: signed doubleword floating point number.
-	</para>
+        <para>
+         FLOAT: signed doubleword floating point number.
+        </para>
        </listitem>
 
        <listitem>
-	<para>
-	 VARCHAR(<replaceable class="parameter">n</replaceable>):
-	 varying length character string of maximum length
-	 <replaceable class="parameter">n</replaceable>.
-	</para>
+        <para>
+         VARCHAR(<replaceable class="parameter">n</replaceable>):
+         varying length character string of maximum length
+         <replaceable class="parameter">n</replaceable>.
+        </para>
        </listitem>
 
        <listitem>
-	<para>
-	 CHAR(<replaceable class="parameter">n</replaceable>):
-	 fixed length character string of length
-	 <replaceable class="parameter">n</replaceable>.
-	</para>
+        <para>
+         CHAR(<replaceable class="parameter">n</replaceable>):
+         fixed length character string of length
+         <replaceable class="parameter">n</replaceable>.
+        </para>
        </listitem>
 
       </itemizedlist>
@@ -1802,8 +1802,8 @@ CREATE INDEX <replaceable class="parameter">index_name</replaceable>
        <title id="index-create">Create Index</title>
 
        <para>
-	To create an index named I on attribute SNAME of relation SUPPLIER
-	we use the following statement:
+        To create an index named I on attribute SNAME of relation SUPPLIER
+        we use the following statement:
 
       <programlisting>
 CREATE INDEX I ON SUPPLIER (SNAME);
@@ -1811,11 +1811,11 @@ CREATE INDEX I ON SUPPLIER (SNAME);
      </para>
 
        <para>
-	The created index is maintained automatically, i.e. whenever a new
-	tuple is inserted into the relation SUPPLIER the index I is
-	adapted. Note that the only changes a user can perceive when an
-	index is present are increased speed for <command>SELECT</command>
-	and decreases in speed of updates.
+        The created index is maintained automatically, i.e. whenever a new
+        tuple is inserted into the relation SUPPLIER the index I is
+        adapted. Note that the only changes a user can perceive when an
+        index is present are increased speed for <command>SELECT</command>
+        and decreases in speed of updates.
        </para>
       </example>
      </para>
@@ -2089,20 +2089,20 @@ DELETE FROM SUPPLIER
      <itemizedlist>
       <listitem>
        <para>
-	There are queries that cannot be formulated using pure <acronym>SQL</acronym>
-	(i.e. recursive queries). To be able to perform such queries we need a
-	host language with a greater expressive power than
-	<acronym>SQL</acronym>.
+        There are queries that cannot be formulated using pure <acronym>SQL</acronym>
+        (i.e. recursive queries). To be able to perform such queries we need a
+        host language with a greater expressive power than
+        <acronym>SQL</acronym>.
        </para>
       </listitem>
 
       <listitem>
        <para>
-	We simply want to access a database from some application that
-	is written in the host language (e.g. a ticket reservation system
-	with a graphical user interface is written in C and the information
-	about which tickets are still left is stored in a database that can be
-	accessed using embedded <acronym>SQL</acronym>).
+        We simply want to access a database from some application that
+        is written in the host language (e.g. a ticket reservation system
+        with a graphical user interface is written in C and the information
+        about which tickets are still left is stored in a database that can be
+        accessed using embedded <acronym>SQL</acronym>).
        </para>
       </listitem>
      </itemizedlist>

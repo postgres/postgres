@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.10 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/gin.sgml,v 2.11 2007/02/16 03:50:29 momjian Exp $ -->
 
 <chapter id="GIN">
 <title>GIN Indexes</title>
@@ -100,12 +100,12 @@
        to consult <literal>n</> to determine the data type of
        <literal>query</> and the key values that need to be extracted.
        The number of returned keys must be stored into <literal>*nkeys</>.
-	   If number of keys is equal to zero then <function>extractQuery</> 
-	   should store 0 or -1 into <literal>*nkeys</>. 0 means that any 
-	   row matches the <literal>query</> and sequence scan should be 
-	   produced. -1 means nothing can satisfy <literal>query</>. 
-	   Choice of value should be based on semantics meaning of operation with 
-	   given strategy number.
+       If number of keys is equal to zero then <function>extractQuery</> 
+       should store 0 or -1 into <literal>*nkeys</>. 0 means that any 
+       row matches the <literal>query</> and sequence scan should be 
+       produced. -1 means nothing can satisfy <literal>query</>. 
+       Choice of value should be based on semantics meaning of operation with 
+       given strategy number.
       </para>
      </listitem>
     </varlistentry>
