@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.130 2007/02/13 02:31:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.131 2007/02/16 20:57:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,7 +43,6 @@ static OuterJoinInfo *make_outerjoininfo(PlannerInfo *root,
 				   Relids left_rels, Relids right_rels,
 				   bool is_full_join, Node *clause);
 static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
-						bool is_pushed_down,
 						bool is_deduced,
 						bool below_outer_join,
 						Relids qualscope,
@@ -283,12 +282,11 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		}
 
 		/*
-		 * Now process the top-level quals.  These are always marked as
-		 * "pushed down", since they clearly didn't come from a JOIN expr.
+		 * Now process the top-level quals.
 		 */
 		foreach(l, (List *) f->quals)
 			distribute_qual_to_rels(root, (Node *) lfirst(l),
-									true, false, below_outer_join,
+									false, below_outer_join,
 									*qualscope, NULL, NULL);
 	}
 	else if (IsA(jtnode, JoinExpr))
@@ -389,7 +387,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		/* Process the qual clauses */
 		foreach(qual, (List *) j->quals)
 			distribute_qual_to_rels(root, (Node *) lfirst(qual),
-									false, false, below_outer_join,
+									false, below_outer_join,
 									*qualscope, ojscope, nonnullable_rels);
 
 		/* Now we can add the OuterJoinInfo to oj_info_list */
@@ -600,8 +598,6 @@ make_outerjoininfo(PlannerInfo *root,
  *	  EquivalenceClasses.
  *
  * 'clause': the qual clause to be distributed
- * 'is_pushed_down': if TRUE, force the clause to be marked 'is_pushed_down'
- *		(this indicates the clause came from a FromExpr, not a JoinExpr)
  * 'is_deduced': TRUE if the qual came from implied-equality deduction
  * 'below_outer_join': TRUE if the qual is from a JOIN/ON that is below the
  *		nullable side of a higher-level outer join
@@ -619,7 +615,6 @@ make_outerjoininfo(PlannerInfo *root,
  */
 static void
 distribute_qual_to_rels(PlannerInfo *root, Node *clause,
-						bool is_pushed_down,
 						bool is_deduced,
 						bool below_outer_join,
 						Relids qualscope,
@@ -627,6 +622,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids outerjoin_nonnullable)
 {
 	Relids		relids;
+	bool		is_pushed_down;
 	bool		outerjoin_delayed;
 	bool		pseudoconstant = false;
 	bool		maybe_equivalence;
@@ -692,17 +688,37 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 				root->hasPseudoConstantQuals = true;
 				/* if not below outer join, push it to top of tree */
 				if (!below_outer_join)
-				{
 					relids = get_relids_in_jointree((Node *) root->parse->jointree);
-					is_pushed_down = true;
-				}
 			}
 		}
 	}
 
-	/*
+	/*----------
 	 * Check to see if clause application must be delayed by outer-join
 	 * considerations.
+	 *
+	 * A word about is_pushed_down: we mark the qual as "pushed down" if
+	 * it is (potentially) applicable at a level different from its original
+	 * syntactic level.  This flag is used to distinguish OUTER JOIN ON quals
+	 * from other quals pushed down to the same joinrel.  The rules are:
+	 *		WHERE quals and INNER JOIN quals: is_pushed_down = true.
+	 *		Non-degenerate OUTER JOIN quals: is_pushed_down = false.
+	 *		Degenerate OUTER JOIN quals: is_pushed_down = true.
+	 * A "degenerate" OUTER JOIN qual is one that doesn't mention the
+	 * non-nullable side, and hence can be pushed down into the nullable side
+	 * without changing the join result.  It is correct to treat it as a
+	 * regular filter condition at the level where it is evaluated.
+	 *
+	 * Note: it is not immediately obvious that a simple boolean is enough
+	 * for this: if for some reason we were to attach a degenerate qual to
+	 * its original join level, it would need to be treated as an outer join
+	 * qual there.  However, this cannot happen, because all the rels the
+	 * clause mentions must be in the outer join's min_righthand, therefore
+	 * the join it needs must be formed before the outer join; and we always
+	 * attach quals to the lowest level where they can be evaluated.  But
+	 * if we were ever to re-introduce a mechanism for delaying evaluation
+	 * of "expensive" quals, this area would need work.
+	 *----------
 	 */
 	if (is_deduced)
 	{
@@ -713,6 +729,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 * where the qual belongs.
 		 */
 		Assert(!ojscope);
+		is_pushed_down = true;
 		outerjoin_delayed = false;
 		/* Don't feed it back for more deductions */
 		maybe_equivalence = false;
@@ -722,12 +739,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 	{
 		/*
 		 * The qual is attached to an outer join and mentions (some of the)
-		 * rels on the nonnullable side.
-		 *
-		 * Note: an outer-join qual that mentions only nullable-side rels can
-		 * be pushed down into the nullable side without changing the join
-		 * result, so we treat it almost the same as an ordinary inner-join
-		 * qual (see below).
+		 * rels on the nonnullable side, so it's not degenerate.
 		 *
 		 * We can't use such a clause to deduce equivalence (the left and right
 		 * sides might be unequal above the join because one of them has gone
@@ -751,12 +763,19 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 */
 		Assert(ojscope);
 		relids = ojscope;
+		is_pushed_down = false;
 		outerjoin_delayed = true;
 		Assert(!pseudoconstant);
 	}
 	else
 	{
-		/* Normal qual clause; check to see if must be delayed by outer join */
+		/*
+		 * Normal qual clause or degenerate outer-join clause.  Either way,
+		 * we can mark it as pushed-down.
+		 */
+		is_pushed_down = true;
+
+		/* Check to see if must be delayed by outer join */
 		outerjoin_delayed = check_outerjoin_delay(root, &relids);
 
 		if (outerjoin_delayed)
@@ -790,17 +809,6 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 */
 		maybe_outer_join = false;
 	}
-
-	/*
-	 * Mark the qual as "pushed down" if it can be applied at a level below
-	 * its original syntactic level.  This allows us to distinguish original
-	 * JOIN/ON quals from higher-level quals pushed down to the same joinrel.
-	 * A qual originating from WHERE is always considered "pushed down". Note
-	 * that for an outer-join qual, we have to compare to ojscope not
-	 * qualscope.
-	 */
-	if (!is_pushed_down)
-		is_pushed_down = !bms_equal(relids, ojscope ? ojscope : qualscope);
 
 	/*
 	 * Build the RestrictInfo node itself.
@@ -915,7 +923,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  * If so, add relids to *relids_p to reflect the lowest safe level for
  * evaluating the qual, and return TRUE.
  *
- * For a non-outer-join qual, we can evaluate the qual as soon as (1) we have
+ * For an is_pushed_down qual, we can evaluate the qual as soon as (1) we have
  * all the rels it mentions, and (2) we are at or above any outer joins that
  * can null any of these rels and are below the syntactic location of the
  * given qual.  We must enforce (2) because pushing down such a clause below
@@ -935,7 +943,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  * B/C join is done first then the join to A can null C, so a qual actually
  * mentioning only C cannot be applied below the join to A.
  *
- * For an outer-join qual, this isn't going to determine where we place the
+ * For a non-pushed-down qual, this isn't going to determine where we place the
  * qual, but we need to determine outerjoin_delayed anyway so we can decide
  * whether the qual is potentially useful for equivalence deductions.
  */
@@ -1101,12 +1109,9 @@ process_implied_equality(PlannerInfo *root,
 
 	/*
 	 * Push the new clause into all the appropriate restrictinfo lists.
-	 *
-	 * Note: we mark the qual "pushed down" to ensure that it can never be
-	 * taken for an original JOIN/ON clause.
 	 */
 	distribute_qual_to_rels(root, (Node *) clause,
-							true, true, below_outer_join,
+							true, below_outer_join,
 							qualscope, NULL, NULL);
 }
 

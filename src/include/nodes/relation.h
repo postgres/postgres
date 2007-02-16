@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.134 2007/01/22 20:00:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.135 2007/02/16 20:57:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -797,14 +797,14 @@ typedef struct HashPath
  * join, we prevent it from being evaluated below the outer join's joinrel.
  * When we do form the outer join's joinrel, we still need to distinguish
  * those quals that are actually in that join's JOIN/ON condition from those
- * that appeared higher in the tree and were pushed down to the join rel
+ * that appeared elsewhere in the tree and were pushed down to the join rel
  * because they used no other rels.  That's what the is_pushed_down flag is
- * for; it tells us that a qual came from a point above the join of the
- * set of base rels listed in required_relids.	A clause that originally came
- * from WHERE will *always* have its is_pushed_down flag set; a clause that
- * came from an INNER JOIN condition, but doesn't use all the rels being
- * joined, will also have is_pushed_down set because it will get attached to
- * some lower joinrel.
+ * for; it tells us that a qual is not an OUTER JOIN qual for the set of base
+ * rels listed in required_relids.  A clause that originally came from WHERE
+ * or an INNER JOIN condition will *always* have its is_pushed_down flag set.
+ * It's possible for an OUTER JOIN clause to be marked is_pushed_down too,
+ * if we decide that it can be pushed down into the nullable side of the join.
+ * In that case it acts as a plain filter qual for wherever it gets evaluated.
  *
  * When application of a qual must be delayed by outer join, we also mark it
  * with outerjoin_delayed = true.  This isn't redundant with required_relids
