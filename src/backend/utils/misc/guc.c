@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.374 2007/02/14 03:08:44 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.375 2007/02/16 02:59:41 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2314,6 +2314,16 @@ static struct config_string ConfigureNamesString[] =
 		NULL, assign_temp_tablespaces, NULL
 	},
 
+	{
+		{"ssl_ciphers", PGC_POSTMASTER, CONN_AUTH_SECURITY,
+			gettext_noop("Sets the list of allowed SSL ciphers."),
+			NULL,
+			GUC_SUPERUSER_ONLY
+		},
+		&SSLCipherSuites,
+		"ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH", NULL, NULL
+	},
+			
 	/* End-of-list marker */
 	{
 		{NULL, 0, 0, NULL, NULL}, NULL, NULL, NULL, NULL

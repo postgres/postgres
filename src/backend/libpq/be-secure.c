@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.77 2007/02/07 00:52:35 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.78 2007/02/16 02:59:40 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -92,6 +92,10 @@
 #ifdef USE_SSL
 #include <openssl/ssl.h>
 #include <openssl/dh.h>
+#if SSLEAY_VERSION_NUMBER >= 0x0907000L
+#include <openssl/conf.h>
+#endif
+
 #endif
 
 #include "libpq/libpq.h"
@@ -125,6 +129,10 @@ static const char *SSLerrmessage(void);
 #define RENEGOTIATION_LIMIT (512 * 1024 * 1024)
 
 static SSL_CTX *SSL_context = NULL;
+
+/* GUC variable controlling SSL cipher list*/
+extern char *SSLCipherSuites;
+
 #endif
 
 /* ------------------------------------------------------------ */
@@ -719,6 +727,9 @@ initialize_SSL(void)
 
 	if (!SSL_context)
 	{
+#if SSLEAY_VERSION_NUMBER >= 0x0907000L
+		OPENSSL_config(NULL);
+#endif
 		SSL_library_init();
 		SSL_load_error_strings();
 		SSL_context = SSL_CTX_new(SSLv23_method());
@@ -780,7 +791,7 @@ initialize_SSL(void)
 	SSL_CTX_set_options(SSL_context, SSL_OP_SINGLE_DH_USE | SSL_OP_NO_SSLv2);
 
 	/* setup the allowed cipher list */
-	if (SSL_CTX_set_cipher_list(SSL_context, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH") != 1)
+	if (SSL_CTX_set_cipher_list(SSL_context, SSLCipherSuites) != 1)
 		elog(FATAL, "could not set the cipher list (no valid ciphers available)");
 
 	/*
