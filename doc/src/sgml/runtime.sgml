@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.377 2007/02/16 02:59:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.378 2007/02/16 16:37:29 tgl Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1518,20 +1518,17 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
   <para>
    <productname>OpenSSL</productname> supports a wide range of ciphers
    and authentication algorithms, whose strength varies significantly.
-   You can restrict the list of ciphers which can be used to connect to
-   your server using the <xref linkend="guc-ssl-ciphers"> parameter.
+   You can restrict the list of ciphers that can be used to connect to
+   your server by adjusting the <xref linkend="guc-ssl-ciphers"> parameter.
   </para>
 
   <para>
-   <productname>PostgreSQL</productname> reads a system-wide
-   <productname>OpenSSL</productname> configuration file. By default this
+   <productname>PostgreSQL</productname> reads the system-wide
+   <productname>OpenSSL</productname> configuration file. By default, this
    file is named <filename>openssl.cnf</filename> and is located in the
-   directory reported by <application>openssl</>:
-   <programlisting>
-   openssl version -d
-   </programlisting>
-   This default can be overriden by setting environment variable
-   <envar>OPENSSL_CONF</envar> to the name of desired configuration file.
+   directory reported by <literal>openssl version -d</>.
+   This default can be overridden by setting environment variable
+   <envar>OPENSSL_CONF</envar> to the name of the desired configuration file.
   </para>
 
   <para>

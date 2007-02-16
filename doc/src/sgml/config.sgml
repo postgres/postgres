@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.111 2007/02/16 02:59:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.112 2007/02/16 16:37:29 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -569,15 +569,15 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-ssl-ciphers" xreflabel="ssl-ciphers">
-      <term><varname>ssl_ciphers> (<type>string</type>)</term>
+     <varlistentry id="guc-ssl-ciphers" xreflabel="ssl_ciphers">
+      <term><varname>ssl_ciphers</varname> (<type>string</type>)</term>
       <indexterm>
        <primary><varname>ssl_ciphers</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
-        Specifies a list of <acronym>SSL</> ciphers which can be used to
-        establish secure connections. See the <application>openssl</>
+        Specifies a list of <acronym>SSL</> ciphers that are allowed to be
+        used on secure connections. See the <application>openssl</>
         manual page for a list of supported ciphers.
        </para>
       </listitem>

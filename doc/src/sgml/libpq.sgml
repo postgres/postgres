@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.230 2007/02/16 03:50:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.231 2007/02/16 16:37:29 tgl Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -4178,10 +4178,11 @@ setting, and is only available if
 <primary><envar>PGSSLKEY</envar></primary>
 </indexterm>
 <envar>PGSSLKEY</envar>
-specifies the hardware token which stores the secret key for the client
-certificate, instead of a file. The value of this variable should consist
+specifies the hardware token that stores the secret key for the client
+certificate. The value of this variable should consist
 of a colon-separated engine name (engines are <productname>OpenSSL</>
-loadable modules) and an engine-specific key identifier.
+loadable modules) and an engine-specific key identifier.  If this is not
+set, the secret key must be kept in a file.
 </para>
 </listitem>
 <listitem>
@@ -4450,30 +4451,29 @@ ldap://ldap.mycompany.com/dc=mycompany,dc=com?uniqueMember?one?(cn=mydatabase)
    for increased security. See <xref linkend="ssl-tcp"> for details
    about the server-side <acronym>SSL</> functionality.
   </para>
+
   <para>
-  <application>libpq</application> reads the system-wide
-  <productname>OpenSSL</productname> configuration file. By default, this
-  file is named <filename>openssl.cnf</filename> and is located in the
-  directory reported by <application>openssl</>:
-  <programlisting>
-  openssl version -d
-  </programlisting>
-  The default can be overriden by setting environment variable
-  <envar>OPENSSL_CONF</envar> to the name of the desired configuration
-  file.
+   <application>libpq</application> reads the system-wide
+   <productname>OpenSSL</productname> configuration file. By default, this
+   file is named <filename>openssl.cnf</filename> and is located in the
+   directory reported by <literal>openssl version -d</>.
+   This default can be overridden by setting environment variable
+   <envar>OPENSSL_CONF</envar> to the name of the desired configuration
+   file.
   </para>
+
   <para>
    If the server demands a client certificate, 
    <application>libpq</application>
    will send the certificate stored in file
    <filename>~/.postgresql/postgresql.crt</> within the user's home directory.
    A matching private key file <filename>~/.postgresql/postgresql.key</>
-   must also be present, and must not be world-readable, unless the secret
-   key is stored in a hardware token, as specified by
-   <envar>PGSSLKEY</envar>.
+   must also be present, unless the secret key for the certificate is stored
+   in a hardware token, as specified by <envar>PGSSLKEY</envar>.
    (On Microsoft Windows these files are named
    <filename>%APPDATA%\postgresql\postgresql.crt</filename> and
    <filename>%APPDATA%\postgresql\postgresql.key</filename>.)
+   The private key file must not be world-readable.
   </para>
 
   <para>
@@ -4481,7 +4481,7 @@ ldap://ldap.mycompany.com/dc=mycompany,dc=com?uniqueMember?one?(cn=mydatabase)
    should consist of a colon-separated engine name and key identifier. In
    this case, <application>libpq</application> will load the specified
    engine, i.e. the <productname>OpenSSL</> module which supports special
-   hardware and reference the key with the specified identifier.
+   hardware, and reference the key with the specified identifier.
    Identifiers are engine-specific. Typically, cryptography hardware tokens
    do not reveal secret keys to the application. Instead, applications
    delegate all cryptography operations which require the secret key to
