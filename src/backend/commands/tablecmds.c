@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.214 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.215 2007/02/16 22:04:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3943,11 +3943,10 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	/*
 	 * Look up the equality operators to use in the constraint.
 	 *
-	 * Note that we look for operator(s) with the PK type on the left; when
-	 * the types are different this is the right choice because the PK index
-	 * will need operators with the indexkey on the left.  Also, we take the
-	 * PK type as being the declared input type of the opclass, which might be
-	 * binary-compatible but not identical to the PK column type.
+	 * Note that we have to be careful about the difference between the actual
+	 * PK column type and the opclass' declared input type, which might be
+	 * only binary-compatible with it.  The declared opcintype is the right
+	 * thing to probe pg_amop with.
 	 */
 	if (numfks != numpks)
 		ereport(ERROR,
@@ -3956,12 +3955,14 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 
 	for (i = 0; i < numpks; i++)
 	{
+		Oid			pktype = pktypoid[i];
+		Oid			fktype = fktypoid[i];
+		Oid			fktyped;
 		HeapTuple	cla_ht;
 		Form_pg_opclass cla_tup;
 		Oid			amid;
 		Oid			opfamily;
-		Oid			pktype;
-		Oid			fktype;
+		Oid			opcintype;
 		Oid			pfeqop;
 		Oid			ppeqop;
 		Oid			ffeqop;
@@ -3976,7 +3977,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		cla_tup = (Form_pg_opclass) GETSTRUCT(cla_ht);
 		amid = cla_tup->opcmethod;
 		opfamily = cla_tup->opcfamily;
-		pktype = cla_tup->opcintype;
+		opcintype = cla_tup->opcintype;
 		ReleaseSysCache(cla_ht);
 
 		/*
@@ -3991,30 +3992,50 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		eqstrategy = BTEqualStrategyNumber;
 
 		/*
-		 * There had better be a PK = PK operator for the index.
+		 * There had better be a primary equality operator for the index.
+		 * We'll use it for PK = PK comparisons.
 		 */
-		ppeqop = get_opfamily_member(opfamily, pktype, pktype, eqstrategy);
+		ppeqop = get_opfamily_member(opfamily, opcintype, opcintype,
+									 eqstrategy);
 
 		if (!OidIsValid(ppeqop))
 			elog(ERROR, "missing operator %d(%u,%u) in opfamily %u",
-				 eqstrategy, pktype, pktype, opfamily);
+				 eqstrategy, opcintype, opcintype, opfamily);
 
 		/*
 		 * Are there equality operators that take exactly the FK type?
 		 * Assume we should look through any domain here.
 		 */
-		fktype = getBaseType(fktypoid[i]);
+		fktyped = getBaseType(fktype);
 
-		pfeqop = get_opfamily_member(opfamily, pktype, fktype, eqstrategy);
-		ffeqop = get_opfamily_member(opfamily, fktype, fktype, eqstrategy);
+		pfeqop = get_opfamily_member(opfamily, opcintype, fktyped,
+									 eqstrategy);
+		if (OidIsValid(pfeqop))
+			ffeqop = get_opfamily_member(opfamily, fktyped, fktyped,
+										 eqstrategy);
+		else
+			ffeqop = InvalidOid;				/* keep compiler quiet */
 
 		if (!(OidIsValid(pfeqop) && OidIsValid(ffeqop)))
 		{
 			/*
 			 * Otherwise, look for an implicit cast from the FK type to
-			 * the PK type, and if found, use the PK type's equality operator.
+			 * the opcintype, and if found, use the primary equality operator.
+			 * This is a bit tricky because opcintype might be a generic type
+			 * such as ANYARRAY, and so what we have to test is whether the
+			 * two actual column types can be concurrently cast to that type.
+			 * (Otherwise, we'd fail to reject combinations such as int[] and
+			 * point[].)
 			 */
-			if (can_coerce_type(1, &fktype, &pktype, COERCION_IMPLICIT))
+			Oid		input_typeids[2];
+			Oid		target_typeids[2];
+
+			input_typeids[0] = pktype;
+			input_typeids[1] = fktype;
+			target_typeids[0] = opcintype;
+			target_typeids[1] = opcintype;
+			if (can_coerce_type(2, input_typeids, target_typeids,
+								COERCION_IMPLICIT))
 				pfeqop = ffeqop = ppeqop;
 		}
 
@@ -4028,8 +4049,8 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 							   "are of incompatible types: %s and %s.",
 							   strVal(list_nth(fkconstraint->fk_attrs, i)),
 							   strVal(list_nth(fkconstraint->pk_attrs, i)),
-							   format_type_be(fktypoid[i]),
-							   format_type_be(pktypoid[i]))));
+							   format_type_be(fktype),
+							   format_type_be(pktype))));
 
 		pfeqoperators[i] = pfeqop;
 		ppeqoperators[i] = ppeqop;
