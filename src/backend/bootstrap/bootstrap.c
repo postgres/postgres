@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.231 2007/02/15 23:23:22 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.232 2007/02/16 02:10:07 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,7 +208,6 @@ BootstrapMain(int argc, char *argv[])
 {
 	char	   *progname = argv[0];
 	int			i;
-	char	   *dbname;
 	int			flag;
 	int			xlogop = BS_XLOG_NOP;
 	char	   *userDoption = NULL;
@@ -239,7 +238,6 @@ BootstrapMain(int argc, char *argv[])
 	 */
 
 	/* Set defaults, to be overriden by explicit options below */
-	dbname = NULL;
 	if (!IsUnderPostmaster)
 		InitializeGUCOptions();
 
@@ -250,7 +248,7 @@ BootstrapMain(int argc, char *argv[])
 		argc--;
 	}
 
-	while ((flag = getopt(argc, argv, "B:c:d:D:Fr:x:y:-:")) != -1)
+	while ((flag = getopt(argc, argv, "B:c:d:D:Fr:x:-:")) != -1)
 	{
 		switch (flag)
 		{
@@ -281,9 +279,6 @@ BootstrapMain(int argc, char *argv[])
 				break;
 			case 'x':
 				xlogop = atoi(optarg);
-				break;
-			case 'y':
-				dbname = strdup(optarg);
 				break;
 			case 'c':
 			case '-':
@@ -320,12 +315,7 @@ BootstrapMain(int argc, char *argv[])
 		}
 	}
 
-	if (!dbname && argc - optind == 1)
-	{
-		dbname = argv[optind];
-		optind++;
-	}
-	if (!dbname || argc != optind)
+	if (argc != optind)
 	{
 		write_stderr("%s: invalid command-line arguments\n", progname);
 		proc_exit(1);
@@ -449,7 +439,7 @@ BootstrapMain(int argc, char *argv[])
 	 * Do backend-like initialization for bootstrap mode
 	 */
 	InitProcess();
-	(void) InitPostgres(dbname, InvalidOid, NULL, NULL);
+	(void) InitPostgres(NULL, InvalidOid, NULL, NULL);
 
 	/*
 	 * In NOP mode, all we really want to do is create shared memory and

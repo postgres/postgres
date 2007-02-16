@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.522 2007/02/15 23:23:23 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.523 2007/02/16 02:10:07 alvherre Exp $
  *
  * NOTES
  *
@@ -3728,9 +3728,6 @@ StartChildProcess(int xlop)
 
 	snprintf(xlbuf, sizeof(xlbuf), "-x%d", xlop);
 	av[ac++] = xlbuf;
-
-	av[ac++] = "-y";
-	av[ac++] = "template1";
 
 	av[ac] = NULL;
 	Assert(ac < lengthof(av));

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.49 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.50 2007/02/16 02:10:07 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -472,17 +472,6 @@ PostgreSQL documentation
         is started, after it conducts the authentication procedure.
         This is intended to give an opportunity to attach to the
         server process with a debugger.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-y</option> <replaceable class="parameter">database</replaceable></term>
-      <listitem>
-       <para>
-        Indicates that this is a subprocess started by a parent
-        <command>postgres</command> process, and specifies the database to
-        use.  This option is for internal use only.
        </para>
       </listitem>
      </varlistentry>

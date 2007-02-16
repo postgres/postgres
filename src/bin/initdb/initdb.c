@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.132 2007/02/10 14:58:55 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.133 2007/02/16 02:10:07 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1186,7 +1186,7 @@ test_config_settings(void)
 				 "-c max_connections=%d "
 				 "-c shared_buffers=%d "
 				 "-c max_fsm_pages=%d "
-				 "template1 < \"%s\" > \"%s\" 2>&1%s",
+				 "< \"%s\" > \"%s\" 2>&1%s",
 				 SYSTEMQUOTE, backend_exec, boot_options,
 				 test_conns, test_buffs, test_max_fsm,
 				 DEVNULL, DEVNULL, SYSTEMQUOTE);
@@ -1221,7 +1221,7 @@ test_config_settings(void)
 				 "-c max_connections=%d "
 				 "-c shared_buffers=%d "
 				 "-c max_fsm_pages=%d "
-				 "template1 < \"%s\" > \"%s\" 2>&1%s",
+				 "< \"%s\" > \"%s\" 2>&1%s",
 				 SYSTEMQUOTE, backend_exec, boot_options,
 				 n_connections, test_buffs, test_max_fsm,
 				 DEVNULL, DEVNULL, SYSTEMQUOTE);
@@ -1455,7 +1455,7 @@ bootstrap_template1(char *short_version)
 	unsetenv("PGCLIENTENCODING");
 
 	snprintf(cmd, sizeof(cmd),
-			 "\"%s\" --boot -x1 %s %s template1",
+			 "\"%s\" --boot -x1 %s %s",
 			 backend_exec, boot_options, talkargs);
 
 	PG_CMD_OPEN;
