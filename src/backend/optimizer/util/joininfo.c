@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.47 2007/01/20 20:45:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.48 2007/02/16 00:14:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,40 +61,6 @@ have_relevant_joinclause(PlannerInfo *root,
 	 */
 	if (!result && rel1->has_eclass_joins && rel2->has_eclass_joins)
 		result = have_relevant_eclass_joinclause(root, rel1, rel2);
-
-	/*
-	 * It's possible that the rels correspond to the left and right sides
-	 * of a degenerate outer join, that is, one with no joinclause mentioning
-	 * the non-nullable side.  The above scan will then have failed to locate
-	 * any joinclause indicating we should join, but nonetheless we must
-	 * allow the join to occur.
-	 *
-	 * Note: we need no comparable check for IN-joins because we can handle
-	 * sequential buildup of an IN-join to multiple outer-side rels; therefore
-	 * the "last ditch" case in make_rels_by_joins() always succeeds.  We
-	 * could dispense with this hack if we were willing to try bushy plans
-	 * in the "last ditch" case, but that seems too expensive.
-	 */
-	if (!result)
-	{
-		foreach(l, root->oj_info_list)
-		{
-			OuterJoinInfo *ojinfo = (OuterJoinInfo *) lfirst(l);
-
-			/* ignore full joins --- other mechanisms handle them */
-			if (ojinfo->is_full_join)
-				continue;
-
-			if ((bms_is_subset(ojinfo->min_lefthand, rel1->relids) &&
-				 bms_is_subset(ojinfo->min_righthand, rel2->relids)) ||
-				(bms_is_subset(ojinfo->min_lefthand, rel2->relids) &&
-				 bms_is_subset(ojinfo->min_righthand, rel1->relids)))
-			{
-				result = true;
-				break;
-			}
-		}
-	}
 
 	bms_free(join_relids);
 

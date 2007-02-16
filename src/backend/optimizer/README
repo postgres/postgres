@@ -105,12 +105,16 @@ that are either base rels or joinrels constructed per sub-join-lists.
 We can join these rels together in any order the planner sees fit.
 The standard (non-GEQO) planner does this as follows:
 
-Consider joining each RelOptInfo to each other RelOptInfo specified in its
-RelOptInfo.joininfo, and generate a Path for each possible join method for
-each such pair.  (If we have a RelOptInfo with no join clauses, we have no
-choice but to generate a clauseless Cartesian-product join; so we consider
-joining that rel to each other available rel.  But in the presence of join
-clauses we will only consider joins that use available join clauses.)
+Consider joining each RelOptInfo to each other RelOptInfo for which there
+is a usable joinclause, and generate a Path for each possible join method
+for each such pair.  (If we have a RelOptInfo with no join clauses, we have
+no choice but to generate a clauseless Cartesian-product join; so we
+consider joining that rel to each other available rel.  But in the presence
+of join clauses we will only consider joins that use available join
+clauses.  Note that join-order restrictions induced by outer joins and
+IN clauses are treated as if they were real join clauses, to ensure that
+we find a workable join order in cases where those restrictions force a
+clauseless join to be done.)
 
 If we only had two relations in the list, we are done: we just pick
 the cheapest path for the join RelOptInfo.  If we had more than two, we now

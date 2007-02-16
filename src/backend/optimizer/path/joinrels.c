@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.85 2007/02/13 02:31:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.86 2007/02/16 00:14:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,8 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 			other_rels = list_head(joinrels[1]);		/* consider all initial
 														 * rels */
 
-		if (old_rel->joininfo != NIL || old_rel->has_eclass_joins)
+		if (old_rel->joininfo != NIL || old_rel->has_eclass_joins ||
+			has_join_restriction(root, old_rel))
 		{
 			/*
 			 * Note that if all available join clauses for this rel require
@@ -80,31 +81,19 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 			 * it here.  In most cases that's OK; it'll be considered by
 			 * "bushy plan" join code in a higher-level pass where we have
 			 * those other rels collected into a join rel.
+			 *
+			 * See also the last-ditch case below.
 			 */
 			new_rels = make_rels_by_clause_joins(root,
 												 old_rel,
 												 other_rels);
-
-			/*
-			 * An exception occurs when there is a clauseless join inside a
-			 * construct that restricts join order, i.e., an outer join or
-			 * an IN (sub-SELECT) construct.  Here, the rel may well have join
-			 * clauses against stuff outside its OJ side or IN sub-SELECT, but
-			 * the clauseless join *must* be done before we can make use of
-			 * those join clauses.	 So do the clauseless join bit.
-			 *
-			 * See also the last-ditch case below.
-			 */
-			if (new_rels == NIL && has_join_restriction(root, old_rel))
-				new_rels = make_rels_by_clauseless_joins(root,
-														 old_rel,
-														 other_rels);
 		}
 		else
 		{
 			/*
 			 * Oops, we have a relation that is not joined to any other
-			 * relation.  Cartesian product time.
+			 * relation, either directly or by join-order restrictions.
+			 * Cartesian product time.
 			 */
 			new_rels = make_rels_by_clauseless_joins(root,
 													 old_rel,
@@ -127,8 +116,8 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 	 * joined to relations of level-k initial rels, for 2 <= k <= level-2.
 	 *
 	 * We only consider bushy-plan joins for pairs of rels where there is a
-	 * suitable join clause, in order to avoid unreasonable growth of planning
-	 * time.
+	 * suitable join clause (or join order restriction), in order to avoid
+	 * unreasonable growth of planning time.
 	 */
 	for (k = 2;; k++)
 	{
@@ -148,12 +137,12 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 			ListCell   *r2;
 
 			/*
-			 * We can ignore clauseless joins here, *except* when there are
-			 * outer joins --- then we might have to force a bushy outer
-			 * join.  See have_relevant_joinclause().
+			 * We can ignore clauseless joins here, *except* when they
+			 * participate in join-order restrictions --- then we might have
+			 * to force a bushy join plan.
 			 */
 			if (old_rel->joininfo == NIL && !old_rel->has_eclass_joins &&
-				root->oj_info_list == NIL)
+				!has_join_restriction(root, old_rel))
 				continue;
 
 			if (k == other_level)
@@ -170,9 +159,10 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 					/*
 					 * OK, we can build a rel of the right level from this
 					 * pair of rels.  Do so if there is at least one usable
-					 * join clause.
+					 * join clause or a relevant join restriction.
 					 */
-					if (have_relevant_joinclause(root, old_rel, new_rel))
+					if (have_relevant_joinclause(root, old_rel, new_rel) ||
+						have_join_order_restriction(root, old_rel, new_rel))
 					{
 						RelOptInfo *jrel;
 
@@ -252,7 +242,8 @@ make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
 /*
  * make_rels_by_clause_joins
  *	  Build joins between the given relation 'old_rel' and other relations
- *	  that participate in join clauses that 'old_rel' also participates in.
+ *	  that participate in join clauses that 'old_rel' also participates in
+ *	  (or participate in join-order restrictions with it).
  *	  The join rel nodes are returned in a list.
  *
  * 'old_rel' is the relation entry for the relation to be joined
@@ -275,7 +266,8 @@ make_rels_by_clause_joins(PlannerInfo *root,
 		RelOptInfo *other_rel = (RelOptInfo *) lfirst(l);
 
 		if (!bms_overlap(old_rel->relids, other_rel->relids) &&
-			have_relevant_joinclause(root, old_rel, other_rel))
+			(have_relevant_joinclause(root, old_rel, other_rel) ||
+			 have_join_order_restriction(root, old_rel, other_rel)))
 		{
 			RelOptInfo *jrel;
 
@@ -330,44 +322,6 @@ make_rels_by_clauseless_joins(PlannerInfo *root,
 	}
 
 	return result;
-}
-
-
-/*
- * has_join_restriction
- *		Detect whether the specified relation has join-order restrictions
- *		due to being inside an outer join or an IN (sub-SELECT).
- */
-static bool
-has_join_restriction(PlannerInfo *root, RelOptInfo *rel)
-{
-	ListCell   *l;
-
-	foreach(l, root->oj_info_list)
-	{
-		OuterJoinInfo *ojinfo = (OuterJoinInfo *) lfirst(l);
-
-		/* ignore full joins --- other mechanisms preserve their ordering */
-		if (ojinfo->is_full_join)
-			continue;
-		/* if it overlaps RHS and isn't yet joined to LHS, it's restricted */
-		if (bms_overlap(rel->relids, ojinfo->min_righthand) &&
-			!bms_overlap(rel->relids, ojinfo->min_lefthand))
-			return true;
-		/* if it's a proper subset of the LHS, it's also restricted */
-		if (bms_is_subset(rel->relids, ojinfo->min_lefthand) &&
-			!bms_equal(rel->relids, ojinfo->min_lefthand))
-			return true;
-	}
-
-	foreach(l, root->in_info_list)
-	{
-		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
-
-		if (bms_is_subset(rel->relids, ininfo->righthand))
-			return true;
-	}
-	return false;
 }
 
 
@@ -668,4 +622,153 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
 	bms_free(joinrelids);
 
 	return joinrel;
+}
+
+
+/*
+ * have_join_order_restriction
+ *		Detect whether the two relations should be joined to satisfy
+ *		a join-order restriction arising from outer joins or IN clauses.
+ *
+ * In practice this is always used with have_relevant_joinclause(), and so
+ * could be merged with that function, but it seems clearer to separate the
+ * two concerns.  We need these tests because there are degenerate cases where
+ * a clauseless join must be performed to satisfy join-order restrictions.
+ *
+ * Note: this is only a problem if one side of a degenerate outer join
+ * contains multiple rels, or a clauseless join is required within an IN's
+ * RHS; else we will find a join path via the "last ditch" case in
+ * make_rels_by_joins().  We could dispense with this test if we were willing
+ * to try bushy plans in the "last ditch" case, but that seems much less
+ * efficient.
+ */
+bool
+have_join_order_restriction(PlannerInfo *root,
+							RelOptInfo *rel1, RelOptInfo *rel2)
+{
+	ListCell   *l;
+
+	/*
+	 * It's possible that the rels correspond to the left and right sides
+	 * of a degenerate outer join, that is, one with no joinclause mentioning
+	 * the non-nullable side; in which case we should force the join to occur.
+	 *
+	 * Also, the two rels could represent a clauseless join that has to be
+	 * completed to build up the LHS or RHS of an outer join.
+	 */
+	foreach(l, root->oj_info_list)
+	{
+		OuterJoinInfo *ojinfo = (OuterJoinInfo *) lfirst(l);
+
+		/* ignore full joins --- other mechanisms handle them */
+		if (ojinfo->is_full_join)
+			continue;
+
+		/* Can we perform the OJ with these rels? */
+		if (bms_is_subset(ojinfo->min_lefthand, rel1->relids) &&
+			bms_is_subset(ojinfo->min_righthand, rel2->relids))
+			return true;
+		if (bms_is_subset(ojinfo->min_lefthand, rel2->relids) &&
+			bms_is_subset(ojinfo->min_righthand, rel1->relids))
+			return true;
+
+		/*
+		 * Might we need to join these rels to complete the RHS?  We have
+		 * to use "overlap" tests since either rel might include a lower OJ
+		 * that has been proven to commute with this one.
+		 */
+		if (bms_overlap(ojinfo->min_righthand, rel1->relids) &&
+			bms_overlap(ojinfo->min_righthand, rel2->relids))
+			return true;
+
+		/* Likewise for the LHS. */
+		if (bms_overlap(ojinfo->min_lefthand, rel1->relids) &&
+			bms_overlap(ojinfo->min_lefthand, rel2->relids))
+			return true;
+	}
+
+	/*
+	 * Similarly, we need to allow a join that completes a degenerate
+	 * IN-clause, or one that builds up its LHS or RHS.
+	 */
+	foreach(l, root->in_info_list)
+	{
+		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
+
+		/* Can we perform the IN with these rels? */
+		if (bms_is_subset(ininfo->lefthand, rel1->relids) &&
+			bms_is_subset(ininfo->righthand, rel2->relids))
+			return true;
+		if (bms_is_subset(ininfo->lefthand, rel2->relids) &&
+			bms_is_subset(ininfo->righthand, rel1->relids))
+			return true;
+
+		/*
+		 * Might we need to join these rels to complete the RHS?  It's
+		 * probably overkill to test "overlap", since we never join part of an
+		 * IN's RHS to anything else, but may as well keep the coding similar
+		 * to the OJ case.
+		 */
+		if (bms_overlap(ininfo->righthand, rel1->relids) &&
+			bms_overlap(ininfo->righthand, rel2->relids))
+			return true;
+
+		/* Likewise for the LHS. */
+		if (bms_overlap(ininfo->lefthand, rel1->relids) &&
+			bms_overlap(ininfo->lefthand, rel2->relids))
+			return true;
+	}
+
+	return false;
+}
+
+
+/*
+ * has_join_restriction
+ *		Detect whether the specified relation has join-order restrictions
+ *		due to being inside an outer join or an IN (sub-SELECT).
+ *
+ * Essentially, this tests whether have_join_order_restriction() could
+ * succeed with this rel and some other one.
+ */
+static bool
+has_join_restriction(PlannerInfo *root, RelOptInfo *rel)
+{
+	ListCell   *l;
+
+	foreach(l, root->oj_info_list)
+	{
+		OuterJoinInfo *ojinfo = (OuterJoinInfo *) lfirst(l);
+
+		/* ignore full joins --- other mechanisms preserve their ordering */
+		if (ojinfo->is_full_join)
+			continue;
+
+		/* ignore if OJ is already contained in rel */
+		if (bms_is_subset(ojinfo->min_lefthand, rel->relids) &&
+			bms_is_subset(ojinfo->min_righthand, rel->relids))
+			continue;
+
+		/* restricted if it overlaps LHS or RHS, but doesn't contain OJ */
+		if (bms_overlap(ojinfo->min_lefthand, rel->relids) ||
+			bms_overlap(ojinfo->min_righthand, rel->relids))
+			return true;
+	}
+
+	foreach(l, root->in_info_list)
+	{
+		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
+
+		/* ignore if IN is already contained in rel */
+		if (bms_is_subset(ininfo->lefthand, rel->relids) &&
+			bms_is_subset(ininfo->righthand, rel->relids))
+			continue;
+
+		/* restricted if it overlaps LHS or RHS, but doesn't contain IN */
+		if (bms_overlap(ininfo->lefthand, rel->relids) ||
+			bms_overlap(ininfo->righthand, rel->relids))
+			return true;
+	}
+
+	return false;
 }
