@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.30 2007/02/16 10:42:31 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.31 2007/02/16 18:37:43 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,10 +39,6 @@
  */
 
 #include "postgres.h"
-
-#ifdef HAVE_STDINT_H
-#include <stdint.h>
-#endif
 
 #ifdef USE_LIBXML
 #include <libxml/chvalid.h>
@@ -2189,7 +2185,8 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 								 "    <xsd:maxInclusive value=\"" INT64_FORMAT "\"/>\n"
 								 "    <xsd:minInclusive value=\"" INT64_FORMAT "\"/>\n"
 								 "  </xsd:restriction>\n",
-								 INT64_MAX, INT64_MIN);
+								 -((INT64CONST(1) << (sizeof(int64) * 8 - 1)) + 1),
+								 (INT64CONST(1) << (sizeof(int64) * 8 - 1)));
 				break;
 
 			case FLOAT4OID:
