@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.88.2.1 2006/01/29 17:27:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.88.2.2 2007/02/16 00:14:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,8 @@ extern RelOptInfo *make_jointree_rel(PlannerInfo *root, Node *jtnode);
 extern RelOptInfo *make_join_rel(PlannerInfo *root,
 			  RelOptInfo *rel1, RelOptInfo *rel2,
 			  JoinType jointype);
+extern bool have_join_order_restriction(PlannerInfo *root,
+										RelOptInfo *rel1, RelOptInfo *rel2);
 
 /*
  * pathkeys.c
