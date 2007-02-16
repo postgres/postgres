@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.128 2007/01/22 01:35:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.129 2007/02/16 03:49:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -935,6 +935,14 @@ set_inner_join_references(Plan *inner_plan, indexed_tlist *outer_itlist)
 			set_inner_join_references((Plan *) lfirst(l),
 									  outer_itlist);
 		}
+	}
+	else if (IsA(inner_plan, Result))
+	{
+		/* Recurse through a gating Result node (similar to Append case) */
+		Result	   *result = (Result *) inner_plan;
+
+		if (result->plan.lefttree)
+			set_inner_join_references(result->plan.lefttree, outer_itlist);
 	}
 	else if (IsA(inner_plan, TidScan))
 	{
