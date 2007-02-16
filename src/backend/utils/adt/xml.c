@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.29 2007/02/16 07:46:54 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.30 2007/02/16 10:42:31 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,10 @@
  */
 
 #include "postgres.h"
+
+#ifdef HAVE_STDINT_H
+#include <stdint.h>
+#endif
 
 #ifdef USE_LIBXML
 #include <libxml/chvalid.h>
