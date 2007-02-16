@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.28 2007/02/13 15:56:12 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.29 2007/02/16 07:46:54 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,11 +49,16 @@
 #include <libxml/xmlwriter.h>
 #endif /* USE_LIBXML */
 
+#include "catalog/namespace.h"
 #include "catalog/pg_type.h"
+#include "commands/dbcommands.h"
 #include "executor/executor.h"
+#include "executor/spi.h"
 #include "fmgr.h"
+#include "lib/stringinfo.h"
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
 #include "nodes/execnodes.h"
 #include "parser/parse_expr.h"
 #include "utils/array.h"
@@ -84,6 +89,14 @@ static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg, bool preserv
 
 #endif /* USE_LIBXML */
 
+static StringInfo query_to_xml_internal(const char *query, char *tablename, const char *xmlschema, bool nulls, bool tableforest, const char *targetns);
+static const char * map_sql_table_to_xmlschema(TupleDesc tupdesc, Oid relid, bool nulls, bool tableforest, const char *targetns);
+static const char * map_sql_type_to_xml_name(Oid typeoid, int typmod);
+static const char * map_sql_typecoll_to_xmlschema_types(TupleDesc tupdesc);
+static const char * map_sql_type_to_xmlschema_type(Oid typeoid, int typmod);
+static void SPI_sql_row_to_xmlelement(int rownum, StringInfo result, char *tablename, bool nulls, bool tableforest, const char *targetns);
+
+
 XmlBinaryType xmlbinary;
 XmlOptionType xmloption;
 
@@ -92,6 +105,16 @@ XmlOptionType xmloption;
 	ereport(ERROR, \
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED), \
 			 errmsg("no XML support in this installation")))
+
+
+#define _textin(str) DirectFunctionCall1(textin, CStringGetDatum(str))
+#define _textout(x) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(x)))
+
+
+/* from SQL/XML:2003 section 4.7 */
+#define NAMESPACE_XSD "http://www.w3.org/2001/XMLSchema"
+#define NAMESPACE_XSI "http://www.w3.org/2001/XMLSchema-instance"
+#define NAMESPACE_SQLXML "http://standards.iso.org/iso/9075/2003/sqlxml"
 
 
 Datum
@@ -259,6 +282,7 @@ appendStringInfoText(StringInfo str, const text *t)
 {
 	appendBinaryStringInfo(str, VARDATA(t), VARSIZE(t) - VARHDRSZ);
 }
+#endif
 
 
 static xmltype *
@@ -276,7 +300,6 @@ stringinfo_to_xmltype(StringInfo buf)
 }
 
 
-#ifdef NOT_USED
 static xmltype *
 cstring_to_xmltype(const char *string)
 {
@@ -290,9 +313,9 @@ cstring_to_xmltype(const char *string)
 
 	return result;
 }
-#endif
 
 
+#ifdef USE_LIBXML
 static xmltype *
 xmlBuffer_to_xmltype(xmlBufferPtr buf)
 {
@@ -1550,4 +1573,763 @@ map_sql_value_to_xml_value(Datum value, Oid type)
 	}
 
 	return buf.data;
+}
+
+
+static char *
+_SPI_strdup(const char *s)
+{
+	char *ret = SPI_palloc(strlen(s) + 1);
+	strcpy(ret, s);
+	return ret;
+}
+
+
+/*
+ * Map SQL table to XML and/or XML Schema document; see SQL/XML:2003
+ * section 9.3.
+ */
+
+Datum
+table_to_xml(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	bool		nulls = PG_GETARG_BOOL(1);
+	bool		tableforest = PG_GETARG_BOOL(2);
+	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+
+	StringInfoData query;
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "SELECT * FROM %s", DatumGetCString(DirectFunctionCall1(regclassout, ObjectIdGetDatum(relid))));
+
+	PG_RETURN_XML_P(stringinfo_to_xmltype(query_to_xml_internal(query.data, get_rel_name(relid), NULL, nulls, tableforest, targetns)));
+}
+
+
+Datum
+query_to_xml(PG_FUNCTION_ARGS)
+{
+	char	   *query = _textout(PG_GETARG_TEXT_P(0));
+	bool		nulls = PG_GETARG_BOOL(1);
+	bool		tableforest = PG_GETARG_BOOL(2);
+	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+
+	PG_RETURN_XML_P(stringinfo_to_xmltype(query_to_xml_internal(query, NULL, NULL, nulls, tableforest, targetns)));
+}
+
+
+Datum
+cursor_to_xml(PG_FUNCTION_ARGS)
+{
+	char	   *name = _textout(PG_GETARG_TEXT_P(0));
+	int32		count = PG_GETARG_INT32(1);
+	bool		nulls = PG_GETARG_BOOL(2);
+	bool		tableforest = PG_GETARG_BOOL(3);
+	const char *targetns = _textout(PG_GETARG_TEXT_P(4));
+
+	StringInfoData result;
+	Portal		portal;
+	int			i;
+
+	initStringInfo(&result);
+
+	SPI_connect();
+	portal = SPI_cursor_find(name);
+	if (portal == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_CURSOR),
+				 errmsg("cursor \"%s\" does not exist", name)));
+
+	SPI_cursor_fetch(portal, true, count);
+	for (i = 0; i < SPI_processed; i++)
+		SPI_sql_row_to_xmlelement(i, &result, NULL, nulls, tableforest, targetns);
+
+	SPI_finish();
+
+	PG_RETURN_XML_P(stringinfo_to_xmltype(&result));
+}
+
+
+static StringInfo
+query_to_xml_internal(const char *query, char *tablename, const char *xmlschema, bool nulls, bool tableforest, const char *targetns)
+{
+	StringInfo	result;
+	char	   *xmltn;
+	int			i;
+
+	if (tablename)
+		xmltn = map_sql_identifier_to_xml_name(tablename, true, false);
+	else
+		xmltn = "table";
+
+	result = makeStringInfo();
+
+	SPI_connect();
+	if (SPI_execute(query, true, 0) != SPI_OK_SELECT)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATA_EXCEPTION),
+				 errmsg("invalid query")));
+
+	if (!tableforest)
+	{
+		appendStringInfo(result, "<%s xmlns:xsi=\"" NAMESPACE_XSI "\"", xmltn);
+		if (strlen(targetns) > 0)
+			appendStringInfo(result, " xmlns=\"%s\"", targetns);
+		if (strlen(targetns) > 0)
+			appendStringInfo(result, " xmlns:xsd=\"%s\"", targetns);
+		if (xmlschema)
+		{
+			if (strlen(targetns) > 0)
+				appendStringInfo(result, " xsi:schemaLocation=\"%s #\"", targetns);
+			else
+				appendStringInfo(result, " xsi:noNamespaceSchemaLocation=\"#\"");
+		}
+		appendStringInfo(result, ">\n\n");
+	}
+
+	if (xmlschema)
+		appendStringInfo(result, "%s\n\n", xmlschema);
+
+	for(i = 0; i < SPI_processed; i++)
+		SPI_sql_row_to_xmlelement(i, result, tablename, nulls, tableforest, targetns);
+
+	if (!tableforest)
+		appendStringInfo(result, "</%s>\n", xmltn);
+
+	SPI_finish();
+
+	return result;
+}
+
+
+Datum
+table_to_xmlschema(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	bool		nulls = PG_GETARG_BOOL(1);
+	bool		tableforest = PG_GETARG_BOOL(2);
+	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+
+	const char *result;
+	Relation rel;
+
+	rel = heap_open(relid, AccessShareLock);
+	result = map_sql_table_to_xmlschema(rel->rd_att, relid, nulls, tableforest, targetns);
+	heap_close(rel, NoLock);
+
+	PG_RETURN_XML_P(cstring_to_xmltype(result));
+}
+
+
+Datum
+query_to_xmlschema(PG_FUNCTION_ARGS)
+{
+	char	   *query = _textout(PG_GETARG_TEXT_P(0));
+	bool		nulls = PG_GETARG_BOOL(1);
+	bool		tableforest = PG_GETARG_BOOL(2);
+	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+
+	const char *result;
+	void	   *plan;
+	Portal		portal;
+
+	SPI_connect();
+	plan = SPI_prepare(query, 0, NULL);
+	portal = SPI_cursor_open(NULL, plan, NULL, NULL, true);
+	result = _SPI_strdup(map_sql_table_to_xmlschema(portal->tupDesc, InvalidOid, nulls, tableforest, targetns));
+	SPI_cursor_close(portal);
+	SPI_finish();
+
+	PG_RETURN_XML_P(cstring_to_xmltype(result));
+}
+
+
+Datum
+cursor_to_xmlschema(PG_FUNCTION_ARGS)
+{
+	char	   *name = _textout(PG_GETARG_TEXT_P(0));
+	bool		nulls = PG_GETARG_BOOL(1);
+	bool		tableforest = PG_GETARG_BOOL(2);
+	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+
+	const char *xmlschema;
+	Portal		portal;
+
+	SPI_connect();
+	portal = SPI_cursor_find(name);
+	if (portal == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_CURSOR),
+				 errmsg("cursor \"%s\" does not exist", name)));
+
+	xmlschema = _SPI_strdup(map_sql_table_to_xmlschema(portal->tupDesc, InvalidOid, nulls, tableforest, targetns));
+	SPI_finish();
+
+	PG_RETURN_XML_P(cstring_to_xmltype(xmlschema));
+}
+
+
+Datum
+table_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
+{
+	Oid			relid = PG_GETARG_OID(0);
+	bool		nulls = PG_GETARG_BOOL(1);
+	bool		tableforest = PG_GETARG_BOOL(2);
+	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+
+	StringInfoData query;
+	Relation	rel;
+	const char *xmlschema;
+
+	rel = heap_open(relid, AccessShareLock);
+	xmlschema = map_sql_table_to_xmlschema(rel->rd_att, relid, nulls, tableforest, targetns);
+	heap_close(rel, NoLock);
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "SELECT * FROM %s", DatumGetCString(DirectFunctionCall1(regclassout, ObjectIdGetDatum(relid))));
+
+	PG_RETURN_XML_P(stringinfo_to_xmltype(query_to_xml_internal(query.data, get_rel_name(relid), xmlschema, nulls, tableforest, targetns)));
+}
+
+
+Datum
+query_to_xml_and_xmlschema(PG_FUNCTION_ARGS)
+{
+	char	   *query = _textout(PG_GETARG_TEXT_P(0));
+	bool		nulls = PG_GETARG_BOOL(1);
+	bool		tableforest = PG_GETARG_BOOL(2);
+	const char *targetns = _textout(PG_GETARG_TEXT_P(3));
+
+	const char *xmlschema;
+	void	   *plan;
+	Portal		portal;
+
+	SPI_connect();
+	plan = SPI_prepare(query, 0, NULL);
+	portal = SPI_cursor_open(NULL, plan, NULL, NULL, true);
+	xmlschema = _SPI_strdup(map_sql_table_to_xmlschema(portal->tupDesc, InvalidOid, nulls, tableforest, targetns));
+	SPI_cursor_close(portal);
+	SPI_finish();
+
+	PG_RETURN_XML_P(stringinfo_to_xmltype(query_to_xml_internal(query, NULL, xmlschema, nulls, tableforest, targetns)));
+}
+
+
+/*
+ * Map a multi-part SQL name to an XML name; see SQL/XML:2003 section
+ * 9.2.
+ */
+static char *
+map_multipart_sql_identifier_to_xml_name(char *a, char *b, char *c, char *d)
+{
+	StringInfoData result;
+
+	initStringInfo(&result);
+
+	if (a)
+		appendStringInfo(&result, "%s", map_sql_identifier_to_xml_name(a, true, true));
+	if (b)
+		appendStringInfo(&result, ".%s", map_sql_identifier_to_xml_name(b, true, true));
+	if (c)
+		appendStringInfo(&result, ".%s", map_sql_identifier_to_xml_name(c, true, true));
+	if (d)
+		appendStringInfo(&result, ".%s", map_sql_identifier_to_xml_name(d, true, true));
+
+	return result.data;
+}
+
+
+/*
+ * Map an SQL table to an XML Schema document; see SQL/XML:2003
+ * section 9.3.
+ *
+ * Map an SQL table to XML Schema data types; see SQL/XML:2003 section
+ * 9.6.
+ */
+static const char *
+map_sql_table_to_xmlschema(TupleDesc tupdesc, Oid relid, bool nulls, bool tableforest, const char *targetns)
+{
+	int			i;
+	char	   *xmltn;
+	char	   *tabletypename;
+	char	   *rowtypename;
+	StringInfoData result;
+
+	initStringInfo(&result);
+
+	if (relid)
+	{
+		HeapTuple tuple = SearchSysCache(RELOID, ObjectIdGetDatum(relid), 0, 0, 0);
+		Form_pg_class reltuple = (Form_pg_class) GETSTRUCT(tuple);
+
+		xmltn = map_sql_identifier_to_xml_name(NameStr(reltuple->relname), true, false);
+
+		tabletypename = map_multipart_sql_identifier_to_xml_name("TableType",
+																 get_database_name(MyDatabaseId),
+																 get_namespace_name(reltuple->relnamespace),
+																 NameStr(reltuple->relname));
+
+		rowtypename = map_multipart_sql_identifier_to_xml_name("RowType",
+															   get_database_name(MyDatabaseId),
+															   get_namespace_name(reltuple->relnamespace),
+															   NameStr(reltuple->relname));
+
+		ReleaseSysCache(tuple);
+	}
+	else
+	{
+		if (tableforest)
+			xmltn = "row";
+		else
+			xmltn = "table";
+
+		tabletypename = "TableType";
+		rowtypename = "RowType";
+	}
+
+	appendStringInfoString(&result,
+						   "<xsd:schema\n"
+						   "    xmlns:xsd=\"" NAMESPACE_XSD "\"");
+	if (strlen(targetns) > 0)
+		appendStringInfo(&result,
+						 "\n"
+						 "    targetNamespace=\"%s\"\n"
+						 "    elementFormDefault=\"qualified\"",
+						 targetns);
+	appendStringInfoString(&result,
+						   ">\n\n");
+
+	appendStringInfoString(&result,
+						   map_sql_typecoll_to_xmlschema_types(tupdesc));
+
+	appendStringInfo(&result,
+					 "<xsd:complexType name=\"%s\">\n"
+					 "  <xsd:sequence>\n",
+					 rowtypename);
+
+	for (i = 0; i < tupdesc->natts; i++)
+		appendStringInfo(&result,
+						 "    <xsd:element name=\"%s\" type=\"%s\"%s></xsd:element>\n",
+						 map_sql_identifier_to_xml_name(NameStr(tupdesc->attrs[i]->attname), true, false),
+						 map_sql_type_to_xml_name(tupdesc->attrs[i]->atttypid, -1),
+						 nulls ? " nillable=\"true\"" : " minOccurs=\"0\"");
+
+	appendStringInfoString(&result,
+						   "  </xsd:sequence>\n"
+						   "</xsd:complexType>\n\n");
+
+	if (!tableforest)
+	{
+		appendStringInfo(&result,
+						 "<xsd:complexType name=\"%s\">\n"
+						 "  <xsd:sequence>\n"
+						 "    <xsd:element name=\"row\" type=\"%s\" minOccurs=\"0\" maxOccurs=\"unbounded\"/>\n"
+						 "  </xsd:sequence>\n"
+						 "</xsd:complexType>\n\n",
+						 tabletypename, rowtypename);
+
+		appendStringInfo(&result,
+						 "<xsd:element name=\"%s\" type=\"%s\"/>\n\n",
+						 xmltn, tabletypename);
+	}
+	else
+		appendStringInfo(&result,
+						 "<xsd:element name=\"%s\" type=\"%s\"/>\n\n",
+						 xmltn, rowtypename);
+
+	appendStringInfoString(&result,
+						   "</xsd:schema>");
+
+	return result.data;
+}
+
+
+/*
+ * Map an SQL data type to an XML name; see SQL/XML:2003 section 9.9.
+ */
+static const char *
+map_sql_type_to_xml_name(Oid typeoid, int typmod)
+{
+	StringInfoData result;
+
+	initStringInfo(&result);
+
+	switch(typeoid)
+	{
+		case BPCHAROID:
+			if (typmod == -1)
+				appendStringInfo(&result, "CHAR");
+			else
+				appendStringInfo(&result, "CHAR_%d", typmod - VARHDRSZ);
+			break;
+		case VARCHAROID:
+			if (typmod == -1)
+				appendStringInfo(&result, "VARCHAR");
+			else
+				appendStringInfo(&result, "VARCHAR_%d", typmod - VARHDRSZ);
+			break;
+		case NUMERICOID:
+			if (typmod == -1)
+				appendStringInfo(&result, "NUMERIC");
+			else
+				appendStringInfo(&result, "NUMERIC_%d_%d",
+								 ((typmod - VARHDRSZ) >> 16) & 0xffff,
+								 (typmod - VARHDRSZ) & 0xffff);
+			break;
+		case INT4OID:
+			appendStringInfo(&result, "INTEGER");
+			break;
+		case INT2OID:
+			appendStringInfo(&result, "SMALLINT");
+			break;
+		case INT8OID:
+			appendStringInfo(&result, "BIGINT");
+			break;
+		case FLOAT4OID:
+			appendStringInfo(&result, "REAL");
+			break;
+		case FLOAT8OID:
+			appendStringInfo(&result, "DOUBLE");
+			break;
+		case BOOLOID:
+			appendStringInfo(&result, "BOOLEAN");
+			break;
+		case TIMEOID:
+			if (typmod == -1)
+				appendStringInfo(&result, "TIME");
+			else
+				appendStringInfo(&result, "TIME_%d", typmod);
+			break;
+		case TIMETZOID:
+			if (typmod == -1)
+				appendStringInfo(&result, "TIME_WTZ");
+			else
+				appendStringInfo(&result, "TIME_WTZ_%d", typmod);
+			break;
+		case TIMESTAMPOID:
+			if (typmod == -1)
+				appendStringInfo(&result, "TIMESTAMP");
+			else
+				appendStringInfo(&result, "TIMESTAMP_%d", typmod);
+			break;
+		case TIMESTAMPTZOID:
+			if (typmod == -1)
+				appendStringInfo(&result, "TIMESTAMP_WTZ");
+			else
+				appendStringInfo(&result, "TIMESTAMP_WTZ_%d", typmod);
+			break;
+		case DATEOID:
+			appendStringInfo(&result, "DATE");
+			break;
+		case XMLOID:
+			appendStringInfo(&result, "XML");
+			break;
+		default:
+		{
+			HeapTuple tuple = SearchSysCache(TYPEOID, ObjectIdGetDatum(typeoid), 0, 0, 0);
+			Form_pg_type typtuple = (Form_pg_type) GETSTRUCT(tuple);
+
+			appendStringInfoString(&result,
+								   map_multipart_sql_identifier_to_xml_name((typtuple->typtype == 'd') ? "Domain" : "UDT",
+																			get_database_name(MyDatabaseId),
+																			get_namespace_name(typtuple->typnamespace),
+																			NameStr(typtuple->typname)));
+
+			ReleaseSysCache(tuple);
+		}
+	}
+
+	return result.data;
+}
+
+
+/*
+ * Map a collection of SQL data types to XML Schema data types; see
+ * SQL/XML:2002 section 9.10.
+ */
+static const char *
+map_sql_typecoll_to_xmlschema_types(TupleDesc tupdesc)
+{
+	Oid		   *uniquetypes;
+	int			i, j;
+	int			len;
+	StringInfoData result;
+
+	initStringInfo(&result);
+
+	uniquetypes = palloc(2 * sizeof(*uniquetypes) * tupdesc->natts);
+	len = 0;
+
+	for (i = 1; i <= tupdesc->natts; i++)
+	{
+		bool already_done = false;
+		Oid type = SPI_gettypeid(tupdesc, i);
+		for (j = 0; j < len; j++)
+			if (type == uniquetypes[j])
+			{
+				already_done = true;
+				break;
+			}
+		if (already_done)
+			continue;
+
+		uniquetypes[len++] = type;
+	}
+
+	/* add base types of domains */
+	for (i = 0; i < len; i++)
+	{
+		bool already_done = false;
+		Oid type = getBaseType(uniquetypes[i]);
+		for (j = 0; j < len; j++)
+			if (type == uniquetypes[j])
+			{
+				already_done = true;
+				break;
+			}
+		if (already_done)
+			continue;
+
+		uniquetypes[len++] = type;
+	}
+
+	for (i = 0; i < len; i++)
+		appendStringInfo(&result, "%s\n", map_sql_type_to_xmlschema_type(uniquetypes[i], -1));
+
+	return result.data;
+}
+
+
+/*
+ * Map an SQL data type to a named XML Schema data type; see SQL/XML
+ * sections 9.11 and 9.15.
+ *
+ * (The distinction between 9.11 and 9.15 is basically that 9.15 adds
+ * a name attribute, which thsi function does.  The name-less version
+ * 9.11 doesn't appear to be required anywhere.)
+ */
+static const char *
+map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
+{
+	StringInfoData result;
+	const char *typename = map_sql_type_to_xml_name(typeoid, typmod);
+
+	initStringInfo(&result);
+
+	if (typeoid == XMLOID)
+	{
+		appendStringInfo(&result,
+						 "<xsd:complexType mixed=\"true\">\n"
+						 "  <xsd:sequence>\n"
+						 "    <xsd:any name=\"element\" minOccurs=\"0\" maxOccurs=\"unbounded\" processContents=\"skip\"/>\n"
+						 "  </xsd:sequence>\n"
+						 "</xsd:complexType>\n");
+	}
+	else
+	{
+		appendStringInfo(&result,
+						 "<xsd:simpleType name=\"%s\">\n", typename);
+
+		switch(typeoid)
+		{
+			case BPCHAROID:
+			case VARCHAROID:
+			case TEXTOID:
+				if (typmod != -1)
+					appendStringInfo(&result,
+									 "  <xsd:restriction base=\"xsd:string\">\n"
+									 "    <xsd:maxLength value=\"%d\"/>\n"
+									 "  </xsd:restriction>\n",
+									 typmod - VARHDRSZ);
+				break;
+
+			case BYTEAOID:
+				appendStringInfo(&result,
+								 "  <xsd:restriction base=\"xsd:%s\">\n"
+								 "  </xsd:restriction>\n",
+								 xmlbinary == XMLBINARY_BASE64 ? "base64Binary" : "hexBinary");
+
+			case NUMERICOID:
+				if (typmod != -1)
+					appendStringInfo(&result,
+									 "  <xsd:restriction base=\"xsd:decimal\">\n"
+									 "    <xsd:totalDigits value=\"%d\"/>\n"
+									 "    <xsd:fractionDigits value=\"%d\"/>\n"
+									 "  </xsd:restriction>\n",
+									 ((typmod - VARHDRSZ) >> 16) & 0xffff,
+									 (typmod - VARHDRSZ) & 0xffff);
+				break;
+
+			case INT2OID:
+				appendStringInfo(&result,
+								 "  <xsd:restriction base=\"xsd:short\">\n"
+								 "    <xsd:maxInclusive value=\"%d\"/>\n"
+								 "    <xsd:minInclusive value=\"%d\"/>\n"
+								 "  </xsd:restriction>\n",
+								 SHRT_MAX, SHRT_MIN);
+				break;
+
+			case INT4OID:
+				appendStringInfo(&result,
+								 "  <xsd:restriction base='xsd:int'>\n"
+								 "    <xsd:maxInclusive value=\"%d\"/>\n"
+								 "    <xsd:minInclusive value=\"%d\"/>\n"
+								 "  </xsd:restriction>\n",
+								 INT_MAX, INT_MIN);
+				break;
+
+			case INT8OID:
+				appendStringInfo(&result,
+								 "  <xsd:restriction base=\"xsd:long\">\n"
+								 "    <xsd:maxInclusive value=\"" INT64_FORMAT "\"/>\n"
+								 "    <xsd:minInclusive value=\"" INT64_FORMAT "\"/>\n"
+								 "  </xsd:restriction>\n",
+								 INT64_MAX, INT64_MIN);
+				break;
+
+			case FLOAT4OID:
+				appendStringInfo(&result,
+								 "  <xsd:restriction base=\"xsd:float\"></xsd:restriction>\n");
+				break;
+
+			case FLOAT8OID:
+				appendStringInfo(&result,
+								 "  <xsd:restriction base=\"xsd:double\"></xsd:restriction>\n");
+				break;
+
+			case BOOLOID:
+				appendStringInfo(&result,
+								 "  <xsd:restriction base=\"xsd:boolean\"></xsd:restriction>\n");
+				break;
+
+			case TIMEOID:
+			case TIMETZOID:
+			{
+				const char *tz = (typeoid == TIMETZOID ? "(+|-)\\p{Nd}{2}:\\p{Nd}{2}" : "");
+
+				if (typmod == -1)
+					appendStringInfo(&result,
+									 "  <xsd:restriction base=\"xsd:time\">\n"
+									 "    <xsd:pattern value=\"\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}(.\\p{Nd}+)?%s\"/>\n"
+									 "  </xsd:restriction>\n", tz);
+				else if (typmod == 0)
+					appendStringInfo(&result,
+									 "  <xsd:restriction base=\"xsd:time\">\n"
+									 "    <xsd:pattern value=\"\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}%s\"/>\n"
+									 "  </xsd:restriction>\n", tz);
+				else
+					appendStringInfo(&result,
+									 "  <xsd:restriction base=\"xsd:time\">\n"
+									 "    <xsd:pattern value=\"\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}.\\p{Nd}{%d}%s\"/>\n"
+									 "  </xsd:restriction>\n", typmod - VARHDRSZ, tz);
+				break;
+			}
+
+			case TIMESTAMPOID:
+			case TIMESTAMPTZOID:
+			{
+				const char *tz = (typeoid == TIMESTAMPTZOID ? "(+|-)\\p{Nd}{2}:\\p{Nd}{2}" : "");
+
+				if (typmod == -1)
+					appendStringInfo(&result,
+									 "  <xsd:restriction base=\"xsd:time\">\n"
+									 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}T\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}(.\\p{Nd}+)?%s\"/>\n"
+									 "  </xsd:restriction>\n", tz);
+				else if (typmod == 0)
+					appendStringInfo(&result,
+									 "  <xsd:restriction base=\"xsd:time\">\n"
+									 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}T\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}%s\"/>\n"
+									 "  </xsd:restriction>\n", tz);
+				else
+					appendStringInfo(&result,
+									 "  <xsd:restriction base=\"xsd:time\">\n"
+									 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}T\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}.\\p{Nd}{%d}%s\"/>\n"
+									 "  </xsd:restriction>\n", typmod - VARHDRSZ, tz);
+				break;
+			}
+
+			case DATEOID:
+				appendStringInfo(&result,
+								 "  <xsd:restriction base=\"xsd:date\">\n"
+								 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}\"/>\n"
+								 "  </xsd:restriction>\n");
+								 break;
+
+			default:
+				if (get_typtype(typeoid) == 'd')
+				{
+					Oid base_typeoid;
+					int32 base_typmod = -1;
+
+					base_typeoid = getBaseTypeAndTypmod(typeoid, &base_typmod);
+
+					appendStringInfo(&result,
+									 "  <xsd:restriction base=\"%s\">\n",
+									 map_sql_type_to_xml_name(base_typeoid, base_typmod));
+				}
+		}
+		appendStringInfo(&result,
+						 "</xsd:simpleType>\n");
+	}
+
+	return result.data;
+}
+
+
+/*
+ * Map an SQL row to an XML element, taking the row from the active
+ * SPI cursor.  See also SQL/XML:2003 section 9.12.
+ */
+static void
+SPI_sql_row_to_xmlelement(int rownum, StringInfo result, char *tablename, bool nulls, bool tableforest, const char *targetns)
+{
+	int			i;
+	char	   *xmltn;
+
+	if (tablename)
+		xmltn = map_sql_identifier_to_xml_name(tablename, true, false);
+	else
+	{
+		if (tableforest)
+			xmltn = "row";
+		else
+			xmltn = "table";
+	}
+
+	if (tableforest)
+	{
+		appendStringInfo(result, "<%s xmlns:xsi=\"" NAMESPACE_XSI "\"", xmltn);
+		if (strlen(targetns) > 0)
+			appendStringInfo(result, " xmlns=\"%s\"", targetns);
+		appendStringInfo(result, ">\n");
+	}
+	else
+		appendStringInfoString(result, "<row>\n");
+
+	for(i = 1; i <= SPI_tuptable->tupdesc->natts; i++)
+	{
+		char *colname;
+		Datum colval;
+		bool isnull;
+
+		colname = map_sql_identifier_to_xml_name(SPI_fname(SPI_tuptable->tupdesc, i), true, false);
+		colval = SPI_getbinval(SPI_tuptable->vals[rownum], SPI_tuptable->tupdesc, i, &isnull);
+
+		if (isnull)
+		{
+			if (nulls)
+				appendStringInfo(result, "  <%s xsi:nil='true'/>\n", colname);
+
+		}
+		else
+			appendStringInfo(result, "  <%s>%s</%s>\n",
+							 colname, map_sql_value_to_xml_value(colval, SPI_gettypeid(SPI_tuptable->tupdesc, i)),
+							 colname);
+	}
+
+	if (tableforest)
+		appendStringInfo(result, "</%s>\n\n", xmltn);
+	else
+		appendStringInfoString(result, "</row>\n\n");
 }

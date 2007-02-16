@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.360 2007/02/16 03:50:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.361 2007/02/16 07:46:54 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11157,6 +11157,193 @@ SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'),
   </sect2>
 
   <sect2>
+   <title>Mapping Tables to XML</title>
+
+   <para>
+    The following functions map the contents of relational tables to
+    XML values.  They can be thought of as XML export functionality.
+<synopsis>
+table_to_xml(tbl regclass, nulls boolean, tableforest boolean, targetns text)
+query_to_xml(query text, nulls boolean, tableforest boolean, targetns text)
+cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, targetns text)
+</synopsis>
+    The return type of each function is <type>xml</type>.
+   </para>
+
+   <para>
+    <function>table_to_xml</function> maps the content of the named
+    table, passed as parameter <parameter>tbl</parameter>.  The
+    <type>regclass</type> accepts strings identifying tables using the
+    usual notation, including optional schema qualifications and
+    double quotes.  <function>query_to_xml</function> executes the
+    query whose text is passed as parameter
+    <parameter>query</parameter> and maps the result set.
+    <function>cursor_to_xml</function> fetches the indicated number of
+    rows from the cursor specificed by the parameter
+    <parameter>cursor</parameter>.  This variant is recommendable if
+    large tables have to be mapped, because the result value is built
+    up in memory by each function.
+   </para>
+
+   <para>
+    If <parameter>tableforest</parameter> is false, then the resulting
+    XML document looks like this:
+<screen><![CDATA[
+<tablename>
+  <row>
+    <columnname1>data</columnname1>
+    <columnname2>data</columnname2>
+  </row>
+
+  <row>
+    ...
+  </row>
+
+  ...
+</tablename>
+]]></screen>
+
+    If <parameter>tableforest</parameter> is true, the result is an
+    XML content fragment that looks like this:
+<screen><![CDATA[
+<tablename>
+  <columnname1>data</columnname1>
+  <columnname2>data</columnname2>
+</tablename>
+
+<tablename>
+  ...
+</tablename>
+
+...
+]]></screen>
+
+    If no table name is avaible, that is, when mapping a query or a
+    cursor, the string <literal>table</literal> is used in the first
+    format, <literal>row</literal> in the second format.
+   </para>
+
+   <para>
+    The choice between these formats is up to the user.  The first
+    format is a proper XML document, which will be important in many
+    applications.  The second format tends to be more useful in the
+    <function>cursor_to_xml</function> function if the result values are to be
+    reassembled into one document later on.  The functions for
+    producing XML content discussed above, in particular
+    <function>xmlelement</function>, can be used to alter the results
+    to taste.
+   </para>
+
+   <para>
+    The data values are mapping in the same way as described for the
+    function <function>xmlelement</function> above.
+   </para>
+
+   <para>
+    The parameter <parameter>nulls</parameter> determines whether null
+    values should be included in the output.  If true, null values in
+    columns are represented as
+<screen><![CDATA[
+<columname xsi:nil="true"/>
+]]></screen>
+    where <literal>xsi</literal> is the XML namespace prefix for XML
+    Schema Instance.  An appropriate namespace declaration will be
+    added to the result value.  If false, columns containing null
+    values are simply omitted from the output.
+   </para>
+
+   <para>
+    The parameter <parameter>targetns</parameter> specifies the
+    desired XML namespace of the result.  If no particular namespace
+    is wanted, an empty string should be passed.
+   </para>
+
+   <para>
+    The following functions return XML Schema documents describing the
+    mappings made by the data mappings produced by the corresponding
+    functions above.
+<synopsis>
+table_to_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
+query_to_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)
+cursor_to_xmlschema(cursor refcursor, nulls boolean, tableforest boolean, targetns text)
+</synopsis>
+    It is essential that the same parameters are passed in order to
+    obtain matching XML data mappings and XML Schema documents.
+   </para>
+
+   <para>
+    The following functions produce XML data mappings and the
+    corresponding XML Schema in one document (or forest), linked
+    together.  They can be useful where self-contained and
+    self-describing results are wanted.
+<synopsis>
+table_to_xml_and_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
+query_to_xml_and_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)
+</synopsis>
+   </para>
+
+   <para>
+    As an example for using the output produced by these functions,
+    <xref linkend="xslt-xml-html"> shows an XSLT stylesheet that
+    converts the output of
+    <function>table_to_xml_and_xmlschema</function> to an HTML
+    document containing a tabular rendition of the table data.  In a
+    similar manner, the result data of these functions can be
+    converted into other XML-based formats.
+   </para>
+
+   <figure id="xslt-xml-html">
+    <title>XSLT stylesheet for converting SQL/XML output to HTML</title>
+<programlisting><![CDATA[
+<?xml version="1.0"?>
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns="http://www.w3.org/1999/xhtml"
+>
+
+  <xsl:output method="xml"
+      doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
+      doctype-public="-//W3C/DTD XHTML 1.0 Strict//EN"
+      indent="yes"/>
+
+  <xsl:template match="/*">
+    <xsl:variable name="schema" select="//xsd:schema"/>
+    <xsl:variable name="tabletypename"
+                  select="$schema/xsd:element[@name=name(current())]/@type"/>
+    <xsl:variable name="rowtypename"
+                  select="$schema/xsd:complexType[@name=$tabletypename]/xsd:sequence/xsd:element[@name='row']/@type"/>
+
+    <html>
+      <head>
+        <title><xsl:value-of select="name(current())"/></title>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <xsl:for-each select="$schema/xsd:complexType[@name=$rowtypename]/xsd:sequence/xsd:element/@name">
+              <th><xsl:value-of select="."/></th>
+            </xsl:for-each>
+          </tr>
+
+          <xsl:for-each select="row">
+            <tr>
+              <xsl:for-each select="*">
+                <td><xsl:value-of select="."/></td>
+              </xsl:for-each>
+            </tr>
+          </xsl:for-each>
+        </table>
+      </body>
+    </html>
+  </xsl:template>
+
+</xsl:stylesheet>
+]]></programlisting>
+   </figure>
+  </sect2>
+
+  <sect2>
    <title>Processing XML</title>
 
    <para>
@@ -11171,21 +11358,6 @@ SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'),
    </para>
 
    <variablelist>
-   <varlistentry>
-    <term>Import/Export</term>
-    <listitem>
-
-     <para>
-      There is no facility for mapping <acronym>XML</> to relational
-      tables.  An external tool must be used for this.  One simple way
-      to export <acronym>XML</> is to use <application>psql</> in
-      <acronym>HTML</> mode (<literal>\pset format html</>), and
-      convert the <acronym>XHTML</> output to XML using an external
-      tool.
-     </para>
-    </listitem>
-   </varlistentry>
-
    <varlistentry>
     <term>Indexing</term>
     <listitem>
