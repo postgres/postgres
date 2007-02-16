@@ -169,6 +169,11 @@ SELECT '' AS "54", d1 as timestamptz,
    date_part( 'usec', d1) AS usec
    FROM TIMESTAMPTZ_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
+SELECT '' AS "54", d1 as "timestamp",
+   date_part( 'isoyear', d1) AS isoyear, date_part( 'week', d1) AS week,
+   date_part( 'dow', d1) AS dow
+   FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
+
 -- TO_CHAR()
 SELECT '' AS to_char_1, to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon') 
    FROM TIMESTAMPTZ_TBL;
@@ -197,8 +202,11 @@ SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth')
 SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. HH:MI:SS p.m. HH:MI:SS pm') 
    FROM TIMESTAMPTZ_TBL;   
 
-SELECT '' AS to_char_10, to_char(d1, 'YYYY WW IYYY IYY IY I IW') 
-   FROM TIMESTAMPTZ_TBL;
+SELECT '' AS to_char_10, to_char(d1, 'IYYY IYY IY I IW IDDD ID')
+   FROM TIMESTAMP_TBL;
+
+SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
+   FROM TIMESTAMP_TBL;
 
 -- TO_TIMESTAMP()
 SELECT '' AS to_timestamp_1, to_timestamp('0097/Feb/16 --> 08:14:30', 'YYYY/Mon/DD --> HH:MI:SS');
@@ -231,9 +239,18 @@ SELECT '' AS to_timestamp_13, to_timestamp('95-1116', 'YY-MMDD');
 
 SELECT '' AS to_timestamp_14, to_timestamp('995-1116', 'YYY-MMDD');
 
-SELECT '' AS to_timestamp_15, to_timestamp('200401', 'IYYYIW');
+SELECT '' AS to_timestamp_15, to_timestamp('2005426', 'YYYYWWD');
 
-SELECT '' AS to_timestamp_16, to_timestamp('200401', 'YYYYWW');
+SELECT '' AS to_timestamp_16, to_timestamp('2005300', 'YYYYDDD');
 
+SELECT '' AS to_timestamp_17, to_timestamp('2005527', 'IYYYIWID');
+
+SELECT '' AS to_timestamp_18, to_timestamp('005527', 'IYYIWID');
+
+SELECT '' AS to_timestamp_19, to_timestamp('05527', 'IYIWID');
+
+SELECT '' AS to_timestamp_20, to_timestamp('5527', 'IIWID');
+
+SELECT '' AS to_timestamp_21, to_timestamp('2005364', 'IYYYIDDD');
 
 SET DateStyle TO DEFAULT;

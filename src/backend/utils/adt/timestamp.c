@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.171 2007/01/05 22:19:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.172 2007/02/16 03:39:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3749,6 +3749,31 @@ interval_trunc(PG_FUNCTION_ARGS)
 	PG_RETURN_INTERVAL_P(result);
 }
 
+/* isoweek2j()
+ *
+ * 	Return the Julian day which corresponds to the first day (Monday) of the given ISO 8601 year and week.
+ * 	Julian days are used to convert between ISO week dates and Gregorian dates.
+ */
+int
+isoweek2j(int year, int week)
+{
+	int			day0,
+				day4;
+
+	if (!year)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+		   errmsg("cannot calculate week number without year information")));
+
+	/* fourth day of current year */
+	day4 = date2j(year, 1, 4);
+
+	/* day0 == offset to first day of week (Monday) */
+	day0 = j2day(day4 - 1);
+
+	return ((week - 1) * 7) + (day4 - day0);
+}
+
 /* isoweek2date()
  * Convert ISO week of year number to date.
  * The year field must be specified with the ISO year!
@@ -3757,24 +3782,24 @@ interval_trunc(PG_FUNCTION_ARGS)
 void
 isoweek2date(int woy, int *year, int *mon, int *mday)
 {
-	int			day0,
-				day4,
-				dayn;
+	j2date(isoweek2j(*year, woy), year, mon, mday);
+}
 
-	if (!*year)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		   errmsg("cannot calculate week number without year information")));
+/* isoweekdate2date()
+ *
+ * 	Convert an ISO 8601 week date (ISO year, ISO week and day of week) into a Gregorian date.
+ * 	Populates year, mon, and mday with the correct Gregorian values.
+ * 	year must be passed in as the ISO year.
+ */
+void
+isoweekdate2date(int isoweek, int isowday, int *year, int *mon, int *mday)
+{
+	int jday;
 
-	/* fourth day of current year */
-	day4 = date2j(*year, 1, 4);
+	jday = isoweek2j(*year, isoweek);
+	jday += isowday - 1;
 
-	/* day0 == offset to first day of week (Monday) */
-	day0 = j2day(day4 - 1);
-
-	dayn = ((woy - 1) * 7) + (day4 - day0);
-
-	j2date(dayn, year, mon, mday);
+	j2date(jday, year, mon, mday);
 }
 
 /* date2isoweek()
@@ -3886,6 +3911,17 @@ date2isoyear(int year, int mon, int mday)
 	return year;
 }
 
+
+/* date2isoyearday()
+ *
+ * 	Returns the ISO 8601 day-of-year, given a Gregorian year, month and day.
+ * 	Possible return values are 1 through 371 (364 in non-leap years).
+ */
+int
+date2isoyearday(int year, int mon, int mday)
+{
+	return date2j(year, mon, mday) - isoweek2j(date2isoyear(year, mon, mday), 1) + 1;
+}
 
 /* timestamp_part()
  * Extract specified field from timestamp.
@@ -4027,6 +4063,10 @@ timestamp_part(PG_FUNCTION_ARGS)
 				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
 						   tm->tm_sec + fsec) / (double) SECS_PER_DAY;
 #endif
+				break;
+
+			case DTK_ISOYEAR:
+				result = date2isoyear(tm->tm_year, tm->tm_mon, tm->tm_mday);
 				break;
 
 			case DTK_TZ:
@@ -4254,6 +4294,10 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				result += ((((tm->tm_hour * MINS_PER_HOUR) + tm->tm_min) * SECS_PER_MINUTE) +
 						   tm->tm_sec + fsec) / (double) SECS_PER_DAY;
 #endif
+				break;
+
+			case DTK_ISOYEAR:
+				result = date2isoyear(tm->tm_year, tm->tm_mon, tm->tm_mday);
 				break;
 
 			default:

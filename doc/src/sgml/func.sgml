@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.358 2007/02/14 18:46:08 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.359 2007/02/16 03:39:44 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -4539,7 +4539,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>I</literal></entry>
-        <entry>last digits of ISO year</entry>
+        <entry>last digit of ISO year</entry>
        </row>
        <row>
         <entry><literal>BC</literal> or <literal>B.C.</literal> or
@@ -4608,12 +4608,20 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
         <entry>day of year (001-366)</entry>
        </row>
        <row>
+        <entry><literal>IDDD</literal></entry>
+        <entry>ISO day of year (001-371; day 1 of the year is Monday of the first ISO week.)</entry>
+       </row>
+       <row>
         <entry><literal>DD</literal></entry>
         <entry>day of month (01-31)</entry>
        </row>
        <row>
         <entry><literal>D</literal></entry>
         <entry>day of week (1-7; Sunday is 1)</entry>
+       </row>
+       <row>
+        <entry><literal>ID</literal></entry>
+        <entry>ISO day of week (1-7; Monday is 1)</entry>
        </row>
        <row>
         <entry><literal>W</literal></entry>
@@ -4625,7 +4633,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>IW</literal></entry>
-        <entry>ISO week number of year (The first Thursday of the new year is in week 1.)</entry>
+        <entry>ISO week number of year (1 - 53; the first Thursday of the new year is in week 1.)</entry>
        </row>
        <row>
         <entry><literal>CC</literal></entry>
@@ -4788,6 +4796,27 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        <literal>Y,YYY</literal> field. If <literal>CC</literal> is used with
        <literal>YY</literal> or <literal>Y</literal> then the year is computed
        as <literal>(CC-1)*100+YY</literal>.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       An ISO week date (as distinct from a Gregorian date) can be specified to <function>to_timestamp</function> and <function>to_date</function> in one of two ways:
+       <itemizedlist>
+        <listitem>
+	 <para>
+	  Year, week and weekday, for example <literal>to_date('2006-42-4', 'IYYY-IW-ID')</literal> returns the date <literal>2006-10-19</literal>.  If you omit the weekday it is assumed to be 1 (Monday).
+	 </para>
+	</listitem>
+	<listitem>
+	 <para>
+	  Year and day of year, for example <literal>to_date('2006-291', 'IYYY-IDDD')</literal> also returns <literal>2006-10-19</literal>.
+	 </para>
+	</listitem>
+       </itemizedlist>
+      </para>
+      <para>
+       Attempting to construct a date using a mixture of ISO week and Gregorian date fields is nonsensical, and could yield unexpected results.  In the context of an ISO year, the concept of a 'month' or 'day of month' has no meaning.  In the context of a Gregorian year, the ISO week has no meaning.  Users should take care to keep Gregorian and ISO date specifications separate.
       </para>
      </listitem>
 
@@ -5773,6 +5802,29 @@ SELECT TIMESTAMP WITH TIME ZONE 'epoch' + 982384720 * INTERVAL '1 second';
 SELECT EXTRACT(HOUR FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
 </screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>isoyear</literal></term>
+      <listitem>
+       <para>
+        The <acronym>ISO</acronym> 8601 year that the date falls in (not applicable to intervals).
+       </para>
+
+<screen>
+SELECT EXTRACT(ISOYEAR FROM DATE '2006-01-01');
+<lineannotation>Result: </lineannotation><computeroutput>2005</computeroutput>
+SELECT EXTRACT(ISOYEAR FROM DATE '2006-01-02');
+<lineannotation>Result: </lineannotation><computeroutput>2006</computeroutput>
+</screen>
+
+       <para>
+        Each <acronym>ISO</acronym> year begins with the Monday of the week containing the 4th of January, so in early January or late December the <acronym>ISO</acronym> year may be different from the Gregorian year.  See the <literal>week</literal> field for more information.
+       </para>
+       <para>
+        This field is not available in PostgreSQL releases prior to 8.3.
+       </para>
       </listitem>
      </varlistentry>
 
