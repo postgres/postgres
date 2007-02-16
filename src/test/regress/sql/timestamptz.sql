@@ -169,11 +169,6 @@ SELECT '' AS "54", d1 as timestamptz,
    date_part( 'usec', d1) AS usec
    FROM TIMESTAMPTZ_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
-SELECT '' AS "54", d1 as "timestamp",
-   date_part( 'isoyear', d1) AS isoyear, date_part( 'week', d1) AS week,
-   date_part( 'dow', d1) AS dow
-   FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
-
 -- TO_CHAR()
 SELECT '' AS to_char_1, to_char(d1, 'DAY Day day DY Dy dy MONTH Month month RM MON Mon mon') 
    FROM TIMESTAMPTZ_TBL;
@@ -202,11 +197,8 @@ SELECT '' AS to_char_8, to_char(d1, 'YYYYTH YYYYth Jth')
 SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. HH:MI:SS p.m. HH:MI:SS pm') 
    FROM TIMESTAMPTZ_TBL;   
 
-SELECT '' AS to_char_10, to_char(d1, 'IYYY IYY IY I IW IDDD ID')
-   FROM TIMESTAMP_TBL;
-
-SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
-   FROM TIMESTAMP_TBL;
+SELECT '' AS to_char_10, to_char(d1, 'YYYY WW IYYY IYY IY I IW')
+   FROM TIMESTAMPTZ_TBL;
 
 -- TO_TIMESTAMP()
 SELECT '' AS to_timestamp_1, to_timestamp('0097/Feb/16 --> 08:14:30', 'YYYY/Mon/DD --> HH:MI:SS');

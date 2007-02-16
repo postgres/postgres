@@ -255,4 +255,15 @@ SELECT '' AS to_timestamp_20, to_timestamp('5527', 'IIWID');
 
 SELECT '' AS to_timestamp_21, to_timestamp('2005364', 'IYYYIDDD');
 
+SELECT '' AS "54", d1 as "timestamp",
+   date_part( 'isoyear', d1) AS isoyear, date_part( 'week', d1) AS week,
+   date_part( 'dow', d1) AS dow
+   FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
+
+SELECT '' AS to_char_10, to_char(d1, 'IYYY IYY IY I IW IDDD ID')
+   FROM TIMESTAMP_TBL;
+
+SELECT '' AS to_char_11, to_char(d1, 'FMIYYY FMIYY FMIY FMI FMIW FMIDDD FMID')
+   FROM TIMESTAMP_TBL;
+
 SET DateStyle TO DEFAULT;
