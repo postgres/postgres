@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.233 2007/02/02 00:02:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.234 2007/02/16 23:32:08 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -974,12 +974,13 @@ contain_nonstrict_functions_walker(Node *node, void *context)
  * the expression to have been AND/OR flattened and converted to implicit-AND
  * format.
  *
- * We don't use expression_tree_walker here because we don't want to
- * descend through very many kinds of nodes; only the ones we can be sure
- * are strict.	We can descend through the top level of implicit AND'ing,
- * but not through any explicit ANDs (or ORs) below that, since those are not
- * strict constructs.  The List case handles the top-level implicit AND list
- * as well as lists of arguments to strict operators/functions.
+ * top_level is TRUE while scanning top-level AND/OR structure; here, showing
+ * the result is either FALSE or NULL is good enough.  top_level is FALSE when
+ * we have descended below a NOT or a strict function: now we must be able to
+ * prove that the subexpression goes to NULL.
+ *
+ * We don't use expression_tree_walker here because we don't want to descend
+ * through very many kinds of nodes; only the ones we can be sure are strict.
  */
 Relids
 find_nonnullable_rels(Node *clause)
@@ -991,6 +992,7 @@ static Relids
 find_nonnullable_rels_walker(Node *node, bool top_level)
 {
 	Relids		result = NULL;
+	ListCell   *l;
 
 	if (node == NULL)
 		return NULL;
@@ -1003,8 +1005,15 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	}
 	else if (IsA(node, List))
 	{
-		ListCell   *l;
-
+		/*
+		 * At top level, we are examining an implicit-AND list: if any of
+		 * the arms produces FALSE-or-NULL then the result is FALSE-or-NULL.
+		 * If not at top level, we are examining the arguments of a strict
+		 * function: if any of them produce NULL then the result of the
+		 * function must be NULL.  So in both cases, the set of nonnullable
+		 * rels is the union of those found in the arms, and we pass down
+		 * the top_level flag unmodified.
+		 */
 		foreach(l, (List *) node)
 		{
 			result = bms_join(result,
@@ -1037,9 +1046,57 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	{
 		BoolExpr   *expr = (BoolExpr *) node;
 
-		/* NOT is strict, others are not */
-		if (expr->boolop == NOT_EXPR)
-			result = find_nonnullable_rels_walker((Node *) expr->args, false);
+		switch (expr->boolop)
+		{
+			case AND_EXPR:
+				/* At top level we can just recurse (to the List case) */
+				if (top_level)
+				{
+					result = find_nonnullable_rels_walker((Node *) expr->args,
+														  top_level);
+					break;
+				}
+				/*
+				 * Below top level, even if one arm produces NULL, the result
+				 * could be FALSE (hence not NULL).  However, if *all* the
+				 * arms produce NULL then the result is NULL, so we can
+				 * take the intersection of the sets of nonnullable rels,
+				 * just as for OR.  Fall through to share code.
+				 */
+				/* FALL THRU */
+			case OR_EXPR:
+				/*
+				 * OR is strict if all of its arms are, so we can take the
+				 * intersection of the sets of nonnullable rels for each arm.
+				 * This works for both values of top_level.
+				 */
+				foreach(l, expr->args)
+				{
+					Relids		subresult;
+
+					subresult = find_nonnullable_rels_walker(lfirst(l),
+															 top_level);
+					if (result == NULL)				/* first subresult? */
+						result = subresult;
+					else
+						result = bms_int_members(result, subresult);
+					/*
+					 * If the intersection is empty, we can stop looking.
+					 * This also justifies the test for first-subresult above.
+					 */
+					if (bms_is_empty(result))
+						break;
+				}
+				break;
+			case NOT_EXPR:
+				/* NOT will return null if its arg is null */
+				result = find_nonnullable_rels_walker((Node *) expr->args,
+													  false);
+				break;
+			default:
+				elog(ERROR, "unrecognized boolop: %d", (int) expr->boolop);
+				break;
+		}
 	}
 	else if (IsA(node, RelabelType))
 	{
@@ -1056,22 +1113,17 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	}
 	else if (IsA(node, NullTest))
 	{
+		/* IS NOT NULL can be considered strict, but only at top level */
 		NullTest   *expr = (NullTest *) node;
 
-		/*
-		 * IS NOT NULL can be considered strict, but only at top level; else
-		 * we might have something like NOT (x IS NOT NULL).
-		 */
 		if (top_level && expr->nulltesttype == IS_NOT_NULL)
 			result = find_nonnullable_rels_walker((Node *) expr->arg, false);
 	}
 	else if (IsA(node, BooleanTest))
 	{
+		/* Boolean tests that reject NULL are strict at top level */
 		BooleanTest *expr = (BooleanTest *) node;
 
-		/*
-		 * Appropriate boolean tests are strict at top level.
-		 */
 		if (top_level &&
 			(expr->booltesttype == IS_TRUE ||
 			 expr->booltesttype == IS_FALSE ||
