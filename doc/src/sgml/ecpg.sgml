@@ -1,4 +1,4 @@
-`<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.81 2007/02/16 03:50:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.82 2007/02/16 03:56:45 momjian Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
