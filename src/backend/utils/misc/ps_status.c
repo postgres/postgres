@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.34 2007/01/05 22:19:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/ps_status.c,v 1.35 2007/02/16 21:34:04 momjian Exp $
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  * various details abducted from various places
@@ -91,6 +91,7 @@ static const size_t ps_buffer_size = PS_BUFFER_SIZE;
 #else							/* PS_USE_CLOBBER_ARGV */
 static char *ps_buffer;			/* will point to argv area */
 static size_t ps_buffer_size;	/* space determined at run time */
+static size_t last_status_len;	/* use to minimize length of clobber */
 #endif   /* PS_USE_CLOBBER_ARGV */
 
 static size_t ps_buffer_fixed_size;		/* size of the constant prefix */
@@ -153,8 +154,8 @@ save_ps_display_args(int argc, char **argv)
 		}
 
 		ps_buffer = argv[0];
-		ps_buffer_size = end_of_area - argv[0];
-
+		last_status_len = ps_buffer_size = end_of_area - argv[0];
+		
 		/*
 		 * move the environment out of the way
 		 */
@@ -329,7 +330,10 @@ set_ps_display(const char *activity, bool force)
 
 		/* pad unused memory */
 		buflen = strlen(ps_buffer);
-		MemSet(ps_buffer + buflen, PS_PADDING, ps_buffer_size - buflen);
+		/* clobber remainder of old status string */
+		if (last_status_len > buflen)
+			MemSet(ps_buffer + buflen, PS_PADDING, last_status_len - buflen);
+		last_status_len = buflen;
 	}
 #endif   /* PS_USE_CLOBBER_ARGV */
 
