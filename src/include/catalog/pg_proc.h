@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.444 2007/02/16 07:46:55 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.445 2007/02/17 00:55:57 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2744,11 +2744,15 @@ DATA(insert OID = 1832 (  float8_stddev_samp	PGNSP PGUID 12 1 0 f f t f i 1 701 
 DESCR("STDDEV_SAMP aggregate final function");
 DATA(insert OID = 1833 (  numeric_accum    PGNSP PGUID 12 1 0 f f t f i 2 1231 "1231 1700" _null_ _null_ _null_ numeric_accum - _null_ ));
 DESCR("aggregate transition function");
+DATA(insert OID = 2858 (  numeric_avg_accum    PGNSP PGUID 12 1 0 f f t f i 2 1231 "1231 1700" _null_ _null_ _null_ numeric_avg_accum - _null_ ));
+DESCR("aggregate transition function");
 DATA(insert OID = 1834 (  int2_accum	   PGNSP PGUID 12 1 0 f f t f i 2 1231 "1231 21" _null_ _null_ _null_ int2_accum - _null_ ));
 DESCR("aggregate transition function");
 DATA(insert OID = 1835 (  int4_accum	   PGNSP PGUID 12 1 0 f f t f i 2 1231 "1231 23" _null_ _null_ _null_ int4_accum - _null_ ));
 DESCR("aggregate transition function");
 DATA(insert OID = 1836 (  int8_accum	   PGNSP PGUID 12 1 0 f f t f i 2 1231 "1231 20" _null_ _null_ _null_ int8_accum - _null_ ));
+DESCR("aggregate transition function");
+DATA(insert OID = 2746 (  int8_avg_accum	   PGNSP PGUID 12 1 0 f f t f i 2 1231 "1231 20" _null_ _null_ _null_ int8_avg_accum - _null_ ));
 DESCR("aggregate transition function");
 DATA(insert OID = 1837 (  numeric_avg	   PGNSP PGUID 12 1 0 f f t f i 1 1700 "1231" _null_ _null_ _null_	numeric_avg - _null_ ));
 DESCR("AVG aggregate final function");

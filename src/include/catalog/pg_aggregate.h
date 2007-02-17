@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.60 2007/01/20 09:27:19 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.61 2007/02/17 00:55:57 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -80,10 +80,10 @@ typedef FormData_pg_aggregate *Form_pg_aggregate;
  */
 
 /* avg */
-DATA(insert ( 2100	int8_accum		numeric_avg		0	1231	"{0,0,0}" ));
+DATA(insert ( 2100	int8_avg_accum	numeric_avg		0	1231	"{0,0}" ));
 DATA(insert ( 2101	int4_avg_accum	int8_avg		0	1016	"{0,0}" ));
 DATA(insert ( 2102	int2_avg_accum	int8_avg		0	1016	"{0,0}" ));
-DATA(insert ( 2103	numeric_accum	numeric_avg		0	1231	"{0,0,0}" ));
+DATA(insert ( 2103	numeric_avg_accum	numeric_avg		0	1231	"{0,0}" ));
 DATA(insert ( 2104	float4_accum	float8_avg		0	1022	"{0,0,0}" ));
 DATA(insert ( 2105	float8_accum	float8_avg		0	1022	"{0,0,0}" ));
 DATA(insert ( 2106	interval_accum	interval_avg	0	1187	"{0 second,0 second}" ));

@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.99 2007/01/16 21:41:13 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.100 2007/02/17 00:55:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2165,6 +2165,40 @@ do_numeric_accum(ArrayType *transarray, Numeric newval)
 	return result;
 }
 
+/*
+ * Improve avg performance by not caclulating sum(X*X).
+ */
+static ArrayType *
+do_numeric_avg_accum(ArrayType *transarray, Numeric newval)
+{
+	Datum	   *transdatums;
+	int			ndatums;
+	Datum		N,
+				sumX;
+	ArrayType  *result;
+
+	/* We assume the input is array of numeric */
+	deconstruct_array(transarray,
+					  NUMERICOID, -1, false, 'i',
+					  &transdatums, NULL, &ndatums);
+	if (ndatums != 2)
+		elog(ERROR, "expected 2-element numeric array");
+	N = transdatums[0];
+	sumX = transdatums[1];
+
+	N = DirectFunctionCall1(numeric_inc, N);
+	sumX = DirectFunctionCall2(numeric_add, sumX,
+							   NumericGetDatum(newval));
+
+	transdatums[0] = N;
+	transdatums[1] = sumX;
+
+	result = construct_array(transdatums, 2,
+							 NUMERICOID, -1, false, 'i');
+
+	return result;
+}
+
 Datum
 numeric_accum(PG_FUNCTION_ARGS)
 {
@@ -2172,6 +2206,18 @@ numeric_accum(PG_FUNCTION_ARGS)
 	Numeric		newval = PG_GETARG_NUMERIC(1);
 
 	PG_RETURN_ARRAYTYPE_P(do_numeric_accum(transarray, newval));
+}
+
+/*
+ * Optimized case for average of numeric.
+ */
+Datum
+numeric_avg_accum(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Numeric		newval = PG_GETARG_NUMERIC(1);
+
+	PG_RETURN_ARRAYTYPE_P(do_numeric_avg_accum(transarray, newval));
 }
 
 /*
@@ -2219,6 +2265,22 @@ int8_accum(PG_FUNCTION_ARGS)
 	PG_RETURN_ARRAYTYPE_P(do_numeric_accum(transarray, newval));
 }
 
+/*
+ * Optimized case for average of int8.
+ */
+Datum
+int8_avg_accum(PG_FUNCTION_ARGS)
+{
+	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P(0);
+	Datum		newval8 = PG_GETARG_DATUM(1);
+	Numeric		newval;
+
+	newval = DatumGetNumeric(DirectFunctionCall1(int8_numeric, newval8));
+
+	PG_RETURN_ARRAYTYPE_P(do_numeric_avg_accum(transarray, newval));
+}
+
+
 Datum
 numeric_avg(PG_FUNCTION_ARGS)
 {
@@ -2232,11 +2294,10 @@ numeric_avg(PG_FUNCTION_ARGS)
 	deconstruct_array(transarray,
 					  NUMERICOID, -1, false, 'i',
 					  &transdatums, NULL, &ndatums);
-	if (ndatums != 3)
-		elog(ERROR, "expected 3-element numeric array");
+	if (ndatums != 2)
+		elog(ERROR, "expected 2-element numeric array");
 	N = DatumGetNumeric(transdatums[0]);
 	sumX = DatumGetNumeric(transdatums[1]);
-	/* ignore sumX2 */
 
 	/* SQL92 defines AVG of no values to be NULL */
 	/* N is zero iff no digits (cf. numeric_uminus) */
