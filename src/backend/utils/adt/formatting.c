@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.127 2007/02/17 01:51:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.128 2007/02/17 03:11:32 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2007, PostgreSQL Global Development Group
@@ -2000,7 +2000,8 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 #ifdef HAVE_INT64_TIMESTAMP
 				sprintf(inout, "%03d", (int) (tmtc->fsec / INT64CONST(1000)));
 #else
-				sprintf(inout, "%03d", (int) rint(tmtc->fsec * 1000));
+				/* No rint() because we can't overflow and we might print US */
+				sprintf(inout, "%03d", (int) (tmtc->fsec * 1000));
 #endif
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
@@ -2041,7 +2042,8 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 #ifdef HAVE_INT64_TIMESTAMP
 				sprintf(inout, "%06d", (int) tmtc->fsec);
 #else
-				sprintf(inout, "%06d", (int) rint(tmtc->fsec * 1000000));
+				/* don't use rint() because we can't overflow 1000 */
+				sprintf(inout, "%06d", (int) (tmtc->fsec * 1000000));
 #endif
 				if (S_THth(suf))
 					str_numth(p_inout, inout, S_TH_TYPE(suf));
