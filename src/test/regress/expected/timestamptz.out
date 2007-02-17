@@ -720,11 +720,11 @@ SELECT '' AS "54", d1 as timestamptz,
     | Mon Jan 01 17:32:01 2001 PST    |       1 |  1000 |  1000000
 (56 rows)
 
-SELECT '' AS "54", d1 as "timestamp",
+SELECT '' AS "54", d1 as timestamptz,
    date_part( 'isoyear', d1) AS isoyear, date_part( 'week', d1) AS week,
    date_part( 'dow', d1) AS dow
    FROM TIMESTAMPTZ_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
- 54 |            timestamp            | isoyear | week | dow 
+ 54 |            timestamptz          | isoyear | week | dow 
 ----+---------------------------------+---------+------+-----
     | Wed Dec 31 16:00:00 1969 PST    |    1970 |    1 |   3
     | Mon Feb 10 17:32:01 1997 PST    |    1997 |    7 |   1
