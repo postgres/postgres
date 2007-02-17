@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Fri Feb 16 20:35:38 EST 2007
+Last updated:           Fri Feb 16 21:00:55 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -332,15 +332,16 @@ first.  There is also a developer's wiki at<br/>
   </li></ul>
   </li><li>Add ISO day of week format 'ID' to to_char() where Monday = 1
   </li><li>Add a field 'isoyear' to extract(), based on the ISO week
-  </li><li>Add SPI_gettypmod() to return the typemod for a TupleDesc
   </li><li>Implement inlining of set-returning functions defined in SQL
   </li><li>Allow SQL-language functions to return results from RETURNING queries
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00665.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00665.php</a>
 </p>
+  </li><li>Add SPI_gettypmod() to return the typemod for a TupleDesc
   </li><li>Enforce typmod for function inputs, function results and parameters for
   spi_prepare'd statements called from PLs
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg01403.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg01403.php</a>
 </p>
+  </li><li>Allow holdable cursors in SPI
   </li><li>Tighten function permission checks
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg00568.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg00568.php</a>
 </p>

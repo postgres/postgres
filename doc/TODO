@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri Feb 16 20:35:38 EST 2007
+Last updated:		Fri Feb 16 21:00:55 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -362,17 +362,18 @@ Functions
 
 * Add ISO day of week format 'ID' to to_char() where Monday = 1
 * Add a field 'isoyear' to extract(), based on the ISO week
-* Add SPI_gettypmod() to return the typemod for a TupleDesc
 * Implement inlining of set-returning functions defined in SQL
 * Allow SQL-language functions to return results from RETURNING queries
 
   http://archives.postgresql.org/pgsql-hackers/2006-10/msg00665.php
 
+* Add SPI_gettypmod() to return the typemod for a TupleDesc
 * Enforce typmod for function inputs, function results and parameters for
   spi_prepare'd statements called from PLs
 
   http://archives.postgresql.org/pgsql-hackers/2007-01/msg01403.php
 
+* Allow holdable cursors in SPI
 * Tighten function permission checks
 
   http://archives.postgresql.org/pgsql-hackers/2006-12/msg00568.php
