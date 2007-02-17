@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.523 2007/02/15 23:23:23 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.524 2007/02/17 19:33:32 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -539,6 +539,19 @@ pg_parse_query(const char *query_string)
 
 	if (log_parser_stats)
 		ShowUsage("PARSER STATISTICS");
+
+#ifdef COPY_PARSE_PLAN_TREES
+	/* Optional debugging check: pass raw parsetrees through copyObject() */
+	{
+		List	   *new_list = (List *) copyObject(raw_parsetree_list);
+
+		/* This checks both copyObject() and the equal() routines... */
+		if (!equal(new_list, raw_parsetree_list))
+			elog(WARNING, "copyObject() failed to produce an equal raw parse tree");
+		else
+			raw_parsetree_list = new_list;
+	}
+#endif
 
 	return raw_parsetree_list;
 }
