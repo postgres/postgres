@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat Feb 17 20:32:39 EST 2007
+Last updated:		Sat Feb 17 20:34:28 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -66,7 +66,7 @@ Administration
 * Allow auto-selection of partitioned tables for min/max() operations
 * Allow more complex user/database default GUC settings
 
-  Currently, ALTER USER and ALTER DATABASE support per-user and
+  Currently ALTER USER and ALTER DATABASE support per-user and
   per-database defaults.  Consider adding per-user-and-database
   defaults so things like search_path can be defaulted for a 
   specific user connecting to a specific database.
@@ -249,7 +249,7 @@ Data Types
 	  format
 	o Improve timestamptz subtraction to be DST-aware
 
-	  Currently, subtracting one date from another that crosses a
+	  Currently subtracting one date from another that crosses a
 	  daylight savings time adjustment can return '1 day 1 hour', but
 	  adding that back to the first date returns a time one hour in
 	  the future.  This is caused by the adjustment of '25 hours' to
@@ -369,7 +369,8 @@ Functions
 
 * Allow SQL-language functions to reference parameters by parameter name
 
-  Currently, SQL-language functions can only refer to parameters via $1, etc
+  Currently SQL-language functions can only refer to dollar parameters,
+  e.g. $1
 
 * Add SPI_gettypmod() to return the typemod for a TupleDesc
 * Enforce typmod for function inputs, function results and parameters for
@@ -459,7 +460,7 @@ SQL Commands
 * Allow PREPARE of cursors
 * Allow finer control over the caching of prepared query plans
 
-  Currently, queries prepared via the libpq API are planned on first
+  Currently queries prepared via the libpq API are planned on first
   execute using the supplied parameters --- allow SQL PREPARE to do the
   same.  Also, allow control over replanning prepared queries either
   manually or automatically when statistics for execute parameters
@@ -802,7 +803,7 @@ Clients
 	  database and therefore preventing the transaction isolation
 	  level from being set.
 
-	  Currently, SET <tab> causes a database lookup to check all
+	  Currently SET <tab> causes a database lookup to check all
 	  supported session variables.  This query causes problems
 	  because setting the transaction isolation level must be the
 	  first statement of a transaction.
@@ -869,7 +870,7 @@ Clients
 
 	o Allow statement results to be automatically batched to the client
 
-	  Currently, all statement results are transferred to the libpq
+	  Currently all statement results are transferred to the libpq
 	  client before libpq makes the results available to the 
 	  application.  This feature would allow the application to make
 	  use of the first result rows while the rest are transferred, or

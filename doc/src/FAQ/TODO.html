@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sat Feb 17 20:32:39 EST 2007
+Last updated:           Sat Feb 17 20:34:28 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -65,7 +65,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Allow auto-selection of partitioned tables for min/max() operations
   </li><li>Allow more complex user/database default GUC settings
-<p>  Currently, ALTER USER and ALTER DATABASE support per-user and
+<p>  Currently ALTER USER and ALTER DATABASE support per-user and
   per-database defaults.  Consider adding per-user-and-database
   defaults so things like search_path can be defaulted for a 
   specific user connecting to a specific database.
@@ -224,7 +224,7 @@ first.  There is also a developer's wiki at<br/>
     </li><li>Add a GUC variable to allow output of interval values in ISO8601 
           format
     </li><li>Improve timestamptz subtraction to be DST-aware
-<p>          Currently, subtracting one date from another that crosses a
+<p>          Currently subtracting one date from another that crosses a
           daylight savings time adjustment can return '1 day 1 hour', but
           adding that back to the first date returns a time one hour in
           the future.  This is caused by the adjustment of '25 hours' to
@@ -337,7 +337,8 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00665.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00665.php</a>
 </p>
   </li><li>Allow SQL-language functions to reference parameters by parameter name
-<p>  Currently, SQL-language functions can only refer to parameters via $1, etc
+<p>  Currently SQL-language functions can only refer to dollar parameters,
+  e.g. $1
 </p>
   </li><li>Add SPI_gettypmod() to return the typemod for a TupleDesc
   </li><li>Enforce typmod for function inputs, function results and parameters for
@@ -414,7 +415,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Allow PREPARE of cursors
   </li><li>Allow finer control over the caching of prepared query plans
-<p>  Currently, queries prepared via the libpq API are planned on first
+<p>  Currently queries prepared via the libpq API are planned on first
   execute using the supplied parameters --- allow SQL PREPARE to do the
   same.  Also, allow control over replanning prepared queries either
   manually or automatically when statistics for execute parameters
@@ -719,7 +720,7 @@ first.  There is also a developer's wiki at<br/>
     </li><li>Prevent tab completion of SET TRANSACTION from querying the
           database and therefore preventing the transaction isolation
           level from being set.
-<p>          Currently, SET &lt;tab&gt; causes a database lookup to check all
+<p>          Currently SET &lt;tab&gt; causes a database lookup to check all
           supported session variables.  This query causes problems
           because setting the transaction isolation level must be the
           first statement of a transaction.
@@ -779,7 +780,7 @@ first.  There is also a developer's wiki at<br/>
           historically it has so we need a way to prevent it
 </p>
     </li><li>Allow statement results to be automatically batched to the client
-<p>          Currently, all statement results are transferred to the libpq
+<p>          Currently all statement results are transferred to the libpq
           client before libpq makes the results available to the 
           application.  This feature would allow the application to make
           use of the first result rows while the rest are transferred, or
