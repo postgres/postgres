@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.97.2.1 2005/11/22 18:23:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.97.2.2 2007/02/18 19:49:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ static void ProcessQuery(Query *parsetree,
 			 ParamListInfo params,
 			 DestReceiver *dest,
 			 char *completionTag);
+static void FillPortalStore(Portal portal);
 static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
 			 DestReceiver *dest);
 static long PortalRunSelect(Portal portal, bool forward, long count,
@@ -629,16 +630,7 @@ PortalRun(Portal portal, long count,
 				 * storing its results in the portal's tuplestore.
 				 */
 				if (!portal->portalUtilReady)
-				{
-					DestReceiver *treceiver;
-
-					PortalCreateHoldStore(portal);
-					treceiver = CreateDestReceiver(DestTuplestore, portal);
-					PortalRunUtility(portal, linitial(portal->parseTrees),
-									 treceiver, NULL);
-					(*treceiver->rDestroy) (treceiver);
-					portal->portalUtilReady = true;
-				}
+					FillPortalStore(portal);
 
 				/*
 				 * Now fetch desired portion of results.
@@ -865,6 +857,35 @@ PortalRunSelect(Portal portal,
 	}
 
 	return nprocessed;
+}
+
+/*
+ * FillPortalStore
+ *		Run the query and load result tuples into the portal's tuple store.
+ *
+ * This is used for PORTAL_UTIL_SELECT cases only.
+ */
+static void
+FillPortalStore(Portal portal)
+{
+	DestReceiver *treceiver;
+	char		completionTag[COMPLETION_TAG_BUFSIZE];
+
+	PortalCreateHoldStore(portal);
+	treceiver = CreateDestReceiver(DestTuplestore, portal);
+
+	completionTag[0] = '\0';
+
+	PortalRunUtility(portal, linitial(portal->parseTrees),
+					 treceiver, completionTag);
+
+	/* Override default completion tag with actual command result */
+	if (completionTag[0] != '\0')
+		portal->commandTag = pstrdup(completionTag);
+
+	(*treceiver->rDestroy) (treceiver);
+
+	portal->portalUtilReady = true;
 }
 
 /*
@@ -1180,16 +1201,7 @@ PortalRunFetch(Portal portal,
 				 * storing its results in the portal's tuplestore.
 				 */
 				if (!portal->portalUtilReady)
-				{
-					DestReceiver *treceiver;
-
-					PortalCreateHoldStore(portal);
-					treceiver = CreateDestReceiver(DestTuplestore, portal);
-					PortalRunUtility(portal, linitial(portal->parseTrees),
-									 treceiver, NULL);
-					(*treceiver->rDestroy) (treceiver);
-					portal->portalUtilReady = true;
-				}
+					FillPortalStore(portal);
 
 				/*
 				 * Now fetch desired portion of results.
