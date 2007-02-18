@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.52 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.53 2007/02/18 01:47:40 momjian Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -321,7 +321,8 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar", false, 5);
   </para>
 
   <para>
-   You can pass multiple commands in one string.
+   You can pass multiple commands in one string, but later commands cannot
+   depend on the creation of objects earlier in the string.
    <function>SPI_execute</function> returns the
    result for the command executed last.  The <parameter>count</parameter>
    limit applies to each command separately, but it is not applied to
