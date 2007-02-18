@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.68 2007/02/16 03:50:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/mvcc.sgml,v 2.69 2007/02/18 01:21:49 momjian Exp $ -->
 
  <chapter id="mvcc">
   <title>Concurrency Control</title>
@@ -536,7 +536,8 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     To some extent the names reflect the typical usage of each lock
     mode &mdash; but the semantics are all the same.  The only real difference
     between one lock mode and another is the set of lock modes with
-    which each conflicts.  Two transactions cannot hold locks of conflicting
+    which each conflicts (see <xref linkend="table-lock-compatibility">).
+ .  Two transactions cannot hold locks of conflicting
     modes on the same table at the same time.  (However, a transaction
     never conflicts with itself.  For example, it might acquire
     <literal>ACCESS EXCLUSIVE</literal> lock and later acquire
@@ -741,119 +742,118 @@ SELECT SUM(value) FROM mytab WHERE class = 2;
     releases locks acquired within it.
    </para>
 
+
+
     <table tocentry="1" id="table-lock-compatibility">
-     <title> Compatibility of lock modes</title>
+     <title> Conflicting lock modes</title>
      <tgroup cols="9">
-      <colspec colnum="1" colwidth="1*">
-      <colspec colnum="2" colwidth="1*">
-      <colspec colnum="3" colwidth="1*">
-      <colspec colnum="4" colwidth="1*">
-      <colspec colnum="5" colwidth="1*">
-      <colspec colnum="6" colwidth="1*">
-      <colspec colnum="7" colwidth="1*">
-      <colspec colnum="8" colwidth="1*">
-      <colspec colnum="9" colwidth="1*">
+      <colspec colnum="2" colname="lockst">
+      <colspec colnum="9" colname="lockend">
+      <spanspec namest="lockst" nameend="lockend" spanname="lockreq">
       <thead>
        <row>
-        <entry>Modes</entry>
-        <entry>AS</entry>
-        <entry>RS</entry>
-        <entry>RE</entry>
-        <entry>SUE</entry>
-        <entry>S</entry>
-        <entry>SRE</entry>
-        <entry>E</entry>
-        <entry>AE</entry>
+        <entry morerows="1">Requested Lock Mode</entry>
+        <entry spanname="lockreq">Current Lock Mode</entry>
+       </row>
+       <row>
+        <entry>ACCESS SHARE</entry>
+        <entry>ROW SHARE</entry>
+        <entry>ROW EXCLUSIVE</entry>
+        <entry>SHARE UPDATE EXCLUSIVE</entry>
+        <entry>SHARE</entry>
+        <entry>SHARE ROW EXCLUSIVE</entry>
+        <entry>EXCLUSIVE</entry>
+        <entry>ACCESS EXCLUSIVE</entry>
        </row>
       </thead>
       <tbody>
        <row>
-        <entry>AS</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">N</entry>
+        <entry>ACCESS SHARE</entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center">X</entry>
        </row>
        <row>
-        <entry>RS</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
+        <entry>ROW SHARE</entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
        </row>
        <row>
-        <entry>RE</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
+        <entry>ROW EXCLUSIVE</entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
        </row>
        <row>
-        <entry>SUE</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
+        <entry>SHARE UPDATE EXCLUSIVE</entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
        </row>
        <row>
-        <entry>S</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
+        <entry>SHARE</entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center"></entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
        </row>
        <row>
-        <entry>SRE</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
+        <entry>SHARE ROW EXCLUSIVE</entry>
+        <entry align="center"></entry>
+        <entry align="center"></entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
        </row>
        <row>
-        <entry>E</entry>
-        <entry align="center">Y</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
+        <entry>EXCLUSIVE</entry>
+        <entry align="center"></entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
        </row>
        <row>
-        <entry>AE</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
-        <entry align="center">N</entry>
+        <entry>ACCESS EXCLUSIVE</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
+        <entry align="center">X</entry>
        </row>
       </tbody>
      </tgroup>
