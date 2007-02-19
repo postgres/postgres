@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sat Feb 17 20:34:28 EST 2007
+Last updated:           Mon Feb 19 11:36:11 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1295,15 +1295,7 @@ first.  There is also a developer's wiki at<br/>
     </li><li>Improve signal handling
 <p>          <a href="http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php">http://archives.postgresql.org/pgsql-patches/2005-06/msg00027.php</a>
 </p>
-    </li><li>Add long file support for binary pg_dump output
-<p>          While Win32 supports 64-bit files, the MinGW API does not,
-          meaning we have to build an fseeko replacement on top of the
-          Win32 API, and we have to make sure MinGW handles it.  Another
-          option is to wait for the MinGW project to fix it, or use the
-          code from the LibGW32C project as a guide.
-</p>
-<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg00551.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg00551.php</a>
-</p>
+    </li><li>-<em>Add long file support for binary pg_dump output</em>
     </li><li>Check WSACancelBlockingCall() for interrupts [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?win32intr">win32intr</a>]
   </li></ul>
   </li><li>Wire Protocol Changes
