@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.172 2007/02/16 03:39:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.173 2007/02/19 17:41:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4112,11 +4112,14 @@ timestamp_part(PG_FUNCTION_ARGS)
 					break;
 				}
 			case DTK_DOW:
+			case DTK_ISODOW:
 				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
 				result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
+				if (val == DTK_ISODOW && result == 0)
+					result = 7;
 				break;
 
 			case DTK_DOY:
@@ -4322,11 +4325,14 @@ timestamptz_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_DOW:
+			case DTK_ISODOW:
 				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn, NULL) != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 							 errmsg("timestamp out of range")));
 				result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
+				if (val == DTK_ISODOW && result == 0)
+					result = 7;
 				break;
 
 			case DTK_DOY:

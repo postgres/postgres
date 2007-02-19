@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.64 2007/02/16 03:39:45 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.65 2007/02/19 17:41:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,6 +166,7 @@
 #define DTK_TZ_HOUR		34
 #define DTK_TZ_MINUTE	35
 #define DTK_ISOYEAR		36
+#define DTK_ISODOW		37
 
 
 /*

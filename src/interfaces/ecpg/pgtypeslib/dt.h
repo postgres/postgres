@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.35 2007/02/16 03:39:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt.h,v 1.36 2007/02/19 17:41:39 momjian Exp $ */
 
 #ifndef DT_H
 #define DT_H
@@ -158,6 +158,7 @@ typedef double fsec_t;
 #define DTK_TZ_HOUR		34
 #define DTK_TZ_MINUTE	35
 #define DTK_ISOYEAR		36
+#define DTK_ISODOW		37
 
 
 /*

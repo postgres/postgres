@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.176 2007/02/16 03:39:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.177 2007/02/19 17:41:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,6 +125,7 @@ static const datetkn datetktbl[] = {
 	{"h", UNITS, DTK_HOUR},		/* "hour" */
 	{LATE, RESERV, DTK_LATE},	/* "infinity" reserved for "late time" */
 	{INVALID, RESERV, DTK_INVALID},		/* "invalid" reserved for bad time */
+	{"isodow", RESERV, DTK_ISODOW},		/* ISO day of week, Sunday == 7 */
 	{"isoyear", UNITS, DTK_ISOYEAR},	/* year in terms of the ISO week date */
 	{"j", UNITS, DTK_JULIAN},
 	{"jan", MONTH, 1},

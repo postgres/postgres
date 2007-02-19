@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.361 2007/02/16 07:46:54 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.362 2007/02/19 17:41:38 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -5732,8 +5732,8 @@ SELECT EXTRACT(DECADE FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>dow</literal></term>
       <listitem>
        <para>
-        The day of the week (0 - 6; Sunday is 0) (for
-        <type>timestamp</type> values only)
+        The day of the week as Sunday(<literal>0</>) to
+        Saturday(<literal>6</>)
        </para>
 
 <screen>
@@ -5741,7 +5741,7 @@ SELECT EXTRACT(DOW FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>5</computeroutput>
 </screen>
        <para>
-        Note that <function>extract</function>'s day of the week numbering is 
+        Note that <function>extract</function>'s day of the week numbering is
         different from that of the <function>to_char</function> function.
        </para>
 
@@ -5752,7 +5752,7 @@ SELECT EXTRACT(DOW FROM TIMESTAMP '2001-02-16 20:38:40');
       <term><literal>doy</literal></term>
       <listitem>
        <para>
-        The day of the year (1 - 365/366) (for <type>timestamp</type> values only)
+        The day of the year (1 - 365/366)
        </para>
 
 <screen>
@@ -5802,6 +5802,26 @@ SELECT TIMESTAMP WITH TIME ZONE 'epoch' + 982384720 * INTERVAL '1 second';
 SELECT EXTRACT(HOUR FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>20</computeroutput>
 </screen>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><literal>isodow</literal></term>
+      <listitem>
+       <para>
+        The day of the week as Monday(<literal>1</>) to
+        Sunday(<literal>7</>)
+       </para>
+
+<screen>
+SELECT EXTRACT(ISODOW FROM TIMESTAMP '2001-02-18 20:38:40');
+<lineannotation>Result: </lineannotation><computeroutput>7</computeroutput>
+</screen>
+       <para>
+        This is identical to <literal>dow</> except for Sunday.  This
+        matches the <acronym>ISO</> 8601 day of the week numbering.
+       </para>
+
       </listitem>
      </varlistentry>
 
@@ -5923,8 +5943,7 @@ SELECT EXTRACT(MONTH FROM INTERVAL '2 years 13 months');
       <term><literal>quarter</literal></term>
       <listitem>
        <para>
-        The quarter of the year (1 - 4) that the day is in (for
-        <type>timestamp</type> values only)
+        The quarter of the year (1 - 4) that the day is in
        </para>
 
 <screen>
@@ -5989,7 +6008,7 @@ SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
         (<acronym>ISO</acronym> 8601), the first week of a year
         contains January 4 of that year.  (The <acronym>ISO</acronym>-8601
         week starts on Monday.)  In other words, the first Thursday of
-        a year is in week 1 of that year. (for <type>timestamp</type> values only)
+        a year is in week 1 of that year.
        </para>
        <para>
         Because of this, it is possible for early January dates to be part of the 
