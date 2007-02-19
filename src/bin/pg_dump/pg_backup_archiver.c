@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.141 2007/02/01 19:10:28 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.142 2007/02/19 15:05:06 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1311,24 +1311,24 @@ TocIDRequired(ArchiveHandle *AH, DumpId id, RestoreOptions *ropt)
 }
 
 size_t
-WriteOffset(ArchiveHandle *AH, off_t o, int wasSet)
+WriteOffset(ArchiveHandle *AH, pgoff_t o, int wasSet)
 {
 	int			off;
 
 	/* Save the flag */
 	(*AH->WriteBytePtr) (AH, wasSet);
 
-	/* Write out off_t smallest byte first, prevents endian mismatch */
-	for (off = 0; off < sizeof(off_t); off++)
+	/* Write out pgoff_t smallest byte first, prevents endian mismatch */
+	for (off = 0; off < sizeof(pgoff_t); off++)
 	{
 		(*AH->WriteBytePtr) (AH, o & 0xFF);
 		o >>= 8;
 	}
-	return sizeof(off_t) + 1;
+	return sizeof(pgoff_t) + 1;
 }
 
 int
-ReadOffset(ArchiveHandle *AH, off_t *o)
+ReadOffset(ArchiveHandle *AH, pgoff_t *o)
 {
 	int			i;
 	int			off;
@@ -1348,8 +1348,8 @@ ReadOffset(ArchiveHandle *AH, off_t *o)
 		else if (i == 0)
 			return K_OFFSET_NO_DATA;
 
-		/* Cast to off_t because it was written as an int. */
-		*o = (off_t) i;
+		/* Cast to pgoff_t because it was written as an int. */
+		*o = (pgoff_t) i;
 		return K_OFFSET_POS_SET;
 	}
 
@@ -1379,8 +1379,8 @@ ReadOffset(ArchiveHandle *AH, off_t *o)
 	 */
 	for (off = 0; off < AH->offSize; off++)
 	{
-		if (off < sizeof(off_t))
-			*o |= ((off_t) ((*AH->ReadBytePtr) (AH))) << (off * 8);
+		if (off < sizeof(pgoff_t))
+			*o |= ((pgoff_t) ((*AH->ReadBytePtr) (AH))) << (off * 8);
 		else
 		{
 			if ((*AH->ReadBytePtr) (AH) != 0)
@@ -1647,7 +1647,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 	AH->createDate = time(NULL);
 
 	AH->intSize = sizeof(int);
-	AH->offSize = sizeof(off_t);
+	AH->offSize = sizeof(pgoff_t);
 	if (FileSpec)
 	{
 		AH->fSpec = strdup(FileSpec);
@@ -2768,11 +2768,11 @@ checkSeek(FILE *fp)
 
 	if (fseeko(fp, 0, SEEK_CUR) != 0)
 		return false;
-	else if (sizeof(off_t) > sizeof(long))
+	else if (sizeof(pgoff_t) > sizeof(long))
 
 		/*
-		 * At this point, off_t is too large for long, so we return based on
-		 * whether an off_t version of fseek is available.
+		 * At this point, pgoff_t is too large for long, so we return based on
+		 * whether an pgoff_t version of fseek is available.
 		 */
 #ifdef HAVE_FSEEKO
 		return true;

@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.36 2006/10/04 00:30:05 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.37 2007/02/19 15:05:06 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,14 +70,14 @@ typedef struct
 	char	   *zlibIn;
 	size_t		inSize;
 	int			hasSeek;
-	off_t		filePos;
-	off_t		dataStart;
+	pgoff_t		filePos;
+	pgoff_t		dataStart;
 } lclContext;
 
 typedef struct
 {
 	int			dataState;
-	off_t		dataPos;
+	pgoff_t		dataPos;
 } lclTocEntry;
 
 
@@ -88,7 +88,7 @@ typedef struct
 static void _readBlockHeader(ArchiveHandle *AH, int *type, int *id);
 static void _StartDataCompressor(ArchiveHandle *AH, TocEntry *te);
 static void _EndDataCompressor(ArchiveHandle *AH, TocEntry *te);
-static off_t _getFilePos(ArchiveHandle *AH, lclContext *ctx);
+static pgoff_t _getFilePos(ArchiveHandle *AH, lclContext *ctx);
 static int	_DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush);
 
 static char *modulename = gettext_noop("custom archiver");
@@ -791,7 +791,7 @@ static void
 _CloseArchive(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	off_t		tpos;
+	pgoff_t		tpos;
 
 	if (AH->mode == archModeWrite)
 	{
@@ -827,10 +827,10 @@ _CloseArchive(ArchiveHandle *AH)
 /*
  * Get the current position in the archive file.
  */
-static off_t
+static pgoff_t
 _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 {
-	off_t		pos;
+	pgoff_t		pos;
 
 	if (ctx->hasSeek)
 	{
@@ -841,7 +841,7 @@ _getFilePos(ArchiveHandle *AH, lclContext *ctx)
 
 			/*
 			 * Prior to 1.7 (pg7.3) we relied on the internally maintained
-			 * pointer. Now we rely on off_t always. pos = ctx->filePos;
+			 * pointer. Now we rely on pgoff_t always. pos = ctx->filePos;
 			 */
 		}
 	}

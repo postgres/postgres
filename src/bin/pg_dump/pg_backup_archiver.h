@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.74 2007/01/25 03:30:43 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.75 2007/02/19 15:05:06 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,7 +199,7 @@ typedef struct _archiveHandle
 								 * format */
 	size_t		lookaheadSize;	/* Size of allocated buffer */
 	size_t		lookaheadLen;	/* Length of data in lookahead */
-	off_t		lookaheadPos;	/* Current read position in lookahead buffer */
+	pgoff_t		lookaheadPos;	/* Current read position in lookahead buffer */
 
 	ArchiveEntryPtr ArchiveEntryPtr;	/* Called for each metadata object */
 	StartDataPtr StartDataPtr;	/* Called when table data is about to be
@@ -332,8 +332,8 @@ extern int	ReadInt(ArchiveHandle *AH);
 extern char *ReadStr(ArchiveHandle *AH);
 extern size_t WriteStr(ArchiveHandle *AH, const char *s);
 
-int			ReadOffset(ArchiveHandle *, off_t *);
-size_t		WriteOffset(ArchiveHandle *, off_t, int);
+int			ReadOffset(ArchiveHandle *, pgoff_t *);
+size_t		WriteOffset(ArchiveHandle *, pgoff_t, int);
 
 extern void StartRestoreBlobs(ArchiveHandle *AH);
 extern void StartRestoreBlob(ArchiveHandle *AH, Oid oid);

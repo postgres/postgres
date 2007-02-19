@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.132 2007/01/23 17:54:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.133 2007/02/19 15:05:06 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,24 @@
 
 #include "postgres_fe.h"
 
+/*
+ * WIN32 does not provide 64-bit off_t, but does provide the functions operating
+ * with 64-bit offsets.
+ */
+#ifdef WIN32
+#define pgoff_t __int64
+#undef fseeko
+#undef ftello
+#ifdef WIN32_ONLY_COMPILER
+#define fseeko(stream, offset, origin) _fseeki64(stream, offset, origin)
+#define ftello(stream) _ftelli64(stream)
+#else
+#define fseeko(stream, offset, origin) fseeko64(stream, offset, origin)
+#define ftello(stream) ftello64(stream)
+#endif
+#else
+#define pgoff_t off_t
+#endif
 
 /*
  * pg_dump uses two different mechanisms for identifying database objects:

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.56 2006/11/01 15:59:26 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.57 2007/02/19 15:05:06 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,30 +67,30 @@ typedef struct
 	FILE	   *tmpFH;
 	char	   *targetFile;
 	char		mode;
-	off_t		pos;
-	off_t		fileLen;
+	pgoff_t		pos;
+	pgoff_t		fileLen;
 	ArchiveHandle *AH;
 } TAR_MEMBER;
 
 /*
  * Maximum file size for a tar member: The limit inherent in the
  * format is 2^33-1 bytes (nearly 8 GB).  But we don't want to exceed
- * what we can represent by an off_t.
+ * what we can represent by an pgoff_t.
  */
 #ifdef INT64_IS_BUSTED
 #define MAX_TAR_MEMBER_FILELEN INT_MAX
 #else
-#define MAX_TAR_MEMBER_FILELEN (((int64) 1 << Min(33, sizeof(off_t)*8 - 1)) - 1)
+#define MAX_TAR_MEMBER_FILELEN (((int64) 1 << Min(33, sizeof(pgoff_t)*8 - 1)) - 1)
 #endif
 
 typedef struct
 {
 	int			hasSeek;
-	off_t		filePos;
+	pgoff_t		filePos;
 	TAR_MEMBER *blobToc;
 	FILE	   *tarFH;
-	off_t		tarFHpos;
-	off_t		tarNextMember;
+	pgoff_t		tarFHpos;
+	pgoff_t		tarNextMember;
 	TAR_MEMBER *FH;
 	int			isSpecialScript;
 	TAR_MEMBER *scriptTH;
@@ -1048,7 +1048,7 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	FILE	   *tmp = th->tmpFH;	/* Grab it for convenience */
 	char		buf[32768];
 	size_t		cnt;
-	off_t		len = 0;
+	pgoff_t		len = 0;
 	size_t		res;
 	size_t		i,
 				pad;
@@ -1061,7 +1061,7 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 
 	/*
 	 * Some compilers with throw a warning knowing this test can never be true
-	 * because off_t can't exceed the compared maximum.
+	 * because pgoff_t can't exceed the compared maximum.
 	 */
 	if (th->fileLen > MAX_TAR_MEMBER_FILELEN)
 		die_horribly(AH, modulename, "archive member too large for tar format\n");
@@ -1197,7 +1197,7 @@ _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER *th)
 				chk;
 	size_t		len;
 	unsigned long ullen;
-	off_t		hPos;
+	pgoff_t		hPos;
 	bool		gotBlock = false;
 
 	while (!gotBlock)
