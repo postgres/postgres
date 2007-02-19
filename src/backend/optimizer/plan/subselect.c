@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.119 2007/02/19 02:23:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.120 2007/02/19 07:03:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,51 +31,18 @@
 #include "utils/syscache.h"
 
 
-Index		PlannerQueryLevel;	/* level of current query */
-List	   *PlannerInitPlan;	/* init subplans for current query */
-List	   *PlannerParamList;	/* to keep track of cross-level Params */
-
-int			PlannerPlanId = 0;	/* to assign unique ID to subquery plans */
-
-/*
- * PlannerParamList keeps track of the PARAM_EXEC slots that we have decided
- * we need for the query.  At runtime these slots are used to pass values
- * either down into subqueries (for outer references in subqueries) or up out
- * of subqueries (for the results of a subplan).  The n'th entry in the list
- * (n counts from 0) corresponds to Param->paramid = n.
- *
- * Each ParamList item shows the absolute query level it is associated with,
- * where the outermost query is level 1 and nested subqueries have higher
- * numbers.  The item the parameter slot represents can be one of three kinds:
- *
- * A Var: the slot represents a variable of that level that must be passed
- * down because subqueries have outer references to it.  The varlevelsup
- * value in the Var will always be zero.
- *
- * An Aggref (with an expression tree representing its argument): the slot
- * represents an aggregate expression that is an outer reference for some
- * subquery.  The Aggref itself has agglevelsup = 0, and its argument tree
- * is adjusted to match in level.
- *
- * A Param: the slot holds the result of a subplan (it is a setParam item
- * for that subplan).  The absolute level shown for such items corresponds
- * to the parent query of the subplan.
- *
- * Note: we detect duplicate Var parameters and coalesce them into one slot,
- * but we do not do this for Aggref or Param slots.
- */
-typedef struct PlannerParamItem
-{
-	Node	   *item;			/* the Var, Aggref, or Param */
-	Index		abslevel;		/* its absolute query level */
-} PlannerParamItem;
-
-
 typedef struct convert_testexpr_context
 {
+	PlannerInfo *root;
 	int			rtindex;		/* RT index for Vars, or 0 for Params */
 	List	   *righthandIds;	/* accumulated list of Vars or Param IDs */
 } convert_testexpr_context;
+
+typedef struct process_sublinks_context
+{
+	PlannerInfo *root;
+	bool		isTopQual;
+} process_sublinks_context;
 
 typedef struct finalize_primnode_context
 {
@@ -84,15 +51,17 @@ typedef struct finalize_primnode_context
 } finalize_primnode_context;
 
 
-static Node *convert_testexpr(Node *testexpr,
-				 int rtindex,
-				 List **righthandIds);
+static Node *convert_testexpr(PlannerInfo *root,
+							  Node *testexpr,
+							  int rtindex,
+							  List **righthandIds);
 static Node *convert_testexpr_mutator(Node *node,
 						 convert_testexpr_context *context);
 static bool subplan_is_hashable(SubLink *slink, SubPlan *node);
 static bool hash_ok_operator(OpExpr *expr);
-static Node *replace_correlation_vars_mutator(Node *node, void *context);
-static Node *process_sublinks_mutator(Node *node, bool *isTopQual);
+static Node *replace_correlation_vars_mutator(Node *node, PlannerInfo *root);
+static Node *process_sublinks_mutator(Node *node,
+									  process_sublinks_context *context);
 static Bitmapset *finalize_plan(Plan *plan, List *rtable,
 			  Bitmapset *outer_params,
 			  Bitmapset *valid_params);
@@ -104,7 +73,7 @@ static bool finalize_primnode(Node *node, finalize_primnode_context *context);
  * which is expected to have varlevelsup > 0 (ie, it is not local).
  */
 static Param *
-replace_outer_var(Var *var)
+replace_outer_var(PlannerInfo *root, Var *var)
 {
 	Param	   *retval;
 	ListCell   *ppl;
@@ -112,11 +81,11 @@ replace_outer_var(Var *var)
 	Index		abslevel;
 	int			i;
 
-	Assert(var->varlevelsup > 0 && var->varlevelsup < PlannerQueryLevel);
-	abslevel = PlannerQueryLevel - var->varlevelsup;
+	Assert(var->varlevelsup > 0 && var->varlevelsup < root->query_level);
+	abslevel = root->query_level - var->varlevelsup;
 
 	/*
-	 * If there's already a PlannerParamList entry for this same Var, just use
+	 * If there's already a paramlist entry for this same Var, just use
 	 * it.	NOTE: in sufficiently complex querytrees, it is possible for the
 	 * same varno/abslevel to refer to different RTEs in different parts of
 	 * the parsetree, so that different fields might end up sharing the same
@@ -130,7 +99,7 @@ replace_outer_var(Var *var)
 	 * a subplan's args list.
 	 */
 	i = 0;
-	foreach(ppl, PlannerParamList)
+	foreach(ppl, root->glob->paramlist)
 	{
 		pitem = (PlannerParamItem *) lfirst(ppl);
 		if (pitem->abslevel == abslevel && IsA(pitem->item, Var))
@@ -152,11 +121,11 @@ replace_outer_var(Var *var)
 		var = (Var *) copyObject(var);
 		var->varlevelsup = 0;
 
-		pitem = (PlannerParamItem *) palloc(sizeof(PlannerParamItem));
+		pitem = makeNode(PlannerParamItem);
 		pitem->item = (Node *) var;
 		pitem->abslevel = abslevel;
 
-		PlannerParamList = lappend(PlannerParamList, pitem);
+		root->glob->paramlist = lappend(root->glob->paramlist, pitem);
 		/* i is already the correct index for the new item */
 	}
 
@@ -174,15 +143,15 @@ replace_outer_var(Var *var)
  * which is expected to have agglevelsup > 0 (ie, it is not local).
  */
 static Param *
-replace_outer_agg(Aggref *agg)
+replace_outer_agg(PlannerInfo *root, Aggref *agg)
 {
 	Param	   *retval;
 	PlannerParamItem *pitem;
 	Index		abslevel;
 	int			i;
 
-	Assert(agg->agglevelsup > 0 && agg->agglevelsup < PlannerQueryLevel);
-	abslevel = PlannerQueryLevel - agg->agglevelsup;
+	Assert(agg->agglevelsup > 0 && agg->agglevelsup < root->query_level);
+	abslevel = root->query_level - agg->agglevelsup;
 
 	/*
 	 * It does not seem worthwhile to try to match duplicate outer aggs. Just
@@ -192,12 +161,12 @@ replace_outer_agg(Aggref *agg)
 	IncrementVarSublevelsUp((Node *) agg, -((int) agg->agglevelsup), 0);
 	Assert(agg->agglevelsup == 0);
 
-	pitem = (PlannerParamItem *) palloc(sizeof(PlannerParamItem));
+	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) agg;
 	pitem->abslevel = abslevel;
 
-	PlannerParamList = lappend(PlannerParamList, pitem);
-	i = list_length(PlannerParamList) - 1;
+	root->glob->paramlist = lappend(root->glob->paramlist, pitem);
+	i = list_length(root->glob->paramlist) - 1;
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
@@ -214,22 +183,22 @@ replace_outer_agg(Aggref *agg)
  * This is used to allocate PARAM_EXEC slots for subplan outputs.
  */
 static Param *
-generate_new_param(Oid paramtype, int32 paramtypmod)
+generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod)
 {
 	Param	   *retval;
 	PlannerParamItem *pitem;
 
 	retval = makeNode(Param);
 	retval->paramkind = PARAM_EXEC;
-	retval->paramid = list_length(PlannerParamList);
+	retval->paramid = list_length(root->glob->paramlist);
 	retval->paramtype = paramtype;
 	retval->paramtypmod = paramtypmod;
 
-	pitem = (PlannerParamItem *) palloc(sizeof(PlannerParamItem));
+	pitem = makeNode(PlannerParamItem);
 	pitem->item = (Node *) retval;
-	pitem->abslevel = PlannerQueryLevel;
+	pitem->abslevel = root->query_level;
 
-	PlannerParamList = lappend(PlannerParamList, pitem);
+	root->glob->paramlist = lappend(root->glob->paramlist, pitem);
 
 	return retval;
 }
@@ -248,7 +217,7 @@ generate_new_param(Oid paramtype, int32 paramtypmod)
  * tree containing InitPlan Param nodes.
  */
 static Node *
-make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
+make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 {
 	SubPlan    *node = makeNode(SubPlan);
 	Query	   *subquery = (Query *) (slink->subselect);
@@ -297,9 +266,13 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
 	/*
 	 * Generate the plan for the subquery.
 	 */
-	node->plan = plan = subquery_planner(subquery, tuple_fraction, NULL);
+	node->plan = plan = subquery_planner(root->glob, subquery,
+										 root->query_level + 1,
+										 tuple_fraction,
+										 NULL);
 
-	node->plan_id = PlannerPlanId++;	/* Assign unique ID to this SubPlan */
+	/* Assign quasi-unique ID to this SubPlan */
+	node->plan_id = root->glob->next_plan_id++;
 
 	node->rtable = subquery->rtable;
 
@@ -323,9 +296,9 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
 	tmpset = bms_copy(plan->extParam);
 	while ((paramid = bms_first_member(tmpset)) >= 0)
 	{
-		PlannerParamItem *pitem = list_nth(PlannerParamList, paramid);
+		PlannerParamItem *pitem = list_nth(root->glob->paramlist, paramid);
 
-		if (pitem->abslevel == PlannerQueryLevel)
+		if (pitem->abslevel == root->query_level)
 			node->parParam = lappend_int(node->parParam, paramid);
 	}
 	bms_free(tmpset);
@@ -342,9 +315,9 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
 	{
 		Param	   *prm;
 
-		prm = generate_new_param(BOOLOID, -1);
+		prm = generate_new_param(root, BOOLOID, -1);
 		node->setParam = list_make1_int(prm->paramid);
-		PlannerInitPlan = lappend(PlannerInitPlan, node);
+		root->init_plans = lappend(root->init_plans, node);
 		result = (Node *) prm;
 	}
 	else if (node->parParam == NIL && slink->subLinkType == EXPR_SUBLINK)
@@ -353,10 +326,11 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
 		Param	   *prm;
 
 		Assert(!te->resjunk);
-		prm = generate_new_param(exprType((Node *) te->expr),
+		prm = generate_new_param(root,
+								 exprType((Node *) te->expr),
 								 exprTypmod((Node *) te->expr));
 		node->setParam = list_make1_int(prm->paramid);
-		PlannerInitPlan = lappend(PlannerInitPlan, node);
+		root->init_plans = lappend(root->init_plans, node);
 		result = (Node *) prm;
 	}
 	else if (node->parParam == NIL && slink->subLinkType == ARRAY_SUBLINK)
@@ -370,19 +344,22 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
 		if (!OidIsValid(arraytype))
 			elog(ERROR, "could not find array type for datatype %s",
 				 format_type_be(exprType((Node *) te->expr)));
-		prm = generate_new_param(arraytype, exprTypmod((Node *) te->expr));
+		prm = generate_new_param(root,
+								 arraytype,
+								 exprTypmod((Node *) te->expr));
 		node->setParam = list_make1_int(prm->paramid);
-		PlannerInitPlan = lappend(PlannerInitPlan, node);
+		root->init_plans = lappend(root->init_plans, node);
 		result = (Node *) prm;
 	}
 	else if (node->parParam == NIL && slink->subLinkType == ROWCOMPARE_SUBLINK)
 	{
 		/* Adjust the Params */
-		result = convert_testexpr(testexpr,
+		result = convert_testexpr(root,
+								  testexpr,
 								  0,
 								  &node->paramIds);
 		node->setParam = list_copy(node->paramIds);
-		PlannerInitPlan = lappend(PlannerInitPlan, node);
+		root->init_plans = lappend(root->init_plans, node);
 
 		/*
 		 * The executable expression is returned to become part of the outer
@@ -395,7 +372,8 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
 		ListCell   *l;
 
 		/* Adjust the Params */
-		node->testexpr = convert_testexpr(testexpr,
+		node->testexpr = convert_testexpr(root,
+										  testexpr,
 										  0,
 										  &node->paramIds);
 
@@ -442,7 +420,8 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
 		args = NIL;
 		foreach(l, node->parParam)
 		{
-			PlannerParamItem *pitem = list_nth(PlannerParamList, lfirst_int(l));
+			PlannerParamItem *pitem = list_nth(root->glob->paramlist,
+											   lfirst_int(l));
 
 			/*
 			 * The Var or Aggref has already been adjusted to have the correct
@@ -477,13 +456,15 @@ make_subplan(SubLink *slink, Node *testexpr, bool isTopQual)
  * any we find are for our own level of SubLink.
  */
 static Node *
-convert_testexpr(Node *testexpr,
+convert_testexpr(PlannerInfo *root,
+				 Node *testexpr,
 				 int rtindex,
 				 List **righthandIds)
 {
 	Node	   *result;
 	convert_testexpr_context context;
 
+	context.root = root;
 	context.rtindex = rtindex;
 	context.righthandIds = NIL;
 	result = convert_testexpr_mutator(testexpr, &context);
@@ -536,7 +517,8 @@ convert_testexpr_mutator(Node *node,
 				/* Make the Param node representing the subplan's result */
 				Param	   *newparam;
 
-				newparam = generate_new_param(param->paramtype,
+				newparam = generate_new_param(context->root,
+											  param->paramtype,
 											  param->paramtypmod);
 				/* Record its ID */
 				context->righthandIds = lappend_int(context->righthandIds,
@@ -765,7 +747,8 @@ convert_IN_to_join(PlannerInfo *root, SubLink *sublink)
 	 * ininfo->sub_targetlist is filled with a list of Vars representing the
 	 * subselect outputs.
 	 */
-	result = convert_testexpr(sublink->testexpr,
+	result = convert_testexpr(root,
+							  sublink->testexpr,
 							  rtindex,
 							  &ininfo->sub_targetlist);
 
@@ -795,30 +778,30 @@ convert_IN_to_join(PlannerInfo *root, SubLink *sublink)
  * argument expressions, either in the parent or the child level.
  */
 Node *
-SS_replace_correlation_vars(Node *expr)
+SS_replace_correlation_vars(PlannerInfo *root, Node *expr)
 {
 	/* No setup needed for tree walk, so away we go */
-	return replace_correlation_vars_mutator(expr, NULL);
+	return replace_correlation_vars_mutator(expr, root);
 }
 
 static Node *
-replace_correlation_vars_mutator(Node *node, void *context)
+replace_correlation_vars_mutator(Node *node, PlannerInfo *root)
 {
 	if (node == NULL)
 		return NULL;
 	if (IsA(node, Var))
 	{
 		if (((Var *) node)->varlevelsup > 0)
-			return (Node *) replace_outer_var((Var *) node);
+			return (Node *) replace_outer_var(root, (Var *) node);
 	}
 	if (IsA(node, Aggref))
 	{
 		if (((Aggref *) node)->agglevelsup > 0)
-			return (Node *) replace_outer_agg((Aggref *) node);
+			return (Node *) replace_outer_agg(root, (Aggref *) node);
 	}
 	return expression_tree_mutator(node,
 								   replace_correlation_vars_mutator,
-								   context);
+								   (void *) root);
 }
 
 /*
@@ -829,16 +812,21 @@ replace_correlation_vars_mutator(Node *node, void *context)
  * not distinguish FALSE from UNKNOWN return values.
  */
 Node *
-SS_process_sublinks(Node *expr, bool isQual)
+SS_process_sublinks(PlannerInfo *root, Node *expr, bool isQual)
 {
-	/* The only context needed is the initial are-we-in-a-qual flag */
-	return process_sublinks_mutator(expr, &isQual);
+	process_sublinks_context context;
+
+	context.root = root;
+	context.isTopQual = isQual;
+	return process_sublinks_mutator(expr, &context);
 }
 
 static Node *
-process_sublinks_mutator(Node *node, bool *isTopQual)
+process_sublinks_mutator(Node *node, process_sublinks_context *context)
 {
-	bool		locTopQual;
+	process_sublinks_context locContext;
+
+	locContext.root = context->root;
 
 	if (node == NULL)
 		return NULL;
@@ -849,14 +837,18 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 
 		/*
 		 * First, recursively process the lefthand-side expressions, if any.
+		 * They're not top-level anymore.
 		 */
-		locTopQual = false;
-		testexpr = process_sublinks_mutator(sublink->testexpr, &locTopQual);
+		locContext.isTopQual = false;
+		testexpr = process_sublinks_mutator(sublink->testexpr, &locContext);
 
 		/*
 		 * Now build the SubPlan node and make the expr to return.
 		 */
-		return make_subplan(sublink, testexpr, *isTopQual);
+		return make_subplan(context->root,
+							sublink,
+							testexpr,
+							context->isTopQual);
 	}
 
 	/*
@@ -883,14 +875,13 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 		ListCell   *l;
 
 		/* Still at qual top-level */
-		locTopQual = *isTopQual;
+		locContext.isTopQual = context->isTopQual;
 
 		foreach(l, ((BoolExpr *) node)->args)
 		{
 			Node	   *newarg;
 
-			newarg = process_sublinks_mutator(lfirst(l),
-											  (void *) &locTopQual);
+			newarg = process_sublinks_mutator(lfirst(l), &locContext);
 			if (and_clause(newarg))
 				newargs = list_concat(newargs, ((BoolExpr *) newarg)->args);
 			else
@@ -900,7 +891,7 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 	}
 
 	/* otherwise not at qual top-level */
-	locTopQual = false;
+	locContext.isTopQual = false;
 
 	if (or_clause(node))
 	{
@@ -911,8 +902,7 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 		{
 			Node	   *newarg;
 
-			newarg = process_sublinks_mutator(lfirst(l),
-											  (void *) &locTopQual);
+			newarg = process_sublinks_mutator(lfirst(l), &locContext);
 			if (or_clause(newarg))
 				newargs = list_concat(newargs, ((BoolExpr *) newarg)->args);
 			else
@@ -923,7 +913,7 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 
 	return expression_tree_mutator(node,
 								   process_sublinks_mutator,
-								   (void *) &locTopQual);
+								   (void *) &locContext);
 }
 
 /*
@@ -934,7 +924,7 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
  * to the top plan node.
  */
 void
-SS_finalize_plan(Plan *plan, List *rtable)
+SS_finalize_plan(PlannerInfo *root, Plan *plan)
 {
 	Bitmapset  *outer_params,
 			   *valid_params,
@@ -951,17 +941,17 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	 */
 	outer_params = valid_params = NULL;
 	paramid = 0;
-	foreach(l, PlannerParamList)
+	foreach(l, root->glob->paramlist)
 	{
 		PlannerParamItem *pitem = (PlannerParamItem *) lfirst(l);
 
-		if (pitem->abslevel < PlannerQueryLevel)
+		if (pitem->abslevel < root->query_level)
 		{
 			/* valid outer-level parameter */
 			outer_params = bms_add_member(outer_params, paramid);
 			valid_params = bms_add_member(valid_params, paramid);
 		}
-		else if (pitem->abslevel == PlannerQueryLevel &&
+		else if (pitem->abslevel == root->query_level &&
 				 IsA(pitem->item, Param))
 		{
 			/* valid local parameter (i.e., a setParam of my child) */
@@ -974,7 +964,7 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	/*
 	 * Now recurse through plan tree.
 	 */
-	(void) finalize_plan(plan, rtable, outer_params, valid_params);
+	(void) finalize_plan(plan, root->parse->rtable, outer_params, valid_params);
 
 	bms_free(outer_params);
 	bms_free(valid_params);
@@ -991,8 +981,8 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	 * top node.  This is a conservative overestimate, since in fact each
 	 * initPlan might be executed later than plan startup, or even not at all.
 	 */
-	plan->initPlan = PlannerInitPlan;
-	PlannerInitPlan = NIL;		/* make sure they're not attached twice */
+	plan->initPlan = root->init_plans;
+	root->init_plans = NIL;		/* make sure they're not attached twice */
 
 	initExtParam = initSetParam = NULL;
 	initplan_cost = 0;
@@ -1287,25 +1277,27 @@ Param *
 SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 						   Oid resulttype, int32 resulttypmod)
 {
-	List	   *saved_initplan = PlannerInitPlan;
+	List	   *saved_init_plans;
 	SubPlan    *node;
 	Param	   *prm;
 
 	/*
 	 * Set up for a new level of subquery.	This is just to keep
-	 * SS_finalize_plan from becoming confused.
+	 * SS_finalize_plan from becoming confused; we don't bother with making
+	 * a whole new PlannerInfo struct.
 	 */
-	PlannerQueryLevel++;
-	PlannerInitPlan = NIL;
+	root->query_level++;
+	saved_init_plans = root->init_plans;
+	root->init_plans = NIL;
 
 	/*
 	 * Build extParam/allParam sets for plan nodes.
 	 */
-	SS_finalize_plan(plan, root->parse->rtable);
+	SS_finalize_plan(root, plan);
 
 	/* Return to outer subquery context */
-	PlannerQueryLevel--;
-	PlannerInitPlan = saved_initplan;
+	root->query_level--;
+	root->init_plans = saved_init_plans;
 
 	/*
 	 * Create a SubPlan node and add it to the outer list of InitPlans.
@@ -1313,11 +1305,12 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 	node = makeNode(SubPlan);
 	node->subLinkType = EXPR_SUBLINK;
 	node->plan = plan;
-	node->plan_id = PlannerPlanId++;	/* Assign unique ID to this SubPlan */
+	/* Assign quasi-unique ID to this SubPlan */
+	node->plan_id = root->glob->next_plan_id++;
 
 	node->rtable = root->parse->rtable;
 
-	PlannerInitPlan = lappend(PlannerInitPlan, node);
+	root->init_plans = lappend(root->init_plans, node);
 
 	/*
 	 * The node can't have any inputs (since it's an initplan), so the
@@ -1327,7 +1320,7 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 	/*
 	 * Make a Param that will be the subplan's output.
 	 */
-	prm = generate_new_param(resulttype, resulttypmod);
+	prm = generate_new_param(root, resulttype, resulttypmod);
 	node->setParam = list_make1_int(prm->paramid);
 
 	return prm;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.212 2007/01/20 20:45:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.213 2007/02/19 07:03:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,6 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
-
-
-ParamListInfo PlannerBoundParamList = NULL;		/* current boundParams */
 
 
 /* Expression kind codes for preprocess_expression */
@@ -86,35 +83,21 @@ Plan *
 planner(Query *parse, bool isCursor, int cursorOptions,
 		ParamListInfo boundParams)
 {
+	PlannerGlobal *glob;
 	double		tuple_fraction;
 	Plan	   *result_plan;
-	Index		save_PlannerQueryLevel;
-	List	   *save_PlannerParamList;
-	ParamListInfo save_PlannerBoundParamList;
 
 	/*
-	 * The planner can be called recursively (an example is when
-	 * eval_const_expressions tries to pre-evaluate an SQL function). So,
-	 * these global state variables must be saved and restored.
-	 *
-	 * Query level and the param list cannot be moved into the per-query
-	 * PlannerInfo structure since their whole purpose is communication across
-	 * multiple sub-queries. Also, boundParams is explicitly info from outside
-	 * the query, and so is likewise better handled as a global variable.
-	 *
-	 * Note we do NOT save and restore PlannerPlanId: it exists to assign
-	 * unique IDs to SubPlan nodes, and we want those IDs to be unique for the
-	 * life of a backend.  Also, PlannerInitPlan is saved/restored in
-	 * subquery_planner, not here.
+	 * Set up global state for this planner invocation.  This data is needed
+	 * across all levels of sub-Query that might exist in the given command,
+	 * so we keep it in a separate struct that's linked to by each per-Query
+	 * PlannerInfo.
 	 */
-	save_PlannerQueryLevel = PlannerQueryLevel;
-	save_PlannerParamList = PlannerParamList;
-	save_PlannerBoundParamList = PlannerBoundParamList;
+	glob = makeNode(PlannerGlobal);
 
-	/* Initialize state for handling outer-level references and params */
-	PlannerQueryLevel = 0;		/* will be 1 in top-level subquery_planner */
-	PlannerParamList = NIL;
-	PlannerBoundParamList = boundParams;
+	glob->boundParams = boundParams;
+	glob->paramlist = NIL;
+	glob->next_plan_id = 0;
 
 	/* Determine what fraction of the plan is likely to be scanned */
 	if (isCursor)
@@ -134,10 +117,7 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 	}
 
 	/* primary planning entry point (may recurse for subqueries) */
-	result_plan = subquery_planner(parse, tuple_fraction, NULL);
-
-	/* check we popped out the right number of levels */
-	Assert(PlannerQueryLevel == 0);
+	result_plan = subquery_planner(glob, parse, 1, tuple_fraction, NULL);
 
 	/*
 	 * If creating a plan for a scrollable cursor, make sure it can run
@@ -153,12 +133,7 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 	result_plan = set_plan_references(result_plan, parse->rtable);
 
 	/* executor wants to know total number of Params used overall */
-	result_plan->nParamExec = list_length(PlannerParamList);
-
-	/* restore state for outer planner, if any */
-	PlannerQueryLevel = save_PlannerQueryLevel;
-	PlannerParamList = save_PlannerParamList;
-	PlannerBoundParamList = save_PlannerBoundParamList;
+	result_plan->nParamExec = list_length(glob->paramlist);
 
 	return result_plan;
 }
@@ -169,7 +144,9 @@ planner(Query *parse, bool isCursor, int cursorOptions,
  *	  Invokes the planner on a subquery.  We recurse to here for each
  *	  sub-SELECT found in the query tree.
  *
+ * glob is the global state for the current planner run.
  * parse is the querytree produced by the parser & rewriter.
+ * level is the current recursion depth (1 at the top-level Query).
  * tuple_fraction is the fraction of tuples we expect will be retrieved.
  * tuple_fraction is interpreted as explained for grouping_planner, below.
  *
@@ -189,24 +166,23 @@ planner(Query *parse, bool isCursor, int cursorOptions,
  *--------------------
  */
 Plan *
-subquery_planner(Query *parse, double tuple_fraction,
+subquery_planner(PlannerGlobal *glob, Query *parse,
+				 Index level, double tuple_fraction,
 				 List **subquery_pathkeys)
 {
-	List	   *saved_initplan = PlannerInitPlan;
-	int			saved_planid = PlannerPlanId;
+	int			saved_plan_id = glob->next_plan_id;
 	PlannerInfo *root;
 	Plan	   *plan;
 	List	   *newHaving;
 	ListCell   *l;
 
-	/* Set up for a new level of subquery */
-	PlannerQueryLevel++;
-	PlannerInitPlan = NIL;
-
 	/* Create a PlannerInfo data structure for this subquery */
 	root = makeNode(PlannerInfo);
 	root->parse = parse;
+	root->glob = glob;
+	root->query_level = level;
 	root->planner_cxt = CurrentMemoryContext;
+	root->init_plans = NIL;
 	root->eq_classes = NIL;
 	root->in_info_list = NIL;
 	root->append_rel_list = NIL;
@@ -396,17 +372,12 @@ subquery_planner(Query *parse, double tuple_fraction,
 	 * initPlan list and extParam/allParam sets for plan nodes, and attach the
 	 * initPlans to the top plan node.
 	 */
-	if (PlannerPlanId != saved_planid || PlannerQueryLevel > 1)
-		SS_finalize_plan(plan, parse->rtable);
+	if (root->glob->next_plan_id != saved_plan_id || root->query_level > 1)
+		SS_finalize_plan(root, plan);
 
 	/* Return sort ordering info if caller wants it */
 	if (subquery_pathkeys)
 		*subquery_pathkeys = root->query_pathkeys;
-
-	/* Return to outer subquery context */
-	PlannerQueryLevel--;
-	PlannerInitPlan = saved_initplan;
-	/* we do NOT restore PlannerPlanId; that's not an oversight! */
 
 	return plan;
 }
@@ -460,7 +431,7 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	if (kind != EXPRKIND_VALUES &&
 		(root->parse->jointree->fromlist != NIL ||
 		 kind == EXPRKIND_QUAL ||
-		 PlannerQueryLevel > 1))
+		 root->query_level > 1))
 		expr = eval_const_expressions(expr);
 
 	/*
@@ -478,7 +449,7 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 
 	/* Expand SubLinks to SubPlans */
 	if (root->parse->hasSubLinks)
-		expr = SS_process_sublinks(expr, (kind == EXPRKIND_QUAL));
+		expr = SS_process_sublinks(root, expr, (kind == EXPRKIND_QUAL));
 
 	/*
 	 * XXX do not insert anything here unless you have grokked the comments in
@@ -486,8 +457,8 @@ preprocess_expression(PlannerInfo *root, Node *expr, int kind)
 	 */
 
 	/* Replace uplevel vars with Param nodes (this IS possible in VALUES) */
-	if (PlannerQueryLevel > 1)
-		expr = SS_replace_correlation_vars(expr);
+	if (root->query_level > 1)
+		expr = SS_replace_correlation_vars(root, expr);
 
 	/*
 	 * If it's a qual or havingQual, convert it to implicit-AND format. (We
@@ -590,6 +561,7 @@ inheritance_planner(PlannerInfo *root)
 		subroot.in_info_list = (List *)
 			adjust_appendrel_attrs((Node *) root->in_info_list,
 								   appinfo);
+		subroot.init_plans = NIL;
 		/* There shouldn't be any OJ info to translate, as yet */
 		Assert(subroot.oj_info_list == NIL);
 
@@ -611,6 +583,9 @@ inheritance_planner(PlannerInfo *root)
 		}
 
 		subplans = lappend(subplans, subplan);
+
+		/* Make sure any initplans from this rel get into the outer list */
+		root->init_plans = list_concat(root->init_plans, subroot.init_plans);
 
 		/* Build target-relations list for the executor */
 		resultRelations = lappend_int(resultRelations, appinfo->child_relid);
@@ -1201,7 +1176,7 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 	 */
 	if (parse->limitCount)
 	{
-		est = estimate_expression_value(parse->limitCount);
+		est = estimate_expression_value(root, parse->limitCount);
 		if (est && IsA(est, Const))
 		{
 			if (((Const *) est)->constisnull)
@@ -1224,7 +1199,7 @@ preprocess_limit(PlannerInfo *root, double tuple_fraction,
 
 	if (parse->limitOffset)
 	{
-		est = estimate_expression_value(parse->limitOffset);
+		est = estimate_expression_value(root, parse->limitOffset);
 		if (est && IsA(est, Const))
 		{
 			if (((Const *) est)->constisnull)

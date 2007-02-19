@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.225 2007/01/31 16:54:51 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.226 2007/02/19 07:03:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3411,7 +3411,7 @@ get_restriction_variable(PlannerInfo *root, List *args, int varRelid,
 	if (vardata->rel && rdata.rel == NULL)
 	{
 		*varonleft = true;
-		*other = estimate_expression_value(rdata.var);
+		*other = estimate_expression_value(root, rdata.var);
 		/* Assume we need no ReleaseVariableStats(rdata) here */
 		return true;
 	}
@@ -3419,7 +3419,7 @@ get_restriction_variable(PlannerInfo *root, List *args, int varRelid,
 	if (vardata->rel == NULL && rdata.rel)
 	{
 		*varonleft = false;
-		*other = estimate_expression_value(vardata->var);
+		*other = estimate_expression_value(root, vardata->var);
 		/* Assume we need no ReleaseVariableStats(*vardata) here */
 		*vardata = rdata;
 		return true;

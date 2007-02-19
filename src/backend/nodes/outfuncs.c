@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.298 2007/02/19 02:23:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.299 2007/02/19 07:03:27 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1226,13 +1226,26 @@ _outHashPath(StringInfo str, HashPath *node)
 }
 
 static void
+_outPlannerGlobal(StringInfo str, PlannerGlobal *node)
+{
+	WRITE_NODE_TYPE("PLANNERGLOBAL");
+
+	/* NB: this isn't a complete set of fields */
+	WRITE_NODE_FIELD(paramlist);
+	WRITE_INT_FIELD(next_plan_id);
+}
+
+static void
 _outPlannerInfo(StringInfo str, PlannerInfo *node)
 {
 	WRITE_NODE_TYPE("PLANNERINFO");
 
 	/* NB: this isn't a complete set of fields */
 	WRITE_NODE_FIELD(parse);
+	WRITE_NODE_FIELD(glob);
+	WRITE_UINT_FIELD(query_level);
 	WRITE_NODE_FIELD(join_rel_list);
+	WRITE_NODE_FIELD(init_plans);
 	WRITE_NODE_FIELD(eq_classes);
 	WRITE_NODE_FIELD(canon_pathkeys);
 	WRITE_NODE_FIELD(left_join_clauses);
@@ -1414,6 +1427,15 @@ _outAppendRelInfo(StringInfo str, AppendRelInfo *node)
 	WRITE_NODE_FIELD(col_mappings);
 	WRITE_NODE_FIELD(translated_vars);
 	WRITE_OID_FIELD(parent_reloid);
+}
+
+static void
+_outPlannerParamItem(StringInfo str, PlannerParamItem *node)
+{
+	WRITE_NODE_TYPE("PLANNERPARAMITEM");
+
+	WRITE_NODE_FIELD(item);
+	WRITE_UINT_FIELD(abslevel);
 }
 
 /*****************************************************************************
@@ -2195,6 +2217,9 @@ _outNode(StringInfo str, void *obj)
 			case T_HashPath:
 				_outHashPath(str, obj);
 				break;
+			case T_PlannerGlobal:
+				_outPlannerGlobal(str, obj);
+				break;
 			case T_PlannerInfo:
 				_outPlannerInfo(str, obj);
 				break;
@@ -2227,6 +2252,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_AppendRelInfo:
 				_outAppendRelInfo(str, obj);
+				break;
+			case T_PlannerParamItem:
+				_outPlannerParamItem(str, obj);
 				break;
 
 			case T_CreateStmt:

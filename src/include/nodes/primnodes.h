@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.124 2007/02/03 14:06:56 petere Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.125 2007/02/19 07:03:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -442,10 +442,9 @@ typedef struct SubPlan
 	List	   *paramIds;		/* IDs of Params embedded in the above */
 	/* The subselect, transformed to a Plan: */
 	struct Plan *plan;			/* subselect plan itself */
-	int			plan_id;		/* dummy thing because of we haven't equal
-								 * funcs for plan nodes... actually, we could
-								 * put *plan itself somewhere else (TopPlan
-								 * node ?)... */
+	int			plan_id;		/* kluge because we haven't equal-funcs for
+								 * plan nodes... we compare this instead of
+								 * subselect plan */
 	List	   *rtable;			/* range table for subselect */
 	/* Information about execution strategy: */
 	bool		useHashTable;	/* TRUE to store subselect output in a hash

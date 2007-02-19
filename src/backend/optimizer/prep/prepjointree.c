@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.46 2007/01/20 20:45:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.47 2007/02/19 07:03:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,10 @@ pull_up_simple_subquery(PlannerInfo *root, Node *jtnode, RangeTblEntry *rte,
 	 */
 	subroot = makeNode(PlannerInfo);
 	subroot->parse = subquery;
+	subroot->glob = root->glob;
+	subroot->query_level = root->query_level;
 	subroot->planner_cxt = CurrentMemoryContext;
+	subroot->init_plans = NIL;
 	subroot->in_info_list = NIL;
 	subroot->append_rel_list = NIL;
 

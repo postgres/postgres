@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.85 2007/01/05 22:19:32 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.86 2007/02/19 07:03:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ preprocess_targetlist(PlannerInfo *root, List *tlist)
 		/*
 		 * Currently the executor only supports FOR UPDATE/SHARE at top level
 		 */
-		if (PlannerQueryLevel > 1)
+		if (root->query_level > 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			errmsg("SELECT FOR UPDATE/SHARE is not allowed in subqueries")));

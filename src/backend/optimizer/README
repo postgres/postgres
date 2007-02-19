@@ -317,7 +317,10 @@ planner()
 Optimizer Data Structures
 -------------------------
 
-PlannerInfo     - global information for planning a particular Query
+PlannerGlobal   - global information for a single planner invocation
+
+PlannerInfo     - information for planning a particular Query (we make
+                  a separate PlannerInfo node for each sub-Query)
 
 RelOptInfo      - a relation or joined relations
 

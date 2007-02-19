@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.135 2007/02/16 20:57:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.136 2007/02/19 07:03:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "access/sdir.h"
 #include "nodes/bitmapset.h"
+#include "nodes/params.h"
 #include "nodes/parsenodes.h"
 #include "storage/block.h"
 
@@ -47,6 +48,27 @@ typedef struct QualCost
 
 
 /*----------
+ * PlannerGlobal
+ *		Global information for planning/optimization
+ *
+ * PlannerGlobal holds state for an entire planner invocation; this state
+ * is shared across all levels of sub-Queries that exist in the command being
+ * planned.
+ *----------
+ */
+typedef struct PlannerGlobal
+{
+	NodeTag		type;
+
+	ParamListInfo boundParams;	/* Param values provided to planner() */
+
+	List	   *paramlist;		/* to keep track of cross-level Params */
+
+	int			next_plan_id;	/* hack for distinguishing SubPlans */
+} PlannerGlobal;
+
+
+/*----------
  * PlannerInfo
  *		Per-query information for planning/optimization
  *
@@ -61,6 +83,10 @@ typedef struct PlannerInfo
 	NodeTag		type;
 
 	Query	   *parse;			/* the Query being planned */
+
+	PlannerGlobal *glob;		/* global info for current planner run */
+
+	Index		query_level;	/* 1 at the outermost Query */
 
 	/*
 	 * simple_rel_array holds pointers to "base rels" and "other rels" (see
@@ -83,6 +109,8 @@ typedef struct PlannerInfo
 	 */
 	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
 	struct HTAB *join_rel_hash; /* optional hashtable for join relations */
+
+	List	   *init_plans;				/* init subplans for query */
 
 	List	   *eq_classes;				/* list of active EquivalenceClasses */
 
@@ -1108,5 +1136,40 @@ typedef struct AppendRelInfo
 	 */
 	Oid			parent_reloid;	/* OID of parent relation */
 } AppendRelInfo;
+
+/*
+ * glob->paramlist keeps track of the PARAM_EXEC slots that we have decided
+ * we need for the query.  At runtime these slots are used to pass values
+ * either down into subqueries (for outer references in subqueries) or up out
+ * of subqueries (for the results of a subplan).  The n'th entry in the list
+ * (n counts from 0) corresponds to Param->paramid = n.
+ *
+ * Each paramlist item shows the absolute query level it is associated with,
+ * where the outermost query is level 1 and nested subqueries have higher
+ * numbers.  The item the parameter slot represents can be one of three kinds:
+ *
+ * A Var: the slot represents a variable of that level that must be passed
+ * down because subqueries have outer references to it.  The varlevelsup
+ * value in the Var will always be zero.
+ *
+ * An Aggref (with an expression tree representing its argument): the slot
+ * represents an aggregate expression that is an outer reference for some
+ * subquery.  The Aggref itself has agglevelsup = 0, and its argument tree
+ * is adjusted to match in level.
+ *
+ * A Param: the slot holds the result of a subplan (it is a setParam item
+ * for that subplan).  The absolute level shown for such items corresponds
+ * to the parent query of the subplan.
+ *
+ * Note: we detect duplicate Var parameters and coalesce them into one slot,
+ * but we do not do this for Aggref or Param slots.
+ */
+typedef struct PlannerParamItem
+{
+	NodeTag		type;
+
+	Node	   *item;			/* the Var, Aggref, or Param */
+	Index		abslevel;		/* its absolute query level */
+} PlannerParamItem;
 
 #endif   /* RELATION_H */

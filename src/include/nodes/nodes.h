@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.194 2007/02/03 14:06:55 petere Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.195 2007/02/19 07:03:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,6 +175,7 @@ typedef enum NodeTag
 	 * TAGS FOR PLANNER NODES (relation.h)
 	 */
 	T_PlannerInfo = 500,
+	T_PlannerGlobal,
 	T_RelOptInfo,
 	T_IndexOptInfo,
 	T_Path,
@@ -198,6 +199,7 @@ typedef enum NodeTag
 	T_OuterJoinInfo,
 	T_InClauseInfo,
 	T_AppendRelInfo,
+	T_PlannerParamItem,
 
 	/*
 	 * TAGS FOR MEMORY NODES (memnodes.h)
