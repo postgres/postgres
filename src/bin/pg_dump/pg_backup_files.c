@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.29 2006/07/14 14:52:26 momjian Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.29.2.1 2007/02/19 15:05:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ static void _EndBlobs(ArchiveHandle *AH, TocEntry *te);
 typedef struct
 {
 	int			hasSeek;
-	off_t		filePos;
+	pgoff_t		filePos;
 	FILE	   *blobToc;
 } lclContext;
 
