@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Feb 19 12:58:25 EST 2007
+Last updated:		Mon Feb 19 15:06:50 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -543,6 +543,11 @@ SQL Commands
 * Implement SQL:2003 window functions
 * Improve failure message when DROP DATABASE is used on a database that
   has prepared transactions
+* Allow INSERT/UPDATE ... RETURNING inside a SELECT 'FROM' clause
+
+  http://archives.postgresql.org/pgsql-general/2006-09/msg00803.php
+  http://archives.postgresql.org/pgsql-hackers/2006-10/msg00693.php
+
 
 
 * CREATE
