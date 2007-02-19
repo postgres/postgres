@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.362 2007/02/19 17:41:38 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.363 2007/02/19 18:20:06 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -4617,11 +4617,11 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>D</literal></entry>
-        <entry>day of week (1-7; Sunday is 1)</entry>
+        <entry>day of the week, Sunday(<literal>1</>) to Saturday(<literal>7</>)</entry>
        </row>
        <row>
         <entry><literal>ID</literal></entry>
-        <entry>ISO day of week (1-7; Monday is 1)</entry>
+        <entry>ISO day of the week, Monday(<literal>1</>) to Sunday(<literal>7</>)</entry>
        </row>
        <row>
         <entry><literal>W</literal></entry>
@@ -4844,9 +4844,11 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
      </listitem>
 
      <listitem>
-      <para><function>to_char</function>'s day of the week numbering
-        (see the 'D' formatting pattern) is different from that of the 
-        <function>extract</function> function.
+      <para>
+        <function>to_char(..., 'ID')</function>'s day of the week numbering
+        matches the <function>extract('isodow', ...)</function> function.
+        <function>to_char(..., 'D')</function>'s does not match
+        <function>extract('dow', ...)</function>'s day numbering.
       </para>
      </listitem>
 
@@ -5741,8 +5743,9 @@ SELECT EXTRACT(DOW FROM TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>5</computeroutput>
 </screen>
        <para>
-        Note that <function>extract</function>'s day of the week numbering is
-        different from that of the <function>to_char</function> function.
+        Note that <function>extract</function>'s day of the week numbering
+        is different from that of the <function>to_char(...,
+        'D')</function> function.
        </para>
 
       </listitem>
