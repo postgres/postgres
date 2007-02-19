@@ -145,7 +145,7 @@ sub GenerateFiles {
 		print H "/* fmgroids.h generated for Visual C++ */\n#ifndef FMGROIDS_H\n#define FMGROIDS_H\n\n";
 		open(T,">src\\backend\\utils\\fmgrtab.c") || confess "Could not open fmgrtab.c";
 		print T "/* fmgrtab.c generated for Visual C++ */\n#include \"postgres.h\"\n#include \"utils/fmgrtab.h\"\n\n";
-		foreach my $s (sort {$a->{oid} <=> $b->{oid}} @fmgr) {
+		foreach my $s (sort {intval($a->{oid}) <=> intval($b->{oid})} @fmgr) {
 			next if $seenit{$s->{prosrc}};
 			$seenit{$s->{prosrc}} = 1;
 			print H "#define F_" . uc $s->{prosrc} . " $s->{oid}\n"; 
@@ -157,8 +157,9 @@ sub GenerateFiles {
 		my %bmap;
 	    $bmap{'t'} = 'true';
 	    $bmap{'f'} = 'false';
-		foreach my $s (sort {$a->{oid} <=> $b->{oid}} @fmgr) {
-			print T "  { $s->{oid}, \"$s->{prosrc}\", $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, $s->{prosrc} },\n";
+		foreach my $s (sort {intval($a->{oid}) <=> intval($b->{oid})} @fmgr) {
+         my $o = intval($s->{oid});
+			print T "  { $o, \"$s->{prosrc}\", $s->{nargs}, $bmap{$s->{strict}}, $bmap{$s->{retset}}, $s->{prosrc} },\n";
 		}
 
 		
@@ -229,6 +230,14 @@ EOF
  		   last;
         }
   	}
+}
+
+sub intval {
+   my $v = shift;
+   if ($v =~ /^\d+$/) {
+      return $v;
+   }
+	return 0;
 }
 
 sub AddProject {

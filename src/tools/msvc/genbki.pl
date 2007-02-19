@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/tools/msvc/genbki.pl,v 1.3 2007/02/06 09:16:08 petere Exp $
+#    $PostgreSQL: pgsql/src/tools/msvc/genbki.pl,v 1.4 2007/02/19 14:05:42 mha Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -80,6 +80,9 @@ foreach my $line (split /\n/, $indata) {
 	   if ($#fields >=4 && $fields[0] eq "insert" && $fields[1] eq "OID" && $fields[2] eq "=") {
 	       $oid = $fields[3];
 	   }
+	   else {
+          $oid = 0;
+      }
 	   $data =~ s/\s{2,}/ /g;
 	   $bki .= $data . "\n";
 	}
