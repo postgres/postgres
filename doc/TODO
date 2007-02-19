@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Feb 19 16:07:17 EST 2007
+Last updated:		Mon Feb 19 16:08:43 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1389,7 +1389,7 @@ Miscellaneous Performance
 * Consider increasing NUM_CLOG_BUFFERS
 * Consider having the background writer update the transaction status
   hint bits before writing out the page
-* Consider allowing configuration of TOAST thresholds
+* Allow user configuration of TOAST thresholds
 
   http://archives.postgresql.org/pgsql-hackers/2007-02/msg00213.php
 
