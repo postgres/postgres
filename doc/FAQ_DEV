@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Jan 4 16:00:00 EST 2007
+   Last updated: Mon Feb 19 18:44:29 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -77,10 +77,13 @@ General Questions
    Some developers use compilers from other software vendors with mixed
    results.
    
-   Developers who are regularly rebuilding the source often pass the
+   Developers who regularly rebuild the source often pass the
    --enable-depend flag to configure. The result is that when you make a
    modification to a C header file, all files depend upon that file are
    also rebuilt.
+   
+   src/Makefile.custom can be used to set environment variables, like
+   CUSTOM_COPT, that are used for every compile.
    
   1.3) What areas need work?
   
