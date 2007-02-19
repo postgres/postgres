@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.98 2007/02/08 18:37:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.99 2007/02/19 03:18:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1728,9 +1728,7 @@ read_sql_construct(int until,
 		{
 			parenlevel--;
 			if (parenlevel < 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("mismatched parentheses")));
+				yyerror("mismatched parentheses");
 		}
 		/*
 		 * End of function definition is an error, and we don't expect to
@@ -1739,11 +1737,9 @@ read_sql_construct(int until,
 		 */
 		if (tok == 0 || tok == ';')
 		{
-			plpgsql_error_lineno = lno;
 			if (parenlevel != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("mismatched parentheses")));
+				yyerror("mismatched parentheses");
+			plpgsql_error_lineno = lno;
 			if (isexpression)
 				ereport(ERROR,
 						(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1811,6 +1807,7 @@ read_datatype(int tok)
 {
 	int					lno;
 	PLpgSQL_dstring		ds;
+	char			   *type_name;
 	PLpgSQL_type		*result;
 	bool				needspace = false;
 	int					parenlevel = 0;
@@ -1833,14 +1830,10 @@ read_datatype(int tok)
 	{
 		if (tok == 0)
 		{
-			plpgsql_error_lineno = lno;
 			if (parenlevel != 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("mismatched parentheses")));
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("incomplete datatype declaration")));
+				yyerror("mismatched parentheses");
+			else
+				yyerror("incomplete datatype declaration");
 		}
 		/* Possible followers for datatype in a declaration */
 		if (tok == K_NOT || tok == K_ASSIGN || tok == K_DEFAULT)
@@ -1862,9 +1855,14 @@ read_datatype(int tok)
 
 	plpgsql_push_back_token(tok);
 
+	type_name = plpgsql_dstring_get(&ds);
+
+	if (type_name[0] == '\0')
+		yyerror("missing datatype declaration");
+
 	plpgsql_error_lineno = lno;	/* in case of error in parse_datatype */
 
-	result = plpgsql_parse_datatype(plpgsql_dstring_get(&ds));
+	result = plpgsql_parse_datatype(type_name);
 
 	plpgsql_dstring_free(&ds);
 
@@ -1895,21 +1893,11 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 		if (tok == ';')
 			break;
 		if (tok == 0)
-		{
-			plpgsql_error_lineno = plpgsql_scanner_lineno();
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("unexpected end of function definition")));
-		}
+			yyerror("unexpected end of function definition");
 		if (tok == K_INTO)
 		{
 			if (have_into)
-			{
-				plpgsql_error_lineno = plpgsql_scanner_lineno();
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("INTO specified more than once")));
-			}
+				yyerror("INTO specified more than once");
 			have_into = true;
 			read_into_target(&rec, &row, &have_strict);
 			continue;
