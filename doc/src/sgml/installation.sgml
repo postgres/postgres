@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.283 2007/02/17 01:26:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.284 2007/02/19 18:57:18 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -477,6 +477,13 @@ su - postgres
 <programlisting>
 <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
 </programlisting>
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Restore your previous <filename>pg_hba.conf</> and any
+     <filename>postgresql.conf</> modifications.
     </para>
    </step>
 
@@ -1619,11 +1626,20 @@ postgres$ <userinput>/usr/local/pgsql/bin/initdb -D /usr/local/pgsql/data</>
     </para>
    </step>
 
+   <step
+    <para>
+     At this point, if you did not use the <command>initdb</> <literal>-A</>
+     option, you might want to modify <filename>pg_hba.conf</> to control
+     local access to the server before you start it.  The default is to 
+     trust all local users.
+    </para>
+   </step>
+
    <step>
     <para>
-     The previous step should have told you how to start up the
-     database server. Do so now. The command should look something
-     like:
+     The previous <command>initdb</> step should have told you how to
+     start up the database server. Do so now. The command should look
+     something like:
 <programlisting>
 /usr/local/pgsql/bin/postgres -D /usr/local/pgsql/data
 </programlisting>
