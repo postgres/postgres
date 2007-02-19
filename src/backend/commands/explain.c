@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.154 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.155 2007/02/19 02:23:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -640,6 +640,7 @@ explain_outNode(StringInfo str,
 			{
 				RangeTblEntry *rte = rt_fetch(((Scan *) plan)->scanrelid,
 											  es->rtable);
+				Node	   *funcexpr;
 				char	   *proname;
 
 				/* Assert it's on a RangeFunction */
@@ -651,10 +652,10 @@ explain_outNode(StringInfo str,
 				 * happen if the optimizer simplified away the function call,
 				 * for example).
 				 */
-				if (rte->funcexpr && IsA(rte->funcexpr, FuncExpr))
+				funcexpr = ((FunctionScan *) plan)->funcexpr;
+				if (funcexpr && IsA(funcexpr, FuncExpr))
 				{
-					FuncExpr   *funcexpr = (FuncExpr *) rte->funcexpr;
-					Oid			funcid = funcexpr->funcid;
+					Oid			funcid = ((FuncExpr *) funcexpr)->funcid;
 
 					/* We only show the func name, not schema name */
 					proname = get_func_name(funcid);

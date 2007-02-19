@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.129 2007/02/16 03:49:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.130 2007/02/19 02:23:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,28 +171,15 @@ set_plan_references(Plan *plan, List *rtable)
 			/* Needs special treatment, see comments below */
 			return set_subqueryscan_references((SubqueryScan *) plan, rtable);
 		case T_FunctionScan:
-			{
-				RangeTblEntry *rte;
-
-				fix_expr_references(plan, (Node *) plan->targetlist);
-				fix_expr_references(plan, (Node *) plan->qual);
-				rte = rt_fetch(((FunctionScan *) plan)->scan.scanrelid,
-							   rtable);
-				Assert(rte->rtekind == RTE_FUNCTION);
-				fix_expr_references(plan, rte->funcexpr);
-			}
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
+			fix_expr_references(plan, ((FunctionScan *) plan)->funcexpr);
 			break;
 		case T_ValuesScan:
-			{
-				RangeTblEntry *rte;
-
-				fix_expr_references(plan, (Node *) plan->targetlist);
-				fix_expr_references(plan, (Node *) plan->qual);
-				rte = rt_fetch(((ValuesScan *) plan)->scan.scanrelid,
-							   rtable);
-				Assert(rte->rtekind == RTE_VALUES);
-				fix_expr_references(plan, (Node *) rte->values_lists);
-			}
+			fix_expr_references(plan, (Node *) plan->targetlist);
+			fix_expr_references(plan, (Node *) plan->qual);
+			fix_expr_references(plan,
+								(Node *) ((ValuesScan *) plan)->values_lists);
 			break;
 		case T_NestLoop:
 			set_join_references((Join *) plan);
@@ -369,10 +356,6 @@ set_subqueryscan_references(SubqueryScan *plan, List *rtable)
 				   *lc;
 
 		sub_rtable = copyObject(rte->subquery->rtable);
-		range_table_walker(sub_rtable,
-						   adjust_expr_varnos_walker,
-						   (void *) &rtoffset,
-						   QTW_IGNORE_RT_SUBQUERIES);
 		rtable = list_concat(rtable, sub_rtable);
 
 		/*
@@ -544,13 +527,15 @@ adjust_plan_varnos(Plan *plan, int rtoffset)
 			((FunctionScan *) plan)->scan.scanrelid += rtoffset;
 			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
 			adjust_expr_varnos((Node *) plan->qual, rtoffset);
-			/* rte was already fixed by set_subqueryscan_references */
+			adjust_expr_varnos(((FunctionScan *) plan)->funcexpr,
+							   rtoffset);
 			break;
 		case T_ValuesScan:
 			((ValuesScan *) plan)->scan.scanrelid += rtoffset;
 			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);
 			adjust_expr_varnos((Node *) plan->qual, rtoffset);
-			/* rte was already fixed by set_subqueryscan_references */
+			adjust_expr_varnos((Node *) ((ValuesScan *) plan)->values_lists,
+							   rtoffset);
 			break;
 		case T_NestLoop:
 			adjust_expr_varnos((Node *) plan->targetlist, rtoffset);

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.91 2007/02/15 03:07:13 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execAmi.c,v 1.92 2007/02/19 02:23:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -444,11 +444,14 @@ ExecMayReturnRawTuples(PlanState *node)
 		case T_IndexScanState:
 		case T_BitmapHeapScanState:
 		case T_TidScanState:
-		case T_SubqueryScanState:
-		case T_FunctionScanState:
-		case T_ValuesScanState:
 			if (node->ps_ProjInfo == NULL)
 				return true;
+			break;
+
+		case T_SubqueryScanState:
+			/* If not projecting, look at input plan */
+			if (node->ps_ProjInfo == NULL)
+				return ExecMayReturnRawTuples(((SubqueryScanState *) node)->subplan);
 			break;
 
 			/* Non-projecting nodes */

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.224 2007/01/30 01:33:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.225 2007/02/19 02:23:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,9 +96,10 @@ static BitmapHeapScan *make_bitmap_heapscan(List *qptlist,
 static TidScan *make_tidscan(List *qptlist, List *qpqual, Index scanrelid,
 			 List *tidquals);
 static FunctionScan *make_functionscan(List *qptlist, List *qpqual,
-				  Index scanrelid);
+				  Index scanrelid, Node *funcexpr, List *funccolnames,
+				  List *funccoltypes, List *funccoltypmods);
 static ValuesScan *make_valuesscan(List *qptlist, List *qpqual,
-				Index scanrelid);
+				Index scanrelid, List *values_lists);
 static BitmapAnd *make_bitmap_and(List *bitmapplans);
 static BitmapOr *make_bitmap_or(List *bitmapplans);
 static NestLoop *make_nestloop(List *tlist,
@@ -1350,10 +1351,12 @@ create_functionscan_plan(PlannerInfo *root, Path *best_path,
 {
 	FunctionScan *scan_plan;
 	Index		scan_relid = best_path->parent->relid;
+	RangeTblEntry *rte;
 
 	/* it should be a function base rel... */
 	Assert(scan_relid > 0);
-	Assert(best_path->parent->rtekind == RTE_FUNCTION);
+	rte = rt_fetch(scan_relid, root->parse->rtable);
+	Assert(rte->rtekind == RTE_FUNCTION);
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -1361,7 +1364,11 @@ create_functionscan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
-	scan_plan = make_functionscan(tlist, scan_clauses, scan_relid);
+	scan_plan = make_functionscan(tlist, scan_clauses, scan_relid,
+								  rte->funcexpr,
+								  rte->eref->colnames,
+								  rte->funccoltypes,
+								  rte->funccoltypmods);
 
 	copy_path_costsize(&scan_plan->scan.plan, best_path);
 
@@ -1379,10 +1386,12 @@ create_valuesscan_plan(PlannerInfo *root, Path *best_path,
 {
 	ValuesScan *scan_plan;
 	Index		scan_relid = best_path->parent->relid;
+	RangeTblEntry *rte;
 
 	/* it should be a values base rel... */
 	Assert(scan_relid > 0);
-	Assert(best_path->parent->rtekind == RTE_VALUES);
+	rte = rt_fetch(scan_relid, root->parse->rtable);
+	Assert(rte->rtekind == RTE_VALUES);
 
 	/* Sort clauses into best execution order */
 	scan_clauses = order_qual_clauses(root, scan_clauses);
@@ -1390,7 +1399,8 @@ create_valuesscan_plan(PlannerInfo *root, Path *best_path,
 	/* Reduce RestrictInfo list to bare expressions; ignore pseudoconstants */
 	scan_clauses = extract_actual_clauses(scan_clauses, false);
 
-	scan_plan = make_valuesscan(tlist, scan_clauses, scan_relid);
+	scan_plan = make_valuesscan(tlist, scan_clauses, scan_relid,
+								rte->values_lists);
 
 	copy_path_costsize(&scan_plan->scan.plan, best_path);
 
@@ -2342,7 +2352,11 @@ make_subqueryscan(List *qptlist,
 static FunctionScan *
 make_functionscan(List *qptlist,
 				  List *qpqual,
-				  Index scanrelid)
+				  Index scanrelid,
+				  Node *funcexpr,
+				  List *funccolnames,
+				  List *funccoltypes,
+				  List *funccoltypmods)
 {
 	FunctionScan *node = makeNode(FunctionScan);
 	Plan	   *plan = &node->scan.plan;
@@ -2353,6 +2367,10 @@ make_functionscan(List *qptlist,
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
+	node->funcexpr = funcexpr;
+	node->funccolnames = funccolnames;
+	node->funccoltypes = funccoltypes;
+	node->funccoltypmods = funccoltypmods;
 
 	return node;
 }
@@ -2360,7 +2378,8 @@ make_functionscan(List *qptlist,
 static ValuesScan *
 make_valuesscan(List *qptlist,
 				List *qpqual,
-				Index scanrelid)
+				Index scanrelid,
+				List *values_lists)
 {
 	ValuesScan *node = makeNode(ValuesScan);
 	Plan	   *plan = &node->scan.plan;
@@ -2371,6 +2390,7 @@ make_valuesscan(List *qptlist,
 	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
+	node->values_lists = values_lists;
 
 	return node;
 }

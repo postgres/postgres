@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeValuesscan.c,v 1.5 2007/01/05 22:19:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeValuesscan.c,v 1.6 2007/02/19 02:23:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,6 @@ ValuesScanState *
 ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 {
 	ValuesScanState *scanstate;
-	RangeTblEntry *rte;
 	TupleDesc	tupdesc;
 	ListCell   *vtl;
 	int			i;
@@ -236,9 +235,7 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	/*
 	 * get info about values list
 	 */
-	rte = rt_fetch(node->scan.scanrelid, estate->es_range_table);
-	Assert(rte->rtekind == RTE_VALUES);
-	tupdesc = ExecTypeFromExprList((List *) linitial(rte->values_lists));
+	tupdesc = ExecTypeFromExprList((List *) linitial(node->values_lists));
 
 	ExecAssignScanType(&scanstate->ss, tupdesc);
 
@@ -247,13 +244,13 @@ ExecInitValuesScan(ValuesScan *node, EState *estate, int eflags)
 	 */
 	scanstate->marked_idx = -1;
 	scanstate->curr_idx = -1;
-	scanstate->array_len = list_length(rte->values_lists);
+	scanstate->array_len = list_length(node->values_lists);
 
 	/* convert list of sublists into array of sublists for easy addressing */
 	scanstate->exprlists = (List **)
 		palloc(scanstate->array_len * sizeof(List *));
 	i = 0;
-	foreach(vtl, rte->values_lists)
+	foreach(vtl, node->values_lists)
 	{
 		scanstate->exprlists[i++] = (List *) lfirst(vtl);
 	}

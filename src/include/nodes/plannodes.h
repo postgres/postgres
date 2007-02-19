@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.89 2007/01/10 18:06:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.90 2007/02/19 02:23:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,9 +270,11 @@ typedef struct TidScan
  *		subquery scan node
  *
  * SubqueryScan is for scanning the output of a sub-query in the range table.
- * We need a special plan node above the sub-query's plan as a place to switch
- * execution contexts.	Although we are not scanning a physical relation,
- * we make this a descendant of Scan anyway for code-sharing purposes.
+ * We often need an extra plan node above the sub-query's plan to perform
+ * expression evaluations (which we can't push into the sub-query without
+ * risking changing its semantics).  Although we are not scanning a physical
+ * relation, we make this a descendant of Scan anyway for code-sharing
+ * purposes.
  *
  * Note: we store the sub-plan in the type-specific subplan field, not in
  * the generic lefttree field as you might expect.	This is because we do
@@ -293,7 +295,10 @@ typedef struct SubqueryScan
 typedef struct FunctionScan
 {
 	Scan		scan;
-	/* no other fields needed at present */
+	Node	   *funcexpr;		/* expression tree for func call */
+	List	   *funccolnames;	/* output column names (string Value nodes) */
+	List	   *funccoltypes;	/* OID list of column type OIDs */
+	List	   *funccoltypmods; /* integer list of column typmods */
 } FunctionScan;
 
 /* ----------------
@@ -303,7 +308,7 @@ typedef struct FunctionScan
 typedef struct ValuesScan
 {
 	Scan		scan;
-	/* no other fields needed at present */
+	List	   *values_lists;	/* list of expression lists */
 } ValuesScan;
 
 /*
