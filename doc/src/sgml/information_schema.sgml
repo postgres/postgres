@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.31 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.32 2007/02/20 18:47:25 momjian Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -1876,7 +1876,7 @@
 SELECT c.column_name, c.data_type, e.data_type AS element_type
 FROM information_schema.columns c LEFT JOIN information_schema.element_types e
      ON ((c.table_catalog, c.table_schema, c.table_name, 'TABLE', c.dtd_identifier)
-       = (e.object_catalog, e.object_schema, e.object_name, e.object_type, e.array_type_identifier))
+       = (e.object_catalog, e.object_schema, e.object_name, e.object_type, e.dtd_identifier))
 WHERE c.table_schema = '...' AND c.table_name = '...'
 ORDER BY c.ordinal_position;
 </programlisting>
@@ -1936,13 +1936,11 @@ ORDER BY c.ordinal_position;
      </row>
 
      <row>
-      <entry><literal>array_type_identifier</literal></entry>
+      <entry><literal>dtd_identifier</literal></entry>
       <entry><type>sql_identifier</type></entry>
       <entry>
        The identifier of the data type descriptor of the array being
-       described.  Use this to join with the
-       <literal>dtd_identifier</literal> columns of other information
-       schema views.
+       described
       </entry>
      </row>
 
@@ -2097,13 +2095,6 @@ ORDER BY c.ordinal_position;
       <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</></entry>
      </row>
 
-     <row>
-      <entry><literal>dtd_identifier</literal></entry>
-      <entry><type>sql_identifier</type></entry>
-      <entry>
-       An identifier of the data type descriptor of the element.  This
-       is currently not useful.
-      </entry>
      </row>
     </tbody>
    </tgroup>
