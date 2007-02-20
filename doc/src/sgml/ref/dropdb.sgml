@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.28 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.29 2007/02/20 18:10:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -168,6 +168,13 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
   </variablelist>
+
+  <para>
+   This utility, like most other <productname>PostgreSQL</> utilities,
+   also uses the environment variables supported by <xref 
+   linkend="libpq-envars" endterm="libpq">.
+  </para>
+
  </refsect1>
 
 
@@ -220,7 +227,6 @@ DROP DATABASE</computeroutput>
   <simplelist type="inline">
    <member><xref linkend="app-createdb"></member>
    <member><xref linkend="sql-dropdatabase" endterm="sql-dropdatabase-title"></member>
-   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
 

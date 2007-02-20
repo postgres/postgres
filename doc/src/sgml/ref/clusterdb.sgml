@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.18 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/clusterdb.sgml,v 1.19 2007/02/20 18:10:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -190,6 +190,13 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
   </variablelist>
+
+  <para>
+   This utility, like most other <productname>PostgreSQL</> utilities,
+   also uses the environment variables supported by <xref 
+   linkend="libpq-envars" endterm="libpq">.
+  </para>
+
  </refsect1>
 
 
@@ -235,7 +242,6 @@ PostgreSQL documentation
 
   <simplelist type="inline">
    <member><xref linkend="sql-cluster" endterm="sql-cluster-title"></member>
-   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
 

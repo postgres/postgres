@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.38 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.39 2007/02/20 18:10:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -171,6 +171,13 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
   </variablelist>
+
+  <para>
+   This utility, like most other <productname>PostgreSQL</> utilities,
+   also uses the environment variables supported by <xref 
+   linkend="libpq-envars" endterm="libpq">.
+  </para>
+
  </refsect1>
 
 
@@ -181,7 +188,9 @@ PostgreSQL documentation
     Most error messages are self-explanatory. If not, run
     <application>createlang</application> with the <option>--echo</option>
     option and see under the respective <acronym>SQL</acronym> command
-    for details.
+    for details.  Also, any default connection settings and environment
+    variables used by the <application>libpq</application> front-end
+    library will apply.
    </para>
  </refsect1>
 
@@ -216,7 +225,6 @@ PostgreSQL documentation
   <simplelist type="inline">
    <member><xref linkend="app-droplang"></member>
    <member><xref linkend="sql-createlanguage" endterm="sql-createlanguage-title"></member>
-   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
 

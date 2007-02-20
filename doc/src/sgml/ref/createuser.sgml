@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.45 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.46 2007/02/20 18:10:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -331,6 +331,13 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
   </variablelist>
+
+  <para>
+   This utility, like most other <productname>PostgreSQL</> utilities,
+   also uses the environment variables supported by <xref 
+   linkend="libpq-envars" endterm="libpq">.
+  </para>
+
  </refsect1>
 
 
@@ -401,7 +408,6 @@ PostgreSQL documentation
   <simplelist type="inline">
    <member><xref linkend="app-dropuser"></member>
    <member><xref linkend="sql-createrole" endterm="sql-createrole-title"></member>
-   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.38 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.39 2007/02/20 18:10:59 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -235,6 +235,14 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
   </variablelist>
+
+  <para>
+   Because <application>psql</application> uses <application>libpq</application>
+   internally, all <application>libpq</application> environment variables are
+   also honored by <application>psql</application>.  For a complete list of those
+   variables, see <xref linkend="libpq-envars">.
+  </para>
+
  </refsect1>
 
 
@@ -301,7 +309,6 @@ PostgreSQL documentation
 
   <simplelist type="inline">
    <member><xref linkend="sql-vacuum" endterm="sql-vacuum-title"></member>
-   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
 
