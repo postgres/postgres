@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.445 2007/02/17 00:55:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.446 2007/02/20 10:00:25 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4054,21 +4054,21 @@ DESCR("concatenate XML values");
 DATA(insert OID = 2922 (  text             PGNSP PGUID 12 1 0 f f t f s 1 25 "142" _null_ _null_ _null_ xmltotext - _null_ ));
 DESCR("serialize an XML value to a character string");
 
-DATA(insert (  table_to_xml                PGNSP PGUID 12 100 0 f f t f s 4 142 "2205 16 16 25" _null_ _null_ "{tbl,nulls,tableforest,targetns}" table_to_xml - _null_ ));
+DATA(insert OID = 2923 (  table_to_xml                PGNSP PGUID 12 100 0 f f t f s 4 142 "2205 16 16 25" _null_ _null_ "{tbl,nulls,tableforest,targetns}" table_to_xml - _null_ ));
 DESCR("map table contents to XML");
-DATA(insert (  query_to_xml                PGNSP PGUID 12 100 0 f f t f s 4 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" query_to_xml - _null_ ));
+DATA(insert OID = 2924 (  query_to_xml                PGNSP PGUID 12 100 0 f f t f s 4 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" query_to_xml - _null_ ));
 DESCR("map query result to XML");
-DATA(insert (  cursor_to_xml               PGNSP PGUID 12 100 0 f f t f s 5 142 "1790 23 16 16 25" _null_ _null_ "{cursor,count,nulls,tableforest,targetns}" cursor_to_xml - _null_ ));
+DATA(insert OID = 2925 (  cursor_to_xml               PGNSP PGUID 12 100 0 f f t f s 5 142 "1790 23 16 16 25" _null_ _null_ "{cursor,count,nulls,tableforest,targetns}" cursor_to_xml - _null_ ));
 DESCR("map rows from cursor to XML");
-DATA(insert (  table_to_xmlschema          PGNSP PGUID 12 100 0 f f t f s 4 142 "2205 16 16 25" _null_ _null_ "{tbl,nulls,tableforest,targetns}" table_to_xmlschema - _null_ ));
+DATA(insert OID = 2926 (  table_to_xmlschema          PGNSP PGUID 12 100 0 f f t f s 4 142 "2205 16 16 25" _null_ _null_ "{tbl,nulls,tableforest,targetns}" table_to_xmlschema - _null_ ));
 DESCR("map table structure to XML Schema");
-DATA(insert (  query_to_xmlschema          PGNSP PGUID 12 100 0 f f t f s 4 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" query_to_xmlschema - _null_ ));
+DATA(insert OID = 2927 (  query_to_xmlschema          PGNSP PGUID 12 100 0 f f t f s 4 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" query_to_xmlschema - _null_ ));
 DESCR("map query result structure to XML Schema");
-DATA(insert (  cursor_to_xmlschema         PGNSP PGUID 12 100 0 f f t f s 4 142 "1790 16 16 25" _null_ _null_ "{cursor,nulls,tableforest,targetns}" cursor_to_xmlschema - _null_ ));
+DATA(insert OID = 2928 (  cursor_to_xmlschema         PGNSP PGUID 12 100 0 f f t f s 4 142 "1790 16 16 25" _null_ _null_ "{cursor,nulls,tableforest,targetns}" cursor_to_xmlschema - _null_ ));
 DESCR("map cursor structure to XML Schema");
-DATA(insert (  table_to_xml_and_xmlschema  PGNSP PGUID 12 100 0 f f t f s 4 142 "2205 16 16 25" _null_ _null_ "{tbl,nulls,tableforest,targetns}" table_to_xml_and_xmlschema - _null_ ));
+DATA(insert OID = 2929 (  table_to_xml_and_xmlschema  PGNSP PGUID 12 100 0 f f t f s 4 142 "2205 16 16 25" _null_ _null_ "{tbl,nulls,tableforest,targetns}" table_to_xml_and_xmlschema - _null_ ));
 DESCR("map table contents and structure to XML and XML Schema");
-DATA(insert (  query_to_xml_and_xmlschema  PGNSP PGUID 12 100 0 f f t f s 4 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" query_to_xml_and_xmlschema - _null_ ));
+DATA(insert OID = 2930 (  query_to_xml_and_xmlschema  PGNSP PGUID 12 100 0 f f t f s 4 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" query_to_xml_and_xmlschema - _null_ ));
 DESCR("map query result and structure to XML and XML Schema");
 
 
