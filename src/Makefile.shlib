@@ -6,7 +6,7 @@
 # Copyright (c) 1998, Regents of the University of California
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.108 2007/02/11 19:31:45 tgl Exp $
+#    $PostgreSQL: pgsql/src/Makefile.shlib,v 1.109 2007/02/20 22:45:57 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -191,7 +191,7 @@ endif
 
 ifeq ($(PORTNAME), solaris)
   ifeq ($(GCC), yes)
-    LINK.shared		= $(CC) -shared
+    LINK.shared		= $(COMPILER) -shared # $(COMPILER) needed for -m64
   else
 # CFLAGS added for X86_64
     LINK.shared		= $(CC) -G $(CFLAGS)
