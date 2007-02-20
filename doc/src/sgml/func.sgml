@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.366 2007/02/20 00:25:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.367 2007/02/20 14:04:50 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -412,6 +412,7 @@
     expression must be of Boolean type.
    </para>
  
+<!-- IS OF does not conform to the ISO SQL behavior, so it is undocumented here
    <para>
     <indexterm>
      <primary>IS OF</primary>
@@ -427,6 +428,9 @@
 </synopsis>
     They return a boolean value based on whether the expression's data
     type is one of the listed data types.
+   </para>
+-->
+
   </sect1>
 
   <sect1 id="functions-math">
