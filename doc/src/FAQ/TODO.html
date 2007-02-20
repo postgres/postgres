@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue Feb 20 17:23:01 EST 2007
+Last updated:           Tue Feb 20 17:29:25 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -499,6 +499,10 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Allow INSERT/UPDATE ... RETURNING inside a SELECT 'FROM' clause
 <p>  <a href="http://archives.postgresql.org/pgsql-general/2006-09/msg00803.php">http://archives.postgresql.org/pgsql-general/2006-09/msg00803.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00693.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00693.php</a>
+</p>
+  </li><li>Increase locking when DROPing objects so dependent objects cannot
+  get dropped while the DROP operation is happening
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00937.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00937.php</a>
 </p>
   </li><li>CREATE
   <ul>
