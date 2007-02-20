@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.367 2007/02/20 14:04:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.368 2007/02/20 18:18:05 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -4661,7 +4661,7 @@ SELECT SUBSTRING('XY1234Z', 'Y*?([0-9]{1,3})');
        </row>
        <row>
         <entry><literal>J</literal></entry>
-        <entry>Julian Day (days since midnight, January 1, 4712 BC)</entry>
+        <entry>Julian Day (days since January 1, 4712 BC at midnight)</entry>
        </row>
        <row>
         <entry><literal>Q</literal></entry>
