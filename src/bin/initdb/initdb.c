@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.133 2007/02/16 02:10:07 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.134 2007/02/20 23:49:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1208,7 +1208,8 @@ test_config_settings(void)
 
 	for (i = 0; i < bufslen; i++)
 	{
-		test_buffs = trial_bufs[i];
+		/* Use same amount of memory, independent of BLCKSZ */
+		test_buffs = (trial_bufs[i] * 8192) / BLCKSZ;
 		if (test_buffs <= ok_buffers)
 		{
 			test_buffs = ok_buffers;

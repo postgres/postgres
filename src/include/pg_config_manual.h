@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.24 2007/02/06 09:16:08 petere Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.25 2007/02/20 23:49:38 momjian Exp $
  *------------------------------------------------------------------------
  */
 
@@ -24,6 +24,10 @@
  * Changing BLCKSZ requires an initdb.
  */
 #define BLCKSZ	8192
+
+#if BLCKSZ < 1024
+#error BLCKSZ must be >= 1024
+#endif
 
 /*
  * RELSEG_SIZE is the maximum number of blocks allowed in one disk
