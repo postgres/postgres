@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.151 2007/02/14 01:58:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.152 2007/02/20 10:23:38 petere Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1188,7 +1188,7 @@ describeOneTableDetails(const char *schemaname,
 		}
 
 		/* count inherited tables */
-		printfPQExpBuffer(&buf, "SELECT c.relname FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhparent AND i.inhrelid = '%s' ORDER BY inhseqno ASC", oid);
+		printfPQExpBuffer(&buf, "SELECT c.oid::regclass FROM pg_catalog.pg_class c, pg_catalog.pg_inherits i WHERE c.oid=i.inhparent AND i.inhrelid = '%s' ORDER BY inhseqno ASC", oid);
 
 		result6 = PSQLexec(buf.data, false);
 		if (!result6)
