@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.26 2007/01/31 23:26:04 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_config-ref.sgml,v 1.27 2007/02/20 15:01:17 momjian Exp $ -->
 
 <refentry id="app-pgconfig">
  <refmeta>
@@ -310,12 +310,4 @@ eval ./configure `pg_config --configure`
   </para>
  </refsect1>
 
- <refsect1>
-  <title>History</title>
-
-  <para>
-   The <command>pg_config</command> utility first appeared in
-   <productname>PostgreSQL</> 7.1.
-  </para>
- </refsect1>
 </refentry>
