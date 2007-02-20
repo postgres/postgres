@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.343 2007/02/10 14:58:55 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.344 2007/02/20 15:20:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3642,6 +3642,8 @@ PasswordFromFile(char *hostname, char *port, char *dbname, char *username)
 				pgpassfile);
 		return NULL;
 	}
+#else
+	/* On Win32, the directory is protected, so we don't have to check the file. */
 #endif
 
 	fp = fopen(pgpassfile, "r");
