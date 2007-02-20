@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Feb 20 09:48:36 EST 2007
+Last updated:		Tue Feb 20 10:21:32 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1470,7 +1470,7 @@ Source Code
 
 	o -Add long file support for binary pg_dump output
 	o Check WSACancelBlockingCall() for interrupts [win32intr]
-	o Check .pgpass file permissions
+
 
 * Wire Protocol Changes
 
