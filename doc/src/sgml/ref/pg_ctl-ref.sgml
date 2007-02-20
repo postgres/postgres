@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.35 2006/12/02 00:34:52 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.35.2.1 2007/02/20 18:11:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -341,7 +341,10 @@ PostgreSQL documentation
   </variablelist>
 
   <para>
-   For others, see <xref linkend="app-postgres">.
+   For additional server variables, see <xref linkend="app-postgres">.
+   This utility, like most other <productname>PostgreSQL</> utilities,
+   also uses the environment variables supported by <xref 
+   linkend="libpq-envars" endterm="libpq">.
   </para>
  </refsect1>
 

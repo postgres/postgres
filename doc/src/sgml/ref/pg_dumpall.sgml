@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.58.2.1 2007/01/15 17:22:48 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.58.2.2 2007/02/20 18:11:17 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -355,6 +355,13 @@ PostgreSQL documentation
     </listitem>
    </varlistentry>
   </variablelist>
+
+  <para>
+   This utility, like most other <productname>PostgreSQL</> utilities,
+   also uses the environment variables supported by <xref 
+   linkend="libpq-envars" endterm="libpq">.
+  </para>
+
  </refsect1>
 
 
@@ -410,9 +417,8 @@ PostgreSQL documentation
   <title>See Also</title>
 
   <para>
-    <xref linkend="app-pgdump">.  Check there for details on possible
-    error conditions.  Also see supported environment variables
-    (<xref linkend="libpq-envars">).
+    Check <xref linkend="app-pgdump"> for details on possible
+    error conditions.
   </para>
  </refsect1>   
 

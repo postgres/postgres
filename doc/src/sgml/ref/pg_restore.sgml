@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.64 2006/11/26 18:11:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.64.2.1 2007/02/20 18:11:17 momjian Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -506,6 +506,13 @@
     </listitem>
    </varlistentry>
   </variablelist>
+
+  <para>
+   This utility, like most other <productname>PostgreSQL</> utilities,
+   also uses the environment variables supported by <xref 
+   linkend="libpq-envars" endterm="libpq">.
+  </para>
+
  </refsect1>
 
 
@@ -518,7 +525,9 @@
    internally executes <acronym>SQL</acronym> statements. If you have
    problems running <application>pg_restore</application>, make sure
    you are able to select information from the database using, for
-   example, <xref linkend="app-psql">.
+   example, <xref linkend="app-psql">.  Also, any default connection
+   settings and environment variables used by the
+   <application>libpq</application> front-end library will apply.
   </para>
  </refsect1>
 
@@ -687,7 +696,6 @@ CREATE DATABASE foo WITH TEMPLATE template0;
    <member><xref linkend="app-pgdump"></member>
    <member><xref linkend="app-pg-dumpall"></member>
    <member><xref linkend="app-psql"></member>
-   <member>Environment Variables (<xref linkend="libpq-envars">)</member>
   </simplelist>
  </refsect1>
 </refentry>
