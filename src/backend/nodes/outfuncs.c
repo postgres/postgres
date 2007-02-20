@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.299 2007/02/19 07:03:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.300 2007/02/20 17:32:15 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -234,6 +234,22 @@ _outDatum(StringInfo str, Datum value, int typlen, bool typbyval)
  *	Stuff from plannodes.h
  */
 
+static void
+_outPlannedStmt(StringInfo str, PlannedStmt *node)
+{
+	WRITE_NODE_TYPE("PLANNEDSTMT");
+
+	WRITE_ENUM_FIELD(commandType, CmdType);
+	WRITE_BOOL_FIELD(canSetTag);
+	WRITE_NODE_FIELD(planTree);
+	WRITE_NODE_FIELD(rtable);
+	WRITE_NODE_FIELD(resultRelations);
+	WRITE_NODE_FIELD(into);
+	WRITE_NODE_FIELD(returningLists);
+	WRITE_NODE_FIELD(rowMarks);
+	WRITE_INT_FIELD(nParamExec);
+}
+
 /*
  * print the basic stuff of all nodes that inherit from Plan
  */
@@ -251,7 +267,6 @@ _outPlanInfo(StringInfo str, Plan *node)
 	WRITE_NODE_FIELD(initPlan);
 	WRITE_BITMAPSET_FIELD(extParam);
 	WRITE_BITMAPSET_FIELD(allParam);
-	WRITE_INT_FIELD(nParamExec);
 }
 
 /*
@@ -633,6 +648,18 @@ _outRangeVar(StringInfo str, RangeVar *node)
 	WRITE_ENUM_FIELD(inhOpt, InhOption);
 	WRITE_BOOL_FIELD(istemp);
 	WRITE_NODE_FIELD(alias);
+}
+
+static void
+_outIntoClause(StringInfo str, IntoClause *node)
+{
+	WRITE_NODE_TYPE("INTOCLAUSE");
+
+	WRITE_NODE_FIELD(rel);
+	WRITE_NODE_FIELD(colNames);
+	WRITE_NODE_FIELD(options);
+	WRITE_ENUM_FIELD(onCommit, OnCommitAction);
+	WRITE_STRING_FIELD(tableSpaceName);
 }
 
 static void
@@ -1245,6 +1272,8 @@ _outPlannerInfo(StringInfo str, PlannerInfo *node)
 	WRITE_NODE_FIELD(glob);
 	WRITE_UINT_FIELD(query_level);
 	WRITE_NODE_FIELD(join_rel_list);
+	WRITE_NODE_FIELD(resultRelations);
+	WRITE_NODE_FIELD(returningLists);
 	WRITE_NODE_FIELD(init_plans);
 	WRITE_NODE_FIELD(eq_classes);
 	WRITE_NODE_FIELD(canon_pathkeys);
@@ -1502,10 +1531,6 @@ _outSelectStmt(StringInfo str, SelectStmt *node)
 
 	WRITE_NODE_FIELD(distinctClause);
 	WRITE_NODE_FIELD(into);
-	WRITE_NODE_FIELD(intoColNames);
-	WRITE_NODE_FIELD(intoOptions);
-	WRITE_ENUM_FIELD(intoOnCommit, OnCommitAction);
-	WRITE_STRING_FIELD(intoTableSpaceName);
 	WRITE_NODE_FIELD(targetList);
 	WRITE_NODE_FIELD(fromClause);
 	WRITE_NODE_FIELD(whereClause);
@@ -1651,9 +1676,6 @@ _outQuery(StringInfo str, Query *node)
 
 	WRITE_INT_FIELD(resultRelation);
 	WRITE_NODE_FIELD(into);
-	WRITE_NODE_FIELD(intoOptions);
-	WRITE_ENUM_FIELD(intoOnCommit, OnCommitAction);
-	WRITE_STRING_FIELD(intoTableSpaceName);
 	WRITE_BOOL_FIELD(hasAggs);
 	WRITE_BOOL_FIELD(hasSubLinks);
 	WRITE_NODE_FIELD(rtable);
@@ -1668,8 +1690,6 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(limitCount);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(setOperations);
-	WRITE_NODE_FIELD(resultRelations);
-	WRITE_NODE_FIELD(returningLists);
 }
 
 static void
@@ -1988,6 +2008,9 @@ _outNode(StringInfo str, void *obj)
 		appendStringInfoChar(str, '{');
 		switch (nodeTag(obj))
 		{
+			case T_PlannedStmt:
+				_outPlannedStmt(str, obj);
+				break;
 			case T_Plan:
 				_outPlan(str, obj);
 				break;
@@ -2071,6 +2094,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_RangeVar:
 				_outRangeVar(str, obj);
+				break;
+			case T_IntoClause:
+				_outIntoClause(str, obj);
 				break;
 			case T_Var:
 				_outVar(str, obj);

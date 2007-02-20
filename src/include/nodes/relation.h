@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.136 2007/02/19 07:03:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.137 2007/02/20 17:32:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,10 @@ typedef struct PlannerInfo
 	 */
 	List	   *join_rel_list;	/* list of join-relation RelOptInfos */
 	struct HTAB *join_rel_hash; /* optional hashtable for join relations */
+
+	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
+
+	List	   *returningLists;		/* list of lists of TargetEntry, or NIL */
 
 	List	   *init_plans;				/* init subplans for query */
 

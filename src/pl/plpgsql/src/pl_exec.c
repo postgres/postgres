@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.188 2007/02/08 18:37:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.189 2007/02/20 17:32:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2380,20 +2380,20 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 		exec_prepare_plan(estate, expr);
 		stmt->mod_stmt = false;
 		spi_plan = (_SPI_plan *) expr->plan;
-		foreach(l, spi_plan->qtlist)
+		foreach(l, spi_plan->stmt_list_list)
 		{
 			ListCell   *l2;
 
 			foreach(l2, (List *) lfirst(l))
 			{
-				Query	   *q = (Query *) lfirst(l2);
+				PlannedStmt *p = (PlannedStmt *) lfirst(l2);
 
-				Assert(IsA(q, Query));
-				if (q->canSetTag)
+				if (IsA(p, PlannedStmt) &&
+					p->canSetTag)
 				{
-					if (q->commandType == CMD_INSERT ||
-						q->commandType == CMD_UPDATE ||
-						q->commandType == CMD_DELETE)
+					if (p->commandType == CMD_INSERT ||
+						p->commandType == CMD_UPDATE ||
+						p->commandType == CMD_DELETE)
 						stmt->mod_stmt = true;
 				}
 			}
@@ -4674,6 +4674,8 @@ static void
 exec_simple_check_plan(PLpgSQL_expr *expr)
 {
 	_SPI_plan  *spi_plan = (_SPI_plan *) expr->plan;
+	List	   *sublist;
+	PlannedStmt *stmt;
 	Plan	   *plan;
 	TargetEntry *tle;
 
@@ -4683,17 +4685,20 @@ exec_simple_check_plan(PLpgSQL_expr *expr)
 	 * 1. We can only evaluate queries that resulted in one single execution
 	 * plan
 	 */
-	if (list_length(spi_plan->ptlist) != 1)
+	if (list_length(spi_plan->stmt_list_list) != 1)
+		return;
+	sublist = (List *) linitial(spi_plan->stmt_list_list);
+	if (list_length(sublist) != 1)
 		return;
 
-	plan = (Plan *) linitial(spi_plan->ptlist);
+	stmt = (PlannedStmt *) linitial(sublist);
 
 	/*
 	 * 2. It must be a RESULT plan --> no scan's required
 	 */
-	if (plan == NULL)			/* utility statement produces this */
+	if (!IsA(stmt, PlannedStmt))
 		return;
-
+	plan = stmt->planTree;
 	if (!IsA(plan, Result))
 		return;
 

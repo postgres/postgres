@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.202 2007/02/03 14:06:54 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.203 2007/02/20 17:32:15 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -140,9 +140,6 @@ _readQuery(void)
 	READ_NODE_FIELD(utilityStmt);
 	READ_INT_FIELD(resultRelation);
 	READ_NODE_FIELD(into);
-	READ_NODE_FIELD(intoOptions);
-	READ_ENUM_FIELD(intoOnCommit, OnCommitAction);
-	READ_STRING_FIELD(intoTableSpaceName);
 	READ_BOOL_FIELD(hasAggs);
 	READ_BOOL_FIELD(hasSubLinks);
 	READ_NODE_FIELD(rtable);
@@ -157,8 +154,6 @@ _readQuery(void)
 	READ_NODE_FIELD(limitCount);
 	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(setOperations);
-	READ_NODE_FIELD(resultRelations);
-	READ_NODE_FIELD(returningLists);
 
 	READ_DONE();
 }
@@ -283,6 +278,20 @@ _readRangeVar(void)
 	READ_ENUM_FIELD(inhOpt, InhOption);
 	READ_BOOL_FIELD(istemp);
 	READ_NODE_FIELD(alias);
+
+	READ_DONE();
+}
+
+static IntoClause *
+_readIntoClause(void)
+{
+	READ_LOCALS(IntoClause);
+
+	READ_NODE_FIELD(rel);
+	READ_NODE_FIELD(colNames);
+	READ_NODE_FIELD(options);
+	READ_ENUM_FIELD(onCommit, OnCommitAction);
+	READ_STRING_FIELD(tableSpaceName);
 
 	READ_DONE();
 }
@@ -984,6 +993,8 @@ parseNodeString(void)
 		return_value = _readAlias();
 	else if (MATCH("RANGEVAR", 8))
 		return_value = _readRangeVar();
+	else if (MATCH("INTOCLAUSE", 10))
+		return_value = _readIntoClause();
 	else if (MATCH("VAR", 3))
 		return_value = _readVar();
 	else if (MATCH("CONST", 5))

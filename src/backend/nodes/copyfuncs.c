@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.366 2007/02/19 02:23:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.367 2007/02/20 17:32:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,27 @@
  */
 
 /*
+ * _copyPlannedStmt
+ */
+static PlannedStmt *
+_copyPlannedStmt(PlannedStmt *from)
+{
+	PlannedStmt	   *newnode = makeNode(PlannedStmt);
+
+	COPY_SCALAR_FIELD(commandType);
+	COPY_SCALAR_FIELD(canSetTag);
+	COPY_NODE_FIELD(planTree);
+	COPY_NODE_FIELD(rtable);
+	COPY_NODE_FIELD(resultRelations);
+	COPY_NODE_FIELD(into);
+	COPY_NODE_FIELD(returningLists);
+	COPY_NODE_FIELD(rowMarks);
+	COPY_SCALAR_FIELD(nParamExec);
+
+	return newnode;
+}
+
+/*
  * CopyPlanFields
  *
  *		This function copies the fields of the Plan node.  It is used by
@@ -84,7 +105,6 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	COPY_NODE_FIELD(initPlan);
 	COPY_BITMAPSET_FIELD(extParam);
 	COPY_BITMAPSET_FIELD(allParam);
-	COPY_SCALAR_FIELD(nParamExec);
 }
 
 /*
@@ -694,6 +714,23 @@ _copyRangeVar(RangeVar *from)
 	COPY_SCALAR_FIELD(inhOpt);
 	COPY_SCALAR_FIELD(istemp);
 	COPY_NODE_FIELD(alias);
+
+	return newnode;
+}
+
+/*
+ * _copyIntoClause
+ */
+static IntoClause *
+_copyIntoClause(IntoClause *from)
+{
+	IntoClause   *newnode = makeNode(IntoClause);
+
+	COPY_NODE_FIELD(rel);
+	COPY_NODE_FIELD(colNames);
+	COPY_NODE_FIELD(options);
+	COPY_SCALAR_FIELD(onCommit);
+	COPY_STRING_FIELD(tableSpaceName);
 
 	return newnode;
 }
@@ -1762,9 +1799,6 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(utilityStmt);
 	COPY_SCALAR_FIELD(resultRelation);
 	COPY_NODE_FIELD(into);
-	COPY_NODE_FIELD(intoOptions);
-	COPY_SCALAR_FIELD(intoOnCommit);
-	COPY_STRING_FIELD(intoTableSpaceName);
 	COPY_SCALAR_FIELD(hasAggs);
 	COPY_SCALAR_FIELD(hasSubLinks);
 	COPY_NODE_FIELD(rtable);
@@ -1779,8 +1813,6 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(limitCount);
 	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(setOperations);
-	COPY_NODE_FIELD(resultRelations);
-	COPY_NODE_FIELD(returningLists);
 
 	return newnode;
 }
@@ -1832,10 +1864,6 @@ _copySelectStmt(SelectStmt *from)
 
 	COPY_NODE_FIELD(distinctClause);
 	COPY_NODE_FIELD(into);
-	COPY_NODE_FIELD(intoColNames);
-	COPY_NODE_FIELD(intoOptions);
-	COPY_SCALAR_FIELD(intoOnCommit);
-	COPY_STRING_FIELD(intoTableSpaceName);
 	COPY_NODE_FIELD(targetList);
 	COPY_NODE_FIELD(fromClause);
 	COPY_NODE_FIELD(whereClause);
@@ -2768,9 +2796,6 @@ _copyExecuteStmt(ExecuteStmt *from)
 
 	COPY_STRING_FIELD(name);
 	COPY_NODE_FIELD(into);
-	COPY_NODE_FIELD(intoOptions);
-	COPY_SCALAR_FIELD(into_on_commit);
-	COPY_STRING_FIELD(into_tbl_space);
 	COPY_NODE_FIELD(params);
 
 	return newnode;
@@ -2902,6 +2927,9 @@ copyObject(void *from)
 			/*
 			 * PLAN NODES
 			 */
+		case T_PlannedStmt:
+			retval = _copyPlannedStmt(from);
+			break;
 		case T_Plan:
 			retval = _copyPlan(from);
 			break;
@@ -2989,6 +3017,9 @@ copyObject(void *from)
 			break;
 		case T_RangeVar:
 			retval = _copyRangeVar(from);
+			break;
+		case T_IntoClause:
+			retval = _copyIntoClause(from);
 			break;
 		case T_Var:
 			retval = _copyVar(from);

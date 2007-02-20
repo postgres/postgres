@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.340 2007/02/03 14:06:55 petere Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.341 2007/02/20 17:32:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,15 +26,6 @@ typedef enum QuerySource
 	QSRC_QUAL_INSTEAD_RULE,		/* added by conditional INSTEAD rule */
 	QSRC_NON_INSTEAD_RULE		/* added by non-INSTEAD rule */
 } QuerySource;
-
-/* What to do at commit time for temporary relations */
-typedef enum OnCommitAction
-{
-	ONCOMMIT_NOOP,				/* No ON COMMIT clause (do nothing) */
-	ONCOMMIT_PRESERVE_ROWS,		/* ON COMMIT PRESERVE ROWS (do nothing) */
-	ONCOMMIT_DELETE_ROWS,		/* ON COMMIT DELETE ROWS */
-	ONCOMMIT_DROP				/* ON COMMIT DROP */
-} OnCommitAction;
 
 /* Sort ordering options for ORDER BY and CREATE INDEX */
 typedef enum SortByDir
@@ -86,11 +77,14 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
 
 /*
  * Query -
- *	  all statements are turned into a Query tree (via transformStmt)
- *	  for further processing by the optimizer
+ *	  Parse analysis turns all statements into a Query tree (via transformStmt)
+ *	  for further processing by the rewriter and planner.
  *
- *	  utility statements (i.e. non-optimizable statements) have the
+ *	  Utility statements (i.e. non-optimizable statements) have the
  *	  utilityStmt field set, and the Query itself is mostly dummy.
+ *
+ *	  Planning converts a Query tree into a Plan tree headed by a PlannedStmt
+ *	  noded --- the Query structure is not used by the executor.
  */
 typedef struct Query
 {
@@ -108,10 +102,7 @@ typedef struct Query
 	int			resultRelation; /* rtable index of target relation for
 								 * INSERT/UPDATE/DELETE; 0 for SELECT */
 
-	RangeVar   *into;			/* target relation for SELECT INTO */
-	List	   *intoOptions;	/* options from WITH clause */
-	OnCommitAction intoOnCommit;	/* what do we do at COMMIT? */
-	char	   *intoTableSpaceName;		/* table space to use, or NULL */
+	IntoClause *into;			/* target for SELECT INTO / CREATE TABLE AS */
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasSubLinks;	/* has subquery SubLink */
@@ -138,29 +129,6 @@ typedef struct Query
 
 	Node	   *setOperations;	/* set-operation tree if this is top level of
 								 * a UNION/INTERSECT/EXCEPT query */
-
-	/*
-	 * If the resultRelation turns out to be the parent of an inheritance
-	 * tree, the planner will add all the child tables to the rtable and store
-	 * a list of the rtindexes of all the result relations here. This is done
-	 * at plan time, not parse time, since we don't want to commit to the
-	 * exact set of child tables at parse time.  XXX This field ought to go in
-	 * some sort of TopPlan plan node, not in the Query.
-	 */
-	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
-
-	/*
-	 * If the query has a returningList then the planner will store a list of
-	 * processed targetlists (one per result relation) here.  We must have a
-	 * separate RETURNING targetlist for each result rel because column
-	 * numbers may vary within an inheritance tree.  In the targetlists, Vars
-	 * referencing the result relation will have their original varno and
-	 * varattno, while Vars referencing other rels will be converted to have
-	 * varno OUTER and varattno referencing a resjunk entry in the top plan
-	 * node's targetlist.  XXX This field ought to go in some sort of TopPlan
-	 * plan node, not in the Query.
-	 */
-	List	   *returningLists; /* list of lists of TargetEntry, or NIL */
 } Query;
 
 
@@ -761,17 +729,10 @@ typedef struct SelectStmt
 
 	/*
 	 * These fields are used only in "leaf" SelectStmts.
-	 *
-	 * into, intoColNames, intoOptions, intoOnCommit, and intoTableSpaceName
-	 * are a kluge; they belong somewhere else...
 	 */
 	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
 								 * lcons(NIL,NIL) for all (SELECT DISTINCT) */
-	RangeVar   *into;			/* target table (for select into table) */
-	List	   *intoColNames;	/* column names for into table */
-	List	   *intoOptions;	/* options from WITH clause */
-	OnCommitAction intoOnCommit;	/* what do we do at COMMIT? */
-	char	   *intoTableSpaceName;		/* table space to use, or NULL */
+	IntoClause *into;			/* target for SELECT INTO / CREATE TABLE AS */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the FROM clause */
 	Node	   *whereClause;	/* WHERE qualification */
@@ -1994,10 +1955,7 @@ typedef struct ExecuteStmt
 {
 	NodeTag		type;
 	char	   *name;			/* The name of the plan to execute */
-	RangeVar   *into;			/* Optional table to store results in */
-	List	   *intoOptions;	/* Options from WITH clause */
-	OnCommitAction into_on_commit;		/* What do we do at COMMIT? */
-	char	   *into_tbl_space; /* Tablespace to use, or NULL */
+	IntoClause *into;			/* Optional table to store results in */
 	List	   *params;			/* Values to assign to parameters */
 } ExecuteStmt;
 

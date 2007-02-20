@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.579 2007/02/03 14:06:54 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.580 2007/02/20 17:32:16 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -139,6 +139,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	IndexElem			*ielem;
 	Alias				*alias;
 	RangeVar			*range;
+	IntoClause			*into;
 	A_Indices			*aind;
 	ResTarget			*target;
 	PrivTarget			*privtarget;
@@ -248,7 +249,8 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 				prep_type_clause
 				execute_param_clause using_clause returning_clause
 
-%type <range>	into_clause OptTempTableName
+%type <range>	OptTempTableName
+%type <into>	into_clause create_as_target
 
 %type <defelt>	createfunc_opt_item common_func_opt_item
 %type <fun_param> func_arg
@@ -2253,8 +2255,7 @@ OptConsTableSpace:   USING INDEX TABLESPACE name	{ $$ = $4; }
  */
 
 CreateAsStmt:
-		CREATE OptTemp TABLE qualified_name OptCreateAs
-			OptWith OnCommitOption OptTableSpace AS SelectStmt
+		CREATE OptTemp TABLE create_as_target AS SelectStmt
 				{
 					/*
 					 * When the SelectStmt is a set-operation tree, we must
@@ -2263,18 +2264,26 @@ CreateAsStmt:
 					 * to find it.	Similarly, the output column names must
 					 * be attached to that Select's target list.
 					 */
-					SelectStmt *n = findLeftmostSelect((SelectStmt *) $10);
+					SelectStmt *n = findLeftmostSelect((SelectStmt *) $6);
 					if (n->into != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("CREATE TABLE AS cannot specify INTO")));
-					$4->istemp = $2;
+					$4->rel->istemp = $2;
 					n->into = $4;
-					n->intoColNames = $5;
-					n->intoOptions = $6;
-					n->intoOnCommit = $7;
-					n->intoTableSpaceName = $8;
-					$$ = $10;
+					$$ = $6;
+				}
+		;
+
+create_as_target:
+			qualified_name OptCreateAs OptWith OnCommitOption OptTableSpace
+				{
+					$$ = makeNode(IntoClause);
+					$$->rel = $1;
+					$$->colNames = $2;
+					$$->options = $3;
+					$$->onCommit = $4;
+					$$->tableSpaceName = $5;
 				}
 		;
 
@@ -5459,19 +5468,15 @@ ExecuteStmt: EXECUTE name execute_param_clause
 					n->into = NULL;
 					$$ = (Node *) n;
 				}
-			| CREATE OptTemp TABLE qualified_name OptCreateAs
-				OptWith OnCommitOption OptTableSpace AS
+			| CREATE OptTemp TABLE create_as_target AS
 				EXECUTE name execute_param_clause
 				{
 					ExecuteStmt *n = makeNode(ExecuteStmt);
-					n->name = $11;
-					n->params = $12;
-					$4->istemp = $2;
+					n->name = $7;
+					n->params = $8;
+					$4->rel->istemp = $2;
 					n->into = $4;
-					n->intoOptions = $6;
-					n->into_on_commit = $7;
-					n->into_tbl_space = $8;
-					if ($5)
+					if ($4->colNames)
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								 errmsg("column name list not allowed in CREATE TABLE / AS EXECUTE")));
@@ -5854,7 +5859,6 @@ simple_select:
 					n->distinctClause = $2;
 					n->targetList = $3;
 					n->into = $4;
-					n->intoColNames = NIL;
 					n->fromClause = $5;
 					n->whereClause = $6;
 					n->groupClause = $7;
@@ -5877,8 +5881,17 @@ simple_select:
 		;
 
 into_clause:
-			INTO OptTempTableName					{ $$ = $2; }
-			| /*EMPTY*/								{ $$ = NULL; }
+			INTO OptTempTableName
+				{
+					$$ = makeNode(IntoClause);
+					$$->rel = $2;
+					$$->colNames = NIL;
+					$$->options = NIL;
+					$$->onCommit = ONCOMMIT_NOOP;
+					$$->tableSpaceName = NULL;
+				}
+			| /*EMPTY*/
+				{ $$ = NULL; }
 		;
 
 /*

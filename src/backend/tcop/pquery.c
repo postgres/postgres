@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.113 2007/02/18 19:49:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.114 2007/02/20 17:32:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,7 @@
 Portal		ActivePortal = NULL;
 
 
-static void ProcessQuery(Query *parsetree,
-			 Plan *plan,
+static void ProcessQuery(PlannedStmt *plan,
 			 ParamListInfo params,
 			 DestReceiver *dest,
 			 char *completionTag);
@@ -42,7 +41,7 @@ static uint32 RunFromStore(Portal portal, ScanDirection direction, long count,
 			 DestReceiver *dest);
 static long PortalRunSelect(Portal portal, bool forward, long count,
 				DestReceiver *dest);
-static void PortalRunUtility(Portal portal, Query *query,
+static void PortalRunUtility(Portal portal, Node *utilityStmt,
 				 DestReceiver *dest, char *completionTag);
 static void PortalRunMulti(Portal portal,
 			   DestReceiver *dest, DestReceiver *altdest,
@@ -58,8 +57,7 @@ static void DoPortalRewind(Portal portal);
  * CreateQueryDesc
  */
 QueryDesc *
-CreateQueryDesc(Query *parsetree,
-				Plan *plantree,
+CreateQueryDesc(PlannedStmt *plannedstmt,
 				Snapshot snapshot,
 				Snapshot crosscheck_snapshot,
 				DestReceiver *dest,
@@ -68,14 +66,42 @@ CreateQueryDesc(Query *parsetree,
 {
 	QueryDesc  *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
 
-	qd->operation = parsetree->commandType;		/* operation */
-	qd->parsetree = parsetree;	/* parse tree */
-	qd->plantree = plantree;	/* plan */
-	qd->snapshot = snapshot;	/* snapshot */
+	qd->operation = plannedstmt->commandType;	/* operation */
+	qd->plannedstmt = plannedstmt;				/* plan */
+	qd->utilitystmt = NULL;
+	qd->snapshot = snapshot;					/* snapshot */
 	qd->crosscheck_snapshot = crosscheck_snapshot;		/* RI check snapshot */
 	qd->dest = dest;			/* output dest */
 	qd->params = params;		/* parameter values passed into query */
 	qd->doInstrument = doInstrument;	/* instrumentation wanted? */
+
+	/* null these fields until set by ExecutorStart */
+	qd->tupDesc = NULL;
+	qd->estate = NULL;
+	qd->planstate = NULL;
+
+	return qd;
+}
+
+/*
+ * CreateUtilityQueryDesc
+ */
+QueryDesc *
+CreateUtilityQueryDesc(Node *utilitystmt,
+					   Snapshot snapshot,
+					   DestReceiver *dest,
+					   ParamListInfo params)
+{
+	QueryDesc  *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
+
+	qd->operation = CMD_UTILITY;				/* operation */
+	qd->plannedstmt = NULL;
+	qd->utilitystmt = utilitystmt;				/* utility command */
+	qd->snapshot = snapshot;					/* snapshot */
+	qd->crosscheck_snapshot = InvalidSnapshot;	/* RI check snapshot */
+	qd->dest = dest;			/* output dest */
+	qd->params = params;		/* parameter values passed into query */
+	qd->doInstrument = false;	/* uninteresting for utilities */
 
 	/* null these fields until set by ExecutorStart */
 	qd->tupDesc = NULL;
@@ -103,7 +129,6 @@ FreeQueryDesc(QueryDesc *qdesc)
  *		Execute a single plannable query within a PORTAL_MULTI_QUERY
  *		or PORTAL_ONE_RETURNING portal
  *
- *	parsetree: the query tree
  *	plan: the plan tree for the query
  *	params: any parameters needed
  *	dest: where to send results
@@ -116,13 +141,11 @@ FreeQueryDesc(QueryDesc *qdesc)
  * error; otherwise the executor's memory usage will be leaked.
  */
 static void
-ProcessQuery(Query *parsetree,
-			 Plan *plan,
+ProcessQuery(PlannedStmt *plan,
 			 ParamListInfo params,
 			 DestReceiver *dest,
 			 char *completionTag)
 {
-	int			operation = parsetree->commandType;
 	QueryDesc  *queryDesc;
 
 	ereport(DEBUG3,
@@ -137,7 +160,7 @@ ProcessQuery(Query *parsetree,
 	/*
 	 * Create the QueryDesc object
 	 */
-	queryDesc = CreateQueryDesc(parsetree, plan,
+	queryDesc = CreateQueryDesc(plan,
 								ActiveSnapshot, InvalidSnapshot,
 								dest, params, false);
 
@@ -163,7 +186,7 @@ ProcessQuery(Query *parsetree,
 	{
 		Oid			lastOid;
 
-		switch (operation)
+		switch (queryDesc->operation)
 		{
 			case CMD_SELECT:
 				strcpy(completionTag, "SELECT");
@@ -206,39 +229,66 @@ ProcessQuery(Query *parsetree,
 
 /*
  * ChoosePortalStrategy
- *		Select portal execution strategy given the intended query list.
+ *		Select portal execution strategy given the intended statement list.
+ *
+ * The list elements can be Querys, PlannedStmts, or utility statements.
+ * That's more general than portals need, but we use this for prepared
+ * statements as well.
  *
  * See the comments in portal.h.
  */
 PortalStrategy
-ChoosePortalStrategy(List *parseTrees)
+ChoosePortalStrategy(List *stmts)
 {
 	int			nSetTag;
 	ListCell   *lc;
 
 	/*
 	 * PORTAL_ONE_SELECT and PORTAL_UTIL_SELECT need only consider the
-	 * single-Query-struct case, since there are no rewrite rules that can add
+	 * single-statement case, since there are no rewrite rules that can add
 	 * auxiliary queries to a SELECT or a utility command.
 	 */
-	if (list_length(parseTrees) == 1)
+	if (list_length(stmts) == 1)
 	{
-		Query	   *query = (Query *) linitial(parseTrees);
+		Node	   *stmt = (Node *) linitial(stmts);
 
-		Assert(IsA(query, Query));
-		if (query->canSetTag)
+		if (IsA(stmt, Query))
 		{
-			if (query->commandType == CMD_SELECT &&
-				query->into == NULL)
-				return PORTAL_ONE_SELECT;
-			if (query->commandType == CMD_UTILITY &&
-				query->utilityStmt != NULL)
+			Query	   *query = (Query *) stmt;
+
+			if (query->canSetTag)
 			{
-				if (UtilityReturnsTuples(query->utilityStmt))
-					return PORTAL_UTIL_SELECT;
-				/* it can't be ONE_RETURNING, so give up */
-				return PORTAL_MULTI_QUERY;
+				if (query->commandType == CMD_SELECT &&
+					query->into == NULL)
+					return PORTAL_ONE_SELECT;
+				if (query->commandType == CMD_UTILITY &&
+					query->utilityStmt != NULL)
+				{
+					if (UtilityReturnsTuples(query->utilityStmt))
+						return PORTAL_UTIL_SELECT;
+					/* it can't be ONE_RETURNING, so give up */
+					return PORTAL_MULTI_QUERY;
+				}
 			}
+		}
+		else if (IsA(stmt, PlannedStmt))
+		{
+			PlannedStmt *pstmt = (PlannedStmt *) stmt;
+
+			if (pstmt->canSetTag)
+			{
+				if (pstmt->commandType == CMD_SELECT &&
+					pstmt->into == NULL)
+					return PORTAL_ONE_SELECT;
+			}
+		}
+		else
+		{
+			/* must be a utility command; assume it's canSetTag */
+			if (UtilityReturnsTuples(stmt))
+				return PORTAL_UTIL_SELECT;
+			/* it can't be ONE_RETURNING, so give up */
+			return PORTAL_MULTI_QUERY;
 		}
 	}
 
@@ -248,18 +298,35 @@ ChoosePortalStrategy(List *parseTrees)
 	 * it has a RETURNING list.
 	 */
 	nSetTag = 0;
-	foreach(lc, parseTrees)
+	foreach(lc, stmts)
 	{
-		Query	   *query = (Query *) lfirst(lc);
+		Node	   *stmt = (Node *) lfirst(lc);
 
-		Assert(IsA(query, Query));
-		if (query->canSetTag)
+		if (IsA(stmt, Query))
 		{
-			if (++nSetTag > 1)
-				return PORTAL_MULTI_QUERY;		/* no need to look further */
-			if (query->returningList == NIL)
-				return PORTAL_MULTI_QUERY;		/* no need to look further */
+			Query	   *query = (Query *) stmt;
+
+			if (query->canSetTag)
+			{
+				if (++nSetTag > 1)
+					return PORTAL_MULTI_QUERY;	/* no need to look further */
+				if (query->returningList == NIL)
+					return PORTAL_MULTI_QUERY;	/* no need to look further */
+			}
 		}
+		else if (IsA(stmt, PlannedStmt))
+		{
+			PlannedStmt *pstmt = (PlannedStmt *) stmt;
+
+			if (pstmt->canSetTag)
+			{
+				if (++nSetTag > 1)
+					return PORTAL_MULTI_QUERY;	/* no need to look further */
+				if (pstmt->returningLists == NIL)
+					return PORTAL_MULTI_QUERY;	/* no need to look further */
+			}
+		}
+		/* otherwise, utility command, assumed not canSetTag */
 	}
 	if (nSetTag == 1)
 		return PORTAL_ONE_RETURNING;
@@ -274,48 +341,84 @@ ChoosePortalStrategy(List *parseTrees)
  *		Returns NIL if the portal doesn't have a determinable targetlist.
  *
  * Note: do not modify the result.
- *
- * XXX be careful to keep this in sync with FetchPreparedStatementTargetList,
- * and with UtilityReturnsTuples.
  */
 List *
 FetchPortalTargetList(Portal portal)
 {
-	if (portal->strategy == PORTAL_ONE_SELECT)
-		return ((Query *) linitial(portal->parseTrees))->targetList;
-	if (portal->strategy == PORTAL_ONE_RETURNING)
-		return (PortalGetPrimaryQuery(portal))->returningList;
-	if (portal->strategy == PORTAL_UTIL_SELECT)
+	/* no point in looking if we determined it doesn't return tuples */
+	if (portal->strategy == PORTAL_MULTI_QUERY)
+		return NIL;
+	/* get the primary statement and find out what it returns */
+	return FetchStatementTargetList(PortalGetPrimaryStmt(portal));
+}
+
+/*
+ * FetchStatementTargetList
+ *		Given a statement that returns tuples, extract the query targetlist.
+ *		Returns NIL if the statement doesn't have a determinable targetlist.
+ *
+ * This can be applied to a Query, a PlannedStmt, or a utility statement.
+ * That's more general than portals need, but we use this for prepared
+ * statements as well.
+ *
+ * Note: do not modify the result.
+ *
+ * XXX be careful to keep this in sync with UtilityReturnsTuples.
+ */
+List *
+FetchStatementTargetList(Node *stmt)
+{
+	if (stmt == NULL)
+		return NIL;
+	if (IsA(stmt, Query))
 	{
-		Node	   *utilityStmt;
+		Query	   *query = (Query *) stmt;
 
-		utilityStmt = ((Query *) linitial(portal->parseTrees))->utilityStmt;
-		switch (nodeTag(utilityStmt))
+		if (query->commandType == CMD_UTILITY &&
+			query->utilityStmt != NULL)
 		{
-			case T_FetchStmt:
-				{
-					FetchStmt  *substmt = (FetchStmt *) utilityStmt;
-					Portal		subportal;
-
-					Assert(!substmt->ismove);
-					subportal = GetPortalByName(substmt->portalname);
-					Assert(PortalIsValid(subportal));
-					return FetchPortalTargetList(subportal);
-				}
-
-			case T_ExecuteStmt:
-				{
-					ExecuteStmt *substmt = (ExecuteStmt *) utilityStmt;
-					PreparedStatement *entry;
-
-					Assert(!substmt->into);
-					entry = FetchPreparedStatement(substmt->name, true);
-					return FetchPreparedStatementTargetList(entry);
-				}
-
-			default:
-				break;
+			/* transfer attention to utility statement */
+			stmt = query->utilityStmt;
 		}
+		else
+		{
+			if (query->commandType == CMD_SELECT &&
+				query->into == NULL)
+				return query->targetList;
+			if (query->returningList)
+				return query->returningList;
+			return NIL;
+		}
+	}
+	if (IsA(stmt, PlannedStmt))
+	{
+		PlannedStmt *pstmt = (PlannedStmt *) stmt;
+
+		if (pstmt->commandType == CMD_SELECT &&
+			pstmt->into == NULL)
+			return pstmt->planTree->targetlist;
+		if (pstmt->returningLists)
+			return (List *) linitial(pstmt->returningLists);
+		return NIL;
+	}
+	if (IsA(stmt, FetchStmt))
+	{
+		FetchStmt  *fstmt = (FetchStmt *) stmt;
+		Portal		subportal;
+
+		Assert(!fstmt->ismove);
+		subportal = GetPortalByName(fstmt->portalname);
+		Assert(PortalIsValid(subportal));
+		return FetchPortalTargetList(subportal);
+	}
+	if (IsA(stmt, ExecuteStmt))
+	{
+		ExecuteStmt *estmt = (ExecuteStmt *) stmt;
+		PreparedStatement *entry;
+
+		Assert(!estmt->into);
+		entry = FetchPreparedStatement(estmt->name, true);
+		return FetchPreparedStatementTargetList(entry);
 	}
 	return NIL;
 }
@@ -374,7 +477,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 		/*
 		 * Determine the portal execution strategy
 		 */
-		portal->strategy = ChoosePortalStrategy(portal->parseTrees);
+		portal->strategy = ChoosePortalStrategy(portal->stmts);
 
 		/*
 		 * Fire her up according to the strategy
@@ -396,8 +499,7 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 				 * Create QueryDesc in portal's context; for the moment, set
 				 * the destination to DestNone.
 				 */
-				queryDesc = CreateQueryDesc((Query *) linitial(portal->parseTrees),
-										(Plan *) linitial(portal->planTrees),
+				queryDesc = CreateQueryDesc((PlannedStmt *) linitial(portal->stmts),
 											ActiveSnapshot,
 											InvalidSnapshot,
 											None_Receiver,
@@ -450,8 +552,16 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 				 * We don't start the executor until we are told to run the
 				 * portal.	We do need to set up the result tupdesc.
 				 */
-				portal->tupDesc =
-					ExecCleanTypeFromTL((PortalGetPrimaryQuery(portal))->returningList, false);
+				{
+					PlannedStmt *pstmt;
+
+					pstmt = (PlannedStmt *) PortalGetPrimaryStmt(portal);
+					Assert(IsA(pstmt, PlannedStmt));
+					Assert(pstmt->returningLists);
+					portal->tupDesc =
+						ExecCleanTypeFromTL((List *) linitial(pstmt->returningLists),
+											false);
+				}
 
 				/*
 				 * Reset cursor position data to "start of query"
@@ -468,8 +578,12 @@ PortalStart(Portal portal, ParamListInfo params, Snapshot snapshot)
 				 * We don't set snapshot here, because PortalRunUtility will
 				 * take care of it if needed.
 				 */
-				portal->tupDesc =
-					UtilityTupleDescriptor(((Query *) linitial(portal->parseTrees))->utilityStmt);
+				{
+					Node *ustmt = PortalGetPrimaryStmt(portal);
+
+					Assert(!IsA(ustmt, PlannedStmt));
+					portal->tupDesc = UtilityTupleDescriptor(ustmt);
+				}
 
 				/*
 				 * Reset cursor position data to "start of query"
@@ -934,7 +1048,7 @@ FillPortalStore(Portal portal)
 			break;
 
 		case PORTAL_UTIL_SELECT:
-			PortalRunUtility(portal, linitial(portal->parseTrees),
+			PortalRunUtility(portal, (Node *) linitial(portal->stmts),
 							 treceiver, completionTag);
 			break;
 
@@ -1023,11 +1137,9 @@ RunFromStore(Portal portal, ScanDirection direction, long count,
  *		Execute a utility statement inside a portal.
  */
 static void
-PortalRunUtility(Portal portal, Query *query,
+PortalRunUtility(Portal portal, Node *utilityStmt,
 				 DestReceiver *dest, char *completionTag)
 {
-	Node	   *utilityStmt = query->utilityStmt;
-
 	ereport(DEBUG3,
 			(errmsg_internal("ProcessUtility")));
 
@@ -1061,18 +1173,7 @@ PortalRunUtility(Portal portal, Query *query,
 	else
 		ActiveSnapshot = NULL;
 
-	if (query->canSetTag)
-	{
-		/* utility statement can override default tag string */
-		ProcessUtility(utilityStmt, portal->portalParams, dest, completionTag);
-		if (completionTag && completionTag[0] == '\0' && portal->commandTag)
-			strcpy(completionTag, portal->commandTag);	/* use the default */
-	}
-	else
-	{
-		/* utility added by rewrite cannot set tag */
-		ProcessUtility(utilityStmt, portal->portalParams, dest, NULL);
-	}
+	ProcessUtility(utilityStmt, portal->portalParams, dest, completionTag);
 
 	/* Some utility statements may change context on us */
 	MemoryContextSwitchTo(PortalGetHeapMemory(portal));
@@ -1092,8 +1193,7 @@ PortalRunMulti(Portal portal,
 			   DestReceiver *dest, DestReceiver *altdest,
 			   char *completionTag)
 {
-	ListCell   *querylist_item;
-	ListCell   *planlist_item;
+	ListCell   *stmtlist_item;
 
 	/*
 	 * If the destination is DestRemoteExecute, change to DestNone.  The
@@ -1114,47 +1214,36 @@ PortalRunMulti(Portal portal,
 	 * Loop to handle the individual queries generated from a single parsetree
 	 * by analysis and rewrite.
 	 */
-	forboth(querylist_item, portal->parseTrees,
-			planlist_item, portal->planTrees)
+	foreach(stmtlist_item, portal->stmts)
 	{
-		Query	   *query = (Query *) lfirst(querylist_item);
-		Plan	   *plan = (Plan *) lfirst(planlist_item);
+		Node   *stmt = (Node *) lfirst(stmtlist_item);
 
 		/*
 		 * If we got a cancel signal in prior command, quit
 		 */
 		CHECK_FOR_INTERRUPTS();
 
-		if (query->commandType == CMD_UTILITY)
-		{
-			/*
-			 * process utility functions (create, destroy, etc..)
-			 */
-			Assert(plan == NULL);
-
-			PortalRunUtility(portal, query,
-							 query->canSetTag ? dest : altdest,
-							 completionTag);
-		}
-		else
+		if (IsA(stmt, PlannedStmt))
 		{
 			/*
 			 * process a plannable query.
 			 */
+			PlannedStmt *pstmt = (PlannedStmt *) stmt;
+
 			if (log_executor_stats)
 				ResetUsage();
 
-			if (query->canSetTag)
+			if (pstmt->canSetTag)
 			{
 				/* statement can set tag string */
-				ProcessQuery(query, plan,
+				ProcessQuery(pstmt,
 							 portal->portalParams,
 							 dest, completionTag);
 			}
 			else
 			{
 				/* stmt added by rewrite cannot set tag */
-				ProcessQuery(query, plan,
+				ProcessQuery(pstmt,
 							 portal->portalParams,
 							 altdest, NULL);
 			}
@@ -1162,12 +1251,25 @@ PortalRunMulti(Portal portal,
 			if (log_executor_stats)
 				ShowUsage("EXECUTOR STATISTICS");
 		}
+		else
+		{
+			/*
+			 * process utility functions (create, destroy, etc..)
+			 *
+			 * These are assumed canSetTag if they're the only stmt in the
+			 * portal.
+			 */
+			if (list_length(portal->stmts) == 1)
+				PortalRunUtility(portal, stmt, dest, completionTag);
+			else
+				PortalRunUtility(portal, stmt, altdest, NULL);
+		}
 
 		/*
 		 * Increment command counter between queries, but not after the last
 		 * one.
 		 */
-		if (lnext(planlist_item) != NULL)
+		if (lnext(stmtlist_item) != NULL)
 			CommandCounterIncrement();
 
 		/*

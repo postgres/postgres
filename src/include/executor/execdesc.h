@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/execdesc.h,v 1.33 2007/01/05 22:19:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/execdesc.h,v 1.34 2007/02/20 17:32:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #define EXECDESC_H
 
 #include "nodes/execnodes.h"
-#include "nodes/parsenodes.h"
+#include "nodes/plannodes.h"
 #include "tcop/dest.h"
 
 
@@ -24,15 +24,19 @@
  *		query descriptor:
  *
  *	a QueryDesc encapsulates everything that the executor
- *	needs to execute the query
+ *	needs to execute the query.
+ *
+ *	For the convenience of SQL-language functions, we also support QueryDescs
+ *	containing utility statements; these must not be passed to the executor
+ *	however.
  * ---------------------
  */
 typedef struct QueryDesc
 {
 	/* These fields are provided by CreateQueryDesc */
 	CmdType		operation;		/* CMD_SELECT, CMD_UPDATE, etc. */
-	Query	   *parsetree;		/* rewritten parsetree */
-	Plan	   *plantree;		/* planner's output */
+	PlannedStmt	*plannedstmt;	/* planner's output, or null if utility */
+	Node	   *utilitystmt;	/* utility statement, or null */
 	Snapshot	snapshot;		/* snapshot to use for query */
 	Snapshot	crosscheck_snapshot;	/* crosscheck for RI update/delete */
 	DestReceiver *dest;			/* the destination for tuple output */
@@ -46,12 +50,17 @@ typedef struct QueryDesc
 } QueryDesc;
 
 /* in pquery.c */
-extern QueryDesc *CreateQueryDesc(Query *parsetree, Plan *plantree,
+extern QueryDesc *CreateQueryDesc(PlannedStmt *plannedstmt,
 				Snapshot snapshot,
 				Snapshot crosscheck_snapshot,
 				DestReceiver *dest,
 				ParamListInfo params,
 				bool doInstrument);
+
+extern QueryDesc *CreateUtilityQueryDesc(Node *utilitystmt,
+				Snapshot snapshot,
+				DestReceiver *dest,
+				ParamListInfo params);
 
 extern void FreeQueryDesc(QueryDesc *qdesc);
 

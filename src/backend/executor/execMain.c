@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.286 2007/02/02 00:07:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.287 2007/02/20 17:32:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,8 @@ static void ExecProcessReturning(ProjectionInfo *projectReturning,
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
 static void ExecCheckRTEPerms(RangeTblEntry *rte);
-static void ExecCheckXactReadOnly(Query *parsetree);
+static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
+static void ExecCheckRangeTblReadOnly(List *rtable);
 static void EvalPlanQualStart(evalPlanQual *epq, EState *estate,
 				  evalPlanQual *priorepq);
 static void EvalPlanQualStop(evalPlanQual *epq);
@@ -139,7 +140,7 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 * planned to non-temporary tables.  EXPLAIN is considered read-only.
 	 */
 	if (XactReadOnly && !(eflags & EXEC_FLAG_EXPLAIN_ONLY))
-		ExecCheckXactReadOnly(queryDesc->parsetree);
+		ExecCheckXactReadOnly(queryDesc->plannedstmt);
 
 	/*
 	 * Build EState, switch into per-query memory context for startup.
@@ -154,9 +155,9 @@ ExecutorStart(QueryDesc *queryDesc, int eflags)
 	 */
 	estate->es_param_list_info = queryDesc->params;
 
-	if (queryDesc->plantree->nParamExec > 0)
+	if (queryDesc->plannedstmt->nParamExec > 0)
 		estate->es_param_exec_vals = (ParamExecData *)
-			palloc0(queryDesc->plantree->nParamExec * sizeof(ParamExecData));
+			palloc0(queryDesc->plannedstmt->nParamExec * sizeof(ParamExecData));
 
 	/*
 	 * Copy other important information into the EState
@@ -227,7 +228,7 @@ ExecutorRun(QueryDesc *queryDesc,
 	estate->es_lastoid = InvalidOid;
 
 	sendTuples = (operation == CMD_SELECT ||
-				  queryDesc->parsetree->returningList);
+				  queryDesc->plannedstmt->returningLists);
 
 	if (sendTuples)
 		(*dest->rStartup) (dest, operation, queryDesc->tupDesc);
@@ -414,26 +415,41 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
  * Check that the query does not imply any writes to non-temp tables.
  */
 static void
-ExecCheckXactReadOnly(Query *parsetree)
+ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 {
-	ListCell   *l;
-
 	/*
 	 * CREATE TABLE AS or SELECT INTO?
 	 *
 	 * XXX should we allow this if the destination is temp?
 	 */
-	if (parsetree->into != NULL)
+	if (plannedstmt->into != NULL)
 		goto fail;
 
 	/* Fail if write permissions are requested on any non-temp table */
-	foreach(l, parsetree->rtable)
+	ExecCheckRangeTblReadOnly(plannedstmt->rtable);
+
+	return;
+
+fail:
+	ereport(ERROR,
+			(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
+			 errmsg("transaction is read-only")));
+}
+
+static void
+ExecCheckRangeTblReadOnly(List *rtable)
+{
+	ListCell   *l;
+
+	/* Fail if write permissions are requested on any non-temp table */
+	foreach(l, rtable)
 	{
 		RangeTblEntry *rte = lfirst(l);
 
 		if (rte->rtekind == RTE_SUBQUERY)
 		{
-			ExecCheckXactReadOnly(rte->subquery);
+			Assert(!rte->subquery->into);
+			ExecCheckRangeTblReadOnly(rte->subquery->rtable);
 			continue;
 		}
 
@@ -469,11 +485,11 @@ static void
 InitPlan(QueryDesc *queryDesc, int eflags)
 {
 	CmdType		operation = queryDesc->operation;
-	Query	   *parseTree = queryDesc->parsetree;
-	Plan	   *plan = queryDesc->plantree;
+	PlannedStmt *plannedstmt = queryDesc->plannedstmt;
+	Plan	   *plan = plannedstmt->planTree;
+	List	   *rangeTable = plannedstmt->rtable;
 	EState	   *estate = queryDesc->estate;
 	PlanState  *planstate;
-	List	   *rangeTable;
 	TupleDesc	tupType;
 	ListCell   *l;
 
@@ -482,12 +498,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	 * rangetable here --- subplan RTEs will be checked during
 	 * ExecInitSubPlan().
 	 */
-	ExecCheckRTPerms(parseTree->rtable);
-
-	/*
-	 * get information from query descriptor
-	 */
-	rangeTable = parseTree->rtable;
+	ExecCheckRTPerms(rangeTable);
 
 	/*
 	 * initialize the node's execution state
@@ -495,50 +506,27 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	estate->es_range_table = rangeTable;
 
 	/*
-	 * if there is a result relation, initialize result relation stuff
+	 * initialize result relation stuff
 	 */
-	if (parseTree->resultRelation)
+	if (plannedstmt->resultRelations)
 	{
-		List	   *resultRelations = parseTree->resultRelations;
-		int			numResultRelations;
+		List	   *resultRelations = plannedstmt->resultRelations;
+		int			numResultRelations = list_length(resultRelations);
 		ResultRelInfo *resultRelInfos;
+		ResultRelInfo *resultRelInfo;
 
-		if (resultRelations != NIL)
+		resultRelInfos = (ResultRelInfo *)
+			palloc(numResultRelations * sizeof(ResultRelInfo));
+		resultRelInfo = resultRelInfos;
+		foreach(l, resultRelations)
 		{
-			/*
-			 * Multiple result relations (due to inheritance)
-			 * parseTree->resultRelations identifies them all
-			 */
-			ResultRelInfo *resultRelInfo;
-
-			numResultRelations = list_length(resultRelations);
-			resultRelInfos = (ResultRelInfo *)
-				palloc(numResultRelations * sizeof(ResultRelInfo));
-			resultRelInfo = resultRelInfos;
-			foreach(l, resultRelations)
-			{
-				initResultRelInfo(resultRelInfo,
-								  lfirst_int(l),
-								  rangeTable,
-								  operation,
-								  estate->es_instrument);
-				resultRelInfo++;
-			}
-		}
-		else
-		{
-			/*
-			 * Single result relation identified by parseTree->resultRelation
-			 */
-			numResultRelations = 1;
-			resultRelInfos = (ResultRelInfo *) palloc(sizeof(ResultRelInfo));
-			initResultRelInfo(resultRelInfos,
-							  parseTree->resultRelation,
+			initResultRelInfo(resultRelInfo,
+							  lfirst_int(l),
 							  rangeTable,
 							  operation,
 							  estate->es_instrument);
+			resultRelInfo++;
 		}
-
 		estate->es_result_relations = resultRelInfos;
 		estate->es_num_result_relations = numResultRelations;
 		/* Initialize to first or only result rel */
@@ -560,10 +548,10 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	 * correct tuple descriptors.  (Other SELECT INTO stuff comes later.)
 	 */
 	estate->es_select_into = false;
-	if (operation == CMD_SELECT && parseTree->into != NULL)
+	if (operation == CMD_SELECT && plannedstmt->into != NULL)
 	{
 		estate->es_select_into = true;
-		estate->es_into_oids = interpretOidsOption(parseTree->intoOptions);
+		estate->es_into_oids = interpretOidsOption(plannedstmt->into->options);
 	}
 
 	/*
@@ -572,7 +560,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	 * While we are at it, build the ExecRowMark list.
 	 */
 	estate->es_rowMarks = NIL;
-	foreach(l, parseTree->rowMarks)
+	foreach(l, plannedstmt->rowMarks)
 	{
 		RowMarkClause *rc = (RowMarkClause *) lfirst(l);
 		Oid			relid = getrelid(rc->rti, rangeTable);
@@ -600,13 +588,13 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	{
 		int			nSlots = ExecCountSlotsNode(plan);
 
-		if (parseTree->resultRelations != NIL)
-			nSlots += list_length(parseTree->resultRelations);
+		if (plannedstmt->resultRelations != NIL)
+			nSlots += list_length(plannedstmt->resultRelations);
 		else
 			nSlots += 1;
 		if (operation != CMD_SELECT)
 			nSlots++;			/* for es_trig_tuple_slot */
-		if (parseTree->returningLists)
+		if (plannedstmt->returningLists)
 			nSlots++;			/* for RETURNING projection */
 
 		estate->es_tupleTable = ExecCreateTupleTable(nSlots);
@@ -617,7 +605,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	/* mark EvalPlanQual not active */
-	estate->es_topPlan = plan;
+	estate->es_plannedstmt = plannedstmt;
 	estate->es_evalPlanQual = NULL;
 	estate->es_evTupleNull = NULL;
 	estate->es_evTuple = NULL;
@@ -683,7 +671,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 			 * junk filter.  Note this is only possible for UPDATE/DELETE, so
 			 * we can't be fooled by some needing a filter and some not.
 			 */
-			if (parseTree->resultRelations != NIL)
+			if (list_length(plannedstmt->resultRelations) > 1)
 			{
 				PlanState **appendplans;
 				int			as_nplans;
@@ -772,7 +760,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	/*
 	 * Initialize RETURNING projections if needed.
 	 */
-	if (parseTree->returningLists)
+	if (plannedstmt->returningLists)
 	{
 		TupleTableSlot *slot;
 		ExprContext *econtext;
@@ -782,7 +770,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		 * We set QueryDesc.tupDesc to be the RETURNING rowtype in this case.
 		 * We assume all the sublists will generate the same output tupdesc.
 		 */
-		tupType = ExecTypeFromTL((List *) linitial(parseTree->returningLists),
+		tupType = ExecTypeFromTL((List *) linitial(plannedstmt->returningLists),
 								 false);
 
 		/* Set up a slot for the output of the RETURNING projection(s) */
@@ -795,9 +783,9 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		 * Build a projection for each result rel.	Note that any SubPlans in
 		 * the RETURNING lists get attached to the topmost plan node.
 		 */
-		Assert(list_length(parseTree->returningLists) == estate->es_num_result_relations);
+		Assert(list_length(plannedstmt->returningLists) == estate->es_num_result_relations);
 		resultRelInfo = estate->es_result_relations;
-		foreach(l, parseTree->returningLists)
+		foreach(l, plannedstmt->returningLists)
 		{
 			List	   *rlist = (List *) lfirst(l);
 			List	   *rliststate;
@@ -2273,14 +2261,14 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	epqstate->es_into_relation_descriptor = estate->es_into_relation_descriptor;
 	epqstate->es_into_relation_use_wal = estate->es_into_relation_use_wal;
 	epqstate->es_param_list_info = estate->es_param_list_info;
-	if (estate->es_topPlan->nParamExec > 0)
+	if (estate->es_plannedstmt->nParamExec > 0)
 		epqstate->es_param_exec_vals = (ParamExecData *)
-			palloc0(estate->es_topPlan->nParamExec * sizeof(ParamExecData));
+			palloc0(estate->es_plannedstmt->nParamExec * sizeof(ParamExecData));
 	epqstate->es_rowMarks = estate->es_rowMarks;
 	epqstate->es_instrument = estate->es_instrument;
 	epqstate->es_select_into = estate->es_select_into;
 	epqstate->es_into_oids = estate->es_into_oids;
-	epqstate->es_topPlan = estate->es_topPlan;
+	epqstate->es_plannedstmt = estate->es_plannedstmt;
 
 	/*
 	 * Each epqstate must have its own es_evTupleNull state, but all the stack
@@ -2299,7 +2287,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	epqstate->es_tupleTable =
 		ExecCreateTupleTable(estate->es_tupleTable->size);
 
-	epq->planstate = ExecInitNode(estate->es_topPlan, epqstate, 0);
+	epq->planstate = ExecInitNode(estate->es_plannedstmt->planTree, epqstate, 0);
 
 	MemoryContextSwitchTo(oldcontext);
 }
@@ -2365,7 +2353,7 @@ typedef struct
 static void
 OpenIntoRel(QueryDesc *queryDesc)
 {
-	Query	   *parseTree = queryDesc->parsetree;
+	IntoClause *into = queryDesc->plannedstmt->into;
 	EState	   *estate = queryDesc->estate;
 	Relation	intoRelationDesc;
 	char	   *intoName;
@@ -2377,10 +2365,12 @@ OpenIntoRel(QueryDesc *queryDesc)
 	TupleDesc	tupdesc;
 	DR_intorel *myState;
 
+	Assert(into);
+
 	/*
 	 * Check consistency of arguments
 	 */
-	if (parseTree->intoOnCommit != ONCOMMIT_NOOP && !parseTree->into->istemp)
+	if (into->onCommit != ONCOMMIT_NOOP && !into->rel->istemp)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("ON COMMIT can only be used on temporary tables")));
@@ -2388,8 +2378,8 @@ OpenIntoRel(QueryDesc *queryDesc)
 	/*
 	 * Find namespace to create in, check its permissions
 	 */
-	intoName = parseTree->into->relname;
-	namespaceId = RangeVarGetCreationNamespace(parseTree->into);
+	intoName = into->rel->relname;
+	namespaceId = RangeVarGetCreationNamespace(into->rel);
 
 	aclresult = pg_namespace_aclcheck(namespaceId, GetUserId(),
 									  ACL_CREATE);
@@ -2401,16 +2391,16 @@ OpenIntoRel(QueryDesc *queryDesc)
 	 * Select tablespace to use.  If not specified, use default_tablespace
 	 * (which may in turn default to database's default).
 	 */
-	if (parseTree->intoTableSpaceName)
+	if (into->tableSpaceName)
 	{
-		tablespaceId = get_tablespace_oid(parseTree->intoTableSpaceName);
+		tablespaceId = get_tablespace_oid(into->tableSpaceName);
 		if (!OidIsValid(tablespaceId))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("tablespace \"%s\" does not exist",
-							parseTree->intoTableSpaceName)));
+							into->tableSpaceName)));
 	}
-	else if (parseTree->into->istemp)
+	else if (into->rel->istemp)
 	{
 		tablespaceId = GetTempTablespace();
 	}
@@ -2435,7 +2425,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 
 	/* Parse and validate any reloptions */
 	reloptions = transformRelOptions((Datum) 0,
-									 parseTree->intoOptions,
+									 into->options,
 									 true,
 									 false);
 	(void) heap_reloptions(RELKIND_RELATION, reloptions, true);
@@ -2454,7 +2444,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 											  false,
 											  true,
 											  0,
-											  parseTree->intoOnCommit,
+											  into->onCommit,
 											  reloptions,
 											  allowSystemTableMods);
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.155 2007/02/19 02:23:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.156 2007/02/20 17:32:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ static void
 ExplainOneQuery(Query *query, ExplainStmt *stmt, ParamListInfo params,
 				TupOutputState *tstate)
 {
-	Plan	   *plan;
+	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
 	bool		isCursor = false;
 	int			cursorOptions = 0;
@@ -203,7 +203,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, ParamListInfo params,
 	ActiveSnapshot->curcid = GetCurrentCommandId();
 
 	/* Create a QueryDesc requesting no output */
-	queryDesc = CreateQueryDesc(query, plan,
+	queryDesc = CreateQueryDesc(plan,
 								ActiveSnapshot, InvalidSnapshot,
 								None_Receiver, params,
 								stmt->analyze);
@@ -260,14 +260,14 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 
 	es->printNodes = stmt->verbose;
 	es->printAnalyze = stmt->analyze;
-	es->rtable = queryDesc->parsetree->rtable;
+	es->rtable = queryDesc->plannedstmt->rtable;
 
 	if (es->printNodes)
 	{
 		char	   *s;
 		char	   *f;
 
-		s = nodeToString(queryDesc->plantree);
+		s = nodeToString(queryDesc->plannedstmt->planTree);
 		if (s)
 		{
 			if (Explain_pretty_print)
@@ -282,7 +282,8 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 	}
 
 	initStringInfo(&buf);
-	explain_outNode(&buf, queryDesc->plantree, queryDesc->planstate,
+	explain_outNode(&buf,
+					queryDesc->plannedstmt->planTree, queryDesc->planstate,
 					NULL, 0, es);
 
 	/*

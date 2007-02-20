@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.136 2007/02/06 02:59:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.137 2007/02/20 17:32:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define EXECUTOR_H
 
 #include "executor/execdesc.h"
+#include "nodes/parsenodes.h"
 
 
 /*

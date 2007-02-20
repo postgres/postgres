@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.524 2007/02/17 19:33:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.525 2007/02/20 17:32:16 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -165,8 +165,7 @@ static int	InteractiveBackend(StringInfo inBuf);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
 static List *pg_rewrite_queries(List *querytree_list);
-static bool check_log_statement_raw(List *raw_parsetree_list);
-static bool check_log_statement_cooked(List *parsetree_list);
+static bool check_log_statement(List *stmt_list);
 static int	errdetail_execute(List *raw_parsetree_list);
 static int	errdetail_params(ParamListInfo params);
 static void start_xact_command(void);
@@ -659,10 +658,10 @@ pg_rewrite_queries(List *querytree_list)
 
 
 /* Generate a plan for a single already-rewritten query. */
-Plan *
+PlannedStmt *
 pg_plan_query(Query *querytree, ParamListInfo boundParams)
 {
-	Plan	   *plan;
+	PlannedStmt *plan;
 
 	/* Utility commands have no plans. */
 	if (querytree->commandType == CMD_UTILITY)
@@ -680,7 +679,7 @@ pg_plan_query(Query *querytree, ParamListInfo boundParams)
 #ifdef COPY_PARSE_PLAN_TREES
 	/* Optional debugging check: pass plan output through copyObject() */
 	{
-		Plan	   *new_plan = (Plan *) copyObject(plan);
+		PlannedStmt *new_plan = (PlannedStmt *) copyObject(plan);
 
 		/*
 		 * equal() currently does not have routines to compare Plan nodes, so
@@ -715,23 +714,26 @@ pg_plan_query(Query *querytree, ParamListInfo boundParams)
  * utility statements depend on not having frozen the snapshot yet.
  * (We assume that such statements cannot appear together with plannable
  * statements in the rewriter's output.)
+ *
+ * Normal optimizable statements generate PlannedStmt entries in the result
+ * list.  Utility statements are simply represented by their statement nodes.
  */
 List *
 pg_plan_queries(List *querytrees, ParamListInfo boundParams,
 				bool needSnapshot)
 {
-	List	   *plan_list = NIL;
+	List	   *stmt_list = NIL;
 	ListCell   *query_list;
 
 	foreach(query_list, querytrees)
 	{
 		Query	   *query = (Query *) lfirst(query_list);
-		Plan	   *plan;
+		Node	   *stmt;
 
 		if (query->commandType == CMD_UTILITY)
 		{
 			/* Utility commands have no plans. */
-			plan = NULL;
+			stmt = query->utilityStmt;
 		}
 		else
 		{
@@ -740,13 +742,13 @@ pg_plan_queries(List *querytrees, ParamListInfo boundParams,
 				ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 				needSnapshot = false;
 			}
-			plan = pg_plan_query(query, boundParams);
+			stmt = (Node *) pg_plan_query(query, boundParams);
 		}
 
-		plan_list = lappend(plan_list, plan);
+		stmt_list = lappend(stmt_list, stmt);
 	}
 
-	return plan_list;
+	return stmt_list;
 }
 
 
@@ -817,7 +819,7 @@ exec_simple_query(const char *query_string)
 	parsetree_list = pg_parse_query(query_string);
 
 	/* Log immediately if dictated by log_statement */
-	if (check_log_statement_raw(parsetree_list))
+	if (check_log_statement(parsetree_list))
 	{
 		ereport(LOG,
 				(errmsg("statement: %s", query_string),
@@ -905,7 +907,6 @@ exec_simple_query(const char *query_string)
 						  NULL,
 						  query_string,
 						  commandTag,
-						  querytree_list,
 						  plantree_list,
 						  MessageContext);
 
@@ -1050,9 +1051,10 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	List	   *parsetree_list;
 	const char *commandTag;
 	List	   *querytree_list,
-			   *plantree_list,
+			   *stmt_list,
 			   *param_list;
 	bool		is_named;
+	bool		fully_planned;
 	bool		save_log_statement_stats = log_statement_stats;
 	char		msec_str[32];
 
@@ -1202,17 +1204,23 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		 * planning until Bind.  Otherwise do it now.
 		 */
 		if (!is_named && numParams > 0)
-			plantree_list = NIL;
+		{
+			stmt_list = querytree_list;
+			fully_planned = false;
+		}
 		else
-			plantree_list = pg_plan_queries(querytree_list, NULL, true);
+		{
+			stmt_list = pg_plan_queries(querytree_list, NULL, true);
+			fully_planned = true;
+		}
 	}
 	else
 	{
 		/* Empty input string.	This is legal. */
 		commandTag = NULL;
-		querytree_list = NIL;
-		plantree_list = NIL;
+		stmt_list = NIL;
 		param_list = NIL;
+		fully_planned = true;
 	}
 
 	/* If we got a cancel signal in analysis or planning, quit */
@@ -1226,9 +1234,9 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		StorePreparedStatement(stmt_name,
 							   query_string,
 							   commandTag,
-							   querytree_list,
-							   plantree_list,
+							   stmt_list,
 							   param_list,
+							   fully_planned,
 							   false);
 	}
 	else
@@ -1240,9 +1248,9 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		pstmt->query_string = pstrdup(query_string);
 		/* the rest is there already */
 		pstmt->commandTag = commandTag;
-		pstmt->query_list = querytree_list;
-		pstmt->plan_list = plantree_list;
+		pstmt->stmt_list = stmt_list;
 		pstmt->argtype_list = param_list;
+		pstmt->fully_planned = fully_planned;
 		pstmt->from_sql = false;
 		pstmt->context = unnamed_stmt_context;
 		/* Now the unnamed statement is complete and valid */
@@ -1393,7 +1401,7 @@ exec_bind_message(StringInfo input_message)
 	 * functions.
 	 */
 	if (IsAbortedTransactionBlockState() &&
-		(!IsTransactionExitStmtList(pstmt->query_list) ||
+		(!IsTransactionExitStmtList(pstmt->stmt_list) ||
 		 numParams != 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
@@ -1581,21 +1589,20 @@ exec_bind_message(StringInfo input_message)
 	 * portal's queryContext becomes its own heap context rather than the
 	 * prepared statement's context.  FIXME someday
 	 */
-	if (pstmt->plan_list == NIL && pstmt->query_list != NIL)
+	if (pstmt->fully_planned)
+	{
+		plan_list = pstmt->stmt_list;
+		qContext = pstmt->context;
+	}
+	else
 	{
 		MemoryContext oldContext;
 
 		qContext = PortalGetHeapMemory(portal);
 		oldContext = MemoryContextSwitchTo(qContext);
-		query_list = copyObject(pstmt->query_list);
+		query_list = copyObject(pstmt->stmt_list);
 		plan_list = pg_plan_queries(query_list, params, true);
 		MemoryContextSwitchTo(oldContext);
-	}
-	else
-	{
-		query_list = pstmt->query_list;
-		plan_list = pstmt->plan_list;
-		qContext = pstmt->context;
 	}
 
 	/*
@@ -1605,7 +1612,6 @@ exec_bind_message(StringInfo input_message)
 					  *pstmt->stmt_name ? pstmt->stmt_name : NULL,
 					  pstmt->query_string,
 					  pstmt->commandTag,
-					  query_list,
 					  plan_list,
 					  qContext);
 
@@ -1688,13 +1694,13 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 */
 	if (portal->commandTag == NULL)
 	{
-		Assert(portal->parseTrees == NIL);
+		Assert(portal->stmts == NIL);
 		NullCommand(dest);
 		return;
 	}
 
 	/* Does the portal contain a transaction command? */
-	is_xact_command = IsTransactionStmtList(portal->parseTrees);
+	is_xact_command = IsTransactionStmtList(portal->stmts);
 
 	/*
 	 * We must copy the sourceText and prepStmtName into MessageContext in
@@ -1760,7 +1766,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	execute_is_fetch = !portal->atStart;
 
 	/* Log immediately if dictated by log_statement */
-	if (check_log_statement_cooked(portal->parseTrees))
+	if (check_log_statement(portal->stmts))
 	{
 		ereport(LOG,
 				(errmsg("%s %s%s%s%s%s",
@@ -1781,7 +1787,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 	 * actually run are those containing COMMIT or ROLLBACK commands.
 	 */
 	if (IsAbortedTransactionBlockState() &&
-		!IsTransactionExitStmtList(portal->parseTrees))
+		!IsTransactionExitStmtList(portal->stmts))
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 				 errmsg("current transaction is aborted, "
@@ -1865,15 +1871,16 @@ exec_execute_message(const char *portal_name, long max_rows)
 }
 
 /*
- * check_log_statement_raw
+ * check_log_statement
  *		Determine whether command should be logged because of log_statement
  *
- * raw_parsetree_list is the raw grammar output
+ * parsetree_list can be either raw grammar output or a list of planned
+ * statements
  */
 static bool
-check_log_statement_raw(List *raw_parsetree_list)
+check_log_statement(List *stmt_list)
 {
-	ListCell   *parsetree_item;
+	ListCell   *stmt_item;
 
 	if (log_statement == LOGSTMT_NONE)
 		return false;
@@ -1881,37 +1888,11 @@ check_log_statement_raw(List *raw_parsetree_list)
 		return true;
 
 	/* Else we have to inspect the statement(s) to see whether to log */
-	foreach(parsetree_item, raw_parsetree_list)
+	foreach(stmt_item, stmt_list)
 	{
-		Node	   *parsetree = (Node *) lfirst(parsetree_item);
+		Node	   *stmt = (Node *) lfirst(stmt_item);
 
-		if (GetCommandLogLevel(parsetree) <= log_statement)
-			return true;
-	}
-
-	return false;
-}
-
-/*
- * check_log_statement_cooked
- *		As above, but work from already-analyzed querytrees
- */
-static bool
-check_log_statement_cooked(List *parsetree_list)
-{
-	ListCell   *parsetree_item;
-
-	if (log_statement == LOGSTMT_NONE)
-		return false;
-	if (log_statement == LOGSTMT_ALL)
-		return true;
-
-	/* Else we have to inspect the statement(s) to see whether to log */
-	foreach(parsetree_item, parsetree_list)
-	{
-		Query	   *parsetree = (Query *) lfirst(parsetree_item);
-
-		if (GetQueryLogLevel(parsetree) <= log_statement)
+		if (GetCommandLogLevel(stmt) <= log_statement)
 			return true;
 	}
 
@@ -2259,6 +2240,7 @@ finish_xact_command(void)
  * ones that we allow in transaction-aborted state.
  */
 
+/* Test a bare parsetree */
 static bool
 IsTransactionExitStmt(Node *parsetree)
 {
@@ -2275,29 +2257,45 @@ IsTransactionExitStmt(Node *parsetree)
 	return false;
 }
 
+/* Test a list that might contain Query nodes or bare parsetrees */
 static bool
 IsTransactionExitStmtList(List *parseTrees)
 {
 	if (list_length(parseTrees) == 1)
 	{
-		Query	   *query = (Query *) linitial(parseTrees);
+		Node	   *stmt = (Node *) linitial(parseTrees);
 
-		if (query->commandType == CMD_UTILITY &&
-			IsTransactionExitStmt(query->utilityStmt))
+		if (IsA(stmt, Query))
+		{
+			Query	   *query = (Query *) stmt;
+
+			if (query->commandType == CMD_UTILITY &&
+				IsTransactionExitStmt(query->utilityStmt))
+				return true;
+		}
+		else if (IsTransactionExitStmt(stmt))
 			return true;
 	}
 	return false;
 }
 
+/* Test a list that might contain Query nodes or bare parsetrees */
 static bool
 IsTransactionStmtList(List *parseTrees)
 {
 	if (list_length(parseTrees) == 1)
 	{
-		Query	   *query = (Query *) linitial(parseTrees);
+		Node	   *stmt = (Node *) linitial(parseTrees);
 
-		if (query->commandType == CMD_UTILITY &&
-			query->utilityStmt && IsA(query->utilityStmt, TransactionStmt))
+		if (IsA(stmt, Query))
+		{
+			Query	   *query = (Query *) stmt;
+
+			if (query->commandType == CMD_UTILITY &&
+				IsA(query->utilityStmt, TransactionStmt))
+				return true;
+		}
+		else if (IsA(stmt, TransactionStmt))
 			return true;
 	}
 	return false;

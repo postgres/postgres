@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.213 2007/02/19 07:03:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.214 2007/02/20 17:32:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,13 +79,15 @@ static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
  *	   Query optimizer entry point
  *
  *****************************************************************************/
-Plan *
+PlannedStmt *
 planner(Query *parse, bool isCursor, int cursorOptions,
 		ParamListInfo boundParams)
 {
+	PlannedStmt *result;
 	PlannerGlobal *glob;
 	double		tuple_fraction;
-	Plan	   *result_plan;
+	PlannerInfo *root;
+	Plan	   *top_plan;
 
 	/*
 	 * Set up global state for this planner invocation.  This data is needed
@@ -117,7 +119,7 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 	}
 
 	/* primary planning entry point (may recurse for subqueries) */
-	result_plan = subquery_planner(glob, parse, 1, tuple_fraction, NULL);
+	top_plan = subquery_planner(glob, parse, 1, tuple_fraction, &root);
 
 	/*
 	 * If creating a plan for a scrollable cursor, make sure it can run
@@ -125,17 +127,27 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 	 */
 	if (isCursor && (cursorOptions & CURSOR_OPT_SCROLL))
 	{
-		if (!ExecSupportsBackwardScan(result_plan))
-			result_plan = materialize_finished_plan(result_plan);
+		if (!ExecSupportsBackwardScan(top_plan))
+			top_plan = materialize_finished_plan(top_plan);
 	}
 
 	/* final cleanup of the plan */
-	result_plan = set_plan_references(result_plan, parse->rtable);
+	top_plan = set_plan_references(top_plan, parse->rtable);
 
-	/* executor wants to know total number of Params used overall */
-	result_plan->nParamExec = list_length(glob->paramlist);
+	/* build the PlannedStmt result */
+	result = makeNode(PlannedStmt);
 
-	return result_plan;
+	result->commandType = parse->commandType;
+	result->canSetTag = parse->canSetTag;
+	result->planTree = top_plan;
+	result->rtable = parse->rtable;
+	result->resultRelations = root->resultRelations;
+	result->into = parse->into;
+	result->returningLists = root->returningLists;
+	result->rowMarks = parse->rowMarks;
+	result->nParamExec = list_length(glob->paramlist);
+
+	return result;
 }
 
 
@@ -150,8 +162,8 @@ planner(Query *parse, bool isCursor, int cursorOptions,
  * tuple_fraction is the fraction of tuples we expect will be retrieved.
  * tuple_fraction is interpreted as explained for grouping_planner, below.
  *
- * If subquery_pathkeys isn't NULL, it receives a list of pathkeys indicating
- * the output sort ordering of the completed plan.
+ * If subroot isn't NULL, we pass back the query's final PlannerInfo struct;
+ * among other things this tells the output sort ordering of the plan.
  *
  * Basically, this routine does the stuff that should only be done once
  * per Query object.  It then calls grouping_planner.  At one time,
@@ -168,7 +180,7 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 Plan *
 subquery_planner(PlannerGlobal *glob, Query *parse,
 				 Index level, double tuple_fraction,
-				 List **subquery_pathkeys)
+				 PlannerInfo **subroot)
 {
 	int			saved_plan_id = glob->next_plan_id;
 	PlannerInfo *root;
@@ -375,9 +387,9 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	if (root->glob->next_plan_id != saved_plan_id || root->query_level > 1)
 		SS_finalize_plan(root, plan);
 
-	/* Return sort ordering info if caller wants it */
-	if (subquery_pathkeys)
-		*subquery_pathkeys = root->query_pathkeys;
+	/* Return internal info if caller wants it */
+	if (subroot)
+		*subroot = root;
 
 	return plan;
 }
@@ -593,14 +605,14 @@ inheritance_planner(PlannerInfo *root)
 		/* Build list of per-relation RETURNING targetlists */
 		if (parse->returningList)
 		{
-			Assert(list_length(subroot.parse->returningLists) == 1);
+			Assert(list_length(subroot.returningLists) == 1);
 			returningLists = list_concat(returningLists,
-										 subroot.parse->returningLists);
+										 subroot.returningLists);
 		}
 	}
 
-	parse->resultRelations = resultRelations;
-	parse->returningLists = returningLists;
+	root->resultRelations = resultRelations;
+	root->returningLists = returningLists;
 
 	/* Mark result as unordered (probably unnecessary) */
 	root->query_pathkeys = NIL;
@@ -1101,8 +1113,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		rlist = set_returning_clause_references(parse->returningList,
 												result_plan,
 												parse->resultRelation);
-		parse->returningLists = list_make1(rlist);
+		root->returningLists = list_make1(rlist);
 	}
+	else
+		root->returningLists = NIL;
+
+	/* Compute result-relations list if needed */
+	if (parse->resultRelation)
+		root->resultRelations = list_make1_int(parse->resultRelation);
+	else
+		root->resultRelations = NIL;
 
 	/*
 	 * Return the actual output ordering in query_pathkeys for possible use by

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.272 2007/02/14 01:58:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.273 2007/02/20 17:32:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,36 +248,41 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 
 
 /*
- * QueryIsReadOnly: is an analyzed/rewritten query read-only?
+ * CommandIsReadOnly: is an executable query read-only?
  *
  * This is a much stricter test than we apply for XactReadOnly mode;
  * the query must be *in truth* read-only, because the caller wishes
  * not to do CommandCounterIncrement for it.
+ *
+ * Note: currently no need to support Query nodes here
  */
 bool
-QueryIsReadOnly(Query *parsetree)
+CommandIsReadOnly(Node *parsetree)
 {
-	switch (parsetree->commandType)
+	if (IsA(parsetree, PlannedStmt))
 	{
-		case CMD_SELECT:
-			if (parsetree->into != NULL)
-				return false;	/* SELECT INTO */
-			else if (parsetree->rowMarks != NIL)
-				return false;	/* SELECT FOR UPDATE/SHARE */
-			else
-				return true;
-		case CMD_UPDATE:
-		case CMD_INSERT:
-		case CMD_DELETE:
-			return false;
-		case CMD_UTILITY:
-			/* For now, treat all utility commands as read/write */
-			return false;
-		default:
-			elog(WARNING, "unrecognized commandType: %d",
-				 (int) parsetree->commandType);
-			break;
+		PlannedStmt *stmt = (PlannedStmt *) parsetree;
+
+		switch (stmt->commandType)
+		{
+			case CMD_SELECT:
+				if (stmt->into != NULL)
+					return false;	/* SELECT INTO */
+				else if (stmt->rowMarks != NIL)
+					return false;	/* SELECT FOR UPDATE/SHARE */
+				else
+					return true;
+			case CMD_UPDATE:
+			case CMD_INSERT:
+			case CMD_DELETE:
+				return false;
+			default:
+				elog(WARNING, "unrecognized commandType: %d",
+					 (int) stmt->commandType);
+				break;
+		}
 	}
+	/* For now, treat all utility commands as read/write */
 	return false;
 }
 
@@ -1161,7 +1166,7 @@ UtilityReturnsTuples(Node *parsetree)
 				entry = FetchPreparedStatement(stmt->name, false);
 				if (!entry)
 					return false;		/* not our business to raise error */
-				switch (ChoosePortalStrategy(entry->query_list))
+				switch (ChoosePortalStrategy(entry->stmt_list))
 				{
 					case PORTAL_ONE_SELECT:
 					case PORTAL_ONE_RETURNING:
@@ -1244,6 +1249,7 @@ UtilityTupleDescriptor(Node *parsetree)
  * QueryReturnsTuples
  *		Return "true" if this Query will send output to the destination.
  */
+#ifdef NOT_USED
 bool
 QueryReturnsTuples(Query *parsetree)
 {
@@ -1270,14 +1276,15 @@ QueryReturnsTuples(Query *parsetree)
 	}
 	return false;				/* default */
 }
+#endif
 
 
 /*
  * CreateCommandTag
- *		utility to get a string representation of the
- *		command operation, given a raw (un-analyzed) parsetree.
+ *		utility to get a string representation of the command operation,
+ *		given either a raw (un-analyzed) parsetree or a planned query.
  *
- * This must handle all raw command types, but since the vast majority
+ * This must handle all command types, but since the vast majority
  * of 'em are utility commands, it seems sensible to keep it here.
  *
  * NB: all result strings must be shorter than COMPLETION_TAG_BUFSIZE.
@@ -1290,6 +1297,7 @@ CreateCommandTag(Node *parsetree)
 
 	switch (nodeTag(parsetree))
 	{
+		/* raw plannable queries */
 		case T_InsertStmt:
 			tag = "INSERT";
 			break;
@@ -1306,6 +1314,7 @@ CreateCommandTag(Node *parsetree)
 			tag = "SELECT";
 			break;
 
+		/* utility statements --- same whether raw or cooked */
 		case T_TransactionStmt:
 			{
 				TransactionStmt *stmt = (TransactionStmt *) parsetree;
@@ -1826,65 +1835,98 @@ CreateCommandTag(Node *parsetree)
 			tag = "DEALLOCATE";
 			break;
 
+		/* already-planned queries */
+		case T_PlannedStmt:
+			{
+				PlannedStmt *stmt = (PlannedStmt *) parsetree;
+
+				switch (stmt->commandType)
+				{
+					case CMD_SELECT:
+						/*
+						 * We take a little extra care here so that the result
+						 * will be useful for complaints about read-only
+						 * statements
+						 */
+						if (stmt->into != NULL)
+							tag = "SELECT INTO";
+						else if (stmt->rowMarks != NIL)
+						{
+							if (((RowMarkClause *) linitial(stmt->rowMarks))->forUpdate)
+								tag = "SELECT FOR UPDATE";
+							else
+								tag = "SELECT FOR SHARE";
+						}
+						else
+							tag = "SELECT";
+						break;
+					case CMD_UPDATE:
+						tag = "UPDATE";
+						break;
+					case CMD_INSERT:
+						tag = "INSERT";
+						break;
+					case CMD_DELETE:
+						tag = "DELETE";
+						break;
+					default:
+						elog(WARNING, "unrecognized commandType: %d",
+							 (int) stmt->commandType);
+						tag = "???";
+						break;
+				}
+			}
+			break;
+
+		/* parsed-and-rewritten-but-not-planned queries */
+		case T_Query:
+			{
+				Query *stmt = (Query *) parsetree;
+
+				switch (stmt->commandType)
+				{
+					case CMD_SELECT:
+						/*
+						 * We take a little extra care here so that the result
+						 * will be useful for complaints about read-only
+						 * statements
+						 */
+						if (stmt->into != NULL)
+							tag = "SELECT INTO";
+						else if (stmt->rowMarks != NIL)
+						{
+							if (((RowMarkClause *) linitial(stmt->rowMarks))->forUpdate)
+								tag = "SELECT FOR UPDATE";
+							else
+								tag = "SELECT FOR SHARE";
+						}
+						else
+							tag = "SELECT";
+						break;
+					case CMD_UPDATE:
+						tag = "UPDATE";
+						break;
+					case CMD_INSERT:
+						tag = "INSERT";
+						break;
+					case CMD_DELETE:
+						tag = "DELETE";
+						break;
+					case CMD_UTILITY:
+						tag = CreateCommandTag(stmt->utilityStmt);
+						break;
+					default:
+						elog(WARNING, "unrecognized commandType: %d",
+							 (int) stmt->commandType);
+						tag = "???";
+						break;
+				}
+			}
+			break;
+
 		default:
 			elog(WARNING, "unrecognized node type: %d",
 				 (int) nodeTag(parsetree));
-			tag = "???";
-			break;
-	}
-
-	return tag;
-}
-
-/*
- * CreateQueryTag
- *		utility to get a string representation of a Query operation.
- *
- * This is exactly like CreateCommandTag, except it works on a Query
- * that has already been through parse analysis (and possibly further).
- */
-const char *
-CreateQueryTag(Query *parsetree)
-{
-	const char *tag;
-
-	Assert(IsA(parsetree, Query));
-
-	switch (parsetree->commandType)
-	{
-		case CMD_SELECT:
-
-			/*
-			 * We take a little extra care here so that the result will be
-			 * useful for complaints about read-only statements
-			 */
-			if (parsetree->into != NULL)
-				tag = "SELECT INTO";
-			else if (parsetree->rowMarks != NIL)
-			{
-				if (((RowMarkClause *) linitial(parsetree->rowMarks))->forUpdate)
-					tag = "SELECT FOR UPDATE";
-				else
-					tag = "SELECT FOR SHARE";
-			}
-			else
-				tag = "SELECT";
-			break;
-		case CMD_UPDATE:
-			tag = "UPDATE";
-			break;
-		case CMD_INSERT:
-			tag = "INSERT";
-			break;
-		case CMD_DELETE:
-			tag = "DELETE";
-			break;
-		case CMD_UTILITY:
-			tag = CreateCommandTag(parsetree->utilityStmt);
-			break;
-		default:
-			elog(WARNING, "unrecognized commandType: %d",
-				 (int) parsetree->commandType);
 			tag = "???";
 			break;
 	}
@@ -1896,9 +1938,9 @@ CreateQueryTag(Query *parsetree)
 /*
  * GetCommandLogLevel
  *		utility to get the minimum log_statement level for a command,
- *		given a raw (un-analyzed) parsetree.
+ *		given either a raw (un-analyzed) parsetree or a planned query.
  *
- * This must handle all raw command types, but since the vast majority
+ * This must handle all command types, but since the vast majority
  * of 'em are utility commands, it seems sensible to keep it here.
  */
 LogStmtLevel
@@ -1908,6 +1950,7 @@ GetCommandLogLevel(Node *parsetree)
 
 	switch (nodeTag(parsetree))
 	{
+		/* raw plannable queries */
 		case T_InsertStmt:
 		case T_DeleteStmt:
 		case T_UpdateStmt:
@@ -1921,6 +1964,7 @@ GetCommandLogLevel(Node *parsetree)
 				lev = LOGSTMT_ALL;
 			break;
 
+		/* utility statements --- same whether raw or cooked */
 		case T_TransactionStmt:
 			lev = LOGSTMT_ALL;
 			break;
@@ -2216,12 +2260,12 @@ GetCommandLogLevel(Node *parsetree)
 				pstmt = FetchPreparedStatement(stmt->name, false);
 				if (pstmt)
 				{
-					foreach(l, pstmt->query_list)
+					foreach(l, pstmt->stmt_list)
 					{
-						Query	   *query = (Query *) lfirst(l);
+						Node	   *substmt = (Node *) lfirst(l);
 						LogStmtLevel stmt_lev;
 
-						stmt_lev = GetQueryLogLevel(query);
+						stmt_lev = GetCommandLogLevel(substmt);
 						lev = Min(lev, stmt_lev);
 					}
 				}
@@ -2232,62 +2276,72 @@ GetCommandLogLevel(Node *parsetree)
 			lev = LOGSTMT_ALL;
 			break;
 
-		case T_Query:
+		/* already-planned queries */
+		case T_PlannedStmt:
+			{
+				PlannedStmt *stmt = (PlannedStmt *) parsetree;
 
-			/*
-			 * In complicated situations (eg, EXPLAIN ANALYZE in an extended
-			 * Query protocol), we might find an already-analyzed query within
-			 * a utility statement.  Cope.
-			 */
-			lev = GetQueryLogLevel((Query *) parsetree);
+				switch (stmt->commandType)
+				{
+					case CMD_SELECT:
+						if (stmt->into != NULL)
+							lev = LOGSTMT_DDL;	/* CREATE AS, SELECT INTO */
+						else
+							lev = LOGSTMT_ALL;
+						break;
+
+					case CMD_UPDATE:
+					case CMD_INSERT:
+					case CMD_DELETE:
+						lev = LOGSTMT_MOD;
+						break;
+
+					default:
+						elog(WARNING, "unrecognized commandType: %d",
+							 (int) stmt->commandType);
+						lev = LOGSTMT_ALL;
+						break;
+				}
+			}
+			break;
+
+		/* parsed-and-rewritten-but-not-planned queries */
+		case T_Query:
+			{
+				Query *stmt = (Query *) parsetree;
+
+				switch (stmt->commandType)
+				{
+					case CMD_SELECT:
+						if (stmt->into != NULL)
+							lev = LOGSTMT_DDL;	/* CREATE AS, SELECT INTO */
+						else
+							lev = LOGSTMT_ALL;
+						break;
+
+					case CMD_UPDATE:
+					case CMD_INSERT:
+					case CMD_DELETE:
+						lev = LOGSTMT_MOD;
+						break;
+
+					case CMD_UTILITY:
+						lev = GetCommandLogLevel(stmt->utilityStmt);
+						break;
+
+					default:
+						elog(WARNING, "unrecognized commandType: %d",
+							 (int) stmt->commandType);
+						lev = LOGSTMT_ALL;
+						break;
+				}
+
+			}
 			break;
 
 		default:
 			elog(WARNING, "unrecognized node type: %d",
 				 (int) nodeTag(parsetree));
-			lev = LOGSTMT_ALL;
-			break;
-	}
-
-	return lev;
-}
-
-/*
- * GetQueryLogLevel
- *		utility to get the minimum log_statement level for a Query operation.
- *
- * This is exactly like GetCommandLogLevel, except it works on a Query
- * that has already been through parse analysis (and possibly further).
- */
-LogStmtLevel
-GetQueryLogLevel(Query *parsetree)
-{
-	LogStmtLevel lev;
-
-	Assert(IsA(parsetree, Query));
-
-	switch (parsetree->commandType)
-	{
-		case CMD_SELECT:
-			if (parsetree->into != NULL)
-				lev = LOGSTMT_DDL;		/* CREATE AS, SELECT INTO */
-			else
-				lev = LOGSTMT_ALL;
-			break;
-
-		case CMD_UPDATE:
-		case CMD_INSERT:
-		case CMD_DELETE:
-			lev = LOGSTMT_MOD;
-			break;
-
-		case CMD_UTILITY:
-			lev = GetCommandLogLevel(parsetree->utilityStmt);
-			break;
-
-		default:
-			elog(WARNING, "unrecognized commandType: %d",
-				 (int) parsetree->commandType);
 			lev = LOGSTMT_ALL;
 			break;
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.110 2007/02/02 00:02:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.111 2007/02/20 17:32:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,8 @@
 
 /*
  * We have an execution_state record for each query in a function.	Each
- * record contains a querytree and plantree for its query.	If the query
- * is currently in F_EXEC_RUN state then there's a QueryDesc too.
+ * record contains a plantree for its query.  If the query is currently in
+ * F_EXEC_RUN state then there's a QueryDesc too.
  */
 typedef enum
 {
@@ -45,8 +45,7 @@ typedef struct local_es
 {
 	struct local_es *next;
 	ExecStatus	status;
-	Query	   *query;
-	Plan	   *plan;
+	Node	   *stmt;			/* PlannedStmt or utility statement */
 	QueryDesc  *qd;				/* null unless status == RUN */
 } execution_state;
 
@@ -105,26 +104,30 @@ init_execution_state(List *queryTree_list, bool readonly_func)
 	foreach(qtl_item, queryTree_list)
 	{
 		Query	   *queryTree = lfirst(qtl_item);
-		Plan	   *planTree;
+		Node	   *stmt;
 		execution_state *newes;
 
+		Assert(IsA(queryTree, Query));
+
+		if (queryTree->commandType == CMD_UTILITY)
+			stmt = queryTree->utilityStmt;
+		else
+			stmt = (Node *) pg_plan_query(queryTree, NULL);
+
 		/* Precheck all commands for validity in a function */
-		if (queryTree->commandType == CMD_UTILITY &&
-			IsA(queryTree->utilityStmt, TransactionStmt))
+		if (IsA(stmt, TransactionStmt))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			/* translator: %s is a SQL statement name */
 					 errmsg("%s is not allowed in a SQL function",
-							CreateQueryTag(queryTree))));
+							CreateCommandTag(stmt))));
 
-		if (readonly_func && !QueryIsReadOnly(queryTree))
+		if (readonly_func && !CommandIsReadOnly(stmt))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			/* translator: %s is a SQL statement name */
 					 errmsg("%s is not allowed in a non-volatile function",
-							CreateQueryTag(queryTree))));
-
-		planTree = pg_plan_query(queryTree, NULL);
+							CreateCommandTag(stmt))));
 
 		newes = (execution_state *) palloc(sizeof(execution_state));
 		if (preves)
@@ -134,8 +137,7 @@ init_execution_state(List *queryTree_list, bool readonly_func)
 
 		newes->next = NULL;
 		newes->status = F_EXEC_START;
-		newes->query = queryTree;
-		newes->plan = planTree;
+		newes->stmt = stmt;
 		newes->qd = NULL;
 
 		preves = newes;
@@ -298,10 +300,16 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 		snapshot = CopySnapshot(GetTransactionSnapshot());
 	}
 
-	es->qd = CreateQueryDesc(es->query, es->plan,
-							 snapshot, InvalidSnapshot,
-							 None_Receiver,
-							 fcache->paramLI, false);
+	if (IsA(es->stmt, PlannedStmt))
+		es->qd = CreateQueryDesc((PlannedStmt *) es->stmt,
+								 snapshot, InvalidSnapshot,
+								 None_Receiver,
+								 fcache->paramLI, false);
+	else
+		es->qd = CreateUtilityQueryDesc(es->stmt,
+										snapshot,
+										None_Receiver,
+										fcache->paramLI);
 
 	/* We assume we don't need to set up ActiveSnapshot for ExecutorStart */
 
@@ -337,7 +345,7 @@ postquel_getnext(execution_state *es)
 
 		if (es->qd->operation == CMD_UTILITY)
 		{
-			ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->params,
+			ProcessUtility(es->qd->utilitystmt, es->qd->params,
 						   es->qd->dest, NULL);
 			result = NULL;
 		}
@@ -351,7 +359,7 @@ postquel_getnext(execution_state *es)
 			 */
 			if (LAST_POSTQUEL_COMMAND(es) &&
 				es->qd->operation == CMD_SELECT &&
-				es->qd->parsetree->into == NULL)
+				es->qd->plannedstmt->into == NULL)
 				count = 1L;
 			else
 				count = 0L;

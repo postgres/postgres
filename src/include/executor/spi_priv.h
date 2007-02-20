@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.26 2007/01/05 22:19:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.27 2007/02/20 17:32:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,10 +35,11 @@ typedef struct
 	MemoryContext plancxt;
 	/* Original query string (used for error reporting) */
 	const char *query;
-	/* List of List of querytrees; one sublist per original parsetree */
-	List	   *qtlist;
-	/* List of plan trees --- length == # of querytrees, but flat list */
-	List	   *ptlist;
+	/*
+	 * List of List of PlannedStmts and utility stmts; one sublist per
+	 * original parsetree
+	 */
+	List	   *stmt_list_list;
 	/* Argument types, if a prepared plan */
 	int			nargs;
 	Oid		   *argtypes;

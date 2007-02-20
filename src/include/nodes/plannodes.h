@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.90 2007/02/19 02:23:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.91 2007/02/20 17:32:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,48 @@
  *						node definitions
  * ----------------------------------------------------------------
  */
+
+/* ----------------
+ *		PlannedStmt node
+ *
+ * The output of the planner is a Plan tree headed by a PlannedStmt node.
+ * PlannedStmt holds the "one time" information needed by the executor.
+ * ----------------
+ */
+typedef struct PlannedStmt
+{
+	NodeTag		type;
+
+	CmdType		commandType;	/* select|insert|update|delete */
+
+	bool		canSetTag;		/* do I set the command result tag? */
+
+	struct Plan *planTree;		/* tree of Plan nodes */
+
+	List	   *rtable;			/* list of RangeTblEntry nodes */
+
+	/* rtable indexes of target relations for INSERT/UPDATE/DELETE */
+	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
+
+	IntoClause *into;			/* target for SELECT INTO / CREATE TABLE AS */
+
+	/*
+	 * If the query has a returningList then the planner will store a list of
+	 * processed targetlists (one per result relation) here.  We must have a
+	 * separate RETURNING targetlist for each result rel because column
+	 * numbers may vary within an inheritance tree.  In the targetlists, Vars
+	 * referencing the result relation will have their original varno and
+	 * varattno, while Vars referencing other rels will be converted to have
+	 * varno OUTER and varattno referencing a resjunk entry in the top plan
+	 * node's targetlist.
+	 */
+	List	   *returningLists; /* list of lists of TargetEntry, or NIL */
+
+	List	   *rowMarks;		/* a list of RowMarkClause's */
+
+	int			nParamExec;		/* number of PARAM_EXEC Params used */
+} PlannedStmt;
+
 
 /* ----------------
  *		Plan node
@@ -75,15 +117,6 @@ typedef struct Plan
 	 */
 	Bitmapset  *extParam;
 	Bitmapset  *allParam;
-
-	/*
-	 * We really need in some TopPlan node to store range table and
-	 * resultRelation from Query there and get rid of Query itself from
-	 * Executor. Some other stuff like below could be put there, too.
-	 */
-	int			nParamExec;		/* Number of them in entire query. This is to
-								 * get Executor know about how many PARAM_EXEC
-								 * there are in query plan. */
 } Plan;
 
 /* ----------------

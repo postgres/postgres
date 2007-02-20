@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.360 2007/02/01 19:10:27 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.361 2007/02/20 17:32:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2143,11 +2143,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	if (stmt->into)
 	{
 		qry->into = stmt->into;
-		if (stmt->intoColNames)
-			applyColumnNames(qry->targetList, stmt->intoColNames);
-		qry->intoOptions = copyObject(stmt->intoOptions);
-		qry->intoOnCommit = stmt->intoOnCommit;
-		qry->intoTableSpaceName = stmt->intoTableSpaceName;
+		if (stmt->into->colNames)
+			applyColumnNames(qry->targetList, stmt->into->colNames);
 	}
 
 	qry->rtable = pstate->p_rtable;
@@ -2315,11 +2312,8 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 	if (stmt->into)
 	{
 		qry->into = stmt->into;
-		if (stmt->intoColNames)
-			applyColumnNames(qry->targetList, stmt->intoColNames);
-		qry->intoOptions = copyObject(stmt->intoOptions);
-		qry->intoOnCommit = stmt->intoOnCommit;
-		qry->intoTableSpaceName = stmt->intoTableSpaceName;
+		if (stmt->into->colNames)
+			applyColumnNames(qry->targetList, stmt->into->colNames);
 	}
 
 	/*
@@ -2399,9 +2393,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 
 	/*
 	 * Find leftmost leaf SelectStmt; extract the one-time-only items from it
-	 * and from the top-level node.  (Most of the INTO options can be
-	 * transferred to the Query immediately, but intoColNames has to be saved
-	 * to apply below.)
+	 * and from the top-level node.
 	 */
 	leftmostSelect = stmt->larg;
 	while (leftmostSelect && leftmostSelect->op != SETOP_NONE)
@@ -2411,10 +2403,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	if (leftmostSelect->into)
 	{
 		qry->into = leftmostSelect->into;
-		intoColNames = leftmostSelect->intoColNames;
-		qry->intoOptions = copyObject(leftmostSelect->intoOptions);
-		qry->intoOnCommit = leftmostSelect->intoOnCommit;
-		qry->intoTableSpaceName = leftmostSelect->intoTableSpaceName;
+		intoColNames = leftmostSelect->into->colNames;
 	}
 
 	/* clear this to prevent complaints in transformSetOperationTree() */

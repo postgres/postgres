@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.68 2007/01/28 19:05:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.69 2007/02/20 17:32:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,9 +114,9 @@ PrepareQuery(PrepareStmt *stmt)
 	StorePreparedStatement(stmt->name,
 						   debug_query_string,
 						   commandTag,
-						   query_list,
 						   plan_list,
 						   stmt->argtype_oids,
+						   true,
 						   true);
 }
 
@@ -129,8 +129,7 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 {
 	PreparedStatement *entry;
 	char	   *query_string;
-	List	   *query_list,
-			   *plan_list;
+	List	   *plan_list;
 	MemoryContext qcontext;
 	ParamListInfo paramLI = NULL;
 	EState	   *estate = NULL;
@@ -139,12 +138,17 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 	/* Look it up in the hash table */
 	entry = FetchPreparedStatement(stmt->name, true);
 
-	query_string = entry->query_string;
-	query_list = entry->query_list;
-	plan_list = entry->plan_list;
-	qcontext = entry->context;
+	/*
+	 * Punt if not fully planned.  (Currently, that only happens for the
+	 * protocol-level unnamed statement, which can't be accessed from SQL;
+	 * so there's no point in doing more than a quick check here.)
+	 */
+	if (!entry->fully_planned)
+		elog(ERROR, "EXECUTE does not support unplanned prepared statements");
 
-	Assert(list_length(query_list) == list_length(plan_list));
+	query_string = entry->query_string;
+	plan_list = entry->stmt_list;
+	qcontext = entry->context;
 
 	/* Evaluate parameters, if any */
 	if (entry->argtype_list != NIL)
@@ -172,30 +176,26 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 	if (stmt->into)
 	{
 		MemoryContext oldContext;
-		Query	   *query;
+		PlannedStmt *pstmt;
 
-		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+		qcontext = PortalGetHeapMemory(portal);
+		oldContext = MemoryContextSwitchTo(qcontext);
 
 		if (query_string)
 			query_string = pstrdup(query_string);
-		query_list = copyObject(query_list);
 		plan_list = copyObject(plan_list);
-		qcontext = PortalGetHeapMemory(portal);
 
-		if (list_length(query_list) != 1)
+		if (list_length(plan_list) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
-		query = (Query *) linitial(query_list);
-		if (query->commandType != CMD_SELECT)
+		pstmt = (PlannedStmt *) linitial(plan_list);
+		if (!IsA(pstmt, PlannedStmt) ||
+			pstmt->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
-		query->into = copyObject(stmt->into);
-		query->intoOptions = copyObject(stmt->intoOptions);
-		query->intoOnCommit = stmt->into_on_commit;
-		if (stmt->into_tbl_space)
-			query->intoTableSpaceName = pstrdup(stmt->into_tbl_space);
+		pstmt->into = copyObject(stmt->into);
 
 		MemoryContextSwitchTo(oldContext);
 	}
@@ -204,7 +204,6 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 					  NULL,
 					  query_string,
 					  entry->commandTag,
-					  query_list,
 					  plan_list,
 					  qcontext);
 
@@ -305,9 +304,9 @@ void
 StorePreparedStatement(const char *stmt_name,
 					   const char *query_string,
 					   const char *commandTag,
-					   List *query_list,
-					   List *plan_list,
+					   List *stmt_list,
 					   List *argtype_list,
+					   bool fully_planned,
 					   bool from_sql)
 {
 	PreparedStatement *entry;
@@ -345,8 +344,7 @@ StorePreparedStatement(const char *stmt_name,
 	 * incomplete (ie corrupt) hashtable entry.
 	 */
 	qstring = query_string ? pstrdup(query_string) : NULL;
-	query_list = (List *) copyObject(query_list);
-	plan_list = (List *) copyObject(plan_list);
+	stmt_list = (List *) copyObject(stmt_list);
 	argtype_list = list_copy(argtype_list);
 
 	/* Now we can add entry to hash table */
@@ -363,12 +361,12 @@ StorePreparedStatement(const char *stmt_name,
 	/* Fill in the hash table entry with copied data */
 	entry->query_string = qstring;
 	entry->commandTag = commandTag;
-	entry->query_list = query_list;
-	entry->plan_list = plan_list;
+	entry->stmt_list = stmt_list;
 	entry->argtype_list = argtype_list;
+	entry->fully_planned = fully_planned;
+	entry->from_sql = from_sql;
 	entry->context = entrycxt;
 	entry->prepare_time = GetCurrentStatementStartTimestamp();
-	entry->from_sql = from_sql;
 
 	MemoryContextSwitchTo(oldcxt);
 }
@@ -426,21 +424,54 @@ FetchPreparedStatementParams(const char *stmt_name)
 TupleDesc
 FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 {
+	Node	   *node;
 	Query	   *query;
+	PlannedStmt *pstmt;
 
-	switch (ChoosePortalStrategy(stmt->query_list))
+	switch (ChoosePortalStrategy(stmt->stmt_list))
 	{
 		case PORTAL_ONE_SELECT:
-			query = (Query *) linitial(stmt->query_list);
-			return ExecCleanTypeFromTL(query->targetList, false);
+			node = (Node *) linitial(stmt->stmt_list);
+			if (IsA(node, Query))
+			{
+				query = (Query *) node;
+				return ExecCleanTypeFromTL(query->targetList, false);
+			}
+			if (IsA(node, PlannedStmt))
+			{
+				pstmt = (PlannedStmt *) node;
+				return ExecCleanTypeFromTL(pstmt->planTree->targetlist, false);
+			}
+			/* other cases shouldn't happen, but return NULL */
+			break;
 
 		case PORTAL_ONE_RETURNING:
-			query = PortalListGetPrimaryQuery(stmt->query_list);
-			return ExecCleanTypeFromTL(query->returningList, false);
+			node = PortalListGetPrimaryStmt(stmt->stmt_list);
+			if (IsA(node, Query))
+			{
+				query = (Query *) node;
+				Assert(query->returningList);
+				return ExecCleanTypeFromTL(query->returningList, false);
+			}
+			if (IsA(node, PlannedStmt))
+			{
+				pstmt = (PlannedStmt *) node;
+				Assert(pstmt->returningLists);
+				return ExecCleanTypeFromTL((List *) linitial(pstmt->returningLists), false);
+			}
+			/* other cases shouldn't happen, but return NULL */
+			break;
 
 		case PORTAL_UTIL_SELECT:
-			query = (Query *) linitial(stmt->query_list);
-			return UtilityTupleDescriptor(query->utilityStmt);
+			node = (Node *) linitial(stmt->stmt_list);
+			if (IsA(node, Query))
+			{
+				query = (Query *) node;
+				Assert(query->utilityStmt);
+				return UtilityTupleDescriptor(query->utilityStmt);
+			}
+			/* else it's a bare utility statement */
+			return UtilityTupleDescriptor(node);
 
 		case PORTAL_MULTI_QUERY:
 			/* will not return tuples */
@@ -460,7 +491,7 @@ FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 bool
 PreparedStatementReturnsTuples(PreparedStatement *stmt)
 {
-	switch (ChoosePortalStrategy(stmt->query_list))
+	switch (ChoosePortalStrategy(stmt->stmt_list))
 	{
 		case PORTAL_ONE_SELECT:
 		case PORTAL_ONE_RETURNING:
@@ -480,52 +511,15 @@ PreparedStatementReturnsTuples(PreparedStatement *stmt)
  * targetlist.
  *
  * Note: do not modify the result.
- *
- * XXX be careful to keep this in sync with FetchPortalTargetList,
- * and with UtilityReturnsTuples.
  */
 List *
 FetchPreparedStatementTargetList(PreparedStatement *stmt)
 {
-	PortalStrategy strategy = ChoosePortalStrategy(stmt->query_list);
-
-	if (strategy == PORTAL_ONE_SELECT)
-		return ((Query *) linitial(stmt->query_list))->targetList;
-	if (strategy == PORTAL_ONE_RETURNING)
-		return (PortalListGetPrimaryQuery(stmt->query_list))->returningList;
-	if (strategy == PORTAL_UTIL_SELECT)
-	{
-		Node	   *utilityStmt;
-
-		utilityStmt = ((Query *) linitial(stmt->query_list))->utilityStmt;
-		switch (nodeTag(utilityStmt))
-		{
-			case T_FetchStmt:
-				{
-					FetchStmt  *substmt = (FetchStmt *) utilityStmt;
-					Portal		subportal;
-
-					Assert(!substmt->ismove);
-					subportal = GetPortalByName(substmt->portalname);
-					Assert(PortalIsValid(subportal));
-					return FetchPortalTargetList(subportal);
-				}
-
-			case T_ExecuteStmt:
-				{
-					ExecuteStmt *substmt = (ExecuteStmt *) utilityStmt;
-					PreparedStatement *entry;
-
-					Assert(!substmt->into);
-					entry = FetchPreparedStatement(substmt->name, true);
-					return FetchPreparedStatementTargetList(entry);
-				}
-
-			default:
-				break;
-		}
-	}
-	return NIL;
+	/* no point in looking if it doesn't return tuples */
+	if (ChoosePortalStrategy(stmt->stmt_list) == PORTAL_MULTI_QUERY)
+		return NIL;
+	/* get the primary statement and find out what it returns */
+	return FetchStatementTargetList(PortalListGetPrimaryStmt(stmt->stmt_list));
 }
 
 /*
@@ -574,10 +568,8 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 {
 	ExecuteStmt *execstmt = (ExecuteStmt *) stmt->query->utilityStmt;
 	PreparedStatement *entry;
-	ListCell   *q,
-			   *p;
-	List	   *query_list,
-			   *plan_list;
+	List	   *plan_list;
+	ListCell   *p;
 	ParamListInfo paramLI = NULL;
 	EState	   *estate = NULL;
 
@@ -587,10 +579,15 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 	/* Look it up in the hash table */
 	entry = FetchPreparedStatement(execstmt->name, true);
 
-	query_list = entry->query_list;
-	plan_list = entry->plan_list;
+	/*
+	 * Punt if not fully planned.  (Currently, that only happens for the
+	 * protocol-level unnamed statement, which can't be accessed from SQL;
+	 * so there's no point in doing more than a quick check here.)
+	 */
+	if (!entry->fully_planned)
+		elog(ERROR, "EXPLAIN EXECUTE does not support unplanned prepared statements");
 
-	Assert(list_length(query_list) == list_length(plan_list));
+	plan_list = entry->stmt_list;
 
 	/* Evaluate parameters, if any */
 	if (entry->argtype_list != NIL)
@@ -606,17 +603,16 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 	}
 
 	/* Explain each query */
-	forboth(q, query_list, p, plan_list)
+	foreach(p, plan_list)
 	{
-		Query	   *query = (Query *) lfirst(q);
-		Plan	   *plan = (Plan *) lfirst(p);
+		PlannedStmt *pstmt = (PlannedStmt *) lfirst(p);
 		bool		is_last_query;
 
 		is_last_query = (lnext(p) == NULL);
 
-		if (query->commandType == CMD_UTILITY)
+		if (!IsA(pstmt, PlannedStmt))
 		{
-			if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
+			if (IsA(pstmt, NotifyStmt))
 				do_text_output_oneline(tstate, "NOTIFY");
 			else
 				do_text_output_oneline(tstate, "UTILITY");
@@ -627,15 +623,15 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 
 			if (execstmt->into)
 			{
-				if (query->commandType != CMD_SELECT)
+				if (pstmt->commandType != CMD_SELECT)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 							 errmsg("prepared statement is not a SELECT")));
 
-				/* Copy the query so we can modify it */
-				query = copyObject(query);
+				/* Copy the stmt so we can modify it */
+				pstmt = copyObject(pstmt);
 
-				query->into = execstmt->into;
+				pstmt->into = execstmt->into;
 			}
 
 			/*
@@ -648,7 +644,7 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 			ActiveSnapshot->curcid = GetCurrentCommandId();
 
 			/* Create a QueryDesc requesting no output */
-			qdesc = CreateQueryDesc(query, plan,
+			qdesc = CreateQueryDesc(pstmt,
 									ActiveSnapshot, InvalidSnapshot,
 									None_Receiver,
 									paramLI, stmt->analyze);

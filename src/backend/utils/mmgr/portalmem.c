@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.98 2007/01/05 22:19:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.99 2007/02/20 17:32:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,29 +141,45 @@ GetPortalByName(const char *name)
 }
 
 /*
- * PortalListGetPrimaryQuery
- *		Get the "primary" Query within a portal, ie, the one marked canSetTag.
+ * PortalListGetPrimaryStmt
+ *		Get the "primary" stmt within a portal, ie, the one marked canSetTag.
  *
- * Returns NULL if no such Query.  If multiple Query structs within the
+ * Returns NULL if no such stmt.  If multiple PlannedStmt structs within the
  * portal are marked canSetTag, returns the first one.	Neither of these
  * cases should occur in present usages of this function.
  *
+ * Copes if given a list of Querys --- can't happen in a portal, but this
+ * code also supports prepared statements, which need both cases.
+ *
  * Note: the reason this is just handed a List is so that prepared statements
- * can share the code.	For use with a portal, use PortalGetPrimaryQuery
+ * can share the code.	For use with a portal, use PortalGetPrimaryStmt
  * rather than calling this directly.
  */
-Query *
-PortalListGetPrimaryQuery(List *parseTrees)
+Node *
+PortalListGetPrimaryStmt(List *stmts)
 {
 	ListCell   *lc;
 
-	foreach(lc, parseTrees)
+	foreach(lc, stmts)
 	{
-		Query	   *query = (Query *) lfirst(lc);
+		Node   *stmt = (Node *) lfirst(lc);
 
-		Assert(IsA(query, Query));
-		if (query->canSetTag)
-			return query;
+		if (IsA(stmt, PlannedStmt))
+		{
+			if (((PlannedStmt *) stmt)->canSetTag)
+				return stmt;
+		}
+		else if (IsA(stmt, Query))
+		{
+			if (((Query *) stmt)->canSetTag)
+				return stmt;
+		}
+		else
+		{
+			/* Utility stmts are assumed canSetTag if they're the only stmt */
+			if (list_length(stmts) == 1)
+				return stmt;
+		}
 	}
 	return NULL;
 }
@@ -261,30 +277,25 @@ CreateNewPortal(void)
  * (before rewriting) was an empty string.	Also, the passed commandTag must
  * be a pointer to a constant string, since it is not copied.  The caller is
  * responsible for ensuring that the passed prepStmtName (if any), sourceText
- * (if any), parse and plan trees have adequate lifetime.  Also, queryContext
- * must accurately describe the location of the parse trees.
+ * (if any), and plan trees have adequate lifetime.
  */
 void
 PortalDefineQuery(Portal portal,
 				  const char *prepStmtName,
 				  const char *sourceText,
 				  const char *commandTag,
-				  List *parseTrees,
-				  List *planTrees,
+				  List *stmts,
 				  MemoryContext queryContext)
 {
 	AssertArg(PortalIsValid(portal));
 	AssertState(portal->queryContext == NULL);	/* else defined already */
 
-	Assert(list_length(parseTrees) == list_length(planTrees));
-
-	Assert(commandTag != NULL || parseTrees == NIL);
+	Assert(commandTag != NULL || stmts == NIL);
 
 	portal->prepStmtName = prepStmtName;
 	portal->sourceText = sourceText;
 	portal->commandTag = commandTag;
-	portal->parseTrees = parseTrees;
-	portal->planTrees = planTrees;
+	portal->stmts = stmts;
 	portal->queryContext = queryContext;
 }
 

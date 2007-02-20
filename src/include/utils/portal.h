@@ -12,7 +12,7 @@
  * to let the client suspend an update-type query partway through!	Because
  * the query rewriter does not allow arbitrary ON SELECT rewrite rules,
  * only queries that were originally update-type could produce multiple
- * parse/plan trees; so the restriction to a single query is not a problem
+ * plan trees; so the restriction to a single query is not a problem
  * in practice.
  *
  * For SQL cursors, we support three kinds of scroll behavior:
@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.72 2007/01/05 22:19:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.73 2007/02/20 17:32:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,9 +124,8 @@ typedef struct PortalData
 	/* The query or queries the portal will execute */
 	const char *sourceText;		/* text of query, if known (may be NULL) */
 	const char *commandTag;		/* command tag for original query */
-	List	   *parseTrees;		/* parse tree(s) */
-	List	   *planTrees;		/* plan tree(s) */
-	MemoryContext queryContext; /* where the parse trees live */
+	List	   *stmts;			/* PlannedStmts and/or utility statements */
+	MemoryContext queryContext; /* where the plan trees live */
 
 	/*
 	 * Note: queryContext effectively identifies which prepared statement the
@@ -191,7 +190,7 @@ typedef struct PortalData
  */
 #define PortalGetQueryDesc(portal)	((portal)->queryDesc)
 #define PortalGetHeapMemory(portal) ((portal)->heap)
-#define PortalGetPrimaryQuery(portal) PortalListGetPrimaryQuery((portal)->parseTrees)
+#define PortalGetPrimaryStmt(portal) PortalListGetPrimaryStmt((portal)->stmts)
 
 
 /* Prototypes for functions in utils/mmgr/portalmem.c */
@@ -217,10 +216,9 @@ extern void PortalDefineQuery(Portal portal,
 				  const char *prepStmtName,
 				  const char *sourceText,
 				  const char *commandTag,
-				  List *parseTrees,
-				  List *planTrees,
+				  List *stmts,
 				  MemoryContext queryContext);
-extern Query *PortalListGetPrimaryQuery(List *parseTrees);
+extern Node *PortalListGetPrimaryStmt(List *stmts);
 extern void PortalCreateHoldStore(Portal portal);
 
 #endif   /* PORTAL_H */

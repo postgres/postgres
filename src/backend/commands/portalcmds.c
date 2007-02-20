@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.60 2007/02/06 22:49:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.61 2007/02/20 17:32:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 {
 	List	   *rewritten;
 	Query	   *query;
-	Plan	   *plan;
+	PlannedStmt *plan;
 	Portal		portal;
 	MemoryContext oldContext;
 
@@ -98,13 +98,12 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 	plan = planner(query, true, stmt->options, params);
 
 	/*
-	 * Create a portal and copy the query and plan into its memory context.
+	 * Create a portal and copy the plan into its memory context.
 	 */
 	portal = CreatePortal(stmt->portalname, false, false);
 
 	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
-	query = copyObject(query);
 	plan = copyObject(plan);
 
 	/*
@@ -115,7 +114,6 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 					  NULL,
 					  debug_query_string ? pstrdup(debug_query_string) : NULL,
 					  "SELECT", /* cursor's query is always a SELECT */
-					  list_make1(query),
 					  list_make1(plan),
 					  PortalGetHeapMemory(portal));
 
@@ -140,7 +138,7 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 	portal->cursorOptions = stmt->options;
 	if (!(portal->cursorOptions & (CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL)))
 	{
-		if (ExecSupportsBackwardScan(plan))
+		if (ExecSupportsBackwardScan(plan->planTree))
 			portal->cursorOptions |= CURSOR_OPT_SCROLL;
 		else
 			portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;
