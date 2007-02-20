@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.115 2007/02/06 09:16:07 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.116 2007/02/20 00:25:05 momjian Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -847,7 +847,8 @@ SELECT (5 !) - 6;
       <row>
        <entry><token>IS</token></entry>
        <entry></entry>
-       <entry><literal>IS TRUE</>, <literal>IS FALSE</>, <literal>IS UNKNOWN</>, <literal>IS NULL</></entry>
+       <entry><literal>IS TRUE</>, <literal>IS FALSE</>, <literal>IS
+       UNKNOWN</>, <literal>IS NULL</>, <literal>IS OF</></entry>
       </row>
 
       <row>

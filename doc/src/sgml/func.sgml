@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.365 2007/02/19 22:51:44 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.366 2007/02/20 00:25:05 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -411,6 +411,22 @@
     <literal>IS NOT NULL</literal>, respectively, except that the input
     expression must be of Boolean type.
    </para>
+ 
+   <para>
+    <indexterm>
+     <primary>IS OF</primary>
+    </indexterm>
+    <indexterm>
+     <primary>IS NOT OF</primary>
+    </indexterm>
+    It is possible to check the data type of an expression using the
+    constructs
+<synopsis>
+<replaceable>expression</replaceable> IS OF (typename, ...)
+<replaceable>expression</replaceable> IS NOT OF (typename, ...)
+</synopsis>
+    They return a boolean value based on whether the expression's data
+    type is one of the listed data types.
   </sect1>
 
   <sect1 id="functions-math">
