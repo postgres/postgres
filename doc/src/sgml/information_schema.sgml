@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.32 2007/02/20 18:47:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.33 2007/02/20 23:14:19 momjian Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -2095,7 +2095,6 @@ ORDER BY c.ordinal_position;
       <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</></entry>
      </row>
 
-     </row>
     </tbody>
    </tgroup>
   </table>
