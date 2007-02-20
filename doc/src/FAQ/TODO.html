@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue Feb 20 10:21:32 EST 2007
+Last updated:           Tue Feb 20 16:22:12 EST 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -350,6 +350,10 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Fix IS OF so it matches the ISO specification, and add documentation
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2003-08/msg00060.php">http://archives.postgresql.org/pgsql-patches/2003-08/msg00060.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-02/msg00060.php">http://archives.postgresql.org/pgsql-hackers/2007-02/msg00060.php</a>
+</p>
+  </li><li>Add missing operators for geometric data types
+<p>  Some geometric types do not have the full suite of geometric operators,
+  e.g. box @&gt; point
 </p>
 </li></ul>
 <h1><a name="section_6">Multi-Language Support</a></h1>
