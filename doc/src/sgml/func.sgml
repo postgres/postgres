@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.368 2007/02/20 18:18:05 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.369 2007/02/20 19:59:04 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1356,8 +1356,10 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Encode binary data to <acronym>ASCII</acronym>-only representation.  Supported
+        Encode binary data to different representation.  Supported
         types are: <literal>base64</>, <literal>hex</>, <literal>escape</>.
+        <literal>Escape</> merely outputs null bytes as <literal>\000</> and
+        doubles backslashes.
        </entry>
        <entry><literal>encode( E'123\\000\\001', 'base64')</literal></entry>
        <entry><literal>MTIzAAE=</literal></entry>
