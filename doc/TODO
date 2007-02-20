@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Feb 19 16:08:43 EST 2007
+Last updated:		Mon Feb 19 22:47:00 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -309,9 +309,6 @@ Data Types
 	  coercion can be performed on empty array expressions
 	o Add support for arrays of domains
 	o Add support for arrays of complex types
-	o ARRAY[[1,2],[3,4]])[1] should return the same values as
-	  ARRAY[[1,2],[3,4]])[1:1];
-
 
 
 * Binary Data
