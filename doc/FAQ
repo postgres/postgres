@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Feb 8 22:43:13 EST 2007
+   Last updated: Tue Feb 20 22:50:50 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -817,7 +817,7 @@
   4.18) How do I return multiple rows or columns from a function?
   
    It is easy using set-returning functions,
-   http://techdocs.postgresql.org/guides/SetReturningFunctions
+   http://www.postgresql.org/docs/techdocs.17
    .
    
   4.19) Why do I get "relation with OID ##### does not exist" errors when
