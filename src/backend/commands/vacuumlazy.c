@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.83 2007/02/04 03:10:55 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.84 2007/02/21 22:15:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,6 +179,16 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 
 	/* Update shared free space map with final free space info */
 	lazy_update_fsm(onerel, vacrelstats);
+
+	if (vacrelstats->tot_free_pages > MaxFSMPages)
+		ereport(WARNING,
+				(errmsg("relation \"%s.%s\" contains more than \"max_fsm_pages\" pages with useful free space",
+						get_namespace_name(RelationGetNamespace(onerel)),
+						RelationGetRelationName(onerel)),
+				 errhint("Consider%sincreasing the configuration parameter \"max_fsm_pages\".",
+						/* Only suggest VACUUM FULL if 20% free */
+						(vacrelstats->tot_free_pages > vacrelstats->rel_pages * 0.20
+							? " using VACUUM FULL on this relation or ": " "))));
 
 	/* Update statistics in pg_class */
 	vac_update_relstats(RelationGetRelid(onerel),
@@ -507,13 +517,6 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 					   vacrelstats->tot_free_pages,
 					   empty_pages,
 					   pg_rusage_show(&ru0))));
-
-	if (vacrelstats->tot_free_pages > MaxFSMPages)
-		ereport(WARNING,
-				(errmsg("relation \"%s.%s\" contains more than \"max_fsm_pages\" pages with useful free space",
-						get_namespace_name(RelationGetNamespace(onerel)),
-						relname),
-				 errhint("Consider using VACUUM FULL on this relation or increasing the configuration parameter \"max_fsm_pages\".")));
 }
 
 
