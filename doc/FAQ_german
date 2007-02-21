@@ -356,8 +356,8 @@
     1.13) Wie sende ich einen Fehlerbericht?
     
    Bitte besuchen Sie die PostgreSQL-BugTool-Seite
-   http://www.postgresql.org/bugform.html, die Hinweise und Anleitungen
-   zur Einreichung von Fehlerberichten enthält.
+   http://www.postgresql.org/support/submitbug, die Hinweise und
+   Anleitungen zur Einreichung von Fehlerberichten enthält.
    
    Überprüfe auch den ftp-Server ftp://ftp.postgresql.org/pub/, um
    nachzusehen, ob es eine neuere PostgreSQL-Version oder neue Patches
