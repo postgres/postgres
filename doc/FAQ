@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Feb 20 22:50:50 EST 2007
+   Last updated: Wed Feb 21 10:07:25 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -436,9 +436,9 @@
    binaries, and restart the server.
    
    All users should upgrade to the most recent minor release as soon as
-   it is available. While every upgrade has some risk, PostgreSQL minor
-   releases are designed to fix only common bugs with the least risk. The
-   community considers not upgrading more risky that upgrading.
+   it is available. While upgrades always have some risk, PostgreSQL
+   minor releases fix only common bugs to reduce the risk of upgrading.
+   The community considers not upgrading more risky that upgrading.
    
    Major releases (e.g. from 7.3 to 7.4) often change the internal format
    of system tables and data files. These changes are often complex, so
