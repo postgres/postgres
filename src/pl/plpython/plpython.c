@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.95 2007/02/09 03:35:35 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.96 2007/02/21 03:27:32 adunstan Exp $
  *
  *********************************************************************
  */
@@ -2309,27 +2309,34 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 				for (i = 0; i < nargs; i++)
 				{
 					char	   *sptr;
-					List	   *names;
 					HeapTuple	typeTup;
+					Oid         typeId;
+					int32       typmod;
 					Form_pg_type typeStruct;
 
 					optr = PySequence_GetItem(list, i);
 					if (!PyString_Check(optr))
 						elog(ERROR, "Type names must be strings.");
 					sptr = PyString_AsString(optr);
+					
+					/********************************************************
+					 * Resolve argument type names and then look them up by 
+					 * oid in the system cache, and remember the required 
+					 *information for input conversion.
+					 ********************************************************/ 
 
-					/*
-					 * Parse possibly-qualified type name and look it up in
-					 * pg_type
-					 */
-					names = stringToQualifiedNameList(sptr,
-													  "PLy_spi_prepare");
-					typeTup = typenameType(NULL,
-										   makeTypeNameFromNameList(names));
+					parseTypeString(sptr, &typeId, &typmod);
+ 
+					typeTup = SearchSysCache(TYPEOID,
+											 ObjectIdGetDatum(typeId),
+											 0,0,0);
+					if (!HeapTupleIsValid(typeTup))
+						elog(ERROR, "cache lookup failed for type %u", typeId);
+
 					Py_DECREF(optr);
 					optr = NULL;	/* this is important */
 
-					plan->types[i] = HeapTupleGetOid(typeTup);
+					plan->types[i] = typeId;
 					typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 					if (typeStruct->typtype != 'c')
 						PLy_output_datum_func(&plan->args[i], typeTup);

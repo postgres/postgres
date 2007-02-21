@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.110 2007/02/09 03:35:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.111 2007/02/21 03:27:32 adunstan Exp $
  *
  **********************************************************************/
 
@@ -1808,23 +1808,22 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	PG_TRY();
 	{
 		/************************************************************
-		 * Lookup the argument types by name in the system cache
-		 * and remember the required information for input conversion
+		 * Resolve argument type names and then look them up by oid 
+         * in the system cache, and remember the required information 
+         * for input conversion.
 		 ************************************************************/
 		for (i = 0; i < nargs; i++)
 		{
-			List	   *names;
-			HeapTuple	typeTup;
+			Oid         typId, typInput, typIOParam;
+            int32       typmod;
 
-			/* Parse possibly-qualified type name and look it up in pg_type */
-			names = stringToQualifiedNameList(args[i],
-											  "pltcl_SPI_prepare");
-			typeTup = typenameType(NULL, makeTypeNameFromNameList(names));
-			qdesc->argtypes[i] = HeapTupleGetOid(typeTup);
-			perm_fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
-						   &(qdesc->arginfuncs[i]));
-			qdesc->argtypioparams[i] = getTypeIOParam(typeTup);
-			ReleaseSysCache(typeTup);
+			parseTypeString(args[i], &typId, &typmod);
+
+			getTypeInputInfo(typId, &typInput, &typIOParam);
+
+			qdesc->argtypes[i] = typId;
+			perm_fmgr_info(typInput, &(qdesc->arginfuncs[i]));
+			qdesc->argtypioparams[i] = typIOParam;
 		}
 
 		/************************************************************
