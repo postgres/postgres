@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Mon Dec 11 17:45:54 EST 2006
+原文最終更新日: Fri Jan 5 15:40:20 EST 2007
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
@@ -168,7 +168,7 @@ SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
 
         POSTGRESQL データベース管理システム
 
-        部分的著作権 (c) 1996-2006, PostgreSQL国際開発チーム
+        部分的著作権 (c) 1996-2007, PostgreSQL国際開発チーム
         部分的著作権 (c) 1994-1996 カリフォルニア大学本校
 
 
@@ -227,7 +227,7 @@ ftp://ftp.PostgreSQL.org/pub/ を使います。
 
 1.6) 最新のリリースはどれですか？
 
-PostgreSQL の最新版はバージョン 8.2.0 です。
+PostgreSQL の最新版はバージョン 8.2.1 です。
 
 我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを行なうことを計
 画しています。
@@ -1017,7 +1017,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2006年12月25日
+  最終更新日:   2007年01月07日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
