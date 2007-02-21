@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.151 2007/02/08 13:52:55 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.152 2007/02/21 20:02:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,10 @@ typedef struct
 	int			fillfactor;		/* needed when splitting rightmost page */
 	bool		is_leaf;		/* T if splitting a leaf page */
 	bool		is_rightmost;	/* T if splitting a rightmost page */
+	OffsetNumber newitemoff;	/* where the new item is to be inserted */
+	int			leftspace;		/* space available for items on left page */
+	int			rightspace;		/* space available for items on right page */
+	int			olddataitemstotal; /* space taken by old items */
 
 	bool		have_split;		/* found a valid split? */
 
@@ -57,9 +61,9 @@ static OffsetNumber _bt_findsplitloc(Relation rel, Page page,
 				 OffsetNumber newitemoff,
 				 Size newitemsz,
 				 bool *newitemonleft);
-static void _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
-				  int leftfree, int rightfree,
-				  bool newitemonleft, Size firstrightitemsz);
+static void _bt_checksplitloc(FindSplitData *state, 
+				  OffsetNumber firstoldonright, bool newitemonleft,
+				  int dataitemstoleft, Size firstoldonrightsz);
 static void _bt_pgaddtup(Relation rel, Page page,
 			 Size itemsize, IndexTuple itup,
 			 OffsetNumber itup_off, const char *where);
@@ -1101,13 +1105,31 @@ _bt_findsplitloc(Relation rel,
 	int			leftspace,
 				rightspace,
 				goodenough,
-				dataitemtotal,
-				dataitemstoleft;
+				olddataitemstotal,
+				olddataitemstoleft;
+	bool		goodenoughfound;
 
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/* Passed-in newitemsz is MAXALIGNED but does not include line pointer */
 	newitemsz += sizeof(ItemIdData);
+
+	/* Total free space available on a btree page, after fixed overhead */
+	leftspace = rightspace =
+		PageGetPageSize(page) - SizeOfPageHeaderData -
+		MAXALIGN(sizeof(BTPageOpaqueData));
+
+	/* The right page will have the same high key as the old page */
+	if (!P_RIGHTMOST(opaque))
+	{
+		itemid = PageGetItemId(page, P_HIKEY);
+		rightspace -= (int) (MAXALIGN(ItemIdGetLength(itemid)) +
+							 sizeof(ItemIdData));
+	}
+
+	/* Count up total space in data items without actually scanning 'em */
+	olddataitemstotal = rightspace - (int) PageGetExactFreeSpace(page);
+
 	state.newitemsz = newitemsz;
 	state.is_leaf = P_ISLEAF(opaque);
 	state.is_rightmost = P_RIGHTMOST(opaque);
@@ -1120,11 +1142,10 @@ _bt_findsplitloc(Relation rel,
 	state.newitemonleft = false;	/* these just to keep compiler quiet */
 	state.firstright = 0;
 	state.best_delta = 0;
-
-	/* Total free space available on a btree page, after fixed overhead */
-	leftspace = rightspace =
-		PageGetPageSize(page) - SizeOfPageHeaderData -
-		MAXALIGN(sizeof(BTPageOpaqueData));
+	state.leftspace = leftspace;
+	state.rightspace = rightspace;
+	state.olddataitemstotal = olddataitemstotal;
+	state.newitemoff = newitemoff;
 
 	/*
 	 * Finding the best possible split would require checking all the possible
@@ -1137,73 +1158,59 @@ _bt_findsplitloc(Relation rel,
 	 */
 	goodenough = leftspace / 16;
 
-	/* The right page will have the same high key as the old page */
-	if (!P_RIGHTMOST(opaque))
-	{
-		itemid = PageGetItemId(page, P_HIKEY);
-		rightspace -= (int) (MAXALIGN(ItemIdGetLength(itemid)) +
-							 sizeof(ItemIdData));
-	}
-
-	/* Count up total space in data items without actually scanning 'em */
-	dataitemtotal = rightspace - (int) PageGetFreeSpace(page);
-
 	/*
 	 * Scan through the data items and calculate space usage for a split at
 	 * each possible position.
 	 */
-	dataitemstoleft = 0;
+	olddataitemstoleft = 0;
+	goodenoughfound = false;
 	maxoff = PageGetMaxOffsetNumber(page);
-
+	
 	for (offnum = P_FIRSTDATAKEY(opaque);
 		 offnum <= maxoff;
 		 offnum = OffsetNumberNext(offnum))
 	{
 		Size		itemsz;
-		int			leftfree,
-					rightfree;
 
 		itemid = PageGetItemId(page, offnum);
 		itemsz = MAXALIGN(ItemIdGetLength(itemid)) + sizeof(ItemIdData);
 
 		/*
-		 * We have to allow for the current item becoming the high key of the
-		 * left page; therefore it counts against left space as well as right
-		 * space.
-		 */
-		leftfree = leftspace - dataitemstoleft - (int) itemsz;
-		rightfree = rightspace - (dataitemtotal - dataitemstoleft);
-
-		/*
 		 * Will the new item go to left or right of split?
 		 */
 		if (offnum > newitemoff)
-			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
-							  true, itemsz);
+			_bt_checksplitloc(&state, offnum, true,
+							  olddataitemstoleft, itemsz);
+
 		else if (offnum < newitemoff)
-			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
-							  false, itemsz);
+			_bt_checksplitloc(&state, offnum, false, 
+							  olddataitemstoleft, itemsz);
 		else
 		{
 			/* need to try it both ways! */
-			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
-							  true, itemsz);
-			/*
-			 * Here we are contemplating newitem as first on right.  In this
-			 * case it, not the current item, will become the high key of the
-			 * left page, and so we have to correct the allowance made above.
-			 */
-			leftfree += (int) itemsz - (int) newitemsz;
-			_bt_checksplitloc(&state, offnum, leftfree, rightfree,
-							  false, newitemsz);
+			_bt_checksplitloc(&state, offnum, true,
+							  olddataitemstoleft, itemsz);
+
+			_bt_checksplitloc(&state, offnum, false,
+							  olddataitemstoleft, itemsz);
 		}
 
 		/* Abort scan once we find a good-enough choice */
 		if (state.have_split && state.best_delta <= goodenough)
+		{
+			goodenoughfound = true;
 			break;
+		}
 
-		dataitemstoleft += itemsz;
+		olddataitemstoleft += itemsz;
 	}
+
+	/* If the new item goes as the last item, check for splitting so that
+	 * all the old items go to the left page and the new item goes to the
+	 * right page.
+	 */
+	if (newitemoff > maxoff && !goodenoughfound)
+		_bt_checksplitloc(&state, newitemoff, false, olddataitemstotal, 0);
 
 	/*
 	 * I believe it is not possible to fail to find a feasible split, but just
@@ -1220,15 +1227,50 @@ _bt_findsplitloc(Relation rel,
 /*
  * Subroutine to analyze a particular possible split choice (ie, firstright
  * and newitemonleft settings), and record the best split so far in *state.
+ *
+ * firstoldonright is the offset of the first item on the original page
+ * that goes to the right page, and firstoldonrightsz is the size of that
+ * tuple. firstoldonright can be > max offset, which means that all the old
+ * items go to the left page and only the new item goes to the right page.
+ * In that case, firstoldonrightsz is not used.
+ *
+ * olddataitemstoleft is the total size of all old items to the left of 
+ * firstoldonright. 
  */
 static void
-_bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
-				  int leftfree, int rightfree,
-				  bool newitemonleft, Size firstrightitemsz)
+_bt_checksplitloc(FindSplitData *state, 
+				  OffsetNumber firstoldonright,
+				  bool newitemonleft,
+				  int olddataitemstoleft,
+				  Size firstoldonrightsz)
 {
+	int		leftfree,
+			rightfree;
+	Size	firstrightitemsz;
+	bool	newitemisfirstonright;
+
+	/* Is the new item going to be the first item on the right page? */
+	newitemisfirstonright = (firstoldonright == state->newitemoff
+							 && !newitemonleft);
+
+	if(newitemisfirstonright)
+		firstrightitemsz = state->newitemsz;
+	else
+		firstrightitemsz = firstoldonrightsz;
+
+	/* Account for all the old tuples */
+	leftfree = state->leftspace - olddataitemstoleft;
+	rightfree = state->rightspace - 
+		(state->olddataitemstotal - olddataitemstoleft);
+
 	/*
-	 * Account for the new item on whichever side it is to be put.
+	 * The first item on the right page becomes the high key of the
+	 * left page; therefore it counts against left space as well as right
+	 * space.
 	 */
+	leftfree -= firstrightitemsz;
+
+	/* account for the new item */
 	if (newitemonleft)
 		leftfree -= (int) state->newitemsz;
 	else
@@ -1270,7 +1312,7 @@ _bt_checksplitloc(FindSplitData *state, OffsetNumber firstright,
 		{
 			state->have_split = true;
 			state->newitemonleft = newitemonleft;
-			state->firstright = firstright;
+			state->firstright = firstoldonright;
 			state->best_delta = delta;
 		}
 	}

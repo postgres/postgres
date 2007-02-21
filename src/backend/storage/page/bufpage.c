@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.70 2007/01/05 22:19:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.71 2007/02/21 20:02:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -418,7 +418,8 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 
 /*
  * PageGetFreeSpace
- *		Returns the size of the free (allocatable) space on a page.
+ *		Returns the size of the free (allocatable) space on a page,
+ *		deducted by the space needed for a new line pointer.
  */
 Size
 PageGetFreeSpace(Page page)
@@ -434,7 +435,26 @@ PageGetFreeSpace(Page page)
 
 	if (space < (int) sizeof(ItemIdData))
 		return 0;
-	space -= sizeof(ItemIdData);	/* XXX not always appropriate */
+	space -= sizeof(ItemIdData);
+
+	return (Size) space;
+}
+
+/*
+ * PageGetExactFreeSpace
+ *		Returns the size of the free (allocatable) space on a page.
+ */
+Size
+PageGetExactFreeSpace(Page page)
+{
+	int			space;
+
+	/*
+	 * Use signed arithmetic here so that we behave sensibly if pd_lower >
+	 * pd_upper.
+	 */
+	space = (int) ((PageHeader) page)->pd_upper -
+		(int) ((PageHeader) page)->pd_lower;
 
 	return (Size) space;
 }
