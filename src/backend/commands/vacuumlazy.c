@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.84 2007/02/21 22:15:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.85 2007/02/21 22:47:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,10 +185,10 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 				(errmsg("relation \"%s.%s\" contains more than \"max_fsm_pages\" pages with useful free space",
 						get_namespace_name(RelationGetNamespace(onerel)),
 						RelationGetRelationName(onerel)),
-				 errhint("Consider%sincreasing the configuration parameter \"max_fsm_pages\".",
-						/* Only suggest VACUUM FULL if 20% free */
-						(vacrelstats->tot_free_pages > vacrelstats->rel_pages * 0.20
-							? " using VACUUM FULL on this relation or ": " "))));
+				 errhint((vacrelstats->tot_free_pages > vacrelstats->rel_pages * 0.20 ?
+							/* Only suggest VACUUM FULL if 20% free */
+							"Consider using VACUUM FULL on this relation or increasing the configuration parameter \"max_fsm_pages\"." :
+							"Consider increasing the configuration parameter \"max_fsm_pages\"."))));
 
 	/* Update statistics in pg_class */
 	vac_update_relstats(RelationGetRelid(onerel),
