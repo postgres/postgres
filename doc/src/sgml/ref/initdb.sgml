@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.41 2007/02/20 18:10:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/initdb.sgml,v 1.42 2007/02/21 23:21:11 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -237,11 +237,11 @@ PostgreSQL documentation
       <term><option>--debug</option></term>
       <listitem>
        <para>
-	Print debugging output from the bootstrap backend and a few other
+        Print debugging output from the bootstrap backend and a few other
         messages of lesser interest for the general public.
-	The bootstrap backend is the program <command>initdb</command>
-	uses to create the catalog tables.  This option generates a tremendous
-	amount of extremely boring output.
+        The bootstrap backend is the program <command>initdb</command>
+        uses to create the catalog tables.  This option generates a tremendous
+        amount of extremely boring output.
        </para>
       </listitem>
      </varlistentry>
@@ -263,11 +263,11 @@ PostgreSQL documentation
       <term><option>--noclean</option></term>
       <listitem>
        <para>
-	By default, when <command>initdb</command>
-	determines that an error prevented it from completely creating the database
-	cluster, it removes any files it might have created before discovering
-	that it cannot finish the job. This option inhibits tidying-up and is
-	thus useful for debugging.
+        By default, when <command>initdb</command>
+        determines that an error prevented it from completely creating the database
+        cluster, it removes any files it might have created before discovering
+        that it cannot finish the job. This option inhibits tidying-up and is
+        thus useful for debugging.
        </para>
       </listitem>
      </varlistentry>

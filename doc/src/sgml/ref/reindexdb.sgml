@@ -69,7 +69,7 @@ PostgreSQL documentation
       <term><option>--all</></term>
       <listitem>
        <para>
-	Reindex all databases.
+        Reindex all databases.
        </para>
       </listitem>
      </varlistentry>
@@ -79,7 +79,7 @@ PostgreSQL documentation
       <term><option>--system</></term>
       <listitem>
        <para>
-	Reindex database's system catalogs.
+        Reindex database's system catalogs.
        </para>
       </listitem>
      </varlistentry>
@@ -89,7 +89,7 @@ PostgreSQL documentation
       <term><option>--table <replaceable class="parameter">table</replaceable></></term>
       <listitem>
        <para>
-	Reindex <replaceable class="parameter">table</replaceable> only.
+        Reindex <replaceable class="parameter">table</replaceable> only.
        </para>
       </listitem>
      </varlistentry>
@@ -99,7 +99,7 @@ PostgreSQL documentation
       <term><option>--index <replaceable class="parameter">index</replaceable></></term>
       <listitem>
        <para>
-	Recreate <replaceable class="parameter">index</replaceable> only.
+        Recreate <replaceable class="parameter">index</replaceable> only.
        </para>
       </listitem>
      </varlistentry>
@@ -109,12 +109,12 @@ PostgreSQL documentation
       <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
        <para>
-	Specifies the name of the database to be reindexed.
-	If this is not specified and <option>-a</option> (or
-	<option>--all</option>) is not used, the database name is read
-	from the environment variable <envar>PGDATABASE</envar>.  If
-	that is not set, the user name specified for the connection is
-	used.
+        Specifies the name of the database to be reindexed.
+        If this is not specified and <option>-a</option> (or
+        <option>--all</option>) is not used, the database name is read
+        from the environment variable <envar>PGDATABASE</envar>.  If
+        that is not set, the user name specified for the connection is
+        used.
        </para>
       </listitem>
      </varlistentry>
@@ -125,7 +125,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Echo the commands that <application>reindexdb</application> generates
-	and sends to the server.
+        and sends to the server.
        </para>
       </listitem>
      </varlistentry>
@@ -153,9 +153,9 @@ PostgreSQL documentation
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the server is
-	running.  If the value begins with a slash, it is used as the
-	directory for the Unix domain socket.
+        Specifies the host name of the machine on which the server is
+        running.  If the value begins with a slash, it is used as the
+        directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -165,9 +165,9 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the TCP port or local Unix domain socket file 
-	extension on which the server
-	is listening for connections.
+        Specifies the TCP port or local Unix domain socket file 
+        extension on which the server
+        is listening for connections.
        </para>
       </listitem>
      </varlistentry>

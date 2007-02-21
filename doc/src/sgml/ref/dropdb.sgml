@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.29 2007/02/20 18:10:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.30 2007/02/21 23:21:11 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -60,7 +60,7 @@ PostgreSQL documentation
       <term><replaceable class="parameter">dbname</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the database to be removed.
+        Specifies the name of the database to be removed.
        </para>
       </listitem>
      </varlistentry>
@@ -71,7 +71,7 @@ PostgreSQL documentation
       <listitem>
        <para>
         Echo the commands that <application>dropdb</application> generates
-	and sends to the server.
+        and sends to the server.
        </para>
       </listitem>
      </varlistentry>
@@ -108,10 +108,10 @@ PostgreSQL documentation
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the 
-	server
-	is running.  If the value begins with a slash, it is used 
-	as the directory for the Unix domain socket.
+        Specifies the host name of the machine on which the 
+        server
+        is running.  If the value begins with a slash, it is used 
+        as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -121,9 +121,9 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the TCP port or local Unix domain socket file 
-	extension on which the server
-	is listening for connections.
+        Specifies the TCP port or local Unix domain socket file 
+        extension on which the server
+        is listening for connections.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.66 2007/02/20 18:10:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.67 2007/02/21 23:21:12 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -128,7 +128,7 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-	 
+ 
      <varlistentry>
       <term><option>-f <replaceable class="parameter">filename</replaceable></option></term>
       <term><option>--file=<replaceable class="parameter">filename</replaceable></option></term>
@@ -335,7 +335,7 @@ PostgreSQL documentation
        </para>
       </listitem>
      </varlistentry>
-	 
+ 
      <varlistentry>
       <term>-l <replaceable>dbname</replaceable></term>
       <term>--database=<replaceable>dbname</replaceable></term>

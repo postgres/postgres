@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.184 2007/02/20 18:10:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.185 2007/02/21 23:21:12 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -108,15 +108,15 @@ PostgreSQL documentation
       <term><option>--dbname <replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
       <para>
-      Specifies the name of the database to connect to. This is
-      equivalent to specifying <replaceable
-      class="parameter">dbname</replaceable> as the first non-option
-      argument on the command line.
+       Specifies the name of the database to connect to. This is
+       equivalent to specifying <replaceable
+       class="parameter">dbname</replaceable> as the first non-option
+       argument on the command line.
       </para>
-	  <para>
-	  If this parameter contains an <symbol>=</symbol> sign, it it treated as a
-	  <parameter>conninfo</parameter> string. See <xref linkend="libpq-connect"> for more information.
-	  </para>
+      <para>
+       If this parameter contains an <symbol>=</symbol> sign, it it treated as a
+       <parameter>conninfo</parameter> string. See <xref linkend="libpq-connect"> for more information.
+      </para>
       </listitem>
     </varlistentry>
 
@@ -559,17 +559,17 @@ PostgreSQL documentation
     passwords. See <xref linkend="libpq-pgpass"> for more information.
     </para>
 
-	<para>
-    An alternative way to specify connection parameters is in a
-	<parameter>conninfo</parameter>	string, which is used instead of a 
-	database name. This mechanism give you very wide control over the 
-	connection. For example:
+    <para>
+     An alternative way to specify connection parameters is in a
+     <parameter>conninfo</parameter>	string, which is used instead of a 
+     database name. This mechanism give you very wide control over the 
+     connection. For example:
 <programlisting>
 $ <userinput>psql "service=myservice sslmode=require"</userinput>
 </programlisting>
-    See <xref linkend="libpq-connect"> for more information on all the
-	available connection options.
-	</para>
+     See <xref linkend="libpq-connect"> for more information on all the
+     available connection options.
+    </para>
 
     <para>
     If the connection could not be made for any reason (e.g., insufficient

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/droplang.sgml,v 1.28 2007/02/20 18:10:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/droplang.sgml,v 1.29 2007/02/21 23:21:11 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -67,7 +67,7 @@ PostgreSQL documentation
       <term><replaceable class="parameter">langname</replaceable></term>
       <listitem>
        <para>
-	Specifies the name of the backend programming language to be removed.
+        Specifies the name of the backend programming language to be removed.
        </para>
       </listitem>
      </varlistentry>
@@ -77,7 +77,7 @@ PostgreSQL documentation
       <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
        <para>
-	Specifies from which database the language should be removed.
+        Specifies from which database the language should be removed.
         The default is to use the database with the same name as the
         current system user.
        </para>
@@ -117,10 +117,10 @@ PostgreSQL documentation
       <term><option>--host <replaceable class="parameter">host</replaceable></></term>
       <listitem>
        <para>
-	Specifies the host name of the machine on which the 
-	server
-	is running.  If host begins with a slash, it is used 
-	as the directory for the Unix domain socket.
+        Specifies the host name of the machine on which the 
+        server
+        is running.  If host begins with a slash, it is used 
+        as the directory for the Unix domain socket.
        </para>
       </listitem>
      </varlistentry>
@@ -130,9 +130,9 @@ PostgreSQL documentation
       <term><option>--port <replaceable class="parameter">port</replaceable></></term>
       <listitem>
        <para>
-	Specifies the Internet TCP/IP port or local Unix domain socket file 
-	extension on which the server
-	is listening for connections.
+        Specifies the Internet TCP/IP port or local Unix domain socket file 
+        extension on which the server
+        is listening for connections.
        </para>
       </listitem>
      </varlistentry>
