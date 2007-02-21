@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.284 2007/02/19 18:57:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.285 2007/02/21 15:12:39 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1036,6 +1036,18 @@ su - postgres
          recommended for production installations only if you use GCC.
          But you should always have it on if you are doing development work
          or running a beta version.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--enable-profiling</option></term>
+       <listitem>
+        <para>
+         If using GCC, all programs and libraries are compiled so they
+         can be profiled.  On backend exit, a subdirectory will be created
+         that contains the <filename>gmon.out</> file for use in profiling.
+         This option is for use only with GCC and when doing development work.
         </para>
        </listitem>
       </varlistentry>

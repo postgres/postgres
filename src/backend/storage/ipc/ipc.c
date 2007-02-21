@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.95 2007/01/05 22:19:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.96 2007/02/21 15:12:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,6 +110,36 @@ proc_exit(int code)
 								  on_proc_exit_list[on_proc_exit_index].arg);
 
 	elog(DEBUG3, "exit(%d)", code);
+
+#ifdef PROFILE_PID_DIR
+	{
+		/*
+		 * If we are profiling ourself then gprof's mcleanup() is about
+		 * to write out a profile to ./gmon.out.  Since mcleanup() always 
+		 * uses a fixed file name, each backend will overwrite earlier
+		 * profiles. To fix that, we create a separate subdirectory for
+		 * each backend (./gprof/pid) and 'cd' to that subdirectory before
+		 * we exit() - that forces mcleanup() to write each profile into
+		 * its own directory.  We end up with something like:
+		 *	$PGDATA/gprof/8829/gmon.out
+		 *	$PGDATA/gprof/8845/gmon.out
+		 *		...
+		 *
+		 * Note that we do this here instead of in an on_proc_exit() 
+		 * callback because we want to ensure that this code executes
+		 * last - we don't want to interfere with any other on_proc_exit()
+		 * callback.
+		 */
+		char gprofDirName[32];
+
+		snprintf(gprofDirName, 32, "gprof/%d", (int) getpid());
+	    
+		mkdir("gprof", 0777);
+		mkdir(gprofDirName, 0777);
+		chdir(gprofDirName);
+	}
+#endif
+
 	exit(code);
 }
 

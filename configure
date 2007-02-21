@@ -314,7 +314,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS configure_args build build_cpu build_vendor build_os host host_cpu host_vendor host_os PORTNAME docdir enable_nls WANTED_LANGUAGES default_port enable_shared enable_rpath enable_debug DTRACE DTRACEFLAGS enable_dtrace CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP GCC TAS autodepend INCLUDES enable_thread_safety with_tcl with_perl with_python with_krb5 krb_srvtab with_pam with_ldap with_bonjour with_openssl XML2_CONFIG with_zlib EGREP ELF_SYS LDFLAGS_SL AWK FLEX FLEXFLAGS LN_S LD with_gnu_ld ld_R_works RANLIB ac_ct_RANLIB TAR STRIP ac_ct_STRIP STRIP_STATIC_LIB STRIP_SHARED_LIB YACC YFLAGS PERL perl_archlibexp perl_privlibexp perl_useshrplib perl_embed_ldflags PYTHON python_version python_configdir python_includespec python_libdir python_libspec python_additional_libs HAVE_IPV6 LIBOBJS acx_pthread_config PTHREAD_CC PTHREAD_LIBS PTHREAD_CFLAGS LDAP_LIBS_FE LDAP_LIBS_BE HAVE_POSIX_SIGNALS MSGFMT MSGMERGE XGETTEXT localedir TCLSH TCL_CONFIG_SH TCL_INCLUDE_SPEC TCL_LIB_FILE TCL_LIBS TCL_LIB_SPEC TCL_SHARED_BUILD TCL_SHLIB_LD_LIBS NSGMLS JADE have_docbook DOCBOOKSTYLE COLLATEINDEX SGMLSPL vpath_build LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS configure_args build build_cpu build_vendor build_os host host_cpu host_vendor host_os PORTNAME docdir enable_nls WANTED_LANGUAGES default_port enable_shared enable_rpath enable_debug enable_profiling DTRACE DTRACEFLAGS enable_dtrace CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP GCC TAS autodepend INCLUDES enable_thread_safety with_tcl with_perl with_python with_krb5 krb_srvtab with_pam with_ldap with_bonjour with_openssl XML2_CONFIG with_zlib EGREP ELF_SYS LDFLAGS_SL AWK FLEX FLEXFLAGS LN_S LD with_gnu_ld ld_R_works RANLIB ac_ct_RANLIB TAR STRIP ac_ct_STRIP STRIP_STATIC_LIB STRIP_SHARED_LIB YACC YFLAGS PERL perl_archlibexp perl_privlibexp perl_useshrplib perl_embed_ldflags PYTHON python_version python_configdir python_includespec python_libdir python_libspec python_additional_libs HAVE_IPV6 LIBOBJS acx_pthread_config PTHREAD_CC PTHREAD_LIBS PTHREAD_CFLAGS LDAP_LIBS_FE LDAP_LIBS_BE HAVE_POSIX_SIGNALS MSGFMT MSGMERGE XGETTEXT localedir TCLSH TCL_CONFIG_SH TCL_INCLUDE_SPEC TCL_LIB_FILE TCL_LIBS TCL_LIB_SPEC TCL_SHARED_BUILD TCL_SHLIB_LD_LIBS NSGMLS JADE have_docbook DOCBOOKSTYLE COLLATEINDEX SGMLSPL vpath_build LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -865,6 +865,7 @@ Optional Features:
   --disable-rpath         do not embed shared library search path in executables
   --disable-spinlocks     do not use spinlocks
   --enable-debug          build with debugging symbols (-g)
+  --enable-profiling      build with profiling enabled
   --enable-dtrace         build with DTrace support
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
@@ -1943,6 +1944,37 @@ echo "$as_me: error: no argument expected for --enable-debug option" >&2;}
 
 else
   enable_debug=no
+
+fi;
+
+
+
+#
+# --enable-profiling enables gcc profiling
+#
+
+pgac_args="$pgac_args enable_profiling"
+
+# Check whether --enable-profiling or --disable-profiling was given.
+if test "${enable_profiling+set}" = set; then
+  enableval="$enable_profiling"
+
+  case $enableval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --enable-profiling option" >&5
+echo "$as_me: error: no argument expected for --enable-profiling option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  enable_profiling=no
 
 fi;
 
@@ -3147,6 +3179,22 @@ fi
 # supply -g if --enable-debug
 if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
   CFLAGS="$CFLAGS -g"
+fi
+
+# enable profiling if --enable-profiling
+if test "$enable_profiling" = yes && test "$ac_cv_prog_cc_g" = yes; then
+  if test "$GCC" = yes; then
+
+cat >>confdefs.h <<\_ACEOF
+#define PROFILE_PID_DIR 1
+_ACEOF
+
+    CFLAGS="$CFLAGS -pg"
+  else
+    { { echo "$as_me:$LINENO: error: --enable-profiling is supported only when using GCC" >&5
+echo "$as_me: error: --enable-profiling is supported only when using GCC" >&2;}
+   { (exit 1); exit 1; }; }
+  fi
 fi
 
 { echo "$as_me:$LINENO: using CFLAGS=$CFLAGS" >&5
@@ -23975,6 +24023,7 @@ s,@default_port@,$default_port,;t t
 s,@enable_shared@,$enable_shared,;t t
 s,@enable_rpath@,$enable_rpath,;t t
 s,@enable_debug@,$enable_debug,;t t
+s,@enable_profiling@,$enable_profiling,;t t
 s,@DTRACE@,$DTRACE,;t t
 s,@DTRACEFLAGS@,$DTRACEFLAGS,;t t
 s,@enable_dtrace@,$enable_dtrace,;t t
