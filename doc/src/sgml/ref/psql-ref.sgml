@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.185 2007/02/21 23:21:12 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.186 2007/02/21 23:22:42 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -561,7 +561,7 @@ PostgreSQL documentation
 
     <para>
      An alternative way to specify connection parameters is in a
-     <parameter>conninfo</parameter>	string, which is used instead of a 
+     <parameter>conninfo</parameter> string, which is used instead of a 
      database name. This mechanism give you very wide control over the 
      connection. For example:
 <programlisting>
