@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Wed Feb 21 10:07:25 EST 2007</P>
+    <P>Last updated: Wed Feb 21 11:07:59 EST 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -584,16 +584,16 @@
 
     <H3 id="item3.6">3.6) What is the upgrade process for PostgreSQL?</H3>
 
-    <P>The PostgreSQL team makes only bug fixes in minor releases,
-    so, for example, upgrading from 7.4.8 to 7.4.9 does not require
-    a dump and restore;  merely stop the database server, install
-    the updated binaries, and restart the server.</P>
+    <P>The PostgreSQL team adds only bug fixes to minor releases.  All
+    users should upgrade to the most recent minor release as soon as it
+    is available.  While upgrades always have some risk, PostgreSQL minor
+    releases fix only frequently-encountered bugs to reduce the risk of
+    upgrading.  The community considers <i>not</i> upgrading more risky
+    that upgrading.</P>
 
-    <P>All users should upgrade to the most recent minor release as soon
-    as it is available.  While upgrades always have some risk, PostgreSQL
-    minor releases fix only common bugs to reduce the risk of upgrading.
-    The community considers <i>not</i> upgrading more risky that
-    upgrading.</P>
+    <P>Upgrading to a minor release, e.g. 8.1.5 to 8.1.6, does not does
+    not require a dump and restore; merely stop the database server,
+    install the updated binaries, and restart the server.</P>
 
     <P>Major releases (e.g. from 7.3 to 7.4) often change the internal
     format of system tables and data files. These changes are often complex,
