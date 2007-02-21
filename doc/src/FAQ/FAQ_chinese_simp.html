@@ -15,8 +15,8 @@
 <h1> PostgreSQL 常见问题（FAQ） </h1>
 
 
-<p> 最近更新：2007 年 1 月 5 日 星期五 15:40:20 EST  <br/>
-      中文版最近更新：2007 年 1 月 29 日 星期一 22:48:04 CST 
+<p> 最近更新：2007 年 1 月 30 日 星期二 17:37:01 EST <br/>
+      中文版最近更新：2007 年 2 月 1 日 星期四 12:55:04 CST 
 </p>
 <p>   目前维护人员：Bruce Momjian (<a href="mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</a>)<br/>
    中文版维护人员：Daojing.Zhou（<a href="mailto:doudou586@gmail.com">doudou586@gmail.com</a>）
@@ -49,7 +49,8 @@
 <a href="#1.11">1.11</a>)我应该怎样学习 SQL ？<br/>
 
 <a href="#1.12">1.12</a>)如何提交补丁或是加入开发队伍？<br/>
-<a href="#1.13">1.13</a>)PostgreSQL 和其他数据库系统比起来如何？<br/>          
+<a href="#1.13">1.13</a>)PostgreSQL 和其他数据库系统比起来如何？<br/>
+<a href="#1.14">1.14</a>)PostgreSQL 可以处理最近各个国家夏时制的变化吗？<br/>
 </p>
 
 <h2><a name="用户客户端问题"></a> 用户客户端问题 </h2>
@@ -392,6 +393,10 @@ PostgreSQL不使用Bug跟踪系统，因为我们发现在邮件列表中直接�
 
 </dl>
 
+
+<h3><a name="1.14"></a>1.14) PostgreSQL可以处理最近各个国家夏时制的变化吗?</h3>
+ 	 
+<p>PostgreSQL 8.0之前的版本是使用操作系统中的时区数据库来处理夏时制的信息，自8.0版及以后的版本PostgreSQL会自身含有最新的时区信息。</p>
 
 
 <hr/>
