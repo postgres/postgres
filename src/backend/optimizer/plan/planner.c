@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.214 2007/02/20 17:32:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.215 2007/02/22 22:00:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,8 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 	double		tuple_fraction;
 	PlannerInfo *root;
 	Plan	   *top_plan;
+	ListCell   *lp,
+			   *lr;
 
 	/*
 	 * Set up global state for this planner invocation.  This data is needed
@@ -99,7 +101,9 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 
 	glob->boundParams = boundParams;
 	glob->paramlist = NIL;
-	glob->next_plan_id = 0;
+	glob->subplans = NIL;
+	glob->subrtables = NIL;
+	glob->finalrtable = NIL;
 
 	/* Determine what fraction of the plan is likely to be scanned */
 	if (isCursor)
@@ -132,7 +136,17 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 	}
 
 	/* final cleanup of the plan */
-	top_plan = set_plan_references(top_plan, parse->rtable);
+	Assert(glob->finalrtable == NIL);
+	top_plan = set_plan_references(glob, top_plan, root->parse->rtable);
+	/* ... and the subplans (both regular subplans and initplans) */
+	Assert(list_length(glob->subplans) == list_length(glob->subrtables));
+	forboth(lp, glob->subplans, lr, glob->subrtables)
+	{
+		Plan   *subplan = (Plan *) lfirst(lp);
+		List   *subrtable = (List *) lfirst(lr);
+
+		lfirst(lp) = set_plan_references(glob, subplan, subrtable);
+	}
 
 	/* build the PlannedStmt result */
 	result = makeNode(PlannedStmt);
@@ -140,9 +154,10 @@ planner(Query *parse, bool isCursor, int cursorOptions,
 	result->commandType = parse->commandType;
 	result->canSetTag = parse->canSetTag;
 	result->planTree = top_plan;
-	result->rtable = parse->rtable;
+	result->rtable = glob->finalrtable;
 	result->resultRelations = root->resultRelations;
 	result->into = parse->into;
+	result->subplans = glob->subplans;
 	result->returningLists = root->returningLists;
 	result->rowMarks = parse->rowMarks;
 	result->nParamExec = list_length(glob->paramlist);
@@ -182,7 +197,7 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 				 Index level, double tuple_fraction,
 				 PlannerInfo **subroot)
 {
-	int			saved_plan_id = glob->next_plan_id;
+	int			num_old_subplans = list_length(glob->subplans);
 	PlannerInfo *root;
 	Plan	   *plan;
 	List	   *newHaving;
@@ -384,7 +399,8 @@ subquery_planner(PlannerGlobal *glob, Query *parse,
 	 * initPlan list and extParam/allParam sets for plan nodes, and attach the
 	 * initPlans to the top plan node.
 	 */
-	if (root->glob->next_plan_id != saved_plan_id || root->query_level > 1)
+	if (list_length(glob->subplans) != num_old_subplans ||
+		root->query_level > 1)
 		SS_finalize_plan(root, plan);
 
 	/* Return internal info if caller wants it */
@@ -621,7 +637,8 @@ inheritance_planner(PlannerInfo *root)
 	 * If we managed to exclude every child rel, return a dummy plan
 	 */
 	if (subplans == NIL)
-		return (Plan *) make_result(tlist,
+		return (Plan *) make_result(root,
+									tlist,
 									(Node *) list_make1(makeBoolConst(false,
 																	  false)),
 									NULL);
@@ -638,6 +655,10 @@ inheritance_planner(PlannerInfo *root)
 	 * XXX should clean this up someday
 	 */
 	parse->rtable = rtable;
+
+	/* Suppress Append if there's only one surviving child rel */
+	if (list_length(subplans) == 1)
+		return (Plan *) linitial(subplans);
 
 	return (Plan *) make_append(subplans, true, tlist);
 }
@@ -897,7 +918,9 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 */
 				if (!is_projection_capable_plan(result_plan))
 				{
-					result_plan = (Plan *) make_result(sub_tlist, NULL,
+					result_plan = (Plan *) make_result(root,
+													   sub_tlist,
+													   NULL,
 													   result_plan);
 				}
 				else
@@ -928,7 +951,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * tuples) --- so make_agg() and make_group() are responsible
 				 * for computing the added cost.
 				 */
-				cost_qual_eval(&tlist_cost, sub_tlist);
+				cost_qual_eval(&tlist_cost, sub_tlist, root);
 				result_plan->startup_cost += tlist_cost.startup;
 				result_plan->total_cost += tlist_cost.startup +
 					tlist_cost.per_tuple * result_plan->plan_rows;
@@ -1051,7 +1074,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 				 * this routine to avoid having to generate the plan in the
 				 * first place.
 				 */
-				result_plan = (Plan *) make_result(tlist,
+				result_plan = (Plan *) make_result(root,
+												   tlist,
 												   parse->havingQual,
 												   NULL);
 			}
@@ -1110,6 +1134,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	{
 		List	   *rlist;
 
+		Assert(parse->resultRelation);
 		rlist = set_returning_clause_references(parse->returningList,
 												result_plan,
 												parse->resultRelation);
@@ -1544,7 +1569,7 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
  * pass down only c,d,a+b, but it's not really worth the trouble to
  * eliminate simple var references from the subplan.  We will avoid doing
  * the extra computation to recompute a+b at the outer level; see
- * replace_vars_with_subplan_refs() in setrefs.c.)
+ * fix_upper_expr() in setrefs.c.)
  *
  * If we are grouping or aggregating, *and* there are no non-Var grouping
  * expressions, then the returned tlist is effectively dummy; we do not

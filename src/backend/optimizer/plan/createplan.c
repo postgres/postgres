@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.225 2007/02/19 02:23:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.226 2007/02/22 22:00:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,12 +128,12 @@ static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
  * create_plan
  *	  Creates the access plan for a query by tracing backwards through the
  *	  desired chain of pathnodes, starting at the node 'best_path'.  For
- *	  every pathnode found:
- *	  (1) Create a corresponding plan node containing appropriate id,
- *		  target list, and qualification information.
- *	  (2) Modify qual clauses of join nodes so that subplan attributes are
- *		  referenced using relative values.
- *	  (3) Target lists are not modified, but will be in setrefs.c.
+ *	  every pathnode found, we create a corresponding plan node containing
+ *	  appropriate id, target list, and qualification information.
+ *
+ *	  The tlists and quals in the plan tree are still in planner format,
+ *	  ie, Vars still correspond to the parser's numbering.  This will be
+ *	  fixed later by setrefs.c.
  *
  *	  best_path is the best access path
  *
@@ -421,7 +421,8 @@ create_gating_plan(PlannerInfo *root, Plan *plan, List *quals)
 	if (!pseudoconstants)
 		return plan;
 
-	return (Plan *) make_result((List *) copyObject(plan->targetlist),
+	return (Plan *) make_result(root,
+								plan->targetlist,
 								(Node *) pseudoconstants,
 								plan);
 }
@@ -519,7 +520,8 @@ create_append_plan(PlannerInfo *root, AppendPath *best_path)
 	if (best_path->subpaths == NIL)
 	{
 		/* Generate a Result plan with constant-FALSE gating qual */
-		return (Plan *) make_result(tlist,
+		return (Plan *) make_result(root,
+									tlist,
 									(Node *) list_make1(makeBoolConst(false,
 																	  false)),
 									NULL);
@@ -559,7 +561,7 @@ create_result_plan(PlannerInfo *root, ResultPath *best_path)
 
 	quals = order_qual_clauses(root, best_path->quals);
 
-	return make_result(tlist, (Node *) quals, NULL);
+	return make_result(root, tlist, (Node *) quals, NULL);
 }
 
 /*
@@ -682,7 +684,7 @@ create_unique_plan(PlannerInfo *root, UniquePath *best_path)
 		 * node to help it along.
 		 */
 		if (!is_projection_capable_plan(subplan))
-			subplan = (Plan *) make_result(newtlist, NULL, subplan);
+			subplan = (Plan *) make_result(root, newtlist, NULL, subplan);
 		else
 			subplan->targetlist = newtlist;
 	}
@@ -1065,12 +1067,6 @@ create_bitmap_scan_plan(PlannerInfo *root,
 	 */
 	bitmapqualorig = list_difference_ptr(bitmapqualorig, qpqual);
 
-	/*
-	 * Copy the finished bitmapqualorig to make sure we have an independent
-	 * copy --- needed in case there are subplans in the index quals
-	 */
-	bitmapqualorig = copyObject(bitmapqualorig);
-
 	/* Finally ready to build the plan node */
 	scan_plan = make_bitmap_heapscan(tlist,
 									 qpqual,
@@ -1333,7 +1329,8 @@ create_subqueryscan_plan(PlannerInfo *root, Path *best_path,
 	scan_plan = make_subqueryscan(tlist,
 								  scan_clauses,
 								  scan_relid,
-								  best_path->parent->subplan);
+								  best_path->parent->subplan,
+								  best_path->parent->subrtable);
 
 	copy_path_costsize(&scan_plan->scan.plan, best_path);
 
@@ -2115,7 +2112,7 @@ order_qual_clauses(PlannerInfo *root, List *clauses)
 		Node	   *clause = (Node *) lfirst(lc);
 		QualCost	qcost;
 
-		cost_qual_eval_node(&qcost, clause);
+		cost_qual_eval_node(&qcost, clause, root);
 		items[i].clause = clause;
 		items[i].cost = qcost.per_tuple;
 		i++;
@@ -2326,7 +2323,8 @@ SubqueryScan *
 make_subqueryscan(List *qptlist,
 				  List *qpqual,
 				  Index scanrelid,
-				  Plan *subplan)
+				  Plan *subplan,
+				  List *subrtable)
 {
 	SubqueryScan *node = makeNode(SubqueryScan);
 	Plan	   *plan = &node->scan.plan;
@@ -2345,6 +2343,7 @@ make_subqueryscan(List *qptlist,
 	plan->righttree = NULL;
 	node->scan.scanrelid = scanrelid;
 	node->subplan = subplan;
+	node->subrtable = subrtable;
 
 	return node;
 }
@@ -2524,7 +2523,7 @@ make_hash(Plan *lefttree)
 	 * plan; this only affects EXPLAIN display not decisions.
 	 */
 	plan->startup_cost = plan->total_cost;
-	plan->targetlist = copyObject(lefttree->targetlist);
+	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -2583,7 +2582,7 @@ make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 			  lefttree->plan_width);
 	plan->startup_cost = sort_path.startup_cost;
 	plan->total_cost = sort_path.total_cost;
-	plan->targetlist = copyObject(lefttree->targetlist);
+	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -2741,10 +2740,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys)
 			 * Do we need to insert a Result node?
 			 */
 			if (!is_projection_capable_plan(lefttree))
-			{
-				tlist = copyObject(tlist);
-				lefttree = (Plan *) make_result(tlist, NULL, lefttree);
-			}
+				lefttree = (Plan *) make_result(root, tlist, NULL, lefttree);
 
 			/*
 			 * Add resjunk entry to input's tlist
@@ -2905,7 +2901,7 @@ make_material(Plan *lefttree)
 	Plan	   *plan = &node->plan;
 
 	/* cost should be inserted by caller */
-	plan->targetlist = copyObject(lefttree->targetlist);
+	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -2996,12 +2992,12 @@ make_agg(PlannerInfo *root, List *tlist, List *qual,
 	 */
 	if (qual)
 	{
-		cost_qual_eval(&qual_cost, qual);
+		cost_qual_eval(&qual_cost, qual, root);
 		plan->startup_cost += qual_cost.startup;
 		plan->total_cost += qual_cost.startup;
 		plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
 	}
-	cost_qual_eval(&qual_cost, tlist);
+	cost_qual_eval(&qual_cost, tlist, root);
 	plan->startup_cost += qual_cost.startup;
 	plan->total_cost += qual_cost.startup;
 	plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
@@ -3059,12 +3055,12 @@ make_group(PlannerInfo *root,
 	 */
 	if (qual)
 	{
-		cost_qual_eval(&qual_cost, qual);
+		cost_qual_eval(&qual_cost, qual, root);
 		plan->startup_cost += qual_cost.startup;
 		plan->total_cost += qual_cost.startup;
 		plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
 	}
-	cost_qual_eval(&qual_cost, tlist);
+	cost_qual_eval(&qual_cost, tlist, root);
 	plan->startup_cost += qual_cost.startup;
 	plan->total_cost += qual_cost.startup;
 	plan->total_cost += qual_cost.per_tuple * plan->plan_rows;
@@ -3108,7 +3104,7 @@ make_unique(Plan *lefttree, List *distinctList)
 	 * has a better idea.
 	 */
 
-	plan->targetlist = copyObject(lefttree->targetlist);
+	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -3174,7 +3170,7 @@ make_setop(SetOpCmd cmd, Plan *lefttree,
 	if (plan->plan_rows < 1)
 		plan->plan_rows = 1;
 
-	plan->targetlist = copyObject(lefttree->targetlist);
+	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -3272,7 +3268,7 @@ make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
 			plan->plan_rows = 1;
 	}
 
-	plan->targetlist = copyObject(lefttree->targetlist);
+	plan->targetlist = lefttree->targetlist;
 	plan->qual = NIL;
 	plan->lefttree = lefttree;
 	plan->righttree = NULL;
@@ -3293,7 +3289,8 @@ make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
  * cost.  In either case, tlist eval cost is not to be included here.
  */
 Result *
-make_result(List *tlist,
+make_result(PlannerInfo *root,
+			List *tlist,
 			Node *resconstantqual,
 			Plan *subplan)
 {
@@ -3312,7 +3309,7 @@ make_result(List *tlist,
 		{
 			QualCost	qual_cost;
 
-			cost_qual_eval(&qual_cost, (List *) resconstantqual);
+			cost_qual_eval(&qual_cost, (List *) resconstantqual, root);
 			/* resconstantqual is evaluated once at startup */
 			plan->startup_cost += qual_cost.startup + qual_cost.per_tuple;
 			plan->total_cost += qual_cost.startup + qual_cost.per_tuple;

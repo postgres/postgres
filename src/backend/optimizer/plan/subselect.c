@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.120 2007/02/19 07:03:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.121 2007/02/22 22:00:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@ typedef struct process_sublinks_context
 
 typedef struct finalize_primnode_context
 {
+	PlannerInfo *root;
 	Bitmapset  *paramids;		/* Set of PARAM_EXEC paramids found */
 	Bitmapset  *outer_params;	/* Set of accessible outer paramids */
 } finalize_primnode_context;
@@ -57,12 +58,13 @@ static Node *convert_testexpr(PlannerInfo *root,
 							  List **righthandIds);
 static Node *convert_testexpr_mutator(Node *node,
 						 convert_testexpr_context *context);
-static bool subplan_is_hashable(SubLink *slink, SubPlan *node);
+static bool subplan_is_hashable(SubLink *slink, SubPlan *node, Plan *plan);
 static bool hash_ok_operator(OpExpr *expr);
 static Node *replace_correlation_vars_mutator(Node *node, PlannerInfo *root);
 static Node *process_sublinks_mutator(Node *node,
 									  process_sublinks_context *context);
-static Bitmapset *finalize_plan(Plan *plan, List *rtable,
+static Bitmapset *finalize_plan(PlannerInfo *root,
+			  Plan *plan,
 			  Bitmapset *outer_params,
 			  Bitmapset *valid_params);
 static bool finalize_primnode(Node *node, finalize_primnode_context *context);
@@ -204,6 +206,24 @@ generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod)
 }
 
 /*
+ * Get the datatype of the first column of the plan's output.
+ *
+ * This is a hack to support exprType(), which doesn't have any way to get
+ * at the plan associated with a SubPlan node.  We really only need the value
+ * for EXPR_SUBLINK and ARRAY_SUBLINK subplans, but for consistency we set
+ * it always.
+ */
+static Oid
+get_first_col_type(Plan *plan)
+{
+	TargetEntry *tent = (TargetEntry *) linitial(plan->targetlist);
+
+	Assert(IsA(tent, TargetEntry));
+	Assert(!tent->resjunk);
+	return exprType((Node *) tent->expr);
+}
+
+/*
  * Convert a SubLink (as created by the parser) into a SubPlan.
  *
  * We are given the original SubLink and the already-processed testexpr
@@ -219,10 +239,11 @@ generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod)
 static Node *
 make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 {
-	SubPlan    *node = makeNode(SubPlan);
 	Query	   *subquery = (Query *) (slink->subselect);
 	double		tuple_fraction;
+	SubPlan    *node;
 	Plan	   *plan;
+	PlannerInfo *subroot;
 	Bitmapset  *tmpset;
 	int			paramid;
 	Node	   *result;
@@ -266,22 +287,19 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 	/*
 	 * Generate the plan for the subquery.
 	 */
-	node->plan = plan = subquery_planner(root->glob, subquery,
-										 root->query_level + 1,
-										 tuple_fraction,
-										 NULL);
-
-	/* Assign quasi-unique ID to this SubPlan */
-	node->plan_id = root->glob->next_plan_id++;
-
-	node->rtable = subquery->rtable;
+	plan = subquery_planner(root->glob, subquery,
+							root->query_level + 1,
+							tuple_fraction,
+							&subroot);
 
 	/*
-	 * Initialize other fields of the SubPlan node.
+	 * Initialize the SubPlan node.  Note plan_id isn't set yet.
 	 */
+	node = makeNode(SubPlan);
 	node->subLinkType = slink->subLinkType;
 	node->testexpr = NULL;
 	node->paramIds = NIL;
+	node->firstColType = get_first_col_type(plan);
 	node->useHashTable = false;
 	/* At top level of a qual, can treat UNKNOWN the same as FALSE */
 	node->unknownEqFalse = isTopQual;
@@ -384,7 +402,7 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 		 * tuple.  But if it's an IN (= ANY) test, we might be able to use a
 		 * hashtable to avoid comparing all the tuples.
 		 */
-		if (subplan_is_hashable(slink, node))
+		if (subplan_is_hashable(slink, node, plan))
 			node->useHashTable = true;
 
 		/*
@@ -411,7 +429,7 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 					break;
 			}
 			if (use_material)
-				node->plan = plan = materialize_finished_plan(plan);
+				plan = materialize_finished_plan(plan);
 		}
 
 		/*
@@ -434,6 +452,15 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 
 		result = (Node *) node;
 	}
+
+	/*
+	 * Add the subplan and its rtable to the global lists.
+	 */
+	root->glob->subplans = lappend(root->glob->subplans,
+								   plan);
+	root->glob->subrtables = lappend(root->glob->subrtables,
+									 subroot->parse->rtable);
+	node->plan_id = list_length(root->glob->subplans);
 
 	return result;
 }
@@ -539,7 +566,7 @@ convert_testexpr_mutator(Node *node,
  * on its plan and parParam fields, however.
  */
 static bool
-subplan_is_hashable(SubLink *slink, SubPlan *node)
+subplan_is_hashable(SubLink *slink, SubPlan *node, Plan *plan)
 {
 	double		subquery_size;
 	ListCell   *l;
@@ -574,8 +601,8 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 	 * actually be stored as MinimalTuples; this provides some fudge factor
 	 * for hashtable overhead.)
 	 */
-	subquery_size = node->plan->plan_rows *
-		(MAXALIGN(node->plan->plan_width) + MAXALIGN(sizeof(HeapTupleHeaderData)));
+	subquery_size = plan->plan_rows *
+		(MAXALIGN(plan->plan_width) + MAXALIGN(sizeof(HeapTupleHeaderData)));
 	if (subquery_size > work_mem * 1024L)
 		return false;
 
@@ -964,7 +991,7 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
 	/*
 	 * Now recurse through plan tree.
 	 */
-	(void) finalize_plan(plan, root->parse->rtable, outer_params, valid_params);
+	(void) finalize_plan(root, plan, outer_params, valid_params);
 
 	bms_free(outer_params);
 	bms_free(valid_params);
@@ -988,16 +1015,16 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
 	initplan_cost = 0;
 	foreach(l, plan->initPlan)
 	{
-		SubPlan    *initplan = (SubPlan *) lfirst(l);
+		SubPlan    *initsubplan = (SubPlan *) lfirst(l);
+		Plan	   *initplan = planner_subplan_get_plan(root, initsubplan);
 		ListCell   *l2;
 
-		initExtParam = bms_add_members(initExtParam,
-									   initplan->plan->extParam);
-		foreach(l2, initplan->setParam)
+		initExtParam = bms_add_members(initExtParam, initplan->extParam);
+		foreach(l2, initsubplan->setParam)
 		{
 			initSetParam = bms_add_member(initSetParam, lfirst_int(l2));
 		}
-		initplan_cost += initplan->plan->total_cost;
+		initplan_cost += initplan->total_cost;
 	}
 	/* allParam must include all these params */
 	plan->allParam = bms_add_members(plan->allParam, initExtParam);
@@ -1019,7 +1046,7 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
  * This is just an internal notational convenience.
  */
 static Bitmapset *
-finalize_plan(Plan *plan, List *rtable,
+finalize_plan(PlannerInfo *root, Plan *plan,
 			  Bitmapset *outer_params, Bitmapset *valid_params)
 {
 	finalize_primnode_context context;
@@ -1027,6 +1054,7 @@ finalize_plan(Plan *plan, List *rtable,
 	if (plan == NULL)
 		return NULL;
 
+	context.root = root;
 	context.paramids = NULL;	/* initialize set to empty */
 	context.outer_params = outer_params;
 
@@ -1110,8 +1138,8 @@ finalize_plan(Plan *plan, List *rtable,
 				{
 					context.paramids =
 						bms_add_members(context.paramids,
-										finalize_plan((Plan *) lfirst(l),
-													  rtable,
+										finalize_plan(root,
+													  (Plan *) lfirst(l),
 													  outer_params,
 													  valid_params));
 				}
@@ -1126,8 +1154,8 @@ finalize_plan(Plan *plan, List *rtable,
 				{
 					context.paramids =
 						bms_add_members(context.paramids,
-										finalize_plan((Plan *) lfirst(l),
-													  rtable,
+										finalize_plan(root,
+													  (Plan *) lfirst(l),
 													  outer_params,
 													  valid_params));
 				}
@@ -1142,8 +1170,8 @@ finalize_plan(Plan *plan, List *rtable,
 				{
 					context.paramids =
 						bms_add_members(context.paramids,
-										finalize_plan((Plan *) lfirst(l),
-													  rtable,
+										finalize_plan(root,
+													  (Plan *) lfirst(l),
 													  outer_params,
 													  valid_params));
 				}
@@ -1193,14 +1221,14 @@ finalize_plan(Plan *plan, List *rtable,
 
 	/* Process left and right child plans, if any */
 	context.paramids = bms_add_members(context.paramids,
-									   finalize_plan(plan->lefttree,
-													 rtable,
+									   finalize_plan(root,
+													 plan->lefttree,
 													 outer_params,
 													 valid_params));
 
 	context.paramids = bms_add_members(context.paramids,
-									   finalize_plan(plan->righttree,
-													 rtable,
+									   finalize_plan(root,
+													 plan->righttree,
 													 outer_params,
 													 valid_params));
 
@@ -1252,10 +1280,11 @@ finalize_primnode(Node *node, finalize_primnode_context *context)
 	if (is_subplan(node))
 	{
 		SubPlan    *subplan = (SubPlan *) node;
+		Plan	   *plan = planner_subplan_get_plan(context->root, subplan);
 
 		/* Add outer-level params needed by the subplan to paramids */
 		context->paramids = bms_join(context->paramids,
-									 bms_intersect(subplan->plan->extParam,
+									 bms_intersect(plan->extParam,
 												   context->outer_params));
 		/* fall through to recurse into subplan args */
 	}
@@ -1300,15 +1329,20 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 	root->init_plans = saved_init_plans;
 
 	/*
+	 * Add the subplan and its rtable to the global lists.
+	 */
+	root->glob->subplans = lappend(root->glob->subplans,
+								   plan);
+	root->glob->subrtables = lappend(root->glob->subrtables,
+									 root->parse->rtable);
+
+	/*
 	 * Create a SubPlan node and add it to the outer list of InitPlans.
 	 */
 	node = makeNode(SubPlan);
 	node->subLinkType = EXPR_SUBLINK;
-	node->plan = plan;
-	/* Assign quasi-unique ID to this SubPlan */
-	node->plan_id = root->glob->next_plan_id++;
-
-	node->rtable = root->parse->rtable;
+	node->firstColType = get_first_col_type(plan);
+	node->plan_id = list_length(root->glob->subplans);
 
 	root->init_plans = lappend(root->init_plans, node);
 

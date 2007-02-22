@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.126 2007/02/20 17:32:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.127 2007/02/22 22:00:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -428,8 +428,10 @@ typedef struct SubLink
  * SubPlan - executable expression node for a subplan (sub-SELECT)
  *
  * The planner replaces SubLink nodes in expression trees with SubPlan
- * nodes after it has finished planning the subquery.  SubPlan contains
- * a sub-plantree and rtable instead of a sub-Query.
+ * nodes after it has finished planning the subquery.  SubPlan references
+ * a sub-plantree stored in the subplans list of the toplevel PlannedStmt.
+ * (We avoid a direct link to make it easier to copy expression trees
+ * without causing multiple processing of the subplan.)
  *
  * In an ordinary subplan, testexpr points to an executable expression
  * (OpExpr, an AND/OR tree of OpExprs, or RowCompareExpr) for the combining
@@ -463,12 +465,10 @@ typedef struct SubPlan
 	/* The combining operators, transformed to an executable expression: */
 	Node	   *testexpr;		/* OpExpr or RowCompareExpr expression tree */
 	List	   *paramIds;		/* IDs of Params embedded in the above */
-	/* The subselect, transformed to a Plan: */
-	struct Plan *plan;			/* subselect plan itself */
-	int			plan_id;		/* kluge because we haven't equal-funcs for
-								 * plan nodes... we compare this instead of
-								 * subselect plan */
-	List	   *rtable;			/* range table for subselect */
+	/* Identification of the Plan tree to use: */
+	int			plan_id;		/* Index (from 1) in PlannedStmt.subplans */
+	/* Extra data saved for the convenience of exprType(): */
+	Oid			firstColType;	/* Type of first column of subplan result */
 	/* Information about execution strategy: */
 	bool		useHashTable;	/* TRUE to store subselect output in a hash
 								 * table (implies we are doing "IN") */

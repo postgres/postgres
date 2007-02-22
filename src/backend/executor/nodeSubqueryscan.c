@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.35 2007/01/05 22:19:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.36 2007/02/22 22:00:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@
 
 #include "executor/execdebug.h"
 #include "executor/nodeSubqueryscan.h"
-#include "parser/parsetree.h"
 
 static TupleTableSlot *SubqueryNext(SubqueryScanState *node);
 
@@ -104,17 +103,18 @@ SubqueryScanState *
 ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 {
 	SubqueryScanState *subquerystate;
-	RangeTblEntry *rte;
 	EState	   *sp_estate;
 
 	/* check for unsupported flags */
 	Assert(!(eflags & EXEC_FLAG_MARK));
 
 	/*
-	 * SubqueryScan should not have any "normal" children.
+	 * SubqueryScan should not have any "normal" children.  Also, if planner
+	 * left anything in subrtable, it's fishy.
 	 */
 	Assert(outerPlan(node) == NULL);
 	Assert(innerPlan(node) == NULL);
+	Assert(node->subrtable == NIL);
 
 	/*
 	 * create state structure
@@ -152,25 +152,18 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	 * initialize subquery
 	 *
 	 * This should agree with ExecInitSubPlan
-	 */
-	rte = rt_fetch(node->scan.scanrelid, estate->es_range_table);
-	Assert(rte->rtekind == RTE_SUBQUERY);
-
-	/*
-	 * Do access checking on the rangetable entries in the subquery.
-	 */
-	ExecCheckRTPerms(rte->subquery->rtable);
-
-	/*
+	 *
 	 * The subquery needs its own EState because it has its own rangetable. It
 	 * shares our Param ID space and es_query_cxt, however.  XXX if rangetable
 	 * access were done differently, the subquery could share our EState,
 	 * which would eliminate some thrashing about in this module...
+	 *
+	 * XXX make that happen!
 	 */
 	sp_estate = CreateSubExecutorState(estate);
 	subquerystate->sss_SubEState = sp_estate;
 
-	sp_estate->es_range_table = rte->subquery->rtable;
+	sp_estate->es_range_table = estate->es_range_table;
 	sp_estate->es_param_list_info = estate->es_param_list_info;
 	sp_estate->es_param_exec_vals = estate->es_param_exec_vals;
 	sp_estate->es_tupleTable =
@@ -178,6 +171,7 @@ ExecInitSubqueryScan(SubqueryScan *node, EState *estate, int eflags)
 	sp_estate->es_snapshot = estate->es_snapshot;
 	sp_estate->es_crosscheck_snapshot = estate->es_crosscheck_snapshot;
 	sp_estate->es_instrument = estate->es_instrument;
+	sp_estate->es_plannedstmt = estate->es_plannedstmt;
 
 	/*
 	 * Start up the subplan (this is a very cut-down form of InitPlan())

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.287 2007/02/20 17:32:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.288 2007/02/22 22:00:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,9 +92,9 @@ static void ExecProcessReturning(ProjectionInfo *projectReturning,
 					 DestReceiver *dest);
 static TupleTableSlot *EvalPlanQualNext(EState *estate);
 static void EndEvalPlanQual(EState *estate);
+static void ExecCheckRTPerms(List *rangeTable);
 static void ExecCheckRTEPerms(RangeTblEntry *rte);
 static void ExecCheckXactReadOnly(PlannedStmt *plannedstmt);
-static void ExecCheckRangeTblReadOnly(List *rtable);
 static void EvalPlanQualStart(evalPlanQual *epq, EState *estate,
 				  evalPlanQual *priorepq);
 static void EvalPlanQualStop(evalPlanQual *epq);
@@ -348,16 +348,14 @@ ExecutorRewind(QueryDesc *queryDesc)
  * ExecCheckRTPerms
  *		Check access permissions for all relations listed in a range table.
  */
-void
+static void
 ExecCheckRTPerms(List *rangeTable)
 {
 	ListCell   *l;
 
 	foreach(l, rangeTable)
 	{
-		RangeTblEntry *rte = lfirst(l);
-
-		ExecCheckRTEPerms(rte);
+		ExecCheckRTEPerms((RangeTblEntry *) lfirst(l));
 	}
 }
 
@@ -373,12 +371,9 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 	Oid			userid;
 
 	/*
-	 * Only plain-relation RTEs need to be checked here.  Subquery RTEs are
-	 * checked by ExecInitSubqueryScan if the subquery is still a separate
-	 * subquery --- if it's been pulled up into our query level then the RTEs
-	 * are in our rangetable and will be checked here. Function RTEs are
+	 * Only plain-relation RTEs need to be checked here.  Function RTEs are
 	 * checked by init_fcache when the function is prepared for execution.
-	 * Join and special RTEs need no checks.
+	 * Join, subquery, and special RTEs need no checks.
 	 */
 	if (rte->rtekind != RTE_RELATION)
 		return;
@@ -417,6 +412,8 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 static void
 ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 {
+	ListCell   *l;
+
 	/*
 	 * CREATE TABLE AS or SELECT INTO?
 	 *
@@ -426,32 +423,9 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 		goto fail;
 
 	/* Fail if write permissions are requested on any non-temp table */
-	ExecCheckRangeTblReadOnly(plannedstmt->rtable);
-
-	return;
-
-fail:
-	ereport(ERROR,
-			(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
-			 errmsg("transaction is read-only")));
-}
-
-static void
-ExecCheckRangeTblReadOnly(List *rtable)
-{
-	ListCell   *l;
-
-	/* Fail if write permissions are requested on any non-temp table */
-	foreach(l, rtable)
+	foreach(l, plannedstmt->rtable)
 	{
-		RangeTblEntry *rte = lfirst(l);
-
-		if (rte->rtekind == RTE_SUBQUERY)
-		{
-			Assert(!rte->subquery->into);
-			ExecCheckRangeTblReadOnly(rte->subquery->rtable);
-			continue;
-		}
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 
 		if (rte->rtekind != RTE_RELATION)
 			continue;
@@ -494,9 +468,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	ListCell   *l;
 
 	/*
-	 * Do permissions checks.  It's sufficient to examine the query's top
-	 * rangetable here --- subplan RTEs will be checked during
-	 * ExecInitSubPlan().
+	 * Do permissions checks
 	 */
 	ExecCheckRTPerms(rangeTable);
 

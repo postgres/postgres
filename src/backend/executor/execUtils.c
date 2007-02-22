@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.145 2007/02/20 17:32:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.146 2007/02/22 22:00:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -847,7 +847,6 @@ ExecRelationIsTargetRelation(EState *estate, Index scanrelid)
 Relation
 ExecOpenScanRelation(EState *estate, Index scanrelid)
 {
-	RangeTblEntry *rtentry;
 	Oid			reloid;
 	LOCKMODE	lockmode;
 	ResultRelInfo *resultRelInfos;
@@ -885,8 +884,7 @@ ExecOpenScanRelation(EState *estate, Index scanrelid)
 	}
 
 	/* OK, open the relation and acquire lock as needed */
-	rtentry = rt_fetch(scanrelid, estate->es_range_table);
-	reloid = rtentry->relid;
+	reloid = getrelid(scanrelid, estate->es_range_table);
 
 	return heap_open(reloid, lockmode);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.300 2007/02/20 17:32:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.301 2007/02/22 22:00:23 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -245,6 +245,7 @@ _outPlannedStmt(StringInfo str, PlannedStmt *node)
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(resultRelations);
 	WRITE_NODE_FIELD(into);
+	WRITE_NODE_FIELD(subplans);
 	WRITE_NODE_FIELD(returningLists);
 	WRITE_NODE_FIELD(rowMarks);
 	WRITE_INT_FIELD(nParamExec);
@@ -415,6 +416,7 @@ _outSubqueryScan(StringInfo str, SubqueryScan *node)
 	_outScanInfo(str, (Scan *) node);
 
 	WRITE_NODE_FIELD(subplan);
+	WRITE_NODE_FIELD(subrtable);
 }
 
 static void
@@ -823,9 +825,8 @@ _outSubPlan(StringInfo str, SubPlan *node)
 	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
 	WRITE_NODE_FIELD(testexpr);
 	WRITE_NODE_FIELD(paramIds);
-	WRITE_NODE_FIELD(plan);
 	WRITE_INT_FIELD(plan_id);
-	WRITE_NODE_FIELD(rtable);
+	WRITE_OID_FIELD(firstColType);
 	WRITE_BOOL_FIELD(useHashTable);
 	WRITE_BOOL_FIELD(unknownEqFalse);
 	WRITE_NODE_FIELD(setParam);
@@ -1259,7 +1260,9 @@ _outPlannerGlobal(StringInfo str, PlannerGlobal *node)
 
 	/* NB: this isn't a complete set of fields */
 	WRITE_NODE_FIELD(paramlist);
-	WRITE_INT_FIELD(next_plan_id);
+	WRITE_NODE_FIELD(subplans);
+	WRITE_NODE_FIELD(subrtables);
+	WRITE_NODE_FIELD(finalrtable);
 }
 
 static void
@@ -1317,6 +1320,7 @@ _outRelOptInfo(StringInfo str, RelOptInfo *node)
 	WRITE_UINT_FIELD(pages);
 	WRITE_FLOAT_FIELD(tuples, "%.0f");
 	WRITE_NODE_FIELD(subplan);
+	WRITE_NODE_FIELD(subrtable);
 	WRITE_NODE_FIELD(baserestrictinfo);
 	WRITE_NODE_FIELD(joininfo);
 	WRITE_BOOL_FIELD(has_eclass_joins);

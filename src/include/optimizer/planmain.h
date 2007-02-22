@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.99 2007/01/22 01:35:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planmain.h,v 1.100 2007/02/22 22:00:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ extern Plan *optimize_minmax_aggregates(PlannerInfo *root, List *tlist,
  */
 extern Plan *create_plan(PlannerInfo *root, Path *best_path);
 extern SubqueryScan *make_subqueryscan(List *qptlist, List *qpqual,
-				  Index scanrelid, Plan *subplan);
+				  Index scanrelid, Plan *subplan, List *subrtable);
 extern Append *make_append(List *appendplans, bool isTarget, List *tlist);
 extern Sort *make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree,
 						List *pathkeys);
@@ -60,7 +60,8 @@ extern Limit *make_limit(Plan *lefttree, Node *limitOffset, Node *limitCount,
 		   int64 offset_est, int64 count_est);
 extern SetOp *make_setop(SetOpCmd cmd, Plan *lefttree,
 		   List *distinctList, AttrNumber flagColIdx);
-extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
+extern Result *make_result(PlannerInfo *root, List *tlist,
+						   Node *resconstantqual, Plan *subplan);
 extern bool is_projection_capable_plan(Plan *plan);
 
 /*
@@ -91,7 +92,9 @@ extern RestrictInfo *build_implied_join_equality(Oid opno,
 /*
  * prototypes for plan/setrefs.c
  */
-extern Plan *set_plan_references(Plan *plan, List *rtable);
+extern Plan *set_plan_references(PlannerGlobal *glob,
+								 Plan *plan,
+								 List *rtable);
 extern List *set_returning_clause_references(List *rlist,
 								Plan *topplan,
 								Index resultRelation);

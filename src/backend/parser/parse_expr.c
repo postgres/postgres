@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.211 2007/02/11 22:18:15 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.212 2007/02/22 22:00:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1769,12 +1769,7 @@ exprType(Node *expr)
 					subplan->subLinkType == ARRAY_SUBLINK)
 				{
 					/* get the type of the subselect's first target column */
-					TargetEntry *tent;
-
-					tent = (TargetEntry *) linitial(subplan->plan->targetlist);
-					Assert(IsA(tent, TargetEntry));
-					Assert(!tent->resjunk);
-					type = exprType((Node *) tent->expr);
+					type = subplan->firstColType;
 					if (subplan->subLinkType == ARRAY_SUBLINK)
 					{
 						type = get_array_type(type);
@@ -1782,7 +1777,7 @@ exprType(Node *expr)
 							ereport(ERROR,
 									(errcode(ERRCODE_UNDEFINED_OBJECT),
 									 errmsg("could not find array type for data type %s",
-							format_type_be(exprType((Node *) tent->expr)))));
+											format_type_be(subplan->firstColType))));
 					}
 				}
 				else

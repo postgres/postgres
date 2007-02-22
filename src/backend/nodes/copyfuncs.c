@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.367 2007/02/20 17:32:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.368 2007/02/22 22:00:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,7 @@ _copyPlannedStmt(PlannedStmt *from)
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(resultRelations);
 	COPY_NODE_FIELD(into);
+	COPY_NODE_FIELD(subplans);
 	COPY_NODE_FIELD(returningLists);
 	COPY_NODE_FIELD(rowMarks);
 	COPY_SCALAR_FIELD(nParamExec);
@@ -366,6 +367,7 @@ _copySubqueryScan(SubqueryScan *from)
 	 * copy remainder of node
 	 */
 	COPY_NODE_FIELD(subplan);
+	COPY_NODE_FIELD(subrtable);
 
 	return newnode;
 }
@@ -957,9 +959,8 @@ _copySubPlan(SubPlan *from)
 	COPY_SCALAR_FIELD(subLinkType);
 	COPY_NODE_FIELD(testexpr);
 	COPY_NODE_FIELD(paramIds);
-	COPY_NODE_FIELD(plan);
 	COPY_SCALAR_FIELD(plan_id);
-	COPY_NODE_FIELD(rtable);
+	COPY_SCALAR_FIELD(firstColType);
 	COPY_SCALAR_FIELD(useHashTable);
 	COPY_SCALAR_FIELD(unknownEqFalse);
 	COPY_NODE_FIELD(setParam);

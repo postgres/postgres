@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.235 2007/02/19 07:03:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.236 2007/02/22 22:00:24 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2989,7 +2989,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 			 */
 			if (contain_subplans(param))
 				goto fail;
-			cost_qual_eval(&eval_cost, list_make1(param));
+			cost_qual_eval(&eval_cost, list_make1(param), NULL);
 			if (eval_cost.startup + eval_cost.per_tuple >
 				10 * cpu_operator_cost)
 				goto fail;

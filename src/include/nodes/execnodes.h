@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.168 2007/02/20 17:32:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.169 2007/02/22 22:00:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,7 @@ typedef struct EState
 	ScanDirection es_direction; /* current scan direction */
 	Snapshot	es_snapshot;	/* time qual to use */
 	Snapshot	es_crosscheck_snapshot; /* crosscheck time qual for RI */
-	List	   *es_range_table; /* List of RangeTableEntrys */
+	List	   *es_range_table; /* List of RangeTblEntry */
 
 	/* Info about target table for insert/update/delete queries: */
 	ResultRelInfo *es_result_relations; /* array of ResultRelInfos */

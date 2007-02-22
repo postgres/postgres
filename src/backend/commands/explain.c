@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.156 2007/02/20 17:32:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.157 2007/02/22 22:00:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@ typedef struct ExplainState
 	bool		printNodes;		/* do nodeToString() too */
 	bool		printAnalyze;	/* print actual times */
 	/* other states */
+	PlannedStmt *pstmt;			/* top of plan */
 	List	   *rtable;			/* range table */
 } ExplainState;
 
@@ -260,6 +261,7 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 
 	es->printNodes = stmt->verbose;
 	es->printAnalyze = stmt->analyze;
+	es->pstmt = queryDesc->plannedstmt;
 	es->rtable = queryDesc->plannedstmt->rtable;
 
 	if (es->printNodes)
@@ -858,7 +860,6 @@ explain_outNode(StringInfo str,
 	/* initPlan-s */
 	if (plan->initPlan)
 	{
-		List	   *saved_rtable = es->rtable;
 		ListCell   *lst;
 
 		for (i = 0; i < indent; i++)
@@ -869,16 +870,15 @@ explain_outNode(StringInfo str,
 			SubPlanState *sps = (SubPlanState *) lfirst(lst);
 			SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
 
-			es->rtable = sp->rtable;
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, sp->plan,
+			explain_outNode(str,
+							exec_subplan_get_plan(es->pstmt, sp),
 							sps->planstate,
 							NULL,
 							indent + 4, es);
 		}
-		es->rtable = saved_rtable;
 	}
 
 	/* lefttree */
@@ -994,12 +994,6 @@ explain_outNode(StringInfo str,
 		SubqueryScan *subqueryscan = (SubqueryScan *) plan;
 		SubqueryScanState *subquerystate = (SubqueryScanState *) planstate;
 		Plan	   *subnode = subqueryscan->subplan;
-		RangeTblEntry *rte = rt_fetch(subqueryscan->scan.scanrelid,
-									  es->rtable);
-		List	   *saved_rtable = es->rtable;
-
-		Assert(rte->rtekind == RTE_SUBQUERY);
-		es->rtable = rte->subquery->rtable;
 
 		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
@@ -1009,14 +1003,11 @@ explain_outNode(StringInfo str,
 						subquerystate->subplan,
 						NULL,
 						indent + 3, es);
-
-		es->rtable = saved_rtable;
 	}
 
 	/* subPlan-s */
 	if (planstate->subPlan)
 	{
-		List	   *saved_rtable = es->rtable;
 		ListCell   *lst;
 
 		for (i = 0; i < indent; i++)
@@ -1027,16 +1018,15 @@ explain_outNode(StringInfo str,
 			SubPlanState *sps = (SubPlanState *) lfirst(lst);
 			SubPlan    *sp = (SubPlan *) sps->xprstate.expr;
 
-			es->rtable = sp->rtable;
 			for (i = 0; i < indent; i++)
 				appendStringInfo(str, "  ");
 			appendStringInfo(str, "    ->  ");
-			explain_outNode(str, sp->plan,
+			explain_outNode(str,
+							exec_subplan_get_plan(es->pstmt, sp),
 							sps->planstate,
 							NULL,
 							indent + 4, es);
 		}
-		es->rtable = saved_rtable;
 	}
 }
 

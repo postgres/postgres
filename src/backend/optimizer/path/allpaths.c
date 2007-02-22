@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.160 2007/02/20 17:32:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.161 2007/02/22 22:00:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -521,6 +521,7 @@ set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 									root->query_level + 1,
 									tuple_fraction,
 									&subroot);
+	rel->subrtable = subroot->parse->rtable;
 
 	/* Copy number of output rows from subplan */
 	rel->tuples = rel->subplan->plan_rows;

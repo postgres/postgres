@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.43 2007/02/19 02:23:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.44 2007/02/22 22:00:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 
 #include "executor/nodeFunctionscan.h"
 #include "funcapi.h"
-#include "parser/parsetree.h"
 #include "utils/builtins.h"
 
 

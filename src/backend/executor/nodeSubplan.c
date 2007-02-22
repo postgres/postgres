@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.85 2007/02/06 02:59:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.86 2007/02/22 22:00:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -637,12 +637,8 @@ void
 ExecInitSubPlan(SubPlanState *node, EState *estate, int eflags)
 {
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
+	Plan	   *plan = exec_subplan_get_plan(estate->es_plannedstmt, subplan);
 	EState	   *sp_estate;
-
-	/*
-	 * Do access checking on the rangetable entries in the subquery.
-	 */
-	ExecCheckRTPerms(subplan->rtable);
 
 	/*
 	 * initialize my state
@@ -668,18 +664,21 @@ ExecInitSubPlan(SubPlanState *node, EState *estate, int eflags)
 	 * shares our Param ID space and es_query_cxt, however.  XXX if rangetable
 	 * access were done differently, the subquery could share our EState,
 	 * which would eliminate some thrashing about in this module...
+	 *
+	 * XXX make that happen!
 	 */
 	sp_estate = CreateSubExecutorState(estate);
 	node->sub_estate = sp_estate;
 
-	sp_estate->es_range_table = subplan->rtable;
+	sp_estate->es_range_table = estate->es_range_table;
 	sp_estate->es_param_list_info = estate->es_param_list_info;
 	sp_estate->es_param_exec_vals = estate->es_param_exec_vals;
 	sp_estate->es_tupleTable =
-		ExecCreateTupleTable(ExecCountSlotsNode(subplan->plan) + 10);
+		ExecCreateTupleTable(ExecCountSlotsNode(plan) + 10);
 	sp_estate->es_snapshot = estate->es_snapshot;
 	sp_estate->es_crosscheck_snapshot = estate->es_crosscheck_snapshot;
 	sp_estate->es_instrument = estate->es_instrument;
+	sp_estate->es_plannedstmt = estate->es_plannedstmt;
 
 	/*
 	 * Start up the subplan (this is a very cut-down form of InitPlan())
@@ -692,7 +691,7 @@ ExecInitSubPlan(SubPlanState *node, EState *estate, int eflags)
 	if (subplan->parParam == NIL && subplan->setParam == NIL)
 		eflags |= EXEC_FLAG_REWIND;
 
-	node->planstate = ExecInitNode(subplan->plan, sp_estate, eflags);
+	node->planstate = ExecInitNode(plan, sp_estate, eflags);
 
 	node->needShutdown = true;	/* now we need to shutdown the subplan */
 

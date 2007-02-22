@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.91 2007/02/20 17:32:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.92 2007/02/22 22:00:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,8 @@ typedef struct PlannedStmt
 
 	IntoClause *into;			/* target for SELECT INTO / CREATE TABLE AS */
 
+	List	   *subplans;		/* Plan trees for SubPlan expressions */
+
 	/*
 	 * If the query has a returningList then the planner will store a list of
 	 * processed targetlists (one per result relation) here.  We must have a
@@ -64,6 +66,10 @@ typedef struct PlannedStmt
 
 	int			nParamExec;		/* number of PARAM_EXEC Params used */
 } PlannedStmt;
+
+/* macro for fetching the Plan associated with a SubPlan node */
+#define exec_subplan_get_plan(plannedstmt, subplan) \
+	((Plan *) list_nth((plannedstmt)->subplans, (subplan)->plan_id - 1))
 
 
 /* ----------------
@@ -313,12 +319,17 @@ typedef struct TidScan
  * the generic lefttree field as you might expect.	This is because we do
  * not want plan-tree-traversal routines to recurse into the subplan without
  * knowing that they are changing Query contexts.
+ *
+ * Note: subrtable is used just to carry the subquery rangetable from
+ * createplan.c to setrefs.c; it should always be NIL by the time the
+ * executor sees the plan.
  * ----------------
  */
 typedef struct SubqueryScan
 {
 	Scan		scan;
 	Plan	   *subplan;
+	List	   *subrtable;		/* temporary workspace for planner */
 } SubqueryScan;
 
 /* ----------------

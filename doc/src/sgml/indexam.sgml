@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.21 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.22 2007/02/22 22:00:22 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -903,7 +903,7 @@ amcostestimate (PlannerInfo *root,
      * Also, we charge for evaluation of the indexquals at each index row.
      * All the costs are assumed to be paid incrementally during the scan.
      */
-    cost_qual_eval(&amp;index_qual_cost, indexQuals);
+    cost_qual_eval(&amp;index_qual_cost, indexQuals, root);
     *indexStartupCost = index_qual_cost.startup;
     *indexTotalCost = seq_page_cost * numIndexPages +
         (cpu_index_tuple_cost + index_qual_cost.per_tuple) * numIndexTuples;
