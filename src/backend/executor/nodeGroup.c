@@ -15,7 +15,7 @@
  *	  locate group boundaries.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.68 2007/02/02 00:07:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeGroup.c,v 1.69 2007/02/22 23:44:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,14 @@ ExecGroup(GroupState *node)
 			node->grp_done = TRUE;
 			return NULL;
 		}
-		/* Copy tuple, set up as input for qual test and projection */
+		/* Copy tuple into firsttupleslot */
 		ExecCopySlot(firsttupleslot, outerslot);
-		econtext->ecxt_scantuple = firsttupleslot;
+
+		/*
+		 * Set it up as input for qual test and projection.  The expressions
+		 * will access the input tuple as varno OUTER.
+		 */
+		econtext->ecxt_outertuple = firsttupleslot;
 
 		/*
 		 * Check the qual (HAVING clause); if the group does not match, ignore
@@ -126,7 +131,7 @@ ExecGroup(GroupState *node)
 		 */
 		/* Copy tuple, set up as input for qual test and projection */
 		ExecCopySlot(firsttupleslot, outerslot);
-		econtext->ecxt_scantuple = firsttupleslot;
+		econtext->ecxt_outertuple = firsttupleslot;
 
 		/*
 		 * Check the qual (HAVING clause); if the group does not match, ignore

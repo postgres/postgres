@@ -38,7 +38,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.39 2007/02/16 03:49:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeResult.c,v 1.40 2007/02/22 23:44:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,13 +132,11 @@ ExecResult(ResultState *node)
 			if (TupIsNull(outerTupleSlot))
 				return NULL;
 
-			node->ps.ps_OuterTupleSlot = outerTupleSlot;
-
 			/*
-			 * XXX gross hack. use outer tuple as scan tuple for projection
+			 * prepare to compute projection expressions, which will expect
+			 * to access the input tuples as varno OUTER.
 			 */
 			econtext->ecxt_outertuple = outerTupleSlot;
-			econtext->ecxt_scantuple = outerTupleSlot;
 		}
 		else
 		{

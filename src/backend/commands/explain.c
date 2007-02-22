@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.157 2007/02/22 22:00:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.158 2007/02/22 23:44:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,8 +52,8 @@ static void show_scan_qual(List *qual, const char *qlabel,
 			   int scanrelid, Plan *outer_plan,
 			   StringInfo str, int indent, ExplainState *es);
 static void show_upper_qual(List *qual, const char *qlabel,
-				const char *outer_name, int outer_varno, Plan *outer_plan,
-				const char *inner_name, int inner_varno, Plan *inner_plan,
+				const char *outer_name, Plan *outer_plan,
+				const char *inner_name, Plan *inner_plan,
 				StringInfo str, int indent, ExplainState *es);
 static void show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
 			   const char *qlabel,
@@ -783,55 +783,55 @@ explain_outNode(StringInfo str,
 		case T_NestLoop:
 			show_upper_qual(((NestLoop *) plan)->join.joinqual,
 							"Join Filter",
-							"outer", OUTER, outerPlan(plan),
-							"inner", INNER, innerPlan(plan),
+							"outer", outerPlan(plan),
+							"inner", innerPlan(plan),
 							str, indent, es);
 			show_upper_qual(plan->qual,
 							"Filter",
-							"outer", OUTER, outerPlan(plan),
-							"inner", INNER, innerPlan(plan),
+							"outer", outerPlan(plan),
+							"inner", innerPlan(plan),
 							str, indent, es);
 			break;
 		case T_MergeJoin:
 			show_upper_qual(((MergeJoin *) plan)->mergeclauses,
 							"Merge Cond",
-							"outer", OUTER, outerPlan(plan),
-							"inner", INNER, innerPlan(plan),
+							"outer", outerPlan(plan),
+							"inner", innerPlan(plan),
 							str, indent, es);
 			show_upper_qual(((MergeJoin *) plan)->join.joinqual,
 							"Join Filter",
-							"outer", OUTER, outerPlan(plan),
-							"inner", INNER, innerPlan(plan),
+							"outer", outerPlan(plan),
+							"inner", innerPlan(plan),
 							str, indent, es);
 			show_upper_qual(plan->qual,
 							"Filter",
-							"outer", OUTER, outerPlan(plan),
-							"inner", INNER, innerPlan(plan),
+							"outer", outerPlan(plan),
+							"inner", innerPlan(plan),
 							str, indent, es);
 			break;
 		case T_HashJoin:
 			show_upper_qual(((HashJoin *) plan)->hashclauses,
 							"Hash Cond",
-							"outer", OUTER, outerPlan(plan),
-							"inner", INNER, innerPlan(plan),
+							"outer", outerPlan(plan),
+							"inner", innerPlan(plan),
 							str, indent, es);
 			show_upper_qual(((HashJoin *) plan)->join.joinqual,
 							"Join Filter",
-							"outer", OUTER, outerPlan(plan),
-							"inner", INNER, innerPlan(plan),
+							"outer", outerPlan(plan),
+							"inner", innerPlan(plan),
 							str, indent, es);
 			show_upper_qual(plan->qual,
 							"Filter",
-							"outer", OUTER, outerPlan(plan),
-							"inner", INNER, innerPlan(plan),
+							"outer", outerPlan(plan),
+							"inner", innerPlan(plan),
 							str, indent, es);
 			break;
 		case T_Agg:
 		case T_Group:
 			show_upper_qual(plan->qual,
 							"Filter",
-							"subplan", 0, outerPlan(plan),
-							"", 0, NULL,
+							"subplan", outerPlan(plan),
+							"", NULL,
 							str, indent, es);
 			break;
 		case T_Sort:
@@ -844,13 +844,13 @@ explain_outNode(StringInfo str,
 		case T_Result:
 			show_upper_qual((List *) ((Result *) plan)->resconstantqual,
 							"One-Time Filter",
-							"subplan", OUTER, outerPlan(plan),
-							"", 0, NULL,
+							"subplan", outerPlan(plan),
+							"", NULL,
 							str, indent, es);
 			show_upper_qual(plan->qual,
 							"Filter",
-							"subplan", OUTER, outerPlan(plan),
-							"", 0, NULL,
+							"subplan", outerPlan(plan),
+							"", NULL,
 							str, indent, es);
 			break;
 		default:
@@ -1088,13 +1088,15 @@ show_scan_qual(List *qual, const char *qlabel,
  */
 static void
 show_upper_qual(List *qual, const char *qlabel,
-				const char *outer_name, int outer_varno, Plan *outer_plan,
-				const char *inner_name, int inner_varno, Plan *inner_plan,
+				const char *outer_name, Plan *outer_plan,
+				const char *inner_name, Plan *inner_plan,
 				StringInfo str, int indent, ExplainState *es)
 {
 	List	   *context;
 	Node	   *outercontext;
 	Node	   *innercontext;
+	int			outer_varno;
+	int			inner_varno;
 	Node	   *node;
 	char	   *exprstr;
 	int			i;
@@ -1105,15 +1107,27 @@ show_upper_qual(List *qual, const char *qlabel,
 
 	/* Generate deparse context */
 	if (outer_plan)
+	{
 		outercontext = deparse_context_for_subplan(outer_name,
 												   (Node *) outer_plan);
+		outer_varno = OUTER;
+	}
 	else
+	{
 		outercontext = NULL;
+		outer_varno = 0;
+	}
 	if (inner_plan)
+	{
 		innercontext = deparse_context_for_subplan(inner_name,
 												   (Node *) inner_plan);
+		inner_varno = INNER;
+	}
 	else
+	{
 		innercontext = NULL;
+		inner_varno = 0;
+	}
 	context = deparse_context_for_plan(outer_varno, outercontext,
 									   inner_varno, innercontext,
 									   es->rtable);

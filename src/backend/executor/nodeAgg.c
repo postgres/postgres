@@ -61,7 +61,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.150 2007/02/02 00:07:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeAgg.c,v 1.151 2007/02/22 23:44:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,7 +420,7 @@ advance_transition_function(AggState *aggstate,
 
 /*
  * Advance all the aggregates for one input tuple.	The input tuple
- * has been stored in tmpcontext->ecxt_scantuple, so that it is accessible
+ * has been stored in tmpcontext->ecxt_outertuple, so that it is accessible
  * to ExecEvalExpr.  pergroup is the array of per-group structs to use
  * (this might be in a hashtable entry).
  *
@@ -643,8 +643,8 @@ find_unaggregated_cols_walker(Node *node, Bitmapset **colnos)
 	{
 		Var		   *var = (Var *) node;
 
-		/* setrefs.c should have set the varno to 0 */
-		Assert(var->varno == 0);
+		/* setrefs.c should have set the varno to OUTER */
+		Assert(var->varno == OUTER);
 		Assert(var->varlevelsup == 0);
 		*colnos = bms_add_member(*colnos, var->varattno);
 		return false;
@@ -905,7 +905,7 @@ agg_retrieve_direct(AggState *aggstate)
 			aggstate->grp_firstTuple = NULL;	/* don't keep two pointers */
 
 			/* set up for first advance_aggregates call */
-			tmpcontext->ecxt_scantuple = firstSlot;
+			tmpcontext->ecxt_outertuple = firstSlot;
 
 			/*
 			 * Process each outer-plan tuple, and then fetch the next one,
@@ -926,7 +926,7 @@ agg_retrieve_direct(AggState *aggstate)
 					break;
 				}
 				/* set up for next advance_aggregates call */
-				tmpcontext->ecxt_scantuple = outerslot;
+				tmpcontext->ecxt_outertuple = outerslot;
 
 				/*
 				 * If we are grouping, check whether we've crossed a group
@@ -973,7 +973,7 @@ agg_retrieve_direct(AggState *aggstate)
 		 * with an empty firstSlot ... but if not grouping, there can't be any
 		 * references to non-aggregated input columns, so no problem.)
 		 */
-		econtext->ecxt_scantuple = firstSlot;
+		econtext->ecxt_outertuple = firstSlot;
 
 		/*
 		 * Check the qual (HAVING clause); if the group does not match, ignore
@@ -1022,7 +1022,7 @@ agg_fill_hash_table(AggState *aggstate)
 		if (TupIsNull(outerslot))
 			break;
 		/* set up for advance_aggregates call */
-		tmpcontext->ecxt_scantuple = outerslot;
+		tmpcontext->ecxt_outertuple = outerslot;
 
 		/* Find or build hashtable entry for this tuple's group */
 		entry = lookup_hash_entry(aggstate, outerslot);
@@ -1116,7 +1116,7 @@ agg_retrieve_hash_table(AggState *aggstate)
 		 * Use the representative input tuple for any references to
 		 * non-aggregated input columns in the qual and tlist.
 		 */
-		econtext->ecxt_scantuple = firstSlot;
+		econtext->ecxt_outertuple = firstSlot;
 
 		/*
 		 * Check the qual (HAVING clause); if the group does not match, ignore

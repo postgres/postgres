@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.249 2007/02/14 01:58:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.250 2007/02/22 23:44:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2626,7 +2626,7 @@ get_rte_for_var(Var *var, int levelsup, deparse_context *context,
 
 	/*
 	 * Try to find the relevant RTE in this rtable.  In a plan tree, it's
-	 * likely that varno is OUTER, INNER, or 0, in which case we try to use
+	 * likely that varno is OUTER or INNER, in which case we try to use
 	 * varnoold instead.  If the Var references an expression computed by a
 	 * subplan, varnoold will be 0, and we fall back to looking at the special
 	 * subplan RTEs.

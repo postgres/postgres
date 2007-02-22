@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.131 2007/02/22 22:00:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.132 2007/02/22 23:44:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,6 @@ typedef struct
 typedef struct
 {
 	indexed_tlist *subplan_itlist;
-	Index		subvarno;
 	int			rtoffset;
 } fix_upper_expr_context;
 
@@ -73,7 +72,7 @@ static Node *fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context);
 static void set_join_references(Join *join, int rtoffset);
 static void set_inner_join_references(Plan *inner_plan,
 						  indexed_tlist *outer_itlist);
-static void set_upper_references(Plan *plan, Index subvarno, int rtoffset);
+static void set_upper_references(Plan *plan, int rtoffset);
 static indexed_tlist *build_tlist_index(List *tlist);
 static Var *search_indexed_tlist_for_var(Var *var,
 							 indexed_tlist *itlist,
@@ -90,7 +89,6 @@ static Node *fix_join_expr_mutator(Node *node,
 								   fix_join_expr_context *context);
 static Node *fix_upper_expr(Node *node,
 							indexed_tlist *subplan_itlist,
-							Index subvarno,
 							int rtoffset);
 static Node *fix_upper_expr_mutator(Node *node,
 									fix_upper_expr_context *context);
@@ -345,7 +343,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			break;
 		case T_Agg:
 		case T_Group:
-			set_upper_references(plan, (Index) 0, rtoffset);
+			set_upper_references(plan, rtoffset);
 			break;
 		case T_Result:
 			{
@@ -354,11 +352,9 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 				/*
 				 * Result may or may not have a subplan; if not, it's more
 				 * like a scan node than an upper node.
-				 *
-				 * XXX why does Result use a different subvarno from Agg/Group?
 				 */
 				if (splan->plan.lefttree != NULL)
-					set_upper_references(plan, (Index) OUTER, rtoffset);
+					set_upper_references(plan, rtoffset);
 				else
 				{
 					splan->plan.targetlist =
@@ -889,7 +885,7 @@ set_inner_join_references(Plan *inner_plan, indexed_tlist *outer_itlist)
  * the expression.
  */
 static void
-set_upper_references(Plan *plan, Index subvarno, int rtoffset)
+set_upper_references(Plan *plan, int rtoffset)
 {
 	Plan	   *subplan = plan->lefttree;
 	indexed_tlist *subplan_itlist;
@@ -909,7 +905,6 @@ set_upper_references(Plan *plan, Index subvarno, int rtoffset)
 
 		newexpr = fix_upper_expr((Node *) tle->expr,
 								 subplan_itlist,
-								 subvarno,
 								 rtoffset);
 		tle = flatCopyTargetEntry(tle);
 		tle->expr = (Expr *) newexpr;
@@ -920,7 +915,6 @@ set_upper_references(Plan *plan, Index subvarno, int rtoffset)
 	plan->qual = (List *)
 		fix_upper_expr((Node *) plan->qual,
 					   subplan_itlist,
-					   subvarno,
 					   rtoffset);
 
 	pfree(subplan_itlist);
@@ -1233,23 +1227,20 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
  *
  * 'node': the tree to be fixed (a target item or qual)
  * 'subplan_itlist': indexed target list for subplan
- * 'subvarno': varno to be assigned to all Vars
  * 'rtoffset': how much to increment varnoold by
  *
  * The resulting tree is a copy of the original in which all Var nodes have
- * varno = subvarno, varattno = resno of corresponding subplan target.
+ * varno = OUTER, varattno = resno of corresponding subplan target.
  * The original tree is not modified.
  */
 static Node *
 fix_upper_expr(Node *node,
 			   indexed_tlist *subplan_itlist,
-			   Index subvarno,
 			   int rtoffset)
 {
 	fix_upper_expr_context context;
 
 	context.subplan_itlist = subplan_itlist;
-	context.subvarno = subvarno;
 	context.rtoffset = rtoffset;
 	return fix_upper_expr_mutator(node, &context);
 }
@@ -1267,7 +1258,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 
 		newvar = search_indexed_tlist_for_var(var,
 											  context->subplan_itlist,
-											  context->subvarno,
+											  OUTER,
 											  context->rtoffset);
 		if (!newvar)
 			elog(ERROR, "variable not found in subplan target list");
@@ -1278,7 +1269,7 @@ fix_upper_expr_mutator(Node *node, fix_upper_expr_context *context)
 	{
 		newvar = search_indexed_tlist_for_non_var(node,
 												  context->subplan_itlist,
-												  context->subvarno);
+												  OUTER);
 		if (newvar)
 			return (Node *) newvar;
 	}
