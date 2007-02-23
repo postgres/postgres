@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 Sun Solaris specific
 To be read in conjunction with the installation instructions.
 ============================================================
-Last updated:        $Date: 2006/12/02 09:29:51 $
+Last updated:        $Date: 2007/02/23 18:38:19 $
 
 
 Contents:
@@ -16,6 +16,7 @@ Contents:
 6) Where I can download prepared Solaris packages?
 7) How can I tune PostgreSQL and Solaris for performance?
 8) Can I use DTrace for tracing PostgreSQL?
+9) Can I compile PostgreSQL with Kerberos v5 support?
 
 
 1) What tools do I need to build and install PostgreSQL on Solaris?
@@ -72,14 +73,12 @@ problem.  Solaris 9 and above has a newer version of OpenSSL.
 This is probably a case of the run-time linker being unable to find
 some library, probably libz, libreadline or some other non-standard
 library such as libssl.  To point it to the right location, set the
-LD_LIBRARY_PATH environment variable, e.g.,
+LDFLAGS environment variable, e.g.,
 
-	LD_LIBRARY_PATH=/usr/sfw/lib:/opt/sfw/lib:/usr/local/lib
-	export LD_LIBRARY_PATH
+	LDFLAGS="-R /usr/sfw/lib:/opt/sfw/lib:/usr/local/lib"
+	export LDFLAGS
 
-and restart configure.  You will also have to keep this setting whenever
-you run any of the installed PostgreSQL programs.   Alternatively, set
-the environment variable LD_RUN_PATH.  See the ld(1) man page for more
+and restart configure. See the ld(1) man page for more
 information.
 
 
@@ -145,6 +144,10 @@ recommendations are also useful on other hardware with Solaris.
 Yes, see the chapter "Monitoring Database Activity" in the documentation
 for further information.
 
+You can also find more information here:
+
+	http://blogs.sun.com/robertlor/entry/user_level_dtrace_probes_in
+
 If you see the linking of the postgres executable abort with an error
 message like
 
@@ -157,8 +160,17 @@ message like
 	gmake: *** [postgres] Error 1
 
 your DTrace installation is too old to handle probes in static
-functions.  You need Solaris 10u3 or newer.
+functions.  You need Solaris 10u4 or newer. Workaround is remove static
+keyword from AbortTransaction and CommitTransaction functions declaration in 
+src/backend/access/transam/xact.c.
 
-You can also find more information here:
+See http://sunsolve.sun.com/search/document.do?assetkey=1-1-2139224-1
+(registration required).
 
-	http://blogs.sun.com/robertlor/entry/user_level_dtrace_probes_in
+9) Can I compile PostgreSQL with Kerberos v5 support?
+
+Kerberos is integrated in OpenSolaris and will be integrated in Solaris 10u4. GSS security
+mechanism contains internal Kerberos v5 library implementation which provide all necessary
+krb5 function. However, usage this library is only on own risk. It is private library
+and interface may change without notice.
+
