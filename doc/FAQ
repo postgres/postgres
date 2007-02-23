@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Feb 21 17:54:05 EST 2007
+   Last updated: Fri Feb 23 14:06:15 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -430,21 +430,27 @@
    
   3.6) What is the upgrade process for PostgreSQL?
   
-   The PostgreSQL team only adds bug fixes to minor releases. All users
-   should upgrade to the most recent minor release as soon as possible.
-   While upgrades always have some risk, PostgreSQL minor releases fix
-   only frequently-encountered, security, and data corruption bugs, to
-   reduce the risk of upgrading. The community considers not upgrading
-   more risky than upgrading.
+   PostgreSQL major releases include new features and occur roughly once
+   every year. A major release is numbered by increasing either the first
+   or second part of the version number, e.g. 8.1 to 8.2.
    
-   Upgrading to a minor release, e.g. 8.1.5 to 8.1.6, does not does not
-   require a dump and restore; merely stop the database server, install
-   the updated binaries, and restart the server.
+   Major releases usually change the internal format of system tables and
+   data files. These changes are often complex, so we don't maintain
+   backward compatibility for data files. A dump/reload of the database
+   is required for major upgrades.
    
-   Major releases (e.g. from 7.3 to 7.4) often change the internal format
-   of system tables and data files. These changes are often complex, so
-   we don't maintain backward compatibility for data files. A dump/reload
-   of the database is required for major upgrades.
+   Minor releases are numbered by increasing the third part of the
+   version number, e.g. 8.1.5 to 8.1.6. The PostgreSQL team only adds bug
+   fixes to minor releases. All users should upgrade to the most recent
+   minor release as soon as possible. While upgrades always have some
+   risk, PostgreSQL minor releases fix only frequently-encountered,
+   security, and data corruption bugs to reduce the risk of upgrading.
+   The community considers not upgrading riskier than upgrading.
+   `
+   
+   Upgrading to a minor release does not does not require a dump and
+   restore; merely stop the database server, install the updated
+   binaries, and restart the server.
    
   3.7) What computer hardware should I use?
   
