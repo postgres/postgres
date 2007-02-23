@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.186 2007/02/21 23:22:42 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.187 2007/02/23 18:20:58 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1425,6 +1425,24 @@ lo_import 152801
         sends it to the server as an <command>ALTER ROLE</> command.  This
         makes sure that the new password does not appear in cleartext in the
         command history, the server log, or elsewhere.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><literal>\prompt [ <replaceable class="parameter">text</replaceable> ] <replaceable class="parameter">name</replaceable></literal></term>
+        <listitem>
+        <para>
+         Prompts the user to set variable <replaceable
+         class="parameter">name</>.  An optional prompt, <replaceable
+         class="parameter">text</>, can be specified.  (For multi-word
+         prompts, use single-quotes.)
+        </para>
+
+        <para>
+         By default, <literal>\prompt</> uses the terminal for input and
+         output.  However, if the <option>-f</> command line switch is
+         used, <literal>\prompt</> uses standard input and standard output.
         </para>
         </listitem>
       </varlistentry>
