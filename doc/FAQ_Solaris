@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 Sun Solaris specific
 To be read in conjunction with the installation instructions.
 ============================================================
-Last updated:        $Date: 2007/02/23 20:30:08 $
+Last updated:        $Date: 2007/02/23 20:37:59 $
 
 
 Contents:
@@ -170,7 +170,7 @@ See http://sunsolve.sun.com/search/document.do?assetkey=1-1-2139224-1
 9) Can I compile PostgreSQL with Kerberos v5 support?
 
 Kerberos is integrated in OpenSolaris and will be integrated in Solaris
-10u4. Kerberos v5 support is implemented by the GSS security libary
+10u4. Kerberos v5 support is implemented by the GSS security library
 which contains Kerberos v5 functions. However, the library is private
 and the interface might change without notice.
 
