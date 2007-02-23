@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.132 2007/02/22 23:44:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.133 2007/02/23 21:59:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,7 @@ static void set_join_references(Join *join, int rtoffset);
 static void set_inner_join_references(Plan *inner_plan,
 						  indexed_tlist *outer_itlist);
 static void set_upper_references(Plan *plan, int rtoffset);
+static void set_dummy_tlist_references(Plan *plan, int rtoffset);
 static indexed_tlist *build_tlist_index(List *tlist);
 static Var *search_indexed_tlist_for_var(Var *var,
 							 indexed_tlist *itlist,
@@ -315,8 +316,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 			 * executor, we fix it up for possible use by EXPLAIN (not to
 			 * mention ease of debugging --- wrong varnos are very confusing).
 			 */
-			plan->targetlist =
-				fix_scan_list(plan->targetlist, rtoffset);
+			set_dummy_tlist_references(plan, rtoffset);
 			/*
 			 * Since these plan types don't check quals either, we should not
 			 * find any qual expression attached to them.
@@ -330,11 +330,12 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 				/*
 				 * Like the plan types above, Limit doesn't evaluate its tlist
 				 * or quals.  It does have live expressions for limit/offset,
-				 * however.
+				 * however; and those cannot contain subplan variable refs,
+				 * so fix_scan_expr works for them.
 				 */
-				splan->plan.targetlist =
-					fix_scan_list(splan->plan.targetlist, rtoffset);
+				set_dummy_tlist_references(plan, rtoffset);
 				Assert(splan->plan.qual == NIL);
+
 				splan->limitOffset =
 					fix_scan_expr(splan->limitOffset, rtoffset);
 				splan->limitCount =
@@ -375,8 +376,7 @@ set_plan_refs(PlannerGlobal *glob, Plan *plan, int rtoffset)
 				 * Append, like Sort et al, doesn't actually evaluate its
 				 * targetlist or check quals.
 				 */
-				splan->plan.targetlist =
-					fix_scan_list(splan->plan.targetlist, rtoffset);
+				set_dummy_tlist_references(plan, rtoffset);
 				Assert(splan->plan.qual == NIL);
 				foreach(l, splan->appendplans)
 				{
@@ -892,10 +892,7 @@ set_upper_references(Plan *plan, int rtoffset)
 	List	   *output_targetlist;
 	ListCell   *l;
 
-	if (subplan != NULL)
-		subplan_itlist = build_tlist_index(subplan->targetlist);
-	else
-		subplan_itlist = build_tlist_index(NIL);
+	subplan_itlist = build_tlist_index(subplan->targetlist);
 
 	output_targetlist = NIL;
 	foreach(l, plan->targetlist)
@@ -919,6 +916,58 @@ set_upper_references(Plan *plan, int rtoffset)
 
 	pfree(subplan_itlist);
 }
+
+/*
+ * set_dummy_tlist_references
+ *	  Replace the targetlist of an upper-level plan node with a simple
+ *	  list of OUTER references to its child.
+ *
+ * This is used for plan types like Sort and Append that don't evaluate
+ * their targetlists.  Although the executor doesn't care at all what's in
+ * the tlist, EXPLAIN needs it to be realistic.
+ *
+ * Note: we could almost use set_upper_references() here, but it fails for
+ * Append for lack of a lefttree subplan.  Single-purpose code is faster
+ * anyway.
+ */
+static void
+set_dummy_tlist_references(Plan *plan, int rtoffset)
+{
+	List	   *output_targetlist;
+	ListCell   *l;
+
+	output_targetlist = NIL;
+	foreach(l, plan->targetlist)
+	{
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
+		Var		   *oldvar = (Var *) tle->expr;
+		Var		   *newvar;
+
+		newvar = makeVar(OUTER,
+						 tle->resno,
+						 exprType((Node *) oldvar),
+						 exprTypmod((Node *) oldvar),
+						 0);
+		if (IsA(oldvar, Var))
+		{
+			newvar->varnoold = oldvar->varno + rtoffset;
+			newvar->varoattno = oldvar->varattno;
+		}
+		else
+		{
+			newvar->varnoold = 0;	/* wasn't ever a plain Var */
+			newvar->varoattno = 0;
+		}
+
+		tle = flatCopyTargetEntry(tle);
+		tle->expr = (Expr *) newvar;
+		output_targetlist = lappend(output_targetlist, tle);
+	}
+	plan->targetlist = output_targetlist;
+
+	/* We don't touch plan->qual here */
+}
+
 
 /*
  * build_tlist_index --- build an index data structure for a child tlist

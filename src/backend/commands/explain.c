@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.158 2007/02/22 23:44:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.159 2007/02/23 21:59:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,11 +49,9 @@ static void explain_outNode(StringInfo str,
 				Plan *outer_plan,
 				int indent, ExplainState *es);
 static void show_scan_qual(List *qual, const char *qlabel,
-			   int scanrelid, Plan *outer_plan,
+			   int scanrelid, Plan *outer_plan, Plan *inner_plan,
 			   StringInfo str, int indent, ExplainState *es);
-static void show_upper_qual(List *qual, const char *qlabel,
-				const char *outer_name, Plan *outer_plan,
-				const char *inner_name, Plan *inner_plan,
+static void show_upper_qual(List *qual, const char *qlabel, Plan *plan,
 				StringInfo str, int indent, ExplainState *es);
 static void show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
 			   const char *qlabel,
@@ -725,19 +723,19 @@ explain_outNode(StringInfo str,
 			show_scan_qual(((IndexScan *) plan)->indexqualorig,
 						   "Index Cond",
 						   ((Scan *) plan)->scanrelid,
-						   outer_plan,
+						   outer_plan, NULL,
 						   str, indent, es);
 			show_scan_qual(plan->qual,
 						   "Filter",
 						   ((Scan *) plan)->scanrelid,
-						   outer_plan,
+						   outer_plan, NULL,
 						   str, indent, es);
 			break;
 		case T_BitmapIndexScan:
 			show_scan_qual(((BitmapIndexScan *) plan)->indexqualorig,
 						   "Index Cond",
 						   ((Scan *) plan)->scanrelid,
-						   outer_plan,
+						   outer_plan, NULL,
 						   str, indent, es);
 			break;
 		case T_BitmapHeapScan:
@@ -745,17 +743,24 @@ explain_outNode(StringInfo str,
 			show_scan_qual(((BitmapHeapScan *) plan)->bitmapqualorig,
 						   "Recheck Cond",
 						   ((Scan *) plan)->scanrelid,
-						   outer_plan,
+						   outer_plan, NULL,
 						   str, indent, es);
 			/* FALL THRU */
 		case T_SeqScan:
-		case T_SubqueryScan:
 		case T_FunctionScan:
 		case T_ValuesScan:
 			show_scan_qual(plan->qual,
 						   "Filter",
 						   ((Scan *) plan)->scanrelid,
+						   outer_plan, NULL,
+						   str, indent, es);
+			break;
+		case T_SubqueryScan:
+			show_scan_qual(plan->qual,
+						   "Filter",
+						   ((Scan *) plan)->scanrelid,
 						   outer_plan,
+						   ((SubqueryScan *) plan)->subplan,
 						   str, indent, es);
 			break;
 		case T_TidScan:
@@ -771,67 +776,49 @@ explain_outNode(StringInfo str,
 				show_scan_qual(tidquals,
 							   "TID Cond",
 							   ((Scan *) plan)->scanrelid,
-							   outer_plan,
+							   outer_plan, NULL,
 							   str, indent, es);
 				show_scan_qual(plan->qual,
 							   "Filter",
 							   ((Scan *) plan)->scanrelid,
-							   outer_plan,
+							   outer_plan, NULL,
 							   str, indent, es);
 			}
 			break;
 		case T_NestLoop:
 			show_upper_qual(((NestLoop *) plan)->join.joinqual,
-							"Join Filter",
-							"outer", outerPlan(plan),
-							"inner", innerPlan(plan),
+							"Join Filter", plan,
 							str, indent, es);
 			show_upper_qual(plan->qual,
-							"Filter",
-							"outer", outerPlan(plan),
-							"inner", innerPlan(plan),
+							"Filter", plan,
 							str, indent, es);
 			break;
 		case T_MergeJoin:
 			show_upper_qual(((MergeJoin *) plan)->mergeclauses,
-							"Merge Cond",
-							"outer", outerPlan(plan),
-							"inner", innerPlan(plan),
+							"Merge Cond", plan,
 							str, indent, es);
 			show_upper_qual(((MergeJoin *) plan)->join.joinqual,
-							"Join Filter",
-							"outer", outerPlan(plan),
-							"inner", innerPlan(plan),
+							"Join Filter", plan,
 							str, indent, es);
 			show_upper_qual(plan->qual,
-							"Filter",
-							"outer", outerPlan(plan),
-							"inner", innerPlan(plan),
+							"Filter", plan,
 							str, indent, es);
 			break;
 		case T_HashJoin:
 			show_upper_qual(((HashJoin *) plan)->hashclauses,
-							"Hash Cond",
-							"outer", outerPlan(plan),
-							"inner", innerPlan(plan),
+							"Hash Cond", plan,
 							str, indent, es);
 			show_upper_qual(((HashJoin *) plan)->join.joinqual,
-							"Join Filter",
-							"outer", outerPlan(plan),
-							"inner", innerPlan(plan),
+							"Join Filter", plan,
 							str, indent, es);
 			show_upper_qual(plan->qual,
-							"Filter",
-							"outer", outerPlan(plan),
-							"inner", innerPlan(plan),
+							"Filter", plan,
 							str, indent, es);
 			break;
 		case T_Agg:
 		case T_Group:
 			show_upper_qual(plan->qual,
-							"Filter",
-							"subplan", outerPlan(plan),
-							"", NULL,
+							"Filter", plan,
 							str, indent, es);
 			break;
 		case T_Sort:
@@ -843,14 +830,10 @@ explain_outNode(StringInfo str,
 			break;
 		case T_Result:
 			show_upper_qual((List *) ((Result *) plan)->resconstantqual,
-							"One-Time Filter",
-							"subplan", outerPlan(plan),
-							"", NULL,
+							"One-Time Filter", plan,
 							str, indent, es);
 			show_upper_qual(plan->qual,
-							"Filter",
-							"subplan", outerPlan(plan),
-							"", NULL,
+							"Filter", plan,
 							str, indent, es);
 			break;
 		default:
@@ -1032,14 +1015,18 @@ explain_outNode(StringInfo str,
 
 /*
  * Show a qualifier expression for a scan plan node
+ *
+ * Note: outer_plan is the referent for any OUTER vars in the scan qual;
+ * this would be the outer side of a nestloop plan.  inner_plan should be
+ * NULL except for a SubqueryScan plan node, where it should be the subplan.
  */
 static void
 show_scan_qual(List *qual, const char *qlabel,
-			   int scanrelid, Plan *outer_plan,
+			   int scanrelid, Plan *outer_plan, Plan *inner_plan,
 			   StringInfo str, int indent, ExplainState *es)
 {
-	Node	   *outercontext;
 	List	   *context;
+	bool		useprefix;
 	Node	   *node;
 	char	   *exprstr;
 	int			i;
@@ -1051,31 +1038,14 @@ show_scan_qual(List *qual, const char *qlabel,
 	/* Convert AND list to explicit AND */
 	node = (Node *) make_ands_explicit(qual);
 
-	/*
-	 * If we have an outer plan that is referenced by the qual, add it to the
-	 * deparse context.  If not, don't (so that we don't force prefixes
-	 * unnecessarily).
-	 */
-	if (outer_plan)
-	{
-		Relids		varnos = pull_varnos(node);
-
-		if (bms_is_member(OUTER, varnos))
-			outercontext = deparse_context_for_subplan("outer",
-													   (Node *) outer_plan);
-		else
-			outercontext = NULL;
-		bms_free(varnos);
-	}
-	else
-		outercontext = NULL;
-
-	context = deparse_context_for_plan(OUTER, outercontext,
-									   0, NULL,
+	/* Set up deparsing context */
+	context = deparse_context_for_plan((Node *) outer_plan,
+									   (Node *) inner_plan,
 									   es->rtable);
+	useprefix = (outer_plan != NULL || inner_plan != NULL);
 
 	/* Deparse the expression */
-	exprstr = deparse_expression(node, context, (outercontext != NULL), false);
+	exprstr = deparse_expression(node, context, useprefix, false);
 
 	/* And add to str */
 	for (i = 0; i < indent; i++)
@@ -1087,16 +1057,11 @@ show_scan_qual(List *qual, const char *qlabel,
  * Show a qualifier expression for an upper-level plan node
  */
 static void
-show_upper_qual(List *qual, const char *qlabel,
-				const char *outer_name, Plan *outer_plan,
-				const char *inner_name, Plan *inner_plan,
+show_upper_qual(List *qual, const char *qlabel, Plan *plan,
 				StringInfo str, int indent, ExplainState *es)
 {
 	List	   *context;
-	Node	   *outercontext;
-	Node	   *innercontext;
-	int			outer_varno;
-	int			inner_varno;
+	bool		useprefix;
 	Node	   *node;
 	char	   *exprstr;
 	int			i;
@@ -1105,36 +1070,15 @@ show_upper_qual(List *qual, const char *qlabel,
 	if (qual == NIL)
 		return;
 
-	/* Generate deparse context */
-	if (outer_plan)
-	{
-		outercontext = deparse_context_for_subplan(outer_name,
-												   (Node *) outer_plan);
-		outer_varno = OUTER;
-	}
-	else
-	{
-		outercontext = NULL;
-		outer_varno = 0;
-	}
-	if (inner_plan)
-	{
-		innercontext = deparse_context_for_subplan(inner_name,
-												   (Node *) inner_plan);
-		inner_varno = INNER;
-	}
-	else
-	{
-		innercontext = NULL;
-		inner_varno = 0;
-	}
-	context = deparse_context_for_plan(outer_varno, outercontext,
-									   inner_varno, innercontext,
+	/* Set up deparsing context */
+	context = deparse_context_for_plan((Node *) outerPlan(plan),
+									   (Node *) innerPlan(plan),
 									   es->rtable);
+	useprefix = list_length(es->rtable) > 1;
 
 	/* Deparse the expression */
 	node = (Node *) make_ands_explicit(qual);
-	exprstr = deparse_expression(node, context, (inner_plan != NULL), false);
+	exprstr = deparse_expression(node, context, useprefix, false);
 
 	/* And add to str */
 	for (i = 0; i < indent; i++)
@@ -1154,7 +1098,6 @@ show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
 	bool		useprefix;
 	int			keyno;
 	char	   *exprstr;
-	Relids		varnos;
 	int			i;
 
 	if (nkeys <= 0)
@@ -1164,33 +1107,11 @@ show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
 		appendStringInfo(str, "  ");
 	appendStringInfo(str, "  %s: ", qlabel);
 
-	/*
-	 * In this routine we expect that the plan node's tlist has not been
-	 * processed by set_plan_references().	Normally, any Vars will contain
-	 * valid varnos referencing the actual rtable.	But we might instead be
-	 * looking at a dummy tlist generated by prepunion.c; if there are Vars
-	 * with zero varno, use the tlist itself to determine their names.
-	 */
-	varnos = pull_varnos((Node *) sortplan->targetlist);
-	if (bms_is_member(0, varnos))
-	{
-		Node	   *outercontext;
-
-		outercontext = deparse_context_for_subplan("sort",
-												   (Node *) sortplan);
-		context = deparse_context_for_plan(0, outercontext,
-										   0, NULL,
-										   es->rtable);
-		useprefix = false;
-	}
-	else
-	{
-		context = deparse_context_for_plan(0, NULL,
-										   0, NULL,
-										   es->rtable);
-		useprefix = list_length(es->rtable) > 1;
-	}
-	bms_free(varnos);
+	/* Set up deparsing context */
+	context = deparse_context_for_plan((Node *) outerPlan(sortplan),
+									   NULL,		/* Sort has no innerPlan */
+									   es->rtable);
+	useprefix = list_length(es->rtable) > 1;
 
 	for (keyno = 0; keyno < nkeys; keyno++)
 	{
