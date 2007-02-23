@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.376 2007/02/16 17:07:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.377 2007/02/23 21:36:18 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3712,6 +3712,10 @@ parse_int(const char *value, int *result, int flags)
 			used = true;
 			endptr += 2;
 		}
+
+#if BLCKSZ < 1024
+#error BLCKSZ must be >= 1024
+#endif
 
 		if (used)
 		{
