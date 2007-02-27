@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Feb 27 16:06:41 EST 2007
+   Last updated: Tue Feb 27 18:12:31 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -573,21 +573,13 @@ General Questions
   1.19) What is the timeline for the next major PostgreSQL release?
   
    The development schedule for the 8.3 release is:
-   
-          March 1, 2007
-          
-   Initial community review of all major feature patches
-          April 1, 2007
-          
-   Feature freeze, all patches must be submitted for review and
-          application
-          mid-May, 2007
-          
-   All patches applied, beta testing begins
-          July, 2007
-          
-   Release of 8.3.0
-          
+     * March 1, 2007 - Initial community review of all major feature
+       patches
+     * April 1, 2007 - Feature freeze, all patches must be submitted for
+       review and applicationmid-May, 2007 - All patches applied, beta
+       testing begins
+     * July, 2007 - Release of 8.3.0
+       
    Patches that appear after appropriate dates are typically not applied
    but held for the next major release.
    
