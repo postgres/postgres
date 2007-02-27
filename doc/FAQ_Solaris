@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 Sun Solaris specific
 To be read in conjunction with the installation instructions.
 ============================================================
-Last updated:        $Date: 2007/02/23 23:22:33 $
+Last updated:        $Date: 2007/02/27 19:10:19 $
 
 
 Contents:
@@ -16,7 +16,6 @@ Contents:
 6) Where I can download prepared Solaris packages?
 7) How can I tune PostgreSQL and Solaris for performance?
 8) Can I use DTrace for tracing PostgreSQL?
-9) Can I compile PostgreSQL with Kerberos v5 support?
 
 
 1) What tools do I need to build and install PostgreSQL on Solaris?
@@ -166,10 +165,3 @@ src/backend/access/transam/xact.c.
 
 See http://sunsolve.sun.com/search/document.do?assetkey=1-1-2139224-1
 (registration required).
-
-9) Can I compile PostgreSQL with Kerberos v5 support?
-
-Yes, Kerberos is integrated in OpenSolaris and will be integrated in
-Solaris 10u4. Kerberos v5 support is implemented by the GSS security
-library which contains Kerberos v5 functions. However, the library is
-private and the interface might change without notice.
