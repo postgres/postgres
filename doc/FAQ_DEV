@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Feb 19 18:44:29 EST 2007
+   Last updated: Tue Feb 27 16:06:41 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -31,6 +31,8 @@ General Questions
    1.17) Where can I get technical assistance?
    1.18) How do I get involved in PostgreSQL web site development?
    1.19) What is the timeline for the next major PostgreSQL release?
+   1.20) Why haven't you replaced CVS with SVN, Git, Monotone, VSS,
+   <insert your favorite SCM system here>?
    
 Technical Questions
 
@@ -568,6 +570,43 @@ General Questions
    http://gborg.postgresql.org/project/pgweb/projdisplay.php , the code
    for the next version of the website is under the "portal" module.
    
+  1.19) What is the timeline for the next major PostgreSQL release?
+  
+   The development schedule for the 8.3 release is:
+   
+          March 1, 2007
+          
+   Initial community review of all major feature patches
+          April 1, 2007
+          
+   Feature freeze, all patches must be submitted for review and
+          application
+          mid-May, 2007
+          
+   All patches applied, beta testing begins
+          July, 2007
+          
+   Release of 8.3.0
+          
+   Patches that appear after appropriate dates are typically not applied
+   but held for the next major release.
+   
+  1.20) Why haven't you replaced CVS with SVN, Git, Monotone, VSS, <insert your
+  favorite SCMS here>?
+  
+   Currently the core developers see no SCMS that will provide enough
+   benefit to outwiegh the pain involved in moving to a new SCMS. Typical
+   problems that must be addressed by any new SCMS include:
+     * Run natively on all of our supported platforms.
+     * Integrate into the Buildfarm.
+     * Import our entire CVS Repository while preserving complete
+       history.
+     * Allow for anonymous checkouts.
+       
+   Currently there is no intention for switching to a new SCMS until at
+   least the end of the 8.4 development cycle sometime in late 2008. For
+   more information please refer to the mailing list archives.
+   
 Technical Questions
 
   2.1) How do I efficiently access information in tables from the backend code?
@@ -802,24 +841,3 @@ typedef struct nameData
    pgsql/data directory. The client profile file will be put in the
    client's current directory. Linux requires a compile with
    -DLINUX_PROFILE for proper profiling.
-   
-  2.9) What is the timeline for the next major PostgreSQL release?
-  
-   The development schedule for the 8.3 release is:
-   
-          March 1, 2007
-          
-   Initial community review of all major feature patches
-          April 1, 2007
-          
-   Feature freeze, all patches must be submitted for review and
-          application
-          mid-May, 2007
-          
-   All patches applied, beta testing begins
-          July, 2007
-          
-   Release of 8.3.0
-          
-   Patches that appear after appropriate dates are typically not applied
-   but held for the next major release.

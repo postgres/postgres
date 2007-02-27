@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Mon Feb 19 18:44:29 EST 2007</P>
+    <P>Last updated: Tue Feb 27 16:06:41 EST 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)<BR>
@@ -57,6 +57,8 @@
     site development?<BR>
      <A href="#item1.19">1.19</A>) What is the timeline for the next major
     PostgreSQL release?<BR>
+     <A href="#item1.20">1.20</A>) Why haven't you replaced CVS with SVN, Git, 
+    Monotone, VSS, &lt;insert your favorite SCM system here&gt;?
 
 
       <H2>Technical Questions</H2>
@@ -708,7 +710,42 @@
     the source code is available at <A href=
     "http://gborg.postgresql.org/project/pgweb/projdisplay.php">http://gborg.postgresql.org/project/pgweb/projdisplay.php</A>
     , the code for the next version of the website is under the
-    "portal" module. 
+    "portal" module.</P> 
+
+    <H3 id="item1.19">1.19) What is the timeline for the next major
+        PostgreSQL release?</H3>
+    
+        <P>The development schedule for the 8.3 release is:</P>
+        <DL>
+        <DD>March 1, 2007</DD>
+        <DT>Initial community review of all major feature patches</DT>
+        <DD>April 1, 2007</DD>
+        <DT>Feature freeze, all patches must be submitted for review and application</DT>
+        <DD>mid-May, 2007</DD>
+        <DT>All patches applied, beta testing begins</DT>
+        <DD>July, 2007</DD>
+        <DT>Release of 8.3.0</DT>
+        </DL>
+    
+        <P>Patches that appear after appropriate dates are typically
+        not applied but held for the next major release.</P>
+
+    <H3 id="item1.20">1.20) Why haven't you replaced CVS with SVN, Git, 
+        Monotone, VSS, &lt;insert your favorite SCMS here&gt;?</H3>
+
+        <P>Currently the core developers see no SCMS that will provide 
+        enough benefit to outwiegh the pain involved in moving to a new
+        SCMS. Typical problems that must be addressed by any new SCMS include:</P>
+            <ul>
+            <li>Run natively on all of our <a href="http://www.postgresql.org/docs/current/interactive/supported-platforms.html">supported platforms</a>.</li>
+            <li>Integrate into the <a href="http://pgbuildfarm.org/">Buildfarm</a>.</li>
+            <li>Import our entire CVS Repository while preserving complete history.</li>
+            <li>Allow for anonymous checkouts.</li>
+            </ul>
+        <P>Currently there is no intention for switching to a new SCMS until at least the
+        end of the 8.4 development cycle sometime in late 2008. For more information
+        please refer to the mailing list archives.</P>
+     
 
       <H2>Technical Questions</H2>
 
@@ -997,24 +1034,6 @@
     file will be put in the client's current directory. Linux
     requires a compile with <I>-DLINUX_PROFILE</I> for proper
     profiling.</P>
-
-    <H3 id="item2.9">2.9) What is the timeline for the next major
-    PostgreSQL release?<BR>
-
-    <P>The development schedule for the 8.3 release is:</P>
-    <DL>
-    <DD>March 1, 2007</DD>
-    <DT>Initial community review of all major feature patches</DT>
-    <DD>April 1, 2007</DD>
-    <DT>Feature freeze, all patches must be submitted for review and application</DT>
-    <DD>mid-May, 2007</DD>
-    <DT>All patches applied, beta testing begins</DT>
-    <DD>July, 2007</DD>
-    <DT>Release of 8.3.0</DT>
-    </DL>
-
-    <P>Patches that appear after appropriate dates are typically
-    not applied but held for the next major release.</P>
 
   </BODY>
 </HTML>
