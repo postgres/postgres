@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.26.2.6 2006/04/24 09:46:32 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.26.2.7 2007/02/27 13:26:50 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -38,33 +38,32 @@
 static char *
 quote_postgres(char *arg, int lineno)
 {
-	char	   *res = (char *) ECPGalloc(2 * strlen(arg) + 3, lineno);
-	int			i,
-				ri = 0;
+	char	*res;
+	int	error;
+	size_t  length;
+	size_t  escaped_len;
+	size_t  buffer_len;
 
+	/*
+	 * if quote is false we just need to store things in a descriptor they
+	 * will be quoted once they are inserted in a statement
+	 */
+	length = strlen(arg);
+	buffer_len = 2 * length + 1;
+	res = (char *) ECPGalloc(buffer_len + 2, lineno);
 	if (!res)
 		return (res);
 
-	res[ri++] = '\'';
-
-	for (i = 0; arg[i]; i++, ri++)
+	error = 0;
+	escaped_len = PQescapeString(res+1, arg, buffer_len);
+	if (error)
 	{
-		switch (arg[i])
-		{
-			case '\'':
-				res[ri++] = '\'';
-				break;
-			case '\\':
-				res[ri++] = '\\';
-				break;
-			default:
-				;
-		}
-		res[ri] = arg[i];
+		ECPGfree(res);
+		return NULL;
 	}
 
-	res[ri++] = '\'';
-	res[ri] = '\0';
+	res[0] = res[escaped_len+1] = '\'';
+	res[escaped_len+2] = '\0';
 
 	ECPGfree(arg);
 	return res;
