@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.92 2007/02/22 22:00:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.93 2007/02/27 01:11:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,8 @@ typedef struct PlannedStmt
 	IntoClause *into;			/* target for SELECT INTO / CREATE TABLE AS */
 
 	List	   *subplans;		/* Plan trees for SubPlan expressions */
+
+	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
 
 	/*
 	 * If the query has a returningList then the planner will store a list of

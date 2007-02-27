@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.138 2007/02/22 22:00:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.139 2007/02/27 01:11:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,8 @@ typedef struct PlannerGlobal
 	List	   *subplans;		/* Plans for SubPlan nodes */
 
 	List	   *subrtables;		/* Rangetables for SubPlan nodes */
+
+	Bitmapset  *rewindPlanIDs;	/* indices of subplans that require REWIND */
 
 	List	   *finalrtable;	/* "flat" rangetable for executor */
 } PlannerGlobal;

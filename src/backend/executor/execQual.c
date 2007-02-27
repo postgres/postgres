@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.213 2007/02/06 17:35:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.214 2007/02/27 01:11:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3723,27 +3723,16 @@ ExecInitExpr(Expr *node, PlanState *parent)
 			break;
 		case T_SubPlan:
 			{
-				/* Keep this in sync with ExecInitExprInitPlan, below */
 				SubPlan    *subplan = (SubPlan *) node;
-				SubPlanState *sstate = makeNode(SubPlanState);
-
-				sstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecSubPlan;
+				SubPlanState *sstate;
 
 				if (!parent)
 					elog(ERROR, "SubPlan found with no parent plan");
 
-				/*
-				 * Here we just add the SubPlanState nodes to parent->subPlan.
-				 * The subplans will be initialized later.
-				 */
-				parent->subPlan = lcons(sstate, parent->subPlan);
-				sstate->sub_estate = NULL;
-				sstate->planstate = NULL;
+				sstate = ExecInitSubPlan(subplan, parent);
 
-				sstate->testexpr =
-					ExecInitExpr((Expr *) subplan->testexpr, parent);
-				sstate->args = (List *)
-					ExecInitExpr((Expr *) subplan->args, parent);
+				/* Add SubPlanState nodes to parent->subPlan */
+				parent->subPlan = lcons(sstate, parent->subPlan);
 
 				state = (ExprState *) sstate;
 			}
@@ -4155,32 +4144,6 @@ ExecInitExpr(Expr *node, PlanState *parent)
 	state->expr = node;
 
 	return state;
-}
-
-/*
- * ExecInitExprInitPlan --- initialize a subplan expr that's being handled
- * as an InitPlan.	This is identical to ExecInitExpr's handling of a regular
- * subplan expr, except we do NOT want to add the node to the parent's
- * subplan list.
- */
-SubPlanState *
-ExecInitExprInitPlan(SubPlan *node, PlanState *parent)
-{
-	SubPlanState *sstate = makeNode(SubPlanState);
-
-	if (!parent)
-		elog(ERROR, "SubPlan found with no parent plan");
-
-	/* The subplan's state will be initialized later */
-	sstate->sub_estate = NULL;
-	sstate->planstate = NULL;
-
-	sstate->testexpr = ExecInitExpr((Expr *) node->testexpr, parent);
-	sstate->args = (List *) ExecInitExpr((Expr *) node->args, parent);
-
-	sstate->xprstate.expr = (Expr *) node;
-
-	return sstate;
 }
 
 /*

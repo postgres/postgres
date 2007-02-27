@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.288 2007/02/22 22:00:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.289 2007/02/27 01:11:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,7 @@ static void initResultRelInfo(ResultRelInfo *resultRelInfo,
 				  List *rangeTable,
 				  CmdType operation,
 				  bool doInstrument);
+static void ExecEndPlan(PlanState *planstate, EState *estate);
 static TupleTableSlot *ExecutePlan(EState *estate, PlanState *planstate,
 			CmdType operation,
 			long numberTuples,
@@ -466,6 +467,7 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	PlanState  *planstate;
 	TupleDesc	tupType;
 	ListCell   *l;
+	int			i;
 
 	/*
 	 * Do permissions checks
@@ -551,15 +553,25 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	}
 
 	/*
-	 * initialize the executor "tuple" table.  We need slots for all the plan
+	 * Initialize the executor "tuple" table.  We need slots for all the plan
 	 * nodes, plus possibly output slots for the junkfilter(s). At this point
 	 * we aren't sure if we need junkfilters, so just add slots for them
 	 * unconditionally.  Also, if it's not a SELECT, set up a slot for use for
-	 * trigger output tuples.
+	 * trigger output tuples.  Also, one for RETURNING-list evaluation.
 	 */
 	{
-		int			nSlots = ExecCountSlotsNode(plan);
+		int			nSlots;
 
+		/* Slots for the main plan tree */
+		nSlots = ExecCountSlotsNode(plan);
+		/* Add slots for subplans and initplans */
+		foreach(l, plannedstmt->subplans)
+		{
+			Plan   *subplan = (Plan *) lfirst(l);
+
+			nSlots += ExecCountSlotsNode(subplan);
+		}
+		/* Add slots for junkfilter(s) */
 		if (plannedstmt->resultRelations != NIL)
 			nSlots += list_length(plannedstmt->resultRelations);
 		else
@@ -584,7 +596,38 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	estate->es_useEvalPlan = false;
 
 	/*
-	 * initialize the private state information for all the nodes in the query
+	 * Initialize private state information for each SubPlan.  We must do
+	 * this before running ExecInitNode on the main query tree, since
+	 * ExecInitSubPlan expects to be able to find these entries.
+	 */
+	Assert(estate->es_subplanstates == NIL);
+	i = 1;						/* subplan indices count from 1 */
+	foreach(l, plannedstmt->subplans)
+	{
+		Plan   *subplan = (Plan *) lfirst(l);
+		PlanState *subplanstate;
+		int		sp_eflags;
+
+		/*
+		 * A subplan will never need to do BACKWARD scan nor MARK/RESTORE.
+		 * If it is a parameterless subplan (not initplan), we suggest that it
+		 * be prepared to handle REWIND efficiently; otherwise there is no
+		 * need.
+		 */
+		sp_eflags = eflags & EXEC_FLAG_EXPLAIN_ONLY;
+		if (bms_is_member(i, plannedstmt->rewindPlanIDs))
+			sp_eflags |= EXEC_FLAG_REWIND;
+
+		subplanstate = ExecInitNode(subplan, estate, sp_eflags);
+
+		estate->es_subplanstates = lappend(estate->es_subplanstates,
+										   subplanstate);
+
+		i++;
+	}
+
+	/*
+	 * Initialize the private state information for all the nodes in the query
 	 * tree.  This opens files, allocates storage and leaves us ready to start
 	 * processing tuples.
 	 */
@@ -648,7 +691,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 				PlanState **appendplans;
 				int			as_nplans;
 				ResultRelInfo *resultRelInfo;
-				int			i;
 
 				/* Top plan had better be an Append here. */
 				Assert(IsA(plan, Append));
@@ -767,20 +809,6 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 				ExecBuildProjectionInfo(rliststate, econtext, slot,
 									   resultRelInfo->ri_RelationDesc->rd_att);
 			resultRelInfo++;
-		}
-
-		/*
-		 * Because we already ran ExecInitNode() for the top plan node, any
-		 * subplans we just attached to it won't have been initialized; so we
-		 * have to do it here.	(Ugly, but the alternatives seem worse.)
-		 */
-		foreach(l, planstate->subPlan)
-		{
-			SubPlanState *sstate = (SubPlanState *) lfirst(l);
-
-			Assert(IsA(sstate, SubPlanState));
-			if (sstate->planstate == NULL)		/* already inited? */
-				ExecInitSubPlan(sstate, estate, eflags);
 		}
 	}
 
@@ -945,7 +973,7 @@ ExecContextForcesOids(PlanState *planstate, bool *hasoids)
  * tuple tables must be cleared or dropped to ensure pins are released.
  * ----------------------------------------------------------------
  */
-void
+static void
 ExecEndPlan(PlanState *planstate, EState *estate)
 {
 	ResultRelInfo *resultRelInfo;
@@ -962,6 +990,16 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	 * shut down the node-type-specific query processing
 	 */
 	ExecEndNode(planstate);
+
+	/*
+	 * for subplans too
+	 */
+	foreach(l, estate->es_subplanstates)
+	{
+		PlanState *subplanstate = (PlanState *) lfirst(l);
+
+		ExecEndNode(subplanstate);
+	}
 
 	/*
 	 * destroy the executor "tuple" table.
@@ -2205,13 +2243,10 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	EState	   *epqstate;
 	int			rtsize;
 	MemoryContext oldcontext;
+	ListCell   *l;
 
 	rtsize = list_length(estate->es_range_table);
 
-	/*
-	 * It's tempting to think about using CreateSubExecutorState here, but
-	 * at present we can't because of memory leakage concerns ...
-	 */
 	epq->estate = epqstate = CreateExecutorState();
 
 	oldcontext = MemoryContextSwitchTo(epqstate->es_query_cxt);
@@ -2256,9 +2291,34 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 		/* later stack entries share the same storage */
 		epqstate->es_evTuple = priorepq->estate->es_evTuple;
 
+	/*
+	 * Create sub-tuple-table; we needn't redo the CountSlots work though.
+	 */
 	epqstate->es_tupleTable =
 		ExecCreateTupleTable(estate->es_tupleTable->size);
 
+	/*
+	 * Initialize private state information for each SubPlan.  We must do
+	 * this before running ExecInitNode on the main query tree, since
+	 * ExecInitSubPlan expects to be able to find these entries.
+	 */
+	Assert(epqstate->es_subplanstates == NIL);
+	foreach(l, estate->es_plannedstmt->subplans)
+	{
+		Plan   *subplan = (Plan *) lfirst(l);
+		PlanState *subplanstate;
+
+		subplanstate = ExecInitNode(subplan, epqstate, 0);
+
+		epqstate->es_subplanstates = lappend(epqstate->es_subplanstates,
+											 subplanstate);
+	}
+
+	/*
+	 * Initialize the private state information for all the nodes in the query
+	 * tree.  This opens files, allocates storage and leaves us ready to start
+	 * processing tuples.
+	 */
 	epq->planstate = ExecInitNode(estate->es_plannedstmt->planTree, epqstate, 0);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -2276,10 +2336,18 @@ EvalPlanQualStop(evalPlanQual *epq)
 {
 	EState	   *epqstate = epq->estate;
 	MemoryContext oldcontext;
+	ListCell   *l;
 
 	oldcontext = MemoryContextSwitchTo(epqstate->es_query_cxt);
 
 	ExecEndNode(epq->planstate);
+
+	foreach(l, epqstate->es_subplanstates)
+	{
+		PlanState *subplanstate = (PlanState *) lfirst(l);
+
+		ExecEndNode(subplanstate);
+	}
 
 	ExecDropTupleTable(epqstate->es_tupleTable, true);
 	epqstate->es_tupleTable = NULL;

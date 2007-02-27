@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.121 2007/02/22 22:00:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.122 2007/02/27 01:11:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,9 +241,10 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 {
 	Query	   *subquery = (Query *) (slink->subselect);
 	double		tuple_fraction;
-	SubPlan    *node;
+	SubPlan    *splan;
 	Plan	   *plan;
 	PlannerInfo *subroot;
+	bool		isInitPlan;
 	Bitmapset  *tmpset;
 	int			paramid;
 	Node	   *result;
@@ -295,17 +296,17 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 	/*
 	 * Initialize the SubPlan node.  Note plan_id isn't set yet.
 	 */
-	node = makeNode(SubPlan);
-	node->subLinkType = slink->subLinkType;
-	node->testexpr = NULL;
-	node->paramIds = NIL;
-	node->firstColType = get_first_col_type(plan);
-	node->useHashTable = false;
+	splan = makeNode(SubPlan);
+	splan->subLinkType = slink->subLinkType;
+	splan->testexpr = NULL;
+	splan->paramIds = NIL;
+	splan->firstColType = get_first_col_type(plan);
+	splan->useHashTable = false;
 	/* At top level of a qual, can treat UNKNOWN the same as FALSE */
-	node->unknownEqFalse = isTopQual;
-	node->setParam = NIL;
-	node->parParam = NIL;
-	node->args = NIL;
+	splan->unknownEqFalse = isTopQual;
+	splan->setParam = NIL;
+	splan->parParam = NIL;
+	splan->args = NIL;
 
 	/*
 	 * Make parParam list of params that current query level will pass to this
@@ -317,7 +318,7 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 		PlannerParamItem *pitem = list_nth(root->glob->paramlist, paramid);
 
 		if (pitem->abslevel == root->query_level)
-			node->parParam = lappend_int(node->parParam, paramid);
+			splan->parParam = lappend_int(splan->parParam, paramid);
 	}
 	bms_free(tmpset);
 
@@ -329,16 +330,16 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 	 * PARAM_EXEC Params instead of the PARAM_SUBLINK Params emitted by the
 	 * parser.
 	 */
-	if (node->parParam == NIL && slink->subLinkType == EXISTS_SUBLINK)
+	if (splan->parParam == NIL && slink->subLinkType == EXISTS_SUBLINK)
 	{
 		Param	   *prm;
 
 		prm = generate_new_param(root, BOOLOID, -1);
-		node->setParam = list_make1_int(prm->paramid);
-		root->init_plans = lappend(root->init_plans, node);
+		splan->setParam = list_make1_int(prm->paramid);
+		isInitPlan = true;
 		result = (Node *) prm;
 	}
-	else if (node->parParam == NIL && slink->subLinkType == EXPR_SUBLINK)
+	else if (splan->parParam == NIL && slink->subLinkType == EXPR_SUBLINK)
 	{
 		TargetEntry *te = linitial(plan->targetlist);
 		Param	   *prm;
@@ -347,11 +348,11 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 		prm = generate_new_param(root,
 								 exprType((Node *) te->expr),
 								 exprTypmod((Node *) te->expr));
-		node->setParam = list_make1_int(prm->paramid);
-		root->init_plans = lappend(root->init_plans, node);
+		splan->setParam = list_make1_int(prm->paramid);
+		isInitPlan = true;
 		result = (Node *) prm;
 	}
-	else if (node->parParam == NIL && slink->subLinkType == ARRAY_SUBLINK)
+	else if (splan->parParam == NIL && slink->subLinkType == ARRAY_SUBLINK)
 	{
 		TargetEntry *te = linitial(plan->targetlist);
 		Oid			arraytype;
@@ -365,19 +366,19 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 		prm = generate_new_param(root,
 								 arraytype,
 								 exprTypmod((Node *) te->expr));
-		node->setParam = list_make1_int(prm->paramid);
-		root->init_plans = lappend(root->init_plans, node);
+		splan->setParam = list_make1_int(prm->paramid);
+		isInitPlan = true;
 		result = (Node *) prm;
 	}
-	else if (node->parParam == NIL && slink->subLinkType == ROWCOMPARE_SUBLINK)
+	else if (splan->parParam == NIL && slink->subLinkType == ROWCOMPARE_SUBLINK)
 	{
 		/* Adjust the Params */
 		result = convert_testexpr(root,
 								  testexpr,
 								  0,
-								  &node->paramIds);
-		node->setParam = list_copy(node->paramIds);
-		root->init_plans = lappend(root->init_plans, node);
+								  &splan->paramIds);
+		splan->setParam = list_copy(splan->paramIds);
+		isInitPlan = true;
 
 		/*
 		 * The executable expression is returned to become part of the outer
@@ -390,10 +391,10 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 		ListCell   *l;
 
 		/* Adjust the Params */
-		node->testexpr = convert_testexpr(root,
-										  testexpr,
-										  0,
-										  &node->paramIds);
+		splan->testexpr = convert_testexpr(root,
+										   testexpr,
+										   0,
+										   &splan->paramIds);
 
 		/*
 		 * We can't convert subplans of ALL_SUBLINK or ANY_SUBLINK types to
@@ -402,8 +403,8 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 		 * tuple.  But if it's an IN (= ANY) test, we might be able to use a
 		 * hashtable to avoid comparing all the tuples.
 		 */
-		if (subplan_is_hashable(slink, node, plan))
-			node->useHashTable = true;
+		if (subplan_is_hashable(slink, splan, plan))
+			splan->useHashTable = true;
 
 		/*
 		 * Otherwise, we have the option to tack a MATERIAL node onto the top
@@ -413,7 +414,7 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 		 * correlated subplans, we add MATERIAL unless the subplan's top plan
 		 * node would materialize its output anyway.
 		 */
-		else if (node->parParam == NIL)
+		else if (splan->parParam == NIL)
 		{
 			bool		use_material;
 
@@ -433,10 +434,10 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 		}
 
 		/*
-		 * Make node->args from parParam.
+		 * Make splan->args from parParam.
 		 */
 		args = NIL;
-		foreach(l, node->parParam)
+		foreach(l, splan->parParam)
 		{
 			PlannerParamItem *pitem = list_nth(root->glob->paramlist,
 											   lfirst_int(l));
@@ -448,9 +449,10 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 			 */
 			args = lappend(args, copyObject(pitem->item));
 		}
-		node->args = args;
+		splan->args = args;
 
-		result = (Node *) node;
+		result = (Node *) splan;
+		isInitPlan = false;
 	}
 
 	/*
@@ -460,7 +462,22 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 								   plan);
 	root->glob->subrtables = lappend(root->glob->subrtables,
 									 subroot->parse->rtable);
-	node->plan_id = list_length(root->glob->subplans);
+	splan->plan_id = list_length(root->glob->subplans);
+
+	if (isInitPlan)
+		root->init_plans = lappend(root->init_plans, splan);
+
+	/*
+	 * A parameterless subplan (not initplan) should be prepared to handle
+	 * REWIND efficiently.  If it has direct parameters then there's no point
+	 * since it'll be reset on each scan anyway; and if it's an initplan
+	 * then there's no point since it won't get re-run without parameter
+	 * changes anyway.  The input of a hashed subplan doesn't need REWIND
+	 * either.
+	 */
+	if (splan->parParam == NIL && !isInitPlan && !splan->useHashTable)
+		root->glob->rewindPlanIDs = bms_add_member(root->glob->rewindPlanIDs,
+												   splan->plan_id);
 
 	return result;
 }
