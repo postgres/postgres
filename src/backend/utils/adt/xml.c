@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.31 2007/02/16 18:37:43 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.32 2007/02/27 23:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ xml_in(PG_FUNCTION_ARGS)
 
 	len = strlen(s);
 	vardata = palloc(len + VARHDRSZ);
-	VARATT_SIZEP(vardata) = len + VARHDRSZ;
+	SET_VARSIZE(vardata, len + VARHDRSZ);
 	memcpy(VARDATA(vardata), s, len);
 
 	/*
@@ -225,7 +225,7 @@ xml_recv(PG_FUNCTION_ARGS)
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
 	result = palloc(nbytes + VARHDRSZ);
-	VARATT_SIZEP(result) = nbytes + VARHDRSZ;
+	SET_VARSIZE(result, nbytes + VARHDRSZ);
 	memcpy(VARDATA(result), str, nbytes);
 
 	parse_xml_decl((xmlChar *) str, NULL, NULL, &encoding, NULL);
@@ -251,7 +251,7 @@ xml_recv(PG_FUNCTION_ARGS)
 		nbytes = strlen(newstr);
 
 		result = palloc(nbytes + VARHDRSZ);
-		VARATT_SIZEP(result) = nbytes + VARHDRSZ;
+		SET_VARSIZE(result, nbytes + VARHDRSZ);
 		memcpy(VARDATA(result), newstr, nbytes);
 	}
 
@@ -293,7 +293,7 @@ stringinfo_to_xmltype(StringInfo buf)
 
 	len = buf->len + VARHDRSZ;
 	result = palloc(len);
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	memcpy(VARDATA(result), buf->data, buf->len);
 
 	return result;
@@ -308,7 +308,7 @@ cstring_to_xmltype(const char *string)
 
 	len = strlen(string) + VARHDRSZ;
 	result = palloc(len);
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	memcpy(VARDATA(result), string, len - VARHDRSZ);
 
 	return result;
@@ -324,7 +324,7 @@ xmlBuffer_to_xmltype(xmlBufferPtr buf)
 
 	len = xmlBufferLength(buf) + VARHDRSZ;
 	result = palloc(len);
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	memcpy(VARDATA(result), xmlBufferContent(buf), len - VARHDRSZ);
 
 	return result;

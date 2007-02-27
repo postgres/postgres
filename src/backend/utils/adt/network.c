@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.67 2007/01/02 22:21:08 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.68 2007/02/27 23:48:08 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -105,9 +105,9 @@ network_in(char *src, bool is_cidr)
 					 errdetail("Value has bits set to right of mask.")));
 	}
 
-	VARATT_SIZEP(dst) = VARHDRSZ +
+	SET_VARSIZE(dst, VARHDRSZ +
 		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst);
+		ip_addrsize(dst));
 	ip_bits(dst) = bits;
 
 	return dst;
@@ -220,9 +220,9 @@ network_recv(StringInfo buf, bool is_cidr)
 		/* translator: %s is inet or cidr */
 				 errmsg("invalid length in external \"%s\" value",
 						is_cidr ? "cidr" : "inet")));
-	VARATT_SIZEP(addr) = VARHDRSZ +
+	SET_VARSIZE(addr, VARHDRSZ +
 		((char *) ip_addr(addr) - (char *) VARDATA(addr)) +
-		ip_addrsize(addr);
+		ip_addrsize(addr));
 
 	addrptr = (char *) ip_addr(addr);
 	for (i = 0; i < nb; i++)
@@ -638,7 +638,7 @@ network_host(PG_FUNCTION_ARGS)
 	/* Return string as a text datum */
 	len = strlen(tmp);
 	ret = (text *) palloc(len + VARHDRSZ);
-	VARATT_SIZEP(ret) = len + VARHDRSZ;
+	SET_VARSIZE(ret, len + VARHDRSZ);
 	memcpy(VARDATA(ret), tmp, len);
 	PG_RETURN_TEXT_P(ret);
 }
@@ -667,7 +667,7 @@ network_show(PG_FUNCTION_ARGS)
 	/* Return string as a text datum */
 	len = strlen(tmp);
 	ret = (text *) palloc(len + VARHDRSZ);
-	VARATT_SIZEP(ret) = len + VARHDRSZ;
+	SET_VARSIZE(ret, len + VARHDRSZ);
 	memcpy(VARDATA(ret), tmp, len);
 	PG_RETURN_TEXT_P(ret);
 }
@@ -692,7 +692,7 @@ inet_abbrev(PG_FUNCTION_ARGS)
 	/* Return string as a text datum */
 	len = strlen(tmp);
 	ret = (text *) palloc(len + VARHDRSZ);
-	VARATT_SIZEP(ret) = len + VARHDRSZ;
+	SET_VARSIZE(ret, len + VARHDRSZ);
 	memcpy(VARDATA(ret), tmp, len);
 	PG_RETURN_TEXT_P(ret);
 }
@@ -717,7 +717,7 @@ cidr_abbrev(PG_FUNCTION_ARGS)
 	/* Return string as a text datum */
 	len = strlen(tmp);
 	ret = (text *) palloc(len + VARHDRSZ);
-	VARATT_SIZEP(ret) = len + VARHDRSZ;
+	SET_VARSIZE(ret, len + VARHDRSZ);
 	memcpy(VARDATA(ret), tmp, len);
 	PG_RETURN_TEXT_P(ret);
 }
@@ -793,9 +793,9 @@ network_broadcast(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ +
+	SET_VARSIZE(dst, VARHDRSZ +
 		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst);
+		ip_addrsize(dst));
 
 	PG_RETURN_INET_P(dst);
 }
@@ -838,9 +838,9 @@ network_network(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ +
+	SET_VARSIZE(dst, VARHDRSZ +
 		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst);
+		ip_addrsize(dst));
 
 	PG_RETURN_INET_P(dst);
 }
@@ -881,9 +881,9 @@ network_netmask(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_maxbits(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ +
+	SET_VARSIZE(dst, VARHDRSZ +
 		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst);
+		ip_addrsize(dst));
 
 	PG_RETURN_INET_P(dst);
 }
@@ -930,9 +930,9 @@ network_hostmask(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_maxbits(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ +
+	SET_VARSIZE(dst, VARHDRSZ +
 		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst);
+		ip_addrsize(dst));
 
 	PG_RETURN_INET_P(dst);
 }
@@ -1272,9 +1272,9 @@ inetnot(PG_FUNCTION_ARGS)
 	ip_bits(dst) = ip_bits(ip);
 
 	ip_family(dst) = ip_family(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ +
+	SET_VARSIZE(dst, VARHDRSZ +
 		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst);
+		ip_addrsize(dst));
 
 	PG_RETURN_INET_P(dst);
 }
@@ -1306,9 +1306,9 @@ inetand(PG_FUNCTION_ARGS)
 	ip_bits(dst) = Max(ip_bits(ip), ip_bits(ip2));
 
 	ip_family(dst) = ip_family(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ +
+	SET_VARSIZE(dst, VARHDRSZ +
 		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst);
+		ip_addrsize(dst));
 
 	PG_RETURN_INET_P(dst);
 }
@@ -1340,9 +1340,9 @@ inetor(PG_FUNCTION_ARGS)
 	ip_bits(dst) = Max(ip_bits(ip), ip_bits(ip2));
 
 	ip_family(dst) = ip_family(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ +
+	SET_VARSIZE(dst, VARHDRSZ +
 		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst);
+		ip_addrsize(dst));
 
 	PG_RETURN_INET_P(dst);
 }
@@ -1394,9 +1394,9 @@ internal_inetpl(inet *ip, int64 addend)
 	ip_bits(dst) = ip_bits(ip);
 
 	ip_family(dst) = ip_family(ip);
-	VARATT_SIZEP(dst) = VARHDRSZ +
+	SET_VARSIZE(dst, VARHDRSZ +
 		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst);
+		ip_addrsize(dst));
 
 	return dst;
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.149 2007/01/05 22:19:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.150 2007/02/27 23:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1596,7 +1596,7 @@ timeofday(PG_FUNCTION_ARGS)
 
 	len = VARHDRSZ + strlen(buf);
 	result = (text *) palloc(len);
-	VARATT_SIZEP(result) = len;
-	memcpy(VARDATA(result), buf, strlen(buf));
+	SET_VARSIZE(result, len);
+	memcpy(VARDATA(result), buf, len - VARHDRSZ);
 	PG_RETURN_TEXT_P(result);
 }

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.67 2007/01/05 22:19:41 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.68 2007/02/27 23:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -532,7 +532,7 @@ like_escape_bytea(PG_FUNCTION_ARGS)
 		}
 	}
 
-	VARATT_SIZEP(result) = r - ((char *) result);
+	SET_VARSIZE(result, r - ((char *) result));
 
 	PG_RETURN_BYTEA_P(result);
 }

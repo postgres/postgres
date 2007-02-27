@@ -54,7 +54,7 @@ fetchval(PG_FUNCTION_ARGS)
 
 	out = palloc(VARHDRSZ + entry->vallen);
 	memcpy(VARDATA(out), STRPTR(hs) + entry->pos + entry->keylen, entry->vallen);
-	VARATT_SIZEP(out) = VARHDRSZ + entry->vallen;
+	SET_VARSIZE(out, VARHDRSZ + entry->vallen);
 
 	PG_FREE_IF_COPY(hs, 0);
 	PG_FREE_IF_COPY(key, 1);
@@ -310,7 +310,7 @@ akeys(PG_FUNCTION_ARGS)
 	{
 		text	   *item = (text *) palloc(VARHDRSZ + ptr->keylen);
 
-		VARATT_SIZEP(item) = VARHDRSZ + ptr->keylen;
+		SET_VARSIZE(item, VARHDRSZ + ptr->keylen);
 		memcpy(VARDATA(item), base + ptr->pos, ptr->keylen);
 		d[ptr - ARRPTR(hs)] = PointerGetDatum(item);
 		ptr++;
@@ -355,7 +355,7 @@ avals(PG_FUNCTION_ARGS)
 		int			vallen = (ptr->valisnull) ? 0 : ptr->vallen;
 		text	   *item = (text *) palloc(VARHDRSZ + vallen);
 
-		VARATT_SIZEP(item) = VARHDRSZ + vallen;
+		SET_VARSIZE(item, VARHDRSZ + vallen);
 		memcpy(VARDATA(item), base + ptr->pos + ptr->keylen, vallen);
 		d[ptr - ARRPTR(hs)] = PointerGetDatum(item);
 		ptr++;
@@ -431,7 +431,7 @@ skeys(PG_FUNCTION_ARGS)
 		HEntry	   *ptr = &(ARRPTR(st->hs)[st->i]);
 		text	   *item = (text *) palloc(VARHDRSZ + ptr->keylen);
 
-		VARATT_SIZEP(item) = VARHDRSZ + ptr->keylen;
+		SET_VARSIZE(item, VARHDRSZ + ptr->keylen);
 		memcpy(VARDATA(item), STRPTR(st->hs) + ptr->pos, ptr->keylen);
 		st->i++;
 
@@ -483,7 +483,7 @@ svals(PG_FUNCTION_ARGS)
 			int			vallen = ptr->vallen;
 			text	   *item = (text *) palloc(VARHDRSZ + vallen);
 
-			VARATT_SIZEP(item) = VARHDRSZ + vallen;
+			SET_VARSIZE(item, VARHDRSZ + vallen);
 			memcpy(VARDATA(item), STRPTR(st->hs) + ptr->pos + ptr->keylen, vallen);
 			st->i++;
 
@@ -593,7 +593,7 @@ each(PG_FUNCTION_ARGS)
 		HeapTuple	tuple;
 
 		item = (text *) palloc(VARHDRSZ + ptr->keylen);
-		VARATT_SIZEP(item) = VARHDRSZ + ptr->keylen;
+		SET_VARSIZE(item, VARHDRSZ + ptr->keylen);
 		memcpy(VARDATA(item), STRPTR(st->hs) + ptr->pos, ptr->keylen);
 		dvalues[0] = PointerGetDatum(item);
 
@@ -607,7 +607,7 @@ each(PG_FUNCTION_ARGS)
 			int			vallen = ptr->vallen;
 
 			item = (text *) palloc(VARHDRSZ + vallen);
-			VARATT_SIZEP(item) = VARHDRSZ + vallen;
+			SET_VARSIZE(item, VARHDRSZ + vallen);
 			memcpy(VARDATA(item), STRPTR(st->hs) + ptr->pos + ptr->keylen, vallen);
 			dvalues[1] = PointerGetDatum(item);
 		}

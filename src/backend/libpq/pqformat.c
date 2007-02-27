@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.43 2007/01/05 22:19:29 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.44 2007/02/27 23:48:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,7 +386,7 @@ pq_endtypsend(StringInfo buf)
 
 	/* Insert correct length into bytea length word */
 	Assert(buf->len >= VARHDRSZ);
-	VARATT_SIZEP(result) = buf->len;
+	SET_VARSIZE(result, buf->len);
 
 	return result;
 }

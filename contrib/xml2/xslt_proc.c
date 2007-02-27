@@ -129,7 +129,7 @@ xslt_process(PG_FUNCTION_ARGS)
 
 	tres = palloc(reslen + VARHDRSZ);
 	memcpy(VARDATA(tres), resstr, reslen);
-	VARATT_SIZEP(tres) = reslen + VARHDRSZ;
+	SET_VARSIZE(tres, reslen + VARHDRSZ);
 
 	PG_RETURN_TEXT_P(tres);
 }

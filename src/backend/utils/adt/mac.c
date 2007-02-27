@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/mac.c,v 1.36 2006/01/11 08:43:12 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/mac.c,v 1.37 2007/02/27 23:48:08 tgl Exp $
  */
 
 #include "postgres.h"
@@ -163,8 +163,8 @@ macaddr_text(PG_FUNCTION_ARGS)
 
 	result = palloc(len);
 
-	VARATT_SIZEP(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
+	SET_VARSIZE(result, len);
+	memcpy(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);
 

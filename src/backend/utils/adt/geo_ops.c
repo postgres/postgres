@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.94 2007/01/05 22:19:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/geo_ops.c,v 1.95 2007/02/27 23:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1415,7 +1415,7 @@ path_in(PG_FUNCTION_ARGS)
 	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * npts;
 	path = (PATH *) palloc(size);
 
-	path->size = size;
+	SET_VARSIZE(path, size);
 	path->npts = npts;
 
 	if ((!path_decode(TRUE, npts, s, &isopen, &s, &(path->p[0])))
@@ -1464,7 +1464,7 @@ path_recv(PG_FUNCTION_ARGS)
 	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * npts;
 	path = (PATH *) palloc(size);
 
-	path->size = size;
+	SET_VARSIZE(path, size);
 	path->npts = npts;
 	path->closed = (closed ? 1 : 0);
 
@@ -3440,7 +3440,7 @@ poly_in(PG_FUNCTION_ARGS)
 	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
 
-	poly->size = size;
+	SET_VARSIZE(poly, size);
 	poly->npts = npts;
 
 	if ((!path_decode(FALSE, npts, str, &isopen, &s, &(poly->p[0])))
@@ -3492,7 +3492,7 @@ poly_recv(PG_FUNCTION_ARGS)
 	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * npts;
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
 
-	poly->size = size;
+	SET_VARSIZE(poly, size);
 	poly->npts = npts;
 
 	for (i = 0; i < npts; i++)
@@ -4079,7 +4079,7 @@ path_add(PG_FUNCTION_ARGS)
 
 	result = (PATH *) palloc(size);
 
-	result->size = size;
+	SET_VARSIZE(result, size);
 	result->npts = (p1->npts + p2->npts);
 	result->closed = p1->closed;
 
@@ -4207,7 +4207,7 @@ path_poly(PG_FUNCTION_ARGS)
 	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * path->npts;
 	poly = (POLYGON *) palloc(size);
 
-	poly->size = size;
+	SET_VARSIZE(poly, size);
 	poly->npts = path->npts;
 
 	for (i = 0; i < path->npts; i++)
@@ -4282,7 +4282,7 @@ box_poly(PG_FUNCTION_ARGS)
 	size = offsetof(POLYGON, p[0]) +sizeof(poly->p[0]) * 4;
 	poly = (POLYGON *) palloc(size);
 
-	poly->size = size;
+	SET_VARSIZE(poly, size);
 	poly->npts = 4;
 
 	poly->p[0].x = box->low.x;
@@ -4312,7 +4312,7 @@ poly_path(PG_FUNCTION_ARGS)
 	size = offsetof(PATH, p[0]) +sizeof(path->p[0]) * poly->npts;
 	path = (PATH *) palloc(size);
 
-	path->size = size;
+	SET_VARSIZE(path, size);
 	path->npts = poly->npts;
 	path->closed = TRUE;
 
@@ -4995,7 +4995,7 @@ circle_poly(PG_FUNCTION_ARGS)
 				 errmsg("too many points requested")));
 
 	poly = (POLYGON *) palloc0(size);	/* zero any holes */
-	poly->size = size;
+	SET_VARSIZE(poly, size);
 	poly->npts = npts;
 
 	anglestep = (2.0 * M_PI) / npts;

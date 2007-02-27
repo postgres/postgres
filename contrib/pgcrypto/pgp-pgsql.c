@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.8 2006/11/10 06:28:29 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgp-pgsql.c,v 1.9 2007/02/27 23:48:06 tgl Exp $
  */
 
 #include "postgres.h"
@@ -152,7 +152,7 @@ convert_charset(text *src, int cset_from, int cset_to)
 	dst_len = strlen((char *) dst);
 	res = palloc(dst_len + VARHDRSZ);
 	memcpy(VARDATA(res), dst, dst_len);
-	VARATT_SIZEP(res) = VARHDRSZ + dst_len;
+	SET_VARSIZE(res, dst_len + VARHDRSZ);
 	pfree(dst);
 	return res;
 }
@@ -514,7 +514,7 @@ encrypt_internal(int is_pubenc, int is_text,
 	/* res_len includes VARHDRSZ */
 	res_len = mbuf_steal_data(dst, &restmp);
 	res = (bytea *) restmp;
-	VARATT_SIZEP(res) = res_len;
+	SET_VARSIZE(res, res_len);
 
 	if (tmp_data)
 		clear_and_pfree(tmp_data);
@@ -615,7 +615,7 @@ out:
 
 	/* res_len includes VARHDRSZ */
 	res = (bytea *) restmp;
-	VARATT_SIZEP(res) = res_len;
+	SET_VARSIZE(res, res_len);
 
 	if (need_text && got_unicode)
 	{
@@ -858,7 +858,7 @@ pg_armor(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
 				 errmsg("Overflow - encode estimate too small")));
-	VARATT_SIZEP(res) = VARHDRSZ + res_len;
+	SET_VARSIZE(res, VARHDRSZ + res_len);
 
 	PG_FREE_IF_COPY(data, 0);
 	PG_RETURN_TEXT_P(res);
@@ -889,7 +889,7 @@ pg_dearmor(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
 				 errmsg("Overflow - decode estimate too small")));
-	VARATT_SIZEP(res) = VARHDRSZ + res_len;
+	SET_VARSIZE(res, VARHDRSZ + res_len);
 
 	PG_FREE_IF_COPY(data, 0);
 	PG_RETURN_TEXT_P(res);
@@ -917,7 +917,7 @@ pgp_key_id_w(PG_FUNCTION_ARGS)
 		ereport(ERROR,
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
 				 errmsg("%s", px_strerror(res_len))));
-	VARATT_SIZEP(res) = VARHDRSZ + res_len;
+	SET_VARSIZE(res, VARHDRSZ + res_len);
 
 	PG_FREE_IF_COPY(data, 0);
 	PG_RETURN_TEXT_P(res);

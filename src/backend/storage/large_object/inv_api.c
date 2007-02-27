@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.121 2007/01/05 22:19:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.122 2007/02/27 23:48:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,7 +507,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 		bytea		hdr;
 		char		data[LOBLKSIZE];
 	}			workbuf;
-	char	   *workb = VARATT_DATA(&workbuf.hdr);
+	char	   *workb = VARDATA(&workbuf.hdr);
 	HeapTuple	newtup;
 	Datum		values[Natts_pg_largeobject];
 	char		nulls[Natts_pg_largeobject];
@@ -607,7 +607,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			off += n;
 			/* compute valid length of new page */
 			len = (len >= off) ? len : off;
-			VARATT_SIZEP(&workbuf.hdr) = len + VARHDRSZ;
+			SET_VARSIZE(&workbuf.hdr, len + VARHDRSZ);
 
 			/*
 			 * Form and insert updated tuple
@@ -651,7 +651,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			obj_desc->offset += n;
 			/* compute valid length of new page */
 			len = off + n;
-			VARATT_SIZEP(&workbuf.hdr) = len + VARHDRSZ;
+			SET_VARSIZE(&workbuf.hdr, len + VARHDRSZ);
 
 			/*
 			 * Form and insert updated tuple

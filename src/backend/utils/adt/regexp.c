@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.68 2007/01/05 22:19:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.69 2007/02/27 23:48:08 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -620,7 +620,7 @@ similar_escape(PG_FUNCTION_ARGS)
 	*r++ = ')';
 	*r++ = '$';
 
-	VARATT_SIZEP(result) = r - ((char *) result);
+	SET_VARSIZE(result, r - ((char *) result));
 
 	PG_RETURN_TEXT_P(result);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.128 2007/02/16 03:39:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.129 2007/02/27 23:48:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -891,8 +891,8 @@ date_text(PG_FUNCTION_ARGS)
 
 	result = palloc(len);
 
-	VARATT_SIZEP(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
+	SET_VARSIZE(result, len);
+	memcpy(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);
 
@@ -1634,8 +1634,8 @@ time_text(PG_FUNCTION_ARGS)
 
 	result = palloc(len);
 
-	VARATT_SIZEP(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
+	SET_VARSIZE(result, len);
+	memcpy(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);
 
@@ -2420,8 +2420,8 @@ timetz_text(PG_FUNCTION_ARGS)
 
 	result = palloc(len);
 
-	VARATT_SIZEP(result) = len;
-	memmove(VARDATA(result), str, (len - VARHDRSZ));
+	SET_VARSIZE(result, len);
+	memcpy(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);
 

@@ -555,7 +555,7 @@ genhl(HLPRSTEXT * prs)
 		wrd++;
 	}
 
-	VARATT_SIZEP(out) = ptr - ((char *) out);
+	SET_VARSIZE(out, ptr - ((char *) out));
 	return out;
 }
 

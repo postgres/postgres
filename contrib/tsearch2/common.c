@@ -36,7 +36,7 @@ charl2text(char *in, int len)
 	text	   *out = (text *) palloc(len + VARHDRSZ);
 
 	memcpy(VARDATA(out), in, len);
-	VARATT_SIZEP(out) = len + VARHDRSZ;
+	SET_VARSIZE(out, len + VARHDRSZ);
 	return out;
 }
 

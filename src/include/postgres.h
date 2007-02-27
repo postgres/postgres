@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.76 2007/01/05 22:19:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.77 2007/02/27 23:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,12 +56,13 @@
 
 /* ----------------
  * struct varattrib is the header of a varlena object that may have been
- * TOASTed.
+ * TOASTed.  Generally, only the code closely associated with TOAST logic
+ * should mess directly with struct varattrib or use the VARATT_FOO macros.
  * ----------------
  */
 typedef struct varattrib
 {
-	int32		va_header;		/* External/compressed storage */
+	int32		va_header_;		/* External/compressed storage */
 	/* flags and item size */
 	union
 	{
@@ -88,20 +89,21 @@ typedef struct varattrib
 #define VARATT_MASK_FLAGS		0xc0000000
 #define VARATT_MASK_SIZE		0x3fffffff
 
-#define VARATT_SIZEP(_PTR)	(((varattrib *)(_PTR))->va_header)
-#define VARATT_SIZE(PTR)	(VARATT_SIZEP(PTR) & VARATT_MASK_SIZE)
-#define VARATT_DATA(PTR)	(((varattrib *)(PTR))->va_content.va_data)
-#define VARATT_CDATA(PTR)	(((varattrib *)(PTR))->va_content.va_compressed.va_data)
-
-#define VARSIZE(__PTR)		VARATT_SIZE(__PTR)
-#define VARDATA(__PTR)		VARATT_DATA(__PTR)
+#define VARATT_SIZEP_DEPRECATED(PTR)	(((varattrib *) (PTR))->va_header_)
 
 #define VARATT_IS_EXTENDED(PTR)		\
-				((VARATT_SIZEP(PTR) & VARATT_MASK_FLAGS) != 0)
+				((VARATT_SIZEP_DEPRECATED(PTR) & VARATT_MASK_FLAGS) != 0)
 #define VARATT_IS_EXTERNAL(PTR)		\
-				((VARATT_SIZEP(PTR) & VARATT_FLAG_EXTERNAL) != 0)
+				((VARATT_SIZEP_DEPRECATED(PTR) & VARATT_FLAG_EXTERNAL) != 0)
 #define VARATT_IS_COMPRESSED(PTR)	\
-				((VARATT_SIZEP(PTR) & VARATT_FLAG_COMPRESSED) != 0)
+				((VARATT_SIZEP_DEPRECATED(PTR) & VARATT_FLAG_COMPRESSED) != 0)
+
+/* These macros are the ones for non-TOAST code to use */
+
+#define VARSIZE(PTR)	(VARATT_SIZEP_DEPRECATED(PTR) & VARATT_MASK_SIZE)
+#define VARDATA(PTR)	(((varattrib *) (PTR))->va_content.va_data)
+
+#define SET_VARSIZE(PTR,SIZE)	(VARATT_SIZEP_DEPRECATED(PTR) = (SIZE))
 
 
 /* ----------------------------------------------------------------

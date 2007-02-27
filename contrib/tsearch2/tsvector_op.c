@@ -44,9 +44,8 @@ strip(PG_FUNCTION_ARGS)
 		len += SHORTALIGN(arrin[i].len);
 
 	len = CALCDATASIZE(in->size, len);
-	out = (tsvector *) palloc(len);
-	memset(out, 0, len);
-	out->len = len;
+	out = (tsvector *) palloc0(len);
+	SET_VARSIZE(out, len);
 	out->size = in->size;
 	arrout = ARRPTR(out);
 	cur = STRPTR(out);
@@ -98,8 +97,8 @@ setweight(PG_FUNCTION_ARGS)
 			elog(ERROR, "unrecognized weight");
 	}
 
-	out = (tsvector *) palloc(in->len);
-	memcpy(out, in, in->len);
+	out = (tsvector *) palloc(VARSIZE(in));
+	memcpy(out, in, VARSIZE(in));
 	entry = ARRPTR(out);
 	i = out->size;
 	while (i--)
@@ -203,9 +202,8 @@ concat(PG_FUNCTION_ARGS)
 	data2 = STRPTR(in2);
 	i1 = in1->size;
 	i2 = in2->size;
-	out = (tsvector *) palloc(in1->len + in2->len);
-	memset(out, 0, in1->len + in2->len);
-	out->len = in1->len + in2->len;
+	out = (tsvector *) palloc0(VARSIZE(in1) + VARSIZE(in2));
+	SET_VARSIZE(out, VARSIZE(in1) + VARSIZE(in2));
 	out->size = in1->size + in2->size;
 	data = cur = STRPTR(out);
 	ptr = ARRPTR(out);
@@ -322,7 +320,7 @@ concat(PG_FUNCTION_ARGS)
 	}
 
 	out->size = ptr - ARRPTR(out);
-	out->len = CALCDATASIZE(out->size, cur - data);
+	SET_VARSIZE(out, CALCDATASIZE(out->size, cur - data));
 	if (data != STRPTR(out))
 		memmove(STRPTR(out), data, cur - data);
 

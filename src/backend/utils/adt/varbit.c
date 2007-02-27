@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.52 2007/01/05 22:19:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.53 2007/02/27 23:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,7 @@ bit_in(PG_FUNCTION_ARGS)
 	len = VARBITTOTALLEN(atttypmod);
 	/* set to 0 so that *r is always initialised and string is zero-padded */
 	result = (VarBit *) palloc0(len);
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	VARBITLEN(result) = atttypmod;
 
 	r = VARBITS(result);
@@ -299,7 +299,7 @@ bit_recv(PG_FUNCTION_ARGS)
 
 	len = VARBITTOTALLEN(bitlen);
 	result = (VarBit *) palloc(len);
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	VARBITLEN(result) = bitlen;
 
 	pq_copymsgbytes(buf, (char *) VARBITS(result), VARBITBYTES(result));
@@ -356,7 +356,7 @@ bit(PG_FUNCTION_ARGS)
 	rlen = VARBITTOTALLEN(len);
 	/* set to 0 so that string is zero-padded */
 	result = (VarBit *) palloc0(rlen);
-	VARATT_SIZEP(result) = rlen;
+	SET_VARSIZE(result, rlen);
 	VARBITLEN(result) = len;
 
 	memcpy(VARBITS(result), VARBITS(arg),
@@ -458,7 +458,7 @@ varbit_in(PG_FUNCTION_ARGS)
 	len = VARBITTOTALLEN(bitlen);
 	/* set to 0 so that *r is always initialised and string is zero-padded */
 	result = (VarBit *) palloc0(len);
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	VARBITLEN(result) = Min(bitlen, atttypmod);
 
 	r = VARBITS(result);
@@ -595,7 +595,7 @@ varbit_recv(PG_FUNCTION_ARGS)
 
 	len = VARBITTOTALLEN(bitlen);
 	result = (VarBit *) palloc(len);
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	VARBITLEN(result) = bitlen;
 
 	pq_copymsgbytes(buf, (char *) VARBITS(result), VARBITBYTES(result));
@@ -656,7 +656,7 @@ varbit(PG_FUNCTION_ARGS)
 
 	rlen = VARBITTOTALLEN(len);
 	result = (VarBit *) palloc(rlen);
-	VARATT_SIZEP(result) = rlen;
+	SET_VARSIZE(result, rlen);
 	VARBITLEN(result) = len;
 
 	memcpy(VARBITS(result), VARBITS(arg), VARBITBYTES(result));
@@ -884,7 +884,7 @@ bitcat(PG_FUNCTION_ARGS)
 	bytelen = VARBITTOTALLEN(bitlen1 + bitlen2);
 
 	result = (VarBit *) palloc(bytelen);
-	VARATT_SIZEP(result) = bytelen;
+	SET_VARSIZE(result, bytelen);
 	VARBITLEN(result) = bitlen1 + bitlen2;
 
 	/* Copy the first bitstring in */
@@ -951,7 +951,7 @@ bitsubstr(PG_FUNCTION_ARGS)
 		/* Need to return a zero-length bitstring */
 		len = VARBITTOTALLEN(0);
 		result = (VarBit *) palloc(len);
-		VARATT_SIZEP(result) = len;
+		SET_VARSIZE(result, len);
 		VARBITLEN(result) = 0;
 	}
 	else
@@ -963,7 +963,7 @@ bitsubstr(PG_FUNCTION_ARGS)
 		rbitlen = e1 - s1;
 		len = VARBITTOTALLEN(rbitlen);
 		result = (VarBit *) palloc(len);
-		VARATT_SIZEP(result) = len;
+		SET_VARSIZE(result, len);
 		VARBITLEN(result) = rbitlen;
 		len -= VARHDRSZ + VARBITHDRSZ;
 		/* Are we copying from a byte boundary? */
@@ -1044,7 +1044,7 @@ bitand(PG_FUNCTION_ARGS)
 
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	VARBITLEN(result) = bitlen1;
 
 	p1 = VARBITS(arg1);
@@ -1084,7 +1084,7 @@ bitor(PG_FUNCTION_ARGS)
 				 errmsg("cannot OR bit strings of different sizes")));
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	VARBITLEN(result) = bitlen1;
 
 	p1 = VARBITS(arg1);
@@ -1131,7 +1131,7 @@ bitxor(PG_FUNCTION_ARGS)
 
 	len = VARSIZE(arg1);
 	result = (VarBit *) palloc(len);
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	VARBITLEN(result) = bitlen1;
 
 	p1 = VARBITS(arg1);
@@ -1164,7 +1164,7 @@ bitnot(PG_FUNCTION_ARGS)
 	bits8		mask;
 
 	result = (VarBit *) palloc(VARSIZE(arg));
-	VARATT_SIZEP(result) = VARSIZE(arg);
+	SET_VARSIZE(result, VARSIZE(arg));
 	VARBITLEN(result) = VARBITLEN(arg);
 
 	p = VARBITS(arg);
@@ -1205,7 +1205,7 @@ bitshiftleft(PG_FUNCTION_ARGS)
 											Int32GetDatum(-shft)));
 
 	result = (VarBit *) palloc(VARSIZE(arg));
-	VARATT_SIZEP(result) = VARSIZE(arg);
+	SET_VARSIZE(result, VARSIZE(arg));
 	VARBITLEN(result) = VARBITLEN(arg);
 	r = VARBITS(result);
 
@@ -1264,7 +1264,7 @@ bitshiftright(PG_FUNCTION_ARGS)
 											Int32GetDatum(-shft)));
 
 	result = (VarBit *) palloc(VARSIZE(arg));
-	VARATT_SIZEP(result) = VARSIZE(arg);
+	SET_VARSIZE(result, VARSIZE(arg));
 	VARBITLEN(result) = VARBITLEN(arg);
 	r = VARBITS(result);
 
@@ -1324,7 +1324,7 @@ bitfromint4(PG_FUNCTION_ARGS)
 
 	rlen = VARBITTOTALLEN(typmod);
 	result = (VarBit *) palloc(rlen);
-	VARATT_SIZEP(result) = rlen;
+	SET_VARSIZE(result, rlen);
 	VARBITLEN(result) = typmod;
 
 	r = VARBITS(result);
@@ -1399,7 +1399,7 @@ bitfromint8(PG_FUNCTION_ARGS)
 
 	rlen = VARBITTOTALLEN(typmod);
 	result = (VarBit *) palloc(rlen);
-	VARATT_SIZEP(result) = rlen;
+	SET_VARSIZE(result, rlen);
 	VARBITLEN(result) = typmod;
 
 	r = VARBITS(result);

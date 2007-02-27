@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.255 2007/01/25 02:17:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.256 2007/02/27 23:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3244,7 +3244,7 @@ load_relcache_init_file(void)
 			rel->rd_options = palloc(len);
 			if ((nread = fread(rel->rd_options, 1, len, fp)) != len)
 				goto read_failed;
-			if (len != VARATT_SIZE(rel->rd_options))
+			if (len != VARSIZE(rel->rd_options))
 				goto read_failed;		/* sanity check */
 		}
 		else
@@ -3540,7 +3540,7 @@ write_relcache_init_file(void)
 
 		/* next, do the access method specific field */
 		write_item(rel->rd_options,
-				   (rel->rd_options ? VARATT_SIZE(rel->rd_options) : 0),
+				   (rel->rd_options ? VARSIZE(rel->rd_options) : 0),
 				   fp);
 
 		/* If it's an index, there's more to do */

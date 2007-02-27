@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.227 2007/02/22 22:00:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.228 2007/02/27 23:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4731,7 +4731,7 @@ string_to_bytea_const(const char *str, size_t str_len)
 	Datum		conval;
 
 	memcpy(VARDATA(bstr), str, str_len);
-	VARATT_SIZEP(bstr) = VARHDRSZ + str_len;
+	SET_VARSIZE(bstr, VARHDRSZ + str_len);
 	conval = PointerGetDatum(bstr);
 
 	return makeConst(BYTEAOID, -1, conval, false, false);

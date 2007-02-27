@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/tutorial/funcs.c,v 1.16 2006/09/27 16:19:42 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/tutorial/funcs.c,v 1.17 2007/02/27 23:48:10 tgl Exp $ */
 
 /******************************************************************************
   These are user-defined functions that can be bound to a Postgres backend
@@ -71,7 +71,7 @@ copytext(text *t)
 	 */
 	text	   *new_t = (text *) palloc(VARSIZE(t));
 
-	VARATT_SIZEP(new_t) = VARSIZE(t);
+	SET_VARSIZE(new_t, VARSIZE(t));
 
 	/*
 	 * VARDATA is a pointer to the data region of the struct.
@@ -90,7 +90,7 @@ concat_text(text *arg1, text *arg2)
 	int32		new_text_size = arg1_size + arg2_size + VARHDRSZ;
 	text	   *new_text = (text *) palloc(new_text_size);
 
-	VARATT_SIZEP(new_text) = new_text_size;
+	SET_VARSIZE(new_text, new_text_size);
 	memcpy(VARDATA(new_text), VARDATA(arg1), arg1_size);
 	memcpy(VARDATA(new_text) + arg1_size, VARDATA(arg2), arg2_size);
 	return new_text;

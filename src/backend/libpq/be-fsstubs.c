@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.84 2007/01/05 22:19:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.85 2007/02/27 23:48:07 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -304,7 +304,7 @@ loread(PG_FUNCTION_ARGS)
 
 	retval = (bytea *) palloc(VARHDRSZ + len);
 	totalread = lo_read(fd, VARDATA(retval), len);
-	VARATT_SIZEP(retval) = totalread + VARHDRSZ;
+	SET_VARSIZE(retval, totalread + VARHDRSZ);
 
 	PG_RETURN_BYTEA_P(retval);
 }

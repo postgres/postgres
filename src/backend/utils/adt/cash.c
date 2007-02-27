@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.69 2007/01/03 01:19:50 darcy Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.70 2007/02/27 23:48:07 tgl Exp $
  */
 
 #include "postgres.h"
@@ -860,7 +860,7 @@ cash_words(PG_FUNCTION_ARGS)
 
 	/* make a text type for output */
 	result = (text *) palloc(strlen(buf) + VARHDRSZ);
-	VARATT_SIZEP(result) = strlen(buf) + VARHDRSZ;
+	SET_VARSIZE(result, strlen(buf) + VARHDRSZ);
 	memcpy(VARDATA(result), buf, strlen(buf));
 
 	PG_RETURN_TEXT_P(result);

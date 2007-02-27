@@ -1,7 +1,7 @@
 /*
  * op function for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.14 2006/10/04 00:29:45 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.15 2007/02/27 23:48:06 tgl Exp $
  */
 
 #include "ltree.h"
@@ -557,7 +557,7 @@ ltree2text(PG_FUNCTION_ARGS)
 		curlevel = LEVEL_NEXT(curlevel);
 	}
 
-	VARATT_SIZEP(out) = VARHDRSZ + (ptr - VARDATA(out));
+	SET_VARSIZE(out, ptr - ((char *) out));
 	PG_FREE_IF_COPY(in, 0);
 
 	PG_RETURN_POINTER(out);

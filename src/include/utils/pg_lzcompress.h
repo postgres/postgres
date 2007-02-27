@@ -3,7 +3,7 @@
  *
  *	Definitions for the builtin LZ compressor
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.13 2006/10/05 23:33:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.14 2007/02/27 23:48:10 tgl Exp $
  * ----------
  */
 
@@ -15,13 +15,11 @@
  * PGLZ_Header -
  *
  *		The information at the top of the compressed data.
- *		The varsize must be kept the same data type as the value
- *		in front of all variable size data types in PostgreSQL.
  * ----------
  */
 typedef struct PGLZ_Header
 {
-	int32		varsize;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int32		rawsize;
 } PGLZ_Header;
 

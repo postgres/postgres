@@ -51,42 +51,34 @@ gbt_var_key_readable(const GBT_VARKEY * k)
 GBT_VARKEY *
 gbt_var_key_copy(const GBT_VARKEY_R * u, bool force_node)
 {
-
 	GBT_VARKEY *r = NULL;
 
 	if (u->lower == u->upper && !force_node)
 	{							/* leaf key mode */
-
 		r = (GBT_VARKEY *) palloc(VARSIZE(u->lower) + VARHDRSZ);
-		memcpy((void *) VARDATA(r), (void *) u->lower, VARSIZE(u->lower));
-		r->vl_len = VARSIZE(u->lower) + VARHDRSZ;
-
+		memcpy(VARDATA(r), u->lower, VARSIZE(u->lower));
+		SET_VARSIZE(r, VARSIZE(u->lower) + VARHDRSZ);
 	}
 	else
 	{							/* node key mode  */
-
 		r = (GBT_VARKEY *) palloc(INTALIGN(VARSIZE(u->lower)) + VARSIZE(u->upper) + VARHDRSZ);
-		memcpy((void *) VARDATA(r), (void *) u->lower, VARSIZE(u->lower));
-		memcpy((void *) &(((char *) r)[VARHDRSZ + INTALIGN(VARSIZE(u->lower))]), (void *) u->upper, VARSIZE(u->upper));
-		r->vl_len = INTALIGN(VARSIZE(u->lower)) + VARSIZE(u->upper) + VARHDRSZ;
-
+		memcpy(VARDATA(r), u->lower, VARSIZE(u->lower));
+		memcpy(VARDATA(r) + INTALIGN(VARSIZE(u->lower)), u->upper, VARSIZE(u->upper));
+		SET_VARSIZE(r, INTALIGN(VARSIZE(u->lower)) + VARSIZE(u->upper) + VARHDRSZ);
 	}
 	return r;
-
 }
 
 
 static GBT_VARKEY *
 gbt_var_leaf2node(GBT_VARKEY * leaf, const gbtree_vinfo * tinfo)
 {
-
 	GBT_VARKEY *out = leaf;
 
 	if (tinfo->f_l2n)
 		out = (*tinfo->f_l2n) (leaf);
 
 	return out;
-
 }
 
 
@@ -212,19 +204,22 @@ gbt_var_node_truncate(const GBT_VARKEY * node, int32 cpf_length, const gbtree_vi
 	GBT_VARKEY_R r = gbt_var_key_readable(node);
 	int32		len1 = VARSIZE(r.lower) - VARHDRSZ;
 	int32		len2 = VARSIZE(r.upper) - VARHDRSZ;
-	int32		si = 0;
+	int32		si;
+	char	   *out2;
 
 	len1 = Min(len1, (cpf_length + 1));
 	len2 = Min(len2, (cpf_length + 1));
 
-	si = 2 * VARHDRSZ + INTALIGN(VARHDRSZ + len1) + len2;
+	si = 2 * VARHDRSZ + INTALIGN(len1 + VARHDRSZ) + len2;
 	out = (GBT_VARKEY *) palloc(si);
-	out->vl_len = si;
-	memcpy((void *) &(((char *) out)[VARHDRSZ]), (void *) r.lower, len1 + VARHDRSZ);
-	memcpy((void *) &(((char *) out)[VARHDRSZ + INTALIGN(VARHDRSZ + len1)]), (void *) r.upper, len2 + VARHDRSZ);
+	SET_VARSIZE(out, si);
 
-	*((int32 *) &(((char *) out)[VARHDRSZ])) = len1 + VARHDRSZ;
-	*((int32 *) &(((char *) out)[VARHDRSZ + INTALIGN(VARHDRSZ + len1)])) = len2 + VARHDRSZ;
+	memcpy(VARDATA(out), r.lower, len1 + VARHDRSZ);
+	SET_VARSIZE(VARDATA(out), len1 + VARHDRSZ);
+
+	out2 = VARDATA(out) + INTALIGN(len1 + VARHDRSZ);
+	memcpy(out2, r.upper, len2 + VARHDRSZ);
+	SET_VARSIZE(out2, len2 + VARHDRSZ);
 
 	return out;
 }

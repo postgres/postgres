@@ -17,7 +17,7 @@ tsstat_in(PG_FUNCTION_ARGS)
 {
 	tsstat	   *stat = palloc(STATHDRSIZE);
 
-	stat->len = STATHDRSIZE;
+	SET_VARSIZE(stat, STATHDRSIZE);
 	stat->size = 0;
 	stat->weight = 0;
 	PG_RETURN_POINTER(stat);
@@ -100,7 +100,7 @@ formstat(tsstat * stat, tsvector * txt, WordEntry ** entry, uint32 len)
 	slen += STATSTRSIZE(stat);
 	totallen = CALCSTATSIZE(nentry, slen);
 	newstat = palloc(totallen);
-	newstat->len = totallen;
+	SET_VARSIZE(newstat, totallen);
 	newstat->weight = stat->weight;
 	newstat->size = nentry;
 
@@ -200,7 +200,7 @@ ts_accum(PG_FUNCTION_ARGS)
 	if (stat == NULL || PG_ARGISNULL(0))
 	{							/* Init in first */
 		stat = palloc(STATHDRSIZE);
-		stat->len = STATHDRSIZE;
+		SET_VARSIZE(stat, STATHDRSIZE);
 		stat->size = 0;
 		stat->weight = 0;
 	}
@@ -341,8 +341,8 @@ ts_setup_firstcall(FunctionCallInfo fcinfo, FuncCallContext *funcctx,
 	oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 	st = palloc(sizeof(StatStorage));
 	st->cur = 0;
-	st->stat = palloc(stat->len);
-	memcpy(st->stat, stat, stat->len);
+	st->stat = palloc(VARSIZE(stat));
+	memcpy(st->stat, stat, VARSIZE(stat));
 	funcctx->user_fctx = (void *) st;
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
@@ -466,7 +466,7 @@ ts_stat_sql(text *txt, text *ws)
 		elog(ERROR, "column isn't of tsvector type");
 
 	stat = palloc(STATHDRSIZE);
-	stat->len = STATHDRSIZE;
+	SET_VARSIZE(stat, STATHDRSIZE);
 	stat->size = 0;
 	stat->weight = 0;
 

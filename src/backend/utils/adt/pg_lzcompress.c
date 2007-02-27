@@ -45,7 +45,7 @@
  *			PGLZ_Header is defined as
  *
  *				typedef struct PGLZ_Header {
- *					int32		varsize;
+ *					int32		vl_len_;
  *					int32		rawsize;
  *				}
  *
@@ -54,7 +54,7 @@
  *			The data representation is easiest explained by describing
  *			the process of decompression.
  *
- *			If varsize == rawsize + sizeof(PGLZ_Header), then the data
+ *			If VARSIZE(x) == rawsize + sizeof(PGLZ_Header), then the data
  *			is stored uncompressed as plain bytes. Thus, the decompressor
  *			simply copies rawsize bytes from the location after the
  *			header to the destination.
@@ -166,7 +166,7 @@
  *
  * Copyright (c) 1999-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.24 2007/01/20 01:08:42 neilc Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.25 2007/02/27 23:48:08 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -618,7 +618,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 	/*
 	 * Success - need only fill in the actual length of the compressed datum.
 	 */
-	dest->varsize = result_size + sizeof(PGLZ_Header);
+	SET_VARSIZE(dest, result_size + sizeof(PGLZ_Header));
 
 	return true;
 }
@@ -643,7 +643,7 @@ pglz_decompress(const PGLZ_Header *source, char *dest)
 	int32		destsize;
 
 	dp = ((const unsigned char *) source) + sizeof(PGLZ_Header);
-	dend = ((const unsigned char *) source) + VARATT_SIZE(source);
+	dend = ((const unsigned char *) source) + VARSIZE(source);
 	bp = (unsigned char *) dest;
 
 	while (dp < dend)

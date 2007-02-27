@@ -19,7 +19,7 @@ typedef struct
 
 typedef struct
 {
-	int4		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		size;
 	int4		weight;
 	char		data[1];
@@ -29,6 +29,6 @@ typedef struct
 #define CALCSTATSIZE(x, lenstr) ( (x) * sizeof(StatEntry) + STATHDRSIZE + (lenstr) )
 #define STATPTR(x)	( (StatEntry*) ( (char*)(x) + STATHDRSIZE ) )
 #define STATSTRPTR(x)	( (char*)(x) + STATHDRSIZE + ( sizeof(StatEntry) * ((tsvector*)(x))->size ) )
-#define STATSTRSIZE(x)	( ((tsvector*)(x))->len - STATHDRSIZE - ( sizeof(StatEntry) * ((tsvector*)(x))->size ) )
+#define STATSTRSIZE(x)	( VARSIZE((tsvector*)(x)) - STATHDRSIZE - ( sizeof(StatEntry) * ((tsvector*)(x))->size ) )
 
 #endif

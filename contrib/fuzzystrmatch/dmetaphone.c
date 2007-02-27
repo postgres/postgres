@@ -1,7 +1,7 @@
 /*
  * This is a port of the Double Metaphone algorithm for use in PostgreSQL.
  *
- * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.10 2006/09/22 21:39:56 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/fuzzystrmatch/dmetaphone.c,v 1.11 2007/02/27 23:48:05 tgl Exp $
  *
  * Double Metaphone computes 2 "sounds like" strings - a primary and an
  * alternate. In most cases they are the same, but for foreign names
@@ -165,10 +165,9 @@ dmetaphone(PG_FUNCTION_ARGS)
 		code = "";
 	rsize = VARHDRSZ + strlen(code);
 	result = (text *) palloc(rsize);
-	memset(result, 0, rsize);
 	rptr = VARDATA(result);
-	memcpy(rptr, code, strlen(code));
-	VARATT_SIZEP(result) = rsize;
+	memcpy(rptr, code, rsize - VARHDRSZ);
+	SET_VARSIZE(result, rsize);
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -206,10 +205,9 @@ dmetaphone_alt(PG_FUNCTION_ARGS)
 		code = "";
 	rsize = VARHDRSZ + strlen(code);
 	result = (text *) palloc(rsize);
-	memset(result, 0, rsize);
 	rptr = VARDATA(result);
-	memcpy(rptr, code, strlen(code));
-	VARATT_SIZEP(result) = rsize;
+	memcpy(rptr, code, rsize - VARHDRSZ);
+	SET_VARSIZE(result, rsize);
 	PG_RETURN_TEXT_P(result);
 }
 

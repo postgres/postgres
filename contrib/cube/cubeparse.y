@@ -2,7 +2,7 @@
 /* NdBox = [(lowerleft),(upperright)] */
 /* [(xLL(1)...xLL(N)),(xUR(1)...xUR(n))] */
 
-/* $PostgreSQL: pgsql/contrib/cube/cubeparse.y,v 1.16 2006/03/11 04:38:28 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/cube/cubeparse.y,v 1.17 2007/02/27 23:48:05 tgl Exp $ */
 
 #define YYPARSE_PARAM result  /* need this to pass a pointer (void *) to yyparse */
 #define YYSTYPE char *
@@ -165,9 +165,8 @@ write_box(unsigned int dim, char *str1, char *str2)
   int i; 
   int size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;
 	    
-  bp = palloc(size);
-  memset(bp, 0, size);
-  bp->size = size;
+  bp = palloc0(size);
+  SET_VARSIZE(bp, size);
   bp->dim = dim;
 	    
   s = str1;
@@ -198,9 +197,8 @@ write_point_as_box(char *str, int dim)
   
   size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;
 
-  bp = palloc(size);
-  memset(bp, 0, size);
-  bp->size = size;
+  bp = palloc0(size);
+  SET_VARSIZE(bp, size);
   bp->dim = dim;
   
   i = 0;

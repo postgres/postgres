@@ -226,7 +226,7 @@ new_intArrayType(int num)
 
 	r = (ArrayType *) palloc0(nbytes);
 
-	ARR_SIZE(r) = nbytes;
+	SET_VARSIZE(r, nbytes);
 	ARR_NDIM(r) = NDIM;
 	r->dataoffset = 0;			/* marker for no null bitmap */
 	ARR_ELEMTYPE(r) = INT4OID;
@@ -246,7 +246,7 @@ resize_intArrayType(ArrayType *a, int num)
 
 	a = (ArrayType *) repalloc(a, nbytes);
 
-	a->size = nbytes;
+	SET_VARSIZE(a, nbytes);
 	*((int *) ARR_DIMS(a)) = num;
 	return a;
 }

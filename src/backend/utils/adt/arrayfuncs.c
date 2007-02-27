@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.136 2007/01/05 22:19:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.137 2007/02/27 23:48:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -324,7 +324,7 @@ array_in(PG_FUNCTION_ARGS)
 		nbytes += ARR_OVERHEAD_NONULLS(ndim);
 	}
 	retval = (ArrayType *) palloc(nbytes);
-	retval->size = nbytes;
+	SET_VARSIZE(retval, nbytes);
 	retval->ndim = ndim;
 	retval->dataoffset = dataoffset;
 	retval->elemtype = element_type;
@@ -1279,7 +1279,7 @@ array_recv(PG_FUNCTION_ARGS)
 		nbytes += ARR_OVERHEAD_NONULLS(ndim);
 	}
 	retval = (ArrayType *) palloc(nbytes);
-	retval->size = nbytes;
+	SET_VARSIZE(retval, nbytes);
 	retval->ndim = ndim;
 	retval->dataoffset = dataoffset;
 	retval->elemtype = element_type;
@@ -1573,7 +1573,7 @@ array_dims(PG_FUNCTION_ARGS)
 		sprintf(p, "[%d:%d]", lb[i], dimv[i] + lb[i] - 1);
 		p += strlen(p);
 	}
-	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
+	SET_VARSIZE(result, strlen(VARDATA(result)) + VARHDRSZ);
 
 	PG_RETURN_TEXT_P(result);
 }
@@ -1879,7 +1879,7 @@ array_get_slice(ArrayType *array,
 	}
 
 	newarray = (ArrayType *) palloc(bytes);
-	newarray->size = bytes;
+	SET_VARSIZE(newarray, bytes);
 	newarray->ndim = ndim;
 	newarray->dataoffset = dataoffset;
 	newarray->elemtype = elemtype;
@@ -2132,7 +2132,7 @@ array_set(ArrayType *array,
 	 * OK, create the new array and fill in header/dimensions
 	 */
 	newarray = (ArrayType *) palloc(newsize);
-	newarray->size = newsize;
+	SET_VARSIZE(newarray, newsize);
 	newarray->ndim = ndim;
 	newarray->dataoffset = newhasnulls ? overheadlen : 0;
 	newarray->elemtype = ARR_ELEMTYPE(array);
@@ -2458,7 +2458,7 @@ array_set_slice(ArrayType *array,
 	newsize = overheadlen + olddatasize - olditemsize + newitemsize;
 
 	newarray = (ArrayType *) palloc(newsize);
-	newarray->size = newsize;
+	SET_VARSIZE(newarray, newsize);
 	newarray->ndim = ndim;
 	newarray->dataoffset = newhasnulls ? overheadlen : 0;
 	newarray->elemtype = ARR_ELEMTYPE(array);
@@ -2717,7 +2717,7 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType,
 		nbytes += ARR_OVERHEAD_NONULLS(ndim);
 	}
 	result = (ArrayType *) palloc(nbytes);
-	result->size = nbytes;
+	SET_VARSIZE(result, nbytes);
 	result->ndim = ndim;
 	result->dataoffset = dataoffset;
 	result->elemtype = retType;
@@ -2853,7 +2853,7 @@ construct_md_array(Datum *elems,
 		nbytes += ARR_OVERHEAD_NONULLS(ndims);
 	}
 	result = (ArrayType *) palloc(nbytes);
-	result->size = nbytes;
+	SET_VARSIZE(result, nbytes);
 	result->ndim = ndims;
 	result->dataoffset = dataoffset;
 	result->elemtype = elmtype;
@@ -2877,7 +2877,7 @@ construct_empty_array(Oid elmtype)
 	ArrayType  *result;
 
 	result = (ArrayType *) palloc(sizeof(ArrayType));
-	result->size = sizeof(ArrayType);
+	SET_VARSIZE(result, sizeof(ArrayType));
 	result->ndim = 0;
 	result->dataoffset = 0;
 	result->elemtype = elmtype;

@@ -1,5 +1,5 @@
 /******************************************************************************
-  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.30 2006/10/04 00:29:44 momjian Exp $
+  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.31 2007/02/27 23:48:05 tgl Exp $
 
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
@@ -223,9 +223,8 @@ cube_a_f8_f8(PG_FUNCTION_ARGS)
 	dll = ARRPTR(ll);
 
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2 * dim;
-	result = (NDBOX *) palloc(size);
-	memset(result, 0, size);
-	result->size = size;
+	result = (NDBOX *) palloc0(size);
+	SET_VARSIZE(result, size);
 	result->dim = dim;
 
 	for (i = 0; i < dim; i++)
@@ -264,9 +263,8 @@ cube_a_f8(PG_FUNCTION_ARGS)
 	dur = ARRPTR(ur);
 
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2 * dim;
-	result = (NDBOX *) palloc(size);
-	memset(result, 0, size);
-	result->size = size;
+	result = (NDBOX *) palloc0(size);
+	SET_VARSIZE(result, size);
 	result->dim = dim;
 
 	for (i = 0; i < dim; i++)
@@ -303,9 +301,8 @@ cube_subset(PG_FUNCTION_ARGS)
 
 	dim = ARRNELEMS(idx);
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2 * dim;
-	result = (NDBOX *) palloc(size);
-	memset(result, 0, size);
-	result->size = size;
+	result = (NDBOX *) palloc0(size);
+	SET_VARSIZE(result, size);
 	result->dim = dim;
 
 	for (i = 0; i < dim; i++)
@@ -432,7 +429,7 @@ g_cube_union(PG_FUNCTION_ARGS)
 	/*
 	 * sizep = sizeof(NDBOX); -- NDBOX has variable size
 	 */
-	*sizep = tmp->size;
+	*sizep = VARSIZE(tmp);
 
 	for (i = 1; i < entryvec->n; i++)
 	{
@@ -744,7 +741,7 @@ g_cube_binary_union(NDBOX * r1, NDBOX * r2, int *sizep)
 	NDBOX	   *retval;
 
 	retval = cube_union_v0(r1, r2);
-	*sizep = retval->size;
+	*sizep = VARSIZE(retval);
 
 	return (retval);
 }
@@ -759,16 +756,14 @@ cube_union_v0(NDBOX * a, NDBOX * b)
 
 	if (a->dim >= b->dim)
 	{
-		result = palloc(a->size);
-		memset(result, 0, a->size);
-		result->size = a->size;
+		result = palloc0(VARSIZE(a));
+		SET_VARSIZE(result, VARSIZE(a));
 		result->dim = a->dim;
 	}
 	else
 	{
-		result = palloc(b->size);
-		memset(result, 0, b->size);
-		result->size = b->size;
+		result = palloc0(VARSIZE(b));
+		SET_VARSIZE(result, VARSIZE(b));
 		result->dim = b->dim;
 	}
 
@@ -834,16 +829,14 @@ cube_inter(PG_FUNCTION_ARGS)
 
 	if (a->dim >= b->dim)
 	{
-		result = palloc(a->size);
-		memset(result, 0, a->size);
-		result->size = a->size;
+		result = palloc0(VARSIZE(a));
+		SET_VARSIZE(result, VARSIZE(a));
 		result->dim = a->dim;
 	}
 	else
 	{
-		result = palloc(b->size);
-		memset(result, 0, b->size);
-		result->size = b->size;
+		result = palloc0(VARSIZE(b));
+		SET_VARSIZE(result, VARSIZE(b));
 		result->dim = b->dim;
 	}
 
@@ -1371,9 +1364,8 @@ cube_enlarge(PG_FUNCTION_ARGS)
 	if (a->dim > dim)
 		dim = a->dim;
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * dim * 2;
-	result = (NDBOX *) palloc(size);
-	memset(result, 0, size);
-	result->size = size;
+	result = (NDBOX *) palloc0(size);
+	SET_VARSIZE(result, size);
 	result->dim = dim;
 	for (i = 0, j = dim, k = a->dim; i < a->dim; i++, j++, k++)
 	{
@@ -1411,9 +1403,8 @@ cube_f8(PG_FUNCTION_ARGS)
 	int			size;
 
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2;
-	result = (NDBOX *) palloc(size);
-	memset(result, 0, size);
-	result->size = size;
+	result = (NDBOX *) palloc0(size);
+	SET_VARSIZE(result, size);
 	result->dim = 1;
 	result->x[0] = PG_GETARG_FLOAT8(0);
 	result->x[1] = result->x[0];
@@ -1429,9 +1420,8 @@ cube_f8_f8(PG_FUNCTION_ARGS)
 	int			size;
 
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * 2;
-	result = (NDBOX *) palloc(size);
-	memset(result, 0, size);
-	result->size = size;
+	result = (NDBOX *) palloc0(size);
+	SET_VARSIZE(result, size);
 	result->dim = 1;
 	result->x[0] = PG_GETARG_FLOAT8(0);
 	result->x[1] = PG_GETARG_FLOAT8(1);
@@ -1454,9 +1444,8 @@ cube_c_f8(PG_FUNCTION_ARGS)
 	x = PG_GETARG_FLOAT8(1);
 
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) *2;
-	result = (NDBOX *) palloc(size);
-	memset(result, 0, size);
-	result->size = size;
+	result = (NDBOX *) palloc0(size);
+	SET_VARSIZE(result, size);
 	result->dim = c->dim + 1;
 	for (i = 0; i < c->dim; i++)
 	{
@@ -1485,9 +1474,8 @@ cube_c_f8_f8(PG_FUNCTION_ARGS)
 	x2 = PG_GETARG_FLOAT8(2);
 
 	size = offsetof(NDBOX, x[0]) + sizeof(double) * (c->dim + 1) *2;
-	result = (NDBOX *) palloc(size);
-	memset(result, 0, size);
-	result->size = size;
+	result = (NDBOX *) palloc0(size);
+	SET_VARSIZE(result, size);
 	result->dim = c->dim + 1;
 	for (i = 0; i < c->dim; i++)
 	{

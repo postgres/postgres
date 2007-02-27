@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.25 2006/11/10 06:28:29 neilc Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.26 2007/02/27 23:48:06 tgl Exp $
  */
 
 #include "postgres.h"
@@ -68,7 +68,7 @@ pg_digest(PG_FUNCTION_ARGS)
 	hlen = px_md_result_size(md);
 
 	res = (text *) palloc(hlen + VARHDRSZ);
-	VARATT_SIZEP(res) = hlen + VARHDRSZ;
+	SET_VARSIZE(res, hlen + VARHDRSZ);
 
 	arg = PG_GETARG_BYTEA_P(0);
 	len = VARSIZE(arg) - VARHDRSZ;
@@ -106,7 +106,7 @@ pg_hmac(PG_FUNCTION_ARGS)
 	hlen = px_hmac_result_size(h);
 
 	res = (text *) palloc(hlen + VARHDRSZ);
-	VARATT_SIZEP(res) = hlen + VARHDRSZ;
+	SET_VARSIZE(res, hlen + VARHDRSZ);
 
 	arg = PG_GETARG_BYTEA_P(0);
 	key = PG_GETARG_BYTEA_P(1);
@@ -150,7 +150,7 @@ pg_gen_salt(PG_FUNCTION_ARGS)
 				 errmsg("gen_salt: %s", px_strerror(len))));
 
 	res = (text *) palloc(len + VARHDRSZ);
-	VARATT_SIZEP(res) = len + VARHDRSZ;
+	SET_VARSIZE(res, len + VARHDRSZ);
 	memcpy(VARDATA(res), buf, len);
 
 	PG_FREE_IF_COPY(arg0, 0);
@@ -184,7 +184,7 @@ pg_gen_salt_rounds(PG_FUNCTION_ARGS)
 				 errmsg("gen_salt: %s", px_strerror(len))));
 
 	res = (text *) palloc(len + VARHDRSZ);
-	VARATT_SIZEP(res) = len + VARHDRSZ;
+	SET_VARSIZE(res, len + VARHDRSZ);
 	memcpy(VARDATA(res), buf, len);
 
 	PG_FREE_IF_COPY(arg0, 0);
@@ -238,7 +238,7 @@ pg_crypt(PG_FUNCTION_ARGS)
 	clen = strlen(cres);
 
 	res = (text *) palloc(clen + VARHDRSZ);
-	VARATT_SIZEP(res) = clen + VARHDRSZ;
+	SET_VARSIZE(res, clen + VARHDRSZ);
 	memcpy(VARDATA(res), cres, clen);
 	pfree(resbuf);
 
@@ -293,7 +293,7 @@ pg_encrypt(PG_FUNCTION_ARGS)
 				 errmsg("encrypt error: %s", px_strerror(err))));
 	}
 
-	VARATT_SIZEP(res) = VARHDRSZ + rlen;
+	SET_VARSIZE(res, VARHDRSZ + rlen);
 	PG_RETURN_BYTEA_P(res);
 }
 
@@ -336,7 +336,7 @@ pg_decrypt(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
 				 errmsg("decrypt error: %s", px_strerror(err))));
 
-	VARATT_SIZEP(res) = VARHDRSZ + rlen;
+	SET_VARSIZE(res, VARHDRSZ + rlen);
 
 	PG_FREE_IF_COPY(data, 0);
 	PG_FREE_IF_COPY(key, 1);
@@ -389,7 +389,7 @@ pg_encrypt_iv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
 				 errmsg("encrypt_iv error: %s", px_strerror(err))));
 
-	VARATT_SIZEP(res) = VARHDRSZ + rlen;
+	SET_VARSIZE(res, VARHDRSZ + rlen);
 
 	PG_FREE_IF_COPY(data, 0);
 	PG_FREE_IF_COPY(key, 1);
@@ -443,7 +443,7 @@ pg_decrypt_iv(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_EXTERNAL_ROUTINE_INVOCATION_EXCEPTION),
 				 errmsg("decrypt_iv error: %s", px_strerror(err))));
 
-	VARATT_SIZEP(res) = VARHDRSZ + rlen;
+	SET_VARSIZE(res, VARHDRSZ + rlen);
 
 	PG_FREE_IF_COPY(data, 0);
 	PG_FREE_IF_COPY(key, 1);
@@ -469,7 +469,7 @@ pg_random_bytes(PG_FUNCTION_ARGS)
 				 errmsg("Length not in range")));
 
 	res = palloc(VARHDRSZ + len);
-	VARATT_SIZEP(res) = VARHDRSZ + len;
+	SET_VARSIZE(res, VARHDRSZ + len);
 
 	/* generate result */
 	err = px_get_random_bytes((uint8 *) VARDATA(res), len);

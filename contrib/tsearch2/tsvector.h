@@ -49,7 +49,7 @@ typedef uint16 WordEntryPos;
 
 /*
  * Structure of tsvector datatype:
- * 1) int4	len - varlena's length
+ * 1) standard varlena header
  * 2) int4		size - number of lexemes or WordEntry array, which is the same
  * 3) Array of WordEntry - sorted array, comparison based on word's length
  *						and strncmp(). WordEntry->pos points number of
@@ -63,12 +63,12 @@ typedef uint16 WordEntryPos;
 
 typedef struct
 {
-	int4		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		size;
 	char		data[1];
 }	tsvector;
 
-#define DATAHDRSIZE (sizeof(int4) * 2)
+#define DATAHDRSIZE (VARHDRSZ + sizeof(int4))
 #define CALCDATASIZE(x, lenstr) ( (x) * sizeof(WordEntry) + DATAHDRSIZE + (lenstr) )
 #define ARRPTR(x)	( (WordEntry*) ( (char*)(x) + DATAHDRSIZE ) )
 #define STRPTR(x)	( (char*)(x) + DATAHDRSIZE + ( sizeof(WordEntry) * ((tsvector*)(x))->size ) )

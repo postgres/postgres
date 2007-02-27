@@ -212,7 +212,7 @@ xml_encode_special_chars(PG_FUNCTION_ARGS)
 	ressize = strlen(tt);
 	tout = (text *) palloc(ressize + VARHDRSZ);
 	memcpy(VARDATA(tout), tt, ressize);
-	VARATT_SIZEP(tout) = ressize + VARHDRSZ;
+	SET_VARSIZE(tout, ressize + VARHDRSZ);
 
 	xmlFree(tt);
 
@@ -612,7 +612,7 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 	ressize = strlen(xpresstr);
 	xpres = (text *) palloc(ressize + VARHDRSZ);
 	memcpy(VARDATA(xpres), xpresstr, ressize);
-	VARATT_SIZEP(xpres) = ressize + VARHDRSZ;
+	SET_VARSIZE(xpres, ressize + VARHDRSZ);
 
 	/* Free various storage */
 	xmlCleanupParser();

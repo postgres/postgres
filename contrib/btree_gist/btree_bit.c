@@ -70,7 +70,7 @@ gbt_bit_xfrm(bytea *leaf)
 	int			s = INTALIGN(VARBITBYTES(leaf) + VARHDRSZ);
 
 	out = palloc(s);
-	VARATT_SIZEP(out) = s;
+	SET_VARSIZE(out, s);
 	memcpy((void *) VARDATA(out), (void *) VARBITS(leaf), VARBITBYTES(leaf));
 	return out;
 }

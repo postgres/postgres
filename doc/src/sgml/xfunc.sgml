@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.125 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.126 2007/02/27 23:48:06 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -1645,7 +1645,7 @@ copytext(text *t)
      * VARSIZE is the total size of the struct in bytes.
      */
     text *new_t = (text *) palloc(VARSIZE(t));
-    VARATT_SIZEP(new_t) = VARSIZE(t);
+    SET_VARSIZE(new_t, VARSIZE(t));
     /*
      * VARDATA is a pointer to the data region of the struct.
      */
@@ -1661,7 +1661,7 @@ concat_text(text *arg1, text *arg2)
     int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
     text *new_text = (text *) palloc(new_text_size);
 
-    VARATT_SIZEP(new_text) = new_text_size;
+    SET_VARSIZE(new_text, new_text_size);
     memcpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1) - VARHDRSZ);
     memcpy(VARDATA(new_text) + (VARSIZE(arg1) - VARHDRSZ),
            VARDATA(arg2), VARSIZE(arg2) - VARHDRSZ);
@@ -1831,7 +1831,7 @@ copytext(PG_FUNCTION_ARGS)
      * VARSIZE is the total size of the struct in bytes.
      */
     text     *new_t = (text *) palloc(VARSIZE(t));
-    VARATT_SIZEP(new_t) = VARSIZE(t);
+    SET_VARSIZE(new_t, VARSIZE(t));
     /*
      * VARDATA is a pointer to the data region of the struct.
      */
@@ -1851,7 +1851,7 @@ concat_text(PG_FUNCTION_ARGS)
     int32 new_text_size = VARSIZE(arg1) + VARSIZE(arg2) - VARHDRSZ;
     text *new_text = (text *) palloc(new_text_size);
 
-    VARATT_SIZEP(new_text) = new_text_size;
+    SET_VARSIZE(new_text, new_text_size);
     memcpy(VARDATA(new_text), VARDATA(arg1), VARSIZE(arg1) - VARHDRSZ);
     memcpy(VARDATA(new_text) + (VARSIZE(arg1) - VARHDRSZ),
            VARDATA(arg2), VARSIZE(arg2) - VARHDRSZ);

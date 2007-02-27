@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.115 2007/02/09 03:35:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.116 2007/02/27 23:48:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ heap_fill_tuple(TupleDesc tupleDesc,
 				*infomask |= HEAP_HASEXTERNAL;
 			if (VARATT_IS_COMPRESSED(values[i]))
 				*infomask |= HEAP_HASCOMPRESSED;
-			data_length = VARATT_SIZE(DatumGetPointer(values[i]));
+			data_length = VARSIZE(DatumGetPointer(values[i]));
 			memcpy(data, DatumGetPointer(values[i]), data_length);
 		}
 		else if (att[i]->attlen == -2)
@@ -261,7 +261,7 @@ DataFill(char *data,
 				*infomask |= HEAP_HASEXTERNAL;
 			if (VARATT_IS_COMPRESSED(values[i]))
 				*infomask |= HEAP_HASCOMPRESSED;
-			data_length = VARATT_SIZE(DatumGetPointer(values[i]));
+			data_length = VARSIZE(DatumGetPointer(values[i]));
 			memcpy(data, DatumGetPointer(values[i]), data_length);
 		}
 		else if (att[i]->attlen == -2)

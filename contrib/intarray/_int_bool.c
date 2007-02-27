@@ -766,7 +766,7 @@ querytree(PG_FUNCTION_ARGS)
 	if (len == 0)
 	{
 		res = (text *) palloc(1 + VARHDRSZ);
-		VARATT_SIZEP(res) = 1 + VARHDRSZ;
+		SET_VARSIZE(res, 1 + VARHDRSZ);
 		*((char *) VARDATA(res)) = 'T';
 	}
 	else
@@ -778,7 +778,7 @@ querytree(PG_FUNCTION_ARGS)
 		infix(&nrm, true);
 
 		res = (text *) palloc(nrm.cur - nrm.buf + VARHDRSZ);
-		VARATT_SIZEP(res) = nrm.cur - nrm.buf + VARHDRSZ;
+		SET_VARSIZE(res, nrm.cur - nrm.buf + VARHDRSZ);
 		memcpy(VARDATA(res), nrm.buf, nrm.cur - nrm.buf);
 	}
 	pfree(q);

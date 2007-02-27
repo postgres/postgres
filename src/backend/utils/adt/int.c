@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.78 2007/02/01 19:10:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int.c,v 1.79 2007/02/27 23:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ buildint2vector(const int2 *int2s, int n)
 	 * Attach standard array header.  For historical reasons, we set the index
 	 * lower bound to 0 not 1.
 	 */
-	result->size = Int2VectorSize(n);
+	SET_VARSIZE(result, Int2VectorSize(n));
 	result->ndim = 1;
 	result->dataoffset = 0;		/* never any nulls */
 	result->elemtype = INT2OID;
@@ -162,7 +162,7 @@ int2vectorin(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("int2vector has too many elements")));
 
-	result->size = Int2VectorSize(n);
+	SET_VARSIZE(result, Int2VectorSize(n));
 	result->ndim = 1;
 	result->dataoffset = 0;		/* never any nulls */
 	result->elemtype = INT2OID;
@@ -350,7 +350,7 @@ int2_text(PG_FUNCTION_ARGS)
 	text	   *result = (text *) palloc(7 + VARHDRSZ); /* sign,5 digits, '\0' */
 
 	pg_itoa(arg1, VARDATA(result));
-	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
+	SET_VARSIZE(result, strlen(VARDATA(result)) + VARHDRSZ);
 	PG_RETURN_TEXT_P(result);
 }
 
@@ -381,7 +381,7 @@ int4_text(PG_FUNCTION_ARGS)
 	text	   *result = (text *) palloc(12 + VARHDRSZ);		/* sign,10 digits,'\0' */
 
 	pg_ltoa(arg1, VARDATA(result));
-	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
+	SET_VARSIZE(result, strlen(VARDATA(result)) + VARHDRSZ);
 	PG_RETURN_TEXT_P(result);
 }
 

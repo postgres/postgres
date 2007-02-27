@@ -19,7 +19,7 @@
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.14 2007/01/05 22:19:41 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.15 2007/02/27 23:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,7 @@ do_like_escape(text *pat, text *esc)
 		}
 	}
 
-	VARATT_SIZEP(result) = r - ((char *) result);
+	SET_VARSIZE(result, r - ((char *) result));
 
 	return result;
 }

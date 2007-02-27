@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.100 2007/02/17 00:55:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.101 2007/02/27 23:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -230,7 +230,7 @@ static void dump_var(const char *str, NumericVar *var);
 
 #define NUMERIC_DIGITS(num) ((NumericDigit *)(num)->n_data)
 #define NUMERIC_NDIGITS(num) \
-	(((num)->varlen - NUMERIC_HDRSZ) / sizeof(NumericDigit))
+	((VARSIZE(num) - NUMERIC_HDRSZ) / sizeof(NumericDigit))
 
 static void alloc_var(NumericVar *var, int ndigits);
 static void free_var(NumericVar *var);
@@ -494,8 +494,8 @@ numeric(PG_FUNCTION_ARGS)
 	 */
 	if (typmod < (int32) (VARHDRSZ))
 	{
-		new = (Numeric) palloc(num->varlen);
-		memcpy(new, num, num->varlen);
+		new = (Numeric) palloc(VARSIZE(num));
+		memcpy(new, num, VARSIZE(num));
 		PG_RETURN_NUMERIC(new);
 	}
 
@@ -515,8 +515,8 @@ numeric(PG_FUNCTION_ARGS)
 	ddigits = (num->n_weight + 1) * DEC_DIGITS;
 	if (ddigits <= maxdigits && scale >= NUMERIC_DSCALE(num))
 	{
-		new = (Numeric) palloc(num->varlen);
-		memcpy(new, num, num->varlen);
+		new = (Numeric) palloc(VARSIZE(num));
+		memcpy(new, num, VARSIZE(num));
 		new->n_sign_dscale = NUMERIC_SIGN(new) |
 			((uint16) scale & NUMERIC_DSCALE_MASK);
 		PG_RETURN_NUMERIC(new);
@@ -621,8 +621,8 @@ numeric_abs(PG_FUNCTION_ARGS)
 	/*
 	 * Do it the easy way directly on the packed format
 	 */
-	res = (Numeric) palloc(num->varlen);
-	memcpy(res, num, num->varlen);
+	res = (Numeric) palloc(VARSIZE(num));
+	memcpy(res, num, VARSIZE(num));
 
 	res->n_sign_dscale = NUMERIC_POS | NUMERIC_DSCALE(num);
 
@@ -645,15 +645,15 @@ numeric_uminus(PG_FUNCTION_ARGS)
 	/*
 	 * Do it the easy way directly on the packed format
 	 */
-	res = (Numeric) palloc(num->varlen);
-	memcpy(res, num, num->varlen);
+	res = (Numeric) palloc(VARSIZE(num));
+	memcpy(res, num, VARSIZE(num));
 
 	/*
 	 * The packed format is known to be totally zero digit trimmed always. So
 	 * we can identify a ZERO by the fact that there are no digits at all.	Do
 	 * nothing to a zero.
 	 */
-	if (num->varlen != NUMERIC_HDRSZ)
+	if (VARSIZE(num) != NUMERIC_HDRSZ)
 	{
 		/* Else, flip the sign */
 		if (NUMERIC_SIGN(num) == NUMERIC_POS)
@@ -672,8 +672,8 @@ numeric_uplus(PG_FUNCTION_ARGS)
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	Numeric		res;
 
-	res = (Numeric) palloc(num->varlen);
-	memcpy(res, num, num->varlen);
+	res = (Numeric) palloc(VARSIZE(num));
+	memcpy(res, num, VARSIZE(num));
 
 	PG_RETURN_NUMERIC(res);
 }
@@ -703,7 +703,7 @@ numeric_sign(PG_FUNCTION_ARGS)
 	 * The packed format is known to be totally zero digit trimmed always. So
 	 * we can identify a ZERO by the fact that there are no digits at all.
 	 */
-	if (num->varlen == NUMERIC_HDRSZ)
+	if (VARSIZE(num) == NUMERIC_HDRSZ)
 		set_var_from_var(&const_zero, &result);
 	else
 	{
@@ -2105,7 +2105,7 @@ numeric_text(PG_FUNCTION_ARGS)
 
 	result = (text *) palloc(VARHDRSZ + len);
 
-	VARATT_SIZEP(result) = len + VARHDRSZ;
+	SET_VARSIZE(result, VARHDRSZ + len);
 	memcpy(VARDATA(result), s, len);
 
 	pfree(s);
@@ -2301,7 +2301,7 @@ numeric_avg(PG_FUNCTION_ARGS)
 
 	/* SQL92 defines AVG of no values to be NULL */
 	/* N is zero iff no digits (cf. numeric_uminus) */
-	if (N->varlen == NUMERIC_HDRSZ)
+	if (VARSIZE(N) == NUMERIC_HDRSZ)
 		PG_RETURN_NULL();
 
 	PG_RETURN_DATUM(DirectFunctionCall2(numeric_div,
@@ -3232,7 +3232,7 @@ make_result(NumericVar *var)
 	{
 		result = (Numeric) palloc(NUMERIC_HDRSZ);
 
-		result->varlen = NUMERIC_HDRSZ;
+		SET_VARSIZE(result, NUMERIC_HDRSZ);
 		result->n_weight = 0;
 		result->n_sign_dscale = NUMERIC_NAN;
 
@@ -3263,7 +3263,7 @@ make_result(NumericVar *var)
 	/* Build the result */
 	len = NUMERIC_HDRSZ + n * sizeof(NumericDigit);
 	result = (Numeric) palloc(len);
-	result->varlen = len;
+	SET_VARSIZE(result, len);
 	result->n_weight = weight;
 	result->n_sign_dscale = sign | (var->dscale & NUMERIC_DSCALE_MASK);
 

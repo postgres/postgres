@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.137 2007/01/05 22:19:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.138 2007/02/27 23:48:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,7 +353,7 @@ allocacl(int n)
 		elog(ERROR, "invalid size: %d", n);
 	size = ACL_N_SIZE(n);
 	new_acl = (Acl *) palloc0(size);
-	new_acl->size = size;
+	SET_VARSIZE(new_acl, size);
 	new_acl->ndim = 1;
 	new_acl->dataoffset = 0;	/* we never put in any nulls */
 	new_acl->elemtype = ACLITEMOID;
@@ -716,8 +716,9 @@ aclupdate(const Acl *old_acl, const AclItem *mod_aip,
 		memmove(new_aip + dst,
 				new_aip + dst + 1,
 				(num - dst - 1) * sizeof(AclItem));
+		/* Adjust array size to be 'num - 1' items */
 		ARR_DIMS(new_acl)[0] = num - 1;
-		ARR_SIZE(new_acl) -= sizeof(AclItem);
+		SET_VARSIZE(new_acl, ACL_N_SIZE(num - 1));
 	}
 
 	/*
@@ -830,7 +831,7 @@ aclnewowner(const Acl *old_acl, Oid oldOwnerId, Oid newOwnerId)
 		}
 		/* Adjust array size to be 'dst' items */
 		ARR_DIMS(new_acl)[0] = dst;
-		ARR_SIZE(new_acl) = ACL_N_SIZE(dst);
+		SET_VARSIZE(new_acl, ACL_N_SIZE(dst));
 	}
 
 	return new_acl;

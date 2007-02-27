@@ -37,7 +37,7 @@ gin_extract_tsvector(PG_FUNCTION_ARGS)
 		{
 			text	   *txt = (text *) palloc(VARHDRSZ + we->len);
 
-			VARATT_SIZEP(txt) = VARHDRSZ + we->len;
+			SET_VARSIZE(txt, VARHDRSZ + we->len);
 			memcpy(VARDATA(txt), STRPTR(vector) + we->pos, we->len);
 
 			entries[i] = PointerGetDatum(txt);
@@ -89,7 +89,7 @@ gin_extract_tsquery(PG_FUNCTION_ARGS)
 
 				txt = (text *) palloc(VARHDRSZ + item[i].length);
 
-				VARATT_SIZEP(txt) = VARHDRSZ + item[i].length;
+				SET_VARSIZE(txt, VARHDRSZ + item[i].length);
 				memcpy(VARDATA(txt), GETOPERAND(query) + item[i].distance, item[i].length);
 
 				entries[j++] = PointerGetDatum(txt);

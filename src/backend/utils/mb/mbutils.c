@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.61 2006/12/24 00:57:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.62 2007/02/27 23:48:09 tgl Exp $
  */
 #include "postgres.h"
 
@@ -339,7 +339,7 @@ pg_convert2(PG_FUNCTION_ARGS)
 	 */
 	len = strlen((char *) result) + VARHDRSZ;
 	retval = palloc(len);
-	VARATT_SIZEP(retval) = len;
+	SET_VARSIZE(retval, len);
 	memcpy(VARDATA(retval), result, len - VARHDRSZ);
 
 	if (result != str)

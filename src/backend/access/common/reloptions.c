@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.3 2007/01/05 22:19:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.4 2007/02/27 23:48:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,8 +72,8 @@ transformRelOptions(Datum oldOptions, List *defList,
 		for (i = 0; i < noldoptions; i++)
 		{
 			text	   *oldoption = DatumGetTextP(oldoptions[i]);
-			char	   *text_str = (char *) VARATT_DATA(oldoption);
-			int			text_len = VARATT_SIZE(oldoption) - VARHDRSZ;
+			char	   *text_str = VARDATA(oldoption);
+			int			text_len = VARSIZE(oldoption) - VARHDRSZ;
 
 			/* Search for a match in defList */
 			foreach(cell, defList)
@@ -131,8 +131,8 @@ transformRelOptions(Datum oldOptions, List *defList,
 			len = VARHDRSZ + strlen(def->defname) + 1 + strlen(value);
 			/* +1 leaves room for sprintf's trailing null */
 			t = (text *) palloc(len + 1);
-			VARATT_SIZEP(t) = len;
-			sprintf((char *) VARATT_DATA(t), "%s=%s", def->defname, value);
+			SET_VARSIZE(t, len);
+			sprintf(VARDATA(t), "%s=%s", def->defname, value);
 
 			astate = accumArrayResult(astate, PointerGetDatum(t),
 									  false, TEXTOID,
@@ -188,8 +188,8 @@ parseRelOptions(Datum options, int numkeywords, const char *const * keywords,
 	for (i = 0; i < noptions; i++)
 	{
 		text	   *optiontext = DatumGetTextP(optiondatums[i]);
-		char	   *text_str = (char *) VARATT_DATA(optiontext);
-		int			text_len = VARATT_SIZE(optiontext) - VARHDRSZ;
+		char	   *text_str = VARDATA(optiontext);
+		int			text_len = VARSIZE(optiontext) - VARHDRSZ;
 		int			j;
 
 		/* Search for a match in keywords */
@@ -267,7 +267,7 @@ default_reloptions(Datum reloptions, bool validate,
 	}
 
 	result = (StdRdOptions *) palloc(sizeof(StdRdOptions));
-	VARATT_SIZEP(result) = sizeof(StdRdOptions);
+	SET_VARSIZE(result, sizeof(StdRdOptions));
 
 	result->fillfactor = fillfactor;
 

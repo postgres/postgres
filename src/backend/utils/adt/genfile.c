@@ -9,7 +9,7 @@
  * Author: Andreas Pflug <pgadmin@pse-consulting.de>
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.15 2007/02/01 19:10:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/genfile.c,v 1.16 2007/02/27 23:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ pg_read_file(PG_FUNCTION_ARGS)
 				(errcode_for_file_access(),
 				 errmsg("could not read file \"%s\": %m", filename)));
 
-	VARATT_SIZEP(buf) = nbytes + VARHDRSZ;
+	SET_VARSIZE(buf, nbytes + VARHDRSZ);
 
 	FreeFile(file);
 	pfree(filename);
@@ -261,7 +261,7 @@ pg_ls_dir(PG_FUNCTION_ARGS)
 			continue;
 
 		result = palloc(len + VARHDRSZ);
-		VARATT_SIZEP(result) = len + VARHDRSZ;
+		SET_VARSIZE(result, len + VARHDRSZ);
 		memcpy(VARDATA(result), de->d_name, len);
 
 		SRF_RETURN_NEXT(funcctx, PointerGetDatum(result));

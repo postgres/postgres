@@ -476,9 +476,8 @@ tsvector_in(PG_FUNCTION_ARGS)
 	else
 		buflen = 0;
 	totallen = CALCDATASIZE(len, buflen);
-	in = (tsvector *) palloc(totallen);
-	memset(in, 0, totallen);
-	in->len = totallen;
+	in = (tsvector *) palloc0(totallen);
+	SET_VARSIZE(in, totallen);
 	in->size = len;
 	cur = STRPTR(in);
 	inarr = ARRPTR(in);
@@ -699,9 +698,8 @@ makevalue(PRSTEXT * prs)
 	}
 
 	totallen = CALCDATASIZE(prs->curwords, lenstr);
-	in = (tsvector *) palloc(totallen);
-	memset(in, 0, totallen);
-	in->len = totallen;
+	in = (tsvector *) palloc0(totallen);
+	SET_VARSIZE(in, totallen);
 	in->size = prs->curwords;
 
 	ptr = ARRPTR(in);
@@ -746,7 +744,7 @@ to_tsvector(PG_FUNCTION_ARGS)
 {
 	text	   *in = PG_GETARG_TEXT_P(1);
 	PRSTEXT		prs;
-	tsvector   *out = NULL;
+	tsvector   *out;
 	TSCfgInfo  *cfg;
 
 	SET_FUNCOID();
@@ -766,7 +764,7 @@ to_tsvector(PG_FUNCTION_ARGS)
 	{
 		pfree(prs.words);
 		out = palloc(CALCDATASIZE(0, 0));
-		out->len = CALCDATASIZE(0, 0);
+		SET_VARSIZE(out, CALCDATASIZE(0, 0));
 		out->size = 0;
 	}
 	PG_RETURN_POINTER(out);
@@ -957,7 +955,7 @@ tsearch2(PG_FUNCTION_ARGS)
 	{
 		tsvector   *out = palloc(CALCDATASIZE(0, 0));
 
-		out->len = CALCDATASIZE(0, 0);
+		SET_VARSIZE(out, CALCDATASIZE(0, 0));
 		out->size = 0;
 		datum = PointerGetDatum(out);
 		pfree(prs.words);
@@ -975,9 +973,9 @@ tsearch2(PG_FUNCTION_ARGS)
 static int
 silly_cmp_tsvector(const tsvector * a, const tsvector * b)
 {
-	if (a->len < b->len)
+	if (VARSIZE(a) < VARSIZE(b))
 		return -1;
-	else if (a->len > b->len)
+	else if (VARSIZE(a) > VARSIZE(b))
 		return 1;
 	else if (a->size < b->size)
 		return -1;

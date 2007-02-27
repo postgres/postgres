@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.10 2007/01/05 22:19:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.11 2007/02/27 23:48:07 tgl Exp $
  *
  */
 
@@ -396,7 +396,7 @@ pg_size_pretty(PG_FUNCTION_ARGS)
 		}
 	}
 
-	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
+	SET_VARSIZE(result, strlen(VARDATA(result)) + VARHDRSZ);
 
 	PG_RETURN_TEXT_P(result);
 }

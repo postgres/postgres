@@ -203,7 +203,7 @@ show_trgm(PG_FUNCTION_ARGS)
 	{
 		text	   *item = (text *) palloc(VARHDRSZ + 3);
 
-		VARATT_SIZEP(item) = VARHDRSZ + 3;
+		SET_VARSIZE(item, VARHDRSZ + 3);
 		CPTRGM(VARDATA(item), ptr);
 		d[ptr - GETARR(trg)] = PointerGetDatum(item);
 		ptr++;

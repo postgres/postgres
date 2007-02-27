@@ -907,7 +907,7 @@ tsquerytree(PG_FUNCTION_ARGS)
 	if (query->size == 0)
 	{
 		res = (text *) palloc(VARHDRSZ);
-		VARATT_SIZEP(res) = VARHDRSZ;
+		SET_VARSIZE(res, VARHDRSZ);
 		PG_RETURN_POINTER(res);
 	}
 
@@ -916,7 +916,7 @@ tsquerytree(PG_FUNCTION_ARGS)
 	if (!q)
 	{
 		res = (text *) palloc(1 + VARHDRSZ);
-		VARATT_SIZEP(res) = 1 + VARHDRSZ;
+		SET_VARSIZE(res, 1 + VARHDRSZ);
 		*((char *) VARDATA(res)) = 'T';
 	}
 	else
@@ -929,7 +929,7 @@ tsquerytree(PG_FUNCTION_ARGS)
 		infix(&nrm, true);
 
 		res = (text *) palloc(nrm.cur - nrm.buf + VARHDRSZ);
-		VARATT_SIZEP(res) = nrm.cur - nrm.buf + VARHDRSZ;
+		SET_VARSIZE(res, nrm.cur - nrm.buf + VARHDRSZ);
 		memcpy(VARDATA(res), nrm.buf, nrm.cur - nrm.buf);
 		pfree(q);
 	}

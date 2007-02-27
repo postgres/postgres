@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.214 2007/02/27 01:11:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.215 2007/02/27 23:48:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2533,7 +2533,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 		}
 
 		result = (ArrayType *) palloc(nbytes);
-		result->size = nbytes;
+		SET_VARSIZE(result, nbytes);
 		result->ndim = ndims;
 		result->dataoffset = dataoffset;
 		result->elemtype = element_type;
@@ -2967,7 +2967,7 @@ ExecEvalXml(XmlExprState *xmlExpr, ExprContext *econtext,
 		int		len = buf.len + VARHDRSZ;
 
 		result = palloc(len);
-		VARATT_SIZEP(result) = len;
+		SET_VARSIZE(result, len);
 		memcpy(VARDATA(result), buf.data, buf.len);
 	}
 

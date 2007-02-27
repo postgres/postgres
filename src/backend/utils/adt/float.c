@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.148 2007/01/20 21:47:10 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.149 2007/02/27 23:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1214,7 +1214,7 @@ float8_text(PG_FUNCTION_ARGS)
 
 	result = (text *) palloc(len);
 
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	memcpy(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);
@@ -1265,7 +1265,7 @@ float4_text(PG_FUNCTION_ARGS)
 
 	result = (text *) palloc(len);
 
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	memcpy(VARDATA(result), str, (len - VARHDRSZ));
 
 	pfree(str);

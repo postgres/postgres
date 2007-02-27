@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/tupmacs.h,v 1.31 2007/01/05 22:19:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/tupmacs.h,v 1.32 2007/02/27 23:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@
 	) \
 	: (((attlen) == -1) ? \
 	( \
-		(cur_offset) + VARATT_SIZE(DatumGetPointer(attval)) \
+		(cur_offset) + VARSIZE(DatumGetPointer(attval)) \
 	) \
 	: \
 	( \

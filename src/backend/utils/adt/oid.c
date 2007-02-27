@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.70 2007/01/05 22:19:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.71 2007/02/27 23:48:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,7 @@ buildoidvector(const Oid *oids, int n)
 	 * Attach standard array header.  For historical reasons, we set the index
 	 * lower bound to 0 not 1.
 	 */
-	result->size = OidVectorSize(n);
+	SET_VARSIZE(result, OidVectorSize(n));
 	result->ndim = 1;
 	result->dataoffset = 0;		/* never any nulls */
 	result->elemtype = OIDOID;
@@ -211,7 +211,7 @@ oidvectorin(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("oidvector has too many elements")));
 
-	result->size = OidVectorSize(n);
+	SET_VARSIZE(result, OidVectorSize(n));
 	result->ndim = 1;
 	result->dataoffset = 0;		/* never any nulls */
 	result->elemtype = OIDOID;
@@ -434,7 +434,7 @@ oid_text(PG_FUNCTION_ARGS)
 
 	result = (text *) palloc(len);
 
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 	memcpy(VARDATA(result), str, (len - VARHDRSZ));
 	pfree(str);
 

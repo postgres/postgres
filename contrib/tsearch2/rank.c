@@ -839,7 +839,7 @@ get_covers(PG_FUNCTION_ARGS)
 	if (!doc)
 	{
 		out = palloc(VARHDRSZ);
-		VARATT_SIZEP(out) = VARHDRSZ;
+		SET_VARSIZE(out, VARHDRSZ);
 		PG_FREE_IF_COPY(txt, 0);
 		PG_FREE_IF_COPY(query, 1);
 		PG_RETURN_POINTER(out);
@@ -910,7 +910,7 @@ get_covers(PG_FUNCTION_ARGS)
 		dwptr++;
 	}
 
-	VARATT_SIZEP(out) = cptr - ((char *) out);
+	SET_VARSIZE(out, cptr - ((char *) out));
 
 	pfree(dw);
 	for (i = 0; i < rlen; i++)

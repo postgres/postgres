@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.154 2007/01/05 22:19:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.155 2007/02/27 23:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,7 +124,7 @@ byteain(PG_FUNCTION_ARGS)
 
 	byte += VARHDRSZ;
 	result = (bytea *) palloc(byte);
-	VARATT_SIZEP(result) = byte;	/* set varlena length */
+	SET_VARSIZE(result, byte);
 
 	tp = inputText;
 	rp = VARDATA(result);
@@ -233,7 +233,7 @@ bytearecv(PG_FUNCTION_ARGS)
 
 	nbytes = buf->len - buf->cursor;
 	result = (bytea *) palloc(nbytes + VARHDRSZ);
-	VARATT_SIZEP(result) = nbytes + VARHDRSZ;
+	SET_VARSIZE(result, nbytes + VARHDRSZ);
 	pq_copymsgbytes(buf, VARDATA(result), nbytes);
 	PG_RETURN_BYTEA_P(result);
 }
@@ -264,7 +264,7 @@ textin(PG_FUNCTION_ARGS)
 
 	len = strlen(inputText);
 	result = (text *) palloc(len + VARHDRSZ);
-	VARATT_SIZEP(result) = len + VARHDRSZ;
+	SET_VARSIZE(result, len + VARHDRSZ);
 
 	memcpy(VARDATA(result), inputText, len);
 
@@ -303,7 +303,7 @@ textrecv(PG_FUNCTION_ARGS)
 	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
 
 	result = (text *) palloc(nbytes + VARHDRSZ);
-	VARATT_SIZEP(result) = nbytes + VARHDRSZ;
+	SET_VARSIZE(result, nbytes + VARHDRSZ);
 	memcpy(VARDATA(result), str, nbytes);
 	pfree(str);
 	PG_RETURN_TEXT_P(result);
@@ -466,7 +466,7 @@ textcat(PG_FUNCTION_ARGS)
 	result = (text *) palloc(len);
 
 	/* Set size of result string... */
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 
 	/* Fill data field of result string... */
 	ptr = VARDATA(result);
@@ -737,7 +737,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			p += pg_mblen(p);
 
 		ret = (text *) palloc(VARHDRSZ + (p - s));
-		VARATT_SIZEP(ret) = VARHDRSZ + (p - s);
+		SET_VARSIZE(ret, VARHDRSZ + (p - s));
 		memcpy(VARDATA(ret), s, (p - s));
 
 		if (slice != (text *) DatumGetPointer(str))
@@ -1409,7 +1409,7 @@ byteacat(PG_FUNCTION_ARGS)
 	result = (bytea *) palloc(len);
 
 	/* Set size of result string... */
-	VARATT_SIZEP(result) = len;
+	SET_VARSIZE(result, len);
 
 	/* Fill data field of result string... */
 	ptr = VARDATA(result);
@@ -1761,7 +1761,7 @@ name_text(PG_FUNCTION_ARGS)
 #endif
 
 	result = palloc(VARHDRSZ + len);
-	VARATT_SIZEP(result) = VARHDRSZ + len;
+	SET_VARSIZE(result, VARHDRSZ + len);
 	memcpy(VARDATA(result), NameStr(*s), len);
 
 	PG_RETURN_TEXT_P(result);
@@ -2593,7 +2593,7 @@ text_to_array(PG_FUNCTION_ARGS)
 
 		/* must build a temp text datum to pass to accumArrayResult */
 		result_text = (text *) palloc(VARHDRSZ + chunk_len);
-		VARATT_SIZEP(result_text) = VARHDRSZ + chunk_len;
+		SET_VARSIZE(result_text, VARHDRSZ + chunk_len);
 		memcpy(VARDATA(result_text), start_ptr, chunk_len);
 
 		/* stash away this field */

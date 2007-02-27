@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.218 2007/02/05 04:22:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.219 2007/02/27 23:48:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -399,13 +399,16 @@ typedef struct
  * NOTE: for TOASTable types, this is an oversimplification, since the value
  * may be compressed or moved out-of-line.	However datatype-specific routines
  * are mostly content to deal with de-TOASTed values only, and of course
- * client-side routines should never see a TOASTed value.  See postgres.h for
- * details of the TOASTed form.
+ * client-side routines should never see a TOASTed value.  But even in a
+ * de-TOASTed value, beware of touching vl_len_ directly, as its representation
+ * is no longer convenient.  It's recommended that code always use the VARDATA,
+ * VARSIZE, and SET_VARSIZE macros instead of relying on direct mentions of
+ * the struct fields.  See postgres.h for details of the TOASTed form.
  * ----------------
  */
 struct varlena
 {
-	int32		vl_len;
+	int32		vl_len_;		/* Do not touch this field directly! */
 	char		vl_dat[1];
 };
 
@@ -433,7 +436,7 @@ typedef struct varlena VarChar; /* var-length char, ie SQL varchar(n) */
  */
 typedef struct
 {
-	int32		size;			/* these fields must match ArrayType! */
+	int32		vl_len_;		/* these fields must match ArrayType! */
 	int			ndim;			/* always 1 for int2vector */
 	int32		dataoffset;		/* always 0 for int2vector */
 	Oid			elemtype;
@@ -444,7 +447,7 @@ typedef struct
 
 typedef struct
 {
-	int32		size;			/* these fields must match ArrayType! */
+	int32		vl_len_;		/* these fields must match ArrayType! */
 	int			ndim;			/* always 1 for oidvector */
 	int32		dataoffset;		/* always 0 for oidvector */
 	Oid			elemtype;
