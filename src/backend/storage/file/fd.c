@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.135 2007/01/25 04:35:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.136 2007/02/28 15:59:30 mha Exp $
  *
  * NOTES:
  *
@@ -1333,20 +1333,6 @@ TryAgain:
 			goto TryAgain;
 		errno = save_errno;
 	}
-
-	/*
-	 * TEMPORARY hack to log the Windows error code on fopen failures, in
-	 * hopes of diagnosing some hard-to-reproduce problems.
-	 */
-#ifdef WIN32
-	{
-		int			save_errno = errno;
-
-		elog(LOG, "Windows fopen(\"%s\",\"%s\") failed: code %lu, errno %d",
-			 name, mode, GetLastError(), save_errno);
-		errno = save_errno;
-	}
-#endif
 
 	return NULL;
 }
