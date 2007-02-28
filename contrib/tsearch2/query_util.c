@@ -260,7 +260,7 @@ QTN2QT(QTNode * in, MemoryType memtype)
 	len = COMPUTESIZE(nnode, sumlen);
 
 	out = (QUERYTYPE *) MEMALLOC(memtype, len);
-	out->len = len;
+	SET_VARSIZE(out, len);
 	out->size = nnode;
 
 	state.curitem = GETQUERY(out);

@@ -2,7 +2,6 @@
 
 #include "access/gist.h"
 #include "access/itup.h"
-/*#include "access/rtree.h"*/
 #include "crc32.h"
 
 /* bigint defines */
@@ -38,7 +37,7 @@ typedef char *BITVECP;
 
 typedef struct
 {
-	int4		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		flag;
 	char		data[1];
 }	GISTTYPE;
@@ -47,7 +46,7 @@ typedef struct
 
 #define ISALLTRUE(x)	( ((GISTTYPE*)x)->flag & ALLISTRUE )
 
-#define GTHDRSIZE		( sizeof(int4)*2  )
+#define GTHDRSIZE		(VARHDRSZ + sizeof(int4))
 #define CALCGTSIZE(flag) ( GTHDRSIZE+(((flag) & ALLISTRUE) ? 0 : SIGLEN) )
 
 #define GETSIGN(x)		( (BITVECP)( (char*)x+GTHDRSIZE ) )
@@ -112,14 +111,13 @@ ghstore_compress(PG_FUNCTION_ARGS)
 
 	if (entry->leafkey)
 	{
-		GISTTYPE   *res = (GISTTYPE *) palloc(CALCGTSIZE(0));
+		GISTTYPE   *res = (GISTTYPE *) palloc0(CALCGTSIZE(0));
 		HStore	   *toastedval = (HStore *) DatumGetPointer(entry->key);
 		HStore	   *val = (HStore *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
 		HEntry	   *ptr = ARRPTR(val);
 		char	   *words = STRPTR(val);
 
-		memset(res, 0, CALCGTSIZE(0));
-		res->len = CALCGTSIZE(0);
+		SET_VARSIZE(res, CALCGTSIZE(0));
 
 		while (ptr - ARRPTR(val) < val->size)
 		{
@@ -156,7 +154,7 @@ ghstore_compress(PG_FUNCTION_ARGS)
 		);
 
 		res = (GISTTYPE *) palloc(CALCGTSIZE(ALLISTRUE));
-		res->len = CALCGTSIZE(ALLISTRUE);
+		SET_VARSIZE(res, CALCGTSIZE(ALLISTRUE));
 		res->flag = ALLISTRUE;
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
@@ -286,10 +284,11 @@ ghstore_union(PG_FUNCTION_ARGS)
 
 	len = CALCGTSIZE(flag);
 	result = (GISTTYPE *) palloc(len);
-	*size = result->len = len;
+	SET_VARSIZE(result, len);
 	result->flag = flag;
 	if (!ISALLTRUE(result))
 		memcpy((void *) GETSIGN(result), (void *) base, sizeof(BITVEC));
+	*size = len;
 
 	PG_RETURN_POINTER(result);
 }
@@ -383,13 +382,13 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 	if (ISALLTRUE(GETENTRY(entryvec, seed_1)))
 	{
 		datum_l = (GISTTYPE *) palloc(GTHDRSIZE);
-		datum_l->len = GTHDRSIZE;
+		SET_VARSIZE(datum_l, GTHDRSIZE);
 		datum_l->flag = ALLISTRUE;
 	}
 	else
 	{
 		datum_l = (GISTTYPE *) palloc(GTHDRSIZE + SIGLEN);
-		datum_l->len = GTHDRSIZE + SIGLEN;
+		SET_VARSIZE(datum_l, GTHDRSIZE + SIGLEN);
 		datum_l->flag = 0;
 		memcpy((void *) GETSIGN(datum_l), (void *) GETSIGN(GETENTRY(entryvec, seed_1)), sizeof(BITVEC))
 			;
@@ -397,13 +396,13 @@ ghstore_picksplit(PG_FUNCTION_ARGS)
 	if (ISALLTRUE(GETENTRY(entryvec, seed_2)))
 	{
 		datum_r = (GISTTYPE *) palloc(GTHDRSIZE);
-		datum_r->len = GTHDRSIZE;
+		SET_VARSIZE(datum_r, GTHDRSIZE);
 		datum_r->flag = ALLISTRUE;
 	}
 	else
 	{
 		datum_r = (GISTTYPE *) palloc(GTHDRSIZE + SIGLEN);
-		datum_r->len = GTHDRSIZE + SIGLEN;
+		SET_VARSIZE(datum_r, GTHDRSIZE + SIGLEN);
 		datum_r->flag = 0;
 		memcpy((void *) GETSIGN(datum_r), (void *) GETSIGN(GETENTRY(entryvec, seed_2)), sizeof(BITVEC));
 	}

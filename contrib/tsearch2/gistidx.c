@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/gistidx.c,v 1.15 2006/10/04 00:29:46 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/gistidx.c,v 1.16 2007/02/28 22:44:38 tgl Exp $ */
 
 #include "postgres.h"
 
@@ -163,7 +163,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 
 		len = CALCGTSIZE(ARRKEY, val->size);
 		res = (GISTTYPE *) palloc(len);
-		res->len = len;
+		SET_VARSIZE(res, len);
 		res->flag = ARRKEY;
 		arr = GETARR(res);
 		len = val->size;
@@ -183,17 +183,17 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 			 */
 			len = CALCGTSIZE(ARRKEY, len);
 			res = (GISTTYPE *) repalloc((void *) res, len);
-			res->len = len;
+			SET_VARSIZE(res, len);
 		}
 
 		/* make signature, if array is too long */
-		if (res->len > TOAST_INDEX_TARGET)
+		if (VARSIZE(res) > TOAST_INDEX_TARGET)
 		{
 			GISTTYPE   *ressign;
 
 			len = CALCGTSIZE(SIGNKEY, 0);
 			ressign = (GISTTYPE *) palloc(len);
-			ressign->len = len;
+			SET_VARSIZE(ressign, len);
 			ressign->flag = SIGNKEY;
 			makesign(GETSIGN(ressign), res);
 			res = ressign;
@@ -219,7 +219,7 @@ gtsvector_compress(PG_FUNCTION_ARGS)
 
 		len = CALCGTSIZE(SIGNKEY | ALLISTRUE, 0);
 		res = (GISTTYPE *) palloc(len);
-		res->len = len;
+		SET_VARSIZE(res, len);
 		res->flag = SIGNKEY | ALLISTRUE;
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
@@ -375,10 +375,11 @@ gtsvector_union(PG_FUNCTION_ARGS)
 	flag |= SIGNKEY;
 	len = CALCGTSIZE(flag, 0);
 	result = (GISTTYPE *) palloc(len);
-	*size = result->len = len;
+	SET_VARSIZE(result, len);
 	result->flag = flag;
 	if (!ISALLTRUE(result))
 		memcpy((void *) GETSIGN(result), (void *) base, sizeof(BITVEC));
+	*size = len;
 
 	PG_RETURN_POINTER(result);
 }
@@ -627,26 +628,26 @@ gtsvector_picksplit(PG_FUNCTION_ARGS)
 	if (cache[seed_1].allistrue)
 	{
 		datum_l = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
-		datum_l->len = CALCGTSIZE(SIGNKEY | ALLISTRUE, 0);
+		SET_VARSIZE(datum_l, CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
 		datum_l->flag = SIGNKEY | ALLISTRUE;
 	}
 	else
 	{
 		datum_l = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY, 0));
-		datum_l->len = CALCGTSIZE(SIGNKEY, 0);
+		SET_VARSIZE(datum_l, CALCGTSIZE(SIGNKEY, 0));
 		datum_l->flag = SIGNKEY;
 		memcpy((void *) GETSIGN(datum_l), (void *) cache[seed_1].sign, sizeof(BITVEC));
 	}
 	if (cache[seed_2].allistrue)
 	{
 		datum_r = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
-		datum_r->len = CALCGTSIZE(SIGNKEY | ALLISTRUE, 0);
+		SET_VARSIZE(datum_r, CALCGTSIZE(SIGNKEY | ALLISTRUE, 0));
 		datum_r->flag = SIGNKEY | ALLISTRUE;
 	}
 	else
 	{
 		datum_r = (GISTTYPE *) palloc(CALCGTSIZE(SIGNKEY, 0));
-		datum_r->len = CALCGTSIZE(SIGNKEY, 0);
+		SET_VARSIZE(datum_r, CALCGTSIZE(SIGNKEY, 0));
 		datum_r->flag = SIGNKEY;
 		memcpy((void *) GETSIGN(datum_r), (void *) cache[seed_2].sign, sizeof(BITVEC));
 	}

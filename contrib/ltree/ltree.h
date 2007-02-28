@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/ltree/ltree.h,v 1.17 2006/10/04 00:29:45 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/ltree/ltree.h,v 1.18 2007/02/28 22:44:38 tgl Exp $ */
 
 #ifndef __LTREE_H__
 #define __LTREE_H__
@@ -18,12 +18,12 @@ typedef struct
 
 typedef struct
 {
-	int32		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	uint16		numlevel;
 	char		data[1];
 }	ltree;
 
-#define LTREE_HDRSIZE	MAXALIGN( sizeof(int32) + sizeof(uint16) )
+#define LTREE_HDRSIZE	MAXALIGN(VARHDRSZ + sizeof(uint16))
 #define LTREE_FIRST(x)	( (ltree_level*)( ((char*)(x))+LTREE_HDRSIZE ) )
 
 
@@ -68,14 +68,14 @@ typedef struct
 
 typedef struct
 {
-	int32		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	uint16		numlevel;
 	uint16		firstgood;
 	uint16		flag;
 	char		data[1];
 }	lquery;
 
-#define LQUERY_HDRSIZE	 MAXALIGN( sizeof(int32) + 3*sizeof(uint16) )
+#define LQUERY_HDRSIZE	 MAXALIGN(VARHDRSZ + 3*sizeof(uint16))
 #define LQUERY_FIRST(x)   ( (lquery_level*)( ((char*)(x))+LQUERY_HDRSIZE ) )
 
 #define LQUERY_HASNOT		0x01
@@ -105,12 +105,12 @@ typedef struct ITEM
  */
 typedef struct
 {
-	int4		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		size;
 	char		data[1];
 }	ltxtquery;
 
-#define HDRSIZEQT		MAXALIGN( 2*sizeof(int4) )
+#define HDRSIZEQT		MAXALIGN(VARHDRSZ + sizeof(int4))
 #define COMPUTESIZE(size,lenofoperand)	( HDRSIZEQT + (size) * sizeof(ITEM) + (lenofoperand) )
 #define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
 #define GETOPERAND(x)	( (char*)GETQUERY(x) + ((ltxtquery*)x)->size * sizeof(ITEM) )
@@ -205,7 +205,7 @@ typedef unsigned char *BITVECP;
 
 typedef struct
 {
-	int4		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	uint32		flag;
 	char		data[1];
 }	ltree_gist;
@@ -214,14 +214,14 @@ typedef struct
 #define LTG_ALLTRUE 0x02
 #define LTG_NORIGHT 0x04
 
-#define LTG_HDRSIZE MAXALIGN( sizeof(int4) + sizeof(uint32) )
+#define LTG_HDRSIZE MAXALIGN(VARHDRSZ + sizeof(uint32))
 #define LTG_SIGN(x) ( (BITVECP)( ((char*)(x))+LTG_HDRSIZE ) )
 #define LTG_NODE(x) ( (ltree*)( ((char*)(x))+LTG_HDRSIZE ) )
 #define LTG_ISONENODE(x) ( ((ltree_gist*)(x))->flag & LTG_ONENODE )
 #define LTG_ISALLTRUE(x) ( ((ltree_gist*)(x))->flag & LTG_ALLTRUE )
 #define LTG_ISNORIGHT(x) ( ((ltree_gist*)(x))->flag & LTG_NORIGHT )
 #define LTG_LNODE(x)	( (ltree*)( ( ((char*)(x))+LTG_HDRSIZE ) + ( LTG_ISALLTRUE(x) ? 0 : SIGLEN ) ) )
-#define LTG_RENODE(x)	( (ltree*)( ((char*)LTG_LNODE(x)) + LTG_LNODE(x)->len) )
+#define LTG_RENODE(x)	( (ltree*)( ((char*)LTG_LNODE(x)) + VARSIZE(LTG_LNODE(x))) )
 #define LTG_RNODE(x)	( LTG_ISNORIGHT(x) ? LTG_LNODE(x) : LTG_RENODE(x) )
 
 #define LTG_GETLNODE(x) ( LTG_ISONENODE(x) ? LTG_NODE(x) : LTG_LNODE(x) )

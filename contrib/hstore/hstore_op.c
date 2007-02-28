@@ -105,13 +105,13 @@ delete(PG_FUNCTION_ARGS)
 {
 	HStore	   *hs = PG_GETARG_HS(0);
 	text	   *key = PG_GETARG_TEXT_P(1);
-	HStore	   *out = palloc(hs->len);
+	HStore	   *out = palloc(VARSIZE(hs));
 	char	   *ptrs,
 			   *ptrd;
 	HEntry	   *es,
 			   *ed;
 
-	out->len = hs->len;
+	SET_VARSIZE(out, VARSIZE(hs));
 	out->size = hs->size;		/* temporary! */
 
 	ptrs = STRPTR(hs);
@@ -142,7 +142,7 @@ delete(PG_FUNCTION_ARGS)
 		out->size = ed - ARRPTR(out);
 
 		memmove(STRPTR(out), ptrd, buflen);
-		out->len = CALCDATASIZE(out->size, buflen);
+		SET_VARSIZE(out, CALCDATASIZE(out->size, buflen));
 	}
 
 
@@ -159,7 +159,7 @@ hs_concat(PG_FUNCTION_ARGS)
 {
 	HStore	   *s1 = PG_GETARG_HS(0);
 	HStore	   *s2 = PG_GETARG_HS(1);
-	HStore	   *out = palloc(s1->len + s2->len);
+	HStore	   *out = palloc(VARSIZE(s1) + VARSIZE(s2));
 	char	   *ps1,
 			   *ps2,
 			   *pd;
@@ -167,7 +167,7 @@ hs_concat(PG_FUNCTION_ARGS)
 			   *es2,
 			   *ed;
 
-	out->len = s1->len + s2->len;
+	SET_VARSIZE(out, VARSIZE(s1) + VARSIZE(s2));
 	out->size = s1->size + s2->size;
 
 	ps1 = STRPTR(s1);
@@ -256,7 +256,7 @@ hs_concat(PG_FUNCTION_ARGS)
 		out->size = ed - ARRPTR(out);
 
 		memmove(STRPTR(out), pd, buflen);
-		out->len = CALCDATASIZE(out->size, buflen);
+		SET_VARSIZE(out, CALCDATASIZE(out->size, buflen));
 	}
 
 	PG_FREE_IF_COPY(s1, 0);
@@ -277,7 +277,7 @@ tconvert(PG_FUNCTION_ARGS)
 
 	len = CALCDATASIZE(1, VARSIZE(key) + VARSIZE(val) - 2 * VARHDRSZ);
 	out = palloc(len);
-	out->len = len;
+	SET_VARSIZE(out, len);
 	out->size = 1;
 
 	ARRPTR(out)->keylen = VARSIZE(key) - VARHDRSZ;
@@ -399,8 +399,8 @@ setup_firstcall(FuncCallContext *funcctx, HStore * hs)
 
 	st = (AKStore *) palloc(sizeof(AKStore));
 	st->i = 0;
-	st->hs = (HStore *) palloc(hs->len);
-	memcpy(st->hs, hs, hs->len);
+	st->hs = (HStore *) palloc(VARSIZE(hs));
+	memcpy(st->hs, hs, VARSIZE(hs));
 
 	funcctx->user_fctx = (void *) st;
 	MemoryContextSwitchTo(oldcontext);
@@ -568,8 +568,8 @@ each(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		st = (AKStore *) palloc(sizeof(AKStore));
 		st->i = 0;
-		st->hs = (HStore *) palloc(hs->len);
-		memcpy(st->hs, hs, hs->len);
+		st->hs = (HStore *) palloc(VARSIZE(hs));
+		memcpy(st->hs, hs, VARSIZE(hs));
 		funcctx->user_fctx = (void *) st;
 
 		tupdesc = RelationNameGetTupleDesc("hs_each");

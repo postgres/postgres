@@ -1,7 +1,7 @@
 /*
  * op function for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.15 2007/02/27 23:48:06 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_op.c,v 1.16 2007/02/28 22:44:38 tgl Exp $
  */
 
 #include "ltree.h"
@@ -230,7 +230,7 @@ inner_subltree(ltree * t, int4 startpos, int4 endpos)
 	}
 
 	res = (ltree *) palloc(LTREE_HDRSIZE + (end - start));
-	res->len = LTREE_HDRSIZE + (end - start);
+	SET_VARSIZE(res, LTREE_HDRSIZE + (end - start));
 	res->numlevel = endpos - startpos;
 
 	memcpy(LTREE_FIRST(res), start, end - start);
@@ -286,13 +286,14 @@ ltree_concat(ltree * a, ltree * b)
 {
 	ltree	   *r;
 
-	r = (ltree *) palloc(a->len + b->len - LTREE_HDRSIZE);
-	r->len = a->len + b->len - LTREE_HDRSIZE;
+	r = (ltree *) palloc(VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
+	SET_VARSIZE(r, VARSIZE(a) + VARSIZE(b) - LTREE_HDRSIZE);
 	r->numlevel = a->numlevel + b->numlevel;
 
-	memcpy(LTREE_FIRST(r), LTREE_FIRST(a), a->len - LTREE_HDRSIZE);
-	memcpy(((char *) LTREE_FIRST(r)) + a->len - LTREE_HDRSIZE, LTREE_FIRST(b), b->len -
-		   LTREE_HDRSIZE);
+	memcpy(LTREE_FIRST(r), LTREE_FIRST(a), VARSIZE(a) - LTREE_HDRSIZE);
+	memcpy(((char *) LTREE_FIRST(r)) + VARSIZE(a) - LTREE_HDRSIZE,
+		   LTREE_FIRST(b),
+		   VARSIZE(b) - LTREE_HDRSIZE);
 	return r;
 }
 
@@ -476,7 +477,7 @@ lca_inner(ltree ** a, int len)
 	}
 
 	res = (ltree *) palloc(reslen);
-	res->len = reslen;
+	SET_VARSIZE(res, reslen);
 	res->numlevel = num;
 
 	l1 = LTREE_FIRST(*a);
@@ -542,7 +543,7 @@ ltree2text(PG_FUNCTION_ARGS)
 	ltree_level *curlevel;
 	text	   *out;
 
-	out = (text *) palloc(in->len + VARHDRSZ);
+	out = (text *) palloc(VARSIZE(in) + VARHDRSZ);
 	ptr = VARDATA(out);
 	curlevel = LTREE_FIRST(in);
 	for (i = 0; i < in->numlevel; i++)

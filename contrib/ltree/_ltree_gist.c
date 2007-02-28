@@ -94,7 +94,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 					 errmsg("array must not contain nulls")));
 
 		key = (ltree_gist *) palloc(len);
-		key->len = len;
+		SET_VARSIZE(key, len);
 		key->flag = 0;
 
 		MemSet(LTG_SIGN(key), 0, ASIGLEN);
@@ -124,7 +124,7 @@ _ltree_compress(PG_FUNCTION_ARGS)
 		);
 		len = LTG_HDRSIZE;
 		key = (ltree_gist *) palloc(len);
-		key->len = len;
+		SET_VARSIZE(key, len);
 		key->flag = LTG_ALLTRUE;
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
@@ -204,10 +204,11 @@ _ltree_union(PG_FUNCTION_ARGS)
 
 	len = LTG_HDRSIZE + ((flag & LTG_ALLTRUE) ? 0 : ASIGLEN);
 	result = (ltree_gist *) palloc(len);
-	*size = result->len = len;
+	SET_VARSIZE(result, len);
 	result->flag = flag;
 	if (!LTG_ISALLTRUE(result))
 		memcpy((void *) LTG_SIGN(result), (void *) base, sizeof(ABITVEC));
+	*size = len;
 
 	PG_RETURN_POINTER(result);
 }
@@ -340,26 +341,26 @@ _ltree_picksplit(PG_FUNCTION_ARGS)
 	if (LTG_ISALLTRUE(GETENTRY(entryvec, seed_1)))
 	{
 		datum_l = (ltree_gist *) palloc(LTG_HDRSIZE);
-		datum_l->len = LTG_HDRSIZE;
+		SET_VARSIZE(datum_l, LTG_HDRSIZE);
 		datum_l->flag = LTG_ALLTRUE;
 	}
 	else
 	{
 		datum_l = (ltree_gist *) palloc(LTG_HDRSIZE + ASIGLEN);
-		datum_l->len = LTG_HDRSIZE + ASIGLEN;
+		SET_VARSIZE(datum_l, LTG_HDRSIZE + ASIGLEN);
 		datum_l->flag = 0;
 		memcpy((void *) LTG_SIGN(datum_l), (void *) LTG_SIGN(GETENTRY(entryvec, seed_1)), sizeof(ABITVEC));
 	}
 	if (LTG_ISALLTRUE(GETENTRY(entryvec, seed_2)))
 	{
 		datum_r = (ltree_gist *) palloc(LTG_HDRSIZE);
-		datum_r->len = LTG_HDRSIZE;
+		SET_VARSIZE(datum_r, LTG_HDRSIZE);
 		datum_r->flag = LTG_ALLTRUE;
 	}
 	else
 	{
 		datum_r = (ltree_gist *) palloc(LTG_HDRSIZE + ASIGLEN);
-		datum_r->len = LTG_HDRSIZE + ASIGLEN;
+		SET_VARSIZE(datum_r, LTG_HDRSIZE + ASIGLEN);
 		datum_r->flag = 0;
 		memcpy((void *) LTG_SIGN(datum_r), (void *) LTG_SIGN(GETENTRY(entryvec, seed_2)), sizeof(ABITVEC));
 	}

@@ -31,12 +31,12 @@ typedef char trgm[3];
 
 typedef struct
 {
-	int4		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	uint8		flag;
 	char		data[1];
 }	TRGM;
 
-#define TRGMHRDSIZE		  (sizeof(int4)+sizeof(uint8))
+#define TRGMHDRSIZE		  (VARHDRSZ + sizeof(uint8))
 
 /* gist */
 #define BITBYTE 8
@@ -70,12 +70,13 @@ typedef char *BITVECP;
 #define ISSIGNKEY(x)	( ((TRGM*)x)->flag & SIGNKEY )
 #define ISALLTRUE(x)	( ((TRGM*)x)->flag & ALLISTRUE )
 
-#define CALCGTSIZE(flag, len) ( TRGMHRDSIZE + ( ( (flag) & ARRKEY ) ? ((len)*sizeof(trgm)) : (((flag) & ALLISTRUE) ? 0 : SIGLEN) ) )
-#define GETSIGN(x)		( (BITVECP)( (char*)x+TRGMHRDSIZE ) )
-#define GETARR(x)		( (trgm*)( (char*)x+TRGMHRDSIZE ) )
-#define ARRNELEM(x) ( ( ((TRGM*)x)->len - TRGMHRDSIZE )/sizeof(trgm) )
+#define CALCGTSIZE(flag, len) ( TRGMHDRSIZE + ( ( (flag) & ARRKEY ) ? ((len)*sizeof(trgm)) : (((flag) & ALLISTRUE) ? 0 : SIGLEN) ) )
+#define GETSIGN(x)		( (BITVECP)( (char*)x+TRGMHDRSIZE ) )
+#define GETARR(x)		( (trgm*)( (char*)x+TRGMHDRSIZE ) )
+#define ARRNELEM(x) ( ( VARSIZE(x) - TRGMHDRSIZE )/sizeof(trgm) )
 
 extern float4 trgm_limit;
+
 TRGM	   *generate_trgm(char *str, int slen);
 float4		cnt_sml(TRGM * trg1, TRGM * trg2);
 

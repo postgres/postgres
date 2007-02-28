@@ -363,7 +363,7 @@ hstore_in(PG_FUNCTION_ARGS)
 		freeHSParse(&state);
 		len = CALCDATASIZE(0, 0);
 		out = palloc(len);
-		out->len = len;
+		SET_VARSIZE(out, len);
 		out->size = 0;
 		PG_RETURN_POINTER(out);
 	}
@@ -372,7 +372,7 @@ hstore_in(PG_FUNCTION_ARGS)
 
 	len = CALCDATASIZE(state.pcur, buflen);
 	out = palloc(len);
-	out->len = len;
+	SET_VARSIZE(out, len);
 	out->size = state.pcur;
 
 	entries = ARRPTR(out);
@@ -436,7 +436,7 @@ hstore_out(PG_FUNCTION_ARGS)
 	}
 
 	buflen = (4 /* " */ + 2 /* => */ + 2 /* , */ ) * in->size +
-		2 /* esc */ * (in->len - CALCDATASIZE(in->size, 0));
+		2 /* esc */ * (VARSIZE(in) - CALCDATASIZE(in->size, 0));
 
 	out = ptr = palloc(buflen);
 	for (i = 0; i < in->size; i++)

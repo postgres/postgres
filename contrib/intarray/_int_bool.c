@@ -465,7 +465,7 @@ bqarr_in(PG_FUNCTION_ARGS)
 
 	commonlen = COMPUTESIZE(state.num);
 	query = (QUERYTYPE *) palloc(commonlen);
-	query->len = commonlen;
+	SET_VARSIZE(query, commonlen);
 	query->size = state.num;
 	ptr = GETQUERY(query);
 

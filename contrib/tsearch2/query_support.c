@@ -144,9 +144,9 @@ CompareTSQ(QUERYTYPE * a, QUERYTYPE * b)
 	{
 		return (a->size < b->size) ? -1 : 1;
 	}
-	else if (a->len != b->len)
+	else if (VARSIZE(a) != VARSIZE(b))
 	{
-		return (a->len < b->len) ? -1 : 1;
+		return (VARSIZE(a) < VARSIZE(b)) ? -1 : 1;
 	}
 	else
 	{

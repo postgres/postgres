@@ -658,7 +658,7 @@ static QUERYTYPE *
 				(errmsg("tsearch query doesn't contain lexeme(s): \"%s\"",
 						state.buffer)));
 		query = (QUERYTYPE *) palloc(HDRSIZEQT);
-		query->len = HDRSIZEQT;
+		SET_VARSIZE(query, HDRSIZEQT);
 		query->size = 0;
 		return query;
 	}
@@ -666,7 +666,7 @@ static QUERYTYPE *
 	/* make finish struct */
 	commonlen = COMPUTESIZE(state.num, state.sumlen);
 	query = (QUERYTYPE *) palloc(commonlen);
-	query->len = commonlen;
+	SET_VARSIZE(query, commonlen);
 	query->size = state.num;
 	ptr = GETQUERY(query);
 
@@ -961,7 +961,7 @@ to_tsquery(PG_FUNCTION_ARGS)
 	res = clean_fakeval_v2(GETQUERY(query), &len);
 	if (!res)
 	{
-		query->len = HDRSIZEQT;
+		SET_VARSIZE(query, HDRSIZEQT);
 		query->size = 0;
 		PG_RETURN_POINTER(query);
 	}
@@ -1016,7 +1016,7 @@ plainto_tsquery(PG_FUNCTION_ARGS)
 	res = clean_fakeval_v2(GETQUERY(query), &len);
 	if (!res)
 	{
-		query->len = HDRSIZEQT;
+		SET_VARSIZE(query, HDRSIZEQT);
 		query->size = 0;
 		PG_RETURN_POINTER(query);
 	}

@@ -70,9 +70,9 @@ generate_trgm(char *str, int slen)
 	int			wl,
 				len;
 
-	trg = (TRGM *) palloc(TRGMHRDSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
+	trg = (TRGM *) palloc(TRGMHDRSIZE + sizeof(trgm) * (slen / 2 + 1) * 3);
 	trg->flag = ARRKEY;
-	trg->len = TRGMHRDSIZE;
+	SET_VARSIZE(trg, TRGMHDRSIZE);
 
 	if (slen + LPADDING + RPADDING < 3 || slen == 0)
 		return trg;
@@ -178,7 +178,7 @@ generate_trgm(char *str, int slen)
 		len = unique_array(GETARR(trg), len);
 	}
 
-	trg->len = CALCGTSIZE(ARRKEY, len);
+	SET_VARSIZE(trg, CALCGTSIZE(ARRKEY, len));
 
 	return trg;
 }

@@ -1,7 +1,7 @@
 /*
  * txtquery io
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_io.c,v 1.12 2006/09/22 21:39:57 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltxtquery_io.c,v 1.13 2007/02/28 22:44:38 tgl Exp $
  */
 
 #include "ltree.h"
@@ -337,7 +337,7 @@ queryin(char *buf)
 	/* make finish struct */
 	commonlen = COMPUTESIZE(state.num, state.sumlen);
 	query = (ltxtquery *) palloc(commonlen);
-	query->len = commonlen;
+	SET_VARSIZE(query, commonlen);
 	query->size = state.num;
 	ptr = GETQUERY(query);
 

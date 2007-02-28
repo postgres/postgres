@@ -28,12 +28,12 @@ typedef struct ITEM
  */
 typedef struct
 {
-	int4		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		size;
 	char		data[1];
 }	QUERYTYPE;
 
-#define HDRSIZEQT	( 2 * sizeof(int4) )
+#define HDRSIZEQT	( VARHDRSZ + sizeof(int4) )
 #define COMPUTESIZE(size,lenofoperand)	( HDRSIZEQT + (size) * sizeof(ITEM) + (lenofoperand) )
 #define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
 #define GETOPERAND(x)	( (char*)GETQUERY(x) + ((QUERYTYPE*)(x))->size * sizeof(ITEM) )

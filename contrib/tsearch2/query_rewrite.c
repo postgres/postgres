@@ -250,7 +250,7 @@ rewrite_accum(PG_FUNCTION_ARGS)
 	if (acc == NULL || PG_ARGISNULL(0))
 	{
 		acc = (QUERYTYPE *) MEMALLOC(AggMemory, sizeof(QUERYTYPE));
-		acc->len = HDRSIZEQT;
+		SET_VARSIZE(acc, HDRSIZEQT);
 		acc->size = 0;
 	}
 
@@ -287,7 +287,7 @@ rewrite_accum(PG_FUNCTION_ARGS)
 
 	if (!acc->size)
 	{
-		if (acc->len > HDRSIZEQT)
+		if (VARSIZE(acc) > HDRSIZEQT)
 		{
 			pfree(elemsp);
 			PG_RETURN_POINTER(acc);
@@ -328,7 +328,7 @@ rewrite_accum(PG_FUNCTION_ARGS)
 		else
 		{
 			acc = (QUERYTYPE *) MEMALLOC(AggMemory, HDRSIZEQT * 2);
-			acc->len = HDRSIZEQT * 2;
+			SET_VARSIZE(acc, HDRSIZEQT * 2);
 			acc->size = 0;
 		}
 	}
@@ -353,12 +353,12 @@ rewrite_finish(PG_FUNCTION_ARGS)
 	if (acc == NULL || PG_ARGISNULL(0) || acc->size == 0)
 	{
 		acc = (QUERYTYPE *) palloc(sizeof(QUERYTYPE));
-		acc->len = HDRSIZEQT;
+		SET_VARSIZE(acc, HDRSIZEQT);
 		acc->size = 0;
 	}
 
-	rewrited = (QUERYTYPE *) palloc(acc->len);
-	memcpy(rewrited, acc, acc->len);
+	rewrited = (QUERYTYPE *) palloc(VARSIZE(acc));
+	memcpy(rewrited, acc, VARSIZE(acc));
 	pfree(acc);
 
 	PG_RETURN_POINTER(rewrited);
@@ -481,7 +481,7 @@ tsquery_rewrite(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		rewrited->len = HDRSIZEQT;
+		SET_VARSIZE(rewrited, HDRSIZEQT);
 		rewrited->size = 0;
 	}
 
@@ -529,7 +529,7 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 
 	if (!tree)
 	{
-		rewrited->len = HDRSIZEQT;
+		SET_VARSIZE(rewrited, HDRSIZEQT);
 		rewrited->size = 0;
 		PG_FREE_IF_COPY(ex, 1);
 		PG_FREE_IF_COPY(subst, 2);

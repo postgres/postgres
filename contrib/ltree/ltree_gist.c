@@ -1,7 +1,7 @@
 /*
  * GiST support for ltree
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.19 2006/10/04 00:29:45 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_gist.c,v 1.20 2007/02/28 22:44:38 tgl Exp $
  */
 
 #include "ltree.h"
@@ -71,12 +71,12 @@ ltree_compress(PG_FUNCTION_ARGS)
 	{							/* ltree */
 		ltree_gist *key;
 		ltree	   *val = (ltree *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
-		int4		len = LTG_HDRSIZE + val->len;
+		int4		len = LTG_HDRSIZE + VARSIZE(val);
 
 		key = (ltree_gist *) palloc(len);
-		key->len = len;
+		SET_VARSIZE(key, len);
 		key->flag = LTG_ONENODE;
-		memcpy((void *) LTG_NODE(key), (void *) val, val->len);
+		memcpy((void *) LTG_NODE(key), (void *) val, VARSIZE(val));
 
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
 		gistentryinit(*retval, PointerGetDatum(key),
@@ -225,10 +225,10 @@ ltree_union(PG_FUNCTION_ARGS)
 	}
 
 	isleqr = (left == right || ISEQ(left, right)) ? true : false;
-	*size = LTG_HDRSIZE + ((isalltrue) ? 0 : SIGLEN) + left->len + ((isleqr) ? 0 : right->len);
+	*size = LTG_HDRSIZE + ((isalltrue) ? 0 : SIGLEN) + VARSIZE(left) + ((isleqr) ? 0 : VARSIZE(right));
 
 	result = (ltree_gist *) palloc(*size);
-	result->len = *size;
+	SET_VARSIZE(result, *size);
 	result->flag = 0;
 
 	if (isalltrue)
@@ -236,11 +236,11 @@ ltree_union(PG_FUNCTION_ARGS)
 	else
 		memcpy((void *) LTG_SIGN(result), base, SIGLEN);
 
-	memcpy((void *) LTG_LNODE(result), (void *) left, left->len);
+	memcpy((void *) LTG_LNODE(result), (void *) left, VARSIZE(left));
 	if (isleqr)
 		result->flag |= LTG_NORIGHT;
 	else
-		memcpy((void *) LTG_RNODE(result), (void *) right, right->len);
+		memcpy((void *) LTG_RNODE(result), (void *) right, VARSIZE(right));
 
 	PG_RETURN_POINTER(result);
 }
@@ -399,36 +399,36 @@ ltree_picksplit(PG_FUNCTION_ARGS)
 
 	lu_l = LTG_GETLNODE(GETENTRY(entryvec, array[FirstOffsetNumber].index));
 	isleqr = (lu_l == lu_r || ISEQ(lu_l, lu_r)) ? true : false;
-	size = LTG_HDRSIZE + ((lisat) ? 0 : SIGLEN) + lu_l->len + ((isleqr) ? 0 : lu_r->len);
+	size = LTG_HDRSIZE + ((lisat) ? 0 : SIGLEN) + VARSIZE(lu_l) + ((isleqr) ? 0 : VARSIZE(lu_r));
 	lu = (ltree_gist *) palloc(size);
-	lu->len = size;
+	SET_VARSIZE(lu, size);
 	lu->flag = 0;
 	if (lisat)
 		lu->flag |= LTG_ALLTRUE;
 	else
 		memcpy((void *) LTG_SIGN(lu), ls, SIGLEN);
-	memcpy((void *) LTG_LNODE(lu), (void *) lu_l, lu_l->len);
+	memcpy((void *) LTG_LNODE(lu), (void *) lu_l, VARSIZE(lu_l));
 	if (isleqr)
 		lu->flag |= LTG_NORIGHT;
 	else
-		memcpy((void *) LTG_RNODE(lu), (void *) lu_r, lu_r->len);
+		memcpy((void *) LTG_RNODE(lu), (void *) lu_r, VARSIZE(lu_r));
 
 
 	ru_l = LTG_GETLNODE(GETENTRY(entryvec, array[1 + ((maxoff - FirstOffsetNumber + 1) / 2)].index));
 	isleqr = (ru_l == ru_r || ISEQ(ru_l, ru_r)) ? true : false;
-	size = LTG_HDRSIZE + ((risat) ? 0 : SIGLEN) + ru_l->len + ((isleqr) ? 0 : ru_r->len);
+	size = LTG_HDRSIZE + ((risat) ? 0 : SIGLEN) + VARSIZE(ru_l) + ((isleqr) ? 0 : VARSIZE(ru_r));
 	ru = (ltree_gist *) palloc(size);
-	ru->len = size;
+	SET_VARSIZE(ru, size);
 	ru->flag = 0;
 	if (risat)
 		ru->flag |= LTG_ALLTRUE;
 	else
 		memcpy((void *) LTG_SIGN(ru), rs, SIGLEN);
-	memcpy((void *) LTG_LNODE(ru), (void *) ru_l, ru_l->len);
+	memcpy((void *) LTG_LNODE(ru), (void *) ru_l, VARSIZE(ru_l));
 	if (isleqr)
 		ru->flag |= LTG_NORIGHT;
 	else
-		memcpy((void *) LTG_RNODE(ru), (void *) ru_r, ru_r->len);
+		memcpy((void *) LTG_RNODE(ru), (void *) ru_r, VARSIZE(ru_r));
 
 	v->spl_ldatum = PointerGetDatum(lu);
 	v->spl_rdatum = PointerGetDatum(ru);
@@ -459,9 +459,9 @@ gist_isparent(ltree_gist * key, ltree * query)
 static ltree *
 copy_ltree(ltree * src)
 {
-	ltree	   *dst = (ltree *) palloc(src->len);
+	ltree	   *dst = (ltree *) palloc(VARSIZE(src));
 
-	memcpy(dst, src, src->len);
+	memcpy(dst, src, VARSIZE(src));
 	return dst;
 }
 

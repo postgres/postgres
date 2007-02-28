@@ -1,7 +1,7 @@
 /*
  * in/out function for ltree and lquery
  * Teodor Sigaev <teodor@stack.net>
- * $PostgreSQL: pgsql/contrib/ltree/ltree_io.c,v 1.13 2006/09/22 21:39:57 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/ltree/ltree_io.c,v 1.14 2007/02/28 22:44:38 tgl Exp $
  */
 
 #include "ltree.h"
@@ -119,7 +119,7 @@ ltree_in(PG_FUNCTION_ARGS)
 				 errdetail("Unexpected end of line.")));
 
 	result = (ltree *) palloc(LTREE_HDRSIZE + totallen);
-	result->len = LTREE_HDRSIZE + totallen;
+	SET_VARSIZE(result, LTREE_HDRSIZE + totallen);
 	result->numlevel = lptr - list;
 	curlevel = LTREE_FIRST(result);
 	lptr = list;
@@ -144,7 +144,7 @@ ltree_out(PG_FUNCTION_ARGS)
 	int			i;
 	ltree_level *curlevel;
 
-	ptr = buf = (char *) palloc(in->len);
+	ptr = buf = (char *) palloc(VARSIZE(in));
 	curlevel = LTREE_FIRST(in);
 	for (i = 0; i < in->numlevel; i++)
 	{
@@ -449,7 +449,7 @@ lquery_in(PG_FUNCTION_ARGS)
 	}
 
 	result = (lquery *) palloc(totallen);
-	result->len = totallen;
+	SET_VARSIZE(result, totallen);
 	result->numlevel = num;
 	result->firstgood = 0;
 	result->flag = 0;

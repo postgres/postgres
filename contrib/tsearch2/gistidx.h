@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/gistidx.h,v 1.7 2006/03/11 04:38:30 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/gistidx.h,v 1.8 2007/02/28 22:44:38 tgl Exp $ */
 
 #ifndef __GISTIDX_H__
 #define __GISTIDX_H__
@@ -39,7 +39,7 @@ typedef char *BITVECP;
  */
 typedef struct
 {
-	int4		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		flag;
 	char		data[1];
 }	GISTTYPE;
@@ -52,11 +52,11 @@ typedef struct
 #define ISSIGNKEY(x)	( ((GISTTYPE*)(x))->flag & SIGNKEY )
 #define ISALLTRUE(x)	( ((GISTTYPE*)(x))->flag & ALLISTRUE )
 
-#define GTHDRSIZE	( sizeof(int4) * 2	)
+#define GTHDRSIZE	( VARHDRSZ + sizeof(int4) )
 #define CALCGTSIZE(flag, len) ( GTHDRSIZE + ( ( (flag) & ARRKEY ) ? ((len)*sizeof(int4)) : (((flag) & ALLISTRUE) ? 0 : SIGLEN) ) )
 
 #define GETSIGN(x)	( (BITVECP)( (char*)(x)+GTHDRSIZE ) )
 #define GETARR(x)	( (int4*)( (char*)(x)+GTHDRSIZE ) )
-#define ARRNELEM(x) ( ( ((GISTTYPE*)(x))->len - GTHDRSIZE )/sizeof(int4) )
+#define ARRNELEM(x) ( ( VARSIZE(x) - GTHDRSIZE )/sizeof(int4) )
 
 #endif

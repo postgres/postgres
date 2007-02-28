@@ -85,7 +85,7 @@ typedef char *BITVECP;
  */
 typedef struct
 {
-	int4		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		flag;
 	char		data[1];
 }	GISTTYPE;
@@ -94,7 +94,7 @@ typedef struct
 
 #define ISALLTRUE(x)	( ((GISTTYPE*)x)->flag & ALLISTRUE )
 
-#define GTHDRSIZE		( sizeof(int4)*2  )
+#define GTHDRSIZE		(VARHDRSZ + sizeof(int4))
 #define CALCGTSIZE(flag) ( GTHDRSIZE+(((flag) & ALLISTRUE) ? 0 : SIGLEN) )
 
 #define GETSIGN(x)		( (BITVECP)( (char*)x+GTHDRSIZE ) )
@@ -145,12 +145,12 @@ typedef struct ITEM
 
 typedef struct
 {
-	int4		len;
+	int32		vl_len_;		/* varlena header (do not touch directly!) */
 	int4		size;
 	char		data[1];
 }	QUERYTYPE;
 
-#define HDRSIZEQT	( 2*sizeof(int4) )
+#define HDRSIZEQT	(VARHDRSZ + sizeof(int4))
 #define COMPUTESIZE(size)	( HDRSIZEQT + size * sizeof(ITEM) )
 #define GETQUERY(x)  (ITEM*)( (char*)(x)+HDRSIZEQT )
 
