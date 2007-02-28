@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Feb 27 18:12:31 EST 2007
+   Last updated: Wed Feb 28 12:27:44 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -136,20 +136,22 @@ General Questions
        src/tools/make_diff/difforig useful. (Unified diffs are only
        preferable if the file changes are single-line changes and do not
        rely on surrounding lines.)
-    4. PostgreSQL is licensed under a BSD license, so any submissions
-       must conform to the BSD license to be included. If you use code
-       that is available under some other license that is BSD compatible
-       (eg. public domain) please note that code in your email submission
+    4. PostgreSQL is licensed under a BSD license. By posting a patch to
+       the public PostgreSQL mailling lists, you are giving the
+       PostgreSQL Global Development Group the non-revokable right to
+       distribute your patch under the BSD license. If you use code that
+       is available under some other license that is BSD compatible (eg.
+       public domain), please note that in your email submission.
     5. Confirm that your changes can pass the regression tests. If your
        changes are port specific, please list the ports you have tested
        it on.
-    6. Provide an implementation overview, preferably in code comments.
-       Following the surrounding code commenting style is usually a good
-       approach.
+    6. If you are adding a new feature, confirm that it has been tested
+       thoroughly. Try to test the feature in all conceivable scenarios.
     7. New feature patches should also be accompanied by documentation
        patches. If you need help checking the SQL standard, see 1.16.
-    8. If you are adding a new feature, confirm that it has been tested
-       thoroughly. Try to test the feature in all conceivable scenarios.
+    8. Provide an implementation overview, preferably in code comments.
+       Following the surrounding code commenting style is usually a good
+       approach.
     9. If it is a performance patch, please provide confirming test
        results to show the benefit of your patch. It is OK to post
        patches without this information, though the patch will not be

@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Tue Feb 27 18:12:31 EST 2007</P>
+    <P>Last updated: Wed Feb 28 12:27:44 EST 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)<BR>
@@ -190,26 +190,28 @@
     preferable if the file changes are single-line changes and do not
     rely on surrounding lines.)</li>
 
-    <li>PostgreSQL is licensed under a BSD license, so any submissions must 
-    conform to the BSD license to be included. If you use code that is 
-    available under some other license that is BSD compatible (eg. public 
-    domain) please note that code in your email submission</li>
+    <li>PostgreSQL is licensed under a BSD license.  By posting a patch
+    to the public PostgreSQL mailling lists, you are giving the PostgreSQL
+    Global Development Group the non-revokable right to distribute your
+    patch under the BSD license.  If you use code that is available under
+    some other license that is BSD compatible (eg. public domain), please
+    note that in your email submission.</li>
 
     <li>Confirm that your changes can pass the regression tests. If your 
     changes are port specific, please list the ports you have tested it
     on.</li>
 
-    <li>Provide an implementation overview, preferably in code comments.
-    Following the surrounding code commenting style is usually a good
-    approach.</li>
+    <li>If you are adding a new feature, confirm that it has been tested
+    thoroughly.  Try to test the feature in all conceivable
+    scenarios.</li>
 
     <li>New feature patches should also be accompanied by documentation
     patches.  If you need help checking the SQL standard, see <a href=
     "#item1.16">1.16</a>.</li>
 
-    <li>If you are adding a new feature, confirm that it has been tested
-    thoroughly.  Try to test the feature in all conceivable
-    scenarios.</li>
+    <li>Provide an implementation overview, preferably in code comments.
+    Following the surrounding code commenting style is usually a good
+    approach.</li>
 
     <li>If it is a performance patch, please provide confirming test
     results to show the benefit of your patch. It is OK to post patches
