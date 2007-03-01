@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.170 2007/02/01 19:10:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.171 2007/03/01 18:50:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,8 @@ static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 static Node *get_assignment_input(Node *node);
 static void rewriteValuesRTE(RangeTblEntry *rte, Relation target_relation,
 				 List *attrnos);
-static void markQueryForLocking(Query *qry, bool forUpdate, bool noWait,
-					bool skipOldNew);
+static void markQueryForLocking(Query *qry, Node *jtnode,
+								bool forUpdate, bool noWait);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
@@ -1122,8 +1122,8 @@ ApplyRetrieveRule(Query *parsetree,
 		/*
 		 * Set up the view's referenced tables as if FOR UPDATE/SHARE.
 		 */
-		markQueryForLocking(rule_action, rc->forUpdate,
-							rc->noWait, true);
+		markQueryForLocking(rule_action, (Node *) rule_action->jointree,
+							rc->forUpdate, rc->noWait);
 	}
 
 	return parsetree;
@@ -1135,24 +1135,20 @@ ApplyRetrieveRule(Query *parsetree,
  * This may generate an invalid query, eg if some sub-query uses an
  * aggregate.  We leave it to the planner to detect that.
  *
- * NB: this must agree with the parser's transformLocking() routine.
+ * NB: this must agree with the parser's transformLockingClause() routine.
+ * However, unlike the parser we have to be careful not to mark a view's
+ * OLD and NEW rels for updating.  The best way to handle that seems to be
+ * to scan the jointree to determine which rels are used.
  */
 static void
-markQueryForLocking(Query *qry, bool forUpdate, bool noWait, bool skipOldNew)
+markQueryForLocking(Query *qry, Node *jtnode, bool forUpdate, bool noWait)
 {
-	Index		rti = 0;
-	ListCell   *l;
-
-	foreach(l, qry->rtable)
+	if (jtnode == NULL)
+		return;
+	if (IsA(jtnode, RangeTblRef))
 	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
-
-		rti++;
-
-		/* Ignore OLD and NEW entries if we are at top level of view */
-		if (skipOldNew &&
-			(rti == PRS2_OLD_VARNO || rti == PRS2_NEW_VARNO))
-			continue;
+		int			rti = ((RangeTblRef *) jtnode)->rtindex;
+		RangeTblEntry *rte = rt_fetch(rti, qry->rtable);
 
 		if (rte->rtekind == RTE_RELATION)
 		{
@@ -1162,9 +1158,28 @@ markQueryForLocking(Query *qry, bool forUpdate, bool noWait, bool skipOldNew)
 		else if (rte->rtekind == RTE_SUBQUERY)
 		{
 			/* FOR UPDATE/SHARE of subquery is propagated to subquery's rels */
-			markQueryForLocking(rte->subquery, forUpdate, noWait, false);
+			markQueryForLocking(rte->subquery, (Node *) rte->subquery->jointree,
+								forUpdate, noWait);
 		}
 	}
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+		ListCell   *l;
+
+		foreach(l, f->fromlist)
+			markQueryForLocking(qry, lfirst(l), forUpdate, noWait);
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+
+		markQueryForLocking(qry, j->larg, forUpdate, noWait);
+		markQueryForLocking(qry, j->rarg, forUpdate, noWait);
+	}
+	else
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 }
 
 
