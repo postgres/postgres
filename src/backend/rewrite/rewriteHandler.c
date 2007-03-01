@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.147.4.1 2006/05/23 17:09:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.147.4.2 2007/03/01 18:50:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,7 +51,7 @@ static TargetEntry *process_matched_tle(TargetEntry *src_tle,
 					TargetEntry *prior_tle,
 					const char *attrName);
 static Node *get_assignment_input(Node *node);
-static void markQueryForUpdate(Query *qry, bool skipOldNew);
+static void markQueryForUpdate(Query *qry, Node *jtnode);
 static List *matchLocks(CmdType event, RuleLock *rulelocks,
 		   int varno, Query *parsetree);
 static Query *fireRIRrules(Query *parsetree, List *activeRIRs);
@@ -765,7 +765,7 @@ ApplyRetrieveRule(Query *parsetree,
 		/*
 		 * Set up the view's referenced tables as if FOR UPDATE.
 		 */
-		markQueryForUpdate(rule_action, true);
+		markQueryForUpdate(rule_action, (Node *) rule_action->jointree);
 	}
 
 	return parsetree;
@@ -778,23 +778,19 @@ ApplyRetrieveRule(Query *parsetree,
  * aggregate.  We leave it to the planner to detect that.
  *
  * NB: this must agree with the parser's transformForUpdate() routine.
+ * However, unlike the parser we have to be careful not to mark a view's
+ * OLD and NEW rels for updating.  The best way to handle that seems to be
+ * to scan the jointree to determine which rels are used.
  */
 static void
-markQueryForUpdate(Query *qry, bool skipOldNew)
+markQueryForUpdate(Query *qry, Node *jtnode)
 {
-	Index		rti = 0;
-	ListCell   *l;
-
-	foreach(l, qry->rtable)
+	if (jtnode == NULL)
+		return;
+	if (IsA(jtnode, RangeTblRef))
 	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
-
-		rti++;
-
-		/* Ignore OLD and NEW entries if we are at top level of view */
-		if (skipOldNew &&
-			(rti == PRS2_OLD_VARNO || rti == PRS2_NEW_VARNO))
-			continue;
+		int			rti = ((RangeTblRef *) jtnode)->rtindex;
+		RangeTblEntry *rte = rt_fetch(rti, qry->rtable);
 
 		if (rte->rtekind == RTE_RELATION)
 		{
@@ -805,9 +801,27 @@ markQueryForUpdate(Query *qry, bool skipOldNew)
 		else if (rte->rtekind == RTE_SUBQUERY)
 		{
 			/* FOR UPDATE of subquery is propagated to subquery's rels */
-			markQueryForUpdate(rte->subquery, false);
+			markQueryForUpdate(rte->subquery, (Node *) rte->subquery->jointree);
 		}
 	}
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+		ListCell   *l;
+
+		foreach(l, f->fromlist)
+			markQueryForUpdate(qry, lfirst(l));
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+
+		markQueryForUpdate(qry, j->larg);
+		markQueryForUpdate(qry, j->rarg);
+	}
+	else
+		elog(ERROR, "unrecognized node type: %d",
+			 (int) nodeTag(jtnode));
 }
 
 
