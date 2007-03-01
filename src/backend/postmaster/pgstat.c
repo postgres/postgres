@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.147 2007/02/15 23:23:23 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.148 2007/03/01 20:06:56 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1716,7 +1716,7 @@ PgstatCollectorMain(int argc, char *argv[])
 	/* Preset the delay between status file writes */
 	MemSet(&write_timeout, 0, sizeof(struct itimerval));
 	write_timeout.it_value.tv_sec = PGSTAT_STAT_INTERVAL / 1000;
-	write_timeout.it_value.tv_usec = PGSTAT_STAT_INTERVAL % 1000;
+	write_timeout.it_value.tv_usec = (PGSTAT_STAT_INTERVAL % 1000) * 1000;
 
 	/*
 	 * Read in an existing statistics stats file or initialize the stats to
