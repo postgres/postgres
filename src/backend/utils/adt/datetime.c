@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.177 2007/02/19 17:41:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.178 2007/03/01 14:52:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3153,7 +3153,7 @@ datebsearch(const char *key, const datetkn *base, int nel)
  *		Append representation of a numeric timezone offset to str.
  */
 static void
-EncodeTimezone(char *str, int tz)
+EncodeTimezone(char *str, int tz, int style)
 {
 	int			hour,
 				min,
@@ -3171,7 +3171,7 @@ EncodeTimezone(char *str, int tz)
 
 	if (sec != 0)
 		sprintf(str, "%02d:%02d:%02d", hour, min, sec);
-	else if (min != 0)
+	else if (min != 0 || style == USE_XSD_DATES)
 		sprintf(str, "%02d:%02d", hour, min);
 	else
 		sprintf(str, "%02d", hour);
@@ -3189,6 +3189,7 @@ EncodeDateOnly(struct pg_tm * tm, int style, char *str)
 	switch (style)
 	{
 		case USE_ISO_DATES:
+		case USE_XSD_DATES:
 			/* compatible with ISO date formats */
 			if (tm->tm_year > 0)
 				sprintf(str, "%04d-%02d-%02d",
@@ -3266,7 +3267,7 @@ EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
 		sprintf(str + strlen(str), ":%02d", tm->tm_sec);
 
 	if (tzp != NULL)
-		EncodeTimezone(str, *tzp);
+		EncodeTimezone(str, *tzp, style);
 
 	return TRUE;
 }	/* EncodeTimeOnly() */
@@ -3279,6 +3280,7 @@ EncodeTimeOnly(struct pg_tm * tm, fsec_t fsec, int *tzp, int style, char *str)
  *	SQL - mm/dd/yyyy hh:mm:ss.ss tz
  *	ISO - yyyy-mm-dd hh:mm:ss+/-tz
  *	German - dd.mm.yyyy hh:mm:ss tz
+ *	XSD - yyyy-mm-ddThh:mm:ss.ss+/-tz
  * Variants (affects order of month and day for Postgres and SQL styles):
  *	US - mm/dd/yyyy
  *	European - dd/mm/yyyy
@@ -3297,11 +3299,18 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 	switch (style)
 	{
 		case USE_ISO_DATES:
+		case USE_XSD_DATES:
 			/* Compatible with ISO-8601 date formats */
 
-			sprintf(str, "%04d-%02d-%02d %02d:%02d",
+			if (style == USE_ISO_DATES)
+				sprintf(str, "%04d-%02d-%02d %02d:%02d",
 					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1),
 					tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
+			else
+				sprintf(str, "%04d-%02d-%02dT%02d:%02d",
+					(tm->tm_year > 0) ? tm->tm_year : -(tm->tm_year - 1),
+					tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
+
 
 			/*
 			 * Print fractional seconds if any.  The field widths here should
@@ -3333,7 +3342,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 			 * a valid time zone translation.
 			 */
 			if (tzp != NULL && tm->tm_isdst >= 0)
-				EncodeTimezone(str, *tzp);
+				EncodeTimezone(str, *tzp, style);
 
 			if (tm->tm_year <= 0)
 				sprintf(str + strlen(str), " BC");
@@ -3379,7 +3388,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 				if (*tzn != NULL)
 					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
 				else
-					EncodeTimezone(str, *tzp);
+					EncodeTimezone(str, *tzp, style);
 			}
 
 			if (tm->tm_year <= 0)
@@ -3423,7 +3432,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 				if (*tzn != NULL)
 					sprintf(str + strlen(str), " %.*s", MAXTZLEN, *tzn);
 				else
-					EncodeTimezone(str, *tzp);
+					EncodeTimezone(str, *tzp, style);
 			}
 
 			if (tm->tm_year <= 0)
@@ -3486,7 +3495,7 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 					 * the date/time parser later. - thomas 2001-10-19
 					 */
 					sprintf(str + strlen(str), " ");
-					EncodeTimezone(str, *tzp);
+					EncodeTimezone(str, *tzp, style);
 				}
 			}
 

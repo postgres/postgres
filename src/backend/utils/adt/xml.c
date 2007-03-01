@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.32 2007/02/27 23:48:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.33 2007/03/01 14:52:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,8 @@
 #include "parser/parse_expr.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/xml.h"
@@ -1513,12 +1515,81 @@ map_sql_value_to_xml_value(Datum value, Oid type)
 		bool isvarlena;
 		char *p, *str;
 
-		if (type == BOOLOID)
+		/*
+		 * Special XSD formatting for some data types
+		 */
+		switch (type)
 		{
-			if (DatumGetBool(value))
-				return "true";
-			else
-				return "false";
+			case BOOLOID:
+				if (DatumGetBool(value))
+					return "true";
+				else
+					return "false";
+
+			case DATEOID:
+			{
+				DateADT		date;
+				struct pg_tm tm;
+				char		buf[MAXDATELEN + 1];
+
+				date = DatumGetDateADT(value);
+				j2date(date + POSTGRES_EPOCH_JDATE,
+					   &(tm.tm_year), &(tm.tm_mon), &(tm.tm_mday));
+				EncodeDateOnly(&tm, USE_XSD_DATES, buf);
+
+				return pstrdup(buf);
+			}
+
+			case TIMESTAMPOID:
+			{
+				Timestamp	timestamp;
+				struct pg_tm tm;
+				fsec_t		fsec;
+				char	   *tzn = NULL;
+				char		buf[MAXDATELEN + 1];
+
+				timestamp = DatumGetTimestamp(value);
+
+				/* XSD doesn't support infinite values */
+				if (TIMESTAMP_NOT_FINITE(timestamp))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+				else if (timestamp2tm(timestamp, NULL, &tm, &fsec, NULL, NULL) == 0)
+					EncodeDateTime(&tm, fsec, NULL, &tzn, USE_XSD_DATES, buf);
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+
+				return pstrdup(buf);
+			}
+
+			case TIMESTAMPTZOID:
+			{
+				TimestampTz	timestamp;
+				struct pg_tm tm;
+				int			tz;
+				fsec_t		fsec;
+				char	   *tzn = NULL;
+				char		buf[MAXDATELEN + 1];
+
+				timestamp = DatumGetTimestamp(value);
+
+				/* XSD doesn't support infinite values */
+				if (TIMESTAMP_NOT_FINITE(timestamp))
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+				else if (timestamp2tm(timestamp, &tz, &tm, &fsec, &tzn, NULL) == 0)
+					EncodeDateTime(&tm, fsec, &tz, &tzn, USE_XSD_DATES, buf);
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+							 errmsg("timestamp out of range")));
+
+				return pstrdup(buf);
+			}
 		}
 
 		getTypeOutputInfo(type, &typeOut, &isvarlena);
@@ -2234,17 +2305,17 @@ map_sql_type_to_xmlschema_type(Oid typeoid, int typmod)
 
 				if (typmod == -1)
 					appendStringInfo(&result,
-									 "  <xsd:restriction base=\"xsd:time\">\n"
+									 "  <xsd:restriction base=\"xsd:dateTime\">\n"
 									 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}T\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}(.\\p{Nd}+)?%s\"/>\n"
 									 "  </xsd:restriction>\n", tz);
 				else if (typmod == 0)
 					appendStringInfo(&result,
-									 "  <xsd:restriction base=\"xsd:time\">\n"
+									 "  <xsd:restriction base=\"xsd:dateTime\">\n"
 									 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}T\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}%s\"/>\n"
 									 "  </xsd:restriction>\n", tz);
 				else
 					appendStringInfo(&result,
-									 "  <xsd:restriction base=\"xsd:time\">\n"
+									 "  <xsd:restriction base=\"xsd:dateTime\">\n"
 									 "    <xsd:pattern value=\"\\p{Nd}{4}-\\p{Nd}{2}-\\p{Nd}{2}T\\p{Nd}{2}:\\p{Nd}{2}:\\p{Nd}{2}.\\p{Nd}{%d}%s\"/>\n"
 									 "  </xsd:restriction>\n", typmod - VARHDRSZ, tz);
 				break;

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.192 2007/02/15 23:23:23 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.193 2007/03/01 14:52:04 petere Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -178,6 +178,7 @@ extern DLLIMPORT Oid MyDatabaseTableSpace;
 #define USE_ISO_DATES			1
 #define USE_SQL_DATES			2
 #define USE_GERMAN_DATES		3
+#define USE_XSD_DATES			4
 
 /* valid DateOrder values */
 #define DATEORDER_YMD			0
