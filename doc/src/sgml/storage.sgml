@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.14 2007/01/31 20:56:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.15 2007/03/02 00:48:44 tgl Exp $ -->
 
 <chapter id="storage">
 
@@ -427,8 +427,8 @@ data. Empty in ordinary tables.</entry>
   The first 20 bytes of each page consists of a page header
   (PageHeaderData). Its format is detailed in <xref
   linkend="pageheaderdata-table">. The first two fields track the most
-  recent WAL entry related to this page. They are followed by three 2-byte
-  integer fields
+  recent WAL entry related to this page. Next is a 2-byte field
+  containing flag bits. This is followed by three 2-byte integer fields
   (<structfield>pd_lower</structfield>, <structfield>pd_upper</structfield>,
   and <structfield>pd_special</structfield>). These contain byte offsets
   from the page start to the start
@@ -437,12 +437,13 @@ data. Empty in ordinary tables.</entry>
   The last 2 bytes of the page header,
   <structfield>pd_pagesize_version</structfield>, store both the page size
   and a version indicator.  Beginning with
-  <productname>PostgreSQL</productname> 8.1 the version number is 3;
+  <productname>PostgreSQL</productname> 8.3 the version number is 4;
+  <productname>PostgreSQL</productname> 8.1 and 8.2 used version number 3;
   <productname>PostgreSQL</productname> 8.0 used version number 2;
   <productname>PostgreSQL</productname> 7.3 and 7.4 used version number 1;
   prior releases used version number 0.
-  (The basic page layout and header format has not changed in these versions,
-  but the layout of heap row headers has.)  The page size
+  (The basic page layout and header format has not changed in most of these
+  versions, but the layout of heap row headers has.)  The page size
   is basically only present as a cross-check; there is no support for having
   more than one page size in an installation.
   
@@ -470,9 +471,15 @@ data. Empty in ordinary tables.</entry>
   </row>
   <row>
    <entry>pd_tli</entry>
-   <entry>TimeLineID</entry>
-   <entry>4 bytes</entry>
-   <entry>TLI of last change</entry>
+   <entry>uint16</entry>
+   <entry>2 bytes</entry>
+   <entry>TimeLineID of last change (only its lowest 16 bits)</entry>
+  </row>
+  <row>
+   <entry>pd_flags</entry>
+   <entry>uint16</entry>
+   <entry>2 bytes</entry>
+   <entry>Flag bits</entry>
   </row>
   <row>
    <entry>pd_lower</entry>

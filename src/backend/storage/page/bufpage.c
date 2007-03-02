@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.71 2007/02/21 20:02:17 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.72 2007/03/02 00:48:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@ PageInit(Page page, Size pageSize, Size specialSize)
 	/* Make sure all fields of page are zero, as well as unused space */
 	MemSet(p, 0, pageSize);
 
+	/* p->pd_flags = 0; 					done by above MemSet */
 	p->pd_lower = SizeOfPageHeaderData;
 	p->pd_upper = pageSize - specialSize;
 	p->pd_special = pageSize - specialSize;
@@ -73,6 +74,7 @@ PageHeaderIsValid(PageHeader page)
 	/* Check normal case */
 	if (PageGetPageSize(page) == BLCKSZ &&
 		PageGetPageLayoutVersion(page) == PG_PAGE_LAYOUT_VERSION &&
+		(page->pd_flags & ~PD_VALID_FLAG_BITS) == 0 &&
 		page->pd_lower >= SizeOfPageHeaderData &&
 		page->pd_lower <= page->pd_upper &&
 		page->pd_upper <= page->pd_special &&
@@ -165,14 +167,27 @@ PageAddItem(Page page,
 	else
 	{
 		/* offsetNumber was not passed in, so find a free slot */
-		/* look for "recyclable" (unused & deallocated) ItemId */
-		for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
-		{
-			itemId = PageGetItemId(phdr, offsetNumber);
-			if (!ItemIdIsUsed(itemId) && ItemIdGetLength(itemId) == 0)
-				break;
-		}
 		/* if no free slot, we'll put it at limit (1st open slot) */
+		if (PageHasFreeLinePointers(phdr))
+		{
+			/* look for "recyclable" (unused & deallocated) ItemId */
+			for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
+			{
+				itemId = PageGetItemId(phdr, offsetNumber);
+				if (!ItemIdIsUsed(itemId) && ItemIdGetLength(itemId) == 0)
+					break;
+			}
+			if (offsetNumber >= limit)
+			{
+				/* the hint is wrong, so reset it */
+				PageClearHasFreeLinePointers(phdr);
+			}
+		}
+		else
+		{
+			/* don't bother searching if hint says there's no free slot */
+			offsetNumber = limit;
+		}
 	}
 
 	if (offsetNumber > limit)
@@ -413,13 +428,19 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 		pfree(itemidbase);
 	}
 
+	/* Set hint bit for PageAddItem */
+	if (nused < nline)
+		PageSetHasFreeLinePointers(page);
+	else
+		PageClearHasFreeLinePointers(page);
+
 	return (nline - nused);
 }
 
 /*
  * PageGetFreeSpace
  *		Returns the size of the free (allocatable) space on a page,
- *		deducted by the space needed for a new line pointer.
+ *		reduced by the space needed for a new line pointer.
  */
 Size
 PageGetFreeSpace(Page page)

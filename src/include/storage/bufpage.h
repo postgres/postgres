@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.71 2007/02/21 20:02:17 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.72 2007/03/02 00:48:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,7 @@ typedef uint16 LocationIndex;
  *
  *		pd_lsn		- identifies xlog record for last change to this page.
  *		pd_tli		- ditto.
+ *		pd_flags	- flag bits.
  *		pd_lower	- offset to start of free space.
  *		pd_upper	- offset to end of free space.
  *		pd_special	- offset to start of special space.
@@ -98,8 +99,9 @@ typedef uint16 LocationIndex;
  * The LSN is used by the buffer manager to enforce the basic rule of WAL:
  * "thou shalt write xlog before data".  A dirty buffer cannot be dumped
  * to disk until xlog has been flushed at least as far as the page's LSN.
- * We also store the TLI for identification purposes (it is not clear that
- * this is actually necessary, but it seems like a good idea).
+ * We also store the 16 least significant bits of the TLI for identification
+ * purposes (it is not clear that this is actually necessary, but it seems
+ * like a good idea).
  *
  * The page version number and page size are packed together into a single
  * uint16 field.  This is for historical reasons: before PostgreSQL 7.3,
@@ -119,7 +121,9 @@ typedef struct PageHeaderData
 	/* XXX LSN is member of *any* block, not only page-organized ones */
 	XLogRecPtr	pd_lsn;			/* LSN: next byte after last byte of xlog
 								 * record for last change to this page */
-	TimeLineID	pd_tli;			/* TLI of last change */
+	uint16		pd_tli;			/* least significant bits of the TimeLineID
+								 * containing the LSN */
+	uint16		pd_flags;		/* flag bits, see below */
 	LocationIndex pd_lower;		/* offset to start of free space */
 	LocationIndex pd_upper;		/* offset to end of free space */
 	LocationIndex pd_special;	/* offset to start of special space */
@@ -130,11 +134,24 @@ typedef struct PageHeaderData
 typedef PageHeaderData *PageHeader;
 
 /*
+ * pd_flags contains the following flag bits.  Undefined bits are initialized
+ * to zero and may be used in the future.
+ *
+ * PD_HAS_FREE_LINES is set if there are any not-LP_USED line pointers before
+ * pd_lower.  This should be considered a hint rather than the truth, since
+ * changes to it are not WAL-logged.
+ */
+#define PD_HAS_FREE_LINES	0x0001	/* are there any unused line pointers? */
+
+#define PD_VALID_FLAG_BITS	0x0001	/* OR of all valid pd_flags bits */
+
+/*
  * Page layout version number 0 is for pre-7.3 Postgres releases.
  * Releases 7.3 and 7.4 use 1, denoting a new HeapTupleHeader layout.
  * Release 8.0 uses 2; it changed the HeapTupleHeader layout again.
  * Release 8.1 uses 3; it redefined HeapTupleHeader infomask bits.
- * Release 8.3 uses 4; it changed the HeapTupleHeader layout again.
+ * Release 8.3 uses 4; it changed the HeapTupleHeader layout again, and
+ * added the pd_flags field (by stealing some bits from pd_tli).
  */
 #define PG_PAGE_LAYOUT_VERSION		4
 
@@ -299,15 +316,27 @@ typedef PageHeaderData *PageHeader;
 	 ((((PageHeader) (page))->pd_lower - SizeOfPageHeaderData) \
 	  / sizeof(ItemIdData)))
 
+/*
+ * Additional macros for access to page headers
+ */
 #define PageGetLSN(page) \
 	(((PageHeader) (page))->pd_lsn)
 #define PageSetLSN(page, lsn) \
 	(((PageHeader) (page))->pd_lsn = (lsn))
 
+/* NOTE: only the 16 least significant bits are stored */
 #define PageGetTLI(page) \
 	(((PageHeader) (page))->pd_tli)
 #define PageSetTLI(page, tli) \
-	(((PageHeader) (page))->pd_tli = (tli))
+	(((PageHeader) (page))->pd_tli = (uint16) (tli))
+
+#define PageHasFreeLinePointers(page) \
+	(((PageHeader) (page))->pd_flags & PD_HAS_FREE_LINES)
+#define PageSetHasFreeLinePointers(page) \
+	(((PageHeader) (page))->pd_flags |= PD_HAS_FREE_LINES)
+#define PageClearHasFreeLinePointers(page) \
+	(((PageHeader) (page))->pd_flags &= ~PD_HAS_FREE_LINES)
+
 
 /* ----------------------------------------------------------------
  *		extern declarations
