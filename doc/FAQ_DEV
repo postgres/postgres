@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Mar 2 12:51:32 EST 2007
+   Last updated: Fri Mar 2 16:03:04 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -579,8 +579,8 @@ General Questions
      * March 1, 2007 - Initial community review of all major feature
        patches
      * April 1, 2007 - Feature freeze, all patches must be submitted for
-       review and applicationmid-May, 2007 - All patches applied, beta
-       testing begins
+       review and application
+     * mid-May, 2007 - All patches applied, beta testing begins
      * July, 2007 - Release of 8.3.0
        
    Patches that appear after appropriate dates are typically not applied
