@@ -262,7 +262,7 @@
 
 # - When to Log -
 
-#client_min_messages = notice		# Values, in order of decreasing detail:
+#client_min_messages = notice		# Values in order of decreasing detail:
 					#   debug5
 					#   debug4
 					#   debug3
@@ -273,7 +273,7 @@
 					#   warning
 					#   error
 
-#log_min_messages = notice		# Values, in order of decreasing detail:
+#log_min_messages = notice		# Values in order of decreasing detail:
 					#   debug5
 					#   debug4
 					#   debug3
@@ -289,7 +289,7 @@
 
 #log_error_verbosity = default		# terse, default, or verbose messages
 
-#log_min_error_statement = error	# Values in order of increasing severity:
+#log_min_error_statement = error	# Values in order of decreasing detail:
 				 	#   debug5
 					#   debug4
 					#   debug3
@@ -299,11 +299,14 @@
 					#   notice
 					#   warning
 					#   error
+					#   log
 					#   fatal
 					#   panic (effectively off)
 
 #log_min_duration_statement = -1	# -1 is disabled, 0 logs all statements
-					# and their durations.
+					# and their durations, > 0 logs only
+					# statements running at least N msec.
+
 
 #silent_mode = off			# DO NOT USE without syslog or 
 					# redirect_stderr

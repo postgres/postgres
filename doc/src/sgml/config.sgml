@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.112 2007/02/16 16:37:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.113 2007/03/02 23:37:22 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2507,9 +2507,10 @@ SELECT * FROM parent WHERE key = 2400;
         <literal>DEBUG2</literal>, <literal>DEBUG1</literal>,
         <literal>INFO</literal>, <literal>NOTICE</literal>,
         <literal>WARNING</literal>, <literal>ERROR</literal>,
+        <literal>LOG</literal>,
         <literal>FATAL</literal>, and <literal>PANIC</literal>.
         The default is <literal>ERROR</literal>, which means statements
-        causing errors, fatal errors, or panics will be logged.
+        causing errors, log messages, fatal errors, or panics will be logged.
         To effectively turn off logging of failing statements,
         set this parameter to <literal>PANIC</literal>.
         Only superusers can change this setting.

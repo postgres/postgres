@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.525 2007/02/20 17:32:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.526 2007/03/02 23:37:22 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -823,6 +823,7 @@ exec_simple_query(const char *query_string)
 	{
 		ereport(LOG,
 				(errmsg("statement: %s", query_string),
+				 errhidestmt(true),
 				 errdetail_execute(parsetree_list)));
 		was_logged = true;
 	}
@@ -1020,12 +1021,14 @@ exec_simple_query(const char *query_string)
 	{
 		case 1:
 			ereport(LOG,
-					(errmsg("duration: %s ms", msec_str)));
+					(errmsg("duration: %s ms", msec_str),
+					 errhidestmt(true)));
 			break;
 		case 2:
 			ereport(LOG,
 					(errmsg("duration: %s ms  statement: %s",
 							msec_str, query_string),
+					 errhidestmt(true),
 					 errdetail_execute(parsetree_list)));
 			break;
 	}
@@ -1281,14 +1284,16 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	{
 		case 1:
 			ereport(LOG,
-					(errmsg("duration: %s ms", msec_str)));
+					(errmsg("duration: %s ms", msec_str),
+					 errhidestmt(true)));
 			break;
 		case 2:
 			ereport(LOG,
 					(errmsg("duration: %s ms  parse %s: %s",
 							msec_str,
 							*stmt_name ? stmt_name : "<unnamed>",
-							query_string)));
+							query_string),
+					 errhidestmt(true)));
 			break;
 	}
 
@@ -1635,7 +1640,8 @@ exec_bind_message(StringInfo input_message)
 	{
 		case 1:
 			ereport(LOG,
-					(errmsg("duration: %s ms", msec_str)));
+					(errmsg("duration: %s ms", msec_str),
+					 errhidestmt(true)));
 			break;
 		case 2:
 			ereport(LOG,
@@ -1645,6 +1651,7 @@ exec_bind_message(StringInfo input_message)
 							*portal_name ? "/" : "",
 							*portal_name ? portal_name : "",
 							pstmt->query_string ? pstmt->query_string : "<source not stored>"),
+					 errhidestmt(true),
 					 errdetail_params(params)));
 			break;
 	}
@@ -1778,6 +1785,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 						*portal_name ? portal_name : "",
 						sourceText ? ": " : "",
 						sourceText ? sourceText : ""),
+				 errhidestmt(true),
 				 errdetail_params(portalParams)));
 		was_logged = true;
 	}
@@ -1846,7 +1854,8 @@ exec_execute_message(const char *portal_name, long max_rows)
 	{
 		case 1:
 			ereport(LOG,
-					(errmsg("duration: %s ms", msec_str)));
+					(errmsg("duration: %s ms", msec_str),
+					 errhidestmt(true)));
 			break;
 		case 2:
 			ereport(LOG,
@@ -1860,6 +1869,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 							*portal_name ? portal_name : "",
 							sourceText ? ": " : "",
 							sourceText ? sourceText : ""),
+					 errhidestmt(true),
 					 errdetail_params(portalParams)));
 			break;
 	}
