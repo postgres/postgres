@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Feb 28 12:27:44 EST 2007
+   Last updated: Fri Mar 2 12:51:32 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -140,8 +140,9 @@ General Questions
        the public PostgreSQL mailling lists, you are giving the
        PostgreSQL Global Development Group the non-revokable right to
        distribute your patch under the BSD license. If you use code that
-       is available under some other license that is BSD compatible (eg.
-       public domain), please note that in your email submission.
+       is available under a BSD-compatible license (eg. public domain),
+       please note that in your email submission. If the license is not
+       BSD-compatible (e.g. GPL), please do not post the patch.
     5. Confirm that your changes can pass the regression tests. If your
        changes are port specific, please list the ports you have tested
        it on.
