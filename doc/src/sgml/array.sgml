@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.58 2007/02/20 14:54:47 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.59 2007/03/02 06:01:01 tgl Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -243,12 +243,11 @@ SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
 (1 row)
 </programlisting>
 
-  If any dimension is written as a slice, i.e contains a colon, then all
-  dimensions are treated as slices.  If a dimension is missing, it is
-  assumed to be <literal>[1:1]</>.  If a dimension has only a single
-  number (no colon), that dimension is treated as being from <literal>1</>
+  If any dimension is written as a slice, i.e. contains a colon, then all
+  dimensions are treated as slices.  Any dimension that has only a single
+  number (no colon) is treated as being from <literal>1</>
   to the number specified.  For example, <literal>[2]</> is treated as
-  <literal>[1:2], as in this example:
+  <literal>[1:2]</>, as in this example:
 
 <programlisting>
 SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
