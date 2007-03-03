@@ -264,10 +264,15 @@ CustomizableCleanupPriorWALFiles(void)
 #else
 					snprintf(WALFilePath, MAXPGPATH, "%s/%s", archiveLocation, xlde->d_name);
 #endif
-					rc = unlink(WALFilePath);
 
 					if (debug)
-					   	fprintf(stderr, "\npg_standby: removed \"%s\"\n", WALFilePath);
+					   	fprintf(stderr, "\npg_standby: removing \"%s\"\n", WALFilePath);
+
+					rc = unlink(WALFilePath);
+					if (rc !=0 )
+						fprintf(stderr, "\npg_standby: ERROR failed to remove \"%s\" because %s\n", WALFilePath,  strerror(errno));
+
+
 				}
 			}
 		}
@@ -315,7 +320,7 @@ CheckForExternalTrigger(void)
 		rc = unlink(triggerPath);
 		if (rc != 0)
 		{
-			fprintf(stderr, "\n ERROR: unable to remove \"%s\", rc=%d", triggerPath, rc);
+			fprintf(stderr, "\n ERROR: unable to remove \"%s\", because %s", triggerPath, strerror(errno));
 			fflush(stderr);
 			exit(rc);
 		}
