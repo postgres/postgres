@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.57 2007/01/05 22:19:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.58 2007/03/03 20:08:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,8 @@ extern void RelationForgetRelation(Oid rid);
 extern void RelationCacheInvalidateEntry(Oid relationId);
 
 extern void RelationCacheInvalidate(void);
+
+extern void RelationCacheResetAtEOXact(void);
 
 extern void AtEOXact_RelationCache(bool isCommit);
 extern void AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.256 2007/02/27 23:48:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.257 2007/03/03 20:08:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1915,9 +1915,6 @@ RelationCacheInvalidateEntry(Oid relationId)
  *	 so we do not touch new-in-transaction relations; they cannot be targets
  *	 of cross-backend SI updates (and our own updates now go through a
  *	 separate linked list that isn't limited by the SI message buffer size).
- *	 We don't do anything special for newRelfilenode-in-transaction relations, 
- *	 though since we have a lock on the relation nobody else should be 
- *	 generating cache invalidation messages for it anyhow.
  *
  *	 We do this in two phases: the first pass deletes deletable items, and
  *	 the second one rebuilds the rebuildable items.  This is essential for
@@ -1959,6 +1956,14 @@ RelationCacheInvalidate(void)
 		/* Ignore new relations, since they are never SI targets */
 		if (relation->rd_createSubid != InvalidSubTransactionId)
 			continue;
+
+		/* 
+		 * Reset newRelfilenode hint. It is never used for correctness, only
+		 * for performance optimization. An incorrectly set hint can lead
+		 * to data loss in some circumstances, so play safe.
+		 */
+		if (relation->rd_newRelfilenodeSubid != InvalidSubTransactionId)
+			relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 
 		relcacheInvalsReceived++;
 
@@ -2009,6 +2014,17 @@ RelationCacheInvalidate(void)
 		RelationClearRelation(relation, true);
 	}
 	list_free(rebuildList);
+}
+
+/*
+ * RelationCacheResetAtEOXact
+ *
+ *  Register that work will be required at main-transaction commit or abort
+ */
+void
+RelationCacheResetAtEOXact(void)
+{
+	need_eoxact_work = true;
 }
 
 /*
@@ -2161,7 +2177,7 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 			if (isCommit)
 				relation->rd_newRelfilenodeSubid = parentSubid;
 			else
-			 relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
+				relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 		}
 
 		/*
@@ -2255,7 +2271,7 @@ RelationBuildLocalRelation(const char *relname,
 	rel->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 
 	/* must flag that we have rels created in this transaction */
-	need_eoxact_work = true;
+	RelationCacheResetAtEOXact();
 
 	/* is it a temporary relation? */
 	rel->rd_istemp = isTempNamespace(relnamespace);
@@ -2911,7 +2927,7 @@ RelationSetIndexList(Relation relation, List *indexIds, Oid oidIndex)
 	relation->rd_oidindex = oidIndex;
 	relation->rd_indexvalid = 2;	/* mark list as forced */
 	/* must flag that we have a forced index list */
-	need_eoxact_work = true;
+	RelationCacheResetAtEOXact();
 }
 
 /*
