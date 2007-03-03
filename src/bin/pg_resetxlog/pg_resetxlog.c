@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.57 2007/02/10 14:58:55 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.58 2007/03/03 20:02:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -464,7 +464,6 @@ GuessControlValues(void)
 
 	ControlFile.checkPointCopy.redo.xlogid = 0;
 	ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogLongPHD;
-	ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
 	ControlFile.checkPointCopy.ThisTimeLineID = 1;
 	ControlFile.checkPointCopy.nextXidEpoch = 0;
 	ControlFile.checkPointCopy.nextXid = (TransactionId) 514;	/* XXX */
@@ -600,7 +599,6 @@ RewriteControlFile(void)
 	ControlFile.checkPointCopy.redo.xlogid = newXlogId;
 	ControlFile.checkPointCopy.redo.xrecoff =
 		newXlogSeg * XLogSegSize + SizeOfXLogLongPHD;
-	ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
 	ControlFile.checkPointCopy.time = time(NULL);
 
 	ControlFile.state = DB_SHUTDOWNED;

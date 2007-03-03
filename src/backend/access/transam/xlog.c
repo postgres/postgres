@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.264 2007/02/14 05:00:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.265 2007/03/03 20:02:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4039,7 +4039,6 @@ BootStrapXLOG(void)
 	/* Set up information for the initial checkpoint record */
 	checkPoint.redo.xlogid = 0;
 	checkPoint.redo.xrecoff = SizeOfXLogLongPHD;
-	checkPoint.undo = checkPoint.redo;
 	checkPoint.ThisTimeLineID = ThisTimeLineID;
 	checkPoint.nextXidEpoch = 0;
 	checkPoint.nextXid = FirstNormalTransactionId;
@@ -4698,9 +4697,8 @@ StartupXLOG(void)
 	wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
 
 	ereport(LOG,
-	 (errmsg("redo record is at %X/%X; undo record is at %X/%X; shutdown %s",
+	 (errmsg("redo record is at %X/%X; shutdown %s",
 			 checkPoint.redo.xlogid, checkPoint.redo.xrecoff,
-			 checkPoint.undo.xlogid, checkPoint.undo.xrecoff,
 			 wasShutdown ? "TRUE" : "FALSE")));
 	ereport(LOG,
 			(errmsg("next transaction ID: %u/%u; next OID: %u",
@@ -4730,20 +4728,17 @@ StartupXLOG(void)
 	if (XLByteLT(RecPtr, checkPoint.redo))
 		ereport(PANIC,
 				(errmsg("invalid redo in checkpoint record")));
-	if (checkPoint.undo.xrecoff == 0)
-		checkPoint.undo = RecPtr;
 
 	/*
 	 * Check whether we need to force recovery from WAL.  If it appears to
 	 * have been a clean shutdown and we did not have a recovery.conf file,
 	 * then assume no recovery needed.
 	 */
-	if (XLByteLT(checkPoint.undo, RecPtr) ||
-		XLByteLT(checkPoint.redo, RecPtr))
+	if (XLByteLT(checkPoint.redo, RecPtr))
 	{
 		if (wasShutdown)
 			ereport(PANIC,
-				(errmsg("invalid redo/undo record in shutdown checkpoint")));
+				(errmsg("invalid redo record in shutdown checkpoint")));
 		InRecovery = true;
 	}
 	else if (ControlFile->state != DB_SHUTDOWNED)
@@ -5850,10 +5845,9 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 	{
 		CheckPoint *checkpoint = (CheckPoint *) rec;
 
-		appendStringInfo(buf, "checkpoint: redo %X/%X; undo %X/%X; "
+		appendStringInfo(buf, "checkpoint: redo %X/%X; "
 						 "tli %u; xid %u/%u; oid %u; multi %u; offset %u; %s",
 						 checkpoint->redo.xlogid, checkpoint->redo.xrecoff,
-						 checkpoint->undo.xlogid, checkpoint->undo.xrecoff,
 						 checkpoint->ThisTimeLineID,
 						 checkpoint->nextXidEpoch, checkpoint->nextXid,
 						 checkpoint->nextOid,

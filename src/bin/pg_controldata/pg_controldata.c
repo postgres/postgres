@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.32 2006/12/08 19:50:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.33 2007/03/03 20:02:27 momjian Exp $
  */
 #include "postgres.h"
 
@@ -168,9 +168,6 @@ main(int argc, char *argv[])
 	printf(_("Latest checkpoint's REDO location:    %X/%X\n"),
 		   ControlFile.checkPointCopy.redo.xlogid,
 		   ControlFile.checkPointCopy.redo.xrecoff);
-	printf(_("Latest checkpoint's UNDO location:    %X/%X\n"),
-		   ControlFile.checkPointCopy.undo.xlogid,
-		   ControlFile.checkPointCopy.undo.xrecoff);
 	printf(_("Latest checkpoint's TimeLineID:       %u\n"),
 		   ControlFile.checkPointCopy.ThisTimeLineID);
 	printf(_("Latest checkpoint's NextXID:          %u/%u\n"),
