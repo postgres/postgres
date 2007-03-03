@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.44 2007/01/05 22:19:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.45 2007/03/03 18:46:40 momjian Exp $
  *
  *	Interface:
  *
@@ -187,13 +187,14 @@ InitDeadLockChecking(void)
  * deadlock.  If resolution is impossible, return TRUE --- the caller
  * is then expected to abort the given proc's transaction.
  *
- * Caller must already have locked all partitions of the lock tables.
+ * Caller must already have locked all partitions of the lock tables,
+ * so standard error logging/reporting code is handled by caller.
  *
  * On failure, deadlock details are recorded in deadlockDetails[] for
  * subsequent printing by DeadLockReport().  That activity is separate
  * because we don't want to do it while holding all those LWLocks.
  */
-bool
+DeadlockState
 DeadLockCheck(PGPROC *proc)
 {
 	int			i,
@@ -203,6 +204,11 @@ DeadLockCheck(PGPROC *proc)
 	nCurConstraints = 0;
 	nPossibleConstraints = 0;
 	nWaitOrders = 0;
+
+#ifdef LOCK_DEBUG
+	if (Debug_deadlocks)
+		DumpAllLocks();
+#endif
 
 	/* Search for deadlocks and possible fixes */
 	if (DeadLockCheckRecurse(proc))
@@ -217,7 +223,7 @@ DeadLockCheck(PGPROC *proc)
 		if (!FindLockCycle(proc, possibleConstraints, &nSoftEdges))
 			elog(FATAL, "deadlock seems to have disappeared");
 
-		return true;			/* cannot find a non-deadlocked state */
+		return DS_HARD_DEADLOCK;	/* cannot find a non-deadlocked state */
 	}
 
 	/* Apply any needed rearrangements of wait queues */
@@ -249,7 +255,11 @@ DeadLockCheck(PGPROC *proc)
 		/* See if any waiters for the lock can be woken up now */
 		ProcLockWakeup(GetLocksMethodTable(lock), lock);
 	}
-	return false;
+
+	if (nWaitOrders > 0)
+		return DS_SOFT_DEADLOCK;
+	else
+		return DS_DEADLOCK_NOT_FOUND;
 }
 
 /*
@@ -896,7 +906,7 @@ DescribeLockTag(StringInfo buf, const LOCKTAG *lock)
 }
 
 /*
- * Report a detected deadlock, with available details.
+ * Report a detected DS_HARD_DEADLOCK, with available details.
  */
 void
 DeadLockReport(void)

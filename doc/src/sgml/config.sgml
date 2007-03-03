@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.113 2007/03/02 23:37:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.114 2007/03/03 18:46:40 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2946,6 +2946,21 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-log-lock-waits" xreflabel="log_lock_waits">
+      <term><varname>log_lock_waits</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>log_lock_waits</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Controls whether a log message is produced when a statement waits
+        longer than <xref linkend="guc-deadlock-timeout"> to acquire a
+        lock.  This is useful in determining if lock waits are causing
+        poor performance.  The default is <literal>off</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-log-temp-files" xreflabel="log_temp_files">
       <term><varname>log_temp_files</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -3980,17 +3995,18 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         This is the amount of time, in milliseconds, to wait on a lock
         before checking to see if there is a deadlock condition. The
         check for deadlock is relatively slow, so the server doesn't run
-        it every time it waits for a lock. We (optimistically?) assume
+        it every time it waits for a lock. We optimistically assume
         that deadlocks are not common in production applications and
         just wait on the lock for a while before starting the check for a
         deadlock. Increasing this value reduces the amount of time
         wasted in needless deadlock checks, but slows down reporting of
         real deadlock errors. The default is one second (<literal>1s</>),
         which is probably about the smallest value you would want in
-        practice. On a heavily loaded server you might want to raise it.
+        practice.  Set <xref linkend="guc-log-lock-waits"> to log deadlock
+        checks.  On a heavily loaded server you might want to raise it.
         Ideally the setting should exceed your typical transaction time,
-        so as to improve the odds that a lock will be released before
-        the waiter decides to check for deadlock.
+        so as to improve the odds that a lock will be released before the
+        waiter decides to check for deadlock.
        </para>
       </listitem>
      </varlistentry>

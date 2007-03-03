@@ -340,7 +340,7 @@
 					# e.g. '<%u%%%d> '
 #log_statement = 'none'			# none, ddl, mod, all
 #log_hostname = off
-
+#log_lock_waits = off			# Log lock waits longer than deadlock_timeout
 #log_temp_files = -1			# Log temporary files equal or larger
 					# than the specified number of kilobytes.
 					# -1 disables;  0 logs all temp files

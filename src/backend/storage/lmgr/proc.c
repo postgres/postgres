@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.184 2007/02/15 23:23:23 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.185 2007/03/03 18:46:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,7 @@
 /* GUC variables */
 int			DeadlockTimeout = 1000;
 int			StatementTimeout = 0;
+bool		log_lock_waits = false;
 
 /* Pointer to this process's PGPROC struct, if any */
 PGPROC	   *MyProc = NULL;
@@ -979,6 +980,7 @@ static void
 CheckDeadLock(void)
 {
 	int			i;
+	DeadlockState deadlock_state = DS_DEADLOCK_NOT_FOUND;
 
 	/*
 	 * Acquire exclusive lock on the entire shared lock data structures. Must
@@ -1004,60 +1006,77 @@ CheckDeadLock(void)
 	 * This is quicker than checking our semaphore's state, since no kernel
 	 * call is needed, and it is safe because we hold the lock partition lock.
 	 */
-	if (MyProc->links.prev == INVALID_OFFSET ||
-		MyProc->links.next == INVALID_OFFSET)
-		goto check_done;
-
-#ifdef LOCK_DEBUG
-	if (Debug_deadlocks)
-		DumpAllLocks();
-#endif
-
-	if (!DeadLockCheck(MyProc))
+	if (MyProc->links.prev != INVALID_OFFSET &&
+		MyProc->links.next != INVALID_OFFSET)
+		deadlock_state = DeadLockCheck(MyProc);
+	
+	if (deadlock_state == DS_HARD_DEADLOCK)
 	{
-		/* No deadlock, so keep waiting */
-		goto check_done;
+		/*
+		 * Oops.  We have a deadlock.
+		 *
+		 * Get this process out of wait state.	(Note: we could do this more
+		 * efficiently by relying on lockAwaited, but use this coding to preserve
+		 * the flexibility to kill some other transaction than the one detecting
+		 * the deadlock.)
+		 *
+		 * RemoveFromWaitQueue sets MyProc->waitStatus to STATUS_ERROR, so
+		 * ProcSleep will report an error after we return from the signal handler.
+		 */
+		Assert(MyProc->waitLock != NULL);
+		RemoveFromWaitQueue(MyProc, LockTagHashCode(&(MyProc->waitLock->tag)));
+
+		/*
+		 * Unlock my semaphore so that the interrupted ProcSleep() call can
+		 * finish.
+		 */
+		PGSemaphoreUnlock(&MyProc->sem);
+
+		/*
+		 * We're done here.  Transaction abort caused by the error that ProcSleep
+		 * will raise will cause any other locks we hold to be released, thus
+		 * allowing other processes to wake up; we don't need to do that here.
+		 * NOTE: an exception is that releasing locks we hold doesn't consider the
+		 * possibility of waiters that were blocked behind us on the lock we just
+		 * failed to get, and might now be wakable because we're not in front of
+		 * them anymore.  However, RemoveFromWaitQueue took care of waking up any
+		 * such processes.
+		 */
 	}
-
-	/*
-	 * Oops.  We have a deadlock.
-	 *
-	 * Get this process out of wait state.	(Note: we could do this more
-	 * efficiently by relying on lockAwaited, but use this coding to preserve
-	 * the flexibility to kill some other transaction than the one detecting
-	 * the deadlock.)
-	 *
-	 * RemoveFromWaitQueue sets MyProc->waitStatus to STATUS_ERROR, so
-	 * ProcSleep will report an error after we return from the signal handler.
-	 */
-	Assert(MyProc->waitLock != NULL);
-	RemoveFromWaitQueue(MyProc, LockTagHashCode(&(MyProc->waitLock->tag)));
-
-	/*
-	 * Unlock my semaphore so that the interrupted ProcSleep() call can
-	 * finish.
-	 */
-	PGSemaphoreUnlock(&MyProc->sem);
-
-	/*
-	 * We're done here.  Transaction abort caused by the error that ProcSleep
-	 * will raise will cause any other locks we hold to be released, thus
-	 * allowing other processes to wake up; we don't need to do that here.
-	 * NOTE: an exception is that releasing locks we hold doesn't consider the
-	 * possibility of waiters that were blocked behind us on the lock we just
-	 * failed to get, and might now be wakable because we're not in front of
-	 * them anymore.  However, RemoveFromWaitQueue took care of waking up any
-	 * such processes.
-	 */
 
 	/*
 	 * Release locks acquired at head of routine.  Order is not critical, so
 	 * do it back-to-front to avoid waking another CheckDeadLock instance
 	 * before it can get all the locks.
 	 */
-check_done:
 	for (i = NUM_LOCK_PARTITIONS; --i >= 0;)
 		LWLockRelease(FirstLockMgrLock + i);
+
+	/*
+	 * Issue any log messages requested.
+	 *
+	 * Deadlock ERROR messages are issued as part of transaction abort, so 
+	 * these messages should not raise error states intentionally.
+	 */
+	if (log_lock_waits)
+	{
+		switch (deadlock_state)
+		{
+			case DS_SOFT_DEADLOCK:
+				ereport(LOG,
+					(errmsg("deadlock avoided by rearranging lock order")));
+				break;
+			case DS_DEADLOCK_NOT_FOUND:
+				ereport(LOG,
+					(errmsg("statement waiting for lock for at least %d ms",
+								DeadlockTimeout)));
+				break;
+			case DS_HARD_DEADLOCK:
+				break;	/* ERROR message handled during abort */
+			default:
+				break;
+		}
+	}
 }
 
 
