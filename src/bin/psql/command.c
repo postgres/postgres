@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.178 2007/02/23 18:20:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.179 2007/03/03 17:19:11 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -863,7 +863,13 @@ exec_command(const char *cmd,
 
 	/* \t -- turn off headers and row count */
 	else if (strcmp(cmd, "t") == 0)
-		success = do_pset("tuples_only", NULL, &pset.popt, pset.quiet);
+	{
+		char	   *opt = psql_scan_slash_option(scan_state,
+												 OT_NORMAL, NULL, true);
+
+		success = do_pset("tuples_only", opt, &pset.popt, pset.quiet);
+		free(opt);
+	}
 
 
 	/* \T -- define html <table ...> attributes */
@@ -975,7 +981,13 @@ exec_command(const char *cmd,
 
 	/* \x -- toggle expanded table representation */
 	else if (strcmp(cmd, "x") == 0)
-		success = do_pset("expanded", NULL, &pset.popt, pset.quiet);
+	{
+		char	   *opt = psql_scan_slash_option(scan_state,
+												 OT_NORMAL, NULL, true);
+
+		success = do_pset("expanded", opt, &pset.popt, pset.quiet);
+		free(opt);
+	}
 
 	/* \z -- list table rights (equivalent to \dp) */
 	else if (strcmp(cmd, "z") == 0)
@@ -1552,7 +1564,10 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	/* set expanded/vertical mode */
 	else if (strcmp(param, "x") == 0 || strcmp(param, "expanded") == 0 || strcmp(param, "vertical") == 0)
 	{
-		popt->topt.expanded = !popt->topt.expanded;
+		if (value)
+			popt->topt.expanded = ParseVariableBool(value);
+		else
+			popt->topt.expanded = !popt->topt.expanded;
 		if (!quiet)
 			printf(popt->topt.expanded
 				   ? _("Expanded display is on.\n")
@@ -1562,7 +1577,10 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	/* locale-aware numeric output */
 	else if (strcmp(param, "numericlocale") == 0)
 	{
-		popt->topt.numericLocale = !popt->topt.numericLocale;
+		if (value)
+			popt->topt.numericLocale = ParseVariableBool(value);
+		else
+			popt->topt.numericLocale = !popt->topt.numericLocale;
 		if (!quiet)
 		{
 			if (popt->topt.numericLocale)
@@ -1616,7 +1634,10 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	/* toggle between full and tuples-only format */
 	else if (strcmp(param, "t") == 0 || strcmp(param, "tuples_only") == 0)
 	{
-		popt->topt.tuples_only = !popt->topt.tuples_only;
+		if (value)
+			popt->topt.tuples_only = ParseVariableBool(value);
+		else
+			popt->topt.tuples_only = !popt->topt.tuples_only;
 		if (!quiet)
 		{
 			if (popt->topt.tuples_only)
@@ -1667,6 +1688,11 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	{
 		if (value && pg_strcasecmp(value, "always") == 0)
 			popt->topt.pager = 2;
+		else if (value)
+			if (ParseVariableBool(value))
+				popt->topt.pager = 1;
+			else
+				popt->topt.pager = 0;
 		else if (popt->topt.pager == 1)
 			popt->topt.pager = 0;
 		else
@@ -1685,7 +1711,10 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	/* disable "(x rows)" footer */
 	else if (strcmp(param, "footer") == 0)
 	{
-		popt->default_footer = !popt->default_footer;
+		if (value)
+			popt->default_footer = ParseVariableBool(value);
+		else
+			popt->default_footer = !popt->default_footer;
 		if (!quiet)
 		{
 			if (popt->default_footer)

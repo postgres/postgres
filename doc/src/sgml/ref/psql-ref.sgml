@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.187 2007/02/23 18:20:58 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.188 2007/03/03 17:19:11 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1509,11 +1509,14 @@ lo_import 152801
           <term><literal>expanded</literal> (or <literal>x</literal>)</term>
           <listitem>
           <para>
-          Toggles between regular and expanded format. When expanded
-          format is enabled, query results are displayed in two
-          columns, with the column name on the left and the data on
-          the right. This mode is useful if the data wouldn't fit on the
-          screen in the normal <quote>horizontal</quote> mode.
+          You can specify an optional second argument, if it is provided it
+          may be either <literal>on</literal> or <literal>off</literal>
+          which will enable or disable expanded mode.  If the second
+          argument is not provided then we will toggle between regular and
+          expanded format. When expanded format is enabled, query results
+          are displayed in two columns, with the column name on the left and
+          the data on the right. This mode is useful if the data wouldn't fit
+          on the screen in the normal <quote>horizontal</quote> mode.
           </para>
 
           <para>
@@ -1553,8 +1556,11 @@ lo_import 152801
           <term><literal>footer</literal></term>
           <listitem>
           <para>
-          Toggles the display of the default footer <literal>(x
-          rows)</literal>.
+          You can specify an optional second argument, if it is provided it
+          may be either <literal>on</literal> or <literal>off</literal>
+          which will enable or disable display of the default footer
+          <literal>(x rows)</literal>.  If the second argument is not
+          provided then we will toggle between on and off.
           </para>
           </listitem>
           </varlistentry>
@@ -1563,9 +1569,12 @@ lo_import 152801
           <term><literal>numericlocale</literal></term>
           <listitem>
           <para>
-          Toggles the display of a locale-aware character to separate groups
-          of digits to the left of the decimal marker.  It also enables
-          a locale-aware decimal marker.
+          You can specify an optional second argument, if it is provided it
+          may be either <literal>on</literal> or <literal>off</literal>
+          which will enable or disable display of a locale-aware character
+          to seperate groups of digits to the left of the decimal marker.  If
+          the second argument is not provided then we will toggle between
+          on and off.
           </para>
           </listitem>
           </varlistentry>
@@ -1584,10 +1593,13 @@ lo_import 152801
           <term><literal>tuples_only</literal> (or <literal>t</literal>)</term>
           <listitem>
           <para>
-          Toggles between tuples only and full display. Full display
-          shows extra information such as column headers, titles, and
-          various footers. In tuples only mode, only actual table data
-          is shown.
+          You can specify an optional second argument, if it is provided it
+          may be either <literal>on</literal> or <literal>off</literal>
+          which will enable or display the tuples only mode.  If the
+          second argument is not provided then we will toggle between tuples
+          only and full display. Full display shows extra information such
+          as column headers, titles, and various footers. In tuples only
+          mode, only actual table data is shown.
           </para>
           </listitem>
           </varlistentry>
@@ -1636,7 +1648,10 @@ lo_import 152801
           (<application>psql</> does not do a perfect job of estimating
           when to use the pager.) <literal>\pset pager</> turns the
           pager on and off. Pager can also be set to <literal>always</>,
-          which causes the pager to be always used.
+          which causes the pager to be always used, or you can set the pager
+          to <literal>on</> which will enable the usage of the pager when
+          appropriate, or you can set the pager to <literal>off</> which
+          will disable the pager.
           </para>
           </listitem>
           </varlistentry>
