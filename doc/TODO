@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Fri Mar  2 22:08:41 EST 2007
+Last updated:		Sat Mar  3 12:23:58 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -812,7 +812,7 @@ Clients
 	  http://archives.postgresql.org/pgsql-hackers/2004-11/msg00014.php
 	  http://archives.postgresql.org/pgsql-hackers/2004-11/msg00014.php
 
-	o Allow psql \pset boolean variables to set to fixed values, rather
+	o -Allow psql \pset boolean variables to set to fixed values, rather
 	  than toggle
 	o Consistently display privilege information for all objects in psql
 	o Add auto-expanded mode so expanded output is used if the row
