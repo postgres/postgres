@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.61 2007/01/05 22:20:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.62 2007/03/03 19:52:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,6 +121,59 @@ lo_close(PGconn *conn, int fd)
 		return -1;
 	}
 }
+
+/*
+ * lo_truncate
+ *    truncates an existing large object to the given size
+ *
+ * returns 0 upon success
+ * returns -1 upon failure
+ */
+int
+lo_truncate(PGconn *conn, int fd, size_t len)
+{
+	PQArgBlock	argv[2];
+	PGresult   *res;
+	int			retval;
+	int			result_len;
+
+	if (conn->lobjfuncs == NULL)
+	{
+		if (lo_initialize(conn) < 0)
+			return -1;
+	}
+
+	/* Must check this on-the-fly because it's not there pre-8.3 */
+	if (conn->lobjfuncs->fn_lo_truncate == 0)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+			  libpq_gettext("cannot determine OID of function lo_truncate\n"));
+		return -1;
+	}
+
+	argv[0].isint = 1;
+	argv[0].len = 4;
+	argv[0].u.integer = fd;
+	
+	argv[1].isint = 1;
+	argv[1].len = 4;
+	argv[1].u.integer = len;
+
+	res = PQfn(conn, conn->lobjfuncs->fn_lo_truncate,
+			   &retval, &result_len, 1, argv, 2);
+
+	if (PQresultStatus(res) == PGRES_COMMAND_OK)
+	{
+		PQclear(res);
+		return retval;
+	}
+	else
+	{
+		PQclear(res);
+		return -1;
+	}
+}
+
 
 /*
  * lo_read
@@ -621,6 +674,7 @@ lo_initialize(PGconn *conn)
 	/*
 	 * Execute the query to get all the functions at once.	In 7.3 and later
 	 * we need to be schema-safe.  lo_create only exists in 8.1 and up.
+	 * lo_truncate only exists in 8.3 and up.
 	 */
 	if (conn->sversion >= 70300)
 		query = "select proname, oid from pg_catalog.pg_proc "
@@ -632,6 +686,7 @@ lo_initialize(PGconn *conn)
 			"'lo_unlink', "
 			"'lo_lseek', "
 			"'lo_tell', "
+			"'lo_truncate', "
 			"'loread', "
 			"'lowrite') "
 			"and pronamespace = (select oid from pg_catalog.pg_namespace "
@@ -684,6 +739,8 @@ lo_initialize(PGconn *conn)
 			lobjfuncs->fn_lo_lseek = foid;
 		else if (!strcmp(fname, "lo_tell"))
 			lobjfuncs->fn_lo_tell = foid;
+		else if (!strcmp(fname, "lo_truncate"))
+			lobjfuncs->fn_lo_truncate = foid;
 		else if (!strcmp(fname, "loread"))
 			lobjfuncs->fn_lo_read = foid;
 		else if (!strcmp(fname, "lowrite"))
@@ -694,7 +751,6 @@ lo_initialize(PGconn *conn)
 
 	/*
 	 * Finally check that we really got all large object interface functions
-	 * --- except lo_create, which may not exist.
 	 */
 	if (lobjfuncs->fn_lo_open == 0)
 	{

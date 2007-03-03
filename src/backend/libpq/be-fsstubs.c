@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.85 2007/02/27 23:48:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-fsstubs.c,v 1.86 2007/03/03 19:52:46 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -120,12 +120,10 @@ lo_close(PG_FUNCTION_ARGS)
 	int32		fd = PG_GETARG_INT32(0);
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
-		PG_RETURN_INT32(-1);
-	}
+
 #if FSDB
 	elog(DEBUG4, "lo_close(%d)", fd);
 #endif
@@ -152,12 +150,9 @@ lo_read(int fd, char *buf, int len)
 	int			status;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
-		return -1;
-	}
 
 	status = inv_read(cookies[fd], buf, len);
 
@@ -170,12 +165,9 @@ lo_write(int fd, const char *buf, int len)
 	int			status;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
-		return -1;
-	}
 
 	if ((cookies[fd]->flags & IFS_WRLOCK) == 0)
 		ereport(ERROR,
@@ -198,12 +190,9 @@ lo_lseek(PG_FUNCTION_ARGS)
 	int			status;
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
-		PG_RETURN_INT32(-1);
-	}
 
 	status = inv_seek(cookies[fd], offset, whence);
 
@@ -248,12 +237,9 @@ lo_tell(PG_FUNCTION_ARGS)
 	int32		fd = PG_GETARG_INT32(0);
 
 	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
-	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("invalid large-object descriptor: %d", fd)));
-		PG_RETURN_INT32(-1);
-	}
 
 	PG_RETURN_INT32(inv_tell(cookies[fd]));
 }
@@ -465,6 +451,26 @@ lo_export(PG_FUNCTION_ARGS)
 	inv_close(lobj);
 
 	PG_RETURN_INT32(1);
+}
+
+/*
+ * lo_truncate -
+ *	  truncate a large object to a specified length
+ */
+Datum
+lo_truncate(PG_FUNCTION_ARGS)
+{
+	int32		fd = PG_GETARG_INT32(0);
+	int32		len = PG_GETARG_INT32(1);
+
+	if (fd < 0 || fd >= cookies_size || cookies[fd] == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("invalid large-object descriptor: %d", fd)));
+
+	inv_truncate(cookies[fd], len);
+
+	PG_RETURN_INT32(0);
 }
 
 /*

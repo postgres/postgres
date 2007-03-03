@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.118 2007/01/26 17:45:41 neilc Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.119 2007/03/03 19:52:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,6 +239,7 @@ typedef struct pgLobjfuncs
 	Oid			fn_lo_unlink;	/* OID of backend function lo_unlink	*/
 	Oid			fn_lo_lseek;	/* OID of backend function lo_lseek		*/
 	Oid			fn_lo_tell;		/* OID of backend function lo_tell		*/
+	Oid			fn_lo_truncate;	/* OID of backend function lo_truncate	*/
 	Oid			fn_lo_read;		/* OID of backend function LOread		*/
 	Oid			fn_lo_write;	/* OID of backend function LOwrite		*/
 } PGlobjfuncs;

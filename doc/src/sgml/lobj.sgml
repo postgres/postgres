@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.44 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.45 2007/03/03 19:52:45 momjian Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -300,6 +300,37 @@ int lo_tell(PGconn *conn, int fd);
      return value is negative.
 </para>
 </sect2>
+
+<sect2>
+<title>Truncating a Large Object</title>
+
+<para>
+     To truncate a large object to a given length, call
+<synopsis>
+int lo_truncate(PGcon *conn, int fd, size_t len);
+</synopsis>
+     <indexterm><primary>lo_truncate</></> truncates the large object
+     descriptor <parameter>fd</> to length <parameter>len</>.  The
+     <parameter>fd</parameter> argument must have been returned by a
+     previous <function>lo_open</function>.  If <parameter>len</> is
+     greater than the current large object length, the large object
+     is extended with null bytes ('\0').
+</para>
+
+<para>
+     The file offset is not changed.
+</para>
+
+<para>
+     On success <function>lo_truncate</function> returns
+     zero.  On error, the return value is negative.
+</para>
+
+<para>
+     <function>lo_truncate</> is new as of <productname>PostgreSQL</productname>
+     8.3; if this function is run against an older server version, it will
+     fail and return a negative value.
+</para>
 
 <sect2>
 <title>Closing a Large Object Descriptor</title>

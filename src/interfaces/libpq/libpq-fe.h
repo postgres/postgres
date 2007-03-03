@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.135 2007/01/05 22:20:01 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.136 2007/03/03 19:52:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -489,6 +489,7 @@ extern int	lo_lseek(PGconn *conn, int fd, int offset, int whence);
 extern Oid	lo_creat(PGconn *conn, int mode);
 extern Oid	lo_create(PGconn *conn, Oid lobjId);
 extern int	lo_tell(PGconn *conn, int fd);
+extern int	lo_truncate(PGconn *conn, int fd, size_t len);
 extern int	lo_unlink(PGconn *conn, Oid lobjId);
 extern Oid	lo_import(PGconn *conn, const char *filename);
 extern int	lo_export(PGconn *conn, Oid lobjId, const char *filename);

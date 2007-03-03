@@ -83,6 +83,25 @@ SELECT lo_close(fd) FROM lotest_stash_values;
 
 END;
 
+-- Test truncation.
+BEGIN;
+UPDATE lotest_stash_values SET fd=lo_open(loid, CAST((2 | 4) * 16^4 AS integer));
+
+SELECT lo_truncate(fd, 10) FROM lotest_stash_values;
+SELECT loread(fd, 15) FROM lotest_stash_values;
+
+SELECT lo_truncate(fd, 10000) FROM lotest_stash_values;
+SELECT loread(fd, 10) FROM lotest_stash_values;
+SELECT lo_lseek(fd, 0, 2) FROM lotest_stash_values;
+SELECT lo_tell(fd) FROM lotest_stash_values;
+
+SELECT lo_truncate(fd, 5000) FROM lotest_stash_values;
+SELECT lo_lseek(fd, 0, 2) FROM lotest_stash_values;
+SELECT lo_tell(fd) FROM lotest_stash_values;
+
+SELECT lo_close(fd) FROM lotest_stash_values;
+END;
+
 -- lo_unlink(lobjId oid) returns integer
 -- return value appears to always be 1
 SELECT lo_unlink(loid) from lotest_stash_values;
