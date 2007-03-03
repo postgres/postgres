@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Feb 20 20:08:47 EST 2007
+Last updated:		Fri Mar  2 22:08:41 EST 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -505,6 +505,9 @@ SQL Commands
   so duplicate checking can be easily performed.  It is possible to
   do it without a unique index if we require the user to LOCK the table
   before the MERGE.
+  http://archives.postgresql.org/pgsql-hackers/2005-11/msg00501.php
+  http://archives.postgresql.org/pgsql-hackers/2005-11/msg00536.php
+
 
 * Add NOVICE output level for helpful messages like automatic sequence/index
   creation
