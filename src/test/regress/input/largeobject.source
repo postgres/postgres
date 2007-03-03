@@ -85,7 +85,7 @@ END;
 
 -- Test truncation.
 BEGIN;
-UPDATE lotest_stash_values SET fd=lo_open(loid, CAST((2 | 4) * 16^4 AS integer));
+UPDATE lotest_stash_values SET fd=lo_open(loid, CAST(x'20000' | x'40000' AS integer));
 
 SELECT lo_truncate(fd, 10) FROM lotest_stash_values;
 SELECT loread(fd, 15) FROM lotest_stash_values;
