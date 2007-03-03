@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.16 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.17 2007/03/03 19:32:54 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -588,8 +588,7 @@ checkSharedDependencies(Oid classId, Oid objectId)
 		 * Note: we don't ever suppress per-database totals, which should be
 		 * OK as long as there aren't too many databases ...
 		 */
-		descs.len = 0;			/* reset to empty */
-		descs.data[0] = '\0';
+		resetStringInfo(&descs);
 
 		if (numLocalDeps > 0)
 		{

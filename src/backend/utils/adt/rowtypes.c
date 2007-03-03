@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.18 2007/01/05 22:19:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/rowtypes.c,v 1.19 2007/03/03 19:32:55 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,8 +168,7 @@ record_in(PG_FUNCTION_ARGS)
 			/* Extract string for this column */
 			bool		inquote = false;
 
-			buf.len = 0;
-			buf.data[0] = '\0';
+			resetStringInfo(&buf);
 			while (inquote || !(*ptr == ',' || *ptr == ')'))
 			{
 				char		ch = *ptr++;

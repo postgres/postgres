@@ -1378,15 +1378,12 @@ build_tuplestore_recursively(char *key_fld,
 								   "incompatible.")));
 		}
 
+		initStringInfo(&branchstr);
+		initStringInfo(&chk_branchstr);
+		initStringInfo(&chk_current_key);
+
 		for (i = 0; i < proc; i++)
 		{
-			/* start a new branch */
-			initStringInfo(&branchstr);
-
-			/* need these to check for recursion */
-			initStringInfo(&chk_branchstr);
-			initStringInfo(&chk_current_key);
-
 			/* initialize branch for this pass */
 			appendStringInfo(&branchstr, "%s", branch);
 			appendStringInfo(&chk_branchstr, "%s%s%s", branch_delim, branch, branch_delim);
@@ -1459,10 +1456,14 @@ build_tuplestore_recursively(char *key_fld,
 													tupstore);
 
 			/* reset branch for next pass */
-			xpfree(branchstr.data);
-			xpfree(chk_branchstr.data);
-			xpfree(chk_current_key.data);
+			resetStringInfo(&branchstr);
+			resetStringInfo(&chk_branchstr);
+			resetStringInfo(&chk_current_key);
 		}
+
+		xpfree(branchstr.data);
+		xpfree(chk_branchstr.data);
+		xpfree(chk_current_key.data);
 	}
 
 	return tupstore;

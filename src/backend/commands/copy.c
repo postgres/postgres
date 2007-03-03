@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.276 2007/02/20 17:32:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.277 2007/03/03 19:32:54 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -466,9 +466,7 @@ CopySendEndOfRow(CopyState cstate)
 			break;
 	}
 
-	/* Reset fe_msgbuf to empty */
-	fe_msgbuf->len = 0;
-	fe_msgbuf->data[0] = '\0';
+	resetStringInfo(fe_msgbuf);
 }
 
 /*
@@ -2193,9 +2191,7 @@ CopyReadLine(CopyState cstate)
 {
 	bool		result;
 
-	/* Reset line_buf to empty */
-	cstate->line_buf.len = 0;
-	cstate->line_buf.data[0] = '\0';
+	resetStringInfo(&cstate->line_buf);
 
 	/* Mark that encoding conversion hasn't occurred yet */
 	cstate->line_buf_converted = false;
@@ -2262,8 +2258,7 @@ CopyReadLine(CopyState cstate)
 		if (cvt != cstate->line_buf.data)
 		{
 			/* transfer converted data back to line_buf */
-			cstate->line_buf.len = 0;
-			cstate->line_buf.data[0] = '\0';
+			resetStringInfo(&cstate->line_buf);
 			appendBinaryStringInfo(&cstate->line_buf, cvt, strlen(cvt));
 			pfree(cvt);
 		}
@@ -2686,9 +2681,7 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 		return 0;
 	}
 
-	/* reset attribute_buf to empty */
-	cstate->attribute_buf.len = 0;
-	cstate->attribute_buf.data[0] = '\0';
+	resetStringInfo(&cstate->attribute_buf);
 
 	/*
 	 * The de-escaped attributes will certainly not be longer than the input
@@ -2886,9 +2879,7 @@ CopyReadAttributesCSV(CopyState cstate, int maxfields, char **fieldvals)
 		return 0;
 	}
 
-	/* reset attribute_buf to empty */
-	cstate->attribute_buf.len = 0;
-	cstate->attribute_buf.data[0] = '\0';
+	resetStringInfo(&cstate->attribute_buf);
 
 	/*
 	 * The de-escaped attributes will certainly not be longer than the input
@@ -3040,12 +3031,9 @@ CopyReadBinaryAttribute(CopyState cstate,
 				 errmsg("invalid field size")));
 
 	/* reset attribute_buf to empty, and load raw data in it */
-	cstate->attribute_buf.len = 0;
-	cstate->attribute_buf.data[0] = '\0';
-	cstate->attribute_buf.cursor = 0;
+	resetStringInfo(&cstate->attribute_buf);
 
 	enlargeStringInfo(&cstate->attribute_buf, fld_size);
-
 	if (CopyGetData(cstate, cstate->attribute_buf.data,
 					fld_size, fld_size) != fld_size)
 		ereport(ERROR,

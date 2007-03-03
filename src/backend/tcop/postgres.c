@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.526 2007/03/02 23:37:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.527 2007/03/03 19:32:54 neilc Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -205,10 +205,7 @@ InteractiveBackend(StringInfo inBuf)
 	printf("backend> ");
 	fflush(stdout);
 
-	/* Reset inBuf to empty */
-	inBuf->len = 0;
-	inBuf->data[0] = '\0';
-	inBuf->cursor = 0;
+	resetStringInfo(inBuf);
 
 	for (;;)
 	{

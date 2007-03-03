@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.45 2007/03/03 18:46:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.46 2007/03/03 19:32:54 neilc Exp $
  *
  *	Interface:
  *
@@ -933,8 +933,7 @@ DeadLockReport(void)
 			appendStringInfoChar(&buf, '\n');
 
 		/* reset buf2 to hold next object description */
-		buf2.len = 0;
-		buf2.data[0] = '\0';
+		resetStringInfo(&buf2);
 
 		DescribeLockTag(&buf2, &info->locktag);
 

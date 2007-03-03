@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.190 2007/02/13 19:18:53 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.191 2007/03/03 19:32:54 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -860,10 +860,7 @@ pq_getstring(StringInfo s)
 {
 	int			i;
 
-	/* Reset string to empty */
-	s->len = 0;
-	s->data[0] = '\0';
-	s->cursor = 0;
+	resetStringInfo(s);
 
 	/* Read until we get the terminating '\0' */
 	for (;;)
@@ -915,10 +912,7 @@ pq_getmessage(StringInfo s, int maxlen)
 {
 	int32		len;
 
-	/* Reset message buffer to empty */
-	s->len = 0;
-	s->data[0] = '\0';
-	s->cursor = 0;
+	resetStringInfo(s);
 
 	/* Read message length word */
 	if (pq_getbytes((char *) &len, 4) == EOF)

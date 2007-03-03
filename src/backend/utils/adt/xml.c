@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.33 2007/03/01 14:52:04 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.34 2007/03/03 19:32:55 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -835,8 +835,7 @@ xml_init(void)
 	else
 	{
 		/* Reset pre-existing buffer to empty */
-		xml_err_buf->data[0] = '\0';
-		xml_err_buf->len = 0;
+		resetStringInfo(xml_err_buf);
 	}
 	/* Now that xml_err_buf exists, safe to call xml_errorHandler */
 	xmlSetGenericErrorFunc(NULL, xml_errorHandler);
@@ -1197,8 +1196,7 @@ xml_ereport(int level, int sqlcode,
 	if (xml_err_buf->len > 0)
 	{
 		detail = pstrdup(xml_err_buf->data);
-		xml_err_buf->data[0] = '\0';
-		xml_err_buf->len = 0;
+		resetStringInfo(xml_err_buf);
 	}
 	else
 		detail = NULL;
