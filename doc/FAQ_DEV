@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat Mar 3 11:12:29 EST 2007
+   Last updated: Mon Mar 5 13:03:51 EST 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -30,8 +30,7 @@ General Questions
    1.16) Where can I get a copy of the SQL standards?
    1.17) Where can I get technical assistance?
    1.18) How do I get involved in PostgreSQL web site development?
-   1.19) What is the timeline for the next major PostgreSQL release?
-   1.20) Why haven't you replaced CVS with SVN, Git, Monotone, VSS,
+   1.19) Why haven't you replaced CVS with SVN, Git, Monotone, VSS,
    <insert your favorite SCM system here>?
    
 Technical Questions
@@ -571,20 +570,7 @@ General Questions
    http://gborg.postgresql.org/project/pgweb/projdisplay.php , the code
    for the next version of the website is under the "portal" module.
    
-  1.19) What is the timeline for the next major PostgreSQL release?
-  
-   The development schedule for the 8.3 release is:
-     * March 1, 2007 - Initial community review of all major feature
-       patches
-     * April 1, 2007 - Feature freeze, all patches must be submitted for
-       review and application
-     * mid-May, 2007 - All patches applied, beta testing begins
-     * July, 2007 - Release of 8.3.0
-       
-   Patches that appear after appropriate dates are typically not applied
-   but held for the next major release.
-   
-  1.20) Why haven't you replaced CVS with SVN, Git, Monotone, VSS, <insert your
+  1.19) Why haven't you replaced CVS with SVN, Git, Monotone, VSS, <insert your
   favorite SCMS here>?
   
    Currently the core developers see no SCMS that will provide enough

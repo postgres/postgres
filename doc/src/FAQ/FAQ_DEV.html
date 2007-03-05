@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Sat Mar  3 11:12:29 EST 2007</P>
+    <P>Last updated: Mon Mar  5 13:03:51 EST 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)<BR>
@@ -55,9 +55,7 @@
     assistance?<BR>
      <A href="#item1.18">1.18</A>) How do I get involved in PostgreSQL web
     site development?<BR>
-     <A href="#item1.19">1.19</A>) What is the timeline for the next major
-    PostgreSQL release?<BR>
-     <A href="#item1.20">1.20</A>) Why haven't you replaced CVS with SVN, Git, 
+     <A href="#item1.19">1.19</A>) Why haven't you replaced CVS with SVN, Git,
     Monotone, VSS, &lt;insert your favorite SCM system here&gt;?
 
 
@@ -713,35 +711,23 @@
     , the code for the next version of the website is under the
     "portal" module.</P> 
 
-    <H3 id="item1.19">1.19) What is the timeline for the next major
-        PostgreSQL release?</H3>
-    
-        <P>The development schedule for the 8.3 release is:</P>
-        <UL>
-        <LI>March 1, 2007 - Initial community review of all major feature patches</LI>
-        <LI>April 1, 2007 -  Feature freeze, all patches must be submitted for review and application</LI>
-        <LI>mid-May, 2007 - All patches applied, beta testing begins</LI>
-        <LI>July, 2007 - Release of 8.3.0</LI>
-        </UL>
-    
-        <P>Patches that appear after appropriate dates are typically
-        not applied but held for the next major release.</P>
+    <H3 id="item1.19">1.19) Why haven't you replaced CVS with SVN, Git,
+    Monotone, VSS, &lt;insert your favorite SCMS here&gt;?</H3>
 
-    <H3 id="item1.20">1.20) Why haven't you replaced CVS with SVN, Git, 
-        Monotone, VSS, &lt;insert your favorite SCMS here&gt;?</H3>
+    <P>Currently the core developers see no SCMS that will provide 
+    enough benefit to outwiegh the pain involved in moving to a new
+    SCMS. Typical problems that must be addressed by any new SCMS include:</P>
 
-        <P>Currently the core developers see no SCMS that will provide 
-        enough benefit to outwiegh the pain involved in moving to a new
-        SCMS. Typical problems that must be addressed by any new SCMS include:</P>
-            <ul>
-            <li>Run natively on all of our <a href="http://www.postgresql.org/docs/current/interactive/supported-platforms.html">supported platforms</a>.</li>
-            <li>Integrate into the <a href="http://pgbuildfarm.org/">Buildfarm</a>.</li>
-            <li>Import our entire CVS Repository while preserving complete history.</li>
-            <li>Allow for anonymous checkouts.</li>
-            </ul>
-        <P>Currently there is no intention for switching to a new SCMS until at least the
-        end of the 8.4 development cycle sometime in late 2008. For more information
-        please refer to the mailing list archives.</P>
+    <ul>
+    <li>Run natively on all of our <a href="http://www.postgresql.org/docs/current/interactive/supported-platforms.html">supported platforms</a>.</li>
+    <li>Integrate into the <a href="http://pgbuildfarm.org/">Buildfarm</a>.</li>
+    <li>Import our entire CVS Repository while preserving complete history.</li>
+    <li>Allow for anonymous checkouts.</li>
+    </ul>
+
+    <P>Currently there is no intention for switching to a new SCMS until at least the
+    end of the 8.4 development cycle sometime in late 2008. For more information
+    please refer to the mailing list archives.</P>
      
 
       <H2>Technical Questions</H2>
