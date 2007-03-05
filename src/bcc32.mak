@@ -1,8 +1,7 @@
-# $PostgreSQL: pgsql/src/bcc32.mak,v 1.4 2006/10/06 18:53:53 tgl Exp $
+# $PostgreSQL: pgsql/src/bcc32.mak,v 1.5 2007/03/05 14:18:38 mha Exp $
 
 # Makefile for Borland C++ 5.5 (or compat)
-# Top-file makefile for Win32 parts of postgresql.
-# Note that most parts are not ported to Win32!
+# Top-file makefile for building Win32 libpq with Borland C++.
 
 !IF "$(CFG)" != "Release" && "$(CFG)" != "Debug"
 !MESSAGE Invalid configuration "$(CFG)" specified.
@@ -13,7 +12,7 @@
 !MESSAGE
 !MESSAGE Possible choices for configuration are:
 !MESSAGE
-!MESSAGE "Release" (Win32 Release )
+!MESSAGE "Release" (Win32 Release)
 !MESSAGE "Debug" (Win32 Debug)
 !MESSAGE
 !ENDIF
@@ -31,16 +30,11 @@ ALL:
    cd ..
    cd interfaces\libpq
    make -N -DCFG=$(CFG) /f bcc32.mak 
-   cd ..\..\bin\psql
-   make -N -DCFG=$(CFG) /f bcc32.mak
    cd ..\..
    echo All Win32 parts have been built!
 
 CLEAN:
    cd interfaces\libpq
-   make -N -DCFG=Release /f bcc32.mak CLEAN
-   make -N -DCFG=Debug /f bcc32.mak CLEAN
-   cd ..\..\bin\psql
    make -N -DCFG=Release /f bcc32.mak CLEAN
    make -N -DCFG=Debug /f bcc32.mak CLEAN
    cd ..\..
