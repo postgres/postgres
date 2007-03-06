@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.5 2007/02/02 00:04:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.6 2007/03/06 22:45:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -31,6 +31,7 @@
 #include "optimizer/var.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
+#include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -1414,6 +1415,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 			newrelabel->arg = (Expr *) arg;
 			newrelabel->resulttype = relabel->resulttype;
 			newrelabel->resulttypmod = relabel->resulttypmod;
+			newrelabel->relabelformat = relabel->relabelformat;
 			return (Node *) newrelabel;
 		}
 	}
@@ -1978,6 +1980,21 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	newexpr = copyObject(newexpr);
 
 	MemoryContextDelete(mycxt);
+
+	/*
+	 * Since check_sql_fn_retval allows binary-compatibility cases, the
+	 * expression we now have might return some type that's only binary
+	 * compatible with the original expression result type.  To avoid
+	 * confusing matters, insert a RelabelType in such cases.
+	 */
+	if (exprType(newexpr) != funcform->prorettype)
+	{
+		Assert(IsBinaryCoercible(exprType(newexpr), funcform->prorettype));
+		newexpr = (Node *) makeRelabelType((Expr *) newexpr,
+										   funcform->prorettype,
+										   -1,
+										   COERCE_IMPLICIT_CAST);
+	}
 
 	/*
 	 * Recursively try to simplify the modified expression.  Here we must
