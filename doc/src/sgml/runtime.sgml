@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.378 2007/02/16 16:37:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.379 2007/03/06 09:54:23 petere Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1201,15 +1201,21 @@ Out of Memory: Killed process 12345 (postgres).
 
    <para>
     One way to avoid this problem is to run
-    <productname>PostgreSQL</productname>
-    on a machine where you can be sure that other processes will not
-    run the machine out of memory.
+    <productname>PostgreSQL</productname> on a machine where you can
+    be sure that other processes will not run the machine out of
+    memory.  If memory is tight, increasing the swap space of the
+    operating system can help avoiding the problem, because the
+    out-of-memory (OOM) killer is invoked whenever physical memory and
+    swap space are exhausted.
    </para>
 
    <para>
-    On Linux 2.6 and later, a better solution is to modify the kernel's
-    behavior so that it will not <quote>overcommit</> memory.  This is
-    done by selecting strict overcommit mode via <command>sysctl</command>:
+    On Linux 2.6 and later, an additional measure is to modify the
+    kernel's behavior so that it will not <quote>overcommit</> memory.
+    Although this setting will not prevent the OOM killer from
+    invoking altogether, it will lower the chances significantly and
+    will therefore lead to more robust system behavior.  This is done
+    by selecting strict overcommit mode via <command>sysctl</command>:
 <programlisting>
 sysctl -w vm.overcommit_memory=2
 </programlisting>
