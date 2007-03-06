@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.236 2007/02/22 22:00:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.237 2007/03/06 22:45:16 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1976,6 +1976,7 @@ eval_const_expressions_mutator(Node *node,
 			newrelabel->arg = (Expr *) arg;
 			newrelabel->resulttype = relabel->resulttype;
 			newrelabel->resulttypmod = relabel->resulttypmod;
+			newrelabel->relabelformat = relabel->relabelformat;
 			return (Node *) newrelabel;
 		}
 	}
@@ -2929,7 +2930,8 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * no rewriting was needed; that's probably not important, but let's be
 	 * careful.
 	 */
-	(void) check_sql_fn_retval(funcid, result_type, querytree_list, NULL);
+	if (check_sql_fn_retval(funcid, result_type, querytree_list, NULL))
+		goto fail;				/* reject whole-tuple-result cases */
 
 	/*
 	 * Additional validity checks on the expression.  It mustn't return a set,
@@ -3013,6 +3015,21 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	newexpr = copyObject(newexpr);
 
 	MemoryContextDelete(mycxt);
+
+	/*
+	 * Since check_sql_fn_retval allows binary-compatibility cases, the
+	 * expression we now have might return some type that's only binary
+	 * compatible with the original expression result type.  To avoid
+	 * confusing matters, insert a RelabelType in such cases.
+	 */
+	if (exprType(newexpr) != funcform->prorettype)
+	{
+		Assert(IsBinaryCoercible(exprType(newexpr), funcform->prorettype));
+		newexpr = (Node *) makeRelabelType((Expr *) newexpr,
+										   funcform->prorettype,
+										   -1,
+										   COERCE_IMPLICIT_CAST);
+	}
 
 	/*
 	 * Recursively try to simplify the modified expression.  Here we must add
