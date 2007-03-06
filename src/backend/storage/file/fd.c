@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.136 2007/02/28 15:59:30 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.137 2007/03/06 02:06:14 momjian Exp $
  *
  * NOTES:
  *
@@ -46,8 +46,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "commands/tablespace.h"
-
 #include "miscadmin.h"
 #include "access/xact.h"
 #include "storage/fd.h"
@@ -78,7 +76,6 @@
  */
 #define FD_MINFREE				10
 
-#define OIDCHARS        10                      /* max chars printed by %u */
 
 /*
  * A number of platforms allow individual processes to open many more files
@@ -883,51 +880,13 @@ OpenTemporaryFile(bool interXact)
 {
 	char		tempfilepath[MAXPGPATH];
 	File		file;
-	Oid		oid;
-	char		*path;
-	int		pathlen;
 
 	/*
-	 * Take a look what should be the path of the temporary file
+	 * Generate a tempfile name that should be unique within the current
+	 * database instance.
 	 */
-	oid = GetTempTablespace();
-	if (oid != InvalidOid)
-	{
-		/*
-		 * As we got a valid tablespace, try to create the
-		 * file there
-		 */
-
-		pathlen = strlen("pg_tblspc/") + OIDCHARS + 1;
-		path = (char *) palloc(pathlen);
-		snprintf(path, pathlen, "pg_tblspc/%u", oid );
-
-		/*
-		 * Generate a tempfile name that should be unique within the current
-		 * database instance.
-		 */
-		snprintf(tempfilepath, sizeof(tempfilepath),
-				 "%s/%s%d.%ld", path, PG_TEMP_FILE_PREFIX,
-				 MyProcPid, tempFileCounter++);
-		pfree(path);
-		file = PathNameOpenFile(tempfilepath,
-							O_RDWR | O_CREAT | O_TRUNC | PG_BINARY,
-							0600);
-	}
-
-	/*
-	 * Create a normal temporary file if no tablespace returned or
-	 * couldn't create the file in the tablespace "oid"
-	 */
-	if (oid == InvalidOid || file <= 0) 
-	{
-		path = PG_TEMP_FILES_DIR;
-		/*
-		 * Generate a tempfile name that should be unique within the current
-		 * database instance.
-		 */
-		snprintf(tempfilepath, sizeof(tempfilepath),
-				 "%s/%s%d.%ld", path, PG_TEMP_FILE_PREFIX,
+	snprintf(tempfilepath, sizeof(tempfilepath),
+			 "%s/%s%d.%ld", PG_TEMP_FILES_DIR, PG_TEMP_FILE_PREFIX,
 			 MyProcPid, tempFileCounter++);
 
 	/*
@@ -959,8 +918,7 @@ OpenTemporaryFile(bool interXact)
 		if (file <= 0)
 			elog(ERROR, "could not create temporary file \"%s\": %m",
 				 tempfilepath);
-		}
- 	}
+	}
 
 	/* Mark it for deletion at close */
 	VfdCache[file].fdstate |= FD_TEMPORARY;

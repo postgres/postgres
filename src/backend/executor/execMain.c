@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.289 2007/02/27 01:11:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.290 2007/03/06 02:06:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2439,10 +2439,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("tablespace \"%s\" does not exist",
 							into->tableSpaceName)));
-	}
-	else if (into->rel->istemp)
-	{
-		tablespaceId = GetTempTablespace();
 	}
 	else
 	{
