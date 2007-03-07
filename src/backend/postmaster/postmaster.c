@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.525 2007/02/16 17:06:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.526 2007/03/07 13:35:02 alvherre Exp $
  *
  * NOTES
  *
@@ -275,7 +275,7 @@ static void SignalChildren(int signal);
 static void SignalSomeChildren(int signal, bool only_autovac);
 static int	CountChildren(void);
 static bool CreateOptsFile(int argc, char *argv[], char *fullprogname);
-static pid_t StartChildProcess(int xlop);
+static pid_t StartChildProcess(AuxProcType type);
 static void StartAutovacuumWorker(void);
 
 #ifdef EXEC_BACKEND
@@ -328,7 +328,7 @@ typedef struct
 	LWLock	   *LWLockArray;
 	slock_t    *ProcStructLock;
 	PROC_HDR   *ProcGlobal;
-	PGPROC	   *DummyProcs;
+	PGPROC	   *AuxiliaryProcs;
 	InheritableSocket pgStatSock;
 	pid_t		PostmasterPid;
 	TimestampTz PgStartTime;
@@ -360,8 +360,8 @@ static void ShmemBackendArrayAdd(Backend *bn);
 static void ShmemBackendArrayRemove(pid_t pid);
 #endif   /* EXEC_BACKEND */
 
-#define StartupDataBase()		StartChildProcess(BS_XLOG_STARTUP)
-#define StartBackgroundWriter() StartChildProcess(BS_XLOG_BGWRITER)
+#define StartupDataBase()		StartChildProcess(StartupProcess)
+#define StartBackgroundWriter() StartChildProcess(BgWriterProcess)
 
 /* Macros to check exit status of a child process */
 #define EXIT_STATUS_0(st)  ((st) == 0)
@@ -3433,12 +3433,12 @@ SubPostmasterMain(int argc, char *argv[])
 		InitShmemAccess(UsedShmemSegAddr);
 
 		/* Need a PGPROC to run CreateSharedMemoryAndSemaphores */
-		InitDummyProcess();
+		InitAuxiliaryProcess();
 
 		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, 0);
 
-		BootstrapMain(argc - 2, argv + 2);
+		AuxiliaryProcessMain(argc - 2, argv + 2);
 		proc_exit(0);
 	}
 	if (strcmp(argv[1], "--forkavlauncher") == 0)
@@ -3450,7 +3450,7 @@ SubPostmasterMain(int argc, char *argv[])
 		InitShmemAccess(UsedShmemSegAddr);
 
 		/* Need a PGPROC to run CreateSharedMemoryAndSemaphores */
-		InitDummyProcess();
+		InitAuxiliaryProcess();
 
 		/* Attach process to shared data structures */
 		CreateSharedMemoryAndSemaphores(false, 0);
@@ -3700,21 +3700,21 @@ CountChildren(void)
 
 
 /*
- * StartChildProcess -- start a non-backend child process for the postmaster
+ * StartChildProcess -- start an auxiliary process for the postmaster
  *
  * xlop determines what kind of child will be started.	All child types
- * initially go to BootstrapMain, which will handle common setup.
+ * initially go to AuxiliaryProcessMain, which will handle common setup.
  *
  * Return value of StartChildProcess is subprocess' PID, or 0 if failed
  * to start subprocess.
  */
 static pid_t
-StartChildProcess(int xlop)
+StartChildProcess(AuxProcType type)
 {
 	pid_t		pid;
 	char	   *av[10];
 	int			ac = 0;
-	char		xlbuf[32];
+	char		typebuf[32];
 
 	/*
 	 * Set up command-line arguments for subprocess
@@ -3726,8 +3726,8 @@ StartChildProcess(int xlop)
 	av[ac++] = NULL;			/* filled in by postmaster_forkexec */
 #endif
 
-	snprintf(xlbuf, sizeof(xlbuf), "-x%d", xlop);
-	av[ac++] = xlbuf;
+	snprintf(typebuf, sizeof(typebuf), "-x%d", type);
+	av[ac++] = typebuf;
 
 	av[ac] = NULL;
 	Assert(ac < lengthof(av));
@@ -3752,7 +3752,7 @@ StartChildProcess(int xlop)
 		MemoryContextDelete(PostmasterContext);
 		PostmasterContext = NULL;
 
-		BootstrapMain(ac, av);
+		AuxiliaryProcessMain(ac, av);
 		ExitPostmaster(0);
 	}
 #endif   /* EXEC_BACKEND */
@@ -3763,13 +3763,13 @@ StartChildProcess(int xlop)
 		int			save_errno = errno;
 
 		errno = save_errno;
-		switch (xlop)
+		switch (type)
 		{
-			case BS_XLOG_STARTUP:
+			case StartupProcess:
 				ereport(LOG,
 						(errmsg("could not fork startup process: %m")));
 				break;
-			case BS_XLOG_BGWRITER:
+			case BgWriterProcess:
 				ereport(LOG,
 				   (errmsg("could not fork background writer process: %m")));
 				break;
@@ -3783,7 +3783,7 @@ StartChildProcess(int xlop)
 		 * fork failure is fatal during startup, but there's no need to choke
 		 * immediately if starting other child types fails.
 		 */
-		if (xlop == BS_XLOG_STARTUP)
+		if (type == StartupProcess)
 			ExitPostmaster(1);
 		return 0;
 	}
@@ -3887,7 +3887,7 @@ extern slock_t *ShmemLock;
 extern LWLock *LWLockArray;
 extern slock_t *ProcStructLock;
 extern PROC_HDR *ProcGlobal;
-extern PGPROC *DummyProcs;
+extern PGPROC *AuxiliaryProcs;
 extern int	pgStatSock;
 
 #ifndef WIN32
@@ -3930,7 +3930,7 @@ save_backend_variables(BackendParameters * param, Port *port,
 	param->LWLockArray = LWLockArray;
 	param->ProcStructLock = ProcStructLock;
 	param->ProcGlobal = ProcGlobal;
-	param->DummyProcs = DummyProcs;
+	param->AuxiliaryProcs = AuxiliaryProcs;
 	write_inheritable_socket(&param->pgStatSock, pgStatSock, childPid);
 
 	param->PostmasterPid = PostmasterPid;
@@ -4133,7 +4133,7 @@ restore_backend_variables(BackendParameters * param, Port *port)
 	LWLockArray = param->LWLockArray;
 	ProcStructLock = param->ProcStructLock;
 	ProcGlobal = param->ProcGlobal;
-	DummyProcs = param->DummyProcs;
+	AuxiliaryProcs = param->AuxiliaryProcs;
 	read_inheritable_socket(&pgStatSock, &param->pgStatSock);
 
 	PostmasterPid = param->PostmasterPid;

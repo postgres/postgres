@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.32 2007/02/15 23:23:23 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.33 2007/03/07 13:35:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -246,7 +246,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 #endif
 
 	/*
-	 * Set up signal handlers.	Since this is a "dummy" process, it has
+	 * Set up signal handlers.	Since this is an auxiliary process, it has
 	 * particular signal requirements -- no deadlock checker or sinval
 	 * catchup, for example.
 	 *
@@ -277,7 +277,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	 * had to do some stuff with LWLocks).
 	 */
 #ifndef EXEC_BACKEND
-	InitDummyProcess();
+	InitAuxiliaryProcess();
 #endif
 
 	/*

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.86 2007/01/09 02:14:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.87 2007/03/07 13:35:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,10 +235,7 @@ Boot_InsertStmt:
 						elog(ERROR, "incorrect number of columns in row (expected %d, got %d)",
 							 numattr, num_columns_read);
 					if (boot_reldesc == NULL)
-					{
-						elog(ERROR, "relation not open");
-						err_out();
-					}
+						elog(FATAL, "relation not open");
 					InsertOneTuple($2);
 					do_end();
 				}

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.232 2007/02/16 02:10:07 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.233 2007/03/07 13:35:02 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +19,6 @@
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
-
-#define BOOTSTRAP_INCLUDE		/* mask out stuff in tcop/tcopprot.h */
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -48,8 +46,10 @@ extern char *optarg;
 
 #define ALLOC(t, c)		((t *) calloc((unsigned)(c), sizeof(t)))
 
+static void CheckerModeMain(void);
+static void BootstrapModeMain(void);
 static void bootstrap_signals(void);
-static void ShutdownDummyProcess(int code, Datum arg);
+static void ShutdownAuxiliaryProcess(int code, Datum arg);
 static hashnode *AddStr(char *str, int strlength, int mderef);
 static Form_pg_attribute AllocateAttribute(void);
 static int	CompHash(char *str, int len);
@@ -166,7 +166,6 @@ struct typmap
 static struct typmap **Typ = NULL;
 static struct typmap *Ap = NULL;
 
-static int	Warnings = 0;
 static char Blanks[MAXATTR];
 
 Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
@@ -193,23 +192,19 @@ static IndexList *ILHead = NULL;
 
 
 /*
- *	 The main entry point for running the backend in bootstrap mode
+ *	 AuxiliaryProcessMain
  *
- *	 The bootstrap mode is used to initialize the template database.
- *	 The bootstrap backend doesn't speak SQL, but instead expects
- *	 commands in a special bootstrap language.
+ *	 The main entry point for auxiliary processes, such as the bgwriter,
+ *	 bootstrapper and the shared memory checker code.
  *
- *	 For historical reasons, BootstrapMain is also used as the control
- *	 routine for non-backend subprocesses launched by the postmaster,
- *	 such as startup and shutdown.
+ *	 This code is here just because of historical reasons.
  */
-int
-BootstrapMain(int argc, char *argv[])
+void
+AuxiliaryProcessMain(int argc, char *argv[])
 {
 	char	   *progname = argv[0];
-	int			i;
 	int			flag;
-	int			xlogop = BS_XLOG_NOP;
+	AuxProcType	auxType = CheckerProcess;
 	char	   *userDoption = NULL;
 
 	/*
@@ -278,7 +273,7 @@ BootstrapMain(int argc, char *argv[])
 				strlcpy(OutputFileName, optarg, MAXPGPATH);
 				break;
 			case 'x':
-				xlogop = atoi(optarg);
+				auxType = atoi(optarg);
 				break;
 			case 'c':
 			case '-':
@@ -328,12 +323,12 @@ BootstrapMain(int argc, char *argv[])
 	{
 		const char *statmsg;
 
-		switch (xlogop)
+		switch (auxType)
 		{
-			case BS_XLOG_STARTUP:
+			case StartupProcess:
 				statmsg = "startup process";
 				break;
-			case BS_XLOG_BGWRITER:
+			case BgWriterProcess:
 				statmsg = "writer process";
 				break;
 			default:
@@ -372,9 +367,9 @@ BootstrapMain(int argc, char *argv[])
 	BaseInit();
 
 	/*
-	 * When we are a dummy process, we aren't going to do the full
+	 * When we are an auxiliary process, we aren't going to do the full
 	 * InitPostgres pushups, but there are a couple of things that need to get
-	 * lit up even in a dummy process.
+	 * lit up even in an auxiliary process.
 	 */
 	if (IsUnderPostmaster)
 	{
@@ -383,14 +378,14 @@ BootstrapMain(int argc, char *argv[])
 		 * this was already done by SubPostmasterMain().
 		 */
 #ifndef EXEC_BACKEND
-		InitDummyProcess();
+		InitAuxiliaryProcess();
 #endif
 
 		/* finish setting up bufmgr.c */
 		InitBufferPoolBackend();
 
 		/* register a shutdown callback for LWLock cleanup */
-		on_shmem_exit(ShutdownDummyProcess, 0);
+		on_shmem_exit(ShutdownAuxiliaryProcess, 0);
 	}
 
 	/*
@@ -398,36 +393,47 @@ BootstrapMain(int argc, char *argv[])
 	 */
 	SetProcessingMode(NormalProcessing);
 
-	switch (xlogop)
+	switch (auxType)
 	{
-		case BS_XLOG_NOP:
+		case CheckerProcess:
 			bootstrap_signals();
-			break;
+			CheckerModeMain();
+			proc_exit(1);		/* should never return */
 
-		case BS_XLOG_BOOTSTRAP:
+		case BootstrapProcess:
 			bootstrap_signals();
 			BootStrapXLOG();
 			StartupXLOG();
-			break;
+			BootstrapModeMain();
+			proc_exit(1);		/* should never return */
 
-		case BS_XLOG_STARTUP:
+		case StartupProcess:
 			bootstrap_signals();
 			StartupXLOG();
 			LoadFreeSpaceMap();
 			BuildFlatFiles(false);
 			proc_exit(0);		/* startup done */
 
-		case BS_XLOG_BGWRITER:
+		case BgWriterProcess:
 			/* don't set signals, bgwriter has its own agenda */
 			InitXLOGAccess();
 			BackgroundWriterMain();
 			proc_exit(1);		/* should never return */
-
+			
 		default:
-			elog(PANIC, "unrecognized XLOG op: %d", xlogop);
+			elog(PANIC, "unrecognized process type: %d", auxType);
 			proc_exit(1);
 	}
+}
 
+/*
+ * In shared memory checker mode, all we really want to do is create shared
+ * memory and semaphores (just to prove we can do it with the current GUC
+ * settings).
+ */
+static void
+CheckerModeMain(void)
+{
 	/*
 	 * We must be getting invoked for bootstrap mode
 	 */
@@ -439,15 +445,31 @@ BootstrapMain(int argc, char *argv[])
 	 * Do backend-like initialization for bootstrap mode
 	 */
 	InitProcess();
-	(void) InitPostgres(NULL, InvalidOid, NULL, NULL);
+	InitPostgres(NULL, InvalidOid, NULL, NULL);
+	proc_exit(0);
+}
+
+/*
+ *	 The main entry point for running the backend in bootstrap mode
+ *
+ *	 The bootstrap mode is used to initialize the template database.
+ *	 The bootstrap backend doesn't speak SQL, but instead expects
+ *	 commands in a special bootstrap language.
+ */
+static void
+BootstrapModeMain(void)
+{
+	int			i;
+
+	Assert(!IsUnderPostmaster);
+
+	SetProcessingMode(BootstrapProcessing);
 
 	/*
-	 * In NOP mode, all we really want to do is create shared memory and
-	 * semaphores (just to prove we can do it with the current GUC settings).
-	 * So, quit now.
+	 * Do backend-like initialization for bootstrap mode
 	 */
-	if (xlogop == BS_XLOG_NOP)
-		proc_exit(0);
+	InitProcess();
+	InitPostgres(NULL, InvalidOid, NULL, NULL);
 
 	/* Initialize stuff for bootstrap-file processing */
 	for (i = 0; i < MAXATTR; i++)
@@ -468,14 +490,10 @@ BootstrapMain(int argc, char *argv[])
 	/* Perform a checkpoint to ensure everything's down to disk */
 	SetProcessingMode(NormalProcessing);
 	CreateCheckPoint(true, true);
-	SetProcessingMode(BootstrapProcessing);
 
 	/* Clean up and exit */
-	StartTransactionCommand();
 	cleanup();
-
-	/* not reached, here to make compiler happy */
-	return 0;
+	proc_exit(0);
 }
 
 
@@ -538,29 +556,17 @@ bootstrap_signals(void)
 }
 
 /*
- * Begin shutdown of a dummy process.  This is approximately the equivalent
- * of ShutdownPostgres() in postinit.c.  We can't run transactions in a
- * dummy process, so most of the work of AbortTransaction() is not needed,
+ * Begin shutdown of an auxiliary process.  This is approximately the equivalent
+ * of ShutdownPostgres() in postinit.c.  We can't run transactions in an
+ * auxiliary process, so most of the work of AbortTransaction() is not needed,
  * but we do need to make sure we've released any LWLocks we are holding.
  * (This is only critical during an error exit.)
  */
 static void
-ShutdownDummyProcess(int code, Datum arg)
+ShutdownAuxiliaryProcess(int code, Datum arg)
 {
 	LWLockReleaseAll();
 }
-
-/* ----------------
- *		error handling / abort routines
- * ----------------
- */
-void
-err_out(void)
-{
-	Warnings++;
-	cleanup();
-}
-
 
 /* ----------------------------------------------------------------
  *				MANUAL BACKEND INTERACTIVE INTERFACE COMMANDS
@@ -815,15 +821,7 @@ InsertOneValue(char *value, int i)
 
 	elog(DEBUG4, "inserting column %d value \"%s\"", i, value);
 
-	if (Typ != NULL)
-	{
-		typoid = boot_reldesc->rd_att->attrs[i]->atttypid;
-	}
-	else
-	{
-		/* XXX why is typoid determined differently in this case? */
-		typoid = attrtypes[i]->atttypid;
-	}
+	typoid = boot_reldesc->rd_att->attrs[i]->atttypid;
 
 	boot_get_type_io_data(typoid,
 						  &typlen, &typbyval, &typalign,
@@ -856,19 +854,8 @@ InsertOneNull(int i)
 static void
 cleanup(void)
 {
-	static int	beenhere = 0;
-
-	if (!beenhere)
-		beenhere = 1;
-	else
-	{
-		elog(FATAL, "cleanup called twice");
-		proc_exit(1);
-	}
 	if (boot_reldesc != NULL)
 		closerel(NULL);
-	CommitTransactionCommand();
-	proc_exit(Warnings ? 1 : 0);
 }
 
 /* ----------------
@@ -934,7 +921,6 @@ gettype(char *type)
 		return gettype(type);
 	}
 	elog(ERROR, "unrecognized type \"%s\"", type);
-	err_out();
 	/* not reached, here to make compiler happy */
 	return 0;
 }

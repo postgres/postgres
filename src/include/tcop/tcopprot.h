@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.87 2007/02/20 17:32:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.88 2007/03/07 13:35:03 alvherre Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -44,8 +44,6 @@ typedef enum
 
 extern LogStmtLevel log_statement;
 
-#ifndef BOOTSTRAP_INCLUDE
-
 extern List *pg_parse_and_rewrite(const char *query_string,
 					 Oid *paramTypes, int numParams);
 extern List *pg_parse_query(const char *query_string);
@@ -56,7 +54,6 @@ extern List *pg_plan_queries(List *querytrees, ParamListInfo boundParams,
 				bool needSnapshot);
 
 extern bool assign_max_stack_depth(int newval, bool doit, GucSource source);
-#endif   /* BOOTSTRAP_INCLUDE */
 
 extern void die(SIGNAL_ARGS);
 extern void quickdie(SIGNAL_ARGS);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.185 2007/03/03 18:46:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.186 2007/03/07 13:35:03 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ NON_EXEC_STATIC slock_t *ProcStructLock = NULL;
 
 /* Pointers to shared-memory structures */
 NON_EXEC_STATIC PROC_HDR *ProcGlobal = NULL;
-NON_EXEC_STATIC PGPROC *DummyProcs = NULL;
+NON_EXEC_STATIC PGPROC *AuxiliaryProcs = NULL;
 
 /* If we are waiting for a lock, this points to the associated LOCALLOCK */
 static LOCALLOCK *lockAwaited = NULL;
@@ -80,7 +80,7 @@ static TimestampTz statement_fin_time;
 
 static void RemoveProcFromArray(int code, Datum arg);
 static void ProcKill(int code, Datum arg);
-static void DummyProcKill(int code, Datum arg);
+static void AuxiliaryProcKill(int code, Datum arg);
 static bool CheckStatementTimeout(void);
 
 
@@ -94,8 +94,8 @@ ProcGlobalShmemSize(void)
 
 	/* ProcGlobal */
 	size = add_size(size, sizeof(PROC_HDR));
-	/* DummyProcs */
-	size = add_size(size, mul_size(NUM_DUMMY_PROCS, sizeof(PGPROC)));
+	/* AuxiliaryProcs */
+	size = add_size(size, mul_size(NUM_AUXILIARY_PROCS, sizeof(PGPROC)));
 	/* MyProcs */
 	size = add_size(size, mul_size(MaxBackends, sizeof(PGPROC)));
 	/* ProcStructLock */
@@ -110,8 +110,8 @@ ProcGlobalShmemSize(void)
 int
 ProcGlobalSemas(void)
 {
-	/* We need a sema per backend, plus one for each dummy process. */
-	return MaxBackends + NUM_DUMMY_PROCS;
+	/* We need a sema per backend, plus one for each auxiliary process. */
+	return MaxBackends + NUM_AUXILIARY_PROCS;
 }
 
 /*
@@ -135,7 +135,7 @@ ProcGlobalSemas(void)
  *	  postmaster, not in backends.
  *
  * Note: this is NOT called by individual backends under a postmaster,
- * not even in the EXEC_BACKEND case.  The ProcGlobal and DummyProcs
+ * not even in the EXEC_BACKEND case.  The ProcGlobal and AuxiliaryProcs
  * pointers must be propagated specially for EXEC_BACKEND operation.
  */
 void
@@ -151,11 +151,11 @@ InitProcGlobal(void)
 	Assert(!found);
 
 	/*
-	 * Create the PGPROC structures for dummy (bgwriter) processes, too. These
-	 * do not get linked into the freeProcs list.
+	 * Create the PGPROC structures for auxiliary (bgwriter) processes, too.
+	 * These do not get linked into the freeProcs list.
 	 */
-	DummyProcs = (PGPROC *)
-		ShmemInitStruct("DummyProcs", NUM_DUMMY_PROCS * sizeof(PGPROC),
+	AuxiliaryProcs = (PGPROC *)
+		ShmemInitStruct("AuxiliaryProcs", NUM_AUXILIARY_PROCS * sizeof(PGPROC),
 						&found);
 	Assert(!found);
 
@@ -182,11 +182,11 @@ InitProcGlobal(void)
 		ProcGlobal->freeProcs = MAKE_OFFSET(&procs[i]);
 	}
 
-	MemSet(DummyProcs, 0, NUM_DUMMY_PROCS * sizeof(PGPROC));
-	for (i = 0; i < NUM_DUMMY_PROCS; i++)
+	MemSet(AuxiliaryProcs, 0, NUM_AUXILIARY_PROCS * sizeof(PGPROC));
+	for (i = 0; i < NUM_AUXILIARY_PROCS; i++)
 	{
-		DummyProcs[i].pid = 0;	/* marks dummy proc as not in use */
-		PGSemaphoreCreate(&(DummyProcs[i].sem));
+		AuxiliaryProcs[i].pid = 0;	/* marks auxiliary proc as not in use */
+		PGSemaphoreCreate(&(AuxiliaryProcs[i].sem));
 	}
 
 	/* Create ProcStructLock spinlock, too */
@@ -320,21 +320,21 @@ InitProcessPhase2(void)
 }
 
 /*
- * InitDummyProcess -- create a dummy per-process data structure
+ * InitAuxiliaryProcess -- create a per-auxiliary-process data structure
  *
  * This is called by bgwriter and similar processes so that they will have a
  * MyProc value that's real enough to let them wait for LWLocks.  The PGPROC
  * and sema that are assigned are one of the extra ones created during
  * InitProcGlobal.
  *
- * Dummy processes are presently not expected to wait for real (lockmgr)
+ * Auxiliary processes are presently not expected to wait for real (lockmgr)
  * locks, so we need not set up the deadlock checker.  They are never added
  * to the ProcArray or the sinval messaging mechanism, either.
  */
 void
-InitDummyProcess(void)
+InitAuxiliaryProcess(void)
 {
-	PGPROC	   *dummyproc;
+	PGPROC	   *auxproc;
 	int			proctype;
 	int			i;
 
@@ -342,7 +342,7 @@ InitDummyProcess(void)
 	 * ProcGlobal should be set up already (if we are a backend, we inherit
 	 * this by fork() or EXEC_BACKEND mechanism from the postmaster).
 	 */
-	if (ProcGlobal == NULL || DummyProcs == NULL)
+	if (ProcGlobal == NULL || AuxiliaryProcs == NULL)
 		elog(PANIC, "proc header uninitialized");
 
 	if (MyProc != NULL)
@@ -350,7 +350,7 @@ InitDummyProcess(void)
 
 	/*
 	 * We use the ProcStructLock to protect assignment and releasing of
-	 * DummyProcs entries.
+	 * AuxiliaryProcs entries.
 	 *
 	 * While we are holding the ProcStructLock, also copy the current shared
 	 * estimate of spins_per_delay to local storage.
@@ -360,25 +360,25 @@ InitDummyProcess(void)
 	set_spins_per_delay(ProcGlobal->spins_per_delay);
 
 	/*
-	 * Find a free dummyproc ... *big* trouble if there isn't one ...
+	 * Find a free auxproc ... *big* trouble if there isn't one ...
 	 */
-	for (proctype = 0; proctype < NUM_DUMMY_PROCS; proctype++)
+	for (proctype = 0; proctype < NUM_AUXILIARY_PROCS; proctype++)
 	{
-		dummyproc = &DummyProcs[proctype];
-		if (dummyproc->pid == 0)
+		auxproc = &AuxiliaryProcs[proctype];
+		if (auxproc->pid == 0)
 			break;
 	}
-	if (proctype >= NUM_DUMMY_PROCS)
+	if (proctype >= NUM_AUXILIARY_PROCS)
 	{
 		SpinLockRelease(ProcStructLock);
-		elog(FATAL, "all DummyProcs are in use");
+		elog(FATAL, "all AuxiliaryProcs are in use");
 	}
 
-	/* Mark dummy proc as in use by me */
+	/* Mark auxiliary proc as in use by me */
 	/* use volatile pointer to prevent code rearrangement */
-	((volatile PGPROC *) dummyproc)->pid = MyProcPid;
+	((volatile PGPROC *) auxproc)->pid = MyProcPid;
 
-	MyProc = dummyproc;
+	MyProc = auxproc;
 
 	SpinLockRelease(ProcStructLock);
 
@@ -412,7 +412,7 @@ InitDummyProcess(void)
 	/*
 	 * Arrange to clean up at process exit.
 	 */
-	on_shmem_exit(DummyProcKill, Int32GetDatum(proctype));
+	on_shmem_exit(AuxiliaryProcKill, Int32GetDatum(proctype));
 }
 
 /*
@@ -582,28 +582,28 @@ ProcKill(int code, Datum arg)
 }
 
 /*
- * DummyProcKill() -- Cut-down version of ProcKill for dummy (bgwriter)
- *		processes.	The PGPROC and sema are not released, only marked
- *		as not-in-use.
+ * AuxiliaryProcKill() -- Cut-down version of ProcKill for auxiliary
+ *		processes (bgwriter, etc).	The PGPROC and sema are not released, only
+ *		marked as not-in-use.
  */
 static void
-DummyProcKill(int code, Datum arg)
+AuxiliaryProcKill(int code, Datum arg)
 {
 	int			proctype = DatumGetInt32(arg);
-	PGPROC	   *dummyproc;
+	PGPROC	   *auxproc;
 
-	Assert(proctype >= 0 && proctype < NUM_DUMMY_PROCS);
+	Assert(proctype >= 0 && proctype < NUM_AUXILIARY_PROCS);
 
-	dummyproc = &DummyProcs[proctype];
+	auxproc = &AuxiliaryProcs[proctype];
 
-	Assert(MyProc == dummyproc);
+	Assert(MyProc == auxproc);
 
 	/* Release any LW locks I am holding (see notes above) */
 	LWLockReleaseAll();
 
 	SpinLockAcquire(ProcStructLock);
 
-	/* Mark dummy proc no longer in use */
+	/* Mark auxiliary proc no longer in use */
 	MyProc->pid = 0;
 
 	/* PGPROC struct isn't mine anymore */
