@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/cube/cubedata.h,v 1.8 2007/02/27 23:48:05 tgl Exp $ */
+/* $PostgreSQL: pgsql/contrib/cube/cubedata.h,v 1.9 2007/03/07 21:21:12 teodor Exp $ */
 
 #define CUBE_MAX_DIM (100)
 
@@ -8,3 +8,7 @@ typedef struct NDBOX
 	unsigned int dim;
 	double		x[1];
 }	NDBOX;
+
+#define DatumGetNDBOX(x)	((NDBOX*)DatumGetPointer(x))
+#define PG_GETARG_NDBOX(x)	DatumGetNDBOX( PG_DETOAST_DATUM(PG_GETARG_DATUM(x)) )
+#define PG_RETURN_NDBOX(x)	PG_RETURN_POINTER(x)
