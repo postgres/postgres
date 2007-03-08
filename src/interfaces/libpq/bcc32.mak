@@ -93,7 +93,6 @@ CLEAN :
 	-@erase "$(INTDIR)\fe-secure.obj"
 	-@erase "$(INTDIR)\pqexpbuffer.obj"
 	-@erase "$(INTDIR)\pqsignal.obj"
-	-@erase "$(OUTDIR)\libpqdll.obj"
 	-@erase "$(OUTDIR)\win32.obj"
 	-@erase "$(INTDIR)\wchar.obj"
 	-@erase "$(INTDIR)\encnames.obj"
@@ -155,14 +154,13 @@ RSC_PROJ=-l 0x409 -i$(BCB)\include -fo"$(INTDIR)\libpq.res"
 
 LINK32=ilink32.exe
 LINK32_FLAGS = -Gn -L$(BCB)\lib;$(INTDIR); -x -Tpd -v
-LINK32_OBJS= "$(INTDIR)\libpqdll.obj"
 
 # @<< is a Response file, http://www.opussoftware.com/tutorial/TutMakefile.htm
 
-"$(OUTDIR)\blibpq.dll": "$(OUTDIR)\blibpq.lib" $(LINK32_OBJS) "$(INTDIR)\libpq.res" blibpqdll.def 
+"$(OUTDIR)\blibpq.dll": "$(OUTDIR)\blibpq.lib" "$(INTDIR)\libpq.res" blibpqdll.def 
 	$(LINK32) @<<
 	$(LINK32_FLAGS) +
-	c0d32.obj $(LINK32_OBJS), +
+	c0d32.obj , +
 	$@,, +
 	"$(OUTDIR)\blibpq.lib" import32.lib cw32mt.lib, +
 	blibpqdll.def,"$(INTDIR)\libpq.res"
