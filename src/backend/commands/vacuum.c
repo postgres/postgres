@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.342 2006/11/05 22:42:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.342.2.1 2007/03/08 17:03:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -715,10 +715,20 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 	}
 
 	/*
-	 * If anything changed, write out the tuple
+	 * If anything changed, write out the tuple.  Even if nothing changed,
+	 * force relcache invalidation so all backends reset their rd_targblock
+	 * --- otherwise it might point to a page we truncated away.
 	 */
 	if (dirty)
+	{
 		heap_inplace_update(rd, ctup);
+		/* the above sends a cache inval message */
+	}
+	else
+	{
+		/* no need to change tuple, but force relcache inval anyway */
+		CacheInvalidateRelcacheByTuple(ctup);
+	}
 
 	heap_close(rd, RowExclusiveLock);
 }
