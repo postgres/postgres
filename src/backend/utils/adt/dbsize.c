@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.11 2007/02/27 23:48:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.12 2007/03/11 05:22:00 alvherre Exp $
  *
  */
 
@@ -52,10 +52,14 @@ db_dir_size(const char *path)
 		snprintf(filename, MAXPGPATH, "%s/%s", path, direntry->d_name);
 
 		if (stat(filename, &fst) < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not stat file \"%s\": %m", filename)));
-
+		{
+			if (errno == ENOENT)
+				continue;
+			else
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m", filename)));
+		}
 		dirsize += fst.st_size;
 	}
 
@@ -174,9 +178,14 @@ calculate_tablespace_size(Oid tblspcOid)
 		snprintf(pathname, MAXPGPATH, "%s/%s", tblspcPath, direntry->d_name);
 
 		if (stat(pathname, &fst) < 0)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not stat file \"%s\": %m", pathname)));
+		{
+			if (errno == ENOENT)
+				continue;
+			else
+				ereport(ERROR,
+						(errcode_for_file_access(),
+						 errmsg("could not stat file \"%s\": %m", pathname)));
+		}
 
 		if (fst.st_mode & S_IFDIR)
 			totalsize += db_dir_size(pathname);
