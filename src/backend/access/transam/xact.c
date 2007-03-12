@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.234 2007/02/09 03:35:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.235 2007/03/12 22:09:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1513,6 +1513,9 @@ CommitTransaction(void)
 	/* NOTIFY commit must come before lower-level cleanup */
 	AtCommit_Notify();
 
+	/* GUC processing could abort transaction */
+	AtEOXact_GUC(true, false);
+
 	/*
 	 * Update flat files if we changed pg_database, pg_authid or
 	 * pg_auth_members.  This should be the last step before commit.
@@ -1623,7 +1626,6 @@ CommitTransaction(void)
 	/* Check we've released all catcache entries */
 	AtEOXact_CatCache(true);
 
-	AtEOXact_GUC(true, false);
 	AtEOXact_SPI(true);
 	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true);
