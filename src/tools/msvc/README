@@ -63,3 +63,11 @@ Get from http://www.zlib.net
 libxml2 and libxslt - required for XML support
 Get from http://www.zlatkovic.com/pub/libxml or build from source from
 http://xmlsoft.org. Note that libxml2 requires iconv.
+
+
+Code indention
+--------------
+If the perl code is modified, use perltidy on it since pgindent won't
+touch perl code. Use the following commandline:
+perltidy -b -bl -nsfs -naws -l=100 *.pl *.pm
+
