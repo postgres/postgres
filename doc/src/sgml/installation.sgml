@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.285 2007/02/21 15:12:39 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.286 2007/03/13 16:03:36 mha Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -139,35 +139,6 @@ su - postgres
       <filename>configure</filename>. Using this option disables
       support for compressed archives in <application>pg_dump</> and
       <application>pg_restore</>.
-     </para>
-    </listitem>
-
-    <listitem>
-     <para>
-      <indexterm>
-       <primary>installation</primary>
-       <secondary>on Windows</secondary>
-      </indexterm>
-
-      Additional software is needed to build
-      <productname>PostgreSQL</productname> on <productname>Windows</>.
-      You can build <productname>PostgreSQL</productname> for
-      <productname>NT</>-based versions of <productname>Windows</>
-      (like Windows XP and 2003) using <productname>MinGW</productname>;
-      see <filename>doc/FAQ_MINGW</> for details.  You can also build
-      <productname>PostgreSQL</productname> using
-      <productname>Cygwin</productname>; see <filename>doc/FAQ_CYGWIN</>.
-      A <productname>Cygwin</productname>-based build will work on older
-      versions of <productname>Windows</>, but if you have a choice,
-      we recommend the <productname>MinGW</productname> approach.
-      While these are the only tool sets recommended for a complete build,
-      it is possible to build just the C client library
-      (<application>libpq</application>) and the interactive terminal
-      (<application>psql</application>) using other <productname>Windows</>
-      tool sets.  For details of that see
-      <![%standalone-include[the documentation chapter "Client-Only
-      Installation on Windows"]]> <![%standalone-ignore[<xref
-      linkend="install-win32">]]>.
      </para>
     </listitem>
    </itemizedlist>
