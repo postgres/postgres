@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.111 2007/02/20 17:32:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.112 2007/03/13 00:33:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,6 +58,8 @@ typedef struct local_es
  */
 typedef struct
 {
+	char	   *src;			/* function body text (for error msgs) */
+
 	Oid		   *argtypes;		/* resolved types of arguments */
 	Oid			rettype;		/* actual return type */
 	int16		typlen;			/* length of the return type */
@@ -82,7 +84,8 @@ static execution_state *init_execution_state(List *queryTree_list,
 					 bool readonly_func);
 static void init_sql_fcache(FmgrInfo *finfo);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
-static TupleTableSlot *postquel_getnext(execution_state *es);
+static TupleTableSlot *postquel_getnext(execution_state *es,
+										SQLFunctionCachePtr fcache);
 static void postquel_end(execution_state *es);
 static void postquel_sub_params(SQLFunctionCachePtr fcache,
 					FunctionCallInfo fcinfo);
@@ -156,7 +159,6 @@ init_sql_fcache(FmgrInfo *finfo)
 	Form_pg_proc procedureStruct;
 	SQLFunctionCachePtr fcache;
 	Oid		   *argOidVect;
-	char	   *src;
 	int			nargs;
 	List	   *queryTree_list;
 	Datum		tmp;
@@ -233,7 +235,7 @@ init_sql_fcache(FmgrInfo *finfo)
 	fcache->argtypes = argOidVect;
 
 	/*
-	 * Parse and rewrite the queries in the function text.
+	 * And of course we need the function body text.
 	 */
 	tmp = SysCacheGetAttr(PROCOID,
 						  procedureTuple,
@@ -241,9 +243,12 @@ init_sql_fcache(FmgrInfo *finfo)
 						  &isNull);
 	if (isNull)
 		elog(ERROR, "null prosrc for function %u", foid);
-	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
+	fcache->src = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
-	queryTree_list = pg_parse_and_rewrite(src, argOidVect, nargs);
+	/*
+	 * Parse and rewrite the queries in the function text.
+	 */
+	queryTree_list = pg_parse_and_rewrite(fcache->src, argOidVect, nargs);
 
 	/*
 	 * Check that the function returns the type it claims to.  Although
@@ -269,8 +274,6 @@ init_sql_fcache(FmgrInfo *finfo)
 	/* Finally, plan the queries */
 	fcache->func_state = init_execution_state(queryTree_list,
 											  fcache->readonly_func);
-
-	pfree(src);
 
 	ReleaseSysCache(procedureTuple);
 
@@ -331,7 +334,7 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 }
 
 static TupleTableSlot *
-postquel_getnext(execution_state *es)
+postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 {
 	TupleTableSlot *result;
 	Snapshot	saveActiveSnapshot;
@@ -345,8 +348,12 @@ postquel_getnext(execution_state *es)
 
 		if (es->qd->operation == CMD_UTILITY)
 		{
-			ProcessUtility(es->qd->utilitystmt, es->qd->params,
-						   es->qd->dest, NULL);
+			ProcessUtility(es->qd->utilitystmt,
+						   fcache->src,
+						   es->qd->params,
+						   false,				/* not top level */
+						   es->qd->dest,
+						   NULL);
 			result = NULL;
 		}
 		else
@@ -465,7 +472,7 @@ postquel_execute(execution_state *es,
 	if (es->status == F_EXEC_START)
 		postquel_start(es, fcache);
 
-	slot = postquel_getnext(es);
+	slot = postquel_getnext(es, fcache);
 
 	if (TupIsNull(slot))
 	{
@@ -754,21 +761,11 @@ sql_exec_error_callback(void *arg)
 	 * If there is a syntax error position, convert to internal syntax error
 	 */
 	syntaxerrposition = geterrposition();
-	if (syntaxerrposition > 0)
+	if (syntaxerrposition > 0 && fcache->src)
 	{
-		bool		isnull;
-		Datum		tmp;
-		char	   *prosrc;
-
-		tmp = SysCacheGetAttr(PROCOID, func_tuple, Anum_pg_proc_prosrc,
-							  &isnull);
-		if (isnull)
-			elog(ERROR, "null prosrc");
-		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
 		errposition(0);
 		internalerrposition(syntaxerrposition);
-		internalerrquery(prosrc);
-		pfree(prosrc);
+		internalerrquery(fcache->src);
 	}
 
 	/*

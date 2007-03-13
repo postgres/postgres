@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.99 2007/02/20 17:32:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.100 2007/03/13 00:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,9 +149,9 @@ GetPortalByName(const char *name)
  * cases should occur in present usages of this function.
  *
  * Copes if given a list of Querys --- can't happen in a portal, but this
- * code also supports prepared statements, which need both cases.
+ * code also supports plancache.c, which needs both cases.
  *
- * Note: the reason this is just handed a List is so that prepared statements
+ * Note: the reason this is just handed a List is so that plancache.c
  * can share the code.	For use with a portal, use PortalGetPrimaryStmt
  * rather than calling this directly.
  */
@@ -275,9 +275,17 @@ CreateNewPortal(void)
  *
  * Notes: commandTag shall be NULL if and only if the original query string
  * (before rewriting) was an empty string.	Also, the passed commandTag must
- * be a pointer to a constant string, since it is not copied.  The caller is
- * responsible for ensuring that the passed prepStmtName (if any), sourceText
- * (if any), and plan trees have adequate lifetime.
+ * be a pointer to a constant string, since it is not copied.  However,
+ * prepStmtName and sourceText, if provided, are copied into the portal's
+ * heap context for safekeeping.
+ *
+ * If cplan is provided, then it is a cached plan containing the stmts,
+ * and the caller must have done RevalidateCachedPlan(), causing a refcount
+ * increment.  The refcount will be released when the portal is destroyed.
+ *
+ * If cplan is NULL, then it is the caller's responsibility to ensure that
+ * the passed plan trees have adequate lifetime.  Typically this is done by
+ * copying them into the portal's heap context.
  */
 void
 PortalDefineQuery(Portal portal,
@@ -285,18 +293,35 @@ PortalDefineQuery(Portal portal,
 				  const char *sourceText,
 				  const char *commandTag,
 				  List *stmts,
-				  MemoryContext queryContext)
+				  CachedPlan *cplan)
 {
 	AssertArg(PortalIsValid(portal));
-	AssertState(portal->queryContext == NULL);	/* else defined already */
+	AssertState(portal->status == PORTAL_NEW);
 
 	Assert(commandTag != NULL || stmts == NIL);
 
-	portal->prepStmtName = prepStmtName;
-	portal->sourceText = sourceText;
+	portal->prepStmtName = prepStmtName ? 
+		MemoryContextStrdup(PortalGetHeapMemory(portal), prepStmtName) : NULL;
+	portal->sourceText = sourceText ? 
+		MemoryContextStrdup(PortalGetHeapMemory(portal), sourceText) : NULL;
 	portal->commandTag = commandTag;
 	portal->stmts = stmts;
-	portal->queryContext = queryContext;
+	portal->cplan = cplan;
+	portal->status = PORTAL_DEFINED;
+}
+
+/*
+ * PortalReleaseCachedPlan
+ *		Release a portal's reference to its cached plan, if any.
+ */
+static void
+PortalReleaseCachedPlan(Portal portal)
+{
+	if (portal->cplan)
+	{
+		ReleaseCachedPlan(portal->cplan, false);
+		portal->cplan = NULL;
+	}
 }
 
 /*
@@ -355,6 +380,10 @@ PortalDrop(Portal portal, bool isTopCommit)
 	/* let portalcmds.c clean up the state it knows about */
 	if (PointerIsValid(portal->cleanup))
 		(*portal->cleanup) (portal);
+
+	/* drop cached plan reference, if any */
+	if (portal->cplan)
+		PortalReleaseCachedPlan(portal);
 
 	/*
 	 * Release any resources still attached to the portal.	There are several
@@ -423,29 +452,6 @@ PortalDrop(Portal portal, bool isTopCommit)
 	pfree(portal);
 }
 
-/*
- * DropDependentPortals
- *		Drop any portals using the specified context as queryContext.
- *
- * This is normally used to make sure we can safely drop a prepared statement.
- */
-void
-DropDependentPortals(MemoryContext queryContext)
-{
-	HASH_SEQ_STATUS status;
-	PortalHashEnt *hentry;
-
-	hash_seq_init(&status, PortalHashTable);
-
-	while ((hentry = (PortalHashEnt *) hash_seq_search(&status)) != NULL)
-	{
-		Portal		portal = hentry->portal;
-
-		if (portal->queryContext == queryContext)
-			PortalDrop(portal, false);
-	}
-}
-
 
 /*
  * Pre-commit processing for portals.
@@ -484,6 +490,10 @@ CommitHoldablePortals(void)
 			 */
 			PortalCreateHoldStore(portal);
 			PersistHoldablePortal(portal);
+
+			/* drop cached plan reference, if any */
+			if (portal->cplan)
+				PortalReleaseCachedPlan(portal);
 
 			/*
 			 * Any resources belonging to the portal will be released in the
@@ -630,6 +640,10 @@ AtAbort_Portals(void)
 			portal->cleanup = NULL;
 		}
 
+		/* drop cached plan reference, if any */
+		if (portal->cplan)
+			PortalReleaseCachedPlan(portal);
+
 		/*
 		 * Any resources belonging to the portal will be released in the
 		 * upcoming transaction-wide cleanup; they will be gone before we run
@@ -768,6 +782,10 @@ AtSubAbort_Portals(SubTransactionId mySubid,
 				(*portal->cleanup) (portal);
 				portal->cleanup = NULL;
 			}
+
+			/* drop cached plan reference, if any */
+			if (portal->cplan)
+				PortalReleaseCachedPlan(portal);
 
 			/*
 			 * Any resources belonging to the portal will be released in the

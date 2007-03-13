@@ -4,7 +4,7 @@
 #    Makefile for utils/cache
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/cache/Makefile,v 1.20 2007/01/20 17:16:13 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/cache/Makefile,v 1.21 2007/03/13 00:33:42 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,8 @@ subdir = src/backend/utils/cache
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = catcache.o inval.o relcache.o syscache.o lsyscache.o typcache.o
+OBJS = catcache.o inval.o plancache.o relcache.o \
+	syscache.o lsyscache.o typcache.o
 
 all: SUBSYS.o
 

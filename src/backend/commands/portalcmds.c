@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.61 2007/02/20 17:32:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.62 2007/03/13 00:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,8 +38,11 @@
  *		Execute SQL DECLARE CURSOR command.
  */
 void
-PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
+PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params,
+				  const char *queryString, bool isTopLevel)
 {
+	Oid		   *param_types;
+	int			num_params;
 	List	   *rewritten;
 	Query	   *query;
 	PlannedStmt *plan;
@@ -61,40 +64,53 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 	 * user-visible effect).
 	 */
 	if (!(stmt->options & CURSOR_OPT_HOLD))
-		RequireTransactionChain((void *) stmt, "DECLARE CURSOR");
+		RequireTransactionChain(isTopLevel, "DECLARE CURSOR");
 
 	/*
-	 * Because the planner is not cool about not scribbling on its input, we
+	 * Don't allow both SCROLL and NO SCROLL to be specified
+	 */
+	if ((stmt->options & CURSOR_OPT_SCROLL) &&
+		(stmt->options & CURSOR_OPT_NO_SCROLL))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+				 errmsg("cannot specify both SCROLL and NO SCROLL")));
+
+	/* Convert parameter type data to the form parser wants */
+	getParamListTypes(params, &param_types, &num_params);
+
+	/*
+	 * Run parse analysis and rewrite.  Note this also acquires sufficient
+	 * locks on the source table(s).
+	 *
+	 * Because the parser and planner tend to scribble on their input, we
 	 * make a preliminary copy of the source querytree.  This prevents
-	 * problems in the case that the DECLARE CURSOR is in a portal and is
-	 * executed repeatedly.  XXX the planner really shouldn't modify its input
-	 * ... FIXME someday.
+	 * problems in the case that the DECLARE CURSOR is in a portal or plpgsql
+	 * function and is executed repeatedly.  (See also the same hack in
+	 * COPY and PREPARE.)  XXX FIXME someday.
 	 */
-	query = copyObject(stmt->query);
+	rewritten = pg_analyze_and_rewrite((Node *) copyObject(stmt->query),
+									   queryString, param_types, num_params);
 
-	/*
-	 * The query has been through parse analysis, but not rewriting or
-	 * planning as yet.  Note that the grammar ensured we have a SELECT query,
-	 * so we are not expecting rule rewriting to do anything strange.
-	 */
-	AcquireRewriteLocks(query);
-	rewritten = QueryRewrite(query);
+	/* We don't expect more or less than one result query */
 	if (list_length(rewritten) != 1 || !IsA(linitial(rewritten), Query))
 		elog(ERROR, "unexpected rewrite result");
 	query = (Query *) linitial(rewritten);
 	if (query->commandType != CMD_SELECT)
 		elog(ERROR, "unexpected rewrite result");
 
+	/* But we must explicitly disallow DECLARE CURSOR ... SELECT INTO */
 	if (query->into)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 				 errmsg("DECLARE CURSOR cannot specify INTO")));
+
 	if (query->rowMarks != NIL)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			  errmsg("DECLARE CURSOR ... FOR UPDATE/SHARE is not supported"),
 				 errdetail("Cursors must be READ ONLY.")));
 
+	/* plan the query */
 	plan = planner(query, true, stmt->options, params);
 
 	/*
@@ -106,23 +122,22 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 
 	plan = copyObject(plan);
 
-	/*
-	 * XXX: debug_query_string is wrong here: the user might have submitted
-	 * multiple semicolon delimited queries.
-	 */
 	PortalDefineQuery(portal,
 					  NULL,
-					  debug_query_string ? pstrdup(debug_query_string) : NULL,
+					  queryString,
 					  "SELECT", /* cursor's query is always a SELECT */
 					  list_make1(plan),
-					  PortalGetHeapMemory(portal));
+					  NULL);
 
-	/*
+	/*----------
 	 * Also copy the outer portal's parameter list into the inner portal's
 	 * memory context.	We want to pass down the parameter values in case we
-	 * had a command like DECLARE c CURSOR FOR SELECT ... WHERE foo = $1 This
-	 * will have been parsed using the outer parameter set and the parameter
-	 * value needs to be preserved for use when the cursor is executed.
+	 * had a command like
+	 *		DECLARE c CURSOR FOR SELECT ... WHERE foo = $1
+	 * This will have been parsed using the outer parameter set and the
+	 * parameter value needs to be preserved for use when the cursor is
+	 * executed.
+	 *----------
 	 */
 	params = copyParamList(params);
 
@@ -314,7 +329,6 @@ PersistHoldablePortal(Portal portal)
 	Snapshot	saveActiveSnapshot;
 	ResourceOwner saveResourceOwner;
 	MemoryContext savePortalContext;
-	MemoryContext saveQueryContext;
 	MemoryContext oldcxt;
 
 	/*
@@ -356,14 +370,12 @@ PersistHoldablePortal(Portal portal)
 	saveActiveSnapshot = ActiveSnapshot;
 	saveResourceOwner = CurrentResourceOwner;
 	savePortalContext = PortalContext;
-	saveQueryContext = QueryContext;
 	PG_TRY();
 	{
 		ActivePortal = portal;
 		ActiveSnapshot = queryDesc->snapshot;
 		CurrentResourceOwner = portal->resowner;
 		PortalContext = PortalGetHeapMemory(portal);
-		QueryContext = portal->queryContext;
 
 		MemoryContextSwitchTo(PortalContext);
 
@@ -434,7 +446,6 @@ PersistHoldablePortal(Portal portal)
 		ActiveSnapshot = saveActiveSnapshot;
 		CurrentResourceOwner = saveResourceOwner;
 		PortalContext = savePortalContext;
-		QueryContext = saveQueryContext;
 
 		PG_RE_THROW();
 	}
@@ -449,7 +460,6 @@ PersistHoldablePortal(Portal portal)
 	ActiveSnapshot = saveActiveSnapshot;
 	CurrentResourceOwner = saveResourceOwner;
 	PortalContext = savePortalContext;
-	QueryContext = saveQueryContext;
 
 	/*
 	 * We can now release any subsidiary memory of the portal's heap context;

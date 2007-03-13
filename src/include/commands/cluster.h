@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/cluster.h,v 1.31 2007/01/05 22:19:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/cluster.h,v 1.32 2007/03/13 00:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include "utils/rel.h"
 
 
-extern void cluster(ClusterStmt *stmt);
+extern void cluster(ClusterStmt *stmt, bool isTopLevel);
 
 extern void check_index_is_clusterable(Relation OldHeap, Oid indexOid,
 						   bool recheck);

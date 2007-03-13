@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.23 2007/01/05 22:19:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/resowner/resowner.c,v 1.24 2007/03/13 00:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,11 @@ typedef struct ResourceOwnerData
 	Relation   *relrefs;		/* dynamically allocated array */
 	int			maxrelrefs;		/* currently allocated array size */
 
+	/* We have built-in support for remembering plancache references */
+	int			nplanrefs;		/* number of owned plancache pins */
+	CachedPlan **planrefs;		/* dynamically allocated array */
+	int			maxplanrefs;	/* currently allocated array size */
+
 	/* We have built-in support for remembering tupdesc references */
 	int			ntupdescs;		/* number of owned tupdesc references */
 	TupleDesc  *tupdescs;		/* dynamically allocated array */
@@ -90,6 +95,7 @@ static void ResourceOwnerReleaseInternal(ResourceOwner owner,
 							 bool isCommit,
 							 bool isTopLevel);
 static void PrintRelCacheLeakWarning(Relation rel);
+static void PrintPlanCacheLeakWarning(CachedPlan *plan);
 static void PrintTupleDescLeakWarning(TupleDesc tupdesc);
 
 
@@ -280,6 +286,13 @@ ResourceOwnerReleaseInternal(ResourceOwner owner,
 				PrintCatCacheListLeakWarning(owner->catlistrefs[owner->ncatlistrefs - 1]);
 			ReleaseCatCacheList(owner->catlistrefs[owner->ncatlistrefs - 1]);
 		}
+		/* Ditto for plancache references */
+		while (owner->nplanrefs > 0)
+		{
+			if (isCommit)
+				PrintPlanCacheLeakWarning(owner->planrefs[owner->nplanrefs - 1]);
+			ReleaseCachedPlan(owner->planrefs[owner->nplanrefs - 1], true);
+		}
 		/* Ditto for tupdesc references */
 		while (owner->ntupdescs > 0)
 		{
@@ -316,6 +329,7 @@ ResourceOwnerDelete(ResourceOwner owner)
 	Assert(owner->ncatrefs == 0);
 	Assert(owner->ncatlistrefs == 0);
 	Assert(owner->nrelrefs == 0);
+	Assert(owner->nplanrefs == 0);
 	Assert(owner->ntupdescs == 0);
 
 	/*
@@ -341,6 +355,8 @@ ResourceOwnerDelete(ResourceOwner owner)
 		pfree(owner->catlistrefs);
 	if (owner->relrefs)
 		pfree(owner->relrefs);
+	if (owner->planrefs)
+		pfree(owner->planrefs);
 	if (owner->tupdescs)
 		pfree(owner->tupdescs);
 
@@ -756,6 +772,86 @@ PrintRelCacheLeakWarning(Relation rel)
 {
 	elog(WARNING, "relcache reference leak: relation \"%s\" not closed",
 		 RelationGetRelationName(rel));
+}
+
+/*
+ * Make sure there is room for at least one more entry in a ResourceOwner's
+ * plancache reference array.
+ *
+ * This is separate from actually inserting an entry because if we run out
+ * of memory, it's critical to do so *before* acquiring the resource.
+ */
+void
+ResourceOwnerEnlargePlanCacheRefs(ResourceOwner owner)
+{
+	int			newmax;
+
+	if (owner->nplanrefs < owner->maxplanrefs)
+		return;					/* nothing to do */
+
+	if (owner->planrefs == NULL)
+	{
+		newmax = 16;
+		owner->planrefs = (CachedPlan **)
+			MemoryContextAlloc(TopMemoryContext, newmax * sizeof(CachedPlan *));
+		owner->maxplanrefs = newmax;
+	}
+	else
+	{
+		newmax = owner->maxplanrefs * 2;
+		owner->planrefs = (CachedPlan **)
+			repalloc(owner->planrefs, newmax * sizeof(CachedPlan *));
+		owner->maxplanrefs = newmax;
+	}
+}
+
+/*
+ * Remember that a plancache reference is owned by a ResourceOwner
+ *
+ * Caller must have previously done ResourceOwnerEnlargePlanCacheRefs()
+ */
+void
+ResourceOwnerRememberPlanCacheRef(ResourceOwner owner, CachedPlan *plan)
+{
+	Assert(owner->nplanrefs < owner->maxplanrefs);
+	owner->planrefs[owner->nplanrefs] = plan;
+	owner->nplanrefs++;
+}
+
+/*
+ * Forget that a plancache reference is owned by a ResourceOwner
+ */
+void
+ResourceOwnerForgetPlanCacheRef(ResourceOwner owner, CachedPlan *plan)
+{
+	CachedPlan **planrefs = owner->planrefs;
+	int			np1 = owner->nplanrefs - 1;
+	int			i;
+
+	for (i = np1; i >= 0; i--)
+	{
+		if (planrefs[i] == plan)
+		{
+			while (i < np1)
+			{
+				planrefs[i] = planrefs[i + 1];
+				i++;
+			}
+			owner->nplanrefs = np1;
+			return;
+		}
+	}
+	elog(ERROR, "plancache reference %p is not owned by resource owner %s",
+		 plan, owner->name);
+}
+
+/*
+ * Debugging subroutine
+ */
+static void
+PrintPlanCacheLeakWarning(CachedPlan *plan)
+{
+	elog(WARNING, "plancache reference leak: plan %p not closed", plan);
 }
 
 /*

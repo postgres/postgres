@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.159 2007/02/23 21:59:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.160 2007/03/13 00:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "optimizer/var.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
+#include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
@@ -41,8 +42,9 @@ typedef struct ExplainState
 	List	   *rtable;			/* range table */
 } ExplainState;
 
-static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
-				ParamListInfo params, TupOutputState *tstate);
+static void ExplainOneQuery(Query *query, bool isCursor, int cursorOptions,
+							ExplainStmt *stmt, const char *queryString,
+							ParamListInfo params, TupOutputState *tstate);
 static double elapsed_time(instr_time *starttime);
 static void explain_outNode(StringInfo str,
 				Plan *plan, PlanState *planstate,
@@ -62,62 +64,49 @@ static void show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
  *	  execute an EXPLAIN command
  */
 void
-ExplainQuery(ExplainStmt *stmt, ParamListInfo params, DestReceiver *dest)
+ExplainQuery(ExplainStmt *stmt, const char *queryString,
+			 ParamListInfo params, DestReceiver *dest)
 {
-	Query	   *query = stmt->query;
+	Oid		   *param_types;
+	int			num_params;
 	TupOutputState *tstate;
 	List	   *rewritten;
 	ListCell   *l;
 
+	/* Convert parameter type data to the form parser wants */
+	getParamListTypes(params, &param_types, &num_params);
+
 	/*
-	 * Because the planner is not cool about not scribbling on its input, we
+	 * Run parse analysis and rewrite.  Note this also acquires sufficient
+	 * locks on the source table(s).
+	 *
+	 * Because the parser and planner tend to scribble on their input, we
 	 * make a preliminary copy of the source querytree.  This prevents
 	 * problems in the case that the EXPLAIN is in a portal or plpgsql
 	 * function and is executed repeatedly.  (See also the same hack in
-	 * DECLARE CURSOR and PREPARE.)  XXX the planner really shouldn't modify
-	 * its input ... FIXME someday.
+	 * DECLARE CURSOR and PREPARE.)  XXX FIXME someday.
 	 */
-	query = copyObject(query);
+	rewritten = pg_analyze_and_rewrite((Node *) copyObject(stmt->query),
+									   queryString, param_types, num_params);
 
 	/* prepare for projection of tuples */
 	tstate = begin_tup_output_tupdesc(dest, ExplainResultDesc(stmt));
 
-	if (query->commandType == CMD_UTILITY)
+	if (rewritten == NIL)
 	{
-		/* Rewriter will not cope with utility statements */
-		if (query->utilityStmt && IsA(query->utilityStmt, DeclareCursorStmt))
-			ExplainOneQuery(query, stmt, params, tstate);
-		else if (query->utilityStmt && IsA(query->utilityStmt, ExecuteStmt))
-			ExplainExecuteQuery(stmt, params, tstate);
-		else
-			do_text_output_oneline(tstate, "Utility statements have no plan structure");
+		/* In the case of an INSTEAD NOTHING, tell at least that */
+		do_text_output_oneline(tstate, "Query rewrites to nothing");
 	}
 	else
 	{
-		/*
-		 * Must acquire locks in case we didn't come fresh from the parser.
-		 * XXX this also scribbles on query, another reason for copyObject
-		 */
-		AcquireRewriteLocks(query);
-
-		/* Rewrite through rule system */
-		rewritten = QueryRewrite(query);
-
-		if (rewritten == NIL)
+		/* Explain every plan */
+		foreach(l, rewritten)
 		{
-			/* In the case of an INSTEAD NOTHING, tell at least that */
-			do_text_output_oneline(tstate, "Query rewrites to nothing");
-		}
-		else
-		{
-			/* Explain every plan */
-			foreach(l, rewritten)
-			{
-				ExplainOneQuery(lfirst(l), stmt, params, tstate);
-				/* put a blank line between plans */
-				if (lnext(l) != NULL)
-					do_text_output_oneline(tstate, "");
-			}
+			ExplainOneQuery((Query *) lfirst(l), false, 0,
+							stmt, queryString, params, tstate);
+			/* put a blank line between plans */
+			if (lnext(l) != NULL)
+				do_text_output_oneline(tstate, "");
 		}
 	}
 
@@ -142,51 +131,22 @@ ExplainResultDesc(ExplainStmt *stmt)
 
 /*
  * ExplainOneQuery -
- *	  print out the execution plan for one query
+ *	  print out the execution plan for one Query
  */
 static void
-ExplainOneQuery(Query *query, ExplainStmt *stmt, ParamListInfo params,
-				TupOutputState *tstate)
+ExplainOneQuery(Query *query, bool isCursor, int cursorOptions,
+				ExplainStmt *stmt, const char *queryString,
+				ParamListInfo params, TupOutputState *tstate)
 {
 	PlannedStmt *plan;
 	QueryDesc  *queryDesc;
-	bool		isCursor = false;
-	int			cursorOptions = 0;
 
 	/* planner will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
 	{
-		if (query->utilityStmt && IsA(query->utilityStmt, DeclareCursorStmt))
-		{
-			DeclareCursorStmt *dcstmt;
-			List	   *rewritten;
-
-			dcstmt = (DeclareCursorStmt *) query->utilityStmt;
-			query = (Query *) dcstmt->query;
-			isCursor = true;
-			cursorOptions = dcstmt->options;
-			/* Still need to rewrite cursor command */
-			Assert(query->commandType == CMD_SELECT);
-			/* get locks (we assume ExplainQuery already copied tree) */
-			AcquireRewriteLocks(query);
-			rewritten = QueryRewrite(query);
-			if (list_length(rewritten) != 1)
-				elog(ERROR, "unexpected rewrite result");
-			query = (Query *) linitial(rewritten);
-			Assert(query->commandType == CMD_SELECT);
-			/* do not actually execute the underlying query! */
-			stmt->analyze = false;
-		}
-		else if (query->utilityStmt && IsA(query->utilityStmt, NotifyStmt))
-		{
-			do_text_output_oneline(tstate, "NOTIFY");
-			return;
-		}
-		else
-		{
-			do_text_output_oneline(tstate, "UTILITY");
-			return;
-		}
+		ExplainOneUtility(query->utilityStmt, stmt,
+						  queryString, params, tstate);
+		return;
 	}
 
 	/* plan the query */
@@ -208,6 +168,78 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, ParamListInfo params,
 								stmt->analyze);
 
 	ExplainOnePlan(queryDesc, stmt, tstate);
+}
+
+/*
+ * ExplainOneUtility -
+ *	  print out the execution plan for one utility statement
+ *	  (In general, utility statements don't have plans, but there are some
+ *	  we treat as special cases)
+ *
+ * This is exported because it's called back from prepare.c in the
+ * EXPLAIN EXECUTE case
+ */
+void
+ExplainOneUtility(Node *utilityStmt, ExplainStmt *stmt,
+				  const char *queryString, ParamListInfo params,
+				  TupOutputState *tstate)
+{
+	if (utilityStmt == NULL)
+		return;
+
+	if (IsA(utilityStmt, DeclareCursorStmt))
+	{
+		DeclareCursorStmt *dcstmt = (DeclareCursorStmt *) utilityStmt;
+		Oid		   *param_types;
+		int			num_params;
+		Query	   *query;
+		List	   *rewritten;
+		ExplainStmt newstmt;
+
+		/* Convert parameter type data to the form parser wants */
+		getParamListTypes(params, &param_types, &num_params);
+
+		/*
+		 * Run parse analysis and rewrite.  Note this also acquires sufficient
+		 * locks on the source table(s).
+		 *
+		 * Because the parser and planner tend to scribble on their input, we
+		 * make a preliminary copy of the source querytree.  This prevents
+		 * problems in the case that the DECLARE CURSOR is in a portal or
+		 * plpgsql function and is executed repeatedly.  (See also the same
+		 * hack in COPY and PREPARE.)  XXX FIXME someday.
+		 */
+		rewritten = pg_analyze_and_rewrite((Node *) copyObject(dcstmt->query),
+										   queryString,
+										   param_types, num_params);
+
+		/* We don't expect more or less than one result query */
+		if (list_length(rewritten) != 1 || !IsA(linitial(rewritten), Query))
+			elog(ERROR, "unexpected rewrite result");
+		query = (Query *) linitial(rewritten);
+		if (query->commandType != CMD_SELECT)
+			elog(ERROR, "unexpected rewrite result");
+
+		/* But we must explicitly disallow DECLARE CURSOR ... SELECT INTO */
+		if (query->into)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+					 errmsg("DECLARE CURSOR cannot specify INTO")));
+
+		/* do not actually execute the underlying query! */
+		memcpy(&newstmt, stmt, sizeof(ExplainStmt));
+		newstmt.analyze = false;
+		ExplainOneQuery(query, true, dcstmt->options, &newstmt,
+						queryString, params, tstate);
+	}
+	else if (IsA(utilityStmt, ExecuteStmt))
+		ExplainExecuteQuery((ExecuteStmt *) utilityStmt, stmt,
+							queryString, params, tstate);
+	else if (IsA(utilityStmt, NotifyStmt))
+		do_text_output_oneline(tstate, "NOTIFY");
+	else
+		do_text_output_oneline(tstate,
+							   "Utility statements have no plan structure");
 }
 
 /*

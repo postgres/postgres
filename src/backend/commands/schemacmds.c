@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.43 2007/02/01 19:10:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.44 2007/03/13 00:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,7 @@ static void AlterSchemaOwner_internal(HeapTuple tup, Relation rel, Oid newOwnerI
  * CREATE SCHEMA
  */
 void
-CreateSchemaCommand(CreateSchemaStmt *stmt)
+CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 {
 	const char *schemaName = stmt->schemaname;
 	const char *authId = stmt->authid;
@@ -122,7 +122,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 		List	   *querytree_list;
 		ListCell   *querytree_item;
 
-		querytree_list = parse_analyze(parsetree, NULL, NULL, 0);
+		querytree_list = parse_analyze(parsetree, queryString, NULL, 0);
 
 		foreach(querytree_item, querytree_list)
 		{
@@ -131,7 +131,12 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 			/* schemas should contain only utility stmts */
 			Assert(querytree->commandType == CMD_UTILITY);
 			/* do this step */
-			ProcessUtility(querytree->utilityStmt, NULL, None_Receiver, NULL);
+			ProcessUtility(querytree->utilityStmt,
+						   queryString,
+						   NULL,
+						   false,				/* not top level */
+						   None_Receiver,
+						   NULL);
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}

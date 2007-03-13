@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.174 2007/02/15 23:23:23 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.175 2007/03/13 00:33:42 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -28,6 +28,7 @@
 #include "libpq/hba.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/autovacuum.h"
 #include "postmaster/postmaster.h"
 #include "storage/backendid.h"
@@ -40,10 +41,10 @@
 #include "utils/acl.h"
 #include "utils/flatfiles.h"
 #include "utils/guc.h"
+#include "utils/plancache.h"
 #include "utils/portal.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
-#include "pgstat.h"
 
 
 static bool FindMyDatabase(const char *name, Oid *db_id, Oid *db_tablespace);
@@ -429,6 +430,7 @@ InitPostgres(const char *in_dbname, Oid dboid, const char *username,
 	 */
 	RelationCacheInitialize();
 	InitCatalogCache();
+	InitPlanCache();
 
 	/* Initialize portal manager */
 	EnablePortalManager();

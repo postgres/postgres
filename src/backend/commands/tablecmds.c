@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.216 2007/03/06 02:06:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.217 2007/03/13 00:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3696,6 +3696,13 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	/* suppress notices when rebuilding existing index */
 	quiet = is_rebuild;
 
+	/*
+	 * Run parse analysis.  We don't have convenient access to the query text
+	 * here, but it's probably not worth worrying about.
+	 */
+	stmt = analyzeIndexStmt(stmt, NULL);
+
+	/* ... and do it */
 	DefineIndex(stmt->relation, /* relation */
 				stmt->idxname,	/* index name */
 				InvalidOid,		/* no predefined OID */
@@ -3703,7 +3710,6 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 				stmt->tableSpace,
 				stmt->indexParams,		/* parameters */
 				(Expr *) stmt->whereClause,
-				stmt->rangetable,
 				stmt->options,
 				stmt->unique,
 				stmt->primary,

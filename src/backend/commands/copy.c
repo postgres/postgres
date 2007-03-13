@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.277 2007/03/03 19:32:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.278 2007/03/13 00:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -713,7 +713,7 @@ CopyLoadRawBuf(CopyState cstate)
  * the table.
  */
 uint64
-DoCopy(const CopyStmt *stmt)
+DoCopy(const CopyStmt *stmt, const char *queryString)
 {
 	CopyState	cstate;
 	bool		is_from = stmt->is_from;
@@ -982,13 +982,11 @@ DoCopy(const CopyStmt *stmt)
 	}
 	else
 	{
-		Query	   *query = stmt->query;
 		List	   *rewritten;
+		Query	   *query;
 		PlannedStmt *plan;
 		DestReceiver *dest;
 
-		Assert(query);
-		Assert(query->commandType == CMD_SELECT);
 		Assert(!is_from);
 		cstate->rel = NULL;
 
@@ -998,33 +996,18 @@ DoCopy(const CopyStmt *stmt)
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("COPY (SELECT) WITH OIDS is not supported")));
 
-		/* Query mustn't use INTO, either */
-		if (query->into)
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("COPY (SELECT INTO) is not supported")));
-
 		/*
-		 * The query has already been through parse analysis, but not
-		 * rewriting or planning.  Do that now.
+		 * Run parse analysis and rewrite.  Note this also acquires sufficient
+		 * locks on the source table(s).
 		 *
-		 * Because the planner is not cool about not scribbling on its input,
-		 * we make a preliminary copy of the source querytree.	This prevents
+		 * Because the parser and planner tend to scribble on their input, we
+		 * make a preliminary copy of the source querytree.  This prevents
 		 * problems in the case that the COPY is in a portal or plpgsql
 		 * function and is executed repeatedly.  (See also the same hack in
-		 * EXPLAIN, DECLARE CURSOR and PREPARE.)  XXX the planner really
-		 * shouldn't modify its input ... FIXME someday.
+		 * DECLARE CURSOR and PREPARE.)  XXX FIXME someday.
 		 */
-		query = copyObject(query);
-
-		/*
-		 * Must acquire locks in case we didn't come fresh from the parser.
-		 * XXX this also scribbles on query, another reason for copyObject
-		 */
-		AcquireRewriteLocks(query);
-
-		/* Rewrite through rule system */
-		rewritten = QueryRewrite(query);
+		rewritten = pg_analyze_and_rewrite((Node *) copyObject(stmt->query),
+										   queryString, NULL, 0);
 
 		/* We don't expect more or less than one result query */
 		if (list_length(rewritten) != 1)
@@ -1032,6 +1015,12 @@ DoCopy(const CopyStmt *stmt)
 
 		query = (Query *) linitial(rewritten);
 		Assert(query->commandType == CMD_SELECT);
+
+		/* Query mustn't use INTO, either */
+		if (query->into)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("COPY (SELECT INTO) is not supported")));
 
 		/* plan the query */
 		plan = planner(query, false, 0, NULL);

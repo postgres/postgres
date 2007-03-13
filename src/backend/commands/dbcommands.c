@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.192 2007/02/09 16:12:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.193 2007/03/13 00:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,9 +96,6 @@ createdb(const CreatedbStmt *stmt)
 	const char *dbtemplate = NULL;
 	int			encoding = -1;
 	int			dbconnlimit = -1;
-
-	/* don't call this in a transaction block */
-	PreventTransactionChain((void *) stmt, "CREATE DATABASE");
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -544,8 +541,6 @@ dropdb(const char *dbname, bool missing_ok)
 	bool		db_istemplate;
 	Relation	pgdbrel;
 	HeapTuple	tup;
-
-	PreventTransactionChain((void *) dbname, "DROP DATABASE");
 
 	AssertArg(dbname);
 

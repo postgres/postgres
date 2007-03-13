@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.69 2007/02/20 17:32:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.70 2007/03/13 00:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,10 @@
 #include "commands/explain.h"
 #include "commands/prepare.h"
 #include "funcapi.h"
+#include "parser/analyze.h"
+#include "parser/parse_coerce.h"
+#include "parser/parse_expr.h"
+#include "parser/parse_type.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
@@ -39,20 +43,24 @@
 static HTAB *prepared_queries = NULL;
 
 static void InitQueryHashTable(void);
-static ParamListInfo EvaluateParams(EState *estate,
-			   List *params, List *argtypes);
-static Datum build_regtype_array(List *oid_list);
+static ParamListInfo EvaluateParams(PreparedStatement *pstmt, List *params,
+									const char *queryString, EState *estate);
+static Datum build_regtype_array(Oid *param_types, int num_params);
 
 /*
  * Implements the 'PREPARE' utility statement.
  */
 void
-PrepareQuery(PrepareStmt *stmt)
+PrepareQuery(PrepareStmt *stmt, const char *queryString)
 {
-	const char *commandTag;
+	Oid		   *argtypes = NULL;
+	int			nargs;
+	List	   *queries;
 	Query	   *query;
+	const char *commandTag;
 	List	   *query_list,
 			   *plan_list;
+	int			i;
 
 	/*
 	 * Disallow empty-string statement name (conflicts with protocol-level
@@ -63,7 +71,70 @@ PrepareQuery(PrepareStmt *stmt)
 				(errcode(ERRCODE_INVALID_PSTATEMENT_DEFINITION),
 				 errmsg("invalid statement name: must not be empty")));
 
-	switch (stmt->query->commandType)
+	/* Transform list of TypeNames to array of type OIDs */
+	nargs = list_length(stmt->argtypes);
+
+	if (nargs)
+	{
+		ParseState *pstate;
+		ListCell   *l;
+
+		/*
+		 * typenameTypeId wants a ParseState to carry the source query string.
+		 * Is it worth refactoring its API to avoid this?
+		 */
+		pstate = make_parsestate(NULL);
+		pstate->p_sourcetext = queryString;
+
+		argtypes = (Oid *) palloc(nargs * sizeof(Oid));
+		i = 0;
+
+		foreach(l, stmt->argtypes)
+		{
+			TypeName   *tn = lfirst(l);
+			Oid			toid = typenameTypeId(pstate, tn);
+
+			argtypes[i++] = toid;
+		}
+	}
+
+	/*
+	 * Analyze the statement using these parameter types (any parameters
+	 * passed in from above us will not be visible to it), allowing
+	 * information about unknown parameters to be deduced from context.
+	 *
+	 * Because parse analysis scribbles on the raw querytree, we must make
+	 * a copy to ensure we have a pristine raw tree to cache.  FIXME someday.
+	 */
+	queries = parse_analyze_varparams((Node *) copyObject(stmt->query),
+									  queryString,
+									  &argtypes, &nargs);
+
+	/*
+	 * Check that all parameter types were determined.
+	 */
+	for (i = 0; i < nargs; i++)
+	{
+		Oid			argtype = argtypes[i];
+
+		if (argtype == InvalidOid || argtype == UNKNOWNOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_INDETERMINATE_DATATYPE),
+					 errmsg("could not determine data type of parameter $%d",
+							i + 1)));
+	}
+
+	/*
+	 * Shouldn't get any extra statements, since grammar only allows
+	 * OptimizableStmt
+	 */
+	if (list_length(queries) != 1)
+		elog(ERROR, "unexpected extra stuff in prepared statement");
+
+	query = (Query *) linitial(queries);
+	Assert(IsA(query, Query));
+
+	switch (query->commandType)
 	{
 		case CMD_SELECT:
 			commandTag = "SELECT";
@@ -85,38 +156,22 @@ PrepareQuery(PrepareStmt *stmt)
 			break;
 	}
 
-	/*
-	 * Parse analysis is already done, but we must still rewrite and plan the
-	 * query.
-	 */
-
-	/*
-	 * Because the planner is not cool about not scribbling on its input, we
-	 * make a preliminary copy of the source querytree.  This prevents
-	 * problems in the case that the PREPARE is in a portal or plpgsql
-	 * function and is executed repeatedly.  (See also the same hack in
-	 * DECLARE CURSOR and EXPLAIN.)  XXX the planner really shouldn't modify
-	 * its input ... FIXME someday.
-	 */
-	query = copyObject(stmt->query);
-
 	/* Rewrite the query. The result could be 0, 1, or many queries. */
-	AcquireRewriteLocks(query);
 	query_list = QueryRewrite(query);
 
 	/* Generate plans for queries.	Snapshot is already set. */
 	plan_list = pg_plan_queries(query_list, NULL, false);
 
 	/*
-	 * Save the results.  We don't have the query string for this PREPARE, but
-	 * we do have the string we got from the client, so use that.
+	 * Save the results.
 	 */
 	StorePreparedStatement(stmt->name,
-						   debug_query_string,
+						   stmt->query,
+						   queryString,
 						   commandTag,
+						   argtypes,
+						   nargs,
 						   plan_list,
-						   stmt->argtype_oids,
-						   true,
 						   true);
 }
 
@@ -124,13 +179,13 @@ PrepareQuery(PrepareStmt *stmt)
  * Implements the 'EXECUTE' utility statement.
  */
 void
-ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
+ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
+			 ParamListInfo params,
 			 DestReceiver *dest, char *completionTag)
 {
 	PreparedStatement *entry;
-	char	   *query_string;
+	CachedPlan *cplan;
 	List	   *plan_list;
-	MemoryContext qcontext;
 	ParamListInfo paramLI = NULL;
 	EState	   *estate = NULL;
 	Portal		portal;
@@ -138,20 +193,15 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 	/* Look it up in the hash table */
 	entry = FetchPreparedStatement(stmt->name, true);
 
-	/*
-	 * Punt if not fully planned.  (Currently, that only happens for the
-	 * protocol-level unnamed statement, which can't be accessed from SQL;
-	 * so there's no point in doing more than a quick check here.)
-	 */
-	if (!entry->fully_planned)
+	/* Shouldn't have a non-fully-planned plancache entry */
+	if (!entry->plansource->fully_planned)
 		elog(ERROR, "EXECUTE does not support unplanned prepared statements");
-
-	query_string = entry->query_string;
-	plan_list = entry->stmt_list;
-	qcontext = entry->context;
+	/* Shouldn't get any non-fixed-result cached plan, either */
+	if (!entry->plansource->fixed_result)
+		elog(ERROR, "EXECUTE does not support variable-result cached plans");
 
 	/* Evaluate parameters, if any */
-	if (entry->argtype_list != NIL)
+	if (entry->plansource->num_params > 0)
 	{
 		/*
 		 * Need an EState to evaluate parameters; must not delete it till end
@@ -159,7 +209,8 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 		 */
 		estate = CreateExecutorState();
 		estate->es_param_list_info = params;
-		paramLI = EvaluateParams(estate, stmt->params, entry->argtype_list);
+		paramLI = EvaluateParams(entry, stmt->params,
+								 queryString, estate);
 	}
 
 	/* Create a new portal to run the query in */
@@ -168,22 +219,23 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 	portal->visible = false;
 
 	/*
-	 * For CREATE TABLE / AS EXECUTE, make a copy of the stored query so that
-	 * we can modify its destination (yech, but this has always been ugly).
-	 * For regular EXECUTE we can just use the stored query where it sits,
-	 * since the executor is read-only.
+	 * For CREATE TABLE / AS EXECUTE, we must make a copy of the stored query
+	 * so that we can modify its destination (yech, but this has always been
+	 * ugly).  For regular EXECUTE we can just use the cached query, since the
+	 * executor is read-only.
 	 */
 	if (stmt->into)
 	{
 		MemoryContext oldContext;
 		PlannedStmt *pstmt;
 
-		qcontext = PortalGetHeapMemory(portal);
-		oldContext = MemoryContextSwitchTo(qcontext);
+		/* Replan if needed, and increment plan refcount transiently */
+		cplan = RevalidateCachedPlan(entry->plansource, true);
 
-		if (query_string)
-			query_string = pstrdup(query_string);
-		plan_list = copyObject(plan_list);
+		/* Copy plan into portal's context, and modify */
+		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+
+		plan_list = copyObject(cplan->stmt_list);
 
 		if (list_length(plan_list) != 1)
 			ereport(ERROR,
@@ -198,21 +250,32 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 		pstmt->into = copyObject(stmt->into);
 
 		MemoryContextSwitchTo(oldContext);
+
+		/* We no longer need the cached plan refcount ... */
+		ReleaseCachedPlan(cplan, true);
+		/* ... and we don't want the portal to depend on it, either */
+		cplan = NULL;
+	}
+	else
+	{
+		/* Replan if needed, and increment plan refcount for portal */
+		cplan = RevalidateCachedPlan(entry->plansource, false);
+		plan_list = cplan->stmt_list;
 	}
 
 	PortalDefineQuery(portal,
 					  NULL,
-					  query_string,
-					  entry->commandTag,
+					  entry->plansource->query_string,
+					  entry->plansource->commandTag,
 					  plan_list,
-					  qcontext);
+					  cplan);
 
 	/*
 	 * Run the portal to completion.
 	 */
 	PortalStart(portal, paramLI, ActiveSnapshot);
 
-	(void) PortalRun(portal, FETCH_ALL, dest, dest, completionTag);
+	(void) PortalRun(portal, FETCH_ALL, false, dest, dest, completionTag);
 
 	PortalDrop(portal, false);
 
@@ -223,42 +286,106 @@ ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
 }
 
 /*
- * Evaluates a list of parameters, using the given executor state. It
- * requires a list of the parameter expressions themselves, and a list of
- * their types. It returns a filled-in ParamListInfo -- this can later
- * be passed to CreateQueryDesc(), which allows the executor to make use
- * of the parameters during query execution.
+ * EvaluateParams: evaluate a list of parameters.
+ *
+ * pstmt: statement we are getting parameters for.
+ * params: list of given parameter expressions (raw parser output!)
+ * queryString: source text for error messages.
+ * estate: executor state to use.
+ *
+ * Returns a filled-in ParamListInfo -- this can later be passed to
+ * CreateQueryDesc(), which allows the executor to make use of the parameters
+ * during query execution.
  */
 static ParamListInfo
-EvaluateParams(EState *estate, List *params, List *argtypes)
+EvaluateParams(PreparedStatement *pstmt, List *params,
+			   const char *queryString, EState *estate)
 {
-	int			nargs = list_length(argtypes);
+	Oid		   *param_types = pstmt->plansource->param_types;
+	int			num_params = pstmt->plansource->num_params;
+	int			nparams = list_length(params);
+	ParseState *pstate;
 	ParamListInfo paramLI;
 	List	   *exprstates;
-	ListCell   *le,
-			   *la;
-	int			i = 0;
+	ListCell   *l;
+	int			i;
 
-	/* Parser should have caught this error, but check for safety */
-	if (list_length(params) != nargs)
-		elog(ERROR, "wrong number of arguments");
+	if (nparams != num_params)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("wrong number of parameters for prepared statement \"%s\"",
+						pstmt->stmt_name),
+				 errdetail("Expected %d parameters but got %d.",
+						   num_params, nparams)));
 
-	if (nargs == 0)
+	/* Quick exit if no parameters */
+	if (num_params == 0)
 		return NULL;
 
+	/*
+	 * We have to run parse analysis for the expressions.  Since the
+	 * parser is not cool about scribbling on its input, copy first.
+	 */
+	params = (List *) copyObject(params);
+
+	pstate = make_parsestate(NULL);
+	pstate->p_sourcetext = queryString;
+
+	i = 0;
+	foreach(l, params)
+	{
+		Node	   *expr = lfirst(l);
+		Oid			expected_type_id = param_types[i];
+		Oid			given_type_id;
+
+		expr = transformExpr(pstate, expr);
+
+		/* Cannot contain subselects or aggregates */
+		if (pstate->p_hasSubLinks)
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot use subquery in EXECUTE parameter")));
+		if (pstate->p_hasAggs)
+			ereport(ERROR,
+					(errcode(ERRCODE_GROUPING_ERROR),
+					 errmsg("cannot use aggregate function in EXECUTE parameter")));
+
+		given_type_id = exprType(expr);
+
+		expr = coerce_to_target_type(pstate, expr, given_type_id,
+									 expected_type_id, -1,
+									 COERCION_ASSIGNMENT,
+									 COERCE_IMPLICIT_CAST);
+
+		if (expr == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("parameter $%d of type %s cannot be coerced to the expected type %s",
+							i + 1,
+							format_type_be(given_type_id),
+							format_type_be(expected_type_id)),
+					 errhint("You will need to rewrite or cast the expression.")));
+
+		lfirst(l) = expr;
+		i++;
+	}
+
+	/* Prepare the expressions for execution */
 	exprstates = (List *) ExecPrepareExpr((Expr *) params, estate);
 
 	/* sizeof(ParamListInfoData) includes the first array element */
-	paramLI = (ParamListInfo) palloc(sizeof(ParamListInfoData) +
-									 (nargs - 1) *sizeof(ParamExternData));
-	paramLI->numParams = nargs;
+	paramLI = (ParamListInfo)
+		palloc(sizeof(ParamListInfoData) +
+			   (num_params - 1) *sizeof(ParamExternData));
+	paramLI->numParams = num_params;
 
-	forboth(le, exprstates, la, argtypes)
+	i = 0;
+	foreach(l, exprstates)
 	{
-		ExprState  *n = lfirst(le);
+		ExprState  *n = lfirst(l);
 		ParamExternData *prm = &paramLI->params[i];
 
-		prm->ptype = lfirst_oid(la);
+		prm->ptype = param_types[i];
 		prm->pflags = 0;
 		prm->value = ExecEvalExprSwitchContext(n,
 											   GetPerTupleExprContext(estate),
@@ -293,8 +420,9 @@ InitQueryHashTable(void)
 
 /*
  * Store all the data pertaining to a query in the hash table using
- * the specified key. A copy of the data is made in a memory context belonging
- * to the hash entry, so the caller can dispose of their copy.
+ * the specified key.  All the given data is copied into either the hashtable
+ * entry or the underlying plancache entry, so the caller can dispose of its
+ * copy.
  *
  * Exception: commandTag is presumed to be a pointer to a constant string,
  * or possibly NULL, so it need not be copied.	Note that commandTag should
@@ -302,17 +430,16 @@ InitQueryHashTable(void)
  */
 void
 StorePreparedStatement(const char *stmt_name,
+					   Node *raw_parse_tree,
 					   const char *query_string,
 					   const char *commandTag,
+					   Oid *param_types,
+					   int num_params,
 					   List *stmt_list,
-					   List *argtype_list,
-					   bool fully_planned,
 					   bool from_sql)
 {
 	PreparedStatement *entry;
-	MemoryContext oldcxt,
-				entrycxt;
-	char	   *qstring;
+	CachedPlanSource *plansource;
 	bool		found;
 
 	/* Initialize the hash table, if necessary */
@@ -328,24 +455,15 @@ StorePreparedStatement(const char *stmt_name,
 				 errmsg("prepared statement \"%s\" already exists",
 						stmt_name)));
 
-	/* Make a permanent memory context for the hashtable entry */
-	entrycxt = AllocSetContextCreate(TopMemoryContext,
-									 stmt_name,
-									 ALLOCSET_SMALL_MINSIZE,
-									 ALLOCSET_SMALL_INITSIZE,
-									 ALLOCSET_SMALL_MAXSIZE);
-
-	oldcxt = MemoryContextSwitchTo(entrycxt);
-
-	/*
-	 * We need to copy the data so that it is stored in the correct memory
-	 * context.  Do this before making hashtable entry, so that an
-	 * out-of-memory failure only wastes memory and doesn't leave us with an
-	 * incomplete (ie corrupt) hashtable entry.
-	 */
-	qstring = query_string ? pstrdup(query_string) : NULL;
-	stmt_list = (List *) copyObject(stmt_list);
-	argtype_list = list_copy(argtype_list);
+	/* Create a plancache entry */
+	plansource = CreateCachedPlan(raw_parse_tree,
+								  query_string,
+								  commandTag,
+								  param_types,
+								  num_params,
+								  stmt_list,
+								  true,
+								  true);
 
 	/* Now we can add entry to hash table */
 	entry = (PreparedStatement *) hash_search(prepared_queries,
@@ -358,22 +476,18 @@ StorePreparedStatement(const char *stmt_name,
 		elog(ERROR, "duplicate prepared statement \"%s\"",
 			 stmt_name);
 
-	/* Fill in the hash table entry with copied data */
-	entry->query_string = qstring;
-	entry->commandTag = commandTag;
-	entry->stmt_list = stmt_list;
-	entry->argtype_list = argtype_list;
-	entry->fully_planned = fully_planned;
+	/* Fill in the hash table entry */
+	entry->plansource = plansource;
 	entry->from_sql = from_sql;
-	entry->context = entrycxt;
 	entry->prepare_time = GetCurrentStatementStartTimestamp();
-
-	MemoryContextSwitchTo(oldcxt);
 }
 
 /*
  * Lookup an existing query in the hash table. If the query does not
  * actually exist, throw ereport(ERROR) or return NULL per second parameter.
+ *
+ * Note: this does not force the referenced plancache entry to be valid,
+ * since not all callers care.
  */
 PreparedStatement *
 FetchPreparedStatement(const char *stmt_name, bool throwError)
@@ -402,20 +516,6 @@ FetchPreparedStatement(const char *stmt_name, bool throwError)
 }
 
 /*
- * Look up a prepared statement given the name (giving error if not found).
- * If found, return the list of argument type OIDs.
- */
-List *
-FetchPreparedStatementParams(const char *stmt_name)
-{
-	PreparedStatement *entry;
-
-	entry = FetchPreparedStatement(stmt_name, true);
-
-	return entry->argtype_list;
-}
-
-/*
  * Given a prepared statement, determine the result tupledesc it will
  * produce.  Returns NULL if the execution will not return tuples.
  *
@@ -424,85 +524,15 @@ FetchPreparedStatementParams(const char *stmt_name)
 TupleDesc
 FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 {
-	Node	   *node;
-	Query	   *query;
-	PlannedStmt *pstmt;
-
-	switch (ChoosePortalStrategy(stmt->stmt_list))
-	{
-		case PORTAL_ONE_SELECT:
-			node = (Node *) linitial(stmt->stmt_list);
-			if (IsA(node, Query))
-			{
-				query = (Query *) node;
-				return ExecCleanTypeFromTL(query->targetList, false);
-			}
-			if (IsA(node, PlannedStmt))
-			{
-				pstmt = (PlannedStmt *) node;
-				return ExecCleanTypeFromTL(pstmt->planTree->targetlist, false);
-			}
-			/* other cases shouldn't happen, but return NULL */
-			break;
-
-		case PORTAL_ONE_RETURNING:
-			node = PortalListGetPrimaryStmt(stmt->stmt_list);
-			if (IsA(node, Query))
-			{
-				query = (Query *) node;
-				Assert(query->returningList);
-				return ExecCleanTypeFromTL(query->returningList, false);
-			}
-			if (IsA(node, PlannedStmt))
-			{
-				pstmt = (PlannedStmt *) node;
-				Assert(pstmt->returningLists);
-				return ExecCleanTypeFromTL((List *) linitial(pstmt->returningLists), false);
-			}
-			/* other cases shouldn't happen, but return NULL */
-			break;
-
-		case PORTAL_UTIL_SELECT:
-			node = (Node *) linitial(stmt->stmt_list);
-			if (IsA(node, Query))
-			{
-				query = (Query *) node;
-				Assert(query->utilityStmt);
-				return UtilityTupleDescriptor(query->utilityStmt);
-			}
-			/* else it's a bare utility statement */
-			return UtilityTupleDescriptor(node);
-
-		case PORTAL_MULTI_QUERY:
-			/* will not return tuples */
-			break;
-	}
-	return NULL;
-}
-
-/*
- * Given a prepared statement, determine whether it will return tuples.
- *
- * Note: this is used rather than just testing the result of
- * FetchPreparedStatementResultDesc() because that routine can fail if
- * invoked in an aborted transaction.  This one is safe to use in any
- * context.  Be sure to keep the two routines in sync!
- */
-bool
-PreparedStatementReturnsTuples(PreparedStatement *stmt)
-{
-	switch (ChoosePortalStrategy(stmt->stmt_list))
-	{
-		case PORTAL_ONE_SELECT:
-		case PORTAL_ONE_RETURNING:
-		case PORTAL_UTIL_SELECT:
-			return true;
-
-		case PORTAL_MULTI_QUERY:
-			/* will not return tuples */
-			break;
-	}
-	return false;
+	/*
+	 * Since we don't allow prepared statements' result tupdescs to change,
+	 * there's no need for a revalidate call here.
+	 */
+	Assert(stmt->plansource->fixed_result);
+	if (stmt->plansource->resultDesc)
+		return CreateTupleDescCopy(stmt->plansource->resultDesc);
+	else
+		return NULL;
 }
 
 /*
@@ -510,16 +540,32 @@ PreparedStatementReturnsTuples(PreparedStatement *stmt)
  * targetlist.	Returns NIL if the statement doesn't have a determinable
  * targetlist.
  *
- * Note: do not modify the result.
+ * Note: this is pretty ugly, but since it's only used in corner cases like
+ * Describe Statement on an EXECUTE command, we don't worry too much about
+ * efficiency.
  */
 List *
 FetchPreparedStatementTargetList(PreparedStatement *stmt)
 {
-	/* no point in looking if it doesn't return tuples */
-	if (ChoosePortalStrategy(stmt->stmt_list) == PORTAL_MULTI_QUERY)
+	List	   *tlist;
+	CachedPlan *cplan;
+
+	/* No point in looking if it doesn't return tuples */
+	if (stmt->plansource->resultDesc == NULL)
 		return NIL;
-	/* get the primary statement and find out what it returns */
-	return FetchStatementTargetList(PortalListGetPrimaryStmt(stmt->stmt_list));
+
+	/* Make sure the plan is up to date */
+	cplan = RevalidateCachedPlan(stmt->plansource, true);
+
+	/* Get the primary statement and find out what it returns */
+	tlist = FetchStatementTargetList(PortalListGetPrimaryStmt(cplan->stmt_list));
+
+	/* Copy into caller's context so we can release the plancache entry */
+	tlist = (List *) copyObject(tlist);
+
+	ReleaseCachedPlan(cplan, true);
+
+	return tlist;
 }
 
 /*
@@ -547,12 +593,8 @@ DropPreparedStatement(const char *stmt_name, bool showError)
 
 	if (entry)
 	{
-		/* Drop any open portals that depend on this prepared statement */
-		Assert(MemoryContextIsValid(entry->context));
-		DropDependentPortals(entry->context);
-
-		/* Flush the context holding the subsidiary data */
-		MemoryContextDelete(entry->context);
+		/* Release the plancache entry */
+		DropCachedPlan(entry->plansource);
 
 		/* Now we can remove the hash table entry */
 		hash_search(prepared_queries, entry->stmt_name, HASH_REMOVE, NULL);
@@ -563,34 +605,34 @@ DropPreparedStatement(const char *stmt_name, bool showError)
  * Implements the 'EXPLAIN EXECUTE' utility statement.
  */
 void
-ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
-					TupOutputState *tstate)
+ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
+					const char *queryString,
+					ParamListInfo params, TupOutputState *tstate)
 {
-	ExecuteStmt *execstmt = (ExecuteStmt *) stmt->query->utilityStmt;
 	PreparedStatement *entry;
+	CachedPlan *cplan;
 	List	   *plan_list;
 	ListCell   *p;
 	ParamListInfo paramLI = NULL;
 	EState	   *estate = NULL;
 
-	/* explain.c should only call me for EXECUTE stmt */
-	Assert(execstmt && IsA(execstmt, ExecuteStmt));
-
 	/* Look it up in the hash table */
 	entry = FetchPreparedStatement(execstmt->name, true);
 
-	/*
-	 * Punt if not fully planned.  (Currently, that only happens for the
-	 * protocol-level unnamed statement, which can't be accessed from SQL;
-	 * so there's no point in doing more than a quick check here.)
-	 */
-	if (!entry->fully_planned)
+	/* Shouldn't have a non-fully-planned plancache entry */
+	if (!entry->plansource->fully_planned)
 		elog(ERROR, "EXPLAIN EXECUTE does not support unplanned prepared statements");
+	/* Shouldn't get any non-fixed-result cached plan, either */
+	if (!entry->plansource->fixed_result)
+		elog(ERROR, "EXPLAIN EXECUTE does not support variable-result cached plans");
 
-	plan_list = entry->stmt_list;
+	/* Replan if needed, and acquire a transient refcount */
+	cplan = RevalidateCachedPlan(entry->plansource, true);
+
+	plan_list = cplan->stmt_list;
 
 	/* Evaluate parameters, if any */
-	if (entry->argtype_list != NIL)
+	if (entry->plansource->num_params)
 	{
 		/*
 		 * Need an EState to evaluate parameters; must not delete it till end
@@ -598,8 +640,8 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 		 */
 		estate = CreateExecutorState();
 		estate->es_param_list_info = params;
-		paramLI = EvaluateParams(estate, execstmt->params,
-								 entry->argtype_list);
+		paramLI = EvaluateParams(entry, execstmt->params,
+								 queryString, estate);
 	}
 
 	/* Explain each query */
@@ -610,14 +652,7 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 
 		is_last_query = (lnext(p) == NULL);
 
-		if (!IsA(pstmt, PlannedStmt))
-		{
-			if (IsA(pstmt, NotifyStmt))
-				do_text_output_oneline(tstate, "NOTIFY");
-			else
-				do_text_output_oneline(tstate, "UTILITY");
-		}
-		else
+		if (IsA(pstmt, PlannedStmt))
 		{
 			QueryDesc  *qdesc;
 
@@ -651,6 +686,11 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 
 			ExplainOnePlan(qdesc, stmt, tstate);
 		}
+		else
+		{
+			ExplainOneUtility((Node *) pstmt, stmt, queryString,
+							  params, tstate);
+		}
 
 		/* No need for CommandCounterIncrement, as ExplainOnePlan did it */
 
@@ -661,6 +701,8 @@ ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
 
 	if (estate)
 		FreeExecutorState(estate);
+
+	ReleaseCachedPlan(cplan, true);
 }
 
 /*
@@ -739,14 +781,15 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 		values[0] = DirectFunctionCall1(textin,
 									  CStringGetDatum(prep_stmt->stmt_name));
 
-		if (prep_stmt->query_string == NULL)
+		if (prep_stmt->plansource->query_string == NULL)
 			nulls[1] = true;
 		else
 			values[1] = DirectFunctionCall1(textin,
-								   CStringGetDatum(prep_stmt->query_string));
+						CStringGetDatum(prep_stmt->plansource->query_string));
 
 		values[2] = TimestampTzGetDatum(prep_stmt->prepare_time);
-		values[3] = build_regtype_array(prep_stmt->argtype_list);
+		values[3] = build_regtype_array(prep_stmt->plansource->param_types,
+										prep_stmt->plansource->num_params);
 		values[4] = BoolGetDatum(prep_stmt->from_sql);
 
 		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
@@ -758,29 +801,23 @@ pg_prepared_statement(PG_FUNCTION_ARGS)
 }
 
 /*
- * This utility function takes a List of Oids, and returns a Datum
- * pointing to a one-dimensional Postgres array of regtypes. The empty
- * list is returned as a zero-element array, not NULL.
+ * This utility function takes a C array of Oids, and returns a Datum
+ * pointing to a one-dimensional Postgres array of regtypes. An empty
+ * array is returned as a zero-element array, not NULL.
  */
 static Datum
-build_regtype_array(List *oid_list)
+build_regtype_array(Oid *param_types, int num_params)
 {
-	ListCell   *lc;
-	int			len;
-	int			i;
 	Datum	   *tmp_ary;
 	ArrayType  *result;
+	int			i;
 
-	len = list_length(oid_list);
-	tmp_ary = (Datum *) palloc(len * sizeof(Datum));
+	tmp_ary = (Datum *) palloc(num_params * sizeof(Datum));
 
-	i = 0;
-	foreach(lc, oid_list)
-	{
-		tmp_ary[i++] = ObjectIdGetDatum(lfirst_oid(lc));
-	}
+	for (i = 0; i < num_params; i++)
+		tmp_ary[i] = ObjectIdGetDatum(param_types[i]);
 
 	/* XXX: this hardcodes assumptions about the regtype type */
-	result = construct_array(tmp_ary, len, REGTYPEOID, 4, true, 'i');
+	result = construct_array(tmp_ary, num_params, REGTYPEOID, 4, true, 'i');
 	return PointerGetDatum(result);
 }

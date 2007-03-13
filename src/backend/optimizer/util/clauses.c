@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.237 2007/03/06 22:45:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.238 2007/03/13 00:33:41 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3603,38 +3603,6 @@ query_tree_walker(Query *query,
 		return true;
 	if (range_table_walker(query->rtable, walker, context, flags))
 		return true;
-	if (query->utilityStmt)
-	{
-		/*
-		 * Certain utility commands contain general-purpose Querys embedded in
-		 * them --- if this is one, invoke the walker on the sub-Query.
-		 */
-		if (IsA(query->utilityStmt, CopyStmt))
-		{
-			if (walker(((CopyStmt *) query->utilityStmt)->query, context))
-				return true;
-		}
-		if (IsA(query->utilityStmt, DeclareCursorStmt))
-		{
-			if (walker(((DeclareCursorStmt *) query->utilityStmt)->query, context))
-				return true;
-		}
-		if (IsA(query->utilityStmt, ExplainStmt))
-		{
-			if (walker(((ExplainStmt *) query->utilityStmt)->query, context))
-				return true;
-		}
-		if (IsA(query->utilityStmt, PrepareStmt))
-		{
-			if (walker(((PrepareStmt *) query->utilityStmt)->query, context))
-				return true;
-		}
-		if (IsA(query->utilityStmt, ViewStmt))
-		{
-			if (walker(((ViewStmt *) query->utilityStmt)->query, context))
-				return true;
-		}
-	}
 	return false;
 }
 

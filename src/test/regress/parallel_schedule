@@ -1,6 +1,6 @@
 # ----------
 # The first group of parallel test
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.39 2007/02/09 03:35:35 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.40 2007/03/13 00:33:44 tgl Exp $
 # ----------
 test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeric uuid
 
@@ -69,7 +69,7 @@ test: misc
 # ----------
 # The fifth group of parallel test
 # ----------
-test: select_views portals_p2 rules foreign_key cluster dependency guc combocid
+test: select_views portals_p2 rules foreign_key cluster dependency guc combocid plancache
 
 # ----------
 # The sixth group of parallel test

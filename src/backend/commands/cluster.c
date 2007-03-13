@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.156 2007/02/01 19:10:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.157 2007/03/13 00:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ static List *get_tables_to_cluster(MemoryContext cluster_context);
  *---------------------------------------------------------------------------
  */
 void
-cluster(ClusterStmt *stmt)
+cluster(ClusterStmt *stmt, bool isTopLevel)
 {
 	if (stmt->relation != NULL)
 	{
@@ -173,7 +173,7 @@ cluster(ClusterStmt *stmt)
 		 * We cannot run this form of CLUSTER inside a user transaction block;
 		 * we'd be holding locks way too long.
 		 */
-		PreventTransactionChain((void *) stmt, "CLUSTER");
+		PreventTransactionChain(isTopLevel, "CLUSTER");
 
 		/*
 		 * Create special memory context for cross-transaction storage.

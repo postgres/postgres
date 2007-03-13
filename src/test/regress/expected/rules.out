@@ -1188,6 +1188,8 @@ drop rule foorule on foo;
 create rule foorule as on insert to foo where f1 < 100
 do instead insert into foo2 values (f1);
 ERROR:  column "f1" does not exist
+LINE 2: do instead insert into foo2 values (f1);
+                                            ^
 -- this is the correct way:
 create rule foorule as on insert to foo where f1 < 100
 do instead insert into foo2 values (new.f1);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.527 2007/03/03 19:32:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.528 2007/03/13 00:33:42 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -140,8 +140,9 @@ static bool ignore_till_sync = false;
  * We keep it separate from the hashtable kept by commands/prepare.c
  * in order to reduce overhead for short-lived queries.
  */
+static CachedPlanSource *unnamed_stmt_psrc = NULL;
+/* workspace for building a new unnamed statement in */
 static MemoryContext unnamed_stmt_context = NULL;
-static PreparedStatement *unnamed_stmt_pstmt = NULL;
 
 
 static bool EchoQuery = false;	/* default don't echo */
@@ -173,6 +174,7 @@ static void finish_xact_command(void);
 static bool IsTransactionExitStmt(Node *parsetree);
 static bool IsTransactionExitStmtList(List *parseTrees);
 static bool IsTransactionStmtList(List *parseTrees);
+static void drop_unnamed_stmt(void);
 static void SigHupHandler(SIGNAL_ARGS);
 static void log_disconnections(int code, Datum arg);
 
@@ -794,20 +796,12 @@ exec_simple_query(const char *query_string)
 	 * statement and portal; this ensures we recover any storage used by prior
 	 * unnamed operations.)
 	 */
-	unnamed_stmt_pstmt = NULL;
-	if (unnamed_stmt_context)
-	{
-		DropDependentPortals(unnamed_stmt_context);
-		MemoryContextDelete(unnamed_stmt_context);
-	}
-	unnamed_stmt_context = NULL;
+	drop_unnamed_stmt();
 
 	/*
 	 * Switch to appropriate context for constructing parsetrees.
 	 */
 	oldcontext = MemoryContextSwitchTo(MessageContext);
-
-	QueryContext = CurrentMemoryContext;
 
 	/*
 	 * Do basic parsing of the query or queries (this should be safe even if
@@ -906,7 +900,7 @@ exec_simple_query(const char *query_string)
 						  query_string,
 						  commandTag,
 						  plantree_list,
-						  MessageContext);
+						  NULL);
 
 		/*
 		 * Start the portal.  No parameters here.
@@ -950,6 +944,7 @@ exec_simple_query(const char *query_string)
 		 */
 		(void) PortalRun(portal,
 						 FETCH_ALL,
+						 true,	/* top level */
 						 receiver,
 						 receiver,
 						 completionTag);
@@ -1009,8 +1004,6 @@ exec_simple_query(const char *query_string)
 	if (!parsetree_list)
 		NullCommand(dest);
 
-	QueryContext = NULL;
-
 	/*
 	 * Emit duration logging if appropriate.
 	 */
@@ -1049,10 +1042,10 @@ exec_parse_message(const char *query_string,	/* string to execute */
 {
 	MemoryContext oldcontext;
 	List	   *parsetree_list;
+	Node	   *raw_parse_tree;
 	const char *commandTag;
 	List	   *querytree_list,
-			   *stmt_list,
-			   *param_list;
+			   *stmt_list;
 	bool		is_named;
 	bool		fully_planned;
 	bool		save_log_statement_stats = log_statement_stats;
@@ -1088,12 +1081,12 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	 * We have two strategies depending on whether the prepared statement is
 	 * named or not.  For a named prepared statement, we do parsing in
 	 * MessageContext and copy the finished trees into the prepared
-	 * statement's private context; then the reset of MessageContext releases
+	 * statement's plancache entry; then the reset of MessageContext releases
 	 * temporary space used by parsing and planning.  For an unnamed prepared
 	 * statement, we assume the statement isn't going to hang around long, so
 	 * getting rid of temp space quickly is probably not worth the costs of
-	 * copying parse/plan trees.  So in this case, we set up a special context
-	 * for the unnamed statement, and do all the parsing work therein.
+	 * copying parse/plan trees.  So in this case, we create the plancache
+	 * entry's context here, and do all the parsing work therein.
 	 */
 	is_named = (stmt_name[0] != '\0');
 	if (is_named)
@@ -1104,24 +1097,16 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	else
 	{
 		/* Unnamed prepared statement --- release any prior unnamed stmt */
-		unnamed_stmt_pstmt = NULL;
-		if (unnamed_stmt_context)
-		{
-			DropDependentPortals(unnamed_stmt_context);
-			MemoryContextDelete(unnamed_stmt_context);
-		}
-		unnamed_stmt_context = NULL;
-		/* create context for parsing/planning */
+		drop_unnamed_stmt();
+		/* Create context for parsing/planning */
 		unnamed_stmt_context =
-			AllocSetContextCreate(TopMemoryContext,
+			AllocSetContextCreate(CacheMemoryContext,
 								  "unnamed prepared statement",
 								  ALLOCSET_DEFAULT_MINSIZE,
 								  ALLOCSET_DEFAULT_INITSIZE,
 								  ALLOCSET_DEFAULT_MAXSIZE);
 		oldcontext = MemoryContextSwitchTo(unnamed_stmt_context);
 	}
-
-	QueryContext = CurrentMemoryContext;
 
 	/*
 	 * Do basic parsing of the query or queries (this should be safe even if
@@ -1141,13 +1126,14 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 	if (parsetree_list != NIL)
 	{
-		Node	   *parsetree = (Node *) linitial(parsetree_list);
 		int			i;
+
+		raw_parse_tree = (Node *) linitial(parsetree_list);
 
 		/*
 		 * Get the command name for possible use in status display.
 		 */
-		commandTag = CreateCommandTag(parsetree);
+		commandTag = CreateCommandTag(raw_parse_tree);
 
 		/*
 		 * If we are in an aborted transaction, reject all commands except
@@ -1158,7 +1144,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		 * state, but not many...)
 		 */
 		if (IsAbortedTransactionBlockState() &&
-			!IsTransactionExitStmt(parsetree))
+			!IsTransactionExitStmt(raw_parse_tree))
 			ereport(ERROR,
 					(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 					 errmsg("current transaction is aborted, "
@@ -1168,20 +1154,22 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		 * OK to analyze, rewrite, and plan this query.  Note that the
 		 * originally specified parameter set is not required to be complete,
 		 * so we have to use parse_analyze_varparams().
+		 *
+		 * XXX must use copyObject here since parse analysis scribbles on
+		 * its input, and we need the unmodified raw parse tree for possible
+		 * replanning later.
 		 */
 		if (log_parser_stats)
 			ResetUsage();
 
-		querytree_list = parse_analyze_varparams(parsetree,
+		querytree_list = parse_analyze_varparams(copyObject(raw_parse_tree),
 												 query_string,
 												 &paramTypes,
 												 &numParams);
 
 		/*
-		 * Check all parameter types got determined, and convert array
-		 * representation to a list for storage.
+		 * Check all parameter types got determined.
 		 */
-		param_list = NIL;
 		for (i = 0; i < numParams; i++)
 		{
 			Oid			ptype = paramTypes[i];
@@ -1191,7 +1179,6 @@ exec_parse_message(const char *query_string,	/* string to execute */
 						(errcode(ERRCODE_INDETERMINATE_DATATYPE),
 					 errmsg("could not determine data type of parameter $%d",
 							i + 1)));
-			param_list = lappend_oid(param_list, ptype);
 		}
 
 		if (log_parser_stats)
@@ -1217,9 +1204,9 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	else
 	{
 		/* Empty input string.	This is legal. */
+		raw_parse_tree = NULL;
 		commandTag = NULL;
 		stmt_list = NIL;
-		param_list = NIL;
 		fully_planned = true;
 	}
 
@@ -1232,34 +1219,32 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	if (is_named)
 	{
 		StorePreparedStatement(stmt_name,
+							   raw_parse_tree,
 							   query_string,
 							   commandTag,
+							   paramTypes,
+							   numParams,
 							   stmt_list,
-							   param_list,
-							   fully_planned,
 							   false);
 	}
 	else
 	{
-		PreparedStatement *pstmt;
-
-		pstmt = (PreparedStatement *) palloc0(sizeof(PreparedStatement));
 		/* query_string needs to be copied into unnamed_stmt_context */
-		pstmt->query_string = pstrdup(query_string);
 		/* the rest is there already */
-		pstmt->commandTag = commandTag;
-		pstmt->stmt_list = stmt_list;
-		pstmt->argtype_list = param_list;
-		pstmt->fully_planned = fully_planned;
-		pstmt->from_sql = false;
-		pstmt->context = unnamed_stmt_context;
-		/* Now the unnamed statement is complete and valid */
-		unnamed_stmt_pstmt = pstmt;
+		unnamed_stmt_psrc = FastCreateCachedPlan(raw_parse_tree,
+												 pstrdup(query_string),
+												 commandTag,
+												 paramTypes,
+												 numParams,
+												 stmt_list,
+												 fully_planned,
+												 true,
+												 unnamed_stmt_context);
+		/* context now belongs to the plancache entry */
+		unnamed_stmt_context = NULL;
 	}
 
 	MemoryContextSwitchTo(oldcontext);
-
-	QueryContext = NULL;
 
 	/*
 	 * We do NOT close the open transaction command here; that only happens
@@ -1315,12 +1300,11 @@ exec_bind_message(StringInfo input_message)
 	int			numParams;
 	int			numRFormats;
 	int16	   *rformats = NULL;
-	PreparedStatement *pstmt;
+	CachedPlanSource *psrc;
+	CachedPlan *cplan;
 	Portal		portal;
 	ParamListInfo params;
-	List	   *query_list;
 	List	   *plan_list;
-	MemoryContext qContext;
 	bool		save_log_statement_stats = log_statement_stats;
 	char		msec_str[32];
 
@@ -1335,12 +1319,17 @@ exec_bind_message(StringInfo input_message)
 
 	/* Find prepared statement */
 	if (stmt_name[0] != '\0')
+	{
+		PreparedStatement *pstmt;
+
 		pstmt = FetchPreparedStatement(stmt_name, true);
+		psrc = pstmt->plansource;
+	}
 	else
 	{
 		/* special-case the unnamed statement */
-		pstmt = unnamed_stmt_pstmt;
-		if (!pstmt)
+		psrc = unnamed_stmt_psrc;
+		if (!psrc)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_PSTATEMENT),
 					 errmsg("unnamed prepared statement does not exist")));
@@ -1349,7 +1338,7 @@ exec_bind_message(StringInfo input_message)
 	/*
 	 * Report query to various monitoring facilities.
 	 */
-	debug_query_string = pstmt->query_string ? pstmt->query_string : "<BIND>";
+	debug_query_string = psrc->query_string ? psrc->query_string : "<BIND>";
 
 	pgstat_report_activity(debug_query_string);
 
@@ -1388,11 +1377,11 @@ exec_bind_message(StringInfo input_message)
 			errmsg("bind message has %d parameter formats but %d parameters",
 				   numPFormats, numParams)));
 
-	if (numParams != list_length(pstmt->argtype_list))
+	if (numParams != psrc->num_params)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("bind message supplies %d parameters, but prepared statement \"%s\" requires %d",
-				   numParams, stmt_name, list_length(pstmt->argtype_list))));
+				   numParams, stmt_name, psrc->num_params)));
 
 	/*
 	 * If we are in aborted transaction state, the only portals we can
@@ -1403,7 +1392,7 @@ exec_bind_message(StringInfo input_message)
 	 * functions.
 	 */
 	if (IsAbortedTransactionBlockState() &&
-		(!IsTransactionExitStmtList(pstmt->stmt_list) ||
+		(!IsTransactionExitStmt(psrc->raw_parse_tree) ||
 		 numParams != 0))
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
@@ -1424,7 +1413,6 @@ exec_bind_message(StringInfo input_message)
 	 */
 	if (numParams > 0)
 	{
-		ListCell   *l;
 		MemoryContext oldContext;
 		int			paramno;
 
@@ -1435,10 +1423,9 @@ exec_bind_message(StringInfo input_message)
 								   (numParams - 1) *sizeof(ParamExternData));
 		params->numParams = numParams;
 
-		paramno = 0;
-		foreach(l, pstmt->argtype_list)
+		for (paramno = 0; paramno < numParams; paramno++)
 		{
-			Oid			ptype = lfirst_oid(l);
+			Oid			ptype = psrc->param_types[paramno];
 			int32		plength;
 			Datum		pval;
 			bool		isNull;
@@ -1554,8 +1541,6 @@ exec_bind_message(StringInfo input_message)
 			 */
 			params->params[paramno].pflags = PARAM_FLAG_CONST;
 			params->params[paramno].ptype = ptype;
-
-			paramno++;
 		}
 
 		MemoryContextSwitchTo(oldContext);
@@ -1576,46 +1561,62 @@ exec_bind_message(StringInfo input_message)
 
 	pq_getmsgend(input_message);
 
-	/*
-	 * If we didn't plan the query before, do it now.  This allows the planner
-	 * to make use of the concrete parameter values we now have.  Because we
-	 * use PARAM_FLAG_CONST, the plan is good only for this set of param
-	 * values, and so we generate the plan in the portal's own memory context
-	 * where it will be thrown away after use.	As in exec_parse_message, we
-	 * make no attempt to recover planner temporary memory until the end of
-	 * the operation.
-	 *
-	 * XXX because the planner has a bad habit of scribbling on its input, we
-	 * have to make a copy of the parse trees, just in case someone binds and
-	 * executes an unnamed statement multiple times; this also means that the
-	 * portal's queryContext becomes its own heap context rather than the
-	 * prepared statement's context.  FIXME someday
-	 */
-	if (pstmt->fully_planned)
+	if (psrc->fully_planned)
 	{
-		plan_list = pstmt->stmt_list;
-		qContext = pstmt->context;
+		/*
+		 * Revalidate the cached plan; this may result in replanning.  Any
+		 * cruft will be generated in MessageContext.  The plan refcount
+		 * will be assigned to the Portal, so it will be released at portal
+		 * destruction.
+		 */
+		cplan = RevalidateCachedPlan(psrc, false);
+		plan_list = cplan->stmt_list;
 	}
 	else
 	{
 		MemoryContext oldContext;
+		List	   *query_list;
 
-		qContext = PortalGetHeapMemory(portal);
-		oldContext = MemoryContextSwitchTo(qContext);
-		query_list = copyObject(pstmt->stmt_list);
+		/*
+		 * Revalidate the cached plan; this may result in redoing parse
+		 * analysis and rewriting (but not planning).  Any cruft will be
+		 * generated in MessageContext.  The plan refcount is assigned to
+		 * CurrentResourceOwner.
+		 */
+		cplan = RevalidateCachedPlan(psrc, true);
+
+		/*
+		 * We didn't plan the query before, so do it now.  This allows the
+		 * planner to make use of the concrete parameter values we now have.
+		 * Because we use PARAM_FLAG_CONST, the plan is good only for this set
+		 * of param values, and so we generate the plan in the portal's own
+		 * memory context where it will be thrown away after use. As in
+		 * exec_parse_message, we make no attempt to recover planner temporary
+		 * memory until the end of the operation.
+		 *
+		 * XXX because the planner has a bad habit of scribbling on its input,
+		 * we have to make a copy of the parse trees.  FIXME someday.
+		 */
+		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
+		query_list = copyObject(cplan->stmt_list);
 		plan_list = pg_plan_queries(query_list, params, true);
 		MemoryContextSwitchTo(oldContext);
+
+		/* We no longer need the cached plan refcount ... */
+		ReleaseCachedPlan(cplan, true);
+		/* ... and we don't want the portal to depend on it, either */
+		cplan = NULL;
 	}
 
 	/*
 	 * Define portal and start execution.
 	 */
 	PortalDefineQuery(portal,
-					  *pstmt->stmt_name ? pstmt->stmt_name : NULL,
-					  pstmt->query_string,
-					  pstmt->commandTag,
+					  stmt_name[0] ? stmt_name : NULL,
+					  psrc->query_string,
+					  psrc->commandTag,
 					  plan_list,
-					  qContext);
+					  cplan);
 
 	PortalStart(portal, params, InvalidSnapshot);
 
@@ -1647,7 +1648,7 @@ exec_bind_message(StringInfo input_message)
 							*stmt_name ? stmt_name : "<unnamed>",
 							*portal_name ? "/" : "",
 							*portal_name ? portal_name : "",
-							pstmt->query_string ? pstmt->query_string : "<source not stored>"),
+							psrc->query_string ? psrc->query_string : "<source not stored>"),
 					 errhidestmt(true),
 					 errdetail_params(params)));
 			break;
@@ -1809,6 +1810,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 	completed = PortalRun(portal,
 						  max_rows,
+						  true,	/* top level */
 						  receiver,
 						  receiver,
 						  completionTag);
@@ -1981,9 +1983,9 @@ errdetail_execute(List *raw_parsetree_list)
 			PreparedStatement *pstmt;
 
 			pstmt = FetchPreparedStatement(stmt->name, false);
-			if (pstmt && pstmt->query_string)
+			if (pstmt && pstmt->plansource->query_string)
 			{
-				errdetail("prepare: %s", pstmt->query_string);
+				errdetail("prepare: %s", pstmt->plansource->query_string);
 				return 0;
 			}
 		}
@@ -2064,10 +2066,9 @@ errdetail_params(ParamListInfo params)
 static void
 exec_describe_statement_message(const char *stmt_name)
 {
-	PreparedStatement *pstmt;
-	TupleDesc	tupdesc;
-	ListCell   *l;
+	CachedPlanSource *psrc;
 	StringInfoData buf;
+	int			i;
 
 	/*
 	 * Start up a transaction command. (Note that this will normally change
@@ -2080,28 +2081,37 @@ exec_describe_statement_message(const char *stmt_name)
 
 	/* Find prepared statement */
 	if (stmt_name[0] != '\0')
+	{
+		PreparedStatement *pstmt;
+
 		pstmt = FetchPreparedStatement(stmt_name, true);
+		psrc = pstmt->plansource;
+	}
 	else
 	{
 		/* special-case the unnamed statement */
-		pstmt = unnamed_stmt_pstmt;
-		if (!pstmt)
+		psrc = unnamed_stmt_psrc;
+		if (!psrc)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_PSTATEMENT),
 					 errmsg("unnamed prepared statement does not exist")));
 	}
 
+	/* Prepared statements shouldn't have changeable result descs */
+	Assert(psrc->fixed_result);
+
 	/*
-	 * If we are in aborted transaction state, we can't safely create a result
-	 * tupledesc, because that needs catalog accesses.	Hence, refuse to
-	 * Describe statements that return data.  (We shouldn't just refuse all
-	 * Describes, since that might break the ability of some clients to issue
-	 * COMMIT or ROLLBACK commands, if they use code that blindly Describes
-	 * whatever it does.)  We can Describe parameters without doing anything
-	 * dangerous, so we don't restrict that.
+	 * If we are in aborted transaction state, we can't run
+	 * SendRowDescriptionMessage(), because that needs catalog accesses.
+	 * (We can't do RevalidateCachedPlan, either, but that's a lesser problem.)
+	 * Hence, refuse to Describe statements that return data.  (We shouldn't
+	 * just refuse all Describes, since that might break the ability of some
+	 * clients to issue COMMIT or ROLLBACK commands, if they use code that
+	 * blindly Describes whatever it does.)  We can Describe parameters
+	 * without doing anything dangerous, so we don't restrict that.
 	 */
 	if (IsAbortedTransactionBlockState() &&
-		PreparedStatementReturnsTuples(pstmt))
+		psrc->resultDesc)
 		ereport(ERROR,
 				(errcode(ERRCODE_IN_FAILED_SQL_TRANSACTION),
 				 errmsg("current transaction is aborted, "
@@ -2114,11 +2124,11 @@ exec_describe_statement_message(const char *stmt_name)
 	 * First describe the parameters...
 	 */
 	pq_beginmessage(&buf, 't'); /* parameter description message type */
-	pq_sendint(&buf, list_length(pstmt->argtype_list), 2);
+	pq_sendint(&buf, psrc->num_params, 2);
 
-	foreach(l, pstmt->argtype_list)
+	for (i = 0; i < psrc->num_params; i++)
 	{
-		Oid			ptype = lfirst_oid(l);
+		Oid			ptype = psrc->param_types[i];
 
 		pq_sendint(&buf, (int) ptype, 4);
 	}
@@ -2127,11 +2137,21 @@ exec_describe_statement_message(const char *stmt_name)
 	/*
 	 * Next send RowDescription or NoData to describe the result...
 	 */
-	tupdesc = FetchPreparedStatementResultDesc(pstmt);
-	if (tupdesc)
-		SendRowDescriptionMessage(tupdesc,
-								  FetchPreparedStatementTargetList(pstmt),
-								  NULL);
+	if (psrc->resultDesc)
+	{
+		CachedPlan *cplan;
+		List	   *tlist;
+
+		/* Make sure the plan is up to date */
+		cplan = RevalidateCachedPlan(psrc, true);
+
+		/* Get the primary statement and find out what it returns */
+		tlist = FetchStatementTargetList(PortalListGetPrimaryStmt(cplan->stmt_list));
+
+		SendRowDescriptionMessage(psrc->resultDesc, tlist, NULL);
+
+		ReleaseCachedPlan(cplan, true);
+	}
 	else
 		pq_putemptymessage('n');	/* NoData */
 
@@ -2306,6 +2326,24 @@ IsTransactionStmtList(List *parseTrees)
 			return true;
 	}
 	return false;
+}
+
+/* Release any existing unnamed prepared statement */
+static void
+drop_unnamed_stmt(void)
+{
+	/* Release any completed unnamed statement */
+	if (unnamed_stmt_psrc)
+		DropCachedPlan(unnamed_stmt_psrc);
+	unnamed_stmt_psrc = NULL;
+	/*
+	 * If we failed while trying to build a prior unnamed statement, we may
+	 * have a memory context that wasn't assigned to a completed plancache
+	 * entry.  If so, drop it to avoid a permanent memory leak.
+	 */
+	if (unnamed_stmt_context)
+		MemoryContextDelete(unnamed_stmt_context);
+	unnamed_stmt_context = NULL;
 }
 
 
@@ -3313,7 +3351,6 @@ PostgresMain(int argc, char *argv[], const char *username)
 		 */
 		MemoryContextSwitchTo(TopMemoryContext);
 		FlushErrorState();
-		QueryContext = NULL;
 
 		/*
 		 * If we were handling an extended-query-protocol message, initiate
@@ -3558,13 +3595,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 							else
 							{
 								/* special-case the unnamed statement */
-								unnamed_stmt_pstmt = NULL;
-								if (unnamed_stmt_context)
-								{
-									DropDependentPortals(unnamed_stmt_context);
-									MemoryContextDelete(unnamed_stmt_context);
-								}
-								unnamed_stmt_context = NULL;
+								drop_unnamed_stmt();
 							}
 							break;
 						case 'P':

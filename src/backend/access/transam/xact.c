@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.235 2007/03/12 22:09:27 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.236 2007/03/13 00:33:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2504,12 +2504,13 @@ AbortCurrentTransaction(void)
  *	could issue more commands and possibly cause a failure after the statement
  *	completes).  Subtransactions are verboten too.
  *
- *	stmtNode: pointer to parameter block for statement; this is used in
- *	a very klugy way to determine whether we are inside a function.
- *	stmtType: statement type name for error messages.
+ *	isTopLevel: passed down from ProcessUtility to determine whether we are
+ *	inside a function.  (We will always fail if this is false, but it's
+ *	convenient to centralize the check here instead of making callers do it.)
+ *	stmtType: statement type name, for error messages.
  */
 void
-PreventTransactionChain(void *stmtNode, const char *stmtType)
+PreventTransactionChain(bool isTopLevel, const char *stmtType)
 {
 	/*
 	 * xact block already started?
@@ -2532,11 +2533,9 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
 						stmtType)));
 
 	/*
-	 * Are we inside a function call?  If the statement's parameter block was
-	 * allocated in QueryContext, assume it is an interactive command.
-	 * Otherwise assume it is coming from a function.
+	 * inside a function call?
 	 */
-	if (!MemoryContextContains(QueryContext, stmtNode))
+	if (!isTopLevel)
 		ereport(ERROR,
 				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
 		/* translator: %s represents an SQL statement name */
@@ -2562,12 +2561,12 @@ PreventTransactionChain(void *stmtNode, const char *stmtType)
  *	use of the current statement's results.  Likewise subtransactions.
  *	Thus this is an inverse for PreventTransactionChain.
  *
- *	stmtNode: pointer to parameter block for statement; this is used in
- *	a very klugy way to determine whether we are inside a function.
- *	stmtType: statement type name for error messages.
+ *	isTopLevel: passed down from ProcessUtility to determine whether we are
+ *	inside a function.
+ *	stmtType: statement type name, for error messages.
  */
 void
-RequireTransactionChain(void *stmtNode, const char *stmtType)
+RequireTransactionChain(bool isTopLevel, const char *stmtType)
 {
 	/*
 	 * xact block already started?
@@ -2582,12 +2581,11 @@ RequireTransactionChain(void *stmtNode, const char *stmtType)
 		return;
 
 	/*
-	 * Are we inside a function call?  If the statement's parameter block was
-	 * allocated in QueryContext, assume it is an interactive command.
-	 * Otherwise assume it is coming from a function.
+	 * inside a function call?
 	 */
-	if (!MemoryContextContains(QueryContext, stmtNode))
+	if (!isTopLevel)
 		return;
+
 	ereport(ERROR,
 			(errcode(ERRCODE_NO_ACTIVE_SQL_TRANSACTION),
 	/* translator: %s represents an SQL statement name */
@@ -2602,11 +2600,11 @@ RequireTransactionChain(void *stmtNode, const char *stmtType)
  *	a transaction block than when running as single commands.  ANALYZE is
  *	currently the only example.
  *
- *	stmtNode: pointer to parameter block for statement; this is used in
- *	a very klugy way to determine whether we are inside a function.
+ *	isTopLevel: passed down from ProcessUtility to determine whether we are
+ *	inside a function.
  */
 bool
-IsInTransactionChain(void *stmtNode)
+IsInTransactionChain(bool isTopLevel)
 {
 	/*
 	 * Return true on same conditions that would make PreventTransactionChain
@@ -2618,7 +2616,7 @@ IsInTransactionChain(void *stmtNode)
 	if (IsSubTransaction())
 		return true;
 
-	if (!MemoryContextContains(QueryContext, stmtNode))
+	if (!isTopLevel)
 		return true;
 
 	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT &&

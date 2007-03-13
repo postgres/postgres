@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.24 2007/02/20 17:32:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.25 2007/03/13 00:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,58 +14,49 @@
 #define PREPARE_H
 
 #include "executor/executor.h"
+#include "utils/plancache.h"
 #include "utils/timestamp.h"
 
 /*
- * The data structure representing a prepared statement
+ * The data structure representing a prepared statement.  This is now just
+ * a thin veneer over a plancache entry --- the main addition is that of
+ * a name.
  *
- * A prepared statement might be fully planned, or only parsed-and-rewritten.
- * If fully planned, stmt_list contains PlannedStmts and/or utility statements;
- * if not, it contains Query nodes.
- *
- * Note: all subsidiary storage lives in the context denoted by the context
- * field.  However, the string referenced by commandTag is not subsidiary
- * storage; it is assumed to be a compile-time-constant string.  As with
- * portals, commandTag shall be NULL if and only if the original query string
- * (before rewriting) was an empty string.
+ * Note: all subsidiary storage lives in the referenced plancache entry.
  */
 typedef struct
 {
 	/* dynahash.c requires key to be first field */
 	char		stmt_name[NAMEDATALEN];
-	char	   *query_string;	/* text of query, or NULL */
-	const char *commandTag;		/* command tag (a constant!), or NULL */
-	List	   *stmt_list;		/* list of statement or Query nodes */
-	List	   *argtype_list;	/* list of parameter type OIDs */
-	bool		fully_planned;	/* what is in stmt_list, exactly? */
+	CachedPlanSource *plansource;	/* the actual cached plan */
 	bool		from_sql;		/* prepared via SQL, not FE/BE protocol? */
 	TimestampTz prepare_time;	/* the time when the stmt was prepared */
-	MemoryContext context;		/* context containing this query */
 } PreparedStatement;
 
 
 /* Utility statements PREPARE, EXECUTE, DEALLOCATE, EXPLAIN EXECUTE */
-extern void PrepareQuery(PrepareStmt *stmt);
-extern void ExecuteQuery(ExecuteStmt *stmt, ParamListInfo params,
+extern void PrepareQuery(PrepareStmt *stmt, const char *queryString);
+extern void ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
+			 ParamListInfo params,
 			 DestReceiver *dest, char *completionTag);
 extern void DeallocateQuery(DeallocateStmt *stmt);
-extern void ExplainExecuteQuery(ExplainStmt *stmt, ParamListInfo params,
-					TupOutputState *tstate);
+extern void ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
+								const char *queryString,
+								ParamListInfo params, TupOutputState *tstate);
 
 /* Low-level access to stored prepared statements */
 extern void StorePreparedStatement(const char *stmt_name,
+					   Node *raw_parse_tree,
 					   const char *query_string,
 					   const char *commandTag,
+					   Oid *param_types,
+					   int num_params,
 					   List *stmt_list,
-					   List *argtype_list,
-					   bool fully_planned,
 					   bool from_sql);
 extern PreparedStatement *FetchPreparedStatement(const char *stmt_name,
 					   bool throwError);
 extern void DropPreparedStatement(const char *stmt_name, bool showError);
-extern List *FetchPreparedStatementParams(const char *stmt_name);
 extern TupleDesc FetchPreparedStatementResultDesc(PreparedStatement *stmt);
-extern bool PreparedStatementReturnsTuples(PreparedStatement *stmt);
 extern List *FetchPreparedStatementTargetList(PreparedStatement *stmt);
 
 #endif   /* PREPARE_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.341 2007/02/20 17:32:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.342 2007/03/13 00:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1021,15 +1021,14 @@ typedef struct GrantRoleStmt
  *
  * We support "COPY relation FROM file", "COPY relation TO file", and
  * "COPY (query) TO file".	In any given CopyStmt, exactly one of "relation"
- * and "query" must be non-NULL.  Note: "query" is a SelectStmt before
- * parse analysis, and a Query afterwards.
+ * and "query" must be non-NULL.
  * ----------------------
  */
 typedef struct CopyStmt
 {
 	NodeTag		type;
 	RangeVar   *relation;		/* the relation to copy */
-	Query	   *query;			/* the query to copy */
+	Node	   *query;			/* the SELECT query to copy */
 	List	   *attlist;		/* List of column names (as Strings), or NIL
 								 * for all columns */
 	bool		is_from;		/* TO or FROM */
@@ -1487,8 +1486,6 @@ typedef struct IndexStmt
 	List	   *indexParams;	/* a list of IndexElem */
 	List	   *options;		/* options from WITH clause */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
-	List	   *rangetable;		/* range table for qual and/or expressions,
-								 * filled in by transformStmt() */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */
 	bool		isconstraint;	/* is it from a CONSTRAINT clause? */
@@ -1713,7 +1710,7 @@ typedef struct ViewStmt
 	NodeTag		type;
 	RangeVar   *view;			/* the view to be created */
 	List	   *aliases;		/* target column names */
-	Query	   *query;			/* the SQL statement */
+	Node	   *query;			/* the SELECT query */
 	bool		replace;		/* replace an existing view? */
 } ViewStmt;
 
@@ -1805,7 +1802,7 @@ typedef struct VacuumStmt
 typedef struct ExplainStmt
 {
 	NodeTag		type;
-	Query	   *query;			/* the query */
+	Node	   *query;			/* the query (as a raw parse tree) */
 	bool		verbose;		/* print plan info */
 	bool		analyze;		/* get statistics by executing plan */
 } ExplainStmt;
@@ -1940,9 +1937,8 @@ typedef struct PrepareStmt
 {
 	NodeTag		type;
 	char	   *name;			/* Name of plan, arbitrary */
-	List	   *argtypes;		/* Types of parameters (TypeNames) */
-	List	   *argtype_oids;	/* Types of parameters (OIDs) */
-	Query	   *query;			/* The query itself */
+	List	   *argtypes;		/* Types of parameters (List of TypeName) */
+	Node	   *query;			/* The query itself (as a raw parsetree) */
 } PrepareStmt;
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.84 2007/01/05 22:19:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.85 2007/03/13 00:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,9 +164,9 @@ extern bool IsTransactionBlock(void);
 extern bool IsTransactionOrTransactionBlock(void);
 extern char TransactionBlockStatusCode(void);
 extern void AbortOutOfAnyTransaction(void);
-extern void PreventTransactionChain(void *stmtNode, const char *stmtType);
-extern void RequireTransactionChain(void *stmtNode, const char *stmtType);
-extern bool IsInTransactionChain(void *stmtNode);
+extern void PreventTransactionChain(bool isTopLevel, const char *stmtType);
+extern void RequireTransactionChain(bool isTopLevel, const char *stmtType);
+extern bool IsInTransactionChain(bool isTopLevel);
 extern void RegisterXactCallback(XactCallback callback, void *arg);
 extern void UnregisterXactCallback(XactCallback callback, void *arg);
 extern void RegisterSubXactCallback(SubXactCallback callback, void *arg);

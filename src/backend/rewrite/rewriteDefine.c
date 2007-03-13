@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.117 2007/02/01 19:10:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.118 2007/03/13 00:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/pg_rewrite.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
+#include "parser/analyze.h"
 #include "parser/parse_expr.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteManip.h"
@@ -177,15 +178,46 @@ InsertRule(char *rulname,
 	return rewriteObjectId;
 }
 
+/*
+ * DefineRule
+ *		Execute a CREATE RULE command.
+ */
 void
-DefineQueryRewrite(RuleStmt *stmt)
+DefineRule(RuleStmt *stmt, const char *queryString)
 {
-	RangeVar   *event_obj = stmt->relation;
-	Node	   *event_qual = stmt->whereClause;
-	CmdType		event_type = stmt->event;
-	bool		is_instead = stmt->instead;
-	bool		replace = stmt->replace;
-	List	   *action = stmt->actions;
+	List	   *actions;
+	Node	   *whereClause;
+
+	/* Parse analysis ... */
+	analyzeRuleStmt(stmt, queryString, &actions, &whereClause);
+
+	/* ... and execution */
+	DefineQueryRewrite(stmt->rulename,
+					   stmt->relation,
+					   whereClause,
+					   stmt->event,
+					   stmt->instead,
+					   stmt->replace,
+					   actions);
+}
+
+
+/*
+ * DefineQueryRewrite
+ *		Create a rule
+ *
+ * This is essentially the same as DefineRule() except that the rule's
+ * action and qual have already been passed through parse analysis.
+ */
+void
+DefineQueryRewrite(char *rulename,
+				   RangeVar *event_obj,
+				   Node *event_qual,
+				   CmdType event_type,
+				   bool is_instead,
+				   bool replace,
+				   List *action)
+{
 	Relation	event_relation;
 	Oid			ev_relid;
 	Oid			ruleId;
@@ -304,7 +336,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		/*
 		 * ... and finally the rule must be named _RETURN.
 		 */
-		if (strcmp(stmt->rulename, ViewSelectRuleName) != 0)
+		if (strcmp(rulename, ViewSelectRuleName) != 0)
 		{
 			/*
 			 * In versions before 7.3, the expected name was _RETviewname. For
@@ -315,14 +347,14 @@ DefineQueryRewrite(RuleStmt *stmt)
 			 * worry about where a multibyte character might have gotten
 			 * truncated.
 			 */
-			if (strncmp(stmt->rulename, "_RET", 4) != 0 ||
-				strncmp(stmt->rulename + 4, event_obj->relname,
+			if (strncmp(rulename, "_RET", 4) != 0 ||
+				strncmp(rulename + 4, event_obj->relname,
 						NAMEDATALEN - 4 - 4) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("view rule for \"%s\" must be named \"%s\"",
 								event_obj->relname, ViewSelectRuleName)));
-			stmt->rulename = pstrdup(ViewSelectRuleName);
+			rulename = pstrdup(ViewSelectRuleName);
 		}
 
 		/*
@@ -411,7 +443,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	/* discard rule if it's null action and not INSTEAD; it's a no-op */
 	if (action != NIL || is_instead)
 	{
-		ruleId = InsertRule(stmt->rulename,
+		ruleId = InsertRule(rulename,
 							event_type,
 							ev_relid,
 							event_attno,

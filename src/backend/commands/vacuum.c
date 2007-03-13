@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.347 2007/03/08 17:03:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.348 2007/03/13 00:33:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -257,13 +257,14 @@ static Size PageGetFreeSpaceWithFillFactor(Relation relation, Page page);
  * relation OIDs to be processed, and vacstmt->relation is ignored.
  * (The non-NIL case is currently only used by autovacuum.)
  *
+ * isTopLevel should be passed down from ProcessUtility.
+ *
  * It is the caller's responsibility that both vacstmt and relids
  * (if given) be allocated in a memory context that won't disappear
- * at transaction commit.  In fact this context must be QueryContext
- * to avoid complaints from PreventTransactionChain.
+ * at transaction commit.
  */
 void
-vacuum(VacuumStmt *vacstmt, List *relids)
+vacuum(VacuumStmt *vacstmt, List *relids, bool isTopLevel)
 {
 	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
 	volatile MemoryContext anl_context = NULL;
@@ -293,11 +294,11 @@ vacuum(VacuumStmt *vacstmt, List *relids)
 	 */
 	if (vacstmt->vacuum)
 	{
-		PreventTransactionChain((void *) vacstmt, stmttype);
+		PreventTransactionChain(isTopLevel, stmttype);
 		in_outer_xact = false;
 	}
 	else
-		in_outer_xact = IsInTransactionChain((void *) vacstmt);
+		in_outer_xact = IsInTransactionChain(isTopLevel);
 
 	/*
 	 * Send info about dead objects to the statistics collector, unless we are

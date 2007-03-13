@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.43 2007/03/06 02:06:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.44 2007/03/13 00:33:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,11 +197,6 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 	char	   *location;
 	char	   *linkloc;
 	Oid			ownerId;
-
-	/* validate */
-
-	/* don't call this in a transaction block */
-	PreventTransactionChain((void *) stmt, "CREATE TABLESPACE");
 
 	/* Must be super user */
 	if (!superuser())
@@ -384,9 +379,6 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	HeapTuple	tuple;
 	ScanKeyData entry[1];
 	Oid			tablespaceoid;
-
-	/* don't call this in a transaction block */
-	PreventTransactionChain((void *) stmt, "DROP TABLESPACE");
 
 	/*
 	 * Find the target tuple

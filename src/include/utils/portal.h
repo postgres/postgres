@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.73 2007/02/20 17:32:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/portal.h,v 1.74 2007/03/13 00:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,8 @@ typedef enum PortalStrategy
  */
 typedef enum PortalStatus
 {
-	PORTAL_NEW,					/* in process of creation */
+	PORTAL_NEW,					/* freshly created */
+	PORTAL_DEFINED,				/* PortalDefineQuery done */
 	PORTAL_READY,				/* PortalStart complete, can run it */
 	PORTAL_ACTIVE,				/* portal is running (can't delete it) */
 	PORTAL_DONE,				/* portal is finished (don't re-run it) */
@@ -125,15 +126,7 @@ typedef struct PortalData
 	const char *sourceText;		/* text of query, if known (may be NULL) */
 	const char *commandTag;		/* command tag for original query */
 	List	   *stmts;			/* PlannedStmts and/or utility statements */
-	MemoryContext queryContext; /* where the plan trees live */
-
-	/*
-	 * Note: queryContext effectively identifies which prepared statement the
-	 * portal depends on, if any.  The queryContext is *not* owned by the
-	 * portal and is not to be deleted by portal destruction.  (But for a
-	 * cursor it is the same as "heap", and that context is deleted by portal
-	 * destruction.)  The plan trees may be in either queryContext or heap.
-	 */
+	CachedPlan *cplan;			/* CachedPlan, if stmts are from one */
 
 	ParamListInfo portalParams; /* params to pass to query */
 
@@ -210,14 +203,13 @@ extern void AtSubCleanup_Portals(SubTransactionId mySubid);
 extern Portal CreatePortal(const char *name, bool allowDup, bool dupSilent);
 extern Portal CreateNewPortal(void);
 extern void PortalDrop(Portal portal, bool isTopCommit);
-extern void DropDependentPortals(MemoryContext queryContext);
 extern Portal GetPortalByName(const char *name);
 extern void PortalDefineQuery(Portal portal,
 				  const char *prepStmtName,
 				  const char *sourceText,
 				  const char *commandTag,
 				  List *stmts,
-				  MemoryContext queryContext);
+				  CachedPlan *cplan);
 extern Node *PortalListGetPrimaryStmt(List *stmts);
 extern void PortalCreateHoldStore(Portal portal);
 

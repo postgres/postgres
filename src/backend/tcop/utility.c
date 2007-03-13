@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.273 2007/02/20 17:32:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.274 2007/03/13 00:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 #include "commands/vacuum.h"
 #include "commands/view.h"
 #include "miscadmin.h"
+#include "parser/analyze.h"
 #include "postmaster/bgwriter.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteRemove.h"
@@ -368,7 +369,9 @@ check_xact_readonly(Node *parsetree)
  *		general utility function invoker
  *
  *	parsetree: the parse tree for the utility statement
+ *	queryString: original source text of command (NULL if not available)
  *	params: parameters to use during execution
+ *	isTopLevel: true if executing a "top level" (interactively issued) command
  *	dest: where to send results
  *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
  *		in which to store a command completion status string.
@@ -379,7 +382,9 @@ check_xact_readonly(Node *parsetree)
  */
 void
 ProcessUtility(Node *parsetree,
+			   const char *queryString,
 			   ParamListInfo params,
+			   bool isTopLevel,
 			   DestReceiver *dest,
 			   char *completionTag)
 {
@@ -444,12 +449,12 @@ ProcessUtility(Node *parsetree,
 						break;
 
 					case TRANS_STMT_COMMIT_PREPARED:
-						PreventTransactionChain(stmt, "COMMIT PREPARED");
+						PreventTransactionChain(isTopLevel, "COMMIT PREPARED");
 						FinishPreparedTransaction(stmt->gid, true);
 						break;
 
 					case TRANS_STMT_ROLLBACK_PREPARED:
-						PreventTransactionChain(stmt, "ROLLBACK PREPARED");
+						PreventTransactionChain(isTopLevel, "ROLLBACK PREPARED");
 						FinishPreparedTransaction(stmt->gid, false);
 						break;
 
@@ -462,7 +467,7 @@ ProcessUtility(Node *parsetree,
 							ListCell   *cell;
 							char	   *name = NULL;
 
-							RequireTransactionChain((void *) stmt, "SAVEPOINT");
+							RequireTransactionChain(isTopLevel, "SAVEPOINT");
 
 							foreach(cell, stmt->options)
 							{
@@ -479,12 +484,12 @@ ProcessUtility(Node *parsetree,
 						break;
 
 					case TRANS_STMT_RELEASE:
-						RequireTransactionChain((void *) stmt, "RELEASE SAVEPOINT");
+						RequireTransactionChain(isTopLevel, "RELEASE SAVEPOINT");
 						ReleaseSavepoint(stmt->options);
 						break;
 
 					case TRANS_STMT_ROLLBACK_TO:
-						RequireTransactionChain((void *) stmt, "ROLLBACK TO SAVEPOINT");
+						RequireTransactionChain(isTopLevel, "ROLLBACK TO SAVEPOINT");
 						RollbackToSavepoint(stmt->options);
 
 						/*
@@ -500,7 +505,8 @@ ProcessUtility(Node *parsetree,
 			 * Portal (cursor) manipulation
 			 */
 		case T_DeclareCursorStmt:
-			PerformCursorOpen((DeclareCursorStmt *) parsetree, params);
+			PerformCursorOpen((DeclareCursorStmt *) parsetree, params,
+							  queryString, isTopLevel);
 			break;
 
 		case T_ClosePortalStmt:
@@ -520,7 +526,8 @@ ProcessUtility(Node *parsetree,
 			 * relation and attribute manipulation
 			 */
 		case T_CreateSchemaStmt:
-			CreateSchemaCommand((CreateSchemaStmt *) parsetree);
+			CreateSchemaCommand((CreateSchemaStmt *) parsetree,
+								queryString);
 			break;
 
 		case T_CreateStmt:
@@ -540,10 +547,12 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreateTableSpaceStmt:
+			PreventTransactionChain(isTopLevel, "CREATE TABLESPACE");
 			CreateTableSpace((CreateTableSpaceStmt *) parsetree);
 			break;
 
 		case T_DropTableSpaceStmt:
+			PreventTransactionChain(isTopLevel, "DROP TABLESPACE");
 			DropTableSpace((DropTableSpaceStmt *) parsetree);
 			break;
 
@@ -640,8 +649,9 @@ ProcessUtility(Node *parsetree,
 
 		case T_CopyStmt:
 			{
-				uint64		processed = DoCopy((CopyStmt *) parsetree);
+				uint64		processed;
 
+				processed = DoCopy((CopyStmt *) parsetree, queryString);
 				if (completionTag)
 					snprintf(completionTag, COMPLETION_TAG_BUFSIZE,
 							 "COPY " UINT64_FORMAT, processed);
@@ -649,11 +659,11 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_PrepareStmt:
-			PrepareQuery((PrepareStmt *) parsetree);
+			PrepareQuery((PrepareStmt *) parsetree, queryString);
 			break;
 
 		case T_ExecuteStmt:
-			ExecuteQuery((ExecuteStmt *) parsetree, params,
+			ExecuteQuery((ExecuteStmt *) parsetree, queryString, params,
 						 dest, completionTag);
 			break;
 
@@ -769,12 +779,8 @@ ProcessUtility(Node *parsetree,
 			}
 			break;
 
-		case T_ViewStmt:		/* CREATE VIEW */
-			{
-				ViewStmt   *stmt = (ViewStmt *) parsetree;
-
-				DefineView(stmt->view, stmt->query, stmt->replace);
-			}
+		case T_ViewStmt:				/* CREATE VIEW */
+			DefineView((ViewStmt *) parsetree, queryString);
 			break;
 
 		case T_CreateFunctionStmt:		/* CREATE FUNCTION */
@@ -790,10 +796,15 @@ ProcessUtility(Node *parsetree,
 				IndexStmt  *stmt = (IndexStmt *) parsetree;
 
 				if (stmt->concurrent)
-					PreventTransactionChain(stmt, "CREATE INDEX CONCURRENTLY");
+					PreventTransactionChain(isTopLevel,
+											"CREATE INDEX CONCURRENTLY");
 
 				CheckRelationOwnership(stmt->relation, true);
 
+				/* Run parse analysis ... */
+				stmt = analyzeIndexStmt(stmt, queryString);
+
+				/* ... and do it */
 				DefineIndex(stmt->relation,		/* relation */
 							stmt->idxname,		/* index name */
 							InvalidOid, /* no predefined OID */
@@ -801,7 +812,6 @@ ProcessUtility(Node *parsetree,
 							stmt->tableSpace,
 							stmt->indexParams,	/* parameters */
 							(Expr *) stmt->whereClause,
-							stmt->rangetable,
 							stmt->options,
 							stmt->unique,
 							stmt->primary,
@@ -815,7 +825,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_RuleStmt:		/* CREATE RULE */
-			DefineQueryRewrite((RuleStmt *) parsetree);
+			DefineRule((RuleStmt *) parsetree, queryString);
 			break;
 
 		case T_CreateSeqStmt:
@@ -850,6 +860,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_CreatedbStmt:
+			PreventTransactionChain(isTopLevel, "CREATE DATABASE");
 			createdb((CreatedbStmt *) parsetree);
 			break;
 
@@ -865,6 +876,7 @@ ProcessUtility(Node *parsetree,
 			{
 				DropdbStmt *stmt = (DropdbStmt *) parsetree;
 
+				PreventTransactionChain(isTopLevel, "DROP DATABASE");
 				dropdb(stmt->dbname, stmt->missing_ok);
 			}
 			break;
@@ -905,15 +917,15 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_ClusterStmt:
-			cluster((ClusterStmt *) parsetree);
+			cluster((ClusterStmt *) parsetree, isTopLevel);
 			break;
 
 		case T_VacuumStmt:
-			vacuum((VacuumStmt *) parsetree, NIL);
+			vacuum((VacuumStmt *) parsetree, NIL, isTopLevel);
 			break;
 
 		case T_ExplainStmt:
-			ExplainQuery((ExplainStmt *) parsetree, params, dest);
+			ExplainQuery((ExplainStmt *) parsetree, queryString, params, dest);
 			break;
 
 		case T_VariableSetStmt:
@@ -1079,6 +1091,14 @@ ProcessUtility(Node *parsetree,
 						ReindexTable(stmt->relation);
 						break;
 					case OBJECT_DATABASE:
+						/*
+						 * This cannot run inside a user transaction block;
+						 * if we were inside a transaction, then its commit-
+						 * and start-transaction-command calls would not have
+						 * the intended effect!
+						 */
+						PreventTransactionChain(isTopLevel,
+												"REINDEX DATABASE");
 						ReindexDatabase(stmt->name,
 										stmt->do_system, stmt->do_user);
 						break;
@@ -1166,16 +1186,8 @@ UtilityReturnsTuples(Node *parsetree)
 				entry = FetchPreparedStatement(stmt->name, false);
 				if (!entry)
 					return false;		/* not our business to raise error */
-				switch (ChoosePortalStrategy(entry->stmt_list))
-				{
-					case PORTAL_ONE_SELECT:
-					case PORTAL_ONE_RETURNING:
-					case PORTAL_UTIL_SELECT:
-						return true;
-					case PORTAL_MULTI_QUERY:
-						/* will not return tuples */
-						break;
-				}
+				if (entry->plansource->resultDesc)
+					return true;
 				return false;
 			}
 
@@ -2134,7 +2146,7 @@ GetCommandLogLevel(Node *parsetree)
 
 				/* Look through an EXPLAIN ANALYZE to the contained stmt */
 				if (stmt->analyze)
-					return GetCommandLogLevel((Node *) stmt->query);
+					return GetCommandLogLevel(stmt->query);
 				/* Plain EXPLAIN isn't so interesting */
 				lev = LOGSTMT_ALL;
 			}
@@ -2245,30 +2257,21 @@ GetCommandLogLevel(Node *parsetree)
 				PrepareStmt *stmt = (PrepareStmt *) parsetree;
 
 				/* Look through a PREPARE to the contained stmt */
-				return GetCommandLogLevel((Node *) stmt->query);
+				lev = GetCommandLogLevel(stmt->query);
 			}
 			break;
 
 		case T_ExecuteStmt:
 			{
 				ExecuteStmt *stmt = (ExecuteStmt *) parsetree;
-				PreparedStatement *pstmt;
-				ListCell   *l;
+				PreparedStatement *ps;
 
-				/* Look through an EXECUTE to the referenced stmt(s) */
-				lev = LOGSTMT_ALL;
-				pstmt = FetchPreparedStatement(stmt->name, false);
-				if (pstmt)
-				{
-					foreach(l, pstmt->stmt_list)
-					{
-						Node	   *substmt = (Node *) lfirst(l);
-						LogStmtLevel stmt_lev;
-
-						stmt_lev = GetCommandLogLevel(substmt);
-						lev = Min(lev, stmt_lev);
-					}
-				}
+				/* Look through an EXECUTE to the referenced stmt */
+				ps = FetchPreparedStatement(stmt->name, false);
+				if (ps)
+					lev = GetCommandLogLevel(ps->plansource->raw_parse_tree);
+				else
+					lev = LOGSTMT_ALL;
 			}
 			break;
 

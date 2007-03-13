@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/schemacmds.h,v 1.15 2007/01/05 22:19:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/schemacmds.h,v 1.16 2007/03/13 00:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,8 @@
 
 #include "nodes/parsenodes.h"
 
-extern void CreateSchemaCommand(CreateSchemaStmt *parsetree);
+extern void CreateSchemaCommand(CreateSchemaStmt *parsetree,
+								const char *queryString);
 
 extern void RemoveSchema(List *names, DropBehavior behavior, bool missing_ok);
 extern void RemoveSchemaById(Oid schemaOid);

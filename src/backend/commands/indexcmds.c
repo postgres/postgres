@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.156 2007/03/06 02:06:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.157 2007/03/13 00:33:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,6 @@ static bool relationHasPrimaryKey(Relation rel);
  * 'attributeList': a list of IndexElem specifying columns and expressions
  *		to index on.
  * 'predicate': the partial-index condition, or NULL if none.
- * 'rangetable': needed to interpret the predicate.
  * 'options': reloptions from WITH (in list-of-DefElem form).
  * 'unique': make the index enforce uniqueness.
  * 'primary': mark the index as a primary key in the catalogs.
@@ -99,7 +98,6 @@ DefineIndex(RangeVar *heapRelation,
 			char *tableSpaceName,
 			List *attributeList,
 			Expr *predicate,
-			List *rangetable,
 			List *options,
 			bool unique,
 			bool primary,
@@ -299,18 +297,6 @@ DefineIndex(RangeVar *heapRelation,
 	amoptions = accessMethodForm->amoptions;
 
 	ReleaseSysCache(tuple);
-
-	/*
-	 * If a range table was created then check that only the base rel is
-	 * mentioned.
-	 */
-	if (rangetable != NIL)
-	{
-		if (list_length(rangetable) != 1 || getrelid(1, rangetable) != relationId)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
-					 errmsg("index expressions and predicates can refer only to the table being indexed")));
-	}
 
 	/*
 	 * Validate predicate, if given
@@ -1218,6 +1204,7 @@ ReindexTable(RangeVar *relation)
  *
  * To reduce the probability of deadlocks, each table is reindexed in a
  * separate transaction, so we can release the lock on it right away.
+ * That means this must not be called within a user transaction block!
  */
 void
 ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
@@ -1240,13 +1227,6 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 	if (!pg_database_ownercheck(MyDatabaseId, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   databaseName);
-
-	/*
-	 * We cannot run inside a user transaction block; if we were inside a
-	 * transaction, then our commit- and start-transaction-command calls would
-	 * not have the intended effect!
-	 */
-	PreventTransactionChain((void *) databaseName, "REINDEX DATABASE");
 
 	/*
 	 * Create a memory context that will survive forced transaction commits we

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.9 2006/09/07 22:52:01 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.10 2007/03/13 00:33:42 tgl Exp $
 
 Notes about memory allocation redesign
 --------------------------------------
@@ -201,15 +201,6 @@ have dangling pointers leading to a crash at top-level commit.  An example of
 data kept here is pending NOTIFY messages, which are sent at top-level commit,
 but only if the generating subtransaction did not abort.
 
-QueryContext --- this is not actually a separate context, but a global
-variable pointing to the context that holds the current command's parse tree.
-(In simple-Query mode this points to MessageContext; when executing a
-prepared statement it will point to the prepared statement's private context.
-Note that the plan tree may or may not be in this same context.)
-Generally it is not appropriate for any code to use QueryContext as an
-allocation target --- from the point of view of any code that would be
-referencing the QueryContext variable, it's a read-only context.
-
 PortalContext --- this is not actually a separate context either, but a
 global variable pointing to the per-portal context of the currently active
 execution portal.  This can be used if it's necessary to allocate storage
@@ -229,9 +220,7 @@ Contexts for prepared statements and portals
 A prepared-statement object has an associated private context, in which
 the parse and plan trees for its query are stored.  Because these trees
 are read-only to the executor, the prepared statement can be re-used many
-times without further copying of these trees.  QueryContext points at this
-private context while executing any portal built from the prepared
-statement.
+times without further copying of these trees.
 
 An execution-portal object has a private context that is referenced by
 PortalContext when the portal is active.  In the case of a portal created
