@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.61 2007/01/22 02:17:30 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.62 2007/03/13 09:06:35 mha Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -1183,6 +1183,11 @@ main(int argc, char **argv)
 	char	   *env;
 
 	char		val[64];
+
+#ifdef WIN32
+	/* stderr is buffered on Win32. */
+	setvbuf(stderr, NULL, _IONBF, 0);
+#endif
 
 	if ((env = getenv("PGHOST")) != NULL && *env != '\0')
 		pghost = env;
