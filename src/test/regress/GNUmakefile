@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.66 2007/02/09 15:56:00 petere Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.67 2007/03/13 22:56:48 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -86,9 +86,10 @@ $(NAME)$(DLSUFFIX): $(shlib)
 
 # Test input and expected files.  These are created by pg_regress itself, so we
 # don't have a rule to create them.  We do need rules to clean them however.
-file_list := $(subst .source,, $(notdir $(wildcard $(top_srcdir)/$(subdir)/input/*.source)))
-input_files  := $(foreach file, $(file_list), sql/$(file).sql)
-output_files := $(foreach file, $(file_list), expected/$(file).out)
+ifile_list := $(subst .source,, $(notdir $(wildcard $(top_srcdir)/$(subdir)/input/*.source)))
+input_files  := $(foreach file, $(ifile_list), sql/$(file).sql)
+ofile_list := $(subst .source,, $(notdir $(wildcard $(top_srcdir)/$(subdir)/output/*.source)))
+output_files := $(foreach file, $(ofile_list), expected/$(file).out)
 
 ifneq ($(PORTNAME),win32)
 abs_srcdir := $(shell cd $(srcdir) && pwd)
