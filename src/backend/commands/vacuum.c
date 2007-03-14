@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.348 2007/03/13 00:33:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.349 2007/03/14 18:48:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1880,6 +1880,15 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 * To be on the safe side, we abandon the repair_frag process if
 			 * we cannot find the parent tuple in vtlinks.	This may be overly
 			 * conservative; AFAICS it would be safe to move the chain.
+			 *
+			 * Also, because we distinguish DEAD and RECENTLY_DEAD tuples
+			 * using OldestXmin, which is a rather coarse test, it is quite
+			 * possible to have an update chain in which a tuple we think is
+			 * RECENTLY_DEAD links forward to one that is definitely DEAD.
+			 * In such a case the RECENTLY_DEAD tuple must actually be dead,
+			 * but it seems too complicated to try to make VACUUM remove it.
+			 * We treat each contiguous set of RECENTLY_DEAD tuples as a
+			 * separately movable chain, ignoring any intervening DEAD ones.
 			 */
 			if (((tuple.t_data->t_infomask & HEAP_UPDATED) &&
 				 !TransactionIdPrecedes(HeapTupleHeaderGetXmin(tuple.t_data),
@@ -1892,6 +1901,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				Buffer		Cbuf = buf;
 				bool		freeCbuf = false;
 				bool		chain_move_failed = false;
+				bool		moved_target = false;
 				ItemPointerData Ctid;
 				HeapTupleData tp = tuple;
 				Size		tlen = tuple_len;
@@ -1919,7 +1929,13 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				 * If this tuple is in the begin/middle of the chain then we
 				 * have to move to the end of chain.  As with any t_ctid
 				 * chase, we have to verify that each new tuple is really the
-				 * descendant of the tuple we came from.
+				 * descendant of the tuple we came from; however, here we
+				 * need even more than the normal amount of paranoia.
+				 * If t_ctid links forward to a tuple determined to be DEAD,
+				 * then depending on where that tuple is, it might already
+				 * have been removed, and perhaps even replaced by a MOVED_IN
+				 * tuple.  We don't want to include any DEAD tuples in the
+				 * chain, so we have to recheck HeapTupleSatisfiesVacuum.
 				 */
 				while (!(tp.t_data->t_infomask & (HEAP_XMAX_INVALID |
 												  HEAP_IS_LOCKED)) &&
@@ -1933,6 +1949,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					OffsetNumber nextOffnum;
 					ItemId		nextItemid;
 					HeapTupleHeader nextTdata;
+					HTSV_Result	nextTstatus;
 
 					nextTid = tp.t_data->t_ctid;
 					priorXmax = HeapTupleHeaderGetXmax(tp.t_data);
@@ -1963,6 +1980,19 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						ReleaseBuffer(nextBuf);
 						break;
 					}
+					/* must check for DEAD or MOVED_IN tuple, too */
+					nextTstatus = HeapTupleSatisfiesVacuum(nextTdata,
+														   OldestXmin,
+														   nextBuf);
+					if (nextTstatus == HEAPTUPLE_DEAD ||
+						nextTstatus == HEAPTUPLE_INSERT_IN_PROGRESS)
+					{
+						ReleaseBuffer(nextBuf);
+						break;
+					}
+					/* if it's MOVED_OFF we shoulda moved this one with it */
+					if (nextTstatus == HEAPTUPLE_DELETE_IN_PROGRESS)
+						elog(ERROR, "updated tuple is already HEAP_MOVED_OFF");
 					/* OK, switch our attention to the next tuple in chain */
 					tp.t_data = nextTdata;
 					tp.t_self = nextTid;
@@ -2034,6 +2064,11 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					free_vtmove--;
 					num_vtmove++;
 
+					/* Remember if we reached the original target tuple */
+					if (ItemPointerGetBlockNumber(&tp.t_self) == blkno &&
+						ItemPointerGetOffsetNumber(&tp.t_self) == offnum)
+						moved_target = true;
+
 					/* Done if at beginning of chain */
 					if (!(tp.t_data->t_infomask & HEAP_UPDATED) ||
 					 TransactionIdPrecedes(HeapTupleHeaderGetXmin(tp.t_data),
@@ -2101,6 +2136,13 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				if (freeCbuf)
 					ReleaseBuffer(Cbuf);
 				freeCbuf = false;
+
+				/* Double-check that we will move the current target tuple */
+				if (!moved_target && !chain_move_failed)
+				{
+					elog(DEBUG2, "failed to chain back to target --- cannot continue repair_frag");
+					chain_move_failed = true;
+				}
 
 				if (chain_move_failed)
 				{
