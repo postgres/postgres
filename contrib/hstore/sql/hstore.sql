@@ -63,15 +63,18 @@ select 'aa=>b, c=>d , b=>16'::hstore->'b';
 select 'aa=>b, c=>d , b=>16'::hstore->'aa';
 select ('aa=>b, c=>d , b=>16'::hstore->'gg') is null;
 select ('aa=>NULL, c=>d , b=>16'::hstore->'aa') is null;
+select ('aa=>"NULL", c=>d , b=>16'::hstore->'aa') is null;
 
 -- exists/defined
 
 select exist('a=>NULL, b=>qq', 'a');
 select exist('a=>NULL, b=>qq', 'b');
 select exist('a=>NULL, b=>qq', 'c');
+select exist('a=>"NULL", b=>qq', 'a');
 select defined('a=>NULL, b=>qq', 'a');
 select defined('a=>NULL, b=>qq', 'b');
 select defined('a=>NULL, b=>qq', 'c');
+select defined('a=>"NULL", b=>qq', 'a');
 
 -- delete 
 
@@ -91,6 +94,8 @@ select ''::hstore || 'cq=>l, b=>g, fg=>f';
 -- =>
 select 'a=>g, b=>c'::hstore || ( 'asd'=>'gf' );
 select 'a=>g, b=>c'::hstore || ( 'b'=>'gf' );
+select 'a=>g, b=>c'::hstore || ( 'b'=>'NULL' );
+select 'a=>g, b=>c'::hstore || ( 'b'=>NULL );
 
 -- keys/values
 select akeys('aa=>1 , b=>2, cq=>3'::hstore || 'cq=>l, b=>g, fg=>f');
@@ -112,13 +117,12 @@ select * from svals('');
 select * from each('aaa=>bq, b=>NULL, ""=>1 ');
 
 -- @>
-select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL';
-select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL, c=>NULL';
-select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL, g=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, c=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, g=>NULL';
 select 'a=>b, b=>1, c=>NULL'::hstore @> 'g=>NULL';
 select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>c';
 select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b';
-select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, c=>NULL';
 select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, c=>q';
 
 CREATE TABLE testhstore (h hstore);
@@ -127,6 +131,7 @@ CREATE TABLE testhstore (h hstore);
 select count(*) from testhstore where h @> 'wait=>NULL';
 select count(*) from testhstore where h @> 'wait=>CC';
 select count(*) from testhstore where h @> 'wait=>CC, public=>t';
+select count(*) from testhstore where h ? 'public';
 
 create index hidx on testhstore using gist(h);
 set enable_seqscan=off;
@@ -134,6 +139,16 @@ set enable_seqscan=off;
 select count(*) from testhstore where h @> 'wait=>NULL';
 select count(*) from testhstore where h @> 'wait=>CC';
 select count(*) from testhstore where h @> 'wait=>CC, public=>t';
+select count(*) from testhstore where h ? 'public';
+
+drop index hidx;
+create index hidx on testhstore using gin (h);
+set enable_seqscan=off;
+
+select count(*) from testhstore where h @> 'wait=>NULL';
+select count(*) from testhstore where h @> 'wait=>CC';
+select count(*) from testhstore where h @> 'wait=>CC, public=>t';
+select count(*) from testhstore where h ? 'public';
 
 select count(*) from (select (each(h)).key from testhstore) as wow ;
 select key, count(*) from (select (each(h)).key from testhstore) as wow group by key order by count desc, key;

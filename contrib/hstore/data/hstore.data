@@ -998,3 +998,4 @@ auth=>BC, title=>CAC, subtitle=>BA, line=>997, date=>BAA
 wait=>AB, user=>ABC, line=>998, pos=>41, node=>CAC
 state=>4, title=>AC, bad=>t, status=>59, line=>999, disabled=>t
 user=>BC, line=>1000
+wait=>NULL, line=>1000

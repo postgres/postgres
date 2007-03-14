@@ -492,37 +492,48 @@ Datum
 ghstore_consistent(PG_FUNCTION_ARGS)
 {
 	GISTTYPE   *entry = (GISTTYPE *) DatumGetPointer(((GISTENTRY *) PG_GETARG_POINTER(0))->key);
-	HStore	   *query = PG_GETARG_HS(1);
+	StrategyNumber strategy = (StrategyNumber) PG_GETARG_UINT16(2);
 	bool		res = true;
-	HEntry	   *qe = ARRPTR(query);
-	char	   *qv = STRPTR(query);
 	BITVECP		sign;
 
 	if (ISALLTRUE(entry))
-	{
-		PG_FREE_IF_COPY(query, 1);
 		PG_RETURN_BOOL(true);
-	}
 
 	sign = GETSIGN(entry);
-	while (res && qe - ARRPTR(query) < query->size)
+
+	if ( strategy == HStoreContainsStrategyNumber || strategy == 13 /* hack for old strats */ )
 	{
-		int			crc = crc32_sz((char *) (qv + qe->pos), qe->keylen);
+		HStore	   *query = PG_GETARG_HS(1);
+		HEntry	   *qe = ARRPTR(query);
+		char	   *qv = STRPTR(query);
 
-		if (GETBIT(sign, HASHVAL(crc)))
+		while (res && qe - ARRPTR(query) < query->size)
 		{
-			if (!qe->valisnull)
-			{
-				crc = crc32_sz((char *) (qv + qe->pos + qe->keylen), qe->vallen);
-				if (!GETBIT(sign, HASHVAL(crc)))
-					res = false;
-			}
-		}
-		else
-			res = false;
-		qe++;
-	}
+			int			crc = crc32_sz((char *) (qv + qe->pos), qe->keylen);
 
-	PG_FREE_IF_COPY(query, 1);
+			if (GETBIT(sign, HASHVAL(crc)))
+			{
+				if (!qe->valisnull)
+				{
+					crc = crc32_sz((char *) (qv + qe->pos + qe->keylen), qe->vallen);
+					if (!GETBIT(sign, HASHVAL(crc)))
+						res = false;
+				}
+			}
+			else
+				res = false;
+			qe++;
+		}
+	}
+	else if ( strategy == HStoreExistsStrategyNumber )
+	{
+		text	*query = PG_GETARG_TEXT_P(1);
+		int		crc = crc32_sz( VARDATA(query), VARSIZE(query)-VARHDRSZ );
+
+		res = (GETBIT(sign, HASHVAL(crc))) ? true : false;
+	}
+	else
+		elog(ERROR, "Unsupported strategy number: %d", strategy);
+
 	PG_RETURN_BOOL(res);
 }

@@ -272,6 +272,12 @@ select ('aa=>NULL, c=>d , b=>16'::hstore->'aa') is null;
  t
 (1 row)
 
+select ('aa=>"NULL", c=>d , b=>16'::hstore->'aa') is null;
+ ?column? 
+----------
+ f
+(1 row)
+
 -- exists/defined
 select exist('a=>NULL, b=>qq', 'a');
  exist 
@@ -291,6 +297,12 @@ select exist('a=>NULL, b=>qq', 'c');
  f
 (1 row)
 
+select exist('a=>"NULL", b=>qq', 'a');
+ exist 
+-------
+ t
+(1 row)
+
 select defined('a=>NULL, b=>qq', 'a');
  defined 
 ---------
@@ -307,6 +319,12 @@ select defined('a=>NULL, b=>qq', 'c');
  defined 
 ---------
  f
+(1 row)
+
+select defined('a=>"NULL", b=>qq', 'a');
+ defined 
+---------
+ t
 (1 row)
 
 -- delete 
@@ -382,6 +400,18 @@ select 'a=>g, b=>c'::hstore || ( 'b'=>'gf' );
       ?column?       
 ---------------------
  "a"=>"g", "b"=>"gf"
+(1 row)
+
+select 'a=>g, b=>c'::hstore || ( 'b'=>'NULL' );
+       ?column?        
+-----------------------
+ "a"=>"g", "b"=>"NULL"
+(1 row)
+
+select 'a=>g, b=>c'::hstore || ( 'b'=>NULL );
+      ?column?       
+---------------------
+ "a"=>"g", "b"=>NULL
 (1 row)
 
 -- keys/values
@@ -485,19 +515,19 @@ select * from each('aaa=>bq, b=>NULL, ""=>1 ');
 (3 rows)
 
 -- @>
-select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL, c=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, c=>NULL';
  ?column? 
 ----------
  t
 (1 row)
 
-select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>NULL, g=>NULL';
+select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, g=>NULL';
  ?column? 
 ----------
  f
@@ -521,12 +551,6 @@ select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b';
  t
 (1 row)
 
-select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, c=>NULL';
- ?column? 
-----------
- t
-(1 row)
-
 select 'a=>b, b=>1, c=>NULL'::hstore @> 'a=>b, c=>q';
  ?column? 
 ----------
@@ -538,7 +562,7 @@ CREATE TABLE testhstore (h hstore);
 select count(*) from testhstore where h @> 'wait=>NULL';
  count 
 -------
-   189
+     1
 (1 row)
 
 select count(*) from testhstore where h @> 'wait=>CC';
@@ -551,6 +575,12 @@ select count(*) from testhstore where h @> 'wait=>CC, public=>t';
  count 
 -------
      2
+(1 row)
+
+select count(*) from testhstore where h ? 'public';
+ count 
+-------
+   194
 (1 row)
 
 create index hidx on testhstore using gist(h);
@@ -558,7 +588,7 @@ set enable_seqscan=off;
 select count(*) from testhstore where h @> 'wait=>NULL';
  count 
 -------
-   189
+     1
 (1 row)
 
 select count(*) from testhstore where h @> 'wait=>CC';
@@ -573,16 +603,49 @@ select count(*) from testhstore where h @> 'wait=>CC, public=>t';
      2
 (1 row)
 
+select count(*) from testhstore where h ? 'public';
+ count 
+-------
+   194
+(1 row)
+
+drop index hidx;
+create index hidx on testhstore using gin (h);
+set enable_seqscan=off;
+select count(*) from testhstore where h @> 'wait=>NULL';
+ count 
+-------
+     1
+(1 row)
+
+select count(*) from testhstore where h @> 'wait=>CC';
+ count 
+-------
+    15
+(1 row)
+
+select count(*) from testhstore where h @> 'wait=>CC, public=>t';
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from testhstore where h ? 'public';
+ count 
+-------
+   194
+(1 row)
+
 select count(*) from (select (each(h)).key from testhstore) as wow ;
  count 
 -------
-  4779
+  4781
 (1 row)
 
 select key, count(*) from (select (each(h)).key from testhstore) as wow group by key order by count desc, key;
     key    | count 
 -----------+-------
- line      |   883
+ line      |   884
  query     |   207
  pos       |   203
  node      |   202
@@ -590,9 +653,9 @@ select key, count(*) from (select (each(h)).key from testhstore) as wow group by
  status    |   195
  public    |   194
  title     |   190
+ wait      |   190
  org       |   189
  user      |   189
- wait      |   189
  coauthors |   188
  disabled  |   185
  indexed   |   184

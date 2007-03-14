@@ -270,26 +270,48 @@ Datum		tconvert(PG_FUNCTION_ARGS);
 Datum
 tconvert(PG_FUNCTION_ARGS)
 {
-	text	   *key = PG_GETARG_TEXT_P(0);
-	text	   *val = PG_GETARG_TEXT_P(1);
+	text	   *key;
+	text	   *val = NULL;
 	int			len;
 	HStore	   *out;
 
-	len = CALCDATASIZE(1, VARSIZE(key) + VARSIZE(val) - 2 * VARHDRSZ);
+	if ( PG_ARGISNULL(0) )
+		PG_RETURN_NULL();
+
+	key = PG_GETARG_TEXT_P(0);
+
+	if ( PG_ARGISNULL(1) )
+		len = CALCDATASIZE(1, VARSIZE(key) );
+	else
+	{
+		val = PG_GETARG_TEXT_P(1);
+		len = CALCDATASIZE(1, VARSIZE(key) + VARSIZE(val) - 2 * VARHDRSZ);
+	}
 	out = palloc(len);
 	SET_VARSIZE(out, len);
 	out->size = 1;
 
 	ARRPTR(out)->keylen = VARSIZE(key) - VARHDRSZ;
-	ARRPTR(out)->vallen = VARSIZE(val) - VARHDRSZ;
-	ARRPTR(out)->valisnull = false;
+	if ( PG_ARGISNULL(1) )
+	{
+		ARRPTR(out)->vallen = 0;
+		ARRPTR(out)->valisnull = true;
+	}
+	else
+	{
+		ARRPTR(out)->vallen = VARSIZE(val) - VARHDRSZ;
+		ARRPTR(out)->valisnull = false;
+	}
 	ARRPTR(out)->pos = 0;
 
 	memcpy(STRPTR(out), VARDATA(key), ARRPTR(out)->keylen);
-	memcpy(STRPTR(out) + ARRPTR(out)->keylen, VARDATA(val), ARRPTR(out)->vallen);
+	if (!PG_ARGISNULL(1))
+	{
+		memcpy(STRPTR(out) + ARRPTR(out)->keylen, VARDATA(val), ARRPTR(out)->vallen);
+		PG_FREE_IF_COPY(val, 1);
+	}
 
 	PG_FREE_IF_COPY(key, 0);
-	PG_FREE_IF_COPY(val, 1);
 
 	PG_RETURN_POINTER(out);
 }
@@ -515,17 +537,18 @@ hs_contains(PG_FUNCTION_ARGS)
 
 		if (entry)
 		{
-			if (!te->valisnull)
+			if ( te->valisnull || entry->valisnull )
 			{
-				if (entry->valisnull || !(
-										  te->vallen == entry->vallen &&
+				if ( !(te->valisnull && entry->valisnull) )
+					res = false;
+			}
+			else if ( te->vallen != entry->vallen ||  
 										  strncmp(
 											 vv + entry->pos + entry->keylen,
 												  tv + te->pos + te->keylen,
-												  te->vallen) == 0
-										  ))
+												  te->vallen) 
+										  )
 					res = false;
-			}
 		}
 		else
 			res = false;

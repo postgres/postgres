@@ -117,13 +117,14 @@ regression=# select * from each('a=>1,b=>2');
  a   | 1
  b   | 2
 
-    * exist (hstore,text) - returns 'true if key is exists in hstore and 
-	false otherwise. 
+    * exist (hstore,text) 
+	* hstore ? text 
+	  - returns 'true if key is exists in hstore and false otherwise. 
 
-regression=# select exist('a=>1','a');
- exist 
-----------
- t
+regression=# select exist('a=>1','a'), 'a=>1' ? 'a';
+ exist | ?column? 
+-------+----------
+ t     | t
 
     * defined (hstore,text) - returns true if key is exists in hstore and 
 	  its value is not NULL. 
@@ -135,9 +136,10 @@ regression=# select defined('a=>NULL','a');
 
 Indices
 
-Module provides index support for '@>' and '<@' operations.
+Module provides index support for '@>' and '?' operations.
 
 create index hidx on testhstore using gist(h);
+create index hidx on testhstore using gin(h);
 
 Note
 

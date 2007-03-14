@@ -40,6 +40,14 @@ RETURNS bool
 AS 'MODULE_PATHNAME','exists'
 LANGUAGE 'C' with (isstrict,iscachable);
 
+CREATE OPERATOR ? (
+	LEFTARG = hstore,
+	RIGHTARG = text,
+	PROCEDURE = exist,
+	RESTRICT = contsel,
+	JOIN = contjoinsel
+);
+
 CREATE FUNCTION isdefined(hstore,text)
 RETURNS bool
 AS 'MODULE_PATHNAME','defined'
@@ -116,7 +124,7 @@ CREATE OPERATOR ~ (
 CREATE FUNCTION tconvert(text,text)
 RETURNS hstore
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE 'C' with (iscachable);
 
 CREATE OPERATOR => (
 	LEFTARG = text,
@@ -210,7 +218,8 @@ LANGUAGE 'C';
 CREATE OPERATOR CLASS gist_hstore_ops
 DEFAULT FOR TYPE hstore USING gist
 AS
-        OPERATOR        7       @>       RECHECK,
+       	OPERATOR        7       @>       RECHECK,
+       	OPERATOR        9       ?(hstore,text)       RECHECK,
         --OPERATOR        8       <@       RECHECK,
         OPERATOR        13      @       RECHECK,
         --OPERATOR        14      ~       RECHECK,
@@ -222,5 +231,34 @@ AS
         FUNCTION        6       ghstore_picksplit (internal, internal),
         FUNCTION        7       ghstore_same (internal, internal, internal),
         STORAGE         ghstore;
+
+-- define the GIN support methods
+
+CREATE FUNCTION gin_extract_hstore(internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE FUNCTION gin_extract_hstore_query(internal, internal, int2)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE FUNCTION gin_consistent_hstore(internal, int2, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE OPERATOR CLASS gin_hstore_ops
+DEFAULT FOR TYPE hstore USING gin
+AS
+	OPERATOR        7       @> RECHECK,
+    OPERATOR        9       ?(hstore,text),
+	FUNCTION        1       bttextcmp(text,text),
+	FUNCTION        2       gin_extract_hstore(internal, internal),
+	FUNCTION        3       gin_extract_hstore_query(internal, internal, int2),
+	FUNCTION        4       gin_consistent_hstore(internal, int2, internal),
+STORAGE         text;
+
 
 END;
