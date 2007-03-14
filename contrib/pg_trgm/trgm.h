@@ -28,6 +28,7 @@ typedef char trgm[3];
 	*(((char*)(a))+2) = *(((char*)(b))+2);	\
 } while(0);
 
+#define TRGMINT(a) ( (*(((char*)(a))+2)<<16)+(*(((char*)(a))+1)<<8)+*(((char*)(a))+0) )
 
 typedef struct
 {

@@ -113,6 +113,8 @@ Tsearch2 Integration
 	Next, create a trigram index on the word column:
 
 	CREATE INDEX words_idx ON words USING gist(word gist_trgm_ops);
+	or
+	CREATE INDEX words_idx ON words USING gin(word gist_trgm_ops);
 
 	Now, a SELECT query similar to the example above can be used to
 	suggest spellings for misspelled words in user search terms. A

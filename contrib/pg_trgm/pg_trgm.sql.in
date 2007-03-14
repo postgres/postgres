@@ -36,7 +36,7 @@ CREATE OPERATOR % (
         JOIN = contjoinsel
 );
 
---gist key
+-- gist key
 CREATE FUNCTION gtrgm_in(cstring)
 RETURNS gtrgm
 AS 'MODULE_PATHNAME'
@@ -53,7 +53,7 @@ CREATE TYPE gtrgm (
         OUTPUT = gtrgm_out
 );
 
--- support functions
+-- support functions for gist
 CREATE FUNCTION gtrgm_consistent(gtrgm,internal,int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
@@ -89,7 +89,7 @@ RETURNS internal
 AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
--- create the operator class
+-- create the operator class for gist
 CREATE OPERATOR CLASS gist_trgm_ops
 FOR TYPE text USING gist
 AS
@@ -103,5 +103,31 @@ AS
         FUNCTION        7       gtrgm_same (gtrgm, gtrgm, internal),
         STORAGE         gtrgm;
 
+-- support functions for gin
+CREATE FUNCTION gin_extract_trgm(text, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE FUNCTION gin_extract_trgm(text, internal, internal)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+CREATE FUNCTION gin_trgm_consistent(internal, internal, text)
+RETURNS internal
+AS 'MODULE_PATHNAME'
+LANGUAGE C;
+
+-- create the operator class for gin
+CREATE OPERATOR CLASS gin_trgm_ops
+FOR TYPE text USING gin
+AS
+        OPERATOR        1       % (text, text) RECHECK,
+        FUNCTION        1       btint4cmp (int4, int4),
+        FUNCTION        2       gin_extract_trgm (text, internal),
+        FUNCTION        3       gin_extract_trgm (text, internal, internal),
+        FUNCTION        4       gin_trgm_consistent (internal, internal, text),
+        STORAGE         int4;
 
 COMMIT;
