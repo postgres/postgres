@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.190 2007/02/01 00:28:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.191 2007/03/14 17:38:05 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2243,12 +2243,13 @@ January 8 04:05:06 1999 PST
         were not already a recognized zone name, it would be accepted and would
         be functionally equivalent to USA East Coast time.  When a
         daylight-savings zone name is present, it is assumed to be used
-        according to USA time zone rules, so this feature is of limited use
-        outside North America.  One should also be wary that this provision can
-        lead to silently accepting bogus input, since there is no check on the
-        reasonableness of the zone abbreviations.  For example, <literal>SET
-        TIMEZONE TO FOOBAR0</> will work, leaving the system effectively using
-        a rather peculiar abbreviation for GMT.
+        according to the same daylight-savings transition rules used in the
+        <literal>zic</> time zone database's <filename>posixrules</> entry.
+        In a standard <productname>PostgreSQL</productname> installation,
+        <filename>posixrules</> is the same as <literal>US/Eastern</>, so
+        that POSIX-style time zone specifications follow USA daylight-savings
+        rules.  If needed, you can adjust this behavior by replacing the
+        <filename>posixrules</> file.
        </para>
       </listitem>
      </itemizedlist>
@@ -2257,6 +2258,14 @@ January 8 04:05:06 1999 PST
      and the full names: abbreviations always represent a fixed offset from
      UTC, whereas most of the full names imply a local daylight-savings time
      rule and so have two possible UTC offsets.
+    </para>
+
+    <para>
+     One should be wary that the POSIX-style time zone feature can
+     lead to silently accepting bogus input, since there is no check on the
+     reasonableness of the zone abbreviations.  For example, <literal>SET
+     TIMEZONE TO FOOBAR0</> will work, leaving the system effectively using
+     a rather peculiar abbreviation for UTC.
     </para>
 
     <para>

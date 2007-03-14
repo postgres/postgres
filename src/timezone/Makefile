@@ -4,7 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.25 2007/02/09 15:56:00 petere Exp $
+#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.26 2007/03/14 17:38:06 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,6 +23,10 @@ TZDATA = africa antarctica asia australasia europe northamerica southamerica \
 	pacificnew etcetera factory backward systemv solar87 solar88 solar89
 TZDATAFILES = $(TZDATA:%=$(srcdir)/data/%)
 
+# which zone should determine the DST rules (not the specific UTC offset!)
+# for POSIX-style timezone specs
+POSIXRULES = US/Eastern
+
 all: SUBSYS.o submake-libpgport zic
 
 SUBSYS.o: $(OBJS)
@@ -32,7 +36,7 @@ zic: $(ZICOBJS)
 	$(CC) $(CFLAGS) $(ZICOBJS) $(LDFLAGS) $(LIBS) -o $@$(X)
 
 install: all installdirs
-	./zic -d '$(DESTDIR)$(datadir)/timezone' $(TZDATAFILES)
+	./zic -d '$(DESTDIR)$(datadir)/timezone' -p '$(POSIXRULES)' $(TZDATAFILES)
 	$(MAKE) -C tznames $@
 
 installdirs:
