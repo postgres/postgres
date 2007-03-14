@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.31 2007/03/13 16:03:35 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.32 2007/03/14 00:15:26 tgl Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -71,68 +71,68 @@
   <title>Requirements</title>
   <para>
    PostgreSQL will build using either the professional versions (any edition)
-	or the free Express edition of
-	<productname>Visual Studio 2005</productname>. The following additional products
-	are required to build the complete package. Use the
-	<filename>config.pl</filename> to specify which directories the libraries
-	are available in.
+   or the free Express edition of
+   <productname>Visual Studio 2005</productname>. The following additional products
+   are required to build the complete package. Use the
+   <filename>config.pl</filename> to specify which directories the libraries
+   are available in.
 
    <variablelist>
     <varlistentry>
      <term><productname>ActiveState Perl</productname></term>
      <listitem><para>
-	   ActiveState Perl is required to run the build generation scripts. MinGW
-		or Cygwin perl will not work. It must also be present in the PATH.
-		Binaries can be downloaded from
-		<ulink url="http://www.activestate.com"></>.
-	  </para></listitem>
+      ActiveState Perl is required to run the build generation scripts. MinGW
+      or Cygwin perl will not work. It must also be present in the PATH.
+      Binaries can be downloaded from
+      <ulink url="http://www.activestate.com"></>.
+     </para></listitem>
     </varlistentry>
 
     <varlistentry>
-	  <term><productname>ActiveState TCL</productname></term>
+     <term><productname>ActiveState TCL</productname></term>
      <listitem><para>
-	   Required for building <application>PL/TCL</application>.
-	  </para></listitem>
+      Required for building <application>PL/TCL</application>.
+     </para></listitem>
     </varlistentry>
 
     <varlistentry>
      <term><productname>Bison</productname> and
-	   <productname>Flex</productname></term>
+      <productname>Flex</productname></term>
      <listitem><para>
-	   Bison and Flex are required to build from CVS, but not required when
-		building from a release file. Note that Bison version 2.0 will not
-		work, but both earlier and later versions do. Bison and Flex can be
-		downloaded from <ulink url="http://gnuwin32.sourceforge.net"></>.
-	  </para></listitem>
+      Bison and Flex are required to build from CVS, but not required when
+      building from a release file. Note that Bison version 2.0 will not
+      work, but both earlier and later versions do. Bison and Flex can be
+      downloaded from <ulink url="http://gnuwin32.sourceforge.net"></>.
+     </para></listitem>
     </varlistentry>
 
-	 <varlistentry>
-	  <term><productname>Microsoft Platform SDK</productname></term>
-	  <listitem><para>
-	   It is recommended that you upgrade to the latest available version
-	   of the <productname>Microsoft Platform SDK</productname>, available
-	   for download from <ulink url="http://www.microsoft.com/downloads/"></>.
-	  </para></listitem>
-    </varlistentry
+    <varlistentry>
+     <term><productname>Microsoft Platform SDK</productname></term>
+     <listitem><para>
+      It is recommended that you upgrade to the latest available version
+      of the <productname>Microsoft Platform SDK</productname>, available
+      for download from <ulink url="http://www.microsoft.com/downloads/"></>.
+     </para></listitem>
+    </varlistentry>
 
     <varlistentry>
      <term><productname>MIT Kerberos</productname></term>
      <listitem><para>
-	   Required for Kerberos authentication support. MIT Kerberos can be
-		downloaded from 
-		<ulink url="http://web.mit.edu/Kerberos/dist/index.html"></>.
-	  </para></listitem>
+      Required for Kerberos authentication support. MIT Kerberos can be
+      downloaded from 
+      <ulink url="http://web.mit.edu/Kerberos/dist/index.html"></>.
+     </para></listitem>
     </varlistentry>
 
     <varlistentry>
      <term><productname>libxml2</productname> and
-	   <productname>libxslt</productname></term>
+      <productname>libxslt</productname></term>
      <listitem><para>
       Required for XML support. Binaries can be downloaded from
-		<ulink url="http://zlatkovic.com/pub/libxml"></> or source from
-		<ulink url="http://xmlsoft.org"></>. Note that libxml2 requires iconv,
-		which is available from the same download location.
-	  </para></listitem>
+      <ulink url="http://zlatkovic.com/pub/libxml"></> or source from
+      <ulink url="http://xmlsoft.org"></>. Note that libxml2 requires iconv,
+      which is available from the same download location.
+     </para></listitem>
     </varlistentry>
 
     <varlistentry>
@@ -140,34 +140,34 @@
      <listitem><para>
       Required for SSL support. Binaries can be downloaded from
       <ulink url="http://www.slproweb.com/products/Win32OpenSSL.html"></>
-		or source from <ulink url="http://www.openssl.org"></>.
-	  </para></listitem>
+      or source from <ulink url="http://www.openssl.org"></>.
+     </para></listitem>
     </varlistentry>
 
     <varlistentry>
      <term><productname>pthreads</productname></term>
      <listitem><para>
       Required for building the <application>ECPG</application> libraries.
-		Binaries can be downloaded from
-		<ulink url="ftp://sources.redhat.com/pub/pthreads-win32"></>.
-	  </para></listitem>
+      Binaries can be downloaded from
+      <ulink url="ftp://sources.redhat.com/pub/pthreads-win32"></>.
+     </para></listitem>
     </varlistentry>
 
     <varlistentry>
      <term><productname>Python</productname></term>
      <listitem><para>
       Required for building <application>PL/Python</application>. Binaries can
-		be downloaded from <ulink url="http://www.python.org"></>.
-	  </para></listitem>
+      be downloaded from <ulink url="http://www.python.org"></>.
+     </para></listitem>
     </varlistentry>
 
-	 <varlistentry>
-	  <term><productname>zlib</productname></term>
+    <varlistentry>
+     <term><productname>zlib</productname></term>
      <listitem><para>
-	   Required for compression support in <application>pg_dump</application>
-		and <application>pg_restore</application>. Binaries can be downloaded
-		from <ulink url="http://www.zlib.net"></>.
-	  </para></listitem>
+      Required for compression support in <application>pg_dump</application>
+      and <application>pg_restore</application>. Binaries can be downloaded
+      from <ulink url="http://www.zlib.net"></>.
+     </para></listitem>
     </varlistentry>
 
    </variablelist>
@@ -179,7 +179,7 @@
 
   <para>
    To build all of PostgreSQL in debug configuration (the default), run the
-	command:
+   command:
    <screen>
     <userinput>
      build
@@ -204,15 +204,15 @@
 
   <para>
    It is also possible to build from inside the Visual Studio GUI. In this
-	case, you need to run:
+   case, you need to run:
    <screen>
     <userinput>
      perl mkvcbuild.pl
     </userinput>
    </screen>
    from the command prompt, and then open the generated
-	<filename>pgsql.sln</filename> (in the root directory of the source tree)
-	in Visual Studio.
+   <filename>pgsql.sln</filename> (in the root directory of the source tree)
+   in Visual Studio.
   </para>
  </sect2>
 
@@ -221,17 +221,17 @@
 
   <para>
    Most of the time, the automatic dependency tracking in Visual Studio will
-	handle changed files. But if there have been large changes, you may need
-	to clean the installation. To do this, simply run the
-	<filename>clean.bat</filename> command, which will automatically clean out
-	all generated files.
+   handle changed files. But if there have been large changes, you may need
+   to clean the installation. To do this, simply run the
+   <filename>clean.bat</filename> command, which will automatically clean out
+   all generated files.
   </para>
 
   <para>
    By default, all files are written into a subdirectory of the
-	<filename>debug</filename> or <filename>release</filename> directories. To
-	install these files using the standard layout, and also generate the files
-	required to initialize and use the database, run the command:
+   <filename>debug</filename> or <filename>release</filename> directories. To
+   install these files using the standard layout, and also generate the files
+   required to initialize and use the database, run the command:
    <screen>
     <userinput>
      perl install.pl c:\destination\directory
@@ -245,15 +245,15 @@
 
   <para>
    Building the PostgreSQL documentation in HTML format requires several tools
-	and files. Create a root directory for all these files, and store them
-	in the subdirectories in the list below.
+   and files. Create a root directory for all these files, and store them
+   in the subdirectories in the list below.
    <variablelist>
     <varlistentry>
      <term>OpenJade 1.3.1-2</term>
      <listitem><para>
       Download from
-		<ulink url="http://sourceforge.net/project/downloading.php?groupname=openjade&amp;filename=openjade-1_3_1-2-bin.zip"></>
-		and uncompress in the subdirectory <filename>openjade-1.3.1</filename>.
+      <ulink url="http://sourceforge.net/project/downloading.php?groupname=openjade&amp;filename=openjade-1_3_1-2-bin.zip"></>
+      and uncompress in the subdirectory <filename>openjade-1.3.1</filename>.
      </para></listitem>
     </varlistentry>
 
@@ -261,8 +261,8 @@
      <term>DocBook DTD 4.2</term>
      <listitem><para>
       Download from
-		<ulink url="http://www.oasis-open.org/docbook/sgml/4.2/docbook-4.2.zip"></>
-		and uncompress in the subdirectory <filename>docbook</filename>.
+      <ulink url="http://www.oasis-open.org/docbook/sgml/4.2/docbook-4.2.zip"></>
+      and uncompress in the subdirectory <filename>docbook</filename>.
      </para></listitem>
     </varlistentry>
 
@@ -272,7 +272,7 @@
       Download from
       <ulink url="http://sourceforge.net/project/downloading.php?groupname=docbook&amp;filename=docbook-dsssl-1.79.zip"></>
       and uncompress in the subdirectory
-		<filename>docbook-dsssl-1.79</filename>.
+      <filename>docbook-dsssl-1.79</filename>.
      </para></listitem>
     </varlistentry>
 
@@ -280,21 +280,21 @@
      <term>ISO character entities</term>
      <listitem><para>
       Download from
-		<ulink url="http://www.oasis-open.org/cover/ISOEnts.zip"></> and
-		uncompress in the subdirectory <filename>docbook</filename>.
+      <ulink url="http://www.oasis-open.org/cover/ISOEnts.zip"></> and
+      uncompress in the subdirectory <filename>docbook</filename>.
      </para></listitem>
     </varlistentry>
    </variablelist>
    Edit the <filename>buildenv.bat</filename> file, and add a variable for the
-	location of the root directory, for example:
+   location of the root directory, for example:
    <screen>
     @ECHO OFF
     SET DOCROOT=c:\docbook
    </screen>
    To build the documentation, run the command
-	<filename>builddoc.bat</filename>. Note that this will actually run the
-	build twice, in order to generate the indexes. The generated HTML files
-	will be in <filename>doc\src\sgml</filename>.
+   <filename>builddoc.bat</filename>. Note that this will actually run the
+   build twice, in order to generate the indexes. The generated HTML files
+   will be in <filename>doc\src\sgml</filename>.
   </para>
  </sect2>
 

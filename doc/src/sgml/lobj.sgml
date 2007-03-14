@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.45 2007/03/03 19:52:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/lobj.sgml,v 1.46 2007/03/14 00:15:26 tgl Exp $ -->
 
  <chapter id="largeObjects">
   <title id="largeObjects-title">Large Objects</title>
@@ -331,6 +331,7 @@ int lo_truncate(PGcon *conn, int fd, size_t len);
      8.3; if this function is run against an older server version, it will
      fail and return a negative value.
 </para>
+</sect2>
 
 <sect2>
 <title>Closing a Large Object Descriptor</title>
