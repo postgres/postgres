@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.85 2007/02/09 03:35:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.86 2007/03/15 23:12:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,11 +173,12 @@ typedef struct PLpgSQL_expr
 	int			dtype;
 	int			exprno;
 	char	   *query;
-	void	   *plan;
+	SPIPlanPtr	plan;
 	Oid		   *plan_argtypes;
 	/* fields for "simple expression" fast-path execution: */
 	Expr	   *expr_simple_expr;		/* NULL means not a simple expr */
-	Oid			expr_simple_type;
+	int			expr_simple_generation;	/* plancache generation we checked */
+	Oid			expr_simple_type;		/* result type Oid, if simple */
 
 	/*
 	 * if expr is simple AND prepared in current eval_estate,

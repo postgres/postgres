@@ -51,3 +51,43 @@ EXECUTE vprep;
 CREATE OR REPLACE TEMP VIEW voo AS SELECT q1, q2/2 AS q2 FROM foo;
 
 EXECUTE vprep;
+
+-- Check basic SPI plan invalidation
+
+create function cache_test(int) returns int as $$
+declare total int;
+begin
+	create temp table t1(f1 int);
+	insert into t1 values($1);
+	insert into t1 values(11);
+	insert into t1 values(12);
+	insert into t1 values(13);
+	select sum(f1) into total from t1;
+	drop table t1;
+	return total;
+end
+$$ language plpgsql;
+
+select cache_test(1);
+select cache_test(2);
+select cache_test(3);
+
+-- Check invalidation of plpgsql "simple expression"
+
+create temp view v1 as
+  select 2+2 as f1;
+
+create function cache_test_2() returns int as $$
+begin
+	return f1 from v1;
+end$$ language plpgsql;
+
+select cache_test_2();
+
+create or replace temp view v1 as
+  select 2+2+4 as f1;
+select cache_test_2();
+
+create or replace temp view v1 as
+  select 2+2+4+(select max(unique1) from tenk1) as f1;
+select cache_test_2();

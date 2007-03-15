@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.252 2007/02/27 23:48:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.253 2007/03/15 23:12:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,9 +105,9 @@ typedef struct
  * Global data
  * ----------
  */
-static void *plan_getrulebyoid = NULL;
+static SPIPlanPtr plan_getrulebyoid = NULL;
 static char *query_getrulebyoid = "SELECT * FROM pg_catalog.pg_rewrite WHERE oid = $1";
-static void *plan_getviewrule = NULL;
+static SPIPlanPtr plan_getviewrule = NULL;
 static char *query_getviewrule = "SELECT * FROM pg_catalog.pg_rewrite WHERE ev_class = $1 AND rulename = $2";
 
 
@@ -250,7 +250,7 @@ pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
 	if (plan_getrulebyoid == NULL)
 	{
 		Oid			argtypes[1];
-		void	   *plan;
+		SPIPlanPtr	plan;
 
 		argtypes[0] = OIDOID;
 		plan = SPI_prepare(query_getrulebyoid, 1, argtypes);
@@ -380,7 +380,7 @@ pg_get_viewdef_worker(Oid viewoid, int prettyFlags)
 	if (plan_getviewrule == NULL)
 	{
 		Oid			argtypes[2];
-		void	   *plan;
+		SPIPlanPtr	plan;
 
 		argtypes[0] = OIDOID;
 		argtypes[1] = NAMEOID;

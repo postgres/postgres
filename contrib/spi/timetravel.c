@@ -24,7 +24,7 @@ Datum		get_timetravel(PG_FUNCTION_ARGS);
 typedef struct
 {
 	char	   *ident;
-	void	   *splan;
+	SPIPlanPtr	splan;
 }	EPlan;
 
 static EPlan *Plans = NULL;		/* for UPDATE/DELETE */
@@ -308,7 +308,7 @@ timetravel(PG_FUNCTION_ARGS)
 	/* if there is no plan ... */
 	if (plan->splan == NULL)
 	{
-		void	   *pplan;
+		SPIPlanPtr	pplan;
 		Oid		   *ctypes;
 		char		sql[8192];
 		char		separ = ' ';

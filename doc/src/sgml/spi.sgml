@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.53 2007/02/18 01:47:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.54 2007/03/15 23:12:06 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -14,7 +14,7 @@
   <acronym>SQL</acronym> commands inside their functions.
   <acronym>SPI</acronym> is a set of
   interface functions to simplify access to the parser, planner,
-  optimizer, and executor. <acronym>SPI</acronym> also does some
+  and executor. <acronym>SPI</acronym> also does some
   memory management.
  </para>
 
@@ -322,7 +322,8 @@ SPI_execute("INSERT INTO foo SELECT * FROM bar", false, 5);
 
   <para>
    You can pass multiple commands in one string, but later commands cannot
-   depend on the creation of objects earlier in the string.
+   depend on the creation of objects earlier in the string, because the
+   whole string will be parsed and planned before execution begins.
    <function>SPI_execute</function> returns the
    result for the command executed last.  The <parameter>count</parameter>
    limit applies to each command separately, but it is not applied to
@@ -699,7 +700,7 @@ int SPI_exec(const char * <parameter>command</parameter>, long <parameter>count<
 
  <refsynopsisdiv>
 <synopsis>
-void * SPI_prepare(const char * <parameter>command</parameter>, int <parameter>nargs</parameter>, Oid * <parameter>argtypes</parameter>)
+SPIPlanPtr SPI_prepare(const char * <parameter>command</parameter>, int <parameter>nargs</parameter>, Oid * <parameter>argtypes</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -791,6 +792,13 @@ void * SPI_prepare(const char * <parameter>command</parameter>, int <parameter>n
   <title>Notes</title>
 
   <para>
+   <type>SPIPlanPtr</> is declared as a pointer to an opaque struct type in
+   <filename>spi.h</>.  It is unwise to try to access its contents
+   directly, as that makes your code much more likely to break in
+   future revisions of <productname>PostgreSQL</productname>.
+  </para>
+
+  <para>
    There is a disadvantage to using parameters: since the planner does
    not know the values that will be supplied for the parameters, it
    might make worse planning choices than it would make for a normal
@@ -816,7 +824,7 @@ void * SPI_prepare(const char * <parameter>command</parameter>, int <parameter>n
 
  <refsynopsisdiv>
 <synopsis>
-int SPI_getargcount(void * <parameter>plan</parameter>)
+int SPI_getargcount(SPIPlanPtr <parameter>plan</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -834,7 +842,7 @@ int SPI_getargcount(void * <parameter>plan</parameter>)
 
   <variablelist>
    <varlistentry>
-    <term><literal>void * <parameter>plan</parameter></literal></term>
+    <term><literal>SPIPlanPtr <parameter>plan</parameter></literal></term>
     <listitem>
      <para>
       execution plan (returned by <function>SPI_prepare</function>)
@@ -847,9 +855,10 @@ int SPI_getargcount(void * <parameter>plan</parameter>)
  <refsect1>
   <title>Return Value</title>
   <para>
-    The expected argument count for the <parameter>plan</parameter>, or
-    <symbol>SPI_ERROR_ARGUMENT</symbol> if the <parameter>plan
-    </parameter> is <symbol>NULL</symbol>
+    The count of expected arguments for the <parameter>plan</parameter>.
+    If the <parameter>plan</parameter> is <symbol>NULL</symbol> or invalid,
+    <varname>SPI_result</varname> is set to <symbol>SPI_ERROR_ARGUMENT</symbol>
+    and <literal>-1</literal> is returned.
   </para>
  </refsect1>
 </refentry>
@@ -871,7 +880,7 @@ int SPI_getargcount(void * <parameter>plan</parameter>)
 
  <refsynopsisdiv>
 <synopsis>
-Oid SPI_getargtypeid(void * <parameter>plan</parameter>, int <parameter>argIndex</parameter>)
+Oid SPI_getargtypeid(SPIPlanPtr <parameter>plan</parameter>, int <parameter>argIndex</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -890,7 +899,7 @@ Oid SPI_getargtypeid(void * <parameter>plan</parameter>, int <parameter>argIndex
 
   <variablelist>
    <varlistentry>
-    <term><literal>void * <parameter>plan</parameter></literal></term>
+    <term><literal>SPIPlanPtr <parameter>plan</parameter></literal></term>
     <listitem>
      <para>
       execution plan (returned by <function>SPI_prepare</function>)
@@ -912,11 +921,13 @@ Oid SPI_getargtypeid(void * <parameter>plan</parameter>, int <parameter>argIndex
  <refsect1>
   <title>Return Value</title>
   <para>
-    The type id of the argument at the given index, or
-    <symbol>SPI_ERROR_ARGUMENT</symbol> if the <parameter>plan</parameter> is
-    <symbol>NULL</symbol> or <parameter>argIndex</parameter> is less than 0 or
+    The type id of the argument at the given index.
+    If the <parameter>plan</parameter> is <symbol>NULL</symbol> or invalid,
+    or <parameter>argIndex</parameter> is less than 0 or
     not less than the number of arguments declared for the
-    <parameter>plan</parameter>
+    <parameter>plan</parameter>,
+    <varname>SPI_result</varname> is set to <symbol>SPI_ERROR_ARGUMENT</symbol>
+    and <symbol>InvalidOid</symbol> is returned.
   </para>
  </refsect1>
 </refentry>
@@ -939,7 +950,7 @@ Oid SPI_getargtypeid(void * <parameter>plan</parameter>, int <parameter>argIndex
 
  <refsynopsisdiv>
 <synopsis>
-bool SPI_is_cursor_plan(void * <parameter>plan</parameter>)
+bool SPI_is_cursor_plan(SPIPlanPtr <parameter>plan</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -964,7 +975,7 @@ bool SPI_is_cursor_plan(void * <parameter>plan</parameter>)
 
   <variablelist>
    <varlistentry>
-    <term><literal>void * <parameter>plan</parameter></literal></term>
+    <term><literal>SPIPlanPtr <parameter>plan</parameter></literal></term>
     <listitem>
      <para>
       execution plan (returned by <function>SPI_prepare</function>)
@@ -978,9 +989,10 @@ bool SPI_is_cursor_plan(void * <parameter>plan</parameter>)
   <title>Return Value</title>
   <para>
     <symbol>true</symbol> or <symbol>false</symbol> to indicate if the
-    <parameter>plan</parameter> can produce a cursor or not, or
-    <symbol>SPI_ERROR_ARGUMENT</symbol> if the <parameter>plan</parameter>
-    is <symbol>NULL</symbol>
+    <parameter>plan</parameter> can produce a cursor or not.
+    If the <parameter>plan</parameter> is <symbol>NULL</symbol> or invalid,
+    <varname>SPI_result</varname> is set to <symbol>SPI_ERROR_ARGUMENT</symbol>
+    and <symbol>false</symbol> is returned.
   </para>
  </refsect1>
 </refentry>
@@ -1001,7 +1013,7 @@ bool SPI_is_cursor_plan(void * <parameter>plan</parameter>)
 
  <refsynopsisdiv>
 <synopsis>
-int SPI_execute_plan(void * <parameter>plan</parameter>, Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>,
+int SPI_execute_plan(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>,
                      bool <parameter>read_only</parameter>, long <parameter>count</parameter>)
 </synopsis>
  </refsynopsisdiv>
@@ -1022,7 +1034,7 @@ int SPI_execute_plan(void * <parameter>plan</parameter>, Datum * <parameter>valu
 
   <variablelist>
    <varlistentry>
-    <term><literal>void * <parameter>plan</parameter></literal></term>
+    <term><literal>SPIPlanPtr <parameter>plan</parameter></literal></term>
     <listitem>
      <para>
       execution plan (returned by <function>SPI_prepare</function>)
@@ -1091,8 +1103,8 @@ int SPI_execute_plan(void * <parameter>plan</parameter>, Datum * <parameter>valu
      <term><symbol>SPI_ERROR_ARGUMENT</symbol></term>
      <listitem>
       <para>
-       if <parameter>plan</parameter> is <symbol>NULL</symbol> or
-       <parameter>count</parameter> is less than 0
+       if <parameter>plan</parameter> is <symbol>NULL</symbol> or invalid,
+       or <parameter>count</parameter> is less than 0
       </para>
      </listitem>
     </varlistentry>
@@ -1143,7 +1155,7 @@ int SPI_execute_plan(void * <parameter>plan</parameter>, Datum * <parameter>valu
 
  <refsynopsisdiv>
 <synopsis>
-int SPI_execp(void * <parameter>plan</parameter>, Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>, long <parameter>count</parameter>)
+int SPI_execp(SPIPlanPtr <parameter>plan</parameter>, Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>, long <parameter>count</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -1163,7 +1175,7 @@ int SPI_execp(void * <parameter>plan</parameter>, Datum * <parameter>values</par
 
   <variablelist>
    <varlistentry>
-    <term><literal>void * <parameter>plan</parameter></literal></term>
+    <term><literal>SPIPlanPtr <parameter>plan</parameter></literal></term>
     <listitem>
      <para>
       execution plan (returned by <function>SPI_prepare</function>)
@@ -1242,7 +1254,7 @@ int SPI_execp(void * <parameter>plan</parameter>, Datum * <parameter>values</par
 
  <refsynopsisdiv>
 <synopsis>
-Portal SPI_cursor_open(const char * <parameter>name</parameter>, void * <parameter>plan</parameter>,
+Portal SPI_cursor_open(const char * <parameter>name</parameter>, SPIPlanPtr <parameter>plan</parameter>,
                        Datum * <parameter>values</parameter>, const char * <parameter>nulls</parameter>,
                        bool <parameter>read_only</parameter>)
 </synopsis>
@@ -1268,6 +1280,11 @@ Portal SPI_cursor_open(const char * <parameter>name</parameter>, void * <paramet
    to the procedure's caller provides a way of returning a row set as
    result.
   </para>
+
+  <para>
+   The passed-in data will be copied into the cursor's portal, so it
+   can be freed while the cursor still exists.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -1285,7 +1302,7 @@ Portal SPI_cursor_open(const char * <parameter>name</parameter>, void * <paramet
    </varlistentry>
 
    <varlistentry>
-    <term><literal>void * <parameter>plan</parameter></literal></term>
+    <term><literal>SPIPlanPtr <parameter>plan</parameter></literal></term>
     <listitem>
      <para>
       execution plan (returned by <function>SPI_prepare</function>)
@@ -1602,7 +1619,7 @@ void SPI_cursor_close(Portal <parameter>portal</parameter>)
 
  <refsynopsisdiv>
 <synopsis>
-void * SPI_saveplan(void * <parameter>plan</parameter>)
+SPIPlanPtr SPI_saveplan(SPIPlanPtr <parameter>plan</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -1611,8 +1628,8 @@ void * SPI_saveplan(void * <parameter>plan</parameter>)
 
   <para>
    <function>SPI_saveplan</function> saves a passed plan (prepared by
-   <function>SPI_prepare</function>) in memory protected from freeing
-   by <function>SPI_finish</function> and by the transaction manager
+   <function>SPI_prepare</function>) in memory that will not be freed
+   by <function>SPI_finish</function> nor by the transaction manager,
    and returns a pointer to the saved plan.  This gives you the
    ability to reuse prepared plans in the subsequent invocations of
    your procedure in the current session.
@@ -1624,7 +1641,7 @@ void * SPI_saveplan(void * <parameter>plan</parameter>)
 
   <variablelist>
    <varlistentry>
-    <term><literal>void * <parameter>plan</parameter></literal></term>
+    <term><literal>SPIPlanPtr <parameter>plan</parameter></literal></term>
     <listitem>
      <para>
       the plan to be saved
@@ -1646,7 +1663,7 @@ void * SPI_saveplan(void * <parameter>plan</parameter>)
      <term><symbol>SPI_ERROR_ARGUMENT</symbol></term>
      <listitem>
       <para>
-       if <parameter>plan</parameter> is <symbol>NULL</symbol>
+       if <parameter>plan</parameter> is <symbol>NULL</symbol> or invalid
       </para>
      </listitem>
     </varlistentry>
@@ -1667,9 +1684,16 @@ void * SPI_saveplan(void * <parameter>plan</parameter>)
   <title>Notes</title>
 
   <para>
+   The passed-in plan is not freed, so you might wish to do
+   <function>SPI_freeplan</function> on it to avoid leaking memory
+   until <function>SPI_finish</>.
+  </para>
+
+  <para>
    If one of the objects (a table, function, etc.) referenced by the
-   prepared plan is dropped during the session then the results of
-   <function>SPI_execute_plan</function> for this plan will be unpredictable.
+   prepared plan is dropped or redefined, then future executions of
+   <function>SPI_execute_plan</function> may fail or return different
+   results than the plan initially indicates.
   </para>
  </refsect1>
 </refentry>
@@ -2879,7 +2903,7 @@ void SPI_freetuptable(SPITupleTable * <parameter>tuptable</parameter>)
 
  <refsynopsisdiv>
 <synopsis>
-int SPI_freeplan(void *<parameter>plan</parameter>)
+int SPI_freeplan(SPIPlanPtr <parameter>plan</parameter>)
 </synopsis>
  </refsynopsisdiv>
 
@@ -2898,7 +2922,7 @@ int SPI_freeplan(void *<parameter>plan</parameter>)
 
   <variablelist>
    <varlistentry>
-    <term><literal>void * <parameter>plan</parameter></literal></term>
+    <term><literal>SPIPlanPtr <parameter>plan</parameter></literal></term>
     <listitem>
      <para>
       pointer to plan to free
@@ -2913,7 +2937,7 @@ int SPI_freeplan(void *<parameter>plan</parameter>)
 
   <para>
    <symbol>SPI_ERROR_ARGUMENT</symbol> if <parameter>plan</parameter>
-   is <symbol>NULL</symbol>.
+   is <symbol>NULL</symbol> or invalid
   </para>
  </refsect1>
 </refentry>

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.1 2007/03/13 00:33:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.2 2007/03/15 23:12:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,5 +101,6 @@ extern void DropCachedPlan(CachedPlanSource *plansource);
 extern CachedPlan *RevalidateCachedPlan(CachedPlanSource *plansource,
 										bool useResOwner);
 extern void ReleaseCachedPlan(CachedPlan *plan, bool useResOwner);
+extern TupleDesc PlanCacheComputeResultDesc(List *stmt_list);
 
 #endif   /* PLANCACHE_H */

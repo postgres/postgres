@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.1 2007/03/13 00:33:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.2 2007/03/15 23:12:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,6 @@ static void ScanQueryForRelids(Query *parsetree,
 							   void *arg);
 static bool ScanQueryWalker(Node *node, ScanQueryWalkerContext *context);
 static bool rowmark_member(List *rowMarks, int rt_index);
-static TupleDesc ComputeResultDesc(List *stmt_list);
 static void PlanCacheCallback(Datum arg, Oid relid);
 static void InvalRelid(Oid relid, LOCKMODE lockmode,
 					   InvalRelidContext *context);
@@ -153,7 +152,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
 	plansource->generation = 0;			/* StoreCachedPlan will increment */
-	plansource->resultDesc = ComputeResultDesc(stmt_list);
+	plansource->resultDesc = PlanCacheComputeResultDesc(stmt_list);
 	plansource->plan = NULL;
 	plansource->context = source_context;
 	plansource->orig_plan = NULL;
@@ -225,7 +224,7 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
 	plansource->generation = 0;			/* StoreCachedPlan will increment */
-	plansource->resultDesc = ComputeResultDesc(stmt_list);
+	plansource->resultDesc = PlanCacheComputeResultDesc(stmt_list);
 	plansource->plan = NULL;
 	plansource->context = context;
 	plansource->orig_plan = NULL;
@@ -271,12 +270,13 @@ StoreCachedPlan(CachedPlanSource *plansource,
 	{
 		/*
 		 * Make a dedicated memory context for the CachedPlan and its
-		 * subsidiary data.
+		 * subsidiary data.  It's probably not going to be large, but
+		 * just in case, use the default maxsize parameter.
 		 */
 		plan_context = AllocSetContextCreate(CacheMemoryContext,
 											 "CachedPlan",
-											 ALLOCSET_DEFAULT_MINSIZE,
-											 ALLOCSET_DEFAULT_INITSIZE,
+											 ALLOCSET_SMALL_MINSIZE,
+											 ALLOCSET_SMALL_INITSIZE,
 											 ALLOCSET_DEFAULT_MAXSIZE);
 
 		/*
@@ -445,7 +445,7 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 		 * Check or update the result tupdesc.  XXX should we use a weaker
 		 * condition than equalTupleDescs() here?
 		 */
-		resultDesc = ComputeResultDesc(slist);
+		resultDesc = PlanCacheComputeResultDesc(slist);
 		if (resultDesc == NULL && plansource->resultDesc == NULL)
 		{
 			/* OK, doesn't return tuples */
@@ -718,14 +718,14 @@ rowmark_member(List *rowMarks, int rt_index)
 }
 
 /*
- * ComputeResultDesc: given a list of either fully-planned statements or
- * Queries, determine the result tupledesc it will produce.  Returns NULL
+ * PlanCacheComputeResultDesc: given a list of either fully-planned statements
+ * or Queries, determine the result tupledesc it will produce.  Returns NULL
  * if the execution will not return tuples.
  *
  * Note: the result is created or copied into current memory context.
  */
-static TupleDesc
-ComputeResultDesc(List *stmt_list)
+TupleDesc
+PlanCacheComputeResultDesc(List *stmt_list)
 {
 	Node	   *node;
 	Query	   *query;

@@ -19,7 +19,7 @@ typedef struct
 {
 	char	   *ident;
 	int			nplans;
-	void	  **splan;
+	SPIPlanPtr *splan;
 }	EPlan;
 
 static EPlan *FPlans = NULL;
@@ -163,7 +163,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 	 */
 	if (plan->nplans <= 0)
 	{
-		void	   *pplan;
+		SPIPlanPtr	pplan;
 		char		sql[8192];
 
 		/*
@@ -191,7 +191,7 @@ check_primary_key(PG_FUNCTION_ARGS)
 		if (pplan == NULL)
 			/* internal error */
 			elog(ERROR, "check_primary_key: SPI_saveplan returned %d", SPI_result);
-		plan->splan = (void **) malloc(sizeof(void *));
+		plan->splan = (SPIPlanPtr *) malloc(sizeof(SPIPlanPtr));
 		*(plan->splan) = pplan;
 		plan->nplans = 1;
 	}
@@ -413,11 +413,11 @@ check_foreign_key(PG_FUNCTION_ARGS)
 	 */
 	if (plan->nplans <= 0)
 	{
-		void	   *pplan;
+		SPIPlanPtr	pplan;
 		char		sql[8192];
 		char	  **args2 = args;
 
-		plan->splan = (void **) malloc(nrefs * sizeof(void *));
+		plan->splan = (SPIPlanPtr *) malloc(nrefs * sizeof(SPIPlanPtr));
 
 		for (r = 0; r < nrefs; r++)
 		{

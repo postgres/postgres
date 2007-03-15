@@ -8,16 +8,14 @@
  *	across query and transaction boundaries, in fact they live as long as
  *	the backend does.  This works because the hashtable structures
  *	themselves are allocated by dynahash.c in its permanent DynaHashCxt,
- *	and the parse/plan node trees they point to are copied into
- *	TopMemoryContext using SPI_saveplan().	This is pretty ugly, since there
- *	is no way to free a no-longer-needed plan tree, but then again we don't
- *	yet have any bookkeeping that would allow us to detect that a plan isn't
- *	needed anymore.  Improve it someday.
+ *	and the SPI plans they point to are saved using SPI_saveplan().
+ *	There is not currently any provision for throwing away a no-longer-needed
+ *	plan --- consider improving this someday.
  *
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.91 2007/02/14 01:58:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.92 2007/03/15 23:12:06 tgl Exp $
  *
  * ----------
  */
@@ -35,7 +33,7 @@
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_operator.h"
 #include "commands/trigger.h"
-#include "executor/spi_priv.h"
+#include "executor/spi.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
 #include "miscadmin.h"
@@ -135,7 +133,7 @@ typedef struct RI_QueryKey
 typedef struct RI_QueryHashEntry
 {
 	RI_QueryKey key;
-	void	   *plan;
+	SPIPlanPtr	plan;
 } RI_QueryHashEntry;
 
 
@@ -206,18 +204,18 @@ static bool ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 				  const RI_ConstraintInfo *riinfo);
 
 static void ri_InitHashTables(void);
-static void *ri_FetchPreparedPlan(RI_QueryKey *key);
-static void ri_HashPreparedPlan(RI_QueryKey *key, void *plan);
+static SPIPlanPtr ri_FetchPreparedPlan(RI_QueryKey *key);
+static void ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan);
 static RI_CompareHashEntry *ri_HashCompareOp(Oid eq_opr, Oid typeid);
 
 static void ri_CheckTrigger(FunctionCallInfo fcinfo, const char *funcname,
 				int tgkind);
 static void ri_FetchConstraintInfo(RI_ConstraintInfo *riinfo,
 					   Trigger *trigger, Relation trig_rel, bool rel_is_pk);
-static void *ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
+static SPIPlanPtr ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 			 RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel,
 			 bool cache_plan);
-static bool ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
+static bool ri_PerformCheck(RI_QueryKey *qkey, SPIPlanPtr qplan,
 				Relation fk_rel, Relation pk_rel,
 				HeapTuple old_tuple, HeapTuple new_tuple,
 				bool detectNewRows,
@@ -248,7 +246,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	HeapTuple	old_row;
 	Buffer		new_row_buf;
 	RI_QueryKey qkey;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 	int			i;
 
 	/*
@@ -542,7 +540,7 @@ ri_Check_Pk_Match(Relation pk_rel, Relation fk_rel,
 				  HeapTuple old_row,
 				  const RI_ConstraintInfo *riinfo)
 {
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 	RI_QueryKey qkey;
 	int			i;
 	bool		result;
@@ -678,7 +676,7 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	Relation	pk_rel;
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 	int			i;
 
 	/*
@@ -855,7 +853,7 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	HeapTuple	new_row;
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 	int			i;
 
 	/*
@@ -1040,7 +1038,7 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	Relation	pk_rel;
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 	int			i;
 
 	/*
@@ -1203,7 +1201,7 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	HeapTuple	new_row;
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 	int			i;
 	int			j;
 
@@ -1397,7 +1395,7 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	Relation	pk_rel;
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 	int			i;
 
 	/*
@@ -1569,7 +1567,7 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	HeapTuple	new_row;
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 	int			i;
 
 	/*
@@ -1744,7 +1742,7 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	Relation	pk_rel;
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 	int			i;
 
 	/*
@@ -1916,7 +1914,7 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	HeapTuple	new_row;
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 	int			i;
 	bool		use_cached_query;
 
@@ -2130,7 +2128,7 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	Relation	pk_rel;
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 
 	/*
 	 * Check that this is a valid trigger call on the right time and event.
@@ -2313,7 +2311,7 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	HeapTuple	new_row;
 	HeapTuple	old_row;
 	RI_QueryKey qkey;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 
 	/*
 	 * Check that this is a valid trigger call on the right time and event.
@@ -2637,7 +2635,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	int			old_work_mem;
 	char		workmembuf[32];
 	int			spi_result;
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 
 	/*
 	 * Check to make sure current user has enough permissions to do the test
@@ -3165,12 +3163,12 @@ ri_FetchConstraintInfo(RI_ConstraintInfo *riinfo,
  * If cache_plan is true, the plan is saved into our plan hashtable
  * so that we don't need to plan it again.
  */
-static void *
+static SPIPlanPtr
 ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
 			 RI_QueryKey *qkey, Relation fk_rel, Relation pk_rel,
 			 bool cache_plan)
 {
-	void	   *qplan;
+	SPIPlanPtr	qplan;
 	Relation	query_rel;
 	Oid			save_uid;
 
@@ -3212,7 +3210,7 @@ ri_PlanCheck(const char *querystr, int nargs, Oid *argtypes,
  * Perform a query to enforce an RI restriction
  */
 static bool
-ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
+ri_PerformCheck(RI_QueryKey *qkey, SPIPlanPtr qplan,
 				Relation fk_rel, Relation pk_rel,
 				HeapTuple old_tuple, HeapTuple new_tuple,
 				bool detectNewRows,
@@ -3576,7 +3574,7 @@ ri_InitHashTables(void)
  *	and saved SPI execution plans. Return the plan if found or NULL.
  * ----------
  */
-static void *
+static SPIPlanPtr
 ri_FetchPreparedPlan(RI_QueryKey *key)
 {
 	RI_QueryHashEntry *entry;
@@ -3606,7 +3604,7 @@ ri_FetchPreparedPlan(RI_QueryKey *key)
  * ----------
  */
 static void
-ri_HashPreparedPlan(RI_QueryKey *key, void *plan)
+ri_HashPreparedPlan(RI_QueryKey *key, SPIPlanPtr plan)
 {
 	RI_QueryHashEntry *entry;
 	bool		found;

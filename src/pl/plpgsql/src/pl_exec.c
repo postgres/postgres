@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.189 2007/02/20 17:32:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.190 2007/03/15 23:12:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,8 +123,9 @@ static void exec_prepare_plan(PLpgSQL_execstate *estate,
 				  PLpgSQL_expr *expr);
 static bool exec_simple_check_node(Node *node);
 static void exec_simple_check_plan(PLpgSQL_expr *expr);
-static Datum exec_eval_simple_expr(PLpgSQL_execstate *estate,
+static bool exec_eval_simple_expr(PLpgSQL_execstate *estate,
 					  PLpgSQL_expr *expr,
+					  Datum *result,
 					  bool *isNull,
 					  Oid *rettype);
 
@@ -409,7 +410,7 @@ plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 				void	   *tmp;
 
 				len = datumGetSize(estate.retval, false, func->fn_rettyplen);
-				tmp = (void *) SPI_palloc(len);
+				tmp = SPI_palloc(len);
 				memcpy(tmp, DatumGetPointer(estate.retval), len);
 				estate.retval = PointerGetDatum(tmp);
 			}
@@ -2294,8 +2295,7 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 				  PLpgSQL_expr *expr)
 {
 	int			i;
-	_SPI_plan  *spi_plan;
-	void	   *plan;
+	SPIPlanPtr	plan;
 	Oid		   *argtypes;
 
 	/*
@@ -2343,12 +2343,11 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 		}
 	}
 	expr->plan = SPI_saveplan(plan);
-	spi_plan = (_SPI_plan *) expr->plan;
-	expr->plan_argtypes = spi_plan->argtypes;
-	expr->expr_simple_expr = NULL;
+	SPI_freeplan(plan);
+	plan = expr->plan;
+	expr->plan_argtypes = plan->argtypes;
 	exec_simple_check_plan(expr);
 
-	SPI_freeplan(plan);
 	pfree(argtypes);
 }
 
@@ -2374,17 +2373,16 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	 */
 	if (expr->plan == NULL)
 	{
-		_SPI_plan  *spi_plan;
 		ListCell   *l;
 
 		exec_prepare_plan(estate, expr);
 		stmt->mod_stmt = false;
-		spi_plan = (_SPI_plan *) expr->plan;
-		foreach(l, spi_plan->stmt_list_list)
+		foreach(l, expr->plan->plancache_list)
 		{
+			CachedPlanSource *plansource = (CachedPlanSource *) lfirst(l);
 			ListCell   *l2;
 
-			foreach(l2, (List *) lfirst(l))
+			foreach(l2, plansource->plan->stmt_list)
 			{
 				PlannedStmt *p = (PlannedStmt *) lfirst(l2);
 
@@ -2735,7 +2733,7 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 	PLpgSQL_row *row = NULL;
 	SPITupleTable *tuptab;
 	int			n;
-	void	   *plan;
+	SPIPlanPtr	plan;
 	Portal		portal;
 	bool		found = false;
 
@@ -2959,7 +2957,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		Datum		queryD;
 		Oid			restype;
 		char	   *querystr;
-		void	   *curplan;
+		SPIPlanPtr	curplan;
 
 		/* ----------
 		 * We evaluate the string expression after the
@@ -3860,10 +3858,11 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 			   bool *isNull,
 			   Oid *rettype)
 {
+	Datum		result;
 	int			rc;
 
 	/*
-	 * If not already done create a plan for this expression
+	 * If first time through, create a plan for this expression.
 	 */
 	if (expr->plan == NULL)
 		exec_prepare_plan(estate, expr);
@@ -3872,9 +3871,12 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	 * If this is a simple expression, bypass SPI and use the executor
 	 * directly
 	 */
-	if (expr->expr_simple_expr != NULL)
-		return exec_eval_simple_expr(estate, expr, isNull, rettype);
+	if (exec_eval_simple_expr(estate, expr, &result, isNull, rettype))
+		return result;
 
+	/*
+	 * Else do it the hard way via exec_run_select
+	 */
 	rc = exec_run_select(estate, expr, 2, NULL);
 	if (rc != SPI_OK_SELECT)
 		ereport(ERROR,
@@ -3994,22 +3996,63 @@ exec_run_select(PLpgSQL_execstate *estate,
  * exec_eval_simple_expr -		Evaluate a simple expression returning
  *								a Datum by directly calling ExecEvalExpr().
  *
+ * If successful, store results into *result, *isNull, *rettype and return
+ * TRUE.  If the expression is not simple (any more), return FALSE.
+ *
+ * It is possible though unlikely for a simple expression to become non-simple
+ * (consider for example redefining a trivial view).  We must handle that for
+ * correctness; fortunately it's normally inexpensive to do
+ * RevalidateCachedPlan on a simple expression.  We do not consider the other
+ * direction (non-simple expression becoming simple) because we'll still give
+ * correct results if that happens, and it's unlikely to be worth the cycles
+ * to check.
+ *
  * Note: if pass-by-reference, the result is in the eval_econtext's
  * temporary memory context.  It will be freed when exec_eval_cleanup
  * is done.
  * ----------
  */
-static Datum
+static bool
 exec_eval_simple_expr(PLpgSQL_execstate *estate,
 					  PLpgSQL_expr *expr,
+					  Datum *result,
 					  bool *isNull,
 					  Oid *rettype)
 {
-	Datum		retval;
 	ExprContext *econtext = estate->eval_econtext;
+	CachedPlanSource *plansource;
+	CachedPlan *cplan;
 	ParamListInfo paramLI;
 	int			i;
 	Snapshot	saveActiveSnapshot;
+
+	/*
+	 * Forget it if expression wasn't simple before.
+	 */
+	if (expr->expr_simple_expr == NULL)
+		return false;
+
+	/*
+	 * Revalidate cached plan, so that we will notice if it became stale.
+	 * (We also need to hold a refcount while using the plan.)  Note that
+	 * even if replanning occurs, the length of plancache_list can't change,
+	 * since it is a property of the raw parsetree generated from the query
+	 * text.
+	 */
+	Assert(list_length(expr->plan->plancache_list) == 1);
+	plansource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
+	cplan = RevalidateCachedPlan(plansource, true);
+	if (cplan->generation != expr->expr_simple_generation)
+	{
+		/* It got replanned ... is it still simple? */
+		exec_simple_check_plan(expr);
+		if (expr->expr_simple_expr == NULL)
+		{
+			/* Ooops, release refcount and fail */
+			ReleaseCachedPlan(cplan, true);
+			return false;
+		}
+	}
 
 	/*
 	 * Pass back previously-determined result type.
@@ -4018,7 +4061,8 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 
 	/*
 	 * Prepare the expression for execution, if it's not been done already in
-	 * the current eval_estate.
+	 * the current eval_estate.  (This will be forced to happen if we called
+	 * exec_simple_check_plan above.)
 	 */
 	if (expr->expr_simple_id != estate->eval_estate_simple_id)
 	{
@@ -4086,10 +4130,10 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 		/*
 		 * Finally we can call the executor to evaluate the expression
 		 */
-		retval = ExecEvalExpr(expr->expr_simple_state,
-							  econtext,
-							  isNull,
-							  NULL);
+		*result = ExecEvalExpr(expr->expr_simple_state,
+							   econtext,
+							   isNull,
+							   NULL);
 		MemoryContextSwitchTo(oldcontext);
 	}
 	PG_CATCH();
@@ -4104,9 +4148,14 @@ exec_eval_simple_expr(PLpgSQL_execstate *estate,
 	SPI_pop();
 
 	/*
+	 * Now we can release our refcount on the cached plan.
+	 */
+	ReleaseCachedPlan(cplan, true);
+
+	/*
 	 * That's it.
 	 */
-	return retval;
+	return true;
 }
 
 
@@ -4673,25 +4722,31 @@ exec_simple_check_node(Node *node)
 static void
 exec_simple_check_plan(PLpgSQL_expr *expr)
 {
-	_SPI_plan  *spi_plan = (_SPI_plan *) expr->plan;
-	List	   *sublist;
+	CachedPlanSource *plansource;
 	PlannedStmt *stmt;
 	Plan	   *plan;
 	TargetEntry *tle;
 
+	/*
+	 * Initialize to "not simple", and remember the plan generation number
+	 * we last checked.  (If the query produces more or less than one parsetree
+	 * we just leave expr_simple_generation set to 0.)
+	 */
 	expr->expr_simple_expr = NULL;
+	expr->expr_simple_generation = 0;
 
 	/*
 	 * 1. We can only evaluate queries that resulted in one single execution
 	 * plan
 	 */
-	if (list_length(spi_plan->stmt_list_list) != 1)
+	if (list_length(expr->plan->plancache_list) != 1)
 		return;
-	sublist = (List *) linitial(spi_plan->stmt_list_list);
-	if (list_length(sublist) != 1)
+	plansource = (CachedPlanSource *) linitial(expr->plan->plancache_list);
+	expr->expr_simple_generation = plansource->generation;
+	if (list_length(plansource->plan->stmt_list) != 1)
 		return;
 
-	stmt = (PlannedStmt *) linitial(sublist);
+	stmt = (PlannedStmt *) linitial(plansource->plan->stmt_list);
 
 	/*
 	 * 2. It must be a RESULT plan --> no scan's required
