@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.152 2007/02/20 10:23:38 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.153 2007/03/16 08:28:01 mha Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -62,21 +62,22 @@ describeAggregates(const char *pattern, bool verbose)
 	printfPQExpBuffer(&buf,
 					  "SELECT n.nspname as \"%s\",\n"
 					  "  p.proname AS \"%s\",\n"
+					  "  pg_catalog.format_type(p.prorettype, NULL) AS \"%s\",\n" 
 					  "  CASE WHEN p.pronargs = 0\n"
 					  "    THEN CAST('*' AS pg_catalog.text)\n"
 					  "    ELSE\n"
 					  "    pg_catalog.array_to_string(ARRAY(\n"
 					  "      SELECT\n"
-				 "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
+					  "        pg_catalog.format_type(p.proargtypes[s.i], NULL)\n"
 					  "      FROM\n"
 					  "        pg_catalog.generate_series(0, pg_catalog.array_upper(p.proargtypes, 1)) AS s(i)\n"
 					  "    ), ', ')\n"
 					  "  END AS \"%s\",\n"
-				 "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"\n"
+					  "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"\n"
 					  "FROM pg_catalog.pg_proc p\n"
-	   "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
+					  "     LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.pronamespace\n"
 					  "WHERE p.proisagg\n",
-					  _("Schema"), _("Name"),
+					  _("Schema"), _("Name"), _("Result data type"),
 					  _("Argument data types"), _("Description"));
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,

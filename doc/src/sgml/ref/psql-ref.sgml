@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.188 2007/03/03 17:19:11 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.189 2007/03/16 08:28:01 mha Exp $
 PostgreSQL documentation
 -->
 
@@ -875,8 +875,8 @@ testdb=&gt;
 
         <listitem>
         <para>
-        Lists all available aggregate functions, together with the data
-        types they operate on. If <replaceable
+        Lists all available aggregate functions, together with their
+        return type and the data types they operate on. If <replaceable
         class="parameter">pattern</replaceable>
         is specified, only aggregates whose names match the pattern are shown.
         </para>
