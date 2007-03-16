@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.148 2007/03/01 20:06:56 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.149 2007/03/16 17:57:36 mha Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1970,6 +1970,11 @@ pgstat_get_db_entry(Oid databaseid, bool create)
 		result->n_xact_rollback = 0;
 		result->n_blocks_fetched = 0;
 		result->n_blocks_hit = 0;
+		result->n_tuples_returned = 0;
+		result->n_tuples_fetched = 0;
+		result->n_tuples_inserted = 0;
+		result->n_tuples_updated = 0;
+		result->n_tuples_deleted = 0;
 		result->last_autovac_time = 0;
 
 		memset(&hash_ctl, 0, sizeof(hash_ctl));
@@ -2412,6 +2417,15 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->blocks_fetched += tabmsg[i].t_blocks_fetched;
 			tabentry->blocks_hit += tabmsg[i].t_blocks_hit;
 		}
+
+		/*
+		 * Add table stats to the database entry.
+		 */
+		dbentry->n_tuples_returned += tabmsg[i].t_tuples_returned;
+		dbentry->n_tuples_fetched += tabmsg[i].t_tuples_fetched;
+		dbentry->n_tuples_inserted += tabmsg[i].t_tuples_inserted;
+		dbentry->n_tuples_updated += tabmsg[i].t_tuples_updated;
+		dbentry->n_tuples_deleted += tabmsg[i].t_tuples_deleted;
 
 		/*
 		 * And add the block IO to the database entry.

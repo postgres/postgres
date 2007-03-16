@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.54 2007/02/09 16:12:19 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.55 2007/03/16 17:57:36 mha Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -251,6 +251,11 @@ typedef struct PgStat_StatDBEntry
 	PgStat_Counter n_xact_rollback;
 	PgStat_Counter n_blocks_fetched;
 	PgStat_Counter n_blocks_hit;
+	PgStat_Counter n_tuples_returned;
+	PgStat_Counter n_tuples_fetched;
+	PgStat_Counter n_tuples_inserted;
+	PgStat_Counter n_tuples_updated;
+	PgStat_Counter n_tuples_deleted;
 	TimestampTz last_autovac_time;
 
 	/*

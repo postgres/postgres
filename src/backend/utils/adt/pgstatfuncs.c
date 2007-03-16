@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.39 2007/02/27 23:48:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.40 2007/03/16 17:57:36 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,11 @@ extern Datum pg_stat_get_db_xact_commit(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_xact_rollback(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_blocks_fetched(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_blocks_hit(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_tuples_returned(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_tuples_fetched(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_tuples_inserted(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_tuples_updated(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_db_tuples_deleted(PG_FUNCTION_ARGS);
 
 extern Datum pg_stat_clear_snapshot(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
@@ -667,6 +672,86 @@ pg_stat_get_db_blocks_hit(PG_FUNCTION_ARGS)
 		result = 0;
 	else
 		result = (int64) (dbentry->n_blocks_hit);
+
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_db_tuples_returned(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_tuples_returned);
+
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_db_tuples_fetched(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_tuples_fetched);
+
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_db_tuples_inserted(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_tuples_inserted);
+
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_db_tuples_updated(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_tuples_updated);
+
+	PG_RETURN_INT64(result);
+}
+
+
+Datum
+pg_stat_get_db_tuples_deleted(PG_FUNCTION_ARGS)
+{
+	Oid			dbid = PG_GETARG_OID(0);
+	int64		result;
+	PgStat_StatDBEntry *dbentry;
+
+	if ((dbentry = pgstat_fetch_stat_dbentry(dbid)) == NULL)
+		result = 0;
+	else
+		result = (int64) (dbentry->n_tuples_deleted);
 
 	PG_RETURN_INT64(result);
 }

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.35 2007/01/05 22:19:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.36 2007/03/16 17:57:36 mha Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -357,5 +357,10 @@ CREATE VIEW pg_stat_database AS
             pg_stat_get_db_xact_rollback(D.oid) AS xact_rollback, 
             pg_stat_get_db_blocks_fetched(D.oid) - 
                     pg_stat_get_db_blocks_hit(D.oid) AS blks_read, 
-            pg_stat_get_db_blocks_hit(D.oid) AS blks_hit 
+            pg_stat_get_db_blocks_hit(D.oid) AS blks_hit,
+            pg_stat_get_db_tuples_returned(D.oid) AS tup_returned,
+            pg_stat_get_db_tuples_fetched(D.oid) AS tup_fetched,
+            pg_stat_get_db_tuples_inserted(D.oid) AS tup_inserted,
+            pg_stat_get_db_tuples_updated(D.oid) AS tup_updated,
+            pg_stat_get_db_tuples_deleted(D.oid) AS tup_deleted
     FROM pg_database D;
