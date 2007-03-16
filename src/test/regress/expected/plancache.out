@@ -1,9 +1,9 @@
 --
 -- Tests to exercise the plan caching/invalidation mechanism
 --
-CREATE TEMP TABLE foo AS SELECT * FROM int8_tbl;
+CREATE TEMP TABLE pcachetest AS SELECT * FROM int8_tbl;
 -- create and use a cached plan
-PREPARE prepstmt AS SELECT * FROM foo;
+PREPARE prepstmt AS SELECT * FROM pcachetest;
 EXECUTE prepstmt;
         q1        |        q2         
 ------------------+-------------------
@@ -15,7 +15,7 @@ EXECUTE prepstmt;
 (5 rows)
 
 -- and one with parameters
-PREPARE prepstmt2(bigint) AS SELECT * FROM foo WHERE q1 = $1;
+PREPARE prepstmt2(bigint) AS SELECT * FROM pcachetest WHERE q1 = $1;
 EXECUTE prepstmt2(123);
  q1  |        q2        
 -----+------------------
@@ -24,14 +24,14 @@ EXECUTE prepstmt2(123);
 (2 rows)
 
 -- invalidate the plans and see what happens
-DROP TABLE foo;
+DROP TABLE pcachetest;
 EXECUTE prepstmt;
-ERROR:  relation "foo" does not exist
+ERROR:  relation "pcachetest" does not exist
 EXECUTE prepstmt2(123);
-ERROR:  relation "foo" does not exist
+ERROR:  relation "pcachetest" does not exist
 -- recreate the temp table (this demonstrates that the raw plan is
 -- purely textual and doesn't depend on OIDs, for instance)
-CREATE TEMP TABLE foo AS SELECT * FROM int8_tbl ORDER BY 2;
+CREATE TEMP TABLE pcachetest AS SELECT * FROM int8_tbl ORDER BY 2;
 EXECUTE prepstmt;
         q1        |        q2         
 ------------------+-------------------
@@ -51,13 +51,13 @@ EXECUTE prepstmt2(123);
 
 -- prepared statements should prevent change in output tupdesc,
 -- since clients probably aren't expecting that to change on the fly
-ALTER TABLE foo ADD COLUMN q3 bigint;
+ALTER TABLE pcachetest ADD COLUMN q3 bigint;
 EXECUTE prepstmt;
 ERROR:  cached plan must not change result type
 EXECUTE prepstmt2(123);
 ERROR:  cached plan must not change result type
 -- but we're nice guys and will let you undo your mistake
-ALTER TABLE foo DROP COLUMN q3;
+ALTER TABLE pcachetest DROP COLUMN q3;
 EXECUTE prepstmt;
         q1        |        q2         
 ------------------+-------------------
@@ -77,8 +77,9 @@ EXECUTE prepstmt2(123);
 
 -- Try it with a view, which isn't directly used in the resulting plan
 -- but should trigger invalidation anyway
-CREATE TEMP VIEW voo AS SELECT * FROM foo;
-PREPARE vprep AS SELECT * FROM voo;
+CREATE TEMP VIEW pcacheview AS
+  SELECT * FROM pcachetest;
+PREPARE vprep AS SELECT * FROM pcacheview;
 EXECUTE vprep;
         q1        |        q2         
 ------------------+-------------------
@@ -89,7 +90,8 @@ EXECUTE vprep;
  4567890123456789 |  4567890123456789
 (5 rows)
 
-CREATE OR REPLACE TEMP VIEW voo AS SELECT q1, q2/2 AS q2 FROM foo;
+CREATE OR REPLACE TEMP VIEW pcacheview AS
+  SELECT q1, q2/2 AS q2 FROM pcachetest;
 EXECUTE vprep;
         q1        |        q2         
 ------------------+-------------------
