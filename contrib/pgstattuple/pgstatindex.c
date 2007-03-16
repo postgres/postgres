@@ -139,7 +139,7 @@ typedef struct BTIndexStat
  * Collect statistics of single b-tree leaf page
  * -------------------------------------------------
  */
-static bool
+static void
 GetBTPageStatistics(BlockNumber blkno, Buffer buffer, BTPageStat * stat)
 {
 	Page		page = BufferGetPage(buffer);
@@ -154,6 +154,7 @@ GetBTPageStatistics(BlockNumber blkno, Buffer buffer, BTPageStat * stat)
 	stat->max_avail = BLCKSZ - (BLCKSZ - phdr->pd_special + SizeOfPageHeaderData);
 
 	stat->dead_items = stat->live_items = 0;
+	stat->fragments = 0;
 
 	stat->page_size = PageGetPageSize(page);
 
@@ -161,7 +162,8 @@ GetBTPageStatistics(BlockNumber blkno, Buffer buffer, BTPageStat * stat)
 	if (P_ISDELETED(opaque))
 	{
 		stat->type = 'd';
-		return true;
+		stat->btpo.xact = opaque->btpo.xact;
+		return;
 	}
 	else if (P_IGNORE(opaque))
 		stat->type = 'e';
@@ -175,10 +177,7 @@ GetBTPageStatistics(BlockNumber blkno, Buffer buffer, BTPageStat * stat)
 	/* btpage opaque data */
 	stat->btpo_prev = opaque->btpo_prev;
 	stat->btpo_next = opaque->btpo_next;
-	if (P_ISDELETED(opaque))
-		stat->btpo.xact = opaque->btpo.xact;
-	else
-		stat->btpo.level = opaque->btpo.level;
+	stat->btpo.level = opaque->btpo.level;
 	stat->btpo_flags = opaque->btpo_flags;
 	stat->btpo_cycleid = opaque->btpo_cycleid;
 
@@ -187,7 +186,6 @@ GetBTPageStatistics(BlockNumber blkno, Buffer buffer, BTPageStat * stat)
 	 * it means a fragmentation.
 	 *----------------------------------------------
 	 */
-	stat->fragments = 0;
 	if (stat->type == 'l')
 	{
 		if (opaque->btpo_next != P_NONE && opaque->btpo_next < blkno)
@@ -216,8 +214,6 @@ GetBTPageStatistics(BlockNumber blkno, Buffer buffer, BTPageStat * stat)
 		stat->avg_item_size = item_size / (stat->live_items + stat->dead_items);
 	else
 		stat->avg_item_size = 0;
-
-	return true;
 }
 
 
@@ -338,8 +334,7 @@ pgstatindex(PG_FUNCTION_ARGS)
 		int			j;
 		char	   *values[PGSTATINDEX_NCOLUMNS];
 
-		HeapTupleData tupleData;
-		HeapTuple	tuple = &tupleData;
+		HeapTuple	tuple;
 
 		tupleDesc = RelationNameGetTupleDesc(PGSTATINDEX_TYPE);
 
