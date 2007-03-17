@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.32 2007/03/14 00:15:26 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.33 2007/03/17 14:30:00 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -103,6 +103,14 @@
       building from a release file. Note that Bison version 2.0 will not
       work, but both earlier and later versions do. Bison and Flex can be
       downloaded from <ulink url="http://gnuwin32.sourceforge.net"></>.
+     </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><productname>Diff</productname></term>
+     <listitem><para>
+      Diff is required to run the regression tests, and can be downloaded
+      from <ulink url="http://gnuwin32.sourceforge.net"></>.
      </para></listitem>
     </varlistentry>
 
