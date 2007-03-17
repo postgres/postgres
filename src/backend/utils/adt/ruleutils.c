@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.253 2007/03/15 23:12:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.254 2007/03/17 00:11:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,11 @@ static void get_oper_expr(OpExpr *expr, deparse_context *context);
 static void get_func_expr(FuncExpr *expr, deparse_context *context,
 			  bool showimplicit);
 static void get_agg_expr(Aggref *aggref, deparse_context *context);
-static void get_const_expr(Const *constval, deparse_context *context);
+static void get_coercion_expr(Node *arg, deparse_context *context,
+							  Oid resulttype, int32 resulttypmod,
+							  Node *parentNode);
+static void get_const_expr(Const *constval, deparse_context *context,
+						   bool showtype);
 static void get_sublink_expr(SubLink *sublink, deparse_context *context);
 static void get_from_clause(Query *query, const char *prefix,
 				deparse_context *context);
@@ -3364,7 +3368,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			break;
 
 		case T_Const:
-			get_const_expr((Const *) node, context);
+			get_const_expr((Const *) node, context, true);
 			break;
 
 		case T_Param:
@@ -3576,14 +3580,10 @@ get_rule_expr(Node *node, deparse_context *context,
 				}
 				else
 				{
-					if (!PRETTY_PAREN(context))
-						appendStringInfoChar(buf, '(');
-					get_rule_expr_paren(arg, context, false, node);
-					if (!PRETTY_PAREN(context))
-						appendStringInfoChar(buf, ')');
-					appendStringInfo(buf, "::%s",
-								format_type_with_typemod(relabel->resulttype,
-													 relabel->resulttypmod));
+					get_coercion_expr(arg, context,
+									  relabel->resulttype,
+									  relabel->resulttypmod,
+									  node);
 				}
 			}
 			break;
@@ -3601,13 +3601,9 @@ get_rule_expr(Node *node, deparse_context *context,
 				}
 				else
 				{
-					if (!PRETTY_PAREN(context))
-						appendStringInfoChar(buf, '(');
-					get_rule_expr_paren(arg, context, false, node);
-					if (!PRETTY_PAREN(context))
-						appendStringInfoChar(buf, ')');
-					appendStringInfo(buf, "::%s",
-						  format_type_with_typemod(convert->resulttype, -1));
+					get_coercion_expr(arg, context,
+									  convert->resulttype, -1,
+									  node);
 				}
 			}
 			break;
@@ -4070,14 +4066,10 @@ get_rule_expr(Node *node, deparse_context *context,
 				}
 				else
 				{
-					if (!PRETTY_PAREN(context))
-						appendStringInfoChar(buf, '(');
-					get_rule_expr_paren(arg, context, false, node);
-					if (!PRETTY_PAREN(context))
-						appendStringInfoChar(buf, ')');
-					appendStringInfo(buf, "::%s",
-								  format_type_with_typemod(ctest->resulttype,
-													   ctest->resulttypmod));
+					get_coercion_expr(arg, context,
+									  ctest->resulttype,
+									  ctest->resulttypmod,
+									  node);
 				}
 			}
 			break;
@@ -4213,13 +4205,9 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 		/* Get the typmod if this is a length-coercion function */
 		(void) exprIsLengthCoercion((Node *) expr, &coercedTypmod);
 
-		if (!PRETTY_PAREN(context))
-			appendStringInfoChar(buf, '(');
-		get_rule_expr_paren(arg, context, false, (Node *) expr);
-		if (!PRETTY_PAREN(context))
-			appendStringInfoChar(buf, ')');
-		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(rettype, coercedTypmod));
+		get_coercion_expr(arg, context,
+						  rettype, coercedTypmod,
+						  (Node *) expr);
 
 		return;
 	}
@@ -4278,15 +4266,58 @@ get_agg_expr(Aggref *aggref, deparse_context *context)
 	appendStringInfoChar(buf, ')');
 }
 
+/* ----------
+ * get_coercion_expr
+ *
+ *	Make a string representation of a value coerced to a specific type
+ * ----------
+ */
+static void
+get_coercion_expr(Node *arg, deparse_context *context,
+				  Oid resulttype, int32 resulttypmod,
+				  Node *parentNode)
+{
+	StringInfo	buf = context->buf;
+
+	/*
+	 * Since parse_coerce.c doesn't immediately collapse application of
+	 * length-coercion functions to constants, what we'll typically see
+	 * in such cases is a Const with typmod -1 and a length-coercion
+	 * function right above it.  Avoid generating redundant output.
+	 * However, beware of suppressing casts when the user actually wrote
+	 * something like 'foo'::text::char(3).
+	 */
+	if (arg && IsA(arg, Const) &&
+		((Const *) arg)->consttype == resulttype &&
+		((Const *) arg)->consttypmod == -1)
+	{
+		/* Show the constant without normal ::typename decoration */
+		get_const_expr((Const *) arg, context, false);
+	}
+	else
+	{
+		if (!PRETTY_PAREN(context))
+			appendStringInfoChar(buf, '(');
+		get_rule_expr_paren(arg, context, false, parentNode);
+		if (!PRETTY_PAREN(context))
+			appendStringInfoChar(buf, ')');
+	}
+	appendStringInfo(buf, "::%s",
+					 format_type_with_typemod(resulttype, resulttypmod));
+}
 
 /* ----------
  * get_const_expr
  *
  *	Make a string representation of a Const
+ *
+ * Note: if showtype is false, the Const is the direct argument of a coercion
+ * operation with the same target type, and so we should suppress "::typename"
+ * to avoid redundant output.
  * ----------
  */
 static void
-get_const_expr(Const *constval, deparse_context *context)
+get_const_expr(Const *constval, deparse_context *context, bool showtype)
 {
 	StringInfo	buf = context->buf;
 	Oid			typoutput;
@@ -4302,8 +4333,11 @@ get_const_expr(Const *constval, deparse_context *context)
 		 * Always label the type of a NULL constant to prevent misdecisions
 		 * about type when reparsing.
 		 */
-		appendStringInfo(buf, "NULL::%s",
-						 format_type_with_typemod(constval->consttype, -1));
+		appendStringInfo(buf, "NULL");
+		if (showtype)
+			appendStringInfo(buf, "::%s",
+							 format_type_with_typemod(constval->consttype,
+													  constval->consttypmod));
 		return;
 	}
 
@@ -4376,6 +4410,9 @@ get_const_expr(Const *constval, deparse_context *context)
 
 	pfree(extval);
 
+	if (!showtype)
+		return;
+
 	/*
 	 * Append ::typename unless the constant will be implicitly typed as the
 	 * right type when it is read in.  XXX this code has to be kept in sync
@@ -4399,7 +4436,8 @@ get_const_expr(Const *constval, deparse_context *context)
 	}
 	if (needlabel)
 		appendStringInfo(buf, "::%s",
-						 format_type_with_typemod(constval->consttype, -1));
+						 format_type_with_typemod(constval->consttype,
+												  constval->consttypmod));
 }
 
 

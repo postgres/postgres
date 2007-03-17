@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.96 2007/01/05 22:19:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.97 2007/03/17 00:11:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,8 @@ transformArrayType(Oid arrayType)
  * arrayType	OID of array's datatype (should match type of arrayBase)
  * elementType	OID of array's element type (fetch with transformArrayType,
  *				or pass InvalidOid to do it here)
- * elementTypMod typmod to be applied to array elements (if storing)
+ * elementTypMod typmod to be applied to array elements (if storing) or of
+ *				the source array (if fetching)
  * indirection	Untransformed list of subscripts (must not be NIL)
  * assignFrom	NULL for array fetch, else transformed expression for source.
  */
@@ -166,7 +167,6 @@ transformArraySubscripts(ParseState *pstate,
 						 List *indirection,
 						 Node *assignFrom)
 {
-	Oid			resultType;
 	bool		isSlice = false;
 	List	   *upperIndexpr = NIL;
 	List	   *lowerIndexpr = NIL;
@@ -197,16 +197,6 @@ transformArraySubscripts(ParseState *pstate,
 	}
 
 	/*
-	 * The type represented by the subscript expression is the element type if
-	 * we are fetching a single element, but it is the same as the array type
-	 * if we are fetching a slice or storing.
-	 */
-	if (isSlice || assignFrom != NULL)
-		resultType = arrayType;
-	else
-		resultType = elementType;
-
-	/*
 	 * Transform the subscript expressions.
 	 */
 	foreach(idx, indirection)
@@ -235,6 +225,7 @@ transformArraySubscripts(ParseState *pstate,
 			{
 				/* Make a constant 1 */
 				subexpr = (Node *) makeConst(INT4OID,
+											 -1,
 											 sizeof(int32),
 											 Int32GetDatum(1),
 											 false,
@@ -284,9 +275,9 @@ transformArraySubscripts(ParseState *pstate,
 	 * Ready to build the ArrayRef node.
 	 */
 	aref = makeNode(ArrayRef);
-	aref->refrestype = resultType;
 	aref->refarraytype = arrayType;
 	aref->refelemtype = elementType;
+	aref->reftypmod = elementTypMod;
 	aref->refupperindexpr = upperIndexpr;
 	aref->reflowerindexpr = lowerIndexpr;
 	aref->refexpr = (Expr *) arrayBase;
@@ -399,6 +390,7 @@ make_const(Value *value)
 		case T_Null:
 			/* return a null const */
 			con = makeConst(UNKNOWNOID,
+							-1,
 							-2,
 							(Datum) 0,
 							true,
@@ -411,6 +403,7 @@ make_const(Value *value)
 	}
 
 	con = makeConst(typeid,
+					-1,			/* typmod -1 is OK for all cases */
 					typelen,
 					val,
 					false,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.29 2007/02/22 22:00:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.30 2007/03/17 00:11:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -477,7 +477,7 @@ make_agg_subplan(PlannerInfo *root, MinMaxAggInfo *info)
 
 	/* set up LIMIT 1 */
 	subparse->limitOffset = NULL;
-	subparse->limitCount = (Node *) makeConst(INT8OID, sizeof(int64),
+	subparse->limitCount = (Node *) makeConst(INT8OID, -1, sizeof(int64),
 											  Int64GetDatum(1),
 											  false, false /* not by val */ );
 

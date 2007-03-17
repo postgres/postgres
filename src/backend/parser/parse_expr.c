@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.212 2007/02/22 22:00:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.213 2007/03/17 00:11:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -312,7 +312,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 														   result,
 														   exprType(result),
 														   InvalidOid,
-														   -1,
+														   exprTypmod(result),
 														   subscripts,
 														   NULL);
 			subscripts = NIL;
@@ -330,7 +330,7 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 												   result,
 												   exprType(result),
 												   InvalidOid,
-												   -1,
+												   exprTypmod(result),
 												   subscripts,
 												   NULL);
 
@@ -1705,7 +1705,15 @@ exprType(Node *expr)
 			type = ((Aggref *) expr)->aggtype;
 			break;
 		case T_ArrayRef:
-			type = ((ArrayRef *) expr)->refrestype;
+			{
+				ArrayRef   *arrayref = (ArrayRef *) expr;
+
+				/* slice and/or store operations yield the array type */
+				if (arrayref->reflowerindexpr || arrayref->refassgnexpr)
+					type = arrayref->refarraytype;
+				else
+					type = arrayref->refelemtype;
+			}
 			break;
 		case T_FuncExpr:
 			type = ((FuncExpr *) expr)->funcresulttype;
@@ -1802,9 +1810,6 @@ exprType(Node *expr)
 		case T_CaseExpr:
 			type = ((CaseExpr *) expr)->casetype;
 			break;
-		case T_CaseWhen:
-			type = exprType((Node *) ((CaseWhen *) expr)->result);
-			break;
 		case T_CaseTestExpr:
 			type = ((CaseTestExpr *) expr)->typeId;
 			break;
@@ -1872,8 +1877,13 @@ exprTypmod(Node *expr)
 	{
 		case T_Var:
 			return ((Var *) expr)->vartypmod;
+		case T_Const:
+			return ((Const *) expr)->consttypmod;
 		case T_Param:
 			return ((Param *) expr)->paramtypmod;
+		case T_ArrayRef:
+			/* typmod is the same for array or element */
+			return ((ArrayRef *) expr)->reftypmod;
 		case T_FuncExpr:
 			{
 				int32		coercedTypmod;
@@ -1881,6 +1891,27 @@ exprTypmod(Node *expr)
 				/* Be smart about length-coercion functions... */
 				if (exprIsLengthCoercion(expr, &coercedTypmod))
 					return coercedTypmod;
+			}
+			break;
+		case T_SubLink:
+			{
+				SubLink    *sublink = (SubLink *) expr;
+
+				if (sublink->subLinkType == EXPR_SUBLINK ||
+					sublink->subLinkType == ARRAY_SUBLINK)
+				{
+					/* get the typmod of the subselect's first target column */
+					Query	   *qtree = (Query *) sublink->subselect;
+					TargetEntry *tent;
+
+					if (!qtree || !IsA(qtree, Query))
+						elog(ERROR, "cannot get type for untransformed sublink");
+					tent = (TargetEntry *) linitial(qtree->targetList);
+					Assert(IsA(tent, TargetEntry));
+					Assert(!tent->resjunk);
+					return exprTypmod((Node *) tent->expr);
+					/* note we don't need to care if it's an array */
+				}
 			}
 			break;
 		case T_FieldSelect:
@@ -1920,6 +1951,34 @@ exprTypmod(Node *expr)
 			break;
 		case T_CaseTestExpr:
 			return ((CaseTestExpr *) expr)->typeMod;
+		case T_ArrayExpr:
+			{
+				/*
+				 * If all the elements agree on type/typmod, return that
+				 * typmod, else use -1
+				 */
+				ArrayExpr  *arrayexpr = (ArrayExpr *) expr;
+				Oid			arraytype = arrayexpr->array_typeid;
+				int32		typmod;
+				ListCell   *elem;
+
+				if (arrayexpr->elements == NIL)
+					return -1;
+				typmod = exprTypmod((Node *) linitial(arrayexpr->elements));
+				if (typmod < 0)
+					return -1;	/* no point in trying harder */
+				foreach(elem, arrayexpr->elements)
+				{
+					Node	   *e = (Node *) lfirst(elem);
+
+					if (exprType(e) != arraytype)
+						return -1;
+					if (exprTypmod(e) != typmod)
+						return -1;
+				}
+				return typmod;
+			}
+			break;
 		case T_CoalesceExpr:
 			{
 				/*

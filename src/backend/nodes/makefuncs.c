@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.54 2007/01/05 22:19:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.55 2007/03/17 00:11:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,6 +140,7 @@ flatCopyTargetEntry(TargetEntry *src_tle)
  */
 Const *
 makeConst(Oid consttype,
+		  int32 consttypmod,
 		  int constlen,
 		  Datum constvalue,
 		  bool constisnull,
@@ -148,6 +149,7 @@ makeConst(Oid consttype,
 	Const	   *cnst = makeNode(Const);
 
 	cnst->consttype = consttype;
+	cnst->consttypmod = consttypmod;
 	cnst->constlen = constlen;
 	cnst->constvalue = constvalue;
 	cnst->constisnull = constisnull;
@@ -159,6 +161,8 @@ makeConst(Oid consttype,
 /*
  * makeNullConst -
  *	  creates a Const node representing a NULL of the specified type
+ *
+ * Note: for all current uses, OK to set typmod of the Const to -1.
  */
 Const *
 makeNullConst(Oid consttype)
@@ -168,6 +172,7 @@ makeNullConst(Oid consttype)
 
 	get_typlenbyval(consttype, &typLen, &typByVal);
 	return makeConst(consttype,
+					 -1,
 					 (int) typLen,
 					 (Datum) 0,
 					 true,
@@ -182,7 +187,8 @@ Node *
 makeBoolConst(bool value, bool isnull)
 {
 	/* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
-	return (Node *) makeConst(BOOLOID, 1, BoolGetDatum(value), isnull, true);
+	return (Node *) makeConst(BOOLOID, -1, 1,
+							  BoolGetDatum(value), isnull, true);
 }
 
 /*

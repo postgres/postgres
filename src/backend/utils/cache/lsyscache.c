@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.148 2007/02/14 01:58:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.149 2007/03/17 00:11:05 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1964,6 +1964,7 @@ get_typdefault(Oid typid)
 										 getTypeIOParam(typeTuple), -1);
 			/* Build a Const node containing the value */
 			expr = (Node *) makeConst(typid,
+									  -1,
 									  type->typlen,
 									  datum,
 									  false,

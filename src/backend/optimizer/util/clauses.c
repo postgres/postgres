@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.238 2007/03/13 00:33:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.239 2007/03/17 00:11:04 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -82,10 +82,12 @@ static List *simplify_and_arguments(List *args,
 					   eval_const_expressions_context *context,
 					   bool *haveNull, bool *forceFalse);
 static Expr *simplify_boolean_equality(List *args);
-static Expr *simplify_function(Oid funcid, Oid result_type, List *args,
+static Expr *simplify_function(Oid funcid,
+				  Oid result_type, int32 result_typmod, List *args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context);
-static Expr *evaluate_function(Oid funcid, Oid result_type, List *args,
+static Expr *evaluate_function(Oid funcid,
+				  Oid result_type, int32 result_typmod, List *args,
 				  HeapTuple func_tuple,
 				  eval_const_expressions_context *context);
 static Expr *inline_function(Oid funcid, Oid result_type, List *args,
@@ -96,7 +98,7 @@ static Node *substitute_actual_parameters(Node *expr, int nargs, List *args,
 static Node *substitute_actual_parameters_mutator(Node *node,
 							  substitute_actual_parameters_context *context);
 static void sql_inline_error_callback(void *arg);
-static Expr *evaluate_expr(Expr *expr, Oid result_type);
+static Expr *evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod);
 
 
 /*****************************************************************************
@@ -934,8 +936,6 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 		return true;
 	if (IsA(node, CaseExpr))
 		return true;
-	if (IsA(node, CaseWhen))
-		return true;
 	if (IsA(node, ArrayExpr))
 		return true;
 	if (IsA(node, RowExpr))
@@ -1654,6 +1654,7 @@ eval_const_expressions_mutator(Node *node,
 					else
 						pval = datumCopy(prm->value, typByVal, typLen);
 					return (Node *) makeConst(param->paramtype,
+											  param->paramtypmod,
 											  (int) typLen,
 											  pval,
 											  prm->isnull,
@@ -1682,9 +1683,13 @@ eval_const_expressions_mutator(Node *node,
 
 		/*
 		 * Code for op/func reduction is pretty bulky, so split it out as a
-		 * separate function.
+		 * separate function.  Note: exprTypmod normally returns -1 for a
+		 * FuncExpr, but not when the node is recognizably a length coercion;
+		 * we want to preserve the typmod in the eventual Const if so.
 		 */
-		simple = simplify_function(expr->funcid, expr->funcresulttype, args,
+		simple = simplify_function(expr->funcid,
+								   expr->funcresulttype, exprTypmod(node),
+								   args,
 								   true, context);
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
@@ -1728,7 +1733,9 @@ eval_const_expressions_mutator(Node *node,
 		 * Code for op/func reduction is pretty bulky, so split it out as a
 		 * separate function.
 		 */
-		simple = simplify_function(expr->opfuncid, expr->opresulttype, args,
+		simple = simplify_function(expr->opfuncid,
+								   expr->opresulttype, -1,
+								   args,
 								   true, context);
 		if (simple)				/* successfully simplified it */
 			return (Node *) simple;
@@ -1816,8 +1823,10 @@ eval_const_expressions_mutator(Node *node,
 			 * Code for op/func reduction is pretty bulky, so split it out as
 			 * a separate function.
 			 */
-			simple = simplify_function(expr->opfuncid, expr->opresulttype,
-									   args, false, context);
+			simple = simplify_function(expr->opfuncid,
+									   expr->opresulttype, -1,
+									   args,
+									   false, context);
 			if (simple)			/* successfully simplified it */
 			{
 				/*
@@ -1961,12 +1970,7 @@ eval_const_expressions_mutator(Node *node,
 			Const	   *con = (Const *) arg;
 
 			con->consttype = relabel->resulttype;
-
-			/*
-			 * relabel's resulttypmod is discarded, which is OK for now; if
-			 * the type actually needs a runtime length coercion then there
-			 * should be a function call to do it just above this node.
-			 */
+			con->consttypmod = relabel->resulttypmod;
 			return (Node *) con;
 		}
 		else
@@ -2134,7 +2138,8 @@ eval_const_expressions_mutator(Node *node,
 
 		if (all_const)
 			return (Node *) evaluate_expr((Expr *) newarray,
-										  newarray->array_typeid);
+										  newarray->array_typeid,
+										  exprTypmod(node));
 
 		return (Node *) newarray;
 	}
@@ -2637,14 +2642,15 @@ simplify_boolean_equality(List *args)
  * (which might originally have been an operator; we don't care)
  *
  * Inputs are the function OID, actual result type OID (which is needed for
- * polymorphic functions), and the pre-simplified argument list;
+ * polymorphic functions) and typmod, and the pre-simplified argument list;
  * also the context data for eval_const_expressions.
  *
  * Returns a simplified expression if successful, or NULL if cannot
  * simplify the function call.
  */
 static Expr *
-simplify_function(Oid funcid, Oid result_type, List *args,
+simplify_function(Oid funcid, Oid result_type, int32 result_typmod,
+				  List *args,
 				  bool allow_inline,
 				  eval_const_expressions_context *context)
 {
@@ -2665,7 +2671,7 @@ simplify_function(Oid funcid, Oid result_type, List *args,
 	if (!HeapTupleIsValid(func_tuple))
 		elog(ERROR, "cache lookup failed for function %u", funcid);
 
-	newexpr = evaluate_function(funcid, result_type, args,
+	newexpr = evaluate_function(funcid, result_type, result_typmod, args,
 								func_tuple, context);
 
 	if (!newexpr && allow_inline)
@@ -2689,7 +2695,7 @@ simplify_function(Oid funcid, Oid result_type, List *args,
  * simplify the function.
  */
 static Expr *
-evaluate_function(Oid funcid, Oid result_type, List *args,
+evaluate_function(Oid funcid, Oid result_type, int32 result_typmod, List *args,
 				  HeapTuple func_tuple,
 				  eval_const_expressions_context *context)
 {
@@ -2773,7 +2779,7 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
 	newexpr->funcformat = COERCE_DONTCARE;		/* doesn't matter */
 	newexpr->args = args;
 
-	return evaluate_expr((Expr *) newexpr, result_type);
+	return evaluate_expr((Expr *) newexpr, result_type, result_typmod);
 }
 
 /*
@@ -3133,7 +3139,7 @@ sql_inline_error_callback(void *arg)
  * code and ensure we get the same result as the executor would get.
  */
 static Expr *
-evaluate_expr(Expr *expr, Oid result_type)
+evaluate_expr(Expr *expr, Oid result_type, int32 result_typmod)
 {
 	EState	   *estate;
 	ExprState  *exprstate;
@@ -3184,7 +3190,7 @@ evaluate_expr(Expr *expr, Oid result_type)
 	/*
 	 * Make the constant result node.
 	 */
-	return (Expr *) makeConst(result_type, resultTypLen,
+	return (Expr *) makeConst(result_type, result_typmod, resultTypLen,
 							  const_val, const_is_null,
 							  resultTypByVal);
 }

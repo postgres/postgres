@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.13 2007/01/05 22:19:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.14 2007/03/17 00:11:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -828,6 +828,7 @@ arrayconst_startup_fn(Node *clause, PredIterInfo info)
 	/* Set up a dummy Const node to hold the per-element values */
 	state->constexpr.xpr.type = T_Const;
 	state->constexpr.consttype = ARR_ELEMTYPE(arrayval);
+	state->constexpr.consttypmod = -1;
 	state->constexpr.constlen = elmlen;
 	state->constexpr.constbyval = elmbyval;
 	lsecond(state->opexpr.args) = &state->constexpr;
