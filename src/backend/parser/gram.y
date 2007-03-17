@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.581 2007/03/13 00:33:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.582 2007/03/17 19:27:12 meskes Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3869,8 +3869,8 @@ opt_class:	any_name								{ $$ = $1; }
 		;
 
 opt_asc_desc: ASC							{ $$ = SORTBY_ASC; }
-			| DESC							{ $$ = SORTBY_DESC; }
-			| /*EMPTY*/						{ $$ = SORTBY_DEFAULT; }
+			| DESC						{ $$ = SORTBY_DESC; }
+			| /*EMPTY*/					{ $$ = SORTBY_DEFAULT; }
 		;
 
 opt_nulls_order: NULLS_FIRST				{ $$ = SORTBY_NULLS_FIRST; }
@@ -5982,28 +5982,12 @@ sortby:		a_expr USING qual_all_Op opt_nulls_order
 					$$->sortby_nulls = $4;
 					$$->useOp = $3;
 				}
-			| a_expr ASC opt_nulls_order
+			| a_expr opt_asc_desc opt_nulls_order
 				{
 					$$ = makeNode(SortBy);
 					$$->node = $1;
-					$$->sortby_dir = SORTBY_ASC;
+					$$->sortby_dir = $2;
 					$$->sortby_nulls = $3;
-					$$->useOp = NIL;
-				}
-			| a_expr DESC opt_nulls_order
-				{
-					$$ = makeNode(SortBy);
-					$$->node = $1;
-					$$->sortby_dir = SORTBY_DESC;
-					$$->sortby_nulls = $3;
-					$$->useOp = NIL;
-				}
-			| a_expr opt_nulls_order
-				{
-					$$ = makeNode(SortBy);
-					$$->node = $1;
-					$$->sortby_dir = SORTBY_DEFAULT;
-					$$->sortby_nulls = $2;
 					$$->useOp = NIL;
 				}
 		;
