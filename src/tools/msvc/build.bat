@@ -1,4 +1,6 @@
 @echo off
+REM $PostgreSQL: pgsql/src/tools/msvc/build.bat,v 1.7 2007/03/17 14:01:01 mha Exp $
+
 SETLOCAL
 SET STARTDIR=%CD%
 if exist src\tools\msvc\buildenv.bat call src\tools\msvc\buildenv.bat

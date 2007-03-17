@@ -1,5 +1,9 @@
 package Project;
-
+#
+# Package that encapsulates a Visual C++ project file generation
+#
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.10 2007/03/17 14:01:01 mha Exp $
+#
 use Carp;
 use strict;
 use warnings;

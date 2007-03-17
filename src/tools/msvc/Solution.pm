@@ -1,4 +1,9 @@
 package Solution;
+#
+# Package that encapsulates a Visual C++ solution file generation
+# 
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.17 2007/03/17 14:01:01 mha Exp $
+#
 use Carp;
 use strict;
 use warnings;

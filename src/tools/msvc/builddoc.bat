@@ -1,6 +1,8 @@
 @echo off
 REM Adjust path for your docbook installation in buildenv.bat
 
+REM $PostgreSQL: pgsql/src/tools/msvc/builddoc.bat,v 1.5 2007/03/17 14:01:01 mha Exp $
+
 SETLOCAL
 SET STARTDIR=%CD%
 SET OPENJADE=openjade-1.3.1

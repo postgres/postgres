@@ -1,4 +1,5 @@
 @echo off
+REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.3 2007/03/17 14:01:01 mha Exp $
 
 set D=%CD%
 if exist ..\msvc if exist ..\..\..\src cd ..\..\..

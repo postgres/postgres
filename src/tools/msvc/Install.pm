@@ -1,5 +1,9 @@
 package Install;
-
+#
+# Package that provides 'make install' functionality for msvc builds
+#
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.2 2007/03/17 14:01:01 mha Exp $
+#
 use strict;
 use warnings;
 use Carp;
