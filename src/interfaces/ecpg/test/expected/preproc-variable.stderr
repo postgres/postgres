@@ -6,7 +6,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 46 Ok: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 49: QUERY: create  table family ( name char  ( 8 )    , born integer   , age smallint   , married date   , children integer   )     on connection regress1
+[NO_PID]: ECPGexecute line 49: QUERY: create  table family ( name char  ( 8 )    , born integer   , age smallint   , married date    , children integer   )     on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 49 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -4,11 +4,11 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGsetcommit line 12 action = on connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 16: QUERY: create  table My_Table ( Item1 int   , Item2 text   )     on connection regress1
+[NO_PID]: ECPGexecute line 16: QUERY: create  table My_Table ( Item1 int   , Item2 text    )     on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 16 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 18: QUERY: create  function My_Table_Check () returns trigger  as $test$    BEGIN	RAISE WARNING 'Notice: TG_NAME=%, TG WHEN=%', TG_NAME, TG_WHEN;	RETURN NEW;    END; $test$ language plpgsql on connection regress1
+[NO_PID]: ECPGexecute line 18: QUERY: create  function My_Table_Check () returns trigger   as $test$    BEGIN	RAISE WARNING 'Notice: TG_NAME=%, TG WHEN=%', TG_NAME, TG_WHEN;	RETURN NEW;    END; $test$ language plpgsql on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 18 Ok: CREATE FUNCTION
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -16,7 +16,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 26 Ok: CREATE TRIGGER
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 32: QUERY: insert into My_Table values( 1234 , 'Some random text' ) on connection regress1
+[NO_PID]: ECPGexecute line 32: QUERY: insert into My_Table values ( 1234 , 'Some random text' )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: Notice: TG_NAME=my_table_check_trigger, TG WHEN=BEFORE[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 0
@@ -24,7 +24,7 @@
 [NO_PID]: ECPGexecute line 32 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 01000
 sql error Notice: TG_NAME=my_table_check_trigger, TG WHEN=BEFORE
-[NO_PID]: ECPGexecute line 33: QUERY: insert into My_Table values( 5678 , 'The Quick Brown' ) on connection regress1
+[NO_PID]: ECPGexecute line 33: QUERY: insert into My_Table values ( 5678 , 'The Quick Brown' )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: Notice: TG_NAME=my_table_check_trigger, TG WHEN=BEFORE[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 0

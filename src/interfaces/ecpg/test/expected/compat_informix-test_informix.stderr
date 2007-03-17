@@ -6,13 +6,13 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 23 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 27: QUERY: insert into test ( i  , j  ) values( 7 ,  0 ) on connection regress1
+[NO_PID]: ECPGexecute line 27: QUERY: insert into test ( i  , j  ) values ( 7 ,  0 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 27 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans line 28 action = commit connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 31: QUERY: insert into test ( i  , j  ) values( 7 , 12 ) on connection regress1
+[NO_PID]: ECPGexecute line 31: QUERY: insert into test ( i  , j  ) values ( 7 , 12 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 31: Error: ERROR:  duplicate key violates unique constraint "test_pkey"
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -20,7 +20,7 @@
 [NO_PID]: sqlca: code: -239, state: 23505
 [NO_PID]: ECPGtrans line 33 action = rollback connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 35: QUERY: insert into test ( i  , j  ) values(  14 , 1 ) on connection regress1
+[NO_PID]: ECPGexecute line 35: QUERY: insert into test ( i  , j  ) values (  14 , 1 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 35 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -34,7 +34,7 @@
 [NO_PID]: sqlca: code: -284, state: 21000
 [NO_PID]: ECPGtrans line 40 action = rollback connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 43: QUERY: select  i  from test where j = ( select  j  from test    order by i limit 1  )   on connection regress1
+[NO_PID]: ECPGexecute line 43: QUERY: select  i  from test where j = ( select  j  from test    order by i   limit 1  )   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 43: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -64,7 +64,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 100 in line 54, 'No data found in line 54.'.
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ECPGexecute line 72: QUERY: delete from test  where i =  21.0 on connection regress1
+[NO_PID]: ECPGexecute line 72: QUERY: delete from test  where i =  21.0  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 72 Ok: DELETE 0
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.71 2006/08/13 10:18:30 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.72 2007/03/17 19:25:23 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -254,7 +254,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 					break;
 				default:
 					if (!IS_SIMPLE_TYPE(type->u.element->type))
-						yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
+						base_yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
 
 					ECPGdump_a_simple(o, name,
 									  type->u.element->type,
@@ -279,7 +279,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * type,
 			ECPGdump_a_struct(o, name, ind_name, make_str("1"), type, ind_type, NULL, prefix, ind_prefix);
 			break;
 		case ECPGt_union:		/* cannot dump a complete union */
-			yyerror("Type of union has to be specified");
+			base_yyerror("Type of union has to be specified");
 			break;
 		case ECPGt_char_variable:
 			if (indicator_set && (ind_type->type == ECPGt_struct || ind_type->type == ECPGt_array))
@@ -521,7 +521,7 @@ ECPGfree_type(struct ECPGtype * type)
 				switch (type->u.element->type)
 				{
 					case ECPGt_array:
-						yyerror("internal error, found multidimensional array\n");
+						base_yyerror("internal error, found multidimensional array\n");
 						break;
 					case ECPGt_struct:
 					case ECPGt_union:
@@ -531,7 +531,7 @@ ECPGfree_type(struct ECPGtype * type)
 						break;
 					default:
 						if (!IS_SIMPLE_TYPE(type->u.element->type))
-							yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
+							base_yyerror("Internal error: unknown datatype, please inform pgsql-bugs@postgresql.org");
 
 						free(type->u.element);
 				}

@@ -37,7 +37,7 @@ main(void)
 
 	ECPGdebug(1, stderr);
 
-	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
 #line 22 "test5.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, "alter user connectuser  encrypted password 'connectpw'", ECPGt_EOIT, ECPGt_EORT);}
@@ -49,28 +49,28 @@ main(void)
 
 	strcpy(db, "connectdb");
 	strcpy(id, "main");
-	{ ECPGconnect(__LINE__, 0, db , NULL,NULL , id, 0); }
+	{ ECPGconnect(__LINE__, 0, db , NULL, NULL , id, 0); }
 #line 28 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, id);}
 #line 29 "test5.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
 #line 31 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
 #line 32 "test5.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
 #line 34 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
 #line 35 "test5.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
 #line 37 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
@@ -127,10 +127,10 @@ main(void)
 
 
 	/* connect twice */
-	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
 #line 62 "test5.pgc"
 
-	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
 #line 63 "test5.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}

@@ -6,15 +6,15 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 18 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 20: QUERY: insert into test ( a  , b  ) values( 1 , 1 )  on connection regress1
+[NO_PID]: ECPGexecute line 20: QUERY: insert into test ( a  , b  ) values ( 1 , 1 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 20 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 21: QUERY: insert into test ( a  , b  ) values( 2 , 2 )  on connection regress1
+[NO_PID]: ECPGexecute line 21: QUERY: insert into test ( a  , b  ) values ( 2 , 2 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 21 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 22: QUERY: insert into test ( a  , b  ) values( 3 , 3 )  on connection regress1
+[NO_PID]: ECPGexecute line 22: QUERY: insert into test ( a  , b  ) values ( 3 , 3 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 22 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -22,7 +22,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 24 Ok: UPDATE 3
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 25: QUERY: update test set ( a  , b  )=( 5 , 5 )  where a = 4  on connection regress1
+[NO_PID]: ECPGexecute line 25: QUERY: update test set ( a  , b  )= ( 5 , 5 )  where a = 4  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 25 Ok: UPDATE 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -30,7 +30,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 26 Ok: UPDATE 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 28: QUERY: select  a , b  from test    order by a on connection regress1
+[NO_PID]: ECPGexecute line 28: QUERY: select  a , b  from test    order by a   on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 28: Correctly got 3 tuples with 2 fields
 [NO_PID]: sqlca: code: 0, state: 00000

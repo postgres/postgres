@@ -66,7 +66,7 @@ main (void)
   ECPGdebug (1, stderr);
 
   empl.idnum = 1;
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
+  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
 #line 28 "binary.pgc"
 
   if (sqlca.sqlcode)
@@ -75,7 +75,7 @@ main (void)
       exit (sqlca.sqlcode);
     }
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "create  table empl ( idnum integer   , name char  ( 20 )    , accs smallint   , byte bytea   )    ", ECPGt_EOIT, ECPGt_EORT);}
+  { ECPGdo(__LINE__, 0, 1, NULL, "create  table empl ( idnum integer   , name char  ( 20 )    , accs smallint   , byte bytea    )    ", ECPGt_EOIT, ECPGt_EORT);}
 #line 36 "binary.pgc"
 
   if (sqlca.sqlcode)

@@ -2,7 +2,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 19: QUERY: create  table My_Table ( Item1 int   , Item2 text   )     on connection regress1
+[NO_PID]: ECPGexecute line 19: QUERY: create  table My_Table ( Item1 int   , Item2 text    )     on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 19 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000

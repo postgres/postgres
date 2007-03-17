@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 
 
   /* setup test_thread table */
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
+  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
 #line 42 "thread_implicit.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, "drop table test_thread ", ECPGt_EOIT, ECPGt_EORT);}
@@ -72,7 +72,7 @@ int main(int argc, char *argv[])
   { ECPGtrans(__LINE__, NULL, "commit");}
 #line 44 "thread_implicit.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "create  table test_thread ( tstamp timestamp    not null default cast( timeofday () as timestamp   ) , thread TEXT   not null , iteration integer   not null , primary key( thread , iteration )   )    ", ECPGt_EOIT, ECPGt_EORT);}
+  { ECPGdo(__LINE__, 0, 1, NULL, "create  table test_thread ( tstamp timestamp    not null default cast( timeofday () as timestamp   ) , thread TEXT    not null , iteration integer   not null , primary key( thread , iteration )   )    ", ECPGt_EOIT, ECPGt_EORT);}
 #line 49 "thread_implicit.pgc"
 
   { ECPGtrans(__LINE__, NULL, "commit");}
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
   free(threads);
 
   /* and check results */
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
+  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
 #line 73 "thread_implicit.pgc"
 
   { ECPGdo(__LINE__, 0, 1, NULL, "select  count (*)  from test_thread   ", ECPGt_EOIT, 
@@ -145,7 +145,7 @@ void *test_thread(void *arg)
   /* exec sql whenever sqlerror  sqlprint ; */
 #line 95 "thread_implicit.pgc"
 
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , l_connection, 0); 
+  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , l_connection, 0); 
 #line 96 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

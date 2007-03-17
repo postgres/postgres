@@ -2,19 +2,19 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 31: QUERY: create  table test ( id int   , c char  ( 10 )    , s smallint   , i int   , b bool   , f float    , l bigint   , dbl double precision   , dec decimal    , dat date   , tmp timestamptz   )     on connection regress1
+[NO_PID]: ECPGexecute line 31: QUERY: create  table test ( id int   , c char  ( 10 )    , s smallint   , i int   , b bool    , f float    , l bigint   , dbl double precision   , dec decimal    , dat date    , tmp timestamptz    )     on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 31 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans line 34 action = commit connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 36: QUERY: insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  ) values( 1 ,  'abc       ' ,  17 ,  -74874 ,  't' ,  3.710000038147 ,  487444 ,  404.404 )  on connection regress1
+[NO_PID]: ECPGexecute line 36: QUERY: insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  ) values ( 1 ,  'abc       ' ,  17 ,  -74874 ,  't' ,  3.710000038147 ,  487444 ,  404.404 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 36 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans line 39 action = commit connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 52: QUERY: insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  , dec  , dat  , tmp  ) values( 2 ,  null ,  null ,  null ,  't' ,  null ,  null ,  null ,  null ,  null ,  null )  on connection regress1
+[NO_PID]: ECPGexecute line 52: QUERY: insert into test ( id  , c  , s  , i  , b  , f  , l  , dbl  , dec  , dat  , tmp  ) values ( 2 ,  null ,  null ,  null ,  't' ,  null ,  null ,  null ,  null ,  null ,  null )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 52 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000

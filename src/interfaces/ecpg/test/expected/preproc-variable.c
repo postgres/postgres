@@ -120,7 +120,7 @@ main (void)
         ECPGdebug(1, stderr);
 
 	strcpy(msg, "connect");
-	{ ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
+	{ ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
 #line 43 "variable.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -136,7 +136,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	strcpy(msg, "create");
-	{ ECPGdo(__LINE__, 0, 1, NULL, "create  table family ( name char  ( 8 )    , born integer   , age smallint   , married date   , children integer   )    ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, "create  table family ( name char  ( 8 )    , born integer   , age smallint   , married date    , children integer   )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 49 "variable.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

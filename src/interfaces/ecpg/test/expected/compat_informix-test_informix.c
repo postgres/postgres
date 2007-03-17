@@ -50,7 +50,7 @@ int main(void)
 #line 18 "test_informix.pgc"
 
 
-	{ ECPGconnect(__LINE__, 1, "regress1" , NULL,NULL , NULL, 0); 
+	{ ECPGconnect(__LINE__, 1, "regress1" , NULL, NULL , NULL, 0); 
 #line 20 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}
@@ -127,7 +127,7 @@ if (sqlca.sqlcode < 0) dosqlprint (  );}
 
 
 	/* this however should be ok */
-	{ ECPGdo(__LINE__, 1, 1, NULL, "select  i  from test where j = ( select  j  from test    order by i limit 1  )  ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 1, NULL, "select  i  from test where j = ( select  j  from test    order by i   limit 1  )  ", ECPGt_EOIT, ECPGt_EORT);
 #line 43 "test_informix.pgc"
 
 if (sqlca.sqlcode < 0) dosqlprint (  );}

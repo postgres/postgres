@@ -113,14 +113,14 @@ int main(void)
    /* exec sql whenever sqlerror  do sqlprint (  ) ; */
 #line 16 "define.pgc"
 
-   { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
+   { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
 #line 17 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 17 "define.pgc"
 
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a int   , b text   )    ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a int   , b text    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 19 "define.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
@@ -157,7 +157,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 
    
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "select  1 , 29 :: text  || '-' || 'abcdef'     ", ECPGt_EOIT, 
+   { ECPGdo(__LINE__, 0, 1, NULL, "select  1 , 29 :: text   || '-' || 'abcdef'     ", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(s),(long)200,(long)1,(200)*sizeof(char), 

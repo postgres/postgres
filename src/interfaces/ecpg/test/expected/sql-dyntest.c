@@ -219,7 +219,7 @@ if (sqlca.sqlcode < 0) error (  );
 #line 45 "dyntest.pgc"
 
 
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
+  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
 #line 47 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
@@ -233,7 +233,7 @@ if (sqlca.sqlcode < 0) error (  );}
 #line 49 "dyntest.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "create  table dyntest ( name char  ( 14 )    , d float8   , i int   , bignumber int8   , b boolean   , comment text   , day date   )    ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "create  table dyntest ( name char  ( 14 )    , d float8    , i int   , bignumber int8    , b boolean   , comment text    , day date    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 53 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}

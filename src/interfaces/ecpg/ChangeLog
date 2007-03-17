@@ -2096,48 +2096,48 @@ Mo Aug 14 10:39:59 CEST 2006
 	- Fixed a nasty buffer underrun that only occured when using Informix
 	  no_indicator NULL setting on timestamps and intervals.
 
-Fr 18. Aug 17:32:54 CEST 2006
+Fr Aug 18 17:32:54 CEST 2006
 
 	- Changed lexer to no longer use the default rule.
 	- Synced parser and keyword list.
 	- Fixed parsing of CONNECT statement so it accepts a C string again.
 	- Fixed a buffer overrun that was masked on Linux systems.
 
-Sa 19. Aug 14:11:32 CEST 2006
+Sa Aug 19 14:11:32 CEST 2006
 
 	- More SoC stuff.
 
-Tu 22. Aug 13:54:08 CEST 2006
+Tu Aug 22 13:54:08 CEST 2006
 
 	- Descriptor values were quoted twice.
 
-We 23. Aug 09:32:14 CEST 2006
+We Aug 23 09:32:14 CEST 2006
 
 	- Replaced double-quote-fix with a hopefully better version.
 	- Use initializer string length as size for character strings.
 	- Added ecpg_config.h file that is created via configure.
 
-Th 24. Aug 11:53:29 CEST 2006
+Th Aug 24 11:53:29 CEST 2006
 
 	- Fixed of by one variable size.
 	- Synced parser.
 
-Su 27. Aug 17:54:36 CEST 2006
+Su Aug 27 17:54:36 CEST 2006
 
 	- Enabled single-quoted connection targets.
 	- Fixed a memory leak/segfault in unsuccessful connection.
 
-Tu 29. Aug 14:21:31 CEST 2006
+Tu Aug 29 14:21:31 CEST 2006
 
 	- Fixed parser and library to allow empty database names.
 	- Streamlined connection name parsing.
 
-Su 3. Sep 14:21:29 CEST 2006
+Su Sep 3 14:21:29 CEST 2006
 
 	- Synced parser.
 	- Added another regression test and fixed tcp test.
 
-Tu 5. Sep 11:49:08 CEST 2006
+Tu Sep 5 11:49:08 CEST 2006
 
 	- Synced parser.
 	- Fixed ecpglib trying to read one character after end-of-string.
@@ -2145,29 +2145,36 @@ Tu 5. Sep 11:49:08 CEST 2006
 	- Added some interval checks to regression suite.
 	- Started to cleanup complex tests.
 
-Th 14. Sep 09:47:03 CEST 2006
+Th Sep 14 09:47:03 CEST 2006
 
 	- Completely removed complex tests.
 	- Added missing constuctor/destructor for interval and date.
 
-We 8. Nov 10:53:42 CET 2006
+We Nov 8 10:53:42 CET 2006
 
 	- Applied patch by Peter Harris to free auto_mem struct in ECPGconnect.
 	- Set ecpg library version to 5.2.
 	- Set ecpg version to 4.2.1.
 
-Th 25. Jan 17:17:01 CET 2007
+Th Jan 25 17:17:01 CET 2007
 
 	- Removed compiler warning due to unneeded unsigned declaration.
 	- Removed regression test that triggers those libc precision bugs on some archs.
 
-Fr 2. Feb 09:53:48 CET 2007
+Fr Feb 2 09:53:48 CET 2007
 
 	- Cleaned up va_list handling. Hopefully this now works on all archs.
 	- Applied Magnus Hagander's patch to take away some compiler warnings.
 
-Su 11. Feb 16:09:31 CET 2007
+Su Feb 11 16:09:31 CET 2007
 
 	- Fixed multibyte handling as reported by <harada.toshi@oss.ntt.co.jp>.
 	- Set ecpg library version to 5.3.
+
+Th Mar 15 08:27:53 CET 2007
+
+	- Made some chars const as proposed by Stefan Huehner <stefan@huehner.org>.
+	- Synced parser and keyword lists.
+	- Copied two token parsing from backend parser to ecpg parser.
+	- Also added a test case for this.
 	- Set ecpg version to 4.3.1.

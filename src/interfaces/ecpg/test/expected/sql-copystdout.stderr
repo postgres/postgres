@@ -6,15 +6,15 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 20 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 21: QUERY: insert into foo values( 5 , 'abc' ) on connection regress1
+[NO_PID]: ECPGexecute line 21: QUERY: insert into foo values ( 5 , 'abc' )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 21 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 22: QUERY: insert into foo values( 6 , 'def' ) on connection regress1
+[NO_PID]: ECPGexecute line 22: QUERY: insert into foo values ( 6 , 'def' )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 22 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 23: QUERY: insert into foo values( 7 , 'ghi' ) on connection regress1
+[NO_PID]: ECPGexecute line 23: QUERY: insert into foo values ( 7 , 'ghi' )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 23 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000

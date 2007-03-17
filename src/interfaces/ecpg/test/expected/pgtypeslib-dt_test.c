@@ -60,13 +60,13 @@ main(void)
         /* exec sql whenever sqlerror  do sqlprint (  ) ; */
 #line 27 "dt_test.pgc"
 
-        { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
+        { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
 #line 28 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 28 "dt_test.pgc"
 
-        { ECPGdo(__LINE__, 0, 1, NULL, "create  table date_test ( d date   , ts timestamp    )    ", ECPGt_EOIT, ECPGt_EORT);
+        { ECPGdo(__LINE__, 0, 1, NULL, "create  table date_test ( d date    , ts timestamp    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 29 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}

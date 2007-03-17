@@ -16,6 +16,7 @@ TESTS = array array.c \
         fetch fetch.c \
         func func.c \
         indicators indicators.c \
+        parser parser.c \
         quote quote.c \
         show show.c \
         update update.c 

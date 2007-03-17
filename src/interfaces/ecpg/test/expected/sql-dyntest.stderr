@@ -6,15 +6,15 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 49 Ok: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 51: QUERY: create  table dyntest ( name char  ( 14 )    , d float8   , i int   , bignumber int8   , b boolean   , comment text   , day date   )     on connection regress1
+[NO_PID]: ECPGexecute line 51: QUERY: create  table dyntest ( name char  ( 14 )    , d float8    , i int   , bignumber int8    , b boolean   , comment text    , day date    )     on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 51 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 54: QUERY: insert into dyntest values( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' ) on connection regress1
+[NO_PID]: ECPGexecute line 54: QUERY: insert into dyntest values ( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 54 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 55: QUERY: insert into dyntest values( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' ) on connection regress1
+[NO_PID]: ECPGexecute line 55: QUERY: insert into dyntest values ( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 55 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -4,21 +4,21 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGsetcommit line 17 action = off connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 19: QUERY: create  table test ( "id" int   primary key   , "str" text   not null , val int   null )     on connection regress1
+[NO_PID]: ECPGexecute line 19: QUERY: create  table test ( "id" int   primary key   , "str" text    not null , val int   null )     on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 19 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans line 23 action = commit connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 25: QUERY: insert into test ( id  , str  , val  ) values( 1 , 'Hello' , 0 ) on connection regress1
+[NO_PID]: ECPGexecute line 25: QUERY: insert into test ( id  , str  , val  ) values ( 1 , 'Hello' , 0 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 25 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 28: QUERY: insert into test ( id  , str  , val  ) values( 2 , 'Hi there' ,  null ) on connection regress1
+[NO_PID]: ECPGexecute line 28: QUERY: insert into test ( id  , str  , val  ) values ( 2 , 'Hi there' ,  null )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 28 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 30: QUERY: insert into test ( id  , str  , val  ) values( 3 , 'Good evening' ,  5 ) on connection regress1
+[NO_PID]: ECPGexecute line 30: QUERY: insert into test ( id  , str  , val  ) values ( 3 , 'Good evening' ,  5 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 30 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -42,7 +42,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 37: RESULT: 5 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 42: QUERY: update test set val  =  null  where id = 1 on connection regress1
+[NO_PID]: ECPGexecute line 42: QUERY: update test set val  =  null  where id = 1  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 42 Ok: UPDATE 1
 [NO_PID]: sqlca: code: 0, state: 00000

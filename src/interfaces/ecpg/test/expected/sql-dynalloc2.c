@@ -125,7 +125,7 @@ int main(void)
    /* exec sql whenever sqlerror  do sqlprint (  ) ; */
 #line 19 "dynalloc2.pgc"
 
-   { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
+   { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
 #line 20 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
@@ -139,7 +139,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 22 "dynalloc2.pgc"
 
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a int   , b text   )    ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a int   , b text    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 24 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}

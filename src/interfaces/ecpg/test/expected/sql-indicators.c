@@ -110,14 +110,14 @@ int main(int argc, char **argv)
 
 	ECPGdebug(1,stderr);
 
-	{ ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
+	{ ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
 #line 16 "indicators.pgc"
 
 	{ ECPGsetcommit(__LINE__, "off", NULL);}
 #line 17 "indicators.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( \"id\" int   primary key   , \"str\" text   not null , val int   null )    ", ECPGt_EOIT, ECPGt_EORT);}
+	{ ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( \"id\" int   primary key   , \"str\" text    not null , val int   null )    ", ECPGt_EOIT, ECPGt_EORT);}
 #line 22 "indicators.pgc"
 
 	{ ECPGtrans(__LINE__, NULL, "commit");}

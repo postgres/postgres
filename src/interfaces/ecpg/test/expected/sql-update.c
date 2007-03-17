@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
 
   ECPGdebug(1, stderr);
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
+  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
 #line 13 "update.pgc"
 
 
@@ -111,7 +111,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 26 "update.pgc"
 ;
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "select  a , b  from test    order by a", ECPGt_EOIT, 
+  { ECPGdo(__LINE__, 0, 1, NULL, "select  a , b  from test    order by a  ", ECPGt_EOIT, 
 	ECPGt_int,(i1),(long)1,(long)3,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,(i2),(long)1,(long)3,sizeof(int), 

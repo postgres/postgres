@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.151 2007/01/05 22:20:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.152 2007/03/17 19:25:23 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,8 @@ static char	   *dolqstart;      /* current $foo$ quote start string */
 static bool		escape_string_warning;
 static bool		standard_conforming_strings;
 static bool 	warn_on_first_escape;
+static YY_BUFFER_STATE scanbufhandle;
+static char *scanbuf;
 
 /*
  * literalbuf is used to accumulate literal values when multiple rules
@@ -504,7 +506,7 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				/* single quote or dollar sign */
 				addlitchar(yytext[0]);
 			}
-<xdolq><<EOF>> 		{ yyerror("unterminated dollar-quoted string"); }
+<xdolq><<EOF>> 		{ base_yyerror("unterminated dollar-quoted string"); }
 <SQL>{xdstart}		{
 						state_before = YYSTATE;
 						BEGIN(xd);
@@ -1346,4 +1348,46 @@ ecpg_isspace(char ch)
 		ch == '\f')
 		return true;
 	return false;
+}
+
+
+/*
+ * Called before any actual parsing is done
+ */
+void
+scanner_init(const char *str)
+{
+	Size	slen = strlen(str);
+
+	/*
+	 * Might be left over after ereport()
+	 */
+	if (YY_CURRENT_BUFFER)
+		yy_delete_buffer(YY_CURRENT_BUFFER);
+
+	/*
+	 * Make a scan buffer with special termination needed by flex.
+	 */
+	scanbuf = mm_alloc(slen + 2);
+	memcpy(scanbuf, str, slen);
+	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
+	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
+
+	/* initialize literal buffer to a reasonable but expansible size */
+	literalalloc = 128;
+	literalbuf = (char *) mm_alloc(literalalloc);
+	startlit();
+
+	BEGIN(INITIAL);
+}
+
+
+/*
+ * Called after parsing is done to clean up after scanner_init()
+ */
+void
+scanner_finish(void)
+{
+	yy_delete_buffer(scanbufhandle);
+	free(scanbuf);
 }

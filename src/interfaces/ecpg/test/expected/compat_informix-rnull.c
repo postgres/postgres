@@ -99,14 +99,14 @@ int main(void)
 #line 27 "rnull.pgc"
 
 
-	{ ECPGconnect(__LINE__, 1, "regress1" , NULL,NULL , NULL, 0); 
+	{ ECPGconnect(__LINE__, 1, "regress1" , NULL, NULL , NULL, 0); 
 #line 29 "rnull.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 29 "rnull.pgc"
 
 
-	{ ECPGdo(__LINE__, 1, 0, NULL, "create  table test ( id int   , c char  ( 10 )    , s smallint   , i int   , b bool   , f float    , l bigint   , dbl double precision   , dec decimal    , dat date   , tmp timestamptz   )    ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 1, 0, NULL, "create  table test ( id int   , c char  ( 10 )    , s smallint   , i int   , b bool    , f float    , l bigint   , dbl double precision   , dec decimal    , dat date    , tmp timestamptz    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 33 "rnull.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}

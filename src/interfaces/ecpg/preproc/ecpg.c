@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.97 2007/02/01 19:10:29 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.98 2007/03/17 19:25:23 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -442,7 +442,7 @@ main(int argc, char *const argv[])
 				output_line_number();
 
 				/* and parse the source */
-				yyparse();
+				base_yyparse();
 
 				/* check if all cursors were indeed opened */
 				for (ptr = cur; ptr != NULL;)

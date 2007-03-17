@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
 
   ECPGdebug(1, stderr);
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
+  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
 #line 13 "show.pgc"
 
 

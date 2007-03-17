@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.64 2007/01/11 15:47:33 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.65 2007/03/17 19:25:23 meskes Exp $ */
 
 #ifndef _ECPG_PREPROC_EXTERN_H
 #define _ECPG_PREPROC_EXTERN_H
@@ -60,9 +60,9 @@ extern void output_line_number(void);
 extern void output_statement(char *, int, char *);
 extern void output_simple_statement(char *);
 extern char *hashline_number(void);
-extern int	yyparse(void);
-extern int	yylex(void);
-extern void yyerror(char *);
+extern int	base_yyparse(void);
+extern int	base_yylex(void);
+extern void base_yyerror(const char *);
 extern void *mm_alloc(size_t), *mm_realloc(void *, size_t);
 extern char *mm_strdup(const char *);
 extern void mmerror(int, enum errortype, char *,...);
@@ -90,6 +90,10 @@ extern void remove_typedefs(int);
 extern void remove_variables(int);
 extern struct variable *new_variable(const char *, struct ECPGtype *, int);
 extern ScanKeyword *ScanKeywordLookup(char *text);
+extern void scanner_init(const char *);
+extern void parser_init(void);
+extern void scanner_finish(void);
+int filtered_base_yylex(void);
 
 /* return codes */
 

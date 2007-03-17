@@ -171,7 +171,7 @@ int main(void)
    /* exec sql whenever sqlerror  do sqlprint (  ) ; */
 #line 32 "dynalloc.pgc"
 
-   { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); 
+   { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); 
 #line 33 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
@@ -185,7 +185,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 35 "dynalloc.pgc"
 
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a serial   , b numeric ( 12 , 3 )   , c varchar    , d varchar ( 3 )    , e char  ( 4 )    , f timestamptz   , g boolean   , h box   , i inet   )    ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a serial    , b numeric ( 12 , 3 )   , c varchar    , d varchar ( 3 )    , e char  ( 4 )    , f timestamptz    , g boolean   , h box    , i inet    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 37 "dynalloc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
@@ -210,7 +210,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 if (sqlca.sqlcode < 0) sqlprint (  );
 #line 41 "dynalloc.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "select  a , b , c , d , e , f , g , h , i  from test    order by a", ECPGt_EOIT, 
+   { ECPGdo(__LINE__, 0, 1, NULL, "select  a , b , c , d , e , f , g , h , i  from test    order by a  ", ECPGt_EOIT, 
 	ECPGt_descriptor, "mydesc", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 42 "dynalloc.pgc"

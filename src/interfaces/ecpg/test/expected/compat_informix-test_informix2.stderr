@@ -10,7 +10,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 68 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 71: QUERY: insert into history ( customerid  , timestamp  , action_taken  , narrative  ) values( 1 , '2003-05-07 13:28:34 CEST' , 'test' , 'test' ) on connection regress1
+[NO_PID]: ECPGexecute line 71: QUERY: insert into history ( customerid  , timestamp  , action_taken  , narrative  ) values ( 1 , '2003-05-07 13:28:34 CEST' , 'test' , 'test' )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 71 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -28,7 +28,7 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 81: RESULT: Wed 07 May 13:28:34 2003 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 95: QUERY: insert into history ( customerid  , timestamp  , action_taken  , narrative  ) values(  2 ,  timestamp '2003-05-08 15:53:39' , 'test' , 'test' ) on connection regress1
+[NO_PID]: ECPGexecute line 95: QUERY: insert into history ( customerid  , timestamp  , action_taken  , narrative  ) values (  2 ,  timestamp '2003-05-08 15:53:39' , 'test' , 'test' )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 95 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000

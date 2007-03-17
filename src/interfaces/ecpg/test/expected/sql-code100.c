@@ -106,12 +106,12 @@ int main(int argc, char **argv)
 
    ECPGdebug(1,stderr);
    
-   { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
+   { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
 #line 15 "code100.pgc"
 
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( \"index\" numeric ( 3 )   primary key   , \"payload\" int4   not null )    ", ECPGt_EOIT, ECPGt_EORT);}
+   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( \"index\" numeric ( 3 )   primary key   , \"payload\" int4    not null )    ", ECPGt_EOIT, ECPGt_EORT);}
 #line 20 "code100.pgc"
 
    if (sqlca.sqlcode) printf("%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);

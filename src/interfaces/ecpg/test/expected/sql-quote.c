@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
 
   ECPGdebug(1, stderr);
-  { ECPGconnect(__LINE__, 0, "regress1" , NULL,NULL , NULL, 0); }
+  { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
 #line 13 "quote.pgc"
 
 
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
 #line 17 "quote.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "create  table \"My_Table\" ( Item1 int   , Item2 text   )    ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, "create  table \"My_Table\" ( Item1 int   , Item2 text    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 19 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();

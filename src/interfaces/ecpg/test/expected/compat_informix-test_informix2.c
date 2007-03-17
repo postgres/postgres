@@ -172,7 +172,7 @@ int main(void)
 	ECPGdebug(1, stderr);
 
 	strcpy(dbname, "regress1");
-	{ ECPGconnect(__LINE__, 1, dbname , NULL,NULL , NULL, 0); 
+	{ ECPGconnect(__LINE__, 1, dbname , NULL, NULL , NULL, 0); 
 #line 63 "test_informix2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
