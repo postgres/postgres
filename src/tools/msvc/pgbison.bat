@@ -1,13 +1,15 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/pgbison.bat,v 1.5 2007/03/17 14:01:01 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/pgbison.bat,v 1.6 2007/03/17 17:11:41 mha Exp $
 
 if exist src\tools\msvc\buildenv.bat call src\tools\msvc\buildenv.bat
 
 SET BV=
 for /F "tokens=4 usebackq" %%f in (`bison -V`) do if "!BV!"=="" SET BV=%%f
 if "%BV%"=="" goto novarexp
-if %BV% LSS 1.875 goto nobison
-if %BV% EQU 2.1 goto nobison
+if %BV% EQU 1.875 goto bisonok
+if %BV% GEQ 2.2 goto bisonok
+goto nobison
+:bisonok
 
 if "%1" == "src\backend\parser\gram.y" call :generate %1 src\backend\parser\gram.c src\include\parser\parse.h
 if "%1" == "src\backend\bootstrap\bootparse.y" call :generate %1 src\backend\bootstrap\bootparse.c src\backend\bootstrap\bootstrap_tokens.h
