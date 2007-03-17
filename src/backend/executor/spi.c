@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.165.2.2 2006/12/26 16:56:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.165.2.3 2007/03/17 03:15:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -869,6 +869,26 @@ SPI_cursor_open(const char *name, void *plan,
 	ptlist = spiplan->ptlist;
 	if (list_length(qtlist) != list_length(ptlist))
 		elog(ERROR, "corrupted SPI plan lists");
+
+	/*
+	 * If told to be read-only, we'd better check for read-only queries.
+	 */
+	if (read_only)
+	{
+		ListCell   *lc;
+
+		foreach(lc, qtlist)
+		{
+			Query  *qry = (Query *) lfirst(lc);
+
+			if (!QueryIsReadOnly(qry))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 /* translator: %s is a SQL statement name */
+						 errmsg("%s is not allowed in a non-volatile function",
+								CreateQueryTag(qry))));
+		}
+	}
 
 	/* Reset SPI result (note we deliberately don't touch lastoid) */
 	SPI_processed = 0;
