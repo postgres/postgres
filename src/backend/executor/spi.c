@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.133.4.1 2005/02/10 20:36:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.133.4.2 2007/03/17 03:16:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -861,6 +861,16 @@ SPI_cursor_open(const char *name, void *plan,
 					 errmsg("cannot open non-SELECT query as cursor")));
 			break;
 	}
+
+	/*
+	 * If told to be read-only, we'd better check for read-only queries.
+	 */
+	if (read_only && !QueryIsReadOnly(queryTree))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 /* translator: %s is a SQL statement name */
+				 errmsg("%s is not allowed in a non-volatile function",
+						CreateQueryTag(queryTree))));
 
 	/* Reset SPI result */
 	SPI_processed = 0;
