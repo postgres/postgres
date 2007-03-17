@@ -3,6 +3,8 @@ use Carp;
 use strict;
 use warnings;
 
+use Genbki;
+
 sub new
 {
     my $junk = shift;
@@ -266,8 +268,11 @@ EOF
         if (IsNewer('src/backend/catalog/postgres.bki', "src/include/catalog/$bki"))
         {
             print "Generating postgres.bki...\n";
-            system("perl src/tools/msvc/genbki.pl $self->{majorver} src/backend/catalog/postgres "
-                  . join(' src/include/catalog/',@allbki));
+            Genbki::genbki(
+                $self->{majorver},
+                "src/backend/catalog/postgres",
+                split(/ /,join(' src/include/catalog/',@allbki))
+            );
             last;
         }
     }

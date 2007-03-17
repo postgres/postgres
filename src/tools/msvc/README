@@ -8,5 +8,5 @@ Notes about code indention
 --------------------------
 If the perl code is modified, use perltidy on it since pgindent won't
 touch perl code. Use the following commandline:
-perltidy -b -bl -nsfs -naws -l=100 *.pl *.pm
+perltidy -b -bl -nsfs -naws -l=100 -ole=unix *.pl *.pm
 
