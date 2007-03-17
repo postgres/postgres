@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.213 2007/03/17 00:11:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.214 2007/03/17 01:15:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1958,7 +1958,7 @@ exprTypmod(Node *expr)
 				 * typmod, else use -1
 				 */
 				ArrayExpr  *arrayexpr = (ArrayExpr *) expr;
-				Oid			arraytype = arrayexpr->array_typeid;
+				Oid			commontype;
 				int32		typmod;
 				ListCell   *elem;
 
@@ -1967,11 +1967,15 @@ exprTypmod(Node *expr)
 				typmod = exprTypmod((Node *) linitial(arrayexpr->elements));
 				if (typmod < 0)
 					return -1;	/* no point in trying harder */
+				if (arrayexpr->multidims)
+					commontype = arrayexpr->array_typeid;
+				else
+					commontype = arrayexpr->element_typeid;
 				foreach(elem, arrayexpr->elements)
 				{
 					Node	   *e = (Node *) lfirst(elem);
 
-					if (exprType(e) != arraytype)
+					if (exprType(e) != commontype)
 						return -1;
 					if (exprTypmod(e) != typmod)
 						return -1;
