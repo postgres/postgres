@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/tools/msvc/Genbki.pm,v 1.1 2007/03/17 13:50:42 mha Exp $
+#    $PostgreSQL: pgsql/src/tools/msvc/Genbki.pm,v 1.2 2007/03/17 13:54:34 mha Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -238,12 +238,6 @@ sub genbki
     open(O,">$prefix.shdescription") || die "Could not write $prefix.shdescription\n";
     print O $shdesc;
     close(O);
-}
-
-sub Usage
-{
-    print "Usage: genbki.pl <version> <prefix> <input1> [<input2> <input3>...]\n";
-    exit(1);
 }
 
 sub read_file
