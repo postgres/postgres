@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.31 2007/02/19 15:05:06 mha Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.32 2007/03/18 16:50:44 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ typedef struct
 	char	   *filename;
 } lclTocEntry;
 
-static char *modulename = gettext_noop("file archiver");
+static const char *modulename = gettext_noop("file archiver");
 static void _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt);
 static void _getBlobTocEntry(ArchiveHandle *AH, Oid *oid, char *fname);
 

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.134 2007/02/20 23:49:38 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.135 2007/03/18 16:50:43 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,7 +727,7 @@ get_encoding_id(char *encoding_name)
 struct encoding_match
 {
 	enum pg_enc pg_enc_code;
-	char	   *system_enc_name;
+	const char *system_enc_name;
 };
 
 struct encoding_match encoding_match_list[] = {
@@ -1481,8 +1481,8 @@ static void
 setup_auth(void)
 {
 	PG_CMD_DECL;
-	char	  **line;
-	static char *pg_authid_setup[] = {
+	const char **line;
+	static const char *pg_authid_setup[] = {
 		/*
 		 * Create triggers to ensure manual updates to shared catalogs will be
 		 * reflected into their "flat file" copies.
@@ -1623,8 +1623,8 @@ static void
 setup_depend(void)
 {
 	PG_CMD_DECL;
-	char	  **line;
-	static char *pg_depend_setup[] = {
+	const char	  **line;
+	static const char *pg_depend_setup[] = {
 		/*
 		 * Make PIN entries in pg_depend for all objects made so far in the
 		 * tables that the dependency code handles.  This is overkill (the
@@ -1990,8 +1990,8 @@ static void
 make_template0(void)
 {
 	PG_CMD_DECL;
-	char	  **line;
-	static char *template0_setup[] = {
+	const char **line;
+	static const char *template0_setup[] = {
 		"CREATE DATABASE template0;\n",
 		"UPDATE pg_database SET "
 		"	datistemplate = 't', "
@@ -2045,8 +2045,8 @@ static void
 make_postgres(void)
 {
 	PG_CMD_DECL;
-	char	  **line;
-	static char *postgres_setup[] = {
+	const char **line;
+	static const char *postgres_setup[] = {
 		"CREATE DATABASE postgres;\n",
 		NULL
 	};

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.153 2007/03/16 08:28:01 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.154 2007/03/18 16:50:44 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1360,7 +1360,7 @@ describeOneTableDetails(const char *schemaname,
 		/* print inherits */
 		for (i = 0; i < inherits_count; i++)
 		{
-			char	   *s = _("Inherits");
+			const char   *s = _("Inherits");
 
 			if (i == 0)
 				printfPQExpBuffer(&buf, "%s: %s", s, PQgetvalue(result6, i, 0));
@@ -1374,7 +1374,7 @@ describeOneTableDetails(const char *schemaname,
 
 		if (verbose)
 		{
-			char	   *s = _("Has OIDs");
+			const char   *s = _("Has OIDs");
 
 			printfPQExpBuffer(&buf, "%s: %s", s,
 							  (tableinfo.hasoids ? _("yes") : _("no")));

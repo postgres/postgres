@@ -6,7 +6,7 @@
  * copyright (c) Oliver Elphick <olly@lfix.co.uk>, 2001;
  * licence: BSD
  *
- * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.33 2007/03/03 20:02:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_controldata/pg_controldata.c,v 1.34 2007/03/18 16:50:43 neilc Exp $
  */
 #include "postgres.h"
 
@@ -72,7 +72,7 @@ main(int argc, char *argv[])
 	char		pgctime_str[128];
 	char		ckpttime_str[128];
 	char		sysident_str[32];
-	char	   *strftime_fmt = "%c";
+	const char *strftime_fmt = "%c";
 	const char *progname;
 
 	set_pglocale_pgservice(argv[0], "pg_controldata");

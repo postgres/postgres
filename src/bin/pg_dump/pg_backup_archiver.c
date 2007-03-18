@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.142 2007/02/19 15:05:06 mha Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.143 2007/03/18 16:50:44 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@
 
 const char *progname;
 
-static char *modulename = gettext_noop("archiver");
+static const char *modulename = gettext_noop("archiver");
 
 
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,

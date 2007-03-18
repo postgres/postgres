@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.37 2007/02/19 15:05:06 mha Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.38 2007/03/18 16:50:44 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ static void _EndDataCompressor(ArchiveHandle *AH, TocEntry *te);
 static pgoff_t _getFilePos(ArchiveHandle *AH, lclContext *ctx);
 static int	_DoDeflate(ArchiveHandle *AH, lclContext *ctx, int flush);
 
-static char *modulename = gettext_noop("custom archiver");
+static const char *modulename = gettext_noop("custom archiver");
 
 
 

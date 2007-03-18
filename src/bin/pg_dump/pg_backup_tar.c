@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.57 2007/02/19 15:05:06 mha Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.58 2007/03/18 16:50:44 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ typedef struct
 	char	   *filename;
 } lclTocEntry;
 
-static char *modulename = gettext_noop("tar archiver");
+static const char *modulename = gettext_noop("tar archiver");
 
 static void _LoadBlobs(ArchiveHandle *AH, RestoreOptions *ropt);
 
