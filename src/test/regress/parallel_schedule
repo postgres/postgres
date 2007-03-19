@@ -1,6 +1,6 @@
 # ----------
 # The first group of parallel test
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.40 2007/03/13 00:33:44 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.41 2007/03/19 16:44:41 tgl Exp $
 # ----------
 test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeric uuid
 
@@ -69,13 +69,13 @@ test: misc
 # ----------
 # The fifth group of parallel test
 # ----------
-test: select_views portals_p2 rules foreign_key cluster dependency guc combocid plancache
+test: select_views portals_p2 rules foreign_key cluster dependency guc combocid
 
 # ----------
 # The sixth group of parallel test
 # ----------
-# "plpgsql" cannot run concurrently with "rules"
-test: limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes returning largeobject xml
+# "plpgsql" cannot run concurrently with "rules", nor can "plancache"
+test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes returning largeobject xml
 
 # run stats by itself because its delay may be insufficient under heavy load
 test: stats
