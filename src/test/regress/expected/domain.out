@@ -15,7 +15,9 @@ NOTICE:  drop cascades to type dependenttypetest
 -- this should fail because already gone
 drop domain domaindroptest cascade;
 ERROR:  type "domaindroptest" does not exist
--- TEST Domains.
+-- Test domain input.
+-- Note: the point of checking both INSERT and COPY FROM is that INSERT
+-- exercises CoerceToDomain while COPY exercises domain_in.
 create domain domainvarchar varchar(5);
 create domain domainnumeric numeric(8,2);
 create domain domainint4 int4;
@@ -72,20 +74,22 @@ drop domain domainvarchar restrict;
 drop domain domainnumeric restrict;
 drop domain domainint4 restrict;
 drop domain domaintext;
--- Array Test
+-- Test domains over array types
 create domain domainint4arr int4[1];
-create domain domaintextarr text[2][3];
+create domain domainchar4arr varchar(4)[2][3];
 create table domarrtest
            ( testint4arr domainint4arr
-           , testtextarr domaintextarr
+           , testchar4arr domainchar4arr
             );
 INSERT INTO domarrtest values ('{2,2}', '{{"a","b"},{"c","d"}}');
 INSERT INTO domarrtest values ('{{2,2},{2,2}}', '{{"a","b"}}');
 INSERT INTO domarrtest values ('{2,2}', '{{"a","b"},{"c","d"},{"e","f"}}');
 INSERT INTO domarrtest values ('{2,2}', '{{"a"},{"c"}}');
 INSERT INTO domarrtest values (NULL, '{{"a","b","c"},{"d","e","f"}}');
+INSERT INTO domarrtest values (NULL, '{{"toolong","b","c"},{"d","e","f"}}');
+ERROR:  value too long for type character varying(4)
 select * from domarrtest;
-  testint4arr  |     testtextarr     
+  testint4arr  |    testchar4arr     
 ---------------+---------------------
  {2,2}         | {{a,b},{c,d}}
  {{2,2},{2,2}} | {{a,b}}
@@ -94,9 +98,9 @@ select * from domarrtest;
                | {{a,b,c},{d,e,f}}
 (5 rows)
 
-select testint4arr[1], testtextarr[2:2] from domarrtest;
- testint4arr | testtextarr 
--------------+-------------
+select testint4arr[1], testchar4arr[2:2] from domarrtest;
+ testint4arr | testchar4arr 
+-------------+--------------
            2 | {{c,d}}
              | {}
            2 | {{c,d}}
@@ -104,9 +108,25 @@ select testint4arr[1], testtextarr[2:2] from domarrtest;
              | {{d,e,f}}
 (5 rows)
 
+COPY domarrtest FROM stdin;
+COPY domarrtest FROM stdin;	-- fail
+ERROR:  value too long for type character varying(4)
+CONTEXT:  COPY domarrtest, line 1, column testchar4arr: "{qwerty,w,e}"
+select * from domarrtest;
+  testint4arr  |    testchar4arr     
+---------------+---------------------
+ {2,2}         | {{a,b},{c,d}}
+ {{2,2},{2,2}} | {{a,b}}
+ {2,2}         | {{a,b},{c,d},{e,f}}
+ {2,2}         | {{a},{c}}
+               | {{a,b,c},{d,e,f}}
+ {3,4}         | {q,w,e}
+               | 
+(7 rows)
+
 drop table domarrtest;
 drop domain domainint4arr restrict;
-drop domain domaintextarr restrict;
+drop domain domainchar4arr restrict;
 create domain dnotnull varchar(15) NOT NULL;
 create domain dnull    varchar(15);
 create domain dcheck   varchar(15) NOT NULL CHECK (VALUE = 'a' OR VALUE = 'c' OR VALUE = 'd');

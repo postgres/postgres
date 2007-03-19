@@ -17,7 +17,10 @@ drop domain domaindroptest cascade;
 drop domain domaindroptest cascade;
 
 
--- TEST Domains.
+-- Test domain input.
+
+-- Note: the point of checking both INSERT and COPY FROM is that INSERT
+-- exercises CoerceToDomain while COPY exercises domain_in.
 
 create domain domainvarchar varchar(5);
 create domain domainnumeric numeric(8,2);
@@ -62,25 +65,38 @@ drop domain domainint4 restrict;
 drop domain domaintext;
 
 
--- Array Test
+-- Test domains over array types
+
 create domain domainint4arr int4[1];
-create domain domaintextarr text[2][3];
+create domain domainchar4arr varchar(4)[2][3];
 
 create table domarrtest
            ( testint4arr domainint4arr
-           , testtextarr domaintextarr
+           , testchar4arr domainchar4arr
             );
 INSERT INTO domarrtest values ('{2,2}', '{{"a","b"},{"c","d"}}');
 INSERT INTO domarrtest values ('{{2,2},{2,2}}', '{{"a","b"}}');
 INSERT INTO domarrtest values ('{2,2}', '{{"a","b"},{"c","d"},{"e","f"}}');
 INSERT INTO domarrtest values ('{2,2}', '{{"a"},{"c"}}');
 INSERT INTO domarrtest values (NULL, '{{"a","b","c"},{"d","e","f"}}');
+INSERT INTO domarrtest values (NULL, '{{"toolong","b","c"},{"d","e","f"}}');
 select * from domarrtest;
-select testint4arr[1], testtextarr[2:2] from domarrtest;
+select testint4arr[1], testchar4arr[2:2] from domarrtest;
+
+COPY domarrtest FROM stdin;
+{3,4}	{q,w,e}
+\N	\N
+\.
+
+COPY domarrtest FROM stdin;	-- fail
+{3,4}	{qwerty,w,e}
+\.
+
+select * from domarrtest;
 
 drop table domarrtest;
 drop domain domainint4arr restrict;
-drop domain domaintextarr restrict;
+drop domain domainchar4arr restrict;
 
 
 create domain dnotnull varchar(15) NOT NULL;
