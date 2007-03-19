@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.138 2006/10/04 00:30:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.138.2.1 2007/03/19 16:30:40 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1366,10 +1366,10 @@ getTypeIOParam(HeapTuple typeTuple)
 
 	/*
 	 * Array types get their typelem as parameter; everybody else gets their
-	 * own type OID as parameter.  (This is a change from 8.0, in which only
-	 * composite types got their own OID as parameter.)
+	 * own type OID as parameter.  (As of 8.2, domains must get their own OID
+	 * even if their base type is an array.)
 	 */
-	if (OidIsValid(typeStruct->typelem))
+	if (typeStruct->typtype == 'b' && OidIsValid(typeStruct->typelem))
 		return typeStruct->typelem;
 	else
 		return HeapTupleGetOid(typeTuple);
