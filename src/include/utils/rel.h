@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.98 2007/02/27 23:48:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.99 2007/03/19 23:38:32 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ typedef struct Trigger
 	char	   *tgname;
 	Oid			tgfoid;
 	int16		tgtype;
-	bool		tgenabled;
+	char		tgenabled;
 	bool		tgisconstraint;
 	Oid			tgconstrrelid;
 	Oid			tgconstraint;

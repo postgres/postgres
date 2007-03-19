@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.94 2007/02/01 00:28:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.95 2007/03/19 23:38:29 wieck Exp $
 PostgreSQL documentation
 -->
 
@@ -43,6 +43,12 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     DROP CONSTRAINT <replaceable class="PARAMETER">constraint_name</replaceable> [ RESTRICT | CASCADE ]
     DISABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
     ENABLE TRIGGER [ <replaceable class="PARAMETER">trigger_name</replaceable> | ALL | USER ]
+    ENABLE REPLICA TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
+    ENABLE ALWAYS TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable>
+    DISABLE RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE REPLICA RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
+    ENABLE ALWAYS RULE <replaceable class="PARAMETER">rewrite_rule_name</replaceable>
     CLUSTER ON <replaceable class="PARAMETER">index_name</replaceable>
     SET WITHOUT CLUSTER
     SET WITHOUT OIDS
@@ -193,10 +199,10 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    </varlistentry>
 
    <varlistentry>
-    <term><literal>DISABLE</literal>/<literal>ENABLE TRIGGER</literal></term>
+    <term><literal>DISABLE</literal>/<literal>ENABLE [ REPLICA | ALWAYS ] TRIGGER</literal></term>
     <listitem>
      <para>
-      These forms disable or enable trigger(s) belonging to the table.
+      These forms configure the firing of trigger(s) belonging to the table.
       A disabled trigger is still known to the system, but is not executed
       when its triggering event occurs.  For a deferred trigger, the enable
       status is checked when the event occurs, not when the trigger function
@@ -207,6 +213,27 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       requires superuser privileges; it should be done with caution since
       of course the integrity of the constraint cannot be guaranteed if the
       triggers are not executed.
+	  The trigger firing mechanism is also affected by the configuration
+	  variable <xref linkend="guc-session-replication-role">. Simply ENABLEd
+	  triggers will fire when the replication role is <quote>origin</>
+	  (the default) or <quote>local</>. Triggers configured ENABLE REPLICA 
+	  will only fire if the session is in <quote>replica</> mode and triggers 
+	  configured ENABLE ALWAYS will fire regardless of the current replication 
+	  mode.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>DISABLE</literal>/<literal>ENABLE [ REPLICA | ALWAYS ] RULE</literal></term>
+    <listitem>
+     <para>
+      These forms configure the firing of rewrite rules belonging to the table.
+      A disabled rule is still known to the system, but is not applied
+	  during query rewriting. The semantics are as for disabled/enabled
+	  triggers. This configuration is ignored for ON SELECT rules, which
+	  are always applied in order to keep views working even if the current
+	  session is in a non-default replication role.
      </para>
     </listitem>
    </varlistentry>

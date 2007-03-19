@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.2 2007/03/15 23:12:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.3 2007/03/19 23:38:29 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -860,3 +860,14 @@ InvalRelid(Oid relid, LOCKMODE lockmode, InvalRelidContext *context)
 	if (relid == context->inval_relid)
 		context->plan->dead = true;
 }
+
+/*
+ * HaveCachedPlans 
+ *		Check if the plancache has stored any plans at all.
+ */
+bool
+HaveCachedPlans(void)
+{
+	return (cached_plans_list != NIL);
+}
+

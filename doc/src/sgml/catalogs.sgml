@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.145 2007/02/14 01:58:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.146 2007/03/19 23:38:28 wieck Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -3640,6 +3640,20 @@
      </row>
 
      <row>
+      <entry><structfield>ev_enabled</structfield></entry>
+      <entry><type>char</type></entry>
+      <entry></entry>
+      <entry>
+	   Controls in which <xref linkend="guc-session-replication-role"> modes
+	   the rule fires.
+	   <literal>O</> = rule fires in <quote>origin</> and <quote>local</> modes,
+	   <literal>D</> = rule is disabled,
+	   <literal>R</> = rule fires in <quote>replica</> mode,
+	   <literal>A</> = rule fires always.
+	  </entry>
+     </row>
+
+     <row>
       <entry><structfield>is_instead</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -4178,9 +4192,16 @@
 
      <row>
       <entry><structfield>tgenabled</structfield></entry>
-      <entry><type>bool</type></entry>
+      <entry><type>char</type></entry>
       <entry></entry>
-      <entry>True if trigger is enabled</entry>
+      <entry>
+	   Controls in which <xref linkend="guc-session-replication-role"> modes
+	   the trigger fires.
+	   <literal>O</> = trigger fires in <quote>origin</> and <quote>local</> modes,
+	   <literal>D</> = trigger is disabled,
+	   <literal>R</> = trigger fires in <quote>replica</> mode,
+	   <literal>A</> = trigger fires always.
+	  </entry>
      </row>
 
      <row>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.257 2007/03/03 20:08:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.258 2007/03/19 23:38:29 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -651,6 +651,7 @@ RelationBuildRuleLock(Relation relation)
 
 		rule->event = rewrite_form->ev_type - '0';
 		rule->attrno = rewrite_form->ev_attr;
+		rule->enabled = rewrite_form->ev_enabled;
 		rule->isInstead = rewrite_form->is_instead;
 
 		/*

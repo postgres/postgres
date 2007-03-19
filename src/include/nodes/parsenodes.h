@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.342 2007/03/13 00:33:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.343 2007/03/19 23:38:32 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -897,11 +897,17 @@ typedef enum AlterTableType
 	AT_SetRelOptions,			/* SET (...) -- AM specific parameters */
 	AT_ResetRelOptions,			/* RESET (...) -- AM specific parameters */
 	AT_EnableTrig,				/* ENABLE TRIGGER name */
+	AT_EnableAlwaysTrig,		/* ENABLE ALWAYS TRIGGER name */
+	AT_EnableReplicaTrig,		/* ENABLE REPLICA TRIGGER name */
 	AT_DisableTrig,				/* DISABLE TRIGGER name */
 	AT_EnableTrigAll,			/* ENABLE TRIGGER ALL */
 	AT_DisableTrigAll,			/* DISABLE TRIGGER ALL */
 	AT_EnableTrigUser,			/* ENABLE TRIGGER USER */
 	AT_DisableTrigUser,			/* DISABLE TRIGGER USER */
+	AT_EnableRule,				/* ENABLE RULE name */
+	AT_EnableAlwaysRule,		/* ENABLE ALWAYS RULE name */
+	AT_EnableReplicaRule,		/* ENABLE REPLICA RULE name */
+	AT_DisableRule,				/* DISABLE RULE name */
 	AT_AddInherit,				/* INHERIT parent */
 	AT_DropInherit				/* NO INHERIT parent */
 } AlterTableType;

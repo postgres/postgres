@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.184 2007/01/25 11:53:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.185 2007/03/19 23:38:29 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"all", ALL},
 	{"also", ALSO},
 	{"alter", ALTER},
+	{"always", ALWAYS},
 	{"analyse", ANALYSE},		/* British spelling */
 	{"analyze", ANALYZE},
 	{"and", AND},
@@ -289,6 +290,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"rename", RENAME},
 	{"repeatable", REPEATABLE},
 	{"replace", REPLACE},
+	{"replica", REPLICA},
 	{"reset", RESET},
 	{"restart", RESTART},
 	{"restrict", RESTRICT},

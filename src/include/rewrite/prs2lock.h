@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/rewrite/prs2lock.h,v 1.22 2007/01/05 22:19:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/rewrite/prs2lock.h,v 1.23 2007/03/19 23:38:32 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@ typedef struct RewriteRule
 	AttrNumber	attrno;
 	Node	   *qual;
 	List	   *actions;
+	char		enabled;
 	bool		isInstead;
 } RewriteRule;
 

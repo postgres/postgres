@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.217 2007/03/13 00:33:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.218 2007/03/19 23:38:29 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "parser/parser.h"
+#include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/smgr.h"
 #include "utils/acl.h"
@@ -253,7 +254,9 @@ static void ATPrepSetTableSpace(AlteredTableInfo *tab, Relation rel,
 static void ATExecSetTableSpace(Oid tableOid, Oid newTableSpace);
 static void ATExecSetRelOptions(Relation rel, List *defList, bool isReset);
 static void ATExecEnableDisableTrigger(Relation rel, char *trigname,
-						   bool enable, bool skip_system);
+						   char fires_when, bool skip_system);
+static void ATExecEnableDisableRule(Relation rel, char *rulename,
+						   char fires_when);
 static void ATExecAddInherit(Relation rel, RangeVar *parent);
 static void ATExecDropInherit(Relation rel, RangeVar *parent);
 static void copy_relation_data(Relation rel, SMgrRelation dst);
@@ -1955,11 +1958,17 @@ ATPrepCmd(List **wqueue, Relation rel, AlterTableCmd *cmd,
 			pass = AT_PASS_MISC;
 			break;
 		case AT_EnableTrig:		/* ENABLE TRIGGER variants */
+		case AT_EnableAlwaysTrig:
+		case AT_EnableReplicaTrig:
 		case AT_EnableTrigAll:
 		case AT_EnableTrigUser:
 		case AT_DisableTrig:	/* DISABLE TRIGGER variants */
 		case AT_DisableTrigAll:
 		case AT_DisableTrigUser:
+		case AT_EnableRule:		/* ENABLE/DISABLE RULE variants */
+		case AT_EnableAlwaysRule:
+		case AT_EnableReplicaRule:
+		case AT_DisableRule:
 		case AT_AddInherit:		/* INHERIT / NO INHERIT */
 		case AT_DropInherit:
 			ATSimplePermissions(rel, false);
@@ -2127,24 +2136,57 @@ ATExecCmd(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd)
 		case AT_ResetRelOptions:		/* RESET (...) */
 			ATExecSetRelOptions(rel, (List *) cmd->def, true);
 			break;
-		case AT_EnableTrig:		/* ENABLE TRIGGER name */
-			ATExecEnableDisableTrigger(rel, cmd->name, true, false);
+
+		case AT_EnableTrig:			/* ENABLE TRIGGER name */
+			ATExecEnableDisableTrigger(rel, cmd->name, 
+					TRIGGER_FIRES_ON_ORIGIN, false);
+			break;
+		case AT_EnableAlwaysTrig:	/* ENABLE ALWAYS TRIGGER name */
+			ATExecEnableDisableTrigger(rel, cmd->name, 
+					TRIGGER_FIRES_ALWAYS, false);
+			break;
+		case AT_EnableReplicaTrig:	/* ENABLE REPLICA TRIGGER name */
+			ATExecEnableDisableTrigger(rel, cmd->name, 
+					TRIGGER_FIRES_ON_REPLICA, false);
 			break;
 		case AT_DisableTrig:	/* DISABLE TRIGGER name */
-			ATExecEnableDisableTrigger(rel, cmd->name, false, false);
+			ATExecEnableDisableTrigger(rel, cmd->name, 
+					TRIGGER_DISABLED, false);
 			break;
 		case AT_EnableTrigAll:	/* ENABLE TRIGGER ALL */
-			ATExecEnableDisableTrigger(rel, NULL, true, false);
+			ATExecEnableDisableTrigger(rel, NULL, 
+					TRIGGER_FIRES_ON_ORIGIN, false);
 			break;
 		case AT_DisableTrigAll:	/* DISABLE TRIGGER ALL */
-			ATExecEnableDisableTrigger(rel, NULL, false, false);
+			ATExecEnableDisableTrigger(rel, NULL, 
+					TRIGGER_DISABLED, false);
 			break;
 		case AT_EnableTrigUser:	/* ENABLE TRIGGER USER */
-			ATExecEnableDisableTrigger(rel, NULL, true, true);
+			ATExecEnableDisableTrigger(rel, NULL, 
+					TRIGGER_FIRES_ON_ORIGIN, true);
 			break;
 		case AT_DisableTrigUser:		/* DISABLE TRIGGER USER */
-			ATExecEnableDisableTrigger(rel, NULL, false, true);
+			ATExecEnableDisableTrigger(rel, NULL, 
+					TRIGGER_DISABLED, true);
 			break;
+
+		case AT_EnableRule:			/* ENABLE RULE name */
+			ATExecEnableDisableRule(rel, cmd->name, 
+					RULE_FIRES_ON_ORIGIN);
+			break;
+		case AT_EnableAlwaysRule:	/* ENABLE ALWAYS RULE name */
+			ATExecEnableDisableRule(rel, cmd->name, 
+					RULE_FIRES_ALWAYS);
+			break;
+		case AT_EnableReplicaRule:	/* ENABLE REPLICA RULE name */
+			ATExecEnableDisableRule(rel, cmd->name, 
+					RULE_FIRES_ON_REPLICA);
+			break;
+		case AT_DisableRule:	/* DISABLE RULE name */
+			ATExecEnableDisableRule(rel, cmd->name, 
+					RULE_DISABLED);
+			break;
+
 		case AT_AddInherit:
 			ATExecAddInherit(rel, (RangeVar *) cmd->def);
 			break;
@@ -4380,7 +4422,7 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 	MemSet(&trig, 0, sizeof(trig));
 	trig.tgoid = InvalidOid;
 	trig.tgname = fkconstraint->constr_name;
-	trig.tgenabled = TRUE;
+	trig.tgenabled = TRIGGER_FIRES_ON_ORIGIN;
 	trig.tgisconstraint = TRUE;
 	trig.tgconstrrelid = RelationGetRelid(pkrel);
 	trig.tgconstraint = constraintOid;
@@ -5877,9 +5919,21 @@ copy_relation_data(Relation rel, SMgrRelation dst)
  */
 static void
 ATExecEnableDisableTrigger(Relation rel, char *trigname,
-						   bool enable, bool skip_system)
+						   char fires_when, bool skip_system)
 {
-	EnableDisableTrigger(rel, trigname, enable, skip_system);
+	EnableDisableTrigger(rel, trigname, fires_when, skip_system);
+}
+
+/*
+ * ALTER TABLE ENABLE/DISABLE RULE
+ *
+ * We just pass this off to rewriteDefine.c.
+ */
+static void
+ATExecEnableDisableRule(Relation rel, char *trigname,
+						   char fires_when)
+{
+	EnableDisableRule(rel, trigname, fires_when);
 }
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.213 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.214 2007/03/19 23:38:29 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,13 @@ static HeapTuple ExecCallTriggerFunc(TriggerData *trigdata,
 static void AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event,
 					  bool row_trigger, HeapTuple oldtup, HeapTuple newtup);
 
+/*
+ * SessionReplicationRole -
+ *
+ *	Global variable that controls the trigger firing behaviour based
+ *	on pg_trigger.tgenabled. This is maintained from misc/guc.c.
+ */
+int	SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
 
 /*
  * Create a trigger.  Returns the OID of the created trigger.
@@ -270,7 +277,7 @@ CreateTrigger(CreateTrigStmt *stmt, Oid constraintOid)
 												  CStringGetDatum(trigname));
 	values[Anum_pg_trigger_tgfoid - 1] = ObjectIdGetDatum(funcoid);
 	values[Anum_pg_trigger_tgtype - 1] = Int16GetDatum(tgtype);
-	values[Anum_pg_trigger_tgenabled - 1] = BoolGetDatum(true);
+	values[Anum_pg_trigger_tgenabled - 1] = CharGetDatum(TRIGGER_FIRES_ON_ORIGIN);
 	values[Anum_pg_trigger_tgisconstraint - 1] = BoolGetDatum(stmt->isconstraint);
 	values[Anum_pg_trigger_tgconstrname - 1] = DirectFunctionCall1(namein,
 												CStringGetDatum(constrname));
@@ -701,11 +708,11 @@ renametrig(Oid relid,
  * EnableDisableTrigger()
  *
  *	Called by ALTER TABLE ENABLE/DISABLE TRIGGER
- *	to change 'tgenabled' flag for the specified trigger(s)
+ *	to change 'tgenabled' field for the specified trigger(s)
  *
  * rel: relation to process (caller must hold suitable lock on it)
  * tgname: trigger to process, or NULL to scan all triggers
- * enable: new value for tgenabled flag
+ * enable: new value for tgenabled field
  * skip_system: if true, skip "system" triggers (constraint triggers)
  *
  * Caller should have checked permissions for the table; here we also
@@ -714,7 +721,7 @@ renametrig(Oid relid,
  */
 void
 EnableDisableTrigger(Relation rel, const char *tgname,
-					 bool enable, bool skip_system)
+					 char fires_when, bool skip_system)
 {
 	Relation	tgrel;
 	int			nkeys;
@@ -765,13 +772,13 @@ EnableDisableTrigger(Relation rel, const char *tgname,
 
 		found = true;
 
-		if (oldtrig->tgenabled != enable)
+		if (oldtrig->tgenabled != fires_when)
 		{
 			/* need to change this one ... make a copy to scribble on */
 			HeapTuple	newtup = heap_copytuple(tuple);
 			Form_pg_trigger newtrig = (Form_pg_trigger) GETSTRUCT(newtup);
 
-			newtrig->tgenabled = enable;
+			newtrig->tgenabled = fires_when;
 
 			simple_heap_update(tgrel, &newtup->t_self, newtup);
 
@@ -1333,8 +1340,18 @@ ExecBSInsertTriggers(EState *estate, ResultRelInfo *relinfo)
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 		HeapTuple	newtuple;
 
-		if (!trigger->tgenabled)
-			continue;
+		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
+		else /* ORIGIN or LOCAL role */
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
 									   tgindx[i],
@@ -1382,8 +1399,18 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
-		if (!trigger->tgenabled)
-			continue;
+		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
+		else /* ORIGIN or LOCAL role */
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
 		LocTriggerData.tg_trigtuple = oldtuple = newtuple;
 		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_trigger = trigger;
@@ -1444,8 +1471,18 @@ ExecBSDeleteTriggers(EState *estate, ResultRelInfo *relinfo)
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 		HeapTuple	newtuple;
 
-		if (!trigger->tgenabled)
-			continue;
+		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
+		else /* ORIGIN or LOCAL role */
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
 									   tgindx[i],
@@ -1500,8 +1537,18 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
-		if (!trigger->tgenabled)
-			continue;
+		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
+		else /* ORIGIN or LOCAL role */
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
 		LocTriggerData.tg_trigtuple = trigtuple;
 		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
 		LocTriggerData.tg_trigger = trigger;
@@ -1575,8 +1622,18 @@ ExecBSUpdateTriggers(EState *estate, ResultRelInfo *relinfo)
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 		HeapTuple	newtuple;
 
-		if (!trigger->tgenabled)
-			continue;
+		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
+		else /* ORIGIN or LOCAL role */
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
 		LocTriggerData.tg_trigger = trigger;
 		newtuple = ExecCallTriggerFunc(&LocTriggerData,
 									   tgindx[i],
@@ -1636,8 +1693,18 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 	{
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
-		if (!trigger->tgenabled)
-			continue;
+		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
+		else /* ORIGIN or LOCAL role */
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
 		LocTriggerData.tg_trigtuple = trigtuple;
 		LocTriggerData.tg_newtuple = oldtuple = newtuple;
 		LocTriggerData.tg_trigtuplebuf = InvalidBuffer;
@@ -3267,8 +3334,18 @@ AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 		Trigger    *trigger = &trigdesc->triggers[tgindx[i]];
 
 		/* Ignore disabled triggers */
-		if (!trigger->tgenabled)
-			continue;
+		if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_ORIGIN ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
+		else /* ORIGIN or LOCAL role */
+		{
+			if (trigger->tgenabled == TRIGGER_FIRES_ON_REPLICA ||
+				trigger->tgenabled == TRIGGER_DISABLED)
+				continue;
+		}
 
 		/*
 		 * If this is an UPDATE of a PK table or FK table that does not change

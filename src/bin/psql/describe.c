@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.154 2007/03/18 16:50:44 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.155 2007/03/19 23:38:31 wieck Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1055,14 +1055,12 @@ describeOneTableDetails(const char *schemaname,
 				   *result3 = NULL,
 				   *result4 = NULL,
 				   *result5 = NULL,
-				   *result6 = NULL,
-				   *result7 = NULL;
+				   *result6 = NULL;
 		int			check_count = 0,
 					index_count = 0,
 					foreignkey_count = 0,
 					rule_count = 0,
 					trigger_count = 0,
-					disabled_trigger_count = 0,
 					inherits_count = 0;
 		int			count_footers = 0;
 
@@ -1105,11 +1103,24 @@ describeOneTableDetails(const char *schemaname,
 		/* count rules */
 		if (tableinfo.hasrules)
 		{
-			printfPQExpBuffer(&buf,
-							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true))\n"
+			if (pset.sversion < 80300)
+			{
+				printfPQExpBuffer(&buf,
+							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true)), "
+							  "'O'::char AS ev_enabled\n"
 							  "FROM pg_catalog.pg_rewrite r\n"
 							  "WHERE r.ev_class = '%s' ORDER BY 1",
 							  oid);
+			}
+			else
+			{
+				printfPQExpBuffer(&buf,
+							  "SELECT r.rulename, trim(trailing ';' from pg_catalog.pg_get_ruledef(r.oid, true)), "
+							  "ev_enabled\n"
+							  "FROM pg_catalog.pg_rewrite r\n"
+							  "WHERE r.ev_class = '%s' ORDER BY 1",
+							  oid);
+			}
 			result3 = PSQLexec(buf.data, false);
 			if (!result3)
 			{
@@ -1125,10 +1136,10 @@ describeOneTableDetails(const char *schemaname,
 		if (tableinfo.triggers)
 		{
 			printfPQExpBuffer(&buf,
-					 "SELECT t.tgname, pg_catalog.pg_get_triggerdef(t.oid)\n"
+					 "SELECT t.tgname, pg_catalog.pg_get_triggerdef(t.oid), "
+							"t.tgenabled\n"
 							  "FROM pg_catalog.pg_trigger t\n"
 							  "WHERE t.tgrelid = '%s' "
-							  "AND t.tgenabled "
 							  "AND t.tgconstraint = 0\n"
 							  "ORDER BY 1",
 							  oid);
@@ -1142,27 +1153,6 @@ describeOneTableDetails(const char *schemaname,
 			}
 			else
 				trigger_count = PQntuples(result4);
-
-			/* acquire disabled triggers as a separate list */
-			printfPQExpBuffer(&buf,
-					 "SELECT t.tgname, pg_catalog.pg_get_triggerdef(t.oid)\n"
-							  "FROM pg_catalog.pg_trigger t\n"
-							  "WHERE t.tgrelid = '%s' "
-							  "AND NOT t.tgenabled "
-							  "AND t.tgconstraint = 0\n"
-							  "ORDER BY 1",
-							  oid);
-			result7 = PSQLexec(buf.data, false);
-			if (!result7)
-			{
-				PQclear(result1);
-				PQclear(result2);
-				PQclear(result3);
-				PQclear(result4);
-				goto error_return;
-			}
-			else
-				disabled_trigger_count = PQntuples(result7);
 		}
 
 		/* count foreign-key constraints (there are none if no triggers) */
@@ -1181,7 +1171,6 @@ describeOneTableDetails(const char *schemaname,
 				PQclear(result2);
 				PQclear(result3);
 				PQclear(result4);
-				PQclear(result7);
 				goto error_return;
 			}
 			else
@@ -1199,7 +1188,6 @@ describeOneTableDetails(const char *schemaname,
 			PQclear(result3);
 			PQclear(result4);
 			PQclear(result5);
-			PQclear(result7);
 			goto error_return;
 		}
 		else
@@ -1297,63 +1285,143 @@ describeOneTableDetails(const char *schemaname,
 		/* print rules */
 		if (rule_count > 0)
 		{
-			printfPQExpBuffer(&buf, _("Rules:"));
-			footers[count_footers++] = pg_strdup(buf.data);
-			for (i = 0; i < rule_count; i++)
+			bool	have_heading;
+			int		category;
+
+			for (category = 0; category < 4; category++)
 			{
-				const char *ruledef;
+				have_heading = false;
 
-				/* Everything after "CREATE RULE" is echoed verbatim */
-				ruledef = PQgetvalue(result3, i, 1);
-				ruledef += 12;
+				for (i = 0; i < rule_count; i++)
+				{
+					const char *ruledef;
+					bool		list_rule = false;
 
-				printfPQExpBuffer(&buf, "    %s", ruledef);
+					switch (category)
+					{
+						case 0:
+							if (*PQgetvalue(result3, i, 2) == 'O')
+								list_rule = true;
+							break;
+						case 1:
+							if (*PQgetvalue(result3, i, 2) == 'D')
+								list_rule = true;
+							break;
+						case 2:
+							if (*PQgetvalue(result3, i, 2) == 'A')
+								list_rule = true;
+							break;
+						case 3:
+							if (*PQgetvalue(result3, i, 2) == 'R')
+								list_rule = true;
+							break;
+					}
+					if (!list_rule)
+						continue;
 
-				footers[count_footers++] = pg_strdup(buf.data);
+					if (!have_heading)
+					{
+						switch (category)
+						{
+							case 0:
+								printfPQExpBuffer(&buf, _("Rules:"));
+								break;
+							case 1:
+								printfPQExpBuffer(&buf, _("Disabled Rules:"));
+								break;
+							case 2:
+								printfPQExpBuffer(&buf, _("Rules firing always:"));
+								break;
+							case 3:
+								printfPQExpBuffer(&buf, _("Rules firing on replica only:"));
+								break;
+						}
+						footers[count_footers++] = pg_strdup(buf.data);
+						have_heading = true;
+					}
+
+					/* Everything after "CREATE RULE" is echoed verbatim */
+					ruledef = PQgetvalue(result3, i, 1);
+					ruledef += 12;
+					printfPQExpBuffer(&buf, "    %s", ruledef);
+					footers[count_footers++] = pg_strdup(buf.data);
+				}
 			}
 		}
 
 		/* print triggers */
 		if (trigger_count > 0)
 		{
-			printfPQExpBuffer(&buf, _("Triggers:"));
-			footers[count_footers++] = pg_strdup(buf.data);
-			for (i = 0; i < trigger_count; i++)
+			bool	have_heading;
+			int		category;
+
+			/* split the output into 4 different categories.
+			 * Enabled triggers, disabled triggers and the two
+			 * special ALWAYS and REPLICA configurations.
+			 */
+			for (category = 0; category < 4; category++)
 			{
-				const char *tgdef;
-				const char *usingpos;
+				have_heading = false;
+				for (i = 0; i < trigger_count; i++)
+				{
+					bool		list_trigger;
+					const char *tgdef;
+					const char *usingpos;
+					const char *tgenabled;
 
-				/* Everything after "TRIGGER" is echoed verbatim */
-				tgdef = PQgetvalue(result4, i, 1);
-				usingpos = strstr(tgdef, " TRIGGER ");
-				if (usingpos)
-					tgdef = usingpos + 9;
+					/* Check if this trigger falls into the current category */
+					tgenabled = PQgetvalue(result4, i, 2);
+					list_trigger = false;
+					switch (category)
+					{
+						case 0:		if (*tgenabled == 'O' || *tgenabled == 't')
+										list_trigger = true;
+									break;
+						case 1:		if (*tgenabled == 'D' || *tgenabled == 'f')
+										list_trigger = true;
+									break;
+						case 2:		if (*tgenabled == 'A')
+										list_trigger = true;
+									break;
+						case 3:		if (*tgenabled == 'R')
+										list_trigger = true;
+									break;
+					}
+					if (list_trigger == false)
+						continue;
 
-				printfPQExpBuffer(&buf, "    %s", tgdef);
+					/* Print the category heading once */
+					if (have_heading == false)
+					{
+						switch (category)
+						{
+							case 0:
+								printfPQExpBuffer(&buf, _("Triggers:"));
+								break;
+							case 1:
+								printfPQExpBuffer(&buf, _("Disabled Triggers:"));
+								break;
+							case 2:
+								printfPQExpBuffer(&buf, _("Triggers firing always:"));
+								break;
+							case 3:
+								printfPQExpBuffer(&buf, _("Triggers firing on replica only:"));
+								break;
+								
+						}
+						footers[count_footers++] = pg_strdup(buf.data);
+						have_heading = true;
+					}
 
-				footers[count_footers++] = pg_strdup(buf.data);
-			}
-		}
+					/* Everything after "TRIGGER" is echoed verbatim */
+					tgdef = PQgetvalue(result4, i, 1);
+					usingpos = strstr(tgdef, " TRIGGER ");
+					if (usingpos)
+						tgdef = usingpos + 9;
 
-		/* print disabled triggers */
-		if (disabled_trigger_count > 0)
-		{
-			printfPQExpBuffer(&buf, _("Disabled triggers:"));
-			footers[count_footers++] = pg_strdup(buf.data);
-			for (i = 0; i < disabled_trigger_count; i++)
-			{
-				const char *tgdef;
-				const char *usingpos;
-
-				/* Everything after "TRIGGER" is echoed verbatim */
-				tgdef = PQgetvalue(result7, i, 1);
-				usingpos = strstr(tgdef, " TRIGGER ");
-				if (usingpos)
-					tgdef = usingpos + 9;
-
-				printfPQExpBuffer(&buf, "    %s", tgdef);
-
-				footers[count_footers++] = pg_strdup(buf.data);
+					printfPQExpBuffer(&buf, "    %s", tgdef);
+					footers[count_footers++] = pg_strdup(buf.data);
+				}
 			}
 		}
 
@@ -1392,7 +1460,6 @@ describeOneTableDetails(const char *schemaname,
 		PQclear(result4);
 		PQclear(result5);
 		PQclear(result6);
-		PQclear(result7);
 	}
 
 	printTable(title.data, headers,

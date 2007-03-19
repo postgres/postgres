@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.172 2007/03/17 00:11:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.173 2007/03/19 23:38:29 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,10 +21,12 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parsetree.h"
+#include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
+#include "commands/trigger.h"
 
 
 /* We use a list of these to detect recursion in RewriteQuery */
@@ -1034,6 +1036,29 @@ matchLocks(CmdType event,
 	for (i = 0; i < nlocks; i++)
 	{
 		RewriteRule *oneLock = rulelocks->rules[i];
+
+		/*
+		 * Suppress ON INSERT/UPDATE/DELETE rules that are disabled
+		 * or configured to not fire during the current sessions
+		 * replication role. ON SELECT rules will always be applied
+		 * in order to keep views working even in LOCAL or REPLICA
+		 * role.
+		 */
+		if (oneLock->event != CMD_SELECT)
+		{
+			if (SessionReplicationRole == SESSION_REPLICATION_ROLE_REPLICA)
+			{
+				if (oneLock->enabled == RULE_FIRES_ON_ORIGIN ||
+					oneLock->enabled == RULE_DISABLED)
+					continue;
+			}
+			else /* ORIGIN or LOCAL ROLE */
+			{
+				if (oneLock->enabled == RULE_FIRES_ON_REPLICA ||
+					oneLock->enabled == RULE_DISABLED)
+					continue;
+			}
+		}
 
 		if (oneLock->event == event)
 		{

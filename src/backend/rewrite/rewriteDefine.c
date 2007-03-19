@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.118 2007/03/13 00:33:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.119 2007/03/19 23:38:29 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/inval.h"
 
 
 static void checkRuleResultList(List *targetList, TupleDesc resultDesc,
@@ -79,6 +80,7 @@ InsertRule(char *rulname,
 	values[i++] = ObjectIdGetDatum(eventrel_oid);		/* ev_class */
 	values[i++] = Int16GetDatum(evslot_index);	/* ev_attr */
 	values[i++] = CharGetDatum(evtype + '0');	/* ev_type */
+	values[i++] = CharGetDatum(RULE_FIRES_ON_ORIGIN);	/* ev_enabled */
 	values[i++] = BoolGetDatum(evinstead);		/* is_instead */
 	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(evqual)); /* ev_qual */
 	values[i++] = DirectFunctionCall1(textin, CStringGetDatum(actiontree));		/* ev_action */
@@ -625,6 +627,72 @@ setRuleCheckAsUser_Query(Query *qry, Oid userid)
 	if (qry->hasSubLinks)
 		query_tree_walker(qry, setRuleCheckAsUser_walker, (void *) &userid,
 						  QTW_IGNORE_RT_SUBQUERIES);
+}
+
+
+/*
+ * Change the firing semantics of an existing rule.
+ *
+ */
+void
+EnableDisableRule(Relation rel, const char *rulename,
+				  char fires_when)
+{
+	Relation	pg_rewrite_desc;
+	Oid			owningRel = RelationGetRelid(rel);
+	Oid			eventRelationOid;
+	HeapTuple	ruletup;
+	bool		changed = false;
+
+	/*
+	 * Find the rule tuple to change.
+	 */
+	pg_rewrite_desc = heap_open(RewriteRelationId, RowExclusiveLock);
+	ruletup = SearchSysCacheCopy(RULERELNAME,
+								 ObjectIdGetDatum(owningRel),
+								 PointerGetDatum(rulename),
+								 0, 0);
+	if (!HeapTupleIsValid(ruletup))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("rule \"%s\" for relation \"%s\" does not exist",
+						rulename, get_rel_name(owningRel))));
+
+	/*
+	 * Verify that the user has appropriate permissions.
+	 */
+	eventRelationOid = ((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_class;
+	Assert(eventRelationOid == owningRel);
+	if (!pg_class_ownercheck(eventRelationOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+						get_rel_name(eventRelationOid));
+	
+	/*
+	 * Change ev_enabled if it is different from the desired new state.
+	 */
+	if (DatumGetChar(((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_enabled) !=
+			fires_when)
+		{
+		((Form_pg_rewrite) GETSTRUCT(ruletup))->ev_enabled =
+					CharGetDatum(fires_when);
+		simple_heap_update(pg_rewrite_desc, &ruletup->t_self, ruletup);
+
+		/* keep system catalog indexes current */
+		CatalogUpdateIndexes(pg_rewrite_desc, ruletup);
+
+		changed = true;
+	}
+
+	heap_freetuple(ruletup);
+	heap_close(pg_rewrite_desc, RowExclusiveLock);
+
+	/*
+	 * If we changed anything, broadcast a SI inval message to force each
+	 * backend (including our own!) to rebuild relation's relcache entry.
+	 * Otherwise they will fail to apply the change promptly.
+	 */
+	if (changed)
+		CacheInvalidateRelcache(rel);
 }
 
 

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.382 2007/03/13 14:32:25 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.383 2007/03/19 23:38:30 wieck Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "commands/async.h"
 #include "commands/vacuum.h"
 #include "commands/variable.h"
+#include "commands/trigger.h"
 #include "funcapi.h"
 #include "libpq/auth.h"
 #include "libpq/pqformat.h"
@@ -59,6 +60,7 @@
 #include "utils/guc_tables.h"
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
+#include "utils/plancache.h"
 #include "utils/ps_status.h"
 #include "utils/tzparser.h"
 #include "utils/xml.h"
@@ -123,6 +125,8 @@ static const char *assign_syslog_ident(const char *ident,
 #endif
 
 static const char *assign_defaultxactisolevel(const char *newval, bool doit,
+						   GucSource source);
+static const char *assign_session_replication_role(const char *newval, bool doit,
 						   GucSource source);
 static const char *assign_log_min_messages(const char *newval, bool doit,
 						GucSource source);
@@ -226,6 +230,7 @@ static char *backslash_quote_string;
 static char *client_encoding_string;
 static char *datestyle_string;
 static char *default_iso_level_string;
+static char *session_replication_role_string;
 static char *locale_collate;
 static char *locale_ctype;
 static char *regex_flavor_string;
@@ -1926,6 +1931,16 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&default_iso_level_string,
 		"read committed", assign_defaultxactisolevel, NULL
+	},
+
+	{
+		{"session_replication_role", PGC_SUSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the sessions behaviour for triggers and rewrite rules."),
+			gettext_noop("Each session can be either"
+						 " \"origin\", \"replica\" or \"local\".")
+		},
+		&session_replication_role_string,
+		"origin", assign_session_replication_role, NULL
 	},
 
 	{
@@ -6109,6 +6124,33 @@ assign_defaultxactisolevel(const char *newval, bool doit, GucSource source)
 	{
 		if (doit)
 			DefaultXactIsoLevel = XACT_READ_UNCOMMITTED;
+	}
+	else
+		return NULL;
+	return newval;
+}
+
+static const char *
+assign_session_replication_role(const char *newval, bool doit, GucSource source)
+{
+	if (HaveCachedPlans())
+		elog(ERROR, "session_replication_role cannot be changed "
+					"after prepared plans have been cached");
+
+	if (pg_strcasecmp(newval, "origin") == 0)
+	{
+		if (doit)
+			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
+	}
+	else if (pg_strcasecmp(newval, "replica") == 0)
+	{
+		if (doit)
+			SessionReplicationRole = SESSION_REPLICATION_ROLE_REPLICA;
+	}
+	else if (pg_strcasecmp(newval, "local") == 0)
+	{
+		if (doit)
+			SessionReplicationRole = SESSION_REPLICATION_ROLE_LOCAL;
 	}
 	else
 		return NULL;

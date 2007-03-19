@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.460 2007/02/14 01:58:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.461 2007/03/19 23:38:30 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3699,15 +3699,26 @@ getRules(int *numRules)
 	int			i_ruletable;
 	int			i_ev_type;
 	int			i_is_instead;
+	int			i_ev_enabled;
 
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	if (g_fout->remoteVersion >= 70100)
+	if (g_fout->remoteVersion >= 80300)
 	{
 		appendPQExpBuffer(query, "SELECT "
 						  "tableoid, oid, rulename, "
-						  "ev_class as ruletable, ev_type, is_instead "
+						  "ev_class as ruletable, ev_type, is_instead, "
+						  "ev_enabled "
+						  "FROM pg_rewrite "
+						  "ORDER BY oid");
+	}
+	else if (g_fout->remoteVersion >= 70100)
+	{
+		appendPQExpBuffer(query, "SELECT "
+						  "tableoid, oid, rulename, "
+						  "ev_class as ruletable, ev_type, is_instead, "
+						  "'O'::char as ev_enabled "
 						  "FROM pg_rewrite "
 						  "ORDER BY oid");
 	}
@@ -3716,7 +3727,8 @@ getRules(int *numRules)
 		appendPQExpBuffer(query, "SELECT "
 						  "(SELECT oid FROM pg_class WHERE relname = 'pg_rewrite') AS tableoid, "
 						  "oid, rulename, "
-						  "ev_class as ruletable, ev_type, is_instead "
+						  "ev_class as ruletable, ev_type, is_instead, "
+						  "'O'::char as ev_enabled "
 						  "FROM pg_rewrite "
 						  "ORDER BY oid");
 	}
@@ -3736,6 +3748,7 @@ getRules(int *numRules)
 	i_ruletable = PQfnumber(res, "ruletable");
 	i_ev_type = PQfnumber(res, "ev_type");
 	i_is_instead = PQfnumber(res, "is_instead");
+	i_ev_enabled = PQfnumber(res, "ev_enabled");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -3759,6 +3772,7 @@ getRules(int *numRules)
 		ruleinfo[i].dobj.dump = ruleinfo[i].ruletable->dobj.dump;
 		ruleinfo[i].ev_type = *(PQgetvalue(res, i, i_ev_type));
 		ruleinfo[i].is_instead = *(PQgetvalue(res, i, i_is_instead)) == 't';
+		ruleinfo[i].ev_enabled = *(PQgetvalue(res, i, i_ev_enabled));
 		if (ruleinfo[i].ruletable)
 		{
 			/*
@@ -3956,7 +3970,7 @@ getTriggers(TableInfo tblinfo[], int numTables)
 			tginfo[j].tgnargs = atoi(PQgetvalue(res, j, i_tgnargs));
 			tginfo[j].tgargs = strdup(PQgetvalue(res, j, i_tgargs));
 			tginfo[j].tgisconstraint = *(PQgetvalue(res, j, i_tgisconstraint)) == 't';
-			tginfo[j].tgenabled = *(PQgetvalue(res, j, i_tgenabled)) == 't';
+			tginfo[j].tgenabled = *(PQgetvalue(res, j, i_tgenabled));
 			tginfo[j].tgdeferrable = *(PQgetvalue(res, j, i_tgdeferrable)) == 't';
 			tginfo[j].tginitdeferred = *(PQgetvalue(res, j, i_tginitdeferred)) == 't';
 
@@ -8824,11 +8838,27 @@ dumpTrigger(Archive *fout, TriggerInfo *tginfo)
 	}
 	appendPQExpBuffer(query, ");\n");
 
-	if (!tginfo->tgenabled)
+	if (tginfo->tgenabled != 't' && tginfo->tgenabled != 'O')
 	{
 		appendPQExpBuffer(query, "\nALTER TABLE %s ",
 						  fmtId(tbinfo->dobj.name));
-		appendPQExpBuffer(query, "DISABLE TRIGGER %s;\n",
+		switch (tginfo->tgenabled)
+		{
+			case 'D':
+			case 'f':
+				appendPQExpBuffer(query, "DISABLE");
+				break;
+			case 'A':
+				appendPQExpBuffer(query, "ENABLE ALWAYS");
+				break;
+			case 'R':
+				appendPQExpBuffer(query, "ENABLE REPLICA");
+				break;
+			default:
+				appendPQExpBuffer(query, "ENABLE");
+				break;
+		}
+		appendPQExpBuffer(query, " TRIGGER %s;\n",
 						  fmtId(tginfo->dobj.name));
 	}
 
@@ -8913,6 +8943,33 @@ dumpRule(Archive *fout, RuleInfo *rinfo)
 	}
 
 	printfPQExpBuffer(cmd, "%s\n", PQgetvalue(res, 0, 0));
+
+	/*
+	 * Add the command to alter the rules replication firing semantics
+	 * if it differs from the default.
+	 */
+	if (rinfo->ev_enabled != 'O')
+	{
+		appendPQExpBuffer(cmd, "ALTER TABLE %s.",
+					fmtId(tbinfo->dobj.namespace->dobj.name));
+		appendPQExpBuffer(cmd, "%s ",
+					fmtId(tbinfo->dobj.name));
+		switch (rinfo->ev_enabled)
+		{
+			case 'A':
+				appendPQExpBuffer(cmd, "ENABLE ALWAYS RULE %s;\n",
+							fmtId(rinfo->dobj.name));
+				break;
+			case 'R':
+				appendPQExpBuffer(cmd, "ENABLE REPLICA RULE %s;\n",
+							fmtId(rinfo->dobj.name));
+				break;
+			case 'D':
+				appendPQExpBuffer(cmd, "DISABLE RULE %s;\n",
+							fmtId(rinfo->dobj.name));
+				break;
+		}
+	}
 
 	/*
 	 * DROP must be fully qualified in case same name appears in pg_catalog
