@@ -2,7 +2,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.2 2007/03/17 14:01:01 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.3 2007/03/19 09:34:09 mha Exp $
 #
 use Carp;
 use Win32;
@@ -140,7 +140,7 @@ sub mkvcbuild
         $libecpg->AddIncludeDir('src\port');
         $libecpg->AddLibrary('wsock32.lib');
         $libecpg->AddLibrary($config->{'pthread'} . '\pthreadVC2.lib');
-        $libecpg->AddReference($libpq,$pgtypes);
+        $libecpg->AddReference($libpq,$pgtypes,$libpgport);
 
         my $libecpgcompat =
           $solution->AddProject('libecpg_compat','dll','interfaces',
