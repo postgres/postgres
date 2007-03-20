@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.448 2007/03/16 17:57:36 mha Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.449 2007/03/20 05:45:00 neilc Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2261,8 +2261,20 @@ DATA(insert OID =  2284 ( regexp_replace	   PGNSP PGUID 12 1 0 f f t f i 3 25 "2
 DESCR("replace text using regexp");
 DATA(insert OID =  2285 ( regexp_replace	   PGNSP PGUID 12 1 0 f f t f i 4 25 "25 25 25 25" _null_ _null_ _null_ textregexreplace - _null_ ));
 DESCR("replace text using regexp");
+DATA(insert OID =  2763 ( regexp_matches   PGNSP PGUID 12 1 1 f f t t i 2 1009 "25 25" _null_ _null_ _null_	regexp_matches_no_flags - _null_ ));
+DESCR("return all match groups for regexp");
+DATA(insert OID =  2764 ( regexp_matches   PGNSP PGUID 12 1 10 f f t t i 3 1009 "25 25 25" _null_ _null_ _null_	regexp_matches - _null_ ));
+DESCR("return all match groups for regexp");
 DATA(insert OID =  2088 ( split_part   PGNSP PGUID 12 1 0 f f t f i 3 25 "25 25 23" _null_ _null_ _null_	split_text - _null_ ));
 DESCR("split string by field_sep and return field_num");
+DATA(insert OID =  2765 ( regexp_split_to_table PGNSP PGUID 12 1 1000 f f t t i 2 25 "25 25" _null_ _null_ _null_	regexp_split_to_table_no_flags - _null_ ));
+DESCR("split string by pattern");
+DATA(insert OID =  2766 ( regexp_split_to_table PGNSP PGUID 12 1 1000 f f t t i 3 25 "25 25 25" _null_ _null_ _null_	regexp_split_to_table - _null_ ));
+DESCR("split string by pattern");
+DATA(insert OID =  2767 ( regexp_split_to_array PGNSP PGUID 12 1 0 f f t f i 2 1009 "25 25" _null_ _null_ _null_	regexp_split_to_array_no_flags - _null_ ));
+DESCR("split string by pattern");
+DATA(insert OID =  2768 ( regexp_split_to_array PGNSP PGUID 12 1 0 f f t f i 3 1009 "25 25 25" _null_ _null_ _null_	regexp_split_to_array - _null_ ));
+DESCR("split string by pattern");
 DATA(insert OID =  2089 ( to_hex	   PGNSP PGUID 12 1 0 f f t f i 1 25 "23" _null_ _null_ _null_	to_hex32 - _null_ ));
 DESCR("convert int4 number to hex");
 DATA(insert OID =  2090 ( to_hex	   PGNSP PGUID 12 1 0 f f t f i 1 25 "20" _null_ _null_ _null_	to_hex64 - _null_ ));

@@ -85,8 +85,59 @@ SELECT regexp_replace('1112223333', E'(\\d{3})(\\d{3})(\\d{4})', E'(\\1) \\2-\\3
 SELECT regexp_replace('AAA   BBB   CCC   ', E'\\s+', ' ', 'g');
 SELECT regexp_replace('AAA', '^|$', 'Z', 'g');
 SELECT regexp_replace('AAA aaa', 'A+', 'Z', 'gi');
--- invalid option of REGEXP_REPLACE
+-- invalid regexp option
 SELECT regexp_replace('AAA aaa', 'A+', 'Z', 'z');
+
+-- set so we can tell NULL from empty string
+\pset null '\\N'
+
+-- return all matches from regexp
+SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque)$re$);
+
+-- test case insensitive
+SELECT regexp_matches('foObARbEqUEbAz', $re$(bar)(beque)$re$, 'i');
+
+-- global option - more than one match
+SELECT regexp_matches('foobarbequebazilbarfbonk', $re$(b[^b]+)(b[^b]+)$re$, 'g');
+
+-- empty capture group (matched empty string)
+SELECT regexp_matches('foobarbequebaz', $re$(bar)(.*)(beque)$re$);
+-- no match
+SELECT regexp_matches('foobarbequebaz', $re$(bar)(.+)(beque)$re$);
+-- optional capture group did not match, null entry in array
+SELECT regexp_matches('foobarbequebaz', $re$(bar)(.+)?(beque)$re$);
+
+-- no capture groups
+SELECT regexp_matches('foobarbequebaz', $re$barbeque$re$);
+
+-- give me errors
+SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque)$re$, 'zipper');
+SELECT regexp_matches('foobarbequebaz', $re$(barbeque$re$);
+SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque){2,1}$re$);
+
+-- split string on regexp
+SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', $re$\s+$re$) AS foo;
+SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', $re$\s+$re$);
+
+SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', $re$\s*$re$) AS foo;
+SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', $re$\s*$re$);
+SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', '') AS foo;
+SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', '');
+-- case insensitive
+SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'i') AS foo;
+SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'i');
+-- no match of pattern
+SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', 'nomatch') AS foo;
+SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', 'nomatch');
+-- errors
+SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'zippy') AS foo;
+SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'zippy');
+-- global option meaningless for regexp_split
+SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'g') AS foo;
+SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'g');
+
+-- change NULL-display back
+\pset null ''
 
 -- E021-11 position expression
 SELECT POSITION('4' IN '1234567890') = '4' AS "4";

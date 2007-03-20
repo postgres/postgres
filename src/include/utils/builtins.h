@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.289 2007/02/23 21:59:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.290 2007/03/20 05:45:00 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -478,6 +478,12 @@ extern Datum textregexsubstr(PG_FUNCTION_ARGS);
 extern Datum textregexreplace_noopt(PG_FUNCTION_ARGS);
 extern Datum textregexreplace(PG_FUNCTION_ARGS);
 extern Datum similar_escape(PG_FUNCTION_ARGS);
+extern Datum regexp_matches(PG_FUNCTION_ARGS);
+extern Datum regexp_matches_no_flags(PG_FUNCTION_ARGS);
+extern Datum regexp_split_to_table(PG_FUNCTION_ARGS);
+extern Datum regexp_split_to_table_no_flags(PG_FUNCTION_ARGS);
+extern Datum regexp_split_to_array(PG_FUNCTION_ARGS);
+extern Datum regexp_split_to_array_no_flags(PG_FUNCTION_ARGS);
 extern bool regex_flavor_is_basic(void);
 
 /* regproc.c */
