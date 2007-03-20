@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Fri Feb 23 14:06:15 EST 2007</P>
+    <P>Last updated: Tue Mar 20 13:43:40 EDT 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -584,37 +584,9 @@
 
     <H3 id="item3.6">3.6) What is the upgrade process for PostgreSQL?</H3>
 
-    <P>PostgreSQL major releases include new features and occur roughly
-    once every year.  A major release is numbered by increasing either
-    the first or second part of the version number, e.g. 8.1 to 8.2.
-
-    <P>Major releases usually change the internal format of system tables
-    and data files. These changes are often complex, so we don't maintain
-    backward compatibility for data files. A dump/reload of the database
-    is required for major upgrades.</P>
-
-    <P>Minor releases are numbered by increasing the third part of the
-    version number, e.g. 8.1.5 to 8.1.6.  The PostgreSQL team only adds
-    bug fixes to minor releases.  All users should upgrade to the most
-    recent minor release as soon as possible.  While upgrades always have
-    some risk, PostgreSQL minor releases fix only frequently-encountered,
-    security, and data corruption bugs to reduce the risk of upgrading.
-    The community considers <i>not</i> upgrading riskier than
-    upgrading.</P>
-`
-    <P>Upgrading to a minor release does not does not require a dump and
-    restore; merely stop the database server, install the updated binaries,
-    and restart the server.</P>
-
-    <H3 id="item3.7">3.7) What computer hardware should I use?</H3>
-
-    <P>Because PC hardware is mostly compatible, people tend to believe that
-    all PC hardware is of equal quality.  It is not.  ECC RAM, SCSI, and
-    quality motherboards are more reliable and have better performance than
-    less expensive hardware.  PostgreSQL will run on almost any hardware,
-    but if reliability and performance are important it is wise to
-    research your hardware options thoroughly.  Our email lists can be used
-    to discuss hardware options and tradeoffs.</P>
+    <P>See <a
+    href="http://www.postgresql.org/support/versioning">http://www.postgresql.org/support/versioning</a>.
+    </P>
 
     <HR>
 
