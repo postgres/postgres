@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Mar 19 11:50:41 EDT 2007
+Last updated:		Tue Mar 20 12:32:33 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -90,12 +90,11 @@ Administration
 
 * Configuration files
 
-	o Allow commenting of variables in postgresql.conf to restore them
+	o -Allow commenting of variables in postgresql.conf to restore them
 	  to defaults
 
 	  Currently, if a variable is commented out, it keeps the
 	  previous uncommented value until a server restarted.
-	  http://archives.postgresql.org/pgsql-hackers/2006-09/msg01481.php
 
 	o Allow pg_hba.conf to specify host names along with IP addresses
 
