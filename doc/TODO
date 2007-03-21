@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 20 20:33:04 EDT 2007
+Last updated:		Wed Mar 21 12:43:21 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -182,6 +182,7 @@ Data Types
 * Add locale-aware MONEY type, and support multiple currencies
 
   http://archives.postgresql.org/pgsql-general/2005-08/msg01432.php
+  http://archives.postgresql.org/pgsql-hackers/2007-03/msg01181.php
 
 * Change NUMERIC to enforce the maximum precision
 * Add NUMERIC division operator that doesn't round?
