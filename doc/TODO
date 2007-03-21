@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Mar 21 12:43:21 EDT 2007
+Last updated:		Wed Mar 21 17:21:13 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -185,17 +185,6 @@ Data Types
   http://archives.postgresql.org/pgsql-hackers/2007-03/msg01181.php
 
 * Change NUMERIC to enforce the maximum precision
-* Add NUMERIC division operator that doesn't round?
-
-  Currently NUMERIC _rounds_ the result to the specified precision.  
-  This means division can return a result that multiplied by the 
-  divisor is greater than the dividend, e.g. this returns a value > 10:
-
-    SELECT (10::numeric(2,0) / 6::numeric(2,0))::numeric(2,0) * 6;
-
-  The positive modulus result returned by NUMERICs might be considered
-  inaccurate, in one sense.
-
 * Fix data types where equality comparison isn't intuitive, e.g. box
 * Allow user-defined types to specify a type modifier at table creation
   time
