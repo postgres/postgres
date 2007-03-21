@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.34 2007/03/17 17:11:41 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.35 2007/03/21 19:22:52 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -245,6 +245,42 @@
      perl install.pl c:\destination\directory
     </userinput>
    </screen>
+  </para>
+ </sect2>
+
+ <sect2>
+  <title>Running the regression tests</title>
+
+  <para>
+   To run the regression tests, make sure you have completed the build of all
+   required parts first. Also, make sure that the DLLs required to load all
+   parts of the system (such as the perl and python DLLs for the procedural
+   languages) are present in the system PATH. If they are not, set it through
+   the <filename>buildenv.bat</filename> file. To run the tests, run one of
+   the following commands from the <filename>src\tools\msvc</filename>
+   directory:
+   <screen>
+    <userinput>
+     vcregress check
+    </userinput>
+    <userinput>
+     vcregress installcheck
+    </userinput>
+    <userinput>
+     vcregress plcheck
+    </userinput>
+   </screen>
+
+   To change the schedule used (default is the parallel), append it to the
+   commandline like:
+   <screen>
+    <userinput>
+     vcregress check serial
+    </userinput>
+   </screen>
+
+   For more information about the regression tests, see
+   <xref linkend="regress">.
   </para>
  </sect2>
 
