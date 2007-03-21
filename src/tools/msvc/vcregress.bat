@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.3 2007/03/17 14:01:01 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.4 2007/03/21 15:39:03 mha Exp $
 
 SETLOCAL
 SET STARTDIR=%CD%
@@ -30,9 +30,10 @@ SET PERL5LIB=..\..\tools\msvc
 
 if "%what%"=="INSTALLCHECK" ..\..\..\%CONFIG%\pg_regress\pg_regress --psqldir=..\..\..\%CONFIG%\psql --schedule=%SCHEDULE%_schedule --multibyte=SQL_ASCII --load-language=plpgsql --no-locale
 if "%what%"=="CHECK" ..\..\..\%CONFIG%\pg_regress\pg_regress --psqldir=..\..\..\%CONFIG%\psql --schedule=%SCHEDULE%_schedule --multibyte=SQL_ASCII --load-language=plpgsql --no-locale --temp-install=./tmp_check --top-builddir=%TOPDIR% --temp-port=%TEMPPORT%
+SET E=%ERRORLEVEL%
 
 cd %STARTDIR%
-goto :eof
+exit /b %E%
 
 :usage
 echo "Usage: vcregress <check|installcheck> [schedule]"
