@@ -22278,13 +22278,21 @@ fi
 
 
 # Select shared-memory implementation type.
+if test "$PORTNAME" != "win32"; then
 
 cat >>confdefs.h <<\_ACEOF
 #define USE_SYSV_SHARED_MEMORY 1
 _ACEOF
 
-SHMEM_IMPLEMENTATION="src/backend/port/sysv_shmem.c"
+  SHMEM_IMPLEMENTATION="src/backend/port/sysv_shmem.c"
+else
 
+cat >>confdefs.h <<\_ACEOF
+#define USE_WIN32_SHARED_MEMORY 1
+_ACEOF
+
+  SHMEM_IMPLEMENTATION="src/backend/port/win32_shmem.c"
+fi
 
 # If not set in template file, set bytes to use libc memset()
 if test x"$MEMSET_LOOP_LIMIT" = x"" ; then

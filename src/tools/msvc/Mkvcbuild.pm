@@ -2,7 +2,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.3 2007/03/19 09:34:09 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.4 2007/03/21 14:39:23 mha Exp $
 #
 use Carp;
 use Win32;
@@ -58,7 +58,7 @@ sub mkvcbuild
     $postgres->AddFile('src\backend\utils\fmgrtab.c');
     $postgres->ReplaceFile('src\backend\port\dynloader.c','src\backend\port\dynloader\win32.c');
     $postgres->ReplaceFile('src\backend\port\pg_sema.c','src\backend\port\win32_sema.c');
-    $postgres->ReplaceFile('src\backend\port\pg_shmem.c','src\backend\port\sysv_shmem.c');
+    $postgres->ReplaceFile('src\backend\port\pg_shmem.c','src\backend\port\win32_shmem.c');
     $postgres->AddFiles('src\port',@pgportfiles);
     $postgres->AddDir('src\timezone');
     $postgres->AddFiles('src\backend\parser','scan.l','gram.y');
