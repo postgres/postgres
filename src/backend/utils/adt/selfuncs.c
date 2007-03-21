@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.229 2007/03/17 00:11:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.230 2007/03/21 22:18:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,7 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
+#include "optimizer/predtest.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
 #include "parser/parse_coerce.h"
@@ -4775,36 +4776,38 @@ genericcostestimate(PlannerInfo *root,
 	List	   *selectivityQuals;
 	ListCell   *l;
 
-	/*
+	/*----------
 	 * If the index is partial, AND the index predicate with the explicitly
 	 * given indexquals to produce a more accurate idea of the index
-	 * selectivity.  This may produce redundant clauses.  We get rid of exact
-	 * duplicates in the code below.  We expect that most cases of partial
-	 * redundancy (such as "x < 4" from the qual and "x < 5" from the
-	 * predicate) will be recognized and handled correctly by
-	 * clauselist_selectivity().  This assumption is somewhat fragile, since
-	 * it depends on predicate_implied_by() and clauselist_selectivity()
-	 * having similar capabilities, and there are certainly many cases where
-	 * we will end up with a too-low selectivity estimate.	This will bias the
-	 * system in favor of using partial indexes where possible, which is not
-	 * necessarily a bad thing. But it'd be nice to do better someday.
+	 * selectivity.  However, we need to be careful not to insert redundant
+	 * clauses, because clauselist_selectivity() is easily fooled into
+	 * computing a too-low selectivity estimate.  Our approach is to add
+	 * only the index predicate clause(s) that cannot be proven to be implied
+	 * by the given indexquals.  This successfully handles cases such as a
+	 * qual "x = 42" used with a partial index "WHERE x >= 40 AND x < 50".
+	 * There are many other cases where we won't detect redundancy, leading
+	 * to a too-low selectivity estimate, which will bias the system in favor
+	 * of using partial indexes where possible.  That is not necessarily bad
+	 * though.
 	 *
-	 * Note that index->indpred and indexQuals are both in implicit-AND form,
-	 * so ANDing them together just takes merging the lists.  However,
-	 * eliminating duplicates is a bit trickier because indexQuals contains
-	 * RestrictInfo nodes and the indpred does not.  It is okay to pass a
-	 * mixed list to clauselist_selectivity, but we have to work a bit to
-	 * generate a list without logical duplicates.	(We could just list_union
-	 * indpred and strippedQuals, but then we'd not get caching of per-qual
-	 * selectivity estimates.)
+	 * Note that indexQuals contains RestrictInfo nodes while the indpred
+	 * does not.  This is OK for both predicate_implied_by() and
+	 * clauselist_selectivity().
+	 *----------
 	 */
 	if (index->indpred != NIL)
 	{
-		List	   *strippedQuals;
-		List	   *predExtraQuals;
+		List	   *predExtraQuals = NIL;
 
-		strippedQuals = get_actual_clauses(indexQuals);
-		predExtraQuals = list_difference(index->indpred, strippedQuals);
+		foreach(l, index->indpred)
+		{
+			Node   *predQual = (Node *) lfirst(l);
+			List   *oneQual = list_make1(predQual);
+
+			if (!predicate_implied_by(oneQual, indexQuals))
+				predExtraQuals = list_concat(predExtraQuals, oneQual);
+		}
+		/* list_concat avoids modifying the passed-in indexQuals list */
 		selectivityQuals = list_concat(predExtraQuals, indexQuals);
 	}
 	else

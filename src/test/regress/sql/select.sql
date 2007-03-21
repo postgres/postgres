@@ -59,9 +59,14 @@ SELECT onek.unique1, onek.string4 FROM onek
 -- test partial btree indexes
 --
 -- As of 7.2, planner probably won't pick an indexscan without stats,
--- so ANALYZE first.
+-- so ANALYZE first.  Also, we want to prevent it from picking a bitmapscan
+-- followed by sort, because that could hide index ordering problems.
 --
 ANALYZE onek2;
+
+SET enable_seqscan TO off;
+SET enable_bitmapscan TO off;
+SET enable_sort TO off;
 
 --
 -- awk '{if($1<10){print $0;}else{next;}}' onek.data | sort +0n -1
@@ -80,6 +85,10 @@ SELECT onek2.unique1, onek2.stringu1 FROM onek2
 --
 SELECT onek2.unique1, onek2.stringu1 FROM onek2
    WHERE onek2.unique1 > 980;
+
+RESET enable_seqscan;
+RESET enable_bitmapscan;
+RESET enable_sort;
 
 
 SELECT two, stringu1, ten, string4

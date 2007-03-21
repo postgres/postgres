@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.217 2007/03/17 00:11:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.218 2007/03/21 22:18:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,8 @@ static Path *choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 static int	bitmap_path_comparator(const void *a, const void *b);
 static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel,
 					List *paths, RelOptInfo *outer_rel);
-static List *pull_indexpath_quals(Path *bitmapqual);
-static bool lists_intersect_ptr(List *list1, List *list2);
+static void find_indexpath_quals(Path *bitmapqual, List **quals, List **preds);
+static bool lists_intersect(List *list1, List *list2);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
 						 int indexcol, Oid opfamily,
 						 RestrictInfo *rinfo,
@@ -562,6 +562,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	Path	  **patharray;
 	Cost		costsofar;
 	List	   *qualsofar;
+	List	   *firstpred;
 	ListCell   *lastcell;
 	int			i;
 	ListCell   *l;
@@ -586,8 +587,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	 * consider an index redundant if any of its index conditions were already
 	 * used by earlier indexes.  (We could use predicate_implied_by to have a
 	 * more intelligent, but much more expensive, check --- but in most cases
-	 * simple pointer equality should suffice, since after all the index
-	 * conditions are all coming from the same RestrictInfo lists.)
+	 * simple equality should suffice.)
 	 *
 	 * You might think the condition for redundancy should be "all index
 	 * conditions already used", not "any", but this turns out to be wrong.
@@ -597,10 +597,27 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 	 * non-selective.  In any case, we'd surely be drastically misestimating
 	 * the selectivity if we count the same condition twice.
 	 *
-	 * We include index predicate conditions in the redundancy test.  Because
-	 * the test is just for pointer equality and not equal(), the effect is
-	 * that use of the same partial index in two different AND elements is
-	 * considered redundant.  (XXX is this too strong?)
+	 * We must also consider index predicate conditions in checking for
+	 * redundancy, because the estimated selectivity of a partial index
+	 * includes its predicate even if the explicit index conditions don't.
+	 * Here we have to work harder than just checking expression equality:
+	 * we check to see if any of the predicate clauses are implied by
+	 * index conditions or predicate clauses of previous paths.  This covers
+	 * cases such as a condition "x = 42" used with a plain index, followed
+	 * by a clauseless scan of a partial index "WHERE x >= 40 AND x < 50".
+	 * Also, we reject indexes that have a qual condition matching any
+	 * previously-used index's predicate (by including predicate conditions
+	 * into qualsofar).  It should be sufficient to check equality in this
+	 * case, not implication, since we've sorted the paths by selectivity
+	 * and so tighter conditions are seen first --- only for exactly equal
+	 * cases might the partial index come first.
+	 *
+	 * XXX the reason we need all these redundancy checks is that costsize.c
+	 * and clausesel.c aren't very smart about redundant clauses: they will
+	 * usually double-count the redundant clauses, producing a too-small
+	 * selectivity that makes a redundant AND look like it reduces the total
+	 * cost.  Perhaps someday that code will be smarter and we can remove
+	 * these heuristics.
 	 *
 	 * Note: outputting the selected sub-paths in selectivity order is a good
 	 * thing even if we weren't using that as part of the selection method,
@@ -619,18 +636,38 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 
 	paths = list_make1(patharray[0]);
 	costsofar = bitmap_and_cost_est(root, rel, paths, outer_rel);
-	qualsofar = pull_indexpath_quals(patharray[0]);
+	find_indexpath_quals(patharray[0], &qualsofar, &firstpred);
+	qualsofar = list_concat(qualsofar, firstpred);
 	lastcell = list_head(paths);	/* for quick deletions */
 
 	for (i = 1; i < npaths; i++)
 	{
 		Path	   *newpath = patharray[i];
 		List	   *newqual;
+		List	   *newpred;
 		Cost		newcost;
 
-		newqual = pull_indexpath_quals(newpath);
-		if (lists_intersect_ptr(newqual, qualsofar))
+		find_indexpath_quals(newpath, &newqual, &newpred);
+		if (lists_intersect(newqual, qualsofar))
 			continue;			/* consider it redundant */
+		if (newpred)
+		{
+			bool	redundant = false;
+
+			/* we check each predicate clause separately */
+			foreach(l, newpred)
+			{
+				Node	   *np = (Node *) lfirst(l);
+
+				if (predicate_implied_by(list_make1(np), qualsofar))
+				{
+					redundant = true;
+					break;		/* out of inner loop */
+				}
+			}
+			if (redundant)
+				continue;
+		}
 		/* tentatively add newpath to paths, so we can estimate cost */
 		paths = lappend(paths, newpath);
 		newcost = bitmap_and_cost_est(root, rel, paths, outer_rel);
@@ -638,7 +675,7 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel,
 		{
 			/* keep newpath in paths, update subsidiary variables */
 			costsofar = newcost;
-			qualsofar = list_concat(qualsofar, newqual);
+			qualsofar = list_concat(list_concat(qualsofar, newqual), newpred);
 			lastcell = lnext(lastcell);
 		}
 		else
@@ -710,24 +747,26 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel,
 }
 
 /*
- * pull_indexpath_quals
+ * find_indexpath_quals
  *
- * Given the Path structure for a plain or bitmap indexscan, extract a list
+ * Given the Path structure for a plain or bitmap indexscan, extract lists
  * of all the indexquals and index predicate conditions used in the Path.
  *
  * This is sort of a simplified version of make_restrictinfo_from_bitmapqual;
  * here, we are not trying to produce an accurate representation of the AND/OR
  * semantics of the Path, but just find out all the base conditions used.
  *
- * The result list contains pointers to the expressions used in the Path,
+ * The result lists contain pointers to the expressions used in the Path,
  * but all the list cells are freshly built, so it's safe to destructively
- * modify the list (eg, by concat'ing it with other lists).
+ * modify the lists (eg, by concat'ing with other lists).
  */
-static List *
-pull_indexpath_quals(Path *bitmapqual)
+static void
+find_indexpath_quals(Path *bitmapqual, List **quals, List **preds)
 {
-	List	   *result = NIL;
 	ListCell   *l;
+
+	*quals = NIL;
+	*preds = NIL;
 
 	if (IsA(bitmapqual, BitmapAndPath))
 	{
@@ -735,10 +774,12 @@ pull_indexpath_quals(Path *bitmapqual)
 
 		foreach(l, apath->bitmapquals)
 		{
-			List	   *sublist;
+			List	   *subquals;
+			List	   *subpreds;
 
-			sublist = pull_indexpath_quals((Path *) lfirst(l));
-			result = list_concat(result, sublist);
+			find_indexpath_quals((Path *) lfirst(l), &subquals, &subpreds);
+			*quals = list_concat(*quals, subquals);
+			*preds = list_concat(*preds, subpreds);
 		}
 	}
 	else if (IsA(bitmapqual, BitmapOrPath))
@@ -747,36 +788,36 @@ pull_indexpath_quals(Path *bitmapqual)
 
 		foreach(l, opath->bitmapquals)
 		{
-			List	   *sublist;
+			List	   *subquals;
+			List	   *subpreds;
 
-			sublist = pull_indexpath_quals((Path *) lfirst(l));
-			result = list_concat(result, sublist);
+			find_indexpath_quals((Path *) lfirst(l), &subquals, &subpreds);
+			*quals = list_concat(*quals, subquals);
+			*preds = list_concat(*preds, subpreds);
 		}
 	}
 	else if (IsA(bitmapqual, IndexPath))
 	{
 		IndexPath  *ipath = (IndexPath *) bitmapqual;
 
-		result = get_actual_clauses(ipath->indexclauses);
-		result = list_concat(result, list_copy(ipath->indexinfo->indpred));
+		*quals = get_actual_clauses(ipath->indexclauses);
+		*preds = list_copy(ipath->indexinfo->indpred);
 	}
 	else
 		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
-
-	return result;
 }
 
 
 /*
- * lists_intersect_ptr
+ * lists_intersect
  *		Detect whether two lists have a nonempty intersection,
- *		using pointer equality to compare members.
+ *		using equal() to compare members.
  *
  * This possibly should go into list.c, but it doesn't yet have any use
  * except in choose_bitmap_and.
  */
 static bool
-lists_intersect_ptr(List *list1, List *list2)
+lists_intersect(List *list1, List *list2)
 {
 	ListCell   *cell1;
 
@@ -787,7 +828,7 @@ lists_intersect_ptr(List *list1, List *list2)
 
 		foreach(cell2, list2)
 		{
-			if (lfirst(cell2) == datum1)
+			if (equal(lfirst(cell2), datum1))
 				return true;
 		}
 	}
