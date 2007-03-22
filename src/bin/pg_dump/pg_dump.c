@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.462 2007/03/22 19:42:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.463 2007/03/22 20:18:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -476,15 +476,15 @@ main(int argc, char **argv)
 	}
 
 	/* open the output file */
-	if (strcasecmp(format, "a") == 0 || strcasecmp(format, "append") == 0)
+	if (pg_strcasecmp(format, "a") == 0 || pg_strcasecmp(format, "append") == 0)
 	{
 		/* not documented */
 		plainText = 1;
 		g_fout = CreateArchive(filename, archNull, 0, archModeAppend);
 	}
-	else if (strcasecmp(format, "c") == 0 || strcasecmp(format, "custom") == 0)
+	else if (pg_strcasecmp(format, "c") == 0 || pg_strcasecmp(format, "custom") == 0)
 		g_fout = CreateArchive(filename, archCustom, compressLevel, archModeWrite);
-	else if (strcasecmp(format, "f") == 0 || strcasecmp(format, "file") == 0)
+	else if (pg_strcasecmp(format, "f") == 0 || pg_strcasecmp(format, "file") == 0)
 	{
 		/*
 		 *	Dump files into the current directory; for demonstration only, not
@@ -492,12 +492,12 @@ main(int argc, char **argv)
 		 */
 		g_fout = CreateArchive(filename, archFiles, compressLevel, archModeWrite);
 	}
-	else if (strcasecmp(format, "p") == 0 || strcasecmp(format, "plain") == 0)
+	else if (pg_strcasecmp(format, "p") == 0 || pg_strcasecmp(format, "plain") == 0)
 	{
 		plainText = 1;
 		g_fout = CreateArchive(filename, archNull, 0, archModeWrite);
 	}
-	else if (strcasecmp(format, "t") == 0 || strcasecmp(format, "tar") == 0)
+	else if (pg_strcasecmp(format, "t") == 0 || pg_strcasecmp(format, "tar") == 0)
 		g_fout = CreateArchive(filename, archTar, compressLevel, archModeWrite);
 	else
 	{
