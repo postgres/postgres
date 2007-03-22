@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.149 2007/03/16 17:57:36 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.150 2007/03/22 19:53:30 momjian Exp $
  * ----------
  */
 #include "postgres.h"
@@ -572,6 +572,10 @@ pgstat_start(void)
 	return 0;
 }
 
+void allow_immediate_pgstat_restart(void)
+{
+		last_pgstat_start_time = 0;
+}
 
 /* ------------------------------------------------------------
  * Public functions used by backends follow

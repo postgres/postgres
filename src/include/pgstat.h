@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.55 2007/03/16 17:57:36 mha Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.56 2007/03/22 19:53:31 momjian Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -369,7 +369,7 @@ extern void CreateSharedBackendStatus(void);
 extern void pgstat_init(void);
 extern int	pgstat_start(void);
 extern void pgstat_reset_all(void);
-
+extern void allow_immediate_pgstat_restart(void);
 #ifdef EXEC_BACKEND
 extern void PgstatCollectorMain(int argc, char *argv[]);
 #endif

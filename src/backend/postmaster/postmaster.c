@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.526 2007/03/07 13:35:02 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.527 2007/03/22 19:53:30 momjian Exp $
  *
  * NOTES
  *
@@ -1896,7 +1896,10 @@ pmdie(SIGNAL_ARGS)
 				signal_child(PgArchPID, SIGQUIT);
 			/* Tell pgstat to shut down too; nothing left for it to do */
 			if (PgStatPID != 0)
+			{
 				signal_child(PgStatPID, SIGQUIT);
+				allow_immediate_pgstat_restart();
+			}
 			/* Tell autovac launcher to shut down too */
 			if (AutoVacPID != 0)
 				signal_child(AutoVacPID, SIGTERM);
@@ -1952,7 +1955,10 @@ pmdie(SIGNAL_ARGS)
 				signal_child(PgArchPID, SIGQUIT);
 			/* Tell pgstat to shut down too; nothing left for it to do */
 			if (PgStatPID != 0)
+			{
 				signal_child(PgStatPID, SIGQUIT);
+				allow_immediate_pgstat_restart();
+			}
 			/* Tell autovac launcher to shut down too */
 			if (AutoVacPID != 0)
 				signal_child(AutoVacPID, SIGTERM);
@@ -1977,7 +1983,10 @@ pmdie(SIGNAL_ARGS)
 			if (PgArchPID != 0)
 				signal_child(PgArchPID, SIGQUIT);
 			if (PgStatPID != 0)
+			{
 				signal_child(PgStatPID, SIGQUIT);
+				allow_immediate_pgstat_restart();
+			}
 			if (DLGetHead(BackendList))
 				SignalChildren(SIGQUIT);
 			ExitPostmaster(0);
@@ -2241,7 +2250,10 @@ reaper(SIGNAL_ARGS)
 			signal_child(PgArchPID, SIGQUIT);
 		/* Tell pgstat to shut down too; nothing left for it to do */
 		if (PgStatPID != 0)
+		{
 			signal_child(PgStatPID, SIGQUIT);
+			allow_immediate_pgstat_restart();
+		}
 		/* Tell autovac launcher to shut down too */
 		if (AutoVacPID != 0)
 			signal_child(AutoVacPID, SIGTERM);
@@ -2404,6 +2416,7 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 								 "SIGQUIT",
 								 (int) PgStatPID)));
 		signal_child(PgStatPID, SIGQUIT);
+		allow_immediate_pgstat_restart();
 	}
 
 	/* We do NOT restart the syslogger */
