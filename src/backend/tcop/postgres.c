@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.528 2007/03/13 00:33:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.529 2007/03/22 19:55:04 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -765,6 +765,7 @@ exec_simple_query(const char *query_string)
 	ListCell   *parsetree_item;
 	bool		save_log_statement_stats = log_statement_stats;
 	bool		was_logged = false;
+	bool		isTopLevel;
 	char		msec_str[32];
 
 	/*
@@ -823,6 +824,15 @@ exec_simple_query(const char *query_string)
 	 * Switch back to transaction context to enter the loop.
 	 */
 	MemoryContextSwitchTo(oldcontext);
+
+	/*
+	 * We'll tell PortalRun it's a top-level command iff there's exactly
+	 * one raw parsetree.  If more than one, it's effectively a transaction
+	 * block and we want PreventTransactionChain to reject unsafe commands.
+	 * (Note: we're assuming that query rewrite cannot add commands that are
+	 * significant to PreventTransactionChain.)
+	 */
+	isTopLevel = (list_length(parsetree_list) == 1);
 
 	/*
 	 * Run through the raw parsetree(s) and process each one.
@@ -944,7 +954,7 @@ exec_simple_query(const char *query_string)
 		 */
 		(void) PortalRun(portal,
 						 FETCH_ALL,
-						 true,	/* top level */
+						 isTopLevel,
 						 receiver,
 						 receiver,
 						 completionTag);
@@ -1810,7 +1820,7 @@ exec_execute_message(const char *portal_name, long max_rows)
 
 	completed = PortalRun(portal,
 						  max_rows,
-						  true,	/* top level */
+						  true,					/* always top level */
 						  receiver,
 						  receiver,
 						  completionTag);

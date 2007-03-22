@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.237 2007/03/13 14:32:25 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.238 2007/03/22 19:55:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2503,9 +2503,10 @@ AbortCurrentTransaction(void)
  *	completes).  Subtransactions are verboten too.
  *
  *	isTopLevel: passed down from ProcessUtility to determine whether we are
- *	inside a function.  (We will always fail if this is false, but it's
- *	convenient to centralize the check here instead of making callers do it.)
- *	stmtType: statement type name, for error messages.
+ *	inside a function or multi-query querystring.  (We will always fail if
+ *	this is false, but it's convenient to centralize the check here instead of
+ *	making callers do it.)
+ *  stmtType: statement type name, for error messages.
  */
 void
 PreventTransactionChain(bool isTopLevel, const char *stmtType)
@@ -2537,7 +2538,8 @@ PreventTransactionChain(bool isTopLevel, const char *stmtType)
 		ereport(ERROR,
 				(errcode(ERRCODE_ACTIVE_SQL_TRANSACTION),
 		/* translator: %s represents an SQL statement name */
-				 errmsg("%s cannot be executed from a function", stmtType)));
+				 errmsg("%s cannot be executed from a function or multi-command string",
+						stmtType)));
 
 	/* If we got past IsTransactionBlock test, should be in default state */
 	if (CurrentTransactionState->blockState != TBLOCK_DEFAULT &&
