@@ -9,19 +9,11 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/lib/dllist.c,v 1.34 2007/01/05 22:19:29 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/lib/dllist.c,v 1.35 2007/03/22 18:57:52 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
-
-/* can be used in frontend or backend */
-#ifdef FRONTEND
-#include "postgres_fe.h"
-/* No assert checks in frontend ... */
-#define Assert(condition)
-#else
 #include "postgres.h"
-#endif
 
 #include "lib/dllist.h"
 
@@ -31,18 +23,8 @@ DLNewList(void)
 {
 	Dllist	   *l;
 
-	l = (Dllist *) malloc(sizeof(Dllist));
-	if (l == NULL)
-	{
-#ifdef FRONTEND
-		fprintf(stderr, "memory exhausted in DLNewList\n");
-		exit(1);
-#else
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-#endif
-	}
+	l = (Dllist *) palloc(sizeof(Dllist));
+
 	l->dll_head = NULL;
 	l->dll_tail = NULL;
 
@@ -66,9 +48,9 @@ DLFreeList(Dllist *list)
 	Dlelem	   *curr;
 
 	while ((curr = DLRemHead(list)) != NULL)
-		free(curr);
+		pfree(curr);
 
-	free(list);
+	pfree(list);
 }
 
 Dlelem *
@@ -76,18 +58,8 @@ DLNewElem(void *val)
 {
 	Dlelem	   *e;
 
-	e = (Dlelem *) malloc(sizeof(Dlelem));
-	if (e == NULL)
-	{
-#ifdef FRONTEND
-		fprintf(stderr, "memory exhausted in DLNewElem\n");
-		exit(1);
-#else
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-#endif
-	}
+	e = (Dlelem *) palloc(sizeof(Dlelem));
+
 	e->dle_next = NULL;
 	e->dle_prev = NULL;
 	e->dle_val = val;
@@ -107,7 +79,7 @@ DLInitElem(Dlelem *e, void *val)
 void
 DLFreeElem(Dlelem *e)
 {
-	free(e);
+	pfree(e);
 }
 
 void
