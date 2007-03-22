@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.146 2007/03/19 23:38:28 wieck Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.147 2007/03/22 15:46:56 momjian Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -3644,13 +3644,13 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-	   Controls in which <xref linkend="guc-session-replication-role"> modes
-	   the rule fires.
-	   <literal>O</> = rule fires in <quote>origin</> and <quote>local</> modes,
-	   <literal>D</> = rule is disabled,
-	   <literal>R</> = rule fires in <quote>replica</> mode,
-	   <literal>A</> = rule fires always.
-	  </entry>
+       Controls in which <xref linkend="guc-session-replication-role"> modes
+       the rule fires.
+       <literal>O</> = rule fires in <quote>origin</> and <quote>local</> modes,
+       <literal>D</> = rule is disabled,
+       <literal>R</> = rule fires in <quote>replica</> mode,
+       <literal>A</> = rule fires always.
+      </entry>
      </row>
 
      <row>
@@ -4195,13 +4195,13 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-	   Controls in which <xref linkend="guc-session-replication-role"> modes
-	   the trigger fires.
-	   <literal>O</> = trigger fires in <quote>origin</> and <quote>local</> modes,
-	   <literal>D</> = trigger is disabled,
-	   <literal>R</> = trigger fires in <quote>replica</> mode,
-	   <literal>A</> = trigger fires always.
-	  </entry>
+       Controls in which <xref linkend="guc-session-replication-role"> modes
+       the trigger fires.
+       <literal>O</> = trigger fires in <quote>origin</> and <quote>local</> modes,
+       <literal>D</> = trigger is disabled,
+       <literal>R</> = trigger fires in <quote>replica</> mode,
+       <literal>A</> = trigger fires always.
+      </entry>
      </row>
 
      <row>
