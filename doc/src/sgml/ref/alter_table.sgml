@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.95 2007/03/19 23:38:29 wieck Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.96 2007/03/22 15:45:56 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -213,13 +213,13 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       requires superuser privileges; it should be done with caution since
       of course the integrity of the constraint cannot be guaranteed if the
       triggers are not executed.
-	  The trigger firing mechanism is also affected by the configuration
-	  variable <xref linkend="guc-session-replication-role">. Simply ENABLEd
-	  triggers will fire when the replication role is <quote>origin</>
-	  (the default) or <quote>local</>. Triggers configured ENABLE REPLICA 
-	  will only fire if the session is in <quote>replica</> mode and triggers 
-	  configured ENABLE ALWAYS will fire regardless of the current replication 
-	  mode.
+      The trigger firing mechanism is also affected by the configuration
+      variable <xref linkend="guc-session-replication-role">. Simply ENABLEd
+      triggers will fire when the replication role is <quote>origin</>
+      (the default) or <quote>local</>. Triggers configured ENABLE REPLICA 
+      will only fire if the session is in <quote>replica</> mode and triggers 
+      configured ENABLE ALWAYS will fire regardless of the current replication 
+      mode.
      </para>
     </listitem>
    </varlistentry>
@@ -230,10 +230,10 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
      <para>
       These forms configure the firing of rewrite rules belonging to the table.
       A disabled rule is still known to the system, but is not applied
-	  during query rewriting. The semantics are as for disabled/enabled
-	  triggers. This configuration is ignored for ON SELECT rules, which
-	  are always applied in order to keep views working even if the current
-	  session is in a non-default replication role.
+      during query rewriting. The semantics are as for disabled/enabled
+      triggers. This configuration is ignored for ON SELECT rules, which
+      are always applied in order to keep views working even if the current
+      session is in a non-default replication role.
      </para>
     </listitem>
    </varlistentry>
