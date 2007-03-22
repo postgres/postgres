@@ -212,3 +212,5 @@ SELECT xmlpath('//text()', '<local:data xmlns:local="http://127.0.0.1"><local:pi
 ERROR:  no XML support in this installation
 SELECT xmlpath('//loc:piece/@id', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>', ARRAY[ARRAY['loc'], ARRAY['http://127.0.0.1']]);
 ERROR:  no XML support in this installation
+SELECT xmlpath('//b', '<a>one <b>two</b> three <b>etc</b></a>');
+ERROR:  no XML support in this installation

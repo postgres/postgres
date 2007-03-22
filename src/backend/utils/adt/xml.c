@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.36 2007/03/22 20:14:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.37 2007/03/22 20:26:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ static xmlChar *xml_text2xmlChar(text *in);
 static int		parse_xml_decl(const xmlChar *str, size_t *lenp, xmlChar **version, xmlChar **encoding, int *standalone);
 static bool		print_xml_decl(StringInfo buf, const xmlChar *version, pg_enc encoding, int standalone);
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace, xmlChar *encoding);
-static text		*xml_xmlnodetotext(xmlNodePtr cur);
+static text		*xml_xmlnodetoxmltype(xmlNodePtr cur);
 
 #endif /* USE_LIBXML */
 
@@ -2414,20 +2414,31 @@ SPI_sql_row_to_xmlelement(int rownum, StringInfo result, char *tablename, bool n
 
 #ifdef USE_LIBXML
 /* 
- * Convert XML node to text (return value only, it's not dumping)
+ * Convert XML node to text (dump subtree in case of element, return value otherwise)
  */
 text *
-xml_xmlnodetotext(xmlNodePtr cur)
+xml_xmlnodetoxmltype(xmlNodePtr cur)
 {
-	xmlChar    		*str;
-	text			*result;
-	size_t			len;	
+	xmlChar    			*str;
+	xmltype				*result;
+	size_t				len;
+	xmlBufferPtr 		buf;
 	
-	str = xmlXPathCastNodeToString(cur);
-	len = strlen((char *) str);
-	result = (text *) palloc(len + VARHDRSZ);
-	SET_VARSIZE(result, len + VARHDRSZ);
-	memcpy(VARDATA(result), str, len);
+	if (cur->type == XML_ELEMENT_NODE)
+	{
+		buf = xmlBufferCreate();
+		xmlNodeDump(buf, NULL, cur, 0, 1);
+		result = xmlBuffer_to_xmltype(buf);
+		xmlBufferFree(buf);
+	}
+	else
+	{
+		str = xmlXPathCastNodeToString(cur);
+		len = strlen((char *) str);
+		result = (text *) palloc(len + VARHDRSZ);
+		SET_VARSIZE(result, len + VARHDRSZ);
+		memcpy(VARDATA(result), str, len);
+	}
 	
 	return result;
 }
@@ -2607,7 +2618,7 @@ xmlpath(PG_FUNCTION_ARGS)
 			{
 				Datum		elem;
 				bool		elemisnull = false;
-				elem = PointerGetDatum(xml_xmlnodetotext(xpathobj->nodesetval->nodeTab[i]));
+				elem = PointerGetDatum(xml_xmlnodetoxmltype(xpathobj->nodesetval->nodeTab[i]));
 				astate = accumArrayResult(astate, elem,
 										  elemisnull, XMLOID,
 										  CurrentMemoryContext);

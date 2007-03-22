@@ -152,3 +152,4 @@ SELECT xmlpath(NULL, NULL) IS NULL FROM xmltest;
 SELECT xmlpath('', '<!-- error -->');
 SELECT xmlpath('//text()', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>');
 SELECT xmlpath('//loc:piece/@id', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>', ARRAY[ARRAY['loc'], ARRAY['http://127.0.0.1']]);
+SELECT xmlpath('//b', '<a>one <b>two</b> three <b>etc</b></a>');
