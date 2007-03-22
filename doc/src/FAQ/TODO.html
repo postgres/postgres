@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Thu Mar 22 16:38:31 EDT 2007
+Last updated:           Thu Mar 22 16:54:36 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -380,6 +380,10 @@ first.  There is also a developer's wiki at<br/>
 <p>  Currently client_encoding is set in postgresql.conf, which
   defaults to the server encoding.
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg01696.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg01696.php</a>
+</p>
+  </li><li>Fix cases where invalid byte encodings are accepted by the database,
+  but throw an error on SELECT
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00767.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00767.php</a>
 </p>
 </li></ul>
 <h1><a name="section_7">Views / Rules</a></h1>
