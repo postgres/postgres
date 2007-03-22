@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.44 2007/03/13 00:33:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.45 2007/03/22 19:51:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -523,12 +523,25 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
 	 * fresh subdirectories in parallel. It is possible that new files are
 	 * being created within subdirectories, though, so the rmdir call could
 	 * fail.  Worst consequence is a less friendly error message.
+	 *
+	 * If redo is true then ENOENT is a likely outcome here, and we allow it
+	 * to pass without comment.  In normal operation we still allow it, but
+	 * with a warning.  This is because even though ProcessUtility disallows
+	 * DROP TABLESPACE in a transaction block, it's possible that a previous
+	 * DROP failed and rolled back after removing the tablespace directories
+	 * and symlink.  We want to allow a new DROP attempt to succeed at
+	 * removing the catalog entries, so we should not give a hard error here.
 	 */
 	dirdesc = AllocateDir(location);
 	if (dirdesc == NULL)
 	{
-		if (redo && errno == ENOENT)
+		if (errno == ENOENT)
 		{
+			if (!redo)
+				ereport(WARNING,
+						(errcode_for_file_access(),
+						 errmsg("could not open directory \"%s\": %m",
+								location)));
 			pfree(location);
 			return true;
 		}
