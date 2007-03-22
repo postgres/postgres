@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.35 2007/03/15 23:12:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.36 2007/03/22 20:14:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@
 #include <libxml/uri.h>
 #include <libxml/xmlerror.h>
 #include <libxml/xmlwriter.h>
+#include <libxml/xpath.h>
+#include <libxml/xpathInternals.h>
 #endif /* USE_LIBXML */
 
 #include "catalog/namespace.h"
@@ -67,6 +69,7 @@
 #include "utils/datetime.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "access/tupmacs.h"
 #include "utils/xml.h"
 
 
@@ -88,6 +91,7 @@ static xmlChar *xml_text2xmlChar(text *in);
 static int		parse_xml_decl(const xmlChar *str, size_t *lenp, xmlChar **version, xmlChar **encoding, int *standalone);
 static bool		print_xml_decl(StringInfo buf, const xmlChar *version, pg_enc encoding, int standalone);
 static xmlDocPtr xml_parse(text *data, XmlOptionType xmloption_arg, bool preserve_whitespace, xmlChar *encoding);
+static text		*xml_xmlnodetotext(xmlNodePtr cur);
 
 #endif /* USE_LIBXML */
 
@@ -1463,7 +1467,6 @@ map_xml_name_to_sql_identifier(char *name)
 	return buf.data;
 }
 
-
 /*
  * Map SQL value to XML value; see SQL/XML:2003 section 9.16.
  */
@@ -2402,4 +2405,248 @@ SPI_sql_row_to_xmlelement(int rownum, StringInfo result, char *tablename, bool n
 		appendStringInfo(result, "</%s>\n\n", xmltn);
 	else
 		appendStringInfoString(result, "</row>\n\n");
+}
+
+
+/*
+ * XPath related functions
+ */
+
+#ifdef USE_LIBXML
+/* 
+ * Convert XML node to text (return value only, it's not dumping)
+ */
+text *
+xml_xmlnodetotext(xmlNodePtr cur)
+{
+	xmlChar    		*str;
+	text			*result;
+	size_t			len;	
+	
+	str = xmlXPathCastNodeToString(cur);
+	len = strlen((char *) str);
+	result = (text *) palloc(len + VARHDRSZ);
+	SET_VARSIZE(result, len + VARHDRSZ);
+	memcpy(VARDATA(result), str, len);
+	
+	return result;
+}
+#endif
+
+/*
+ * Evaluate XPath expression and return array of XML values.
+ * As we have no support of XQuery sequences yet, this functions seems
+ * to be the most useful one (array of XML functions plays a role of
+ * some kind of substritution for XQuery sequences).
+
+ * Workaround here: we parse XML data in different way to allow XPath for
+ * fragments (see "XPath for fragment" TODO comment inside).
+ */
+Datum
+xmlpath(PG_FUNCTION_ARGS)
+{
+#ifdef USE_LIBXML
+	ArrayBuildState		*astate = NULL;
+	xmlParserCtxtPtr	ctxt = NULL;
+	xmlDocPtr			doc = NULL;
+	xmlXPathContextPtr	xpathctx = NULL;
+	xmlXPathCompExprPtr	xpathcomp = NULL;
+	xmlXPathObjectPtr	xpathobj = NULL;
+	int32				len, xpath_len;
+	xmlChar				*string, *xpath_expr;
+	bool				res_is_null = FALSE;
+	int					i;
+	xmltype				*data;
+	text				*xpath_expr_text;
+	ArrayType			*namespaces;
+	int					*dims, ndims, ns_count = 0, bitmask = 1;
+	char				*ptr;
+	bits8				*bitmap;
+	char				**ns_names = NULL, **ns_uris = NULL;
+	int16				typlen;
+	bool				typbyval;
+	char				typalign;
+	
+	/* the function is not strict, we must check first two args */
+	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
+		PG_RETURN_NULL();
+	
+	xpath_expr_text = PG_GETARG_TEXT_P(0);
+	data  = PG_GETARG_XML_P(1);
+	
+	/* Namespace mappings passed as text[].
+	 * Assume that 2-dimensional array has been passed, 
+	 * the 1st subarray is array of names, the 2nd -- array of URIs,
+	 * example: ARRAY[ARRAY['myns', 'myns2'], ARRAY['http://example.com', 'http://example2.com']]. 
+	 */
+	if (!PG_ARGISNULL(2))
+	{
+		namespaces = PG_GETARG_ARRAYTYPE_P(2);
+		ndims = ARR_NDIM(namespaces);
+		dims = ARR_DIMS(namespaces);
+		
+		/* Sanity check */
+		if (ndims != 2)
+			ereport(ERROR, (errmsg("invalid array passed for namespace mappings"),
+							errdetail("Only 2-dimensional array may be used for namespace mappings.")));
+		
+		Assert(ARR_ELEMTYPE(namespaces) == TEXTOID);
+		
+		ns_count = ArrayGetNItems(ndims, dims) / 2;
+		get_typlenbyvalalign(ARR_ELEMTYPE(namespaces),
+							 &typlen, &typbyval, &typalign);
+		ns_names = (char **) palloc(ns_count * sizeof(char *));
+		ns_uris = (char **) palloc(ns_count * sizeof(char *));
+		ptr = ARR_DATA_PTR(namespaces);
+		bitmap = ARR_NULLBITMAP(namespaces);
+		bitmask = 1;
+		
+		for (i = 0; i < ns_count * 2; i++)
+		{
+			if (bitmap && (*bitmap & bitmask) == 0)
+				ereport(ERROR, (errmsg("neither namespace nor URI may be NULL"))); /* TODO: better message */
+			else
+			{
+				if (i < ns_count)
+					ns_names[i] = DatumGetCString(DirectFunctionCall1(textout,
+														  PointerGetDatum(ptr)));
+				else
+					ns_uris[i - ns_count] = DatumGetCString(DirectFunctionCall1(textout,
+														  PointerGetDatum(ptr)));
+				ptr = att_addlength(ptr, typlen, PointerGetDatum(ptr));
+				ptr = (char *) att_align(ptr, typalign);
+			}
+	
+			/* advance bitmap pointer if any */
+			if (bitmap)
+			{
+				bitmask <<= 1;
+				if (bitmask == 0x100)
+				{
+					bitmap++;
+					bitmask = 1;
+				}
+			}
+		}
+	}
+	
+	len = VARSIZE(data) - VARHDRSZ;
+	xpath_len = VARSIZE(xpath_expr_text) - VARHDRSZ;
+	if (xpath_len == 0)
+		ereport(ERROR, (errmsg("empty XPath expression")));
+	
+	if (xmlStrncmp((xmlChar *) VARDATA(data), (xmlChar *) "<?xml", 5) == 0)
+	{
+		string = palloc(len + 1);
+		memcpy(string, VARDATA(data), len);
+		string[len] = '\0';
+		xpath_expr = palloc(xpath_len + 1);
+		memcpy(xpath_expr, VARDATA(xpath_expr_text), xpath_len);
+		xpath_expr[xpath_len] = '\0';
+	}
+	else
+	{
+		/* use "<x>...</x>" as dummy root element to enable XPath for fragments */
+		/* TODO: (XPath for fragment) find better solution to work with XML fragment! */
+		string = xmlStrncatNew((xmlChar *) "<x>", (xmlChar *) VARDATA(data), len);
+		string = xmlStrncat(string, (xmlChar *) "</x>", 5);
+		len += 7;
+		xpath_expr = xmlStrncatNew((xmlChar *) "/x", (xmlChar *) VARDATA(xpath_expr_text), xpath_len);
+		len += 2;
+	}
+	
+	xml_init();
+
+	PG_TRY();
+	{
+		/* redundant XML parsing (two parsings for the same value in the same session are possible) */
+		ctxt = xmlNewParserCtxt();
+		if (ctxt == NULL)
+			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+						"could not allocate parser context");
+		doc = xmlCtxtReadMemory(ctxt, (char *) string, len, NULL, NULL, 0);
+		if (doc == NULL)
+			xml_ereport(ERROR, ERRCODE_INVALID_XML_DOCUMENT,
+						"could not parse XML data");
+		xpathctx = xmlXPathNewContext(doc);
+		if (xpathctx == NULL)
+			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+						"could not allocate XPath context");
+		xpathctx->node = xmlDocGetRootElement(doc);
+		if (xpathctx->node == NULL)
+			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+						"could not find root XML element"); 
+
+		/* register namespaces, if any */
+		if ((ns_count > 0) && ns_names && ns_uris)
+			for (i = 0; i < ns_count; i++)
+				if (0 != xmlXPathRegisterNs(xpathctx, (xmlChar *) ns_names[i], (xmlChar *) ns_uris[i]))
+					ereport(ERROR, 
+						(errmsg("could not register XML namespace with prefix=\"%s\" and href=\"%s\"", ns_names[i], ns_uris[i])));
+		
+		xpathcomp = xmlXPathCompile(xpath_expr);
+		if (xpathcomp == NULL)
+			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+						"invalid XPath expression"); /* TODO: show proper XPath error details */
+		
+		xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
+		xmlXPathFreeCompExpr(xpathcomp);
+		if (xpathobj == NULL)
+			ereport(ERROR, (errmsg("could not create XPath object")));
+		
+		if (xpathobj->nodesetval == NULL)
+			res_is_null = TRUE;
+		
+		if (!res_is_null && xpathobj->nodesetval->nodeNr == 0)
+			/* TODO maybe empty array should be here, not NULL? (if so -- fix segfault) */
+			/*PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));*/
+			res_is_null = TRUE;
+		
+		if (!res_is_null) 
+			for (i = 0; i < xpathobj->nodesetval->nodeNr; i++)
+			{
+				Datum		elem;
+				bool		elemisnull = false;
+				elem = PointerGetDatum(xml_xmlnodetotext(xpathobj->nodesetval->nodeTab[i]));
+				astate = accumArrayResult(astate, elem,
+										  elemisnull, XMLOID,
+										  CurrentMemoryContext);
+			}
+		
+		xmlXPathFreeObject(xpathobj);
+		xmlXPathFreeContext(xpathctx);
+		xmlFreeParserCtxt(ctxt);
+		xmlFreeDoc(doc);
+		xmlCleanupParser();
+	}
+	PG_CATCH();
+	{
+		if (xpathcomp)
+			xmlXPathFreeCompExpr(xpathcomp);
+		if (xpathobj)
+			xmlXPathFreeObject(xpathobj);
+		if (xpathctx)
+			xmlXPathFreeContext(xpathctx);
+		if (doc)
+			xmlFreeDoc(doc);
+		if (ctxt)
+			xmlFreeParserCtxt(ctxt);
+		xmlCleanupParser();
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	
+	if (res_is_null)
+	{
+		PG_RETURN_NULL();
+	}
+	else
+	{
+		PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
+	}
+#else
+	NO_XML_SUPPORT();
+	return 0;
+#endif
 }

@@ -401,3 +401,33 @@ SELECT table_name, view_definition FROM information_schema.views
  xmlview9   | SELECT XMLSERIALIZE(CONTENT 'good'::"xml" AS text) AS "xmlserialize";
 (9 rows)
 
+-- Text XPath expressions evaluation
+SELECT xmlpath('/value', data) FROM xmltest;
+ xmlpath 
+---------
+ {one}
+ {two}
+(2 rows)
+
+SELECT xmlpath(NULL, NULL) IS NULL FROM xmltest;
+ ?column? 
+----------
+ t
+ t
+(2 rows)
+
+SELECT xmlpath('', '<!-- error -->');
+ERROR:  empty XPath expression
+CONTEXT:  SQL function "xmlpath" statement 1
+SELECT xmlpath('//text()', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>');
+    xmlpath     
+----------------
+ {"number one"}
+(1 row)
+
+SELECT xmlpath('//loc:piece/@id', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>', ARRAY[ARRAY['loc'], ARRAY['http://127.0.0.1']]);
+ xmlpath 
+---------
+ {1,2}
+(1 row)
+

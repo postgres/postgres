@@ -144,3 +144,11 @@ CREATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as text);
 
 SELECT table_name, view_definition FROM information_schema.views
   WHERE table_name LIKE 'xmlview%' ORDER BY 1;
+
+-- Text XPath expressions evaluation
+
+SELECT xmlpath('/value', data) FROM xmltest;
+SELECT xmlpath(NULL, NULL) IS NULL FROM xmltest;
+SELECT xmlpath('', '<!-- error -->');
+SELECT xmlpath('//text()', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>');
+SELECT xmlpath('//loc:piece/@id', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>', ARRAY[ARRAY['loc'], ARRAY['http://127.0.0.1']]);

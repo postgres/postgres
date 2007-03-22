@@ -197,3 +197,18 @@ SELECT table_name, view_definition FROM information_schema.views
  xmlview5   | SELECT XMLPARSE(CONTENT '<abc>x</abc>'::text STRIP WHITESPACE) AS "xmlparse";
 (2 rows)
 
+-- Text XPath expressions evaluation
+SELECT xmlpath('/value', data) FROM xmltest;
+ xmlpath 
+---------
+(0 rows)
+
+SELECT xmlpath(NULL, NULL) IS NULL FROM xmltest;
+ERROR:  no XML support in this installation
+CONTEXT:  SQL function "xmlpath" statement 1
+SELECT xmlpath('', '<!-- error -->');
+ERROR:  no XML support in this installation
+SELECT xmlpath('//text()', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>');
+ERROR:  no XML support in this installation
+SELECT xmlpath('//loc:piece/@id', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>', ARRAY[ARRAY['loc'], ARRAY['http://127.0.0.1']]);
+ERROR:  no XML support in this installation
