@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.37 2007/03/23 21:45:17 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.38 2007/03/23 21:57:10 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1276,6 +1276,8 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 	VacuumStmt	vacstmt;
 	MemoryContext old_cxt;
 
+	MemSet(&vacstmt, 0, sizeof(vacstmt));
+
 	/*
 	 * The list must survive transaction boundaries, so make sure we create it
 	 * in a long-lived context
@@ -1283,6 +1285,7 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 	old_cxt = MemoryContextSwitchTo(AutovacMemCxt);
 
 	/* Set up command parameters */
+	vacstmt.type = T_VacuumStmt;
 	vacstmt.vacuum = dovacuum;
 	vacstmt.full = false;
 	vacstmt.analyze = doanalyze;
