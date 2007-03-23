@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.35 2007/03/21 19:22:52 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.36 2007/03/23 09:57:55 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -268,6 +268,9 @@
     </userinput>
     <userinput>
      vcregress plcheck
+    </userinput>
+    <userinput>
+     vcregress contribcheck
     </userinput>
    </screen>
 
