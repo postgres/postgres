@@ -93,3 +93,33 @@ select cache_test_2();
 create or replace temp view v1 as
   select 2+2+4+(select max(unique1) from tenk1) as f1;
 select cache_test_2();
+
+--- Check that change of search_path is ignored by replans
+
+create schema s1
+  create table abc (f1 int);
+
+create schema s2
+  create table abc (f1 int);
+
+insert into s1.abc values(123);
+insert into s2.abc values(456);
+
+set search_path = s1;
+
+prepare p1 as select f1 from abc;
+
+execute p1;
+
+set search_path = s2;
+
+select f1 from abc;
+
+execute p1;
+
+alter table s1.abc add column f2 float8;   -- force replan
+
+execute p1;
+
+drop schema s1 cascade;
+drop schema s2 cascade;

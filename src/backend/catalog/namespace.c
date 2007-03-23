@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.92 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.93 2007/03/23 19:53:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,16 +46,15 @@
 
 /*
  * The namespace search path is a possibly-empty list of namespace OIDs.
- * In addition to the explicit list, several implicitly-searched namespaces
+ * In addition to the explicit list, implicitly-searched namespaces
  * may be included:
  *
- * 1. If a "special" namespace has been set by PushSpecialNamespace, it is
- * always searched first.  (This is a hack for CREATE SCHEMA.)
+ * 1. If a TEMP table namespace has been initialized in this session, it
+ * is implicitly searched first.  (The only time this doesn't happen is
+ * when we are obeying an override search path spec that says not to use the
+ * temp namespace, or the temp namespace is included in the explicit list.)
  *
- * 2. If a TEMP table namespace has been initialized in this session, it
- * is always searched just after any special namespace.
- *
- * 3. The system catalog namespace is always searched.	If the system
+ * 2. The system catalog namespace is always searched.	If the system
  * namespace is present in the explicit path then it will be searched in
  * the specified order; otherwise it will be searched after TEMP tables and
  * *before* the explicit list.	(It might seem that the system namespace
@@ -63,43 +62,67 @@
  * SQL99.  Also, this provides a way to search the system namespace first
  * without thereby making it the default creation target namespace.)
  *
- * The default creation target namespace is normally equal to the first
- * element of the explicit list, but is the "special" namespace when one
- * has been set.  If the explicit list is empty and there is no special
- * namespace, there is no default target.
+ * The default creation target namespace is always the first element of the
+ * explicit list.  If the explicit list is empty, there is no default target.
  *
  * In bootstrap mode, the search path is set equal to 'pg_catalog', so that
  * the system namespace is the only one searched or inserted into.
- * The initdb script is also careful to set search_path to 'pg_catalog' for
- * its post-bootstrap standalone backend runs.	Otherwise the default search
+ * initdb is also careful to set search_path to 'pg_catalog' for its
+ * post-bootstrap standalone backend runs.	Otherwise the default search
  * path is determined by GUC.  The factory default path contains the PUBLIC
  * namespace (if it exists), preceded by the user's personal namespace
  * (if one exists).
  *
- * If namespaceSearchPathValid is false, then namespaceSearchPath (and other
+ * We support a stack of "override" search path settings for use within
+ * specific sections of backend code.  namespace_search_path is ignored
+ * whenever the override stack is nonempty.  activeSearchPath is always
+ * the actually active path; it points either to the search list of the
+ * topmost stack entry, or to baseSearchPath which is the list derived
+ * from namespace_search_path.
+ *
+ * If baseSearchPathValid is false, then baseSearchPath (and other
  * derived variables) need to be recomputed from namespace_search_path.
  * We mark it invalid upon an assignment to namespace_search_path or receipt
  * of a syscache invalidation event for pg_namespace.  The recomputation
- * is done during the next lookup attempt.
+ * is done during the next non-overridden lookup attempt.  Note that an
+ * override spec is never subject to recomputation.
  *
  * Any namespaces mentioned in namespace_search_path that are not readable
- * by the current user ID are simply left out of namespaceSearchPath; so
+ * by the current user ID are simply left out of baseSearchPath; so
  * we have to be willing to recompute the path when current userid changes.
  * namespaceUser is the userid the path has been computed for.
+ *
+ * Note: all data pointed to by these List variables is in TopMemoryContext.
  */
 
-static List *namespaceSearchPath = NIL;
+/* These variables define the actually active state: */
+
+static List *activeSearchPath = NIL;
+
+/* default place to create stuff; if InvalidOid, no default */
+static Oid	activeCreationNamespace = InvalidOid;
+
+/* These variables are the values last derived from namespace_search_path: */
+
+static List *baseSearchPath = NIL;
+
+static Oid	baseCreationNamespace = InvalidOid;
 
 static Oid	namespaceUser = InvalidOid;
 
-/* default place to create stuff; if InvalidOid, no default */
-static Oid	defaultCreationNamespace = InvalidOid;
+/* The above three values are valid only if baseSearchPathValid */
+static bool baseSearchPathValid = true;
 
-/* first explicit member of list; usually same as defaultCreationNamespace */
-static Oid	firstExplicitNamespace = InvalidOid;
+/* Override requests are remembered in a stack of OverrideStackEntry structs */
 
-/* The above four values are valid only if namespaceSearchPathValid */
-static bool namespaceSearchPathValid = true;
+typedef struct
+{
+	List	   *searchPath;				/* the desired search path */
+	Oid			creationNamespace;		/* the desired creation namespace */
+	int			nestLevel;				/* subtransaction nesting level */
+} OverrideStackEntry;
+
+static List *overrideStack = NIL;
 
 /*
  * myTempNamespace is InvalidOid until and unless a TEMP namespace is set up
@@ -118,13 +141,7 @@ static Oid	myTempNamespace = InvalidOid;
 static SubTransactionId myTempNamespaceSubID = InvalidSubTransactionId;
 
 /*
- * "Special" namespace for CREATE SCHEMA.  If set, it's the first search
- * path element, and also the default creation namespace.
- */
-static Oid	mySpecialNamespace = InvalidOid;
-
-/*
- * This is the text equivalent of the search path --- it's the value
+ * This is the user's textual search path specification --- it's the value
  * of the GUC variable 'search_path'.
  */
 char	   *namespace_search_path = NULL;
@@ -260,7 +277,7 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 	{
 		/* use the default creation namespace */
 		recomputeNamespacePath();
-		namespaceId = defaultCreationNamespace;
+		namespaceId = activeCreationNamespace;
 		if (!OidIsValid(namespaceId))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -285,7 +302,7 @@ RelnameGetRelid(const char *relname)
 
 	recomputeNamespacePath();
 
-	foreach(l, namespaceSearchPath)
+	foreach(l, activeSearchPath)
 	{
 		Oid			namespaceId = lfirst_oid(l);
 
@@ -329,7 +346,7 @@ RelationIsVisible(Oid relid)
 	 */
 	relnamespace = relform->relnamespace;
 	if (relnamespace != PG_CATALOG_NAMESPACE &&
-		!list_member_oid(namespaceSearchPath, relnamespace))
+		!list_member_oid(activeSearchPath, relnamespace))
 		visible = false;
 	else
 	{
@@ -342,7 +359,7 @@ RelationIsVisible(Oid relid)
 		ListCell   *l;
 
 		visible = false;
-		foreach(l, namespaceSearchPath)
+		foreach(l, activeSearchPath)
 		{
 			Oid			namespaceId = lfirst_oid(l);
 
@@ -381,7 +398,7 @@ TypenameGetTypid(const char *typname)
 
 	recomputeNamespacePath();
 
-	foreach(l, namespaceSearchPath)
+	foreach(l, activeSearchPath)
 	{
 		Oid			namespaceId = lfirst_oid(l);
 
@@ -427,7 +444,7 @@ TypeIsVisible(Oid typid)
 	 */
 	typnamespace = typform->typnamespace;
 	if (typnamespace != PG_CATALOG_NAMESPACE &&
-		!list_member_oid(namespaceSearchPath, typnamespace))
+		!list_member_oid(activeSearchPath, typnamespace))
 		visible = false;
 	else
 	{
@@ -440,7 +457,7 @@ TypeIsVisible(Oid typid)
 		ListCell   *l;
 
 		visible = false;
-		foreach(l, namespaceSearchPath)
+		foreach(l, activeSearchPath)
 		{
 			Oid			namespaceId = lfirst_oid(l);
 
@@ -535,7 +552,7 @@ FuncnameGetCandidates(List *names, int nargs)
 			/* Consider only procs that are in the search path */
 			ListCell   *nsp;
 
-			foreach(nsp, namespaceSearchPath)
+			foreach(nsp, activeSearchPath)
 			{
 				if (procform->pronamespace == lfirst_oid(nsp))
 					break;
@@ -647,7 +664,7 @@ FunctionIsVisible(Oid funcid)
 	 */
 	pronamespace = procform->pronamespace;
 	if (pronamespace != PG_CATALOG_NAMESPACE &&
-		!list_member_oid(namespaceSearchPath, pronamespace))
+		!list_member_oid(activeSearchPath, pronamespace))
 		visible = false;
 	else
 	{
@@ -748,7 +765,7 @@ OpernameGetOprid(List *names, Oid oprleft, Oid oprright)
 	 */
 	recomputeNamespacePath();
 
-	foreach(l, namespaceSearchPath)
+	foreach(l, activeSearchPath)
 	{
 		Oid			namespaceId = lfirst_oid(l);
 		int			i;
@@ -858,7 +875,7 @@ OpernameGetCandidates(List *names, char oprkind)
 			/* Consider only opers that are in the search path */
 			ListCell   *nsp;
 
-			foreach(nsp, namespaceSearchPath)
+			foreach(nsp, activeSearchPath)
 			{
 				if (operform->oprnamespace == lfirst_oid(nsp))
 					break;
@@ -965,7 +982,7 @@ OperatorIsVisible(Oid oprid)
 	 */
 	oprnamespace = oprform->oprnamespace;
 	if (oprnamespace != PG_CATALOG_NAMESPACE &&
-		!list_member_oid(namespaceSearchPath, oprnamespace))
+		!list_member_oid(activeSearchPath, oprnamespace))
 		visible = false;
 	else
 	{
@@ -1004,7 +1021,7 @@ OpclassnameGetOpcid(Oid amid, const char *opcname)
 
 	recomputeNamespacePath();
 
-	foreach(l, namespaceSearchPath)
+	foreach(l, activeSearchPath)
 	{
 		Oid			namespaceId = lfirst_oid(l);
 
@@ -1051,7 +1068,7 @@ OpclassIsVisible(Oid opcid)
 	 */
 	opcnamespace = opcform->opcnamespace;
 	if (opcnamespace != PG_CATALOG_NAMESPACE &&
-		!list_member_oid(namespaceSearchPath, opcnamespace))
+		!list_member_oid(activeSearchPath, opcnamespace))
 		visible = false;
 	else
 	{
@@ -1087,7 +1104,7 @@ OpfamilynameGetOpfid(Oid amid, const char *opfname)
 
 	recomputeNamespacePath();
 
-	foreach(l, namespaceSearchPath)
+	foreach(l, activeSearchPath)
 	{
 		Oid			namespaceId = lfirst_oid(l);
 
@@ -1134,7 +1151,7 @@ OpfamilyIsVisible(Oid opfid)
 	 */
 	opfnamespace = opfform->opfnamespace;
 	if (opfnamespace != PG_CATALOG_NAMESPACE &&
-		!list_member_oid(namespaceSearchPath, opfnamespace))
+		!list_member_oid(activeSearchPath, opfnamespace))
 		visible = false;
 	else
 	{
@@ -1169,7 +1186,7 @@ ConversionGetConid(const char *conname)
 
 	recomputeNamespacePath();
 
-	foreach(l, namespaceSearchPath)
+	foreach(l, activeSearchPath)
 	{
 		Oid			namespaceId = lfirst_oid(l);
 
@@ -1215,7 +1232,7 @@ ConversionIsVisible(Oid conid)
 	 */
 	connamespace = conform->connamespace;
 	if (connamespace != PG_CATALOG_NAMESPACE &&
-		!list_member_oid(namespaceSearchPath, connamespace))
+		!list_member_oid(activeSearchPath, connamespace))
 		visible = false;
 	else
 	{
@@ -1381,7 +1398,7 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 	{
 		/* use the default creation namespace */
 		recomputeNamespacePath();
-		namespaceId = defaultCreationNamespace;
+		namespaceId = activeCreationNamespace;
 		if (!OidIsValid(namespaceId))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_SCHEMA),
@@ -1520,35 +1537,145 @@ isOtherTempNamespace(Oid namespaceId)
 	return isAnyTempNamespace(namespaceId);
 }
 
+
 /*
- * PushSpecialNamespace - push a "special" namespace onto the front of the
- * search path.
+ * GetOverrideSearchPath - fetch current search path definition in form
+ * used by PushOverrideSearchPath.
  *
- * This is a slightly messy hack intended only for support of CREATE SCHEMA.
- * Although the API is defined to allow a stack of pushed namespaces, we
- * presently only support one at a time.
- *
- * The pushed namespace will be removed from the search path at end of
- * transaction, whether commit or abort.
+ * The result structure is allocated in the specified memory context
+ * (which might or might not be equal to CurrentMemoryContext); but any
+ * junk created by revalidation calculations will be in CurrentMemoryContext.
  */
-void
-PushSpecialNamespace(Oid namespaceId)
+OverrideSearchPath *
+GetOverrideSearchPath(MemoryContext context)
 {
-	Assert(!OidIsValid(mySpecialNamespace));
-	mySpecialNamespace = namespaceId;
-	namespaceSearchPathValid = false;
+	OverrideSearchPath *result;
+	List	   *schemas;
+	MemoryContext oldcxt;
+
+	recomputeNamespacePath();
+
+	oldcxt = MemoryContextSwitchTo(context);
+
+	result = (OverrideSearchPath *) palloc0(sizeof(OverrideSearchPath));
+	schemas = list_copy(activeSearchPath);
+	while (schemas && linitial_oid(schemas) != activeCreationNamespace)
+	{
+		if (linitial_oid(schemas) == myTempNamespace)
+			result->addTemp = true;
+		else
+		{
+			Assert(linitial_oid(schemas) == PG_CATALOG_NAMESPACE);
+			result->addCatalog = true;
+		}
+		schemas = list_delete_first(schemas);
+	}
+	result->schemas = schemas;
+
+	MemoryContextSwitchTo(oldcxt);
+
+	return result;
 }
 
 /*
- * PopSpecialNamespace - remove previously pushed special namespace.
+ * PushOverrideSearchPath - temporarily override the search path
+ *
+ * We allow nested overrides, hence the push/pop terminology.  The GUC
+ * search_path variable is ignored while an override is active.
  */
 void
-PopSpecialNamespace(Oid namespaceId)
+PushOverrideSearchPath(OverrideSearchPath *newpath)
 {
-	Assert(mySpecialNamespace == namespaceId);
-	mySpecialNamespace = InvalidOid;
-	namespaceSearchPathValid = false;
+	OverrideStackEntry *entry;
+	List	   *oidlist;
+	Oid			firstNS;
+	MemoryContext oldcxt;
+
+	/*
+	 * Copy the list for safekeeping, and insert implicitly-searched
+	 * namespaces as needed.  This code should track recomputeNamespacePath.
+	 */
+	oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+
+	oidlist = list_copy(newpath->schemas);
+
+	/*
+	 * Remember the first member of the explicit list.
+	 */
+	if (oidlist == NIL)
+		firstNS = InvalidOid;
+	else
+		firstNS = linitial_oid(oidlist);
+
+	/*
+	 * Add any implicitly-searched namespaces to the list.	Note these go on
+	 * the front, not the back; also notice that we do not check USAGE
+	 * permissions for these.
+	 */
+	if (newpath->addCatalog)
+		oidlist = lcons_oid(PG_CATALOG_NAMESPACE, oidlist);
+
+	if (newpath->addTemp)
+	{
+		Assert(OidIsValid(myTempNamespace));
+		oidlist = lcons_oid(myTempNamespace, oidlist);
+	}
+
+	/*
+	 * Build the new stack entry, then insert it at the head of the list.
+	 */
+	entry = (OverrideStackEntry *) palloc(sizeof(OverrideStackEntry));
+	entry->searchPath = oidlist;
+	entry->creationNamespace = firstNS;
+	entry->nestLevel = GetCurrentTransactionNestLevel();
+
+	overrideStack = lcons(entry, overrideStack);
+
+	/* And make it active. */
+	activeSearchPath = entry->searchPath;
+	activeCreationNamespace = entry->creationNamespace;
+
+	MemoryContextSwitchTo(oldcxt);
 }
+
+/*
+ * PopOverrideSearchPath - undo a previous PushOverrideSearchPath
+ *
+ * Any push during a (sub)transaction will be popped automatically at abort.
+ * But it's caller error if a push isn't popped in normal control flow.
+ */
+void
+PopOverrideSearchPath(void)
+{
+	OverrideStackEntry *entry;
+
+	/* Sanity checks. */
+	if (overrideStack == NIL)
+		elog(ERROR, "bogus PopOverrideSearchPath call");
+	entry = (OverrideStackEntry *) linitial(overrideStack);
+	if (entry->nestLevel != GetCurrentTransactionNestLevel())
+		elog(ERROR, "bogus PopOverrideSearchPath call");
+
+	/* Pop the stack and free storage. */
+	overrideStack = list_delete_first(overrideStack);
+	list_free(entry->searchPath);
+	pfree(entry);
+
+	/* Activate the next level down. */
+	if (overrideStack)
+	{
+		entry = (OverrideStackEntry *) linitial(overrideStack);
+		activeSearchPath = entry->searchPath;
+		activeCreationNamespace = entry->creationNamespace;
+	}
+	else
+	{
+		/* If not baseSearchPathValid, this is useless but harmless */
+		activeSearchPath = baseSearchPath;
+		activeCreationNamespace = baseCreationNamespace;
+	}
+}
+
 
 /*
  * FindConversionByName - find a conversion by possibly qualified name
@@ -1576,7 +1703,7 @@ FindConversionByName(List *name)
 		/* search for it in search path */
 		recomputeNamespacePath();
 
-		foreach(l, namespaceSearchPath)
+		foreach(l, activeSearchPath)
 		{
 			namespaceId = lfirst_oid(l);
 			conoid = FindConversion(conversion_name, namespaceId);
@@ -1600,7 +1727,7 @@ FindDefaultConversionProc(int4 for_encoding, int4 to_encoding)
 
 	recomputeNamespacePath();
 
-	foreach(l, namespaceSearchPath)
+	foreach(l, activeSearchPath)
 	{
 		Oid			namespaceId = lfirst_oid(l);
 
@@ -1628,10 +1755,12 @@ recomputeNamespacePath(void)
 	Oid			firstNS;
 	MemoryContext oldcxt;
 
-	/*
-	 * Do nothing if path is already valid.
-	 */
-	if (namespaceSearchPathValid && namespaceUser == roleid)
+	/* Do nothing if an override search spec is active. */
+	if (overrideStack)
+		return;
+
+	/* Do nothing if path is already valid. */
+	if (baseSearchPathValid && namespaceUser == roleid)
 		return;
 
 	/* Need a modifiable copy of namespace_search_path string */
@@ -1715,10 +1844,6 @@ recomputeNamespacePath(void)
 		!list_member_oid(oidlist, myTempNamespace))
 		oidlist = lcons_oid(myTempNamespace, oidlist);
 
-	if (OidIsValid(mySpecialNamespace) &&
-		!list_member_oid(oidlist, mySpecialNamespace))
-		oidlist = lcons_oid(mySpecialNamespace, oidlist);
-
 	/*
 	 * Now that we've successfully built the new list of namespace OIDs, save
 	 * it in permanent storage.
@@ -1727,22 +1852,18 @@ recomputeNamespacePath(void)
 	newpath = list_copy(oidlist);
 	MemoryContextSwitchTo(oldcxt);
 
-	/* Now safe to assign to state variable. */
-	list_free(namespaceSearchPath);
-	namespaceSearchPath = newpath;
-
-	/*
-	 * Update info derived from search path.
-	 */
-	firstExplicitNamespace = firstNS;
-	if (OidIsValid(mySpecialNamespace))
-		defaultCreationNamespace = mySpecialNamespace;
-	else
-		defaultCreationNamespace = firstNS;
+	/* Now safe to assign to state variables. */
+	list_free(baseSearchPath);
+	baseSearchPath = newpath;
+	baseCreationNamespace = firstNS;
 
 	/* Mark the path valid. */
-	namespaceSearchPathValid = true;
+	baseSearchPathValid = true;
 	namespaceUser = roleid;
+
+	/* And make it active. */
+	activeSearchPath = baseSearchPath;
+	activeCreationNamespace = baseCreationNamespace;
 
 	/* Clean up. */
 	pfree(rawname);
@@ -1816,7 +1937,7 @@ InitTempTableNamespace(void)
 	AssertState(myTempNamespaceSubID == InvalidSubTransactionId);
 	myTempNamespaceSubID = GetCurrentSubTransactionId();
 
-	namespaceSearchPathValid = false;	/* need to rebuild list */
+	baseSearchPathValid = false;	/* need to rebuild list */
 }
 
 /*
@@ -1840,18 +1961,30 @@ AtEOXact_Namespace(bool isCommit)
 		else
 		{
 			myTempNamespace = InvalidOid;
-			namespaceSearchPathValid = false;	/* need to rebuild list */
+			baseSearchPathValid = false;	/* need to rebuild list */
 		}
 		myTempNamespaceSubID = InvalidSubTransactionId;
 	}
 
 	/*
-	 * Clean up if someone failed to do PopSpecialNamespace
+	 * Clean up if someone failed to do PopOverrideSearchPath
 	 */
-	if (OidIsValid(mySpecialNamespace))
+	if (overrideStack)
 	{
-		mySpecialNamespace = InvalidOid;
-		namespaceSearchPathValid = false;		/* need to rebuild list */
+		if (isCommit)
+			elog(WARNING, "leaked override search path");
+		while (overrideStack)
+		{
+			OverrideStackEntry *entry;
+
+			entry = (OverrideStackEntry *) linitial(overrideStack);
+			overrideStack = list_delete_first(overrideStack);
+			list_free(entry->searchPath);
+			pfree(entry);
+		}
+		/* If not baseSearchPathValid, this is useless but harmless */
+		activeSearchPath = baseSearchPath;
+		activeCreationNamespace = baseCreationNamespace;
 	}
 }
 
@@ -1867,6 +2000,8 @@ void
 AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 					  SubTransactionId parentSubid)
 {
+	OverrideStackEntry *entry;
+
 	if (myTempNamespaceSubID == mySubid)
 	{
 		if (isCommit)
@@ -1876,8 +2011,37 @@ AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 			myTempNamespaceSubID = InvalidSubTransactionId;
 			/* TEMP namespace creation failed, so reset state */
 			myTempNamespace = InvalidOid;
-			namespaceSearchPathValid = false;	/* need to rebuild list */
+			baseSearchPathValid = false;	/* need to rebuild list */
 		}
+	}
+
+	/*
+	 * Clean up if someone failed to do PopOverrideSearchPath
+	 */
+	while (overrideStack)
+	{
+		entry = (OverrideStackEntry *) linitial(overrideStack);
+		if (entry->nestLevel < GetCurrentTransactionNestLevel())
+			break;
+		if (isCommit)
+			elog(WARNING, "leaked override search path");
+		overrideStack = list_delete_first(overrideStack);
+		list_free(entry->searchPath);
+		pfree(entry);
+	}
+
+	/* Activate the next level down. */
+	if (overrideStack)
+	{
+		entry = (OverrideStackEntry *) linitial(overrideStack);
+		activeSearchPath = entry->searchPath;
+		activeCreationNamespace = entry->creationNamespace;
+	}
+	else
+	{
+		/* If not baseSearchPathValid, this is useless but harmless */
+		activeSearchPath = baseSearchPath;
+		activeCreationNamespace = baseCreationNamespace;
 	}
 }
 
@@ -1991,7 +2155,7 @@ assign_search_path(const char *newval, bool doit, GucSource source)
 	 * initialization.
 	 */
 	if (doit)
-		namespaceSearchPathValid = false;
+		baseSearchPathValid = false;
 
 	return newval;
 }
@@ -2013,12 +2177,13 @@ InitializeSearchPath(void)
 		MemoryContext oldcxt;
 
 		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
-		namespaceSearchPath = list_make1_oid(PG_CATALOG_NAMESPACE);
+		baseSearchPath = list_make1_oid(PG_CATALOG_NAMESPACE);
 		MemoryContextSwitchTo(oldcxt);
-		defaultCreationNamespace = PG_CATALOG_NAMESPACE;
-		firstExplicitNamespace = PG_CATALOG_NAMESPACE;
-		namespaceSearchPathValid = true;
+		baseCreationNamespace = PG_CATALOG_NAMESPACE;
+		baseSearchPathValid = true;
 		namespaceUser = GetUserId();
+		activeSearchPath = baseSearchPath;
+		activeCreationNamespace = baseCreationNamespace;
 	}
 	else
 	{
@@ -2030,7 +2195,7 @@ InitializeSearchPath(void)
 									  NamespaceCallback,
 									  (Datum) 0);
 		/* Force search path to be recomputed on next use */
-		namespaceSearchPathValid = false;
+		baseSearchPathValid = false;
 	}
 }
 
@@ -2042,7 +2207,7 @@ static void
 NamespaceCallback(Datum arg, Oid relid)
 {
 	/* Force search path to be recomputed on next use */
-	namespaceSearchPathValid = false;
+	baseSearchPathValid = false;
 }
 
 /*
@@ -2060,10 +2225,10 @@ fetch_search_path(bool includeImplicit)
 
 	recomputeNamespacePath();
 
-	result = list_copy(namespaceSearchPath);
+	result = list_copy(activeSearchPath);
 	if (!includeImplicit)
 	{
-		while (result && linitial_oid(result) != firstExplicitNamespace)
+		while (result && linitial_oid(result) != activeCreationNamespace)
 			result = list_delete_first(result);
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.44 2007/03/13 00:33:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.45 2007/03/23 19:53:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	const char *schemaName = stmt->schemaname;
 	const char *authId = stmt->authid;
 	Oid			namespaceId;
+	OverrideSearchPath *overridePath;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
 	Oid			owner_uid;
@@ -102,7 +103,10 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	 * well as the default creation target namespace.  This will be undone at
 	 * the end of this routine, or upon error.
 	 */
-	PushSpecialNamespace(namespaceId);
+	overridePath = GetOverrideSearchPath(CurrentMemoryContext);
+	overridePath->schemas = lcons_oid(namespaceId, overridePath->schemas);
+	/* XXX should we clear overridePath->useTemp? */
+	PushOverrideSearchPath(overridePath);
 
 	/*
 	 * Examine the list of commands embedded in the CREATE SCHEMA command, and
@@ -143,7 +147,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	}
 
 	/* Reset search path to normal state */
-	PopSpecialNamespace(namespaceId);
+	PopOverrideSearchPath();
 
 	/* Reset current user */
 	SetUserId(saved_uid);

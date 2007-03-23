@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.44 2007/01/05 22:19:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.45 2007/03/23 19:53:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,16 @@ typedef struct _FuncCandidateList
 	int			nargs;			/* number of arg types returned */
 	Oid			args[1];		/* arg types --- VARIABLE LENGTH ARRAY */
 }	*FuncCandidateList;	/* VARIABLE LENGTH STRUCT */
+
+/*
+ *	Structure for xxxOverrideSearchPath functions
+ */
+typedef struct OverrideSearchPath
+{
+	List	   *schemas;		/* OIDs of explicitly named schemas */
+	bool		addCatalog;		/* implicitly prepend pg_catalog? */
+	bool		addTemp;		/* implicitly prepend temp schema? */
+} OverrideSearchPath;
 
 
 extern Oid	RangeVarGetRelid(const RangeVar *relation, bool failOK);
@@ -72,8 +82,9 @@ extern bool isTempNamespace(Oid namespaceId);
 extern bool isAnyTempNamespace(Oid namespaceId);
 extern bool isOtherTempNamespace(Oid namespaceId);
 
-extern void PushSpecialNamespace(Oid namespaceId);
-extern void PopSpecialNamespace(Oid namespaceId);
+extern OverrideSearchPath *GetOverrideSearchPath(MemoryContext context);
+extern void PushOverrideSearchPath(OverrideSearchPath *newpath);
+extern void PopOverrideSearchPath(void);
 
 extern Oid	FindConversionByName(List *conname);
 extern Oid	FindDefaultConversionProc(int4 for_encoding, int4 to_encoding);

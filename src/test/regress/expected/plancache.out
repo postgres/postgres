@@ -163,3 +163,42 @@ select cache_test_2();
         10007
 (1 row)
 
+--- Check that change of search_path is ignored by replans
+create schema s1
+  create table abc (f1 int);
+create schema s2
+  create table abc (f1 int);
+insert into s1.abc values(123);
+insert into s2.abc values(456);
+set search_path = s1;
+prepare p1 as select f1 from abc;
+execute p1;
+ f1  
+-----
+ 123
+(1 row)
+
+set search_path = s2;
+select f1 from abc;
+ f1  
+-----
+ 456
+(1 row)
+
+execute p1;
+ f1  
+-----
+ 123
+(1 row)
+
+alter table s1.abc add column f2 float8;   -- force replan
+execute p1;
+ f1  
+-----
+ 123
+(1 row)
+
+drop schema s1 cascade;
+NOTICE:  drop cascades to table s1.abc
+drop schema s2 cascade;
+NOTICE:  drop cascades to table abc

@@ -33,13 +33,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.3 2007/03/19 23:38:29 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.4 2007/03/23 19:53:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "utils/plancache.h"
+#include "catalog/namespace.h"
 #include "executor/executor.h"
 #include "optimizer/clauses.h"
 #include "storage/lmgr.h"
@@ -120,6 +121,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 				 bool fixed_result)
 {
 	CachedPlanSource *plansource;
+	OverrideSearchPath *search_path;
 	MemoryContext source_context;
 	MemoryContext oldcxt;
 
@@ -132,6 +134,12 @@ CreateCachedPlan(Node *raw_parse_tree,
 										   ALLOCSET_SMALL_MINSIZE,
 										   ALLOCSET_SMALL_INITSIZE,
 										   ALLOCSET_SMALL_MAXSIZE);
+
+	/*
+	 * Fetch current search_path into new context, but do any recalculation
+	 * work required in caller's context.
+	 */
+	search_path = GetOverrideSearchPath(source_context);
 
 	/*
 	 * Create and fill the CachedPlanSource struct within the new context.
@@ -151,6 +159,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 	plansource->num_params = num_params;
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
+	plansource->search_path = search_path;
 	plansource->generation = 0;			/* StoreCachedPlan will increment */
 	plansource->resultDesc = PlanCacheComputeResultDesc(stmt_list);
 	plansource->plan = NULL;
@@ -209,7 +218,14 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 					 MemoryContext context)
 {
 	CachedPlanSource *plansource;
+	OverrideSearchPath *search_path;
 	MemoryContext oldcxt;
+
+	/*
+	 * Fetch current search_path into given context, but do any recalculation
+	 * work required in caller's context.
+	 */
+	search_path = GetOverrideSearchPath(context);
 
 	/*
 	 * Create and fill the CachedPlanSource struct within the given context.
@@ -223,6 +239,7 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 	plansource->num_params = num_params;
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
+	plansource->search_path = search_path;
 	plansource->generation = 0;			/* StoreCachedPlan will increment */
 	plansource->resultDesc = PlanCacheComputeResultDesc(stmt_list);
 	plansource->plan = NULL;
@@ -421,6 +438,12 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 		TupleDesc resultDesc;
 
 		/*
+		 * Restore the search_path that was in use when the plan was made.
+		 * (XXX is there anything else we really need to restore?)
+		 */
+		PushOverrideSearchPath(plansource->search_path);
+
+		/*
 		 * Run parse analysis and rule rewriting.  The parser tends to
 		 * scribble on its input, so we must copy the raw parse tree to
 		 * prevent corruption of the cache.  Note that we do not use
@@ -468,6 +491,9 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 			plansource->resultDesc = resultDesc;
 			MemoryContextSwitchTo(oldcxt);
 		}
+
+		/* Now we can restore current search path */
+		PopOverrideSearchPath();
 
 		/*
 		 * Store the plans into the plancache entry, advancing the generation

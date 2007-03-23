@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.3 2007/03/19 23:38:32 wieck Exp $
+ * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.4 2007/03/23 19:53:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,6 +53,7 @@ typedef struct CachedPlanSource
 	int			num_params;		/* length of param_types array */
 	bool		fully_planned;	/* do we cache planner or rewriter output? */
 	bool		fixed_result;	/* disallow change in result tupdesc? */
+	struct OverrideSearchPath *search_path;		/* saved search_path */
 	int			generation;		/* counter, starting at 1, for replans */
 	TupleDesc	resultDesc;		/* result type; NULL = doesn't return tuples */
 	struct CachedPlan *plan;	/* link to plan, or NULL if not valid */
