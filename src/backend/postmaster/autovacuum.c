@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.36 2007/03/23 21:23:13 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.37 2007/03/23 21:45:17 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,7 @@ static pid_t avworker_forkexec(void);
 NON_EXEC_STATIC void AutoVacWorkerMain(int argc, char *argv[]);
 NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]);
 
+static void do_start_worker(void);
 static void do_autovacuum(PgStat_StatDBEntry *dbentry);
 static List *autovac_get_database_list(void);
 static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
@@ -218,9 +219,6 @@ NON_EXEC_STATIC void
 AutoVacLauncherMain(int argc, char *argv[])
 {
 	sigjmp_buf	local_sigjmp_buf;
-	List	   *dblist;
-	bool		for_xid_wrap;
-	autovac_dbase *db;
 	MemoryContext	avlauncher_cxt;
 
 	/* we are a postmaster subprocess now */
@@ -358,8 +356,6 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 	for (;;)
 	{
-		TransactionId xidForceLimit;
-		ListCell *cell;
 		int		worker_pid;
 
 		/*
@@ -407,86 +403,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 			}
 		}
 
-		/* Get a list of databases */
-		dblist = autovac_get_database_list();
+		do_start_worker();
 
-		/*
-		 * Determine the oldest datfrozenxid/relfrozenxid that we will allow
-		 * to pass without forcing a vacuum.  (This limit can be tightened for
-		 * particular tables, but not loosened.)
-		 */
-		recentXid = ReadNewTransactionId();
-		xidForceLimit = recentXid - autovacuum_freeze_max_age;
-		/* ensure it's a "normal" XID, else TransactionIdPrecedes misbehaves */
-		if (xidForceLimit < FirstNormalTransactionId)
-			xidForceLimit -= FirstNormalTransactionId;
-
-		/*
-		 * Choose a database to connect to.  We pick the database that was least
-		 * recently auto-vacuumed, or one that needs vacuuming to prevent Xid
-		 * wraparound-related data loss.  If any db at risk of wraparound is
-		 * found, we pick the one with oldest datfrozenxid, independently of
-		 * autovacuum times.
-		 *
-		 * Note that a database with no stats entry is not considered, except for
-		 * Xid wraparound purposes.  The theory is that if no one has ever
-		 * connected to it since the stats were last initialized, it doesn't need
-		 * vacuuming.
-		 *
-		 * XXX This could be improved if we had more info about whether it needs
-		 * vacuuming before connecting to it.  Perhaps look through the pgstats
-		 * data for the database's tables?  One idea is to keep track of the
-		 * number of new and dead tuples per database in pgstats.  However it
-		 * isn't clear how to construct a metric that measures that and not cause
-		 * starvation for less busy databases.
-		 */
-		db = NULL;
-		for_xid_wrap = false;
-		foreach(cell, dblist)
-		{
-			autovac_dbase *tmp = lfirst(cell);
-
-			/* Find pgstat entry if any */
-			tmp->entry = pgstat_fetch_stat_dbentry(tmp->oid);
-
-			/* Check to see if this one is at risk of wraparound */
-			if (TransactionIdPrecedes(tmp->frozenxid, xidForceLimit))
-			{
-				if (db == NULL ||
-					TransactionIdPrecedes(tmp->frozenxid, db->frozenxid))
-					db = tmp;
-				for_xid_wrap = true;
-				continue;
-			}
-			else if (for_xid_wrap)
-				continue;			/* ignore not-at-risk DBs */
-
-			/*
-			 * Otherwise, skip a database with no pgstat entry; it means it
-			 * hasn't seen any activity.
-			 */
-			if (!tmp->entry)
-				continue;
-
-			/*
-			 * Remember the db with oldest autovac time.  (If we are here,
-			 * both tmp->entry and db->entry must be non-null.)
-			 */
-			if (db == NULL ||
-				tmp->entry->last_autovac_time < db->entry->last_autovac_time)
-				db = tmp;
-		}
-
-		/* Found a database -- process it */
-		if (db != NULL)
-		{
-			LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
-			AutoVacuumShmem->process_db = db->oid;
-			LWLockRelease(AutovacuumLock);
-
-			SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_WORKER);
-		}
-		
 sleep:
 		/*
 		 * in emergency mode, exit immediately so that the postmaster can
@@ -510,6 +428,103 @@ sleep:
 			(errmsg("autovacuum launcher shutting down")));
 
 	proc_exit(0);		/* done */
+}
+
+/*
+ * do_start_worker
+ *
+ * Bare-bones procedure for starting an autovacuum worker from the launcher.
+ * It determines what database to work on, sets up shared memory stuff and
+ * signals postmaster to start the worker.
+ */
+static void
+do_start_worker(void)
+{
+	List	   *dblist;
+	bool		for_xid_wrap;
+	autovac_dbase *db;
+	ListCell *cell;
+	TransactionId xidForceLimit;
+
+	/* Get a list of databases */
+	dblist = autovac_get_database_list();
+
+	/*
+	 * Determine the oldest datfrozenxid/relfrozenxid that we will allow
+	 * to pass without forcing a vacuum.  (This limit can be tightened for
+	 * particular tables, but not loosened.)
+	 */
+	recentXid = ReadNewTransactionId();
+	xidForceLimit = recentXid - autovacuum_freeze_max_age;
+	/* ensure it's a "normal" XID, else TransactionIdPrecedes misbehaves */
+	if (xidForceLimit < FirstNormalTransactionId)
+		xidForceLimit -= FirstNormalTransactionId;
+
+	/*
+	 * Choose a database to connect to.  We pick the database that was least
+	 * recently auto-vacuumed, or one that needs vacuuming to prevent Xid
+	 * wraparound-related data loss.  If any db at risk of wraparound is
+	 * found, we pick the one with oldest datfrozenxid, independently of
+	 * autovacuum times.
+	 *
+	 * Note that a database with no stats entry is not considered, except for
+	 * Xid wraparound purposes.  The theory is that if no one has ever
+	 * connected to it since the stats were last initialized, it doesn't need
+	 * vacuuming.
+	 *
+	 * XXX This could be improved if we had more info about whether it needs
+	 * vacuuming before connecting to it.  Perhaps look through the pgstats
+	 * data for the database's tables?  One idea is to keep track of the
+	 * number of new and dead tuples per database in pgstats.  However it
+	 * isn't clear how to construct a metric that measures that and not cause
+	 * starvation for less busy databases.
+	 */
+	db = NULL;
+	for_xid_wrap = false;
+	foreach(cell, dblist)
+	{
+		autovac_dbase *tmp = lfirst(cell);
+
+		/* Find pgstat entry if any */
+		tmp->entry = pgstat_fetch_stat_dbentry(tmp->oid);
+
+		/* Check to see if this one is at risk of wraparound */
+		if (TransactionIdPrecedes(tmp->frozenxid, xidForceLimit))
+		{
+			if (db == NULL ||
+				TransactionIdPrecedes(tmp->frozenxid, db->frozenxid))
+				db = tmp;
+			for_xid_wrap = true;
+			continue;
+		}
+		else if (for_xid_wrap)
+			continue;			/* ignore not-at-risk DBs */
+
+		/*
+		 * Otherwise, skip a database with no pgstat entry; it means it
+		 * hasn't seen any activity.
+		 */
+		if (!tmp->entry)
+			continue;
+
+		/*
+		 * Remember the db with oldest autovac time.  (If we are here,
+		 * both tmp->entry and db->entry must be non-null.)
+		 */
+		if (db == NULL ||
+			tmp->entry->last_autovac_time < db->entry->last_autovac_time)
+			db = tmp;
+	}
+
+	/* Found a database -- process it */
+	if (db != NULL)
+	{
+		LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
+		AutoVacuumShmem->process_db = db->oid;
+		LWLockRelease(AutovacuumLock);
+
+		SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_WORKER);
+	}
 }
 
 /* SIGHUP: set flag to re-read config file at next convenient time */
