@@ -2,7 +2,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 # 
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.17 2007/03/17 14:01:01 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.18 2007/03/23 08:43:51 mha Exp $
 #
 use Carp;
 use strict;
@@ -102,14 +102,15 @@ sub GenerateFiles
 s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY(z)\n#define PG_VERSION_STR "PostgreSQL $self->{strver}, compiled by Visual C++ build " __STRINGIFY2(_MSC_VER)};
             print O;
         }
+        print O "#define LOCALEDIR \"/share/locale\"\n" if ($self->{options}->{nls});
         print O "/* defines added by config steps */\n";
+	print O "#ifndef IGNORE_CONFIGURED_SETTINGS\n";
         print O "#define USE_ASSERT_CHECKING 1\n" if ($self->{options}->{asserts});
         print O "#define USE_INTEGER_DATETIMES 1\n" if ($self->{options}->{integer_datetimes});
         print O "#define USE_LDAP 1\n" if ($self->{options}->{ldap});
         print O "#define HAVE_LIBZ 1\n" if ($self->{options}->{zlib});
         print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
         print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
-        print O "#define LOCALEDIR \"/share/locale\"\n" if ($self->{options}->{nls});
 
         if ($self->{options}->{xml})
         {
@@ -123,6 +124,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
             print O "#define HAVE_KRB5_TICKET_ENC_PART2 1\n";
             print O "#define PG_KRB_SRVNAM \"postgres\"\n";
         }
+	print O "#endif /* IGNORE_CONFIGURED_SETTINGS */\n";
         close(O);
         close(I);
     }
