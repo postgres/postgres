@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.35 2007/03/23 20:56:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.36 2007/03/23 21:23:13 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,6 +127,7 @@ static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 					 List **toast_table_ids);
 static void autovacuum_do_vac_analyze(Oid relid, bool dovacuum,
 						  bool doanalyze, int freeze_min_age);
+static HeapTuple get_pg_autovacuum_tuple_relid(Relation avRel, Oid relid);
 static void autovac_report_activity(VacuumStmt *vacstmt, Oid relid);
 static void avl_sighup_handler(SIGNAL_ARGS);
 static void avlauncher_shutdown(SIGNAL_ARGS);
@@ -933,9 +934,7 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 		Form_pg_class classForm = (Form_pg_class) GETSTRUCT(tuple);
 		Form_pg_autovacuum avForm = NULL;
 		PgStat_StatTabEntry *tabentry;
-		SysScanDesc avScan;
 		HeapTuple	avTup;
-		ScanKeyData entry[1];
 		Oid			relid;
 
 		/* Consider only regular and toast tables. */
@@ -952,16 +951,8 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 
 		relid = HeapTupleGetOid(tuple);
 
-		/* See if we have a pg_autovacuum entry for this relation. */
-		ScanKeyInit(&entry[0],
-					Anum_pg_autovacuum_vacrelid,
-					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(relid));
-
-		avScan = systable_beginscan(avRel, AutovacuumRelidIndexId, true,
-									SnapshotNow, 1, entry);
-
-		avTup = systable_getnext(avScan);
+		/* Fetch the pg_autovacuum tuple for the relation, if any */
+		avTup = get_pg_autovacuum_tuple_relid(avRel, relid);
 
 		if (HeapTupleIsValid(avTup))
 			avForm = (Form_pg_autovacuum) GETSTRUCT(avTup);
@@ -978,7 +969,8 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 		test_rel_for_autovac(relid, tabentry, classForm, avForm,
 							 &vacuum_tables, &toast_table_ids);
 
-		systable_endscan(avScan);
+		if (HeapTupleIsValid(avTup))
+			heap_freetuple(avTup);
 	}
 
 	heap_endscan(relScan);
@@ -1028,6 +1020,35 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 
 	/* Finally close out the last transaction. */
 	CommitTransactionCommand();
+}
+
+/*
+ * Returns a copy of the pg_autovacuum tuple for the given relid, or NULL if
+ * there isn't any.  avRel is pg_autovacuum, already open and suitably locked.
+ */
+static HeapTuple
+get_pg_autovacuum_tuple_relid(Relation avRel, Oid relid)
+{
+	ScanKeyData entry[1];
+	SysScanDesc avScan;
+	HeapTuple	avTup;
+
+	ScanKeyInit(&entry[0],
+				Anum_pg_autovacuum_vacrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+
+	avScan = systable_beginscan(avRel, AutovacuumRelidIndexId, true,
+								SnapshotNow, 1, entry);
+
+	avTup = systable_getnext(avScan);
+
+	if (HeapTupleIsValid(avTup))
+		avTup = heap_copytuple(avTup);
+
+	systable_endscan(avScan);
+
+	return avTup;
 }
 
 /*
