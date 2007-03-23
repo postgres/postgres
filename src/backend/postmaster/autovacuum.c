@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.34 2007/03/13 00:33:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.35 2007/03/23 20:56:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1237,32 +1237,28 @@ static void
 autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 						  int freeze_min_age)
 {
-	VacuumStmt *vacstmt;
+	VacuumStmt	vacstmt;
 	MemoryContext old_cxt;
 
 	/*
-	 * The node must survive transaction boundaries, so make sure we create it
+	 * The list must survive transaction boundaries, so make sure we create it
 	 * in a long-lived context
 	 */
 	old_cxt = MemoryContextSwitchTo(AutovacMemCxt);
 
-	vacstmt = makeNode(VacuumStmt);
-
 	/* Set up command parameters */
-	vacstmt->vacuum = dovacuum;
-	vacstmt->full = false;
-	vacstmt->analyze = doanalyze;
-	vacstmt->freeze_min_age = freeze_min_age;
-	vacstmt->verbose = false;
-	vacstmt->relation = NULL;	/* not used since we pass a relids list */
-	vacstmt->va_cols = NIL;
+	vacstmt.vacuum = dovacuum;
+	vacstmt.full = false;
+	vacstmt.analyze = doanalyze;
+	vacstmt.freeze_min_age = freeze_min_age;
+	vacstmt.verbose = false;
+	vacstmt.relation = NULL;	/* not used since we pass a relids list */
+	vacstmt.va_cols = NIL;
 
 	/* Let pgstat know what we're doing */
-	autovac_report_activity(vacstmt, relid);
+	autovac_report_activity(&vacstmt, relid);
 
-	vacuum(vacstmt, list_make1_oid(relid), true);
-
-	pfree(vacstmt);
+	vacuum(&vacstmt, list_make1_oid(relid), true);
 	MemoryContextSwitchTo(old_cxt);
 }
 
