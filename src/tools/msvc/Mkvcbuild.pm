@@ -1,8 +1,9 @@
 package Mkvcbuild;
+
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.4 2007/03/21 14:39:23 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.5 2007/03/23 09:53:33 mha Exp $
 #
 use Carp;
 use Win32;
@@ -249,6 +250,8 @@ sub mkvcbuild
     }
     $pgcrypto->AddReference($postgres);
     $pgcrypto->AddLibrary('wsock32.lib');
+    my $mf = Project::read_file('contrib/pgcrypto/Makefile');
+    GenerateContribSqlFiles('pgcrypto', $mf);
 
     my $D;
     opendir($D, 'contrib') || croak "Could not opendir on contrib!\n";
@@ -384,7 +387,6 @@ sub AddContrib
             }
         }
         AdjustContribProj($proj);
-        return $proj;
     }
     elsif ($mf =~ /^MODULES\s*=\s*(.*)$/mg)
     {
@@ -395,7 +397,6 @@ sub AddContrib
             $proj->AddReference($postgres);
             AdjustContribProj($proj);
         }
-        return undef;
     }
     elsif ($mf =~ /^PROGRAM\s*=\s*(.*)$/mg)
     {
@@ -407,11 +408,61 @@ sub AddContrib
             $proj->AddFile('contrib\\' . $n . '\\' . $o);
         }
         AdjustContribProj($proj);
-        return $proj;
     }
     else
     {
         croak "Could not determine contrib module type for $n\n";
+    }
+
+    # Are there any output data files to build?
+    GenerateContribSqlFiles($n, $mf);
+}
+
+sub GenerateContribSqlFiles
+{
+    my $n = shift;
+    my $mf = shift;
+    if ($mf =~ /^DATA_built\s*=\s*(.*)$/mg)
+    {
+        my $l = $1;
+
+        # Strip out $(addsuffix) rules
+        if (index($l, '$(addsuffix ') >= 0)
+        {
+            my $pcount = 0;
+            my $i;
+            for ($i = index($l, '$(addsuffix ') + 12; $i < length($l); $i++)
+            {
+                $pcount++ if (substr($l, $i, 1) eq '(');
+                $pcount-- if (substr($l, $i, 1) eq ')');
+                last if ($pcount < 0);
+            }
+            $l = substr($l, 0, index($l, '$(addsuffix ')) . substr($l, $i+1);
+        }
+
+        # Special case for contrib/spi
+        $l = "autoinc.sql insert_username.sql moddatetime.sql refint.sql timetravel.sql"
+          if ($n eq 'spi');
+
+        foreach my $d (split /\s+/, $l)
+        {
+            my $in = "$d.in";
+            my $out = "$d";
+
+            # tsearch2 uses inconsistent naming
+            $in = "tsearch.sql.in" if ($in eq "tsearch2.sql.in");
+            $in = "untsearch.sql.in" if ($in eq "uninstall_tsearch2.sql.in");
+            if (Solution::IsNewer("contrib/$n/$out", "contrib/$n/$in"))
+            {
+                print "Building $out from $in (contrib/$n)...\n";
+                my $cont = Project::read_file("contrib/$n/$in");
+                $cont =~ s/MODULE_PATHNAME/\$libdir\/$n/g;
+                my $o;
+                open($o,">contrib/$n/$out") || croak "Could not write to contrib/$n/$d";
+                print $o $cont;
+                close($o);
+            }
+        }
     }
 }
 
