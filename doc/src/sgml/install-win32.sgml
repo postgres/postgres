@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.36 2007/03/23 09:57:55 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.37 2007/03/24 22:16:49 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -111,6 +111,15 @@
      <listitem><para>
       Diff is required to run the regression tests, and can be downloaded
       from <ulink url="http://gnuwin32.sourceforge.net"></>.
+     </para></listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><productname>Gettext</productname></term>
+     <listitem><para>
+      Gettext is required to build with NLS support, and can be downloaded
+      from <ulink url="http://gnuwin32.sourceforge.net"></>. Note that binaries,
+      dependencies and developer files are all needed.
      </para></listitem>
     </varlistentry>
 

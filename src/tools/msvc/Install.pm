@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.3 2007/03/24 15:28:48 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.4 2007/03/24 22:16:49 mha Exp $
 #
 use strict;
 use warnings;
@@ -21,6 +21,8 @@ sub Install
     $| = 1;
 
     my $target = shift;
+    our $config;
+    require 'config.pl';
 
     chdir("../../..") if (-f "../../../configure");
     my $conf = "";
@@ -57,6 +59,8 @@ sub Install
     GenerateConversionScript($target);
     GenerateTimezoneFiles($target,$conf);
     CopyContribFiles($target);
+
+    GenerateNLSFiles($target,$config->{nls}) if ($config->{nls});
 }
 
 sub EnsureDirectories
@@ -272,6 +276,46 @@ sub ParseAndCleanRule
         $flist = substr($flist, 0, index($flist, '$(addsuffix ')) . substr($flist, $i+1);
     }
     return $flist;
+}
+
+sub GenerateNLSFiles
+{
+    my $target = shift;
+    my $nlspath = shift;
+    my $D;
+
+    print "Installing NLS files...";
+    EnsureDirectories($target, "share/locale");
+    open($D,"dir /b /s nls.mk|") || croak "Could not list nls.mk\n";
+    while (<$D>)
+    {
+        chomp;
+        s/nls.mk/po/;
+        my $dir = $_;
+        next unless ($dir =~ /([^\\]+)\\po$/);
+        my $prgm = $1;
+        $prgm = 'postgres' if ($prgm eq 'backend');
+        my $E;
+        open($E,"dir /b $dir\\*.po|") || croak "Could not list contents of $_\n";
+
+        while (<$E>)
+        {
+            chomp;
+            my $lang;
+            next unless /^(.*)\.po/;
+            $lang = $1;
+
+            EnsureDirectories($target, "share/locale/$lang", "share/locale/$lang/LC_MESSAGES");
+            system(
+"$nlspath\\bin\\msgfmt -o $target\\share\\locale\\$lang\\LC_MESSAGES\\$prgm.mo $dir\\$_"
+              )
+              && croak("Could not run msgfmt on $dir\\$_");
+            print ".";
+        }
+        close($E);
+    }
+    close($D);
+    print "\n";
 }
 
 sub read_file

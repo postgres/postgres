@@ -2,7 +2,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 # 
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.18 2007/03/23 08:43:51 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.19 2007/03/24 22:16:49 mha Exp $
 #
 use Carp;
 use strict;
@@ -313,7 +313,7 @@ sub AddProject
     if ($self->{options}->{nls})
     {
         $proj->AddIncludeDir($self->{options}->{nls} . '\include');
-        $proj->AddLibrary($self->{options}->{nls} . '\lib\intl.lib');
+        $proj->AddLibrary($self->{options}->{nls} . '\lib\libintl.lib');
     }
     if ($self->{options}->{krb5})
     {
