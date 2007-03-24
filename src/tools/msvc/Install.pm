@@ -1,8 +1,9 @@
 package Install;
+
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.2 2007/03/17 14:01:01 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.3 2007/03/24 15:28:48 mha Exp $
 #
 use strict;
 use warnings;
@@ -34,7 +35,8 @@ sub Install
     die "Could not find debug or release binaries" if ($conf eq "");
     print "Installing for $conf\n";
 
-    EnsureDirectories($target, 'bin','lib','share','share/timezonesets');
+    EnsureDirectories($target, 'bin','lib','share','share/timezonesets','share/contrib','doc',
+        'doc/contrib');
 
     CopySolutionOutput($conf, $target);
     copy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
@@ -54,6 +56,7 @@ sub Install
     );
     GenerateConversionScript($target);
     GenerateTimezoneFiles($target,$conf);
+    CopyContribFiles($target);
 }
 
 sub EnsureDirectories
@@ -192,6 +195,83 @@ sub GenerateTimezoneFiles
     print "Generating timezone files...";
     system("$conf\\zic\\zic -d $target/share/timezone " . join(" src/timezone/data/", @tzfiles));
     print "\n";
+}
+
+sub CopyContribFiles
+{
+    my $target = shift;
+
+    print "Copying contrib data files...";
+    my $D;
+    opendir($D, 'contrib') || croak "Could not opendir on contrib!\n";
+    while (my $d = readdir($D))
+    {
+        next if ($d =~ /^\./);
+        next unless (-f "contrib/$d/Makefile");
+
+        my $mf = read_file("contrib/$d/Makefile");
+        $mf =~ s{\\s*[\r\n]+}{}mg;
+        my $flist = '';
+        if ($mf =~ /^DATA_built\s*=\s*(.*)$/m) {$flist .= $1}
+        if ($mf =~ /^DATA\s*=\s*(.*)$/m) {$flist .= " $1"}
+        $flist =~ s/^\s*//; # Remove leading spaces if we had only DATA_built
+
+        if ($flist ne '')
+        {
+            $flist = ParseAndCleanRule($flist, $mf);
+
+            # Special case for contrib/spi
+            $flist = "autoinc.sql insert_username.sql moddatetime.sql refint.sql timetravel.sql"
+              if ($d eq 'spi');
+            foreach my $f (split /\s+/,$flist)
+            {
+                copy('contrib/' . $d . '/' . $f,$target . '/share/contrib/' . basename($f))
+                  || croak("Could not copy file $f in contrib $d");
+                print '.';
+            }
+        }
+
+        $flist = '';
+        if ($mf =~ /^DOCS\s*=\s*(.*)$/mg) {$flist .= $1}
+        if ($flist ne '')
+        {
+            $flist = ParseAndCleanRule($flist, $mf);
+
+            # Special case for contrib/spi
+            $flist =
+"README.spi autoinc.example insert_username.example moddatetime.example refint.example timetravel.example"
+              if ($d eq 'spi');
+            foreach my $f (split /\s+/,$flist)
+            {
+                copy('contrib/' . $d . '/' . $f, $target . '/doc/contrib/' . $f)
+                  || croak("Coud not copy file $f in contrib $d");
+                print '.';
+            }
+        }
+    }
+    closedir($D);
+    print "\n";
+}
+
+sub ParseAndCleanRule
+{
+    my $flist = shift;
+    my $mf = shift;
+
+    # Strip out $(addsuffix) rules
+    if (index($flist, '$(addsuffix ') >= 0)
+    {
+        my $pcount = 0;
+        my $i;
+        for ($i = index($flist, '$(addsuffix ') + 12; $i < length($flist); $i++)
+        {
+            $pcount++ if (substr($flist, $i, 1) eq '(');
+            $pcount-- if (substr($flist, $i, 1) eq ')');
+            last if ($pcount < 0);
+        }
+        $flist = substr($flist, 0, index($flist, '$(addsuffix ')) . substr($flist, $i+1);
+    }
+    return $flist;
 }
 
 sub read_file
