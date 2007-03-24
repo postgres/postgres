@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.97 2007/01/31 20:56:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.98 2007/03/24 21:46:23 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -929,9 +929,13 @@ omicron       bryanh            guest1
     <synopsis>
 ldap[<replaceable>s</>]://<replaceable>servername</>[:<replaceable>port</>]/<replaceable>base dn</replaceable>[;<replaceable>prefix</>[;<replaceable>suffix</>]]
     </synopsis>
-    for example:
+    Commas are used to specify multiple items in an <literal>ldap</>
+    component.  However, because unquoted commas are treated as item
+    separators in <filename>pg_hba.conf</filename>, it is wise to
+    double-quote the <literal>ldap</> URL to preserve any commas present,
+    e.g.:
     <synopsis>
-ldap://ldap.example.net/dc=example,dc=net;EXAMPLE\
+"ldap://ldap.example.net/dc=example,dc=net;EXAMPLE\"
     </synopsis>
 
    </para>
