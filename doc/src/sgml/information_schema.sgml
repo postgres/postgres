@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.29.2.1 2007/02/20 18:47:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/information_schema.sgml,v 1.29.2.2 2007/03/24 16:46:28 tgl Exp $ -->
 
 <chapter id="information-schema">
  <title>The Information Schema</title>
@@ -2093,8 +2093,6 @@ ORDER BY c.ordinal_position;
       <entry><literal>maximum_cardinality</literal></entry>
       <entry><type>cardinal_number</type></entry>
       <entry>Always null, because arrays always have unlimited maximum cardinality in <productname>PostgreSQL</></entry>
-     </row>
-
      </row>
     </tbody>
    </tgroup>

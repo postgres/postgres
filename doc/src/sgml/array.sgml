@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.52.2.3 2007/02/20 14:54:51 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.52.2.4 2007/03/24 16:46:28 tgl Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -248,7 +248,7 @@ SELECT schedule[1:2][1:1] FROM sal_emp WHERE name = 'Bill';
   assumed to be <literal>[1:1]</>.  If a dimension has only a single
   number (no colon), that dimension is treated as being from <literal>1</>
   to the number specified.  For example, <literal>[2]</> is treated as
-  <literal>[1:2], as in this example:
+  <literal>[1:2]</>, as in this example:
 
 <programlisting>
 SELECT schedule[1:2][2] FROM sal_emp WHERE name = 'Bill';
