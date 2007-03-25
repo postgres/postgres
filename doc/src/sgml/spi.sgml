@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.54 2007/03/15 23:12:06 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.55 2007/03/25 23:27:59 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -555,20 +555,10 @@ typedef struct
     </varlistentry>
 
     <varlistentry>
-     <term><symbol>SPI_ERROR_CURSOR</symbol></term>
-     <listitem>
-      <para>
-       if <command>DECLARE</>, <command>CLOSE</>, or <command>FETCH</>
-       was attempted
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
      <term><symbol>SPI_ERROR_TRANSACTION</symbol></term>
      <listitem>
       <para>
-       if any command involving transaction manipulation was attempted
+       if a transaction manipulation command was attempted
        (<command>BEGIN</>,
        <command>COMMIT</>,
        <command>ROLLBACK</>,

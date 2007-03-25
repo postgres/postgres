@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.173 2007/03/17 03:15:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.174 2007/03/25 23:27:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1155,8 +1155,6 @@ SPI_result_code_string(int code)
 			return "SPI_ERROR_OPUNKNOWN";
 		case SPI_ERROR_UNCONNECTED:
 			return "SPI_ERROR_UNCONNECTED";
-		case SPI_ERROR_CURSOR:
-			return "SPI_ERROR_CURSOR";
 		case SPI_ERROR_ARGUMENT:
 			return "SPI_ERROR_ARGUMENT";
 		case SPI_ERROR_PARAM:
@@ -1489,13 +1487,6 @@ _SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 							my_res = SPI_ERROR_COPY;
 							goto fail;
 						}
-					}
-					else if (IsA(stmt, DeclareCursorStmt) ||
-							 IsA(stmt, ClosePortalStmt) ||
-							 IsA(stmt, FetchStmt))
-					{
-						my_res = SPI_ERROR_CURSOR;
-						goto fail;
 					}
 					else if (IsA(stmt, TransactionStmt))
 					{

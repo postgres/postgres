@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.59 2007/03/15 23:12:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.60 2007/03/25 23:27:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ typedef struct _SPI_plan *SPIPlanPtr;
 #define SPI_ERROR_COPY			(-2)
 #define SPI_ERROR_OPUNKNOWN		(-3)
 #define SPI_ERROR_UNCONNECTED	(-4)
-#define SPI_ERROR_CURSOR		(-5)
+#define SPI_ERROR_CURSOR		(-5)			/* not used anymore */
 #define SPI_ERROR_ARGUMENT		(-6)
 #define SPI_ERROR_PARAM			(-7)
 #define SPI_ERROR_TRANSACTION	(-8)
