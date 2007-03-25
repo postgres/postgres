@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.290 2007/03/06 02:06:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.291 2007/03/25 19:45:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1893,6 +1893,7 @@ EvalPlanQual(EState *estate, Index rti,
 	Relation	relation;
 	HeapTupleData tuple;
 	HeapTuple	copyTuple = NULL;
+	SnapshotData SnapshotDirty;
 	bool		endNode;
 
 	Assert(rti != 0);
@@ -1925,12 +1926,13 @@ EvalPlanQual(EState *estate, Index rti,
 	 *
 	 * Loop here to deal with updated or busy tuples
 	 */
+	InitDirtySnapshot(SnapshotDirty);
 	tuple.t_self = *tid;
 	for (;;)
 	{
 		Buffer		buffer;
 
-		if (heap_fetch(relation, SnapshotDirty, &tuple, &buffer, true, NULL))
+		if (heap_fetch(relation, &SnapshotDirty, &tuple, &buffer, true, NULL))
 		{
 			/*
 			 * If xmin isn't what we're expecting, the slot must have been
@@ -1948,17 +1950,17 @@ EvalPlanQual(EState *estate, Index rti,
 			}
 
 			/* otherwise xmin should not be dirty... */
-			if (TransactionIdIsValid(SnapshotDirty->xmin))
+			if (TransactionIdIsValid(SnapshotDirty.xmin))
 				elog(ERROR, "t_xmin is uncommitted in tuple to be updated");
 
 			/*
 			 * If tuple is being updated by other transaction then we have to
 			 * wait for its commit/abort.
 			 */
-			if (TransactionIdIsValid(SnapshotDirty->xmax))
+			if (TransactionIdIsValid(SnapshotDirty.xmax))
 			{
 				ReleaseBuffer(buffer);
-				XactLockTableWait(SnapshotDirty->xmax);
+				XactLockTableWait(SnapshotDirty.xmax);
 				continue;		/* loop back to repeat heap_fetch */
 			}
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.69 2007/01/05 22:19:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.70 2007/03/25 19:45:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -361,9 +361,12 @@ Oid
 GetNewOidWithIndex(Relation relation, Relation indexrel)
 {
 	Oid			newOid;
+	SnapshotData SnapshotDirty;
 	IndexScanDesc scan;
 	ScanKeyData key;
 	bool		collides;
+
+	InitDirtySnapshot(SnapshotDirty);
 
 	/* Generate new OIDs until we find one not in the table */
 	do
@@ -377,7 +380,7 @@ GetNewOidWithIndex(Relation relation, Relation indexrel)
 
 		/* see notes above about using SnapshotDirty */
 		scan = index_beginscan(relation, indexrel,
-							   SnapshotDirty, 1, &key);
+							   &SnapshotDirty, 1, &key);
 
 		collides = HeapTupleIsValid(index_getnext(scan, ForwardScanDirection));
 

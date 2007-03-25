@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.154 2007/03/05 14:13:12 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.155 2007/03/25 19:45:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,10 +176,13 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 {
 	TupleDesc	itupdesc = RelationGetDescr(rel);
 	int			natts = rel->rd_rel->relnatts;
+	SnapshotData SnapshotDirty;
 	OffsetNumber maxoff;
 	Page		page;
 	BTPageOpaque opaque;
 	Buffer		nbuf = InvalidBuffer;
+
+	InitDirtySnapshot(SnapshotDirty);
 
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -232,13 +235,13 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 				/* okay, we gotta fetch the heap tuple ... */
 				curitup = (IndexTuple) PageGetItem(page, curitemid);
 				htup.t_self = curitup->t_tid;
-				if (heap_fetch(heapRel, SnapshotDirty, &htup, &hbuffer,
+				if (heap_fetch(heapRel, &SnapshotDirty, &htup, &hbuffer,
 							   true, NULL))
 				{
 					/* it is a duplicate */
 					TransactionId xwait =
-					(TransactionIdIsValid(SnapshotDirty->xmin)) ?
-					SnapshotDirty->xmin : SnapshotDirty->xmax;
+					(TransactionIdIsValid(SnapshotDirty.xmin)) ?
+					SnapshotDirty.xmin : SnapshotDirty.xmax;
 
 					ReleaseBuffer(hbuffer);
 

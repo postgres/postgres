@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.280 2007/03/03 20:08:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.281 2007/03/25 19:45:14 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1828,10 +1828,11 @@ validate_index_heapscan(Relation heapRelation,
 			 */
 			if (indexInfo->ii_Unique)
 			{
-				/* must hold a buffer lock to call HeapTupleSatisfiesNow */
+				/* must lock buffer to call HeapTupleSatisfiesVisibility */
 				LockBuffer(scan->rs_cbuf, BUFFER_LOCK_SHARE);
 
-				if (HeapTupleSatisfiesNow(heapTuple->t_data, scan->rs_cbuf))
+				if (HeapTupleSatisfiesVisibility(heapTuple, SnapshotNow,
+												 scan->rs_cbuf))
 					check_unique = true;
 				else
 					check_unique = false;

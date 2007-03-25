@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.92 2007/03/15 23:12:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.93 2007/03/25 19:45:14 tgl Exp $
  *
  * ----------
  */
@@ -277,11 +277,11 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 * We should not even consider checking the row if it is no longer valid,
 	 * since it was either deleted (so the deferred check should be skipped)
 	 * or updated (in which case only the latest version of the row should be
-	 * checked).  Test its liveness with HeapTupleSatisfiesItself.
+	 * checked).  Test its liveness according to SnapshotSelf.
 	 *
 	 * NOTE: The normal coding rule is that one must acquire the buffer
-	 * content lock to call HeapTupleSatisfiesFOO.	We can skip that here
-	 * because we know that AfterTriggerExecute just fetched the tuple
+	 * content lock to call HeapTupleSatisfiesVisibility.  We can skip that
+	 * here because we know that AfterTriggerExecute just fetched the tuple
 	 * successfully, so there cannot be a VACUUM compaction in progress on the
 	 * page (either heap_fetch would have waited for the VACUUM, or the
 	 * VACUUM's LockBufferForCleanup would be waiting for us to drop pin).
@@ -289,7 +289,7 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 * can be entitled to change its xmin/xmax.
 	 */
 	Assert(new_row_buf != InvalidBuffer);
-	if (!HeapTupleSatisfiesItself(new_row->t_data, new_row_buf))
+	if (!HeapTupleSatisfiesVisibility(new_row, SnapshotSelf, new_row_buf))
 		return PointerGetDatum(NULL);
 
 	/*

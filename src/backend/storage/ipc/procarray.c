@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.22 2007/03/23 03:16:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.23 2007/03/25 19:45:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,7 +484,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
  * limited cache area for subxact XIDs, full information may not be
  * available.  If we find any overflowed subxid arrays, we have to mark
  * the snapshot's subxid data as overflowed, and extra work will need to
- * be done to determine what's running (see XidInSnapshot() in tqual.c).
+ * be done to determine what's running (see XidInMVCCSnapshot() in tqual.c).
  *
  * We also update the following backend-global variables:
  *		TransactionXmin: the oldest xmin of any snapshot in use in the

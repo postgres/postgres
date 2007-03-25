@@ -1,15 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * tqual.c
- *	  POSTGRES "time" qualification code, ie, tuple visibility rules.
- *
- * The caller must hold at least a shared buffer context lock on the buffer
- * containing the tuple.  (VACUUM FULL assumes it's sufficient to have
- * exclusive lock on the containing relation, instead.)
+ *	  POSTGRES "time qualification" code, ie, tuple visibility rules.
  *
  * NOTE: all the HeapTupleSatisfies routines will update the tuple's
  * "hint" status bits if we see that the inserting or deleting transaction
- * has now committed or aborted.
+ * has now committed or aborted.  If the hint bits are changed,
+ * SetBufferCommitInfoNeedsSave is called on the passed-in buffer.
+ * The caller must hold at least a shared buffer context lock on the buffer
+ * containing the tuple.
  *
  * NOTE: must check TransactionIdIsInProgress (which looks in PGPROC array)
  * before TransactionIdDidCommit/TransactionIdDidAbort (which look in
@@ -32,7 +31,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.101 2007/01/05 22:19:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.102 2007/03/25 19:45:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,16 +46,21 @@
 #include "storage/procarray.h"
 #include "utils/tqual.h"
 
+
+/* Static variables representing various special snapshot semantics */
+SnapshotData SnapshotNowData = {HeapTupleSatisfiesNow};
+SnapshotData SnapshotSelfData = {HeapTupleSatisfiesSelf};
+SnapshotData SnapshotAnyData = {HeapTupleSatisfiesAny};
+SnapshotData SnapshotToastData = {HeapTupleSatisfiesToast};
+
 /*
  * These SnapshotData structs are static to simplify memory allocation
  * (see the hack in GetSnapshotData to avoid repeated malloc/free).
  */
-static SnapshotData SnapshotDirtyData;
-static SnapshotData SerializableSnapshotData;
-static SnapshotData LatestSnapshotData;
+static SnapshotData SerializableSnapshotData = {HeapTupleSatisfiesMVCC};
+static SnapshotData LatestSnapshotData = {HeapTupleSatisfiesMVCC};
 
 /* Externally visible pointers to valid snapshots: */
-Snapshot	SnapshotDirty = &SnapshotDirtyData;
 Snapshot	SerializableSnapshot = NULL;
 Snapshot	LatestSnapshot = NULL;
 
@@ -73,11 +77,11 @@ TransactionId RecentXmin = InvalidTransactionId;
 TransactionId RecentGlobalXmin = InvalidTransactionId;
 
 /* local functions */
-static bool XidInSnapshot(TransactionId xid, Snapshot snapshot);
+static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);
 
 
 /*
- * HeapTupleSatisfiesItself
+ * HeapTupleSatisfiesSelf
  *		True iff heap tuple is valid "for itself".
  *
  *	Here, we consider the effects of:
@@ -101,7 +105,7 @@ static bool XidInSnapshot(TransactionId xid, Snapshot snapshot);
  *			 Xmax is not committed)))			that has not been committed
  */
 bool
-HeapTupleSatisfiesItself(HeapTupleHeader tuple, Buffer buffer)
+HeapTupleSatisfiesSelf(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
 {
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
@@ -278,7 +282,7 @@ HeapTupleSatisfiesItself(HeapTupleHeader tuple, Buffer buffer)
  *		that do catalog accesses.  this is unfortunate, but not critical.
  */
 bool
-HeapTupleSatisfiesNow(HeapTupleHeader tuple, Buffer buffer)
+HeapTupleSatisfiesNow(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
 {
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
@@ -423,6 +427,16 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple, Buffer buffer)
 }
 
 /*
+ * HeapTupleSatisfiesAny
+ *		Dummy "satisfies" routine: any tuple satisfies SnapshotAny.
+ */
+bool
+HeapTupleSatisfiesAny(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
+{
+	return true;
+}
+
+/*
  * HeapTupleSatisfiesToast
  *		True iff heap tuple is valid as a TOAST row.
  *
@@ -437,7 +451,8 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple, Buffer buffer)
  * table.
  */
 bool
-HeapTupleSatisfiesToast(HeapTupleHeader tuple, Buffer buffer)
+HeapTupleSatisfiesToast(HeapTupleHeader tuple, Snapshot snapshot,
+						Buffer buffer)
 {
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
@@ -676,20 +691,22 @@ HeapTupleSatisfiesUpdate(HeapTupleHeader tuple, CommandId curcid,
  *		previous commands of this transaction
  *		changes made by the current command
  *
- * This is essentially like HeapTupleSatisfiesItself as far as effects of
+ * This is essentially like HeapTupleSatisfiesSelf as far as effects of
  * the current transaction and committed/aborted xacts are concerned.
  * However, we also include the effects of other xacts still in progress.
  *
- * Returns extra information in the global variable SnapshotDirty, namely
- * xids of concurrent xacts that affected the tuple.  SnapshotDirty->xmin
- * is set to InvalidTransactionId if xmin is either committed good or
- * committed dead; or to xmin if that transaction is still in progress.
- * Similarly for SnapshotDirty->xmax.
+ * A special hack is that the passed-in snapshot struct is used as an
+ * output argument to return the xids of concurrent xacts that affected the
+ * tuple.  snapshot->xmin is set to the tuple's xmin if that is another
+ * transaction that's still in progress; or to InvalidTransactionId if the
+ * tuple's xmin is committed good, committed dead, or my own xact.  Similarly
+ * for snapshot->xmax and the tuple's xmax.
  */
 bool
-HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Buffer buffer)
+HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Snapshot snapshot,
+						Buffer buffer)
 {
-	SnapshotDirty->xmin = SnapshotDirty->xmax = InvalidTransactionId;
+	snapshot->xmin = snapshot->xmax = InvalidTransactionId;
 
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
@@ -759,7 +776,7 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Buffer buffer)
 		}
 		else if (TransactionIdIsInProgress(HeapTupleHeaderGetXmin(tuple)))
 		{
-			SnapshotDirty->xmin = HeapTupleHeaderGetXmin(tuple);
+			snapshot->xmin = HeapTupleHeaderGetXmin(tuple);
 			/* XXX shouldn't we fall through to look at xmax? */
 			return true;		/* in insertion by other */
 		}
@@ -805,7 +822,7 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Buffer buffer)
 
 	if (TransactionIdIsInProgress(HeapTupleHeaderGetXmax(tuple)))
 	{
-		SnapshotDirty->xmax = HeapTupleHeaderGetXmax(tuple);
+		snapshot->xmax = HeapTupleHeaderGetXmax(tuple);
 		return true;
 	}
 
@@ -832,8 +849,8 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Buffer buffer)
 }
 
 /*
- * HeapTupleSatisfiesSnapshot
- *		True iff heap tuple is valid for the given snapshot.
+ * HeapTupleSatisfiesMVCC
+ *		True iff heap tuple is valid for the given MVCC snapshot.
  *
  *	Here, we consider the effects of:
  *		all transactions committed as of the time of the given snapshot
@@ -853,8 +870,8 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Buffer buffer)
  * can't see it.)
  */
 bool
-HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot,
-						   Buffer buffer)
+HeapTupleSatisfiesMVCC(HeapTupleHeader tuple, Snapshot snapshot,
+					   Buffer buffer)
 {
 	if (!(tuple->t_infomask & HEAP_XMIN_COMMITTED))
 	{
@@ -949,7 +966,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot,
 	 * By here, the inserting transaction has committed - have to check
 	 * when...
 	 */
-	if (XidInSnapshot(HeapTupleHeaderGetXmin(tuple), snapshot))
+	if (XidInMVCCSnapshot(HeapTupleHeaderGetXmin(tuple), snapshot))
 		return false;			/* treat as still in progress */
 
 	if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid or aborted */
@@ -994,7 +1011,7 @@ HeapTupleSatisfiesSnapshot(HeapTupleHeader tuple, Snapshot snapshot,
 	/*
 	 * OK, the deleting transaction committed too ... but when?
 	 */
-	if (XidInSnapshot(HeapTupleHeaderGetXmax(tuple), snapshot))
+	if (XidInMVCCSnapshot(HeapTupleHeaderGetXmax(tuple), snapshot))
 		return true;			/* treat as still in progress */
 
 	return false;
@@ -1241,8 +1258,6 @@ GetLatestSnapshot(void)
  *		Copy the given snapshot.
  *
  * The copy is palloc'd in the current memory context.
- *
- * Note that this will not work on "special" snapshots.
  */
 Snapshot
 CopySnapshot(Snapshot snapshot)
@@ -1290,7 +1305,7 @@ CopySnapshot(Snapshot snapshot)
  * This is currently identical to pfree, but is provided for cleanliness.
  *
  * Do *not* apply this to the results of GetTransactionSnapshot or
- * GetLatestSnapshot.
+ * GetLatestSnapshot, since those are just static structs.
  */
 void
 FreeSnapshot(Snapshot snapshot)
@@ -1316,7 +1331,7 @@ FreeXactSnapshot(void)
 }
 
 /*
- * XidInSnapshot
+ * XidInMVCCSnapshot
  *		Is the given XID still-in-progress according to the snapshot?
  *
  * Note: GetSnapshotData never stores either top xid or subxids of our own
@@ -1325,7 +1340,7 @@ FreeXactSnapshot(void)
  * apply this for known-committed XIDs.
  */
 static bool
-XidInSnapshot(TransactionId xid, Snapshot snapshot)
+XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot)
 {
 	uint32		i;
 
