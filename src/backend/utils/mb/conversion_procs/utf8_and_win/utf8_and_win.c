@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.9 2007/01/05 22:19:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c,v 1.10 2007/03/25 11:56:04 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ win_to_utf8(PG_FUNCTION_ARGS)
 	{
 		if (encoding == maps[i].encoding)
 		{
-			LocalToUtf(src, dest, maps[i].map1, maps[i].size1, encoding, len);
+			LocalToUtf(src, dest, maps[i].map1, NULL, maps[i].size1, 0, encoding, len);
 			PG_RETURN_VOID();
 		}
 	}
@@ -145,7 +145,7 @@ utf8_to_win(PG_FUNCTION_ARGS)
 	{
 		if (encoding == maps[i].encoding)
 		{
-			UtfToLocal(src, dest, maps[i].map2, maps[i].size2, encoding, len);
+			UtfToLocal(src, dest, maps[i].map2, NULL, maps[i].size2, 0, encoding, len);
 			PG_RETURN_VOID();
 		}
 	}

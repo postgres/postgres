@@ -1642,6 +1642,84 @@ SELECT CONVERT('foo', 'WIN1257', 'UTF8');
  foo
 (1 row)
 
+-- UTF8 --> EUC_JIS_2004
+SELECT CONVERT('foo' USING utf8_to_euc_jis_2004);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UTF8', 'EUC_JIS_2004');
+ convert 
+---------
+ foo
+(1 row)
+
+-- EUC_JIS_2004 --> UTF8
+SELECT CONVERT('foo' USING euc_jis_2004_to_utf8);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'EUC_JIS_2004', 'UTF8');
+ convert 
+---------
+ foo
+(1 row)
+
+-- UTF8 --> SHIFT_JIS_2004
+SELECT CONVERT('foo' USING utf8_to_euc_jis_2004);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'UTF8', 'SHIFT_JIS_2004');
+ convert 
+---------
+ foo
+(1 row)
+
+-- SHIFT_JIS_2004 --> UTF8
+SELECT CONVERT('foo' USING shift_jis_2004_to_utf8);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'SHIFT_JIS_2004', 'UTF8');
+ convert 
+---------
+ foo
+(1 row)
+
+-- EUC_JIS_2004 --> SHIFT_JIS_2004
+SELECT CONVERT('foo' USING euc_jis_2004_to_shift_jis_2004);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'EUC_JIS_2004', 'SHIFT_JIS_2004');
+ convert 
+---------
+ foo
+(1 row)
+
+-- SHIFT_JIS_2004 --> EUC_JIS_2004
+SELECT CONVERT('foo' USING shift_jis_2004_to_euc_jis_2004);
+ convert_using 
+---------------
+ foo
+(1 row)
+
+SELECT CONVERT('foo', 'SHIFT_JIS_2004', 'EUC_JIS_2004');
+ convert 
+---------
+ foo
+(1 row)
+
 --
 -- return to the super user
 --

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.370 2007/03/20 05:44:59 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.371 2007/03/25 11:56:01 ishii Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -2392,6 +2392,42 @@
        <entry><literal>windows_874_to_utf8</literal></entry>
        <entry><literal>WIN874</literal></entry>
        <entry><literal>UTF8</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal>euc_jis_2004_to_utf8</literal></entry>
+       <entry><literal>EUC_JIS_2004</literal></entry>
+       <entry><literal>UTF8</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal>ut8_to_euc_jis_2004</literal></entry>
+       <entry><literal>UTF8</literal></entry>
+       <entry><literal>EUC_JIS_2004</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal>shift_jis_2004_to_utf8</literal></entry>
+       <entry><literal>SHIFT_JIS_2004</literal></entry>
+       <entry><literal>UTF8</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal>ut8_to_shift_jis_2004</literal></entry>
+       <entry><literal>UTF8</literal></entry>
+       <entry><literal>SHIFT_JIS_2004</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal>euc_jis_2004_to_shift_jis_2004</literal></entry>
+       <entry><literal>EUC_JIS_2004</literal></entry>
+       <entry><literal>SHIFT_JIS_2004</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal>shift_jis_2004_to_euc_jis_2004</literal></entry>
+       <entry><literal>SHIFT_JIS_2004</literal></entry>
+       <entry><literal>EUC_JIS_2004</literal></entry>
       </row>
 
      </tbody>

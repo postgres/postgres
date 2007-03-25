@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_cyrillic/utf8_and_cyrillic.c,v 1.18 2007/01/05 22:19:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_cyrillic/utf8_and_cyrillic.c,v 1.19 2007/03/25 11:56:02 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,8 @@ utf8_to_koi8r(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_KOI8R);
 	Assert(len >= 0);
 
-	UtfToLocal(src, dest, ULmapKOI8R,
-			   sizeof(ULmapKOI8R) / sizeof(pg_utf_to_local), PG_KOI8R, len);
+	UtfToLocal(src, dest, ULmapKOI8R, NULL, 
+			   sizeof(ULmapKOI8R) / sizeof(pg_utf_to_local), 0, PG_KOI8R, len);
 
 	PG_RETURN_VOID();
 }
@@ -64,8 +64,8 @@ koi8r_to_utf8(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_UTF8);
 	Assert(len >= 0);
 
-	LocalToUtf(src, dest, LUmapKOI8R,
-			   sizeof(LUmapKOI8R) / sizeof(pg_local_to_utf), PG_KOI8R, len);
+	LocalToUtf(src, dest, LUmapKOI8R, NULL,
+			   sizeof(LUmapKOI8R) / sizeof(pg_local_to_utf), 0, PG_KOI8R, len);
 
 	PG_RETURN_VOID();
 }

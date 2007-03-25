@@ -4,7 +4,7 @@
 #    Makefile for utils/mb/conversion_procs
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.17 2006/02/27 16:09:49 petere Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/Makefile,v 1.18 2007/03/25 11:56:02 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,8 @@ DIRS = \
 	utf8_and_ascii utf8_and_big5 utf8_and_cyrillic utf8_and_euc_cn \
 	utf8_and_euc_jp utf8_and_euc_kr utf8_and_euc_tw utf8_and_gb18030 \
 	utf8_and_gbk utf8_and_iso8859 utf8_and_iso8859_1 utf8_and_johab \
-	utf8_and_sjis utf8_and_win utf8_and_uhc
+	utf8_and_sjis utf8_and_win utf8_and_uhc \
+	utf8_and_euc_jis_2004 utf8_and_shift_jis_2004 euc_jis_2004_and_shift_jis_2004
 
 # conversion_name source_encoding destination_encoding function object
 CONVERSIONS = \
@@ -150,8 +151,13 @@ CONVERSIONS = \
 		sjis_to_utf8 SJIS UTF8 sjis_to_utf8 utf8_and_sjis \
 		utf8_to_sjis UTF8 SJIS utf8_to_sjis utf8_and_sjis \
 		uhc_to_utf8 UHC UTF8 uhc_to_utf8 utf8_and_uhc \
-		utf8_to_uhc UTF8 UHC utf8_to_uhc utf8_and_uhc
-
+		utf8_to_uhc UTF8 UHC utf8_to_uhc utf8_and_uhc \
+		euc_jis_2004_to_utf8 EUC_JIS_2004 UTF8 euc_jis_2004_to_utf8 utf8_and_euc_jis_2004 \
+		utf8_to_euc_jis_2004 UTF8 EUC_JIS_2004 utf8_to_euc_jis_2004 utf8_and_euc_jis_2004 \
+		shift_jis_2004_to_utf8 SHIFT_JIS_2004 UTF8 shift_jis_2004_to_utf8 utf8_and_shift_jis_2004 \
+		utf8_to_shift_jis_2004 UTF8 SHIFT_JIS_2004 utf8_to_shift_jis_2004 utf8_and_shift_jis_2004 \
+		euc_jis_2004_to_shift_jis_2004 EUC_JIS_2004 SHIFT_JIS_2004 euc_jis_2004_to_shift_jis_2004 euc_jis_2004_and_shift_jis_2004 \
+		shift_jis_2004_to_euc_jis_2004 SHIFT_JIS_2004 EUC_JIS_2004 shift_jis_2004_to_euc_jis_2004 euc_jis_2004_and_shift_jis_2004
 
 all: $(SQLSCRIPT)
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@ || exit; done

@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.31 2006/07/14 14:52:25 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.32 2007/03/25 11:56:02 ishii Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -44,6 +44,10 @@ pg_encname	pg_encname_tbl[] =
 		"euccn", PG_EUC_CN
 	},							/* EUC-CN; Extended Unix Code for simplified
 								 * Chinese */
+	{
+		"eucjis2004", PG_EUC_JIS_2004
+	},							/* EUC-JIS-2004; Extended UNIX Code fixed Width for
+								 * Japanese, standard JIS X 0213 */
 	{
 		"eucjp", PG_EUC_JP
 	},							/* EUC-JP; Extended UNIX Code fixed Width for
@@ -156,6 +160,11 @@ pg_encname	pg_encname_tbl[] =
 	{
 		"shiftjis", PG_SJIS
 	},							/* Shift_JIS; JIS X 0202-1991 */
+
+	{
+		"shiftjis2004", PG_SHIFT_JIS_2004
+	},							/* SHIFT-JIS-2004; Shift JIS for
+								 * Japanese, standard JIS X 0213 */
 	{
 		"sjis", PG_SJIS
 	},							/* alias for Shift_JIS */
@@ -392,6 +401,9 @@ pg_enc2name pg_enc2name_tbl[] =
 		"WIN1257", PG_WIN1257
 	},
 	{
+		"EUC_JIS_2004", PG_EUC_JIS_2004
+	},
+	{
 		"SJIS", PG_SJIS
 	},
 	{
@@ -405,6 +417,9 @@ pg_enc2name pg_enc2name_tbl[] =
 	},
 	{
 		"GB18030", PG_GB18030
+	},
+	{
+		"SHIFT_JIS_2004", PG_SHIFT_JIS_2004
 	}
 };
 

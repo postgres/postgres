@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.70 2006/12/24 00:57:48 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.71 2007/03/25 11:56:04 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -187,6 +187,7 @@ typedef enum pg_enc
 	PG_WIN1254,					/* windows-1254 */
 	PG_WIN1255,					/* windows-1255 */
 	PG_WIN1257,					/* windows-1257 */
+	PG_EUC_JIS_2004,			/* EUC-JIS-2004 */
 	/* PG_ENCODING_BE_LAST points to the above entry */
 
 	/* followings are for client encoding only */
@@ -195,11 +196,12 @@ typedef enum pg_enc
 	PG_GBK,						/* GBK (Windows-936) */
 	PG_UHC,						/* UHC (Windows-949) */
 	PG_GB18030,					/* GB18030 */
+	PG_SHIFT_JIS_2004,			/* Shift-JIS-2004 */
 	_PG_LAST_ENCODING_			/* mark only */
 
 } pg_enc;
 
-#define PG_ENCODING_BE_LAST PG_WIN1257
+#define PG_ENCODING_BE_LAST PG_EUC_JIS_2004
 
 /*
  * Please use these tests before access to pg_encconv_tbl[]
@@ -274,22 +276,44 @@ typedef struct
 extern pg_wchar_tbl pg_wchar_table[];
 
 /*
- * UTF8 to local code conversion map
+ * UTF-8 to local code conversion map
+ * Note that we limit the max length of UTF-8 to 4 bytes,
+ * which is UCS-4 00010000-001FFFFF range.
  */
 typedef struct
 {
-	unsigned int utf;			/* UTF8 */
-	unsigned int code;			/* local code */
+	uint32 utf;			/* UTF-8 */
+	uint32 code;		/* local code */
 } pg_utf_to_local;
 
 /*
- * local code to UTF8 conversion map
+ * local code to UTF-8 conversion map
  */
 typedef struct
 {
-	unsigned int code;			/* local code */
-	unsigned int utf;			/* UTF8 */
+	uint32 code;		/* local code */
+	uint32 utf;			/* UTF-8 */
 } pg_local_to_utf;
+
+/*
+ * UTF-8 to local code conversion map(combined characters)
+ */
+typedef struct
+{
+	uint32 utf1;			/* UTF-8 code 1 */
+	uint32 utf2;			/* UTF-8 code 2 */
+	uint32 code;			/* local code */
+} pg_utf_to_local_combined;
+
+/*
+ * local code to UTF-8 conversion map(combined characters)
+ */
+typedef struct
+{
+	uint32 code;			/* local code */
+	uint32 utf1;			/* UTF-8 code 1 */
+	uint32 utf2;			/* UTF-8 code 2 */
+} pg_local_to_utf_combined;
 
 extern int	pg_mb2wchar(const char *from, pg_wchar *to);
 extern int	pg_mb2wchar_with_len(const char *from, pg_wchar *to, int len);
@@ -338,10 +362,12 @@ extern unsigned short BIG5toCNS(unsigned short big5, unsigned char *lc);
 extern unsigned short CNStoBIG5(unsigned short cns, unsigned char lc);
 
 extern void LocalToUtf(const unsigned char *iso, unsigned char *utf,
-		   const pg_local_to_utf *map, int size, int encoding, int len);
+					   const pg_local_to_utf *map, const pg_local_to_utf_combined *cmap,
+					   int size1, int size2, int encoding, int len);
 
 extern void UtfToLocal(const unsigned char *utf, unsigned char *iso,
-		   const pg_utf_to_local *map, int size, int encoding, int len);
+					   const pg_utf_to_local *map, const pg_utf_to_local_combined *cmap,
+					   int size1, int size2, int encoding, int len);
 
 extern bool pg_verifymbstr(const char *mbstr, int len, bool noError);
 extern bool pg_verify_mbstr(int encoding, const char *mbstr, int len,

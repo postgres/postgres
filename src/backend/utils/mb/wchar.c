@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.59 2007/01/24 17:12:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.60 2007/03/25 11:56:02 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -1346,11 +1346,13 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 30; PG_WIN1254 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 31; PG_WIN1255 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 32; PG_WIN1257 */
-	{0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2},	/* 33; PG_SJIS */
-	{0, pg_big5_mblen, pg_big5_dsplen, pg_big5_verifier, 2},	/* 34; PG_BIG5 */
-	{0, pg_gbk_mblen, pg_gbk_dsplen, pg_gbk_verifier, 2},		/* 35; PG_GBK */
-	{0, pg_uhc_mblen, pg_uhc_dsplen, pg_uhc_verifier, 2},		/* 36; PG_UHC */
-	{0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 2}	/* 37; PG_GB18030 */
+	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, pg_eucjp_verifier, 3},	/* 33; PG_EUC_JIS_2004 */
+	{0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2},	/* 34; PG_SJIS */
+	{0, pg_big5_mblen, pg_big5_dsplen, pg_big5_verifier, 2},	/* 35; PG_BIG5 */
+	{0, pg_gbk_mblen, pg_gbk_dsplen, pg_gbk_verifier, 2},		/* 36; PG_GBK */
+	{0, pg_uhc_mblen, pg_uhc_dsplen, pg_uhc_verifier, 2},		/* 37; PG_UHC */
+	{0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 2},	/* 38; PG_GB18030 */
+	{0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2}		/* 39; PG_SHIFT_JIS_2004 */
 };
 
 /* returns the byte length of a word for mule internal code */

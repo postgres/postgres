@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_jp/utf8_and_euc_jp.c,v 1.16 2007/01/05 22:19:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_euc_jp/utf8_and_euc_jp.c,v 1.17 2007/03/25 11:56:03 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,8 +46,8 @@ euc_jp_to_utf8(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_UTF8);
 	Assert(len >= 0);
 
-	LocalToUtf(src, dest, LUmapEUC_JP,
-			   sizeof(LUmapEUC_JP) / sizeof(pg_local_to_utf), PG_EUC_JP, len);
+	LocalToUtf(src, dest, LUmapEUC_JP, NULL,
+			   sizeof(LUmapEUC_JP) / sizeof(pg_local_to_utf), 0, PG_EUC_JP, len);
 
 	PG_RETURN_VOID();
 }
@@ -63,8 +63,8 @@ utf8_to_euc_jp(PG_FUNCTION_ARGS)
 	Assert(PG_GETARG_INT32(1) == PG_EUC_JP);
 	Assert(len >= 0);
 
-	UtfToLocal(src, dest, ULmapEUC_JP,
-			   sizeof(ULmapEUC_JP) / sizeof(pg_utf_to_local), PG_EUC_JP, len);
+	UtfToLocal(src, dest, ULmapEUC_JP, NULL,
+			   sizeof(ULmapEUC_JP) / sizeof(pg_utf_to_local), 0, PG_EUC_JP, len);
 
 	PG_RETURN_VOID();
 }
