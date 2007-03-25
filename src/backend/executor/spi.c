@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.174 2007/03/25 23:27:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.175 2007/03/25 23:42:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1548,7 +1548,7 @@ _SPI_execute_plan(SPIPlanPtr plan, Datum *Values, const char *Nulls,
 				else
 				{
 					ProcessUtility(stmt,
-								   NULL, /* XXX provide query string? */
+								   plansource->query_string,
 								   paramLI,
 								   false,				/* not top level */
 								   dest,
