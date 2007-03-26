@@ -48,7 +48,7 @@ readstoplist(text *in, StopList * s)
 		while (fgets(buf, sizeof(buf), hin))
 		{
 			pbuf = buf;
-			while( !isspace( *pbuf ) )
+			while( *pbuf && !isspace( *pbuf ) )
 				pbuf++;
 			*pbuf = '\0';
 
