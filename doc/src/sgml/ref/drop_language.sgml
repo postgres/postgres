@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.24 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_language.sgml,v 1.25 2007/03/26 16:58:38 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,6 +31,8 @@ DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="PARAMETER">name</
    <command>DROP LANGUAGE</command> will remove the definition
    of the previously registered procedural language called
    <replaceable class="parameter">name</replaceable>.
+   You must be superuser or owner of the language to
+   use <command>DROP LANGUAGE</command>.
   </para>
  </refsect1>
   
@@ -43,7 +45,7 @@ DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] <replaceable class="PARAMETER">name</
     <term><literal>IF EXISTS</literal></term>
     <listitem>
      <para>
-      Do not throw an error if the function does not exist. A notice is issued 
+      Do not throw an error if the language does not exist. A notice is issued 
       in this case.
      </para>
     </listitem>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.22 2007/01/23 05:07:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.23 2007/03/26 16:58:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,6 +201,10 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 
 		case OBJECT_FUNCTION:
 			AlterFunctionOwner(stmt->object, stmt->objarg, newowner);
+			break;
+
+		case OBJECT_LANGUAGE:
+			AlterLanguageOwner((char *) linitial(stmt->object), newowner);
 			break;
 
 		case OBJECT_OPERATOR:

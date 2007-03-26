@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.159 2007/02/23 18:20:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.160 2007/03/26 16:58:40 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -651,7 +651,12 @@ psql_completion(char *text, int start, int end)
 	/* ALTER LANGUAGE <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "LANGUAGE") == 0)
-		COMPLETE_WITH_CONST("RENAME TO");
+	{
+		static const char *const list_ALTERLANGUAGE[] =
+		{"OWNER TO", "RENAME TO", NULL};
+
+		COMPLETE_WITH_LIST(list_ALTERLANGUAGE);
+	}
 
 	/* ALTER USER,ROLE <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&

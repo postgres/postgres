@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.147 2007/03/22 15:46:56 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.148 2007/03/26 16:58:37 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -2656,6 +2656,13 @@
      </row>
 
      <row>
+      <entry><structfield>lanowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the language</entry>
+     </row>
+
+     <row>
       <entry><structfield>lanispl</structfield></entry>
       <entry><type>bool</type></entry>
       <entry></entry>
@@ -3265,7 +3272,7 @@
   <table>
    <title><structname>pg_pltemplate</> Columns</title>
 
-   <tgroup cols=4>
+   <tgroup cols=3>
     <thead>
      <row>
       <entry>Name</entry>
@@ -3285,6 +3292,12 @@
       <entry><structfield>tmpltrusted</structfield></entry>
       <entry><type>boolean</type></entry>
       <entry>True if language is considered trusted</entry>
+     </row>
+
+     <row>
+      <entry><structfield>tmpldbacreate</structfield></entry>
+      <entry><type>boolean</type></entry>
+      <entry>True if language may be created by a database owner</entry>
      </row>
 
      <row>

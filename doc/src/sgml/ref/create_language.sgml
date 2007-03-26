@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.43 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_language.sgml,v 1.44 2007/03/26 16:58:38 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -34,9 +34,7 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
    <productname>PostgreSQL</productname> user can register a new
    procedural language with a <productname>PostgreSQL</productname>
    database.  Subsequently, functions and trigger procedures can be
-   defined in this new language.  The user must have the
-   <productname>PostgreSQL</productname> superuser privilege to
-   register a new language.
+   defined in this new language.
   </para>
 
   <para>
@@ -63,6 +61,20 @@ CREATE [ TRUSTED ] [ PROCEDURAL ] LANGUAGE <replaceable class="parameter">name</
    command includes language parameters.  This behavior simplifies loading of
    old dump files, which are likely to contain out-of-date information
    about language support functions.
+  </para>
+
+  <para>
+   Ordinarily, the user must have the
+   <productname>PostgreSQL</productname> superuser privilege to
+   register a new language.  However, the owner of a database can register
+   a new language within that database if the language is listed in
+   the <structname>pg_pltemplate</structname> catalog and is marked
+   as allowed to be created by database owners (<structfield>tmpldbacreate</>
+   is true).  The default is that trusted languages can be created
+   by database owners, but this can be adjusted by superusers by modifying
+   the contents of <structname>pg_pltemplate</structname>.
+   The creator of a language becomes its owner and can later
+   drop it, rename it, or assign it to a new owner.
   </para>
  </refsect1>
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.137 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.138 2007/03/26 16:58:38 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1003,11 +1003,8 @@ ExecGrant_Language(InternalGrant *istmt)
 		/*
 		 * Get owner ID and working copy of existing ACL. If there's no ACL,
 		 * substitute the proper default.
-		 *
-		 * Note: for now, languages are treated as owned by the bootstrap
-		 * user. We should add an owner column to pg_language instead.
 		 */
-		ownerId = BOOTSTRAP_SUPERUSERID;
+		ownerId = pg_language_tuple->lanowner;
 		aclDatum = SysCacheGetAttr(LANGNAME, tuple, Anum_pg_language_lanacl,
 								   &isNull);
 		if (isNull)
@@ -1770,8 +1767,7 @@ pg_language_aclmask(Oid lang_oid, Oid roleid,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("language with OID %u does not exist", lang_oid)));
 
-	/* XXX pg_language should have an owner column, but doesn't */
-	ownerId = BOOTSTRAP_SUPERUSERID;
+	ownerId = ((Form_pg_language) GETSTRUCT(tuple))->lanowner;
 
 	aclDatum = SysCacheGetAttr(LANGOID, tuple, Anum_pg_language_lanacl,
 							   &isNull);
@@ -2141,6 +2137,34 @@ pg_proc_ownercheck(Oid proc_oid, Oid roleid)
 				 errmsg("function with OID %u does not exist", proc_oid)));
 
 	ownerId = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
+
+	ReleaseSysCache(tuple);
+
+	return has_privs_of_role(roleid, ownerId);
+}
+
+/*
+ * Ownership check for a procedural language (specified by OID)
+ */
+bool
+pg_language_ownercheck(Oid lan_oid, Oid roleid)
+{
+	HeapTuple	tuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	tuple = SearchSysCache(LANGOID,
+						   ObjectIdGetDatum(lan_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_FUNCTION),
+				 errmsg("language with OID %u does not exist", lan_oid)));
+
+	ownerId = ((Form_pg_language) GETSTRUCT(tuple))->lanowner;
 
 	ReleaseSysCache(tuple);
 

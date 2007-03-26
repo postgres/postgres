@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.464 2007/03/22 20:47:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.465 2007/03/26 16:58:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4030,7 +4030,19 @@ getProcLangs(int *numProcLangs)
 	/* Make sure we are in proper schema */
 	selectSourceSchema("pg_catalog");
 
-	if (g_fout->remoteVersion >= 80100)
+	if (g_fout->remoteVersion >= 80300)
+	{
+		/* pg_language has a lanowner column */
+		appendPQExpBuffer(query, "SELECT tableoid, oid, "
+						  "lanname, lanpltrusted, lanplcallfoid, "
+						  "lanvalidator,  lanacl, "
+						  "(%s lanowner) as lanowner "
+						  "FROM pg_language "
+						  "WHERE lanispl "
+						  "ORDER BY oid",
+						  username_subquery);
+	}
+	else if (g_fout->remoteVersion >= 80100)
 	{
 		/* Languages are owned by the bootstrap superuser, OID 10 */
 		appendPQExpBuffer(query, "SELECT tableoid, oid, *, "

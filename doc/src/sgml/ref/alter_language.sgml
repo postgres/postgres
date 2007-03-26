@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_language.sgml,v 1.6 2006/09/16 00:30:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_language.sgml,v 1.7 2007/03/26 16:58:38 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER LANGUAGE <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
+ALTER [ PROCEDURAL ] LANGUAGE <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
+ALTER [ PROCEDURAL ] LANGUAGE <replaceable>name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
 </synopsis>
  </refsynopsisdiv>
 
@@ -29,8 +30,9 @@ ALTER LANGUAGE <replaceable>name</replaceable> RENAME TO <replaceable>newname</r
 
   <para>
    <command>ALTER LANGUAGE</command> changes the definition of a
-   language.  The only functionality is to rename the language.  Only
-   a superuser can rename languages.
+   procedural language.  The only functionality is to rename the language or
+   assign a new owner.  You must be superuser or owner of the language to
+   use <command>ALTER LANGUAGE</command>.
   </para>
  </refsect1>
 
@@ -52,6 +54,15 @@ ALTER LANGUAGE <replaceable>name</replaceable> RENAME TO <replaceable>newname</r
     <listitem>
      <para>
       The new name of the language
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable>new_owner</replaceable></term>
+    <listitem>
+     <para>
+      The new owner of the language
      </para>
     </listitem>
    </varlistentry>
