@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat Mar 24 22:21:15 EDT 2007
+Last updated:		Mon Mar 26 19:47:31 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1205,6 +1205,11 @@ Vacuum
 
 * Reuse index tuples that point to heap tuples that are not visible to 
   anyone?
+* Increase the number of rows recognized as dead during multi-statement
+  transactions
+
+  http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php
+
 * Auto-vacuum
 
 	o Use free-space map information to guide refilling
