@@ -47,9 +47,13 @@ readstoplist(text *in, StopList * s)
 
 		while (fgets(buf, sizeof(buf), hin))
 		{
-			buf[strlen(buf) - 1] = '\0';
+			pbuf = buf;
+			while( !isspace( *pbuf ) )
+				pbuf++;
+			*pbuf = '\0';
+
 			pg_verifymbstr(buf, strlen(buf), false);
-			if (*buf == '\0')
+			if (*buf == '\0' || *buf=='\n' || *buf=='\r')
 				continue;
 
 			if (s->len >= reallen)
