@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.189 2007/03/16 08:28:01 mha Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.190 2007/03/26 17:23:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2731,8 +2731,8 @@ $endif
 
   <para>
    This utility, like most other <productname>PostgreSQL</> utilities,
-   also uses the environment variables supported by <xref 
-   linkend="libpq-envars" endterm="libpq">.
+   also uses the environment variables supported by <application>libpq</>
+   (see <xref linkend="libpq-envars">).
   </para>
 
  </refsect1>

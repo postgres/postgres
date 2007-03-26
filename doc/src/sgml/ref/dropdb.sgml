@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.30 2007/02/21 23:21:11 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.31 2007/03/26 17:23:36 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -171,8 +171,8 @@ PostgreSQL documentation
 
   <para>
    This utility, like most other <productname>PostgreSQL</> utilities,
-   also uses the environment variables supported by <xref 
-   linkend="libpq-envars" endterm="libpq">.
+   also uses the environment variables supported by <application>libpq</>
+   (see <xref linkend="libpq-envars">).
   </para>
 
  </refsect1>
