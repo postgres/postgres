@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/port/getopt.c,v 1.10 2006/03/11 04:38:40 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/port/getopt.c,v 1.11 2007/03/26 21:44:11 momjian Exp $ */
 
 /* This is used by psql under Win32 */
 
@@ -14,11 +14,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *	  notice, this list of conditions and the following disclaimer in the
  *	  documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *	  must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *	  may be used to endorse or promote products derived from this software
  *	  without specific prior written permission.
  *
