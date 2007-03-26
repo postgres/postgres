@@ -6675,7 +6675,7 @@ fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 if test "$ac_cv_search_com_err" = no; then
-  for ac_lib in krb5 'krb5 -ldes -lasn1 -lroken' com_err; do
+  for ac_lib in krb5 'krb5 -lcrypto -ldes -lasn1 -lroken' com_err; do
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
     cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
@@ -6805,7 +6805,7 @@ fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 if test "$ac_cv_search_krb5_sendauth" = no; then
-  for ac_lib in krb5 'krb5 -ldes -lasn1 -lroken'; do
+  for ac_lib in krb5 'krb5 -lcrypto -ldes -lasn1 -lroken'; do
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
     cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
