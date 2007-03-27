@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.341 2007/03/17 19:25:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.342 2007/03/27 03:25:28 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -6414,7 +6414,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| DOUBLE_P			{ $$ = make_str("double"); }
 		| DROP				{ $$ = make_str("drop"); }
 		| EACH				{ $$ = make_str("each"); }
-		| ENABLE_P			{ $$ = make_str("ensable"); }
+		| ENABLE_P			{ $$ = make_str("enable"); }
 		| ENCODING			{ $$ = make_str("encoding"); }
 		| ENCRYPTED			{ $$ = make_str("encrypted"); }
 		| ESCAPE			{ $$ = make_str("escape"); }
