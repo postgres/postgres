@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.230 2007/03/21 22:18:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.231 2007/03/27 23:21:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1454,53 +1454,25 @@ nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
 /*
  * strip_array_coercion - strip binary-compatible relabeling from an array expr
  *
- * For array values, the parser doesn't generate simple RelabelType nodes,
- * but function calls of array_type_coerce() or array_type_length_coerce().
- * If we want to cope with binary-compatible situations we have to look
- * through these calls whenever the element-type coercion is binary-compatible.
+ * For array values, the parser normally generates ArrayCoerceExpr conversions,
+ * but it seems possible that RelabelType might show up.  Also, the planner
+ * is not currently tense about collapsing stacked ArrayCoerceExpr nodes,
+ * so we need to be ready to deal with more than one level.
  */
 static Node *
 strip_array_coercion(Node *node)
 {
-	/* could be more than one level, so loop */
 	for (;;)
 	{
-		if (node && IsA(node, RelabelType))
+		if (node && IsA(node, ArrayCoerceExpr) &&
+			((ArrayCoerceExpr *) node)->elemfuncid == InvalidOid)
+		{
+			node = (Node *) ((ArrayCoerceExpr *) node)->arg;
+		}
+		else if (node && IsA(node, RelabelType))
 		{
 			/* We don't really expect this case, but may as well cope */
 			node = (Node *) ((RelabelType *) node)->arg;
-		}
-		else if (node && IsA(node, FuncExpr))
-		{
-			FuncExpr   *fexpr = (FuncExpr *) node;
-			Node	   *arg1;
-			Oid			src_elem_type;
-			Oid			tgt_elem_type;
-			Oid			funcId;
-
-			/* must be the right function(s) */
-			if (!(fexpr->funcid == F_ARRAY_TYPE_COERCE ||
-				  fexpr->funcid == F_ARRAY_TYPE_LENGTH_COERCE))
-				break;
-
-			/* fetch source and destination array element types */
-			arg1 = (Node *) linitial(fexpr->args);
-			src_elem_type = get_element_type(exprType(arg1));
-			if (src_elem_type == InvalidOid)
-				break;			/* probably shouldn't happen */
-			tgt_elem_type = get_element_type(fexpr->funcresulttype);
-			if (tgt_elem_type == InvalidOid)
-				break;			/* probably shouldn't happen */
-
-			/* find out how to coerce */
-			if (!find_coercion_pathway(tgt_elem_type, src_elem_type,
-									   COERCION_EXPLICIT, &funcId))
-				break;			/* definitely shouldn't happen */
-
-			if (OidIsValid(funcId))
-				break;			/* non-binary-compatible coercion */
-
-			node = arg1;		/* OK to look through the node */
 		}
 		else
 			break;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.450 2007/03/22 20:14:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.451 2007/03/27 23:21:11 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1013,8 +1013,6 @@ DATA(insert OID = 379 (  array_prepend	   PGNSP PGUID 12 1 0 f f f f i 2 2277 "2
 DESCR("prepend element onto front of array");
 DATA(insert OID = 383 (  array_cat		   PGNSP PGUID 12 1 0 f f f f i 2 2277 "2277 2277" _null_ _null_ _null_ array_cat - _null_ ));
 DESCR("concatenate two arrays");
-DATA(insert OID = 384  (  array_coerce	   PGNSP PGUID 12 1 0 f f t f s 1 2277 "2277" _null_ _null_ _null_ array_type_coerce - _null_ ));
-DESCR("coerce array to another array type");
 DATA(insert OID = 394 (  string_to_array   PGNSP PGUID 12 1 0 f f t f i 2 1009 "25 25" _null_ _null_ _null_ text_to_array - _null_ ));
 DESCR("split delimited text into text[]");
 DATA(insert OID = 395 (  array_to_string   PGNSP PGUID 12 1 0 f f t f i 2 25 "2277 25" _null_ _null_ _null_ array_to_text - _null_ ));
@@ -1622,9 +1620,6 @@ DESCR("convert int8 to text");
 DATA(insert OID = 1290 (  int8			   PGNSP PGUID 12 1 0 f f t f i 1 20 "25" _null_ _null_ _null_	text_int8 - _null_ ));
 DESCR("convert text to int8");
 
-DATA(insert OID = 1291 (  array_length_coerce	PGNSP PGUID 12 1 0 f f t f s 3 2277 "2277 23 16" _null_ _null_ _null_ array_length_coerce - _null_ ));
-DESCR("adjust any array to new element typmod");
-
 DATA(insert OID = 1292 ( tideq			   PGNSP PGUID 12 1 0 f f t f i 2 16 "27 27" _null_ _null_ _null_ tideq - _null_ ));
 DESCR("equal");
 DATA(insert OID = 1293 ( currtid		   PGNSP PGUID 12 1 0 f f t f v 2 27 "26 27" _null_ _null_ _null_ currtid_byreloid - _null_ ));
@@ -1786,10 +1781,6 @@ DATA(insert OID = 1370 (  interval			 PGNSP PGUID 12 1 0 f f t f i 1 1186 "1083"
 DESCR("convert time to interval");
 DATA(insert OID = 1372 (  char_length		 PGNSP PGUID 12 1 0 f f t f i 1 23	 "1042" _null_ _null_ _null_	bpcharlen - _null_ ));
 DESCR("character length");
-
-DATA(insert OID = 1373 (  array_type_length_coerce	PGNSP PGUID 12 1 0 f f t f s 3 2277 "2277 23 16" _null_ _null_ _null_ array_type_length_coerce - _null_ ));
-DESCR("coerce array to another type and adjust element typmod");
-
 DATA(insert OID = 1374 (  octet_length			 PGNSP PGUID 12 1 0 f f t f i 1 23	 "25" _null_ _null_ _null_	textoctetlen - _null_ ));
 DESCR("octet length");
 DATA(insert OID = 1375 (  octet_length			 PGNSP PGUID 12 1 0 f f t f i 1 23	 "1042" _null_ _null_ _null_	bpcharoctetlen - _null_ ));

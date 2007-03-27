@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.239 2007/03/17 00:11:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.240 2007/03/27 23:21:09 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -710,7 +710,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, OpExpr))
+	else if (IsA(node, OpExpr))
 	{
 		OpExpr	   *expr = (OpExpr *) node;
 
@@ -718,7 +718,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, DistinctExpr))
+	else if (IsA(node, DistinctExpr))
 	{
 		DistinctExpr *expr = (DistinctExpr *) node;
 
@@ -726,7 +726,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, ScalarArrayOpExpr))
+	else if (IsA(node, ScalarArrayOpExpr))
 	{
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
 
@@ -734,7 +734,16 @@ contain_mutable_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, NullIfExpr))
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
+
+		if (OidIsValid(expr->elemfuncid) &&
+			func_volatile(expr->elemfuncid) != PROVOLATILE_IMMUTABLE)
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, NullIfExpr))
 	{
 		NullIfExpr *expr = (NullIfExpr *) node;
 
@@ -742,7 +751,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, RowCompareExpr))
+	else if (IsA(node, RowCompareExpr))
 	{
 		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
 		ListCell   *opid;
@@ -793,7 +802,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, OpExpr))
+	else if (IsA(node, OpExpr))
 	{
 		OpExpr	   *expr = (OpExpr *) node;
 
@@ -801,7 +810,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, DistinctExpr))
+	else if (IsA(node, DistinctExpr))
 	{
 		DistinctExpr *expr = (DistinctExpr *) node;
 
@@ -809,7 +818,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, ScalarArrayOpExpr))
+	else if (IsA(node, ScalarArrayOpExpr))
 	{
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
 
@@ -817,7 +826,16 @@ contain_volatile_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, NullIfExpr))
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
+
+		if (OidIsValid(expr->elemfuncid) &&
+			func_volatile(expr->elemfuncid) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, NullIfExpr))
 	{
 		NullIfExpr *expr = (NullIfExpr *) node;
 
@@ -825,7 +843,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
-	if (IsA(node, RowCompareExpr))
+	else if (IsA(node, RowCompareExpr))
 	{
 		/* RowCompare probably can't have volatile ops, but check anyway */
 		RowCompareExpr *rcexpr = (RowCompareExpr *) node;
@@ -932,6 +950,7 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	}
 	if (IsA(node, SubPlan))
 		return true;
+	/* ArrayCoerceExpr is strict at the array level, regardless of elemfunc */
 	if (IsA(node, FieldStore))
 		return true;
 	if (IsA(node, CaseExpr))
@@ -1102,6 +1121,13 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	else if (IsA(node, RelabelType))
 	{
 		RelabelType *expr = (RelabelType *) node;
+
+		result = find_nonnullable_rels_walker((Node *) expr->arg, top_level);
+	}
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		/* ArrayCoerceExpr is strict at the array level */
+		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
 
 		result = find_nonnullable_rels_walker((Node *) expr->arg, top_level);
 	}
@@ -1460,6 +1486,13 @@ strip_implicit_coercions(Node *node)
 		if (r->relabelformat == COERCE_IMPLICIT_CAST)
 			return strip_implicit_coercions((Node *) r->arg);
 	}
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		ArrayCoerceExpr *c = (ArrayCoerceExpr *) node;
+
+		if (c->coerceformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions((Node *) c->arg);
+	}
 	else if (IsA(node, ConvertRowtypeExpr))
 	{
 		ConvertRowtypeExpr *c = (ConvertRowtypeExpr *) node;
@@ -1504,6 +1537,8 @@ set_coercionform_dontcare_walker(Node *node, void *context)
 		((FuncExpr *) node)->funcformat = COERCE_DONTCARE;
 	else if (IsA(node, RelabelType))
 		((RelabelType *) node)->relabelformat = COERCE_DONTCARE;
+	else if (IsA(node, ArrayCoerceExpr))
+		((ArrayCoerceExpr *) node)->coerceformat = COERCE_DONTCARE;
 	else if (IsA(node, ConvertRowtypeExpr))
 		((ConvertRowtypeExpr *) node)->convertformat = COERCE_DONTCARE;
 	else if (IsA(node, RowExpr))
@@ -3436,6 +3471,8 @@ expression_tree_walker(Node *node,
 			break;
 		case T_RelabelType:
 			return walker(((RelabelType *) node)->arg, context);
+		case T_ArrayCoerceExpr:
+			return walker(((ArrayCoerceExpr *) node)->arg, context);
 		case T_ConvertRowtypeExpr:
 			return walker(((ConvertRowtypeExpr *) node)->arg, context);
 		case T_CaseExpr:
@@ -3898,6 +3935,16 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, relabel, RelabelType);
 				MUTATE(newnode->arg, relabel->arg, Expr *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_ArrayCoerceExpr:
+			{
+				ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) node;
+				ArrayCoerceExpr *newnode;
+
+				FLATCOPY(newnode, acoerce, ArrayCoerceExpr);
+				MUTATE(newnode->arg, acoerce->arg, Expr *);
 				return (Node *) newnode;
 			}
 			break;

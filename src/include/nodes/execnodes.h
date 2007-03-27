@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.170 2007/02/27 01:11:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.171 2007/03/27 23:21:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -624,6 +624,20 @@ typedef struct FieldStoreState
 	List	   *newvals;		/* new value(s) for field(s) */
 	TupleDesc	argdesc;		/* tupdesc for most recent input */
 } FieldStoreState;
+
+/* ----------------
+ *		ArrayCoerceExprState node
+ * ----------------
+ */
+typedef struct ArrayCoerceExprState
+{
+	ExprState	xprstate;
+	ExprState  *arg;			/* input array value */
+	Oid			resultelemtype;	/* element type of result array */
+	FmgrInfo	elemfunc;		/* lookup info for element coercion function */
+	/* use struct pointer to avoid including array.h here */
+	struct ArrayMapState *amstate;	/* workspace for array_map */
+} ArrayCoerceExprState;
 
 /* ----------------
  *		ConvertRowtypeExprState node

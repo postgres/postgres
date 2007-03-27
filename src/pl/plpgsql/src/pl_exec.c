@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.191 2007/03/25 23:27:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.192 2007/03/27 23:21:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4562,6 +4562,9 @@ exec_simple_check_node(Node *node)
 
 		case T_RelabelType:
 			return exec_simple_check_node((Node *) ((RelabelType *) node)->arg);
+
+		case T_ArrayCoerceExpr:
+			return exec_simple_check_node((Node *) ((ArrayCoerceExpr *) node)->arg);
 
 		case T_ConvertRowtypeExpr:
 			return exec_simple_check_node((Node *) ((ConvertRowtypeExpr *) node)->arg);

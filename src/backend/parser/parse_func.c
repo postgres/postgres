@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.194 2007/02/01 19:10:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.195 2007/03/27 23:21:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -756,13 +756,15 @@ func_get_detail(List *funcname,
 				Oid			sourceType = argtypes[0];
 				Node	   *arg1 = linitial(fargs);
 				Oid			cfuncid;
+				bool		arrayCoerce;
 
 				if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
 					(find_coercion_pathway(targetType, sourceType,
-										   COERCION_EXPLICIT, &cfuncid) &&
-					 cfuncid == InvalidOid))
+										   COERCION_EXPLICIT,
+										   &cfuncid, &arrayCoerce) &&
+					 cfuncid == InvalidOid && !arrayCoerce))
 				{
-					/* Yup, it's a type coercion */
+					/* Yup, it's a trivial type coercion */
 					*funcid = InvalidOid;
 					*rettype = targetType;
 					*retset = false;

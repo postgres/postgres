@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.104 2007/02/09 03:35:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.105 2007/03/27 23:21:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2061,6 +2061,8 @@ get_call_expr_argtype(Node *expr, int argnum)
 		args = ((DistinctExpr *) expr)->args;
 	else if (IsA(expr, ScalarArrayOpExpr))
 		args = ((ScalarArrayOpExpr *) expr)->args;
+	else if (IsA(expr, ArrayCoerceExpr))
+		args = list_make1(((ArrayCoerceExpr *) expr)->arg);
 	else if (IsA(expr, NullIfExpr))
 		args = ((NullIfExpr *) expr)->args;
 	else
@@ -2072,11 +2074,15 @@ get_call_expr_argtype(Node *expr, int argnum)
 	argtype = exprType((Node *) list_nth(args, argnum));
 
 	/*
-	 * special hack for ScalarArrayOpExpr: what the underlying function will
-	 * actually get passed is the element type of the array.
+	 * special hack for ScalarArrayOpExpr and ArrayCoerceExpr: what the
+	 * underlying function will actually get passed is the element type of
+	 * the array.
 	 */
 	if (IsA(expr, ScalarArrayOpExpr) &&
 		argnum == 1)
+		argtype = get_element_type(argtype);
+	else if (IsA(expr, ArrayCoerceExpr) &&
+			 argnum == 0)
 		argtype = get_element_type(argtype);
 
 	return argtype;

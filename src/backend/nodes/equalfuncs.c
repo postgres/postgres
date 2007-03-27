@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.302 2007/03/17 00:11:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.303 2007/03/27 23:21:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,6 +354,27 @@ _equalRelabelType(RelabelType *a, RelabelType *b)
 	if (a->relabelformat != b->relabelformat &&
 		a->relabelformat != COERCE_DONTCARE &&
 		b->relabelformat != COERCE_DONTCARE)
+		return false;
+
+	return true;
+}
+
+static bool
+_equalArrayCoerceExpr(ArrayCoerceExpr *a, ArrayCoerceExpr *b)
+{
+	COMPARE_NODE_FIELD(arg);
+	COMPARE_SCALAR_FIELD(elemfuncid);
+	COMPARE_SCALAR_FIELD(resulttype);
+	COMPARE_SCALAR_FIELD(resulttypmod);
+	COMPARE_SCALAR_FIELD(isExplicit);
+
+	/*
+	 * Special-case COERCE_DONTCARE, so that planner can build coercion nodes
+	 * that are equal() to both explicit and implicit coercions.
+	 */
+	if (a->coerceformat != b->coerceformat &&
+		a->coerceformat != COERCE_DONTCARE &&
+		b->coerceformat != COERCE_DONTCARE)
 		return false;
 
 	return true;
@@ -2012,6 +2033,9 @@ equal(void *a, void *b)
 			break;
 		case T_RelabelType:
 			retval = _equalRelabelType(a, b);
+			break;
+		case T_ArrayCoerceExpr:
+			retval = _equalArrayCoerceExpr(a, b);
 			break;
 		case T_ConvertRowtypeExpr:
 			retval = _equalConvertRowtypeExpr(a, b);

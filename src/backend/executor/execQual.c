@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.215 2007/02/27 23:48:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.216 2007/03/27 23:21:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,9 @@ static Datum ExecEvalFieldStore(FieldStoreState *fstate,
 static Datum ExecEvalRelabelType(GenericExprState *exprstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
+									 ExprContext *econtext,
+									 bool *isNull, ExprDoneCond *isDone);
 
 
 /* ----------------------------------------------------------------
@@ -3501,6 +3504,83 @@ ExecEvalRelabelType(GenericExprState *exprstate,
 	return ExecEvalExpr(exprstate->arg, econtext, isNull, isDone);
 }
 
+/* ----------------------------------------------------------------
+ *		ExecEvalArrayCoerceExpr
+ *
+ *		Evaluate an ArrayCoerceExpr node.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
+						ExprContext *econtext,
+						bool *isNull, ExprDoneCond *isDone)
+{
+	ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) astate->xprstate.expr;
+	Datum		result;
+	ArrayType  *array;
+	FunctionCallInfoData locfcinfo;
+
+	result = ExecEvalExpr(astate->arg, econtext, isNull, isDone);
+
+	if (isDone && *isDone == ExprEndResult)
+		return result;			/* nothing to do */
+	if (*isNull)
+		return result;			/* nothing to do */
+
+	/*
+	 * If it's binary-compatible, modify the element type in the array header,
+	 * but otherwise leave the array as we received it.
+	 */
+	if (!OidIsValid(acoerce->elemfuncid))
+	{
+		/* Detoast input array if necessary, and copy in any case */
+		array = DatumGetArrayTypePCopy(result);
+		ARR_ELEMTYPE(array) = astate->resultelemtype;
+		PG_RETURN_ARRAYTYPE_P(array);
+	}
+
+	/* Detoast input array if necessary, but don't make a useless copy */
+	array = DatumGetArrayTypeP(result);
+
+	/* Initialize function cache if first time through */
+	if (astate->elemfunc.fn_oid == InvalidOid)
+	{
+		AclResult	aclresult;
+
+		/* Check permission to call function */
+		aclresult = pg_proc_aclcheck(acoerce->elemfuncid, GetUserId(),
+									 ACL_EXECUTE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_PROC,
+						   get_func_name(acoerce->elemfuncid));
+
+		/* Set up the primary fmgr lookup information */
+		fmgr_info_cxt(acoerce->elemfuncid, &(astate->elemfunc),
+					  econtext->ecxt_per_query_memory);
+
+		/* Initialize additional info */
+		astate->elemfunc.fn_expr = (Node *) acoerce;
+	}
+
+	/*
+	 * Use array_map to apply the function to each array element.
+	 *
+	 * We pass on the desttypmod and isExplicit flags whether or not the
+	 * function wants them.
+	 */
+	InitFunctionCallInfoData(locfcinfo, &(astate->elemfunc), 3,
+							 NULL, NULL);
+	locfcinfo.arg[0] = PointerGetDatum(array);
+	locfcinfo.arg[1] = Int32GetDatum(acoerce->resulttypmod);
+	locfcinfo.arg[2] = BoolGetDatum(acoerce->isExplicit);
+	locfcinfo.argnull[0] = false;
+	locfcinfo.argnull[1] = false;
+	locfcinfo.argnull[2] = false;
+
+	return array_map(&locfcinfo, ARR_ELEMTYPE(array), astate->resultelemtype,
+					 astate->amstate);
+}
+
 
 /*
  * ExecEvalExprSwitchContext
@@ -3768,6 +3848,26 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				gstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalRelabelType;
 				gstate->arg = ExecInitExpr(relabel->arg, parent);
 				state = (ExprState *) gstate;
+			}
+			break;
+		case T_ArrayCoerceExpr:
+			{
+				ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) node;
+				ArrayCoerceExprState *astate = makeNode(ArrayCoerceExprState);
+
+				astate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalArrayCoerceExpr;
+				astate->arg = ExecInitExpr(acoerce->arg, parent);
+				astate->resultelemtype = get_element_type(acoerce->resulttype);
+				if (astate->resultelemtype == InvalidOid)
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							 errmsg("target type is not an array")));
+				/* Arrays over domains aren't supported yet */
+				Assert(getBaseType(astate->resultelemtype) ==
+					   astate->resultelemtype);
+				astate->elemfunc.fn_oid = InvalidOid;	/* not initialized */
+				astate->amstate = (ArrayMapState *) palloc0(sizeof(ArrayMapState));
+				state = (ExprState *) astate;
 			}
 			break;
 		case T_ConvertRowtypeExpr:

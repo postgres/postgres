@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.64 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.65 2007/03/27 23:21:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1314,6 +1314,17 @@ find_expr_references_walker(Node *node,
 		/* since there is no function dependency, need to depend on type */
 		add_object_address(OCLASS_TYPE, relab->resulttype, 0,
 						   context->addrs);
+	}
+	if (IsA(node, ArrayCoerceExpr))
+	{
+		ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) node;
+
+		if (OidIsValid(acoerce->elemfuncid))
+			add_object_address(OCLASS_PROC, acoerce->elemfuncid, 0,
+							   context->addrs);
+		add_object_address(OCLASS_TYPE, acoerce->resulttype, 0,
+						   context->addrs);
+		/* fall through to examine arguments */
 	}
 	if (IsA(node, ConvertRowtypeExpr))
 	{

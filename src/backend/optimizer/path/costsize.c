@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.178 2007/02/22 22:00:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.179 2007/03/27 23:21:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1890,6 +1890,15 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 		set_sa_opfuncid(saop);
 		context->total.per_tuple += get_func_cost(saop->opfuncid) *
 			cpu_operator_cost * estimate_array_length(arraynode) * 0.5;
+	}
+	else if (IsA(node, ArrayCoerceExpr))
+	{
+		ArrayCoerceExpr *acoerce = (ArrayCoerceExpr *) node;
+		Node	   *arraynode = (Node *) acoerce->arg;
+
+		if (OidIsValid(acoerce->elemfuncid))
+			context->total.per_tuple += get_func_cost(acoerce->elemfuncid) *
+				cpu_operator_cost * estimate_array_length(arraynode);
 	}
 	else if (IsA(node, RowCompareExpr))
 	{

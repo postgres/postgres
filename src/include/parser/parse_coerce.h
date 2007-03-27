@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.69 2007/01/05 22:19:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_coerce.h,v 1.70 2007/03/27 23:21:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,8 @@ extern Oid resolve_generic_type(Oid declared_type,
 
 extern bool find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 					  CoercionContext ccontext,
-					  Oid *funcid);
-extern Oid	find_typmod_coercion_function(Oid typeId);
+					  Oid *funcid, bool *arrayCoerce);
+extern bool find_typmod_coercion_function(Oid typeId,
+					  Oid *funcid, bool *arrayCoerce);
 
 #endif   /* PARSE_COERCE_H */

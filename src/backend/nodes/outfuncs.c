@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.304 2007/03/17 00:11:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.305 2007/03/27 23:21:09 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -867,6 +867,19 @@ _outRelabelType(StringInfo str, RelabelType *node)
 	WRITE_OID_FIELD(resulttype);
 	WRITE_INT_FIELD(resulttypmod);
 	WRITE_ENUM_FIELD(relabelformat, CoercionForm);
+}
+
+static void
+_outArrayCoerceExpr(StringInfo str, ArrayCoerceExpr *node)
+{
+	WRITE_NODE_TYPE("ARRAYCOERCEEXPR");
+
+	WRITE_NODE_FIELD(arg);
+	WRITE_OID_FIELD(elemfuncid);
+	WRITE_OID_FIELD(resulttype);
+	WRITE_INT_FIELD(resulttypmod);
+	WRITE_BOOL_FIELD(isExplicit);
+	WRITE_ENUM_FIELD(coerceformat, CoercionForm);
 }
 
 static void
@@ -2148,6 +2161,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_RelabelType:
 				_outRelabelType(str, obj);
+				break;
+			case T_ArrayCoerceExpr:
+				_outArrayCoerceExpr(str, obj);
 				break;
 			case T_ConvertRowtypeExpr:
 				_outConvertRowtypeExpr(str, obj);
