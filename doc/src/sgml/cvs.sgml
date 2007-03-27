@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.41 2007/02/01 00:28:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.42 2007/03/27 01:45:22 momjian Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -27,8 +27,8 @@
  </para>
 
  <para>
-  At least two methods,
-  anonymous CVS and <productname>CVSup</productname>,
+  At least three methods, anonymous CVS, <productname>rsync</productname>,
+  and <productname>CVSup</productname>,
   are available to pull the <productname>CVS</productname> code tree from the
   <productname>PostgreSQL</productname> server to your local machine.
  </para>
@@ -270,27 +270,45 @@ cvs commit
   </para>
  </sect1>
 
+ <sect1 id="rsync">
+  <title>Getting The Source Via <productname>rsync</productname></title>
+
+  <para>
+   An alternative to using anonymous CVS for retrieving the
+   <productname>PostgreSQL</productname> source tree is
+   <productname>rsync</productname>, an incremental file transfer tool.
+   A major advantage to using <productname>rsync</productname> is that it
+   can reliably replicate the <emphasis>entire</emphasis> CVS repository
+   on your local system, allowing fast local access to <command>cvs</>
+   operations such as <option>log</option> and <option>diff</option>.
+   Other advantages include fast synchronization to the
+   <productname>PostgreSQL</productname> server due to an efficient
+   streaming transfer protocol which only sends the changes since the last
+   update.
+  </para>
+
+  <para>
+   You can download the CVS repository using this command:
+<programlisting>
+rsync -avzCH --delete rsync.postgresql.org::pgsql-cvs cvsroot/
+</programlisting>
+   For full instructions, see the "rsync" section in the 
+   <ulink url="http://pgfoundry.org/docman/view.php/1000040/4/PGBuildFarm-HOWTO.txt">
+   pgbuildfarm instructions</ulink>.
+  </para>
+ </sect1>
+
  <sect1 id="cvsup">
   <title>Getting The Source Via <productname>CVSup</productname></title>
 
   <para>
-   An alternative to using anonymous CVS for retrieving
+   Another alternative to using anonymous CVS for retrieving
    the <productname>PostgreSQL</productname> source tree
    is <productname>CVSup</productname>.
    <productname>CVSup</productname> was developed by
    John Polstra (<email>jdp@polstra.com</email>) to
    distribute CVS repositories and other file trees for the
    <ulink url="http://www.freebsd.org">FreeBSD project</ulink>.
-  </para>
-
-  <para>
-   A major advantage to using
-   <productname>CVSup</productname> is that it can reliably
-   replicate the <emphasis>entire</emphasis> CVS repository on your local system,
-   allowing fast local access to <command>cvs</> operations such as <option>log</option>
-   and <option>diff</option>. Other advantages include fast synchronization to
-   the <productname>PostgreSQL</productname> server due to an efficient
-   streaming transfer protocol which only sends the changes since the last update.
   </para>
 
   <sect2>
