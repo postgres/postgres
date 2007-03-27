@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.4 2007/03/24 22:16:49 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.5 2007/03/27 21:47:10 mha Exp $
 #
 use strict;
 use warnings;
@@ -43,6 +43,11 @@ sub Install
     CopySolutionOutput($conf, $target);
     copy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
     CopySetOfFiles('config files', "*.sample", $target . '/share/');
+    CopyFiles(
+        'Import libraries', $target .'/lib/',
+        "$conf\\", "postgres\\postgres.lib",
+        "libpq\\libpq.lib", "libecpg\\libecpg.lib"
+    );
     CopySetOfFiles('timezone names', 'src\timezone\tznames\*.txt',$target . '/share/timezonesets/');
     CopyFiles(
         'timezone sets',
