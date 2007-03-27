@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.38 2007/03/23 21:57:10 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.39 2007/03/27 20:36:03 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,22 +85,22 @@ static MemoryContext AutovacMemCxt;
 /* struct to keep list of candidate databases for vacuum */
 typedef struct autovac_dbase
 {
-	Oid			oid;
-	char	   *name;
-	TransactionId frozenxid;
-	PgStat_StatDBEntry *entry;
+	Oid			ad_datid;
+	char	   *ad_name;
+	TransactionId ad_frozenxid;
+	PgStat_StatDBEntry *ad_entry;
 } autovac_dbase;
 
-/* struct to keep track of tables to vacuum and/or analyze */
+/* struct to keep track of tables to vacuum and/or analyze, after rechecking */
 typedef struct autovac_table
 {
-	Oid			relid;
-	Oid			toastrelid;
-	bool		dovacuum;
-	bool		doanalyze;
-	int			freeze_min_age;
-	int			vacuum_cost_delay;
-	int			vacuum_cost_limit;
+	Oid			at_relid;
+	Oid			at_toastrelid;
+	bool		at_dovacuum;
+	bool		at_doanalyze;
+	int			at_freeze_min_age;
+	int			at_vacuum_cost_delay;
+	int			at_vacuum_cost_limit;
 } autovac_table;
 
 typedef struct
@@ -119,7 +119,7 @@ NON_EXEC_STATIC void AutoVacWorkerMain(int argc, char *argv[]);
 NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]);
 
 static void do_start_worker(void);
-static void do_autovacuum(PgStat_StatDBEntry *dbentry);
+static void do_autovacuum(Oid dbid);
 static List *autovac_get_database_list(void);
 static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 					 Form_pg_class classForm,
@@ -129,6 +129,9 @@ static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 static void autovacuum_do_vac_analyze(Oid relid, bool dovacuum,
 						  bool doanalyze, int freeze_min_age);
 static HeapTuple get_pg_autovacuum_tuple_relid(Relation avRel, Oid relid);
+static PgStat_StatTabEntry *get_pgstat_tabentry_relid(Oid relid, bool isshared,
+						  PgStat_StatDBEntry *shared,
+						  PgStat_StatDBEntry *dbentry);
 static void autovac_report_activity(VacuumStmt *vacstmt, Oid relid);
 static void avl_sighup_handler(SIGNAL_ARGS);
 static void avlauncher_shutdown(SIGNAL_ARGS);
@@ -486,13 +489,13 @@ do_start_worker(void)
 		autovac_dbase *tmp = lfirst(cell);
 
 		/* Find pgstat entry if any */
-		tmp->entry = pgstat_fetch_stat_dbentry(tmp->oid);
+		tmp->ad_entry = pgstat_fetch_stat_dbentry(tmp->ad_datid);
 
 		/* Check to see if this one is at risk of wraparound */
-		if (TransactionIdPrecedes(tmp->frozenxid, xidForceLimit))
+		if (TransactionIdPrecedes(tmp->ad_frozenxid, xidForceLimit))
 		{
 			if (db == NULL ||
-				TransactionIdPrecedes(tmp->frozenxid, db->frozenxid))
+				TransactionIdPrecedes(tmp->ad_frozenxid, db->ad_frozenxid))
 				db = tmp;
 			for_xid_wrap = true;
 			continue;
@@ -504,7 +507,7 @@ do_start_worker(void)
 		 * Otherwise, skip a database with no pgstat entry; it means it
 		 * hasn't seen any activity.
 		 */
-		if (!tmp->entry)
+		if (!tmp->ad_entry)
 			continue;
 
 		/*
@@ -512,7 +515,7 @@ do_start_worker(void)
 		 * both tmp->entry and db->entry must be non-null.)
 		 */
 		if (db == NULL ||
-			tmp->entry->last_autovac_time < db->entry->last_autovac_time)
+			tmp->ad_entry->last_autovac_time < db->ad_entry->last_autovac_time)
 			db = tmp;
 	}
 
@@ -520,7 +523,7 @@ do_start_worker(void)
 	if (db != NULL)
 	{
 		LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
-		AutoVacuumShmem->process_db = db->oid;
+		AutoVacuumShmem->process_db = db->ad_datid;
 		LWLockRelease(AutovacuumLock);
 
 		SendPostmasterSignal(PMSIGNAL_START_AUTOVAC_WORKER);
@@ -762,7 +765,6 @@ AutoVacWorkerMain(int argc, char *argv[])
 	if (OidIsValid(dbid))
 	{
 		char	*dbname;
-		PgStat_StatDBEntry *dbentry;
 
 		/*
 		 * Report autovac startup to the stats collector.  We deliberately do
@@ -795,8 +797,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 
 		/* And do an appropriate amount of work */
 		recentXid = ReadNewTransactionId();
-		dbentry = pgstat_fetch_stat_dbentry(dbid);
-		do_autovacuum(dbentry);
+		do_autovacuum(dbid);
 	}
 
 	/*
@@ -838,17 +839,17 @@ autovac_get_database_list(void)
 	while (read_pg_database_line(db_file, thisname, &db_id,
 								 &db_tablespace, &db_frozenxid))
 	{
-		autovac_dbase *db;
+		autovac_dbase *avdb;
 
-		db = (autovac_dbase *) palloc(sizeof(autovac_dbase));
+		avdb = (autovac_dbase *) palloc(sizeof(autovac_dbase));
 
-		db->oid = db_id;
-		db->name = pstrdup(thisname);
-		db->frozenxid = db_frozenxid;
+		avdb->ad_datid = db_id;
+		avdb->ad_name = pstrdup(thisname);
+		avdb->ad_frozenxid = db_frozenxid;
 		/* this gets set later: */
-		db->entry = NULL;
+		avdb->ad_entry = NULL;
 
-		dblist = lappend(dblist, db);
+		dblist = lappend(dblist, avdb);
 	}
 
 	FreeFile(db_file);
@@ -860,15 +861,11 @@ autovac_get_database_list(void)
 /*
  * Process a database table-by-table
  *
- * dbentry is either a pointer to the database entry in the stats databases
- * hash table, or NULL if we couldn't find any entry (the latter case occurs
- * only if we are forcing a vacuum for anti-wrap purposes).
- *
  * Note that CHECK_FOR_INTERRUPTS is supposed to be used in certain spots in
  * order not to ignore shutdown commands for too long.
  */
 static void
-do_autovacuum(PgStat_StatDBEntry *dbentry)
+do_autovacuum(Oid dbid)
 {
 	Relation	classRel,
 				avRel;
@@ -879,6 +876,13 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 	List	   *toast_table_ids = NIL;
 	ListCell   *cell;
 	PgStat_StatDBEntry *shared;
+	PgStat_StatDBEntry *dbentry;
+
+	/*
+	 * may be NULL if we couldn't find an entry (only happens if we
+	 * are forcing a vacuum for anti-wrap purposes).
+	 */
+	dbentry = pgstat_fetch_stat_dbentry(dbid);
 
 	/* Start a transaction so our commands have one to play into. */
 	StartTransactionCommand();
@@ -968,18 +972,12 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 
 		/* Fetch the pg_autovacuum tuple for the relation, if any */
 		avTup = get_pg_autovacuum_tuple_relid(avRel, relid);
-
 		if (HeapTupleIsValid(avTup))
 			avForm = (Form_pg_autovacuum) GETSTRUCT(avTup);
 
-		if (classForm->relisshared && PointerIsValid(shared))
-			tabentry = hash_search(shared->tables, &relid,
-								   HASH_FIND, NULL);
-		else if (PointerIsValid(dbentry))
-			tabentry = hash_search(dbentry->tables, &relid,
-								   HASH_FIND, NULL);
-		else
-			tabentry = NULL;
+		/* Fetch the pgstat entry for this table */
+		tabentry = get_pgstat_tabentry_relid(relid, classForm->relisshared,
+											 shared, dbentry);
 
 		test_rel_for_autovac(relid, tabentry, classForm, avForm,
 							 &vacuum_tables, &toast_table_ids);
@@ -1005,26 +1003,26 @@ do_autovacuum(PgStat_StatDBEntry *dbentry)
 		 * Check to see if we need to force vacuuming of this table because
 		 * its toast table needs it.
 		 */
-		if (OidIsValid(tab->toastrelid) && !tab->dovacuum &&
-			list_member_oid(toast_table_ids, tab->toastrelid))
+		if (OidIsValid(tab->at_toastrelid) && !tab->at_dovacuum &&
+			list_member_oid(toast_table_ids, tab->at_toastrelid))
 		{
-			tab->dovacuum = true;
+			tab->at_dovacuum = true;
 			elog(DEBUG2, "autovac: VACUUM %u because of TOAST table",
-				 tab->relid);
+				 tab->at_relid);
 		}
 
 		/* Otherwise, ignore table if it needs no work */
-		if (!tab->dovacuum && !tab->doanalyze)
+		if (!tab->at_dovacuum && !tab->at_doanalyze)
 			continue;
 
 		/* Set the vacuum cost parameters for this table */
-		VacuumCostDelay = tab->vacuum_cost_delay;
-		VacuumCostLimit = tab->vacuum_cost_limit;
+		VacuumCostDelay = tab->at_vacuum_cost_delay;
+		VacuumCostLimit = tab->at_vacuum_cost_limit;
 
-		autovacuum_do_vac_analyze(tab->relid,
-								  tab->dovacuum,
-								  tab->doanalyze,
-								  tab->freeze_min_age);
+		autovacuum_do_vac_analyze(tab->at_relid,
+								  tab->at_dovacuum,
+								  tab->at_doanalyze,
+								  tab->at_freeze_min_age);
 	}
 
 	/*
@@ -1064,6 +1062,30 @@ get_pg_autovacuum_tuple_relid(Relation avRel, Oid relid)
 	systable_endscan(avScan);
 
 	return avTup;
+}
+
+/*
+ * get_pgstat_tabentry_relid
+ *
+ * Fetch the pgstat entry of a table, either local to a database or shared.
+ */
+static PgStat_StatTabEntry *
+get_pgstat_tabentry_relid(Oid relid, bool isshared, PgStat_StatDBEntry *shared,
+						  PgStat_StatDBEntry *dbentry)
+{
+	PgStat_StatTabEntry *tabentry = NULL;
+
+	if (isshared)
+	{
+		if (PointerIsValid(shared))
+			tabentry = hash_search(shared->tables, &relid,
+								   HASH_FIND, NULL);
+	}
+	else if (PointerIsValid(dbentry))
+		tabentry = hash_search(dbentry->tables, &relid,
+							   HASH_FIND, NULL);
+
+	return tabentry;
 }
 
 /*
@@ -1246,13 +1268,13 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 			autovac_table *tab;
 
 			tab = (autovac_table *) palloc(sizeof(autovac_table));
-			tab->relid = relid;
-			tab->toastrelid = classForm->reltoastrelid;
-			tab->dovacuum = dovacuum;
-			tab->doanalyze = doanalyze;
-			tab->freeze_min_age = freeze_min_age;
-			tab->vacuum_cost_limit = vac_cost_limit;
-			tab->vacuum_cost_delay = vac_cost_delay;
+			tab->at_relid = relid;
+			tab->at_toastrelid = classForm->reltoastrelid;
+			tab->at_dovacuum = dovacuum;
+			tab->at_doanalyze = doanalyze;
+			tab->at_freeze_min_age = freeze_min_age;
+			tab->at_vacuum_cost_limit = vac_cost_limit;
+			tab->at_vacuum_cost_delay = vac_cost_delay;
 
 			*vacuum_tables = lappend(*vacuum_tables, tab);
 		}
