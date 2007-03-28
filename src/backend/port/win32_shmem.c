@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.1 2007/03/21 14:39:23 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32_shmem.c,v 1.2 2007/03/28 08:06:11 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,7 +136,8 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 	if (!hmap)
 		ereport(FATAL,
 				(errmsg("could not create shared memory segment: %lu", GetLastError()),
-				 errdetail("Failed system call was CreateFileMapping(size=%lu, name=%s)", size, szShareMem)));
+				 errdetail("Failed system call was CreateFileMapping(size=%lu, name=%s)",
+						   (unsigned long) size, szShareMem)));
 
 	/*
 	 * If the segment already existed, CreateFileMapping() will return a
@@ -158,7 +159,8 @@ PGSharedMemoryCreate(Size size, bool makePrivate, int port)
 		if (!hmap)
 			ereport(FATAL,
 					(errmsg("could not create shared memory segment: %lu", GetLastError()),
-					 errdetail("Failed system call was CreateFileMapping(size=%lu, name=%s)", size, szShareMem)));
+					 errdetail("Failed system call was CreateFileMapping(size=%lu, name=%s)",
+							   (unsigned long) size, szShareMem)));
 
 		if (GetLastError() == ERROR_ALREADY_EXISTS)
 			ereport(FATAL,
