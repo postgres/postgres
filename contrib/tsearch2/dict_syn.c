@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/tsearch2/dict_syn.c,v 1.13 2007/03/26 12:25:35 teodor Exp $ */
+/* $PostgreSQL: pgsql/contrib/tsearch2/dict_syn.c,v 1.14 2007/03/28 01:28:34 tgl Exp $ */
 
 /*
  * ISpell interface
@@ -103,7 +103,8 @@ syn_init(PG_FUNCTION_ARGS)
 
 	while (fgets(buf, sizeof(buf), fin))
 	{
-		pg_verifymbstr(buf, strlen(buf), false);
+		slen = strlen(buf);	
+		pg_verifymbstr(buf, slen, false);
 		if (cur == d->len)
 		{
 			d->len = (d->len) ? 2 * d->len : 16;
