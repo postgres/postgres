@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.70 2007/03/20 05:44:59 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.71 2007/03/28 22:59:37 neilc Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -30,6 +30,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "regex/regex.h"
 #include "utils/builtins.h"
@@ -95,12 +96,6 @@ typedef struct regexp_matches_ctx
 	size_t		  offset;
 
 	re_comp_flags flags;
-
-	/* text type info */
-	Oid			  param_type;
-	int16		  typlen;
-	bool		  typbyval;
-	char		  typalign;
 } regexp_matches_ctx;
 
 typedef struct regexp_split_ctx
@@ -119,8 +114,7 @@ typedef struct regexp_split_ctx
 static int	num_res = 0;		/* # of cached re's */
 static cached_re_str re_array[MAX_CACHED_RES];	/* cached re's */
 
-static regexp_matches_ctx *setup_regexp_matches(FunctionCallInfo fcinfo,
-												text *orig_str, text *pattern,
+static regexp_matches_ctx *setup_regexp_matches(text *orig_str, text *pattern,
 												text *flags);
 static ArrayType *perform_regexp_matches(regexp_matches_ctx *matchctx);
 
@@ -760,8 +754,8 @@ regexp_matches(PG_FUNCTION_ARGS)
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
 		/* be sure to copy the input string into the multi-call ctx */
-		matchctx = setup_regexp_matches(fcinfo, PG_GETARG_TEXT_P_COPY(0),
-										pattern, flags);
+		matchctx = setup_regexp_matches(PG_GETARG_TEXT_P_COPY(0), pattern,
+										flags);
 
 		MemoryContextSwitchTo(oldcontext);
 		funcctx->user_fctx = (void *) matchctx;
@@ -822,7 +816,7 @@ regexp_matches_no_flags(PG_FUNCTION_ARGS)
 }
 
 static regexp_matches_ctx *
-setup_regexp_matches(FunctionCallInfo fcinfo, text *orig_str, text *pattern, text *flags)
+setup_regexp_matches(text *orig_str, text *pattern, text *flags)
 {
 	regexp_matches_ctx	*matchctx = palloc(sizeof(regexp_matches_ctx));
 
@@ -834,11 +828,6 @@ setup_regexp_matches(FunctionCallInfo fcinfo, text *orig_str, text *pattern, tex
 	matchctx->cpattern = RE_compile_and_cache(pattern, matchctx->flags.cflags);
 	matchctx->pmatch = palloc(sizeof(regmatch_t) * (matchctx->cpattern->re_nsub + 1));
 	matchctx->offset = 0;
-
-	/* get text type oid, too lazy to do it some other way */
-	matchctx->param_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
-	get_typlenbyvalalign(matchctx->param_type, &matchctx->typlen,
-						 &matchctx->typbyval, &matchctx->typalign);
 
 	matchctx->wide_str = palloc(sizeof(pg_wchar) * (matchctx->orig_len + 1));
 	matchctx->wide_len = pg_mb2wchar_with_len(VARDATA(matchctx->orig_str),
@@ -915,9 +904,9 @@ perform_regexp_matches(regexp_matches_ctx *matchctx)
 		dims[0] = 1;
 	}
 
+	/* XXX: this hardcodes assumptions about the text type */
 	return construct_md_array(elems, nulls, ndims, dims, lbs,
-							  matchctx->param_type, matchctx->typlen,
-							  matchctx->typbyval, matchctx->typalign);
+							  TEXTOID, -1, false, 'i');
 }
 
 Datum
@@ -976,15 +965,11 @@ Datum regexp_split_to_array(PG_FUNCTION_ARGS)
 {
 	ArrayBuildState 	*astate = NULL;
 	regexp_split_ctx 	*splitctx;
-	Oid 				 param_type;
 	int 				 nitems;
 
 	splitctx = setup_regexp_split(PG_GETARG_TEXT_P(0),
 								  PG_GETARG_TEXT_P(1),
 								  PG_GETARG_TEXT_P_IF_EXISTS(2));
-
-	/* get text type oid, too lazy to do it some other way */
-	param_type = get_fn_expr_argtype(fcinfo->flinfo, 0);
 
 	for (nitems = 0; splitctx->offset < splitctx->wide_len; nitems++)
 	{
@@ -995,7 +980,7 @@ Datum regexp_split_to_array(PG_FUNCTION_ARGS)
 		astate = accumArrayResult(astate,
 								  get_next_split(splitctx),
 								  false,
-								  param_type,
+								  TEXTOID,
 								  CurrentMemoryContext);
 	}
 
