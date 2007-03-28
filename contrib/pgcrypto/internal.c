@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.25 2006/10/04 00:29:46 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/internal.c,v 1.26 2007/03/28 22:48:58 neilc Exp $
  */
 
 #include "postgres.h"
@@ -251,7 +251,7 @@ struct int_ctx
 	uint8		iv[INT_MAX_IV];
 	union
 	{
-		blf_ctx		bf;
+		BlowfishContext		bf;
 		rijndael_ctx rj;
 	}			ctx;
 	unsigned	keylen;
@@ -426,7 +426,7 @@ bf_block_size(PX_Cipher * c)
 static unsigned
 bf_key_size(PX_Cipher * c)
 {
-	return BLF_MAXKEYLEN;
+	return 448/8;
 }
 
 static unsigned
@@ -440,9 +440,9 @@ bf_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 {
 	struct int_ctx *cx = (struct int_ctx *) c->ptr;
 
-	blf_key(&cx->ctx.bf, key, klen);
+	blowfish_setkey(&cx->ctx.bf, key, klen);
 	if (iv)
-		memcpy(cx->iv, iv, 8);
+		blowfish_setiv(&cx->ctx.bf, iv);
 
 	return 0;
 }
@@ -451,6 +451,7 @@ static int
 bf_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 {
 	struct int_ctx *cx = (struct int_ctx *) c->ptr;
+	BlowfishContext *bfctx = &cx->ctx.bf;
 
 	if (dlen == 0)
 		return 0;
@@ -462,11 +463,11 @@ bf_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 	switch (cx->mode)
 	{
 		case MODE_ECB:
-			blf_ecb_encrypt(&cx->ctx.bf, res, dlen);
+			blowfish_encrypt_ecb(res, dlen, bfctx);
 			break;
 		case MODE_CBC:
-			blf_cbc_encrypt(&cx->ctx.bf, cx->iv, res, dlen);
-			memcpy(cx->iv, res + dlen - 8, 8);
+			blowfish_encrypt_cbc(res, dlen, bfctx);
+			break;
 	}
 	return 0;
 }
@@ -475,6 +476,7 @@ static int
 bf_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 {
 	struct int_ctx *cx = (struct int_ctx *) c->ptr;
+	BlowfishContext *bfctx = &cx->ctx.bf;
 
 	if (dlen == 0)
 		return 0;
@@ -486,11 +488,11 @@ bf_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 	switch (cx->mode)
 	{
 		case MODE_ECB:
-			blf_ecb_decrypt(&cx->ctx.bf, res, dlen);
+			blowfish_decrypt_ecb(res, dlen, bfctx);
 			break;
 		case MODE_CBC:
-			blf_cbc_decrypt(&cx->ctx.bf, cx->iv, res, dlen);
-			memcpy(cx->iv, data + dlen - 8, 8);
+			blowfish_decrypt_cbc(res, dlen, bfctx);
+			break;
 	}
 	return 0;
 }

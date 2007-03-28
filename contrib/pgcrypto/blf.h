@@ -1,83 +1,48 @@
-/*	$OpenBSD: blf.h,v 1.3 2001/05/15 02:40:35 deraadt Exp $ */
-
+/* $PostgreSQL: pgsql/contrib/pgcrypto/blf.h,v 1.6 2007/03/28 22:48:58 neilc Exp $ */
 /*
- * Blowfish - a fast block cipher designed by Bruce Schneier
+ * PuTTY is copyright 1997-2007 Simon Tatham.
  *
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
- * All rights reserved.
+ * Portions copyright Robert de Bath, Joris van Rantwijk, Delian
+ * Delchev, Andreas Schultz, Jeroen Massar, Wez Furlong, Nicolas Barry,
+ * Justin Bradford, Ben Harris, Malcolm Smith, Ahmad Khalifa, Markus
+ * Kuhn, and CORE SDI S.A.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *	  notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *	  notice, this list of conditions and the following disclaimer in the
- *	  documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *	  must display the following acknowledgement:
- *		This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
- *	  derived from this software without specific prior written permission.
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation files
+ * (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge,
+ * publish, distribute, sublicense, and/or sell copies of the Software,
+ * and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT.  IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE
+ * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef _BLF_H_
-#define _BLF_H_
-
-/* Schneier states the maximum key length to be 56 bytes.
- * The way how the subkeys are initalized by the key up
- * to (N+2)*4 i.e. 72 bytes are utilized.
- * Warning: For normal blowfish encryption only 56 bytes
- * of the key affect all cipherbits.
- */
-
-#define BLF_N	16				/* Number of Subkeys */
-#define BLF_MAXKEYLEN ((BLF_N-2)*4)		/* 448 bits */
-
-/* Blowfish context */
-typedef struct BlowfishContext
+typedef struct
 {
-	uint32		S[4][256];		/* S-Boxes */
-	uint32		P[BLF_N + 2];	/* Subkeys */
-}	blf_ctx;
+	uint32		S0[256],
+				S1[256],
+				S2[256],
+				S3[256],
+				P[18];
+	uint32		iv0,
+				iv1;            /* for CBC mode */
+} BlowfishContext;
 
-/* Raw access to customized Blowfish
- *	blf_key is just:
- *	Blowfish_initstate( state )
- *	Blowfish_expand0state( state, key, keylen )
- */
+void blowfish_setkey(BlowfishContext *ctx, const uint8 *key, short keybytes);
+void blowfish_setiv(BlowfishContext *ctx, const uint8 *iv);
+void blowfish_encrypt_cbc(uint8 *blk, int len, BlowfishContext *ctx);
+void blowfish_decrypt_cbc(uint8 *blk, int len, BlowfishContext *ctx);
+void blowfish_encrypt_ecb(uint8 *blk, int len, BlowfishContext *ctx);
+void blowfish_decrypt_ecb(uint8 *blk, int len, BlowfishContext *ctx);
 
-void		Blowfish_encipher(blf_ctx *, uint32 *);
-void		Blowfish_decipher(blf_ctx *, uint32 *);
-void		Blowfish_initstate(blf_ctx *);
-void		Blowfish_expand0state(blf_ctx *, const uint8 *, uint16);
-void		Blowfish_expandstate
-			(blf_ctx *, const uint8 *, uint16, const uint8 *, uint16);
 
-/* Standard Blowfish */
-
-void		blf_key(blf_ctx *, const uint8 *, uint16);
-void		blf_enc(blf_ctx *, uint32 *, uint16);
-void		blf_dec(blf_ctx *, uint32 *, uint16);
-
-/* Converts uint8 to uint32 */
-uint32		Blowfish_stream2word(const uint8 *, uint16, uint16 *);
-
-void		blf_ecb_encrypt(blf_ctx *, uint8 *, uint32);
-void		blf_ecb_decrypt(blf_ctx *, uint8 *, uint32);
-
-void		blf_cbc_encrypt(blf_ctx *, uint8 *, uint8 *, uint32);
-void		blf_cbc_decrypt(blf_ctx *, uint8 *, uint8 *, uint32);
-
-#endif

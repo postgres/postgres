@@ -639,7 +639,7 @@ I have used code from following sources:
   DES crypt()          David Burren and others   FreeBSD libcrypt
   MD5 crypt()          Poul-Henning Kamp         FreeBSD libcrypt
   Blowfish crypt()     Solar Designer            www.openwall.com
-  Blowfish cipher      Niels Provos              OpenBSD sys/crypto
+  Blowfish cipher      Simon Tatham              PuTTY
   Rijndael cipher      Brian Gladman             OpenBSD sys/crypto
   MD5 and SHA1         WIDE Project              KAME kame/sys/crypto
   SHA256/384/512       Aaron D. Gifford          OpenBSD sys/crypto
@@ -651,7 +651,6 @@ I have used code from following sources:
 -------------
 
 * I owe a beer to Poul-Henning.
-* This product includes software developed by Niels Provos.
 
 
 10.  References/Links
@@ -707,4 +706,4 @@ http://www.cs.ut.ee/~helger/crypto/[]::
 	Collection of cryptology pointers.
 
 
-// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.18 2006/09/05 21:26:48 tgl Exp $
+// $PostgreSQL: pgsql/contrib/pgcrypto/README.pgcrypto,v 1.19 2007/03/28 22:48:58 neilc Exp $

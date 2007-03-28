@@ -1,695 +1,500 @@
-/*	$OpenBSD: blf.c,v 1.3 2000/06/17 23:36:22 provos Exp $	*/
-
 /*
- * Blowfish block cipher for OpenBSD
- * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
- * All rights reserved.
+ * Butchered version of sshblowf.c from putty-0.59.
  *
- * Implementation advice by David Mazieres <dm@lcs.mit.edu>.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *	  notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *	  notice, this list of conditions and the following disclaimer in the
- *	  documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *	  must display the following acknowledgement:
- *		This product includes software developed by Niels Provos.
- * 4. The name of the author may not be used to endorse or promote products
- *	  derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $PostgreSQL: pgsql/contrib/pgcrypto/blf.c,v 1.7 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/blf.c,v 1.8 2007/03/28 22:48:58 neilc Exp $
  */
 
 /*
- * This code is derived from section 14.3 and the given source
- * in section V of Applied Cryptography, second edition.
- * Blowfish is an unpatented fast block cipher designed by
- * Bruce Schneier.
+ * PuTTY is copyright 1997-2007 Simon Tatham.
+ *
+ * Portions copyright Robert de Bath, Joris van Rantwijk, Delian
+ * Delchev, Andreas Schultz, Jeroen Massar, Wez Furlong, Nicolas Barry,
+ * Justin Bradford, Ben Harris, Malcolm Smith, Ahmad Khalifa, Markus
+ * Kuhn, and CORE SDI S.A.
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation files
+ * (the "Software"), to deal in the Software without restriction,
+ * including without limitation the rights to use, copy, modify, merge,
+ * publish, distribute, sublicense, and/or sell copies of the Software,
+ * and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT.  IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE
+ * FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+/*
+ * Blowfish implementation for PuTTY.
+ *
+ * Coded from scratch from the algorithm description.
  */
 
 #include "postgres.h"
-
-#include "px.h"
 #include "blf.h"
 
-/* Function for Feistel Networks */
+#define GET_32BIT_MSB_FIRST(p) ( \
+	((p)[0] << 24) | ((p)[1] << 16) | ((p)[2] << 8) | ((p)[3]) )
 
-#define F(s, x) ((((s)[		   (((x)>>24)&0xFF)]  \
-		 + (s)[0x100 + (((x)>>16)&0xFF)]) \
-		 ^ (s)[0x200 + (((x)>> 8)&0xFF)]) \
-		 + (s)[0x300 + ( (x)	 &0xFF)])
+#define PUT_32BIT_MSB_FIRST(p, v) do { \
+	(p)[0] = v >> 24; \
+	(p)[1] = v >> 16; \
+	(p)[2] = v >> 8; \
+	(p)[3] = v; \
+} while (0)
 
-#define BLFRND(s,p,i,j,n) (i ^= F(s,j) ^ (p)[n])
+/*
+ * The Blowfish init data: hex digits of the fractional part of pi.
+ * (ie pi as a hex fraction is 3.243F6A8885A308D3...)
+ */
+static const uint32 parray[] = {
+	0x243F6A88, 0x85A308D3, 0x13198A2E, 0x03707344, 0xA4093822, 0x299F31D0,
+	0x082EFA98, 0xEC4E6C89, 0x452821E6, 0x38D01377, 0xBE5466CF, 0x34E90C6C,
+	0xC0AC29B7, 0xC97C50DD, 0x3F84D5B5, 0xB5470917, 0x9216D5D9, 0x8979FB1B,
+};
 
-void
-Blowfish_encipher(blf_ctx * c, uint32 *x)
+static const uint32 sbox0[] = {
+	0xD1310BA6, 0x98DFB5AC, 0x2FFD72DB, 0xD01ADFB7, 0xB8E1AFED, 0x6A267E96,
+	0xBA7C9045, 0xF12C7F99, 0x24A19947, 0xB3916CF7, 0x0801F2E2, 0x858EFC16,
+	0x636920D8, 0x71574E69, 0xA458FEA3, 0xF4933D7E, 0x0D95748F, 0x728EB658,
+	0x718BCD58, 0x82154AEE, 0x7B54A41D, 0xC25A59B5, 0x9C30D539, 0x2AF26013,
+	0xC5D1B023, 0x286085F0, 0xCA417918, 0xB8DB38EF, 0x8E79DCB0, 0x603A180E,
+	0x6C9E0E8B, 0xB01E8A3E, 0xD71577C1, 0xBD314B27, 0x78AF2FDA, 0x55605C60,
+	0xE65525F3, 0xAA55AB94, 0x57489862, 0x63E81440, 0x55CA396A, 0x2AAB10B6,
+	0xB4CC5C34, 0x1141E8CE, 0xA15486AF, 0x7C72E993, 0xB3EE1411, 0x636FBC2A,
+	0x2BA9C55D, 0x741831F6, 0xCE5C3E16, 0x9B87931E, 0xAFD6BA33, 0x6C24CF5C,
+	0x7A325381, 0x28958677, 0x3B8F4898, 0x6B4BB9AF, 0xC4BFE81B, 0x66282193,
+	0x61D809CC, 0xFB21A991, 0x487CAC60, 0x5DEC8032, 0xEF845D5D, 0xE98575B1,
+	0xDC262302, 0xEB651B88, 0x23893E81, 0xD396ACC5, 0x0F6D6FF3, 0x83F44239,
+	0x2E0B4482, 0xA4842004, 0x69C8F04A, 0x9E1F9B5E, 0x21C66842, 0xF6E96C9A,
+	0x670C9C61, 0xABD388F0, 0x6A51A0D2, 0xD8542F68, 0x960FA728, 0xAB5133A3,
+	0x6EEF0B6C, 0x137A3BE4, 0xBA3BF050, 0x7EFB2A98, 0xA1F1651D, 0x39AF0176,
+	0x66CA593E, 0x82430E88, 0x8CEE8619, 0x456F9FB4, 0x7D84A5C3, 0x3B8B5EBE,
+	0xE06F75D8, 0x85C12073, 0x401A449F, 0x56C16AA6, 0x4ED3AA62, 0x363F7706,
+	0x1BFEDF72, 0x429B023D, 0x37D0D724, 0xD00A1248, 0xDB0FEAD3, 0x49F1C09B,
+	0x075372C9, 0x80991B7B, 0x25D479D8, 0xF6E8DEF7, 0xE3FE501A, 0xB6794C3B,
+	0x976CE0BD, 0x04C006BA, 0xC1A94FB6, 0x409F60C4, 0x5E5C9EC2, 0x196A2463,
+	0x68FB6FAF, 0x3E6C53B5, 0x1339B2EB, 0x3B52EC6F, 0x6DFC511F, 0x9B30952C,
+	0xCC814544, 0xAF5EBD09, 0xBEE3D004, 0xDE334AFD, 0x660F2807, 0x192E4BB3,
+	0xC0CBA857, 0x45C8740F, 0xD20B5F39, 0xB9D3FBDB, 0x5579C0BD, 0x1A60320A,
+	0xD6A100C6, 0x402C7279, 0x679F25FE, 0xFB1FA3CC, 0x8EA5E9F8, 0xDB3222F8,
+	0x3C7516DF, 0xFD616B15, 0x2F501EC8, 0xAD0552AB, 0x323DB5FA, 0xFD238760,
+	0x53317B48, 0x3E00DF82, 0x9E5C57BB, 0xCA6F8CA0, 0x1A87562E, 0xDF1769DB,
+	0xD542A8F6, 0x287EFFC3, 0xAC6732C6, 0x8C4F5573, 0x695B27B0, 0xBBCA58C8,
+	0xE1FFA35D, 0xB8F011A0, 0x10FA3D98, 0xFD2183B8, 0x4AFCB56C, 0x2DD1D35B,
+	0x9A53E479, 0xB6F84565, 0xD28E49BC, 0x4BFB9790, 0xE1DDF2DA, 0xA4CB7E33,
+	0x62FB1341, 0xCEE4C6E8, 0xEF20CADA, 0x36774C01, 0xD07E9EFE, 0x2BF11FB4,
+	0x95DBDA4D, 0xAE909198, 0xEAAD8E71, 0x6B93D5A0, 0xD08ED1D0, 0xAFC725E0,
+	0x8E3C5B2F, 0x8E7594B7, 0x8FF6E2FB, 0xF2122B64, 0x8888B812, 0x900DF01C,
+	0x4FAD5EA0, 0x688FC31C, 0xD1CFF191, 0xB3A8C1AD, 0x2F2F2218, 0xBE0E1777,
+	0xEA752DFE, 0x8B021FA1, 0xE5A0CC0F, 0xB56F74E8, 0x18ACF3D6, 0xCE89E299,
+	0xB4A84FE0, 0xFD13E0B7, 0x7CC43B81, 0xD2ADA8D9, 0x165FA266, 0x80957705,
+	0x93CC7314, 0x211A1477, 0xE6AD2065, 0x77B5FA86, 0xC75442F5, 0xFB9D35CF,
+	0xEBCDAF0C, 0x7B3E89A0, 0xD6411BD3, 0xAE1E7E49, 0x00250E2D, 0x2071B35E,
+	0x226800BB, 0x57B8E0AF, 0x2464369B, 0xF009B91E, 0x5563911D, 0x59DFA6AA,
+	0x78C14389, 0xD95A537F, 0x207D5BA2, 0x02E5B9C5, 0x83260376, 0x6295CFA9,
+	0x11C81968, 0x4E734A41, 0xB3472DCA, 0x7B14A94A, 0x1B510052, 0x9A532915,
+	0xD60F573F, 0xBC9BC6E4, 0x2B60A476, 0x81E67400, 0x08BA6FB5, 0x571BE91F,
+	0xF296EC6B, 0x2A0DD915, 0xB6636521, 0xE7B9F9B6, 0xFF34052E, 0xC5855664,
+	0x53B02D5D, 0xA99F8FA1, 0x08BA4799, 0x6E85076A,
+};
+
+static const uint32 sbox1[] = {
+	0x4B7A70E9, 0xB5B32944, 0xDB75092E, 0xC4192623, 0xAD6EA6B0, 0x49A7DF7D,
+	0x9CEE60B8, 0x8FEDB266, 0xECAA8C71, 0x699A17FF, 0x5664526C, 0xC2B19EE1,
+	0x193602A5, 0x75094C29, 0xA0591340, 0xE4183A3E, 0x3F54989A, 0x5B429D65,
+	0x6B8FE4D6, 0x99F73FD6, 0xA1D29C07, 0xEFE830F5, 0x4D2D38E6, 0xF0255DC1,
+	0x4CDD2086, 0x8470EB26, 0x6382E9C6, 0x021ECC5E, 0x09686B3F, 0x3EBAEFC9,
+	0x3C971814, 0x6B6A70A1, 0x687F3584, 0x52A0E286, 0xB79C5305, 0xAA500737,
+	0x3E07841C, 0x7FDEAE5C, 0x8E7D44EC, 0x5716F2B8, 0xB03ADA37, 0xF0500C0D,
+	0xF01C1F04, 0x0200B3FF, 0xAE0CF51A, 0x3CB574B2, 0x25837A58, 0xDC0921BD,
+	0xD19113F9, 0x7CA92FF6, 0x94324773, 0x22F54701, 0x3AE5E581, 0x37C2DADC,
+	0xC8B57634, 0x9AF3DDA7, 0xA9446146, 0x0FD0030E, 0xECC8C73E, 0xA4751E41,
+	0xE238CD99, 0x3BEA0E2F, 0x3280BBA1, 0x183EB331, 0x4E548B38, 0x4F6DB908,
+	0x6F420D03, 0xF60A04BF, 0x2CB81290, 0x24977C79, 0x5679B072, 0xBCAF89AF,
+	0xDE9A771F, 0xD9930810, 0xB38BAE12, 0xDCCF3F2E, 0x5512721F, 0x2E6B7124,
+	0x501ADDE6, 0x9F84CD87, 0x7A584718, 0x7408DA17, 0xBC9F9ABC, 0xE94B7D8C,
+	0xEC7AEC3A, 0xDB851DFA, 0x63094366, 0xC464C3D2, 0xEF1C1847, 0x3215D908,
+	0xDD433B37, 0x24C2BA16, 0x12A14D43, 0x2A65C451, 0x50940002, 0x133AE4DD,
+	0x71DFF89E, 0x10314E55, 0x81AC77D6, 0x5F11199B, 0x043556F1, 0xD7A3C76B,
+	0x3C11183B, 0x5924A509, 0xF28FE6ED, 0x97F1FBFA, 0x9EBABF2C, 0x1E153C6E,
+	0x86E34570, 0xEAE96FB1, 0x860E5E0A, 0x5A3E2AB3, 0x771FE71C, 0x4E3D06FA,
+	0x2965DCB9, 0x99E71D0F, 0x803E89D6, 0x5266C825, 0x2E4CC978, 0x9C10B36A,
+	0xC6150EBA, 0x94E2EA78, 0xA5FC3C53, 0x1E0A2DF4, 0xF2F74EA7, 0x361D2B3D,
+	0x1939260F, 0x19C27960, 0x5223A708, 0xF71312B6, 0xEBADFE6E, 0xEAC31F66,
+	0xE3BC4595, 0xA67BC883, 0xB17F37D1, 0x018CFF28, 0xC332DDEF, 0xBE6C5AA5,
+	0x65582185, 0x68AB9802, 0xEECEA50F, 0xDB2F953B, 0x2AEF7DAD, 0x5B6E2F84,
+	0x1521B628, 0x29076170, 0xECDD4775, 0x619F1510, 0x13CCA830, 0xEB61BD96,
+	0x0334FE1E, 0xAA0363CF, 0xB5735C90, 0x4C70A239, 0xD59E9E0B, 0xCBAADE14,
+	0xEECC86BC, 0x60622CA7, 0x9CAB5CAB, 0xB2F3846E, 0x648B1EAF, 0x19BDF0CA,
+	0xA02369B9, 0x655ABB50, 0x40685A32, 0x3C2AB4B3, 0x319EE9D5, 0xC021B8F7,
+	0x9B540B19, 0x875FA099, 0x95F7997E, 0x623D7DA8, 0xF837889A, 0x97E32D77,
+	0x11ED935F, 0x16681281, 0x0E358829, 0xC7E61FD6, 0x96DEDFA1, 0x7858BA99,
+	0x57F584A5, 0x1B227263, 0x9B83C3FF, 0x1AC24696, 0xCDB30AEB, 0x532E3054,
+	0x8FD948E4, 0x6DBC3128, 0x58EBF2EF, 0x34C6FFEA, 0xFE28ED61, 0xEE7C3C73,
+	0x5D4A14D9, 0xE864B7E3, 0x42105D14, 0x203E13E0, 0x45EEE2B6, 0xA3AAABEA,
+	0xDB6C4F15, 0xFACB4FD0, 0xC742F442, 0xEF6ABBB5, 0x654F3B1D, 0x41CD2105,
+	0xD81E799E, 0x86854DC7, 0xE44B476A, 0x3D816250, 0xCF62A1F2, 0x5B8D2646,
+	0xFC8883A0, 0xC1C7B6A3, 0x7F1524C3, 0x69CB7492, 0x47848A0B, 0x5692B285,
+	0x095BBF00, 0xAD19489D, 0x1462B174, 0x23820E00, 0x58428D2A, 0x0C55F5EA,
+	0x1DADF43E, 0x233F7061, 0x3372F092, 0x8D937E41, 0xD65FECF1, 0x6C223BDB,
+	0x7CDE3759, 0xCBEE7460, 0x4085F2A7, 0xCE77326E, 0xA6078084, 0x19F8509E,
+	0xE8EFD855, 0x61D99735, 0xA969A7AA, 0xC50C06C2, 0x5A04ABFC, 0x800BCADC,
+	0x9E447A2E, 0xC3453484, 0xFDD56705, 0x0E1E9EC9, 0xDB73DBD3, 0x105588CD,
+	0x675FDA79, 0xE3674340, 0xC5C43465, 0x713E38D8, 0x3D28F89E, 0xF16DFF20,
+	0x153E21E7, 0x8FB03D4A, 0xE6E39F2B, 0xDB83ADF7,
+};
+
+static const uint32 sbox2[] = {
+	0xE93D5A68, 0x948140F7, 0xF64C261C, 0x94692934, 0x411520F7, 0x7602D4F7,
+	0xBCF46B2E, 0xD4A20068, 0xD4082471, 0x3320F46A, 0x43B7D4B7, 0x500061AF,
+	0x1E39F62E, 0x97244546, 0x14214F74, 0xBF8B8840, 0x4D95FC1D, 0x96B591AF,
+	0x70F4DDD3, 0x66A02F45, 0xBFBC09EC, 0x03BD9785, 0x7FAC6DD0, 0x31CB8504,
+	0x96EB27B3, 0x55FD3941, 0xDA2547E6, 0xABCA0A9A, 0x28507825, 0x530429F4,
+	0x0A2C86DA, 0xE9B66DFB, 0x68DC1462, 0xD7486900, 0x680EC0A4, 0x27A18DEE,
+	0x4F3FFEA2, 0xE887AD8C, 0xB58CE006, 0x7AF4D6B6, 0xAACE1E7C, 0xD3375FEC,
+	0xCE78A399, 0x406B2A42, 0x20FE9E35, 0xD9F385B9, 0xEE39D7AB, 0x3B124E8B,
+	0x1DC9FAF7, 0x4B6D1856, 0x26A36631, 0xEAE397B2, 0x3A6EFA74, 0xDD5B4332,
+	0x6841E7F7, 0xCA7820FB, 0xFB0AF54E, 0xD8FEB397, 0x454056AC, 0xBA489527,
+	0x55533A3A, 0x20838D87, 0xFE6BA9B7, 0xD096954B, 0x55A867BC, 0xA1159A58,
+	0xCCA92963, 0x99E1DB33, 0xA62A4A56, 0x3F3125F9, 0x5EF47E1C, 0x9029317C,
+	0xFDF8E802, 0x04272F70, 0x80BB155C, 0x05282CE3, 0x95C11548, 0xE4C66D22,
+	0x48C1133F, 0xC70F86DC, 0x07F9C9EE, 0x41041F0F, 0x404779A4, 0x5D886E17,
+	0x325F51EB, 0xD59BC0D1, 0xF2BCC18F, 0x41113564, 0x257B7834, 0x602A9C60,
+	0xDFF8E8A3, 0x1F636C1B, 0x0E12B4C2, 0x02E1329E, 0xAF664FD1, 0xCAD18115,
+	0x6B2395E0, 0x333E92E1, 0x3B240B62, 0xEEBEB922, 0x85B2A20E, 0xE6BA0D99,
+	0xDE720C8C, 0x2DA2F728, 0xD0127845, 0x95B794FD, 0x647D0862, 0xE7CCF5F0,
+	0x5449A36F, 0x877D48FA, 0xC39DFD27, 0xF33E8D1E, 0x0A476341, 0x992EFF74,
+	0x3A6F6EAB, 0xF4F8FD37, 0xA812DC60, 0xA1EBDDF8, 0x991BE14C, 0xDB6E6B0D,
+	0xC67B5510, 0x6D672C37, 0x2765D43B, 0xDCD0E804, 0xF1290DC7, 0xCC00FFA3,
+	0xB5390F92, 0x690FED0B, 0x667B9FFB, 0xCEDB7D9C, 0xA091CF0B, 0xD9155EA3,
+	0xBB132F88, 0x515BAD24, 0x7B9479BF, 0x763BD6EB, 0x37392EB3, 0xCC115979,
+	0x8026E297, 0xF42E312D, 0x6842ADA7, 0xC66A2B3B, 0x12754CCC, 0x782EF11C,
+	0x6A124237, 0xB79251E7, 0x06A1BBE6, 0x4BFB6350, 0x1A6B1018, 0x11CAEDFA,
+	0x3D25BDD8, 0xE2E1C3C9, 0x44421659, 0x0A121386, 0xD90CEC6E, 0xD5ABEA2A,
+	0x64AF674E, 0xDA86A85F, 0xBEBFE988, 0x64E4C3FE, 0x9DBC8057, 0xF0F7C086,
+	0x60787BF8, 0x6003604D, 0xD1FD8346, 0xF6381FB0, 0x7745AE04, 0xD736FCCC,
+	0x83426B33, 0xF01EAB71, 0xB0804187, 0x3C005E5F, 0x77A057BE, 0xBDE8AE24,
+	0x55464299, 0xBF582E61, 0x4E58F48F, 0xF2DDFDA2, 0xF474EF38, 0x8789BDC2,
+	0x5366F9C3, 0xC8B38E74, 0xB475F255, 0x46FCD9B9, 0x7AEB2661, 0x8B1DDF84,
+	0x846A0E79, 0x915F95E2, 0x466E598E, 0x20B45770, 0x8CD55591, 0xC902DE4C,
+	0xB90BACE1, 0xBB8205D0, 0x11A86248, 0x7574A99E, 0xB77F19B6, 0xE0A9DC09,
+	0x662D09A1, 0xC4324633, 0xE85A1F02, 0x09F0BE8C, 0x4A99A025, 0x1D6EFE10,
+	0x1AB93D1D, 0x0BA5A4DF, 0xA186F20F, 0x2868F169, 0xDCB7DA83, 0x573906FE,
+	0xA1E2CE9B, 0x4FCD7F52, 0x50115E01, 0xA70683FA, 0xA002B5C4, 0x0DE6D027,
+	0x9AF88C27, 0x773F8641, 0xC3604C06, 0x61A806B5, 0xF0177A28, 0xC0F586E0,
+	0x006058AA, 0x30DC7D62, 0x11E69ED7, 0x2338EA63, 0x53C2DD94, 0xC2C21634,
+	0xBBCBEE56, 0x90BCB6DE, 0xEBFC7DA1, 0xCE591D76, 0x6F05E409, 0x4B7C0188,
+	0x39720A3D, 0x7C927C24, 0x86E3725F, 0x724D9DB9, 0x1AC15BB4, 0xD39EB8FC,
+	0xED545578, 0x08FCA5B5, 0xD83D7CD3, 0x4DAD0FC4, 0x1E50EF5E, 0xB161E6F8,
+	0xA28514D9, 0x6C51133C, 0x6FD5C7E7, 0x56E14EC4, 0x362ABFCE, 0xDDC6C837,
+	0xD79A3234, 0x92638212, 0x670EFA8E, 0x406000E0,
+};
+
+static const uint32 sbox3[] = {
+	0x3A39CE37, 0xD3FAF5CF, 0xABC27737, 0x5AC52D1B, 0x5CB0679E, 0x4FA33742,
+	0xD3822740, 0x99BC9BBE, 0xD5118E9D, 0xBF0F7315, 0xD62D1C7E, 0xC700C47B,
+	0xB78C1B6B, 0x21A19045, 0xB26EB1BE, 0x6A366EB4, 0x5748AB2F, 0xBC946E79,
+	0xC6A376D2, 0x6549C2C8, 0x530FF8EE, 0x468DDE7D, 0xD5730A1D, 0x4CD04DC6,
+	0x2939BBDB, 0xA9BA4650, 0xAC9526E8, 0xBE5EE304, 0xA1FAD5F0, 0x6A2D519A,
+	0x63EF8CE2, 0x9A86EE22, 0xC089C2B8, 0x43242EF6, 0xA51E03AA, 0x9CF2D0A4,
+	0x83C061BA, 0x9BE96A4D, 0x8FE51550, 0xBA645BD6, 0x2826A2F9, 0xA73A3AE1,
+	0x4BA99586, 0xEF5562E9, 0xC72FEFD3, 0xF752F7DA, 0x3F046F69, 0x77FA0A59,
+	0x80E4A915, 0x87B08601, 0x9B09E6AD, 0x3B3EE593, 0xE990FD5A, 0x9E34D797,
+	0x2CF0B7D9, 0x022B8B51, 0x96D5AC3A, 0x017DA67D, 0xD1CF3ED6, 0x7C7D2D28,
+	0x1F9F25CF, 0xADF2B89B, 0x5AD6B472, 0x5A88F54C, 0xE029AC71, 0xE019A5E6,
+	0x47B0ACFD, 0xED93FA9B, 0xE8D3C48D, 0x283B57CC, 0xF8D56629, 0x79132E28,
+	0x785F0191, 0xED756055, 0xF7960E44, 0xE3D35E8C, 0x15056DD4, 0x88F46DBA,
+	0x03A16125, 0x0564F0BD, 0xC3EB9E15, 0x3C9057A2, 0x97271AEC, 0xA93A072A,
+	0x1B3F6D9B, 0x1E6321F5, 0xF59C66FB, 0x26DCF319, 0x7533D928, 0xB155FDF5,
+	0x03563482, 0x8ABA3CBB, 0x28517711, 0xC20AD9F8, 0xABCC5167, 0xCCAD925F,
+	0x4DE81751, 0x3830DC8E, 0x379D5862, 0x9320F991, 0xEA7A90C2, 0xFB3E7BCE,
+	0x5121CE64, 0x774FBE32, 0xA8B6E37E, 0xC3293D46, 0x48DE5369, 0x6413E680,
+	0xA2AE0810, 0xDD6DB224, 0x69852DFD, 0x09072166, 0xB39A460A, 0x6445C0DD,
+	0x586CDECF, 0x1C20C8AE, 0x5BBEF7DD, 0x1B588D40, 0xCCD2017F, 0x6BB4E3BB,
+	0xDDA26A7E, 0x3A59FF45, 0x3E350A44, 0xBCB4CDD5, 0x72EACEA8, 0xFA6484BB,
+	0x8D6612AE, 0xBF3C6F47, 0xD29BE463, 0x542F5D9E, 0xAEC2771B, 0xF64E6370,
+	0x740E0D8D, 0xE75B1357, 0xF8721671, 0xAF537D5D, 0x4040CB08, 0x4EB4E2CC,
+	0x34D2466A, 0x0115AF84, 0xE1B00428, 0x95983A1D, 0x06B89FB4, 0xCE6EA048,
+	0x6F3F3B82, 0x3520AB82, 0x011A1D4B, 0x277227F8, 0x611560B1, 0xE7933FDC,
+	0xBB3A792B, 0x344525BD, 0xA08839E1, 0x51CE794B, 0x2F32C9B7, 0xA01FBAC9,
+	0xE01CC87E, 0xBCC7D1F6, 0xCF0111C3, 0xA1E8AAC7, 0x1A908749, 0xD44FBD9A,
+	0xD0DADECB, 0xD50ADA38, 0x0339C32A, 0xC6913667, 0x8DF9317C, 0xE0B12B4F,
+	0xF79E59B7, 0x43F5BB3A, 0xF2D519FF, 0x27D9459C, 0xBF97222C, 0x15E6FC2A,
+	0x0F91FC71, 0x9B941525, 0xFAE59361, 0xCEB69CEB, 0xC2A86459, 0x12BAA8D1,
+	0xB6C1075E, 0xE3056A0C, 0x10D25065, 0xCB03A442, 0xE0EC6E0E, 0x1698DB3B,
+	0x4C98A0BE, 0x3278E964, 0x9F1F9532, 0xE0D392DF, 0xD3A0342B, 0x8971F21E,
+	0x1B0A7441, 0x4BA3348C, 0xC5BE7120, 0xC37632D8, 0xDF359F8D, 0x9B992F2E,
+	0xE60B6F47, 0x0FE3F11D, 0xE54CDA54, 0x1EDAD891, 0xCE6279CF, 0xCD3E7E6F,
+	0x1618B166, 0xFD2C1D05, 0x848FD2C5, 0xF6FB2299, 0xF523F357, 0xA6327623,
+	0x93A83531, 0x56CCCD02, 0xACF08162, 0x5A75EBB5, 0x6E163697, 0x88D273CC,
+	0xDE966292, 0x81B949D0, 0x4C50901B, 0x71C65614, 0xE6C6C7BD, 0x327A140A,
+	0x45E1D006, 0xC3F27B9A, 0xC9AA53FD, 0x62A80F00, 0xBB25BFE2, 0x35BDD2F6,
+	0x71126905, 0xB2040222, 0xB6CBCF7C, 0xCD769C2B, 0x53113EC0, 0x1640E3D3,
+	0x38ABBD60, 0x2547ADF0, 0xBA38209C, 0xF746CE76, 0x77AFA1C5, 0x20756060,
+	0x85CBFE4E, 0x8AE88DD8, 0x7AAAF9B0, 0x4CF9AA7E, 0x1948C25C, 0x02FB8A8C,
+	0x01C36AE4, 0xD6EBE1F9, 0x90D4F869, 0xA65CDEA0, 0x3F09252D, 0xC208E69F,
+	0xB74E6132, 0xCE77E25B, 0x578FDFE3, 0x3AC372E6,
+};
+
+#define Fprime(a,b,c,d) ( ( (S0[a] + S1[b]) ^ S2[c] ) + S3[d] )
+#define F(x) Fprime( ((x>>24)&0xFF), ((x>>16)&0xFF), ((x>>8)&0xFF), (x&0xFF) )
+#define ROUND(n) ( xL ^= P[n], t = xL, xL = F(xL) ^ xR, xR = t )
+
+static void
+blowfish_encrypt(uint32 xL, uint32 xR, uint32 *output,
+				 BlowfishContext *ctx)
 {
-	uint32		Xl;
-	uint32		Xr;
-	uint32	   *s = c->S[0];
-	uint32	   *p = c->P;
+	uint32	   *S0 = ctx->S0;
+	uint32	   *S1 = ctx->S1;
+	uint32	   *S2 = ctx->S2;
+	uint32	   *S3 = ctx->S3;
+	uint32	   *P = ctx->P;
+	uint32		t;
 
-	Xl = x[0];
-	Xr = x[1];
+	ROUND(0);
+	ROUND(1);
+	ROUND(2);
+	ROUND(3);
+	ROUND(4);
+	ROUND(5);
+	ROUND(6);
+	ROUND(7);
+	ROUND(8);
+	ROUND(9);
+	ROUND(10);
+	ROUND(11);
+	ROUND(12);
+	ROUND(13);
+	ROUND(14);
+	ROUND(15);
+	xL ^= P[16];
+	xR ^= P[17];
 
-	Xl ^= p[0];
-	BLFRND(s, p, Xr, Xl, 1);
-	BLFRND(s, p, Xl, Xr, 2);
-	BLFRND(s, p, Xr, Xl, 3);
-	BLFRND(s, p, Xl, Xr, 4);
-	BLFRND(s, p, Xr, Xl, 5);
-	BLFRND(s, p, Xl, Xr, 6);
-	BLFRND(s, p, Xr, Xl, 7);
-	BLFRND(s, p, Xl, Xr, 8);
-	BLFRND(s, p, Xr, Xl, 9);
-	BLFRND(s, p, Xl, Xr, 10);
-	BLFRND(s, p, Xr, Xl, 11);
-	BLFRND(s, p, Xl, Xr, 12);
-	BLFRND(s, p, Xr, Xl, 13);
-	BLFRND(s, p, Xl, Xr, 14);
-	BLFRND(s, p, Xr, Xl, 15);
-	BLFRND(s, p, Xl, Xr, 16);
+	output[0] = xR;
+	output[1] = xL;
+}
 
-	x[0] = Xr ^ p[17];
-	x[1] = Xl;
+static void
+blowfish_decrypt(uint32 xL, uint32 xR, uint32 *output,
+				 BlowfishContext *ctx)
+{
+	uint32	   *S0 = ctx->S0;
+	uint32	   *S1 = ctx->S1;
+	uint32	   *S2 = ctx->S2;
+	uint32	   *S3 = ctx->S3;
+	uint32	   *P = ctx->P;
+	uint32		t;
+
+	ROUND(17);
+	ROUND(16);
+	ROUND(15);
+	ROUND(14);
+	ROUND(13);
+	ROUND(12);
+	ROUND(11);
+	ROUND(10);
+	ROUND(9);
+	ROUND(8);
+	ROUND(7);
+	ROUND(6);
+	ROUND(5);
+	ROUND(4);
+	ROUND(3);
+	ROUND(2);
+	xL ^= P[1];
+	xR ^= P[0];
+
+	output[0] = xR;
+	output[1] = xL;
 }
 
 void
-Blowfish_decipher(blf_ctx * c, uint32 *x)
+blowfish_encrypt_cbc(uint8 *blk, int len, BlowfishContext *ctx)
 {
-	uint32		Xl;
-	uint32		Xr;
-	uint32	   *s = c->S[0];
-	uint32	   *p = c->P;
+	uint32		xL,
+				xR,
+				out[2],
+				iv0,
+				iv1;
 
-	Xl = x[0];
-	Xr = x[1];
+	Assert((len & 7) == 0);
 
-	Xl ^= p[17];
-	BLFRND(s, p, Xr, Xl, 16);
-	BLFRND(s, p, Xl, Xr, 15);
-	BLFRND(s, p, Xr, Xl, 14);
-	BLFRND(s, p, Xl, Xr, 13);
-	BLFRND(s, p, Xr, Xl, 12);
-	BLFRND(s, p, Xl, Xr, 11);
-	BLFRND(s, p, Xr, Xl, 10);
-	BLFRND(s, p, Xl, Xr, 9);
-	BLFRND(s, p, Xr, Xl, 8);
-	BLFRND(s, p, Xl, Xr, 7);
-	BLFRND(s, p, Xr, Xl, 6);
-	BLFRND(s, p, Xl, Xr, 5);
-	BLFRND(s, p, Xr, Xl, 4);
-	BLFRND(s, p, Xl, Xr, 3);
-	BLFRND(s, p, Xr, Xl, 2);
-	BLFRND(s, p, Xl, Xr, 1);
+	iv0 = ctx->iv0;
+	iv1 = ctx->iv1;
 
-	x[0] = Xr ^ p[0];
-	x[1] = Xl;
+	while (len > 0)
+	{
+		xL = GET_32BIT_MSB_FIRST(blk);
+		xR = GET_32BIT_MSB_FIRST(blk + 4);
+		iv0 ^= xL;
+		iv1 ^= xR;
+		blowfish_encrypt(iv0, iv1, out, ctx);
+		iv0 = out[0];
+		iv1 = out[1];
+		PUT_32BIT_MSB_FIRST(blk, iv0);
+		PUT_32BIT_MSB_FIRST(blk + 4, iv1);
+		blk += 8;
+		len -= 8;
+	}
+
+	ctx->iv0 = iv0;
+	ctx->iv1 = iv1;
 }
 
 void
-Blowfish_initstate(blf_ctx * c)
+blowfish_decrypt_cbc(uint8 *blk, int len, BlowfishContext *ctx)
 {
+	uint32		xL,
+				xR,
+				out[2],
+				iv0,
+				iv1;
 
-/* P-box and S-box tables initialized with digits of Pi */
+	Assert((len & 7) == 0);
 
-	static const blf_ctx initstate =
+	iv0 = ctx->iv0;
+	iv1 = ctx->iv1;
 
-	{{
-			{
-				0xd1310ba6, 0x98dfb5ac, 0x2ffd72db, 0xd01adfb7,
-				0xb8e1afed, 0x6a267e96, 0xba7c9045, 0xf12c7f99,
-				0x24a19947, 0xb3916cf7, 0x0801f2e2, 0x858efc16,
-				0x636920d8, 0x71574e69, 0xa458fea3, 0xf4933d7e,
-				0x0d95748f, 0x728eb658, 0x718bcd58, 0x82154aee,
-				0x7b54a41d, 0xc25a59b5, 0x9c30d539, 0x2af26013,
-				0xc5d1b023, 0x286085f0, 0xca417918, 0xb8db38ef,
-				0x8e79dcb0, 0x603a180e, 0x6c9e0e8b, 0xb01e8a3e,
-				0xd71577c1, 0xbd314b27, 0x78af2fda, 0x55605c60,
-				0xe65525f3, 0xaa55ab94, 0x57489862, 0x63e81440,
-				0x55ca396a, 0x2aab10b6, 0xb4cc5c34, 0x1141e8ce,
-				0xa15486af, 0x7c72e993, 0xb3ee1411, 0x636fbc2a,
-				0x2ba9c55d, 0x741831f6, 0xce5c3e16, 0x9b87931e,
-				0xafd6ba33, 0x6c24cf5c, 0x7a325381, 0x28958677,
-				0x3b8f4898, 0x6b4bb9af, 0xc4bfe81b, 0x66282193,
-				0x61d809cc, 0xfb21a991, 0x487cac60, 0x5dec8032,
-				0xef845d5d, 0xe98575b1, 0xdc262302, 0xeb651b88,
-				0x23893e81, 0xd396acc5, 0x0f6d6ff3, 0x83f44239,
-				0x2e0b4482, 0xa4842004, 0x69c8f04a, 0x9e1f9b5e,
-				0x21c66842, 0xf6e96c9a, 0x670c9c61, 0xabd388f0,
-				0x6a51a0d2, 0xd8542f68, 0x960fa728, 0xab5133a3,
-				0x6eef0b6c, 0x137a3be4, 0xba3bf050, 0x7efb2a98,
-				0xa1f1651d, 0x39af0176, 0x66ca593e, 0x82430e88,
-				0x8cee8619, 0x456f9fb4, 0x7d84a5c3, 0x3b8b5ebe,
-				0xe06f75d8, 0x85c12073, 0x401a449f, 0x56c16aa6,
-				0x4ed3aa62, 0x363f7706, 0x1bfedf72, 0x429b023d,
-				0x37d0d724, 0xd00a1248, 0xdb0fead3, 0x49f1c09b,
-				0x075372c9, 0x80991b7b, 0x25d479d8, 0xf6e8def7,
-				0xe3fe501a, 0xb6794c3b, 0x976ce0bd, 0x04c006ba,
-				0xc1a94fb6, 0x409f60c4, 0x5e5c9ec2, 0x196a2463,
-				0x68fb6faf, 0x3e6c53b5, 0x1339b2eb, 0x3b52ec6f,
-				0x6dfc511f, 0x9b30952c, 0xcc814544, 0xaf5ebd09,
-				0xbee3d004, 0xde334afd, 0x660f2807, 0x192e4bb3,
-				0xc0cba857, 0x45c8740f, 0xd20b5f39, 0xb9d3fbdb,
-				0x5579c0bd, 0x1a60320a, 0xd6a100c6, 0x402c7279,
-				0x679f25fe, 0xfb1fa3cc, 0x8ea5e9f8, 0xdb3222f8,
-				0x3c7516df, 0xfd616b15, 0x2f501ec8, 0xad0552ab,
-				0x323db5fa, 0xfd238760, 0x53317b48, 0x3e00df82,
-				0x9e5c57bb, 0xca6f8ca0, 0x1a87562e, 0xdf1769db,
-				0xd542a8f6, 0x287effc3, 0xac6732c6, 0x8c4f5573,
-				0x695b27b0, 0xbbca58c8, 0xe1ffa35d, 0xb8f011a0,
-				0x10fa3d98, 0xfd2183b8, 0x4afcb56c, 0x2dd1d35b,
-				0x9a53e479, 0xb6f84565, 0xd28e49bc, 0x4bfb9790,
-				0xe1ddf2da, 0xa4cb7e33, 0x62fb1341, 0xcee4c6e8,
-				0xef20cada, 0x36774c01, 0xd07e9efe, 0x2bf11fb4,
-				0x95dbda4d, 0xae909198, 0xeaad8e71, 0x6b93d5a0,
-				0xd08ed1d0, 0xafc725e0, 0x8e3c5b2f, 0x8e7594b7,
-				0x8ff6e2fb, 0xf2122b64, 0x8888b812, 0x900df01c,
-				0x4fad5ea0, 0x688fc31c, 0xd1cff191, 0xb3a8c1ad,
-				0x2f2f2218, 0xbe0e1777, 0xea752dfe, 0x8b021fa1,
-				0xe5a0cc0f, 0xb56f74e8, 0x18acf3d6, 0xce89e299,
-				0xb4a84fe0, 0xfd13e0b7, 0x7cc43b81, 0xd2ada8d9,
-				0x165fa266, 0x80957705, 0x93cc7314, 0x211a1477,
-				0xe6ad2065, 0x77b5fa86, 0xc75442f5, 0xfb9d35cf,
-				0xebcdaf0c, 0x7b3e89a0, 0xd6411bd3, 0xae1e7e49,
-				0x00250e2d, 0x2071b35e, 0x226800bb, 0x57b8e0af,
-				0x2464369b, 0xf009b91e, 0x5563911d, 0x59dfa6aa,
-				0x78c14389, 0xd95a537f, 0x207d5ba2, 0x02e5b9c5,
-				0x83260376, 0x6295cfa9, 0x11c81968, 0x4e734a41,
-				0xb3472dca, 0x7b14a94a, 0x1b510052, 0x9a532915,
-				0xd60f573f, 0xbc9bc6e4, 0x2b60a476, 0x81e67400,
-				0x08ba6fb5, 0x571be91f, 0xf296ec6b, 0x2a0dd915,
-				0xb6636521, 0xe7b9f9b6, 0xff34052e, 0xc5855664,
-			0x53b02d5d, 0xa99f8fa1, 0x08ba4799, 0x6e85076a},
-			{
-				0x4b7a70e9, 0xb5b32944, 0xdb75092e, 0xc4192623,
-				0xad6ea6b0, 0x49a7df7d, 0x9cee60b8, 0x8fedb266,
-				0xecaa8c71, 0x699a17ff, 0x5664526c, 0xc2b19ee1,
-				0x193602a5, 0x75094c29, 0xa0591340, 0xe4183a3e,
-				0x3f54989a, 0x5b429d65, 0x6b8fe4d6, 0x99f73fd6,
-				0xa1d29c07, 0xefe830f5, 0x4d2d38e6, 0xf0255dc1,
-				0x4cdd2086, 0x8470eb26, 0x6382e9c6, 0x021ecc5e,
-				0x09686b3f, 0x3ebaefc9, 0x3c971814, 0x6b6a70a1,
-				0x687f3584, 0x52a0e286, 0xb79c5305, 0xaa500737,
-				0x3e07841c, 0x7fdeae5c, 0x8e7d44ec, 0x5716f2b8,
-				0xb03ada37, 0xf0500c0d, 0xf01c1f04, 0x0200b3ff,
-				0xae0cf51a, 0x3cb574b2, 0x25837a58, 0xdc0921bd,
-				0xd19113f9, 0x7ca92ff6, 0x94324773, 0x22f54701,
-				0x3ae5e581, 0x37c2dadc, 0xc8b57634, 0x9af3dda7,
-				0xa9446146, 0x0fd0030e, 0xecc8c73e, 0xa4751e41,
-				0xe238cd99, 0x3bea0e2f, 0x3280bba1, 0x183eb331,
-				0x4e548b38, 0x4f6db908, 0x6f420d03, 0xf60a04bf,
-				0x2cb81290, 0x24977c79, 0x5679b072, 0xbcaf89af,
-				0xde9a771f, 0xd9930810, 0xb38bae12, 0xdccf3f2e,
-				0x5512721f, 0x2e6b7124, 0x501adde6, 0x9f84cd87,
-				0x7a584718, 0x7408da17, 0xbc9f9abc, 0xe94b7d8c,
-				0xec7aec3a, 0xdb851dfa, 0x63094366, 0xc464c3d2,
-				0xef1c1847, 0x3215d908, 0xdd433b37, 0x24c2ba16,
-				0x12a14d43, 0x2a65c451, 0x50940002, 0x133ae4dd,
-				0x71dff89e, 0x10314e55, 0x81ac77d6, 0x5f11199b,
-				0x043556f1, 0xd7a3c76b, 0x3c11183b, 0x5924a509,
-				0xf28fe6ed, 0x97f1fbfa, 0x9ebabf2c, 0x1e153c6e,
-				0x86e34570, 0xeae96fb1, 0x860e5e0a, 0x5a3e2ab3,
-				0x771fe71c, 0x4e3d06fa, 0x2965dcb9, 0x99e71d0f,
-				0x803e89d6, 0x5266c825, 0x2e4cc978, 0x9c10b36a,
-				0xc6150eba, 0x94e2ea78, 0xa5fc3c53, 0x1e0a2df4,
-				0xf2f74ea7, 0x361d2b3d, 0x1939260f, 0x19c27960,
-				0x5223a708, 0xf71312b6, 0xebadfe6e, 0xeac31f66,
-				0xe3bc4595, 0xa67bc883, 0xb17f37d1, 0x018cff28,
-				0xc332ddef, 0xbe6c5aa5, 0x65582185, 0x68ab9802,
-				0xeecea50f, 0xdb2f953b, 0x2aef7dad, 0x5b6e2f84,
-				0x1521b628, 0x29076170, 0xecdd4775, 0x619f1510,
-				0x13cca830, 0xeb61bd96, 0x0334fe1e, 0xaa0363cf,
-				0xb5735c90, 0x4c70a239, 0xd59e9e0b, 0xcbaade14,
-				0xeecc86bc, 0x60622ca7, 0x9cab5cab, 0xb2f3846e,
-				0x648b1eaf, 0x19bdf0ca, 0xa02369b9, 0x655abb50,
-				0x40685a32, 0x3c2ab4b3, 0x319ee9d5, 0xc021b8f7,
-				0x9b540b19, 0x875fa099, 0x95f7997e, 0x623d7da8,
-				0xf837889a, 0x97e32d77, 0x11ed935f, 0x16681281,
-				0x0e358829, 0xc7e61fd6, 0x96dedfa1, 0x7858ba99,
-				0x57f584a5, 0x1b227263, 0x9b83c3ff, 0x1ac24696,
-				0xcdb30aeb, 0x532e3054, 0x8fd948e4, 0x6dbc3128,
-				0x58ebf2ef, 0x34c6ffea, 0xfe28ed61, 0xee7c3c73,
-				0x5d4a14d9, 0xe864b7e3, 0x42105d14, 0x203e13e0,
-				0x45eee2b6, 0xa3aaabea, 0xdb6c4f15, 0xfacb4fd0,
-				0xc742f442, 0xef6abbb5, 0x654f3b1d, 0x41cd2105,
-				0xd81e799e, 0x86854dc7, 0xe44b476a, 0x3d816250,
-				0xcf62a1f2, 0x5b8d2646, 0xfc8883a0, 0xc1c7b6a3,
-				0x7f1524c3, 0x69cb7492, 0x47848a0b, 0x5692b285,
-				0x095bbf00, 0xad19489d, 0x1462b174, 0x23820e00,
-				0x58428d2a, 0x0c55f5ea, 0x1dadf43e, 0x233f7061,
-				0x3372f092, 0x8d937e41, 0xd65fecf1, 0x6c223bdb,
-				0x7cde3759, 0xcbee7460, 0x4085f2a7, 0xce77326e,
-				0xa6078084, 0x19f8509e, 0xe8efd855, 0x61d99735,
-				0xa969a7aa, 0xc50c06c2, 0x5a04abfc, 0x800bcadc,
-				0x9e447a2e, 0xc3453484, 0xfdd56705, 0x0e1e9ec9,
-				0xdb73dbd3, 0x105588cd, 0x675fda79, 0xe3674340,
-				0xc5c43465, 0x713e38d8, 0x3d28f89e, 0xf16dff20,
-			0x153e21e7, 0x8fb03d4a, 0xe6e39f2b, 0xdb83adf7},
-			{
-				0xe93d5a68, 0x948140f7, 0xf64c261c, 0x94692934,
-				0x411520f7, 0x7602d4f7, 0xbcf46b2e, 0xd4a20068,
-				0xd4082471, 0x3320f46a, 0x43b7d4b7, 0x500061af,
-				0x1e39f62e, 0x97244546, 0x14214f74, 0xbf8b8840,
-				0x4d95fc1d, 0x96b591af, 0x70f4ddd3, 0x66a02f45,
-				0xbfbc09ec, 0x03bd9785, 0x7fac6dd0, 0x31cb8504,
-				0x96eb27b3, 0x55fd3941, 0xda2547e6, 0xabca0a9a,
-				0x28507825, 0x530429f4, 0x0a2c86da, 0xe9b66dfb,
-				0x68dc1462, 0xd7486900, 0x680ec0a4, 0x27a18dee,
-				0x4f3ffea2, 0xe887ad8c, 0xb58ce006, 0x7af4d6b6,
-				0xaace1e7c, 0xd3375fec, 0xce78a399, 0x406b2a42,
-				0x20fe9e35, 0xd9f385b9, 0xee39d7ab, 0x3b124e8b,
-				0x1dc9faf7, 0x4b6d1856, 0x26a36631, 0xeae397b2,
-				0x3a6efa74, 0xdd5b4332, 0x6841e7f7, 0xca7820fb,
-				0xfb0af54e, 0xd8feb397, 0x454056ac, 0xba489527,
-				0x55533a3a, 0x20838d87, 0xfe6ba9b7, 0xd096954b,
-				0x55a867bc, 0xa1159a58, 0xcca92963, 0x99e1db33,
-				0xa62a4a56, 0x3f3125f9, 0x5ef47e1c, 0x9029317c,
-				0xfdf8e802, 0x04272f70, 0x80bb155c, 0x05282ce3,
-				0x95c11548, 0xe4c66d22, 0x48c1133f, 0xc70f86dc,
-				0x07f9c9ee, 0x41041f0f, 0x404779a4, 0x5d886e17,
-				0x325f51eb, 0xd59bc0d1, 0xf2bcc18f, 0x41113564,
-				0x257b7834, 0x602a9c60, 0xdff8e8a3, 0x1f636c1b,
-				0x0e12b4c2, 0x02e1329e, 0xaf664fd1, 0xcad18115,
-				0x6b2395e0, 0x333e92e1, 0x3b240b62, 0xeebeb922,
-				0x85b2a20e, 0xe6ba0d99, 0xde720c8c, 0x2da2f728,
-				0xd0127845, 0x95b794fd, 0x647d0862, 0xe7ccf5f0,
-				0x5449a36f, 0x877d48fa, 0xc39dfd27, 0xf33e8d1e,
-				0x0a476341, 0x992eff74, 0x3a6f6eab, 0xf4f8fd37,
-				0xa812dc60, 0xa1ebddf8, 0x991be14c, 0xdb6e6b0d,
-				0xc67b5510, 0x6d672c37, 0x2765d43b, 0xdcd0e804,
-				0xf1290dc7, 0xcc00ffa3, 0xb5390f92, 0x690fed0b,
-				0x667b9ffb, 0xcedb7d9c, 0xa091cf0b, 0xd9155ea3,
-				0xbb132f88, 0x515bad24, 0x7b9479bf, 0x763bd6eb,
-				0x37392eb3, 0xcc115979, 0x8026e297, 0xf42e312d,
-				0x6842ada7, 0xc66a2b3b, 0x12754ccc, 0x782ef11c,
-				0x6a124237, 0xb79251e7, 0x06a1bbe6, 0x4bfb6350,
-				0x1a6b1018, 0x11caedfa, 0x3d25bdd8, 0xe2e1c3c9,
-				0x44421659, 0x0a121386, 0xd90cec6e, 0xd5abea2a,
-				0x64af674e, 0xda86a85f, 0xbebfe988, 0x64e4c3fe,
-				0x9dbc8057, 0xf0f7c086, 0x60787bf8, 0x6003604d,
-				0xd1fd8346, 0xf6381fb0, 0x7745ae04, 0xd736fccc,
-				0x83426b33, 0xf01eab71, 0xb0804187, 0x3c005e5f,
-				0x77a057be, 0xbde8ae24, 0x55464299, 0xbf582e61,
-				0x4e58f48f, 0xf2ddfda2, 0xf474ef38, 0x8789bdc2,
-				0x5366f9c3, 0xc8b38e74, 0xb475f255, 0x46fcd9b9,
-				0x7aeb2661, 0x8b1ddf84, 0x846a0e79, 0x915f95e2,
-				0x466e598e, 0x20b45770, 0x8cd55591, 0xc902de4c,
-				0xb90bace1, 0xbb8205d0, 0x11a86248, 0x7574a99e,
-				0xb77f19b6, 0xe0a9dc09, 0x662d09a1, 0xc4324633,
-				0xe85a1f02, 0x09f0be8c, 0x4a99a025, 0x1d6efe10,
-				0x1ab93d1d, 0x0ba5a4df, 0xa186f20f, 0x2868f169,
-				0xdcb7da83, 0x573906fe, 0xa1e2ce9b, 0x4fcd7f52,
-				0x50115e01, 0xa70683fa, 0xa002b5c4, 0x0de6d027,
-				0x9af88c27, 0x773f8641, 0xc3604c06, 0x61a806b5,
-				0xf0177a28, 0xc0f586e0, 0x006058aa, 0x30dc7d62,
-				0x11e69ed7, 0x2338ea63, 0x53c2dd94, 0xc2c21634,
-				0xbbcbee56, 0x90bcb6de, 0xebfc7da1, 0xce591d76,
-				0x6f05e409, 0x4b7c0188, 0x39720a3d, 0x7c927c24,
-				0x86e3725f, 0x724d9db9, 0x1ac15bb4, 0xd39eb8fc,
-				0xed545578, 0x08fca5b5, 0xd83d7cd3, 0x4dad0fc4,
-				0x1e50ef5e, 0xb161e6f8, 0xa28514d9, 0x6c51133c,
-				0x6fd5c7e7, 0x56e14ec4, 0x362abfce, 0xddc6c837,
-			0xd79a3234, 0x92638212, 0x670efa8e, 0x406000e0},
-			{
-				0x3a39ce37, 0xd3faf5cf, 0xabc27737, 0x5ac52d1b,
-				0x5cb0679e, 0x4fa33742, 0xd3822740, 0x99bc9bbe,
-				0xd5118e9d, 0xbf0f7315, 0xd62d1c7e, 0xc700c47b,
-				0xb78c1b6b, 0x21a19045, 0xb26eb1be, 0x6a366eb4,
-				0x5748ab2f, 0xbc946e79, 0xc6a376d2, 0x6549c2c8,
-				0x530ff8ee, 0x468dde7d, 0xd5730a1d, 0x4cd04dc6,
-				0x2939bbdb, 0xa9ba4650, 0xac9526e8, 0xbe5ee304,
-				0xa1fad5f0, 0x6a2d519a, 0x63ef8ce2, 0x9a86ee22,
-				0xc089c2b8, 0x43242ef6, 0xa51e03aa, 0x9cf2d0a4,
-				0x83c061ba, 0x9be96a4d, 0x8fe51550, 0xba645bd6,
-				0x2826a2f9, 0xa73a3ae1, 0x4ba99586, 0xef5562e9,
-				0xc72fefd3, 0xf752f7da, 0x3f046f69, 0x77fa0a59,
-				0x80e4a915, 0x87b08601, 0x9b09e6ad, 0x3b3ee593,
-				0xe990fd5a, 0x9e34d797, 0x2cf0b7d9, 0x022b8b51,
-				0x96d5ac3a, 0x017da67d, 0xd1cf3ed6, 0x7c7d2d28,
-				0x1f9f25cf, 0xadf2b89b, 0x5ad6b472, 0x5a88f54c,
-				0xe029ac71, 0xe019a5e6, 0x47b0acfd, 0xed93fa9b,
-				0xe8d3c48d, 0x283b57cc, 0xf8d56629, 0x79132e28,
-				0x785f0191, 0xed756055, 0xf7960e44, 0xe3d35e8c,
-				0x15056dd4, 0x88f46dba, 0x03a16125, 0x0564f0bd,
-				0xc3eb9e15, 0x3c9057a2, 0x97271aec, 0xa93a072a,
-				0x1b3f6d9b, 0x1e6321f5, 0xf59c66fb, 0x26dcf319,
-				0x7533d928, 0xb155fdf5, 0x03563482, 0x8aba3cbb,
-				0x28517711, 0xc20ad9f8, 0xabcc5167, 0xccad925f,
-				0x4de81751, 0x3830dc8e, 0x379d5862, 0x9320f991,
-				0xea7a90c2, 0xfb3e7bce, 0x5121ce64, 0x774fbe32,
-				0xa8b6e37e, 0xc3293d46, 0x48de5369, 0x6413e680,
-				0xa2ae0810, 0xdd6db224, 0x69852dfd, 0x09072166,
-				0xb39a460a, 0x6445c0dd, 0x586cdecf, 0x1c20c8ae,
-				0x5bbef7dd, 0x1b588d40, 0xccd2017f, 0x6bb4e3bb,
-				0xdda26a7e, 0x3a59ff45, 0x3e350a44, 0xbcb4cdd5,
-				0x72eacea8, 0xfa6484bb, 0x8d6612ae, 0xbf3c6f47,
-				0xd29be463, 0x542f5d9e, 0xaec2771b, 0xf64e6370,
-				0x740e0d8d, 0xe75b1357, 0xf8721671, 0xaf537d5d,
-				0x4040cb08, 0x4eb4e2cc, 0x34d2466a, 0x0115af84,
-				0xe1b00428, 0x95983a1d, 0x06b89fb4, 0xce6ea048,
-				0x6f3f3b82, 0x3520ab82, 0x011a1d4b, 0x277227f8,
-				0x611560b1, 0xe7933fdc, 0xbb3a792b, 0x344525bd,
-				0xa08839e1, 0x51ce794b, 0x2f32c9b7, 0xa01fbac9,
-				0xe01cc87e, 0xbcc7d1f6, 0xcf0111c3, 0xa1e8aac7,
-				0x1a908749, 0xd44fbd9a, 0xd0dadecb, 0xd50ada38,
-				0x0339c32a, 0xc6913667, 0x8df9317c, 0xe0b12b4f,
-				0xf79e59b7, 0x43f5bb3a, 0xf2d519ff, 0x27d9459c,
-				0xbf97222c, 0x15e6fc2a, 0x0f91fc71, 0x9b941525,
-				0xfae59361, 0xceb69ceb, 0xc2a86459, 0x12baa8d1,
-				0xb6c1075e, 0xe3056a0c, 0x10d25065, 0xcb03a442,
-				0xe0ec6e0e, 0x1698db3b, 0x4c98a0be, 0x3278e964,
-				0x9f1f9532, 0xe0d392df, 0xd3a0342b, 0x8971f21e,
-				0x1b0a7441, 0x4ba3348c, 0xc5be7120, 0xc37632d8,
-				0xdf359f8d, 0x9b992f2e, 0xe60b6f47, 0x0fe3f11d,
-				0xe54cda54, 0x1edad891, 0xce6279cf, 0xcd3e7e6f,
-				0x1618b166, 0xfd2c1d05, 0x848fd2c5, 0xf6fb2299,
-				0xf523f357, 0xa6327623, 0x93a83531, 0x56cccd02,
-				0xacf08162, 0x5a75ebb5, 0x6e163697, 0x88d273cc,
-				0xde966292, 0x81b949d0, 0x4c50901b, 0x71c65614,
-				0xe6c6c7bd, 0x327a140a, 0x45e1d006, 0xc3f27b9a,
-				0xc9aa53fd, 0x62a80f00, 0xbb25bfe2, 0x35bdd2f6,
-				0x71126905, 0xb2040222, 0xb6cbcf7c, 0xcd769c2b,
-				0x53113ec0, 0x1640e3d3, 0x38abbd60, 0x2547adf0,
-				0xba38209c, 0xf746ce76, 0x77afa1c5, 0x20756060,
-				0x85cbfe4e, 0x8ae88dd8, 0x7aaaf9b0, 0x4cf9aa7e,
-				0x1948c25c, 0x02fb8a8c, 0x01c36ae4, 0xd6ebe1f9,
-				0x90d4f869, 0xa65cdea0, 0x3f09252d, 0xc208e69f,
-			0xb74e6132, 0xce77e25b, 0x578fdfe3, 0x3ac372e6}
-	},
+	while (len > 0)
 	{
-		0x243f6a88, 0x85a308d3, 0x13198a2e, 0x03707344,
-		0xa4093822, 0x299f31d0, 0x082efa98, 0xec4e6c89,
-		0x452821e6, 0x38d01377, 0xbe5466cf, 0x34e90c6c,
-		0xc0ac29b7, 0xc97c50dd, 0x3f84d5b5, 0xb5470917,
-		0x9216d5d9, 0x8979fb1b
-	}};
-
-	*c = initstate;
-
-}
-
-uint32
-Blowfish_stream2word(const uint8 *data, uint16 databytes, uint16 *current)
-{
-	uint8		i;
-	uint16		j;
-	uint32		temp;
-
-	temp = 0x00000000;
-	j = *current;
-
-	for (i = 0; i < 4; i++, j++)
-	{
-		if (j >= databytes)
-			j = 0;
-		temp = (temp << 8) | data[j];
+		xL = GET_32BIT_MSB_FIRST(blk);
+		xR = GET_32BIT_MSB_FIRST(blk + 4);
+		blowfish_decrypt(xL, xR, out, ctx);
+		iv0 ^= out[0];
+		iv1 ^= out[1];
+		PUT_32BIT_MSB_FIRST(blk, iv0);
+		PUT_32BIT_MSB_FIRST(blk + 4, iv1);
+		iv0 = xL;
+		iv1 = xR;
+		blk += 8;
+		len -= 8;
 	}
 
-	*current = j;
-	return temp;
+	ctx->iv0 = iv0;
+	ctx->iv1 = iv1;
 }
 
 void
-Blowfish_expand0state(blf_ctx * c, const uint8 *key, uint16 keybytes)
+blowfish_encrypt_ecb(uint8 *blk, int len, BlowfishContext *ctx)
 {
-	uint16		i;
-	uint16		j;
-	uint16		k;
-	uint32		temp;
-	uint32		data[2];
+	uint32		xL,
+				xR,
+				out[2];
 
-	j = 0;
-	for (i = 0; i < BLF_N + 2; i++)
+	Assert((len & 7) == 0);
+
+	while (len > 0)
 	{
-		/* Extract 4 int8 to 1 int32 from keystream */
-		temp = Blowfish_stream2word(key, keybytes, &j);
-		c->P[i] = c->P[i] ^ temp;
-	}
-
-	j = 0;
-	data[0] = 0x00000000;
-	data[1] = 0x00000000;
-	for (i = 0; i < BLF_N + 2; i += 2)
-	{
-		Blowfish_encipher(c, data);
-
-		c->P[i] = data[0];
-		c->P[i + 1] = data[1];
-	}
-
-	for (i = 0; i < 4; i++)
-	{
-		for (k = 0; k < 256; k += 2)
-		{
-			Blowfish_encipher(c, data);
-
-			c->S[i][k] = data[0];
-			c->S[i][k + 1] = data[1];
-		}
-	}
-}
-
-
-void
-Blowfish_expandstate(blf_ctx * c, const uint8 *data, uint16 databytes,
-					 const uint8 *key, uint16 keybytes)
-{
-	uint16		i;
-	uint16		j;
-	uint16		k;
-	uint32		temp;
-	uint32		d[2];
-
-	j = 0;
-	for (i = 0; i < BLF_N + 2; i++)
-	{
-		/* Extract 4 int8 to 1 int32 from keystream */
-		temp = Blowfish_stream2word(key, keybytes, &j);
-		c->P[i] = c->P[i] ^ temp;
-	}
-
-	j = 0;
-	d[0] = 0x00000000;
-	d[1] = 0x00000000;
-	for (i = 0; i < BLF_N + 2; i += 2)
-	{
-		d[0] ^= Blowfish_stream2word(data, databytes, &j);
-		d[1] ^= Blowfish_stream2word(data, databytes, &j);
-		Blowfish_encipher(c, d);
-
-		c->P[i] = d[0];
-		c->P[i + 1] = d[1];
-	}
-
-	for (i = 0; i < 4; i++)
-	{
-		for (k = 0; k < 256; k += 2)
-		{
-			d[0] ^= Blowfish_stream2word(data, databytes, &j);
-			d[1] ^= Blowfish_stream2word(data, databytes, &j);
-			Blowfish_encipher(c, d);
-
-			c->S[i][k] = d[0];
-			c->S[i][k + 1] = d[1];
-		}
-	}
-
-}
-
-void
-blf_key(blf_ctx * c, const uint8 *k, uint16 len)
-{
-	/* Initalize S-boxes and subkeys with Pi */
-	Blowfish_initstate(c);
-
-	/* Transform S-boxes and subkeys with key */
-	Blowfish_expand0state(c, k, len);
-}
-
-void
-blf_enc(blf_ctx * c, uint32 *data, uint16 blocks)
-{
-	uint32	   *d;
-	uint16		i;
-
-	d = data;
-	for (i = 0; i < blocks; i++)
-	{
-		Blowfish_encipher(c, d);
-		d += 2;
+		xL = GET_32BIT_MSB_FIRST(blk);
+		xR = GET_32BIT_MSB_FIRST(blk + 4);
+		blowfish_encrypt(xL, xR, out, ctx);
+		PUT_32BIT_MSB_FIRST(blk, out[0]);
+		PUT_32BIT_MSB_FIRST(blk + 4, out[1]);
+		blk += 8;
+		len -= 8;
 	}
 }
 
 void
-blf_dec(blf_ctx * c, uint32 *data, uint16 blocks)
+blowfish_decrypt_ecb(uint8 *blk, int len, BlowfishContext *ctx)
 {
-	uint32	   *d;
-	uint16		i;
+	uint32		xL,
+				xR,
+				out[2];
 
-	d = data;
-	for (i = 0; i < blocks; i++)
+	Assert((len & 7) == 0);
+
+	while (len > 0)
 	{
-		Blowfish_decipher(c, d);
-		d += 2;
+		xL = GET_32BIT_MSB_FIRST(blk);
+		xR = GET_32BIT_MSB_FIRST(blk + 4);
+		blowfish_decrypt(xL, xR, out, ctx);
+		PUT_32BIT_MSB_FIRST(blk, out[0]);
+		PUT_32BIT_MSB_FIRST(blk + 4, out[1]);
+		blk += 8;
+		len -= 8;
 	}
 }
 
 void
-blf_ecb_encrypt(blf_ctx * c, uint8 *data, uint32 len)
+blowfish_setkey(BlowfishContext *ctx,
+				const uint8 *key, short keybytes)
 {
-	uint32		l,
-				r,
-				d[2];
-	uint32		i;
+	uint32	   *S0 = ctx->S0;
+	uint32	   *S1 = ctx->S1;
+	uint32	   *S2 = ctx->S2;
+	uint32	   *S3 = ctx->S3;
+	uint32	   *P = ctx->P;
+	uint32		str[2];
+	int			i;
 
-	for (i = 0; i < len; i += 8)
+	Assert(keybytes > 0 && keybytes <= (448/8));
+
+	for (i = 0; i < 18; i++)
 	{
-		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
-		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
-		d[0] = l;
-		d[1] = r;
-		Blowfish_encipher(c, d);
-		l = d[0];
-		r = d[1];
-		data[0] = l >> 24 & 0xff;
-		data[1] = l >> 16 & 0xff;
-		data[2] = l >> 8 & 0xff;
-		data[3] = l & 0xff;
-		data[4] = r >> 24 & 0xff;
-		data[5] = r >> 16 & 0xff;
-		data[6] = r >> 8 & 0xff;
-		data[7] = r & 0xff;
-		data += 8;
+		P[i] = parray[i];
+		P[i] ^= ((uint32) key[(i * 4 + 0) % keybytes]) << 24;
+		P[i] ^= ((uint32) key[(i * 4 + 1) % keybytes]) << 16;
+		P[i] ^= ((uint32) key[(i * 4 + 2) % keybytes]) << 8;
+		P[i] ^= ((uint32) key[(i * 4 + 3) % keybytes]);
+	}
+
+	for (i = 0; i < 256; i++)
+	{
+		S0[i] = sbox0[i];
+		S1[i] = sbox1[i];
+		S2[i] = sbox2[i];
+		S3[i] = sbox3[i];
+	}
+
+	str[0] = str[1] = 0;
+
+	for (i = 0; i < 18; i += 2)
+	{
+		blowfish_encrypt(str[0], str[1], str, ctx);
+		P[i] = str[0];
+		P[i + 1] = str[1];
+	}
+
+	for (i = 0; i < 256; i += 2)
+	{
+		blowfish_encrypt(str[0], str[1], str, ctx);
+		S0[i] = str[0];
+		S0[i + 1] = str[1];
+	}
+	for (i = 0; i < 256; i += 2)
+	{
+		blowfish_encrypt(str[0], str[1], str, ctx);
+		S1[i] = str[0];
+		S1[i + 1] = str[1];
+	}
+	for (i = 0; i < 256; i += 2)
+	{
+		blowfish_encrypt(str[0], str[1], str, ctx);
+		S2[i] = str[0];
+		S2[i + 1] = str[1];
+	}
+	for (i = 0; i < 256; i += 2)
+	{
+		blowfish_encrypt(str[0], str[1], str, ctx);
+		S3[i] = str[0];
+		S3[i + 1] = str[1];
 	}
 }
 
 void
-blf_ecb_decrypt(blf_ctx * c, uint8 *data, uint32 len)
+blowfish_setiv(BlowfishContext *ctx, const uint8 *iv)
 {
-	uint32		l,
-				r,
-				d[2];
-	uint32		i;
-
-	for (i = 0; i < len; i += 8)
-	{
-		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
-		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
-		d[0] = l;
-		d[1] = r;
-		Blowfish_decipher(c, d);
-		l = d[0];
-		r = d[1];
-		data[0] = l >> 24 & 0xff;
-		data[1] = l >> 16 & 0xff;
-		data[2] = l >> 8 & 0xff;
-		data[3] = l & 0xff;
-		data[4] = r >> 24 & 0xff;
-		data[5] = r >> 16 & 0xff;
-		data[6] = r >> 8 & 0xff;
-		data[7] = r & 0xff;
-		data += 8;
-	}
+	ctx->iv0 = GET_32BIT_MSB_FIRST(iv);
+	ctx->iv1 = GET_32BIT_MSB_FIRST(iv + 4);
 }
 
-void
-blf_cbc_encrypt(blf_ctx * c, uint8 *iv, uint8 *data, uint32 len)
-{
-	uint32		l,
-				r,
-				d[2];
-	uint32		i,
-				j;
-
-	for (i = 0; i < len; i += 8)
-	{
-		for (j = 0; j < 8; j++)
-			data[j] ^= iv[j];
-		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
-		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
-		d[0] = l;
-		d[1] = r;
-		Blowfish_encipher(c, d);
-		l = d[0];
-		r = d[1];
-		data[0] = l >> 24 & 0xff;
-		data[1] = l >> 16 & 0xff;
-		data[2] = l >> 8 & 0xff;
-		data[3] = l & 0xff;
-		data[4] = r >> 24 & 0xff;
-		data[5] = r >> 16 & 0xff;
-		data[6] = r >> 8 & 0xff;
-		data[7] = r & 0xff;
-		iv = data;
-		data += 8;
-	}
-}
-
-void
-blf_cbc_decrypt(blf_ctx * c, uint8 *iva, uint8 *data, uint32 len)
-{
-	uint32		l,
-				r,
-				d[2];
-	uint8	   *iv;
-	uint32		i,
-				j;
-
-	iv = data + len - 16;
-	data = data + len - 8;
-	for (i = len - 8; i >= 8; i -= 8)
-	{
-		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
-		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
-		d[0] = l;
-		d[1] = r;
-		Blowfish_decipher(c, d);
-		l = d[0];
-		r = d[1];
-		data[0] = l >> 24 & 0xff;
-		data[1] = l >> 16 & 0xff;
-		data[2] = l >> 8 & 0xff;
-		data[3] = l & 0xff;
-		data[4] = r >> 24 & 0xff;
-		data[5] = r >> 16 & 0xff;
-		data[6] = r >> 8 & 0xff;
-		data[7] = r & 0xff;
-		for (j = 0; j < 8; j++)
-			data[j] ^= iv[j];
-		iv -= 8;
-		data -= 8;
-	}
-	l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
-	r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
-	d[0] = l;
-	d[1] = r;
-	Blowfish_decipher(c, d);
-	l = d[0];
-	r = d[1];
-	data[0] = l >> 24 & 0xff;
-	data[1] = l >> 16 & 0xff;
-	data[2] = l >> 8 & 0xff;
-	data[3] = l & 0xff;
-	data[4] = r >> 24 & 0xff;
-	data[5] = r >> 16 & 0xff;
-	data[6] = r >> 8 & 0xff;
-	data[7] = r & 0xff;
-	for (j = 0; j < 8; j++)
-		data[j] ^= iva[j];
-}
