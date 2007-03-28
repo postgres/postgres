@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.39 2007/03/27 20:36:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.40 2007/03/28 22:17:12 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,13 @@ typedef struct autovac_dbase
 	PgStat_StatDBEntry *ad_entry;
 } autovac_dbase;
 
+/* struct to keep track of tables to vacuum and/or analyze, in 1st pass */
+typedef struct av_relation
+{
+	Oid		ar_relid;
+	Oid		ar_toastrelid;
+} av_relation;
+
 /* struct to keep track of tables to vacuum and/or analyze, after rechecking */
 typedef struct autovac_table
 {
@@ -119,13 +126,19 @@ NON_EXEC_STATIC void AutoVacWorkerMain(int argc, char *argv[]);
 NON_EXEC_STATIC void AutoVacLauncherMain(int argc, char *argv[]);
 
 static void do_start_worker(void);
-static void do_autovacuum(Oid dbid);
+static void do_autovacuum(void);
 static List *autovac_get_database_list(void);
-static void test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
-					 Form_pg_class classForm,
-					 Form_pg_autovacuum avForm,
-					 List **vacuum_tables,
-					 List **toast_table_ids);
+
+static void relation_check_autovac(Oid relid, Form_pg_class classForm,
+					   Form_pg_autovacuum avForm, PgStat_StatTabEntry *tabentry,
+					   List **table_oids, List **table_toast_list,
+					   List **toast_oids);
+static autovac_table *table_recheck_autovac(Oid relid);
+static void relation_needs_vacanalyze(Oid relid, Form_pg_autovacuum avForm,
+						  Form_pg_class classForm,
+						  PgStat_StatTabEntry *tabentry, bool *dovacuum,
+						  bool *doanalyze);
+
 static void autovacuum_do_vac_analyze(Oid relid, bool dovacuum,
 						  bool doanalyze, int freeze_min_age);
 static HeapTuple get_pg_autovacuum_tuple_relid(Relation avRel, Oid relid);
@@ -797,7 +810,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 
 		/* And do an appropriate amount of work */
 		recentXid = ReadNewTransactionId();
-		do_autovacuum(dbid);
+		do_autovacuum();
 	}
 
 	/*
@@ -865,15 +878,16 @@ autovac_get_database_list(void)
  * order not to ignore shutdown commands for too long.
  */
 static void
-do_autovacuum(Oid dbid)
+do_autovacuum(void)
 {
 	Relation	classRel,
 				avRel;
 	HeapTuple	tuple;
 	HeapScanDesc relScan;
 	Form_pg_database dbForm;
-	List	   *vacuum_tables = NIL;
-	List	   *toast_table_ids = NIL;
+	List	   *table_oids = NIL;
+	List	   *toast_oids = NIL;
+	List	   *table_toast_list = NIL;
 	ListCell   *cell;
 	PgStat_StatDBEntry *shared;
 	PgStat_StatDBEntry *dbentry;
@@ -882,7 +896,7 @@ do_autovacuum(Oid dbid)
 	 * may be NULL if we couldn't find an entry (only happens if we
 	 * are forcing a vacuum for anti-wrap purposes).
 	 */
-	dbentry = pgstat_fetch_stat_dbentry(dbid);
+	dbentry = pgstat_fetch_stat_dbentry(MyDatabaseId);
 
 	/* Start a transaction so our commands have one to play into. */
 	StartTransactionCommand();
@@ -979,8 +993,8 @@ do_autovacuum(Oid dbid)
 		tabentry = get_pgstat_tabentry_relid(relid, classForm->relisshared,
 											 shared, dbentry);
 
-		test_rel_for_autovac(relid, tabentry, classForm, avForm,
-							 &vacuum_tables, &toast_table_ids);
+		relation_check_autovac(relid, classForm, avForm, tabentry,
+							   &table_oids, &table_toast_list, &toast_oids);
 
 		if (HeapTupleIsValid(avTup))
 			heap_freetuple(avTup);
@@ -991,38 +1005,75 @@ do_autovacuum(Oid dbid)
 	heap_close(classRel, AccessShareLock);
 
 	/*
+	 * Add to the list of tables to vacuum, the OIDs of the tables that
+	 * correspond to the saved OIDs of toast tables needing vacuum.
+	 */
+	foreach (cell, toast_oids)
+	{
+		Oid		toastoid = lfirst_oid(cell);
+		ListCell *cell2;
+
+		foreach (cell2, table_toast_list)
+		{
+			av_relation	   *ar = lfirst(cell2);
+
+			if (ar->ar_toastrelid == toastoid)
+			{
+				table_oids = lappend_oid(table_oids, ar->ar_relid);
+				break;
+			}
+		}
+	}
+
+	list_free_deep(table_toast_list);
+	table_toast_list = NIL;
+	list_free(toast_oids);
+	toast_oids = NIL;
+
+	/*
 	 * Perform operations on collected tables.
 	 */
-	foreach(cell, vacuum_tables)
+	foreach(cell, table_oids)
 	{
-		autovac_table *tab = lfirst(cell);
+		Oid		relid = lfirst_oid(cell);
+		autovac_table *tab;
+		char   *relname;
 
 		CHECK_FOR_INTERRUPTS();
 
 		/*
-		 * Check to see if we need to force vacuuming of this table because
-		 * its toast table needs it.
+		 * Check whether pgstat data still says we need to vacuum this table.
+		 * It could have changed if something else processed the table while we
+		 * weren't looking.
+		 *
+		 * FIXME we ignore the possibility that the table was finished being
+		 * vacuumed in the last 500ms (PGSTAT_STAT_INTERVAL).  This is a bug.
 		 */
-		if (OidIsValid(tab->at_toastrelid) && !tab->at_dovacuum &&
-			list_member_oid(toast_table_ids, tab->at_toastrelid))
+		tab = table_recheck_autovac(relid);
+		if (tab == NULL)
 		{
-			tab->at_dovacuum = true;
-			elog(DEBUG2, "autovac: VACUUM %u because of TOAST table",
-				 tab->at_relid);
-		}
-
-		/* Otherwise, ignore table if it needs no work */
-		if (!tab->at_dovacuum && !tab->at_doanalyze)
+			/* someone else vacuumed the table */
 			continue;
+		}
+		/* Ok, good to go! */
 
 		/* Set the vacuum cost parameters for this table */
 		VacuumCostDelay = tab->at_vacuum_cost_delay;
 		VacuumCostLimit = tab->at_vacuum_cost_limit;
 
+		relname = get_rel_name(relid);
+		elog(DEBUG2, "autovac: will%s%s %s",
+			 (tab->at_dovacuum ? " VACUUM" : ""),
+			 (tab->at_doanalyze ? " ANALYZE" : ""),
+			 relname);
+
 		autovacuum_do_vac_analyze(tab->at_relid,
 								  tab->at_dovacuum,
 								  tab->at_doanalyze,
 								  tab->at_freeze_min_age);
+		/* be tidy */
+		pfree(tab);
+		pfree(relname);
 	}
 
 	/*
@@ -1089,10 +1140,207 @@ get_pgstat_tabentry_relid(Oid relid, bool isshared, PgStat_StatDBEntry *shared,
 }
 
 /*
- * test_rel_for_autovac
+ * relation_check_autovac
  *
- * Check whether a table needs to be vacuumed or analyzed.	Add it to the
- * appropriate output list if so.
+ * For a given relation (either a plain table or TOAST table), check whether it
+ * needs vacuum or analyze.
+ *
+ * Plain tables that need either are added to the table_list.  TOAST tables
+ * that need vacuum are added to toast_list.  Plain tables that don't need
+ * either but which have a TOAST table are added, as a struct, to
+ * table_toast_list.  The latter is to allow appending the OIDs of the plain
+ * tables whose TOAST table needs vacuuming into the plain tables list, which
+ * allows us to substantially reduce the number of "rechecks" that we need to
+ * do later on.
+ */
+static void
+relation_check_autovac(Oid relid, Form_pg_class classForm,
+					   Form_pg_autovacuum avForm, PgStat_StatTabEntry *tabentry,
+					   List **table_oids, List **table_toast_list,
+					   List **toast_oids)
+{
+	bool	dovacuum;
+	bool	doanalyze;
+
+	relation_needs_vacanalyze(relid, avForm, classForm, tabentry,
+							  &dovacuum, &doanalyze);
+
+	if (classForm->relkind == RELKIND_TOASTVALUE)
+	{
+		if (dovacuum)
+			*toast_oids = lappend_oid(*toast_oids, relid);
+	}
+	else
+	{
+		Assert(classForm->relkind == RELKIND_RELATION);
+
+		if (dovacuum || doanalyze)
+			*table_oids = lappend_oid(*table_oids, relid);
+		else if (OidIsValid(classForm->reltoastrelid))
+		{
+			av_relation	   *rel = palloc(sizeof(av_relation));
+
+			rel->ar_relid = relid;
+			rel->ar_toastrelid = classForm->reltoastrelid;
+
+			*table_toast_list = lappend(*table_toast_list, rel);
+		}
+	}
+}
+
+/*
+ * table_recheck_autovac
+ *
+ * Recheck whether a plain table still needs vacuum or analyze; be it because
+ * it does directly, or because its TOAST table does.  Return value is a valid
+ * autovac_table pointer if it does, NULL otherwise.
+ */
+static autovac_table *
+table_recheck_autovac(Oid relid)
+{
+	Form_pg_autovacuum avForm = NULL;
+	Form_pg_class classForm;
+	HeapTuple	classTup;
+	HeapTuple	avTup;
+	Relation	avRel;
+	bool		dovacuum;
+	bool		doanalyze;
+	autovac_table *tab = NULL;
+	PgStat_StatTabEntry *tabentry;
+	bool		doit = false;
+	PgStat_StatDBEntry *shared;
+	PgStat_StatDBEntry *dbentry;
+
+	/* We need fresh pgstat data for this */
+	pgstat_clear_snapshot();
+
+	shared = pgstat_fetch_stat_dbentry(InvalidOid);
+	dbentry = pgstat_fetch_stat_dbentry(MyDatabaseId);
+
+	/* fetch the relation's relcache entry */
+	classTup = SearchSysCacheCopy(RELOID,
+							  ObjectIdGetDatum(relid),
+							  0, 0, 0);
+	if (!HeapTupleIsValid(classTup))
+		return NULL;
+	classForm = (Form_pg_class) GETSTRUCT(classTup);
+
+	/* fetch the pg_autovacuum entry, if any */
+	avRel = heap_open(AutovacuumRelationId, AccessShareLock);
+	avTup = get_pg_autovacuum_tuple_relid(avRel, relid);
+	if (HeapTupleIsValid(avTup))
+		avForm = (Form_pg_autovacuum) GETSTRUCT(avTup);
+
+	/* fetch the pgstat table entry */
+	tabentry = get_pgstat_tabentry_relid(relid, classForm->relisshared,
+										 shared, dbentry);
+
+	relation_needs_vacanalyze(relid, avForm, classForm, tabentry,
+							  &dovacuum, &doanalyze);
+
+	/* OK, it needs vacuum by itself */
+	if (dovacuum)
+		doit = true;
+	/* it doesn't need vacuum, but what about it's TOAST table? */
+	else if (OidIsValid(classForm->reltoastrelid))
+	{
+		Oid		toastrelid = classForm->reltoastrelid;
+		HeapTuple	toastClassTup;
+
+		toastClassTup = SearchSysCacheCopy(RELOID,
+										   ObjectIdGetDatum(toastrelid),
+										   0, 0, 0);
+		if (HeapTupleIsValid(toastClassTup))
+		{
+			bool			toast_dovacuum;
+			bool			toast_doanalyze;
+			Form_pg_class	toastClassForm;
+			PgStat_StatTabEntry *toasttabentry;
+
+			toastClassForm = (Form_pg_class) GETSTRUCT(toastClassTup);
+			toasttabentry = get_pgstat_tabentry_relid(toastrelid,
+													  toastClassForm->relisshared,
+													  shared, dbentry);
+
+			/* note we use the pg_autovacuum entry for the main table */
+			relation_needs_vacanalyze(toastrelid, avForm, toastClassForm,
+									  toasttabentry, &toast_dovacuum,
+									  &toast_doanalyze);
+			/* we only consider VACUUM for toast tables */
+			if (toast_dovacuum)
+			{
+				dovacuum = true;
+				doit = true;
+			}
+
+			heap_freetuple(toastClassTup);
+		}
+	}
+
+	if (doanalyze)
+		doit = true;
+
+	if (doit)
+	{
+		int			freeze_min_age;
+		int			vac_cost_limit;
+		int			vac_cost_delay;
+
+		/*
+		 * Calculate the vacuum cost parameters and the minimum freeze age.  If
+		 * there is a tuple in pg_autovacuum, use it; else, use the GUC
+		 * defaults.  Note that the fields may contain "-1" (or indeed any
+		 * negative value), which means use the GUC defaults for each setting.
+		 */
+		if (avForm != NULL)
+		{
+			vac_cost_limit = (avForm->vac_cost_limit >= 0) ?
+				avForm->vac_cost_limit :
+				((autovacuum_vac_cost_limit >= 0) ?
+				 autovacuum_vac_cost_limit : VacuumCostLimit);
+
+			vac_cost_delay = (avForm->vac_cost_delay >= 0) ?
+				avForm->vac_cost_delay :
+				((autovacuum_vac_cost_delay >= 0) ?
+				 autovacuum_vac_cost_delay : VacuumCostDelay);
+
+			freeze_min_age = (avForm->freeze_min_age >= 0) ?
+				avForm->freeze_min_age : default_freeze_min_age;
+		}
+		else
+		{
+			vac_cost_limit = (autovacuum_vac_cost_limit >= 0) ?
+				autovacuum_vac_cost_limit : VacuumCostLimit;
+
+			vac_cost_delay = (autovacuum_vac_cost_delay >= 0) ?
+				autovacuum_vac_cost_delay : VacuumCostDelay;
+
+			freeze_min_age = default_freeze_min_age;
+		}
+
+		tab = palloc(sizeof(autovac_table));
+		tab->at_relid = relid;
+		tab->at_dovacuum = dovacuum;
+		tab->at_doanalyze = doanalyze;
+		tab->at_freeze_min_age = freeze_min_age;
+		tab->at_vacuum_cost_limit = vac_cost_limit;
+		tab->at_vacuum_cost_delay = vac_cost_delay;
+	}
+
+	heap_close(avRel, AccessShareLock);
+	if (HeapTupleIsValid(avTup))
+		heap_freetuple(avTup);
+	heap_freetuple(classTup);
+
+	return tab;
+}
+
+/*
+ * relation_needs_vacanalyze
+ *
+ * Check whether a relation needs to be vacuumed or analyzed; return each into
+ * "dovacuum" and "doanalyze", respectively.  avForm and tabentry can be NULL,
+ * classForm shouldn't.
  *
  * A table needs to be vacuumed if the number of dead tuples exceeds a
  * threshold.  This threshold is calculated as
@@ -1119,15 +1367,15 @@ get_pgstat_tabentry_relid(Oid relid, bool isshared, PgStat_StatDBEntry *shared,
  * autovacuum_vacuum_scale_factor GUC variable.  Ditto for analyze.
  */
 static void
-test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
-					 Form_pg_class classForm,
-					 Form_pg_autovacuum avForm,
-					 List **vacuum_tables,
-					 List **toast_table_ids)
+relation_needs_vacanalyze(Oid relid,
+						  Form_pg_autovacuum avForm,
+						  Form_pg_class classForm,
+						  PgStat_StatTabEntry *tabentry,
+						  /* output params below */
+						  bool *dovacuum,
+						  bool *doanalyze)
 {
 	bool		force_vacuum;
-	bool		dovacuum;
-	bool		doanalyze;
 	float4		reltuples;		/* pg_class.reltuples */
 	/* constants from pg_autovacuum or GUC variables */
 	int			vac_base_thresh,
@@ -1141,17 +1389,17 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 	float4		vactuples,
 				anltuples;
 	/* freeze parameters */
-	int			freeze_min_age;
 	int			freeze_max_age;
 	TransactionId xidForceLimit;
-	/* cost-based vacuum delay parameters */
-	int			vac_cost_limit;
-	int			vac_cost_delay;
+
+	AssertArg(classForm != NULL);
+	AssertArg(OidIsValid(relid));
 
 	/*
-	 * If there is a tuple in pg_autovacuum, use it; else, use the GUC
-	 * defaults.  Note that the fields may contain "-1" (or indeed any
-	 * negative value), which means use the GUC defaults for each setting.
+	 * Determine vacuum/analyze equation parameters.  If there is a tuple in
+	 * pg_autovacuum, use it; else, use the GUC defaults.  Note that the fields
+	 * may contain "-1" (or indeed any negative value), which means use the GUC
+	 * defaults for each setting.
 	 */
 	if (avForm != NULL)
 	{
@@ -1165,21 +1413,9 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 		anl_base_thresh = (avForm->anl_base_thresh >= 0) ?
 			avForm->anl_base_thresh : autovacuum_anl_thresh;
 
-		freeze_min_age = (avForm->freeze_min_age >= 0) ?
-			avForm->freeze_min_age : default_freeze_min_age;
 		freeze_max_age = (avForm->freeze_max_age >= 0) ?
 			Min(avForm->freeze_max_age, autovacuum_freeze_max_age) :
 			autovacuum_freeze_max_age;
-
-		vac_cost_limit = (avForm->vac_cost_limit >= 0) ?
-			avForm->vac_cost_limit :
-			((autovacuum_vac_cost_limit >= 0) ?
-			 autovacuum_vac_cost_limit : VacuumCostLimit);
-
-		vac_cost_delay = (avForm->vac_cost_delay >= 0) ?
-			avForm->vac_cost_delay :
-			((autovacuum_vac_cost_delay >= 0) ?
-			 autovacuum_vac_cost_delay : VacuumCostDelay);
 	}
 	else
 	{
@@ -1189,14 +1425,7 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 		anl_scale_factor = autovacuum_anl_scale;
 		anl_base_thresh = autovacuum_anl_thresh;
 
-		freeze_min_age = default_freeze_min_age;
 		freeze_max_age = autovacuum_freeze_max_age;
-
-		vac_cost_limit = (autovacuum_vac_cost_limit >= 0) ?
-			autovacuum_vac_cost_limit : VacuumCostLimit;
-
-		vac_cost_delay = (autovacuum_vac_cost_delay >= 0) ?
-			autovacuum_vac_cost_delay : VacuumCostDelay;
 	}
 
 	/* Force vacuum if table is at risk of wraparound */
@@ -1209,7 +1438,11 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 
 	/* User disabled it in pg_autovacuum?  (But ignore if at risk) */
 	if (avForm && !avForm->enabled && !force_vacuum)
+	{
+		*doanalyze = false;
+		*dovacuum = false;
 		return;
+	}
 
 	if (PointerIsValid(tabentry))
 	{
@@ -1231,8 +1464,8 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 			 vactuples, vacthresh, anltuples, anlthresh);
 
 		/* Determine if this table needs vacuum or analyze. */
-		dovacuum = force_vacuum || (vactuples > vacthresh);
-		doanalyze = (anltuples > anlthresh);
+		*dovacuum = force_vacuum || (vactuples > vacthresh);
+		*doanalyze = (anltuples > anlthresh);
 	}
 	else
 	{
@@ -1241,50 +1474,13 @@ test_rel_for_autovac(Oid relid, PgStat_StatTabEntry *tabentry,
 		 * vacuum for anti-wrap purposes.  If it's not acted upon, there's
 		 * no need to vacuum it.
 		 */
-		dovacuum = force_vacuum;
-		doanalyze = false;
+		*dovacuum = force_vacuum;
+		*doanalyze = false;
 	}
 
 	/* ANALYZE refuses to work with pg_statistics */
 	if (relid == StatisticRelationId)
-		doanalyze = false;
-
-	Assert(CurrentMemoryContext == AutovacMemCxt);
-
-	if (classForm->relkind == RELKIND_RELATION)
-	{
-		if (dovacuum || doanalyze)
-			elog(DEBUG2, "autovac: will%s%s %s",
-				 (dovacuum ? " VACUUM" : ""),
-				 (doanalyze ? " ANALYZE" : ""),
-				 NameStr(classForm->relname));
-
-		/*
-		 * we must record tables that have a toast table, even if we currently
-		 * don't think they need vacuuming.
-		 */
-		if (dovacuum || doanalyze || OidIsValid(classForm->reltoastrelid))
-		{
-			autovac_table *tab;
-
-			tab = (autovac_table *) palloc(sizeof(autovac_table));
-			tab->at_relid = relid;
-			tab->at_toastrelid = classForm->reltoastrelid;
-			tab->at_dovacuum = dovacuum;
-			tab->at_doanalyze = doanalyze;
-			tab->at_freeze_min_age = freeze_min_age;
-			tab->at_vacuum_cost_limit = vac_cost_limit;
-			tab->at_vacuum_cost_delay = vac_cost_delay;
-
-			*vacuum_tables = lappend(*vacuum_tables, tab);
-		}
-	}
-	else
-	{
-		Assert(classForm->relkind == RELKIND_TOASTVALUE);
-		if (dovacuum)
-			*toast_table_ids = lappend_oid(*toast_table_ids, relid);
-	}
+		*doanalyze = false;
 }
 
 /*

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.150 2007/03/22 19:53:30 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.151 2007/03/28 22:17:12 alvherre Exp $
  * ----------
  */
 #include "postgres.h"
@@ -2328,10 +2328,6 @@ pgstat_setup_memcxt(void)
 void
 pgstat_clear_snapshot(void)
 {
-	/* In an autovacuum worker process we keep the stats forever */
-	if (IsAutoVacuumWorkerProcess())
-		return;
-
 	/* Release memory, if any was allocated */
 	if (pgStatLocalContext)
 		MemoryContextDelete(pgStatLocalContext);
