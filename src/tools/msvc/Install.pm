@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.5 2007/03/27 21:47:10 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.6 2007/03/29 20:48:26 mha Exp $
 #
 use strict;
 use warnings;
@@ -44,9 +44,9 @@ sub Install
     copy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
     CopySetOfFiles('config files', "*.sample", $target . '/share/');
     CopyFiles(
-        'Import libraries', $target .'/lib/',
-        "$conf\\", "postgres\\postgres.lib",
-        "libpq\\libpq.lib", "libecpg\\libecpg.lib"
+        'Import libraries',
+        $target .'/lib/',
+        "$conf\\", "postgres\\postgres.lib","libpq\\libpq.lib", "libecpg\\libecpg.lib"
     );
     CopySetOfFiles('timezone names', 'src\timezone\tznames\*.txt',$target . '/share/timezonesets/');
     CopyFiles(
@@ -64,6 +64,7 @@ sub Install
     GenerateConversionScript($target);
     GenerateTimezoneFiles($target,$conf);
     CopyContribFiles($target);
+    CopyIncludeFiles($target);
 
     GenerateNLSFiles($target,$config->{nls}) if ($config->{nls});
 }
@@ -101,17 +102,21 @@ sub CopySetOfFiles
     my $what = shift;
     my $spec = shift;
     my $target = shift;
+    my $silent = shift;
+    my $norecurse = shift;
     my $D;
 
-    print "Copying $what";
-    open($D, "dir /b /s $spec |") || croak "Could not list $spec\n";
+    my $subdirs = $norecurse?'':'/s';
+    print "Copying $what" unless ($silent);
+    open($D, "dir /b $subdirs $spec |") || croak "Could not list $spec\n";
     while (<$D>)
     {
         chomp;
         next if /regress/; # Skip temporary install in regression subdir
         my $tgt = $target . basename($_);
         print ".";
-        copy($_, $tgt) || croak "Could not copy $_: $!\n";
+        my $src = $norecurse?(dirname($spec) . '/' . $_):$_;
+        copy($src, $tgt) || croak "Could not copy $src: $!\n";
     }
     close($D);
     print "\n";
@@ -281,6 +286,78 @@ sub ParseAndCleanRule
         $flist = substr($flist, 0, index($flist, '$(addsuffix ')) . substr($flist, $i+1);
     }
     return $flist;
+}
+
+sub CopyIncludeFiles
+{
+    my $target = shift;
+
+    EnsureDirectories($target, 'include', 'include/libpq', 'include/postgresql',
+        'include/postgresql/internal', 'include/postgresql/internal/libpq',
+        'include/postgresql/server');
+
+    CopyFiles(
+        'Public headers',
+        $target . '/include/',
+        'src/include/', 'postgres_ext.h', 'pg_config.h', 'pg_config_os.h', 'pg_config_manual.h'
+    );
+    copy('src/include/libpq/libpq-fs.h', $target . '/include/libpq/')
+      || croak 'Could not copy libpq-fs.h';
+
+    CopyFiles('Libpq headers', $target . '/include/', 'src/interfaces/libpq/', 'libpq-fe.h');
+    CopyFiles(
+        'Libpq internal headers',
+        $target .'/include/postgresql/internal/',
+        'src/interfaces/libpq/', 'libpq-int.h', 'pqexpbuffer.h'
+    );
+
+    CopyFiles(
+        'Internal headers',
+        $target . '/include/postgresql/internal/',
+        'src/include/', 'c.h', 'port.h', 'postgres_fe.h'
+    );
+    copy('src/include/libpq/pqcomm.h', $target . '/include/postgresql/internal/libpq/')
+      || croak 'Could not copy pqcomm.h';
+
+    CopyFiles(
+        'Server headers',
+        $target . '/include/postgresql/server/',
+        'src/include/', 'pg_config.h', 'pg_config_os.h'
+    );
+    CopySetOfFiles('', "src\\include\\*.h", $target . '/include/postgresql/server/', 1, 1);
+    my $D;
+    opendir($D, 'src/include') || croak "Could not opendir on src/include!\n";
+
+    while (my $d = readdir($D))
+    {
+        next if ($d =~ /^\./);
+        next if ($d eq 'CVS');
+        next unless (-d 'src/include/' . $d);
+
+        EnsureDirectories($target . '/include/postgresql/server', $d);
+        system(
+            "xcopy /s /i /q /r /y src\\include\\$d\\*.h $target\\include\\postgresql\\server\\$d\\")
+          && croak("Failed to copy include directory $d\n");
+    }
+    closedir($D);
+
+    my $mf = read_file('src/interfaces/ecpg/include/Makefile');
+    $mf =~ s{\\s*[\r\n]+}{}mg;
+    $mf =~ /^ecpg_headers\s*=\s*(.*)$/m || croak "Could not find ecpg_headers line\n";
+    CopyFiles(
+        'ECPG headers',
+        $target . '/include/',
+        'src/interfaces/ecpg/include/',
+        'ecpg_config.h', split /\s+/,$1
+    );
+    $mf =~ /^informix_headers\s*=\s*(.*)$/m || croak "Could not find informix_headers line\n";
+    EnsureDirectories($target . '/include/postgresql', 'informix', 'informix/esql');
+    CopyFiles(
+        'ECPG informix headers',
+        $target .'/include/postgresql/informix/esql/',
+        'src/interfaces/ecpg/include/',
+        split /\s+/,$1
+    );
 }
 
 sub GenerateNLSFiles
