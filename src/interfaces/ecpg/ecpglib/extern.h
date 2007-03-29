@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.22 2007/01/25 16:45:25 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.23 2007/03/29 12:02:24 meskes Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -6,6 +6,7 @@
 #include "postgres_fe.h"
 #include "libpq-fe.h"
 #include "sqlca.h"
+#include "ecpg_config.h"
 
 enum COMPAT_MODE
 {

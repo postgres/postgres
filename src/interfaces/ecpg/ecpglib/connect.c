@@ -1,10 +1,14 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.40 2007/03/17 19:25:22 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.41 2007/03/29 12:02:24 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
 #ifdef ENABLE_THREAD_SAFETY
+#ifndef WIN32
 #include <pthread.h>
+#else
+#include "ecpg-pthread-win32.h"
+#endif
 #endif
 #include "ecpgtype.h"
 #include "ecpglib.h"
@@ -13,9 +17,14 @@
 #include "sqlca.h"
 
 #ifdef ENABLE_THREAD_SAFETY
+#ifndef WIN32
 static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t actual_connection_key;
 static pthread_once_t actual_connection_key_once = PTHREAD_ONCE_INIT;
+#else
+static HANDLE connections_mutex = INVALID_HANDLE_VALUE;
+static DWORD actual_connection_key;
+#endif /* WIN32 */
 #endif
 static struct connection *actual_connection = NULL;
 static struct connection *all_connections = NULL;
@@ -30,7 +39,13 @@ ecpg_actual_connection_init(void)
 void
 ecpg_pthreads_init(void)
 {
+#ifndef WIN32
 	pthread_once(&actual_connection_key_once, ecpg_actual_connection_init);
+#else
+	static long has_run = 0;
+	if (InterlockedCompareExchange(&has_run, 1, 0) == 0)
+		ecpg_actual_connection_init();
+#endif
 }
 #endif
 

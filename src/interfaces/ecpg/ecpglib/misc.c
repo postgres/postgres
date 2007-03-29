@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.34 2007/01/12 10:00:13 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.35 2007/03/29 12:02:24 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -6,7 +6,11 @@
 #include <limits.h>
 #include <unistd.h>
 #ifdef ENABLE_THREAD_SAFETY
+#ifndef WIN32
 #include <pthread.h>
+#else
+#include "ecpg-pthread-win32.h"
+#endif
 #endif
 #include "ecpgtype.h"
 #include "ecpglib.h"
@@ -58,8 +62,12 @@ static struct sqlca_t sqlca_init =
 };
 
 #ifdef ENABLE_THREAD_SAFETY
+#ifndef WIN32
 static pthread_key_t sqlca_key;
 static pthread_once_t sqlca_key_once = PTHREAD_ONCE_INIT;
+#else
+static DWORD sqlca_key;
+#endif
 #else
 static struct sqlca_t sqlca =
 {
@@ -90,8 +98,13 @@ static struct sqlca_t sqlca =
 #endif
 
 #ifdef ENABLE_THREAD_SAFETY
+#ifndef WIN32
 static pthread_mutex_t debug_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_mutex_t debug_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+#else
+static HANDLE debug_mutex = INVALID_HANDLE_VALUE;
+static HANDLE debug_init_mutex = INVALID_HANDLE_VALUE;
+#endif /* WIN32 */
 #endif
 static int	simple_debug = 0;
 static FILE *debugstream = NULL;
@@ -138,8 +151,13 @@ ECPGget_sqlca(void)
 {
 #ifdef ENABLE_THREAD_SAFETY
 	struct sqlca_t *sqlca;
-
+#ifdef WIN32
+	static long has_run = 0;
+	if (InterlockedCompareExchange(&has_run, 1, 0) == 0)
+		ecpg_sqlca_key_init();
+#else
 	pthread_once(&sqlca_key_once, ecpg_sqlca_key_init);
+#endif
 
 	sqlca = pthread_getspecific(sqlca_key);
 	if (sqlca == NULL)

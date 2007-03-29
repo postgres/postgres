@@ -2177,4 +2177,10 @@ Th Mar 15 08:27:53 CET 2007
 	- Synced parser and keyword lists.
 	- Copied two token parsing from backend parser to ecpg parser.
 	- Also added a test case for this.
+
+Thu, 29 Mar 2007 11:18:39 +0200
+
+	- Added patch by Magnus Hagander <magnus@hagander.net> to use native
+	  win32 threads.
+	- Fixed regression tests to run threading tests.
 	- Set ecpg version to 4.3.1.

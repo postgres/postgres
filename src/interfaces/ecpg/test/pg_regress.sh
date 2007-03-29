@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.18 2007/01/21 09:23:29 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress.sh,v 1.19 2007/03/29 12:02:24 meskes Exp $
 
 me=`basename $0`
 
@@ -34,6 +34,7 @@ Options for \`temp-install' mode:
   --top-builddir=DIR        (relative) path to top level build directory
   --temp-port=PORT          port number to start temp postmaster on
   --listen-on-tcp           listen on the tcp port as well
+  --enable-threading	    expect threading to be enabled	
 
 Options for using an existing installation:
   --host=HOST               use postmaster running on HOST
@@ -78,6 +79,7 @@ init_vars(){
 	temp_port=65432
 	load_langs=""
 	listen_on_tcp=no
+	enable_threading=no
 
 	: ${GMAKE='@GMAKE@'}
 }
@@ -108,6 +110,9 @@ do
         --listen-on-tcp)
                 listen_on_tcp=yes
                 shift;;
+	--enable-threading)
+		enable_threading=yes
+		shift;;
         --load-language=*)
                 lang=`expr "x$1" : "x--load-language=\(.*\)"`
                 load_langs="$load_langs $lang"
@@ -751,13 +756,20 @@ for i in \
 	cat "$outfile_source.tmp" | sed -e 's,^\(#line [0-9]*\) ".*/\([^/]*\)",\1 "\2",' > "$outfile_source"
 	rm "$outfile_source.tmp"
 
+	if [ "$enable_threading" = yes ] && [ "${i%%/*}" = "thread" ]; then
+		expectedoutprg="expected/$outprg-thread"
+	else
+		expectedoutprg="expected/$outprg"
+	fi
+
+	expected_stdout="$expectedoutprg$PLATFORM_TAG.stdout"
+	if [ ! -f "$expected_stdout" ]; then
+		expected_stdout="$expectedoutprg.stdout"
+	fi
+	# threading has log output disabled
 	expected_stderr="expected/$outprg$PLATFORM_TAG.stderr"
 	if [ ! -f "$expected_stderr" ]; then
 		expected_stderr="expected/$outprg.stderr"
-	fi
-	expected_stdout="expected/$outprg$PLATFORM_TAG.stdout"
-	if [ ! -f "$expected_stdout" ]; then
-		expected_stdout="expected/$outprg.stdout"
 	fi
 	# the source should be identical on all platforms
 	expected_source="expected/$outprg.c"

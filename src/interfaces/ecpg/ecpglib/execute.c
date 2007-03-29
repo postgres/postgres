@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.64 2007/02/11 15:18:17 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.65 2007/03/29 12:02:24 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -39,7 +39,6 @@ static char *
 quote_postgres(char *arg, bool quote, int lineno)
 {
 	char	*res;
-	int	error;
 	size_t  length;
 	size_t  escaped_len;
 	size_t  buffer_len;
@@ -58,13 +57,7 @@ quote_postgres(char *arg, bool quote, int lineno)
 		if (!res)
 			return (res);
 
-		error = 0;
 		escaped_len = PQescapeString(res+1, arg, buffer_len);
-		if (error)
-		{
-			ECPGfree(res);
-			return NULL;
-		}
 		if (length == escaped_len)
 		{
 			res[0] = res[escaped_len+1] = '\'';
