@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.37 2007/03/24 22:16:49 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.38 2007/03/29 15:30:52 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -158,15 +158,6 @@
       Required for SSL support. Binaries can be downloaded from
       <ulink url="http://www.slproweb.com/products/Win32OpenSSL.html"></>
       or source from <ulink url="http://www.openssl.org"></>.
-     </para></listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><productname>pthreads</productname></term>
-     <listitem><para>
-      Required for building the <application>ECPG</application> libraries.
-      Binaries can be downloaded from
-      <ulink url="ftp://sources.redhat.com/pub/pthreads-win32"></>.
      </para></listitem>
     </varlistentry>
 

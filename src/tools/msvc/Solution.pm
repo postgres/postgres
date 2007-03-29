@@ -1,8 +1,9 @@
 package Solution;
+
 #
 # Package that encapsulates a Visual C++ solution file generation
-# 
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.19 2007/03/24 22:16:49 mha Exp $
+#
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.20 2007/03/29 15:30:52 mha Exp $
 #
 use Carp;
 use strict;
@@ -104,7 +105,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         }
         print O "#define LOCALEDIR \"/share/locale\"\n" if ($self->{options}->{nls});
         print O "/* defines added by config steps */\n";
-	print O "#ifndef IGNORE_CONFIGURED_SETTINGS\n";
+        print O "#ifndef IGNORE_CONFIGURED_SETTINGS\n";
         print O "#define USE_ASSERT_CHECKING 1\n" if ($self->{options}->{asserts});
         print O "#define USE_INTEGER_DATETIMES 1\n" if ($self->{options}->{integer_datetimes});
         print O "#define USE_LDAP 1\n" if ($self->{options}->{ldap});
@@ -124,7 +125,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
             print O "#define HAVE_KRB5_TICKET_ENC_PART2 1\n";
             print O "#define PG_KRB_SRVNAM \"postgres\"\n";
         }
-	print O "#endif /* IGNORE_CONFIGURED_SETTINGS */\n";
+        print O "#endif /* IGNORE_CONFIGURED_SETTINGS */\n";
         close(O);
         close(I);
     }
@@ -239,6 +240,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         print O <<EOF;
 #if (_MSC_VER > 1200)
 #define HAVE_LONG_LONG_INT_64
+#define ENABLE_THREAD_SAFETY 1
 #endif
 EOF
         close(O);

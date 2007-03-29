@@ -3683,6 +3683,7 @@ IFS=$ac_save_IFS
 #
 echo "$as_me:$LINENO: checking allow thread-safe client libraries" >&5
 echo $ECHO_N "checking allow thread-safe client libraries... $ECHO_C" >&6
+if test "$PORTNAME" != "win32"; then
 
 pgac_args="$pgac_args enable_thread_safety"
 
@@ -3708,6 +3709,36 @@ else
   enable_thread_safety=no
 
 fi;
+
+else
+# Win32 should always use threads
+
+pgac_args="$pgac_args enable_thread_safety"
+
+# Check whether --enable-thread-safety or --disable-thread-safety was given.
+if test "${enable_thread_safety+set}" = set; then
+  enableval="$enable_thread_safety"
+
+  case $enableval in
+    yes)
+      :
+      ;;
+    no)
+      :
+      ;;
+    *)
+      { { echo "$as_me:$LINENO: error: no argument expected for --enable-thread-safety option" >&5
+echo "$as_me: error: no argument expected for --enable-thread-safety option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+  esac
+
+else
+  enable_thread_safety=yes
+
+fi;
+
+fi
 
 
 pgac_args="$pgac_args enable_thread_safety_force"
@@ -16701,8 +16732,8 @@ fi
 # For each platform, we need to know about any special compile and link
 # libraries, and whether the normal C function names are thread-safe.
 # See the comment at the top of src/port/thread.c for more information.
-#
-if test "$enable_thread_safety" = yes; then
+# WIN32 doesn't need the pthread tests;  it always uses threads
+if test "$enable_thread_safety" = yes -a "$PORTNAME" != "win32"; then
 
 
 
@@ -17236,6 +17267,7 @@ _LIBS="$LIBS"
 CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
 LIBS="$LIBS $PTHREAD_LIBS"
 
+if test "$PORTNAME" != "win32"; then
 if test "${ac_cv_header_pthread_h+set}" = set; then
   echo "$as_me:$LINENO: checking for pthread.h" >&5
 echo $ECHO_N "checking for pthread.h... $ECHO_C" >&6
@@ -17382,6 +17414,7 @@ echo "$as_me: error: pthread.h not found, required for --enable-thread-safety" >
 fi
 
 
+fi
 
 
 

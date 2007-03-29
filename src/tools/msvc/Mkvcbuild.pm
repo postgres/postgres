@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.6 2007/03/24 14:13:27 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.7 2007/03/29 15:30:52 mha Exp $
 #
 use Carp;
 use Win32;
@@ -131,38 +131,28 @@ sub mkvcbuild
     $pgtypes->AddReference($postgres,$libpgport);
     $pgtypes->AddIncludeDir('src\interfaces\ecpg\include');
 
-    if ($config->{pthread})
-    {
-        my $libecpg =
-          $solution->AddProject('libecpg','dll','interfaces','src\interfaces\ecpg\ecpglib');
-        $libecpg->AddDefine('FRONTEND');
-        $libecpg->AddIncludeDir('src\interfaces\ecpg\include');
-        $libecpg->AddIncludeDir('src\interfaces\libpq');
-        $libecpg->AddIncludeDir('src\port');
-        $libecpg->AddLibrary('wsock32.lib');
-        $libecpg->AddLibrary($config->{'pthread'} . '\pthreadVC2.lib');
-        $libecpg->AddReference($libpq,$pgtypes,$libpgport);
+    my $libecpg =$solution->AddProject('libecpg','dll','interfaces','src\interfaces\ecpg\ecpglib');
+    $libecpg->AddDefine('FRONTEND');
+    $libecpg->AddIncludeDir('src\interfaces\ecpg\include');
+    $libecpg->AddIncludeDir('src\interfaces\libpq');
+    $libecpg->AddIncludeDir('src\port');
+    $libecpg->AddLibrary('wsock32.lib');
+    $libecpg->AddReference($libpq,$pgtypes,$libpgport);
 
-        my $libecpgcompat =
-          $solution->AddProject('libecpg_compat','dll','interfaces',
-            'src\interfaces\ecpg\compatlib');
-        $libecpgcompat->AddIncludeDir('src\interfaces\ecpg\include');
-        $libecpgcompat->AddIncludeDir('src\interfaces\libpq');
-        $libecpgcompat->AddReference($pgtypes,$libecpg);
+    my $libecpgcompat =
+      $solution->AddProject('libecpg_compat','dll','interfaces','src\interfaces\ecpg\compatlib');
+    $libecpgcompat->AddIncludeDir('src\interfaces\ecpg\include');
+    $libecpgcompat->AddIncludeDir('src\interfaces\libpq');
+    $libecpgcompat->AddReference($pgtypes,$libecpg);
 
-        my $ecpg = $solution->AddProject('ecpg','exe','interfaces','src\interfaces\ecpg\preproc');
-        $ecpg->AddIncludeDir('src\interfaces\ecpg\include');
-        $ecpg->AddIncludeDir('src\interfaces\libpq');
-        $ecpg->AddFiles('src\interfaces\ecpg\preproc','pgc.l','preproc.y');
-        $ecpg->AddDefine('MAJOR_VERSION=4');
-        $ecpg->AddDefine('MINOR_VERSION=2');
-        $ecpg->AddDefine('PATCHLEVEL=1');
-        $ecpg->AddReference($libpgport);
-    }
-    else
-    {
-        print "Not building ecpg due to lack of pthreads.\n";
-    }
+    my $ecpg = $solution->AddProject('ecpg','exe','interfaces','src\interfaces\ecpg\preproc');
+    $ecpg->AddIncludeDir('src\interfaces\ecpg\include');
+    $ecpg->AddIncludeDir('src\interfaces\libpq');
+    $ecpg->AddFiles('src\interfaces\ecpg\preproc','pgc.l','preproc.y');
+    $ecpg->AddDefine('MAJOR_VERSION=4');
+    $ecpg->AddDefine('MINOR_VERSION=2');
+    $ecpg->AddDefine('PATCHLEVEL=1');
+    $ecpg->AddReference($libpgport);
 
     # src/bin
     my $initdb = AddSimpleFrontend('initdb', 1);
