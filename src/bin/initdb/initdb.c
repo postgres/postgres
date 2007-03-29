@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.135 2007/03/18 16:50:43 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.136 2007/03/29 22:46:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -709,8 +709,7 @@ get_encoding_id(char *encoding_name)
 
 	if (encoding_name && *encoding_name)
 	{
-		if ((enc = pg_char_to_encoding(encoding_name)) >= 0 &&
-			pg_valid_server_encoding(encoding_name) >= 0)
+		if ((enc = pg_valid_server_encoding(encoding_name)) >= 0)
 			return encodingid_to_string(enc);
 	}
 	fprintf(stderr, _("%s: \"%s\" is not a valid server encoding name\n"),
