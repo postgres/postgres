@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Mar 27 22:17:40 EDT 2007
+Last updated:		Thu Mar 29 16:23:50 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -625,7 +625,7 @@ SQL Commands
 
 	o %Add VERBOSE option to report tables as they are processed,
 	  like VACUUM VERBOSE
-	o Add more logical syntax CLUSTER table ORDER BY index; 
+	o Add more logical syntax CLUSTER table USING index; 
 	  support current syntax for backward compatibility
 
 
