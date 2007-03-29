@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.258 2007/03/19 23:38:29 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.259 2007/03/29 00:15:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1572,7 +1572,8 @@ RelationClose(Relation relation)
 
 #ifdef RELCACHE_FORCE_RELEASE
 	if (RelationHasReferenceCountZero(relation) &&
-		relation->rd_createSubid == InvalidSubTransactionId)
+		relation->rd_createSubid == InvalidSubTransactionId &&
+		relation->rd_newRelfilenodeSubid == InvalidSubTransactionId)
 		RelationClearRelation(relation, false);
 #endif
 }
@@ -1759,11 +1760,12 @@ RelationClearRelation(Relation relation, bool rebuild)
 	{
 		/*
 		 * When rebuilding an open relcache entry, must preserve ref count and
-		 * rd_createSubid state.  Also attempt to preserve the tupledesc and
-		 * rewrite-rule substructures in place.  (Note: the refcount mechanism
-		 * for tupledescs may eventually ensure that we don't really need to
-		 * preserve the tupledesc in-place, but for now there are still a lot
-		 * of places that assume an open rel's tupledesc won't move.)
+		 * rd_createSubid/rd_newRelfilenodeSubid state.  Also attempt to
+		 * preserve the tupledesc and rewrite-rule substructures in place.
+		 * (Note: the refcount mechanism for tupledescs may eventually ensure
+		 * that we don't really need to preserve the tupledesc in-place, but
+		 * for now there are still a lot of places that assume an open rel's
+		 * tupledesc won't move.)
 		 *
 		 * Note that this process does not touch CurrentResourceOwner; which
 		 * is good because whatever ref counts the entry may have do not
@@ -1839,7 +1841,7 @@ RelationFlushRelation(Relation relation)
 		/*
 		 * New relcache entries are always rebuilt, not flushed; else we'd
 		 * forget the "new" status of the relation, which is a useful
-		 * optimization to have.
+		 * optimization to have.  Ditto for the new-relfilenode status.
 		 */
 		rebuild = true;
 	}
@@ -1916,6 +1918,8 @@ RelationCacheInvalidateEntry(Oid relationId)
  *	 so we do not touch new-in-transaction relations; they cannot be targets
  *	 of cross-backend SI updates (and our own updates now go through a
  *	 separate linked list that isn't limited by the SI message buffer size).
+ *	 Likewise, we need not discard new-relfilenode-in-transaction hints,
+ *	 since any invalidation of those would be a local event.
  *
  *	 We do this in two phases: the first pass deletes deletable items, and
  *	 the second one rebuilds the rebuildable items.  This is essential for
@@ -1957,14 +1961,6 @@ RelationCacheInvalidate(void)
 		/* Ignore new relations, since they are never SI targets */
 		if (relation->rd_createSubid != InvalidSubTransactionId)
 			continue;
-
-		/* 
-		 * Reset newRelfilenode hint. It is never used for correctness, only
-		 * for performance optimization. An incorrectly set hint can lead
-		 * to data loss in some circumstances, so play safe.
-		 */
-		if (relation->rd_newRelfilenodeSubid != InvalidSubTransactionId)
-			relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 
 		relcacheInvalsReceived++;
 
@@ -2018,17 +2014,6 @@ RelationCacheInvalidate(void)
 }
 
 /*
- * RelationCacheResetAtEOXact
- *
- *  Register that work will be required at main-transaction commit or abort
- */
-void
-RelationCacheResetAtEOXact(void)
-{
-	need_eoxact_work = true;
-}
-
-/*
  * AtEOXact_RelationCache
  *
  *	Clean up the relcache at main-transaction commit or abort.
@@ -2056,9 +2041,10 @@ AtEOXact_RelationCache(bool isCommit)
 	 * the debug-only Assert checks, most transactions don't create any work
 	 * for us to do here, so we keep a static flag that gets set if there is
 	 * anything to do.	(Currently, this means either a relation is created in
-	 * the current xact, or an index list is forced.)  For simplicity, the
-	 * flag remains set till end of top-level transaction, even though we
-	 * could clear it at subtransaction end in some cases.
+	 * the current xact, or one is given a new relfilenode, or an index list
+	 * is forced.)  For simplicity, the flag remains set till end of top-level
+	 * transaction, even though we could clear it at subtransaction end in
+	 * some cases.
 	 */
 	if (!need_eoxact_work
 #ifdef USE_ASSERT_CHECKING
@@ -2111,6 +2097,10 @@ AtEOXact_RelationCache(bool isCommit)
 				continue;
 			}
 		}
+
+		/*
+		 * Likewise, reset the hint about the relfilenode being new.
+		 */
 		relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 
 		/*
@@ -2173,6 +2163,10 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 				continue;
 			}
 		}
+
+		/*
+		 * Likewise, update or drop any new-relfilenode-in-subtransaction hint.
+		 */
 		if (relation->rd_newRelfilenodeSubid == mySubid)
 		{
 			if (isCommit)
@@ -2193,6 +2187,23 @@ AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 		}
 	}
 }
+
+/*
+ * RelationCacheMarkNewRelfilenode
+ *
+ *	Mark the rel as having been given a new relfilenode in the current
+ *	(sub) transaction.  This is a hint that can be used to optimize
+ *	later operations on the rel in the same transaction.
+ */
+void
+RelationCacheMarkNewRelfilenode(Relation rel)
+{
+	/* Mark it... */
+	rel->rd_newRelfilenodeSubid = GetCurrentSubTransactionId();
+	/* ... and now we have eoxact cleanup work to do */
+	need_eoxact_work = true;
+}
+
 
 /*
  *		RelationBuildLocalRelation
@@ -2272,7 +2283,7 @@ RelationBuildLocalRelation(const char *relname,
 	rel->rd_newRelfilenodeSubid = InvalidSubTransactionId;
 
 	/* must flag that we have rels created in this transaction */
-	RelationCacheResetAtEOXact();
+	need_eoxact_work = true;
 
 	/* is it a temporary relation? */
 	rel->rd_istemp = isTempNamespace(relnamespace);
@@ -2928,7 +2939,7 @@ RelationSetIndexList(Relation relation, List *indexIds, Oid oidIndex)
 	relation->rd_oidindex = oidIndex;
 	relation->rd_indexvalid = 2;	/* mark list as forced */
 	/* must flag that we have a forced index list */
-	RelationCacheResetAtEOXact();
+	need_eoxact_work = true;
 }
 
 /*

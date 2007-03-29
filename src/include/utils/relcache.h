@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.58 2007/03/03 20:08:41 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/relcache.h,v 1.59 2007/03/29 00:15:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,11 +60,11 @@ extern void RelationCacheInvalidateEntry(Oid relationId);
 
 extern void RelationCacheInvalidate(void);
 
-extern void RelationCacheResetAtEOXact(void);
-
 extern void AtEOXact_RelationCache(bool isCommit);
 extern void AtEOSubXact_RelationCache(bool isCommit, SubTransactionId mySubid,
 						  SubTransactionId parentSubid);
+
+extern void RelationCacheMarkNewRelfilenode(Relation rel);
 
 /*
  * Routines to help manage rebuilding of relcache init file

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.281 2007/03/25 19:45:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.282 2007/03/29 00:15:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1248,12 +1248,11 @@ setNewRelfilenode(Relation relation)
 
 	heap_close(pg_class, RowExclusiveLock);
 
-	/* Remember we did this in current transaction, to allow later optimisations */
-	relation->rd_newRelfilenodeSubid = GetCurrentSubTransactionId();
-	RelationCacheResetAtEOXact();
-
 	/* Make sure the relfilenode change is visible */
 	CommandCounterIncrement();
+
+	/* Mark the rel as having a new relfilenode in current transaction */
+	RelationCacheMarkNewRelfilenode(relation);
 }
 
 

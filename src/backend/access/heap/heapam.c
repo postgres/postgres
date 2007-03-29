@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.229 2007/03/25 19:45:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.230 2007/03/29 00:15:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1360,10 +1360,13 @@ heap_get_latest_tid(Relation relation,
  * that all new tuples go into new pages not containing any tuples from other
  * transactions, that the relation gets fsync'd before commit, and that the
  * transaction emits at least one WAL record to ensure RecordTransactionCommit
- * will decide to WAL-log the commit. (see heap_sync() comments also)
+ * will decide to WAL-log the commit.  (See also heap_sync() comments)
  *
  * use_fsm is passed directly to RelationGetBufferForTuple, which see for
  * more info.
+ *
+ * Note that use_wal and use_fsm will be applied when inserting into the
+ * heap's TOAST table, too, if the tuple requires any out-of-line data.
  *
  * The return value is the OID assigned to the tuple (either here or by the
  * caller), or InvalidOid if no OID.  The header fields of *tup are updated
@@ -1418,7 +1421,8 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * into the relation; tup is the caller's original untoasted data.
 	 */
 	if (HeapTupleHasExternal(tup) || tup->t_len > TOAST_TUPLE_THRESHOLD)
-		heaptup = toast_insert_or_update(relation, tup, NULL, use_wal);
+		heaptup = toast_insert_or_update(relation, tup, NULL,
+										 use_wal, use_fsm);
 	else
 		heaptup = tup;
 
@@ -1526,25 +1530,15 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
  *	simple_heap_insert - insert a tuple
  *
  * Currently, this routine differs from heap_insert only in supplying
- * a default command ID.  But it should be used rather than using
- * heap_insert directly in most places where we are modifying system catalogs.
+ * a default command ID and not allowing access to the speedup options.
+ *
+ * This should be used rather than using heap_insert directly in most places
+ * where we are modifying system catalogs.
  */
 Oid
 simple_heap_insert(Relation relation, HeapTuple tup)
 {
 	return heap_insert(relation, tup, GetCurrentCommandId(), true, true);
-}
-
-/*
- *	fast_heap_insert - insert a tuple with options to improve speed
- *
- * Currently, this routine allows specifying additional options for speed
- * in certain cases, such as WAL-avoiding COPY command
- */
-Oid
-fast_heap_insert(Relation relation, HeapTuple tup, bool use_wal)
-{
-	return heap_insert(relation, tup, GetCurrentCommandId(), use_wal, use_wal);
 }
 
 /*
@@ -2112,7 +2106,9 @@ l2:
 		 */
 		if (need_toast)
 		{
-			heaptup = toast_insert_or_update(relation, newtup, &oldtup, true);
+			/* Note we always use WAL and FSM during updates */
+			heaptup = toast_insert_or_update(relation, newtup, &oldtup,
+											 true, true);
 			newtupsize = MAXALIGN(heaptup->t_len);
 		}
 		else
@@ -3988,23 +3984,40 @@ heap2_desc(StringInfo buf, uint8 xl_info, char *rec)
 		appendStringInfo(buf, "UNKNOWN");
 }
 
-/* ----------------
- *		heap_sync - sync a heap, for use when no WAL has been written
+/*
+ *	heap_sync		- sync a heap, for use when no WAL has been written
  *
- * ----------------
+ * This forces the heap contents (including TOAST heap if any) down to disk.
+ * If we skipped using WAL, and it's not a temp relation, we must force the
+ * relation down to disk before it's safe to commit the transaction.  This
+ * requires writing out any dirty buffers and then doing a forced fsync.
+ *
+ * Indexes are not touched.  (Currently, index operations associated with
+ * the commands that use this are WAL-logged and so do not need fsync.
+ * That behavior might change someday, but in any case it's likely that
+ * any fsync decisions required would be per-index and hence not appropriate
+ * to be done here.)
  */
 void
 heap_sync(Relation rel)
 {
-	if (!rel->rd_istemp)
+	/* temp tables never need fsync */
+	if (rel->rd_istemp)
+		return;
+
+	/* main heap */
+	FlushRelationBuffers(rel);
+	/* FlushRelationBuffers will have opened rd_smgr */
+	smgrimmedsync(rel->rd_smgr);
+
+	/* toast heap, if any */
+	if (OidIsValid(rel->rd_rel->reltoastrelid))
 	{
-		/*
-		 * If we skipped using WAL, and it's not a temp relation,
-		 * we must force the relation down to disk before it's
-		 * safe to commit the transaction.  This requires forcing
-		 * out any dirty buffers and then doing a forced fsync.
-		 */
-		FlushRelationBuffers(rel);
-		smgrimmedsync(rel->rd_smgr);
+		Relation		toastrel;
+
+		toastrel = heap_open(rel->rd_rel->reltoastrelid, AccessShareLock);
+		FlushRelationBuffers(toastrel);
+		smgrimmedsync(toastrel->rd_smgr);
+		heap_close(toastrel, AccessShareLock);
 	}
 }

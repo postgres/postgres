@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.71 2007/02/27 23:48:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.72 2007/03/29 00:15:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -33,6 +33,7 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/tuptoaster.h"
+#include "access/xact.h"
 #include "catalog/catalog.h"
 #include "utils/fmgroids.h"
 #include "utils/pg_lzcompress.h"
@@ -42,7 +43,8 @@
 #undef TOAST_DEBUG
 
 static void toast_delete_datum(Relation rel, Datum value);
-static Datum toast_save_datum(Relation rel, Datum value, bool use_wal);
+static Datum toast_save_datum(Relation rel, Datum value,
+							  bool use_wal, bool use_fsm);
 static varattrib *toast_fetch_datum(varattrib *attr);
 static varattrib *toast_fetch_datum_slice(varattrib *attr,
 						int32 sliceoffset, int32 length);
@@ -333,6 +335,7 @@ toast_delete(Relation rel, HeapTuple oldtup)
  * Inputs:
  *	newtup: the candidate new tuple to be inserted
  *	oldtup: the old row version for UPDATE, or NULL for INSERT
+ *	use_wal, use_fsm: flags to be passed to heap_insert() for toast rows
  * Result:
  *	either newtup if no toasting is needed, or a palloc'd modified tuple
  *	that is what should actually get stored
@@ -342,7 +345,8 @@ toast_delete(Relation rel, HeapTuple oldtup)
  * ----------
  */
 HeapTuple
-toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup, bool use_wal)
+toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
+					   bool use_wal, bool use_fsm)
 {
 	HeapTuple	result_tuple;
 	TupleDesc	tupleDesc;
@@ -618,7 +622,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup, bool us
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-		toast_values[i] = toast_save_datum(rel, toast_values[i], use_wal);
+		toast_values[i] = toast_save_datum(rel, toast_values[i],
+										   use_wal, use_fsm);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 
@@ -729,7 +734,8 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup, bool us
 		i = biggest_attno;
 		old_value = toast_values[i];
 		toast_action[i] = 'p';
-		toast_values[i] = toast_save_datum(rel, toast_values[i], use_wal);
+		toast_values[i] = toast_save_datum(rel, toast_values[i],
+										   use_wal, use_fsm);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
 
@@ -977,7 +983,8 @@ toast_compress_datum(Datum value)
  * ----------
  */
 static Datum
-toast_save_datum(Relation rel, Datum value, bool use_wal)
+toast_save_datum(Relation rel, Datum value,
+				 bool use_wal, bool use_fsm)
 {
 	Relation	toastrel;
 	Relation	toastidx;
@@ -985,6 +992,7 @@ toast_save_datum(Relation rel, Datum value, bool use_wal)
 	TupleDesc	toasttupDesc;
 	Datum		t_values[3];
 	bool		t_isnull[3];
+	CommandId	mycid = GetCurrentCommandId();
 	varattrib  *result;
 	struct
 	{
@@ -1063,7 +1071,7 @@ toast_save_datum(Relation rel, Datum value, bool use_wal)
 		if (!HeapTupleIsValid(toasttup))
 			elog(ERROR, "failed to build TOAST tuple");
 
-		fast_heap_insert(toastrel, toasttup, use_wal);
+		heap_insert(toastrel, toasttup, mycid, use_wal, use_fsm);
 
 		/*
 		 * Create the index entry.	We cheat a little here by not using

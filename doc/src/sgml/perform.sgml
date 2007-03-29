@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.63 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.64 2007/03/29 00:15:36 tgl Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -801,7 +801,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     <command>EXECUTE</command> as many times as required.  This avoids
     some of the overhead of repeatedly parsing and planning
     <command>INSERT</command>. Different interfaces provide this facility
-    in different ways; look for Prepared Statements in the interface
+    in different ways; look for <quote>prepared statements</> in the interface
     documentation.
    </para>
 
@@ -815,14 +815,12 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <para>
     <command>COPY</command> is fastest when used within the same
     transaction as an earlier <command>CREATE TABLE</command> or
-    <command>TRUNCATE</command> command. In those cases, no WAL
-    needs to be written because in case of an error, the files
-    containing the newly loaded data will be removed automatically.
-    <command>CREATE TABLE AS SELECT</command> is also optimized 
-    to avoid writing WAL. <command>COPY</command> and
-    <command>CREATE TABLE AS SELECT</command> will write WAL 
-    when <xref linkend="guc-archive-command"> is set and will not
-    therefore be optimized in that case.
+    <command>TRUNCATE</command> command. In such cases no WAL
+    needs to be written, because in case of an error, the files
+    containing the newly loaded data will be removed anyway.
+    However, this consideration does not apply when
+    <xref linkend="guc-archive-command"> is set, as all commands
+    must write WAL in that case.
    </para>
 
   </sect2>
@@ -897,23 +895,51 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
    <title>Turn off <varname>archive_command</varname></title>
 
    <para>
-    When loading large amounts of data you might want to unset the
-    <xref linkend="guc-archive-command"> before loading. It might be
-    faster to take a new base backup once the load has completed
-    than to allow a large archive to accumulate.
+    When loading large amounts of data into an installation that uses
+    WAL archiving, you might want to disable archiving (unset the
+    <xref linkend="guc-archive-command"> configuration variable)
+    while loading.  It might be
+    faster to take a new base backup after the load has completed
+    than to process a large amount of incremental WAL data.
    </para>
 
    <para>
-    This is particularly important advice because certain commands 
-    will perform more slowly when <varname>archive_command</varname>
-    is set, as a result of their needing to write large amounts of WAL.
+    Aside from avoiding the time for the archiver to process the WAL data,
+    doing this will actually make certain commands faster, because they
+    are designed not to write WAL at all if <varname>archive_command</varname>
+    is unset.  (They can guarantee crash safety more cheaply by doing an
+    <function>fsync</> at the end than by writing WAL.)
     This applies to the following commands: 
-    <command>CREATE TABLE AS SELECT</command>, 
-    <command>CREATE INDEX</command> and also <command>COPY</command>, when
-    it is executed in the same transaction as a prior 
-    <command>CREATE TABLE</command> or <command>TRUNCATE</command> command.
+    <itemizedlist>
+     <listitem>
+      <para>
+       <command>CREATE TABLE AS SELECT</command>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <command>CREATE INDEX</command> (and variants such as
+       <command>ALTER TABLE ADD PRIMARY KEY</command>)
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <command>ALTER TABLE SET TABLESPACE</command>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <command>CLUSTER</command>
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       <command>COPY FROM</command>, when the target table has been
+       created or truncated earlier in the same transaction
+      </para>
+     </listitem>
+    </itemizedlist>
    </para>
-
   </sect2>
 
   <sect2 id="populate-analyze">
@@ -950,15 +976,43 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     By default, <application>pg_dump</> uses <command>COPY</>, and when
     it is generating a complete schema-and-data dump, it is careful to
     load data before creating indexes and foreign keys.  So in this case
-    the first several guidelines are handled automatically.  What is left
-    for you to do is to set appropriate (i.e., larger than normal) values
-    for <varname>maintenance_work_mem</varname> and
-    <varname>checkpoint_segments</varname>, as well as unsetting 
-    <varname>archive_command</varname> before loading the dump script,
-    and then to run <command>ANALYZE</> afterwards and resetting
-    <varname>archive_command</varname> if required. All of the 
-    parameters can be reset once the load has completed without needing
-    to restart the server, as described in <xref linkend="config-setting">.
+    several guidelines are handled automatically.  What is left
+    for you to do is to:
+    <itemizedlist>
+     <listitem>
+      <para>
+       Set appropriate (i.e., larger than normal) values for
+       <varname>maintenance_work_mem</varname> and
+       <varname>checkpoint_segments</varname>.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       If using WAL archiving, consider disabling it during the restore.
+       To do that, unset <varname>archive_command</varname> before loading the
+       dump script, and afterwards restore <varname>archive_command</varname>
+       and take a fresh base backup.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Consider whether the whole dump should be restored as a single
+       transaction.  To do that, pass the <option>-1</> or
+       <option>--single-transaction</> command-line option to
+       <application>psql</> or <application>pg_restore</>. When using this
+       mode, even the smallest of errors will rollback the entire restore,
+       possibly discarding many hours of processing.  Depending on how
+       interrelated the data is, that might seem preferable to manual cleanup,
+       or not.  <command>COPY</> commands will run fastest if you use a single
+       transaction and have WAL archiving turned off.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       Run <command>ANALYZE</> afterwards.
+      </para>
+     </listitem>
+    </itemizedlist>
    </para>
 
    <para>
