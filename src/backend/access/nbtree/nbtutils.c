@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.82 2007/01/09 02:14:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.83 2007/03/30 00:12:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1214,13 +1214,25 @@ _bt_start_vacuum(Relation rel)
 		vac = &btvacinfo->vacuums[i];
 		if (vac->relid.relId == rel->rd_lockInfo.lockRelId.relId &&
 			vac->relid.dbId == rel->rd_lockInfo.lockRelId.dbId)
+		{
+			/*
+			 * Unlike most places in the backend, we have to explicitly
+			 * release our LWLock before throwing an error.  This is because
+			 * we expect _bt_end_vacuum() to be called before transaction
+			 * abort cleanup can run to release LWLocks.
+			 */
+			LWLockRelease(BtreeVacuumLock);
 			elog(ERROR, "multiple active vacuums for index \"%s\"",
 				 RelationGetRelationName(rel));
+		}
 	}
 
 	/* OK, add an entry */
 	if (btvacinfo->num_vacuums >= btvacinfo->max_vacuums)
+	{
+		LWLockRelease(BtreeVacuumLock);
 		elog(ERROR, "out of btvacinfo slots");
+	}
 	vac = &btvacinfo->vacuums[btvacinfo->num_vacuums];
 	vac->relid = rel->rd_lockInfo.lockRelId;
 	vac->cycleid = result;
