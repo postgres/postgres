@@ -4,12 +4,12 @@
 <TITLE>PostgreSQL FAQ in Japanese</TITLE>
 </HEAD>
 <BODY BGCOLOR="#FFFFFF" TEXT="#000000" LINK="#FF0000" VLINK="#A00000" ALINK="#0000FF">
-<META HTTP-EQUIV="Content-Type" CONTENT="text/html; CHARSET=x-euc-jp">
+<META http-equiv="Content-Type" content="text/html; charset=EUC-JP">
 
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Fri Jan  5 15:40:20 EST 2007</p>
+<p>原文最終更新日:		Tue Mar 20 13:43:40 EDT 2007</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -53,7 +53,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <a href="#item1.11">1.11</a>) <small>SQL</small>はどうすれば学べますか？<br />
 <a href="#item1.12">1.12</a>) パッチを提供したり、開発チーム参加するにはどうすればよいですか？<br />
 <a href="#item1.13">1.13</a>) 他の<small>DBMS</small>と比べてPostgreSQLはどうなのですか？<br />
-
+<a href="#item1.14">1.14</a>) PostgreSQLは国毎の最新の夏時間の変更を扱いますか？<br />
 
 <h2 align="center">ユーザ・クライアントの質問</h2>
 
@@ -69,14 +69,14 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <a href="#item3.3">3.3</a>) より良い性能を得るためには、データベース・エンジンをどのように調整しますか？<br />
 <a href="#item3.4">3.4</a>) どのようなデバグ機能が使えますか？<br />
 <a href="#item3.5">3.5</a>) 接続しようとするときに <i>'Sorry, too many clients'</i> が出るのはなぜですか？<br />
-<a href="#item3.6">3.6</a>) PostgreSQLのアップグレードの手順はどうしますか？<br />
-<a href="#item3.7">3.7</a>) ハードウェアにはどんなコンピュータを使えばよいですか？<br />
+<a href="#item3.6">3.6</a>) PostgreSQLのアップグレードの手順はどうなりますか？<br />
+<a href="#item3.7">3.7</a>) ハードウェアにはどのようなコンピュータを使えばよいですか？<br />
 
 
 <h2 align="center">操作上の質問</h2>
 
 <a href="#item4.1">4.1</a>) 最初のいくつかのロウのみを <small>select</small> するにはどうしますか？ ランダムなロウ？ <br />
-<a href="#item4.7">4.2</a>) 定義されたテーブル、インデックス、データベース、および、ユーザをどのようにして見つけ出しますか？<br />
+<a href="#item4.2">4.2</a>) 定義されたテーブル、インデックス、データベース、および、ユーザをどのようにして見つけ出しますか？<br />
 <a href="#item4.3">4.3</a>) カラムのデータタイプを変更するにはどうしますか？<br />
 <a href="#item4.4">4.4</a>) ロウ、テーブル、データベースの最大サイズは？<br />
 <a href="#item4.5">4.5</a>) 一般的なテキストファイルのデータを保存するには、データベースのディスク容量はどのくらい必要ですか？<br />
@@ -261,7 +261,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
 <h4 id="item1.6">1.6</a>) 最新のリリースはどれですか？</h4>
 
-    <p>PostgreSQL の最新版はバージョン 8.2.1 です。</p>
+    <p>PostgreSQL の最新版はバージョン 8.2.3 です。</p>
     <p>我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを
     行なうことを計画しています。</p>
 
@@ -547,6 +547,15 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
    </dl>
    </p>
 
+<h3 id="item1.14">1.14) PostgreSQLは国毎の最新の夏時間の変更を扱いますか？</h3>
+
+   <p>合州国の夏時間の変更は、PostgreSQLのリリース8.0.4以降[4+]と、その
+      後のメジャーリリース、たとえば 8.1 には含まれています。カナダとオー
+      西部ストラリアの変更は、8.0.[10+], 8.1.[6+] および、その後のメジャー
+      リリースのすべてに含まれます。8.0より前のPosrgreSQLではオペレーティ
+      ングシステムのタイムゾーンデータベースを夏時間情報のために使ってい
+      ます。</p>
+
 <hr />
 
 <h2 align="center">ユーザ・クライアントの質問</h2>
@@ -683,6 +692,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     <p>サーバ構成変数には多くの <code>log_*</code> があり、クエリとプロ
     セスの統計を出力することができ、デバグと性能計測にとても便利です。</p>
 
+
 <h4 id="item3.5">3.5</a>) 接続しようとするときに <i>'Sorry, too many clients'</i> が出るのはなぜですか？</h4>
 
     <p> 既定での制限である 100 のデータベースセッションに達してしまって
@@ -691,27 +701,39 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     <i>max_connections</i> の値を変更して <i>postmaster</i>を再起動する
     ことで可能になります。</p>
 
-<h4 id="item3.6">3.6</a>)  PostgreSQLのアップグレードの手順はどうしますか？</h4>
 
-    <p>PostgreSQLチームはマイナーリリースではバグの修正しか行ないません
-    ので、たとえば 7.4.8 から 7.4.9 へのアップグレードにダンプとリスト
-    アは必要ありません。したがって、データベースサーバを一時的に停止して、
-    アップデートしたバイナリをインストールし、そして、サーバをリスタート
-    するだけです。</p>
+<h4 id="item3.6">3.6</a>)  PostgreSQLのアップグレードの手順はどうなりますか？</h4>
 
-    <p>全ユーザはできるだけ早く最新のマイナーリリースにアップグレードす
-    るべきです。すべてのアップグレードにリスクはつきものですが、
-    PostgreSQLのマイナーリリースは、なるべく小さなリスクで一般的なバグの
-    修正だけを目論んだものです。我々コミュニティの中ではアップグレード
-    <i>しない</i>ほうがもっとリスクが高いものと考えられています。</p>
+    <p>バージョン番号付けの方針については、<a
+    href="http://www.postgresql.org/support/versioning">http://www.postgresql.org/support/versioning</a>
+    をご覧ください。
+    </p>
 
-    <p>しかし、メジャーリリース（たとえば、7.3 から 7.4 のような）では、
-    システムテーブルやデータファイルの内部フォーマットの変更をしばしば行
-    ないます。これらの変更はたいてい複雑で、そのため我々はデータファイル
-    のための後方互換性を維持することができません。メジャーアップグレード
-    のためには、データベースのダンプ/リロードが必要です。</p>
+    <p>新しい機能を盛り込むPostgreSQLのメジャーリリースはだいたい年に1回
+    程度行ないます。メジャーリリースは、たとえば、8.1から8.2へのように、
+    バージョン番号の1番目か2番目の部分を増やしてゆきます。</p>
 
-<h4 id="item3.7">3.7</a>) ハードウェアにはどんなコンピュータを使えばよいですか？</h4>
+    <p>PostgreSQLのメジャーリリースは通常、システムテーブルとデータの内
+    部フォーマットを変更します。これらの変更はたいていは複雑なのでで、デー
+    タファイルの後方互換性を維持したりはしません。メジャーアップグレード
+    のためには、データベースのダンプ/リロードが必要になります。</p>
+
+    <p>マイナーリリースは、たとえば、8.1.5 から8.1.6へのように、バージョ
+    ン番号の3番目の値を増やします。PostgreSQLチームは、マイナーリリース
+    に対しては、バグフィクスしか行ないません。すべてのユーザは、できるだ
+    け最新のマイナーリリースに更新すべきです。アップグレードには、常にリ
+    スクがつきものですから、PostgreSQLのマイナー修正リリースでは、頻繁に
+    発生したり、セキュリティに関係したり、データがつぶれるバグだけを修正
+    し、アップグレードのリスクを最小限にとどめます。我々のコミュニティで
+    は、アップグレードするリスクよりも、アップグレード<i>しないリスク</i>
+    のほうが高いと考えています。</p>
+
+    <p>マイナーリリースのアップグレードにはダンプとリストアの必要はなく、
+    データベースサーバを停止して、アップデートされたバイナリをインストー
+    ルし、サーバをリスタートします。</p>
+
+
+<h4 id="item3.7">3.7</a>) ハードウェアにはどのようなコンピュータを使えばよいですか？</h4>
 
     <p>PCハードウェアはほとんど互換性がありますので、ほとんどの人は、す
     べてのPCハードウェアが同じ品質だと思い込む傾向があります。しかし、そ
@@ -723,6 +745,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     とができます。</p>
 
 <hr />
+
 
 <h2 align="center">操作上の質問</h2>
 
@@ -828,27 +851,27 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     <p> 例題として、各行に整数とテキスト記述を持つ 100,000行のファイルを
     考えてみましょう。テキストの文字列の平均長さを20バイトと仮定すると、
     フラットファイルの大きさは約2.8MB です。このデータを含む PostgreSQL
-    データベースファイルの大きさは次のように約5.6MBと見積もることができ
+    データベースファイルの大きさは次のように約5.2MBと見積もることができ
     ます： 
 
 <pre>
-    28 bytes: 各ロウのヘッダ(概算)
+    24 bytes: 各ロウのヘッダ(概算)
     24 bytes: 整数(int)フィールドとテキスト(text)フィールド
    + 4 bytes: ページ上のタップルへのポインタ
    ----------------------------------------
-    56 bytes per row
+    52 bytes per row
 
    PostgreSQL のデータページサイズは 8192バイト(8KB)なので:
 
    8192 bytes per page
    -------------------   =  146 rows per database page (切り捨て)
-     56 bytes per row
+     52 bytes per row
 
    100000 data rows
-   --------------------  =  685 database pages (切り上げ)
-      146 rows per page
+   --------------------  =  633 database pages (切り上げ)
+      158 rows per page
  
-  685 database pages * 8192 bytes per page  =  5,611,520 bytes (5.6 MB)
+  633 database pages * 8192 bytes per page  =  5,185,536 bytes (5.2 MB)
 </pre>
 
     <p>インデックスは、これほどのオーバヘッドは要求しませんが、インデッ
@@ -1175,8 +1198,8 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 <h4 id="item4.18">4.18</a>) 関数から複数のロウまたはカラムを返すにはどうしますか？</h4>
 
     <p>集合を返す関数(Set Returning Functions):
-    <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
-    http://techdocs.postgresql.org/guides/SetReturningFunctions</a>
+    <a href="http://www.postgresql.org/docs/techdocs.17">
+    http://www.postgresql.org/docs/techdocs.17</a></p>
     を使うと簡単です</p>。
 
 
@@ -1266,7 +1289,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2007年01月07日
+  最終更新日:	2007年03月25日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
