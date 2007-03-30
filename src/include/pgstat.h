@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.56 2007/03/22 19:53:31 momjian Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.57 2007/03/30 18:34:55 mha Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -30,7 +30,8 @@ typedef enum StatMsgType
 	PGSTAT_MTYPE_RESETCOUNTER,
 	PGSTAT_MTYPE_AUTOVAC_START,
 	PGSTAT_MTYPE_VACUUM,
-	PGSTAT_MTYPE_ANALYZE
+	PGSTAT_MTYPE_ANALYZE,
+	PGSTAT_MTYPE_BGWRITER
 } StatMsgType;
 
 /* ----------
@@ -213,6 +214,24 @@ typedef struct PgStat_MsgAnalyze
 
 
 /* ----------
+ * PgStat_MsgBgWriter           Sent by the bgwriter to update statistics.
+ * ----------
+ */
+typedef struct PgStat_MsgBgWriter
+{
+	PgStat_MsgHdr m_hdr;
+
+	PgStat_Counter  m_timed_checkpoints;
+	PgStat_Counter	m_requested_checkpoints;
+	PgStat_Counter	m_buf_written_checkpoints;
+	PgStat_Counter	m_buf_written_lru;
+	PgStat_Counter	m_buf_written_all;
+	PgStat_Counter	m_maxwritten_lru;
+	PgStat_Counter	m_maxwritten_all;
+} PgStat_MsgBgWriter;
+
+
+/* ----------
  * PgStat_Msg					Union over all possible messages.
  * ----------
  */
@@ -227,6 +246,7 @@ typedef union PgStat_Msg
 	PgStat_MsgAutovacStart msg_autovacuum;
 	PgStat_MsgVacuum msg_vacuum;
 	PgStat_MsgAnalyze msg_analyze;
+	PgStat_MsgBgWriter msg_bgwriter;
 } PgStat_Msg;
 
 
@@ -295,6 +315,21 @@ typedef struct PgStat_StatTabEntry
 	TimestampTz analyze_timestamp;		/* user initiated */
 	TimestampTz autovac_analyze_timestamp;		/* autovacuum initiated */
 } PgStat_StatTabEntry;
+
+
+/*
+ * Global statistics kept in the stats collector
+ */
+typedef struct PgStat_GlobalStats
+{
+	PgStat_Counter  timed_checkpoints;
+	PgStat_Counter  requested_checkpoints;
+	PgStat_Counter  buf_written_checkpoints;
+	PgStat_Counter  buf_written_lru;
+	PgStat_Counter  buf_written_all;
+	PgStat_Counter  maxwritten_lru;
+	PgStat_Counter  maxwritten_all;
+} PgStat_GlobalStats;
 
 
 /* ----------
@@ -478,6 +513,7 @@ extern void pgstat_initstats(PgStat_Info *stats, Relation rel);
 
 extern void pgstat_count_xact_commit(void);
 extern void pgstat_count_xact_rollback(void);
+extern void pgstat_send_bgwriter(void);
 
 /* ----------
  * Support functions for the SQL-callable functions to
@@ -488,5 +524,6 @@ extern PgStat_StatDBEntry *pgstat_fetch_stat_dbentry(Oid dbid);
 extern PgStat_StatTabEntry *pgstat_fetch_stat_tabentry(Oid relid);
 extern PgBackendStatus *pgstat_fetch_stat_beentry(int beid);
 extern int	pgstat_fetch_stat_numbackends(void);
+extern PgStat_GlobalStats *pgstat_fetch_global(void);
 
 #endif   /* PGSTAT_H */

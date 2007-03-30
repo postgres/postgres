@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.40 2007/03/16 17:57:36 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.41 2007/03/30 18:34:55 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,9 +61,19 @@ extern Datum pg_stat_get_db_tuples_inserted(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_tuples_updated(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_db_tuples_deleted(PG_FUNCTION_ARGS);
 
+extern Datum pg_stat_get_bgwriter_timed_checkpoints(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_bgwriter_requested_checkpoints(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_bgwriter_buf_written_checkpoints(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_bgwriter_buf_written_lru(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_bgwriter_buf_written_all(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_bgwriter_maxwritten_lru(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_bgwriter_maxwritten_all(PG_FUNCTION_ARGS);
+
 extern Datum pg_stat_clear_snapshot(PG_FUNCTION_ARGS);
 extern Datum pg_stat_reset(PG_FUNCTION_ARGS);
 
+/* Global bgwriter statistics, from bgwriter.c */
+extern PgStat_MsgBgWriter bgwriterStats;
 
 Datum
 pg_stat_get_numscans(PG_FUNCTION_ARGS)
@@ -754,6 +764,48 @@ pg_stat_get_db_tuples_deleted(PG_FUNCTION_ARGS)
 		result = (int64) (dbentry->n_tuples_deleted);
 
 	PG_RETURN_INT64(result);
+}
+
+Datum
+pg_stat_get_bgwriter_timed_checkpoints(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->timed_checkpoints);
+}
+
+Datum
+pg_stat_get_bgwriter_requested_checkpoints(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->requested_checkpoints);
+}
+
+Datum
+pg_stat_get_bgwriter_buf_written_checkpoints(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->buf_written_checkpoints);
+}
+
+Datum
+pg_stat_get_bgwriter_buf_written_lru(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->buf_written_lru);
+}
+
+Datum
+pg_stat_get_bgwriter_buf_written_all(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->buf_written_all);
+}
+
+Datum
+pg_stat_get_bgwriter_maxwritten_lru(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->maxwritten_lru);
+}
+
+Datum
+pg_stat_get_bgwriter_maxwritten_all(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_INT64(pgstat_fetch_global()->maxwritten_all);
 }
 
 

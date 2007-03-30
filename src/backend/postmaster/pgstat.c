@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.151 2007/03/28 22:17:12 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.152 2007/03/30 18:34:55 mha Exp $
  * ----------
  */
 #include "postgres.h"
@@ -135,6 +135,18 @@ static HTAB *pgStatDBHash = NULL;
 static PgBackendStatus *localBackendStatusTable = NULL;
 static int	localNumBackends = 0;
 
+/*
+ * BgWriter global statistics counters, from bgwriter.c
+ */
+extern PgStat_MsgBgWriter BgWriterStats;
+
+/*
+ * Cluster wide statistics, kept in the stats collector.
+ * Contains statistics that are not collected per database
+ * or per table.
+ */
+static PgStat_GlobalStats globalStats;
+
 static volatile bool need_exit = false;
 static volatile bool need_statwrite = false;
 
@@ -171,6 +183,7 @@ static void pgstat_recv_resetcounter(PgStat_MsgResetcounter *msg, int len);
 static void pgstat_recv_autovac(PgStat_MsgAutovacStart *msg, int len);
 static void pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len);
 static void pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len);
+static void pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len);
 
 
 /* ------------------------------------------------------------
@@ -1288,6 +1301,22 @@ pgstat_fetch_stat_numbackends(void)
 	return localNumBackends;
 }
 
+/*
+ * ---------
+ * pgstat_fetch_global() -
+ *
+ *  Support function for the SQL-callable pgstat* functions. Returns
+ *  a pointer to the global statistics struct.
+ * ---------
+ */
+PgStat_GlobalStats *
+pgstat_fetch_global(void)
+{
+	backend_read_statsfile();
+
+	return &globalStats;
+}
+
 
 /* ------------------------------------------------------------
  * Functions for management of the shared-memory PgBackendStatus array
@@ -1646,6 +1675,42 @@ pgstat_send(void *msg, int len)
 #endif
 }
 
+/* ----------
+ * pgstat_send_bgwriter() -
+ *
+ *      Send bgwriter statistics to the collector
+ * ----------
+ */
+void
+pgstat_send_bgwriter(void)
+{
+	/*
+	 * This function can be called even if nothing at all has happened.
+	 * In this case, avoid sending a completely empty message to
+	 * the stats collector.
+	 */
+	if (BgWriterStats.m_timed_checkpoints == 0 &&
+		BgWriterStats.m_requested_checkpoints == 0 &&
+		BgWriterStats.m_buf_written_checkpoints == 0 &&
+		BgWriterStats.m_buf_written_lru == 0 &&
+		BgWriterStats.m_buf_written_all == 0 &&
+		BgWriterStats.m_maxwritten_lru == 0 &&
+		BgWriterStats.m_maxwritten_all == 0)
+		return;
+
+	/*
+	 * Prepare and send the message
+	 */
+	pgstat_setheader(&BgWriterStats.m_hdr, PGSTAT_MTYPE_BGWRITER);
+	pgstat_send(&BgWriterStats, sizeof(BgWriterStats));
+
+	/*
+	 * Clear out the bgwriter statistics buffer, so it can be
+	 * re-used.
+	 */
+	memset(&BgWriterStats, 0, sizeof(BgWriterStats));
+}
+
 
 /* ----------
  * PgstatCollectorMain() -
@@ -1892,6 +1957,10 @@ PgstatCollectorMain(int argc, char *argv[])
 					pgstat_recv_analyze((PgStat_MsgAnalyze *) &msg, len);
 					break;
 
+				case PGSTAT_MTYPE_BGWRITER:
+					pgstat_recv_bgwriter((PgStat_MsgBgWriter *) &msg, len);
+					break;
+
 				default:
 					break;
 			}
@@ -2031,6 +2100,11 @@ pgstat_write_statsfile(void)
 	fwrite(&format_id, sizeof(format_id), 1, fpout);
 
 	/*
+	 * Write global stats struct
+	 */
+	fwrite(&globalStats, sizeof(globalStats), 1, fpout);
+
+	/*
 	 * Walk through the database table.
 	 */
 	hash_seq_init(&hstat, pgStatDBHash);
@@ -2133,6 +2207,12 @@ pgstat_read_statsfile(Oid onlydb)
 						 HASH_ELEM | HASH_FUNCTION | HASH_CONTEXT);
 
 	/*
+	 * Clear out global statistics so they start from zero in case we can't
+	 * load an existing statsfile.
+	 */
+	memset(&globalStats, 0, sizeof(globalStats));
+
+	/*
 	 * Try to open the status file. If it doesn't exist, the backends simply
 	 * return zero for anything and the collector simply starts from scratch
 	 * with empty counters.
@@ -2145,6 +2225,16 @@ pgstat_read_statsfile(Oid onlydb)
 	 */
 	if (fread(&format_id, 1, sizeof(format_id), fpin) != sizeof(format_id)
 		|| format_id != PGSTAT_FILE_FORMAT_ID)
+	{
+		ereport(pgStatRunningInCollector ? LOG : WARNING,
+				(errmsg("corrupted pgstat.stat file")));
+		goto done;
+	}
+
+	/*
+	 * Read global stats struct
+	 */
+	if (fread(&globalStats, 1, sizeof(globalStats), fpin) != sizeof(globalStats))
 	{
 		ereport(pgStatRunningInCollector ? LOG : WARNING,
 				(errmsg("corrupted pgstat.stat file")));
@@ -2655,4 +2745,23 @@ pgstat_recv_analyze(PgStat_MsgAnalyze *msg, int len)
 	tabentry->n_live_tuples = msg->m_live_tuples;
 	tabentry->n_dead_tuples = msg->m_dead_tuples;
 	tabentry->last_anl_tuples = msg->m_live_tuples + msg->m_dead_tuples;
+}
+
+
+/* ----------
+ * pgstat_recv_bgwriter() -
+ *
+ *	Process a BGWRITER message.
+ * ----------
+ */
+static void
+pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
+{
+	globalStats.timed_checkpoints += msg->m_timed_checkpoints;
+	globalStats.requested_checkpoints += msg->m_requested_checkpoints;
+	globalStats.buf_written_checkpoints += msg->m_buf_written_checkpoints;
+	globalStats.buf_written_lru += msg->m_buf_written_lru;
+	globalStats.buf_written_all += msg->m_buf_written_all;
+	globalStats.maxwritten_lru += msg->m_maxwritten_lru;
+	globalStats.maxwritten_all += msg->m_maxwritten_all;
 }

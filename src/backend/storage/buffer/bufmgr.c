@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.215 2007/02/01 19:10:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.216 2007/03/30 18:34:55 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,12 @@ static bool IsForInput;
 
 /* local state for LockBufferForCleanup */
 static volatile BufferDesc *PinCountWaitBuf = NULL;
+
+/*
+ * Global statistics for the bgwriter. The contents of this variable
+ * only makes sense in the bgwriter process.
+ */
+extern PgStat_MsgBgWriter BgWriterStats;
 
 
 static bool PinBuffer(volatile BufferDesc *buf);
@@ -964,6 +970,8 @@ BufferSync(void)
 	{
 		if (SyncOneBuffer(buf_id, false))
 		{
+			BgWriterStats.m_buf_written_checkpoints++;
+
 			/*
 			 * If in bgwriter, absorb pending fsync requests after each
 			 * WRITES_PER_ABSORB write operations, to prevent overflow of the
@@ -1027,9 +1035,13 @@ BgBufferSync(void)
 			if (SyncOneBuffer(buf_id1, false))
 			{
 				if (++num_written >= bgwriter_all_maxpages)
+				{
+					BgWriterStats.m_maxwritten_all++;
 					break;
+				}
 			}
 		}
+		BgWriterStats.m_buf_written_all += num_written;
 	}
 
 	/*
@@ -1048,11 +1060,15 @@ BgBufferSync(void)
 			if (SyncOneBuffer(buf_id2, true))
 			{
 				if (++num_written >= bgwriter_lru_maxpages)
+				{
+					BgWriterStats.m_maxwritten_lru++;
 					break;
+				}
 			}
 			if (++buf_id2 >= NBuffers)
 				buf_id2 = 0;
 		}
+		BgWriterStats.m_buf_written_lru += num_written;
 	}
 }
 

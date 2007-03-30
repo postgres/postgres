@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.36 2007/03/16 17:57:36 mha Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.37 2007/03/30 18:34:55 mha Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -364,3 +364,13 @@ CREATE VIEW pg_stat_database AS
             pg_stat_get_db_tuples_updated(D.oid) AS tup_updated,
             pg_stat_get_db_tuples_deleted(D.oid) AS tup_deleted
     FROM pg_database D;
+
+CREATE VIEW pg_stat_bgwriter AS
+	SELECT
+			pg_stat_get_bgwriter_timed_checkpoints() AS checkpoints_timed,
+			pg_stat_get_bgwriter_requested_checkpoints() AS checkpoints_req,
+			pg_stat_get_bgwriter_buf_written_checkpoints() AS buffers_checkpoint,
+			pg_stat_get_bgwriter_buf_written_lru() AS buffers_lru,
+			pg_stat_get_bgwriter_buf_written_all() AS buffers_all,
+			pg_stat_get_bgwriter_maxwritten_lru() AS maxwritten_lru,
+			pg_stat_get_bgwriter_maxwritten_all() AS maxwritten_all;

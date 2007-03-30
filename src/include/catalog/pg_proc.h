@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.451 2007/03/27 23:21:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.452 2007/03/30 18:34:56 mha Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2987,6 +2987,20 @@ DATA(insert OID = 2761 (  pg_stat_get_db_tuples_updated PGNSP PGUID 12 1 0 f f t
 DESCR("Statistics: Tuples updated in database");
 DATA(insert OID = 2762 (  pg_stat_get_db_tuples_deleted PGNSP PGUID 12 1 0 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_db_tuples_deleted - _null_ ));
 DESCR("Statistics: Tuples deleted in database");
+DATA(insert OID = 2769 ( pg_stat_get_bgwriter_timed_checkpoints PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_timed_checkpoints - _null_ ));
+DESCR("Statistics: Number of timed checkpoints started by the bgwriter");
+DATA(insert OID = 2770 ( pg_stat_get_bgwriter_requested_checkpoints PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_requested_checkpoints - _null_ ));
+DESCR("Statistics: Number of backend requested checkpoints started by the bgwriter");
+DATA(insert OID = 2771 ( pg_stat_get_bgwriter_buf_written_checkpoints PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_buf_written_checkpoints - _null_ ));
+DESCR("Statistics: Number of buffers written by the bgwriter during checkpoints");
+DATA(insert OID = 2772 ( pg_stat_get_bgwriter_buf_written_lru PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_buf_written_lru - _null_ ));
+DESCR("Statistics: Number of buffers written by the bgwriter during LRU scans");
+DATA(insert OID = 2773 ( pg_stat_get_bgwriter_buf_written_all PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_buf_written_all - _null_ ));
+DESCR("Statistics: Number of buffers written by the bgwriter during all-buffer scans");
+DATA(insert OID = 2774 ( pg_stat_get_bgwriter_maxwritten_lru PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_maxwritten_lru - _null_ ));
+DESCR("Statistics: Number of times the bgwriter stopped processing when it had written too many buffers during LRU scans");
+DATA(insert OID = 2775 ( pg_stat_get_bgwriter_maxwritten_all PGNSP PGUID 12 1 0 f f t f s 0 20 "" _null_ _null_ _null_ pg_stat_get_bgwriter_maxwritten_all - _null_ ));
+DESCR("Statistics: Number of times the bgwriter stopped processing when it had written too many buffers during all-buffer scans");
 DATA(insert OID = 2230 (  pg_stat_clear_snapshot		PGNSP PGUID 12 1 0 f f f f v 0 2278  "" _null_ _null_ _null_	pg_stat_clear_snapshot - _null_ ));
 DESCR("Statistics: Discard current transaction's statistics snapshot");
 DATA(insert OID = 2274 (  pg_stat_reset					PGNSP PGUID 12 1 0 f f f f v 0 2278  "" _null_ _null_ _null_	pg_stat_reset - _null_ ));

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.36 2007/01/17 16:25:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.37 2007/03/30 18:34:55 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@
 #include "access/xlog_internal.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "pgstat.h"
 #include "postmaster/bgwriter.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
@@ -123,6 +124,13 @@ typedef struct
 } BgWriterShmemStruct;
 
 static BgWriterShmemStruct *BgWriterShmem;
+
+/*
+ * BgWriter statistics counters.
+ * Stored directly in a stats message structure so it can be sent
+ * without needing to copy things around.
+ */
+PgStat_MsgBgWriter BgWriterStats;
 
 /*
  * GUC parameters
@@ -243,6 +251,11 @@ BackgroundWriterMain(void)
 	MemoryContextSwitchTo(bgwriter_context);
 
 	/*
+	 * Initialize statistics counters to zero
+	 */
+	memset(&BgWriterStats, 0, sizeof(BgWriterStats));
+
+	/*
 	 * If an exception is encountered, processing resumes here.
 	 *
 	 * See notes in postgres.c about the design of this coding.
@@ -354,6 +367,7 @@ BackgroundWriterMain(void)
 			checkpoint_requested = false;
 			do_checkpoint = true;
 			force_checkpoint = true;
+			BgWriterStats.m_requested_checkpoints++;
 		}
 		if (shutdown_requested)
 		{
@@ -376,7 +390,11 @@ BackgroundWriterMain(void)
 		now = time(NULL);
 		elapsed_secs = now - last_checkpoint_time;
 		if (elapsed_secs >= CheckPointTimeout)
+		{
 			do_checkpoint = true;
+			if (!force_checkpoint)
+				BgWriterStats.m_timed_checkpoints++;
+		}
 
 		/*
 		 * Do a checkpoint if requested, otherwise do one cycle of
@@ -472,6 +490,11 @@ BackgroundWriterMain(void)
 				last_xlog_switch_time = now;
 			}
 		}
+
+		/*
+		 * Send off activity statistics to the stats collector
+		 */
+		pgstat_send_bgwriter();
 
 		/*
 		 * Nap for the configured time, or sleep for 10 seconds if there is no
