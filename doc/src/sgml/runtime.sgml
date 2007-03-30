@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.380 2007/03/06 09:59:22 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.381 2007/03/30 03:19:02 momjian Exp $ -->
 
 <chapter Id="runtime">
  <title>Operating System Environment</title>
@@ -1574,10 +1574,11 @@ chmod og-rwx server.key
    certificates of the <acronym>CA</acronym>(s) you wish to check for in
    the file <filename>root.crt</filename> in the data directory.  When
    present, a client certificate will be requested from the client
-   during SSL connection startup, and it must have been signed by one of the
-   certificates present in <filename>root.crt</filename>.  Certificate 
-   Revocation List (CRL) entries are also checked if the file 
-   <filename>root.crl</filename> exists.
+   during SSL connection startup, and it must have been signed by one of
+   the certificates present in <filename>root.crt</filename>.  (See <xref
+   linkend="libpq-ssl"> for a description of how to set up client
+   certificates.) Certificate Revocation List (CRL) entries are also
+   checked if the file <filename>root.crl</filename> exists.
   </para>
 
   <para>
