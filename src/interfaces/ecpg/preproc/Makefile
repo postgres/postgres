@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2007, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.125 2007/03/18 17:57:34 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.126 2007/04/01 08:56:58 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -74,7 +74,7 @@ uninstall:
 	rm -f '$(DESTDIR)$(bindir)/ecpg$(X)'
 
 clean distclean:
-	rm -f *.o ecpg$(X)
+	rm -f *.o ecpg$(X) parser.c
 # garbage from partial builds
 	@rm -f y.tab.c y.tab.h
 # garbage from development
