@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.452 2007/03/30 18:34:56 mha Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.453 2007/04/01 09:00:25 petere Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4099,6 +4099,20 @@ DATA(insert OID = 2929 (  table_to_xml_and_xmlschema  PGNSP PGUID 12 100 0 f f t
 DESCR("map table contents and structure to XML and XML Schema");
 DATA(insert OID = 2930 (  query_to_xml_and_xmlschema  PGNSP PGUID 12 100 0 f f t f s 4 142 "25 16 16 25" _null_ _null_ "{query,nulls,tableforest,targetns}" query_to_xml_and_xmlschema - _null_ ));
 DESCR("map query result and structure to XML and XML Schema");
+
+DATA(insert OID = 2933 (  schema_to_xml               PGNSP PGUID 12 100 0 f f t f s 4 142 "19 16 16 25" _null_ _null_ "{schema,nulls,tableforest,targetns}" schema_to_xml - _null_ ));
+DESCR("map schema contents to XML");
+DATA(insert OID = 2934 (  schema_to_xmlschema         PGNSP PGUID 12 100 0 f f t f s 4 142 "19 16 16 25" _null_ _null_ "{schema,nulls,tableforest,targetns}" schema_to_xmlschema - _null_ ));
+DESCR("map schema structure to XML Schema");
+DATA(insert OID = 2935 (  schema_to_xml_and_xmlschema PGNSP PGUID 12 100 0 f f t f s 4 142 "19 16 16 25" _null_ _null_ "{schema,nulls,tableforest,targetns}" schema_to_xml_and_xmlschema - _null_ ));
+DESCR("map schema contents and structure to XML and XML Schema");
+
+DATA(insert OID = 2936 (  database_to_xml             PGNSP PGUID 12 100 0 f f t f s 3 142 "16 16 25" _null_ _null_ "{nulls,tableforest,targetns}" database_to_xml - _null_ ));
+DESCR("map database contents to XML");
+DATA(insert OID = 2937 (  database_to_xmlschema       PGNSP PGUID 12 100 0 f f t f s 3 142 "16 16 25" _null_ _null_ "{nulls,tableforest,targetns}" database_to_xmlschema - _null_ ));
+DESCR("map database structure to XML Schema");
+DATA(insert OID = 2938 (  database_to_xml_and_xmlschema PGNSP PGUID 12 100 0 f f t f s 3 142 "16 16 25" _null_ _null_ "{nulls,tableforest,targetns}" database_to_xml_and_xmlschema - _null_ ));
+DESCR("map database contents and structure to XML and XML Schema");
 
 DATA(insert OID = 2931 (  xmlpath      PGNSP PGUID 12 1 0 f f f f i 3 143 "25 142 1009" _null_ _null_ _null_ xmlpath - _null_ ));
 DESCR("evaluate XPath expression, with namespaces support");

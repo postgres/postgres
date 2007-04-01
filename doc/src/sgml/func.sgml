@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.371 2007/03/25 11:56:01 ishii Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.372 2007/04/01 09:00:24 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11427,7 +11427,7 @@ cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, t
     query whose text is passed as parameter
     <parameter>query</parameter> and maps the result set.
     <function>cursor_to_xml</function> fetches the indicated number of
-    rows from the cursor specificed by the parameter
+    rows from the cursor specified by the parameter
     <parameter>cursor</parameter>.  This variant is recommendable if
     large tables have to be mapped, because the result value is built
     up in memory by each function.
@@ -11492,7 +11492,7 @@ cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, t
     values should be included in the output.  If true, null values in
     columns are represented as
 <screen><![CDATA[
-<columname xsi:nil="true"/>
+<columnname xsi:nil="true"/>
 ]]></screen>
     where <literal>xsi</literal> is the XML namespace prefix for XML
     Schema Instance.  An appropriate namespace declaration will be
@@ -11528,6 +11528,65 @@ cursor_to_xmlschema(cursor refcursor, nulls boolean, tableforest boolean, target
 table_to_xml_and_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
 query_to_xml_and_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)
 </synopsis>
+   </para>
+
+   <para>
+    In addition, the following functions are available to produce
+    analogous mappings of entire schemas or the entire current
+    database.
+<synopsis>
+schema_to_xml(schema name, nulls boolean, tableforest boolean, targetns text)
+schema_to_xmlschema(schema name, nulls boolean, tableforest boolean, targetns text)
+schema_to_xml_and_xmlschema(schema name, nulls boolean, tableforest boolean, targetns text)
+
+database_to_xml(nulls boolean, tableforest boolean, targetns text)
+database_to_xmlschema(nulls boolean, tableforest boolean, targetns text)
+database_to_xml_and_xmlschema(nulls boolean, tableforest boolean, targetns text)
+</synopsis>
+
+    Note that these potentially produce a lot of data, which needs to
+    be built up in memory.  When requesting content mappings of large
+    schemas or databases, it may be worthwhile to consider mapping the
+    tables separately instead, possibly even through a cursor.
+   </para>
+
+   <para>
+    The result of a schema content mapping looks like this:
+
+<screen><![CDATA[
+<schemaname>
+
+table1-mapping
+
+table2-mapping
+
+...
+
+</schemaname>]]></screen>
+
+    where the format of a table mapping depends on the
+    <parameter>tableforest</parameter> parameter as explained above.
+   </para>
+
+   <para>
+    The result of a database content mapping looks like this:
+
+<screen><![CDATA[
+<dbname>
+
+<schema1name>
+  ...
+</schema1name>
+
+<schema2name>
+  ...
+</schema2name>
+
+...
+
+</dbname>]]></screen>
+
+    where the schema mapping is as above.
    </para>
 
    <para>
