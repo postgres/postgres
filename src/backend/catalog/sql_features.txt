@@ -452,24 +452,24 @@ X034	XMLAgg			YES
 X035	XMLAgg: ORDER BY option			NO	
 X036	XMLComment			YES	
 X037	XMLPI			YES	
-X041	Basic table mapping: nulls absent			NO	
-X042	Basic table mapping: null as nil			NO	
-X043	Basic table mapping: table as forest			NO	
-X044	Basic table mapping: table as element			NO	
-X045	Basic table mapping: with target namespace			NO	
-X046	Basic table mapping: data mapping			NO	
-X047	Basic table mapping: metadata mapping			NO	
-X048	Basic table mapping: base64 encoding of binary strings			NO	
-X049	Basic table mapping: hex encoding of binary strings			NO	
-X051	Advanced table mapping: nulls absent			NO	
-X052	Advanced table mapping: null as nil			NO	
-X053	Advanced table mapping: table as forest			NO	
-X054	Advanced table mapping: table as element			NO	
-X055	Advanced table mapping: target namespace			NO	
-X056	Advanced table mapping: data mapping			NO	
-X057	Advanced table mapping: metadata mapping			NO	
-X058	Advanced table mapping: base64 encoding of binary strings			NO	
-X059	Advanced table mapping: hex encoding of binary strings			NO	
+X041	Basic table mapping: nulls absent			YES	
+X042	Basic table mapping: null as nil			YES	
+X043	Basic table mapping: table as forest			YES	
+X044	Basic table mapping: table as element			YES	
+X045	Basic table mapping: with target namespace			YES	
+X046	Basic table mapping: data mapping			YES	
+X047	Basic table mapping: metadata mapping			YES	
+X048	Basic table mapping: base64 encoding of binary strings			YES	
+X049	Basic table mapping: hex encoding of binary strings			YES	
+X051	Advanced table mapping: nulls absent			YES	
+X052	Advanced table mapping: null as nil			YES	
+X053	Advanced table mapping: table as forest			YES	
+X054	Advanced table mapping: table as element			YES	
+X055	Advanced table mapping: target namespace			YES	
+X056	Advanced table mapping: data mapping			YES	
+X057	Advanced table mapping: metadata mapping			YES	
+X058	Advanced table mapping: base64 encoding of binary strings			YES	
+X059	Advanced table mapping: hex encoding of binary strings			YES	
 X060	XMLParse: CONTENT option			YES	
 X061	XMLParse: DOCUMENT option			YES	
 X062	XMLParse: explicit WHITESPACE option			YES	
