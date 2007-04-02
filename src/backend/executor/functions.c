@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.113 2007/04/02 03:49:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.114 2007/04/02 18:49:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -849,9 +849,9 @@ ShutdownSQLFunction(Datum arg)
  * ANYELEMENT as rettype.  (This means we can't check the type during function
  * definition of a polymorphic function.)
  *
- * The return value is true if the function returns the entire tuple result
- * of its final SELECT, and false otherwise.  Note that because we allow
- * "SELECT rowtype_expression", this may be false even when the declared
+ * This function returns true if the sql function returns the entire tuple
+ * result of its final SELECT, and false otherwise.  Note that because we
+ * allow "SELECT rowtype_expression", this may be false even when the declared
  * function return type is a rowtype.
  *
  * If junkFilter isn't NULL, then *junkFilter is set to a JunkFilter defined
@@ -864,7 +864,6 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					JunkFilter **junkFilter)
 {
 	Query	   *parse;
-	bool		isSelect;
 	List	   *tlist;
 	ListCell   *tlistitem;
 	int			tlistlen;
@@ -890,32 +889,30 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	parse = (Query *) lfirst(list_tail(queryTreeList));
 
 	/*
-	 * Note: eventually replace this with QueryReturnsTuples?  We'd need a
-	 * more general method of determining the output type, though.
+	 * If the last query isn't a SELECT, the return type must be VOID.
+	 *
+	 * Note: eventually replace this test with QueryReturnsTuples?  We'd need
+	 * a more general method of determining the output type, though.
 	 */
-	isSelect = (parse->commandType == CMD_SELECT && parse->into == NULL);
-
-	/*
-	 * The last query must be a SELECT if and only if return type isn't VOID.
-	 */
-	if (rettype == VOIDOID)
+	if (!(parse->commandType == CMD_SELECT && parse->into == NULL))
 	{
-		if (isSelect)
+		if (rettype != VOIDOID)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 			 errmsg("return type mismatch in function declared to return %s",
 					format_type_be(rettype)),
-			 errdetail("Function's final statement must not be a SELECT.")));
+				 errdetail("Function's final statement must be a SELECT.")));
 		return false;
 	}
 
-	/* by here, the function is declared to return some type */
-	if (!isSelect)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-			 errmsg("return type mismatch in function declared to return %s",
-					format_type_be(rettype)),
-				 errdetail("Function's final statement must be a SELECT.")));
+	/*
+	 * OK, it's a SELECT, so it must return something matching the declared
+	 * type.  (We used to insist that the declared type not be VOID in this
+	 * case, but that makes it hard to write a void function that exits
+	 * after calling another void function.  Instead, we insist that the
+	 * SELECT return void ... so void is treated as if it were a scalar type
+	 * below.)
+	 */
 
 	/*
 	 * Count the non-junk entries in the result targetlist.
@@ -927,10 +924,11 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 
 	if (fn_typtype == TYPTYPE_BASE ||
 		fn_typtype == TYPTYPE_DOMAIN ||
-		fn_typtype == TYPTYPE_ENUM)
+		fn_typtype == TYPTYPE_ENUM ||
+		rettype == VOIDOID)
 	{
 		/*
-		 * For base-type returns, the target list should have exactly one
+		 * For scalar-type returns, the target list should have exactly one
 		 * entry, and its type should agree with what the user declared. (As
 		 * of Postgres 7.2, we accept binary-compatible types too.)
 		 */
