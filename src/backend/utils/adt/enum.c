@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/backend/utils/adt/enum.c,v 1.1 2007/04/02 03:49:39 tgl Exp $
+ *    $PostgreSQL: pgsql/src/backend/utils/adt/enum.c,v 1.2 2007/04/02 22:14:17 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,15 @@ cstring_enum(char *name, Oid enumtypoid)
 {
 	HeapTuple tup;
 	Oid enumoid;
+
+	/* must check length to prevent Assert failure within SearchSysCache */
+
+	if (strlen(name) >= NAMEDATALEN)
+        ereport(ERROR,
+                (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+                 errmsg("invalid input value for enum %s: \"%s\"",
+						format_type_be(enumtypoid),
+                        name)));
 
 	tup = SearchSysCache(ENUMTYPOIDNAME,
 						 ObjectIdGetDatum(enumtypoid),
