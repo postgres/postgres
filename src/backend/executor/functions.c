@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.112 2007/03/13 00:33:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.113 2007/04/02 03:49:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,7 @@ init_sql_fcache(FmgrInfo *finfo)
 	 */
 	rettype = procedureStruct->prorettype;
 
-	if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)
+	if (IsPolymorphicType(rettype))
 	{
 		rettype = get_fn_expr_rettype(finfo);
 		if (rettype == InvalidOid)		/* this probably should not happen */
@@ -218,7 +218,7 @@ init_sql_fcache(FmgrInfo *finfo)
 		{
 			Oid			argtype = argOidVect[argnum];
 
-			if (argtype == ANYARRAYOID || argtype == ANYELEMENTOID)
+			if (IsPolymorphicType(argtype))
 			{
 				argtype = get_fn_expr_argtype(finfo, argnum);
 				if (argtype == InvalidOid)
@@ -845,9 +845,9 @@ ShutdownSQLFunction(Datum arg)
  * to be sure that the user is returning the type he claims.
  *
  * For a polymorphic function the passed rettype must be the actual resolved
- * output type of the function; we should never see ANYARRAY or ANYELEMENT
- * as rettype.  (This means we can't check the type during function definition
- * of a polymorphic function.)
+ * output type of the function; we should never see ANYARRAY, ANYENUM or
+ * ANYELEMENT as rettype.  (This means we can't check the type during function
+ * definition of a polymorphic function.)
  *
  * The return value is true if the function returns the entire tuple result
  * of its final SELECT, and false otherwise.  Note that because we allow
@@ -925,7 +925,9 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 
 	fn_typtype = get_typtype(rettype);
 
-	if (fn_typtype == 'b' || fn_typtype == 'd')
+	if (fn_typtype == TYPTYPE_BASE ||
+		fn_typtype == TYPTYPE_DOMAIN ||
+		fn_typtype == TYPTYPE_ENUM)
 	{
 		/*
 		 * For base-type returns, the target list should have exactly one
@@ -948,7 +950,7 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 					 errdetail("Actual return type is %s.",
 							   format_type_be(restype))));
 	}
-	else if (fn_typtype == 'c' || rettype == RECORDOID)
+	else if (fn_typtype == TYPTYPE_COMPOSITE || rettype == RECORDOID)
 	{
 		/* Returns a rowtype */
 		TupleDesc	tupdesc;
@@ -1053,13 +1055,13 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 		/* Report that we are returning entire tuple result */
 		return true;
 	}
-	else if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)
+	else if (IsPolymorphicType(rettype))
 	{
 		/* This should already have been caught ... */
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine result data type"),
-				 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
+				 errdetail("A function returning a polymorphic type must have at least one polymorphic argument.")));
 	}
 	else
 		ereport(ERROR,

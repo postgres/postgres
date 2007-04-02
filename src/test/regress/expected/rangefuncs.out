@@ -500,7 +500,7 @@ SELECT dup(22);
 (1 row)
 
 SELECT dup('xyz');	-- fails
-ERROR:  could not determine anyarray/anyelement type because input has type "unknown"
+ERROR:  could not determine polymorphic type because input has type "unknown"
 SELECT dup('xyz'::text);
         dup        
 -------------------
@@ -527,4 +527,4 @@ DROP FUNCTION dup(anyelement);
 CREATE FUNCTION bad (f1 int, out f2 anyelement, out f3 anyarray)
 AS 'select $1, array[$1,$1]' LANGUAGE sql;
 ERROR:  cannot determine result data type
-DETAIL:  A function returning "anyarray" or "anyelement" must have at least one argument of either type.
+DETAIL:  A function returning a polymorphic type must have at least one polymorphic argument.

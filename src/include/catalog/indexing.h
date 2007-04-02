@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.98 2007/02/14 01:58:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/indexing.h,v 1.99 2007/04/02 03:49:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,11 @@ DECLARE_UNIQUE_INDEX(pg_description_o_c_o_index, 2675, on pg_description using b
 #define DescriptionObjIndexId  2675
 DECLARE_UNIQUE_INDEX(pg_shdescription_o_c_index, 2397, on pg_shdescription using btree(objoid oid_ops, classoid oid_ops));
 #define SharedDescriptionObjIndexId 2397
+
+DECLARE_UNIQUE_INDEX(pg_enum_oid_index, 3502, on pg_enum using btree(oid oid_ops));
+#define EnumOidIndexId  3502
+DECLARE_UNIQUE_INDEX(pg_enum_typid_label_index, 3503, on pg_enum using btree(enumtypid oid_ops, enumlabel name_ops));
+#define EnumTypIdLabelIndexId 3503
 
 /* This following index is not used for a cache and is not unique */
 DECLARE_INDEX(pg_index_indrelid_index, 2678, on pg_index using btree(indrelid oid_ops));

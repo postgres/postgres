@@ -1,8 +1,8 @@
 # ----------
 # The first group of parallel test
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.41 2007/03/19 16:44:41 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.42 2007/04/02 03:49:42 tgl Exp $
 # ----------
-test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeric uuid
+test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeric uuid enum
 
 # Depends on things setup during char, varchar and text
 test: strings

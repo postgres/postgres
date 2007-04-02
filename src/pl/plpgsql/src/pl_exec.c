@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.192 2007/03/27 23:21:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.193 2007/04/02 03:49:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3294,8 +3294,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				PLpgSQL_row *row = (PLpgSQL_row *) target;
 
 				/* Source must be of RECORD or composite type */
-				if (!(valtype == RECORDOID ||
-					  get_typtype(valtype) == 'c'))
+				if (!type_is_rowtype(valtype))
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg("cannot assign non-composite value to a row variable")));
@@ -3337,8 +3336,7 @@ exec_assign_value(PLpgSQL_execstate *estate,
 				PLpgSQL_rec *rec = (PLpgSQL_rec *) target;
 
 				/* Source must be of RECORD or composite type */
-				if (!(valtype == RECORDOID ||
-					  get_typtype(valtype) == 'c'))
+				if (!type_is_rowtype(valtype))
 					ereport(ERROR,
 							(errcode(ERRCODE_DATATYPE_MISMATCH),
 							 errmsg("cannot assign non-composite value to a record variable")));

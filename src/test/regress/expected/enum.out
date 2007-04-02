@@ -1,0 +1,407 @@
+--
+-- Enum tests
+--
+CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple');
+--
+-- Did it create the right number of rows?
+--
+SELECT COUNT(*) FROM pg_enum WHERE enumtypid = 'rainbow'::regtype;
+ count 
+-------
+     6
+(1 row)
+
+--
+-- I/O functions
+--
+SELECT 'red'::rainbow;
+ rainbow 
+---------
+ red
+(1 row)
+
+SELECT 'mauve'::rainbow;
+ERROR:  invalid input value for enum rainbow: "mauve"
+--
+-- Basic table creation, row selection
+--
+CREATE TABLE enumtest (col rainbow);
+INSERT INTO enumtest values ('red'), ('orange'), ('yellow'), ('green');
+COPY enumtest FROM stdin;
+SELECT * FROM enumtest;
+  col   
+--------
+ red
+ orange
+ yellow
+ green
+ blue
+ purple
+(6 rows)
+
+--
+-- Operators, no index
+--
+SELECT * FROM enumtest WHERE col = 'orange';
+  col   
+--------
+ orange
+(1 row)
+
+SELECT * FROM enumtest WHERE col <> 'orange' ORDER BY col;
+  col   
+--------
+ red
+ yellow
+ green
+ blue
+ purple
+(5 rows)
+
+SELECT * FROM enumtest WHERE col > 'yellow' ORDER BY col;
+  col   
+--------
+ green
+ blue
+ purple
+(3 rows)
+
+SELECT * FROM enumtest WHERE col >= 'yellow' ORDER BY col;
+  col   
+--------
+ yellow
+ green
+ blue
+ purple
+(4 rows)
+
+SELECT * FROM enumtest WHERE col < 'green' ORDER BY col;
+  col   
+--------
+ red
+ orange
+ yellow
+(3 rows)
+
+SELECT * FROM enumtest WHERE col <= 'green' ORDER BY col;
+  col   
+--------
+ red
+ orange
+ yellow
+ green
+(4 rows)
+
+--
+-- Cast to/from text
+--
+SELECT 'red'::rainbow::text || 'hithere';
+  ?column?  
+------------
+ redhithere
+(1 row)
+
+SELECT 'red'::text::rainbow = 'red'::rainbow;
+ ?column? 
+----------
+ t
+(1 row)
+
+--
+-- Aggregates
+--
+SELECT min(col) FROM enumtest;
+ min 
+-----
+ red
+(1 row)
+
+SELECT max(col) FROM enumtest;
+  max   
+--------
+ purple
+(1 row)
+
+SELECT max(col) FROM enumtest WHERE col < 'green';
+  max   
+--------
+ yellow
+(1 row)
+
+--
+-- Index tests, force use of index
+--
+SET enable_seqscan = off;
+SET enable_bitmapscan = off;
+--
+-- Btree index / opclass with the various operators
+--
+CREATE UNIQUE INDEX enumtest_btree ON enumtest USING btree (col);
+SELECT * FROM enumtest WHERE col = 'orange';
+  col   
+--------
+ orange
+(1 row)
+
+SELECT * FROM enumtest WHERE col <> 'orange' ORDER BY col;
+  col   
+--------
+ red
+ yellow
+ green
+ blue
+ purple
+(5 rows)
+
+SELECT * FROM enumtest WHERE col > 'yellow' ORDER BY col;
+  col   
+--------
+ green
+ blue
+ purple
+(3 rows)
+
+SELECT * FROM enumtest WHERE col >= 'yellow' ORDER BY col;
+  col   
+--------
+ yellow
+ green
+ blue
+ purple
+(4 rows)
+
+SELECT * FROM enumtest WHERE col < 'green' ORDER BY col;
+  col   
+--------
+ red
+ orange
+ yellow
+(3 rows)
+
+SELECT * FROM enumtest WHERE col <= 'green' ORDER BY col;
+  col   
+--------
+ red
+ orange
+ yellow
+ green
+(4 rows)
+
+SELECT min(col) FROM enumtest;
+ min 
+-----
+ red
+(1 row)
+
+SELECT max(col) FROM enumtest;
+  max   
+--------
+ purple
+(1 row)
+
+SELECT max(col) FROM enumtest WHERE col < 'green';
+  max   
+--------
+ yellow
+(1 row)
+
+DROP INDEX enumtest_btree;
+--
+-- Hash index / opclass with the = operator
+--
+CREATE INDEX enumtest_hash ON enumtest USING hash (col);
+SELECT * FROM enumtest WHERE col = 'orange';
+  col   
+--------
+ orange
+(1 row)
+
+DROP INDEX enumtest_hash;
+--
+-- End index tests
+--
+RESET enable_seqscan;
+RESET enable_bitmapscan;
+--
+-- Domains over enums
+--
+CREATE DOMAIN rgb AS rainbow CHECK (VALUE IN ('red', 'green', 'blue'));
+SELECT 'red'::rgb;
+ rgb 
+-----
+ red
+(1 row)
+
+SELECT 'purple'::rgb;
+ERROR:  value for domain rgb violates check constraint "rgb_check"
+SELECT 'purple'::rainbow::rgb;
+ERROR:  value for domain rgb violates check constraint "rgb_check"
+DROP DOMAIN rgb;
+--
+-- Arrays
+--
+SELECT '{red,green,blue}'::rainbow[];
+     rainbow      
+------------------
+ {red,green,blue}
+(1 row)
+
+SELECT ('{red,green,blue}'::rainbow[])[2];
+ rainbow 
+---------
+ green
+(1 row)
+
+SELECT 'red' = ANY ('{red,green,blue}'::rainbow[]);
+ ?column? 
+----------
+ t
+(1 row)
+
+SELECT 'yellow' = ANY ('{red,green,blue}'::rainbow[]);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT 'red' = ALL ('{red,green,blue}'::rainbow[]);
+ ?column? 
+----------
+ f
+(1 row)
+
+SELECT 'red' = ALL ('{red,red}'::rainbow[]);
+ ?column? 
+----------
+ t
+(1 row)
+
+--
+-- Support functions
+--
+SELECT enum_first(NULL::rainbow);
+ enum_first 
+------------
+ red
+(1 row)
+
+SELECT enum_last('green'::rainbow);
+ enum_last 
+-----------
+ purple
+(1 row)
+
+SELECT enum_range(NULL::rainbow);
+              enum_range               
+---------------------------------------
+ {red,orange,yellow,green,blue,purple}
+(1 row)
+
+SELECT enum_range('orange'::rainbow, 'green'::rainbow);
+      enum_range       
+-----------------------
+ {orange,yellow,green}
+(1 row)
+
+SELECT enum_range(NULL, 'green'::rainbow);
+        enum_range         
+---------------------------
+ {red,orange,yellow,green}
+(1 row)
+
+SELECT enum_range('orange'::rainbow, NULL);
+            enum_range             
+-----------------------------------
+ {orange,yellow,green,blue,purple}
+(1 row)
+
+SELECT enum_range(NULL::rainbow, NULL);
+              enum_range               
+---------------------------------------
+ {red,orange,yellow,green,blue,purple}
+(1 row)
+
+--
+-- User functions, can't test perl/python etc here since may not be compiled.
+--
+CREATE FUNCTION echo_me(anyenum) RETURNS text AS $$
+BEGIN
+RETURN $1::text || 'omg';
+END
+$$ LANGUAGE plpgsql;
+SELECT echo_me('red'::rainbow);
+ echo_me 
+---------
+ redomg
+(1 row)
+
+--
+-- Concrete function should override generic one
+--
+CREATE FUNCTION echo_me(rainbow) RETURNS text AS $$
+BEGIN
+RETURN $1::text || 'wtf';
+END
+$$ LANGUAGE plpgsql;
+SELECT echo_me('red'::rainbow);
+ echo_me 
+---------
+ redwtf
+(1 row)
+
+--
+-- If we drop the original generic one, we don't have to qualify the type
+-- anymore, since there's only one match
+--
+DROP FUNCTION echo_me(anyenum);
+SELECT echo_me('red');
+ echo_me 
+---------
+ redwtf
+(1 row)
+
+DROP FUNCTION echo_me(rainbow);
+--
+-- RI triggers on enum types
+--
+CREATE TABLE enumtest_parent (id rainbow PRIMARY KEY);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "enumtest_parent_pkey" for table "enumtest_parent"
+CREATE TABLE enumtest_child (parent rainbow REFERENCES enumtest_parent);
+INSERT INTO enumtest_parent VALUES ('red');
+INSERT INTO enumtest_child VALUES ('red');
+INSERT INTO enumtest_child VALUES ('blue');  -- fail
+ERROR:  insert or update on table "enumtest_child" violates foreign key constraint "enumtest_child_parent_fkey"
+DETAIL:  Key (parent)=(blue) is not present in table "enumtest_parent".
+DELETE FROM enumtest_parent;  -- fail
+ERROR:  update or delete on table "enumtest_parent" violates foreign key constraint "enumtest_child_parent_fkey" on table "enumtest_child"
+DETAIL:  Key (id)=(red) is still referenced from table "enumtest_child".
+--
+-- cross-type RI should fail
+--
+CREATE TYPE bogus AS ENUM('good', 'bad', 'ugly');
+CREATE TABLE enumtest_bogus_child(parent bogus REFERENCES enumtest_parent);
+ERROR:  foreign key constraint "enumtest_bogus_child_parent_fkey" cannot be implemented
+DETAIL:  Key columns "parent" and "id" are of incompatible types: bogus and rainbow.
+DROP TYPE bogus;
+--
+-- Cleanup
+--
+DROP TABLE enumtest_child;
+DROP TABLE enumtest_parent;
+DROP TABLE enumtest;
+DROP TYPE rainbow;
+--
+-- Verify properly cleaned up
+--
+SELECT COUNT(*) FROM pg_type WHERE typname = 'rainbow';
+ count 
+-------
+     0
+(1 row)
+
+SELECT * FROM pg_enum WHERE NOT EXISTS
+  (SELECT 1 FROM pg_type WHERE pg_type.oid = enumtypid);
+ enumtypid | enumlabel 
+-----------+-----------
+(0 rows)
+

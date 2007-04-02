@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.68 2007/02/14 01:58:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.69 2007/04/02 03:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,23 +48,25 @@
 #define CONSTROID			17
 #define CONVOID				18
 #define DATABASEOID			19
-#define INDEXRELID			20
-#define LANGNAME			21
-#define LANGOID				22
-#define NAMESPACENAME		23
-#define NAMESPACEOID		24
-#define OPERNAMENSP			25
-#define OPEROID				26
-#define OPFAMILYAMNAMENSP	27
-#define OPFAMILYOID			28
-#define PROCNAMEARGSNSP		29
-#define PROCOID				30
-#define RELNAMENSP			31
-#define RELOID				32
-#define RULERELNAME			33
-#define STATRELATT			34
-#define TYPENAMENSP			35
-#define TYPEOID				36
+#define ENUMOID				20
+#define ENUMTYPOIDNAME		21
+#define INDEXRELID			22
+#define LANGNAME			23
+#define LANGOID				24
+#define NAMESPACENAME		25
+#define NAMESPACEOID		26
+#define OPERNAMENSP			27
+#define OPEROID				28
+#define OPFAMILYAMNAMENSP	29
+#define OPFAMILYOID			30
+#define PROCNAMEARGSNSP		31
+#define PROCOID				32
+#define RELNAMENSP			33
+#define RELOID				34
+#define RULERELNAME			35
+#define STATRELATT			36
+#define TYPENAMENSP			37
+#define TYPEOID				38
 
 extern void InitCatalogCache(void);
 extern void InitCatalogCachePhase2(void);

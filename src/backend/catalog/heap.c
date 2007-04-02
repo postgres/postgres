@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.317 2007/02/14 01:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.318 2007/04/02 03:49:37 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -412,7 +412,7 @@ CheckAttributeType(const char *attname, Oid atttypid)
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("column \"%s\" has type \"unknown\"", attname),
 				 errdetail("Proceeding with relation creation anyway.")));
-	else if (att_typtype == 'p')
+	else if (att_typtype == TYPTYPE_PSEUDO)
 	{
 		/* Special hack for pg_statistic: allow ANYARRAY during initdb */
 		if (atttypid != ANYARRAYOID || IsUnderPostmaster)
@@ -718,7 +718,7 @@ AddNewRelationType(const char *typeName,
 				   new_rel_oid, /* relation oid */
 				   new_rel_kind,	/* relation kind */
 				   -1,			/* internal size (varlena) */
-				   'c',			/* type-type (complex) */
+				   TYPTYPE_COMPOSITE,	/* type-type (composite) */
 				   ',',			/* default array delimiter */
 				   F_RECORD_IN, /* input procedure */
 				   F_RECORD_OUT,	/* output procedure */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.36 2007/01/30 22:05:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_handler.c,v 1.37 2007/04/02 03:49:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,8 +147,8 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	functyptype = get_typtype(proc->prorettype);
 
 	/* Disallow pseudotype result */
-	/* except for TRIGGER, RECORD, VOID, ANYARRAY, or ANYELEMENT */
-	if (functyptype == 'p')
+	/* except for TRIGGER, RECORD, VOID, or polymorphic */
+	if (functyptype == TYPTYPE_PSEUDO)
 	{
 		/* we assume OPAQUE with no arguments means a trigger */
 		if (proc->prorettype == TRIGGEROID ||
@@ -156,8 +156,7 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 			istrigger = true;
 		else if (proc->prorettype != RECORDOID &&
 				 proc->prorettype != VOIDOID &&
-				 proc->prorettype != ANYARRAYOID &&
-				 proc->prorettype != ANYELEMENTOID)
+				 !IsPolymorphicType(proc->prorettype))
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("plpgsql functions cannot return type %s",
@@ -165,15 +164,14 @@ plpgsql_validator(PG_FUNCTION_ARGS)
 	}
 
 	/* Disallow pseudotypes in arguments (either IN or OUT) */
-	/* except for ANYARRAY or ANYELEMENT */
+	/* except for polymorphic */
 	numargs = get_func_arg_info(tuple,
 								&argtypes, &argnames, &argmodes);
 	for (i = 0; i < numargs; i++)
 	{
-		if (get_typtype(argtypes[i]) == 'p')
+		if (get_typtype(argtypes[i]) == TYPTYPE_PSEUDO)
 		{
-			if (argtypes[i] != ANYARRAYOID &&
-				argtypes[i] != ANYELEMENTOID)
+			if (!IsPolymorphicType(argtypes[i]))
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("plpgsql functions cannot take type %s",

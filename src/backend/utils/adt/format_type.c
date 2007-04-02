@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.46 2007/01/05 22:19:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/format_type.c,v 1.47 2007/04/02 03:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -148,7 +148,7 @@ format_type_internal(Oid type_oid, int32 typemod,
 
 	if (array_base_type != InvalidOid &&
 		typeform->typstorage != 'p' &&
-		typeform->typtype != 'd')
+		typeform->typtype != TYPTYPE_DOMAIN)
 	{
 		/* Switch our attention to the array element type */
 		ReleaseSysCache(tuple);

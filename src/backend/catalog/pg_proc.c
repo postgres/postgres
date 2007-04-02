@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.143 2007/01/22 01:35:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.144 2007/04/02 03:49:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,9 +137,9 @@ ProcedureCreate(const char *procedureName,
 	}
 
 	/*
-	 * Do not allow return type ANYARRAY or ANYELEMENT unless at least one
-	 * input argument is ANYARRAY or ANYELEMENT.  Also, do not allow return
-	 * type INTERNAL unless at least one input argument is INTERNAL.
+	 * Do not allow polymorphic return type unless at least one input argument
+	 * is polymorphic.  Also, do not allow return type INTERNAL unless at
+	 * least one input argument is INTERNAL.
 	 */
 	for (i = 0; i < parameterCount; i++)
 	{
@@ -147,6 +147,7 @@ ProcedureCreate(const char *procedureName,
 		{
 			case ANYARRAYOID:
 			case ANYELEMENTOID:
+			case ANYENUMOID:
 				genericInParam = true;
 				break;
 			case INTERNALOID:
@@ -169,6 +170,7 @@ ProcedureCreate(const char *procedureName,
 			{
 				case ANYARRAYOID:
 				case ANYELEMENTOID:
+				case ANYENUMOID:
 					genericOutParam = true;
 					break;
 				case INTERNALOID:
@@ -178,12 +180,12 @@ ProcedureCreate(const char *procedureName,
 		}
 	}
 
-	if ((returnType == ANYARRAYOID || returnType == ANYELEMENTOID ||
-		 genericOutParam) && !genericInParam)
+	if ((IsPolymorphicType(returnType) || genericOutParam)
+		&& !genericInParam)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine result data type"),
-				 errdetail("A function returning \"anyarray\" or \"anyelement\" must have at least one argument of either type.")));
+				 errdetail("A function returning a polymorphic type must have at least one polymorphic argument.")));
 
 	if ((returnType == INTERNALOID || internalOutParam) && !internalInParam)
 		ereport(ERROR,
@@ -533,26 +535,24 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
 	/* Disallow pseudotype result */
-	/* except for RECORD, VOID, ANYARRAY, or ANYELEMENT */
-	if (get_typtype(proc->prorettype) == 'p' &&
+	/* except for RECORD, VOID, or polymorphic */
+	if (get_typtype(proc->prorettype) == TYPTYPE_PSEUDO &&
 		proc->prorettype != RECORDOID &&
 		proc->prorettype != VOIDOID &&
-		proc->prorettype != ANYARRAYOID &&
-		proc->prorettype != ANYELEMENTOID)
+		!IsPolymorphicType(proc->prorettype))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("SQL functions cannot return type %s",
 						format_type_be(proc->prorettype))));
 
 	/* Disallow pseudotypes in arguments */
-	/* except for ANYARRAY or ANYELEMENT */
+	/* except for polymorphic */
 	haspolyarg = false;
 	for (i = 0; i < proc->pronargs; i++)
 	{
-		if (get_typtype(proc->proargtypes.values[i]) == 'p')
+		if (get_typtype(proc->proargtypes.values[i]) == TYPTYPE_PSEUDO)
 		{
-			if (proc->proargtypes.values[i] == ANYARRAYOID ||
-				proc->proargtypes.values[i] == ANYELEMENTOID)
+			if (IsPolymorphicType(proc->proargtypes.values[i]))
 				haspolyarg = true;
 			else
 				ereport(ERROR,

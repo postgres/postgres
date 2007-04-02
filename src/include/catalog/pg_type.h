@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.180 2007/01/28 16:16:54 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.181 2007/04/02 03:49:41 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -66,8 +66,9 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	bool		typbyval;
 
 	/*
-	 * typtype is 'b' for a basic type, 'c' for a complex type (ie a table's
-	 * rowtype), 'd' for a domain type, or 'p' for a pseudo type.
+	 * typtype is 'b' for a base type, 'c' for a composite type (e.g.,
+	 * a table's rowtype), 'd' for a domain type, 'e' for an enum type,
+	 * or 'p' for a pseudo-type.  (Use the TYPTYPE macros below.)
 	 *
 	 * If typtype is 'c', typrelid is the OID of the class' entry in pg_class.
 	 */
@@ -531,6 +532,11 @@ DATA(insert OID = 2210 ( _regclass	   PGNSP PGUID -1 f b t \054 0 2205 array_in 
 DATA(insert OID = 2211 ( _regtype	   PGNSP PGUID -1 f b t \054 0 2206 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
 #define REGTYPEARRAYOID 2211
 
+/* uuid */ 
+DATA(insert OID = 2950 ( uuid			PGNSP PGUID 16 f b t \054 0 0 uuid_in uuid_out uuid_recv uuid_send - - - c p f 0 -1 0 _null_ _null_ ));
+DESCR("UUID datatype");
+DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b t \054 0 2950 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+
 /*
  * pseudo-types
  *
@@ -560,11 +566,24 @@ DATA(insert OID = 2282 ( opaque			PGNSP PGUID  4 t p t \054 0 0 opaque_in opaque
 #define OPAQUEOID		2282
 DATA(insert OID = 2283 ( anyelement		PGNSP PGUID  4 t p t \054 0 0 anyelement_in anyelement_out - - - - - i p f 0 -1 0 _null_ _null_ ));
 #define ANYELEMENTOID	2283
+DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p t \054 0 0 anyenum_in anyenum_out - - - - - i p f 0 -1 0 _null_ _null_ ));
+#define ANYENUMOID		3500
 
-/* uuid */ 
-DATA(insert OID = 2950 ( uuid			PGNSP PGUID 16 f b t \054 0 0 uuid_in uuid_out uuid_recv uuid_send - - - c p f 0 -1 0 _null_ _null_ ));
-DESCR("UUID datatype");
-DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b t \054 0 2950 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+
+/*
+ * macros
+ */
+#define  TYPTYPE_BASE		'b'		/* base type (ordinary scalar type) */
+#define  TYPTYPE_COMPOSITE	'c'		/* composite (e.g., table's rowtype) */
+#define  TYPTYPE_DOMAIN		'd'		/* domain over another type */
+#define  TYPTYPE_ENUM		'e'		/* enumerated type */
+#define  TYPTYPE_PSEUDO		'p'		/* pseudo-type */
+
+/* Is a type OID a polymorphic pseudotype?  (Beware of multiple evaluation) */
+#define IsPolymorphicType(typid)  \
+	((typid) == ANYELEMENTOID || \
+	 (typid) == ANYARRAYOID || \
+	 (typid) == ANYENUMOID)
 
 /*
  * prototypes for functions in pg_type.c

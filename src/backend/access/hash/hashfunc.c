@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.50 2007/01/05 22:19:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashfunc.c,v 1.51 2007/04/02 03:49:37 tgl Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -70,6 +70,12 @@ Datum
 hashoid(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_UINT32(~((uint32) PG_GETARG_OID(0)));
+}
+
+Datum
+hashenum(PG_FUNCTION_ARGS)
+{
+    PG_RETURN_UINT32(~((uint32) PG_GETARG_OID(0)));
 }
 
 Datum

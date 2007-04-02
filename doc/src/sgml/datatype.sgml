@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.191 2007/03/14 17:38:05 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.192 2007/04/02 03:49:36 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2424,6 +2424,161 @@ SELECT * FROM test1 WHERE a;
    </para>
   </sect1>
 
+  <sect1 id="datatype-enum">
+   <title>Enumerated Types</title>
+
+   <indexterm zone="datatype-enum">
+    <primary>data type</primary>
+    <secondary>enumerated (enum)</secondary>
+   </indexterm>
+
+   <para>
+    Enumerated (enum) types are data types that
+    are comprised of a static, predefined set of values with a
+    specific order. They are equivalent to the <type>enum</type>
+    types in a number of programming languages. An example of an enum
+    type might be the days of the week, or a set of status values for
+    a piece of data.
+   </para>
+
+   <sect2>
+    <title>Declaration of Enumerated Types</title>
+
+    <para>
+     Enum types are created using the <xref
+     linkend="sql-createtype" endterm="sql-createtype-title"> command,
+     for example:
+
+<programlisting>
+CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
+</programlisting>
+
+     Once created, the enum type can be used in table and function
+     definitions much like any other type:
+    </para>
+
+    <example>
+     <title>Basic Enum Usage</title>
+<programlisting>
+CREATE TYPE mood AS ENUM ('sad', 'ok', 'happy');
+CREATE TABLE person (
+    name text,
+    current_mood mood
+);
+INSERT INTO person VALUES ('Moe', 'happy');
+SELECT * FROM person WHERE current_mood = 'happy';
+ name | current_mood 
+------+--------------
+ Moe  | happy
+(1 row)
+</programlisting>
+     </example>
+    </sect2>
+
+    <sect2>
+     <title>Ordering</title>
+
+     <para>
+      The ordering of the values in an enum type is the
+      order in which the values were listed when the type was declared.
+      All standard comparison operators and related
+      aggregate functions are supported for enums.  For example:
+     </para>
+
+     <example>
+      <title>Enum Ordering</title>
+<programlisting>
+INSERT INTO person VALUES ('Larry', 'sad');
+INSERT INTO person VALUES ('Curly', 'ok');
+SELECT * FROM person WHERE current_mood > 'sad';
+ name  | current_mood 
+-------+--------------
+ Moe   | happy
+ Curly | ok
+(2 rows)
+
+SELECT * FROM person WHERE current_mood > 'sad' ORDER BY current_mood;
+ name  | current_mood 
+-------+--------------
+ Curly | ok
+ Moe   | happy
+(2 rows)
+
+SELECT name FROM person
+  WHERE current_mood = (SELECT MIN(current_mood) FROM person);
+ name  
+-------
+ Larry
+(1 row)
+</programlisting>
+    </example>
+   </sect2>
+
+   <sect2>
+    <title>Type Safety</title>
+
+    <para>
+     Enumerated types are completely separate data types and may not
+     be compared with each other.
+    </para>
+
+    <example>
+     <title>Lack of Casting</title>
+<programlisting>
+CREATE TYPE happiness AS ENUM ('happy', 'very happy', 'ecstatic');
+CREATE TABLE holidays (                                           
+    num_weeks int,
+    happiness happiness
+);
+INSERT INTO holidays(num_weeks,happiness) VALUES (4, 'happy');
+INSERT INTO holidays(num_weeks,happiness) VALUES (6, 'very happy');
+INSERT INTO holidays(num_weeks,happiness) VALUES (8, 'ecstatic');
+INSERT INTO holidays(num_weeks,happiness) VALUES (2, 'sad');
+ERROR:  invalid input value for enum happiness: "sad"
+SELECT person.name, holidays.num_weeks FROM person, holidays
+  WHERE person.current_mood = holidays.happiness;
+ERROR:  operator does not exist: mood = happiness
+</programlisting>
+    </example>
+
+    <para>
+     If you really need to do something like that, you can either
+     write a custom operator or add explicit casts to your query:
+    </para>
+
+    <example>
+     <title>Comparing Different Enums by Casting to Text</title>
+<programlisting>
+SELECT person.name, holidays.num_weeks FROM person, holidays
+  WHERE person.current_mood::text = holidays.happiness::text;
+ name | num_weeks 
+------+-----------
+ Moe  |         4
+(1 row)
+
+</programlisting>
+    </example>
+   </sect2>
+
+   <sect2>
+    <title>Implementation Details</title>
+    
+    <para>
+     An enum value occupies four bytes on disk.  The length of an enum
+     value's textual label is limited by the <symbol>NAMEDATALEN</symbol>
+     setting compiled into <productname>PostgreSQL</productname>; in standard
+     builds this means at most 63 bytes.
+    </para>
+
+    <para>
+     Enum labels are case sensitive, so
+     <type>'happy'</type> is not the same as <type>'HAPPY'</type>.
+     Spaces in the labels are significant, too.
+    </para>
+
+   </sect2>
+  </sect1>
+
   <sect1 id="datatype-geometric">
    <title>Geometric Types</title>
 
@@ -3279,6 +3434,10 @@ SELECT * FROM pg_attribute
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
+    <primary>anyenum</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
     <primary>void</primary>
    </indexterm>
 
@@ -3344,6 +3503,13 @@ SELECT * FROM pg_attribute
        </row>
 
        <row>
+        <entry><type>anyenum</></entry>
+        <entry>Indicates that a function accepts any enum data type
+        (see <xref linkend="extend-types-polymorphic"> and
+        <xref linkend="datatype-enum">).</entry>
+       </row>
+
+       <row>
         <entry><type>cstring</></entry>
         <entry>Indicates that a function accepts or returns a null-terminated C string.</entry>
        </row>
@@ -3395,8 +3561,8 @@ SELECT * FROM pg_attribute
     languages all forbid use of a pseudo-type as argument type, and allow
     only <type>void</> and <type>record</> as a result type (plus
     <type>trigger</> when the function is used as a trigger).  Some also
-    support polymorphic functions using the types <type>anyarray</> and
-    <type>anyelement</>.
+    support polymorphic functions using the types <type>anyarray</>,
+    <type>anyelement</> and <type>anyenum</>.
    </para>
 
    <para>

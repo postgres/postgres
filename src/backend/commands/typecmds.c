@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.100 2007/02/14 01:58:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.101 2007/04/02 03:49:38 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -39,6 +39,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_constraint.h"
 #include "catalog/pg_depend.h"
+#include "catalog/pg_enum.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
@@ -205,7 +206,7 @@ DefineType(List *names, List *parameters)
 		{
 			elemType = typenameTypeId(NULL, defGetTypeName(defel));
 			/* disallow arrays of pseudotypes */
-			if (get_typtype(elemType) == 'p')
+			if (get_typtype(elemType) == TYPTYPE_PSEUDO)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("array element type cannot be %s",
@@ -404,7 +405,7 @@ DefineType(List *names, List *parameters)
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   internalLength,		/* internal size */
-				   'b',			/* type-type (base type) */
+				   TYPTYPE_BASE,		/* type-type (base type) */
 				   delimiter,	/* array element delimiter */
 				   inputOid,	/* input procedure */
 				   outputOid,	/* output procedure */
@@ -438,7 +439,7 @@ DefineType(List *names, List *parameters)
 			   InvalidOid,		/* relation oid (n/a here) */
 			   0,				/* relation kind (ditto) */
 			   -1,				/* internal size */
-			   'b',				/* type-type (base type) */
+			   TYPTYPE_BASE,	/* type-type (base type) */
 			   DEFAULT_TYPDELIM,	/* array element delimiter */
 			   F_ARRAY_IN,		/* input procedure */
 			   F_ARRAY_OUT,		/* output procedure */
@@ -543,6 +544,14 @@ RemoveTypeById(Oid typeOid)
 
 	simple_heap_delete(relation, &tup->t_self);
 
+	/*
+	 * If it is an enum, delete the pg_enum entries too; we don't bother
+	 * with making dependency entries for those, so it has to be done
+	 * "by hand" here.
+	 */
+	if (((Form_pg_type) GETSTRUCT(tup))->typtype == TYPTYPE_ENUM)
+		EnumValuesDelete(typeOid);
+
 	ReleaseSysCache(tup);
 
 	heap_close(relation, RowExclusiveLock);
@@ -620,12 +629,15 @@ DefineDomain(CreateDomainStmt *stmt)
 	basetypeMod = typenameTypeMod(NULL, stmt->typename, basetypeoid);
 
 	/*
-	 * Base type must be a plain base type or another domain.  Domains over
-	 * pseudotypes would create a security hole.  Domains over composite types
-	 * might be made to work in the future, but not today.
+	 * Base type must be a plain base type, another domain or an enum.
+	 * Domains over pseudotypes would create a security hole.  Domains
+	 * over composite types might be made to work in the future, but not
+	 * today.
 	 */
 	typtype = baseType->typtype;
-	if (typtype != 'b' && typtype != 'd')
+	if (typtype != TYPTYPE_BASE &&
+		typtype != TYPTYPE_DOMAIN &&
+		typtype != TYPTYPE_ENUM)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("\"%s\" is not a valid base type for a domain",
@@ -798,7 +810,7 @@ DefineDomain(CreateDomainStmt *stmt)
 				   InvalidOid,	/* relation oid (n/a here) */
 				   0,			/* relation kind (ditto) */
 				   internalLength,		/* internal size */
-				   'd',			/* type-type (domain type) */
+				   TYPTYPE_DOMAIN,		/* type-type (domain type) */
 				   delimiter,	/* array element delimiter */
 				   inputProcedure,		/* input procedure */
 				   outputProcedure,		/* output procedure */
@@ -907,7 +919,7 @@ RemoveDomain(List *names, DropBehavior behavior, bool missing_ok)
 	/* Check that this is actually a domain */
 	typtype = ((Form_pg_type) GETSTRUCT(tup))->typtype;
 
-	if (typtype != 'd')
+	if (typtype != TYPTYPE_DOMAIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a domain",
@@ -923,6 +935,100 @@ RemoveDomain(List *names, DropBehavior behavior, bool missing_ok)
 	object.objectSubId = 0;
 
 	performDeletion(&object, behavior);
+}
+
+/*
+ * DefineEnum
+ *		Registers a new enum.
+ */
+void
+DefineEnum(CreateEnumStmt *stmt)
+{
+	char   *enumName;
+	char   *enumArrayName;
+	Oid		enumNamespace;
+	Oid		enumTypeOid;
+	AclResult	aclresult;
+
+	/* Convert list of names to a name and namespace */
+	enumNamespace = QualifiedNameGetCreationNamespace(stmt->typename,
+													  &enumName);
+
+	/* Check we have creation rights in target namespace */
+	aclresult = pg_namespace_aclcheck(enumNamespace, GetUserId(), ACL_CREATE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
+					   get_namespace_name(enumNamespace));
+
+	/*
+	 * Type names must be one character shorter than other names, allowing
+	 * room to create the corresponding array type name with prepended "_".
+	 */
+	if (strlen(enumName) > (NAMEDATALEN - 2))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_NAME),
+				 errmsg("type names must be %d characters or less",
+						NAMEDATALEN - 2)));
+
+	/* Create the pg_type entry */
+	enumTypeOid = 
+		TypeCreate(enumName,		/* type name */
+				   enumNamespace,	/* namespace */
+				   InvalidOid,		/* relation oid (n/a here) */
+				   0,				/* relation kind (ditto) */
+				   sizeof(Oid),		/* internal size */
+				   TYPTYPE_ENUM,	/* type-type (enum type) */
+				   DEFAULT_TYPDELIM,	/* array element delimiter */
+				   F_ENUM_IN,		/* input procedure */
+				   F_ENUM_OUT,		/* output procedure */
+				   InvalidOid,		/* receive procedure - none */
+				   InvalidOid,		/* send procedure - none */
+				   InvalidOid,		/* typmodin procedure - none */
+				   InvalidOid,		/* typmodout procedure - none */
+				   InvalidOid,		/* analyze procedure - default */
+				   InvalidOid,		/* element type ID */
+				   InvalidOid,		/* base type ID (only for domains) */
+				   NULL,			/* never a default type value */
+				   NULL,			/* binary default isn't sent either */
+				   true,			/* always passed by value */
+				   'i',				/* int alignment */
+				   'p',				/* TOAST strategy always plain */
+				   -1,				/* typMod (Domains only) */
+				   0,				/* Array dimensions of typbasetype */
+				   false);			/* Type NOT NULL */
+
+	/* Enter the enum's values into pg_enum */
+	EnumValuesCreate(enumTypeOid, stmt->vals);
+
+	/* Create array type for enum */
+	enumArrayName = makeArrayTypeName(enumName);
+
+	TypeCreate(enumArrayName,   /* type name */
+			   enumNamespace,   /* namespace */
+			   InvalidOid,      /* relation oid (n/a here) */
+			   0,               /* relation kind (ditto) */
+			   -1,              /* internal size */
+			   TYPTYPE_BASE,	/* type-type (base type) */
+			   DEFAULT_TYPDELIM,    /* array element delimiter */
+			   F_ARRAY_IN,      /* input procedure */
+			   F_ARRAY_OUT,     /* output procedure */
+			   F_ARRAY_RECV,    /* receive procedure */
+			   F_ARRAY_SEND,    /* send procedure */
+			   InvalidOid,		/* typmodin procedure - none */
+			   InvalidOid,		/* typmodout procedure - none */
+			   InvalidOid,      /* analyze procedure - default */
+			   enumTypeOid,     /* element type ID */
+			   InvalidOid,      /* base type ID */
+			   NULL,            /* never a default type value */
+			   NULL,            /* binary default isn't sent either */
+			   false,           /* never passed by value */
+			   'i',             /* enums have align i, so do their arrays */
+			   'x',             /* ARRAY is always toastable */
+			   -1,              /* typMod (Domains only) */
+               0,               /* Array dimensions of typbasetype */
+			   false);          /* Type NOT NULL */
+
+	pfree(enumArrayName);
 }
 
 
@@ -1835,7 +1941,7 @@ checkDomainOwner(HeapTuple tup, TypeName *typename)
 	Form_pg_type typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* Check that this is actually a domain */
-	if (typTup->typtype != 'd')
+	if (typTup->typtype != TYPTYPE_DOMAIN)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is not a domain",
@@ -2021,7 +2127,7 @@ GetDomainConstraints(Oid typeOid)
 			elog(ERROR, "cache lookup failed for type %u", typeOid);
 		typTup = (Form_pg_type) GETSTRUCT(tup);
 
-		if (typTup->typtype != 'd')
+		if (typTup->typtype != TYPTYPE_DOMAIN)
 		{
 			/* Not a domain, so done */
 			ReleaseSysCache(tup);
@@ -2148,7 +2254,7 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 	 * free-standing composite type, and not a table's underlying type. We
 	 * want people to use ALTER TABLE not ALTER TYPE for that case.
 	 */
-	if (typTup->typtype == 'c' &&
+	if (typTup->typtype == TYPTYPE_COMPOSITE &&
 		get_rel_relkind(typTup->typrelid) != RELKIND_COMPOSITE_TYPE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -2325,11 +2431,12 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 
 	/* Detect whether type is a composite type (but not a table rowtype) */
 	isCompositeType =
-		(typform->typtype == 'c' &&
+		(typform->typtype == TYPTYPE_COMPOSITE &&
 		 get_rel_relkind(typform->typrelid) == RELKIND_COMPOSITE_TYPE);
 
 	/* Enforce not-table-type if requested */
-	if (typform->typtype == 'c' && !isCompositeType && errorOnTableType)
+	if (typform->typtype == TYPTYPE_COMPOSITE && !isCompositeType &&
+		errorOnTableType)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("%s is a table's row type",
@@ -2376,14 +2483,14 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 	else
 	{
 		/* If it's a domain, it might have constraints */
-		if (typform->typtype == 'd')
+		if (typform->typtype == TYPTYPE_DOMAIN)
 			AlterConstraintNamespaces(typeOid, oldNspOid, nspOid, true);
 
 		/*
 		 * Update dependency on schema, if any --- a table rowtype has not got
 		 * one.
 		 */
-		if (typform->typtype != 'c')
+		if (typform->typtype != TYPTYPE_COMPOSITE)
 			if (changeDependencyFor(TypeRelationId, typeOid,
 								NamespaceRelationId, oldNspOid, nspOid) != 1)
 				elog(ERROR, "failed to change schema dependency for type %s",

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.303 2007/03/27 23:21:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.304 2007/04/02 03:49:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1187,6 +1187,15 @@ _equalCompositeTypeStmt(CompositeTypeStmt *a, CompositeTypeStmt *b)
 }
 
 static bool
+_equalCreateEnumStmt(CreateEnumStmt *a, CreateEnumStmt *b)
+{
+	COMPARE_NODE_FIELD(typename);
+	COMPARE_NODE_FIELD(vals);
+
+	return true;
+}
+
+static bool
 _equalViewStmt(ViewStmt *a, ViewStmt *b)
 {
 	COMPARE_NODE_FIELD(view);
@@ -2246,6 +2255,9 @@ equal(void *a, void *b)
 			break;
 		case T_CompositeTypeStmt:
 			retval = _equalCompositeTypeStmt(a, b);
+			break;
+		case T_CreateEnumStmt:
+			retval = _equalCreateEnumStmt(a, b);
 			break;
 		case T_ViewStmt:
 			retval = _equalViewStmt(a, b);

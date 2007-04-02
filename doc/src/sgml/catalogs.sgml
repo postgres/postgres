@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.148 2007/03/26 16:58:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.149 2007/04/02 03:49:36 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -126,6 +126,11 @@
      <row>
       <entry><link linkend="catalog-pg-description"><structname>pg_description</structname></link></entry>
       <entry>descriptions or comments on database objects</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-enum"><structname>pg_enum</structname></link></entry>
+      <entry>enum label and value definitions</entry>
      </row>
 
      <row>
@@ -1425,11 +1430,7 @@
    in which the source and target types are the same, if the associated
    function takes more than one argument.  Such entries represent
    <quote>length coercion functions</> that coerce values of the type
-   to be legal for a particular type modifier value.  Note however that
-   at present there is no support for associating non-default type
-   modifiers with user-created data types, and so this facility is only
-   of use for the small number of built-in types that have type modifier
-   syntax built into the grammar.
+   to be legal for a particular type modifier value.
   </para>
 
   <para>
@@ -2412,6 +2413,55 @@
 
  </sect1>
 
+
+ <sect1 id="catalog-pg-enum">
+  <title><structname>pg_enum</structname></title>
+
+  <indexterm zone="catalog-pg-enum">
+   <primary>pg_enum</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_enum</structname> catalog contains entries
+   matching enum types to their associated values and labels. The
+   internal representation of a given enum value is actually the OID
+   of its associated row in <structname>pg_enum</structname>.  The
+   OIDs for a particular enum type are guaranteed to be ordered in
+   the way the type should sort, but there is no guarantee about the
+   ordering of OIDs of unrelated enum types.
+  </para>
+
+  <table>
+   <title><structname>pg_enum</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>enumtypid</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>The OID of the <structname>pg_type</> entry owning this enum value</entry>
+     </row>
+
+     <row>
+      <entry><structfield>enumlabel</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>The textual label for this enum value</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
 
  <sect1 id="catalog-pg-index">
   <title><structname>pg_index</structname></title>
@@ -4395,11 +4445,13 @@
       <entry><type>char</type></entry>
       <entry></entry>
       <entry>
-       <structfield>typtype</structfield> is <literal>b</literal> for
-       a base type, <literal>c</literal> for a composite type (e.g., a
-       table's row type), <literal>d</literal> for a domain, or
-       <literal>p</literal> for a pseudo-type.  See also
-       <structfield>typrelid</structfield> and
+       <structfield>typtype</structfield> is
+       <literal>b</literal> for a base type,
+       <literal>c</literal> for a composite type (e.g., a table's row type),
+       <literal>d</literal> for a domain,
+       <literal>e</literal> for an enum type,
+       or <literal>p</literal> for a pseudo-type.
+       See also <structfield>typrelid</structfield> and
        <structfield>typbasetype</structfield>
       </entry>
      </row>

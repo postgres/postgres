@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.150 2007/03/19 16:30:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/lsyscache.c,v 1.151 2007/04/02 03:49:39 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1770,7 +1770,7 @@ getTypeIOParam(HeapTuple typeTuple)
 	 * own type OID as parameter.  (As of 8.2, domains must get their own OID
 	 * even if their base type is an array.)
 	 */
-	if (typeStruct->typtype == 'b' && OidIsValid(typeStruct->typelem))
+	if (typeStruct->typtype == TYPTYPE_BASE && OidIsValid(typeStruct->typelem))
 		return typeStruct->typelem;
 	else
 		return HeapTupleGetOid(typeTuple);
@@ -2022,7 +2022,7 @@ getBaseTypeAndTypmod(Oid typid, int32 *typmod)
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "cache lookup failed for type %u", typid);
 		typTup = (Form_pg_type) GETSTRUCT(tup);
-		if (typTup->typtype != 'd')
+		if (typTup->typtype != TYPTYPE_DOMAIN)
 		{
 			/* Not a domain, so done */
 			ReleaseSysCache(tup);
@@ -2128,7 +2128,17 @@ get_typtype(Oid typid)
 bool
 type_is_rowtype(Oid typid)
 {
-	return (typid == RECORDOID || get_typtype(typid) == 'c');
+	return (typid == RECORDOID || get_typtype(typid) == TYPTYPE_COMPOSITE);
+}
+
+/*
+ * type_is_enum
+ *    Returns true if the given type is an enum type.
+ */
+bool
+type_is_enum(Oid typid)
+{
+	return (get_typtype(typid) == TYPTYPE_ENUM);
 }
 
 /*

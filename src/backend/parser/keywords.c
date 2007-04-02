@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.185 2007/03/19 23:38:29 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.186 2007/04/02 03:49:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"encoding", ENCODING},
 	{"encrypted", ENCRYPTED},
 	{"end", END_P},
+	{"enum", ENUM_P},
 	{"escape", ESCAPE},
 	{"except", EXCEPT},
 	{"excluding", EXCLUDING},

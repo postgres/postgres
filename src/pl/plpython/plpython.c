@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.96 2007/02/21 03:27:32 adunstan Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.97 2007/04/02 03:49:42 tgl Exp $
  *
  *********************************************************************
  */
@@ -1185,7 +1185,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 			rvTypeStruct = (Form_pg_type) GETSTRUCT(rvTypeTup);
 
 			/* Disallow pseudotype result, except for void */
-			if (rvTypeStruct->typtype == 'p' &&
+			if (rvTypeStruct->typtype == TYPTYPE_PSEUDO &&
 				procStruct->prorettype != VOIDOID)
 			{
 				if (procStruct->prorettype == TRIGGEROID)
@@ -1199,7 +1199,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 								  format_type_be(procStruct->prorettype))));
 			}
 
-			if (rvTypeStruct->typtype == 'c')
+			if (rvTypeStruct->typtype == TYPTYPE_COMPOSITE)
 			{
 				/*
 				 * Tuple: set up later, during first call to
@@ -1258,13 +1258,13 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 			argTypeStruct = (Form_pg_type) GETSTRUCT(argTypeTup);
 
 			/* Disallow pseudotype argument */
-			if (argTypeStruct->typtype == 'p')
+			if (argTypeStruct->typtype == TYPTYPE_PSEUDO)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 						 errmsg("plpython functions cannot take type %s",
 						format_type_be(procStruct->proargtypes.values[i]))));
 
-			if (argTypeStruct->typtype != 'c')
+			if (argTypeStruct->typtype != TYPTYPE_COMPOSITE)
 				PLy_input_datum_func(&(proc->args[i]),
 									 procStruct->proargtypes.values[i],
 									 argTypeTup);
@@ -2338,7 +2338,7 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 
 					plan->types[i] = typeId;
 					typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
-					if (typeStruct->typtype != 'c')
+					if (typeStruct->typtype != TYPTYPE_COMPOSITE)
 						PLy_output_datum_func(&plan->args[i], typeTup);
 					else
 						elog(ERROR, "tuples not handled in plpy.prepare, yet.");

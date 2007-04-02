@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.61 2007/02/17 00:55:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_aggregate.h,v 1.62 2007/04/02 03:49:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -118,6 +118,7 @@ DATA(insert ( 2130	numeric_larger	-				1756	1700	_null_ ));
 DATA(insert ( 2050	array_larger	-				1073	2277	_null_ ));
 DATA(insert ( 2244	bpchar_larger	-				1060	1042	_null_ ));
 DATA(insert ( 2797	tidlarger		-				2800	27		_null_ ));
+DATA(insert ( 3526	enum_larger		-				3519	3500	_null_ ));
 
 /* min */
 DATA(insert ( 2131	int8smaller		-				412		20		_null_ ));
@@ -139,6 +140,7 @@ DATA(insert ( 2146	numeric_smaller -				1754	1700	_null_ ));
 DATA(insert ( 2051	array_smaller	-				1072	2277	_null_ ));
 DATA(insert ( 2245	bpchar_smaller	-				1058	1042	_null_ ));
 DATA(insert ( 2798	tidsmaller		-				2799	27		_null_ ));
+DATA(insert ( 3527	enum_smaller	-				3518	3500	_null_ ));
 
 /* count */
 DATA(insert ( 2147	int8inc_any		-				0		20		"0" ));

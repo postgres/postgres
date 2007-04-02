@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.31 2007/02/03 14:06:55 petere Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.32 2007/04/02 03:49:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -402,5 +402,11 @@ DATA(insert (   25 2950 2964 a ));
 DATA(insert ( 2950   25 2965 a ));
 DATA(insert ( 1043 2950 2964 a ));
 DATA(insert ( 2950 1043 2965 a ));
+
+/*
+ * enums
+ */
+DATA(insert ( 3500   25 3532 e ));
+DATA(insert (   25 3500 3533 e ));
 
 #endif   /* PG_CAST_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_type.h,v 1.35 2007/01/05 22:19:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_type.h,v 1.36 2007/04/02 03:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,6 @@ extern Type typeidType(Oid id);
 extern Oid	typeTypeId(Type tp);
 extern int16 typeLen(Type t);
 extern bool typeByVal(Type t);
-extern char typeTypType(Type t);
 extern char *typeTypeName(Type t);
 extern Oid	typeTypeRelid(Type typ);
 extern Datum stringTypeDatum(Type tp, char *string, int32 atttypmod);

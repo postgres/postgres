@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.42 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/aggregatecmds.c,v 1.43 2007/04/02 03:49:37 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -176,9 +176,8 @@ DefineAggregate(List *name, List *args, bool oldstyle, List *parameters)
 	 * in some cases (AggregateCreate will check).
 	 */
 	transTypeId = typenameTypeId(NULL, transType);
-	if (get_typtype(transTypeId) == 'p' &&
-		transTypeId != ANYARRAYOID &&
-		transTypeId != ANYELEMENTOID)
+	if (get_typtype(transTypeId) == TYPTYPE_PSEUDO &&
+		!IsPolymorphicType(transTypeId))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("aggregate transition data type cannot be %s",

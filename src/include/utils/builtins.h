@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.290 2007/03/20 05:45:00 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.291 2007/04/02 03:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,6 +102,25 @@ extern Datum char_text(PG_FUNCTION_ARGS);
 /* domains.c */
 extern Datum domain_in(PG_FUNCTION_ARGS);
 extern Datum domain_recv(PG_FUNCTION_ARGS);
+
+/* enum.c */
+extern Datum enum_in(PG_FUNCTION_ARGS);
+extern Datum enum_out(PG_FUNCTION_ARGS);
+extern Datum enum_lt(PG_FUNCTION_ARGS);
+extern Datum enum_le(PG_FUNCTION_ARGS);
+extern Datum enum_eq(PG_FUNCTION_ARGS);
+extern Datum enum_ne(PG_FUNCTION_ARGS);
+extern Datum enum_ge(PG_FUNCTION_ARGS);
+extern Datum enum_gt(PG_FUNCTION_ARGS);
+extern Datum enum_cmp(PG_FUNCTION_ARGS);
+extern Datum enum_text(PG_FUNCTION_ARGS);
+extern Datum text_enum(PG_FUNCTION_ARGS);
+extern Datum enum_smaller(PG_FUNCTION_ARGS);
+extern Datum enum_larger(PG_FUNCTION_ARGS);
+extern Datum enum_first(PG_FUNCTION_ARGS);
+extern Datum enum_last(PG_FUNCTION_ARGS);
+extern Datum enum_range_bounds(PG_FUNCTION_ARGS);
+extern Datum enum_range_all(PG_FUNCTION_ARGS);
 
 /* int.c */
 extern Datum int2in(PG_FUNCTION_ARGS);
@@ -450,6 +469,8 @@ extern Datum anyarray_in(PG_FUNCTION_ARGS);
 extern Datum anyarray_out(PG_FUNCTION_ARGS);
 extern Datum anyarray_recv(PG_FUNCTION_ARGS);
 extern Datum anyarray_send(PG_FUNCTION_ARGS);
+extern Datum anyenum_in(PG_FUNCTION_ARGS);
+extern Datum anyenum_out(PG_FUNCTION_ARGS);
 extern Datum void_in(PG_FUNCTION_ARGS);
 extern Datum void_out(PG_FUNCTION_ARGS);
 extern Datum trigger_in(PG_FUNCTION_ARGS);

@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.111 2007/02/21 03:27:32 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.112 2007/04/02 03:49:42 tgl Exp $
  *
  **********************************************************************/
 
@@ -1051,7 +1051,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 			/* Disallow pseudotype result, except VOID */
-			if (typeStruct->typtype == 'p')
+			if (typeStruct->typtype == TYPTYPE_PSEUDO)
 			{
 				if (procStruct->prorettype == VOIDOID)
 					 /* okay */ ;
@@ -1074,7 +1074,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 				}
 			}
 
-			if (typeStruct->typtype == 'c')
+			if (typeStruct->typtype == TYPTYPE_COMPOSITE)
 			{
 				free(prodesc->proname);
 				free(prodesc);
@@ -1112,7 +1112,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 				/* Disallow pseudotype argument */
-				if (typeStruct->typtype == 'p')
+				if (typeStruct->typtype == TYPTYPE_PSEUDO)
 				{
 					free(prodesc->proname);
 					free(prodesc);
@@ -1122,7 +1122,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 						format_type_be(procStruct->proargtypes.values[i]))));
 				}
 
-				if (typeStruct->typtype == 'c')
+				if (typeStruct->typtype == TYPTYPE_COMPOSITE)
 				{
 					prodesc->arg_is_rowtype[i] = true;
 					snprintf(buf, sizeof(buf), "__PLTcl_Tup_%d", i + 1);

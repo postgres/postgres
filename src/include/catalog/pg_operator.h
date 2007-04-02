@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.150 2007/02/06 02:59:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.151 2007/04/02 03:49:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -902,6 +902,14 @@ DATA(insert OID = 2974 (  "<"	   PGNSP PGUID b f f 2950 2950 16 2975 2977 uuid_l
 DATA(insert OID = 2975 (  ">"	   PGNSP PGUID b f f 2950 2950 16 2974 2976 uuid_gt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 2976 (  "<="	   PGNSP PGUID b f f 2950 2950 16 2977 2975 uuid_le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 2977 (  ">="	   PGNSP PGUID b f f 2950 2950 16 2976 2974 uuid_ge scalargtsel scalargtjoinsel ));
+
+/* enum operators */
+DATA(insert OID = 3516 (  "="	   PGNSP PGUID b t t 3500 3500 16 3516 3517 enum_eq eqsel eqjoinsel ));
+DATA(insert OID = 3517 (  "<>"	   PGNSP PGUID b f f 3500 3500 16 3517 3516 enum_ne neqsel neqjoinsel ));
+DATA(insert OID = 3518 (  "<"	   PGNSP PGUID b f f 3500 3500 16 3519 3521 enum_lt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3519 (  ">"	   PGNSP PGUID b f f 3500 3500 16 3518 3520 enum_gt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3520 (  "<="	   PGNSP PGUID b f f 3500 3500 16 3521 3519 enum_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3521 (  ">="	   PGNSP PGUID b f f 3500 3500 16 3520 3518 enum_ge scalargtsel scalargtjoinsel ));
 
 
 /*

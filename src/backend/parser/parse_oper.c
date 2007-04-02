@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.94 2007/02/01 19:10:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_oper.c,v 1.95 2007/04/02 03:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -886,8 +886,8 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 	declared_arg_types[1] = opform->oprright;
 
 	/*
-	 * enforce consistency with ANYARRAY and ANYELEMENT argument and return
-	 * types, possibly adjusting return type or declared_arg_types (which will
+	 * enforce consistency with polymorphic argument and return types,
+	 * possibly adjusting return type or declared_arg_types (which will
 	 * be used as the cast destination by make_fn_arguments)
 	 */
 	rettype = enforce_generic_type_consistency(actual_arg_types,
@@ -911,15 +911,25 @@ make_scalar_array_op(ParseState *pstate, List *opname,
 
 	/*
 	 * Now switch back to the array type on the right, arranging for any
-	 * needed cast to be applied.
+	 * needed cast to be applied.  Beware of polymorphic operators here;
+	 * enforce_generic_type_consistency may or may not have replaced a
+	 * polymorphic type with a real one.
 	 */
-	res_atypeId = get_array_type(declared_arg_types[1]);
-	if (!OidIsValid(res_atypeId))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("could not find array type for data type %s",
-						format_type_be(declared_arg_types[1])),
-				 parser_errposition(pstate, location)));
+	if (IsPolymorphicType(declared_arg_types[1]))
+	{
+		/* assume the actual array type is OK */
+		res_atypeId = atypeId;
+	}
+	else
+	{
+		res_atypeId = get_array_type(declared_arg_types[1]);
+		if (!OidIsValid(res_atypeId))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("could not find array type for data type %s",
+							format_type_be(declared_arg_types[1])),
+					 parser_errposition(pstate, location)));
+	}
 	actual_arg_types[1] = atypeId;
 	declared_arg_types[1] = res_atypeId;
 
@@ -986,8 +996,8 @@ make_op_expr(ParseState *pstate, Operator op,
 	}
 
 	/*
-	 * enforce consistency with ANYARRAY and ANYELEMENT argument and return
-	 * types, possibly adjusting return type or declared_arg_types (which will
+	 * enforce consistency with polymorphic argument and return types,
+	 * possibly adjusting return type or declared_arg_types (which will
 	 * be used as the cast destination by make_fn_arguments)
 	 */
 	rettype = enforce_generic_type_consistency(actual_arg_types,

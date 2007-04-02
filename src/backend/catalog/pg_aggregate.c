@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.85 2007/01/22 01:35:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_aggregate.c,v 1.86 2007/04/02 03:49:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,8 +80,7 @@ AggregateCreate(const char *aggName,
 	hasPolyArg = false;
 	for (i = 0; i < numArgs; i++)
 	{
-		if (aggArgTypes[i] == ANYARRAYOID ||
-			aggArgTypes[i] == ANYELEMENTOID)
+		if (IsPolymorphicType(aggArgTypes[i]))
 		{
 			hasPolyArg = true;
 			break;
@@ -92,12 +91,11 @@ AggregateCreate(const char *aggName,
 	 * If transtype is polymorphic, must have polymorphic argument also; else
 	 * we will have no way to deduce the actual transtype.
 	 */
-	if (!hasPolyArg &&
-		(aggTransType == ANYARRAYOID || aggTransType == ANYELEMENTOID))
+	if (IsPolymorphicType(aggTransType) && !hasPolyArg)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				 errmsg("cannot determine transition data type"),
-				 errdetail("An aggregate using \"anyarray\" or \"anyelement\" as transition type must have at least one argument of either type.")));
+				 errdetail("An aggregate using a polymorphic transition type must have at least one polymorphic argument.")));
 
 	/* find the transfn */
 	nargs_transfn = numArgs + 1;
@@ -170,13 +168,12 @@ AggregateCreate(const char *aggName,
 	 * that itself violates the rule against polymorphic result with no
 	 * polymorphic input.)
 	 */
-	if (!hasPolyArg &&
-		(finaltype == ANYARRAYOID || finaltype == ANYELEMENTOID))
+	if (IsPolymorphicType(finaltype) && !hasPolyArg)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
 				 errmsg("cannot determine result data type"),
-		   errdetail("An aggregate returning \"anyarray\" or \"anyelement\" "
-					 "must have at least one argument of either type.")));
+		   errdetail("An aggregate returning a polymorphic type "
+					 "must have at least one polymorphic argument.")));
 
 	/* handle sortop, if supplied */
 	if (aggsortopName)
@@ -329,8 +326,7 @@ lookup_agg_function(List *fnName,
 	 */
 	for (i = 0; i < nargs; i++)
 	{
-		if (input_types[i] != ANYARRAYOID &&
-			input_types[i] != ANYELEMENTOID)
+		if (!IsPolymorphicType(input_types[i]))
 		{
 			allPolyArgs = false;
 			break;
@@ -351,8 +347,7 @@ lookup_agg_function(List *fnName,
 	 */
 	for (i = 0; i < nargs; i++)
 	{
-		if (true_oid_array[i] != ANYARRAYOID &&
-			true_oid_array[i] != ANYELEMENTOID &&
+		if (!IsPolymorphicType(true_oid_array[i]) &&
 			!IsBinaryCoercible(input_types[i], true_oid_array[i]))
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),

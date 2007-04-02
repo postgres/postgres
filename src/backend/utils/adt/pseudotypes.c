@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pseudotypes.c,v 1.18 2007/01/05 22:19:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pseudotypes.c,v 1.19 2007/04/02 03:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,6 +160,31 @@ Datum
 anyarray_send(PG_FUNCTION_ARGS)
 {
 	return array_send(fcinfo);
+}
+
+
+/*
+ * anyenum_in		- input routine for pseudo-type ANYENUM.
+ */
+Datum
+anyenum_in(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type anyenum")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * anyenum_out		- output routine for pseudo-type ANYENUM.
+ *
+ * We may as well allow this, since enum_out will in fact work.
+ */
+Datum
+anyenum_out(PG_FUNCTION_ARGS)
+{
+	return enum_out(fcinfo);
 }
 
 

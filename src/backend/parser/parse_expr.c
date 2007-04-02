@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.215 2007/03/27 23:21:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.216 2007/04/02 03:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1627,7 +1627,7 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname,
 			break;
 		case RTE_FUNCTION:
 			toid = exprType(rte->funcexpr);
-			if (toid == RECORDOID || get_typtype(toid) == 'c')
+			if (type_is_rowtype(toid))
 			{
 				/* func returns composite; same as relation case */
 				result = (Node *) makeVar(vnum,

@@ -28,7 +28,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.74 2007/01/28 16:16:52 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.75 2007/04/02 03:49:40 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -200,7 +200,9 @@ DATA(insert (	2742	_timestamp_ops		PGNSP PGUID 2745  1115 t 1114 ));
 DATA(insert (	2742	_money_ops			PGNSP PGUID 2745  791 t 790 ));
 DATA(insert (	2742	_reltime_ops		PGNSP PGUID 2745  1024 t 703 ));
 DATA(insert (	2742	_tinterval_ops		PGNSP PGUID 2745  1025 t 704 ));
-DATA(insert (   403     uuid_ops			PGNSP PGUID 2968  2950 t 0 ));
-DATA(insert (   405     uuid_ops			PGNSP PGUID 2969  2950 t 0 ));
+DATA(insert (	403		uuid_ops			PGNSP PGUID 2968  2950 t 0 ));
+DATA(insert (	405		uuid_ops			PGNSP PGUID 2969  2950 t 0 ));
+DATA(insert (	403		enum_ops			PGNSP PGUID 3522  3500 t 0 ));
+DATA(insert (	405		enum_ops			PGNSP PGUID 3523  3500 t 0 ));
 
 #endif   /* PG_OPCLASS_H */

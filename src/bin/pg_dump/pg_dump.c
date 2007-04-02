@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.465 2007/03/26 16:58:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.466 2007/04/02 03:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,6 +137,7 @@ static void dumpDumpableObject(Archive *fout, DumpableObject *dobj);
 static void dumpNamespace(Archive *fout, NamespaceInfo *nspinfo);
 static void dumpType(Archive *fout, TypeInfo *tinfo);
 static void dumpBaseType(Archive *fout, TypeInfo *tinfo);
+static void dumpEnumType(Archive *fout, TypeInfo *tinfo);
 static void dumpDomain(Archive *fout, TypeInfo *tinfo);
 static void dumpCompositeType(Archive *fout, TypeInfo *tinfo);
 static void dumpShellType(Archive *fout, ShellTypeInfo *stinfo);
@@ -2085,7 +2086,7 @@ getTypes(int *numTypes)
 		 */
 		tinfo[i].nDomChecks = 0;
 		tinfo[i].domChecks = NULL;
-		if (tinfo[i].dobj.dump && tinfo[i].typtype == 'd')
+		if (tinfo[i].dobj.dump && tinfo[i].typtype == TYPTYPE_DOMAIN)
 			getDomainConstraints(&(tinfo[i]));
 
 		/*
@@ -2097,7 +2098,7 @@ getTypes(int *numTypes)
 		 * should copy the base type's catId, but then it might capture the
 		 * pg_depend entries for the type, which we don't want.
 		 */
-		if (tinfo[i].dobj.dump && tinfo[i].typtype == 'b')
+		if (tinfo[i].dobj.dump && tinfo[i].typtype == TYPTYPE_BASE)
 		{
 			stinfo = (ShellTypeInfo *) malloc(sizeof(ShellTypeInfo));
 			stinfo->dobj.objType = DO_SHELL_TYPE;
@@ -5119,12 +5120,91 @@ dumpType(Archive *fout, TypeInfo *tinfo)
 		return;
 
 	/* Dump out in proper style */
-	if (tinfo->typtype == 'b')
+	if (tinfo->typtype == TYPTYPE_BASE)
 		dumpBaseType(fout, tinfo);
-	else if (tinfo->typtype == 'd')
+	else if (tinfo->typtype == TYPTYPE_DOMAIN)
 		dumpDomain(fout, tinfo);
-	else if (tinfo->typtype == 'c')
+	else if (tinfo->typtype == TYPTYPE_COMPOSITE)
 		dumpCompositeType(fout, tinfo);
+	else if (tinfo->typtype == TYPTYPE_ENUM)
+		dumpEnumType(fout, tinfo);
+}
+
+/*
+ * dumpEnumType
+ *	  writes out to fout the queries to recreate a user-defined enum type
+ */
+static void
+dumpEnumType(Archive *fout, TypeInfo *tinfo)
+{
+	PQExpBuffer q = createPQExpBuffer();
+	PQExpBuffer delq = createPQExpBuffer();
+	PQExpBuffer query = createPQExpBuffer();
+	PGresult   *res;
+	int num, i;
+	char *label;
+
+	/* Set proper schema search path so regproc references list correctly */
+	selectSourceSchema(tinfo->dobj.namespace->dobj.name);
+
+	appendPQExpBuffer(query, "SELECT enumlabel FROM pg_catalog.pg_enum "
+					  "WHERE enumtypid = '%u'"
+					  "ORDER BY oid",
+					  tinfo->dobj.catId.oid);
+
+	res = PQexec(g_conn, query->data);
+	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
+
+	num = PQntuples(res);
+	/* should be at least 1 value */
+	if (num == 0)
+	{
+		write_msg(NULL, "No rows found for enum");
+		exit_nicely();
+	}
+
+	/*
+	 * DROP must be fully qualified in case same name appears in pg_catalog.
+	 * CASCADE shouldn't be required here as for normal types since the
+	 * I/O functions are generic and do not get dropped.
+	 */
+	appendPQExpBuffer(delq, "DROP TYPE %s.",
+					  fmtId(tinfo->dobj.namespace->dobj.name));
+	appendPQExpBuffer(delq, "%s;\n",
+					  fmtId(tinfo->dobj.name));
+	appendPQExpBuffer(q, "CREATE TYPE %s AS ENUM (\n",
+					  fmtId(tinfo->dobj.name));
+	for (i = 0; i < num; i++)
+	{
+		label = PQgetvalue(res, i, 0);
+		if (i > 0)
+			appendPQExpBuffer(q, ",\n"); 
+		appendPQExpBuffer(q, "    "); 
+		appendStringLiteralAH(q, label, fout);
+	}
+	appendPQExpBuffer(q, "\n);\n");
+
+	ArchiveEntry(fout, tinfo->dobj.catId, tinfo->dobj.dumpId,
+				 tinfo->dobj.name,
+				 tinfo->dobj.namespace->dobj.name,
+				 NULL,
+				 tinfo->rolname, false,
+				 "TYPE", q->data, delq->data, NULL,
+				 tinfo->dobj.dependencies, tinfo->dobj.nDeps,
+				 NULL, NULL);
+
+	/* Dump Type Comments */
+	resetPQExpBuffer(q);
+
+	appendPQExpBuffer(q, "TYPE %s", fmtId(tinfo->dobj.name));
+	dumpComment(fout, q->data,
+				tinfo->dobj.namespace->dobj.name, tinfo->rolname,
+				tinfo->dobj.catId, 0, tinfo->dobj.dumpId);
+
+	PQclear(res);
+	destroyPQExpBuffer(q);
+	destroyPQExpBuffer(delq);
+	destroyPQExpBuffer(query);
 }
 
 /*

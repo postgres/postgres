@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.105 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.106 2007/04/02 03:49:37 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -210,7 +210,8 @@ $$ LANGUAGE plpgsql;
     <para>
      <application>PL/pgSQL</> functions can also be declared to accept
      and return the polymorphic types
-     <type>anyelement</type> and <type>anyarray</type>.  The actual
+     <type>anyelement</type>, <type>anyarray</type>, and <type>anyenum</>.
+     The actual
      data types handled by a polymorphic function can vary from call to
      call, as discussed in <xref linkend="extend-types-polymorphic">.
      An example is shown in <xref linkend="plpgsql-declaration-aliases">.
@@ -698,8 +699,9 @@ $$ LANGUAGE plpgsql;
 
      <para>
       When the return type of a <application>PL/pgSQL</application>
-      function is declared as a polymorphic type (<type>anyelement</type>
-      or <type>anyarray</type>), a special parameter <literal>$0</literal>
+      function is declared as a polymorphic type (<type>anyelement</type>,
+      <type>anyarray</type>, or <type>anyenum</>),
+      a special parameter <literal>$0</literal>
       is created.  Its data type is the actual return type of the function,
       as deduced from the actual input types (see <xref
       linkend="extend-types-polymorphic">).
@@ -726,7 +728,7 @@ $$ LANGUAGE plpgsql;
 
      <para>
       The same effect can be had by declaring one or more output parameters as
-      <type>anyelement</type> or <type>anyarray</type>.  In this case the
+      polymorphic types.  In this case the
       special <literal>$0</literal> parameter is not used; the output
       parameters themselves serve the same purpose.  For example:
 

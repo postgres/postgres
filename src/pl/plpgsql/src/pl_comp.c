@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.113 2007/02/09 03:35:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.114 2007/04/02 03:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -406,7 +406,7 @@ do_compile(FunctionCallInfo fcinfo,
 				argdtype = plpgsql_build_datatype(argtypeid, -1);
 
 				/* Disallow pseudotype argument */
-				/* (note we already replaced ANYARRAY/ANYELEMENT) */
+				/* (note we already replaced polymorphic types) */
 				/* (build_variable would do this, but wrong message) */
 				if (argdtype->ttype != PLPGSQL_TTYPE_SCALAR &&
 					argdtype->ttype != PLPGSQL_TTYPE_ROW)
@@ -474,7 +474,7 @@ do_compile(FunctionCallInfo fcinfo,
 			 * the info available.
 			 */
 			rettypeid = procStruct->prorettype;
-			if (rettypeid == ANYARRAYOID || rettypeid == ANYELEMENTOID)
+			if (IsPolymorphicType(rettypeid))
 			{
 				if (forValidator)
 				{
@@ -482,6 +482,7 @@ do_compile(FunctionCallInfo fcinfo,
 						rettypeid = INT4ARRAYOID;
 					else
 						rettypeid = INT4OID;
+					/* XXX what could we use for ANYENUM? */
 				}
 				else
 				{
@@ -512,8 +513,8 @@ do_compile(FunctionCallInfo fcinfo,
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 			/* Disallow pseudotype result, except VOID or RECORD */
-			/* (note we already replaced ANYARRAY/ANYELEMENT) */
-			if (typeStruct->typtype == 'p')
+			/* (note we already replaced polymorphic types) */
+			if (typeStruct->typtype == TYPTYPE_PSEUDO)
 			{
 				if (rettypeid == VOIDOID ||
 					rettypeid == RECORDOID)
@@ -544,8 +545,7 @@ do_compile(FunctionCallInfo fcinfo,
 				 * types, and not when the return is specified through an
 				 * output parameter.
 				 */
-				if ((procStruct->prorettype == ANYARRAYOID ||
-					 procStruct->prorettype == ANYELEMENTOID) &&
+				if (IsPolymorphicType(procStruct->prorettype) &&
 					num_out_args == 0)
 				{
 					(void) plpgsql_build_variable("$0", 0,
@@ -1785,15 +1785,16 @@ build_datatype(HeapTuple typeTup, int32 typmod)
 	typ->typoid = HeapTupleGetOid(typeTup);
 	switch (typeStruct->typtype)
 	{
-		case 'b':				/* base type */
-		case 'd':				/* domain */
+		case TYPTYPE_BASE:
+		case TYPTYPE_DOMAIN:
+		case TYPTYPE_ENUM:
 			typ->ttype = PLPGSQL_TTYPE_SCALAR;
 			break;
-		case 'c':				/* composite, ie, rowtype */
+		case TYPTYPE_COMPOSITE:
 			Assert(OidIsValid(typeStruct->typrelid));
 			typ->ttype = PLPGSQL_TTYPE_ROW;
 			break;
-		case 'p':				/* pseudo */
+		case TYPTYPE_PSEUDO:
 			if (typ->typoid == RECORDOID)
 				typ->ttype = PLPGSQL_TTYPE_REC;
 			else
@@ -2026,6 +2027,7 @@ plpgsql_resolve_polymorphic_argtypes(int numargs,
 			switch (argtypes[i])
 			{
 				case ANYELEMENTOID:
+				case ANYENUMOID:				/* XXX dubious */
 					argtypes[i] = INT4OID;
 					break;
 				case ANYARRAYOID:

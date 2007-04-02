@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.110 2007/01/05 22:19:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.111 2007/04/02 03:49:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	 *
 	 * The representational details are the same as int4 ... it doesn't really
 	 * matter what they are so long as they are consistent.  Also note that we
-	 * give it typtype = 'p' (pseudotype) as extra insurance that it won't be
+	 * give it typtype = TYPTYPE_PSEUDO as extra insurance that it won't be
 	 * mistaken for a usable type.
 	 */
 	i = 0;
@@ -85,7 +85,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	values[i++] = ObjectIdGetDatum(GetUserId());		/* typowner */
 	values[i++] = Int16GetDatum(sizeof(int4));	/* typlen */
 	values[i++] = BoolGetDatum(true);	/* typbyval */
-	values[i++] = CharGetDatum('p');	/* typtype */
+	values[i++] = CharGetDatum(TYPTYPE_PSEUDO);	/* typtype */
 	values[i++] = BoolGetDatum(false);	/* typisdefined */
 	values[i++] = CharGetDatum(DEFAULT_TYPDELIM);		/* typdelim */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typrelid */
@@ -159,7 +159,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 Oid
 TypeCreate(const char *typeName,
 		   Oid typeNamespace,
-		   Oid relationOid,		/* only for 'c'atalog types */
+		   Oid relationOid,		/* only for composite types */
 		   char relationKind,	/* ditto */
 		   int16 internalSize,
 		   char typeType,
@@ -243,7 +243,8 @@ TypeCreate(const char *typeName,
 	values[i++] = CharGetDatum(typeType);		/* typtype */
 	values[i++] = BoolGetDatum(true);	/* typisdefined */
 	values[i++] = CharGetDatum(typDelim);		/* typdelim */
-	values[i++] = ObjectIdGetDatum(typeType == 'c' ? relationOid : InvalidOid); /* typrelid */
+	values[i++] = ObjectIdGetDatum(typeType == TYPTYPE_COMPOSITE ?
+								   relationOid : InvalidOid); /* typrelid */
 	values[i++] = ObjectIdGetDatum(elementType);		/* typelem */
 	values[i++] = ObjectIdGetDatum(inputProcedure);		/* typinput */
 	values[i++] = ObjectIdGetDatum(outputProcedure);	/* typoutput */
@@ -377,7 +378,7 @@ TypeCreate(const char *typeName,
 void
 GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typeObjectId,
-						 Oid relationOid,		/* only for 'c'atalog types */
+						 Oid relationOid,		/* only for composite types */
 						 char relationKind,		/* ditto */
 						 Oid owner,
 						 Oid inputProcedure,

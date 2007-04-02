@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.584 2007/03/26 16:58:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.585 2007/04/02 03:49:38 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -248,6 +248,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 				TableFuncElementList opt_type_modifiers
 				prep_type_clause
 				execute_param_clause using_clause returning_clause
+				enum_val_list
 
 %type <range>	OptTempTableName
 %type <into>	into_clause create_as_target
@@ -383,7 +384,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
 	DESC DISABLE_P DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
 
-	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ESCAPE EXCEPT EXCLUDING
+	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ENUM_P ESCAPE EXCEPT EXCLUDING
 	EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
 	FALSE_P FAMILY FETCH FIRST_P FLOAT_P FOR FORCE FOREIGN FORWARD
@@ -2922,6 +2923,13 @@ DefineStmt:
 					n->coldeflist = $6;
 					$$ = (Node *)n;
 				}
+			| CREATE TYPE_P any_name AS ENUM_P '(' enum_val_list ')'
+				{
+					CreateEnumStmt *n = makeNode(CreateEnumStmt);
+					n->typename = $3;
+					n->vals = $7;
+					$$ = (Node *)n;
+				}
 		;
 
 definition: '(' def_list ')'						{ $$ = $2; }
@@ -2964,6 +2972,12 @@ old_aggr_elem:  IDENT '=' def_arg
 				{
 					$$ = makeDefElem($1, (Node *)$3);
 				}
+		;
+
+enum_val_list:	Sconst
+				{ $$ = list_make1(makeString($1)); }
+			| enum_val_list ',' Sconst
+				{ $$ = lappend($1, makeString($3)); }
 		;
 
 
@@ -8760,6 +8774,7 @@ unreserved_keyword:
 			| ENABLE_P
 			| ENCODING
 			| ENCRYPTED
+			| ENUM_P
 			| ESCAPE
 			| EXCLUDING
 			| EXCLUSIVE

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.87 2007/01/05 22:19:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.88 2007/04/02 03:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -396,16 +396,6 @@ typeByVal(Type t)
 
 	typ = (Form_pg_type) GETSTRUCT(t);
 	return typ->typbyval;
-}
-
-/* given type (as type struct), return the value of its 'typtype' attribute.*/
-char
-typeTypType(Type t)
-{
-	Form_pg_type typ;
-
-	typ = (Form_pg_type) GETSTRUCT(t);
-	return typ->typtype;
 }
 
 /* given type (as type struct), return the name of type */

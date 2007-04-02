@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.127 2007/02/09 03:35:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.128 2007/04/02 03:49:41 tgl Exp $
  *
  **********************************************************************/
 
@@ -843,7 +843,7 @@ plperl_validator(PG_FUNCTION_ARGS)
 
 	/* Disallow pseudotype result */
 	/* except for TRIGGER, RECORD, or VOID */
-	if (functyptype == 'p')
+	if (functyptype == TYPTYPE_PSEUDO)
 	{
 		/* we assume OPAQUE with no arguments means a trigger */
 		if (proc->prorettype == TRIGGEROID ||
@@ -862,7 +862,7 @@ plperl_validator(PG_FUNCTION_ARGS)
 								&argtypes, &argnames, &argmodes);
 	for (i = 0; i < numargs; i++)
 	{
-		if (get_typtype(argtypes[i]) == 'p')
+		if (get_typtype(argtypes[i]) == TYPTYPE_PSEUDO)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("plperl functions cannot take type %s",
@@ -1525,7 +1525,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 			/* Disallow pseudotype result, except VOID or RECORD */
-			if (typeStruct->typtype == 'p')
+			if (typeStruct->typtype == TYPTYPE_PSEUDO)
 			{
 				if (procStruct->prorettype == VOIDOID ||
 					procStruct->prorettype == RECORDOID)
@@ -1552,8 +1552,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 
 			prodesc->result_oid = procStruct->prorettype;
 			prodesc->fn_retisset = procStruct->proretset;
-			prodesc->fn_retistuple = (typeStruct->typtype == 'c' ||
-									  procStruct->prorettype == RECORDOID);
+			prodesc->fn_retistuple = (procStruct->prorettype == RECORDOID ||
+									  typeStruct->typtype == TYPTYPE_COMPOSITE);
 
 			prodesc->fn_retisarray =
 				(typeStruct->typlen == -1 && typeStruct->typelem);
@@ -1586,7 +1586,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 				typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 				/* Disallow pseudotype argument */
-				if (typeStruct->typtype == 'p')
+				if (typeStruct->typtype == TYPTYPE_PSEUDO)
 				{
 					free(prodesc->proname);
 					free(prodesc);
@@ -1596,7 +1596,7 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 						format_type_be(procStruct->proargtypes.values[i]))));
 				}
 
-				if (typeStruct->typtype == 'c')
+				if (typeStruct->typtype == TYPTYPE_COMPOSITE)
 					prodesc->arg_is_rowtype[i] = true;
 				else
 				{

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.68 2007/02/01 00:28:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.69 2007/04/02 03:49:37 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -22,6 +22,9 @@ PostgreSQL documentation
 <synopsis>
 CREATE TYPE <replaceable class="parameter">name</replaceable> AS
     ( <replaceable class="PARAMETER">attribute_name</replaceable> <replaceable class="PARAMETER">data_type</replaceable> [, ... ] )
+
+CREATE TYPE <replaceable class="parameter">name</replaceable> AS ENUM
+    ( '<replaceable class="parameter">label</replaceable>' [, ... ] )
 
 CREATE TYPE <replaceable class="parameter">name</replaceable> (
     INPUT = <replaceable class="parameter">input_function</replaceable>,
@@ -78,10 +81,22 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   </refsect2>
 
   <refsect2>
+   <title>Enumerated Types</title>
+
+   <para>
+    The second form of <command>CREATE TYPE</command> creates an enumerated
+    (enum) type, as described in <xref linkend="datatype-enum">.
+    Enum types take a list of one or more quoted labels, each of which
+    must be less than <symbol>NAMEDATALEN</symbol> bytes long (64 in a standard
+    <productname>PostgreSQL</productname> build).
+   </para>
+  </refsect2>
+
+  <refsect2>
    <title>Base Types</title>
 
   <para>
-   The second form of <command>CREATE TYPE</command> creates a new base type
+   The third form of <command>CREATE TYPE</command> creates a new base type
    (scalar type).  The parameters can appear in any order, not only that
    illustrated above, and most are optional.  You must register
    two or more functions (using <command>CREATE FUNCTION</command>) before
@@ -297,7 +312,7 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    <title>Array Types</title>
 
    <para>
-    Whenever a user-defined base data type is created,
+    Whenever a user-defined base or enum data type is created,
     <productname>PostgreSQL</productname> automatically creates an
     associated array type, whose name consists of the base type's
     name prepended with an underscore.  The parser understands this
@@ -359,6 +374,16 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
      <para>
       The name of an existing data type to become a column of the
       composite type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">label</replaceable></term>
+    <listitem>
+     <para>
+      A string literal representing the textual label associated with
+      one value of an enum type.
      </para>
     </listitem>
    </varlistentry>
@@ -564,6 +589,20 @@ CREATE TYPE compfoo AS (f1 int, f2 text);
 CREATE FUNCTION getfoo() RETURNS SETOF compfoo AS $$
     SELECT fooid, fooname FROM foo
 $$ LANGUAGE SQL;
+</programlisting>
+  </para>
+
+  <para>
+   This example creates an enumerated type and uses it in
+   a table definition:
+<programlisting>
+CREATE TYPE bug_status AS ENUM ('new', 'open', 'closed');
+
+CREATE TABLE bug (
+    serial id,
+    description text,
+    status bug_status
+);
 </programlisting>
   </para>
 

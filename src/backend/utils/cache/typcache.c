@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.24 2007/01/05 22:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.25 2007/04/02 03:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,7 +275,7 @@ lookup_type_cache(Oid type_id, int flags)
 	 */
 	if ((flags & TYPECACHE_TUPDESC) &&
 		typentry->tupDesc == NULL &&
-		typentry->typtype == 'c')
+		typentry->typtype == TYPTYPE_COMPOSITE)
 	{
 		Relation	rel;
 

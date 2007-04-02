@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.152 2007/03/27 23:21:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.153 2007/04/02 03:49:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,8 @@ coerce_type(ParseState *pstate, Node *node,
 	}
 	if (targetTypeId == ANYOID ||
 		targetTypeId == ANYELEMENTOID ||
-		(targetTypeId == ANYARRAYOID && inputTypeId != UNKNOWNOID))
+		(targetTypeId == ANYARRAYOID && inputTypeId != UNKNOWNOID) ||
+		(targetTypeId == ANYENUMOID && inputTypeId != UNKNOWNOID))
 	{
 		/*
 		 * Assume can_coerce_type verified that implicit coercion is okay.
@@ -143,7 +144,8 @@ coerce_type(ParseState *pstate, Node *node,
 		 * since an UNKNOWN value is still a perfectly valid Datum.  However
 		 * an UNKNOWN value is definitely *not* an array, and so we mustn't
 		 * accept it for ANYARRAY.  (Instead, we will call anyarray_in below,
-		 * which will produce an error.)
+		 * which will produce an error.)  Likewise, UNKNOWN input is no good
+		 * for ANYENUM.
 		 *
 		 * NB: we do NOT want a RelabelType here.
 		 */
@@ -406,9 +408,8 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		if (targetTypeId == ANYOID)
 			continue;
 
-		/* accept if target is ANYARRAY or ANYELEMENT, for now */
-		if (targetTypeId == ANYARRAYOID ||
-			targetTypeId == ANYELEMENTOID)
+		/* accept if target is polymorphic, for now */
+		if (IsPolymorphicType(targetTypeId))
 		{
 			have_generics = true;		/* do more checking later */
 			continue;
@@ -1048,6 +1049,9 @@ coerce_to_common_type(ParseState *pstate, Node *node,
  * 3) If there are arguments of both ANYELEMENT and ANYARRAY, make sure
  *	  the actual ANYELEMENT datatype is in fact the element type for
  *	  the actual ANYARRAY datatype.
+ * 4) ANYENUM is treated the same as ANYELEMENT except that if it is used
+ *	  (alone or in combination with plain ANYELEMENT), we add the extra
+ *	  condition that the ANYELEMENT type must be an enum.
  *
  * If we have UNKNOWN input (ie, an untyped literal) for any ANYELEMENT
  * or ANYARRAY argument, assume it is okay.
@@ -1070,6 +1074,7 @@ check_generic_type_consistency(Oid *actual_arg_types,
 	Oid			array_typeid = InvalidOid;
 	Oid			array_typelem;
 	bool		have_anyelement = false;
+	bool		have_anyenum = false;
 
 	/*
 	 * Loop through the arguments to see if we have any that are ANYARRAY or
@@ -1079,9 +1084,12 @@ check_generic_type_consistency(Oid *actual_arg_types,
 	{
 		Oid			actual_type = actual_arg_types[j];
 
-		if (declared_arg_types[j] == ANYELEMENTOID)
+		if (declared_arg_types[j] == ANYELEMENTOID ||
+			declared_arg_types[j] == ANYENUMOID)
 		{
 			have_anyelement = true;
+			if (declared_arg_types[j] == ANYENUMOID)
+				have_anyenum = true;
 			if (actual_type == UNKNOWNOID)
 				continue;
 			if (OidIsValid(elem_typeid) && actual_type != elem_typeid)
@@ -1127,6 +1135,13 @@ check_generic_type_consistency(Oid *actual_arg_types,
 		}
 	}
 
+	if (have_anyenum)
+	{
+		/* require the element type to be an enum */
+		if (!type_is_enum(elem_typeid))
+			return false;
+	}
+
 	/* Looks valid */
 	return true;
 }
@@ -1136,18 +1151,18 @@ check_generic_type_consistency(Oid *actual_arg_types,
  *		Make sure a polymorphic function is legally callable, and
  *		deduce actual argument and result types.
  *
- * If ANYARRAY or ANYELEMENT is used for a function's arguments or
+ * If ANYARRAY, ANYELEMENT, or ANYENUM is used for a function's arguments or
  * return type, we make sure the actual data types are consistent with
  * each other. The argument consistency rules are shown above for
  * check_generic_type_consistency().
  *
- * If we have UNKNOWN input (ie, an untyped literal) for any ANYELEMENT
- * or ANYARRAY argument, we attempt to deduce the actual type it should
- * have.  If successful, we alter that position of declared_arg_types[]
- * so that make_fn_arguments will coerce the literal to the right thing.
+ * If we have UNKNOWN input (ie, an untyped literal) for any polymorphic
+ * argument, we attempt to deduce the actual type it should have.  If
+ * successful, we alter that position of declared_arg_types[] so that
+ * make_fn_arguments will coerce the literal to the right thing.
  *
  * Rules are applied to the function's return type (possibly altering it)
- * if it is declared ANYARRAY or ANYELEMENT:
+ * if it is declared as a polymorphic type:
  *
  * 1) If return type is ANYARRAY, and any argument is ANYARRAY, use the
  *	  argument's actual type as the function's return type.
@@ -1167,6 +1182,9 @@ check_generic_type_consistency(Oid *actual_arg_types,
  * 6) If return type is ANYELEMENT, no argument is ANYARRAY or ANYELEMENT,
  *	  generate an ERROR. This condition is prevented by CREATE FUNCTION
  *	  and is therefore not expected here.
+ * 7) ANYENUM is treated the same as ANYELEMENT except that if it is used
+ *	  (alone or in combination with plain ANYELEMENT), we add the extra
+ *	  condition that the ANYELEMENT type must be an enum.
  */
 Oid
 enforce_generic_type_consistency(Oid *actual_arg_types,
@@ -1180,7 +1198,9 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 	Oid			elem_typeid = InvalidOid;
 	Oid			array_typeid = InvalidOid;
 	Oid			array_typelem;
-	bool		have_anyelement = (rettype == ANYELEMENTOID);
+	bool		have_anyelement = (rettype == ANYELEMENTOID ||
+								   rettype == ANYENUMOID);
+	bool		have_anyenum = (rettype == ANYENUMOID);
 
 	/*
 	 * Loop through the arguments to see if we have any that are ANYARRAY or
@@ -1190,9 +1210,12 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 	{
 		Oid			actual_type = actual_arg_types[j];
 
-		if (declared_arg_types[j] == ANYELEMENTOID)
+		if (declared_arg_types[j] == ANYELEMENTOID ||
+			declared_arg_types[j] == ANYENUMOID)
 		{
 			have_generics = have_anyelement = true;
+			if (declared_arg_types[j] == ANYENUMOID)
+				have_anyenum = true;
 			if (actual_type == UNKNOWNOID)
 			{
 				have_unknowns = true;
@@ -1227,8 +1250,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 	}
 
 	/*
-	 * Fast Track: if none of the arguments are ANYARRAY or ANYELEMENT, return
-	 * the unmodified rettype.
+	 * Fast Track: if none of the arguments are polymorphic, return the
+	 * unmodified rettype.  We assume it can't be polymorphic either.
 	 */
 	if (!have_generics)
 		return rettype;
@@ -1274,7 +1297,17 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 		/* Only way to get here is if all the generic args are UNKNOWN */
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
-				 errmsg("could not determine anyarray/anyelement type because input has type \"unknown\"")));
+				 errmsg("could not determine polymorphic type because input has type \"unknown\"")));
+	}
+
+	if (have_anyenum)
+	{
+		/* require the element type to be an enum */
+		if (!type_is_enum(elem_typeid))
+			ereport(ERROR,
+					(errcode(ERRCODE_DATATYPE_MISMATCH),
+					 errmsg("type matched to anyenum is not an enum type: %s",
+							format_type_be(elem_typeid))));
 	}
 
 	/*
@@ -1289,7 +1322,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 			if (actual_type != UNKNOWNOID)
 				continue;
 
-			if (declared_arg_types[j] == ANYELEMENTOID)
+			if (declared_arg_types[j] == ANYELEMENTOID ||
+				declared_arg_types[j] == ANYENUMOID)
 				declared_arg_types[j] = elem_typeid;
 			else if (declared_arg_types[j] == ANYARRAYOID)
 			{
@@ -1307,7 +1341,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 		}
 	}
 
-	/* if we return ANYARRAYOID use the appropriate argument type */
+	/* if we return ANYARRAY use the appropriate argument type */
 	if (rettype == ANYARRAYOID)
 	{
 		if (!OidIsValid(array_typeid))
@@ -1322,8 +1356,8 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 		return array_typeid;
 	}
 
-	/* if we return ANYELEMENTOID use the appropriate argument type */
-	if (rettype == ANYELEMENTOID)
+	/* if we return ANYELEMENT use the appropriate argument type */
+	if (rettype == ANYELEMENTOID || rettype == ANYENUMOID)
 		return elem_typeid;
 
 	/* we don't return a generic type; send back the original return type */
@@ -1333,7 +1367,7 @@ enforce_generic_type_consistency(Oid *actual_arg_types,
 /*
  * resolve_generic_type()
  *		Deduce an individual actual datatype on the assumption that
- *		the rules for ANYARRAY/ANYELEMENT are being followed.
+ *		the rules for polymorphic types are being followed.
  *
  * declared_type is the declared datatype we want to resolve.
  * context_actual_type is the actual input datatype to some argument
@@ -1362,7 +1396,8 @@ resolve_generic_type(Oid declared_type,
 								format_type_be(context_actual_type))));
 			return context_actual_type;
 		}
-		else if (context_declared_type == ANYELEMENTOID)
+		else if (context_declared_type == ANYELEMENTOID ||
+				 context_declared_type == ANYENUMOID)
 		{
 			/* Use the array type corresponding to actual type */
 			Oid			array_typeid = get_array_type(context_actual_type);
@@ -1375,7 +1410,7 @@ resolve_generic_type(Oid declared_type,
 			return array_typeid;
 		}
 	}
-	else if (declared_type == ANYELEMENTOID)
+	else if (declared_type == ANYELEMENTOID || declared_type == ANYENUMOID)
 	{
 		if (context_declared_type == ANYARRAYOID)
 		{
@@ -1389,7 +1424,8 @@ resolve_generic_type(Oid declared_type,
 								format_type_be(context_actual_type))));
 			return array_typelem;
 		}
-		else if (context_declared_type == ANYELEMENTOID)
+		else if (context_declared_type == ANYELEMENTOID ||
+				 context_declared_type == ANYENUMOID)
 		{
 			/* Use the actual type; it doesn't matter if array or not */
 			return context_actual_type;
@@ -1402,7 +1438,7 @@ resolve_generic_type(Oid declared_type,
 	}
 	/* If we get here, declared_type is polymorphic and context isn't */
 	/* NB: this is a calling-code logic error, not a user error */
-	elog(ERROR, "could not determine ANYARRAY/ANYELEMENT type because context isn't polymorphic");
+	elog(ERROR, "could not determine polymorphic type because context isn't polymorphic");
 	return InvalidOid;			/* keep compiler quiet */
 }
 
@@ -1502,6 +1538,7 @@ TypeCategory(Oid inType)
 		case (INTERNALOID):
 		case (OPAQUEOID):
 		case (ANYELEMENTOID):
+		case (ANYENUMOID):
 			result = GENERIC_TYPE;
 			break;
 
@@ -1647,6 +1684,11 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
 		if (get_element_type(srctype) != InvalidOid)
 			return true;
 
+	/* Also accept any enum type as coercible to ANYENUM */
+	if (targettype == ANYENUMOID)
+		if (type_is_enum(srctype))
+			return true;
+
 	/* Else look in pg_cast */
 	tuple = SearchSysCache(CASTSOURCETARGET,
 						   ObjectIdGetDatum(srctype),
@@ -1777,6 +1819,22 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 				result = true;
 			}
 		}
+
+		/*
+		 * If we still haven't found a possibility, check for enums,
+		 * and retry looking for a cast to or from ANYENUM.  But don't
+		 * mistakenly conclude that ANYENUM-to-some-enum-type is a
+		 * trivial cast.
+		 */
+		if (!result)
+		{
+			if (type_is_enum(sourceTypeId))
+				result = find_coercion_pathway(targetTypeId, ANYENUMOID,
+											   ccontext, funcid, arrayCoerce);
+			else if (sourceTypeId != ANYENUMOID && type_is_enum(targetTypeId))
+				result = find_coercion_pathway(ANYENUMOID, sourceTypeId,
+											   ccontext, funcid, arrayCoerce);
+		}
 	}
 
 	return result;
@@ -1813,7 +1871,7 @@ find_typmod_coercion_function(Oid typeId,
 	/* Check for a varlena array type (and not a domain) */
 	if (typeForm->typelem != InvalidOid &&
 		typeForm->typlen == -1 &&
-		typeForm->typtype != 'd')
+		typeForm->typtype != TYPTYPE_DOMAIN)
 	{
 		/* Yes, switch our attention to the element type */
 		typeId = typeForm->typelem;
