@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.373 2007/04/02 03:49:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.374 2007/04/02 15:27:02 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7502,6 +7502,671 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
   </sect1>
 
 
+ <sect1 id="functions-xml">
+  <title>XML Functions</title>
+
+  <para>
+   The functions and function-like expressions described in this
+   section operate on values of type <type>xml</type>.  Check <xref
+   linkend="datatype-xml"> for information about the <type>xml</type>
+   type.  The function-like expressions <function>xmlparse</function>
+   and <function>xmlserialize</function> for converting to and from
+   type <type>xml</type> are not repeated here.
+  </para>
+
+  <sect2>
+   <title>Producing XML Content</title>
+
+   <para>
+    A set of functions and function-like expressions are available for
+    producing XML content from SQL data.  As such, they are
+    particularly suitable for formatting query results into XML
+    documents for processing in client applications.
+   </para>
+
+   <sect3>
+    <title><literal>xmlcomment</literal></title>
+
+    <indexterm>
+     <primary>xmlcomment</primary>
+    </indexterm>
+
+<synopsis>
+<function>xmlcomment</function>(<replaceable>text</replaceable>)
+</synopsis>
+
+    <para>
+     The function <function>xmlcomment</function> creates an XML value
+     containing an XML comment with the specified text as content.
+     The text cannot contain <literal>--</literal> or end with a
+     <literal>-</literal> so that the resulting construct is a valid
+     XML comment.  If the argument is null, the result is null.
+    </para>
+
+    <para>
+     Example:
+<screen><![CDATA[
+SELECT xmlcomment('hello');
+
+  xmlcomment
+--------------
+ <!--hello-->
+]]></screen>
+    </para>
+   </sect3>
+
+   <sect3>
+    <title><literal>xmlconcat</literal></title>
+
+    <indexterm>
+     <primary>xmlconcat</primary>
+    </indexterm>
+
+ <synopsis>
+ <function>xmlconcat</function>(<replaceable>xml</replaceable><optional>, ...</optional>)
+ </synopsis>
+ 
+    <para>
+     The function <function>xmlconcat</function> concatenates a list
+     of individual XML values to create a single value containing an
+     XML content fragment.  Null values are omitted; the result is
+     only null if there are no nonnull arguments.
+    </para>
+
+    <para>
+     Example:
+<screen><![CDATA[
+SELECT xmlconcat('<abc/>', '<bar>foo</bar>');
+
+      xmlconcat
+----------------------
+ <abc/><bar>foo</bar>
+]]></screen>
+    </para>
+
+    <para>
+     XML declarations, if present are combined as follows.  If all
+     argument values have the same XML version declaration, that
+     version is used in the result, else no version is used.  If all
+     argument values have the standalone declaration value
+     <quote>yes</quote>, then that value is used in the result.  If
+     all argument values have a standalone declaration value and at
+     least one is <quote>no</quote>, then that is used in the result.
+     Else the result will have no standalone declaration.  If the
+     result is determined to require a standalone declaration but no
+     version declaration, a version declaration with version 1.0 will
+     be used because XML requires an XML declaration to contain a
+     version declaration.  Encoding declarations are ignored and
+     removed in all cases.
+    </para>
+
+    <para>
+     Example:
+<screen><![CDATA[
+SELECT xmlconcat('<?xml version="1.1"?><foo/>', '<?xml version="1.1" standalone="no"?><bar/>');
+
+             xmlconcat
+-----------------------------------
+ <?xml version="1.1"?><foo/><bar/>
+]]></screen>
+    </para>
+   </sect3>
+ 
+   <sect3>
+    <title><literal>xmlelement</literal></title>
+ 
+   <indexterm>
+    <primary>xmlelement</primary>
+   </indexterm>
+ 
+<synopsis>
+ <function>xmlelement</function>(name <replaceable>name</replaceable> <optional>, xmlattributes(<replaceable>value</replaceable> <optional>AS <replaceable>attname</replaceable></optional> <optional>, ... </optional>)</optional> <optional><replaceable>, content, ...</replaceable></optional>)
+ </synopsis>
+ 
+    <para>
+     The <function>xmlelement</function> expression produces an XML
+     element with the given name, attributes, and content.
+    </para>
+
+    <para>
+     Examples:
+<screen><![CDATA[
+SELECT xmlelement(name foo);
+
+ xmlelement
+------------
+ <foo/>
+
+SELECT xmlelement(name foo, xmlattributes('xyz' as bar));
+
+    xmlelement
+------------------
+ <foo bar="xyz"/>
+
+SELECT xmlelement(name foo, xmlattributes(current_date as bar), 'cont', 'ent');
+
+             xmlelement
+-------------------------------------
+ <foo bar="2007-01-26">content</foo>
+]]></screen>
+    </para>
+
+    <para>
+     Element and attribute names that are not valid XML names are
+     escaped by replacing the offending characters by the sequence
+     <literal>_x<replaceable>HHHH</replaceable>_</literal>, where
+     <replaceable>HHHH</replaceable> is the character's Unicode
+     codepoint in hexadecimal notation.  For example:
+<screen><![CDATA[
+SELECT xmlelement(name "foo$bar", xmlattributes('xyz' as "a&b"));
+
+            xmlelement
+----------------------------------
+ <foo_x0024_bar a_x0026_b="xyz"/>
+]]></screen>
+    </para>
+
+    <para>
+     An explicit attribute name need not be specified if the attribute
+     value is a column reference, in which case the column's name will
+     be used as attribute name by default.  In any other case, the
+     attribute must be given an explicit name.  So this example is
+     valid:
+<screen>
+CREATE TABLE test (a xml, b xml);
+SELECT xmlelement(name test, xmlattributes(a, b)) FROM test;
+</screen>
+     But these are not:
+<screen>
+SELECT xmlelement(name test, xmlattributes('constant'), a, b) FROM test;
+SELECT xmlelement(name test, xmlattributes(func(a, b))) FROM test;
+</screen>
+    </para>
+
+    <para>
+     Element content, if specified, will be formatted according to
+     data type.  If the content is itself of type <type>xml</type>,
+     complex XML documents can be constructed.  For example:
+<screen><![CDATA[
+SELECT xmlelement(name foo, xmlattributes('xyz' as bar),
+                            xmlelement(name abc),
+                            xmlcomment('test'),
+                            xmlelement(name xyz));
+
+                  xmlelement
+----------------------------------------------
+ <foo bar="xyz"><abc/><!--test--><xyz/></foo>
+]]></screen>
+
+     Content of other types will be formatted into valid XML character
+     data.  This means in particular that the characters &lt;, &gt;,
+     and &amp; will be converted to entities.  Binary data (data type
+     <type>bytea</type>) will be represented in base64 or hex
+     encoding, depending on the setting of the configuration parameter
+     <xref linkend="guc-xmlbinary">.  The particular behavior for
+     individual data types is expected evolve in order to align the
+     SQL and PostgreSQL data types with the XML Schema specification,
+     at which point a more precise description will appear.
+    </para>
+   </sect3>
+ 
+   <sect3>
+    <title><literal>xmlforest</literal></title>
+ 
+   <indexterm>
+    <primary>xmlforest</primary>
+   </indexterm>
+ 
+ <synopsis>
+ <function>xmlforest</function>(<replaceable>content</replaceable> <optional>AS <replaceable>name</replaceable></optional> <optional>, ...</optional>)
+ </synopsis>
+ 
+    <para>
+     The <function>xmlforest</function> expression produces an XML
+     forest (sequence) of elements using the given names and content.
+    </para>
+
+    <para>
+     Examples:
+<screen><![CDATA[
+SELECT xmlforest('abc' AS foo, 123 AS bar);
+
+          xmlforest
+------------------------------
+ <foo>abc</foo><bar>123</bar>
+
+
+SELECT xmlforest(table_name, column_name) FROM information_schema.columns WHERE table_schema = 'pg_catalog';
+
+                                         xmlforest
+-------------------------------------------------------------------------------------------
+ <table_name>pg_authid</table_name><column_name>rolname</column_name>
+ <table_name>pg_authid</table_name><column_name>rolsuper</column_name>
+ ...
+]]></screen>
+
+     As seen in the second example, the element name can be omitted if
+     the content value is a column reference, in which case the column
+     name is used by default.  Otherwise, a name must be specified.
+    </para>
+
+    <para>
+     Element names that are not valid XML names are escaped as shown
+     for <function>xmlelement</function> above.  Similarly, content
+     data is escaped to make valid XML content, unless it is already
+     of type <type>xml</type>.
+    </para>
+
+    <para>
+     Note that XML forests are not valid XML documents if they consist
+     of more than one element.  So it might be useful to wrap
+     <function>xmlforest</function> expressions in
+     <function>xmlelement</function>.
+    </para>
+   </sect3>
+ 
+   <sect3>
+    <title><literal>xmlpi</literal></title>
+ 
+   <indexterm>
+    <primary>xmlpi</primary>
+   </indexterm>
+ 
+ <synopsis>
+ <function>xmlpi</function>(name <replaceable>target</replaceable> <optional>, <replaceable>content</replaceable></optional>)
+ </synopsis>
+ 
+    <para>
+     The <function>xmlpi</function> expression creates an XML
+     processing instruction.  The content, if present, must not
+     contain the character sequence <literal>?&gt;</literal>.
+    </para>
+
+    <para>
+     Example:
+<screen><![CDATA[
+SELECT xmlpi(name php, 'echo "hello world";');
+
+            xmlpi
+-----------------------------
+ <?php echo "hello world";?>
+]]></screen>
+    </para>
+   </sect3>
+ 
+   <sect3>
+    <title><literal>xmlroot</literal></title>
+ 
+   <indexterm>
+    <primary>xmlroot</primary>
+   </indexterm>
+ 
+ <synopsis>
+ <function>xmlroot</function>(<replaceable>xml</replaceable>, version <replaceable>text</replaceable>|no value <optional>, standalone yes|no|no value</optional>)
+ </synopsis>
+ 
+    <para>
+     The <function>xmlroot</function> expression alters the properties
+     of the root node of an XML value.  If a version is specified,
+     this replaces the value in the version declaration, if a
+     standalone value is specified, this replaces the value in the
+     standalone declaration.
+    </para>
+
+    <para>
+<screen><![CDATA[
+SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'), version '1.0', standalone yes);
+
+                xmlroot
+----------------------------------------
+ <?xml version="1.0" standalone="yes"?>
+ <content>abc</content>
+]]></screen>
+    </para>
+   </sect3>
+
+   <sect3>
+    <title>XML Predicates</title>
+
+    <indexterm>
+     <primary>IS DOCUMENT</primary>
+    </indexterm>
+
+<synopsis>
+<replaceable>xml</replaceable> IS DOCUMENT
+</synopsis>
+
+    <para>
+     The expression <literal>IS DOCUMENT</literal> returns true if the
+     argument XML value is a proper XML document, false if it is not
+     (that is, it is a content fragment), or null if the argument is
+     null.  See <xref linkend="datatype-xml"> about the difference
+     between documents and content fragments.
+    </para>
+   </sect3>
+  </sect2>
+
+  <sect2 id="functions-xml-mapping">
+   <title>Mapping Tables to XML</title>
+
+   <indexterm zone="functions-xml-mapping"> 
+    <primary>XML export</primary>
+   </indexterm>
+
+   <para>
+    The following functions map the contents of relational tables to
+    XML values.  They can be thought of as XML export functionality.
+<synopsis>
+table_to_xml(tbl regclass, nulls boolean, tableforest boolean, targetns text)
+query_to_xml(query text, nulls boolean, tableforest boolean, targetns text)
+cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, targetns text)
+</synopsis>
+    The return type of each function is <type>xml</type>.
+   </para>
+
+   <para>
+    <function>table_to_xml</function> maps the content of the named
+    table, passed as parameter <parameter>tbl</parameter>.  The
+    <type>regclass</type> accepts strings identifying tables using the
+    usual notation, including optional schema qualifications and
+    double quotes.  <function>query_to_xml</function> executes the
+    query whose text is passed as parameter
+    <parameter>query</parameter> and maps the result set.
+    <function>cursor_to_xml</function> fetches the indicated number of
+    rows from the cursor specified by the parameter
+    <parameter>cursor</parameter>.  This variant is recommendable if
+    large tables have to be mapped, because the result value is built
+    up in memory by each function.
+   </para>
+
+   <para>
+    If <parameter>tableforest</parameter> is false, then the resulting
+    XML document looks like this:
+<screen><![CDATA[
+<tablename>
+  <row>
+    <columnname1>data</columnname1>
+    <columnname2>data</columnname2>
+  </row>
+
+  <row>
+    ...
+  </row>
+
+  ...
+</tablename>
+]]></screen>
+
+    If <parameter>tableforest</parameter> is true, the result is an
+    XML content fragment that looks like this:
+<screen><![CDATA[
+<tablename>
+  <columnname1>data</columnname1>
+  <columnname2>data</columnname2>
+</tablename>
+
+<tablename>
+  ...
+</tablename>
+
+...
+]]></screen>
+
+    If no table name is avaible, that is, when mapping a query or a
+    cursor, the string <literal>table</literal> is used in the first
+    format, <literal>row</literal> in the second format.
+   </para>
+
+   <para>
+    The choice between these formats is up to the user.  The first
+    format is a proper XML document, which will be important in many
+    applications.  The second format tends to be more useful in the
+    <function>cursor_to_xml</function> function if the result values are to be
+    reassembled into one document later on.  The functions for
+    producing XML content discussed above, in particular
+    <function>xmlelement</function>, can be used to alter the results
+    to taste.
+   </para>
+
+   <para>
+    The data values are mapping in the same way as described for the
+    function <function>xmlelement</function> above.
+   </para>
+
+   <para>
+    The parameter <parameter>nulls</parameter> determines whether null
+    values should be included in the output.  If true, null values in
+    columns are represented as
+<screen><![CDATA[
+<columnname xsi:nil="true"/>
+]]></screen>
+    where <literal>xsi</literal> is the XML namespace prefix for XML
+    Schema Instance.  An appropriate namespace declaration will be
+    added to the result value.  If false, columns containing null
+    values are simply omitted from the output.
+   </para>
+
+   <para>
+    The parameter <parameter>targetns</parameter> specifies the
+    desired XML namespace of the result.  If no particular namespace
+    is wanted, an empty string should be passed.
+   </para>
+
+   <para>
+    The following functions return XML Schema documents describing the
+    mappings made by the data mappings produced by the corresponding
+    functions above.
+<synopsis>
+table_to_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
+query_to_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)
+cursor_to_xmlschema(cursor refcursor, nulls boolean, tableforest boolean, targetns text)
+</synopsis>
+    It is essential that the same parameters are passed in order to
+    obtain matching XML data mappings and XML Schema documents.
+   </para>
+
+   <para>
+    The following functions produce XML data mappings and the
+    corresponding XML Schema in one document (or forest), linked
+    together.  They can be useful where self-contained and
+    self-describing results are wanted.
+<synopsis>
+table_to_xml_and_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
+query_to_xml_and_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)
+</synopsis>
+   </para>
+
+   <para>
+    In addition, the following functions are available to produce
+    analogous mappings of entire schemas or the entire current
+    database.
+<synopsis>
+schema_to_xml(schema name, nulls boolean, tableforest boolean, targetns text)
+schema_to_xmlschema(schema name, nulls boolean, tableforest boolean, targetns text)
+schema_to_xml_and_xmlschema(schema name, nulls boolean, tableforest boolean, targetns text)
+
+database_to_xml(nulls boolean, tableforest boolean, targetns text)
+database_to_xmlschema(nulls boolean, tableforest boolean, targetns text)
+database_to_xml_and_xmlschema(nulls boolean, tableforest boolean, targetns text)
+</synopsis>
+
+    Note that these potentially produce a lot of data, which needs to
+    be built up in memory.  When requesting content mappings of large
+    schemas or databases, it may be worthwhile to consider mapping the
+    tables separately instead, possibly even through a cursor.
+   </para>
+
+   <para>
+    The result of a schema content mapping looks like this:
+
+<screen><![CDATA[
+<schemaname>
+
+table1-mapping
+
+table2-mapping
+
+...
+
+</schemaname>]]></screen>
+
+    where the format of a table mapping depends on the
+    <parameter>tableforest</parameter> parameter as explained above.
+   </para>
+
+   <para>
+    The result of a database content mapping looks like this:
+
+<screen><![CDATA[
+<dbname>
+
+<schema1name>
+  ...
+</schema1name>
+
+<schema2name>
+  ...
+</schema2name>
+
+...
+
+</dbname>]]></screen>
+
+    where the schema mapping is as above.
+   </para>
+
+   <para>
+    As an example for using the output produced by these functions,
+    <xref linkend="xslt-xml-html"> shows an XSLT stylesheet that
+    converts the output of
+    <function>table_to_xml_and_xmlschema</function> to an HTML
+    document containing a tabular rendition of the table data.  In a
+    similar manner, the result data of these functions can be
+    converted into other XML-based formats.
+   </para>
+
+   <figure id="xslt-xml-html">
+    <title>XSLT stylesheet for converting SQL/XML output to HTML</title>
+<programlisting><![CDATA[
+<?xml version="1.0"?>
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns="http://www.w3.org/1999/xhtml"
+>
+
+  <xsl:output method="xml"
+      doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
+      doctype-public="-//W3C/DTD XHTML 1.0 Strict//EN"
+      indent="yes"/>
+
+  <xsl:template match="/*">
+    <xsl:variable name="schema" select="//xsd:schema"/>
+    <xsl:variable name="tabletypename"
+                  select="$schema/xsd:element[@name=name(current())]/@type"/>
+    <xsl:variable name="rowtypename"
+                  select="$schema/xsd:complexType[@name=$tabletypename]/xsd:sequence/xsd:element[@name='row']/@type"/>
+
+    <html>
+      <head>
+        <title><xsl:value-of select="name(current())"/></title>
+      </head>
+      <body>
+        <table>
+          <tr>
+            <xsl:for-each select="$schema/xsd:complexType[@name=$rowtypename]/xsd:sequence/xsd:element/@name">
+              <th><xsl:value-of select="."/></th>
+            </xsl:for-each>
+          </tr>
+
+          <xsl:for-each select="row">
+            <tr>
+              <xsl:for-each select="*">
+                <td><xsl:value-of select="."/></td>
+              </xsl:for-each>
+            </tr>
+          </xsl:for-each>
+        </table>
+      </body>
+    </html>
+  </xsl:template>
+
+</xsl:stylesheet>
+]]></programlisting>
+   </figure>
+  </sect2>
+
+  <sect2>
+   <title>Processing XML</title>
+
+   <para>
+    <acronym>XML</> support is not just the existence of an
+    <type>xml</type> data type, but a variety of features supported by
+    a database system.  These capabilities include import/export,
+    indexing, searching, transforming, and <acronym>XML</> to
+    <acronym>SQL</> mapping.  <productname>PostgreSQL</> supports some
+    but not all of these <acronym>XML</> capabilities.  For an
+    overview of <acronym>XML</> use in databases, see <ulink
+    url="http://www.rpbourret.com/xml/XMLAndDatabases.htm"></>.
+   </para>
+
+   <variablelist>
+   <varlistentry>
+    <term>Indexing</term>
+    <listitem>
+
+     <para>
+      <filename>contrib/xml2/</> functions can be used in expression
+      indexes to index specific <acronym>XML</> fields.  To index the
+      full contents of <acronym>XML</> documents, the full-text
+      indexing tool <filename>contrib/tsearch2/</> can be used.  Of
+      course, Tsearch2 indexes have no <acronym>XML</> awareness so
+      additional <filename>contrib/xml2/</> checks should be added to
+      queries.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Searching</term>
+    <listitem>
+
+     <para>
+      XPath searches are implemented using <filename>contrib/xml2/</>.
+      It processes <acronym>XML</> text documents and returns results
+      based on the requested query.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>Transforming</term>
+    <listitem>
+
+     <para>
+      <filename>contrib/xml2/</> supports <acronym>XSLT</> (Extensible
+      Stylesheet Language Transformation).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>XML to SQL Mapping</term>
+    <listitem>
+
+     <para>
+      This involves converting <acronym>XML</> data to and from
+      relational structures. <productname>PostgreSQL</> has no
+      internal support for such mapping, and relies on external tools
+      to do such conversions.
+     </para>
+    </listitem>
+   </varlistentry>
+   </variablelist>
+  </sect2>
+ </sect1>
+
+
  <sect1 id="functions-sequence">
   <title>Sequence Manipulation Functions</title>
 
@@ -11141,663 +11806,4 @@ SELECT (pg_stat_file('filename')).modification;
 
   </sect1>
 
- <sect1 id="functions-xml">
-  <title>XML Functions</title>
-
-  <para>
-   The functions and function-like expressions described in this
-   section operate on values of type <type>xml</type>.  Check <xref
-   linkend="datatype-xml"> for information about the <type>xml</type>
-   type.  The function-like expressions <function>xmlparse</function>
-   and <function>xmlserialize</function> for converting to and from
-   type <type>xml</type> are not repeated here.
-  </para>
-
-  <sect2>
-   <title>Producing XML Content</title>
-
-   <para>
-    A set of functions and function-like expressions are available for
-    producing XML content from SQL data.  As such, they are
-    particularly suitable for formatting query results into XML
-    documents for processing in client applications.
-   </para>
-
-   <sect3>
-    <title><literal>xmlcomment</literal></title>
-
-    <indexterm>
-     <primary>xmlcomment</primary>
-    </indexterm>
-
-<synopsis>
-<function>xmlcomment</function>(<replaceable>text</replaceable>)
-</synopsis>
-
-    <para>
-     The function <function>xmlcomment</function> creates an XML value
-     containing an XML comment with the specified text as content.
-     The text cannot contain <literal>--</literal> or end with a
-     <literal>-</literal> so that the resulting construct is a valid
-     XML comment.  If the argument is null, the result is null.
-    </para>
-
-    <para>
-     Example:
-<screen><![CDATA[
-SELECT xmlcomment('hello');
-
-  xmlcomment
---------------
- <!--hello-->
-]]></screen>
-    </para>
-   </sect3>
-
-   <sect3>
-    <title><literal>xmlconcat</literal></title>
-
-    <indexterm>
-     <primary>xmlconcat</primary>
-    </indexterm>
-
- <synopsis>
- <function>xmlconcat</function>(<replaceable>xml</replaceable><optional>, ...</optional>)
- </synopsis>
- 
-    <para>
-     The function <function>xmlconcat</function> concatenates a list
-     of individual XML values to create a single value containing an
-     XML content fragment.  Null values are omitted; the result is
-     only null if there are no nonnull arguments.
-    </para>
-
-    <para>
-     Example:
-<screen><![CDATA[
-SELECT xmlconcat('<abc/>', '<bar>foo</bar>');
-
-      xmlconcat
-----------------------
- <abc/><bar>foo</bar>
-]]></screen>
-    </para>
-
-    <para>
-     XML declarations, if present are combined as follows.  If all
-     argument values have the same XML version declaration, that
-     version is used in the result, else no version is used.  If all
-     argument values have the standalone declaration value
-     <quote>yes</quote>, then that value is used in the result.  If
-     all argument values have a standalone declaration value and at
-     least one is <quote>no</quote>, then that is used in the result.
-     Else the result will have no standalone declaration.  If the
-     result is determined to require a standalone declaration but no
-     version declaration, a version declaration with version 1.0 will
-     be used because XML requires an XML declaration to contain a
-     version declaration.  Encoding declarations are ignored and
-     removed in all cases.
-    </para>
-
-    <para>
-     Example:
-<screen><![CDATA[
-SELECT xmlconcat('<?xml version="1.1"?><foo/>', '<?xml version="1.1" standalone="no"?><bar/>');
-
-             xmlconcat
------------------------------------
- <?xml version="1.1"?><foo/><bar/>
-]]></screen>
-    </para>
-   </sect3>
- 
-   <sect3>
-    <title><literal>xmlelement</literal></title>
- 
-   <indexterm>
-    <primary>xmlelement</primary>
-   </indexterm>
- 
-<synopsis>
- <function>xmlelement</function>(name <replaceable>name</replaceable> <optional>, xmlattributes(<replaceable>value</replaceable> <optional>AS <replaceable>attname</replaceable></optional> <optional>, ... </optional>)</optional> <optional><replaceable>, content, ...</replaceable></optional>)
- </synopsis>
- 
-    <para>
-     The <function>xmlelement</function> expression produces an XML
-     element with the given name, attributes, and content.
-    </para>
-
-    <para>
-     Examples:
-<screen><![CDATA[
-SELECT xmlelement(name foo);
-
- xmlelement
-------------
- <foo/>
-
-SELECT xmlelement(name foo, xmlattributes('xyz' as bar));
-
-    xmlelement
-------------------
- <foo bar="xyz"/>
-
-SELECT xmlelement(name foo, xmlattributes(current_date as bar), 'cont', 'ent');
-
-             xmlelement
--------------------------------------
- <foo bar="2007-01-26">content</foo>
-]]></screen>
-    </para>
-
-    <para>
-     Element and attribute names that are not valid XML names are
-     escaped by replacing the offending characters by the sequence
-     <literal>_x<replaceable>HHHH</replaceable>_</literal>, where
-     <replaceable>HHHH</replaceable> is the character's Unicode
-     codepoint in hexadecimal notation.  For example:
-<screen><![CDATA[
-SELECT xmlelement(name "foo$bar", xmlattributes('xyz' as "a&b"));
-
-            xmlelement
-----------------------------------
- <foo_x0024_bar a_x0026_b="xyz"/>
-]]></screen>
-    </para>
-
-    <para>
-     An explicit attribute name need not be specified if the attribute
-     value is a column reference, in which case the column's name will
-     be used as attribute name by default.  In any other case, the
-     attribute must be given an explicit name.  So this example is
-     valid:
-<screen>
-CREATE TABLE test (a xml, b xml);
-SELECT xmlelement(name test, xmlattributes(a, b)) FROM test;
-</screen>
-     But these are not:
-<screen>
-SELECT xmlelement(name test, xmlattributes('constant'), a, b) FROM test;
-SELECT xmlelement(name test, xmlattributes(func(a, b))) FROM test;
-</screen>
-    </para>
-
-    <para>
-     Element content, if specified, will be formatted according to
-     data type.  If the content is itself of type <type>xml</type>,
-     complex XML documents can be constructed.  For example:
-<screen><![CDATA[
-SELECT xmlelement(name foo, xmlattributes('xyz' as bar),
-                            xmlelement(name abc),
-                            xmlcomment('test'),
-                            xmlelement(name xyz));
-
-                  xmlelement
-----------------------------------------------
- <foo bar="xyz"><abc/><!--test--><xyz/></foo>
-]]></screen>
-
-     Content of other types will be formatted into valid XML character
-     data.  This means in particular that the characters &lt;, &gt;,
-     and &amp; will be converted to entities.  Binary data (data type
-     <type>bytea</type>) will be represented in base64 or hex
-     encoding, depending on the setting of the configuration parameter
-     <xref linkend="guc-xmlbinary">.  The particular behavior for
-     individual data types is expected evolve in order to align the
-     SQL and PostgreSQL data types with the XML Schema specification,
-     at which point a more precise description will appear.
-    </para>
-   </sect3>
- 
-   <sect3>
-    <title><literal>xmlforest</literal></title>
- 
-   <indexterm>
-    <primary>xmlforest</primary>
-   </indexterm>
- 
- <synopsis>
- <function>xmlforest</function>(<replaceable>content</replaceable> <optional>AS <replaceable>name</replaceable></optional> <optional>, ...</optional>)
- </synopsis>
- 
-    <para>
-     The <function>xmlforest</function> expression produces an XML
-     forest (sequence) of elements using the given names and content.
-    </para>
-
-    <para>
-     Examples:
-<screen><![CDATA[
-SELECT xmlforest('abc' AS foo, 123 AS bar);
-
-          xmlforest
-------------------------------
- <foo>abc</foo><bar>123</bar>
-
-
-SELECT xmlforest(table_name, column_name) FROM information_schema.columns WHERE table_schema = 'pg_catalog';
-
-                                         xmlforest
--------------------------------------------------------------------------------------------
- <table_name>pg_authid</table_name><column_name>rolname</column_name>
- <table_name>pg_authid</table_name><column_name>rolsuper</column_name>
- ...
-]]></screen>
-
-     As seen in the second example, the element name can be omitted if
-     the content value is a column reference, in which case the column
-     name is used by default.  Otherwise, a name must be specified.
-    </para>
-
-    <para>
-     Element names that are not valid XML names are escaped as shown
-     for <function>xmlelement</function> above.  Similarly, content
-     data is escaped to make valid XML content, unless it is already
-     of type <type>xml</type>.
-    </para>
-
-    <para>
-     Note that XML forests are not valid XML documents if they consist
-     of more than one element.  So it might be useful to wrap
-     <function>xmlforest</function> expressions in
-     <function>xmlelement</function>.
-    </para>
-   </sect3>
- 
-   <sect3>
-    <title><literal>xmlpi</literal></title>
- 
-   <indexterm>
-    <primary>xmlpi</primary>
-   </indexterm>
- 
- <synopsis>
- <function>xmlpi</function>(name <replaceable>target</replaceable> <optional>, <replaceable>content</replaceable></optional>)
- </synopsis>
- 
-    <para>
-     The <function>xmlpi</function> expression creates an XML
-     processing instruction.  The content, if present, must not
-     contain the character sequence <literal>?&gt;</literal>.
-    </para>
-
-    <para>
-     Example:
-<screen><![CDATA[
-SELECT xmlpi(name php, 'echo "hello world";');
-
-            xmlpi
------------------------------
- <?php echo "hello world";?>
-]]></screen>
-    </para>
-   </sect3>
- 
-   <sect3>
-    <title><literal>xmlroot</literal></title>
- 
-   <indexterm>
-    <primary>xmlroot</primary>
-   </indexterm>
- 
- <synopsis>
- <function>xmlroot</function>(<replaceable>xml</replaceable>, version <replaceable>text</replaceable>|no value <optional>, standalone yes|no|no value</optional>)
- </synopsis>
- 
-    <para>
-     The <function>xmlroot</function> expression alters the properties
-     of the root node of an XML value.  If a version is specified,
-     this replaces the value in the version declaration, if a
-     standalone value is specified, this replaces the value in the
-     standalone declaration.
-    </para>
-
-    <para>
-<screen><![CDATA[
-SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'), version '1.0', standalone yes);
-
-                xmlroot
-----------------------------------------
- <?xml version="1.0" standalone="yes"?>
- <content>abc</content>
-]]></screen>
-    </para>
-   </sect3>
-
-   <sect3>
-    <title>XML Predicates</title>
-
-    <indexterm>
-     <primary>IS DOCUMENT</primary>
-    </indexterm>
-
-<synopsis>
-<replaceable>xml</replaceable> IS DOCUMENT
-</synopsis>
-
-    <para>
-     The expression <literal>IS DOCUMENT</literal> returns true if the
-     argument XML value is a proper XML document, false if it is not
-     (that is, it is a content fragment), or null if the argument is
-     null.  See <xref linkend="datatype-xml"> about the difference
-     between documents and content fragments.
-    </para>
-   </sect3>
-  </sect2>
-
-  <sect2>
-   <title>Mapping Tables to XML</title>
-
-   <para>
-    The following functions map the contents of relational tables to
-    XML values.  They can be thought of as XML export functionality.
-<synopsis>
-table_to_xml(tbl regclass, nulls boolean, tableforest boolean, targetns text)
-query_to_xml(query text, nulls boolean, tableforest boolean, targetns text)
-cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, targetns text)
-</synopsis>
-    The return type of each function is <type>xml</type>.
-   </para>
-
-   <para>
-    <function>table_to_xml</function> maps the content of the named
-    table, passed as parameter <parameter>tbl</parameter>.  The
-    <type>regclass</type> accepts strings identifying tables using the
-    usual notation, including optional schema qualifications and
-    double quotes.  <function>query_to_xml</function> executes the
-    query whose text is passed as parameter
-    <parameter>query</parameter> and maps the result set.
-    <function>cursor_to_xml</function> fetches the indicated number of
-    rows from the cursor specified by the parameter
-    <parameter>cursor</parameter>.  This variant is recommendable if
-    large tables have to be mapped, because the result value is built
-    up in memory by each function.
-   </para>
-
-   <para>
-    If <parameter>tableforest</parameter> is false, then the resulting
-    XML document looks like this:
-<screen><![CDATA[
-<tablename>
-  <row>
-    <columnname1>data</columnname1>
-    <columnname2>data</columnname2>
-  </row>
-
-  <row>
-    ...
-  </row>
-
-  ...
-</tablename>
-]]></screen>
-
-    If <parameter>tableforest</parameter> is true, the result is an
-    XML content fragment that looks like this:
-<screen><![CDATA[
-<tablename>
-  <columnname1>data</columnname1>
-  <columnname2>data</columnname2>
-</tablename>
-
-<tablename>
-  ...
-</tablename>
-
-...
-]]></screen>
-
-    If no table name is avaible, that is, when mapping a query or a
-    cursor, the string <literal>table</literal> is used in the first
-    format, <literal>row</literal> in the second format.
-   </para>
-
-   <para>
-    The choice between these formats is up to the user.  The first
-    format is a proper XML document, which will be important in many
-    applications.  The second format tends to be more useful in the
-    <function>cursor_to_xml</function> function if the result values are to be
-    reassembled into one document later on.  The functions for
-    producing XML content discussed above, in particular
-    <function>xmlelement</function>, can be used to alter the results
-    to taste.
-   </para>
-
-   <para>
-    The data values are mapping in the same way as described for the
-    function <function>xmlelement</function> above.
-   </para>
-
-   <para>
-    The parameter <parameter>nulls</parameter> determines whether null
-    values should be included in the output.  If true, null values in
-    columns are represented as
-<screen><![CDATA[
-<columnname xsi:nil="true"/>
-]]></screen>
-    where <literal>xsi</literal> is the XML namespace prefix for XML
-    Schema Instance.  An appropriate namespace declaration will be
-    added to the result value.  If false, columns containing null
-    values are simply omitted from the output.
-   </para>
-
-   <para>
-    The parameter <parameter>targetns</parameter> specifies the
-    desired XML namespace of the result.  If no particular namespace
-    is wanted, an empty string should be passed.
-   </para>
-
-   <para>
-    The following functions return XML Schema documents describing the
-    mappings made by the data mappings produced by the corresponding
-    functions above.
-<synopsis>
-table_to_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
-query_to_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)
-cursor_to_xmlschema(cursor refcursor, nulls boolean, tableforest boolean, targetns text)
-</synopsis>
-    It is essential that the same parameters are passed in order to
-    obtain matching XML data mappings and XML Schema documents.
-   </para>
-
-   <para>
-    The following functions produce XML data mappings and the
-    corresponding XML Schema in one document (or forest), linked
-    together.  They can be useful where self-contained and
-    self-describing results are wanted.
-<synopsis>
-table_to_xml_and_xmlschema(tbl regclass, nulls boolean, tableforest boolean, targetns text)
-query_to_xml_and_xmlschema(query text, nulls boolean, tableforest boolean, targetns text)
-</synopsis>
-   </para>
-
-   <para>
-    In addition, the following functions are available to produce
-    analogous mappings of entire schemas or the entire current
-    database.
-<synopsis>
-schema_to_xml(schema name, nulls boolean, tableforest boolean, targetns text)
-schema_to_xmlschema(schema name, nulls boolean, tableforest boolean, targetns text)
-schema_to_xml_and_xmlschema(schema name, nulls boolean, tableforest boolean, targetns text)
-
-database_to_xml(nulls boolean, tableforest boolean, targetns text)
-database_to_xmlschema(nulls boolean, tableforest boolean, targetns text)
-database_to_xml_and_xmlschema(nulls boolean, tableforest boolean, targetns text)
-</synopsis>
-
-    Note that these potentially produce a lot of data, which needs to
-    be built up in memory.  When requesting content mappings of large
-    schemas or databases, it may be worthwhile to consider mapping the
-    tables separately instead, possibly even through a cursor.
-   </para>
-
-   <para>
-    The result of a schema content mapping looks like this:
-
-<screen><![CDATA[
-<schemaname>
-
-table1-mapping
-
-table2-mapping
-
-...
-
-</schemaname>]]></screen>
-
-    where the format of a table mapping depends on the
-    <parameter>tableforest</parameter> parameter as explained above.
-   </para>
-
-   <para>
-    The result of a database content mapping looks like this:
-
-<screen><![CDATA[
-<dbname>
-
-<schema1name>
-  ...
-</schema1name>
-
-<schema2name>
-  ...
-</schema2name>
-
-...
-
-</dbname>]]></screen>
-
-    where the schema mapping is as above.
-   </para>
-
-   <para>
-    As an example for using the output produced by these functions,
-    <xref linkend="xslt-xml-html"> shows an XSLT stylesheet that
-    converts the output of
-    <function>table_to_xml_and_xmlschema</function> to an HTML
-    document containing a tabular rendition of the table data.  In a
-    similar manner, the result data of these functions can be
-    converted into other XML-based formats.
-   </para>
-
-   <figure id="xslt-xml-html">
-    <title>XSLT stylesheet for converting SQL/XML output to HTML</title>
-<programlisting><![CDATA[
-<?xml version="1.0"?>
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:xsd="http://www.w3.org/2001/XMLSchema"
-    xmlns="http://www.w3.org/1999/xhtml"
->
-
-  <xsl:output method="xml"
-      doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
-      doctype-public="-//W3C/DTD XHTML 1.0 Strict//EN"
-      indent="yes"/>
-
-  <xsl:template match="/*">
-    <xsl:variable name="schema" select="//xsd:schema"/>
-    <xsl:variable name="tabletypename"
-                  select="$schema/xsd:element[@name=name(current())]/@type"/>
-    <xsl:variable name="rowtypename"
-                  select="$schema/xsd:complexType[@name=$tabletypename]/xsd:sequence/xsd:element[@name='row']/@type"/>
-
-    <html>
-      <head>
-        <title><xsl:value-of select="name(current())"/></title>
-      </head>
-      <body>
-        <table>
-          <tr>
-            <xsl:for-each select="$schema/xsd:complexType[@name=$rowtypename]/xsd:sequence/xsd:element/@name">
-              <th><xsl:value-of select="."/></th>
-            </xsl:for-each>
-          </tr>
-
-          <xsl:for-each select="row">
-            <tr>
-              <xsl:for-each select="*">
-                <td><xsl:value-of select="."/></td>
-              </xsl:for-each>
-            </tr>
-          </xsl:for-each>
-        </table>
-      </body>
-    </html>
-  </xsl:template>
-
-</xsl:stylesheet>
-]]></programlisting>
-   </figure>
-  </sect2>
-
-  <sect2>
-   <title>Processing XML</title>
-
-   <para>
-    <acronym>XML</> support is not just the existence of an
-    <type>xml</type> data type, but a variety of features supported by
-    a database system.  These capabilities include import/export,
-    indexing, searching, transforming, and <acronym>XML</> to
-    <acronym>SQL</> mapping.  <productname>PostgreSQL</> supports some
-    but not all of these <acronym>XML</> capabilities.  For an
-    overview of <acronym>XML</> use in databases, see <ulink
-    url="http://www.rpbourret.com/xml/XMLAndDatabases.htm"></>.
-   </para>
-
-   <variablelist>
-   <varlistentry>
-    <term>Indexing</term>
-    <listitem>
-
-     <para>
-      <filename>contrib/xml2/</> functions can be used in expression
-      indexes to index specific <acronym>XML</> fields.  To index the
-      full contents of <acronym>XML</> documents, the full-text
-      indexing tool <filename>contrib/tsearch2/</> can be used.  Of
-      course, Tsearch2 indexes have no <acronym>XML</> awareness so
-      additional <filename>contrib/xml2/</> checks should be added to
-      queries.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>Searching</term>
-    <listitem>
-
-     <para>
-      XPath searches are implemented using <filename>contrib/xml2/</>.
-      It processes <acronym>XML</> text documents and returns results
-      based on the requested query.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>Transforming</term>
-    <listitem>
-
-     <para>
-      <filename>contrib/xml2/</> supports <acronym>XSLT</> (Extensible
-      Stylesheet Language Transformation).
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>XML to SQL Mapping</term>
-    <listitem>
-
-     <para>
-      This involves converting <acronym>XML</> data to and from
-      relational structures. <productname>PostgreSQL</> has no
-      internal support for such mapping, and relies on external tools
-      to do such conversions.
-     </para>
-    </listitem>
-   </varlistentry>
-   </variablelist>
-  </sect2>
- </sect1>
 </chapter>

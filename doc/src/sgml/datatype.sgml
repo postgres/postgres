@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.192 2007/04/02 03:49:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.193 2007/04/02 15:27:02 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3190,6 +3190,144 @@ SELECT * FROM test;
 
   </sect1>
 
+  <sect1 id="datatype-xml">
+   <title><acronym>XML</> Type</title>
+
+   <indexterm zone="datatype-xml">
+    <primary>XML</primary>
+   </indexterm>
+
+   <para>
+    The data type <type>xml</type> can be used to store XML data.  Its
+    advantage over storing XML data in a <type>text</type> field is that it
+    checks the input values for well-formedness, and there are support
+    functions to perform type-safe operations on it; see <xref
+    linkend="functions-xml">.
+   </para>
+
+   <para>
+    In particular, the <type>xml</type> type can store well-formed
+    <quote>documents</quote>, as defined by the XML standard, as well
+    as <quote>content</quote> fragments, which are defined by the
+    production <literal>XMLDecl? content</literal> in the XML
+    standard.  Roughly, this means that content fragments can have
+    more than one top-level element or character node.  The expression
+    <literal><replaceable>xmlvalue</replaceable> IS DOCUMENT</literal>
+    can be used to evaluate whether a particular <type>xml</type>
+    value is a full document or only a content fragment.
+   </para>
+
+   <para>
+    To produce a value of type <type>xml</type> from character data,
+    use the function
+    <function>xmlparse</function>:<indexterm><primary>xmlparse</primary></indexterm>
+<synopsis>
+XMLPARSE ( { DOCUMENT | CONTENT } <replaceable>value</replaceable>)
+</synopsis>
+    Examples:
+<programlisting><![CDATA[
+XMLPARSE (DOCUMENT '<?xml version="1.0"?><book><title>Manual</title><chapter>...</chapter><book>')
+XMLPARSE (CONTENT 'abc<foo>bar</bar><bar>foo</foo>')
+]]></programlisting>
+    While this is the only way to convert character strings into XML
+    values according to the SQL standard, the PostgreSQL-specific
+    syntaxes:
+<programlisting><![CDATA[
+xml '<foo>bar</foo>'
+'<foo>bar</foo>'::xml
+]]></programlisting>
+    can also be used.
+   </para>
+
+   <para>
+    The <type>xml</type> type does not validate its input values
+    against a possibly included document type declaration
+    (DTD).<indexterm><primary>DTD</primary></indexterm>
+   </para>
+
+   <para>
+    The inverse operation, producing character string type values from
+    <type>xml</type>, uses the function
+    <function>xmlserialize</function>:<indexterm><primary>xmlserialize</primary></indexterm>
+<synopsis>
+XMLSERIALIZE ( { DOCUMENT | CONTENT } <replaceable>value</replaceable> AS <replaceable>type</replaceable> )
+</synopsis>
+    <replaceable>type</replaceable> can be one of
+    <type>character</type>, <type>character varying</type>, or
+    <type>text</type> (or an alias name for those).  Again, according
+    to the SQL standard, this is the only way to convert between type
+    <type>xml</type> and character types, but PostgreSQL also allows
+    you to simply cast the value.
+   </para>
+
+   <para>
+    When character string values are cast to or from type
+    <type>xml</type> without going through <type>XMLPARSE</type> or
+    <type>XMLSERIALIZE</type>, respectively, the choice of
+    <literal>DOCUMENT</literal> versus <literal>CONTENT</literal> is
+    determined by the <quote>XML option</quote>
+    <indexterm><primary>XML option</primary></indexterm>
+    session configuration parameter, which can be set using the
+    standard command
+<synopsis>
+SET XML OPTION { DOCUMENT | CONTENT };
+</synopsis>
+    or the more PostgreSQL-like syntax
+<synopsis>
+SET xmloption TO { DOCUMENT | CONTENT };
+</synopsis>
+    The default is <literal>CONTENT</literal>, so all forms of XML
+    data are allowed.
+   </para>
+
+   <para>
+    Care must be taken when dealing with multiple character encodings
+    on the client, server, and in the XML data passed through them.
+    When using the text mode to pass queries to the server and query
+    results to the client (which is the normal mode), PostgreSQL
+    converts all character data passed between the client and the
+    server and vice versa to the character encoding of the respective
+    end; see <xref linkend="multibyte">.  This includes string
+    representations of XML values, such as in the above examples.
+    This would ordinarily mean that encoding declarations contained in
+    XML data might become invalid as the character data is converted
+    to other encodings while travelling between client and server,
+    while the embedded encoding declaration is not changed.  To cope
+    with this behavior, an encoding declaration contained in a
+    character string presented for input to the <type>xml</type> type
+    is <emphasis>ignored</emphasis>, and the content is always assumed
+    to be in the current server encoding.  Consequently, for correct
+    processing, such character strings of XML data must be sent off
+    from the client in the current client encoding.  It is the
+    responsibility of the client to either convert the document to the
+    current client encoding before sending it off to the server or to
+    adjust the client encoding appropriately.  On output, values of
+    type <type>xml</type> will not have an encoding declaration, and
+    clients must assume that the data is in the current client
+    encoding.
+   </para>
+
+   <para>
+    When using the binary mode to pass query parameters to the server
+    and query results back the the client, no character set conversion
+    is performed, so the situation is different.  In this case, an
+    encoding declaration in the XML data will be observed, and if it
+    is absent, the data will be assumed to be in UTF-8 (as required by
+    the XML standard; note that PostgreSQL does not support UTF-16 at
+    all).  On output, data will have an encoding declaration
+    specifying the client encoding, unless the client encoding is
+    UTF-8, in which case it will be omitted.
+   </para>
+
+   <para>
+    Needless to say, processing XML data with PostgreSQL will be less
+    error-prone and more efficient if data encoding, client encoding,
+    and server encoding are the same.  Since XML data is internally
+    processed in UTF-8, computations will be most efficient if the
+    server encoding is also UTF-8.
+   </para>
+  </sect1>
+
   &array;
 
   &rowtypes;
@@ -3577,140 +3715,6 @@ SELECT * FROM pg_attribute
     <type>internal</> argument.
    </para>
 
-  </sect1>
-
-  <sect1 id="datatype-xml">
-   <title><acronym>XML</> Type</title>
-
-   <indexterm zone="datatype-xml">
-    <primary>XML</primary>
-   </indexterm>
-
-   <para>
-    The data type <type>xml</type> can be used to store XML data.  Its
-    advantage over storing XML data in a <type>text</type> field is that it
-    checks the input values for well-formedness, and there are support
-    functions to perform type-safe operations on it; see <xref
-    linkend="functions-xml">.
-   </para>
-
-   <para>
-    In particular, the <type>xml</type> type can store well-formed
-    <quote>documents</quote>, as defined by the XML standard, as well
-    as <quote>content</quote> fragments, which are defined by the
-    production <literal>XMLDecl? content</literal> in the XML
-    standard.  Roughly, this means that content fragments can have
-    more than one top-level element or character node.  The expression
-    <literal><replaceable>xmlvalue</replaceable> IS DOCUMENT</literal>
-    can be used to evaluate whether a particular <type>xml</type>
-    value is a full document or only a content fragment.
-   </para>
-
-   <para>
-    To produce a value of type <type>xml</type> from character data,
-    use the function <function>xmlparse</function>:
-<synopsis>
-XMLPARSE ( { DOCUMENT | CONTENT } <replaceable>value</replaceable>)
-</synopsis>
-    Examples:
-<programlisting><![CDATA[
-XMLPARSE (DOCUMENT '<?xml version="1.0"?><book><title>Manual</title><chapter>...</chapter><book>')
-XMLPARSE (CONTENT 'abc<foo>bar</bar><bar>foo</foo>')
-]]></programlisting>
-    While this is the only way to convert character strings into XML
-    values according to the SQL standard, the PostgreSQL-specific
-    syntaxes:
-<programlisting><![CDATA[
-xml '<foo>bar</foo>'
-'<foo>bar</foo>'::xml
-]]></programlisting>
-    can also be used.
-   </para>
-
-   <para>
-    The <type>xml</type> type does not validate its input values
-    against a possibly included document type declaration (DTD).
-   </para>
-
-   <para>
-    The inverse operation, producing character string type values from
-    <type>xml</type>, uses the function
-    <function>xmlserialize</function>:
-<synopsis>
-XMLSERIALIZE ( { DOCUMENT | CONTENT } <replaceable>value</replaceable> AS <replaceable>type</replaceable> )
-</synopsis>
-    <replaceable>type</replaceable> can be one of
-    <type>character</type>, <type>character varying</type>, or
-    <type>text</type> (or an alias name for those).  Again, according
-    to the SQL standard, this is the only way to convert between type
-    <type>xml</type> and character types, but PostgreSQL also allows
-    you to simply cast the value.
-   </para>
-
-   <para>
-    When character string values are cast to or from type
-    <type>xml</type> without going through <type>XMLPARSE</type> or
-    <type>XMLSERIALIZE</type>, respectively, the choice of
-    <literal>DOCUMENT</literal> versus <literal>CONTENT</literal> is
-    determined by the <quote>XML option</quote> session configuration
-    parameter, which can be set using the standard command
-<synopsis>
-SET XML OPTION { DOCUMENT | CONTENT };
-</synopsis>
-    or the more PostgreSQL-like syntax
-<synopsis>
-SET xmloption TO { DOCUMENT | CONTENT };
-</synopsis>
-    The default is <literal>CONTENT</literal>, so all forms of XML
-    data are allowed.
-   </para>
-
-   <para>
-    Care must be taken when dealing with multiple character encodings
-    on the client, server, and in the XML data passed through them.
-    When using the text mode to pass queries to the server and query
-    results to the client (which is the normal mode), PostgreSQL
-    converts all character data passed between the client and the
-    server and vice versa to the character encoding of the respective
-    end; see <xref linkend="multibyte">.  This includes string
-    representations of XML values, such as in the above examples.
-    This would ordinarily mean that encoding declarations contained in
-    XML data might become invalid as the character data is converted
-    to other encodings while travelling between client and server,
-    while the embedded encoding declaration is not changed.  To cope
-    with this behavior, an encoding declaration contained in a
-    character string presented for input to the <type>xml</type> type
-    is <emphasis>ignored</emphasis>, and the content is always assumed
-    to be in the current server encoding.  Consequently, for correct
-    processing, such character strings of XML data must be sent off
-    from the client in the current client encoding.  It is the
-    responsibility of the client to either convert the document to the
-    current client encoding before sending it off to the server or to
-    adjust the client encoding appropriately.  On output, values of
-    type <type>xml</type> will not have an encoding declaration, and
-    clients must assume that the data is in the current client
-    encoding.
-   </para>
-
-   <para>
-    When using the binary mode to pass query parameters to the server
-    and query results back the the client, no character set conversion
-    is performed, so the situation is different.  In this case, an
-    encoding declaration in the XML data will be observed, and if it
-    is absent, the data will be assumed to be in UTF-8 (as required by
-    the XML standard; note that PostgreSQL does not support UTF-16 at
-    all).  On output, data will have an encoding declaration
-    specifying the client encoding, unless the client encoding is
-    UTF-8, in which case it will be omitted.
-   </para>
-
-   <para>
-    Needless to say, processing XML data with PostgreSQL will be less
-    error-prone and more efficient if data encoding, client encoding,
-    and server encoding are the same.  Since XML data is internally
-    processed in UTF-8, computations will be most efficient if the
-    server encoding is also UTF-8.
-   </para>
   </sect1>
 
  </chapter>
