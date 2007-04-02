@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Apr  2 17:25:28 EDT 2007
+Last updated:		Mon Apr  2 17:27:56 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -774,17 +774,17 @@ SQL Commands
 		  http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php
 
 	o Other
-		o Add table function support to pltcl, plpython
+		o Add table function support to pltcl, plpythonu
 		o Add support for polymorphic arguments and return types to
 		  languages other than PL/PgSQL
 		o Add capability to create and call PROCEDURES
 		o Add support for OUT and INOUT parameters to languages other 
 		  than PL/PgSQL
-		o Add PL/Python tracebacks
+		o Add PL/PythonU tracebacks
 
 		  http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php
 
-		o Allow PL/Python to return boolean rather than 1/0
+		o Allow PL/PythonU to return boolean rather than 1/0
 
 		  http://archives.postgresql.org/pgsql-patches/2007-01/msg00596.php
 
