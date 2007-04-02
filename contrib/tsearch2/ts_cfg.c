@@ -224,8 +224,8 @@ findcfg(Oid id)
 		CList.reallen = reallen;
 		CList.list = tmp;
 	}
+	init_cfg(id, &(CList.list[CList.len]) );
 	CList.last_cfg = &(CList.list[CList.len]);
-	init_cfg(id, CList.last_cfg);
 	CList.len++;
 	qsort(CList.list, CList.len, sizeof(TSCfgInfo), comparecfg);
 	return findcfg(id); /* qsort changed order!! */ ;
