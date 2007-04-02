@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Apr  2 16:43:36 EDT 2007
+Last updated:		Mon Apr  2 17:10:50 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -779,6 +779,11 @@ SQL Commands
 		o Add PL/Python tracebacks
 
 		  http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php
+
+		o Allow PL/Python to return boolean rather than 1/0
+
+		  http://archives.postgresql.org/pgsql-patches/2007-01/msg00596.php
+
 
 
 Clients
