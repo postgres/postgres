@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Mon Apr  2 18:46:07 EDT 2007
+Last updated:           Mon Apr  2 18:48:47 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1037,9 +1037,11 @@ first.  There is also a developer's wiki at<br/>
 
 <ul>
   <li>Improve speed with indexes
-<p>  For large table adjustments during VACUUM FULL, it is faster to 
-  reindex rather than update the index.  Also, index updates can
-  bloat the index.
+<p>  For large table adjustments during VACUUM FULL, it is faster to cluster
+  or reindex rather than update the index.  Also, index updates can bloat
+  the index.
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00024.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00024.php</a>
 </p>
   </li><li>Reduce lock time during VACUUM FULL by moving tuples with read lock,
   then write lock and truncate table
