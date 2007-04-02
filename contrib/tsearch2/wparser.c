@@ -127,8 +127,8 @@ findprs(Oid id)
 		PList.reallen = reallen;
 		PList.list = tmp;
 	}
+	init_prs(id, &(PList.list[PList.len]) );
 	PList.last_prs = &(PList.list[PList.len]);
-	init_prs(id, PList.last_prs);
 	PList.len++;
 	qsort(PList.list, PList.len, sizeof(WParserInfo), compareprs);
 	return findprs(id); /* qsort changed order!! */ ;
