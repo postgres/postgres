@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.97 2007/04/02 03:49:42 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.98 2007/04/03 13:37:22 momjian Exp $
  *
  *********************************************************************
  */
@@ -21,6 +21,15 @@
 #undef errcode
 #else
 #include <Python.h>
+#endif
+
+/*
+ * Py_ssize_t compat for Python <= 2.4
+ */
+#if PY_VERSION_HEX < 0x02050000 && !defined(PY_SSIZE_T_MIN)
+typedef int Py_ssize_t;
+#define PY_SSIZE_T_MAX INT_MAX
+#define PY_SSIZE_T_MIN INT_MIN
 #endif
 
 #include "postgres.h"
@@ -1953,11 +1962,11 @@ static void PLy_result_dealloc(PyObject *);
 static PyObject *PLy_result_getattr(PyObject *, char *);
 static PyObject *PLy_result_nrows(PyObject *, PyObject *);
 static PyObject *PLy_result_status(PyObject *, PyObject *);
-static int	PLy_result_length(PyObject *);
-static PyObject *PLy_result_item(PyObject *, int);
-static PyObject *PLy_result_slice(PyObject *, int, int);
-static int	PLy_result_ass_item(PyObject *, int, PyObject *);
-static int	PLy_result_ass_slice(PyObject *, int, int, PyObject *);
+static Py_ssize_t PLy_result_length(PyObject *);
+static PyObject *PLy_result_item(PyObject *, Py_ssize_t);
+static PyObject *PLy_result_slice(PyObject *, Py_ssize_t, Py_ssize_t);
+static int	PLy_result_ass_item(PyObject *, Py_ssize_t, PyObject *);
+static int	PLy_result_ass_slice(PyObject *, Py_ssize_t, Py_ssize_t, PyObject *);
 
 
 static PyObject *PLy_spi_prepare(PyObject *, PyObject *);
@@ -2001,15 +2010,14 @@ static PyMethodDef PLy_plan_methods[] = {
 	{NULL, NULL, 0, NULL}
 };
 
-
 static PySequenceMethods PLy_result_as_sequence = {
-	(inquiry) PLy_result_length,	/* sq_length */
-	(binaryfunc) 0,				/* sq_concat */
-	(intargfunc) 0,				/* sq_repeat */
-	(intargfunc) PLy_result_item,		/* sq_item */
-	(intintargfunc) PLy_result_slice,	/* sq_slice */
-	(intobjargproc) PLy_result_ass_item,		/* sq_ass_item */
-	(intintobjargproc) PLy_result_ass_slice,	/* sq_ass_slice */
+	PLy_result_length,		/* sq_length */
+	NULL,					/* sq_concat */
+	NULL,					/* sq_repeat */
+	PLy_result_item,		/* sq_item */
+	PLy_result_slice,		/* sq_slice */
+	PLy_result_ass_item,	/* sq_ass_item */
+	PLy_result_ass_slice,	/* sq_ass_slice */
 };
 
 static PyTypeObject PLy_ResultType = {
@@ -2190,7 +2198,7 @@ PLy_result_status(PyObject * self, PyObject * args)
 	return ob->status;
 }
 
-static int
+static Py_ssize_t
 PLy_result_length(PyObject * arg)
 {
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2199,7 +2207,7 @@ PLy_result_length(PyObject * arg)
 }
 
 static PyObject *
-PLy_result_item(PyObject * arg, int idx)
+PLy_result_item(PyObject * arg, Py_ssize_t idx)
 {
 	PyObject   *rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2211,7 +2219,7 @@ PLy_result_item(PyObject * arg, int idx)
 }
 
 static int
-PLy_result_ass_item(PyObject * arg, int idx, PyObject * item)
+PLy_result_ass_item(PyObject * arg, Py_ssize_t idx, PyObject * item)
 {
 	int			rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2222,7 +2230,7 @@ PLy_result_ass_item(PyObject * arg, int idx, PyObject * item)
 }
 
 static PyObject *
-PLy_result_slice(PyObject * arg, int lidx, int hidx)
+PLy_result_slice(PyObject * arg, Py_ssize_t lidx, Py_ssize_t hidx)
 {
 	PyObject   *rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
@@ -2235,7 +2243,7 @@ PLy_result_slice(PyObject * arg, int lidx, int hidx)
 }
 
 static int
-PLy_result_ass_slice(PyObject * arg, int lidx, int hidx, PyObject * slice)
+PLy_result_ass_slice(PyObject * arg, Py_ssize_t lidx, Py_ssize_t hidx, PyObject * slice)
 {
 	int			rv;
 	PLyResultObject *ob = (PLyResultObject *) arg;
