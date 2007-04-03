@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.28 2007/02/13 19:39:42 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.29 2007/04/03 16:34:35 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -279,6 +279,7 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 	gxact->proc.pid = 0;
 	gxact->proc.databaseId = databaseid;
 	gxact->proc.roleId = owner;
+	gxact->proc.inCommit = false;
 	gxact->proc.inVacuum = false;
 	gxact->proc.isAutovacuum = false;
 	gxact->proc.lwWaiting = false;
@@ -934,18 +935,18 @@ EndPrepare(GlobalTransaction gxact)
 	 * odds of a PANIC actually occurring should be very tiny given that we
 	 * were able to write the bogus CRC above.
 	 *
-	 * We have to lock out checkpoint start here, too; otherwise a checkpoint
+	 * We have to set inCommit here, too; otherwise a checkpoint
 	 * starting immediately after the WAL record is inserted could complete
 	 * without fsync'ing our state file.  (This is essentially the same kind
 	 * of race condition as the COMMIT-to-clog-write case that
-	 * RecordTransactionCommit uses CheckpointStartLock for; see notes there.)
+	 * RecordTransactionCommit uses inCommit for; see notes there.)
 	 *
 	 * We save the PREPARE record's location in the gxact for later use by
 	 * CheckPointTwoPhase.
 	 */
 	START_CRIT_SECTION();
 
-	LWLockAcquire(CheckpointStartLock, LW_SHARED);
+	MyProc->inCommit = true;
 
 	gxact->prepare_lsn = XLogInsert(RM_XACT_ID, XLOG_XACT_PREPARE,
 									records.head);
@@ -982,10 +983,11 @@ EndPrepare(GlobalTransaction gxact)
 	MarkAsPrepared(gxact);
 
 	/*
-	 * Now we can release the checkpoint start lock: a checkpoint starting
-	 * after this will certainly see the gxact as a candidate for fsyncing.
+	 * Now we can mark ourselves as out of the commit critical section:
+	 * a checkpoint starting after this will certainly see the gxact as a
+	 * candidate for fsyncing.
 	 */
-	LWLockRelease(CheckpointStartLock);
+	MyProc->inCommit = false;
 
 	END_CRIT_SECTION();
 
@@ -1649,7 +1651,7 @@ RecoverPreparedTransactions(void)
  *	RecordTransactionCommitPrepared
  *
  * This is basically the same as RecordTransactionCommit: in particular,
- * we must take the CheckpointStartLock to avoid a race condition.
+ * we must set the inCommit flag to avoid a race condition.
  *
  * We know the transaction made at least one XLOG entry (its PREPARE),
  * so it is never possible to optimize out the commit record.
@@ -1669,7 +1671,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	START_CRIT_SECTION();
 
 	/* See notes in RecordTransactionCommit */
-	LWLockAcquire(CheckpointStartLock, LW_SHARED);
+	MyProc->inCommit = true;
 
 	/* Emit the XLOG commit record */
 	xlrec.xid = xid;
@@ -1713,8 +1715,8 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	/* to avoid race conditions, the parent must commit first */
 	TransactionIdCommitTree(nchildren, children);
 
-	/* Checkpoint is allowed again */
-	LWLockRelease(CheckpointStartLock);
+	/* Checkpoint can proceed now */
+	MyProc->inCommit = false;
 
 	END_CRIT_SECTION();
 }

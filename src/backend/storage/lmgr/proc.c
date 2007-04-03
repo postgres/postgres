@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.186 2007/03/07 13:35:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.187 2007/04/03 16:34:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,6 +259,7 @@ InitProcess(void)
 	/* databaseId and roleId will be filled in later */
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
+	MyProc->inCommit = false;
 	MyProc->inVacuum = false;
 	MyProc->isAutovacuum = IsAutoVacuumWorkerProcess();
 	MyProc->lwWaiting = false;
@@ -392,6 +393,7 @@ InitAuxiliaryProcess(void)
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
+	MyProc->inCommit = false;
 	MyProc->inVacuum = false;
 	MyProc->isAutovacuum = IsAutoVacuumLauncherProcess(); /* is this needed? */
 	MyProc->lwWaiting = false;

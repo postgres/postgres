@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.96 2007/03/07 13:35:03 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/proc.h,v 1.97 2007/04/03 16:34:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,6 +73,8 @@ struct PGPROC
 	int			pid;			/* This backend's process id, or 0 */
 	Oid			databaseId;		/* OID of database this backend is using */
 	Oid			roleId;			/* OID of role using this backend */
+
+	bool		inCommit;		/* true if within commit critical section */
 
 	bool		inVacuum;		/* true if current xact is a LAZY VACUUM */
 	bool		isAutovacuum;	/* true if it's autovacuum */

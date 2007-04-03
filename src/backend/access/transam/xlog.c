@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.266 2007/04/03 04:14:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.267 2007/04/03 16:34:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5366,6 +5366,8 @@ CreateCheckPoint(bool shutdown, bool force)
 	int			nsegsadded = 0;
 	int			nsegsremoved = 0;
 	int			nsegsrecycled = 0;
+	TransactionId *inCommitXids;
+	int			nInCommit;
 
 	/*
 	 * Acquire CheckpointLock to ensure only one checkpoint happens at a time.
@@ -5392,14 +5394,9 @@ CreateCheckPoint(bool shutdown, bool force)
 	checkPoint.time = time(NULL);
 
 	/*
-	 * We must hold CheckpointStartLock while determining the checkpoint REDO
-	 * pointer.  This ensures that any concurrent transaction commits will be
-	 * either not yet logged, or logged and recorded in pg_clog. See notes in
-	 * RecordTransactionCommit().
+	 * We must hold WALInsertLock while examining insert state to determine
+	 * the checkpoint REDO pointer.
 	 */
-	LWLockAcquire(CheckpointStartLock, LW_EXCLUSIVE);
-
-	/* And we need WALInsertLock too */
 	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
 
 	/*
@@ -5431,7 +5428,6 @@ CreateCheckPoint(bool shutdown, bool force)
 			ControlFile->checkPointCopy.redo.xrecoff)
 		{
 			LWLockRelease(WALInsertLock);
-			LWLockRelease(CheckpointStartLock);
 			LWLockRelease(CheckpointLock);
 			END_CRIT_SECTION();
 			return;
@@ -5476,16 +5472,47 @@ CreateCheckPoint(bool shutdown, bool force)
 	}
 
 	/*
-	 * Now we can release insert lock and checkpoint start lock, allowing
-	 * other xacts to proceed even while we are flushing disk buffers.
+	 * Now we can release WAL insert lock, allowing other xacts to proceed
+	 * while we are flushing disk buffers.
 	 */
 	LWLockRelease(WALInsertLock);
-
-	LWLockRelease(CheckpointStartLock);
 
 	if (!shutdown)
 		ereport(DEBUG2,
 				(errmsg("checkpoint starting")));
+
+	/*
+	 * Before flushing data, we must wait for any transactions that are
+	 * currently in their commit critical sections.  If an xact inserted its
+	 * commit record into XLOG just before the REDO point, then a crash
+	 * restart from the REDO point would not replay that record, which means
+	 * that our flushing had better include the xact's update of pg_clog.  So
+	 * we wait till he's out of his commit critical section before proceeding.
+	 * See notes in RecordTransactionCommit().
+	 *
+	 * Because we've already released WALInsertLock, this test is a bit fuzzy:
+	 * it is possible that we will wait for xacts we didn't really need to
+	 * wait for.  But the delay should be short and it seems better to make
+	 * checkpoint take a bit longer than to hold locks longer than necessary.
+	 * (In fact, the whole reason we have this issue is that xact.c does
+	 * commit record XLOG insertion and clog update as two separate steps
+	 * protected by different locks, but again that seems best on grounds
+	 * of minimizing lock contention.)
+	 *
+	 * A transaction that has not yet set inCommit when we look cannot be
+	 * at risk, since he's not inserted his commit record yet; and one that's
+	 * already cleared it is not at risk either, since he's done fixing clog
+	 * and we will correctly flush the update below.  So we cannot miss any
+	 * xacts we need to wait for.
+	 */
+	nInCommit = GetTransactionsInCommit(&inCommitXids);
+	if (nInCommit > 0)
+	{
+		do {
+			pg_usleep(10000L);				/* wait for 10 msec */
+		} while (HaveTransactionsInCommit(inCommitXids, nInCommit));
+	}
+	pfree(inCommitXids);
 
 	/*
 	 * Get the other info we need for the checkpoint record.

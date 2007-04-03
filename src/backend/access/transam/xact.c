@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.238 2007/03/22 19:55:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.239 2007/04/03 16:34:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -717,33 +717,35 @@ RecordTransactionCommit(void)
 		START_CRIT_SECTION();
 
 		/*
-		 * If our transaction made any transaction-controlled XLOG entries, we
-		 * need to lock out checkpoint start between writing our XLOG record
-		 * and updating pg_clog.  Otherwise it is possible for the checkpoint
-		 * to set REDO after the XLOG record but fail to flush the pg_clog
-		 * update to disk, leading to loss of the transaction commit if we
-		 * crash a little later.  Slightly klugy fix for problem discovered
-		 * 2004-08-10.
-		 *
-		 * (If it made no transaction-controlled XLOG entries, its XID appears
-		 * nowhere in permanent storage, so no one else will ever care if it
-		 * committed; so it doesn't matter if we lose the commit flag.)
-		 *
-		 * Note we only need a shared lock.
-		 */
-		madeTCentries = (MyLastRecPtr.xrecoff != 0);
-		if (madeTCentries)
-			LWLockAcquire(CheckpointStartLock, LW_SHARED);
-
-		/*
 		 * We only need to log the commit in XLOG if the transaction made any
 		 * transaction-controlled XLOG entries or will delete files.
 		 */
+		madeTCentries = (MyLastRecPtr.xrecoff != 0);
 		if (madeTCentries || nrels > 0)
 		{
 			XLogRecData rdata[3];
 			int			lastrdata = 0;
 			xl_xact_commit xlrec;
+
+			/*
+			 * Mark ourselves as within our "commit critical section".  This
+			 * forces any concurrent checkpoint to wait until we've updated
+			 * pg_clog.  Without this, it is possible for the checkpoint to
+			 * set REDO after the XLOG record but fail to flush the pg_clog
+			 * update to disk, leading to loss of the transaction commit if
+			 * the system crashes a little later.
+			 *
+			 * Note: we could, but don't bother to, set this flag in
+			 * RecordTransactionAbort.  That's because loss of a transaction
+			 * abort is noncritical; the presumption would be that it aborted,
+			 * anyway.
+			 *
+			 * It's safe to change the inCommit flag of our own backend
+			 * without holding the ProcArrayLock, since we're the only one
+			 * modifying it.  This makes checkpoint's determination of which
+			 * xacts are inCommit a bit fuzzy, but it doesn't matter.
+			 */
+			MyProc->inCommit = true;
 
 			xlrec.xtime = time(NULL);
 			xlrec.nrels = nrels;
@@ -825,9 +827,8 @@ RecordTransactionCommit(void)
 			TransactionIdCommitTree(nchildren, children);
 		}
 
-		/* Unlock checkpoint lock if we acquired it */
-		if (madeTCentries)
-			LWLockRelease(CheckpointStartLock);
+		/* Checkpoint can proceed now */
+		MyProc->inCommit = false;
 
 		END_CRIT_SECTION();
 	}
@@ -1961,6 +1962,7 @@ AbortTransaction(void)
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
 		MyProc->inVacuum = false;		/* must be cleared with xid/xmin */
+		MyProc->inCommit = false;		/* be sure this gets cleared */
 
 		/* Clear the subtransaction-XID cache too while holding the lock */
 		MyProc->subxids.nxids = 0;

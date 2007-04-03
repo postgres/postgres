@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.23 2007/03/25 19:45:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.24 2007/04/03 16:34:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,6 +737,98 @@ restart:
 	LWLockRelease(ProcArrayLock);
 
 	return (num != 0);
+}
+
+/*
+ * GetTransactionsInCommit -- Get the XIDs of transactions that are committing
+ *
+ * Constructs an array of XIDs of transactions that are currently in commit
+ * critical sections, as shown by having inCommit set in their PGPROC entries.
+ *
+ * *xids_p is set to a palloc'd array that should be freed by the caller.
+ * The return value is the number of valid entries.
+ *
+ * Note that because backends set or clear inCommit without holding any lock,
+ * the result is somewhat indeterminate, but we don't really care.  Even in
+ * a multiprocessor with delayed writes to shared memory, it should be certain
+ * that setting of inCommit will propagate to shared memory when the backend
+ * takes the WALInsertLock, so we cannot fail to see an xact as inCommit if
+ * it's already inserted its commit record.  Whether it takes a little while
+ * for clearing of inCommit to propagate is unimportant for correctness.
+ */
+int
+GetTransactionsInCommit(TransactionId **xids_p)
+{
+	ProcArrayStruct *arrayP = procArray;
+	TransactionId *xids;
+	int	nxids;
+	int	index;
+
+	xids = (TransactionId *) palloc(arrayP->maxProcs * sizeof(TransactionId));
+	nxids = 0;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	for (index = 0; index < arrayP->numProcs; index++)
+	{
+		PGPROC	   *proc = arrayP->procs[index];
+		/* Fetch xid just once - see GetNewTransactionId */
+		TransactionId pxid = proc->xid;
+
+		if (proc->inCommit && TransactionIdIsValid(pxid))
+			xids[nxids++] = pxid;
+	}
+
+	LWLockRelease(ProcArrayLock);
+
+	*xids_p = xids;
+	return nxids;
+}
+
+/*
+ * HaveTransactionsInCommit -- Are any of the specified XIDs in commit?
+ *
+ * This is used with the results of GetTransactionsInCommit to see if any
+ * of the specified XIDs are still in their commit critical sections.
+ *
+ * Note: this is O(N^2) in the number of xacts that are/were in commit, but
+ * those numbers should be small enough for it not to be a problem.
+ */
+bool
+HaveTransactionsInCommit(TransactionId *xids, int nxids)
+{
+	bool result = false;
+	ProcArrayStruct *arrayP = procArray;
+	int	index;
+
+	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	for (index = 0; index < arrayP->numProcs; index++)
+	{
+		PGPROC	   *proc = arrayP->procs[index];
+		/* Fetch xid just once - see GetNewTransactionId */
+		TransactionId pxid = proc->xid;
+
+		if (proc->inCommit && TransactionIdIsValid(pxid))
+		{
+			int		i;
+
+			for (i = 0; i < nxids; i++)
+			{
+				if (xids[i] == pxid)
+				{
+					result = true;
+					break;
+				}
+			}
+			if (result)
+				break;
+		}
+	}
+
+	LWLockRelease(ProcArrayLock);
+
+	return result;
 }
 
 /*
