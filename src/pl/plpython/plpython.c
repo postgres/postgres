@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.98 2007/04/03 13:37:22 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.99 2007/04/03 15:50:58 momjian Exp $
  *
  *********************************************************************
  */
@@ -31,6 +31,14 @@ typedef int Py_ssize_t;
 #define PY_SSIZE_T_MAX INT_MAX
 #define PY_SSIZE_T_MIN INT_MIN
 #endif
+
+/*
+ * PyBool_FromLong is supported from 2.3.
+ */
+#if PY_VERSION_HEX < 0x02030000
+#define PyBool_FromLong(x) PyInt_FromLong(x)
+#endif
+
 
 #include "postgres.h"
 
@@ -1600,8 +1608,8 @@ PLyBool_FromString(const char *src)
 	 *	versions.  http://docs.python.org/api/boolObjects.html
 	 */
 	if (src[0] == 't')
-		return PyInt_FromLong(1);
-	return PyInt_FromLong(0);
+		return PyBool_FromLong(1);
+	return PyBool_FromLong(0);
 }
 
 static PyObject *
