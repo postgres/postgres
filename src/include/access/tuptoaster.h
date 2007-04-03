@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.33 2007/03/29 00:15:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.34 2007/04/03 04:14:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,19 +29,26 @@
  * TOAST_TUPLE_TARGET bytes.  Both numbers include all tuple header overhead
  * and between-fields alignment padding, but we do *not* consider any
  * end-of-tuple alignment padding; hence the values can be compared directly
- * to a tuple's t_len field.  We choose TOAST_TUPLE_THRESHOLD with the
- * knowledge that toast-table tuples will be exactly that size, and we'd
- * like to fit four of them per page with minimal space wastage.
+ * to a tuple's t_len field.
  *
- * The numbers need not be the same, though they currently are.
+ * The numbers need not be the same, though they currently are.  It doesn't
+ * make sense for TARGET to exceed THRESHOLD, but it could be useful to make
+ * it be smaller.
  *
- * Note: sizeof(PageHeaderData) includes the first ItemId, but we have
- * to allow for 3 more, if we want to fit 4 tuples on a page.
+ * Currently we choose both values to match the largest tuple size for which
+ * TOAST_TUPLES_PER_PAGE tuples can fit on a disk page.
+ *
+ * XXX while these can be modified without initdb, some thought needs to be
+ * given to needs_toast_table() in toasting.c before unleashing random
+ * changes.
  */
+#define TOAST_TUPLES_PER_PAGE	4
+
+/* Note: sizeof(PageHeaderData) includes the first ItemId on the page */
 #define TOAST_TUPLE_THRESHOLD	\
 	MAXALIGN_DOWN((BLCKSZ - \
-				   MAXALIGN(sizeof(PageHeaderData) + 3 * sizeof(ItemIdData))) \
-				  / 4)
+				   MAXALIGN(sizeof(PageHeaderData) + (TOAST_TUPLES_PER_PAGE-1) * sizeof(ItemIdData))) \
+				  / TOAST_TUPLES_PER_PAGE)
 
 #define TOAST_TUPLE_TARGET		TOAST_TUPLE_THRESHOLD
 
@@ -56,20 +63,26 @@
  * When we store an oversize datum externally, we divide it into chunks
  * containing at most TOAST_MAX_CHUNK_SIZE data bytes.	This number *must*
  * be small enough that the completed toast-table tuple (including the
- * ID and sequence fields and all overhead) is no more than MaxHeapTupleSize
- * bytes.  It *should* be small enough to make toast-table tuples no more
- * than TOAST_TUPLE_THRESHOLD bytes, else heapam.c will uselessly invoke
- * the toaster on toast-table tuples.  The current coding ensures that the
- * maximum tuple length is exactly TOAST_TUPLE_THRESHOLD bytes.
+ * ID and sequence fields and all overhead) will fit on a page.
+ * The coding here sets the size on the theory that we want to fit
+ * EXTERN_TUPLES_PER_PAGE tuples of maximum size onto a page.
  *
- * NB: you cannot change this value without forcing initdb, at least not
- * if your DB contains any multi-chunk toasted values.
+ * NB: Changing TOAST_MAX_CHUNK_SIZE requires an initdb.
  */
-#define TOAST_MAX_CHUNK_SIZE	(TOAST_TUPLE_THRESHOLD -			\
-				MAXALIGN(offsetof(HeapTupleHeaderData, t_bits)) -	\
-				sizeof(Oid) -										\
-				sizeof(int32) -										\
-				VARHDRSZ)
+#define EXTERN_TUPLES_PER_PAGE	4				/* tweak only this */
+
+/* Note: sizeof(PageHeaderData) includes the first ItemId on the page */
+#define EXTERN_TUPLE_MAX_SIZE	\
+	MAXALIGN_DOWN((BLCKSZ - \
+				   MAXALIGN(sizeof(PageHeaderData) + (EXTERN_TUPLES_PER_PAGE-1) * sizeof(ItemIdData))) \
+				  / EXTERN_TUPLES_PER_PAGE)
+
+#define TOAST_MAX_CHUNK_SIZE	\
+	(EXTERN_TUPLE_MAX_SIZE -							\
+	 MAXALIGN(offsetof(HeapTupleHeaderData, t_bits)) -	\
+	 sizeof(Oid) -										\
+	 sizeof(int32) -									\
+	 VARHDRSZ)
 
 
 /* ----------

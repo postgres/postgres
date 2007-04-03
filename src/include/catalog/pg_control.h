@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.36 2007/03/03 20:02:27 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.37 2007/04/03 04:14:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	832
+#define PG_CONTROL_VERSION	833
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -134,6 +134,8 @@ typedef struct ControlFileData
 
 	uint32		nameDataLen;	/* catalog name field width */
 	uint32		indexMaxKeys;	/* max number of columns in an index */
+
+	uint32		toast_max_chunk_size;	/* chunk size in TOAST tables */
 
 	/* flag indicating internal format of timestamp, interval, time */
 	uint32		enableIntTimes; /* int64 storage enabled? */

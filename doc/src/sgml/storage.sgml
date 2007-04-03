@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.15 2007/03/02 00:48:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.16 2007/04/03 04:14:26 tgl Exp $ -->
 
 <chapter id="storage">
 
@@ -240,8 +240,9 @@ of the LZ family of compression techniques.  See
 
 <para>
 Out-of-line values are divided (after compression if used) into chunks of at
-most <literal>TOAST_MAX_CHUNK_SIZE</> bytes (this value is a little less than
-<literal>BLCKSZ/4</>, or about 2000 bytes by default).  Each chunk is stored
+most <symbol>TOAST_MAX_CHUNK_SIZE</> bytes (by default this value is chosen
+so that four chunk rows will fit on a page, making it about 2000 bytes).
+Each chunk is stored
 as a separate row in the <acronym>TOAST</> table for the owning table.  Every
 <acronym>TOAST</> table has the columns <structfield>chunk_id</> (an OID
 identifying the particular <acronym>TOAST</>ed value),
@@ -260,10 +261,12 @@ regardless of the actual size of the represented value.
 
 <para>
 The <acronym>TOAST</> code is triggered only
-when a row value to be stored in a table is wider than <literal>BLCKSZ/4</>
-bytes (normally 2 kB).  The <acronym>TOAST</> code will compress and/or move
+when a row value to be stored in a table is wider than
+<symbol>TOAST_TUPLE_THRESHOLD</> bytes (normally 2 kB).
+The <acronym>TOAST</> code will compress and/or move
 field values out-of-line until the row value is shorter than
-<literal>BLCKSZ/4</> bytes or no more gains can be had.  During an UPDATE
+<symbol>TOAST_TUPLE_TARGET</> bytes (also normally 2 kB)
+or no more gains can be had.  During an UPDATE
 operation, values of unchanged fields are normally preserved as-is; so an
 UPDATE of a row with out-of-line values incurs no <acronym>TOAST</> costs if
 none of the out-of-line values change.

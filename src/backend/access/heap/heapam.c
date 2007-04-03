@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.230 2007/03/29 00:15:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.231 2007/04/03 04:14:26 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1420,7 +1420,13 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 * Note: below this point, heaptup is the data we actually intend to store
 	 * into the relation; tup is the caller's original untoasted data.
 	 */
-	if (HeapTupleHasExternal(tup) || tup->t_len > TOAST_TUPLE_THRESHOLD)
+	if (relation->rd_rel->relkind == RELKIND_TOASTVALUE)
+	{
+		/* toast table entries should never be recursively toasted */
+		Assert(!HeapTupleHasExternal(tup));
+		heaptup = tup;
+	}
+	else if (HeapTupleHasExternal(tup) || tup->t_len > TOAST_TUPLE_THRESHOLD)
 		heaptup = toast_insert_or_update(relation, tup, NULL,
 										 use_wal, use_fsm);
 	else
@@ -1777,7 +1783,12 @@ l1:
 	 * because we need to look at the contents of the tuple, but it's OK to
 	 * release the content lock on the buffer first.
 	 */
-	if (HeapTupleHasExternal(&tp))
+	if (relation->rd_rel->relkind == RELKIND_TOASTVALUE)
+	{
+		/* toast table entries should never be recursively toasted */
+		Assert(!HeapTupleHasExternal(&tp));
+	}
+	else if (HeapTupleHasExternal(&tp))
 		toast_delete(relation, &tp);
 
 	/*
@@ -2075,9 +2086,17 @@ l2:
 	 * We need to invoke the toaster if there are already any out-of-line
 	 * toasted values present, or if the new tuple is over-threshold.
 	 */
-	need_toast = (HeapTupleHasExternal(&oldtup) ||
-				  HeapTupleHasExternal(newtup) ||
-				  newtup->t_len > TOAST_TUPLE_THRESHOLD);
+	if (relation->rd_rel->relkind == RELKIND_TOASTVALUE)
+	{
+		/* toast table entries should never be recursively toasted */
+		Assert(!HeapTupleHasExternal(&oldtup));
+		Assert(!HeapTupleHasExternal(newtup));
+		need_toast = false;
+	}
+	else
+		need_toast = (HeapTupleHasExternal(&oldtup) ||
+					  HeapTupleHasExternal(newtup) ||
+					  newtup->t_len > TOAST_TUPLE_THRESHOLD);
 
 	pagefree = PageGetFreeSpace((Page) dp);
 

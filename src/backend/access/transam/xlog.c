@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.265 2007/03/03 20:02:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.266 2007/04/03 04:14:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "access/multixact.h"
 #include "access/subtrans.h"
 #include "access/transam.h"
+#include "access/tuptoaster.h"
 #include "access/twophase.h"
 #include "access/xact.h"
 #include "access/xlog_internal.h"
@@ -3634,6 +3635,8 @@ WriteControlFile(void)
 	ControlFile->nameDataLen = NAMEDATALEN;
 	ControlFile->indexMaxKeys = INDEX_MAX_KEYS;
 
+	ControlFile->toast_max_chunk_size = TOAST_MAX_CHUNK_SIZE;
+
 #ifdef HAVE_INT64_TIMESTAMP
 	ControlFile->enableIntTimes = TRUE;
 #else
@@ -3823,6 +3826,13 @@ ReadControlFile(void)
 				 errdetail("The database cluster was initialized with INDEX_MAX_KEYS %d,"
 					  " but the server was compiled with INDEX_MAX_KEYS %d.",
 						   ControlFile->indexMaxKeys, INDEX_MAX_KEYS),
+				 errhint("It looks like you need to recompile or initdb.")));
+	if (ControlFile->toast_max_chunk_size != TOAST_MAX_CHUNK_SIZE)
+		ereport(FATAL,
+				(errmsg("database files are incompatible with server"),
+				 errdetail("The database cluster was initialized with TOAST_MAX_CHUNK_SIZE %d,"
+						   " but the server was compiled with TOAST_MAX_CHUNK_SIZE %d.",
+						   ControlFile->toast_max_chunk_size, (int) TOAST_MAX_CHUNK_SIZE),
 				 errhint("It looks like you need to recompile or initdb.")));
 
 #ifdef HAVE_INT64_TIMESTAMP

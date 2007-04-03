@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.72 2007/03/29 00:15:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.73 2007/04/03 04:14:26 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -292,6 +292,12 @@ toast_delete(Relation rel, HeapTuple oldtup)
 	bool		toast_isnull[MaxHeapAttributeNumber];
 
 	/*
+	 * We should only ever be called for tuples of plain relations ---
+	 * recursing on a toast rel is bad news.
+	 */
+	Assert(rel->rd_rel->relkind == RELKIND_RELATION);
+
+	/*
 	 * Get the tuple descriptor and break down the tuple into fields.
 	 *
 	 * NOTE: it's debatable whether to use heap_deformtuple() here or just
@@ -360,6 +366,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	bool		has_nulls = false;
 
 	Size		maxDataLen;
+	Size		hoff;
 
 	char		toast_action[MaxHeapAttributeNumber];
 	bool		toast_isnull[MaxHeapAttributeNumber];
@@ -369,6 +376,12 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	int32		toast_sizes[MaxHeapAttributeNumber];
 	bool		toast_free[MaxHeapAttributeNumber];
 	bool		toast_delold[MaxHeapAttributeNumber];
+
+	/*
+	 * We should only ever be called for tuples of plain relations ---
+	 * recursing on a toast rel is bad news.
+	 */
+	Assert(rel->rd_rel->relkind == RELKIND_RELATION);
 
 	/*
 	 * Get the tuple descriptor and break down the tuple(s) into fields.
@@ -512,15 +525,15 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	 */
 
 	/* compute header overhead --- this should match heap_form_tuple() */
-	maxDataLen = offsetof(HeapTupleHeaderData, t_bits);
+	hoff = offsetof(HeapTupleHeaderData, t_bits);
 	if (has_nulls)
-		maxDataLen += BITMAPLEN(numAttrs);
+		hoff += BITMAPLEN(numAttrs);
 	if (newtup->t_data->t_infomask & HEAP_HASOID)
-		maxDataLen += sizeof(Oid);
-	maxDataLen = MAXALIGN(maxDataLen);
-	Assert(maxDataLen == newtup->t_data->t_hoff);
+		hoff += sizeof(Oid);
+	hoff = MAXALIGN(hoff);
+	Assert(hoff == newtup->t_data->t_hoff);
 	/* now convert to a limit on the tuple data size */
-	maxDataLen = TOAST_TUPLE_TARGET - maxDataLen;
+	maxDataLen = TOAST_TUPLE_TARGET - hoff;
 
 	/*
 	 * Look for attributes with attstorage 'x' to compress
@@ -583,7 +596,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 
 	/*
 	 * Second we look for attributes of attstorage 'x' or 'e' that are still
-	 * inline.
+	 * inline.  But skip this if there's no toast table to push them to.
 	 */
 	while (heap_compute_data_size(tupleDesc,
 								  toast_values, toast_isnull) > maxDataLen &&
@@ -695,7 +708,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 	}
 
 	/*
-	 * Finally we store attributes of type 'm' external
+	 * Finally we store attributes of type 'm' external, if possible.
 	 */
 	while (heap_compute_data_size(tupleDesc,
 								  toast_values, toast_isnull) > maxDataLen &&
