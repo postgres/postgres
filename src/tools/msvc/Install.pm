@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.7 2007/04/02 12:11:26 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.8 2007/04/04 16:34:43 mha Exp $
 #
 use strict;
 use warnings;
@@ -63,7 +63,7 @@ sub Install
     );
     GenerateConversionScript($target);
     GenerateTimezoneFiles($target,$conf);
-    CopyContribFiles($target);
+    CopyContribFiles($config,$target);
     CopyIncludeFiles($target);
 
     GenerateNLSFiles($target,$config->{nls}) if ($config->{nls});
@@ -215,6 +215,7 @@ sub GenerateTimezoneFiles
 
 sub CopyContribFiles
 {
+    my $config = shift;
     my $target = shift;
 
     print "Copying contrib data files...";
@@ -224,6 +225,7 @@ sub CopyContribFiles
     {
         next if ($d =~ /^\./);
         next unless (-f "contrib/$d/Makefile");
+        next if ($d eq "sslinfo" && !defined($config->{openssl}));
 
         my $mf = read_file("contrib/$d/Makefile");
         $mf =~ s{\\s*[\r\n]+}{}mg;
