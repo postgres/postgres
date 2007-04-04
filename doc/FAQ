@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Mar 20 13:43:40 EDT 2007
+   Last updated: Wed Apr 4 15:26:28 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -431,6 +431,16 @@
   3.6) What is the upgrade process for PostgreSQL?
   
    See http://www.postgresql.org/support/versioning.
+   
+  3.7) What computer hardware should I use?
+  
+   Because PC hardware is mostly compatible, people tend to believe that
+   all PC hardware is of equal quality. It is not. ECC RAM, SCSI, and
+   quality motherboards are more reliable and have better performance
+   than less expensive hardware. PostgreSQL will run on almost any
+   hardware, but if reliability and performance are important it is wise
+   to research your hardware options thoroughly. Our email lists can be
+   used to discuss hardware options and tradeoffs.
      _________________________________________________________________
    
                            Operational Questions
