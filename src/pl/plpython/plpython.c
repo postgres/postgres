@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.99 2007/04/03 15:50:58 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.100 2007/04/04 17:28:11 momjian Exp $
  *
  *********************************************************************
  */
@@ -1994,9 +1994,9 @@ static PyTypeObject PLy_PlanType = {
 	/*
 	 * methods
 	 */
-	(destructor) PLy_plan_dealloc,		/* tp_dealloc */
+	PLy_plan_dealloc,			/* tp_dealloc */
 	0,							/* tp_print */
-	(getattrfunc) PLy_plan_getattr,		/* tp_getattr */
+	PLy_plan_getattr,			/* tp_getattr */
 	0,							/* tp_setattr */
 	0,							/* tp_compare */
 	0,							/* tp_repr */
@@ -2038,9 +2038,9 @@ static PyTypeObject PLy_ResultType = {
 	/*
 	 * methods
 	 */
-	(destructor) PLy_result_dealloc,	/* tp_dealloc */
+	PLy_result_dealloc,			/* tp_dealloc */
 	0,							/* tp_print */
-	(getattrfunc) PLy_result_getattr,	/* tp_getattr */
+	PLy_result_getattr,			/* tp_getattr */
 	0,							/* tp_setattr */
 	0,							/* tp_compare */
 	0,							/* tp_repr */
