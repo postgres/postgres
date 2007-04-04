@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.6 2007/03/23 09:57:55 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.7 2007/04/04 20:53:44 adunstan Exp $
 
 SETLOCAL
 SET STARTDIR=%CD%
@@ -58,6 +58,7 @@ goto :eof
 
 REM Check a single procedural language
 :oneplcheck
+echo ==========================================================================
 echo Checking %1
 cd %1
 SET PL=%1
@@ -86,6 +87,8 @@ REM Check a single contrib module
 :onecontribcheck
 cd %1
 
+echo ==========================================================================
+echo Checking %1
 perl ../../src/tools/msvc/getregress.pl > regress.tmp.bat
 call regress.tmp.bat
 del regress.tmp.bat
