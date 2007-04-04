@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.8 2007/04/04 16:34:43 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.9 2007/04/04 18:45:59 adunstan Exp $
 #
 use strict;
 use warnings;
@@ -226,6 +226,7 @@ sub CopyContribFiles
         next if ($d =~ /^\./);
         next unless (-f "contrib/$d/Makefile");
         next if ($d eq "sslinfo" && !defined($config->{openssl}));
+        next if ($d eq "xml2" && !defined($config->{xml}));
 
         my $mf = read_file("contrib/$d/Makefile");
         $mf =~ s{\\s*[\r\n]+}{}mg;
