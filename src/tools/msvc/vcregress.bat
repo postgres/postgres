@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.7 2007/04/04 20:53:44 adunstan Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.8 2007/04/05 12:10:40 mha Exp $
 
 SETLOCAL
 SET STARTDIR=%CD%
@@ -65,6 +65,7 @@ SET PL=%1
 IF %PL%==plpython SET PL=plpythonu
 IF %PL%==tcl SET PL=pltcl
 
+set TESTS=
 perl ../../tools/msvc/getregress.pl > regress.tmp.bat
 call regress.tmp.bat
 del regress.tmp.bat
@@ -89,6 +90,7 @@ cd %1
 
 echo ==========================================================================
 echo Checking %1
+set TESTS=
 perl ../../src/tools/msvc/getregress.pl > regress.tmp.bat
 call regress.tmp.bat
 del regress.tmp.bat
