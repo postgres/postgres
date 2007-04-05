@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.193 2007/04/02 15:27:02 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.194 2007/04/05 01:46:27 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3202,11 +3202,13 @@ SELECT * FROM test;
     advantage over storing XML data in a <type>text</type> field is that it
     checks the input values for well-formedness, and there are support
     functions to perform type-safe operations on it; see <xref
-    linkend="functions-xml">.
+    linkend="functions-xml">.  Use of this data type requires the
+    installation to have been built with <command>configure 
+    --with-libxml</>.
    </para>
 
    <para>
-    In particular, the <type>xml</type> type can store well-formed
+    The <type>xml</type> type can store well-formed
     <quote>documents</quote>, as defined by the XML standard, as well
     as <quote>content</quote> fragments, which are defined by the
     production <literal>XMLDecl? content</literal> in the XML

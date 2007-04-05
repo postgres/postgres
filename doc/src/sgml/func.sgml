@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.374 2007/04/02 15:27:02 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.375 2007/04/05 01:46:27 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7511,7 +7511,9 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    linkend="datatype-xml"> for information about the <type>xml</type>
    type.  The function-like expressions <function>xmlparse</function>
    and <function>xmlserialize</function> for converting to and from
-   type <type>xml</type> are not repeated here.
+   type <type>xml</type> are not repeated here.  Use of many of these
+   <type>xml</type> functions requires the installation to have been built
+   with <command>configure --with-libxml</>.
   </para>
 
   <sect2>
