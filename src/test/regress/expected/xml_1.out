@@ -3,109 +3,199 @@ CREATE TABLE xmltest (
     data xml
 );
 INSERT INTO xmltest VALUES (1, '<value>one</value>');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 INSERT INTO xmltest VALUES (2, '<value>two</value>');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 INSERT INTO xmltest VALUES (3, '<wrong');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT * FROM xmltest;
  id | data 
 ----+------
 (0 rows)
 
 SELECT xmlcomment('test');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlcomment('-test');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlcomment('test-');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlcomment('--test');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlcomment('te st');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlconcat(xmlcomment('hello'),
                  xmlelement(NAME qux, 'foo'),
                  xmlcomment('world'));
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlconcat('hello', 'you');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlconcat(1, 2);
 ERROR:  argument of XMLCONCAT must be type "xml", not type integer
 SELECT xmlconcat('bad', '<syntax');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlconcat('<foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlconcat('<?xml version="1.1"?><foo/>', NULL, '<?xml version="1.1" standalone="no"?><bar/>');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlelement(name element,
                   xmlattributes (1 as one, 'deuce' as two),
                   'content');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlelement(name element,
                   xmlattributes ('unnamed and wrong'));
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlelement(name element, xmlelement(name nested, 'stuff'));
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlelement(name duplicate, xmlattributes(1 as a, 2 as b, 3 as a));
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlelement(name num, 37);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, text 'bar');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, xml 'bar');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, text 'b<a/>r');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, xml 'b<a/>r');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlelement(name foo, array[1, 2, 3]);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SET xmlbinary TO base64;
 SELECT xmlelement(name foo, bytea 'bar');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SET xmlbinary TO hex;
 SELECT xmlelement(name foo, bytea 'bar');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlparse(content 'abc');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlparse(content '<abc>x</abc>');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlparse(document 'abc');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlparse(document '<abc>x</abc>');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlpi(name foo);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlpi(name xmlstuff);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlpi(name foo, 'bar');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlpi(name foo, 'in?>valid');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlpi(name foo, null);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlpi(name xmlstuff, null);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlpi(name foo, '   bar');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlroot(xml '<foo/>', version no value, standalone no value);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlroot(xml '<foo/>', version '2.0');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlroot(xml '<?xml version="1.1"?><foo/>', version no value, standalone yes);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlroot(xmlroot(xml '<foo/>', version '1.0'), version '1.1', standalone no);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value, standalone no);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value, standalone no value);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlroot('<?xml version="1.1" standalone="yes"?><foo/>', version no value);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlroot (
   xmlelement (
     name gazonk,
@@ -121,26 +211,42 @@ SELECT xmlroot (
   version '1.0',
   standalone yes
 );
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlserialize(content data as character varying(20)) FROM xmltest;
  xmlserialize 
 --------------
 (0 rows)
 
 SELECT xmlserialize(content 'good' as char(10));
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlserialize(document 'bad' as text);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xml '<foo>bar</foo>' IS DOCUMENT;
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xml '<foo>bar</foo><bar>foo</bar>' IS DOCUMENT;
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xml '<abc/>' IS NOT DOCUMENT;
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xml 'abc' IS NOT DOCUMENT;
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT '<>' IS NOT DOCUMENT;
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlagg(data) FROM xmltest;
  xmlagg 
 --------
@@ -154,14 +260,22 @@ SELECT xmlagg(data) FROM xmltest WHERE id > 10;
 (1 row)
 
 SELECT xmlelement(name employees, xmlagg(xmlelement(name name, name))) FROM emp;
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 -- Check mapping SQL identifier to XML name
 SELECT xmlpi(name ":::_xml_abc135.%-&_");
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlpi(name "123");
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 PREPARE foo (xml) AS SELECT xmlconcat('<foo/>', $1);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SET XML OPTION DOCUMENT;
 EXECUTE foo ('<bar/>');
 ERROR:  prepared statement "foo" does not exist
@@ -175,20 +289,34 @@ ERROR:  prepared statement "foo" does not exist
 -- Test backwards parsing
 CREATE VIEW xmlview1 AS SELECT xmlcomment('test');
 CREATE VIEW xmlview2 AS SELECT xmlconcat('hello', 'you');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 CREATE VIEW xmlview3 AS SELECT xmlelement(name element, xmlattributes (1 as ":one:", 'deuce' as two), 'content&');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 CREATE VIEW xmlview4 AS SELECT xmlelement(name employee, xmlforest(name, age, salary as pay)) FROM emp;
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 CREATE VIEW xmlview5 AS SELECT xmlparse(content '<abc>x</abc>');
 CREATE VIEW xmlview6 AS SELECT xmlpi(name foo, 'bar');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 CREATE VIEW xmlview7 AS SELECT xmlroot(xml '<foo/>', version no value, standalone yes);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 CREATE VIEW xmlview8 AS SELECT xmlserialize(content 'good' as char(10));
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 CREATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as text);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT table_name, view_definition FROM information_schema.views
   WHERE table_name LIKE 'xmlview%' ORDER BY 1;
  table_name |                                view_definition                                
@@ -204,13 +332,23 @@ SELECT xmlpath('/value', data) FROM xmltest;
 (0 rows)
 
 SELECT xmlpath(NULL, NULL) IS NULL FROM xmltest;
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 CONTEXT:  SQL function "xmlpath" statement 1
 SELECT xmlpath('', '<!-- error -->');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlpath('//text()', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlpath('//loc:piece/@id', '<local:data xmlns:local="http://127.0.0.1"><local:piece id="1">number one</local:piece><local:piece id="2" /></local:data>', ARRAY[ARRAY['loc'], ARRAY['http://127.0.0.1']]);
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlpath('//b', '<a>one <b>two</b> three <b>etc</b></a>');
-ERROR:  no XML support in this installation
+ERROR:  unsupported XML feature
+DETAIL:  This functionality requires libxml support.
+HINT:  You need to re-compile PostgreSQL using --with-libxml.
