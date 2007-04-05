@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.8 2007/04/05 12:10:40 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.9 2007/04/05 12:31:36 mha Exp $
 
 SETLOCAL
 SET STARTDIR=%CD%
@@ -78,10 +78,12 @@ exit /b %E%
 REM Check contrib modules
 :contribcheck
 cd ..\..\..\contrib
+set CONTRIBERROR=0
 for /d %%d IN (*) do if exist %%d\sql if exist %%d\expected (
    call :onecontribcheck %%d
-   if errorlevel 1 exit /b 1
+   if errorlevel 1 set CONTRIBERROR=1
 )
+if %CONTRIBERROR%==1 exit /b 1
 goto :eof
 
 REM Check a single contrib module
