@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.194 2007/04/05 01:46:27 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.195 2007/04/06 19:22:38 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -516,7 +516,7 @@ NUMERIC
      type is more akin to <type>varchar(<replaceable>n</>)</type>
      than to <type>char(<replaceable>n</>)</type>.)  The actual storage
      requirement is two bytes for each group of four decimal digits,
-     plus eight bytes overhead.
+     plus five to eight bytes overhead.
     </para>
 
     <indexterm>
@@ -842,9 +842,9 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
       <tbody>
        <row>
         <entry>money</entry>
-        <entry>4 bytes</entry>
+        <entry>8 bytes</entry>
         <entry>currency amount</entry>
-        <entry>-21474836.48 to +21474836.47</entry>
+        <entry>-92233720368547758.08 to +92233720368547758.07</entry>
        </row>
       </tbody>
      </tgroup>
@@ -975,12 +975,13 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
    </para>
 
    <para>
-    The storage requirement for data of these types is 4 bytes plus the
-    actual string, and in case of <type>character</type> plus the
-    padding. Long strings are compressed by the system automatically, so
-    the physical requirement on disk might be less. Long values are also
-    stored in background tables so they do not interfere with rapid
-    access to the shorter column values. In any case, the longest
+    The storage requirement for a short string (up to 126 bytes) is 1 byte
+    plus the actual string, which includes the space padding in the case of
+    <type>character</type>.  Longer strings have 4 bytes overhead instead
+    of 1.  Long strings are compressed by the system automatically, so
+    the physical requirement on disk might be less. Very long values are also
+    stored in background tables so that they do not interfere with rapid
+    access to shorter column values. In any case, the longest
     possible character string that can be stored is about 1 GB. (The
     maximum value that will be allowed for <replaceable>n</> in the data
     type declaration is less than that. It wouldn't be very useful to
@@ -994,8 +995,10 @@ ALTER SEQUENCE <replaceable class="parameter">tablename</replaceable>_<replaceab
    <tip>
     <para>
      There are no performance differences between these three types,
-     apart from the increased storage size when using the blank-padded
-     type.  While <type>character(<replaceable>n</>)</type> has performance
+     apart from increased storage size when using the blank-padded
+     type, and a few extra cycles to check the length when storing into
+     a length-constrained column.  While
+     <type>character(<replaceable>n</>)</type> has performance
      advantages in some other database systems, it has no such advantages in
      <productname>PostgreSQL</productname>.  In most situations
      <type>text</type> or <type>character varying</type> should be used
@@ -1080,7 +1083,7 @@ SELECT b, char_length(b) FROM test2;
        <row>
         <entry><type>"char"</type></entry>
         <entry>1 byte</entry>
-        <entry>single-character internal type</entry>
+        <entry>single-byte internal type</entry>
        </row>
        <row>
         <entry><type>name</type></entry>
@@ -1122,7 +1125,7 @@ SELECT b, char_length(b) FROM test2;
      <tbody>
       <row>
        <entry><type>bytea</type></entry>
-       <entry>4 bytes plus the actual binary string</entry>
+       <entry>1 or 4 bytes plus the actual binary string</entry>
        <entry>variable-length binary string</entry>
       </row>
      </tbody>
@@ -2879,13 +2882,13 @@ SELECT person.name, holidays.num_weeks FROM person, holidays
 
        <row>
         <entry><type>cidr</type></entry>
-        <entry>12 or 24 bytes</entry>
+        <entry>7 or 19 bytes</entry>
         <entry>IPv4 and IPv6 networks</entry>
        </row>
 
        <row>
         <entry><type>inet</type></entry>
-        <entry>12 or 24 bytes</entry>
+        <entry>7 or 19 bytes</entry>
         <entry>IPv4 and IPv6 hosts and networks</entry>
        </row>
 
@@ -3188,6 +3191,12 @@ SELECT * FROM test;
 </programlisting>
    </example>
 
+   <para>
+    A bit string value requires 1 byte for each group of 8 bits, plus
+    5 or 8 bytes overhead depending on the length of the string
+    (but long values may be compressed or moved out-of-line, as explained
+    in <xref linkend="datatype-character"> for character strings).
+   </para>
   </sect1>
 
   <sect1 id="datatype-xml">
