@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/pgbench/README.pgbench,v 1.16 2007/04/06 08:49:44 ishii Exp $
+$PostgreSQL: pgsql/contrib/pgbench/README.pgbench,v 1.17 2007/04/06 09:16:15 ishii Exp $
 
 pgbench README
 
@@ -96,10 +96,14 @@ o options
 		default is 1.  NOTE: scaling factor should be at least
 		as large as the largest number of clients you intend
 		to test; else you'll mostly be measuring update contention.
+		Regular (not initializing) runs using one of the
+		built-in tests will detect scale based on the number of
+		branches in the database.  For custom (-f) runs it can
+		be manually specified with this parameter.
 
 	-D varname=value
-		Define a variable. It can be refereed to by a script
-		provided by using -f option. Multile -D options are allowed.
+		Define a variable. It can be refered to by a script
+		provided by using -f option. Multiple -D options are allowed.
 
 	-U login
 		Specify db user's login name if it is different from
@@ -141,9 +145,22 @@ o options
 		with the name "pgbench_log.xxx", where xxx is the PID
 		of the pgbench process. The format of the log is:
 
-			client_id transaction_no time
+			client_id transaction_no time file_no time-epoch time-us
 
-		where time is measured in microseconds.
+		where time is measured in microseconds, , the file_no is
+		which test file was used (useful when multiple were
+		specified with -f), and time-epoch/time-us are a
+		UNIX epoch format timestamp followed by an offset
+		in microseconds (suitable for creating a ISO 8601
+		timestamp with a fraction of a second) of when
+		the transaction completed.
+
+		Here are example outputs:
+
+		0 199 2241 0 1175850568 995598
+		0 200 2465 0 1175850568 998079
+		0 201 2513 0 1175850569 608
+		0 202 2038 0 1175850569 2663
 
 	-d
 		debug option.
@@ -164,6 +181,8 @@ o What is the "transaction" actually performed in pgbench?
   (6) insert into history(tid,bid,aid,delta) values(:tid,:bid,:aid,:delta);
 
   (7) end;
+
+If you specify -N, (4) and (5) aren't included in the transaction.
 
 o -f option
 
