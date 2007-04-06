@@ -75,6 +75,12 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
      2
 (1 row)
 
+SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
+ count 
+-------
+   278
+(1 row)
+
 SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
     ORDER BY (poly_center(f1))[0];
          f1          
@@ -123,6 +129,12 @@ SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
  count 
 -------
      2
+(1 row)
+
+SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
+ count 
+-------
+   278
 (1 row)
 
 SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
@@ -410,3 +422,71 @@ Indexes:
     "std_index" btree (f2)
 
 DROP TABLE concur_heap;
+--
+-- Tests for IS NULL with b-tree indexes
+--
+SELECT unique1, unique2 INTO onek_with_null FROM onek;
+INSERT INTO onek_with_null (unique1,unique2) VALUES (NULL, -1), (NULL, NULL);
+CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2,unique1);
+SET enable_seqscan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = ON;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
+ count 
+-------
+     2
+(1 row)
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+ count 
+-------
+     1
+(1 row)
+
+DROP INDEX onek_nulltest;
+CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2 desc,unique1);
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
+ count 
+-------
+     2
+(1 row)
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+ count 
+-------
+     1
+(1 row)
+
+DROP INDEX onek_nulltest;
+CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2 desc nulls last,unique1);
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
+ count 
+-------
+     2
+(1 row)
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+ count 
+-------
+     1
+(1 row)
+
+DROP INDEX onek_nulltest;
+CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2  nulls first,unique1);
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
+ count 
+-------
+     2
+(1 row)
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+ count 
+-------
+     1
+(1 row)
+
+RESET enable_seqscan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;
+ 
+DROP TABLE onek_with_null;

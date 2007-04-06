@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.139 2007/02/27 01:11:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.140 2007/04/06 22:33:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,6 +397,7 @@ typedef struct IndexOptInfo
 	bool		predOK;			/* true if predicate matches query */
 	bool		unique;			/* true if a unique index */
 	bool		amoptionalkey;	/* can query omit key for the first column? */
+	bool		amsearchnulls;	/* can AM search for NULL index entries? */
 } IndexOptInfo;
 
 

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.111 2007/01/09 02:14:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.112 2007/04/06 22:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -746,8 +746,6 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	 *
 	 * If goback = true, we will then step back one item, while if
 	 * goback = false, we will start the scan on the located item.
-	 *
-	 * it's yet other place to add some code later for is(not)null ...
 	 *----------
 	 */
 	switch (strat_total)

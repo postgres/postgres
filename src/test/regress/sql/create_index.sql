@@ -96,6 +96,8 @@ SELECT * FROM fast_emp4000
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
 
+SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
+
 SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
     ORDER BY (poly_center(f1))[0];
 
@@ -118,6 +120,8 @@ SELECT * FROM fast_emp4000
     ORDER BY (home_base[0])[0];
 
 SELECT count(*) FROM fast_emp4000 WHERE home_base && '(1000,1000,0,0)'::box;
+
+SELECT count(*) FROM fast_emp4000 WHERE home_base IS NULL;
 
 SELECT * FROM polygon_tbl WHERE f1 ~ '((1,1),(2,2),(2,1))'::polygon
     ORDER BY (poly_center(f1))[0];
@@ -259,3 +263,45 @@ COMMIT;
 \d concur_heap
 
 DROP TABLE concur_heap;
+
+--
+-- Tests for IS NULL with b-tree indexes
+--
+
+SELECT unique1, unique2 INTO onek_with_null FROM onek;
+INSERT INTO onek_with_null (unique1,unique2) VALUES (NULL, -1), (NULL, NULL);
+CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2,unique1);
+
+SET enable_seqscan = OFF;
+SET enable_indexscan = ON;
+SET enable_bitmapscan = ON;
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+
+DROP INDEX onek_nulltest;
+
+CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2 desc,unique1);
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+
+DROP INDEX onek_nulltest;
+
+CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2 desc nulls last,unique1);
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+
+DROP INDEX onek_nulltest;
+
+CREATE UNIQUE INDEX onek_nulltest ON onek_with_null (unique2  nulls first,unique1);
+
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL;
+SELECT count(*) FROM onek_with_null WHERE unique1 IS NULL AND unique2 IS NULL;
+
+RESET enable_seqscan;
+RESET enable_indexscan;
+RESET enable_bitmapscan;
+ 
+DROP TABLE onek_with_null;

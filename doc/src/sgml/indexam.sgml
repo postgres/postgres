@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.22 2007/02/22 22:00:22 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indexam.sgml,v 2.23 2007/04/06 22:33:41 tgl Exp $ -->
 
 <chapter id="indexam">
  <title>Index Access Method Interface Definition</title>
@@ -129,7 +129,10 @@
    It is, however, OK to omit rows where the first indexed column is null.
    Thus, <structfield>amindexnulls</structfield> should be set true only if the
    index access method indexes all rows, including arbitrary combinations of
-   null values.
+   null values.  An index access method that sets
+   <structfield>amindexnulls</structfield> may also set
+   <structfield>amsearchnulls</structfield>, indicating that it supports
+   <literal>IS NULL</> clauses as search conditions.
   </para>
 
  </sect1>

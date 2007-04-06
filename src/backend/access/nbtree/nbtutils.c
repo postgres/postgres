@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.83 2007/03/30 00:12:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.84 2007/04/06 22:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,12 +264,27 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	if (numberOfKeys == 1)
 	{
 		/*
-		 * We don't use indices for 'A is null' and 'A is not null' currently
-		 * and 'A < = > <> NULL' will always fail - so qual is not OK if
-		 * comparison value is NULL.	  - vadim 03/21/97
+		 * We treat all btree operators as strict (even if they're not so
+		 * marked in pg_proc).  This means that it is impossible for an
+		 * operator condition with a NULL comparison constant to succeed,
+		 * and we can reject it right away.
+		 *
+		 * However, we now also support "x IS NULL" clauses as search
+		 * conditions, so in that case keep going.  The planner has not
+		 * filled in any particular strategy in this case, so set it to
+		 * BTEqualStrategyNumber --- we can treat IS NULL as an equality
+		 * operator for purposes of search strategy.
 		 */
 		if (cur->sk_flags & SK_ISNULL)
-			so->qual_ok = false;
+		{
+			if (cur->sk_flags & SK_SEARCHNULL)
+			{
+				cur->sk_strategy = BTEqualStrategyNumber;
+				cur->sk_subtype = InvalidOid;
+			}
+			else
+				so->qual_ok = false;
+		}
 		_bt_mark_scankey_with_indoption(cur, indoption);
 		memcpy(outkeys, cur, sizeof(ScanKeyData));
 		so->numberOfKeys = 1;
@@ -303,17 +318,20 @@ _bt_preprocess_keys(IndexScanDesc scan)
 	{
 		if (i < numberOfKeys)
 		{
-			/* See comments above: any NULL implies cannot match qual */
+			/* See comments above about NULLs and IS NULL handling. */
 			/* Note: we assume SK_ISNULL is never set in a row header key */
 			if (cur->sk_flags & SK_ISNULL)
 			{
-				so->qual_ok = false;
-
-				/*
-				 * Quit processing so we don't try to invoke comparison
-				 * routines on NULLs.
-				 */
-				return;
+				if (cur->sk_flags & SK_SEARCHNULL)
+				{
+					cur->sk_strategy = BTEqualStrategyNumber;
+					cur->sk_subtype = InvalidOid;
+				}
+				else
+				{
+					so->qual_ok = false;
+					return;
+				}
 			}
 		}
 
@@ -344,6 +362,14 @@ _bt_preprocess_keys(IndexScanDesc scan)
 
 					if (!chk || j == (BTEqualStrategyNumber - 1))
 						continue;
+
+					/* IS NULL together with any other predicate must fail */
+					if (eq->sk_flags & SK_SEARCHNULL)
+					{
+						so->qual_ok = false;
+						return;
+					}
+
 					if (_bt_compare_scankey_args(scan, chk, eq, chk,
 												 &test_result))
 					{
@@ -455,6 +481,23 @@ _bt_preprocess_keys(IndexScanDesc scan)
 		else
 		{
 			/* yup, keep only the more restrictive key */
+
+			/* if either arg is NULL, don't try to compare */
+			if ((cur->sk_flags | xform[j]->sk_flags) & SK_ISNULL)
+			{
+				/* at least one of them must be an IS NULL clause */
+				Assert(j == (BTEqualStrategyNumber - 1));
+				Assert((cur->sk_flags | xform[j]->sk_flags) & SK_SEARCHNULL);
+				/* if one is and one isn't, the search must fail */
+				if ((cur->sk_flags ^ xform[j]->sk_flags) & SK_SEARCHNULL)
+				{
+					so->qual_ok = false;
+					return;
+				}
+				/* we have duplicate IS NULL clauses, ignore the newer one */
+				continue;
+			}
+
 			if (_bt_compare_scankey_args(scan, cur, cur, xform[j],
 										 &test_result))
 			{
@@ -798,11 +841,29 @@ _bt_checkkeys(IndexScanDesc scan,
 							  tupdesc,
 							  &isNull);
 
-		/* btree doesn't support 'A is null' clauses, yet */
 		if (key->sk_flags & SK_ISNULL)
 		{
-			/* we shouldn't get here, really; see _bt_preprocess_keys() */
-			*continuescan = false;
+			/* Handle IS NULL tests */
+			Assert(key->sk_flags & SK_SEARCHNULL);
+
+			if (isNull)
+				continue;		/* tuple satisfies this qual */
+
+			/*
+			 * Tuple fails this qual.  If it's a required qual for the current
+			 * scan direction, then we can conclude no further tuples will
+			 * pass, either.
+			 */
+			if ((key->sk_flags & SK_BT_REQFWD) &&
+				ScanDirectionIsForward(dir))
+				*continuescan = false;
+			else if ((key->sk_flags & SK_BT_REQBKWD) &&
+					 ScanDirectionIsBackward(dir))
+				*continuescan = false;
+
+			/*
+			 * In any case, this indextuple doesn't match the qual.
+			 */
 			return false;
 		}
 

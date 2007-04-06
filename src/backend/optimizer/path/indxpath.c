@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.218 2007/03/21 22:18:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.219 2007/04/06 22:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1050,6 +1050,7 @@ match_clause_to_indexcol(IndexOptInfo *index,
 	 * Clause must be a binary opclause, or possibly a ScalarArrayOpExpr
 	 * (which is always binary, by definition).  Or it could be a
 	 * RowCompareExpr, which we pass off to match_rowcompare_to_indexcol().
+	 * Or, if the index supports it, we can handle IS NULL clauses.
 	 */
 	if (is_opclause(clause))
 	{
@@ -1082,6 +1083,15 @@ match_clause_to_indexcol(IndexOptInfo *index,
 		return match_rowcompare_to_indexcol(index, indexcol, opfamily,
 											(RowCompareExpr *) clause,
 											outer_relids);
+	}
+	else if (index->amsearchnulls && IsA(clause, NullTest))
+	{
+		NullTest	*nt = (NullTest *) clause;
+
+		if (nt->nulltesttype == IS_NULL &&
+			match_index_to_operand((Node *) nt->arg, indexcol, index))
+			return true;
+		return false;
 	}
 	else
 		return false;
@@ -2102,8 +2112,8 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 			}
 
 			/*
-			 * Else it must be an opclause (usual case), ScalarArrayOp, or
-			 * RowCompare
+			 * Else it must be an opclause (usual case), ScalarArrayOp,
+			 * RowCompare, or NullTest
 			 */
 			if (is_opclause(clause))
 			{
@@ -2122,6 +2132,16 @@ expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 									  expand_indexqual_rowcompare(rinfo,
 																  index,
 																  indexcol));
+			}
+			else if (IsA(clause, NullTest))
+			{
+				Assert(index->amsearchnulls);
+				resultquals = lappend(resultquals,
+									  make_restrictinfo(clause,
+														true,
+														false,
+														false,
+														NULL));
 			}
 			else
 				elog(ERROR, "unsupported indexqual type: %d",

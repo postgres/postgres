@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.149 2007/04/02 03:49:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.150 2007/04/06 22:33:41 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -403,6 +403,13 @@
       <entry><type>bool</type></entry>
       <entry></entry>
       <entry>Does the access method support null index entries?</entry>
+     </row>
+
+     <row>
+      <entry><structfield>amsearchnulls</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>Does the access method support IS NULL searches?</entry>
      </row>
 
      <row>

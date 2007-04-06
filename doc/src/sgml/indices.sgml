@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.70 2007/02/14 20:47:15 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/indices.sgml,v 1.71 2007/04/06 22:33:41 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -147,8 +147,8 @@ CREATE INDEX test1_id_index ON test1 (id);
 
    Constructs equivalent to combinations of these operators, such as
    <literal>BETWEEN</> and <literal>IN</>, can also be implemented with
-   a B-tree index search.  (But note that <literal>IS NULL</> is not
-   equivalent to <literal>=</> and is not indexable.)
+   a B-tree index search.  Also, an <literal>IS NULL</> condition on
+   an index column can be used with a B-tree index.
   </para>
 
   <para>
@@ -180,8 +180,9 @@ CREATE INDEX test1_id_index ON test1 (id);
    Hash indexes can only handle simple equality comparisons.
    The query planner will consider using a hash index whenever an
    indexed column is involved in a comparison using the
-   <literal>=</literal> operator.  The following command is used to
-   create a hash index:
+   <literal>=</literal> operator.  (But hash indexes do not support
+   <literal>IS NULL</> searches.)
+   The following command is used to create a hash index:
 <synopsis>
 CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING hash (<replaceable>column</replaceable>);
 </synopsis>
@@ -234,6 +235,8 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
    (See <xref linkend="functions-geometry"> for the meaning of
    these operators.)
+   Also, an <literal>IS NULL</> condition on
+   an index column can be used with a GiST index.
    Many other GiST operator
    classes are available in the <literal>contrib</> collection or as separate
    projects.  For more information see <xref linkend="GiST">.
@@ -266,6 +269,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 
    (See <xref linkend="functions-array"> for the meaning of
    these operators.)
+   GIN indexes cannot use <literal>IS NULL</> as a search condition.
    Other GIN operator classes are available in the <literal>contrib</>
    <literal>tsearch2</literal> and <literal>intarray</literal> modules.
    For more information see <xref linkend="GIN">.

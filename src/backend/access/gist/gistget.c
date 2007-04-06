@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.64 2007/01/20 18:43:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.65 2007/04/06 22:33:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,37 +381,45 @@ gistindex_keytest(IndexTuple tuple,
 		if (key->sk_flags & SK_ISNULL)
 		{
 			/*
-			 * is the compared-to datum NULL? on non-leaf page it's possible
-			 * to have nulls in childs :(
+			 * On non-leaf page we can't conclude that child hasn't NULL
+			 * values because of assumption in GiST: uinon (VAL, NULL) is VAL
+			 * But if on non-leaf page key IS  NULL then all childs
+			 * has NULL.
 			 */
 
-			if (isNull || !GistPageIsLeaf(p))
-				return true;
-			return false;
+			Assert( key->sk_flags & SK_SEARCHNULL );
+
+			if ( GistPageIsLeaf(p) && !isNull )
+				return false;
 		}
 		else if (isNull)
+		{
 			return false;
+		}
+		else
+		{
 
-		gistdentryinit(giststate, key->sk_attno - 1, &de,
-					   datum, r, p, offset,
-					   FALSE, isNull);
+			gistdentryinit(giststate, key->sk_attno - 1, &de,
+						   datum, r, p, offset,
+						   FALSE, isNull);
 
-		/*
-		 * Call the Consistent function to evaluate the test.  The arguments
-		 * are the index datum (as a GISTENTRY*), the comparison datum, and
-		 * the comparison operator's strategy number and subtype from pg_amop.
-		 *
-		 * (Presently there's no need to pass the subtype since it'll always
-		 * be zero, but might as well pass it for possible future use.)
-		 */
-		test = FunctionCall4(&key->sk_func,
-							 PointerGetDatum(&de),
-							 key->sk_argument,
-							 Int32GetDatum(key->sk_strategy),
-							 ObjectIdGetDatum(key->sk_subtype));
+			/*
+			 * Call the Consistent function to evaluate the test.  The arguments
+			 * are the index datum (as a GISTENTRY*), the comparison datum, and
+			 * the comparison operator's strategy number and subtype from pg_amop.
+			 *
+			 * (Presently there's no need to pass the subtype since it'll always
+			 * be zero, but might as well pass it for possible future use.)
+			 */
+			test = FunctionCall4(&key->sk_func,
+								 PointerGetDatum(&de),
+								 key->sk_argument,
+								 Int32GetDatum(key->sk_strategy),
+								 ObjectIdGetDatum(key->sk_subtype));
 
-		if (!DatumGetBool(test))
-			return false;
+			if (!DatumGetBool(test))
+				return false;
+		}
 
 		keySize--;
 		key++;

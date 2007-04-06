@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.231 2007/03/27 23:21:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.232 2007/04/06 22:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4992,6 +4992,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	int			indexcol;
 	bool		eqQualHere;
 	bool		found_saop;
+	bool		found_null_op;
 	double		num_sa_scans;
 	ListCell   *l;
 
@@ -5016,6 +5017,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 	indexcol = 0;
 	eqQualHere = false;
 	found_saop = false;
+	found_null_op = false;
 	num_sa_scans = 1;
 	foreach(l, indexQuals)
 	{
@@ -5025,6 +5027,7 @@ btcostestimate(PG_FUNCTION_ARGS)
 				   *rightop;
 		Oid			clause_op;
 		int			op_strategy;
+		bool		is_null_op = false;
 
 		Assert(IsA(rinfo, RestrictInfo));
 		clause = rinfo->clause;
@@ -5050,6 +5053,17 @@ btcostestimate(PG_FUNCTION_ARGS)
 			rightop = (Node *) lsecond(saop->args);
 			clause_op = saop->opno;
 			found_saop = true;
+		}
+		else if (IsA(clause, NullTest))
+		{
+			NullTest   *nt = (NullTest *) clause;
+
+			Assert(nt->nulltesttype == IS_NULL);
+			leftop = (Node *) nt->arg;
+			rightop = NULL;
+			clause_op = InvalidOid;
+			found_null_op = true;
+			is_null_op = true;
 		}
 		else
 		{
@@ -5088,11 +5102,20 @@ btcostestimate(PG_FUNCTION_ARGS)
 				break;
 			}
 		}
-		op_strategy = get_op_opfamily_strategy(clause_op,
-											   index->opfamily[indexcol]);
-		Assert(op_strategy != 0);		/* not a member of opfamily?? */
-		if (op_strategy == BTEqualStrategyNumber)
+		/* check for equality operator */
+		if (is_null_op)
+		{
+			/* IS NULL is like = for purposes of selectivity determination */
 			eqQualHere = true;
+		}
+		else
+		{
+			op_strategy = get_op_opfamily_strategy(clause_op,
+												   index->opfamily[indexcol]);
+			Assert(op_strategy != 0);		/* not a member of opfamily?? */
+			if (op_strategy == BTEqualStrategyNumber)
+				eqQualHere = true;
+		}
 		/* count up number of SA scans induced by indexBoundQuals only */
 		if (IsA(clause, ScalarArrayOpExpr))
 		{
@@ -5108,12 +5131,14 @@ btcostestimate(PG_FUNCTION_ARGS)
 	/*
 	 * If index is unique and we found an '=' clause for each column, we can
 	 * just assume numIndexTuples = 1 and skip the expensive
-	 * clauselist_selectivity calculations.
+	 * clauselist_selectivity calculations.  However, a ScalarArrayOp or
+	 * NullTest invalidates that theory, even though it sets eqQualHere.
 	 */
 	if (index->unique &&
 		indexcol == index->ncolumns - 1 &&
 		eqQualHere &&
-		!found_saop)
+		!found_saop &&
+		!found_null_op)
 		numIndexTuples = 1.0;
 	else
 	{

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.61 2007/04/03 22:38:35 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.62 2007/04/06 22:33:41 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -432,12 +432,6 @@ Indexes:
   <para>
    Use <xref linkend="sql-dropindex" endterm="sql-dropindex-title">
    to remove an index.
-  </para>
-
-  <para>
-   Indexes are not used for <literal>IS NULL</> clauses by default.
-   The best way to use indexes in such cases is to create a partial index
-   using an <literal>IS NULL</> predicate.
   </para>
 
   <para>

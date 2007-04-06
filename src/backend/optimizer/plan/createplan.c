@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.227 2007/02/25 17:44:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.228 2007/04/06 22:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 
 #include <limits.h>
 
+#include "access/skey.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
@@ -1821,6 +1822,7 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 		Oid			stratlefttype;
 		Oid			stratrighttype;
 		bool		recheck;
+		bool		is_null_op = false;
 
 		Assert(IsA(rinfo, RestrictInfo));
 
@@ -1907,6 +1909,17 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 														 &opfamily);
 			clause_op = saop->opno;
 		}
+		else if (IsA(clause, NullTest))
+		{
+			NullTest *nt = (NullTest *) clause;
+
+			Assert(nt->nulltesttype == IS_NULL);
+			nt->arg = (Expr *) fix_indexqual_operand((Node *) nt->arg,
+													 index,
+													 &opfamily);
+			is_null_op = true;
+			clause_op = InvalidOid;		/* keep compiler quiet */
+		}
 		else
 		{
 			elog(ERROR, "unsupported indexqual type: %d",
@@ -1916,16 +1929,27 @@ fix_indexqual_references(List *indexquals, IndexPath *index_path,
 
 		*fixed_indexquals = lappend(*fixed_indexquals, clause);
 
-		/*
-		 * Look up the (possibly commuted) operator in the operator family to
-		 * get its strategy number and the recheck indicator.	This also
-		 * double-checks that we found an operator matching the index.
-		 */
-		get_op_opfamily_properties(clause_op, opfamily,
-								   &stratno,
-								   &stratlefttype,
-								   &stratrighttype,
-								   &recheck);
+		if (is_null_op)
+		{
+			/* IS NULL doesn't have a clause_op */
+			stratno = InvalidStrategy;
+			stratrighttype = InvalidOid;
+			/* We assume it's non-lossy ... might need more work someday */
+			recheck = false;
+		}
+		else
+		{
+			/*
+			 * Look up the (possibly commuted) operator in the operator family
+			 * to get its strategy number and the recheck indicator. This also
+			 * double-checks that we found an operator matching the index.
+			 */
+			get_op_opfamily_properties(clause_op, opfamily,
+									   &stratno,
+									   &stratlefttype,
+									   &stratrighttype,
+									   &recheck);
+		}
 
 		*indexstrategy = lappend_int(*indexstrategy, stratno);
 		*indexsubtype = lappend_oid(*indexsubtype, stratrighttype);

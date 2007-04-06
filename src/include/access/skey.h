@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/skey.h,v 1.34 2007/01/05 22:19:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/skey.h,v 1.35 2007/04/06 22:33:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,12 @@ typedef uint16 StrategyNumber;
  * For an index scan, sk_strategy and sk_subtype must be set correctly for
  * the operator.  When using a ScanKey in a heap scan, these fields are not
  * used and may be set to InvalidStrategy/InvalidOid.
+ *
+ * A ScanKey can also represent a condition "column IS NULL"; this is signaled
+ * by the SK_SEARCHNULL flag bit.  In this case the argument is always NULL,
+ * and the sk_strategy, sk_subtype, and sk_func fields are not used (unless
+ * set by the index AM).  Currently, SK_SEARCHNULL is supported only for
+ * index scans, not heap scans; and not all index AMs support it.
  *
  * Note: in some places, ScanKeys are used as a convenient representation
  * for the invocation of an access method support procedure.  In this case
@@ -111,6 +117,7 @@ typedef ScanKeyData *ScanKey;
 #define SK_ROW_HEADER	0x0004	/* row comparison header (see above) */
 #define SK_ROW_MEMBER	0x0008	/* row comparison member (see above) */
 #define SK_ROW_END		0x0010	/* last row comparison member (see above) */
+#define SK_SEARCHNULL	0x0020	/* scankey represents a "col IS NULL" qual */
 
 
 /*

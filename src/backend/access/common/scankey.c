@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/scankey.c,v 1.29 2007/01/05 22:19:21 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/scankey.c,v 1.30 2007/04/06 22:33:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,8 @@
 /*
  * ScanKeyEntryInitialize
  *		Initializes a scan key entry given all the field values.
- *		The target procedure is specified by OID.
+ *		The target procedure is specified by OID (but can be invalid
+ *		if SK_SEARCHNULL is set).
  *
  * Note: CurrentMemoryContext at call should be as long-lived as the ScanKey
  * itself, because that's what will be used for any subsidiary info attached
@@ -40,7 +41,13 @@ ScanKeyEntryInitialize(ScanKey entry,
 	entry->sk_strategy = strategy;
 	entry->sk_subtype = subtype;
 	entry->sk_argument = argument;
-	fmgr_info(procedure, &entry->sk_func);
+	if (RegProcedureIsValid(procedure))
+		fmgr_info(procedure, &entry->sk_func);
+	else
+	{
+		Assert(flags & SK_SEARCHNULL);
+		MemSet(&entry->sk_func, 0, sizeof(entry->sk_func));
+	}
 }
 
 /*
