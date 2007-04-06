@@ -28,7 +28,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/sha1.c,v 1.16 2005/07/11 15:07:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/sha1.c,v 1.17 2007/04/06 05:36:50 tgl Exp $
  */
 /*
  * FIPS pub 180-1: Secure Hash Algorithm (SHA-1)
@@ -42,11 +42,6 @@
 
 #include "px.h"
 #include "sha1.h"
-
-/* sanity check */
-#if !defined(BYTE_ORDER) || (BYTE_ORDER != LITTLE_ENDIAN && BYTE_ORDER != BIG_ENDIAN)
-#error Define BYTE_ORDER to be equal to either LITTLE_ENDIAN or BIG_ENDIAN
-#endif
 
 /* constant table */
 static uint32 _K[] = {0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6};
@@ -98,7 +93,7 @@ sha1_step(struct sha1_ctxt * ctxt)
 				s;
 	uint32		tmp;
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	struct sha1_ctxt tctxt;
 
 	memmove(&tctxt.m.b8[0], &ctxt->m.b8[0], 64);
@@ -264,7 +259,7 @@ sha1_pad(struct sha1_ctxt * ctxt)
 	memset(&ctxt->m.b8[padstart], 0, padlen - 8);
 	COUNT += (padlen - 8);
 	COUNT %= 64;
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 	PUTPAD(ctxt->c.b8[0]);
 	PUTPAD(ctxt->c.b8[1]);
 	PUTPAD(ctxt->c.b8[2]);
@@ -320,7 +315,7 @@ sha1_result(struct sha1_ctxt * ctxt, uint8 *digest0)
 
 	digest = (uint8 *) digest0;
 	sha1_pad(ctxt);
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
 	memmove(digest, &ctxt->h.b8[0], 20);
 #else
 	digest[0] = ctxt->h.b8[3];

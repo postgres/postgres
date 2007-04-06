@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.44 2007/02/27 23:48:07 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqformat.c,v 1.45 2007/04/06 05:36:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,9 +72,6 @@
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#ifdef HAVE_ENDIAN_H
-#include <endian.h>
-#endif
 
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
@@ -312,20 +309,16 @@ pq_sendfloat8(StringInfo buf, float8 f)
 	swap.h[0] = htonl(swap.h[0]);
 	swap.h[1] = htonl(swap.h[1]);
 
-	/* Have to figure out endianness by testing... */
-	if (((uint32) 1) == htonl((uint32) 1))
-	{
-		/* machine seems to be big-endian, send h[0] first */
-		appendBinaryStringInfo(buf, (char *) &swap.h[0], 4);
-		appendBinaryStringInfo(buf, (char *) &swap.h[1], 4);
-	}
-	else
-	{
-		/* machine seems to be little-endian, send h[1] first */
-		appendBinaryStringInfo(buf, (char *) &swap.h[1], 4);
-		appendBinaryStringInfo(buf, (char *) &swap.h[0], 4);
-	}
+#ifdef WORDS_BIGENDIAN
+	/* machine seems to be big-endian, send h[0] first */
+	appendBinaryStringInfo(buf, (char *) &swap.h[0], 4);
+	appendBinaryStringInfo(buf, (char *) &swap.h[1], 4);
 #else
+	/* machine seems to be little-endian, send h[1] first */
+	appendBinaryStringInfo(buf, (char *) &swap.h[1], 4);
+	appendBinaryStringInfo(buf, (char *) &swap.h[0], 4);
+#endif
+#else  /* INT64 works */
 	union
 	{
 		float8		f;
@@ -549,21 +542,17 @@ pq_getmsgfloat8(StringInfo msg)
 		uint32		h[2];
 	}			swap;
 
-	/* Have to figure out endianness by testing... */
-	if (((uint32) 1) == htonl((uint32) 1))
-	{
-		/* machine seems to be big-endian, receive h[0] first */
-		swap.h[0] = pq_getmsgint(msg, 4);
-		swap.h[1] = pq_getmsgint(msg, 4);
-	}
-	else
-	{
-		/* machine seems to be little-endian, receive h[1] first */
-		swap.h[1] = pq_getmsgint(msg, 4);
-		swap.h[0] = pq_getmsgint(msg, 4);
-	}
-	return swap.f;
+#ifdef WORDS_BIGENDIAN
+	/* machine seems to be big-endian, receive h[0] first */
+	swap.h[0] = pq_getmsgint(msg, 4);
+	swap.h[1] = pq_getmsgint(msg, 4);
 #else
+	/* machine seems to be little-endian, receive h[1] first */
+	swap.h[1] = pq_getmsgint(msg, 4);
+	swap.h[0] = pq_getmsgint(msg, 4);
+#endif
+	return swap.f;
+#else  /* INT64 works */
 	union
 	{
 		float8		f;

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-blowfish.c,v 1.11 2006/03/11 04:38:30 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/crypt-blowfish.c,v 1.12 2007/04/06 05:36:50 tgl Exp $
  *
  * This code comes from John the Ripper password cracker, with reentrant
  * and crypt(3) interfaces added, but optimizations specific to password
@@ -436,19 +436,19 @@ BF_encode(char *dst, const BF_word * src, int size)
 }
 
 static void
-BF_swap(BF_word * x, int count)
+BF_swap(BF_word *x, int count)
 {
-	static int	endianness_check = 1;
-	char	   *is_little_endian = (char *) &endianness_check;
+	/* Swap on little-endian hardware, else do nothing */
+#ifndef WORDS_BIGENDIAN
 	BF_word		tmp;
 
-	if (*is_little_endian)
-		do
-		{
-			tmp = *x;
-			tmp = (tmp << 16) | (tmp >> 16);
-			*x++ = ((tmp & 0x00FF00FF) << 8) | ((tmp >> 8) & 0x00FF00FF);
-		} while (--count);
+	do
+	{
+		tmp = *x;
+		tmp = (tmp << 16) | (tmp >> 16);
+		*x++ = ((tmp & 0x00FF00FF) << 8) | ((tmp >> 8) & 0x00FF00FF);
+	} while (--count);
+#endif
 }
 
 #if BF_SCALE

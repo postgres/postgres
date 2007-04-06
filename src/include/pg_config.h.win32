@@ -107,9 +107,6 @@
 /* Define to 1 if you have the <editline/readline.h> header file. */
 /* #undef HAVE_EDITLINE_READLINE_H */
 
-/* Define to 1 if you have the <endian.h> header file. */
-/* #undef HAVE_ENDIAN_H */
-
 /* Define to 1 if you have the `fcvt' function. */
 #define HAVE_FCVT 1
 

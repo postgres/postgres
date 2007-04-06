@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.73 2007/03/23 08:30:55 mha Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.74 2007/04/06 05:36:51 tgl Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -298,20 +298,6 @@ typedef unsigned short mode_t;
 
 #define isinf(x) ((_fpclass(x) == _FPCLASS_PINF) || (_fpclass(x) == _FPCLASS_NINF))
 #define isnan(x) _isnan(x)
-
-#ifndef			BIG_ENDIAN
-#define			BIG_ENDIAN		4321
-#endif
-#ifndef			LITTLE_ENDIAN
-#define			LITTLE_ENDIAN	1234
-#endif
-#ifndef			PDP_ENDIAN
-#define			PDP_ENDIAN		3412
-#endif
-
-#ifndef BYTE_ORDER
-#define BYTE_ORDER LITTLE_ENDIAN
-#endif
 
 /* Pulled from Makefile.port in mingw */
 #define DLSUFFIX ".dll"

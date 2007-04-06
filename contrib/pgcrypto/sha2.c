@@ -33,7 +33,7 @@
  *
  * $From: sha2.c,v 1.1 2001/11/08 00:01:51 adg Exp adg $
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.8 2006/10/04 00:29:46 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/sha2.c,v 1.9 2007/04/06 05:36:50 tgl Exp $
  */
 
 #include "postgres.h"
@@ -56,40 +56,6 @@
  *
  */
 
-
-/*** SHA-256/384/512 Machine Architecture Definitions *****************/
-/*
- * BYTE_ORDER NOTE:
- *
- * Please make sure that your system defines BYTE_ORDER.  If your
- * architecture is little-endian, make sure it also defines
- * LITTLE_ENDIAN and that the two (BYTE_ORDER and LITTLE_ENDIAN) are
- * equivilent.
- *
- * If your system does not define the above, then you can do so by
- * hand like this:
- *
- *	 #define LITTLE_ENDIAN 1234
- *	 #define BIG_ENDIAN    4321
- *
- * And for little-endian machines, add:
- *
- *	 #define BYTE_ORDER LITTLE_ENDIAN
- *
- * Or for big-endian machines:
- *
- *	 #define BYTE_ORDER BIG_ENDIAN
- *
- * The FreeBSD machine this was written on defines BYTE_ORDER
- * appropriately by including <sys/types.h> (which in turn includes
- * <machine/endian.h> where the appropriate definitions are actually
- * made).
- */
-#if !defined(BYTE_ORDER) || (BYTE_ORDER != LITTLE_ENDIAN && BYTE_ORDER != BIG_ENDIAN)
-#error Define BYTE_ORDER to be equal to either LITTLE_ENDIAN or BIG_ENDIAN
-#endif
-
-
 /*** SHA-256/384/512 Various Length Definitions ***********************/
 /* NOTE: Most of these are in sha2.h */
 #define SHA256_SHORT_BLOCK_LENGTH	(SHA256_BLOCK_LENGTH - 8)
@@ -98,7 +64,7 @@
 
 
 /*** ENDIAN REVERSAL MACROS *******************************************/
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 #define REVERSE32(w,x)	{ \
 	uint32 tmp = (w); \
 	tmp = (tmp >> 16) | (tmp << 16); \
@@ -112,7 +78,7 @@
 	(x) = ((tmp & 0xffff0000ffff0000ULL) >> 16) | \
 		  ((tmp & 0x0000ffff0000ffffULL) << 16); \
 }
-#endif   /* BYTE_ORDER == LITTLE_ENDIAN */
+#endif /* not bigendian */
 
 /*
  * Macro for incrementally adding the unsigned 64-bit integer n to the
@@ -539,7 +505,7 @@ SHA256_Last(SHA256_CTX * context)
 	unsigned int usedspace;
 
 	usedspace = (context->bitcount >> 3) % SHA256_BLOCK_LENGTH;
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	/* Convert FROM host byte order */
 	REVERSE64(context->bitcount, context->bitcount);
 #endif
@@ -589,7 +555,7 @@ SHA256_Final(uint8 digest[], SHA256_CTX * context)
 	{
 		SHA256_Last(context);
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 		{
 			/* Convert TO host byte order */
 			int			j;
@@ -865,7 +831,7 @@ SHA512_Last(SHA512_CTX * context)
 	unsigned int usedspace;
 
 	usedspace = (context->bitcount[0] >> 3) % SHA512_BLOCK_LENGTH;
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 	/* Convert FROM host byte order */
 	REVERSE64(context->bitcount[0], context->bitcount[0]);
 	REVERSE64(context->bitcount[1], context->bitcount[1]);
@@ -918,7 +884,7 @@ SHA512_Final(uint8 digest[], SHA512_CTX * context)
 		SHA512_Last(context);
 
 		/* Save the hash data for output: */
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 		{
 			/* Convert TO host byte order */
 			int			j;
@@ -963,7 +929,7 @@ SHA384_Final(uint8 digest[], SHA384_CTX * context)
 		SHA512_Last((SHA512_CTX *) context);
 
 		/* Save the hash data for output: */
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 		{
 			/* Convert TO host byte order */
 			int			j;
@@ -1006,7 +972,7 @@ SHA224_Final(uint8 digest[], SHA224_CTX * context)
 	{
 		SHA256_Last(context);
 
-#if BYTE_ORDER == LITTLE_ENDIAN
+#ifndef WORDS_BIGENDIAN
 		{
 			/* Convert TO host byte order */
 			int			j;

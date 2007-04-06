@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.15 2007/01/10 18:22:50 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/solaris.h,v 1.16 2007/04/06 05:36:51 tgl Exp $ */
 
 /*
  * Sort this out for all operating systems some time.  The __xxx
@@ -23,28 +23,6 @@
 
 #if defined(__i386__)
 #include <sys/isa_defs.h>
-#endif
-
-#ifndef			BIG_ENDIAN
-#define			BIG_ENDIAN		4321
-#endif
-#ifndef			LITTLE_ENDIAN
-#define			LITTLE_ENDIAN	1234
-#endif
-#ifndef			PDP_ENDIAN
-#define			PDP_ENDIAN		3412
-#endif
-
-#ifndef			BYTE_ORDER
-#ifdef __sparc__
-#define		  BYTE_ORDER	  BIG_ENDIAN
-#endif
-#ifdef __i386__
-#define		 BYTE_ORDER		 LITTLE_ENDIAN
-#endif
-#if defined(__amd64___) || defined(__x86_64__)
-#define		 BYTE_ORDER		 LITTLE_ENDIAN
-#endif
 #endif
 
 /*
