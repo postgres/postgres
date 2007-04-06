@@ -166,7 +166,7 @@
  *
  * Copyright (c) 1999-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.25 2007/02/27 23:48:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.26 2007/04/06 04:21:43 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -618,7 +618,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 	/*
 	 * Success - need only fill in the actual length of the compressed datum.
 	 */
-	SET_VARSIZE(dest, result_size + sizeof(PGLZ_Header));
+	SET_VARSIZE_COMPRESSED(dest, result_size + sizeof(PGLZ_Header));
 
 	return true;
 }

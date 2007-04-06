@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.181 2007/04/02 03:49:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.182 2007/04/06 04:21:43 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -130,8 +130,10 @@ CATALOG(pg_type,1247) BKI_BOOTSTRAP
 	 * 'i' = INT alignment (4 bytes on most machines).
 	 * 'd' = DOUBLE alignment (8 bytes on many machines, but by no means all).
 	 *
-	 * See include/utils/memutils.h for the macros that compute these
-	 * alignment requirements.
+	 * See include/access/tupmacs.h for the macros that compute these
+	 * alignment requirements.  Note also that we allow the nominal alignment
+	 * to be violated when storing "packed" varlenas; the TOAST mechanism
+	 * takes care of hiding that from most code.
 	 *
 	 * NOTE: for types used in system tables, it is critical that the
 	 * size and alignment defined in pg_type agree with the way that the
@@ -398,10 +400,10 @@ DATA(insert OID = 791 (  _money    PGNSP PGUID	-1 f b t \054 0  790 array_in arr
 DATA(insert OID = 829 ( macaddr    PGNSP PGUID	6 f b t \054 0 0 macaddr_in macaddr_out macaddr_recv macaddr_send - - - i p f 0 -1 0 _null_ _null_ ));
 DESCR("XX:XX:XX:XX:XX:XX, MAC address");
 #define MACADDROID 829
-DATA(insert OID = 869 ( inet	   PGNSP PGUID	-1 f b t \054 0 0 inet_in inet_out inet_recv inet_send - - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 869 ( inet	   PGNSP PGUID	-1 f b t \054 0 0 inet_in inet_out inet_recv inet_send - - - i m f 0 -1 0 _null_ _null_ ));
 DESCR("IP address/netmask, host address, netmask optional");
 #define INETOID 869
-DATA(insert OID = 650 ( cidr	   PGNSP PGUID	-1 f b t \054 0 0 cidr_in cidr_out cidr_recv cidr_send - - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 650 ( cidr	   PGNSP PGUID	-1 f b t \054 0 0 cidr_in cidr_out cidr_recv cidr_send - - - i m f 0 -1 0 _null_ _null_ ));
 DESCR("network IP address/netmask, network address");
 #define CIDROID 650
 

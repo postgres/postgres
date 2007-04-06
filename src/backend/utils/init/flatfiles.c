@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.24 2007/01/05 22:19:43 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.25 2007/04/06 04:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,7 +467,7 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 				auth_info[curr_role].rolpassword = DatumGetCString(DirectFunctionCall1(textout, datum));
 
 			/* assume passwd has attlen -1 */
-			off = att_addlength(off, -1, tp + off);
+			off = att_addlength_pointer(off, -1, tp + off);
 		}
 
 		if (HeapTupleHasNulls(tuple) &&
@@ -482,7 +482,7 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 			 * rolvaliduntil is timestamptz, which we assume is double
 			 * alignment and pass-by-reference.
 			 */
-			off = att_align(off, 'd');
+			off = att_align_nominal(off, 'd');
 			datum = PointerGetDatum(tp + off);
 			auth_info[curr_role].rolvaliduntil = DatumGetCString(DirectFunctionCall1(timestamptz_out, datum));
 		}

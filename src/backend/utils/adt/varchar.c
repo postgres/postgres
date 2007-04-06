@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.122 2007/02/27 23:48:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.123 2007/04/06 04:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 
 #include "access/hash.h"
+#include "access/tuptoaster.h"
 #include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
@@ -206,14 +207,14 @@ bpcharin(PG_FUNCTION_ARGS)
 Datum
 bpcharout(PG_FUNCTION_ARGS)
 {
-	BpChar	   *s = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *s = PG_GETARG_BPCHAR_PP(0);
 	char	   *result;
 	int			len;
 
 	/* copy and add null term */
-	len = VARSIZE(s) - VARHDRSZ;
+	len = VARSIZE_ANY_EXHDR(s);
 	result = (char *) palloc(len + 1);
-	memcpy(result, VARDATA(s), len);
+	memcpy(result, VARDATA_ANY(s), len);
 	result[len] = '\0';
 
 	PG_RETURN_CSTRING(result);
@@ -267,7 +268,7 @@ bpcharsend(PG_FUNCTION_ARGS)
 Datum
 bpchar(PG_FUNCTION_ARGS)
 {
-	BpChar	   *source = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
 	int32		maxlen = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	BpChar	   *result;
@@ -282,9 +283,12 @@ bpchar(PG_FUNCTION_ARGS)
 	if (maxlen < (int32) VARHDRSZ)
 		PG_RETURN_BPCHAR_P(source);
 
-	len = VARSIZE(source);
+	maxlen -= VARHDRSZ;
 
-	charlen = pg_mbstrlen_with_len(VARDATA(source), len - VARHDRSZ) + VARHDRSZ;
+	len = VARSIZE_ANY_EXHDR(source);
+	s = VARDATA_ANY(source);
+
+	charlen = pg_mbstrlen_with_len(s, len);
 
 	/* No work if supplied data matches typmod already */
 	if (charlen == maxlen)
@@ -295,23 +299,22 @@ bpchar(PG_FUNCTION_ARGS)
 		/* Verify that extra characters are spaces, and clip them off */
 		size_t		maxmblen;
 
-		maxmblen = pg_mbcharcliplen(VARDATA(source), len - VARHDRSZ,
-									maxlen - VARHDRSZ) + VARHDRSZ;
+		maxmblen = pg_mbcharcliplen(s, len, maxlen);
 
 		if (!isExplicit)
 		{
-			for (i = maxmblen - VARHDRSZ; i < len - VARHDRSZ; i++)
-				if (*(VARDATA(source) + i) != ' ')
+			for (i = maxmblen; i < len; i++)
+				if (s[i] != ' ')
 					ereport(ERROR,
 							(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
 							 errmsg("value too long for type character(%d)",
-									maxlen - VARHDRSZ)));
+									maxlen)));
 		}
 
 		len = maxmblen;
 
 		/*
-		 * XXX: at this point, maxlen is the necessary byte length+VARHDRSZ,
+		 * At this point, maxlen is the necessary byte length,
 		 * not the number of CHARACTERS!
 		 */
 		maxlen = len;
@@ -319,23 +322,23 @@ bpchar(PG_FUNCTION_ARGS)
 	else
 	{
 		/*
-		 * XXX: at this point, maxlen is the necessary byte length+VARHDRSZ,
+		 * At this point, maxlen is the necessary byte length,
 		 * not the number of CHARACTERS!
 		 */
 		maxlen = len + (maxlen - charlen);
 	}
 
-	s = VARDATA(source);
+	Assert(maxlen >= len);
 
-	result = palloc(maxlen);
-	SET_VARSIZE(result, maxlen);
+	result = palloc(maxlen+VARHDRSZ);
+	SET_VARSIZE(result, maxlen+VARHDRSZ);
 	r = VARDATA(result);
 
-	memcpy(r, s, len - VARHDRSZ);
+	memcpy(r, s, len);
 
 	/* blank pad the string if necessary */
 	if (maxlen > len)
-		memset(r + len - VARHDRSZ, ' ', maxlen - len);
+		memset(r + len, ' ', maxlen - len);
 
 	PG_RETURN_BPCHAR_P(result);
 }
@@ -365,11 +368,13 @@ char_bpchar(PG_FUNCTION_ARGS)
 Datum
 bpchar_name(PG_FUNCTION_ARGS)
 {
-	BpChar	   *s = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *s = PG_GETARG_BPCHAR_PP(0);
+	char       *s_data;
 	Name		result;
 	int			len;
 
-	len = VARSIZE(s) - VARHDRSZ;
+	len = VARSIZE_ANY_EXHDR(s);
+	s_data = VARDATA_ANY(s);
 
 	/* Truncate to max length for a Name */
 	if (len >= NAMEDATALEN)
@@ -378,13 +383,13 @@ bpchar_name(PG_FUNCTION_ARGS)
 	/* Remove trailing blanks */
 	while (len > 0)
 	{
-		if (*(VARDATA(s) + len - 1) != ' ')
+		if (s_data[len - 1] != ' ')
 			break;
 		len--;
 	}
 
 	result = (NameData *) palloc(NAMEDATALEN);
-	memcpy(NameStr(*result), VARDATA(s), len);
+	memcpy(NameStr(*result), s_data, len);
 
 	/* Now null pad to full length... */
 	while (len < NAMEDATALEN)
@@ -509,14 +514,14 @@ varcharin(PG_FUNCTION_ARGS)
 Datum
 varcharout(PG_FUNCTION_ARGS)
 {
-	VarChar    *s = PG_GETARG_VARCHAR_P(0);
+	VarChar    *s = PG_GETARG_VARCHAR_PP(0);
 	char	   *result;
 	int32		len;
 
 	/* copy and add null term */
-	len = VARSIZE(s) - VARHDRSZ;
+	len = VARSIZE_ANY_EXHDR(s);
 	result = palloc(len + 1);
-	memcpy(result, VARDATA(s), len);
+	memcpy(result, VARDATA_ANY(s), len);
 	result[len] = '\0';
 
 	PG_RETURN_CSTRING(result);
@@ -570,39 +575,41 @@ varcharsend(PG_FUNCTION_ARGS)
 Datum
 varchar(PG_FUNCTION_ARGS)
 {
-	VarChar    *source = PG_GETARG_VARCHAR_P(0);
-	int32		maxlen = PG_GETARG_INT32(1);
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
+	int32		typmod = PG_GETARG_INT32(1);
 	bool		isExplicit = PG_GETARG_BOOL(2);
 	VarChar    *result;
-	int32		len;
+	int32		len, maxlen;
 	size_t		maxmblen;
 	int			i;
+	char 	   *s_data;
 
-	len = VARSIZE(source);
+	len = VARSIZE_ANY_EXHDR(source);
+	s_data = VARDATA_ANY(source);
+	maxlen = typmod - VARHDRSZ;
+
 	/* No work if typmod is invalid or supplied data fits it already */
-	if (maxlen < (int32) VARHDRSZ || len <= maxlen)
+	if (maxlen < 0 || len <= maxlen)
 		PG_RETURN_VARCHAR_P(source);
 
 	/* only reach here if string is too long... */
 
 	/* truncate multibyte string preserving multibyte boundary */
-	maxmblen = pg_mbcharcliplen(VARDATA(source), len - VARHDRSZ,
-								maxlen - VARHDRSZ);
+	maxmblen = pg_mbcharcliplen(s_data, len, maxlen);
 
 	if (!isExplicit)
 	{
-		for (i = maxmblen; i < len - VARHDRSZ; i++)
-			if (*(VARDATA(source) + i) != ' ')
+		for (i = maxmblen; i < len; i++)
+			if (s_data[i] != ' ')
 				ereport(ERROR,
 						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
-					  errmsg("value too long for type character varying(%d)",
-							 maxlen - VARHDRSZ)));
+						 errmsg("value too long for type character varying(%d)",
+								maxlen)));
 	}
 
-	len = maxmblen + VARHDRSZ;
-	result = palloc(len);
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), VARDATA(source), len - VARHDRSZ);
+	result = palloc(maxmblen + VARHDRSZ);
+	SET_VARSIZE(result, maxmblen + VARHDRSZ);
+	memcpy(VARDATA(result), s_data, maxmblen);
 
 	PG_RETURN_VARCHAR_P(result);
 }
@@ -632,11 +639,11 @@ varchartypmodout(PG_FUNCTION_ARGS)
 static int
 bcTruelen(BpChar *arg)
 {
-	char	   *s = VARDATA(arg);
+	char	   *s = VARDATA_ANY(arg);
 	int			i;
 	int			len;
 
-	len = VARSIZE(arg) - VARHDRSZ;
+	len = VARSIZE_ANY_EXHDR(arg);
 	for (i = len - 1; i >= 0; i--)
 	{
 		if (s[i] != ' ')
@@ -648,7 +655,7 @@ bcTruelen(BpChar *arg)
 Datum
 bpcharlen(PG_FUNCTION_ARGS)
 {
-	BpChar	   *arg = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *arg = PG_GETARG_BPCHAR_PP(0);
 	int			len;
 
 	/* get number of bytes, ignoring trailing spaces */
@@ -656,7 +663,7 @@ bpcharlen(PG_FUNCTION_ARGS)
 
 	/* in multibyte encoding, convert to number of characters */
 	if (pg_database_encoding_max_length() != 1)
-		len = pg_mbstrlen_with_len(VARDATA(arg), len);
+		len = pg_mbstrlen_with_len(VARDATA_ANY(arg), len);
 
 	PG_RETURN_INT32(len);
 }
@@ -664,9 +671,10 @@ bpcharlen(PG_FUNCTION_ARGS)
 Datum
 bpcharoctetlen(PG_FUNCTION_ARGS)
 {
-	BpChar	   *arg = PG_GETARG_BPCHAR_P(0);
+	Datum	   arg = PG_GETARG_DATUM(0);
 
-	PG_RETURN_INT32(VARSIZE(arg) - VARHDRSZ);
+	/* We need not detoast the input at all */
+	PG_RETURN_INT32(toast_raw_datum_size(arg) - VARHDRSZ);
 }
 
 
@@ -681,8 +689,8 @@ bpcharoctetlen(PG_FUNCTION_ARGS)
 Datum
 bpchareq(PG_FUNCTION_ARGS)
 {
-	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
-	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
 	bool		result;
@@ -697,7 +705,7 @@ bpchareq(PG_FUNCTION_ARGS)
 	if (len1 != len2)
 		result = false;
 	else
-		result = (strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0);
+		result = (strncmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), len1) == 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -708,8 +716,8 @@ bpchareq(PG_FUNCTION_ARGS)
 Datum
 bpcharne(PG_FUNCTION_ARGS)
 {
-	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
-	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
 	bool		result;
@@ -724,7 +732,7 @@ bpcharne(PG_FUNCTION_ARGS)
 	if (len1 != len2)
 		result = true;
 	else
-		result = (strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0);
+		result = (strncmp(VARDATA_ANY(arg1), VARDATA_ANY(arg2), len1) != 0);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -735,8 +743,8 @@ bpcharne(PG_FUNCTION_ARGS)
 Datum
 bpcharlt(PG_FUNCTION_ARGS)
 {
-	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
-	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -744,7 +752,7 @@ bpcharlt(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -755,8 +763,8 @@ bpcharlt(PG_FUNCTION_ARGS)
 Datum
 bpcharle(PG_FUNCTION_ARGS)
 {
-	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
-	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -764,7 +772,7 @@ bpcharle(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -775,8 +783,8 @@ bpcharle(PG_FUNCTION_ARGS)
 Datum
 bpchargt(PG_FUNCTION_ARGS)
 {
-	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
-	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -784,7 +792,7 @@ bpchargt(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -795,8 +803,8 @@ bpchargt(PG_FUNCTION_ARGS)
 Datum
 bpcharge(PG_FUNCTION_ARGS)
 {
-	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
-	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -804,7 +812,7 @@ bpcharge(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -815,8 +823,8 @@ bpcharge(PG_FUNCTION_ARGS)
 Datum
 bpcharcmp(PG_FUNCTION_ARGS)
 {
-	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
-	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -824,7 +832,7 @@ bpcharcmp(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
 
 	PG_FREE_IF_COPY(arg1, 0);
 	PG_FREE_IF_COPY(arg2, 1);
@@ -835,8 +843,8 @@ bpcharcmp(PG_FUNCTION_ARGS)
 Datum
 bpchar_larger(PG_FUNCTION_ARGS)
 {
-	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
-	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -844,7 +852,7 @@ bpchar_larger(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
 
 	PG_RETURN_BPCHAR_P((cmp >= 0) ? arg1 : arg2);
 }
@@ -852,8 +860,8 @@ bpchar_larger(PG_FUNCTION_ARGS)
 Datum
 bpchar_smaller(PG_FUNCTION_ARGS)
 {
-	BpChar	   *arg1 = PG_GETARG_BPCHAR_P(0);
-	BpChar	   *arg2 = PG_GETARG_BPCHAR_P(1);
+	BpChar	   *arg1 = PG_GETARG_BPCHAR_PP(0);
+	BpChar	   *arg2 = PG_GETARG_BPCHAR_PP(1);
 	int			len1,
 				len2;
 	int			cmp;
@@ -861,7 +869,7 @@ bpchar_smaller(PG_FUNCTION_ARGS)
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
-	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
+	cmp = varstr_cmp(VARDATA_ANY(arg1), len1, VARDATA_ANY(arg2), len2);
 
 	PG_RETURN_BPCHAR_P((cmp <= 0) ? arg1 : arg2);
 }
@@ -878,12 +886,12 @@ bpchar_smaller(PG_FUNCTION_ARGS)
 Datum
 hashbpchar(PG_FUNCTION_ARGS)
 {
-	BpChar	   *key = PG_GETARG_BPCHAR_P(0);
+	BpChar	   *key = PG_GETARG_BPCHAR_PP(0);
 	char	   *keydata;
 	int			keylen;
 	Datum		result;
 
-	keydata = VARDATA(key);
+	keydata = VARDATA_ANY(key);
 	keylen = bcTruelen(key);
 
 	result = hash_any((unsigned char *) keydata, keylen);

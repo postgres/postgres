@@ -62,9 +62,7 @@ init_cfg(Oid id, TSCfgInfo * cfg)
 		ts_error(ERROR, "SPI_execp return %d", stat);
 	if (SPI_processed > 0)
 	{
-		prsname = (text *) DatumGetPointer(
-										   SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull)
-			);
+		prsname = DatumGetTextP(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
 		oldcontext = MemoryContextSwitchTo(TopMemoryContext);
 		prsname = ptextdup(prsname);
 		MemoryContextSwitchTo(oldcontext);

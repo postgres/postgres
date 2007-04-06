@@ -97,7 +97,7 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{							/* trgm */
 		TRGM	   *res;
-		text	   *val = (text *) DatumGetPointer(PG_DETOAST_DATUM(entry->key));
+		text	   *val = DatumGetTextP(entry->key);
 
 		res = generate_trgm(VARDATA(val), VARSIZE(val) - VARHDRSZ);
 		retval = (GISTENTRY *) palloc(sizeof(GISTENTRY));
@@ -134,7 +134,25 @@ gtrgm_compress(PG_FUNCTION_ARGS)
 Datum
 gtrgm_decompress(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_DATUM(PG_GETARG_DATUM(0));
+	GISTENTRY  *entry = (GISTENTRY *) PG_GETARG_POINTER(0);
+	GISTENTRY  *retval;
+	text *key;
+
+	key = DatumGetTextP(entry->key);
+
+	if (key != (text *) DatumGetPointer(entry->key))
+	{
+		/* need to pass back the decompressed item */
+		retval = palloc(sizeof(GISTENTRY));
+		gistentryinit(*retval, PointerGetDatum(key),
+					  entry->rel, entry->page, entry->offset, entry->leafkey);
+		PG_RETURN_POINTER(retval);
+	}
+	else
+	{
+		/* we can return the entry as-is */
+		PG_RETURN_POINTER(entry);
+	}
 }
 
 Datum

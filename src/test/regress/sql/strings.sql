@@ -329,6 +329,19 @@ SELECT substr(f1, 99995, 10) from toasttest;
 
 DROP TABLE toasttest;
 
+-- test internally compressing datums
+
+-- this tests compressing a datum to a very small size which exercises a
+-- corner case in packed-varlena handling: even though small, the compressed
+-- datum must be given a 4-byte header because there are no bits to indicate
+-- compression in a 1-byte header
+
+CREATE TABLE toasttest (c char(4096));
+INSERT INTO toasttest VALUES('x');
+SELECT length(c), c::text FROM toasttest;
+SELECT c FROM toasttest;
+DROP TABLE toasttest;
+
 --
 -- test length
 --

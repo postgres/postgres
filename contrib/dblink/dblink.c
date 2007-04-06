@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.62 2007/02/07 00:52:35 petere Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.63 2007/04/06 04:21:41 tgl Exp $
  * Copyright (c) 2001-2007, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -1752,8 +1752,8 @@ get_text_array_contents(ArrayType *array, int *numitems)
 		{
 			values[i] = DatumGetCString(DirectFunctionCall1(textout,
 													  PointerGetDatum(ptr)));
-			ptr = att_addlength(ptr, typlen, PointerGetDatum(ptr));
-			ptr = (char *) att_align(ptr, typalign);
+			ptr = att_addlength_pointer(ptr, typlen, ptr);
+			ptr = (char *) att_align_nominal(ptr, typalign);
 		}
 
 		/* advance bitmap pointer if any */

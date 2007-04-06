@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.73 2007/04/03 04:14:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.74 2007/04/06 04:21:41 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -42,25 +42,39 @@
 
 #undef TOAST_DEBUG
 
+/*
+ * Testing whether an externally-stored value is compressed now requires
+ * comparing extsize (the actual length of the external data) to rawsize
+ * (the original uncompressed datum's size).  The latter includes VARHDRSZ
+ * overhead, the former doesn't.  We never use compression unless it actually
+ * saves space, so we expect either equality or less-than.
+ */
+#define VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer) \
+	((toast_pointer).va_extsize < (toast_pointer).va_rawsize - VARHDRSZ)
+
 static void toast_delete_datum(Relation rel, Datum value);
 static Datum toast_save_datum(Relation rel, Datum value,
 							  bool use_wal, bool use_fsm);
-static varattrib *toast_fetch_datum(varattrib *attr);
-static varattrib *toast_fetch_datum_slice(varattrib *attr,
+static struct varlena *toast_fetch_datum(struct varlena *attr);
+static struct varlena *toast_fetch_datum_slice(struct varlena *attr,
 						int32 sliceoffset, int32 length);
 
 
 /* ----------
  * heap_tuple_fetch_attr -
  *
- *	Public entry point to get back a toasted value
+ *	Public entry point to get back a toasted value from
  *	external storage (possibly still in compressed format).
- * ----------
+ *
+ * This will return a datum that contains all the data internally, ie, not
+ * relying on external storage, but it can still be compressed or have a short
+ * header.
+ ----------
  */
-varattrib *
-heap_tuple_fetch_attr(varattrib *attr)
+struct varlena *
+heap_tuple_fetch_attr(struct varlena *attr)
 {
-	varattrib  *result;
+	struct varlena  *result;
 
 	if (VARATT_IS_EXTERNAL(attr))
 	{
@@ -88,34 +102,24 @@ heap_tuple_fetch_attr(varattrib *attr)
  *	or external storage.
  * ----------
  */
-varattrib *
-heap_tuple_untoast_attr(varattrib *attr)
+struct varlena *
+heap_tuple_untoast_attr(struct varlena *attr)
 {
-	varattrib  *result;
-
 	if (VARATT_IS_EXTERNAL(attr))
 	{
+		/*
+		 * This is an externally stored datum --- fetch it back from there
+		 */
+		attr = toast_fetch_datum(attr);
+		/* If it's compressed, decompress it */
 		if (VARATT_IS_COMPRESSED(attr))
 		{
-			/* ----------
-			 * This is an external stored compressed value
-			 * Fetch it from the toast heap and decompress.
-			 * ----------
-			 */
-			PGLZ_Header *tmp;
+			PGLZ_Header *tmp = (PGLZ_Header *) attr;
 
-			tmp = (PGLZ_Header *) toast_fetch_datum(attr);
-			result = (varattrib *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-			SET_VARSIZE(result, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-			pglz_decompress(tmp, VARDATA(result));
+			attr = (struct varlena *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+			SET_VARSIZE(attr, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+			pglz_decompress(tmp, VARDATA(attr));
 			pfree(tmp);
-		}
-		else
-		{
-			/*
-			 * This is an external stored plain value
-			 */
-			result = toast_fetch_datum(attr);
 		}
 	}
 	else if (VARATT_IS_COMPRESSED(attr))
@@ -125,18 +129,26 @@ heap_tuple_untoast_attr(varattrib *attr)
 		 */
 		PGLZ_Header *tmp = (PGLZ_Header *) attr;
 
-		result = (varattrib *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-		SET_VARSIZE(result, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-		pglz_decompress(tmp, VARDATA(result));
+		attr = (struct varlena *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+		SET_VARSIZE(attr, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+		pglz_decompress(tmp, VARDATA(attr));
 	}
-	else
-
+	else if (VARATT_IS_SHORT(attr))
+	{
 		/*
-		 * This is a plain value inside of the main tuple - why am I called?
+		 * This is a short-header varlena --- convert to 4-byte header format
 		 */
-		return attr;
+		Size	data_size = VARSIZE_SHORT(attr) - VARHDRSZ_SHORT;
+		Size	new_size = data_size + VARHDRSZ;
+		struct varlena *new_attr;
 
-	return result;
+		new_attr = (struct varlena *) palloc(new_size);
+		SET_VARSIZE(new_attr, new_size);
+		memcpy(VARDATA(new_attr), VARDATA_SHORT(attr), data_size);
+		attr = new_attr;
+	}
+
+	return attr;
 }
 
 
@@ -147,44 +159,57 @@ heap_tuple_untoast_attr(varattrib *attr)
  *		from compression or external storage.
  * ----------
  */
-varattrib *
-heap_tuple_untoast_attr_slice(varattrib *attr, int32 sliceoffset, int32 slicelength)
+struct varlena *
+heap_tuple_untoast_attr_slice(struct varlena *attr,
+							  int32 sliceoffset, int32 slicelength)
 {
-	varattrib  *preslice;
-	varattrib  *result;
+	struct varlena *preslice;
+	struct varlena *result;
+	char       *attrdata;
 	int32		attrsize;
 
-	if (VARATT_IS_COMPRESSED(attr))
+	if (VARATT_IS_EXTERNAL(attr))
 	{
-		PGLZ_Header *tmp;
+		struct varatt_external toast_pointer;
 
-		if (VARATT_IS_EXTERNAL(attr))
-			tmp = (PGLZ_Header *) toast_fetch_datum(attr);
-		else
-			tmp = (PGLZ_Header *) attr;		/* compressed in main tuple */
+		memcpy(&toast_pointer, VARDATA_SHORT(attr), sizeof(toast_pointer));
 
-		preslice = (varattrib *) palloc(PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
-		SET_VARSIZE(preslice, PGLZ_RAW_SIZE(tmp) + VARHDRSZ);
+		/* fast path for non-compressed external datums */
+		if (!VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
+			return toast_fetch_datum_slice(attr, sliceoffset, slicelength);
+
+		/* fetch it back (compressed marker will get set automatically) */
+		preslice = toast_fetch_datum(attr);
+	}
+	else
+		preslice = attr;
+
+	if (VARATT_IS_COMPRESSED(preslice))
+	{
+		PGLZ_Header *tmp = (PGLZ_Header *) preslice;
+		Size size = PGLZ_RAW_SIZE(tmp) + VARHDRSZ;
+
+		preslice = (struct varlena *) palloc(size);
+		SET_VARSIZE(preslice, size);
 		pglz_decompress(tmp, VARDATA(preslice));
 
 		if (tmp != (PGLZ_Header *) attr)
 			pfree(tmp);
 	}
+
+	if (VARATT_IS_SHORT(preslice))
+	{
+		attrdata = VARDATA_SHORT(preslice);
+		attrsize = VARSIZE_SHORT(preslice) - VARHDRSZ_SHORT;
+	}
 	else
 	{
-		/* Plain value */
-		if (VARATT_IS_EXTERNAL(attr))
-		{
-			/* fast path */
-			return toast_fetch_datum_slice(attr, sliceoffset, slicelength);
-		}
-		else
-			preslice = attr;
+		attrdata = VARDATA(preslice);
+		attrsize = VARSIZE(preslice) - VARHDRSZ;
 	}
 
 	/* slicing of datum for compressed cases and plain value */
 
-	attrsize = VARSIZE(preslice) - VARHDRSZ;
 	if (sliceoffset >= attrsize)
 	{
 		sliceoffset = 0;
@@ -194,10 +219,10 @@ heap_tuple_untoast_attr_slice(varattrib *attr, int32 sliceoffset, int32 slicelen
 	if (((sliceoffset + slicelength) > attrsize) || slicelength < 0)
 		slicelength = attrsize - sliceoffset;
 
-	result = (varattrib *) palloc(slicelength + VARHDRSZ);
+	result = (struct varlena *) palloc(slicelength + VARHDRSZ);
 	SET_VARSIZE(result, slicelength + VARHDRSZ);
 
-	memcpy(VARDATA(result), VARDATA(preslice) + sliceoffset, slicelength);
+	memcpy(VARDATA(result), attrdata + sliceoffset, slicelength);
 
 	if (preslice != attr)
 		pfree(preslice);
@@ -210,29 +235,35 @@ heap_tuple_untoast_attr_slice(varattrib *attr, int32 sliceoffset, int32 slicelen
  * toast_raw_datum_size -
  *
  *	Return the raw (detoasted) size of a varlena datum
+ *	(including the VARHDRSZ header)
  * ----------
  */
 Size
 toast_raw_datum_size(Datum value)
 {
-	varattrib  *attr = (varattrib *) DatumGetPointer(value);
+	struct varlena *attr = (struct varlena *) DatumGetPointer(value);
 	Size		result;
 
-	if (VARATT_IS_COMPRESSED(attr))
+	if (VARATT_IS_EXTERNAL(attr))
 	{
-		/*
-		 * va_rawsize shows the original data size, whether the datum is
-		 * external or not.
-		 */
-		result = attr->va_content.va_compressed.va_rawsize + VARHDRSZ;
+		/* va_rawsize is the size of the original datum -- including header */
+		struct varatt_external toast_pointer;
+
+		memcpy(&toast_pointer, VARDATA_SHORT(attr), sizeof(toast_pointer));
+		result = toast_pointer.va_rawsize;
 	}
-	else if (VARATT_IS_EXTERNAL(attr))
+	else if (VARATT_IS_COMPRESSED(attr))
+	{
+		/* here, va_rawsize is just the payload size */
+		result = VARRAWSIZE_4B_C(attr) + VARHDRSZ;
+	}
+	else if (VARATT_IS_SHORT(attr))
 	{
 		/*
-		 * an uncompressed external attribute has rawsize including the header
-		 * (not too consistent!)
+		 * we have to normalize the header length to VARHDRSZ or else the
+		 * callers of this function will be confused.
 		 */
-		result = attr->va_content.va_external.va_rawsize;
+		result = VARSIZE_SHORT(attr) - VARHDRSZ_SHORT + VARHDRSZ;
 	}
 	else
 	{
@@ -251,7 +282,7 @@ toast_raw_datum_size(Datum value)
 Size
 toast_datum_size(Datum value)
 {
-	varattrib  *attr = (varattrib *) DatumGetPointer(value);
+	struct varlena  *attr = (struct varlena *) DatumGetPointer(value);
 	Size		result;
 
 	if (VARATT_IS_EXTERNAL(attr))
@@ -261,7 +292,14 @@ toast_datum_size(Datum value)
 		 * compressed or not.  We do not count the size of the toast pointer
 		 * ... should we?
 		 */
-		result = attr->va_content.va_external.va_extsize;
+		struct varatt_external toast_pointer;
+
+		memcpy(&toast_pointer, VARDATA_SHORT(attr), sizeof(toast_pointer));
+		result = toast_pointer.va_extsize;
+	}
+	else if (VARATT_IS_SHORT(attr))
+	{
+		result = VARSIZE_SHORT(attr);
 	}
 	else
 	{
@@ -413,16 +451,16 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 
 	for (i = 0; i < numAttrs; i++)
 	{
-		varattrib  *old_value;
-		varattrib  *new_value;
+		struct varlena  *old_value;
+		struct varlena  *new_value;
 
 		if (oldtup != NULL)
 		{
 			/*
 			 * For UPDATE get the old and new values of this attribute
 			 */
-			old_value = (varattrib *) DatumGetPointer(toast_oldvalues[i]);
-			new_value = (varattrib *) DatumGetPointer(toast_values[i]);
+			old_value = (struct varlena *) DatumGetPointer(toast_oldvalues[i]);
+			new_value = (struct varlena *) DatumGetPointer(toast_values[i]);
 
 			/*
 			 * If the old value is an external stored one, check if it has
@@ -432,10 +470,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 				VARATT_IS_EXTERNAL(old_value))
 			{
 				if (toast_isnull[i] || !VARATT_IS_EXTERNAL(new_value) ||
-					old_value->va_content.va_external.va_valueid !=
-					new_value->va_content.va_external.va_valueid ||
-					old_value->va_content.va_external.va_toastrelid !=
-					new_value->va_content.va_external.va_toastrelid)
+					memcmp(VARDATA_SHORT(old_value),
+						   VARDATA_SHORT(new_value),
+						   sizeof(struct varatt_external)) != 0)
 				{
 					/*
 					 * The old external stored value isn't needed any more
@@ -452,7 +489,6 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 					 * tuple.
 					 */
 					toast_action[i] = 'p';
-					toast_sizes[i] = VARSIZE(toast_values[i]);
 					continue;
 				}
 			}
@@ -462,7 +498,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			/*
 			 * For INSERT simply get the new value
 			 */
-			new_value = (varattrib *) DatumGetPointer(toast_values[i]);
+			new_value = (struct varlena *) DatumGetPointer(toast_values[i]);
 		}
 
 		/*
@@ -503,7 +539,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			/*
 			 * Remember the size of this attribute
 			 */
-			toast_sizes[i] = VARSIZE(new_value);
+			toast_sizes[i] = VARSIZE_ANY(new_value);
 		}
 		else
 		{
@@ -542,7 +578,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 								  toast_values, toast_isnull) > maxDataLen)
 	{
 		int			biggest_attno = -1;
-		int32		biggest_size = MAXALIGN(sizeof(varattrib));
+		int32		biggest_size = MAXALIGN(sizeof(varattrib_pointer));
 		Datum		old_value;
 		Datum		new_value;
 
@@ -553,7 +589,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		{
 			if (toast_action[i] != ' ')
 				continue;
-			if (VARATT_IS_EXTENDED(toast_values[i]))
+			if (VARATT_IS_EXTERNAL(toast_values[i]))
+				continue;
+			if (VARATT_IS_COMPRESSED(toast_values[i]))
 				continue;
 			if (att[i]->attstorage != 'x')
 				continue;
@@ -603,7 +641,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno = -1;
-		int32		biggest_size = MAXALIGN(sizeof(varattrib));
+		int32		biggest_size = MAXALIGN(sizeof(varattrib_pointer));
 		Datum		old_value;
 
 		/*------
@@ -639,9 +677,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 										   use_wal, use_fsm);
 		if (toast_free[i])
 			pfree(DatumGetPointer(old_value));
-
 		toast_free[i] = true;
-		toast_sizes[i] = VARSIZE(toast_values[i]);
 
 		need_change = true;
 		need_free = true;
@@ -655,7 +691,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 								  toast_values, toast_isnull) > maxDataLen)
 	{
 		int			biggest_attno = -1;
-		int32		biggest_size = MAXALIGN(sizeof(varattrib));
+		int32		biggest_size = MAXALIGN(sizeof(varattrib_pointer));
 		Datum		old_value;
 		Datum		new_value;
 
@@ -666,7 +702,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		{
 			if (toast_action[i] != ' ')
 				continue;
-			if (VARATT_IS_EXTENDED(toast_values[i]))
+			if (VARATT_IS_EXTERNAL(toast_values[i]))
+				continue;
+			if (VARATT_IS_COMPRESSED(toast_values[i]))
 				continue;
 			if (att[i]->attstorage != 'm')
 				continue;
@@ -715,7 +753,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno = -1;
-		int32		biggest_size = MAXALIGN(sizeof(varattrib));
+		int32		biggest_size = MAXALIGN(sizeof(varattrib_pointer));
 		Datum		old_value;
 
 		/*--------
@@ -768,6 +806,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		HeapTupleHeader olddata = newtup->t_data;
 		HeapTupleHeader new_data;
 		int32		new_len;
+		int32		new_data_len;
 
 		/*
 		 * Calculate the new size of the tuple.  Header size should not
@@ -780,8 +819,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			new_len += sizeof(Oid);
 		new_len = MAXALIGN(new_len);
 		Assert(new_len == olddata->t_hoff);
-		new_len += heap_compute_data_size(tupleDesc,
-										  toast_values, toast_isnull);
+		new_data_len = heap_compute_data_size(tupleDesc,
+											  toast_values, toast_isnull);
+		new_len += new_data_len;
 
 		/*
 		 * Allocate and zero the space needed, and fill HeapTupleData fields.
@@ -802,6 +842,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 						toast_values,
 						toast_isnull,
 						(char *) new_data + olddata->t_hoff,
+						new_data_len,
 						&(new_data->t_infomask),
 						has_nulls ? new_data->t_bits : NULL);
 	}
@@ -835,6 +876,9 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
  *	This must be invoked on any potentially-composite field that is to be
  *	inserted into a tuple.	Doing this preserves the invariant that toasting
  *	goes only one level deep in a tuple.
+ *
+ *	Note that flattening does not mean expansion of short-header varlenas,
+ *	so in one sense toasting is allowed within composite datums.
  * ----------
  */
 Datum
@@ -845,6 +889,7 @@ toast_flatten_tuple_attribute(Datum value,
 	HeapTupleHeader olddata;
 	HeapTupleHeader new_data;
 	int32		new_len;
+	int32		new_data_len;
 	HeapTupleData tmptup;
 	Form_pg_attribute *att;
 	int			numAttrs;
@@ -891,10 +936,11 @@ toast_flatten_tuple_attribute(Datum value,
 			has_nulls = true;
 		else if (att[i]->attlen == -1)
 		{
-			varattrib  *new_value;
+			struct varlena  *new_value;
 
-			new_value = (varattrib *) DatumGetPointer(toast_values[i]);
-			if (VARATT_IS_EXTENDED(new_value))
+			new_value = (struct varlena *) DatumGetPointer(toast_values[i]);
+			if (VARATT_IS_EXTERNAL(new_value) ||
+				VARATT_IS_COMPRESSED(new_value))
 			{
 				new_value = heap_tuple_untoast_attr(new_value);
 				toast_values[i] = PointerGetDatum(new_value);
@@ -924,7 +970,9 @@ toast_flatten_tuple_attribute(Datum value,
 		new_len += sizeof(Oid);
 	new_len = MAXALIGN(new_len);
 	Assert(new_len == olddata->t_hoff);
-	new_len += heap_compute_data_size(tupleDesc, toast_values, toast_isnull);
+	new_data_len = heap_compute_data_size(tupleDesc,
+										  toast_values, toast_isnull);
+	new_len += new_data_len;
 
 	new_data = (HeapTupleHeader) palloc0(new_len);
 
@@ -939,6 +987,7 @@ toast_flatten_tuple_attribute(Datum value,
 					toast_values,
 					toast_isnull,
 					(char *) new_data + olddata->t_hoff,
+					new_data_len,
 					&(new_data->t_infomask),
 					has_nulls ? new_data->t_bits : NULL);
 
@@ -962,21 +1011,26 @@ toast_flatten_tuple_attribute(Datum value,
  *	If we fail (ie, compressed result is actually bigger than original)
  *	then return NULL.  We must not use compressed data if it'd expand
  *	the tuple!
+ *
+ *	We use VAR{SIZE,DATA}_ANY so we can handle short varlenas here without
+ *	copying them.  But we can't handle external or compressed datums.
  * ----------
  */
 Datum
 toast_compress_datum(Datum value)
 {
-	varattrib  *tmp;
-	int32		valsize = VARSIZE(value) - VARHDRSZ;
+	struct varlena *tmp;
+	int32		valsize = VARSIZE_ANY_EXHDR(value);
 
-	tmp = (varattrib *) palloc(PGLZ_MAX_OUTPUT(valsize));
-	if (pglz_compress(VARDATA(value), valsize,
+	Assert(!VARATT_IS_EXTERNAL(value));
+	Assert(!VARATT_IS_COMPRESSED(value));
+
+	tmp = (struct varlena *) palloc(PGLZ_MAX_OUTPUT(valsize));
+	if (pglz_compress(VARDATA_ANY(value), valsize,
 					  (PGLZ_Header *) tmp, PGLZ_strategy_default) &&
-		VARSIZE(tmp) < VARSIZE(value))
+		VARSIZE(tmp) < VARSIZE_ANY(value))
 	{
 		/* successful compression */
-		VARATT_SIZEP_DEPRECATED(tmp) |= VARATT_FLAG_COMPRESSED;
 		return PointerGetDatum(tmp);
 	}
 	else
@@ -992,7 +1046,7 @@ toast_compress_datum(Datum value)
  * toast_save_datum -
  *
  *	Save one single datum into the secondary relation and return
- *	a varattrib reference for it.
+ *	a Datum reference for it.
  * ----------
  */
 static Datum
@@ -1006,7 +1060,8 @@ toast_save_datum(Relation rel, Datum value,
 	Datum		t_values[3];
 	bool		t_isnull[3];
 	CommandId	mycid = GetCurrentCommandId();
-	varattrib  *result;
+	struct varlena *result;
+	struct varatt_external toast_pointer;
 	struct
 	{
 		struct varlena hdr;
@@ -1027,42 +1082,49 @@ toast_save_datum(Relation rel, Datum value,
 	toastidx = index_open(toastrel->rd_rel->reltoastidxid, RowExclusiveLock);
 
 	/*
-	 * Create the varattrib reference
+	 * Get the data pointer and length, and compute va_rawsize and va_extsize.
+	 *
+	 * va_rawsize is the size of the equivalent fully uncompressed datum,
+	 * so we have to adjust for short headers.
+	 *
+	 * va_extsize is the actual size of the data payload in the toast records.
 	 */
-	result = (varattrib *) palloc(sizeof(varattrib));
-
-	SET_VARSIZE(result, sizeof(varattrib));
-	VARATT_SIZEP_DEPRECATED(result) |= VARATT_FLAG_EXTERNAL;
-	if (VARATT_IS_COMPRESSED(value))
+	if (VARATT_IS_SHORT(value))
 	{
-		VARATT_SIZEP_DEPRECATED(result) |= VARATT_FLAG_COMPRESSED;
-		result->va_content.va_external.va_rawsize =
-			((varattrib *) value)->va_content.va_compressed.va_rawsize;
+		data_p = VARDATA_SHORT(value);
+		data_todo = VARSIZE_SHORT(value) - VARHDRSZ_SHORT;
+		toast_pointer.va_rawsize = data_todo + VARHDRSZ; /* as if not short */
+		toast_pointer.va_extsize = data_todo;
+	}
+	else if (VARATT_IS_COMPRESSED(value))
+	{
+		data_p = VARDATA(value);
+		data_todo = VARSIZE(value) - VARHDRSZ;
+		/* rawsize in a compressed datum is just the size of the payload */
+		toast_pointer.va_rawsize = VARRAWSIZE_4B_C(value) + VARHDRSZ;
+		toast_pointer.va_extsize = data_todo;
+		/* Assert that the numbers look like it's compressed */
+		Assert(VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer));
 	}
 	else
-		result->va_content.va_external.va_rawsize = VARSIZE(value);
+	{
+		data_p = VARDATA(value);
+		data_todo = VARSIZE(value) - VARHDRSZ;
+		toast_pointer.va_rawsize = VARSIZE(value);
+		toast_pointer.va_extsize = data_todo;
+	}
 
-	result->va_content.va_external.va_extsize =
-		VARSIZE(value) - VARHDRSZ;
-	result->va_content.va_external.va_valueid =
-		GetNewOidWithIndex(toastrel, toastidx);
-	result->va_content.va_external.va_toastrelid =
-		rel->rd_rel->reltoastrelid;
+	toast_pointer.va_valueid = GetNewOidWithIndex(toastrel, toastidx);
+	toast_pointer.va_toastrelid = rel->rd_rel->reltoastrelid;
 
 	/*
 	 * Initialize constant parts of the tuple data
 	 */
-	t_values[0] = ObjectIdGetDatum(result->va_content.va_external.va_valueid);
+	t_values[0] = ObjectIdGetDatum(toast_pointer.va_valueid);
 	t_values[2] = PointerGetDatum(&chunk_data);
 	t_isnull[0] = false;
 	t_isnull[1] = false;
 	t_isnull[2] = false;
-
-	/*
-	 * Get the data to process
-	 */
-	data_p = VARDATA(value);
-	data_todo = VARSIZE(value) - VARHDRSZ;
 
 	/*
 	 * Split up the item into chunks
@@ -1111,10 +1173,17 @@ toast_save_datum(Relation rel, Datum value,
 	}
 
 	/*
-	 * Done - close toast relation and return the reference
+	 * Done - close toast relation
 	 */
 	index_close(toastidx, RowExclusiveLock);
 	heap_close(toastrel, RowExclusiveLock);
+
+	/*
+	 * Create the TOAST pointer value that we'll return
+	 */
+	result = (struct varlena *) palloc(sizeof(varattrib_pointer));
+	SET_VARSIZE_EXTERNAL(result);
+	memcpy(VARDATA_SHORT(result), &toast_pointer, sizeof(toast_pointer));
 
 	return PointerGetDatum(result);
 }
@@ -1129,7 +1198,8 @@ toast_save_datum(Relation rel, Datum value,
 static void
 toast_delete_datum(Relation rel, Datum value)
 {
-	varattrib  *attr = (varattrib *) DatumGetPointer(value);
+	struct varlena *attr = (struct varlena *) DatumGetPointer(value);
+	struct varatt_external toast_pointer;
 	Relation	toastrel;
 	Relation	toastidx;
 	ScanKeyData toastkey;
@@ -1139,11 +1209,14 @@ toast_delete_datum(Relation rel, Datum value)
 	if (!VARATT_IS_EXTERNAL(attr))
 		return;
 
+	/* Must copy to access aligned fields */
+	memcpy(&toast_pointer, VARDATA_SHORT(attr),
+		   sizeof(struct varatt_external));
+
 	/*
 	 * Open the toast relation and its index
 	 */
-	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
-						 RowExclusiveLock);
+	toastrel = heap_open(toast_pointer.va_toastrelid, RowExclusiveLock);
 	toastidx = index_open(toastrel->rd_rel->reltoastidxid, RowExclusiveLock);
 
 	/*
@@ -1153,7 +1226,7 @@ toast_delete_datum(Relation rel, Datum value)
 	ScanKeyInit(&toastkey,
 				(AttrNumber) 1,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+				ObjectIdGetDatum(toast_pointer.va_valueid));
 
 	/*
 	 * Find the chunks by index
@@ -1180,12 +1253,12 @@ toast_delete_datum(Relation rel, Datum value)
 /* ----------
  * toast_fetch_datum -
  *
- *	Reconstruct an in memory varattrib from the chunks saved
+ *	Reconstruct an in memory Datum from the chunks saved
  *	in the toast relation
  * ----------
  */
-static varattrib *
-toast_fetch_datum(varattrib *attr)
+static struct varlena *
+toast_fetch_datum(struct varlena *attr)
 {
 	Relation	toastrel;
 	Relation	toastidx;
@@ -1193,28 +1266,35 @@ toast_fetch_datum(varattrib *attr)
 	IndexScanDesc toastscan;
 	HeapTuple	ttup;
 	TupleDesc	toasttupDesc;
-	varattrib  *result;
+	struct varlena *result;
+	struct varatt_external toast_pointer;
 	int32		ressize;
 	int32		residx,
 				nextidx;
 	int32		numchunks;
 	Pointer		chunk;
 	bool		isnull;
+	char 	   *chunkdata;
 	int32		chunksize;
 
-	ressize = attr->va_content.va_external.va_extsize;
+	/* Must copy to access aligned fields */
+	memcpy(&toast_pointer, VARDATA_SHORT(attr),
+		   sizeof(struct varatt_external));
+
+	ressize = toast_pointer.va_extsize;
 	numchunks = ((ressize - 1) / TOAST_MAX_CHUNK_SIZE) + 1;
 
-	result = (varattrib *) palloc(ressize + VARHDRSZ);
-	SET_VARSIZE(result, ressize + VARHDRSZ);
-	if (VARATT_IS_COMPRESSED(attr))
-		VARATT_SIZEP_DEPRECATED(result) |= VARATT_FLAG_COMPRESSED;
+	result = (struct varlena *) palloc(ressize + VARHDRSZ);
+
+	if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
+		SET_VARSIZE_COMPRESSED(result, ressize + VARHDRSZ);
+	else
+		SET_VARSIZE(result, ressize + VARHDRSZ);
 
 	/*
 	 * Open the toast relation and its index
 	 */
-	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
-						 AccessShareLock);
+	toastrel = heap_open(toast_pointer.va_toastrelid, AccessShareLock);
 	toasttupDesc = toastrel->rd_att;
 	toastidx = index_open(toastrel->rd_rel->reltoastidxid, AccessShareLock);
 
@@ -1224,7 +1304,7 @@ toast_fetch_datum(varattrib *attr)
 	ScanKeyInit(&toastkey,
 				(AttrNumber) 1,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+				ObjectIdGetDatum(toast_pointer.va_valueid));
 
 	/*
 	 * Read the chunks by index
@@ -1246,7 +1326,24 @@ toast_fetch_datum(varattrib *attr)
 		Assert(!isnull);
 		chunk = DatumGetPointer(fastgetattr(ttup, 3, toasttupDesc, &isnull));
 		Assert(!isnull);
-		chunksize = VARSIZE(chunk) - VARHDRSZ;
+		if (!VARATT_IS_EXTENDED(chunk))
+		{
+			chunksize = VARSIZE(chunk) - VARHDRSZ;
+			chunkdata = VARDATA(chunk);
+		}
+		else if (VARATT_IS_SHORT(chunk))
+		{
+			/* could happen due to heap_form_tuple doing its thing */
+			chunksize = VARSIZE_SHORT(chunk) - VARHDRSZ_SHORT;
+			chunkdata = VARDATA_SHORT(chunk);
+		}
+		else
+		{
+			/* should never happen */
+			elog(ERROR, "found toasted toast chunk");
+			chunksize = 0;				/* keep compiler quiet */
+			chunkdata = NULL;
+		}
 
 		/*
 		 * Some checks on the data we've found
@@ -1254,31 +1351,35 @@ toast_fetch_datum(varattrib *attr)
 		if (residx != nextidx)
 			elog(ERROR, "unexpected chunk number %d (expected %d) for toast value %u",
 				 residx, nextidx,
-				 attr->va_content.va_external.va_valueid);
+				 toast_pointer.va_valueid);
 		if (residx < numchunks - 1)
 		{
 			if (chunksize != TOAST_MAX_CHUNK_SIZE)
-				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %u",
-					 chunksize, residx,
-					 attr->va_content.va_external.va_valueid);
+				elog(ERROR, "unexpected chunk size %d (expected %d) in chunk %d of %d for toast value %u",
+					 chunksize, (int) TOAST_MAX_CHUNK_SIZE,
+					 residx, numchunks,
+					 toast_pointer.va_valueid);
 		}
-		else if (residx < numchunks)
+		else if (residx == numchunks-1)
 		{
 			if ((residx * TOAST_MAX_CHUNK_SIZE + chunksize) != ressize)
-				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %u",
-					 chunksize, residx,
-					 attr->va_content.va_external.va_valueid);
+				elog(ERROR, "unexpected chunk size %d (expected %d) in final chunk %d for toast value %u",
+					 chunksize,
+					 (int) (ressize - residx*TOAST_MAX_CHUNK_SIZE),
+					 residx,
+					 toast_pointer.va_valueid);
 		}
 		else
-			elog(ERROR, "unexpected chunk number %d for toast value %u",
+			elog(ERROR, "unexpected chunk number %d for toast value %u (out of range %d..%d)",
 				 residx,
-				 attr->va_content.va_external.va_valueid);
+				 toast_pointer.va_valueid,
+				 0, numchunks-1);
 
 		/*
 		 * Copy the data into proper place in our result
 		 */
 		memcpy(VARDATA(result) + residx * TOAST_MAX_CHUNK_SIZE,
-			   VARDATA(chunk),
+			   chunkdata,
 			   chunksize);
 
 		nextidx++;
@@ -1290,7 +1391,7 @@ toast_fetch_datum(varattrib *attr)
 	if (nextidx != numchunks)
 		elog(ERROR, "missing chunk number %d for toast value %u",
 			 nextidx,
-			 attr->va_content.va_external.va_valueid);
+			 toast_pointer.va_valueid);
 
 	/*
 	 * End scan and close relations
@@ -1305,12 +1406,12 @@ toast_fetch_datum(varattrib *attr)
 /* ----------
  * toast_fetch_datum_slice -
  *
- *	Reconstruct a segment of a varattrib from the chunks saved
+ *	Reconstruct a segment of a Datum from the chunks saved
  *	in the toast relation
  * ----------
  */
-static varattrib *
-toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
+static struct varlena *
+toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset, int32 length)
 {
 	Relation	toastrel;
 	Relation	toastidx;
@@ -1319,7 +1420,8 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	IndexScanDesc toastscan;
 	HeapTuple	ttup;
 	TupleDesc	toasttupDesc;
-	varattrib  *result;
+	struct varlena *result;
+	struct varatt_external toast_pointer;
 	int32		attrsize;
 	int32		residx;
 	int32		nextidx;
@@ -1331,11 +1433,16 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	int			totalchunks;
 	Pointer		chunk;
 	bool		isnull;
+	char 	   *chunkdata;
 	int32		chunksize;
 	int32		chcpystrt;
 	int32		chcpyend;
 
-	attrsize = attr->va_content.va_external.va_extsize;
+	/* Must copy to access aligned fields */
+	memcpy(&toast_pointer, VARDATA_SHORT(attr),
+		   sizeof(struct varatt_external));
+
+	attrsize = toast_pointer.va_extsize;
 	totalchunks = ((attrsize - 1) / TOAST_MAX_CHUNK_SIZE) + 1;
 
 	if (sliceoffset >= attrsize)
@@ -1347,11 +1454,12 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	if (((sliceoffset + length) > attrsize) || length < 0)
 		length = attrsize - sliceoffset;
 
-	result = (varattrib *) palloc(length + VARHDRSZ);
-	SET_VARSIZE(result, length + VARHDRSZ);
+	result = (struct varlena *) palloc(length + VARHDRSZ);
 
-	if (VARATT_IS_COMPRESSED(attr))
-		VARATT_SIZEP_DEPRECATED(result) |= VARATT_FLAG_COMPRESSED;
+	if (VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer))
+		SET_VARSIZE_COMPRESSED(result, length + VARHDRSZ);
+	else
+		SET_VARSIZE(result, length + VARHDRSZ);
 
 	if (length == 0)
 		return result;			/* Can save a lot of work at this point! */
@@ -1366,8 +1474,7 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	/*
 	 * Open the toast relation and its index
 	 */
-	toastrel = heap_open(attr->va_content.va_external.va_toastrelid,
-						 AccessShareLock);
+	toastrel = heap_open(toast_pointer.va_toastrelid, AccessShareLock);
 	toasttupDesc = toastrel->rd_att;
 	toastidx = index_open(toastrel->rd_rel->reltoastidxid, AccessShareLock);
 
@@ -1378,7 +1485,7 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	ScanKeyInit(&toastkey[0],
 				(AttrNumber) 1,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(attr->va_content.va_external.va_valueid));
+				ObjectIdGetDatum(toast_pointer.va_valueid));
 
 	/*
 	 * Use equality condition for one chunk, a range condition otherwise:
@@ -1421,7 +1528,24 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 		Assert(!isnull);
 		chunk = DatumGetPointer(fastgetattr(ttup, 3, toasttupDesc, &isnull));
 		Assert(!isnull);
-		chunksize = VARSIZE(chunk) - VARHDRSZ;
+		if (!VARATT_IS_EXTENDED(chunk))
+		{
+			chunksize = VARSIZE(chunk) - VARHDRSZ;
+			chunkdata = VARDATA(chunk);
+		}
+		else if (VARATT_IS_SHORT(chunk))
+		{
+			/* could happen due to heap_form_tuple doing its thing */
+			chunksize = VARSIZE_SHORT(chunk) - VARHDRSZ_SHORT;
+			chunkdata = VARDATA_SHORT(chunk);
+		}
+		else
+		{
+			/* should never happen */
+			elog(ERROR, "found toasted toast chunk");
+			chunksize = 0;				/* keep compiler quiet */
+			chunkdata = NULL;
+		}
 
 		/*
 		 * Some checks on the data we've found
@@ -1429,21 +1553,29 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 		if ((residx != nextidx) || (residx > endchunk) || (residx < startchunk))
 			elog(ERROR, "unexpected chunk number %d (expected %d) for toast value %u",
 				 residx, nextidx,
-				 attr->va_content.va_external.va_valueid);
+				 toast_pointer.va_valueid);
 		if (residx < totalchunks - 1)
 		{
 			if (chunksize != TOAST_MAX_CHUNK_SIZE)
-				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %u",
-					 chunksize, residx,
-					 attr->va_content.va_external.va_valueid);
+				elog(ERROR, "unexpected chunk size %d (expected %d) in chunk %d of %d for toast value %u when fetching slice",
+					 chunksize, (int) TOAST_MAX_CHUNK_SIZE,
+					 residx, totalchunks,
+					 toast_pointer.va_valueid);
 		}
-		else
+		else if (residx == totalchunks-1)
 		{
 			if ((residx * TOAST_MAX_CHUNK_SIZE + chunksize) != attrsize)
-				elog(ERROR, "unexpected chunk size %d in chunk %d for toast value %u",
-					 chunksize, residx,
-					 attr->va_content.va_external.va_valueid);
+				elog(ERROR, "unexpected chunk size %d (expected %d) in final chunk %d for toast value %u when fetching slice",
+					 chunksize,
+					 (int) (attrsize - residx * TOAST_MAX_CHUNK_SIZE),
+					 residx,
+					 toast_pointer.va_valueid);
 		}
+		else
+			elog(ERROR, "unexpected chunk number %d for toast value %u (out of range %d..%d)",
+				 residx,
+				 toast_pointer.va_valueid,
+				 0, totalchunks-1);
 
 		/*
 		 * Copy the data into proper place in our result
@@ -1457,7 +1589,7 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 
 		memcpy(VARDATA(result) +
 			   (residx * TOAST_MAX_CHUNK_SIZE - sliceoffset) + chcpystrt,
-			   VARDATA(chunk) + chcpystrt,
+			   chunkdata + chcpystrt,
 			   (chcpyend - chcpystrt) + 1);
 
 		nextidx++;
@@ -1469,7 +1601,7 @@ toast_fetch_datum_slice(varattrib *attr, int32 sliceoffset, int32 length)
 	if (nextidx != (endchunk + 1))
 		elog(ERROR, "missing chunk number %d for toast value %u",
 			 nextidx,
-			 attr->va_content.va_external.va_valueid);
+			 toast_pointer.va_valueid);
 
 	/*
 	 * End scan and close relations

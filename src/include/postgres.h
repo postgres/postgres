@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.78 2007/03/23 20:24:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.79 2007/04/06 04:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,56 +54,219 @@
  * ----------------------------------------------------------------
  */
 
-/* ----------------
- * struct varattrib is the header of a varlena object that may have been
- * TOASTed.  Generally, only the code closely associated with TOAST logic
- * should mess directly with struct varattrib or use the VARATT_FOO macros.
- * ----------------
+/*
+ * struct varatt_external is a "TOAST pointer", that is, the information
+ * needed to fetch a stored-out-of-line Datum.  The data is compressed
+ * if and only if va_extsize < va_rawsize - VARHDRSZ.  This struct must not
+ * contain any padding, because we sometimes compare pointers using memcmp.
+ *
+ * Note that this information is stored unaligned within actual tuples, so
+ * you need to memcpy from the tuple into a local struct variable before
+ * you can look at these fields!  (The reason we use memcmp is to avoid
+ * having to do that just to detect equality of two TOAST pointers...)
  */
-typedef struct varattrib
+struct varatt_external
 {
-	int32		va_header_;		/* External/compressed storage */
-	/* flags and item size */
-	union
+	int32		va_rawsize;			/* Original data size (includes header) */
+	int32		va_extsize;			/* External saved size (doesn't) */
+	Oid			va_valueid;			/* Unique ID of value within TOAST table */
+	Oid			va_toastrelid;		/* RelID of TOAST table containing it */
+};
+
+/*
+ * These structs describe the header of a varlena object that may have been
+ * TOASTed.  Generally, don't reference these structs directly, but use the
+ * macros below.
+ *
+ * We use separate structs for the aligned and unaligned cases because the
+ * compiler might otherwise think it could generate code that assumes
+ * alignment while touching fields of a 1-byte-header varlena.
+ */
+typedef union
+{
+	struct							/* Normal varlena (4-byte length) */
 	{
-		struct
-		{
-			int32		va_rawsize;		/* Plain data size */
-			char		va_data[1];		/* Compressed data */
-		}			va_compressed;		/* Compressed stored attribute */
+		uint32	va_header;
+		char	va_data[1];
+	} va_4byte;
+	struct							/* Compressed-in-line format */
+	{
+		uint32	va_header;
+		uint32	va_rawsize;			/* Original data size (excludes header) */
+		char	va_data[1];			/* Compressed data */
+	} va_compressed;
+} varattrib_4b;
 
-		struct
-		{
-			int32		va_rawsize;		/* Plain data size */
-			int32		va_extsize;		/* External saved size */
-			Oid			va_valueid;		/* Unique identifier of value */
-			Oid			va_toastrelid;	/* RelID where to find chunks */
-		}			va_external;	/* External stored attribute */
+typedef struct
+{
+	uint8		va_header;
+	char		va_data[1];			/* Data or TOAST pointer */
+} varattrib_1b;
 
-		char		va_data[1]; /* Plain stored attribute */
-	}			va_content;
-} varattrib;
+typedef struct
+{
+	uint8		va_header;
+	char		va_data[sizeof(struct varatt_external)];
+} varattrib_pointer;
 
-#define VARATT_FLAG_EXTERNAL	0x80000000
-#define VARATT_FLAG_COMPRESSED	0x40000000
-#define VARATT_MASK_FLAGS		0xc0000000
-#define VARATT_MASK_SIZE		0x3fffffff
+/*
+ * Bit layouts for varlena headers on big-endian machines:
+ *
+ * 00xxxxxx	4-byte length word, aligned, uncompressed data (up to 1G)
+ * 01xxxxxx	4-byte length word, aligned, *compressed* data (up to 1G)
+ * 10000000	1-byte length word, unaligned, TOAST pointer
+ * 1xxxxxxx	1-byte length word, unaligned, uncompressed data (up to 126b)
+ *
+ * Bit layouts for varlena headers on little-endian machines:
+ *
+ * xxxxxx00	4-byte length word, aligned, uncompressed data (up to 1G)
+ * xxxxxx10	4-byte length word, aligned, *compressed* data (up to 1G)
+ * 00000001	1-byte length word, unaligned, TOAST pointer
+ * xxxxxxx1	1-byte length word, unaligned, uncompressed data (up to 126b)
+ *
+ * The "xxx" bits are the length field (which includes itself in all cases).
+ * In the big-endian case we mask to extract the length, in the little-endian
+ * case we shift.  Note that in both cases the flag bits are in the physically
+ * first byte.  Also, it is not possible for a 1-byte length word to be zero;
+ * this lets us disambiguate alignment padding bytes from the start of an
+ * unaligned datum.  (We now *require* pad bytes to be filled with zero!)
+ */
 
-#define VARATT_SIZEP_DEPRECATED(PTR)	(((varattrib *) (PTR))->va_header_)
+/*
+ * Endian-dependent macros.  These are considered internal --- use the
+ * external macros below instead of using these directly.
+ *
+ * Note: IS_1B is true for external toast records but VARSIZE_1B will return 0
+ * for such records. Hence you should usually check for IS_EXTERNAL before
+ * checking for IS_1B.
+ */
 
-#define VARATT_IS_EXTENDED(PTR)		\
-				((VARATT_SIZEP_DEPRECATED(PTR) & VARATT_MASK_FLAGS) != 0)
-#define VARATT_IS_EXTERNAL(PTR)		\
-				((VARATT_SIZEP_DEPRECATED(PTR) & VARATT_FLAG_EXTERNAL) != 0)
-#define VARATT_IS_COMPRESSED(PTR)	\
-				((VARATT_SIZEP_DEPRECATED(PTR) & VARATT_FLAG_COMPRESSED) != 0)
+#ifdef WORDS_BIGENDIAN
 
-/* These macros are the ones for non-TOAST code to use */
+#define VARATT_IS_4B(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0x80) == 0x00)
+#define VARATT_IS_4B_U(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0xC0) == 0x00)
+#define VARATT_IS_4B_C(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0xC0) == 0x40)
+#define VARATT_IS_1B(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0x80) == 0x80)
+#define VARATT_IS_1B_E(PTR) \
+	((((varattrib_1b *) (PTR))->va_header) == 0x80)
+#define VARATT_NOT_PAD_BYTE(PTR) \
+	(*((uint8 *) (PTR)) != 0)
 
-#define VARSIZE(PTR)	(VARATT_SIZEP_DEPRECATED(PTR) & VARATT_MASK_SIZE)
-#define VARDATA(PTR)	(((varattrib *) (PTR))->va_content.va_data)
+/* VARSIZE_4B() should only be used on known-aligned data */
+#define VARSIZE_4B(PTR) \
+	(((varattrib_4b *) (PTR))->va_4byte.va_header & 0x3FFFFFFF)
+#define VARSIZE_1B(PTR) \
+	(((varattrib_1b *) (PTR))->va_header & 0x7F)
+/* Currently there is only one size of toast pointer, but someday maybe not */
+#define VARSIZE_1B_E(PTR) \
+	(sizeof(varattrib_pointer))
 
-#define SET_VARSIZE(PTR,SIZE)	(VARATT_SIZEP_DEPRECATED(PTR) = (SIZE))
+#define SET_VARSIZE_4B(PTR,len) \
+	(((varattrib_4b *) (PTR))->va_4byte.va_header = (len) & 0x3FFFFFFF)
+#define SET_VARSIZE_4B_C(PTR,len) \
+	(((varattrib_4b *) (PTR))->va_4byte.va_header = ((len) & 0x3FFFFFFF) | 0x40000000)
+#define SET_VARSIZE_1B(PTR,len) \
+	(((varattrib_1b *) (PTR))->va_header = (len) | 0x80)
+#define SET_VARSIZE_1B_E(PTR) \
+	(((varattrib_1b *) (PTR))->va_header = 0x80)
+
+#else  /* !WORDS_BIGENDIAN */
+
+#define VARATT_IS_4B(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0x01) == 0x00)
+#define VARATT_IS_4B_U(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0x03) == 0x00)
+#define VARATT_IS_4B_C(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0x03) == 0x02)
+#define VARATT_IS_1B(PTR) \
+	((((varattrib_1b *) (PTR))->va_header & 0x01) == 0x01)
+#define VARATT_IS_1B_E(PTR) \
+	((((varattrib_1b *) (PTR))->va_header) == 0x01)
+#define VARATT_NOT_PAD_BYTE(PTR) \
+	(*((uint8 *) (PTR)) != 0)
+
+/* VARSIZE_4B() should only be used on known-aligned data */
+#define VARSIZE_4B(PTR) \
+	((((varattrib_4b *) (PTR))->va_4byte.va_header >> 2) & 0x3FFFFFFF)
+#define VARSIZE_1B(PTR) \
+	((((varattrib_1b *) (PTR))->va_header >> 1) & 0x7F)
+/* Currently there is only one size of toast pointer, but someday maybe not */
+#define VARSIZE_1B_E(PTR) \
+	(sizeof(varattrib_pointer))
+
+#define SET_VARSIZE_4B(PTR,len) \
+	(((varattrib_4b *) (PTR))->va_4byte.va_header = (((uint32) (len)) << 2))
+#define SET_VARSIZE_4B_C(PTR,len) \
+	(((varattrib_4b *) (PTR))->va_4byte.va_header = (((uint32) (len)) << 2) | 0x02)
+#define SET_VARSIZE_1B(PTR,len) \
+	(((varattrib_1b *) (PTR))->va_header = (((uint8) (len)) << 1) | 0x01)
+#define SET_VARSIZE_1B_E(PTR) \
+	(((varattrib_1b *) (PTR))->va_header = 0x01)
+
+#endif /* WORDS_BIGENDIAN */
+
+#define VARHDRSZ_SHORT			1
+#define VARATT_SHORT_MAX		0x7F
+#define VARATT_CAN_MAKE_SHORT(PTR) \
+	(VARATT_IS_4B_U(PTR) && \
+	 (VARSIZE(PTR) - VARHDRSZ + VARHDRSZ_SHORT) <= VARATT_SHORT_MAX)
+#define VARATT_CONVERTED_SHORT_SIZE(PTR) \
+	(VARSIZE(PTR) - VARHDRSZ + VARHDRSZ_SHORT)
+
+#define VARDATA_4B(PTR)		(((varattrib_4b *) (PTR))->va_4byte.va_data)
+#define VARDATA_4B_C(PTR)	(((varattrib_4b *) (PTR))->va_compressed.va_data)
+#define VARDATA_1B(PTR)		(((varattrib_1b *) (PTR))->va_data)
+
+#define VARRAWSIZE_4B_C(PTR) \
+	(((varattrib_4b *) (PTR))->va_compressed.va_rawsize)
+
+/* Externally visible macros */
+
+/*
+ * VARDATA, VARSIZE, and SET_VARSIZE are the recommended API for most code
+ * for varlena datatypes.  Note that they only work on untoasted,
+ * 4-byte-header Datums!
+ *
+ * Code that wants to use 1-byte-header values without detoasting should
+ * use VARSIZE_ANY/VARSIZE_ANY_EXHDR/VARDATA_ANY.  The other macros here
+ * should usually be used only by tuple assembly/disassembly code and
+ * code that specifically wants to work with still-toasted Datums.
+ */
+#define VARDATA(PTR)						VARDATA_4B(PTR)
+#define VARSIZE(PTR)						VARSIZE_4B(PTR)
+
+#define VARSIZE_SHORT(PTR)					VARSIZE_1B(PTR)
+#define VARDATA_SHORT(PTR)					VARDATA_1B(PTR)
+
+#define VARSIZE_EXTERNAL(PTR)				VARSIZE_1B_E(PTR)
+
+#define VARATT_IS_COMPRESSED(PTR)			VARATT_IS_4B_C(PTR)
+#define VARATT_IS_EXTERNAL(PTR)				VARATT_IS_1B_E(PTR)
+#define VARATT_IS_SHORT(PTR)				VARATT_IS_1B(PTR)
+#define VARATT_IS_EXTENDED(PTR)				(!VARATT_IS_4B_U(PTR))
+
+#define SET_VARSIZE(PTR, len)				SET_VARSIZE_4B(PTR, len)
+#define SET_VARSIZE_SHORT(PTR, len)			SET_VARSIZE_1B(PTR, len)
+#define SET_VARSIZE_COMPRESSED(PTR, len)	SET_VARSIZE_4B_C(PTR, len)
+#define SET_VARSIZE_EXTERNAL(PTR)			SET_VARSIZE_1B_E(PTR)
+
+#define VARSIZE_ANY(PTR) \
+	(VARATT_IS_1B_E(PTR) ? VARSIZE_1B_E(PTR) : \
+	 (VARATT_IS_1B(PTR) ? VARSIZE_1B(PTR) : \
+	  VARSIZE_4B(PTR)))
+
+#define VARSIZE_ANY_EXHDR(PTR) \
+	(VARATT_IS_1B_E(PTR) ? VARSIZE_1B_E(PTR)-1 : \
+	 (VARATT_IS_1B(PTR) ? VARSIZE_1B(PTR)-1 : \
+	  VARSIZE_4B(PTR)-4))
+
+/* caution: this will not work on an external or compressed-in-line Datum */
+#define VARDATA_ANY(PTR) \
+	 (VARATT_IS_1B(PTR) ? VARDATA_1B(PTR) : VARDATA_4B(PTR))
 
 
 /* ----------------------------------------------------------------

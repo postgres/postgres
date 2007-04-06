@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/inet.h,v 1.25 2007/01/05 22:19:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/inet.h,v 1.26 2007/04/06 04:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,13 +39,19 @@ typedef struct
 
 /*
  * Both INET and CIDR addresses are represented within Postgres as varlena
- * objects, ie, there is a varlena header (basically a length word) in front
- * of the struct type depicted above.
- *
- * Although these types are variable-length, the maximum length
- * is pretty short, so we make no provision for TOASTing them.
+ * objects, ie, there is a varlena header in front of the struct type
+ * depicted above.  This struct depicts what we actually have in memory
+ * in "uncompressed" cases.  Note that since the maximum data size is only
+ * 18 bytes, INET/CIDR will invariably be stored into tuples using the
+ * 1-byte-header varlena format.  However, we have to be prepared to cope
+ * with the 4-byte-header format too, because various code may helpfully
+ * try to "decompress" 1-byte-header datums.
  */
-typedef struct varlena inet;
+typedef struct
+{
+	int32		vl_len_;		/* Do not touch this field directly! */
+	inet_struct	inet_data;
+} inet;
 
 
 /*
@@ -64,7 +70,7 @@ typedef struct macaddr
 /*
  * fmgr interface macros
  */
-#define DatumGetInetP(X)	((inet *) DatumGetPointer(X))
+#define DatumGetInetP(X)	((inet *) PG_DETOAST_DATUM_PACKED(X))
 #define InetPGetDatum(X)	PointerGetDatum(X)
 #define PG_GETARG_INET_P(n) DatumGetInetP(PG_GETARG_DATUM(n))
 #define PG_RETURN_INET_P(x) return InetPGetDatum(x)

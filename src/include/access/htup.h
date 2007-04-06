@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.92 2007/02/27 23:48:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/htup.h,v 1.93 2007/04/06 04:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,9 +160,8 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 #define HEAP_HASNULL			0x0001	/* has null attribute(s) */
 #define HEAP_HASVARWIDTH		0x0002	/* has variable-width attribute(s) */
 #define HEAP_HASEXTERNAL		0x0004	/* has external stored attribute(s) */
-#define HEAP_HASCOMPRESSED		0x0008	/* has compressed stored attribute(s) */
-#define HEAP_HASEXTENDED		0x000C	/* the two above combined */
-#define HEAP_HASOID				0x0010	/* has an object-id field */
+#define HEAP_HASOID				0x0008	/* has an object-id field */
+/* bit 0x0010 is available */
 #define HEAP_COMBOCID			0x0020	/* t_cid is a combo cid */
 #define HEAP_XMAX_EXCL_LOCK		0x0040	/* xmax is exclusive locker */
 #define HEAP_XMAX_SHARED_LOCK	0x0080	/* xmax is shared locker */
@@ -341,7 +340,7 @@ do { \
  * MaxAttrSize is a somewhat arbitrary upper limit on the declared size of
  * data fields of char(n) and similar types.  It need not have anything
  * directly to do with the *actual* upper limit of varlena values, which
- * is currently 1Gb (see struct varattrib in postgres.h).  I've set it
+ * is currently 1Gb (see TOAST structures in postgres.h).  I've set it
  * at 10Mb which seems like a reasonable number --- tgl 8/6/00.
  */
 #define MaxAttrSize		(10 * 1024 * 1024)
@@ -484,12 +483,6 @@ typedef HeapTupleData *HeapTuple;
 
 #define HeapTupleHasExternal(tuple) \
 		(((tuple)->t_data->t_infomask & HEAP_HASEXTERNAL) != 0)
-
-#define HeapTupleHasCompressed(tuple) \
-		(((tuple)->t_data->t_infomask & HEAP_HASCOMPRESSED) != 0)
-
-#define HeapTupleHasExtended(tuple) \
-		(((tuple)->t_data->t_infomask & HEAP_HASEXTENDED) != 0)
 
 #define HeapTupleGetOid(tuple) \
 		HeapTupleHeaderGetOid((tuple)->t_data)

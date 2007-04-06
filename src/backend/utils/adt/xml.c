@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.41 2007/04/05 13:53:23 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.42 2007/04/06 04:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3071,8 +3071,8 @@ xmlpath(PG_FUNCTION_ARGS)
 				else
 					ns_uris[i - ns_count] = DatumGetCString(DirectFunctionCall1(textout,
 														  PointerGetDatum(ptr)));
-				ptr = att_addlength(ptr, typlen, PointerGetDatum(ptr));
-				ptr = (char *) att_align(ptr, typalign);
+				ptr = att_addlength_pointer(ptr, typlen, ptr);
+				ptr = (char *) att_align_nominal(ptr, typalign);
 			}
 	
 			/* advance bitmap pointer if any */

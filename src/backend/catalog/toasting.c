@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.5 2007/01/09 02:14:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/toasting.c,v 1.6 2007/04/06 04:21:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,7 +314,7 @@ needs_toast_table(Relation rel)
 	{
 		if (att[i]->attisdropped)
 			continue;
-		data_length = att_align(data_length, att[i]->attalign);
+		data_length = att_align_nominal(data_length, att[i]->attalign);
 		if (att[i]->attlen > 0)
 		{
 			/* Fixed-length types are never toastable */

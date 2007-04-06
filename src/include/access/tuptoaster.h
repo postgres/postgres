@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.34 2007/04/03 04:14:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/tuptoaster.h,v 1.35 2007/04/06 04:21:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ extern void toast_delete(Relation rel, HeapTuple oldtup);
  *		in compressed format.
  * ----------
  */
-extern varattrib *heap_tuple_fetch_attr(varattrib *attr);
+extern struct varlena *heap_tuple_fetch_attr(struct varlena *attr);
 
 /* ----------
  * heap_tuple_untoast_attr() -
@@ -120,7 +120,7 @@ extern varattrib *heap_tuple_fetch_attr(varattrib *attr);
  *		it as needed.
  * ----------
  */
-extern varattrib *heap_tuple_untoast_attr(varattrib *attr);
+extern struct varlena *heap_tuple_untoast_attr(struct varlena *attr);
 
 /* ----------
  * heap_tuple_untoast_attr_slice() -
@@ -129,7 +129,7 @@ extern varattrib *heap_tuple_untoast_attr(varattrib *attr);
  *		(Handles all cases for attribute storage)
  * ----------
  */
-extern varattrib *heap_tuple_untoast_attr_slice(varattrib *attr,
+extern struct varlena *heap_tuple_untoast_attr_slice(struct varlena *attr,
 							  int32 sliceoffset,
 							  int32 slicelength);
 

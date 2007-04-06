@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.49 2007/01/05 22:19:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.50 2007/04/06 04:21:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,6 +153,11 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
  * if you need a modifiable copy of the input.	Caller is expected to have
  * checked for null inputs first, if necessary.
  *
+ * pg_detoast_datum_packed() will return packed (1-byte header) datums
+ * unmodified.  It will still expand an externally toasted or compressed datum.
+ * The resulting datum can be accessed using VARSIZE_ANY() and VARDATA_ANY()
+ * (beware of multiple evaluations in those macros!)
+ *
  * Note: it'd be nice if these could be macros, but I see no way to do that
  * without evaluating the arguments multiple times, which is NOT acceptable.
  */
@@ -160,6 +165,7 @@ extern struct varlena *pg_detoast_datum(struct varlena * datum);
 extern struct varlena *pg_detoast_datum_copy(struct varlena * datum);
 extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
 					   int32 first, int32 count);
+extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 
 #define PG_DETOAST_DATUM(datum) \
 	pg_detoast_datum((struct varlena *) DatumGetPointer(datum))
@@ -168,6 +174,8 @@ extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
 #define PG_DETOAST_DATUM_SLICE(datum,f,c) \
 		pg_detoast_datum_slice((struct varlena *) DatumGetPointer(datum), \
 		(int32) f, (int32) c)
+#define PG_DETOAST_DATUM_PACKED(datum) \
+	pg_detoast_datum_packed((struct varlena *) DatumGetPointer(datum))
 
 /*
  * Support for cleaning up detoasted copies of inputs.	This must only
@@ -207,9 +215,13 @@ extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
 #define PG_GETARG_VARLENA_P(n) PG_DETOAST_DATUM(PG_GETARG_DATUM(n))
 /* DatumGetFoo macros for varlena types will typically look like this: */
 #define DatumGetByteaP(X)			((bytea *) PG_DETOAST_DATUM(X))
+#define DatumGetByteaPP(X)			((bytea *) PG_DETOAST_DATUM_PACKED(X))
 #define DatumGetTextP(X)			((text *) PG_DETOAST_DATUM(X))
+#define DatumGetTextPP(X)			((text *) PG_DETOAST_DATUM_PACKED(X))
 #define DatumGetBpCharP(X)			((BpChar *) PG_DETOAST_DATUM(X))
+#define DatumGetBpCharPP(X)			((BpChar *) PG_DETOAST_DATUM_PACKED(X))
 #define DatumGetVarCharP(X)			((VarChar *) PG_DETOAST_DATUM(X))
+#define DatumGetVarCharPP(X)		((VarChar *) PG_DETOAST_DATUM_PACKED(X))
 #define DatumGetHeapTupleHeader(X)	((HeapTupleHeader) PG_DETOAST_DATUM(X))
 /* And we also offer variants that return an OK-to-write copy */
 #define DatumGetByteaPCopy(X)		((bytea *) PG_DETOAST_DATUM_COPY(X))
@@ -224,9 +236,13 @@ extern struct varlena *pg_detoast_datum_slice(struct varlena * datum,
 #define DatumGetVarCharPSlice(X,m,n) ((VarChar *) PG_DETOAST_DATUM_SLICE(X,m,n))
 /* GETARG macros for varlena types will typically look like this: */
 #define PG_GETARG_BYTEA_P(n)		DatumGetByteaP(PG_GETARG_DATUM(n))
+#define PG_GETARG_BYTEA_PP(n)		DatumGetByteaPP(PG_GETARG_DATUM(n))
 #define PG_GETARG_TEXT_P(n)			DatumGetTextP(PG_GETARG_DATUM(n))
+#define PG_GETARG_TEXT_PP(n)		DatumGetTextPP(PG_GETARG_DATUM(n))
 #define PG_GETARG_BPCHAR_P(n)		DatumGetBpCharP(PG_GETARG_DATUM(n))
+#define PG_GETARG_BPCHAR_PP(n)		DatumGetBpCharPP(PG_GETARG_DATUM(n))
 #define PG_GETARG_VARCHAR_P(n)		DatumGetVarCharP(PG_GETARG_DATUM(n))
+#define PG_GETARG_VARCHAR_PP(n)		DatumGetVarCharPP(PG_GETARG_DATUM(n))
 #define PG_GETARG_HEAPTUPLEHEADER(n)	DatumGetHeapTupleHeader(PG_GETARG_DATUM(n))
 /* And we also offer variants that return an OK-to-write copy */
 #define PG_GETARG_BYTEA_P_COPY(n)	DatumGetByteaPCopy(PG_GETARG_DATUM(n))

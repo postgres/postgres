@@ -109,3 +109,7 @@ select thousand, tenthous from tenk1
 where (thousand, tenthous) >= (997, 5000)
 order by thousand, tenthous;
 
+-- Check some corner cases involving empty rowtypes
+select ROW();
+select ROW() IS NULL;
+select ROW() = ROW();

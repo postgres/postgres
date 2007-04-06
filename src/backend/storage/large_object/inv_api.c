@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.123 2007/03/03 19:52:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.124 2007/04/06 04:21:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,7 +336,7 @@ inv_getsize(LargeObjectDesc *obj_desc)
 		if (VARATT_IS_EXTENDED(datafield))
 		{
 			datafield = (bytea *)
-				heap_tuple_untoast_attr((varattrib *) datafield);
+				heap_tuple_untoast_attr((struct varlena *) datafield);
 			pfreeit = true;
 		}
 		lastbyte = data->pageno * LOBLKSIZE + getbytealen(datafield);
@@ -462,7 +462,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			if (VARATT_IS_EXTENDED(datafield))
 			{
 				datafield = (bytea *)
-					heap_tuple_untoast_attr((varattrib *) datafield);
+					heap_tuple_untoast_attr((struct varlena *) datafield);
 				pfreeit = true;
 			}
 			len = getbytealen(datafield);
@@ -580,7 +580,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			if (VARATT_IS_EXTENDED(datafield))
 			{
 				datafield = (bytea *)
-					heap_tuple_untoast_attr((varattrib *) datafield);
+					heap_tuple_untoast_attr((struct varlena *) datafield);
 				pfreeit = true;
 			}
 			len = getbytealen(datafield);
@@ -756,7 +756,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 		if (VARATT_IS_EXTENDED(datafield))
 		{
 			datafield = (bytea *)
-				heap_tuple_untoast_attr((varattrib *) datafield);
+				heap_tuple_untoast_attr((struct varlena *) datafield);
 			pfreeit = true;
 		}
 		pagelen = getbytealen(datafield);

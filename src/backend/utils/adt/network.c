@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.68 2007/02/27 23:48:08 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.69 2007/04/06 04:21:43 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -30,23 +30,38 @@ static int	ip_addrsize(inet *inetptr);
 static inet *internal_inetpl(inet *ip, int64 addend);
 
 /*
- *	Access macros.
+ *	Access macros.  We use VARDATA_ANY so that we can process short-header
+ *	varlena values without detoasting them.  This requires a trick:
+ *	VARDATA_ANY assumes the varlena header is already filled in, which is
+ *	not the case when constructing a new value (until SET_INET_VARSIZE is
+ *	called, which we typically can't do till the end).  Therefore, we
+ *	always initialize the newly-allocated value to zeroes (using palloc0).
+ *	A zero length word will look like the not-1-byte case to VARDATA_ANY,
+ *	and so we correctly construct an uncompressed value.
+ *
+ *	Note that ip_maxbits() and SET_INET_VARSIZE() require
+ *	the family field to be set correctly.
  */
 
 #define ip_family(inetptr) \
-	(((inet_struct *)VARDATA(inetptr))->family)
+	(((inet_struct *) VARDATA_ANY(inetptr))->family)
 
 #define ip_bits(inetptr) \
-	(((inet_struct *)VARDATA(inetptr))->bits)
+	(((inet_struct *) VARDATA_ANY(inetptr))->bits)
 
 #define ip_addr(inetptr) \
-	(((inet_struct *)VARDATA(inetptr))->ipaddr)
+	(((inet_struct *) VARDATA_ANY(inetptr))->ipaddr)
 
 #define ip_maxbits(inetptr) \
 	(ip_family(inetptr) == PGSQL_AF_INET ? 32 : 128)
 
+#define SET_INET_VARSIZE(dst) \
+	SET_VARSIZE(dst, VARHDRSZ + offsetof(inet_struct, ipaddr) + \
+				ip_addrsize(dst))
+
+
 /*
- * Return the number of bytes of storage needed for this data type.
+ * Return the number of bytes of address storage needed for this data type.
  */
 static int
 ip_addrsize(inet *inetptr)
@@ -71,7 +86,7 @@ network_in(char *src, bool is_cidr)
 	int			bits;
 	inet	   *dst;
 
-	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(sizeof(inet));
 
 	/*
 	 * First, check to see if this is an IPv6 or IPv4 address.	IPv6 addresses
@@ -105,10 +120,8 @@ network_in(char *src, bool is_cidr)
 					 errdetail("Value has bits set to right of mask.")));
 	}
 
-	SET_VARSIZE(dst, VARHDRSZ +
-		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst));
 	ip_bits(dst) = bits;
+	SET_INET_VARSIZE(dst);
 
 	return dst;
 }
@@ -194,7 +207,7 @@ network_recv(StringInfo buf, bool is_cidr)
 				i;
 
 	/* make sure any unused bits in a CIDR value are zeroed */
-	addr = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+	addr = (inet *) palloc0(sizeof(inet));
 
 	ip_family(addr) = pq_getmsgbyte(buf);
 	if (ip_family(addr) != PGSQL_AF_INET &&
@@ -220,9 +233,6 @@ network_recv(StringInfo buf, bool is_cidr)
 		/* translator: %s is inet or cidr */
 				 errmsg("invalid length in external \"%s\" value",
 						is_cidr ? "cidr" : "inet")));
-	SET_VARSIZE(addr, VARHDRSZ +
-		((char *) ip_addr(addr) - (char *) VARDATA(addr)) +
-		ip_addrsize(addr));
 
 	addrptr = (char *) ip_addr(addr);
 	for (i = 0; i < nb; i++)
@@ -239,6 +249,8 @@ network_recv(StringInfo buf, bool is_cidr)
 					 errmsg("invalid external \"cidr\" value"),
 					 errdetail("Value has bits set to right of mask.")));
 	}
+
+	SET_INET_VARSIZE(addr);
 
 	return addr;
 }
@@ -348,8 +360,8 @@ inet_to_cidr(PG_FUNCTION_ARGS)
 		elog(ERROR, "invalid inet bit length: %d", bits);
 
 	/* clone the original data */
-	dst = (inet *) palloc(VARSIZE(src));
-	memcpy(dst, src, VARSIZE(src));
+	dst = (inet *) palloc(VARSIZE_ANY(src));
+	memcpy(dst, src, VARSIZE_ANY(src));
 
 	/* zero out any bits to the right of the netmask */
 	byte = bits / 8;
@@ -387,8 +399,8 @@ inet_set_masklen(PG_FUNCTION_ARGS)
 				 errmsg("invalid mask length: %d", bits)));
 
 	/* clone the original data */
-	dst = (inet *) palloc(VARSIZE(src));
-	memcpy(dst, src, VARSIZE(src));
+	dst = (inet *) palloc(VARSIZE_ANY(src));
+	memcpy(dst, src, VARSIZE_ANY(src));
 
 	ip_bits(dst) = bits;
 
@@ -414,8 +426,8 @@ cidr_set_masklen(PG_FUNCTION_ARGS)
 				 errmsg("invalid mask length: %d", bits)));
 
 	/* clone the original data */
-	dst = (inet *) palloc(VARSIZE(src));
-	memcpy(dst, src, VARSIZE(src));
+	dst = (inet *) palloc(VARSIZE_ANY(src));
+	memcpy(dst, src, VARSIZE_ANY(src));
 
 	ip_bits(dst) = bits;
 
@@ -546,7 +558,7 @@ hashinet(PG_FUNCTION_ARGS)
 	int			addrsize = ip_addrsize(addr);
 
 	/* XXX this assumes there are no pad bytes in the data structure */
-	return hash_any((unsigned char *) VARDATA(addr), addrsize + 2);
+	return hash_any((unsigned char *) VARDATA_ANY(addr), addrsize + 2);
 }
 
 /*
@@ -762,7 +774,7 @@ network_broadcast(PG_FUNCTION_ARGS)
 			   *b;
 
 	/* make sure any unused bits are zeroed */
-	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(sizeof(inet));
 
 	if (ip_family(ip) == PGSQL_AF_INET)
 		maxbytes = 4;
@@ -793,9 +805,7 @@ network_broadcast(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
-	SET_VARSIZE(dst, VARHDRSZ +
-		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst));
+	SET_INET_VARSIZE(dst);
 
 	PG_RETURN_INET_P(dst);
 }
@@ -812,7 +822,7 @@ network_network(PG_FUNCTION_ARGS)
 			   *b;
 
 	/* make sure any unused bits are zeroed */
-	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(sizeof(inet));
 
 	bits = ip_bits(ip);
 	a = ip_addr(ip);
@@ -838,9 +848,7 @@ network_network(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_bits(ip);
-	SET_VARSIZE(dst, VARHDRSZ +
-		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst));
+	SET_INET_VARSIZE(dst);
 
 	PG_RETURN_INET_P(dst);
 }
@@ -856,7 +864,7 @@ network_netmask(PG_FUNCTION_ARGS)
 	unsigned char *b;
 
 	/* make sure any unused bits are zeroed */
-	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(sizeof(inet));
 
 	bits = ip_bits(ip);
 	b = ip_addr(dst);
@@ -881,9 +889,7 @@ network_netmask(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_maxbits(ip);
-	SET_VARSIZE(dst, VARHDRSZ +
-		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst));
+	SET_INET_VARSIZE(dst);
 
 	PG_RETURN_INET_P(dst);
 }
@@ -900,7 +906,7 @@ network_hostmask(PG_FUNCTION_ARGS)
 	unsigned char *b;
 
 	/* make sure any unused bits are zeroed */
-	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(sizeof(inet));
 
 	if (ip_family(ip) == PGSQL_AF_INET)
 		maxbytes = 4;
@@ -930,9 +936,7 @@ network_hostmask(PG_FUNCTION_ARGS)
 
 	ip_family(dst) = ip_family(ip);
 	ip_bits(dst) = ip_maxbits(ip);
-	SET_VARSIZE(dst, VARHDRSZ +
-		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst));
+	SET_INET_VARSIZE(dst);
 
 	PG_RETURN_INET_P(dst);
 }
@@ -1259,7 +1263,7 @@ inetnot(PG_FUNCTION_ARGS)
 	inet	   *ip = PG_GETARG_INET_P(0);
 	inet	   *dst;
 
-	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(sizeof(inet));
 
 	{
 		int			nb = ip_addrsize(ip);
@@ -1272,9 +1276,7 @@ inetnot(PG_FUNCTION_ARGS)
 	ip_bits(dst) = ip_bits(ip);
 
 	ip_family(dst) = ip_family(ip);
-	SET_VARSIZE(dst, VARHDRSZ +
-		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst));
+	SET_INET_VARSIZE(dst);
 
 	PG_RETURN_INET_P(dst);
 }
@@ -1287,7 +1289,7 @@ inetand(PG_FUNCTION_ARGS)
 	inet	   *ip2 = PG_GETARG_INET_P(1);
 	inet	   *dst;
 
-	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(sizeof(inet));
 
 	if (ip_family(ip) != ip_family(ip2))
 		ereport(ERROR,
@@ -1306,9 +1308,7 @@ inetand(PG_FUNCTION_ARGS)
 	ip_bits(dst) = Max(ip_bits(ip), ip_bits(ip2));
 
 	ip_family(dst) = ip_family(ip);
-	SET_VARSIZE(dst, VARHDRSZ +
-		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst));
+	SET_INET_VARSIZE(dst);
 
 	PG_RETURN_INET_P(dst);
 }
@@ -1321,7 +1321,7 @@ inetor(PG_FUNCTION_ARGS)
 	inet	   *ip2 = PG_GETARG_INET_P(1);
 	inet	   *dst;
 
-	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(sizeof(inet));
 
 	if (ip_family(ip) != ip_family(ip2))
 		ereport(ERROR,
@@ -1340,9 +1340,7 @@ inetor(PG_FUNCTION_ARGS)
 	ip_bits(dst) = Max(ip_bits(ip), ip_bits(ip2));
 
 	ip_family(dst) = ip_family(ip);
-	SET_VARSIZE(dst, VARHDRSZ +
-		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst));
+	SET_INET_VARSIZE(dst);
 
 	PG_RETURN_INET_P(dst);
 }
@@ -1353,7 +1351,7 @@ internal_inetpl(inet *ip, int64 addend)
 {
 	inet	   *dst;
 
-	dst = (inet *) palloc0(VARHDRSZ + sizeof(inet_struct));
+	dst = (inet *) palloc0(sizeof(inet));
 
 	{
 		int			nb = ip_addrsize(ip);
@@ -1391,12 +1389,10 @@ internal_inetpl(inet *ip, int64 addend)
 					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 					 errmsg("result is out of range")));
 	}
-	ip_bits(dst) = ip_bits(ip);
 
+	ip_bits(dst) = ip_bits(ip);
 	ip_family(dst) = ip_family(ip);
-	SET_VARSIZE(dst, VARHDRSZ +
-		((char *) ip_addr(dst) - (char *) VARDATA(dst)) +
-		ip_addrsize(dst));
+	SET_INET_VARSIZE(dst);
 
 	return dst;
 }

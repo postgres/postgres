@@ -248,3 +248,20 @@ order by thousand, tenthous;
       999 |     9999
 (25 rows)
 
+-- Check some corner cases involving empty rowtypes
+select ROW();
+ row 
+-----
+ ()
+(1 row)
+
+select ROW() IS NULL;
+ ?column? 
+----------
+ t
+(1 row)
+
+select ROW() = ROW();
+ERROR:  cannot compare rows of zero length
+LINE 1: select ROW() = ROW();
+                     ^
