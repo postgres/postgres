@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.62 2007/03/13 09:06:35 mha Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.63 2007/04/06 08:49:44 ishii Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -188,12 +188,26 @@ getrand(int min, int max)
 	return min + (int) (((max - min) * (double) random()) / MAX_RANDOM_VALUE + 0.5);
 }
 
+/* call PQexec() and exit() on failure */
+static void
+executeStatement(PGconn *con, const char* sql)
+{
+	PGresult   *res;
+
+	res = PQexec(con, sql);
+	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "%s", PQerrorMessage(con));
+		exit(1);
+	}
+	PQclear(res);
+}
+
 /* set up a connection to the backend */
 static PGconn *
 doConnect(void)
 {
 	PGconn	   *con;
-	PGresult   *res;
 
 	con = PQsetdbLogin(pghost, pgport, pgoptions, pgtty, dbName,
 					   login, pwd);
@@ -216,13 +230,7 @@ doConnect(void)
 		return (NULL);
 	}
 
-	res = PQexec(con, "SET search_path = public");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "%s", PQerrorMessage(con));
-		exit(1);
-	}
-	PQclear(res);
+	executeStatement(con, "SET search_path = public");
 
 	return (con);
 }
@@ -720,18 +728,18 @@ init(void)
 	PGconn	   *con;
 	PGresult   *res;
 	static char *DDLs[] = {
-		"drop table branches",
+		"drop table if exists branches",
 		"create table branches(bid int not null,bbalance int,filler char(88))",
-		"drop table tellers",
+		"drop table if exists tellers",
 		"create table tellers(tid int not null,bid int,tbalance int,filler char(84))",
-		"drop table accounts",
+		"drop table if exists accounts",
 		"create table accounts(aid int not null,bid int,abalance int,filler char(84))",
-		"drop table history",
-	"create table history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"};
+		"drop table if exists history",
+		"create table history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"};
 	static char *DDLAFTERs[] = {
 		"alter table branches add primary key (bid)",
 		"alter table tellers add primary key (tid)",
-	"alter table accounts add primary key (aid)"};
+		"alter table accounts add primary key (aid)"};
 
 
 	char		sql[256];
@@ -741,76 +749,45 @@ init(void)
 	if ((con = doConnect()) == NULL)
 		exit(1);
 
-	for (i = 0; i < (sizeof(DDLs) / sizeof(char *)); i++)
-	{
-		res = PQexec(con, DDLs[i]);
-		if (strncmp(DDLs[i], "drop", 4) && PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "%s", PQerrorMessage(con));
-			exit(1);
-		}
-		PQclear(res);
-	}
+	for (i = 0; i < lengthof(DDLs); i++)
+		executeStatement(con, DDLs[i]);
 
-	res = PQexec(con, "begin");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "%s", PQerrorMessage(con));
-		exit(1);
-	}
-	PQclear(res);
+	executeStatement(con, "begin");
 
 	for (i = 0; i < nbranches * scale; i++)
 	{
 		snprintf(sql, 256, "insert into branches(bid,bbalance) values(%d,0)", i + 1);
-		res = PQexec(con, sql);
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "%s", PQerrorMessage(con));
-			exit(1);
-		}
-		PQclear(res);
+		executeStatement(con, sql);
 	}
 
 	for (i = 0; i < ntellers * scale; i++)
 	{
 		snprintf(sql, 256, "insert into tellers(tid,bid,tbalance) values (%d,%d,0)"
 				 ,i + 1, i / ntellers + 1);
-		res = PQexec(con, sql);
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "%s", PQerrorMessage(con));
-			exit(1);
-		}
-		PQclear(res);
+		executeStatement(con, sql);
 	}
 
-	res = PQexec(con, "end");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
+	executeStatement(con, "commit");
+
+	/*
+	 * fill the accounts table with some data
+	 */
+	fprintf(stderr, "creating tables...\n");
+
+	executeStatement(con, "begin");
+	executeStatement(con, "truncate accounts");
+
+	res = PQexec(con, "copy accounts from stdin");
+	if (PQresultStatus(res) != PGRES_COPY_IN)
 	{
 		fprintf(stderr, "%s", PQerrorMessage(con));
 		exit(1);
 	}
 	PQclear(res);
 
-	/*
-	 * occupy accounts table with some data
-	 */
-	fprintf(stderr, "creating tables...\n");
 	for (i = 0; i < naccounts * scale; i++)
 	{
 		int			j = i + 1;
-
-		if (j % 10000 == 1)
-		{
-			res = PQexec(con, "copy accounts from stdin");
-			if (PQresultStatus(res) != PGRES_COPY_IN)
-			{
-				fprintf(stderr, "%s", PQerrorMessage(con));
-				exit(1);
-			}
-			PQclear(res);
-		}
 
 		snprintf(sql, 256, "%d\t%d\t%d\t\n", j, i / naccounts + 1, 0);
 		if (PQputline(con, sql))
@@ -820,62 +797,32 @@ init(void)
 		}
 
 		if (j % 10000 == 0)
-		{
-			/*
-			 * every 10000 tuples, we commit the copy command. this should
-			 * avoid generating too much WAL logs
-			 */
 			fprintf(stderr, "%d tuples done.\n", j);
-			if (PQputline(con, "\\.\n"))
-			{
-				fprintf(stderr, "very last PQputline failed\n");
-				exit(1);
-			}
-
-			if (PQendcopy(con))
-			{
-				fprintf(stderr, "PQendcopy failed\n");
-				exit(1);
-			}
-
-#ifdef NOT_USED
-
-			/*
-			 * do a checkpoint to purge the old WAL logs
-			 */
-			res = PQexec(con, "checkpoint");
-			if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			{
-				fprintf(stderr, "%s", PQerrorMessage(con));
-				exit(1);
-			}
-			PQclear(res);
-#endif   /* NOT_USED */
-		}
 	}
-	fprintf(stderr, "set primary key...\n");
-	for (i = 0; i < (sizeof(DDLAFTERs) / sizeof(char *)); i++)
+	if (PQputline(con, "\\.\n"))
 	{
-		res = PQexec(con, DDLAFTERs[i]);
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "%s", PQerrorMessage(con));
-			exit(1);
-		}
-		PQclear(res);
+		fprintf(stderr, "very last PQputline failed\n");
+		exit(1);
 	}
+	if (PQendcopy(con))
+	{
+		fprintf(stderr, "PQendcopy failed\n");
+		exit(1);
+	}
+	executeStatement(con, "commit");
+
+	/*
+	 * create indexes
+	 */
+	fprintf(stderr, "set primary key...\n");
+	for (i = 0; i < lengthof(DDLAFTERs); i++)
+		executeStatement(con, DDLAFTERs[i]);
 
 	/* vacuum */
 	fprintf(stderr, "vacuum...");
-	res = PQexec(con, "vacuum analyze");
-	if (PQresultStatus(res) != PGRES_COMMAND_OK)
-	{
-		fprintf(stderr, "%s", PQerrorMessage(con));
-		exit(1);
-	}
-	PQclear(res);
-	fprintf(stderr, "done.\n");
+	executeStatement(con, "vacuum analyze");
 
+	fprintf(stderr, "done.\n");
 	PQfinish(con);
 }
 
@@ -1155,7 +1102,7 @@ main(int argc, char **argv)
 	int			c;
 	int			is_init_mode = 0;		/* initialize mode? */
 	int			is_no_vacuum = 0;		/* no vacuum at all before testing? */
-	int			is_full_vacuum = 0;		/* do full vacuum before testing? */
+	int			do_vacuum_accounts = 0;	/* do vacuum accounts before testing? */
 	int			debug = 0;		/* debug flag */
 	int			ttype = 0;		/* transaction type. 0: TPC-B, 1: SELECT only,
 								 * 2: skip update of branches and tellers */
@@ -1219,7 +1166,7 @@ main(int argc, char **argv)
 				is_no_vacuum++;
 				break;
 			case 'v':
-				is_full_vacuum++;
+				do_vacuum_accounts++;
 				break;
 			case 'p':
 				pgport = optarg;
@@ -1456,49 +1403,16 @@ main(int argc, char **argv)
 	if (!is_no_vacuum)
 	{
 		fprintf(stderr, "starting vacuum...");
-		res = PQexec(con, "vacuum branches");
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "%s", PQerrorMessage(con));
-			exit(1);
-		}
-		PQclear(res);
-
-		res = PQexec(con, "vacuum tellers");
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "%s", PQerrorMessage(con));
-			exit(1);
-		}
-		PQclear(res);
-
-		res = PQexec(con, "delete from history");
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "%s", PQerrorMessage(con));
-			exit(1);
-		}
-		PQclear(res);
-		res = PQexec(con, "vacuum history");
-		if (PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			fprintf(stderr, "%s", PQerrorMessage(con));
-			exit(1);
-		}
-		PQclear(res);
-
+		executeStatement(con, "vacuum branches");
+		executeStatement(con, "vacuum tellers");
+		executeStatement(con, "delete from history");
+		executeStatement(con, "vacuum history");
 		fprintf(stderr, "end.\n");
 
-		if (is_full_vacuum)
+		if (do_vacuum_accounts)
 		{
-			fprintf(stderr, "starting full vacuum...");
-			res = PQexec(con, "vacuum analyze accounts");
-			if (PQresultStatus(res) != PGRES_COMMAND_OK)
-			{
-				fprintf(stderr, "%s", PQerrorMessage(con));
-				exit(1);
-			}
-			PQclear(res);
+			fprintf(stderr, "starting vacuum accounts...");
+			executeStatement(con, "vacuum analyze accounts");
 			fprintf(stderr, "end.\n");
 		}
 	}

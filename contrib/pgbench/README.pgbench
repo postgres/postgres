@@ -1,4 +1,6 @@
-pgbench README		2006/10/21 Tatsuo Ishii
+$PostgreSQL: pgsql/contrib/pgbench/README.pgbench,v 1.16 2007/04/06 08:49:44 ishii Exp $
+
+pgbench README
 
 o What is pgbench?
 
@@ -233,54 +235,7 @@ o License?
 
 Basically it is same as BSD license. See pgbench.c for more details.
 
-o History
-
-2006/10/21
-	* more fix with handling default scaling factor in the default
-          scenarios
-
-2006/09/14
-	* change "tps" to "scale" to avoid confusion
-
-	* fix bug with handling default scaling factor in the default
-          scenarios
-
-2006/07/26
-	* New features contributed by Tomoaki Sato.
-
-	* predefined variable "tps"
-	    The value of variable tps is taken from the scaling factor
-	    specified by -s option.
-        * -D option
-	   Variable values can be defined by -D option.
-	* \set command now allows arithmetic calculations.
-
-2005/09/29
-	* add -f option. contributed by Tomoaki Sato.
-
-[updation records were missing]
-
-2003/11/26
-	* create indexes after data insertion to reduce time.
-	  patch from Yutaka Tanida.
-
-2003/06/10
-	* fix uninitialized memory bug
-	* add support for PGHOST, PGPORT, PGUSER environment variables
-
-2002/07/20
-	* patch contributed by Neil Conway.
-	* code/document clean up and add -l option.
-
-2002/02/24
-	* do not CHECKPOINT anymore while initializing benchmark
-	* database. Add -N option.
-
-2001/10/24
-	* "time"->"mtime"
-
-2001/09/09
-	* Add -U, -P, -C options
+o History before contributed to PostgreSQL
 
 2000/1/15 pgbench-1.2 contributed to PostgreSQL
 	* Add -v option
