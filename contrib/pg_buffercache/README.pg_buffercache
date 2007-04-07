@@ -40,7 +40,7 @@ Notes
    reldatabase    | pg_database.oid      | Database for the relation.
    relblocknumber |                      | Offset of the page in the relation.
    isdirty        |                      | Is the page dirty?
-
+   usagecount     |                      | Page LRU count
 
   There is one row for each buffer in the shared cache. Unused buffers are
   shown with all fields null except bufferid.
@@ -60,20 +60,22 @@ Sample output
 
   regression=# \d pg_buffercache;
        View "public.pg_buffercache"
-       Column     |  Type   | Modifiers
-  ----------------+---------+-----------
-   bufferid       | integer |
-   relfilenode    | oid     |
-   reltablespace  | oid     |
-   reldatabase    | oid     |
-   relblocknumber | bigint  |
-   isdirty        | boolean |
+       Column     |  Type    | Modifiers
+  ----------------+----------+-----------
+   bufferid       | integer  |
+   relfilenode    | oid      |
+   reltablespace  | oid      |
+   reldatabase    | oid      |
+   relblocknumber | bigint   |
+   isdirty        | boolean  |
+   usagecount     | smallint |
+
   View definition:
    SELECT p.bufferid, p.relfilenode, p.reltablespace, p.reldatabase, 
-          p.relblocknumber, p.isdirty
+          p.relblocknumber, p.isdirty, p.usagecount
      FROM pg_buffercache_pages() p(bufferid integer, relfilenode oid, 
      reltablespace oid, reldatabase oid, relblocknumber bigint, 
-     isdirty boolean);
+     isdirty boolean, usagecount smallint);
 
   regression=# SELECT c.relname, count(*) AS buffers
                FROM pg_class c INNER JOIN pg_buffercache b
