@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Wed Apr  4 22:08:46 EDT 2007
+Last updated:           Fri Apr  6 22:48:08 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1273,14 +1273,7 @@ first.  There is also a developer's wiki at<br/>
   </li><li>-<em>Merge xmin/xmax/cmin/cmax back into three header fields</em>
   </li><li>Consider ways of storing rows more compactly on disk
   <ul>
-    <li>Support a smaller header for short variable-length fields?
-<p>          One idea is to create zero-or-one-byte-header versions 
-          of varlena data types.  In involves setting the high-bit and 
-          0-127 length in the single-byte header, or clear the high bit
-          and store the 7-bit ASCII value in the rest of the byte.
-          The small-header versions have no alignment requirements.
-          <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg01372.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg01372.php</a>
-</p>
+    <li>-<em>Support a smaller header for short variable-length fields</em>
     </li><li>Reduce the row header size?
     </li><li>Consider reducing on-disk varlena length from four to two
           because a heap row cannot be more than 64k in length
