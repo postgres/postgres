@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.376 2007/04/07 03:34:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.377 2007/04/07 03:58:08 neilc Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11359,9 +11359,10 @@ postgres=# select pg_start_backup('label_goes_here');
 
    <para>
     <function>pg_current_xlog_location</> displays the current transaction log write
-    location in the same format used by the above functions.  Similarly
+    location in the same format used by the above functions.  Similarly,
     <function>pg_current_xlog_insert_location</> displays the current transaction log
-    insertion point.  The insertion point is the <quote>logical</> end of transaction log
+    insertion point.  The insertion point is the <quote>logical</> end
+    of the transaction log
     at any instant, while the write location is the end of what has actually
     been written out from the server's internal buffers.  The write location
     is the end of what can be examined from outside the server, and is usually
@@ -11383,7 +11384,7 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
 (1 row)
 </programlisting>
     Similarly, <function>pg_xlogfile_name</> extracts just the transaction log file name.
-    When the given transction log location is exactly at an transaction log file boundary, both
+    When the given transaction log location is exactly at a transaction log file boundary, both
     these functions return the name of the preceding transaction log file.
     This is usually the desired behavior for managing transaction log archiving
     behavior, since the preceding file is the last one that currently
