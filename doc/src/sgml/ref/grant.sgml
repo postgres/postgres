@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.64 2007/02/01 00:28:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.65 2007/04/07 03:48:25 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -520,14 +520,8 @@ GRANT admins TO joe;
    </para>
 
    <para>
-    The SQL standard allows setting privileges for individual columns
-    within a table:
-
-<synopsis>
-GRANT <replaceable class="PARAMETER">privileges</replaceable>
-    ON <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ] [, ...]
-    TO { PUBLIC | <replaceable class="PARAMETER">username</replaceable> [, ...] } [ WITH GRANT OPTION ]
-</synopsis>
+    <productname>PostgreSQL</productname> does not support the SQL-standard 
+    functionality of setting privileges for individual columns.
    </para>
 
    <para>
