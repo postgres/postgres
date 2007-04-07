@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.22 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.23 2007/04/07 17:12:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -31,7 +31,9 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
    <command>TRUNCATE</command> quickly removes all rows from a set of
    tables. It has the same effect as an unqualified
    <command>DELETE</command> on each table, but since it does not actually
-   scan the tables it is faster. This is most useful on large tables.
+   scan the tables it is faster; furthermore it reclaims disk space
+   immediately, rather than requiring a subsequent vacuum operation.
+   This is most useful on large tables.
   </para>
  </refsect1>
   
@@ -91,6 +93,27 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
   <para>
    <command>TRUNCATE</> will not run any user-defined <literal>ON
    DELETE</literal> triggers that might exist for the tables.
+  </para>
+
+  <para>
+   <command>TRUNCATE</> is not MVCC-safe (see <xref linkend="mvcc">
+   for general information about MVCC).  After truncation, the table
+   will appear empty to all concurrent transactions, even if they are
+   using a snapshot taken before the truncation occurred.  This will
+   only be an issue for a transaction that did not touch the table
+   before the truncation started &mdash; any transaction that has done
+   so would hold at least <literal>ACCESS SHARE</literal> lock,
+   which would block
+   <command>TRUNCATE</> until that transaction completes.  So
+   truncation will not cause any apparent inconsistency in the table
+   contents for successive queries on the same table, but it could
+   cause visible inconsistency between the contents of the
+   truncated table and other tables.
+  </para>
+
+  <para>
+   <command>TRUNCATE</> is transaction-safe, however: the truncation
+   will roll back if the surrounding transaction does not commit.
   </para>
  </refsect1>
 
