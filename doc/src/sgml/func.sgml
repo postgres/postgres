@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.375 2007/04/05 01:46:27 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.376 2007/04/07 03:34:36 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -280,7 +280,7 @@
     the <acronym>CPU</acronym> cycles required to rewrite the first one
     into the second one internally.
     <indexterm>
-     <primary>BETWEEN SYMETRIC</primary>
+     <primary>BETWEEN SYMMETRIC</primary>
     </indexterm>
     <token>BETWEEN SYMMETRIC</> is the same as <literal>BETWEEN</>
     except there is no requirement that the argument to the left of <literal>AND</> be less than
