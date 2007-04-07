@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.43 2007/04/07 03:48:25 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/revoke.sgml,v 1.44 2007/04/07 04:04:56 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -232,7 +232,7 @@ REVOKE admins FROM joe;
    <para>
     The compatibility notes of the <xref linkend="sql-grant" endterm="sql-grant-title"> command
     apply analogously to <command>REVOKE</command>.
-    <literal>RESTRICT</literal> or <literal>CASCADE</literal>
+    They keyword <literal>RESTRICT</literal> or <literal>CASCADE</literal>
     is required according to the standard, but <productname>PostgreSQL</>
     assumes <literal>RESTRICT</literal> by default.
    </para>
