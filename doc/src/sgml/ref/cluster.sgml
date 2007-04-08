@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.41 2007/04/08 00:26:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.42 2007/04/08 02:07:35 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CLUSTER <replaceable class="PARAMETER">tablename</replaceable> [ USING <replaceable class="PARAMETER">indexname</replaceable> ]
+CLUSTER <replaceable class="PARAMETER">tablename</replaceable> <optional> USING <replaceable class="PARAMETER">indexname</replaceable> </optional>
 CLUSTER
 </synopsis>
  </refsynopsisdiv>
@@ -43,22 +43,24 @@ CLUSTER
    based on the index information. Clustering is a one-time operation:
    when the table is subsequently updated, the changes are
    not clustered.  That is, no attempt is made to store new or
-   updated rows according to their index order.  If one wishes, one can
-   periodically recluster by issuing the command again.
+   updated rows according to their index order.  (If one wishes, one can
+   periodically recluster by issuing the command again.  Also, setting
+   the table's FILLFACTOR storage parameter to less than 100% can aid
+   in preserving cluster ordering during updates, since updated rows
+   are preferentially kept on the same page.)
   </para>
 
   <para>
    When a table is clustered, <productname>PostgreSQL</productname>
-   remembers on which index it was clustered.  The form
+   remembers which index it was clustered by.  The form
    <command>CLUSTER <replaceable class="parameter">tablename</replaceable></command>
-   reclusters the table on the same index that it was clustered before.
+   reclusters the table using the same index as before.
   </para>
 
   <para>
-   <command>CLUSTER</command> without any parameter reclusters all the tables
-   in the
-   current database that the calling user owns, or all tables if called
-   by a superuser.  (Never-clustered tables are not included.)  This
+   <command>CLUSTER</command> without any parameter reclusters all the
+   previously-clustered tables in the current database that the calling user
+   owns, or all such tables if called by a superuser.  This
    form of <command>CLUSTER</command> cannot be executed inside a transaction
    block.
   </para>
@@ -197,12 +199,16 @@ CLUSTER;
   <title>Compatibility</title>
 
   <para>
-   The syntax:
+   There is no <command>CLUSTER</command> statement in the SQL standard.
+  </para>
+
+  <para>
+   The syntax
 <synopsis>
 CLUSTER <replaceable class="PARAMETER">indexname</replaceable> ON <replaceable class="PARAMETER">tablename</replaceable>
 </synopsis>
-  is also supported for compatibility with pre-8.3 <productname>PostgreSQL</> installations.
-  There is no <command>CLUSTER</command> statement in the SQL standard.
+  is also supported for compatibility with pre-8.3 <productname>PostgreSQL</>
+  versions.
   </para>
  </refsect1>
 
