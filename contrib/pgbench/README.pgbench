@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/pgbench/README.pgbench,v 1.17 2007/04/06 09:16:15 ishii Exp $
+$PostgreSQL: pgsql/contrib/pgbench/README.pgbench,v 1.18 2007/04/08 01:15:07 ishii Exp $
 
 pgbench README
 
@@ -57,8 +57,9 @@ o How to use pgbench?
 	accounts	100000
 	history		0
 
-	You can increase the number of tuples by using -s option. See
-	below.
+	You can increase the number of tuples by using -s option. branches,
+	tellers and accounts tables are created with a fillfactor which is
+	set using -F option. See below.
 
   (2) Run the benchmark test
 
@@ -162,6 +163,12 @@ o options
 		0 201 2513 0 1175850569 608
 		0 202 2038 0 1175850569 2663
 
+	-F fillfactor
+
+		Create tables(accounts, tellers and branches) with the given
+		fillfactor. Default is 100.  This should be used with -i
+		(initialize) option.
+		
 	-d
 		debug option.
 

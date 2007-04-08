@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.64 2007/04/06 09:16:16 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.65 2007/04/08 01:15:07 ishii Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -63,6 +63,12 @@ int			nxacts = 10;		/* default number of transactions per clients */
  * accounts table.
  */
 int			scale = 1;
+
+/*
+ * fillfactor. for example, fillfactor = 90 will use only 90 percent
+ * space during inserts and leave 10 percent free.
+ */
+int			fillfactor = 100;
 
 /*
  * end of configurable parameters
@@ -178,7 +184,7 @@ static void
 usage(void)
 {
 	fprintf(stderr, "usage: pgbench [-h hostname][-p port][-c nclients][-t ntransactions][-s scaling_factor][-D varname=value][-n][-C][-v][-S][-N][-f filename][-l][-U login][-P password][-d][dbname]\n");
-	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor][-U login][-P password][-d][dbname]\n");
+	fprintf(stderr, "(initialize mode): pgbench -i [-h hostname][-p port][-s scaling_factor] [-F fillfactor] [-U login][-P password][-d][dbname]\n");
 }
 
 /* random number generator */
@@ -730,11 +736,11 @@ init(void)
 	PGresult   *res;
 	static char *DDLs[] = {
 		"drop table if exists branches",
-		"create table branches(bid int not null,bbalance int,filler char(88))",
+		"create table branches(bid int not null,bbalance int,filler char(88)) with (fillfactor=%d)",
 		"drop table if exists tellers",
-		"create table tellers(tid int not null,bid int,tbalance int,filler char(84))",
+		"create table tellers(tid int not null,bid int,tbalance int,filler char(84)) with (fillfactor=%d)",
 		"drop table if exists accounts",
-		"create table accounts(aid int not null,bid int,abalance int,filler char(84))",
+		"create table accounts(aid int not null,bid int,abalance int,filler char(84)) with (fillfactor=%d)",
 		"drop table if exists history",
 		"create table history(tid int,bid int,aid int,delta int,mtime timestamp,filler char(22))"};
 	static char *DDLAFTERs[] = {
@@ -751,7 +757,22 @@ init(void)
 		exit(1);
 
 	for (i = 0; i < lengthof(DDLs); i++)
-		executeStatement(con, DDLs[i]);
+	{
+		/*
+		 * set fillfactor for branches, tellers and accounts tables
+		 */
+		if ((strstr(DDLs[i], "create table branches") == DDLs[i]) ||
+			(strstr(DDLs[i], "create table tellers") == DDLs[i]) ||
+			(strstr(DDLs[i], "create table accounts") == DDLs[i]))
+		{
+			char ddl_stmt[128];
+			snprintf(ddl_stmt, 128, DDLs[i], fillfactor);
+			executeStatement(con, ddl_stmt);
+			continue;
+		}
+		else
+			executeStatement(con, DDLs[i]);
+	}
 
 	executeStatement(con, "begin");
 
@@ -1153,7 +1174,7 @@ main(int argc, char **argv)
 
 	memset(state, 0, sizeof(*state));
 
-	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CNSlf:D:")) != -1)
+	while ((c = getopt(argc, argv, "ih:nvp:dc:t:s:U:P:CNSlf:D:F:")) != -1)
 	{
 		switch (c)
 		{
@@ -1256,6 +1277,14 @@ main(int argc, char **argv)
 						fprintf(stderr, "Couldn't allocate memory for variable\n");
 						exit(1);
 					}
+				}
+				break;
+			case 'F':
+				fillfactor = atoi(optarg);
+				if ((fillfactor < 10) || (fillfactor > 100))
+				{
+					fprintf(stderr, "invalid fillfactor: %d\n", fillfactor);
+					exit(1);
 				}
 				break;
 			default:

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/pgbench/README.pgbench_jis,v 1.18 2007/04/06 09:16:16 ishii Exp $
+$PostgreSQL: pgsql/contrib/pgbench/README.pgbench_jis,v 1.19 2007/04/08 01:15:07 ishii Exp $
 
 pgbench README
 
@@ -154,6 +154,11 @@ pgbench にはいろいろなオプションがあります．
 		0 200 2465 0 1175850568 998079
 		0 201 2513 0 1175850569 608
 		0 202 2038 0 1175850569 2663
+
+-F フィルファクター
+		accounts, tellers, bracnhesテーブルを作成する際に指定されたフィ
+		ルファクターを使用します．フィルファクターのデフォルトは100で
+		す．このオプションは -i オプションと同時に使用します．
 
 -d		デバッグオプション．様々な情報が表示されます．
 
