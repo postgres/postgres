@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.160 2007/03/26 16:58:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.161 2007/04/08 00:26:34 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -822,11 +822,9 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_COLUMNALTER);
 	}
-	else if (pg_strcasecmp(prev3_wd, "TABLE") == 0 &&
-			 pg_strcasecmp(prev_wd, "CLUSTER") == 0)
+	else if (pg_strcasecmp(prev3_wd, "TABLE") == 0)
 		COMPLETE_WITH_CONST("ON");
 	else if (pg_strcasecmp(prev4_wd, "TABLE") == 0 &&
-			 pg_strcasecmp(prev2_wd, "CLUSTER") == 0 &&
 			 pg_strcasecmp(prev_wd, "ON") == 0)
 	{
 		completion_info_charp = prev3_wd;
@@ -929,24 +927,25 @@ psql_completion(char *text, int start, int end)
 
 	/*
 	 * If the previous word is CLUSTER and not without produce list of
-	 * indexes.
+	 * tables
 	 */
 	else if (pg_strcasecmp(prev_wd, "CLUSTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "WITHOUT") != 0)
-		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_indexes, NULL);
-	/* If we have CLUSTER <sth>, then add "ON" */
+		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
+	/* If we have CLUSTER <sth>, then add "USING" */
 	else if (pg_strcasecmp(prev2_wd, "CLUSTER") == 0 &&
-			 pg_strcasecmp(prev_wd, "ON") != 0)
-		COMPLETE_WITH_CONST("ON");
+			 pg_strcasecmp(prev_wd, "ON") != 0) {
+		COMPLETE_WITH_CONST("USING");
+	}
 
 	/*
-	 * If we have CLUSTER <sth> ON, then add the correct tablename as well.
+	 * If we have CLUSTER <sth> ORDER BY, then add the index as well.
 	 */
 	else if (pg_strcasecmp(prev3_wd, "CLUSTER") == 0 &&
-			 pg_strcasecmp(prev_wd, "ON") == 0)
+			 pg_strcasecmp(prev_wd, "USING") == 0)
 	{
 		completion_info_charp = prev2_wd;
-		COMPLETE_WITH_QUERY(Query_for_table_owning_index);
+		COMPLETE_WITH_QUERY(Query_for_index_of_table);
 	}
 
 /* COMMENT */

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.40 2007/02/01 00:28:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.41 2007/04/08 00:26:33 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -20,8 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CLUSTER <replaceable class="PARAMETER">indexname</replaceable> ON <replaceable class="PARAMETER">tablename</replaceable>
-CLUSTER <replaceable class="PARAMETER">tablename</replaceable>
+CLUSTER <replaceable class="PARAMETER">tablename</replaceable> [ USING <replaceable class="PARAMETER">indexname</replaceable> ]
 CLUSTER
 </synopsis>
  </refsynopsisdiv>
@@ -77,19 +76,19 @@ CLUSTER
 
   <variablelist>
    <varlistentry>
-    <term><replaceable class="PARAMETER">indexname</replaceable></term>
+    <term><replaceable class="PARAMETER">tablename</replaceable></term>
     <listitem>
      <para>
-      The name of an index.
+      The name (possibly schema-qualified) of a table.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="PARAMETER">tablename</replaceable></term>
+    <term><replaceable class="PARAMETER">indexname</replaceable></term>
     <listitem>
      <para>
-      The name (possibly schema-qualified) of a table.
+      The name of an index.
      </para>
     </listitem>
    </varlistentry>
@@ -172,9 +171,9 @@ CREATE TABLE <replaceable class="parameter">newtable</replaceable> AS
 
   <para>
    Cluster the table <literal>employees</literal> on the basis of
-   its index <literal>emp_ind</literal>:
+   its index <literal>employees_ind</literal>:
 <programlisting>
-CLUSTER emp_ind ON emp;
+CLUSTER employees USING employees_ind;
 </programlisting>
   </para>
 
@@ -182,7 +181,7 @@ CLUSTER emp_ind ON emp;
    Cluster the <literal>employees</literal> table using the same
    index that was used before:
 <programlisting>
-CLUSTER emp;
+CLUSTER employees;
 </programlisting>
   </para>
 
@@ -198,7 +197,12 @@ CLUSTER;
   <title>Compatibility</title>
 
   <para>
-   There is no <command>CLUSTER</command> statement in the SQL standard.
+   The syntax:
+<synopsis>
+CLUSTER <replaceable class="PARAMETER">indexname</replaceable> ON <replaceable class="PARAMETER">tablename</replaceable>
+</synopsis>
+  is also supported for compatibility with pre-8.3 <productname>PostgreSQL</> installations.
+  There is no <command>CLUSTER</command> statement in the SQL standard.
   </para>
  </refsect1>
 

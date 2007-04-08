@@ -122,7 +122,7 @@ INSERT INTO clstr_3 VALUES (1);
 CLUSTER clstr_2;
 
 CLUSTER clstr_1_pkey ON clstr_1;
-CLUSTER clstr_2_pkey ON clstr_2;
+CLUSTER clstr_2 USING clstr_2_pkey;
 SELECT * FROM clstr_1 UNION ALL
   SELECT * FROM clstr_2 UNION ALL
   SELECT * FROM clstr_3;
