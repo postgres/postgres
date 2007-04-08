@@ -153,8 +153,42 @@ INSERT INTO clstr_1 VALUES (1);
 CLUSTER clstr_1;
 SELECT * FROM clstr_1;
 
+-- Test MVCC-safety of cluster. There isn't much we can do to verify the
+-- results with a single backend...
+
+CREATE TABLE clustertest (key int PRIMARY KEY);
+
+INSERT INTO clustertest VALUES (10);
+INSERT INTO clustertest VALUES (20);
+INSERT INTO clustertest VALUES (30);
+INSERT INTO clustertest VALUES (40);
+INSERT INTO clustertest VALUES (50);
+
+-- Use a transaction so that updates are not committed when CLUSTER sees 'em
+BEGIN;
+
+-- Test update where the old row version is found first in the scan
+UPDATE clustertest SET key = 100 WHERE key = 10;
+
+-- Test update where the new row version is found first in the scan
+UPDATE clustertest SET key = 35 WHERE key = 40;
+
+-- Test longer update chain 
+UPDATE clustertest SET key = 60 WHERE key = 50;
+UPDATE clustertest SET key = 70 WHERE key = 60;
+UPDATE clustertest SET key = 80 WHERE key = 70;
+
+SELECT * FROM clustertest;
+CLUSTER clustertest_pkey ON clustertest;
+SELECT * FROM clustertest;
+
+COMMIT;
+
+SELECT * FROM clustertest;
+
 -- clean up
 \c -
+DROP TABLE clustertest;
 DROP TABLE clstr_1;
 DROP TABLE clstr_2;
 DROP TABLE clstr_3;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.231 2007/04/03 04:14:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.232 2007/04/08 01:26:27 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -3297,6 +3297,51 @@ log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from,
 			  Buffer newbuf, HeapTuple newtup)
 {
 	return log_heap_update(reln, oldbuf, from, newbuf, newtup, true);
+}
+
+/*
+ * Perform XLogInsert of a HEAP_NEWPAGE record to WAL. Caller is responsible
+ * for writing the page to disk after calling this routine.
+ *
+ * Note: all current callers build pages in private memory and write them
+ * directly to smgr, rather than using bufmgr.  Therefore there is no need
+ * to pass a buffer ID to XLogInsert, nor to perform MarkBufferDirty within
+ * the critical section.
+ *
+ * Note: the NEWPAGE log record is used for both heaps and indexes, so do
+ * not do anything that assumes we are touching a heap.
+ */
+XLogRecPtr
+log_newpage(RelFileNode *rnode, BlockNumber blkno, Page page)
+{
+	xl_heap_newpage xlrec;
+	XLogRecPtr	recptr;
+	XLogRecData rdata[2];
+
+	/* NO ELOG(ERROR) from here till newpage op is logged */
+	START_CRIT_SECTION();
+
+	xlrec.node = *rnode;
+	xlrec.blkno = blkno;
+
+	rdata[0].data = (char *) &xlrec;
+	rdata[0].len = SizeOfHeapNewpage;
+	rdata[0].buffer = InvalidBuffer;
+	rdata[0].next = &(rdata[1]);
+
+	rdata[1].data = (char *) page;
+	rdata[1].len = BLCKSZ;
+	rdata[1].buffer = InvalidBuffer;
+	rdata[1].next = NULL;
+
+	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
+
+	PageSetLSN(page, recptr);
+	PageSetTLI(page, ThisTimeLineID);
+
+	END_CRIT_SECTION();
+
+	return recptr;
 }
 
 static void
