@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.84 2007/04/06 22:33:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.85 2007/04/09 22:04:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1263,11 +1263,13 @@ _bt_start_vacuum(Relation rel)
 
 	LWLockAcquire(BtreeVacuumLock, LW_EXCLUSIVE);
 
-	/* Assign the next cycle ID, being careful to avoid zero */
-	do
-	{
-		result = ++(btvacinfo->cycle_ctr);
-	} while (result == 0);
+	/*
+	 * Assign the next cycle ID, being careful to avoid zero as well as
+	 * the reserved high values.
+	 */
+	result = ++(btvacinfo->cycle_ctr);
+	if (result == 0 || result > MAX_BT_CYCLE_ID)
+		result = btvacinfo->cycle_ctr = 1;
 
 	/* Let's just make sure there's no entry already for this index */
 	for (i = 0; i < btvacinfo->num_vacuums; i++)

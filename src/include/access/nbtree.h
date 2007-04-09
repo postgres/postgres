@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.111 2007/02/08 05:05:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/nbtree.h,v 1.112 2007/04/09 22:04:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,8 @@ typedef uint16 BTCycleId;
  *	stored into both halves of the split page.	(If VACUUM is not running,
  *	both pages receive zero cycleids.)	This allows VACUUM to detect whether
  *	a page was split since it started, with a small probability of false match
- *	if the page was last split some exact multiple of 65536 VACUUMs ago.
- *	Also, during a split, the BTP_SPLIT_END flag is cleared in the left
+ *	if the page was last split some exact multiple of MAX_BT_CYCLE_ID VACUUMs
+ *	ago.  Also, during a split, the BTP_SPLIT_END flag is cleared in the left
  *	(original) page, and set in the right page, but only if the next page
  *	to its right has a different cycleid.
  *
@@ -72,6 +72,15 @@ typedef BTPageOpaqueData *BTPageOpaque;
 #define BTP_HALF_DEAD	(1 << 4)	/* empty, but still in tree */
 #define BTP_SPLIT_END	(1 << 5)	/* rightmost page of split group */
 #define BTP_HAS_GARBAGE (1 << 6)	/* page has LP_DELETEd tuples */
+
+/*
+ * The max allowed value of a cycle ID is a bit less than 64K.  This is
+ * for convenience of pg_filedump and similar utilities: we want to use
+ * the last 2 bytes of special space as an index type indicator, and
+ * restricting cycle ID lets btree use that space for vacuum cycle IDs
+ * while still allowing index type to be identified.
+ */
+#define MAX_BT_CYCLE_ID		0xFF7F
 
 
 /*

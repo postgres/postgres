@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.21 2007/01/05 22:19:22 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.22 2007/04/09 22:03:57 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -559,10 +559,11 @@ GISTInitBuffer(Buffer b, uint32 f)
 	PageInit(page, pageSize, sizeof(GISTPageOpaqueData));
 
 	opaque = GistPageGetOpaque(page);
-	opaque->flags = f;
-	opaque->rightlink = InvalidBlockNumber;
 	/* page was already zeroed by PageInit, so this is not needed: */
 	/* memset(&(opaque->nsn), 0, sizeof(GistNSN)); */
+	opaque->rightlink = InvalidBlockNumber;
+	opaque->flags = f;
+	opaque->gist_page_id = GIST_PAGE_ID;
 }
 
 /*

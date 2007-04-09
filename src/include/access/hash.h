@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.77 2007/04/02 03:49:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.78 2007/04/09 22:04:05 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -56,20 +56,18 @@ typedef struct HashPageOpaqueData
 	BlockNumber hasho_nextblkno;	/* next ovfl blkno */
 	Bucket		hasho_bucket;	/* bucket number this pg belongs to */
 	uint16		hasho_flag;		/* page type code, see above */
-	uint16		hasho_filler;	/* available for future use */
-
-	/*
-	 * We presently set hasho_filler to HASHO_FILL (0x1234); this is for the
-	 * convenience of pg_filedump, which otherwise would have a hard time
-	 * telling HashPageOpaqueData from BTPageOpaqueData.  If we ever need that
-	 * space for some other purpose, pg_filedump will have to find another
-	 * way.
-	 */
+	uint16		hasho_page_id;	/* for identification of hash indexes */
 } HashPageOpaqueData;
 
 typedef HashPageOpaqueData *HashPageOpaque;
 
-#define HASHO_FILL		0x1234
+/*
+ * The page ID is for the convenience of pg_filedump and similar utilities,
+ * which otherwise would have a hard time telling pages of different index
+ * types apart.  It should be the last 2 bytes on the page.  This is more or
+ * less "free" due to alignment considerations.
+ */
+#define HASHO_PAGE_ID		0xFF80
 
 /*
  *	HashScanOpaqueData is private state for a hash index scan.

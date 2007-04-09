@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.64 2007/01/29 23:22:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.65 2007/04/09 22:03:57 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -252,7 +252,7 @@ _hash_metapinit(Relation rel)
 	pageopaque->hasho_nextblkno = InvalidBlockNumber;
 	pageopaque->hasho_bucket = -1;
 	pageopaque->hasho_flag = LH_META_PAGE;
-	pageopaque->hasho_filler = HASHO_FILL;
+	pageopaque->hasho_page_id = HASHO_PAGE_ID;
 
 	metap = (HashMetaPage) pg;
 
@@ -310,7 +310,7 @@ _hash_metapinit(Relation rel)
 		pageopaque->hasho_nextblkno = InvalidBlockNumber;
 		pageopaque->hasho_bucket = i;
 		pageopaque->hasho_flag = LH_BUCKET_PAGE;
-		pageopaque->hasho_filler = HASHO_FILL;
+		pageopaque->hasho_page_id = HASHO_PAGE_ID;
 		_hash_wrtbuf(rel, buf);
 	}
 
@@ -654,7 +654,7 @@ _hash_splitbucket(Relation rel,
 	nopaque->hasho_nextblkno = InvalidBlockNumber;
 	nopaque->hasho_bucket = nbucket;
 	nopaque->hasho_flag = LH_BUCKET_PAGE;
-	nopaque->hasho_filler = HASHO_FILL;
+	nopaque->hasho_page_id = HASHO_PAGE_ID;
 
 	/*
 	 * Partition the tuples in the old bucket between the old bucket and the
