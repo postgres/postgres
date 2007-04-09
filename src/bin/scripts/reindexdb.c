@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.9 2007/02/13 18:06:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.10 2007/04/09 18:21:22 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,6 +126,8 @@ main(int argc, char *argv[])
 			exit(1);
 	}
 
+	setup_cancel_handler();
+
 	if (alldb)
 	{
 		if (dbname)
@@ -214,7 +216,6 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 	PQExpBufferData sql;
 
 	PGconn	   *conn;
-	PGresult   *result;
 
 	initPQExpBuffer(&sql);
 
@@ -229,11 +230,7 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 
 	conn = connectDatabase(dbname, host, port, username, password, progname);
 
-	if (echo)
-		printf("%s", sql.data);
-	result = PQexec(conn, sql.data);
-
-	if (PQresultStatus(result) != PGRES_COMMAND_OK)
+	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		if (strcmp(type, "TABLE") == 0)
 			fprintf(stderr, _("%s: reindexing of table \"%s\" in database \"%s\" failed: %s"),
@@ -248,7 +245,6 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 		exit(1);
 	}
 
-	PQclear(result);
 	PQfinish(conn);
 	termPQExpBuffer(&sql);
 
@@ -294,27 +290,19 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 	PQExpBufferData sql;
 
 	PGconn	   *conn;
-	PGresult   *result;
 
 	initPQExpBuffer(&sql);
 
 	appendPQExpBuffer(&sql, "REINDEX SYSTEM %s;\n", dbname);
 
 	conn = connectDatabase(dbname, host, port, username, password, progname);
-
-	if (echo)
-		printf("%s", sql.data);
-	result = PQexec(conn, sql.data);
-
-	if (PQresultStatus(result) != PGRES_COMMAND_OK)
+	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		fprintf(stderr, _("%s: reindexing of system catalogs failed: %s"),
 				progname, PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);
 	}
-
-	PQclear(result);
 	PQfinish(conn);
 	termPQExpBuffer(&sql);
 

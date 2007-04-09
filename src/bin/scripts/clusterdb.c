@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.16 2007/02/13 18:06:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/clusterdb.c,v 1.17 2007/04/09 18:21:22 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,6 +111,8 @@ main(int argc, char *argv[])
 			exit(1);
 	}
 
+	setup_cancel_handler();
+
 	if (alldb)
 	{
 		if (dbname)
@@ -159,7 +161,6 @@ cluster_one_database(const char *dbname, const char *table,
 	PQExpBufferData sql;
 
 	PGconn	   *conn;
-	PGresult   *result;
 
 	initPQExpBuffer(&sql);
 
@@ -169,12 +170,7 @@ cluster_one_database(const char *dbname, const char *table,
 	appendPQExpBuffer(&sql, ";\n");
 
 	conn = connectDatabase(dbname, host, port, username, password, progname);
-
-	if (echo)
-		printf("%s", sql.data);
-	result = PQexec(conn, sql.data);
-
-	if (PQresultStatus(result) != PGRES_COMMAND_OK)
+	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		if (table)
 			fprintf(stderr, _("%s: clustering of table \"%s\" in database \"%s\" failed: %s"),
@@ -185,8 +181,6 @@ cluster_one_database(const char *dbname, const char *table,
 		PQfinish(conn);
 		exit(1);
 	}
-
-	PQclear(result);
 	PQfinish(conn);
 	termPQExpBuffer(&sql);
 

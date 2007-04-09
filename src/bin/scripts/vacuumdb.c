@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.16 2007/02/13 17:39:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/vacuumdb.c,v 1.17 2007/04/09 18:21:22 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,6 +128,8 @@ main(int argc, char *argv[])
 			exit(1);
 	}
 
+	setup_cancel_handler();
+
 	if (alldb)
 	{
 		if (dbname)
@@ -178,7 +180,6 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
 	PQExpBufferData sql;
 
 	PGconn	   *conn;
-	PGresult   *result;
 
 	initPQExpBuffer(&sql);
 
@@ -194,12 +195,7 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
 	appendPQExpBuffer(&sql, ";\n");
 
 	conn = connectDatabase(dbname, host, port, username, password, progname);
-
-	if (echo)
-		printf("%s", sql.data);
-	result = PQexec(conn, sql.data);
-
-	if (PQresultStatus(result) != PGRES_COMMAND_OK)
+	if (!executeMaintenanceCommand(conn, sql.data, echo))
 	{
 		if (table)
 			fprintf(stderr, _("%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"),
@@ -210,8 +206,6 @@ vacuum_one_database(const char *dbname, bool full, bool verbose, bool analyze,
 		PQfinish(conn);
 		exit(1);
 	}
-
-	PQclear(result);
 	PQfinish(conn);
 	termPQExpBuffer(&sql);
 

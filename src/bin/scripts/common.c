@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.25 2007/01/05 22:19:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.26 2007/04/09 18:21:22 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,14 +15,23 @@
 #include "postgres_fe.h"
 
 #include <pwd.h>
+#include <signal.h>
 #include <unistd.h>
 
 #include "common.h"
+#include "libpq/pqsignal.h"
+
+static void SetCancelConn(PGconn *conn);
+static void ResetCancelConn(void);
 
 #ifndef HAVE_INT_OPTRESET
 int			optreset;
 #endif
 
+static PGcancel *volatile cancelConn = NULL;
+#ifdef WIN32
+static CRITICAL_SECTION cancelConnLock;
+#endif
 
 /*
  * Returns the current user name.
@@ -195,6 +204,33 @@ executeCommand(PGconn *conn, const char *query,
 
 
 /*
+ * As above for a SQL maintenance command (returns command success).
+ * Command is executed with a cancel handler set, so Ctrl-C can
+ * interrupt it.
+ */
+bool
+executeMaintenanceCommand(PGconn *conn, const char *query, bool echo)
+{
+	PGresult   *res;
+	bool		r;
+
+	if (echo)
+		printf("%s\n", query);
+
+	SetCancelConn(conn);
+	res = PQexec(conn, query);
+	ResetCancelConn();
+
+	r = (res && PQresultStatus(res) == PGRES_COMMAND_OK);
+
+	if (res)
+		PQclear(res);
+
+	return r;
+}
+
+
+/*
  * Check yes/no answer in a localized way.	1=yes, 0=no, -1=neither.
  */
 
@@ -237,3 +273,135 @@ yesno_prompt(const char *question)
 			   _(PG_YESLETTER), _(PG_NOLETTER));
 	}
 }
+
+
+/*
+ * SetCancelConn
+ *
+ * Set cancelConn to point to the current database connection.
+ */
+static void
+SetCancelConn(PGconn *conn)
+{
+	PGcancel   *oldCancelConn;
+
+#ifdef WIN32
+	EnterCriticalSection(&cancelConnLock);
+#endif
+
+	/* Free the old one if we have one */
+	oldCancelConn = cancelConn;
+
+	/* be sure handle_sigint doesn't use pointer while freeing */
+	cancelConn = NULL;
+
+	if (oldCancelConn != NULL)
+		PQfreeCancel(oldCancelConn);
+
+	cancelConn = PQgetCancel(conn);
+
+#ifdef WIN32
+	LeaveCriticalSection(&cancelConnLock);
+#endif
+}
+
+/*
+ * ResetCancelConn
+ *
+ * Free the current cancel connection, if any, and set to NULL.
+ */
+static void
+ResetCancelConn(void)
+{
+	PGcancel   *oldCancelConn;
+
+#ifdef WIN32
+	EnterCriticalSection(&cancelConnLock);
+#endif
+
+	oldCancelConn = cancelConn;
+
+	/* be sure handle_sigint doesn't use pointer while freeing */
+	cancelConn = NULL;
+
+	if (oldCancelConn != NULL)
+		PQfreeCancel(oldCancelConn);
+
+#ifdef WIN32
+	LeaveCriticalSection(&cancelConnLock);
+#endif
+}
+
+#ifndef WIN32
+/*
+ * Handle interrupt signals by cancelling the current command,
+ * if it's being executed through executeMaintenanceCommand(),
+ * and thus has a cancelConn set.
+ */
+static void
+handle_sigint(SIGNAL_ARGS)
+{
+	int			save_errno = errno;
+	char		errbuf[256];
+
+	/* Send QueryCancel if we are processing a database query */
+	if (cancelConn != NULL)
+	{
+		if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
+			fprintf(stderr, _("Cancel request sent\n"));
+		else
+			fprintf(stderr, _("Could not send cancel request: %s\n"), errbuf);
+	}
+
+	errno = save_errno;			/* just in case the write changed it */
+}
+
+void
+setup_cancel_handler(void)
+{
+	pqsignal(SIGINT, handle_sigint);
+}
+
+#else							/* WIN32 */
+
+/*
+ * Console control handler for Win32. Note that the control handler will
+ * execute on a *different thread* than the main one, so we need to do
+ * proper locking around those structures.
+ */
+static BOOL WINAPI
+consoleHandler(DWORD dwCtrlType)
+{
+	char		errbuf[256];
+
+	if (dwCtrlType == CTRL_C_EVENT ||
+		dwCtrlType == CTRL_BREAK_EVENT)
+	{
+		/* Send QueryCancel if we are processing a database query */
+		EnterCriticalSection(&cancelConnLock);
+		if (cancelConn != NULL)
+		{
+			if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
+				fprintf(stderr, _("Cancel request sent\n"));
+			else
+				fprintf(stderr, _("Could not send cancel request: %s"), errbuf);
+		}
+		LeaveCriticalSection(&cancelConnLock);
+
+		return TRUE;
+	}
+	else
+		/* Return FALSE for any signals not being handled */
+		return FALSE;
+}
+
+void
+setup_cancel_handler(void)
+{
+	InitializeCriticalSection(&cancelConnLock);
+
+	SetConsoleCtrlHandler(consoleHandler, TRUE);
+}
+
+#endif   /* WIN32 */
+
