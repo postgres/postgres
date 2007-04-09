@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.291.2.8 2006/10/01 18:54:40 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.291.2.9 2007/04/09 07:40:23 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -283,7 +283,7 @@ PostgreSQL documentation
     the <acronym>CPU</acronym> cycles required to rewrite the first one
     into the second one internally.
     <indexterm>
-     <primary>BETWEEN SYMETRIC</primary>
+     <primary>BETWEEN SYMMETRIC</primary>
     </indexterm>
     <token>BETWEEN SYMMETRIC</> is the same as <literal>BETWEEN</>
     except there is no requirement that the argument to the left of <literal>AND</> be less than
