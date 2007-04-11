@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.155 2007/03/25 19:45:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.156 2007/04/11 20:47:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ static TransactionId _bt_check_unique(Relation rel, IndexTuple itup,
 				 Relation heapRel, Buffer buf, OffsetNumber ioffset,
 				 ScanKey itup_scankey);
 static void _bt_findinsertloc(Relation rel,
-				  Buffer *bufptr, 
+				  Buffer *bufptr,
 				  OffsetNumber *offsetptr,
 				  int keysz,
 				  ScanKey scankey,
@@ -66,7 +66,7 @@ static OffsetNumber _bt_findsplitloc(Relation rel, Page page,
 				 OffsetNumber newitemoff,
 				 Size newitemsz,
 				 bool *newitemonleft);
-static void _bt_checksplitloc(FindSplitData *state, 
+static void _bt_checksplitloc(FindSplitData *state,
 				  OffsetNumber firstoldonright, bool newitemonleft,
 				  int dataitemstoleft, Size firstoldonrightsz);
 static void _bt_pgaddtup(Relation rel, Page page,
@@ -459,7 +459,7 @@ _bt_findinsertloc(Relation rel,
 			 * the hint supplied by the caller invalid */
 			vacuumed = true;
 
-			if (PageGetFreeSpace(page) >= itemsz) 
+			if (PageGetFreeSpace(page) >= itemsz)
 				break;		/* OK, now we have enough space */
 		}
 
@@ -506,7 +506,7 @@ _bt_findinsertloc(Relation rel,
 	 * moved right at all, we know we should insert at the start of the
 	 * page. If we didn't move right, we can use the firstlegaloff hint
 	 * if the caller supplied one, unless we vacuumed the page which
-	 * might have moved tuples around making the hint invalid. If we 
+	 * might have moved tuples around making the hint invalid. If we
 	 * didn't move right or can't use the hint, find the position
 	 * by searching.
 	 */
@@ -779,8 +779,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	Buffer		sbuf = InvalidBuffer;
 	Page		spage = NULL;
 	BTPageOpaque sopaque = NULL;
-	OffsetNumber itup_off = 0;
-	BlockNumber itup_blkno = 0;
 	Size		itemsz;
 	ItemId		itemid;
 	IndexTuple	item;
@@ -797,6 +795,14 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 	_bt_pageinit(leftpage, BufferGetPageSize(buf));
 	/* rightpage was already initialized by _bt_getbuf */
+
+	/*
+	 * Copy the original page's LSN and TLI into leftpage, which will become
+	 * the updated version of the page.  We need this because XLogInsert will
+	 * examine these fields and possibly dump them in a page image.
+	 */
+	PageSetLSN(leftpage, PageGetLSN(origpage));
+	PageSetTLI(leftpage, PageGetTLI(origpage));
 
 	/* init btree private data */
 	oopaque = (BTPageOpaque) PageGetSpecialPointer(origpage);
@@ -864,7 +870,10 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	leftoff = OffsetNumberNext(leftoff);
 
 	/*
-	 * Now transfer all the data items to the appropriate page
+	 * Now transfer all the data items to the appropriate page.
+	 *
+	 * Note: we *must* insert at least the right page's items in item-number
+	 * order, for the benefit of _bt_restore_page().
 	 */
 	maxoff = PageGetMaxOffsetNumber(origpage);
 
@@ -881,16 +890,12 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 			{
 				_bt_pgaddtup(rel, leftpage, newitemsz, newitem, leftoff,
 							 "left sibling");
-				itup_off = leftoff;
-				itup_blkno = BufferGetBlockNumber(buf);
 				leftoff = OffsetNumberNext(leftoff);
 			}
 			else
 			{
 				_bt_pgaddtup(rel, rightpage, newitemsz, newitem, rightoff,
 							 "right sibling");
-				itup_off = rightoff;
-				itup_blkno = BufferGetBlockNumber(rbuf);
 				rightoff = OffsetNumberNext(rightoff);
 			}
 		}
@@ -921,8 +926,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		Assert(!newitemonleft);
 		_bt_pgaddtup(rel, rightpage, newitemsz, newitem, rightoff,
 					 "right sibling");
-		itup_off = rightoff;
-		itup_blkno = BufferGetBlockNumber(rbuf);
 		rightoff = OffsetNumberNext(rightoff);
 	}
 
@@ -961,7 +964,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 	/*
 	 * Right sibling is locked, new siblings are prepared, but original page
-	 * is not updated yet. Log changes before continuing.
+	 * is not updated yet.
 	 *
 	 * NO EREPORT(ERROR) till right sibling is updated.  We can get away with
 	 * not starting the critical section till here because we haven't been
@@ -969,15 +972,6 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 * sibling until it's linked into the btree.
 	 */
 	START_CRIT_SECTION();
-
-	MarkBufferDirty(buf);
-	MarkBufferDirty(rbuf);
-
-	if (!P_RIGHTMOST(ropaque))
-	{
-		sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
-		MarkBufferDirty(sbuf);
-	}
 
 	/*
 	 * By here, the original data page has been split into two new halves, and
@@ -994,6 +988,15 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 	 */
 	PageRestoreTempPage(leftpage, origpage);
 
+	MarkBufferDirty(buf);
+	MarkBufferDirty(rbuf);
+
+	if (!P_RIGHTMOST(ropaque))
+	{
+		sopaque->btpo_prev = BufferGetBlockNumber(rbuf);
+		MarkBufferDirty(sbuf);
+	}
+
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
 	{
@@ -1006,9 +1009,9 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		xlrec.node = rel->rd_node;
 		xlrec.leftsib = BufferGetBlockNumber(buf);
 		xlrec.rightsib = BufferGetBlockNumber(rbuf);
-		xlrec.firstright = firstright;
 		xlrec.rnext = ropaque->btpo_next;
 		xlrec.level = ropaque->btpo.level;
+		xlrec.firstright = firstright;
 
 		rdata[0].data = (char *) &xlrec;
 		rdata[0].len = SizeOfBtreeSplit;
@@ -1027,14 +1030,18 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 			lastrdata->buffer = InvalidBuffer;
 		}
 
-		/* Log the new item, if it was inserted on the left page. If it was 
-		 * put on the right page, we don't need to explicitly WAL log it 
-		 * because it's included with all the other items on the right page.
+		/*
+		 * Log the new item and its offset, if it was inserted on the left
+		 * page. (If it was put on the right page, we don't need to explicitly
+		 * WAL log it because it's included with all the other items on the
+		 * right page.) Show these as belonging to the left page buffer,
+		 * so that they are not stored if XLogInsert decides it needs a
+		 * full-page image of the left page.
 		 */
-		lastrdata->next = lastrdata + 1;
-		lastrdata++;
 		if (newitemonleft)
 		{
+			lastrdata->next = lastrdata + 1;
+			lastrdata++;
 			lastrdata->data = (char *) &newitemoff;
 			lastrdata->len = sizeof(OffsetNumber);
 			lastrdata->buffer = buf;		/* backup block 1 */
@@ -1042,39 +1049,49 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 			lastrdata->next = lastrdata + 1;
 			lastrdata++;
-			lastrdata->data = (char *)newitem;
-			lastrdata->len = newitemsz;
+			lastrdata->data = (char *) newitem;
+			lastrdata->len = MAXALIGN(newitemsz);
 			lastrdata->buffer = buf;		/* backup block 1 */
 			lastrdata->buffer_std = true;
 		}
 		else
 		{
+			/*
+			 * Although we don't need to WAL-log the new item, we still
+			 * need XLogInsert to consider storing a full-page image of the
+			 * left page, so make an empty entry referencing that buffer.
+			 * This also ensures that the left page is always backup block 1.
+			 */
+			lastrdata->next = lastrdata + 1;
+			lastrdata++;
 			lastrdata->data = NULL;
 			lastrdata->len = 0;
 			lastrdata->buffer = buf;		/* backup block 1 */
 			lastrdata->buffer_std = true;
 		}
 
-		/* Log the contents of the right page in the format understood by
+		/*
+		 * Log the contents of the right page in the format understood by
 		 * _bt_restore_page(). We set lastrdata->buffer to InvalidBuffer,
-		 * because we're going to recreate the whole page anyway.
+		 * because we're going to recreate the whole page anyway, so it
+		 * should never be stored by XLogInsert.
 		 *
 		 * Direct access to page is not good but faster - we should implement
 		 * some new func in page API.  Note we only store the tuples
-		 * themselves, knowing that the item pointers are in the same order
-		 * and can be reconstructed by scanning the tuples.  See comments for
+		 * themselves, knowing that they were inserted in item-number order
+		 * and so the item pointers can be reconstructed.  See comments for
 		 * _bt_restore_page().
 		 */
 		lastrdata->next = lastrdata + 1;
 		lastrdata++;
 
-		lastrdata->data = (char *) rightpage + 
+		lastrdata->data = (char *) rightpage +
 			((PageHeader) rightpage)->pd_upper;
 		lastrdata->len = ((PageHeader) rightpage)->pd_special -
 			((PageHeader) rightpage)->pd_upper;
 		lastrdata->buffer = InvalidBuffer;
 
-		/* Log the right sibling, because we've changed it's prev-pointer. */
+		/* Log the right sibling, because we've changed its' prev-pointer. */
 		if (!P_RIGHTMOST(ropaque))
 		{
 			lastrdata->next = lastrdata + 1;
@@ -1216,7 +1233,7 @@ _bt_findsplitloc(Relation rel,
 	olddataitemstoleft = 0;
 	goodenoughfound = false;
 	maxoff = PageGetMaxOffsetNumber(page);
-	
+
 	for (offnum = P_FIRSTDATAKEY(opaque);
 		 offnum <= maxoff;
 		 offnum = OffsetNumberNext(offnum))
@@ -1234,7 +1251,7 @@ _bt_findsplitloc(Relation rel,
 							  olddataitemstoleft, itemsz);
 
 		else if (offnum < newitemoff)
-			_bt_checksplitloc(&state, offnum, false, 
+			_bt_checksplitloc(&state, offnum, false,
 							  olddataitemstoleft, itemsz);
 		else
 		{
@@ -1285,11 +1302,11 @@ _bt_findsplitloc(Relation rel,
  * items go to the left page and only the new item goes to the right page.
  * In that case, firstoldonrightsz is not used.
  *
- * olddataitemstoleft is the total size of all old items to the left of 
- * firstoldonright. 
+ * olddataitemstoleft is the total size of all old items to the left of
+ * firstoldonright.
  */
 static void
-_bt_checksplitloc(FindSplitData *state, 
+_bt_checksplitloc(FindSplitData *state,
 				  OffsetNumber firstoldonright,
 				  bool newitemonleft,
 				  int olddataitemstoleft,
@@ -1311,7 +1328,7 @@ _bt_checksplitloc(FindSplitData *state,
 
 	/* Account for all the old tuples */
 	leftfree = state->leftspace - olddataitemstoleft;
-	rightfree = state->rightspace - 
+	rightfree = state->rightspace -
 		(state->olddataitemstotal - olddataitemstoleft);
 
 	/*
@@ -1854,7 +1871,7 @@ _bt_vacuum_one_page(Relation rel, Buffer buffer)
 	BTPageOpaque opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
 	/*
-	 * Scan over all items to see which ones need to be deleted 
+	 * Scan over all items to see which ones need to be deleted
 	 * according to LP_DELETE flags.
 	 */
 	minoff = P_FIRSTDATAKEY(opaque);
