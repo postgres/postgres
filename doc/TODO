@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Mon Apr  9 21:33:13 EDT 2007
+Last updated:		Wed Apr 11 17:02:21 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -313,7 +313,7 @@ Data Types
 	  coercion can be performed on empty array expressions
 	o Add support for arrays of domains
 	o Add support for arrays of complex types
-	o Allow single-byte header storage for arrays
+	o Allow single-byte header storage for array elements
 
 
 * Binary Data
