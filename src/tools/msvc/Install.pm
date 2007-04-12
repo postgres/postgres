@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.9 2007/04/04 18:45:59 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.10 2007/04/12 12:46:20 mha Exp $
 #
 use strict;
 use warnings;
@@ -38,7 +38,7 @@ sub Install
     print "Installing for $conf\n";
 
     EnsureDirectories($target, 'bin','lib','share','share/timezonesets','share/contrib','doc',
-        'doc/contrib');
+        'doc/contrib', 'symbols');
 
     CopySolutionOutput($conf, $target);
     copy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
@@ -162,6 +162,7 @@ sub CopySolutionOutput
             next;
         }
         copy("$conf\\$pf\\$pf.$ext","$target\\$dir\\$pf.$ext") || croak "Could not copy $pf.$ext\n";
+        copy("$conf\\$pf\\$pf.pdb","$target\\symbols\\$pf.pdb") || croak "Could not copy $pf.pdb\n";
         print ".";
     }
     print "\n";
