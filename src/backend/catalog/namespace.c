@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.94 2007/04/12 06:53:46 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.95 2007/04/12 22:34:45 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1946,18 +1946,8 @@ InitTempTableNamespace(void)
 void
 ResetTempTableNamespace(void)
 {
-	char		namespaceName[NAMEDATALEN];
-	Oid			namespaceId;
-
-	/* find oid */
-	snprintf(namespaceName, sizeof(namespaceName), "pg_temp_%d", MyBackendId);
-	namespaceId = GetSysCacheOid(NAMESPACENAME,
-								 CStringGetDatum(namespaceName),
-								 0, 0, 0);
-
-	/* clean if exists */
-	if (OidIsValid(namespaceId))
-		RemoveTempRelations(namespaceId);
+	if (OidIsValid(myTempNamespace))
+		RemoveTempRelations(myTempNamespace);
 }
 
 /*

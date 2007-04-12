@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.46 2007/04/12 06:53:48 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.47 2007/04/12 22:34:45 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +81,7 @@ extern char *NameListToQuotedString(List *names);
 extern bool isTempNamespace(Oid namespaceId);
 extern bool isAnyTempNamespace(Oid namespaceId);
 extern bool isOtherTempNamespace(Oid namespaceId);
+extern void ResetTempTableNamespace(void);
 
 extern OverrideSearchPath *GetOverrideSearchPath(MemoryContext context);
 extern void PushOverrideSearchPath(OverrideSearchPath *newpath);
@@ -99,7 +100,5 @@ extern void AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 extern char *namespace_search_path;
 
 extern List *fetch_search_path(bool includeImplicit);
-
-extern void ResetTempTableNamespace(void);
 
 #endif   /* NAMESPACE_H */

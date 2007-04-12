@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.33 2007/04/12 06:53:46 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.34 2007/04/12 22:34:45 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -42,7 +42,7 @@ SET <replaceable class="parameter">configuration_parameter</replaceable> TO DEFA
 
   <para>
    The default value is defined as the value that the parameter would
-   have had, if no <command>SET</> ever been issued for it in the
+   have had, if no <command>SET</> had ever been issued for it in the
    current session.  The actual source of this value might be a
    compiled-in default, the configuration file, command-line options,
    or per-database or per-user default settings.  See <xref
@@ -112,7 +112,7 @@ SET <replaceable class="parameter">configuration_parameter</replaceable> TO DEFA
       Releases all temporary resources associated with the current
       session. This has the same effect as executing the following
       command sequence:
-<synopsis>
+<programlisting>
 SET SESSION AUTHORIZATION DEFAULT;
 RESET ALL;
 DEALLOCATE ALL;
@@ -120,7 +120,7 @@ CLOSE ALL;
 UNLISTEN *;
 RESET PLANS;
 RESET TEMP;
-</synopsis>
+</programlisting>
      </para>
     </listitem>
    </varlistentry>
