@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.25 2007/03/13 00:33:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.26 2007/04/12 06:53:48 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,5 +58,7 @@ extern PreparedStatement *FetchPreparedStatement(const char *stmt_name,
 extern void DropPreparedStatement(const char *stmt_name, bool showError);
 extern TupleDesc FetchPreparedStatementResultDesc(PreparedStatement *stmt);
 extern List *FetchPreparedStatementTargetList(PreparedStatement *stmt);
+
+void DropAllPreparedStatements(void);
 
 #endif   /* PREPARE_H */

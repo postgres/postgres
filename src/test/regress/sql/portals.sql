@@ -303,3 +303,18 @@ ROLLBACK;
 PREPARE cprep AS
   SELECT name, statement, is_holdable, is_binary, is_scrollable FROM pg_cursors;
 EXECUTE cprep;
+
+-- test CLOSE ALL;
+SELECT name FROM pg_cursors ORDER BY 1;
+CLOSE ALL;
+SELECT name FROM pg_cursors ORDER BY 1;
+BEGIN;
+DECLARE foo1 CURSOR WITH HOLD FOR SELECT 1;
+DECLARE foo2 CURSOR WITHOUT HOLD FOR SELECT 1;
+SELECT name FROM pg_cursors ORDER BY 1;
+CLOSE ALL;
+SELECT name FROM pg_cursors ORDER BY 1;
+COMMIT;
+
+
+

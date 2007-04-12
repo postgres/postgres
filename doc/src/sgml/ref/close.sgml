@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.24 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.25 2007/04/12 06:53:45 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -25,7 +25,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CLOSE <replaceable class="PARAMETER">name</replaceable>
+CLOSE { <replaceable class="PARAMETER">name</replaceable> | ALL }
 </synopsis>
  </refsynopsisdiv>
 
@@ -44,10 +44,10 @@ CLOSE <replaceable class="PARAMETER">name</replaceable>
    transaction is terminated by <command>COMMIT</command> or
    <command>ROLLBACK</command>.  A holdable cursor is implicitly
    closed if the transaction that created it aborts via
-   <command>ROLLBACK</command>.  If the creating transaction successfully
-   commits, the holdable
-   cursor remains open until an explicit <command>CLOSE</command> is
-   executed, or the client disconnects.
+   <command>ROLLBACK</command>.  If the creating transaction
+   successfully commits, the holdable cursor remains open until an
+   explicit <command>CLOSE</command> is executed, or the client
+   disconnects.
   </para>
  </refsect1>
   
@@ -63,6 +63,16 @@ CLOSE <replaceable class="PARAMETER">name</replaceable>
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><literal>ALL</literal></term>
+    <listitem>
+     <para>
+      Close all open cursors.
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
  </refsect1>
 
@@ -98,7 +108,9 @@ CLOSE liahona;
   <title>Compatibility</title>
   
   <para>
-   <command>CLOSE</command> is fully conforming with the SQL standard.
+   <command>CLOSE</command> is fully conforming with the SQL
+   standard. <command>CLOSE ALL</> is a <productname>PostgreSQL</>
+   extension.
   </para>
  </refsect1>
 

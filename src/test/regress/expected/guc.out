@@ -425,3 +425,103 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
  Sun Aug 13 12:34:56 2006 PDT
 (1 row)
 
+--
+-- Test RESET TEMP
+--
+CREATE TEMP TABLE reset_test ( data text ) ON COMMIT DELETE ROWS;
+SELECT relname FROM pg_class WHERE relname = 'reset_test';
+  relname   
+------------
+ reset_test
+(1 row)
+
+RESET TEMP;
+SELECT relname FROM pg_class WHERE relname = 'reset_test';
+ relname 
+---------
+(0 rows)
+
+--
+-- Test RESET SESSION
+--
+-- do changes
+DECLARE foo CURSOR WITH HOLD FOR SELECT 1;
+PREPARE foo AS SELECT 1;
+LISTEN foo_event;
+SET vacuum_cost_delay = 13;
+CREATE TEMP TABLE tmp_foo (data text) ON COMMIT DELETE ROWS;
+CREATE ROLE temp_reset_user;
+SET SESSION AUTHORIZATION temp_reset_user;
+-- look changes
+SELECT relname FROM pg_listener;
+  relname  
+-----------
+ foo_event
+(1 row)
+
+SELECT name FROM pg_prepared_statements;
+ name 
+------
+ foo
+(1 row)
+
+SELECT name FROM pg_cursors;
+ name 
+------
+ foo
+(1 row)
+
+SHOW vacuum_cost_delay;
+ vacuum_cost_delay 
+-------------------
+ 13ms
+(1 row)
+
+SELECT relname from pg_class where relname = 'tmp_foo';
+ relname 
+---------
+ tmp_foo
+(1 row)
+
+SELECT current_user = 'temp_reset_user';
+ ?column? 
+----------
+ t
+(1 row)
+
+-- big RESET
+RESET SESSION;
+-- look again
+SELECT relname FROM pg_listener;
+ relname 
+---------
+(0 rows)
+
+SELECT name FROM pg_prepared_statements;
+ name 
+------
+(0 rows)
+
+SELECT name FROM pg_cursors;
+ name 
+------
+(0 rows)
+
+SHOW vacuum_cost_delay;
+ vacuum_cost_delay 
+-------------------
+ 0
+(1 row)
+
+SELECT relname from pg_class where relname = 'tmp_foo';
+ relname 
+---------
+(0 rows)
+
+SELECT current_user = 'temp_reset_user';
+ ?column? 
+----------
+ f
+(1 row)
+
+DROP ROLE temp_reset_user;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.45 2007/03/23 19:53:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.46 2007/04/12 06:53:48 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,5 +99,7 @@ extern void AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 extern char *namespace_search_path;
 
 extern List *fetch_search_path(bool includeImplicit);
+
+extern void ResetTempTableNamespace(void);
 
 #endif   /* NAMESPACE_H */

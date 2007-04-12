@@ -166,3 +166,11 @@ SELECT name, statement, parameter_types FROM pg_prepared_statements
       :     SELECT * FROM road WHERE thepath = $1;                         
 (5 rows)
 
+-- test DEALLOCATE ALL;
+DEALLOCATE ALL;
+SELECT name, statement, parameter_types FROM pg_prepared_statements
+    ORDER BY name;
+ name | statement | parameter_types 
+------+-----------+-----------------
+(0 rows)
+

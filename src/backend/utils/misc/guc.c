@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.383 2007/03/19 23:38:30 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.384 2007/04/12 06:53:47 neilc Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include "access/xact.h"
 #include "catalog/namespace.h"
 #include "commands/async.h"
+#include "commands/prepare.h"
 #include "commands/vacuum.h"
 #include "commands/variable.h"
 #include "commands/trigger.h"
@@ -61,6 +62,7 @@
 #include "utils/memutils.h"
 #include "utils/pg_locale.h"
 #include "utils/plancache.h"
+#include "utils/portal.h"
 #include "utils/ps_status.h"
 #include "utils/tzparser.h"
 #include "utils/xml.h"
@@ -4952,13 +4954,44 @@ GetPGVariableResultDesc(const char *name)
 }
 
 /*
+ * RESET SESSION command.
+ */
+static void
+ResetSession(bool isTopLevel)
+{
+	/*
+	 * Disallow RESET SESSION in a transaction block. This is arguably
+	 * inconsistent (we don't make a similar check in the command
+	 * sequence that RESET SESSION is equivalent to), but the idea is
+	 * to catch mistakes: RESET SESSION inside a transaction block
+	 * would leave the transaction still uncommitted.
+	 */
+	PreventTransactionChain(isTopLevel, "RESET SESSION");
+
+	SetPGVariable("session_authorization", NIL, false);
+	ResetAllOptions();
+	DropAllPreparedStatements();
+	PortalHashTableDeleteAll();
+	Async_UnlistenAll();
+	ResetPlanCache();
+	ResetTempTableNamespace();
+}
+
+/*
  * RESET command
  */
 void
-ResetPGVariable(const char *name)
+ResetPGVariable(const char *name, bool isTopLevel)
 {
 	if (pg_strcasecmp(name, "all") == 0)
 		ResetAllOptions();
+	else if (pg_strcasecmp(name, "session") == 0)
+		ResetSession(isTopLevel);
+	else if (pg_strcasecmp(name, "temp") == 0 ||
+			 pg_strcasecmp(name, "temporary") == 0)
+		ResetTempTableNamespace();
+	else if (pg_strcasecmp(name, "plans") == 0)
+		ResetPlanCache();
 	else
 		set_config_option(name,
 						  NULL,

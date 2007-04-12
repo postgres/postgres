@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/deallocate.sgml,v 1.9 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/deallocate.sgml,v 1.10 2007/04/12 06:53:46 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -25,7 +25,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DEALLOCATE [ PREPARE ] <replaceable class="parameter">name</replaceable>
+DEALLOCATE [ PREPARE ] { <replaceable class="parameter">name</replaceable> | ALL }
 </synopsis>
  </refsynopsisdiv>
 
@@ -62,6 +62,15 @@ DEALLOCATE [ PREPARE ] <replaceable class="parameter">name</replaceable>
     <listitem>
      <para>
       The name of the prepared statement to deallocate.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ALL</literal></term>
+    <listitem>
+     <para>
+      Deallocate all prepared statements.
      </para>
     </listitem>
    </varlistentry>

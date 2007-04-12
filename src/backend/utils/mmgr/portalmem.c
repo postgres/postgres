@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.100 2007/03/13 00:33:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.101 2007/04/12 06:53:48 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,6 +450,29 @@ PortalDrop(Portal portal, bool isTopCommit)
 
 	/* release portal struct (it's in PortalMemory) */
 	pfree(portal);
+}
+
+/*
+ * Delete all declared cursors.
+ *
+ * Used by commands: CLOSE ALL, RESET SESSION
+ */
+void
+PortalHashTableDeleteAll(void)
+{
+	HASH_SEQ_STATUS status;
+	PortalHashEnt *hentry;
+
+	if (PortalHashTable == NULL)
+		return;
+
+	hash_seq_init(&status, PortalHashTable);
+	while ((hentry = hash_seq_search(&status)) != NULL)
+	{
+		Portal portal = hentry->portal;
+		if (portal->status != PORTAL_ACTIVE)
+			PortalDrop(portal, false);
+	}
 }
 
 

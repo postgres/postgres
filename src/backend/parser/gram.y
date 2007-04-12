@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.587 2007/04/08 00:26:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.588 2007/04/12 06:53:46 neilc Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1665,6 +1665,12 @@ ClosePortalStmt:
 				{
 					ClosePortalStmt *n = makeNode(ClosePortalStmt);
 					n->portalname = $2;
+					$$ = (Node *)n;
+				}
+			| CLOSE ALL
+				{
+					ClosePortalStmt *n = makeNode(ClosePortalStmt);
+					n->portalname = NULL;
 					$$ = (Node *)n;
 				}
 		;
@@ -5589,6 +5595,18 @@ DeallocateStmt: DEALLOCATE name
 					{
 						DeallocateStmt *n = makeNode(DeallocateStmt);
 						n->name = $3;
+						$$ = (Node *) n;
+					}
+				| DEALLOCATE ALL
+					{
+						DeallocateStmt *n = makeNode(DeallocateStmt);
+						n->name = NULL;
+						$$ = (Node *) n;
+					}
+				| DEALLOCATE PREPARE ALL
+					{
+						DeallocateStmt *n = makeNode(DeallocateStmt);
+						n->name = NULL;
 						$$ = (Node *) n;
 					}
 		;

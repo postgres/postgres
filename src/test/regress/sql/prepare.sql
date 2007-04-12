@@ -68,3 +68,9 @@ PREPARE q7(unknown) AS
 
 SELECT name, statement, parameter_types FROM pg_prepared_statements
     ORDER BY name;
+
+-- test DEALLOCATE ALL;
+DEALLOCATE ALL;
+SELECT name, statement, parameter_types FROM pg_prepared_statements
+    ORDER BY name;
+

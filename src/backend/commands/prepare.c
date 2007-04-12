@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.70 2007/03/13 00:33:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.71 2007/04/12 06:53:46 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -575,7 +575,10 @@ FetchPreparedStatementTargetList(PreparedStatement *stmt)
 void
 DeallocateQuery(DeallocateStmt *stmt)
 {
-	DropPreparedStatement(stmt->name, true);
+	if (stmt->name)
+		DropPreparedStatement(stmt->name, true);
+	else
+		DropAllPreparedStatements();
 }
 
 /*
@@ -592,6 +595,31 @@ DropPreparedStatement(const char *stmt_name, bool showError)
 	entry = FetchPreparedStatement(stmt_name, showError);
 
 	if (entry)
+	{
+		/* Release the plancache entry */
+		DropCachedPlan(entry->plansource);
+
+		/* Now we can remove the hash table entry */
+		hash_search(prepared_queries, entry->stmt_name, HASH_REMOVE, NULL);
+	}
+}
+
+/*
+ * Drop all cached statements.
+ */
+void
+DropAllPreparedStatements(void)
+{
+	HASH_SEQ_STATUS seq;
+	PreparedStatement *entry;
+
+	/* nothing cached */
+	if (!prepared_queries)
+		return;
+
+	/* walk over cache */
+	hash_seq_init(&seq, prepared_queries);
+	while ((entry = hash_seq_search(&seq)) != NULL)
 	{
 		/* Release the plancache entry */
 		DropCachedPlan(entry->plansource);

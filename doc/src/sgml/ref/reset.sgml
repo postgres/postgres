@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.32 2006/09/16 00:30:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/reset.sgml,v 1.33 2007/04/12 06:53:46 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -22,9 +22,10 @@ PostgreSQL documentation
 <synopsis>
 RESET <replaceable class="PARAMETER">configuration_parameter</replaceable>
 RESET ALL
+RESET { PLANS | SESSION | TEMP | TEMPORARY }
 </synopsis>
  </refsynopsisdiv>
-  
+
  <refsect1>
   <title>Description</title>
 
@@ -41,7 +42,7 @@ SET <replaceable class="parameter">configuration_parameter</replaceable> TO DEFA
 
   <para>
    The default value is defined as the value that the parameter would
-   have had, had no <command>SET</> ever been issued for it in the
+   have had, if no <command>SET</> ever been issued for it in the
    current session.  The actual source of this value might be a
    compiled-in default, the configuration file, command-line options,
    or per-database or per-user default settings.  See <xref
@@ -51,6 +52,15 @@ SET <replaceable class="parameter">configuration_parameter</replaceable> TO DEFA
   <para>
    See the <command>SET</> reference page for details on the
    transaction behavior of <command>RESET</>.
+  </para>
+
+  <para>
+   <command>RESET</> can also be used to release internal resources
+   that are usually released at the end of session.  <command>RESET
+   TEMP</> drops all temporary tables created in the current session.
+   <command>RESET PLANS</> releases all internally cached plans.
+   <command>RESET SESSION</> releases all externally visible temporary
+   resources associated with the current session.
   </para>
  </refsect1>
 
@@ -76,7 +86,54 @@ SET <replaceable class="parameter">configuration_parameter</replaceable> TO DEFA
      </para>
     </listitem>
    </varlistentry>
+
+   <varlistentry>
+    <term><literal>TEMP, TEMPORARY</literal></term>
+    <listitem>
+     <para>
+      Drops all temporary tables created in the current session.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PLANS</literal></term>
+    <listitem>
+     <para>
+      Releases all cached query plans.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>SESSION</literal></term>
+    <listitem>
+     <para>
+      Releases all temporary resources associated with the current
+      session. This has the same effect as executing the following
+      command sequence:
+<synopsis>
+SET SESSION AUTHORIZATION DEFAULT;
+RESET ALL;
+DEALLOCATE ALL;
+CLOSE ALL;
+UNLISTEN *;
+RESET PLANS;
+RESET TEMP;
+</synopsis>
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+   <para>
+    <command>RESET SESSION</> cannot be executed inside a transaction block.
+   </para>
  </refsect1>
 
  <refsect1>

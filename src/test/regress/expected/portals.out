@@ -869,3 +869,33 @@ EXECUTE cprep;
  c2   | declare c2 cursor with hold for select count_tt1_v(), count_tt1_s(); | t           | f         | f
 (1 row)
 
+-- test CLOSE ALL;
+SELECT name FROM pg_cursors ORDER BY 1;
+ name 
+------
+ c2
+(1 row)
+
+CLOSE ALL;
+SELECT name FROM pg_cursors ORDER BY 1;
+ name 
+------
+(0 rows)
+
+BEGIN;
+DECLARE foo1 CURSOR WITH HOLD FOR SELECT 1;
+DECLARE foo2 CURSOR WITHOUT HOLD FOR SELECT 1;
+SELECT name FROM pg_cursors ORDER BY 1;
+ name 
+------
+ foo1
+ foo2
+(2 rows)
+
+CLOSE ALL;
+SELECT name FROM pg_cursors ORDER BY 1;
+ name 
+------
+(0 rows)
+
+COMMIT;

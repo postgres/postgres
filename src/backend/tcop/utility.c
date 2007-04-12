@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.276 2007/04/02 03:49:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.277 2007/04/12 06:53:47 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -990,7 +990,7 @@ ProcessUtility(Node *parsetree,
 			{
 				VariableResetStmt *n = (VariableResetStmt *) parsetree;
 
-				ResetPGVariable(n->name);
+				ResetPGVariable(n->name, isTopLevel);
 			}
 			break;
 
@@ -1387,7 +1387,13 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_ClosePortalStmt:
-			tag = "CLOSE CURSOR";
+			{
+				ClosePortalStmt *stmt = (ClosePortalStmt *) parsetree;
+				if (stmt->portalname == NULL)
+					tag = "CLOSE CURSOR ALL";
+				else
+					tag = "CLOSE CURSOR";
+			}
 			break;
 
 		case T_FetchStmt:
@@ -1746,7 +1752,13 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_VariableResetStmt:
-			tag = "RESET";
+			{
+				VariableResetStmt *stmt = (VariableResetStmt *) parsetree;
+				if (pg_strcasecmp(stmt->name, "session") == 0)
+					tag = "RESET SESSION";
+				else
+					tag = "RESET";
+			}
 			break;
 
 		case T_CreateTrigStmt:
@@ -1856,7 +1868,13 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_DeallocateStmt:
-			tag = "DEALLOCATE";
+			{
+				DeallocateStmt *stmt = (DeallocateStmt *) parsetree;
+				if (stmt->name == NULL)
+					tag = "DEALLOCATE ALL";
+				else
+					tag = "DEALLOCATE";
+			}
 			break;
 
 		/* already-planned queries */

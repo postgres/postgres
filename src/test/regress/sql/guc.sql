@@ -123,3 +123,42 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 RESET datestyle;
 SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
+
+--
+-- Test RESET TEMP
+--
+CREATE TEMP TABLE reset_test ( data text ) ON COMMIT DELETE ROWS;
+SELECT relname FROM pg_class WHERE relname = 'reset_test';
+RESET TEMP;
+SELECT relname FROM pg_class WHERE relname = 'reset_test';
+
+--
+-- Test RESET SESSION
+--
+
+-- do changes
+DECLARE foo CURSOR WITH HOLD FOR SELECT 1;
+PREPARE foo AS SELECT 1;
+LISTEN foo_event;
+SET vacuum_cost_delay = 13;
+CREATE TEMP TABLE tmp_foo (data text) ON COMMIT DELETE ROWS;
+CREATE ROLE temp_reset_user;
+SET SESSION AUTHORIZATION temp_reset_user;
+-- look changes
+SELECT relname FROM pg_listener;
+SELECT name FROM pg_prepared_statements;
+SELECT name FROM pg_cursors;
+SHOW vacuum_cost_delay;
+SELECT relname from pg_class where relname = 'tmp_foo';
+SELECT current_user = 'temp_reset_user';
+-- big RESET
+RESET SESSION;
+-- look again
+SELECT relname FROM pg_listener;
+SELECT name FROM pg_prepared_statements;
+SELECT name FROM pg_cursors;
+SHOW vacuum_cost_delay;
+SELECT relname from pg_class where relname = 'tmp_foo';
+SELECT current_user = 'temp_reset_user';
+DROP ROLE temp_reset_user;
+
