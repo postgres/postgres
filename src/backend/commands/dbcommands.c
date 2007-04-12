@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.173.2.2 2007/01/27 20:15:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.173.2.3 2007/04/12 15:04:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1374,6 +1374,12 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		 * Drop pages for this database that are in the shared buffer cache
 		 */
 		DropBuffers(xlrec->db_id);
+
+		/* Also, clean out any entries in the shared free space map */
+		FreeSpaceMapForgetDatabase(xlrec->db_id);
+
+		/* Also, clean out any fsync requests that might be pending in md.c */
+		ForgetDatabaseFsyncRequests(xlrec->db_id);
 
 		if (!rmtree(dst_path, true))
 			ereport(WARNING,
