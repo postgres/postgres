@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.20 2007/03/29 15:30:52 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.21 2007/04/12 07:03:00 mha Exp $
 #
 use Carp;
 use strict;
@@ -112,6 +112,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         print O "#define HAVE_LIBZ 1\n" if ($self->{options}->{zlib});
         print O "#define USE_SSL 1\n" if ($self->{options}->{openssl});
         print O "#define ENABLE_NLS 1\n" if ($self->{options}->{nls});
+        print O "#define HAVE_IPV6 1\n";
 
         if ($self->{options}->{xml})
         {
