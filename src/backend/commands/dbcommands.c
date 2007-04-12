@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.193 2007/03/13 00:33:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.194 2007/04/12 15:04:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1438,6 +1438,9 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		/* Also, clean out any entries in the shared free space map */
 		FreeSpaceMapForgetDatabase(xlrec->db_id);
+
+		/* Also, clean out any fsync requests that might be pending in md.c */
+		ForgetDatabaseFsyncRequests(xlrec->db_id);
 
 		/* Clean out the xlog relcache too */
 		XLogDropDatabase(xlrec->db_id);
