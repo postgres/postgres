@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.39 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/explain.sgml,v 1.40 2007/04/12 22:39:21 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -72,7 +72,7 @@ EXPLAIN [ ANALYZE ] [ VERBOSE ] <replaceable class="parameter">statement</replac
   <important>
    <para>
     Keep in mind that the statement is actually executed when
-    <literal>ANALYZE</literal> is used.  Although
+    the <literal>ANALYZE</literal> option is used.  Although
     <command>EXPLAIN</command> will discard any output that a
     <command>SELECT</command> would return, other side effects of the
     statement will happen as usual.  If you wish to use
@@ -141,23 +141,33 @@ ROLLBACK;
   <para>
    In order to allow the <productname>PostgreSQL</productname> query
    planner to make reasonably informed decisions when optimizing
-   queries, the <command>ANALYZE</command> statement should be run to
-   record statistics about the distribution of data within the
-   table. If you have not done this (or if the statistical
-   distribution of the data in the table has changed significantly
-   since the last time <command>ANALYZE</command> was run), the
-   estimated costs are unlikely to conform to the real properties of
-   the query, and consequently an inferior query plan might be chosen.
+   queries, the <xref linkend="sql-analyze" endterm="sql-analyze-title">
+   statement should be run to record statistics about the distribution
+   of data within the table. If you have not done this (or if the
+   statistical distribution of the data in the table has changed
+   significantly since the last time <command>ANALYZE</command> was
+   run), the estimated costs are unlikely to conform to the real
+   properties of the query, and consequently an inferior query plan
+   might be chosen.
   </para>
 
   <para>
-   Genetic query optimization (<acronym>GEQO</acronym>) randomly 
-   tests execution plans.  Therefore, when the number of tables exceeds
-   <varname>geqo_threshold</> causing genetic query optimization to be 
-   used, the execution plan is likely to change each time the statement
-   is executed.
+   Genetic query optimization (<acronym>GEQO</acronym>) randomly tests
+   execution plans.  Therefore, when the number of join relations
+   exceeds <xref linkend="guc-geqo-threshold"> causing genetic query
+   optimization to be used, the execution plan is likely to change
+   each time the statement is executed.
   </para>
 
+  <para>
+   In order to measure the runtime cost of each node in the execution
+   plan, the current implementation of <command>EXPLAIN
+   ANALYZE</command> can add considerable profiling overhead to query
+   execution. As a result, running <command>EXPLAIN ANALYZE</command>
+   on a query can sometimes take significantly longer than executing
+   the query normally. The amount of overhead depends on the nature of
+   the query.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -194,8 +204,8 @@ EXPLAIN SELECT * FROM foo WHERE i = 4;
   </para>
 
   <para>
-   And here is an example of a query plan for a query
-   using an aggregate function:
+   Here is an example of a query plan for a query using an aggregate
+   function:
 
 <programlisting>
 EXPLAIN SELECT sum(i) FROM foo WHERE i &lt; 10;
