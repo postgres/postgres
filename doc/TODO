@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Thu Apr 12 15:38:17 EDT 2007
+Last updated:		Fri Apr 13 19:23:16 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1428,8 +1428,8 @@ Miscellaneous Performance
 
 	o -Support a smaller header for short variable-length fields
 	o Reduce the row header size?
-	o Consider reducing on-disk varlena length from four to two
-	  because a heap row cannot be more than 64k in length
+	o Consider reducing on-disk varlena length from four bytes to 
+	  two because a heap row cannot be more than 64k in length
 
 * Consider increasing NUM_CLOG_BUFFERS
 * Consider having the background writer update the transaction status

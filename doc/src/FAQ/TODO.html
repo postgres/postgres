@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Thu Apr 12 15:38:17 EDT 2007
+Last updated:           Fri Apr 13 19:23:16 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1267,8 +1267,8 @@ first.  There is also a developer's wiki at<br/>
   <ul>
     <li>-<em>Support a smaller header for short variable-length fields</em>
     </li><li>Reduce the row header size?
-    </li><li>Consider reducing on-disk varlena length from four to two
-          because a heap row cannot be more than 64k in length
+    </li><li>Consider reducing on-disk varlena length from four bytes to 
+          two because a heap row cannot be more than 64k in length
   </li></ul>
   </li><li>Consider increasing NUM_CLOG_BUFFERS
   </li><li>Consider having the background writer update the transaction status
