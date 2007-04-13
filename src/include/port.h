@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.110 2007/02/07 00:28:55 petere Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.111 2007/04/13 10:30:30 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -277,6 +277,7 @@ extern bool rmtree(char *path, bool rmtopdir);
 /* open() and fopen() replacements to allow deletion of open files and
  * passing of other special options.
  */
+#define		O_DIRECT	0x80000000
 extern int	pgwin32_open(const char *, int,...);
 extern FILE *pgwin32_fopen(const char *, const char *);
 

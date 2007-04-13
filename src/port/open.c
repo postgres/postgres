@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/port/open.c,v 1.19 2007/02/13 02:06:22 momjian Exp $
+ * $PostgreSQL: pgsql/src/port/open.c,v 1.20 2007/04/13 10:30:30 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,6 @@ openFlagsToCreateFileFlags(int openFlags)
 
 /*
  *	 - file attribute setting, based on fileMode?
- *	 - handle other flags? (eg FILE_FLAG_NO_BUFFERING/FILE_FLAG_WRITE_THROUGH)
  */
 int
 pgwin32_open(const char *fileName, int fileFlags,...)
@@ -65,7 +64,7 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 	/* Check that we can handle the request */
 	assert((fileFlags & ((O_RDONLY | O_WRONLY | O_RDWR) | O_APPEND |
 						 (O_RANDOM | O_SEQUENTIAL | O_TEMPORARY) |
-						 _O_SHORT_LIVED | O_DSYNC |
+						 _O_SHORT_LIVED | O_DSYNC | O_DIRECT |
 		  (O_CREAT | O_TRUNC | O_EXCL) | (O_TEXT | O_BINARY))) == fileFlags);
 
 	sa.nLength = sizeof(sa);
@@ -85,7 +84,8 @@ pgwin32_open(const char *fileName, int fileFlags,...)
 			   ((fileFlags & O_SEQUENTIAL) ? FILE_FLAG_SEQUENTIAL_SCAN : 0) |
 			  ((fileFlags & _O_SHORT_LIVED) ? FILE_ATTRIBUTE_TEMPORARY : 0) |
 				((fileFlags & O_TEMPORARY) ? FILE_FLAG_DELETE_ON_CLOSE : 0) |
-						((fileFlags & O_DSYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
+					  ((fileFlags & O_DIRECT) ? FILE_FLAG_NO_BUFFERING : 0) |
+					  ((fileFlags & O_DSYNC) ? FILE_FLAG_WRITE_THROUGH : 0),
 						NULL)) == INVALID_HANDLE_VALUE)
 	{
 		switch (GetLastError())
