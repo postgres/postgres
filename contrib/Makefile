@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/Makefile,v 1.72 2007/04/13 18:50:01 adunstan Exp $
+# $PostgreSQL: pgsql/contrib/Makefile,v 1.73 2007/04/14 12:57:07 adunstan Exp $
 
 subdir = contrib
 top_builddir = ..
@@ -37,13 +37,9 @@ ifeq ($(with_openssl),yes)
 WANTED_DIRS += sslinfo
 endif
 
-ifeq ($(with_libxml),yes)
-WANTED_DIRS += xml2
-endif
-
 # Missing:
 #		start-scripts	\ (does not have a makefile)
-
+#		xml2		\ (requires libxml and libxslt installed)
 
 all install installdirs uninstall distprep clean distclean maintainer-clean:
 	@for dir in $(WANTED_DIRS); do \
