@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.96 2007/02/16 00:14:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.97 2007/04/15 20:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,5 +176,6 @@ extern int	pathkeys_useful_for_ordering(PlannerInfo *root, List *pathkeys);
 extern List *truncate_useless_pathkeys(PlannerInfo *root,
 						  RelOptInfo *rel,
 						  List *pathkeys);
+extern bool has_useful_pathkeys(PlannerInfo *root, RelOptInfo *rel);
 
 #endif   /* PATHS_H */

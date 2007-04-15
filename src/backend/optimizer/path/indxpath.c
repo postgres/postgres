@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.219 2007/04/06 22:33:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.220 2007/04/15 20:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,6 +251,7 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 					SaOpControl saop_control)
 {
 	Relids		outer_relids = outer_rel ? outer_rel->relids : NULL;
+	bool		possibly_useful_pathkeys = has_useful_pathkeys(root, rel);
 	List	   *result = NIL;
 	List	   *all_clauses = NIL;		/* not computed till needed */
 	ListCell   *ilist;
@@ -337,7 +338,8 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		 * relevant unless we are at top level.
 		 */
 		index_is_ordered = OidIsValid(index->fwdsortop[0]);
-		if (index_is_ordered && istoplevel && outer_rel == NULL)
+		if (index_is_ordered && possibly_useful_pathkeys &&
+			istoplevel && outer_rel == NULL)
 		{
 			index_pathkeys = build_index_pathkeys(root, index,
 												  ForwardScanDirection);
@@ -369,7 +371,8 @@ find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 		 * 4. If the index is ordered, a backwards scan might be
 		 * interesting.  Again, this is only interesting at top level.
 		 */
-		if (index_is_ordered && istoplevel && outer_rel == NULL)
+		if (index_is_ordered && possibly_useful_pathkeys &&
+			istoplevel && outer_rel == NULL)
 		{
 			index_pathkeys = build_index_pathkeys(root, index,
 												  BackwardScanDirection);

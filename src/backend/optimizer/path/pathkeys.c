@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.83 2007/01/21 00:57:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.84 2007/04/15 20:09:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1327,8 +1327,35 @@ truncate_useless_pathkeys(PlannerInfo *root,
 	 * Note: not safe to modify input list destructively, but we can avoid
 	 * copying the list if we're not actually going to change it
 	 */
-	if (nuseful == list_length(pathkeys))
+	if (nuseful == 0)
+		return NIL;
+	else if (nuseful == list_length(pathkeys))
 		return pathkeys;
 	else
 		return list_truncate(list_copy(pathkeys), nuseful);
+}
+
+/*
+ * has_useful_pathkeys
+ *		Detect whether the specified rel could have any pathkeys that are
+ *		useful according to truncate_useless_pathkeys().
+ *
+ * This is a cheap test that lets us skip building pathkeys at all in very
+ * simple queries.  It's OK to err in the direction of returning "true" when
+ * there really aren't any usable pathkeys, but erring in the other direction
+ * is bad --- so keep this in sync with the routines above!
+ *
+ * We could make the test more complex, for example checking to see if any of
+ * the joinclauses are really mergejoinable, but that likely wouldn't win
+ * often enough to repay the extra cycles.  Queries with neither a join nor
+ * a sort are reasonably common, though, so this much work seems worthwhile.
+ */
+bool
+has_useful_pathkeys(PlannerInfo *root, RelOptInfo *rel)
+{
+	if (rel->joininfo != NIL || rel->has_eclass_joins)
+		return true;			/* might be able to use pathkeys for merging */
+	if (root->query_pathkeys != NIL)
+		return true;			/* might be able to use them for ordering */
+	return false;				/* definitely useless */
 }
