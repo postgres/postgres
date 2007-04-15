@@ -1,6 +1,6 @@
 新しいエンコーディング変換関数の追加方法
 
-	2002/09/18 Tatsuo Ishii
+	2006/04/15 Tatsuo Ishii
 
 はじめに
 
@@ -24,7 +24,7 @@ o C関数の呼び出し形式
 	INTEGER,	-- source encoding id
 	INTEGER,	-- destination encoding id
 	CSTRING,	-- source string (null terminated C string)
-	CSTRING,	-- destination string (null terminated C string)
+	INTERNAL,	-- destination string (null terminated C string)
 	INTEGER		-- source string length
   ) returns VOID;
 
