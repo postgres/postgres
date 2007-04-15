@@ -256,6 +256,9 @@
 /* Define to 1 if you have the `xml2' library (-lxml2). */
 #undef HAVE_LIBXML2
 
+/* Define to 1 if you have the `xslt' library (-lxslt). */
+#undef HAVE_LIBXSLT
+
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
 
