@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.61 2007/03/26 11:15:13 ishii Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.62 2007/04/15 10:56:25 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -1317,27 +1317,26 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{pg_euccn2wchar_with_len, pg_euccn_mblen, pg_euccn_dsplen, pg_euccn_verifier, 2},	/* 2; PG_EUC_CN */
 	{pg_euckr2wchar_with_len, pg_euckr_mblen, pg_euckr_dsplen, pg_euckr_verifier, 3},	/* 3; PG_EUC_KR */
 	{pg_euctw2wchar_with_len, pg_euctw_mblen, pg_euctw_dsplen, pg_euctw_verifier, 4},	/* 4; PG_EUC_TW */
-	{pg_johab2wchar_with_len, pg_johab_mblen, pg_johab_dsplen, pg_johab_verifier, 3},	/* 5; PG_JOHAB */
-	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, pg_utf8_verifier, 4},	/* 6; PG_UTF8 */
-	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, pg_mule_verifier, 4},		/* 7; PG_MULE_INTERNAL */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 8; PG_LATIN1 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 9; PG_LATIN2 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 10; PG_LATIN3 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 11; PG_LATIN4 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 12; PG_LATIN5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 13; PG_LATIN6 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 14; PG_LATIN7 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 15; PG_LATIN8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 16; PG_LATIN9 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 17; PG_LATIN10 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 18; PG_WIN1256 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 19; PG_WIN1258 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 20; PG_WIN874 */
+	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, pg_utf8_verifier, 4},	/* 5; PG_UTF8 */
+	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, pg_mule_verifier, 4},		/* 6; PG_MULE_INTERNAL */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 7; PG_LATIN1 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 8; PG_LATIN2 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 9; PG_LATIN3 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 10; PG_LATIN4 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 11; PG_LATIN5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 12; PG_LATIN6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 13; PG_LATIN7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 14; PG_LATIN8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 15; PG_LATIN9 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 16; PG_LATIN10 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 17; PG_WIN1256 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 18; PG_WIN1258 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 19; PG_WIN874 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 21; PG_KOI8 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 22; PG_WIN1251 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 22; PG_WIN1252 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 23; PG_WIN866 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 24; ISO-8859-5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 23; PG_WIN1252 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 24; PG_WIN866 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 25; ISO-8859-5 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 25; ISO-8859-6 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 26; ISO-8859-7 */
 	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, pg_latin1_verifier, 1},		/* 27; ISO-8859-8 */
@@ -1351,8 +1350,9 @@ pg_wchar_tbl pg_wchar_table[] = {
 	{0, pg_big5_mblen, pg_big5_dsplen, pg_big5_verifier, 2},	/* 35; PG_BIG5 */
 	{0, pg_gbk_mblen, pg_gbk_dsplen, pg_gbk_verifier, 2},		/* 36; PG_GBK */
 	{0, pg_uhc_mblen, pg_uhc_dsplen, pg_uhc_verifier, 2},		/* 37; PG_UHC */
-	{0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 4},	/* 38; PG_GB18030 */
-	{0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2}		/* 39; PG_SHIFT_JIS_2004 */
+	{pg_johab2wchar_with_len, pg_johab_mblen, pg_johab_dsplen, pg_johab_verifier, 3},	/* 38; PG_JOHAB */
+	{0, pg_gb18030_mblen, pg_gb18030_dsplen, pg_gb18030_verifier, 4},	/* 39; PG_GB18030 */
+	{0, pg_sjis_mblen, pg_sjis_dsplen, pg_sjis_verifier, 2}		/* 40; PG_SHIFT_JIS_2004 */
 };
 
 /* returns the byte length of a word for mule internal code */

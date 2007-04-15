@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.71 2007/03/25 11:56:04 ishii Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.72 2007/04/15 10:56:30 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -158,7 +158,6 @@ typedef enum pg_enc
 	PG_EUC_CN,					/* EUC for Chinese */
 	PG_EUC_KR,					/* EUC for Korean */
 	PG_EUC_TW,					/* EUC for Taiwan */
-	PG_JOHAB,					/* EUC for Korean JOHAB */
 	PG_UTF8,					/* Unicode UTF8 */
 	PG_MULE_INTERNAL,			/* Mule internal code */
 	PG_LATIN1,					/* ISO-8859-1 Latin 1 */
@@ -195,6 +194,7 @@ typedef enum pg_enc
 	PG_BIG5,					/* Big5 (Windows-950) */
 	PG_GBK,						/* GBK (Windows-936) */
 	PG_UHC,						/* UHC (Windows-949) */
+	PG_JOHAB,					/* EUC for Korean JOHAB */
 	PG_GB18030,					/* GB18030 */
 	PG_SHIFT_JIS_2004,			/* Shift-JIS-2004 */
 	_PG_LAST_ENCODING_			/* mark only */
