@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.453 2006/10/09 23:36:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.453.2.1 2007/04/16 18:42:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -8030,8 +8030,8 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 	 *
 	 * Add a CREATE SEQUENCE statement as part of a "schema" dump (use
 	 * last_val for start if called is false, else use min_val for start_val).
-	 * Also, if the sequence is owned by a column, add an ALTER SEQUENCE SET
-	 * OWNED command for it.
+	 * Also, if the sequence is owned by a column, add an ALTER SEQUENCE
+	 * OWNED BY command for it.
 	 *
 	 * Add a 'SETVAL(seq, last_val, iscalled)' as part of a "data" dump.
 	 */
@@ -8099,7 +8099,7 @@ dumpSequence(Archive *fout, TableInfo *tbinfo)
 		{
 			TableInfo  *owning_tab = findTableByOid(tbinfo->owning_tab);
 
-			if (owning_tab)
+			if (owning_tab && owning_tab->dobj.dump)
 			{
 				resetPQExpBuffer(query);
 				appendPQExpBuffer(query, "ALTER SEQUENCE %s",
