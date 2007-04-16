@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.7 2007/04/16 01:14:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.8 2007/04/16 18:21:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,6 +106,7 @@ InitPlanCache(void)
  * commandTag: compile-time-constant tag for query, or NULL if empty query
  * param_types: array of parameter type OIDs, or NULL if none
  * num_params: number of parameters
+ * cursor_options: options bitmask that was/will be passed to planner
  * stmt_list: list of PlannedStmts/utility stmts, or list of Query trees
  * fully_planned: are we caching planner or rewriter output?
  * fixed_result: TRUE to disallow changes in result tupdesc
@@ -116,6 +117,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 				 const char *commandTag,
 				 Oid *param_types,
 				 int num_params,
+				 int cursor_options,
 				 List *stmt_list,
 				 bool fully_planned,
 				 bool fixed_result)
@@ -157,6 +159,7 @@ CreateCachedPlan(Node *raw_parse_tree,
 	else
 		plansource->param_types = NULL;
 	plansource->num_params = num_params;
+	plansource->cursor_options = cursor_options;
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
 	plansource->search_path = search_path;
@@ -212,6 +215,7 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 					 const char *commandTag,
 					 Oid *param_types,
 					 int num_params,
+					 int cursor_options,
 					 List *stmt_list,
 					 bool fully_planned,
 					 bool fixed_result,
@@ -237,6 +241,7 @@ FastCreateCachedPlan(Node *raw_parse_tree,
 	plansource->commandTag = commandTag;			/* no copying needed */
 	plansource->param_types = param_types;
 	plansource->num_params = num_params;
+	plansource->cursor_options = cursor_options;
 	plansource->fully_planned = fully_planned;
 	plansource->fixed_result = fixed_result;
 	plansource->search_path = search_path;
@@ -458,13 +463,11 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 		if (plansource->fully_planned)
 		{
 			/*
-			 * Generate plans for queries.  We don't need any boundParams, and
-			 * currently we don't need to worry about cursor options because
-			 * cursor plans are never saved in the plancache (that might have
-			 * to change someday).  Also, assume snapshot is not set yet
+			 * Generate plans for queries.	Assume snapshot is not set yet
 			 * (XXX this may be wasteful, won't all callers have done that?)
 			 */
-			slist = pg_plan_queries(slist, 0, NULL, true);
+			slist = pg_plan_queries(slist, plansource->cursor_options, NULL,
+									true);
 		}
 
 		/*

@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.72 2007/04/16 01:14:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.73 2007/04/16 18:21:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,7 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 						   commandTag,
 						   argtypes,
 						   nargs,
+						   0,				/* default cursor options */
 						   plan_list,
 						   true);
 }
@@ -435,6 +436,7 @@ StorePreparedStatement(const char *stmt_name,
 					   const char *commandTag,
 					   Oid *param_types,
 					   int num_params,
+					   int cursor_options,
 					   List *stmt_list,
 					   bool from_sql)
 {
@@ -461,6 +463,7 @@ StorePreparedStatement(const char *stmt_name,
 								  commandTag,
 								  param_types,
 								  num_params,
+								  cursor_options,
 								  stmt_list,
 								  true,
 								  true);

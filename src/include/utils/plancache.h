@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.5 2007/04/12 06:53:48 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.6 2007/04/16 18:21:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@ typedef struct CachedPlanSource
 	const char *commandTag;		/* command tag (a constant!), or NULL */
 	Oid		   *param_types;	/* array of parameter type OIDs, or NULL */
 	int			num_params;		/* length of param_types array */
+	int			cursor_options;	/* cursor options used for planning */
 	bool		fully_planned;	/* do we cache planner or rewriter output? */
 	bool		fixed_result;	/* disallow change in result tupdesc? */
 	struct OverrideSearchPath *search_path;		/* saved search_path */
@@ -86,6 +87,7 @@ extern CachedPlanSource *CreateCachedPlan(Node *raw_parse_tree,
 										  const char *commandTag,
 										  Oid *param_types,
 										  int num_params,
+										  int cursor_options,
 										  List *stmt_list,
 										  bool fully_planned,
 										  bool fixed_result);
@@ -94,6 +96,7 @@ extern CachedPlanSource *FastCreateCachedPlan(Node *raw_parse_tree,
 											  const char *commandTag,
 											  Oid *param_types,
 											  int num_params,
+											  int cursor_options,
 											  List *stmt_list,
 											  bool fully_planned,
 											  bool fixed_result,

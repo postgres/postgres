@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.26 2007/04/12 06:53:48 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/commands/prepare.h,v 1.27 2007/04/16 18:21:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,7 @@ extern void StorePreparedStatement(const char *stmt_name,
 					   const char *commandTag,
 					   Oid *param_types,
 					   int num_params,
+					   int cursor_options,
 					   List *stmt_list,
 					   bool from_sql);
 extern PreparedStatement *FetchPreparedStatement(const char *stmt_name,

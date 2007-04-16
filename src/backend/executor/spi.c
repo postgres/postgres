@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.177 2007/04/16 17:21:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.178 2007/04/16 18:21:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2032,6 +2032,7 @@ _SPI_save_plan(SPIPlanPtr plan)
 									 plansource->commandTag,
 									 newplan->argtypes,
 									 newplan->nargs,
+									 newplan->cursor_options,
 									 cplan->stmt_list,
 									 true,
 									 false);
