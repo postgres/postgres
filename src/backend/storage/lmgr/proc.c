@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.187 2007/04/03 16:34:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.188 2007/04/16 18:29:53 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ ProcGlobalShmemSize(void)
 	size = add_size(size, sizeof(PROC_HDR));
 	/* AuxiliaryProcs */
 	size = add_size(size, mul_size(NUM_AUXILIARY_PROCS, sizeof(PGPROC)));
-	/* MyProcs */
+	/* MyProcs, including autovacuum */
 	size = add_size(size, mul_size(MaxBackends, sizeof(PGPROC)));
 	/* ProcStructLock */
 	size = add_size(size, sizeof(slock_t));
@@ -110,7 +110,10 @@ ProcGlobalShmemSize(void)
 int
 ProcGlobalSemas(void)
 {
-	/* We need a sema per backend, plus one for each auxiliary process. */
+	/*
+	 * We need a sema per backend (including autovacuum), plus one for each
+	 * auxiliary process.
+	 */
 	return MaxBackends + NUM_AUXILIARY_PROCS;
 }
 
@@ -127,8 +130,8 @@ ProcGlobalSemas(void)
  *	  running out when trying to start another backend is a common failure.
  *	  So, now we grab enough semaphores to support the desired max number
  *	  of backends immediately at initialization --- if the sysadmin has set
- *	  MaxBackends higher than his kernel will support, he'll find out sooner
- *	  rather than later.
+ *	  MaxConnections or autovacuum_max_workers higher than his kernel will
+ *	  support, he'll find out sooner rather than later.
  *
  *	  Another reason for creating semaphores here is that the semaphore
  *	  implementation typically requires us to create semaphores in the
@@ -163,23 +166,37 @@ InitProcGlobal(void)
 	 * Initialize the data structures.
 	 */
 	ProcGlobal->freeProcs = INVALID_OFFSET;
+	ProcGlobal->autovacFreeProcs = INVALID_OFFSET;
 
 	ProcGlobal->spins_per_delay = DEFAULT_SPINS_PER_DELAY;
 
 	/*
 	 * Pre-create the PGPROC structures and create a semaphore for each.
 	 */
-	procs = (PGPROC *) ShmemAlloc(MaxBackends * sizeof(PGPROC));
+	procs = (PGPROC *) ShmemAlloc((MaxConnections) * sizeof(PGPROC));
 	if (!procs)
 		ereport(FATAL,
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of shared memory")));
-	MemSet(procs, 0, MaxBackends * sizeof(PGPROC));
-	for (i = 0; i < MaxBackends; i++)
+	MemSet(procs, 0, MaxConnections * sizeof(PGPROC));
+	for (i = 0; i < MaxConnections; i++)
 	{
 		PGSemaphoreCreate(&(procs[i].sem));
 		procs[i].links.next = ProcGlobal->freeProcs;
 		ProcGlobal->freeProcs = MAKE_OFFSET(&procs[i]);
+	}
+
+	procs = (PGPROC *) ShmemAlloc((autovacuum_max_workers) * sizeof(PGPROC));
+	if (!procs)
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of shared memory")));
+	MemSet(procs, 0, autovacuum_max_workers * sizeof(PGPROC));
+	for (i = 0; i < autovacuum_max_workers; i++)
+	{
+		PGSemaphoreCreate(&(procs[i].sem));
+		procs[i].links.next = ProcGlobal->autovacFreeProcs;
+		ProcGlobal->autovacFreeProcs = MAKE_OFFSET(&procs[i]);
 	}
 
 	MemSet(AuxiliaryProcs, 0, NUM_AUXILIARY_PROCS * sizeof(PGPROC));
@@ -226,12 +243,18 @@ InitProcess(void)
 
 	set_spins_per_delay(procglobal->spins_per_delay);
 
-	myOffset = procglobal->freeProcs;
+	if (IsAutoVacuumWorkerProcess())
+		myOffset = procglobal->autovacFreeProcs;
+	else
+		myOffset = procglobal->freeProcs;
 
 	if (myOffset != INVALID_OFFSET)
 	{
 		MyProc = (PGPROC *) MAKE_PTR(myOffset);
-		procglobal->freeProcs = MyProc->links.next;
+		if (IsAutoVacuumWorkerProcess())
+			procglobal->autovacFreeProcs = MyProc->links.next;
+		else
+			procglobal->freeProcs = MyProc->links.next;
 		SpinLockRelease(ProcStructLock);
 	}
 	else
@@ -239,7 +262,8 @@ InitProcess(void)
 		/*
 		 * If we reach here, all the PGPROCs are in use.  This is one of the
 		 * possible places to detect "too many backends", so give the standard
-		 * error message.
+		 * error message.  XXX do we need to give a different failure message
+		 * in the autovacuum case?
 		 */
 		SpinLockRelease(ProcStructLock);
 		ereport(FATAL,
@@ -571,8 +595,16 @@ ProcKill(int code, Datum arg)
 	SpinLockAcquire(ProcStructLock);
 
 	/* Return PGPROC structure (and semaphore) to freelist */
-	MyProc->links.next = procglobal->freeProcs;
-	procglobal->freeProcs = MAKE_OFFSET(MyProc);
+	if (IsAutoVacuumWorkerProcess())
+	{
+		MyProc->links.next = procglobal->autovacFreeProcs;
+		procglobal->autovacFreeProcs = MAKE_OFFSET(MyProc);
+	}
+	else
+	{
+		MyProc->links.next = procglobal->freeProcs;
+		procglobal->freeProcs = MAKE_OFFSET(MyProc);
+	}
 
 	/* PGPROC struct isn't mine anymore */
 	MyProc = NULL;
@@ -581,6 +613,10 @@ ProcKill(int code, Datum arg)
 	procglobal->spins_per_delay = update_spins_per_delay(procglobal->spins_per_delay);
 
 	SpinLockRelease(ProcStructLock);
+
+	/* wake autovac launcher if needed -- see comments in FreeWorkerInfo */
+	if (AutovacuumLauncherPid != 0)
+		kill(AutovacuumLauncherPid, SIGUSR1);
 }
 
 /*

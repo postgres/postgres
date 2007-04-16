@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.119 2007/04/02 15:27:02 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.120 2007/04/16 18:29:50 alvherre Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3166,11 +3166,26 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Controls whether the server should run the
-        autovacuum daemon.  This is off by default.
+        autovacuum launcher daemon.  This is on by default.
         <varname>stats_start_collector</> and <varname>stats_row_level</>
         must also be turned on for autovacuum to work.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-autovacuum-max-workers" xreflabel="autovacuum_max_workers">
+      <term><varname>autovacuum_max_workers</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>autovacuum_max_workers</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the maximum number of autovacuum processes (other than the
+        autovacuum launcher) which may be running at any one time.  The default
+        is three (<literal>3</literal>).  This parameter can only be set in
+        the <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -3182,9 +3197,9 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        Specifies the delay between activity rounds for the autovacuum
-        daemon.  In each round the daemon examines one database
-        and issues <command>VACUUM</> and <command>ANALYZE</> commands
+        Specifies the minimum delay between autovacuum runs on any given
+        database.  In each round the daemon examines the
+        database and issues <command>VACUUM</> and <command>ANALYZE</> commands
         as needed for tables in that database.  The delay is measured
         in seconds, and the default is one minute (<literal>1m</>).
         This parameter can only be set in the <filename>postgresql.conf</>
@@ -3318,7 +3333,10 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies the cost limit value that will be used in automatic
         <command>VACUUM</> operations.  If <literal>-1</> is specified (which is the
         default), the regular
-        <xref linkend="guc-vacuum-cost-limit"> value will be used.
+        <xref linkend="guc-vacuum-cost-limit"> value will be used.  Note that
+        the value is distributed proportionally among the running autovacuum
+        workers, if there is more than one, so that the sum of the limits of
+        each worker never exceeds the limit on this variable.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in

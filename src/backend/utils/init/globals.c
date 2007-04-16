@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.100 2007/01/05 22:19:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.101 2007/04/16 18:29:54 alvherre Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -95,9 +95,14 @@ bool		allowSystemTableMods = false;
 int			work_mem = 1024;
 int			maintenance_work_mem = 16384;
 
-/* Primary determinants of sizes of shared-memory structures: */
+/*
+ * Primary determinants of sizes of shared-memory structures.  MaxBackends is
+ * MaxConnections + autovacuum_max_workers (it is computed by the GUC assign
+ * hook):
+ */
 int			NBuffers = 1000;
 int			MaxBackends = 100;
+int			MaxConnections = 90;
 
 int			VacuumCostPageHit = 1;		/* GUC parameters for vacuum */
 int			VacuumCostPageMiss = 10;

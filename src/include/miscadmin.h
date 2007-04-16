@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.193 2007/03/01 14:52:04 petere Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.194 2007/04/16 18:29:56 alvherre Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -129,6 +129,7 @@ extern DLLIMPORT char *DataDir;
 
 extern DLLIMPORT int NBuffers;
 extern int	MaxBackends;
+extern int	MaxConnections;
 
 extern DLLIMPORT int MyProcPid;
 extern DLLIMPORT struct Port *MyProcPort;

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.70 2007/02/01 19:10:24 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.71 2007/04/16 18:29:50 alvherre Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -466,26 +466,43 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     <secondary>general information</secondary>
    </indexterm>
    <para>
-    Beginning in <productname>PostgreSQL </productname> 8.1, there is a
-    separate optional server process called the <firstterm>autovacuum
-    daemon</firstterm>, whose purpose is to automate the execution of
+    Beginning in <productname>PostgreSQL</productname> 8.1, there is an
+    optional feature called <firstterm>autovacuum</firstterm>,
+    whose purpose is to automate the execution of
     <command>VACUUM</command> and <command>ANALYZE </command> commands.
-    When enabled, the autovacuum daemon runs periodically and checks for
+    When enabled, autovacuum checks for
     tables that have had a large number of inserted, updated or deleted
     tuples.  These checks use the row-level statistics collection facility;
-    therefore, the autovacuum daemon cannot be used unless <xref
+    therefore, autovacuum cannot be used unless <xref
     linkend="guc-stats-start-collector"> and <xref
-    linkend="guc-stats-row-level"> are set to <literal>true</literal>.  Also,
-    it's important to allow a slot for the autovacuum process when choosing
-    the value of <xref linkend="guc-superuser-reserved-connections">.  In
-    the default configuration, autovacuuming is enabled and the related
+    linkend="guc-stats-row-level"> are set to <literal>true</literal>.
+    In the default configuration, autovacuuming is enabled and the related
     configuration parameters are appropriately set.
    </para>
 
    <para>
-    The autovacuum daemon, when enabled, runs every <xref
-    linkend="guc-autovacuum-naptime"> seconds.  On each run, it selects
-    one database to process and checks each table within that database.
+	Beginning in <productname>PostgreSQL</productname> 8.3, autovacuum has a
+	multi-process architecture: there is a daemon process, called the
+	<firstterm>autovacuum launcher</firstterm>, which is in charge of starting
+	an <firstterm>autovacuum worker</firstterm> process on each database every
+	<xref linkend="guc-autovacuum-naptime"> seconds.
+   </para>
+
+   <para>
+    There is a limit of <xref linkend="guc-autovacuum-max-workers"> worker
+    processes that may be running at at any time, so if the <command>VACUUM</>
+    and <command>ANALYZE</> work to do takes too long to run, the deadline may
+    be failed to meet for other databases.  Also, if a particular database
+    takes long to process, more than one worker may be processing it
+	simultaneously.  The workers are smart enough to avoid repeating work that
+	other workers have done, so this is normally not a problem.  Note that the
+	number of running workers does not count towards the <xref
+	linkend="guc-max-connections"> nor the <xref
+	linkend="guc-superuser-reserved-connections"> limits.
+   </para>
+
+   <para>
+    On each run, the worker process checks each table within that database, and
     <command>VACUUM</command> or <command>ANALYZE</command> commands are
     issued as needed.
    </para>
@@ -580,6 +597,12 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
      dump the catalog manually.
     </para>
    </caution>
+
+   <para>
+    When multiple workers are running, the cost limit is "balanced" among all
+    the running workers, so that the total impact on the system is the same,
+    regardless of the number of workers actually running.
+   </para>
 
   </sect2>
  </sect1>

@@ -376,6 +376,7 @@
 #autovacuum = on			# enable autovacuum subprocess?
 					# 'on' requires stats_start_collector
 					# and stats_row_level to also be on
+#autovacuum_max_workers = 3 # max # of autovacuum subprocesses
 #autovacuum_naptime = 1min		# time between autovacuum runs
 #autovacuum_vacuum_threshold = 500	# min # of tuple updates before
 					# vacuum

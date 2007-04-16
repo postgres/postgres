@@ -7,15 +7,18 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.8 2007/02/15 23:23:23 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.9 2007/04/16 18:30:03 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef AUTOVACUUM_H
 #define AUTOVACUUM_H
 
+#include "storage/lock.h"
+
 /* GUC variables */
 extern bool autovacuum_start_daemon;
+extern int	autovacuum_max_workers;
 extern int	autovacuum_naptime;
 extern int	autovacuum_vac_thresh;
 extern double autovacuum_vac_scale;
@@ -24,6 +27,9 @@ extern double autovacuum_anl_scale;
 extern int	autovacuum_freeze_max_age;
 extern int	autovacuum_vac_cost_delay;
 extern int	autovacuum_vac_cost_limit;
+
+/* autovacuum launcher PID, only valid when worker is shutting down */
+extern int	AutovacuumLauncherPid;
 
 /* Status inquiry functions */
 extern bool AutoVacuumingActive(void);
@@ -34,6 +40,9 @@ extern bool IsAutoVacuumWorkerProcess(void);
 extern void autovac_init(void);
 extern int	StartAutoVacLauncher(void);
 extern int	StartAutoVacWorker(void);
+
+/* autovacuum cost-delay balancer */
+extern void AutoVacuumUpdateDelay(void);
 
 #ifdef EXEC_BACKEND
 extern void AutoVacLauncherMain(int argc, char *argv[]);

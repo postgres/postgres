@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.349 2007/03/14 18:48:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.350 2007/04/16 18:29:50 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3503,6 +3503,9 @@ vacuum_delay_point(void)
 		pg_usleep(msec * 1000L);
 
 		VacuumCostBalance = 0;
+
+		/* update balance values for workers */
+		AutoVacuumUpdateDelay();
 
 		/* Might have gotten an interrupt while sleeping */
 		CHECK_FOR_INTERRUPTS();

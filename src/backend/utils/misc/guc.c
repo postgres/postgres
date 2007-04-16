@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.384 2007/04/12 06:53:47 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.385 2007/04/16 18:29:55 alvherre Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -163,6 +163,8 @@ static bool assign_tcp_keepalives_count(int newval, bool doit, GucSource source)
 static const char *show_tcp_keepalives_idle(void);
 static const char *show_tcp_keepalives_interval(void);
 static const char *show_tcp_keepalives_count(void);
+static bool assign_autovacuum_max_workers(int newval, bool doit, GucSource source);
+static bool assign_maxconnections(int newval, bool doit, GucSource source);
 
 /*
  * GUC option variables that are exported from this module
@@ -1149,16 +1151,19 @@ static struct config_int ConfigureNamesInt[] =
 	 * number.
 	 *
 	 * MaxBackends is limited to INT_MAX/4 because some places compute
-	 * 4*MaxBackends without any overflow check.  Likewise we have to limit
-	 * NBuffers to INT_MAX/2.
+	 * 4*MaxBackends without any overflow check.  This check is made on
+	 * assign_maxconnections, since MaxBackends is computed as MaxConnections +
+	 * autovacuum_max_workers.
+	 *
+	 * Likewise we have to limit NBuffers to INT_MAX/2.
 	 */
 	{
 		{"max_connections", PGC_POSTMASTER, CONN_AUTH_SETTINGS,
 			gettext_noop("Sets the maximum number of concurrent connections."),
 			NULL
 		},
-		&MaxBackends,
-		100, 1, INT_MAX / 4, NULL, NULL
+		&MaxConnections,
+		100, 1, INT_MAX / 4, assign_maxconnections, NULL
 	},
 
 	{
@@ -1621,6 +1626,15 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&autovacuum_freeze_max_age,
 		200000000, 100000000, 2000000000, NULL, NULL
+	},
+	{
+		/* see max_connections */
+		{"autovacuum_max_workers", PGC_POSTMASTER, AUTOVACUUM,
+			gettext_noop("Sets the maximum number of simultaneously running autovacuum worker processes."),
+			NULL
+		},
+		&autovacuum_max_workers,
+		3, 1, INT_MAX / 4, assign_autovacuum_max_workers, NULL
 	},
 
 	{
@@ -6692,5 +6706,32 @@ show_tcp_keepalives_count(void)
 	return nbuf;
 }
 
+static bool
+assign_maxconnections(int newval, bool doit, GucSource source)
+{
+	if (doit)
+	{
+		if (newval + autovacuum_max_workers > INT_MAX / 4)
+			return false;
+
+		MaxBackends = newval + autovacuum_max_workers;
+	}
+
+	return true;
+}
+
+static bool
+assign_autovacuum_max_workers(int newval, bool doit, GucSource source)
+{
+	if (doit)
+	{
+		if (newval + MaxConnections > INT_MAX / 4)
+			return false;
+
+		MaxBackends = newval + MaxConnections;
+	}
+
+	return true;
+}
 
 #include "guc-file.c"

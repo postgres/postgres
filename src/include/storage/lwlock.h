@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.35 2007/04/03 16:34:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lwlock.h,v 1.36 2007/04/16 18:30:04 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,7 @@ typedef enum LWLockId
 	BtreeVacuumLock,
 	AddinShmemInitLock,
 	AutovacuumLock,
+	AutovacuumScheduleLock,
 	/* Individual lock IDs end here */
 	FirstBufMappingLock,
 	FirstLockMgrLock = FirstBufMappingLock + NUM_BUFFER_PARTITIONS,
