@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.63 2007/04/12 06:53:46 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.64 2007/04/16 01:14:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params,
 				 errdetail("Cursors must be READ ONLY.")));
 
 	/* plan the query */
-	plan = planner(query, true, stmt->options, params);
+	plan = planner(query, stmt->options, params);
 
 	/*
 	 * Create a portal and copy the plan into its memory context.

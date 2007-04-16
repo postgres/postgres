@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.175 2007/03/25 23:42:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.176 2007/04/16 01:14:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,8 @@ static int	_SPI_stack_depth = 0;		/* allocated size of _SPI_stack */
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
-static void _SPI_prepare_plan(const char *src, SPIPlanPtr plan);
+static void _SPI_prepare_plan(const char *src, SPIPlanPtr plan,
+							  int cursorOptions);
 
 static int _SPI_execute_plan(SPIPlanPtr plan,
 				  Datum *Values, const char *Nulls,
@@ -45,8 +46,9 @@ static int	_SPI_pquery(QueryDesc *queryDesc, long tcount);
 
 static void _SPI_error_callback(void *arg);
 
-static void _SPI_cursor_operation(Portal portal, bool forward, long count,
-					  DestReceiver *dest);
+static void _SPI_cursor_operation(Portal portal,
+								  FetchDirection direction, long count,
+								  DestReceiver *dest);
 
 static SPIPlanPtr _SPI_copy_plan(SPIPlanPtr plan, MemoryContext parentcxt);
 static SPIPlanPtr _SPI_save_plan(SPIPlanPtr plan);
@@ -310,7 +312,7 @@ SPI_execute(const char *src, bool read_only, long tcount)
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
 
-	_SPI_prepare_plan(src, &plan);
+	_SPI_prepare_plan(src, &plan, 0);
 
 	res = _SPI_execute_plan(&plan, NULL, NULL,
 							InvalidSnapshot, InvalidSnapshot,
@@ -399,6 +401,13 @@ SPI_execute_snapshot(SPIPlanPtr plan,
 SPIPlanPtr
 SPI_prepare(const char *src, int nargs, Oid *argtypes)
 {
+	return SPI_prepare_cursor(src, nargs, argtypes, 0);
+}
+
+SPIPlanPtr
+SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
+				   int cursorOptions)
+{
 	_SPI_plan	plan;
 	SPIPlanPtr	result;
 
@@ -417,7 +426,7 @@ SPI_prepare(const char *src, int nargs, Oid *argtypes)
 	plan.nargs = nargs;
 	plan.argtypes = argtypes;
 
-	_SPI_prepare_plan(src, &plan);
+	_SPI_prepare_plan(src, &plan, cursorOptions);
 
 	/* copy plan to procedure context */
 	result = _SPI_copy_plan(&plan, _SPI_current->procCxt);
@@ -1032,7 +1041,8 @@ SPI_cursor_find(const char *name)
 void
 SPI_cursor_fetch(Portal portal, bool forward, long count)
 {
-	_SPI_cursor_operation(portal, forward, count,
+	_SPI_cursor_operation(portal,
+						  forward ? FETCH_FORWARD : FETCH_BACKWARD, count,
 						  CreateDestReceiver(DestSPI, NULL));
 	/* we know that the DestSPI receiver doesn't need a destroy call */
 }
@@ -1046,7 +1056,36 @@ SPI_cursor_fetch(Portal portal, bool forward, long count)
 void
 SPI_cursor_move(Portal portal, bool forward, long count)
 {
-	_SPI_cursor_operation(portal, forward, count, None_Receiver);
+	_SPI_cursor_operation(portal,
+						  forward ? FETCH_FORWARD : FETCH_BACKWARD, count,
+						  None_Receiver);
+}
+
+
+/*
+ * SPI_scroll_cursor_fetch()
+ *
+ *	Fetch rows in a scrollable cursor
+ */
+void
+SPI_scroll_cursor_fetch(Portal portal, FetchDirection direction, long count)
+{
+	_SPI_cursor_operation(portal,
+						  direction, count,
+						  CreateDestReceiver(DestSPI, NULL));
+	/* we know that the DestSPI receiver doesn't need a destroy call */
+}
+
+
+/*
+ * SPI_scroll_cursor_move()
+ *
+ *	Move in a scrollable cursor
+ */
+void
+SPI_scroll_cursor_move(Portal portal, FetchDirection direction, long count)
+{
+	_SPI_cursor_operation(portal, direction, count, None_Receiver);
 }
 
 
@@ -1299,7 +1338,7 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
  * and need to be copied somewhere to survive.
  */
 static void
-_SPI_prepare_plan(const char *src, SPIPlanPtr plan)
+_SPI_prepare_plan(const char *src, SPIPlanPtr plan, int cursorOptions)
 {
 	List	   *raw_parsetree_list;
 	List	   *plancache_list;
@@ -1345,7 +1384,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 		/* Need a copyObject here to keep parser from modifying raw tree */
 		stmt_list = pg_analyze_and_rewrite(copyObject(parsetree),
 										   src, argtypes, nargs);
-		stmt_list = pg_plan_queries(stmt_list, NULL, false);
+		stmt_list = pg_plan_queries(stmt_list, cursorOptions, NULL, false);
 
 		plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
 		cplan = (CachedPlan *) palloc0(sizeof(CachedPlan));
@@ -1739,7 +1778,7 @@ _SPI_error_callback(void *arg)
  *	Do a FETCH or MOVE in a cursor
  */
 static void
-_SPI_cursor_operation(Portal portal, bool forward, long count,
+_SPI_cursor_operation(Portal portal, FetchDirection direction, long count,
 					  DestReceiver *dest)
 {
 	long		nfetched;
@@ -1760,7 +1799,7 @@ _SPI_cursor_operation(Portal portal, bool forward, long count,
 
 	/* Run the cursor */
 	nfetched = PortalRunFetch(portal,
-							  forward ? FETCH_FORWARD : FETCH_BACKWARD,
+							  direction,
 							  count,
 							  dest);
 

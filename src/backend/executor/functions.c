@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.114 2007/04/02 18:49:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.115 2007/04/16 01:14:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ init_execution_state(List *queryTree_list, bool readonly_func)
 		if (queryTree->commandType == CMD_UTILITY)
 			stmt = queryTree->utilityStmt;
 		else
-			stmt = (Node *) pg_plan_query(queryTree, NULL);
+			stmt = (Node *) pg_plan_query(queryTree, 0, NULL);
 
 		/* Precheck all commands for validity in a function */
 		if (IsA(stmt, TransactionStmt))

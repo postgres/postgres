@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.55 2007/03/25 23:27:59 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.56 2007/04/16 01:14:55 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -799,6 +799,104 @@ SPIPlanPtr SPI_prepare(const char * <parameter>command</parameter>, int <paramet
 
 <!-- *********************************************** -->
 
+<refentry id="spi-spi-prepare-cursor">
+ <refmeta>
+  <refentrytitle>SPI_prepare_cursor</refentrytitle>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_prepare_cursor</refname>
+  <refpurpose>prepare a plan for a command, without executing it yet</refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_prepare_cursor</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+SPIPlanPtr SPI_prepare_cursor(const char * <parameter>command</parameter>, int <parameter>nargs</parameter>, Oid * <parameter>argtypes</parameter>, int <parameter>cursorOptions</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_prepare_cursor</function> is identical to
+   <function>SPI_prepare</function>, except that it also allows specification
+   of the planner's <quote>cursor options</> parameter.  This is a bitmask
+   having the values shown in <filename>nodes/parsenodes.h</filename>
+   for the <structfield>options</> field of <structname>DeclareCursorStmt</>.
+   <function>SPI_prepare</function> always takes these options as zero.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>const char * <parameter>command</parameter></literal></term>
+    <listitem>
+     <para>
+      command string
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>int <parameter>nargs</parameter></literal></term>
+    <listitem>
+     <para>
+      number of input parameters (<literal>$1</>, <literal>$2</>, etc.)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>Oid * <parameter>argtypes</parameter></literal></term>
+    <listitem>
+     <para>
+      pointer to an array containing the <acronym>OID</acronym>s of
+      the data types of the parameters
+     </para>
+    </listitem>
+   </varlistentry>
+ 
+   <varlistentry>
+    <term><literal>int <parameter>cursorOptions</parameter></literal></term>
+    <listitem>
+     <para>
+      integer bitmask of cursor options; zero produces default behavior
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   <function>SPI_prepare_cursor</function> has the same return conventions as
+   <function>SPI_prepare</function>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Useful bits to set in <parameter>cursorOptions</> include
+   <symbol>CURSOR_OPT_SCROLL</symbol>,
+   <symbol>CURSOR_OPT_NO_SCROLL</symbol>, and
+   <symbol>CURSOR_OPT_FAST_PLAN</symbol>.  Note in particular that
+   <symbol>CURSOR_OPT_HOLD</symbol> is ignored.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
 <refentry id="spi-spi-getargcount">
  <refmeta>
   <refentrytitle>SPI_getargcount</refentrytitle>
@@ -1430,7 +1528,9 @@ void SPI_cursor_fetch(Portal <parameter>portal</parameter>, bool <parameter>forw
 
   <para>
    <function>SPI_cursor_fetch</function> fetches some rows from a
-   cursor.  This is equivalent to the SQL command <command>FETCH</>.
+   cursor.  This is equivalent to a subset of the SQL command
+   <command>FETCH</> (see <function>SPI_scroll_cursor_fetch</function>
+   for more functionality).
   </para>
  </refsect1>
 
@@ -1476,6 +1576,15 @@ void SPI_cursor_fetch(Portal <parameter>portal</parameter>, bool <parameter>forw
    <function>SPI_execute</function> if successful.
   </para>
  </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Fetching backward may fail if the cursor's plan was not created
+   with the <symbol>CURSOR_OPT_SCROLL</symbol> option.
+  </para>
+ </refsect1>
 </refentry>
 
 <!-- *********************************************** -->
@@ -1503,8 +1612,9 @@ void SPI_cursor_move(Portal <parameter>portal</parameter>, bool <parameter>forwa
 
   <para>
    <function>SPI_cursor_move</function> skips over some number of rows
-   in a cursor.  This is equivalent to the SQL command
-   <command>MOVE</>.
+   in a cursor.  This is equivalent to a subset of the SQL command
+   <command>MOVE</> (see <function>SPI_scroll_cursor_move</function>
+   for more functionality).
   </para>
  </refsect1>
 
@@ -1539,6 +1649,210 @@ void SPI_cursor_move(Portal <parameter>portal</parameter>, bool <parameter>forwa
     </listitem>
    </varlistentry>
   </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   Moving backward may fail if the cursor's plan was not created
+   with the <symbol>CURSOR_OPT_SCROLL</symbol> option.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-scroll-cursor-fetch">
+ <refmeta>
+  <refentrytitle>SPI_scroll_cursor_fetch</refentrytitle>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_scroll_cursor_fetch</refname>
+  <refpurpose>fetch some rows from a cursor</refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_scroll_cursor_fetch</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+void SPI_scroll_cursor_fetch(Portal <parameter>portal</parameter>, FetchDirection <parameter>direction</parameter>, long <parameter>count</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_scroll_cursor_fetch</function> fetches some rows from a
+   cursor.  This is equivalent to the SQL command <command>FETCH</>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>Portal <parameter>portal</parameter></literal></term>
+    <listitem>
+     <para>
+      portal containing the cursor
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FetchDirection <parameter>direction</parameter></literal></term>
+    <listitem>
+     <para>
+      one of <symbol>FETCH_FORWARD</symbol>,
+      <symbol>FETCH_BACKWARD</symbol>,
+      <symbol>FETCH_ABSOLUTE</symbol> or
+      <symbol>FETCH_RELATIVE</symbol>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>long <parameter>count</parameter></literal></term>
+    <listitem>
+     <para>
+      number of rows to fetch for
+      <symbol>FETCH_FORWARD</symbol> or
+      <symbol>FETCH_BACKWARD</symbol>; absolute row number to fetch for
+      <symbol>FETCH_ABSOLUTE</symbol>; or relative row number to fetch for
+      <symbol>FETCH_RELATIVE</symbol>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   <varname>SPI_processed</varname> and
+   <varname>SPI_tuptable</varname> are set as in
+   <function>SPI_execute</function> if successful.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   See the SQL <xref linkend="sql-fetch" endterm="sql-fetch-title"> command
+   for details of the interpretation of the 
+   <parameter>direction</parameter> and
+   <parameter>count</parameter> parameters.
+  </para>
+
+  <para>
+   Direction values other than <symbol>FETCH_FORWARD</symbol>
+   may fail if the cursor's plan was not created
+   with the <symbol>CURSOR_OPT_SCROLL</symbol> option.
+  </para>
+ </refsect1>
+</refentry>
+
+<!-- *********************************************** -->
+
+<refentry id="spi-spi-scroll-cursor-move">
+ <refmeta>
+  <refentrytitle>SPI_scroll_cursor_move</refentrytitle>
+ </refmeta>
+
+ <refnamediv>
+  <refname>SPI_scroll_cursor_move</refname>
+  <refpurpose>move a cursor</refpurpose>
+ </refnamediv>
+
+ <indexterm><primary>SPI_scroll_cursor_move</primary></indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+void SPI_scroll_cursor_move(Portal <parameter>portal</parameter>, FetchDirection <parameter>direction</parameter>, long <parameter>count</parameter>)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <function>SPI_scroll_cursor_move</function> skips over some number of rows
+   in a cursor.  This is equivalent to the SQL command
+   <command>MOVE</>.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Arguments</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><literal>Portal <parameter>portal</parameter></literal></term>
+    <listitem>
+     <para>
+      portal containing the cursor
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>FetchDirection <parameter>direction</parameter></literal></term>
+    <listitem>
+     <para>
+      one of <symbol>FETCH_FORWARD</symbol>,
+      <symbol>FETCH_BACKWARD</symbol>,
+      <symbol>FETCH_ABSOLUTE</symbol> or
+      <symbol>FETCH_RELATIVE</symbol>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>long <parameter>count</parameter></literal></term>
+    <listitem>
+     <para>
+      number of rows to move for
+      <symbol>FETCH_FORWARD</symbol> or
+      <symbol>FETCH_BACKWARD</symbol>; absolute row number to move to for
+      <symbol>FETCH_ABSOLUTE</symbol>; or relative row number to move to for
+      <symbol>FETCH_RELATIVE</symbol>
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Return Value</title>
+
+  <para>
+   <varname>SPI_processed</varname> and
+   <varname>SPI_tuptable</varname> are set as in
+   <function>SPI_execute</function> if successful.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   See the SQL <xref linkend="sql-fetch" endterm="sql-fetch-title"> command
+   for details of the interpretation of the 
+   <parameter>direction</parameter> and
+   <parameter>count</parameter> parameters.
+  </para>
+
+  <para>
+   Direction values other than <symbol>FETCH_FORWARD</symbol>
+   may fail if the cursor's plan was not created
+   with the <symbol>CURSOR_OPT_SCROLL</symbol> option.
+  </para>
  </refsect1>
 </refentry>
 

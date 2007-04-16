@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.530 2007/03/29 19:10:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.531 2007/04/16 01:14:57 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -656,9 +656,12 @@ pg_rewrite_queries(List *querytree_list)
 }
 
 
-/* Generate a plan for a single already-rewritten query. */
+/*
+ * Generate a plan for a single already-rewritten query.
+ * This is a thin wrapper around planner() and takes the same parameters.
+ */
 PlannedStmt *
-pg_plan_query(Query *querytree, ParamListInfo boundParams)
+pg_plan_query(Query *querytree, int cursorOptions, ParamListInfo boundParams)
 {
 	PlannedStmt *plan;
 
@@ -670,7 +673,7 @@ pg_plan_query(Query *querytree, ParamListInfo boundParams)
 		ResetUsage();
 
 	/* call the optimizer */
-	plan = planner(querytree, false, 0, boundParams);
+	plan = planner(querytree, cursorOptions, boundParams);
 
 	if (log_planner_stats)
 		ShowUsage("PLANNER STATISTICS");
@@ -718,7 +721,7 @@ pg_plan_query(Query *querytree, ParamListInfo boundParams)
  * list.  Utility statements are simply represented by their statement nodes.
  */
 List *
-pg_plan_queries(List *querytrees, ParamListInfo boundParams,
+pg_plan_queries(List *querytrees, int cursorOptions, ParamListInfo boundParams,
 				bool needSnapshot)
 {
 	List	   *stmt_list = NIL;
@@ -741,7 +744,7 @@ pg_plan_queries(List *querytrees, ParamListInfo boundParams,
 				ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 				needSnapshot = false;
 			}
-			stmt = (Node *) pg_plan_query(query, boundParams);
+			stmt = (Node *) pg_plan_query(query, cursorOptions, boundParams);
 		}
 
 		stmt_list = lappend(stmt_list, stmt);
@@ -892,7 +895,7 @@ exec_simple_query(const char *query_string)
 		querytree_list = pg_analyze_and_rewrite(parsetree, query_string,
 												NULL, 0);
 
-		plantree_list = pg_plan_queries(querytree_list, NULL, true);
+		plantree_list = pg_plan_queries(querytree_list, 0, NULL, true);
 
 		/* If we got a cancel signal in analysis or planning, quit */
 		CHECK_FOR_INTERRUPTS();
@@ -1207,7 +1210,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		}
 		else
 		{
-			stmt_list = pg_plan_queries(querytree_list, NULL, true);
+			stmt_list = pg_plan_queries(querytree_list, 0, NULL, true);
 			fully_planned = true;
 		}
 	}
@@ -1621,7 +1624,7 @@ exec_bind_message(StringInfo input_message)
 		 */
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 		query_list = copyObject(cplan->stmt_list);
-		plan_list = pg_plan_queries(query_list, params, true);
+		plan_list = pg_plan_queries(query_list, 0, params, true);
 		MemoryContextSwitchTo(oldContext);
 
 		/* We no longer need the cached plan refcount ... */

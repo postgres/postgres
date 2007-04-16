@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.279 2007/03/29 00:15:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.280 2007/04/16 01:14:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1023,7 +1023,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 					 errmsg("COPY (SELECT INTO) is not supported")));
 
 		/* plan the query */
-		plan = planner(query, false, 0, NULL);
+		plan = planner(query, 0, NULL);
 
 		/*
 		 * Update snapshot command ID to ensure this query sees results of any

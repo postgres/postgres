@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.60 2007/03/25 23:27:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.61 2007/04/16 01:14:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,8 @@
 #include "postgres.h"
 
 /*
- *	These are not needed by this file, but used by other programs
- *	using SPI
+ *	Most of these are not needed by this file, but may be used by
+ *	user-written code that uses SPI
  */
 #include "access/heapam.h"
 #include "access/xact.h"
@@ -32,6 +32,7 @@
 #include "executor/executor.h"
 #include "nodes/execnodes.h"
 #include "nodes/params.h"
+#include "nodes/parsenodes.h"
 #include "nodes/plannodes.h"
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
@@ -105,6 +106,8 @@ extern int	SPI_execute_snapshot(SPIPlanPtr plan,
 					 Snapshot crosscheck_snapshot,
 					 bool read_only, long tcount);
 extern SPIPlanPtr SPI_prepare(const char *src, int nargs, Oid *argtypes);
+extern SPIPlanPtr SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
+									 int cursorOptions);
 extern SPIPlanPtr SPI_saveplan(SPIPlanPtr plan);
 extern int	SPI_freeplan(SPIPlanPtr plan);
 
@@ -136,6 +139,8 @@ extern Portal SPI_cursor_open(const char *name, SPIPlanPtr plan,
 extern Portal SPI_cursor_find(const char *name);
 extern void SPI_cursor_fetch(Portal portal, bool forward, long count);
 extern void SPI_cursor_move(Portal portal, bool forward, long count);
+extern void SPI_scroll_cursor_fetch(Portal, FetchDirection direction, long count);
+extern void SPI_scroll_cursor_move(Portal, FetchDirection direction, long count);
 extern void SPI_cursor_close(Portal portal);
 
 extern void AtEOXact_SPI(bool isCommit);

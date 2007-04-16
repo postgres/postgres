@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.160 2007/03/13 00:33:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.161 2007/04/16 01:14:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ typedef struct ExplainState
 	List	   *rtable;			/* range table */
 } ExplainState;
 
-static void ExplainOneQuery(Query *query, bool isCursor, int cursorOptions,
+static void ExplainOneQuery(Query *query, int cursorOptions,
 							ExplainStmt *stmt, const char *queryString,
 							ParamListInfo params, TupOutputState *tstate);
 static double elapsed_time(instr_time *starttime);
@@ -102,7 +102,7 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 		/* Explain every plan */
 		foreach(l, rewritten)
 		{
-			ExplainOneQuery((Query *) lfirst(l), false, 0,
+			ExplainOneQuery((Query *) lfirst(l), 0,
 							stmt, queryString, params, tstate);
 			/* put a blank line between plans */
 			if (lnext(l) != NULL)
@@ -134,7 +134,7 @@ ExplainResultDesc(ExplainStmt *stmt)
  *	  print out the execution plan for one Query
  */
 static void
-ExplainOneQuery(Query *query, bool isCursor, int cursorOptions,
+ExplainOneQuery(Query *query, int cursorOptions,
 				ExplainStmt *stmt, const char *queryString,
 				ParamListInfo params, TupOutputState *tstate)
 {
@@ -150,7 +150,7 @@ ExplainOneQuery(Query *query, bool isCursor, int cursorOptions,
 	}
 
 	/* plan the query */
-	plan = planner(query, isCursor, cursorOptions, params);
+	plan = planner(query, cursorOptions, params);
 
 	/*
 	 * Update snapshot command ID to ensure this query sees results of any
@@ -229,7 +229,7 @@ ExplainOneUtility(Node *utilityStmt, ExplainStmt *stmt,
 		/* do not actually execute the underlying query! */
 		memcpy(&newstmt, stmt, sizeof(ExplainStmt));
 		newstmt.analyze = false;
-		ExplainOneQuery(query, true, dcstmt->options, &newstmt,
+		ExplainOneQuery(query, dcstmt->options, &newstmt,
 						queryString, params, tstate);
 	}
 	else if (IsA(utilityStmt, ExecuteStmt))
