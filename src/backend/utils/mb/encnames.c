@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.33 2007/04/15 10:56:25 ishii Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/encnames.c,v 1.34 2007/04/16 18:50:49 tgl Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -460,10 +460,10 @@ pg_valid_server_encoding(const char *name)
  * ----------
  */
 static char *
-clean_encoding_name(char *key, char *newkey)
+clean_encoding_name(const char *key, char *newkey)
 {
-	char	   *p,
-			   *np;
+	const char *p;
+	char 	   *np;
 
 	for (p = key, np = newkey; *p != '\0'; p++)
 	{
@@ -508,7 +508,7 @@ pg_char_to_encname_struct(const char *name)
 				 errmsg("encoding name too long")));
 #endif
 	}
-	key = clean_encoding_name((char *) name, buff);
+	key = clean_encoding_name(name, buff);
 
 	while (last >= base)
 	{
