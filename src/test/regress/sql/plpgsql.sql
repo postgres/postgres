@@ -2440,3 +2440,75 @@ end$$ language plpgsql;
 select footest();
 
 drop function footest();
+
+-- test scrollable cursor support
+
+create function sc_test() returns setof integer as $$
+declare 
+  c scroll cursor for select f1 from int4_tbl;
+  x integer;
+begin
+  open c;
+  fetch last from c into x;
+  while found loop
+    return next x;
+    fetch prior from c into x;
+  end loop;
+  close c;
+end;
+$$ language plpgsql;
+
+select * from sc_test();
+
+create or replace function sc_test() returns setof integer as $$
+declare 
+  c no scroll cursor for select f1 from int4_tbl;
+  x integer;
+begin
+  open c;
+  fetch last from c into x;
+  while found loop
+    return next x;
+    fetch prior from c into x;
+  end loop;
+  close c;
+end;
+$$ language plpgsql;
+
+select * from sc_test();  -- fails because of NO SCROLL specification
+
+create or replace function sc_test() returns setof integer as $$
+declare 
+  c refcursor;
+  x integer;
+begin
+  open c scroll for select f1 from int4_tbl;
+  fetch last from c into x;
+  while found loop
+    return next x;
+    fetch prior from c into x;
+  end loop;
+  close c;
+end;
+$$ language plpgsql;
+
+select * from sc_test();
+
+create or replace function sc_test() returns setof integer as $$
+declare 
+  c refcursor;
+  x integer;
+begin
+  open c scroll for execute 'select f1 from int4_tbl';
+  fetch last from c into x;
+  while found loop
+    return next x;
+    fetch relative -2 from c into x;
+  end loop;
+  close c;
+end;
+$$ language plpgsql;
+
+select * from sc_test();
+
+drop function sc_test();

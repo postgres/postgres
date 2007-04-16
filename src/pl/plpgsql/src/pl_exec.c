@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.193 2007/04/02 03:49:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.194 2007/04/16 17:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,7 +120,7 @@ static void plpgsql_estate_setup(PLpgSQL_execstate *estate,
 static void exec_eval_cleanup(PLpgSQL_execstate *estate);
 
 static void exec_prepare_plan(PLpgSQL_execstate *estate,
-				  PLpgSQL_expr *expr);
+				  PLpgSQL_expr *expr, int cursorOptions);
 static bool exec_simple_check_node(Node *node);
 static void exec_simple_check_plan(PLpgSQL_expr *expr);
 static bool exec_eval_simple_expr(PLpgSQL_execstate *estate,
@@ -2292,7 +2292,7 @@ exec_eval_cleanup(PLpgSQL_execstate *estate)
  */
 static void
 exec_prepare_plan(PLpgSQL_execstate *estate,
-				  PLpgSQL_expr *expr)
+				  PLpgSQL_expr *expr, int cursorOptions)
 {
 	int			i;
 	SPIPlanPtr	plan;
@@ -2317,7 +2317,8 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 	/*
 	 * Generate and save the plan
 	 */
-	plan = SPI_prepare(expr->query, expr->nparams, argtypes);
+	plan = SPI_prepare_cursor(expr->query, expr->nparams, argtypes,
+							  cursorOptions);
 	if (plan == NULL)
 	{
 		/* Some SPI errors deserve specific error messages */
@@ -2333,7 +2334,7 @@ exec_prepare_plan(PLpgSQL_execstate *estate,
 						 errmsg("cannot begin/end transactions in PL/pgSQL"),
 						 errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
 			default:
-				elog(ERROR, "SPI_prepare failed for \"%s\": %s",
+				elog(ERROR, "SPI_prepare_cursor failed for \"%s\": %s",
 					 expr->query, SPI_result_code_string(SPI_result));
 		}
 	}
@@ -2370,7 +2371,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	{
 		ListCell   *l;
 
-		exec_prepare_plan(estate, expr);
+		exec_prepare_plan(estate, expr, 0);
 		stmt->mod_stmt = false;
 		foreach(l, expr->plan->plancache_list)
 		{
@@ -2936,7 +2937,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		 */
 		query = stmt->query;
 		if (query->plan == NULL)
-			exec_prepare_plan(estate, query);
+			exec_prepare_plan(estate, query, stmt->cursor_options);
 	}
 	else if (stmt->dynquery != NULL)
 	{
@@ -2970,9 +2971,9 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		 * Now we prepare a query plan for it and open a cursor
 		 * ----------
 		 */
-		curplan = SPI_prepare(querystr, 0, NULL);
+		curplan = SPI_prepare_cursor(querystr, 0, NULL, stmt->cursor_options);
 		if (curplan == NULL)
-			elog(ERROR, "SPI_prepare failed for \"%s\": %s",
+			elog(ERROR, "SPI_prepare_cursor failed for \"%s\": %s",
 				 querystr, SPI_result_code_string(SPI_result));
 		portal = SPI_cursor_open(curname, curplan, NULL, NULL,
 								 estate->readonly_func);
@@ -3039,7 +3040,7 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 
 		query = curvar->cursor_explicit_expr;
 		if (query->plan == NULL)
-			exec_prepare_plan(estate, query);
+			exec_prepare_plan(estate, query, curvar->cursor_options);
 	}
 
 	/* ----------
@@ -3103,6 +3104,7 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 	PLpgSQL_var *curvar = NULL;
 	PLpgSQL_rec *rec = NULL;
 	PLpgSQL_row *row = NULL;
+	long		how_many = stmt->how_many;
 	SPITupleTable *tuptab;
 	Portal		portal;
 	char	   *curname;
@@ -3126,6 +3128,22 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 				 errmsg("cursor \"%s\" does not exist", curname)));
 	pfree(curname);
 
+	/* Calculate position for FETCH_RELATIVE or FETCH_ABSOLUTE */
+	if (stmt->expr)
+	{
+		bool isnull;
+
+		/* XXX should be doing this in LONG not INT width */
+		how_many = exec_eval_integer(estate, stmt->expr, &isnull);
+
+		if (isnull)
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("relative or absolute cursor position is NULL")));
+
+		exec_eval_cleanup(estate);
+	}
+
 	/* ----------
 	 * Determine if we fetch into a record or a row
 	 * ----------
@@ -3141,7 +3159,7 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 	 * Fetch 1 tuple from the cursor
 	 * ----------
 	 */
-	SPI_cursor_fetch(portal, true, 1);
+	SPI_scroll_cursor_fetch(portal, stmt->direction, how_many);
 	tuptab = SPI_tuptable;
 	n = SPI_processed;
 
@@ -3853,7 +3871,7 @@ exec_eval_expr(PLpgSQL_execstate *estate,
 	 * If first time through, create a plan for this expression.
 	 */
 	if (expr->plan == NULL)
-		exec_prepare_plan(estate, expr);
+		exec_prepare_plan(estate, expr, 0);
 
 	/*
 	 * If this is a simple expression, bypass SPI and use the executor
@@ -3920,7 +3938,7 @@ exec_run_select(PLpgSQL_execstate *estate,
 	 * On the first call for this expression generate the plan
 	 */
 	if (expr->plan == NULL)
-		exec_prepare_plan(estate, expr);
+		exec_prepare_plan(estate, expr, 0);
 
 	/*
 	 * Now build up the values and nulls arguments for SPI_execute_plan()

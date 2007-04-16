@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.86 2007/03/15 23:12:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.87 2007/04/16 17:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,6 +207,7 @@ typedef struct
 	PLpgSQL_expr *default_val;
 	PLpgSQL_expr *cursor_explicit_expr;
 	int			cursor_explicit_argrow;
+	int			cursor_options;
 
 	Datum		value;
 	bool		isnull;
@@ -436,6 +437,7 @@ typedef struct
 	int			cmd_type;
 	int			lineno;
 	int			curvar;
+	int			cursor_options;
 	PLpgSQL_row *returntype;
 	PLpgSQL_expr *argquery;
 	PLpgSQL_expr *query;
@@ -444,12 +446,15 @@ typedef struct
 
 
 typedef struct
-{								/* FETCH curvar INTO statement		*/
+{								/* FETCH statement */
 	int			cmd_type;
 	int			lineno;
-	PLpgSQL_rec *rec;
+	PLpgSQL_rec *rec;			/* target, as record or row */
 	PLpgSQL_row *row;
-	int			curvar;
+	int			curvar;			/* cursor variable to fetch from */
+	FetchDirection direction;	/* fetch direction */
+	int			how_many;		/* count, if constant (expr is NULL) */
+	PLpgSQL_expr *expr;			/* count, if expression */
 } PLpgSQL_stmt_fetch;
 
 

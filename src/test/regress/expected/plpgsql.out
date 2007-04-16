@@ -2934,3 +2934,93 @@ select footest();
 ERROR:  query returned more than one row
 CONTEXT:  PL/pgSQL function "footest" line 4 at execute statement
 drop function footest();
+-- test scrollable cursor support
+create function sc_test() returns setof integer as $$
+declare 
+  c scroll cursor for select f1 from int4_tbl;
+  x integer;
+begin
+  open c;
+  fetch last from c into x;
+  while found loop
+    return next x;
+    fetch prior from c into x;
+  end loop;
+  close c;
+end;
+$$ language plpgsql;
+select * from sc_test();
+   sc_test   
+-------------
+ -2147483647
+  2147483647
+     -123456
+      123456
+           0
+(5 rows)
+
+create or replace function sc_test() returns setof integer as $$
+declare 
+  c no scroll cursor for select f1 from int4_tbl;
+  x integer;
+begin
+  open c;
+  fetch last from c into x;
+  while found loop
+    return next x;
+    fetch prior from c into x;
+  end loop;
+  close c;
+end;
+$$ language plpgsql;
+select * from sc_test();  -- fails because of NO SCROLL specification
+ERROR:  cursor can only scan forward
+HINT:  Declare it with SCROLL option to enable backward scan.
+CONTEXT:  PL/pgSQL function "sc_test" line 6 at fetch
+create or replace function sc_test() returns setof integer as $$
+declare 
+  c refcursor;
+  x integer;
+begin
+  open c scroll for select f1 from int4_tbl;
+  fetch last from c into x;
+  while found loop
+    return next x;
+    fetch prior from c into x;
+  end loop;
+  close c;
+end;
+$$ language plpgsql;
+select * from sc_test();
+   sc_test   
+-------------
+ -2147483647
+  2147483647
+     -123456
+      123456
+           0
+(5 rows)
+
+create or replace function sc_test() returns setof integer as $$
+declare 
+  c refcursor;
+  x integer;
+begin
+  open c scroll for execute 'select f1 from int4_tbl';
+  fetch last from c into x;
+  while found loop
+    return next x;
+    fetch relative -2 from c into x;
+  end loop;
+  close c;
+end;
+$$ language plpgsql;
+select * from sc_test();
+   sc_test   
+-------------
+ -2147483647
+     -123456
+           0
+(3 rows)
+
+drop function sc_test();

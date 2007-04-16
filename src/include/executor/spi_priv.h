@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.28 2007/03/15 23:12:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi_priv.h,v 1.29 2007/04/16 17:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@ typedef struct _SPI_plan
 	bool		saved;			/* saved or unsaved plan? */
 	List	   *plancache_list;	/* one CachedPlanSource per parsetree */
 	MemoryContext plancxt;		/* Context containing _SPI_plan and data */
+	int			cursor_options;	/* Cursor options used for planning */
 	int			nargs;			/* number of plan arguments */
 	Oid		   *argtypes;		/* Argument types (NULL if nargs is 0) */
 } _SPI_plan;

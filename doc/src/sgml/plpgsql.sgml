@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.106 2007/04/02 03:49:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.107 2007/04/16 17:21:22 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -2364,10 +2364,14 @@ SELECT merge_db(1, 'dennis');
      Another way is to use the cursor declaration syntax,
      which in general is:
 <synopsis>
-<replaceable>name</replaceable> CURSOR <optional> ( <replaceable>arguments</replaceable> ) </optional> FOR <replaceable>query</replaceable>;
+<replaceable>name</replaceable> <optional> <optional> NO </optional> SCROLL </optional> CURSOR <optional> ( <replaceable>arguments</replaceable> ) </optional> FOR <replaceable>query</replaceable>;
 </synopsis>
      (<literal>FOR</> can be replaced by <literal>IS</> for
      <productname>Oracle</productname> compatibility.)
+     If <literal>SCROLL</> is specified, the cursor will be capable of
+     scrolling backward; if <literal>NO SCROLL</> is specified, backward
+     fetches will be rejected; if neither specification appears, it is
+     query-dependent whether backward fetches will be allowed.
      <replaceable>arguments</replaceable>, if specified, is a
      comma-separated list of pairs <literal><replaceable>name</replaceable>
      <replaceable>datatype</replaceable></literal> that define names to be
@@ -2409,7 +2413,7 @@ DECLARE
      <title><command>OPEN FOR</command> <replaceable>query</replaceable></title>
 
 <synopsis>
-OPEN <replaceable>unbound_cursor</replaceable> FOR <replaceable>query</replaceable>;
+OPEN <replaceable>unbound_cursor</replaceable> <optional> <optional> NO </optional> SCROLL </optional> FOR <replaceable>query</replaceable>;
 </synopsis>
 
        <para>
@@ -2422,7 +2426,8 @@ OPEN <replaceable>unbound_cursor</replaceable> FOR <replaceable>query</replaceab
         is treated in the same way as other SQL commands in
         <application>PL/pgSQL</>: <application>PL/pgSQL</>
         variable names are substituted, and the query plan is cached for
-        possible reuse.
+        possible reuse.  The <literal>SCROLL</> and <literal>NO SCROLL</>
+        options have the same meanings as for a bound cursor.
        </para>
 
        <para>
@@ -2437,7 +2442,7 @@ OPEN curs1 FOR SELECT * FROM foo WHERE key = mykey;
      <title><command>OPEN FOR EXECUTE</command></title>
 
 <synopsis>
-OPEN <replaceable>unbound_cursor</replaceable> FOR EXECUTE <replaceable class="command">query_string</replaceable>;
+OPEN <replaceable>unbound_cursor</replaceable> <optional> <optional> NO </optional> SCROLL </optional> FOR EXECUTE <replaceable class="command">query_string</replaceable>;
 </synopsis>
 
          <para>
@@ -2447,8 +2452,10 @@ OPEN <replaceable>unbound_cursor</replaceable> FOR EXECUTE <replaceable class="c
           <type>refcursor</> variable).  The query is specified as a string
           expression, in the same way as in the <command>EXECUTE</command>
           command.  As usual, this gives flexibility so the query can vary
-          from one run to the next.
-       </para>
+          from one run to the next.  The <literal>SCROLL</> and
+          <literal>NO SCROLL</> options have the same meanings as for a bound
+          cursor.
+         </para>
 
        <para>
         An example:
@@ -2473,6 +2480,9 @@ OPEN <replaceable>bound_cursor</replaceable> <optional> ( <replaceable>argument_
           take arguments.  These values will be substituted in the query.
           The query plan for a bound cursor is always considered cacheable;
           there is no equivalent of <command>EXECUTE</command> in this case.
+          Notice that <literal>SCROLL</> and
+          <literal>NO SCROLL</> cannot be specified, as the cursor's scrolling
+          behavior was already determined.
          </para>
 
     <para>
@@ -2513,23 +2523,45 @@ OPEN curs3(42);
      <title><literal>FETCH</></title>
 
 <synopsis>
-FETCH <replaceable>cursor</replaceable> INTO <replaceable>target</replaceable>;
+FETCH <optional> <replaceable>direction</replaceable> FROM </optional> <replaceable>cursor</replaceable> INTO <replaceable>target</replaceable>;
 </synopsis>
 
-         <para>
-          <command>FETCH</command> retrieves the next row from the
-          cursor into a target, which might be a row variable, a record
-          variable, or a comma-separated list of simple variables, just like
-          <command>SELECT INTO</command>.  As with <command>SELECT
-          INTO</command>, the special variable <literal>FOUND</literal> can
-          be checked to see whether a row was obtained or not.
-         </para>
+    <para>
+     <command>FETCH</command> retrieves the next row from the
+     cursor into a target, which might be a row variable, a record
+     variable, or a comma-separated list of simple variables, just like
+     <command>SELECT INTO</command>.  As with <command>SELECT
+     INTO</command>, the special variable <literal>FOUND</literal> can
+     be checked to see whether a row was obtained or not.
+    </para>
 
     <para>
-     An example:
+     The <replaceable>direction</replaceable> clause can be any of the
+     variants allowed in the SQL <xref linkend="sql-fetch"
+     endterm="sql-fetch-title"> command except the ones that can fetch
+     more than one row; namely, it can be
+     <literal>NEXT</>,
+     <literal>PRIOR</>,
+     <literal>FIRST</>,
+     <literal>LAST</>,
+     <literal>ABSOLUTE</> <replaceable>count</replaceable>,
+     <literal>RELATIVE</> <replaceable>count</replaceable>,
+     <literal>FORWARD</>, or
+     <literal>BACKWARD</>.
+     Omitting <replaceable>direction</replaceable> is the same
+     as specifying <literal>NEXT</>.
+     <replaceable>direction</replaceable> values that require moving
+     backward are likely to fail unless the cursor was declared or opened
+     with the <literal>SCROLL</> option.
+    </para>
+
+    <para>
+     Examples:
 <programlisting>
 FETCH curs1 INTO rowvar;
 FETCH curs2 INTO foo, bar, baz;
+FETCH LAST FROM curs3 INTO x, y;
+FETCH RELATIVE -2 FROM curs4 INTO x;
 </programlisting>
        </para>
      </sect3>

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.99 2007/02/19 03:18:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.100 2007/04/16 17:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,7 @@ static PLpgSQL_expr		*read_sql_construct(int until,
 static	PLpgSQL_expr	*read_sql_stmt(const char *sqlstart);
 static	PLpgSQL_type	*read_datatype(int tok);
 static	PLpgSQL_stmt	*make_execsql_stmt(const char *sqlstart, int lineno);
-static	PLpgSQL_stmt	*make_fetch_stmt(int lineno, int curvar);
+static	PLpgSQL_stmt_fetch *read_fetch_direction(void);
 static	PLpgSQL_stmt	*make_return_stmt(int lineno);
 static	PLpgSQL_stmt	*make_return_next_stmt(int lineno);
 static	void			 check_assignable(PLpgSQL_datum *datum);
@@ -92,6 +92,7 @@ static	void			 check_labels(const char *start_label,
 		PLpgSQL_exception_block	*exception_block;
 		PLpgSQL_nsitem			*nsitem;
 		PLpgSQL_diag_item		*diagitem;
+		PLpgSQL_stmt_fetch		*fetch;
 }
 
 %type <declhdr> decl_sect
@@ -109,8 +110,8 @@ static	void			 check_labels(const char *start_label,
 %type <expr>	expr_until_then expr_until_loop
 %type <expr>	opt_exitcond
 
-%type <ival>	assign_var cursor_variable
-%type <var>		cursor_varptr
+%type <ival>	assign_var
+%type <var>		cursor_variable
 %type <variable>	decl_cursor_arg
 %type <forvariable>	for_variable
 %type <stmt>	for_control
@@ -138,6 +139,9 @@ static	void			 check_labels(const char *start_label,
 %type <list>	getdiag_list
 %type <diagitem> getdiag_list_item
 %type <ival>	getdiag_kind getdiag_target
+
+%type <ival>	opt_scrollable
+%type <fetch>   opt_fetch_direction
 
 %type <ival>	lno
 
@@ -176,6 +180,7 @@ static	void			 check_labels(const char *start_label,
 %token	K_LOG
 %token	K_LOOP
 %token	K_NEXT
+%token	K_NOSCROLL
 %token	K_NOT
 %token	K_NOTICE
 %token	K_NULL
@@ -188,6 +193,7 @@ static	void			 check_labels(const char *start_label,
 %token	K_RESULT_OID
 %token	K_RETURN
 %token	K_REVERSE
+%token	K_SCROLL
 %token	K_STRICT
 %token	K_THEN
 %token	K_TO
@@ -358,9 +364,9 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 					{
 						plpgsql_ns_rename($2, $4);
 					}
-				| decl_varname K_CURSOR
+				| decl_varname opt_scrollable K_CURSOR
 					{ plpgsql_ns_push(NULL); }
-				  decl_cursor_args decl_is_from decl_cursor_query
+				  decl_cursor_args decl_is_for decl_cursor_query
 					{
 						PLpgSQL_var *new;
 						PLpgSQL_expr *curname_def;
@@ -400,11 +406,26 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						curname_def->query = pstrdup(buf);
 						new->default_val = curname_def;
 
-						new->cursor_explicit_expr = $6;
-						if ($4 == NULL)
+						new->cursor_explicit_expr = $7;
+						if ($5 == NULL)
 							new->cursor_explicit_argrow = -1;
 						else
-							new->cursor_explicit_argrow = $4->rowno;
+							new->cursor_explicit_argrow = $5->rowno;
+						new->cursor_options = CURSOR_OPT_FAST_PLAN | $2;
+					}
+				;
+
+opt_scrollable :
+					{
+						$$ = 0;
+					}
+				| K_NOSCROLL
+					{
+						$$ = CURSOR_OPT_NO_SCROLL;
+					}
+				| K_SCROLL
+					{
+						$$ = CURSOR_OPT_SCROLL;
 					}
 				;
 
@@ -470,7 +491,7 @@ decl_cursor_arg : decl_varname decl_datatype
 					}
 				;
 
-decl_is_from	:	K_IS |		/* Oracle */
+decl_is_for		:	K_IS |		/* Oracle */
 					K_FOR;		/* ANSI */
 
 decl_aliasitem	: T_WORD
@@ -956,7 +977,7 @@ for_control		:
 														   false,
 														   &tok);
 
-								if (tok == K_BY) 
+								if (tok == K_BY)
 									expr_by = plpgsql_read_expression(K_LOOP, "LOOP");
 								else
 								{
@@ -1311,7 +1332,7 @@ stmt_dynexecute : K_EXECUTE lno
 				;
 
 
-stmt_open		: K_OPEN lno cursor_varptr
+stmt_open		: K_OPEN lno cursor_variable
 					{
 						PLpgSQL_stmt_open *new;
 						int				  tok;
@@ -1320,10 +1341,23 @@ stmt_open		: K_OPEN lno cursor_varptr
 						new->cmd_type = PLPGSQL_STMT_OPEN;
 						new->lineno = $2;
 						new->curvar = $3->varno;
+						new->cursor_options = CURSOR_OPT_FAST_PLAN;
 
 						if ($3->cursor_explicit_expr == NULL)
 						{
+							/* be nice if we could use opt_scrollable here */
 						    tok = yylex();
+							if (tok == K_NOSCROLL)
+							{
+								new->cursor_options |= CURSOR_OPT_NO_SCROLL;
+								tok = yylex();
+							}
+							else if (tok == K_SCROLL)
+							{
+								new->cursor_options |= CURSOR_OPT_SCROLL;
+								tok = yylex();
+							}
+
 							if (tok != K_FOR)
 							{
 								plpgsql_error_lineno = $2;
@@ -1428,9 +1462,30 @@ stmt_open		: K_OPEN lno cursor_varptr
 					}
 				;
 
-stmt_fetch		: K_FETCH lno cursor_variable K_INTO
+stmt_fetch		: K_FETCH lno opt_fetch_direction cursor_variable K_INTO
 					{
-						$$ = make_fetch_stmt($2, $3);
+						PLpgSQL_stmt_fetch *fetch = $3;
+						PLpgSQL_rec	   *rec;
+						PLpgSQL_row	   *row;
+
+						/* We have already parsed everything through the INTO keyword */
+						read_into_target(&rec, &row, NULL);
+
+						if (yylex() != ';')
+							yyerror("syntax error");
+
+						fetch->lineno = $2;
+						fetch->rec		= rec;
+						fetch->row		= row;
+						fetch->curvar	= $4->varno;
+
+						$$ = (PLpgSQL_stmt *)fetch;
+					}
+				;
+
+opt_fetch_direction	:
+					{
+						$$ = read_fetch_direction();
 					}
 				;
 
@@ -1441,7 +1496,7 @@ stmt_close		: K_CLOSE lno cursor_variable ';'
 						new = palloc(sizeof(PLpgSQL_stmt_close));
 						new->cmd_type = PLPGSQL_STMT_CLOSE;
 						new->lineno = $2;
-						new->curvar = $3;
+						new->curvar = $3->varno;
 
 						$$ = (PLpgSQL_stmt *)new;
 					}
@@ -1451,23 +1506,6 @@ stmt_null		: K_NULL ';'
 					{
 						/* We do not bother building a node for NULL */
 						$$ = NULL;
-					}
-				;
-
-cursor_varptr	: T_SCALAR
-					{
-						if (yylval.scalar->dtype != PLPGSQL_DTYPE_VAR)
-							yyerror("cursor variable must be a simple variable");
-
-						if (((PLpgSQL_var *) yylval.scalar)->datatype->typoid != REFCURSOROID)
-						{
-							plpgsql_error_lineno = plpgsql_scanner_lineno();
-							ereport(ERROR,
-									(errcode(ERRCODE_DATATYPE_MISMATCH),
-									 errmsg("\"%s\" must be of type cursor or refcursor",
-											((PLpgSQL_var *) yylval.scalar)->refname)));
-						}
-						$$ = (PLpgSQL_var *) yylval.scalar;
 					}
 				;
 
@@ -1481,10 +1519,10 @@ cursor_variable	: T_SCALAR
 							plpgsql_error_lineno = plpgsql_scanner_lineno();
 							ereport(ERROR,
 									(errcode(ERRCODE_DATATYPE_MISMATCH),
-									 errmsg("\"%s\" must be of type refcursor",
+									 errmsg("\"%s\" must be of type cursor or refcursor",
 											((PLpgSQL_var *) yylval.scalar)->refname)));
 						}
-						$$ = yylval.scalar->dno;
+						$$ = (PLpgSQL_var *) yylval.scalar;
 					}
 				;
 
@@ -1959,28 +1997,81 @@ make_execsql_stmt(const char *sqlstart, int lineno)
 }
 
 
-static PLpgSQL_stmt *
-make_fetch_stmt(int lineno, int curvar)
+static PLpgSQL_stmt_fetch *
+read_fetch_direction(void)
 {
-	int					tok;
-	PLpgSQL_rec		   *rec;
-	PLpgSQL_row		   *row;
 	PLpgSQL_stmt_fetch *fetch;
+	int			tok;
+	bool		check_FROM = true;
 
-	/* We have already parsed everything through the INTO keyword */
-	read_into_target(&rec, &row, NULL);
-	tok = yylex();
-	if (tok != ';')
-		yyerror("syntax error");
-
-	fetch = palloc0(sizeof(PLpgSQL_stmt_fetch));
+	/*
+	 * We create the PLpgSQL_stmt_fetch struct here, but only fill in
+	 * the fields arising from the optional direction clause
+	 */
+	fetch = (PLpgSQL_stmt_fetch *) palloc0(sizeof(PLpgSQL_stmt_fetch));
 	fetch->cmd_type = PLPGSQL_STMT_FETCH;
-	fetch->lineno	= lineno;
-	fetch->rec		= rec;
-	fetch->row		= row;
-	fetch->curvar	= curvar;
+	/* set direction defaults: */
+	fetch->direction = FETCH_FORWARD;
+	fetch->how_many  = 1;
+	fetch->expr      = NULL;
 
-	return (PLpgSQL_stmt *) fetch;
+	/*
+	 * Most of the direction keywords are not plpgsql keywords, so we
+	 * rely on examining yytext ...
+	 */
+	tok = yylex();
+	if (tok == 0)
+		yyerror("unexpected end of function definition");
+
+	if (pg_strcasecmp(yytext, "next") == 0)
+	{
+		/* use defaults */
+	}
+	else if (pg_strcasecmp(yytext, "prior") == 0)
+	{
+		fetch->direction = FETCH_BACKWARD;
+	}
+	else if (pg_strcasecmp(yytext, "first") == 0)
+	{
+		fetch->direction = FETCH_ABSOLUTE;
+	}
+	else if (pg_strcasecmp(yytext, "last") == 0)
+	{
+		fetch->direction = FETCH_ABSOLUTE;
+		fetch->how_many  = -1;
+	}
+	else if (pg_strcasecmp(yytext, "absolute") == 0)
+	{
+		fetch->direction = FETCH_ABSOLUTE;
+		fetch->expr = plpgsql_read_expression(K_FROM, "FROM");
+		check_FROM = false;
+	}
+	else if (pg_strcasecmp(yytext, "relative") == 0)
+	{
+		fetch->direction = FETCH_RELATIVE;
+		fetch->expr = plpgsql_read_expression(K_FROM, "FROM");
+		check_FROM = false;
+	}
+	else if (pg_strcasecmp(yytext, "forward") == 0)
+	{
+		/* use defaults */
+	}
+	else if (pg_strcasecmp(yytext, "backward") == 0)
+	{
+		fetch->direction = FETCH_BACKWARD;
+	}
+	else
+	{
+		/* Assume there's no direction clause */
+		plpgsql_push_back_token(tok);
+		check_FROM = false;
+	}
+
+	/* check FROM keyword after direction's specification */
+	if (check_FROM && yylex() != K_FROM)
+		yyerror("expected \"FROM\"");
+
+	return fetch;
 }
 
 

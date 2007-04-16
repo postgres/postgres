@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.176 2007/04/16 01:14:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.177 2007/04/16 17:21:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,7 @@ static int	_SPI_stack_depth = 0;		/* allocated size of _SPI_stack */
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
-static void _SPI_prepare_plan(const char *src, SPIPlanPtr plan,
-							  int cursorOptions);
+static void _SPI_prepare_plan(const char *src, SPIPlanPtr plan);
 
 static int _SPI_execute_plan(SPIPlanPtr plan,
 				  Datum *Values, const char *Nulls,
@@ -311,8 +310,9 @@ SPI_execute(const char *src, bool read_only, long tcount)
 
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
+	plan.cursor_options = 0;
 
-	_SPI_prepare_plan(src, &plan, 0);
+	_SPI_prepare_plan(src, &plan);
 
 	res = _SPI_execute_plan(&plan, NULL, NULL,
 							InvalidSnapshot, InvalidSnapshot,
@@ -423,10 +423,11 @@ SPI_prepare_cursor(const char *src, int nargs, Oid *argtypes,
 
 	memset(&plan, 0, sizeof(_SPI_plan));
 	plan.magic = _SPI_PLAN_MAGIC;
+	plan.cursor_options = cursorOptions;
 	plan.nargs = nargs;
 	plan.argtypes = argtypes;
 
-	_SPI_prepare_plan(src, &plan, cursorOptions);
+	_SPI_prepare_plan(src, &plan);
 
 	/* copy plan to procedure context */
 	result = _SPI_copy_plan(&plan, _SPI_current->procCxt);
@@ -963,15 +964,19 @@ SPI_cursor_open(const char *name, SPIPlanPtr plan,
 					  cplan);
 
 	/*
-	 * Set up options for portal.
+	 * Set up options for portal.  Default SCROLL type is chosen the same
+	 * way as PerformCursorOpen does it.
 	 */
-	portal->cursorOptions &= ~(CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL);
-	if (list_length(stmt_list) == 1 &&
-		IsA((Node *) linitial(stmt_list), PlannedStmt) &&
-		ExecSupportsBackwardScan(((PlannedStmt *) linitial(stmt_list))->planTree))
-		portal->cursorOptions |= CURSOR_OPT_SCROLL;
-	else
-		portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;
+	portal->cursorOptions = plan->cursor_options;
+	if (!(portal->cursorOptions & (CURSOR_OPT_SCROLL | CURSOR_OPT_NO_SCROLL)))
+	{
+		if (list_length(stmt_list) == 1 &&
+			IsA((Node *) linitial(stmt_list), PlannedStmt) &&
+			ExecSupportsBackwardScan(((PlannedStmt *) linitial(stmt_list))->planTree))
+			portal->cursorOptions |= CURSOR_OPT_SCROLL;
+		else
+			portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;
+	}
 
 	/*
 	 * If told to be read-only, we'd better check for read-only queries.
@@ -1331,14 +1336,15 @@ spi_printtup(TupleTableSlot *slot, DestReceiver *self)
 /*
  * Parse and plan a querystring.
  *
- * At entry, plan->argtypes and plan->nargs must be valid.
+ * At entry, plan->argtypes, plan->nargs, and plan->cursor_options must be
+ * valid.
  *
  * Results are stored into *plan (specifically, plan->plancache_list).
  * Note however that the result trees are all in CurrentMemoryContext
  * and need to be copied somewhere to survive.
  */
 static void
-_SPI_prepare_plan(const char *src, SPIPlanPtr plan, int cursorOptions)
+_SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 {
 	List	   *raw_parsetree_list;
 	List	   *plancache_list;
@@ -1346,6 +1352,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, int cursorOptions)
 	ErrorContextCallback spierrcontext;
 	Oid		   *argtypes = plan->argtypes;
 	int			nargs = plan->nargs;
+	int			cursor_options = plan->cursor_options;
 
 	/*
 	 * Increment CommandCounter to see changes made by now.  We must do this
@@ -1384,7 +1391,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan, int cursorOptions)
 		/* Need a copyObject here to keep parser from modifying raw tree */
 		stmt_list = pg_analyze_and_rewrite(copyObject(parsetree),
 										   src, argtypes, nargs);
-		stmt_list = pg_plan_queries(stmt_list, cursorOptions, NULL, false);
+		stmt_list = pg_plan_queries(stmt_list, cursor_options, NULL, false);
 
 		plansource = (CachedPlanSource *) palloc0(sizeof(CachedPlanSource));
 		cplan = (CachedPlan *) palloc0(sizeof(CachedPlan));
@@ -1926,6 +1933,7 @@ _SPI_copy_plan(SPIPlanPtr plan, MemoryContext parentcxt)
 	newplan->saved = false;
 	newplan->plancache_list = NIL;
 	newplan->plancxt = plancxt;
+	newplan->cursor_options = plan->cursor_options;
 	newplan->nargs = plan->nargs;
 	if (plan->nargs > 0)
 	{
@@ -2000,6 +2008,7 @@ _SPI_save_plan(SPIPlanPtr plan)
 	newplan->saved = true;
 	newplan->plancache_list = NIL;
 	newplan->plancxt = plancxt;
+	newplan->cursor_options = plan->cursor_options;
 	newplan->nargs = plan->nargs;
 	if (plan->nargs > 0)
 	{
