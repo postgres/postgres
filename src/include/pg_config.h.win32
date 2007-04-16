@@ -8,7 +8,6 @@
  * HAVE_GETOPT_H, HAVE_GETOPT_LONG, HAVE_RINT, HAVE_STRINGS_H, 
  * HAVE_STRTOLL, HAVE_STRTOULL, HAVE_STRUCT_OPTION, ENABLE_THREAD_SAFETY
  *
- * For now, also HAVE_IPV6
  */
 
 /* Define to the type of arg 1 of 'accept' */
@@ -186,7 +185,7 @@
 #define HAVE_INT_TIMEZONE 
 
 /* Define to 1 if you have support for IPv6. */
-//#define HAVE_IPV6 1
+#define HAVE_IPV6 1
 
 /* Define to 1 if you have isinf(). */
 #define HAVE_ISINF 1
