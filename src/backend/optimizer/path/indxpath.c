@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191.2.9 2006/06/07 17:08:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191.2.10 2007/04/17 20:03:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,15 +47,29 @@
 	((opclass) == BOOL_BTREE_OPS_OID || (opclass) == BOOL_HASH_OPS_OID)
 
 
+/* Per-path data used within choose_bitmap_and() */
+typedef struct
+{
+	Path	   *path;			/* IndexPath, BitmapAndPath, or BitmapOrPath */
+	List	   *quals;			/* the WHERE clauses it uses */
+	List	   *preds;			/* predicates of its partial index(es) */
+	Bitmapset  *clauseids;		/* quals+preds represented as a bitmapset */
+} PathClauseUsage;
+
+
 static List *find_usable_indexes(PlannerInfo *root, RelOptInfo *rel,
 					List *clauses, List *outer_clauses,
 					bool istoplevel, bool isjoininner,
 					Relids outer_relids);
 static Path *choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths);
-static int	bitmap_path_comparator(const void *a, const void *b);
+static int	path_usage_comparator(const void *a, const void *b);
+static Cost bitmap_scan_cost_est(PlannerInfo *root, RelOptInfo *rel,
+								 Path *ipath);
 static Cost bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths);
-static List *pull_indexpath_quals(Path *bitmapqual);
-static bool lists_intersect_ptr(List *list1, List *list2);
+static PathClauseUsage *classify_index_clause_usage(Path *path,
+													List **clauselist);
+static void find_indexpath_quals(Path *bitmapqual, List **quals, List **preds);
+static int	find_list_position(Node *node, List **nodelist);
 static bool match_clause_to_indexcol(IndexOptInfo *index,
 						 int indexcol, Oid opclass,
 						 RestrictInfo *rinfo,
@@ -508,11 +522,12 @@ static Path *
 choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 {
 	int			npaths = list_length(paths);
-	Path	  **patharray;
-	Cost		costsofar;
-	List	   *qualsofar;
-	ListCell   *lastcell;
-	int			i;
+	PathClauseUsage **pathinfoarray;
+	PathClauseUsage *pathinfo;
+	List	   *clauselist;
+	List	   *bestpaths = NIL;
+	Cost		bestcost = 0;
+	int			i, j;
 	ListCell   *l;
 
 	Assert(npaths > 0);			/* else caller error */
@@ -523,117 +538,230 @@ choose_bitmap_and(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	 * In theory we should consider every nonempty subset of the given paths.
 	 * In practice that seems like overkill, given the crude nature of the
 	 * estimates, not to mention the possible effects of higher-level AND and
-	 * OR clauses.	As a compromise, we sort the paths by selectivity.  We
-	 * always take the first, and sequentially add on paths that result in a
-	 * lower estimated cost.
+	 * OR clauses.  Moreover, it's completely impractical if there are a large
+	 * number of paths, since the work would grow as O(2^N).
 	 *
-	 * We also make some effort to detect directly redundant input paths, as
-	 * can happen if there are multiple possibly usable indexes.  We
-	 * consider an index redundant if any of its index conditions were already
-	 * used by earlier indexes.  (We could use predicate_implied_by to have a
-	 * more intelligent, but much more expensive, check --- but in most cases
-	 * simple pointer equality should suffice, since after all the index
-	 * conditions are all coming from the same RestrictInfo lists.)
+	 * As a heuristic, we first check for paths using exactly the same
+	 * sets of WHERE clauses + index predicate conditions, and reject all
+	 * but the cheapest-to-scan in any such group.  This primarily gets rid
+	 * of indexes that include the interesting columns but also irrelevant
+	 * columns.  (In situations where the DBA has gone overboard on creating
+	 * variant indexes, this can make for a very large reduction in the number
+	 * of paths considered further.)
 	 *
-	 * You might think the condition for redundancy should be "all index
-	 * conditions already used", not "any", but this turns out to be wrong.
-	 * For example, if we use an index on A, and then come to an index with
-	 * conditions on A and B, the only way that the second index can be later
-	 * in the selectivity-order sort is if the condition on B is completely
-	 * non-selective.  In any case, we'd surely be drastically misestimating
-	 * the selectivity if we count the same condition twice.
+	 * We then sort the surviving paths with the cheapest-to-scan first,
+	 * and for each path, consider using that path alone as the basis for
+	 * a bitmap scan.  Then we consider bitmap AND scans formed from that
+	 * path plus each subsequent (higher-cost) path, adding on a subsequent
+	 * path if it results in a reduction in the estimated total scan cost.
+	 * This means we consider about O(N^2) rather than O(2^N) path
+	 * combinations, which is quite tolerable, especially given than N is
+	 * usually reasonably small because of the prefiltering step.  The
+	 * cheapest of these is returned.
 	 *
-	 * We include index predicate conditions in the redundancy test.  Because
-	 * the test is just for pointer equality and not equal(), the effect is
-	 * that use of the same partial index in two different AND elements is
-	 * considered redundant.  (XXX is this too strong?)
+	 * We will only consider AND combinations in which no two indexes use
+	 * the same WHERE clause.  This is a bit of a kluge: it's needed because
+	 * costsize.c and clausesel.c aren't very smart about redundant clauses.
+	 * They will usually double-count the redundant clauses, producing a
+	 * too-small selectivity that makes a redundant AND step look like it
+	 * reduces the total cost.  Perhaps someday that code will be smarter and
+	 * we can remove this limitation.  (But note that this also defends
+	 * against flat-out duplicate input paths, which can happen because
+	 * best_inner_indexscan will find the same OR join clauses that
+	 * create_or_index_quals has pulled OR restriction clauses out of.)
 	 *
-	 * Note: outputting the selected sub-paths in selectivity order is a good
-	 * thing even if we weren't using that as part of the selection method,
-	 * because it makes the short-circuit case in MultiExecBitmapAnd() more
-	 * likely to apply.
+	 * For the same reason, we reject AND combinations in which an index
+	 * predicate clause duplicates another clause.  Here we find it necessary
+	 * to be even stricter: we'll reject a partial index if any of its
+	 * predicate clauses are implied by the set of WHERE clauses and predicate
+	 * clauses used so far.  This covers cases such as a condition "x = 42"
+	 * used with a plain index, followed by a clauseless scan of a partial
+	 * index "WHERE x >= 40 AND x < 50".  The partial index has been accepted
+	 * only because "x = 42" was present, and so allowing it would partially
+	 * double-count selectivity.  (We could use predicate_implied_by on
+	 * regular qual clauses too, to have a more intelligent, but much more
+	 * expensive, check for redundancy --- but in most cases simple equality
+	 * seems to suffice.)
 	 */
 
-	/* Convert list to array so we can apply qsort */
-	patharray = (Path **) palloc(npaths * sizeof(Path *));
-	i = 0;
+	/*
+	 * Extract clause usage info and detect any paths that use exactly
+	 * the same set of clauses; keep only the cheapest-to-scan of any such
+	 * groups.  The surviving paths are put into an array for qsort'ing.
+	 */
+	pathinfoarray = (PathClauseUsage **)
+		palloc(npaths * sizeof(PathClauseUsage *));
+	clauselist = NIL;
+	npaths = 0;
 	foreach(l, paths)
 	{
-		patharray[i++] = (Path *) lfirst(l);
-	}
-	qsort(patharray, npaths, sizeof(Path *), bitmap_path_comparator);
+		Path   *ipath = (Path *) lfirst(l);
 
-	paths = list_make1(patharray[0]);
-	costsofar = bitmap_and_cost_est(root, rel, paths);
-	qualsofar = pull_indexpath_quals(patharray[0]);
-	lastcell = list_head(paths);	/* for quick deletions */
-
-	for (i = 1; i < npaths; i++)
-	{
-		Path	   *newpath = patharray[i];
-		List	   *newqual;
-		Cost		newcost;
-
-		newqual = pull_indexpath_quals(newpath);
-		if (lists_intersect_ptr(newqual, qualsofar))
-			continue;			/* consider it redundant */
-		/* tentatively add newpath to paths, so we can estimate cost */
-		paths = lappend(paths, newpath);
-		newcost = bitmap_and_cost_est(root, rel, paths);
-		if (newcost < costsofar)
+		pathinfo = classify_index_clause_usage(ipath, &clauselist);
+		for (i = 0; i < npaths; i++)
 		{
-			/* keep newpath in paths, update subsidiary variables */
-			costsofar = newcost;
-			qualsofar = list_concat(qualsofar, newqual);
-			lastcell = lnext(lastcell);
+			if (bms_equal(pathinfo->clauseids, pathinfoarray[i]->clauseids))
+				break;
+		}
+		if (i < npaths)
+		{
+			/* duplicate clauseids, keep the cheaper one */
+			Cost		ncost;
+			Cost		ocost;
+			Selectivity nselec;
+			Selectivity oselec;
+
+			cost_bitmap_tree_node(pathinfo->path, &ncost, &nselec);
+			cost_bitmap_tree_node(pathinfoarray[i]->path, &ocost, &oselec);
+			if (ncost < ocost)
+				pathinfoarray[i] = pathinfo;
 		}
 		else
 		{
-			/* reject newpath, remove it from paths list */
-			paths = list_delete_cell(paths, lnext(lastcell), lastcell);
+			/* not duplicate clauseids, add to array */
+			pathinfoarray[npaths++] = pathinfo;
 		}
-		Assert(lnext(lastcell) == NULL);
 	}
 
-	if (list_length(paths) == 1)
-		return (Path *) linitial(paths);		/* no need for AND */
-	return (Path *) create_bitmap_and_path(root, rel, paths);
+	/* If only one surviving path, we're done */
+	if (npaths == 1)
+		return pathinfoarray[0]->path;
+
+	/* Sort the surviving paths by index access cost */
+	qsort(pathinfoarray, npaths, sizeof(PathClauseUsage *),
+		  path_usage_comparator);
+
+	/*
+	 * For each surviving index, consider it as an "AND group leader", and
+	 * see whether adding on any of the later indexes results in an AND path
+	 * with cheaper total cost than before.  Then take the cheapest AND group.
+	 */
+	for (i = 0; i < npaths; i++)
+	{
+		Cost		costsofar;
+		List	   *qualsofar;
+		Bitmapset  *clauseidsofar;
+		ListCell   *lastcell;
+
+		pathinfo = pathinfoarray[i];
+		paths = list_make1(pathinfo->path);
+		costsofar = bitmap_scan_cost_est(root, rel, pathinfo->path);
+		qualsofar = list_concat(list_copy(pathinfo->quals),
+								list_copy(pathinfo->preds));
+		clauseidsofar = bms_copy(pathinfo->clauseids);
+		lastcell = list_head(paths);	/* for quick deletions */
+
+		for (j = i+1; j < npaths; j++)
+		{
+			Cost		newcost;
+
+			pathinfo = pathinfoarray[j];
+			/* Check for redundancy */
+			if (bms_overlap(pathinfo->clauseids, clauseidsofar))
+				continue;			/* consider it redundant */
+			if (pathinfo->preds)
+			{
+				bool	redundant = false;
+
+				/* we check each predicate clause separately */
+				foreach(l, pathinfo->preds)
+				{
+					Node	   *np = (Node *) lfirst(l);
+
+					if (predicate_implied_by(list_make1(np), qualsofar))
+					{
+						redundant = true;
+						break;		/* out of inner foreach loop */
+					}
+				}
+				if (redundant)
+					continue;
+			}
+			/* tentatively add new path to paths, so we can estimate cost */
+			paths = lappend(paths, pathinfo->path);
+			newcost = bitmap_and_cost_est(root, rel, paths);
+			if (newcost < costsofar)
+			{
+				/* keep new path in paths, update subsidiary variables */
+				costsofar = newcost;
+				qualsofar = list_concat(qualsofar,
+										list_copy(pathinfo->quals));
+				qualsofar = list_concat(qualsofar,
+										list_copy(pathinfo->preds));
+				clauseidsofar = bms_add_members(clauseidsofar,
+												pathinfo->clauseids);
+				lastcell = lnext(lastcell);
+			}
+			else
+			{
+				/* reject new path, remove it from paths list */
+				paths = list_delete_cell(paths, lnext(lastcell), lastcell);
+			}
+			Assert(lnext(lastcell) == NULL);
+		}
+
+		/* Keep the cheapest AND-group (or singleton) */
+		if (i == 0 || costsofar < bestcost)
+		{
+			bestpaths = paths;
+			bestcost = costsofar;
+		}
+
+		/* some easy cleanup (we don't try real hard though) */
+		list_free(qualsofar);
+	}
+
+	if (list_length(bestpaths) == 1)
+		return (Path *) linitial(bestpaths);		/* no need for AND */
+	return (Path *) create_bitmap_and_path(root, rel, bestpaths);
 }
 
-/* qsort comparator to sort in increasing selectivity order */
+/* qsort comparator to sort in increasing index access cost order */
 static int
-bitmap_path_comparator(const void *a, const void *b)
+path_usage_comparator(const void *a, const void *b)
 {
-	Path	   *pa = *(Path *const *) a;
-	Path	   *pb = *(Path *const *) b;
+	PathClauseUsage *pa = *(PathClauseUsage *const *) a;
+	PathClauseUsage *pb = *(PathClauseUsage *const *) b;
 	Cost		acost;
 	Cost		bcost;
 	Selectivity aselec;
 	Selectivity bselec;
 
-	cost_bitmap_tree_node(pa, &acost, &aselec);
-	cost_bitmap_tree_node(pb, &bcost, &bselec);
+	cost_bitmap_tree_node(pa->path, &acost, &aselec);
+	cost_bitmap_tree_node(pb->path, &bcost, &bselec);
 
 	/*
-	 * If selectivities are the same, sort by cost.  (Note: there used to be
-	 * logic here to do "fuzzy comparison", but that's a bad idea because it
-	 * fails to be transitive, which will confuse qsort terribly.)
+	 * If costs are the same, sort by selectivity.
 	 */
-	if (aselec < bselec)
-		return -1;
-	if (aselec > bselec)
-		return 1;
-
 	if (acost < bcost)
 		return -1;
 	if (acost > bcost)
+		return 1;
+
+	if (aselec < bselec)
+		return -1;
+	if (aselec > bselec)
 		return 1;
 
 	return 0;
 }
 
 /*
- * Estimate the cost of actually executing a BitmapAnd with the given
+ * Estimate the cost of actually executing a bitmap scan with a single
+ * index path (no BitmapAnd, at least not at this level).
+ */
+static Cost
+bitmap_scan_cost_est(PlannerInfo *root, RelOptInfo *rel, Path *ipath)
+{
+	Path		bpath;
+
+	cost_bitmap_heap_scan(&bpath, root, rel, ipath, false);
+
+	return bpath.total_cost;
+}
+
+/*
+ * Estimate the cost of actually executing a BitmapAnd scan with the given
  * inputs.
  */
 static Cost
@@ -654,90 +782,134 @@ bitmap_and_cost_est(PlannerInfo *root, RelOptInfo *rel, List *paths)
 	return bpath.total_cost;
 }
 
+
 /*
- * pull_indexpath_quals
+ * classify_index_clause_usage
+ *		Construct a PathClauseUsage struct describing the WHERE clauses and
+ *		index predicate clauses used by the given indexscan path.
+ *		We consider two clauses the same if they are equal().
  *
- * Given the Path structure for a plain or bitmap indexscan, extract a list
- * of all the indexquals and index predicate conditions used in the Path.
+ * At some point we might want to migrate this info into the Path data
+ * structure proper, but for the moment it's only needed within
+ * choose_bitmap_and().
  *
- * This is sort of a simplified version of make_restrictinfo_from_bitmapqual;
- * here, we are not trying to produce an accurate representation of the AND/OR
- * semantics of the Path, but just find out all the base conditions used.
- *
- * The result list contains pointers to the expressions used in the Path,
- * but all the list cells are freshly built, so it's safe to destructively
- * modify the list (eg, by concat'ing it with other lists).
+ * *clauselist is used and expanded as needed to identify all the distinct
+ * clauses seen across successive calls.  Caller must initialize it to NIL
+ * before first call of a set.
  */
-static List *
-pull_indexpath_quals(Path *bitmapqual)
+static PathClauseUsage *
+classify_index_clause_usage(Path *path, List **clauselist)
 {
-	List	   *result = NIL;
-	ListCell   *l;
+	PathClauseUsage *result;
+	Bitmapset  *clauseids;
+	ListCell   *lc;
 
-	if (IsA(bitmapqual, BitmapAndPath))
+	result = (PathClauseUsage *) palloc(sizeof(PathClauseUsage));
+	result->path = path;
+
+	/* Recursively find the quals and preds used by the path */
+	result->quals = NIL;
+	result->preds = NIL;
+	find_indexpath_quals(path, &result->quals, &result->preds);
+
+	/* Build up a bitmapset representing the quals and preds */
+	clauseids = NULL;
+	foreach(lc, result->quals)
 	{
-		BitmapAndPath *apath = (BitmapAndPath *) bitmapqual;
+		Node   *node = (Node *) lfirst(lc);
 
-		foreach(l, apath->bitmapquals)
-		{
-			List	   *sublist;
-
-			sublist = pull_indexpath_quals((Path *) lfirst(l));
-			result = list_concat(result, sublist);
-		}
+		clauseids = bms_add_member(clauseids,
+								   find_list_position(node, clauselist));
 	}
-	else if (IsA(bitmapqual, BitmapOrPath))
+	foreach(lc, result->preds)
 	{
-		BitmapOrPath *opath = (BitmapOrPath *) bitmapqual;
+		Node   *node = (Node *) lfirst(lc);
 
-		foreach(l, opath->bitmapquals)
-		{
-			List	   *sublist;
-
-			sublist = pull_indexpath_quals((Path *) lfirst(l));
-			result = list_concat(result, sublist);
-		}
+		clauseids = bms_add_member(clauseids,
+								   find_list_position(node, clauselist));
 	}
-	else if (IsA(bitmapqual, IndexPath))
-	{
-		IndexPath  *ipath = (IndexPath *) bitmapqual;
-
-		result = get_actual_clauses(ipath->indexclauses);
-		result = list_concat(result, list_copy(ipath->indexinfo->indpred));
-	}
-	else
-		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
+	result->clauseids = clauseids;
 
 	return result;
 }
 
 
 /*
- * lists_intersect_ptr
- *		Detect whether two lists have a nonempty intersection,
- *		using pointer equality to compare members.
+ * find_indexpath_quals
  *
- * This possibly should go into list.c, but it doesn't yet have any use
- * except in choose_bitmap_and.
+ * Given the Path structure for a plain or bitmap indexscan, extract lists
+ * of all the indexquals and index predicate conditions used in the Path.
+ * These are appended to the initial contents of *quals and *preds (hence
+ * caller should initialize those to NIL).
+ *
+ * This is sort of a simplified version of make_restrictinfo_from_bitmapqual;
+ * here, we are not trying to produce an accurate representation of the AND/OR
+ * semantics of the Path, but just find out all the base conditions used.
+ *
+ * The result lists contain pointers to the expressions used in the Path,
+ * but all the list cells are freshly built, so it's safe to destructively
+ * modify the lists (eg, by concat'ing with other lists).
  */
-static bool
-lists_intersect_ptr(List *list1, List *list2)
+static void
+find_indexpath_quals(Path *bitmapqual, List **quals, List **preds)
 {
-	ListCell   *cell1;
-
-	foreach(cell1, list1)
+	if (IsA(bitmapqual, BitmapAndPath))
 	{
-		void   *datum1 = lfirst(cell1);
-		ListCell   *cell2;
+		BitmapAndPath *apath = (BitmapAndPath *) bitmapqual;
+		ListCell   *l;
 
-		foreach(cell2, list2)
+		foreach(l, apath->bitmapquals)
 		{
-			if (lfirst(cell2) == datum1)
-				return true;
+			find_indexpath_quals((Path *) lfirst(l), quals, preds);
 		}
 	}
+	else if (IsA(bitmapqual, BitmapOrPath))
+	{
+		BitmapOrPath *opath = (BitmapOrPath *) bitmapqual;
+		ListCell   *l;
 
-	return false;
+		foreach(l, opath->bitmapquals)
+		{
+			find_indexpath_quals((Path *) lfirst(l), quals, preds);
+		}
+	}
+	else if (IsA(bitmapqual, IndexPath))
+	{
+		IndexPath  *ipath = (IndexPath *) bitmapqual;
+
+		*quals = list_concat(*quals, get_actual_clauses(ipath->indexclauses));
+		*preds = list_concat(*preds, list_copy(ipath->indexinfo->indpred));
+	}
+	else
+		elog(ERROR, "unrecognized node type: %d", nodeTag(bitmapqual));
+}
+
+
+/*
+ * find_list_position
+ *		Return the given node's position (counting from 0) in the given
+ *		list of nodes.  If it's not equal() to any existing list member,
+ *		add it at the end, and return that position.
+ */
+static int
+find_list_position(Node *node, List **nodelist)
+{
+	int			i;
+	ListCell   *lc;
+
+	i = 0;
+	foreach(lc, *nodelist)
+	{
+		Node   *oldnode = (Node *) lfirst(lc);
+
+		if (equal(node, oldnode))
+			return i;
+		i++;
+	}
+
+	*nodelist = lappend(*nodelist, node);
+
+	return i;
 }
 
 
