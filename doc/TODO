@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Tue Apr 17 16:50:27 EDT 2007
+Last updated:		Tue Apr 17 17:22:09 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -754,7 +754,7 @@ SQL Commands
 		  http://archives.postgresql.org/pgsql-patches/2006-05/msg00302.php
 		  http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php
 
-		o Add MOVE
+		o -Add MOVE
 		o Add single-step debugging of functions
 		o Add support for WITH HOLD and SCROLL cursors
 
