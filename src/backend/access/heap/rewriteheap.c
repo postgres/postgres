@@ -96,7 +96,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.1 2007/04/08 01:26:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.2 2007/04/17 20:49:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -203,7 +203,6 @@ begin_heap_rewrite(Relation new_heap, TransactionId oldest_xmin,
 	state->rs_buffer = (Page) palloc(BLCKSZ);
 	/* new_heap needn't be empty, just locked */
 	state->rs_blockno = RelationGetNumberOfBlocks(new_heap);
-	/* Note: we assume RelationGetNumberOfBlocks did RelationOpenSmgr for us */
 	state->rs_buffer_valid = false;
 	state->rs_use_wal = use_wal;
 	state->rs_oldest_xmin = oldest_xmin;
@@ -267,6 +266,7 @@ end_heap_rewrite(RewriteState state)
 			log_newpage(&state->rs_new_rel->rd_node,
 						state->rs_blockno,
 						state->rs_buffer);
+		RelationOpenSmgr(state->rs_new_rel);
 		smgrextend(state->rs_new_rel->rd_smgr, state->rs_blockno,
 				   (char *) state->rs_buffer, true);
 	}
@@ -586,6 +586,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 			 * temp table, because there's no need for smgr to schedule an
 			 * fsync for this write; we'll do it ourselves before committing.
 			 */
+			RelationOpenSmgr(state->rs_new_rel);
 			smgrextend(state->rs_new_rel->rd_smgr, state->rs_blockno,
 					   (char *) page, true);
 
