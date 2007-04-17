@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.195 2007/04/06 19:22:38 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.196 2007/04/17 17:30:34 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1938,7 +1938,7 @@ January 8 04:05:06 1999 PST
 
       <table id="datatype-datetime-special-table">
        <title>Special Date/Time Inputs</title>
-       <tgroup cols="2">
+       <tgroup cols="3">
         <thead>
          <row>
           <entry>Input String</entry>

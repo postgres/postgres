@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.82 2007/02/16 03:56:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ecpg.sgml,v 1.83 2007/04/17 17:30:35 tgl Exp $ -->
 
 <chapter id="ecpg">
  <title><application>ECPG</application> - Embedded <acronym>SQL</acronym> in C</title>
@@ -1485,7 +1485,7 @@ int PGTYPESdate_defmt_asc(date *d, char *fmt, char *str);
         you an idea of how to use this function.
         <table>
          <title>Valid input formats for <function>rdefmtdate</function></title>
-         <tgroup cols="2">
+         <tgroup cols="3">
           <thead>
            <row>
             <entry>fmt</entry>
