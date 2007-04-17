@@ -96,7 +96,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.2 2007/04/17 20:49:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.3 2007/04/17 21:29:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,10 +272,17 @@ end_heap_rewrite(RewriteState state)
 	}
 
 	/*
-	 * If not WAL-logging, must fsync before commit.  We use heap_sync
+	 * If the rel isn't temp, must fsync before commit.  We use heap_sync
 	 * to ensure that the toast table gets fsync'd too.
+	 *
+	 * It's obvious that we must do this when not WAL-logging. It's less
+	 * obvious that we have to do it even if we did WAL-log the pages.
+	 * The reason is the same as in tablecmds.c's copy_relation_data():
+	 * we're writing data that's not in shared buffers, and so a CHECKPOINT
+	 * occurring during the rewriteheap operation won't have fsync'd data
+	 * we wrote before the checkpoint.
 	 */
-	if (!state->rs_use_wal)
+	if (!state->rs_new_rel->rd_istemp)
 		heap_sync(state->rs_new_rel);
 
 	/* Deleting the context frees everything */
@@ -584,7 +591,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 			/*
 			 * Now write the page. We say isTemp = true even if it's not a
 			 * temp table, because there's no need for smgr to schedule an
-			 * fsync for this write; we'll do it ourselves before committing.
+			 * fsync for this write; we'll do it ourselves in end_heap_rewrite.
 			 */
 			RelationOpenSmgr(state->rs_new_rel);
 			smgrextend(state->rs_new_rel->rd_smgr, state->rs_blockno,
