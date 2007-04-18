@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.41 2007/04/16 18:29:52 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.42 2007/04/18 16:44:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,8 @@ int			autovacuum_freeze_max_age;
 
 int			autovacuum_vac_cost_delay;
 int			autovacuum_vac_cost_limit;
+
+int			Log_autovacuum = -1;
 
 /* Flags to tell if we are in an autovacuum process */
 static bool am_autovacuum_launcher = false;
@@ -1814,7 +1816,6 @@ do_autovacuum(void)
 	{
 		Oid		relid = lfirst_oid(cell);
 		autovac_table *tab;
-		char   *relname;
 		WorkerInfo	worker;
 		bool        skipit;
 
@@ -1891,12 +1892,6 @@ next_worker:
 		VacuumCostDelay = tab->at_vacuum_cost_delay;
 		VacuumCostLimit = tab->at_vacuum_cost_limit;
 
-		relname = get_rel_name(relid);
-		elog(DEBUG2, "autovac: will%s%s %s",
-			 (tab->at_dovacuum ? " VACUUM" : ""),
-			 (tab->at_doanalyze ? " ANALYZE" : ""),
-			 relname);
-
 		/*
 		 * Advertise my cost delay parameters for the balancing algorithm, and
 		 * do a balance
@@ -1915,7 +1910,6 @@ next_worker:
 								  tab->at_freeze_min_age);
 		/* be tidy */
 		pfree(tab);
-		pfree(relname);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.120 2007/04/16 18:29:50 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.121 2007/04/18 16:44:17 alvherre Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3185,6 +3185,25 @@ SELECT * FROM parent WHERE key = 2400;
         Specifies the maximum number of autovacuum processes (other than the
         autovacuum launcher) which may be running at any one time.  The default
         is three (<literal>3</literal>).  This parameter can only be set in
+        the <filename>postgresql.conf</> file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-autovacuum" xreflabel="log_autovacuum">
+      <term><varname>log_autovacuum</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>log_autovacuum</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Causes actions executed by autovacuum to be logged if it ran for at
+        least the specified number of milliseconds.  Setting this to zero prints
+        all action durations. Minus-one (the default) disables logging
+        autovacuum action durations.  For example, if you set it to
+        <literal>250ms</literal> then all vacuums and analyzes that run
+        250ms or longer will be logged.  Enabling this parameter can be helpful
+        in tracking autovacuum activity.  This setting can only be set in
         the <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>

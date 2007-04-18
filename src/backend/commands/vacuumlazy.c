@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.85 2007/02/21 22:47:45 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.86 2007/04/18 16:44:18 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,11 @@
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/transam.h"
+#include "commands/dbcommands.h"
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "pgstat.h"
+#include "postmaster/autovacuum.h"
 #include "storage/freespace.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -90,6 +92,7 @@ typedef struct LVRelStats
 	int			max_free_pages; /* # slots allocated in array */
 	PageFreeSpaceInfo *free_pages;		/* array or heap of blkno/avail */
 	BlockNumber tot_free_pages; /* total pages with >= threshold space */
+	int			num_index_scans;
 } LVRelStats;
 
 
@@ -141,6 +144,14 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	Relation   *Irel;
 	int			nindexes;
 	BlockNumber possibly_freeable;
+	PGRUsage	ru0;
+	TimestampTz	starttime = 0;
+
+	pg_rusage_init(&ru0);
+
+	/* measure elapsed time iff autovacuum logging requires it */
+	if (IsAutoVacuumWorkerProcess() && Log_autovacuum > 0)
+		starttime = GetCurrentTimestamp();
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -155,6 +166,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	/* Set threshold for interesting free space = average request size */
 	/* XXX should we scale it up or down?  Adjust vacuum.c too, if so */
 	vacrelstats->threshold = GetAvgFSMRequestSize(&onerel->rd_node);
+
+	vacrelstats->num_index_scans = 0;
 
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, RowExclusiveLock, &nindexes, &Irel);
@@ -200,6 +213,40 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	/* report results to the stats collector, too */
 	pgstat_report_vacuum(RelationGetRelid(onerel), onerel->rd_rel->relisshared,
 						 vacstmt->analyze, vacrelstats->rel_tuples);
+
+	/* and log the action if appropriate */
+	if (IsAutoVacuumWorkerProcess() && Log_autovacuum >= 0)
+	{
+		long	diff;
+
+		if (Log_autovacuum > 0)
+		{
+			TimestampTz	endtime;
+			int		usecs;
+			long	secs;
+
+			endtime = GetCurrentTimestamp();
+			TimestampDifference(starttime, endtime, &secs, &usecs);
+
+			diff = secs * 1000 + usecs / 1000;
+		}
+		
+		if (Log_autovacuum == 0 || diff >= Log_autovacuum)
+		{
+			ereport(LOG,
+					(errmsg("automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"
+							"pages: %d removed, %d remain\n"
+							"tuples: %.0f removed, %.0f remain\n"
+							"system usage: %s",
+							get_database_name(MyDatabaseId),
+							get_namespace_name(RelationGetNamespace(onerel)),
+							RelationGetRelationName(onerel),
+							vacrelstats->num_index_scans,
+							vacrelstats->pages_removed, vacrelstats->rel_pages,
+							vacrelstats->tuples_deleted, vacrelstats->rel_tuples, 
+							pg_rusage_show(&ru0))));
+		}
+	}
 }
 
 
@@ -282,6 +329,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			lazy_vacuum_heap(onerel, vacrelstats);
 			/* Forget the now-vacuumed tuples, and press on */
 			vacrelstats->num_dead_tuples = 0;
+			vacrelstats->num_index_scans++;
 		}
 
 		buf = ReadBuffer(onerel, blkno);
@@ -490,6 +538,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 							  vacrelstats);
 		/* Remove tuples from heap */
 		lazy_vacuum_heap(onerel, vacrelstats);
+		vacrelstats->num_index_scans++;
 	}
 
 	/* Do post-vacuum cleanup and statistics update for each index */

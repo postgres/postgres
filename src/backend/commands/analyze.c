@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.104 2007/04/06 04:21:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.105 2007/04/18 16:44:17 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
+#include "commands/dbcommands.h"
 #include "commands/vacuum.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -29,10 +30,12 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "pgstat.h"
+#include "postmaster/autovacuum.h"
 #include "utils/acl.h"
 #include "utils/datum.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
+#include "utils/pg_rusage.h"
 #include "utils/syscache.h"
 #include "utils/tuplesort.h"
 
@@ -109,6 +112,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	double		totalrows,
 				totaldeadrows;
 	HeapTuple  *rows;
+	PGRUsage	ru0;
+	TimestampTz	starttime = 0;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -188,6 +193,14 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	{
 		relation_close(onerel, ShareUpdateExclusiveLock);
 		return;
+	}
+
+	/* measure elapsed time iff autovacuum logging requires it */
+	if (IsAutoVacuumWorkerProcess() && Log_autovacuum >= 0)
+	{
+		pg_rusage_init(&ru0);
+		if (Log_autovacuum > 0)
+			starttime = GetCurrentTimestamp();
 	}
 
 	ereport(elevel,
@@ -451,6 +464,34 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 * expose us to concurrent-update failures in update_attstats.)
 	 */
 	relation_close(onerel, NoLock);
+
+	/* Log the action if appropriate */
+	if (IsAutoVacuumWorkerProcess() && Log_autovacuum >= 0)
+	{
+		long	diff;
+
+		if (Log_autovacuum > 0)
+		{
+			TimestampTz	endtime;
+			int		usecs;
+			long	secs;
+
+			endtime = GetCurrentTimestamp();
+			TimestampDifference(starttime, endtime, &secs, &usecs);
+
+			diff = secs * 1000 + usecs / 1000;
+		}
+		
+		if (Log_autovacuum == 0 || diff >= Log_autovacuum)
+		{
+			ereport(LOG,
+					(errmsg("automatic analyze of table \"%s.%s.%s\" system usage: %s",
+							get_database_name(MyDatabaseId),
+							get_namespace_name(RelationGetNamespace(onerel)),
+							RelationGetRelationName(onerel),
+							pg_rusage_show(&ru0))));
+		}
+	}
 }
 
 /*
