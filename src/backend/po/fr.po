@@ -11,8 +11,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: postgres-fr-8.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2006-10-13 19:25-0300\n"
-"PO-Revision-Date: 2006-10-16 20:35+0100\n"
+"POT-Creation-Date: 2007-01-31 06:02-0400\n"
+"PO-Revision-Date: 2007-03-29 07:30+0100\n"
 "Last-Translator: Guillaume Lelarge <gleu@wanadoo.fr>\n"
 "Language-Team:  <pgsql-fr-general@postgresql.org>\n"
 "MIME-Version: 1.0\n"
@@ -82,7 +82,7 @@ msgstr "Les valeurs plus larges qu'une page de tampon ne peuvent pas être indexé
 msgid "hash indexes do not support whole-index scans"
 msgstr "les index hâchés ne supportent pas les parcours complets d'index"
 
-#: access/hash/hashovfl.c:519
+#: access/hash/hashovfl.c:545
 #, c-format
 msgid "out of overflow pages in hash index \"%s\""
 msgstr "en dehors des pages surchargées dans l'index haché «%s»"
@@ -130,9 +130,9 @@ msgstr "«%s» est une relation spéciale"
 msgid "\"%s\" is a composite type"
 msgstr "«%s» est un type composite"
 
-#: access/heap/heapam.c:2137
-#: access/heap/heapam.c:2168
-#: access/heap/heapam.c:2203
+#: access/heap/heapam.c:2158
+#: access/heap/heapam.c:2189
+#: access/heap/heapam.c:2224
 #, c-format
 msgid "could not obtain lock on row in relation \"%s\""
 msgstr "n'a pas pu obtenir un verrou sur la relation «%s»"
@@ -694,8 +694,8 @@ msgstr "n'a pas pu lier le fichier «%s» vers «%s» : %m"
 #: access/transam/xlog.c:4167
 #: access/transam/xlog.c:4208
 #: postmaster/pgarch.c:564
-#: utils/init/flatfiles.c:271
-#: utils/init/flatfiles.c:658
+#: utils/init/flatfiles.c:289
+#: utils/init/flatfiles.c:676
 #, c-format
 msgid "could not rename file \"%s\" to \"%s\": %m"
 msgstr "n'a pas pu renommer le fichier «%s» en «%s» : %m"
@@ -1588,11 +1588,11 @@ msgstr "type de privilège %s invalide pour la base de données"
 
 #: catalog/aclchk.c:435
 #: commands/comment.c:461
-#: commands/dbcommands.c:590
-#: commands/dbcommands.c:721
-#: commands/dbcommands.c:839
-#: commands/dbcommands.c:909
-#: commands/dbcommands.c:992
+#: commands/dbcommands.c:591
+#: commands/dbcommands.c:728
+#: commands/dbcommands.c:846
+#: commands/dbcommands.c:916
+#: commands/dbcommands.c:999
 #: utils/adt/acl.c:1712
 #: utils/adt/dbsize.c:131
 #: utils/init/postinit.c:353
@@ -1658,7 +1658,7 @@ msgstr "type de privilège %s invalide pour l'espace logique"
 #: catalog/aclchk.c:1147
 #: commands/tablecmds.c:326
 #: commands/tablecmds.c:5622
-#: commands/dbcommands.c:291
+#: commands/dbcommands.c:292
 #: commands/indexcmds.c:171
 #: commands/tablespace.c:407
 #: commands/tablespace.c:702
@@ -2353,12 +2353,12 @@ msgstr "type 0x%02X du message, inattendu, lors d'une opération COPY à partir de
 #: commands/copy.c:733
 #: commands/copy.c:741
 #: commands/copy.c:749
-#: commands/dbcommands.c:115
-#: commands/dbcommands.c:123
-#: commands/dbcommands.c:131
-#: commands/dbcommands.c:139
-#: commands/dbcommands.c:147
-#: commands/dbcommands.c:814
+#: commands/dbcommands.c:116
+#: commands/dbcommands.c:124
+#: commands/dbcommands.c:132
+#: commands/dbcommands.c:140
+#: commands/dbcommands.c:148
+#: commands/dbcommands.c:821
 #: commands/functioncmds.c:309
 #: commands/functioncmds.c:359
 #: commands/functioncmds.c:367
@@ -3352,94 +3352,94 @@ msgstr "Le codage de destination «%s» n'existe pas"
 msgid "conversion \"%s\" already exists in schema \"%s\""
 msgstr "La conversion «%s» existe déjà dans le schéma «%s»"
 
-#: commands/dbcommands.c:154
+#: commands/dbcommands.c:155
 msgid "LOCATION is not supported anymore"
 msgstr "LOCATION n'est plus supporté"
 
-#: commands/dbcommands.c:155
+#: commands/dbcommands.c:156
 msgid "Consider using tablespaces instead."
 msgstr "Considérez l'utilisation d'espaces logiques."
 
-#: commands/dbcommands.c:178
+#: commands/dbcommands.c:179
 #, c-format
 msgid "%d is not a valid encoding code"
 msgstr "%d n'est pas un code de codage valide"
 
-#: commands/dbcommands.c:187
+#: commands/dbcommands.c:188
 #, c-format
 msgid "%s is not a valid encoding name"
 msgstr "%s n'est pas un nom de codage valide"
 
-#: commands/dbcommands.c:214
+#: commands/dbcommands.c:215
 msgid "permission denied to create database"
 msgstr "droit refusé pour créer une base de données"
 
-#: commands/dbcommands.c:230
-#: commands/dbcommands.c:447
-#: commands/dbcommands.c:754
+#: commands/dbcommands.c:231
+#: commands/dbcommands.c:448
+#: commands/dbcommands.c:761
 #, c-format
 msgid "database \"%s\" already exists"
 msgstr "la base de données «%s» existe déjà"
 
-#: commands/dbcommands.c:243
+#: commands/dbcommands.c:244
 #, c-format
 msgid "template database \"%s\" does not exist"
 msgstr "la base de données modèle «%s» n'existe pas"
 
-#: commands/dbcommands.c:254
+#: commands/dbcommands.c:255
 #, c-format
 msgid "permission denied to copy database \"%s\""
 msgstr "droit refusé pour copier la base de données «%s»"
 
-#: commands/dbcommands.c:267
+#: commands/dbcommands.c:268
 #, c-format
 msgid "source database \"%s\" is being accessed by other users"
 msgstr "la base de données source «%s» est accédée par d'autres utilisateurs"
 
-#: commands/dbcommands.c:278
+#: commands/dbcommands.c:279
 #, c-format
 msgid "invalid server encoding %d"
 msgstr "codage serveur %d invalide"
 
-#: commands/dbcommands.c:324
+#: commands/dbcommands.c:325
 #, c-format
 msgid "cannot assign new default tablespace \"%s\""
 msgstr "n'a pas pu affecter un nouvel espace logique par défaut «%s»"
 
-#: commands/dbcommands.c:326
+#: commands/dbcommands.c:327
 #, c-format
 msgid "There is a conflict because database \"%s\" already has some tables in this tablespace."
 msgstr "Il existe un conflit car la base de données «%s» a déjà quelques tables dans son espace logique."
 
-#: commands/dbcommands.c:570
+#: commands/dbcommands.c:571
 msgid "cannot drop the currently open database"
 msgstr "n'a pas pu supprimer la base de données actuellement ouverte"
 
-#: commands/dbcommands.c:604
+#: commands/dbcommands.c:605
 msgid "cannot drop a template database"
 msgstr "n'a pas pu supprimer une base de données modèle"
 
-#: commands/dbcommands.c:612
-#: commands/dbcommands.c:741
+#: commands/dbcommands.c:613
+#: commands/dbcommands.c:748
 #, c-format
 msgid "database \"%s\" is being accessed by other users"
 msgstr "la base de données «%s» est actuellement accédée par d'autres utilisateurs"
 
-#: commands/dbcommands.c:732
+#: commands/dbcommands.c:739
 msgid "current database may not be renamed"
 msgstr "la base de données pourrait ne pas être renommée"
 
-#: commands/dbcommands.c:766
+#: commands/dbcommands.c:773
 msgid "permission denied to rename database"
 msgstr "droit refusé pour le renommage de la base de données"
 
-#: commands/dbcommands.c:1031
+#: commands/dbcommands.c:1038
 msgid "permission denied to change owner of database"
 msgstr "droit refusé pour modifier le propriétaire de la base de données"
 
-#: commands/dbcommands.c:1208
-#: commands/dbcommands.c:1341
-#: commands/dbcommands.c:1373
+#: commands/dbcommands.c:1215
+#: commands/dbcommands.c:1348
+#: commands/dbcommands.c:1380
 #, c-format
 msgid "could not remove database directory \"%s\""
 msgstr "n'a pas pu supprimer le répertoire de bases de données «%s»"
@@ -4011,7 +4011,7 @@ msgstr "setval : la valeur %s est en dehors des limites de la séquence «%s» (%s.
 #: postmaster/postmaster.c:1722
 #: postmaster/postmaster.c:2490
 #: storage/buffer/buf_init.c:162
-#: storage/buffer/localbuf.c:310
+#: storage/buffer/localbuf.c:307
 #: storage/file/fd.c:317
 #: storage/file/fd.c:676
 #: storage/file/fd.c:811
@@ -4803,7 +4803,7 @@ msgstr "La nouvelle ligne pour la relation «%s» viole la contrainte de vérificat
 
 #: executor/execQual.c:266
 #: executor/execQual.c:294
-#: executor/execQual.c:2172
+#: executor/execQual.c:2182
 #: utils/adt/array_userfuncs.c:361
 #: utils/adt/arrayfuncs.c:214
 #: utils/adt/arrayfuncs.c:470
@@ -4827,7 +4827,7 @@ msgstr "Les fonctions et opérateurs peuvent prendre au plus un argument d'ensemb
 #: executor/execQual.c:923
 #: executor/execQual.c:966
 #: executor/execQual.c:1259
-#: executor/execQual.c:3682
+#: executor/execQual.c:3715
 #: executor/functions.c:677
 #: executor/functions.c:716
 #: utils/fmgr/funcapi.c:59
@@ -4855,46 +4855,47 @@ msgstr "IS DISTINCT FROM ne supporte pas les arguments d'ensemble"
 msgid "op ANY/ALL (array) does not support set arguments"
 msgstr "op ANY/ALL (array) ne supporte pas les arguments d'ensemble"
 
-#: executor/execQual.c:2158
+#: executor/execQual.c:2160
 msgid "cannot merge incompatible arrays"
 msgstr "n'a pas pu fusionner les tableaux incompatibles"
 
-#: executor/execQual.c:2159
+#: executor/execQual.c:2161
 #, c-format
 msgid "Array with element type %s cannot be included in ARRAY construct with element type %s."
 msgstr "Le tableau avec le type d'élément %s ne peut pas être inclus dans la consstruction ARRAY avec le type d'élément %s."
 
-#: executor/execQual.c:2192
+#: executor/execQual.c:2202
+#: executor/execQual.c:2237
 #: utils/adt/arrayfuncs.c:505
 msgid "multidimensional arrays must have array expressions with matching dimensions"
 msgstr "Les tableaux multidimensionels doivent avoir des expressions de tableaux avec les dimensions correspondantes"
 
-#: executor/execQual.c:2412
+#: executor/execQual.c:2445
 msgid "NULLIF does not support set arguments"
 msgstr "NULLIF ne supporte pas les arguments d'ensemble"
 
-#: executor/execQual.c:2593
+#: executor/execQual.c:2626
 #, c-format
 msgid "domain %s does not allow null values"
 msgstr "Le domaine %s n'autorise pas les valeurs NULL"
 
-#: executor/execQual.c:2622
+#: executor/execQual.c:2655
 #, c-format
 msgid "value for domain %s violates check constraint \"%s\""
 msgstr "La valeur pour le domaine %s viole la contrainte de vérification «%s»"
 
-#: executor/execQual.c:2969
+#: executor/execQual.c:3002
 #: optimizer/util/clauses.c:472
 #: parser/parse_agg.c:74
 msgid "aggregate function calls may not be nested"
 msgstr "les appels à la fonction d'aggrégat ne doivent pas être imbriqués"
 
-#: executor/execQual.c:3292
+#: executor/execQual.c:3325
 #, c-format
 msgid "ROW() column has type %s instead of type %s"
 msgstr "une colonne ROW() a le type %s au lieu du type %s"
 
-#: executor/execQual.c:3357
+#: executor/execQual.c:3390
 #: utils/adt/arrayfuncs.c:2709
 #, c-format
 msgid "could not identify a comparison function for type %s"
@@ -4986,23 +4987,23 @@ msgstr "Le type de retour %s n'est pas supporté pour les fonctions SQL"
 msgid "aggregate %u needs to have compatible input type and transition type"
 msgstr "L'aggrégat %u a besoin d'avoir un type d'entrée compatible avec le type de transition"
 
-#: executor/nodeFunctionscan.c:363
-#: executor/nodeFunctionscan.c:377
-#: executor/nodeFunctionscan.c:387
+#: executor/nodeFunctionscan.c:364
+#: executor/nodeFunctionscan.c:378
+#: executor/nodeFunctionscan.c:388
 msgid "function return row and query-specified return row do not match"
 msgstr "La ligne de retour spécifiée par la requête et la ligne de retour de la fonction ne correspondent pas"
 
-#: executor/nodeFunctionscan.c:364
+#: executor/nodeFunctionscan.c:365
 #, c-format
 msgid "Returned row contains %d attributes, but query expects %d."
 msgstr "La ligne renvoyée contient %d attributs mais la requête en attend %d."
 
-#: executor/nodeFunctionscan.c:378
+#: executor/nodeFunctionscan.c:379
 #, c-format
 msgid "Returned type %s at ordinal position %d, but query expects %s."
 msgstr "A renvoyé le type %s à la position ordinale %d, mais la requête attend %s."
 
-#: executor/nodeFunctionscan.c:388
+#: executor/nodeFunctionscan.c:389
 #, c-format
 msgid "Physical storage mismatch on dropped attribute at ordinal position %d."
 msgstr "Le stockage physique ne correspond pas à l'attribut supprimé à la position ordinale %d."
@@ -6982,11 +6983,11 @@ msgstr "n'a pas pu lancer le processus autovacuum : %m"
 msgid "autovacuum: processing database \"%s\""
 msgstr "autovacuum : traitement de la base de données «%s»"
 
-#: postmaster/autovacuum.c:1021
+#: postmaster/autovacuum.c:1048
 msgid "autovacuum not started because of misconfiguration"
 msgstr "autovacuum non exécuté à cause d'une mauvaise configuration"
 
-#: postmaster/autovacuum.c:1022
+#: postmaster/autovacuum.c:1049
 msgid "Enable options \"stats_start_collector\" and \"stats_row_level\"."
 msgstr "Activez les options «stats_start_collector» et «stats_row_level»."
 
@@ -7506,168 +7507,168 @@ msgstr "journal des transactions archivé «%s»"
 msgid "could not open archive status directory \"%s\": %m"
 msgstr "n'a pas pu accéder au répertoire du statut des archives «%s» : %m"
 
-#: postmaster/pgstat.c:262
+#: postmaster/pgstat.c:263
 #, c-format
 msgid "could not resolve \"localhost\": %s"
 msgstr "n'a pas pu résoudre «localhost»: %s"
 
-#: postmaster/pgstat.c:290
+#: postmaster/pgstat.c:291
 #, c-format
 msgid "could not create socket for statistics collector: %m"
 msgstr "n'a pas pu créer la socket pour le récupérateur de statistiques : %m"
 
-#: postmaster/pgstat.c:302
+#: postmaster/pgstat.c:303
 #, c-format
 msgid "could not bind socket for statistics collector: %m"
 msgstr "n'a pas pu lier la socket au récupérateur de statistiques : %m"
 
-#: postmaster/pgstat.c:313
+#: postmaster/pgstat.c:314
 #, c-format
 msgid "could not get address of socket for statistics collector: %m"
 msgstr "n'a pas pu obtenir l'adresse de la socket du récupérateur de statistiques : %m"
 
-#: postmaster/pgstat.c:329
+#: postmaster/pgstat.c:330
 #, c-format
 msgid "could not connect socket for statistics collector: %m"
 msgstr "n'a pas pu connecter la socket aux récupérateur de statistiques : %m"
 
-#: postmaster/pgstat.c:350
+#: postmaster/pgstat.c:351
 #, c-format
 msgid "could not send test message on socket for statistics collector: %m"
 msgstr "n'a pas pu envoyer le message de tests sur la socket du collecteur de statistiques : %m"
 
-#: postmaster/pgstat.c:375
-#: postmaster/pgstat.c:1696
+#: postmaster/pgstat.c:376
+#: postmaster/pgstat.c:1727
 #, c-format
 msgid "select() failed in statistics collector: %m"
 msgstr "Échec du select() dans le récupérateur de statistiques : %m"
 
-#: postmaster/pgstat.c:390
+#: postmaster/pgstat.c:391
 msgid "test message did not get through on socket for statistics collector"
 msgstr "le message de test n'a pas pu arriver sur la socket du récupérateur de statistiques : %m"
 
-#: postmaster/pgstat.c:405
+#: postmaster/pgstat.c:406
 #, c-format
 msgid "could not receive test message on socket for statistics collector: %m"
 msgstr "n'a pas pu recevoir le message de tests sur la socket du récupérateur de statistiques : %m"
 
-#: postmaster/pgstat.c:415
+#: postmaster/pgstat.c:416
 msgid "incorrect test message transmission on socket for statistics collector"
 msgstr "transmission du message de tests incorrecte sur la socket du récupérateur de statistiques"
 
-#: postmaster/pgstat.c:439
+#: postmaster/pgstat.c:440
 #, c-format
 msgid "could not set statistics collector socket to nonblocking mode: %m"
 msgstr "n'a pas pu initialiser la socket du récupérateur de statistiques dans le mode non bloquant : %m"
 
-#: postmaster/pgstat.c:449
+#: postmaster/pgstat.c:450
 msgid "disabling statistics collector for lack of working socket"
 msgstr "Désactivation du récupérateur de statistiques à cause du manque de socket fonctionnel"
 
-#: postmaster/pgstat.c:586
+#: postmaster/pgstat.c:587
 msgid "statistics collector startup skipped"
 msgstr "Laisse de côté le lancement du récupérateur de statistiques"
 
-#: postmaster/pgstat.c:607
+#: postmaster/pgstat.c:608
 #, c-format
 msgid "could not fork statistics buffer: %m"
 msgstr "n'a pas pu lancer le processus fils du tampon de statistiques : %m"
 
-#: postmaster/pgstat.c:1079
+#: postmaster/pgstat.c:1110
 msgid "must be superuser to reset statistics counters"
 msgstr "doit être super-utilisateur pour réinitialiser les compteurs statistiques"
 
-#: postmaster/pgstat.c:1518
+#: postmaster/pgstat.c:1549
 #, c-format
 msgid "could not create pipe for statistics buffer: %m"
 msgstr "n'a pas pu créer un tube pour le tampon des statistiques : %m"
 
-#: postmaster/pgstat.c:1530
+#: postmaster/pgstat.c:1561
 #, c-format
 msgid "could not fork statistics collector: %m"
 msgstr "n'a pas pu lancer le processus fils du collecteur de statistiques : %m"
 
-#: postmaster/pgstat.c:1737
+#: postmaster/pgstat.c:1768
 #, c-format
 msgid "could not read from statistics collector pipe: %m"
 msgstr "n'a pas pu lire à partir du tube du collecteur de statistiques : %m"
 
-#: postmaster/pgstat.c:1758
+#: postmaster/pgstat.c:1789
 msgid "invalid statistics message length"
 msgstr "Longueur invalide du message des statistiques"
 
-#: postmaster/pgstat.c:1914
+#: postmaster/pgstat.c:1945
 #, c-format
 msgid "could not set statistics collector pipe to nonblocking mode: %m"
 msgstr "n'a pas pu initialiser le tube du collecteur de statistiques dans le mode non bloquant : %m"
 
-#: postmaster/pgstat.c:1945
+#: postmaster/pgstat.c:1976
 msgid "statistics buffer is full"
 msgstr "Le tampon statistiques est rempli"
 
-#: postmaster/pgstat.c:1976
+#: postmaster/pgstat.c:2007
 #, c-format
 msgid "select() failed in statistics buffer: %m"
 msgstr "Echec du select() dans le tampon statistiques : %m"
 
-#: postmaster/pgstat.c:1993
+#: postmaster/pgstat.c:2024
 #, c-format
 msgid "could not read statistics message: %m"
 msgstr "n'a pas pu lire le message des statistiques : %m"
 
-#: postmaster/pgstat.c:2057
+#: postmaster/pgstat.c:2088
 #, c-format
 msgid "could not write to statistics collector pipe: %m"
 msgstr "n'a pas pu écrire dans le tube du collecteur de statistiques : %m"
 
-#: postmaster/pgstat.c:2130
+#: postmaster/pgstat.c:2161
 #, c-format
 msgid "invalid server process ID %d"
 msgstr "Identifiant du processus serveur invalide %d"
 
-#: postmaster/pgstat.c:2320
+#: postmaster/pgstat.c:2351
 #, c-format
 msgid "could not open temporary statistics file \"%s\": %m"
 msgstr "n'a pas pu ouvrir le fichier temporaire des statistiques «%s»: %m"
 
-#: postmaster/pgstat.c:2352
+#: postmaster/pgstat.c:2383
 msgid "database hash table corrupted during cleanup --- abort"
 msgstr "Corruption de la table hachée de la base de données lors du lancement --- annulation"
 
-#: postmaster/pgstat.c:2388
+#: postmaster/pgstat.c:2419
 #, c-format
 msgid "tables hash table for database %u corrupted during cleanup --- abort"
 msgstr "Corruption de la table hachée de la base de données %u lors du lancement --- annulation"
 
-#: postmaster/pgstat.c:2444
+#: postmaster/pgstat.c:2475
 #, c-format
 msgid "could not write temporary statistics file \"%s\": %m"
 msgstr "n'a pas pu écrire le fichier temporaire des statistiques «%s»: %m"
 
-#: postmaster/pgstat.c:2453
+#: postmaster/pgstat.c:2484
 #, c-format
 msgid "could not close temporary statistics file \"%s\": %m"
 msgstr "n'a pas pu fermer le fichier temporaire de statistiques «%s»: %m"
 
-#: postmaster/pgstat.c:2461
+#: postmaster/pgstat.c:2492
 #, c-format
 msgid "could not rename temporary statistics file \"%s\" to \"%s\": %m"
 msgstr "n'a pas pu renommer le fichier temporaire des statistiques «%s» to «%s»: %m"
 
-#: postmaster/pgstat.c:2481
+#: postmaster/pgstat.c:2512
 msgid "dead-server-process hash table corrupted during cleanup --- abort"
 msgstr "Corruption de la table hachée des processus serveur morts lors du nettoyage --- annulation"
 
-#: postmaster/pgstat.c:2576
-#: postmaster/pgstat.c:2598
-#: postmaster/pgstat.c:2612
-#: postmaster/pgstat.c:2664
-#: postmaster/pgstat.c:2681
-#: postmaster/pgstat.c:2698
-#: postmaster/pgstat.c:2731
-#: postmaster/pgstat.c:2738
-#: postmaster/pgstat.c:2750
-#: postmaster/pgstat.c:2795
+#: postmaster/pgstat.c:2607
+#: postmaster/pgstat.c:2629
+#: postmaster/pgstat.c:2643
+#: postmaster/pgstat.c:2695
+#: postmaster/pgstat.c:2712
+#: postmaster/pgstat.c:2729
+#: postmaster/pgstat.c:2762
+#: postmaster/pgstat.c:2769
+#: postmaster/pgstat.c:2781
+#: postmaster/pgstat.c:2826
 msgid "corrupted pgstat.stat file"
 msgstr "Fichier pgstat.stat corrompu"
 
@@ -7894,7 +7895,7 @@ msgstr "Echecs multipls --- l'erreur d'écriture pourrait être permanent."
 msgid "writing block %u of relation %u/%u/%u"
 msgstr "écriture du bloc %u de la relation %u/%u/%u"
 
-#: storage/buffer/localbuf.c:139
+#: storage/buffer/localbuf.c:140
 msgid "no empty local buffer available"
 msgstr "Aucun tampon local vide disponible"
 
@@ -8090,17 +8091,22 @@ msgstr "Longueurs d'élément corrompus : total %u, espace disponible %u"
 msgid "corrupted item pointer: offset = %u, size = %u"
 msgstr "Pointeur d'élément corrompu : décalage = %u, taille = %u"
 
-#: storage/smgr/md.c:361
+#: storage/smgr/md.c:410
 #, c-format
 msgid "could not open relation %u/%u/%u: %m"
 msgstr "n'a pas pu ouvrir la relation %u/%u/%u : %m"
 
-#: storage/smgr/md.c:764
+#: storage/smgr/md.c:857
 #, c-format
 msgid "could not fsync segment %u of relation %u/%u/%u: %m"
 msgstr "n'a pas pu synchroniser via fsync le segment %u de la relation %u/%u/%u : %m"
 
-#: storage/smgr/md.c:949
+#: storage/smgr/md.c:867
+#, c-format
+msgid "could not fsync segment %u of relation %u/%u/%u, but retrying: %m"
+msgstr "n'a pas pu synchroniser via fsync le segment %u de la relation %u/%u/%u, nouvelle tentative : %m"
+
+#: storage/smgr/md.c:1160
 #, c-format
 msgid "could not open segment %u of relation %u/%u/%u (target block %u): %m"
 msgstr "n'a pas pu ouvrir le segment %u de la relation %u/%u/%u (bloc cible %u) : %m"
@@ -8661,13 +8667,13 @@ msgstr "La fonction «%s» n'existe pas"
 msgid "must be member of role \"%s\""
 msgstr "doit être un membre du rôle «%s»"
 
-#: utils/adt/selfuncs.c:3409
-#: utils/adt/selfuncs.c:3809
+#: utils/adt/selfuncs.c:3413
+#: utils/adt/selfuncs.c:3858
 msgid "case insensitive matching not supported on type bytea"
 msgstr "La recherche insensible à la casse n'est pas supportée avec le type bytea"
 
-#: utils/adt/selfuncs.c:3515
-#: utils/adt/selfuncs.c:3970
+#: utils/adt/selfuncs.c:3526
+#: utils/adt/selfuncs.c:4019
 msgid "regular-expression matching not supported on type bytea"
 msgstr "La recherche par expression rationnelle n'est pas supportée sur le type bytea"
 
@@ -10347,25 +10353,25 @@ msgstr "aucun alias de colonne n'a été fourni"
 msgid "could not determine row description for function returning record"
 msgstr "n'a pas pu déterminer la description de la ligne pour la fonction renvoyant l'enregistrement"
 
-#: utils/init/flatfiles.c:198
-#: utils/init/flatfiles.c:261
-#: utils/init/flatfiles.c:392
-#: utils/init/flatfiles.c:648
+#: utils/init/flatfiles.c:205
+#: utils/init/flatfiles.c:279
+#: utils/init/flatfiles.c:410
+#: utils/init/flatfiles.c:666
 #, c-format
 msgid "could not write to temporary file \"%s\": %m"
 msgstr "n'a pas pu écrire le fichier temporaire «%s» : %m"
 
-#: utils/init/flatfiles.c:242
+#: utils/init/flatfiles.c:249
 #, c-format
 msgid "invalid database name \"%s\""
 msgstr "nom de base de données invalide «%s»"
 
-#: utils/init/flatfiles.c:482
+#: utils/init/flatfiles.c:500
 #, c-format
 msgid "invalid role name \"%s\""
 msgstr "nom de rôle invalide «%s»"
 
-#: utils/init/flatfiles.c:489
+#: utils/init/flatfiles.c:507
 #, c-format
 msgid "invalid role password \"%s\""
 msgstr "mot de passe de l'utilisateur invalide «%s»"
@@ -10553,16 +10559,16 @@ msgstr "id de codage %d inattendu pour des ensembles de caractères ISO-8859"
 msgid "invalid encoding number: %d"
 msgstr "numéro de codage invalide : %d"
 
-#: utils/mb/wchar.c:1326
+#: utils/mb/wchar.c:1352
 #, c-format
 msgid "invalid byte sequence for encoding \"%s\": 0x%s"
 msgstr "Séquence d'octets invalide pour le codage «%s» : 0x%s"
 
-#: utils/mb/wchar.c:1329
+#: utils/mb/wchar.c:1355
 msgid "This error can also happen if the byte sequence does not match the encoding expected by the server, which is controlled by \"client_encoding\"."
 msgstr "Cette erreur peut aussi survenir si la séquence d'octets ne correspond au jeu de caractères attendu par le serveur et qui est contrôlé par « client_encoding »."
 
-#: utils/mb/wchar.c:1358
+#: utils/mb/wchar.c:1384
 #, c-format
 msgid "character 0x%s of encoding \"%s\" has no equivalent in \"%s\""
 msgstr "Le caractère 0x%s du codage «%s» n'a pas d'équivalent dans «%s»"
