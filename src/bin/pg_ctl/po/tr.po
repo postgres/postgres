@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_ctl-tr\n"
 "POT-Creation-Date: 2005-01-04 19:05+0000\n"
-"PO-Revision-Date: 2007-01-21 00:46+0200\n"
+"PO-Revision-Date: 2007-02-14 13:20+0200\n"
 "Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -39,8 +39,8 @@ msgstr "%s: core boyutu ayarlanma, hard limit tarafından sınırlanmış.\n"
 
 #: pg_ctl.c:525
 #, c-format
-msgid "%s: another server may be running; trying to start server anyway\n"
-msgstr "%s: başka bir sunucu çalışıyor olabilir; yine de başlatılmaya çalışıyorum..\n"
+msgid "%s: another server might be running; trying to start server anyway\n"
+msgstr "%s: başka bir sunucu çalışıyor olabilir; yine de başlatmaya çalışıyorum.\n"
 
 #: pg_ctl.c:543
 #, c-format
@@ -426,8 +426,8 @@ msgstr ""
 
 #: pg_ctl.c:1446
 #, c-format
-msgid "  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr "  -m KAPANMA-MODU   \"smart\", \"fast\", ya da \"immediate\" olabilir\n"
+msgid "  -m SHUTDOWN-MODE   can be \"smart\", \"fast\", or \"immediate\"\n"
+msgstr "  -m KAPANMA-MODU   \"smart\", \"fast\", veya \"immediate\" olabilir\n"
 
 #: pg_ctl.c:1448
 #, c-format
@@ -541,50 +541,60 @@ msgstr "%s: hiçbir işlem belirtilmedi\n"
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
 msgstr "%s: Hiçbir veritabanı dizini belirtilmemiş ve PGDATA çevresel değişkeni boş\n"
 
-#: ../../port/exec.c:191
-#: ../../port/exec.c:305
-#: ../../port/exec.c:348
+#: ../../port/exec.c:192
+#: ../../port/exec.c:306
+#: ../../port/exec.c:349
 #, c-format
 msgid "could not identify current directory: %s"
 msgstr "geçerli dizin tespit edilemedi: %s"
 
-#: ../../port/exec.c:210
+#: ../../port/exec.c:211
 #, c-format
 msgid "invalid binary \"%s\""
 msgstr "geçersiz ikili (binary) \"%s\""
 
-#: ../../port/exec.c:259
+#: ../../port/exec.c:260
 #, c-format
 msgid "could not read binary \"%s\""
 msgstr "\"%s\" ikili (binary) dosyası okunamadı"
 
-#: ../../port/exec.c:266
+#: ../../port/exec.c:267
 #, c-format
 msgid "could not find a \"%s\" to execute"
 msgstr "\"%s\"  çalıştırmak için bulunamadı"
 
-#: ../../port/exec.c:321
-#: ../../port/exec.c:357
+#: ../../port/exec.c:322
+#: ../../port/exec.c:358
 #, c-format
 msgid "could not change directory to \"%s\""
 msgstr "çalışma dizini \"%s\" olarak değiştirilemedi"
 
-#: ../../port/exec.c:336
+#: ../../port/exec.c:337
 #, c-format
 msgid "could not read symbolic link \"%s\""
 msgstr "symbolic link \"%s\" okuma hatası"
 
-#: ../../port/exec.c:582
+#: ../../port/exec.c:583
 #, c-format
 msgid "child process exited with exit code %d"
 msgstr "alt süreç %d çıkış koduyla sonuçlandırılmıştır"
 
-#: ../../port/exec.c:585
+#: ../../port/exec.c:587
+#, c-format
+msgid "child process was terminated by exception 0x%X"
+msgstr "alt süreç 0x%X exception tarafından sonlandırılmıştır"
+
+#: ../../port/exec.c:596
+#, c-format
+msgid "child process was terminated by signal %s"
+msgstr "alt süreç %s sinyali tarafından sonlandırılmıştır"
+
+#: ../../port/exec.c:599
 #, c-format
 msgid "child process was terminated by signal %d"
 msgstr "alt süreç %d sinyali tarafından sonlandırılmıştır"
 
-#: ../../port/exec.c:588
+#: ../../port/exec.c:603
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "alt süreç %d bilinmeyen durumu ile sonlandırılmıştır"

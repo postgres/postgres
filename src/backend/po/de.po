@@ -1,7 +1,7 @@
 # German message translation file for PostgreSQL server
 # Peter Eisentraut <peter_e@gmx.net>, 2001 - 2006.
 #
-# pgtranslation Id: postgres.po,v 1.17 2007/01/31 07:58:40 petere Exp $
+# pgtranslation Id: postgres.po,v 1.18 2007/04/12 13:21:44 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -457,11 +457,11 @@ msgstr "Aggregatfunktion sind nicht in der WHERE-Klausel erlaubt"
 
 #: parser/parse_agg.c:124
 msgid "aggregates not allowed in JOIN conditions"
-msgstr "Aggregatfunktionen sind nicht JOIN-Bedingungen erlaubt"
+msgstr "Aggregatfunktionen sind nicht in JOIN-Bedingungen erlaubt"
 
 #: parser/parse_agg.c:143
 msgid "aggregates not allowed in GROUP BY clause"
-msgstr "Aggregatfunktionen sind nicht der der GROUP-BY-Klausel erlaubt"
+msgstr "Aggregatfunktionen sind nicht in der GROUP-BY-Klausel erlaubt"
 
 #: parser/parse_agg.c:328
 #, c-format

@@ -1,13 +1,13 @@
 # translation of pgscripts-tr.po to Turkish
-# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004, 2005, 2006.
-# Nicolai Tufar <ntufar@gmail.org>, 2005, 2006.
+# Devrim GUNDUZ <devrim@PostgreSQL.org>, 2004, 2005, 2006, 2007.
+# Nicolai Tufar <ntufar@gmail.org>, 2005, 2006, 2007.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pgscripts-tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-01-06 01:34-0400\n"
-"PO-Revision-Date: 2006-10-05 22:28+0200\n"
+"PO-Revision-Date: 2007-04-12 14:10+0200\n"
 "Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -87,9 +87,9 @@ msgstr ""
 #: dropdb.c:146
 #: droplang.c:321
 #: dropuser.c:145
-#: clusterdb.c:234
-#: vacuumdb.c:260
-#: reindexdb.c:332
+#: clusterdb.c:228
+#: vacuumdb.c:254
+#: reindexdb.c:320
 #, c-format
 msgid "Usage:\n"
 msgstr "Kullanımı:\n"
@@ -105,9 +105,9 @@ msgstr "  %s [SEÇENEK]... [VERİTABANI_ADI] [TANIM]\n"
 #: dropdb.c:148
 #: droplang.c:323
 #: dropuser.c:147
-#: clusterdb.c:236
-#: vacuumdb.c:262
-#: reindexdb.c:334
+#: clusterdb.c:230
+#: vacuumdb.c:256
+#: reindexdb.c:322
 #, c-format
 msgid ""
 "\n"
@@ -158,9 +158,9 @@ msgstr "  --version                    sürüm bilgisini göster ve çık\n"
 
 #: createdb.c:232
 #: createuser.c:335
-#: clusterdb.c:244
-#: vacuumdb.c:273
-#: reindexdb.c:344
+#: clusterdb.c:238
+#: vacuumdb.c:267
+#: reindexdb.c:332
 #, c-format
 msgid ""
 "\n"
@@ -204,9 +204,9 @@ msgstr ""
 #: dropdb.c:158
 #: droplang.c:333
 #: dropuser.c:157
-#: clusterdb.c:250
-#: vacuumdb.c:279
-#: reindexdb.c:350
+#: clusterdb.c:244
+#: vacuumdb.c:273
+#: reindexdb.c:338
 #, c-format
 msgid ""
 "\n"
@@ -281,8 +281,8 @@ msgstr "  -d, --dbname=VERİTABANI_ADI       dilin kurulacağı veritabanının 
 #: dropdb.c:149
 #: droplang.c:325
 #: dropuser.c:148
-#: clusterdb.c:240
-#: reindexdb.c:340
+#: clusterdb.c:234
+#: reindexdb.c:328
 #, c-format
 msgid "  -e, --echo                show the commands being sent to the server\n"
 msgstr "  -e, --echo                sunucuya gönderilen komutları göster\n"
@@ -298,9 +298,9 @@ msgstr "  -l, --list                Şu anda kurulu olan dilleri göster\n"
 #: dropdb.c:152
 #: droplang.c:327
 #: dropuser.c:151
-#: clusterdb.c:245
-#: vacuumdb.c:274
-#: reindexdb.c:345
+#: clusterdb.c:239
+#: vacuumdb.c:268
+#: reindexdb.c:333
 #, c-format
 msgid "  -h, --host=HOSTNAME       database server host or socket directory\n"
 msgstr "  -h, --host=HOSTNAME       veritabanı sunucusu adresi ya da soket dizini\n"
@@ -310,9 +310,9 @@ msgstr "  -h, --host=HOSTNAME       veritabanı sunucusu adresi ya da soket dizi
 #: dropdb.c:153
 #: droplang.c:328
 #: dropuser.c:152
-#: clusterdb.c:246
-#: vacuumdb.c:275
-#: reindexdb.c:346
+#: clusterdb.c:240
+#: vacuumdb.c:269
+#: reindexdb.c:334
 #, c-format
 msgid "  -p, --port=PORT           database server port\n"
 msgstr "  -p, --port=PORT           veritabanı sunucusunun portu\n"
@@ -320,9 +320,9 @@ msgstr "  -p, --port=PORT           veritabanı sunucusunun portu\n"
 #: createlang.c:212
 #: dropdb.c:154
 #: droplang.c:329
-#: clusterdb.c:247
-#: vacuumdb.c:276
-#: reindexdb.c:347
+#: clusterdb.c:241
+#: vacuumdb.c:270
+#: reindexdb.c:335
 #, c-format
 msgid "  -U, --username=USERNAME   user name to connect as\n"
 msgstr "  -U, --username=KULLANICI_ADI   bağlanılacak kullanıcı adı\n"
@@ -330,9 +330,9 @@ msgstr "  -U, --username=KULLANICI_ADI   bağlanılacak kullanıcı adı\n"
 #: createlang.c:213
 #: dropdb.c:155
 #: droplang.c:330
-#: clusterdb.c:248
-#: vacuumdb.c:277
-#: reindexdb.c:348
+#: clusterdb.c:242
+#: vacuumdb.c:271
+#: reindexdb.c:336
 #, c-format
 msgid "  -W, --password            prompt for password\n"
 msgstr "  -W, --password            şifre sorulmasını sağla\n"
@@ -342,8 +342,8 @@ msgstr "  -W, --password            şifre sorulmasını sağla\n"
 #: dropdb.c:156
 #: droplang.c:331
 #: dropuser.c:155
-#: clusterdb.c:242
-#: reindexdb.c:342
+#: clusterdb.c:236
+#: reindexdb.c:330
 #, c-format
 msgid "  --help                    show this help, then exit\n"
 msgstr "  --help                    bu yardımı göster ve çık\n"
@@ -353,8 +353,8 @@ msgstr "  --help                    bu yardımı göster ve çık\n"
 #: dropdb.c:157
 #: droplang.c:332
 #: dropuser.c:156
-#: clusterdb.c:243
-#: reindexdb.c:343
+#: clusterdb.c:237
+#: reindexdb.c:331
 #, c-format
 msgid "  --version                 output version information, then exit\n"
 msgstr "  --version                 sürüm bilgisini göster ve çık\n"
@@ -488,8 +488,8 @@ msgstr "  -N, --unencrypted         saklanmış şifreyi kriptolama\n"
 #: createuser.c:332
 #: dropdb.c:151
 #: dropuser.c:150
-#: clusterdb.c:241
-#: reindexdb.c:341
+#: clusterdb.c:235
+#: reindexdb.c:329
 #, c-format
 msgid "  -q, --quiet               don't write any messages\n"
 msgstr "  -q, --quiet               hiçbir ileti yazmaz\n"
@@ -613,32 +613,32 @@ msgstr ""
 msgid "  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"
 msgstr "  -U, --username=KULLANICI _ADI   bağlanırken kullanılacak kullanıcı adı (silinecek olan değil)\n"
 
-#: clusterdb.c:118
+#: clusterdb.c:120
 #, c-format
 msgid "%s: cannot cluster all databases and a specific one at the same time\n"
 msgstr "%s: Aynı anda tüm veritabanları ve de belirli bir tanesi cluster edilemez\n"
 
-#: clusterdb.c:124
+#: clusterdb.c:126
 #, c-format
 msgid "%s: cannot cluster a specific table in all databases\n"
 msgstr "%s: tüm veritabanlarındaki belirli tablolar cluster edilemez.\n"
 
-#: clusterdb.c:180
+#: clusterdb.c:176
 #, c-format
 msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: \"%s\"tablosunun (\"%s\" veritabanındaki) cluster işlemi başarısız oldu: %s"
 
-#: clusterdb.c:183
+#: clusterdb.c:179
 #, c-format
 msgid "%s: clustering of database \"%s\" failed: %s"
 msgstr "%s: \"%s\" veritabanının cluster işlemi başarısız oldu: %s"
 
-#: clusterdb.c:219
+#: clusterdb.c:213
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
 msgstr "%s: \"%s\" veritabanı cluster ediliyor\n"
 
-#: clusterdb.c:233
+#: clusterdb.c:227
 #, c-format
 msgid ""
 "%s clusters all previously clustered tables in a database.\n"
@@ -647,29 +647,29 @@ msgstr ""
 "%s Konutu bir veritabanında daha önceden cluster edilmiş tüm tabloları cluster eder.\n"
 "\n"
 
-#: clusterdb.c:235
-#: vacuumdb.c:261
-#: reindexdb.c:333
+#: clusterdb.c:229
+#: vacuumdb.c:255
+#: reindexdb.c:321
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [SEÇENEK]... [VERİTABANI_ADI]\n"
 
-#: clusterdb.c:237
+#: clusterdb.c:231
 #, c-format
 msgid "  -a, --all                 cluster all databases\n"
 msgstr "  -a, --all                 tüm veritabanlarını cluster eder\n"
 
-#: clusterdb.c:238
+#: clusterdb.c:232
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to cluster\n"
 msgstr "  -d, --dbname=VERİTABANI_ADI       cluster edilecek veritabanı adı\n"
 
-#: clusterdb.c:239
+#: clusterdb.c:233
 #, c-format
 msgid "  -t, --table=TABLE         cluster specific table only\n"
 msgstr "  -t, --table=TABLO_ADI         sadece belirli bir tabloyu cluster eder\n"
 
-#: clusterdb.c:249
+#: clusterdb.c:243
 #, c-format
 msgid ""
 "\n"
@@ -678,32 +678,32 @@ msgstr ""
 "\n"
 "Ayrıntılar için bir SQL komutu olan CLUSTER'in açıklamasını okuyabilirsiniz.\n"
 
-#: vacuumdb.c:135
+#: vacuumdb.c:137
 #, c-format
 msgid "%s: cannot vacuum all databases and a specific one at the same time\n"
 msgstr "%s:Aynı anda tüm veritabanları ve de belirli bir tanesi vakumlanamaz\n"
 
-#: vacuumdb.c:141
+#: vacuumdb.c:143
 #, c-format
 msgid "%s: cannot vacuum a specific table in all databases\n"
 msgstr "%s: Tüm veritabanlarındaki belirli bir tablo vakumlanamaz.\n"
 
-#: vacuumdb.c:205
+#: vacuumdb.c:201
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%s: \"%s\" tablosunun (\"%s\" veritabanındaki) vakumlama işlemi başarısız oldu: %s"
 
-#: vacuumdb.c:208
+#: vacuumdb.c:204
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
 msgstr "%s: \"%s\" veritabanının vakumlanması başarısız oldu: %s"
 
-#: vacuumdb.c:245
+#: vacuumdb.c:239
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
 msgstr "%s: \"%s\" veritabanı vakumlanıyor\n"
 
-#: vacuumdb.c:259
+#: vacuumdb.c:253
 #, c-format
 msgid ""
 "%s cleans and analyzes a PostgreSQL database.\n"
@@ -712,57 +712,57 @@ msgstr ""
 "%s bir PostgreSQL veritabanını temizler ve analiz eder.\n"
 "\n"
 
-#: vacuumdb.c:263
+#: vacuumdb.c:257
 #, c-format
 msgid "  -a, --all                       vacuum all databases\n"
 msgstr "  -a, --all                       tüm veritabanlarını vakumlar\n"
 
-#: vacuumdb.c:264
+#: vacuumdb.c:258
 #, c-format
 msgid "  -d, --dbname=DBNAME             database to vacuum\n"
 msgstr "  -d, --dbname=VERİTABANI_ADI             vakumlanacak veritabanı\n"
 
-#: vacuumdb.c:265
+#: vacuumdb.c:259
 #, c-format
 msgid "  -t, --table='TABLE[(COLUMNS)]'  vacuum specific table only\n"
 msgstr "  -t, --table='TABLO[(KOLONLAR)]'  sadece belirli bir tabloyu vakumlar\n"
 
-#: vacuumdb.c:266
+#: vacuumdb.c:260
 #, c-format
 msgid "  -f, --full                      do full vacuuming\n"
 msgstr "  -f, --full                      tam (FULL) vakumlama yap\n"
 
-#: vacuumdb.c:267
+#: vacuumdb.c:261
 #, c-format
 msgid "  -z, --analyze                   update optimizer hints\n"
 msgstr "  -z, --analyze                   optimizer bilgilerini güncelle\n"
 
-#: vacuumdb.c:268
+#: vacuumdb.c:262
 #, c-format
 msgid "  -e, --echo                      show the commands being sent to the server\n"
 msgstr "  -e, --echo                      sunucuya gönderilen komutları yaz\n"
 
-#: vacuumdb.c:269
+#: vacuumdb.c:263
 #, c-format
 msgid "  -q, --quiet                     don't write any messages\n"
 msgstr "  -q, --quiet                     hiçbir mesaj yazma\n"
 
-#: vacuumdb.c:270
+#: vacuumdb.c:264
 #, c-format
 msgid "  -v, --verbose                   write a lot of output\n"
 msgstr "  -v, --verbose                   bolca çıktı yaz\n"
 
-#: vacuumdb.c:271
+#: vacuumdb.c:265
 #, c-format
 msgid "  --help                          show this help, then exit\n"
 msgstr "  --help                          bu yardımı göster ve çık\n"
 
-#: vacuumdb.c:272
+#: vacuumdb.c:266
 #, c-format
 msgid "  --version                       output version information, then exit\n"
 msgstr "  --version                       sürüm bilgisini göster ve çık\n"
 
-#: vacuumdb.c:278
+#: vacuumdb.c:272
 #, c-format
 msgid ""
 "\n"
@@ -771,62 +771,62 @@ msgstr ""
 "\n"
 "Ayrıntılar için, bir SQL komutu olan VACUUM'un tanımlarını okuyun.\n"
 
-#: reindexdb.c:133
+#: reindexdb.c:135
 #, c-format
 msgid "%s: cannot reindex all databases and a specific one at the same time\n"
 msgstr "%s: aynı anda hem tüm veritabanları hem belirli bir veritabanı reindex edilemez\n"
 
-#: reindexdb.c:138
+#: reindexdb.c:140
 #, c-format
 msgid "%s: cannot reindex all databases and system catalogs at the same time\n"
 msgstr "%s: aynı anda hem tüm veritabanları hem de sistem kataloğu reindex edilemez\n"
 
-#: reindexdb.c:143
+#: reindexdb.c:145
 #, c-format
 msgid "%s: cannot reindex a specific table in all databases\n"
 msgstr "%s: tüm veritabanlarındaki belirli bir tablo reindex edilemez\n"
 
-#: reindexdb.c:148
+#: reindexdb.c:150
 #, c-format
 msgid "%s: cannot reindex a specific index in all databases\n"
 msgstr "%s: tüm veritabanlarındaki belirli bir index reindex edilemez\n"
 
-#: reindexdb.c:159
+#: reindexdb.c:161
 #, c-format
 msgid "%s: cannot reindex a specific table and system catalogs at the same time\n"
 msgstr "%s: aynı anda hem belirli bir tablo hem de sistem kataloğu reindex edilemez\n"
 
-#: reindexdb.c:164
+#: reindexdb.c:166
 #, c-format
 msgid "%s: cannot reindex a specific index and system catalogs at the same time\n"
 msgstr "%s: aynı anda hem belirli bir indeks hem de sistem kataloğu reindex edilemez\n"
 
-#: reindexdb.c:239
+#: reindexdb.c:236
 #, c-format
 msgid "%s: reindexing of table \"%s\" in database \"%s\" failed: %s"
 msgstr "%1$s: \"%3$s\" veritabanındaki \"%2$s\" tablosunun reindex işlemi başarısız: %4$s"
 
-#: reindexdb.c:242
+#: reindexdb.c:239
 #, c-format
 msgid "%s: reindexing of index \"%s\" in database \"%s\" failed: %s"
 msgstr "%1$s: \"%3$s\" veritabanındaki \"%2$s\" indeksinin yeniden oluşturulması başarısız: %4$s"
 
-#: reindexdb.c:245
+#: reindexdb.c:242
 #, c-format
 msgid "%s: reindexing of database \"%s\" failed: %s"
 msgstr "%s: \"%s\" veritabanının yeniden indekslenmesi başarısız oldu: %s"
 
-#: reindexdb.c:280
+#: reindexdb.c:276
 #, c-format
 msgid "%s: reindexing database \"%s\"\n"
 msgstr "%s: \"%s\" veritabanı yeniden indeksleniyor\n"
 
-#: reindexdb.c:311
+#: reindexdb.c:301
 #, c-format
 msgid "%s: reindexing of system catalogs failed: %s"
 msgstr "%s: sistem kataloğların yeniden indekslemesi başarısız: %s"
 
-#: reindexdb.c:331
+#: reindexdb.c:319
 #, c-format
 msgid ""
 "%s reindexes a PostgreSQL database.\n"
@@ -835,32 +835,32 @@ msgstr ""
 "%s PostgreSQL veritabanını yeniden indeksler.\n"
 "\n"
 
-#: reindexdb.c:335
+#: reindexdb.c:323
 #, c-format
 msgid "  -a, --all                 reindex all databases\n"
 msgstr "  -a, --all                tüm veritabanları yeniden indeksle\n"
 
-#: reindexdb.c:336
+#: reindexdb.c:324
 #, c-format
 msgid "  -s, --system              reindex system catalogs\n"
 msgstr "  -s, --system             sistem kataloğu yeniden indeksle\n"
 
-#: reindexdb.c:337
+#: reindexdb.c:325
 #, c-format
 msgid "  -d, --dbname=DBNAME       database to reindex\n"
 msgstr "  -d, --dbname=VERİTABANI_ADI      yeniden indekslenecek veritabanın adı\n"
 
-#: reindexdb.c:338
+#: reindexdb.c:326
 #, c-format
 msgid "  -t, --table=TABLE         reindex specific table only\n"
 msgstr "  -t, --table=TABLO_ADI        sadece belirli bir tablonun indexleri yeniden oluştur\n"
 
-#: reindexdb.c:339
+#: reindexdb.c:327
 #, c-format
 msgid "  -i, --index=INDEX         recreate specific index only\n"
 msgstr "  -i, --index=INDEX        sadece belirli bir indeksi yeniden oluştur\n"
 
-#: reindexdb.c:349
+#: reindexdb.c:337
 #, c-format
 msgid ""
 "\n"
@@ -869,60 +869,76 @@ msgstr ""
 "\n"
 "Ayrıntılar için bir REINDEX SQL komutunun açıklamasını okuyabilirsiniz.\n"
 
-#: common.c:39
+#: common.c:48
 #, c-format
 msgid "%s: could not obtain information about current user: %s\n"
 msgstr "%s: geçerli kullanıcı hakkında bilgi alınamadı: %s\n"
 
-#: common.c:50
+#: common.c:59
 #, c-format
 msgid "%s: could not get current user name: %s\n"
 msgstr "%s: geçerli kullanıcı adı alınamadı: %s\n"
 
-#: common.c:97
-#: common.c:123
+#: common.c:106
+#: common.c:132
 msgid "Password: "
 msgstr "Şifre: "
 
-#: common.c:110
+#: common.c:119
 #, c-format
 msgid "%s: could not connect to database %s\n"
 msgstr "%s: %s veritabanına bağlanılamadı\n"
 
-#: common.c:133
+#: common.c:142
 #, c-format
 msgid "%s: could not connect to database %s: %s"
 msgstr "%s: %s veritabanına bağlanılamadı: %s"
 
-#: common.c:157
-#: common.c:185
+#: common.c:166
+#: common.c:194
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: sorgu başarısız oldu: %s"
 
-#: common.c:159
-#: common.c:187
+#: common.c:168
+#: common.c:196
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: sorgu şu idi: %s\n"
 
 #. translator: abbreviation for "yes"
-#: common.c:202
+#: common.c:238
 msgid "y"
 msgstr "y"
 
 #. translator: abbreviation for "no"
-#: common.c:204
+#: common.c:240
 msgid "n"
 msgstr "n"
 
-#: common.c:215
+#: common.c:251
 #, c-format
 msgid "%s (%s/%s) "
 msgstr "%s (%s/%s) "
 
-#: common.c:236
+#: common.c:272
 #, c-format
 msgid "Please answer \"%s\" or \"%s\".\n"
 msgstr "Geçerli cevap: \"%s\" veya \"%s\".\n"
+
+#: common.c:351
+#: common.c:385
+#, c-format
+msgid "Cancel request sent\n"
+msgstr "İptal isteği gönderildi\n"
+
+#: common.c:353
+#, c-format
+msgid "Could not send cancel request: %s\n"
+msgstr "İptal isteği gönderilemedi: %s\n"
+
+#: common.c:387
+#, c-format
+msgid "Could not send cancel request: %s"
+msgstr "İptal isteği gönderilemedi: %s"
 
