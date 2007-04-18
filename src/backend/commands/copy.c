@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.280 2007/04/16 01:14:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.281 2007/04/18 00:38:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -857,7 +857,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	if (strlen(cstate->delim) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY delimiter must be a single character")));
+				 errmsg("COPY delimiter must be a single ASCII character")));
 
 	/* Disallow end-of-line characters */
 	if (strchr(cstate->delim, '\r') != NULL ||
