@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.78 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.79 2007/04/18 00:17:56 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -171,7 +171,7 @@ COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable c
     <term><replaceable class="parameter">delimiter</replaceable></term>
     <listitem>
      <para>
-      The single character that separates columns within each row
+      The single ASCII character that separates columns within each row
       (line) of the file.  The default is a tab character in text mode,
       a comma in <literal>CSV</> mode.
      </para>
