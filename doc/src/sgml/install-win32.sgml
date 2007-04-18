@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.38 2007/03/29 15:30:52 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.39 2007/04/18 10:14:06 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -186,17 +186,17 @@
   <title>Building</title>
 
   <para>
-   To build all of PostgreSQL in debug configuration (the default), run the
+   To build all of PostgreSQL in release configuration (the default), run the
    command:
    <screen>
     <userinput>
      build
     </userinput>
    </screen>
-   To build all of PostgreSQL in release configuration, run the command:
+   To build all of PostgreSQL in debug configuration, run the command:
    <screen>
     <userinput>
-     build RELEASE
+     build DEBUG
     </userinput>
    </screen>
    To build just a single project, for example psql, run the commands:
@@ -205,7 +205,14 @@
      build psql
     </userinput>
     <userinput>
-     build RELEASE psql
+     build DEBUG psql
+    </userinput>
+   </screen>
+   To change the default build configuration to debug, put the following
+   in the buildenv.bat file:
+   <screen>
+    <userinput>
+     set CONFIG=Debug
     </userinput>
    </screen>
   </para>
