@@ -1,13 +1,22 @@
-# Makefile for Microsoft Visual C++ 5.0 (or compat)
+# Makefile for Microsoft Visual C++ 6.0-8.0
 
-# Will build a Win32 static library libpq(d).lib
-#        and a Win32 dynamic library libpq(d).dll with import library libpq(d)dll.lib
+# Will build a static library libpq(d).lib
+#        and a dynamic library libpq(d).dll with import library libpq(d)dll.lib
 # USE_SSL=1 will compile with OpenSSL
+# USE_KFW=1 will compile with kfw(kerberos for Windows)
 # DEBUG=1 compiles with debugging symbols
 # ENABLE_THREAD_SAFETY=1 compiles with threading enabled
+# CPU="i386" or CPU environment of nmake.exe (AMD64 or IA64)
 
+!IF "$(CPU)" == ""
+CPU=i386
 !MESSAGE Building the Win32 static library...
 !MESSAGE
+!ELSE
+ADD_DEFINES=/D "WIN64" /Wp64
+!MESSAGE Building the Win64 static library...
+!MESSAGE
+!ENDIF
 
 !IFDEF DEBUG
 OPT=/Od /Zi /MDd
@@ -19,6 +28,26 @@ OPT=/O2 /MD
 LOPT=
 DEBUGDEF=/D NDEBUG
 OUTFILENAME=libpq
+!ENDIF
+
+!IF "$(SSL_INC)" == "" 
+SSL_INC=C:\OpenSSL\include
+!MESSAGE Using default OpenSSL Include directory: $(SSL_INC)
+!ENDIF
+
+!IF "$(SSL_LIB_PATH)" == ""
+SSL_LIB_PATH=C:\OpenSSL\lib\VC
+!MESSAGE Using default OpenSSL Library directory: $(SSL_LIB_PATH)
+!ENDIF
+
+!IF "$(KFW_INC)" == "" 
+KFW_INC=C:\kfw-2.6.5\inc
+!MESSAGE Using default Kerberos Include directory: $(KFW_INC)
+!ENDIF
+
+!IF "$(KFW_LIB_PATH)" == ""
+KFW_LIB_PATH=C:\kfw-2.6.5\lib\$(CPU)
+!MESSAGE Using default Kerberos Library directory: $(KFW_LIB_PATH)
 !ENDIF
 
 !IF "$(OS)" == "Windows_NT"
@@ -74,7 +103,7 @@ CLEAN :
 	-@erase "$(OUTDIR)\libpq.res"
 	-@erase "$(OUTDIR)\$(OUTFILENAME).dll"
 	-@erase "$(OUTDIR)\$(OUTFILENAME)dll.exp"
-	-@erase "$(INTDIR)\pg_config_paths.h"
+	-@erase pg_config_paths.h"
 
 
 LIB32=link.exe -lib
@@ -107,10 +136,13 @@ LIB32_OBJS= \
 	"$(INTDIR)\pthread-win32.obj"
 
 
-config: ..\..\include\pg_config.h pg_config_paths.h
+config: ..\..\include\pg_config.h pg_config_paths.h  ..\..\include\pg_config_os.h
 
 ..\..\include\pg_config.h: ..\..\include\pg_config.h.win32
 	copy ..\..\include\pg_config.h.win32 ..\..\include\pg_config.h
+
+..\..\include\pg_config_os.h:
+	copy ..\..\include\port\win32.h ..\..\include\pg_config_os.h
 
 pg_config_paths.h: win32.mak
 	echo #define SYSCONFDIR "" > pg_config_paths.h
@@ -118,14 +150,20 @@ pg_config_paths.h: win32.mak
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
 
-CPP_PROJ=/nologo /W3 /EHsc $(OPT) /I "..\..\include" /I "..\..\include\port\win32" /I "..\..\include\port\win32_msvc" /I "..\..\port" /I. /D "FRONTEND" $(DEBUGDEF) /D\
- "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" \
+CPP_PROJ=/nologo /W3 /EHsc $(OPT) /I "..\..\include" /I "..\..\include\port\win32" /I "..\..\include\port\win32_msvc" /I "..\..\port" /I. /I "$(SSL_INC)" \
+ /D "FRONTEND" $(DEBUGDEF) \
+ /D "WIN32" /D "_WINDOWS" /Fp"$(INTDIR)\libpq.pch" \
  /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c  \
- /D "_CRT_SECURE_NO_DEPRECATE"
+ /D "_CRT_SECURE_NO_DEPRECATE" $(ADD_DEFINES)
 
 !IFDEF USE_SSL
 CPP_PROJ=$(CPP_PROJ) /D USE_SSL
 SSL_LIBS=ssleay32.lib libeay32.lib gdi32.lib
+!ENDIF
+
+!IFDEF USE_KFW
+CPP_PROJ=$(CPP_PROJ) /D KRB5
+KFW_LIBS=krb5_32.lib comerr32.lib
 !ENDIF
 
 !IFDEF ENABLE_THREAD_SAFETY
@@ -137,14 +175,16 @@ CPP_SBRS=.
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib advapi32.lib shfolder.lib wsock32.lib $(SSL_LIBS)  \
- /nologo /subsystem:windows /dll $(LOPT) /incremental:no\
- /pdb:"$(OUTDIR)\libpqdll.pdb" /machine:I386 /out:"$(OUTDIR)\$(OUTFILENAME).dll"\
- /implib:"$(OUTDIR)\$(OUTFILENAME)dll.lib"  /def:$(OUTFILENAME)dll.def
+LINK32_FLAGS=kernel32.lib user32.lib advapi32.lib shfolder.lib wsock32.lib $(SSL_LIBS)  $(KFW_LIB) \
+ /nologo /subsystem:windows /dll $(LOPT) /incremental:no \
+ /pdb:"$(OUTDIR)\libpqdll.pdb" /machine:$(CPU) \
+ /out:"$(OUTDIR)\$(OUTFILENAME).dll"\
+ /implib:"$(OUTDIR)\$(OUTFILENAME)dll.lib"  \
+ /libpath:"$(SSL_LIB_PATH)" /libpath:"$(KFW_LIB_PATH)" \
+ /def:$(OUTFILENAME)dll.def
 LINK32_OBJS= \
 	"$(OUTDIR)\$(OUTFILENAME).lib" \
 	"$(OUTDIR)\libpq.res"
-
 
 # @<< is a Response file, http://www.opussoftware.com/tutorial/TutMakefile.htm
 

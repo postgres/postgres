@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.39 2007/04/18 10:14:06 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.40 2007/04/18 13:50:08 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -360,7 +360,7 @@
   <productname>Borland C++</productname></title>
 
  <para>
-  Using <productname>Visual Studio 6.0</productname> or
+  Using <productname>Visual C++ 6.0-8.0</productname> or
   <productname>Borland C++</productname> to build libpq is only recommended
   if you need a version with different debug/release flags, or if you need a
   static library to link into an application. For normal use the
@@ -370,11 +370,22 @@
 
  <para>
   To build the <application>libpq</application> client library using
-  <productname>Visual Studio 6.0</productname>, change into the
+  <productname>Visual Studio 6.0 or later</productname>, change into the
   <filename>src</filename> directory and type the command
 <screen>
 <userinput>nmake /f win32.mak</userinput>
 </screen>
+ </para>
+ <para>
+ To build a 64-bit version of the <application>libpq</application>
+ client library using <productname>Visual Studio 8.0 or
+ later</productname>, change into the <filename>src</filename>
+ directory and type in the command
+<screen>
+<userinput>nmake /f win32.mak CPU=AMD64</userinput>
+</screen>
+ See the <filename>win32.mak</filename> file for further details
+ about supported variables.
  </para>
 
  <para>
