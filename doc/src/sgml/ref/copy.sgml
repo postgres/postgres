@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.79 2007/04/18 00:17:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/copy.sgml,v 1.80 2007/04/18 02:28:22 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -225,7 +225,7 @@ COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable c
     <term><replaceable class="parameter">quote</replaceable></term>
     <listitem>
      <para>
-      Specifies the quotation character in <literal>CSV</> mode.
+      Specifies the ASCII quotation character in <literal>CSV</> mode.
       The default is double-quote.
      </para>
     </listitem>
@@ -235,7 +235,7 @@ COPY { <replaceable class="parameter">tablename</replaceable> [ ( <replaceable c
     <term><replaceable class="parameter">escape</replaceable></term>
     <listitem>
      <para>
-      Specifies the character that should appear before a
+      Specifies the ASCII character that should appear before a
       <literal>QUOTE</> data character value in <literal>CSV</> mode.
       The default is the <literal>QUOTE</> value (usually double-quote).
      </para>

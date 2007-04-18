@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.281 2007/04/18 00:38:57 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.282 2007/04/18 02:28:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -893,7 +893,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	if (cstate->csv_mode && strlen(cstate->quote) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY quote must be a single character")));
+				 errmsg("COPY quote must be a single ASCII character")));
 
 	/* Check escape */
 	if (!cstate->csv_mode && cstate->escape != NULL)
@@ -904,7 +904,7 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 	if (cstate->csv_mode && strlen(cstate->escape) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("COPY escape must be a single character")));
+				 errmsg("COPY escape must be a single ASCII character")));
 
 	/* Check force_quote */
 	if (!cstate->csv_mode && force_quote != NIL)
