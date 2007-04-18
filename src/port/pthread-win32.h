@@ -5,7 +5,7 @@ typedef ULONG pthread_key_t;
 typedef HANDLE pthread_mutex_t;
 typedef int pthread_once_t;
 
-DWORD		pthread_self();
+DWORD		pthread_self(void);
 
 void		pthread_setspecific(pthread_key_t, void *);
 void	   *pthread_getspecific(pthread_key_t);

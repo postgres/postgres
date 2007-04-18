@@ -5,7 +5,7 @@
 *
 * Copyright (c) 2004-2007, PostgreSQL Global Development Group
 * IDENTIFICATION
-*	$PostgreSQL: pgsql/src/interfaces/libpq/pthread-win32.c,v 1.13 2007/01/05 22:20:01 momjian Exp $
+*	$PostgreSQL: pgsql/src/interfaces/libpq/pthread-win32.c,v 1.14 2007/04/18 08:32:40 mha Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -16,7 +16,7 @@
 #include "pthread-win32.h"
 
 DWORD
-pthread_self()
+pthread_self(void)
 {
 	return GetCurrentThreadId();
 }
