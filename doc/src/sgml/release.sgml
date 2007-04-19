@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.40 2007/04/19 02:46:29 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.41 2007/04/19 13:01:44 momjian Exp $
 -->
 
 <appendix id="release">
@@ -14,8 +14,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.40 2007/04/19 02:46:
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.3.18, including
-    a security fix.
+    This release contains a variety of fixes from 7.3.18.
    </para>
 
    <sect2>
