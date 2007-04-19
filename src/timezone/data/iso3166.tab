@@ -1,6 +1,6 @@
 # ISO 3166 alpha-2 country codes
 #
-# @(#)iso3166.tab	8.3
+# @(#)iso3166.tab	8.4
 #
 # From Paul Eggert (2006-09-27):
 #
@@ -92,7 +92,7 @@ FI	Finland
 FJ	Fiji
 FK	Falkland Islands
 FM	Micronesia
-FO	Faeroe Islands
+FO	Faroe Islands
 FR	France
 GA	Gabon
 GB	Britain (UK)

@@ -1,4 +1,4 @@
-# @(#)asia	8.8
+# @(#)asia	8.11
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -217,7 +217,7 @@ Rule	PRC	1987	1991	-	Apr	Sun>=10	0:00	1:00	D
 # BTW, I did some research on-line and found some info regarding these five
 # historic timezones from some Taiwan websites.  And yes, there are official
 # Chinese names for these locales (before 1949).
-# 
+#
 # From Jesper Norgaard Welen (2006-07-14):
 # I have investigated the timezones around 1970 on the
 # http://www.astro.com/atlas site [with provinces and county
@@ -413,6 +413,8 @@ Zone	Asia/Tbilisi	2:59:16 -	LMT	1880
 
 # East Timor
 
+# See Indonesia for the 1945 transition.
+
 # From Joao Carrascalao, brother of the former governor of East Timor, in
 # <a href="http://etan.org/et99c/december/26-31/30ETMAY.htm">
 # East Timor may be late for its millennium
@@ -437,7 +439,7 @@ Zone	Asia/Tbilisi	2:59:16 -	LMT	1880
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Dili	8:22:20 -	LMT	1912
 			8:00	-	TLT	1942 Feb 21 23:00 # E Timor Time
-			9:00	-	JST	1945 Aug
+			9:00	-	JST	1945 Sep 23
 			9:00	-	TLT	1976 May  3
 			8:00	-	CIT	2000 Sep 17 00:00
 			9:00	-	TLT
@@ -463,6 +465,19 @@ Zone	Asia/Calcutta	5:53:28 -	LMT	1880	# Kolkata
 # time zone maps, I think that must refer to Western Borneo (Kalimantan Barat
 # and Kalimantan Tengah) switching from UTC+8 to UTC+7.
 #
+# From Paul Eggert (2007-03-10):
+# Here is another correction to Shanks & Pottenger.
+# JohnTWB writes that Japanese forces did not surrender control in
+# Indonesia until 1945-09-01 00:00 at the earliest (in Jakarta) and
+# other formal surrender ceremonies were September 9, 11, and 13, plus
+# September 12 for the regional surrender to Mountbatten in Singapore.
+# These would be the earliest possible times for a change.
+# Regimes horaires pour le monde entier, by Henri Le Corre, (Editions
+# Traditionnelles, 1987, Paris) says that Java and Madura switched
+# from JST to UTC+07:30 on 1945-09-23, and gives 1944-09-01 for Jayapura
+# (Hollandia).  For now, assume all Indonesian locations other than Jayapura
+# switched on 1945-09-23.
+#
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Asia/Jakarta	7:07:12 -	LMT	1867 Aug 10
 # Shanks & Pottenger say the next transition was at 1924 Jan 1 0:13,
@@ -470,7 +485,7 @@ Zone Asia/Jakarta	7:07:12 -	LMT	1867 Aug 10
 			7:07:12	-	JMT	1923 Dec 31 23:47:12 # Jakarta
 			7:20	-	JAVT	1932 Nov	 # Java Time
 			7:30	-	WIT	1942 Mar 23
-			9:00	-	JST	1945 Aug
+			9:00	-	JST	1945 Sep 23
 			7:30	-	WIT	1948 May
 			8:00	-	WIT	1950 May
 			7:30	-	WIT	1964
@@ -478,7 +493,7 @@ Zone Asia/Jakarta	7:07:12 -	LMT	1867 Aug 10
 Zone Asia/Pontianak	7:17:20	-	LMT	1908 May
 			7:17:20	-	PMT	1932 Nov    # Pontianak MT
 			7:30	-	WIT	1942 Jan 29
-			9:00	-	JST	1945 Aug
+			9:00	-	JST	1945 Sep 23
 			7:30	-	WIT	1948 May
 			8:00	-	WIT	1950 May
 			7:30	-	WIT	1964
@@ -487,10 +502,10 @@ Zone Asia/Pontianak	7:17:20	-	LMT	1908 May
 Zone Asia/Makassar	7:57:36 -	LMT	1920
 			7:57:36	-	MMT	1932 Nov    # Macassar MT
 			8:00	-	CIT	1942 Feb  9
-			9:00	-	JST	1945 Aug
+			9:00	-	JST	1945 Sep 23
 			8:00	-	CIT
 Zone Asia/Jayapura	9:22:48 -	LMT	1932 Nov
-			9:00	-	EIT	1944
+			9:00	-	EIT	1944 Sep  1
 			9:30	-	CST	1964
 			9:00	-	EIT
 
@@ -614,7 +629,7 @@ Rule	Iraq	1985	1990	-	Sep	lastSun	1:00s	0	S
 Rule	Iraq	1986	1990	-	Mar	lastSun	1:00s	1:00	D
 # IATA SSIM (1991/1996) says Apr 1 12:01am UTC; guess the `:01' is a typo.
 # Shanks & Pottenger say Iraq did not observe DST 1992/1997; ignore this.
-# 
+#
 Rule	Iraq	1991	max	-	Apr	 1	3:00s	1:00	D
 Rule	Iraq	1991	max	-	Oct	 1	3:00s	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -1146,6 +1161,14 @@ Zone	Asia/Pyongyang	8:23:00 -	LMT	1890
 
 # Kuwait
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+# From the Arab Times (2007-03-14):
+# The Civil Service Commission (CSC) has approved a proposal forwarded
+# by MP Ahmad Baqer on implementing the daylight saving time (DST) in
+# Kuwait starting from April until the end of Sept this year, reports Al-Anba.
+# <http://www.arabtimesonline.com/arabtimes/kuwait/Viewdet.asp?ID=9950>.
+# From Paul Eggert (2007-03-29):
+# We don't know the details, or whether the approval means it'll happen,
+# so for now we assume no DST.
 Zone	Asia/Kuwait	3:11:56 -	LMT	1950
 			3:00	-	AST
 
@@ -1293,6 +1316,11 @@ Zone	Indian/Maldives	4:54:00 -	LMT	1880	# Male
 # parliament passed during the tumultuous winter session."
 # For now, let's ignore this information, until we have more confirmation.
 
+# From Ganbold Ts. (2007-02-26):
+# Parliament of Mongolia has just changed the daylight-saving rule in February.
+# They decided not to adopt daylight-saving time....
+# http://www.mongolnews.mn/index.php?module=unuudur&sec=view&id=15742
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Mongol	1983	1984	-	Apr	1	0:00	1:00	S
 Rule	Mongol	1983	only	-	Oct	1	0:00	0	-
@@ -1311,8 +1339,8 @@ Rule	Mongol	1985	1998	-	Mar	lastSun	0:00	1:00	S
 Rule	Mongol	1984	1998	-	Sep	lastSun	0:00	0	-
 # IATA SSIM (1999-09) says Mongolia no longer observes DST.
 Rule	Mongol	2001	only	-	Apr	lastSat	2:00	1:00	S
-Rule	Mongol	2001	max	-	Sep	lastSat	2:00	0	-
-Rule	Mongol	2002	max	-	Mar	lastSat	2:00	1:00	S
+Rule	Mongol	2001	2006	-	Sep	lastSat	2:00	0	-
+Rule	Mongol	2002	2006	-	Mar	lastSat	2:00	1:00	S
 
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 # Hovd, a.k.a. Chovd, Dund-Us, Dzhargalant, Khovd, Jirgalanta
@@ -1690,11 +1718,17 @@ Rule	Syria	1993	only	-	Sep	25	0:00	0	-
 Rule	Syria	1994	1996	-	Apr	 1	0:00	1:00	S
 Rule	Syria	1994	2005	-	Oct	 1	0:00	0	-
 Rule	Syria	1997	1998	-	Mar	lastMon	0:00	1:00	S
-Rule	Syria	1999	max	-	Apr	 1	0:00	1:00	S
+Rule	Syria	1999	2006	-	Apr	 1	0:00	1:00	S
 # From Stephen Colebourne (2006-09-18):
 # According to IATA data, Syria will change DST on 21st September [21:00 UTC]
 # this year [only]....  This is probably related to Ramadan, like Egypt.
 Rule	Syria	2006	only	-	Sep	22	0:00	0	-
+# From Paul Eggert (2007-03-29):
+# Today the AP reported "Syria will switch to summertime at midnight Thursday."
+# http://www.iht.com/articles/ap/2007/03/29/africa/ME-GEN-Syria-Time-Change.php
+# For lack of better info, assume the rule changed to "last Friday in March"
+# this year.
+Rule	Syria	2007	max	-	Mar	lastFri	0:00	1:00	S
 Rule	Syria	2007	max	-	Oct	 1	0:00	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Asia/Damascus	2:25:12 -	LMT	1920	# Dimashq
