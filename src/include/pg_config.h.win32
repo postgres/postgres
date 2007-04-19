@@ -571,13 +571,13 @@
 #define PACKAGE_STRING "PostgreSQL 8.2.3"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "8.2.3"
+#define PACKAGE_VERSION "8.2.4"
 
 /* PostgreSQL version as a string */
-#define PG_VERSION "8.2.3"
+#define PG_VERSION "8.2.4"
 
 /* PostgreSQL version as a number */
-#define PG_VERSION_NUM 80203
+#define PG_VERSION_NUM 80204
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "postgresql"

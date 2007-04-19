@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Jan 4 16:00:00 EST 2007
+   Last updated: Mon Mar 19 12:52:30 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -30,7 +30,8 @@ General Questions
    1.16) Where can I get a copy of the SQL standards?
    1.17) Where can I get technical assistance?
    1.18) How do I get involved in PostgreSQL web site development?
-   1.19) What is the timeline for the next major PostgreSQL release?
+   1.19) Why haven't you replaced CVS with SVN, Git, Monotone, VSS,
+   <insert your favorite SCM system here>?
    
 Technical Questions
 
@@ -77,10 +78,13 @@ General Questions
    Some developers use compilers from other software vendors with mixed
    results.
    
-   Developers who are regularly rebuilding the source often pass the
+   Developers who regularly rebuild the source often pass the
    --enable-depend flag to configure. The result is that when you make a
    modification to a C header file, all files depend upon that file are
    also rebuilt.
+   
+   src/Makefile.custom can be used to set environment variables, like
+   CUSTOM_COPT, that are used for every compile.
    
   1.3) What areas need work?
   
@@ -131,20 +135,20 @@ General Questions
        src/tools/make_diff/difforig useful. (Unified diffs are only
        preferable if the file changes are single-line changes and do not
        rely on surrounding lines.)
-    4. PostgreSQL is licensed under a BSD license, so any submissions
-       must conform to the BSD license to be included. If you use code
-       that is available under some other license that is BSD compatible
-       (eg. public domain) please note that code in your email submission
+    4. PostgreSQL is licensed under a BSD license. By posting a patch to
+       the public PostgreSQL mailling lists, you are giving the
+       PostgreSQL Global Development Group the non-revokable right to
+       distribute your patch under the BSD license.
     5. Confirm that your changes can pass the regression tests. If your
        changes are port specific, please list the ports you have tested
        it on.
-    6. Provide an implementation overview, preferably in code comments.
-       Following the surrounding code commenting style is usually a good
-       approach.
+    6. If you are adding a new feature, confirm that it has been tested
+       thoroughly. Try to test the feature in all conceivable scenarios.
     7. New feature patches should also be accompanied by documentation
        patches. If you need help checking the SQL standard, see 1.16.
-    8. If you are adding a new feature, confirm that it has been tested
-       thoroughly. Try to test the feature in all conceivable scenarios.
+    8. Provide an implementation overview, preferably in code comments.
+       Following the surrounding code commenting style is usually a good
+       approach.
     9. If it is a performance patch, please provide confirming test
        results to show the benefit of your patch. It is OK to post
        patches without this information, though the patch will not be
@@ -565,6 +569,22 @@ General Questions
    http://gborg.postgresql.org/project/pgweb/projdisplay.php , the code
    for the next version of the website is under the "portal" module.
    
+  1.19) Why haven't you replaced CVS with SVN, Git, Monotone, VSS, <insert your
+  favorite SCMS here>?
+  
+   Currently the core developers see no SCMS that will provide enough
+   benefit to outwiegh the pain involved in moving to a new SCMS. Typical
+   problems that must be addressed by any new SCMS include:
+     * Run natively on all of our supported platforms.
+     * Integrate into the Buildfarm.
+     * Import our entire CVS Repository while preserving complete
+       history.
+     * Allow for anonymous checkouts.
+       
+   Currently there is no intention for switching to a new SCMS until at
+   least the end of the 8.4 development cycle sometime in late 2008. For
+   more information please refer to the mailing list archives.
+   
 Technical Questions
 
   2.1) How do I efficiently access information in tables from the backend code?
@@ -799,24 +819,3 @@ typedef struct nameData
    pgsql/data directory. The client profile file will be put in the
    client's current directory. Linux requires a compile with
    -DLINUX_PROFILE for proper profiling.
-   
-  2.9) What is the timeline for the next major PostgreSQL release?
-  
-   The development schedule for the 8.3 release is:
-   
-          March 1, 2007
-          
-   Initial community review of all major feature patches
-          April 1, 2007
-          
-   Feature freeze, all patches must be submitted for review and
-          application
-          mid-May, 2007
-          
-   All patches applied, beta testing begins
-          July, 2007
-          
-   Release of 8.3.0
-          
-   Patches that appear after appropriate dates are typically not applied
-   but held for the next major release.

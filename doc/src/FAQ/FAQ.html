@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Tue Feb  6 22:16:17 EST 2007</P>
+    <P>Last updated: Wed Apr 18 23:05:05 EDT 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)
@@ -221,7 +221,7 @@
 
     <H3 id="item1.6">1.6) What is the most recent release?</H3>
 
-    <P>The latest release of PostgreSQL is version 8.2.3.</P>
+    <P>The latest release of PostgreSQL is version 8.2.4.</P>
 
     <P>We plan to have a major release every year, with minor releases
     every few months.</P>
@@ -584,21 +584,9 @@
 
     <H3 id="item3.6">3.6) What is the upgrade process for PostgreSQL?</H3>
 
-    <P>The PostgreSQL team makes only bug fixes in minor releases,
-    so, for example, upgrading from 7.4.8 to 7.4.9 does not require
-    a dump and restore;  merely stop the database server, install
-    the updated binaries, and restart the server.</P>
-
-    <P>All users should upgrade to the most recent minor release as
-    soon as it is available.  While every upgrade has some risk,
-    PostgreSQL minor releases are designed to fix only common bugs
-    with the least risk.  The community considers <i>not</i> upgrading
-    more risky that upgrading.</P>
-
-    <P>Major releases (e.g. from 7.3 to 7.4) often change the internal
-    format of system tables and data files. These changes are often complex,
-    so we don't maintain backward compatibility for data files. A dump/reload
-    of the database is required for major upgrades.</P>
+    <P>See <a
+    href="http://www.postgresql.org/support/versioning">http://www.postgresql.org/support/versioning</a>.
+    </P>
 
     <H3 id="item3.7">3.7) What computer hardware should I use?</H3>
 
@@ -609,7 +597,7 @@
     but if reliability and performance are important it is wise to
     research your hardware options thoroughly.  Our email lists can be used
     to discuss hardware options and tradeoffs.</P>
-
+  
     <HR>
 
     <H2 align="center">Operational Questions</H2>
@@ -720,25 +708,25 @@ table?</TD><TD>unlimited</TD></TR>
     and text description on each line. Suppose the text string
     avergages twenty bytes in length. The flat file would be 2.8 MB.
     The size of the PostgreSQL database file containing this data can
-    be estimated as 5.6 MB:</P>
+    be estimated as 5.2 MB:</P>
 <PRE>
-    28 bytes: each row header (approximate)
+    24 bytes: each row header (approximate)
     24 bytes: one int field and one text field
    + 4 bytes: pointer on page to tuple
    ----------------------------------------
-    56 bytes per row
+    52 bytes per row
 
    The data page size in PostgreSQL is 8192 bytes (8 KB), so:
 
    8192 bytes per page
-   -------------------   =  146 rows per database page (rounded down)
-     56 bytes per row
+   -------------------   =  158 rows per database page (rounded down)
+     52 bytes per row
 
    100000 data rows
-   --------------------  =  685 database pages (rounded up)
-      146 rows per page
+   --------------------  =  633 database pages (rounded up)
+      158 rows per page
 
-685 database pages * 8192 bytes per page  =  5,611,520 bytes (5.6 MB)
+633 database pages * 8192 bytes per page  =  5,185,536 bytes (5.2 MB)
 </PRE>
 
     <P>Indexes do not require as much overhead, but do contain the data
@@ -1069,8 +1057,8 @@ length</TD></TR>
     columns from a function?</H3>
 
     <P>It is easy using set-returning functions, 
-    <a href="http://techdocs.postgresql.org/guides/SetReturningFunctions">
-    http://techdocs.postgresql.org/guides/SetReturningFunctions</a></P>.
+    <a href="http://www.postgresql.org/docs/techdocs.17">
+    http://www.postgresql.org/docs/techdocs.17</a></P>.
 
     <H3 id="item4.19">4.19) Why do I get "relation with OID #####
     does not exist" errors when accessing temporary tables in PL/PgSQL

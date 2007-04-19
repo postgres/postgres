@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Feb 6 22:16:17 EST 2007
+   Last updated: Wed Apr 18 23:05:05 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -173,7 +173,7 @@
    
   1.6) What is the most recent release?
   
-   The latest release of PostgreSQL is version 8.2.3.
+   The latest release of PostgreSQL is version 8.2.4.
    
    We plan to have a major release every year, with minor releases every
    few months.
@@ -430,20 +430,7 @@
    
   3.6) What is the upgrade process for PostgreSQL?
   
-   The PostgreSQL team makes only bug fixes in minor releases, so, for
-   example, upgrading from 7.4.8 to 7.4.9 does not require a dump and
-   restore; merely stop the database server, install the updated
-   binaries, and restart the server.
-   
-   All users should upgrade to the most recent minor release as soon as
-   it is available. While every upgrade has some risk, PostgreSQL minor
-   releases are designed to fix only common bugs with the least risk. The
-   community considers not upgrading more risky that upgrading.
-   
-   Major releases (e.g. from 7.3 to 7.4) often change the internal format
-   of system tables and data files. These changes are often complex, so
-   we don't maintain backward compatibility for data files. A dump/reload
-   of the database is required for major upgrades.
+   See http://www.postgresql.org/support/versioning.
    
   3.7) What computer hardware should I use?
   
@@ -547,25 +534,25 @@
    As an example, consider a file of 100,000 lines with an integer and
    text description on each line. Suppose the text string avergages
    twenty bytes in length. The flat file would be 2.8 MB. The size of the
-   PostgreSQL database file containing this data can be estimated as 5.6
+   PostgreSQL database file containing this data can be estimated as 5.2
    MB:
-    28 bytes: each row header (approximate)
+    24 bytes: each row header (approximate)
     24 bytes: one int field and one text field
    + 4 bytes: pointer on page to tuple
    ----------------------------------------
-    56 bytes per row
+    52 bytes per row
 
    The data page size in PostgreSQL is 8192 bytes (8 KB), so:
 
    8192 bytes per page
-   -------------------   =  146 rows per database page (rounded down)
-     56 bytes per row
+   -------------------   =  158 rows per database page (rounded down)
+     52 bytes per row
 
    100000 data rows
-   --------------------  =  685 database pages (rounded up)
-      146 rows per page
+   --------------------  =  633 database pages (rounded up)
+      158 rows per page
 
-685 database pages * 8192 bytes per page  =  5,611,520 bytes (5.6 MB)
+633 database pages * 8192 bytes per page  =  5,185,536 bytes (5.2 MB)
 
    Indexes do not require as much overhead, but do contain the data that
    is being indexed, so they can be large also.
@@ -817,7 +804,7 @@
   4.18) How do I return multiple rows or columns from a function?
   
    It is easy using set-returning functions,
-   http://techdocs.postgresql.org/guides/SetReturningFunctions
+   http://www.postgresql.org/docs/techdocs.17
    .
    
   4.19) Why do I get "relation with OID ##### does not exist" errors when
