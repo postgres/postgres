@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.86 2007/04/18 16:44:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.87 2007/04/19 16:26:44 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	/* and log the action if appropriate */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum >= 0)
 	{
-		long	diff;
+		long	diff = 0L;
 
 		if (Log_autovacuum > 0)
 		{
