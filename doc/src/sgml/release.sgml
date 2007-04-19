@@ -1,9 +1,66 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.32 2007/02/07 04:22:08 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.33 2007/04/19 02:47:01 momjian Exp $
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-8-0-13">
+   <title>Release 8.0.13</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-04-23</simpara>
+   </note>
+
+   <para>
+    This release contains fixes from 8.0.12, including a security fix.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.13</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.6, see the release
+     notes for 8.0.6.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      <filename>/contrib/tsearch2</> fixes (Teodor)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Improve detection of <acronym>POSIX</>-style time zone names (Tom)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix bug in how <command>VACUUM FULL</> handles <command>UPDATE</> chains (Tom, Pavan Deolasee)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      <filename>/contrib/tsearch2</> fixes (Teodor)
+     </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-8-0-12">
    <title>Release 8.0.12</title>
@@ -3438,6 +3495,52 @@ typedefs (Michael)</para></listitem>
    </sect2>
   </sect1>
 
+  <sect1 id="release-7-4-17">
+   <title>Release 7.4.17</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-04-23</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.4.16, including
+    a security fix.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.17</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.11, see the release
+     notes for 7.4.11.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      <filename>/contrib/tsearch2</> fixes (Teodor)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix bug in how <command>VACUUM FULL</> handles <command>UPDATE</> chains (Tom, Pavan Deolasee)
+     </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-4-16">
    <title>Release 7.4.16</title>
 
@@ -6552,6 +6655,46 @@ DROP SCHEMA information_schema CASCADE;
   </sect3>
   </sect2>
  </sect1>
+
+  <sect1 id="release-7-3-19">
+   <title>Release 7.3.19</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-04-23</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.18, including
+    a security fix.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.19</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+     <para>
+      Fix bug in how <command>VACUUM FULL</> handles <command>UPDATE</> chains (Tom, Pavan Deolasee)
+     </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-3-18">
    <title>Release 7.3.18</title>
