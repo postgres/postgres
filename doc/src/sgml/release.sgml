@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.499 2007/04/19 02:47:36 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.500 2007/04/19 13:02:49 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -44,7 +44,7 @@ do it for earlier branch release files.
    </note>
 
    <para>
-    This release contains fixes from 8.2.3, including a security fix.
+    This release contains fixes from 8.2.3.
    </para>
 
    <sect2>
@@ -3040,7 +3040,7 @@ do it for earlier branch release files.
    </note>
 
    <para>
-    This release contains fixes from 8.1.8, including a security fix.
+    This release contains fixes from 8.1.8.
    </para>
 
    <sect2>
@@ -6061,7 +6061,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
    </note>
 
    <para>
-    This release contains fixes from 8.0.12, including a security fix.
+    This release contains fixes from 8.0.12.
    </para>
 
    <sect2>
@@ -9552,8 +9552,7 @@ typedefs (Michael)</para></listitem>
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.4.16, including
-    a security fix.
+    This release contains a variety of fixes from 7.4.16.
    </para>
 
    <sect2>
@@ -12715,8 +12714,7 @@ DROP SCHEMA information_schema CASCADE;
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.3.18, including
-    a security fix.
+    This release contains a variety of fixes from 7.3.18.
    </para>
 
    <sect2>
