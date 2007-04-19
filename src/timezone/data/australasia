@@ -1,4 +1,4 @@
-# @(#)australasia	8.4
+# @(#)australasia	8.6
 # <pre>
 
 # This file also includes Pacific islands.
@@ -30,11 +30,6 @@ Zone Australia/Darwin	 8:43:20 -	LMT	1895 Feb
 			 9:30	Aus	CST
 # Western Australia
 #
-# From Christopher Hunt (2006-11-21), after an advance warning
-# from Jesper Norgaard Welen (2006-11-01):
-# WA are trialing DST for three years. 
-# <http://www.parliament.wa.gov.au/parliament/bills.nsf/62D4F7C55EA88993482572110007316A/$File/Bill174-1.pdf>
-#
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	AW	1974	only	-	Oct	lastSun	2:00s	1:00	-
 Rule	AW	1975	only	-	Mar	Sun>=1	2:00s	0	-
@@ -48,6 +43,10 @@ Rule	AW	2007	2008	-	Oct	lastSun	2:00s	1:00	-
 Zone Australia/Perth	 7:43:24 -	LMT	1895 Dec
 			 8:00	Aus	WST	1943 Jul
 			 8:00	AW	WST
+Zone Australia/Eucla	 8:35:28 -	LMT	1895 Dec
+			 8:45	Aus	CWST	1943 Jul
+			 8:45	AW	CWST
+
 # Queensland
 #
 # From Alex Livingston (1996-11-01):
@@ -203,16 +202,16 @@ Zone Australia/Lord_Howe 10:36:20 -	LMT	1895 Feb
 #
 # Ashmore Is, Cartier
 # no indigenous inhabitants; only seasonal caretakers
-# like Australia/Perth, says Turner
+# no times are set
 #
 # Coral Sea Is
 # no indigenous inhabitants; only meteorologists
-# no information
+# no times are set
 #
 # Macquarie
 # permanent occupation (scientific station) since 1948;
 # sealing and penguin oil station operated 1888/1917
-# like Australia/Hobart, says Turner
+# like Australia/Hobart
 
 # Christmas
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -544,6 +543,7 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 #		std dst
 #		LMT	Local Mean Time
 #	  8:00	WST WST	Western Australia
+#	  8:45	CWST CWST Central Western Australia*
 #	  9:00	JST	Japan
 #	  9:30	CST CST	Central Australia
 #	 10:00	EST EST	Eastern Australia
@@ -816,37 +816,51 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # From Arthur David Olson (1992-03-08):
 # The chosen rules the union of the 1971/1972 change and the 1989-1992 changes.
 
+# From Christopher Hunt (2006-11-21), after an advance warning
+# from Jesper Norgaard Welen (2006-11-01):
+# WA are trialing DST for three years.
+# <http://www.parliament.wa.gov.au/parliament/bills.nsf/9A1B183144403DA54825721200088DF1/$File/Bill175-1B.pdf>
+
 # From Rives McDow (2002-04-09):
 # The most interesting region I have found consists of three towns on the
-# southern coast of Australia, population 10 at last report, along with
-# 50,000 sheep, about 100 kilometers long and 40 kilometers into the
-# continent.  The primary town is Madura, with the other towns being
-# Mundrabilla and Eucla.  According to the sheriff of Madura, the
-# residents got tired of having to change the time so often, as they are
-# located in a strip overlapping the border of South Australia and Western
-# Australia.  South Australia observes daylight saving time; Western
+# southern coast....  South Australia observes daylight saving time; Western
 # Australia does not.  The two states are one and a half hours apart.  The
 # residents decided to forget about this nonsense of changing the clock so
 # much and set the local time 20 hours and 45 minutes from the
 # international date line, or right in the middle of the time of South
-# Australia and Western Australia.  As it only affects about 10 people and
-# tourists staying at the Madura Motel, it has never really made as big an
-# impact as Broken Hill.  However, as tourist visiting there or anyone
-# calling the local sheriff will attest, they do keep time in this way.
+# Australia and Western Australia....
 #
 # From Paul Eggert (2002-04-09):
 # This is confirmed by the section entitled
 # "What's the deal with time zones???" in
-# <http://www.earthsci.unimelb.edu.au/~awatkins/null.html>,
-# which says a few other things:
+# <http://www.earthsci.unimelb.edu.au/~awatkins/null.html>.
 #
-# * Border Village, SA also is 45 minutes ahead of Perth.
-# * The locals call this time zone "central W.A. Time" (presumably "CWAT").
-# * The locals also call Western Australia time "Perth time".
+# From Alex Livingston (2006-12-07):
+# ... it was just on four years ago that I drove along the Eyre Highway,
+# which passes through eastern Western Australia close to the southern
+# coast of the continent.
 #
-# It's not clear from context whether everyone in Western Australia
-# knows of this naming convention, or whether it's just the people in
-# this subregion.
+# I paid particular attention to the time kept there. There can be no
+# dispute that UTC+08:45 was considered "the time" from the border
+# village just inside the border with South Australia to as far west
+# as just east of Caiguna. There can also be no dispute that Eucla is
+# the largest population centre in this zone....
+#
+# Now that Western Australia is observing daylight saving, the
+# question arose whether this part of the state would follow suit. I
+# just called the border village and confirmed that indeed they have,
+# meaning that they are now observing UTC+09:45.
+#
+# (2006-12-09):
+# I personally doubt that either experimentation with daylight saving
+# in WA or its introduction in SA had anything to do with the genesis
+# of this time zone.  My hunch is that it's been around since well
+# before 1975.  I remember seeing it noted on road maps decades ago.
+
+# From Paul Eggert (2006-12-15):
+# For lack of better info, assume the tradition dates back to the
+# introduction of standard time in 1895.
+
 
 # South Australia, Tasmania, Victoria
 

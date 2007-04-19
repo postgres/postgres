@@ -1,4 +1,4 @@
-# @(#)southamerica	8.6
+# @(#)southamerica	8.11
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -714,8 +714,13 @@ Zone America/Rio_Branco	-4:31:12 -	LMT	1914
 # (they should have been 1990-09-15 and 1990-09-16 respectively), but
 # anyhow it clears up some doubts too.
 
-# The following data are from <http://www.horaoficial.cl/horaof.htm>
-# (2006-09-20), transcribed by Jesper Norgaard Welen.
+# From Paul Eggert (2006-12-27):
+# The following data for Chile and America/Santiago are from
+# <http://www.horaoficial.cl/horaof.htm> (2006-09-20), transcribed by
+# Jesper Norgaard Welen.  The data for Pacific/Easter are from Shanks
+# & Pottenger, except with DST transitions after 1932 cloned from
+# America/Santiago.  The pre-1980 Pacific/Easter data are dubious,
+# but we have no other source.
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Chile	1927	1932	-	Sep	 1	0:00	1:00	S
@@ -759,9 +764,9 @@ Zone America/Santiago	-4:42:46 -	LMT	1890
 			-4:42:46 -	SMT	1927 Sep  1 # Santiago Mean Time
 			-5:00	Chile	CL%sT	1947 May 22 # Chile Time
 			-4:00	Chile	CL%sT
-Zone Pacific/Easter	-7:17:28 -	LMT	1890	    # Mataveri
-			-7:17:28 -	MMT	1932 Sep    # Mataveri Mean Time
-			-7:00	Chile	EAS%sT	1982 Jan 18 21:00 # Easter I Time
+Zone Pacific/Easter	-7:17:44 -	LMT	1890
+			-7:17:28 -	EMT	1932 Sep    # Easter Mean Time
+			-7:00	Chile	EAS%sT	1982 Mar 13 21:00 # Easter I Time
 			-6:00	Chile	EAS%sT
 #
 # Sala y Gomez Island is like Pacific/Easter.
@@ -781,26 +786,33 @@ Zone	America/Bogota	-4:56:20 -	LMT	1884 Mar 13
 
 # Curacao
 #
-# From Paul Eggert (2006-03-22): 
+# From Paul Eggert (2006-03-22):
 # Shanks & Pottenger say that The Bottom and Philipsburg have been at
 # -4:00 since standard time was introduced on 1912-03-02; and that
 # Kralendijk and Rincon used Kralendijk Mean Time (-4:33:08) from
 # 1912-02-02 to 1965-01-01.  The former is dubious, since S&P also say
 # Saba Island has been like Curacao.
-# This all predates our 1970 cutoff, though.  
+# This all predates our 1970 cutoff, though.
 #
 # By July 2007 Curacao and St Maarten are planned to become
 # associated states within the Netherlands, much like Aruba;
 # Bonaire, Saba and St Eustatius would become directly part of the
 # Netherlands as Kingdom Islands.  This won't affect their time zones
 # though, as far as we know.
-# 
+#
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Curacao	-4:35:44 -	LMT	1912 Feb 12	# Willemstad
 			-4:30	-	ANT	1965 # Netherlands Antilles Time
 			-4:00	-	AST
 
 # Ecuador
+#
+# From Paul Eggert (2007-03-04):
+# Apparently Ecuador had a failed experiment with DST in 1992.
+# <http://midena.gov.ec/content/view/1261/208/> (2007-02-27) and
+# <http://www.hoy.com.ec/NoticiaNue.asp?row_id=249856> (2006-11-06) both
+# talk about "hora Sixto".  Leave this alone for now, as we have no data.
+#
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Guayaquil	-5:19:20 -	LMT	1890
 			-5:14:00 -	QMT	1931 # Quito Mean Time
