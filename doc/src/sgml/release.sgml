@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.33 2007/04/19 02:47:01 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.34 2007/04/19 13:02:15 momjian Exp $
 -->
 
 <appendix id="release">
@@ -14,7 +14,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.33 2007/04/19 02:47:01 mo
    </note>
 
    <para>
-    This release contains fixes from 8.0.12, including a security fix.
+    This release contains fixes from 8.0.12.
    </para>
 
    <sect2>
@@ -3504,8 +3504,7 @@ typedefs (Michael)</para></listitem>
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.4.16, including
-    a security fix.
+    This release contains a variety of fixes from 7.4.16.
    </para>
 
    <sect2>
@@ -6665,8 +6664,7 @@ DROP SCHEMA information_schema CASCADE;
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.3.18, including
-    a security fix.
+    This release contains a variety of fixes from 7.3.18.
    </para>
 
    <sect2>
