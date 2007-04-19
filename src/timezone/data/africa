@@ -1,4 +1,4 @@
-# @(#)africa	8.5
+# @(#)africa	8.7
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -232,8 +232,8 @@ Zone	Africa/Malabo	0:35:08 -	LMT	1912
 
 # Eritrea
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
-Zone	Africa/Asmera	2:35:32 -	LMT	1870
-			2:35:32	-	AMT	1890	      # Asmera Mean Time
+Zone	Africa/Asmara	2:35:32 -	LMT	1870
+			2:35:32	-	AMT	1890	      # Asmara Mean Time
 			2:35:20	-	ADMT	1936 May 5    # Adis Dera MT
 			3:00	-	EAT
 

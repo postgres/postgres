@@ -1,4 +1,4 @@
-# @(#)zone.tab	8.6
+# @(#)zone.tab	8.10
 #
 # TZ zone descriptions
 #
@@ -63,7 +63,8 @@ AU	-2728+15302	Australia/Brisbane	Queensland - most locations
 AU	-2016+14900	Australia/Lindeman	Queensland - Holiday Islands
 AU	-3455+13835	Australia/Adelaide	South Australia
 AU	-1228+13050	Australia/Darwin	Northern Territory
-AU	-3157+11551	Australia/Perth	Western Australia
+AU	-3157+11551	Australia/Perth	Western Australia - most locations
+AU	-3143+12852	Australia/Eucla	Western Australia - Eucla area
 AW	+1230-06858	America/Aruba
 AX	+6006+01957	Europe/Mariehamn
 AZ	+4023+04951	Asia/Baku
@@ -109,8 +110,9 @@ CA	+4531-07334	America/Montreal	Eastern Time - Quebec - most locations
 CA	+4339-07923	America/Toronto	Eastern Time - Ontario - most locations
 CA	+4901-08816	America/Nipigon	Eastern Time - Ontario & Quebec - places that did not observe DST 1967-1973
 CA	+4823-08915	America/Thunder_Bay	Eastern Time - Thunder Bay, Ontario
+CA	+6344-06828	America/Iqaluit	Eastern Time - east Nunavut - most locations
 CA	+6608-06544	America/Pangnirtung	Eastern Time - Pangnirtung, Nunavut
-CA	+6344-06828	America/Iqaluit	Eastern Time - east Nunavut
+CA	+744144-0944945	America/Resolute	Eastern Time - Resolute, Nunavut
 CA	+484531-0913718	America/Atikokan	Eastern Standard Time - Atikokan, Ontario and Southampton I, Nunavut
 CA	+624900-0920459	America/Rankin_Inlet	Central Time - central Nunavut
 CA	+4953-09709	America/Winnipeg	Central Time - Manitoba & west Ontario
@@ -134,7 +136,7 @@ CH	+4723+00832	Europe/Zurich
 CI	+0519-00402	Africa/Abidjan
 CK	-2114-15946	Pacific/Rarotonga
 CL	-3327-07040	America/Santiago	most locations
-CL	-2710-10927	Pacific/Easter	Easter Island & Sala y Gomez
+CL	-2709-10926	Pacific/Easter	Easter Island & Sala y Gomez
 CM	+0403+00942	Africa/Douala
 CN	+3114+12128	Asia/Shanghai	east China - Beijing, Guangdong, Shanghai, etc.
 CN	+4545+12641	Asia/Harbin	Heilongjiang (except Mohe), Jilin
@@ -159,7 +161,7 @@ EC	-0054-08936	Pacific/Galapagos	Galapagos Islands
 EE	+5925+02445	Europe/Tallinn
 EG	+3003+03115	Africa/Cairo
 EH	+2709-01312	Africa/El_Aaiun
-ER	+1520+03853	Africa/Asmera
+ER	+1520+03853	Africa/Asmara
 ES	+4024-00341	Europe/Madrid	mainland
 ES	+3553-00519	Africa/Ceuta	Ceuta & Melilla
 ES	+2806-01524	Atlantic/Canary	Canary Islands
@@ -170,7 +172,7 @@ FK	-5142-05751	Atlantic/Stanley
 FM	+0725+15147	Pacific/Truk	Truk (Chuuk) and Yap
 FM	+0658+15813	Pacific/Ponape	Ponape (Pohnpei)
 FM	+0519+16259	Pacific/Kosrae	Kosrae
-FO	+6201-00646	Atlantic/Faeroe
+FO	+6201-00646	Atlantic/Faroe
 FR	+4852+00220	Europe/Paris
 GA	+0023+00927	Africa/Libreville
 GB	+512830-0001845	Europe/London
@@ -378,11 +380,12 @@ US	+421953-0830245	America/Detroit	Eastern Time - Michigan - most locations
 US	+381515-0854534	America/Kentucky/Louisville	Eastern Time - Kentucky - Louisville area
 US	+364947-0845057	America/Kentucky/Monticello	Eastern Time - Kentucky - Wayne County
 US	+394606-0860929	America/Indiana/Indianapolis	Eastern Time - Indiana - most locations
-US	+382232-0862041	America/Indiana/Marengo	Eastern Time - Indiana - Crawford County
 US	+411745-0863730	America/Indiana/Knox	Eastern Time - Indiana - Starke County
+US	+410305-0863611	America/Indiana/Winamac	Eastern Time - Indiana - Pulaski County
+US	+382232-0862041	America/Indiana/Marengo	Eastern Time - Indiana - Crawford County
 US	+384452-0850402	America/Indiana/Vevay	Eastern Time - Indiana - Switzerland County
 US	+415100-0873900	America/Chicago	Central Time
-US	+384038-0873143	America/Indiana/Vincennes	Central Time - Indiana - Daviess, Dubois, Knox, Martin, Perry & Pulaski Counties
+US	+384038-0873143	America/Indiana/Vincennes	Central Time - Indiana - Daviess, Dubois, Knox, Martin & Perry Counties
 US	+382931-0871643	America/Indiana/Petersburg	Central Time - Indiana - Pike County
 US	+450628-0873651	America/Menominee	Central Time - Michigan - Dickinson, Gogebic, Iron & Menominee Counties
 US	+470659-1011757	America/North_Dakota/Center	Central Time - North Dakota - Oliver County
