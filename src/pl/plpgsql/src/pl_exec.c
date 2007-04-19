@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.194 2007/04/16 17:21:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.195 2007/04/19 16:33:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -986,6 +986,25 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			rc = exec_stmts(estate, block->body);
 
 			estate->err_text = gettext_noop("during statement block exit");
+
+			/*
+			 * If the block ended with RETURN, we may need to copy the return
+			 * value out of the subtransaction eval_context.  This is currently
+			 * only needed for scalar result types --- rowtype values will
+			 * always exist in the function's own memory context.
+			 */
+			if (rc == PLPGSQL_RC_RETURN &&
+				!estate->retisset &&
+				!estate->retisnull &&
+				estate->rettupdesc == NULL)
+			{
+				int16		resTypLen;
+				bool		resTypByVal;
+
+				get_typlenbyval(estate->rettype, &resTypLen, &resTypByVal);
+				estate->retval = datumCopy(estate->retval,
+										   resTypByVal, resTypLen);
+			}
 
 			/* Commit the inner transaction, return to outer xact context */
 			ReleaseCurrentSubTransaction();
