@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.55 2007/04/09 22:03:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.56 2007/04/19 20:24:04 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -272,19 +272,12 @@ _hash_getovflpage(Relation rel, Buffer metabuf)
 	blkno = bitno_to_blkno(metap, bit);
 
 	/*
-	 * We have to fetch the page with P_NEW to ensure smgr's idea of the
+	 * Fetch the page with _hash_getnewbuf to ensure smgr's idea of the
 	 * relation length stays in sync with ours.  XXX It's annoying to do this
 	 * with metapage write lock held; would be better to use a lock that
-	 * doesn't block incoming searches.  Best way to fix it would be to stop
-	 * maintaining hashm_spares[hashm_ovflpoint] and rely entirely on the
-	 * smgr relation length to track where new overflow pages come from;
-	 * then we could release the metapage before we do the smgrextend.
-	 * FIXME later (not in beta...)
+	 * doesn't block incoming searches.
 	 */
-	newbuf = _hash_getbuf(rel, P_NEW, HASH_WRITE);
-	if (BufferGetBlockNumber(newbuf) != blkno)
-		elog(ERROR, "unexpected hash relation size: %u, should be %u",
-			 BufferGetBlockNumber(newbuf), blkno);
+	newbuf = _hash_getnewbuf(rel, blkno, HASH_WRITE);
 
 	metap->hashm_spares[splitnum]++;
 
@@ -507,19 +500,14 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno)
 	/*
 	 * It is okay to write-lock the new bitmap page while holding metapage
 	 * write lock, because no one else could be contending for the new page.
-	 * Also, the metapage lock makes it safe to extend the index using P_NEW,
-	 * which we want to do to ensure the smgr's idea of the relation size
-	 * stays in step with ours.
+	 * Also, the metapage lock makes it safe to extend the index using
+	 * _hash_getnewbuf.
 	 *
 	 * There is some loss of concurrency in possibly doing I/O for the new
 	 * page while holding the metapage lock, but this path is taken so seldom
 	 * that it's not worth worrying about.
 	 */
-	buf = _hash_getbuf(rel, P_NEW, HASH_WRITE);
-	if (BufferGetBlockNumber(buf) != blkno)
-		elog(ERROR, "unexpected hash relation size: %u, should be %u",
-			 BufferGetBlockNumber(buf), blkno);
-
+	buf = _hash_getnewbuf(rel, blkno, HASH_WRITE);
 	pg = BufferGetPage(buf);
 
 	/* initialize the page */

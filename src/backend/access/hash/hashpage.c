@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.65 2007/04/09 22:03:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.66 2007/04/19 20:24:04 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -36,7 +36,8 @@
 #include "utils/lsyscache.h"
 
 
-static BlockNumber _hash_alloc_buckets(Relation rel, uint32 nblocks);
+static bool _hash_alloc_buckets(Relation rel, BlockNumber firstblock,
+								uint32 nblocks);
 static void _hash_splitbucket(Relation rel, Buffer metabuf,
 				  Bucket obucket, Bucket nbucket,
 				  BlockNumber start_oblkno,
@@ -104,8 +105,9 @@ _hash_droplock(Relation rel, BlockNumber whichlock, int access)
  *		requested buffer and its reference count has been incremented
  *		(ie, the buffer is "locked and pinned").
  *
- *		blkno == P_NEW is allowed, but it is caller's responsibility to
- *		ensure that only one process can extend the index at a time.
+ *		P_NEW is disallowed because this routine should only be used
+ *		to access pages that are known to be before the filesystem EOF.
+ *		Extending the index should be done with _hash_getnewbuf.
  *
  *		All call sites should call either _hash_checkpage or _hash_pageinit
  *		on the returned page, depending on whether the block is expected
@@ -116,7 +118,55 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access)
 {
 	Buffer		buf;
 
+	if (blkno == P_NEW)
+		elog(ERROR, "hash AM does not use P_NEW");
+
 	buf = ReadBuffer(rel, blkno);
+
+	if (access != HASH_NOLOCK)
+		LockBuffer(buf, access);
+
+	/* ref count and lock type are correct */
+	return buf;
+}
+
+/*
+ *	_hash_getnewbuf() -- Get a new page at the end of the index.
+ *
+ *		This has the same API as _hash_getbuf, except that we are adding
+ *		a page to the index, and hence expect the page to be past the
+ *		logical EOF.  (However, we have to support the case where it isn't,
+ *		since a prior try might have crashed after extending the filesystem
+ *		EOF but before updating the metapage to reflect the added page.)
+ *
+ *		It is caller's responsibility to ensure that only one process can
+ *		extend the index at a time.
+ *
+ *		All call sites should call _hash_pageinit on the returned page.
+ *		Also, it's difficult to imagine why access would not be HASH_WRITE.
+ */
+Buffer
+_hash_getnewbuf(Relation rel, BlockNumber blkno, int access)
+{
+	BlockNumber	nblocks = RelationGetNumberOfBlocks(rel);
+	Buffer		buf;
+
+	if (blkno == P_NEW)
+		elog(ERROR, "hash AM does not use P_NEW");
+	if (blkno > nblocks)
+		elog(ERROR, "access to noncontiguous page in hash index \"%s\"",
+			 RelationGetRelationName(rel));
+
+	/* smgr insists we use P_NEW to extend the relation */
+	if (blkno == nblocks)
+	{
+		buf = ReadBuffer(rel, P_NEW);
+		if (BufferGetBlockNumber(buf) != blkno)
+			elog(ERROR, "unexpected hash relation size: %u, should be %u",
+				 BufferGetBlockNumber(buf), blkno);
+	}
+	else
+		buf = ReadBuffer(rel, blkno);
 
 	if (access != HASH_NOLOCK)
 		LockBuffer(buf, access);
@@ -238,12 +288,11 @@ _hash_metapinit(Relation rel)
 
 	/*
 	 * We initialize the metapage, the first two bucket pages, and the
-	 * first bitmap page in sequence, using P_NEW to cause smgrextend()
-	 * calls to occur.  This ensures that the smgr level has the right
-	 * idea of the physical index length.
+	 * first bitmap page in sequence, using _hash_getnewbuf to cause
+	 * smgrextend() calls to occur.  This ensures that the smgr level
+	 * has the right idea of the physical index length.
 	 */
-	metabuf = _hash_getbuf(rel, P_NEW, HASH_WRITE);
-	Assert(BufferGetBlockNumber(metabuf) == HASH_METAPAGE);
+	metabuf = _hash_getnewbuf(rel, HASH_METAPAGE, HASH_WRITE);
 	pg = BufferGetPage(metabuf);
 	_hash_pageinit(pg, BufferGetPageSize(metabuf));
 
@@ -301,8 +350,7 @@ _hash_metapinit(Relation rel)
 	 */
 	for (i = 0; i <= 1; i++)
 	{
-		buf = _hash_getbuf(rel, P_NEW, HASH_WRITE);
-		Assert(BufferGetBlockNumber(buf) == BUCKET_TO_BLKNO(metap, i));
+		buf = _hash_getnewbuf(rel, BUCKET_TO_BLKNO(metap, i), HASH_WRITE);
 		pg = BufferGetPage(buf);
 		_hash_pageinit(pg, BufferGetPageSize(buf));
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
@@ -350,7 +398,6 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 	Bucket		old_bucket;
 	Bucket		new_bucket;
 	uint32		spare_ndx;
-	BlockNumber firstblock = InvalidBlockNumber;
 	BlockNumber start_oblkno;
 	BlockNumber start_nblkno;
 	uint32		maxbucket;
@@ -403,10 +450,44 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 		goto fail;
 
 	/*
+	 * Determine which bucket is to be split, and attempt to lock the old
+	 * bucket.	If we can't get the lock, give up.
+	 *
+	 * The lock protects us against other backends, but not against our own
+	 * backend.  Must check for active scans separately.
+	 */
+	new_bucket = metap->hashm_maxbucket + 1;
+
+	old_bucket = (new_bucket & metap->hashm_lowmask);
+
+	start_oblkno = BUCKET_TO_BLKNO(metap, old_bucket);
+
+	if (_hash_has_active_scan(rel, old_bucket))
+		goto fail;
+
+	if (!_hash_try_getlock(rel, start_oblkno, HASH_EXCLUSIVE))
+		goto fail;
+
+	/*
+	 * Likewise lock the new bucket (should never fail).
+	 *
+	 * Note: it is safe to compute the new bucket's blkno here, even though
+	 * we may still need to update the BUCKET_TO_BLKNO mapping.  This is
+	 * because the current value of hashm_spares[hashm_ovflpoint] correctly
+	 * shows where we are going to put a new splitpoint's worth of buckets.
+	 */
+	start_nblkno = BUCKET_TO_BLKNO(metap, new_bucket);
+
+	if (_hash_has_active_scan(rel, new_bucket))
+		elog(ERROR, "scan in progress on supposedly new bucket");
+
+	if (!_hash_try_getlock(rel, start_nblkno, HASH_EXCLUSIVE))
+		elog(ERROR, "could not get lock on supposedly new bucket");
+
+	/*
 	 * If the split point is increasing (hashm_maxbucket's log base 2
 	 * increases), we need to allocate a new batch of bucket pages.
 	 */
-	new_bucket = metap->hashm_maxbucket + 1;
 	spare_ndx = _hash_log2(new_bucket + 1);
 	if (spare_ndx > metap->hashm_ovflpoint)
 	{
@@ -417,33 +498,14 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 		 * this maps one-to-one to blocks required, but someday we may need
 		 * a more complicated calculation here.
 		 */
-		firstblock = _hash_alloc_buckets(rel, new_bucket);
-		if (firstblock == InvalidBlockNumber)
-			goto fail;			/* can't split due to BlockNumber overflow */
+		if (!_hash_alloc_buckets(rel, start_nblkno, new_bucket))
+		{
+			/* can't split due to BlockNumber overflow */
+			_hash_droplock(rel, start_oblkno, HASH_EXCLUSIVE);
+			_hash_droplock(rel, start_nblkno, HASH_EXCLUSIVE);
+			goto fail;
+		}
 	}
-
-	/*
-	 * Determine which bucket is to be split, and attempt to lock the old
-	 * bucket.	If we can't get the lock, give up.
-	 *
-	 * The lock protects us against other backends, but not against our own
-	 * backend.  Must check for active scans separately.
-	 *
-	 * Ideally we would lock the new bucket too before proceeding, but if we
-	 * are about to cross a splitpoint then the BUCKET_TO_BLKNO mapping isn't
-	 * correct yet.  For simplicity we update the metapage first and then
-	 * lock.  This should be okay because no one else should be trying to lock
-	 * the new bucket yet...
-	 */
-	old_bucket = (new_bucket & metap->hashm_lowmask);
-
-	start_oblkno = BUCKET_TO_BLKNO(metap, old_bucket);
-
-	if (_hash_has_active_scan(rel, old_bucket))
-		goto fail;
-
-	if (!_hash_try_getlock(rel, start_oblkno, HASH_EXCLUSIVE))
-		goto fail;
 
 	/*
 	 * Okay to proceed with split.	Update the metapage bucket mapping info.
@@ -476,20 +538,6 @@ _hash_expandtable(Relation rel, Buffer metabuf)
 		metap->hashm_spares[spare_ndx] = metap->hashm_spares[metap->hashm_ovflpoint];
 		metap->hashm_ovflpoint = spare_ndx;
 	}
-
-	/* now we can compute the new bucket's primary block number */
-	start_nblkno = BUCKET_TO_BLKNO(metap, new_bucket);
-
-	/* if we added a splitpoint, should match result of _hash_alloc_buckets */
-	if (firstblock != InvalidBlockNumber &&
-		firstblock != start_nblkno)
-		elog(PANIC, "unexpected hash relation size: %u, should be %u",
-			 firstblock, start_nblkno);
-
-	Assert(!_hash_has_active_scan(rel, new_bucket));
-
-	if (!_hash_try_getlock(rel, start_nblkno, HASH_EXCLUSIVE))
-		elog(PANIC, "could not get lock on supposedly new bucket");
 
 	/* Done mucking with metapage */
 	END_CRIT_SECTION();
@@ -539,7 +587,7 @@ fail:
  * This does not need to initialize the new bucket pages; we'll do that as
  * each one is used by _hash_expandtable().  But we have to extend the logical
  * EOF to the end of the splitpoint; this keeps smgr's idea of the EOF in
- * sync with ours, so that overflow-page allocation works correctly.
+ * sync with ours, so that we don't get complaints from smgr.
  *
  * We do this by writing a page of zeroes at the end of the splitpoint range.
  * We expect that the filesystem will ensure that the intervening pages read
@@ -554,22 +602,15 @@ fail:
  * for the purpose.  OTOH, adding a splitpoint is a very infrequent operation,
  * so it may not be worth worrying about.
  *
- * Returns the first block number in the new splitpoint's range, or
- * InvalidBlockNumber if allocation failed due to BlockNumber overflow.
+ * Returns TRUE if successful, or FALSE if allocation failed due to
+ * BlockNumber overflow.
  */
-static BlockNumber
-_hash_alloc_buckets(Relation rel, uint32 nblocks)
+static bool
+_hash_alloc_buckets(Relation rel, BlockNumber firstblock, uint32 nblocks)
 {
-	BlockNumber	firstblock;
 	BlockNumber	lastblock;
 	char		zerobuf[BLCKSZ];
 
-	/*
-	 * Since we hold metapage lock, no one else is either splitting or
-	 * allocating a new page in _hash_getovflpage(); hence it's safe to
-	 * assume that the relation length isn't changing under us.
-	 */
-	firstblock = RelationGetNumberOfBlocks(rel);
 	lastblock = firstblock + nblocks - 1;
 
 	/*
@@ -577,14 +618,14 @@ _hash_alloc_buckets(Relation rel, uint32 nblocks)
 	 * extend the index anymore.
 	 */
 	if (lastblock < firstblock || lastblock == InvalidBlockNumber)
-		return InvalidBlockNumber;
+		return false;
 
 	MemSet(zerobuf, 0, sizeof(zerobuf));
 
-	/* Note: we assume RelationGetNumberOfBlocks did RelationOpenSmgr for us */
+	RelationOpenSmgr(rel);
 	smgrextend(rel->rd_smgr, lastblock, zerobuf, rel->rd_istemp);
 
-	return firstblock;
+	return true;
 }
 
 

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/hash/README,v 1.5 2007/01/09 07:30:49 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/hash/README,v 1.6 2007/04/19 20:24:04 tgl Exp $
 
 This directory contains an implementation of hash indexing for Postgres.  Most
 of the core ideas are taken from Margo Seltzer and Ozan Yigit, A New Hashing
@@ -76,6 +76,18 @@ effect of reserving the correct number of bucket pages at the end of the
 index, and preparing to allocate additional overflow pages after those
 bucket pages.  hashm_spares[] entries before S cannot change anymore,
 since that would require moving already-created bucket pages.
+
+The last page nominally used by the index is always determinable from
+hashm_spares[S].  To avoid complaints from smgr, the logical EOF as seen by
+the filesystem and smgr must always be greater than or equal to this page.
+We have to allow the case "greater than" because it's possible that during
+an index extension we crash after allocating filesystem space and before
+updating the metapage.  Note that on filesystems that allow "holes" in
+files, it's entirely likely that pages before the logical EOF are not yet
+allocated: when we allocate a new splitpoint's worth of bucket pages, we
+physically zero the last such page to force the EOF up, and the first such
+page will be used immediately, but the intervening pages are not written
+until needed.
 
 Since overflow pages may be recycled if enough tuples are deleted from
 their bucket, we need a way to keep track of currently-free overflow
@@ -309,6 +321,10 @@ we can just error out without any great harm being done.
 
 Free space management
 ---------------------
+
+(Question: why is this so complicated?  Why not just have a linked list
+of free pages with the list head in the metapage?  It's not like we
+avoid needing to modify the metapage with all this.)
 
 Free space management consists of two sub-algorithms, one for reserving
 an overflow page to add to a bucket chain, and one for returning an empty
