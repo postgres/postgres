@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.73 2006/07/13 16:49:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/hash.h,v 1.73.2.1 2007/04/19 20:24:10 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -281,6 +281,7 @@ extern void _hash_getlock(Relation rel, BlockNumber whichlock, int access);
 extern bool _hash_try_getlock(Relation rel, BlockNumber whichlock, int access);
 extern void _hash_droplock(Relation rel, BlockNumber whichlock, int access);
 extern Buffer _hash_getbuf(Relation rel, BlockNumber blkno, int access);
+extern Buffer _hash_getnewbuf(Relation rel, BlockNumber blkno, int access);
 extern void _hash_relbuf(Relation rel, Buffer buf);
 extern void _hash_dropbuf(Relation rel, Buffer buf);
 extern void _hash_wrtbuf(Relation rel, Buffer buf);
