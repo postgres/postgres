@@ -1,4 +1,4 @@
-# @(#)europe	8.6
+# @(#)europe	8.10
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -259,32 +259,32 @@
 #   -- James Joyce, Ulysses
 
 # From Joseph S. Myers (2005-01-26):
-# Irish laws are available online at www.irishstatutebook.ie.  These include 
+# Irish laws are available online at www.irishstatutebook.ie.  These include
 # various relating to legal time, for example:
-# 
+#
 # ZZA13Y1923.html ZZA12Y1924.html ZZA8Y1925.html ZZSIV20PG1267.html
-# 
+#
 # ZZSI71Y1947.html ZZSI128Y1948.html ZZSI23Y1949.html ZZSI41Y1950.html
 # ZZSI27Y1951.html ZZSI73Y1952.html
-# 
+#
 # ZZSI11Y1961.html ZZSI232Y1961.html ZZSI182Y1962.html
 # ZZSI167Y1963.html ZZSI257Y1964.html ZZSI198Y1967.html
 # ZZA23Y1968.html ZZA17Y1971.html
-# 
+#
 # ZZSI67Y1981.html ZZSI212Y1982.html ZZSI45Y1986.html
 # ZZSI264Y1988.html ZZSI52Y1990.html ZZSI371Y1992.html
 # ZZSI395Y1994.html ZZSI484Y1997.html ZZSI506Y2001.html
 #
 # [These are all relative to the root, e.g., the first is
 # <http://www.irishstatutebook.ie/ZZA13Y1923.html>.]
-# 
-# (These are those I found, but there could be more.  In any case these 
-# should allow various updates to the comments in the europe file to cover 
+#
+# (These are those I found, but there could be more.  In any case these
+# should allow various updates to the comments in the europe file to cover
 # the laws applicable in Ireland.)
-# 
-# (Note that the time in the Republic of Ireland since 1968 has been defined 
-# in terms of standard time being GMT+1 with a period of winter time when it 
-# is GMT, rather than standard time being GMT with a period of summer time 
+#
+# (Note that the time in the Republic of Ireland since 1968 has been defined
+# in terms of standard time being GMT+1 with a period of winter time when it
+# is GMT, rather than standard time being GMT with a period of summer time
 # being GMT+1.)
 
 # From Paul Eggert (1999-03-28):
@@ -754,7 +754,7 @@ Zone	Europe/Prague	0:57:44 -	LMT	1850
 			1:00	Czech	CE%sT	1979
 			1:00	EU	CE%sT
 
-# Denmark, Faeroe Islands, and Greenland
+# Denmark, Faroe Islands, and Greenland
 
 # From Jesper Norgaard Welen (2005-04-26):
 # http://www.hum.aau.dk/~poe/tid/tine/DanskTid.htm says that the law
@@ -809,7 +809,7 @@ Zone Europe/Copenhagen	 0:50:20 -	LMT	1890
 			 1:00	C-Eur	CE%sT	1945 Apr  2 2:00
 			 1:00	Denmark	CE%sT	1980
 			 1:00	EU	CE%sT
-Zone Atlantic/Faeroe	-0:27:04 -	LMT	1908 Jan 11	# Torshavn
+Zone Atlantic/Faroe	-0:27:04 -	LMT	1908 Jan 11	# Torshavn
 			 0:00	-	WET	1981
 			 0:00	EU	WE%sT
 #
@@ -2278,6 +2278,34 @@ Zone	Europe/Zurich	0:34:08 -	LMT	1848 Sep 12
 			1:00	EU	CE%sT
 
 # Turkey
+
+# From Amar Devegowda (2007-01-03):
+# The time zone rules for Istanbul, Turkey have not been changed for years now.
+# ... The latest rules are available at -
+# http://www.timeanddate.com/worldclock/timezone.html?n=107
+# From Steffen Thorsen (2007-01-03):
+# I have been able to find press records back to 1996 which all say that
+# DST started 01:00 local time and end at 02:00 local time.  I am not sure
+# what happened before that.  One example for each year from 1996 to 2001:
+# http://newspot.byegm.gov.tr/arsiv/1996/21/N4.htm
+# http://www.byegm.gov.tr/YAYINLARIMIZ/CHR/ING97/03/97X03X25.TXT
+# http://www.byegm.gov.tr/YAYINLARIMIZ/CHR/ING98/03/98X03X02.HTM
+# http://www.byegm.gov.tr/YAYINLARIMIZ/CHR/ING99/10/99X10X26.HTM#%2016
+# http://www.byegm.gov.tr/YAYINLARIMIZ/CHR/ING2000/03/00X03X06.HTM#%2021
+# http://www.byegm.gov.tr/YAYINLARIMIZ/CHR/ING2001/03/23x03x01.HTM#%2027
+# From Paul Eggert (2007-01-03):
+# Prefer the above source to Shanks & Pottenger for time stamps after 1990.
+
+# From Steffen Thorsen (2007-03-09):
+# Starting 2007 though, it seems that they are adopting EU's 1:00 UTC
+# start/end time, according to the following page (2007-03-07):
+# http://www.ntvmsnbc.com/news/402029.asp
+# The official document is located here - it is in Turkish...:
+# http://rega.basbakanlik.gov.tr/eskiler/2007/03/20070307-7.htm
+# I was able to locate the following seemingly official document
+# (on a non-government server though) describing dates between 2002 and 2006:
+# http://www.alomaliye.com/bkk_2002_3769.htm
+
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Turkey	1916	only	-	May	 1	0:00	1:00	S
 Rule	Turkey	1916	only	-	Oct	 1	0:00	0	-
@@ -2332,13 +2360,17 @@ Rule	Turkey	1983	only	-	Jul	31	0:00	1:00	S
 Rule	Turkey	1983	only	-	Oct	 2	0:00	0	-
 Rule	Turkey	1985	only	-	Apr	20	0:00	1:00	S
 Rule	Turkey	1985	only	-	Sep	28	0:00	0	-
+Rule	Turkey	1986	1990	-	Mar	lastSun	2:00s	1:00	S
+Rule	Turkey	1986	1990	-	Sep	lastSun	2:00s	0	-
+Rule	Turkey	1991	2006	-	Mar	lastSun	1:00s	1:00	S
+Rule	Turkey	1991	1995	-	Sep	lastSun	1:00s	0	-
+Rule	Turkey	1996	2006	-	Oct	lastSun	1:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	Europe/Istanbul	1:55:52 -	LMT	1880
 			1:56:56	-	IMT	1910 Oct # Istanbul Mean Time?
 			2:00	Turkey	EE%sT	1978 Oct 15
 			3:00	Turkey	TR%sT	1985 Apr 20 # Turkey Time
-			2:00	Turkey	EE%sT	1986
-			2:00	C-Eur	EE%sT	1991
+			2:00	Turkey	EE%sT	2007
 			2:00	EU	EE%sT
 Link	Europe/Istanbul	Asia/Istanbul	# Istanbul is in both continents.
 

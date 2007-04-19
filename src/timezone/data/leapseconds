@@ -1,4 +1,4 @@
-# @(#)leapseconds	8.1
+# @(#)leapseconds	8.3
 
 # Allowance for leapseconds added to each timezone file.
 
@@ -45,48 +45,38 @@ Leap	1997	Jun	30	23:59:60	+	S
 Leap	1998	Dec	31	23:59:60	+	S
 Leap	2005	Dec	31	23:59:60	+	S
 
-#	INTERNATIONAL EARTH ROTATION AND REFERENCE SYSTEMS SERVICE (IERS)
+# ...
+# Sent: Thursday, February 01, 2007 9:49 AM
+# ...
+# Subject: Bulletin C number 33
+#
+# 	INTERNATIONAL EARTH ROTATION AND REFERENCE SYSTEMS SERVICE (IERS)
 #
 # SERVICE INTERNATIONAL DE LA ROTATION TERRESTRE ET DES SYSTEMES DE REFERENCE
 #
 # SERVICE DE LA ROTATION TERRESTRE
 # OBSERVATOIRE DE PARIS
 # 61, Av. de l'Observatoire 75014 PARIS (France)
-# Tel.      : 33 (0) 1 40 51 22 26
-# FAX       : 33 (0) 1 40 51 22 91
 # ...
-# http://hpiers.obspm.fr/eop-pc
 #
-#						Paris, 4 July 2005
-#							
-#						Bulletin C 30
+#                                                Paris, 1 February 2007
+#                                                Bulletin C 33
+#                                                To authorities responsible
+#                                                for the measurement and
+#                                                distribution of time
 #
-#						To authorities responsible
-#						for the measurement and
-#						distribution of time
+#                           INFORMATION ON UTC - TAI
 #
+# NO positive leap second will be introduced at the end of June 2007.
+# The difference between Coordinated Universal Time UTC and the
+# International Atomic Time TAI is:
+#      from 2006 January 1, 0h UTC, until further notice : UTC-TAI = -33 s
+# Leap seconds can be introduced in UTC at the end of the months of
+# December  or June,  depending on the evolution of UT1-TAI. Bulletin C is
+# mailed every  six months, either to announce a time step in UTC, or to
+# confirm that there  will be no time step at the next possible date.
 #
-#                                    UTC TIME STEP
-#                             on the 1st of January 2006
-#
-# A positive leap second will be introduced at the end of December 2005.
-# The sequence of dates of the UTC second markers will be:
-#
-#			2005 December 31,     23h 59m 59s
-#			2005 December 31,     23h 59m 60s
-#			2006 January   1,      0h  0m  0s
-#
-# The difference between UTC and the International Atomic Time TAI is:
-#
-# from 1999 January 1, 0h UTC, to 2006 January 1  0h UTC  : UTC-TAI = - 32s
-# from 2006 January 1, 0h UTC, until further notice       : UTC-TAI = - 33s
-#
-# Leap seconds can be introduced in UtC at the end of the months of December
-# or June, depending on the evolution of UT1-TAI. Bulletin C is mailed every
-# six months, either to announce a time step in UTC or to confirm that there
-# will be no time step at the next possible date.
-#
-#					Daniel GAMBIS
-#					Head
-#					Earth Orientation Center of IERS
-#					Observatoire de Paris, France
+# 				Daniel GAMBIS
+# 				Director
+# 				Earth Orientation Center of IERS
+# 				Observatoire de Paris, France
