@@ -568,7 +568,7 @@
 #define PACKAGE_NAME "PostgreSQL"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "PostgreSQL 8.2.3"
+#define PACKAGE_STRING "PostgreSQL 8.2.4"
 
 /* Define to the version of this package. */
 #define PACKAGE_VERSION "8.2.4"
