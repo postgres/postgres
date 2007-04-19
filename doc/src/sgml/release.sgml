@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.51 2007/04/19 02:46:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.52 2007/04/19 13:01:59 momjian Exp $
 -->
 
 <appendix id="release">
@@ -14,8 +14,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.51 2007/04/19 02:46:
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.4.16, including
-    a security fix.
+    This release contains a variety of fixes from 7.4.16.
    </para>
 
    <sect2>
@@ -3175,8 +3174,7 @@ DROP SCHEMA information_schema CASCADE;
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.3.18, including
-    a security fix.
+    This release contains a variety of fixes from 7.3.18.
    </para>
 
    <sect2>
