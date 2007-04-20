@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Apr 18 23:05:05 EDT 2007
+   Last updated: Fri Apr 20 09:48:11 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -630,9 +630,6 @@
    upper and lowercase characters, it can not have identical values that
    differ only in case. To force a particular case to be stored in the
    column, use a CHECK constraint or a trigger.
-   4.9) In a query, how do I detect if a field is NULL? How do I
-   concatenate possible NULLs? How can I sort on whether a field is NULL
-   or not?
    
   4.9) In a query, how do I detect if a field is NULL? How do I concatenate
   possible NULLs? How can I sort on whether a field is NULL or not?
