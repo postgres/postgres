@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.138 2007/03/26 16:58:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.139 2007/04/20 02:37:37 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1833,7 +1833,7 @@ pg_namespace_aclmask(Oid nsp_oid, Oid roleid,
 	 */
 	if (isTempNamespace(nsp_oid))
 	{
-		if (pg_database_aclcheck(MyDatabaseId, GetUserId(),
+		if (pg_database_aclcheck(MyDatabaseId, roleid,
 								 ACL_CREATE_TEMP) == ACLCHECK_OK)
 			return mask & ACL_ALL_RIGHTS_NAMESPACE;
 		else

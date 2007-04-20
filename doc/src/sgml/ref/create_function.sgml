@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.73 2007/02/01 19:10:24 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.74 2007/04/20 02:37:37 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -506,6 +506,54 @@ CREATE FUNCTION dup(int) RETURNS dup_result
 SELECT * FROM dup(42);
 </programlisting>
   </para>
+ </refsect1>
+
+ <refsect1 id="sql-createfunction-security">
+  <title>Writing <literal>SECURITY DEFINER</literal> Functions Safely</title>
+
+   <para>
+    Because a <literal>SECURITY DEFINER</literal> function is executed
+    with the privileges of the user that created it, care is needed to
+    ensure that the function cannot be misused.  For security,
+    <xref linkend="guc-search-path"> should be set to exclude any schemas
+    writable by untrusted users.  This prevents
+    malicious users from creating objects that mask objects used by the
+    function.  Particularly important is in this regard is the
+    temporary-table schema, which is searched first by default, and
+    is normally writable by anyone.  A secure arrangement can be had
+    by forcing the temporary schema to be searched last.  To do this,
+    write <literal>pg_temp</> as the last entry in <varname>search_path</>.
+    This function illustrates safe usage:
+   </para>
+
+<programlisting>
+CREATE FUNCTION check_password(uname TEXT, pass TEXT)
+RETURNS BOOLEAN AS $$
+DECLARE passed BOOLEAN;
+        old_path TEXT;
+BEGIN
+        -- Save old search_path; notice we must qualify current_setting
+        -- to ensure we invoke the right function
+        old_path := pg_catalog.current_setting('search_path');
+
+        -- Set a secure search_path: trusted schemas, then 'pg_temp'.
+        -- We set is_local = true so that the old value will be restored
+        -- in event of an error before we reach the function end.
+        PERFORM pg_catalog.set_config('search_path', 'admin, pg_temp', true);
+
+        -- Do whatever secure work we came for.
+        SELECT  (pwd = $2) INTO passed
+        FROM    pwds
+        WHERE   username = $1;
+
+        -- Restore caller's search_path
+        PERFORM pg_catalog.set_config('search_path', old_path, true);
+
+        RETURN passed;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+</programlisting>
+
  </refsect1>
 
  

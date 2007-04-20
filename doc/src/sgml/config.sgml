@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.121 2007/04/18 16:44:17 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.122 2007/04/20 02:37:37 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3405,9 +3405,17 @@ SELECT * FROM parent WHERE key = 2400;
         mentioned in the path then it will be searched in the specified
         order.  If <literal>pg_catalog</> is not in the path then it will
         be searched <emphasis>before</> searching any of the path items.
-        It should also be noted that the temporary-table schema,
-        <literal>pg_temp_<replaceable>nnn</></>, is implicitly searched before any of
-        these.
+       </para>
+
+       <para>
+        Likewise, the current session's temporary-table schema,
+        <literal>pg_temp_<replaceable>nnn</></>, is always searched if it
+        exists.  It can be explicitly listed in the path by using the
+        alias <literal>pg_temp</>.  If it is not listed in the path then
+        it is searched first (before even <literal>pg_catalog</>).  However,
+        the temporary schema is only searched for relation (table, view,
+        sequence, etc) and data type names.  It will never be searched for
+        function or operator names.
        </para>
 
        <para>
