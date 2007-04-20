@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.79.2.2 2006/02/10 19:01:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.79.2.3 2007/04/20 02:38:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,14 +64,32 @@
  * SQL99.  Also, this provides a way to search the system namespace first
  * without thereby making it the default creation target namespace.)
  *
+ * For security reasons, searches using the search path will ignore the temp
+ * namespace when searching for any object type other than relations and
+ * types.  (We must allow types since temp tables have rowtypes.)
+ *
  * The default creation target namespace is normally equal to the first
  * element of the explicit list, but is the "special" namespace when one
  * has been set.  If the explicit list is empty and there is no special
  * namespace, there is no default target.
  *
- * In bootstrap mode, the search path is set equal to 'pg_catalog', so that
+ * The textual specification of search_path can include "$user" to refer to
+ * the namespace named the same as the current user, if any.  (This is just
+ * ignored if there is no such namespace.)  Also, it can include "pg_temp"
+ * to refer to the current backend's temp namespace.  This is usually also
+ * ignorable if the temp namespace hasn't been set up, but there's a special
+ * case: if "pg_temp" appears first then it should be the default creation
+ * target.  We kluge this case a little bit so that the temp namespace isn't
+ * set up until the first attempt to create something in it.  (The reason for
+ * klugery is that we can't create the temp namespace outside a transaction,
+ * but initial GUC processing of search_path happens outside a transaction.)
+ * tempCreationPending is TRUE if "pg_temp" appears first in the string but
+ * is not reflected in defaultCreationNamespace because the namespace isn't
+ * set up yet.
+ *
+ * In bootstrap mode, the search path is set equal to "pg_catalog", so that
  * the system namespace is the only one searched or inserted into.
- * The initdb script is also careful to set search_path to 'pg_catalog' for
+ * The initdb script is also careful to set search_path to "pg_catalog" for
  * its post-bootstrap standalone backend runs.	Otherwise the default search
  * path is determined by GUC.  The factory default path contains the PUBLIC
  * namespace (if it exists), preceded by the user's personal namespace
@@ -99,7 +117,10 @@ static Oid	defaultCreationNamespace = InvalidOid;
 /* first explicit member of list; usually same as defaultCreationNamespace */
 static Oid	firstExplicitNamespace = InvalidOid;
 
-/* The above four values are valid only if namespaceSearchPathValid */
+/* if TRUE, defaultCreationNamespace is wrong, it should be temp namespace */
+static bool tempCreationPending = false;
+
+/* The above five values are valid only if namespaceSearchPathValid */
 static bool namespaceSearchPathValid = true;
 
 /*
@@ -244,6 +265,14 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 
 	if (newRelation->schemaname)
 	{
+		/* check for pg_temp alias */
+		if (strcmp(newRelation->schemaname, "pg_temp") == 0)
+		{
+			/* Initialize temp namespace if first time through */
+			if (!OidIsValid(myTempNamespace))
+				InitTempTableNamespace();
+			return myTempNamespace;
+		}
 		/* use exact schema given */
 		namespaceId = GetSysCacheOid(NAMESPACENAME,
 									 CStringGetDatum(newRelation->schemaname),
@@ -259,6 +288,12 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 	{
 		/* use the default creation namespace */
 		recomputeNamespacePath();
+		if (tempCreationPending)
+		{
+			/* Need to initialize temp namespace */
+			InitTempTableNamespace();
+			return myTempNamespace;
+		}
 		namespaceId = defaultCreationNamespace;
 		if (!OidIsValid(namespaceId))
 			ereport(ERROR,
@@ -531,12 +566,16 @@ FuncnameGetCandidates(List *names, int nargs)
 		}
 		else
 		{
-			/* Consider only procs that are in the search path */
+			/*
+			 * Consider only procs that are in the search path and are not
+			 * in the temp namespace.
+			 */
 			ListCell   *nsp;
 
 			foreach(nsp, namespaceSearchPath)
 			{
-				if (procform->pronamespace == lfirst_oid(nsp))
+				if (procform->pronamespace == lfirst_oid(nsp) &&
+					procform->pronamespace != myTempNamespace)
 					break;
 				pathpos++;
 			}
@@ -765,12 +804,16 @@ OpernameGetCandidates(List *names, char oprkind)
 		}
 		else
 		{
-			/* Consider only opers that are in the search path */
+			/*
+			 * Consider only opers that are in the search path and are not
+			 * in the temp namespace.
+			 */
 			ListCell   *nsp;
 
 			foreach(nsp, namespaceSearchPath)
 			{
-				if (operform->oprnamespace == lfirst_oid(nsp))
+				if (operform->oprnamespace == lfirst_oid(nsp) &&
+					operform->oprnamespace != myTempNamespace)
 					break;
 				pathpos++;
 			}
@@ -931,6 +974,9 @@ OpclassnameGetOpcid(Oid amid, const char *opcname)
 	{
 		Oid			namespaceId = lfirst_oid(l);
 
+		if (namespaceId == myTempNamespace)
+			continue;			/* do not look in temp namespace */
+
 		opcid = GetSysCacheOid(CLAAMNAMENSP,
 							   ObjectIdGetDatum(amid),
 							   PointerGetDatum(opcname),
@@ -1012,6 +1058,9 @@ ConversionGetConid(const char *conname)
 	foreach(l, namespaceSearchPath)
 	{
 		Oid			namespaceId = lfirst_oid(l);
+
+		if (namespaceId == myTempNamespace)
+			continue;			/* do not look in temp namespace */
 
 		conid = GetSysCacheOid(CONNAMENSP,
 							   PointerGetDatum(conname),
@@ -1139,6 +1188,19 @@ LookupExplicitNamespace(const char *nspname)
 	Oid			namespaceId;
 	AclResult	aclresult;
 
+	/* check for pg_temp alias */
+	if (strcmp(nspname, "pg_temp") == 0)
+	{
+		if (OidIsValid(myTempNamespace))
+			return myTempNamespace;
+		/*
+		 * Since this is used only for looking up existing objects, there
+		 * is no point in trying to initialize the temp namespace here;
+		 * and doing so might create problems for some callers.
+		 * Just fall through and give the "does not exist" error.
+		 */
+	}
+
 	namespaceId = GetSysCacheOid(NAMESPACENAME,
 								 CStringGetDatum(nspname),
 								 0, 0, 0);
@@ -1159,13 +1221,26 @@ LookupExplicitNamespace(const char *nspname)
  * LookupCreationNamespace
  *		Look up the schema and verify we have CREATE rights on it.
  *
- * This is just like LookupExplicitNamespace except for the permission check.
+ * This is just like LookupExplicitNamespace except for the permission check,
+ * and that we are willing to create pg_temp if needed.
+ *
+ * Note: calling this may result in a CommandCounterIncrement operation,
+ * if we have to create or clean out the temp namespace.
  */
 Oid
 LookupCreationNamespace(const char *nspname)
 {
 	Oid			namespaceId;
 	AclResult	aclresult;
+
+	/* check for pg_temp alias */
+	if (strcmp(nspname, "pg_temp") == 0)
+	{
+		/* Initialize temp namespace if first time through */
+		if (!OidIsValid(myTempNamespace))
+			InitTempTableNamespace();
+		return myTempNamespace;
+	}
 
 	namespaceId = GetSysCacheOid(NAMESPACENAME,
 								 CStringGetDatum(nspname),
@@ -1192,21 +1267,28 @@ LookupCreationNamespace(const char *nspname)
  * Note: this does not apply any permissions check.  Callers must check
  * for CREATE rights on the selected namespace when appropriate.
  *
- * This is *not* used for tables.  Hence, the TEMP table namespace is
- * never selected as the creation target.
+ * Note: calling this may result in a CommandCounterIncrement operation,
+ * if we have to create or clean out the temp namespace.
  */
 Oid
 QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 {
 	char	   *schemaname;
-	char	   *objname;
 	Oid			namespaceId;
 
 	/* deconstruct the name list */
-	DeconstructQualifiedName(names, &schemaname, &objname);
+	DeconstructQualifiedName(names, &schemaname, objname_p);
 
 	if (schemaname)
 	{
+		/* check for pg_temp alias */
+		if (strcmp(schemaname, "pg_temp") == 0)
+		{
+			/* Initialize temp namespace if first time through */
+			if (!OidIsValid(myTempNamespace))
+				InitTempTableNamespace();
+			return myTempNamespace;
+		}
 		/* use exact schema given */
 		namespaceId = GetSysCacheOid(NAMESPACENAME,
 									 CStringGetDatum(schemaname),
@@ -1221,6 +1303,12 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 	{
 		/* use the default creation namespace */
 		recomputeNamespacePath();
+		if (tempCreationPending)
+		{
+			/* Need to initialize temp namespace */
+			InitTempTableNamespace();
+			return myTempNamespace;
+		}
 		namespaceId = defaultCreationNamespace;
 		if (!OidIsValid(namespaceId))
 			ereport(ERROR,
@@ -1228,7 +1316,6 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 					 errmsg("no schema has been selected to create in")));
 	}
 
-	*objname_p = objname;
 	return namespaceId;
 }
 
@@ -1419,6 +1506,10 @@ FindConversionByName(List *name)
 		foreach(l, namespaceSearchPath)
 		{
 			namespaceId = lfirst_oid(l);
+
+			if (namespaceId == myTempNamespace)
+				continue;			/* do not look in temp namespace */
+
 			conoid = FindConversion(conversion_name, namespaceId);
 			if (OidIsValid(conoid))
 				return conoid;
@@ -1444,6 +1535,9 @@ FindDefaultConversionProc(int4 for_encoding, int4 to_encoding)
 	{
 		Oid			namespaceId = lfirst_oid(l);
 
+		if (namespaceId == myTempNamespace)
+			continue;			/* do not look in temp namespace */
+
 		proc = FindDefaultConversion(namespaceId, for_encoding, to_encoding);
 		if (OidIsValid(proc))
 			return proc;
@@ -1465,6 +1559,7 @@ recomputeNamespacePath(void)
 	List	   *oidlist;
 	List	   *newpath;
 	ListCell   *l;
+	bool		temp_missing;
 	Oid			firstNS;
 	MemoryContext oldcxt;
 
@@ -1492,6 +1587,7 @@ recomputeNamespacePath(void)
 	 * already been accepted.)	Don't make duplicate entries, either.
 	 */
 	oidlist = NIL;
+	temp_missing = false;
 	foreach(l, namelist)
 	{
 		char	   *curname = (char *) lfirst(l);
@@ -1521,6 +1617,21 @@ recomputeNamespacePath(void)
 					oidlist = lappend_oid(oidlist, namespaceId);
 			}
 		}
+		else if (strcmp(curname, "pg_temp") == 0)
+		{
+			/* pg_temp --- substitute temp namespace, if any */
+			if (OidIsValid(myTempNamespace))
+			{
+				if (!list_member_oid(oidlist, myTempNamespace))
+					oidlist = lappend_oid(oidlist, myTempNamespace);
+			}
+			else
+			{
+				/* If it ought to be the creation namespace, set flag */
+				if (oidlist == NIL)
+					temp_missing = true;
+			}
+		}
 		else
 		{
 			/* normal namespace reference */
@@ -1536,7 +1647,9 @@ recomputeNamespacePath(void)
 	}
 
 	/*
-	 * Remember the first member of the explicit list.
+	 * Remember the first member of the explicit list.  (Note: this is
+	 * nominally wrong if temp_missing, but we need it anyway to distinguish
+	 * explicit from implicit mention of pg_catalog.)
 	 */
 	if (oidlist == NIL)
 		firstNS = InvalidOid;
@@ -1576,9 +1689,16 @@ recomputeNamespacePath(void)
 	 */
 	firstExplicitNamespace = firstNS;
 	if (OidIsValid(mySpecialNamespace))
+	{
 		defaultCreationNamespace = mySpecialNamespace;
+		/* don't have to create temp in this state */
+		tempCreationPending = false;
+	}
 	else
+	{
 		defaultCreationNamespace = firstNS;
+		tempCreationPending = temp_missing;
+	}
 
 	/* Mark the path valid. */
 	namespaceSearchPathValid = true;
@@ -1599,6 +1719,8 @@ InitTempTableNamespace(void)
 {
 	char		namespaceName[NAMEDATALEN];
 	Oid			namespaceId;
+
+	Assert(!OidIsValid(myTempNamespace));
 
 	/*
 	 * First, do permission check to see if we are authorized to make temp
@@ -1798,8 +1920,9 @@ assign_search_path(const char *newval, bool doit, GucSource source)
 	{
 		/*
 		 * Verify that all the names are either valid namespace names or
-		 * "$user".  We do not require $user to correspond to a valid
-		 * namespace.  We do not check for USAGE rights, either; should we?
+		 * "$user" or "pg_temp".  We do not require $user to correspond to a
+		 * valid namespace, and pg_temp might not exist yet.  We do not check
+		 * for USAGE rights, either; should we?
 		 *
 		 * When source == PGC_S_TEST, we are checking the argument of an ALTER
 		 * DATABASE SET or ALTER USER SET command.	It could be that the
@@ -1812,6 +1935,8 @@ assign_search_path(const char *newval, bool doit, GucSource source)
 			char	   *curname = (char *) lfirst(l);
 
 			if (strcmp(curname, "$user") == 0)
+				continue;
+			if (strcmp(curname, "pg_temp") == 0)
 				continue;
 			if (!SearchSysCacheExists(NAMESPACENAME,
 									  CStringGetDatum(curname),
@@ -1857,6 +1982,7 @@ InitializeSearchPath(void)
 		MemoryContextSwitchTo(oldcxt);
 		defaultCreationNamespace = PG_CATALOG_NAMESPACE;
 		firstExplicitNamespace = PG_CATALOG_NAMESPACE;
+		tempCreationPending = false;
 		namespaceSearchPathValid = true;
 		namespaceUser = GetUserId();
 	}
@@ -1892,6 +2018,9 @@ NamespaceCallback(Datum arg, Oid relid)
  *
  * The returned list includes the implicitly-prepended namespaces only if
  * includeImplicit is true.
+ *
+ * Note: calling this may result in a CommandCounterIncrement operation,
+ * if we have to create or clean out the temp namespace.
  */
 List *
 fetch_search_path(bool includeImplicit)
@@ -1899,6 +2028,19 @@ fetch_search_path(bool includeImplicit)
 	List	   *result;
 
 	recomputeNamespacePath();
+
+	/*
+	 * If the temp namespace should be first, force it to exist.  This is
+	 * so that callers can trust the result to reflect the actual default
+	 * creation namespace.  It's a bit bogus to do this here, since
+	 * current_schema() is supposedly a stable function without side-effects,
+	 * but the alternatives seem worse.
+	 */
+	if (tempCreationPending)
+	{
+		InitTempTableNamespace();
+		recomputeNamespacePath();
+	}
 
 	result = list_copy(namespaceSearchPath);
 	if (!includeImplicit)

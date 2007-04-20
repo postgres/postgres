@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.41 2007/04/19 13:02:30 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.42 2007/04/20 02:38:04 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -28,7 +28,8 @@ For new features, add links to the documentation sections.
    </note>
 
    <para>
-    This release contains fixes from 8.1.8.
+    This release contains a variety of fixes from 8.1.8,
+    including a security fix.
    </para>
 
    <sect2>
@@ -49,39 +50,57 @@ For new features, add links to the documentation sections.
 
      <listitem>
      <para>
-      Fix <function>to_char()</> so it properly upper/lower cases localized day or month
-      names (Pavel Stehule)
+      Support explicit placement of the temporary-table schema within
+      <varname>search_path</>, and disable searching it for functions
+      and operators (Tom)
+     </para>
+     <para>
+      This is needed to allow a security-definer function to set a
+      truly secure value of <varname>search_path</>.  Without it,
+      an unprivileged SQL user can use temporary objects to execute code
+      with the privileges of the security-definer function (CVE-2007-2138).
+      See <xref linkend="sql-createfunction"
+      endterm="sql-createfunction-title"> for more information.
      </para>
      </listitem>
 
      <listitem>
      <para>
-      <filename>/contrib/tsearch2</> fixes (Teodor)
+      <filename>/contrib/tsearch2</> crash fixes (Teodor)
      </para>
      </listitem>
 
      <listitem>
      <para>
-      Require <command>COMMIT TRANSACTION</> to be executed in the same database as
-      it was prepared (Heikki)
+      Require <command>COMMIT PREPARED</> to be executed in the same
+      database as the transaction was prepared in (Heikki)
      </para>
      </listitem>
 
      <listitem>
      <para>
-      Improve detection of <acronym>POSIX</>-style time zone names (Tom)
+      Fix potential-data-corruption bug in how <command>VACUUM FULL</> handles
+      <command>UPDATE</> chains (Tom, Pavan Deolasee)
      </para>
      </listitem>
 
      <listitem>
      <para>
-      Fix bug in how <command>VACUUM FULL</> handles <command>UPDATE</> chains (Tom, Pavan Deolasee)
+      Planner fixes, including improving outer join and bitmap scan
+      selection logic (Tom)
      </para>
      </listitem>
 
      <listitem>
      <para>
-      Improve outer join and bitmap join selection logic (Tom)
+      Fix PANIC during enlargement of a hash index (bug introduced in 8.1.6)
+      (Tom)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix POSIX-style timezone specs to follow new USA DST rules (Tom)
      </para>
      </listitem>
 
@@ -3047,7 +3066,8 @@ psql -t -f fixseq.sql db1 | psql -e db1
    </note>
 
    <para>
-    This release contains fixes from 8.0.12.
+    This release contains a variety of fixes from 8.0.12,
+    including a security fix.
    </para>
 
    <sect2>
@@ -3068,25 +3088,43 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
      <listitem>
      <para>
-      <filename>/contrib/tsearch2</> fixes (Teodor)
+      Support explicit placement of the temporary-table schema within
+      <varname>search_path</>, and disable searching it for functions
+      and operators (Tom)
+     </para>
+     <para>
+      This is needed to allow a security-definer function to set a
+      truly secure value of <varname>search_path</>.  Without it,
+      an unprivileged SQL user can use temporary objects to execute code
+      with the privileges of the security-definer function (CVE-2007-2138).
+      See <xref linkend="sql-createfunction"
+      endterm="sql-createfunction-title"> for more information.
      </para>
      </listitem>
 
      <listitem>
      <para>
-      Improve detection of <acronym>POSIX</>-style time zone names (Tom)
+      <filename>/contrib/tsearch2</> crash fixes (Teodor)
      </para>
      </listitem>
 
      <listitem>
      <para>
-      Fix bug in how <command>VACUUM FULL</> handles <command>UPDATE</> chains (Tom, Pavan Deolasee)
+      Fix potential-data-corruption bug in how <command>VACUUM FULL</> handles
+      <command>UPDATE</> chains (Tom, Pavan Deolasee)
      </para>
      </listitem>
 
      <listitem>
      <para>
-      <filename>/contrib/tsearch2</> fixes (Teodor)
+      Fix PANIC during enlargement of a hash index (bug introduced in 8.0.10)
+      (Tom)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix POSIX-style timezone specs to follow new USA DST rules (Tom)
      </para>
      </listitem>
 
@@ -6537,7 +6575,8 @@ typedefs (Michael)</para></listitem>
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.4.16.
+    This release contains fixes from 7.4.16,
+    including a security fix.
    </para>
 
    <sect2>
@@ -6558,13 +6597,37 @@ typedefs (Michael)</para></listitem>
 
      <listitem>
      <para>
-      <filename>/contrib/tsearch2</> fixes (Teodor)
+      Support explicit placement of the temporary-table schema within
+      <varname>search_path</>, and disable searching it for functions
+      and operators (Tom)
+     </para>
+     <para>
+      This is needed to allow a security-definer function to set a
+      truly secure value of <varname>search_path</>.  Without it,
+      an unprivileged SQL user can use temporary objects to execute code
+      with the privileges of the security-definer function (CVE-2007-2138).
+      See <xref linkend="sql-createfunction"
+      endterm="sql-createfunction-title"> for more information.
      </para>
      </listitem>
 
      <listitem>
      <para>
-      Fix bug in how <command>VACUUM FULL</> handles <command>UPDATE</> chains (Tom, Pavan Deolasee)
+      <filename>/contrib/tsearch2</> crash fixes (Teodor)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix potential-data-corruption bug in how <command>VACUUM FULL</> handles
+      <command>UPDATE</> chains (Tom, Pavan Deolasee)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix PANIC during enlargement of a hash index (bug introduced in 7.4.15)
+      (Tom)
      </para>
      </listitem>
 
@@ -9697,7 +9760,8 @@ DROP SCHEMA information_schema CASCADE;
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.3.18.
+    This release contains fixes from 7.3.18,
+    including a security fix.
    </para>
 
    <sect2>
@@ -9718,7 +9782,24 @@ DROP SCHEMA information_schema CASCADE;
 
      <listitem>
      <para>
-      Fix bug in how <command>VACUUM FULL</> handles <command>UPDATE</> chains (Tom, Pavan Deolasee)
+      Support explicit placement of the temporary-table schema within
+      <varname>search_path</>, and disable searching it for functions
+      and operators (Tom)
+     </para>
+     <para>
+      This is needed to allow a security-definer function to set a
+      truly secure value of <varname>search_path</>.  Without it,
+      an unprivileged SQL user can use temporary objects to execute code
+      with the privileges of the security-definer function (CVE-2007-2138).
+      See <xref linkend="sql-createfunction"
+      endterm="sql-createfunction-title"> for more information.
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix potential-data-corruption bug in how <command>VACUUM FULL</> handles
+      <command>UPDATE</> chains (Tom, Pavan Deolasee)
      </para>
      </listitem>
 
