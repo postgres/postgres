@@ -1,0 +1,30 @@
+:
+
+# This program takes release.sgml and breaks it up into
+# per-major-release files that can be copied to the proper
+# CVS tree.
+
+[ "$#" -ne 1 ] && echo "Usage: $0 release_sgml_file" 1>&2 && exit 1
+
+FILE="$1"
+
+trap "rm -f /tmp/preamble" 0 1 2 3 15
+
+# Create the SGML preamble file
+# Copy from the start of the file to the first "sect1" heading
+grep -B 1000000 "`sed -n '/<sect1/p;/<sect1/q' \"$FILE\"`" "$FILE" | 
+# exclude last line
+sed -n '$q;p' > /tmp/preamble
+
+# Create per-major-release files
+# spin over all "sect1" releases to find major release numbers
+sed -n 's/^ *<sect1 id="release-\([^-]-[^-]\).*/\1/p' "$FILE" |
+uniq |
+while read RELEASE
+do
+	# copy preamble
+	cp /tmp/preamble "$RELEASE"-"`basename $FILE`"
+	# grab remainder of file for major release
+	grep -A 10000000 "<sect1 id=\"release-$RELEASE" "$FILE" >> "$RELEASE"-"`basename $FILE`"
+done
+
