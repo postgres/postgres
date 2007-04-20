@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.42 2007/04/20 02:38:04 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.400.2.43 2007/04/20 03:27:43 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -59,8 +59,7 @@ For new features, add links to the documentation sections.
       truly secure value of <varname>search_path</>.  Without it,
       an unprivileged SQL user can use temporary objects to execute code
       with the privileges of the security-definer function (CVE-2007-2138).
-      See <xref linkend="sql-createfunction"
-      endterm="sql-createfunction-title"> for more information.
+      See <command>CREATE FUNCTION</> for more information.
      </para>
      </listitem>
 
@@ -3097,8 +3096,7 @@ psql -t -f fixseq.sql db1 | psql -e db1
       truly secure value of <varname>search_path</>.  Without it,
       an unprivileged SQL user can use temporary objects to execute code
       with the privileges of the security-definer function (CVE-2007-2138).
-      See <xref linkend="sql-createfunction"
-      endterm="sql-createfunction-title"> for more information.
+      See <command>CREATE FUNCTION</> for more information.
      </para>
      </listitem>
 
@@ -6606,8 +6604,7 @@ typedefs (Michael)</para></listitem>
       truly secure value of <varname>search_path</>.  Without it,
       an unprivileged SQL user can use temporary objects to execute code
       with the privileges of the security-definer function (CVE-2007-2138).
-      See <xref linkend="sql-createfunction"
-      endterm="sql-createfunction-title"> for more information.
+      See <command>CREATE FUNCTION</> for more information.
      </para>
      </listitem>
 
@@ -9791,8 +9788,7 @@ DROP SCHEMA information_schema CASCADE;
       truly secure value of <varname>search_path</>.  Without it,
       an unprivileged SQL user can use temporary objects to execute code
       with the privileges of the security-definer function (CVE-2007-2138).
-      See <xref linkend="sql-createfunction"
-      endterm="sql-createfunction-title"> for more information.
+      See <command>CREATE FUNCTION</> for more information.
      </para>
      </listitem>
 
