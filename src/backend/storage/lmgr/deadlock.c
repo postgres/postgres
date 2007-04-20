@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.46 2007/03/03 19:32:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.47 2007/04/20 20:15:52 momjian Exp $
  *
  *	Interface:
  *
@@ -836,6 +836,8 @@ PrintLockQueue(LOCK *lock, const char *info)
  * Append a description of a lockable object to buf.
  *
  * XXX probably this should be exported from lmgr.c or some such place.
+ * Ideally we would print names for the numeric values, but that requires
+ * getting locks on system tables, which might cause problems.
  */
 static void
 DescribeLockTag(StringInfo buf, const LOCKTAG *lock)
