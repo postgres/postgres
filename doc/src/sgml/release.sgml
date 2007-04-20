@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.41 2007/04/19 13:01:44 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.42 2007/04/20 02:38:57 tgl Exp $
 -->
 
 <appendix id="release">
@@ -14,7 +14,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.41 2007/04/19 13:01:
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.3.18.
+    This release contains fixes from 7.3.18,
+    including a security fix.
    </para>
 
    <sect2>
@@ -35,7 +36,24 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.163.2.41 2007/04/19 13:01:
 
      <listitem>
      <para>
-      Fix bug in how <command>VACUUM FULL</> handles <command>UPDATE</> chains (Tom, Pavan Deolasee)
+      Support explicit placement of the temporary-table schema within
+      <varname>search_path</>, and disable searching it for functions
+      and operators (Tom)
+     </para>
+     <para>
+      This is needed to allow a security-definer function to set a
+      truly secure value of <varname>search_path</>.  Without it,
+      an unprivileged SQL user can use temporary objects to execute code
+      with the privileges of the security-definer function (CVE-2007-2138).
+      See <xref linkend="sql-createfunction"
+      endterm="sql-createfunction-title"> for more information.
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix potential-data-corruption bug in how <command>VACUUM FULL</> handles
+      <command>UPDATE</> chains (Tom, Pavan Deolasee)
      </para>
      </listitem>
 
