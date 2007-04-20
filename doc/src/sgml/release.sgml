@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.52 2007/04/19 13:01:59 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.53 2007/04/20 02:38:44 tgl Exp $
 -->
 
 <appendix id="release">
@@ -14,7 +14,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.52 2007/04/19 13:01:
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.4.16.
+    This release contains fixes from 7.4.16,
+    including a security fix.
    </para>
 
    <sect2>
@@ -35,13 +36,37 @@ $Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.235.2.52 2007/04/19 13:01:
 
      <listitem>
      <para>
-      <filename>/contrib/tsearch2</> fixes (Teodor)
+      Support explicit placement of the temporary-table schema within
+      <varname>search_path</>, and disable searching it for functions
+      and operators (Tom)
+     </para>
+     <para>
+      This is needed to allow a security-definer function to set a
+      truly secure value of <varname>search_path</>.  Without it,
+      an unprivileged SQL user can use temporary objects to execute code
+      with the privileges of the security-definer function (CVE-2007-2138).
+      See <xref linkend="sql-createfunction"
+      endterm="sql-createfunction-title"> for more information.
      </para>
      </listitem>
 
      <listitem>
      <para>
-      Fix bug in how <command>VACUUM FULL</> handles <command>UPDATE</> chains (Tom, Pavan Deolasee)
+      <filename>/contrib/tsearch2</> crash fixes (Teodor)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix potential-data-corruption bug in how <command>VACUUM FULL</> handles
+      <command>UPDATE</> chains (Tom, Pavan Deolasee)
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix PANIC during enlargement of a hash index (bug introduced in 7.4.15)
+      (Tom)
      </para>
      </listitem>
 
@@ -3174,7 +3199,8 @@ DROP SCHEMA information_schema CASCADE;
    </note>
 
    <para>
-    This release contains a variety of fixes from 7.3.18.
+    This release contains fixes from 7.3.18,
+    including a security fix.
    </para>
 
    <sect2>
@@ -3195,7 +3221,24 @@ DROP SCHEMA information_schema CASCADE;
 
      <listitem>
      <para>
-      Fix bug in how <command>VACUUM FULL</> handles <command>UPDATE</> chains (Tom, Pavan Deolasee)
+      Support explicit placement of the temporary-table schema within
+      <varname>search_path</>, and disable searching it for functions
+      and operators (Tom)
+     </para>
+     <para>
+      This is needed to allow a security-definer function to set a
+      truly secure value of <varname>search_path</>.  Without it,
+      an unprivileged SQL user can use temporary objects to execute code
+      with the privileges of the security-definer function (CVE-2007-2138).
+      See <xref linkend="sql-createfunction"
+      endterm="sql-createfunction-title"> for more information.
+     </para>
+     </listitem>
+
+     <listitem>
+     <para>
+      Fix potential-data-corruption bug in how <command>VACUUM FULL</> handles
+      <command>UPDATE</> chains (Tom, Pavan Deolasee)
      </para>
      </listitem>
 

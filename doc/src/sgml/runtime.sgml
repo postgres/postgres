@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.215.2.9 2006/05/21 20:11:58 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.215.2.10 2007/04/20 02:38:46 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1980,9 +1980,17 @@ SET ENABLE_SEQSCAN TO OFF;
         mentioned in the path then it will be searched in the specified
         order.  If <literal>pg_catalog</> is not in the path then it will
         be searched <emphasis>before</> searching any of the path items.
-        It should also be noted that the temporary-table schema,
-        <literal>pg_temp_<replaceable>nnn</></>, is implicitly searched before any of
-        these.
+       </para>
+
+       <para>
+        Likewise, the current session's temporary-table schema,
+        <literal>pg_temp_<replaceable>nnn</></>, is always searched if it
+        exists.  It can be explicitly listed in the path by using the
+        alias <literal>pg_temp</>.  If it is not listed in the path then
+        it is searched first (before even <literal>pg_catalog</>).  However,
+        the temporary schema is only searched for relation (table, view,
+        sequence, etc) and data type names.  It will never be searched for
+        function or operator names.
        </para>
 
        <para>
