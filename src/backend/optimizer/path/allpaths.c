@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.161 2007/02/22 22:00:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.162 2007/04/21 06:18:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,6 +196,25 @@ set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, Index rti)
 static void
 set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
+	/*
+	 * If we can prove we don't need to scan the rel via constraint exclusion,
+	 * set up a single dummy path for it.  (Rather than inventing a special
+	 * "dummy" path type, we represent this as an AppendPath with no members.)
+	 */
+	if (relation_excluded_by_constraints(rel, rte))
+	{
+		/* Set dummy size estimates --- we leave attr_widths[] as zeroes */
+		rel->rows = 0;
+		rel->width = 0;
+
+		add_path(rel, (Path *) create_append_path(rel, NIL));
+
+		/* Select cheapest path (pretty easy in this case...) */
+		set_cheapest(rel);
+
+		return;
+	}
+
 	/* Mark rel with estimated output rows, width, etc */
 	set_baserel_size_estimates(root, rel);
 
@@ -209,24 +228,6 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 */
 	if (create_or_index_quals(root, rel))
 		set_baserel_size_estimates(root, rel);
-
-	/*
-	 * If we can prove we don't need to scan the rel via constraint exclusion,
-	 * set up a single dummy path for it.  (Rather than inventing a special
-	 * "dummy" path type, we represent this as an AppendPath with no members.)
-	 */
-	if (relation_excluded_by_constraints(rel, rte))
-	{
-		/* Reset output-rows estimate to 0 */
-		rel->rows = 0;
-
-		add_path(rel, (Path *) create_append_path(rel, NIL));
-
-		/* Select cheapest path (pretty easy in this case...) */
-		set_cheapest(rel);
-
-		return;
-	}
 
 	/*
 	 * Generate paths and add them to the rel's pathlist.
@@ -369,7 +370,8 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		/*
 		 * Propagate size information from the child back to the parent. For
 		 * simplicity, we use the largest widths from any child as the parent
-		 * estimates.
+		 * estimates.  (If you want to change this, beware of child
+		 * attr_widths[] entries that haven't been set and are still 0.)
 		 */
 		rel->rows += childrel->rows;
 		if (childrel->width > rel->width)
