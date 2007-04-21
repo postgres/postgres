@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.136 2007/01/05 22:19:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.137 2007/04/21 04:49:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,6 +158,7 @@ static uint32
 CatalogCacheComputeHashValue(CatCache *cache, int nkeys, ScanKey cur_skey)
 {
 	uint32		hashValue = 0;
+	uint32		oneHash;
 
 	CACHE4_elog(DEBUG2, "CatalogCacheComputeHashValue %s %d %p",
 				cache->cc_relname,
@@ -167,24 +168,31 @@ CatalogCacheComputeHashValue(CatCache *cache, int nkeys, ScanKey cur_skey)
 	switch (nkeys)
 	{
 		case 4:
-			hashValue ^=
+			oneHash =
 				DatumGetUInt32(DirectFunctionCall1(cache->cc_hashfunc[3],
-											  cur_skey[3].sk_argument)) << 9;
+												   cur_skey[3].sk_argument));
+			hashValue ^= oneHash << 24;
+			hashValue ^= oneHash >> 8;
 			/* FALLTHROUGH */
 		case 3:
-			hashValue ^=
+			oneHash =
 				DatumGetUInt32(DirectFunctionCall1(cache->cc_hashfunc[2],
-											  cur_skey[2].sk_argument)) << 6;
+												   cur_skey[2].sk_argument));
+			hashValue ^= oneHash << 16;
+			hashValue ^= oneHash >> 16;
 			/* FALLTHROUGH */
 		case 2:
-			hashValue ^=
+			oneHash =
 				DatumGetUInt32(DirectFunctionCall1(cache->cc_hashfunc[1],
-											  cur_skey[1].sk_argument)) << 3;
+												   cur_skey[1].sk_argument));
+			hashValue ^= oneHash << 8;
+			hashValue ^= oneHash >> 24;
 			/* FALLTHROUGH */
 		case 1:
-			hashValue ^=
+			oneHash =
 				DatumGetUInt32(DirectFunctionCall1(cache->cc_hashfunc[0],
 												   cur_skey[0].sk_argument));
+			hashValue ^= oneHash;
 			break;
 		default:
 			elog(FATAL, "wrong number of hash keys: %d", nkeys);
