@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.10 2007/04/12 12:46:20 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.11 2007/04/21 20:58:05 mha Exp $
 #
 use strict;
 use warnings;
@@ -210,7 +210,7 @@ sub GenerateTimezoneFiles
     my @tzfiles = split /\s+/,$1;
     unshift @tzfiles,'';
     print "Generating timezone files...";
-    system("$conf\\zic\\zic -d $target/share/timezone " . join(" src/timezone/data/", @tzfiles));
+    system("$conf\\zic\\zic -d \"$target/share/timezone\" " . join(" src/timezone/data/", @tzfiles));
     print "\n";
 }
 

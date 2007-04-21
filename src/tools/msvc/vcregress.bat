@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.10 2007/04/06 13:44:39 adunstan Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.11 2007/04/21 20:58:05 mha Exp $
 
 SETLOCAL
 SET STARTDIR=%CD%
@@ -30,13 +30,13 @@ IF NOT "%2"=="" SET SCHEDULE=%2
 
 SET PERL5LIB=..\..\tools\msvc
 
-if "%what%"=="INSTALLCHECK" ..\..\..\%CONFIG%\pg_regress\pg_regress --psqldir=..\..\..\%CONFIG%\psql --schedule=%SCHEDULE%_schedule --multibyte=SQL_ASCII --load-language=plpgsql --no-locale
-if "%what%"=="CHECK" ..\..\..\%CONFIG%\pg_regress\pg_regress --psqldir=..\..\..\%CONFIG%\psql --schedule=%SCHEDULE%_schedule --multibyte=SQL_ASCII --load-language=plpgsql --no-locale --temp-install=./tmp_check --top-builddir=%TOPDIR% --temp-port=%TEMPPORT%
+if "%what%"=="INSTALLCHECK" ..\..\..\%CONFIG%\pg_regress\pg_regress --psqldir="..\..\..\%CONFIG%\psql" --schedule=%SCHEDULE%_schedule --multibyte=SQL_ASCII --load-language=plpgsql --no-locale
+if "%what%"=="CHECK" ..\..\..\%CONFIG%\pg_regress\pg_regress --psqldir="..\..\..\%CONFIG%\psql" --schedule=%SCHEDULE%_schedule --multibyte=SQL_ASCII --load-language=plpgsql --no-locale --temp-install=./tmp_check --top-builddir="%TOPDIR%" --temp-port=%TEMPPORT%
 if "%what%"=="PLCHECK" call :plcheck
 if "%what%"=="CONTRIBCHECK" call :contribcheck
 SET E=%ERRORLEVEL%
 
-cd %STARTDIR%
+cd "%STARTDIR%"
 exit /b %E%
 
 :usage
