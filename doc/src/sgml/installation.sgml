@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.287 2007/04/21 15:30:28 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.288 2007/04/21 17:26:17 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -906,6 +906,19 @@ su - postgres
         <para>
          Build with Bonjour support.  This requires Bonjour support
          in your operating system.  Recommended on Mac OS X.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-ossp-uuid</option></term>
+       <listitem>
+        <para>
+         Build with the <ulink
+         url="http://www.ossp.org/pkg/lib/uuid/">OSSP UUID
+         library</ulink>.  This is necessary for the contrib module
+         <literal>uuid-ossp</literal> which provides functions to
+         generate UUIDs.<indexterm><primary>UUID</primary></indexterm>
         </para>
        </listitem>
       </varlistentry>

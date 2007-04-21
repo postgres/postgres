@@ -133,6 +133,10 @@ tsearch2 -
 	by Teodor Sigaev <teodor@sigaev.ru> and Oleg Bartunov
 	<oleg@sai.msu.su>.
 
+uuid-ossp -
+	UUID generation functions
+	by Peter Eisentraut <peter_e@gmx.net>
+
 vacuumlo -
 	Remove orphaned large objects
 	by Peter T Mount <peter@retep.org.uk>

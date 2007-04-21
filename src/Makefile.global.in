@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.235 2007/04/15 12:48:23 adunstan Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.236 2007/04/21 17:26:18 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -152,6 +152,7 @@ with_perl	= @with_perl@
 with_python	= @with_python@
 with_tcl	= @with_tcl@
 with_openssl	= @with_openssl@
+with_ossp_uuid	= @with_ossp_uuid@
 with_libxml	= @with_libxml@
 with_libxslt	= @with_libxslt@
 with_zlib	= @with_zlib@
