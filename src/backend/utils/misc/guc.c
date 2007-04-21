@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.386 2007/04/18 16:44:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.387 2007/04/21 20:02:40 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2481,7 +2481,8 @@ set_string_field(struct config_string * conf, char **field, char *newval)
 	if (oldval == NULL ||
 		oldval == *(conf->variable) ||
 		oldval == conf->reset_val ||
-		oldval == conf->tentative_val)
+		oldval == conf->tentative_val ||
+		oldval == conf->boot_val)
 		return;
 	for (stack = conf->gen.stack; stack; stack = stack->prev)
 	{
@@ -2504,7 +2505,8 @@ string_field_used(struct config_string * conf, char *strval)
 
 	if (strval == *(conf->variable) ||
 		strval == conf->reset_val ||
-		strval == conf->tentative_val)
+		strval == conf->tentative_val ||
+		strval == conf->boot_val)
 		return true;
 	for (stack = conf->gen.stack; stack; stack = stack->prev)
 	{
@@ -2671,6 +2673,18 @@ add_guc_variable(struct config_generic * var, int elevel)
 	qsort((void *) guc_variables, num_guc_variables,
 		  sizeof(struct config_generic *), guc_var_compare);
 	return true;
+}
+
+static int
+guc_get_index(const char *name)
+{
+	int i;
+
+	for (i = 0; i < num_guc_variables; i++)
+		if (strcasecmp(name, guc_variables[i]->name) == 0)
+			return i;
+
+	return -1;
 }
 
 /*
@@ -2851,39 +2865,39 @@ InitializeGUCOptions(void)
 					struct config_bool *conf = (struct config_bool *) gconf;
 
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true,
+						if (!(*conf->assign_hook) (conf->boot_val, true,
 												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %d",
-								 conf->gen.name, (int) conf->reset_val);
-					*conf->variable = conf->reset_val;
+								 conf->gen.name, (int) conf->boot_val);
+					*conf->variable = conf->reset_val = conf->boot_val;
 					break;
 				}
 			case PGC_INT:
 				{
 					struct config_int *conf = (struct config_int *) gconf;
 
-					Assert(conf->reset_val >= conf->min);
-					Assert(conf->reset_val <= conf->max);
+					Assert(conf->boot_val >= conf->min);
+					Assert(conf->boot_val <= conf->max);
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true,
+						if (!(*conf->assign_hook) (conf->boot_val, true,
 												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %d",
-								 conf->gen.name, conf->reset_val);
-					*conf->variable = conf->reset_val;
+								 conf->gen.name, conf->boot_val);
+					*conf->variable = conf->reset_val = conf->boot_val; 
 					break;
 				}
 			case PGC_REAL:
 				{
 					struct config_real *conf = (struct config_real *) gconf;
 
-					Assert(conf->reset_val >= conf->min);
-					Assert(conf->reset_val <= conf->max);
+					Assert(conf->boot_val >= conf->min);
+					Assert(conf->boot_val <= conf->max);
 					if (conf->assign_hook)
-						if (!(*conf->assign_hook) (conf->reset_val, true,
+						if (!(*conf->assign_hook) (conf->boot_val, true,
 												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %g",
-								 conf->gen.name, conf->reset_val);
-					*conf->variable = conf->reset_val;
+								 conf->gen.name, conf->boot_val);
+					*conf->variable = conf->reset_val = conf->boot_val; 
 					break;
 				}
 			case PGC_STRING:
@@ -3946,6 +3960,13 @@ set_config_option(const char *name, const char *value,
 	}
 
 	/*
+	 * Do not replace a value that has been set on the command line by a SIGHUP
+	 * reload
+	 */
+	if (context == PGC_SIGHUP && record->source == PGC_S_ARGV)
+		return true;
+
+	/*
 	 * Check if the option can be set at this time. See guc.h for the precise
 	 * rules. Note that we don't want to throw errors if we're in the SIGHUP
 	 * context. In that case we just ignore the attempt and return true.
@@ -4040,19 +4061,26 @@ set_config_option(const char *name, const char *value,
 	}
 
 	/*
-	 * Should we set reset/stacked values?	(If so, the behavior is not
-	 * transactional.)
+	 * Should we set reset/stacked values?  (If so, the behavior is not
+	 * transactional.)  This is done either when we get a default
+	 * value from the database's/user's/client's default settings or
+	 * when we reset a value to its default.
 	 */
-	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) && (value != NULL);
+	makeDefault = changeVal && (source <= PGC_S_OVERRIDE)
+					&& ((value != NULL) || source == PGC_S_DEFAULT);
 
 	/*
-	 * Ignore attempted set if overridden by previously processed setting.
-	 * However, if changeVal is false then plow ahead anyway since we are
-	 * trying to find out if the value is potentially good, not actually use
-	 * it. Also keep going if makeDefault is true, since we may want to set
-	 * the reset/stacked values even if we can't set the variable itself.
+	 * Ignore attempted set if overridden by previously processed
+	 * setting.  However, if changeVal is false then plow ahead anyway
+	 * since we are trying to find out if the value is potentially
+	 * good, not actually use it.  Also keep going if makeDefault is
+	 * true, since we may want to set the reset/stacked values even if
+	 * we can't set the variable itself.  There's one exception to
+	 * this rule: if we want to apply the default value to variables
+	 * that were removed from the configuration file.  This is
+	 * indicated by source == PGC_S_DEFAULT.
 	 */
-	if (record->source > source)
+	if (record->source > source && source != PGC_S_DEFAULT)
 	{
 		if (changeVal && !makeDefault)
 		{
@@ -4084,6 +4112,14 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 				}
+				/*
+				 * If value == NULL and source == PGC_S_DEFAULT then
+				 * we reset some value to its default (removed from
+				 * configuration file).
+				 */
+				else if (source == PGC_S_DEFAULT)
+					newval = conf->boot_val;
+				/* else we handle a "RESET varname" command */
 				else
 				{
 					newval = conf->reset_val;
@@ -4168,6 +4204,14 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 				}
+				/*
+				 * If value == NULL and source == PGC_S_DEFAULT then
+				 * we reset some value to its default (removed from
+				 * configuration file).
+				 */
+				else if (source == PGC_S_DEFAULT)
+					newval = conf->boot_val;
+				/* else we handle a "RESET varname" command */
 				else
 				{
 					newval = conf->reset_val;
@@ -4252,6 +4296,14 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 				}
+				/*
+				 * If value == NULL and source == PGC_S_DEFAULT then
+				 * we reset some value to its default (removed from
+				 * configuration file).
+				 */
+				else if (source == PGC_S_DEFAULT)
+					newval = conf->boot_val;
+				/* else we handle a "RESET varname" command */
 				else
 				{
 					newval = conf->reset_val;
@@ -4330,6 +4382,23 @@ set_config_option(const char *name, const char *value,
 					if (conf->gen.flags & GUC_IS_NAME)
 						truncate_identifier(newval, strlen(newval), true);
 				}
+				/*
+				 * If value == NULL and source == PGC_S_DEFAULT then
+				 * we reset some value to its default (removed from
+				 * configuration file).
+				 */
+				else if (source == PGC_S_DEFAULT)
+				{
+					if (conf->boot_val == NULL)
+						newval = NULL;
+					else
+					{
+						newval = guc_strdup(elevel, conf->boot_val);
+						if (newval == NULL)
+							return false;
+					}
+				}
+				/* else we handle a "RESET varname" command */
 				else if (conf->reset_val)
 				{
 					/*
@@ -6404,6 +6473,13 @@ assign_custom_variable_classes(const char *newval, bool doit, GucSource source)
 	int			c;
 	StringInfoData buf;
 
+	/*
+	 * Resetting custom_variable_classes by removing it from the
+	 * configuration file will lead to newval = NULL
+	 */
+	if (newval == NULL)
+		return guc_strdup(ERROR, "");
+
 	initStringInfo(&buf);
 	while ((c = *cp++) != 0)
 	{
@@ -6448,7 +6524,7 @@ assign_custom_variable_classes(const char *newval, bool doit, GucSource source)
 	if (buf.len == 0)
 		newval = NULL;
 	else if (doit)
-		newval = strdup(buf.data);
+		newval = guc_strdup(ERROR, buf.data);
 
 	pfree(buf.data);
 	return newval;

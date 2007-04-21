@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.32 2007/03/13 14:32:25 petere Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.33 2007/04/21 20:02:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,10 +154,11 @@ struct config_bool
 	/* these fields must be set correctly in initial value: */
 	/* (all but reset_val are constants) */
 	bool	   *variable;
-	bool		reset_val;
+	bool		boot_val;
 	GucBoolAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
+	bool		reset_val;
 	bool		tentative_val;
 };
 
@@ -167,12 +168,13 @@ struct config_int
 	/* these fields must be set correctly in initial value: */
 	/* (all but reset_val are constants) */
 	int		   *variable;
-	int			reset_val;
+	int			boot_val;
 	int			min;
 	int			max;
 	GucIntAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
+	int			reset_val;
 	int			tentative_val;
 };
 
@@ -182,12 +184,13 @@ struct config_real
 	/* these fields must be set correctly in initial value: */
 	/* (all but reset_val are constants) */
 	double	   *variable;
-	double		reset_val;
+	double		boot_val;
 	double		min;
 	double		max;
 	GucRealAssignHook assign_hook;
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
+	double		reset_val;
 	double		tentative_val;
 };
 

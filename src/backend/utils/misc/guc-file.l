@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.49 2007/03/13 14:32:25 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.50 2007/04/21 20:02:40 petere Exp $
  */
 
 %{
@@ -116,6 +116,9 @@ ProcessConfigFile(GucContext context)
 {
 	int			elevel;
 	struct name_value_pair *item, *head, *tail;
+	int			i;
+	bool	   *in_conffile = NULL;
+	const char *var;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
 
@@ -140,19 +143,158 @@ ProcessConfigFile(GucContext context)
 	/* Check if all options are valid */
 	for (item = head; item; item = item->next)
 	{
+		char *sep = strchr(item->name, GUC_QUALIFIER_SEPARATOR);
+		if (sep && !is_custom_class(item->name, sep - item->name))
+		{
+			ereport(elevel,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("unrecognized configuration parameter \"%s\"",
+						item->name)));
+			goto cleanup_list;
+		}
+
 		if (!set_config_option(item->name, item->value, context,
 							   PGC_S_FILE, false, false))
 			goto cleanup_list;
 	}
 
-	/* If we got here all the options checked out okay, so apply them. */
+
+	/*
+	 * Mark all variables as not showing up in the config file.  The
+	 * allocation has to take place after ParseConfigFile() since this
+	 * function can change num_guc_variables due to custom variables.
+	 * It would be easier to add a new field or status bit to struct
+	 * conf_generic, but that way we would expose internal information
+	 * that is just needed here in the following few lines.  The price
+	 * to pay for this separation are a few more loops over the set of
+	 * configuration options, but those are expected to be rather few
+	 * and we only have to pay the cost at SIGHUP.  We initialize
+	 * in_conffile only here because set_config_option() makes
+	 * guc_variables grow with custom variables.
+	 */
+	in_conffile = guc_malloc(elevel, num_guc_variables * sizeof(bool));
+	if (!in_conffile)
+		goto cleanup_list;
+	for (i = 0; i < num_guc_variables; i++)
+		in_conffile[i] = false;
+
 	for (item = head; item; item = item->next)
 	{
-		set_config_option(item->name, item->value, context,
-						  PGC_S_FILE, false, true);
+		/*
+		 * After set_config_option() the variable name item->name is
+		 * known to exist.
+		 */
+		Assert(guc_get_index(item->name) >= 0);
+		in_conffile[guc_get_index(item->name)] = true;
 	}
 
+	for (i = 0; i < num_guc_variables; i++)
+	{
+		struct config_generic *gconf = guc_variables[i];
+		if (!in_conffile[i] && gconf->source == PGC_S_FILE)
+		{
+			if (gconf->context < PGC_SIGHUP)
+				ereport(elevel,
+					(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+							 errmsg("parameter \"%s\" cannot be changed after server start; configuration file change ignored",
+									gconf->name)));
+			else
+			{
+					/* prepare */
+					GucStack   *stack;
+					if (gconf->reset_source == PGC_S_FILE)
+						gconf->reset_source = PGC_S_DEFAULT;
+					for (stack = gconf->stack; stack; stack = stack->prev)
+						if (stack->source == PGC_S_FILE)
+							stack->source = PGC_S_DEFAULT;
+					/* apply the default */
+					set_config_option(gconf->name, NULL, context,
+									  PGC_S_DEFAULT, false, true);
+			}
+		}
+		else if (!in_conffile[i] && gconf->reset_source == PGC_S_FILE)
+		{
+			/*------
+			 * Change the reset_val to default_val.  Here's an
+			 * example: In the configuration file we have
+			 *
+			 * seq_page_cost = 3.00
+			 *
+			 * Now we execute in a session
+			 *
+			 * SET seq_page_cost TO 4.00;
+			 *
+			 * Then we remove this option from the configuration file
+			 * and send SIGHUP. Now when you execute
+			 *
+			 * RESET seq_page_cost;
+			 *
+			 * it should fall back to 1.00 (the default value for
+			 * seq_page_cost) and not to 3.00 (which is the current
+			 * reset_val).
+			 */
+
+			switch (gconf->vartype)
+			{
+				case PGC_BOOL:
+					{
+						struct config_bool *conf;
+						conf = (struct config_bool *) gconf;
+						conf->reset_val = conf->boot_val;
+						break;
+					}
+				case PGC_INT:
+					{
+						struct config_int *conf;
+						conf = (struct config_int *) gconf;
+						conf->reset_val = conf->boot_val;
+						break;
+					}
+				case PGC_REAL:
+					{
+						struct config_real *conf;
+						conf = (struct config_real *) gconf;
+						conf->reset_val = conf->boot_val;
+						break;
+					}
+				case PGC_STRING:
+					{
+						struct config_string   *conf;
+						conf = (struct config_string *) gconf;
+						/*
+						 * We can cast away the const here because we
+						 * won't free the address.  It is protected by
+						 * set_string_field() and string_field_used().
+						 */
+						conf->reset_val = (char *) conf->boot_val;
+						break;
+					}
+			}
+		}
+	}
+
+	/* If we got here all the options checked out okay, so apply them. */
+	for (item = head; item; item = item->next)
+		set_config_option(item->name, item->value, context,
+						  PGC_S_FILE, false, true);
+
+	/*
+	 * Reset variables to the value of environment variables
+	 * (PGC_S_ENV_VAR overrules PGC_S_FILE).  PGPORT is ignored,
+	 * because it cannot be changed without restart.
+	 */
+	var = getenv("PGDATESTYLE");
+	if (var != NULL)
+		set_config_option("datestyle", var, context,
+						  PGC_S_ENV_VAR, false, true);
+
+	var = getenv("PGCLIENTENCODING");
+	if (var != NULL)
+		set_config_option("client_encoding", var, context,
+						  PGC_S_ENV_VAR, false, true);
+
  cleanup_list:
+	free(in_conffile);
 	free_name_value_list(head);
 }
 
@@ -312,14 +454,14 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 			{
 				pfree(opt_name);
 				pfree(opt_value);
-				/* we assume error message was logged already */
+
+				/* We assume the error message was logged already. */
 				OK = false;
 				goto cleanup_exit;
 			}
-			pfree(opt_name);
-			pfree(opt_value);
 		}
-		else
+
+		if (pg_strcasecmp(opt_name, "include") != 0)
 		{
 			/* append to list */
 			struct name_value_pair *item;
