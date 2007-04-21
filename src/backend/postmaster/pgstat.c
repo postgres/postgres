@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.152 2007/03/30 18:34:55 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.153 2007/04/21 04:10:53 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -114,6 +114,14 @@ static bool pgStatRunningInCollector = false;
  * Place where backends store per-table info to be sent to the collector.
  * We store shared relations separately from non-shared ones, to be able to
  * send them in separate messages.
+ *
+ * NOTE: once allocated, a PgStat_MsgTabstat struct belonging to a
+ * TabStatArray is never moved or deleted for the life of the backend.
+ * Also, we zero out the t_id fields of the contained PgStat_TableEntry
+ * structs whenever they are not actively in use.  This allows PgStat_Info
+ * pointers to be treated as long-lived data, avoiding repeated searches in
+ * pgstat_initstats() when a relation is repeatedly heap_open'd or
+ * index_open'd during a transaction.
  */
 typedef struct TabStatArray
 {
@@ -169,6 +177,7 @@ static void pgstat_write_statsfile(void);
 static HTAB *pgstat_read_statsfile(Oid onlydb);
 static void backend_read_statsfile(void);
 static void pgstat_read_current_status(void);
+static void pgstat_report_one_tabstat(TabStatArray *tsarr, Oid dbid);
 static HTAB *pgstat_collect_oids(Oid catalogid);
 
 static void pgstat_setup_memcxt(void);
@@ -606,25 +615,22 @@ void allow_immediate_pgstat_restart(void)
 void
 pgstat_report_tabstat(void)
 {
-	int			i;
-
-	if (pgStatSock < 0 ||
-		(!pgstat_collect_tuplelevel &&
-		 !pgstat_collect_blocklevel))
-	{
-		/* Not reporting stats, so just flush whatever we have */
-		RegularTabStat.tsa_used = 0;
-		SharedTabStat.tsa_used = 0;
-		return;
-	}
-
 	/*
 	 * For each message buffer used during the last query set the header
-	 * fields and send it out.
+	 * fields and send it out; then mark the entries unused.
 	 */
-	for (i = 0; i < RegularTabStat.tsa_used; i++)
+	pgstat_report_one_tabstat(&RegularTabStat, MyDatabaseId);
+	pgstat_report_one_tabstat(&SharedTabStat, InvalidOid);
+}
+
+static void
+pgstat_report_one_tabstat(TabStatArray *tsarr, Oid dbid)
+{
+	int			i;
+
+	for (i = 0; i < tsarr->tsa_used; i++)
 	{
-		PgStat_MsgTabstat *tsmsg = RegularTabStat.tsa_messages[i];
+		PgStat_MsgTabstat *tsmsg = tsarr->tsa_messages[i];
 		int			n;
 		int			len;
 
@@ -637,32 +643,24 @@ pgstat_report_tabstat(void)
 		pgStatXactCommit = 0;
 		pgStatXactRollback = 0;
 
-		pgstat_setheader(&tsmsg->m_hdr, PGSTAT_MTYPE_TABSTAT);
-		tsmsg->m_databaseid = MyDatabaseId;
-		pgstat_send(tsmsg, len);
+		/*
+		 * It's unlikely we'd get here with no socket, but maybe not
+		 * impossible
+		 */
+		if (pgStatSock >= 0)
+		{
+			pgstat_setheader(&tsmsg->m_hdr, PGSTAT_MTYPE_TABSTAT);
+			tsmsg->m_databaseid = dbid;
+			pgstat_send(tsmsg, len);
+		}
+
+		/*
+		 * Zero out the entries, to mark them unused and prepare them
+		 * for next use.
+		 */
+		MemSet(tsmsg, 0, len);
 	}
-	RegularTabStat.tsa_used = 0;
-
-	/* Ditto, for shared relations */
-	for (i = 0; i < SharedTabStat.tsa_used; i++)
-	{
-		PgStat_MsgTabstat *tsmsg = SharedTabStat.tsa_messages[i];
-		int			n;
-		int			len;
-
-		n = tsmsg->m_nentries;
-		len = offsetof(PgStat_MsgTabstat, m_entry[0]) +
-			n * sizeof(PgStat_TableEntry);
-
-		/* We don't report transaction commit/abort here */
-		tsmsg->m_xact_commit = 0;
-		tsmsg->m_xact_rollback = 0;
-
-		pgstat_setheader(&tsmsg->m_hdr, PGSTAT_MTYPE_TABSTAT);
-		tsmsg->m_databaseid = InvalidOid;
-		pgstat_send(tsmsg, len);
-	}
-	SharedTabStat.tsa_used = 0;
+	tsarr->tsa_used = 0;
 }
 
 
@@ -1013,7 +1011,7 @@ more_tabstat_space(TabStatArray *tsarr)
 
 	newAlloc = tsarr->tsa_alloc + TABSTAT_QUANTUM;
 
-	/* Create (another) quantum of message buffers */
+	/* Create (another) quantum of message buffers, and zero them */
 	newMessages = (PgStat_MsgTabstat *)
 		MemoryContextAllocZero(TopMemoryContext,
 							   sizeof(PgStat_MsgTabstat) * TABSTAT_QUANTUM);
@@ -1043,6 +1041,17 @@ more_tabstat_space(TabStatArray *tsarr)
  *	of Relation or Scan structures. The data placed into these
  *	structures from here tell where later to count for buffer reads,
  *	scans and tuples fetched.
+ *
+ *	NOTE: PgStat_Info pointers in scan structures are really redundant
+ *	with those in relcache entries.  The passed stats pointer might point
+ *	either to the Relation struct's own pgstat_info field, or to one in
+ *	a scan structure; we'll set the Relation pg_statinfo and copy it to
+ *	the scan struct.
+ *
+ *	We assume that a relcache entry's pgstat_info field is zeroed by
+ *	relcache.c when the relcache entry is made; thereafter it is long-lived
+ *	data.  We can avoid repeated searches of the TabStat arrays when the
+ *	same relation is touched repeatedly within a transaction.
  * ----------
  */
 void
@@ -1055,21 +1064,31 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	int			mb;
 	int			i;
 
-	/*
-	 * Initialize data not to count at all.
-	 */
-	stats->tabentry = NULL;
-
 	if (pgStatSock < 0 ||
 		!(pgstat_collect_tuplelevel ||
 		  pgstat_collect_blocklevel))
+	{
+		/* We're not counting at all. */
+		stats->tabentry = NULL;
 		return;
+	}
 
-	tsarr = rel->rd_rel->relisshared ? &SharedTabStat : &RegularTabStat;
+	/*
+	 * If we already set up this relation in the current transaction,
+	 * just copy the pointer.
+	 */
+	if (rel->pgstat_info.tabentry != NULL &&
+		((PgStat_TableEntry *) rel->pgstat_info.tabentry)->t_id == rel_id)
+	{
+		stats->tabentry = rel->pgstat_info.tabentry;
+		return;
+	}
 
 	/*
 	 * Search the already-used message slots for this relation.
 	 */
+	tsarr = rel->rd_rel->relisshared ? &SharedTabStat : &RegularTabStat;
+
 	for (mb = 0; mb < tsarr->tsa_used; mb++)
 	{
 		tsmsg = tsarr->tsa_messages[mb];
@@ -1078,7 +1097,8 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 		{
 			if (tsmsg->m_entry[i].t_id == rel_id)
 			{
-				stats->tabentry = (void *) &(tsmsg->m_entry[i]);
+				rel->pgstat_info.tabentry = (void *) &(tsmsg->m_entry[i]);
+				stats->tabentry = rel->pgstat_info.tabentry;
 				return;
 			}
 		}
@@ -1088,13 +1108,14 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 
 		/*
 		 * Not found, but found a message buffer with an empty slot instead.
-		 * Fine, let's use this one.
+		 * Fine, let's use this one.  We assume the entry was already zeroed,
+		 * either at creation or after last use.
 		 */
 		i = tsmsg->m_nentries++;
 		useent = &tsmsg->m_entry[i];
-		MemSet(useent, 0, sizeof(PgStat_TableEntry));
 		useent->t_id = rel_id;
-		stats->tabentry = (void *) useent;
+		rel->pgstat_info.tabentry = (void *) useent;
+		stats->tabentry = rel->pgstat_info.tabentry;
 		return;
 	}
 
@@ -1111,9 +1132,9 @@ pgstat_initstats(PgStat_Info *stats, Relation rel)
 	tsmsg = tsarr->tsa_messages[mb];
 	tsmsg->m_nentries = 1;
 	useent = &tsmsg->m_entry[0];
-	MemSet(useent, 0, sizeof(PgStat_TableEntry));
 	useent->t_id = rel_id;
-	stats->tabentry = (void *) useent;
+	rel->pgstat_info.tabentry = (void *) useent;
+	stats->tabentry = rel->pgstat_info.tabentry;
 }
 
 
