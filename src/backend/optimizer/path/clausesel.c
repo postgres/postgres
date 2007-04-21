@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.84 2007/02/19 07:03:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.85 2007/04/21 21:01:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -500,7 +500,7 @@ clause_selectivity(PlannerInfo *root,
 		if (var->varlevelsup == 0 &&
 			(varRelid == 0 || varRelid == (int) var->varno))
 		{
-			RangeTblEntry *rte = rt_fetch(var->varno, root->parse->rtable);
+			RangeTblEntry *rte = planner_rt_fetch(var->varno, root);
 
 			if (rte->rtekind == RTE_SUBQUERY)
 			{

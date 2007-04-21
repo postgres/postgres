@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.99 2007/01/20 20:45:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.100 2007/04/21 21:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,7 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	Path	   *cheapestpath;
 	Path	   *sortedpath;
 	Index		rti;
+	ListCell   *lc;
 	double		total_pages;
 
 	/* Make tuple_fraction accessible to lower-level routines */
@@ -122,6 +123,20 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 	root->right_join_clauses = NIL;
 	root->full_join_clauses = NIL;
 	root->oj_info_list = NIL;
+
+	/*
+	 * Make a flattened version of the rangetable for faster access (this
+	 * is OK because the rangetable won't change any more).
+	 */
+	root->simple_rte_array = (RangeTblEntry **)
+		palloc0(root->simple_rel_array_size * sizeof(RangeTblEntry *));
+	rti = 1;
+	foreach(lc, parse->rtable)
+	{
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lc);
+
+		root->simple_rte_array[rti++] = rte;
+	}
 
 	/*
 	 * Construct RelOptInfo nodes for all base relations in query, and

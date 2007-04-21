@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.232 2007/04/06 22:33:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.233 2007/04/21 21:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3487,7 +3487,7 @@ examine_variable(PlannerInfo *root, Node *node, int varRelid,
 		vardata->atttype = var->vartype;
 		vardata->atttypmod = var->vartypmod;
 
-		rte = rt_fetch(var->varno, root->parse->rtable);
+		rte = root->simple_rte_array[var->varno];
 
 		if (rte->inh)
 		{

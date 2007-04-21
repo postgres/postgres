@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.86 2007/02/22 22:00:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.87 2007/04/21 21:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,14 +56,14 @@ build_simple_rel(PlannerInfo *root, int relid, RelOptKind reloptkind)
 	RelOptInfo *rel;
 	RangeTblEntry *rte;
 
-	/* Fetch RTE for relation */
-	Assert(relid > 0 && relid <= list_length(root->parse->rtable));
-	rte = rt_fetch(relid, root->parse->rtable);
-
 	/* Rel should not exist already */
-	Assert(relid < root->simple_rel_array_size);
+	Assert(relid > 0 && relid < root->simple_rel_array_size);
 	if (root->simple_rel_array[relid] != NULL)
 		elog(ERROR, "rel %d already exists", relid);
+
+	/* Fetch RTE for relation */
+	rte = root->simple_rte_array[relid];
+	Assert(rte != NULL);
 
 	rel = makeNode(RelOptInfo);
 	rel->reloptkind = reloptkind;

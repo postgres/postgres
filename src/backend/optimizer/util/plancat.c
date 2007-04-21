@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.133 2007/04/06 22:33:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.134 2007/04/21 21:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,6 +497,9 @@ get_relation_constraints(Oid relationObjectId, RelOptInfo *rel)
  * Detect whether the relation need not be scanned because it has either
  * self-inconsistent restrictions, or restrictions inconsistent with the
  * relation's CHECK constraints.
+ *
+ * Note: this examines only rel->relid and rel->baserestrictinfo; therefore
+ * it can be called before filling in other fields of the RelOptInfo.
  */
 bool
 relation_excluded_by_constraints(RelOptInfo *rel, RangeTblEntry *rte)
@@ -595,7 +598,7 @@ build_physical_tlist(PlannerInfo *root, RelOptInfo *rel)
 {
 	List	   *tlist = NIL;
 	Index		varno = rel->relid;
-	RangeTblEntry *rte = rt_fetch(varno, root->parse->rtable);
+	RangeTblEntry *rte = planner_rt_fetch(varno, root);
 	Relation	relation;
 	Query	   *subquery;
 	Var		   *var;

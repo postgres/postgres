@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.140 2007/04/06 22:33:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.141 2007/04/21 21:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,14 @@ typedef struct PlannerInfo
 	int			simple_rel_array_size;	/* allocated size of array */
 
 	/*
+	 * simple_rte_array is the same length as simple_rel_array and holds
+	 * pointers to the associated rangetable entries.  This lets us avoid
+	 * rt_fetch(), which can be a bit slow once large inheritance sets have
+	 * been expanded.
+	 */
+	RangeTblEntry **simple_rte_array;			/* rangetable as an array */
+
+	/*
 	 * join_rel_list is a list of all join-relation RelOptInfos we have
 	 * considered in this planning run.  For small problems we just scan the
 	 * list to do lookups, but when there are many join relations we build a
@@ -165,6 +173,16 @@ typedef struct PlannerInfo
 	bool		hasPseudoConstantQuals; /* true if any RestrictInfo has
 										 * pseudoconstant = true */
 } PlannerInfo;
+
+
+/*
+ * In places where it's known that simple_rte_array[] must have been prepared
+ * already, we just index into it to fetch RTEs.  In code that might be
+ * executed before or after entering query_planner(), use this macro.
+ */
+#define planner_rt_fetch(rti, root) \
+	((root)->simple_rte_array ? (root)->simple_rte_array[rti] : \
+	 rt_fetch(rti, (root)->parse->rtable))
 
 
 /*----------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.162 2007/04/21 06:18:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.163 2007/04/21 21:01:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,8 @@ int			geqo_threshold;
 
 
 static void set_base_rel_pathlists(PlannerInfo *root);
-static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, Index rti);
+static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
+							 Index rti, RangeTblEntry *rte);
 static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -144,7 +145,7 @@ set_base_rel_pathlists(PlannerInfo *root)
 		if (rel->reloptkind != RELOPT_BASEREL)
 			continue;
 
-		set_rel_pathlist(root, rel, rti);
+		set_rel_pathlist(root, rel, rti, root->simple_rte_array[rti]);
 	}
 }
 
@@ -153,10 +154,9 @@ set_base_rel_pathlists(PlannerInfo *root)
  *	  Build access paths for a base relation
  */
 static void
-set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, Index rti)
+set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
+				 Index rti, RangeTblEntry *rte)
 {
-	RangeTblEntry *rte = rt_fetch(rti, root->parse->rtable);
-
 	if (rte->inh)
 	{
 		/* It's an "append relation", process accordingly */
@@ -200,8 +200,11 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 	 * If we can prove we don't need to scan the rel via constraint exclusion,
 	 * set up a single dummy path for it.  (Rather than inventing a special
 	 * "dummy" path type, we represent this as an AppendPath with no members.)
+	 * We only need to check for regular baserels; if it's an otherrel, CE
+	 * was already checked in set_append_rel_pathlist().
 	 */
-	if (relation_excluded_by_constraints(rel, rte))
+	if (rel->reloptkind == RELOPT_BASEREL &&
+		relation_excluded_by_constraints(rel, rte))
 	{
 		/* Set dummy size estimates --- we leave attr_widths[] as zeroes */
 		rel->rows = 0;
@@ -294,6 +297,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	{
 		AppendRelInfo *appinfo = (AppendRelInfo *) lfirst(l);
 		int			childRTindex;
+		RangeTblEntry *childRTE;
 		RelOptInfo *childrel;
 		Path	   *childpath;
 		ListCell   *parentvars;
@@ -304,6 +308,7 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 			continue;
 
 		childRTindex = appinfo->child_relid;
+		childRTE = root->simple_rte_array[childRTindex];
 
 		/*
 		 * The child rel's RelOptInfo was already created during
@@ -313,17 +318,28 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		Assert(childrel->reloptkind == RELOPT_OTHER_MEMBER_REL);
 
 		/*
-		 * Copy the parent's targetlist and quals to the child, with
-		 * appropriate substitution of variables.
+		 * We have to copy the parent's targetlist and quals to the child,
+		 * with appropriate substitution of variables.  However, only the
+		 * baserestrictinfo quals are needed before we can check for
+		 * constraint exclusion; so do that first and then check to see
+		 * if we can disregard this child.
 		 */
-		childrel->reltargetlist = (List *)
-			adjust_appendrel_attrs((Node *) rel->reltargetlist,
-								   appinfo);
 		childrel->baserestrictinfo = (List *)
 			adjust_appendrel_attrs((Node *) rel->baserestrictinfo,
 								   appinfo);
+
+		if (relation_excluded_by_constraints(childrel, childRTE))
+		{
+			/* this child need not be scanned, so just disregard it */
+			continue;
+		}
+
+		/* CE failed, so finish copying targetlist and join quals */
 		childrel->joininfo = (List *)
 			adjust_appendrel_attrs((Node *) rel->joininfo,
+								   appinfo);
+		childrel->reltargetlist = (List *)
+			adjust_appendrel_attrs((Node *) rel->reltargetlist,
 								   appinfo);
 
 		/*
@@ -353,12 +369,9 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 		 * It's possible that the child is itself an appendrel, in which case
 		 * we can "cut out the middleman" and just add its child paths to our
 		 * own list.  (We don't try to do this earlier because we need to
-		 * apply both levels of transformation to the quals.) This test also
-		 * handles the case where the child rel need not be scanned because of
-		 * constraint exclusion: it'll have an Append path with no subpaths,
-		 * and will vanish from our list.
+		 * apply both levels of transformation to the quals.)
 		 */
-		set_rel_pathlist(root, childrel, childRTindex);
+		set_rel_pathlist(root, childrel, childRTindex, childRTE);
 
 		childpath = childrel->cheapest_total_path;
 		if (IsA(childpath, AppendPath))

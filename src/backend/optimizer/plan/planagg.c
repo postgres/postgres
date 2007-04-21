@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.30 2007/03/17 00:11:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planagg.c,v 1.31 2007/04/21 21:01:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,7 @@ optimize_minmax_aggregates(PlannerInfo *root, List *tlist, Path *best_path)
 	if (!IsA(jtnode, RangeTblRef))
 		return NULL;
 	rtr = (RangeTblRef *) jtnode;
-	rte = rt_fetch(rtr->rtindex, parse->rtable);
+	rte = planner_rt_fetch(rtr->rtindex, root);
 	if (rte->rtekind != RTE_RELATION || rte->inh)
 		return NULL;
 	rel = find_base_rel(root, rtr->rtindex);
