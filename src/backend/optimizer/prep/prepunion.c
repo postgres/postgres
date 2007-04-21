@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.140 2007/03/17 00:11:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.141 2007/04/21 05:56:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -973,31 +973,42 @@ make_inh_translation_lists(Relation oldrelation, Relation newrelation,
 		 * Otherwise we have to search for the matching column by name.
 		 * There's no guarantee it'll have the same column position, because
 		 * of cases like ALTER TABLE ADD COLUMN and multiple inheritance.
+		 * However, in simple cases it will be the same column number, so
+		 * try that before we go groveling through all the columns.
+		 *
+		 * Note: the test for (att = ...) != NULL cannot fail, it's just a
+		 * notational device to include the assignment into the if-clause.
 		 */
-		for (new_attno = 0; new_attno < newnatts; new_attno++)
+		if (old_attno < newnatts &&
+			(att = new_tupdesc->attrs[old_attno]) != NULL &&
+			!att->attisdropped && att->attinhcount != 0 &&
+			strcmp(attname, NameStr(att->attname)) == 0)
+			new_attno = old_attno;
+		else
 		{
-			att = new_tupdesc->attrs[new_attno];
-			if (att->attisdropped || att->attinhcount == 0)
-				continue;
-			if (strcmp(attname, NameStr(att->attname)) != 0)
-				continue;
-			/* Found it, check type */
-			if (atttypid != att->atttypid || atttypmod != att->atttypmod)
-				elog(ERROR, "attribute \"%s\" of relation \"%s\" does not match parent's type",
+			for (new_attno = 0; new_attno < newnatts; new_attno++)
+			{
+				att = new_tupdesc->attrs[new_attno];
+				if (!att->attisdropped && att->attinhcount != 0 &&
+					strcmp(attname, NameStr(att->attname)) == 0)
+					break;
+			}
+			if (new_attno >= newnatts)
+				elog(ERROR, "could not find inherited attribute \"%s\" of relation \"%s\"",
 					 attname, RelationGetRelationName(newrelation));
-
-			numbers = lappend_int(numbers, new_attno + 1);
-			vars = lappend(vars, makeVar(newvarno,
-										 (AttrNumber) (new_attno + 1),
-										 atttypid,
-										 atttypmod,
-										 0));
-			break;
 		}
 
-		if (new_attno >= newnatts)
-			elog(ERROR, "could not find inherited attribute \"%s\" of relation \"%s\"",
+		/* Found it, check type */
+		if (atttypid != att->atttypid || atttypmod != att->atttypmod)
+			elog(ERROR, "attribute \"%s\" of relation \"%s\" does not match parent's type",
 				 attname, RelationGetRelationName(newrelation));
+
+		numbers = lappend_int(numbers, new_attno + 1);
+		vars = lappend(vars, makeVar(newvarno,
+									 (AttrNumber) (new_attno + 1),
+									 atttypid,
+									 atttypmod,
+									 0));
 	}
 
 	*col_mappings = numbers;
