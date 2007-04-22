@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.sql.in,v 1.1 2007/04/21 17:26:17 petere Exp $ */
+/* $PostgreSQL: pgsql/contrib/uuid-ossp/uuid-ossp.sql.in,v 1.2 2007/04/22 21:16:18 petere Exp $ */
 
 SET search_path = public;
 
@@ -8,8 +8,8 @@ CREATE FUNCTION uuid_ns_url()  RETURNS uuid IMMUTABLE STRICT LANGUAGE C AS 'MODU
 CREATE FUNCTION uuid_ns_oid()  RETURNS uuid IMMUTABLE STRICT LANGUAGE C AS 'MODULE_PATHNAME', 'uuid_ns_oid';
 CREATE FUNCTION uuid_ns_x500() RETURNS uuid IMMUTABLE STRICT LANGUAGE C AS 'MODULE_PATHNAME', 'uuid_ns_x500';
 
-CREATE FUNCTION uuid_generate_v1()   RETURNS uuid IMMUTABLE STRICT LANGUAGE C AS 'MODULE_PATHNAME', 'uuid_generate_v1';
-CREATE FUNCTION uuid_generate_v1mc() RETURNS uuid IMMUTABLE STRICT LANGUAGE C AS 'MODULE_PATHNAME', 'uuid_generate_v1mc';
+CREATE FUNCTION uuid_generate_v1()   RETURNS uuid VOLATILE STRICT LANGUAGE C AS 'MODULE_PATHNAME', 'uuid_generate_v1';
+CREATE FUNCTION uuid_generate_v1mc() RETURNS uuid VOLATILE STRICT LANGUAGE C AS 'MODULE_PATHNAME', 'uuid_generate_v1mc';
 CREATE FUNCTION uuid_generate_v3(namespace uuid, name text) RETURNS uuid IMMUTABLE STRICT LANGUAGE C AS 'MODULE_PATHNAME', 'uuid_generate_v3';
-CREATE FUNCTION uuid_generate_v4()   RETURNS uuid IMMUTABLE STRICT LANGUAGE C AS 'MODULE_PATHNAME', 'uuid_generate_v4';
+CREATE FUNCTION uuid_generate_v4()   RETURNS uuid VOLATILE STRICT LANGUAGE C AS 'MODULE_PATHNAME', 'uuid_generate_v4';
 CREATE FUNCTION uuid_generate_v5(namespace uuid, name text) RETURNS uuid IMMUTABLE STRICT LANGUAGE C AS 'MODULE_PATHNAME', 'uuid_generate_v5';
