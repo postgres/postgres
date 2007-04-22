@@ -44,7 +44,7 @@ uuid_generate_v3(namespace uuid, name text)
 This function generates a version 3 UUID in the given namespace using
 the specified input name.  The namespace should be one of the special
 constants produced by the uuid_ns_*() functions shown below.  (It
-should be any UUID in theory.)  The name is an identifier in the
+could be any UUID in theory.)  The name is an identifier in the
 selected namespace.  For example:
 
   uuid_generate_v3(uuid_ns_url(), 'http://www.postgresql.org')
