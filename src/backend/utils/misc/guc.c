@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.387 2007/04/21 20:02:40 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.388 2007/04/22 03:52:40 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2681,7 +2681,7 @@ guc_get_index(const char *name)
 	int i;
 
 	for (i = 0; i < num_guc_variables; i++)
-		if (strcasecmp(name, guc_variables[i]->name) == 0)
+		if (guc_name_compare(name, guc_variables[i]->name) == 0)
 			return i;
 
 	return -1;
