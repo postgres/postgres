@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.74 2007/04/20 02:37:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.75 2007/04/23 16:52:53 neilc Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -518,7 +518,7 @@ SELECT * FROM dup(42);
     <xref linkend="guc-search-path"> should be set to exclude any schemas
     writable by untrusted users.  This prevents
     malicious users from creating objects that mask objects used by the
-    function.  Particularly important is in this regard is the
+    function.  Particularly important in this regard is the
     temporary-table schema, which is searched first by default, and
     is normally writable by anyone.  A secure arrangement can be had
     by forcing the temporary schema to be searched last.  To do this,
