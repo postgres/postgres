@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Apr 20 09:48:11 EDT 2007
+   Last updated: Tue Apr 24 17:28:23 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -430,7 +430,10 @@
    
   3.6) What is the upgrade process for PostgreSQL?
   
-   See http://www.postgresql.org/support/versioning.
+   See http://www.postgresql.org/support/versioning for a general
+   discussion about upgading, and
+   http://www.postgresql.org/docs/current/static/install-upgrading.html
+   for specific instructions.
    
   3.7) What computer hardware should I use?
   
