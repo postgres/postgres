@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.12 2007/04/23 17:18:58 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.13 2007/04/25 18:58:33 mha Exp $
 #
 use strict;
 use warnings;
@@ -299,9 +299,9 @@ sub CopyIncludeFiles
 {
     my $target = shift;
 
-    EnsureDirectories($target, 'include', 'include/libpq', 'include/postgresql',
-        'include/postgresql/internal', 'include/postgresql/internal/libpq',
-        'include/postgresql/server');
+    EnsureDirectories($target, 'include', 'include/libpq',
+        'include/internal', 'include/internal/libpq',
+        'include/server');
 
     CopyFiles(
         'Public headers',
@@ -314,24 +314,24 @@ sub CopyIncludeFiles
     CopyFiles('Libpq headers', $target . '/include/', 'src/interfaces/libpq/', 'libpq-fe.h');
     CopyFiles(
         'Libpq internal headers',
-        $target .'/include/postgresql/internal/',
+        $target .'/include/internal/',
         'src/interfaces/libpq/', 'libpq-int.h', 'pqexpbuffer.h'
     );
 
     CopyFiles(
         'Internal headers',
-        $target . '/include/postgresql/internal/',
+        $target . '/include/internal/',
         'src/include/', 'c.h', 'port.h', 'postgres_fe.h'
     );
-    copy('src/include/libpq/pqcomm.h', $target . '/include/postgresql/internal/libpq/')
+    copy('src/include/libpq/pqcomm.h', $target . '/include/internal/libpq/')
       || croak 'Could not copy pqcomm.h';
 
     CopyFiles(
         'Server headers',
-        $target . '/include/postgresql/server/',
+        $target . '/include/server/',
         'src/include/', 'pg_config.h', 'pg_config_os.h'
     );
-    CopySetOfFiles('', "src\\include\\*.h", $target . '/include/postgresql/server/', 1, 1);
+    CopySetOfFiles('', "src\\include\\*.h", $target . '/include/server/', 1, 1);
     my $D;
     opendir($D, 'src/include') || croak "Could not opendir on src/include!\n";
 
@@ -341,9 +341,9 @@ sub CopyIncludeFiles
         next if ($d eq 'CVS');
         next unless (-d 'src/include/' . $d);
 
-        EnsureDirectories($target . '/include/postgresql/server', $d);
+        EnsureDirectories($target . '/include/server', $d);
         system(
-            "xcopy /s /i /q /r /y src\\include\\$d\\*.h \"$target\\include\\postgresql\\server\\$d\\\"")
+            "xcopy /s /i /q /r /y src\\include\\$d\\*.h \"$target\\include\\server\\$d\\\"")
           && croak("Failed to copy include directory $d\n");
     }
     closedir($D);
@@ -358,10 +358,10 @@ sub CopyIncludeFiles
         'ecpg_config.h', split /\s+/,$1
     );
     $mf =~ /^informix_headers\s*=\s*(.*)$/m || croak "Could not find informix_headers line\n";
-    EnsureDirectories($target . '/include/postgresql', 'informix', 'informix/esql');
+    EnsureDirectories($target . '/include', 'informix', 'informix/esql');
     CopyFiles(
         'ECPG informix headers',
-        $target .'/include/postgresql/informix/esql/',
+        $target .'/include/informix/esql/',
         'src/interfaces/ecpg/include/',
         split /\s+/,$1
     );
