@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Tue Mar 20 13:43:40 EDT 2007
+原文最終更新日: Last updated: Tue Apr 24 17:29:38 EDT 2007
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
@@ -228,7 +228,7 @@ ftp://ftp.PostgreSQL.org/pub/ を使います。
 
 1.6) 最新のリリースはどれですか？
 
-PostgreSQL の最新版はバージョン 8.2.3 です。
+PostgreSQL の最新版はバージョン 8.2.4 です。
 
 我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを行なうことを計
 画しています。
@@ -546,8 +546,9 @@ postgresql.conf の中の max_connections の値を変更して postmasterを再起動するこ
 
 3.6) PostgreSQLのアップグレードの手順はどうなりますか？
 
-バージョン番号付けの方針については、http://www.postgresql.org/support/
-versioning をご覧ください。
+バージョン番号付けの方針について、更新全般についての解説は http://
+www.postgresql.org/support/versioning を、そして、詳細についての説明は http://
+www.postgresql.org/docs/current/static/install-upgrading.html をご覧ください。
 
 新しい機能を盛り込むPostgreSQLのメジャーリリースはだいたい年に1回程度行ないます
 。メジャーリリースは、たとえば、8.1から8.2へのように、バージョン番号の1番目か2
@@ -577,9 +578,9 @@ PCハードウェアはほとんど互換性がありますので、ほとんどの人は、すべてのPCハード
 ウェアが同じ品質だと思い込む傾向があります。しかし、それは間違いです。ECC RAM、
 SCSI、および、高品質マザーボードは、安いハードウェアに比べると、より信頼性が高
 く、より性能も良いのです。 PostgreSQL はほとんどのハードウェアで稼働しますが、
-信頼性や性能が重要な場合は、ハードウェアのオプションを研究することが賢明です。
-メーリングリストでもハードウェアオプションとトレードオフについて議論することが
-できます。
+信頼性や性能が重要な場合は、使用中のハードウェアのオプションについて調査するこ
+とが賢明です。我々のメーリングリスト上でもハードウェアオプションのトレードオフ
+について議論することができます。
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -1037,13 +1038,13 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2007年03月25日
+  最終更新日:   2007年04月25日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
 
                 田仲 稔(Minoru TANAKA <Tanaka.Minoru at keiken.co.jp>)
-                石井 達夫(Tatsuo ISHII <t-ishii at sra.co.jp>)
+                石井 達夫(Tatsuo ISHII <ishii at sraoss.co.jp>)
                 齊藤 知人(Tomohito SAITOH <tomos at elelab.nsc.co.jp>)
                 馬場  肇(Hajime BABA <baba at kusastro.kyoto-u.ac.jp>)
                 岡本 一幸(Kazuyuki OKAMOTO <kaz-okamoto at hitachi-system.co.jp>)
@@ -1057,7 +1058,6 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
                 神谷 英孝(Hidetaka KAMIYA <hkamiya at catvmics.ne.jp>)
                 菅原 敦(Atsushi SUGAWARA <asugawar at f3.dion.ne.jp>)
                 稲葉 香理(Kaori Inaba <i-kaori at sra.co.jp>)
-                石井 達夫(Tatsuo Ishii <t-ishii at sra.co.jp>)
 
   をはじめ、ポストグレスに関する話題豊富な日本語PostgreSQLメーリングリスト、
   和訳のきっかけを作ってくれたり、いつもチェックをしてくれる
@@ -1072,7 +1072,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
   また、最新版は以下のサイトにあります。
         http://www.PostgreSQL.jp/wg/jpugdoc/ 「JPUG文書・書籍関連分科会」
         http://www.linux.or.jp/JF/JFdocs/INDEX-database.html 「Linux JFプロジェクト」
-        http://www.rccm.co.jp/~juk/pgsql/ 「PostgreSQL Notes for Japanese」（翻訳者ページ）
+        http://www.linet.gr.jp/~juk/pgsql/ 「PostgreSQL Notes for Japanese」（翻訳者ページ）
 
   なお、この和訳に関するご意見・ご質問は(juk at PostgreSQL.jp)までお寄せください。
   （※ メールアドレスの " at " は適切に直してください。半角の "@" です。）
