@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.288 2007/04/21 17:26:17 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.289 2007/04/25 13:01:41 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -951,8 +951,8 @@ su - postgres
        <listitem>
         <para>
          Build with libxslt. The <filename>contrib/xml2</> module 
-		 relies on this library to perform Stylesheet transformations of
-		 XML. 
+         relies on this library to perform Stylesheet transformations of
+         XML. 
         </para>
        </listitem>
       </varlistentry>
