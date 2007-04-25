@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.59 2007/02/06 04:38:31 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xindex.sgml,v 1.60 2007/04/25 19:48:27 neilc Exp $ -->
 
 <sect1 id="xindex">
  <title>Interfacing Extensions To Indexes</title>
@@ -326,7 +326,7 @@
        <entry>
         Compare two keys and return an integer less than zero, zero, or
         greater than zero, indicating whether the first key is less than,
-        equal to, or greater than the second.
+        equal to, or greater than the second
        </entry>
        <entry>1</entry>
       </row>
