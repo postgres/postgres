@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.195.4.1 2005/04/11 19:51:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.195.4.2 2007/04/26 23:25:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1579,6 +1579,7 @@ CommitTransaction(void)
 	AtEOXact_Namespace(true);
 	/* smgrcommit already done */
 	AtEOXact_Files();
+	AtEOXact_HashTables(true);
 	pgstat_count_xact_commit();
 
 	CurrentResourceOwner = NULL;
@@ -1720,6 +1721,7 @@ AbortTransaction(void)
 	AtEOXact_Namespace(false);
 	smgrabort();
 	AtEOXact_Files();
+	AtEOXact_HashTables(false);
 	pgstat_count_xact_rollback();
 
 	/*
@@ -3330,6 +3332,7 @@ CommitSubTransaction(void)
 						  s->parent->subTransactionId);
 	AtEOSubXact_Files(true, s->subTransactionId,
 					  s->parent->subTransactionId);
+	AtEOSubXact_HashTables(true, s->nestingLevel);
 
 	/*
 	 * We need to restore the upper transaction's read-only state, in case
@@ -3439,6 +3442,7 @@ AbortSubTransaction(void)
 							  s->parent->subTransactionId);
 		AtEOSubXact_Files(false, s->subTransactionId,
 						  s->parent->subTransactionId);
+		AtEOSubXact_HashTables(false, s->nestingLevel);
 	}
 
 	/*

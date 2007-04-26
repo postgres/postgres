@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.34.4.1 2005/06/18 20:51:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.34.4.2 2007/04/26 23:25:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,8 @@ typedef struct HTAB
 								 * used */
 	char	   *tabname;		/* table name (for error messages) */
 	bool		isshared;		/* true if table is in shared memory */
+	/* freezing a shared table isn't allowed, so we can keep state here */
+	bool		frozen;			/* true = no more inserts allowed */
 	HashCopyFunc keycopy;		/* key copying function */
 } HTAB;
 
@@ -188,8 +190,12 @@ extern void *hash_search(HTAB *hashp, const void *keyPtr, HASHACTION action,
 			bool *foundPtr);
 extern void hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp);
 extern void *hash_seq_search(HASH_SEQ_STATUS *status);
+extern void hash_seq_term(HASH_SEQ_STATUS *status);
+extern void hash_freeze(HTAB *hashp);
 extern long hash_estimate_size(long num_entries, Size entrysize);
 extern long hash_select_dirsize(long num_entries);
+extern void AtEOXact_HashTables(bool isCommit);
+extern void AtEOSubXact_HashTables(bool isCommit, int nestDepth);
 
 /*
  * prototypes for functions in hashfn.c
