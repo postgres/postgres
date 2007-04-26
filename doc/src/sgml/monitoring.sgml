@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.48 2007/03/30 18:34:55 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.49 2007/04/26 22:10:54 neilc Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -766,7 +766,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        <entry><type>bigint</type></entry>
        <entry>
         The number of times the bgwriter has started timed checkpoints
-        (because the <varname>checkpoint_timeout</varname> time has expired).
+        (because the <varname>checkpoint_timeout</varname> time has expired)
        </entry>
      </row>
 
@@ -774,9 +774,10 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_requested_checkpoints</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of times the bgwriter has started checkpoints based on
-       requests from backends because the <varname>checkpoint_segments</varname>
-       has been exceeded or because the CHECKPOINT command has been issued.
+       The number of times the bgwriter has started checkpoints based
+       on requests from backends because the <varname>checkpoint_segments</varname>
+       has been exceeded or because the <command>CHECKPOINT</command>
+       command has been issued
       </entry>
      </row>
 
@@ -784,7 +785,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_bgwriter_buf_written_checkpoints</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of buffers written by the bgwriter during checkpoints.
+       The number of buffers written by the bgwriter during checkpoints
       </entry>
      </row>
 
@@ -793,7 +794,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>bigint</type></entry>
       <entry>
        The number of buffers written by the bgwriter when performing a
-       LRU scan of the buffer cache.
+       LRU scan of the buffer cache
       </entry>
      </row>
 
@@ -802,7 +803,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>bigint</type></entry>
       <entry>
        The number of buffers written by the bgwriter when performing a
-       scan of all the buffer cache.
+       scan of all the buffer cache
       </entry>
      </row>
 
@@ -812,7 +813,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>
        The number of times the bgwriter has stopped its LRU round because
        it has written more buffers than specified in the
-       <varname>bgwriter_lru_maxpages</varname> parameter.
+       <varname>bgwriter_lru_maxpages</varname> parameter
       </entry>
      </row>
 
@@ -822,7 +823,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>
        The number of times the bgwriter has stopped its all-buffer round
        because it has written more buffers than specified in the
-       <varname>bgwriter_all_maxpages</varname> parameter.
+       <varname>bgwriter_all_maxpages</varname> parameter
       </entry>
      </row>
 
