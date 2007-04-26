@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.161 2007/04/08 00:26:34 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.162 2007/04/26 16:13:13 neilc Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -527,8 +527,8 @@ psql_completion(char *text, int start, int end)
 	static const char *const sql_commands[] = {
 		"ABORT", "ALTER", "ANALYZE", "BEGIN", "CHECKPOINT", "CLOSE", "CLUSTER",
 		"COMMENT", "COMMIT", "COPY", "CREATE", "DEALLOCATE", "DECLARE",
-		"DELETE FROM", "DROP", "END", "EXECUTE", "EXPLAIN", "FETCH", "GRANT",
-		"INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY", "PREPARE",
+		"DELETE FROM", "DISCARD", "DROP", "END", "EXECUTE", "EXPLAIN", "FETCH",
+		"GRANT", "INSERT", "LISTEN", "LOAD", "LOCK", "MOVE", "NOTIFY", "PREPARE",
 		"REASSIGN", "REINDEX", "RELEASE", "RESET", "REVOKE", "ROLLBACK",
 		"SAVEPOINT", "SELECT", "SET", "SHOW", "START", "TRUNCATE", "UNLISTEN",
 		"UPDATE", "VACUUM", NULL
@@ -1243,6 +1243,15 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_LIST(list_DELETE);
 	}
 	/* XXX: implement tab completion for DELETE ... USING */
+
+/* DISCARD */
+	else if (pg_strcasecmp(prev_wd, "DISCARD") == 0)
+	{
+		static const char *const list_DISCARD[] =
+		{"ALL", "PLANS", "TEMP", NULL};
+
+		COMPLETE_WITH_LIST(list_DISCARD);
+	}
 
 /* DROP (when not the previous word) */
 	/* DROP AGGREGATE */

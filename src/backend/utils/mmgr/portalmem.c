@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.101 2007/04/12 06:53:48 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.102 2007/04/26 16:13:13 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -455,7 +455,7 @@ PortalDrop(Portal portal, bool isTopCommit)
 /*
  * Delete all declared cursors.
  *
- * Used by commands: CLOSE ALL, RESET SESSION
+ * Used by commands: CLOSE ALL, DISCARD ALL
  */
 void
 PortalHashTableDeleteAll(void)

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.277 2007/04/12 06:53:47 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.278 2007/04/26 16:13:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "commands/copy.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
+#include "commands/discard.h"
 #include "commands/explain.h"
 #include "commands/lockcmds.h"
 #include "commands/portalcmds.h"
@@ -604,10 +605,7 @@ ProcessUtility(Node *parsetree,
 							break;
 
 						case OBJECT_DOMAIN:
-
-							/*
-							 * RemoveDomain does its own permissions checks
-							 */
+							/* RemoveDomain does its own permissions checks */
 							RemoveDomain(names, stmt->behavior,
 										 stmt->missing_ok);
 							break;
@@ -618,10 +616,7 @@ ProcessUtility(Node *parsetree,
 							break;
 
 						case OBJECT_SCHEMA:
-
-							/*
-							 * RemoveSchema does its own permissions checks
-							 */
+							/* RemoveSchema does its own permissions checks */
 							RemoveSchema(names, stmt->behavior,
 										 stmt->missing_ok);
 							break;
@@ -992,6 +987,10 @@ ProcessUtility(Node *parsetree,
 
 				ResetPGVariable(n->name, isTopLevel);
 			}
+			break;
+
+		case T_DiscardStmt:
+			DiscardCommand((DiscardStmt *) parsetree, isTopLevel);
 			break;
 
 		case T_CreateTrigStmt:
@@ -1752,12 +1751,22 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_VariableResetStmt:
-			{
-				VariableResetStmt *stmt = (VariableResetStmt *) parsetree;
-				if (pg_strcasecmp(stmt->name, "session") == 0)
-					tag = "RESET SESSION";
-				else
-					tag = "RESET";
+			tag = "RESET";
+			break;
+
+		case T_DiscardStmt:
+			switch (((DiscardStmt *) parsetree)->target) {
+				case DISCARD_ALL:
+					tag = "DISCARD ALL";
+					break;
+				case DISCARD_PLANS:
+					tag = "DISCARD PLANS";
+					break;
+				case DISCARD_TEMP:
+					tag = "DISCARD TEMP";
+					break;
+				default:
+					tag = "???";
 			}
 			break;
 

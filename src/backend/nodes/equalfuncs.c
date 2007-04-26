@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.304 2007/04/02 03:49:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.305 2007/04/26 16:13:11 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1377,6 +1377,14 @@ _equalVariableResetStmt(VariableResetStmt *a, VariableResetStmt *b)
 }
 
 static bool
+_equalDiscardStmt(DiscardStmt *a, DiscardStmt *b)
+{
+	COMPARE_SCALAR_FIELD(target);
+
+	return true;
+}
+
+static bool
 _equalCreateTableSpaceStmt(CreateTableSpaceStmt *a, CreateTableSpaceStmt *b)
 {
 	COMPARE_STRING_FIELD(tablespacename);
@@ -2312,6 +2320,9 @@ equal(void *a, void *b)
 			break;
 		case T_VariableResetStmt:
 			retval = _equalVariableResetStmt(a, b);
+			break;
+		case T_DiscardStmt:
+			retval = _equalDiscardStmt(a, b);
 			break;
 		case T_CreateTableSpaceStmt:
 			retval = _equalCreateTableSpaceStmt(a, b);

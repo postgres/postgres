@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.373 2007/04/02 03:49:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.374 2007/04/26 16:13:10 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2589,6 +2589,16 @@ _copyVariableResetStmt(VariableResetStmt *from)
 	return newnode;
 }
 
+static DiscardStmt *
+_copyDiscardStmt(DiscardStmt *from)
+{
+	DiscardStmt *newnode = makeNode(DiscardStmt);
+
+	COPY_SCALAR_FIELD(target);
+
+	return newnode;
+}
+
 static CreateTableSpaceStmt *
 _copyCreateTableSpaceStmt(CreateTableSpaceStmt *from)
 {
@@ -3379,6 +3389,9 @@ copyObject(void *from)
 			break;
 		case T_VariableResetStmt:
 			retval = _copyVariableResetStmt(from);
+			break;
+		case T_DiscardStmt:
+			retval = _copyDiscardStmt(from);
 			break;
 		case T_CreateTableSpaceStmt:
 			retval = _copyCreateTableSpaceStmt(from);

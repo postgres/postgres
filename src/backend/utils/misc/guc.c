@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.388 2007/04/22 03:52:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.389 2007/04/26 16:13:12 neilc Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -5048,30 +5048,6 @@ GetPGVariableResultDesc(const char *name)
 }
 
 /*
- * RESET SESSION command.
- */
-static void
-ResetSession(bool isTopLevel)
-{
-	/*
-	 * Disallow RESET SESSION in a transaction block. This is arguably
-	 * inconsistent (we don't make a similar check in the command
-	 * sequence that RESET SESSION is equivalent to), but the idea is
-	 * to catch mistakes: RESET SESSION inside a transaction block
-	 * would leave the transaction still uncommitted.
-	 */
-	PreventTransactionChain(isTopLevel, "RESET SESSION");
-
-	SetPGVariable("session_authorization", NIL, false);
-	ResetAllOptions();
-	DropAllPreparedStatements();
-	PortalHashTableDeleteAll();
-	Async_UnlistenAll();
-	ResetPlanCache();
-	ResetTempTableNamespace();
-}
-
-/*
  * RESET command
  */
 void
@@ -5079,13 +5055,6 @@ ResetPGVariable(const char *name, bool isTopLevel)
 {
 	if (pg_strcasecmp(name, "all") == 0)
 		ResetAllOptions();
-	else if (pg_strcasecmp(name, "session") == 0)
-		ResetSession(isTopLevel);
-	else if (pg_strcasecmp(name, "temp") == 0 ||
-			 pg_strcasecmp(name, "temporary") == 0)
-		ResetTempTableNamespace();
-	else if (pg_strcasecmp(name, "plans") == 0)
-		ResetPlanCache();
 	else
 		set_config_option(name,
 						  NULL,

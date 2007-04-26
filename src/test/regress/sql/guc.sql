@@ -125,15 +125,15 @@ SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
 
 --
--- Test RESET TEMP
+-- Test DISCARD TEMP
 --
 CREATE TEMP TABLE reset_test ( data text ) ON COMMIT DELETE ROWS;
 SELECT relname FROM pg_class WHERE relname = 'reset_test';
-RESET TEMP;
+DISCARD TEMP;
 SELECT relname FROM pg_class WHERE relname = 'reset_test';
 
 --
--- Test RESET SESSION
+-- Test DISCARD ALL
 --
 
 -- do changes
@@ -151,8 +151,8 @@ SELECT name FROM pg_cursors;
 SHOW vacuum_cost_delay;
 SELECT relname from pg_class where relname = 'tmp_foo';
 SELECT current_user = 'temp_reset_user';
--- big RESET
-RESET SESSION;
+-- discard everything
+DISCARD ALL;
 -- look again
 SELECT relname FROM pg_listener;
 SELECT name FROM pg_prepared_statements;

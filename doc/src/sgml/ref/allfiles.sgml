@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.69 2007/01/23 05:07:16 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.70 2007/04/26 16:13:08 neilc Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -61,6 +61,7 @@ Complete list of usable sgml source files in this directory.
 <!entity deallocate         system "deallocate.sgml">
 <!entity declare            system "declare.sgml">
 <!entity delete             system "delete.sgml">
+<!entity discard            system "discard.sgml">
 <!entity dropAggregate      system "drop_aggregate.sgml">
 <!entity dropCast           system "drop_cast.sgml">
 <!entity dropConversion     system "drop_conversion.sgml">

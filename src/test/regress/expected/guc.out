@@ -426,7 +426,7 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
 (1 row)
 
 --
--- Test RESET TEMP
+-- Test DISCARD TEMP
 --
 CREATE TEMP TABLE reset_test ( data text ) ON COMMIT DELETE ROWS;
 SELECT relname FROM pg_class WHERE relname = 'reset_test';
@@ -435,14 +435,14 @@ SELECT relname FROM pg_class WHERE relname = 'reset_test';
  reset_test
 (1 row)
 
-RESET TEMP;
+DISCARD TEMP;
 SELECT relname FROM pg_class WHERE relname = 'reset_test';
  relname 
 ---------
 (0 rows)
 
 --
--- Test RESET SESSION
+-- Test DISCARD ALL
 --
 -- do changes
 DECLARE foo CURSOR WITH HOLD FOR SELECT 1;
@@ -489,8 +489,8 @@ SELECT current_user = 'temp_reset_user';
  t
 (1 row)
 
--- big RESET
-RESET SESSION;
+-- discard everything
+DISCARD ALL;
 -- look again
 SELECT relname FROM pg_listener;
  relname 

@@ -1,0 +1,107 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/discard.sgml,v 1.1 2007/04/26 16:13:09 neilc Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-DISCARD">
+ <refmeta>
+  <refentrytitle id="SQL-DISCARD-TITLE">DISCARD</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DISCARD</refname>
+  <refpurpose>Discard internal server state</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-discard">
+  <primary>DISCARD</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+DISCARD { ALL | PLANS | TEMPORARY | TEMP }
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DISCARD</> releases internal resources associated with a
+   database session. These resources are normally released at the end
+   of the session.
+  </para>
+
+  <para>
+   <command>DISCARD TEMP</> drops all temporary tables created in the
+   current session.  <command>DISCARD PLANS</> releases all internally
+   cached query plans.  <command>DISCARD ALL</> resets a session to
+   its original state, discarding temporary resources and resetting
+   session-local configuration changes.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+
+   <varlistentry>
+    <term><literal>TEMPORARY</literal> or <literal>TEMP</literal></term>
+    <listitem>
+     <para>
+      Drops all temporary tables created in the current session.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>PLANS</literal></term>
+    <listitem>
+     <para>
+      Releases all cached query plans.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>ALL</literal></term>
+    <listitem>
+     <para>
+      Releases all temporary resources associated with the current
+      session and resets the session to its initial state. This has
+      the same effect as executing the following sequence of
+      statements:
+<programlisting>
+SET SESSION AUTHORIZATION DEFAULT;
+RESET ALL;
+DEALLOCATE ALL;
+CLOSE ALL;
+UNLISTEN *;
+DISCARD PLANS;
+DISCARD TEMP;
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+   <para>
+    <command>DISCARD ALL</> cannot be executed inside a transaction block.
+   </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>DISCARD</command> is a <productname>PostgreSQL</productname> extension.
+  </para>
+ </refsect1>
+</refentry>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.62 2007/01/31 20:56:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.63 2007/04/26 16:13:08 neilc Exp $ -->
 
 <part id="reference">
  <title>Reference</title>
@@ -89,6 +89,7 @@
    &deallocate;
    &declare;
    &delete;
+   &discard;
    &dropAggregate;
    &dropCast;
    &dropConversion;

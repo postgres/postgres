@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.186 2007/04/02 03:49:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.187 2007/04/26 16:13:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,6 +124,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"delimiters", DELIMITERS},
 	{"desc", DESC},
 	{"disable", DISABLE_P},
+	{"discard", DISCARD},
 	{"distinct", DISTINCT},
 	{"do", DO},
 	{"document", DOCUMENT_P},
@@ -269,6 +270,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
 	{"placing", PLACING},
+	{"plans", PLANS},
 	{"position", POSITION},
 	{"precision", PRECISION},
 	{"prepare", PREPARE},
