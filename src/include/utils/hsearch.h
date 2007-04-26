@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.46 2007/01/05 22:19:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/hsearch.h,v 1.47 2007/04/26 23:24:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,9 +130,13 @@ extern void *hash_search_with_hash_value(HTAB *hashp, const void *keyPtr,
 extern long hash_get_num_entries(HTAB *hashp);
 extern void hash_seq_init(HASH_SEQ_STATUS *status, HTAB *hashp);
 extern void *hash_seq_search(HASH_SEQ_STATUS *status);
+extern void hash_seq_term(HASH_SEQ_STATUS *status);
+extern void hash_freeze(HTAB *hashp);
 extern Size hash_estimate_size(long num_entries, Size entrysize);
 extern long hash_select_dirsize(long num_entries);
 extern Size hash_get_shared_size(HASHCTL *info, int flags);
+extern void AtEOXact_HashTables(bool isCommit);
+extern void AtEOSubXact_HashTables(bool isCommit, int nestDepth);
 
 /*
  * prototypes for functions in hashfn.c

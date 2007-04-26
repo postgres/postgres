@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.73 2007/04/16 18:21:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.74 2007/04/26 23:24:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 #include "catalog/pg_type.h"
 #include "commands/explain.h"
 #include "commands/prepare.h"
-#include "funcapi.h"
+#include "miscadmin.h"
 #include "parser/analyze.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -743,92 +743,99 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 Datum
 pg_prepared_statement(PG_FUNCTION_ARGS)
 {
-	FuncCallContext *funcctx;
-	HASH_SEQ_STATUS *hash_seq;
-	PreparedStatement *prep_stmt;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
 
-	/* stuff done only on the first call of the function */
-	if (SRF_IS_FIRSTCALL())
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
+
+	/* need to build tuplestore in query context */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	/*
+	 * build tupdesc for result tuples. This must match the definition of
+	 * the pg_prepared_statements view in system_views.sql
+	 */
+	tupdesc = CreateTemplateTupleDesc(5, false);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
+					   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "statement",
+					   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "prepare_time",
+					   TIMESTAMPTZOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "parameter_types",
+					   REGTYPEARRAYOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "from_sql",
+					   BOOLOID, -1, 0);
+
+	/*
+	 * We put all the tuples into a tuplestore in one scan of the hashtable.
+	 * This avoids any issue of the hashtable possibly changing between calls.
+	 */
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+
+	/* hash table might be uninitialized */
+	if (prepared_queries)
 	{
-		TupleDesc	tupdesc;
-		MemoryContext oldcontext;
+		HASH_SEQ_STATUS hash_seq;
+		PreparedStatement *prep_stmt;
 
-		/* create a function context for cross-call persistence */
-		funcctx = SRF_FIRSTCALL_INIT();
-
-		/*
-		 * switch to memory context appropriate for multiple function calls
-		 */
-		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
-
-		/* allocate memory for user context */
-		if (prepared_queries)
+		hash_seq_init(&hash_seq, prepared_queries);
+		while ((prep_stmt = hash_seq_search(&hash_seq)) != NULL)
 		{
-			hash_seq = (HASH_SEQ_STATUS *) palloc(sizeof(HASH_SEQ_STATUS));
-			hash_seq_init(hash_seq, prepared_queries);
-			funcctx->user_fctx = (void *) hash_seq;
-		}
-		else
-			funcctx->user_fctx = NULL;
+			HeapTuple	tuple;
+			Datum		values[5];
+			bool		nulls[5];
 
-		/*
-		 * build tupdesc for result tuples. This must match the definition of
-		 * the pg_prepared_statements view in system_views.sql
-		 */
-		tupdesc = CreateTemplateTupleDesc(5, false);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "name",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "statement",
-						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "prepare_time",
-						   TIMESTAMPTZOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "parameter_types",
-						   REGTYPEARRAYOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "from_sql",
-						   BOOLOID, -1, 0);
+			/* generate junk in short-term context */
+			MemoryContextSwitchTo(oldcontext);
 
-		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
-		MemoryContextSwitchTo(oldcontext);
-	}
+			MemSet(nulls, 0, sizeof(nulls));
 
-	/* stuff done on every call of the function */
-	funcctx = SRF_PERCALL_SETUP();
-	hash_seq = (HASH_SEQ_STATUS *) funcctx->user_fctx;
-
-	/* if the hash table is uninitialized, we're done */
-	if (hash_seq == NULL)
-		SRF_RETURN_DONE(funcctx);
-
-	prep_stmt = hash_seq_search(hash_seq);
-	if (prep_stmt)
-	{
-		Datum		result;
-		HeapTuple	tuple;
-		Datum		values[5];
-		bool		nulls[5];
-
-		MemSet(nulls, 0, sizeof(nulls));
-
-		values[0] = DirectFunctionCall1(textin,
+			values[0] = DirectFunctionCall1(textin,
 									  CStringGetDatum(prep_stmt->stmt_name));
 
-		if (prep_stmt->plansource->query_string == NULL)
-			nulls[1] = true;
-		else
-			values[1] = DirectFunctionCall1(textin,
+			if (prep_stmt->plansource->query_string == NULL)
+				nulls[1] = true;
+			else
+				values[1] = DirectFunctionCall1(textin,
 						CStringGetDatum(prep_stmt->plansource->query_string));
 
-		values[2] = TimestampTzGetDatum(prep_stmt->prepare_time);
-		values[3] = build_regtype_array(prep_stmt->plansource->param_types,
-										prep_stmt->plansource->num_params);
-		values[4] = BoolGetDatum(prep_stmt->from_sql);
+			values[2] = TimestampTzGetDatum(prep_stmt->prepare_time);
+			values[3] = build_regtype_array(prep_stmt->plansource->param_types,
+											prep_stmt->plansource->num_params);
+			values[4] = BoolGetDatum(prep_stmt->from_sql);
 
-		tuple = heap_form_tuple(funcctx->tuple_desc, values, nulls);
-		result = HeapTupleGetDatum(tuple);
-		SRF_RETURN_NEXT(funcctx, result);
+			tuple = heap_form_tuple(tupdesc, values, nulls);
+
+			/* switch to appropriate context while storing the tuple */
+			MemoryContextSwitchTo(per_query_ctx);
+			tuplestore_puttuple(tupstore, tuple);
+		}
 	}
 
-	SRF_RETURN_DONE(funcctx);
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	MemoryContextSwitchTo(oldcontext);
+
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	return (Datum) 0;
 }
 
 /*
