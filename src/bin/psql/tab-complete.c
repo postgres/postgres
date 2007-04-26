@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.162 2007/04/26 16:13:13 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.163 2007/04/26 18:10:28 neilc Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -1107,9 +1107,10 @@ psql_completion(char *text, int start, int end)
 		COMPLETE_WITH_SCHEMA_QUERY(Query_for_list_of_tables, NULL);
 
 /* CREATE TABLE */
-	/* Complete CREATE TEMP with "TABLE" */
+	/* Complete CREATE TEMP/TEMPORARY with "TABLE" */
 	else if (pg_strcasecmp(prev2_wd, "CREATE") == 0 &&
-			 pg_strcasecmp(prev_wd, "TEMP") == 0)
+			 (pg_strcasecmp(prev_wd, "TEMP") == 0 ||
+			  pg_strcasecmp(prev_wd, "TEMPORARY") == 0))
 		COMPLETE_WITH_CONST("TABLE");
 
 /* CREATE TABLESPACE */
