@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.58 2003/10/01 21:30:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.58.2.1 2007/04/26 23:25:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -627,7 +627,7 @@ findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot)
 	TupleHashIterator hashiter;
 	TupleHashEntry entry;
 
-	ResetTupleHashIterator(hashtable, &hashiter);
+	InitTupleHashIterator(hashtable, &hashiter);
 	while ((entry = ScanTupleHashTable(&hashiter)) != NULL)
 	{
 		if (!execTuplesUnequal(entry->firstTuple,
@@ -636,8 +636,12 @@ findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot)
 							   numCols, keyColIdx,
 							   hashtable->eqfunctions,
 							   hashtable->tempcxt))
+		{
+			TermTupleHashIterator(&hashiter);
 			return true;
+		}
 	}
+	/* No TermTupleHashIterator call needed here */
 	return false;
 }
 
