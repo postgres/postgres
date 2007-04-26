@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/discard.sgml,v 1.1 2007/04/26 16:13:09 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/discard.sgml,v 1.2 2007/04/26 18:00:24 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -11,7 +11,7 @@ PostgreSQL documentation
 
  <refnamediv>
   <refname>DISCARD</refname>
-  <refpurpose>Discard internal server state</refpurpose>
+  <refpurpose>discard session state</refpurpose>
  </refnamediv>
 
  <indexterm zone="sql-discard">
