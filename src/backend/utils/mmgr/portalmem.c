@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.82.2.1 2005/11/22 18:23:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/portalmem.c,v 1.82.2.2 2007/04/26 23:25:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -548,7 +548,9 @@ AtCommit_Portals(void)
 		/* Zap all non-holdable portals */
 		PortalDrop(portal, true);
 
-		/* Restart the iteration */
+		/* Restart the iteration in case that led to other drops */
+		/* XXX is this really necessary? */
+		hash_seq_term(&status);
 		hash_seq_init(&status, PortalHashTable);
 	}
 }
