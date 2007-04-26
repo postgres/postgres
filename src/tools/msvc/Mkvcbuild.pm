@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.9 2007/04/21 19:04:51 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.10 2007/04/26 14:09:12 mha Exp $
 #
 use Carp;
 use Win32;
@@ -128,7 +128,7 @@ sub mkvcbuild
     my $pgtypes =
       $solution->AddProject('libpgtypes','dll','interfaces','src\interfaces\ecpg\pgtypeslib');
     $pgtypes->AddDefine('FRONTEND');
-    $pgtypes->AddReference($postgres,$libpgport);
+    $pgtypes->AddReference($libpgport);
     $pgtypes->AddIncludeDir('src\interfaces\ecpg\include');
 
     my $libecpg =$solution->AddProject('libecpg','dll','interfaces','src\interfaces\ecpg\ecpglib');
