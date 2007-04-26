@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.161.2.1 2006/12/26 21:37:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.161.2.2 2007/04/26 23:24:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,8 +390,20 @@ typedef struct TupleHashTableData
 
 typedef HASH_SEQ_STATUS TupleHashIterator;
 
-#define ResetTupleHashIterator(htable, iter) \
+/*
+ * Use InitTupleHashIterator/TermTupleHashIterator for a read/write scan.
+ * Use ResetTupleHashIterator if the table can be frozen (in this case no
+ * explicit scan termination is needed).
+ */
+#define InitTupleHashIterator(htable, iter) \
 	hash_seq_init(iter, (htable)->hashtab)
+#define TermTupleHashIterator(iter) \
+	hash_seq_term(iter)
+#define ResetTupleHashIterator(htable, iter) \
+	do { \
+		hash_freeze((htable)->hashtab); \
+		hash_seq_init(iter, (htable)->hashtab); \
+	} while (0)
 #define ScanTupleHashTable(iter) \
 	((TupleHashEntry) hash_seq_search(iter))
 

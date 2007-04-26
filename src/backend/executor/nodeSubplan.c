@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.80.2.2 2007/02/02 00:07:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.80.2.3 2007/04/26 23:24:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -569,7 +569,7 @@ findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot)
 	TupleHashIterator hashiter;
 	TupleHashEntry entry;
 
-	ResetTupleHashIterator(hashtable, &hashiter);
+	InitTupleHashIterator(hashtable, &hashiter);
 	while ((entry = ScanTupleHashTable(&hashiter)) != NULL)
 	{
 		ExecStoreMinimalTuple(entry->firstTuple, hashtable->tableslot, false);
@@ -577,8 +577,12 @@ findPartialMatch(TupleHashTable hashtable, TupleTableSlot *slot)
 							   numCols, keyColIdx,
 							   hashtable->eqfunctions,
 							   hashtable->tempcxt))
+		{
+			TermTupleHashIterator(&hashiter);
 			return true;
+		}
 	}
+	/* No TermTupleHashIterator call needed here */
 	return false;
 }
 
