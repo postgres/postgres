@@ -2183,4 +2183,9 @@ Thu, 29 Mar 2007 11:18:39 +0200
 	- Added patch by Magnus Hagander <magnus@hagander.net> to use native
 	  win32 threads.
 	- Fixed regression tests to run threading tests.
+
+Fr 27. Apr 08:55:25 CEST 2007
+
+	- Inlined two functions to get rid of va_list problems on some
+	  architectures.
 	- Set ecpg version to 4.3.1.

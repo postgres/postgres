@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.65 2007/03/29 12:02:24 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.66 2007/04/27 06:56:11 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -77,136 +77,6 @@ quote_postgres(char *arg, bool quote, int lineno)
 		ECPGfree(arg);
 		return res;
 	}
-}
-
-#if defined(__GNUC__) && (defined (__powerpc__) || defined(__amd64__) || defined(__x86_64__))
-#define APREF ap
-#else
-#define APREF *ap
-#endif
-
-void
-ECPGget_variable(va_list APREF, enum ECPGttype type, struct variable * var, bool indicator)
-{
-	var->type = type;
-	var->pointer = va_arg(APREF, char *);
-
-	var->varcharsize = va_arg(APREF, long);
-	var->arrsize = va_arg(APREF, long);
-	var->offset = va_arg(APREF, long);
-
-	if (var->arrsize == 0 || var->varcharsize == 0)
-		var->value = *((char **) (var->pointer));
-	else
-		var->value = var->pointer;
-
-	/*
-	 * negative values are used to indicate an array without given bounds
-	 */
-	/* reset to zero for us */
-	if (var->arrsize < 0)
-		var->arrsize = 0;
-	if (var->varcharsize < 0)
-		var->varcharsize = 0;
-
-	var->next = NULL;
-
-	if (indicator)
-	{
-		var->ind_type = va_arg(APREF, enum ECPGttype);
-		var->ind_pointer = va_arg(APREF, char *);
-		var->ind_varcharsize = va_arg(APREF, long);
-		var->ind_arrsize = va_arg(APREF, long);
-		var->ind_offset = va_arg(APREF, long);
-
-		if (var->ind_type != ECPGt_NO_INDICATOR
-			&& (var->ind_arrsize == 0 || var->ind_varcharsize == 0))
-			var->ind_value = *((char **) (var->ind_pointer));
-		else
-			var->ind_value = var->ind_pointer;
-
-		/*
-		 * negative values are used to indicate an array without given bounds
-		 */
-		/* reset to zero for us */
-		if (var->ind_arrsize < 0)
-			var->ind_arrsize = 0;
-		if (var->ind_varcharsize < 0)
-			var->ind_varcharsize = 0;
-	}
-}
-
-/*
- * create a list of variables
- * The variables are listed with input variables preceding outputvariables
- * The end of each group is marked by an end marker.
- * per variable we list:
- * type - as defined in ecpgtype.h
- * value - where to store the data
- * varcharsize - length of string in case we have a stringvariable, else 0
- * arraysize - 0 for pointer (we don't know the size of the array),
- * 1 for simple variable, size for arrays
- * offset - offset between ith and (i+1)th entry in an array,
- * normally that means sizeof(type)
- * ind_type - type of indicator variable
- * ind_value - pointer to indicator variable
- * ind_varcharsize - empty
- * ind_arraysize -	arraysize of indicator array
- * ind_offset - indicator offset
- */
-static bool
-create_statement(int lineno, int compat, int force_indicator, struct connection * connection, struct statement ** stmt, const char *query, va_list APREF)
-{
-	struct variable **list = &((*stmt)->inlist);
-	enum ECPGttype type;
-
-	if (!(*stmt = (struct statement *) ECPGalloc(sizeof(struct statement), lineno)))
-		return false;
-
-	(*stmt)->command = ECPGstrdup(query, lineno);
-	(*stmt)->connection = connection;
-	(*stmt)->lineno = lineno;
-	(*stmt)->compat = compat;
-	(*stmt)->force_indicator = force_indicator;
-
-	list = &((*stmt)->inlist);
-
-	type = va_arg(APREF, enum ECPGttype);
-
-	while (type != ECPGt_EORT)
-	{
-		if (type == ECPGt_EOIT)
-			list = &((*stmt)->outlist);
-		else
-		{
-			struct variable *var,
-					   *ptr;
-
-			if (!(var = (struct variable *) ECPGalloc(sizeof(struct variable), lineno)))
-				return false;
-
-			ECPGget_variable(ap, type, var, true);
-
-			/* if variable is NULL, the statement hasn't been prepared */
-			if (var->pointer == NULL)
-			{
-				ECPGraise(lineno, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, NULL);
-				ECPGfree(var);
-				return false;
-			}
-
-			for (ptr = *list; ptr && ptr->next; ptr = ptr->next);
-
-			if (ptr == NULL)
-				*list = var;
-			else
-				ptr->next = var;
-		}
-
-		type = va_arg(APREF, enum ECPGttype);
-	}
-
-	return (true);
 }
 
 static void
@@ -1519,6 +1389,8 @@ ECPGdo(int lineno, int compat, int force_indicator, const char *connection_name,
 	struct connection *con;
 	bool		status;
 	char	   *oldlocale;
+	enum ECPGttype type;
+	struct variable **list;
 
 	/* Make sure we do NOT honor the locale for numeric input/output */
 	/* since the database wants the standard decimal point */
@@ -1540,17 +1412,128 @@ ECPGdo(int lineno, int compat, int force_indicator, const char *connection_name,
 
 	/* construct statement in our own structure */
 	va_start(args, query);
-#if defined(__GNUC__) && (defined (__powerpc__) || defined(__amd64__) || defined(__x86_64__))
-	if (create_statement(lineno, compat, force_indicator, con, &stmt, query, args) == false)
-#else
-	if (create_statement(lineno, compat, force_indicator, con, &stmt, query, &args) == false)
-#endif
+
+	/*
+	 * create a list of variables
+	 * The variables are listed with input variables preceding outputvariables
+	 * The end of each group is marked by an end marker.
+	 * per variable we list:
+	 * type - as defined in ecpgtype.h
+	 * value - where to store the data
+	 * varcharsize - length of string in case we have a stringvariable, else 0
+	 * arraysize - 0 for pointer (we don't know the size of the array),
+	 * 1 for simple variable, size for arrays
+	 * offset - offset between ith and (i+1)th entry in an array,
+	 * normally that means sizeof(type)
+	 * ind_type - type of indicator variable
+	 * ind_value - pointer to indicator variable
+	 * ind_varcharsize - empty
+	 * ind_arraysize -	arraysize of indicator array
+	 * ind_offset - indicator offset
+	 */
+	if (!(stmt = (struct statement *) ECPGalloc(sizeof(struct statement), lineno)))
 	{
 		setlocale(LC_NUMERIC, oldlocale);
 		ECPGfree(oldlocale);
-		free_statement(stmt);
-		return (false);
+		va_end(args);
+		return false;
 	}
+
+	stmt->command = ECPGstrdup(query, lineno);
+	stmt->connection = con;
+	stmt->lineno = lineno;
+	stmt->compat = compat;
+	stmt->force_indicator = force_indicator;
+
+	list = &(stmt->inlist);
+
+	type = va_arg(args, enum ECPGttype);
+
+	while (type != ECPGt_EORT)
+	{
+		if (type == ECPGt_EOIT)
+			list = &(stmt->outlist);
+		else
+		{
+			struct variable *var,
+					   *ptr;
+
+			if (!(var = (struct variable *) ECPGalloc(sizeof(struct variable), lineno)))
+			{
+				setlocale(LC_NUMERIC, oldlocale);
+				ECPGfree(oldlocale);
+				free_statement(stmt);
+				va_end(args);
+				return false;
+			}
+
+			var->type = type;
+			var->pointer = va_arg(args, char *);
+
+			var->varcharsize = va_arg(args, long);
+			var->arrsize = va_arg(args, long);
+			var->offset = va_arg(args, long);
+
+			if (var->arrsize == 0 || var->varcharsize == 0)
+				var->value = *((char **) (var->pointer));
+			else
+				var->value = var->pointer;
+
+			/*
+			 * negative values are used to indicate an array without given bounds
+			 */
+			/* reset to zero for us */
+			if (var->arrsize < 0)
+				var->arrsize = 0;
+			if (var->varcharsize < 0)
+				var->varcharsize = 0;
+
+			var->next = NULL;
+
+			var->ind_type = va_arg(args, enum ECPGttype);
+			var->ind_pointer = va_arg(args, char *);
+			var->ind_varcharsize = va_arg(args, long);
+			var->ind_arrsize = va_arg(args, long);
+			var->ind_offset = va_arg(args, long);
+
+			if (var->ind_type != ECPGt_NO_INDICATOR
+				&& (var->ind_arrsize == 0 || var->ind_varcharsize == 0))
+				var->ind_value = *((char **) (var->ind_pointer));
+			else
+				var->ind_value = var->ind_pointer;
+
+			/*
+			 * negative values are used to indicate an array without given bounds
+			 */
+			/* reset to zero for us */
+			if (var->ind_arrsize < 0)
+				var->ind_arrsize = 0;
+			if (var->ind_varcharsize < 0)
+				var->ind_varcharsize = 0;
+
+			/* if variable is NULL, the statement hasn't been prepared */
+			if (var->pointer == NULL)
+			{
+				ECPGraise(lineno, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, NULL);
+				ECPGfree(var);
+				setlocale(LC_NUMERIC, oldlocale);
+				ECPGfree(oldlocale);
+				free_statement(stmt);
+				va_end(args);
+				return false;
+			}
+
+			for (ptr = *list; ptr && ptr->next; ptr = ptr->next);
+
+			if (ptr == NULL)
+				*list = var;
+			else
+				ptr->next = var;
+		}
+
+		type = va_arg(args, enum ECPGttype);
+	}
+
 	va_end(args);
 
 	/* are we connected? */

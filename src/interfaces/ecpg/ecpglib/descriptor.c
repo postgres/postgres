@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.20 2006/10/04 00:30:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.21 2007/04/27 06:56:11 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -507,7 +507,6 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 	do
 	{
 		enum ECPGdtype itemtype;
-		enum ECPGttype type;
 		const char *tobeinserted = NULL;
 		bool		malloced;
 
@@ -516,13 +515,29 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 		if (itemtype == ECPGd_EODT)
 			break;
 
-		type = va_arg(args, enum ECPGttype);
-#if defined(__GNUC__) && (defined (__powerpc__) || defined(__amd64__) || defined(__x86_64__))
-		ECPGget_variable(args, type, var, false);
-#else
-		ECPGget_variable(&args, type, var, false);
-#endif
+		var->type = va_arg(args, enum ECPGttype);
+		var->pointer = va_arg(args, char *);
 
+		var->varcharsize = va_arg(args, long);
+		var->arrsize = va_arg(args, long);
+		var->offset = va_arg(args, long);
+
+		if (var->arrsize == 0 || var->varcharsize == 0)
+			var->value = *((char **) (var->pointer));
+		else
+			var->value = var->pointer;
+
+		/*
+		 * negative values are used to indicate an array without given bounds
+		 */
+		/* reset to zero for us */
+		if (var->arrsize < 0)
+			var->arrsize = 0;
+		if (var->varcharsize < 0)
+			var->varcharsize = 0;
+
+		var->next = NULL;
+		
 		switch (itemtype)
 		{
 			case ECPGd_data:
