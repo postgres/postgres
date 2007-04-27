@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.93 2007/02/27 01:11:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.94 2007/04/27 22:05:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,9 @@ typedef struct PlannedStmt
 	/* rtable indexes of target relations for INSERT/UPDATE/DELETE */
 	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
-	IntoClause *into;			/* target for SELECT INTO / CREATE TABLE AS */
+	Node	   *utilityStmt;	/* non-null if this is DECLARE CURSOR */
+
+	IntoClause *intoClause;		/* target for SELECT INTO / CREATE TABLE AS */
 
 	List	   *subplans;		/* Plan trees for SubPlan expressions */
 

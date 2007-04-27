@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.292 2007/03/29 00:15:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.293 2007/04/27 22:05:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,7 +420,7 @@ ExecCheckXactReadOnly(PlannedStmt *plannedstmt)
 	 *
 	 * XXX should we allow this if the destination is temp?
 	 */
-	if (plannedstmt->into != NULL)
+	if (plannedstmt->intoClause != NULL)
 		goto fail;
 
 	/* Fail if write permissions are requested on any non-temp table */
@@ -522,10 +522,10 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 	 * correct tuple descriptors.  (Other SELECT INTO stuff comes later.)
 	 */
 	estate->es_select_into = false;
-	if (operation == CMD_SELECT && plannedstmt->into != NULL)
+	if (operation == CMD_SELECT && plannedstmt->intoClause != NULL)
 	{
 		estate->es_select_into = true;
-		estate->es_into_oids = interpretOidsOption(plannedstmt->into->options);
+		estate->es_into_oids = interpretOidsOption(plannedstmt->intoClause->options);
 	}
 
 	/*
@@ -2395,7 +2395,7 @@ typedef struct
 static void
 OpenIntoRel(QueryDesc *queryDesc)
 {
-	IntoClause *into = queryDesc->plannedstmt->into;
+	IntoClause *into = queryDesc->plannedstmt->intoClause;
 	EState	   *estate = queryDesc->estate;
 	Relation	intoRelationDesc;
 	char	   *intoName;

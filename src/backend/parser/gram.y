@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.590 2007/04/26 16:13:11 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.591 2007/04/27 22:05:48 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2355,12 +2355,12 @@ CreateAsStmt:
 					 * be attached to that Select's target list.
 					 */
 					SelectStmt *n = findLeftmostSelect((SelectStmt *) $6);
-					if (n->into != NULL)
+					if (n->intoClause != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 								 errmsg("CREATE TABLE AS cannot specify INTO")));
 					$4->rel->istemp = $2;
-					n->into = $4;
+					n->intoClause = $4;
 					$$ = $6;
 				}
 		;
@@ -5993,7 +5993,7 @@ simple_select:
 					SelectStmt *n = makeNode(SelectStmt);
 					n->distinctClause = $2;
 					n->targetList = $3;
-					n->into = $4;
+					n->intoClause = $4;
 					n->fromClause = $5;
 					n->whereClause = $6;
 					n->groupClause = $7;

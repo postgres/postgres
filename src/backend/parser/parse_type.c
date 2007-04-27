@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.88 2007/04/02 03:49:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.89 2007/04/27 22:05:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -519,7 +519,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 	if (stmt == NULL ||
 		!IsA(stmt, SelectStmt) ||
 		stmt->distinctClause != NIL ||
-		stmt->into != NULL ||
+		stmt->intoClause != NULL ||
 		stmt->fromClause != NIL ||
 		stmt->whereClause != NULL ||
 		stmt->groupClause != NIL ||

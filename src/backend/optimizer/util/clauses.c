@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.241 2007/04/02 03:49:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.242 2007/04/27 22:05:48 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2945,7 +2945,8 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 */
 	if (!IsA(querytree, Query) ||
 		querytree->commandType != CMD_SELECT ||
-		querytree->into ||
+		querytree->utilityStmt ||
+		querytree->intoClause ||
 		querytree->hasAggs ||
 		querytree->hasSubLinks ||
 		querytree->rtable ||

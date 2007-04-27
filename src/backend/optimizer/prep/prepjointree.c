@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.47 2007/02/19 07:03:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.48 2007/04/27 22:05:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -627,7 +627,8 @@ is_simple_subquery(Query *subquery)
 	 */
 	if (!IsA(subquery, Query) ||
 		subquery->commandType != CMD_SELECT ||
-		subquery->into != NULL)
+		subquery->utilityStmt != NULL ||
+		subquery->intoClause != NULL)
 		elog(ERROR, "subquery is bogus");
 
 	/*
@@ -698,7 +699,8 @@ is_simple_union_all(Query *subquery)
 	/* Let's just make sure it's a valid subselect ... */
 	if (!IsA(subquery, Query) ||
 		subquery->commandType != CMD_SELECT ||
-		subquery->into != NULL)
+		subquery->utilityStmt != NULL ||
+		subquery->intoClause != NULL)
 		elog(ERROR, "subquery is bogus");
 
 	/* Is it a set-operation query at all? */

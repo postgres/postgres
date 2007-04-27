@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.217 2007/04/16 01:14:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.218 2007/04/27 22:05:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,6 +90,11 @@ planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	ListCell   *lp,
 			   *lr;
 
+	/* Cursor options may come from caller or from DECLARE CURSOR stmt */
+	if (parse->utilityStmt &&
+		IsA(parse->utilityStmt, DeclareCursorStmt))
+		cursorOptions |= ((DeclareCursorStmt *) parse->utilityStmt)->options;
+
 	/*
 	 * Set up global state for this planner invocation.  This data is needed
 	 * across all levels of sub-Query that might exist in the given command,
@@ -156,7 +161,8 @@ planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 	result->planTree = top_plan;
 	result->rtable = glob->finalrtable;
 	result->resultRelations = root->resultRelations;
-	result->into = parse->into;
+	result->utilityStmt = parse->utilityStmt;
+	result->intoClause = parse->intoClause;
 	result->subplans = glob->subplans;
 	result->rewindPlanIDs = glob->rewindPlanIDs;
 	result->returningLists = root->returningLists;

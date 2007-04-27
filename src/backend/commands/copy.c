@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.282 2007/04/18 02:28:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.283 2007/04/27 22:05:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1015,9 +1015,10 @@ DoCopy(const CopyStmt *stmt, const char *queryString)
 
 		query = (Query *) linitial(rewritten);
 		Assert(query->commandType == CMD_SELECT);
+		Assert(query->utilityStmt == NULL);
 
 		/* Query mustn't use INTO, either */
-		if (query->into)
+		if (query->intoClause)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("COPY (SELECT INTO) is not supported")));

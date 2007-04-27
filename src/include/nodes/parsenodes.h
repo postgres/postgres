@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.347 2007/04/26 16:13:14 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.348 2007/04/27 22:05:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,9 +82,11 @@ typedef uint32 AclMode;			/* a bitmask of privilege bits */
  *
  *	  Utility statements (i.e. non-optimizable statements) have the
  *	  utilityStmt field set, and the Query itself is mostly dummy.
+ *	  DECLARE CURSOR is a special case: it is represented like a SELECT,
+ *	  but the original DeclareCursorStmt is stored in utilityStmt.
  *
  *	  Planning converts a Query tree into a Plan tree headed by a PlannedStmt
- *	  noded --- the Query structure is not used by the executor.
+ *	  node --- the Query structure is not used by the executor.
  */
 typedef struct Query
 {
@@ -96,13 +98,13 @@ typedef struct Query
 
 	bool		canSetTag;		/* do I set the command result tag? */
 
-	Node	   *utilityStmt;	/* non-null if this is a non-optimizable
-								 * statement */
+	Node	   *utilityStmt;	/* non-null if this is DECLARE CURSOR or a
+								 * non-optimizable statement */
 
 	int			resultRelation; /* rtable index of target relation for
 								 * INSERT/UPDATE/DELETE; 0 for SELECT */
 
-	IntoClause *into;			/* target for SELECT INTO / CREATE TABLE AS */
+	IntoClause *intoClause;		/* target for SELECT INTO / CREATE TABLE AS */
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasSubLinks;	/* has subquery SubLink */
@@ -732,7 +734,7 @@ typedef struct SelectStmt
 	 */
 	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
 								 * lcons(NIL,NIL) for all (SELECT DISTINCT) */
-	IntoClause *into;			/* target for SELECT INTO / CREATE TABLE AS */
+	IntoClause *intoClause;		/* target for SELECT INTO / CREATE TABLE AS */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the FROM clause */
 	Node	   *whereClause;	/* WHERE qualification */
@@ -1427,6 +1429,10 @@ typedef struct CommentStmt
 
 /* ----------------------
  *		Declare Cursor Statement
+ *
+ * Note: the "query" field of DeclareCursorStmt is only used in the raw grammar
+ * output.  After parse analysis it's set to null, and the Query points to the
+ * DeclareCursorStmt, not vice versa.
  * ----------------------
  */
 #define CURSOR_OPT_BINARY		0x0001		/* BINARY */
@@ -1441,7 +1447,7 @@ typedef struct DeclareCursorStmt
 	NodeTag		type;
 	char	   *portalname;		/* name of the portal (cursor) */
 	int			options;		/* bitmask of options (see above) */
-	Node	   *query;			/* the SELECT query */
+	Node	   *query;			/* the raw SELECT query */
 } DeclareCursorStmt;
 
 /* ----------------------

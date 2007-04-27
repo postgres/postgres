@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.216 2007/04/02 03:49:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.217 2007/04/27 22:05:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1117,7 +1117,8 @@ transformSubLink(ParseState *pstate, SubLink *sublink)
 		elog(ERROR, "bad query in sub-select");
 	qtree = (Query *) linitial(qtrees);
 	if (qtree->commandType != CMD_SELECT ||
-		qtree->into != NULL)
+		qtree->utilityStmt != NULL ||
+		qtree->intoClause != NULL)
 		elog(ERROR, "bad query in sub-select");
 	sublink->subselect = (Node *) qtree;
 

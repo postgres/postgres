@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.74 2007/04/26 23:24:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.75 2007/04/27 22:05:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,6 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 	int			nargs;
 	List	   *queries;
 	Query	   *query;
-	const char *commandTag;
 	List	   *query_list,
 			   *plan_list;
 	int			i;
@@ -137,22 +136,15 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 	switch (query->commandType)
 	{
 		case CMD_SELECT:
-			commandTag = "SELECT";
-			break;
 		case CMD_INSERT:
-			commandTag = "INSERT";
-			break;
 		case CMD_UPDATE:
-			commandTag = "UPDATE";
-			break;
 		case CMD_DELETE:
-			commandTag = "DELETE";
+			/* OK */
 			break;
 		default:
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PSTATEMENT_DEFINITION),
 					 errmsg("utility statements cannot be prepared")));
-			commandTag = NULL;	/* keep compiler quiet */
 			break;
 	}
 
@@ -168,7 +160,7 @@ PrepareQuery(PrepareStmt *stmt, const char *queryString)
 	StorePreparedStatement(stmt->name,
 						   stmt->query,
 						   queryString,
-						   commandTag,
+						   CreateCommandTag((Node *) query),
 						   argtypes,
 						   nargs,
 						   0,				/* default cursor options */
@@ -244,11 +236,12 @@ ExecuteQuery(ExecuteStmt *stmt, const char *queryString,
 					 errmsg("prepared statement is not a SELECT")));
 		pstmt = (PlannedStmt *) linitial(plan_list);
 		if (!IsA(pstmt, PlannedStmt) ||
-			pstmt->commandType != CMD_SELECT)
+			pstmt->commandType != CMD_SELECT ||
+			pstmt->utilityStmt != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
-		pstmt->into = copyObject(stmt->into);
+		pstmt->intoClause = copyObject(stmt->into);
 
 		MemoryContextSwitchTo(oldContext);
 
@@ -689,7 +682,8 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 
 			if (execstmt->into)
 			{
-				if (pstmt->commandType != CMD_SELECT)
+				if (pstmt->commandType != CMD_SELECT ||
+					pstmt->utilityStmt != NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 							 errmsg("prepared statement is not a SELECT")));
@@ -697,7 +691,7 @@ ExplainExecuteQuery(ExecuteStmt *execstmt, ExplainStmt *stmt,
 				/* Copy the stmt so we can modify it */
 				pstmt = copyObject(pstmt);
 
-				pstmt->into = execstmt->into;
+				pstmt->intoClause = execstmt->into;
 			}
 
 			/*

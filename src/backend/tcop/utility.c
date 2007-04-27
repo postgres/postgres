@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.278 2007/04/26 16:13:12 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.279 2007/04/27 22:05:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,7 +268,7 @@ CommandIsReadOnly(Node *parsetree)
 		switch (stmt->commandType)
 		{
 			case CMD_SELECT:
-				if (stmt->into != NULL)
+				if (stmt->intoClause != NULL)
 					return false;	/* SELECT INTO */
 				else if (stmt->rowMarks != NIL)
 					return false;	/* SELECT FOR UPDATE/SHARE */
@@ -505,10 +505,20 @@ ProcessUtility(Node *parsetree,
 
 			/*
 			 * Portal (cursor) manipulation
+			 *
+			 * Note: DECLARE CURSOR is processed mostly as a SELECT, and
+			 * therefore what we will get here is a PlannedStmt not a bare
+			 * DeclareCursorStmt.
 			 */
-		case T_DeclareCursorStmt:
-			PerformCursorOpen((DeclareCursorStmt *) parsetree, params,
-							  queryString, isTopLevel);
+		case T_PlannedStmt:
+			{
+				PlannedStmt *stmt = (PlannedStmt *) parsetree;
+
+				if (stmt->utilityStmt == NULL ||
+					!IsA(stmt->utilityStmt, DeclareCursorStmt))
+					elog(ERROR, "non-DECLARE CURSOR PlannedStmt passed to ProcessUtility");
+				PerformCursorOpen(stmt, params, queryString, isTopLevel);
+			}
 			break;
 
 		case T_ClosePortalStmt:
@@ -1272,8 +1282,9 @@ QueryReturnsTuples(Query *parsetree)
 	switch (parsetree->commandType)
 	{
 		case CMD_SELECT:
-			/* returns tuples ... unless it's SELECT INTO */
-			if (parsetree->into == NULL)
+			/* returns tuples ... unless it's DECLARE CURSOR or SELECT INTO */
+			if (parsetree->utilityStmt == NULL &&
+				parsetree->intoClause == NULL)
 				return true;
 			break;
 		case CMD_INSERT:
@@ -1899,7 +1910,12 @@ CreateCommandTag(Node *parsetree)
 						 * will be useful for complaints about read-only
 						 * statements
 						 */
-						if (stmt->into != NULL)
+						if (stmt->utilityStmt != NULL)
+						{
+							Assert(IsA(stmt->utilityStmt, DeclareCursorStmt));
+							tag = "DECLARE CURSOR";
+						}
+						else if (stmt->intoClause != NULL)
 							tag = "SELECT INTO";
 						else if (stmt->rowMarks != NIL)
 						{
@@ -1942,7 +1958,12 @@ CreateCommandTag(Node *parsetree)
 						 * will be useful for complaints about read-only
 						 * statements
 						 */
-						if (stmt->into != NULL)
+						if (stmt->utilityStmt != NULL)
+						{
+							Assert(IsA(stmt->utilityStmt, DeclareCursorStmt));
+							tag = "DECLARE CURSOR";
+						}
+						else if (stmt->intoClause != NULL)
 							tag = "SELECT INTO";
 						else if (stmt->rowMarks != NIL)
 						{
@@ -2009,7 +2030,7 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_SelectStmt:
-			if (((SelectStmt *) parsetree)->into)
+			if (((SelectStmt *) parsetree)->intoClause)
 				lev = LOGSTMT_DDL;		/* CREATE AS, SELECT INTO */
 			else
 				lev = LOGSTMT_ALL;
@@ -2330,10 +2351,10 @@ GetCommandLogLevel(Node *parsetree)
 				switch (stmt->commandType)
 				{
 					case CMD_SELECT:
-						if (stmt->into != NULL)
+						if (stmt->intoClause != NULL)
 							lev = LOGSTMT_DDL;	/* CREATE AS, SELECT INTO */
 						else
-							lev = LOGSTMT_ALL;
+							lev = LOGSTMT_ALL;	/* SELECT or DECLARE CURSOR */
 						break;
 
 					case CMD_UPDATE:
@@ -2359,10 +2380,10 @@ GetCommandLogLevel(Node *parsetree)
 				switch (stmt->commandType)
 				{
 					case CMD_SELECT:
-						if (stmt->into != NULL)
+						if (stmt->intoClause != NULL)
 							lev = LOGSTMT_DDL;	/* CREATE AS, SELECT INTO */
 						else
-							lev = LOGSTMT_ALL;
+							lev = LOGSTMT_ALL;	/* SELECT or DECLARE CURSOR */
 						break;
 
 					case CMD_UPDATE:

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.362 2007/03/13 00:33:41 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.363 2007/04/27 22:05:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,6 +118,10 @@ static Query *transformValuesClause(ParseState *pstate, SelectStmt *stmt);
 static Query *transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt);
 static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
+static Query *transformDeclareCursorStmt(ParseState *pstate,
+						   DeclareCursorStmt *stmt);
+static Query *transformExplainStmt(ParseState *pstate,
+						   ExplainStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 					List **extras_before, List **extras_after);
 static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
@@ -313,20 +317,6 @@ transformStmt(ParseState *pstate, Node *parseTree,
 	switch (nodeTag(parseTree))
 	{
 			/*
-			 * Non-optimizable statements
-			 */
-		case T_CreateStmt:
-			result = transformCreateStmt(pstate, (CreateStmt *) parseTree,
-										 extras_before, extras_after);
-			break;
-
-		case T_AlterTableStmt:
-			result = transformAlterTableStmt(pstate,
-											 (AlterTableStmt *) parseTree,
-											 extras_before, extras_after);
-			break;
-
-			/*
 			 * Optimizable statements
 			 */
 		case T_InsertStmt:
@@ -353,6 +343,33 @@ transformStmt(ParseState *pstate, Node *parseTree,
 				else
 					result = transformSetOperationStmt(pstate, n);
 			}
+			break;
+
+			/*
+			 * Non-optimizable statements
+			 */
+		case T_CreateStmt:
+			result = transformCreateStmt(pstate, (CreateStmt *) parseTree,
+										 extras_before, extras_after);
+			break;
+
+		case T_AlterTableStmt:
+			result = transformAlterTableStmt(pstate,
+											 (AlterTableStmt *) parseTree,
+											 extras_before, extras_after);
+			break;
+
+			/*
+			 * Special cases
+			 */
+		case T_DeclareCursorStmt:
+			result = transformDeclareCursorStmt(pstate,
+											(DeclareCursorStmt *) parseTree);
+			break;
+
+		case T_ExplainStmt:
+			result = transformExplainStmt(pstate,
+										  (ExplainStmt *) parseTree);
 			break;
 
 		default:
@@ -546,9 +563,11 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		release_pstate_resources(sub_pstate);
 		pfree(sub_pstate);
 
+		/* The grammar should have produced a SELECT, but it might have INTO */
 		Assert(IsA(selectQuery, Query));
 		Assert(selectQuery->commandType == CMD_SELECT);
-		if (selectQuery->into)
+		Assert(selectQuery->utilityStmt == NULL);
+		if (selectQuery->intoClause)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("INSERT ... SELECT cannot specify INTO")));
@@ -2029,6 +2048,8 @@ analyzeRuleStmt(RuleStmt *stmt, const char *queryString,
 /*
  * transformSelectStmt -
  *	  transforms a Select Statement
+ *
+ * Note: this is also used for DECLARE CURSOR statements.
  */
 static Query *
 transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
@@ -2085,11 +2106,11 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 										   "LIMIT");
 
 	/* handle any SELECT INTO/CREATE TABLE AS spec */
-	if (stmt->into)
+	if (stmt->intoClause)
 	{
-		qry->into = stmt->into;
-		if (stmt->into->colNames)
-			applyColumnNames(qry->targetList, stmt->into->colNames);
+		qry->intoClause = stmt->intoClause;
+		if (stmt->intoClause->colNames)
+			applyColumnNames(qry->targetList, stmt->intoClause->colNames);
 	}
 
 	qry->rtable = pstate->p_rtable;
@@ -2254,11 +2275,11 @@ transformValuesClause(ParseState *pstate, SelectStmt *stmt)
 			 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to VALUES")));
 
 	/* handle any CREATE TABLE AS spec */
-	if (stmt->into)
+	if (stmt->intoClause)
 	{
-		qry->into = stmt->into;
-		if (stmt->into->colNames)
-			applyColumnNames(qry->targetList, stmt->into->colNames);
+		qry->intoClause = stmt->intoClause;
+		if (stmt->intoClause->colNames)
+			applyColumnNames(qry->targetList, stmt->intoClause->colNames);
 	}
 
 	/*
@@ -2345,14 +2366,14 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		leftmostSelect = leftmostSelect->larg;
 	Assert(leftmostSelect && IsA(leftmostSelect, SelectStmt) &&
 		   leftmostSelect->larg == NULL);
-	if (leftmostSelect->into)
+	if (leftmostSelect->intoClause)
 	{
-		qry->into = leftmostSelect->into;
-		intoColNames = leftmostSelect->into->colNames;
+		qry->intoClause = leftmostSelect->intoClause;
+		intoColNames = leftmostSelect->intoClause->colNames;
 	}
 
 	/* clear this to prevent complaints in transformSetOperationTree() */
-	leftmostSelect->into = NULL;
+	leftmostSelect->intoClause = NULL;
 
 	/*
 	 * These are not one-time, exactly, but we want to process them here and
@@ -2533,7 +2554,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Validity-check both leaf and internal SELECTs for disallowed ops.
 	 */
-	if (stmt->into)
+	if (stmt->intoClause)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("INTO is only allowed on first SELECT of UNION/INTERSECT/EXCEPT")));
@@ -3110,6 +3131,105 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 	*extras_after = list_concat(cxt.alist, *extras_after);
 
 	return qry;
+}
+
+
+/*
+ * transformDeclareCursorStmt -
+ *	transform a DECLARE CURSOR Statement
+ *
+ * DECLARE CURSOR is a hybrid case: it's an optimizable statement (in fact not
+ * significantly different from a SELECT) as far as parsing/rewriting/planning
+ * are concerned, but it's not passed to the executor and so in that sense is
+ * a utility statement.  We transform it into a Query exactly as if it were
+ * a SELECT, then stick the original DeclareCursorStmt into the utilityStmt
+ * field to carry the cursor name and options.
+ */
+static Query *
+transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
+{
+	Query	   *result;
+	List	   *extras_before = NIL,
+			   *extras_after = NIL;
+
+	/*
+	 * Don't allow both SCROLL and NO SCROLL to be specified
+	 */
+	if ((stmt->options & CURSOR_OPT_SCROLL) &&
+		(stmt->options & CURSOR_OPT_NO_SCROLL))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+				 errmsg("cannot specify both SCROLL and NO SCROLL")));
+
+	result = transformStmt(pstate, stmt->query,
+						   &extras_before, &extras_after);
+
+	/* Shouldn't get any extras, since grammar only allows SelectStmt */
+	if (extras_before || extras_after)
+		elog(ERROR, "unexpected extra stuff in cursor statement");
+	if (!IsA(result, Query) ||
+		result->commandType != CMD_SELECT ||
+		result->utilityStmt != NULL)
+		elog(ERROR, "unexpected non-SELECT command in cursor statement");
+
+	/* But we must explicitly disallow DECLARE CURSOR ... SELECT INTO */
+	if (result->intoClause)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
+				 errmsg("DECLARE CURSOR cannot specify INTO")));
+
+	/* Implementation restriction (might go away someday) */
+	if (result->rowMarks != NIL)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			  errmsg("DECLARE CURSOR ... FOR UPDATE/SHARE is not supported"),
+				 errdetail("Cursors must be READ ONLY.")));
+
+	/* We won't need the raw querytree any more */
+	stmt->query = NULL;
+
+	result->utilityStmt = (Node *) stmt;
+
+	return result;
+}
+
+
+/*
+ * transformExplainStmt -
+ *	transform an EXPLAIN Statement
+ *
+ * EXPLAIN is just like other utility statements in that we emit it as a
+ * CMD_UTILITY Query node with no transformation of the raw parse tree.
+ * However, if p_variableparams is set, it could be that the client is
+ * expecting us to resolve parameter types in something like
+ *		EXPLAIN SELECT * FROM tab WHERE col = $1
+ * To deal with such cases, we run parse analysis and throw away the result;
+ * this is a bit grotty but not worth contorting the rest of the system for.
+ * (The approach we use for DECLARE CURSOR won't work because the statement
+ * being explained isn't necessarily a SELECT, and in particular might rewrite
+ * to multiple parsetrees.)
+ */
+static Query *
+transformExplainStmt(ParseState *pstate, ExplainStmt *stmt)
+{
+	Query	   *result;
+
+	if (pstate->p_variableparams)
+	{
+		List	   *extras_before = NIL,
+				   *extras_after = NIL;
+
+		/* Since parse analysis scribbles on its input, copy the tree first! */
+		(void) transformStmt(pstate, copyObject(stmt->query),
+							 &extras_before, &extras_after);
+	}
+
+	/* Now return the untransformed command as a utility Query */
+	result = makeNode(Query);
+	result->commandType = CMD_UTILITY;
+	result->utilityStmt = (Node *) stmt;
+
+	return result;
 }
 
 

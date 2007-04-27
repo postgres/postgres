@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.161 2007/04/16 01:14:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.162 2007/04/27 22:05:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,8 @@ typedef struct ExplainState
 	List	   *rtable;			/* range table */
 } ExplainState;
 
-static void ExplainOneQuery(Query *query, int cursorOptions,
-							ExplainStmt *stmt, const char *queryString,
+static void ExplainOneQuery(Query *query, ExplainStmt *stmt,
+							const char *queryString,
 							ParamListInfo params, TupOutputState *tstate);
 static double elapsed_time(instr_time *starttime);
 static void explain_outNode(StringInfo str,
@@ -102,8 +102,8 @@ ExplainQuery(ExplainStmt *stmt, const char *queryString,
 		/* Explain every plan */
 		foreach(l, rewritten)
 		{
-			ExplainOneQuery((Query *) lfirst(l), 0,
-							stmt, queryString, params, tstate);
+			ExplainOneQuery((Query *) lfirst(l), stmt,
+							queryString, params, tstate);
 			/* put a blank line between plans */
 			if (lnext(l) != NULL)
 				do_text_output_oneline(tstate, "");
@@ -134,8 +134,7 @@ ExplainResultDesc(ExplainStmt *stmt)
  *	  print out the execution plan for one Query
  */
 static void
-ExplainOneQuery(Query *query, int cursorOptions,
-				ExplainStmt *stmt, const char *queryString,
+ExplainOneQuery(Query *query, ExplainStmt *stmt, const char *queryString,
 				ParamListInfo params, TupOutputState *tstate)
 {
 	PlannedStmt *plan;
@@ -150,7 +149,7 @@ ExplainOneQuery(Query *query, int cursorOptions,
 	}
 
 	/* plan the query */
-	plan = planner(query, cursorOptions, params);
+	plan = planner(query, 0, params);
 
 	/*
 	 * Update snapshot command ID to ensure this query sees results of any
@@ -187,52 +186,7 @@ ExplainOneUtility(Node *utilityStmt, ExplainStmt *stmt,
 	if (utilityStmt == NULL)
 		return;
 
-	if (IsA(utilityStmt, DeclareCursorStmt))
-	{
-		DeclareCursorStmt *dcstmt = (DeclareCursorStmt *) utilityStmt;
-		Oid		   *param_types;
-		int			num_params;
-		Query	   *query;
-		List	   *rewritten;
-		ExplainStmt newstmt;
-
-		/* Convert parameter type data to the form parser wants */
-		getParamListTypes(params, &param_types, &num_params);
-
-		/*
-		 * Run parse analysis and rewrite.  Note this also acquires sufficient
-		 * locks on the source table(s).
-		 *
-		 * Because the parser and planner tend to scribble on their input, we
-		 * make a preliminary copy of the source querytree.  This prevents
-		 * problems in the case that the DECLARE CURSOR is in a portal or
-		 * plpgsql function and is executed repeatedly.  (See also the same
-		 * hack in COPY and PREPARE.)  XXX FIXME someday.
-		 */
-		rewritten = pg_analyze_and_rewrite((Node *) copyObject(dcstmt->query),
-										   queryString,
-										   param_types, num_params);
-
-		/* We don't expect more or less than one result query */
-		if (list_length(rewritten) != 1 || !IsA(linitial(rewritten), Query))
-			elog(ERROR, "unexpected rewrite result");
-		query = (Query *) linitial(rewritten);
-		if (query->commandType != CMD_SELECT)
-			elog(ERROR, "unexpected rewrite result");
-
-		/* But we must explicitly disallow DECLARE CURSOR ... SELECT INTO */
-		if (query->into)
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
-					 errmsg("DECLARE CURSOR cannot specify INTO")));
-
-		/* do not actually execute the underlying query! */
-		memcpy(&newstmt, stmt, sizeof(ExplainStmt));
-		newstmt.analyze = false;
-		ExplainOneQuery(query, dcstmt->options, &newstmt,
-						queryString, params, tstate);
-	}
-	else if (IsA(utilityStmt, ExecuteStmt))
+	if (IsA(utilityStmt, ExecuteStmt))
 		ExplainExecuteQuery((ExecuteStmt *) utilityStmt, stmt,
 							queryString, params, tstate);
 	else if (IsA(utilityStmt, NotifyStmt))
@@ -246,6 +200,11 @@ ExplainOneUtility(Node *utilityStmt, ExplainStmt *stmt,
  * ExplainOnePlan -
  *		given a planned query, execute it if needed, and then print
  *		EXPLAIN output
+ *
+ * Since we ignore any DeclareCursorStmt that might be attached to the query,
+ * if you say EXPLAIN ANALYZE DECLARE CURSOR then we'll actually run the
+ * query.  This is different from pre-8.3 behavior but seems more useful than
+ * not running the query.  No cursor will be created, however.
  *
  * This is exported because it's called back from prepare.c in the
  * EXPLAIN EXECUTE case

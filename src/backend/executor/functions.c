@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.115 2007/04/16 01:14:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.116 2007/04/27 22:05:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,7 +317,7 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 	/* We assume we don't need to set up ActiveSnapshot for ExecutorStart */
 
 	/* Utility commands don't need Executor. */
-	if (es->qd->operation != CMD_UTILITY)
+	if (es->qd->utilitystmt == NULL)
 	{
 		/*
 		 * Only set up to collect queued triggers if it's not a SELECT.
@@ -346,9 +346,12 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 	{
 		ActiveSnapshot = es->qd->snapshot;
 
-		if (es->qd->operation == CMD_UTILITY)
+		if (es->qd->utilitystmt)
 		{
-			ProcessUtility(es->qd->utilitystmt,
+			/* ProcessUtility needs the PlannedStmt for DECLARE CURSOR */
+			ProcessUtility((es->qd->plannedstmt ?
+							(Node *) es->qd->plannedstmt :
+							es->qd->utilitystmt),
 						   fcache->src,
 						   es->qd->params,
 						   false,				/* not top level */
@@ -366,7 +369,8 @@ postquel_getnext(execution_state *es, SQLFunctionCachePtr fcache)
 			 */
 			if (LAST_POSTQUEL_COMMAND(es) &&
 				es->qd->operation == CMD_SELECT &&
-				es->qd->plannedstmt->into == NULL)
+				es->qd->plannedstmt->utilityStmt == NULL &&
+				es->qd->plannedstmt->intoClause == NULL)
 				count = 1L;
 			else
 				count = 0L;
@@ -396,7 +400,7 @@ postquel_end(execution_state *es)
 	es->status = F_EXEC_DONE;
 
 	/* Utility commands don't need Executor. */
-	if (es->qd->operation != CMD_UTILITY)
+	if (es->qd->utilitystmt == NULL)
 	{
 		/* Make our snapshot the active one for any called functions */
 		saveActiveSnapshot = ActiveSnapshot;
@@ -894,7 +898,9 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	 * Note: eventually replace this test with QueryReturnsTuples?  We'd need
 	 * a more general method of determining the output type, though.
 	 */
-	if (!(parse->commandType == CMD_SELECT && parse->into == NULL))
+	if (!(parse->commandType == CMD_SELECT &&
+		  parse->utilityStmt == NULL &&
+		  parse->intoClause == NULL))
 	{
 		if (rettype != VOIDOID)
 			ereport(ERROR,

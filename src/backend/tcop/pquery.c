@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.115 2007/03/13 00:33:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.116 2007/04/27 22:05:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ CreateQueryDesc(PlannedStmt *plannedstmt,
 
 	qd->operation = plannedstmt->commandType;	/* operation */
 	qd->plannedstmt = plannedstmt;				/* plan */
-	qd->utilitystmt = NULL;
+	qd->utilitystmt = plannedstmt->utilityStmt;	/* in case DECLARE CURSOR */
 	qd->snapshot = snapshot;					/* snapshot */
 	qd->crosscheck_snapshot = crosscheck_snapshot;		/* RI check snapshot */
 	qd->dest = dest;			/* output dest */
@@ -257,7 +257,8 @@ ChoosePortalStrategy(List *stmts)
 			if (query->canSetTag)
 			{
 				if (query->commandType == CMD_SELECT &&
-					query->into == NULL)
+					query->utilityStmt == NULL &&
+					query->intoClause == NULL)
 					return PORTAL_ONE_SELECT;
 				if (query->commandType == CMD_UTILITY &&
 					query->utilityStmt != NULL)
@@ -276,7 +277,8 @@ ChoosePortalStrategy(List *stmts)
 			if (pstmt->canSetTag)
 			{
 				if (pstmt->commandType == CMD_SELECT &&
-					pstmt->into == NULL)
+					pstmt->utilityStmt == NULL &&
+					pstmt->intoClause == NULL)
 					return PORTAL_ONE_SELECT;
 			}
 		}
@@ -380,7 +382,8 @@ FetchStatementTargetList(Node *stmt)
 		else
 		{
 			if (query->commandType == CMD_SELECT &&
-				query->into == NULL)
+				query->utilityStmt == NULL &&
+				query->intoClause == NULL)
 				return query->targetList;
 			if (query->returningList)
 				return query->returningList;
@@ -392,7 +395,8 @@ FetchStatementTargetList(Node *stmt)
 		PlannedStmt *pstmt = (PlannedStmt *) stmt;
 
 		if (pstmt->commandType == CMD_SELECT &&
-			pstmt->into == NULL)
+			pstmt->utilityStmt == NULL &&
+			pstmt->intoClause == NULL)
 			return pstmt->planTree->targetlist;
 		if (pstmt->returningLists)
 			return (List *) linitial(pstmt->returningLists);
@@ -1222,7 +1226,8 @@ PortalRunMulti(Portal portal, bool isTopLevel,
 		 */
 		CHECK_FOR_INTERRUPTS();
 
-		if (IsA(stmt, PlannedStmt))
+		if (IsA(stmt, PlannedStmt) &&
+			((PlannedStmt *) stmt)->utilityStmt == NULL)
 		{
 			/*
 			 * process a plannable query.
