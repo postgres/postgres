@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.49 2007/04/26 22:10:54 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.50 2007/04/27 20:08:43 neilc Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -175,19 +175,6 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    only superusers are allowed to change these parameters with
    <command>SET</>.)
   </para>
-
-   <note>
-    <para>
-     Since the parameters <varname>stats_block_level</varname>, and
-     <varname>stats_row_level</varname> default to <literal>false</>,
-     very few statistics are collected in the default
-     configuration. Enabling either of these configuration
-     variables will significantly increase the amount of useful data
-     produced by the statistics facilities, at the expense of
-     additional run-time overhead.
-    </para>
-   </note>
-
  </sect2>
 
  <sect2 id="monitoring-stats-views">
