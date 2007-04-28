@@ -1918,7 +1918,7 @@ $$ language plpgsql;
 begin;
 
 select refcursor_test1('test1');
-fetch next from test1;
+fetch next in test1;
 
 select refcursor_test1('test2');
 fetch all from test2;

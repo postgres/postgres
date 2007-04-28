@@ -2245,7 +2245,7 @@ select refcursor_test1('test1');
  test1
 (1 row)
 
-fetch next from test1;
+fetch next in test1;
  a 
 ---
  5

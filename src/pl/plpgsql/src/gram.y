@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.100 2007/04/16 17:21:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.101 2007/04/28 23:54:59 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2043,13 +2043,15 @@ read_fetch_direction(void)
 	else if (pg_strcasecmp(yytext, "absolute") == 0)
 	{
 		fetch->direction = FETCH_ABSOLUTE;
-		fetch->expr = plpgsql_read_expression(K_FROM, "FROM");
+		fetch->expr = read_sql_construct(K_FROM, K_IN, "FROM or IN",
+										 "SELECT ", true, true, NULL);
 		check_FROM = false;
 	}
 	else if (pg_strcasecmp(yytext, "relative") == 0)
 	{
 		fetch->direction = FETCH_RELATIVE;
-		fetch->expr = plpgsql_read_expression(K_FROM, "FROM");
+		fetch->expr = read_sql_construct(K_FROM, K_IN, "FROM or IN",
+										 "SELECT ", true, true, NULL);
 		check_FROM = false;
 	}
 	else if (pg_strcasecmp(yytext, "forward") == 0)
@@ -2060,6 +2062,13 @@ read_fetch_direction(void)
 	{
 		fetch->direction = FETCH_BACKWARD;
 	}
+	else if (tok != T_SCALAR)
+	{
+		plpgsql_push_back_token(tok);
+		fetch->expr = read_sql_construct(K_FROM, K_IN, "FROM or IN",
+										 "SELECT ", true, true, NULL);
+		check_FROM = false;
+	}
 	else
 	{
 		/* Assume there's no direction clause */
@@ -2067,9 +2076,13 @@ read_fetch_direction(void)
 		check_FROM = false;
 	}
 
-	/* check FROM keyword after direction's specification */
-	if (check_FROM && yylex() != K_FROM)
-		yyerror("expected \"FROM\"");
+	/* check FROM or IN keyword after direction's specification */
+	if (check_FROM)
+	{
+		tok = yylex();
+		if (tok != K_FROM && tok != K_IN)
+			yyerror("expected FROM or IN");
+	}
 
 	return fetch;
 }
