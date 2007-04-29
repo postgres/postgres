@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.58 2007/03/18 05:36:49 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.59 2007/04/29 01:21:09 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -493,6 +493,7 @@ static void dump_dynfors(PLpgSQL_stmt_dynfors *stmt);
 static void dump_getdiag(PLpgSQL_stmt_getdiag *stmt);
 static void dump_open(PLpgSQL_stmt_open *stmt);
 static void dump_fetch(PLpgSQL_stmt_fetch *stmt);
+static void dump_cursor_direction(PLpgSQL_stmt_fetch *stmt);
 static void dump_close(PLpgSQL_stmt_close *stmt);
 static void dump_perform(PLpgSQL_stmt_perform *stmt);
 static void dump_expr(PLpgSQL_expr *expr);
@@ -761,21 +762,64 @@ static void
 dump_fetch(PLpgSQL_stmt_fetch *stmt)
 {
 	dump_ind();
-	printf("FETCH curvar=%d\n", stmt->curvar);
+	
+	if (!stmt->is_move)
+	{
+		printf("FETCH curvar=%d\n", stmt->curvar);
+		dump_cursor_direction(stmt);
 
+		dump_indent += 2;
+		if (stmt->rec != NULL)
+		{
+			dump_ind();
+			printf("    target = %d %s\n", stmt->rec->recno, stmt->rec->refname);
+		}
+		if (stmt->row != NULL)
+		{
+			dump_ind();
+			printf("    target = %d %s\n", stmt->row->rowno, stmt->row->refname);
+		}
+		dump_indent -= 2;
+	}
+	else
+	{
+		printf("MOVE curvar=%d\n", stmt->curvar);
+		dump_cursor_direction(stmt);
+	}
+}
+
+static void
+dump_cursor_direction(PLpgSQL_stmt_fetch *stmt)
+{
 	dump_indent += 2;
-	if (stmt->rec != NULL)
+	dump_ind();
+	switch (stmt->direction)
 	{
-		dump_ind();
-		printf("    target = %d %s\n", stmt->rec->recno, stmt->rec->refname);
+		case FETCH_FORWARD:
+			printf("    FORWARD ");
+			break;
+		case FETCH_BACKWARD:
+			printf("    BACKWARD ");
+			break;
+		case FETCH_ABSOLUTE:
+			printf("    ABSOLUTE ");
+			break;
+		case FETCH_RELATIVE:
+			printf("    RELATIVE ");
+			break;
+		default:
+			printf("??? unknown cursor direction %d", stmt->direction);
 	}
-	if (stmt->row != NULL)
+	
+	if (stmt->expr)
 	{
-		dump_ind();
-		printf("    target = %d %s\n", stmt->row->rowno, stmt->row->refname);
+		dump_expr(stmt->expr);
+		printf("\n");
 	}
+	else
+		printf("%d\n", stmt->how_many);
+		
 	dump_indent -= 2;
-
 }
 
 static void
@@ -1067,3 +1111,4 @@ plpgsql_dumptree(PLpgSQL_function *func)
 	printf("\nEnd of execution tree of function %s\n\n", func->fn_name);
 	fflush(stdout);
 }
+

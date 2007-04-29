@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.108 2007/04/28 23:54:58 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.109 2007/04/29 01:21:08 neilc Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1524,6 +1524,13 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
           </listitem>
           <listitem>
            <para>
+                A <command>MOVE</> statement sets <literal>FOUND</literal>
+                true if it successfully repositions the cursor, false otherwise.
+           </para>
+          </listitem>
+
+          <listitem>
+           <para>
                 A <command>FOR</> statement sets <literal>FOUND</literal> true
                 if it iterates one or more times, else false.  This applies to
                 all three variants of the <command>FOR</> statement (integer
@@ -2562,6 +2569,53 @@ FETCH curs1 INTO rowvar;
 FETCH curs2 INTO foo, bar, baz;
 FETCH LAST FROM curs3 INTO x, y;
 FETCH RELATIVE -2 FROM curs4 INTO x;
+</programlisting>
+       </para>
+     </sect3>
+
+    <sect3>
+     <title><literal>MOVE</></title>
+
+<synopsis>
+MOVE <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> <replaceable>cursor</replaceable>;
+</synopsis>
+
+    <para>
+     <command>MOVE</command> repositions a cursor without retrieving
+     any data. <command>MOVE</command> works exactly like the
+     <command>FETCH</command> command, except it only positions the
+     cursor and does not return rows. As with <command>SELECT
+      INTO</command>, the special variable <literal>FOUND</literal> can
+     be checked to see whether the cursor was successfully
+     repositioned or not.
+    </para>
+
+    <para>
+     The <replaceable>direction</replaceable> clause can be any of the
+     variants allowed in the SQL <xref linkend="sql-move"
+     endterm="sql-move-title"> command except the ones that can move by
+     more than one row; namely, it can be
+     <literal>NEXT</>,
+     <literal>PRIOR</>,
+     <literal>FIRST</>,
+     <literal>LAST</>,
+     <literal>ABSOLUTE</> <replaceable>count</replaceable>,
+     <literal>RELATIVE</> <replaceable>count</replaceable>,
+     <literal>FORWARD</>, or
+     <literal>BACKWARD</>.
+     Omitting <replaceable>direction</replaceable> is the same
+     as specifying <literal>NEXT</>.
+     <replaceable>direction</replaceable> values that require moving
+     backward are likely to fail unless the cursor was declared or opened
+     with the <literal>SCROLL</> option.
+    </para>
+
+    <para>
+     Examples:
+<programlisting>
+MOVE curs1;
+MOVE LAST FROM curs3;
+MOVE RELATIVE -2 FROM curs4;
 </programlisting>
        </para>
      </sect3>

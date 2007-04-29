@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.195 2007/04/19 16:33:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.196 2007/04/29 01:21:09 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3114,7 +3114,8 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 
 
 /* ----------
- * exec_stmt_fetch			Fetch from a cursor into a target
+ * exec_stmt_fetch			Fetch from a cursor into a target, or just
+ *                          move the current position of the cursor
  * ----------
  */
 static int
@@ -3163,45 +3164,56 @@ exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 		exec_eval_cleanup(estate);
 	}
 
-	/* ----------
-	 * Determine if we fetch into a record or a row
-	 * ----------
-	 */
-	if (stmt->rec != NULL)
-		rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
-	else if (stmt->row != NULL)
-		row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
-	else
-		elog(ERROR, "unsupported target");
-
-	/* ----------
-	 * Fetch 1 tuple from the cursor
-	 * ----------
-	 */
-	SPI_scroll_cursor_fetch(portal, stmt->direction, how_many);
-	tuptab = SPI_tuptable;
-	n = SPI_processed;
-
-	/* ----------
-	 * Set the target and the global FOUND variable appropriately.
-	 * ----------
-	 */
-	if (n == 0)
+	if (!stmt->is_move)
 	{
-		exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
-		exec_set_found(estate, false);
+		/* ----------
+		 * Determine if we fetch into a record or a row
+		 * ----------
+		 */
+		if (stmt->rec != NULL)
+			rec = (PLpgSQL_rec *) (estate->datums[stmt->rec->recno]);
+		else if (stmt->row != NULL)
+			row = (PLpgSQL_row *) (estate->datums[stmt->row->rowno]);
+		else
+			elog(ERROR, "unsupported target");
+
+		/* ----------
+		 * Fetch 1 tuple from the cursor
+		 * ----------
+		 */
+		SPI_scroll_cursor_fetch(portal, stmt->direction, how_many);
+		tuptab = SPI_tuptable;
+		n = SPI_processed;
+
+		/* ----------
+		 * Set the target and the global FOUND variable appropriately.
+		 * ----------
+		 */
+		if (n == 0)
+		{
+			exec_move_row(estate, rec, row, NULL, tuptab->tupdesc);
+			exec_set_found(estate, false);
+		}
+		else
+		{
+			exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
+			exec_set_found(estate, true);
+		}
+
+		SPI_freetuptable(tuptab);
 	}
 	else
 	{
-		exec_move_row(estate, rec, row, tuptab->vals[0], tuptab->tupdesc);
-		exec_set_found(estate, true);
-	}
+		/* Move the cursor */
+		SPI_scroll_cursor_move(portal, stmt->direction, how_many);
+		n = SPI_processed;
 
-	SPI_freetuptable(tuptab);
+		/* Set the global FOUND variable appropriately. */
+		exec_set_found(estate, n != 0);
+	}
 
 	return PLPGSQL_RC_OK;
 }
-
 
 /* ----------
  * exec_stmt_close			Close a cursor

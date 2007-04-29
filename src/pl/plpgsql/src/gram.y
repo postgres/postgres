@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.101 2007/04/28 23:54:59 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.102 2007/04/29 01:21:09 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ static	void			 check_labels(const char *start_label,
 %type <stmt>	stmt_assign stmt_if stmt_loop stmt_while stmt_exit
 %type <stmt>	stmt_return stmt_raise stmt_execsql stmt_execsql_insert
 %type <stmt>	stmt_dynexecute stmt_for stmt_perform stmt_getdiag
-%type <stmt>	stmt_open stmt_fetch stmt_close stmt_null
+%type <stmt>	stmt_open stmt_fetch stmt_move stmt_close stmt_null
 
 %type <list>	proc_exceptions
 %type <exception_block> exception_sect
@@ -179,6 +179,7 @@ static	void			 check_labels(const char *start_label,
 %token	K_IS
 %token	K_LOG
 %token	K_LOOP
+%token	K_MOVE
 %token	K_NEXT
 %token	K_NOSCROLL
 %token	K_NOT
@@ -634,6 +635,8 @@ proc_stmt		: pl_block ';'
 				| stmt_open
 						{ $$ = $1; }
 				| stmt_fetch
+						{ $$ = $1; }
+				| stmt_move
 						{ $$ = $1; }
 				| stmt_close
 						{ $$ = $1; }
@@ -1478,6 +1481,19 @@ stmt_fetch		: K_FETCH lno opt_fetch_direction cursor_variable K_INTO
 						fetch->rec		= rec;
 						fetch->row		= row;
 						fetch->curvar	= $4->varno;
+						fetch->is_move	= false;
+
+						$$ = (PLpgSQL_stmt *)fetch;
+					}
+				;
+				
+stmt_move		: K_MOVE lno opt_fetch_direction cursor_variable ';'
+					{
+						PLpgSQL_stmt_fetch *fetch = $3;
+
+						fetch->lineno = $2;
+						fetch->curvar	= $4->varno;
+						fetch->is_move	= true;
 
 						$$ = (PLpgSQL_stmt *)fetch;
 					}
