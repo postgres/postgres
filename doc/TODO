@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sun Apr 22 09:28:30 EDT 2007
+Last updated:		Sun Apr 29 02:48:05 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -750,11 +750,8 @@ SQL Commands
 		  http://archives.postgresql.org/pgsql-patches/2006-06/msg00031.php
 
 		o Add single-step debugging of functions
-		o Add support for MOVE and SCROLL cursors
-
-		  PL/pgSQL cursors should support the same syntax as
-		  backend cursors.
-
+		o -Add support for MOVE cursors
+		o Add support for SCROLL cursors
 		o Add support for WITH HOLD cursors
 		o Allow RETURN to return row or record functions
 
