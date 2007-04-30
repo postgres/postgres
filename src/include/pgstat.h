@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.57 2007/03/30 18:34:55 mha Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.58 2007/04/30 16:37:08 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -416,7 +416,7 @@ extern void PgstatCollectorMain(int argc, char *argv[]);
  */
 extern void pgstat_ping(void);
 
-extern void pgstat_report_tabstat(void);
+extern void pgstat_report_tabstat(bool force);
 extern void pgstat_vacuum_tabstat(void);
 extern void pgstat_drop_database(Oid databaseid);
 extern void pgstat_drop_relation(Oid relid);

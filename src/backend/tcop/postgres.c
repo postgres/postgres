@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.532 2007/04/16 18:21:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.533 2007/04/30 16:37:08 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -3444,7 +3444,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 			}
 			else
 			{
-				pgstat_report_tabstat();
+				pgstat_report_tabstat(false);
 
 				set_ps_display("idle", false);
 				pgstat_report_activity("<IDLE>");
