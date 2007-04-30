@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.267 2007/04/03 16:34:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.268 2007/04/30 21:01:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@
 #include "storage/procarray.h"
 #include "storage/spin.h"
 #include "utils/builtins.h"
-#include "utils/nabstime.h"
 #include "utils/pg_locale.h"
 
 
@@ -114,11 +113,11 @@ static bool recoveryTarget = false;
 static bool recoveryTargetExact = false;
 static bool recoveryTargetInclusive = true;
 static TransactionId recoveryTargetXid;
-static time_t recoveryTargetTime;
+static TimestampTz recoveryTargetTime;
 
 /* if recoveryStopsHere returns true, it saves actual stop xid/time here */
 static TransactionId recoveryStopXid;
-static time_t recoveryStopTime;
+static TimestampTz recoveryStopTime;
 static bool recoveryStopAfter;
 
 /*
@@ -3536,7 +3535,7 @@ writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 			 xlogfname,
 			 recoveryStopAfter ? "after" : "before",
 			 recoveryStopXid,
-			 str_time(recoveryStopTime));
+			 timestamptz_to_str(recoveryStopTime));
 
 	nbytes = strlen(buffer);
 	errno = 0;
@@ -4276,17 +4275,16 @@ readRecoveryCommandFile(void)
 			recoveryTargetExact = false;
 
 			/*
-			 * Convert the time string given by the user to the time_t format.
-			 * We use type abstime's input converter because we know abstime
-			 * has the same representation as time_t.
+			 * Convert the time string given by the user to TimestampTz form.
 			 */
-			recoveryTargetTime = (time_t)
-				DatumGetAbsoluteTime(DirectFunctionCall1(abstimein,
-													 CStringGetDatum(tok2)));
+			recoveryTargetTime =
+				DatumGetTimestampTz(DirectFunctionCall3(timestamptz_in,
+												   CStringGetDatum(tok2),
+												ObjectIdGetDatum(InvalidOid),
+														Int32GetDatum(-1)));
 			ereport(LOG,
 					(errmsg("recovery_target_time = %s",
-							DatumGetCString(DirectFunctionCall1(abstimeout,
-				AbsoluteTimeGetDatum((AbsoluteTime) recoveryTargetTime))))));
+							timestamptz_to_str(recoveryTargetTime))));
 		}
 		else if (strcmp(tok1, "recovery_target_inclusive") == 0)
 		{
@@ -4464,7 +4462,7 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 {
 	bool		stopsHere;
 	uint8		record_info;
-	time_t		recordXtime;
+	TimestampTz	recordXtime;
 
 	/* Do we have a PITR target at all? */
 	if (!recoveryTarget)
@@ -4479,14 +4477,14 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 		xl_xact_commit *recordXactCommitData;
 
 		recordXactCommitData = (xl_xact_commit *) XLogRecGetData(record);
-		recordXtime = recordXactCommitData->xtime;
+		recordXtime = recordXactCommitData->xact_time;
 	}
 	else if (record_info == XLOG_XACT_ABORT)
 	{
 		xl_xact_abort *recordXactAbortData;
 
 		recordXactAbortData = (xl_xact_abort *) XLogRecGetData(record);
-		recordXtime = recordXactAbortData->xtime;
+		recordXtime = recordXactAbortData->xact_time;
 	}
 	else
 		return false;
@@ -4532,22 +4530,26 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 			if (recoveryStopAfter)
 				ereport(LOG,
 						(errmsg("recovery stopping after commit of transaction %u, time %s",
-							  recoveryStopXid, str_time(recoveryStopTime))));
+								recoveryStopXid,
+								timestamptz_to_str(recoveryStopTime))));
 			else
 				ereport(LOG,
 						(errmsg("recovery stopping before commit of transaction %u, time %s",
-							  recoveryStopXid, str_time(recoveryStopTime))));
+								recoveryStopXid,
+								timestamptz_to_str(recoveryStopTime))));
 		}
 		else
 		{
 			if (recoveryStopAfter)
 				ereport(LOG,
 						(errmsg("recovery stopping after abort of transaction %u, time %s",
-							  recoveryStopXid, str_time(recoveryStopTime))));
+								recoveryStopXid,
+								timestamptz_to_str(recoveryStopTime))));
 			else
 				ereport(LOG,
 						(errmsg("recovery stopping before abort of transaction %u, time %s",
-							  recoveryStopXid, str_time(recoveryStopTime))));
+								recoveryStopXid,
+								timestamptz_to_str(recoveryStopTime))));
 		}
 	}
 

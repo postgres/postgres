@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.29 2007/04/03 16:34:35 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.30 2007/04/30 21:01:52 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -1675,7 +1675,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 
 	/* Emit the XLOG commit record */
 	xlrec.xid = xid;
-	xlrec.crec.xtime = time(NULL);
+	xlrec.crec.xact_time = GetCurrentTimestamp();
 	xlrec.crec.nrels = nrels;
 	xlrec.crec.nsubxacts = nchildren;
 	rdata[0].data = (char *) (&xlrec);
@@ -1753,7 +1753,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 
 	/* Emit the XLOG abort record */
 	xlrec.xid = xid;
-	xlrec.arec.xtime = time(NULL);
+	xlrec.arec.xact_time = GetCurrentTimestamp();
 	xlrec.arec.nrels = nrels;
 	xlrec.arec.nsubxacts = nchildren;
 	rdata[0].data = (char *) (&xlrec);

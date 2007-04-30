@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.241 2007/04/30 03:23:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.242 2007/04/30 21:01:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -773,7 +773,7 @@ RecordTransactionCommit(void)
 			MyProc->inCommit = true;
 
 			SetCurrentTransactionStopTimestamp();
-			xlrec.xtime = timestamptz_to_time_t(xactStopTimestamp);
+			xlrec.xact_time = xactStopTimestamp;
 			xlrec.nrels = nrels;
 			xlrec.nsubxacts = nchildren;
 			rdata[0].data = (char *) (&xlrec);
@@ -1069,7 +1069,7 @@ RecordTransactionAbort(void)
 			XLogRecPtr	recptr;
 
 			SetCurrentTransactionStopTimestamp();
-			xlrec.xtime = timestamptz_to_time_t(xactStopTimestamp);
+			xlrec.xact_time = xactStopTimestamp;
 			xlrec.nrels = nrels;
 			xlrec.nsubxacts = nchildren;
 			rdata[0].data = (char *) (&xlrec);
@@ -1247,7 +1247,7 @@ RecordSubTransactionAbort(void)
 			xl_xact_abort xlrec;
 			XLogRecPtr	recptr;
 
-			xlrec.xtime = time(NULL);
+			xlrec.xact_time = GetCurrentTimestamp();
 			xlrec.nrels = nrels;
 			xlrec.nsubxacts = nchildren;
 			rdata[0].data = (char *) (&xlrec);
@@ -4282,12 +4282,9 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 static void
 xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 {
-	struct tm  *tm = localtime(&xlrec->xtime);
 	int			i;
 
-	appendStringInfo(buf, "%04u-%02u-%02u %02u:%02u:%02u",
-					 tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-					 tm->tm_hour, tm->tm_min, tm->tm_sec);
+	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
 	if (xlrec->nrels > 0)
 	{
 		appendStringInfo(buf, "; rels:");
@@ -4313,12 +4310,9 @@ xact_desc_commit(StringInfo buf, xl_xact_commit *xlrec)
 static void
 xact_desc_abort(StringInfo buf, xl_xact_abort *xlrec)
 {
-	struct tm  *tm = localtime(&xlrec->xtime);
 	int			i;
 
-	appendStringInfo(buf, "%04u-%02u-%02u %02u:%02u:%02u",
-					 tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
-					 tm->tm_hour, tm->tm_min, tm->tm_sec);
+	appendStringInfoString(buf, timestamptz_to_str(xlrec->xact_time));
 	if (xlrec->nrels > 0)
 	{
 		appendStringInfo(buf, "; rels:");
