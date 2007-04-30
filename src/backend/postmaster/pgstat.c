@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.153 2007/04/21 04:10:53 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.154 2007/04/30 03:23:49 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -608,15 +608,34 @@ void allow_immediate_pgstat_restart(void)
 /* ----------
  * pgstat_report_tabstat() -
  *
- *	Called from tcop/postgres.c to send the so far collected
- *	per table access statistics to the collector.
+ *	Called from tcop/postgres.c to send the so far collected per-table
+ *	access statistics to the collector.  Note that this is called only
+ *	when not within a transaction, so it is fair to use transaction stop
+ *	time as an approximation of current time.
  * ----------
  */
 void
 pgstat_report_tabstat(void)
 {
+	static TimestampTz last_report = 0;	
+	TimestampTz now;
+
+	/* Don't expend a clock check if nothing to do */
+	if (RegularTabStat.tsa_used == 0 &&
+		SharedTabStat.tsa_used == 0)
+		return;
+
 	/*
-	 * For each message buffer used during the last query set the header
+	 * Don't send a message unless it's been at least PGSTAT_STAT_INTERVAL
+	 * msec since we last sent one.
+	 */
+	now = GetCurrentTransactionStopTimestamp();
+	if (!TimestampDifferenceExceeds(last_report, now, PGSTAT_STAT_INTERVAL))
+		return;
+	last_report = now;
+
+	/*
+	 * For each message buffer used during the last queries, set the header
 	 * fields and send it out; then mark the entries unused.
 	 */
 	pgstat_report_one_tabstat(&RegularTabStat, MyDatabaseId);

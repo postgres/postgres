@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.174 2007/02/27 23:48:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.175 2007/04/30 03:23:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1236,6 +1236,27 @@ TimestampDifference(TimestampTz start_time, TimestampTz stop_time,
 		*microsecs = (int) ((diff - *secs) * 1000000.0);
 #endif
 	}
+}
+
+/*
+ * TimestampDifferenceExceeds -- report whether the difference between two
+ *		timestamps is >= a threshold (expressed in milliseconds)
+ *
+ * Both inputs must be ordinary finite timestamps (in current usage,
+ * they'll be results from GetCurrentTimestamp()).
+ */
+bool
+TimestampDifferenceExceeds(TimestampTz start_time,
+						   TimestampTz stop_time,
+						   int msec)
+{
+	TimestampTz diff = stop_time - start_time;
+
+#ifdef HAVE_INT64_TIMESTAMP
+	return (diff >= msec * INT64CONST(1000));
+#else
+	return (diff * 1000.0 >= msec);
+#endif
 }
 
 /*

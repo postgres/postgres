@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.106 2007/04/19 16:26:44 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.107 2007/04/30 03:23:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -468,29 +468,15 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	/* Log the action if appropriate */
 	if (IsAutoVacuumWorkerProcess() && Log_autovacuum >= 0)
 	{
-		long	diff = 0L;
-
-		if (Log_autovacuum > 0)
-		{
-			TimestampTz	endtime;
-			int		usecs;
-			long	secs;
-
-			endtime = GetCurrentTimestamp();
-			TimestampDifference(starttime, endtime, &secs, &usecs);
-
-			diff = secs * 1000 + usecs / 1000;
-		}
-		
-		if (Log_autovacuum == 0 || diff >= Log_autovacuum)
-		{
+		if (Log_autovacuum == 0 ||
+			TimestampDifferenceExceeds(starttime, GetCurrentTimestamp(),
+									   Log_autovacuum))
 			ereport(LOG,
 					(errmsg("automatic analyze of table \"%s.%s.%s\" system usage: %s",
 							get_database_name(MyDatabaseId),
 							get_namespace_name(RelationGetNamespace(onerel)),
 							RelationGetRelationName(onerel),
 							pg_rusage_show(&ru0))));
-		}
 	}
 }
 

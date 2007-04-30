@@ -73,6 +73,14 @@ SELECT count(*) FROM tenk2 WHERE unique1 = 1;
      1
 (1 row)
 
+-- force the rate-limiting logic in pgstat_report_tabstat() to time out
+-- and send a message
+SELECT pg_sleep(1.0);
+ pg_sleep 
+----------
+ 
+(1 row)
+
 -- wait for stats collector to update
 SELECT wait_for_stats();
  wait_for_stats 

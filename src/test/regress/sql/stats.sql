@@ -60,6 +60,10 @@ SELECT count(*) FROM tenk2;
 -- do an indexscan
 SELECT count(*) FROM tenk2 WHERE unique1 = 1;
 
+-- force the rate-limiting logic in pgstat_report_tabstat() to time out
+-- and send a message
+SELECT pg_sleep(1.0);
+
 -- wait for stats collector to update
 SELECT wait_for_stats();
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.240 2007/04/26 23:24:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.241 2007/04/30 03:23:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,11 +160,13 @@ static CommandId currentCommandId;
 /*
  * xactStartTimestamp is the value of transaction_timestamp().
  * stmtStartTimestamp is the value of statement_timestamp().
+ * xactStopTimestamp is the time at which we log a commit or abort WAL record.
  * These do not change as we enter and exit subtransactions, so we don't
  * keep them inside the TransactionState stack.
  */
 static TimestampTz xactStartTimestamp;
 static TimestampTz stmtStartTimestamp;
+static TimestampTz xactStopTimestamp;
 
 /*
  * GID to be used for preparing the current transaction.  This is also
@@ -436,12 +438,35 @@ GetCurrentStatementStartTimestamp(void)
 }
 
 /*
+ *	GetCurrentTransactionStopTimestamp
+ *
+ * We return current time if the transaction stop time hasn't been set
+ * (which can happen if we decide we don't need to log an XLOG record).
+ */
+TimestampTz
+GetCurrentTransactionStopTimestamp(void)
+{
+	if (xactStopTimestamp != 0)
+		return xactStopTimestamp;
+	return GetCurrentTimestamp();
+}
+
+/*
  *	SetCurrentStatementStartTimestamp
  */
 void
 SetCurrentStatementStartTimestamp(void)
 {
 	stmtStartTimestamp = GetCurrentTimestamp();
+}
+
+/*
+ *	SetCurrentTransactionStopTimestamp
+ */
+static inline void
+SetCurrentTransactionStopTimestamp(void)
+{
+	xactStopTimestamp = GetCurrentTimestamp();
 }
 
 /*
@@ -747,7 +772,8 @@ RecordTransactionCommit(void)
 			 */
 			MyProc->inCommit = true;
 
-			xlrec.xtime = time(NULL);
+			SetCurrentTransactionStopTimestamp();
+			xlrec.xtime = timestamptz_to_time_t(xactStopTimestamp);
 			xlrec.nrels = nrels;
 			xlrec.nsubxacts = nchildren;
 			rdata[0].data = (char *) (&xlrec);
@@ -1042,7 +1068,8 @@ RecordTransactionAbort(void)
 			xl_xact_abort xlrec;
 			XLogRecPtr	recptr;
 
-			xlrec.xtime = time(NULL);
+			SetCurrentTransactionStopTimestamp();
+			xlrec.xtime = timestamptz_to_time_t(xactStopTimestamp);
 			xlrec.nrels = nrels;
 			xlrec.nsubxacts = nchildren;
 			rdata[0].data = (char *) (&xlrec);
@@ -1415,9 +1442,11 @@ StartTransaction(void)
 	/*
 	 * set transaction_timestamp() (a/k/a now()).  We want this to be the same
 	 * as the first command's statement_timestamp(), so don't do a fresh
-	 * GetCurrentTimestamp() call (which'd be expensive anyway).
+	 * GetCurrentTimestamp() call (which'd be expensive anyway).  Also,
+	 * mark xactStopTimestamp as unset.
 	 */
 	xactStartTimestamp = stmtStartTimestamp;
+	xactStopTimestamp = 0;
 	pgstat_report_txn_timestamp(xactStartTimestamp);
 
 	/*
