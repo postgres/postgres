@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.242 2007/04/27 22:05:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.243 2007/04/30 00:14:54 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3770,12 +3770,12 @@ expression_tree_mutator(Node *node,
 	 */
 
 #define FLATCOPY(newnode, node, nodetype)  \
-	( (newnode) = makeNode(nodetype), \
+	( (newnode) = (nodetype *) palloc(sizeof(nodetype)), \
 	  memcpy((newnode), (node), sizeof(nodetype)) )
 
 #define CHECKFLATCOPY(newnode, node, nodetype)	\
 	( AssertMacro(IsA((node), nodetype)), \
-	  (newnode) = makeNode(nodetype), \
+	  (newnode) = (nodetype *) palloc(sizeof(nodetype)), \
 	  memcpy((newnode), (node), sizeof(nodetype)) )
 
 #define MUTATE(newfield, oldfield, fieldtype)  \
@@ -3789,15 +3789,36 @@ expression_tree_mutator(Node *node,
 
 	switch (nodeTag(node))
 	{
+		/*
+		 * Primitive node types with no expression subnodes.  Var and Const
+		 * are frequent enough to deserve special cases, the others we just
+		 * use copyObject for.
+		 */
 		case T_Var:
+			{
+				Var	   *var = (Var *) node;
+				Var	   *newnode;
+
+				FLATCOPY(newnode, var, Var);
+				return (Node *) newnode;
+			}
+			break;
 		case T_Const:
+			{
+				Const	   *oldnode = (Const *) node;
+				Const	   *newnode;
+
+				FLATCOPY(newnode, oldnode, Const);
+				/* XXX we don't bother with datumCopy; should we? */
+				return (Node *) newnode;
+			}
+			break;
 		case T_Param:
 		case T_CoerceToDomainValue:
 		case T_CaseTestExpr:
 		case T_SetToDefault:
 		case T_RangeTblRef:
 		case T_OuterJoinInfo:
-			/* primitive node types with no expression subnodes */
 			return (Node *) copyObject(node);
 		case T_Aggref:
 			{
