@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.71 2007/01/05 22:19:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.72 2007/04/30 00:12:08 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -516,7 +516,6 @@ AllocSetAlloc(MemoryContext context, Size size)
 	AllocSet	set = (AllocSet) context;
 	AllocBlock	block;
 	AllocChunk	chunk;
-	AllocChunk	priorfree;
 	int			fidx;
 	Size		chunk_size;
 	Size		blksize;
@@ -578,26 +577,16 @@ AllocSetAlloc(MemoryContext context, Size size)
 	/*
 	 * Request is small enough to be treated as a chunk.  Look in the
 	 * corresponding free list to see if there is a free chunk we could reuse.
-	 */
-	fidx = AllocSetFreeIndex(size);
-	priorfree = NULL;
-	for (chunk = set->freelist[fidx]; chunk; chunk = (AllocChunk) chunk->aset)
-	{
-		if (chunk->size >= size)
-			break;
-		priorfree = chunk;
-	}
-
-	/*
 	 * If one is found, remove it from the free list, make it again a member
 	 * of the alloc set and return its data address.
 	 */
+	fidx = AllocSetFreeIndex(size);
+	chunk = set->freelist[fidx];
 	if (chunk != NULL)
 	{
-		if (priorfree == NULL)
-			set->freelist[fidx] = (AllocChunk) chunk->aset;
-		else
-			priorfree->aset = chunk->aset;
+		Assert(chunk->size >= size);
+
+		set->freelist[fidx] = (AllocChunk) chunk->aset;
 
 		chunk->aset = (void *) set;
 
@@ -618,7 +607,7 @@ AllocSetAlloc(MemoryContext context, Size size)
 	/*
 	 * Choose the actual chunk size to allocate.
 	 */
-	chunk_size = 1 << (fidx + ALLOC_MINBITS);
+	chunk_size = (1 << ALLOC_MINBITS) << fidx;
 	Assert(chunk_size >= size);
 
 	/*
