@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.134 2007/04/06 22:57:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.135 2007/04/30 00:16:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,6 +566,22 @@ trivial_subqueryscan(SubqueryScan *plan)
 }
 
 /*
+ * copyVar
+ *		Copy a Var node.
+ *
+ * fix_scan_expr and friends do this enough times that it's worth having
+ * a bespoke routine instead of using the generic copyObject() function.
+ */
+static inline Var *
+copyVar(Var *var)
+{
+	Var		   *newvar = (Var *) palloc(sizeof(Var));
+
+	*newvar = *var;
+	return newvar;
+}
+
+/*
  * fix_scan_expr
  *		Do set_plan_references processing on a scan-level expression
  *
@@ -588,7 +604,7 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		return NULL;
 	if (IsA(node, Var))
 	{
-		Var		   *var = (Var *) copyObject(node);
+		Var		   *var = copyVar((Var *) node);
 
 		Assert(var->varlevelsup == 0);
 		/*
@@ -1091,7 +1107,7 @@ search_indexed_tlist_for_var(Var *var, indexed_tlist *itlist,
 		if (vinfo->varno == varno && vinfo->varattno == varattno)
 		{
 			/* Found a match */
-			Var		   *newvar = (Var *) copyObject(var);
+			Var		   *newvar = copyVar(var);
 
 			newvar->varno = newvarno;
 			newvar->varattno = vinfo->resno;
@@ -1213,7 +1229,7 @@ fix_join_expr_mutator(Node *node, fix_join_expr_context *context)
 		/* If it's for acceptable_rel, adjust and return it */
 		if (var->varno == context->acceptable_rel)
 		{
-			var = (Var *) copyObject(var);
+			var = copyVar(var);
 			var->varno += context->rtoffset;
 			var->varnoold += context->rtoffset;
 			return (Node *) var;
