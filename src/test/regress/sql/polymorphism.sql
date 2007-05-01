@@ -374,3 +374,19 @@ select f3, myaggn08b(f1) from t group by f3;
 select f3, myaggn09a(f1) from t group by f3;
 select f3, myaggn10a(f1) from t group by f3;
 select mysum2(f1, f1 + 1) from t;
+
+-- test inlining of polymorphic SQL functions
+create function bleat(int) returns int as $$
+begin
+  raise notice 'bleat %', $1;
+  return $1;
+end$$ language plpgsql;
+
+create function sql_if(bool, anyelement, anyelement) returns anyelement as $$
+select case when $1 then $2 else $3 end $$ language sql;
+
+-- Note this would fail with integer overflow, never mind wrong bleat() output,
+-- if the CASE expression were not successfully inlined
+select f1, sql_if(f1 > 0, bleat(f1), bleat(f1 + 1)) from int4_tbl;
+
+select q2, sql_if(q2 > 0, q2, q2 + 1) from int8_tbl;
