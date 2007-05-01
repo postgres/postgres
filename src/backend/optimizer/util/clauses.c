@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.6 2007/03/06 22:45:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.154.2.7 2007/05/01 18:54:24 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1987,11 +1987,11 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * compatible with the original expression result type.  To avoid
 	 * confusing matters, insert a RelabelType in such cases.
 	 */
-	if (exprType(newexpr) != funcform->prorettype)
+	if (exprType(newexpr) != result_type)
 	{
-		Assert(IsBinaryCoercible(exprType(newexpr), funcform->prorettype));
+		Assert(IsBinaryCoercible(exprType(newexpr), result_type));
 		newexpr = (Node *) makeRelabelType((Expr *) newexpr,
-										   funcform->prorettype,
+										   result_type,
 										   -1,
 										   COERCE_IMPLICIT_CAST);
 	}
