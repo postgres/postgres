@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.84 2007/03/02 23:37:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.85 2007/05/02 15:32:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,7 +223,7 @@ extern DLLIMPORT ErrorContextCallback *error_context_stack;
 	} while (0)
 
 #define PG_RE_THROW()  \
-	siglongjmp(*PG_exception_stack, 1)
+	pg_re_throw()
 
 extern DLLIMPORT sigjmp_buf *PG_exception_stack;
 
@@ -262,6 +262,7 @@ extern ErrorData *CopyErrorData(void);
 extern void FreeErrorData(ErrorData *edata);
 extern void FlushErrorState(void);
 extern void ReThrowError(ErrorData *edata);
+extern void pg_re_throw(void);
 
 
 /* GUC-configurable parameters */

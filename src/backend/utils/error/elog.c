@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.183 2007/03/02 23:37:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.184 2007/05/02 15:32:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1098,6 +1098,61 @@ ReThrowError(ErrorData *edata)
 	recursion_depth--;
 	PG_RE_THROW();
 }
+
+/*
+ * pg_re_throw --- out-of-line implementation of PG_RE_THROW() macro
+ */
+void
+pg_re_throw(void)
+{
+	/* If possible, throw the error to the next outer setjmp handler */
+	if (PG_exception_stack != NULL)
+		siglongjmp(*PG_exception_stack, 1);
+	else
+	{
+		/*
+		 * If we get here, elog(ERROR) was thrown inside a PG_TRY block, which
+		 * we have now exited only to discover that there is no outer setjmp
+		 * handler to pass the error to.  Had the error been thrown outside the
+		 * block to begin with, we'd have promoted the error to FATAL, so the
+		 * correct behavior is to make it FATAL now; that is, emit it and then
+		 * call proc_exit.
+		 */
+		ErrorData  *edata = &errordata[errordata_stack_depth];
+
+		Assert(errordata_stack_depth >= 0);
+		Assert(edata->elevel == ERROR);
+		edata->elevel = FATAL;
+
+		/*
+		 * At least in principle, the increase in severity could have changed
+		 * where-to-output decisions, so recalculate.  This should stay in
+		 * sync with errstart(), which see for comments.
+		 */
+		if (IsPostmasterEnvironment)
+			edata->output_to_server = is_log_level_output(FATAL,
+														  log_min_messages);
+		else
+			edata->output_to_server = (FATAL >= log_min_messages);
+		if (whereToSendOutput == DestRemote)
+		{
+			if (ClientAuthInProgress)
+				edata->output_to_client = true;
+			else
+				edata->output_to_client = (FATAL >= client_min_messages);
+		}
+
+		/*
+		 * We can use errfinish() for the rest, but we don't want it to call
+		 * any error context routines a second time.  Since we know we are
+		 * about to exit, it should be OK to just clear the context stack.
+		 */
+		error_context_stack = NULL;
+
+		errfinish(0);
+	}
+}
+
 
 /*
  * Initialization of error output file
