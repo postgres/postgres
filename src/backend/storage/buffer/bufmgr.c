@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.217 2007/05/02 23:18:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.218 2007/05/02 23:34:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,9 @@
  *		cache we don't read it, but just return a zeroed-out buffer.  Useful
  *		when the caller intends to fill the page from scratch, since this
  *		saves I/O and avoids unnecessary failure if the page-on-disk has
- *		corrupt page headers.
+ *		corrupt page headers.  Caution: do not use this to read a page that
+ *		is beyond the relation's current physical EOF; that is likely to
+ *		cause problems in md.c when the page is modified and written out.
  *
  * ReleaseBuffer() -- unpin a buffer
  *
@@ -137,6 +139,9 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
  *		cache already, it's filled with zeros instead of reading it from
  *		disk. The caller is expected to overwrite the whole buffer,
  *		so that the current page contents are not interesting.
+ *		Caution: do not use this to read a page that is beyond the relation's
+ *		current physical EOF; that is likely to cause problems in md.c when
+ *		the page is modified and written out.  P_NEW is OK, though.
  */
 Buffer
 ReadOrZeroBuffer(Relation reln, BlockNumber blockNum)
