@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.259 2007/03/29 00:15:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.260 2007/05/02 21:08:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ static HTAB *OpClassCache = NULL;
 
 static void RelationClearRelation(Relation relation, bool rebuild);
 
-static void RelationReloadClassinfo(Relation relation);
+static void RelationReloadIndexInfo(Relation relation);
 static void RelationFlushRelation(Relation relation);
 static bool load_relcache_init_file(void);
 static void write_relcache_init_file(void);
@@ -1504,7 +1504,7 @@ RelationIdGetRelation(Oid relationId)
 		RelationIncrementReferenceCount(rd);
 		/* revalidate nailed index if necessary */
 		if (!rd->rd_isvalid)
-			RelationReloadClassinfo(rd);
+			RelationReloadIndexInfo(rd);
 		return rd;
 	}
 
@@ -1579,24 +1579,24 @@ RelationClose(Relation relation)
 }
 
 /*
- * RelationReloadClassinfo - reload the pg_class row (only)
+ * RelationReloadIndexInfo - reload minimal information for an open index
  *
- *	This function is used only for indexes.  We currently allow only the
- *	pg_class row of an existing index to change (to support changes of
- *	owner, tablespace, or relfilenode), not its pg_index row or other
- *	subsidiary index schema information.  Therefore it's sufficient to do
- *	this when we get an SI invalidation.  Furthermore, there are cases
- *	where it's necessary not to throw away the index information, especially
- *	for "nailed" indexes which we are unable to rebuild on-the-fly.
+ *	This function is used only for indexes.  A relcache inval on an index
+ *	can mean that its pg_class or pg_index row changed.  There are only
+ *	very limited changes that are allowed to an existing index's schema,
+ *	so we can update the relcache entry without a complete rebuild; which
+ *	is fortunate because we can't rebuild an index entry that is "nailed"
+ *	and/or in active use.  We support full replacement of the pg_class row,
+ *	as well as updates of a few simple fields of the pg_index row.
  *
- *	We can't necessarily reread the pg_class row right away; we might be
+ *	We can't necessarily reread the catalog rows right away; we might be
  *	in a failed transaction when we receive the SI notification.  If so,
  *	RelationClearRelation just marks the entry as invalid by setting
  *	rd_isvalid to false.  This routine is called to fix the entry when it
  *	is next needed.
  */
 static void
-RelationReloadClassinfo(Relation relation)
+RelationReloadIndexInfo(Relation relation)
 {
 	bool		indexOK;
 	HeapTuple	pg_class_tuple;
@@ -1635,6 +1635,33 @@ RelationReloadClassinfo(Relation relation)
 	if (relation->rd_amcache)
 		pfree(relation->rd_amcache);
 	relation->rd_amcache = NULL;
+
+	/*
+	 * For a non-system index, there are fields of the pg_index row that are
+	 * allowed to change, so re-read that row and update the relcache entry.
+	 * Most of the info derived from pg_index (such as support function lookup
+	 * info) cannot change, and indeed the whole point of this routine is to
+	 * update the relcache entry without clobbering that data; so wholesale
+	 * replacement is not appropriate.
+	 */
+	if (!IsSystemRelation(relation))
+	{
+		HeapTuple	tuple;
+		Form_pg_index index;
+
+		tuple = SearchSysCache(INDEXRELID,
+							   ObjectIdGetDatum(RelationGetRelid(relation)),
+							   0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+				elog(ERROR, "cache lookup failed for index %u",
+					 RelationGetRelid(relation));
+		index = (Form_pg_index) GETSTRUCT(tuple);
+
+		relation->rd_index->indisvalid = index->indisvalid;
+
+		ReleaseSysCache(tuple);
+	}
+
 	/* Okay, now it's valid again */
 	relation->rd_isvalid = true;
 }
@@ -1683,7 +1710,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		{
 			relation->rd_isvalid = false;		/* needs to be revalidated */
 			if (relation->rd_refcnt > 1)
-				RelationReloadClassinfo(relation);
+				RelationReloadIndexInfo(relation);
 		}
 		return;
 	}
@@ -1693,14 +1720,14 @@ RelationClearRelation(Relation relation, bool rebuild)
 	 * have valid index support information.  This avoids problems with active
 	 * use of the index support information.  As with nailed indexes, we
 	 * re-read the pg_class row to handle possible physical relocation of the
-	 * index.
+	 * index, and we check for pg_index updates too.
 	 */
 	if (relation->rd_rel->relkind == RELKIND_INDEX &&
 		relation->rd_refcnt > 0 &&
 		relation->rd_indexcxt != NULL)
 	{
 		relation->rd_isvalid = false;	/* needs to be revalidated */
-		RelationReloadClassinfo(relation);
+		RelationReloadIndexInfo(relation);
 		return;
 	}
 

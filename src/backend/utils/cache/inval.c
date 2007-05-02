@@ -80,7 +80,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.79 2007/01/05 22:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/inval.c,v 1.80 2007/05/02 21:08:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -590,10 +590,25 @@ PrepareForTupleInvalidation(Relation relation, HeapTuple tuple)
 		 * KLUGE ALERT: we always send the relcache event with MyDatabaseId,
 		 * even if the rel in question is shared (which we can't easily tell).
 		 * This essentially means that only backends in this same database
-		 * will react to the relcache flush request. This is in fact
+		 * will react to the relcache flush request.  This is in fact
 		 * appropriate, since only those backends could see our pg_attribute
-		 * change anyway.  It looks a bit ugly though.
+		 * change anyway.  It looks a bit ugly though.  (In practice, shared
+		 * relations can't have schema changes after bootstrap, so we should
+		 * never come here for a shared rel anyway.)
 		 */
+		databaseId = MyDatabaseId;
+	}
+	else if (tupleRelId == IndexRelationId)
+	{
+		Form_pg_index indextup = (Form_pg_index) GETSTRUCT(tuple);
+
+		/*
+		 * When a pg_index row is updated, we should send out a relcache inval
+		 * for the index relation.  As above, we don't know the shared status
+		 * of the index, but in practice it doesn't matter since indexes of
+		 * shared catalogs can't have such updates.
+		 */
+		relationId = indextup->indexrelid;
 		databaseId = MyDatabaseId;
 	}
 	else
