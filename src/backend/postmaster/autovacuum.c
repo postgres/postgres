@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.42 2007/04/18 16:44:18 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.43 2007/05/02 15:47:14 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1407,25 +1407,36 @@ AutoVacWorkerMain(int argc, char *argv[])
 	 * Get the info about the database we're going to work on.
 	 */
 	LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
-	MyWorkerInfo = (WorkerInfo) MAKE_PTR(AutoVacuumShmem->av_startingWorker);
-	dbid = MyWorkerInfo->wi_dboid;
-	MyWorkerInfo->wi_workerpid = MyProcPid;
 
-	/* insert into the running list */
-	SHMQueueInsertBefore(&AutoVacuumShmem->av_runningWorkers, 
-						 &MyWorkerInfo->wi_links);
 	/*
-	 * remove from the "starting" pointer, so that the launcher can start a new
-	 * worker if required
+	 * beware of startingWorker being INVALID; this could happen if the
+	 * launcher thinks we've taking too long to start.
 	 */
-	AutoVacuumShmem->av_startingWorker = INVALID_OFFSET;
-	LWLockRelease(AutovacuumLock);
+	if (AutoVacuumShmem->av_startingWorker != INVALID_OFFSET)
+	{
+		MyWorkerInfo = (WorkerInfo) MAKE_PTR(AutoVacuumShmem->av_startingWorker);
+		dbid = MyWorkerInfo->wi_dboid;
+		MyWorkerInfo->wi_workerpid = MyProcPid;
 
-	on_shmem_exit(FreeWorkerInfo, 0);
+		/* insert into the running list */
+		SHMQueueInsertBefore(&AutoVacuumShmem->av_runningWorkers, 
+							 &MyWorkerInfo->wi_links);
+		/*
+		 * remove from the "starting" pointer, so that the launcher can start a new
+		 * worker if required
+		 */
+		AutoVacuumShmem->av_startingWorker = INVALID_OFFSET;
+		LWLockRelease(AutovacuumLock);
 
-	/* wake up the launcher */
-	if (AutoVacuumShmem->av_launcherpid != 0)
-		kill(AutoVacuumShmem->av_launcherpid, SIGUSR1);
+		on_shmem_exit(FreeWorkerInfo, 0);
+
+		/* wake up the launcher */
+		if (AutoVacuumShmem->av_launcherpid != 0)
+			kill(AutoVacuumShmem->av_launcherpid, SIGUSR1);
+	}
+	else
+		/* no worker entry for me, go away */
+		LWLockRelease(AutovacuumLock);
 
 	if (OidIsValid(dbid))
 	{
@@ -1466,8 +1477,8 @@ AutoVacWorkerMain(int argc, char *argv[])
 	}
 
 	/*
-	 * FIXME -- we need to notify the launcher when we are gone.  But this
-	 * should be done after our PGPROC is released, in ProcKill.
+	 * The launcher will be notified of my death in ProcKill, *if* we managed
+	 * to get a worker slot at all
 	 */
 
 	/* All done, go away */
