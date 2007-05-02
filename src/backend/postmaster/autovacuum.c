@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.43 2007/05/02 15:47:14 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.44 2007/05/02 18:27:57 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,8 +549,6 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 		if (can_launch && AutoVacuumShmem->av_startingWorker != INVALID_OFFSET)
 		{
-			long	secs;
-			int		usecs;
 			WorkerInfo worker = (WorkerInfo) MAKE_PTR(AutoVacuumShmem->av_startingWorker);
 
 			if (current_time == 0)
@@ -566,11 +564,8 @@ AutoVacLauncherMain(int argc, char *argv[])
 			 * startingWorker pointer before trying to connect; only low-level
 			 * problems, like fork() failure, can get us here.
 			 */
-			TimestampDifference(worker->wi_launchtime, current_time,
-								&secs, &usecs);
-
-			/* ignore microseconds, as they cannot make any difference */
-			if (secs > autovacuum_naptime)
+			if (TimestampDifferenceExceeds(worker->wi_launchtime, current_time,
+										   autovacuum_naptime * 1000))
 			{
 				LWLockRelease(AutovacuumLock);
 				LWLockAcquire(AutovacuumLock, LW_EXCLUSIVE);
@@ -618,13 +613,13 @@ AutoVacLauncherMain(int argc, char *argv[])
 			if (elem != NULL)
 			{
 				avl_dbase *avdb = DLE_VAL(elem);
-				long	secs;
-				int		usecs;
 
-				TimestampDifference(current_time, avdb->adl_next_worker, &secs, &usecs);
-
-				/* do we have to start a worker? */
-				if (secs <= 0 && usecs <= 0)
+				/*
+				 * launch a worker if next_worker is right now or it is in the
+				 * past
+				 */
+				if (TimestampDifferenceExceeds(avdb->adl_next_worker,
+											   current_time, 0))
 					launch_worker(current_time);
 			}
 			else
@@ -1037,22 +1032,15 @@ do_start_worker(void)
 
 			if (dbp->adl_datid == tmp->adw_datid)
 			{
-				TimestampTz		curr_plus_naptime;
-				TimestampTz		next = dbp->adl_next_worker;
-				
-				curr_plus_naptime =
-					TimestampTzPlusMilliseconds(current_time,
-												autovacuum_naptime * 1000);
-
 				/*
-				 * What we want here if to skip if next_worker falls between
+				 * Skip this database if its next_worker value falls between
 				 * the current time and the current time plus naptime.
 				 */
-				if (timestamp_cmp_internal(current_time, next) > 0)
-					skipit = false;
-				else if (timestamp_cmp_internal(next, curr_plus_naptime) > 0)
-					skipit = false;
-				else
+				if (TimestampDifferenceExceeds(current_time,
+											   dbp->adl_next_worker, 0) &&
+					!TimestampDifferenceExceeds(current_time,
+												dbp->adl_next_worker,
+												autovacuum_naptime * 1000))
 					skipit = true;
 
 				break;
