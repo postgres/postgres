@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.216 2007/03/30 18:34:55 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.217 2007/05/02 23:18:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,12 @@
  * ReadBuffer() -- find or create a buffer holding the requested page,
  *		and pin it so that no one can destroy it while this process
  *		is using it.
+ *
+ * ReadOrZeroBuffer() -- like ReadBuffer, but if the page is not already in
+ *		cache we don't read it, but just return a zeroed-out buffer.  Useful
+ *		when the caller intends to fill the page from scratch, since this
+ *		saves I/O and avoids unnecessary failure if the page-on-disk has
+ *		corrupt page headers.
  *
  * ReleaseBuffer() -- unpin a buffer
  *
@@ -87,6 +93,8 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
 extern PgStat_MsgBgWriter BgWriterStats;
 
 
+static Buffer ReadBuffer_common(Relation reln, BlockNumber blockNum,
+								bool zeroPage);
 static bool PinBuffer(volatile BufferDesc *buf);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
 static void UnpinBuffer(volatile BufferDesc *buf,
@@ -120,6 +128,27 @@ static void AtProcExit_Buffers(int code, Datum arg);
  */
 Buffer
 ReadBuffer(Relation reln, BlockNumber blockNum)
+{
+	return ReadBuffer_common(reln, blockNum, false);
+}
+
+/*
+ * ReadOrZeroBuffer -- like ReadBuffer, but if the page isn't in buffer
+ *		cache already, it's filled with zeros instead of reading it from
+ *		disk. The caller is expected to overwrite the whole buffer,
+ *		so that the current page contents are not interesting.
+ */
+Buffer
+ReadOrZeroBuffer(Relation reln, BlockNumber blockNum)
+{
+	return ReadBuffer_common(reln, blockNum, true);
+}
+
+/*
+ * ReadBuffer_common -- common logic for ReadBuffer and ReadOrZeroBuffer
+ */
+static Buffer
+ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage)
 {
 	volatile BufferDesc *bufHdr;
 	Block		bufBlock;
@@ -253,17 +282,18 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
 	}
 	else
 	{
-		smgrread(reln->rd_smgr, blockNum, (char *) bufBlock);
+		/* 
+		 * Read in the page, unless the caller intends to overwrite it
+		 * and just wants us to allocate a buffer.
+		 */
+		if (zeroPage)
+			MemSet((char *) bufBlock, 0, BLCKSZ);
+		else
+			smgrread(reln->rd_smgr, blockNum, (char *) bufBlock);
 		/* check for garbage data */
 		if (!PageHeaderIsValid((PageHeader) bufBlock))
 		{
-			/*
-			 * During WAL recovery, the first access to any data page should
-			 * overwrite the whole page from the WAL; so a clobbered page
-			 * header is not reason to fail.  Hence, when InRecovery we may
-			 * always act as though zero_damaged_pages is ON.
-			 */
-			if (zero_damaged_pages || InRecovery)
+			if (zero_damaged_pages)
 			{
 				ereport(WARNING,
 						(errcode(ERRCODE_DATA_CORRUPTED),

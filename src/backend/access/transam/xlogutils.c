@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.49 2007/01/05 22:19:24 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.50 2007/05/02 23:18:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,9 @@ XLogCheckInvalidPages(void)
  * If "init" is true then the caller intends to rewrite the page fully
  * using the info in the XLOG record.  In this case we will extend the
  * relation if needed to make the page exist, and we will not complain about
- * the page being "new" (all zeroes).
+ * the page being "new" (all zeroes); in fact, we usually will supply a
+ * zeroed buffer without reading the page at all, so as to avoid unnecessary
+ * failure if the page is present on disk but has corrupt headers.
  *
  * If "init" is false then the caller needs the page to be valid already.
  * If the page doesn't exist or contains zeroes, we return InvalidBuffer.
@@ -226,7 +228,10 @@ XLogReadBuffer(Relation reln, BlockNumber blkno, bool init)
 	if (blkno < lastblock)
 	{
 		/* page exists in file */
-		buffer = ReadBuffer(reln, blkno);
+		if (init)
+			buffer = ReadOrZeroBuffer(reln, blkno);
+		else
+			buffer = ReadBuffer(reln, blkno);
 	}
 	else
 	{
