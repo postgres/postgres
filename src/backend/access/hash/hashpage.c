@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.66 2007/04/19 20:24:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashpage.c,v 1.67 2007/05/03 16:45:58 tgl Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -100,21 +100,21 @@ _hash_droplock(Relation rel, BlockNumber whichlock, int access)
  *	_hash_getbuf() -- Get a buffer by block number for read or write.
  *
  *		'access' must be HASH_READ, HASH_WRITE, or HASH_NOLOCK.
+ *		'flags' is a bitwise OR of the allowed page types.
+ *
+ *		This must be used only to fetch pages that are expected to be valid
+ *		already.  _hash_checkpage() is applied using the given flags.
  *
  *		When this routine returns, the appropriate lock is set on the
  *		requested buffer and its reference count has been incremented
  *		(ie, the buffer is "locked and pinned").
  *
- *		P_NEW is disallowed because this routine should only be used
+ *		P_NEW is disallowed because this routine can only be used
  *		to access pages that are known to be before the filesystem EOF.
  *		Extending the index should be done with _hash_getnewbuf.
- *
- *		All call sites should call either _hash_checkpage or _hash_pageinit
- *		on the returned page, depending on whether the block is expected
- *		to be valid or not.
  */
 Buffer
-_hash_getbuf(Relation rel, BlockNumber blkno, int access)
+_hash_getbuf(Relation rel, BlockNumber blkno, int access, int flags)
 {
 	Buffer		buf;
 
@@ -127,13 +127,52 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access)
 		LockBuffer(buf, access);
 
 	/* ref count and lock type are correct */
+
+	_hash_checkpage(rel, buf, flags);
+
+	return buf;
+}
+
+/*
+ *	_hash_getinitbuf() -- Get and initialize a buffer by block number.
+ *
+ *		This must be used only to fetch pages that are known to be before
+ *		the index's filesystem EOF, but are to be filled from scratch.
+ *		_hash_pageinit() is applied automatically.  Otherwise it has
+ *		effects similar to _hash_getbuf() with access = HASH_WRITE.
+ *
+ *		When this routine returns, a write lock is set on the
+ *		requested buffer and its reference count has been incremented
+ *		(ie, the buffer is "locked and pinned").
+ *
+ *		P_NEW is disallowed because this routine can only be used
+ *		to access pages that are known to be before the filesystem EOF.
+ *		Extending the index should be done with _hash_getnewbuf.
+ */
+Buffer
+_hash_getinitbuf(Relation rel, BlockNumber blkno)
+{
+	Buffer		buf;
+
+	if (blkno == P_NEW)
+		elog(ERROR, "hash AM does not use P_NEW");
+
+	buf = ReadOrZeroBuffer(rel, blkno);
+
+	LockBuffer(buf, HASH_WRITE);
+
+	/* ref count and lock type are correct */
+
+	/* initialize the page */
+	_hash_pageinit(BufferGetPage(buf), BufferGetPageSize(buf));
+
 	return buf;
 }
 
 /*
  *	_hash_getnewbuf() -- Get a new page at the end of the index.
  *
- *		This has the same API as _hash_getbuf, except that we are adding
+ *		This has the same API as _hash_getinitbuf, except that we are adding
  *		a page to the index, and hence expect the page to be past the
  *		logical EOF.  (However, we have to support the case where it isn't,
  *		since a prior try might have crashed after extending the filesystem
@@ -141,12 +180,9 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access)
  *
  *		It is caller's responsibility to ensure that only one process can
  *		extend the index at a time.
- *
- *		All call sites should call _hash_pageinit on the returned page.
- *		Also, it's difficult to imagine why access would not be HASH_WRITE.
  */
 Buffer
-_hash_getnewbuf(Relation rel, BlockNumber blkno, int access)
+_hash_getnewbuf(Relation rel, BlockNumber blkno)
 {
 	BlockNumber	nblocks = RelationGetNumberOfBlocks(rel);
 	Buffer		buf;
@@ -166,12 +202,15 @@ _hash_getnewbuf(Relation rel, BlockNumber blkno, int access)
 				 BufferGetBlockNumber(buf), blkno);
 	}
 	else
-		buf = ReadBuffer(rel, blkno);
+		buf = ReadOrZeroBuffer(rel, blkno);
 
-	if (access != HASH_NOLOCK)
-		LockBuffer(buf, access);
+	LockBuffer(buf, HASH_WRITE);
 
 	/* ref count and lock type are correct */
+
+	/* initialize the page */
+	_hash_pageinit(BufferGetPage(buf), BufferGetPageSize(buf));
+
 	return buf;
 }
 
@@ -292,9 +331,8 @@ _hash_metapinit(Relation rel)
 	 * smgrextend() calls to occur.  This ensures that the smgr level
 	 * has the right idea of the physical index length.
 	 */
-	metabuf = _hash_getnewbuf(rel, HASH_METAPAGE, HASH_WRITE);
+	metabuf = _hash_getnewbuf(rel, HASH_METAPAGE);
 	pg = BufferGetPage(metabuf);
-	_hash_pageinit(pg, BufferGetPageSize(metabuf));
 
 	pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
 	pageopaque->hasho_prevblkno = InvalidBlockNumber;
@@ -350,9 +388,8 @@ _hash_metapinit(Relation rel)
 	 */
 	for (i = 0; i <= 1; i++)
 	{
-		buf = _hash_getnewbuf(rel, BUCKET_TO_BLKNO(metap, i), HASH_WRITE);
+		buf = _hash_getnewbuf(rel, BUCKET_TO_BLKNO(metap, i));
 		pg = BufferGetPage(buf);
-		_hash_pageinit(pg, BufferGetPageSize(buf));
 		pageopaque = (HashPageOpaque) PageGetSpecialPointer(pg);
 		pageopaque->hasho_prevblkno = InvalidBlockNumber;
 		pageopaque->hasho_nextblkno = InvalidBlockNumber;
@@ -679,17 +716,15 @@ _hash_splitbucket(Relation rel,
 	 * either bucket.
 	 */
 	oblkno = start_oblkno;
-	obuf = _hash_getbuf(rel, oblkno, HASH_WRITE);
-	_hash_checkpage(rel, obuf, LH_BUCKET_PAGE);
+	obuf = _hash_getbuf(rel, oblkno, HASH_WRITE, LH_BUCKET_PAGE);
 	opage = BufferGetPage(obuf);
 	oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 
 	nblkno = start_nblkno;
-	nbuf = _hash_getbuf(rel, nblkno, HASH_WRITE);
+	nbuf = _hash_getnewbuf(rel, nblkno);
 	npage = BufferGetPage(nbuf);
 
 	/* initialize the new bucket's primary page */
-	_hash_pageinit(npage, BufferGetPageSize(nbuf));
 	nopaque = (HashPageOpaque) PageGetSpecialPointer(npage);
 	nopaque->hasho_prevblkno = InvalidBlockNumber;
 	nopaque->hasho_nextblkno = InvalidBlockNumber;
@@ -725,8 +760,7 @@ _hash_splitbucket(Relation rel,
 			 */
 			_hash_wrtbuf(rel, obuf);
 
-			obuf = _hash_getbuf(rel, oblkno, HASH_WRITE);
-			_hash_checkpage(rel, obuf, LH_OVERFLOW_PAGE);
+			obuf = _hash_getbuf(rel, oblkno, HASH_WRITE, LH_OVERFLOW_PAGE);
 			opage = BufferGetPage(obuf);
 			oopaque = (HashPageOpaque) PageGetSpecialPointer(opage);
 			ooffnum = FirstOffsetNumber;
@@ -763,7 +797,6 @@ _hash_splitbucket(Relation rel,
 				_hash_chgbufaccess(rel, nbuf, HASH_WRITE, HASH_NOLOCK);
 				/* chain to a new overflow page */
 				nbuf = _hash_addovflpage(rel, metabuf, nbuf);
-				_hash_checkpage(rel, nbuf, LH_OVERFLOW_PAGE);
 				npage = BufferGetPage(nbuf);
 				/* we don't need nopaque within the loop */
 			}

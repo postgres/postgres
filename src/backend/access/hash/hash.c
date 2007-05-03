@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.93 2007/01/20 18:43:35 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.94 2007/05/03 16:45:58 tgl Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -506,8 +506,7 @@ hashbulkdelete(PG_FUNCTION_ARGS)
 	 * array cannot change under us; and it beats rereading the metapage for
 	 * each bucket.
 	 */
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ);
-	_hash_checkpage(rel, metabuf, LH_META_PAGE);
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 	orig_maxbucket = metap->hashm_maxbucket;
 	orig_ntuples = metap->hashm_ntuples;
@@ -548,8 +547,8 @@ loop_top:
 
 			vacuum_delay_point();
 
-			buf = _hash_getbuf(rel, blkno, HASH_WRITE);
-			_hash_checkpage(rel, buf, LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+			buf = _hash_getbuf(rel, blkno, HASH_WRITE,
+							   LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
 			page = BufferGetPage(buf);
 			opaque = (HashPageOpaque) PageGetSpecialPointer(page);
 			Assert(opaque->hasho_bucket == cur_bucket);
@@ -607,8 +606,7 @@ loop_top:
 	}
 
 	/* Write-lock metapage and check for split since we started */
-	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE);
-	_hash_checkpage(rel, metabuf, LH_META_PAGE);
+	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_WRITE, LH_META_PAGE);
 	metap = (HashMetaPage) BufferGetPage(metabuf);
 
 	if (cur_maxbucket != metap->hashm_maxbucket)
