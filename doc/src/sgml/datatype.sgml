@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.198 2007/04/21 17:26:17 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.199 2007/05/03 15:05:56 neilc Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3376,7 +3376,7 @@ SET xmloption TO { DOCUMENT | CONTENT };
 
    <para>
     When using the binary mode to pass query parameters to the server
-    and query results back the the client, no character set conversion
+    and query results back to the client, no character set conversion
     is performed, so the situation is different.  In this case, an
     encoding declaration in the XML data will be observed, and if it
     is absent, the data will be assumed to be in UTF-8 (as required by

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.64 2007/02/16 03:50:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.65 2007/05/03 15:05:56 neilc Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -20,7 +20,7 @@
   <para> The usual advantage to using PL/Perl is that this allows use,
    within stored functions, of the manyfold <quote>string
     munging</quote> operators and functions available for Perl.  Parsing
-   complex strings might be be easier using Perl than it is with the
+   complex strings might be easier using Perl than it is with the
    string functions and control structures provided in PL/pgSQL.</para>
   
   <para>
@@ -619,7 +619,7 @@ CREATE FUNCTION badfunc() RETURNS integer AS $$
 $$ LANGUAGE plperl;
 </programlisting>
     The creation of this function will fail as its use of a forbidden
-    operation will be be caught by the validator.
+    operation will be caught by the validator.
   </para>
 
   <para>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.73 2007/02/01 00:28:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.74 2007/05/03 15:05:56 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2233,7 +2233,7 @@ VALUES ('New York', NULL, NULL, 'NY');
 
     <listitem>
      <para>
-      When queries or updates access a large percentage of a a single
+      When queries or updates access a large percentage of a single
       partition, performance can be improved by taking advantage
       of sequential scan of that partition instead of using an
       index and random access reads scattered across the whole table.
@@ -2556,7 +2556,7 @@ DO INSTEAD
 </programlisting>
 
         Note that the <literal>WHERE</literal> clause in each rule
-        exactly matches the the <literal>CHECK</literal>
+        exactly matches the <literal>CHECK</literal>
         constraint for its partition.
        </para>
       </listitem>

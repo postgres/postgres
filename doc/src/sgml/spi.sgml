@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.56 2007/04/16 01:14:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.57 2007/05/03 15:05:56 neilc Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -2233,7 +2233,7 @@ char * SPI_getvalue(HeapTuple <parameter>row</parameter>, TupleDesc <parameter>r
    Column value, or <symbol>NULL</symbol> if the column is null,
    <parameter>colnumber</parameter> is out of range
    (<varname>SPI_result</varname> is set to
-   <symbol>SPI_ERROR_NOATTRIBUTE</symbol>), or no no output function
+   <symbol>SPI_ERROR_NOATTRIBUTE</symbol>), or no output function is
    available (<varname>SPI_result</varname> is set to
    <symbol>SPI_ERROR_NOOUTFUNC</symbol>).
   </para>
