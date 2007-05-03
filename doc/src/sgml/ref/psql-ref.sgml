@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.190 2007/03/26 17:23:37 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.191 2007/05/03 15:47:48 alvherre Exp $
 PostgreSQL documentation
 -->
 
@@ -114,7 +114,7 @@ PostgreSQL documentation
        argument on the command line.
       </para>
       <para>
-       If this parameter contains an <symbol>=</symbol> sign, it it treated as a
+       If this parameter contains an <symbol>=</symbol> sign, it is treated as a
        <parameter>conninfo</parameter> string. See <xref linkend="libpq-connect"> for more information.
       </para>
       </listitem>

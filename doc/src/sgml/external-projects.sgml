@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.15 2007/01/31 20:56:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/external-projects.sgml,v 1.16 2007/05/03 15:47:48 alvherre Exp $ -->
 
  <appendix id="external-projects">
   <title>External Projects</title>
@@ -31,7 +31,7 @@
     currently closed to new projects in favor of PgFoundry, it still
     contains many active and relevant projects. Other popular
     <productname>PostgreSQL</productname>-related projects are hosted
-    independently, or on other project-hosting sites such such as <ulink
+    independently, or on other project-hosting sites such as <ulink
     url="http://sourceforge.net/">SourceForge.net</ulink>. You should search
     the web if you don't find the project you are looking for.
    </para>

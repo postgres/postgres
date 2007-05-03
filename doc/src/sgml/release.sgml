@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.502 2007/04/20 03:27:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.503 2007/05/03 15:47:48 alvherre Exp $ -->
 <!--
 
 Typical markup:
@@ -16463,7 +16463,7 @@ Fix for SELECT timespan('21:11:26'::time) (Tom)
 netmask('x.x.x.x/0') is 255.255.255.255 instead of 0.0.0.0 (Oleg Sharoiko)
 Add btree index on NUMERIC (Jan)
 Perl fix for large objects containing NUL characters (Douglas Thomson)
-ODBC fix for for large objects (free)
+ODBC fix for large objects (free)
 Fix indexing of cidr data type
 Fix for Ethernet MAC addresses (macaddr type) comparisons
 Fix for date/time types when overflows happened in computations (Tom)
@@ -19056,7 +19056,7 @@ more compliant to the SQL-92 standard):
 
         "WITH GRANT OPTION" is not supported.  Only class owners can change
         access control
-   - The default access control is to to grant users readonly access.
+   - The default access control is to grant users readonly access.
      You must explicitly grant insert/update access to users.  To change
      this, modify the line in
                 src/backend/utils/acl.h

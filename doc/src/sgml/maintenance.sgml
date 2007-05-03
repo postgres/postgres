@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.72 2007/04/18 20:44:53 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.73 2007/05/03 15:47:48 alvherre Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -490,7 +490,7 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
 
    <para>
     There is a limit of <xref linkend="guc-autovacuum-max-workers"> worker
-    processes that may be running at at any time, so if the <command>VACUUM</>
+    processes that may be running at any time, so if the <command>VACUUM</>
     and <command>ANALYZE</> work to do takes too long to run, the deadline may
     be failed to meet for other databases.  Also, if a particular database
     takes long to process, more than one worker may be processing it
