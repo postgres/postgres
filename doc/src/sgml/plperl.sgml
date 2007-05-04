@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.65 2007/05/03 15:05:56 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.66 2007/05/04 14:55:32 adunstan Exp $ -->
 
  <chapter id="plperl">
   <title>PL/Perl - Perl Procedural Language</title>
@@ -138,13 +138,43 @@ $$ LANGUAGE plperl;
   </para>
 
   <para>
+   Anything in a function argument that is not a reference is
+   a string, which is in the standard <productname>PostgreSQL</productname> 
+   external text representation for the relevant data type. In the case of
+   ordinary numeric or text types, Perl will just do the right thing and
+   the programmer will normally not have to worry about it. However, in
+   other cases the argument will need to be converted into a form that is 
+   more usable in Perl. For example, here is how to convert an argument of 
+   type <type>bytea</> into unescaped binary 
+   data:
+
+<programlisting>
+    my $arg = shift;
+    $arg =~ s!\\(\d{3})!chr(oct($1))!ge;
+</programlisting>
+
+  </para>
+
+  <para>
+   Similarly, values passed back to <productname>PostgreSQL</productname> 
+   must be in the external text representation format. For example, here 
+   is how to escape binary data for a return value of type <type>bytea</>:
+
+<programlisting>
+    $retval =~ s!([^ -~])!sprintf("\\%03o",ord($1))!ge;
+    return $retval;
+</programlisting>
+
+  </para>
+
+  <para>
    Perl can return <productname>PostgreSQL</productname> arrays as
    references to Perl arrays.  Here is an example:
 
 <programlisting>
 CREATE OR REPLACE function returns_array()
 RETURNS text[][] AS $$
-    return [['a"b','c,d'],['e\\f','g']];
+    return [['a&quot;b','c,d'],['e\\f','g']];
 $$ LANGUAGE plperl;
 
 select returns_array();
