@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.75 2007/05/04 01:13:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.76 2007/05/04 21:29:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,6 +196,7 @@ struct Tuplesortstate
 	bool		randomAccess;	/* did caller request random access? */
 	bool		bounded;		/* did caller specify a maximum number of
 								 * tuples to return? */
+	bool		boundUsed;		/* true if we made use of a bounded heap */
 	int			bound;			/* if bounded, the maximum number of tuples */
 	long		availMem;		/* remaining memory available, in bytes */
 	long		allowedMem;		/* total memory allowed, in bytes */
@@ -505,6 +506,8 @@ tuplesort_begin_common(int workMem, bool randomAccess)
 
 	state->status = TSS_INITIAL;
 	state->randomAccess = randomAccess;
+	state->bounded = false;
+	state->boundUsed = false;
 	state->allowedMem = workMem * 1024L;
 	state->availMem = state->allowedMem;
 	state->sortcontext = sortcontext;
@@ -2113,6 +2116,64 @@ tuplesort_restorepos(Tuplesortstate *state)
 	MemoryContextSwitchTo(oldcontext);
 }
 
+/*
+ * tuplesort_explain - produce a line of information for EXPLAIN ANALYZE
+ *
+ * This can be called after tuplesort_performsort() finishes to obtain
+ * printable summary information about how the sort was performed.
+ *
+ * The result is a palloc'd string.
+ */
+char *
+tuplesort_explain(Tuplesortstate *state)
+{
+	char	   *result = (char *) palloc(100);
+	long		spaceUsed;
+
+	/*
+	 * Note: it might seem we should print both memory and disk usage for a
+	 * disk-based sort.  However, the current code doesn't track memory space
+	 * accurately once we have begun to return tuples to the caller (since
+	 * we don't account for pfree's the caller is expected to do), so we
+	 * cannot rely on availMem in a disk sort.  This does not seem worth the
+	 * overhead to fix.  Is it worth creating an API for the memory context
+	 * code to tell us how much is actually used in sortcontext?
+	 */
+	if (state->tapeset)
+		spaceUsed = LogicalTapeSetBlocks(state->tapeset) * (BLCKSZ / 1024);
+	else
+		spaceUsed = (state->allowedMem - state->availMem + 1023) / 1024;
+
+	switch (state->status)
+	{
+		case TSS_SORTEDINMEM:
+			if (state->boundUsed)
+				snprintf(result, 100,
+						 "Sort Method:  top-N heapsort  Memory: %ldkB",
+						 spaceUsed);
+			else
+				snprintf(result, 100,
+						 "Sort Method:  quicksort  Memory: %ldkB",
+						 spaceUsed);
+			break;
+		case TSS_SORTEDONTAPE:
+			snprintf(result, 100,
+					 "Sort Method:  external sort  Disk: %ldkB",
+					 spaceUsed);
+			break;
+		case TSS_FINALMERGE:
+			snprintf(result, 100,
+					 "Sort Method:  external merge  Disk: %ldkB",
+					 spaceUsed);
+			break;
+		default:
+			snprintf(result, 100, "sort still in progress");
+			break;
+	}
+
+	return result;
+}
+
 
 /*
  * Heap manipulation routines, per Knuth's Algorithm 5.2.3H.
@@ -2216,6 +2277,7 @@ sort_bounded_heap(Tuplesortstate *state)
 	REVERSEDIRECTION(state);
 
 	state->status = TSS_SORTEDINMEM;
+	state->boundUsed = true;
 }
 
 /*

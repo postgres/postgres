@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.162 2007/04/27 22:05:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.163 2007/05/04 21:29:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/tuplesort.h"
 
 
 typedef struct ExplainState
@@ -57,6 +58,8 @@ static void show_upper_qual(List *qual, const char *qlabel, Plan *plan,
 				StringInfo str, int indent, ExplainState *es);
 static void show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
 			   const char *qlabel,
+			   StringInfo str, int indent, ExplainState *es);
+static void show_sort_info(SortState *sortstate,
 			   StringInfo str, int indent, ExplainState *es);
 
 /*
@@ -818,6 +821,8 @@ explain_outNode(StringInfo str,
 						   ((Sort *) plan)->sortColIdx,
 						   "Sort Key",
 						   str, indent, es);
+			show_sort_info((SortState *) planstate,
+						   str, indent, es);
 			break;
 		case T_Result:
 			show_upper_qual((List *) ((Result *) plan)->resconstantqual,
@@ -1122,4 +1127,26 @@ show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
 	}
 
 	appendStringInfo(str, "\n");
+}
+
+/*
+ * If it's EXPLAIN ANALYZE, show tuplesort explain info for a sort node
+ */
+static void
+show_sort_info(SortState *sortstate,
+			   StringInfo str, int indent, ExplainState *es)
+{
+	Assert(IsA(sortstate, SortState));
+	if (es->printAnalyze && sortstate->sort_Done &&
+		sortstate->tuplesortstate != NULL)
+	{
+		char	   *sortinfo;
+		int			i;
+
+		sortinfo = tuplesort_explain((Tuplesortstate *) sortstate->tuplesortstate);
+		for (i = 0; i < indent; i++)
+			appendStringInfo(str, "  ");
+		appendStringInfo(str, "  %s\n", sortinfo);
+		pfree(sortinfo);
+	}
 }
