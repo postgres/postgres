@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.85 2007/02/22 22:00:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.86 2007/05/04 01:13:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,8 @@ extern void cost_functionscan(Path *path, PlannerInfo *root,
 extern void cost_valuesscan(Path *path, PlannerInfo *root,
 				RelOptInfo *baserel);
 extern void cost_sort(Path *path, PlannerInfo *root,
-		  List *pathkeys, Cost input_cost, double tuples, int width);
+		  List *pathkeys, Cost input_cost, double tuples, int width,
+		  double limit_tuples);
 extern void cost_material(Path *path,
 			  Cost input_cost, double tuples, int width);
 extern void cost_agg(Path *path, PlannerInfo *root,

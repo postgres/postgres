@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.100 2007/04/21 21:01:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planmain.c,v 1.101 2007/05/04 01:13:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,8 @@
  * tlist is the target list the query should produce
  *		(this is NOT necessarily root->parse->targetList!)
  * tuple_fraction is the fraction of tuples we expect will be retrieved
+ * limit_tuples is a hard limit on number of tuples to retrieve,
+ *		or -1 if no limit
  *
  * Output parameters:
  * *cheapest_path receives the overall-cheapest path for the query
@@ -74,9 +76,13 @@
  *		from the plan to be retrieved
  *	  tuple_fraction >= 1: tuple_fraction is the absolute number of tuples
  *		expected to be retrieved (ie, a LIMIT specification)
+ * Note that a nonzero tuple_fraction could come from outer context; it is
+ * therefore not redundant with limit_tuples.  We use limit_tuples to determine
+ * whether a bounded sort can be used at runtime.
  */
 void
-query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
+query_planner(PlannerInfo *root, List *tlist,
+			  double tuple_fraction, double limit_tuples,
 			  Path **cheapest_path, Path **sorted_path,
 			  double *num_groups)
 {
@@ -354,7 +360,8 @@ query_planner(PlannerInfo *root, List *tlist, double tuple_fraction,
 			/* Figure cost for sorting */
 			cost_sort(&sort_path, root, root->query_pathkeys,
 					  cheapestpath->total_cost,
-					  final_rel->rows, final_rel->width);
+					  final_rel->rows, final_rel->width,
+					  limit_tuples);
 		}
 
 		if (compare_fractional_path_costs(sortedpath, &sort_path,

@@ -91,12 +91,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.74 2007/01/10 18:06:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.75 2007/05/04 01:13:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
+#include <limits.h>
 
 #include "access/heapam.h"
 #include "access/nbtree.h"
@@ -112,9 +114,12 @@
 #include "utils/tuplesort.h"
 
 
-/* GUC variable */
+/* GUC variables */
 #ifdef TRACE_SORT
 bool		trace_sort = false;
+#endif
+#ifdef DEBUG_BOUNDED_SORT
+bool		optimize_bounded_sort = true;
 #endif
 
 
@@ -159,6 +164,7 @@ typedef struct
 typedef enum
 {
 	TSS_INITIAL,				/* Loading tuples; still within memory limit */
+	TSS_BOUNDED,				/* Loading tuples into bounded-size heap */
 	TSS_BUILDRUNS,				/* Loading tuples; writing to tape */
 	TSS_SORTEDINMEM,			/* Sort completed entirely in memory */
 	TSS_SORTEDONTAPE,			/* Sort completed, final run is on tape */
@@ -188,6 +194,9 @@ struct Tuplesortstate
 	TupSortStatus status;		/* enumerated value as shown above */
 	int			nKeys;			/* number of columns in sort key */
 	bool		randomAccess;	/* did caller request random access? */
+	bool		bounded;		/* did caller specify a maximum number of
+								 * tuples to return? */
+	int			bound;			/* if bounded, the maximum number of tuples */
 	long		availMem;		/* remaining memory available, in bytes */
 	long		allowedMem;		/* total memory allowed, in bytes */
 	int			maxTapes;		/* number of tapes (Knuth's T) */
@@ -233,6 +242,13 @@ struct Tuplesortstate
 	 */
 	void		(*readtup) (Tuplesortstate *state, SortTuple *stup,
 										int tapenum, unsigned int len);
+
+	/*
+	 * Function to reverse the sort direction from its current state.
+	 * (We could dispense with this if we wanted to enforce that all variants
+	 * represent the sort key information alike.)
+	 */
+	void		(*reversedirection) (Tuplesortstate *state);
 
 	/*
 	 * This array holds the tuples now in sort memory.	If we are in state
@@ -347,6 +363,7 @@ struct Tuplesortstate
 #define COPYTUP(state,stup,tup) ((*(state)->copytup) (state, stup, tup))
 #define WRITETUP(state,tape,stup)	((*(state)->writetup) (state, tape, stup))
 #define READTUP(state,stup,tape,len) ((*(state)->readtup) (state, stup, tape, len))
+#define REVERSEDIRECTION(state) ((*(state)->reversedirection) (state))
 #define LACKMEM(state)		((state)->availMem < 0)
 #define USEMEM(state,amt)	((state)->availMem -= (amt))
 #define FREEMEM(state,amt)	((state)->availMem += (amt))
@@ -403,6 +420,8 @@ static void beginmerge(Tuplesortstate *state);
 static void mergepreread(Tuplesortstate *state);
 static void mergeprereadone(Tuplesortstate *state, int srcTape);
 static void dumptuples(Tuplesortstate *state, bool alltuples);
+static void make_bounded_heap(Tuplesortstate *state);
+static void sort_bounded_heap(Tuplesortstate *state);
 static void tuplesort_heap_insert(Tuplesortstate *state, SortTuple *tuple,
 					  int tupleindex, bool checkIndex);
 static void tuplesort_heap_siftup(Tuplesortstate *state, bool checkIndex);
@@ -415,6 +434,7 @@ static void writetup_heap(Tuplesortstate *state, int tapenum,
 			  SortTuple *stup);
 static void readtup_heap(Tuplesortstate *state, SortTuple *stup,
 			 int tapenum, unsigned int len);
+static void reversedirection_heap(Tuplesortstate *state);
 static int comparetup_index(const SortTuple *a, const SortTuple *b,
 				 Tuplesortstate *state);
 static void copytup_index(Tuplesortstate *state, SortTuple *stup, void *tup);
@@ -422,6 +442,7 @@ static void writetup_index(Tuplesortstate *state, int tapenum,
 			   SortTuple *stup);
 static void readtup_index(Tuplesortstate *state, SortTuple *stup,
 			  int tapenum, unsigned int len);
+static void reversedirection_index(Tuplesortstate *state);
 static int comparetup_datum(const SortTuple *a, const SortTuple *b,
 				 Tuplesortstate *state);
 static void copytup_datum(Tuplesortstate *state, SortTuple *stup, void *tup);
@@ -429,6 +450,8 @@ static void writetup_datum(Tuplesortstate *state, int tapenum,
 			   SortTuple *stup);
 static void readtup_datum(Tuplesortstate *state, SortTuple *stup,
 			  int tapenum, unsigned int len);
+static void reversedirection_datum(Tuplesortstate *state);
+static void free_sort_tuple(Tuplesortstate *state, SortTuple *stup);
 
 
 /*
@@ -538,6 +561,7 @@ tuplesort_begin_heap(TupleDesc tupDesc,
 	state->copytup = copytup_heap;
 	state->writetup = writetup_heap;
 	state->readtup = readtup_heap;
+	state->reversedirection = reversedirection_heap;
 
 	state->tupDesc = tupDesc;	/* assume we need not copy tupDesc */
 	state->scanKeys = (ScanKey) palloc0(nkeys * sizeof(ScanKeyData));
@@ -601,6 +625,7 @@ tuplesort_begin_index(Relation indexRel,
 	state->copytup = copytup_index;
 	state->writetup = writetup_index;
 	state->readtup = readtup_index;
+	state->reversedirection = reversedirection_index;
 
 	state->indexRel = indexRel;
 	/* see comments below about btree dependence of this code... */
@@ -639,6 +664,7 @@ tuplesort_begin_datum(Oid datumType,
 	state->copytup = copytup_datum;
 	state->writetup = writetup_datum;
 	state->readtup = readtup_datum;
+	state->reversedirection = reversedirection_datum;
 
 	state->datumType = datumType;
 
@@ -662,6 +688,40 @@ tuplesort_begin_datum(Oid datumType,
 	MemoryContextSwitchTo(oldcontext);
 
 	return state;
+}
+
+/*
+ * tuplesort_set_bound
+ *
+ *	Advise tuplesort that at most the first N result tuples are required.
+ *
+ * Must be called before inserting any tuples.  (Actually, we could allow it
+ * as long as the sort hasn't spilled to disk, but there seems no need for
+ * delayed calls at the moment.)
+ *
+ * This is a hint only. The tuplesort may still return more tuples than
+ * requested.
+ */
+void
+tuplesort_set_bound(Tuplesortstate *state, int64 bound)
+{
+	/* Assert we're called before loading any tuples */
+	Assert(state->status == TSS_INITIAL);
+	Assert(state->memtupcount == 0);
+	Assert(!state->bounded);
+
+#ifdef DEBUG_BOUNDED_SORT
+	/* Honor GUC setting that disables the feature (for easy testing) */
+	if (!optimize_bounded_sort)
+		return;
+#endif
+
+	/* We want to be able to compute bound * 2, so limit the setting */
+	if (bound > (int64) (INT_MAX/2))
+		return;
+
+	state->bounded = true;
+	state->bound = (int) bound;
 }
 
 /*
@@ -863,6 +923,32 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 			state->memtuples[state->memtupcount++] = *tuple;
 
 			/*
+			 * Check if it's time to switch over to a bounded heapsort.
+			 * We do so if the input tuple count exceeds twice the desired
+			 * tuple count (this is a heuristic for where heapsort becomes
+			 * cheaper than a quicksort), or if we've just filled workMem
+			 * and have enough tuples to meet the bound.
+			 *
+			 * Note that once we enter TSS_BOUNDED state we will always try
+			 * to complete the sort that way.  In the worst case, if later
+			 * input tuples are larger than earlier ones, this might cause
+			 * us to exceed workMem significantly.
+			 */
+			if (state->bounded &&
+				(state->memtupcount > state->bound * 2 ||
+				 (state->memtupcount > state->bound && LACKMEM(state))))
+			{
+#ifdef TRACE_SORT
+				if (trace_sort)
+					elog(LOG, "switching to bounded heapsort at %d tuples: %s",
+						 state->memtupcount,
+						 pg_rusage_show(&state->ru_start));
+#endif
+				make_bounded_heap(state);
+				return;
+			}
+
+			/*
 			 * Done if we still fit in available memory and have array slots.
 			 */
 			if (state->memtupcount < state->memtupsize && !LACKMEM(state))
@@ -878,6 +964,31 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 			 */
 			dumptuples(state, false);
 			break;
+
+		case TSS_BOUNDED:
+			/*
+			 * We don't want to grow the array here, so check whether the
+			 * new tuple can be discarded before putting it in.  This should
+			 * be a good speed optimization, too, since when there are many
+			 * more input tuples than the bound, most input tuples can be
+			 * discarded with just this one comparison.  Note that because
+			 * we currently have the sort direction reversed, we must check
+			 * for <= not >=.
+			 */
+			if (COMPARETUP(state, tuple, &state->memtuples[0]) <= 0)
+			{
+				/* new tuple <= top of the heap, so we can discard it */
+				free_sort_tuple(state, tuple);
+			}
+			else
+			{
+				/* discard top of heap, sift up, insert new tuple */
+				free_sort_tuple(state, &state->memtuples[0]);
+				tuplesort_heap_siftup(state, false);
+				tuplesort_heap_insert(state, tuple, 0, false);
+			}
+			break;
+
 		case TSS_BUILDRUNS:
 
 			/*
@@ -904,6 +1015,7 @@ puttuple_common(Tuplesortstate *state, SortTuple *tuple)
 			 */
 			dumptuples(state, false);
 			break;
+
 		default:
 			elog(ERROR, "invalid tuplesort state");
 			break;
@@ -944,6 +1056,23 @@ tuplesort_performsort(Tuplesortstate *state)
 			state->markpos_eof = false;
 			state->status = TSS_SORTEDINMEM;
 			break;
+
+		case TSS_BOUNDED:
+
+			/*
+			 * We were able to accumulate all the tuples required for output
+			 * in memory, using a heap to eliminate excess tuples.  Now we have
+			 * to transform the heap to a properly-sorted array.
+			 */
+			if (state->memtupcount > 1)
+				sort_bounded_heap(state);
+			state->current = 0;
+			state->eof_reached = false;
+			state->markpos_offset = 0;
+			state->markpos_eof = false;
+			state->status = TSS_SORTEDINMEM;
+			break;
+
 		case TSS_BUILDRUNS:
 
 			/*
@@ -959,6 +1088,7 @@ tuplesort_performsort(Tuplesortstate *state)
 			state->markpos_offset = 0;
 			state->markpos_eof = false;
 			break;
+
 		default:
 			elog(ERROR, "invalid tuplesort state");
 			break;
@@ -1004,6 +1134,15 @@ tuplesort_gettuple_common(Tuplesortstate *state, bool forward,
 					return true;
 				}
 				state->eof_reached = true;
+
+				/*
+				 * Complain if caller tries to retrieve more tuples than
+				 * originally asked for in a bounded sort.  This is because
+				 * returning EOF here might be the wrong thing.
+				 */
+				if (state->bounded && state->current >= state->bound)
+					elog(ERROR, "retrieved too many tuples in a bounded sort");
+
 				return false;
 			}
 			else
@@ -1988,6 +2127,98 @@ tuplesort_restorepos(Tuplesortstate *state)
 	 COMPARETUP(state, tup1, tup2))
 
 /*
+ * Convert the existing unordered array of SortTuples to a bounded heap,
+ * discarding all but the smallest "state->bound" tuples.
+ *
+ * When working with a bounded heap, we want to keep the largest entry
+ * at the root (array entry zero), instead of the smallest as in the normal
+ * sort case.  This allows us to discard the largest entry cheaply.
+ * Therefore, we temporarily reverse the sort direction.
+ *
+ * We assume that all entries in a bounded heap will always have tupindex
+ * zero; it therefore doesn't matter that HEAPCOMPARE() doesn't reverse
+ * the direction of comparison for tupindexes.
+ */
+static void
+make_bounded_heap(Tuplesortstate *state)
+{
+	int		tupcount = state->memtupcount;
+	int		i;
+
+	Assert(state->status == TSS_INITIAL);
+	Assert(state->bounded);
+	Assert(tupcount >= state->bound);
+
+	/* Reverse sort direction so largest entry will be at root */
+	REVERSEDIRECTION(state);
+
+	state->memtupcount = 0;		/* make the heap empty */
+	for (i=0; i<tupcount; i++)
+	{
+		if (state->memtupcount >= state->bound &&
+			COMPARETUP(state, &state->memtuples[i], &state->memtuples[0]) <= 0)
+		{
+			/* New tuple would just get thrown out, so skip it */
+			free_sort_tuple(state, &state->memtuples[i]);
+		}
+		else
+		{
+			/* Insert next tuple into heap */
+			/* Must copy source tuple to avoid possible overwrite */
+			SortTuple stup = state->memtuples[i];
+
+			tuplesort_heap_insert(state, &stup, 0, false);
+
+			/* If heap too full, discard largest entry */
+			if (state->memtupcount > state->bound)
+			{
+				free_sort_tuple(state, &state->memtuples[0]);
+				tuplesort_heap_siftup(state, false);
+			}
+		}
+	}
+
+	Assert(state->memtupcount == state->bound);
+	state->status = TSS_BOUNDED;
+}
+
+/*
+ * Convert the bounded heap to a properly-sorted array
+ */
+static void
+sort_bounded_heap(Tuplesortstate *state)
+{
+	int		tupcount = state->memtupcount;
+
+	Assert(state->status == TSS_BOUNDED);
+	Assert(state->bounded);
+	Assert(tupcount == state->bound);
+
+	/*
+	 * We can unheapify in place because each sift-up will remove the largest
+	 * entry, which we can promptly store in the newly freed slot at the end.
+	 * Once we're down to a single-entry heap, we're done.
+	 */
+	while (state->memtupcount > 1)
+	{
+		SortTuple stup = state->memtuples[0];
+
+		/* this sifts-up the next-largest entry and decreases memtupcount */
+		tuplesort_heap_siftup(state, false);
+		state->memtuples[state->memtupcount] = stup;
+	}
+	state->memtupcount = tupcount;
+
+	/*
+	 * Reverse sort direction back to the original state.  This is not
+	 * actually necessary but seems like a good idea for tidiness.
+	 */
+	REVERSEDIRECTION(state);
+
+	state->status = TSS_SORTEDINMEM;
+}
+
+/*
  * Insert a new tuple into an empty or existing heap, maintaining the
  * heap invariant.	Caller is responsible for ensuring there's room.
  *
@@ -2322,6 +2553,18 @@ readtup_heap(Tuplesortstate *state, SortTuple *stup,
 								&stup->isnull1);
 }
 
+static void
+reversedirection_heap(Tuplesortstate *state)
+{
+	ScanKey		scanKey = state->scanKeys;
+	int			nkey;
+
+	for (nkey = 0; nkey < state->nKeys; nkey++, scanKey++)
+	{
+		scanKey->sk_flags ^= (SK_BT_DESC | SK_BT_NULLS_FIRST);
+	}
+}
+
 
 /*
  * Routines specialized for IndexTuple case
@@ -2497,6 +2740,18 @@ readtup_index(Tuplesortstate *state, SortTuple *stup,
 								 &stup->isnull1);
 }
 
+static void
+reversedirection_index(Tuplesortstate *state)
+{
+	ScanKey		scanKey = state->indexScanKey;
+	int			nkey;
+
+	for (nkey = 0; nkey < state->nKeys; nkey++, scanKey++)
+	{
+		scanKey->sk_flags ^= (SK_BT_DESC | SK_BT_NULLS_FIRST);
+	}
+}
+
 
 /*
  * Routines specialized for DatumTuple case
@@ -2600,4 +2855,20 @@ readtup_datum(Tuplesortstate *state, SortTuple *stup,
 		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tuplen,
 							sizeof(tuplen)) != sizeof(tuplen))
 			elog(ERROR, "unexpected end of data");
+}
+
+static void
+reversedirection_datum(Tuplesortstate *state)
+{
+	state->sortFnFlags ^= (SK_BT_DESC | SK_BT_NULLS_FIRST);
+}
+
+/*
+ * Convenience routine to free a tuple previously loaded into sort memory
+ */
+static void
+free_sort_tuple(Tuplesortstate *state, SortTuple *stup)
+{
+	FREEMEM(state, GetMemoryChunkSpace(stup->tuple));
+	pfree(stup->tuple);
 }

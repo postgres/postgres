@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.172 2007/04/26 23:24:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.173 2007/05/04 01:13:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1294,7 +1294,11 @@ typedef struct SortState
 {
 	ScanState	ss;				/* its first field is NodeTag */
 	bool		randomAccess;	/* need random access to sort output? */
+	bool		bounded;		/* is the result set bounded? */
+	int64		bound;			/* if bounded, how many tuples are needed */
 	bool		sort_Done;		/* sort completed yet? */
+	bool		bounded_Done;	/* value of bounded we did the sort with */
+	int64		bound_Done;		/* value of bound we did the sort with */
 	void	   *tuplesortstate; /* private state of tuplesort.c */
 } SortState;
 

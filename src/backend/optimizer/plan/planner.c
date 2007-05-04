@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.218 2007/04/27 22:05:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.219 2007/05/04 01:13:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,8 @@ static double preprocess_limit(PlannerInfo *root,
 				 double tuple_fraction,
 				 int64 *offset_est, int64 *count_est);
 static Oid *extract_grouping_ops(List *groupClause);
-static bool choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
+static bool choose_hashed_grouping(PlannerInfo *root,
+					   double tuple_fraction, double limit_tuples,
 					   Path *cheapest_path, Path *sorted_path,
 					   Oid *groupOperators, double dNumGroups,
 					   AggClauseCounts *agg_counts);
@@ -696,6 +697,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 	List	   *tlist = parse->targetList;
 	int64		offset_est = 0;
 	int64		count_est = 0;
+	double		limit_tuples = -1.0;
 	Plan	   *result_plan;
 	List	   *current_pathkeys;
 	List	   *sort_pathkeys;
@@ -703,8 +705,16 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 
 	/* Tweak caller-supplied tuple_fraction if have LIMIT/OFFSET */
 	if (parse->limitCount || parse->limitOffset)
+	{
 		tuple_fraction = preprocess_limit(root, tuple_fraction,
 										  &offset_est, &count_est);
+		/*
+		 * If we have a known LIMIT, and don't have an unknown OFFSET,
+		 * we can estimate the effects of using a bounded sort.
+		 */
+		if (count_est > 0 && offset_est >= 0)
+			limit_tuples = (double) count_est + (double) offset_est;
+	}
 
 	if (parse->setOperations)
 	{
@@ -850,7 +860,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		 * estimate the number of groups in the query, and canonicalize all
 		 * the pathkeys.
 		 */
-		query_planner(root, sub_tlist, tuple_fraction,
+		query_planner(root, sub_tlist, tuple_fraction, limit_tuples,
 					  &cheapest_path, &sorted_path, &dNumGroups);
 
 		group_pathkeys = root->group_pathkeys;
@@ -864,7 +874,7 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		{
 			groupOperators = extract_grouping_ops(parse->groupClause);
 			use_hashed_grouping =
-				choose_hashed_grouping(root, tuple_fraction,
+				choose_hashed_grouping(root, tuple_fraction, limit_tuples,
 									   cheapest_path, sorted_path,
 									   groupOperators, dNumGroups,
 									   &agg_counts);
@@ -1099,7 +1109,8 @@ grouping_planner(PlannerInfo *root, double tuple_fraction)
 		{
 			result_plan = (Plan *) make_sort_from_pathkeys(root,
 														   result_plan,
-														   sort_pathkeys);
+														   sort_pathkeys,
+														   limit_tuples);
 			current_pathkeys = sort_pathkeys;
 		}
 	}
@@ -1414,7 +1425,8 @@ extract_grouping_ops(List *groupClause)
  * choose_hashed_grouping - should we use hashed grouping?
  */
 static bool
-choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
+choose_hashed_grouping(PlannerInfo *root,
+					   double tuple_fraction, double limit_tuples,
 					   Path *cheapest_path, Path *sorted_path,
 					   Oid *groupOperators, double dNumGroups,
 					   AggClauseCounts *agg_counts)
@@ -1499,7 +1511,7 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 	/* Result of hashed agg is always unsorted */
 	if (root->sort_pathkeys)
 		cost_sort(&hashed_p, root, root->sort_pathkeys, hashed_p.total_cost,
-				  dNumGroups, cheapest_path_width);
+				  dNumGroups, cheapest_path_width, limit_tuples);
 
 	if (sorted_path)
 	{
@@ -1516,7 +1528,7 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 	if (!pathkeys_contained_in(root->group_pathkeys, current_pathkeys))
 	{
 		cost_sort(&sorted_p, root, root->group_pathkeys, sorted_p.total_cost,
-				  cheapest_path_rows, cheapest_path_width);
+				  cheapest_path_rows, cheapest_path_width, -1.0);
 		current_pathkeys = root->group_pathkeys;
 	}
 
@@ -1533,7 +1545,7 @@ choose_hashed_grouping(PlannerInfo *root, double tuple_fraction,
 	if (root->sort_pathkeys &&
 		!pathkeys_contained_in(root->sort_pathkeys, current_pathkeys))
 		cost_sort(&sorted_p, root, root->sort_pathkeys, sorted_p.total_cost,
-				  dNumGroups, cheapest_path_width);
+				  dNumGroups, cheapest_path_width, limit_tuples);
 
 	/*
 	 * Now make the decision using the top-level tuple fraction.  First we

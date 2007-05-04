@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.389 2007/04/26 16:13:12 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.390 2007/05/04 01:13:44 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -107,6 +107,9 @@ extern bool fullPageWrites;
 
 #ifdef TRACE_SORT
 extern bool trace_sort;
+#endif
+#ifdef DEBUG_BOUNDED_SORT
+extern bool optimize_bounded_sort;
 #endif
 
 #ifdef USE_SSL
@@ -966,6 +969,20 @@ static struct config_bool ConfigureNamesBool[] =
 	},
 #endif
 
+#ifdef DEBUG_BOUNDED_SORT
+	/* this is undocumented because not exposed in a standard build */
+	{
+		{
+			"optimize_bounded_sort", PGC_USERSET, QUERY_TUNING_METHOD,
+			gettext_noop("Enable bounded sorting using heap sort."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&optimize_bounded_sort,
+		true, NULL, NULL
+	},
+#endif
+
 #ifdef WAL_DEBUG
 	{
 		{"wal_debug", PGC_SUSET, DEVELOPER_OPTIONS,
@@ -1711,7 +1728,7 @@ static struct config_int ConfigureNamesInt[] =
 		&server_version_num,
 		PG_VERSION_NUM, PG_VERSION_NUM, PG_VERSION_NUM, NULL, NULL
 	},
-				
+
 	{
 		{"log_temp_files", PGC_USERSET, LOGGING_WHAT,
 			gettext_noop("Log the use of temporary files larger than this number of kilobytes."),
@@ -2883,7 +2900,7 @@ InitializeGUCOptions(void)
 												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %d",
 								 conf->gen.name, conf->boot_val);
-					*conf->variable = conf->reset_val = conf->boot_val; 
+					*conf->variable = conf->reset_val = conf->boot_val;
 					break;
 				}
 			case PGC_REAL:
@@ -2897,7 +2914,7 @@ InitializeGUCOptions(void)
 												   PGC_S_DEFAULT))
 							elog(FATAL, "failed to initialize %s to %g",
 								 conf->gen.name, conf->boot_val);
-					*conf->variable = conf->reset_val = conf->boot_val; 
+					*conf->variable = conf->reset_val = conf->boot_val;
 					break;
 				}
 			case PGC_STRING:

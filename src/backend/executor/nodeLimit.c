@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.29 2007/01/05 22:19:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.30 2007/05/04 01:13:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,6 +280,37 @@ recompute_limits(LimitState *node)
 	/* Reset position to start-of-scan */
 	node->position = 0;
 	node->subSlot = NULL;
+
+	/*
+	 * If we have a COUNT, and our input is a Sort node, notify it that it can
+	 * use bounded sort.
+	 *
+	 * This is a bit of a kluge, but we don't have any more-abstract way of
+	 * communicating between the two nodes; and it doesn't seem worth trying
+	 * to invent one without some more examples of special communication needs.
+	 *
+	 * Note: it is the responsibility of nodeSort.c to react properly to
+	 * changes of these parameters.  If we ever do redesign this, it'd be
+	 * a good idea to integrate this signaling with the parameter-change
+	 * mechanism.
+	 */
+	if (IsA(outerPlanState(node), SortState))
+	{
+		SortState *sortState = (SortState *) outerPlanState(node);
+		int64 tuples_needed = node->count + node->offset;
+
+		/* negative test checks for overflow */
+		if (node->noCount || tuples_needed < 0)
+		{
+			/* make sure flag gets reset if needed upon rescan */
+			sortState->bounded = false;
+		}
+		else
+		{
+			sortState->bounded = true;
+			sortState->bound = tuples_needed;
+		}
+	}
 }
 
 /* ----------------------------------------------------------------

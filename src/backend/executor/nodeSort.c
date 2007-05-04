@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.60 2007/01/09 02:14:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSort.c,v 1.61 2007/05/04 01:13:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,6 +89,8 @@ ExecSort(SortState *node)
 											  plannode->nullsFirst,
 											  work_mem,
 											  node->randomAccess);
+		if (node->bounded)
+			tuplesort_set_bound(tuplesortstate, node->bound);
 		node->tuplesortstate = (void *) tuplesortstate;
 
 		/*
@@ -119,6 +121,8 @@ ExecSort(SortState *node)
 		 * finally set the sorted flag to true
 		 */
 		node->sort_Done = true;
+		node->bounded_Done = node->bounded;
+		node->bound_Done = node->bound;
 		SO1_printf("ExecSort: %s\n", "sorting done");
 	}
 
@@ -167,6 +171,7 @@ ExecInitSort(Sort *node, EState *estate, int eflags)
 										 EXEC_FLAG_BACKWARD |
 										 EXEC_FLAG_MARK)) != 0;
 
+	sortstate->bounded = false;
 	sortstate->sort_Done = false;
 	sortstate->tuplesortstate = NULL;
 
@@ -307,11 +312,14 @@ ExecReScanSort(SortState *node, ExprContext *exprCtxt)
 
 	/*
 	 * If subnode is to be rescanned then we forget previous sort results; we
-	 * have to re-read the subplan and re-sort.
+	 * have to re-read the subplan and re-sort.  Also must re-sort if the
+	 * bounded-sort parameters changed or we didn't select randomAccess.
 	 *
 	 * Otherwise we can just rewind and rescan the sorted output.
 	 */
 	if (((PlanState *) node)->lefttree->chgParam != NULL ||
+		node->bounded != node->bounded_Done ||
+		node->bound != node->bound_Done ||
 		!node->randomAccess)
 	{
 		node->sort_Done = false;

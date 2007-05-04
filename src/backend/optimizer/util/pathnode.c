@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.139 2007/04/21 21:01:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.140 2007/05/04 01:13:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -842,7 +842,8 @@ create_unique_path(PlannerInfo *root, RelOptInfo *rel, Path *subpath)
 	cost_sort(&sort_path, root, NIL,
 			  subpath->total_cost,
 			  rel->rows,
-			  rel->width);
+			  rel->width,
+			  -1.0);
 
 	/*
 	 * Charge one cpu_operator_cost per comparison per input tuple. We assume

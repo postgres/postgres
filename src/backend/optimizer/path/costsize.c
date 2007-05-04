@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.181 2007/04/21 21:01:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.182 2007/05/04 01:13:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -922,6 +922,10 @@ cost_valuesscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
  *		disk traffic = 2 * relsize * ceil(logM(p / (2*work_mem)))
  *		cpu = comparison_cost * t * log2(t)
  *
+ * If the sort is bounded (i.e., only the first k result tuples are needed)
+ * and k tuples can fit into work_mem, we use a heap method that keeps only
+ * k tuples in the heap; this will require about t*log2(k) tuple comparisons.
+ *
  * The disk traffic is assumed to be 3/4ths sequential and 1/4th random
  * accesses (XXX can't we refine that guess?)
  *
@@ -932,6 +936,7 @@ cost_valuesscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
  * 'input_cost' is the total cost for reading the input data
  * 'tuples' is the number of tuples in the relation
  * 'width' is the average tuple width in bytes
+ * 'limit_tuples' is the bound on the number of output tuples; -1 if no bound
  *
  * NOTE: some callers currently pass NIL for pathkeys because they
  * can't conveniently supply the sort keys.  Since this routine doesn't
@@ -942,11 +947,14 @@ cost_valuesscan(Path *path, PlannerInfo *root, RelOptInfo *baserel)
  */
 void
 cost_sort(Path *path, PlannerInfo *root,
-		  List *pathkeys, Cost input_cost, double tuples, int width)
+		  List *pathkeys, Cost input_cost, double tuples, int width,
+		  double limit_tuples)
 {
 	Cost		startup_cost = input_cost;
 	Cost		run_cost = 0;
-	double		nbytes = relation_byte_size(tuples, width);
+	double		input_bytes = relation_byte_size(tuples, width);
+	double		output_bytes;
+	double		output_tuples;
 	long		work_mem_bytes = work_mem * 1024L;
 
 	if (!enable_sort)
@@ -959,22 +967,38 @@ cost_sort(Path *path, PlannerInfo *root,
 	if (tuples < 2.0)
 		tuples = 2.0;
 
-	/*
-	 * CPU costs
-	 *
-	 * Assume about two operator evals per tuple comparison and N log2 N
-	 * comparisons
-	 */
-	startup_cost += 2.0 * cpu_operator_cost * tuples * LOG2(tuples);
-
-	/* disk costs */
-	if (nbytes > work_mem_bytes)
+	/* Do we have a useful LIMIT? */
+	if (limit_tuples > 0 && limit_tuples < tuples)
 	{
-		double		npages = ceil(nbytes / BLCKSZ);
-		double		nruns = (nbytes / work_mem_bytes) * 0.5;
+		output_tuples = limit_tuples;
+		output_bytes = relation_byte_size(output_tuples, width);
+	}
+	else
+	{
+		output_tuples = tuples;
+		output_bytes = input_bytes;
+	}
+
+	if (output_bytes > work_mem_bytes)
+	{
+		/*
+		 * We'll have to use a disk-based sort of all the tuples
+		 */
+		double		npages = ceil(input_bytes / BLCKSZ);
+		double		nruns = (input_bytes / work_mem_bytes) * 0.5;
 		double		mergeorder = tuplesort_merge_order(work_mem_bytes);
 		double		log_runs;
 		double		npageaccesses;
+
+		/*
+		 * CPU costs
+		 *
+		 * Assume about two operator evals per tuple comparison and N log2 N
+		 * comparisons
+		 */
+		startup_cost += 2.0 * cpu_operator_cost * tuples * LOG2(tuples);
+
+		/* Disk costs */
 
 		/* Compute logM(r) as log(r) / log(M) */
 		if (nruns > mergeorder)
@@ -986,10 +1010,27 @@ cost_sort(Path *path, PlannerInfo *root,
 		startup_cost += npageaccesses *
 			(seq_page_cost * 0.75 + random_page_cost * 0.25);
 	}
+	else if (tuples > 2 * output_tuples || input_bytes > work_mem_bytes)
+	{
+		/*
+		 * We'll use a bounded heap-sort keeping just K tuples in memory,
+		 * for a total number of tuple comparisons of N log2 K; but the
+		 * constant factor is a bit higher than for quicksort.  Tweak it
+		 * so that the cost curve is continuous at the crossover point.
+		 */
+		startup_cost += 2.0 * cpu_operator_cost * tuples * LOG2(2.0 * output_tuples);
+	}
+	else
+	{
+		/* We'll use plain quicksort on all the input tuples */
+		startup_cost += 2.0 * cpu_operator_cost * tuples * LOG2(tuples);
+	}
 
 	/*
 	 * Also charge a small amount (arbitrarily set equal to operator cost) per
-	 * extracted tuple.
+	 * extracted tuple.  Note it's correct to use tuples not output_tuples
+	 * here --- the upper LIMIT will pro-rate the run cost so we'd be double
+	 * counting the LIMIT otherwise.
 	 */
 	run_cost += cpu_operator_cost * tuples;
 
@@ -1431,7 +1472,8 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 				  outersortkeys,
 				  outer_path->total_cost,
 				  outer_path_rows,
-				  outer_path->parent->width);
+				  outer_path->parent->width,
+				  -1.0);
 		startup_cost += sort_path.startup_cost;
 		run_cost += (sort_path.total_cost - sort_path.startup_cost)
 			* outerscansel;
@@ -1450,7 +1492,8 @@ cost_mergejoin(MergePath *path, PlannerInfo *root)
 				  innersortkeys,
 				  inner_path->total_cost,
 				  inner_path_rows,
-				  inner_path->parent->width);
+				  inner_path->parent->width,
+				  -1.0);
 		startup_cost += sort_path.startup_cost;
 		run_cost += (sort_path.total_cost - sort_path.startup_cost)
 			* innerscansel * rescanratio;

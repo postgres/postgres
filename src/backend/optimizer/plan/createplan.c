@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.229 2007/04/21 21:01:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.230 2007/05/04 01:13:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,8 @@ static MergeJoin *make_mergejoin(List *tlist,
 			   Plan *lefttree, Plan *righttree,
 			   JoinType jointype);
 static Sort *make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
-		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst);
+		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst,
+		  double limit_tuples);
 
 
 /*
@@ -1579,7 +1580,8 @@ create_mergejoin_plan(PlannerInfo *root,
 		outer_plan = (Plan *)
 			make_sort_from_pathkeys(root,
 									outer_plan,
-									best_path->outersortkeys);
+									best_path->outersortkeys,
+									-1.0);
 		outerpathkeys = best_path->outersortkeys;
 	}
 	else
@@ -1591,7 +1593,8 @@ create_mergejoin_plan(PlannerInfo *root,
 		inner_plan = (Plan *)
 			make_sort_from_pathkeys(root,
 									inner_plan,
-									best_path->innersortkeys);
+									best_path->innersortkeys,
+									-1.0);
 		innerpathkeys = best_path->innersortkeys;
 	}
 	else
@@ -2589,11 +2592,13 @@ make_mergejoin(List *tlist,
  * make_sort --- basic routine to build a Sort plan node
  *
  * Caller must have built the sortColIdx, sortOperators, and nullsFirst
- * arrays already.
+ * arrays already.  limit_tuples is as for cost_sort (in particular, pass
+ * -1 if no limit)
  */
 static Sort *
 make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
-		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst)
+		  AttrNumber *sortColIdx, Oid *sortOperators, bool *nullsFirst,
+		  double limit_tuples)
 {
 	Sort	   *node = makeNode(Sort);
 	Plan	   *plan = &node->plan;
@@ -2603,7 +2608,8 @@ make_sort(PlannerInfo *root, Plan *lefttree, int numCols,
 	cost_sort(&sort_path, root, NIL,
 			  lefttree->total_cost,
 			  lefttree->plan_rows,
-			  lefttree->plan_width);
+			  lefttree->plan_width,
+			  limit_tuples);
 	plan->startup_cost = sort_path.startup_cost;
 	plan->total_cost = sort_path.total_cost;
 	plan->targetlist = lefttree->targetlist;
@@ -2664,6 +2670,8 @@ add_sort_column(AttrNumber colIdx, Oid sortOp, bool nulls_first,
  *
  *	  'lefttree' is the node which yields input tuples
  *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
+ *	  'limit_tuples' is the bound on the number of output tuples;
+ *				-1 if no bound
  *
  * We must convert the pathkey information into arrays of sort key column
  * numbers and sort operator OIDs.
@@ -2675,7 +2683,8 @@ add_sort_column(AttrNumber colIdx, Oid sortOp, bool nulls_first,
  * adding a Result node just to do the projection.
  */
 Sort *
-make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys)
+make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys,
+						double limit_tuples)
 {
 	List	   *tlist = lefttree->targetlist;
 	ListCell   *i;
@@ -2810,7 +2819,7 @@ make_sort_from_pathkeys(PlannerInfo *root, Plan *lefttree, List *pathkeys)
 	Assert(numsortkeys > 0);
 
 	return make_sort(root, lefttree, numsortkeys,
-					 sortColIdx, sortOperators, nullsFirst);
+					 sortColIdx, sortOperators, nullsFirst, limit_tuples);
 }
 
 /*
@@ -2859,7 +2868,7 @@ make_sort_from_sortclauses(PlannerInfo *root, List *sortcls, Plan *lefttree)
 	Assert(numsortkeys > 0);
 
 	return make_sort(root, lefttree, numsortkeys,
-					 sortColIdx, sortOperators, nullsFirst);
+					 sortColIdx, sortOperators, nullsFirst, -1.0);
 }
 
 /*
@@ -2919,7 +2928,7 @@ make_sort_from_groupcols(PlannerInfo *root,
 	Assert(numsortkeys > 0);
 
 	return make_sort(root, lefttree, numsortkeys,
-					 sortColIdx, sortOperators, nullsFirst);
+					 sortColIdx, sortOperators, nullsFirst, -1.0);
 }
 
 Material *
