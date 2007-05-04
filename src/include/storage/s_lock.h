@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.158 2007/01/05 22:19:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.159 2007/05/04 15:20:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -554,6 +554,18 @@ do \
 } while (0)
 
 #endif /* __mips__ && !__sgi */
+
+
+#if defined(__m32r__) && defined(HAVE_SYS_TAS_H)	/* Renesas' M32R */
+#define HAS_TEST_AND_SET
+
+#include <sys/tas.h>
+
+typedef int slock_t;
+
+#define TAS(lock) tas(lock)
+
+#endif /* __m32r__ */
 
 
 /* These live in s_lock.c, but only for gcc */

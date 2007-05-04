@@ -495,6 +495,9 @@
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
+/* Define to 1 if you have the <sys/tas.h> header file. */
+#undef HAVE_SYS_TAS_H
+
 /* Define to 1 if you have the <sys/time.h> header file. */
 #undef HAVE_SYS_TIME_H
 
@@ -643,6 +646,9 @@
 
 /* Define to 1 to build with XML support. (--with-libxml) */
 #undef USE_LIBXML
+
+/* Define to 1 to build with XSLT support. (--with-libxslt) */
+#undef USE_LIBXSLT
 
 /* Define to select named POSIX semaphores. */
 #undef USE_NAMED_POSIX_SEMAPHORES
