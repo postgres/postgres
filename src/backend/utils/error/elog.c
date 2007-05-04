@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.184 2007/05/02 15:32:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.185 2007/05/04 02:01:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1151,6 +1151,16 @@ pg_re_throw(void)
 
 		errfinish(0);
 	}
+
+	/* We mustn't return... */
+	ExceptionalCondition("pg_re_throw tried to return", "FailedAssertion",
+						 __FILE__, __LINE__);
+
+	/*
+	 * Since ExceptionalCondition isn't declared noreturn because of
+	 * TrapMacro(), we need this to keep gcc from complaining.
+	 */
+	abort();
 }
 
 

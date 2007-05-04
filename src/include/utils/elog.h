@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.85 2007/05/02 15:32:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.86 2007/05/04 02:01:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,8 +222,17 @@ extern DLLIMPORT ErrorContextCallback *error_context_stack;
 		error_context_stack = save_context_stack; \
 	} while (0)
 
+/*
+ * gcc understands __attribute__((noreturn)); for other compilers, insert
+ * a useless exit() call so that the compiler gets the point.
+ */
+#ifdef __GNUC__
 #define PG_RE_THROW()  \
 	pg_re_throw()
+#else
+#define PG_RE_THROW()  \
+	(pg_re_throw(), exit(1))
+#endif
 
 extern DLLIMPORT sigjmp_buf *PG_exception_stack;
 
@@ -262,7 +271,7 @@ extern ErrorData *CopyErrorData(void);
 extern void FreeErrorData(ErrorData *edata);
 extern void FlushErrorState(void);
 extern void ReThrowError(ErrorData *edata);
-extern void pg_re_throw(void);
+extern void pg_re_throw(void) __attribute__((noreturn));
 
 
 /* GUC-configurable parameters */

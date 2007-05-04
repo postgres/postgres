@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.79 2007/04/06 04:21:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.80 2007/05/04 02:01:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -694,8 +694,9 @@ extern DLLIMPORT bool assert_enabled;
 		Trap(!(condition), "BadState")
 #endif   /* USE_ASSERT_CHECKING */
 
-extern int ExceptionalCondition(char *conditionName, char *errorType,
-					 char *fileName, int lineNumber);
+extern int ExceptionalCondition(const char *conditionName,
+								const char *errorType,
+								const char *fileName, int lineNumber);
 
 /* ----------------------------------------------------------------
  *				Section 4: genbki macros used by catalog/pg_xxx.h files
