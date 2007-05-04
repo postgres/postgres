@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.44 2007/05/02 18:27:57 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.45 2007/05/04 02:06:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1288,7 +1288,7 @@ NON_EXEC_STATIC void
 AutoVacWorkerMain(int argc, char *argv[])
 {
 	sigjmp_buf	local_sigjmp_buf;
-	Oid			dbid = InvalidOid;
+	Oid			dbid;
 
 	/* we are a postmaster subprocess now */
 	IsUnderPostmaster = true;
@@ -1410,8 +1410,8 @@ AutoVacWorkerMain(int argc, char *argv[])
 		SHMQueueInsertBefore(&AutoVacuumShmem->av_runningWorkers, 
 							 &MyWorkerInfo->wi_links);
 		/*
-		 * remove from the "starting" pointer, so that the launcher can start a new
-		 * worker if required
+		 * remove from the "starting" pointer, so that the launcher can start
+		 * a new worker if required
 		 */
 		AutoVacuumShmem->av_startingWorker = INVALID_OFFSET;
 		LWLockRelease(AutovacuumLock);
@@ -1423,8 +1423,11 @@ AutoVacWorkerMain(int argc, char *argv[])
 			kill(AutoVacuumShmem->av_launcherpid, SIGUSR1);
 	}
 	else
+	{
 		/* no worker entry for me, go away */
+		dbid = InvalidOid;
 		LWLockRelease(AutovacuumLock);
+	}
 
 	if (OidIsValid(dbid))
 	{
@@ -1474,7 +1477,8 @@ AutoVacWorkerMain(int argc, char *argv[])
 }
 
 /*
- * Return a WorkerInfo to the free list */
+ * Return a WorkerInfo to the free list
+ */
 static void
 FreeWorkerInfo(int code, Datum arg)
 {
