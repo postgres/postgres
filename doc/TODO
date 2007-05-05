@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sun Apr 29 03:17:05 EDT 2007
+Last updated:		Fri May  4 23:14:29 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1361,14 +1361,8 @@ Optimizer / Executor
 ====================
 
 * Improve selectivity functions for geometric operators
-* Allow ORDER BY ... LIMIT # to select high/low value without sort or
+* -Allow ORDER BY ... LIMIT # to select high/low value without sort or
   index using a sequential scan for highest/lowest values
-
-  Right now, if no index exists, ORDER BY ... LIMIT # requires we sort
-  all values to return the high/low value.  Instead The idea is to do a 
-  sequential scan to find the high/low value, thus avoiding the sort.
-  MIN/MAX already does this, but not for LIMIT > 1.
-
 * Precompile SQL functions to avoid overhead
 * Create utility to compute accurate random_page_cost value
 * Improve ability to display optimizer analysis using OPTIMIZER_DEBUG
