@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.233 2007/04/21 21:01:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.234 2007/05/05 17:05:48 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3137,6 +3137,10 @@ convert_string_datum(Datum value, Oid typid)
 		 * from the second call than the first; thus the Assert must be <= not
 		 * == as you'd expect.  Can't any of these people program their way
 		 * out of a paper bag?
+		 *
+		 * XXX: strxfrm doesn't support UTF-8 encoding on Win32, it can return
+		 * bogus data or set an error. This is not really a problem unless it 
+		 * crashes since it will only give an estimation error and nothing fatal.
 		 */
 #if _MSC_VER == 1400			/* VS.Net 2005 */
 
@@ -3151,6 +3155,15 @@ convert_string_datum(Datum value, Oid typid)
 		}
 #else
 		xfrmlen = strxfrm(NULL, val, 0);
+#endif
+#ifdef WIN32
+		/*
+		 * On Windows, strxfrm returns INT_MAX when an error occurs. Instead of
+		 * trying to allocate this much memory (and fail), just return the
+		 * original string unmodified as if we were in the C locale.
+		 */
+		if (xfrmlen == INT_MAX)
+			return val;
 #endif
 		xfrmstr = (char *) palloc(xfrmlen + 1);
 		xfrmlen2 = strxfrm(xfrmstr, val, xfrmlen + 1);
