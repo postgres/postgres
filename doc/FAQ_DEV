@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat May 5 10:30:33 EDT 2007
+   Last updated: Sat May 5 10:33:44 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -173,7 +173,7 @@ General Questions
      * Contains sufficient comments
      * Contains code that works on all supported operating systems
      * Has proper documentation
-     * Passes all regression tests, and if needed, includes new ones
+     * Passes all regression tests, and if needed, adds new ones
      * Behaves as expected, even under unusual cirumstances
      * Contains no reliability risks
      * Does not overly complicate the source code
