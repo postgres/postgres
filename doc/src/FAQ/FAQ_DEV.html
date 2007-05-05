@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Sat May  5 00:09:15 EDT 2007</P>
+    <P>Last updated: Sat May  5 06:20:41 EDT 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)<BR>
@@ -863,24 +863,25 @@
       <DL>
         <DT>lfirst(i), lfirst_int(i), lfirst_oid(i)</DT>
 
-        <DD>return the data (a point, integer and OID respectively) at
-        list element <I>i.</I></DD>
+        <DD>return the data (a pointer, integer or OID respectively) of
+        list cell <I>i.</I></DD>
 
         <DT>lnext(i)</DT>
 
-        <DD>return the next list element after <I>i.</I></DD>
+        <DD>return the next list cell after <I>i.</I></DD>
 
         <DT>foreach(i, list)</DT>
 
         <DD>
-          loop through <I>list,</I> assigning each list element to
-          <I>i.</I> It is important to note that <I>i</I> is a List *,
+          loop through <I>list,</I> assigning each list cell to
+          <I>i.</I> It is important to note that <I>i</I> is a ListCell *,
           not the data in the <I>List</I> element. You need to use
           <I>lfirst(i)</I> to get at the data. Here is a typical code
           snippet that loops through a List containing <I>Var *'s</I>
           and processes each one: 
 <PRE>
-<CODE> List                *list;
+<CODE>
+    List        *list;
     ListCell    *i;
 
     foreach(i, list)
@@ -900,26 +901,26 @@
 
         <DT>lappend(list, node)</DT>
 
-        <DD>add <I>node</I> to the end of <I>list.</I> This is more
-        expensive that lcons.</DD>
+        <DD>add <I>node</I> to the end of <I>list.</I></DD>
 
-        <DT>nconc(list1, list2)</DT>
+        <DT>list_concat(list1, list2)</DT>
 
-        <DD>Concat <I>list2</I> on to the end of <I>list1.</I></DD>
+        <DD>Concatenate <I>list2</I> on to the end of <I>list1.</I></DD>
 
-        <DT>length(list)</DT>
+        <DT>list_length(list)</DT>
 
         <DD>return the length of the <I>list.</I></DD>
 
-        <DT>nth(i, list)</DT>
+        <DT>list_nth(list, i)</DT>
 
-        <DD>return the <I>i</I>'th element in <I>list.</I></DD>
+        <DD>return the <I>i</I>'th element in <I>list,</I>
+         counting from zero.</DD>
 
-        <DT>lconsi, ...</DT>
+        <DT>lcons_int, ...</DT>
 
-        <DD>There are integer versions of these: <I>lconsi,
-        lappendi</I>, etc. Also versions for OID lists: <I>lconso,
-        lappendo</I>, etc.</DD>
+        <DD>There are integer versions of these: <I>lcons_int,
+        lappend_int</I>, etc. Also versions for OID lists: <I>lcons_oid,
+        lappend_oid</I>, etc.</DD>
       </DL>
     </BLOCKQUOTE>
     You can print nodes easily inside <I>gdb.</I> First, to disable
@@ -944,7 +945,7 @@
     <H3 id="item2.4">2.4) I just added a field to a structure.
     What else should I do?</H3>
 
-    <P>The structures passing around from the parser, rewrite,
+    <P>The structures passed around in the parser, rewriter,
     optimizer, and executor require quite a bit of support. Most
     structures have support routines in <I>src/backend/nodes</I> used
     to create, copy, read, and output those structures (in particular,

@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sat May 5 00:09:15 EDT 2007
+   Last updated: Sat May 5 06:20:41 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -698,20 +698,21 @@ typedef struct nameData
    Here are some of the List manipulation commands:
    
    lfirst(i), lfirst_int(i), lfirst_oid(i)
-          return the data (a point, integer and OID respectively) at list
-          element i.
+          return the data (a pointer, integer or OID respectively) of
+          list cell i.
           
    lnext(i)
-          return the next list element after i.
+          return the next list cell after i.
           
    foreach(i, list)
-          loop through list, assigning each list element to i. It is
-          important to note that i is a List *, not the data in the List
-          element. You need to use lfirst(i) to get at the data. Here is
-          a typical code snippet that loops through a List containing Var
-          *'s and processes each one:
+          loop through list, assigning each list cell to i. It is
+          important to note that i is a ListCell *, not the data in the
+          List element. You need to use lfirst(i) to get at the data.
+          Here is a typical code snippet that loops through a List
+          containing Var *'s and processes each one:
           
- List                *list;
+
+    List        *list;
     ListCell    *i;
 
     foreach(i, list)
@@ -726,20 +727,20 @@ typedef struct nameData
           if list is NIL.
           
    lappend(list, node)
-          add node to the end of list. This is more expensive that lcons.
+          add node to the end of list.
           
-   nconc(list1, list2)
-          Concat list2 on to the end of list1.
+   list_concat(list1, list2)
+          Concatenate list2 on to the end of list1.
           
-   length(list)
+   list_length(list)
           return the length of the list.
           
-   nth(i, list)
-          return the i'th element in list.
+   list_nth(list, i)
+          return the i'th element in list, counting from zero.
           
-   lconsi, ...
-          There are integer versions of these: lconsi, lappendi, etc.
-          Also versions for OID lists: lconso, lappendo, etc.
+   lcons_int, ...
+          There are integer versions of these: lcons_int, lappend_int,
+          etc. Also versions for OID lists: lcons_oid, lappend_oid, etc.
           
    You can print nodes easily inside gdb. First, to disable output
    truncation when you use the gdb print command:
@@ -758,7 +759,7 @@ typedef struct nameData
    
   2.4) I just added a field to a structure. What else should I do?
   
-   The structures passing around from the parser, rewrite, optimizer, and
+   The structures passed around in the parser, rewriter, optimizer, and
    executor require quite a bit of support. Most structures have support
    routines in src/backend/nodes used to create, copy, read, and output
    those structures (in particular, the files copyfuncs.c and
