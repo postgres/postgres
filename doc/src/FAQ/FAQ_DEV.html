@@ -13,7 +13,7 @@
     <H1>Developer's Frequently Asked Questions (FAQ) for
     PostgreSQL</H1>
 
-    <P>Last updated: Mon Mar 19 12:52:30 EDT 2007</P>
+    <P>Last updated: Sat May  5 00:09:15 EDT 2007</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:bruce@momjian.us">bruce@momjian.us</A>)<BR>
@@ -34,28 +34,29 @@
      <A href="#item1.3">1.3</A>) What areas need work?<BR>
      <A href="#item1.4">1.4</A>) What do I do after choosing an item to
     work on?<BR>
-     <A href="#item1.5">1.5</A>) I've developed a patch, what next?<BR>
-     <A href="#item1.6">1.6</A>) Where can I learn more about the code?<BR>
-     <A href="#item1.7">1.7</A>) How do I download/update the current
+     <A href="#item1.5">1.5</A>) I have developed a patch, what next?<BR>
+     <A href="#item1.7">1.6</A>) How is a patch reviewed?<BR>
+     <A href="#item1.7">1.7</A>) Where can I learn more about the code?<BR>
+     <A href="#item1.8">1.8</A>) How do I download/update the current
     source tree?<BR>
-     <A href="#item1.8">1.8</A>) How do I test my changes?<BR>
-     <A href="#item1.9">1.9</A>) What tools are available for
+     <A href="#item1.9">1.9</A>) How do I test my changes?<BR>
+     <A href="#item1.10">1.10</A>) What tools are available for
     developers?<BR>
-     <A href="#item1.10">1.10</A>) What books are good for developers?<BR>
-     <A href="#item1.11">1.11</A>) What is configure all about?<BR>
-     <A href="#item1.12">1.12</A>) How do I add a new port?<BR>
-     <A href="#item1.13">1.13</A>) Why don't you use threads, raw
+     <A href="#item1.11">1.11</A>) What books are good for developers?<BR>
+     <A href="#item1.12">1.12</A>) What is configure all about?<BR>
+     <A href="#item1.13">1.13</A>) How do I add a new port?<BR>
+     <A href="#item1.14">1.14</A>) Why don't you use threads, raw
     devices, async-I/O, &lt;insert your favorite wizz-bang feature
     here&gt;?<BR>
-     <A href="#item1.14">1.14</A>) How are RPM's packaged?<BR>
-     <A href="#item1.15">1.15</A>) How are CVS branches handled?<BR>
-     <A href="#item1.16">1.16</A>) Where can I get a copy of the SQL
+     <A href="#item1.15">1.15</A>) How are RPM's packaged?<BR>
+     <A href="#item1.16">1.16</A>) How are CVS branches handled?<BR>
+     <A href="#item1.17">1.17</A>) Where can I get a copy of the SQL
     standards?<BR>
-     <A href="#item1.17">1.17</A>) Where can I get technical
+     <A href="#item1.18">1.18</A>) Where can I get technical
     assistance?<BR>
-     <A href="#item1.18">1.18</A>) How do I get involved in PostgreSQL web
+     <A href="#item1.19">1.19</A>) How do I get involved in PostgreSQL web
     site development?<BR>
-     <A href="#item1.19">1.19</A>) Why haven't you replaced CVS with SVN, Git,
+     <A href="#item1.20">1.20</A>) Why haven't you replaced CVS with SVN, Git,
     Monotone, VSS, &lt;insert your favorite SCM system here&gt;?
 
 
@@ -85,7 +86,7 @@
     development?</H3>
 
     <P>Download the code and have a look around. See <A href=
-    "#item1.7">1.7</A>.</P>
+    "#item1.8">1.8</A>.</P>
 
     <P>Subscribe to and read the <A href=
     "http://archives.postgresql.org/pgsql-hackers">pgsql-hackers</A>
@@ -137,7 +138,7 @@
 
     <P>You can learn more about these features by consulting the
     archives, the SQL standards and the recommend texts (see <A href=
-    "#item1.10">1.10</A>).</P>
+    "#item1.11">1.11</A>).</P>
 
     <H3 id="item1.4">1.4) What do I do after choosing an item to
     work on?</H3>
@@ -161,7 +162,7 @@
     <a href="http://momjian.postgresql.org/cgi-bin/pgpatches_hold">
     http://momjian.postgresql.org/cgi-bin/pgpatches_hold</a>.</P>
 
-    <H3 id="item1.5">1.5) I've developed a patch, what next?</H3>
+    <H3 id="item1.5">1.5) I have developed a patch, what next?</H3>
 
     <P>You will need to submit the patch to pgsql-patches@postgresql.org. It
     will be reviewed by other contributors to the project and will be
@@ -172,7 +173,7 @@
     <ol>
     <li>Ensure that your patch is generated against the most recent version 
     of the code, which for developers is CVS HEAD. For more on branches in 
-    PostgreSQL, see <a href="#item1.15">1.15</a>.</li>
+    PostgreSQL, see <a href="#item1.16">1.16</a>.</li>
 
     <li>Try to make your patch as readable as possible by following the 
     project's code-layout conventions.  This makes it easier for the
@@ -203,7 +204,7 @@
 
     <li>New feature patches should also be accompanied by documentation
     patches.  If you need help checking the SQL standard, see <a href=
-    "#item1.16">1.16</a>.</li>
+    "#item1.17">1.17</a>.</li>
 
     <li>Provide an implementation overview, preferably in code comments.
     Following the surrounding code commenting style is usually a good
@@ -223,7 +224,28 @@
     <p>You will be notified via email when the patch is applied, and
     your name will appear in the next version of the release notes.</p>
 
-    <H3 id="item1.6">1.6) Where can I learn more about the
+    <H3 id="item1.6">1.6) How is a patch reviewed?</H3>
+
+    <p>Patch committers check several things before applying a patch:</p>
+
+    <ul>
+    <li>Patch follows the SQL standard or community agreed-upon behavior</li>
+    <li>Style merges seamlessly into the surrounding code</li>
+    <li>Written as simply and efficiently as possible</li>
+    <li>Uses the available PostgreSQL subsystems properly</li>
+    <li>Contains sufficient comments</li>
+    <li>Contains code that works on all supported operating systems</li>
+    <li>Has proper documentation</li>
+    <li>Passes all regression tests</li>
+    <li>Behaves as expected, even under unusual cirumstances</li>
+    <li>Contains no reliability risks</li>
+    <li>Does not overly complicate the source code</li>
+    <li>If performance-related, has a measureable performance benefit</li>
+    <li>Is of sufficient usefulness to the average PostgreSQL user</li>
+    <li>Follows existing PostgreSQL coding standards</li>
+    </ul>
+  
+    <H3 id="item1.7">1.7) Where can I learn more about the
     code?</H3>
 
     <P>Other than documentation in the source tree itself, you can find
@@ -233,7 +255,7 @@
     is at <a href=
     "http://neilconway.org/talks/hacking/">http://neilconway.org/talks/hacking/</a></P>
 
-    <H3 id="item1.7">1.7) How do I download/update the current
+    <H3 id="item1.8">1.8) How do I download/update the current
     source tree?</H3>
 
     <P>There are several ways to obtain the source tree. Occasional
@@ -248,7 +270,7 @@
     "http://developer.postgresql.org/docs/postgres/cvs.html">
     http://developer.postgresql.org/docs/postgres/cvs.html</A>.</P>
 
-    <H3 id="item1.8">1.8) How do I test my changes?</H3>
+    <H3 id="item1.9">1.9) How do I test my changes?</H3>
 
     <P><B>Basic system testing</B></P>
 
@@ -296,7 +318,7 @@
     you can use the <I>--enable-depend</I> option of <I>configure</I>
     to have the compiler compute the dependencies automatically.</P>
 
-    <H3 id="item1.9">1.9) What tools are available for
+    <H3 id="item1.10">1.10) What tools are available for
     developers?</H3>
 
     <P>First, all the files in the <I>src/tools</I> directory are
@@ -402,7 +424,7 @@
     There is also a script called <I>unused_oids</I> in
     <I>pgsql/src/include/catalog</I> that shows the unused oids.</P>
 
-    <H3 id="item1.10">1.10) What books are good for
+    <H3 id="item1.11">1.11) What books are good for
     developers?</H3>
 
     <P>I have four good books, <I>An Introduction to Database
@@ -416,7 +438,7 @@
     on-line written by Jim Gray at <A href=
     "http://www.benchmarkresources.com">http://www.benchmarkresources.com.</A>.</P>
 
-    <H3 id="item1.11">1.11) What is configure all about?</H3>
+    <H3 id="item1.12">1.12) What is configure all about?</H3>
 
     <P>The files <I>configure</I> and <I>configure.in</I> are part of
     the GNU <I>autoconf</I> package. Configure allows us to test for
@@ -440,7 +462,7 @@
     all files derived by configure are removed, so you see only the
     file contained in the source distribution.</P>
 
-    <H3 id="item1.12">1.12) How do I add a new port?</H3>
+    <H3 id="item1.13">1.13) How do I add a new port?</H3>
 
     <P>There are a variety of places that need to be modified to add a
     new port. First, start in the <I>src/template</I> directory. Add an
@@ -459,7 +481,7 @@
     handling. There is a <I>backend/port</I> directory if you need
     special files for your OS.</P>
 
-    <H3 id="item1.13">1.13) Why don't you use threads, raw
+    <H3 id="item1.14">1.14) Why don't you use threads, raw
     devices, async-I/O, &lt;insert your favorite wizz-bang feature
     here&gt;?</H3>
 
@@ -493,7 +515,7 @@
     cautious about their adoption. The TODO list often contains links
     to discussions showing our reasoning in these areas.</P>
 
-    <H3 id="item1.14">1.14) How are RPMs packaged?</H3>
+    <H3 id="item1.15">1.15) How are RPMs packaged?</H3>
 
     <P>This was written by Lamar Owen and Devrim Gündüz:</P>
 
@@ -578,7 +600,7 @@
    <P>As to why all these files aren't part of the source tree, well, unless
    there was a large cry for it to happen, we don't believe it should.</P>
 
-    <H3 id="item1.15">1.15) How are CVS branches managed?</H3>
+    <H3 id="item1.16">1.16) How are CVS branches managed?</H3>
 
     <P>This was written by Tom Lane:</P>
 
@@ -648,7 +670,7 @@
     dot-release or two, so that we won't have to double-patch the first
     wave of fixes.</P>
 
-    <H3 id="item1.16">1.16) Where can I get a copy of the SQL
+    <H3 id="item1.17">1.17) Where can I get a copy of the SQL
     standards?</H3>
 
     <P>There are three versions of the SQL standard: SQL-92, SQL:1999,
@@ -685,7 +707,7 @@
       (paper)</LI>
     </UL>
 
-    <H3 id="item1.17">1.17) Where can I get technical
+    <H3 id="item1.18">1.18) Where can I get technical
     assistance?</H3>
 
     <P>Many technical questions held by those new to the code have been
@@ -700,7 +722,7 @@
     questions about development of new features, on IRC at
     irc.freenode.net in the #postgresql channel.</P>
 
-    <H3 id="item1.18">1.18) How do I get involved in PostgreSQL
+    <H3 id="item1.19">1.19) How do I get involved in PostgreSQL
     web site development?</H3>
 
     <P>PostgreSQL website development is discussed on the
@@ -710,7 +732,7 @@
     , the code for the next version of the website is under the
     "portal" module.</P> 
 
-    <H3 id="item1.19">1.19) Why haven't you replaced CVS with SVN, Git,
+    <H3 id="item1.20">1.20) Why haven't you replaced CVS with SVN, Git,
     Monotone, VSS, &lt;insert your favorite SCMS here&gt;?</H3>
 
     <P>Currently the core developers see no SCMS that will provide 
@@ -929,7 +951,7 @@
     the files <I>copyfuncs.c</I> and <I>equalfuncs.c</I>. Make sure you
     add support for your new field to these files. Find any other
     places the structure might need code for your new field. <I>mkid</I>
-    is helpful with this (see <A href="#item1.9">1.9</A>).</P>
+    is helpful with this (see <A href="#item1.10">1.10</A>).</P>
 
     <H3 id="item2.5">2.5) Why do we use <I>palloc</I>() and
     <I>pfree</I>() to allocate memory?</H3>

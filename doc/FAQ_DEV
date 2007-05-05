@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Mar 19 12:52:30 EDT 2007
+   Last updated: Sat May 5 00:09:15 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -15,22 +15,23 @@ General Questions
    1.2) What development environment is required to develop code?
    1.3) What areas need work?
    1.4) What do I do after choosing an item to work on?
-   1.5) I've developed a patch, what next?
-   1.6) Where can I learn more about the code?
-   1.7) How do I download/update the current source tree?
-   1.8) How do I test my changes?
-   1.9) What tools are available for developers?
-   1.10) What books are good for developers?
-   1.11) What is configure all about?
-   1.12) How do I add a new port?
-   1.13) Why don't you use threads, raw devices, async-I/O, <insert your
+   1.5) I have developed a patch, what next?
+   1.6) How is a patch reviewed?
+   1.7) Where can I learn more about the code?
+   1.8) How do I download/update the current source tree?
+   1.9) How do I test my changes?
+   1.10) What tools are available for developers?
+   1.11) What books are good for developers?
+   1.12) What is configure all about?
+   1.13) How do I add a new port?
+   1.14) Why don't you use threads, raw devices, async-I/O, <insert your
    favorite wizz-bang feature here>?
-   1.14) How are RPM's packaged?
-   1.15) How are CVS branches handled?
-   1.16) Where can I get a copy of the SQL standards?
-   1.17) Where can I get technical assistance?
-   1.18) How do I get involved in PostgreSQL web site development?
-   1.19) Why haven't you replaced CVS with SVN, Git, Monotone, VSS,
+   1.15) How are RPM's packaged?
+   1.16) How are CVS branches handled?
+   1.17) Where can I get a copy of the SQL standards?
+   1.18) Where can I get technical assistance?
+   1.19) How do I get involved in PostgreSQL web site development?
+   1.20) Why haven't you replaced CVS with SVN, Git, Monotone, VSS,
    <insert your favorite SCM system here>?
    
 Technical Questions
@@ -51,7 +52,7 @@ General Questions
 
   1.1) How do I get involved in PostgreSQL development?
   
-   Download the code and have a look around. See 1.7.
+   Download the code and have a look around. See 1.8.
    
    Subscribe to and read the pgsql-hackers mailing list (often termed
    'hackers'). This is where the major contributors and core members of
@@ -93,7 +94,7 @@ General Questions
    http://www.postgresql.org/docs/faqs.TODO.html.
    
    You can learn more about these features by consulting the archives,
-   the SQL standards and the recommend texts (see 1.10).
+   the SQL standards and the recommend texts (see 1.11).
    
   1.4) What do I do after choosing an item to work on?
   
@@ -113,7 +114,7 @@ General Questions
    being kept for the next release,
    http://momjian.postgresql.org/cgi-bin/pgpatches_hold.
    
-  1.5) I've developed a patch, what next?
+  1.5) I have developed a patch, what next?
   
    You will need to submit the patch to pgsql-patches@postgresql.org. It
    will be reviewed by other contributors to the project and will be
@@ -122,7 +123,7 @@ General Questions
    make sure your submission conforms to the following guidelines:
     1. Ensure that your patch is generated against the most recent
        version of the code, which for developers is CVS HEAD. For more on
-       branches in PostgreSQL, see 1.15.
+       branches in PostgreSQL, see 1.16.
     2. Try to make your patch as readable as possible by following the
        project's code-layout conventions. This makes it easier for the
        reviewer, and there's no point in trying to layout things
@@ -145,7 +146,7 @@ General Questions
     6. If you are adding a new feature, confirm that it has been tested
        thoroughly. Try to test the feature in all conceivable scenarios.
     7. New feature patches should also be accompanied by documentation
-       patches. If you need help checking the SQL standard, see 1.16.
+       patches. If you need help checking the SQL standard, see 1.17.
     8. Provide an implementation overview, preferably in code comments.
        Following the surrounding code commenting style is usually a good
        approach.
@@ -162,14 +163,32 @@ General Questions
    You will be notified via email when the patch is applied, and your
    name will appear in the next version of the release notes.
    
-  1.6) Where can I learn more about the code?
+  1.6) How is a patch reviewed?
+  
+   Patch committers check several things before applying a patch:
+     * Patch follows the SQL standard or community agreed-upon behavior
+     * Style merges seamlessly into the surrounding code
+     * Written as simply and efficiently as possible
+     * Uses the available PostgreSQL subsystems properly
+     * Contains sufficient comments
+     * Contains code that works on all supported operating systems
+     * Has proper documentation
+     * Passes all regression tests
+     * Behaves as expected, even under unusual cirumstances
+     * Contains no reliability risks
+     * Does not overly complicate the source code
+     * If performance-related, has a measureable performance benefit
+     * Is of sufficient usefulness to the average PostgreSQL user
+     * Follows existing PostgreSQL coding standards
+       
+  1.7) Where can I learn more about the code?
   
    Other than documentation in the source tree itself, you can find some
    papers/presentations discussing the code at
    http://www.postgresql.org/developer. An excellent presentation is at
    http://neilconway.org/talks/hacking/
    
-  1.7) How do I download/update the current source tree?
+  1.8) How do I download/update the current source tree?
   
    There are several ways to obtain the source tree. Occasional
    developers can just get the most recent source tree snapshot from
@@ -180,7 +199,7 @@ General Questions
    in CVS. For details of how to obtain the source from CVS see
    http://developer.postgresql.org/docs/postgres/cvs.html.
    
-  1.8) How do I test my changes?
+  1.9) How do I test my changes?
   
    Basic system testing
    
@@ -223,7 +242,7 @@ General Questions
    you are using GCC you can use the --enable-depend option of configure
    to have the compiler compute the dependencies automatically.
    
-  1.9) What tools are available for developers?
+  1.10) What tools are available for developers?
   
    First, all the files in the src/tools directory are designed for
    developers.
@@ -316,7 +335,7 @@ General Questions
    is also a script called unused_oids in pgsql/src/include/catalog that
    shows the unused oids.
    
-  1.10) What books are good for developers?
+  1.11) What books are good for developers?
   
    I have four good books, An Introduction to Database Systems, by C.J.
    Date, Addison, Wesley, A Guide to the SQL Standard, by C.J. Date, et.
@@ -326,7 +345,7 @@ General Questions
    There is also a database performance site, with a handbook on-line
    written by Jim Gray at http://www.benchmarkresources.com..
    
-  1.11) What is configure all about?
+  1.12) What is configure all about?
   
    The files configure and configure.in are part of the GNU autoconf
    package. Configure allows us to test for various capabilities of the
@@ -348,7 +367,7 @@ General Questions
    removed, so you see only the file contained in the source
    distribution.
    
-  1.12) How do I add a new port?
+  1.13) How do I add a new port?
   
    There are a variety of places that need to be modified to add a new
    port. First, start in the src/template directory. Add an appropriate
@@ -365,7 +384,7 @@ General Questions
    src/makefiles directory for port-specific Makefile handling. There is
    a backend/port directory if you need special files for your OS.
    
-  1.13) Why don't you use threads, raw devices, async-I/O, <insert your
+  1.14) Why don't you use threads, raw devices, async-I/O, <insert your
   favorite wizz-bang feature here>?
   
    There is always a temptation to use the newest operating system
@@ -391,7 +410,7 @@ General Questions
    cautious about their adoption. The TODO list often contains links to
    discussions showing our reasoning in these areas.
    
-  1.14) How are RPMs packaged?
+  1.15) How are RPMs packaged?
   
    This was written by Lamar Owen and Devrim Gündüz:
    
@@ -472,7 +491,7 @@ General Questions
    As to why all these files aren't part of the source tree, well, unless
    there was a large cry for it to happen, we don't believe it should.
    
-  1.15) How are CVS branches managed?
+  1.16) How are CVS branches managed?
   
    This was written by Tom Lane:
    
@@ -531,7 +550,7 @@ General Questions
    tree right away after a major release --- we wait for a dot-release or
    two, so that we won't have to double-patch the first wave of fixes.
    
-  1.16) Where can I get a copy of the SQL standards?
+  1.17) Where can I get a copy of the SQL standards?
   
    There are three versions of the SQL standard: SQL-92, SQL:1999, and
    SQL:2003. They are endorsed by ANSI and ISO. Draft versions can be
@@ -548,7 +567,7 @@ General Questions
      * http://www.contrib.andrew.cmu.edu/~shadow/sql.html#syntax (SQL-92)
      * http://dbs.uni-leipzig.de/en/lokal/standards.pdf (paper)
        
-  1.17) Where can I get technical assistance?
+  1.18) Where can I get technical assistance?
   
    Many technical questions held by those new to the code have been
    answered on the pgsql-hackers mailing list - the archives of which can
@@ -561,7 +580,7 @@ General Questions
    questions about development of new features, on IRC at
    irc.freenode.net in the #postgresql channel.
    
-  1.18) How do I get involved in PostgreSQL web site development?
+  1.19) How do I get involved in PostgreSQL web site development?
   
    PostgreSQL website development is discussed on the
    pgsql-www@postgresql.org mailing list. The is a project page where the
@@ -569,7 +588,7 @@ General Questions
    http://gborg.postgresql.org/project/pgweb/projdisplay.php , the code
    for the next version of the website is under the "portal" module.
    
-  1.19) Why haven't you replaced CVS with SVN, Git, Monotone, VSS, <insert your
+  1.20) Why haven't you replaced CVS with SVN, Git, Monotone, VSS, <insert your
   favorite SCMS here>?
   
    Currently the core developers see no SCMS that will provide enough
@@ -745,7 +764,7 @@ typedef struct nameData
    those structures (in particular, the files copyfuncs.c and
    equalfuncs.c. Make sure you add support for your new field to these
    files. Find any other places the structure might need code for your
-   new field. mkid is helpful with this (see 1.9).
+   new field. mkid is helpful with this (see 1.10).
    
   2.5) Why do we use palloc() and pfree() to allocate memory?
   
