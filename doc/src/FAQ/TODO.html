@@ -2,14 +2,16 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html>
 <head>
-<title>PostgreSQL TODO List</title>
+<title>z</title>
 <meta name="generator" content="HTML::TextToHTML v2.25"/>
 </head>
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
-<h1><a name="section_1">PostgreSQL TODO List</a></h1>
-<p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sat May  5 10:47:39 EDT 2007
-</p>
+<p>z<br/>
+PostgreSQL TODO List
+</p><hr/>
+Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
+Last updated:           Sat May  5 11:39:57 EDT 2007
+
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
 </p>
@@ -23,7 +25,7 @@ you would like to work on an item, please read the Developer's FAQ<br/>
 first.  There is also a developer's wiki at<br/>
 <a href="http://developer.postgresql.org">http://developer.postgresql.org</a>.
 </p>
-<h1><a name="section_2">Administration</a></h1>
+<h1><a name="section_1">Administration</a></h1>
 
 <ul>
   <li>Allow major upgrades without dump/reload, perhaps using pg_upgrade 
@@ -151,7 +153,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li></ul>
 </li></ul>
-<h1><a name="section_3">Monitoring</a></h1>
+<h1><a name="section_2">Monitoring</a></h1>
 
 <ul>
   <li>Allow server log information to be output as INSERT statements
@@ -160,7 +162,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>-<em>Add ability to monitor the use of temporary sort files</em>
 </li></ul>
-<h1><a name="section_4">Data Types</a></h1>
+<h1><a name="section_3">Data Types</a></h1>
 
 <ul>
   <li>-<em>Make 64-bit version of the MONEY data type</em>
@@ -298,7 +300,7 @@ first.  There is also a developer's wiki at<br/>
     </li></ul>
   </li></ul>
 </li></ul>
-<h1><a name="section_5">Functions</a></h1>
+<h1><a name="section_4">Functions</a></h1>
 
 <ul>
   <li>Allow INET subnet tests using non-constants to be indexed
@@ -354,7 +356,7 @@ first.  There is also a developer's wiki at<br/>
   e.g. box @&gt; point
 </p>
 </li></ul>
-<h1><a name="section_6">Multi-Language Support</a></h1>
+<h1><a name="section_5">Multi-Language Support</a></h1>
 
 <ul>
   <li>Add NCHAR (as distinguished from ordinary varchar),
@@ -395,7 +397,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00767.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00767.php</a>
 </p>
 </li></ul>
-<h1><a name="section_7">Views / Rules</a></h1>
+<h1><a name="section_6">Views / Rules</a></h1>
 
 <ul>
   <li>Automatically create rules on views so they are updateable, per SQL99
@@ -412,7 +414,7 @@ first.  There is also a developer's wiki at<br/>
   are added after the view is created.
 </p>
 </li></ul>
-<h1><a name="section_8">SQL Commands</a></h1>
+<h1><a name="section_7">SQL Commands</a></h1>
 
 <ul>
   <li>Add CORRESPONDING BY to UNION/INTERSECT/EXCEPT
@@ -701,7 +703,7 @@ first.  There is also a developer's wiki at<br/>
     </li></ul>
   </li></ul>
 </li></ul>
-<h1><a name="section_9">Clients</a></h1>
+<h1><a name="section_8">Clients</a></h1>
 
 <ul>
   <li>Have pg_ctl look at PGHOST in case it is a socket directory?
@@ -815,7 +817,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li></ul>
 </p></ul>
-<h1><a name="section_10">Triggers</a></h1>
+<h1><a name="section_9">Triggers</a></h1>
 
 <ul>
   <li>Add deferred trigger queue file
@@ -850,26 +852,16 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-general/2007-02/msg01466.php">http://archives.postgresql.org/pgsql-general/2007-02/msg01466.php</a>
 </p>
 </li></ul>
-<h1><a name="section_11">Dependency Checking</a></h1>
+<h1><a name="section_10">Dependency Checking</a></h1>
 
 <ul>
-  <li>Flush cached query plans when the dependent objects change,
-  when the cardinality of parameters changes dramatically, or
+  <li>-<em>Flush cached query plans when the dependent objects change or</em>
   when new ANALYZE statistics are available
-<p>  A more complex solution would be to save multiple plans for different
-  cardinality and use the appropriate plan based on the EXECUTE values.
-</p>
-  </li><li>Track dependencies in function bodies and recompile/invalidate
-<p>  This is particularly important for references to temporary tables
-  in PL/PgSQL because PL/PgSQL caches query plans.  The only workaround
-  in PL/PgSQL is to use EXECUTE.  One complexity is that a function
-  might itself drop and recreate dependent tables, causing it to
-  invalidate its own query plan.
-</p>
-  </li><li>Invalidate prepared queries, like INSERT, when the table definition
+  </li><li>-<em>Track dependencies in function bodies and recompile/invalidate</em>
+  </li><li>-<em>Invalidate prepared queries, like INSERT, when the table definition</em>
   is altered
 </li></ul>
-<h1><a name="section_12">Indexes</a></h1>
+<h1><a name="section_11">Indexes</a></h1>
 
 <ul>
   <li>Add UNIQUE capability to non-btree indexes
@@ -942,7 +934,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li></ul>
 </li></ul>
-<h1><a name="section_13">Fsync</a></h1>
+<h1><a name="section_12">Fsync</a></h1>
 
 <ul>
   <li>Improve commit_delay handling to reduce fsync()
@@ -960,7 +952,7 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00079.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00079.php</a>
 </p>
 </li></ul>
-<h1><a name="section_14">Cache Usage</a></h1>
+<h1><a name="section_13">Cache Usage</a></h1>
 
 <ul>
   <li>Allow free-behind capability for large sequential scans, perhaps using
@@ -1025,7 +1017,7 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php</a>
 </p>
 </li></ul>
-<h1><a name="section_15">Vacuum</a></h1>
+<h1><a name="section_14">Vacuum</a></h1>
 
 <ul>
   <li>Improve speed with indexes
@@ -1095,7 +1087,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li></ul>
 </li></ul>
-<h1><a name="section_16">Locking</a></h1>
+<h1><a name="section_15">Locking</a></h1>
 
 <ul>
   <li>Fix priority ordering of read and write light-weight locks (Neil)
@@ -1115,7 +1107,7 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Add idle_in_transaction_timeout GUC so locks are not held for long
   periods of time
 </li></ul>
-<h1><a name="section_17">Startup Time Improvements</a></h1>
+<h1><a name="section_16">Startup Time Improvements</a></h1>
 
 <ul>
   <li>Experiment with multi-threaded backend for backend creation [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?thread">thread</a>]
@@ -1138,7 +1130,7 @@ first.  There is also a developer's wiki at<br/>
   existing backends is one of the difficulties with a backend approach.
 </p>
 </li></ul>
-<h1><a name="section_18">Write-Ahead Log</a></h1>
+<h1><a name="section_17">Write-Ahead Log</a></h1>
 
 <ul>
   <li>Eliminate need to write full pages to WAL before page modification [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?wal">wal</a>]
@@ -1204,7 +1196,7 @@ first.  There is also a developer's wiki at<br/>
   of indexes on TOAST tables.
 </p>
 </li></ul>
-<h1><a name="section_19">Optimizer / Executor</a></h1>
+<h1><a name="section_18">Optimizer / Executor</a></h1>
 
 <ul>
   <li>Improve selectivity functions for geometric operators
@@ -1229,7 +1221,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00096.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00096.php</a>
 </p>
 </li></ul>
-<h1><a name="section_20">Miscellaneous Performance</a></h1>
+<h1><a name="section_19">Miscellaneous Performance</a></h1>
 
 <ul>
   <li>Do async I/O for faster random read-ahead of data
@@ -1274,7 +1266,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php</a>
 </p>
 </li></ul>
-<h1><a name="section_21">Source Code</a></h1>
+<h1><a name="section_20">Source Code</a></h1>
 
 <ul>
   <li>Add use of 'const' for variables in source tree
@@ -1349,7 +1341,7 @@ first.  There is also a developer's wiki at<br/>
           of result sets using new statement protocol
   </li></ul>
 </li></ul>
-<h1><a name="section_22">Exotic Features</a></h1>
+<h1><a name="section_21">Exotic Features</a></h1>
 
 <ul>
   <li>Add pre-parsing phase that converts non-ISO syntax to supported
@@ -1377,7 +1369,7 @@ first.  There is also a developer's wiki at<br/>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg01527.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg01527.php</a>
 </p>
 </li></ul>
-<h1><a name="section_23">Features We Do <u>Not</u> Want</a></h1>
+<h1><a name="section_22">Features We Do <u>Not</u> Want</a></h1>
 
 <ul>
   <li>All backends running as threads in a single process (not wanted)
