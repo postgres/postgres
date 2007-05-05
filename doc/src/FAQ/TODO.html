@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sat May  5 10:44:05 EDT 2007
+Last updated:           Sat May  5 10:47:39 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -430,8 +430,6 @@ first.  There is also a developer's wiki at<br/>
   manually or automatically when statistics for execute parameters
   differ dramatically from those used during planning.
 </p>
-  </li><li>Invalidate prepared queries, like INSERT, when the table definition
-  is altered
   </li><li>Improve logging of prepared statements recovered during startup
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php">http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php</a>
 </p>
@@ -868,6 +866,8 @@ first.  There is also a developer's wiki at<br/>
   might itself drop and recreate dependent tables, causing it to
   invalidate its own query plan.
 </p>
+  </li><li>Invalidate prepared queries, like INSERT, when the table definition
+  is altered
 </li></ul>
 <h1><a name="section_12">Indexes</a></h1>
 

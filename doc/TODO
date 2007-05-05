@@ -2,7 +2,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat May  5 10:44:05 EDT 2007
+Last updated:		Sat May  5 10:47:39 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -480,8 +480,6 @@ SQL Commands
   manually or automatically when statistics for execute parameters
   differ dramatically from those used during planning.
 
-* Invalidate prepared queries, like INSERT, when the table definition
-  is altered
 * Improve logging of prepared statements recovered during startup
 
   http://archives.postgresql.org/pgsql-hackers/2006-11/msg00092.php
@@ -974,6 +972,9 @@ Dependency Checking
   in PL/PgSQL is to use EXECUTE.  One complexity is that a function
   might itself drop and recreate dependent tables, causing it to
   invalidate its own query plan.
+
+* Invalidate prepared queries, like INSERT, when the table definition
+  is altered
 
 
 Indexes
