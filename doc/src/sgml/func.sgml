@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.377 2007/04/07 03:58:08 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.378 2007/05/07 02:03:58 neilc Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -8189,15 +8189,16 @@ table2-mapping
   </indexterm>
 
   <para>
-   This section describes <productname>PostgreSQL</productname>'s functions
-   for operating on <firstterm>sequence objects</firstterm>.
-   Sequence objects (also called sequence generators or
-   just sequences) are special single-row tables created with
-   <command>CREATE SEQUENCE</command>.  A sequence object is usually used to
-   generate unique identifiers for rows of a table.  The sequence functions,
-   listed in <xref linkend="functions-sequence-table">,
-   provide simple, multiuser-safe methods for obtaining successive
-   sequence values from sequence objects.
+   This section describes <productname>PostgreSQL</productname>'s
+   functions for operating on <firstterm>sequence objects</firstterm>.
+   Sequence objects (also called sequence generators or just
+   sequences) are special single-row tables created with <xref
+   linkend="sql-createsequence" endterm="sql-createsequence-title">.
+   A sequence object is usually used to generate unique identifiers
+   for rows of a table.  The sequence functions, listed in <xref
+   linkend="functions-sequence-table">, provide simple, multiuser-safe
+   methods for obtaining successive sequence values from sequence
+   objects.
   </para>
 
    <table id="functions-sequence-table">
