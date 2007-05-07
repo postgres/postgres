@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.45 2007/05/04 02:06:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.46 2007/05/07 20:41:24 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1036,8 +1036,8 @@ do_start_worker(void)
 				 * Skip this database if its next_worker value falls between
 				 * the current time and the current time plus naptime.
 				 */
-				if (TimestampDifferenceExceeds(current_time,
-											   dbp->adl_next_worker, 0) &&
+				if (!TimestampDifferenceExceeds(dbp->adl_next_worker,
+											   current_time, 0) &&
 					!TimestampDifferenceExceeds(current_time,
 												dbp->adl_next_worker,
 												autovacuum_naptime * 1000))
