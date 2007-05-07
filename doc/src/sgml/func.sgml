@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.378 2007/05/07 02:03:58 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.379 2007/05/07 07:53:26 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7931,7 +7931,7 @@ cursor_to_xml(cursor refcursor, count int, nulls boolean, tableforest boolean, t
    </para>
 
    <para>
-    The data values are mapping in the same way as described for the
+    The data values are mapped in the same way as described for the
     function <function>xmlelement</function> above.
    </para>
 
