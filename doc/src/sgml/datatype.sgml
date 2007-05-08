@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.199 2007/05/03 15:05:56 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.200 2007/05/08 17:02:59 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2275,6 +2275,11 @@ January 8 04:05:06 1999 PST
      reasonableness of the zone abbreviations.  For example, <literal>SET
      TIMEZONE TO FOOBAR0</> will work, leaving the system effectively using
      a rather peculiar abbreviation for UTC.
+     Another issue to keep in mind is that in POSIX time zone names,
+     positive offsets are used for locations <emphasis>west</> of Greenwich.
+     Everywhere else, <productname>PostgreSQL</productname> follows the
+     ISO-8601 convention that positive timezone offsets are <emphasis>east</>
+     of Greenwich.
     </para>
 
     <para>
