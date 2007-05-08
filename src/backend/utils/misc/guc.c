@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.390 2007/05/04 01:13:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.391 2007/05/08 16:33:51 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2692,18 +2692,6 @@ add_guc_variable(struct config_generic * var, int elevel)
 	return true;
 }
 
-static int
-guc_get_index(const char *name)
-{
-	int i;
-
-	for (i = 0; i < num_guc_variables; i++)
-		if (guc_name_compare(name, guc_variables[i]->name) == 0)
-			return i;
-
-	return -1;
-}
-
 /*
  * Create and add a placeholder variable. It's presumed to belong
  * to a valid custom variable class at this point.
@@ -2840,6 +2828,30 @@ guc_name_compare(const char *namea, const char *nameb)
 	if (*nameb)
 		return -1;				/* b is longer */
 	return 0;
+}
+
+
+static int
+guc_get_index(const char *name)
+{
+	const char **key = &name;
+	struct config_generic **res;
+
+	Assert(name);
+
+	/*
+	 * By equating const char ** with struct config_generic *, we are assuming
+	 * the name field is first in config_generic.
+	 */
+	res = (struct config_generic **) bsearch((void *) &key,
+											 (void *) guc_variables,
+											 num_guc_variables,
+											 sizeof(struct config_generic *),
+											 guc_var_compare);
+	if (!res)
+		return -1;
+
+	return res - guc_variables;
 }
 
 
@@ -4095,9 +4107,10 @@ set_config_option(const char *name, const char *value,
 	 * we can't set the variable itself.  There's one exception to
 	 * this rule: if we want to apply the default value to variables
 	 * that were removed from the configuration file.  This is
-	 * indicated by source == PGC_S_DEFAULT.
+	 * indicated by source == PGC_S_DEFAULT and context == PGC_SIGHUP.
 	 */
-	if (record->source > source && source != PGC_S_DEFAULT)
+	if (record->source > source
+		&& !(source == PGC_S_DEFAULT && context == PGC_SIGHUP))
 	{
 		if (changeVal && !makeDefault)
 		{
