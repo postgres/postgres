@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opfamily.h,v 1.4 2007/04/02 03:49:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opfamily.h,v 1.5 2007/05/08 18:56:47 neilc Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -93,6 +93,7 @@ DATA(insert OID = 1986 (	403		name_ops		PGNSP PGUID ));
 #define NAME_BTREE_FAM_OID 1986
 DATA(insert OID = 1987 (	405		name_ops		PGNSP PGUID ));
 DATA(insert OID = 1988 (	403		numeric_ops		PGNSP PGUID ));
+DATA(insert OID = 1998 (	405		numeric_ops		PGNSP PGUID ));
 DATA(insert OID = 1989 (	403		oid_ops			PGNSP PGUID ));
 #define OID_BTREE_FAM_OID 1989
 DATA(insert OID = 1990 (	405		oid_ops			PGNSP PGUID ));

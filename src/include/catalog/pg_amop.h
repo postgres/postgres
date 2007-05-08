@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.80 2007/04/02 03:49:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.81 2007/05/08 18:56:47 neilc Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -568,6 +568,8 @@ DATA(insert (	2232   19 19 1 f 2334	405 ));
 DATA(insert (	2235   1033 1033 1 f  974	405 ));
 /* uuid_ops */ 
 DATA(insert (	2969   2950 2950 1 f 2972 405 ));
+/* numeric_ops */
+DATA(insert (	1998   1700 1700 1 f 1752 405 ));
 
 
 /*

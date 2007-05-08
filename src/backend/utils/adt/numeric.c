@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.101 2007/02/27 23:48:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.102 2007/05/08 18:56:47 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include <limits.h>
 #include <math.h>
 
+#include "access/hash.h"
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
 #include "utils/array.h"
@@ -1147,6 +1148,81 @@ cmp_numerics(Numeric num1, Numeric num2)
 	}
 
 	return result;
+}
+
+Datum
+hash_numeric(PG_FUNCTION_ARGS)
+{
+	Numeric 	key = PG_GETARG_NUMERIC(0);
+	Datum 		digit_hash;
+	Datum 		result;
+	int 		weight;
+	int 		start_offset;
+	int 		end_offset;
+	int 		i;
+	int 		hash_len;
+
+	/* If it's NaN, don't try to hash the rest of the fields */
+	if (NUMERIC_IS_NAN(key))
+		PG_RETURN_UINT32(0);
+
+	weight 		 = key->n_weight;
+	start_offset = 0;
+	end_offset 	 = 0;
+
+	/*
+	 * Omit any leading or trailing zeros from the input to the
+	 * hash. The numeric implementation *should* guarantee that
+	 * leading and trailing zeros are suppressed, but we're
+	 * paranoid. Note that we measure the starting and ending offsets
+	 * in units of NumericDigits, not bytes.
+	 */
+	for (i = 0; i < NUMERIC_NDIGITS(key); i++)
+	{
+		if (NUMERIC_DIGITS(key)[i] != (NumericDigit) 0)
+			break;
+
+		start_offset++;
+		/*
+		 * The weight is effectively the # of digits before the
+		 * decimal point, so decrement it for each leading zero we
+		 * skip.
+		 */
+		weight--;
+	}
+
+	/*
+	 * If there are no non-zero digits, then the value of the number
+	 * is zero, regardless of any other fields.
+	 */
+	if (NUMERIC_NDIGITS(key) == start_offset)
+		PG_RETURN_UINT32(-1);
+
+	for (i = NUMERIC_NDIGITS(key) - 1; i >= 0; i--)
+	{
+		if (NUMERIC_DIGITS(key)[i] != (NumericDigit) 0)
+			break;
+
+		end_offset++;
+	}
+
+	/* If we get here, there should be at least one non-zero digit */
+	Assert(start_offset + end_offset < NUMERIC_NDIGITS(key));
+
+	/*
+	 * Note that we don't hash on the Numeric's scale, since two
+	 * numerics can compare equal but have different scales. We also
+	 * don't hash on the sign, although we could: since a sign
+	 * difference implies inequality, this shouldn't affect correctness.
+	 */
+	hash_len = NUMERIC_NDIGITS(key) - start_offset - end_offset;
+	digit_hash = hash_any((unsigned char *) (NUMERIC_DIGITS(key) + start_offset),
+                          hash_len * sizeof(NumericDigit));
+
+	/* Mix in the weight, via XOR */
+	result = digit_hash ^ weight;
+
+	PG_RETURN_DATUM(result);
 }
 
 

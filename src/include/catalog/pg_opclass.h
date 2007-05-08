@@ -28,7 +28,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.75 2007/04/02 03:49:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opclass.h,v 1.76 2007/05/08 18:56:47 neilc Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -129,6 +129,7 @@ DATA(insert (	405		macaddr_ops			PGNSP PGUID 1985  829 t 0 ));
 DATA(insert (	403		name_ops			PGNSP PGUID 1986   19 t 0 ));
 DATA(insert (	405		name_ops			PGNSP PGUID 1987   19 t 0 ));
 DATA(insert (	403		numeric_ops			PGNSP PGUID 1988 1700 t 0 ));
+DATA(insert (	405		numeric_ops			PGNSP PGUID 1998 1700 t 0 ));
 DATA(insert OID = 1981 ( 403	oid_ops		PGNSP PGUID 1989   26 t 0 ));
 #define OID_BTREE_OPS_OID 1981
 DATA(insert (	405		oid_ops				PGNSP PGUID 1990   26 t 0 ));

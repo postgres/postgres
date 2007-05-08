@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.291 2007/04/02 03:49:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.292 2007/05/08 18:56:48 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -883,6 +883,7 @@ extern Datum int2_avg_accum(PG_FUNCTION_ARGS);
 extern Datum int4_avg_accum(PG_FUNCTION_ARGS);
 extern Datum int8_avg(PG_FUNCTION_ARGS);
 extern Datum width_bucket_numeric(PG_FUNCTION_ARGS);
+extern Datum hash_numeric(PG_FUNCTION_ARGS);
 
 /* ri_triggers.c */
 extern Datum RI_FKey_check_ins(PG_FUNCTION_ARGS);
