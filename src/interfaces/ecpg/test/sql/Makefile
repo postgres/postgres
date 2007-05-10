@@ -19,7 +19,7 @@ TESTS = array array.c \
         parser parser.c \
         quote quote.c \
         show show.c \
-        update update.c 
+        insupd insupd.c 
 
 all: $(TESTS)
 

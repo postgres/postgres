@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.78 2007/03/17 19:25:23 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.79 2007/05/10 09:53:16 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"all", ALL},
 	{"also", ALSO},
 	{"alter", ALTER},
+	{"always", ALWAYS},
 	{"analyse", ANALYSE},		/* British spelling */
 	{"analyze", ANALYZE},
 	{"and", AND},
@@ -120,6 +121,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"delimiters", DELIMITERS},
 	{"desc", DESC},
 	{"disable", DISABLE_P},
+	{"discard", DISCARD},
 	{"distinct", DISTINCT},
 	{"do", DO},
 	{"document", DOCUMENT_P},
@@ -132,6 +134,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"encoding", ENCODING},
 	{"encrypted", ENCRYPTED},
 	{"end", END_P},
+	{"enum", ENUM_P},
 	{"escape", ESCAPE},
 	{"except", EXCEPT},
 	{"excluding", EXCLUDING},
@@ -261,6 +264,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"owner", OWNER},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
+	{"placing", PLACING},
+	{"plans", PLANS},
 	{"position", POSITION},
 	{"precision", PRECISION},
 	{"prepare", PREPARE},
@@ -283,6 +288,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"rename", RENAME},
 	{"repeatable", REPEATABLE},
 	{"replace", REPLACE},
+	{"replica", REPLICA},
 	{"reset", RESET},
 	{"restart", RESTART},
 	{"restrict", RESTRICT},

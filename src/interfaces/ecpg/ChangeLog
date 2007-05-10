@@ -2188,4 +2188,9 @@ Fr 27. Apr 08:55:25 CEST 2007
 
 	- Inlined two functions to get rid of va_list problems on some
 	  architectures.
+
+Th 10. Mai 09:42:42 CEST 2007
+
+	- Synced parser and keyword list
+	- Renamed update test so it hopefully runs on Vista
 	- Set ecpg version to 4.3.1.

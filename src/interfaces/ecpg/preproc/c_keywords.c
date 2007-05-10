@@ -3,7 +3,7 @@
  * keywords.c
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/c_keywords.c,v 1.19 2006/07/30 16:28:58 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/c_keywords.c,v 1.20 2007/05/10 09:53:16 meskes Exp $
  * §
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"bool", SQL_BOOL},
 	{"char", CHAR_P},
 	{"const", S_CONST},
-	{"enum", SQL_ENUM},
+	{"enum", ENUM_P},
 	{"extern", S_EXTERN},
 	{"float", FLOAT_P},
 	{"hour", HOUR_P},

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.342 2007/03/27 03:25:28 tgl Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.343 2007/05/10 09:53:17 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -349,7 +349,7 @@ add_additional_variables(char *name, bool insert)
 		SQL_CONTINUE SQL_COUNT SQL_CURRENT SQL_DATA
 		SQL_DATETIME_INTERVAL_CODE
 		SQL_DATETIME_INTERVAL_PRECISION SQL_DESCRIBE
-		SQL_DESCRIPTOR SQL_DISCONNECT SQL_ENUM SQL_FOUND
+		SQL_DESCRIPTOR SQL_DISCONNECT SQL_FOUND
 		SQL_FREE SQL_GO SQL_GOTO SQL_IDENTIFIED
 		SQL_INDICATOR SQL_KEY_MEMBER SQL_LENGTH
 		SQL_LONG SQL_NULLABLE SQL_OCTET_LENGTH
@@ -371,7 +371,7 @@ add_additional_variables(char *name, bool insert)
 
 /* ordinary key words in alphabetical order */
 %token <keyword> ABORT_P ABSOLUTE_P ACCESS ACTION ADD_P ADMIN AFTER
-	AGGREGATE ALL ALSO ALTER ANALYSE ANALYZE AND ANY ARRAY AS ASC
+	AGGREGATE ALL ALSO ALTER ALWAYS ANALYSE ANALYZE AND ANY ARRAY AS ASC
 	ASSERTION ASSIGNMENT ASYMMETRIC AT AUTHORIZATION
 
 	BACKWARD BEFORE BEGIN_P BETWEEN BIGINT BINARY BIT
@@ -387,9 +387,9 @@ add_additional_variables(char *name, bool insert)
 
 	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
-	DESC DISABLE_P DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
+	DESC DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
 
-	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ESCAPE EXCEPT EXCLUSIVE EXCLUDING
+	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ENUM_P ESCAPE EXCEPT EXCLUSIVE EXCLUDING
 	EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
 
 	FALSE_P FAMILY FETCH FIRST_P FLOAT_P FOR FORCE FOREIGN FORWARD FREEZE FROM
@@ -421,15 +421,15 @@ add_additional_variables(char *name, bool insert)
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR ORDER
 	OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
 
-	PARTIAL PASSWORD PLACING POSITION
+	PARTIAL PASSWORD PLACING PLANS POSITION
 	PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
 	QUOTE
 
 	READ REAL REASSIGN RECHECK REFERENCES REINDEX RELATIVE_P RELEASE RENAME
-	REPEATABLE REPLACE RESET RESTART RESTRICT RETURNING RETURNS REVOKE RIGHT
-	ROLE ROLLBACK ROW ROWS RULE
+	REPEATABLE REPLACE REPLICA RESET RESTART RESTRICT RETURNING RETURNS REVOKE
+	RIGHT ROLE ROLLBACK ROW ROWS RULE
 
 	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
 	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
@@ -504,7 +504,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>	ColConstraint ColConstraintElem drop_type Bconst Iresult
 %type  <str>	TableConstraint OptTableElementList Xconst opt_transaction
-%type  <str>	ConstraintElem key_actions ColQualList 
+%type  <str>	ConstraintElem key_actions ColQualList cluster_index_specification
 %type  <str>	target_list target_el alias_clause type_func_name_keyword
 %type  <str>	qualified_name database_name alter_using type_function_name
 %type  <str>	access_method attr_name index_name name func_name
@@ -513,8 +513,8 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	opt_indirection expr_list extract_list extract_arg
 %type  <str>	position_list substr_list substr_from alter_column_default
 %type  <str>	trim_list in_expr substr_for attrs TableFuncElement
-%type  <str>	Typename SimpleTypename Numeric opt_float 
-%type  <str>	Character character opt_varying opt_charset
+%type  <str>	Typename SimpleTypename Numeric opt_float DiscardStmt
+%type  <str>	Character character opt_varying opt_charset enum_val_list
 %type  <str>	opt_timezone opt_interval table_ref fetch_direction
 %type  <str>	ConstDatetime AlterDomainStmt AlterSeqStmt alter_rel_cmds
 %type  <str>	SelectStmt into_clause OptTemp ConstraintAttributeSpec
@@ -736,6 +736,7 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 		| DeclareCursorStmt	{ output_simple_statement($1); }
 		| DefineStmt		{ output_statement($1, 0, connection); }
 		| DeleteStmt		{ output_statement($1, 1, connection); }
+		| DiscardStmt		{ output_statement($1, 1, connection); }
 		| DropAssertStmt	{ output_statement($1, 0, connection); }
 		| DropCastStmt		{ output_statement($1, 0, connection); }
 		| DropGroupStmt		{ output_statement($1, 0, connection); }
@@ -1278,6 +1279,12 @@ constraints_set_mode:  DEFERRED		{ $$ = make_str("deferred"); }
 CheckPointStmt: CHECKPOINT	   { $$= make_str("checkpoint"); }
 		;
 
+DiscardStmt:
+		DISCARD ALL		{ $$ = make_str("discard all"); }
+		| DISCARD TEMP		{ $$ = make_str("discard temp"); }
+		| DISCARD TEMPORARY	{ $$ = make_str("discard temporary"); }
+		| DISCARD PLANS		{ $$ = make_str("discard plans"); }
+		;
 
 /*****************************************************************************
  *
@@ -1341,6 +1348,12 @@ alter_table_cmd:
 /* ALTER TABLE <name> ENABLE TRIGGER <trig> */
 		| ENABLE_P TRIGGER name
 			{ $$ = cat2_str(make_str("enable trigger"), $3); }
+/* ALTER TABLE <name> ENABLE ALWAYS TRIGGER <trig> */
+		| ENABLE_P ALWAYS TRIGGER name
+			{ $$ = cat2_str(make_str("enable always trigger"), $4); }
+/* ALTER TABLE <name> ENABLE REPLICA TRIGGER <trig> */
+		| ENABLE_P REPLICA TRIGGER name
+			{ $$ = cat2_str(make_str("enable replica trigger"), $4); }
 /* ALTER TABLE <name> ENABLE TRIGGER ALL */
 		| ENABLE_P TRIGGER ALL
 			{ $$ = make_str("enable trigger all"); }
@@ -1356,6 +1369,18 @@ alter_table_cmd:
 /* ALTER TABLE <name> DISABLE TRIGGER USER */
 		| DISABLE_P TRIGGER USER
 			{ $$ = make_str("disable trigger user"); }
+/* ALTER TABLE <name> ENABLE RULE <rule> */
+		| ENABLE_P RULE name
+			{ $$ = cat2_str(make_str("enable rule"), $3); }
+/* ALTER TABLE <name> ENABLE ALWAYS RULE <rule> */
+		| ENABLE_P ALWAYS RULE name
+			{ $$ = cat2_str(make_str("enable always rule"), $4); }
+/* ALTER TABLE <name> ENABLE REPLICA RULE <rule> */
+		| ENABLE_P REPLICA RULE name
+			{ $$ = cat2_str(make_str("enable replica rule"), $4); }
+/* ALTER TABLE <name> DISABLE RULE <rule> */
+		| DISABLE_P RULE name
+			{ $$ = cat2_str(make_str("disable rule"), $3); }
 /* ALTER TABLE <name> ALTER INHERITS ADD <parent> */
 		| INHERIT qualified_name
 			{ $$ = cat2_str(make_str("inherit"), $2); }
@@ -1407,6 +1432,8 @@ alter_using:	USING a_expr	{ $$ = cat2_str(make_str("using"), $2); }
 
 ClosePortalStmt:  CLOSE name
 			{ $$ = cat2_str(make_str("close"), $2);	}
+		| CLOSE ALL
+			{ $$ = make_str("close all"); }
 		;
 
 CopyStmt:  COPY opt_binary qualified_name opt_oids copy_from
@@ -2009,6 +2036,8 @@ DefineStmt:  CREATE AGGREGATE func_name aggr_args definition
 			{ $$ = cat2_str(make_str("create type"), $3); }
 		| CREATE TYPE_P any_name AS '(' TableFuncElementList ')'
 			{ $$ = cat_str(5, make_str("create type"), $3, make_str("as ("), $6, make_str(")")); }
+		| CREATE TYPE_P any_name AS ENUM_P '(' enum_val_list ')'
+			{ $$ = cat_str(5, make_str("create type"), $3, make_str("as enum ("), $7, make_str(")")); }
 		;
 
 definition:  '(' def_list ')'
@@ -2044,6 +2073,9 @@ old_aggr_list: old_aggr_elem				{ $$ = $1; }
 old_aggr_elem:  ident '=' def_arg	{ $$ = cat_str(3, $1, make_str("="), $3); }
 		;
 
+enum_val_list:  StringConst			{ $$ = $1; }
+		| enum_val_list ',' StringConst	{ $$ = cat_str(3, $1, make_str(","), $3);}
+		;
 
 CreateOpClassStmt:      CREATE OPERATOR CLASS any_name opt_default FOR TYPE_P Typename
 						USING access_method opt_opfamily AS opclass_item_list
@@ -2688,8 +2720,8 @@ RenameStmt:  ALTER AGGREGATE func_name aggr_args RENAME TO name
 			{ $$ = cat_str(5, make_str("alter function"), $3, $4, make_str("rename to"), $7); }
 		| ALTER GROUP_P RoleId RENAME TO RoleId
 			{ $$ = cat_str(4, make_str("alter group"), $3, make_str("rename to"), $6); }
-		| ALTER LANGUAGE name RENAME TO name
-			{ $$ = cat_str(4, make_str("alter language"), $3, make_str("rename to"), $6); }
+		| ALTER opt_procedural LANGUAGE name RENAME TO name
+			{ $$ = cat_str(6, make_str("alter"), $2, make_str("language"), $4, make_str("rename to"), $7); }
 		| ALTER OPERATOR CLASS any_name USING access_method RENAME TO name
 			{ $$ = cat_str(6, make_str("alter operator class"), $4, make_str("using"), $6, make_str("rename to"), $9); }
 		| ALTER OPERATOR FAMILY any_name USING access_method RENAME TO name
@@ -2751,6 +2783,8 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 			{ $$ = cat_str(4, make_str("alter domain"), $3, make_str("owner to"), $6); }
 		| ALTER FUNCTION func_name func_args OWNER TO RoleId
 			{ $$ = cat_str(5, make_str("alter function"), $3, $4, make_str("owner to"), $7); }
+		| ALTER opt_procedural LANGUAGE name OWNER TO RoleId
+			{ $$ = cat_str(6, make_str("alter"), $2, make_str("language"), $4, make_str("owner to"), $7); }
 		| ALTER OPERATOR any_operator '(' oper_argtypes ')' OWNER TO RoleId
 			{ $$ = cat_str(6, make_str("alter operator"), $3, make_str("("), $5, make_str(") owner to"), $9); }
 		| ALTER OPERATOR CLASS any_name USING access_method OWNER TO RoleId
@@ -2831,15 +2865,15 @@ DropRuleStmt:  DROP RULE name ON qualified_name opt_drop_behavior
  *
  *****************************************************************************/
 
-NotifyStmt:  NOTIFY qualified_name
+NotifyStmt:  NOTIFY ColId
 			{ $$ = cat2_str(make_str("notify"), $2); }
 		;
 
-ListenStmt:  LISTEN qualified_name
+ListenStmt:  LISTEN ColId
 			{ $$ = cat2_str(make_str("listen"), $2); }
 		;
 
-UnlistenStmt:  UNLISTEN qualified_name
+UnlistenStmt:  UNLISTEN ColId
 			{ $$ = cat2_str(make_str("unlisten"), $2); }
 		| UNLISTEN '*'
 			{ $$ = make_str("unlisten *"); }
@@ -3075,14 +3109,18 @@ CreateConversionStmt:
  *
  *****************************************************************************/
 
-ClusterStmt:  CLUSTER index_name ON qualified_name
-				{ $$ = cat_str(4, make_str("cluster"), $2, make_str("on"), $4); }
-		| CLUSTER qualified_name
-				{ $$ = cat2_str(make_str("cluster"), $2); }
+ClusterStmt:  CLUSTER qualified_name cluster_index_specification
+				{ $$ = cat_str(3,make_str("cluster"), $2, $3); }
 		| CLUSTER
 				{ $$ = make_str("cluster"); }
+		| CLUSTER qualified_name ON qualified_name
+				{ $$ = cat_str(4, make_str("cluster"), $2, make_str("on"), $4); }
 		;
 
+cluster_index_specification:
+		USING index_name	{ $$ = cat2_str(make_str("using"), $2); }
+		| /*EMPTY*/		{ $$ = EMPTY; }
+		;
 
 /*****************************************************************************
  *
@@ -3185,6 +3223,8 @@ execute_param_clause: '(' expr_list ')'	{ $$ = cat_str(3, make_str("("), $2, mak
 
 DeallocateStmt: DEALLOCATE name		{ $$ = cat2_str(make_str("deallocate"), $2); }
 		| DEALLOCATE PREPARE name	{ $$ = cat2_str(make_str("deallocate prepare"), $3); }
+		| DEALLOCATE ALL		{ $$ = make_str("deallocate all"); }
+		| DEALLOCATE PREPARE ALL	{ $$ = make_str("deallocate prepare all"); }
 		;
 */
 
@@ -5401,11 +5441,11 @@ var_type:	simple_type
 		}
 		;
 
-enum_type: SQL_ENUM symbol enum_definition
+enum_type: ENUM_P symbol enum_definition
 			{ $$ = cat_str(3, make_str("enum"), $2, $3); }
-		| SQL_ENUM enum_definition
+		| ENUM_P enum_definition
 			{ $$ = cat2_str(make_str("enum"), $2); }
-		| SQL_ENUM symbol
+		| ENUM_P symbol
 			{ $$ = cat2_str(make_str("enum"), $2); }
 		;
 
@@ -6367,6 +6407,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| AGGREGATE			{ $$ = make_str("aggregate"); }
 		| ALSO				{ $$ = make_str("also"); }
 		| ALTER				{ $$ = make_str("alter"); }
+		| ALWAYS			{ $$ = make_str("always"); }
 		| ASSERTION			{ $$ = make_str("assertion"); }
 		| ASSIGNMENT		{ $$ = make_str("assignment"); }
 		| AT				{ $$ = make_str("at"); }
@@ -6409,6 +6450,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| DELIMITER			{ $$ = make_str("delimiter"); }
 		| DELIMITERS		{ $$ = make_str("delimiters"); }
 		| DISABLE_P			{ $$ = make_str("disable"); }
+		| DISCARD			{ $$ = make_str("discard"); }
 		| DOCUMENT_P			{ $$ = make_str("document"); }
 		| DOMAIN_P			{ $$ = make_str("domain"); }
 		| DOUBLE_P			{ $$ = make_str("double"); }
@@ -6417,6 +6459,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| ENABLE_P			{ $$ = make_str("enable"); }
 		| ENCODING			{ $$ = make_str("encoding"); }
 		| ENCRYPTED			{ $$ = make_str("encrypted"); }
+/*		| ENUM_P			{ $$ = make_str("enum"); }*/
 		| ESCAPE			{ $$ = make_str("escape"); }
 		| EXCLUDING			{ $$ = make_str("excluding"); }
 		| EXCLUSIVE			{ $$ = make_str("exclusive"); }
@@ -6491,6 +6534,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| OWNER				{ $$ = make_str("owner"); }
 		| PARTIAL			{ $$ = make_str("partial"); }
 		| PASSWORD			{ $$ = make_str("password"); }
+		| PLANS				{ $$ = make_str("plans"); }
 		| PREPARE			{ $$ = make_str("prepare"); }
 		| PREPARED			{ $$ = make_str("prepared"); }
 		| PRESERVE			{ $$ = make_str("preserver"); }
@@ -6508,6 +6552,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| RENAME			{ $$ = make_str("rename"); }
 		| REPEATABLE		{ $$ = make_str("repeatable"); }
 		| REPLACE			{ $$ = make_str("replace"); }
+		| REPLICA			{ $$ = make_str("replica"); }
 		| RESET				{ $$ = make_str("reset"); }
 		| RESTART			{ $$ = make_str("restart"); }
 		| RESTRICT			{ $$ = make_str("restrict"); }
@@ -6903,7 +6948,7 @@ c_anything:  IDENT				{ $$ = $1; }
 		| S_TYPEDEF			{ $$ = make_str("typedef"); }
 		| S_VOLATILE			{ $$ = make_str("volatile"); }
 		| SQL_BOOL			{ $$ = make_str("bool"); }
-		| SQL_ENUM			{ $$ = make_str("enum"); }
+		| ENUM_P			{ $$ = make_str("enum"); }
 		| HOUR_P			{ $$ = make_str("hour"); }
 		| INT_P				{ $$ = make_str("int"); }
 		| SQL_LONG			{ $$ = make_str("long"); }
