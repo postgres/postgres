@@ -351,3 +351,34 @@ select doubledecrement(0); -- fail before call
 select doubledecrement(1); -- fail at assignment to v
 select doubledecrement(2); -- fail at return
 select doubledecrement(3); -- good
+
+-- Check that ALTER DOMAIN tests columns of derived types
+
+create domain posint as int4;
+
+-- Currently, this doesn't work for composite types, but verify it complains
+create type ddtest1 as (f1 posint);
+create table ddtest2(f1 ddtest1);
+insert into ddtest2 values(row(-1));
+alter domain posint add constraint c1 check(value >= 0);
+drop table ddtest2;
+
+create table ddtest2(f1 ddtest1[]);
+insert into ddtest2 values('{(-1)}');
+alter domain posint add constraint c1 check(value >= 0);
+drop table ddtest2;
+
+alter domain posint add constraint c1 check(value >= 0);
+
+create domain posint2 as posint check (value % 2 = 0);
+create table ddtest2(f1 posint2);
+insert into ddtest2 values(11); -- fail
+insert into ddtest2 values(-2); -- fail
+insert into ddtest2 values(2);
+
+alter domain posint add constraint c2 check(value >= 10); -- fail
+alter domain posint add constraint c2 check(value > 0); -- OK
+
+drop table ddtest2;
+drop type ddtest1;
+drop domain posint cascade;

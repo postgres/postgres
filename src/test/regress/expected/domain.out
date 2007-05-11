@@ -438,3 +438,32 @@ select doubledecrement(3); -- good
                1
 (1 row)
 
+-- Check that ALTER DOMAIN tests columns of derived types
+create domain posint as int4;
+-- Currently, this doesn't work for composite types, but verify it complains
+create type ddtest1 as (f1 posint);
+create table ddtest2(f1 ddtest1);
+insert into ddtest2 values(row(-1));
+alter domain posint add constraint c1 check(value >= 0);
+ERROR:  cannot alter type "posint" because column "ddtest2"."f1" uses it
+drop table ddtest2;
+create table ddtest2(f1 ddtest1[]);
+insert into ddtest2 values('{(-1)}');
+alter domain posint add constraint c1 check(value >= 0);
+ERROR:  cannot alter type "posint" because column "ddtest2"."f1" uses it
+drop table ddtest2;
+alter domain posint add constraint c1 check(value >= 0);
+create domain posint2 as posint check (value % 2 = 0);
+create table ddtest2(f1 posint2);
+insert into ddtest2 values(11); -- fail
+ERROR:  value for domain posint2 violates check constraint "posint2_check"
+insert into ddtest2 values(-2); -- fail
+ERROR:  value for domain posint2 violates check constraint "c1"
+insert into ddtest2 values(2);
+alter domain posint add constraint c2 check(value >= 10); -- fail
+ERROR:  column "f1" of table "ddtest2" contains values that violate the new constraint
+alter domain posint add constraint c2 check(value > 0); -- OK
+drop table ddtest2;
+drop type ddtest1;
+drop domain posint cascade;
+NOTICE:  drop cascades to type posint2

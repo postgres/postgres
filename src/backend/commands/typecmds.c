@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.102 2007/05/11 17:57:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.103 2007/05/11 20:16:54 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1805,6 +1805,10 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
  * the domain type.  We have opened each rel and acquired the specified lock
  * type on it.
  *
+ * We support nested domains by including attributes that are of derived
+ * domain types.  Current callers do not need to distinguish between attributes
+ * that are of exactly the given domain and those that are of derived domains.
+ *
  * XXX this is completely broken because there is no way to lock the domain
  * to prevent columns from being added or dropped while our command runs.
  * We can partially protect against column drops by locking relations as we
@@ -1814,9 +1818,11 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
  * trivial risk of deadlock.  We can minimize but not eliminate the deadlock
  * risk by using the weakest suitable lock (ShareLock for most callers).
  *
- * XXX to support domains over domains, we'd need to make this smarter,
- * or make its callers smarter, so that we could find columns of derived
- * domains.  Arrays of domains would be a problem too.
+ * XXX the API for this is not sufficient to support checking domain values
+ * that are inside composite types or arrays.  Currently we just error out
+ * if a composite type containing the target domain is stored anywhere.
+ * There are not currently arrays of domains; if there were, we could take
+ * the same approach, but it'd be nicer to fix it properly.
  *
  * Generally used for retrieving a list of tests when adding
  * new constraints to a domain.
@@ -1858,7 +1864,23 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 		Form_pg_attribute pg_att;
 		int			ptr;
 
-		/* Ignore dependees that aren't user columns of relations */
+		/* Check for directly dependent types --- must be domains */
+		if (pg_depend->classid == TypeRelationId)
+		{
+			Assert(get_typtype(pg_depend->objid) == TYPTYPE_DOMAIN);
+			/*
+			 * Recursively add dependent columns to the output list.  This
+			 * is a bit inefficient since we may fail to combine RelToCheck
+			 * entries when attributes of the same rel have different derived
+			 * domain types, but it's probably not worth improving.
+			 */
+			result = list_concat(result,
+								 get_rels_with_domain(pg_depend->objid,
+													  lockmode));
+			continue;
+		}
+
+		/* Else, ignore dependees that aren't user columns of relations */
 		/* (we assume system columns are never of domain types) */
 		if (pg_depend->classid != RelationRelationId ||
 			pg_depend->objsubid <= 0)
@@ -1884,7 +1906,16 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 			/* Acquire requested lock on relation */
 			rel = relation_open(pg_depend->objid, lockmode);
 
-			/* It could be a view or composite type; if so ignore it */
+			/*
+			 * Check to see if rowtype is stored anyplace as a composite-type
+			 * column; if so we have to fail, for now anyway.
+			 */
+			if (OidIsValid(rel->rd_rel->reltype))
+				find_composite_type_dependencies(rel->rd_rel->reltype,
+												 NULL,
+												 format_type_be(domainOid));
+
+			/* Otherwise we can ignore views, composite types, etc */
 			if (rel->rd_rel->relkind != RELKIND_RELATION)
 			{
 				relation_close(rel, lockmode);
