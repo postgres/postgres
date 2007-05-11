@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.206.2.2 2007/02/02 00:07:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.206.2.3 2007/05/11 20:17:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -204,8 +204,6 @@ static void ATSimpleRecursion(List **wqueue, Relation rel,
 				  AlterTableCmd *cmd, bool recurse);
 static void ATOneLevelRecursion(List **wqueue, Relation rel,
 					AlterTableCmd *cmd);
-static void find_composite_type_dependencies(Oid typeOid,
-								 const char *origTblName);
 static void ATPrepAddColumn(List **wqueue, Relation rel, bool recurse,
 				AlterTableCmd *cmd);
 static void ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
@@ -2590,7 +2588,8 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 	 */
 	if (newrel)
 		find_composite_type_dependencies(oldrel->rd_rel->reltype,
-										 RelationGetRelationName(oldrel));
+										 RelationGetRelationName(oldrel),
+										 NULL);
 
 	/*
 	 * Generate the constraint and default execution states
@@ -2992,16 +2991,21 @@ ATOneLevelRecursion(List **wqueue, Relation rel,
 /*
  * find_composite_type_dependencies
  *
- * Check to see if a table's rowtype is being used as a column in some
+ * Check to see if a composite type is being used as a column in some
  * other table (possibly nested several levels deep in composite types!).
  * Eventually, we'd like to propagate the check or rewrite operation
  * into other such tables, but for now, just error out if we find any.
  *
+ * Caller should provide either a table name or a type name (not both) to
+ * report in the error message, if any.
+ *
  * We assume that functions and views depending on the type are not reasons
  * to reject the ALTER.  (How safe is this really?)
  */
-static void
-find_composite_type_dependencies(Oid typeOid, const char *origTblName)
+void
+find_composite_type_dependencies(Oid typeOid,
+								 const char *origTblName,
+								 const char *origTypeName)
 {
 	Relation	depRel;
 	ScanKeyData key[2];
@@ -3043,12 +3047,20 @@ find_composite_type_dependencies(Oid typeOid, const char *origTblName)
 
 		if (rel->rd_rel->relkind == RELKIND_RELATION)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot alter table \"%s\" because column \"%s\".\"%s\" uses its rowtype",
-							origTblName,
-							RelationGetRelationName(rel),
-							NameStr(att->attname))));
+			if (origTblName)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot alter table \"%s\" because column \"%s\".\"%s\" uses its rowtype",
+								origTblName,
+								RelationGetRelationName(rel),
+								NameStr(att->attname))));
+			else
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("cannot alter type \"%s\" because column \"%s\".\"%s\" uses it",
+								origTypeName,
+								RelationGetRelationName(rel),
+								NameStr(att->attname))));
 		}
 		else if (OidIsValid(rel->rd_rel->reltype))
 		{
@@ -3057,7 +3069,7 @@ find_composite_type_dependencies(Oid typeOid, const char *origTblName)
 			 * recursively check for indirect dependencies via its rowtype.
 			 */
 			find_composite_type_dependencies(rel->rd_rel->reltype,
-											 origTblName);
+											 origTblName, origTypeName);
 		}
 
 		relation_close(rel, AccessShareLock);
