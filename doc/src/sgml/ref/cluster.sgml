@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.42 2007/04/08 02:07:35 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/cluster.sgml,v 1.43 2007/05/11 19:40:07 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -45,7 +45,7 @@ CLUSTER
    not clustered.  That is, no attempt is made to store new or
    updated rows according to their index order.  (If one wishes, one can
    periodically recluster by issuing the command again.  Also, setting
-   the table's FILLFACTOR storage parameter to less than 100% can aid
+   the table's <literal>FILLFACTOR</literal> storage parameter to less than 100% can aid
    in preserving cluster ordering during updates, since updated rows
    are preferentially kept on the same page.)
   </para>

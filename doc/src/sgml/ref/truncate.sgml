@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.23 2007/04/07 17:12:15 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/truncate.sgml,v 1.24 2007/05/11 19:40:08 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -31,9 +31,9 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
    <command>TRUNCATE</command> quickly removes all rows from a set of
    tables. It has the same effect as an unqualified
    <command>DELETE</command> on each table, but since it does not actually
-   scan the tables it is faster; furthermore it reclaims disk space
-   immediately, rather than requiring a subsequent vacuum operation.
-   This is most useful on large tables.
+   scan the tables it is faster. Furthermore, it reclaims disk space
+   immediately, rather than requiring a subsequent <command>VACUUM</command>
+   operation. This is most useful on large tables.
   </para>
  </refsect1>
   
@@ -86,35 +86,38 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
    in the same command.  Checking validity in such cases would require table
    scans, and the whole point is not to do one.  The <literal>CASCADE</>
    option can be used to automatically include all dependent tables &mdash;
-   but be very careful when using this option, else you might lose data you
+   but be very careful when using this option, or else you might lose data you
    did not intend to!
   </para>
 
   <para>
-   <command>TRUNCATE</> will not run any user-defined <literal>ON
-   DELETE</literal> triggers that might exist for the tables.
+   <command>TRUNCATE</> will not run any <literal>ON DELETE</literal>
+   triggers that might exist for the tables.
   </para>
 
-  <para>
-   <command>TRUNCATE</> is not MVCC-safe (see <xref linkend="mvcc">
-   for general information about MVCC).  After truncation, the table
-   will appear empty to all concurrent transactions, even if they are
-   using a snapshot taken before the truncation occurred.  This will
-   only be an issue for a transaction that did not touch the table
-   before the truncation started &mdash; any transaction that has done
-   so would hold at least <literal>ACCESS SHARE</literal> lock,
-   which would block
-   <command>TRUNCATE</> until that transaction completes.  So
-   truncation will not cause any apparent inconsistency in the table
-   contents for successive queries on the same table, but it could
-   cause visible inconsistency between the contents of the
-   truncated table and other tables.
-  </para>
+  <warning>
+   <para>
+    <command>TRUNCATE</> is not MVCC-safe (see <xref linkend="mvcc">
+     for general information about MVCC).  After truncation, the table
+     will appear empty to all concurrent transactions, even if they
+     are using a snapshot taken before the truncation occurred.  This
+     will only be an issue for a transaction that did not access the
+     truncated table before the truncation happened &mdash; any
+     transaction that has done so would hold at least an
+     <literal>ACCESS SHARE</literal> lock, which would block
+     <command>TRUNCATE</> until that transaction completes.  So
+     truncation will not cause any apparent inconsistency in the table
+     contents for successive queries on the same table, but it could
+     cause visible inconsistency between the contents of the truncated
+     table and other tables in the database.
+   </para>
 
-  <para>
-   <command>TRUNCATE</> is transaction-safe, however: the truncation
-   will roll back if the surrounding transaction does not commit.
-  </para>
+   <para>
+    <command>TRUNCATE</> is transaction-safe, however: the truncation
+    will be safely rolled back if the surrounding transaction does not
+    commit.
+   </para>
+  </warning>
  </refsect1>
 
  <refsect1>
@@ -124,13 +127,13 @@ TRUNCATE [ TABLE ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ C
    Truncate the tables <literal>bigtable</literal> and <literal>fattable</literal>:
 
 <programlisting>
-TRUNCATE TABLE bigtable, fattable;
+TRUNCATE bigtable, fattable;
 </programlisting>
   </para>
 
   <para>
    Truncate the table <literal>othertable</literal>, and cascade to any tables
-   that are referencing <literal>othertable</literal> via foreign-key
+   that reference <literal>othertable</literal> via foreign-key
    constraints:
 
 <programlisting>
