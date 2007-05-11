@@ -1456,7 +1456,6 @@ select alter2.plus1(41);
 
 -- clean up
 drop schema alter2 cascade;
-NOTICE:  drop cascades to composite type alter2.ctype
 NOTICE:  drop cascades to type alter2.ctype
 NOTICE:  drop cascades to type alter2.posint
 NOTICE:  drop cascades to function alter2.plus1(integer)

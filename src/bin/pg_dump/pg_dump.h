@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.134 2007/03/19 23:38:30 wieck Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.135 2007/05/11 17:57:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ typedef struct _typeInfo
 	Oid			typrelid;
 	char		typrelkind;		/* 'r', 'v', 'c', etc */
 	char		typtype;		/* 'b', 'c', etc */
-	bool		isArray;		/* true if user-defined array type */
+	bool		isArray;		/* true if auto-generated array type */
 	bool		isDefined;		/* true if typisdefined */
 	/* If it's a dumpable base type, we create a "shell type" entry for it */
 	struct _shellTypeInfo *shellType;	/* shell-type entry, or NULL */

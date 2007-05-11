@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.117 2007/02/20 14:04:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.118 2007/05/11 17:57:11 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -131,10 +131,10 @@ INSERT INTO MY_TABLE VALUES (3, 'hi there');
    <para>
     <indexterm><primary>identifier</primary><secondary>length</secondary></indexterm>
     The system uses no more than <symbol>NAMEDATALEN</symbol>-1
-    characters of an identifier; longer names can be written in
+    bytes of an identifier; longer names can be written in
     commands, but they will be truncated.  By default,
     <symbol>NAMEDATALEN</symbol> is 64 so the maximum identifier
-    length is 63. If this limit is problematic, it can be raised by
+    length is 63 bytes. If this limit is problematic, it can be raised by
     changing the <symbol>NAMEDATALEN</symbol> constant in
     <filename>src/include/pg_config_manual.h</filename>.
    </para>

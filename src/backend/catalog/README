@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/catalog/README,v 1.10 2006/07/31 01:16:36 tgl Exp $
+$PostgreSQL: pgsql/src/backend/catalog/README,v 1.11 2007/05/11 17:57:11 tgl Exp $
 
 This directory contains .c files that manipulate the system catalogs;
 src/include/catalog contains the .h files that define the structure
@@ -86,9 +86,9 @@ general) assumes that the fixed-length portions of all system catalog
 tuples are in fact present, because it maps C struct declarations onto
 them.  Thus, the variable-length fields must all be at the end, and
 only the variable-length fields of a catalog tuple are permitted to be
-NULL.  For example, if you set pg_type.typdelim to be NULL, a
-piece of code will likely perform "typetup->typdelim" (or, worse,
-"typetyp->typelem", which follows typdelim).  This will result in
+NULL.  For example, if you set pg_type.typrelid to be NULL, a
+piece of code will likely perform "typetup->typrelid" (or, worse,
+"typetyp->typelem", which follows typrelid).  This will result in
 random errors or even segmentation violations.  Hence, do NOT insert
 catalog tuples that contain NULL attributes except in their
 variable-length portions!  (The bootstrapping code is fairly good about

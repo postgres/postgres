@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.318 2007/04/02 03:49:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.319 2007/05/11 17:57:11 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -45,6 +45,7 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "commands/tablecmds.h"
+#include "commands/typecmds.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/var.h"
@@ -69,7 +70,8 @@ static void AddNewRelationTuple(Relation pg_class_desc,
 static Oid AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
-				   char new_rel_kind);
+				   char new_rel_kind,
+				   Oid new_array_type);
 static void RelationRemoveInheritance(Oid relid);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel, TupleDesc tupdesc);
@@ -401,25 +403,54 @@ CheckAttributeType(const char *attname, Oid atttypid)
 {
 	char		att_typtype = get_typtype(atttypid);
 
-	/*
-	 * Warn user, but don't fail, if column to be created has UNKNOWN type
-	 * (usually as a result of a 'retrieve into' - jolly)
-	 *
-	 * Refuse any attempt to create a pseudo-type column.
-	 */
 	if (atttypid == UNKNOWNOID)
+	{
+		/*
+		 * Warn user, but don't fail, if column to be created has UNKNOWN type
+		 *    (usually as a result of a 'retrieve into' - jolly)
+		 */
 		ereport(WARNING,
 				(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 				 errmsg("column \"%s\" has type \"unknown\"", attname),
 				 errdetail("Proceeding with relation creation anyway.")));
+	}
 	else if (att_typtype == TYPTYPE_PSEUDO)
 	{
-		/* Special hack for pg_statistic: allow ANYARRAY during initdb */
+		/*
+		 * Refuse any attempt to create a pseudo-type column, except for 
+		 * a special hack for pg_statistic: allow ANYARRAY during initdb
+		 */
 		if (atttypid != ANYARRAYOID || IsUnderPostmaster)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
 					 errmsg("column \"%s\" has pseudo-type %s",
 							attname, format_type_be(atttypid))));
+	}
+	else if (att_typtype == TYPTYPE_COMPOSITE)
+	{
+		/*
+		 * For a composite type, recurse into its attributes.  You might
+		 * think this isn't necessary, but since we allow system catalogs
+		 * to break the rule, we have to guard against the case.
+		 */
+		Relation relation;
+		TupleDesc tupdesc;
+		int i;
+
+		relation = relation_open(get_typ_typrelid(atttypid), AccessShareLock);
+
+		tupdesc = RelationGetDescr(relation);
+
+		for (i = 0; i < tupdesc->natts; i++)
+		{
+			Form_pg_attribute attr = tupdesc->attrs[i];
+
+			if (attr->attisdropped)
+				continue;
+			CheckAttributeType(NameStr(attr->attname), attr->atttypid);
+		}
+
+		relation_close(relation, AccessShareLock);
 	}
 }
 
@@ -710,16 +741,18 @@ static Oid
 AddNewRelationType(const char *typeName,
 				   Oid typeNamespace,
 				   Oid new_rel_oid,
-				   char new_rel_kind)
+				   char new_rel_kind,
+	               Oid new_array_type)
 {
 	return
-		TypeCreate(typeName,	/* type name */
+		TypeCreate(InvalidOid,	/* no predetermined OID */
+				   typeName,	/* type name */
 				   typeNamespace,		/* type namespace */
 				   new_rel_oid, /* relation oid */
 				   new_rel_kind,	/* relation kind */
 				   -1,			/* internal size (varlena) */
 				   TYPTYPE_COMPOSITE,	/* type-type (composite) */
-				   ',',			/* default array delimiter */
+				   DEFAULT_TYPDELIM,	/* default array delimiter */
 				   F_RECORD_IN, /* input procedure */
 				   F_RECORD_OUT,	/* output procedure */
 				   F_RECORD_RECV,		/* receive procedure */
@@ -728,6 +761,8 @@ AddNewRelationType(const char *typeName,
 				   InvalidOid,	/* typmodout procedure - none */
 				   InvalidOid,	/* analyze procedure - default */
 				   InvalidOid,	/* array element type - irrelevant */
+				   false,		/* this is not an array type */
+				   new_array_type,	/* array type if any */
 				   InvalidOid,	/* domain base type - irrelevant */
 				   NULL,		/* default value - none */
 				   NULL,		/* default binary representation */
@@ -763,6 +798,7 @@ heap_create_with_catalog(const char *relname,
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
 	Oid			new_type_oid;
+	Oid         new_array_oid = InvalidOid;
 
 	pg_class_desc = heap_open(RelationRelationId, RowExclusiveLock);
 
@@ -805,7 +841,24 @@ heap_create_with_catalog(const char *relname,
 	Assert(relid == RelationGetRelid(new_rel_desc));
 
 	/*
-	 * since defining a relation also defines a complex type, we add a new
+	 * Decide whether to create an array type over the relation's rowtype.
+	 * We do not create any array types for system catalogs (ie, those made
+	 * during initdb).  We create array types for regular relations, views,
+	 * and composite types ... but not, eg, for toast tables or sequences.
+	 */
+	if (IsUnderPostmaster && (relkind == RELKIND_RELATION ||
+							  relkind == RELKIND_VIEW ||
+							  relkind == RELKIND_COMPOSITE_TYPE))
+	{
+		/* OK, so pre-assign a type OID for the array type */
+		Relation pg_type = heap_open(TypeRelationId, AccessShareLock);	
+
+		new_array_oid = GetNewOid(pg_type);
+		heap_close(pg_type, AccessShareLock);
+	}
+
+	/*
+	 * Since defining a relation also defines a complex type, we add a new
 	 * system type corresponding to the new relation.
 	 *
 	 * NOTE: we could get a unique-index failure here, in case the same name
@@ -814,7 +867,47 @@ heap_create_with_catalog(const char *relname,
 	new_type_oid = AddNewRelationType(relname,
 									  relnamespace,
 									  relid,
-									  relkind);
+									  relkind,
+		                              new_array_oid);
+	/*
+	 * Now make the array type if wanted.
+	 */
+	if (OidIsValid(new_array_oid))
+	{
+		char	   *relarrayname;
+
+		relarrayname = makeArrayTypeName(relname, relnamespace);
+
+		TypeCreate(new_array_oid,		/* force the type's OID to this */
+				   relarrayname,		/* Array type name */
+				   relnamespace,		/* Same namespace as parent */
+				   InvalidOid,			/* Not composite, no relationOid */
+				   0,					/* relkind, also N/A here */
+				   -1,					/* Internal size (varlena) */
+				   TYPTYPE_BASE,		/* Not composite - typelem is */
+				   DEFAULT_TYPDELIM,	/* default array delimiter */
+				   F_ARRAY_IN,			/* array input proc */
+				   F_ARRAY_OUT,			/* array output proc */
+				   F_ARRAY_RECV,		/* array recv (bin) proc */
+				   F_ARRAY_SEND,		/* array send (bin) proc */
+				   InvalidOid,			/* typmodin procedure - none */
+				   InvalidOid,			/* typmodout procedure - none */
+				   InvalidOid,			/* analyze procedure - default */
+				   new_type_oid,		/* array element type - the rowtype */
+				   true,				/* yes, this is an array type */
+				   InvalidOid,			/* this has no array type */
+				   InvalidOid,			/* domain base type - irrelevant */
+				   NULL,				/* default value - none */
+				   NULL,				/* default binary representation */
+				   false,				/* passed by reference */
+				   'd',					/* alignment - must be the largest! */
+				   'x',					/* fully TOASTable */
+				   -1,					/* typmod */
+				   0,					/* array dimensions for typBaseType */
+				   false);				/* Type NOT NULL */
+
+		pfree(relarrayname);
+	}
 
 	/*
 	 * now create an entry in pg_class for the relation.
@@ -838,13 +931,15 @@ heap_create_with_catalog(const char *relname,
 						  oidislocal, oidinhcount);
 
 	/*
-	 * make a dependency link to force the relation to be deleted if its
-	 * namespace is.  Skip this in bootstrap mode, since we don't make
-	 * dependencies while bootstrapping.
+	 * Make a dependency link to force the relation to be deleted if its
+	 * namespace is.  Also make a dependency link to its owner.
 	 *
-	 * Also make a dependency link to its owner.
+	 * For composite types, these dependencies are tracked for the pg_type
+	 * entry, so we needn't record them here.  Also, skip this in bootstrap
+	 * mode, since we don't make dependencies while bootstrapping.
 	 */
-	if (!IsBootstrapProcessingMode())
+	if (relkind != RELKIND_COMPOSITE_TYPE &&
+		!IsBootstrapProcessingMode())
 	{
 		ObjectAddress myself,
 					referenced;
@@ -857,13 +952,7 @@ heap_create_with_catalog(const char *relname,
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
 
-		/*
-		 * For composite types, the dependency on owner is tracked for the
-		 * pg_type entry, so don't record it here.  All other relkinds need
-		 * their ownership tracked.
-		 */
-		if (relkind != RELKIND_COMPOSITE_TYPE)
-			recordDependencyOnOwner(RelationRelationId, relid, ownerid);
+		recordDependencyOnOwner(RelationRelationId, relid, ownerid);
 	}
 
 	/*

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.150 2007/04/06 22:33:41 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.151 2007/05/11 17:57:11 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -4525,6 +4525,17 @@
      </row>
 
      <row>
+      <entry><structfield>typarray</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
+      <entry>
+       If <structfield>typarray</structfield> is not 0 then it
+       identifies another row in <structname>pg_type</structname>, which
+       is the <quote>true</quote> array type having this type as element
+      </entry>
+     </row>
+
+     <row>
       <entry><structfield>typinput</structfield></entry>
       <entry><type>regproc</type></entry>
       <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
@@ -4686,9 +4697,10 @@
       <entry></entry>
       <entry><para>
        <structfield>typndims</structfield> is the number of array dimensions
-       for a domain that is an array (that is, <structfield>typbasetype</> is an array type;
-       the domain's <structfield>typelem</> will match the base type's <structfield>typelem</structfield>).
-       Zero for types other than array domains
+       for a domain that is an array (that is, <structfield>typbasetype</> is
+       an array type; the domain's <structfield>typelem</> will match the base
+       type's <structfield>typelem</structfield>).
+       Zero for types other than domains over array types
        </para></entry>
      </row>
 

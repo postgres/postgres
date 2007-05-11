@@ -59,6 +59,13 @@ WHERE p1.typtype in ('b','e') AND p1.typname NOT LIKE E'\\_%' AND NOT EXISTS
      WHERE p2.typname = ('_' || p1.typname)::name AND
            p2.typelem = p1.oid);
 
+-- Make sure typarray points to a varlena array type of our own base
+SELECT p1.oid, p1.typname as basetype, p2.typname as arraytype, 
+       p2.typelem, p2.typlen
+FROM   pg_type p1 LEFT JOIN pg_type p2 ON (p1.typarray = p2.oid)
+WHERE  p1.typarray <> 0 AND
+       (p2.oid IS NULL OR p2.typelem <> p1.oid OR p2.typlen <> -1);
+
 -- Text conversion routines must be provided.
 
 SELECT p1.oid, p1.typname

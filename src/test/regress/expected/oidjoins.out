@@ -409,6 +409,14 @@ WHERE	indrelid != 0 AND
 ------+----------
 (0 rows)
 
+SELECT	ctid, lanowner 
+FROM	pg_catalog.pg_language fk 
+WHERE	lanowner != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.lanowner);
+ ctid | lanowner 
+------+----------
+(0 rows)
+
 SELECT	ctid, lanvalidator 
 FROM	pg_catalog.pg_language fk 
 WHERE	lanvalidator != 0 AND 
@@ -719,6 +727,14 @@ WHERE	typelem != 0 AND
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.typelem);
  ctid | typelem 
 ------+---------
+(0 rows)
+
+SELECT	ctid, typarray 
+FROM	pg_catalog.pg_type fk 
+WHERE	typarray != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.typarray);
+ ctid | typarray 
+------+----------
 (0 rows)
 
 SELECT	ctid, typinput 

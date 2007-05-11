@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.111 2007/04/02 03:49:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_type.c,v 1.112 2007/05/11 17:57:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/pg_type.h"
 #include "commands/typecmds.h"
 #include "miscadmin.h"
+#include "parser/scansup.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -90,6 +91,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 	values[i++] = CharGetDatum(DEFAULT_TYPDELIM);		/* typdelim */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typrelid */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typelem */
+	values[i++] = ObjectIdGetDatum(InvalidOid); /* typarray */
 	values[i++] = ObjectIdGetDatum(F_SHELL_IN); /* typinput */
 	values[i++] = ObjectIdGetDatum(F_SHELL_OUT);		/* typoutput */
 	values[i++] = ObjectIdGetDatum(InvalidOid); /* typreceive */
@@ -135,6 +137,7 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
 								 InvalidOid,
 								 InvalidOid,
 								 InvalidOid,
+								 false,
 								 InvalidOid,
 								 NULL,
 								 false);
@@ -153,13 +156,16 @@ TypeShellMake(const char *typeName, Oid typeNamespace)
  *
  *		This does all the necessary work needed to define a new type.
  *
- *		Returns the OID assigned to the new type.
+ *		Returns the OID assigned to the new type.  If newTypeOid is
+ *		zero (the normal case), a new OID is created; otherwise we
+ *		use exactly that OID.
  * ----------------------------------------------------------------
  */
 Oid
-TypeCreate(const char *typeName,
+TypeCreate(Oid newTypeOid,
+		   const char *typeName,
 		   Oid typeNamespace,
-		   Oid relationOid,		/* only for composite types */
+		   Oid relationOid,		/* only for relation rowtypes */
 		   char relationKind,	/* ditto */
 		   int16 internalSize,
 		   char typeType,
@@ -172,6 +178,8 @@ TypeCreate(const char *typeName,
 		   Oid typmodoutProcedure,
 		   Oid analyzeProcedure,
 		   Oid elementType,
+		   bool isImplicitArray,
+		   Oid arrayType,
 		   Oid baseType,
 		   const char *defaultTypeValue,		/* human readable rep */
 		   char *defaultTypeBin,	/* cooked rep */
@@ -243,9 +251,9 @@ TypeCreate(const char *typeName,
 	values[i++] = CharGetDatum(typeType);		/* typtype */
 	values[i++] = BoolGetDatum(true);	/* typisdefined */
 	values[i++] = CharGetDatum(typDelim);		/* typdelim */
-	values[i++] = ObjectIdGetDatum(typeType == TYPTYPE_COMPOSITE ?
-								   relationOid : InvalidOid); /* typrelid */
+	values[i++] = ObjectIdGetDatum(relationOid);		/* typrelid */
 	values[i++] = ObjectIdGetDatum(elementType);		/* typelem */
+	values[i++] = ObjectIdGetDatum(arrayType);			/* typarray */
 	values[i++] = ObjectIdGetDatum(inputProcedure);		/* typinput */
 	values[i++] = ObjectIdGetDatum(outputProcedure);	/* typoutput */
 	values[i++] = ObjectIdGetDatum(receiveProcedure);	/* typreceive */
@@ -310,6 +318,10 @@ TypeCreate(const char *typeName,
 		if (((Form_pg_type) GETSTRUCT(tup))->typowner != GetUserId())
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TYPE, typeName);
 
+		/* trouble if caller wanted to force the OID */
+		if (OidIsValid(newTypeOid))
+			elog(ERROR, "cannot assign new OID to existing shell type");
+
 		/*
 		 * Okay to update existing shell type tuple
 		 */
@@ -330,6 +342,10 @@ TypeCreate(const char *typeName,
 		tup = heap_formtuple(RelationGetDescr(pg_type_desc),
 							 values,
 							 nulls);
+
+		/* Force the OID if requested by caller, else heap_insert does it */
+		if (OidIsValid(newTypeOid))
+			HeapTupleSetOid(tup, newTypeOid);
 
 		typeObjectId = simple_heap_insert(pg_type_desc, tup);
 	}
@@ -354,6 +370,7 @@ TypeCreate(const char *typeName,
 								 typmodoutProcedure,
 								 analyzeProcedure,
 								 elementType,
+								 isImplicitArray,
 								 baseType,
 								 (defaultTypeBin ?
 								  stringToNode(defaultTypeBin) :
@@ -378,8 +395,8 @@ TypeCreate(const char *typeName,
 void
 GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typeObjectId,
-						 Oid relationOid,		/* only for composite types */
-						 char relationKind,		/* ditto */
+						 Oid relationOid,	/* only for relation rowtypes */
+						 char relationKind,	/* ditto */
 						 Oid owner,
 						 Oid inputProcedure,
 						 Oid outputProcedure,
@@ -389,6 +406,7 @@ GenerateTypeDependencies(Oid typeNamespace,
 						 Oid typmodoutProcedure,
 						 Oid analyzeProcedure,
 						 Oid elementType,
+						 bool isImplicitArray,
 						 Oid baseType,
 						 Node *defaultExpr,
 						 bool rebuild)
@@ -406,14 +424,23 @@ GenerateTypeDependencies(Oid typeNamespace,
 	myself.objectId = typeObjectId;
 	myself.objectSubId = 0;
 
-	/* dependency on namespace */
-	/* skip for relation rowtype, since we have indirect dependency */
-	if (!OidIsValid(relationOid))
+	/*
+	 * Make dependency on namespace and shared dependency on owner.
+	 *
+	 * For a relation rowtype (that's not a composite type), we should skip
+	 * these because we'll depend on them indirectly through the pg_class
+	 * entry.  Likewise, skip for implicit arrays since we'll depend on them
+	 * through the element type.
+	 */
+	if ((!OidIsValid(relationOid) || relationKind == RELKIND_COMPOSITE_TYPE) &&
+		!isImplicitArray)
 	{
 		referenced.classId = NamespaceRelationId;
 		referenced.objectId = typeNamespace;
 		referenced.objectSubId = 0;
 		recordDependencyOn(&myself, &referenced, DEPENDENCY_NORMAL);
+
+		recordDependencyOnOwner(TypeRelationId, typeObjectId, owner);
 	}
 
 	/* Normal dependencies on the I/O functions */
@@ -495,17 +522,17 @@ GenerateTypeDependencies(Oid typeNamespace,
 	}
 
 	/*
-	 * If the type is an array type, mark it auto-dependent on the base type.
-	 * (This is a compromise between the typical case where the array type is
-	 * automatically generated and the case where it is manually created: we'd
-	 * prefer INTERNAL for the former case and NORMAL for the latter.)
+	 * If the type is an implicitly-created array type, mark it as internally
+	 * dependent on the element type.  Otherwise, if it has an element type,
+	 * the dependency is a normal one.
 	 */
 	if (OidIsValid(elementType))
 	{
 		referenced.classId = TypeRelationId;
 		referenced.objectId = elementType;
 		referenced.objectSubId = 0;
-		recordDependencyOn(&myself, &referenced, DEPENDENCY_AUTO);
+		recordDependencyOn(&myself, &referenced,
+					isImplicitArray ? DEPENDENCY_INTERNAL : DEPENDENCY_NORMAL);
 	}
 
 	/* Normal dependency from a domain to its base type. */
@@ -520,9 +547,6 @@ GenerateTypeDependencies(Oid typeNamespace,
 	/* Normal dependency on the default expression. */
 	if (defaultExpr)
 		recordDependencyOnExpr(&myself, defaultExpr, NIL, DEPENDENCY_NORMAL);
-
-	/* Shared dependency on owner. */
-	recordDependencyOnOwner(TypeRelationId, typeObjectId, owner);
 }
 
 /*
@@ -570,21 +594,47 @@ TypeRename(const char *oldTypeName, Oid typeNamespace,
 	heap_close(pg_type_desc, RowExclusiveLock);
 }
 
+
 /*
- * makeArrayTypeName(typeName);
- *	  - given a base type name, make an array of type name out of it
+ * makeArrayTypeName(typeName)
+ *	  - given a base type name, make an array type name for it
  *
  * the caller is responsible for pfreeing the result
  */
 char *
-makeArrayTypeName(const char *typeName)
+makeArrayTypeName(const char *typeName, Oid typeNamespace)
 {
 	char	   *arr;
+	int        i;
+	Relation	pg_type_desc;
 
-	if (!typeName)
-		return NULL;
+	/*
+	 * The idea is to prepend underscores as needed until we make a name
+	 * that doesn't collide with anything...
+	 */
 	arr = palloc(NAMEDATALEN);
-	snprintf(arr, NAMEDATALEN,
-			 "_%.*s", NAMEDATALEN - 2, typeName);
+
+	pg_type_desc = heap_open(TypeRelationId, AccessShareLock);
+
+	for (i = 1; i < NAMEDATALEN - 1; i++)
+	{
+		arr[i - 1] = '_';
+		strlcpy(arr + i, typeName, NAMEDATALEN - i);
+		truncate_identifier(arr, strlen(arr), false);
+		if (!SearchSysCacheExists(TYPENAMENSP,
+								  CStringGetDatum(arr),
+								  ObjectIdGetDatum(typeNamespace),
+								  0, 0))
+			break;
+	}
+
+	heap_close(pg_type_desc, AccessShareLock);
+
+	if (i >= NAMEDATALEN-1)
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_OBJECT),
+				 errmsg("could not form array type name for type \"%s\"", 
+						typeName)));
+
 	return arr;
 }

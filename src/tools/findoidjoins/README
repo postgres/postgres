@@ -1,3 +1,4 @@
+$PostgreSQL: pgsql/src/tools/findoidjoins/README,v 1.4 2007/05/11 17:57:14 tgl Exp $
 
    			      findoidjoins
 
@@ -87,6 +88,7 @@ Join pg_catalog.pg_depend.refclassid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_description.classoid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_index.indexrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_index.indrelid => pg_catalog.pg_class.oid
+Join pg_catalog.pg_language.lanowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_language.lanvalidator => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_namespace.nspowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_opclass.opcmethod => pg_catalog.pg_am.oid
@@ -126,6 +128,7 @@ Join pg_catalog.pg_type.typnamespace => pg_catalog.pg_namespace.oid
 Join pg_catalog.pg_type.typowner => pg_catalog.pg_authid.oid
 Join pg_catalog.pg_type.typrelid => pg_catalog.pg_class.oid
 Join pg_catalog.pg_type.typelem => pg_catalog.pg_type.oid
+Join pg_catalog.pg_type.typarray => pg_catalog.pg_type.oid
 Join pg_catalog.pg_type.typinput => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_type.typoutput => pg_catalog.pg_proc.oid
 Join pg_catalog.pg_type.typreceive => pg_catalog.pg_proc.oid

@@ -205,6 +205,10 @@ SELECT	ctid, indrelid
 FROM	pg_catalog.pg_index fk 
 WHERE	indrelid != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_class pk WHERE pk.oid = fk.indrelid);
+SELECT	ctid, lanowner 
+FROM	pg_catalog.pg_language fk 
+WHERE	lanowner != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_authid pk WHERE pk.oid = fk.lanowner);
 SELECT	ctid, lanvalidator 
 FROM	pg_catalog.pg_language fk 
 WHERE	lanvalidator != 0 AND 
@@ -361,6 +365,10 @@ SELECT	ctid, typelem
 FROM	pg_catalog.pg_type fk 
 WHERE	typelem != 0 AND 
 	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.typelem);
+SELECT	ctid, typarray 
+FROM	pg_catalog.pg_type fk 
+WHERE	typarray != 0 AND 
+	NOT EXISTS(SELECT 1 FROM pg_catalog.pg_type pk WHERE pk.oid = fk.typarray);
 SELECT	ctid, typinput 
 FROM	pg_catalog.pg_type fk 
 WHERE	typinput != 0 AND 

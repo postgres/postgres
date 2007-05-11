@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.219 2007/04/08 01:26:32 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.220 2007/05/11 17:57:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2827,6 +2827,7 @@ find_composite_type_dependencies(Oid typeOid, const char *origTblName)
 	ScanKeyData key[2];
 	SysScanDesc depScan;
 	HeapTuple	depTup;
+	Oid			arrayOid;
 
 	/*
 	 * We scan pg_depend to find those things that depend on the rowtype. (We
@@ -2886,6 +2887,14 @@ find_composite_type_dependencies(Oid typeOid, const char *origTblName)
 	systable_endscan(depScan);
 
 	relation_close(depRel, AccessShareLock);
+
+	/*
+	 * If there's an array type for the rowtype, must check for uses of it,
+	 * too.
+	 */
+	arrayOid = get_array_type(typeOid);
+	if (OidIsValid(arrayOid))
+		find_composite_type_dependencies(arrayOid, origTblName);
 }
 
 
@@ -5299,6 +5308,9 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
  * be changed separately from the parent table.  Also, we can skip permission
  * checks (this is necessary not just an optimization, else we'd fail to
  * handle toast tables properly).
+ *
+ * recursing is also true if ALTER TYPE OWNER is calling us to fix up a
+ * free-standing composite type.
  */
 void
 ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
@@ -5370,6 +5382,7 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 			}
 			break;
 		case RELKIND_TOASTVALUE:
+		case RELKIND_COMPOSITE_TYPE:
 			if (recursing)
 				break;
 			/* FALL THRU */
@@ -5448,14 +5461,22 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 
 		heap_freetuple(newtuple);
 
-		/* Update owner dependency reference */
-		changeDependencyOnOwner(RelationRelationId, relationOid, newOwnerId);
+		/*
+		 * Update owner dependency reference, if any.  A composite type has
+		 * none, because it's tracked for the pg_type entry instead of here;
+		 * indexes don't have their own entries either.
+		 */
+		if (tuple_class->relkind != RELKIND_COMPOSITE_TYPE &&
+			tuple_class->relkind != RELKIND_INDEX)
+			changeDependencyOnOwner(RelationRelationId, relationOid,
+									newOwnerId);
 
 		/*
 		 * Also change the ownership of the table's rowtype, if it has one
 		 */
 		if (tuple_class->relkind != RELKIND_INDEX)
-			AlterTypeOwnerInternal(tuple_class->reltype, newOwnerId);
+			AlterTypeOwnerInternal(tuple_class->reltype, newOwnerId,
+							tuple_class->relkind == RELKIND_COMPOSITE_TYPE);
 
 		/*
 		 * If we are operating on a table, also change the ownership of any
@@ -6462,7 +6483,7 @@ AlterTableNamespace(RangeVar *relation, const char *newschema)
 	AlterRelationNamespaceInternal(classRel, relid, oldNspOid, nspOid, true);
 
 	/* Fix the table's rowtype too */
-	AlterTypeNamespaceInternal(rel->rd_rel->reltype, nspOid, false);
+	AlterTypeNamespaceInternal(rel->rd_rel->reltype, nspOid, false, false);
 
 	/* Fix other dependent stuff */
 	if (rel->rd_rel->relkind == RELKIND_RELATION)
@@ -6625,7 +6646,7 @@ AlterSeqNamespaces(Relation classRel, Relation rel,
 		 * them to the new namespace, too.
 		 */
 		AlterTypeNamespaceInternal(RelationGetForm(seqRel)->reltype,
-								   newNspOid, false);
+								   newNspOid, false, false);
 
 		/* Now we can close it.  Keep the lock till end of transaction. */
 		relation_close(seqRel, NoLock);
