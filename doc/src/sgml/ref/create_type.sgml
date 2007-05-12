@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.70 2007/05/11 17:57:11 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_type.sgml,v 1.71 2007/05/12 00:54:59 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -530,18 +530,6 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
   <title>Notes</title>
 
   <para>
-   It is best to avoid using type names that begin with the underscore
-   character (<literal>_</literal>).  <productname>PostgreSQL</productname>
-   forms the name of an array type by prepending one or more underscores
-   to the element type's name, and these names may collide with user-defined
-   type names that begin with underscore.  While the system will modify
-   generated array type names to avoid collisions, this does not help if the
-   conflicting array type already exists when you try to create your type.
-   Also, various old client software may assume that names beginning with
-   underscores always represent arrays.
-  </para>
-
-  <para>
    Because there are no restrictions on use of a data type once it's been
    created, creating a base type is tantamount to granting public execute
    permission on the functions mentioned in the type definition.  (The creator
@@ -550,6 +538,27 @@ CREATE TYPE <replaceable class="parameter">name</replaceable>
    definition.  But you might want to think twice before designing a type
    in a way that would require <quote>secret</> information to be used
    while converting it to or from external form.
+  </para>
+
+  <para>
+   Before <productname>PostgreSQL</productname> version 8.3, the name of
+   a generated array type was always exactly the element type's name with one
+   underscore character (<literal>_</literal>) prepended.  (Type names were
+   therefore restricted in length to one less character than other names.)
+   While this is still usually the case, the array type name may vary from
+   this in case of maximum-length names or collisions with user type names
+   that begin with underscore.  Writing code that depends on this convention
+   is therefore deprecated.  Instead, use
+   <structname>pg_type</>.<structfield>typarray</> to locate the array type
+   associated with a given type.
+  </para>
+
+  <para>
+   It may be advisable to avoid using type and table names that begin with
+   underscore.  While the server will change generated array type names to
+   avoid collisions with user-given names, there is still risk of confusion,
+   particularly with old client software that may assume that type names
+   beginning with underscores always represent arrays.
   </para>
 
   <para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.221 2007/05/11 20:16:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.222 2007/05/12 00:54:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1626,6 +1626,7 @@ renamerel(Oid myrelid, const char *newrelname)
 	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
 	HeapTuple	reltup;
+	Form_pg_class relform;
 	Oid			namespaceId;
 	char	   *oldrelname;
 	char		relkind;
@@ -1655,10 +1656,11 @@ renamerel(Oid myrelid, const char *newrelname)
 	relrelation = heap_open(RelationRelationId, RowExclusiveLock);
 
 	reltup = SearchSysCacheCopy(RELOID,
-								PointerGetDatum(myrelid),
+								ObjectIdGetDatum(myrelid),
 								0, 0, 0);
 	if (!HeapTupleIsValid(reltup))		/* shouldn't happen */
 		elog(ERROR, "cache lookup failed for relation %u", myrelid);
+	relform = (Form_pg_class) GETSTRUCT(reltup);
 
 	if (get_relname_relid(newrelname, namespaceId) != InvalidOid)
 		ereport(ERROR,
@@ -1670,7 +1672,7 @@ renamerel(Oid myrelid, const char *newrelname)
 	 * Update pg_class tuple with new relname.	(Scribbling on reltup is OK
 	 * because it's a copy...)
 	 */
-	namestrcpy(&(((Form_pg_class) GETSTRUCT(reltup))->relname), newrelname);
+	namestrcpy(&(relform->relname), newrelname);
 
 	simple_heap_update(relrelation, &reltup->t_self, reltup);
 
@@ -1683,8 +1685,8 @@ renamerel(Oid myrelid, const char *newrelname)
 	/*
 	 * Also rename the associated type, if any.
 	 */
-	if (relkind != RELKIND_INDEX)
-		TypeRename(oldrelname, namespaceId, newrelname);
+	if (OidIsValid(targetrelation->rd_rel->reltype))
+		TypeRename(targetrelation->rd_rel->reltype, newrelname, namespaceId);
 
 	/*
 	 * Close rel, but keep exclusive lock!

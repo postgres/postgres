@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.183 2007/05/11 17:57:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.184 2007/05/12 00:54:59 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -645,9 +645,12 @@ extern void GenerateTypeDependencies(Oid typeNamespace,
 						 Node *defaultExpr,
 						 bool rebuild);
 
-extern void TypeRename(const char *oldTypeName, Oid typeNamespace,
-		   const char *newTypeName);
+extern void TypeRename(Oid typeOid, const char *newTypeName,
+					   Oid typeNamespace);
 
 extern char *makeArrayTypeName(const char *typeName, Oid typeNamespace);
+
+extern bool moveArrayTypeName(Oid typeOid, const char *typeName,
+							  Oid typeNamespace);
 
 #endif   /* PG_TYPE_H */

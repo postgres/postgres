@@ -318,3 +318,23 @@ SELECT max(f1), min(f1), max(f2), min(f2), max(f3), min(f3) FROM arraggtest;
 INSERT INTO arraggtest (f1, f2, f3) VALUES
 ('{}','{{pink,white,blue,red,grey,orange}}','{2.1,1.87,1.4,2.2}');
 SELECT max(f1), min(f1), max(f2), min(f2), max(f3), min(f3) FROM arraggtest;
+
+-- A few simple tests for arrays of composite types
+
+create type comptype as (f1 int, f2 text);
+
+create table comptable (c1 comptype, c2 comptype[]);
+
+-- XXX would like to not have to specify row() construct types here ...
+insert into comptable
+  values (row(1,'foo'), array[row(2,'bar')::comptype, row(3,'baz')::comptype]);
+
+-- check that implicitly named array type _comptype isn't a problem
+create type _comptype as enum('fooey');
+
+select * from comptable;
+select c2[2].f2 from comptable;
+
+drop type _comptype;
+drop table comptable;
+drop type comptype;
