@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.30 2003/11/02 12:59:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/cluster.sgml,v 1.30.2.1 2007/05/13 16:04:22 mha Exp $
 PostgreSQL documentation
 -->
 
@@ -98,6 +98,17 @@ CLUSTER
 
  <refsect1>
   <title>Notes</title>
+
+   <para>
+    <command>CLUSTER</command> loses all visibility information of tuples,
+    which makes the table look empty to any snapshot that was taken
+    before the <command>CLUSTER</command> command finished. That makes
+    <command>CLUSTER</command> unsuitable for applications where
+    transactions that access the table being clustered are run concurrently
+    with <command>CLUSTER</command>. This is most visible with serializable
+    transactions, because they take only one snapshot at the beginning of the
+    transaction, but read-committed transactions are also affected.
+   </para>
 
    <para>
     In cases where you are accessing single rows randomly
