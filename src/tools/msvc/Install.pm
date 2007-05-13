@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.14 2007/04/25 19:00:05 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.15 2007/05/13 15:33:07 mha Exp $
 #
 use strict;
 use warnings;
@@ -35,7 +35,7 @@ sub Install
         $conf = "release";
     }
     die "Could not find debug or release binaries" if ($conf eq "");
-    print "Installing for $conf\n";
+    print "Installing for $conf in $target\n";
 
     EnsureDirectories($target, 'bin','lib','share','share/timezonesets','share/contrib','doc',
         'doc/contrib', 'symbols');
