@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.18 2007/05/11 17:57:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_shdepend.c,v 1.19 2007/05/14 16:50:36 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -456,6 +456,9 @@ typedef struct
  * Check whether there are shared dependency entries for a given shared
  * object.	Returns a string containing a newline-separated list of object
  * descriptions that depend on the shared object, or NULL if none is found.
+ * The size of the returned string is limited to about MAX_REPORTED_DEPS lines;
+ * if there are more objects than that, the output is returned truncated at
+ * that point and the full message is logged to the postmaster log.
  *
  * We can find three different kinds of dependencies: dependencies on objects
  * of the current database; dependencies on shared objects; and dependencies
@@ -472,21 +475,26 @@ checkSharedDependencies(Oid classId, Oid objectId)
 	ScanKeyData key[2];
 	SysScanDesc scan;
 	HeapTuple	tup;
-	int			totalDeps = 0;
-	int			numLocalDeps = 0;
-	int			numSharedDeps = 0;
+	int			numNotReportedDeps = 0;
+	int			numReportedDeps = 0;
+	int			numNotReportedDbs = 0;
 	List	   *remDeps = NIL;
 	ListCell   *cell;
 	ObjectAddress object;
 	StringInfoData descs;
+	StringInfoData alldescs;
 
 	/*
-	 * We try to limit the number of reported dependencies to something sane,
-	 * both for the user's sake and to avoid blowing out memory.
+	 * We try to limit the number of dependencies reported to the client to
+	 * something sane, both for the user's sake and to avoid blowing out
+	 * memory.  The server log always gets a full report, which is collected
+	 * in a separate StringInfo if and only if we detect that the original
+	 * report is going to be truncated.
 	 */
 #define MAX_REPORTED_DEPS 100
 
 	initStringInfo(&descs);
+	initStringInfo(&alldescs);
 
 	sdepRel = heap_open(SharedDependRelationId, AccessShareLock);
 
@@ -531,17 +539,35 @@ checkSharedDependencies(Oid classId, Oid objectId)
 		 */
 		if (sdepForm->dbid == MyDatabaseId)
 		{
-			numLocalDeps++;
-			if (++totalDeps <= MAX_REPORTED_DEPS)
+			if (++numReportedDeps <= MAX_REPORTED_DEPS)
 				storeObjectDescription(&descs, LOCAL_OBJECT, &object,
 									   sdepForm->deptype, 0);
+			else
+			{
+				numNotReportedDeps++;
+				/* initialize the server-only log line */
+				if (alldescs.len == 0)
+					appendBinaryStringInfo(&alldescs, descs.data, descs.len);
+
+				storeObjectDescription(&alldescs, LOCAL_OBJECT, &object,
+									   sdepForm->deptype, 0);
+			}
 		}
 		else if (sdepForm->dbid == InvalidOid)
 		{
-			numSharedDeps++;
-			if (++totalDeps <= MAX_REPORTED_DEPS)
+			if (++numReportedDeps <= MAX_REPORTED_DEPS)
 				storeObjectDescription(&descs, SHARED_OBJECT, &object,
 									   sdepForm->deptype, 0);
+			else
+			{
+				numNotReportedDeps++;
+				/* initialize the server-only log line */
+				if (alldescs.len == 0)
+					appendBinaryStringInfo(&alldescs, descs.data, descs.len);
+
+				storeObjectDescription(&alldescs, SHARED_OBJECT, &object,
+									   sdepForm->deptype, 0);
+			}
 		}
 		else
 		{
@@ -571,7 +597,6 @@ checkSharedDependencies(Oid classId, Oid objectId)
 				dep->dbOid = sdepForm->dbid;
 				dep->count = 1;
 				remDeps = lappend(remDeps, dep);
-				totalDeps++;
 			}
 		}
 	}
@@ -580,28 +605,11 @@ checkSharedDependencies(Oid classId, Oid objectId)
 
 	heap_close(sdepRel, AccessShareLock);
 
-	if (totalDeps > MAX_REPORTED_DEPS)
-	{
-		/*
-		 * Report seems unreasonably long, so reduce it to per-database info
-		 *
-		 * Note: we don't ever suppress per-database totals, which should be
-		 * OK as long as there aren't too many databases ...
-		 */
-		resetStringInfo(&descs);
-
-		if (numLocalDeps > 0)
-		{
-			appendStringInfo(&descs, _("%d objects in this database"),
-							 numLocalDeps);
-			if (numSharedDeps > 0)
-				appendStringInfoChar(&descs, '\n');
-		}
-		if (numSharedDeps > 0)
-			appendStringInfo(&descs, _("%d shared objects"),
-							 numSharedDeps);
-	}
-
+	/*
+	 * Report dependencies on remote databases.  If we're truncating the
+	 * output already, don't put a line per database, but a single one for all
+	 * of them.  Otherwise add as many as fit in MAX_REPORTED_DEPS.
+	 */
 	foreach(cell, remDeps)
 	{
 		remoteDep  *dep = lfirst(cell);
@@ -610,8 +618,35 @@ checkSharedDependencies(Oid classId, Oid objectId)
 		object.objectId = dep->dbOid;
 		object.objectSubId = 0;
 
-		storeObjectDescription(&descs, REMOTE_OBJECT, &object,
-							   SHARED_DEPENDENCY_INVALID, dep->count);
+		if (alldescs.len != 0)
+		{
+			numNotReportedDbs++;
+			storeObjectDescription(&alldescs, REMOTE_OBJECT, &object,
+								   SHARED_DEPENDENCY_INVALID, dep->count);
+		}
+		else
+		{
+			if (numReportedDeps <= MAX_REPORTED_DEPS)
+			{
+				numReportedDeps++;
+				storeObjectDescription(&descs, REMOTE_OBJECT, &object,
+									   SHARED_DEPENDENCY_INVALID, dep->count);
+			}
+			else
+			{
+				/* initialize the server-only log line */
+				numNotReportedDbs++;
+				appendBinaryStringInfo(&alldescs, descs.data, descs.len);
+				storeObjectDescription(&alldescs, REMOTE_OBJECT, &object,
+									   SHARED_DEPENDENCY_INVALID, dep->count);
+			}
+		}
+	}
+
+	if (numNotReportedDbs > 0)
+	{
+		appendStringInfo(&descs, "\nand objects in other %d databases",
+						 numNotReportedDbs);
 	}
 
 	list_free_deep(remDeps);
@@ -619,8 +654,26 @@ checkSharedDependencies(Oid classId, Oid objectId)
 	if (descs.len == 0)
 	{
 		pfree(descs.data);
+		pfree(alldescs.data);
 		return NULL;
 	}
+
+	if (numNotReportedDbs + numNotReportedDeps > 0)
+	{
+		ObjectAddress	obj;
+
+		obj.classId = classId;
+		obj.objectId = objectId;
+		obj.objectSubId = 0;
+		ereport(LOG,
+				(errmsg("objects dependent on %s", getObjectDescription(&obj)),
+				 errdetail(alldescs.data)));
+
+		if (numNotReportedDeps > 0)
+			appendStringInfo(&descs, "\nand other %d objects",
+							 numNotReportedDeps);
+	}
+	pfree(alldescs.data);
 
 	return descs.data;
 }
@@ -977,8 +1030,12 @@ storeObjectDescription(StringInfo descs, objectType type,
 			break;
 
 		case REMOTE_OBJECT:
-			/* translator: %s will always be "database %s" */
-			appendStringInfo(descs, _("%d objects in %s"), count, objdesc);
+			if (count == 1)
+				/* translator: %s will always be "database %s" */
+				appendStringInfo(descs, _("one object in %s"), objdesc);
+			else
+				/* translator: %s will always be "database %s" */
+				appendStringInfo(descs, _("%d objects in %s"), count, objdesc);
 			break;
 
 		default:
