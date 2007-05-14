@@ -33,7 +33,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.8 2007/04/16 18:21:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/plancache.c,v 1.9 2007/05/14 18:13:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,7 @@ static List *cached_plans_list = NIL;
 
 static void StoreCachedPlan(CachedPlanSource *plansource, List *stmt_list,
 							MemoryContext plan_context);
+static List *do_planning(List *querytrees, int cursorOptions);
 static void AcquireExecutorLocks(List *stmt_list, bool acquire);
 static void AcquirePlannerLocks(List *stmt_list, bool acquire);
 static void LockRelid(Oid relid, LOCKMODE lockmode, void *arg);
@@ -462,12 +463,8 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 
 		if (plansource->fully_planned)
 		{
-			/*
-			 * Generate plans for queries.	Assume snapshot is not set yet
-			 * (XXX this may be wasteful, won't all callers have done that?)
-			 */
-			slist = pg_plan_queries(slist, plansource->cursor_options, NULL,
-									true);
+			/* Generate plans for queries */
+			slist = do_planning(slist, plansource->cursor_options);
 		}
 
 		/*
@@ -521,6 +518,49 @@ RevalidateCachedPlan(CachedPlanSource *plansource, bool useResOwner)
 
 	return plan;
 }
+
+/*
+ * Invoke the planner on some rewritten queries.  This is broken out of
+ * RevalidateCachedPlan just to avoid plastering "volatile" all over that
+ * function's variables.
+ */
+static List *
+do_planning(List *querytrees, int cursorOptions)
+{
+	List	   *stmt_list;
+
+	/*
+	 * If a snapshot is already set (the normal case), we can just use that
+	 * for planning.  But if it isn't, we have to tell pg_plan_queries to make
+	 * a snap if it needs one.  In that case we should arrange to reset
+	 * ActiveSnapshot afterward, to ensure that RevalidateCachedPlan has no
+	 * caller-visible effects on the snapshot.  Having to replan is an unusual
+	 * case, and it seems a really bad idea for RevalidateCachedPlan to affect
+	 * the snapshot only in unusual cases.  (Besides, the snap might have
+	 * been created in a short-lived context.)
+	 */
+	if (ActiveSnapshot != NULL)
+		stmt_list = pg_plan_queries(querytrees, cursorOptions, NULL, false);
+	else
+	{
+		PG_TRY();
+		{
+			stmt_list = pg_plan_queries(querytrees, cursorOptions, NULL, true);
+		}
+		PG_CATCH();
+		{
+			/* Restore global vars and propagate error */
+			ActiveSnapshot = NULL;
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+
+		ActiveSnapshot = NULL;
+	}
+
+	return stmt_list;
+}
+
 
 /*
  * ReleaseCachedPlan: release active use of a cached plan.
