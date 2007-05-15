@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.98.2.5 2007/04/20 02:37:48 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.98.2.6 2007/05/15 15:35:58 neilc Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3147,6 +3147,12 @@ SELECT * FROM parent WHERE key = 2400;
         in seconds, and the default is one minute (<literal>1m</>).
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
+       </para>
+       <para>
+        Note that even when this parameter is disabled, the system
+        will periodically launch autovacuum processes in order to
+        prevent transaction ID wraparound.  See <xref
+        linkend="vacuum-for-wraparound"> for more information.
        </para>
       </listitem>
      </varlistentry>
