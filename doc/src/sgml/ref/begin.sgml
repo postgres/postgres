@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.34 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/begin.sgml,v 1.34.2.1 2007/05/15 19:43:59 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -133,8 +133,8 @@ BEGIN;
    <command>BEGIN</command> is a <productname>PostgreSQL</productname>
    language extension.  It is equivalent to the SQL-standard command
    <xref linkend="sql-start-transaction"
-   endterm="sql-start-transaction-title">, which see for additional
-   compatibility information.
+   endterm="sql-start-transaction-title">, whose reference page
+   contains additional compatibility information.
   </para>
 
   <para>
