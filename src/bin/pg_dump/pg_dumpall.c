@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.85 2006/11/21 22:19:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.85.2.1 2007/05/15 20:20:24 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,8 +589,8 @@ dumpRoleMembership(PGconn *conn)
 
 	res = executeQuery(conn, "SELECT ur.rolname AS roleid, "
 					   "um.rolname AS member, "
-					   "ug.rolname AS grantor, "
-					   "a.admin_option "
+					   "a.admin_option, "
+					   "ug.rolname AS grantor "
 					   "FROM pg_auth_members a "
 					   "LEFT JOIN pg_authid ur on ur.oid = a.roleid "
 					   "LEFT JOIN pg_authid um on um.oid = a.member "
@@ -604,14 +604,24 @@ dumpRoleMembership(PGconn *conn)
 	{
 		char	   *roleid = PQgetvalue(res, i, 0);
 		char	   *member = PQgetvalue(res, i, 1);
-		char	   *grantor = PQgetvalue(res, i, 2);
-		char	   *option = PQgetvalue(res, i, 3);
+		char	   *option = PQgetvalue(res, i, 2);
 
 		printf("GRANT %s", fmtId(roleid));
 		printf(" TO %s", fmtId(member));
 		if (*option == 't')
 			printf(" WITH ADMIN OPTION");
-		printf(" GRANTED BY %s;\n", fmtId(grantor));
+
+		/*
+		 * We don't track the grantor very carefully in the backend, so cope
+		 * with the possibility that it has been dropped.
+		 */
+		if (!PQgetisnull(res, i, 3))
+		{
+			char	*grantor = PQgetvalue(res, i, 3);
+
+			printf(" GRANTED BY %s", fmtId(grantor));
+		}
+		printf(";\n");
 	}
 
 	PQclear(res);
