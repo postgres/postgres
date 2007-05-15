@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.50 2007/04/06 04:21:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.51 2007/05/15 17:39:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,6 +158,12 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
  * The resulting datum can be accessed using VARSIZE_ANY() and VARDATA_ANY()
  * (beware of multiple evaluations in those macros!)
  *
+ * WARNING: It is only safe to use PG_DETOAST_DATUM_UNPACKED() and
+ * VARDATA_ANY() if you really don't care about the alignment. Either because
+ * you're working with something like text where the alignment doesn't matter
+ * or because you're not going to access its constituent parts and just use
+ * things like memcpy on it anyways.
+ *
  * Note: it'd be nice if these could be macros, but I see no way to do that
  * without evaluating the arguments multiple times, which is NOT acceptable.
  */
@@ -174,6 +180,7 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 #define PG_DETOAST_DATUM_SLICE(datum,f,c) \
 		pg_detoast_datum_slice((struct varlena *) DatumGetPointer(datum), \
 		(int32) f, (int32) c)
+/* WARNING -- unaligned pointer */
 #define PG_DETOAST_DATUM_PACKED(datum) \
 	pg_detoast_datum_packed((struct varlena *) DatumGetPointer(datum))
 

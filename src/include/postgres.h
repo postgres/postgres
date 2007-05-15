@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.80 2007/05/04 02:01:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.81 2007/05/15 17:39:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,6 +235,12 @@ typedef struct
  * use VARSIZE_ANY/VARSIZE_ANY_EXHDR/VARDATA_ANY.  The other macros here
  * should usually be used only by tuple assembly/disassembly code and
  * code that specifically wants to work with still-toasted Datums.
+ *
+ * WARNING: It is only safe to use VARDATA_ANY() -- typically with
+ * PG_DETOAST_DATUM_UNPACKED() -- if you really don't care about the alignment.
+ * Either because you're working with something like text where the alignment
+ * doesn't matter or because you're not going to access its constituent parts
+ * and just use things like memcpy on it anyways.
  */
 #define VARDATA(PTR)						VARDATA_4B(PTR)
 #define VARSIZE(PTR)						VARSIZE_4B(PTR)
@@ -265,6 +271,7 @@ typedef struct
 	  VARSIZE_4B(PTR)-4))
 
 /* caution: this will not work on an external or compressed-in-line Datum */
+/* caution: this will return a possibly unaligned pointer */
 #define VARDATA_ANY(PTR) \
 	 (VARATT_IS_1B(PTR) ? VARDATA_1B(PTR) : VARDATA_4B(PTR))
 
