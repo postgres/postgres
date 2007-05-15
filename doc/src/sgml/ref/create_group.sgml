@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_group.sgml,v 1.17 2006/09/16 00:30:17 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_group.sgml,v 1.18 2007/05/15 19:43:51 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -46,8 +46,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
 
   <para>
    <command>CREATE GROUP</command> is now an alias for
-   <xref linkend="sql-createrole" endterm="sql-createrole-title">,
-   which see for more information.
+   <xref linkend="sql-createrole" endterm="sql-createrole-title">.
   </para>
  </refsect1> 
  

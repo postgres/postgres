@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.42 2006/09/16 00:30:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.43 2007/05/15 19:43:51 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -46,8 +46,7 @@ ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
 
   <para>
    <command>ALTER USER</command> is now an alias for
-   <xref linkend="sql-alterrole" endterm="sql-alterrole-title">,
-   which see for more information.
+   <xref linkend="sql-alterrole" endterm="sql-alterrole-title">.
   </para>
  </refsect1>
 

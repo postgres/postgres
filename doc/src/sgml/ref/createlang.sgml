@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.40 2007/03/26 17:23:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createlang.sgml,v 1.41 2007/05/15 19:43:51 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -42,7 +42,7 @@ PostgreSQL documentation
    programming language to a <productname>PostgreSQL</productname> database.
    <application>createlang</application> is just a wrapper around the
    <xref linkend="sql-createlanguage" endterm="sql-createlanguage-title">
-   command, which see for additional information.
+   command.
   </para>
  </refsect1>
 

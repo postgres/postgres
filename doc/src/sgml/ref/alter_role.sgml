@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.7 2006/09/16 00:30:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_role.sgml,v 1.8 2007/05/15 19:43:51 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -52,8 +52,8 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
   <para>
    The first variant of this command listed in the synopsis can change
    many of the role attributes that can be specified in 
-   <xref linkend="sql-createrole" endterm="sql-createrole-title">,
-   which see for details.  (All the possible attributes are covered,
+   <xref linkend="sql-createrole" endterm="sql-createrole-title">.
+   (All the possible attributes are covered,
    except that there are no options for adding or removing memberships; use
    <xref linkend="SQL-GRANT" endterm="SQL-GRANT-title"> and
    <xref linkend="SQL-REVOKE" endterm="SQL-REVOKE-title"> for that.)
@@ -127,8 +127,9 @@ ALTER ROLE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>
       <listitem>
        <para>
         These clauses alter attributes originally set by
-        <xref linkend="SQL-CREATEROLE" endterm="SQL-CREATEROLE-title">,
-        which see for more information.
+        <xref linkend="SQL-CREATEROLE"
+        endterm="SQL-CREATEROLE-title">. For more information, see the
+        <command>CREATE ROLE</command> reference page.
        </para>
       </listitem>
      </varlistentry>

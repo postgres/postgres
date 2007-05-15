@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.74 2007/05/03 15:05:56 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.75 2007/05/15 19:43:50 neilc Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -1095,7 +1095,8 @@ CREATE TABLE order_items (
 
    All these actions are performed using the
    <xref linkend="sql-altertable" endterm="sql-altertable-title">
-   command, which see for details beyond those given here.
+   command, whose reference page contains details beyond those given
+   here.
   </para>
 
   <sect2>
