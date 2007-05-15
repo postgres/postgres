@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.73 2007/05/03 15:47:48 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.74 2007/05/15 15:52:40 neilc Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -485,7 +485,9 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     multi-process architecture: there is a daemon process, called the
     <firstterm>autovacuum launcher</firstterm>, which is in charge of starting
     an <firstterm>autovacuum worker</firstterm> process on each database every
-    <xref linkend="guc-autovacuum-naptime"> seconds.
+    <xref linkend="guc-autovacuum-naptime"> seconds. On each run, the worker
+    process checks each table within that database, and <command>VACUUM</> or
+    <command>ANALYZE</> commands are issued as needed.
    </para>
 
    <para>
@@ -493,18 +495,12 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     processes that may be running at any time, so if the <command>VACUUM</>
     and <command>ANALYZE</> work to do takes too long to run, the deadline may
     be failed to meet for other databases.  Also, if a particular database
-    takes long to process, more than one worker may be processing it
+    takes a long time to process, more than one worker may be processing it
     simultaneously.  The workers are smart enough to avoid repeating work that
     other workers have done, so this is normally not a problem.  Note that the
     number of running workers does not count towards the <xref
     linkend="guc-max-connections"> nor the <xref
     linkend="guc-superuser-reserved-connections"> limits.
-   </para>
-
-   <para>
-    On each run, the worker process checks each table within that database, and
-    <command>VACUUM</command> or <command>ANALYZE</command> commands are
-    issued as needed.
    </para>
 
    <para>
@@ -591,19 +587,19 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    <caution>
     <para>
      The contents of the <structname>pg_autovacuum</structname> system
-     catalog are currently not saved in database dumps created by
-     the tools <command>pg_dump</command> and <command>pg_dumpall</command>.
-     If you want to preserve them across a dump/reload cycle, make sure you
-     dump the catalog manually.
+     catalog are currently not saved in database dumps created by the
+     tools <application>pg_dump</> and <application>pg_dumpall</>.  If
+     you want to preserve them across a dump/reload cycle, make sure
+     you dump the catalog manually.
     </para>
    </caution>
 
    <para>
-    When multiple workers are running, the cost limit is "balanced" among all
-    the running workers, so that the total impact on the system is the same,
-    regardless of the number of workers actually running.
+    When multiple workers are running, the cost limit is
+    <quote>balanced</quote> among all the running workers, so that the
+    total impact on the system is the same, regardless of the number
+    of workers actually running.
    </para>
-
   </sect2>
  </sect1>
 
