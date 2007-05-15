@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.23 2007/04/26 10:36:47 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.24 2007/05/15 00:15:01 adunstan Exp $
 #
 use Carp;
 use strict;
@@ -125,6 +125,11 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
             print O "#define HAVE_KRB5_TICKET_ENC_PART2 1\n";
             print O "#define PG_KRB_SRVNAM \"postgres\"\n";
         }
+		if (my $port = $self->{options}->{--with-pgport})
+		{
+			print O "#define DEF_PGPORT $port\n";
+			print O "#define DEF_PGPORT_STR \"$port\"\n";
+		}
         print O "#define VAL_CONFIGURE \"" . $self->GetFakeConfigure() . "\"\n";
         print O "#endif /* IGNORE_CONFIGURED_SETTINGS */\n";
         close(O);
