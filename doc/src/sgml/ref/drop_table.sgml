@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.26 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_table.sgml,v 1.27 2007/05/15 19:13:55 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -29,7 +29,7 @@ DROP TABLE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
 
   <para>
    <command>DROP TABLE</command> removes tables from the database.
-   Only its owner can destroy a table.  To empty a table of rows
+   Only its owner can drop a table.  To empty a table of rows
    without destroying the table, use <xref linkend="sql-delete"
    endterm="sql-delete-title"> or <xref linkend="sql-truncate"
    endterm="sql-truncate-title">.

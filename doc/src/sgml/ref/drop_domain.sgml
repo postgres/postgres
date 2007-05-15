@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.17 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_domain.sgml,v 1.18 2007/05/15 19:13:55 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-DROP DOMAIN [IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...]  [ CASCADE | RESTRICT ]
+DROP DOMAIN [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...] [ CASCADE | RESTRICT ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -28,8 +28,8 @@ DROP DOMAIN [IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ..
   <title>Description</title>
 
   <para>
-   <command>DROP DOMAIN</command> will remove a domain.  Only the
-   owner of a domain can remove it.
+   <command>DROP DOMAIN</command> removes a domain.  Only the owner of
+   a domain can remove it.
   </para>
  </refsect1>
 

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.70 2007/03/26 17:23:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.71 2007/05/15 19:13:55 neilc Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -11,7 +11,8 @@
   <refname>pg_restore</refname>
 
   <refpurpose>
-   restore a <productname>PostgreSQL</productname> database from an archive file created by pg_dump
+   restore a <productname>PostgreSQL</productname> database from an
+   archive file created by <application>pg_dump</application>
   </refpurpose>
  </refnamediv>
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.12 2007/01/31 23:26:02 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_index.sgml,v 1.13 2007/05/15 19:13:54 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -109,7 +109,7 @@ ALTER INDEX <replaceable class="PARAMETER">name</replaceable> RESET ( <replaceab
       <term><replaceable class="PARAMETER">new_name</replaceable></term>
       <listitem>
        <para>
-        New name for the index.
+        The new name for the index.
        </para>
       </listitem>
      </varlistentry>

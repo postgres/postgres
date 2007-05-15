@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.26 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_sequence.sgml,v 1.27 2007/05/15 19:13:55 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -28,7 +28,8 @@ DROP SEQUENCE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [,
   <title>Description</title>
 
   <para>
-   <command>DROP SEQUENCE</command> removes sequence number generators.
+   <command>DROP SEQUENCE</command> removes sequence number
+   generators. A sequence can only be dropped by its owner or a superuser.
   </para>
  </refsect1>
   

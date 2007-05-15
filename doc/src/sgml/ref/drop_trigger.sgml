@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.21 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.22 2007/05/15 19:13:55 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -28,7 +28,7 @@ DROP TRIGGER [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> ON 
   <title>Description</title>
 
   <para>
-   <command>DROP TRIGGER</command> will remove an existing
+   <command>DROP TRIGGER</command> removes an existing
    trigger definition. To execute this command, the current
    user must be the owner of the table for which the trigger is defined.
   </para>

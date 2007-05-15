@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.21 2007/01/31 23:26:02 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/analyze.sgml,v 1.22 2007/05/15 19:13:55 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,7 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
+ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) ] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -29,10 +29,11 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
 
   <para>
    <command>ANALYZE</command> collects statistics about the contents
-   of tables in the database, and stores the results in the system
-   table <literal>pg_statistic</literal>.  Subsequently, the query
-   planner uses these statistics to help determine the most efficient
-   execution plans for queries.
+   of tables in the database, and stores the results in the <link
+   linkend="catalog-pg-statistic"><structname>pg_statistic</></>
+   system catalog.  Subsequently, the query planner uses these
+   statistics to help determine the most efficient execution plans for
+   queries.
   </para>
 
   <para>
@@ -125,7 +126,7 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
    will change slightly each time <command>ANALYZE</command> is run,
    even if the actual table contents did not change.  This might result
    in small changes in the planner's estimated costs shown by
-   <command>EXPLAIN</command>. In rare situations, this
+   <xref linkend="sql-explain" endterm="sql-explain-title">. In rare situations, this
    non-determinism will cause the query optimizer to choose a
    different query plan between runs of <command>ANALYZE</command>. To
    avoid this, raise the amount of statistics collected by

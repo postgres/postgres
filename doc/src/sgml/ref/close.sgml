@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.25 2007/04/12 06:53:45 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/close.sgml,v 1.26 2007/05/15 19:13:55 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -88,8 +88,8 @@ CLOSE { <replaceable class="PARAMETER">name</replaceable> | ALL }
   </para>
 
   <para>
-   You can see all available cursors by querying the
-   <structname>pg_cursors</structname> system view.
+   You can see all available cursors by querying the <link
+   linkend="view-pg-cursors"><structname>pg_cursors</></> system view.
   </para>
  </refsect1>
 

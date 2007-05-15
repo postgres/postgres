@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.99 2007/02/01 19:10:25 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.100 2007/05/15 19:13:55 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -354,7 +354,7 @@ where <replaceable class="parameter">from_item</replaceable> can be one of:
      </varlistentry>
      
      <varlistentry>
-      <term><literal>USING (<replaceable class="parameter">join_column</replaceable> [, ...])</literal></term>
+      <term><literal>USING ( <replaceable class="parameter">join_column</replaceable> [, ...] )</literal></term>
       <listitem>
        <para>
         A clause of the form <literal>USING ( a, b, ... )</literal> is

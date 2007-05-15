@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.29 2006/10/23 18:10:32 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_type.sgml,v 1.30 2007/05/15 19:13:55 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -28,7 +28,7 @@ DROP TYPE [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [, ...
   <title>Description</title>
 
   <para>
-   <command>DROP TYPE</command> will remove a user-defined data type.
+   <command>DROP TYPE</command> removes a user-defined data type.
    Only the owner of a type can remove it.
   </para>
  </refsect1>

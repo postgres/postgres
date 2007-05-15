@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.151 2007/05/11 17:57:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.152 2007/05/15 19:13:54 neilc Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -3984,12 +3984,13 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_statistic</structname> stores statistical data
-   about the contents of the database.  Entries are created by
-   <command>ANALYZE</command> and subsequently used by the query planner.
-   There is one entry for each table column that has been analyzed.
-   Note that all the statistical data is inherently approximate,
-   even assuming that it is up-to-date.
+   The catalog <structname>pg_statistic</structname> stores
+   statistical data about the contents of the database.  Entries are
+   created by <xref linkend="sql-analyze" endterm="sql-analyze-title">
+   and subsequently used by the query planner.  There is one entry for
+   each table column that has been analyzed.  Note that all the
+   statistical data is inherently approximate, even assuming that it
+   is up-to-date.
   </para>
 
   <para>
