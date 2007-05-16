@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.282 2007/03/29 00:15:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.283 2007/05/16 17:28:20 alvherre Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1188,9 +1188,12 @@ index_update_stats(Relation rel, bool hasindex, bool isprimary,
  * setNewRelfilenode		- assign a new relfilenode value to the relation
  *
  * Caller must already hold exclusive lock on the relation.
+ *
+ * The relation is marked with relfrozenxid=freezeXid (InvalidTransactionId
+ * must be passed for indexes)
  */
 void
-setNewRelfilenode(Relation relation)
+setNewRelfilenode(Relation relation, TransactionId freezeXid)
 {
 	Oid			newrelfilenode;
 	RelFileNode newrnode;
@@ -1204,6 +1207,10 @@ setNewRelfilenode(Relation relation)
 		   relation->rd_rel->relkind == RELKIND_INDEX);
 	/* Can't change for shared tables or indexes */
 	Assert(!relation->rd_rel->relisshared);
+	/* Indexes must have Invalid frozenxid; other relations must not */
+	Assert((relation->rd_rel->relkind == RELKIND_INDEX &&
+			freezeXid == InvalidTransactionId) ||
+		   TransactionIdIsNormal(freezeXid));
 
 	/* Allocate a new relfilenode */
 	newrelfilenode = GetNewRelFileNode(relation->rd_rel->reltablespace,
@@ -1241,6 +1248,7 @@ setNewRelfilenode(Relation relation)
 	rd_rel->relfilenode = newrelfilenode;
 	rd_rel->relpages = 0;		/* it's empty until further notice */
 	rd_rel->reltuples = 0;
+	rd_rel->relfrozenxid = freezeXid;
 	simple_heap_update(pg_class, &tuple->t_self, tuple);
 	CatalogUpdateIndexes(pg_class, tuple);
 
@@ -1957,7 +1965,7 @@ reindex_index(Oid indexId)
 			/*
 			 * We'll build a new physical relation for the index.
 			 */
-			setNewRelfilenode(iRel);
+			setNewRelfilenode(iRel, InvalidTransactionId);
 		}
 
 		/* Initialize the index and rebuild */

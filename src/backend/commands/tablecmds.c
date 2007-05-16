@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.223 2007/05/14 20:24:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.224 2007/05/16 17:28:20 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -616,7 +616,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 		 * the relfilenode value.	The old storage file is scheduled for
 		 * deletion at commit.
 		 */
-		setNewRelfilenode(rel);
+		setNewRelfilenode(rel, RecentXmin);
 
 		heap_relid = RelationGetRelid(rel);
 		toast_relid = rel->rd_rel->reltoastrelid;
@@ -629,7 +629,7 @@ ExecuteTruncate(TruncateStmt *stmt)
 		if (OidIsValid(toast_relid))
 		{
 			rel = relation_open(toast_relid, AccessExclusiveLock);
-			setNewRelfilenode(rel);
+			setNewRelfilenode(rel, RecentXmin);
 			heap_close(rel, NoLock);
 		}
 
