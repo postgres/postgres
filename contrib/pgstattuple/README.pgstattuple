@@ -56,53 +56,6 @@ pgstattuple README			2002/08/29 Tatsuo Ishii
         avg_leaf_density   | 50.27
         leaf_fragmentation | 0
 
-    bt_metap
-    --------
-    bt_metap() returns information about the btree index metapage:
-
-        test=> SELECT * FROM bt_metap('pg_cast_oid_index');
-        -[ RECORD 1 ]-----
-        magic     | 340322
-        version   | 2
-        root      | 1
-        level     | 0
-        fastroot  | 1
-        fastlevel | 0
-
-    bt_page_stats
-    -------------
-    bt_page_stats() shows information about single btree pages:
-
-        test=> SELECT * FROM bt_page_stats('pg_cast_oid_index', 1);
-        -[ RECORD 1 ]-+-----
-        blkno         | 1
-        type          | l
-        live_items    | 256
-        dead_items    | 0
-        avg_item_size | 12
-        page_size     | 8192
-        free_size     | 4056
-        btpo_prev     | 0
-        btpo_next     | 0
-        btpo          | 0
-        btpo_flags    | 3
-
-    bt_page_items
-    -------------
-    bt_page_items() returns information about specific items on btree pages:
-
-        test=> SELECT * FROM bt_page_items('pg_cast_oid_index', 1);
-         itemoffset |  ctid   | itemlen | nulls | vars |    data
-        ------------+---------+---------+-------+------+-------------
-                  1 | (0,1)   |      12 | f     | f    | 23 27 00 00
-                  2 | (0,2)   |      12 | f     | f    | 24 27 00 00
-                  3 | (0,3)   |      12 | f     | f    | 25 27 00 00
-                  4 | (0,4)   |      12 | f     | f    | 26 27 00 00
-                  5 | (0,5)   |      12 | f     | f    | 27 27 00 00
-                  6 | (0,6)   |      12 | f     | f    | 28 27 00 00
-                  7 | (0,7)   |      12 | f     | f    | 29 27 00 00
-                  8 | (0,8)   |      12 | f     | f    | 2a 27 00 00
-
 
 2. Installing pgstattuple
 
@@ -139,6 +92,10 @@ pgstattuple README			2002/08/29 Tatsuo Ishii
 
 
 5. History
+
+    2007/05/17
+
+	Moved page-level functions to contrib/pageinspect
 
     2006/06/28
 
