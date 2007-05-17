@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for the INET and CIDR types.
  *
- *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.69 2007/04/06 04:21:43 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/network.c,v 1.70 2007/05/17 23:31:49 tgl Exp $
  *
  *	Jon Postel RIP 16 Oct 1998
  */
@@ -1142,6 +1142,8 @@ inet_client_addr(PG_FUNCTION_ARGS)
 	if (ret)
 		PG_RETURN_NULL();
 
+	clean_ipv6_addr(port->raddr.addr.ss_family, remote_host);
+
 	PG_RETURN_INET_P(network_in(remote_host, false));
 }
 
@@ -1215,6 +1217,8 @@ inet_server_addr(PG_FUNCTION_ARGS)
 							 NI_NUMERICHOST | NI_NUMERICSERV);
 	if (ret)
 		PG_RETURN_NULL();
+
+	clean_ipv6_addr(port->laddr.addr.ss_family, local_host);
 
 	PG_RETURN_INET_P(network_in(local_host, false));
 }
@@ -1478,4 +1482,33 @@ inetmi(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_INT64(res);
+}
+
+
+/*
+ * clean_ipv6_addr --- remove any '%zone' part from an IPv6 address string
+ *
+ * XXX This should go away someday!
+ *
+ * This is a kluge needed because we don't yet support zones in stored inet
+ * values.  Since the result of getnameinfo() might include a zone spec,
+ * call this to remove it anywhere we want to feed getnameinfo's output to
+ * network_in.  Beats failing entirely.
+ *
+ * An alternative approach would be to let network_in ignore %-parts for
+ * itself, but that would mean we'd silently drop zone specs in user input,
+ * which seems not such a good idea.
+ */
+void
+clean_ipv6_addr(int addr_family, char *addr)
+{
+#ifdef HAVE_IPV6
+	if (addr_family == AF_INET6)
+	{
+		char *pct = strchr(addr, '%');
+
+		if (pct)
+			*pct = '\0';
+	}
+#endif
 }
