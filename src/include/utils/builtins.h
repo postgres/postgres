@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.282.2.1 2007/01/03 22:39:35 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.282.2.2 2007/05/17 23:31:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -767,6 +767,7 @@ extern Datum inetor(PG_FUNCTION_ARGS);
 extern Datum inetpl(PG_FUNCTION_ARGS);
 extern Datum inetmi_int8(PG_FUNCTION_ARGS);
 extern Datum inetmi(PG_FUNCTION_ARGS);
+extern void clean_ipv6_addr(int addr_family, char *addr);
 
 /* mac.c */
 extern Datum macaddr_in(PG_FUNCTION_ARGS);

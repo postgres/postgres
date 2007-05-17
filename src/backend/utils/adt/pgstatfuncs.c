@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.34 2006/10/04 00:29:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.34.2.1 2007/05/17 23:31:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,6 +484,8 @@ pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS)
 							 NI_NUMERICHOST | NI_NUMERICSERV);
 	if (ret)
 		PG_RETURN_NULL();
+
+	clean_ipv6_addr(beentry->st_clientaddr.addr.ss_family, remote_host);
 
 	PG_RETURN_INET_P(DirectFunctionCall1(inet_in,
 										 CStringGetDatum(remote_host)));
