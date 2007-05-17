@@ -96,7 +96,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.4 2007/05/16 16:36:56 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.5 2007/05/17 15:28:29 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,6 +123,8 @@ typedef struct RewriteStateData
 	bool			rs_use_wal;			/* must we WAL-log inserts? */
 	TransactionId	rs_oldest_xmin;		/* oldest xmin used by caller to
 										 * determine tuple visibility */
+	TransactionId	rs_freeze_xid;		/* Xid that will be used as freeze
+										 * cutoff point */
 	MemoryContext	rs_cxt;				/* for hash tables and entries and
 										 * tuples in them */
 	HTAB		   *rs_unresolved_tups;	/* unmatched A tuples */
@@ -171,6 +173,7 @@ static void raw_heap_insert(RewriteState state, HeapTuple tup);
  *
  * new_heap		new, locked heap relation to insert tuples to
  * oldest_xmin	xid used by the caller to determine which tuples are dead
+ * freeze_xid	xid before which tuples will be frozen
  * use_wal		should the inserts to the new heap be WAL-logged?
  *
  * Returns an opaque RewriteState, allocated in current memory context,
@@ -178,7 +181,7 @@ static void raw_heap_insert(RewriteState state, HeapTuple tup);
  */
 RewriteState
 begin_heap_rewrite(Relation new_heap, TransactionId oldest_xmin,
-				   bool use_wal)
+				   TransactionId freeze_xid, bool use_wal)
 {
 	RewriteState state;
 	MemoryContext rw_cxt;
@@ -206,6 +209,7 @@ begin_heap_rewrite(Relation new_heap, TransactionId oldest_xmin,
 	state->rs_buffer_valid = false;
 	state->rs_use_wal = use_wal;
 	state->rs_oldest_xmin = oldest_xmin;
+	state->rs_freeze_xid = freeze_xid;
 	state->rs_cxt = rw_cxt;
 
 	/* Initialize hash tables used to track update chains */
@@ -292,7 +296,9 @@ end_heap_rewrite(RewriteState state)
 /*
  * Add a tuple to the new heap.
  *
- * Visibility information is copied from the original tuple.
+ * Visibility information is copied from the original tuple, except that
+ * we "freeze" very-old tuples.  Note that since we scribble on new_tuple,
+ * it had better be temp storage not a pointer to the original tuple.
  *
  * state		opaque state as returned by begin_heap_rewrite
  * old_tuple	original tuple in the old heap
@@ -322,6 +328,17 @@ rewrite_heap_tuple(RewriteState state,
 	new_tuple->t_data->t_infomask &= ~HEAP_XACT_MASK;
 	new_tuple->t_data->t_infomask |=
 		old_tuple->t_data->t_infomask & HEAP_XACT_MASK;
+
+	/*
+	 * While we have our hands on the tuple, we may as well freeze any
+	 * very-old xmin or xmax, so that future VACUUM effort can be saved.
+	 *
+	 * Note we abuse heap_freeze_tuple() a bit here, since it's expecting
+	 * to be given a pointer to a tuple in a disk buffer.  It happens
+	 * though that we can get the right things to happen by passing
+	 * InvalidBuffer for the buffer.
+	 */
+	heap_freeze_tuple(new_tuple->t_data, state->rs_freeze_xid, InvalidBuffer);
 
 	/*
 	 * Invalid ctid means that ctid should point to the tuple itself.
@@ -537,8 +554,6 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 	Size			len;
 	OffsetNumber	newoff;
 	HeapTuple		heaptup;
-
-	heap_freeze_tuple(tup->t_data, state->rs_oldest_xmin, InvalidBuffer);
 
 	/*
 	 * If the new tuple is too big for storage or contains already toasted

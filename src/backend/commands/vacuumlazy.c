@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.88 2007/04/30 03:23:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.89 2007/05/17 15:28:29 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	else
 		elevel = DEBUG2;
 
-	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,
+	vacuum_set_xid_limits(vacstmt->freeze_min_age, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);
 
 	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));

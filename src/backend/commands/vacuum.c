@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.350 2007/04/16 18:29:50 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.351 2007/05/17 15:28:29 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -566,7 +566,7 @@ get_rel_oids(List *relids, const RangeVar *vacrel, const char *stmttype)
  * vacuum_set_xid_limits() -- compute oldest-Xmin and freeze cutoff points
  */
 void
-vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
+vacuum_set_xid_limits(int freeze_min_age, bool sharedRel,
 					  TransactionId *oldestXmin,
 					  TransactionId *freezeLimit)
 {
@@ -588,12 +588,12 @@ vacuum_set_xid_limits(VacuumStmt *vacstmt, bool sharedRel,
 	Assert(TransactionIdIsNormal(*oldestXmin));
 
 	/*
-	 * Determine the minimum freeze age to use: as specified in the vacstmt,
+	 * Determine the minimum freeze age to use: as specified by the caller,
 	 * or vacuum_freeze_min_age, but in any case not more than half
 	 * autovacuum_freeze_max_age, so that autovacuums to prevent XID
 	 * wraparound won't occur too frequently.
 	 */
-	freezemin = vacstmt->freeze_min_age;
+	freezemin = freeze_min_age;
 	if (freezemin < 0)
 		freezemin = vacuum_freeze_min_age;
 	freezemin = Min(freezemin, autovacuum_freeze_max_age / 2);
@@ -1154,7 +1154,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 				i;
 	VRelStats  *vacrelstats;
 
-	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,
+	vacuum_set_xid_limits(vacstmt->freeze_min_age, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);
 
 	/*

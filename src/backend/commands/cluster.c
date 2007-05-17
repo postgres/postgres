@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.159 2007/04/08 01:26:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.160 2007/05/17 15:28:29 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 #include "catalog/namespace.h"
 #include "catalog/toasting.h"
 #include "commands/cluster.h"
+#include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "storage/procarray.h"
 #include "utils/acl.h"
@@ -657,6 +658,7 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	HeapTuple	tuple;
 	bool		use_wal;
 	TransactionId OldestXmin;
+	TransactionId FreezeXid;
 	RewriteState rwstate;
 
 	/*
@@ -688,11 +690,16 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	/* use_wal off requires rd_targblock be initially invalid */
 	Assert(NewHeap->rd_targblock == InvalidBlockNumber);
 
-	/* Get the cutoff xmin we'll use to weed out dead tuples */
-	OldestXmin = GetOldestXmin(OldHeap->rd_rel->relisshared, true);
+	/*
+	 * compute xids used to freeze and weed out dead tuples.  We use -1
+	 * freeze_min_age to avoid having CLUSTER freeze tuples earlier than
+	 * a plain VACUUM would.
+	 */
+	vacuum_set_xid_limits(-1, OldHeap->rd_rel->relisshared,
+						  &OldestXmin, &FreezeXid);
 
 	/* Initialize the rewrite operation */
-	rwstate = begin_heap_rewrite(NewHeap, OldestXmin, use_wal);
+	rwstate = begin_heap_rewrite(NewHeap, OldestXmin, FreezeXid, use_wal);
 
 	/*
 	 * Scan through the OldHeap in OldIndex order and copy each tuple into the
