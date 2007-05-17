@@ -2,7 +2,7 @@ z
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Thu May 17 18:53:18 EDT 2007
+Last updated:		Thu May 17 19:42:24 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1500,6 +1500,10 @@ Source Code
 
   http://archives.postgresql.org/pgsql-bugs/2006-12/msg00122.php
   http://archives.postgresql.org/pgsql-bugs/2007-05/msg00065.php
+
+* Support scoped IPv6 addresses
+
+  http://archives.postgresql.org/pgsql-bugs/2007-05/msg00111.php
 
 
 * Win32
