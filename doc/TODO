@@ -2,7 +2,7 @@ z
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Thu May 17 18:42:49 EDT 2007
+Last updated:		Thu May 17 18:44:01 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -78,6 +78,10 @@ Administration
 * Allow custom variable classes that can restrict who can set the values
 
   http://archives.postgresql.org/pgsql-hackers/2006-11/msg00911.php
+
+* Implement the SQL standard mechanism whereby REVOKE ROLE revokes only
+  the privilege granted by the invoking role, and not those granted
+  by other roles
 
 
 * Improve replication solutions
