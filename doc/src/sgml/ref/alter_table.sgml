@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.96 2007/03/22 15:45:56 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.97 2007/05/17 23:36:04 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -216,9 +216,9 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       The trigger firing mechanism is also affected by the configuration
       variable <xref linkend="guc-session-replication-role">. Simply ENABLEd
       triggers will fire when the replication role is <quote>origin</>
-      (the default) or <quote>local</>. Triggers configured ENABLE REPLICA 
+      (the default) or <quote>local</>. Triggers configured <literal>ENABLE REPLICA</literal>
       will only fire if the session is in <quote>replica</> mode and triggers 
-      configured ENABLE ALWAYS will fire regardless of the current replication 
+      configured <literal>ENABLE ALWAYS</literal> will fire regardless of the current replication 
       mode.
      </para>
     </listitem>
@@ -231,7 +231,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
       These forms configure the firing of rewrite rules belonging to the table.
       A disabled rule is still known to the system, but is not applied
       during query rewriting. The semantics are as for disabled/enabled
-      triggers. This configuration is ignored for ON SELECT rules, which
+      triggers. This configuration is ignored for <literal>ON SELECT</literal> rules, which
       are always applied in order to keep views working even if the current
       session is in a non-default replication role.
      </para>
