@@ -95,7 +95,7 @@ pgstattuple README			2002/08/29 Tatsuo Ishii
 
     2007/05/17
 
-	Moved page-level functions to contrib/pageinspect
+	Moved page-level functions to contrib/pageinspect.
 
     2006/06/28
 
