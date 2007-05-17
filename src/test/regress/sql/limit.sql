@@ -30,3 +30,12 @@ SELECT ''::text AS five, unique1, unique2, stringu1
 SELECT ''::text AS five, unique1, unique2, stringu1 
 		FROM onek
 		ORDER BY unique1 LIMIT 5 OFFSET 900;
+
+-- Stress test for variable LIMIT in conjunction with bounded-heap sorting
+
+SELECT
+  (SELECT n
+     FROM (VALUES (1)) AS x,
+          (SELECT n FROM generate_series(1,10) AS n
+             ORDER BY n LIMIT 1 OFFSET s-1) AS y) AS z
+  FROM generate_series(1,10) AS s;

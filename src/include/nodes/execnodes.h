@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.173 2007/05/04 01:13:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.174 2007/05/17 19:35:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1416,6 +1416,7 @@ typedef struct SetOpState
 typedef enum
 {
 	LIMIT_INITIAL,				/* initial state for LIMIT node */
+	LIMIT_RESCAN,				/* rescan after recomputing parameters */
 	LIMIT_EMPTY,				/* there are no returnable rows */
 	LIMIT_INWINDOW,				/* have returned a row in the window */
 	LIMIT_SUBPLANEOF,			/* at EOF of subplan (within window) */

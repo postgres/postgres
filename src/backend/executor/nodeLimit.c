@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.30 2007/05/04 01:13:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeLimit.c,v 1.31 2007/05/17 19:35:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,17 +55,22 @@ ExecLimit(LimitState *node)
 		case LIMIT_INITIAL:
 
 			/*
+			 * First call for this node, so compute limit/offset. (We can't do
+			 * this any earlier, because parameters from upper nodes will not
+			 * be set during ExecInitLimit.)  This also sets position = 0
+			 * and changes the state to LIMIT_RESCAN.
+			 */
+			recompute_limits(node);
+
+			/* FALL THRU */
+
+		case LIMIT_RESCAN:
+
+			/*
 			 * If backwards scan, just return NULL without changing state.
 			 */
 			if (!ScanDirectionIsForward(direction))
 				return NULL;
-
-			/*
-			 * First call for this scan, so compute limit/offset. (We can't do
-			 * this any earlier, because parameters from upper nodes may not
-			 * be set until now.)  This also sets position = 0.
-			 */
-			recompute_limits(node);
 
 			/*
 			 * Check for empty window; if so, treat like empty subplan.
@@ -217,7 +222,7 @@ ExecLimit(LimitState *node)
 }
 
 /*
- * Evaluate the limit/offset expressions --- done at start of each scan.
+ * Evaluate the limit/offset expressions --- done at startup or rescan.
  *
  * This is also a handy place to reset the current-position state info.
  */
@@ -280,6 +285,9 @@ recompute_limits(LimitState *node)
 	/* Reset position to start-of-scan */
 	node->position = 0;
 	node->subSlot = NULL;
+
+	/* Set state-machine state */
+	node->lstate = LIMIT_RESCAN;
 
 	/*
 	 * If we have a COUNT, and our input is a Sort node, notify it that it can
@@ -403,8 +411,12 @@ ExecEndLimit(LimitState *node)
 void
 ExecReScanLimit(LimitState *node, ExprContext *exprCtxt)
 {
-	/* resetting lstate will force offset/limit recalculation */
-	node->lstate = LIMIT_INITIAL;
+	/*
+	 * Recompute limit/offset in case parameters changed, and reset the
+	 * state machine.  We must do this before rescanning our child node,
+	 * in case it's a Sort that we are passing the parameters down to.
+	 */
+	recompute_limits(node);
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.88 2007/04/26 23:24:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.89 2007/05/17 19:35:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,6 +242,9 @@ ExecScanSubPlan(SubPlanState *node,
 		planstate->chgParam = bms_add_member(planstate->chgParam, paramid);
 	}
 
+	/*
+	 * Now that we've set up its parameters, we can reset the subplan.
+	 */
 	ExecReScan(planstate, NULL);
 
 	/*
@@ -901,6 +904,10 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		subLinkType == ALL_SUBLINK)
 		elog(ERROR, "ANY/ALL subselect unsupported as initplan");
 
+	/*
+	 * By definition, an initplan has no parameters from our query level,
+	 * but it could have some from an outer level.  Rescan it if needed.
+	 */
 	if (planstate->chgParam != NULL)
 		ExecReScan(planstate, NULL);
 
