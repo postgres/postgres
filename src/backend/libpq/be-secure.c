@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.43.2.3 2006/05/12 22:44:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.43.2.4 2007/05/18 01:20:48 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -269,15 +269,9 @@ rloop:
 			case SSL_ERROR_WANT_WRITE:
 				goto rloop;
 			case SSL_ERROR_SYSCALL:
-				if (n == -1)
-					ereport(COMMERROR,
-							(errcode_for_socket_access(),
-							 errmsg("SSL SYSCALL error: %m")));
-				else
+				/* leave it to caller to ereport the value of errno */
+				if (n != -1)
 				{
-					ereport(COMMERROR,
-							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("SSL SYSCALL error: EOF detected")));
 					errno = ECONNRESET;
 					n = -1;
 				}
@@ -360,15 +354,9 @@ wloop:
 			case SSL_ERROR_WANT_WRITE:
 				goto wloop;
 			case SSL_ERROR_SYSCALL:
-				if (n == -1)
-					ereport(COMMERROR,
-							(errcode_for_socket_access(),
-							 errmsg("SSL SYSCALL error: %m")));
-				else
+				/* leave it to caller to ereport the value of errno */
+				if (n != -1)
 				{
-					ereport(COMMERROR,
-							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("SSL SYSCALL error: EOF detected")));
 					errno = ECONNRESET;
 					n = -1;
 				}
