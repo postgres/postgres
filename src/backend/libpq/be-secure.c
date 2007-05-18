@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.79 2007/02/16 17:06:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/be-secure.c,v 1.80 2007/05/18 01:20:16 tgl Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -287,15 +287,9 @@ rloop:
 #endif
 				goto rloop;
 			case SSL_ERROR_SYSCALL:
-				if (n == -1)
-					ereport(COMMERROR,
-							(errcode_for_socket_access(),
-							 errmsg("SSL SYSCALL error: %m")));
-				else
+				/* leave it to caller to ereport the value of errno */
+				if (n != -1)
 				{
-					ereport(COMMERROR,
-							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("SSL SYSCALL error: EOF detected")));
 					errno = ECONNRESET;
 					n = -1;
 				}
@@ -387,15 +381,9 @@ wloop:
 #endif
 				goto wloop;
 			case SSL_ERROR_SYSCALL:
-				if (n == -1)
-					ereport(COMMERROR,
-							(errcode_for_socket_access(),
-							 errmsg("SSL SYSCALL error: %m")));
-				else
+				/* leave it to caller to ereport the value of errno */
+				if (n != -1)
 				{
-					ereport(COMMERROR,
-							(errcode(ERRCODE_PROTOCOL_VIOLATION),
-							 errmsg("SSL SYSCALL error: EOF detected")));
 					errno = ECONNRESET;
 					n = -1;
 				}
