@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.160 2007/05/17 15:28:29 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.161 2007/05/18 23:19:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ typedef struct
 
 static void cluster_rel(RelToCluster *rv, bool recheck);
 static void rebuild_relation(Relation OldHeap, Oid indexOid);
-static void copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
+static TransactionId copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
 static List *get_tables_to_cluster(MemoryContext cluster_context);
 
 
@@ -513,6 +513,7 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	Oid			tableSpace = OldHeap->rd_rel->reltablespace;
 	Oid			OIDNewHeap;
 	char		NewHeapName[NAMEDATALEN];
+	TransactionId frozenXid;
 	ObjectAddress object;
 
 	/* Mark the correct index as clustered */
@@ -539,13 +540,13 @@ rebuild_relation(Relation OldHeap, Oid indexOid)
 	/*
 	 * Copy the heap data into the new table in the desired order.
 	 */
-	copy_heap_data(OIDNewHeap, tableOid, indexOid);
+	frozenXid = copy_heap_data(OIDNewHeap, tableOid, indexOid);
 
 	/* To make the new heap's data visible (probably not needed?). */
 	CommandCounterIncrement();
 
 	/* Swap the physical files of the old and new heaps. */
-	swap_relation_files(tableOid, OIDNewHeap);
+	swap_relation_files(tableOid, OIDNewHeap, frozenXid);
 
 	CommandCounterIncrement();
 
@@ -641,9 +642,10 @@ make_new_heap(Oid OIDOldHeap, const char *NewName, Oid NewTableSpace)
 }
 
 /*
- * Do the physical copying of heap data.
+ * Do the physical copying of heap data.  Returns the TransactionId used as
+ * freeze cutoff point for the tuples.
  */
-static void
+static TransactionId
 copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 {
 	Relation	NewHeap,
@@ -816,6 +818,8 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
 	index_close(OldIndex, NoLock);
 	heap_close(OldHeap, NoLock);
 	heap_close(NewHeap, NoLock);
+
+	return FreezeXid;
 }
 
 /*
@@ -826,9 +830,16 @@ copy_heap_data(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex)
  *
  * Also swap any TOAST links, so that the toast data moves along with
  * the main-table data.
+ *
+ * Additionally, the first relation is marked with relfrozenxid set to
+ * frozenXid.  It seems a bit ugly to have this here, but all callers would
+ * have to do it anyway, so having it here saves a heap_update.  Note: the
+ * TOAST table needs no special handling, because since we swapped the links,
+ * the entry for the TOAST table will now contain RecentXmin in relfrozenxid,
+ * which is the correct value.
  */
 void
-swap_relation_files(Oid r1, Oid r2)
+swap_relation_files(Oid r1, Oid r2, TransactionId frozenXid)
 {
 	Relation	relRelation;
 	HeapTuple	reltup1,
@@ -871,6 +882,10 @@ swap_relation_files(Oid r1, Oid r2)
 	relform2->reltoastrelid = swaptemp;
 
 	/* we should not swap reltoastidxid */
+
+	/* set rel1's frozen Xid */
+	Assert(TransactionIdIsNormal(frozenXid));
+	relform1->relfrozenxid = frozenXid;
 
 	/* swap size statistics too, since new rel has freshly-updated stats */
 	{

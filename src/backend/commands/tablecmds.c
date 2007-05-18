@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.224 2007/05/16 17:28:20 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.225 2007/05/18 23:19:41 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2285,8 +2285,13 @@ ATRewriteTables(List **wqueue)
 			 */
 			ATRewriteTable(tab, OIDNewHeap);
 
-			/* Swap the physical files of the old and new heaps. */
-			swap_relation_files(tab->relid, OIDNewHeap);
+			/*
+			 * Swap the physical files of the old and new heaps.  Since we are
+			 * generating a new heap, we can use RecentXmin for the table's new
+			 * relfrozenxid because we rewrote all the tuples on
+			 * ATRewriteTable, so no older Xid remains on the table.
+			 */
+			swap_relation_files(tab->relid, OIDNewHeap, RecentXmin);
 
 			CommandCounterIncrement();
 
