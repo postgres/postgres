@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.81.2.2 2006/12/15 16:50:10 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.81.2.3 2007/05/18 09:43:15 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -137,16 +137,14 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 # need to distinguish the path we're taking.
 
 %.tex-ps: %.sgml $(ALLSGML) stylesheet.dsl
-	# multiple runs are necessary to create proper index entries
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texdvi-output -o $@ $<
 
 %.tex-pdf: %.sgml $(ALLSGML) stylesheet.dsl
-	# multiple runs are necessary to create proper index entries
 	$(JADE) $(JADEFLAGS) $(SGMLINCLUDE) $(CATALOG) -d stylesheet.dsl -t tex -V tex-backend -i output-print -V texpdf-output -o $@ $<
 
 %.dvi: %.tex-ps
 	@rm -f $*.aux $*.log
-	# multiple runs are necessary to create proper intra-document links
+# multiple runs are necessary to create proper intra-document links
 	jadetex $<
 	jadetex $<
 	jadetex $<
@@ -157,7 +155,7 @@ features-unsupported.sgml: $(top_srcdir)/src/backend/catalog/sql_feature_package
 
 %.pdf: %.tex-pdf
 	@rm -f $*.aux $*.log $*.out
-	# multiple runs are necessary to create proper intra-document links
+# multiple runs are necessary to create proper intra-document links
 	pdfjadetex $<
 	pdfjadetex $<
 	pdfjadetex $<
