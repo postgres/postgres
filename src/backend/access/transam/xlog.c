@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.268 2007/04/30 21:01:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.269 2007/05/20 21:08:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -782,6 +782,19 @@ begin:;
 			rdt->next = NULL;
 		}
 	}
+
+	/*
+	 * If we backed up any full blocks and online backup is not in progress,
+	 * mark the backup blocks as removable.  This allows the WAL archiver to
+	 * know whether it is safe to compress archived WAL data by transforming
+	 * full-block records into the non-full-block format.
+	 *
+	 * Note: we could just set the flag whenever !forcePageWrites, but
+	 * defining it like this leaves the info bit free for some potential
+	 * other use in records without any backup blocks.
+	 */
+	if ((info & XLR_BKP_BLOCK_MASK) && !Insert->forcePageWrites)
+		info |= XLR_BKP_REMOVABLE;
 
 	/*
 	 * If there isn't enough space on the current XLOG page for a record
@@ -5868,6 +5881,10 @@ xlog_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		RecoveryRestartPoint(&checkPoint);
 	}
+	else if (info == XLOG_NOOP)
+	{
+		/* nothing to do here */
+	}
 	else if (info == XLOG_SWITCH)
 	{
 		/* nothing to do here */
@@ -5893,6 +5910,10 @@ xlog_desc(StringInfo buf, uint8 xl_info, char *rec)
 						 checkpoint->nextMulti,
 						 checkpoint->nextMultiOffset,
 				 (info == XLOG_CHECKPOINT_SHUTDOWN) ? "shutdown" : "online");
+	}
+	else if (info == XLOG_NOOP)
+	{
+		appendStringInfo(buf, "xlog no-op");
 	}
 	else if (info == XLOG_NEXTOID)
 	{

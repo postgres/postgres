@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.43 2007/04/11 20:47:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.44 2007/05/20 21:08:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,14 +292,17 @@ btree_xlog_split(bool onleft, bool isroot,
 	}
 
 	/* Extract newitem and newitemoff, if present */
-	if (onleft && !(record->xl_info & XLR_BKP_BLOCK_1))
+	if (onleft)
 	{
-		IndexTupleData itupdata;
-
 		/* Extract the offset (still assuming 16-bit alignment) */
 		memcpy(&newitemoff, datapos, sizeof(OffsetNumber));
 		datapos += sizeof(OffsetNumber);
 		datalen -= sizeof(OffsetNumber);
+	}
+
+	if (onleft && !(record->xl_info & XLR_BKP_BLOCK_1))
+	{
+		IndexTupleData itupdata;
 
 		/*
 		 * We need to copy the tuple header to apply IndexTupleDSize, because

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.156 2007/04/11 20:47:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.157 2007/05/20 21:08:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1034,21 +1034,23 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		 * Log the new item and its offset, if it was inserted on the left
 		 * page. (If it was put on the right page, we don't need to explicitly
 		 * WAL log it because it's included with all the other items on the
-		 * right page.) Show these as belonging to the left page buffer,
-		 * so that they are not stored if XLogInsert decides it needs a
-		 * full-page image of the left page.
+		 * right page.) Show the new item as belonging to the left page buffer,
+		 * so that it is not stored if XLogInsert decides it needs a full-page
+		 * image of the left page.  We store the offset anyway, though, to
+		 * support archive compression of these records.
 		 */
 		if (newitemonleft)
 		{
 			lastrdata->next = lastrdata + 1;
 			lastrdata++;
+
 			lastrdata->data = (char *) &newitemoff;
 			lastrdata->len = sizeof(OffsetNumber);
-			lastrdata->buffer = buf;		/* backup block 1 */
-			lastrdata->buffer_std = true;
+			lastrdata->buffer = InvalidBuffer;
 
 			lastrdata->next = lastrdata + 1;
 			lastrdata++;
+
 			lastrdata->data = (char *) newitem;
 			lastrdata->len = MAXALIGN(newitemsz);
 			lastrdata->buffer = buf;		/* backup block 1 */
@@ -1064,6 +1066,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 			 */
 			lastrdata->next = lastrdata + 1;
 			lastrdata++;
+
 			lastrdata->data = NULL;
 			lastrdata->len = 0;
 			lastrdata->buffer = buf;		/* backup block 1 */
