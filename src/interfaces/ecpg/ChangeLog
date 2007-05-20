@@ -2196,6 +2196,6 @@ Thu, 10 May 09:42:42 CEST 2007
 	
 Th, 17 May 2007 22:03:40 +0200
 
-	- Removed mktime() call to hopefully get rid of some compatiility
+	- Removed mktime() call to hopefully get rid of some compatibility
 	  problems.
 	- Set ecpg version to 4.3.1.

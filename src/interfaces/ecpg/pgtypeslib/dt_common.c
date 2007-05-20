@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.37 2007/02/19 17:41:39 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.38 2007/05/20 11:30:30 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -2538,7 +2538,9 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			if (fmask & DTK_M(DTZMOD))
 				return -1;
 
-			*tzp = DetermineLocalTimeZone(tm);
+			/* test to see if this is the reason for the error on Vista
+			 * doesn't seem to be used anyway
+			 * *tzp = DetermineLocalTimeZone(tm); */
 		}
 	}
 
