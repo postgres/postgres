@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.38 2007/05/20 11:30:30 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.39 2007/05/21 07:04:00 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -2528,20 +2528,12 @@ DecodeDateTime(char **field, int *ftype, int nf,
 		if (tm->tm_mday < 1 || tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 			return -1;
 
-		/* timezone not specified? then find local timezone if possible */
-		if ((fmask & DTK_DATE_M) == DTK_DATE_M && tzp != NULL && !(fmask & DTK_M(TZ)))
-		{
-			/*
-			 * daylight savings time modifier but no standard timezone? then
-			 * error
-			 */
-			if (fmask & DTK_M(DTZMOD))
+		/* backend tried to find local timezone here 
+		 * but we don't use the result afterwards anyway
+		 * so we only check for this error:
+		 * daylight savings time modifier but no standard timezone? */
+		if ((fmask & DTK_DATE_M) == DTK_DATE_M && tzp != NULL && !(fmask & DTK_M(TZ)) && (fmask & DTK_M(DTZMOD)))
 				return -1;
-
-			/* test to see if this is the reason for the error on Vista
-			 * doesn't seem to be used anyway
-			 * *tzp = DetermineLocalTimeZone(tm); */
-		}
 	}
 
 	return 0;
