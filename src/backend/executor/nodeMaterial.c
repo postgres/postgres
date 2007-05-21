@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.58 2007/01/05 22:19:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMaterial.c,v 1.59 2007/05/21 17:57:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,10 +56,10 @@ ExecMaterial(MaterialState *node)
 	/*
 	 * If first time through, and we need a tuplestore, initialize it.
 	 */
-	if (tuplestorestate == NULL && node->randomAccess)
+	if (tuplestorestate == NULL && node->eflags != 0)
 	{
 		tuplestorestate = tuplestore_begin_heap(true, false, work_mem);
-
+		tuplestore_set_eflags(tuplestorestate, node->eflags);
 		node->tuplestorestate = (void *) tuplestorestate;
 	}
 
@@ -162,14 +162,14 @@ ExecInitMaterial(Material *node, EState *estate, int eflags)
 	matstate->ss.ps.state = estate;
 
 	/*
-	 * We must have random access to the subplan output to do backward scan or
-	 * mark/restore.  We also prefer to materialize the subplan output if we
-	 * might be called on to rewind and replay it many times. However, if none
-	 * of these cases apply, we can skip storing the data.
+	 * We must have a tuplestore buffering the subplan output to do backward
+	 * scan or mark/restore.  We also prefer to materialize the subplan output
+	 * if we might be called on to rewind and replay it many times. However,
+	 * if none of these cases apply, we can skip storing the data.
 	 */
-	matstate->randomAccess = (eflags & (EXEC_FLAG_REWIND |
-										EXEC_FLAG_BACKWARD |
-										EXEC_FLAG_MARK)) != 0;
+	matstate->eflags = (eflags & (EXEC_FLAG_REWIND |
+								  EXEC_FLAG_BACKWARD |
+								  EXEC_FLAG_MARK));
 
 	matstate->eof_underlying = false;
 	matstate->tuplestorestate = NULL;
@@ -255,7 +255,7 @@ ExecEndMaterial(MaterialState *node)
 void
 ExecMaterialMarkPos(MaterialState *node)
 {
-	Assert(node->randomAccess);
+	Assert(node->eflags & EXEC_FLAG_MARK);
 
 	/*
 	 * if we haven't materialized yet, just return.
@@ -275,7 +275,7 @@ ExecMaterialMarkPos(MaterialState *node)
 void
 ExecMaterialRestrPos(MaterialState *node)
 {
-	Assert(node->randomAccess);
+	Assert(node->eflags & EXEC_FLAG_MARK);
 
 	/*
 	 * if we haven't materialized yet, just return.
@@ -300,7 +300,7 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 {
 	ExecClearTuple(node->ss.ps.ps_ResultTupleSlot);
 
-	if (node->randomAccess)
+	if (node->eflags != 0)
 	{
 		/*
 		 * If we haven't materialized yet, just return. If outerplan' chgParam
@@ -312,15 +312,21 @@ ExecMaterialReScan(MaterialState *node, ExprContext *exprCtxt)
 
 		/*
 		 * If subnode is to be rescanned then we forget previous stored
-		 * results; we have to re-read the subplan and re-store.
+		 * results; we have to re-read the subplan and re-store.  Also,
+		 * if we told tuplestore it needn't support rescan, we lose and
+		 * must re-read.  (This last should not happen in common cases;
+		 * else our caller lied by not passing EXEC_FLAG_REWIND to us.)
 		 *
 		 * Otherwise we can just rewind and rescan the stored output. The
 		 * state of the subnode does not change.
 		 */
-		if (((PlanState *) node)->lefttree->chgParam != NULL)
+		if (((PlanState *) node)->lefttree->chgParam != NULL ||
+			(node->eflags & EXEC_FLAG_REWIND) == 0)
 		{
 			tuplestore_end((Tuplestorestate *) node->tuplestorestate);
 			node->tuplestorestate = NULL;
+			if (((PlanState *) node)->lefttree->chgParam == NULL)
+				ExecReScan(((PlanState *) node)->lefttree, exprCtxt);
 			node->eof_underlying = false;
 		}
 		else

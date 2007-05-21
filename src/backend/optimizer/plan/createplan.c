@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.230 2007/05/04 01:13:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.231 2007/05/21 17:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1599,6 +1599,30 @@ create_mergejoin_plan(PlannerInfo *root,
 	}
 	else
 		innerpathkeys = best_path->jpath.innerjoinpath->pathkeys;
+
+	/*
+	 * If inner plan is a sort that is expected to spill to disk, add a
+	 * materialize node to shield it from the need to handle mark/restore.
+	 * This will allow it to perform the last merge pass on-the-fly, while
+	 * in most cases not requiring the materialize to spill to disk.
+	 *
+	 * XXX really, Sort oughta do this for itself, probably, to avoid the
+	 * overhead of a separate plan node.
+	 */
+	if (IsA(inner_plan, Sort) &&
+		sort_exceeds_work_mem((Sort *) inner_plan))
+	{
+		Plan	   *matplan = (Plan *) make_material(inner_plan);
+
+		/*
+		 * We assume the materialize will not spill to disk, and therefore
+		 * charge just cpu_tuple_cost per tuple.
+		 */
+		copy_plan_costsize(matplan, inner_plan);
+		matplan->total_cost += cpu_tuple_cost * matplan->plan_rows;
+
+		inner_plan = matplan;
+	}
 
 	/*
 	 * Compute the opfamily/strategy/nullsfirst arrays needed by the executor.

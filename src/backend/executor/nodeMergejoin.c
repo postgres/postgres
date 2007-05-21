@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.87 2007/02/02 00:07:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.88 2007/05/21 17:57:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -706,6 +706,9 @@ ExecMergeJoin(MergeJoinState *node)
 				}
 				else
 				{
+					/* Mark before advancing, if wanted */
+					if (node->mj_ExtraMarks)
+						ExecMarkPos(innerPlan);
 					/* Stay in same state to fetch next inner tuple */
 					if (doFillInner)
 					{
@@ -830,6 +833,9 @@ ExecMergeJoin(MergeJoinState *node)
 				 * now we get the next inner tuple, if any.  If there's none,
 				 * advance to next outer tuple (which may be able to join to
 				 * previously marked tuples).
+				 *
+				 * NB: must NOT do "extraMarks" here, since we may need to
+				 * return to previously marked tuples.
 				 */
 				innerTupleSlot = ExecProcNode(innerPlan);
 				node->mj_InnerTupleSlot = innerTupleSlot;
@@ -1140,6 +1146,9 @@ ExecMergeJoin(MergeJoinState *node)
 				break;
 
 				/*
+				 * SKIPOUTER_ADVANCE: advance over an outer tuple that is
+				 * known not to join to any inner tuple.
+				 *
 				 * Before advancing, we check to see if we must emit an
 				 * outer-join fill tuple for this outer tuple.
 				 */
@@ -1204,6 +1213,9 @@ ExecMergeJoin(MergeJoinState *node)
 				break;
 
 				/*
+				 * SKIPINNER_ADVANCE: advance over an inner tuple that is
+				 * known not to join to any outer tuple.
+				 *
 				 * Before advancing, we check to see if we must emit an
 				 * outer-join fill tuple for this inner tuple.
 				 */
@@ -1224,6 +1236,10 @@ ExecMergeJoin(MergeJoinState *node)
 					if (result)
 						return result;
 				}
+
+				/* Mark before advancing, if wanted */
+				if (node->mj_ExtraMarks)
+					ExecMarkPos(innerPlan);
 
 				/*
 				 * now we get the next inner tuple, if any
@@ -1294,6 +1310,10 @@ ExecMergeJoin(MergeJoinState *node)
 					if (result)
 						return result;
 				}
+
+				/* Mark before advancing, if wanted */
+				if (node->mj_ExtraMarks)
+					ExecMarkPos(innerPlan);
 
 				/*
 				 * now we get the next inner tuple, if any
@@ -1424,6 +1444,22 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate, int eflags)
 	outerPlanState(mergestate) = ExecInitNode(outerPlan(node), estate, eflags);
 	innerPlanState(mergestate) = ExecInitNode(innerPlan(node), estate,
 											  eflags | EXEC_FLAG_MARK);
+
+	/*
+	 * For certain types of inner child nodes, it is advantageous to issue
+	 * MARK every time we advance past an inner tuple we will never return
+	 * to.  For other types, MARK on a tuple we cannot return to is a waste
+	 * of cycles.  Detect which case applies and set mj_ExtraMarks if we
+	 * want to issue "unnecessary" MARK calls.
+	 *
+	 * Currently, only Material wants the extra MARKs, and it will be helpful
+	 * only if eflags doesn't specify REWIND.
+	 */
+	if (IsA(innerPlan(node), Material) &&
+		(eflags & EXEC_FLAG_REWIND) == 0)
+		mergestate->mj_ExtraMarks = true;
+	else
+		mergestate->mj_ExtraMarks = false;
 
 #define MERGEJOIN_NSLOTS 4
 

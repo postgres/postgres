@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.182 2007/05/04 01:13:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.183 2007/05/21 17:57:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1036,6 +1036,23 @@ cost_sort(Path *path, PlannerInfo *root,
 
 	path->startup_cost = startup_cost;
 	path->total_cost = startup_cost + run_cost;
+}
+
+/*
+ * sort_exceeds_work_mem
+ *	  Given a finished Sort plan node, detect whether it is expected to
+ *	  spill to disk (ie, will need more than work_mem workspace)
+ *
+ * This assumes there will be no available LIMIT.
+ */
+bool
+sort_exceeds_work_mem(Sort *sort)
+{
+	double		input_bytes = relation_byte_size(sort->plan.plan_rows,
+												 sort->plan.plan_width);
+	long		work_mem_bytes = work_mem * 1024L;
+
+	return (input_bytes > work_mem_bytes);
 }
 
 /*
