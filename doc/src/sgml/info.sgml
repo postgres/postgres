@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/info.sgml,v 1.23 2005/04/09 03:52:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/info.sgml,v 1.23.2.1 2007/05/21 15:09:46 petere Exp $
 -->
 
 <sect1 id="resources">
@@ -14,7 +14,7 @@ $PostgreSQL: pgsql/doc/src/sgml/info.sgml,v 1.23 2005/04/09 03:52:43 momjian Exp
     <term>FAQs</term>
     <listitem>
      <para>
-      The FAQ list <indexterm><primary>FAQ-Liste</></> contains
+      The FAQ list <indexterm><primary>FAQ</></> contains
       continuously updated answers to frequently asked questions.
      </para>
     </listitem>
