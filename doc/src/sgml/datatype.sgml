@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.200 2007/05/08 17:02:59 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.201 2007/05/21 17:10:28 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3213,7 +3213,7 @@ SELECT * FROM test;
   <sect1 id="datatype-uuid">
    <title><acronym>UUID</acronym> Type</title>
 
-   <indexterm zone="datatype-xml">
+   <indexterm zone="datatype-uuid">
     <primary>UUID</primary>
    </indexterm>
 
@@ -3289,6 +3289,8 @@ a0eebc999c0b4ef8bb6d6bb9bd380a11
     value is a full document or only a content fragment.
    </para>
 
+   <sect2>
+    <title>Creating XML Values</title>
    <para>
     To produce a value of type <type>xml</type> from character data,
     use the function
@@ -3299,7 +3301,7 @@ XMLPARSE ( { DOCUMENT | CONTENT } <replaceable>value</replaceable>)
     Examples:
 <programlisting><![CDATA[
 XMLPARSE (DOCUMENT '<?xml version="1.0"?><book><title>Manual</title><chapter>...</chapter><book>')
-XMLPARSE (CONTENT 'abc<foo>bar</bar><bar>foo</foo>')
+XMLPARSE (CONTENT 'abc<foo>bar</foo><bar>foo</bar>')
 ]]></programlisting>
     While this is the only way to convert character strings into XML
     values according to the SQL standard, the PostgreSQL-specific
@@ -3351,7 +3353,10 @@ SET xmloption TO { DOCUMENT | CONTENT };
     The default is <literal>CONTENT</literal>, so all forms of XML
     data are allowed.
    </para>
+   </sect2>
 
+   <sect2>
+    <title>Encoding Handling</title>
    <para>
     Care must be taken when dealing with multiple character encodings
     on the client, server, and in the XML data passed through them.
@@ -3398,6 +3403,41 @@ SET xmloption TO { DOCUMENT | CONTENT };
     processed in UTF-8, computations will be most efficient if the
     server encoding is also UTF-8.
    </para>
+   </sect2>
+
+   <sect2>
+   <title>Accessing XML Values</title>
+
+   <para>
+    The <type>xml</type> data type is unusual in that it does not
+    provide any comparison operators.  This is because there is no
+    well-defined and universally useful comparison algorithm for XML
+    data.  One consequence of this is that you cannot retrieve rows by
+    comparing an <type>xml</type> column against a search value.  XML
+    values should therefore typically be accompanied by a separate key
+    field such as an ID.  An alternative solution for comparing XML
+    values is to convert them to character strings first, but note
+    that character string comparison has little to do with a useful
+    XML comparison method.
+   </para>
+
+   <para>
+    Since there are no comparison operators for the <type>xml</type>
+    data type, it is not possible to create an index directly on a
+    column of this type.  If speedy searches in XML data are desired,
+    possible workarounds would be casting the expression to a
+    character string type and indexing that, or indexing an XPath
+    expression.  The actual query would of course have to be adjusted
+    to search by the indexed expression.
+   </para>
+
+   <para>
+    The full-text search module Tsearch2 could also be used to speed
+    up full-document searches in XML data.  The necessary
+    preprocessing support is, however, not available in the PostgreSQL
+    distribution in this release.
+   </para>
+   </sect2>
   </sect1>
 
   &array;

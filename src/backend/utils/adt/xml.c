@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.42 2007/04/06 04:21:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.43 2007/05/21 17:10:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2991,90 +2991,94 @@ xml_xmlnodetoxmltype(xmlNodePtr cur)
 }
 #endif
 
+
 /*
  * Evaluate XPath expression and return array of XML values.
  * As we have no support of XQuery sequences yet, this functions seems
  * to be the most useful one (array of XML functions plays a role of
  * some kind of substritution for XQuery sequences).
-
+ *
  * Workaround here: we parse XML data in different way to allow XPath for
  * fragments (see "XPath for fragment" TODO comment inside).
  */
 Datum
-xmlpath(PG_FUNCTION_ARGS)
+xpath(PG_FUNCTION_ARGS)
 {
 #ifdef USE_LIBXML
-	ArrayBuildState		*astate = NULL;
+	text	   *xpath_expr_text = PG_GETARG_TEXT_P(0);
+	xmltype	   *data = PG_GETARG_XML_P(1);
+	ArrayType  *namespaces = PG_GETARG_ARRAYTYPE_P(2);
+
+	ArrayBuildState	   *astate = NULL;
 	xmlParserCtxtPtr	ctxt = NULL;
 	xmlDocPtr			doc = NULL;
 	xmlXPathContextPtr	xpathctx = NULL;
 	xmlXPathCompExprPtr	xpathcomp = NULL;
 	xmlXPathObjectPtr	xpathobj = NULL;
-	int32				len, xpath_len;
-	xmlChar				*string, *xpath_expr;
-	bool				res_is_null = FALSE;
-	int					i;
-	xmltype				*data;
-	text				*xpath_expr_text;
-	ArrayType			*namespaces;
-	int					*dims, ndims, ns_count = 0, bitmask = 1;
-	char				*ptr;
-	bits8				*bitmap;
-	char				**ns_names = NULL, **ns_uris = NULL;
-	int16				typlen;
-	bool				typbyval;
-	char				typalign;
-	
-	/* the function is not strict, we must check first two args */
-	if (PG_ARGISNULL(0) || PG_ARGISNULL(1))
-		PG_RETURN_NULL();
-	
-	xpath_expr_text = PG_GETARG_TEXT_P(0);
-	data  = PG_GETARG_XML_P(1);
-	
-	/* Namespace mappings passed as text[].
-	 * Assume that 2-dimensional array has been passed, 
-	 * the 1st subarray is array of names, the 2nd -- array of URIs,
-	 * example: ARRAY[ARRAY['myns', 'myns2'], ARRAY['http://example.com', 'http://example2.com']]. 
+	int32		len;
+	int32		xpath_len;
+	xmlChar	   *string;
+	xmlChar	   *xpath_expr;
+	int			i;
+	int			res_nitems;
+	int			ndim;
+	int			ns_count;
+	char	  **ns_names;
+	char	  **ns_uris;
+
+	/*
+	 * Namespace mappings are passed as text[].  If an empty array is
+	 * passed (ndim = 0, "0-dimentional"), then there are no namespace
+	 * mappings.  Else, a 2-dimentional array with length of the
+	 * second axis being equal to 2 should be passed, i.e., every
+	 * subarray contains 2 elements, the first element defining the
+	 * name, the second one the URI.  Example: ARRAY[ARRAY['myns',
+	 * 'http://example.com'], ARRAY['myns2', 'http://example2.com']].
 	 */
-	if (!PG_ARGISNULL(2))
+	ndim = ARR_NDIM(namespaces);
+	if (ndim != 0)
 	{
-		namespaces = PG_GETARG_ARRAYTYPE_P(2);
-		ndims = ARR_NDIM(namespaces);
+		bits8	   *bitmap;
+		int			bitmask;
+		int16		typlen;
+		bool		typbyval;
+		char		typalign;
+		char	   *ptr;
+		int		   *dims;
+
 		dims = ARR_DIMS(namespaces);
-		
-		/* Sanity check */
-		if (ndims != 2)
-			ereport(ERROR, (errmsg("invalid array passed for namespace mappings"),
-							errdetail("Only 2-dimensional array may be used for namespace mappings.")));
-		
+
+		if (ndim != 2 || dims[1] != 2)
+			ereport(ERROR, (errmsg("invalid array for XML namespace mapping"),
+							errdetail("The array must be two-dimensional with length of the second axis equal to 2."),
+							errcode(ERRCODE_DATA_EXCEPTION)));
+
 		Assert(ARR_ELEMTYPE(namespaces) == TEXTOID);
-		
-		ns_count = ArrayGetNItems(ndims, dims) / 2;
+
+		ns_count = ArrayGetNItems(ndim, dims) / 2; /* number of NS mappings */
 		get_typlenbyvalalign(ARR_ELEMTYPE(namespaces),
 							 &typlen, &typbyval, &typalign);
-		ns_names = (char **) palloc(ns_count * sizeof(char *));
-		ns_uris = (char **) palloc(ns_count * sizeof(char *));
+		ns_names = palloc(ns_count * sizeof(char *));
+		ns_uris = palloc(ns_count * sizeof(char *));
 		ptr = ARR_DATA_PTR(namespaces);
 		bitmap = ARR_NULLBITMAP(namespaces);
 		bitmask = 1;
-		
 		for (i = 0; i < ns_count * 2; i++)
 		{
 			if (bitmap && (*bitmap & bitmask) == 0)
-				ereport(ERROR, (errmsg("neither namespace nor URI may be NULL"))); /* TODO: better message */
+				ereport(ERROR, (errmsg("neither namespace name nor URI may be null")));
 			else
 			{
-				if (i < ns_count)
-					ns_names[i] = DatumGetCString(DirectFunctionCall1(textout,
-														  PointerGetDatum(ptr)));
+				if (i % 2 == 0)
+					ns_names[i / 2] = DatumGetCString(DirectFunctionCall1(textout,
+																		  PointerGetDatum(ptr)));
 				else
-					ns_uris[i - ns_count] = DatumGetCString(DirectFunctionCall1(textout,
-														  PointerGetDatum(ptr)));
+					ns_uris[i / 2] = DatumGetCString(DirectFunctionCall1(textout,
+																		 PointerGetDatum(ptr)));
 				ptr = att_addlength_pointer(ptr, typlen, ptr);
 				ptr = (char *) att_align_nominal(ptr, typalign);
 			}
-	
+
 			/* advance bitmap pointer if any */
 			if (bitmap)
 			{
@@ -3087,37 +3091,55 @@ xmlpath(PG_FUNCTION_ARGS)
 			}
 		}
 	}
-	
+	else
+	{
+		ns_count = 0;
+		ns_names = NULL;
+		ns_uris = NULL;
+	}
+
 	len = VARSIZE(data) - VARHDRSZ;
 	xpath_len = VARSIZE(xpath_expr_text) - VARHDRSZ;
 	if (xpath_len == 0)
-		ereport(ERROR, (errmsg("empty XPath expression")));
-	
-	if (xmlStrncmp((xmlChar *) VARDATA(data), (xmlChar *) "<?xml", 5) == 0)
+		ereport(ERROR, (errmsg("empty XPath expression"),
+						errcode(ERRCODE_DATA_EXCEPTION)));
+
+	/*
+	 * To handle both documents and fragments, regardless of the fact
+	 * whether the XML datum has a single root (XML well-formedness),
+	 * we wrap the XML datum in a dummy element (<x>...</x>) and
+	 * extend the XPath expression accordingly.  To do it, throw away
+	 * the XML prolog, if any.
+	 */
+	if ((len > 4) && xmlStrncmp((xmlChar *) VARDATA(data), (xmlChar *) "<?xml", 5) == 0)
 	{
-		string = palloc(len + 1);
-		memcpy(string, VARDATA(data), len);
-		string[len] = '\0';
-		xpath_expr = palloc(xpath_len + 1);
-		memcpy(xpath_expr, VARDATA(xpath_expr_text), xpath_len);
-		xpath_expr[xpath_len] = '\0';
+		i = 5;
+		while ((i < len) && (('?' != (VARDATA(data))[i - 1]) || ('>' != (VARDATA(data))[i])))
+			i++;
+
+		if (i == len)
+			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
+						"could not parse XML data");
+
+		++i;
+		string = xmlStrncatNew((xmlChar *) "<x>", (xmlChar *) VARDATA(data) + i, len - i);
 	}
 	else
-	{
-		/* use "<x>...</x>" as dummy root element to enable XPath for fragments */
-		/* TODO: (XPath for fragment) find better solution to work with XML fragment! */
 		string = xmlStrncatNew((xmlChar *) "<x>", (xmlChar *) VARDATA(data), len);
-		string = xmlStrncat(string, (xmlChar *) "</x>", 5);
-		len += 7;
-		xpath_expr = xmlStrncatNew((xmlChar *) "/x", (xmlChar *) VARDATA(xpath_expr_text), xpath_len);
-		len += 2;
-	}
-	
+
+	string = xmlStrncat(string, (xmlChar *) "</x>", 5);
+	len += 7;
+	xpath_expr = xmlStrncatNew((xmlChar *) "/x", (xmlChar *) VARDATA(xpath_expr_text), xpath_len);
+	xpath_len += 2;
+
 	xml_init();
 
 	PG_TRY();
 	{
-		/* redundant XML parsing (two parsings for the same value in the same session are possible) */
+		/*
+		 * redundant XML parsing (two parsings for the same value *
+		 * during one command execution are possible)
+		 */
 		ctxt = xmlNewParserCtxt();
 		if (ctxt == NULL)
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
@@ -3133,34 +3155,33 @@ xmlpath(PG_FUNCTION_ARGS)
 		xpathctx->node = xmlDocGetRootElement(doc);
 		if (xpathctx->node == NULL)
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
-						"could not find root XML element"); 
+						"could not find root XML element");
 
 		/* register namespaces, if any */
 		if ((ns_count > 0) && ns_names && ns_uris)
 			for (i = 0; i < ns_count; i++)
 				if (0 != xmlXPathRegisterNs(xpathctx, (xmlChar *) ns_names[i], (xmlChar *) ns_uris[i]))
-					ereport(ERROR, 
-						(errmsg("could not register XML namespace with prefix=\"%s\" and href=\"%s\"", ns_names[i], ns_uris[i])));
-		
+					ereport(ERROR,
+							(errmsg("could not register XML namespace with name \"%s\" and URI \"%s\"",
+									ns_names[i], ns_uris[i])));
+
 		xpathcomp = xmlXPathCompile(xpath_expr);
 		if (xpathcomp == NULL)
 			xml_ereport(ERROR, ERRCODE_INTERNAL_ERROR,
 						"invalid XPath expression"); /* TODO: show proper XPath error details */
-		
+
 		xpathobj = xmlXPathCompiledEval(xpathcomp, xpathctx);
 		xmlXPathFreeCompExpr(xpathcomp);
 		if (xpathobj == NULL)
-			ereport(ERROR, (errmsg("could not create XPath object")));
-		
+			ereport(ERROR, (errmsg("could not create XPath object"))); /* TODO: reason? */
+
+		/* return empty array in cases when nothing is found */
 		if (xpathobj->nodesetval == NULL)
-			res_is_null = TRUE;
-		
-		if (!res_is_null && xpathobj->nodesetval->nodeNr == 0)
-			/* TODO maybe empty array should be here, not NULL? (if so -- fix segfault) */
-			/*PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));*/
-			res_is_null = TRUE;
-		
-		if (!res_is_null) 
+			res_nitems = 0;
+		else
+			res_nitems = xpathobj->nodesetval->nodeNr;
+
+		if (res_nitems)
 			for (i = 0; i < xpathobj->nodesetval->nodeNr; i++)
 			{
 				Datum		elem;
@@ -3170,7 +3191,7 @@ xmlpath(PG_FUNCTION_ARGS)
 										  elemisnull, XMLOID,
 										  CurrentMemoryContext);
 			}
-		
+
 		xmlXPathFreeObject(xpathobj);
 		xmlXPathFreeContext(xpathctx);
 		xmlFreeParserCtxt(ctxt);
@@ -3194,15 +3215,11 @@ xmlpath(PG_FUNCTION_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
-	
-	if (res_is_null)
-	{
-		PG_RETURN_NULL();
-	}
+
+	if (res_nitems == 0)
+		PG_RETURN_ARRAYTYPE_P(construct_empty_array(XMLOID));
 	else
-	{
 		PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
-	}
 #else
 	NO_XML_SUPPORT();
 	return 0;

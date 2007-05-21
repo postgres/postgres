@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.379 2007/05/07 07:53:26 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.380 2007/05/21 17:10:28 petere Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7512,7 +7512,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
    type.  The function-like expressions <function>xmlparse</function>
    and <function>xmlserialize</function> for converting to and from
    type <type>xml</type> are not repeated here.  Use of many of these
-   <type>xml</type> functions requires the installation to have been built
+   functions requires the installation to have been built
    with <command>configure --with-libxml</>.
   </para>
 
@@ -7848,6 +7848,51 @@ SELECT xmlroot(xmlparse(document '<?xml version="1.1"?><content>abc</content>'),
    </sect3>
   </sect2>
 
+  <sect2 id="functions-xml-processing">
+   <title>Processing XML</title>
+
+   <indexterm>
+    <primary>XPath</primary>
+   </indexterm>
+
+   <para>
+    To process values of data type <type>xml</type>, PostgreSQL offers
+    the function <function>xpath</function>, which evaluates XPath 1.0
+    expressions.
+   </para>
+
+<synopsis>
+<function>xpath</function>(<replaceable>xpath</replaceable>, <replaceable>xml</replaceable><optional>, <replaceable>nsarray</replaceable></optional>)
+</synopsis>
+
+   <para>
+    The function <function>xpath</function> evaluates the XPath
+    expression <replaceable>xpath</replaceable> against the XML value
+    <replaceable>xml</replaceable>.  It returns an array of XML values
+    corresponding to the node set produced by the XPath expression.
+   </para>
+
+   <para>
+    The third argument of the function is an array of namespace
+    mappings.  This array should be a two-dimensional array with the
+    length of the second axis being equal to 2 (i.e., it should be an
+    array of arrays, each of which consists of exactly 2 elements).
+    The first element of each array entry is the namespace name, the
+    second the namespace URI.
+   </para>
+
+   <para>
+    Example:
+<screen><![CDATA[
+SELECT xpath('/my:a/text()', '<my:a xmlns:my="http://example.com">test</my:a>', ARRAY[ARRAY['my', 'http://example.com']]);
+ xpath  
+--------
+ {test}
+(1 row)
+]]></screen>
+   </para>
+  </sect2>
+
   <sect2 id="functions-xml-mapping">
    <title>Mapping Tables to XML</title>
 
@@ -8096,75 +8141,6 @@ table2-mapping
 </xsl:stylesheet>
 ]]></programlisting>
    </figure>
-  </sect2>
-
-  <sect2>
-   <title>Processing XML</title>
-
-   <para>
-    <acronym>XML</> support is not just the existence of an
-    <type>xml</type> data type, but a variety of features supported by
-    a database system.  These capabilities include import/export,
-    indexing, searching, transforming, and <acronym>XML</> to
-    <acronym>SQL</> mapping.  <productname>PostgreSQL</> supports some
-    but not all of these <acronym>XML</> capabilities.  For an
-    overview of <acronym>XML</> use in databases, see <ulink
-    url="http://www.rpbourret.com/xml/XMLAndDatabases.htm"></>.
-   </para>
-
-   <variablelist>
-   <varlistentry>
-    <term>Indexing</term>
-    <listitem>
-
-     <para>
-      <filename>contrib/xml2/</> functions can be used in expression
-      indexes to index specific <acronym>XML</> fields.  To index the
-      full contents of <acronym>XML</> documents, the full-text
-      indexing tool <filename>contrib/tsearch2/</> can be used.  Of
-      course, Tsearch2 indexes have no <acronym>XML</> awareness so
-      additional <filename>contrib/xml2/</> checks should be added to
-      queries.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>Searching</term>
-    <listitem>
-
-     <para>
-      XPath searches are implemented using <filename>contrib/xml2/</>.
-      It processes <acronym>XML</> text documents and returns results
-      based on the requested query.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>Transforming</term>
-    <listitem>
-
-     <para>
-      <filename>contrib/xml2/</> supports <acronym>XSLT</> (Extensible
-      Stylesheet Language Transformation).
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>XML to SQL Mapping</term>
-    <listitem>
-
-     <para>
-      This involves converting <acronym>XML</> data to and from
-      relational structures. <productname>PostgreSQL</> has no
-      internal support for such mapping, and relies on external tools
-      to do such conversions.
-     </para>
-    </listitem>
-   </varlistentry>
-   </variablelist>
   </sect2>
  </sect1>
 
