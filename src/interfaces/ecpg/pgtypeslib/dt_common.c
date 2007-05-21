@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.36.2.1 2007/05/21 07:10:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.36.2.2 2007/05/21 14:57:07 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -214,7 +214,6 @@ static datetkn datetktbl[] = {
 	{"irkst", DTZ, POS(36)},	/* Irkutsk Summer Time */
 	{"irkt", TZ, POS(32)},		/* Irkutsk Time */
 	{"irt", TZ, POS(14)},		/* Iran Time */
-	{"isodow", RESERV, DTK_ISODOW},	/* ISO day of week, Sunday == 7 */
 #if 0
 	isst
 #endif
