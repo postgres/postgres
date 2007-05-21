@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.20 2003/09/12 22:17:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.20.2.1 2007/05/21 15:00:57 petere Exp $
 -->
 
 <sect1 id="resources">
@@ -14,7 +14,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/info.sgml,v 1.20 2003/09/12 22:17:23 tgl Ex
     <term>FAQs</term>
     <listitem>
      <para>
-      The FAQ list <indexterm><primary>FAQ-Liste</></> contains
+      The FAQ list <indexterm><primary>FAQ</></> contains
       continuously updated answers to frequently asked questions.
      </para>
     </listitem>
