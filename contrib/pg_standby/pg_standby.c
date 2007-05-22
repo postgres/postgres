@@ -379,7 +379,7 @@ usage()
 	fprintf(stderr, "						  note space between [ARCHIVELOCATION] and [NEXTWALFILE]\n");
 	fprintf(stderr, "with main intended use via restore_command in the recovery.conf\n");
 	fprintf(stderr, "	 restore_command = 'pg_standby [OPTION]... [ARCHIVELOCATION] %%f %%p'\n");
-	fprintf(stderr, "e.g. restore_command = 'pg_standby -l -u /mnt/server/archiverdir %%f %%p'\n");
+	fprintf(stderr, "e.g. restore_command = 'pg_standby -l /mnt/server/archiverdir %%f %%p'\n");
 	fprintf(stderr, "\nOptions:\n");
 	fprintf(stderr, "  -c			copies file from archive (default)\n");
 	fprintf(stderr, "  -d			generate lots of debugging output (testing only)\n");
