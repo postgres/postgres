@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.88.2.2 2007/02/16 00:14:16 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/paths.h,v 1.88.2.3 2007/05/22 01:40:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,9 @@ extern List *generate_bitmap_or_paths(PlannerInfo *root, RelOptInfo *rel,
 						 List *clauses, List *outer_clauses,
 						 bool isjoininner,
 						 Relids outer_relids);
-extern Path *best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
-					 Relids outer_relids, JoinType jointype);
+extern void best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
+					 Relids outer_relids, JoinType jointype,
+					 Path **cheapest_startup, Path **cheapest_total);
 extern List *group_clauses_by_indexkey(IndexOptInfo *index,
 						  List *clauses, List *outer_clauses,
 						  Relids outer_relids,

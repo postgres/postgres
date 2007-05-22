@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.261.2.1 2005/11/14 23:54:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.261.2.2 2007/05/22 01:40:52 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1262,7 +1262,8 @@ _outInnerIndexscanInfo(StringInfo str, InnerIndexscanInfo *node)
 	WRITE_NODE_TYPE("INNERINDEXSCANINFO");
 	WRITE_BITMAPSET_FIELD(other_relids);
 	WRITE_BOOL_FIELD(isouterjoin);
-	WRITE_NODE_FIELD(best_innerpath);
+	WRITE_NODE_FIELD(cheapest_startup_innerpath);
+	WRITE_NODE_FIELD(cheapest_total_innerpath);
 }
 
 static void

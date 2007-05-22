@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.97.2.1 2005/11/22 18:23:10 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.97.2.2 2007/05/22 01:40:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,10 +295,11 @@ sort_inner_and_outer(PlannerInfo *root,
  *	  only outer paths that are already ordered well enough for merging).
  *
  * We always generate a nestloop path for each available outer path.
- * In fact we may generate as many as four: one on the cheapest-total-cost
+ * In fact we may generate as many as five: one on the cheapest-total-cost
  * inner path, one on the same with materialization, one on the
- * cheapest-startup-cost inner path (if different),
- * and one on the best inner-indexscan path (if any).
+ * cheapest-startup-cost inner path (if different), one on the
+ * cheapest-total inner-indexscan path (if any), and one on the
+ * cheapest-startup inner-indexscan path (if different).
  *
  * We also consider mergejoins if mergejoin clauses are available.	We have
  * two ways to generate the inner path for a mergejoin: sort the cheapest
@@ -334,7 +335,8 @@ match_unsorted_outer(PlannerInfo *root,
 	Path	   *inner_cheapest_startup = innerrel->cheapest_startup_path;
 	Path	   *inner_cheapest_total = innerrel->cheapest_total_path;
 	Path	   *matpath = NULL;
-	Path	   *bestinnerjoin = NULL;
+	Path	   *index_cheapest_startup = NULL;
+	Path	   *index_cheapest_total = NULL;
 	ListCell   *l;
 
 	/*
@@ -392,11 +394,12 @@ match_unsorted_outer(PlannerInfo *root,
 				create_material_path(innerrel, inner_cheapest_total);
 
 		/*
-		 * Get the best innerjoin indexpath (if any) for this outer rel. It's
-		 * the same for all outer paths.
+		 * Get the best innerjoin indexpaths (if any) for this outer rel.
+		 * They're the same for all outer paths.
 		 */
-		bestinnerjoin = best_inner_indexscan(root, innerrel,
-											 outerrel->relids, jointype);
+		best_inner_indexscan(root, innerrel, outerrel->relids, jointype,
+							 &index_cheapest_startup,
+							 &index_cheapest_total);
 	}
 
 	foreach(l, outerrel->pathlist)
@@ -437,8 +440,8 @@ match_unsorted_outer(PlannerInfo *root,
 			 * Always consider a nestloop join with this outer and
 			 * cheapest-total-cost inner.  When appropriate, also consider
 			 * using the materialized form of the cheapest inner, the
-			 * cheapest-startup-cost inner path, and the best innerjoin
-			 * indexpath.
+			 * cheapest-startup-cost inner path, and the cheapest innerjoin
+			 * indexpaths.
 			 */
 			add_path(joinrel, (Path *)
 					 create_nestloop_path(root,
@@ -466,13 +469,23 @@ match_unsorted_outer(PlannerInfo *root,
 											  inner_cheapest_startup,
 											  restrictlist,
 											  merge_pathkeys));
-			if (bestinnerjoin != NULL)
+			if (index_cheapest_total != NULL)
 				add_path(joinrel, (Path *)
 						 create_nestloop_path(root,
 											  joinrel,
 											  jointype,
 											  outerpath,
-											  bestinnerjoin,
+											  index_cheapest_total,
+											  restrictlist,
+											  merge_pathkeys));
+			if (index_cheapest_startup != NULL &&
+				index_cheapest_startup != index_cheapest_total)
+				add_path(joinrel, (Path *)
+						 create_nestloop_path(root,
+											  joinrel,
+											  jointype,
+											  outerpath,
+											  index_cheapest_startup,
 											  restrictlist,
 											  merge_pathkeys));
 		}
