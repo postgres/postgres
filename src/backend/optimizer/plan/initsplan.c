@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.131 2007/02/16 20:57:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.132 2007/05/22 23:23:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,8 @@ static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						Relids qualscope,
 						Relids ojscope,
 						Relids outerjoin_nonnullable);
-static bool check_outerjoin_delay(PlannerInfo *root, Relids *relids_p);
+static bool check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
+								  bool is_pushed_down);
 static void check_mergejoinable(RestrictInfo *restrictinfo);
 static void check_hashjoinable(RestrictInfo *restrictinfo);
 
@@ -492,6 +493,9 @@ make_outerjoininfo(PlannerInfo *root,
 					 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to the nullable side of an outer join")));
 	}
 
+	/* this always starts out false */
+	ojinfo->delay_upper_joins = false;
+
 	/* If it's a full join, no need to be very smart */
 	ojinfo->is_full_join = is_full_join;
 	if (is_full_join)
@@ -561,10 +565,21 @@ make_outerjoininfo(PlannerInfo *root,
 		 * lower join's RHS and the lower OJ's join condition is strict, we
 		 * can interchange the ordering of the two OJs, so exclude the lower
 		 * RHS from our min_righthand.
+		 *
+		 * Here, we have to consider that "our join condition" includes
+		 * any clauses that syntactically appeared above the lower OJ and
+		 * below ours; those are equivalent to degenerate clauses in our
+		 * OJ and must be treated as such.  Such clauses obviously can't
+		 * reference our LHS, and they must be non-strict for the lower OJ's
+		 * RHS (else reduce_outer_joins would have reduced the lower OJ to
+		 * a plain join).  Hence the other ways in which we handle clauses
+		 * within our join condition are not affected by them.  The net
+		 * effect is therefore sufficiently represented by the
+		 * delay_upper_joins flag saved for us by check_outerjoin_delay.
 		 */
 		if (bms_overlap(ojinfo->min_righthand, otherinfo->min_righthand) &&
 			!bms_overlap(clause_relids, otherinfo->min_righthand) &&
-			otherinfo->lhs_strict)
+			otherinfo->lhs_strict && !otherinfo->delay_upper_joins)
 		{
 			ojinfo->min_righthand = bms_del_members(ojinfo->min_righthand,
 													otherinfo->min_righthand);
@@ -749,7 +764,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		 * clauses.
 		 */
 		maybe_equivalence = false;
-		maybe_outer_join = !check_outerjoin_delay(root, &relids);
+		maybe_outer_join = !check_outerjoin_delay(root, &relids, false);
 
 		/*
 		 * Now force the qual to be evaluated exactly at the level of joining
@@ -776,7 +791,7 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 		is_pushed_down = true;
 
 		/* Check to see if must be delayed by outer join */
-		outerjoin_delayed = check_outerjoin_delay(root, &relids);
+		outerjoin_delayed = check_outerjoin_delay(root, &relids, true);
 
 		if (outerjoin_delayed)
 		{
@@ -918,10 +933,13 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 /*
  * check_outerjoin_delay
  *		Detect whether a qual referencing the given relids must be delayed
- *		in application due to the presence of a lower outer join.
+ *		in application due to the presence of a lower outer join, and/or
+ *		may force extra delay of higher-level outer joins.
  *
- * If so, add relids to *relids_p to reflect the lowest safe level for
- * evaluating the qual, and return TRUE.
+ * If the qual must be delayed, add relids to *relids_p to reflect the lowest
+ * safe level for evaluating the qual, and return TRUE.  Any extra delay for
+ * higher-level joins is reflected by setting delay_upper_joins to TRUE in
+ * OuterJoinInfo structs.
  *
  * For an is_pushed_down qual, we can evaluate the qual as soon as (1) we have
  * all the rels it mentions, and (2) we are at or above any outer joins that
@@ -946,9 +964,23 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
  * For a non-pushed-down qual, this isn't going to determine where we place the
  * qual, but we need to determine outerjoin_delayed anyway so we can decide
  * whether the qual is potentially useful for equivalence deductions.
+ *
+ * Lastly, a pushed-down qual that references the nullable side of any current
+ * oj_info_list member and has to be evaluated above that OJ (because its
+ * required relids overlap the LHS too) causes that OJ's delay_upper_joins
+ * flag to be set TRUE.  This will prevent any higher-level OJs from
+ * being interchanged with that OJ, which would result in not having any
+ * correct place to evaluate the qual.  (The case we care about here is a
+ * sub-select WHERE clause within the RHS of some outer join.  The WHERE
+ * clause must effectively be treated as a degenerate clause of that outer
+ * join's condition.  Rather than trying to match such clauses with joins
+ * directly, we set delay_upper_joins here, and when the upper outer join
+ * is processed by make_outerjoininfo, it will refrain from allowing the
+ * two OJs to commute.)
  */
 static bool
-check_outerjoin_delay(PlannerInfo *root, Relids *relids_p)
+check_outerjoin_delay(PlannerInfo *root, Relids *relids_p,
+					  bool is_pushed_down)
 {
 	Relids		relids = *relids_p;
 	bool		outerjoin_delayed;
@@ -979,6 +1011,10 @@ check_outerjoin_delay(PlannerInfo *root, Relids *relids_p)
 					/* we'll need another iteration */
 					found_some = true;
 				}
+				/* set delay_upper_joins if needed */
+				if (is_pushed_down && !ojinfo->is_full_join &&
+					bms_overlap(relids, ojinfo->min_lefthand))
+					ojinfo->delay_upper_joins = true;
 			}
 		}
 	} while (found_some);
