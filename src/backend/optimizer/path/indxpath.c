@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.221 2007/04/17 20:03:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.222 2007/05/22 01:40:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1599,26 +1599,26 @@ eclass_matches_any_index(EquivalenceClass *ec, EquivalenceMember *em,
 
 /*
  * best_inner_indexscan
- *	  Finds the best available inner indexscan for a nestloop join
+ *	  Finds the best available inner indexscans for a nestloop join
  *	  with the given rel on the inside and the given outer_rel outside.
- *	  May return NULL if there are no possible inner indexscans.
  *
- * We ignore ordering considerations (since a nestloop's inner scan's order
- * is uninteresting).  Also, we consider only total cost when deciding which
- * of two possible paths is better --- this assumes that all indexpaths have
- * negligible startup cost.  (True today, but someday we might have to think
- * harder.)  Therefore, there is only one dimension of comparison and so it's
- * sufficient to return a single "best" path.
+ * *cheapest_startup gets the path with least startup cost
+ * *cheapest_total gets the path with least total cost (often the same path)
+ * Both are set to NULL if there are no possible inner indexscans.
+ *
+ * We ignore ordering considerations, since a nestloop's inner scan's order
+ * is uninteresting.  Hence startup cost and total cost are the only figures
+ * of merit to consider.
  *
  * Note: create_index_paths() must have been run previously for this rel,
- * else the result will always be NULL.
+ * else the results will always be NULL.
  */
-Path *
+void
 best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
-					 RelOptInfo *outer_rel, JoinType jointype)
+					 RelOptInfo *outer_rel, JoinType jointype,
+					 Path **cheapest_startup, Path **cheapest_total)
 {
 	Relids		outer_relids;
-	Path	   *cheapest;
 	bool		isouterjoin;
 	List	   *clause_list;
 	List	   *indexpaths;
@@ -1626,6 +1626,9 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	ListCell   *l;
 	InnerIndexscanInfo *info;
 	MemoryContext oldcontext;
+
+	/* Initialize results for failure returns */
+	*cheapest_startup = *cheapest_total = NULL;
 
 	/*
 	 * Nestloop only supports inner, left, and IN joins.
@@ -1641,14 +1644,14 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 			isouterjoin = true;
 			break;
 		default:
-			return NULL;
+			return;
 	}
 
 	/*
 	 * If there are no indexable joinclauses for this rel, exit quickly.
 	 */
 	if (bms_is_empty(rel->index_outer_relids))
-		return NULL;
+		return;
 
 	/*
 	 * Otherwise, we have to do path selection in the main planning context,
@@ -1668,17 +1671,17 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	{
 		bms_free(outer_relids);
 		MemoryContextSwitchTo(oldcontext);
-		return NULL;
+		return;
 	}
 
 	/*
 	 * Look to see if we already computed the result for this set of relevant
 	 * outerrels.  (We include the isouterjoin status in the cache lookup key
 	 * for safety.	In practice I suspect this is not necessary because it
-	 * should always be the same for a given innerrel.)
+	 * should always be the same for a given combination of rels.)
 	 *
 	 * NOTE: because we cache on outer_relids rather than outer_rel->relids,
-	 * we will report the same path and hence path cost for joins with
+	 * we will report the same paths and hence path cost for joins with
 	 * different sets of irrelevant rels on the outside.  Now that cost_index
 	 * is sensitive to outer_rel->rows, this is not really right.  However the
 	 * error is probably not large.  Is it worth establishing a separate cache
@@ -1692,7 +1695,9 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 		{
 			bms_free(outer_relids);
 			MemoryContextSwitchTo(oldcontext);
-			return info->best_innerpath;
+			*cheapest_startup = info->cheapest_startup_innerpath;
+			*cheapest_total = info->cheapest_total_innerpath;
+			return;
 		}
 	}
 
@@ -1755,28 +1760,32 @@ best_inner_indexscan(PlannerInfo *root, RelOptInfo *rel,
 	}
 
 	/*
-	 * Now choose the cheapest member of indexpaths.
+	 * Now choose the cheapest members of indexpaths.
 	 */
-	cheapest = NULL;
-	foreach(l, indexpaths)
+	if (indexpaths != NIL)
 	{
-		Path	   *path = (Path *) lfirst(l);
+		*cheapest_startup = *cheapest_total = (Path *) linitial(indexpaths);
 
-		if (cheapest == NULL ||
-			compare_path_costs(path, cheapest, TOTAL_COST) < 0)
-			cheapest = path;
+		for_each_cell(l, lnext(list_head(indexpaths)))
+		{
+			Path	   *path = (Path *) lfirst(l);
+
+			if (compare_path_costs(path, *cheapest_startup, STARTUP_COST) < 0)
+				*cheapest_startup = path;
+			if (compare_path_costs(path, *cheapest_total, TOTAL_COST) < 0)
+				*cheapest_total = path;
+		}
 	}
 
-	/* Cache the result --- whether positive or negative */
+	/* Cache the results --- whether positive or negative */
 	info = makeNode(InnerIndexscanInfo);
 	info->other_relids = outer_relids;
 	info->isouterjoin = isouterjoin;
-	info->best_innerpath = cheapest;
+	info->cheapest_startup_innerpath = *cheapest_startup;
+	info->cheapest_total_innerpath = *cheapest_total;
 	rel->index_inner_paths = lcons(info, rel->index_inner_paths);
 
 	MemoryContextSwitchTo(oldcontext);
-
-	return cheapest;
 }
 
 /*
