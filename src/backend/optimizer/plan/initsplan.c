@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.123.2.4 2007/02/16 20:57:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.123.2.5 2007/05/22 23:24:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,6 +495,9 @@ make_outerjoininfo(PlannerInfo *root,
 					 errmsg("SELECT FOR UPDATE/SHARE cannot be applied to the nullable side of an outer join")));
 	}
 
+	/* this always starts out false */
+	ojinfo->delay_upper_joins = false;
+
 	/* If it's a full join, no need to be very smart */
 	ojinfo->is_full_join = is_full_join;
 	if (is_full_join)
@@ -564,10 +567,21 @@ make_outerjoininfo(PlannerInfo *root,
 		 * lower join's RHS and the lower OJ's join condition is strict, we
 		 * can interchange the ordering of the two OJs, so exclude the lower
 		 * RHS from our min_righthand.
+		 *
+		 * Here, we have to consider that "our join condition" includes
+		 * any clauses that syntactically appeared above the lower OJ and
+		 * below ours; those are equivalent to degenerate clauses in our
+		 * OJ and must be treated as such.  Such clauses obviously can't
+		 * reference our LHS, and they must be non-strict for the lower OJ's
+		 * RHS (else reduce_outer_joins would have reduced the lower OJ to
+		 * a plain join).  Hence the other ways in which we handle clauses
+		 * within our join condition are not affected by them.  The net
+		 * effect is therefore sufficiently represented by the
+		 * delay_upper_joins flag saved for us by distribute_qual_to_rels.
 		 */
 		if (bms_overlap(ojinfo->min_righthand, otherinfo->min_righthand) &&
 			!bms_overlap(clause_relids, otherinfo->min_righthand) &&
-			otherinfo->lhs_strict)
+			otherinfo->lhs_strict && !otherinfo->delay_upper_joins)
 		{
 			ojinfo->min_righthand = bms_del_members(ojinfo->min_righthand,
 													otherinfo->min_righthand);
@@ -829,6 +843,10 @@ distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						/* we'll need another iteration */
 						found_some = true;
 					}
+					/* set delay_upper_joins if needed */
+					if (!ojinfo->is_full_join &&
+						bms_overlap(relids, ojinfo->min_lefthand))
+						ojinfo->delay_upper_joins = true;
 				}
 			}
 		} while (found_some);

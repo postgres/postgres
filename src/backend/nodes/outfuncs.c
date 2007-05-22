@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.285.2.1 2007/05/22 01:40:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.285.2.2 2007/05/22 23:24:08 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1293,6 +1293,7 @@ _outOuterJoinInfo(StringInfo str, OuterJoinInfo *node)
 	WRITE_BITMAPSET_FIELD(min_righthand);
 	WRITE_BOOL_FIELD(is_full_join);
 	WRITE_BOOL_FIELD(lhs_strict);
+	WRITE_BOOL_FIELD(delay_upper_joins);
 }
 
 static void
