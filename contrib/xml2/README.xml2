@@ -1,6 +1,19 @@
 XML-handling functions for PostgreSQL
 =====================================
 
+    DEPRECATION NOTICE:  From PostgreSQL 8.3 on, there is XML-related
+    functionality based on the SQL/XML standard in the core server.
+    That functionality covers XML syntax checking and XPath queries,
+    which is what this module does as well, and more, but the API is
+    not at all compatible.  It is planned that this module will be
+    removed in PostgreSQL 8.4 in favor of the newer standard API, so
+    you are encouraged to try converting your applications.  If you
+    find that some of the functionality of this module is not
+    available in an adequate form with the newer API, please explain
+    your issue to pgsql-hackers@postgresql.org so that the deficiency
+    can be addressed.
+                                      -- Peter Eisentraut, 2007-05-24
+
 Development of this module was sponsored by Torchbox Ltd. (www.torchbox.com)
 It has the same BSD licence as PostgreSQL.
 
