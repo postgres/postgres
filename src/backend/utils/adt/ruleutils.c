@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.257 2007/03/27 23:21:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.258 2007/05/24 18:58:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2598,19 +2598,13 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 
 	/*
 	 * Try to find the relevant RTE in this rtable.  In a plan tree, it's
-	 * likely that varno is OUTER or INNER, in which case we try to use
-	 * varnoold instead.  If the Var references an expression computed by a
-	 * subplan, varnoold will be 0, and we must dig down into the subplans.
+	 * likely that varno is OUTER or INNER, in which case we must dig down
+	 * into the subplans.
 	 */
 	if (var->varno >= 1 && var->varno <= list_length(dpns->rtable))
 	{
 		rte = rt_fetch(var->varno, dpns->rtable);
 		attnum = var->varattno;
-	}
-	else if (var->varnoold >= 1 && var->varnoold <= list_length(dpns->rtable))
-	{
-		rte = rt_fetch(var->varnoold, dpns->rtable);
-		attnum = var->varoattno;
 	}
 	else if (var->varno == OUTER && dpns->outer_plan)
 	{
@@ -2631,9 +2625,11 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 		 * Force parentheses because our caller probably assumed a Var is a
 		 * simple expression.
 		 */
-		appendStringInfoChar(buf, '(');
+		if (!IsA(tle->expr, Var))
+			appendStringInfoChar(buf, '(');
 		get_rule_expr((Node *) tle->expr, context, true);
-		appendStringInfoChar(buf, ')');
+		if (!IsA(tle->expr, Var))
+			appendStringInfoChar(buf, ')');
 
 		dpns->outer_plan = save_outer;
 		dpns->inner_plan = save_inner;
@@ -2658,9 +2654,11 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 		 * Force parentheses because our caller probably assumed a Var is a
 		 * simple expression.
 		 */
-		appendStringInfoChar(buf, '(');
+		if (!IsA(tle->expr, Var))
+			appendStringInfoChar(buf, '(');
 		get_rule_expr((Node *) tle->expr, context, true);
-		appendStringInfoChar(buf, ')');
+		if (!IsA(tle->expr, Var))
+			appendStringInfoChar(buf, ')');
 
 		dpns->outer_plan = save_outer;
 		dpns->inner_plan = save_inner;
@@ -2700,7 +2698,13 @@ get_variable(Var *var, int levelsup, bool showstar, deparse_context *context)
 			 * simple reference, we have to just print the unqualified
 			 * variable name (this can only happen with columns that were
 			 * merged by USING or NATURAL clauses).
+			 *
+			 * This wouldn't work in decompiling plan trees, because we don't
+			 * store joinaliasvars lists after planning; but a plan tree
+			 * should never contain a join alias variable.
 			 */
+			if (rte->joinaliasvars == NIL)
+				elog(ERROR, "cannot decompile join alias var in plan tree");
 			if (attnum > 0)
 			{
 				Var		   *aliasvar;
@@ -2798,9 +2802,7 @@ get_name_for_var_field(Var *var, int fieldno,
 	/*
 	 * Try to find the relevant RTE in this rtable.  In a plan tree, it's
 	 * likely that varno is OUTER or INNER, in which case we must dig down
-	 * into the subplans.  (We can't shortcut with varnoold here, because
-	 * it might reference a SUBQUERY RTE; we have to dig down to the
-	 * SubqueryScan plan level to cope with that.  See below.)
+	 * into the subplans.
 	 */
 	if (var->varno >= 1 && var->varno <= list_length(dpns->rtable))
 	{
@@ -2963,6 +2965,8 @@ get_name_for_var_field(Var *var, int fieldno,
 			break;
 		case RTE_JOIN:
 			/* Join RTE --- recursively inspect the alias variable */
+			if (rte->joinaliasvars == NIL)
+				elog(ERROR, "cannot decompile join alias var in plan tree");
 			Assert(attnum > 0 && attnum <= list_length(rte->joinaliasvars));
 			expr = (Node *) list_nth(rte->joinaliasvars, attnum - 1);
 			if (IsA(expr, Var))
