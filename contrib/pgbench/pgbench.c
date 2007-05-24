@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.65 2007/04/08 01:15:07 ishii Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.66 2007/05/24 18:54:10 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -476,7 +476,8 @@ top:
 				(int) (now.tv_usec - st->txn_begin.tv_usec);
 
 			fprintf(LOGFILE, "%d %d %.0f %d %ld %ld\n",
-				st->id, st->cnt, diff, st->use_file, now.tv_sec,now.tv_usec);
+					st->id, st->cnt, diff, st->use_file,
+					(long) now.tv_sec, (long) now.tv_usec);
 		}
 
 		if (commands[st->state]->type == SQL_COMMAND)
