@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.163 2007/05/04 21:29:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.164 2007/05/25 17:54:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,12 @@
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/tuplesort.h"
+
+
+/* Hook for plugins to get control in ExplainOneQuery() */
+ExplainOneQuery_hook_type ExplainOneQuery_hook = NULL;
+/* Hook for plugins to get control in explain_get_index_name() */
+explain_get_index_name_hook_type explain_get_index_name_hook = NULL;
 
 
 typedef struct ExplainState
@@ -61,6 +67,8 @@ static void show_sort_keys(Plan *sortplan, int nkeys, AttrNumber *keycols,
 			   StringInfo str, int indent, ExplainState *es);
 static void show_sort_info(SortState *sortstate,
 			   StringInfo str, int indent, ExplainState *es);
+static const char *explain_get_index_name(Oid indexId);
+
 
 /*
  * ExplainQuery -
@@ -140,9 +148,6 @@ static void
 ExplainOneQuery(Query *query, ExplainStmt *stmt, const char *queryString,
 				ParamListInfo params, TupOutputState *tstate)
 {
-	PlannedStmt *plan;
-	QueryDesc  *queryDesc;
-
 	/* planner will not cope with utility statements */
 	if (query->commandType == CMD_UTILITY)
 	{
@@ -151,25 +156,19 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, const char *queryString,
 		return;
 	}
 
-	/* plan the query */
-	plan = planner(query, 0, params);
+	/* if an advisor plugin is present, let it manage things */
+	if (ExplainOneQuery_hook)
+		(*ExplainOneQuery_hook) (query, stmt, queryString, params, tstate);
+	else
+	{
+		PlannedStmt *plan;
 
-	/*
-	 * Update snapshot command ID to ensure this query sees results of any
-	 * previously executed queries.  (It's a bit cheesy to modify
-	 * ActiveSnapshot without making a copy, but for the limited ways in which
-	 * EXPLAIN can be invoked, I think it's OK, because the active snapshot
-	 * shouldn't be shared with anything else anyway.)
-	 */
-	ActiveSnapshot->curcid = GetCurrentCommandId();
+		/* plan the query */
+		plan = planner(query, 0, params);
 
-	/* Create a QueryDesc requesting no output */
-	queryDesc = CreateQueryDesc(plan,
-								ActiveSnapshot, InvalidSnapshot,
-								None_Receiver, params,
-								stmt->analyze);
-
-	ExplainOnePlan(queryDesc, stmt, tstate);
+		/* run it (if needed) and produce output */
+		ExplainOnePlan(plan, params, stmt, tstate);
+	}
 }
 
 /*
@@ -210,19 +209,34 @@ ExplainOneUtility(Node *utilityStmt, ExplainStmt *stmt,
  * not running the query.  No cursor will be created, however.
  *
  * This is exported because it's called back from prepare.c in the
- * EXPLAIN EXECUTE case
- *
- * Note: the passed-in QueryDesc is freed when we're done with it
+ * EXPLAIN EXECUTE case, and because an index advisor plugin would need
+ * to call it.
  */
 void
-ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
-			   TupOutputState *tstate)
+ExplainOnePlan(PlannedStmt *plannedstmt, ParamListInfo params,
+			   ExplainStmt *stmt, TupOutputState *tstate)
 {
+	QueryDesc  *queryDesc;
 	instr_time	starttime;
 	double		totaltime = 0;
 	ExplainState *es;
 	StringInfoData buf;
 	int			eflags;
+
+	/*
+	 * Update snapshot command ID to ensure this query sees results of any
+	 * previously executed queries.  (It's a bit cheesy to modify
+	 * ActiveSnapshot without making a copy, but for the limited ways in which
+	 * EXPLAIN can be invoked, I think it's OK, because the active snapshot
+	 * shouldn't be shared with anything else anyway.)
+	 */
+	ActiveSnapshot->curcid = GetCurrentCommandId();
+
+	/* Create a QueryDesc requesting no output */
+	queryDesc = CreateQueryDesc(plannedstmt,
+								ActiveSnapshot, InvalidSnapshot,
+								None_Receiver, params,
+								stmt->analyze);
 
 	INSTR_TIME_SET_CURRENT(starttime);
 
@@ -592,7 +606,7 @@ explain_outNode(StringInfo str,
 			if (ScanDirectionIsBackward(((IndexScan *) plan)->indexorderdir))
 				appendStringInfoString(str, " Backward");
 			appendStringInfo(str, " using %s",
-			  quote_identifier(get_rel_name(((IndexScan *) plan)->indexid)));
+					explain_get_index_name(((IndexScan *) plan)->indexid));
 			/* FALL THRU */
 		case T_SeqScan:
 		case T_BitmapHeapScan:
@@ -618,7 +632,7 @@ explain_outNode(StringInfo str,
 			break;
 		case T_BitmapIndexScan:
 			appendStringInfo(str, " on %s",
-							 quote_identifier(get_rel_name(((BitmapIndexScan *) plan)->indexid)));
+				explain_get_index_name(((BitmapIndexScan *) plan)->indexid));
 			break;
 		case T_SubqueryScan:
 			if (((Scan *) plan)->scanrelid > 0)
@@ -1149,4 +1163,30 @@ show_sort_info(SortState *sortstate,
 		appendStringInfo(str, "  %s\n", sortinfo);
 		pfree(sortinfo);
 	}
+}
+
+/*
+ * Fetch the name of an index in an EXPLAIN
+ *
+ * We allow plugins to get control here so that plans involving hypothetical
+ * indexes can be explained.
+ */
+static const char *
+explain_get_index_name(Oid indexId)
+{
+	const char   *result;
+
+	if (explain_get_index_name_hook)
+		result = (*explain_get_index_name_hook) (indexId);
+	else
+		result = NULL;
+	if (result == NULL)
+	{
+		/* default behavior: look in the catalogs and quote it */
+		result = get_rel_name(indexId);
+		if (result == NULL)
+			elog(ERROR, "cache lookup failed for index %u", indexId);
+		result = quote_identifier(result);
+	}
+	return result;
 }

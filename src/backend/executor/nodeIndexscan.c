@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.121 2007/04/06 22:33:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.122 2007/05/25 17:54:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -415,10 +415,12 @@ ExecEndIndexScan(IndexScanState *node)
 	ExecClearTuple(node->ss.ss_ScanTupleSlot);
 
 	/*
-	 * close the index relation
+	 * close the index relation (no-op if we didn't open it)
 	 */
-	index_endscan(indexScanDesc);
-	index_close(indexRelationDesc, NoLock);
+	if (indexScanDesc)
+		index_endscan(indexScanDesc);
+	if (indexRelationDesc)
+		index_close(indexRelationDesc, NoLock);
 
 	/*
 	 * close the heap relation.
@@ -519,6 +521,14 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	 * get the scan type from the relation descriptor.
 	 */
 	ExecAssignScanType(&indexstate->ss, RelationGetDescr(currentRelation));
+
+	/*
+	 * If we are just doing EXPLAIN (ie, aren't going to run the plan),
+	 * stop here.  This allows an index-advisor plugin to EXPLAIN a plan
+	 * containing references to nonexistent indexes.
+	 */
+	if (eflags & EXEC_FLAG_EXPLAIN_ONLY)
+		return indexstate;
 
 	/*
 	 * Open the index relation.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.219 2007/05/04 01:13:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.220 2007/05/25 17:54:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,10 @@
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
+
+/* Hook for plugins to get control in planner() */
+planner_hook_type planner_hook = NULL;
 
 
 /* Expression kind codes for preprocess_expression */
@@ -79,9 +83,29 @@ static List *postprocess_setop_tlist(List *new_tlist, List *orig_tlist);
  *
  *	   Query optimizer entry point
  *
+ * To support loadable plugins that monitor or modify planner behavior,
+ * we provide a hook variable that lets a plugin get control before and
+ * after the standard planning process.  The plugin would normally call
+ * standard_planner().
+ *
+ * Note to plugin authors: standard_planner() scribbles on its Query input,
+ * so you'd better copy that data structure if you want to plan more than once.
+ *
  *****************************************************************************/
 PlannedStmt *
 planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
+{
+	PlannedStmt *result;
+
+	if (planner_hook)
+		result = (*planner_hook) (parse, cursorOptions, boundParams);
+	else
+		result = standard_planner(parse, cursorOptions, boundParams);
+	return result;
+}
+
+PlannedStmt *
+standard_planner(Query *parse, int cursorOptions, ParamListInfo boundParams)
 {
 	PlannedStmt *result;
 	PlannerGlobal *glob;
