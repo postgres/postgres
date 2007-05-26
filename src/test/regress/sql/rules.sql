@@ -881,3 +881,41 @@ select * from id_ordered;
 
 set client_min_messages to warning; -- suppress cascade notices
 drop table id cascade;
+reset client_min_messages;
+
+--
+-- check corner case where an entirely-dummy subplan is created by
+-- constraint exclusion
+--
+
+create temp table t1 (a integer primary key);
+
+create temp table t1_1 (check (a >= 0 and a < 10)) inherits (t1);
+create temp table t1_2 (check (a >= 10 and a < 20)) inherits (t1);
+
+create rule t1_ins_1 as on insert to t1 
+	where new.a >= 0 and new.a < 10
+	do instead
+	insert into t1_1 values (new.a);
+create rule t1_ins_2 as on insert to t1 
+	where new.a >= 10 and new.a < 20
+	do instead
+	insert into t1_2 values (new.a);
+
+create rule t1_upd_1 as on update to t1
+	where old.a >= 0 and old.a < 10
+	do instead
+	update t1_1 set a = new.a where a = old.a;
+create rule t1_upd_2 as on update to t1
+	where old.a >= 10 and old.a < 20
+	do instead
+	update t1_2 set a = new.a where a = old.a;
+
+set constraint_exclusion = on;
+
+insert into t1 select * from generate_series(5,19,1) g;
+update t1 set a = 4 where a = 5;
+
+select * from only t1;
+select * from only t1_1;
+select * from only t1_2;

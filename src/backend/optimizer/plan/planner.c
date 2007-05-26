@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.220 2007/05/25 17:54:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.221 2007/05/26 18:23:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -669,11 +669,16 @@ inheritance_planner(PlannerInfo *root)
 	 * If we managed to exclude every child rel, return a dummy plan
 	 */
 	if (subplans == NIL)
+	{
+		root->resultRelations = list_make1_int(parentRTindex);
+		/* although dummy, it must have a valid tlist for executor */
+		tlist = preprocess_targetlist(root, parse->targetList);
 		return (Plan *) make_result(root,
 									tlist,
 									(Node *) list_make1(makeBoolConst(false,
 																	  false)),
 									NULL);
+	}
 
 	/*
 	 * Planning might have modified the rangetable, due to changes of the

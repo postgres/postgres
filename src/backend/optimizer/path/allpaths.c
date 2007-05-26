@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.163 2007/04/21 21:01:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.164 2007/05/26 18:23:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@ static void set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					   RangeTblEntry *rte);
 static void set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 						Index rti, RangeTblEntry *rte);
+static void set_dummy_rel_pathlist(RelOptInfo *rel);
 static void set_subquery_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					  Index rti, RangeTblEntry *rte);
 static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -198,23 +199,14 @@ set_plain_rel_pathlist(PlannerInfo *root, RelOptInfo *rel, RangeTblEntry *rte)
 {
 	/*
 	 * If we can prove we don't need to scan the rel via constraint exclusion,
-	 * set up a single dummy path for it.  (Rather than inventing a special
-	 * "dummy" path type, we represent this as an AppendPath with no members.)
-	 * We only need to check for regular baserels; if it's an otherrel, CE
-	 * was already checked in set_append_rel_pathlist().
+	 * set up a single dummy path for it.  We only need to check for regular
+	 * baserels; if it's an otherrel, CE was already checked in
+	 * set_append_rel_pathlist().
 	 */
 	if (rel->reloptkind == RELOPT_BASEREL &&
 		relation_excluded_by_constraints(rel, rte))
 	{
-		/* Set dummy size estimates --- we leave attr_widths[] as zeroes */
-		rel->rows = 0;
-		rel->width = 0;
-
-		add_path(rel, (Path *) create_append_path(rel, NIL));
-
-		/* Select cheapest path (pretty easy in this case...) */
-		set_cheapest(rel);
-
+		set_dummy_rel_pathlist(rel);
 		return;
 	}
 
@@ -330,7 +322,12 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 
 		if (relation_excluded_by_constraints(childrel, childRTE))
 		{
-			/* this child need not be scanned, so just disregard it */
+			/*
+			 * This child need not be scanned, so we can omit it from the
+			 * appendrel.  Mark it with a dummy cheapest-path though, in
+			 * case best_appendrel_indexscan() looks at it later.
+			 */
+			set_dummy_rel_pathlist(childrel);
 			continue;
 		}
 
@@ -420,6 +417,26 @@ set_append_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
 	 * live subpath due to constraint exclusion.)
 	 */
 	add_path(rel, (Path *) create_append_path(rel, subpaths));
+
+	/* Select cheapest path (pretty easy in this case...) */
+	set_cheapest(rel);
+}
+
+/*
+ * set_dummy_rel_pathlist
+ *	  Build a dummy path for a relation that's been excluded by constraints
+ *
+ * Rather than inventing a special "dummy" path type, we represent this as an
+ * AppendPath with no members.
+ */
+static void
+set_dummy_rel_pathlist(RelOptInfo *rel)
+{
+	/* Set dummy size estimates --- we leave attr_widths[] as zeroes */
+	rel->rows = 0;
+	rel->width = 0;
+
+	add_path(rel, (Path *) create_append_path(rel, NIL));
 
 	/* Select cheapest path (pretty easy in this case...) */
 	set_cheapest(rel);
