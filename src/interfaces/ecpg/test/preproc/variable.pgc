@@ -3,7 +3,7 @@
 
 exec sql include ../regression;
 
-exec sql whenever sqlerror sqlprint;
+exec sql whenever sqlerror stop;
 
 exec sql type c is char reference;
 typedef char* c;

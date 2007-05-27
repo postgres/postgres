@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.25 2007/05/15 01:57:57 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.26 2007/05/27 11:16:41 meskes Exp $
 #
 use Carp;
 use strict;
@@ -247,8 +247,9 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
 #if (_MSC_VER > 1200)
 #define HAVE_LONG_LONG_INT_64
 #define ENABLE_THREAD_SAFETY 1
-#endif
 EOF
+	print O "#define USE_INTEGER_DATETIMES 1\n" if ($self->{options}->{integer_datetimes});
+	print O "#endif\n";
         close(O);
     }
 

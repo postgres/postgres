@@ -2198,4 +2198,9 @@ Sun, 20 May 2007 22:01:11 +0200
 
 	- Do not try to find local timezone in DecodeDateTime() because the
 	  result is not used anyway. This also fixes Vista's build problems.
+
+Sun, 27 May 2007 13:14:39 +0200
+
+	- Changed variable test to not run into infinite loops on backend
+	  errors.
 	- Set ecpg version to 4.3.1.
