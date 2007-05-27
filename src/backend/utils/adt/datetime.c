@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.178 2007/03/01 14:52:03 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.179 2007/05/27 20:32:16 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,10 +32,10 @@
 
 static int DecodeNumber(int flen, char *field, bool haveTextMonth,
 			 int fmask, int *tmask,
-			 struct pg_tm * tm, fsec_t *fsec, int *is2digits);
+			 struct pg_tm * tm, fsec_t *fsec, bool *is2digits);
 static int DecodeNumberField(int len, char *str,
 				  int fmask, int *tmask,
-				  struct pg_tm * tm, fsec_t *fsec, int *is2digits);
+				  struct pg_tm * tm, fsec_t *fsec, bool *is2digits);
 static int DecodeTime(char *str, int fmask, int *tmask,
 		   struct pg_tm * tm, fsec_t *fsec);
 static int	DecodeTimezone(char *str, int *tzp);
@@ -668,8 +668,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			dterr;
 	int			mer = HR24;
 	bool		haveTextMonth = FALSE;
-	int			is2digits = FALSE;
-	int			bc = FALSE;
+	bool		is2digits = FALSE;
+	bool		bc = FALSE;
 	pg_tz	   *namedTz = NULL;
 
 	/*
@@ -1476,7 +1476,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 	int			i;
 	int			val;
 	int			dterr;
-	int			is2digits = FALSE;
+	bool		is2digits = FALSE;
 	int			mer = HR24;
 	pg_tz	   *namedTz = NULL;
 
@@ -2047,8 +2047,8 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
 				len;
 	int			dterr;
 	bool		haveTextMonth = FALSE;
-	int			bc = FALSE;
-	int			is2digits = FALSE;
+	bool		bc = FALSE;
+	bool		is2digits = FALSE;
 	int			type,
 				val,
 				dmask = 0;
@@ -2193,8 +2193,8 @@ DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm)
  * Decode time string which includes delimiters.
  * Return 0 if okay, a DTERR code if not.
  *
- * Only check the lower limit on hours, since this same code
- *	can be used to represent time spans.
+ * Only check the lower limit on hours, since this same code can be
+ * used to represent time spans.
  */
 static int
 DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
@@ -2270,7 +2270,7 @@ DecodeTime(char *str, int fmask, int *tmask, struct pg_tm * tm, fsec_t *fsec)
  */
 static int
 DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
-			 int *tmask, struct pg_tm * tm, fsec_t *fsec, int *is2digits)
+			 int *tmask, struct pg_tm * tm, fsec_t *fsec, bool *is2digits)
 {
 	int			val;
 	char	   *cp;
@@ -2462,7 +2462,7 @@ DecodeNumber(int flen, char *str, bool haveTextMonth, int fmask,
  */
 static int
 DecodeNumberField(int len, char *str, int fmask,
-				  int *tmask, struct pg_tm * tm, fsec_t *fsec, int *is2digits)
+				  int *tmask, struct pg_tm * tm, fsec_t *fsec, bool *is2digits)
 {
 	char	   *cp;
 
@@ -2680,7 +2680,7 @@ DecodeSpecial(int field, char *lowtoken, int *val)
 int
 DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, fsec_t *fsec)
 {
-	int			is_before = FALSE;
+	bool		is_before = FALSE;
 	char	   *cp;
 	int			fmask = 0,
 				tmask,
@@ -3519,8 +3519,8 @@ EncodeDateTime(struct pg_tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, 
 int
 EncodeInterval(struct pg_tm * tm, fsec_t fsec, int style, char *str)
 {
-	int			is_before = FALSE;
-	int			is_nonzero = FALSE;
+	bool		is_before = FALSE;
+	bool		is_nonzero = FALSE;
 	char	   *cp = str;
 
 	/*
