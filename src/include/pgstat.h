@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.60 2007/05/27 05:37:50 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.61 2007/05/27 17:28:36 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -58,6 +58,7 @@ typedef int64 PgStat_Counter;
  * tuples_inserted/tuples_updated/tuples_deleted count attempted actions,
  * regardless of whether the transaction committed.  new_live_tuples and
  * new_dead_tuples are properly adjusted depending on commit or abort.
+ * Note that new_live_tuples can be negative!
  * ----------
  */
 typedef struct PgStat_TableCounts

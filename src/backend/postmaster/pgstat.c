@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.157 2007/05/27 05:37:49 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.158 2007/05/27 17:28:35 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1376,7 +1376,8 @@ AtEOXact_PgStat(bool isCommit)
 			Assert(tabstat->trans == trans);
 			if (isCommit)
 			{
-				tabstat->t_counts.t_new_live_tuples += trans->tuples_inserted;
+				tabstat->t_counts.t_new_live_tuples +=
+					trans->tuples_inserted - trans->tuples_deleted;
 				tabstat->t_counts.t_new_dead_tuples += trans->tuples_deleted;
 			}
 			else
@@ -1563,7 +1564,8 @@ pgstat_twophase_postcommit(TransactionId xid, uint16 info,
 	/* Find or create a tabstat entry for the rel */
 	pgstat_info = get_tabstat_entry(rec->t_id, rec->t_shared);
 
-	pgstat_info->t_counts.t_new_live_tuples += rec->tuples_inserted;
+	pgstat_info->t_counts.t_new_live_tuples +=
+		rec->tuples_inserted - rec->tuples_deleted;
 	pgstat_info->t_counts.t_new_dead_tuples += rec->tuples_deleted;
 }
 
@@ -2919,6 +2921,9 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->blocks_hit += tabmsg[i].t_counts.t_blocks_hit;
 		}
 
+		/* Clamp n_live_tuples in case of negative new_live_tuples */
+		tabentry->n_live_tuples = Max(tabentry->n_live_tuples, 0);
+
 		/*
 		 * Add per-table stats to the per-database entry, too.
 		 */
@@ -3113,7 +3118,7 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	}
 	else
 	{
-		/* last_anl_tuples must never exceed n_live_tuples */
+		/* last_anl_tuples must never exceed n_live_tuples+n_dead_tuples */
 		tabentry->last_anl_tuples = Min(tabentry->last_anl_tuples,
 										msg->m_tuples);
 	}
