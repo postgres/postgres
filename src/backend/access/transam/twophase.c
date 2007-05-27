@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.30 2007/04/30 21:01:52 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.31 2007/05/27 03:50:39 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -1211,7 +1211,8 @@ FinishPreparedTransaction(const char *gid, bool isCommit)
 	else
 		ProcessRecords(bufptr, xid, twophase_postabort_callbacks);
 
-	pgstat_count_xact_commit();
+	/* Count the prepared xact as committed or aborted */
+	AtEOXact_PgStat(isCommit);
 
 	/*
 	 * And now we can clean up our mess.

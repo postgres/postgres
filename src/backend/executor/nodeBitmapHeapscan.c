@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.16 2007/01/05 22:19:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.17 2007/05/27 03:50:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		scan->rs_ctup.t_len = ItemIdGetLength(lp);
 		ItemPointerSet(&scan->rs_ctup.t_self, tbmres->blockno, targoffset);
 
-		pgstat_count_heap_fetch(&scan->rs_pgstat_info);
+		pgstat_count_heap_fetch(scan->rs_rd);
 
 		/*
 		 * Set up the result slot to point to this tuple. Note that the slot
@@ -389,7 +389,7 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	heap_rescan(node->ss.ss_currentScanDesc, NULL);
 
 	/* undo bogus "seq scan" count (see notes in ExecInitBitmapHeapScan) */
-	pgstat_discount_heap_scan(&node->ss.ss_currentScanDesc->rs_pgstat_info);
+	pgstat_discount_heap_scan(node->ss.ss_currentScanDesc->rs_rd);
 
 	if (node->tbm)
 		tbm_free(node->tbm);
@@ -535,7 +535,7 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 	 * when we actually aren't doing any such thing.  Reverse out the added
 	 * scan count.	(Eventually we may want to count bitmap scans separately.)
 	 */
-	pgstat_discount_heap_scan(&scanstate->ss.ss_currentScanDesc->rs_pgstat_info);
+	pgstat_discount_heap_scan(scanstate->ss.ss_currentScanDesc->rs_rd);
 
 	/*
 	 * get the scan type from the relation descriptor.

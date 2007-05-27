@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.260 2007/05/02 21:08:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.261 2007/05/27 03:50:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1802,6 +1802,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		int			old_refcnt = relation->rd_refcnt;
 		SubTransactionId old_createSubid = relation->rd_createSubid;
 		SubTransactionId old_newRelfilenodeSubid = relation->rd_newRelfilenodeSubid;
+		struct PgStat_TableStatus *old_pgstat_info = relation->pgstat_info;
 		TupleDesc	old_att = relation->rd_att;
 		RuleLock   *old_rules = relation->rd_rules;
 		MemoryContext old_rulescxt = relation->rd_rulescxt;
@@ -1821,6 +1822,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 		relation->rd_refcnt = old_refcnt;
 		relation->rd_createSubid = old_createSubid;
 		relation->rd_newRelfilenodeSubid = old_newRelfilenodeSubid;
+		relation->pgstat_info = old_pgstat_info;
 
 		if (equalTupleDescs(old_att, relation->rd_att))
 		{

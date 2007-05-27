@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.242 2007/04/30 21:01:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.243 2007/05/27 03:50:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1661,8 +1661,7 @@ CommitTransaction(void)
 	AtEOXact_Files();
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
-	pgstat_clear_snapshot();
-	pgstat_count_xact_commit();
+	AtEOXact_PgStat(true);
 	pgstat_report_txn_timestamp(0);
 
 	CurrentResourceOwner = NULL;
@@ -1796,6 +1795,7 @@ PrepareTransaction(void)
 	AtPrepare_UpdateFlatFiles();
 	AtPrepare_Inval();
 	AtPrepare_Locks();
+	AtPrepare_PgStat();
 
 	/*
 	 * Here is where we really truly prepare.
@@ -1853,6 +1853,8 @@ PrepareTransaction(void)
 
 	/* notify and flatfiles don't need a postprepare call */
 
+	PostPrepare_PgStat();
+
 	PostPrepare_Inval();
 
 	PostPrepare_smgr();
@@ -1880,7 +1882,7 @@ PrepareTransaction(void)
 	AtEOXact_Files();
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(true);
-	pgstat_clear_snapshot();
+	/* don't call AtEOXact_PgStat here */
 
 	CurrentResourceOwner = NULL;
 	ResourceOwnerDelete(TopTransactionResourceOwner);
@@ -2035,8 +2037,7 @@ AbortTransaction(void)
 	AtEOXact_Files();
 	AtEOXact_ComboCid();
 	AtEOXact_HashTables(false);
-	pgstat_clear_snapshot();
-	pgstat_count_xact_rollback();
+	AtEOXact_PgStat(false);
 	pgstat_report_txn_timestamp(0);
 
 	/*
@@ -3749,6 +3750,7 @@ CommitSubTransaction(void)
 	AtEOSubXact_Files(true, s->subTransactionId,
 					  s->parent->subTransactionId);
 	AtEOSubXact_HashTables(true, s->nestingLevel);
+	AtEOSubXact_PgStat(true, s->nestingLevel);
 
 	/*
 	 * We need to restore the upper transaction's read-only state, in case the
@@ -3861,6 +3863,7 @@ AbortSubTransaction(void)
 		AtEOSubXact_Files(false, s->subTransactionId,
 						  s->parent->subTransactionId);
 		AtEOSubXact_HashTables(false, s->nestingLevel);
+		AtEOSubXact_PgStat(false, s->nestingLevel);
 	}
 
 	/*

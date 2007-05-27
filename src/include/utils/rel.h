@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.100 2007/03/29 00:15:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/rel.h,v 1.101 2007/05/27 03:50:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,15 +87,6 @@ typedef struct TriggerDesc
 	Trigger    *triggers;
 	int			numtriggers;
 } TriggerDesc;
-
-
-/*
- * Same for the statistics collector data in Relation and scan data.
- */
-typedef struct PgStat_Info
-{
-	void	   *tabentry;
-} PgStat_Info;
 
 
 /*
@@ -200,8 +191,8 @@ typedef struct RelationData
 	List	   *rd_indpred;		/* index predicate tree, if any */
 	void	   *rd_amcache;		/* available for use by index AM */
 
-	/* statistics collection area */
-	PgStat_Info pgstat_info;
+	/* use "struct" here to avoid needing to include pgstat.h: */
+	struct PgStat_TableStatus *pgstat_info;	/* statistics collection area */
 } RelationData;
 
 typedef RelationData *Relation;

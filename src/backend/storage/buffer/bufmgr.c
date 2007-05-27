@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.218 2007/05/02 23:34:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.219 2007/05/27 03:50:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,12 +87,6 @@ static bool IsForInput;
 
 /* local state for LockBufferForCleanup */
 static volatile BufferDesc *PinCountWaitBuf = NULL;
-
-/*
- * Global statistics for the bgwriter. The contents of this variable
- * only makes sense in the bgwriter process.
- */
-extern PgStat_MsgBgWriter BgWriterStats;
 
 
 static Buffer ReadBuffer_common(Relation reln, BlockNumber blockNum,
@@ -174,7 +168,7 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage)
 	if (isExtend)
 		blockNum = smgrnblocks(reln->rd_smgr);
 
-	pgstat_count_buffer_read(&reln->pgstat_info, reln);
+	pgstat_count_buffer_read(reln);
 
 	if (isLocalBuf)
 	{
@@ -204,7 +198,7 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage)
 		if (!isExtend)
 		{
 			/* Just need to update stats before we exit */
-			pgstat_count_buffer_hit(&reln->pgstat_info, reln);
+			pgstat_count_buffer_hit(reln);
 
 			if (VacuumCostActive)
 				VacuumCostBalance += VacuumCostPageHit;

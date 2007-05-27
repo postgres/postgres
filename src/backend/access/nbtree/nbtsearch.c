@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.112 2007/04/06 22:33:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.113 2007/05/27 03:50:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -453,7 +453,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	int			i;
 	StrategyNumber strat_total;
 
-	pgstat_count_index_scan(&scan->xs_pgstat_info);
+	pgstat_count_index_scan(rel);
 
 	/*
 	 * Examine the scan keys and eliminate any redundant keys; also mark the

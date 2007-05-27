@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.232 2007/04/08 01:26:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.233 2007/05/27 03:50:38 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -100,7 +100,7 @@ initscan(HeapScanDesc scan, ScanKey key)
 	if (key != NULL)
 		memcpy(scan->rs_key, key, scan->rs_nkeys * sizeof(ScanKeyData));
 
-	pgstat_count_heap_scan(&scan->rs_pgstat_info);
+	pgstat_count_heap_scan(scan->rs_rd);
 }
 
 /*
@@ -701,6 +701,8 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	if (!RelationIsValid(r))
 		elog(ERROR, "could not open relation with OID %u", relationId);
 
+	pgstat_initstats(r);
+
 	return r;
 }
 
@@ -742,6 +744,8 @@ try_relation_open(Oid relationId, LOCKMODE lockmode)
 
 	if (!RelationIsValid(r))
 		elog(ERROR, "could not open relation with OID %u", relationId);
+
+	pgstat_initstats(r);
 
 	return r;
 }
@@ -786,6 +790,8 @@ relation_open_nowait(Oid relationId, LOCKMODE lockmode)
 
 	if (!RelationIsValid(r))
 		elog(ERROR, "could not open relation with OID %u", relationId);
+
+	pgstat_initstats(r);
 
 	return r;
 }
@@ -873,8 +879,6 @@ heap_open(Oid relationId, LOCKMODE lockmode)
 				 errmsg("\"%s\" is a composite type",
 						RelationGetRelationName(r))));
 
-	pgstat_initstats(&r->pgstat_info, r);
-
 	return r;
 }
 
@@ -902,8 +906,6 @@ heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("\"%s\" is a composite type",
 						RelationGetRelationName(r))));
-
-	pgstat_initstats(&r->pgstat_info, r);
 
 	return r;
 }
@@ -953,8 +955,6 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 		scan->rs_key = (ScanKey) palloc(sizeof(ScanKeyData) * nkeys);
 	else
 		scan->rs_key = NULL;
-
-	pgstat_initstats(&scan->rs_pgstat_info, relation);
 
 	initscan(scan, key);
 
@@ -1059,7 +1059,7 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
 	 */
 	HEAPDEBUG_3;				/* heap_getnext returning tuple */
 
-	pgstat_count_heap_getnext(&scan->rs_pgstat_info);
+	pgstat_count_heap_getnext(scan->rs_rd);
 
 	return &(scan->rs_ctup);
 }
@@ -1086,6 +1086,10 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
  * and return it in *userbuf (so the caller must eventually unpin it); when
  * keep_buf = false, the pin is released and *userbuf is set to InvalidBuffer.
  *
+ * stats_relation is the relation to charge the heap_fetch operation against
+ * for statistical purposes.  (This could be the heap rel itself, an
+ * associated index, or NULL to not count the fetch at all.)
+ *
  * It is somewhat inconsistent that we ereport() on invalid block number but
  * return false on invalid item number.  There are a couple of reasons though.
  * One is that the caller can relatively easily check the block number for
@@ -1101,12 +1105,12 @@ heap_fetch(Relation relation,
 		   HeapTuple tuple,
 		   Buffer *userbuf,
 		   bool keep_buf,
-		   PgStat_Info *pgstat_info)
+		   Relation stats_relation)
 {
 	/* Assume *userbuf is undefined on entry */
 	*userbuf = InvalidBuffer;
 	return heap_release_fetch(relation, snapshot, tuple,
-							  userbuf, keep_buf, pgstat_info);
+							  userbuf, keep_buf, stats_relation);
 }
 
 /*
@@ -1125,7 +1129,7 @@ heap_release_fetch(Relation relation,
 				   HeapTuple tuple,
 				   Buffer *userbuf,
 				   bool keep_buf,
-				   PgStat_Info *pgstat_info)
+				   Relation stats_relation)
 {
 	ItemPointer tid = &(tuple->t_self);
 	ItemId		lp;
@@ -1210,9 +1214,9 @@ heap_release_fetch(Relation relation,
 		 */
 		*userbuf = buffer;
 
-		/* Count the successful fetch in *pgstat_info, if given. */
-		if (pgstat_info != NULL)
-			pgstat_count_heap_fetch(pgstat_info);
+		/* Count the successful fetch against appropriate rel, if any */
+		if (stats_relation != NULL)
+			pgstat_count_heap_fetch(stats_relation);
 
 		return true;
 	}
@@ -1517,7 +1521,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	 */
 	CacheInvalidateHeapTuple(relation, heaptup);
 
-	pgstat_count_heap_insert(&relation->pgstat_info);
+	pgstat_count_heap_insert(relation);
 
 	/*
 	 * If heaptup is a private copy, release it.  Don't forget to copy t_self
@@ -1807,7 +1811,7 @@ l1:
 	if (have_tuple_lock)
 		UnlockTuple(relation, &(tp.t_self), ExclusiveLock);
 
-	pgstat_count_heap_delete(&relation->pgstat_info);
+	pgstat_count_heap_delete(relation);
 
 	return HeapTupleMayBeUpdated;
 }
@@ -2269,7 +2273,7 @@ l2:
 	if (have_tuple_lock)
 		UnlockTuple(relation, &(oldtup.t_self), ExclusiveLock);
 
-	pgstat_count_heap_update(&relation->pgstat_info);
+	pgstat_count_heap_update(relation);
 
 	/*
 	 * If heaptup is a private copy, release it.  Don't forget to copy t_self

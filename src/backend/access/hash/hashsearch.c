@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.49 2007/05/03 16:45:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashsearch.c,v 1.50 2007/05/27 03:50:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	ItemPointer current;
 	OffsetNumber offnum;
 
-	pgstat_count_index_scan(&scan->xs_pgstat_info);
+	pgstat_count_index_scan(rel);
 
 	current = &(so->hashso_curpos);
 	ItemPointerSetInvalid(current);

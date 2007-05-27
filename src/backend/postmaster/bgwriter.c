@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.37 2007/03/30 18:34:55 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.38 2007/05/27 03:50:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,13 +124,6 @@ typedef struct
 } BgWriterShmemStruct;
 
 static BgWriterShmemStruct *BgWriterShmem;
-
-/*
- * BgWriter statistics counters.
- * Stored directly in a stats message structure so it can be sent
- * without needing to copy things around.
- */
-PgStat_MsgBgWriter BgWriterStats;
 
 /*
  * GUC parameters
@@ -249,11 +242,6 @@ BackgroundWriterMain(void)
 											 ALLOCSET_DEFAULT_INITSIZE,
 											 ALLOCSET_DEFAULT_MAXSIZE);
 	MemoryContextSwitchTo(bgwriter_context);
-
-	/*
-	 * Initialize statistics counters to zero
-	 */
-	memset(&BgWriterStats, 0, sizeof(BgWriterStats));
 
 	/*
 	 * If an exception is encountered, processing resumes here.

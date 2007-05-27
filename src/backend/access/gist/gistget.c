@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.65 2007/04/06 22:33:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.66 2007/05/27 03:50:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 		stk->next = NULL;
 		stk->block = GIST_ROOT_BLKNO;
 
-		pgstat_count_index_scan(&scan->xs_pgstat_info);
+		pgstat_count_index_scan(scan->indexRelation);
 	}
 	else if (so->curbuf == InvalidBuffer)
 	{
