@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.156 2007/05/27 03:50:39 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.157 2007/05/27 05:37:49 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1772,27 +1772,44 @@ CreateSharedBackendStatus(void)
 
 
 /* ----------
+ * pgstat_initialize() -
+ *
+ *	Initialize pgstats state, and set up our on-proc-exit hook.
+ *	Called from InitPostgres.  MyBackendId must be set,
+ *	but we must not have started any transaction yet (since the
+ *	exit hook must run after the last transaction exit).
+ * ----------
+ */
+void
+pgstat_initialize(void)
+{
+	/* Initialize MyBEEntry */
+	Assert(MyBackendId >= 1 && MyBackendId <= MaxBackends);
+	MyBEEntry = &BackendStatusArray[MyBackendId - 1];
+
+	/* Set up a process-exit hook to clean up */
+	on_shmem_exit(pgstat_beshutdown_hook, 0);
+}
+
+/* ----------
  * pgstat_bestart() -
  *
- *	Initialize this backend's entry in the PgBackendStatus array,
- *	and set up an on-proc-exit hook that will clear it again.
- *	Called from InitPostgres.  MyBackendId and MyDatabaseId must be set.
+ *	Initialize this backend's entry in the PgBackendStatus array.
+ *	Called from InitPostgres.  MyDatabaseId and session userid must be set
+ *	(hence, this cannot be combined with pgstat_initialize).
  * ----------
  */
 void
 pgstat_bestart(void)
 {
-	volatile PgBackendStatus *beentry;
 	TimestampTz proc_start_timestamp;
 	Oid			userid;
 	SockAddr	clientaddr;
-
-	Assert(MyBackendId >= 1 && MyBackendId <= MaxBackends);
-	MyBEEntry = &BackendStatusArray[MyBackendId - 1];
+	volatile PgBackendStatus *beentry;
 
 	/*
-	 * To minimize the time spent modifying the entry, fetch all the needed
-	 * data first.
+	 * To minimize the time spent modifying the PgBackendStatus entry,
+	 * fetch all the needed data first.
 	 *
 	 * If we have a MyProcPort, use its session start time (for consistency,
 	 * and to save a kernel call).
@@ -1839,11 +1856,6 @@ pgstat_bestart(void)
 
 	beentry->st_changecount++;
 	Assert((beentry->st_changecount & 1) == 0);
-
-	/*
-	 * Set up a process-exit hook to clean up.
-	 */
-	on_shmem_exit(pgstat_beshutdown_hook, 0);
 }
 
 /*
