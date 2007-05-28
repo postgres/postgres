@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.62 2007/02/27 23:48:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.63 2007/05/28 16:43:24 tgl Exp $
  */
 #include "postgres.h"
 
@@ -14,6 +14,17 @@
 #include "utils/builtins.h"
 #include "utils/memutils.h"
 #include "utils/syscache.h"
+
+/*
+ * When converting strings between different encodings, we assume that space
+ * for converted result is 4-to-1 growth in the worst case. The rate for
+ * currently supported encoding pairs are within 3 (SJIS JIS X0201 half width
+ * kanna -> UTF8 is the worst case).  So "4" should be enough for the moment.
+ *
+ * Note that this is not the same as the maximum character width in any
+ * particular encoding.
+ */
+#define MAX_CONVERSION_GROWTH  4
 
 /*
  * We handle for actual FE and BE encoding setting encoding-identificator
@@ -207,15 +218,14 @@ pg_get_client_encoding_name(void)
  * conversion function is chosen from the pg_conversion system catalog
  * marked as "default". If it is not found in the schema search path,
  * it's taken from pg_catalog schema. If it even is not in the schema,
- * warn and returns src. We cannot raise an error, since it will cause
- * an infinit loop in error message sending.
+ * warn and return src.
  *
  * In the case of no conversion, src is returned.
  *
- * XXX We assume that storage for converted result is 4-to-1 growth in
- * the worst case. The rate for currently supported encoding pares are within 3
- * (SJIS JIS X0201 half width kanna -> UTF8 is the worst case).
- * So "4" should be enough for the moment.
+ * Note: we try to avoid raising error, since that could get us into
+ * infinite recursion when this function is invoked during error message
+ * sending.  It should be OK to raise error for overlength strings though,
+ * since the recursion will come with a shorter message.
  */
 unsigned char *
 pg_do_encoding_conversion(unsigned char *src, int len,
@@ -260,7 +270,17 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 		return src;
 	}
 
-	result = palloc(len * 4 + 1);
+	/*
+	 * Allocate space for conversion result, being wary of integer overflow
+	 */
+	if ((Size) len >= (MaxAllocSize / (Size) MAX_CONVERSION_GROWTH))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("out of memory"),
+				 errdetail("String of %d bytes is too long for encoding conversion.",
+						   len)));
+
+	result = palloc(len * MAX_CONVERSION_GROWTH + 1);
 
 	OidFunctionCall5(proc,
 					 Int32GetDatum(src_encoding),
@@ -458,7 +478,17 @@ perform_default_encoding_conversion(const char *src, int len, bool is_client_to_
 	if (flinfo == NULL)
 		return (char *) src;
 
-	result = palloc(len * 4 + 1);
+	/*
+	 * Allocate space for conversion result, being wary of integer overflow
+	 */
+	if ((Size) len >= (MaxAllocSize / (Size) MAX_CONVERSION_GROWTH))
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("out of memory"),
+				 errdetail("String of %d bytes is too long for encoding conversion.",
+						   len)));
+
+	result = palloc(len * MAX_CONVERSION_GROWTH + 1);
 
 	FunctionCall5(flinfo,
 				  Int32GetDatum(src_encoding),
