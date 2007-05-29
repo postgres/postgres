@@ -116,3 +116,14 @@ SELECT justify_days(interval '6 months 36 days 5 hours 4 minutes 3 seconds') as 
 -- test justify_interval()
 
 SELECT justify_interval(interval '1 month -1 hour') as "1 month -1 hour";
+
+-- test fractional second input, and detection of duplicate units
+SET DATESTYLE = 'ISO';
+SELECT '1 millisecond'::interval, '1 microsecond'::interval,
+       '500 seconds 99 milliseconds 51 microseconds'::interval;
+SELECT '3 days 5 milliseconds'::interval;
+
+SELECT '1 second 2 seconds'::interval;              -- error
+SELECT '10 milliseconds 20 milliseconds'::interval; -- error
+SELECT '5.5 seconds 3 milliseconds'::interval;      -- error
+SELECT '1:20:05 5 microseconds'::interval;          -- error
