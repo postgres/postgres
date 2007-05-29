@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.57 2005/10/15 02:49:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.57.2.1 2007/05/29 04:59:44 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,17 +99,19 @@
 #define HOUR	10
 #define MINUTE	11
 #define SECOND	12
-#define DOY		13
-#define DOW		14
-#define UNITS	15
-#define ADBC	16
+#define MILLISECOND 13
+#define MICROSECOND 14
+#define DOY		15
+#define DOW		16
+#define UNITS	17
+#define ADBC	18
 /* these are only for relative dates */
-#define AGO		17
-#define ABS_BEFORE		18
-#define ABS_AFTER		19
+#define AGO		19
+#define ABS_BEFORE		20
+#define ABS_AFTER		21
 /* generic fields to help with parsing */
-#define ISODATE 20
-#define ISOTIME 21
+#define ISODATE 22
+#define ISOTIME 23
 /* reserved for unrecognized string values */
 #define UNKNOWN_FIELD	31
 
@@ -172,8 +174,10 @@
 
 #define DTK_M(t)		(0x01 << (t))
 
+/* Convenvience: a second, plus any fractional component */
+#define DTK_ALL_SECS_M	(DTK_M(SECOND) | DTK_M(MILLISECOND) | DTK_M(MICROSECOND))
 #define DTK_DATE_M		(DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY))
-#define DTK_TIME_M		(DTK_M(HOUR) | DTK_M(MINUTE) | DTK_M(SECOND))
+#define DTK_TIME_M		(DTK_M(HOUR) | DTK_M(MINUTE) | DTK_ALL_SECS_M)
 
 #define MAXDATELEN		51		/* maximum possible length of an input date
 								 * string (not counting tr. null) */
