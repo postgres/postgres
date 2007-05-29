@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.179 2007/05/27 20:32:16 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.180 2007/05/29 04:58:43 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -924,6 +924,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 #else
 								*fsec = frac;
 #endif
+								tmask = DTK_ALL_SECS_M;
 							}
 							break;
 
@@ -1699,6 +1700,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 #else
 								*fsec = frac;
 #endif
+								tmask = DTK_ALL_SECS_M;
 							}
 							break;
 
@@ -2805,6 +2807,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 #else
 						*fsec += (val + fval) * 1e-6;
 #endif
+						tmask = DTK_M(MICROSECOND);
 						break;
 
 					case DTK_MILLISEC:
@@ -2813,6 +2816,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 #else
 						*fsec += (val + fval) * 1e-3;
 #endif
+						tmask = DTK_M(MILLISECOND);
 						break;
 
 					case DTK_SECOND:
@@ -2822,7 +2826,15 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct pg_tm * tm, 
 #else
 						*fsec += fval;
 #endif
-						tmask = DTK_M(SECOND);
+						/*
+						 * If any subseconds were specified, consider
+						 * this microsecond and millisecond input as
+						 * well.
+						 */
+						if (fval == 0)
+							tmask = DTK_M(SECOND);
+						else
+							tmask = DTK_ALL_SECS_M;
 						break;
 
 					case DTK_MINUTE:

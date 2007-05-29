@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.201 2007/05/21 17:10:28 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.202 2007/05/29 04:58:43 neilc Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -1880,7 +1880,8 @@ January 8 04:05:06 1999 PST
 </programlisting>
 
       Where: <replaceable>quantity</> is a number (possibly signed);
-      <replaceable>unit</> is <literal>second</literal>,
+      <replaceable>unit</> is <literal>microsecond</literal>,
+      <literal>millisecond</literal>, <literal>second</literal>,
       <literal>minute</literal>, <literal>hour</literal>, <literal>day</literal>,
       <literal>week</literal>, <literal>month</literal>, <literal>year</literal>,
       <literal>decade</literal>, <literal>century</literal>, <literal>millennium</literal>,
