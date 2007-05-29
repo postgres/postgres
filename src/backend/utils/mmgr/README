@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.10 2007/03/13 00:33:42 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/mmgr/README,v 1.11 2007/05/29 04:19:35 neilc Exp $
 
 Notes about memory allocation redesign
 --------------------------------------
@@ -201,7 +201,7 @@ have dangling pointers leading to a crash at top-level commit.  An example of
 data kept here is pending NOTIFY messages, which are sent at top-level commit,
 but only if the generating subtransaction did not abort.
 
-PortalContext --- this is not actually a separate context either, but a
+PortalContext --- this is not actually a separate context, but a
 global variable pointing to the per-portal context of the currently active
 execution portal.  This can be used if it's necessary to allocate storage
 that will live just as long as the execution of the current portal requires.
