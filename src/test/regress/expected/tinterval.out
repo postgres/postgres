@@ -103,7 +103,6 @@ SELECT '' AS three, t1.*
        | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
 (3 rows)
 
-SET geqo TO 'off';
 SELECT '' AS five, t1.f1, t2.f1
    FROM TINTERVAL_TBL t1, TINTERVAL_TBL t2
    WHERE t1.f1 && t2.f1 and
@@ -167,4 +166,3 @@ SELECT '' AS three, t1.f1
        | ["Wed Dec 31 16:00:00 1969 PST" "Mon May 01 00:30:30 1995 PDT"]
 (3 rows)
 
-RESET geqo;

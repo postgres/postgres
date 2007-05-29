@@ -55,8 +55,6 @@ SELECT '' AS six, p.f1, p.f1 <-> point '(0,0)' AS dist
    FROM POINT_TBL p
    ORDER BY dist;
 
-SET geqo TO 'off';
-
 SELECT '' AS thirtysix, p1.f1 AS point1, p2.f1 AS point2, p1.f1 <-> p2.f1 AS dist
    FROM POINT_TBL p1, POINT_TBL p2
    ORDER BY dist, p1.f1[0], p2.f1[0];
@@ -76,6 +74,3 @@ SELECT '' AS three, p1.f1 AS point1, p2.f1 AS point2, (p1.f1 <-> p2.f1) AS dista
    FROM POINT_TBL p1, POINT_TBL p2 
    WHERE (p1.f1 <-> p2.f1) > 3 and p1.f1 << p2.f1 and p1.f1 >^ p2.f1
    ORDER BY distance;
-
-RESET geqo;
-

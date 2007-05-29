@@ -87,8 +87,6 @@ SELECT '' AS twenty, b.f1 / p.f1 AS rotation
 -- Paths
 --
 
-SET geqo TO 'off';
-
 SELECT '' AS eight, npoints(f1) AS npoints, f1 AS path FROM PATH_TBL;
 
 SELECT '' AS four, path(f1) FROM POLYGON_TBL;
@@ -100,8 +98,6 @@ SELECT '' AS eight, p1.f1 + point '(10,10)' AS dist_add
 -- scaling and rotation
 SELECT '' AS eight, p1.f1 * point '(2,-1)' AS dist_mul
    FROM PATH_TBL p1;
-
-RESET geqo;
 
 --
 -- Polygons

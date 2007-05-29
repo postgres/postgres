@@ -284,7 +284,6 @@ SELECT '' AS twenty, b.f1 / p.f1 AS rotation
 --
 -- Paths
 --
-SET geqo TO 'off';
 SELECT '' AS eight, npoints(f1) AS npoints, f1 AS path FROM PATH_TBL;
  eight | npoints |           path            
 -------+---------+---------------------------
@@ -337,7 +336,6 @@ SELECT '' AS eight, p1.f1 * point '(2,-1)' AS dist_mul
        | ((34,13),(40,15))
 (8 rows)
 
-RESET geqo;
 --
 -- Polygons
 --
