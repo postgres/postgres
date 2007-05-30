@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.43 2007/05/30 17:41:43 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.44 2007/05/30 18:00:08 momjian Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -155,10 +155,11 @@ cvs update
    documentation at <ulink url="http://www.nongnu.org/cvs/"></ulink>.
   </para>
   <para>
-   For those things which <productname>CVS</productname> does not do by
-   itself, for example ones that add or remove files, you can use
-   <productname>cvsutils</productname>, which is packaged for many
-   operating systems, or available in source form at <ulink
+   <productname>CVS</productname> has deficiencies.  For example,
+   generating diffs that add or remove files requires write access to the
+   CVS repository.  To work around such difficiencies, use
+   <productname>cvsutils</productname>, which is packaged in several
+   operating systems, and is available in source form at <ulink
    url="http://www.red-bean.com/cvsutils/"></ulink>.
   </para>
  </sect1>
