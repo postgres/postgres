@@ -16,13 +16,13 @@
 #
 # Next, add this line to the /etc/hostconfig file:
 #
-# POSTGRESQLSERVER=-YES-
+# POSTGRESQL=-YES-
 #
 # The startup bundle will now be ready to go. To prevent this script from
 # starting PostgreSQL at system startup, simply change that line in
 # /etc/hostconfig back to:
 #
-# POSTGRESQLSERVER=-NO-
+# POSTGRESQL=-NO-
 #
 # For more information on Darwin/Mac OS X startup bundles, see this article:
 #
@@ -66,7 +66,7 @@ ROTATESEC="604800"
 ################################################################################
 
 # The path that is to be used for the script
-PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+PATH=/usr/local/pgsql/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
 # What to use to start up the postmaster (we do NOT use pg_ctl for this,
 # as it adds no value and can cause the postmaster to misrecognize a stale
@@ -82,8 +82,9 @@ LOGUTIL="/usr/sbin/rotatelogs"
 . /etc/rc.common
 
 StartService () {
-    if [ "${POSTGRESQLSERVER:=-NO-}" = "-YES-" ]; then
+    if [ "${POSTGRESQL:=-NO-}" = "-YES-" ]; then
         ConsoleMessage "Starting PostgreSQL database server"
+        cd /Users/postgres
         if [ "${ROTATELOGS}" = "1" ]; then
             sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' | ${LOGUTIL} '${PGLOG}' ${ROTATESEC} &"
         else
@@ -94,13 +95,15 @@ StartService () {
 
 StopService () {
     ConsoleMessage "Stopping PostgreSQL database server"
+    cd /Users/postgres
     sudo -u $PGUSER $PGCTL stop -D "$PGDATA" -s -m fast
 }
 
 RestartService () {
-    if [ "${POSTGRESQLSERVER:=-NO-}" = "-YES-" ]; then
+    if [ "${POSTGRESQL:=-NO-}" = "-YES-" ]; then
         ConsoleMessage "Restarting PostgreSQL database server"
 	# should match StopService:
+        cd /Users/postgres
 	sudo -u $PGUSER $PGCTL stop -D "$PGDATA" -s -m fast
 	# should match StartService:
         if [ "${ROTATELOGS}" = "1" ]; then
