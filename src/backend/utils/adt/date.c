@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.129 2007/02/27 23:48:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.130 2007/05/30 19:38:05 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1635,7 +1635,7 @@ time_text(PG_FUNCTION_ARGS)
 	result = palloc(len);
 
 	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), str, (len - VARHDRSZ));
+	memcpy(VARDATA(result), str, len - VARHDRSZ);
 
 	pfree(str);
 
@@ -1651,11 +1651,9 @@ time_text(PG_FUNCTION_ARGS)
 Datum
 text_time(PG_FUNCTION_ARGS)
 {
-	text	   *str = PG_GETARG_TEXT_P(0);
-	int			i;
-	char	   *sp,
-			   *dp,
-				dstr[MAXDATELEN + 1];
+	text	   	*str = PG_GETARG_TEXT_P(0);
+	char 		 dstr[MAXDATELEN + 1];
+	size_t 		 len;
 
 	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
 		ereport(ERROR,
@@ -1663,11 +1661,9 @@ text_time(PG_FUNCTION_ARGS)
 				 errmsg("invalid input syntax for type time: \"%s\"",
 						VARDATA(str))));
 
-	sp = VARDATA(str);
-	dp = dstr;
-	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
-		*dp++ = *sp++;
-	*dp = '\0';
+	len = VARSIZE(str) - VARHDRSZ;
+	memcpy(dstr, VARDATA(str), len); 
+	dstr[len] = '\0';
 
 	return DirectFunctionCall3(time_in,
 							   CStringGetDatum(dstr),
