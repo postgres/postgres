@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.380 2007/05/21 17:10:28 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.381 2007/05/30 18:13:29 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10174,6 +10174,13 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
   <para>
    <xref linkend="functions-info-session-table"> shows several
    functions that extract session and system information.
+  </para>
+
+  <para>
+   In addition to the functions listed in this section, there are a number of
+   functions related to the statistics system that also provide system
+   information. See <xref linkend="monitoring-stats-views"> for more
+   information.
   </para>
 
    <table id="functions-info-session-table">
