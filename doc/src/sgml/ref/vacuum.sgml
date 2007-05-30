@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.47 2007/01/31 23:26:04 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/vacuum.sgml,v 1.48 2007/05/30 19:45:01 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -164,10 +164,11 @@ VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ <replaceable class="PARAMETER">
    <para>
     The <option>FULL</option> option is not recommended for routine use,
     but might be useful in special cases.  An example is when you have deleted
-    most of the rows in a table and would like the table to physically shrink
-    to occupy less disk space.  <command>VACUUM FULL</command> will usually
-    shrink the table more than a plain <command>VACUUM</command> would.
-    The <option>FULL</option> option does not shrink indexes; a periodic
+    or updated most of the rows in a table and would like the table to
+    physically shrink to occupy less disk space and allow faster table
+    scans. <command>VACUUM FULL</command> will usually shrink the table
+    more than a plain <command>VACUUM</command> would.  The
+    <option>FULL</option> option does not shrink indexes; a periodic
     <command>REINDEX</> is still recommended.  In fact, it is often faster
     to drop all indexes, <command>VACUUM FULL</>, and recreate the indexes.
    </para>
