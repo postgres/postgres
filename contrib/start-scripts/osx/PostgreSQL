@@ -86,7 +86,7 @@ StartService () {
         ConsoleMessage "Starting PostgreSQL database server"
         cd /Users/postgres
         if [ "${ROTATELOGS}" = "1" ]; then
-            sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' | ${LOGUTIL} '${PGLOG}' ${ROTATESEC} &"
+            sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' 2>&1 | ${LOGUTIL} '${PGLOG}' ${ROTATESEC} &"
         else
             sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' &" >>$PGLOG 2>&1
         fi
@@ -107,7 +107,7 @@ RestartService () {
 	sudo -u $PGUSER $PGCTL stop -D "$PGDATA" -s -m fast
 	# should match StartService:
         if [ "${ROTATELOGS}" = "1" ]; then
-            sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' | ${LOGUTIL} '${PGLOG}' ${ROTATESEC} &"
+            sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' 2>&1 | ${LOGUTIL} '${PGLOG}' ${ROTATESEC} &"
         else
             sudo -u $PGUSER sh -c "${DAEMON} -D '${PGDATA}' &" >>$PGLOG 2>&1
         fi
