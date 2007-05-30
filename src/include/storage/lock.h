@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.104 2007/03/03 18:46:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.105 2007/05/30 16:16:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -394,7 +394,7 @@ typedef enum
 	LOCKACQUIRE_ALREADY_HELD	/* incremented count for lock already held */
 } LockAcquireResult;
 
-/* Deadlock states identified by DeadlockCheck() */
+/* Deadlock states identified by DeadLockCheck() */
 typedef enum
 {
 	DS_DEADLOCK_NOT_FOUND,		/* no deadlock found within database server */
