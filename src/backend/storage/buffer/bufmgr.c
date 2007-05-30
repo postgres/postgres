@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.219 2007/05/27 03:50:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.220 2007/05/30 20:11:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,11 +90,11 @@ static volatile BufferDesc *PinCountWaitBuf = NULL;
 
 
 static Buffer ReadBuffer_common(Relation reln, BlockNumber blockNum,
-								bool zeroPage);
-static bool PinBuffer(volatile BufferDesc *buf);
+								bool zeroPage,
+								BufferAccessStrategy strategy);
+static bool PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
-static void UnpinBuffer(volatile BufferDesc *buf,
-			bool fixOwner, bool normalAccess);
+static void UnpinBuffer(volatile BufferDesc *buf, bool fixOwner);
 static bool SyncOneBuffer(int buf_id, bool skip_pinned);
 static void WaitIO(volatile BufferDesc *buf);
 static bool StartBufferIO(volatile BufferDesc *buf, bool forInput);
@@ -102,7 +102,8 @@ static void TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
 				  int set_flag_bits);
 static void buffer_write_error_callback(void *arg);
 static volatile BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
-			bool *foundPtr);
+										BufferAccessStrategy strategy,
+										bool *foundPtr);
 static void FlushBuffer(volatile BufferDesc *buf, SMgrRelation reln);
 static void AtProcExit_Buffers(int code, Datum arg);
 
@@ -125,7 +126,18 @@ static void AtProcExit_Buffers(int code, Datum arg);
 Buffer
 ReadBuffer(Relation reln, BlockNumber blockNum)
 {
-	return ReadBuffer_common(reln, blockNum, false);
+	return ReadBuffer_common(reln, blockNum, false, NULL);
+}
+
+/*
+ * ReadBufferWithStrategy -- same as ReadBuffer, except caller can specify
+ *		a nondefault buffer access strategy.  See buffer/README for details.
+ */
+Buffer
+ReadBufferWithStrategy(Relation reln, BlockNumber blockNum,
+					   BufferAccessStrategy strategy)
+{
+	return ReadBuffer_common(reln, blockNum, false, strategy);
 }
 
 /*
@@ -140,14 +152,15 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
 Buffer
 ReadOrZeroBuffer(Relation reln, BlockNumber blockNum)
 {
-	return ReadBuffer_common(reln, blockNum, true);
+	return ReadBuffer_common(reln, blockNum, true, NULL);
 }
 
 /*
- * ReadBuffer_common -- common logic for ReadBuffer and ReadOrZeroBuffer
+ * ReadBuffer_common -- common logic for ReadBuffer variants
  */
 static Buffer
-ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage)
+ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
+				  BufferAccessStrategy strategy)
 {
 	volatile BufferDesc *bufHdr;
 	Block		bufBlock;
@@ -185,7 +198,7 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage)
 		 * lookup the buffer.  IO_IN_PROGRESS is set if the requested block is
 		 * not currently in memory.
 		 */
-		bufHdr = BufferAlloc(reln, blockNum, &found);
+		bufHdr = BufferAlloc(reln, blockNum, strategy, &found);
 		if (found)
 			BufferHitCount++;
 	}
@@ -330,6 +343,10 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage)
  *		buffer.  If no buffer exists already, selects a replacement
  *		victim and evicts the old page, but does NOT read in new page.
  *
+ * "strategy" can be a buffer replacement strategy object, or NULL for
+ * the default strategy.  The selected buffer's usage_count is advanced when
+ * using the default strategy, but otherwise possibly not (see PinBuffer).
+ *
  * The returned buffer is pinned and is already marked as holding the
  * desired page.  If it already did have the desired page, *foundPtr is
  * set TRUE.  Otherwise, *foundPtr is set FALSE and the buffer is marked
@@ -343,6 +360,7 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage)
 static volatile BufferDesc *
 BufferAlloc(Relation reln,
 			BlockNumber blockNum,
+			BufferAccessStrategy strategy,
 			bool *foundPtr)
 {
 	BufferTag	newTag;			/* identity of requested block */
@@ -375,7 +393,7 @@ BufferAlloc(Relation reln,
 		 */
 		buf = &BufferDescriptors[buf_id];
 
-		valid = PinBuffer(buf);
+		valid = PinBuffer(buf, strategy);
 
 		/* Can release the mapping lock as soon as we've pinned it */
 		LWLockRelease(newPartitionLock);
@@ -413,13 +431,15 @@ BufferAlloc(Relation reln,
 	/* Loop here in case we have to try another victim buffer */
 	for (;;)
 	{
+		bool lock_held;
+
 		/*
 		 * Select a victim buffer.	The buffer is returned with its header
-		 * spinlock still held!  Also the BufFreelistLock is still held, since
-		 * it would be bad to hold the spinlock while possibly waking up other
-		 * processes.
+		 * spinlock still held!  Also (in most cases) the BufFreelistLock is
+		 * still held, since it would be bad to hold the spinlock while
+		 * possibly waking up other processes.
 		 */
-		buf = StrategyGetBuffer();
+		buf = StrategyGetBuffer(strategy, &lock_held);
 
 		Assert(buf->refcount == 0);
 
@@ -430,7 +450,8 @@ BufferAlloc(Relation reln,
 		PinBuffer_Locked(buf);
 
 		/* Now it's safe to release the freelist lock */
-		LWLockRelease(BufFreelistLock);
+		if (lock_held)
+			LWLockRelease(BufFreelistLock);
 
 		/*
 		 * If the buffer was dirty, try to write it out.  There is a race
@@ -458,16 +479,34 @@ BufferAlloc(Relation reln,
 			 */
 			if (LWLockConditionalAcquire(buf->content_lock, LW_SHARED))
 			{
+				/*
+				 * If using a nondefault strategy, and writing the buffer
+				 * would require a WAL flush, let the strategy decide whether
+				 * to go ahead and write/reuse the buffer or to choose another
+				 * victim.  We need lock to inspect the page LSN, so this
+				 * can't be done inside StrategyGetBuffer.
+				 */
+				if (strategy != NULL &&
+					XLogNeedsFlush(BufferGetLSN(buf)) &&
+					StrategyRejectBuffer(strategy, buf))
+				{
+					/* Drop lock/pin and loop around for another buffer */
+					LWLockRelease(buf->content_lock);
+					UnpinBuffer(buf, true);
+					continue;
+				}
+
+				/* OK, do the I/O */
 				FlushBuffer(buf, NULL);
 				LWLockRelease(buf->content_lock);
 			}
 			else
 			{
 				/*
-				 * Someone else has pinned the buffer, so give it up and loop
+				 * Someone else has locked the buffer, so give it up and loop
 				 * back to get another one.
 				 */
-				UnpinBuffer(buf, true, false /* evidently recently used */ );
+				UnpinBuffer(buf, true);
 				continue;
 			}
 		}
@@ -531,10 +570,9 @@ BufferAlloc(Relation reln,
 			 * Got a collision. Someone has already done what we were about to
 			 * do. We'll just handle this as if it were found in the buffer
 			 * pool in the first place.  First, give up the buffer we were
-			 * planning to use.  Don't allow it to be thrown in the free list
-			 * (we don't want to hold freelist and mapping locks at once).
+			 * planning to use.
 			 */
-			UnpinBuffer(buf, true, false);
+			UnpinBuffer(buf, true);
 
 			/* Can give up that buffer's mapping partition lock now */
 			if ((oldFlags & BM_TAG_VALID) &&
@@ -545,7 +583,7 @@ BufferAlloc(Relation reln,
 
 			buf = &BufferDescriptors[buf_id];
 
-			valid = PinBuffer(buf);
+			valid = PinBuffer(buf, strategy);
 
 			/* Can release the mapping lock as soon as we've pinned it */
 			LWLockRelease(newPartitionLock);
@@ -595,20 +633,21 @@ BufferAlloc(Relation reln,
 			oldPartitionLock != newPartitionLock)
 			LWLockRelease(oldPartitionLock);
 		LWLockRelease(newPartitionLock);
-		UnpinBuffer(buf, true, false /* evidently recently used */ );
+		UnpinBuffer(buf, true);
 	}
 
 	/*
 	 * Okay, it's finally safe to rename the buffer.
 	 *
 	 * Clearing BM_VALID here is necessary, clearing the dirtybits is just
-	 * paranoia.  We also clear the usage_count since any recency of use of
-	 * the old content is no longer relevant.
+	 * paranoia.  We also reset the usage_count since any recency of use of
+	 * the old content is no longer relevant.  (The usage_count starts out
+	 * at 1 so that the buffer can survive one clock-sweep pass.)
 	 */
 	buf->tag = newTag;
 	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_IO_ERROR);
 	buf->flags |= BM_TAG_VALID;
-	buf->usage_count = 0;
+	buf->usage_count = 1;
 
 	UnlockBufHdr(buf);
 
@@ -736,7 +775,7 @@ retry:
 	/*
 	 * Insert the buffer at the head of the list of free buffers.
 	 */
-	StrategyFreeBuffer(buf, true);
+	StrategyFreeBuffer(buf);
 }
 
 /*
@@ -814,9 +853,6 @@ ReleaseAndReadBuffer(Buffer buffer,
 				return buffer;
 			ResourceOwnerForgetBuffer(CurrentResourceOwner, buffer);
 			LocalRefCount[-buffer - 1]--;
-			if (LocalRefCount[-buffer - 1] == 0 &&
-				bufHdr->usage_count < BM_MAX_USAGE_COUNT)
-				bufHdr->usage_count++;
 		}
 		else
 		{
@@ -826,7 +862,7 @@ ReleaseAndReadBuffer(Buffer buffer,
 			if (bufHdr->tag.blockNum == blockNum &&
 				RelFileNodeEquals(bufHdr->tag.rnode, relation->rd_node))
 				return buffer;
-			UnpinBuffer(bufHdr, true, true);
+			UnpinBuffer(bufHdr, true);
 		}
 	}
 
@@ -836,6 +872,14 @@ ReleaseAndReadBuffer(Buffer buffer,
 /*
  * PinBuffer -- make buffer unavailable for replacement.
  *
+ * For the default access strategy, the buffer's usage_count is incremented
+ * when we first pin it; for other strategies we just make sure the usage_count
+ * isn't zero.  (The idea of the latter is that we don't want synchronized
+ * heap scans to inflate the count, but we need it to not be zero to discourage
+ * other backends from stealing buffers from our ring.  As long as we cycle
+ * through the ring faster than the global clock-sweep cycles, buffers in
+ * our ring won't be chosen as victims for replacement by other backends.)
+ *
  * This should be applied only to shared buffers, never local ones.
  *
  * Note that ResourceOwnerEnlargeBuffers must have been done already.
@@ -844,7 +888,7 @@ ReleaseAndReadBuffer(Buffer buffer,
  * some callers to avoid an extra spinlock cycle.
  */
 static bool
-PinBuffer(volatile BufferDesc *buf)
+PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy)
 {
 	int			b = buf->buf_id;
 	bool		result;
@@ -853,6 +897,16 @@ PinBuffer(volatile BufferDesc *buf)
 	{
 		LockBufHdr(buf);
 		buf->refcount++;
+		if (strategy == NULL)
+		{
+			if (buf->usage_count < BM_MAX_USAGE_COUNT)
+				buf->usage_count++;
+		}
+		else
+		{
+			if (buf->usage_count == 0)
+				buf->usage_count = 1;
+		}
 		result = (buf->flags & BM_VALID) != 0;
 		UnlockBufHdr(buf);
 	}
@@ -871,6 +925,11 @@ PinBuffer(volatile BufferDesc *buf)
 /*
  * PinBuffer_Locked -- as above, but caller already locked the buffer header.
  * The spinlock is released before return.
+ *
+ * Currently, no callers of this function want to modify the buffer's
+ * usage_count at all, so there's no need for a strategy parameter.
+ * Also we don't bother with a BM_VALID test (the caller could check that for
+ * itself).
  *
  * Note: use of this routine is frequently mandatory, not just an optimization
  * to save a spin lock/unlock cycle, because we need to pin a buffer before
@@ -897,17 +956,9 @@ PinBuffer_Locked(volatile BufferDesc *buf)
  *
  * Most but not all callers want CurrentResourceOwner to be adjusted.
  * Those that don't should pass fixOwner = FALSE.
- *
- * normalAccess indicates that we are finishing a "normal" page access,
- * that is, one requested by something outside the buffer subsystem.
- * Passing FALSE means it's an internal access that should not update the
- * buffer's usage count nor cause a change in the freelist.
- *
- * If we are releasing a buffer during VACUUM, and it's not been otherwise
- * used recently, and normalAccess is true, we send the buffer to the freelist.
  */
 static void
-UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool normalAccess)
+UnpinBuffer(volatile BufferDesc *buf, bool fixOwner)
 {
 	int			b = buf->buf_id;
 
@@ -919,8 +970,6 @@ UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool normalAccess)
 	PrivateRefCount[b]--;
 	if (PrivateRefCount[b] == 0)
 	{
-		bool		immed_free_buffer = false;
-
 		/* I'd better not still hold any locks on the buffer */
 		Assert(!LWLockHeldByMe(buf->content_lock));
 		Assert(!LWLockHeldByMe(buf->io_in_progress_lock));
@@ -931,22 +980,7 @@ UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool normalAccess)
 		Assert(buf->refcount > 0);
 		buf->refcount--;
 
-		/* Update buffer usage info, unless this is an internal access */
-		if (normalAccess)
-		{
-			if (!strategy_hint_vacuum)
-			{
-				if (buf->usage_count < BM_MAX_USAGE_COUNT)
-					buf->usage_count++;
-			}
-			else
-			{
-				/* VACUUM accesses don't bump usage count, instead... */
-				if (buf->refcount == 0 && buf->usage_count == 0)
-					immed_free_buffer = true;
-			}
-		}
-
+		/* Support LockBufferForCleanup() */
 		if ((buf->flags & BM_PIN_COUNT_WAITER) &&
 			buf->refcount == 1)
 		{
@@ -959,14 +993,6 @@ UnpinBuffer(volatile BufferDesc *buf, bool fixOwner, bool normalAccess)
 		}
 		else
 			UnlockBufHdr(buf);
-
-		/*
-		 * If VACUUM is releasing an otherwise-unused buffer, send it to the
-		 * freelist for near-term reuse.  We put it at the tail so that it
-		 * won't be used before any invalid buffers that may exist.
-		 */
-		if (immed_free_buffer)
-			StrategyFreeBuffer(buf, false);
 	}
 }
 
@@ -1150,7 +1176,7 @@ SyncOneBuffer(int buf_id, bool skip_pinned)
 	FlushBuffer(bufHdr, NULL);
 
 	LWLockRelease(bufHdr->content_lock);
-	UnpinBuffer(bufHdr, true, false /* don't change freelist */ );
+	UnpinBuffer(bufHdr, true);
 
 	return true;
 }
@@ -1266,7 +1292,7 @@ AtProcExit_Buffers(int code, Datum arg)
 			 * here, it suggests that ResourceOwners are messed up.
 			 */
 			PrivateRefCount[i] = 1;		/* make sure we release shared pin */
-			UnpinBuffer(buf, false, false /* don't change freelist */ );
+			UnpinBuffer(buf, false);
 			Assert(PrivateRefCount[i] == 0);
 		}
 	}
@@ -1700,7 +1726,7 @@ FlushRelationBuffers(Relation rel)
 			LWLockAcquire(bufHdr->content_lock, LW_SHARED);
 			FlushBuffer(bufHdr, rel->rd_smgr);
 			LWLockRelease(bufHdr->content_lock);
-			UnpinBuffer(bufHdr, true, false /* no freelist change */ );
+			UnpinBuffer(bufHdr, true);
 		}
 		else
 			UnlockBufHdr(bufHdr);
@@ -1723,11 +1749,7 @@ ReleaseBuffer(Buffer buffer)
 	if (BufferIsLocal(buffer))
 	{
 		Assert(LocalRefCount[-buffer - 1] > 0);
-		bufHdr = &LocalBufferDescriptors[-buffer - 1];
 		LocalRefCount[-buffer - 1]--;
-		if (LocalRefCount[-buffer - 1] == 0 &&
-			bufHdr->usage_count < BM_MAX_USAGE_COUNT)
-			bufHdr->usage_count++;
 		return;
 	}
 
@@ -1738,7 +1760,7 @@ ReleaseBuffer(Buffer buffer)
 	if (PrivateRefCount[buffer - 1] > 1)
 		PrivateRefCount[buffer - 1]--;
 	else
-		UnpinBuffer(bufHdr, false, true);
+		UnpinBuffer(bufHdr, false);
 }
 
 /*

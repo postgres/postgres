@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.57 2007/05/03 16:45:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.58 2007/05/30 20:11:51 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -362,6 +362,9 @@ _hash_firstfreebit(uint32 map)
  *	Remove this overflow page from its bucket's chain, and mark the page as
  *	free.  On entry, ovflbuf is write-locked; it is released before exiting.
  *
+ *	Since this function is invoked in VACUUM, we provide an access strategy
+ *	parameter that controls fetches of the bucket pages.
+ *
  *	Returns the block number of the page that followed the given page
  *	in the bucket, or InvalidBlockNumber if no following page.
  *
@@ -370,7 +373,8 @@ _hash_firstfreebit(uint32 map)
  *	on the bucket, too.
  */
 BlockNumber
-_hash_freeovflpage(Relation rel, Buffer ovflbuf)
+_hash_freeovflpage(Relation rel, Buffer ovflbuf,
+				   BufferAccessStrategy bstrategy)
 {
 	HashMetaPage metap;
 	Buffer		metabuf;
@@ -413,8 +417,11 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	 */
 	if (BlockNumberIsValid(prevblkno))
 	{
-		Buffer		prevbuf = _hash_getbuf(rel, prevblkno, HASH_WRITE,
-										   LH_BUCKET_PAGE | LH_OVERFLOW_PAGE);
+		Buffer		prevbuf = _hash_getbuf_with_strategy(rel,
+														 prevblkno,
+														 HASH_WRITE,
+														 LH_BUCKET_PAGE | LH_OVERFLOW_PAGE,
+														 bstrategy);
 		Page		prevpage = BufferGetPage(prevbuf);
 		HashPageOpaque prevopaque = (HashPageOpaque) PageGetSpecialPointer(prevpage);
 
@@ -424,8 +431,11 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	}
 	if (BlockNumberIsValid(nextblkno))
 	{
-		Buffer		nextbuf = _hash_getbuf(rel, nextblkno, HASH_WRITE,
-										   LH_OVERFLOW_PAGE);
+		Buffer		nextbuf = _hash_getbuf_with_strategy(rel,
+														 nextblkno,
+														 HASH_WRITE,
+														 LH_OVERFLOW_PAGE,
+														 bstrategy);
 		Page		nextpage = BufferGetPage(nextbuf);
 		HashPageOpaque nextopaque = (HashPageOpaque) PageGetSpecialPointer(nextpage);
 
@@ -433,6 +443,8 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 		nextopaque->hasho_prevblkno = prevblkno;
 		_hash_wrtbuf(rel, nextbuf);
 	}
+
+	/* Note: bstrategy is intentionally not used for metapage and bitmap */
 
 	/* Read the metapage so we can determine which bitmap page to use */
 	metabuf = _hash_getbuf(rel, HASH_METAPAGE, HASH_READ, LH_META_PAGE);
@@ -558,11 +570,15 @@ _hash_initbitmap(Relation rel, HashMetaPage metap, BlockNumber blkno)
  *
  *	Caller must hold exclusive lock on the target bucket.  This allows
  *	us to safely lock multiple pages in the bucket.
+ *
+ *	Since this function is invoked in VACUUM, we provide an access strategy
+ *	parameter that controls fetches of the bucket pages.
  */
 void
 _hash_squeezebucket(Relation rel,
 					Bucket bucket,
-					BlockNumber bucket_blkno)
+					BlockNumber bucket_blkno,
+					BufferAccessStrategy bstrategy)
 {
 	Buffer		wbuf;
 	Buffer		rbuf = 0;
@@ -581,7 +597,11 @@ _hash_squeezebucket(Relation rel,
 	 * start squeezing into the base bucket page.
 	 */
 	wblkno = bucket_blkno;
-	wbuf = _hash_getbuf(rel, wblkno, HASH_WRITE, LH_BUCKET_PAGE);
+	wbuf = _hash_getbuf_with_strategy(rel,
+									  wblkno,
+									  HASH_WRITE,
+									  LH_BUCKET_PAGE,
+									  bstrategy);
 	wpage = BufferGetPage(wbuf);
 	wopaque = (HashPageOpaque) PageGetSpecialPointer(wpage);
 
@@ -595,8 +615,10 @@ _hash_squeezebucket(Relation rel,
 	}
 
 	/*
-	 * find the last page in the bucket chain by starting at the base bucket
-	 * page and working forward.
+	 * Find the last page in the bucket chain by starting at the base bucket
+	 * page and working forward.  Note: we assume that a hash bucket chain is
+	 * usually smaller than the buffer ring being used by VACUUM, else using
+	 * the access strategy here would be counterproductive.
 	 */
 	ropaque = wopaque;
 	do
@@ -604,7 +626,11 @@ _hash_squeezebucket(Relation rel,
 		rblkno = ropaque->hasho_nextblkno;
 		if (ropaque != wopaque)
 			_hash_relbuf(rel, rbuf);
-		rbuf = _hash_getbuf(rel, rblkno, HASH_WRITE, LH_OVERFLOW_PAGE);
+		rbuf = _hash_getbuf_with_strategy(rel,
+										  rblkno,
+										  HASH_WRITE,
+										  LH_OVERFLOW_PAGE,
+										  bstrategy);
 		rpage = BufferGetPage(rbuf);
 		ropaque = (HashPageOpaque) PageGetSpecialPointer(rpage);
 		Assert(ropaque->hasho_bucket == bucket);
@@ -644,7 +670,11 @@ _hash_squeezebucket(Relation rel,
 					return;
 				}
 
-				wbuf = _hash_getbuf(rel, wblkno, HASH_WRITE, LH_OVERFLOW_PAGE);
+				wbuf = _hash_getbuf_with_strategy(rel,
+												  wblkno,
+												  HASH_WRITE,
+												  LH_OVERFLOW_PAGE,
+												  bstrategy);
 				wpage = BufferGetPage(wbuf);
 				wopaque = (HashPageOpaque) PageGetSpecialPointer(wpage);
 				Assert(wopaque->hasho_bucket == bucket);
@@ -688,15 +718,19 @@ _hash_squeezebucket(Relation rel,
 				/* yes, so release wbuf lock first */
 				_hash_wrtbuf(rel, wbuf);
 				/* free this overflow page (releases rbuf) */
-				_hash_freeovflpage(rel, rbuf);
+				_hash_freeovflpage(rel, rbuf, bstrategy);
 				/* done */
 				return;
 			}
 
 			/* free this overflow page, then get the previous one */
-			_hash_freeovflpage(rel, rbuf);
+			_hash_freeovflpage(rel, rbuf, bstrategy);
 
-			rbuf = _hash_getbuf(rel, rblkno, HASH_WRITE, LH_OVERFLOW_PAGE);
+			rbuf = _hash_getbuf_with_strategy(rel,
+											  rblkno,
+											  HASH_WRITE,
+											  LH_OVERFLOW_PAGE,
+											  bstrategy);
 			rpage = BufferGetPage(rbuf);
 			ropaque = (HashPageOpaque) PageGetSpecialPointer(rpage);
 			Assert(ropaque->hasho_bucket == bucket);

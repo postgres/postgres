@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.351 2007/05/17 15:28:29 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.352 2007/05/30 20:11:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,12 +191,15 @@ ExecContext_Finish(ExecContext ec)
  *----------------------------------------------------------------------
  */
 
+/* A few variables that don't seem worth passing around as parameters */
 static MemoryContext vac_context = NULL;
 
 static int	elevel = -1;
 
 static TransactionId OldestXmin;
 static TransactionId FreezeLimit;
+
+static BufferAccessStrategy vac_strategy;
 
 
 /* non-export function prototypes */
@@ -257,14 +260,18 @@ static Size PageGetFreeSpaceWithFillFactor(Relation relation, Page page);
  * relation OIDs to be processed, and vacstmt->relation is ignored.
  * (The non-NIL case is currently only used by autovacuum.)
  *
+ * bstrategy is normally given as NULL, but in autovacuum it can be passed
+ * in to use the same buffer strategy object across multiple vacuum() calls.
+ *
  * isTopLevel should be passed down from ProcessUtility.
  *
- * It is the caller's responsibility that both vacstmt and relids
+ * It is the caller's responsibility that vacstmt, relids, and bstrategy
  * (if given) be allocated in a memory context that won't disappear
  * at transaction commit.
  */
 void
-vacuum(VacuumStmt *vacstmt, List *relids, bool isTopLevel)
+vacuum(VacuumStmt *vacstmt, List *relids,
+	   BufferAccessStrategy bstrategy, bool isTopLevel)
 {
 	const char *stmttype = vacstmt->vacuum ? "VACUUM" : "ANALYZE";
 	volatile MemoryContext anl_context = NULL;
@@ -318,6 +325,19 @@ vacuum(VacuumStmt *vacstmt, List *relids, bool isTopLevel)
 										ALLOCSET_DEFAULT_MINSIZE,
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
+
+	/*
+	 * If caller didn't give us a buffer strategy object, make one in the
+	 * cross-transaction memory context.
+	 */
+	if (bstrategy == NULL)
+	{
+		MemoryContext old_context = MemoryContextSwitchTo(vac_context);
+
+		bstrategy = GetAccessStrategy(BAS_VACUUM);
+		MemoryContextSwitchTo(old_context);
+	}
+	vac_strategy = bstrategy;
 
 	/* Remember whether we are processing everything in the DB */
 	all_rels = (relids == NIL && vacstmt->relation == NULL);
@@ -417,15 +437,7 @@ vacuum(VacuumStmt *vacstmt, List *relids, bool isTopLevel)
 				else
 					old_context = MemoryContextSwitchTo(anl_context);
 
-				/*
-				 * Tell the buffer replacement strategy that vacuum is causing
-				 * the IO
-				 */
-				StrategyHintVacuum(true);
-
-				analyze_rel(relid, vacstmt);
-
-				StrategyHintVacuum(false);
+				analyze_rel(relid, vacstmt, vac_strategy);
 
 				if (use_own_xacts)
 					CommitTransactionCommand();
@@ -441,8 +453,6 @@ vacuum(VacuumStmt *vacstmt, List *relids, bool isTopLevel)
 	{
 		/* Make sure cost accounting is turned off after error */
 		VacuumCostActive = false;
-		/* And reset buffer replacement strategy, too */
-		StrategyHintVacuum(false);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -1085,20 +1095,12 @@ vacuum_rel(Oid relid, VacuumStmt *vacstmt, char expected_relkind)
 	toast_relid = onerel->rd_rel->reltoastrelid;
 
 	/*
-	 * Tell the cache replacement strategy that vacuum is causing all
-	 * following IO
-	 */
-	StrategyHintVacuum(true);
-
-	/*
 	 * Do the actual work --- either FULL or "lazy" vacuum
 	 */
 	if (vacstmt->full)
 		full_vacuum_rel(onerel, vacstmt);
 	else
-		lazy_vacuum_rel(onerel, vacstmt);
-
-	StrategyHintVacuum(false);
+		lazy_vacuum_rel(onerel, vacstmt, vac_strategy);
 
 	/* all done with this class, but hold lock until commit */
 	relation_close(onerel, NoLock);
@@ -1290,7 +1292,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 		vacuum_delay_point();
 
-		buf = ReadBuffer(onerel, blkno);
+		buf = ReadBufferWithStrategy(onerel, blkno, vac_strategy);
 		page = BufferGetPage(buf);
 
 		/*
@@ -1730,7 +1732,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		/*
 		 * Process this page of relation.
 		 */
-		buf = ReadBuffer(onerel, blkno);
+		buf = ReadBufferWithStrategy(onerel, blkno, vac_strategy);
 		page = BufferGetPage(buf);
 
 		vacpage->offsets_free = 0;
@@ -1954,8 +1956,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					nextTid = tp.t_data->t_ctid;
 					priorXmax = HeapTupleHeaderGetXmax(tp.t_data);
 					/* assume block# is OK (see heap_fetch comments) */
-					nextBuf = ReadBuffer(onerel,
-										 ItemPointerGetBlockNumber(&nextTid));
+					nextBuf = ReadBufferWithStrategy(onerel,
+										 ItemPointerGetBlockNumber(&nextTid),
+													 vac_strategy);
 					nextPage = BufferGetPage(nextBuf);
 					/* If bogus or unused slot, assume tp is end of chain */
 					nextOffnum = ItemPointerGetOffsetNumber(&nextTid);
@@ -2091,8 +2094,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						break;	/* out of check-all-items loop */
 					}
 					tp.t_self = vtlp->this_tid;
-					Pbuf = ReadBuffer(onerel,
-									ItemPointerGetBlockNumber(&(tp.t_self)));
+					Pbuf = ReadBufferWithStrategy(onerel,
+									ItemPointerGetBlockNumber(&(tp.t_self)),
+												  vac_strategy);
 					Ppage = BufferGetPage(Pbuf);
 					Pitemid = PageGetItemId(Ppage,
 								   ItemPointerGetOffsetNumber(&(tp.t_self)));
@@ -2174,11 +2178,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 					/* Get page to move from */
 					tuple.t_self = vtmove[ti].tid;
-					Cbuf = ReadBuffer(onerel,
-								 ItemPointerGetBlockNumber(&(tuple.t_self)));
+					Cbuf = ReadBufferWithStrategy(onerel,
+								 ItemPointerGetBlockNumber(&(tuple.t_self)),
+												  vac_strategy);
 
 					/* Get page to move to */
-					dst_buffer = ReadBuffer(onerel, destvacpage->blkno);
+					dst_buffer = ReadBufferWithStrategy(onerel,
+														destvacpage->blkno,
+														vac_strategy);
 
 					LockBuffer(dst_buffer, BUFFER_LOCK_EXCLUSIVE);
 					if (dst_buffer != Cbuf)
@@ -2239,7 +2246,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				if (i == num_fraged_pages)
 					break;		/* can't move item anywhere */
 				dst_vacpage = fraged_pages->pagedesc[i];
-				dst_buffer = ReadBuffer(onerel, dst_vacpage->blkno);
+				dst_buffer = ReadBufferWithStrategy(onerel,
+													dst_vacpage->blkno,
+													vac_strategy);
 				LockBuffer(dst_buffer, BUFFER_LOCK_EXCLUSIVE);
 				dst_page = BufferGetPage(dst_buffer);
 				/* if this page was not used before - clean it */
@@ -2386,7 +2395,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			Page		page;
 
 			/* this page was not used as a move target, so must clean it */
-			buf = ReadBuffer(onerel, (*curpage)->blkno);
+			buf = ReadBufferWithStrategy(onerel,
+										 (*curpage)->blkno,
+										 vac_strategy);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			page = BufferGetPage(buf);
 			if (!PageIsEmpty(page))
@@ -2470,7 +2481,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			int			uncnt;
 			int			num_tuples = 0;
 
-			buf = ReadBuffer(onerel, vacpage->blkno);
+			buf = ReadBufferWithStrategy(onerel, vacpage->blkno, vac_strategy);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			page = BufferGetPage(buf);
 			maxoff = PageGetMaxOffsetNumber(page);
@@ -2859,7 +2870,7 @@ update_hint_bits(Relation rel, VacPageList fraged_pages, int num_fraged_pages,
 			break;				/* no need to scan any further */
 		if ((*curpage)->offsets_used == 0)
 			continue;			/* this page was never used as a move dest */
-		buf = ReadBuffer(rel, (*curpage)->blkno);
+		buf = ReadBufferWithStrategy(rel, (*curpage)->blkno, vac_strategy);
 		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 		page = BufferGetPage(buf);
 		max_offset = PageGetMaxOffsetNumber(page);
@@ -2925,7 +2936,9 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 
 		if ((*vacpage)->offsets_free > 0)
 		{
-			buf = ReadBuffer(onerel, (*vacpage)->blkno);
+			buf = ReadBufferWithStrategy(onerel,
+										 (*vacpage)->blkno,
+										 vac_strategy);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			vacuum_page(onerel, buf, *vacpage);
 			UnlockReleaseBuffer(buf);
@@ -3012,6 +3025,7 @@ scan_index(Relation indrel, double num_tuples)
 	ivinfo.vacuum_full = true;
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = num_tuples;
+	ivinfo.strategy = vac_strategy;
 
 	stats = index_vacuum_cleanup(&ivinfo, NULL);
 
@@ -3077,6 +3091,7 @@ vacuum_index(VacPageList vacpagelist, Relation indrel,
 	ivinfo.vacuum_full = true;
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = num_tuples + keep_tuples;
+	ivinfo.strategy = vac_strategy;
 
 	/* Do bulk deletion */
 	stats = index_bulk_delete(&ivinfo, NULL, tid_reaped, (void *) vacpagelist);

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.46 2007/05/07 20:41:24 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.47 2007/05/30 20:11:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,8 @@ static void relation_needs_vacanalyze(Oid relid, Form_pg_autovacuum avForm,
 						  bool *doanalyze);
 
 static void autovacuum_do_vac_analyze(Oid relid, bool dovacuum,
-						  bool doanalyze, int freeze_min_age);
+						  bool doanalyze, int freeze_min_age,
+						  BufferAccessStrategy bstrategy);
 static HeapTuple get_pg_autovacuum_tuple_relid(Relation avRel, Oid relid);
 static PgStat_StatTabEntry *get_pgstat_tabentry_relid(Oid relid, bool isshared,
 						  PgStat_StatDBEntry *shared,
@@ -1673,6 +1674,7 @@ do_autovacuum(void)
 	ListCell   *cell;
 	PgStat_StatDBEntry *shared;
 	PgStat_StatDBEntry *dbentry;
+	BufferAccessStrategy bstrategy;
 
 	/*
 	 * may be NULL if we couldn't find an entry (only happens if we
@@ -1813,6 +1815,13 @@ do_autovacuum(void)
 	toast_oids = NIL;
 
 	/*
+	 * Create a buffer access strategy object for VACUUM to use.  We want
+	 * to use the same one across all the vacuum operations we perform,
+	 * since the point is for VACUUM not to blow out the shared cache.
+	 */
+	bstrategy = GetAccessStrategy(BAS_VACUUM);
+
+	/*
 	 * Perform operations on collected tables.
 	 */
 	foreach(cell, table_oids)
@@ -1910,7 +1919,8 @@ next_worker:
 		autovacuum_do_vac_analyze(tab->at_relid,
 								  tab->at_dovacuum,
 								  tab->at_doanalyze,
-								  tab->at_freeze_min_age);
+								  tab->at_freeze_min_age,
+								  bstrategy);
 		/* be tidy */
 		pfree(tab);
 	}
@@ -2328,7 +2338,8 @@ relation_needs_vacanalyze(Oid relid,
  */
 static void
 autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
-						  int freeze_min_age)
+						  int freeze_min_age,
+						  BufferAccessStrategy bstrategy)
 {
 	VacuumStmt	vacstmt;
 	MemoryContext old_cxt;
@@ -2354,7 +2365,7 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
 	/* Let pgstat know what we're doing */
 	autovac_report_activity(&vacstmt, relid);
 
-	vacuum(&vacstmt, list_make1_oid(relid), true);
+	vacuum(&vacstmt, list_make1_oid(relid), bstrategy, true);
 	MemoryContextSwitchTo(old_cxt);
 }
 

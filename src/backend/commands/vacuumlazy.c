@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.89 2007/05/17 15:28:29 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.90 2007/05/30 20:11:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,10 +96,13 @@ typedef struct LVRelStats
 } LVRelStats;
 
 
+/* A few variables that don't seem worth passing around as parameters */
 static int	elevel = -1;
 
 static TransactionId OldestXmin;
 static TransactionId FreezeLimit;
+
+static BufferAccessStrategy vac_strategy;
 
 
 /* non-export function prototypes */
@@ -138,7 +141,8 @@ static int	vac_cmp_page_spaces(const void *left, const void *right);
  *		and locked the relation.
  */
 void
-lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
+lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
+				BufferAccessStrategy bstrategy)
 {
 	LVRelStats *vacrelstats;
 	Relation   *Irel;
@@ -157,6 +161,8 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 		elevel = INFO;
 	else
 		elevel = DEBUG2;
+
+	vac_strategy = bstrategy;
 
 	vacuum_set_xid_limits(vacstmt->freeze_min_age, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);
@@ -318,7 +324,7 @@ lazy_scan_heap(Relation onerel, LVRelStats *vacrelstats,
 			vacrelstats->num_index_scans++;
 		}
 
-		buf = ReadBuffer(onerel, blkno);
+		buf = ReadBufferWithStrategy(onerel, blkno, vac_strategy);
 
 		/* Initially, we only need shared access to the buffer */
 		LockBuffer(buf, BUFFER_LOCK_SHARE);
@@ -586,7 +592,7 @@ lazy_vacuum_heap(Relation onerel, LVRelStats *vacrelstats)
 		vacuum_delay_point();
 
 		tblk = ItemPointerGetBlockNumber(&vacrelstats->dead_tuples[tupindex]);
-		buf = ReadBuffer(onerel, tblk);
+		buf = ReadBufferWithStrategy(onerel, tblk, vac_strategy);
 		LockBufferForCleanup(buf);
 		tupindex = lazy_vacuum_page(onerel, tblk, buf, tupindex, vacrelstats);
 		/* Now that we've compacted the page, record its available space */
@@ -684,6 +690,7 @@ lazy_vacuum_index(Relation indrel,
 	ivinfo.message_level = elevel;
 	/* We don't yet know rel_tuples, so pass -1 */
 	ivinfo.num_heap_tuples = -1;
+	ivinfo.strategy = vac_strategy;
 
 	/* Do bulk deletion */
 	*stats = index_bulk_delete(&ivinfo, *stats,
@@ -713,6 +720,7 @@ lazy_cleanup_index(Relation indrel,
 	ivinfo.vacuum_full = false;
 	ivinfo.message_level = elevel;
 	ivinfo.num_heap_tuples = vacrelstats->rel_tuples;
+	ivinfo.strategy = vac_strategy;
 
 	stats = index_vacuum_cleanup(&ivinfo, stats);
 
@@ -869,7 +877,7 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 
 		blkno--;
 
-		buf = ReadBuffer(onerel, blkno);
+		buf = ReadBufferWithStrategy(onerel, blkno, vac_strategy);
 
 		/* In this phase we only need shared access to the buffer */
 		LockBuffer(buf, BUFFER_LOCK_SHARE);

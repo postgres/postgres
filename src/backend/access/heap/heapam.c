@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.233 2007/05/27 03:50:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.234 2007/05/30 20:11:53 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -83,6 +83,24 @@ initscan(HeapScanDesc scan, ScanKey key)
 	 */
 	scan->rs_nblocks = RelationGetNumberOfBlocks(scan->rs_rd);
 
+	/*
+	 * If the table is large relative to NBuffers, use a bulk-read access
+	 * strategy, else use the default random-access strategy.  During a
+	 * rescan, don't make a new strategy object if we don't have to.
+	 */
+	if (scan->rs_nblocks > NBuffers / 4 &&
+		!scan->rs_rd->rd_istemp)
+	{
+		if (scan->rs_strategy == NULL)
+			scan->rs_strategy = GetAccessStrategy(BAS_BULKREAD);
+	}
+	else
+	{
+		if (scan->rs_strategy != NULL)
+			FreeAccessStrategy(scan->rs_strategy);
+		scan->rs_strategy = NULL;
+	}
+
 	scan->rs_inited = false;
 	scan->rs_ctup.t_data = NULL;
 	ItemPointerSetInvalid(&scan->rs_ctup.t_self);
@@ -123,9 +141,17 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 
 	Assert(page < scan->rs_nblocks);
 
-	scan->rs_cbuf = ReleaseAndReadBuffer(scan->rs_cbuf,
-										 scan->rs_rd,
-										 page);
+	/* release previous scan buffer, if any */
+	if (BufferIsValid(scan->rs_cbuf))
+	{
+		ReleaseBuffer(scan->rs_cbuf);
+		scan->rs_cbuf = InvalidBuffer;
+	}
+
+	/* read page using selected strategy */
+	scan->rs_cbuf = ReadBufferWithStrategy(scan->rs_rd,
+										   page,
+										   scan->rs_strategy);
 	scan->rs_cblock = page;
 
 	if (!scan->rs_pageatatime)
@@ -938,6 +964,7 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	scan->rs_rd = relation;
 	scan->rs_snapshot = snapshot;
 	scan->rs_nkeys = nkeys;
+	scan->rs_strategy = NULL;	/* set in initscan */
 
 	/*
 	 * we can use page-at-a-time mode if it's an MVCC-safe snapshot
@@ -1006,6 +1033,9 @@ heap_endscan(HeapScanDesc scan)
 
 	if (scan->rs_key)
 		pfree(scan->rs_key);
+
+	if (scan->rs_strategy != NULL)
+		FreeAccessStrategy(scan->rs_strategy);
 
 	pfree(scan);
 }

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.11 2006/07/23 03:07:58 tgl Exp $
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.12 2007/05/30 20:11:58 tgl Exp $
 
 Notes about shared buffer access rules
 --------------------------------------
@@ -152,20 +152,21 @@ we could use per-backend LWLocks instead (a buffer header would then contain
 a field to show which backend is doing its I/O).
 
 
-Buffer replacement strategy
----------------------------
+Normal buffer replacement strategy
+----------------------------------
 
 There is a "free list" of buffers that are prime candidates for replacement.
 In particular, buffers that are completely free (contain no valid page) are
-always in this list.  We may also throw buffers into this list if we
-consider their pages unlikely to be needed soon.  The list is singly-linked
-using fields in the buffer headers; we maintain head and tail pointers in
-global variables.  (Note: although the list links are in the buffer headers,
-they are considered to be protected by the BufFreelistLock, not the
-buffer-header spinlocks.)  To choose a victim buffer to recycle when there
-are no free buffers available, we use a simple clock-sweep algorithm, which
-avoids the need to take system-wide locks during common operations.  It
-works like this:
+always in this list.  We could also throw buffers into this list if we
+consider their pages unlikely to be needed soon; however, the current
+algorithm never does that.  The list is singly-linked using fields in the
+buffer headers; we maintain head and tail pointers in global variables.
+(Note: although the list links are in the buffer headers, they are
+considered to be protected by the BufFreelistLock, not the buffer-header
+spinlocks.)  To choose a victim buffer to recycle when there are no free
+buffers available, we use a simple clock-sweep algorithm, which avoids the
+need to take system-wide locks during common operations.  It works like
+this:
 
 Each buffer header contains a usage counter, which is incremented (up to a
 small limit value) whenever the buffer is unpinned.  (This requires only the
@@ -199,22 +200,40 @@ before we can recycle it; if someone else pins the buffer meanwhile we will
 have to give up and try another buffer.  This however is not a concern
 of the basic select-a-victim-buffer algorithm.)
 
-A special provision is that while running VACUUM, a backend does not
-increment the usage count on buffers it accesses.  In fact, if ReleaseBuffer
-sees that it is dropping the pin count to zero and the usage count is zero,
-then it appends the buffer to the tail of the free list.  (This implies that
-VACUUM, but only VACUUM, must take the BufFreelistLock during ReleaseBuffer;
-this shouldn't create much of a contention problem.)  This provision
-encourages VACUUM to work in a relatively small number of buffers rather
-than blowing out the entire buffer cache.  It is reasonable since a page
-that has been touched only by VACUUM is unlikely to be needed again soon.
 
-Since VACUUM usually requests many pages very fast, the effect of this is that
-it will get back the very buffers it filled and possibly modified on the next
-call and will therefore do its work in a few shared memory buffers, while
-being able to use whatever it finds in the cache already.  This also implies
-that most of the write traffic caused by a VACUUM will be done by the VACUUM
-itself and not pushed off onto other processes.
+Buffer ring replacement strategy
+---------------------------------
+
+When running a query that needs to access a large number of pages just once,
+such as VACUUM or a large sequential scan, a different strategy is used.
+A page that has been touched only by such a scan is unlikely to be needed
+again soon, so instead of running the normal clock sweep algorithm and
+blowing out the entire buffer cache, a small ring of buffers is allocated
+using the normal clock sweep algorithm and those buffers are reused for the
+whole scan.  This also implies that much of the write traffic caused by such
+a statement will be done by the backend itself and not pushed off onto other
+processes.
+
+For sequential scans, a 256KB ring is used. That's small enough to fit in L2
+cache, which makes transferring pages from OS cache to shared buffer cache
+efficient.  Even less would often be enough, but the ring must be big enough
+to accommodate all pages in the scan that are pinned concurrently.  256KB
+should also be enough to leave a small cache trail for other backends to
+join in a synchronized seq scan.  If a ring buffer is dirtied and its LSN
+updated, we would normally have to write and flush WAL before we could
+re-use the buffer; in this case we instead discard the buffer from the ring
+and (later) choose a replacement using the normal clock-sweep algorithm.
+Hence this strategy works best for scans that are read-only (or at worst
+update hint bits).  In a scan that modifies every page in the scan, like a
+bulk UPDATE or DELETE, the buffers in the ring will always be dirtied and
+the ring strategy effectively degrades to the normal strategy.
+
+VACUUM uses a 256KB ring like sequential scans, but dirty pages are not
+removed from the ring.  Instead, WAL is flushed if needed to allow reuse of
+the buffers.  Before introducing the buffer ring strategy in 8.3, VACUUM's
+buffers were sent to the freelist, which was effectively a buffer ring of 1
+buffer, resulting in excessive WAL flushing.  Allowing VACUUM to update
+256KB between WAL flushes should be more efficient.
 
 
 Background writer's processing

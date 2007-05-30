@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.89 2007/01/05 22:19:57 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.90 2007/05/30 20:12:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,9 +167,6 @@ extern DLLIMPORT BufferDesc *BufferDescriptors;
 /* in localbuf.c */
 extern BufferDesc *LocalBufferDescriptors;
 
-/* in freelist.c */
-extern bool strategy_hint_vacuum;
-
 /* event counters in buf_init.c */
 extern long int ReadBufferCount;
 extern long int ReadLocalBufferCount;
@@ -184,8 +181,12 @@ extern long int LocalBufferFlushCount;
  */
 
 /* freelist.c */
-extern volatile BufferDesc *StrategyGetBuffer(void);
-extern void StrategyFreeBuffer(volatile BufferDesc *buf, bool at_head);
+extern volatile BufferDesc *StrategyGetBuffer(BufferAccessStrategy strategy,
+											  bool *lock_held);
+extern void StrategyFreeBuffer(volatile BufferDesc *buf);
+extern bool StrategyRejectBuffer(BufferAccessStrategy strategy,
+								 volatile BufferDesc *buf);
+
 extern int	StrategySyncStart(void);
 extern Size StrategyShmemSize(void);
 extern void StrategyInitialize(bool init);

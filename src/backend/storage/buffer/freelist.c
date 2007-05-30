@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.58 2007/01/05 22:19:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.59 2007/05/30 20:11:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,42 @@ typedef struct
 /* Pointers to shared state */
 static BufferStrategyControl *StrategyControl = NULL;
 
-/* Backend-local state about whether currently vacuuming */
-bool		strategy_hint_vacuum = false;
+/*
+ * Private (non-shared) state for managing a ring of shared buffers to re-use.
+ * This is currently the only kind of BufferAccessStrategy object, but someday
+ * we might have more kinds.
+ */
+typedef struct BufferAccessStrategyData
+{
+	/* Overall strategy type */
+	BufferAccessStrategyType btype;
+	/* Number of elements in buffers[] array */
+	int			ring_size;
+	/*
+	 * Index of the "current" slot in the ring, ie, the one most recently
+	 * returned by GetBufferFromRing.
+	 */
+	int			current;
+	/*
+	 * True if the buffer just returned by StrategyGetBuffer had been in
+	 * the ring already.
+	 */
+	bool		current_was_in_ring;
+
+	/*
+	 * Array of buffer numbers.  InvalidBuffer (that is, zero) indicates
+	 * we have not yet selected a buffer for this ring slot.  For allocation
+	 * simplicity this is palloc'd together with the fixed fields of the
+	 * struct.
+	 */
+	Buffer		buffers[1];				/* VARIABLE SIZE ARRAY */
+} BufferAccessStrategyData;
+
+
+/* Prototypes for internal functions */
+static volatile BufferDesc *GetBufferFromRing(BufferAccessStrategy strategy);
+static void AddBufferToRing(BufferAccessStrategy strategy,
+							volatile BufferDesc *buf);
 
 
 /*
@@ -50,17 +84,38 @@ bool		strategy_hint_vacuum = false;
  *	BufferAlloc(). The only hard requirement BufferAlloc() has is that
  *	the selected buffer must not currently be pinned by anyone.
  *
+ *	strategy is a BufferAccessStrategy object, or NULL for default strategy.
+ *
  *	To ensure that no one else can pin the buffer before we do, we must
- *	return the buffer with the buffer header spinlock still held.  That
- *	means that we return with the BufFreelistLock still held, as well;
- *	the caller must release that lock once the spinlock is dropped.
+ *	return the buffer with the buffer header spinlock still held.  If
+ *	*lock_held is set on exit, we have returned with the BufFreelistLock
+ *	still held, as well; the caller must release that lock once the spinlock
+ *	is dropped.  We do it that way because releasing the BufFreelistLock
+ *	might awaken other processes, and it would be bad to do the associated
+ *	kernel calls while holding the buffer header spinlock.
  */
 volatile BufferDesc *
-StrategyGetBuffer(void)
+StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 {
 	volatile BufferDesc *buf;
 	int			trycounter;
 
+	/*
+	 * If given a strategy object, see whether it can select a buffer.
+	 * We assume strategy objects don't need the BufFreelistLock.
+	 */
+	if (strategy != NULL)
+	{
+		buf = GetBufferFromRing(strategy);
+		if (buf != NULL)
+		{
+			*lock_held = false;
+			return buf;
+		}
+	}
+
+	/* Nope, so lock the freelist */
+	*lock_held = true;
 	LWLockAcquire(BufFreelistLock, LW_EXCLUSIVE);
 
 	/*
@@ -82,11 +137,16 @@ StrategyGetBuffer(void)
 		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
 		 * it; discard it and retry.  (This can only happen if VACUUM put a
 		 * valid buffer in the freelist and then someone else used it before
-		 * we got to it.)
+		 * we got to it.  It's probably impossible altogether as of 8.3,
+		 * but we'd better check anyway.)
 		 */
 		LockBufHdr(buf);
 		if (buf->refcount == 0 && buf->usage_count == 0)
+		{
+			if (strategy != NULL)
+				AddBufferToRing(strategy, buf);
 			return buf;
+		}
 		UnlockBufHdr(buf);
 	}
 
@@ -101,15 +161,23 @@ StrategyGetBuffer(void)
 
 		/*
 		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
-		 * it; decrement the usage_count and keep scanning.
+		 * it; decrement the usage_count (unless pinned) and keep scanning.
 		 */
 		LockBufHdr(buf);
-		if (buf->refcount == 0 && buf->usage_count == 0)
-			return buf;
-		if (buf->usage_count > 0)
+		if (buf->refcount == 0)
 		{
-			buf->usage_count--;
-			trycounter = NBuffers;
+			if (buf->usage_count > 0)
+			{
+				buf->usage_count--;
+				trycounter = NBuffers;
+			}
+			else
+			{
+				/* Found a usable buffer */
+				if (strategy != NULL)
+					AddBufferToRing(strategy, buf);
+				return buf;
+			}
 		}
 		else if (--trycounter == 0)
 		{
@@ -132,13 +200,9 @@ StrategyGetBuffer(void)
 
 /*
  * StrategyFreeBuffer: put a buffer on the freelist
- *
- * The buffer is added either at the head or the tail, according to the
- * at_head parameter.  This allows a small amount of control over how
- * quickly the buffer is reused.
  */
 void
-StrategyFreeBuffer(volatile BufferDesc *buf, bool at_head)
+StrategyFreeBuffer(volatile BufferDesc *buf)
 {
 	LWLockAcquire(BufFreelistLock, LW_EXCLUSIVE);
 
@@ -148,22 +212,10 @@ StrategyFreeBuffer(volatile BufferDesc *buf, bool at_head)
 	 */
 	if (buf->freeNext == FREENEXT_NOT_IN_LIST)
 	{
-		if (at_head)
-		{
-			buf->freeNext = StrategyControl->firstFreeBuffer;
-			if (buf->freeNext < 0)
-				StrategyControl->lastFreeBuffer = buf->buf_id;
-			StrategyControl->firstFreeBuffer = buf->buf_id;
-		}
-		else
-		{
-			buf->freeNext = FREENEXT_END_OF_LIST;
-			if (StrategyControl->firstFreeBuffer < 0)
-				StrategyControl->firstFreeBuffer = buf->buf_id;
-			else
-				BufferDescriptors[StrategyControl->lastFreeBuffer].freeNext = buf->buf_id;
+		buf->freeNext = StrategyControl->firstFreeBuffer;
+		if (buf->freeNext < 0)
 			StrategyControl->lastFreeBuffer = buf->buf_id;
-		}
+		StrategyControl->firstFreeBuffer = buf->buf_id;
 	}
 
 	LWLockRelease(BufFreelistLock);
@@ -188,15 +240,6 @@ StrategySyncStart(void)
 	result = StrategyControl->nextVictimBuffer;
 	LWLockRelease(BufFreelistLock);
 	return result;
-}
-
-/*
- * StrategyHintVacuum -- tell us whether VACUUM is active
- */
-void
-StrategyHintVacuum(bool vacuum_active)
-{
-	strategy_hint_vacuum = vacuum_active;
 }
 
 
@@ -273,4 +316,173 @@ StrategyInitialize(bool init)
 	}
 	else
 		Assert(!init);
+}
+
+
+/* ----------------------------------------------------------------
+ *				Backend-private buffer ring management
+ * ----------------------------------------------------------------
+ */
+
+
+/*
+ * GetAccessStrategy -- create a BufferAccessStrategy object
+ *
+ * The object is allocated in the current memory context.
+ */
+BufferAccessStrategy
+GetAccessStrategy(BufferAccessStrategyType btype)
+{
+	BufferAccessStrategy strategy;
+	int		ring_size;
+
+	/*
+	 * Select ring size to use.  See buffer/README for rationales.
+	 * (Currently all cases are the same size, but keep this code
+	 * structure for flexibility.)
+	 */
+	switch (btype)
+	{
+		case BAS_NORMAL:
+			/* if someone asks for NORMAL, just give 'em a "default" object */
+			return NULL;
+
+		case BAS_BULKREAD:
+			ring_size = 256 * 1024 / BLCKSZ;
+			break;
+		case BAS_VACUUM:
+			ring_size = 256 * 1024 / BLCKSZ;
+			break;
+
+		default:
+			elog(ERROR, "unrecognized buffer access strategy: %d",
+				 (int) btype);
+			return NULL;		/* keep compiler quiet */
+	}
+
+	/* Make sure ring isn't an undue fraction of shared buffers */
+	ring_size = Min(NBuffers / 8, ring_size);
+
+	/* Allocate the object and initialize all elements to zeroes */
+	strategy = (BufferAccessStrategy)
+		palloc0(offsetof(BufferAccessStrategyData, buffers) +
+				ring_size * sizeof(Buffer));
+
+	/* Set fields that don't start out zero */
+	strategy->btype = btype;
+	strategy->ring_size = ring_size;
+
+	return strategy;
+}
+
+/*
+ * FreeAccessStrategy -- release a BufferAccessStrategy object
+ *
+ * A simple pfree would do at the moment, but we would prefer that callers
+ * don't assume that much about the representation of BufferAccessStrategy.
+ */
+void
+FreeAccessStrategy(BufferAccessStrategy strategy)
+{
+	/* don't crash if called on a "default" strategy */
+	if (strategy != NULL)
+		pfree(strategy);
+}
+
+/*
+ * GetBufferFromRing -- returns a buffer from the ring, or NULL if the
+ *		ring is empty.
+ *
+ * The bufhdr spin lock is held on the returned buffer.
+ */
+static volatile BufferDesc *
+GetBufferFromRing(BufferAccessStrategy strategy)
+{
+	volatile BufferDesc *buf;
+	Buffer		bufnum;
+
+	/* Advance to next ring slot */
+	if (++strategy->current >= strategy->ring_size)
+		strategy->current = 0;
+
+	/*
+	 * If the slot hasn't been filled yet, tell the caller to allocate
+	 * a new buffer with the normal allocation strategy.  He will then
+	 * fill this slot by calling AddBufferToRing with the new buffer.
+	 */
+	bufnum = strategy->buffers[strategy->current];
+	if (bufnum == InvalidBuffer)
+	{
+		strategy->current_was_in_ring = false;
+		return NULL;
+	}
+
+	/*
+	 * If the buffer is pinned we cannot use it under any circumstances.
+	 *
+	 * If usage_count is 0 or 1 then the buffer is fair game (we expect 1,
+	 * since our own previous usage of the ring element would have left it
+	 * there, but it might've been decremented by clock sweep since then).
+	 * A higher usage_count indicates someone else has touched the buffer,
+	 * so we shouldn't re-use it.
+	 */
+	buf = &BufferDescriptors[bufnum - 1];
+	LockBufHdr(buf);
+	if (buf->refcount == 0 && buf->usage_count <= 1)
+	{
+		strategy->current_was_in_ring = true;
+		return buf;
+	}
+	UnlockBufHdr(buf);
+
+	/*
+	 * Tell caller to allocate a new buffer with the normal allocation
+	 * strategy.  He'll then replace this ring element via AddBufferToRing.
+	 */
+	strategy->current_was_in_ring = false;
+	return NULL;
+}
+
+/*
+ * AddBufferToRing -- add a buffer to the buffer ring
+ *
+ * Caller must hold the buffer header spinlock on the buffer.  Since this
+ * is called with the spinlock held, it had better be quite cheap.
+ */
+static void
+AddBufferToRing(BufferAccessStrategy strategy, volatile BufferDesc *buf)
+{
+	strategy->buffers[strategy->current] = BufferDescriptorGetBuffer(buf);
+}
+
+/*
+ * StrategyRejectBuffer -- consider rejecting a dirty buffer
+ *
+ * When a nondefault strategy is used, the buffer manager calls this function
+ * when it turns out that the buffer selected by StrategyGetBuffer needs to
+ * be written out and doing so would require flushing WAL too.  This gives us
+ * a chance to choose a different victim.
+ *
+ * Returns true if buffer manager should ask for a new victim, and false
+ * if this buffer should be written and re-used.
+ */
+bool
+StrategyRejectBuffer(BufferAccessStrategy strategy, volatile BufferDesc *buf)
+{
+	/* We only do this in bulkread mode */
+	if (strategy->btype != BAS_BULKREAD)
+		return false;
+
+	/* Don't muck with behavior of normal buffer-replacement strategy */
+	if (!strategy->current_was_in_ring ||
+		strategy->buffers[strategy->current] != BufferDescriptorGetBuffer(buf))
+		return false;
+
+	/*
+	 * Remove the dirty buffer from the ring; necessary to prevent infinite
+	 * loop if all ring members are dirty.
+	 */
+	strategy->buffers[strategy->current] = InvalidBuffer;
+
+	return true;
 }
