@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.42 2007/03/27 01:45:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.43 2007/05/30 17:41:43 momjian Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -14,6 +14,10 @@
    <author>
     <firstname>Thomas</firstname>
     <surname>Lockhart</surname>
+   </author>
+   <author>
+    <firstname>David</firstname>
+    <surname>Fetter</surname>
    </author>
   </authorgroup>
   <date>1999-05-20</date>
@@ -149,6 +153,13 @@ cvs update
    latest development version.  For more info consult the manual that
    comes with <productname>CVS</productname>, or see the online
    documentation at <ulink url="http://www.nongnu.org/cvs/"></ulink>.
+  </para>
+  <para>
+   For those things which <productname>CVS</productname> does not do by
+   itself, for example ones that add or remove files, you can use
+   <productname>cvsutils</productname>, which is packaged for many
+   operating systems, or available in source form at <ulink
+   url="http://www.red-bean.com/cvsutils/"></ulink>.
   </para>
  </sect1>
 
