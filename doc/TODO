@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed May 30 15:07:10 EDT 2007
+Last updated:		Wed May 30 16:00:30 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -1508,6 +1508,9 @@ Source Code
 * Support scoped IPv6 addresses
 
   http://archives.postgresql.org/pgsql-bugs/2007-05/msg00111.php
+
+* Consider allowing 64-bit integers to be passed by reference on 64-bit
+  platforms
 
 
 * Win32
