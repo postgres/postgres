@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.24 2007/02/07 00:28:54 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_config/pg_config.c,v 1.25 2007/05/31 15:13:04 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -469,7 +469,7 @@ main(int argc, char **argv)
 
 	if (ret)
 	{
-		fprintf(stderr, _("%s: could not find own executable\n"), progname);
+		fprintf(stderr, _("%s: could not find own program executable\n"), progname);
 		exit(1);
 	}
 

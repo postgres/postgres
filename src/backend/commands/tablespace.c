@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.45 2007/03/22 19:51:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.46 2007/05/31 15:13:02 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -570,7 +570,7 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
 		if (rmdir(subfile) < 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not delete directory \"%s\": %m",
+					 errmsg("could not remove directory \"%s\": %m",
 							subfile)));
 
 		pfree(subfile);

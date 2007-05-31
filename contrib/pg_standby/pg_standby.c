@@ -270,7 +270,7 @@ CustomizableCleanupPriorWALFiles(void)
 
 					rc = unlink(WALFilePath);
 					if (rc !=0 )
-						fprintf(stderr, "\npg_standby: ERROR failed to remove \"%s\" because %s\n", WALFilePath,  strerror(errno));
+						fprintf(stderr, "\npg_standby: ERROR failed to remove \"%s\": %s\n", WALFilePath,  strerror(errno));
 
 
 				}
@@ -320,7 +320,7 @@ CheckForExternalTrigger(void)
 		rc = unlink(triggerPath);
 		if (rc != 0)
 		{
-			fprintf(stderr, "\n ERROR: unable to remove \"%s\", because %s", triggerPath, strerror(errno));
+			fprintf(stderr, "\n ERROR: could not remove \"%s\": %s", triggerPath, strerror(errno));
 			fflush(stderr);
 			exit(rc);
 		}

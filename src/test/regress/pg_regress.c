@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.31 2007/02/08 19:48:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.32 2007/05/31 15:13:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -886,14 +886,14 @@ spawn_process(const char *cmdline)
    {
       if (Advapi32Handle != NULL)
       	FreeLibrary(Advapi32Handle);
-      fprintf(stderr, "ERROR: Unable to create restricted tokens on this platform\n");
+      fprintf(stderr, "ERROR: cannot create restricted tokens on this platform\n");
       exit_nicely(2);
    }
 
    /* Open the current token to use as base for the restricted one */
    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &origToken))
    {
-      fprintf(stderr, "Failed to open process token: %lu\n", GetLastError());
+      fprintf(stderr, "could not open process token: %lu\n", GetLastError());
       exit_nicely(2);
    }
 
@@ -904,7 +904,7 @@ spawn_process(const char *cmdline)
 		 !AllocateAndInitializeSid(&NtAuthority, 2,
 		   SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_POWER_USERS, 0, 0, 0, 0, 0, 0, &dropSids[1].Sid))
    {
-      fprintf(stderr, "Failed to allocate SIDs: %lu\n", GetLastError());
+      fprintf(stderr, "could not allocate SIDs: %lu\n", GetLastError());
       exit_nicely(2);
    }
 	
@@ -923,7 +923,7 @@ spawn_process(const char *cmdline)
    
    if (!b)
    {
-      fprintf(stderr, "Failed to create restricted token: %lu\n", GetLastError());
+      fprintf(stderr, "could not create restricted token: %lu\n", GetLastError());
       exit_nicely(2);
    }
 

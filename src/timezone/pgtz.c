@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.50 2007/02/10 14:58:55 petere Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.51 2007/05/31 15:13:06 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -455,7 +455,7 @@ identify_system_timezone(void)
 	if (std_zone_name[0] == '\0')
 	{
 		ereport(LOG,
-				(errmsg("unable to determine system timezone, defaulting to \"%s\"", "GMT"),
+				(errmsg("could not determine system time zone, defaulting to \"%s\"", "GMT"),
 		errhint("You can specify the correct timezone in postgresql.conf.")));
 		return NULL;			/* go to GMT */
 	}

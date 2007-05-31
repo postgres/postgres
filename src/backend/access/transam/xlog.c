@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.271 2007/05/31 07:36:12 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.272 2007/05/31 15:13:01 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2933,7 +2933,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode)
 		{
 			ereport(emode,
 					(errcode_for_file_access(),
-					 errmsg("could not read from log file %u, segment %u at offset %u: %m",
+					 errmsg("could not read from log file %u, segment %u, offset %u: %m",
 							readId, readSeg, readOff)));
 			goto next_record_is_invalid;
 		}

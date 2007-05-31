@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.15 2006/10/04 00:30:11 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/error.c,v 1.16 2007/05/31 15:13:05 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -62,7 +62,7 @@ ECPGraise(int line, int code, const char *sqlstate, const char *str)
 
 		case ECPG_CONVERT_BOOL:
 			snprintf(sqlca->sqlerrm.sqlerrmc, sizeof(sqlca->sqlerrm.sqlerrmc),
-					 "Unable to convert %s to bool on line %d.", str, line);
+					 "Could not convert %s to bool on line %d.", str, line);
 			break;
 
 		case ECPG_EMPTY:

@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.136 2007/03/29 22:46:42 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.137 2007/05/31 15:13:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2328,7 +2328,7 @@ CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo)
 
 	if (_CreateRestrictedToken == NULL)
 	{
-		fprintf(stderr, "WARNING: Unable to create restricted tokens on this platform\n");
+		fprintf(stderr, "WARNING: cannot create restricted tokens on this platform\n");
 		if (Advapi32Handle != NULL)
 			FreeLibrary(Advapi32Handle);
 		return 0;
@@ -3005,7 +3005,7 @@ main(int argc, char *argv[])
 			exit_nicely();
 		}
 #else
-		fprintf(stderr, _("%s: symlinks are not supported on this plataform"));
+		fprintf(stderr, _("%s: symlinks are not supported on this platform"));
 		exit_nicely();
 #endif
 	}
