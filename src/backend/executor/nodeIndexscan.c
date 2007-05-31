@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.122 2007/05/25 17:54:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.123 2007/05/31 20:45:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -523,6 +523,12 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 	ExecAssignScanType(&indexstate->ss, RelationGetDescr(currentRelation));
 
 	/*
+	 * Initialize result tuple type and projection info.
+	 */
+	ExecAssignResultTypeFromTL(&indexstate->ss.ps);
+	ExecAssignScanProjectionInfo(&indexstate->ss);
+
+	/*
 	 * If we are just doing EXPLAIN (ie, aren't going to run the plan),
 	 * stop here.  This allows an index-advisor plugin to EXPLAIN a plan
 	 * containing references to nonexistent indexes.
@@ -588,12 +594,6 @@ ExecInitIndexScan(IndexScan *node, EState *estate, int eflags)
 											   estate->es_snapshot,
 											   indexstate->iss_NumScanKeys,
 											   indexstate->iss_ScanKeys);
-
-	/*
-	 * Initialize result tuple type and projection info.
-	 */
-	ExecAssignResultTypeFromTL(&indexstate->ss.ps);
-	ExecAssignScanProjectionInfo(&indexstate->ss);
 
 	/*
 	 * all done.
