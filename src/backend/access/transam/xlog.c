@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.270 2007/05/30 20:11:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.271 2007/05/31 07:36:12 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4702,7 +4702,7 @@ StartupXLOG(void)
 		record = ReadCheckpointRecord(checkPointLoc, 0);
 		if (record != NULL)
 		{
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("checkpoint record is at %X/%X",
 							checkPointLoc.xlogid, checkPointLoc.xrecoff)));
 			InRecovery = true;	/* force recovery even if SHUTDOWNED */
@@ -4726,7 +4726,7 @@ StartupXLOG(void)
 		record = ReadCheckpointRecord(checkPointLoc, 1);
 		if (record != NULL)
 		{
-			ereport(LOG,
+			ereport(DEBUG1,
 					(errmsg("checkpoint record is at %X/%X",
 							checkPointLoc.xlogid, checkPointLoc.xrecoff)));
 		}
@@ -4751,15 +4751,15 @@ StartupXLOG(void)
 	memcpy(&checkPoint, XLogRecGetData(record), sizeof(CheckPoint));
 	wasShutdown = (record->xl_info == XLOG_CHECKPOINT_SHUTDOWN);
 
-	ereport(LOG,
+	ereport(DEBUG1,
 	 (errmsg("redo record is at %X/%X; shutdown %s",
 			 checkPoint.redo.xlogid, checkPoint.redo.xrecoff,
 			 wasShutdown ? "TRUE" : "FALSE")));
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("next transaction ID: %u/%u; next OID: %u",
 					checkPoint.nextXidEpoch, checkPoint.nextXid,
 					checkPoint.nextOid)));
-	ereport(LOG,
+	ereport(DEBUG1,
 			(errmsg("next MultiXactId: %u; next MultiXactOffset: %u",
 					checkPoint.nextMulti, checkPoint.nextMultiOffset)));
 	if (!TransactionIdIsNormal(checkPoint.nextXid))
