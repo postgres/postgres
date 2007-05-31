@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.143 2007/05/22 23:23:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.144 2007/05/31 16:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -370,10 +370,11 @@ typedef struct RelOptInfo
  *		and indexes, but that created confusion without actually doing anything
  *		useful.  So now we have a separate IndexOptInfo struct for indexes.
  *
- *		opfamily[], indexkeys[], fwdsortop[], revsortop[], and nulls_first[]
- *		each have ncolumns entries.  Note: for historical reasons, the
- *		opfamily array has an extra entry that is always zero.  Some code
- *		scans until it sees a zero entry, rather than looking at ncolumns.
+ *		opfamily[], indexkeys[], opcintype[], fwdsortop[], revsortop[],
+ *		and nulls_first[] each have ncolumns entries.
+ *		Note: for historical reasons, the opfamily array has an extra entry
+ *		that is always zero.  Some code scans until it sees a zero entry,
+ *		rather than looking at ncolumns.
  *
  *		Zeroes in the indexkeys[] array indicate index columns that are
  *		expressions; there is one element in indexprs for each such column.
@@ -402,6 +403,7 @@ typedef struct IndexOptInfo
 	int			ncolumns;		/* number of columns in index */
 	Oid		   *opfamily;		/* OIDs of operator families for columns */
 	int		   *indexkeys;		/* column numbers of index's keys, or 0 */
+	Oid		   *opcintype;		/* OIDs of opclass declared input data types */
 	Oid		   *fwdsortop;		/* OIDs of sort operators for each column */
 	Oid		   *revsortop;		/* OIDs of sort operators for backward scan */
 	bool	   *nulls_first;	/* do NULLs come first in the sort order? */

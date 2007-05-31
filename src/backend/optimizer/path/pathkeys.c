@@ -11,13 +11,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.84 2007/04/15 20:09:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.85 2007/05/31 16:57:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "access/skey.h"
+#include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
@@ -491,6 +492,27 @@ build_index_pathkeys(PlannerInfo *root,
 				elog(ERROR, "wrong number of index expressions");
 			indexkey = (Expr *) lfirst(indexprs_item);
 			indexprs_item = lnext(indexprs_item);
+		}
+
+		/*
+		 * When dealing with binary-compatible indexes, we have to ensure that
+		 * the exposed type of the expression tree matches the declared input
+		 * type of the opclass, except when that is a polymorphic type
+		 * (compare the behavior of parse_coerce.c).  This ensures that we can
+		 * correctly match the indexkey expression to expressions we find in
+		 * the query, because arguments of operators that could match the
+		 * index will be cast likewise.
+		 */
+		if (exprType((Node *) indexkey) != index->opcintype[i] &&
+			!IsPolymorphicType(index->opcintype[i]))
+		{
+			/* Strip any existing RelabelType, and add a new one */
+			while (indexkey && IsA(indexkey, RelabelType))
+				indexkey = (Expr *) ((RelabelType *) indexkey)->arg;
+			indexkey = (Expr *) makeRelabelType(indexkey,
+												index->opcintype[i],
+												-1,
+												COERCE_DONTCARE);
 		}
 
 		/* OK, make a canonical pathkey for this sort key */
