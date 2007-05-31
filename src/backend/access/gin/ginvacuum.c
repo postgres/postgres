@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.12 2007/02/01 04:16:08 neilc Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.13 2007/05/31 14:03:09 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -28,6 +28,7 @@ typedef struct
 	IndexBulkDeleteCallback callback;
 	void	   *callback_state;
 	GinState	ginstate;
+	BufferAccessStrategy	strategy;
 } GinVacuumState;
 
 
@@ -152,7 +153,7 @@ xlogVacuumPage(Relation index, Buffer buffer)
 static bool
 ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, Buffer *rootBuffer)
 {
-	Buffer		buffer = ReadBuffer(gvs->index, blkno);
+	Buffer		buffer = ReadBufferWithStrategy(gvs->index, blkno, gvs->strategy);
 	Page		page = BufferGetPage(buffer);
 	bool		hasVoidPage = FALSE;
 
@@ -238,9 +239,10 @@ static void
 ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkno,
 			  BlockNumber parentBlkno, OffsetNumber myoff, bool isParentRoot)
 {
-	Buffer		dBuffer = ReadBuffer(gvs->index, deleteBlkno);
-	Buffer		lBuffer = (leftBlkno == InvalidBlockNumber) ? InvalidBuffer : ReadBuffer(gvs->index, leftBlkno);
-	Buffer		pBuffer = ReadBuffer(gvs->index, parentBlkno);
+	Buffer		dBuffer = ReadBufferWithStrategy(gvs->index, deleteBlkno, gvs->strategy);
+	Buffer		lBuffer = (leftBlkno == InvalidBlockNumber) ? 
+							InvalidBuffer : ReadBufferWithStrategy(gvs->index, leftBlkno, gvs->strategy);
+	Buffer		pBuffer = ReadBufferWithStrategy(gvs->index, parentBlkno, gvs->strategy);
 	Page		page,
 				parentPage;
 
@@ -390,7 +392,7 @@ ginScanToDelete(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, DataPageDel
 			me = parent->child;
 	}
 
-	buffer = ReadBuffer(gvs->index, blkno);
+	buffer = ReadBufferWithStrategy(gvs->index, blkno, gvs->strategy);
 	page = BufferGetPage(buffer);
 
 	Assert(GinPageIsData(page));
@@ -574,9 +576,10 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 	gvs.result = stats;
 	gvs.callback = callback;
 	gvs.callback_state = callback_state;
+	gvs.strategy = info->strategy;
 	initGinState(&gvs.ginstate, index);
 
-	buffer = ReadBuffer(index, blkno);
+	buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
 
 	/* find leaf page */
 	for (;;)
@@ -607,8 +610,8 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 		blkno = GinItemPointerGetBlockNumber(&(itup)->t_tid);
 		Assert(blkno != InvalidBlockNumber);
 
-		LockBuffer(buffer, GIN_UNLOCK);
-		buffer = ReleaseAndReadBuffer(buffer, index, blkno);
+		UnlockReleaseBuffer(buffer);
+		buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
 	}
 
 	/* right now we found leftmost page in entry's BTree */
@@ -650,7 +653,7 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 		if (blkno == InvalidBlockNumber)		/* rightmost page */
 			break;
 
-		buffer = ReadBuffer(index, blkno);
+		buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
 		LockBuffer(buffer, GIN_EXCLUSIVE);
 	}
 
@@ -713,7 +716,7 @@ ginvacuumcleanup(PG_FUNCTION_ARGS)
 
 		vacuum_delay_point();
 
-		buffer = ReadBuffer(index, blkno);
+		buffer = ReadBufferWithStrategy(index, blkno, info->strategy);
 		LockBuffer(buffer, GIN_SHARE);
 		page = (Page) BufferGetPage(buffer);
 

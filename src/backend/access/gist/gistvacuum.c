@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.29 2007/01/05 22:19:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistvacuum.c,v 1.30 2007/05/31 14:03:09 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,7 @@ typedef struct
 	Relation	index;
 	MemoryContext opCtx;
 	GistBulkDeleteResult *result;
+	BufferAccessStrategy	strategy;
 } GistVacuum;
 
 typedef struct
@@ -83,7 +84,7 @@ gistDeleteSubtree(GistVacuum *gv, BlockNumber blkno)
 	Buffer		buffer;
 	Page		page;
 
-	buffer = ReadBuffer(gv->index, blkno);
+	buffer = ReadBufferWithStrategy(gv->index, blkno, gv->strategy);
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	page = (Page) BufferGetPage(buffer);
 
@@ -303,7 +304,7 @@ gistVacuumUpdate(GistVacuum *gv, BlockNumber blkno, bool needunion)
 
 	vacuum_delay_point();
 
-	buffer = ReadBuffer(gv->index, blkno);
+	buffer = ReadBufferWithStrategy(gv->index, blkno, gv->strategy);
 	LockBuffer(buffer, GIST_EXCLUSIVE);
 	gistcheckpage(gv->index, buffer);
 	page = (Page) BufferGetPage(buffer);
@@ -550,6 +551,7 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 		initGISTstate(&(gv.giststate), rel);
 		gv.opCtx = createTempGistContext();
 		gv.result = stats;
+		gv.strategy = info->strategy;
 
 		/* walk through the entire index for update tuples */
 		res = gistVacuumUpdate(&gv, GIST_ROOT_BLKNO, false);
@@ -600,7 +602,7 @@ gistvacuumcleanup(PG_FUNCTION_ARGS)
 
 		vacuum_delay_point();
 
-		buffer = ReadBuffer(rel, blkno);
+		buffer = ReadBufferWithStrategy(rel, blkno, info->strategy);
 		LockBuffer(buffer, GIST_SHARE);
 		page = (Page) BufferGetPage(buffer);
 
@@ -704,7 +706,7 @@ gistbulkdelete(PG_FUNCTION_ARGS)
 
 	while (stack)
 	{
-		Buffer		buffer = ReadBuffer(rel, stack->blkno);
+		Buffer		buffer = ReadBufferWithStrategy(rel, stack->blkno, info->strategy);
 		Page		page;
 		OffsetNumber i,
 					maxoff;
