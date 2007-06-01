@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Wed May 30 16:26:02 EDT 2007
+Last updated:           Fri Jun  1 14:40:33 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -506,10 +506,6 @@ first.  There is also a developer's wiki at<br/>
   get dropped while the DROP operation is happening
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00937.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00937.php</a>
 </p>
-  </li><li>Fix self-referential UPDATEs that see inconsistent row versions in
-  read-committed mode
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-05/msg00507.php">http://archives.postgresql.org/pgsql-hackers/2007-05/msg00507.php</a>
-</p>
   </li><li>CREATE
   <ul>
     <li>Allow CREATE TABLE AS to determine column lengths for complex
@@ -528,6 +524,10 @@ first.  There is also a developer's wiki at<br/>
     <li>Allow UPDATE tab SET ROW (col, ...) = (SELECT...)
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2006-07/msg01306.php">http://archives.postgresql.org/pgsql-hackers/2006-07/msg01306.php</a>
           <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00865.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00865.php</a>
+</p>
+    </li><li>Research self-referential UPDATEs that see inconsistent row versions
+          in read-committed mode
+<p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-05/msg00507.php">http://archives.postgresql.org/pgsql-hackers/2007-05/msg00507.php</a>
 </p>
   </li></ul>
   </li><li>ALTER
