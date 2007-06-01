@@ -14,7 +14,7 @@ SELECT 1 AS one;
 
 SELECT bool 't' AS true;
 
-SELECT bool 'f' AS false;
+SELECT bool '   f           ' AS false;
 
 SELECT bool 't' or bool 'f' AS true;
 
@@ -26,6 +26,14 @@ SELECT bool 't' = bool 'f' AS false;
 
 SELECT bool 't' <> bool 'f' AS true;
 
+-- explicit casts to/from text
+SELECT 'TrUe'::text::boolean AS true, 'fAlse'::text::boolean AS false;
+SELECT '    true   '::text::boolean AS true,
+       '     FALSE'::text::boolean AS false;
+SELECT true::boolean::text AS true, false::boolean::text AS false;
+
+SELECT '  tru e '::text::boolean AS invalid;    -- error
+SELECT ''::text::boolean AS invalid;            -- error
 
 CREATE TABLE BOOLTBL1 (f1 bool);
 

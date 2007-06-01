@@ -18,7 +18,7 @@ SELECT bool 't' AS true;
  t
 (1 row)
 
-SELECT bool 'f' AS false;
+SELECT bool '   f           ' AS false;
  false 
 -------
  f
@@ -54,6 +54,30 @@ SELECT bool 't' <> bool 'f' AS true;
  t
 (1 row)
 
+-- explicit casts to/from text
+SELECT 'TrUe'::text::boolean AS true, 'fAlse'::text::boolean AS false;
+ true | false 
+------+-------
+ t    | f
+(1 row)
+
+SELECT '    true   '::text::boolean AS true,
+       '     FALSE'::text::boolean AS false;
+ true | false 
+------+-------
+ t    | f
+(1 row)
+
+SELECT true::boolean::text AS true, false::boolean::text AS false;
+ true | false 
+------+-------
+ true | false
+(1 row)
+
+SELECT '  tru e '::text::boolean AS invalid;    -- error
+ERROR:  invalid input syntax for type boolean: "  tru e "
+SELECT ''::text::boolean AS invalid;            -- error
+ERROR:  invalid input syntax for type boolean: ""
 CREATE TABLE BOOLTBL1 (f1 bool);
 INSERT INTO BOOLTBL1 (f1) VALUES (bool 't');
 INSERT INTO BOOLTBL1 (f1) VALUES (bool 'True');

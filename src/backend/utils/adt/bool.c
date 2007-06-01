@@ -8,12 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.38 2007/01/05 22:19:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.39 2007/06/01 23:40:18 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
+#include <ctype.h>
 
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
@@ -33,41 +35,54 @@
 Datum
 boolin(PG_FUNCTION_ARGS)
 {
-	char	   *b = PG_GETARG_CSTRING(0);
+	const char	*in_str = PG_GETARG_CSTRING(0);
+	const char 	*str;
+	size_t 		 len;
 
-	switch (*b)
+	/*
+	 * Skip leading and trailing whitespace
+	 */
+	str = in_str;
+	while (isspace((unsigned char) *str))
+		str++;
+
+	len = strlen(str);
+	while (len > 0 && isspace((unsigned char) str[len - 1]))
+		len--;
+
+	switch (*str)
 	{
 		case 't':
 		case 'T':
-			if (pg_strncasecmp(b, "true", strlen(b)) == 0)
+			if (pg_strncasecmp(str, "true", len) == 0)
 				PG_RETURN_BOOL(true);
 			break;
 
 		case 'f':
 		case 'F':
-			if (pg_strncasecmp(b, "false", strlen(b)) == 0)
+			if (pg_strncasecmp(str, "false", len) == 0)
 				PG_RETURN_BOOL(false);
 			break;
 
 		case 'y':
 		case 'Y':
-			if (pg_strncasecmp(b, "yes", strlen(b)) == 0)
+			if (pg_strncasecmp(str, "yes", len) == 0)
 				PG_RETURN_BOOL(true);
 			break;
 
 		case '1':
-			if (pg_strncasecmp(b, "1", strlen(b)) == 0)
+			if (pg_strncasecmp(str, "1", len) == 0)
 				PG_RETURN_BOOL(true);
 			break;
 
 		case 'n':
 		case 'N':
-			if (pg_strncasecmp(b, "no", strlen(b)) == 0)
+			if (pg_strncasecmp(str, "no", len) == 0)
 				PG_RETURN_BOOL(false);
 			break;
 
 		case '0':
-			if (pg_strncasecmp(b, "0", strlen(b)) == 0)
+			if (pg_strncasecmp(str, "0", len) == 0)
 				PG_RETURN_BOOL(false);
 			break;
 
@@ -77,7 +92,7 @@ boolin(PG_FUNCTION_ARGS)
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-			 errmsg("invalid input syntax for type boolean: \"%s\"", b)));
+			 errmsg("invalid input syntax for type boolean: \"%s\"", in_str)));
 
 	/* not reached */
 	PG_RETURN_BOOL(false);
@@ -125,6 +140,37 @@ boolsend(PG_FUNCTION_ARGS)
 	pq_begintypsend(&buf);
 	pq_sendbyte(&buf, arg1 ? 1 : 0);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+/*
+ *	    textbool			- cast function for text => bool
+ */
+Datum
+textbool(PG_FUNCTION_ARGS)
+{
+	Datum 		 in_text = PG_GETARG_DATUM(0);
+	char 		*str;
+
+	str = DatumGetCString(DirectFunctionCall1(textout, in_text));
+
+	PG_RETURN_DATUM(DirectFunctionCall1(boolin, CStringGetDatum(str)));
+}
+
+/*
+ *	    booltext			- cast function for bool => text
+ */
+Datum
+booltext(PG_FUNCTION_ARGS)
+{
+	bool 		 arg1 = PG_GETARG_BOOL(0);
+	char 		*str;
+
+	if (arg1)
+		str = "true";
+	else
+		str = "false";
+
+	PG_RETURN_DATUM(DirectFunctionCall1(textin, CStringGetDatum(str)));
 }
 
 

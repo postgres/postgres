@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.202 2007/05/29 04:58:43 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.203 2007/06/01 23:40:18 neilc Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2403,9 +2403,9 @@ January 8 04:05:06 1999 PST
      <member><literal>'no'</literal></member>
      <member><literal>'0'</literal></member>
     </simplelist>
-    Using the key words <literal>TRUE</literal> and
-    <literal>FALSE</literal> is preferred (and
-    <acronym>SQL</acronym>-compliant).
+    Leading and trailing whitespace is ignored. Using the key words
+    <literal>TRUE</literal> and <literal>FALSE</literal> is preferred
+    (and <acronym>SQL</acronym>-compliant).
    </para>
 
    <example id="datatype-boolean-example">

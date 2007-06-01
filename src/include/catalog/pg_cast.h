@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.32 2007/04/02 03:49:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.33 2007/06/01 23:40:18 neilc Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -302,6 +302,8 @@ DATA(insert ( 1700	 25 1688 i ));
 DATA(insert (	25 1700 1686 e ));
 DATA(insert (  142   25 2922 e ));
 DATA(insert (   25  142	2896 e ));
+DATA(insert (   16   25 2971 e ));
+DATA(insert (   25   16 2970 e ));
 
 /*
  * Cross-category casts to and from VARCHAR
@@ -342,6 +344,8 @@ DATA(insert ( 1700 1043 1688 a ));
 DATA(insert ( 1043 1700 1686 e ));
 DATA(insert (  142 1043 2922 e ));
 DATA(insert ( 1043  142 2896 e ));
+DATA(insert (   16 1043 2971 e ));
+DATA(insert ( 1043   16 2970 e ));
 
 /*
  * Cross-category casts to and from BPCHAR
