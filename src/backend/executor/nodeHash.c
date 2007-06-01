@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.107 2006/07/14 04:44:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.107.2.1 2007/06/01 15:58:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include <math.h>
 #include <limits.h>
 
+#include "access/hash.h"
 #include "executor/execdebug.h"
 #include "executor/hashjoin.h"
 #include "executor/instrument.h"
@@ -719,9 +720,11 @@ ExecHashGetHashValue(HashJoinTable hashtable,
  * chains), and must only cause the batch number to remain the same or
  * increase.  Our algorithm is
  *		bucketno = hashvalue MOD nbuckets
- *		batchno = (hashvalue DIV nbuckets) MOD nbatch
- * where nbuckets should preferably be prime so that all bits of the
- * hash value can affect both bucketno and batchno.
+ *		batchno = hash_uint32(hashvalue) MOD nbatch
+ * which gives reasonably independent bucket and batch numbers in the face
+ * of some rather poorly-implemented hash functions in hashfunc.c.  (This
+ * will change in PG 8.3.)
+ *
  * nbuckets doesn't change over the course of the join.
  *
  * nbatch is always a power of 2; we increase it only by doubling it.  This
@@ -740,7 +743,7 @@ ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 	{
 		*bucketno = hashvalue % nbuckets;
 		/* since nbatch is a power of 2, can do MOD by masking */
-		*batchno = (hashvalue / nbuckets) & (nbatch - 1);
+		*batchno = hash_uint32(hashvalue) & (nbatch - 1);
 	}
 	else
 	{
