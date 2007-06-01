@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.22 2005/10/15 02:49:25 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.22.2.1 2007/06/01 23:43:23 tgl Exp $
  *
  * NOTES:
  *
@@ -291,7 +291,7 @@ BufFileDumpBuffer(BufFile *file)
 				return;			/* seek failed, give up */
 			file->offsets[file->curFile] = file->curOffset;
 		}
-		bytestowrite = FileWrite(thisfile, file->buffer, bytestowrite);
+		bytestowrite = FileWrite(thisfile, file->buffer + wpos, bytestowrite);
 		if (bytestowrite <= 0)
 			return;				/* failed to write */
 		file->offsets[file->curFile] += bytestowrite;
