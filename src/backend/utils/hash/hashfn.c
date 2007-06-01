@@ -9,7 +9,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.30 2007/01/05 22:19:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/hashfn.c,v 1.31 2007/06/01 15:33:18 tgl Exp $
+ *
+ * NOTES
+ *	  It is expected that every bit of a hash function's 32-bit result is
+ *	  as random as every other; failure to ensure this is likely to lead
+ *	  to poor performance of hash tables.  In most cases a hash
+ *	  function should use hash_any() or its variant hash_uint32().
  *
  *-------------------------------------------------------------------------
  */
@@ -58,8 +64,7 @@ uint32
 oid_hash(const void *key, Size keysize)
 {
 	Assert(keysize == sizeof(Oid));
-	/* We don't actually bother to do anything to the OID value ... */
-	return (uint32) *((const Oid *) key);
+	return DatumGetUInt32(hash_uint32((uint32) *((const Oid *) key)));
 }
 
 /*
