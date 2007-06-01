@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.44 2007/01/30 01:33:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.45 2007/06/01 17:38:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +76,8 @@ typedef struct HashJoinTupleData
 typedef struct HashJoinTableData
 {
 	int			nbuckets;		/* # buckets in the in-memory hash table */
+	int			log2_nbuckets;	/* its log2 (nbuckets must be a power of 2) */
+
 	/* buckets[i] is head of list of tuples in i'th in-memory bucket */
 	struct HashJoinTupleData **buckets;
 	/* buckets array is per-batch storage, as are all the tuples */

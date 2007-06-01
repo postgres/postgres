@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.111 2007/02/22 22:49:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.112 2007/06/01 17:38:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "executor/nodeHashjoin.h"
 #include "miscadmin.h"
 #include "parser/parse_expr.h"
+#include "utils/dynahash.h"
 #include "utils/memutils.h"
 #include "utils/lsyscache.h"
 
@@ -223,6 +224,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	Plan	   *outerNode;
 	int			nbuckets;
 	int			nbatch;
+	int			log2_nbuckets;
 	int			nkeys;
 	int			i;
 	ListCell   *ho;
@@ -242,6 +244,10 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	printf("nbatch = %d, nbuckets = %d\n", nbatch, nbuckets);
 #endif
 
+	/* nbuckets must be a power of 2 */
+	log2_nbuckets = my_log2(nbuckets);
+	Assert(nbuckets == (1 << log2_nbuckets));
+
 	/*
 	 * Initialize the hash table control block.
 	 *
@@ -250,6 +256,7 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	 */
 	hashtable = (HashJoinTable) palloc(sizeof(HashJoinTableData));
 	hashtable->nbuckets = nbuckets;
+	hashtable->log2_nbuckets = log2_nbuckets;
 	hashtable->buckets = NULL;
 	hashtable->nbatch = nbatch;
 	hashtable->curbatch = 0;
@@ -345,13 +352,6 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 /* Target bucket loading (tuples per bucket) */
 #define NTUP_PER_BUCKET			10
 
-/* Prime numbers that we like to use as nbuckets values */
-static const int hprimes[] = {
-	1033, 2063, 4111, 8219, 16417, 32779, 65539, 131111,
-	262151, 524341, 1048589, 2097211, 4194329, 8388619, 16777289, 33554473,
-	67108913, 134217773, 268435463, 536870951, 1073741831
-};
-
 void
 ExecChooseHashTableSize(double ntuples, int tupwidth,
 						int *numbuckets,
@@ -396,7 +396,7 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		int			minbatch;
 
 		lbuckets = (hash_table_bytes / tupsize) / NTUP_PER_BUCKET;
-		lbuckets = Min(lbuckets, INT_MAX);
+		lbuckets = Min(lbuckets, INT_MAX / 2);
 		nbuckets = (int) lbuckets;
 
 		dbatch = ceil(inner_rel_bytes / hash_table_bytes);
@@ -412,27 +412,22 @@ ExecChooseHashTableSize(double ntuples, int tupwidth,
 		double		dbuckets;
 
 		dbuckets = ceil(ntuples / NTUP_PER_BUCKET);
-		dbuckets = Min(dbuckets, INT_MAX);
+		dbuckets = Min(dbuckets, INT_MAX / 2);
 		nbuckets = (int) dbuckets;
 
 		nbatch = 1;
 	}
 
 	/*
-	 * We want nbuckets to be prime so as to avoid having bucket and batch
-	 * numbers depend on only some bits of the hash code.  Choose the next
-	 * larger prime from the list in hprimes[].  (This also enforces that
-	 * nbuckets is not very small, by the simple expedient of not putting any
-	 * very small entries in hprimes[].)
+	 * Both nbuckets and nbatch must be powers of 2 to make
+	 * ExecHashGetBucketAndBatch fast.  We already fixed nbatch; now inflate
+	 * nbuckets to the next larger power of 2.  We also force nbuckets to not
+	 * be real small, by starting the search at 2^10.
 	 */
-	for (i = 0; i < (int) lengthof(hprimes); i++)
-	{
-		if (hprimes[i] >= nbuckets)
-		{
-			nbuckets = hprimes[i];
-			break;
-		}
-	}
+	i = 10;
+	while ((1 << i) < nbuckets)
+		i++;
+	nbuckets = (1 << i);
 
 	*numbuckets = nbuckets;
 	*numbatches = nbatch;
@@ -765,8 +760,11 @@ ExecHashGetHashValue(HashJoinTable hashtable,
  * increase.  Our algorithm is
  *		bucketno = hashvalue MOD nbuckets
  *		batchno = (hashvalue DIV nbuckets) MOD nbatch
- * where nbuckets should preferably be prime so that all bits of the
- * hash value can affect both bucketno and batchno.
+ * where nbuckets and nbatch are both expected to be powers of 2, so we can
+ * do the computations by shifting and masking.  (This assumes that all hash
+ * functions are good about randomizing all their output bits, else we are
+ * likely to have very skewed bucket or batch occupancy.)
+ *
  * nbuckets doesn't change over the course of the join.
  *
  * nbatch is always a power of 2; we increase it only by doubling it.  This
@@ -783,13 +781,13 @@ ExecHashGetBucketAndBatch(HashJoinTable hashtable,
 
 	if (nbatch > 1)
 	{
-		*bucketno = hashvalue % nbuckets;
-		/* since nbatch is a power of 2, can do MOD by masking */
-		*batchno = (hashvalue / nbuckets) & (nbatch - 1);
+		/* we can do MOD by masking, DIV by shifting */
+		*bucketno = hashvalue & (nbuckets - 1);
+		*batchno = (hashvalue >> hashtable->log2_nbuckets) & (nbatch - 1);
 	}
 	else
 	{
-		*bucketno = hashvalue % nbuckets;
+		*bucketno = hashvalue & (nbuckets - 1);
 		*batchno = 0;
 	}
 }
