@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/pl/Makefile,v 1.25 2007/02/09 15:55:59 petere Exp $
+# $PostgreSQL: pgsql/src/pl/Makefile,v 1.26 2007/06/01 19:38:07 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,12 +32,9 @@ all install installdirs uninstall distprep:
 clean distclean maintainer-clean:
 	@for dir in $(DIRS); do $(MAKE) -C $$dir $@; done
 
-# We'd like check operations to run all the subtests before failing;
-# also insert a sleep to ensure the previous test backend exited before
-# we try to drop the regression database.
+# We'd like check operations to run all the subtests before failing.
 check installcheck:
 	@CHECKERR=0; for dir in $(DIRS); do \
-		sleep 1; \
 		$(MAKE) -C $$dir $@ || CHECKERR=$$?; \
 	done; \
 	exit $$CHECKERR

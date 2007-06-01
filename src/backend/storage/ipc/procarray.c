@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.24 2007/04/03 16:34:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.25 2007/06/01 19:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -684,62 +684,6 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 }
 
 /*
- * DatabaseCancelAutovacuumActivity -- are there any backends running in the
- * given DB, apart from autovacuum?  If an autovacuum process is running on the
- * database, kill it and restart the counting.
- *
- * If 'ignoreMyself' is TRUE, ignore this particular backend while checking
- * for backends in the target database.
- *
- * This function is used to interlock DROP DATABASE against there being
- * any active backends in the target DB --- dropping the DB while active
- * backends remain would be a Bad Thing.  Note that we cannot detect here
- * the possibility of a newly-started backend that is trying to connect
- * to the doomed database, so additional interlocking is needed during
- * backend startup.
- */
-bool
-DatabaseCancelAutovacuumActivity(Oid databaseId, bool ignoreMyself)
-{
-	ProcArrayStruct *arrayP = procArray;
-	int			index;
-	int			num;
-
-restart:
-	num = 0;
-
-	CHECK_FOR_INTERRUPTS();
-
-	LWLockAcquire(ProcArrayLock, LW_SHARED);
-
-	for (index = 0; index < arrayP->numProcs; index++)
-	{
-		PGPROC	   *proc = arrayP->procs[index];
-
-		if (proc->databaseId == databaseId)
-		{
-			if (ignoreMyself && proc == MyProc)
-				continue;
-
-			num++;
-
-			if (proc->isAutovacuum)
-			{
-				/* an autovacuum -- kill it and restart */
-				LWLockRelease(ProcArrayLock);
-				kill(proc->pid, SIGINT);
-				pg_usleep(100 * 1000);		/* 100ms */
-				goto restart;
-			}
-		}
-	}
-
-	LWLockRelease(ProcArrayLock);
-
-	return (num != 0);
-}
-
-/*
  * GetTransactionsInCommit -- Get the XIDs of transactions that are committing
  *
  * Constructs an array of XIDs of transactions that are currently in commit
@@ -1003,6 +947,91 @@ CountUserBackends(Oid roleid)
 	LWLockRelease(ProcArrayLock);
 
 	return count;
+}
+
+/*
+ * CheckOtherDBBackends -- check for other backends running in the given DB
+ *
+ * If there are other backends in the DB, we will wait a maximum of 5 seconds
+ * for them to exit.  Autovacuum backends are encouraged to exit early by
+ * sending them SIGINT, but normal user backends are just waited for.
+ *
+ * The current backend is always ignored; it is caller's responsibility to
+ * check whether the current backend uses the given DB, if it's important.
+ *
+ * Returns TRUE if there are (still) other backends in the DB, FALSE if not.
+ *
+ * This function is used to interlock DROP DATABASE and related commands
+ * against there being any active backends in the target DB --- dropping the
+ * DB while active backends remain would be a Bad Thing.  Note that we cannot
+ * detect here the possibility of a newly-started backend that is trying to
+ * connect to the doomed database, so additional interlocking is needed during
+ * backend startup.  The caller should normally hold an exclusive lock on the
+ * target DB before calling this, which is one reason we mustn't wait
+ * indefinitely.
+ */
+bool
+CheckOtherDBBackends(Oid databaseId)
+{
+	ProcArrayStruct *arrayP = procArray;
+	int			tries;
+
+	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
+	for (tries = 0; tries < 50; tries++)
+	{
+		bool		found = false;
+		int			index;
+
+		CHECK_FOR_INTERRUPTS();
+
+		LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+		for (index = 0; index < arrayP->numProcs; index++)
+		{
+			PGPROC	   *proc = arrayP->procs[index];
+
+			if (proc->databaseId != databaseId)
+				continue;
+			if (proc == MyProc)
+				continue;
+
+			found = true;
+
+			if (proc->isAutovacuum)
+			{
+				/* an autovacuum --- send it SIGINT before sleeping */
+				int		autopid = proc->pid;
+
+				/*
+				 * It's a bit awkward to release ProcArrayLock within the loop,
+				 * but we'd probably better do so before issuing kill().  We
+				 * have no idea what might block kill() inside the kernel...
+				 */
+				LWLockRelease(ProcArrayLock);
+
+				(void) kill(autopid, SIGINT);		/* ignore any error */
+
+				break;
+			}
+			else
+			{
+				LWLockRelease(ProcArrayLock);
+				break;
+			}
+		}
+
+		/* if found is set, we released the lock within the loop body */
+		if (!found)
+		{
+			LWLockRelease(ProcArrayLock);
+			return false;				/* no conflicting backends, so done */
+		}
+
+		/* else sleep and try again */
+		pg_usleep(100 * 1000L);			/* 100ms */
+	}
+
+	return true;						/* timed out, still conflicts */
 }
 
 

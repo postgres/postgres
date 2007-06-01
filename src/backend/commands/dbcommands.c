@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.194 2007/04/12 15:04:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.195 2007/06/01 19:38:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,17 +244,6 @@ createdb(const CreatedbStmt *stmt)
 							dbtemplate)));
 	}
 
-	/*
-	 * The source DB can't have any active backends, except this one
-	 * (exception is to allow CREATE DB while connected to template1).
-	 * Otherwise we might copy inconsistent data.
-	 */
-	if (DatabaseCancelAutovacuumActivity(src_dboid, true))
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("source database \"%s\" is being accessed by other users",
-						dbtemplate)));
-
 	/* If encoding is defaulted, use source's encoding */
 	if (encoding < 0)
 		encoding = src_encoding;
@@ -332,6 +321,21 @@ createdb(const CreatedbStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_DATABASE),
 				 errmsg("database \"%s\" already exists", dbname)));
+
+	/*
+	 * The source DB can't have any active backends, except this one
+	 * (exception is to allow CREATE DB while connected to template1).
+	 * Otherwise we might copy inconsistent data.
+	 *
+	 * This should be last among the basic error checks, because it involves
+	 * potential waiting; we may as well throw an error first if we're gonna
+	 * throw one.
+	 */
+	if (CheckOtherDBBackends(src_dboid))
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("source database \"%s\" is being accessed by other users",
+						dbtemplate)));
 
 	/*
 	 * Select an OID for the new database, checking that it doesn't have
@@ -542,13 +546,6 @@ dropdb(const char *dbname, bool missing_ok)
 	Relation	pgdbrel;
 	HeapTuple	tup;
 
-	AssertArg(dbname);
-
-	if (strcmp(dbname, get_database_name(MyDatabaseId)) == 0)
-		ereport(ERROR,
-				(errcode(ERRCODE_OBJECT_IN_USE),
-				 errmsg("cannot drop the currently open database")));
-
 	/*
 	 * Look up the target database's OID, and get exclusive lock on it. We
 	 * need this to ensure that no new backend starts up in the target
@@ -595,11 +592,19 @@ dropdb(const char *dbname, bool missing_ok)
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("cannot drop a template database")));
 
+	/* Obviously can't drop my own database */
+	if (db_id == MyDatabaseId)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("cannot drop the currently open database")));
+
 	/*
-	 * Check for active backends in the target database.  (Because we hold the
+	 * Check for other backends in the target database.  (Because we hold the
 	 * database lock, no new ones can start after this.)
+	 *
+	 * As in CREATE DATABASE, check this after other error conditions.
 	 */
-	if (DatabaseCancelAutovacuumActivity(db_id, false))
+	if (CheckOtherDBBackends(db_id))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
 				 errmsg("database \"%s\" is being accessed by other users",
@@ -699,6 +704,26 @@ RenameDatabase(const char *oldname, const char *newname)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", oldname)));
 
+	/* must be owner */
+	if (!pg_database_ownercheck(db_id, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+					   oldname);
+
+	/* must have createdb rights */
+	if (!have_createdb_privilege())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("permission denied to rename database")));
+
+	/*
+	 * Make sure the new name doesn't exist.  See notes for same error in
+	 * CREATE DATABASE.
+	 */
+	if (OidIsValid(get_database_oid(newname)))
+		ereport(ERROR,
+				(errcode(ERRCODE_DUPLICATE_DATABASE),
+				 errmsg("database \"%s\" already exists", newname)));
+
 	/*
 	 * XXX Client applications probably store the current database somewhere,
 	 * so renaming it could cause confusion.  On the other hand, there may not
@@ -713,29 +738,14 @@ RenameDatabase(const char *oldname, const char *newname)
 	/*
 	 * Make sure the database does not have active sessions.  This is the same
 	 * concern as above, but applied to other sessions.
+	 *
+	 * As in CREATE DATABASE, check this after other error conditions.
 	 */
-	if (DatabaseCancelAutovacuumActivity(db_id, false))
+	if (CheckOtherDBBackends(db_id))
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_IN_USE),
 				 errmsg("database \"%s\" is being accessed by other users",
 						oldname)));
-
-	/* make sure the new name doesn't exist */
-	if (OidIsValid(get_database_oid(newname)))
-		ereport(ERROR,
-				(errcode(ERRCODE_DUPLICATE_DATABASE),
-				 errmsg("database \"%s\" already exists", newname)));
-
-	/* must be owner */
-	if (!pg_database_ownercheck(db_id, GetUserId()))
-		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
-					   oldname);
-
-	/* must have createdb rights */
-	if (!have_createdb_privilege())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("permission denied to rename database")));
 
 	/* rename */
 	newtup = SearchSysCacheCopy(DATABASEOID,
