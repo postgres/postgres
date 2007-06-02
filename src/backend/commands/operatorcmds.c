@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.35 2007/01/05 22:19:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.36 2007/06/02 23:36:35 petere Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -99,7 +99,7 @@ DefineOperator(List *names, List *parameters)
 			if (typeName1->setof)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					errmsg("setof type not allowed for operator argument")));
+					errmsg("SETOF type not allowed for operator argument")));
 		}
 		else if (pg_strcasecmp(defel->defname, "rightarg") == 0)
 		{
@@ -107,7 +107,7 @@ DefineOperator(List *names, List *parameters)
 			if (typeName2->setof)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-					errmsg("setof type not allowed for operator argument")));
+					errmsg("SETOF type not allowed for operator argument")));
 		}
 		else if (pg_strcasecmp(defel->defname, "procedure") == 0)
 			functionName = defGetQualifiedName(defel);

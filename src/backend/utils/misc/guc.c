@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.391 2007/05/08 16:33:51 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.392 2007/06/02 23:36:35 petere Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1979,7 +1979,7 @@ static struct config_string ConfigureNamesString[] =
 
 	{
 		{"session_replication_role", PGC_SUSET, CLIENT_CONN_STATEMENT,
-			gettext_noop("Sets the sessions behaviour for triggers and rewrite rules."),
+			gettext_noop("Sets the sessions behavior for triggers and rewrite rules."),
 			gettext_noop("Each session can be either"
 						 " \"origin\", \"replica\" or \"local\".")
 		},
