@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.101.2.1 2007/01/30 22:29:40 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.101.2.2 2007/06/02 15:15:30 neilc Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1237,7 +1237,7 @@ END IF;
      to catch the error, for example:
 
 <programlisting>
-BEGIN;
+BEGIN
     SELECT * INTO STRICT myrec FROM emp WHERE empname = myname;
     EXCEPTION
         WHEN NO_DATA_FOUND THEN
