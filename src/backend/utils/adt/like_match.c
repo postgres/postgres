@@ -3,23 +3,21 @@
  * like_match.c
  *	  like expression handling internal code.
  *
- * This file is included by like.c *twice*, to provide an optimization
- * for single-byte encodings.
+ * This file is included by like.c three times, to provide natching code for
+ * single-byte encodings, UTF8, and for other multi-byte encodings.
+ * UTF8 is a special case because we can use a much more efficient version
+ * of NextChar than can be used for other multi-byte encodings.
  *
  * Before the inclusion, we need to define following macros:
  *
- * CHAREQ
- * ICHAREQ
- * NextChar
- * CopyAdvChar
- * MatchText (MBMatchText)
- * MatchTextIC (MBMatchTextIC)
- * do_like_escape (MB_do_like_escape)
+ * NextChar 
+ * MatchText - to name of function wanted
+ * do_like_escape - name of function if wanted - needs CHAREQ and CopyAdvChar
  *
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.15 2007/02/27 23:48:08 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.16 2007/06/02 02:03:42 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,21 +75,36 @@ MatchText(char *t, int tlen, char *p, int plen)
 	if ((plen == 1) && (*p == '%'))
 		return LIKE_TRUE;
 
+	/*
+	 * In this loop, we advance by char when matching wildcards (and thus
+	 * on recursive entry to this function we are properly char-synced). On
+	 * other occasions it is safe to advance by byte, as the text and pattern
+	 * will be in lockstep. This allows us to perform all comparisons  between
+	 * the text and pattern on a byte by byte basis, even for multi-byte
+	 * encodings.
+	 */
+
 	while ((tlen > 0) && (plen > 0))
 	{
 		if (*p == '\\')
 		{
-			/* Next pattern char must match literally, whatever it is */
-			NextChar(p, plen);
-			if ((plen <= 0) || !CHAREQ(t, p))
+			/* Next byte must match literally, whatever it is */
+			NextByte(p, plen);
+			if ((plen <= 0) || *p != *t )
 				return LIKE_FALSE;
 		}
 		else if (*p == '%')
 		{
+			/*
+			 * % processing is essentially a search for a match for what 
+			 * follows the %, plus a recursive match of the remainder.
+			 * We succeed if and only if both conditions are met.
+			 */
+
 			/* %% is the same as % according to the SQL standard */
 			/* Advance past all %'s */
 			while ((plen > 0) && (*p == '%'))
-				NextChar(p, plen);
+				NextByte(p, plen);
 			/* Trailing percent matches everything. */
 			if (plen <= 0)
 				return LIKE_TRUE;
@@ -100,21 +113,62 @@ MatchText(char *t, int tlen, char *p, int plen)
 			 * Otherwise, scan for a text position at which we can match the
 			 * rest of the pattern.
 			 */
-			while (tlen > 0)
-			{
-				/*
-				 * Optimization to prevent most recursion: don't recurse
-				 * unless first pattern char might match this text char.
-				 */
-				if (CHAREQ(t, p) || (*p == '\\') || (*p == '_'))
-				{
-					int			matched = MatchText(t, tlen, p, plen);
+			if (*p == '_')
 
-					if (matched != LIKE_FALSE)
-						return matched; /* TRUE or ABORT */
-				}
+			{
+				/* %_ is the same as _% - avoid matching _ repeatedly */
 
 				NextChar(t, tlen);
+				NextByte(p, plen);
+
+				if (tlen <= 0)
+				{
+					return (plen <= 0) ? LIKE_TRUE : LIKE_ABORT;
+				}
+				else if (plen <= 0)
+				{
+					return LIKE_FALSE;
+				}
+
+				while (tlen > 0)
+				{
+					int			matched = MatchText(t, tlen, p, plen);
+						
+					if (matched != LIKE_FALSE)
+							return matched; /* TRUE or ABORT */
+
+					NextChar(t, tlen);
+				}
+			}
+			else
+			{
+
+				char firstpat = *p ;
+
+				if (*p == '\\')
+				{
+					if (plen < 2)
+						return LIKE_FALSE;
+					firstpat = p[1];
+				}
+
+				while (tlen > 0)
+				{
+					/*
+					 * Optimization to prevent most recursion: don't recurse
+					 * unless first pattern byte matches first text byte.
+					 */
+					if (*t == firstpat)
+					{
+						int			matched = MatchText(t, tlen, p, plen);
+						
+						if (matched != LIKE_FALSE)
+							return matched; /* TRUE or ABORT */
+					}
+
+					NextChar(t, tlen);
+
+				}
 			}
 
 			/*
@@ -123,7 +177,13 @@ MatchText(char *t, int tlen, char *p, int plen)
 			 */
 			return LIKE_ABORT;
 		}
-		else if ((*p != '_') && !CHAREQ(t, p))
+		else if (*p == '_')
+		{
+			NextChar(t, tlen);
+			NextByte(p, plen);
+			continue;
+		}
+		else if (*t != *p)
 		{
 			/*
 			 * Not the single-character wildcard and no explicit match? Then
@@ -131,9 +191,20 @@ MatchText(char *t, int tlen, char *p, int plen)
 			 */
 			return LIKE_FALSE;
 		}
-
-		NextChar(t, tlen);
-		NextChar(p, plen);
+		/*
+		 * It is safe to use NextByte instead of NextChar here, even for
+		 * multi-byte character sets, because we are not following 
+		 * immediately after a wildcard character.
+		 * If we are in the middle of a multibyte character, we must 
+		 * already have matched at least one byte of the character from 
+		 * both text and pattern; so we cannot get out-of-sync
+		 * on character boundaries.  And we know that no backend-legal 
+		 * encoding allows ASCII characters such as '%' to appear as 
+		 * non-first bytes of characters, so we won't mistakenly detect 
+		 * a new wildcard.
+		 */
+		NextByte(t, tlen);
+		NextByte(p, plen);
 	}
 
 	if (tlen > 0)
@@ -142,7 +213,8 @@ MatchText(char *t, int tlen, char *p, int plen)
 	/* End of input string.  Do we have matching pattern remaining? */
 	while ((plen > 0) && (*p == '%'))	/* allow multiple %'s at end of
 										 * pattern */
-		NextChar(p, plen);
+		NextByte(p, plen);
+
 	if (plen <= 0)
 		return LIKE_TRUE;
 
@@ -154,95 +226,11 @@ MatchText(char *t, int tlen, char *p, int plen)
 }	/* MatchText() */
 
 /*
- * Same as above, but ignore case
- */
-static int
-MatchTextIC(char *t, int tlen, char *p, int plen)
-{
-	/* Fast path for match-everything pattern */
-	if ((plen == 1) && (*p == '%'))
-		return LIKE_TRUE;
-
-	while ((tlen > 0) && (plen > 0))
-	{
-		if (*p == '\\')
-		{
-			/* Next pattern char must match literally, whatever it is */
-			NextChar(p, plen);
-			if ((plen <= 0) || !ICHAREQ(t, p))
-				return LIKE_FALSE;
-		}
-		else if (*p == '%')
-		{
-			/* %% is the same as % according to the SQL standard */
-			/* Advance past all %'s */
-			while ((plen > 0) && (*p == '%'))
-				NextChar(p, plen);
-			/* Trailing percent matches everything. */
-			if (plen <= 0)
-				return LIKE_TRUE;
-
-			/*
-			 * Otherwise, scan for a text position at which we can match the
-			 * rest of the pattern.
-			 */
-			while (tlen > 0)
-			{
-				/*
-				 * Optimization to prevent most recursion: don't recurse
-				 * unless first pattern char might match this text char.
-				 */
-				if (ICHAREQ(t, p) || (*p == '\\') || (*p == '_'))
-				{
-					int			matched = MatchTextIC(t, tlen, p, plen);
-
-					if (matched != LIKE_FALSE)
-						return matched; /* TRUE or ABORT */
-				}
-
-				NextChar(t, tlen);
-			}
-
-			/*
-			 * End of text with no match, so no point in trying later places
-			 * to start matching this pattern.
-			 */
-			return LIKE_ABORT;
-		}
-		else if ((*p != '_') && !ICHAREQ(t, p))
-		{
-			/*
-			 * Not the single-character wildcard and no explicit match? Then
-			 * time to quit...
-			 */
-			return LIKE_FALSE;
-		}
-
-		NextChar(t, tlen);
-		NextChar(p, plen);
-	}
-
-	if (tlen > 0)
-		return LIKE_FALSE;		/* end of pattern, but not of text */
-
-	/* End of input string.  Do we have matching pattern remaining? */
-	while ((plen > 0) && (*p == '%'))	/* allow multiple %'s at end of
-										 * pattern */
-		NextChar(p, plen);
-	if (plen <= 0)
-		return LIKE_TRUE;
-
-	/*
-	 * End of text with no match, so no point in trying later places to start
-	 * matching this pattern.
-	 */
-	return LIKE_ABORT;
-}	/* MatchTextIC() */
-
-/*
  * like_escape() --- given a pattern and an ESCAPE string,
  * convert the pattern to use Postgres' standard backslash escape convention.
  */
+#ifdef do_like_escape
+
 static text *
 do_like_escape(text *pat, text *esc)
 {
@@ -336,3 +324,17 @@ do_like_escape(text *pat, text *esc)
 
 	return result;
 }
+#endif /* do_like_escape */
+
+#ifdef CHAREQ
+#undef CHAREQ
+#endif
+
+#undef NextChar
+#undef CopyAdvChar
+#undef MatchText
+
+#ifdef do_like_escape
+#undef do_like_escape
+#endif
+
