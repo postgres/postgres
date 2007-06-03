@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.293 2007/04/27 22:05:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.294 2007/06/03 17:07:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2430,7 +2430,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 					   get_namespace_name(namespaceId));
 
 	/*
-	 * Select tablespace to use.  If not specified, use default_tablespace
+	 * Select tablespace to use.  If not specified, use default tablespace
 	 * (which may in turn default to database's default).
 	 */
 	if (into->tableSpaceName)
@@ -2444,7 +2444,7 @@ OpenIntoRel(QueryDesc *queryDesc)
 	}
 	else
 	{
-		tablespaceId = GetDefaultTablespace();
+		tablespaceId = GetDefaultTablespace(into->rel->istemp);
 		/* note InvalidOid is OK in this case */
 	}
 

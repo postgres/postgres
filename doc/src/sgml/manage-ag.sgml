@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.53 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.54 2007/06/03 17:05:52 tgl Exp $ -->
 
 <chapter id="managing-databases">
  <title>Managing Databases</title>
@@ -424,12 +424,22 @@ CREATE TABLE foo(i int);
    </para>
 
    <para>
+    There is also a <xref linkend="guc-temp-tablespaces"> parameter, which
+    determines the placement of temporary tables and indexes, as well as
+    temporary files that are used for purposes such as sorting large data
+    sets.  This can be a list of tablespace names, rather than only one,
+    so that the load associated with temporary objects can be spread over
+    multiple tablespaces.  A random member of the list is picked each time
+    a temporary object is to be created.
+   </para>
+
+   <para>
     The tablespace associated with a database is used to store the system
-    catalogs of that database, as well as any temporary files created by
-    server processes using that database.  Furthermore, it is the default
-    tablespace selected for tables and indexes created within the database,
-    if no <literal>TABLESPACE</> clause is given (either explicitly or via
-    <varname>default_tablespace</>) when the objects are created.
+    catalogs of that database.  Furthermore, it is the default tablespace
+    used for tables, indexes, and temporary files created within the database,
+    if no <literal>TABLESPACE</> clause is given and no other selection is
+    specified by <varname>default_tablespace</> or
+    <varname>temp_tablespaces</> (as appropriate).
     If a database is created without specifying a tablespace for it,
     it uses the same tablespace as the template database it is copied from.
    </para>
@@ -468,7 +478,7 @@ SELECT spcname FROM pg_tablespace;
    </para>
 
    <para>
-    <productname>PostgreSQL</> makes extensive use of symbolic links
+    <productname>PostgreSQL</> makes use of symbolic links
     to simplify the implementation of tablespaces. This
     means that tablespaces can be used <emphasis>only</> on systems
     that support symbolic links.

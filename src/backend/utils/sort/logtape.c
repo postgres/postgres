@@ -70,13 +70,14 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.23 2007/01/05 22:19:47 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/logtape.c,v 1.24 2007/06/03 17:08:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "commands/tablespace.h"
 #include "storage/buffile.h"
 #include "utils/logtape.h"
 
@@ -528,7 +529,7 @@ LogicalTapeSetCreate(int ntapes)
 	Assert(ntapes > 0);
 	lts = (LogicalTapeSet *) palloc(sizeof(LogicalTapeSet) +
 									(ntapes - 1) *sizeof(LogicalTape));
-	lts->pfile = BufFileCreateTemp(false);
+	lts->pfile = BufFileCreateTemp(false, GetTempTablespace());
 	lts->nFileBlocks = 0L;
 	lts->forgetFreeSpace = false;
 	lts->blocksSorted = true;	/* a zero-length array is sorted ... */

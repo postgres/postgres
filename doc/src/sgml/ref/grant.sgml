@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.65 2007/04/07 03:48:25 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.66 2007/06/03 17:06:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -211,10 +211,10 @@ GRANT <replaceable class="PARAMETER">role</replaceable> [, ...] TO <replaceable 
        have this privilege for the containing schema.
       </para>
       <para>
-       For tablespaces, allows tables and indexes to be created within the
-       tablespace, and allows databases to be created that have the tablespace
-       as their default tablespace.  (Note that revoking this privilege
-       will not alter the placement of existing objects.)
+       For tablespaces, allows tables, indexes, and temporary files to be
+       created within the tablespace, and allows databases to be created that
+       have the tablespace as their default tablespace.  (Note that revoking
+       this privilege will not alter the placement of existing objects.)
       </para>
      </listitem>
     </varlistentry>

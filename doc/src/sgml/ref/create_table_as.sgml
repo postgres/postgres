@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.36 2006/09/18 19:54:01 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table_as.sgml,v 1.37 2007/06/03 17:06:12 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -184,9 +184,8 @@ CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE <replaceable>table_name
       The <replaceable class="PARAMETER">tablespace</replaceable> is the name
       of the tablespace in which the new table is to be created.
       If not specified,
-      <xref linkend="guc-default-tablespace"> is used, or the database's
-      default tablespace if <varname>default_tablespace</> is an empty
-      string.
+      <xref linkend="guc-default-tablespace"> is consulted, or
+      <xref linkend="guc-temp-tablespaces"> if the table is temporary.
      </para>
     </listitem>
    </varlistentry>

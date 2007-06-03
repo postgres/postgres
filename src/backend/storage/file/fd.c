@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.137 2007/03/06 02:06:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.138 2007/06/03 17:07:31 tgl Exp $
  *
  * NOTES:
  *
@@ -48,6 +48,7 @@
 
 #include "miscadmin.h"
 #include "access/xact.h"
+#include "catalog/pg_tablespace.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "utils/guc.h"
@@ -225,7 +226,7 @@ static File AllocateVfd(void);
 static void FreeVfd(File file);
 
 static int	FileAccess(File file);
-static char *make_database_relative(const char *filename);
+static File OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError);
 static void AtProcExit_Files(int code, Datum arg);
 static void CleanupTempFiles(bool isProcExit);
 static void RemovePgTempFilesInDir(const char *tmpdirname);
@@ -721,23 +722,6 @@ FreeVfd(File file)
 	VfdCache[0].nextFree = file;
 }
 
-/*
- * make_database_relative()
- *		Prepend DatabasePath to the given file name.
- *
- * Result is a palloc'd string.
- */
-static char *
-make_database_relative(const char *filename)
-{
-	char	   *buf;
-
-	Assert(!is_absolute_path(filename));
-	buf = (char *) palloc(strlen(DatabasePath) + strlen(filename) + 2);
-	sprintf(buf, "%s/%s", DatabasePath, filename);
-	return buf;
-}
-
 /* returns 0 on success, -1 on re-open failure (with errno set) */
 static int
 FileAccess(File file)
@@ -845,24 +829,6 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 }
 
 /*
- * open a file in the database directory ($PGDATA/base/DIROID/)
- *
- * The passed name MUST be a relative path.  Effectively, this
- * prepends DatabasePath to it and then acts like PathNameOpenFile.
- */
-File
-FileNameOpenFile(FileName fileName, int fileFlags, int fileMode)
-{
-	File		fd;
-	char	   *fname;
-
-	fname = make_database_relative(fileName);
-	fd = PathNameOpenFile(fname, fileFlags, fileMode);
-	pfree(fname);
-	return fd;
-}
-
-/*
  * Open a temporary file that will disappear when we close it.
  *
  * This routine takes care of generating an appropriate tempfile name.
@@ -874,51 +840,32 @@ FileNameOpenFile(FileName fileName, int fileFlags, int fileMode)
  * that created them, so this should be false -- but if you need
  * "somewhat" temporary storage, this might be useful. In either case,
  * the file is removed when the File is explicitly closed.
+ *
+ * tblspcOid: the Oid of the tablespace where the temp file should be created.
+ * If InvalidOid, or if the tablespace can't be found, we silently fall back
+ * to the database's default tablespace.
  */
 File
-OpenTemporaryFile(bool interXact)
+OpenTemporaryFile(bool interXact, Oid tblspcOid)
 {
-	char		tempfilepath[MAXPGPATH];
-	File		file;
+	File		file = 0;
 
 	/*
-	 * Generate a tempfile name that should be unique within the current
-	 * database instance.
+	 * If caller specified a tablespace, try to create there.
 	 */
-	snprintf(tempfilepath, sizeof(tempfilepath),
-			 "%s/%s%d.%ld", PG_TEMP_FILES_DIR, PG_TEMP_FILE_PREFIX,
-			 MyProcPid, tempFileCounter++);
+	if (OidIsValid(tblspcOid))
+		file = OpenTemporaryFileInTablespace(tblspcOid, false);
 
 	/*
-	 * Open the file.  Note: we don't use O_EXCL, in case there is an orphaned
-	 * temp file that can be reused.
+	 * If not, or if tablespace is bad, create in database's default
+	 * tablespace.  MyDatabaseTableSpace should normally be set before we get
+	 * here, but just in case it isn't, fall back to pg_default tablespace.
 	 */
-	file = FileNameOpenFile(tempfilepath,
-							O_RDWR | O_CREAT | O_TRUNC | PG_BINARY,
-							0600);
 	if (file <= 0)
-	{
-		char	   *dirpath;
-
-		/*
-		 * We might need to create the pg_tempfiles subdirectory, if no one
-		 * has yet done so.
-		 *
-		 * Don't check for error from mkdir; it could fail if someone else
-		 * just did the same thing.  If it doesn't work then we'll bomb out on
-		 * the second create attempt, instead.
-		 */
-		dirpath = make_database_relative(PG_TEMP_FILES_DIR);
-		mkdir(dirpath, S_IRWXU);
-		pfree(dirpath);
-
-		file = FileNameOpenFile(tempfilepath,
-								O_RDWR | O_CREAT | O_TRUNC | PG_BINARY,
-								0600);
-		if (file <= 0)
-			elog(ERROR, "could not create temporary file \"%s\": %m",
-				 tempfilepath);
-	}
+		file = OpenTemporaryFileInTablespace(MyDatabaseTableSpace ?
+											 MyDatabaseTableSpace :
+											 DEFAULTTABLESPACE_OID,
+											 true);
 
 	/* Mark it for deletion at close */
 	VfdCache[file].fdstate |= FD_TEMPORARY;
@@ -928,6 +875,73 @@ OpenTemporaryFile(bool interXact)
 	{
 		VfdCache[file].fdstate |= FD_XACT_TEMPORARY;
 		VfdCache[file].create_subid = GetCurrentSubTransactionId();
+	}
+
+	return file;
+}
+
+/*
+ * Open a temporary file in a specific tablespace.
+ * Subroutine for OpenTemporaryFile, which see for details.
+ */
+static File
+OpenTemporaryFileInTablespace(Oid tblspcOid, bool rejectError)
+{
+	char		tempdirpath[MAXPGPATH];
+	char		tempfilepath[MAXPGPATH];
+	File		file;
+
+	/*
+	 * Identify the tempfile directory for this tablespace.
+	 *
+	 * If someone tries to specify pg_global, use pg_default instead.
+	 */
+	if (tblspcOid == DEFAULTTABLESPACE_OID ||
+		tblspcOid == GLOBALTABLESPACE_OID)
+	{
+		/* The default tablespace is {datadir}/base */
+		snprintf(tempdirpath, sizeof(tempdirpath), "base/%s",
+				 PG_TEMP_FILES_DIR);
+	}
+	else
+	{
+		/* All other tablespaces are accessed via symlinks */
+		snprintf(tempdirpath, sizeof(tempdirpath), "pg_tblspc/%u/%s",
+				 tblspcOid, PG_TEMP_FILES_DIR);
+	}
+
+	/*
+	 * Generate a tempfile name that should be unique within the current
+	 * database instance.
+	 */
+	snprintf(tempfilepath, sizeof(tempfilepath), "%s/%s%d.%ld",
+			 tempdirpath, PG_TEMP_FILE_PREFIX, MyProcPid, tempFileCounter++);
+
+	/*
+	 * Open the file.  Note: we don't use O_EXCL, in case there is an orphaned
+	 * temp file that can be reused.
+	 */
+	file = PathNameOpenFile(tempfilepath,
+							O_RDWR | O_CREAT | O_TRUNC | PG_BINARY,
+							0600);
+	if (file <= 0)
+	{
+		/*
+		 * We might need to create the tablespace's tempfile directory,
+		 * if no one has yet done so.
+		 *
+		 * Don't check for error from mkdir; it could fail if someone else
+		 * just did the same thing.  If it doesn't work then we'll bomb out on
+		 * the second create attempt, instead.
+		 */
+		mkdir(tempdirpath, S_IRWXU);
+
+		file = PathNameOpenFile(tempfilepath,
+								O_RDWR | O_CREAT | O_TRUNC | PG_BINARY,
+								0600);
+		if (file <= 0 && rejectError)
+			elog(ERROR, "could not create temporary file \"%s\": %m",
+				 tempfilepath);
 	}
 
 	return file;
@@ -1643,27 +1657,32 @@ void
 RemovePgTempFiles(void)
 {
 	char		temp_path[MAXPGPATH];
-	DIR		   *db_dir;
-	struct dirent *db_de;
+	DIR		   *spc_dir;
+	struct dirent *spc_de;
 
 	/*
-	 * Cycle through pgsql_tmp directories for all databases and remove old
-	 * temp files.
+	 * First process temp files in pg_default ($PGDATA/base)
 	 */
-	db_dir = AllocateDir("base");
+	snprintf(temp_path, sizeof(temp_path), "base/%s", PG_TEMP_FILES_DIR);
+	RemovePgTempFilesInDir(temp_path);
 
-	while ((db_de = ReadDir(db_dir, "base")) != NULL)
+	/*
+	 * Cycle through temp directories for all non-default tablespaces.
+	 */
+	spc_dir = AllocateDir("pg_tblspc");
+
+	while ((spc_de = ReadDir(spc_dir, "pg_tblspc")) != NULL)
 	{
-		if (strcmp(db_de->d_name, ".") == 0 ||
-			strcmp(db_de->d_name, "..") == 0)
+		if (strcmp(spc_de->d_name, ".") == 0 ||
+			strcmp(spc_de->d_name, "..") == 0)
 			continue;
 
-		snprintf(temp_path, sizeof(temp_path), "base/%s/%s",
-				 db_de->d_name, PG_TEMP_FILES_DIR);
+		snprintf(temp_path, sizeof(temp_path), "pg_tblspc/%s/%s",
+				 spc_de->d_name, PG_TEMP_FILES_DIR);
 		RemovePgTempFilesInDir(temp_path);
 	}
 
-	FreeDir(db_dir);
+	FreeDir(spc_dir);
 
 	/*
 	 * In EXEC_BACKEND case there is a pgsql_tmp directory at the top level of

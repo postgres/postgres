@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.124 2007/05/17 23:36:04 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.125 2007/06/03 17:05:29 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -281,7 +281,7 @@ SET ENABLE_SEQSCAN TO OFF;
       If you wish, you can specify the configuration file names and locations
       individually using the parameters <varname>config_file</>,
       <varname>hba_file</> and/or <varname>ident_file</>.
-      <varname>config_file</> can only be specified on the 
+      <varname>config_file</> can only be specified on the
       <command>postgres</command> command line, but the others can be
       set within the main configuration file.  If all three parameters plus
       <varname>data_directory</> are explicitly set, then it is not necessary
@@ -311,7 +311,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
          Specifies the TCP/IP address(es) on which the server is
-         to listen for connections from client applications.  
+         to listen for connections from client applications.
          The value takes the form of a comma-separated list of host names
          and/or numeric IP addresses.  The special entry <literal>*</>
          corresponds to all available IP interfaces.
@@ -362,7 +362,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-superuser-reserved-connections"
      xreflabel="superuser_reserved_connections">
       <term><varname>superuser_reserved_connections</varname>
@@ -461,7 +461,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-bonjour-name" xreflabel="bonjour_name">
       <term><varname>bonjour_name</varname> (<type>string</type>)</term>
       <indexterm>
@@ -478,7 +478,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-tcp-keepalives-idle" xreflabel="tcp_keepalives_idle">
       <term><varname>tcp_keepalives_idle</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -494,7 +494,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-tcp-keepalives-interval" xreflabel="tcp_keepalives_interval">
       <term><varname>tcp_keepalives_interval</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -510,7 +510,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-tcp-keepalives-count" xreflabel="tcp_keepalives_count">
       <term><varname>tcp_keepalives_count</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -519,19 +519,19 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         On systems that support the <symbol>TCP_KEEPCNT</symbol> socket option, specifies how
-        many keepalives can be lost before the connection is considered dead. 
+        many keepalives can be lost before the connection is considered dead.
         A value of zero uses the system default. If <symbol>TCP_KEEPCNT</symbol> is not
         supported, this parameter must be zero. This parameter is ignored
         for connections made via a Unix-domain socket.
        </para>
       </listitem>
      </varlistentry>
-     
+
      </variablelist>
      </sect2>
      <sect2 id="runtime-config-connection-security">
      <title>Security and Authentication</title>
-     
+
      <variablelist>
      <varlistentry id="guc-authentication-timeout" xreflabel="authentication_timeout">
       <term><varname>authentication_timeout</varname> (<type>integer</type>)</term>
@@ -826,7 +826,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-maintenance-work-mem" xreflabel="maintenance_work_mem">
       <term><varname>maintenance_work_mem</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -896,7 +896,7 @@ SET ENABLE_SEQSCAN TO OFF;
       is not in the map cannot be re-used; instead <productname>PostgreSQL</>
       will request more disk space from the operating system when it needs
       to store new data.
-      The last few lines displayed by a database-wide <command>VACUUM VERBOSE</> 
+      The last few lines displayed by a database-wide <command>VACUUM VERBOSE</>
       command can help in determining if the current settings are adequate.
       A <literal>NOTICE</> message is also printed during such an operation
       if the current settings are too low.
@@ -944,7 +944,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
       </listitem>
      </varlistentry>
-     
+
      </variablelist>
      </sect2>
      <sect2 id="runtime-config-resource-kernel">
@@ -3475,12 +3475,55 @@ SELECT * FROM parent WHERE key = 2400;
         to specify using the default tablespace of the current database.
         If the value does not match the name of any existing tablespace,
         <productname>PostgreSQL</> will automatically use the default
-        tablespace of the current database.
+        tablespace of the current database.  If a nondefault tablespace
+        is specified, the user must have <literal>CREATE</> privilege
+        for it, or creation attempts will fail.
+       </para>
+
+       <para>
+        This variable is not used for temporary tables; for them,
+        <xref linkend="guc-temp-tablespaces"> is consulted instead.
        </para>
 
        <para>
         For more information on tablespaces,
         see <xref linkend="manage-ag-tablespaces">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-temp-tablespaces" xreflabel="temp_tablespaces">
+      <term><varname>temp_tablespaces</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>temp_tablespaces</> configuration parameter</primary>
+      </indexterm>
+      <indexterm><primary>tablespace</><secondary>temporary</></>
+      <listitem>
+       <para>
+        This variable specifies tablespace(s) in which to create temporary
+        objects (temp tables and indexes on temp tables) when a
+        <command>CREATE</> command does not explicitly specify a tablespace.
+        Temporary files for purposes such as sorting large data sets
+        are also created in these tablespace(s).
+       </para>
+
+       <para>
+        The value is a list of names of tablespaces.  When there is more than
+        one name in the list, <productname>PostgreSQL</> chooses a random
+        member of the list each time a temporary object is to be created.
+       </para>
+
+       <para>
+        If any element of the list is an empty string or does not match the
+        name of any existing tablespace, <productname>PostgreSQL</> will
+        automatically use the default tablespace of the current database
+        instead.  If a nondefault tablespace
+        is specified, the user must have <literal>CREATE</> privilege
+        for it, or creation attempts will fail.
+       </para>
+
+       <para>
+        See also <xref linkend="guc-default-tablespace">.
        </para>
       </listitem>
      </varlistentry>
@@ -3605,7 +3648,7 @@ SELECT * FROM parent WHERE key = 2400;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-xmlbinary" xreflabel="xmlbinary">
       <term><varname>xmlbinary</varname> (<type>string</type>)</term>
       <indexterm>
@@ -3632,7 +3675,7 @@ SELECT * FROM parent WHERE key = 2400;
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-xmloption" xreflabel="xmloption">
       <term><varname>xmloption</varname> (<type>string</type>)</term>
       <indexterm>
@@ -3664,7 +3707,7 @@ SET XML OPTION { DOCUMENT | CONTENT };
        </para>
       </listitem>
      </varlistentry>
-     
+
      </variablelist>
     </sect2>
      <sect2 id="runtime-config-client-format">
@@ -3945,7 +3988,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        </para>
       </listitem>
      </varlistentry>
-     
+
      <varlistentry id="guc-local-preload-libraries" xreflabel="local_preload_libraries">
       <term><varname>local_preload_libraries</varname> (<type>string</type>)</term>
       <indexterm>
@@ -3994,7 +4037,7 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
        <para>
         Every  PostgreSQL-supported library has a <quote>magic
         block</> that is checked to guarantee compatibility.  
-        For this reason, non-PostgreSQL libraries cannot be 
+        For this reason, non-PostgreSQL libraries cannot be
         loaded in this way.
        </para>
       </listitem>

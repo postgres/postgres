@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.62 2007/04/06 22:33:41 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.63 2007/06/03 17:05:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -240,9 +240,9 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
       <listitem>
        <para>
         The tablespace in which to create the index.  If not specified,
-        <xref linkend="guc-default-tablespace"> is used, or the database's
-        default tablespace if <varname>default_tablespace</> is an empty
-        string.
+        <xref linkend="guc-default-tablespace"> is consulted, or
+        <xref linkend="guc-temp-tablespaces"> for indexes on temporary
+        tables.
        </para>
       </listitem>
      </varlistentry>

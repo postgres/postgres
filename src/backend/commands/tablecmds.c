@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.225 2007/05/18 23:19:41 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.226 2007/06/03 17:06:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -319,7 +319,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	}
 
 	/*
-	 * Select tablespace to use.  If not specified, use default_tablespace
+	 * Select tablespace to use.  If not specified, use default tablespace
 	 * (which may in turn default to database's default).
 	 */
 	if (stmt->tablespacename)
@@ -333,16 +333,9 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	}
 	else
 	{
-		tablespaceId = GetDefaultTablespace();
+		tablespaceId = GetDefaultTablespace(stmt->relation->istemp);
 		/* note InvalidOid is OK in this case */
 	}
-
-	/*
-	 * Parse and validate reloptions, if any.
-	 */
-	reloptions = transformRelOptions((Datum) 0, stmt->options, true, false);
-
-	(void) heap_reloptions(relkind, reloptions, true);
 
 	/* Check permissions except when using database's default */
 	if (OidIsValid(tablespaceId))
@@ -355,6 +348,13 @@ DefineRelation(CreateStmt *stmt, char relkind)
 			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
 						   get_tablespace_name(tablespaceId));
 	}
+
+	/*
+	 * Parse and validate reloptions, if any.
+	 */
+	reloptions = transformRelOptions((Datum) 0, stmt->options, true, false);
+
+	(void) heap_reloptions(relkind, reloptions, true);
 
 	/*
 	 * Look up inheritance ancestors and generate relation schema, including

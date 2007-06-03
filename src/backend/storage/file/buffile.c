@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.26 2007/06/01 23:43:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.27 2007/06/03 17:07:30 tgl Exp $
  *
  * NOTES:
  *
@@ -60,6 +60,7 @@ struct BufFile
 	 * offsets[i] is the current seek position of files[i].  We use this to
 	 * avoid making redundant FileSeek calls.
 	 */
+	Oid			tblspcOid;		/* tablespace to use (InvalidOid = default) */
 
 	bool		isTemp;			/* can only add files if this is TRUE */
 	bool		isInterXact;	/* keep open over transactions? */
@@ -85,7 +86,7 @@ static int	BufFileFlush(BufFile *file);
 
 /*
  * Create a BufFile given the first underlying physical file.
- * NOTE: caller must set isTemp true if appropriate.
+ * NOTE: caller must set tblspcOid, isTemp, isInterXact if appropriate.
  */
 static BufFile *
 makeBufFile(File firstfile)
@@ -97,7 +98,9 @@ makeBufFile(File firstfile)
 	file->files[0] = firstfile;
 	file->offsets = (long *) palloc(sizeof(long));
 	file->offsets[0] = 0L;
+	file->tblspcOid = InvalidOid;
 	file->isTemp = false;
+	file->isInterXact = false;
 	file->dirty = false;
 	file->curFile = 0;
 	file->curOffset = 0L;
@@ -116,7 +119,7 @@ extendBufFile(BufFile *file)
 	File		pfile;
 
 	Assert(file->isTemp);
-	pfile = OpenTemporaryFile(file->isInterXact);
+	pfile = OpenTemporaryFile(file->isInterXact, file->tblspcOid);
 	Assert(pfile >= 0);
 
 	file->files = (File *) repalloc(file->files,
@@ -133,19 +136,24 @@ extendBufFile(BufFile *file)
  * multiple temporary files if more than MAX_PHYSICAL_FILESIZE bytes are
  * written to it).
  *
+ * If interXact is true, the temp file will not be automatically deleted
+ * at end of transaction.  If tblspcOid is not InvalidOid, the temp file
+ * is created in the specified tablespace instead of the default one.
+ *
  * Note: if interXact is true, the caller had better be calling us in a
  * memory context that will survive across transaction boundaries.
  */
 BufFile *
-BufFileCreateTemp(bool interXact)
+BufFileCreateTemp(bool interXact, Oid tblspcOid)
 {
 	BufFile    *file;
 	File		pfile;
 
-	pfile = OpenTemporaryFile(interXact);
+	pfile = OpenTemporaryFile(interXact, tblspcOid);
 	Assert(pfile >= 0);
 
 	file = makeBufFile(pfile);
+	file->tblspcOid = tblspcOid;
 	file->isTemp = true;
 	file->isInterXact = interXact;
 

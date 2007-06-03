@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tablespace.sgml,v 1.6 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tablespace.sgml,v 1.7 2007/06/03 17:06:13 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -36,7 +36,10 @@ DROP TABLESPACE [ IF EXISTS ] <replaceable class="PARAMETER">tablespacename</rep
    The tablespace must be empty of all database objects before it can be
    dropped. It is possible that objects in other databases might still reside
    in the tablespace even if no objects in the current database are using
-   the tablespace.
+   the tablespace.  Also, if the tablespace is listed in the <xref
+   linkend="guc-temp-tablespaces"> setting of any active session, the
+   <command>DROP</> might fail due to temporary files residing in the
+   tablespace.
   </para>
  </refsect1>
 

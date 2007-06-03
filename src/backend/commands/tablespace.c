@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.46 2007/05/31 15:13:02 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.47 2007/06/03 17:06:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,12 +65,14 @@
 #include "utils/lsyscache.h"
 
 
-/* GUC variable */
+/* GUC variables */
 char	   *default_tablespace = NULL;
+char	   *temp_tablespaces = NULL;
 
 
 static bool remove_tablespace_directories(Oid tablespaceoid, bool redo);
 static void set_short_version(const char *path);
+static Oid	getTempTablespace(void);
 
 
 /*
@@ -903,15 +905,25 @@ assign_default_tablespace(const char *newval, bool doit, GucSource source)
 /*
  * GetDefaultTablespace -- get the OID of the current default tablespace
  *
- * May return InvalidOid to indicate "use the database's default tablespace"
+ * Regular objects and temporary objects have different default tablespaces,
+ * hence the forTemp parameter must be specified.
+ *
+ * May return InvalidOid to indicate "use the database's default tablespace".
+ *
+ * Note that caller is expected to check appropriate permissions for any
+ * result other than InvalidOid.
  *
  * This exists to hide (and possibly optimize the use of) the
  * default_tablespace GUC variable.
  */
 Oid
-GetDefaultTablespace(void)
+GetDefaultTablespace(bool forTemp)
 {
 	Oid			result;
+
+	/* The temp-table case is handled by getTempTablespace() */
+	if (forTemp)
+		return getTempTablespace();
 
 	/* Fast path for default_tablespace == "" */
 	if (default_tablespace == NULL || default_tablespace[0] == '\0')
@@ -937,6 +949,179 @@ GetDefaultTablespace(void)
 
 
 /*
+ * Routines for handling the GUC variable 'temp_tablespaces'.
+ */
+
+/* assign_hook: validate new temp_tablespaces, do extra actions as needed */
+const char *
+assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
+{
+	char	   *rawname;
+	List	   *namelist;
+	ListCell   *l;
+
+	/* Need a modifiable copy of string */
+	rawname = pstrdup(newval);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawname, ',', &namelist))
+	{
+		/* syntax error in name list */
+		pfree(rawname);
+		list_free(namelist);
+		return NULL;
+	}
+
+	/*
+	 * If we aren't inside a transaction, we cannot do database access so
+	 * cannot verify the individual names.	Must accept the list on faith.
+	 */
+	if (source >= PGC_S_INTERACTIVE && IsTransactionState())
+	{
+		foreach(l, namelist)
+		{
+			char	   *curname = (char *) lfirst(l);
+
+			/* Allow an empty string (signifying database default) */
+			if (curname[0] == '\0')
+				continue;
+
+			/* Else verify that name is a valid tablespace name */
+			if (get_tablespace_oid(curname) == InvalidOid)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("tablespace \"%s\" does not exist",
+								curname)));
+		}
+	}
+
+	pfree(rawname);
+	list_free(namelist);
+
+	return newval;
+}
+
+/*
+ * GetTempTablespace -- get the OID of the next temp tablespace to use
+ *
+ * May return InvalidOid to indicate "use the database's default tablespace".
+ *
+ * This is different from GetDefaultTablespace(true) in just two ways:
+ * 1. We check privileges here instead of leaving it to the caller.
+ * 2. It's safe to call this outside a transaction (we just return InvalidOid).
+ * The transaction state check is used so that this can be called from
+ * low-level places that might conceivably run outside a transaction.
+ */
+Oid
+GetTempTablespace(void)
+{
+	Oid			result;
+
+	/* Can't do catalog access unless within a transaction */
+	if (!IsTransactionState())
+		return InvalidOid;
+
+	/* OK, select a temp tablespace */
+	result = getTempTablespace();
+
+	/* Check permissions except when using database's default */
+	if (OidIsValid(result))
+	{
+		AclResult	aclresult;
+
+		aclresult = pg_tablespace_aclcheck(result, GetUserId(),
+										   ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
+						   get_tablespace_name(result));
+	}
+
+	return result;
+}
+
+/*
+ * getTempTablespace -- get the OID of the next temp tablespace to use
+ *
+ * This has exactly the API defined for GetDefaultTablespace(true),
+ * in particular that caller is responsible for permissions checks.
+ *
+ * This exists to hide (and possibly optimize the use of) the
+ * temp_tablespaces GUC variable.
+ */
+static Oid
+getTempTablespace(void)
+{
+	Oid			result;
+	char	   *rawname;
+	List	   *namelist;
+	int			nnames;
+	char	   *curname;
+
+	if (temp_tablespaces == NULL)
+		return InvalidOid;
+
+	/*
+	 * We re-parse the string on each call; this is a bit expensive, but
+	 * we don't expect this function will be called many times per query,
+	 * so it's probably not worth being tenser.
+	 */
+
+	/* Need a modifiable copy of string */
+	rawname = pstrdup(temp_tablespaces);
+
+	/* Parse string into list of identifiers */
+	if (!SplitIdentifierString(rawname, ',', &namelist))
+	{
+		/* syntax error in name list */
+		pfree(rawname);
+		list_free(namelist);
+		return InvalidOid;
+	}
+	nnames = list_length(namelist);
+
+	/* Fast path for temp_tablespaces == "" */
+	if (nnames == 0)
+	{
+		pfree(rawname);
+		list_free(namelist);
+		return InvalidOid;
+	}
+
+	/* Select a random element */
+	if (nnames == 1)			/* no need for a random() call */
+		curname = (char *) linitial(namelist);
+	else
+		curname = (char *) list_nth(namelist, random() % nnames);
+
+	/*
+	 * Empty string means "database's default", else look up the tablespace.
+	 *
+	 * It is tempting to cache this lookup for more speed, but then we would
+	 * fail to detect the case where the tablespace was dropped since the GUC
+	 * variable was set.  Note also that we don't complain if the value fails
+	 * to refer to an existing tablespace; we just silently return InvalidOid,
+	 * causing the new object to be created in the database's tablespace.
+	 */
+	if (curname[0] == '\0')
+		result = InvalidOid;
+	else
+		result = get_tablespace_oid(curname);
+
+	/*
+	 * Allow explicit specification of database's default tablespace in
+	 * temp_tablespaces without triggering permissions checks.
+	 */
+	if (result == MyDatabaseTableSpace)
+		result = InvalidOid;
+
+	pfree(rawname);
+	list_free(namelist);
+
+	return result;
+}
+
+
+/*
  * get_tablespace_oid - given a tablespace name, look up the OID
  *
  * Returns InvalidOid if tablespace name not found.
@@ -950,7 +1135,11 @@ get_tablespace_oid(const char *tablespacename)
 	HeapTuple	tuple;
 	ScanKeyData entry[1];
 
-	/* Search pg_tablespace */
+	/*
+	 * Search pg_tablespace.  We use a heapscan here even though there is an
+	 * index on name, on the theory that pg_tablespace will usually have just
+	 * a few entries and so an indexed lookup is a waste of effort.
+	 */
 	rel = heap_open(TableSpaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],
@@ -960,6 +1149,7 @@ get_tablespace_oid(const char *tablespacename)
 	scandesc = heap_beginscan(rel, SnapshotNow, 1, entry);
 	tuple = heap_getnext(scandesc, ForwardScanDirection);
 
+	/* We assume that there can be at most one matching tuple */
 	if (HeapTupleIsValid(tuple))
 		result = HeapTupleGetOid(tuple);
 	else
@@ -985,7 +1175,11 @@ get_tablespace_name(Oid spc_oid)
 	HeapTuple	tuple;
 	ScanKeyData entry[1];
 
-	/* Search pg_tablespace */
+	/*
+	 * Search pg_tablespace.  We use a heapscan here even though there is an
+	 * index on oid, on the theory that pg_tablespace will usually have just
+	 * a few entries and so an indexed lookup is a waste of effort.
+	 */
 	rel = heap_open(TableSpaceRelationId, AccessShareLock);
 
 	ScanKeyInit(&entry[0],

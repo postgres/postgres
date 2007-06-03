@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.81 2007/04/12 06:53:48 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.82 2007/06/03 17:08:34 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -224,6 +224,8 @@ extern void read_nondefault_variables(void);
 
 /* in commands/tablespace.c */
 extern const char *assign_default_tablespace(const char *newval,
+						  bool doit, GucSource source);
+extern const char *assign_temp_tablespaces(const char *newval,
 						  bool doit, GucSource source);
 
 /* in utils/adt/regexp.c */

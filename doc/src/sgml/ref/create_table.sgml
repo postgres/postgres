@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.107 2007/02/01 00:28:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_table.sgml,v 1.108 2007/06/03 17:06:03 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -645,9 +645,8 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       The <replaceable class="PARAMETER">tablespace</replaceable> is the name
       of the tablespace in which the new table is to be created.
       If not specified,
-      <xref linkend="guc-default-tablespace"> is used, or the database's
-      default tablespace if <varname>default_tablespace</> is an empty
-      string.
+      <xref linkend="guc-default-tablespace"> is consulted, or
+      <xref linkend="guc-temp-tablespaces"> if the table is temporary.
      </para>
     </listitem>
    </varlistentry>
@@ -660,9 +659,8 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       associated with a <literal>UNIQUE</literal> or <literal>PRIMARY
       KEY</literal> constraint will be created.
       If not specified,
-      <xref linkend="guc-default-tablespace"> is used, or the database's
-      default tablespace if <varname>default_tablespace</> is an empty
-      string.
+      <xref linkend="guc-default-tablespace"> is consulted, or
+      <xref linkend="guc-temp-tablespaces"> if the table is temporary.
      </para>
     </listitem>
    </varlistentry>

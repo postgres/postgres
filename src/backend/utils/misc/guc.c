@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.392 2007/06/02 23:36:35 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.393 2007/06/03 17:07:34 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -103,6 +103,7 @@ extern bool Log_disconnections;
 extern int	CommitDelay;
 extern int	CommitSiblings;
 extern char *default_tablespace;
+extern char *temp_tablespaces;
 extern bool fullPageWrites;
 
 #ifdef TRACE_SORT
@@ -1965,6 +1966,16 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&default_tablespace,
 		"", assign_default_tablespace, NULL
+	},
+
+	{
+		{"temp_tablespaces", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the tablespace(s) to use for temporary tables and sort files."),
+			NULL,
+			GUC_LIST_INPUT | GUC_LIST_QUOTE
+		},
+		&temp_tablespaces,
+		"", assign_temp_tablespaces, NULL
 	},
 
 	{
