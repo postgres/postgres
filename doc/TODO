@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat Jun  2 07:27:46 EDT 2007
+Last updated:		Sun Jun  3 14:49:04 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -142,10 +142,6 @@ Administration
 
 	o -Add a GUC variable to control the tablespace for temporary objects
 	  and sort files
-
-	  It could start with a random tablespace from a supplied list and
-	  cycle through the list.
-
 	o Allow WAL replay of CREATE TABLESPACE to work when the directory
 	  structure on the recovery computer is different from the original
 
