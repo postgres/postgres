@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.157 2007/05/20 21:08:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.158 2007/06/03 22:16:02 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,7 +287,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 
 					ereport(ERROR,
 							(errcode(ERRCODE_UNIQUE_VIOLATION),
-					errmsg("duplicate key violates unique constraint \"%s\"",
+					errmsg("duplicate key value violates unique constraint \"%s\"",
 						   RelationGetRelationName(rel))));
 				}
 				else if (htup.t_data != NULL)

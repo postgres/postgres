@@ -605,7 +605,7 @@ SELECT * FROM a; /* Has ee entry */
 (1 row)
 
 CREATE TABLE inhf (LIKE inhx, LIKE inhx); /* Throw error */
-ERROR:  column "xx" duplicated
+ERROR:  column "xx" specified more than once
 CREATE TABLE inhf (LIKE inhx INCLUDING DEFAULTS INCLUDING CONSTRAINTS);
 INSERT INTO inhf DEFAULT VALUES;
 SELECT * FROM inhf; /* Single entry with value 'text' */

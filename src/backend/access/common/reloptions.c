@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.4 2007/02/27 23:48:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/reloptions.c,v 1.5 2007/06/03 22:16:02 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,7 @@ parseRelOptions(Datum options, int numkeywords, const char *const * keywords,
 				if (values[j] && validate)
 					ereport(ERROR,
 							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-							 errmsg("duplicate parameter \"%s\"",
+							 errmsg("parameter \"%s\" specified more than once",
 									keywords[j])));
 				value_len = text_len - kw_len - 1;
 				value = (char *) palloc(value_len + 1);

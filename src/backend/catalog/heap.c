@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.321 2007/05/14 20:24:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.322 2007/06/03 22:16:02 petere Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -375,7 +375,7 @@ CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind)
 					   NameStr(tupdesc->attrs[i]->attname)) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
-						 errmsg("column name \"%s\" is duplicated",
+						 errmsg("column name \"%s\" specified more than once",
 								NameStr(tupdesc->attrs[j]->attname))));
 		}
 	}

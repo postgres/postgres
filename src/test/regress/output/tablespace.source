@@ -48,7 +48,7 @@ ALTER TABLE testschema.atable SET TABLESPACE testspace;
 ALTER INDEX testschema.anindex SET TABLESPACE testspace;
 INSERT INTO testschema.atable VALUES(3);	-- ok
 INSERT INTO testschema.atable VALUES(1);	-- fail (checks index)
-ERROR:  duplicate key violates unique constraint "anindex"
+ERROR:  duplicate key value violates unique constraint "anindex"
 SELECT COUNT(*) FROM testschema.atable;		-- checks heap
  count 
 -------

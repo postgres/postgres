@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.226 2007/06/03 17:06:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.227 2007/06/03 22:16:03 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -791,7 +791,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			if (strcmp(coldef->colname, restdef->colname) == 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
-						 errmsg("column \"%s\" duplicated",
+						 errmsg("column \"%s\" specified more than once",
 								coldef->colname)));
 		}
 	}
@@ -839,7 +839,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		if (list_member_oid(parentOids, RelationGetRelid(relation)))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_TABLE),
-					 errmsg("inherited relation \"%s\" duplicated",
+					 errmsg("relation \"%s\" would be inherited from more than once",
 							parent->relname)));
 
 		parentOids = lappend_oid(parentOids, RelationGetRelid(relation));
@@ -1139,7 +1139,7 @@ add_nonduplicate_constraint(Constraint *cdef, ConstrCheck *check, int *ncheck)
 			return;				/* duplicate constraint, so ignore it */
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_OBJECT),
-				 errmsg("duplicate check constraint name \"%s\"",
+				 errmsg("check constraint name \"%s\" appears multiple times but with different expressions",
 						cdef->name)));
 	}
 	/* No match on name, so add it to array */
@@ -6013,7 +6013,7 @@ ATExecAddInherit(Relation child_rel, RangeVar *parent)
 		if (inh->inhparent == RelationGetRelid(parent_rel))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_TABLE),
-					 errmsg("inherited relation \"%s\" duplicated",
+					 errmsg("relation \"%s\" would be inherited from more than once",
 							RelationGetRelationName(parent_rel))));
 		if (inh->inhseqno > inhseqno)
 			inhseqno = inh->inhseqno;

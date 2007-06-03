@@ -360,7 +360,7 @@ alter table atacc3 add constraint foo check (test2>0);
 alter table atacc3 inherit atacc2;
 -- fail due to duplicates and circular inheritance
 alter table atacc3 inherit atacc2;
-ERROR:  inherited relation "atacc2" duplicated
+ERROR:  relation "atacc2" would be inherited from more than once
 alter table atacc2 inherit atacc3;
 ERROR:  circular inheritance not allowed
 DETAIL:  "atacc3" is already a child of "atacc2".
@@ -402,7 +402,7 @@ NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1" for t
 insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
-ERROR:  duplicate key violates unique constraint "atacc_test1"
+ERROR:  duplicate key value violates unique constraint "atacc_test1"
 -- should succeed
 insert into atacc1 (test) values (4);
 -- try adding a unique oid constraint
@@ -437,7 +437,7 @@ NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc_test1" for t
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
 insert into atacc1 (test,test2) values (4,4);
-ERROR:  duplicate key violates unique constraint "atacc_test1"
+ERROR:  duplicate key value violates unique constraint "atacc_test1"
 -- should all succeed
 insert into atacc1 (test,test2) values (4,5);
 insert into atacc1 (test,test2) values (5,4);
@@ -451,7 +451,7 @@ NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index "atacc1_test2_key" 
 -- should fail for @@ second one @@
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
-ERROR:  duplicate key violates unique constraint "atacc1_test_key"
+ERROR:  duplicate key value violates unique constraint "atacc1_test_key"
 drop table atacc1;
 -- test primary key constraint adding
 create table atacc1 ( test int ) with oids;
@@ -462,7 +462,7 @@ NOTICE:  ALTER TABLE / ADD PRIMARY KEY will create implicit index "atacc_test1" 
 insert into atacc1 (test) values (2);
 -- should fail
 insert into atacc1 (test) values (2);
-ERROR:  duplicate key violates unique constraint "atacc_test1"
+ERROR:  duplicate key value violates unique constraint "atacc_test1"
 -- should succeed
 insert into atacc1 (test) values (4);
 -- inserting NULL should fail
@@ -517,7 +517,7 @@ ERROR:  multiple primary keys for table "atacc1" are not allowed
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
 insert into atacc1 (test,test2) values (4,4);
-ERROR:  duplicate key violates unique constraint "atacc_test1"
+ERROR:  duplicate key value violates unique constraint "atacc_test1"
 insert into atacc1 (test,test2) values (NULL,3);
 ERROR:  null value in column "test" violates not-null constraint
 insert into atacc1 (test,test2) values (3, NULL);
@@ -535,7 +535,7 @@ NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "atacc1_pkey" for
 -- only first should succeed
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
-ERROR:  duplicate key violates unique constraint "atacc1_pkey"
+ERROR:  duplicate key value violates unique constraint "atacc1_pkey"
 insert into atacc1 (test2, test) values (1, NULL);
 ERROR:  null value in column "test" violates not-null constraint
 drop table atacc1;
