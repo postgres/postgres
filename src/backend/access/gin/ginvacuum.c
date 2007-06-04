@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.9 2006/11/30 16:22:32 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.9.2.1 2007/06/04 15:59:19 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -159,14 +159,14 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 	/*
 	 * We should be sure that we don't concurrent with inserts, insert process
 	 * never release root page until end (but it can unlock it and lock
-	 * again). If we lock root with with LockBufferForCleanup, new scan
-	 * process can't begin, but previous may run. ginmarkpos/start* keeps
-	 * buffer pinned, so we will wait for it. We lock only one posting tree in
-	 * whole index, so, it's concurrent enough.. Side effect: after this is
-	 * full complete, tree is unused by any other process
+	 * again). New scan can't start but previously started 
+	 * ones work concurrently.
 	 */
 
-	LockBufferForCleanup(buffer);
+	if ( isRoot ) 
+		LockBufferForCleanup(buffer);
+	else
+		LockBuffer(buffer, GIN_EXCLUSIVE); 
 
 	Assert(GinPageIsData(page));
 
@@ -248,14 +248,14 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	if (!isParentRoot)			/* parent is already locked by
 								 * LockBufferForCleanup() */
 		LockBuffer(pBuffer, GIN_EXCLUSIVE);
+	if (leftBlkno != InvalidBlockNumber)
+		LockBuffer(lBuffer, GIN_EXCLUSIVE);
 
 	START_CRIT_SECTION();
 
 	if (leftBlkno != InvalidBlockNumber)
 	{
 		BlockNumber rightlink;
-
-		LockBuffer(lBuffer, GIN_EXCLUSIVE);
 
 		page = BufferGetPage(dBuffer);
 		rightlink = GinPageGetOpaque(page)->rightlink;
@@ -274,6 +274,10 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	PageDeletePostingItem(parentPage, myoff);
 
 	page = BufferGetPage(dBuffer);
+	/*
+	 * we shouldn't change rightlink field to save 
+	 * workability of running search scan
+	 */
 	GinPageGetOpaque(page)->flags = GIN_DELETED;
 
 	if (!gvs->index->rd_istemp)
