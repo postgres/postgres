@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.10.2.3 2007/06/04 13:39:34 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.10.2.4 2007/06/04 13:48:29 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,7 +289,6 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 	int			r;
 	DWORD		b;
 	DWORD		flags = f;
-	int		n;
 
 	if (pgwin32_poll_signals())
 		return -1;
