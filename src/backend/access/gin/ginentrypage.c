@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.6 2007/01/05 22:19:21 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.7 2007/06/04 15:56:28 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -354,6 +354,7 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 	static XLogRecData rdata[3];
 	OffsetNumber placed;
 	static ginxlogInsert data;
+	int 	cnt=0;
 
 	*prdata = rdata;
 	data.updateBlkno = entryPreparePage(btree, page, off);
@@ -371,21 +372,33 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 	data.isData = false;
 	data.isLeaf = GinPageIsLeaf(page) ? TRUE : FALSE;
 
-	rdata[0].buffer = buf;
-	rdata[0].buffer_std = TRUE;
-	rdata[0].data = NULL;
-	rdata[0].len = 0;
-	rdata[0].next = &rdata[1];
+    /*
+	 * Prevent full page write if child's split occurs. That is needed
+	 * to remove incomplete splits while replaying WAL
+	 *
+	 * data.updateBlkno contains new block number (of newly created right page)
+	 * for recently splited page.
+	 */
+	if ( data.updateBlkno == InvalidBlockNumber ) 
+	{
+		rdata[0].buffer = buf;
+		rdata[0].buffer_std = TRUE;
+		rdata[0].data = NULL;
+		rdata[0].len = 0;
+		rdata[0].next = &rdata[1];
+		cnt++;
+	}
 
-	rdata[1].buffer = InvalidBuffer;
-	rdata[1].data = (char *) &data;
-	rdata[1].len = sizeof(ginxlogInsert);
-	rdata[1].next = &rdata[2];
+	rdata[cnt].buffer = InvalidBuffer;
+	rdata[cnt].data = (char *) &data;
+	rdata[cnt].len = sizeof(ginxlogInsert);
+	rdata[cnt].next = &rdata[cnt+1];
+	cnt++;
 
-	rdata[2].buffer = InvalidBuffer;
-	rdata[2].data = (char *) btree->entry;
-	rdata[2].len = IndexTupleSize(btree->entry);
-	rdata[2].next = NULL;
+	rdata[cnt].buffer = InvalidBuffer;
+	rdata[cnt].data = (char *) btree->entry;
+	rdata[cnt].len = IndexTupleSize(btree->entry);
+	rdata[cnt].next = NULL;
 
 	btree->entry = NULL;
 }

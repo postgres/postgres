@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.6 2007/01/05 22:19:21 momjian Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.7 2007/06/04 15:56:28 teodor Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -53,6 +53,7 @@ static void
 forgetIncompleteSplit(RelFileNode node, BlockNumber leftBlkno, BlockNumber updateBlkno)
 {
 	ListCell   *l;
+	bool		found = false;
 
 	foreach(l, incomplete_splits)
 	{
@@ -61,8 +62,15 @@ forgetIncompleteSplit(RelFileNode node, BlockNumber leftBlkno, BlockNumber updat
 		if (RelFileNodeEquals(node, split->node) && leftBlkno == split->leftBlkno && updateBlkno == split->rightBlkno)
 		{
 			incomplete_splits = list_delete_ptr(incomplete_splits, split);
+			found = true;
 			break;
 		}
+	}
+
+	if (!found)
+	{
+		elog(ERROR, "failed to identify corresponding split record for %u/%u/%u",
+					node.relNode, leftBlkno, updateBlkno);
 	}
 }
 
@@ -416,7 +424,7 @@ ginRedoDeletePage(XLogRecPtr lsn, XLogRecord *record)
 		UnlockReleaseBuffer(buffer);
 	}
 
-	if (!(record->xl_info & XLR_BKP_BLOCK_2) && data->leftBlkno != InvalidBlockNumber)
+	if (!(record->xl_info & XLR_BKP_BLOCK_3) && data->leftBlkno != InvalidBlockNumber)
 	{
 		buffer = XLogReadBuffer(reln, data->leftBlkno, false);
 		page = BufferGetPage(buffer);
@@ -594,6 +602,7 @@ gin_xlog_cleanup(void)
 
 	MemoryContextSwitchTo(topCtx);
 	MemoryContextDelete(opCtx);
+	incomplete_splits = NIL;
 }
 
 bool

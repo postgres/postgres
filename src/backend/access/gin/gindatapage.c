@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.6 2007/01/05 22:19:21 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gindatapage.c,v 1.7 2007/06/04 15:56:28 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -358,6 +358,7 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prda
 	static XLogRecData rdata[3];
 	int			sizeofitem = GinSizeOfItem(page);
 	static ginxlogInsert data;
+	int 		cnt=0;
 
 	*prdata = rdata;
 	Assert(GinPageIsData(page));
@@ -372,21 +373,33 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prda
 	data.isData = TRUE;
 	data.isLeaf = GinPageIsLeaf(page) ? TRUE : FALSE;
 
-	rdata[0].buffer = buf;
-	rdata[0].buffer_std = FALSE;
-	rdata[0].data = NULL;
-	rdata[0].len = 0;
-	rdata[0].next = &rdata[1];
+	/* 
+	 * Prevent full page write if child's split occurs. That is needed
+	 * to remove incomplete splits while replaying WAL
+	 * 
+	 * data.updateBlkno contains new block number (of newly created right page)
+	 * for recently splited page.
+	 */
+	if ( data.updateBlkno == InvalidBlockNumber ) 
+	{
+		rdata[0].buffer = buf;
+		rdata[0].buffer_std = FALSE;
+		rdata[0].data = NULL;
+		rdata[0].len = 0;
+		rdata[0].next = &rdata[1];
+		cnt++;
+	}
 
-	rdata[1].buffer = InvalidBuffer;
-	rdata[1].data = (char *) &data;
-	rdata[1].len = sizeof(ginxlogInsert);
-	rdata[1].next = &rdata[2];
+	rdata[cnt].buffer = InvalidBuffer;
+	rdata[cnt].data = (char *) &data;
+	rdata[cnt].len = sizeof(ginxlogInsert);
+	rdata[cnt].next = &rdata[cnt+1];
+	cnt++;
 
-	rdata[2].buffer = InvalidBuffer;
-	rdata[2].data = (GinPageIsLeaf(page)) ? ((char *) (btree->items + btree->curitem)) : ((char *) &(btree->pitem));
-	rdata[2].len = sizeofitem;
-	rdata[2].next = NULL;
+	rdata[cnt].buffer = InvalidBuffer;
+	rdata[cnt].data = (GinPageIsLeaf(page)) ? ((char *) (btree->items + btree->curitem)) : ((char *) &(btree->pitem));
+	rdata[cnt].len = sizeofitem;
+	rdata[cnt].next = NULL;
 
 	if (GinPageIsLeaf(page))
 	{
@@ -402,7 +415,7 @@ dataPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prda
 				btree->curitem++;
 			}
 			data.nitem = btree->curitem - savedPos;
-			rdata[2].len = sizeofitem * data.nitem;
+			rdata[cnt].len = sizeofitem * data.nitem;
 		}
 		else
 		{

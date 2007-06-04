@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.7 2007/02/01 04:16:08 neilc Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginget.c,v 1.8 2007/06/04 15:56:28 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -17,22 +17,71 @@
 #include "catalog/index.h"
 #include "utils/memutils.h"
 
-static OffsetNumber
-findItemInPage(Page page, ItemPointer item, OffsetNumber off)
+static bool
+findItemInPage(Page page, ItemPointer item, OffsetNumber *off)
 {
 	OffsetNumber maxoff = GinPageGetOpaque(page)->maxoff;
 	int			res;
 
-	for (; off <= maxoff; off++)
-	{
-		res = compareItemPointers(item, (ItemPointer) GinDataPageGetItem(page, off));
-		Assert(res >= 0);
+	if ( GinPageGetOpaque(page)->flags & GIN_DELETED )
+		/* page was deleted by concurrent  vacuum */
+		return false;
 
-		if (res == 0)
-			return off;
+	if ( *off > maxoff || *off == InvalidOffsetNumber )
+		res = -1;
+	else
+		res = compareItemPointers(item, (ItemPointer) GinDataPageGetItem(page, *off));
+
+	if ( res == 0 ) 
+	{
+		/* page isn't changed */
+		return true; 
+	} 
+	else if ( res > 0 ) 
+	{
+		/* 
+		 * some items was added before our position, look further to find 
+		 * it or first greater 
+		 */
+	
+		(*off)++;
+		for (; *off <= maxoff; (*off)++) 
+		{
+			res = compareItemPointers(item, (ItemPointer) GinDataPageGetItem(page, *off));
+
+			if (res == 0)
+				return true;
+
+			if (res < 0)
+			{	
+				(*off)--;
+				return true;
+			}
+		}
+	}
+	else
+	{
+		/* 
+		 * some items was deleted before our position, look from begining
+		 * to find it or first greater
+		 */
+
+		for(*off = FirstOffsetNumber; *off<= maxoff; (*off)++) 
+		{
+			res = compareItemPointers(item, (ItemPointer) GinDataPageGetItem(page, *off));
+
+			if ( res == 0 )
+				return true;
+
+			if (res < 0)
+			{	
+				(*off)--;
+				return true;
+			}
+		}
 	}
 
-	return InvalidOffsetNumber;
+	return false;
 }
 
 /*
@@ -111,7 +160,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry, bool firs
 	}
 	else if (entry->buffer != InvalidBuffer)
 	{
-		/* we should find place were we was stopped */
+		/* we should find place where we was stopped */
 		BlockNumber blkno;
 		Page		page;
 
@@ -125,7 +174,7 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry, bool firs
 		page = BufferGetPage(entry->buffer);
 
 		/* try to find curItem in current buffer */
-		if ((entry->offset = findItemInPage(page, &entry->curItem, entry->offset)) != InvalidOffsetNumber)
+		if ( findItemInPage(page, &entry->curItem, &entry->offset) )
 			return;
 
 		/* walk to right */
@@ -136,11 +185,15 @@ startScanEntry(Relation index, GinState *ginstate, GinScanEntry entry, bool firs
 			LockBuffer(entry->buffer, GIN_SHARE);
 			page = BufferGetPage(entry->buffer);
 
-			if ((entry->offset = findItemInPage(page, &entry->curItem, FirstOffsetNumber)) != InvalidOffsetNumber)
+			entry->offset = InvalidOffsetNumber;
+			if ( findItemInPage(page, &entry->curItem, &entry->offset) )
 				return;
 		}
 
-		elog(ERROR, "Logic error: lost previously founded ItemId");
+		/*
+		 * curItem and any greated items was deleted by concurrent vacuum,
+		 * so we finished scan with currrent entry
+		 */
 	}
 }
 
