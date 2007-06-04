@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.47 2007/03/26 17:23:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.48 2007/06/04 10:02:40 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -239,16 +239,6 @@ PostgreSQL documentation
        <para>
         Echo the commands that <application>createuser</application> generates
         and sends to the server.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-q</></term>
-      <term><option>--quiet</></term>
-      <listitem>
-       <para>
-        Do not display a response.
        </para>
       </listitem>
      </varlistentry>

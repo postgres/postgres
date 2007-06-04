@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.20 2007/01/05 22:19:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/dropuser.c,v 1.21 2007/06/04 10:02:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,6 @@ main(int argc, char *argv[])
 	char	   *username = NULL;
 	bool		password = false;
 	bool		echo = false;
-	bool		quiet = false;
 	bool		interactive = false;
 
 	PQExpBufferData sql;
@@ -75,7 +74,7 @@ main(int argc, char *argv[])
 				echo = true;
 				break;
 			case 'q':
-				quiet = true;
+				/* obsolete; remove in 8.4 */
 				break;
 			case 'i':
 				interactive = true;
@@ -129,11 +128,6 @@ main(int argc, char *argv[])
 
 	PQclear(result);
 	PQfinish(conn);
-	if (!quiet)
-	{
-		puts("DROP ROLE");
-		fflush(stdout);
-	}
 	exit(0);
 }
 
@@ -147,7 +141,6 @@ help(const char *progname)
 	printf(_("\nOptions:\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -i, --interactive         prompt before deleting anything\n"));
-	printf(_("  -q, --quiet               don't write any messages\n"));
 	printf(_("  -h, --host=HOSTNAME       database server host or socket directory\n"));
 	printf(_("  -p, --port=PORT           database server port\n"));
 	printf(_("  -U, --username=USERNAME   user name to connect as (not the one to drop)\n"));

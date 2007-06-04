@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.35 2007/01/05 22:19:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createuser.c,v 1.36 2007/06/04 10:02:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,6 @@ main(int argc, char *argv[])
 	char	   *username = NULL;
 	bool		password = false;
 	bool		echo = false;
-	bool		quiet = false;
 	char	   *conn_limit = NULL;
 	bool		pwprompt = false;
 	char	   *newpassword = NULL;
@@ -107,7 +106,7 @@ main(int argc, char *argv[])
 				echo = true;
 				break;
 			case 'q':
-				quiet = true;
+				/* obsolete; remove in 8.4 */
 				break;
 			case 'd':
 				createdb = TRI_YES;
@@ -297,11 +296,6 @@ main(int argc, char *argv[])
 
 	PQclear(result);
 	PQfinish(conn);
-	if (!quiet)
-	{
-		puts("CREATE ROLE");
-		fflush(stdout);
-	}
 	exit(0);
 }
 
@@ -329,7 +323,6 @@ help(const char *progname)
 	printf(_("  -E, --encrypted           encrypt stored password\n"));
 	printf(_("  -N, --unencrypted         do not encrypt stored password\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
-	printf(_("  -q, --quiet               don't write any messages\n"));
 	printf(_("  --help                    show this help, then exit\n"));
 	printf(_("  --version                 output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));

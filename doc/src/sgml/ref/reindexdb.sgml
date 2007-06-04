@@ -75,36 +75,6 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-s</></term>
-      <term><option>--system</></term>
-      <listitem>
-       <para>
-        Reindex database's system catalogs.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-t <replaceable class="parameter">table</replaceable></></term>
-      <term><option>--table <replaceable class="parameter">table</replaceable></></term>
-      <listitem>
-       <para>
-        Reindex <replaceable class="parameter">table</replaceable> only.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-i <replaceable class="parameter">index</replaceable></></term>
-      <term><option>--index <replaceable class="parameter">index</replaceable></></term>
-      <listitem>
-       <para>
-        Recreate <replaceable class="parameter">index</replaceable> only.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option><optional>-d</> <replaceable class="parameter">dbname</replaceable></></term>
       <term><option><optional>--dbname</> <replaceable class="parameter">dbname</replaceable></></term>
       <listitem>
@@ -131,15 +101,44 @@ PostgreSQL documentation
      </varlistentry>
 
      <varlistentry>
-      <term><option>-q</></term>
-      <term><option>--quiet</></term>
+      <term><option>-i <replaceable class="parameter">index</replaceable></></term>
+      <term><option>--index <replaceable class="parameter">index</replaceable></></term>
       <listitem>
        <para>
-        Do not display a response.
+        Recreate <replaceable class="parameter">index</replaceable> only.
        </para>
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term><option>-q</></term>
+      <term><option>--quiet</></term>
+      <listitem>
+       <para>
+        Do not display progress messages.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-s</></term>
+      <term><option>--system</></term>
+      <listitem>
+       <para>
+        Reindex database's system catalogs.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><option>-t <replaceable class="parameter">table</replaceable></></term>
+      <term><option>--table <replaceable class="parameter">table</replaceable></></term>
+      <listitem>
+       <para>
+        Reindex <replaceable class="parameter">table</replaceable> only.
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 

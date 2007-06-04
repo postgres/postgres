@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.31 2007/03/26 17:23:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.32 2007/06/04 10:02:40 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -82,16 +82,6 @@ PostgreSQL documentation
       <listitem>
        <para>
        Issues a verification prompt before doing anything destructive.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-q</></term>
-      <term><option>--quiet</></term>
-      <listitem>
-       <para>
-        Do not display a response.
        </para>
       </listitem>
      </varlistentry>

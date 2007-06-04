@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.10 2007/04/09 18:21:22 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/reindexdb.c,v 1.11 2007/06/04 10:02:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@ static void reindex_one_database(const char *name, const char *dbname,
 					 const char *type, const char *host,
 					 const char *port, const char *username,
 					 bool password, const char *progname,
-					 bool echo, bool quiet);
+					 bool echo);
 static void reindex_all_databases(const char *host, const char *port,
 					  const char *username, bool password,
 					  const char *progname, bool echo,
@@ -26,8 +26,7 @@ static void reindex_all_databases(const char *host, const char *port,
 static void reindex_system_catalogs(const char *dbname,
 						const char *host, const char *port,
 						const char *username, bool password,
-						const char *progname, bool echo,
-						bool quiet);
+						const char *progname, bool echo);
 static void help(const char *progname);
 
 int
@@ -178,7 +177,7 @@ main(int argc, char *argv[])
 		}
 
 		reindex_system_catalogs(dbname, host, port, username, password,
-								progname, echo, quiet);
+								progname, echo);
 	}
 	else
 	{
@@ -194,14 +193,14 @@ main(int argc, char *argv[])
 
 		if (index)
 			reindex_one_database(index, dbname, "INDEX", host, port,
-								 username, password, progname, echo, quiet);
+								 username, password, progname, echo);
 		if (table)
 			reindex_one_database(table, dbname, "TABLE", host, port,
-								 username, password, progname, echo, quiet);
+								 username, password, progname, echo);
 		/* reindex database only if index or table is not specified */
 		if (index == NULL && table == NULL)
 			reindex_one_database(dbname, dbname, "DATABASE", host, port,
-								 username, password, progname, echo, quiet);
+								 username, password, progname, echo);
 	}
 
 	exit(0);
@@ -210,8 +209,7 @@ main(int argc, char *argv[])
 static void
 reindex_one_database(const char *name, const char *dbname, const char *type,
 					 const char *host, const char *port, const char *username,
-					 bool password, const char *progname, bool echo,
-					 bool quiet)
+					 bool password, const char *progname, bool echo)
 {
 	PQExpBufferData sql;
 
@@ -247,12 +245,6 @@ reindex_one_database(const char *name, const char *dbname, const char *type,
 
 	PQfinish(conn);
 	termPQExpBuffer(&sql);
-
-	if (!quiet)
-	{
-		puts("REINDEX");
-		fflush(stdout);
-	}
 }
 
 static void
@@ -273,10 +265,13 @@ reindex_all_databases(const char *host, const char *port,
 		char	   *dbname = PQgetvalue(result, i, 0);
 
 		if (!quiet)
-			fprintf(stderr, _("%s: reindexing database \"%s\"\n"), progname, dbname);
+		{
+			printf(_("%s: reindexing database \"%s\"\n"), progname, dbname);
+			fflush(stdout);
+		}
 
 		reindex_one_database(dbname, dbname, "DATABASE", host, port, username,
-							 password, progname, echo, quiet);
+							 password, progname, echo);
 	}
 
 	PQclear(result);
@@ -285,7 +280,7 @@ reindex_all_databases(const char *host, const char *port,
 static void
 reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 						const char *username, bool password,
-						const char *progname, bool echo, bool quiet)
+						const char *progname, bool echo)
 {
 	PQExpBufferData sql;
 
@@ -305,12 +300,6 @@ reindex_system_catalogs(const char *dbname, const char *host, const char *port,
 	}
 	PQfinish(conn);
 	termPQExpBuffer(&sql);
-
-	if (!quiet)
-	{
-		puts("REINDEX");
-		fflush(stdout);
-	}
 }
 
 static void

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.44 2007/03/26 17:23:36 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.45 2007/06/04 10:02:40 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -125,16 +125,6 @@ PostgreSQL documentation
       <listitem>
        <para>
         Specifies the database user who will own the new database.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-q</></term>
-      <term><option>--quiet</></term>
-      <listitem>
-       <para>
-        Do not display a response.
        </para>
       </listitem>
      </varlistentry>

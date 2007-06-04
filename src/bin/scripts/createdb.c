@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.22 2007/01/05 22:19:50 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/createdb.c,v 1.23 2007/06/04 10:02:40 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,6 @@ main(int argc, char *argv[])
 	char	   *username = NULL;
 	bool		password = false;
 	bool		echo = false;
-	bool		quiet = false;
 	char	   *owner = NULL;
 	char	   *tablespace = NULL;
 	char	   *template = NULL;
@@ -84,7 +83,7 @@ main(int argc, char *argv[])
 				echo = true;
 				break;
 			case 'q':
-				quiet = true;
+				/* obsolete; remove in 8.4 */
 				break;
 			case 'O':
 				owner = optarg;
@@ -175,12 +174,6 @@ main(int argc, char *argv[])
 	PQclear(result);
 	PQfinish(conn);
 
-	if (!quiet)
-	{
-		puts("CREATE DATABASE");
-		fflush(stdout);
-	}
-
 	if (comment)
 	{
 		conn = connectDatabase(dbname, host, port, username, password, progname);
@@ -203,11 +196,6 @@ main(int argc, char *argv[])
 
 		PQclear(result);
 		PQfinish(conn);
-		if (!quiet)
-		{
-			puts("COMMENT");
-			fflush(stdout);
-		}
 	}
 
 	exit(0);
@@ -226,7 +214,6 @@ help(const char *progname)
 	printf(_("  -O, --owner=OWNER            database user to own the new database\n"));
 	printf(_("  -T, --template=TEMPLATE      template database to copy\n"));
 	printf(_("  -e, --echo                   show the commands being sent to the server\n"));
-	printf(_("  -q, --quiet                  don't write any messages\n"));
 	printf(_("  --help                       show this help, then exit\n"));
 	printf(_("  --version                    output version information, then exit\n"));
 	printf(_("\nConnection options:\n"));
