@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.17 2007/01/26 20:06:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.18 2007/06/04 13:39:28 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,6 +291,7 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 	int			r;
 	DWORD		b;
 	DWORD		flags = f;
+	int		n;
 
 	if (pgwin32_poll_signals())
 		return -1;
@@ -312,17 +313,36 @@ pgwin32_recv(SOCKET s, char *buf, int len, int f)
 
 	/* No error, zero bytes (win2000+) or error+WSAEWOULDBLOCK (<=nt4) */
 
-	if (pgwin32_waitforsinglesocket(s, FD_READ | FD_CLOSE | FD_ACCEPT,
-									INFINITE) == 0)
-		return -1;
-
-	r = WSARecv(s, &wbuf, 1, &b, &flags, NULL, NULL);
-	if (r == SOCKET_ERROR)
+	for (n = 0; n < 5; n++)
 	{
-		TranslateSocketError();
-		return -1;
+		if (pgwin32_waitforsinglesocket(s, FD_READ | FD_CLOSE | FD_ACCEPT,
+										INFINITE) == 0)
+			return -1; /* errno already set */
+	
+		r = WSARecv(s, &wbuf, 1, &b, &flags, NULL, NULL);
+		if (r == SOCKET_ERROR)
+		{
+			if (WSAGetLastError() == WSAEWOULDBLOCK)
+			{
+				/*
+				 * There seem to be cases on win2k (at least) where WSARecv
+				 * can return WSAEWOULDBLOCK even when pgwin32_waitforsinglesocket
+				 * claims the socket is readable. In this case, just sleep for a
+				 * moment and try again. We try up to 5 times - if it fails more than
+				 * that it's not likely to ever come back.
+				 */
+				pg_usleep(10000);
+				continue;
+			}
+			TranslateSocketError();
+			return -1;
+		}
+		return b;
 	}
-	return b;
+	ereport(NOTICE,
+		(errmsg_internal("Failed to read from ready socket (after retries)")));
+	errno = EWOULDBLOCK;
+	return -1;
 }
 
 int
