@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.30 2007/01/05 22:19:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.31 2007/06/04 22:21:42 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,7 +108,6 @@ static volatile sig_atomic_t rotation_requested = false;
 static pid_t syslogger_forkexec(void);
 static void syslogger_parseArgs(int argc, char *argv[]);
 #endif
-static void write_syslogger_file_binary(const char *buffer, int count);
 
 #ifdef WIN32
 static unsigned int __stdcall pipeThread(void *arg);
@@ -338,7 +337,7 @@ SysLoggerMain(int argc, char *argv[])
 			}
 			else if (bytesRead > 0)
 			{
-				write_syslogger_file_binary(logbuffer, bytesRead);
+				write_syslogger_file(logbuffer, bytesRead);
 				continue;
 			}
 			else
@@ -627,49 +626,6 @@ syslogger_parseArgs(int argc, char *argv[])
 void
 write_syslogger_file(const char *buffer, int count)
 {
-#ifdef WIN32
-
-	/*
-	 * On Windows we need to do our own newline-to-CRLF translation.
-	 */
-	char		convbuf[256];
-	char	   *p;
-	int			n;
-
-	p = convbuf;
-	n = 0;
-	while (count-- > 0)
-	{
-		if (*buffer == '\n')
-		{
-			*p++ = '\r';
-			n++;
-		}
-		*p++ = *buffer++;
-		n++;
-		if (n >= sizeof(convbuf) - 1)
-		{
-			write_syslogger_file_binary(convbuf, n);
-			p = convbuf;
-			n = 0;
-		}
-	}
-	if (n > 0)
-		write_syslogger_file_binary(convbuf, n);
-#else							/* !WIN32 */
-	write_syslogger_file_binary(buffer, count);
-#endif
-}
-
-/*
- * Write binary data to the currently open logfile
- *
- * On Windows the data arriving in the pipe already has CR/LF newlines,
- * so we must send it to the file without further translation.
- */
-static void
-write_syslogger_file_binary(const char *buffer, int count)
-{
 	int			rc;
 
 #ifndef WIN32
@@ -716,7 +672,7 @@ pipeThread(void *arg)
 					 errmsg("could not read from logger pipe: %m")));
 		}
 		else if (bytesRead > 0)
-			write_syslogger_file_binary(logbuffer, bytesRead);
+			write_syslogger_file(logbuffer, bytesRead);
 	}
 
 	/* We exit the above loop only upon detecting pipe EOF */
