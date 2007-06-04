@@ -870,7 +870,7 @@ Optional Features:
   --enable-depend         turn on automatic dependency tracking
   --enable-cassert        enable assertion checks (for debugging)
   --enable-thread-safety  make client libraries thread-safe
-  --enable-thread-safety-force  force thread-safety in spite of thread test failure
+  --enable-thread-safety-force  force thread-safety despite thread test failure
   --disable-largefile     omit support for large files
 
 Optional Packages:
@@ -888,7 +888,7 @@ Optional Packages:
   --with-perl             build Perl modules (PL/Perl)
   --with-python           build Python modules (PL/Python)
   --with-krb5             build with Kerberos 5 support
-  --with-krb-srvnam=NAME  name of the default service principal in Kerberos [postgres]
+  --with-krb-srvnam=NAME  default service principal name in Kerberos [postgres]
   --with-pam              build with PAM support
   --with-ldap             build with LDAP support
   --with-bonjour          build with Bonjour support
