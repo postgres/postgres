@@ -14,9 +14,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 31: QUERY: insert into test ( i  , j  ) values ( 7 , 12 )  on connection regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 31: Error: ERROR:  duplicate key violates unique constraint "test_pkey"
+[NO_PID]: ECPGexecute line 31: Error: ERROR:  duplicate key value violates unique constraint "test_pkey"
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: raising sqlstate 23505 (sqlcode: -239) in line 31, ''duplicate key violates unique constraint "test_pkey"' in line 31.'.
+[NO_PID]: raising sqlstate 23505 (sqlcode: -239) in line 31, ''duplicate key value violates unique constraint "test_pkey"' in line 31.'.
 [NO_PID]: sqlca: code: -239, state: 23505
 [NO_PID]: ECPGtrans line 33 action = rollback connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
