@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.5 2006/10/04 00:29:47 momjian Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/gininsert.c,v 1.5.2.1 2007/06/05 12:48:21 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -48,6 +48,8 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems)
 	memcpy(GinDataPageGetData(page), items, sizeof(ItemPointerData) * nitems);
 	GinPageGetOpaque(page)->maxoff = nitems;
 
+	MarkBufferDirty(buffer);
+
 	if (!index->rd_istemp)
 	{
 		XLogRecPtr	recptr;
@@ -76,7 +78,6 @@ createPostingTree(Relation index, ItemPointerData *items, uint32 nitems)
 
 	}
 
-	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 
 	END_CRIT_SECTION();
@@ -281,6 +282,8 @@ ginbuild(PG_FUNCTION_ARGS)
 	buffer = GinNewBuffer(index);
 	START_CRIT_SECTION();
 	GinInitBuffer(buffer, GIN_LEAF);
+	MarkBufferDirty(buffer);
+
 	if (!index->rd_istemp)
 	{
 		XLogRecPtr	recptr;
@@ -301,7 +304,6 @@ ginbuild(PG_FUNCTION_ARGS)
 
 	}
 
-	MarkBufferDirty(buffer);
 	UnlockReleaseBuffer(buffer);
 	END_CRIT_SECTION();
 
