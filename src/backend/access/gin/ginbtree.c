@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.8 2007/02/01 04:16:07 neilc Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginbtree.c,v 1.9 2007/06/05 12:47:49 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -294,6 +294,8 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack)
 			START_CRIT_SECTION();
 			btree->placeToPage(btree, stack->buffer, stack->off, &rdata);
 
+			MarkBufferDirty(stack->buffer);
+
 			if (!btree->index->rd_istemp)
 			{
 				XLogRecPtr	recptr;
@@ -303,7 +305,6 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack)
 				PageSetTLI(page, ThisTimeLineID);
 			}
 
-			MarkBufferDirty(stack->buffer);
 			UnlockReleaseBuffer(stack->buffer);
 			END_CRIT_SECTION();
 
@@ -351,6 +352,11 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack)
 				GinInitBuffer(stack->buffer, GinPageGetOpaque(newlpage)->flags & ~GIN_LEAF);
 				PageRestoreTempPage(newlpage, lpage);
 				btree->fillRoot(btree, stack->buffer, lbuffer, rbuffer);
+
+				MarkBufferDirty(rbuffer);
+				MarkBufferDirty(lbuffer);
+				MarkBufferDirty(stack->buffer);
+
 				if (!btree->index->rd_istemp)
 				{
 					XLogRecPtr	recptr;
@@ -364,11 +370,8 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack)
 					PageSetTLI(rpage, ThisTimeLineID);
 				}
 
-				MarkBufferDirty(rbuffer);
 				UnlockReleaseBuffer(rbuffer);
-				MarkBufferDirty(lbuffer);
 				UnlockReleaseBuffer(lbuffer);
-				MarkBufferDirty(stack->buffer);
 				UnlockReleaseBuffer(stack->buffer);
 
 				END_CRIT_SECTION();
@@ -389,6 +392,10 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack)
 
 				START_CRIT_SECTION();
 				PageRestoreTempPage(newlpage, lpage);
+
+				MarkBufferDirty(rbuffer);
+				MarkBufferDirty(stack->buffer);
+
 				if (!btree->index->rd_istemp)
 				{
 					XLogRecPtr	recptr;
@@ -399,9 +406,7 @@ ginInsertValue(GinBtree btree, GinBtreeStack *stack)
 					PageSetLSN(rpage, recptr);
 					PageSetTLI(rpage, ThisTimeLineID);
 				}
-				MarkBufferDirty(rbuffer);
 				UnlockReleaseBuffer(rbuffer);
-				MarkBufferDirty(stack->buffer);
 				END_CRIT_SECTION();
 			}
 		}

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.14 2007/06/04 15:56:28 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.15 2007/06/05 12:47:49 teodor Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -191,9 +191,9 @@ ginVacuumPostingTreeLeaves(GinVacuumState *gvs, BlockNumber blkno, bool isRoot, 
 			pfree(cleaned);
 			GinPageGetOpaque(page)->maxoff = newMaxOff;
 
+			MarkBufferDirty(buffer);
 			xlogVacuumPage(gvs->index, buffer);
 
-			MarkBufferDirty(buffer);
 			END_CRIT_SECTION();
 
 			/* if root is a leaf page, we don't desire further processing */
@@ -282,6 +282,11 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 	 */
 	GinPageGetOpaque(page)->flags = GIN_DELETED;
 
+	MarkBufferDirty(pBuffer);
+	if (leftBlkno != InvalidBlockNumber)
+		MarkBufferDirty(lBuffer);
+	MarkBufferDirty(dBuffer);
+
 	if (!gvs->index->rd_istemp)
 	{
 		XLogRecPtr	recptr;
@@ -339,18 +344,13 @@ ginDeletePage(GinVacuumState *gvs, BlockNumber deleteBlkno, BlockNumber leftBlkn
 		}
 	}
 
-	MarkBufferDirty(pBuffer);
 	if (!isParentRoot)
 		LockBuffer(pBuffer, GIN_UNLOCK);
 	ReleaseBuffer(pBuffer);
 
 	if (leftBlkno != InvalidBlockNumber)
-	{
-		MarkBufferDirty(lBuffer);
 		UnlockReleaseBuffer(lBuffer);
-	}
 
-	MarkBufferDirty(dBuffer);
 	UnlockReleaseBuffer(dBuffer);
 
 	END_CRIT_SECTION();
@@ -636,8 +636,8 @@ ginbulkdelete(PG_FUNCTION_ARGS)
 		{
 			START_CRIT_SECTION();
 			PageRestoreTempPage(resPage, page);
-			xlogVacuumPage(gvs.index, buffer);
 			MarkBufferDirty(buffer);
+			xlogVacuumPage(gvs.index, buffer);
 			UnlockReleaseBuffer(buffer);
 			END_CRIT_SECTION();
 		}
