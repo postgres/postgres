@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.244 2007/05/01 18:53:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.245 2007/06/05 21:31:05 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -734,6 +734,25 @@ contain_mutable_functions_walker(Node *node, void *context)
 			return true;
 		/* else fall through to check args */
 	}
+	else if (IsA(node, CoerceViaIO))
+	{
+		CoerceViaIO *expr = (CoerceViaIO *) node;
+		Oid		iofunc;
+		Oid		typioparam;
+		bool	typisvarlena;
+
+		/* check the result type's input function */
+		getTypeInputInfo(expr->resulttype,
+						 &iofunc, &typioparam);
+		if (func_volatile(iofunc) != PROVOLATILE_IMMUTABLE)
+			return true;
+		/* check the input type's output function */
+		getTypeOutputInfo(exprType((Node *) expr->arg),
+						  &iofunc, &typisvarlena);
+		if (func_volatile(iofunc) != PROVOLATILE_IMMUTABLE)
+			return true;
+		/* else fall through to check args */
+	}
 	else if (IsA(node, ArrayCoerceExpr))
 	{
 		ArrayCoerceExpr *expr = (ArrayCoerceExpr *) node;
@@ -823,6 +842,25 @@ contain_volatile_functions_walker(Node *node, void *context)
 		ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
 
 		if (op_volatile(expr->opno) == PROVOLATILE_VOLATILE)
+			return true;
+		/* else fall through to check args */
+	}
+	else if (IsA(node, CoerceViaIO))
+	{
+		CoerceViaIO *expr = (CoerceViaIO *) node;
+		Oid		iofunc;
+		Oid		typioparam;
+		bool	typisvarlena;
+
+		/* check the result type's input function */
+		getTypeInputInfo(expr->resulttype,
+						 &iofunc, &typioparam);
+		if (func_volatile(iofunc) == PROVOLATILE_VOLATILE)
+			return true;
+		/* check the input type's output function */
+		getTypeOutputInfo(exprType((Node *) expr->arg),
+						  &iofunc, &typisvarlena);
+		if (func_volatile(iofunc) == PROVOLATILE_VOLATILE)
 			return true;
 		/* else fall through to check args */
 	}
@@ -1121,6 +1159,13 @@ find_nonnullable_rels_walker(Node *node, bool top_level)
 	else if (IsA(node, RelabelType))
 	{
 		RelabelType *expr = (RelabelType *) node;
+
+		result = find_nonnullable_rels_walker((Node *) expr->arg, top_level);
+	}
+	else if (IsA(node, CoerceViaIO))
+	{
+		/* not clear this is useful, but it can't hurt */
+		CoerceViaIO *expr = (CoerceViaIO *) node;
 
 		result = find_nonnullable_rels_walker((Node *) expr->arg, top_level);
 	}
@@ -1486,6 +1531,13 @@ strip_implicit_coercions(Node *node)
 		if (r->relabelformat == COERCE_IMPLICIT_CAST)
 			return strip_implicit_coercions((Node *) r->arg);
 	}
+	else if (IsA(node, CoerceViaIO))
+	{
+		CoerceViaIO *c = (CoerceViaIO *) node;
+
+		if (c->coerceformat == COERCE_IMPLICIT_CAST)
+			return strip_implicit_coercions((Node *) c->arg);
+	}
 	else if (IsA(node, ArrayCoerceExpr))
 	{
 		ArrayCoerceExpr *c = (ArrayCoerceExpr *) node;
@@ -1537,6 +1589,8 @@ set_coercionform_dontcare_walker(Node *node, void *context)
 		((FuncExpr *) node)->funcformat = COERCE_DONTCARE;
 	else if (IsA(node, RelabelType))
 		((RelabelType *) node)->relabelformat = COERCE_DONTCARE;
+	else if (IsA(node, CoerceViaIO))
+		((CoerceViaIO *) node)->coerceformat = COERCE_DONTCARE;
 	else if (IsA(node, ArrayCoerceExpr))
 		((ArrayCoerceExpr *) node)->coerceformat = COERCE_DONTCARE;
 	else if (IsA(node, ConvertRowtypeExpr))
@@ -3471,6 +3525,8 @@ expression_tree_walker(Node *node,
 			break;
 		case T_RelabelType:
 			return walker(((RelabelType *) node)->arg, context);
+		case T_CoerceViaIO:
+			return walker(((CoerceViaIO *) node)->arg, context);
 		case T_ArrayCoerceExpr:
 			return walker(((ArrayCoerceExpr *) node)->arg, context);
 		case T_ConvertRowtypeExpr:
@@ -3956,6 +4012,16 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, relabel, RelabelType);
 				MUTATE(newnode->arg, relabel->arg, Expr *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_CoerceViaIO:
+			{
+				CoerceViaIO *iocoerce = (CoerceViaIO *) node;
+				CoerceViaIO *newnode;
+
+				FLATCOPY(newnode, iocoerce, CoerceViaIO);
+				MUTATE(newnode->arg, iocoerce->arg, Expr *);
 				return (Node *) newnode;
 			}
 			break;

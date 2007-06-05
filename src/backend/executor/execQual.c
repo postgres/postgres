@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.217 2007/04/06 04:21:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.218 2007/06/05 21:31:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,6 +145,9 @@ static Datum ExecEvalFieldStore(FieldStoreState *fstate,
 static Datum ExecEvalRelabelType(GenericExprState *exprstate,
 					ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalCoerceViaIO(CoerceViaIOState *iostate,
+								 ExprContext *econtext,
+								 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 									 ExprContext *econtext,
 									 bool *isNull, ExprDoneCond *isDone);
@@ -3505,6 +3508,40 @@ ExecEvalRelabelType(GenericExprState *exprstate,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalCoerceViaIO
+ *
+ *		Evaluate a CoerceViaIO node.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalCoerceViaIO(CoerceViaIOState *iostate,
+					ExprContext *econtext,
+					bool *isNull, ExprDoneCond *isDone)
+{
+	Datum		result;
+	Datum		inputval;
+	char	   *string;
+
+	inputval = ExecEvalExpr(iostate->arg, econtext, isNull, isDone);
+
+	if (isDone && *isDone == ExprEndResult)
+		return inputval;		/* nothing to do */
+
+	if (*isNull)
+		string = NULL;			/* output functions are not called on nulls */
+	else
+		string = OutputFunctionCall(&iostate->outfunc, inputval);
+
+	result = InputFunctionCall(&iostate->infunc,
+							   string,
+							   iostate->intypioparam,
+							   -1);
+
+	/* The input function cannot change the null/not-null status */
+	return result;
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalArrayCoerceExpr
  *
  *		Evaluate an ArrayCoerceExpr node.
@@ -3848,6 +3885,26 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				gstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalRelabelType;
 				gstate->arg = ExecInitExpr(relabel->arg, parent);
 				state = (ExprState *) gstate;
+			}
+			break;
+		case T_CoerceViaIO:
+			{
+				CoerceViaIO *iocoerce = (CoerceViaIO *) node;
+				CoerceViaIOState *iostate = makeNode(CoerceViaIOState);
+				Oid		iofunc;
+				bool	typisvarlena;
+
+				iostate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalCoerceViaIO;
+				iostate->arg = ExecInitExpr(iocoerce->arg, parent);
+				/* lookup the result type's input function */
+				getTypeInputInfo(iocoerce->resulttype, &iofunc,
+								 &iostate->intypioparam);
+				fmgr_info(iofunc, &iostate->infunc);
+				/* lookup the input type's output function */
+				getTypeOutputInfo(exprType((Node *) iocoerce->arg),
+								  &iofunc, &typisvarlena);
+				fmgr_info(iofunc, &iostate->outfunc);
+				state = (ExprState *) iostate;
 			}
 			break;
 		case T_ArrayCoerceExpr:

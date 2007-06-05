@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/isn.h,v 1.3 2007/01/05 22:19:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/isn/isn.h,v 1.4 2007/06/05 21:31:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,13 +38,6 @@ extern Datum ismn_in(PG_FUNCTION_ARGS);
 extern Datum issn_in(PG_FUNCTION_ARGS);
 extern Datum upc_in(PG_FUNCTION_ARGS);
 
-extern Datum ean13_cast_to_text(PG_FUNCTION_ARGS);
-extern Datum isn_cast_to_text(PG_FUNCTION_ARGS);
-extern Datum ean13_cast_from_text(PG_FUNCTION_ARGS);
-extern Datum isbn_cast_from_text(PG_FUNCTION_ARGS);
-extern Datum ismn_cast_from_text(PG_FUNCTION_ARGS);
-extern Datum issn_cast_from_text(PG_FUNCTION_ARGS);
-extern Datum upc_cast_from_text(PG_FUNCTION_ARGS);
 extern Datum isbn_cast_from_ean13(PG_FUNCTION_ARGS);
 extern Datum ismn_cast_from_ean13(PG_FUNCTION_ARGS);
 extern Datum issn_cast_from_ean13(PG_FUNCTION_ARGS);

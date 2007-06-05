@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/backend/utils/adt/enum.c,v 1.2 2007/04/02 22:14:17 adunstan Exp $
+ *    $PostgreSQL: pgsql/src/backend/utils/adt/enum.c,v 1.3 2007/06/05 21:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,8 +21,6 @@
 #include "utils/syscache.h"
 
 
-static Oid	cstring_enum(char *name, Oid enumtypoid);
-static char *enum_cstring(Oid enumval);
 static ArrayType *enum_range_internal(Oid enumtypoid, Oid lower, Oid upper);
 static int	enum_elem_cmp(const void *left, const void *right);
 
@@ -32,75 +30,60 @@ static int	enum_elem_cmp(const void *left, const void *right);
 Datum
 enum_in(PG_FUNCTION_ARGS)
 {
-    char *name = PG_GETARG_CSTRING(0);
-    Oid enumtypoid = PG_GETARG_OID(1);
-
-    PG_RETURN_OID(cstring_enum(name, enumtypoid));
-}
-
-/* guts of enum_in and text-to-enum */
-static Oid
-cstring_enum(char *name, Oid enumtypoid)
-{
-	HeapTuple tup;
+	char *name = PG_GETARG_CSTRING(0);
+	Oid enumtypoid = PG_GETARG_OID(1);
 	Oid enumoid;
+	HeapTuple tup;
 
 	/* must check length to prevent Assert failure within SearchSysCache */
-
 	if (strlen(name) >= NAMEDATALEN)
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-                 errmsg("invalid input value for enum %s: \"%s\"",
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input value for enum %s: \"%s\"",
 						format_type_be(enumtypoid),
-                        name)));
+						name)));
 
 	tup = SearchSysCache(ENUMTYPOIDNAME,
 						 ObjectIdGetDatum(enumtypoid),
 						 CStringGetDatum(name),
 						 0, 0);
-    if (tup == NULL)
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
-                 errmsg("invalid input value for enum %s: \"%s\"",
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input value for enum %s: \"%s\"",
 						format_type_be(enumtypoid),
-                        name)));
+						name)));
 
 	enumoid = HeapTupleGetOid(tup);
 
 	ReleaseSysCache(tup);
-	return enumoid;
+
+	PG_RETURN_OID(enumoid);
 }
 
 Datum
 enum_out(PG_FUNCTION_ARGS)
 {
-    Oid enumoid = PG_GETARG_OID(0);
-
-    PG_RETURN_CSTRING(enum_cstring(enumoid));
-}
-
-/* guts of enum_out and enum-to-text */
-static char *
-enum_cstring(Oid enumval)
-{
+	Oid enumval = PG_GETARG_OID(0);
+	char *result;
 	HeapTuple tup;
 	Form_pg_enum en;
-	char *label;
 
 	tup = SearchSysCache(ENUMOID,
 						 ObjectIdGetDatum(enumval),
 						 0, 0, 0);
-    if (tup == NULL)
-        ereport(ERROR,
-                (errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
-                 errmsg("invalid internal value for enum: %u",
-                        enumval)));
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid internal value for enum: %u",
+						enumval)));
 	en = (Form_pg_enum) GETSTRUCT(tup);
 
-	label = pstrdup(NameStr(en->enumlabel));
+	result = pstrdup(NameStr(en->enumlabel));
 
 	ReleaseSysCache(tup);
-	return label;
+
+	PG_RETURN_CSTRING(result);
 }
 
 /* Comparison functions and related */
@@ -191,47 +174,6 @@ enum_cmp(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(-1);
 }
 
-/* Casts between text and enum */
-
-Datum
-enum_text(PG_FUNCTION_ARGS)
-{
-	Oid enumval = PG_GETARG_OID(0);
-	text *result;
-	char *cstr;
-	int len;
-
-	cstr = enum_cstring(enumval);
-	len = strlen(cstr);
-	result = (text *) palloc(VARHDRSZ + len);
-	SET_VARSIZE(result, VARHDRSZ + len);
-	memcpy(VARDATA(result), cstr, len);
-	pfree(cstr);
-	PG_RETURN_TEXT_P(result);
-}
-
-Datum
-text_enum(PG_FUNCTION_ARGS)
-{
-	text *textval = PG_GETARG_TEXT_P(0);
-	Oid enumtypoid;
-	char *str;
-
-	/*
-	 * We rely on being able to get the specific enum type from the calling
-	 * expression tree.
-	 */
-	enumtypoid = get_fn_expr_rettype(fcinfo->flinfo);
-	if (enumtypoid == InvalidOid)
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("could not determine actual enum type")));
-
-	str = DatumGetCString(DirectFunctionCall1(textout,
-											  PointerGetDatum(textval)));
-    PG_RETURN_OID(cstring_enum(str, enumtypoid));
-}
-
 /* Enum programming support functions */
 
 Datum
@@ -266,7 +208,7 @@ enum_first(PG_FUNCTION_ARGS)
 
 	ReleaseCatCacheList(list);
 
-    if (!OidIsValid(min))		/* should not happen */
+	if (!OidIsValid(min))		/* should not happen */
 		elog(ERROR, "no values found for enum %s",
 			 format_type_be(enumtypoid));
 
@@ -276,10 +218,10 @@ enum_first(PG_FUNCTION_ARGS)
 Datum
 enum_last(PG_FUNCTION_ARGS)
 {
-    Oid enumtypoid;
-    Oid max = InvalidOid;
-    CatCList *list;
-    int num, i;
+	Oid enumtypoid;
+	Oid max = InvalidOid;
+	CatCList *list;
+	int num, i;
 
 	/*
 	 * We rely on being able to get the specific enum type from the calling
@@ -292,24 +234,24 @@ enum_last(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("could not determine actual enum type")));
 
-    list = SearchSysCacheList(ENUMTYPOIDNAME, 1,
-                              ObjectIdGetDatum(enumtypoid),
+	list = SearchSysCacheList(ENUMTYPOIDNAME, 1,
+							  ObjectIdGetDatum(enumtypoid),
 							  0, 0, 0);
-    num = list->n_members;
-    for (i = 0; i < num; i++)
-    {
+	num = list->n_members;
+	for (i = 0; i < num; i++)
+	{
 		Oid valoid = HeapTupleHeaderGetOid(list->members[i]->tuple.t_data);
-        if(!OidIsValid(max) || valoid > max)
-            max = valoid;
-    }
+		if (!OidIsValid(max) || valoid > max)
+			max = valoid;
+	}
 
 	ReleaseCatCacheList(list);
 
-    if (!OidIsValid(max))		/* should not happen */
+	if (!OidIsValid(max))		/* should not happen */
 		elog(ERROR, "no values found for enum %s",
 			 format_type_be(enumtypoid));
 
-    PG_RETURN_OID(max);
+	PG_RETURN_OID(max);
 }
 
 /* 2-argument variant of enum_range */
@@ -368,26 +310,26 @@ static ArrayType *
 enum_range_internal(Oid enumtypoid, Oid lower, Oid upper)
 {
 	ArrayType *result;
-    CatCList *list;
-    int total, i, j;
-    Datum *elems;
+	CatCList *list;
+	int total, i, j;
+	Datum *elems;
 
 	list = SearchSysCacheList(ENUMTYPOIDNAME, 1,
-                              ObjectIdGetDatum(enumtypoid),
+							  ObjectIdGetDatum(enumtypoid),
 							  0, 0, 0);
 	total = list->n_members;
 
 	elems = (Datum *) palloc(total * sizeof(Datum));
 
 	j = 0;
-    for (i = 0; i < total; i++)
-    {
+	for (i = 0; i < total; i++)
+	{
 		Oid val = HeapTupleGetOid(&(list->members[i]->tuple));
 
 		if ((!OidIsValid(lower) || lower <= val) &&
 			(!OidIsValid(upper) || val <= upper))
-            elems[j++] = ObjectIdGetDatum(val);
-    }
+			elems[j++] = ObjectIdGetDatum(val);
+	}
 
 	/* shouldn't need the cache anymore */
 	ReleaseCatCacheList(list);

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.118 2007/05/11 17:57:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.119 2007/06/05 21:31:04 tgl Exp $ -->
 
 <chapter id="sql-syntax">
  <title>SQL Syntax</title>
@@ -561,18 +561,18 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      The <literal>::</literal>, <literal>CAST()</literal>, and
      function-call syntaxes can also be used to specify run-time type
      conversions of arbitrary expressions, as discussed in <xref
-     linkend="sql-syntax-type-casts">.  But the form
-     <literal><replaceable>type</replaceable> '<replaceable>string</replaceable>'</literal>
-     can only be used to specify the type of a literal constant.
-     Another restriction on
-     <literal><replaceable>type</replaceable> '<replaceable>string</replaceable>'</literal>
-     is that it does not work for array types; use <literal>::</literal>
+     linkend="sql-syntax-type-casts">.  To avoid syntactic ambiguity, the
+     <literal><replaceable>type</> '<replaceable>string</>'</literal>
+     syntax can only be used to specify the type of a simple literal constant.
+     Another restriction on the
+     <literal><replaceable>type</> '<replaceable>string</>'</literal>
+     syntax is that it does not work for array types; use <literal>::</literal>
      or <literal>CAST()</literal> to specify the type of an array constant.
     </para>
 
     <para>
      The <literal>CAST()</> syntax conforms to SQL.  The
-     <literal><replaceable>type</replaceable> '<replaceable>string</replaceable>'</literal>
+     <literal><replaceable>type</> '<replaceable>string</>'</literal>
      syntax is a generalization of the standard: SQL specifies this syntax only
      for a few data types, but <productname>PostgreSQL</productname> allows it
      for all types.  The syntax with
@@ -1431,16 +1431,21 @@ CAST ( <replaceable>expression</replaceable> AS <replaceable>type</replaceable> 
     double-quoted, because of syntactic conflicts.  Therefore, the use of
     the function-like cast syntax leads to inconsistencies and should
     probably be avoided in new applications.
-
-    (The function-like syntax is in fact just a function call.  When
-    one of the two standard cast syntaxes is used to do a run-time
-    conversion, it will internally invoke a registered function to
-    perform the conversion.  By convention, these conversion functions
-    have the same name as their output type, and thus the <quote>function-like
-    syntax</> is nothing more than a direct invocation of the underlying
-    conversion function.  Obviously, this is not something that a portable
-    application should rely on.)
    </para>
+
+   <note>
+    <para>
+     The function-like syntax is in fact just a function call.  When
+     one of the two standard cast syntaxes is used to do a run-time
+     conversion, it will internally invoke a registered function to
+     perform the conversion.  By convention, these conversion functions
+     have the same name as their output type, and thus the <quote>function-like
+     syntax</> is nothing more than a direct invocation of the underlying
+     conversion function.  Obviously, this is not something that a portable
+     application should rely on.  For further details see
+     <xref linkend="sql-createcast" endterm="sql-createcast-title">.
+    </para>
+   </note>
   </sect2>
 
   <sect2 id="sql-syntax-scalar-subqueries">

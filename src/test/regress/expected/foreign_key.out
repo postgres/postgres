@@ -1125,10 +1125,12 @@ ALTER TABLE fktable ADD CONSTRAINT fk_3_1
 FOREIGN KEY (x3) REFERENCES pktable(id1);
 ERROR:  foreign key constraint "fk_3_1" cannot be implemented
 DETAIL:  Key columns "x3" and "id1" are of incompatible types: real and integer.
--- should succeed
--- int4 promotes to text, so this is allowed (though pretty durn debatable)
+-- int4 does not promote to text
 ALTER TABLE fktable ADD CONSTRAINT fk_1_2
 FOREIGN KEY (x1) REFERENCES pktable(id2);
+ERROR:  foreign key constraint "fk_1_2" cannot be implemented
+DETAIL:  Key columns "x1" and "id2" are of incompatible types: integer and character varying.
+-- should succeed
 -- int4 promotes to real
 ALTER TABLE fktable ADD CONSTRAINT fk_1_3
 FOREIGN KEY (x1) REFERENCES pktable(id3);
@@ -1150,7 +1152,7 @@ FOREIGN KEY (x2,x5,x3) REFERENCES pktable(id2,id1,id3);
 ALTER TABLE fktable ADD CONSTRAINT fk_123_231
 FOREIGN KEY (x1,x2,x3) REFERENCES pktable(id2,id3,id1);
 ERROR:  foreign key constraint "fk_123_231" cannot be implemented
-DETAIL:  Key columns "x2" and "id3" are of incompatible types: character varying and real.
+DETAIL:  Key columns "x1" and "id2" are of incompatible types: integer and character varying.
 ALTER TABLE fktable ADD CONSTRAINT fk_241_132
 FOREIGN KEY (x2,x4,x1) REFERENCES pktable(id1,id3,id2);
 ERROR:  foreign key constraint "fk_241_132" cannot be implemented
@@ -1162,7 +1164,6 @@ NOTICE:  drop cascades to constraint fk_123_123 on table fktable
 NOTICE:  drop cascades to constraint fk_5_1 on table fktable
 NOTICE:  drop cascades to constraint fktable_x1_fkey on table fktable
 NOTICE:  drop cascades to constraint fk_4_2 on table fktable
-NOTICE:  drop cascades to constraint fk_1_2 on table fktable
 NOTICE:  drop cascades to constraint fktable_x2_fkey on table fktable
 NOTICE:  drop cascades to constraint fk_1_3 on table fktable
 NOTICE:  drop cascades to constraint fktable_x3_fkey on table fktable

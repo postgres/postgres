@@ -218,7 +218,7 @@ create rule shipped_view_insert as on insert to shipped_view do instead
 insert into parts (partnum, cost) values (1, 1234.56);
 
 insert into shipped_view (ordnum, partnum, value)
-    values (0, 1, (select cost from parts where partnum = 1));
+    values (0, 1, (select cost from parts where partnum = '1'));
 
 select * from shipped_view;
 

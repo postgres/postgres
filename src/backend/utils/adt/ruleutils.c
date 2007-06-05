@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.258 2007/05/24 18:58:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.259 2007/06/05 21:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3127,6 +3127,9 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 		case T_RelabelType:
 			return isSimpleNode((Node *) ((RelabelType *) node)->arg,
 								node, prettyFlags);
+		case T_CoerceViaIO:
+			return isSimpleNode((Node *) ((CoerceViaIO *) node)->arg,
+								node, prettyFlags);
 		case T_ArrayCoerceExpr:
 			return isSimpleNode((Node *) ((ArrayCoerceExpr *) node)->arg,
 								node, prettyFlags);
@@ -3590,6 +3593,27 @@ get_rule_expr(Node *node, deparse_context *context,
 					get_coercion_expr(arg, context,
 									  relabel->resulttype,
 									  relabel->resulttypmod,
+									  node);
+				}
+			}
+			break;
+
+		case T_CoerceViaIO:
+			{
+				CoerceViaIO *iocoerce = (CoerceViaIO *) node;
+				Node	   *arg = (Node *) iocoerce->arg;
+
+				if (iocoerce->coerceformat == COERCE_IMPLICIT_CAST &&
+					!showimplicit)
+				{
+					/* don't show the implicit cast */
+					get_rule_expr_paren(arg, context, false, node);
+				}
+				else
+				{
+					get_coercion_expr(arg, context,
+									  iocoerce->resulttype,
+									  -1,
 									  node);
 				}
 			}

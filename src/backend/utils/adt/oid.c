@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.71 2007/02/27 23:48:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/oid.c,v 1.72 2007/06/05 21:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
  *****************************************************************************/
 
 static Oid
-oidin_subr(const char *funcname, const char *s, char **endloc)
+oidin_subr(const char *s, char **endloc)
 {
 	unsigned long cvt;
 	char	   *endptr;
@@ -116,7 +116,7 @@ oidin(PG_FUNCTION_ARGS)
 	char	   *s = PG_GETARG_CSTRING(0);
 	Oid			result;
 
-	result = oidin_subr("oidin", s, NULL);
+	result = oidin_subr(s, NULL);
 	PG_RETURN_OID(result);
 }
 
@@ -202,7 +202,7 @@ oidvectorin(PG_FUNCTION_ARGS)
 			oidString++;
 		if (*oidString == '\0')
 			break;
-		result->values[n] = oidin_subr("oidvectorin", oidString, &oidString);
+		result->values[n] = oidin_subr(oidString, &oidString);
 	}
 	while (*oidString && isspace((unsigned char) *oidString))
 		oidString++;
@@ -418,46 +418,4 @@ oidvectorgt(PG_FUNCTION_ARGS)
 	int32		cmp = DatumGetInt32(btoidvectorcmp(fcinfo));
 
 	PG_RETURN_BOOL(cmp > 0);
-}
-
-Datum
-oid_text(PG_FUNCTION_ARGS)
-{
-	Oid			oid = PG_GETARG_OID(0);
-	text	   *result;
-	int			len;
-	char	   *str;
-
-	str = DatumGetCString(DirectFunctionCall1(oidout,
-											  ObjectIdGetDatum(oid)));
-	len = strlen(str) + VARHDRSZ;
-
-	result = (text *) palloc(len);
-
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), str, (len - VARHDRSZ));
-	pfree(str);
-
-	PG_RETURN_TEXT_P(result);
-}
-
-Datum
-text_oid(PG_FUNCTION_ARGS)
-{
-	text	   *string = PG_GETARG_TEXT_P(0);
-	Oid			result;
-	int			len;
-	char	   *str;
-
-	len = (VARSIZE(string) - VARHDRSZ);
-
-	str = palloc(len + 1);
-	memcpy(str, VARDATA(string), len);
-	*(str + len) = '\0';
-
-	result = oidin_subr("text_oid", str, NULL);
-
-	pfree(str);
-
-	PG_RETURN_OID(result);
 }

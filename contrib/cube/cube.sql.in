@@ -31,16 +31,6 @@ CREATE TYPE cube (
 
 COMMENT ON TYPE cube IS 'multi-dimensional cube ''(FLOAT-1, FLOAT-2, ..., FLOAT-N), (FLOAT-1, FLOAT-2, ..., FLOAT-N)''';
 
--- Convert from text to cube
-
-CREATE OR REPLACE FUNCTION cube(text) RETURNS cube
-AS 'MODULE_PATHNAME'
-LANGUAGE C IMMUTABLE STRICT;
-
-COMMENT ON FUNCTION cube(text) IS 'convert text to cube';
-
-CREATE CAST (text AS cube) WITH FUNCTION cube(text) AS ASSIGNMENT;
-
 --
 -- External C-functions for R-tree methods
 --

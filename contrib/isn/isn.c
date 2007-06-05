@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.5 2007/01/05 22:19:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/isn/isn.c,v 1.6 2007/06/05 21:31:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,10 +38,6 @@ static const char *isn_names[] = {"EAN13/UPC/ISxN", "EAN13/UPC/ISxN", "EAN13", "
 
 static bool g_weak = false;
 static bool g_initialized = false;
-
-/* Macros for converting TEXT to and from c-string */
-#define GET_TEXT(cstrp) DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(cstrp)))
-#define GET_STR(textp) DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(textp)))
 
 
 /***********************************************************************
@@ -1042,30 +1038,6 @@ upc_in(PG_FUNCTION_ARGS)
 
 /* casting functions
 */
-PG_FUNCTION_INFO_V1(ean13_cast_to_text);
-Datum
-ean13_cast_to_text(PG_FUNCTION_ARGS)
-{
-	ean13		val = PG_GETARG_EAN13(0);
-	char		buf[MAXEAN13LEN + 1];
-
-	(void) ean2string(val, false, buf, false);
-
-	PG_RETURN_TEXT_P(GET_TEXT(buf));
-}
-
-PG_FUNCTION_INFO_V1(isn_cast_to_text);
-Datum
-isn_cast_to_text(PG_FUNCTION_ARGS)
-{
-	ean13		val = PG_GETARG_EAN13(0);
-	char		buf[MAXEAN13LEN + 1];
-
-	(void) ean2string(val, false, buf, true);
-
-	PG_RETURN_TEXT_P(GET_TEXT(buf));
-}
-
 PG_FUNCTION_INFO_V1(isbn_cast_from_ean13);
 Datum
 isbn_cast_from_ean13(PG_FUNCTION_ARGS)
@@ -1114,61 +1086,6 @@ upc_cast_from_ean13(PG_FUNCTION_ARGS)
 	PG_RETURN_EAN13(result);
 }
 
-
-PG_FUNCTION_INFO_V1(ean13_cast_from_text);
-Datum
-ean13_cast_from_text(PG_FUNCTION_ARGS)
-{
-	const char *str = GET_STR(PG_GETARG_TEXT_P(0));
-	ean13		result;
-
-	(void) string2ean(str, false, &result, EAN13);
-	PG_RETURN_EAN13(result);
-}
-
-PG_FUNCTION_INFO_V1(isbn_cast_from_text);
-Datum
-isbn_cast_from_text(PG_FUNCTION_ARGS)
-{
-	const char *str = GET_STR(PG_GETARG_TEXT_P(0));
-	ean13		result;
-
-	(void) string2ean(str, false, &result, ISBN);
-	PG_RETURN_EAN13(result);
-}
-
-PG_FUNCTION_INFO_V1(ismn_cast_from_text);
-Datum
-ismn_cast_from_text(PG_FUNCTION_ARGS)
-{
-	const char *str = GET_STR(PG_GETARG_TEXT_P(0));
-	ean13		result;
-
-	(void) string2ean(str, false, &result, ISMN);
-	PG_RETURN_EAN13(result);
-}
-
-PG_FUNCTION_INFO_V1(issn_cast_from_text);
-Datum
-issn_cast_from_text(PG_FUNCTION_ARGS)
-{
-	const char *str = GET_STR(PG_GETARG_TEXT_P(0));
-	ean13		result;
-
-	(void) string2ean(str, false, &result, ISSN);
-	PG_RETURN_EAN13(result);
-}
-
-PG_FUNCTION_INFO_V1(upc_cast_from_text);
-Datum
-upc_cast_from_text(PG_FUNCTION_ARGS)
-{
-	const char *str = GET_STR(PG_GETARG_TEXT_P(0));
-	ean13		result;
-
-	(void) string2ean(str, false, &result, UPC);
-	PG_RETURN_EAN13(result);
-}
 
 /* is_valid - returns false if the "invalid-check-digit-on-input" is set
  */

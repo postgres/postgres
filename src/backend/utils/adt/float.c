@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.149 2007/02/27 23:48:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/float.c,v 1.150 2007/06/05 21:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1193,108 +1193,6 @@ i2tof(PG_FUNCTION_ARGS)
 	int16		num = PG_GETARG_INT16(0);
 
 	PG_RETURN_FLOAT4((float4) num);
-}
-
-
-/*
- *		float8_text		- converts a float8 number to a text string
- */
-Datum
-float8_text(PG_FUNCTION_ARGS)
-{
-	float8		num = PG_GETARG_FLOAT8(0);
-	text	   *result;
-	int			len;
-	char	   *str;
-
-	str = DatumGetCString(DirectFunctionCall1(float8out,
-											  Float8GetDatum(num)));
-
-	len = strlen(str) + VARHDRSZ;
-
-	result = (text *) palloc(len);
-
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), str, (len - VARHDRSZ));
-
-	pfree(str);
-
-	PG_RETURN_TEXT_P(result);
-}
-
-
-/*
- *		text_float8		- converts a text string to a float8 number
- */
-Datum
-text_float8(PG_FUNCTION_ARGS)
-{
-	text	   *string = PG_GETARG_TEXT_P(0);
-	Datum		result;
-	int			len;
-	char	   *str;
-
-	len = (VARSIZE(string) - VARHDRSZ);
-	str = palloc(len + 1);
-	memcpy(str, VARDATA(string), len);
-	*(str + len) = '\0';
-
-	result = DirectFunctionCall1(float8in, CStringGetDatum(str));
-
-	pfree(str);
-
-	PG_RETURN_DATUM(result);
-}
-
-
-/*
- *		float4_text		- converts a float4 number to a text string
- */
-Datum
-float4_text(PG_FUNCTION_ARGS)
-{
-	float4		num = PG_GETARG_FLOAT4(0);
-	text	   *result;
-	int			len;
-	char	   *str;
-
-	str = DatumGetCString(DirectFunctionCall1(float4out,
-											  Float4GetDatum(num)));
-
-	len = strlen(str) + VARHDRSZ;
-
-	result = (text *) palloc(len);
-
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), str, (len - VARHDRSZ));
-
-	pfree(str);
-
-	PG_RETURN_TEXT_P(result);
-}
-
-
-/*
- *		text_float4		- converts a text string to a float4 number
- */
-Datum
-text_float4(PG_FUNCTION_ARGS)
-{
-	text	   *string = PG_GETARG_TEXT_P(0);
-	Datum		result;
-	int			len;
-	char	   *str;
-
-	len = (VARSIZE(string) - VARHDRSZ);
-	str = palloc(len + 1);
-	memcpy(str, VARDATA(string), len);
-	*(str + len) = '\0';
-
-	result = DirectFunctionCall1(float4in, CStringGetDatum(str));
-
-	pfree(str);
-
-	PG_RETURN_DATUM(result);
 }
 
 

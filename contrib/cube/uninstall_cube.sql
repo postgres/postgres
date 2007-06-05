@@ -92,8 +92,4 @@ DROP FUNCTION cube_ne(cube, cube);
 
 DROP FUNCTION cube_eq(cube, cube);
 
-DROP CAST (text AS cube);
-
-DROP FUNCTION cube(text);
-
 DROP TYPE cube CASCADE;

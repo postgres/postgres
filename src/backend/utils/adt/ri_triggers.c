@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.94 2007/03/27 23:21:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.95 2007/06/05 21:31:06 tgl Exp $
  *
  * ----------
  */
@@ -3871,7 +3871,7 @@ ri_HashCompareOp(Oid eq_opr, Oid typeid)
 		Oid		lefttype,
 				righttype,
 				castfunc;
-		bool	arrayCoerce;
+		CoercionPathType pathtype;
 
 		/* We always need to know how to call the equality operator */
 		fmgr_info_cxt(get_opcode(eq_opr), &entry->eq_opr_finfo,
@@ -3885,20 +3885,28 @@ ri_HashCompareOp(Oid eq_opr, Oid typeid)
 		 * here and in ri_AttributesEqual().  At the moment there is no
 		 * point because cases involving nonidentical array types will
 		 * be rejected at constraint creation time.
+		 *
+		 * XXX perhaps also consider supporting CoerceViaIO?  No need at the
+		 * moment since that will never be generated for implicit coercions.
 		 */
 		op_input_types(eq_opr, &lefttype, &righttype);
 		Assert(lefttype == righttype);
 		if (typeid == lefttype)
 			castfunc = InvalidOid;				/* simplest case */
-		else if (!find_coercion_pathway(lefttype, typeid, COERCION_IMPLICIT,
-										&castfunc, &arrayCoerce)
-				 || arrayCoerce)				/* XXX fixme */
+		else
 		{
-			/* If target is ANYARRAY, assume it's OK, else punt. */
-			if (lefttype != ANYARRAYOID)
-				elog(ERROR, "no conversion function from %s to %s",
-					 format_type_be(typeid),
-					 format_type_be(lefttype));
+			pathtype = find_coercion_pathway(lefttype, typeid,
+											 COERCION_IMPLICIT,
+											 &castfunc);
+			if (pathtype != COERCION_PATH_FUNC &&
+				pathtype != COERCION_PATH_RELABELTYPE)
+			{
+				/* If target is ANYARRAY, assume it's OK, else punt. */
+				if (lefttype != ANYARRAYOID)
+					elog(ERROR, "no conversion function from %s to %s",
+						 format_type_be(typeid),
+						 format_type_be(lefttype));
+			}
 		}
 		if (OidIsValid(castfunc))
 			fmgr_info_cxt(castfunc, &entry->cast_func_finfo,

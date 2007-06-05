@@ -236,10 +236,6 @@ cube_distance(cube, cube) returns double
   cube_distance returns the distance between two cubes. If both cubes are
   points, this is the normal distance function.
 
-cube(text) returns cube
-  cube takes text input and returns a cube. This is useful for making cubes
-  from computed strings.
-
 cube(float8) returns cube
   This makes a one dimensional cube with both coordinates the same.
   If the type of the argument is a numeric type other than float8 an

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.217 2007/04/27 22:05:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.218 2007/06/05 21:31:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,6 +265,7 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_FieldSelect:
 		case T_FieldStore:
 		case T_RelabelType:
+		case T_CoerceViaIO:
 		case T_ArrayCoerceExpr:
 		case T_ConvertRowtypeExpr:
 		case T_CaseTestExpr:
@@ -1805,6 +1806,9 @@ exprType(Node *expr)
 			break;
 		case T_RelabelType:
 			type = ((RelabelType *) expr)->resulttype;
+			break;
+		case T_CoerceViaIO:
+			type = ((CoerceViaIO *) expr)->resulttype;
 			break;
 		case T_ArrayCoerceExpr:
 			type = ((ArrayCoerceExpr *) expr)->resulttype;

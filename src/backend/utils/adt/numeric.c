@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.102 2007/05/08 18:56:47 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.103 2007/06/05 21:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2143,50 +2143,6 @@ numeric_float4(PG_FUNCTION_ARGS)
 	pfree(tmp);
 
 	PG_RETURN_DATUM(result);
-}
-
-
-Datum
-text_numeric(PG_FUNCTION_ARGS)
-{
-	text	   *str = PG_GETARG_TEXT_P(0);
-	int			len;
-	char	   *s;
-	Datum		result;
-
-	len = (VARSIZE(str) - VARHDRSZ);
-	s = palloc(len + 1);
-	memcpy(s, VARDATA(str), len);
-	*(s + len) = '\0';
-
-	result = DirectFunctionCall3(numeric_in, CStringGetDatum(s),
-								 ObjectIdGetDatum(0), Int32GetDatum(-1));
-
-	pfree(s);
-
-	return result;
-}
-
-Datum
-numeric_text(PG_FUNCTION_ARGS)
-{
-	/* val is numeric, but easier to leave it as Datum */
-	Datum		val = PG_GETARG_DATUM(0);
-	char	   *s;
-	int			len;
-	text	   *result;
-
-	s = DatumGetCString(DirectFunctionCall1(numeric_out, val));
-	len = strlen(s);
-
-	result = (text *) palloc(VARHDRSZ + len);
-
-	SET_VARSIZE(result, VARHDRSZ + len);
-	memcpy(VARDATA(result), s, len);
-
-	pfree(s);
-
-	PG_RETURN_TEXT_P(result);
 }
 
 

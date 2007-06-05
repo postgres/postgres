@@ -223,7 +223,7 @@ SELECT cube_distance('(0)'::cube,'(.3,.4)'::cube);
 
 -- Test of cube function (text to cube)
 --
-SELECT cube('('||1||','||1.2||')');
+SELECT cube('(1,1.2)'::text);
 SELECT cube(NULL);
 
 -- Test of cube_dim function (dimensions stored in cube)

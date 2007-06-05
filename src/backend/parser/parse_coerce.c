@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.153 2007/04/02 03:49:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.154 2007/06/05 21:31:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +37,10 @@ static Node *coerce_type_typmod(Node *node,
 				   bool hideInputCoercion);
 static void hide_coercion_node(Node *node);
 static Node *build_coercion_expression(Node *node,
-						  Oid funcId, bool arrayCoerce,
-						  Oid targetTypeId, int32 targetTypMod,
-						  CoercionForm cformat, bool isExplicit);
+									   CoercionPathType pathtype,
+									   Oid funcId,
+									   Oid targetTypeId, int32 targetTypMod,
+									   CoercionForm cformat, bool isExplicit);
 static Node *coerce_record_to_complex(ParseState *pstate, Node *node,
 						 Oid targetTypeId,
 						 CoercionContext ccontext,
@@ -121,8 +122,8 @@ coerce_type(ParseState *pstate, Node *node,
 			CoercionContext ccontext, CoercionForm cformat)
 {
 	Node	   *result;
+	CoercionPathType pathtype;
 	Oid			funcId;
-	bool		arrayCoerce;
 
 	if (targetTypeId == inputTypeId ||
 		node == NULL)
@@ -280,10 +281,11 @@ coerce_type(ParseState *pstate, Node *node,
 
 		return (Node *) param;
 	}
-	if (find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
-							  &funcId, &arrayCoerce))
+	pathtype = find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
+									 &funcId);
+	if (pathtype != COERCION_PATH_NONE)
 	{
-		if (OidIsValid(funcId) || arrayCoerce)
+		if (pathtype != COERCION_PATH_RELABELTYPE)
 		{
 			/*
 			 * Generate an expression tree representing run-time application
@@ -298,7 +300,7 @@ coerce_type(ParseState *pstate, Node *node,
 			baseTypeMod = targetTypeMod;
 			baseTypeId = getBaseTypeAndTypmod(targetTypeId, &baseTypeMod);
 
-			result = build_coercion_expression(node, funcId, arrayCoerce,
+			result = build_coercion_expression(node, pathtype, funcId,
 											   baseTypeId, baseTypeMod,
 											   cformat,
 										  (cformat != COERCE_IMPLICIT_CAST));
@@ -397,8 +399,8 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 	{
 		Oid			inputTypeId = input_typeids[i];
 		Oid			targetTypeId = target_typeids[i];
+		CoercionPathType pathtype;
 		Oid			funcId;
-		bool		arrayCoerce;
 
 		/* no problem if same type */
 		if (inputTypeId == targetTypeId)
@@ -426,8 +428,9 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		 * If pg_cast shows that we can coerce, accept.  This test now covers
 		 * both binary-compatible and coercion-function cases.
 		 */
-		if (find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
-								  &funcId, &arrayCoerce))
+		pathtype = find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
+										 &funcId);
+		if (pathtype != COERCION_PATH_NONE)
 			continue;
 
 		/*
@@ -567,8 +570,8 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 				   CoercionForm cformat, bool isExplicit,
 				   bool hideInputCoercion)
 {
+	CoercionPathType pathtype;
 	Oid			funcId;
-	bool		arrayCoerce;
 
 	/*
 	 * A negative typmod is assumed to mean that no coercion is wanted. Also,
@@ -577,14 +580,15 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 	if (targetTypMod < 0 || targetTypMod == exprTypmod(node))
 		return node;
 
-	if (find_typmod_coercion_function(targetTypeId,
-									  &funcId, &arrayCoerce))
+	pathtype = find_typmod_coercion_function(targetTypeId, &funcId);
+
+	if (pathtype != COERCION_PATH_NONE)
 	{
 		/* Suppress display of nested coercion steps */
 		if (hideInputCoercion)
 			hide_coercion_node(node);
 
-		node = build_coercion_expression(node, funcId, arrayCoerce,
+		node = build_coercion_expression(node, pathtype, funcId,
 										 targetTypeId, targetTypMod,
 										 cformat, isExplicit);
 	}
@@ -609,6 +613,8 @@ hide_coercion_node(Node *node)
 		((FuncExpr *) node)->funcformat = COERCE_IMPLICIT_CAST;
 	else if (IsA(node, RelabelType))
 		((RelabelType *) node)->relabelformat = COERCE_IMPLICIT_CAST;
+	else if (IsA(node, CoerceViaIO))
+		((CoerceViaIO *) node)->coerceformat = COERCE_IMPLICIT_CAST;
 	else if (IsA(node, ArrayCoerceExpr))
 		((ArrayCoerceExpr *) node)->coerceformat = COERCE_IMPLICIT_CAST;
 	else if (IsA(node, ConvertRowtypeExpr))
@@ -630,7 +636,8 @@ hide_coercion_node(Node *node)
  */
 static Node *
 build_coercion_expression(Node *node,
-						  Oid funcId, bool arrayCoerce,
+						  CoercionPathType pathtype,
+						  Oid funcId,
 						  Oid targetTypeId, int32 targetTypMod,
 						  CoercionForm cformat, bool isExplicit)
 {
@@ -651,7 +658,7 @@ build_coercion_expression(Node *node,
 		/*
 		 * These Asserts essentially check that function is a legal coercion
 		 * function.  We can't make the seemingly obvious tests on prorettype
-		 * and proargtypes[0], even in the non-arrayCoerce case, because of
+		 * and proargtypes[0], even in the COERCION_PATH_FUNC case, because of
 		 * various binary-compatibility cases.
 		 */
 		/* Assert(targetTypeId == procstruct->prorettype); */
@@ -666,26 +673,7 @@ build_coercion_expression(Node *node,
 		ReleaseSysCache(tp);
 	}
 
-	if (arrayCoerce)
-	{
-		/* We need to build an ArrayCoerceExpr */
-		ArrayCoerceExpr *acoerce = makeNode(ArrayCoerceExpr);
-
-		acoerce->arg = (Expr *) node;
-		acoerce->elemfuncid = funcId;
-		acoerce->resulttype = targetTypeId;
-		/*
-		 * Label the output as having a particular typmod only if we are
-		 * really invoking a length-coercion function, ie one with more
-		 * than one argument.
-		 */
-		acoerce->resulttypmod = (nargs >= 2) ? targetTypMod : -1;
-		acoerce->isExplicit = isExplicit;
-		acoerce->coerceformat = cformat;
-
-		return (Node *) acoerce;
-	}
-	else
+	if (pathtype == COERCION_PATH_FUNC)
 	{
 		/* We build an ordinary FuncExpr with special arguments */
 		List	   *args;
@@ -722,6 +710,44 @@ build_coercion_expression(Node *node,
 		}
 
 		return (Node *) makeFuncExpr(funcId, targetTypeId, args, cformat);
+	}
+	else if (pathtype == COERCION_PATH_ARRAYCOERCE)
+	{
+		/* We need to build an ArrayCoerceExpr */
+		ArrayCoerceExpr *acoerce = makeNode(ArrayCoerceExpr);
+
+		acoerce->arg = (Expr *) node;
+		acoerce->elemfuncid = funcId;
+		acoerce->resulttype = targetTypeId;
+		/*
+		 * Label the output as having a particular typmod only if we are
+		 * really invoking a length-coercion function, ie one with more
+		 * than one argument.
+		 */
+		acoerce->resulttypmod = (nargs >= 2) ? targetTypMod : -1;
+		acoerce->isExplicit = isExplicit;
+		acoerce->coerceformat = cformat;
+
+		return (Node *) acoerce;
+	}
+	else if (pathtype == COERCION_PATH_COERCEVIAIO)
+	{
+		/* We need to build a CoerceViaIO node */
+		CoerceViaIO *iocoerce = makeNode(CoerceViaIO);
+
+		Assert(!OidIsValid(funcId));
+
+		iocoerce->arg = (Expr *) node;
+		iocoerce->resulttype = targetTypeId;
+		iocoerce->coerceformat = cformat;
+
+		return (Node *) iocoerce;
+	}
+	else
+	{
+		elog(ERROR, "unsupported pathtype %d in build_coercion_expression",
+			 (int) pathtype);
+		return NULL;			/* keep compiler quiet */
 	}
 }
 
@@ -1711,29 +1737,38 @@ IsBinaryCoercible(Oid srctype, Oid targettype)
  * find_coercion_pathway
  *		Look for a coercion pathway between two types.
  *
+ * Currently, this deals only with scalar-type cases; it does not consider
+ * polymorphic types nor casts between composite types.  (Perhaps fold
+ * those in someday?)
+ *
  * ccontext determines the set of available casts.
  *
- * If we find a suitable entry in pg_cast, return TRUE, and set *funcid
- * to the castfunc value, which may be InvalidOid for a binary-compatible
- * coercion.  Also, arrayCoerce is set to indicate whether this is a plain
- * or array coercion (if true, funcid actually shows how to coerce the
- * array elements).
+ * The possible result codes are:
+ *	COERCION_PATH_NONE: failed to find any coercion pathway
+ *				*funcid is set to InvalidOid
+ *	COERCION_PATH_FUNC: apply the coercion function returned in *funcid
+ *	COERCION_PATH_RELABELTYPE: binary-compatible cast, no function needed
+ *				*funcid is set to InvalidOid
+ *	COERCION_PATH_ARRAYCOERCE: need an ArrayCoerceExpr node
+ *				*funcid is set to the element cast function, or InvalidOid
+ *				if the array elements are binary-compatible
+ *	COERCION_PATH_COERCEVIAIO: need a CoerceViaIO node
+ *				*funcid is set to InvalidOid
  *
- * NOTE: *funcid == InvalidOid does not necessarily mean that no work is
+ * Note: COERCION_PATH_RELABELTYPE does not necessarily mean that no work is
  * needed to do the coercion; if the target is a domain then we may need to
  * apply domain constraint checking.  If you want to check for a zero-effort
  * conversion then use IsBinaryCoercible().
  */
-bool
+CoercionPathType
 find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 					  CoercionContext ccontext,
-					  Oid *funcid, bool *arrayCoerce)
+					  Oid *funcid)
 {
-	bool		result = false;
+	CoercionPathType result = COERCION_PATH_NONE;
 	HeapTuple	tuple;
 
 	*funcid = InvalidOid;
-	*arrayCoerce = false;
 
 	/* Perhaps the types are domains; if so, look at their base types */
 	if (OidIsValid(sourceTypeId))
@@ -1743,7 +1778,7 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 
 	/* Domains are always coercible to and from their base type */
 	if (sourceTypeId == targetTypeId)
-		return true;
+		return COERCION_PATH_RELABELTYPE;
 
 	/* Look in pg_cast */
 	tuple = SearchSysCache(CASTSOURCETARGET,
@@ -1779,7 +1814,10 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		if (ccontext >= castcontext)
 		{
 			*funcid = castForm->castfunc;
-			result = true;
+			if (OidIsValid(*funcid))
+				result = COERCION_PATH_FUNC;
+			else
+				result = COERCION_PATH_RELABELTYPE;
 		}
 
 		ReleaseSysCache(tuple);
@@ -1789,7 +1827,7 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		/*
 		 * If there's no pg_cast entry, perhaps we are dealing with a pair of
 		 * array types.  If so, and if the element types have a suitable cast,
-		 * report that with arrayCoerce = true.
+		 * report that we can coerce with an ArrayCoerceExpr.
 		 *
 		 * Hack: disallow coercions to oidvector and int2vector, which
 		 * otherwise tend to capture coercions that should go to "real" array
@@ -1798,25 +1836,30 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		 * guaranteed to produce an output that meets the restrictions of
 		 * these datatypes, such as being 1-dimensional.)
 		 */
-		Oid			targetElemType;
-		Oid			sourceElemType;
-		Oid			elemfuncid;
-		bool		elemarraycoerce;
-
-		if (targetTypeId == OIDVECTOROID || targetTypeId == INT2VECTOROID)
-			return false;
-
-		if ((targetElemType = get_element_type(targetTypeId)) != InvalidOid &&
-			(sourceElemType = get_element_type(sourceTypeId)) != InvalidOid)
+		if (targetTypeId != OIDVECTOROID && targetTypeId != INT2VECTOROID)
 		{
-			if (find_coercion_pathway(targetElemType, sourceElemType,
-									  ccontext,
-									  &elemfuncid, &elemarraycoerce) &&
-				!elemarraycoerce)
+			Oid			targetElem;
+			Oid			sourceElem;
+
+			if ((targetElem = get_element_type(targetTypeId)) != InvalidOid &&
+				(sourceElem = get_element_type(sourceTypeId)) != InvalidOid)
 			{
-				*funcid = elemfuncid;
-				*arrayCoerce = true;
-				result = true;
+				CoercionPathType elempathtype;
+				Oid			elemfuncid;
+
+				elempathtype = find_coercion_pathway(targetElem,
+													 sourceElem,
+													 ccontext,
+													 &elemfuncid);
+				if (elempathtype != COERCION_PATH_NONE &&
+					elempathtype != COERCION_PATH_ARRAYCOERCE)
+				{
+					*funcid = elemfuncid;
+					if (elempathtype == COERCION_PATH_COERCEVIAIO)
+						result = COERCION_PATH_COERCEVIAIO;
+					else
+						result = COERCION_PATH_ARRAYCOERCE;
+				}
 			}
 		}
 
@@ -1826,14 +1869,39 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
 		 * mistakenly conclude that ANYENUM-to-some-enum-type is a
 		 * trivial cast.
 		 */
-		if (!result)
+		if (result == COERCION_PATH_NONE)
 		{
 			if (type_is_enum(sourceTypeId))
 				result = find_coercion_pathway(targetTypeId, ANYENUMOID,
-											   ccontext, funcid, arrayCoerce);
+											   ccontext, funcid);
 			else if (sourceTypeId != ANYENUMOID && type_is_enum(targetTypeId))
 				result = find_coercion_pathway(ANYENUMOID, sourceTypeId,
-											   ccontext, funcid, arrayCoerce);
+											   ccontext, funcid);
+		}
+
+		/*
+		 * If we still haven't found a possibility, consider automatic casting
+		 * using I/O functions.  We allow assignment casts to textual types
+		 * and explicit casts from textual types to be handled this way.
+		 * (The CoerceViaIO mechanism is a lot more general than that, but
+		 * this is all we want to allow in the absence of a pg_cast entry.)
+		 * It would probably be better to insist on explicit casts in both
+		 * directions, but this is a compromise to preserve something of the
+		 * pre-8.3 behavior that many types had implicit (yipes!) casts to
+		 * text.
+		 */
+		if (result == COERCION_PATH_NONE)
+		{
+			if (ccontext >= COERCION_ASSIGNMENT &&
+				(targetTypeId == TEXTOID ||
+				 targetTypeId == VARCHAROID ||
+				 targetTypeId == BPCHAROID))
+				result = COERCION_PATH_COERCEVIAIO;
+			else if (ccontext >= COERCION_EXPLICIT &&
+					 (sourceTypeId == TEXTOID ||
+					  sourceTypeId == VARCHAROID ||
+					  sourceTypeId == BPCHAROID))
+				result = COERCION_PATH_COERCEVIAIO;
 		}
 	}
 
@@ -1851,19 +1919,26 @@ find_coercion_pathway(Oid targetTypeId, Oid sourceTypeId,
  *
  * If the given type is a varlena array type, we do not look for a coercion
  * function associated directly with the array type, but instead look for
- * one associated with the element type.  If one exists, we report it with
- * *arrayCoerce set to true.
+ * one associated with the element type.  An ArrayCoerceExpr node must be
+ * used to apply such a function.
+ *
+ * We use the same result enum as find_coercion_pathway, but the only possible
+ * result codes are:
+ *	COERCION_PATH_NONE: no length coercion needed
+ *	COERCION_PATH_FUNC: apply the function returned in *funcid
+ *	COERCION_PATH_ARRAYCOERCE: apply the function using ArrayCoerceExpr
  */
-bool
+CoercionPathType
 find_typmod_coercion_function(Oid typeId,
-							  Oid *funcid, bool *arrayCoerce)
+							  Oid *funcid)
 {
+	CoercionPathType result;
 	Type		targetType;
 	Form_pg_type typeForm;
 	HeapTuple	tuple;
 
 	*funcid = InvalidOid;
-	*arrayCoerce = false;
+	result = COERCION_PATH_FUNC;
 
 	targetType = typeidType(typeId);
 	typeForm = (Form_pg_type) GETSTRUCT(targetType);
@@ -1875,7 +1950,7 @@ find_typmod_coercion_function(Oid typeId,
 	{
 		/* Yes, switch our attention to the element type */
 		typeId = typeForm->typelem;
-		*arrayCoerce = true;
+		result = COERCION_PATH_ARRAYCOERCE;
 	}
 	ReleaseSysCache(targetType);
 
@@ -1893,5 +1968,8 @@ find_typmod_coercion_function(Oid typeId,
 		ReleaseSysCache(tuple);
 	}
 
-	return OidIsValid(*funcid);
+	if (!OidIsValid(*funcid))
+		result = COERCION_PATH_NONE;
+
+	return result;
 }

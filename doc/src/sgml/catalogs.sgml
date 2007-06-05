@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.152 2007/05/15 19:13:54 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.153 2007/06/05 21:31:03 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1358,9 +1358,20 @@
   </indexterm>
 
   <para>
-   The catalog <structname>pg_cast</structname> stores data type conversion paths,
-   both built-in paths and those defined with
+   The catalog <structname>pg_cast</structname> stores data type conversion
+   paths, both built-in paths and those defined with
    <xref linkend="sql-createcast" endterm="sql-createcast-title">.
+  </para>
+
+  <para>
+   It should be noted that <structname>pg_cast</structname> does not represent
+   every type conversion that the system knows how to perform; only those that
+   cannot be deduced from some generic rule.  For example, casting between a
+   domain and its base type is not explicitly represented in
+   <structname>pg_cast</structname>.  Another important exception is that
+   <quote>I/O conversion casts</>, those performed using a data type's own
+   I/O functions to convert to or from <type>text</> or other string types,
+   are not explicitly represented in <structname>pg_cast</structname>.
   </para>
 
   <table>

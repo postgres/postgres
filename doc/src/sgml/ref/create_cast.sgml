@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.25 2007/02/01 00:28:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/create_cast.sgml,v 1.26 2007/06/05 21:31:04 tgl Exp $ -->
 
 <refentry id="SQL-CREATECAST">
  <refmeta>
@@ -35,11 +35,11 @@ CREATE CAST (<replaceable>sourcetype</replaceable> AS <replaceable>targettype</r
    specifies how to perform a conversion between
    two data types.  For example:
 <programlisting>
-SELECT CAST(42 AS text);
+SELECT CAST(42 AS float8);
 </programlisting>
-   converts the integer constant 42 to type <type>text</type> by
+   converts the integer constant 42 to type <type>float8</type> by
    invoking a previously specified function, in this case
-   <literal>text(int4)</>. (If no suitable cast has been defined, the
+   <literal>float8(int4)</>. (If no suitable cast has been defined, the
    conversion fails.)
   </para>
 
@@ -69,8 +69,7 @@ SELECT CAST(42 AS text);
 INSERT INTO foo (f1) VALUES (42);
 </programlisting>
    will be allowed if the cast from type <type>integer</type> to type
-   <type>text</type> is marked <literal>AS ASSIGNMENT</>, otherwise
-   not.
+   <type>text</type> is marked <literal>AS ASSIGNMENT</>, otherwise not.
    (We generally use the term <firstterm>assignment
    cast</firstterm> to describe this kind of cast.)
   </para>
@@ -78,19 +77,37 @@ INSERT INTO foo (f1) VALUES (42);
   <para>
    If the cast is marked <literal>AS IMPLICIT</> then it can be invoked
    implicitly in any context, whether assignment or internally in an
-   expression.  For example, since <literal>||</> takes <type>text</>
-   operands,
-<programlisting>
-SELECT 'The time is ' || now();
-</programlisting>
-   will be allowed only if the cast from type <type>timestamp</> to
-   <type>text</type> is marked <literal>AS IMPLICIT</>.  Otherwise it
-   will be necessary to write the cast explicitly, for example:
-<programlisting>
-SELECT 'The time is ' || CAST(now() AS text);
-</programlisting>
-   (We generally use the term <firstterm>implicit
+   expression.  (We generally use the term <firstterm>implicit
    cast</firstterm> to describe this kind of cast.)
+   For example, consider this query:
+<programlisting>
+SELECT 2 + 4.0;
+</programlisting>
+   The parser initially marks the constants as being of type <type>integer</>
+   and <type>numeric</> respectively.  There is no <type>integer</>
+   <literal>+</> <type>numeric</> operator in the system catalogs,
+   but there is a <type>numeric</> <literal>+</> <type>numeric</> operator.
+   The query will therefore succeed if a cast from <type>integer</> to
+   <type>numeric</> is available and is marked <literal>AS IMPLICIT</> &mdash;
+   which in fact it is.  The parser will apply the implicit cast and resolve
+   the query as if it had been written
+<programlisting>
+SELECT CAST ( 2 AS numeric ) + 4.0;
+</programlisting>
+  </para>
+
+  <para>
+   Now, the catalogs also provide a cast from <type>numeric</> to
+   <type>integer</>.  If that cast were marked <literal>AS IMPLICIT</> &mdash;
+   which it is not &mdash; then the parser would be faced with choosing
+   between the above interpretation and the alternative of casting the
+   <type>numeric</> constant to <type>integer</> and applying the
+   <type>integer</> <literal>+</> <type>integer</> operator.  Lacking any
+   knowledge of which choice to prefer, it would give up and declare the
+   query ambiguous.  The fact that only one of the two casts is
+   implicit is the way in which we teach the parser to prefer resolution
+   of a mixed <type>numeric</>-and-<type>integer</> expression as
+   <type>numeric</>; there is no built-in knowledge about that.
   </para>
 
   <para>
@@ -208,9 +225,7 @@ SELECT 'The time is ' || CAST(now() AS text);
    argument.  This is used to represent type-specific length coercion
    functions in the system catalogs.  The named function is used to
    coerce a value of the type to the type modifier value given by its
-   second argument.  (Since the grammar presently permits only certain
-   built-in data types to have type modifiers, this feature is of no
-   use for user-defined target types, but we mention it for completeness.)
+   second argument.
   </para>
 
   <para>
@@ -235,6 +250,32 @@ SELECT 'The time is ' || CAST(now() AS text);
   <para>
    Remember that if you want to be able to convert types both ways you
    need to declare casts both ways explicitly.
+  </para>
+
+ <indexterm zone="sql-createcast">
+  <primary>cast</primary>
+  <secondary>I/O conversion</secondary>
+ </indexterm>
+
+  <para>
+   It is normally not necessary to create casts between user-defined types
+   and the standard string types (<type>text</>, <type>varchar</>, and
+   <type>char(<replaceable>n</>)</type>).  <productname>PostgreSQL</> will
+   automatically handle a cast to a string type by invoking the other
+   type's output function, or conversely handle a cast from a string type
+   by invoking the other type's input function.  These
+   automatically-provided casts are known as <firstterm>I/O conversion
+   casts</>.  I/O conversion casts to string types are treated as
+   assignment casts, while I/O conversion casts from string types are
+   explicit-only.  You can override this behavior by declaring your own
+   cast to replace an I/O conversion cast, but usually the only reason to
+   do so is if you want the conversion to be more easily invokable than the
+   standard assignment-only or explicit-only setting.  Another possible
+   reason is that you want the conversion to behave differently from the
+   type's I/O function; but that is sufficiently surprising that you
+   should think twice about whether it's a good idea.  (A small number of
+   the built-in types do indeed have different behaviors for conversions,
+   mostly because of requirements of the SQL standard.)
   </para>
 
   <para>
@@ -265,16 +306,20 @@ SELECT 'The time is ' || CAST(now() AS text);
 
   <note>
    <para>
-   There is one small lie in the preceding paragraph: there is still one
-   case in which <structname>pg_cast</> will be used to resolve the
-   meaning of an apparent function call.  If a
-   function call <replaceable>name</>(<replaceable>x</>) matches no
-   actual function, but <replaceable>name</> is the name of a data type
-   and <structname>pg_cast</> shows a binary-compatible cast to this
-   type from the type of <replaceable>x</>, then the call will be construed
-   as an explicit cast.  This exception is made so that binary-compatible
-   casts can be invoked using functional syntax, even though they lack
-   any function.
+    Actually the preceding paragraph is an oversimplification: there are
+    two cases in which a function-call construct will be treated as a cast
+    request without having matched it to an actual function.
+    If a function call <replaceable>name</>(<replaceable>x</>) does not
+    exactly match any existing function, but <replaceable>name</> is the name
+    of a data type and <structname>pg_cast</> provides a binary-compatible cast
+    to this type from the type of <replaceable>x</>, then the call will be
+    construed as a binary-compatible cast.  This exception is made so that
+    binary-compatible casts can be invoked using functional syntax, even
+    though they lack any function.  Likewise, if there is no
+    <structname>pg_cast</> entry but the cast would be to or from a string
+    type, the call will be construed as an I/O conversion cast.  This
+    exception allows I/O conversion casts to be invoked using functional
+    syntax.
    </para>
   </note>
  </refsect1>
@@ -284,10 +329,10 @@ SELECT 'The time is ' || CAST(now() AS text);
   <title>Examples</title>
 
   <para>
-   To create a cast from type <type>text</type> to type
-   <type>int4</type> using the function <literal>int4(text)</literal>:
+   To create a cast from type <type>bigint</type> to type
+   <type>int4</type> using the function <literal>int4(bigint)</literal>:
 <programlisting>
-CREATE CAST (text AS int4) WITH FUNCTION int4(text);
+CREATE CAST (bigint AS int4) WITH FUNCTION int4(bigint);
 </programlisting>
    (This cast is already predefined in the system.)
   </para>

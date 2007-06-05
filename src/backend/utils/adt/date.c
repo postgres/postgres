@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.131 2007/06/02 16:41:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.132 2007/06/05 21:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -873,65 +873,6 @@ abstime_date(PG_FUNCTION_ARGS)
 }
 
 
-/* date_text()
- * Convert date to text data type.
- */
-Datum
-date_text(PG_FUNCTION_ARGS)
-{
-	/* Input is a Date, but may as well leave it in Datum form */
-	Datum		date = PG_GETARG_DATUM(0);
-	text	   *result;
-	char	   *str;
-	int			len;
-
-	str = DatumGetCString(DirectFunctionCall1(date_out, date));
-
-	len = strlen(str) + VARHDRSZ;
-
-	result = palloc(len);
-
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), str, (len - VARHDRSZ));
-
-	pfree(str);
-
-	PG_RETURN_TEXT_P(result);
-}
-
-
-/* text_date()
- * Convert text string to date.
- * Text type is not null terminated, so use temporary string
- *	then call the standard input routine.
- */
-Datum
-text_date(PG_FUNCTION_ARGS)
-{
-	text	   *str = PG_GETARG_TEXT_P(0);
-	int			i;
-	char	   *sp,
-			   *dp,
-				dstr[MAXDATELEN + 1];
-
-	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for type date: \"%s\"",
-						DatumGetCString(DirectFunctionCall1(textout,
-													PointerGetDatum(str))))));
-	
-	sp = VARDATA(str);
-	dp = dstr;
-	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
-		*dp++ = *sp++;
-	*dp = '\0';
-
-	return DirectFunctionCall1(date_in,
-							   CStringGetDatum(dstr));
-}
-
-
 /*****************************************************************************
  *	 Time ADT
  *****************************************************************************/
@@ -1616,62 +1557,6 @@ time_mi_interval(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMEADT(result);
 }
 
-
-/* time_text()
- * Convert time to text data type.
- */
-Datum
-time_text(PG_FUNCTION_ARGS)
-{
-	/* Input is a Time, but may as well leave it in Datum form */
-	Datum		time = PG_GETARG_DATUM(0);
-	text	   *result;
-	char	   *str;
-	int			len;
-
-	str = DatumGetCString(DirectFunctionCall1(time_out, time));
-
-	len = strlen(str) + VARHDRSZ;
-
-	result = palloc(len);
-
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), str, len - VARHDRSZ);
-
-	pfree(str);
-
-	PG_RETURN_TEXT_P(result);
-}
-
-
-/* text_time()
- * Convert text string to time.
- * Text type is not null terminated, so use temporary string
- *	then call the standard input routine.
- */
-Datum
-text_time(PG_FUNCTION_ARGS)
-{
-	text	   	*str = PG_GETARG_TEXT_P(0);
-	char 		 dstr[MAXDATELEN + 1];
-	size_t 		 len;
-
-	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-				 errmsg("invalid input syntax for type time: \"%s\"",
-						DatumGetCString(DirectFunctionCall1(textout, 
-													PointerGetDatum(str))))));
-
-	len = VARSIZE(str) - VARHDRSZ;
-	memcpy(dstr, VARDATA(str), len); 
-	dstr[len] = '\0';
-
-	return DirectFunctionCall3(time_in,
-							   CStringGetDatum(dstr),
-							   ObjectIdGetDatum(InvalidOid),
-							   Int32GetDatum(-1));
-}
 
 /* time_part()
  * Extract specified field from time type.
@@ -2399,66 +2284,6 @@ datetimetz_timestamptz(PG_FUNCTION_ARGS)
 	PG_RETURN_TIMESTAMP(result);
 }
 
-
-/* timetz_text()
- * Convert timetz to text data type.
- */
-Datum
-timetz_text(PG_FUNCTION_ARGS)
-{
-	/* Input is a Timetz, but may as well leave it in Datum form */
-	Datum		timetz = PG_GETARG_DATUM(0);
-	text	   *result;
-	char	   *str;
-	int			len;
-
-	str = DatumGetCString(DirectFunctionCall1(timetz_out, timetz));
-
-	len = strlen(str) + VARHDRSZ;
-
-	result = palloc(len);
-
-	SET_VARSIZE(result, len);
-	memcpy(VARDATA(result), str, (len - VARHDRSZ));
-
-	pfree(str);
-
-	PG_RETURN_TEXT_P(result);
-}
-
-
-/* text_timetz()
- * Convert text string to timetz.
- * Text type is not null terminated, so use temporary string
- *	then call the standard input routine.
- */
-Datum
-text_timetz(PG_FUNCTION_ARGS)
-{
-	text	   *str = PG_GETARG_TEXT_P(0);
-	int			i;
-	char	   *sp,
-			   *dp,
-				dstr[MAXDATELEN + 1];
-
-	if (VARSIZE(str) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
-		  errmsg("invalid input syntax for type time with time zone: \"%s\"",
-				 DatumGetCString(DirectFunctionCall1(textout, 
-													 PointerGetDatum(str))))));
-
-	sp = VARDATA(str);
-	dp = dstr;
-	for (i = 0; i < (VARSIZE(str) - VARHDRSZ); i++)
-		*dp++ = *sp++;
-	*dp = '\0';
-
-	return DirectFunctionCall3(timetz_in,
-							   CStringGetDatum(dstr),
-							   ObjectIdGetDatum(InvalidOid),
-							   Int32GetDatum(-1));
-}
 
 /* timetz_part()
  * Extract specified field from time type.

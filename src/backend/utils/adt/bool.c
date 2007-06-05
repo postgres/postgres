@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.39 2007/06/01 23:40:18 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/bool.c,v 1.40 2007/06/05 21:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,21 +143,10 @@ boolsend(PG_FUNCTION_ARGS)
 }
 
 /*
- *	    textbool			- cast function for text => bool
- */
-Datum
-textbool(PG_FUNCTION_ARGS)
-{
-	Datum 		 in_text = PG_GETARG_DATUM(0);
-	char 		*str;
-
-	str = DatumGetCString(DirectFunctionCall1(textout, in_text));
-
-	PG_RETURN_DATUM(DirectFunctionCall1(boolin, CStringGetDatum(str)));
-}
-
-/*
  *	    booltext			- cast function for bool => text
+ *
+ * We need this because it's different from the behavior of boolout();
+ * this function follows the SQL-spec result (except for producing lower case)
  */
 Datum
 booltext(PG_FUNCTION_ARGS)

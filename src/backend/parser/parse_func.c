@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.195 2007/03/27 23:21:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.196 2007/06/05 21:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	if (fdresult == FUNCDETAIL_COERCION)
 	{
 		/*
-		 * We can do it as a trivial coercion. coerce_type can handle these
+		 * We interpreted it as a type coercion. coerce_type can handle these
 		 * cases, so why duplicate code...
 		 */
 		return coerce_type(pstate, linitial(fargs),
@@ -669,7 +669,7 @@ func_select_candidate(int nargs,
  *	(exact match) is as quick as possible.
  *
  * If an exact match isn't found:
- *	1) check for possible interpretation as a trivial type coercion
+ *	1) check for possible interpretation as a type coercion request
  *	2) get a vector of all possible input arg type arrays constructed
  *	   from the superclasses of the original input arg types
  *	3) get a list of all possible argument type arrays to the function
@@ -720,29 +720,35 @@ func_get_detail(List *funcname,
 		 * If we didn't find an exact match, next consider the possibility
 		 * that this is really a type-coercion request: a single-argument
 		 * function call where the function name is a type name.  If so, and
-		 * if we can do the coercion trivially (no run-time function call
-		 * needed), then go ahead and treat the "function call" as a coercion.
+		 * if the coercion path is RELABELTYPE or COERCEVIAIO, then go ahead
+		 * and treat the "function call" as a coercion.
+		 *
 		 * This interpretation needs to be given higher priority than
 		 * interpretations involving a type coercion followed by a function
 		 * call, otherwise we can produce surprising results. For example, we
-		 * want "text(varchar)" to be interpreted as a trivial coercion, not
+		 * want "text(varchar)" to be interpreted as a simple coercion, not
 		 * as "text(name(varchar))" which the code below this point is
 		 * entirely capable of selecting.
 		 *
-		 * "Trivial" coercions are ones that involve binary-compatible types
-		 * and ones that are coercing a previously-unknown-type literal
-		 * constant to a specific type.
+		 * We also treat a coercion of a previously-unknown-type literal
+		 * constant to a specific type this way.
 		 *
-		 * The reason we can restrict our check to binary-compatible coercions
-		 * here is that we expect non-binary-compatible coercions to have an
-		 * implementation function named after the target type. That function
-		 * will be found by normal lookup if appropriate.
+		 * The reason we reject COERCION_PATH_FUNC here is that we expect the
+		 * cast implementation function to be named after the target type.
+		 * Thus the function will be found by normal lookup if appropriate.
 		 *
-		 * NB: it's important that this code stays in sync with what
-		 * coerce_type can do, because the caller will try to apply
-		 * coerce_type if we return FUNCDETAIL_COERCION.  If we return that
-		 * result for something coerce_type can't handle, we'll cause infinite
-		 * recursion between this module and coerce_type!
+		 * The reason we reject COERCION_PATH_ARRAYCOERCE is mainly that
+		 * you can't write "foo[] (something)" as a function call.  In theory
+		 * someone might want to invoke it as "_foo (something)" but we have
+		 * never supported that historically, so we can insist that people
+		 * write it as a normal cast instead.  Lack of historical support is
+		 * also the reason for not considering composite-type casts here.
+		 *
+		 * NB: it's important that this code does not exceed what coerce_type
+		 * can do, because the caller will try to apply coerce_type if we
+		 * return FUNCDETAIL_COERCION.  If we return that result for something
+		 * coerce_type can't handle, we'll cause infinite recursion between
+		 * this module and coerce_type!
 		 */
 		if (nargs == 1 && fargs != NIL)
 		{
@@ -755,16 +761,28 @@ func_get_detail(List *funcname,
 			{
 				Oid			sourceType = argtypes[0];
 				Node	   *arg1 = linitial(fargs);
-				Oid			cfuncid;
-				bool		arrayCoerce;
+				bool		iscoercion;
 
-				if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
-					(find_coercion_pathway(targetType, sourceType,
-										   COERCION_EXPLICIT,
-										   &cfuncid, &arrayCoerce) &&
-					 cfuncid == InvalidOid && !arrayCoerce))
+				if (sourceType == UNKNOWNOID && IsA(arg1, Const))
 				{
-					/* Yup, it's a trivial type coercion */
+					/* always treat typename('literal') as coercion */
+					iscoercion = true;
+				}
+				else
+				{
+					CoercionPathType cpathtype;
+					Oid			cfuncid;
+
+					cpathtype = find_coercion_pathway(targetType, sourceType,
+													  COERCION_EXPLICIT,
+													  &cfuncid);
+					iscoercion = (cpathtype == COERCION_PATH_RELABELTYPE ||
+								  cpathtype == COERCION_PATH_COERCEVIAIO);
+				}
+
+				if (iscoercion)
+				{
+					/* Treat it as a type coercion */
 					*funcid = InvalidOid;
 					*rettype = targetType;
 					*retset = false;

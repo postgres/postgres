@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.129 2007/03/27 23:21:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.130 2007/06/05 21:31:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,6 +549,24 @@ typedef struct RelabelType
 	int32		resulttypmod;	/* output typmod (usually -1) */
 	CoercionForm relabelformat; /* how to display this node */
 } RelabelType;
+
+/* ----------------
+ * CoerceViaIO
+ *
+ * CoerceViaIO represents a type coercion between two types whose textual
+ * representations are compatible, implemented by invoking the source type's
+ * typoutput function then the destination type's typinput function.
+ * ----------------
+ */
+
+typedef struct CoerceViaIO
+{
+	Expr		xpr;
+	Expr	   *arg;			/* input expression */
+	Oid			resulttype;		/* output type of coercion */
+	/* output typmod is not stored, but is presumed -1 */
+	CoercionForm coerceformat;	/* how to display this node */
+} CoerceViaIO;
 
 /* ----------------
  * ArrayCoerceExpr

@@ -142,7 +142,7 @@ SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e'
 -- E021-11 position expression
 SELECT POSITION('4' IN '1234567890') = '4' AS "4";
 
-SELECT POSITION(5 IN '1234567890') = '5' AS "5";
+SELECT POSITION('5' IN '1234567890') = '5' AS "5";
 
 -- T312 character overlay function
 SELECT OVERLAY('abcdef' PLACING '45' FROM 4) AS "abc45f";

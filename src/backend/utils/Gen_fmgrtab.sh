@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.35 2007/01/22 01:35:21 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.36 2007/06/05 21:31:06 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -127,7 +127,7 @@ cat > "$$-$OIDSFILE" <<FuNkYfMgRsTuFf
  *	NOTE: macros are named after the prosrc value, ie the actual C name
  *	of the implementing function, not the proname which may be overloaded.
  *	For example, we want to be able to assign different macro names to both
- *	char_text() and int4_text() even though these both appear with proname
+ *	char_text() and name_text() even though these both appear with proname
  *	'text'.  If the same C function appears in more than one pg_proc entry,
  *	its equivalent macro will be defined with the lowest OID among those
  *	entries.

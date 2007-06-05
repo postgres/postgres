@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.175 2007/05/21 17:57:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.176 2007/06/05 21:31:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -636,6 +636,19 @@ typedef struct FieldStoreState
 	List	   *newvals;		/* new value(s) for field(s) */
 	TupleDesc	argdesc;		/* tupdesc for most recent input */
 } FieldStoreState;
+
+/* ----------------
+ *		CoerceViaIOState node
+ * ----------------
+ */
+typedef struct CoerceViaIOState
+{
+	ExprState	xprstate;
+	ExprState  *arg;			/* input expression */
+	FmgrInfo	outfunc;		/* lookup info for source output function */
+	FmgrInfo	infunc;			/* lookup info for result input function */
+	Oid			intypioparam;	/* argument needed for input function */
+} CoerceViaIOState;
 
 /* ----------------
  *		ArrayCoerceExprState node

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.196 2007/04/29 01:21:09 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.197 2007/06/05 21:31:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4609,6 +4609,9 @@ exec_simple_check_node(Node *node)
 
 		case T_RelabelType:
 			return exec_simple_check_node((Node *) ((RelabelType *) node)->arg);
+
+		case T_CoerceViaIO:
+			return exec_simple_check_node((Node *) ((CoerceViaIO *) node)->arg);
 
 		case T_ArrayCoerceExpr:
 			return exec_simple_check_node((Node *) ((ArrayCoerceExpr *) node)->arg);

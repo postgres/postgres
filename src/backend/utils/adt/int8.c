@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.65 2007/02/27 23:48:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.66 2007/06/05 21:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1135,48 +1135,6 @@ oidtoi8(PG_FUNCTION_ARGS)
 	Oid			arg = PG_GETARG_OID(0);
 
 	PG_RETURN_INT64((int64) arg);
-}
-
-Datum
-text_int8(PG_FUNCTION_ARGS)
-{
-	text	   *str = PG_GETARG_TEXT_P(0);
-	int			len;
-	char	   *s;
-	Datum		result;
-
-	len = (VARSIZE(str) - VARHDRSZ);
-	s = palloc(len + 1);
-	memcpy(s, VARDATA(str), len);
-	*(s + len) = '\0';
-
-	result = DirectFunctionCall1(int8in, CStringGetDatum(s));
-
-	pfree(s);
-
-	return result;
-}
-
-Datum
-int8_text(PG_FUNCTION_ARGS)
-{
-	/* arg is int64, but easier to leave it as Datum */
-	Datum		arg = PG_GETARG_DATUM(0);
-	char	   *s;
-	int			len;
-	text	   *result;
-
-	s = DatumGetCString(DirectFunctionCall1(int8out, arg));
-	len = strlen(s);
-
-	result = (text *) palloc(VARHDRSZ + len);
-
-	SET_VARSIZE(result, VARHDRSZ + len);
-	memcpy(VARDATA(result), s, len);
-
-	pfree(s);
-
-	PG_RETURN_TEXT_P(result);
 }
 
 /*

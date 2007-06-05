@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.206 2007/04/27 22:05:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.207 2007/06/05 21:31:04 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -585,6 +585,21 @@ _readRelabelType(void)
 }
 
 /*
+ * _readCoerceViaIO
+ */
+static CoerceViaIO *
+_readCoerceViaIO(void)
+{
+	READ_LOCALS(CoerceViaIO);
+
+	READ_NODE_FIELD(arg);
+	READ_OID_FIELD(resulttype);
+	READ_ENUM_FIELD(coerceformat, CoercionForm);
+
+	READ_DONE();
+}
+
+/*
  * _readArrayCoerceExpr
  */
 static ArrayCoerceExpr *
@@ -1042,6 +1057,8 @@ parseNodeString(void)
 		return_value = _readFieldStore();
 	else if (MATCH("RELABELTYPE", 11))
 		return_value = _readRelabelType();
+	else if (MATCH("COERCEVIAIO", 11))
+		return_value = _readCoerceViaIO();
 	else if (MATCH("ARRAYCOERCEEXPR", 15))
 		return_value = _readArrayCoerceExpr();
 	else if (MATCH("CONVERTROWTYPEEXPR", 18))

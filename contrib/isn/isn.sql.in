@@ -2,7 +2,7 @@
 --	PostgreSQL code for ISNs (ISBN, ISMN, ISSN, EAN13, UPC)
 --  Copyright (c) 2004-2006, German Mendez Bravo (Kronuz)
 --
---	$PostgreSQL: pgsql/contrib/isn/isn.sql.in,v 1.4 2006/11/24 18:44:37 tgl Exp $
+--	$PostgreSQL: pgsql/contrib/isn/isn.sql.in,v 1.5 2007/06/05 21:31:03 tgl Exp $
 --
 -- Example:
 --   create table test ( id isbn );
@@ -2966,73 +2966,6 @@ AS 'MODULE_PATHNAME', 'upc_cast_from_ean13'
 LANGUAGE 'C' IMMUTABLE STRICT;
 
 
-CREATE FUNCTION ean13(text)
-RETURNS ean13
-AS 'MODULE_PATHNAME', 'ean13_cast_from_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION isbn13(text)
-RETURNS isbn13
-AS 'MODULE_PATHNAME', 'isbn_cast_from_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION ismn13(text)
-RETURNS ismn13
-AS 'MODULE_PATHNAME', 'ismn_cast_from_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION issn13(text)
-RETURNS issn13
-AS 'MODULE_PATHNAME', 'issn_cast_from_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION isbn(text)
-RETURNS isbn
-AS 'MODULE_PATHNAME', 'isbn_cast_from_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION ismn(text)
-RETURNS ismn
-AS 'MODULE_PATHNAME', 'ismn_cast_from_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION issn(text)
-RETURNS issn
-AS 'MODULE_PATHNAME', 'issn_cast_from_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION upc(text)
-RETURNS upc
-AS 'MODULE_PATHNAME', 'upc_cast_from_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-
-
-CREATE FUNCTION text(ean13)
-RETURNS text
-AS 'MODULE_PATHNAME', 'ean13_cast_to_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION text(isbn13)
-RETURNS text
-AS 'MODULE_PATHNAME', 'ean13_cast_to_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION text(ismn13)
-RETURNS text
-AS 'MODULE_PATHNAME', 'ean13_cast_to_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION text(issn13)
-RETURNS text
-AS 'MODULE_PATHNAME', 'ean13_cast_to_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION text(isbn)
-RETURNS text
-AS 'MODULE_PATHNAME', 'isn_cast_to_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION text(ismn)
-RETURNS text
-AS 'MODULE_PATHNAME', 'isn_cast_to_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION text(issn)
-RETURNS text
-AS 'MODULE_PATHNAME', 'isn_cast_to_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-CREATE FUNCTION text(upc)
-RETURNS text
-AS 'MODULE_PATHNAME', 'isn_cast_to_text'
-LANGUAGE 'C' IMMUTABLE STRICT;
-
 CREATE CAST (ean13 AS isbn13) WITH FUNCTION isbn13(ean13);
 CREATE CAST (ean13 AS isbn) WITH FUNCTION isbn(ean13);
 CREATE CAST (ean13 AS ismn13) WITH FUNCTION ismn13(ean13);
@@ -3055,24 +2988,6 @@ CREATE CAST (ismn AS ismn13) WITHOUT FUNCTION AS ASSIGNMENT;
 CREATE CAST (ismn13 AS ismn) WITHOUT FUNCTION AS ASSIGNMENT;
 CREATE CAST (issn AS issn13) WITHOUT FUNCTION AS ASSIGNMENT;
 CREATE CAST (issn13 AS issn) WITHOUT FUNCTION AS ASSIGNMENT;
-
-CREATE CAST (text AS ean13) WITH FUNCTION ean13(text);
-CREATE CAST (text AS isbn13) WITH FUNCTION isbn13(text);
-CREATE CAST (text AS ismn13) WITH FUNCTION ismn13(text);
-CREATE CAST (text AS issn13) WITH FUNCTION issn13(text);
-CREATE CAST (text AS isbn) WITH FUNCTION isbn(text);
-CREATE CAST (text AS ismn) WITH FUNCTION ismn(text);
-CREATE CAST (text AS issn) WITH FUNCTION issn(text);
-CREATE CAST (text AS upc) WITH FUNCTION upc(text);
-
-CREATE CAST (ean13 AS text) WITH FUNCTION text(ean13);
-CREATE CAST (isbn13 AS text) WITH FUNCTION text(isbn13);
-CREATE CAST (ismn13 AS text) WITH FUNCTION text(ismn13);
-CREATE CAST (issn13 AS text) WITH FUNCTION text(issn13);
-CREATE CAST (isbn AS text) WITH FUNCTION text(isbn);
-CREATE CAST (ismn AS text) WITH FUNCTION text(ismn);
-CREATE CAST (issn AS text) WITH FUNCTION text(issn);
-CREATE CAST (upc AS text) WITH FUNCTION text(upc);
 
 --
 -- Validation stuff for lose types:

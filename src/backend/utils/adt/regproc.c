@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.100 2007/01/05 22:19:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.101 2007/06/05 21:31:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1070,6 +1070,10 @@ regtypesend(PG_FUNCTION_ARGS)
 
 /*
  * text_regclass: convert text to regclass
+ *
+ * This could be replaced by CoerceViaIO, except that we need to treat
+ * text-to-regclass as an implicit cast to support legacy forms of nextval()
+ * and related functions.
  */
 Datum
 text_regclass(PG_FUNCTION_ARGS)

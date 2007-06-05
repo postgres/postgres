@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.36 2007/01/05 22:19:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/date.h,v 1.37 2007/06/05 21:31:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,8 +133,6 @@ extern Datum date_timestamptz(PG_FUNCTION_ARGS);
 extern Datum timestamptz_date(PG_FUNCTION_ARGS);
 extern Datum datetime_timestamp(PG_FUNCTION_ARGS);
 extern Datum abstime_date(PG_FUNCTION_ARGS);
-extern Datum text_date(PG_FUNCTION_ARGS);
-extern Datum date_text(PG_FUNCTION_ARGS);
 
 extern Datum time_in(PG_FUNCTION_ARGS);
 extern Datum time_out(PG_FUNCTION_ARGS);
@@ -158,8 +156,6 @@ extern Datum timestamp_time(PG_FUNCTION_ARGS);
 extern Datum timestamptz_time(PG_FUNCTION_ARGS);
 extern Datum time_interval(PG_FUNCTION_ARGS);
 extern Datum interval_time(PG_FUNCTION_ARGS);
-extern Datum text_time(PG_FUNCTION_ARGS);
-extern Datum time_text(PG_FUNCTION_ARGS);
 extern Datum time_pl_interval(PG_FUNCTION_ARGS);
 extern Datum time_mi_interval(PG_FUNCTION_ARGS);
 extern Datum time_part(PG_FUNCTION_ARGS);
@@ -186,8 +182,6 @@ extern Datum timetz_time(PG_FUNCTION_ARGS);
 extern Datum time_timetz(PG_FUNCTION_ARGS);
 extern Datum timestamptz_timetz(PG_FUNCTION_ARGS);
 extern Datum datetimetz_timestamptz(PG_FUNCTION_ARGS);
-extern Datum text_timetz(PG_FUNCTION_ARGS);
-extern Datum timetz_text(PG_FUNCTION_ARGS);
 extern Datum timetz_part(PG_FUNCTION_ARGS);
 extern Datum timetz_zone(PG_FUNCTION_ARGS);
 extern Datum timetz_izone(PG_FUNCTION_ARGS);

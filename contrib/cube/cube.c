@@ -1,5 +1,5 @@
 /******************************************************************************
-  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.32 2007/03/07 21:21:11 teodor Exp $
+  $PostgreSQL: pgsql/contrib/cube/cube.c,v 1.33 2007/06/05 21:31:03 tgl Exp $
 
   This file contains routines that can be bound to a Postgres backend and
   called by the backend in the process of processing queries.  The calling
@@ -171,18 +171,6 @@ cube_in(PG_FUNCTION_ARGS)
 	cube_scanner_finish();
 
 	PG_RETURN_NDBOX(result);
-}
-
-/* Allow conversion from text to cube to allow input of computed strings */
-/* There may be issues with toasted data here. I don't know enough to be sure.*/
-Datum
-cube(PG_FUNCTION_ARGS)
-{
-	char	   *cstring;
-
-	cstring = DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(PG_GETARG_TEXT_P(0))));
-
-	PG_RETURN_DATUM(DirectFunctionCall1(cube_in, PointerGetDatum(cstring)));
 }
 
 
