@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.394 2007/06/05 20:00:41 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.395 2007/06/05 21:50:19 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -6270,32 +6270,27 @@ assign_defaultxactisolevel(const char *newval, bool doit, GucSource source)
 static const char *
 assign_session_replication_role(const char *newval, bool doit, GucSource source)
 {
+	int		newrole;
+
 	if (pg_strcasecmp(newval, "origin") == 0)
-	{
-		if (doit)
-		{
-			ResetPlanCache();
-			SessionReplicationRole = SESSION_REPLICATION_ROLE_ORIGIN;
-		}
-	}
+		newrole = SESSION_REPLICATION_ROLE_ORIGIN;
 	else if (pg_strcasecmp(newval, "replica") == 0)
-	{
-		if (doit)
-		{
-			ResetPlanCache();
-			SessionReplicationRole = SESSION_REPLICATION_ROLE_REPLICA;
-		}
-	}
+		newrole = SESSION_REPLICATION_ROLE_REPLICA;
 	else if (pg_strcasecmp(newval, "local") == 0)
-	{
-		if (doit)
-		{
-			ResetPlanCache();
-			SessionReplicationRole = SESSION_REPLICATION_ROLE_LOCAL;
-		}
-	}
+		newrole = SESSION_REPLICATION_ROLE_LOCAL;
 	else
 		return NULL;
+
+	/*
+	 * Must flush the plan cache when changing replication role; but don't
+	 * flush unnecessarily.
+	 */
+	if (doit && SessionReplicationRole != newrole)
+	{
+		ResetPlanCache();
+		SessionReplicationRole = newrole;
+	}
+
 	return newval;
 }
 
