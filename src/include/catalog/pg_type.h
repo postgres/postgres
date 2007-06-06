@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.184 2007/05/12 00:54:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.185 2007/06/06 23:00:43 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -575,6 +575,8 @@ DATA(insert OID = 2282 ( opaque			PGNSP PGUID  4 t p t \054 0 0 0 opaque_in opaq
 #define OPAQUEOID		2282
 DATA(insert OID = 2283 ( anyelement		PGNSP PGUID  4 t p t \054 0 0 0 anyelement_in anyelement_out - - - - - i p f 0 -1 0 _null_ _null_ ));
 #define ANYELEMENTOID	2283
+DATA(insert OID = 2776 ( anynonarray	PGNSP PGUID  4 t p t \054 0 0 0 anynonarray_in anynonarray_out - - - - - i p f 0 -1 0 _null_ _null_ ));
+#define ANYNONARRAYOID	2776
 DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p t \054 0 0 0 anyenum_in anyenum_out - - - - - i p f 0 -1 0 _null_ _null_ ));
 #define ANYENUMOID		3500
 
@@ -592,6 +594,7 @@ DATA(insert OID = 3500 ( anyenum		PGNSP PGUID  4 t p t \054 0 0 0 anyenum_in any
 #define IsPolymorphicType(typid)  \
 	((typid) == ANYELEMENTOID || \
 	 (typid) == ANYARRAYOID || \
+	 (typid) == ANYNONARRAYOID || \
 	 (typid) == ANYENUMOID)
 
 /*

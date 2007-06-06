@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.295 2007/06/05 21:31:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.296 2007/06/06 23:00:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,6 +458,8 @@ extern Datum anyarray_in(PG_FUNCTION_ARGS);
 extern Datum anyarray_out(PG_FUNCTION_ARGS);
 extern Datum anyarray_recv(PG_FUNCTION_ARGS);
 extern Datum anyarray_send(PG_FUNCTION_ARGS);
+extern Datum anynonarray_in(PG_FUNCTION_ARGS);
+extern Datum anynonarray_out(PG_FUNCTION_ARGS);
 extern Datum anyenum_in(PG_FUNCTION_ARGS);
 extern Datum anyenum_out(PG_FUNCTION_ARGS);
 extern Datum void_in(PG_FUNCTION_ARGS);

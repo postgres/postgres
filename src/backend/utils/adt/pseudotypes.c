@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pseudotypes.c,v 1.19 2007/04/02 03:49:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pseudotypes.c,v 1.20 2007/06/06 23:00:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -343,6 +343,32 @@ anyelement_out(PG_FUNCTION_ARGS)
 	ereport(ERROR,
 			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 			 errmsg("cannot display a value of type anyelement")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * anynonarray_in		- input routine for pseudo-type ANYNONARRAY.
+ */
+Datum
+anynonarray_in(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot accept a value of type anynonarray")));
+
+	PG_RETURN_VOID();			/* keep compiler quiet */
+}
+
+/*
+ * anynonarray_out		- output routine for pseudo-type ANYNONARRAY.
+ */
+Datum
+anynonarray_out(PG_FUNCTION_ARGS)
+{
+	ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("cannot display a value of type anynonarray")));
 
 	PG_RETURN_VOID();			/* keep compiler quiet */
 }

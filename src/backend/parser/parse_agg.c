@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.77 2007/02/01 19:10:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.78 2007/06/06 23:00:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -363,7 +363,7 @@ check_ungrouped_columns_walker(Node *node,
  *
  * agg_input_types, agg_state_type, agg_result_type identify the input,
  * transition, and result types of the aggregate.  These should all be
- * resolved to actual types (ie, none should ever be ANYARRAY or ANYELEMENT).
+ * resolved to actual types (ie, none should ever be ANYELEMENT etc).
  *
  * transfn_oid and finalfn_oid identify the funcs to be called; the latter
  * may be InvalidOid.

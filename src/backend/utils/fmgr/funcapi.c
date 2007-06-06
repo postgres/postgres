@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.34 2007/04/02 03:49:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/funcapi.c,v 1.35 2007/06/06 23:00:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,8 +193,8 @@ shutdown_MultiFuncCall(Datum arg)
  * only when we couldn't resolve the actual rowtype for lack of information.
  *
  * The other hard case that this handles is resolution of polymorphism.
- * We will never return ANYELEMENT, ANYARRAY or ANYENUM, either as a scalar
- * result type or as a component of a rowtype.
+ * We will never return polymorphic pseudotypes (ANYELEMENT etc), either
+ * as a scalar result type or as a component of a rowtype.
  *
  * This function is relatively expensive --- in a function returning set,
  * try to call it only the first time through.
@@ -389,9 +389,9 @@ internal_get_result_type(Oid funcid,
 
 /*
  * Given the result tuple descriptor for a function with OUT parameters,
- * replace any polymorphic columns (ANYELEMENT/ANYARRAY/ANYENUM) with correct
- * data types deduced from the input arguments.	Returns TRUE if able to deduce
- * all types, FALSE if not.
+ * replace any polymorphic columns (ANYELEMENT etc) with correct data types
+ * deduced from the input arguments. Returns TRUE if able to deduce all types,
+ * FALSE if not.
  */
 static bool
 resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
@@ -401,6 +401,7 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 	int			nargs = declared_args->dim1;
 	bool		have_anyelement_result = false;
 	bool		have_anyarray_result = false;
+	bool		have_anynonarray = false;
 	bool		have_anyenum = false;
 	Oid			anyelement_type = InvalidOid;
 	Oid			anyarray_type = InvalidOid;
@@ -416,6 +417,10 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 				break;
 			case ANYARRAYOID:
 				have_anyarray_result = true;
+				break;
+			case ANYNONARRAYOID:
+				have_anyelement_result = true;
+				have_anynonarray = true;
 				break;
 			case ANYENUMOID:
 				have_anyelement_result = true;
@@ -440,6 +445,7 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 		switch (declared_args->values[i])
 		{
 			case ANYELEMENTOID:
+			case ANYNONARRAYOID:
 			case ANYENUMOID:
 				if (!OidIsValid(anyelement_type))
 					anyelement_type = get_call_expr_argtype(call_expr, i);
@@ -467,7 +473,11 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 											 anyelement_type,
 											 ANYELEMENTOID);
 
-	/* Check for enum if needed */
+	/* Enforce ANYNONARRAY if needed */
+	if (have_anynonarray && type_is_array(anyelement_type))
+		return false;
+
+	/* Enforce ANYENUM if needed */
 	if (have_anyenum && !type_is_enum(anyelement_type))
 		return false;
 
@@ -477,6 +487,7 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 		switch (tupdesc->attrs[i]->atttypid)
 		{
 			case ANYELEMENTOID:
+			case ANYNONARRAYOID:
 			case ANYENUMOID:
 				TupleDescInitEntry(tupdesc, i + 1,
 								   NameStr(tupdesc->attrs[i]->attname),
@@ -500,11 +511,11 @@ resolve_polymorphic_tupdesc(TupleDesc tupdesc, oidvector *declared_args,
 }
 
 /*
- * Given the declared argument types and modes for a function,
- * replace any polymorphic types (ANYELEMENT/ANYARRAY/ANYENUM) with correct
- * data types deduced from the input arguments.	Returns TRUE if able to deduce
- * all types, FALSE if not.  This is the same logic as
- * resolve_polymorphic_tupdesc, but with a different argument representation.
+ * Given the declared argument types and modes for a function, replace any
+ * polymorphic types (ANYELEMENT etc) with correct data types deduced from the
+ * input arguments.  Returns TRUE if able to deduce all types, FALSE if not.
+ * This is the same logic as resolve_polymorphic_tupdesc, but with a different
+ * argument representation.
  *
  * argmodes may be NULL, in which case all arguments are assumed to be IN mode.
  */
@@ -528,6 +539,7 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 		switch (argtypes[i])
 		{
 			case ANYELEMENTOID:
+			case ANYNONARRAYOID:
 			case ANYENUMOID:
 				if (argmode == PROARGMODE_OUT)
 					have_anyelement_result = true;
@@ -583,7 +595,7 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 											 anyelement_type,
 											 ANYELEMENTOID);
 
-	/* XXX do we need to enforce ANYENUM here?  I think not */
+	/* XXX do we need to enforce ANYNONARRAY or ANYENUM here?  I think not */
 
 	/* And finally replace the output column types as needed */
 	for (i = 0; i < numargs; i++)
@@ -591,6 +603,7 @@ resolve_polymorphic_argtypes(int numargs, Oid *argtypes, char *argmodes,
 		switch (argtypes[i])
 		{
 			case ANYELEMENTOID:
+			case ANYNONARRAYOID:
 			case ANYENUMOID:
 				argtypes[i] = anyelement_type;
 				break;

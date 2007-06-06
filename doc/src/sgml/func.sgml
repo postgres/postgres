@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.381 2007/05/30 18:13:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.382 2007/06/06 23:00:35 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -986,23 +986,35 @@
    <para>
     This section describes functions and operators for examining and
     manipulating string values.  Strings in this context include values
-    of all the types <type>character</type>, <type>character
-     varying</type>, and <type>text</type>.  Unless otherwise noted, all
+    of the types <type>character</type>, <type>character varying</type>,
+    and <type>text</type>.  Unless otherwise noted, all
     of the functions listed below work on all of these types, but be
-    wary of potential effects of the automatic padding when using the
-    <type>character</type> type.  Generally, the functions described
-    here also work on data of non-string types by converting that data
-    to a string representation first.  Some functions also exist
+    wary of potential effects of automatic space-padding when using the
+    <type>character</type> type.  Some functions also exist
     natively for the bit-string types.
    </para>
 
    <para>
-    <acronym>SQL</acronym> defines some string functions with a special syntax where
-    certain key words rather than commas are used to separate the
+    <acronym>SQL</acronym> defines some string functions with a special syntax
+    wherein certain key words rather than commas are used to separate the
     arguments.  Details are in <xref linkend="functions-string-sql">.
     These functions are also implemented using the regular syntax for
     function invocation.  (See <xref linkend="functions-string-other">.)
    </para>
+
+   <note>
+    <para>
+     Before <productname>PostgreSQL</productname> 8.3, these functions would
+     silently accept values of several non-string data types as well, due to
+     the presence of implicit coercions from those data types to
+     <type>text</>.  Those coercions have been removed because they frequently
+     caused surprising behaviors.  However, the string concatenation operator
+     (<literal>||</>) still accepts non-string input, so long as at least one
+     input is of a string type, as shown in <xref
+     linkend="functions-string-sql">.  For other cases, insert an explicit
+     coercion to <type>text</> if you need to duplicate the previous behavior.
+    </para>
+   </note>
 
    <indexterm>
     <primary>bit_length</primary>
@@ -1062,6 +1074,22 @@
        </entry>
        <entry><literal>'Post' || 'greSQL'</literal></entry>
        <entry><literal>PostgreSQL</literal></entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><parameter>string</parameter> <literal>||</literal>
+        <parameter>non-string</parameter></literal>
+        or
+        <literal><parameter>non-string</parameter> <literal>||</literal>
+        <parameter>string</parameter></literal>
+       </entry>
+       <entry> <type>text</type> </entry>
+       <entry>
+        String concatenation with one non-string input
+       </entry>
+       <entry><literal>'Value: ' || 42</literal></entry>
+       <entry><literal>Value: 42</literal></entry>
       </row>
 
       <row>

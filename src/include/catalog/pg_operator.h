@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.152 2007/05/08 18:56:47 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.153 2007/06/06 23:00:41 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -701,7 +701,7 @@ DATA(insert OID = 1793 (  "#"	  PGNSP PGUID b f f 1560 1560 1560 1793	 0 bitxor 
 DATA(insert OID = 1794 (  "~"	  PGNSP PGUID l f f    0 1560 1560	  0  0 bitnot - - ));
 DATA(insert OID = 1795 (  "<<"	  PGNSP PGUID b f f 1560   23 1560	  0  0 bitshiftleft - - ));
 DATA(insert OID = 1796 (  ">>"	  PGNSP PGUID b f f 1560   23 1560	  0  0 bitshiftright - - ));
-DATA(insert OID = 1797 (  "||"	  PGNSP PGUID b f f 1560 1560 1560	  0  0 bitcat - - ));
+DATA(insert OID = 1797 (  "||"	  PGNSP PGUID b f f 1562 1562 1562	  0  0 bitcat - - ));
 
 DATA(insert OID = 1800 (  "+"	   PGNSP PGUID b f f 1083 1186 1083	 1849 0 time_pl_interval - - ));
 DATA(insert OID = 1801 (  "-"	   PGNSP PGUID b f f 1083 1186 1083	 0	0 time_mi_interval - - ));
@@ -874,6 +874,10 @@ DATA(insert OID = 2590 (  "|&>"    PGNSP PGUID b f f 718 718	16	 0	 0 circle_ove
 DATA(insert OID = 2750 (  "&&"	   PGNSP PGUID b f f 2277 2277	16 2750  0 arrayoverlap areasel areajoinsel ));
 DATA(insert OID = 2751 (  "@>"	   PGNSP PGUID b f f 2277 2277	16 2752  0 arraycontains contsel contjoinsel ));
 DATA(insert OID = 2752 (  "<@"	   PGNSP PGUID b f f 2277 2277	16 2751  0 arraycontained contsel contjoinsel ));
+
+/* capturing operators to preserve pre-8.3 behavior of text concatenation */
+DATA(insert OID = 2779 (  "||"	   PGNSP PGUID b f f 25 2776	25	 0 0 textanycat - - ));
+DATA(insert OID = 2780 (  "||"	   PGNSP PGUID b f f 2776 25	25	 0 0 anytextcat - - ));
 
 /* obsolete names for contains/contained-by operators; remove these someday */
 DATA(insert OID = 2860 (  "@"	   PGNSP PGUID b f f 604 604	16 2861  0 poly_contained contsel contjoinsel ));

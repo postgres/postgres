@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.34 2007/04/02 03:49:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.35 2007/06/06 23:00:35 tgl Exp $ -->
 
  <chapter id="extend">
   <title>Extending <acronym>SQL</acronym></title>
@@ -193,8 +193,8 @@
    </indexterm>
 
     <para>
-     Three pseudo-types of special interest are <type>anyelement</>,
-     <type>anyarray</>, and <type>anyenum</>,
+     Four pseudo-types of special interest are <type>anyelement</>,
+     <type>anyarray</>, <type>anynonarray</>, and <type>anyenum</>,
      which are collectively called <firstterm>polymorphic types</>.
      Any function declared using these types is said to be
      a <firstterm>polymorphic function</>.  A polymorphic function can
@@ -216,6 +216,9 @@
      <type>anyelement</type>, the actual array type in the
      <type>anyarray</type> positions must be an array whose elements are
      the same type appearing in the <type>anyelement</type> positions.
+     <type>anynonarray</> is treated exactly the same as <type>anyelement</>,
+     but adds the additional constraint that the actual type must not be
+     an array type.
      <type>anyenum</> is treated exactly the same as <type>anyelement</>,
      but adds the additional constraint that the actual type must
      be an enum type.
@@ -241,6 +244,15 @@
      result type from the actual first argument's type.  Another example
      is that a function declared as <literal>f(anyarray) returns anyenum</>
      will only accept arrays of enum types.
+    </para>
+
+    <para>
+     Note that <type>anynonarray</> and <type>anyenum</> do not represent
+     separate type variables; they are the same type as
+     <type>anyelement</type>, just with an additional constraint.  For
+     example, declaring a function as <literal>f(anyelement, anyenum)</>
+     is equivalent to declaring it as <literal>f(anyenum, anyenum)</>:
+     both actual arguments have to be the same enum type.
     </para>
    </sect2>
   </sect1>

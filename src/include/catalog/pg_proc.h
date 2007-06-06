@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.458 2007/06/05 21:31:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.459 2007/06/06 23:00:41 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1425,7 +1425,7 @@ DATA(insert OID = 1156 (  timestamptz_ge   PGNSP PGUID 12 1 0 f f t f i 2 16 "11
 DESCR("greater-than-or-equal");
 DATA(insert OID = 1157 (  timestamptz_gt   PGNSP PGUID 12 1 0 f f t f i 2 16 "1184 1184" _null_ _null_ _null_ timestamp_gt - _null_ ));
 DESCR("greater-than");
-DATA(insert OID = 1158 (  to_timestamp	   PGNSP PGUID 14 1 0 f f t f i 1 1184 "701" _null_ _null_ _null_ "select (''epoch''::timestamptz + $1 * ''1 second''::interval)" - _null_ ));
+DATA(insert OID = 1158 (  to_timestamp	   PGNSP PGUID 14 1 0 f f t f i 1 1184 "701" _null_ _null_ _null_ "select (''epoch''::pg_catalog.timestamptz + $1 * ''1 second''::pg_catalog.interval)" - _null_ ));
 DESCR("convert UNIX epoch to timestamptz");
 DATA(insert OID = 1159 (  timezone		   PGNSP PGUID 12 1 0 f f t f i 2 1114 "25 1184" _null_ _null_ _null_  timestamptz_zone - _null_ ));
 DESCR("adjust timestamp to new time zone");
@@ -1509,7 +1509,7 @@ DESCR("adjust interval precision");
 
 DATA(insert OID = 1215 (  obj_description	PGNSP PGUID 14 100 0 f f t f s 2	25 "26 19" _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP) and objsubid = 0" - _null_ ));
 DESCR("get description for object id and catalog name");
-DATA(insert OID = 1216 (  col_description	PGNSP PGUID 14 100 0 f f t f s 2	25 "26 23" _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and classoid = ''pg_catalog.pg_class''::regclass and objsubid = $2" - _null_ ));
+DATA(insert OID = 1216 (  col_description	PGNSP PGUID 14 100 0 f f t f s 2	25 "26 23" _null_ _null_ _null_ "select description from pg_catalog.pg_description where objoid = $1 and classoid = ''pg_catalog.pg_class''::pg_catalog.regclass and objsubid = $2" - _null_ ));
 DESCR("get description for table column");
 DATA(insert OID = 1993 ( shobj_description	PGNSP PGUID 14 100 0 f f t f s 2	25 "26 19" _null_ _null_ _null_ "select description from pg_catalog.pg_shdescription where objoid = $1 and classoid = (select oid from pg_catalog.pg_class where relname = $2 and relnamespace = PGNSP)" - _null_ ));
 DESCR("get description for object id and shared catalog name");
@@ -1722,7 +1722,7 @@ DESCR("less-equal-greater");
 DATA(insert OID = 1359 (  timestamptz	   PGNSP PGUID 12 1 0 f f t f i 2 1184 "1082 1266" _null_ _null_ _null_ datetimetz_timestamptz - _null_ ));
 DESCR("convert date and time with time zone to timestamp with time zone");
 
-DATA(insert OID = 1364 (  time			   PGNSP PGUID 14 1 0 f f t f s 1 1083 "702" _null_ _null_ _null_  "select cast(cast($1 as timestamp without time zone) as time)" - _null_ ));
+DATA(insert OID = 1364 (  time			   PGNSP PGUID 14 1 0 f f t f s 1 1083 "702" _null_ _null_ _null_  "select cast(cast($1 as timestamp without time zone) as pg_catalog.time)" - _null_ ));
 DESCR("convert abstime to time");
 
 DATA(insert OID = 1367 (  character_length	PGNSP PGUID 12 1 0 f f t f i 1	23 "1042" _null_ _null_ _null_	bpcharlen - _null_ ));
@@ -2328,7 +2328,7 @@ DATA(insert OID = 1677 (  bitshiftleft		PGNSP PGUID 12 1 0 f f t f i 2 1560 "156
 DESCR("bitwise left shift");
 DATA(insert OID = 1678 (  bitshiftright		PGNSP PGUID 12 1 0 f f t f i 2 1560 "1560 23" _null_ _null_ _null_	bitshiftright - _null_ ));
 DESCR("bitwise right shift");
-DATA(insert OID = 1679 (  bitcat			PGNSP PGUID 12 1 0 f f t f i 2 1560 "1560 1560" _null_ _null_ _null_	bitcat - _null_ ));
+DATA(insert OID = 1679 (  bitcat			PGNSP PGUID 12 1 0 f f t f i 2 1562 "1562 1562" _null_ _null_ _null_	bitcat - _null_ ));
 DESCR("bitwise concatenation");
 DATA(insert OID = 1680 (  substring			PGNSP PGUID 12 1 0 f f t f i 3 1560 "1560 23 23" _null_ _null_ _null_ bitsubstr - _null_ ));
 DESCR("return portion of bitstring");
@@ -2981,6 +2981,11 @@ DESCR("adjust time precision");
 DATA(insert OID = 1969 (  timetz		   PGNSP PGUID 12 1 0 f f t f i 2 1266 "1266 23" _null_ _null_ _null_ timetz_scale - _null_ ));
 DESCR("adjust time with time zone precision");
 
+DATA(insert OID = 2003 (  textanycat	   PGNSP PGUID 14 1 0 f f t f i 2 25 "25 2776" _null_ _null_ _null_ "select $1 || $2::pg_catalog.text" - _null_ ));
+DESCR("concatenate");
+DATA(insert OID = 2004 (  anytextcat	   PGNSP PGUID 14 1 0 f f t f i 2 25 "2776 25" _null_ _null_ _null_ "select $1::pg_catalog.text || $2" - _null_ ));
+DESCR("concatenate");
+
 DATA(insert OID = 2005 (  bytealike		   PGNSP PGUID 12 1 0 f f t f i 2 16 "17 17" _null_ _null_ _null_ bytealike - _null_ ));
 DESCR("matches LIKE expression");
 DATA(insert OID = 2006 (  byteanlike	   PGNSP PGUID 12 1 0 f f t f i 2 16 "17 17" _null_ _null_ _null_ byteanlike - _null_ ));
@@ -3488,6 +3493,10 @@ DESCR("I/O");
 DATA(insert OID = 2597 (  domain_in			PGNSP PGUID 12 1 0 f f f f v 3 2276 "2275 26 23" _null_ _null_ _null_ domain_in - _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2598 (  domain_recv		PGNSP PGUID 12 1 0 f f f f v 3 2276 "2281 26 23" _null_ _null_ _null_ domain_recv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2777 (  anynonarray_in	PGNSP PGUID 12 1 0 f f t f i 1 2776 "2275" _null_ _null_ _null_ anynonarray_in - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 2778 (  anynonarray_out	PGNSP PGUID 12 1 0 f f t f i 1 2275 "2776" _null_ _null_ _null_ anynonarray_out - _null_ ));
 DESCR("I/O");
 
 /* cryptographic */
@@ -4054,7 +4063,7 @@ DESCR("map database contents and structure to XML and XML Schema");
 
 DATA(insert OID = 2931 (  xpath      PGNSP PGUID 12 1 0 f f t f i 3 143 "25 142 1009" _null_ _null_ _null_ xpath - _null_ ));
 DESCR("evaluate XPath expression, with namespaces support");
-DATA(insert OID = 2932 (  xpath      PGNSP PGUID 14 1 0 f f t f i 2 143 "25 142" _null_ _null_ _null_ "select pg_catalog.xpath($1, $2, ''{}''::_text)" - _null_ ));
+DATA(insert OID = 2932 (  xpath      PGNSP PGUID 14 1 0 f f t f i 2 143 "25 142" _null_ _null_ _null_ "select pg_catalog.xpath($1, $2, ''{}''::pg_catalog.text[])" - _null_ ));
 DESCR("evaluate XPath expression");
 
 /* uuid */ 

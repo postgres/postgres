@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.118 2007/04/02 03:49:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/lsyscache.h,v 1.119 2007/06/06 23:00:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ extern char *get_namespace_name(Oid nspid);
 extern Oid	get_roleid(const char *rolname);
 extern Oid	get_roleid_checked(const char *rolname);
 
-#define is_array_type(typid)  (get_element_type(typid) != InvalidOid)
+#define type_is_array(typid)  (get_element_type(typid) != InvalidOid)
 
 #define TypeIsToastable(typid)	(get_typstorage(typid) != 'p')
 

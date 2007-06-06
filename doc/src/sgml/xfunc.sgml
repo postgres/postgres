@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.127 2007/04/02 03:49:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.128 2007/06/06 23:00:36 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -718,7 +718,8 @@ SELECT name, listchildren(name) FROM nodes;
     <para>
      <acronym>SQL</acronym> functions can be declared to accept and
      return the polymorphic types <type>anyelement</type>,
-     <type>anyarray</type>, and <type>anyenum</type>.  See <xref
+     <type>anyarray</type>, <type>anynonarray</type>, and
+     <type>anyenum</type>.  See <xref
      linkend="extend-types-polymorphic"> for a more detailed
      explanation of polymorphic functions. Here is a polymorphic
      function <function>make_array</function> that builds up an array
@@ -2831,7 +2832,8 @@ CREATE OR REPLACE FUNCTION retcomposite(IN integer, IN integer,
     <para>
      C-language functions can be declared to accept and
      return the polymorphic types
-     <type>anyelement</type>, <type>anyarray</type>, and <type>anyenum</type>.
+     <type>anyelement</type>, <type>anyarray</type>, <type>anynonarray</type>,
+     and <type>anyenum</type>.
      See <xref linkend="extend-types-polymorphic"> for a more detailed explanation
      of polymorphic functions. When function arguments or return types
      are defined as polymorphic types, the function author cannot know

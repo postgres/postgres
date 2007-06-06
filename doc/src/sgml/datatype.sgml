@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.203 2007/06/01 23:40:18 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.204 2007/06/06 23:00:35 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3677,11 +3677,15 @@ SELECT * FROM pg_attribute
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
+    <primary>anyelement</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-pseudo">
     <primary>anyarray</primary>
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
-    <primary>anyelement</primary>
+    <primary>anynonarray</primary>
    </indexterm>
 
    <indexterm zone="datatype-pseudo">
@@ -3761,6 +3765,12 @@ SELECT * FROM pg_attribute
        </row>
 
        <row>
+        <entry><type>anynonarray</></entry>
+        <entry>Indicates that a function accepts any non-array data type
+        (see <xref linkend="extend-types-polymorphic">).</entry>
+       </row>
+
+       <row>
         <entry><type>cstring</></entry>
         <entry>Indicates that a function accepts or returns a null-terminated C string.</entry>
        </row>
@@ -3813,7 +3823,7 @@ SELECT * FROM pg_attribute
     only <type>void</> and <type>record</> as a result type (plus
     <type>trigger</> when the function is used as a trigger).  Some also
     support polymorphic functions using the types <type>anyarray</>,
-    <type>anyelement</> and <type>anyenum</>.
+    <type>anyelement</>, <type>anyenum</>, and <type>anynonarray</>.
    </para>
 
    <para>

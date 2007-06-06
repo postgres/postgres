@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.116 2007/04/27 22:05:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.117 2007/06/06 23:00:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -849,9 +849,9 @@ ShutdownSQLFunction(Datum arg)
  * to be sure that the user is returning the type he claims.
  *
  * For a polymorphic function the passed rettype must be the actual resolved
- * output type of the function; we should never see ANYARRAY, ANYENUM or
- * ANYELEMENT as rettype.  (This means we can't check the type during function
- * definition of a polymorphic function.)
+ * output type of the function; we should never see a polymorphic pseudotype
+ * such as ANYELEMENT as rettype.  (This means we can't check the type during
+ * function definition of a polymorphic function.)
  *
  * This function returns true if the sql function returns the entire tuple
  * result of its final SELECT, and false otherwise.  Note that because we
@@ -873,6 +873,8 @@ check_sql_fn_retval(Oid func_id, Oid rettype, List *queryTreeList,
 	int			tlistlen;
 	char		fn_typtype;
 	Oid			restype;
+
+	AssertArg(!IsPolymorphicType(rettype));
 
 	if (junkFilter)
 		*junkFilter = NULL;		/* default result */
