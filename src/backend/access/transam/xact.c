@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.244 2007/05/30 21:01:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.245 2007/06/07 21:45:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,12 +64,12 @@ int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
  */
 typedef enum TransState
 {
-	TRANS_DEFAULT,
-	TRANS_START,
-	TRANS_INPROGRESS,
-	TRANS_COMMIT,
-	TRANS_ABORT,
-	TRANS_PREPARE
+	TRANS_DEFAULT,				/* idle */
+	TRANS_START,				/* transaction starting */
+	TRANS_INPROGRESS,			/* inside a valid transaction */
+	TRANS_COMMIT,				/* commit in progress */
+	TRANS_ABORT,				/* abort in progress */
+	TRANS_PREPARE				/* prepare in progress */
 } TransState;
 
 /*
@@ -255,34 +255,22 @@ static const char *TransStateAsString(TransState state);
 /*
  *	IsTransactionState
  *
- *	This returns true if we are currently running a query
- *	within an executing transaction.
+ *	This returns true if we are inside a valid transaction; that is,
+ *	it is safe to initiate database access, take heavyweight locks, etc.
  */
 bool
 IsTransactionState(void)
 {
 	TransactionState s = CurrentTransactionState;
 
-	switch (s->state)
-	{
-		case TRANS_DEFAULT:
-			return false;
-		case TRANS_START:
-			return true;
-		case TRANS_INPROGRESS:
-			return true;
-		case TRANS_COMMIT:
-			return true;
-		case TRANS_ABORT:
-			return true;
-		case TRANS_PREPARE:
-			return true;
-	}
-
 	/*
-	 * Shouldn't get here, but lint is not happy without this...
+	 * TRANS_DEFAULT and TRANS_ABORT are obviously unsafe states.  However,
+	 * we also reject the startup/shutdown states TRANS_START, TRANS_COMMIT,
+	 * TRANS_PREPARE since it might be too soon or too late within those
+	 * transition states to do anything interesting.  Hence, the only "valid"
+	 * state is TRANS_INPROGRESS.
 	 */
-	return false;
+	return (s->state == TRANS_INPROGRESS);
 }
 
 /*
@@ -308,7 +296,9 @@ IsAbortedTransactionBlockState(void)
  *	GetTopTransactionId
  *
  * Get the ID of the main transaction, even if we are currently inside
- * a subtransaction.
+ * a subtransaction.  If we are not in a transaction at all, or if we
+ * are in transaction startup and haven't yet assigned an XID,
+ * InvalidTransactionId is returned.
  */
 TransactionId
 GetTopTransactionId(void)
