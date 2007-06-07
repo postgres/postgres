@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.61 2007/05/11 17:57:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/array.sgml,v 1.62 2007/06/07 14:49:56 tgl Exp $ -->
 
 <sect1 id="arrays">
  <title>Arrays</title>
@@ -289,7 +289,7 @@ SELECT array_dims(schedule) FROM sal_emp WHERE name = 'Carol';
 
  array_dims
 ------------
- [1:2][1:1]
+ [1:2][1:2]
 (1 row)
 </programlisting>
 
