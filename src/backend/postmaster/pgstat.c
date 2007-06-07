@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2006, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.140.2.3 2007/03/01 20:07:02 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.140.2.4 2007/06/07 19:07:13 alvherre Exp $
  * ----------
  */
 #include "postgres.h"
@@ -690,7 +690,9 @@ pgstat_vacuum_tabstat(void)
 
 		CHECK_FOR_INTERRUPTS();
 
-		if (hash_search(htab, (void *) &dbid, HASH_FIND, NULL) == NULL)
+		/* the DB entry for shared tables (with InvalidOid) is never dropped */
+		if (OidIsValid(dbid) &&
+			hash_search(htab, (void *) &dbid, HASH_FIND, NULL) == NULL)
 			pgstat_drop_database(dbid);
 	}
 
