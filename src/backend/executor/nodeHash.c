@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.113 2007/06/03 17:07:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.114 2007/06/07 19:19:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -267,7 +267,6 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 	hashtable->totalTuples = 0;
 	hashtable->innerBatchFile = NULL;
 	hashtable->outerBatchFile = NULL;
-	hashtable->hashTblSpc = InvalidOid;
 	hashtable->spaceUsed = 0;
 	hashtable->spaceAllowed = work_mem * 1024L;
 
@@ -327,8 +326,8 @@ ExecHashTableCreate(Hash *node, List *hashOperators)
 		hashtable->outerBatchFile = (BufFile **)
 			palloc0(nbatch * sizeof(BufFile *));
 		/* The files will not be opened until needed... */
-		/* ... but we want to choose the tablespace only once */
-		hashtable->hashTblSpc = GetTempTablespace();
+		/* ... but make sure we have temp tablespaces established for them */
+		PrepareTempTablespaces();
 	}
 
 	/*
@@ -510,8 +509,8 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 			palloc0(nbatch * sizeof(BufFile *));
 		hashtable->outerBatchFile = (BufFile **)
 			palloc0(nbatch * sizeof(BufFile *));
-		/* time to choose the tablespace, too */
-		hashtable->hashTblSpc = GetTempTablespace();
+		/* time to establish the temp tablespaces, too */
+		PrepareTempTablespaces();
 	}
 	else
 	{
@@ -564,8 +563,7 @@ ExecHashIncreaseNumBatches(HashJoinTable hashtable)
 			{
 				/* dump it out */
 				Assert(batchno > curbatch);
-				ExecHashJoinSaveTuple(hashtable,
-									  HJTUPLE_MINTUPLE(tuple),
+				ExecHashJoinSaveTuple(HJTUPLE_MINTUPLE(tuple),
 									  tuple->hashvalue,
 									  &hashtable->innerBatchFile[batchno]);
 				/* and remove from hash table */
@@ -657,8 +655,7 @@ ExecHashTableInsert(HashJoinTable hashtable,
 		 * put the tuple into a temp file for later batches
 		 */
 		Assert(batchno > hashtable->curbatch);
-		ExecHashJoinSaveTuple(hashtable,
-							  tuple,
+		ExecHashJoinSaveTuple(tuple,
 							  hashvalue,
 							  &hashtable->innerBatchFile[batchno]);
 	}

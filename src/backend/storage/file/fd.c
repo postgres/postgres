@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.138 2007/06/03 17:07:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.139 2007/06/07 19:19:57 tgl Exp $
  *
  * NOTES:
  *
@@ -184,6 +184,14 @@ static AllocateDesc allocatedDescs[MAX_ALLOCATED_DESCS];
  * this is used in generation of tempfile names.
  */
 static long tempFileCounter = 0;
+
+/*
+ * Array of OIDs of temp tablespaces.  When numTempTableSpaces is -1,
+ * this has not been set in the current transaction.
+ */
+static Oid *tempTableSpaces = NULL;
+static int	numTempTableSpaces = -1;
+static int	nextTempTableSpace = 0;
 
 
 /*--------------------
@@ -840,21 +848,28 @@ PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
  * that created them, so this should be false -- but if you need
  * "somewhat" temporary storage, this might be useful. In either case,
  * the file is removed when the File is explicitly closed.
- *
- * tblspcOid: the Oid of the tablespace where the temp file should be created.
- * If InvalidOid, or if the tablespace can't be found, we silently fall back
- * to the database's default tablespace.
  */
 File
-OpenTemporaryFile(bool interXact, Oid tblspcOid)
+OpenTemporaryFile(bool interXact)
 {
 	File		file = 0;
 
 	/*
-	 * If caller specified a tablespace, try to create there.
+	 * If some temp tablespace(s) have been given to us, try to use the next
+	 * one.  If a given tablespace can't be found, we silently fall back
+	 * to the database's default tablespace.
+	 *
+	 * BUT: if the temp file is slated to outlive the current transaction,
+	 * force it into the database's default tablespace, so that it will
+	 * not pose a threat to possible tablespace drop attempts.
 	 */
-	if (OidIsValid(tblspcOid))
-		file = OpenTemporaryFileInTablespace(tblspcOid, false);
+	if (numTempTableSpaces > 0 && !interXact)
+	{
+		Oid		tblspcOid = GetNextTempTableSpace();
+
+		if (OidIsValid(tblspcOid))
+			file = OpenTemporaryFileInTablespace(tblspcOid, false);
+	}
 
 	/*
 	 * If not, or if tablespace is bad, create in database's default
@@ -1530,6 +1545,69 @@ closeAllVfds(void)
 	}
 }
 
+
+/*
+ * SetTempTablespaces
+ *
+ * Define a list (actually an array) of OIDs of tablespaces to use for
+ * temporary files.  This list will be used until end of transaction,
+ * unless this function is called again before then.  It is caller's
+ * responsibility that the passed-in array has adequate lifespan (typically
+ * it'd be allocated in TopTransactionContext).
+ */
+void
+SetTempTablespaces(Oid *tableSpaces, int numSpaces)
+{
+	Assert(numSpaces >= 0);
+	tempTableSpaces = tableSpaces;
+	numTempTableSpaces = numSpaces;
+	/*
+	 * Select a random starting point in the list.  This is to minimize
+	 * conflicts between backends that are most likely sharing the same
+	 * list of temp tablespaces.  Note that if we create multiple temp
+	 * files in the same transaction, we'll advance circularly through
+	 * the list --- this ensures that large temporary sort files are
+	 * nicely spread across all available tablespaces.
+	 */
+	if (numSpaces > 1)
+		nextTempTableSpace = random() % numSpaces;
+	else
+		nextTempTableSpace = 0;
+}
+
+/*
+ * TempTablespacesAreSet
+ *
+ * Returns TRUE if SetTempTablespaces has been called in current transaction.
+ * (This is just so that tablespaces.c doesn't need its own per-transaction
+ * state.)
+ */
+bool
+TempTablespacesAreSet(void)
+{
+	return (numTempTableSpaces >= 0);
+}
+
+/*
+ * GetNextTempTableSpace
+ *
+ * Select the next temp tablespace to use.  A result of InvalidOid means
+ * to use the current database's default tablespace.
+ */
+Oid
+GetNextTempTableSpace(void)
+{
+	if (numTempTableSpaces > 0)
+	{
+		/* Advance nextTempTableSpace counter with wraparound */
+		if (++nextTempTableSpace >= numTempTableSpaces)
+			nextTempTableSpace = 0;
+		return tempTableSpaces[nextTempTableSpace];
+	}
+	return InvalidOid;
+}
+
+
 /*
  * AtEOSubXact_Files
  *
@@ -1583,11 +1661,14 @@ AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
  * particularly care which).  All still-open per-transaction temporary file
  * VFDs are closed, which also causes the underlying files to be
  * deleted. Furthermore, all "allocated" stdio files are closed.
+ * We also forget any transaction-local temp tablespace list.
  */
 void
 AtEOXact_Files(void)
 {
 	CleanupTempFiles(false);
+	tempTableSpaces = NULL;
+	numTempTableSpaces = -1;
 }
 
 /*

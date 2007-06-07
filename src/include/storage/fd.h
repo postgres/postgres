@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.58 2007/06/03 17:08:33 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.59 2007/06/07 19:19:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,7 +60,7 @@ extern int	max_files_per_process;
 
 /* Operations on virtual Files --- equivalent to Unix kernel file ops */
 extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
-extern File OpenTemporaryFile(bool interXact, Oid tblspcOid);
+extern File OpenTemporaryFile(bool interXact);
 extern void FileClose(File file);
 extern void FileUnlink(File file);
 extern int	FileRead(File file, char *buffer, int amount);
@@ -85,10 +85,14 @@ extern int	BasicOpenFile(FileName fileName, int fileFlags, int fileMode);
 extern void InitFileAccess(void);
 extern void set_max_safe_fds(void);
 extern void closeAllVfds(void);
+extern void SetTempTablespaces(Oid *tableSpaces, int numSpaces);
+extern bool TempTablespacesAreSet(void);
+extern Oid	GetNextTempTableSpace(void);
 extern void AtEOXact_Files(void);
 extern void AtEOSubXact_Files(bool isCommit, SubTransactionId mySubid,
 				  SubTransactionId parentSubid);
 extern void RemovePgTempFiles(void);
+
 extern int	pg_fsync(int fd);
 extern int	pg_fsync_no_writethrough(int fd);
 extern int	pg_fsync_writethrough(int fd);

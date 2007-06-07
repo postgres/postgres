@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.125 2007/06/03 17:05:29 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.126 2007/06/07 19:19:56 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3510,16 +3510,22 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         The value is a list of names of tablespaces.  When there is more than
         one name in the list, <productname>PostgreSQL</> chooses a random
-        member of the list each time a temporary object is to be created.
+        member of the list each time a temporary object is to be created;
+        except that within a transaction, successively created temporary
+        objects are placed in successive tablespaces from the list.
+        If any element of the list is an empty string,
+        <productname>PostgreSQL</> will automatically use the default
+        tablespace of the current database instead.
        </para>
 
        <para>
-        If any element of the list is an empty string or does not match the
-        name of any existing tablespace, <productname>PostgreSQL</> will
-        automatically use the default tablespace of the current database
-        instead.  If a nondefault tablespace
-        is specified, the user must have <literal>CREATE</> privilege
-        for it, or creation attempts will fail.
+        When <varname>temp_tablespaces</> is set interactively, specifying a
+        nonexistent tablespace is an error, as is specifying a tablespace for
+        which the user does not have <literal>CREATE</> privilege.  However,
+        when using a previously set value, nonexistent tablespaces are
+        ignored, as are tablespaces for which the user lacks
+        <literal>CREATE</> privilege.  In particular, this rule applies when
+        using a value set in <filename>postgresql.conf</>.
        </para>
 
        <para>

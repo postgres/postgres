@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.76 2007/05/04 21:29:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.77 2007/06/07 19:19:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,7 @@
 #include "access/nbtree.h"
 #include "catalog/pg_amop.h"
 #include "catalog/pg_operator.h"
+#include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "utils/datum.h"
 #include "utils/logtape.h"
@@ -1478,6 +1479,12 @@ inittapes(Tuplesortstate *state)
 	tapeSpace = maxTapes * TAPE_BUFFER_OVERHEAD;
 	if (tapeSpace + GetMemoryChunkSpace(state->memtuples) < state->allowedMem)
 		USEMEM(state, tapeSpace);
+
+	/*
+	 * Make sure that the temp file(s) underlying the tape set are created in
+	 * suitable temp tablespaces.
+	 */
+	PrepareTempTablespaces();
 
 	/*
 	 * Create the tape set and allocate the per-tape data arrays.

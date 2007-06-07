@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.47 2007/06/03 17:06:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.48 2007/06/07 19:19:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@
 #include "utils/fmgroids.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
+#include "utils/memutils.h"
 
 
 /* GUC variables */
@@ -72,7 +73,6 @@ char	   *temp_tablespaces = NULL;
 
 static bool remove_tablespace_directories(Oid tablespaceoid, bool redo);
 static void set_short_version(const char *path);
-static Oid	getTempTablespace(void);
 
 
 /*
@@ -921,9 +921,12 @@ GetDefaultTablespace(bool forTemp)
 {
 	Oid			result;
 
-	/* The temp-table case is handled by getTempTablespace() */
+	/* The temp-table case is handled elsewhere */
 	if (forTemp)
-		return getTempTablespace();
+	{
+		PrepareTempTablespaces();
+		return GetNextTempTableSpace();
+	}
 
 	/* Fast path for default_tablespace == "" */
 	if (default_tablespace == NULL || default_tablespace[0] == '\0')
@@ -958,7 +961,6 @@ assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
 {
 	char	   *rawname;
 	List	   *namelist;
-	ListCell   *l;
 
 	/* Need a modifiable copy of string */
 	rawname = pstrdup(newval);
@@ -975,24 +977,79 @@ assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
 	/*
 	 * If we aren't inside a transaction, we cannot do database access so
 	 * cannot verify the individual names.	Must accept the list on faith.
+	 * Fortunately, there's then also no need to pass the data to fd.c.
 	 */
-	if (source >= PGC_S_INTERACTIVE && IsTransactionState())
+	if (IsTransactionState())
 	{
+		/*
+		 * If we error out below, or if we are called multiple times in one
+		 * transaction, we'll leak a bit of TopTransactionContext memory.
+		 * Doesn't seem worth worrying about.
+		 */
+		Oid	   *tblSpcs;
+		int		numSpcs;
+		ListCell   *l;
+
+		tblSpcs = (Oid *) MemoryContextAlloc(TopTransactionContext,
+									list_length(namelist) * sizeof(Oid));
+		numSpcs = 0;
 		foreach(l, namelist)
 		{
 			char	   *curname = (char *) lfirst(l);
+			Oid			curoid;
+			AclResult	aclresult;
 
 			/* Allow an empty string (signifying database default) */
 			if (curname[0] == '\0')
+			{
+				tblSpcs[numSpcs++] = InvalidOid;
 				continue;
+			}
 
 			/* Else verify that name is a valid tablespace name */
-			if (get_tablespace_oid(curname) == InvalidOid)
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("tablespace \"%s\" does not exist",
-								curname)));
+			curoid = get_tablespace_oid(curname);
+			if (curoid == InvalidOid)
+			{
+				/*
+				 * In an interactive SET command, we ereport for bad info.
+				 * Otherwise, silently ignore any bad list elements.
+				 */
+				if (source >= PGC_S_INTERACTIVE)
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_OBJECT),
+							 errmsg("tablespace \"%s\" does not exist",
+									curname)));
+				continue;
+			}
+
+			/*
+			 * Allow explicit specification of database's default tablespace
+			 * in temp_tablespaces without triggering permissions checks.
+			 */
+			if (curoid == MyDatabaseTableSpace)
+			{
+				tblSpcs[numSpcs++] = InvalidOid;
+				continue;
+			}
+
+			/* Check permissions similarly */
+			aclresult = pg_tablespace_aclcheck(curoid, GetUserId(),
+											   ACL_CREATE);
+			if (aclresult != ACLCHECK_OK)
+			{
+				if (source >= PGC_S_INTERACTIVE)
+					aclcheck_error(aclresult, ACL_KIND_TABLESPACE, curname);
+				continue;
+			}
+
+			tblSpcs[numSpcs++] = curoid;
 		}
+
+		/* If actively "doing it", give the new list to fd.c */
+		if (doit)
+			SetTempTablespaces(tblSpcs, numSpcs);
+		else
+			pfree(tblSpcs);
 	}
 
 	pfree(rawname);
@@ -1002,69 +1059,34 @@ assign_temp_tablespaces(const char *newval, bool doit, GucSource source)
 }
 
 /*
- * GetTempTablespace -- get the OID of the next temp tablespace to use
+ * PrepareTempTablespaces -- prepare to use temp tablespaces
  *
- * May return InvalidOid to indicate "use the database's default tablespace".
- *
- * This is different from GetDefaultTablespace(true) in just two ways:
- * 1. We check privileges here instead of leaving it to the caller.
- * 2. It's safe to call this outside a transaction (we just return InvalidOid).
- * The transaction state check is used so that this can be called from
- * low-level places that might conceivably run outside a transaction.
+ * If we have not already done so in the current transaction, parse the
+ * temp_tablespaces GUC variable and tell fd.c which tablespace(s) to use
+ * for temp files.
  */
-Oid
-GetTempTablespace(void)
+void
+PrepareTempTablespaces(void)
 {
-	Oid			result;
-
-	/* Can't do catalog access unless within a transaction */
-	if (!IsTransactionState())
-		return InvalidOid;
-
-	/* OK, select a temp tablespace */
-	result = getTempTablespace();
-
-	/* Check permissions except when using database's default */
-	if (OidIsValid(result))
-	{
-		AclResult	aclresult;
-
-		aclresult = pg_tablespace_aclcheck(result, GetUserId(),
-										   ACL_CREATE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
-						   get_tablespace_name(result));
-	}
-
-	return result;
-}
-
-/*
- * getTempTablespace -- get the OID of the next temp tablespace to use
- *
- * This has exactly the API defined for GetDefaultTablespace(true),
- * in particular that caller is responsible for permissions checks.
- *
- * This exists to hide (and possibly optimize the use of) the
- * temp_tablespaces GUC variable.
- */
-static Oid
-getTempTablespace(void)
-{
-	Oid			result;
 	char	   *rawname;
 	List	   *namelist;
-	int			nnames;
-	char	   *curname;
+	Oid		   *tblSpcs;
+	int			numSpcs;
+	ListCell   *l;
 
-	if (temp_tablespaces == NULL)
-		return InvalidOid;
+	/* No work if already done in current transaction */
+	if (TempTablespacesAreSet())
+		return;
 
 	/*
-	 * We re-parse the string on each call; this is a bit expensive, but
-	 * we don't expect this function will be called many times per query,
-	 * so it's probably not worth being tenser.
+	 * Can't do catalog access unless within a transaction.  This is just
+	 * a safety check in case this function is called by low-level code that
+	 * could conceivably execute outside a transaction.  Note that in such
+	 * a scenario, fd.c will fall back to using the current database's default
+	 * tablespace, which should always be OK.
 	 */
+	if (!IsTransactionState())
+		return;
 
 	/* Need a modifiable copy of string */
 	rawname = pstrdup(temp_tablespaces);
@@ -1073,51 +1095,60 @@ getTempTablespace(void)
 	if (!SplitIdentifierString(rawname, ',', &namelist))
 	{
 		/* syntax error in name list */
+		SetTempTablespaces(NULL, 0);
 		pfree(rawname);
 		list_free(namelist);
-		return InvalidOid;
+		return;
 	}
-	nnames = list_length(namelist);
 
-	/* Fast path for temp_tablespaces == "" */
-	if (nnames == 0)
+	/* Store tablespace OIDs in an array in TopTransactionContext */
+	tblSpcs = (Oid *) MemoryContextAlloc(TopTransactionContext,
+									list_length(namelist) * sizeof(Oid));
+	numSpcs = 0;
+	foreach(l, namelist)
 	{
-		pfree(rawname);
-		list_free(namelist);
-		return InvalidOid;
+		char	   *curname = (char *) lfirst(l);
+		Oid			curoid;
+		AclResult	aclresult;
+
+		/* Allow an empty string (signifying database default) */
+		if (curname[0] == '\0')
+		{
+			tblSpcs[numSpcs++] = InvalidOid;
+			continue;
+		}
+
+		/* Else verify that name is a valid tablespace name */
+		curoid = get_tablespace_oid(curname);
+		if (curoid == InvalidOid)
+		{
+			/* Silently ignore any bad list elements */
+			continue;
+		}
+
+		/*
+		 * Allow explicit specification of database's default tablespace
+		 * in temp_tablespaces without triggering permissions checks.
+		 */
+		if (curoid == MyDatabaseTableSpace)
+		{
+			tblSpcs[numSpcs++] = InvalidOid;
+			continue;
+		}
+
+		/* Check permissions similarly */
+		aclresult = pg_tablespace_aclcheck(curoid, GetUserId(),
+										   ACL_CREATE);
+		if (aclresult != ACLCHECK_OK)
+			continue;
+
+		tblSpcs[numSpcs++] = curoid;
 	}
 
-	/* Select a random element */
-	if (nnames == 1)			/* no need for a random() call */
-		curname = (char *) linitial(namelist);
-	else
-		curname = (char *) list_nth(namelist, random() % nnames);
-
-	/*
-	 * Empty string means "database's default", else look up the tablespace.
-	 *
-	 * It is tempting to cache this lookup for more speed, but then we would
-	 * fail to detect the case where the tablespace was dropped since the GUC
-	 * variable was set.  Note also that we don't complain if the value fails
-	 * to refer to an existing tablespace; we just silently return InvalidOid,
-	 * causing the new object to be created in the database's tablespace.
-	 */
-	if (curname[0] == '\0')
-		result = InvalidOid;
-	else
-		result = get_tablespace_oid(curname);
-
-	/*
-	 * Allow explicit specification of database's default tablespace in
-	 * temp_tablespaces without triggering permissions checks.
-	 */
-	if (result == MyDatabaseTableSpace)
-		result = InvalidOid;
+	SetTempTablespaces(tblSpcs, numSpcs);
 
 	pfree(rawname);
 	list_free(namelist);
-
-	return result;
 }
 
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.27 2007/06/03 17:07:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/buffile.c,v 1.28 2007/06/07 19:19:57 tgl Exp $
  *
  * NOTES:
  *
@@ -41,6 +41,8 @@
  * The maximum safe file size is presumed to be RELSEG_SIZE * BLCKSZ.
  * Note we adhere to this limit whether or not LET_OS_MANAGE_FILESIZE
  * is defined, although md.c ignores it when that symbol is defined.
+ * The reason for doing this is that we'd like large temporary BufFiles
+ * to be spread across multiple tablespaces when available.
  */
 #define MAX_PHYSICAL_FILESIZE  (RELSEG_SIZE * BLCKSZ)
 
@@ -60,7 +62,6 @@ struct BufFile
 	 * offsets[i] is the current seek position of files[i].  We use this to
 	 * avoid making redundant FileSeek calls.
 	 */
-	Oid			tblspcOid;		/* tablespace to use (InvalidOid = default) */
 
 	bool		isTemp;			/* can only add files if this is TRUE */
 	bool		isInterXact;	/* keep open over transactions? */
@@ -86,7 +87,7 @@ static int	BufFileFlush(BufFile *file);
 
 /*
  * Create a BufFile given the first underlying physical file.
- * NOTE: caller must set tblspcOid, isTemp, isInterXact if appropriate.
+ * NOTE: caller must set isTemp and isInterXact if appropriate.
  */
 static BufFile *
 makeBufFile(File firstfile)
@@ -98,7 +99,6 @@ makeBufFile(File firstfile)
 	file->files[0] = firstfile;
 	file->offsets = (long *) palloc(sizeof(long));
 	file->offsets[0] = 0L;
-	file->tblspcOid = InvalidOid;
 	file->isTemp = false;
 	file->isInterXact = false;
 	file->dirty = false;
@@ -119,7 +119,7 @@ extendBufFile(BufFile *file)
 	File		pfile;
 
 	Assert(file->isTemp);
-	pfile = OpenTemporaryFile(file->isInterXact, file->tblspcOid);
+	pfile = OpenTemporaryFile(file->isInterXact);
 	Assert(pfile >= 0);
 
 	file->files = (File *) repalloc(file->files,
@@ -137,23 +137,21 @@ extendBufFile(BufFile *file)
  * written to it).
  *
  * If interXact is true, the temp file will not be automatically deleted
- * at end of transaction.  If tblspcOid is not InvalidOid, the temp file
- * is created in the specified tablespace instead of the default one.
+ * at end of transaction.
  *
  * Note: if interXact is true, the caller had better be calling us in a
  * memory context that will survive across transaction boundaries.
  */
 BufFile *
-BufFileCreateTemp(bool interXact, Oid tblspcOid)
+BufFileCreateTemp(bool interXact)
 {
 	BufFile    *file;
 	File		pfile;
 
-	pfile = OpenTemporaryFile(interXact, tblspcOid);
+	pfile = OpenTemporaryFile(interXact);
 	Assert(pfile >= 0);
 
 	file = makeBufFile(pfile);
-	file->tblspcOid = tblspcOid;
 	file->isTemp = true;
 	file->isInterXact = interXact;
 

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.46 2007/06/03 17:08:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/hashjoin.h,v 1.47 2007/06/07 19:19:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,8 +101,6 @@ typedef struct HashJoinTableData
 	 */
 	BufFile   **innerBatchFile; /* buffered virtual temp file per batch */
 	BufFile   **outerBatchFile; /* buffered virtual temp file per batch */
-
-	Oid			hashTblSpc;		/* tablespace to put temp files in */
 
 	/*
 	 * Info about the datatype-specific hash functions for the datatypes being
