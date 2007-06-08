@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.124 2007/05/27 03:50:39 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.125 2007/06/08 18:23:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,13 @@ extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
 )
 
 
+typedef enum
+{
+	LockTupleShared,
+	LockTupleExclusive
+} LockTupleMode;
+
+
 /* ----------------
  *		function prototypes for heap access method
  *
@@ -120,14 +127,7 @@ extern Datum fastgetattr(HeapTuple tup, int attnum, TupleDesc tupleDesc,
  * ----------------
  */
 
-/* heapam.c */
-
-typedef enum
-{
-	LockTupleShared,
-	LockTupleExclusive
-} LockTupleMode;
-
+/* in heap/heapam.c */
 extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation relation_open_nowait(Oid relationId, LOCKMODE lockmode);
@@ -239,5 +239,11 @@ extern HeapTuple heap_addheader(int natts, bool withoid,
 			   Size structlen, void *structure);
 
 extern void heap_sync(Relation relation);
+
+/* in heap/syncscan.c */
+extern void ss_report_location(Relation rel, BlockNumber location);
+extern BlockNumber ss_get_location(Relation rel, BlockNumber relnblocks);
+extern void SyncScanShmemInit(void);
+extern Size SyncScanShmemSize(void);
 
 #endif   /* HEAPAM_H */

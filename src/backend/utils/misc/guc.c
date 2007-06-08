@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.395 2007/06/05 21:50:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.396 2007/06/08 18:23:52 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -108,6 +108,9 @@ extern bool fullPageWrites;
 
 #ifdef TRACE_SORT
 extern bool trace_sort;
+#endif
+#ifdef TRACE_SYNCSCAN
+extern bool trace_syncscan;
 #endif
 #ifdef DEBUG_BOUNDED_SORT
 extern bool optimize_bounded_sort;
@@ -966,6 +969,19 @@ static struct config_bool ConfigureNamesBool[] =
 			GUC_NOT_IN_SAMPLE
 		},
 		&trace_sort,
+		false, NULL, NULL
+	},
+#endif
+
+#ifdef TRACE_SYNCSCAN
+	/* this is undocumented because not exposed in a standard build */
+	{
+		{"trace_syncscan", PGC_USERSET, DEVELOPER_OPTIONS,
+			gettext_noop("Generate debugging output for synchronized scanning."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&trace_syncscan,
 		false, NULL, NULL
 	},
 #endif

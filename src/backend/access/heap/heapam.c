@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.234 2007/05/30 20:11:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.235 2007/06/08 18:23:52 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -78,28 +78,43 @@ initscan(HeapScanDesc scan, ScanKey key)
 	 * Determine the number of blocks we have to scan.
 	 *
 	 * It is sufficient to do this once at scan start, since any tuples added
-	 * while the scan is in progress will be invisible to my transaction
-	 * anyway...
+	 * while the scan is in progress will be invisible to my snapshot
+	 * anyway.  (That is not true when using a non-MVCC snapshot.  However,
+	 * we couldn't guarantee to return tuples added after scan start anyway,
+	 * since they might go into pages we already scanned.  To guarantee
+	 * consistent results for a non-MVCC snapshot, the caller must hold some
+	 * higher-level lock that ensures the interesting tuple(s) won't change.)
 	 */
 	scan->rs_nblocks = RelationGetNumberOfBlocks(scan->rs_rd);
 
 	/*
 	 * If the table is large relative to NBuffers, use a bulk-read access
-	 * strategy, else use the default random-access strategy.  During a
-	 * rescan, don't make a new strategy object if we don't have to.
+	 * strategy and enable synchronized scanning (see syncscan.c).  Although
+	 * the thresholds for these features could be different, we make them the
+	 * same so that there are only two behaviors to tune rather than four.
+	 *
+	 * During a rescan, don't make a new strategy object if we don't have to.
 	 */
 	if (scan->rs_nblocks > NBuffers / 4 &&
 		!scan->rs_rd->rd_istemp)
 	{
 		if (scan->rs_strategy == NULL)
 			scan->rs_strategy = GetAccessStrategy(BAS_BULKREAD);
+
+		scan->rs_syncscan = true;
+		scan->rs_startblock = ss_get_location(scan->rs_rd, scan->rs_nblocks);
 	}
 	else
 	{
 		if (scan->rs_strategy != NULL)
 			FreeAccessStrategy(scan->rs_strategy);
 		scan->rs_strategy = NULL;
+
+		scan->rs_syncscan = false;
+		scan->rs_startblock = 0;
 	}
+
+	/* rs_pageatatime was set when the snapshot was filled in */
 
 	scan->rs_inited = false;
 	scan->rs_ctup.t_data = NULL;
@@ -229,6 +244,7 @@ heapgettup(HeapScanDesc scan,
 	Snapshot	snapshot = scan->rs_snapshot;
 	bool		backward = ScanDirectionIsBackward(dir);
 	BlockNumber page;
+	bool		finished;
 	Page		dp;
 	int			lines;
 	OffsetNumber lineoff;
@@ -251,7 +267,7 @@ heapgettup(HeapScanDesc scan,
 				tuple->t_data = NULL;
 				return;
 			}
-			page = 0;			/* first page */
+			page = scan->rs_startblock;			/* first page */
 			heapgetpage(scan, page);
 			lineoff = FirstOffsetNumber;		/* first offnum */
 			scan->rs_inited = true;
@@ -285,7 +301,18 @@ heapgettup(HeapScanDesc scan,
 				tuple->t_data = NULL;
 				return;
 			}
-			page = scan->rs_nblocks - 1;		/* final page */
+			/*
+			 * Disable reporting to syncscan logic in a backwards scan; it's
+			 * not very likely anyone else is doing the same thing at the same
+			 * time, and much more likely that we'll just bollix things for
+			 * forward scanners.
+			 */
+			scan->rs_syncscan = false;
+			/* start from last page of the scan */ 
+			if (scan->rs_startblock > 0)
+				page = scan->rs_startblock - 1;
+			else
+				page = scan->rs_nblocks - 1;
 			heapgetpage(scan, page);
 		}
 		else
@@ -398,9 +425,42 @@ heapgettup(HeapScanDesc scan,
 		LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
 		/*
+		 * advance to next/prior page and detect end of scan
+		 */
+		if (backward)
+		{
+			finished = (page == scan->rs_startblock);
+			if (page == 0)
+				page = scan->rs_nblocks;
+			page--;
+		}
+		else
+		{
+			page++;
+			if (page >= scan->rs_nblocks)
+				page = 0;
+			finished = (page == scan->rs_startblock);
+
+			/*
+			 * Report our new scan position for synchronization purposes.
+			 * We don't do that when moving backwards, however. That would
+			 * just mess up any other forward-moving scanners.
+			 *
+			 * Note: we do this before checking for end of scan so that the
+			 * final state of the position hint is back at the start of the
+			 * rel.  That's not strictly necessary, but otherwise when you run
+			 * the same query multiple times the starting position would shift
+			 * a little bit backwards on every invocation, which is confusing.
+			 * We don't guarantee any specific ordering in general, though.
+			 */
+			if (scan->rs_syncscan)
+				ss_report_location(scan->rs_rd, page);
+		}
+
+		/*
 		 * return NULL if we've exhausted all the pages
 		 */
-		if (backward ? (page == 0) : (page + 1 >= scan->rs_nblocks))
+		if (finished)
 		{
 			if (BufferIsValid(scan->rs_cbuf))
 				ReleaseBuffer(scan->rs_cbuf);
@@ -410,8 +470,6 @@ heapgettup(HeapScanDesc scan,
 			scan->rs_inited = false;
 			return;
 		}
-
-		page = backward ? (page - 1) : (page + 1);
 
 		heapgetpage(scan, page);
 
@@ -455,6 +513,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 	HeapTuple	tuple = &(scan->rs_ctup);
 	bool		backward = ScanDirectionIsBackward(dir);
 	BlockNumber page;
+	bool		finished;
 	Page		dp;
 	int			lines;
 	int			lineindex;
@@ -478,7 +537,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 				tuple->t_data = NULL;
 				return;
 			}
-			page = 0;			/* first page */
+			page = scan->rs_startblock;			/* first page */
 			heapgetpage(scan, page);
 			lineindex = 0;
 			scan->rs_inited = true;
@@ -509,7 +568,18 @@ heapgettup_pagemode(HeapScanDesc scan,
 				tuple->t_data = NULL;
 				return;
 			}
-			page = scan->rs_nblocks - 1;		/* final page */
+			/*
+			 * Disable reporting to syncscan logic in a backwards scan; it's
+			 * not very likely anyone else is doing the same thing at the same
+			 * time, and much more likely that we'll just bollix things for
+			 * forward scanners.
+			 */
+			scan->rs_syncscan = false;
+			/* start from last page of the scan */ 
+			if (scan->rs_startblock > 0)
+				page = scan->rs_startblock - 1;
+			else
+				page = scan->rs_nblocks - 1;
 			heapgetpage(scan, page);
 		}
 		else
@@ -616,11 +686,40 @@ heapgettup_pagemode(HeapScanDesc scan,
 		 * if we get here, it means we've exhausted the items on this page and
 		 * it's time to move to the next.
 		 */
+		if (backward)
+		{
+			finished = (page == scan->rs_startblock);
+			if (page == 0)
+				page = scan->rs_nblocks;
+			page--;
+		}
+		else
+		{
+			page++;
+			if (page >= scan->rs_nblocks)
+				page = 0;
+			finished = (page == scan->rs_startblock);
+
+			/*
+			 * Report our new scan position for synchronization purposes.
+			 * We don't do that when moving backwards, however. That would
+			 * just mess up any other forward-moving scanners.
+			 *
+			 * Note: we do this before checking for end of scan so that the
+			 * final state of the position hint is back at the start of the
+			 * rel.  That's not strictly necessary, but otherwise when you run
+			 * the same query multiple times the starting position would shift
+			 * a little bit backwards on every invocation, which is confusing.
+			 * We don't guarantee any specific ordering in general, though.
+			 */
+			if (scan->rs_syncscan)
+				ss_report_location(scan->rs_rd, page);
+		}
 
 		/*
 		 * return NULL if we've exhausted all the pages
 		 */
-		if (backward ? (page == 0) : (page + 1 >= scan->rs_nblocks))
+		if (finished)
 		{
 			if (BufferIsValid(scan->rs_cbuf))
 				ReleaseBuffer(scan->rs_cbuf);
@@ -631,7 +730,6 @@ heapgettup_pagemode(HeapScanDesc scan,
 			return;
 		}
 
-		page = backward ? (page - 1) : (page + 1);
 		heapgetpage(scan, page);
 
 		dp = (Page) BufferGetPage(scan->rs_cbuf);

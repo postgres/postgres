@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.59 2007/05/30 20:11:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.60 2007/06/08 18:23:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,6 +340,9 @@ GetAccessStrategy(BufferAccessStrategyType btype)
 	 * Select ring size to use.  See buffer/README for rationales.
 	 * (Currently all cases are the same size, but keep this code
 	 * structure for flexibility.)
+	 *
+	 * Note: if you change the ring size for BAS_BULKREAD, see also
+	 * SYNC_SCAN_REPORT_INTERVAL in access/heap/syncscan.c.
 	 */
 	switch (btype)
 	{

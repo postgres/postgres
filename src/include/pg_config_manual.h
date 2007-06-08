@@ -6,7 +6,7 @@
  * for developers.	If you edit any of these, be sure to do a *full*
  * rebuild (and an initdb if noted).
  *
- * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.26 2007/02/23 21:36:19 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/pg_config_manual.h,v 1.27 2007/06/08 18:23:53 tgl Exp $
  *------------------------------------------------------------------------
  */
 
@@ -248,6 +248,11 @@
  * see also the trace_sort GUC var.  For 8.1 this is enabled by default.
  */
 #define TRACE_SORT 1
+
+/*
+ * Enable tracing of syncscan operations (see also the trace_syncscan GUC var).
+ */
+/* #define TRACE_SYNCSCAN */
 
 /*
  * Other debug #defines (documentation, anyone?)
