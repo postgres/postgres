@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.100 2007/05/15 19:13:55 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/select.sgml,v 1.101 2007/06/08 20:26:18 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -809,6 +809,14 @@ OFFSET <replaceable class="parameter">start</replaceable>
     is an inherent consequence of the fact that SQL does not promise
     to deliver the results of a query in any particular order unless
     <literal>ORDER BY</> is used to constrain the order.
+   </para>
+
+   <para>
+    It is even possible for repeated executions of the same <literal>LIMIT</>
+    query to return different subsets of the rows of a table, if there
+    is not an <literal>ORDER BY</> to enforce selection of a deterministic
+    subset.  Again, this is not a bug; determinism of the results is
+    simply not guaranteed in such a case.
    </para>
   </refsect2>
 
