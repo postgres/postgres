@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.48 2007/06/08 21:09:49 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.49 2007/06/08 21:21:28 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1599,7 +1599,11 @@ autovac_balance_cost(void)
 			int     limit = (int)
 				(cost_avail * worker->wi_cost_limit_base / cost_total);
 
-			worker->wi_cost_limit = Min(limit, worker->wi_cost_limit_base);
+			/*
+			 * We put a lower bound of 1 to the cost_limit, to avoid division-
+			 * by-zero in the vacuum code.
+			 */
+			worker->wi_cost_limit = Max(Min(limit, worker->wi_cost_limit_base), 1);
 
 			elog(DEBUG2, "autovac_balance_cost(pid=%u db=%u, rel=%u, cost_limit=%d, cost_delay=%d)",
 				 worker->wi_workerpid, worker->wi_dboid,
