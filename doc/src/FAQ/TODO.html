@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sun Jun  3 14:49:04 EDT 2007
+Last updated:           Fri Jun  8 14:45:14 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1010,18 +1010,8 @@ first.  There is also a developer's wiki at<br/>
     </li><li>Query execute plan
     </li><li>Query results
   </li></ul>
-  </li><li>Allow sequential scans to take advantage of other concurrent
+  </li><li>-<em>Allow sequential scans to take advantage of other concurrent</em>
   sequential scans, also called "Synchronised Scanning"
-<p>  One possible implementation is to start sequential scans from the lowest
-  numbered buffer in the shared cache, and when reaching the end wrap
-  around to the beginning, rather than always starting sequential scans
-  at the start of the table.
-</p>
-<p>  <a href="http://archives.postgresql.org/pgsql-patches/2006-12/msg00076.php">http://archives.postgresql.org/pgsql-patches/2006-12/msg00076.php</a>
-  <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg00408.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg00408.php</a>
-  <a href="http://archives.postgresql.org/pgsql-hackers/2006-12/msg00784.php">http://archives.postgresql.org/pgsql-hackers/2006-12/msg00784.php</a>
-  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00415.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00415.php</a>
-</p>
   </li><li>Consider increasing internal areas when shared buffers is increased
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-10/msg01419.php">http://archives.postgresql.org/pgsql-hackers/2005-10/msg01419.php</a>
 </p>
