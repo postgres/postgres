@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.47 2007/05/30 20:11:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.48 2007/06/08 21:09:49 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1548,7 +1548,11 @@ static void
 autovac_balance_cost(void)
 {
 	WorkerInfo	worker;
-	int         vac_cost_limit = (autovacuum_vac_cost_limit >= 0 ?
+	/*
+	 * note: in cost_limit, zero also means use value from elsewhere, because
+	 * zero is not a valid value.
+	 */
+	int         vac_cost_limit = (autovacuum_vac_cost_limit > 0 ?
 								  autovacuum_vac_cost_limit : VacuumCostLimit);
 	int         vac_cost_delay = (autovacuum_vac_cost_delay >= 0 ?
 								  autovacuum_vac_cost_delay : VacuumCostDelay);
@@ -2140,12 +2144,14 @@ table_recheck_autovac(Oid relid)
 		 * there is a tuple in pg_autovacuum, use it; else, use the GUC
 		 * defaults.  Note that the fields may contain "-1" (or indeed any
 		 * negative value), which means use the GUC defaults for each setting.
+		 * In cost_limit, the value 0 also means to use the value from
+		 * elsewhere.
 		 */
 		if (avForm != NULL)
 		{
-			vac_cost_limit = (avForm->vac_cost_limit >= 0) ?
+			vac_cost_limit = (avForm->vac_cost_limit > 0) ?
 				avForm->vac_cost_limit :
-				((autovacuum_vac_cost_limit >= 0) ?
+				((autovacuum_vac_cost_limit > 0) ?
 				 autovacuum_vac_cost_limit : VacuumCostLimit);
 
 			vac_cost_delay = (avForm->vac_cost_delay >= 0) ?
@@ -2158,7 +2164,7 @@ table_recheck_autovac(Oid relid)
 		}
 		else
 		{
-			vac_cost_limit = (autovacuum_vac_cost_limit >= 0) ?
+			vac_cost_limit = (autovacuum_vac_cost_limit > 0) ?
 				autovacuum_vac_cost_limit : VacuumCostLimit;
 
 			vac_cost_delay = (autovacuum_vac_cost_delay >= 0) ?

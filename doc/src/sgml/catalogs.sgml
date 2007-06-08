@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.153 2007/06/05 21:31:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.154 2007/06/08 21:09:49 alvherre Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -1339,7 +1339,7 @@
    be used for this particular value.  Observe that the
    <structfield>vac_cost_delay</> variable inherits its default value from the
    <xref linkend="guc-autovacuum-vacuum-cost-delay"> configuration parameter,
-   or from <varname>vacuum_cost_delay</> if the former is set to a negative
+   or from <xref linkend="guc-vacuum-cost-delay"> if the former is set to a negative
    value.  The same applies to <structfield>vac_cost_limit</>.
    Also, autovacuum will ignore attempts to set a per-table
    <structfield>freeze_max_age</> larger than the system-wide setting (it can only be set
