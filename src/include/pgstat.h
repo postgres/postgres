@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.61 2007/05/27 17:28:36 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.62 2007/06/09 18:49:55 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -517,12 +517,6 @@ extern void pgstat_initstats(Relation rel);
 	do {																\
 		if (pgstat_collect_tuplelevel && (rel)->pgstat_info != NULL)	\
 			(rel)->pgstat_info->t_counts.t_numscans++;					\
-	} while (0)
-/* kluge for bitmap scans: */
-#define pgstat_discount_heap_scan(rel)									\
-	do {																\
-		if (pgstat_collect_tuplelevel && (rel)->pgstat_info != NULL)	\
-			(rel)->pgstat_info->t_counts.t_numscans--;					\
 	} while (0)
 #define pgstat_count_heap_getnext(rel)									\
 	do {																\

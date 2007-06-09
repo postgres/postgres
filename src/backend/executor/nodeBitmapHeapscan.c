@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.17 2007/05/27 03:50:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.18 2007/06/09 18:49:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,9 +388,6 @@ ExecBitmapHeapReScan(BitmapHeapScanState *node, ExprContext *exprCtxt)
 	/* rescan to release any page pin */
 	heap_rescan(node->ss.ss_currentScanDesc, NULL);
 
-	/* undo bogus "seq scan" count (see notes in ExecInitBitmapHeapScan) */
-	pgstat_discount_heap_scan(node->ss.ss_currentScanDesc->rs_rd);
-
 	if (node->tbm)
 		tbm_free(node->tbm);
 	node->tbm = NULL;
@@ -522,20 +519,12 @@ ExecInitBitmapHeapScan(BitmapHeapScan *node, EState *estate, int eflags)
 
 	/*
 	 * Even though we aren't going to do a conventional seqscan, it is useful
-	 * to create a HeapScanDesc --- this checks the relation size and sets up
-	 * statistical infrastructure for us.
+	 * to create a HeapScanDesc --- most of the fields in it are usable.
 	 */
-	scanstate->ss.ss_currentScanDesc = heap_beginscan(currentRelation,
-													  estate->es_snapshot,
-													  0,
-													  NULL);
-
-	/*
-	 * One problem is that heap_beginscan counts a "sequential scan" start,
-	 * when we actually aren't doing any such thing.  Reverse out the added
-	 * scan count.	(Eventually we may want to count bitmap scans separately.)
-	 */
-	pgstat_discount_heap_scan(scanstate->ss.ss_currentScanDesc->rs_rd);
+	scanstate->ss.ss_currentScanDesc = heap_beginscan_bm(currentRelation,
+														 estate->es_snapshot,
+														 0,
+														 NULL);
 
 	/*
 	 * get the scan type from the relation descriptor.

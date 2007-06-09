@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.125 2007/06/08 18:23:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/heapam.h,v 1.126 2007/06/09 18:49:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,6 +140,8 @@ extern Relation heap_openrv(const RangeVar *relation, LOCKMODE lockmode);
 #define heap_close(r,l)  relation_close(r,l)
 
 extern HeapScanDesc heap_beginscan(Relation relation, Snapshot snapshot,
+			   int nkeys, ScanKey key);
+extern HeapScanDesc heap_beginscan_bm(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key);
 extern void heap_rescan(HeapScanDesc scan, ScanKey key);
 extern void heap_endscan(HeapScanDesc scan);

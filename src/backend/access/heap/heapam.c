@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.235 2007/06/08 18:23:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.236 2007/06/09 18:49:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -58,6 +58,10 @@
 #include "utils/syscache.h"
 
 
+static HeapScanDesc heap_beginscan_internal(Relation relation,
+											Snapshot snapshot,
+											int nkeys, ScanKey key,
+											bool is_bitmapscan);
 static XLogRecPtr log_heap_update(Relation reln, Buffer oldbuf,
 		   ItemPointerData from, Buffer newbuf, HeapTuple newtup, bool move);
 
@@ -95,8 +99,9 @@ initscan(HeapScanDesc scan, ScanKey key)
 	 *
 	 * During a rescan, don't make a new strategy object if we don't have to.
 	 */
-	if (scan->rs_nblocks > NBuffers / 4 &&
-		!scan->rs_rd->rd_istemp)
+	if (!scan->rs_bitmapscan &&
+		!scan->rs_rd->rd_istemp &&
+		scan->rs_nblocks > NBuffers / 4)
 	{
 		if (scan->rs_strategy == NULL)
 			scan->rs_strategy = GetAccessStrategy(BAS_BULKREAD);
@@ -113,8 +118,6 @@ initscan(HeapScanDesc scan, ScanKey key)
 		scan->rs_syncscan = false;
 		scan->rs_startblock = 0;
 	}
-
-	/* rs_pageatatime was set when the snapshot was filled in */
 
 	scan->rs_inited = false;
 	scan->rs_ctup.t_data = NULL;
@@ -133,7 +136,12 @@ initscan(HeapScanDesc scan, ScanKey key)
 	if (key != NULL)
 		memcpy(scan->rs_key, key, scan->rs_nkeys * sizeof(ScanKeyData));
 
-	pgstat_count_heap_scan(scan->rs_rd);
+	/*
+	 * Currently, we don't have a stats counter for bitmap heap scans
+	 * (but the underlying bitmap index scans will be counted).
+	 */
+	if (!scan->rs_bitmapscan)
+		pgstat_count_heap_scan(scan->rs_rd);
 }
 
 /*
@@ -1037,11 +1045,30 @@ heap_openrv(const RangeVar *relation, LOCKMODE lockmode)
 
 /* ----------------
  *		heap_beginscan	- begin relation scan
+ *
+ * heap_beginscan_bm is an alternate entry point for setting up a HeapScanDesc
+ * for a bitmap heap scan.  Although that scan technology is really quite
+ * unlike a standard seqscan, there is just enough commonality to make it
+ * worth using the same data structure.
  * ----------------
  */
 HeapScanDesc
 heap_beginscan(Relation relation, Snapshot snapshot,
 			   int nkeys, ScanKey key)
+{
+	return heap_beginscan_internal(relation, snapshot, nkeys, key, false);
+}
+
+HeapScanDesc
+heap_beginscan_bm(Relation relation, Snapshot snapshot,
+				  int nkeys, ScanKey key)
+{
+	return heap_beginscan_internal(relation, snapshot, nkeys, key, true);
+}
+
+static HeapScanDesc
+heap_beginscan_internal(Relation relation, Snapshot snapshot,
+						int nkeys, ScanKey key, bool is_bitmapscan)
 {
 	HeapScanDesc scan;
 
@@ -1062,6 +1089,7 @@ heap_beginscan(Relation relation, Snapshot snapshot,
 	scan->rs_rd = relation;
 	scan->rs_snapshot = snapshot;
 	scan->rs_nkeys = nkeys;
+	scan->rs_bitmapscan = is_bitmapscan;
 	scan->rs_strategy = NULL;	/* set in initscan */
 
 	/*
