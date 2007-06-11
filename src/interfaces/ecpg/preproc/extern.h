@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.65 2007/03/17 19:25:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.66 2007/06/11 11:52:08 meskes Exp $ */
 
 #ifndef _ECPG_PREPROC_EXTERN_H
 #define _ECPG_PREPROC_EXTERN_H
@@ -37,6 +37,7 @@ extern int	yylineno,
 			yyleng;
 extern FILE *yyin,
 		   *yyout;
+extern char *output_filename;
 
 extern struct _include_path *include_paths;
 extern struct cursor *cur;
@@ -93,7 +94,7 @@ extern ScanKeyword *ScanKeywordLookup(char *text);
 extern void scanner_init(const char *);
 extern void parser_init(void);
 extern void scanner_finish(void);
-int filtered_base_yylex(void);
+extern int filtered_base_yylex(void);
 
 /* return codes */
 

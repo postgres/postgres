@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.343 2007/05/10 09:53:17 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.344 2007/06/11 11:52:08 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -99,6 +99,10 @@ mmerror(int error_code, enum errortype type, char * error, ...)
 			ret_value = error_code;
 			break;
 		case ET_FATAL:
+			fclose(yyin);
+			fclose(yyout);
+			if (unlink(output_filename) != 0)
+				fprintf(stderr, "Could not remove ourput file %s!\n", output_filename);
 			exit(error_code);
 	}
 }

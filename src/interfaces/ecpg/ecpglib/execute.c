@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.66 2007/04/27 06:56:11 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.67 2007/06/11 11:52:08 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -48,7 +48,7 @@ quote_postgres(char *arg, bool quote, int lineno)
 	 * will be quoted once they are inserted in a statement
 	 */
 	if (!quote)
-		return res = ECPGstrdup(arg, lineno);
+		return arg;
 	else
 	{
 		length = strlen(arg);

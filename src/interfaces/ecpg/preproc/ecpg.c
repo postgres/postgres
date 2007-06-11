@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.98 2007/03/17 19:25:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.99 2007/06/11 11:52:08 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -19,6 +19,8 @@ int			ret_value = 0,
 			force_indicator = true,
 			header_mode = false,
 			regression_mode = false;
+
+char	   *output_filename;
 
 enum COMPAT_MODE compat = ECPG_COMPAT_PGSQL;
 
@@ -135,6 +137,7 @@ main(int argc, char *const argv[])
 
 	find_my_exec(argv[0], my_exec_path);
 
+	output_filename = NULL;
 	while ((c = getopt_long(argc, argv, "vcio:I:tD:dC:r:h?", ecpg_options, NULL)) != -1)
 	{
 		switch (c)
@@ -163,14 +166,18 @@ main(int argc, char *const argv[])
 				regression_mode = true;
 				break;
 			case 'o':
-				if (strcmp(optarg, "-") == 0)
+				output_filename = optarg;
+				if (strcmp(output_filename, "-") == 0)
 					yyout = stdout;
 				else
-					yyout = fopen(optarg, PG_BINARY_W);
+					yyout = fopen(output_filename, PG_BINARY_W);
 
-				if (yyout == NULL)
+				if (yyout == NULL) 
+				{
 					fprintf(stderr, "%s: could not open file \"%s\": %s\n",
-							progname, optarg, strerror(errno));
+							progname, output_filename, strerror(errno));
+					output_filename = NULL;
+				}
 				else
 					out_option = 1;
 				break;
@@ -269,8 +276,7 @@ main(int argc, char *const argv[])
 		/* after the options there must not be anything but filenames */
 		for (fnr = optind; fnr < argc; fnr++)
 		{
-			char	   *output_filename = NULL,
-					   *ptr2ext;
+			char *ptr2ext;
 
 			/* If argv[fnr] is "-" we have to read from stdin */
 			if (strcmp(argv[fnr], "-") == 0)
@@ -467,7 +473,7 @@ main(int argc, char *const argv[])
 					fclose(yyout);
 			}
 
-			if (output_filename)
+			if (output_filename && out_option == 0)
 				free(output_filename);
 
 			free(input_filename);
