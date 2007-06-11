@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Fri Jun  8 14:45:14 EDT 2007
+Last updated:           Sun Jun 10 21:51:20 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -606,13 +606,7 @@ first.  There is also a developer's wiki at<br/>
   </li></ul>
   </li><li>CURSOR
   <ul>
-    <li>Allow UPDATE/DELETE WHERE CURRENT OF cursor
-<p>          This requires using the row ctid to map cursor rows back to the
-          original heap row. This become more complicated if WITH HOLD cursors
-          are to be supported because WITH HOLD cursors have a copy of the row
-          and no FOR UPDATE lock.
-          <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg01014.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg01014.php</a>
-</p>
+    <li>-<em>Allow UPDATE/DELETE WHERE CURRENT OF cursor</em>
     </li><li>Prevent DROP TABLE from dropping a row referenced by its own open
           cursor?
   </li></ul>
