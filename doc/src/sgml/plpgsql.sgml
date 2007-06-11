@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.110 2007/06/06 23:00:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.111 2007/06/11 15:08:32 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -2583,18 +2583,16 @@ MOVE <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> <
     <para>
      <command>MOVE</command> repositions a cursor without retrieving
      any data. <command>MOVE</command> works exactly like the
-     <command>FETCH</command> command, except it only positions the
-     cursor and does not return rows. As with <command>SELECT
-      INTO</command>, the special variable <literal>FOUND</literal> can
+     <command>FETCH</command> command, except it only repositions the
+     cursor and does not return the row moved to. As with <command>SELECT
+     INTO</command>, the special variable <literal>FOUND</literal> can
      be checked to see whether the cursor was successfully
      repositioned or not.
     </para>
 
     <para>
-     The <replaceable>direction</replaceable> clause can be any of the
-     variants allowed in the SQL <xref linkend="sql-move"
-     endterm="sql-move-title"> command except the ones that can move by
-     more than one row; namely, it can be
+     The options for the <replaceable>direction</replaceable> clause are
+     the same as for <command>FETCH</>, namely
      <literal>NEXT</>,
      <literal>PRIOR</>,
      <literal>FIRST</>,
