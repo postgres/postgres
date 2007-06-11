@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.141 2007/04/21 05:56:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.142 2007/06/11 01:16:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1131,6 +1131,14 @@ adjust_appendrel_attrs_mutator(Node *node, AppendRelInfo *context)
 			/* system attributes don't need any other translation */
 		}
 		return (Node *) var;
+	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) copyObject(node);
+
+		if (cexpr->cvarno == context->parent_relid)
+			cexpr->cvarno = context->child_relid;
+		return (Node *) cexpr;
 	}
 	if (IsA(node, RangeTblRef))
 	{

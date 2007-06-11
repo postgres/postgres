@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.30 2007/02/01 00:28:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/delete.sgml,v 1.31 2007/06/11 01:16:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -22,7 +22,7 @@ PostgreSQL documentation
 <synopsis>
 DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <replaceable class="parameter">alias</replaceable> ]
     [ USING <replaceable class="PARAMETER">usinglist</replaceable> ]
-    [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
+    [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ AS <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 </synopsis>
  </refsynopsisdiv>
@@ -134,9 +134,23 @@ DELETE FROM [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ]
     <term><replaceable class="parameter">condition</replaceable></term>
     <listitem>
      <para>
-      An expression returning a value of type
-      <type>boolean</type>, which determines the rows that are to be
-      deleted.
+      An expression that returns a value of type <type>boolean</type>.
+      Only rows for which this expression returns <literal>true</>
+      will be deleted.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">cursor_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the cursor to use in a <literal>WHERE CURRENT OF</>
+      condition.  The row to be deleted is the one most recently fetched
+      from this cursor.  The cursor must be a simple (non-join, non-aggregate)
+      query on the <command>DELETE</>'s target table.
+      Note that <literal>WHERE CURRENT OF</> cannot be
+      specified together with a boolean condition.
      </para>
     </listitem>
    </varlistentry>
@@ -236,6 +250,14 @@ DELETE FROM films;
    Delete completed tasks, returning full details of the deleted rows:
 <programlisting>
 DELETE FROM tasks WHERE status = 'DONE' RETURNING *;
+</programlisting>      
+  </para>
+
+   <para>
+   Delete the row of <structname>tasks</> on which the cursor
+   <literal>c_tasks</> is currently positioned:
+<programlisting>
+DELETE FROM tasks WHERE CURRENT OF c_tasks;
 </programlisting>      
   </para>
  </refsect1>

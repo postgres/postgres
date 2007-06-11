@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.207 2007/06/05 21:31:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.208 2007/06/11 01:16:22 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -874,6 +874,20 @@ _readSetToDefault(void)
 }
 
 /*
+ * _readCurrentOfExpr
+ */
+static CurrentOfExpr *
+_readCurrentOfExpr(void)
+{
+	READ_LOCALS(CurrentOfExpr);
+
+	READ_UINT_FIELD(cvarno);
+	READ_STRING_FIELD(cursor_name);
+
+	READ_DONE();
+}
+
+/*
  * _readTargetEntry
  */
 static TargetEntry *
@@ -1093,6 +1107,8 @@ parseNodeString(void)
 		return_value = _readCoerceToDomainValue();
 	else if (MATCH("SETTODEFAULT", 12))
 		return_value = _readSetToDefault();
+	else if (MATCH("CURRENTOFEXPR", 13))
+		return_value = _readCurrentOfExpr();
 	else if (MATCH("TARGETENTRY", 11))
 		return_value = _readTargetEntry();
 	else if (MATCH("RANGETBLREF", 11))

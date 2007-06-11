@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.218 2007/06/05 21:31:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.219 2007/06/11 01:16:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,6 +242,21 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_BooleanTest:
 			result = transformBooleanTest(pstate, (BooleanTest *) expr);
 			break;
+
+		case T_CurrentOfExpr:
+			{
+				CurrentOfExpr *c = (CurrentOfExpr *) expr;
+				int		sublevels_up;
+
+				/* CURRENT OF can only appear at top level of UPDATE/DELETE */
+				Assert(pstate->p_target_rangetblentry != NULL);
+				c->cvarno = RTERangeTablePosn(pstate,
+											  pstate->p_target_rangetblentry,
+											  &sublevels_up);
+				Assert(sublevels_up == 0);
+				result = expr;
+				break;
+			}
 
 			/*********************************************
 			 * Quietly accept node types that may be presented when we are
@@ -1862,6 +1877,9 @@ exprType(Node *expr)
 			break;
 		case T_SetToDefault:
 			type = ((SetToDefault *) expr)->typeId;
+			break;
+		case T_CurrentOfExpr:
+			type = BOOLOID;
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));

@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.363 2007/04/27 22:05:48 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.364 2007/06/11 01:16:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3178,12 +3178,12 @@ transformDeclareCursorStmt(ParseState *pstate, DeclareCursorStmt *stmt)
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 				 errmsg("DECLARE CURSOR cannot specify INTO")));
 
-	/* Implementation restriction (might go away someday) */
-	if (result->rowMarks != NIL)
+	/* FOR UPDATE and WITH HOLD are not compatible */
+	if (result->rowMarks != NIL && (stmt->options & CURSOR_OPT_HOLD))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			  errmsg("DECLARE CURSOR ... FOR UPDATE/SHARE is not supported"),
-				 errdetail("Cursors must be READ ONLY.")));
+			  errmsg("DECLARE CURSOR WITH HOLD ... FOR UPDATE/SHARE is not supported"),
+				 errdetail("Holdable cursors must be READ ONLY.")));
 
 	/* We won't need the raw querytree any more */
 	stmt->query = NULL;

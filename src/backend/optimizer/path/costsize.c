@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.184 2007/06/05 21:31:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.185 2007/06/11 01:16:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -770,6 +770,7 @@ cost_tidscan(Path *path, PlannerInfo *root,
 	Cost		startup_cost = 0;
 	Cost		run_cost = 0;
 	Cost		cpu_per_tuple;
+	QualCost	tid_qual_cost;
 	int			ntuples;
 	ListCell   *l;
 
@@ -799,12 +800,20 @@ cost_tidscan(Path *path, PlannerInfo *root,
 		}
 	}
 
+	/*
+	 * The TID qual expressions will be computed once, any other baserestrict
+	 * quals once per retrived tuple.
+	 */
+	cost_qual_eval(&tid_qual_cost, tidquals, root);
+
 	/* disk costs --- assume each tuple on a different page */
 	run_cost += random_page_cost * ntuples;
 
 	/* CPU costs */
-	startup_cost += baserel->baserestrictcost.startup;
-	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple;
+	startup_cost += baserel->baserestrictcost.startup +
+		tid_qual_cost.per_tuple;
+	cpu_per_tuple = cpu_tuple_cost + baserel->baserestrictcost.per_tuple -
+		tid_qual_cost.per_tuple;
 	run_cost += cpu_per_tuple * ntuples;
 
 	path->startup_cost = startup_cost;
@@ -1990,6 +1999,11 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 			context->total.per_tuple += get_func_cost(get_opcode(opid)) *
 				cpu_operator_cost;
 		}
+	}
+	else if (IsA(node, CurrentOfExpr))
+	{
+		/* This is noticeably more expensive than a typical operator */
+		context->total.per_tuple += 100 * cpu_operator_cost;
 	}
 	else if (IsA(node, SubLink))
 	{

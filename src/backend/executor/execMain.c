@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.294 2007/06/03 17:07:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.295 2007/06/11 01:16:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2366,6 +2366,24 @@ EvalPlanQualStop(evalPlanQual *epq)
 
 	epq->estate = NULL;
 	epq->planstate = NULL;
+}
+
+/*
+ * ExecGetActivePlanTree --- get the active PlanState tree from a QueryDesc
+ *
+ * Ordinarily this is just the one mentioned in the QueryDesc, but if we
+ * are looking at a row returned by the EvalPlanQual machinery, we need
+ * to look at the subsidiary state instead.
+ */
+PlanState *
+ExecGetActivePlanTree(QueryDesc *queryDesc)
+{
+	EState	   *estate = queryDesc->estate;
+
+	if (estate && estate->es_useEvalPlan && estate->es_evalPlanQual != NULL)
+		return estate->es_evalPlanQual->planstate;
+	else
+		return queryDesc->planstate;
 }
 
 

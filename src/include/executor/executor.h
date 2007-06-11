@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.139 2007/02/27 01:11:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.140 2007/06/11 01:16:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,12 @@ extern void ExecRestrPos(PlanState *node);
 extern bool ExecSupportsMarkRestore(NodeTag plantype);
 extern bool ExecSupportsBackwardScan(Plan *node);
 extern bool ExecMayReturnRawTuples(PlanState *node);
+
+/*
+ * prototypes from functions in execCurrent.c
+ */
+extern bool execCurrentOf(char *cursor_name, Oid table_oid,
+						  ItemPointer current_tid);
 
 /*
  * prototypes from functions in execGrouping.c
@@ -135,6 +141,7 @@ extern void ExecConstraints(ResultRelInfo *resultRelInfo,
 				TupleTableSlot *slot, EState *estate);
 extern TupleTableSlot *EvalPlanQual(EState *estate, Index rti,
 			 ItemPointer tid, TransactionId priorXmax, CommandId curCid);
+extern PlanState *ExecGetActivePlanTree(QueryDesc *queryDesc);
 extern DestReceiver *CreateIntoRelDestReceiver(void);
 
 /*

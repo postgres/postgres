@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.43 2007/02/01 00:28:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/update.sgml,v 1.44 2007/06/11 01:16:22 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -24,7 +24,7 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
     SET { <replaceable class="PARAMETER">column</replaceable> = { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } |
           ( <replaceable class="PARAMETER">column</replaceable> [, ...] ) = ( { <replaceable class="PARAMETER">expression</replaceable> | DEFAULT } [, ...] ) } [, ...]
     [ FROM <replaceable class="PARAMETER">fromlist</replaceable> ]
-    [ WHERE <replaceable class="PARAMETER">condition</replaceable> ]
+    [ WHERE <replaceable class="PARAMETER">condition</replaceable> | WHERE CURRENT OF <replaceable class="PARAMETER">cursor_name</replaceable> ]
     [ RETURNING * | <replaceable class="parameter">output_expression</replaceable> [ AS <replaceable class="parameter">output_name</replaceable> ] [, ...] ]
 </synopsis>
  </refsynopsisdiv>
@@ -156,6 +156,20 @@ UPDATE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ [ AS ] <rep
       An expression that returns a value of type <type>boolean</type>.
       Only rows for which this expression returns <literal>true</>
       will be updated.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="PARAMETER">cursor_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the cursor to use in a <literal>WHERE CURRENT OF</>
+      condition.  The row to be updated is the one most recently fetched
+      from this cursor.  The cursor must be a simple (non-join, non-aggregate)
+      query on the <command>UPDATE</>'s target table.
+      Note that <literal>WHERE CURRENT OF</> cannot be
+      specified together with a boolean condition.
      </para>
     </listitem>
    </varlistentry>
@@ -308,6 +322,15 @@ UPDATE wines SET stock = stock + 24 WHERE winename = 'Chateau Lafite 2003';
 -- continue with other operations, and eventually
 COMMIT;
 </programlisting>
+  </para>
+
+  <para>
+   Change the <structfield>kind</> column of the table
+   <structname>films</structname> in the row on which the cursor
+   <literal>c_films</> is currently positioned:
+<programlisting>
+UPDATE films SET kind = 'Dramatic' WHERE CURRENT OF c_films;
+</programlisting>      
   </para>
  </refsect1>
 

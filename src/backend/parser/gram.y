@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.591 2007/04/27 22:05:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.592 2007/06/11 01:16:25 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -296,7 +296,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 %type <node>	TableElement ConstraintElem TableFuncElement
 %type <node>	columnDef
 %type <defelt>	def_elem old_aggr_elem
-%type <node>	def_arg columnElem where_clause
+%type <node>	def_arg columnElem where_clause where_or_current_clause
 				a_expr b_expr c_expr func_expr AexprConst indirection_el
 				columnref in_expr having_clause func_table array_expr
 %type <list>	row type_list array_expr_list
@@ -377,8 +377,8 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONCURRENTLY CONNECTION CONSTRAINT CONSTRAINTS
 	CONTENT_P CONVERSION_P CONVERT COPY COST CREATE CREATEDB
-	CREATEROLE CREATEUSER CROSS CSV CURRENT_DATE CURRENT_ROLE CURRENT_TIME
-	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
+	CREATEROLE CREATEUSER CROSS CSV CURRENT_P CURRENT_DATE CURRENT_ROLE
+	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
 	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
@@ -5715,7 +5715,7 @@ returning_clause:
  *****************************************************************************/
 
 DeleteStmt: DELETE_P FROM relation_expr_opt_alias
-			using_clause where_clause returning_clause
+			using_clause where_or_current_clause returning_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
 					n->relation = $3;
@@ -5771,7 +5771,7 @@ opt_nowait:	NOWAIT							{ $$ = TRUE; }
 UpdateStmt: UPDATE relation_expr_opt_alias
 			SET set_clause_list
 			from_clause
-			where_clause
+			where_or_current_clause
 			returning_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
@@ -6559,6 +6559,18 @@ func_table: func_expr								{ $$ = $1; }
 
 where_clause:
 			WHERE a_expr							{ $$ = $2; }
+			| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+/* variant for UPDATE and DELETE */
+where_or_current_clause:
+			WHERE a_expr							{ $$ = $2; }
+			| WHERE CURRENT_P OF name
+				{
+					CurrentOfExpr *n = makeNode(CurrentOfExpr);
+					n->cursor_name = $4;
+					$$ = (Node *) n;
+				}
 			| /*EMPTY*/								{ $$ = NULL; }
 		;
 
@@ -8818,6 +8830,7 @@ unreserved_keyword:
 			| CREATEROLE
 			| CREATEUSER
 			| CSV
+			| CURRENT_P
 			| CURSOR
 			| CYCLE
 			| DATABASE

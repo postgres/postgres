@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.103 2007/01/05 22:19:36 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.104 2007/06/11 01:16:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,6 +149,14 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 			var->varno += context->offset;
 			var->varnoold += context->offset;
 		}
+		return false;
+	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
+
+		if (context->sublevels_up == 0)
+			cexpr->cvarno += context->offset;
 		return false;
 	}
 	if (IsA(node, RangeTblRef))
@@ -300,6 +308,15 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			var->varno = context->new_index;
 			var->varnoold = context->new_index;
 		}
+		return false;
+	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
+
+		if (context->sublevels_up == 0 &&
+			cexpr->cvarno == context->rt_index)
+			cexpr->cvarno = context->new_index;
 		return false;
 	}
 	if (IsA(node, RangeTblRef))
@@ -466,6 +483,13 @@ IncrementVarSublevelsUp_walker(Node *node,
 			var->varlevelsup += context->delta_sublevels_up;
 		return false;			/* done here */
 	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		/* this should not happen */
+		if (context->min_sublevels_up == 0)
+			elog(ERROR, "cannot push down CurrentOfExpr");
+		return false;
+	}
 	if (IsA(node, Aggref))
 	{
 		Aggref	   *agg = (Aggref *) node;
@@ -533,6 +557,15 @@ rangeTableEntry_used_walker(Node *node,
 
 		if (var->varlevelsup == context->sublevels_up &&
 			var->varno == context->rt_index)
+			return true;
+		return false;
+	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
+
+		if (context->sublevels_up == 0 &&
+			cexpr->cvarno == context->rt_index)
 			return true;
 		return false;
 	}
@@ -932,8 +965,27 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 		}
 		/* otherwise fall through to copy the var normally */
 	}
+	else if (IsA(node, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
+		int			this_varno = (int) cexpr->cvarno;
 
-	if (IsA(node, Query))
+		if (this_varno == context->target_varno &&
+			context->sublevels_up == 0)
+		{
+			/*
+			 * We get here if a WHERE CURRENT OF expression turns out to
+			 * apply to a view.  Someday we might be able to translate
+			 * the expression to apply to an underlying table of the view,
+			 * but right now it's not implemented.
+			 */
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("WHERE CURRENT OF on a view is not implemented")));
+		}
+		/* otherwise fall through to copy the expr normally */
+	}
+	else if (IsA(node, Query))
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
 		Query	   *newnode;

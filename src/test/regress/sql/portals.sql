@@ -316,5 +316,85 @@ CLOSE ALL;
 SELECT name FROM pg_cursors ORDER BY 1;
 COMMIT;
 
+--
+-- Tests for updatable cursors
+--
 
+CREATE TEMP TABLE uctest(f1 int, f2 text);
+INSERT INTO uctest VALUES (1, 'one'), (2, 'two'), (3, 'three');
+SELECT * FROM uctest;
 
+-- Check DELETE WHERE CURRENT
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+FETCH 2 FROM c1;
+DELETE FROM uctest WHERE CURRENT OF c1;
+-- should show deletion
+SELECT * FROM uctest;
+-- cursor did not move
+FETCH ALL FROM c1;
+-- cursor is insensitive
+MOVE BACKWARD ALL IN c1;
+FETCH ALL FROM c1;
+COMMIT;
+-- should still see deletion
+SELECT * FROM uctest;
+
+-- Check UPDATE WHERE CURRENT; this time use FOR UPDATE
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest FOR UPDATE;
+FETCH c1;
+UPDATE uctest SET f1 = 8 WHERE CURRENT OF c1;
+SELECT * FROM uctest;
+COMMIT;
+SELECT * FROM uctest;
+
+-- Check inheritance cases
+CREATE TEMP TABLE ucchild () inherits (uctest);
+INSERT INTO ucchild values(100, 'hundred');
+SELECT * FROM uctest;
+
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+FETCH 1 FROM c1;
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
+FETCH 1 FROM c1;
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
+FETCH 1 FROM c1;
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
+FETCH 1 FROM c1;
+COMMIT;
+SELECT * FROM uctest;
+
+-- Check various error cases
+
+DELETE FROM uctest WHERE CURRENT OF c1;  -- fail, no such cursor
+DECLARE cx CURSOR WITH HOLD FOR SELECT * FROM uctest;
+DELETE FROM uctest WHERE CURRENT OF cx;  -- fail, can't use held cursor
+BEGIN;
+DECLARE c CURSOR FOR SELECT * FROM tenk2;
+DELETE FROM uctest WHERE CURRENT OF c;  -- fail, cursor on wrong table
+ROLLBACK;
+BEGIN;
+DECLARE c CURSOR FOR SELECT * FROM tenk1 JOIN tenk2 USING (unique1);
+DELETE FROM tenk1 WHERE CURRENT OF c;  -- fail, cursor is on a join
+ROLLBACK;
+BEGIN;
+DECLARE c CURSOR FOR SELECT f1,count(*) FROM uctest GROUP BY f1;
+DELETE FROM uctest WHERE CURRENT OF c;  -- fail, cursor is on aggregation
+ROLLBACK;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+DELETE FROM uctest WHERE CURRENT OF c1; -- fail, no current row
+ROLLBACK;
+
+-- WHERE CURRENT OF may someday work with views, but today is not that day.
+-- For now, just make sure it errors out cleanly.
+CREATE TEMP VIEW ucview AS SELECT * FROM uctest;
+CREATE RULE ucrule AS ON DELETE TO ucview DO INSTEAD
+  DELETE FROM uctest WHERE f1 = OLD.f1;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM ucview;
+FETCH FROM c1;
+DELETE FROM ucview WHERE CURRENT OF c1; -- fail, views not supported
+ROLLBACK;

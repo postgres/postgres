@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.40 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/declare.sgml,v 1.41 2007/06/11 01:16:21 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -27,7 +27,6 @@ PostgreSQL documentation
 <synopsis>
 DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITIVE ] [ [ NO ] SCROLL ]
     CURSOR [ { WITH | WITHOUT } HOLD ] FOR <replaceable class="parameter">query</replaceable>
-    [ FOR { READ ONLY | UPDATE [ OF <replaceable class="parameter">column</replaceable> [, ...] ] } ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -37,50 +36,10 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
   <para>
    <command>DECLARE</command> allows a user to create cursors, which
    can be used to retrieve
-   a small number of rows at a time out of a larger query. Cursors can
-   return data either in text or in binary format using
+   a small number of rows at a time out of a larger query.
+   After the cursor is created, rows are fetched from it using
    <xref linkend="sql-fetch" endterm="sql-fetch-title">.
   </para>
-
-  <para>
-   Normal cursors return data in text format, the same as a
-   <command>SELECT</> would produce.  Since data is stored natively in
-   binary format, the system must do a conversion to produce the text
-   format.  Once the information comes back in text form, the client
-   application might need to convert it to a binary format to manipulate
-   it.  In addition, data in the text format is often larger in size
-   than in the binary format.  Binary cursors return the data in a
-   binary representation that might be more easily manipulated.
-   Nevertheless, if you intend to display the data as text anyway,
-   retrieving it in text form will
-   save you some effort on the client side.
-  </para>
-
-  <para>
-   As an example, if a query returns a value of one from an integer column,
-   you would get a string of <literal>1</> with a default cursor
-   whereas with a binary cursor you would get
-   a 4-byte field containing the internal representation of the value
-   (in big-endian byte order).
-  </para>
-
-  <para>
-   Binary cursors should be used carefully.  Many applications,
-   including <application>psql</application>, are not prepared to
-   handle binary cursors and expect data to come back in the text
-   format.
-  </para>
-
-  <note>
-   <para>
-    When the client application uses the <quote>extended query</> protocol
-    to issue a <command>FETCH</> command, the Bind protocol message
-    specifies whether data is to be retrieved in text or binary format.
-    This choice overrides the way that the cursor is defined.  The concept
-    of a binary cursor as such is thus obsolete when using extended query
-    protocol &mdash; any cursor can be treated as either text or binary.
-   </para>
-  </note>
  </refsect1>
 
  <refsect1>
@@ -110,10 +69,10 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     <listitem>
      <para>
       Indicates that data retrieved from the cursor should be
-      unaffected by updates to the tables underlying the cursor while
-      the cursor exists.  In <productname>PostgreSQL</productname>,
-      all cursors are insensitive; this key word currently has no
-      effect and is present for compatibility with the SQL standard.
+      unaffected by updates to the table(s) underlying the cursor that occur
+      after the cursor is created.  In <productname>PostgreSQL</productname>,
+      this is the default behavior; so this key word has no
+      effect and is only accepted for compatibility with the SQL standard.
      </para>
     </listitem>
    </varlistentry>
@@ -163,34 +122,6 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
      </para>
     </listitem>
    </varlistentry>
-
-   <varlistentry>
-    <term><literal>FOR READ ONLY</literal></term>
-    <term><literal>FOR UPDATE</literal></term>
-    <listitem>
-     <para>
-      <literal>FOR READ ONLY</literal> indicates that the cursor will
-      be used in a read-only mode.  <literal>FOR UPDATE</literal>
-      indicates that the cursor will be used to update tables.  Since
-      cursor updates are not currently supported in
-      <productname>PostgreSQL</productname>, specifying <literal>FOR
-      UPDATE</literal> will cause an error message and specifying
-      <literal>FOR READ ONLY</literal> has no effect.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><replaceable class="parameter">column</replaceable></term>
-    <listitem>
-     <para>
-      Column(s) to be updated by the cursor.  Since cursor updates are
-      not currently supported in
-      <productname>PostgreSQL</productname>, the <literal>FOR
-      UPDATE</literal> clause provokes an error message.
-     </para>
-    </listitem>
-   </varlistentry>
   </variablelist>
 
   <para>
@@ -202,6 +133,38 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
 
  <refsect1 id="sql-declare-notes">
   <title id="sql-declare-notes-title">Notes</title>
+
+  <para>
+   Normal cursors return data in text format, the same as a
+   <command>SELECT</> would produce.  The <literal>BINARY</> option
+   specifies that the cursor should return data in binary format.
+   This reduces conversion effort for both the server and client,
+   at the cost of more programmer effort to deal with platform-dependent
+   binary data formats.
+   As an example, if a query returns a value of one from an integer column,
+   you would get a string of <literal>1</> with a default cursor,
+   whereas with a binary cursor you would get
+   a 4-byte field containing the internal representation of the value
+   (in big-endian byte order).
+  </para>
+
+  <para>
+   Binary cursors should be used carefully.  Many applications,
+   including <application>psql</application>, are not prepared to
+   handle binary cursors and expect data to come back in the text
+   format.
+  </para>
+
+  <note>
+   <para>
+    When the client application uses the <quote>extended query</> protocol
+    to issue a <command>FETCH</> command, the Bind protocol message
+    specifies whether data is to be retrieved in text or binary format.
+    This choice overrides the way that the cursor is defined.  The concept
+    of a binary cursor as such is thus obsolete when using extended query
+    protocol &mdash; any cursor can be treated as either text or binary.
+   </para>
+  </note>
 
    <para>
     Unless <literal>WITH HOLD</literal> is specified, the cursor
@@ -233,6 +196,11 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
    </para>
 
    <para>
+    <literal>WITH HOLD</literal> may not be specified when the query
+    includes <literal>FOR UPDATE</> or <literal>FOR SHARE</>.
+   </para>
+
+   <para>
     The <literal>SCROLL</> option should be specified when defining a
     cursor that will be used to fetch backwards.  This is required by
     the SQL standard.  However, for compatibility with earlier
@@ -243,6 +211,23 @@ DECLARE <replaceable class="parameter">name</replaceable> [ BINARY ] [ INSENSITI
     using backward fetches from a cursor that has not been created
     with <literal>SCROLL</literal>.  If <literal>NO SCROLL</> is
     specified, then backward fetches are disallowed in any case.
+   </para>
+
+   <para>
+    If the cursor's query includes <literal>FOR UPDATE</> or <literal>FOR
+    SHARE</>, then returned rows are locked at the time they are first
+    fetched, in the same way as for a regular
+    <xref linkend="sql-select" endterm="sql-select-title"> command with
+    these options.
+    In addition, the returned rows will be the most up-to-date versions;
+    therefore these options provide the equivalent of what the SQL standard
+    calls a <quote>sensitive cursor</>.  It is often wise to use <literal>FOR
+    UPDATE</> if the cursor is intended to be used with <command>UPDATE
+    ... WHERE CURRENT OF</> or <command>DELETE ... WHERE CURRENT OF</>,
+    since this will prevent other sessions from changing the rows between
+    the time they are fetched and the time they are updated.  Without
+    <literal>FOR UPDATE</>, a subsequent <literal>WHERE CURRENT OF</> command
+    will have no effect if the row was changed meanwhile.
    </para>
 
    <para>
@@ -280,14 +265,16 @@ DECLARE liahona CURSOR FOR SELECT * FROM films;
   <title>Compatibility</title>
 
   <para>
-   The SQL standard allows cursors only in embedded
-   <acronym>SQL</acronym> and in modules. <productname>PostgreSQL</>
-   permits cursors to be used interactively.
+   The SQL standard specifies that by default, cursors are sensitive to
+   concurrent updates of the underlying data.  In
+   <productname>PostgreSQL</productname>, cursors are insensitive by default,
+   and can be made sensitive by specifying <literal>FOR UPDATE</>.
   </para>
 
   <para>
-   The SQL standard allows cursors to update table data. All
-   <productname>PostgreSQL</> cursors are read only.
+   The SQL standard allows cursors only in embedded
+   <acronym>SQL</acronym> and in modules. <productname>PostgreSQL</>
+   permits cursors to be used interactively.
   </para>
 
   <para>

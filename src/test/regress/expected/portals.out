@@ -899,3 +899,176 @@ SELECT name FROM pg_cursors ORDER BY 1;
 (0 rows)
 
 COMMIT;
+--
+-- Tests for updatable cursors
+--
+CREATE TEMP TABLE uctest(f1 int, f2 text);
+INSERT INTO uctest VALUES (1, 'one'), (2, 'two'), (3, 'three');
+SELECT * FROM uctest;
+ f1 |  f2   
+----+-------
+  1 | one
+  2 | two
+  3 | three
+(3 rows)
+
+-- Check DELETE WHERE CURRENT
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+FETCH 2 FROM c1;
+ f1 | f2  
+----+-----
+  1 | one
+  2 | two
+(2 rows)
+
+DELETE FROM uctest WHERE CURRENT OF c1;
+-- should show deletion
+SELECT * FROM uctest;
+ f1 |  f2   
+----+-------
+  1 | one
+  3 | three
+(2 rows)
+
+-- cursor did not move
+FETCH ALL FROM c1;
+ f1 |  f2   
+----+-------
+  3 | three
+(1 row)
+
+-- cursor is insensitive
+MOVE BACKWARD ALL IN c1;
+FETCH ALL FROM c1;
+ f1 |  f2   
+----+-------
+  1 | one
+  2 | two
+  3 | three
+(3 rows)
+
+COMMIT;
+-- should still see deletion
+SELECT * FROM uctest;
+ f1 |  f2   
+----+-------
+  1 | one
+  3 | three
+(2 rows)
+
+-- Check UPDATE WHERE CURRENT; this time use FOR UPDATE
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest FOR UPDATE;
+FETCH c1;
+ f1 | f2  
+----+-----
+  1 | one
+(1 row)
+
+UPDATE uctest SET f1 = 8 WHERE CURRENT OF c1;
+SELECT * FROM uctest;
+ f1 |  f2   
+----+-------
+  3 | three
+  8 | one
+(2 rows)
+
+COMMIT;
+SELECT * FROM uctest;
+ f1 |  f2   
+----+-------
+  3 | three
+  8 | one
+(2 rows)
+
+-- Check inheritance cases
+CREATE TEMP TABLE ucchild () inherits (uctest);
+INSERT INTO ucchild values(100, 'hundred');
+SELECT * FROM uctest;
+ f1  |   f2    
+-----+---------
+   3 | three
+   8 | one
+ 100 | hundred
+(3 rows)
+
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+FETCH 1 FROM c1;
+ f1 |  f2   
+----+-------
+  3 | three
+(1 row)
+
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
+FETCH 1 FROM c1;
+ f1 | f2  
+----+-----
+  8 | one
+(1 row)
+
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
+FETCH 1 FROM c1;
+ f1  |   f2    
+-----+---------
+ 100 | hundred
+(1 row)
+
+UPDATE uctest SET f1 = f1 + 10 WHERE CURRENT OF c1;
+FETCH 1 FROM c1;
+ f1 | f2 
+----+----
+(0 rows)
+
+COMMIT;
+SELECT * FROM uctest;
+ f1  |   f2    
+-----+---------
+  13 | three
+  18 | one
+ 110 | hundred
+(3 rows)
+
+-- Check various error cases
+DELETE FROM uctest WHERE CURRENT OF c1;  -- fail, no such cursor
+ERROR:  cursor "c1" does not exist
+DECLARE cx CURSOR WITH HOLD FOR SELECT * FROM uctest;
+DELETE FROM uctest WHERE CURRENT OF cx;  -- fail, can't use held cursor
+ERROR:  cursor "cx" is held from a previous transaction
+BEGIN;
+DECLARE c CURSOR FOR SELECT * FROM tenk2;
+DELETE FROM uctest WHERE CURRENT OF c;  -- fail, cursor on wrong table
+ERROR:  cursor "c" is not a simply updatable scan of table "uctest"
+ROLLBACK;
+BEGIN;
+DECLARE c CURSOR FOR SELECT * FROM tenk1 JOIN tenk2 USING (unique1);
+DELETE FROM tenk1 WHERE CURRENT OF c;  -- fail, cursor is on a join
+ERROR:  cursor "c" is not a simply updatable scan of table "tenk1"
+ROLLBACK;
+BEGIN;
+DECLARE c CURSOR FOR SELECT f1,count(*) FROM uctest GROUP BY f1;
+DELETE FROM uctest WHERE CURRENT OF c;  -- fail, cursor is on aggregation
+ERROR:  cursor "c" is not a simply updatable scan of table "uctest"
+ROLLBACK;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM uctest;
+DELETE FROM uctest WHERE CURRENT OF c1; -- fail, no current row
+ERROR:  cursor "c1" is not positioned on a row
+ROLLBACK;
+-- WHERE CURRENT OF may someday work with views, but today is not that day.
+-- For now, just make sure it errors out cleanly.
+CREATE TEMP VIEW ucview AS SELECT * FROM uctest;
+CREATE RULE ucrule AS ON DELETE TO ucview DO INSTEAD
+  DELETE FROM uctest WHERE f1 = OLD.f1;
+BEGIN;
+DECLARE c1 CURSOR FOR SELECT * FROM ucview;
+FETCH FROM c1;
+ f1 |  f2   
+----+-------
+ 13 | three
+(1 row)
+
+DELETE FROM ucview WHERE CURRENT OF c1; -- fail, views not supported
+ERROR:  WHERE CURRENT OF on a view is not implemented
+ROLLBACK;

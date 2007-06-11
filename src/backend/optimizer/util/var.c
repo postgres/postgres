@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.69 2007/01/05 22:19:33 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.70 2007/06/11 01:16:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,6 +109,14 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 
 		if (var->varlevelsup == context->sublevels_up)
 			context->varnos = bms_add_member(context->varnos, var->varno);
+		return false;
+	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) node;
+
+		if (context->sublevels_up == 0)
+			context->varnos = bms_add_member(context->varnos, cexpr->cvarno);
 		return false;
 	}
 	if (IsA(node, Query))
@@ -217,6 +225,8 @@ contain_var_clause_walker(Node *node, void *context)
 			return true;		/* abort the tree traversal and return true */
 		return false;
 	}
+	if (IsA(node, CurrentOfExpr))
+		return true;
 	return expression_tree_walker(node, contain_var_clause_walker, context);
 }
 
@@ -249,6 +259,13 @@ contain_vars_of_level_walker(Node *node, int *sublevels_up)
 	{
 		if (((Var *) node)->varlevelsup == *sublevels_up)
 			return true;		/* abort tree traversal and return true */
+		return false;
+	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		if (*sublevels_up == 0)
+			return true;
+		return false;
 	}
 	if (IsA(node, Query))
 	{
@@ -356,6 +373,29 @@ find_minimum_var_level_walker(Node *node,
 	if (IsA(node, Var))
 	{
 		int			varlevelsup = ((Var *) node)->varlevelsup;
+
+		/* convert levelsup to frame of reference of original query */
+		varlevelsup -= context->sublevels_up;
+		/* ignore local vars of subqueries */
+		if (varlevelsup >= 0)
+		{
+			if (context->min_varlevel < 0 ||
+				context->min_varlevel > varlevelsup)
+			{
+				context->min_varlevel = varlevelsup;
+
+				/*
+				 * As soon as we find a local variable, we can abort the tree
+				 * traversal, since min_varlevel is then certainly 0.
+				 */
+				if (varlevelsup == 0)
+					return true;
+			}
+		}
+	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		int			varlevelsup = 0;
 
 		/* convert levelsup to frame of reference of original query */
 		varlevelsup -= context->sublevels_up;

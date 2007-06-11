@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.309 2007/06/05 21:31:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.310 2007/06/11 01:16:22 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1056,6 +1056,15 @@ _outSetToDefault(StringInfo str, SetToDefault *node)
 
 	WRITE_OID_FIELD(typeId);
 	WRITE_INT_FIELD(typeMod);
+}
+
+static void
+_outCurrentOfExpr(StringInfo str, CurrentOfExpr *node)
+{
+	WRITE_NODE_TYPE("CURRENTOFEXPR");
+
+	WRITE_UINT_FIELD(cvarno);
+	WRITE_STRING_FIELD(cursor_name);
 }
 
 static void
@@ -2228,6 +2237,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_SetToDefault:
 				_outSetToDefault(str, obj);
+				break;
+			case T_CurrentOfExpr:
+				_outCurrentOfExpr(str, obj);
 				break;
 			case T_TargetEntry:
 				_outTargetEntry(str, obj);

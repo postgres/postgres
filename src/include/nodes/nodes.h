@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.200 2007/06/05 21:31:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.201 2007/06/11 01:16:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,6 +139,7 @@ typedef enum NodeTag
 	T_CoerceToDomain,
 	T_CoerceToDomainValue,
 	T_SetToDefault,
+	T_CurrentOfExpr,
 	T_TargetEntry,
 	T_RangeTblRef,
 	T_JoinExpr,

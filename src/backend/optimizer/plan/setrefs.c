@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.135 2007/04/30 00:16:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.136 2007/06/11 01:16:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -617,6 +617,15 @@ fix_scan_expr_mutator(Node *node, fix_scan_expr_context *context)
 		if (var->varnoold > 0)
 			var->varnoold += context->rtoffset;
 		return (Node *) var;
+	}
+	if (IsA(node, CurrentOfExpr))
+	{
+		CurrentOfExpr *cexpr = (CurrentOfExpr *) copyObject(node);
+
+		Assert(cexpr->cvarno != INNER);
+		Assert(cexpr->cvarno != OUTER);
+		cexpr->cvarno += context->rtoffset;
+		return (Node *) cexpr;
 	}
 	/*
 	 * Since we update opcode info in-place, this part could possibly

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.218 2007/06/05 21:31:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.219 2007/06/11 01:16:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -151,6 +151,8 @@ static Datum ExecEvalCoerceViaIO(CoerceViaIOState *iostate,
 static Datum ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 									 ExprContext *econtext,
 									 bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
+			bool *isNull, ExprDoneCond *isDone);
 
 
 /* ----------------------------------------------------------------
@@ -3618,6 +3620,41 @@ ExecEvalArrayCoerceExpr(ArrayCoerceExprState *astate,
 					 astate->amstate);
 }
 
+/* ----------------------------------------------------------------
+ *		ExecEvalCurrentOfExpr
+ *
+ * Normally, the planner will convert CURRENT OF into a TidScan qualification,
+ * but we have plain execQual support in case it doesn't.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
+					  bool *isNull, ExprDoneCond *isDone)
+{
+	CurrentOfExpr *cexpr = (CurrentOfExpr *) exprstate->expr;
+	bool result;
+	HeapTuple tup;
+	ItemPointerData cursor_tid;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+	*isNull = false;
+
+	Assert(cexpr->cvarno != INNER);
+	Assert(cexpr->cvarno != OUTER);
+	Assert(!TupIsNull(econtext->ecxt_scantuple));
+	tup = econtext->ecxt_scantuple->tts_tuple;
+	if (tup == NULL)
+		elog(ERROR, "CURRENT OF applied to non-materialized tuple");
+
+	if (execCurrentOf(cexpr->cursor_name, tup->t_tableOid, &cursor_tid))
+		result = ItemPointerEquals(&cursor_tid, &(tup->t_self));
+	else
+		result = false;
+
+	return BoolGetDatum(result);
+}
+
 
 /*
  * ExecEvalExprSwitchContext
@@ -4265,6 +4302,10 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				cstate->constraints = GetDomainConstraints(ctest->resulttype);
 				state = (ExprState *) cstate;
 			}
+			break;
+		case T_CurrentOfExpr:
+			state = (ExprState *) makeNode(ExprState);
+			state->evalfunc = ExecEvalCurrentOfExpr;
 			break;
 		case T_TargetEntry:
 			{
