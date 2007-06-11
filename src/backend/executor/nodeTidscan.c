@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.54 2007/06/11 01:16:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeTidscan.c,v 1.55 2007/06/11 22:22:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,7 +153,7 @@ TidListCreate(TidScanState *tidstate)
 			CurrentOfExpr *cexpr = (CurrentOfExpr *) expr;
 			ItemPointerData cursor_tid;
 
-			if (execCurrentOf(cexpr->cursor_name,
+			if (execCurrentOf(cexpr, econtext,
 						  RelationGetRelid(tidstate->ss.ss_currentRelation),
 							  &cursor_tid))
 			{

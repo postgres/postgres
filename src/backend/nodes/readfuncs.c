@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.208 2007/06/11 01:16:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.209 2007/06/11 22:22:41 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -883,6 +883,7 @@ _readCurrentOfExpr(void)
 
 	READ_UINT_FIELD(cvarno);
 	READ_STRING_FIELD(cursor_name);
+	READ_INT_FIELD(cursor_param);
 
 	READ_DONE();
 }

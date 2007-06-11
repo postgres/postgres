@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.219 2007/06/11 01:16:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.220 2007/06/11 22:22:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3632,8 +3632,10 @@ ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
 					  bool *isNull, ExprDoneCond *isDone)
 {
 	CurrentOfExpr *cexpr = (CurrentOfExpr *) exprstate->expr;
-	bool result;
-	HeapTuple tup;
+	bool	result;
+	bool	lisnull;
+	Oid		tableoid;
+	ItemPointer tuple_tid;
 	ItemPointerData cursor_tid;
 
 	if (isDone)
@@ -3643,12 +3645,19 @@ ExecEvalCurrentOfExpr(ExprState *exprstate, ExprContext *econtext,
 	Assert(cexpr->cvarno != INNER);
 	Assert(cexpr->cvarno != OUTER);
 	Assert(!TupIsNull(econtext->ecxt_scantuple));
-	tup = econtext->ecxt_scantuple->tts_tuple;
-	if (tup == NULL)
-		elog(ERROR, "CURRENT OF applied to non-materialized tuple");
+	/* Use slot_getattr to catch any possible mistakes */
+	tableoid = DatumGetObjectId(slot_getattr(econtext->ecxt_scantuple,
+											 TableOidAttributeNumber,
+											 &lisnull));
+	Assert(!lisnull);
+	tuple_tid = (ItemPointer)
+		DatumGetPointer(slot_getattr(econtext->ecxt_scantuple,
+									 SelfItemPointerAttributeNumber,
+									 &lisnull));
+	Assert(!lisnull);
 
-	if (execCurrentOf(cexpr->cursor_name, tup->t_tableOid, &cursor_tid))
-		result = ItemPointerEquals(&cursor_tid, &(tup->t_self));
+	if (execCurrentOf(cexpr, econtext, tableoid, &cursor_tid))
+		result = ItemPointerEquals(&cursor_tid, tuple_tid);
 	else
 		result = false;
 

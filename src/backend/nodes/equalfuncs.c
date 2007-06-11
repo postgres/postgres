@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.309 2007/06/11 01:16:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.310 2007/06/11 22:22:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -603,6 +603,7 @@ _equalCurrentOfExpr(CurrentOfExpr *a, CurrentOfExpr *b)
 {
 	COMPARE_SCALAR_FIELD(cvarno);
 	COMPARE_STRING_FIELD(cursor_name);
+	COMPARE_SCALAR_FIELD(cursor_param);
 
 	return true;
 }

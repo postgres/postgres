@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.310 2007/06/11 01:16:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.311 2007/06/11 22:22:40 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1065,6 +1065,7 @@ _outCurrentOfExpr(StringInfo str, CurrentOfExpr *node)
 
 	WRITE_UINT_FIELD(cvarno);
 	WRITE_STRING_FIELD(cursor_name);
+	WRITE_INT_FIELD(cursor_param);
 }
 
 static void

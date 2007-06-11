@@ -6,26 +6,29 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.1 2007/06/11 01:16:22 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/executor/execCurrent.c,v 1.2 2007/06/11 22:22:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "catalog/pg_type.h"
 #include "executor/executor.h"
+#include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/portal.h"
 
 
+static char *fetch_param_value(ExprContext *econtext, int paramId);
 static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
 
 
 /*
  * execCurrentOf
  *
- * Given the name of a cursor and the OID of a table, determine which row
- * of the table is currently being scanned by the cursor, and return its
- * TID into *current_tid.
+ * Given a CURRENT OF expression and the OID of a table, determine which row
+ * of the table is currently being scanned by the cursor named by CURRENT OF,
+ * and return the row's TID into *current_tid.
  *
  * Returns TRUE if a row was identified.  Returns FALSE if the cursor is valid
  * for the table but is not currently scanning a row of the table (this is a
@@ -33,14 +36,25 @@ static ScanState *search_plan_tree(PlanState *node, Oid table_oid);
  * valid updatable scan of the specified table.
  */
 bool
-execCurrentOf(char *cursor_name, Oid table_oid,
+execCurrentOf(CurrentOfExpr *cexpr,
+			  ExprContext *econtext,
+			  Oid table_oid,
 			  ItemPointer current_tid)
 {
+	char	   *cursor_name;
 	char	   *table_name;
 	Portal		portal;
 	QueryDesc *queryDesc;
 	ScanState  *scanstate;
-	HeapTuple tup;
+	bool	lisnull;
+	Oid		tuple_tableoid;
+	ItemPointer tuple_tid;
+
+	/* Get the cursor name --- may have to look up a parameter reference */
+	if (cexpr->cursor_name)
+		cursor_name = cexpr->cursor_name;
+	else
+		cursor_name = fetch_param_value(econtext, cexpr->cursor_param);
 
 	/* Fetch table name for possible use in error messages */
 	table_name = get_rel_name(table_oid);
@@ -100,14 +114,52 @@ execCurrentOf(char *cursor_name, Oid table_oid,
 	if (TupIsNull(scanstate->ss_ScanTupleSlot))
 		return false;
 
-	tup = scanstate->ss_ScanTupleSlot->tts_tuple;
-	if (tup == NULL)
-		elog(ERROR, "CURRENT OF applied to non-materialized tuple");
-	Assert(tup->t_tableOid == table_oid);
+	/* Use slot_getattr to catch any possible mistakes */
+	tuple_tableoid = DatumGetObjectId(slot_getattr(scanstate->ss_ScanTupleSlot,
+												   TableOidAttributeNumber,
+												   &lisnull));
+	Assert(!lisnull);
+	tuple_tid = (ItemPointer)
+		DatumGetPointer(slot_getattr(scanstate->ss_ScanTupleSlot,
+									 SelfItemPointerAttributeNumber,
+									 &lisnull));
+	Assert(!lisnull);
 
-	*current_tid = tup->t_self;
+	Assert(tuple_tableoid == table_oid);
+
+	*current_tid = *tuple_tid;
 
 	return true;
+}
+
+/*
+ * fetch_param_value
+ *
+ * Fetch the string value of a param, verifying it is of type REFCURSOR.
+ */
+static char *
+fetch_param_value(ExprContext *econtext, int paramId)
+{
+	ParamListInfo paramInfo = econtext->ecxt_param_list_info;
+
+	if (paramInfo &&
+		paramId > 0 && paramId <= paramInfo->numParams)
+	{
+		ParamExternData *prm = &paramInfo->params[paramId - 1];
+
+		if (OidIsValid(prm->ptype) && !prm->isnull)
+		{
+			Assert(prm->ptype == REFCURSOROID);
+			/* We know that refcursor uses text's I/O routines */
+			return DatumGetCString(DirectFunctionCall1(textout,
+													   prm->value));
+		}
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			 errmsg("no value found for parameter %d", paramId)));
+	return NULL;
 }
 
 /*
