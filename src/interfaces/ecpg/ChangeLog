@@ -2203,4 +2203,9 @@ Sun, 27 May 2007 13:14:39 +0200
 
 	- Changed variable test to not run into infinite loops on backend
 	  errors.
+
+Mon, 11 Jun 2007 13:59:57 +0200
+
+	- Fixed memory leak in descriptor code.
+	- Made ecpg delete output file in case of an error.
 	- Set ecpg version to 4.3.1.
