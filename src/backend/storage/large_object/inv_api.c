@@ -5,6 +5,13 @@
  *	  contains the user-level large object application interface routines.
  *
  *
+ * Note: we access pg_largeobject.data using its C struct declaration.
+ * This is safe because it immediately follows pageno which is an int4 field,
+ * and therefore the data field will always be 4-byte aligned, even if it
+ * is in the short 1-byte-header format.  We have to detoast it since it's
+ * quite likely to be in compressed or short format.  We also need to check
+ * for NULLs, since initdb will mark loid and pageno but not data as NOT NULL.
+ *
  * Note: many of these routines leak memory in CurrentMemoryContext, as indeed
  * does most of the backend code.  We expect that CurrentMemoryContext will
  * be a short-lived context.  Data that must persist across function calls
@@ -17,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.124 2007/04/06 04:21:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/large_object/inv_api.c,v 1.125 2007/06/12 19:46:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,8 +337,10 @@ inv_getsize(LargeObjectDesc *obj_desc)
 		bool		pfreeit;
 
 		found = true;
+		if (HeapTupleHasNulls(tuple))				/* paranoia */
+			elog(ERROR, "null field found in pg_largeobject");
 		data = (Form_pg_largeobject) GETSTRUCT(tuple);
-		datafield = &(data->data);
+		datafield = &(data->data);			/* see note at top of file */
 		pfreeit = false;
 		if (VARATT_IS_EXTENDED(datafield))
 		{
@@ -434,6 +443,8 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		bytea	   *datafield;
 		bool		pfreeit;
 
+		if (HeapTupleHasNulls(tuple))				/* paranoia */
+			elog(ERROR, "null field found in pg_largeobject");
 		data = (Form_pg_largeobject) GETSTRUCT(tuple);
 
 		/*
@@ -457,7 +468,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 			off = (int) (obj_desc->offset - pageoff);
 			Assert(off >= 0 && off < LOBLKSIZE);
 
-			datafield = &(data->data);
+			datafield = &(data->data);			/* see note at top of file */
 			pfreeit = false;
 			if (VARATT_IS_EXTENDED(datafield))
 			{
@@ -558,6 +569,8 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 		{
 			if ((oldtuple = index_getnext(sd, ForwardScanDirection)) != NULL)
 			{
+				if (HeapTupleHasNulls(oldtuple))			/* paranoia */
+					elog(ERROR, "null field found in pg_largeobject");
 				olddata = (Form_pg_largeobject) GETSTRUCT(oldtuple);
 				Assert(olddata->pageno >= pageno);
 			}
@@ -575,7 +588,7 @@ inv_write(LargeObjectDesc *obj_desc, const char *buf, int nbytes)
 			 *
 			 * First, load old data into workbuf
 			 */
-			datafield = &(olddata->data);
+			datafield = &(olddata->data);		/* see note at top of file */
 			pfreeit = false;
 			if (VARATT_IS_EXTENDED(datafield))
 			{
@@ -737,6 +750,8 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	olddata = NULL;
 	if ((oldtuple = index_getnext(sd, ForwardScanDirection)) != NULL)
 	{
+		if (HeapTupleHasNulls(oldtuple))				/* paranoia */
+			elog(ERROR, "null field found in pg_largeobject");
 		olddata = (Form_pg_largeobject) GETSTRUCT(oldtuple);
 		Assert(olddata->pageno >= pageno);
 	}
@@ -749,7 +764,7 @@ inv_truncate(LargeObjectDesc *obj_desc, int len)
 	if (olddata != NULL && olddata->pageno == pageno)
 	{
 		/* First, load old data into workbuf */
-		bytea *datafield = &(olddata->data);
+		bytea *datafield = &(olddata->data);	/* see note at top of file */
 		bool pfreeit = false;
 		int pagelen;
 
