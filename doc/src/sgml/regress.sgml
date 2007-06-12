@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.57 2007/02/01 00:28:17 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.58 2007/06/12 17:49:12 mha Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -351,10 +351,13 @@ diff results/random.out expected/random.out
    <para>
     Each line in the mapping file is of the form
 <synopsis>
-testname/platformpattern=comparisonfilename
+testname:output:platformpattern=comparisonfilename
 </synopsis>
     The test name is just the name of the particular regression test
-    module.  The platform pattern is a pattern in the style of the Unix
+    module. The output value indicates which output file to check. For the 
+    standard regression tests, this is always <literal>out</literal>. The
+    value corresponds to the file extension of the output file.
+    The platform pattern is a pattern in the style of the Unix
     tool <command>expr</> (that is, a regular expression with an implicit
     <literal>^</literal> anchor at the start).  It is matched against the
     platform name as printed by <command>config.guess</command>.
@@ -372,7 +375,7 @@ testname/platformpattern=comparisonfilename
     <quote>failure</quote> message on <systemitem>OpenBSD</systemitem>
     platforms, <filename>resultmap</filename> includes:
 <programlisting>
-float8/i.86-.*-openbsd=float8-small-is-zero
+float8:out:i.86-.*-openbsd=float8-small-is-zero.out
 </programlisting>
     which will trigger on any machine for which the output of
     <command>config.guess</command> matches <literal>i.86-.*-openbsd</literal>.
