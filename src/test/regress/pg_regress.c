@@ -11,12 +11,12 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.32 2007/05/31 15:13:06 petere Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.33 2007/06/12 11:07:34 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres_fe.h"
+#include "pg_regress.h"
 
 #include <ctype.h>
 #include <sys/stat.h>
@@ -32,26 +32,11 @@
 #include "getopt_long.h"
 #include "pg_config_paths.h"
 
-#ifndef WIN32
-#define PID_TYPE pid_t
-#define INVALID_PID (-1)
-#else
-#define PID_TYPE HANDLE
-#define INVALID_PID INVALID_HANDLE_VALUE
-#endif
-
-
-/* simple list of strings */
-typedef struct _stringlist
-{
-	char	   *str;
-	struct _stringlist *next;
-}	_stringlist;
-
 /* for resultmap we need a list of pairs of strings */
 typedef struct _resultmap
 {
 	char	   *test;
+	char	   *type;
 	char	   *resultfile;
 	struct _resultmap *next;
 }	_resultmap;
@@ -63,10 +48,10 @@ typedef struct _resultmap
  * In non-temp_install mode, the only thing we need is the location of psql,
  * which we expect to find in psqldir, or in the PATH if psqldir isn't given.
  */
-static char *bindir = PGBINDIR;
-static char *libdir = LIBDIR;
-static char *datadir = PGSHAREDIR;
-static char *host_platform = HOST_TUPLE;
+char *bindir = PGBINDIR;
+char *libdir = LIBDIR;
+char *datadir = PGSHAREDIR;
+char *host_platform = HOST_TUPLE;
 #ifndef WIN32_ONLY_COMPILER
 static char *makeprog = MAKEPROG;
 #endif
@@ -76,14 +61,15 @@ static char *shellprog = SHELLPROG;
 #endif
 
 /* currently we can use the same diff switches on all platforms */
-static const char *basic_diff_opts = "-w";
-static const char *pretty_diff_opts = "-w -C3";
+const char *basic_diff_opts = "-w";
+const char *pretty_diff_opts = "-w -C3";
 
 /* options settable from command line */
-static char *dbname = "regression";
-static bool debug = false;
-static char *inputdir = ".";
-static char *outputdir = ".";
+_stringlist *dblist = NULL;
+bool debug = false;
+char *inputdir = ".";
+char *outputdir = ".";
+char *psqldir = NULL;
 static _stringlist *loadlanguage = NULL;
 static int	max_connections = 0;
 static char *encoding = NULL;
@@ -93,11 +79,11 @@ static char *temp_install = NULL;
 static char *top_builddir = NULL;
 static int	temp_port = 65432;
 static bool nolocale = false;
-static char *psqldir = NULL;
 static char *hostname = NULL;
 static int	port = -1;
 static char *user = NULL;
 static char *srcdir = NULL;
+static _stringlist *extraroles = NULL;
 
 /* internal variables */
 static const char *progname;
@@ -170,7 +156,7 @@ unlimit_core_size(void)
 /*
  * Add an item at the end of a stringlist.
  */
-static void
+void
 add_stringlist_item(_stringlist ** listhead, const char *str)
 {
 	_stringlist *newentry = malloc(sizeof(_stringlist));
@@ -186,6 +172,37 @@ add_stringlist_item(_stringlist ** listhead, const char *str)
 			 /* skip */ ;
 		oldentry->next = newentry;
 	}
+}
+
+/*
+ * Free a stringlist.
+ */
+static void
+free_stringlist(_stringlist **listhead) 
+{
+	if (listhead == NULL || *listhead == NULL)
+		return;
+	if ((*listhead)->next != NULL)
+		free_stringlist(&((*listhead)->next));
+	free((*listhead)->str);
+	free(*listhead);
+	*listhead = NULL;
+}
+
+/*
+ * Split a delimited string into a stringlist
+ */
+static void
+split_to_stringlist(const char *s, const char *delim, _stringlist **listhead)
+{
+	char *sc = strdup(s);
+	char *token = strtok(sc, delim);
+	while (token)
+	{
+		add_stringlist_item(listhead, token);
+		token = strtok(NULL, delim);
+	}
+	free(sc);
 }
 
 /*
@@ -265,7 +282,7 @@ stop_postmaster(void)
  * Always exit through here, not through plain exit(), to ensure we make
  * an effort to shut down a temp postmaster
  */
-static void
+void
 exit_nicely(int code)
 {
 	stop_postmaster();
@@ -349,7 +366,7 @@ string_matches_pattern(const char *str, const char *pattern)
  * Replace all occurances of a string in a string with a different string.
  * NOTE: Assumes there is enough room in the target buffer!
  */
-static void
+void
 replace_string(char *string, char *replace, char *replacement)
 {
 	char *ptr;
@@ -537,6 +554,7 @@ load_resultmap(void)
 	while (fgets(buf, sizeof(buf), f))
 	{
 		char	   *platform;
+		char	   *file_type;
 		char	   *expected;
 		int			i;
 
@@ -546,7 +564,16 @@ load_resultmap(void)
 			buf[--i] = '\0';
 
 		/* parse out the line fields */
-		platform = strchr(buf, '/');
+		file_type = strchr(buf, ':');
+		if (!file_type)
+		{
+			fprintf(stderr, _("incorrectly formatted resultmap entry: %s\n"),
+				buf);
+			exit_nicely(2);
+		}
+		*file_type++ = '\0';
+
+		platform = strchr(file_type, ':');
 		if (!platform)
 		{
 			fprintf(stderr, _("incorrectly formatted resultmap entry: %s\n"),
@@ -574,12 +601,42 @@ load_resultmap(void)
 			_resultmap *entry = malloc(sizeof(_resultmap));
 
 			entry->test = strdup(buf);
+			entry->type = strdup(file_type);
 			entry->resultfile = strdup(expected);
 			entry->next = resultmap;
 			resultmap = entry;
 		}
 	}
 	fclose(f);
+}
+
+/*
+ * Check in resultmap if we should be looking at a different file
+ */
+static
+const char *get_expectfile(const char *testname, const char *file)
+{
+	char *file_type;
+	_resultmap *rm;
+
+	/*
+	 * Determine the file type from the file name. This is just what is
+	 * following the last dot in the file name.
+	 */
+	if (!file || !(file_type = strrchr(file, '.')))
+		return NULL;
+
+	file_type++;
+
+	for (rm = resultmap; rm != NULL; rm = rm->next)
+	{
+		if (strcmp(testname, rm->test) == 0 && strcmp(file_type, rm->type) == 0)
+		{
+			return rm->resultfile;
+		}
+	}
+
+	return NULL;
 }
 
 /*
@@ -704,7 +761,7 @@ initialize_environment(void)
 
 		/* psql will be installed into temp-install bindir */
 		psqldir = bindir;
-
+		
 		/*
 		 * Set up shared library paths to include the temp install.
 		 *
@@ -820,7 +877,7 @@ psql_command(const char *database, const char *query,...)
  *
  * Returns the process ID (or HANDLE) so we can wait for it later
  */
-static PID_TYPE
+PID_TYPE
 spawn_process(const char *cmdline)
 {
 #ifndef WIN32
@@ -944,43 +1001,6 @@ spawn_process(const char *cmdline)
 }
 
 /*
- * start a psql test process for specified file (including redirection),
- * and return process ID
- */
-static PID_TYPE
-psql_start_test(const char *testname)
-{
-	PID_TYPE	pid;
-	char		infile[MAXPGPATH];
-	char		outfile[MAXPGPATH];
-	char		psql_cmd[MAXPGPATH * 3];
-
-	snprintf(infile, sizeof(infile), "%s/sql/%s.sql",
-			 inputdir, testname);
-	snprintf(outfile, sizeof(outfile), "%s/results/%s.out",
-			 outputdir, testname);
-
-	snprintf(psql_cmd, sizeof(psql_cmd),
-			 SYSTEMQUOTE "\"%s%spsql\" -X -a -q -d \"%s\" < \"%s\" > \"%s\" 2>&1" SYSTEMQUOTE,
-			 psqldir ? psqldir : "",
-			 psqldir ? "/" : "",
-			 dbname,
-			 infile,
-			 outfile);
-
-	pid = spawn_process(psql_cmd);
-
-	if (pid == INVALID_PID)
-	{
-		fprintf(stderr, _("could not start process for test %s\n"),
-				testname);
-		exit_nicely(2);
-	}
-
-	return pid;
-}
-
-/*
  * Count bytes in file
  */
 static long
@@ -1062,6 +1082,26 @@ make_directory(const char *dir)
 }
 
 /*
+ * In: filename.ext, Return: filename_i.ext, where 0 < i <= 9
+ */
+static char *
+get_alternative_expectfile(const char *expectfile, int i)
+{
+	char *last_dot;
+	int ssize = strlen(expectfile) + 2 + 1;
+	char *tmp = (char *)malloc(ssize);
+	char *s = (char *)malloc(ssize);
+	strcpy(tmp, expectfile);
+	last_dot = strrchr(tmp,'.');
+	if (!last_dot)
+		return NULL;
+	*last_dot = '\0';
+	snprintf(s, ssize, "%s_%d.%s", tmp, i, last_dot+1);
+	free(tmp);
+	return s;
+}
+
+/*
  * Run a "diff" command and also check that it didn't crash
  */
 static int
@@ -1098,42 +1138,38 @@ run_diff(const char *cmd, const char *filename)
  * In the true case, the diff is appended to the diffs file.
  */
 static bool
-results_differ(const char *testname)
+results_differ(const char *testname, const char *resultsfile, const char *default_expectfile)
 {
-	const char *expectname;
-	char		resultsfile[MAXPGPATH];
 	char		expectfile[MAXPGPATH];
 	char		diff[MAXPGPATH];
 	char		cmd[MAXPGPATH * 3];
 	char		best_expect_file[MAXPGPATH];
-	_resultmap *rm;
 	FILE	   *difffile;
 	int			best_line_count;
 	int			i;
 	int			l;
+	const char *platform_expectfile;
 
-	/* Check in resultmap if we should be looking at a different file */
-	expectname = testname;
-	for (rm = resultmap; rm != NULL; rm = rm->next)
+	/*
+	 * We can pass either the resultsfile or the expectfile, they should
+	 * have the same type (filename.type) anyway.
+	 */
+	platform_expectfile = get_expectfile(testname, resultsfile);
+
+	strcpy(expectfile, default_expectfile);
+	if (platform_expectfile) 
 	{
-		if (strcmp(testname, rm->test) == 0)
-		{
-			expectname = rm->resultfile;
-			break;
-		}
+		/*
+		 * Replace everything afer the last slash in expectfile with what the
+		 * platform_expectfile contains.
+		 */
+		char *p = strrchr(expectfile, '/');
+		if (p)
+			strcpy(++p, platform_expectfile);
 	}
 
-	/* Name of test results file */
-	snprintf(resultsfile, sizeof(resultsfile), "%s/results/%s.out",
-			 outputdir, testname);
-
-	/* Name of expected-results file */
-	snprintf(expectfile, sizeof(expectfile), "%s/expected/%s.out",
-			 inputdir, expectname);
-
 	/* Name to use for temporary diff file */
-	snprintf(diff, sizeof(diff), "%s/results/%s.diff",
-			 outputdir, testname);
+	snprintf(diff, sizeof(diff), "%s.diff", resultsfile);
 
 	/* OK, run the diff */
 	snprintf(cmd, sizeof(cmd),
@@ -1153,14 +1189,15 @@ results_differ(const char *testname)
 
 	for (i = 0; i <= 9; i++)
 	{
-		snprintf(expectfile, sizeof(expectfile), "%s/expected/%s_%d.out",
-				 inputdir, expectname, i);
-		if (!file_exists(expectfile))
+		char *alt_expectfile;
+
+		alt_expectfile = get_alternative_expectfile(expectfile, i);
+		if (!file_exists(alt_expectfile))
 			continue;
 
 		snprintf(cmd, sizeof(cmd),
 				 SYSTEMQUOTE "diff %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
-				 basic_diff_opts, expectfile, resultsfile, diff);
+				 basic_diff_opts, alt_expectfile, resultsfile, diff);
 
 		if (run_diff(cmd, diff) == 0)
 		{
@@ -1173,8 +1210,9 @@ results_differ(const char *testname)
 		{
 			/* This diff was a better match than the last one */
 			best_line_count = l;
-			strcpy(best_expect_file, expectfile);
+			strcpy(best_expect_file, alt_expectfile);
 		}
+		free(alt_expectfile);
 	}
 
 	/*
@@ -1182,14 +1220,11 @@ results_differ(const char *testname)
 	 * haven't found a complete match yet.
 	 */
 
-	if (strcmp(expectname, testname) != 0)
+	if (platform_expectfile)
 	{
-		snprintf(expectfile, sizeof(expectfile), "%s/expected/%s.out",
-				 inputdir, testname);
-
 		snprintf(cmd, sizeof(cmd),
 				 SYSTEMQUOTE "diff %s \"%s\" \"%s\" > \"%s\"" SYSTEMQUOTE,
-				 basic_diff_opts, expectfile, resultsfile, diff);
+				 basic_diff_opts, default_expectfile, resultsfile, diff);
 
 		if (run_diff(cmd, diff) == 0)
 		{
@@ -1203,7 +1238,7 @@ results_differ(const char *testname)
 		{
 			/* This diff was a better match than the last one */
 			best_line_count = l;
-			strcpy(best_expect_file, expectfile);
+			strcpy(best_expect_file, default_expectfile);
 		}
 	}
 
@@ -1302,15 +1337,22 @@ wait_for_tests(PID_TYPE * pids, char **names, int num_tests)
  * Run all the tests specified in one schedule file
  */
 static void
-run_schedule(const char *schedule)
+run_schedule(const char *schedule, test_function tfunc)
 {
 #define MAX_PARALLEL_TESTS 100
 	char	   *tests[MAX_PARALLEL_TESTS];
+	_stringlist *resultfiles[MAX_PARALLEL_TESTS];
+	_stringlist *expectfiles[MAX_PARALLEL_TESTS];
+	_stringlist *tags[MAX_PARALLEL_TESTS];
 	PID_TYPE	pids[MAX_PARALLEL_TESTS];
 	_stringlist *ignorelist = NULL;
 	char		scbuf[1024];
 	FILE	   *scf;
 	int			line_num = 0;
+
+	memset(resultfiles,0,sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
+	memset(expectfiles,0,sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
+	memset(tags,0,sizeof(_stringlist *) * MAX_PARALLEL_TESTS);
 
 	scf = fopen(schedule, "r");
 	if (!scf)
@@ -1329,6 +1371,15 @@ run_schedule(const char *schedule)
 		int			i;
 
 		line_num++;
+
+		for (i = 0; i < MAX_PARALLEL_TESTS; i++)
+		{
+			if (resultfiles[i] == NULL)
+				break;
+			free_stringlist(&resultfiles[i]);
+			free_stringlist(&expectfiles[i]);
+			free_stringlist(&tags[i]);
+		}
 
 		/* strip trailing whitespace, especially the newline */
 		i = strlen(scbuf);
@@ -1394,7 +1445,7 @@ run_schedule(const char *schedule)
 		if (num_tests == 1)
 		{
 			status(_("test %-20s ... "), tests[0]);
-			pids[0] = psql_start_test(tests[0]);
+			pids[0] = (tfunc)(tests[0], &resultfiles[0], &expectfiles[0], &tags[0]);
 			wait_for_tests(pids, NULL, 1);
 			/* status line is finished below */
 		}
@@ -1411,7 +1462,7 @@ run_schedule(const char *schedule)
 					wait_for_tests(pids + oldest, tests + oldest, i - oldest);
 					oldest = i;
 				}
-				pids[i] = psql_start_test(tests[i]);
+				pids[i] = (tfunc)(tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 			}
 			wait_for_tests(pids + oldest, tests + oldest, i - oldest);
 			status_end();
@@ -1421,7 +1472,7 @@ run_schedule(const char *schedule)
 			status(_("parallel group (%d tests): "), num_tests);
 			for (i = 0; i < num_tests; i++)
 			{
-				pids[i] = psql_start_test(tests[i]);
+				pids[i] = (tfunc)(tests[i], &resultfiles[i], &expectfiles[i], &tags[i]);
 			}
 			wait_for_tests(pids, tests, num_tests);
 			status_end();
@@ -1430,10 +1481,36 @@ run_schedule(const char *schedule)
 		/* Check results for all tests */
 		for (i = 0; i < num_tests; i++)
 		{
+			_stringlist *rl, *el, *tl;
+			bool differ = false;
+
 			if (num_tests > 1)
 				status(_("     %-20s ... "), tests[i]);
 
-			if (results_differ(tests[i]))
+			/*
+			 * Advance over all three lists simultaneously.
+			 *
+			 * Compare resultfiles[j] with expectfiles[j] always.
+			 * Tags are optional but if there are tags, the tag list has the
+			 * same length as the other two lists.
+			 */
+			for (rl = resultfiles[i], el = expectfiles[i], tl = tags[i];
+				rl != NULL; /* rl and el have the same length */
+				rl = rl->next, el = el->next)
+			{
+				bool newdiff;
+				if (tl)
+					tl = tl->next; /* tl has the same lengt has rl and el if it exists */
+
+				newdiff = results_differ(tests[i], rl->str, el->str);
+				if (newdiff && tl) 
+				{
+					printf("%s ", tl->str);
+				}
+				differ |= newdiff;
+			}
+
+			if (differ)
 			{
 				bool		ignore = false;
 				_stringlist *sl;
@@ -1474,15 +1551,43 @@ run_schedule(const char *schedule)
  * Run a single test
  */
 static void
-run_single_test(const char *test)
+run_single_test(const char *test, test_function tfunc)
 {
 	PID_TYPE	pid;
+	_stringlist *resultfiles;
+	_stringlist *expectfiles;
+	_stringlist *tags;
+	_stringlist *rl, *el, *tl;
+	bool		differ = false;
 
 	status(_("test %-20s ... "), test);
-	pid = psql_start_test(test);
+	pid = (tfunc)(test, &resultfiles, &expectfiles, &tags);
 	wait_for_tests(&pid, NULL, 1);
 
-	if (results_differ(test))
+	/*
+	 * Advance over all three lists simultaneously.
+	 *
+	 * Compare resultfiles[j] with expectfiles[j] always.
+	 * Tags are optional but if there are tags, the tag list has the
+	 * same length as the other two lists.
+	 */
+	for (rl = resultfiles, el = expectfiles, tl = tags;
+		rl != NULL; /* rl and el have the same length */
+		rl = rl->next, el = el->next)
+	{
+		bool newdiff;
+		if (tl)
+			tl = tl->next; /* tl has the same lengt has rl and el if it exists */
+
+		newdiff = results_differ(test, rl->str, el->str);
+		if (newdiff && tl) 
+		{
+			printf("%s ", tl->str);
+		}
+		differ |= newdiff;
+	}
+
+	if (differ)
 	{
 		status(_("FAILED"));
 		fail_count++;
@@ -1535,6 +1640,63 @@ open_result_files(void)
 }
 
 static void
+drop_database_if_exists(const char *dbname)
+{
+	header(_("dropping database \"%s\""), dbname);
+	psql_command("postgres", "DROP DATABASE IF EXISTS \"%s\"", dbname);
+}
+
+static void
+create_database(const char *dbname)
+{
+	_stringlist *sl;
+	/*
+	 * We use template0 so that any installation-local cruft in template1 will
+	 * not mess up the tests.
+	 */
+	header(_("creating database \"%s\""), dbname);
+	if (encoding)
+		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'", dbname, encoding);
+	else
+		psql_command("postgres", "CREATE DATABASE \"%s\" TEMPLATE=template0", dbname);
+	psql_command(dbname, 
+		"ALTER DATABASE \"%s\" SET lc_messages TO 'C';"
+		"ALTER DATABASE \"%s\" SET lc_monetary TO 'C';"
+		"ALTER DATABASE \"%s\" SET lc_numeric TO 'C';"
+		"ALTER DATABASE \"%s\" SET lc_time TO 'C';"
+		"ALTER DATABASE \"%s\" SET timezone_abbreviations TO 'Default';",
+		dbname, dbname, dbname, dbname, dbname);
+
+	/*
+	 * Install any requested procedural languages
+	 */
+	for (sl = loadlanguage; sl != NULL; sl = sl->next)
+	{
+		header(_("installing %s"), sl->str);
+		psql_command(dbname, "CREATE LANGUAGE \"%s\"", sl->str);
+	}
+}
+
+static void
+drop_role_if_exists(const char *rolename)
+{
+	header(_("dropping role \"%s\""), rolename);
+	psql_command("postgres", "DROP ROLE IF EXISTS \"%s\"", rolename);
+}
+
+static void
+create_role(const char *rolename, const _stringlist *granted_dbs)
+{
+	header(_("creating role \"%s\""), rolename);
+	psql_command("postgres", "CREATE ROLE \"%s\" WITH LOGIN", rolename);
+	for (; granted_dbs != NULL; granted_dbs = granted_dbs->next)
+	{
+		psql_command("postgres", "GRANT ALL ON DATABASE \"%s\" TO \"%s\"",
+			granted_dbs->str, rolename);
+	}
+}
+
+static void
 help(void)
 {
 	printf(_("PostgreSQL regression test driver\n"));
@@ -1547,6 +1709,7 @@ help(void)
 	printf(_("  --inputdir=DIR            take input files from DIR (default \".\")\n"));
 	printf(_("  --load-language=lang      load the named language before running the\n"));
 	printf(_("                            tests; can appear multiple times\n"));
+	printf(_("  --create-role=ROLE        create the specified role before testing\n"));
 	printf(_("  --max-connections=N       maximum number of concurrent connections\n"));
 	printf(_("                            (default is 0 meaning unlimited)\n"));
 	printf(_("  --multibyte=ENCODING      use ENCODING as the multibyte encoding\n"));
@@ -1574,7 +1737,7 @@ help(void)
 }
 
 int
-main(int argc, char *argv[])
+regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc)
 {
 	_stringlist *sl;
 	int			c;
@@ -1602,6 +1765,7 @@ main(int argc, char *argv[])
 		{"user", required_argument, NULL, 15},
 		{"psqldir", required_argument, NULL, 16},
 		{"srcdir", required_argument, NULL, 17},
+		{"create-role", required_argument, NULL, 18},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -1612,6 +1776,12 @@ main(int argc, char *argv[])
 	/* no unix domain sockets available, so change default */
 	hostname = "localhost";
 #endif
+
+	/*
+	 * We call the initialization function here because that way we can set
+	 * default parameters and let them be overwritten by the commandline.
+	 */
+	ifunc();
 
 	while ((c = getopt_long(argc, argv, "hV", long_options, &option_index)) != -1)
 	{
@@ -1624,7 +1794,7 @@ main(int argc, char *argv[])
 				printf("pg_regress (PostgreSQL %s)\n", PG_VERSION);
 				exit_nicely(0);
 			case 1:
-				dbname = strdup(optarg);
+				split_to_stringlist(strdup(optarg), ", ", &dblist);
 				break;
 			case 2:
 				debug = true;
@@ -1696,6 +1866,9 @@ main(int argc, char *argv[])
 				break;
 			case 17:
 				srcdir = strdup(optarg);
+				break;
+			case 18:
+				split_to_stringlist(strdup(optarg), ", ", &extraroles);
 				break;
 			default:
 				/* getopt_long already emitted a complaint */
@@ -1865,45 +2038,21 @@ main(int argc, char *argv[])
 	{
 		/*
 		 * Using an existing installation, so may need to get rid of
-		 * pre-existing database.
+		 * pre-existing database(s) and role(s)
 		 */
-		header(_("dropping database \"%s\""), dbname);
-		psql_command("postgres", "DROP DATABASE IF EXISTS \"%s\"", dbname);
+		for (sl = dblist; sl; sl = sl->next)
+			drop_database_if_exists(sl->str);
+		for (sl = extraroles; sl; sl = sl->next)
+			drop_role_if_exists(sl->str);
 	}
 
 	/*
-	 * Create the test database
-	 *
-	 * We use template0 so that any installation-local cruft in template1 will
-	 * not mess up the tests.
+	 * Create the test database(s) and role(s)
 	 */
-	header(_("creating database \"%s\""), dbname);
-	if (encoding)
-		psql_command("postgres",
-				   "CREATE DATABASE \"%s\" TEMPLATE=template0 ENCODING='%s'",
-					 dbname, encoding);
-	else
-		/* use installation default */
-		psql_command("postgres",
-					 "CREATE DATABASE \"%s\" TEMPLATE=template0",
-					 dbname);
-
-	psql_command(dbname,
-				 "ALTER DATABASE \"%s\" SET lc_messages TO 'C';"
-				 "ALTER DATABASE \"%s\" SET lc_monetary TO 'C';"
-				 "ALTER DATABASE \"%s\" SET lc_numeric TO 'C';"
-				 "ALTER DATABASE \"%s\" SET lc_time TO 'C';"
-			"ALTER DATABASE \"%s\" SET timezone_abbreviations TO 'Default';",
-				 dbname, dbname, dbname, dbname, dbname);
-
-	/*
-	 * Install any requested PL languages
-	 */
-	for (sl = loadlanguage; sl != NULL; sl = sl->next)
-	{
-		header(_("installing %s"), sl->str);
-		psql_command(dbname, "CREATE LANGUAGE \"%s\"", sl->str);
-	}
+	for (sl = dblist; sl; sl = sl->next)
+		create_database(sl->str);
+	for (sl = extraroles; sl; sl = sl->next)
+		create_role(sl->str, dblist);
 
 	/*
 	 * Ready to run the tests
@@ -1912,12 +2061,12 @@ main(int argc, char *argv[])
 
 	for (sl = schedulelist; sl != NULL; sl = sl->next)
 	{
-		run_schedule(sl->str);
+		run_schedule(sl->str, tfunc);
 	}
 
 	for (sl = extra_tests; sl != NULL; sl = sl->next)
 	{
-		run_single_test(sl->str);
+		run_single_test(sl->str, tfunc);
 	}
 
 	/*

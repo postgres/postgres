@@ -103,7 +103,11 @@ void *test_thread(void *arg)
   EXEC SQL END DECLARE SECTION;
 
   /* build up connection name, and connect to database */
+#ifndef WIN32_ONLY_COMPILER
   snprintf(l_connection, sizeof(l_connection), "thread_%03ld", threadnum);
+#else
+  _snprintf(l_connection, sizeof(l_connection), "thread_%03ld", threadnum);
+#endif
   EXEC SQL WHENEVER sqlerror sqlprint;
   EXEC SQL CONNECT TO REGRESSDB1 AS :l_connection;
   if( sqlca.sqlcode != 0 )

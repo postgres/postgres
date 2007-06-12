@@ -154,15 +154,19 @@ void *test_thread(void *arg)
 
 
   /* build up connection name, and connect to database */
+#ifndef WIN32_ONLY_COMPILER
   snprintf(l_connection, sizeof(l_connection), "thread_%03ld", threadnum);
+#else
+  _snprintf(l_connection, sizeof(l_connection), "thread_%03ld", threadnum);
+#endif
   /* exec sql whenever sqlerror  sqlprint ; */
-#line 108 "thread_implicit.pgc"
+#line 112 "thread_implicit.pgc"
 
   { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , l_connection, 0); 
-#line 109 "thread_implicit.pgc"
+#line 113 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 109 "thread_implicit.pgc"
+#line 113 "thread_implicit.pgc"
 
   if( sqlca.sqlcode != 0 )
     {
@@ -170,10 +174,10 @@ if (sqlca.sqlcode < 0) sqlprint();}
       return( NULL );
     }
   { ECPGtrans(__LINE__, NULL, "begin transaction ");
-#line 115 "thread_implicit.pgc"
+#line 119 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 115 "thread_implicit.pgc"
+#line 119 "thread_implicit.pgc"
 
 
   /* insert into test_thread table */
@@ -184,10 +188,10 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,&(l_i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 120 "thread_implicit.pgc"
+#line 124 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 120 "thread_implicit.pgc"
+#line 124 "thread_implicit.pgc"
 
       if( sqlca.sqlcode != 0 )
 	printf("%s: ERROR: insert failed!\n", l_connection);
@@ -195,16 +199,16 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
   /* all done */
   { ECPGtrans(__LINE__, NULL, "commit");
-#line 126 "thread_implicit.pgc"
+#line 130 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 126 "thread_implicit.pgc"
+#line 130 "thread_implicit.pgc"
 
   { ECPGdisconnect(__LINE__, l_connection);
-#line 127 "thread_implicit.pgc"
+#line 131 "thread_implicit.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 127 "thread_implicit.pgc"
+#line 131 "thread_implicit.pgc"
 
   return( NULL );
 }

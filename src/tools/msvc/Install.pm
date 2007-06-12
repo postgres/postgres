@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.15 2007/05/13 15:33:07 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.16 2007/06/12 11:07:34 mha Exp $
 #
 use strict;
 use warnings;
@@ -25,6 +25,7 @@ sub Install
     require 'config.pl';
 
     chdir("../../..") if (-f "../../../configure");
+    chdir("../../../..") if (-f "../../../../configure");
     my $conf = "";
     if (-d "debug")
     {
@@ -115,6 +116,7 @@ sub CopySetOfFiles
     {
         chomp;
         next if /regress/; # Skip temporary install in regression subdir
+        next if /ecpg.test/; # Skip temporary install in regression subdir
         my $tgt = $target . basename($_);
         print ".";
         my $src = $norecurse?(dirname($spec) . '/' . $_):$_;

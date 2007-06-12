@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.4 2007/03/23 09:53:33 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.5 2007/06/12 11:07:34 mha Exp $
 
 set D=%CD%
 if exist ..\msvc if exist ..\..\..\src cd ..\..\..
@@ -59,6 +59,10 @@ call :del tsearch2\tsearch2.sql
 call :del tsearch2\uninstall_tsearch2.sql
 
 cd %D%
+
+REM Clean up ecpg regression test files
+msbuild ecpg_regression.proj /t:clean /v:q
+
 goto :eof
 
 

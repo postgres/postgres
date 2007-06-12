@@ -153,15 +153,19 @@ void *test_thread(void *arg)
 
 
   /* build up connection name, and connect to database */
+#ifndef WIN32_ONLY_COMPILER
   snprintf(l_connection, sizeof(l_connection), "thread_%03ld", threadnum);
+#else
+  _snprintf(l_connection, sizeof(l_connection), "thread_%03ld", threadnum);
+#endif
   /* exec sql whenever sqlerror  sqlprint ; */
-#line 107 "thread.pgc"
+#line 111 "thread.pgc"
 
   { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , l_connection, 0); 
-#line 108 "thread.pgc"
+#line 112 "thread.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 108 "thread.pgc"
+#line 112 "thread.pgc"
 
   if( sqlca.sqlcode != 0 )
     {
@@ -169,10 +173,10 @@ if (sqlca.sqlcode < 0) sqlprint();}
       return( NULL );
     }
   { ECPGtrans(__LINE__, l_connection, "begin transaction ");
-#line 114 "thread.pgc"
+#line 118 "thread.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 114 "thread.pgc"
+#line 118 "thread.pgc"
 
 
   /* insert into test_thread table */
@@ -183,10 +187,10 @@ if (sqlca.sqlcode < 0) sqlprint();}
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,&(l_i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
-#line 119 "thread.pgc"
+#line 123 "thread.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 119 "thread.pgc"
+#line 123 "thread.pgc"
 
       if( sqlca.sqlcode != 0 )
 	printf("%s: ERROR: insert failed!\n", l_connection);
@@ -194,16 +198,16 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
   /* all done */
   { ECPGtrans(__LINE__, l_connection, "commit");
-#line 125 "thread.pgc"
+#line 129 "thread.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 125 "thread.pgc"
+#line 129 "thread.pgc"
 
   { ECPGdisconnect(__LINE__, l_connection);
-#line 126 "thread.pgc"
+#line 130 "thread.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
-#line 126 "thread.pgc"
+#line 130 "thread.pgc"
 
   return( NULL );
 }

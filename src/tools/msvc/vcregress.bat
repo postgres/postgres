@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.11 2007/04/21 20:58:05 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.12 2007/06/12 11:07:34 mha Exp $
 
 SETLOCAL
 SET STARTDIR=%CD%
@@ -11,6 +11,7 @@ if /I "%1"=="check" SET what=CHECK
 if /I "%1"=="installcheck" SET what=INSTALLCHECK
 if /I "%1"=="plcheck" SET what=PLCHECK
 if /I "%1"=="contribcheck" SET what=CONTRIBCHECK
+if /I "%1"=="ecpgcheck" SET what=ECPGCHECK
 if "%what%"=="" goto usage
 
 SET CONFIG=Debug
@@ -28,10 +29,20 @@ SET SCHEDULE=parallel
 SET TEMPPORT=54321
 IF NOT "%2"=="" SET SCHEDULE=%2
 
-SET PERL5LIB=..\..\tools\msvc
+IF "%what%"=="ECPGCHECK" (
+   cd "%STARTDIR%"
+   msbuild ecpg_regression.proj /p:config=%CONFIG%
+   if errorlevel 1 exit /b 1
+   cd "%TOPDIR%"
+   cd src\interfaces\ecpg\test
+   SET SCHEDULE=ecpg
+)
+
+SET PERL5LIB=%TOPDIR%\src\tools\msvc
 
 if "%what%"=="INSTALLCHECK" ..\..\..\%CONFIG%\pg_regress\pg_regress --psqldir="..\..\..\%CONFIG%\psql" --schedule=%SCHEDULE%_schedule --multibyte=SQL_ASCII --load-language=plpgsql --no-locale
 if "%what%"=="CHECK" ..\..\..\%CONFIG%\pg_regress\pg_regress --psqldir="..\..\..\%CONFIG%\psql" --schedule=%SCHEDULE%_schedule --multibyte=SQL_ASCII --load-language=plpgsql --no-locale --temp-install=./tmp_check --top-builddir="%TOPDIR%" --temp-port=%TEMPPORT%
+if "%what%"=="ECPGCHECK" ..\..\..\..\%CONFIG%\pg_regress_ecpg\pg_regress_ecpg --psqldir="..\..\..\%CONFIG%\psql" --dbname=regress1,connectdb --create-role=connectuser,connectdb --schedule=%SCHEDULE%_schedule --multibyte=SQL_ASCII --load-language=plpgsql --no-locale --temp-install=./tmp_check --top-builddir="%TOPDIR%" --temp-port=%TEMPPORT%
 if "%what%"=="PLCHECK" call :plcheck
 if "%what%"=="CONTRIBCHECK" call :contribcheck
 SET E=%ERRORLEVEL%
@@ -40,7 +51,7 @@ cd "%STARTDIR%"
 exit /b %E%
 
 :usage
-echo "Usage: vcregress <check|installcheck> [schedule]"
+echo "Usage: vcregress <check|installcheck|plcheck|contribcheck|ecpgcheck> [schedule]"
 goto :eof
 
 
