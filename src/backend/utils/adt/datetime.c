@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.180 2007/05/29 04:58:43 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.181 2007/06/12 15:58:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,11 +721,17 @@ DecodeDateTime(char **field, int *ftype, int nf,
 				}
 				/***
 				 * Already have a date? Then this might be a time zone name
-				 * with embedded punctuation (e.g. "America/New_York") or
-				 * a run-together time with trailing time zone (e.g. hhmmss-zz).
+				 * with embedded punctuation (e.g. "America/New_York") or a
+				 * run-together time with trailing time zone (e.g. hhmmss-zz).
 				 * - thomas 2001-12-25
+				 *
+				 * We consider it a time zone if we already have month & day.
+				 * This is to allow the form "mmm dd hhmmss tz year", which
+				 * we've historically accepted.
 				 ***/
-				else if ((fmask & DTK_DATE_M) == DTK_DATE_M || ptype != 0)
+				else if (ptype != 0 ||
+						 ((fmask & (DTK_M(MONTH) | DTK_M(DAY))) ==
+						  (DTK_M(MONTH) | DTK_M(DAY))))
 				{
 					/* No time zone accepted? Then quit... */
 					if (tzp == NULL)
