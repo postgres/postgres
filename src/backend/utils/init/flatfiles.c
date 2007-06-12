@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.25 2007/04/06 04:21:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/init/flatfiles.c,v 1.26 2007/06/12 17:16:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -441,7 +441,10 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 		 * We can't use heap_getattr() here because during startup we will not
 		 * have any tupdesc for pg_authid.	Fortunately it's not too hard to
 		 * work around this.  rolpassword is the first possibly-null field so
-		 * we can compute its offset directly.
+		 * we can compute its offset directly.  Note that this only works
+		 * reliably because the preceding field (rolconnlimit) is int4, and
+		 * therefore rolpassword is always 4-byte-aligned, and will be at
+		 * the same offset no matter whether it uses 1-byte or 4-byte header.
 		 */
 		tp = (char *) tup + tup->t_hoff;
 		off = offsetof(FormData_pg_authid, rolpassword);
@@ -460,6 +463,10 @@ write_auth_file(Relation rel_authid, Relation rel_authmem)
 			/*
 			 * The password probably shouldn't ever be out-of-line toasted; if
 			 * it is, ignore it, since we can't handle that in startup mode.
+			 *
+			 * It is entirely likely that it's 1-byte format not 4-byte, and
+			 * theoretically possible that it's compressed inline, but textout
+			 * should be able to handle those cases even in startup mode.
 			 */
 			if (VARATT_IS_EXTERNAL(DatumGetPointer(datum)))
 				auth_info[curr_role].rolpassword = pstrdup("");
