@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.345 2007/06/11 12:01:23 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.346 2007/06/12 07:55:56 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -351,7 +351,7 @@ add_additional_variables(char *name, bool insert)
 /* special embedded SQL token */
 %token	SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK
 		SQL_CALL SQL_CARDINALITY SQL_CONNECT
-		SQL_CONTINUE SQL_COUNT SQL_CURRENT SQL_DATA
+		SQL_CONTINUE SQL_COUNT SQL_DATA
 		SQL_DATETIME_INTERVAL_CODE
 		SQL_DATETIME_INTERVAL_PRECISION SQL_DESCRIBE
 		SQL_DESCRIPTOR SQL_DISCONNECT SQL_FOUND
@@ -387,8 +387,8 @@ add_additional_variables(char *name, bool insert)
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONCURRENTLY CONNECTION CONSTRAINT CONSTRAINTS 
 	CONTENT_P CONVERSION_P CONVERT COPY COST CREATE CREATEDB
-	CREATEROLE CREATEUSER CROSS CSV CURRENT_DATE CURRENT_ROLE CURRENT_TIME
-	CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
+	CREATEROLE CREATEUSER CROSS CSV CURRENT_P CURRENT_DATE CURRENT_ROLE
+	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
 	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
 	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
@@ -576,7 +576,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	select_limit CheckPointStmt ECPGColId old_aggr_list
 %type  <str>	OptSchemaName OptSchemaEltList schema_stmt opt_drop_behavior
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
-%type  <str>	columnref values_clause AllConstVar
+%type  <str>	columnref values_clause AllConstVar where_or_current_clause
 %type  <str>	insert_column_item DropRuleStmt ctext_expr 
 %type  <str>	createfunc_opt_item set_rest var_list_or_default alter_rel_cmd
 %type  <str>	CreateFunctionStmt createfunc_opt_list func_table
@@ -3274,7 +3274,7 @@ returning_clause:  RETURNING target_list	{ $$ = cat2_str(make_str("returning"), 
  *
  *****************************************************************************/
 
-DeleteStmt:  DELETE_P FROM relation_expr_opt_alias using_clause where_clause returning_clause
+DeleteStmt:  DELETE_P FROM relation_expr_opt_alias using_clause where_or_current_clause returning_clause
 			{ $$ = cat_str(5, make_str("delete from"), $3, $4, $5, $6); }
 		;
 
@@ -3316,7 +3316,7 @@ opt_nowait:    NOWAIT                   { $$ = make_str("nowait"); }
 UpdateStmt:  UPDATE relation_expr_opt_alias
 				SET set_clause_list
 				from_clause
-				where_clause
+				where_or_current_clause
 				returning_clause
 			{$$ = cat_str(7, make_str("update"), $2, make_str("set"), $4, $5, $6, $7); }
 		;
@@ -3728,6 +3728,12 @@ func_table:  func_expr 	{ $$ = $1; }
 where_clause:  WHERE a_expr		{ $$ = cat2_str(make_str("where"), $2); }
 		| /*EMPTY*/				{ $$ = EMPTY;  /* no qualifiers */ }
 		;
+
+where_or_current_clause:  WHERE a_expr                  { $$ = cat2_str(make_str("where"), $2); }
+                | WHERE CURRENT_P OF name               { $$ = cat2_str(make_str("where current of"), $4); }
+                | WHERE CURRENT_P OF PARAM              { $$ = make_str("where current of param"); }
+                | /*EMPTY*/                             { $$ = EMPTY;  /* no qualifiers */ }
+                ;
 
 TableFuncElementList: TableFuncElement
 			{ $$ = $1; }
@@ -5721,7 +5727,7 @@ ECPGDisconnect: SQL_DISCONNECT dis_name { $$ = $2; }
 		;
 
 dis_name: connection_object			{ $$ = $1; }
-		| SQL_CURRENT			{ $$ = make_str("\"CURRENT\""); }
+		| CURRENT_P			{ $$ = make_str("\"CURRENT\""); }
 		| ALL				{ $$ = make_str("\"ALL\""); }
 		| /* EMPTY */			{ $$ = make_str("\"CURRENT\""); }
 		;
@@ -6443,6 +6449,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| CREATEROLE		{ $$ = make_str("createrole"); }
 		| CREATEUSER		{ $$ = make_str("createuser"); }
 		| CSV				{ $$ = make_str("csv"); }
+		| CURRENT_P                     { $$ = make_str("current"); }
 		| CURSOR			{ $$ = make_str("cursor"); }
 		| CYCLE				{ $$ = make_str("cycle"); }
 		| DATABASE			{ $$ = make_str("database"); }

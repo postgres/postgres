@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.79 2007/05/10 09:53:16 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.80 2007/06/12 07:55:56 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,6 +99,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"createuser", CREATEUSER},
 	{"cross", CROSS},
 	{"csv", CSV},
+	{"current", CURRENT_P},
 	{"current_date", CURRENT_DATE},
 	{"current_role", CURRENT_ROLE},
 	{"current_time", CURRENT_TIME},

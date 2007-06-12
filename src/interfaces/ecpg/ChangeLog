@@ -2169,7 +2169,6 @@ Fr Feb 2 09:53:48 CET 2007
 Su Feb 11 16:09:31 CET 2007
 
 	- Fixed multibyte handling as reported by <harada.toshi@oss.ntt.co.jp>.
-	- Set ecpg library version to 5.3.
 
 Th Mar 15 08:27:53 CET 2007
 
@@ -2208,4 +2207,9 @@ Mon, 11 Jun 2007 13:59:57 +0200
 
 	- Fixed memory leak in descriptor code.
 	- Made ecpg delete output file in case of an error.
+
+Tue, 12 Jun 2007 09:46:03 +0200
+
+	- Synced parser and keyword list.
+	- Set ecpg library version to 5.3.
 	- Set ecpg version to 4.3.1.
