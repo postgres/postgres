@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.69 2007/06/12 13:09:58 mha Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/test/Makefile,v 1.70 2007/06/12 15:00:41 alvherre Exp $
 
 subdir = src/interfaces/ecpg/test
 top_builddir = ../../../..
@@ -32,7 +32,7 @@ EXTRADEFS = '-DHOST_TUPLE="$(host_tuple)"' \
 	'-DSHELLPROG="$(SHELL)"' \
 	'-DDLSUFFIX="$(DLSUFFIX)"'
 
-REGRESSINCLUDES = "-I$(top_builddir)/src/test/regress"
+REGRESSINCLUDES = "-I$(top_srcdir)/src/test/regress"
 REGRESSDRIVER = "$(top_builddir)/src/test/regress/pg_regress.o"
 
 all install installdirs uninstall distprep:
@@ -61,7 +61,7 @@ clean distclean maintainer-clean:
 all: pg_regress$(X)
 
 pg_regress$(X): pg_regress_ecpg.o
-	$(CC) $(CFLAGS) $^ $(REGRESSDRIVER) $(LDFLAGS) $(LIBS) -o $@
+	$(CC) $(CFLAGS) $^ $(REGRESSDRIVER) $(REGRESSINCLUDES) $(LDFLAGS) $(LIBS) -o $@
 
 # dependencies ensure that path changes propagate
 pg_regress_ecpg.o: pg_regress_ecpg.c $(top_builddir)/src/port/pg_config_paths.h
