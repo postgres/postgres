@@ -3,7 +3,7 @@ package Project;
 #
 # Package that encapsulates a Visual C++ project file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.11 2007/03/29 15:30:52 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.12 2007/06/12 18:31:28 mha Exp $
 #
 use Carp;
 use strict;
@@ -27,6 +27,7 @@ sub new
         libraries       => [],
         suffixlib       => [],
         includes        => '',
+        prefixincludes  => '',
         defines         => ';',
         solution        => $solution,
         disablewarnings => '4018;4244;4273;4102',
@@ -126,6 +127,13 @@ sub AddIncludeDir
         $self->{includes} .= ';';
     }
     $self->{includes} .= $inc;
+}
+
+sub AddPrefixInclude
+{
+    my ($self, $inc) = @_;
+
+    $self->{prefixincludes} = $inc . ';' . $self->{prefixincludes};
 }
 
 sub AddDefine
@@ -467,7 +475,7 @@ sub WriteConfiguration
   <Configuration Name="$cfgname|Win32" OutputDirectory=".\\$cfgname\\$self->{name}" IntermediateDirectory=".\\$cfgname\\$self->{name}"
 	ConfigurationType="$cfgtype" UseOfMFC="0" ATLMinimizesCRunTimeLibraryUsage="FALSE" CharacterSet="2" WholeProgramOptimization="$p->{wholeopt}">
 	<Tool Name="VCCLCompilerTool" Optimization="$p->{opt}"
-		AdditionalIncludeDirectories="src/include;src/include/port/win32;src/include/port/win32_msvc;$self->{includes}"
+		AdditionalIncludeDirectories="$self->{prefixincludes}src/include;src/include/port/win32;src/include/port/win32_msvc;$self->{includes}"
 		PreprocessorDefinitions="WIN32;_WINDOWS;__WINDOWS__;__WIN32__;EXEC_BACKEND;WIN32_STACK_RLIMIT=4194304;_CRT_SECURE_NO_DEPRECATE;_CRT_NONSTDC_NO_DEPRECATE$self->{defines}$p->{defs}"
 		StringPooling="$p->{strpool}"
 		RuntimeLibrary="$p->{runtime}" DisableSpecificWarnings="$self->{disablewarnings}"

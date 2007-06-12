@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.12 2007/06/12 11:07:34 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.13 2007/06/12 18:31:28 mha Exp $
 #
 use Carp;
 use Win32;
@@ -148,6 +148,7 @@ sub mkvcbuild
     my $ecpg = $solution->AddProject('ecpg','exe','interfaces','src\interfaces\ecpg\preproc');
     $ecpg->AddIncludeDir('src\interfaces\ecpg\include');
     $ecpg->AddIncludeDir('src\interfaces\libpq');
+    $ecpg->AddPrefixInclude('src\interfaces\ecpg\preproc');
     $ecpg->AddFiles('src\interfaces\ecpg\preproc','pgc.l','preproc.y');
     $ecpg->AddDefine('MAJOR_VERSION=4');
     $ecpg->AddDefine('MINOR_VERSION=2');
