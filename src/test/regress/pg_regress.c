@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.34 2007/06/12 13:26:45 mha Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.35 2007/06/12 13:54:58 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1794,6 +1794,10 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 				printf("pg_regress (PostgreSQL %s)\n", PG_VERSION);
 				exit_nicely(0);
 			case 1:
+				/* If a default database was specified, we need to remove it before we add
+				 * the specified one.
+				 */
+				free_stringlist(&dblist);
 				split_to_stringlist(strdup(optarg), ", ", &dblist);
 				break;
 			case 2:
