@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.66 2007/05/29 04:58:43 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.67 2007/06/12 16:01:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,8 @@
  *
  * Furthermore, the values for YEAR, MONTH, DAY, HOUR, MINUTE, SECOND
  * must be in the range 0..14 so that the associated bitmasks can fit
- * into the left half of an INTERVAL's typmod value.
+ * into the left half of an INTERVAL's typmod value.  Since those bits
+ * are stored in typmods, you can't change them without initdb!
  */
 
 #define RESERV	0
@@ -177,7 +178,7 @@
 
 #define DTK_M(t)		(0x01 << (t))
 
-/* Convenvience: a second, plus any fractional component */
+/* Convenience: a second, plus any fractional component */
 #define DTK_ALL_SECS_M	(DTK_M(SECOND) | DTK_M(MILLISECOND) | DTK_M(MICROSECOND))
 #define DTK_DATE_M		(DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY))
 #define DTK_TIME_M		(DTK_M(HOUR) | DTK_M(MINUTE) | DTK_ALL_SECS_M)
