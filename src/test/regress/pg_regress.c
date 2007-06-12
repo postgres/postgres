@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.33 2007/06/12 11:07:34 mha Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.34 2007/06/12 13:26:45 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1554,9 +1554,9 @@ static void
 run_single_test(const char *test, test_function tfunc)
 {
 	PID_TYPE	pid;
-	_stringlist *resultfiles;
-	_stringlist *expectfiles;
-	_stringlist *tags;
+	_stringlist *resultfiles = NULL;
+	_stringlist *expectfiles = NULL;
+	_stringlist *tags = NULL;
 	_stringlist *rl, *el, *tl;
 	bool		differ = false;
 
