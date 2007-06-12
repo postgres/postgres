@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.346 2007/06/12 07:55:56 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.347 2007/06/12 11:32:30 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -6449,7 +6449,6 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| CREATEROLE		{ $$ = make_str("createrole"); }
 		| CREATEUSER		{ $$ = make_str("createuser"); }
 		| CSV				{ $$ = make_str("csv"); }
-		| CURRENT_P                     { $$ = make_str("current"); }
 		| CURSOR			{ $$ = make_str("cursor"); }
 		| CYCLE				{ $$ = make_str("cycle"); }
 		| DATABASE			{ $$ = make_str("database"); }
@@ -6752,6 +6751,7 @@ reserved_keyword:
 		| COLUMN			{ $$ = make_str("column"); }
 		| CONSTRAINT		{ $$ = make_str("constraint"); }
 		| CREATE			{ $$ = make_str("create"); }
+		| CURRENT_P                     { $$ = make_str("current"); }
 		| CURRENT_DATE		{ $$ = make_str("current_date"); }
 		| CURRENT_TIME		{ $$ = make_str("current_time"); }
 		| CURRENT_TIMESTAMP	{ $$ = make_str("current_timestamp"); }
