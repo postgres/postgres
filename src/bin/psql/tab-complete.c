@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.164 2007/04/26 22:25:56 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.165 2007/06/13 23:59:47 neilc Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -397,7 +397,7 @@ static const SchemaQuery Query_for_list_of_views = {
 "SELECT pg_catalog.quote_ident(c1.relname) "\
 "  FROM pg_catalog.pg_class c1, pg_catalog.pg_class c2, pg_catalog.pg_index i"\
 " WHERE c1.oid=i.indrelid and i.indexrelid=c2.oid"\
-"       and (%d = length('%s'))"\
+"       and (%d = pg_catalog.length('%s'))"\
 "       and pg_catalog.quote_ident(c2.relname)='%s'"\
 "       and pg_catalog.pg_table_is_visible(c2.oid)"
 
@@ -406,7 +406,7 @@ static const SchemaQuery Query_for_list_of_views = {
 "SELECT pg_catalog.quote_ident(c2.relname) "\
 "  FROM pg_catalog.pg_class c1, pg_catalog.pg_class c2, pg_catalog.pg_index i"\
 " WHERE c1.oid=i.indrelid and i.indexrelid=c2.oid"\
-"       and (%d = length('%s'))"\
+"       and (%d = pg_catalog.length('%s'))"\
 "       and pg_catalog.quote_ident(c1.relname)='%s'"\
 "       and pg_catalog.pg_table_is_visible(c2.oid)"
 
@@ -414,7 +414,7 @@ static const SchemaQuery Query_for_list_of_views = {
 #define Query_for_list_of_tables_for_trigger \
 "SELECT pg_catalog.quote_ident(relname) "\
 "  FROM pg_catalog.pg_class"\
-" WHERE (%d = length('%s'))"\
+" WHERE (%d = pg_catalog.length('%s'))"\
 "   AND oid IN "\
 "       (SELECT tgrelid FROM pg_catalog.pg_trigger "\
 "         WHERE pg_catalog.quote_ident(tgname)='%s')"
