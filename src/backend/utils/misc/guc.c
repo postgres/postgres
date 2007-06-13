@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.396 2007/06/08 18:23:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.397 2007/06/13 21:24:56 alvherre Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1645,7 +1645,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_S
 		},
 		&autovacuum_naptime,
-		60, 1, INT_MAX, NULL, NULL
+		60, 1, INT_MAX / 1000, NULL, NULL
 	},
 	{
 		{"autovacuum_vacuum_threshold", PGC_SIGHUP, AUTOVACUUM,
