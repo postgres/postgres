@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sun Jun 10 21:51:20 EDT 2007
+Last updated:		Wed Jun 13 17:37:56 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -526,7 +526,7 @@ SQL Commands
 * Add GUC to issue notice about statements that use unjoined tables
 * Allow EXPLAIN to identify tables that were skipped because of 
   constraint_exclusion
-* Allow EXPLAIN output to be more easily processed by scripts
+* Allow EXPLAIN output to be more easily processed by scripts, perhaps XML
 * Enable standard_conforming_strings
 * Make standard_conforming_strings the default in 8.4?
 
