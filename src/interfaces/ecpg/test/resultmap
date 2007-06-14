@@ -1,3 +1,6 @@
 compat_informix/dec_test:stdout:i.86-pc-win32vc=compat_informix-dec_test-MinGW32.stdout
+compat_informix/dec_test:stdout:i.86-pc-mingw32=compat_informix-dec_test-MinGW32.stdout
 pgtypeslib/num_test:stdout:i.86-pc-win32vc=pgtypeslib-num_test-MinGW32.stdout
+pgtypeslib/num_test:stdout:i.86-pc-mingw32=pgtypeslib-num_test-MinGW32.stdout
 pgtypeslib/num_test2:stdout:i.86-pc-win32vc=pgtypeslib-num_test2-MinGW32.stdout
+pgtypeslib/num_test2:stdout:i.86-pc-mingw32=pgtypeslib-num_test2-MinGW32.stdout
