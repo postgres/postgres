@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.167.2.2 2007/02/11 15:12:48 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.167.2.3 2007/06/14 01:50:14 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,7 +122,7 @@ static char *expand_fmt_string(const char *fmt, ErrorData *edata);
 static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
-
+static void write_pipe_chunks(int fd, char *data, int len);
 
 /*
  * errstart --- begin an error-reporting cycle
@@ -1710,7 +1710,10 @@ send_message_to_server_log(ErrorData *edata)
 			write_eventlog(edata->elevel, buf.data);
 		else
 #endif
-			fprintf(stderr, "%s", buf.data);
+			if (Redirect_stderr)
+				write_pipe_chunks(fileno(stderr), buf.data, buf.len);
+			else
+				write(fileno(stderr), buf.data, buf.len);
 	}
 
 	/* If in the syslogger process, try to write messages direct to file */
@@ -1718,6 +1721,37 @@ send_message_to_server_log(ErrorData *edata)
 		write_syslogger_file(buf.data, buf.len);
 
 	pfree(buf.data);
+}
+
+/*
+ * Send data to the syslogger using the chunked protocol
+ */
+static void
+write_pipe_chunks(int fd, char *data, int len)
+{
+	PipeProtoChunk p;
+
+	Assert(len > 0);
+
+	p.proto.nuls[0] = p.proto.nuls[1] = '\0';
+	p.proto.pid = MyProcPid;
+
+	/* write all but the last chunk */
+	while (len > PIPE_MAX_PAYLOAD)
+	{
+		p.proto.is_last = 'f';
+		p.proto.len = PIPE_MAX_PAYLOAD;
+		memcpy(p.proto.data, data, PIPE_MAX_PAYLOAD);
+		write(fd, &p, PIPE_HEADER_SIZE + PIPE_MAX_PAYLOAD);
+		data += PIPE_MAX_PAYLOAD;
+		len -= PIPE_MAX_PAYLOAD;
+	}
+
+	/* write the last chunk */
+	p.proto.is_last = 't';
+	p.proto.len = len;
+	memcpy(p.proto.data, data, len);
+	write(fd, &p, PIPE_HEADER_SIZE + len);
 }
 
 
@@ -2043,6 +2077,7 @@ write_stderr(const char *fmt,...)
 #ifndef WIN32
 	/* On Unix, we just fprintf to stderr */
 	vfprintf(stderr, fmt, ap);
+	fflush(stderr);
 #else
 
 	/*
@@ -2058,8 +2093,11 @@ write_stderr(const char *fmt,...)
 		write_eventlog(EVENTLOG_ERROR_TYPE, errbuf);
 	}
 	else
+	{
 		/* Not running as service, write to stderr */
 		vfprintf(stderr, fmt, ap);
+		fflush(stderr);
+	}
 #endif
 	va_end(ap);
 }
