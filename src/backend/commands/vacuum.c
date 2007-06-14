@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.352 2007/05/30 20:11:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.353 2007/06/14 13:53:14 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -359,14 +359,17 @@ vacuum(VacuumStmt *vacstmt, List *relids,
 	 * For ANALYZE (no VACUUM): if inside a transaction block, we cannot
 	 * start/commit our own transactions.  Also, there's no need to do so if
 	 * only processing one relation.  For multiple relations when not within a
-	 * transaction block, use own transactions so we can release locks sooner.
+	 * transaction block, and also in an autovacuum worker, use own
+	 * transactions so we can release locks sooner.
 	 */
 	if (vacstmt->vacuum)
 		use_own_xacts = true;
 	else
 	{
 		Assert(vacstmt->analyze);
-		if (in_outer_xact)
+		if (IsAutoVacuumWorkerProcess())
+			use_own_xacts = true;
+		else if (in_outer_xact)
 			use_own_xacts = false;
 		else if (list_length(relations) > 1)
 			use_own_xacts = true;
