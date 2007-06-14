@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress_ecpg.c,v 1.1 2007/06/12 11:07:30 mha Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/test/pg_regress_ecpg.c,v 1.2 2007/06/14 13:10:11 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,11 +159,11 @@ static void
 ecpg_init(void)
 {
 	/* no reason to set -w for ecpg checks, except for when on windows */
-	if (strstr(host_platform, "-win32"))
+	if (strstr(host_platform, "-win32") || strstr(host_platform, "-mingw32"))
 		basic_diff_opts = "-w";
 	else 
 		basic_diff_opts = "";
-	if (strstr(host_platform, "-win32"))
+	if (strstr(host_platform, "-win32") || strstr(host_platform, "-mingw32"))
 		pretty_diff_opts = "-C3 -w";
 	else 
 		pretty_diff_opts = "-C3";
