@@ -37,7 +37,7 @@ main(void)
 
 	ECPGdebug(1, stderr);
 
-	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb" , NULL, NULL , "main", 0); }
 #line 22 "test1.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, "alter user connectuser  encrypted password 'connectpw'", ECPGt_EOIT, ECPGt_EORT);}
@@ -47,7 +47,7 @@ main(void)
 #line 24 "test1.pgc"
   /* <-- "main" not specified */
 
-	{ ECPGconnect(__LINE__, 0, "connectdb@localhost" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb@localhost" , NULL, NULL , "main", 0); }
 #line 26 "test1.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
@@ -61,7 +61,7 @@ main(void)
 #line 30 "test1.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "connectdb@localhost:@TEMP_PORT@" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb@localhost:@TEMP_PORT@" , NULL, NULL , "main", 0); }
 #line 32 "test1.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
@@ -75,7 +75,7 @@ main(void)
 #line 36 "test1.pgc"
 
 
-	{ ECPGconnect(__LINE__, 0, "connectdb:@TEMP_PORT@" , NULL,NULL , "main", 0); }
+	{ ECPGconnect(__LINE__, 0, "connectdb:@TEMP_PORT@" , NULL, NULL , "main", 0); }
 #line 38 "test1.pgc"
 
 	{ ECPGdisconnect(__LINE__, "main");}
