@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.132 2007/06/05 21:31:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.133 2007/06/15 20:56:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ anytime_typmodin(bool istz, ArrayType *ta)
 	int32	*tl;
 	int		n;
 
-	tl = ArrayGetTypmods(ta, &n);
+	tl = ArrayGetIntegerTypmods(ta, &n);
 
 	/*
 	 * we're not too tense about good error message here because grammar

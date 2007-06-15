@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.90 2007/05/11 17:57:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.91 2007/06/15 20:56:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,28 +289,55 @@ typenameTypeMod(ParseState *pstate, const TypeName *typename,
 				 parser_errposition(pstate, typename->location)));
 
 	/*
-	 * Convert the list of (raw grammar output) expressions to an integer
-	 * array.  Currently, we only allow simple integer constants, though
-	 * possibly this could be extended.
+	 * Convert the list of raw-grammar-output expressions to a cstring array.
+	 * Currently, we allow simple numeric constants, string literals, and
+	 * identifiers; possibly this list could be extended.
 	 */
 	datums = (Datum *) palloc(list_length(typename->typmods) * sizeof(Datum));
 	n = 0;
 	foreach(l, typename->typmods)
 	{
-		A_Const	*ac = (A_Const *) lfirst(l);
+		Node	*tm = (Node *) lfirst(l);
+		char	*cstr = NULL;
 
-		if (!IsA(ac, A_Const) ||
-			!IsA(&ac->val, Integer))
+		if (IsA(tm, A_Const))
+		{
+			A_Const	   *ac = (A_Const *) tm;
+
+			/*
+			 * The grammar hands back some integers with ::int4 attached,
+			 * so allow a cast decoration if it's an Integer value, but
+			 * not otherwise.
+			 */
+			if (IsA(&ac->val, Integer))
+			{
+				cstr = (char *) palloc(32);
+				snprintf(cstr, 32, "%ld", (long) ac->val.val.ival);
+			}
+			else if (ac->typename == NULL)	/* no casts allowed */
+			{
+				/* otherwise we can just use the str field directly. */
+				cstr = ac->val.val.str;
+			}
+		}
+		else if (IsA(tm, ColumnRef))
+		{
+			ColumnRef   *cr = (ColumnRef *) tm;
+
+			if (list_length(cr->fields) == 1)
+				cstr = strVal(linitial(cr->fields));
+		}
+		if (!cstr)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("type modifiers must be integer constants"),
+					 errmsg("type modifiers must be simple constants or identifiers"),
 					 parser_errposition(pstate, typename->location)));
-		datums[n++] = Int32GetDatum(ac->val.val.ival);
+		datums[n++] = CStringGetDatum(cstr);
 	}
 
-	/* hardwired knowledge about int4's representation details here */
-	arrtypmod = construct_array(datums, n, INT4OID,
-								sizeof(int4), true, 'i');
+	/* hardwired knowledge about cstring's representation details here */
+	arrtypmod = construct_array(datums, n, CSTRINGOID,
+								-2, false, 'c');
 
 	result = DatumGetInt32(OidFunctionCall1(typmodin,
 											PointerGetDatum(arrtypmod)));

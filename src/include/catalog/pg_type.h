@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.185 2007/06/06 23:00:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.186 2007/06/15 20:56:52 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -451,8 +451,11 @@ DESCR("access control list");
 #define ACLITEMOID		1033
 DATA(insert OID = 1034 (  _aclitem	 PGNSP PGUID -1 f b t \054 0 1033 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
 DATA(insert OID = 1040 (  _macaddr	 PGNSP PGUID -1 f b t \054 0  829 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 1041 (  _inet    PGNSP PGUID -1 f b t \054 0	869 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
-DATA(insert OID = 651  (  _cidr    PGNSP PGUID -1 f b t \054 0	650 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1041 (  _inet		 PGNSP PGUID -1 f b t \054 0  869 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 651  (  _cidr		 PGNSP PGUID -1 f b t \054 0  650 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 1263 (  _cstring	 PGNSP PGUID -1 f b t \054 0 2275 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+#define CSTRINGARRAYOID		1263
+
 DATA(insert OID = 1042 ( bpchar		 PGNSP PGUID -1 f b t \054 0	0 1014 bpcharin bpcharout bpcharrecv bpcharsend bpchartypmodin bpchartypmodout - i x f 0 -1 0 _null_ _null_ ));
 DESCR("char(length), blank-padded string, fixed storage length");
 #define BPCHAROID		1042
@@ -554,10 +557,14 @@ DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b t \054 0 2950 0 array_in arr
  * These cannot be used to define table columns, but are valid as function
  * argument and result types (if supported by the function's implementation
  * language).
+ *
+ * Note: cstring is a borderline case; it is still considered a pseudo-type,
+ * but there is now support for it in records and arrays.  Perhaps we should
+ * just treat it as a regular base type?
  */
 DATA(insert OID = 2249 ( record			PGNSP PGUID -1 f p t \054 0 0 0 record_in record_out record_recv record_send - - - d x f 0 -1 0 _null_ _null_ ));
 #define RECORDOID		2249
-DATA(insert OID = 2275 ( cstring		PGNSP PGUID -2 f p t \054 0 0 0 cstring_in cstring_out cstring_recv cstring_send - - - c p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2275 ( cstring		PGNSP PGUID -2 f p t \054 0 0 1263 cstring_in cstring_out cstring_recv cstring_send - - - c p f 0 -1 0 _null_ _null_ ));
 #define CSTRINGOID		2275
 DATA(insert OID = 2276 ( any			PGNSP PGUID  4 t p t \054 0 0 0 any_in any_out - - - - - i p f 0 -1 0 _null_ _null_ ));
 #define ANYOID			2276

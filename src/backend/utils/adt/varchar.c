@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.123 2007/04/06 04:21:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varchar.c,v 1.124 2007/06/15 20:56:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ anychar_typmodin(ArrayType *ta, const char *typename)
 	int32	*tl;
 	int		n;
 
-	tl = ArrayGetTypmods(ta, &n);
+	tl = ArrayGetIntegerTypmods(ta, &n);
 
 	/*
 	 * we're not too tense about good error message here because grammar

@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.64 2007/03/27 23:21:12 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/array.h,v 1.65 2007/06/15 20:56:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,7 +256,7 @@ extern void mda_get_range(int n, int *span, const int *st, const int *endp);
 extern void mda_get_prod(int n, const int *range, int *prod);
 extern void mda_get_offset_values(int n, int *dist, const int *prod, const int *span);
 extern int	mda_next_tuple(int n, int *curr, const int *span);
-extern int32 *ArrayGetTypmods(ArrayType *arr, int *n);
+extern int32 *ArrayGetIntegerTypmods(ArrayType *arr, int *n);
 
 /*
  * prototypes for functions defined in array_userfuncs.c

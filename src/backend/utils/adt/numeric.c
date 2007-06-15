@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.104 2007/06/09 15:52:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.105 2007/06/15 20:56:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -547,7 +547,7 @@ numerictypmodin(PG_FUNCTION_ARGS)
 	int			n;
 	int32		typmod;
 
-	tl = ArrayGetTypmods(ta, &n);
+	tl = ArrayGetIntegerTypmods(ta, &n);
 
 	if (n == 2)
 	{

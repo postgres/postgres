@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.53 2007/02/27 23:48:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.54 2007/06/15 20:56:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ anybit_typmodin(ArrayType *ta, const char *typename)
 	int32	*tl;
 	int		n;
 
-	tl = ArrayGetTypmods(ta, &n);
+	tl = ArrayGetIntegerTypmods(ta, &n);
 
 	/*
 	 * we're not too tense about good error message here because grammar

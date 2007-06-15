@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.593 2007/06/11 22:22:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.594 2007/06/15 20:56:49 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -6695,7 +6695,7 @@ ConstTypename:
  * by the standard, including qualified names.  We also allow type modifiers.
  * To avoid parsing conflicts against function invocations, the modifiers
  * have to be shown as expr_list here, but parse analysis will only accept
- * integer constants for them.
+ * constants for them.
  */
 GenericType:
 			type_function_name opt_type_modifiers

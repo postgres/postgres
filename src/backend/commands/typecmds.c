@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.104 2007/05/12 00:54:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.105 2007/06/15 20:56:49 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1270,9 +1270,9 @@ findTypeTypmodinFunction(List *procname)
 	Oid			procOid;
 
 	/*
-	 * typmodin functions always take one int4[] argument and return int4.
+	 * typmodin functions always take one cstring[] argument and return int4.
 	 */
-	argList[0] = INT4ARRAYOID;
+	argList[0] = CSTRINGARRAYOID;
 
 	procOid = LookupFuncName(procname, 1, argList, true);
 	if (!OidIsValid(procOid))

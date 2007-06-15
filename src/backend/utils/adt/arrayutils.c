@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayutils.c,v 1.23 2007/01/05 22:19:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/arrayutils.c,v 1.24 2007/06/15 20:56:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "catalog/pg_type.h"
 #include "utils/array.h"
+#include "utils/builtins.h"
 #include "utils/memutils.h"
 
 
@@ -191,16 +192,21 @@ mda_next_tuple(int n, int *curr, const int *span)
 }
 
 /*
- * ArrayGetTypmods: verify that argument is a 1-D integer array,
- * return its length and a pointer to the first contained integer.
+ * ArrayGetIntegerTypmods: verify that argument is a 1-D cstring array,
+ * and get the contents converted to integers.  Returns a palloc'd array
+ * and places the length at *n.
  */
 int32 *
-ArrayGetTypmods(ArrayType *arr, int *n)
+ArrayGetIntegerTypmods(ArrayType *arr, int *n)
 {
-	if (ARR_ELEMTYPE(arr) != INT4OID)
+	int32	   *result;
+	Datum	   *elem_values;
+	int			i;
+
+	if (ARR_ELEMTYPE(arr) != CSTRINGOID)
 		ereport(ERROR,
 				(errcode(ERRCODE_ARRAY_ELEMENT_ERROR),
-				 errmsg("typmod array must be type integer[]")));
+				 errmsg("typmod array must be type cstring[]")));
 
 	if (ARR_NDIM(arr) != 1)
 		ereport(ERROR,
@@ -212,7 +218,18 @@ ArrayGetTypmods(ArrayType *arr, int *n)
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("typmod array must not contain nulls")));
 
-	*n = ArrayGetNItems(ARR_NDIM(arr), ARR_DIMS(arr));
+	/* hardwired knowledge about cstring's representation details here */
+	deconstruct_array(arr, CSTRINGOID,
+					  -2, false, 'c',
+					  &elem_values, NULL, n);
 
-	return (int32 *) ARR_DATA_PTR(arr);
+	result = (int32 *) palloc(*n * sizeof(int32));
+
+	for (i = 0; i < *n; i++)
+		result[i] = pg_atoi(DatumGetCString(elem_values[i]),
+							sizeof(int32), '\0');
+
+	pfree(elem_values);
+
+	return result;
 }
