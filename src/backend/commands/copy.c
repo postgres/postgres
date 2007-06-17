@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.283 2007/04/27 22:05:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.284 2007/06/17 23:39:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3075,68 +3075,88 @@ CopyAttributeOutText(CopyState cstate, char *string)
 	 * We have to grovel through the string searching for control characters
 	 * and instances of the delimiter character.  In most cases, though, these
 	 * are infrequent.	To avoid overhead from calling CopySendData once per
-	 * character, we dump out all characters between replaceable characters in
+	 * character, we dump out all characters between escaped characters in
 	 * a single call.  The loop invariant is that the data from "start" to
 	 * "ptr" can be sent literally, but hasn't yet been.
+	 *
+	 * We can skip pg_encoding_mblen() overhead when encoding is safe, because
+	 * in valid backend encodings, extra bytes of a multibyte character never
+	 * look like ASCII.  This loop is sufficiently performance-critical that
+	 * it's worth making two copies of it to get the IS_HIGHBIT_SET() test
+	 * out of the normal safe-encoding path.
 	 */
-	start = ptr;
-	while ((c = *ptr) != '\0')
+	if (cstate->encoding_embeds_ascii)
 	{
-		switch (c)
+		start = ptr;
+		while ((c = *ptr) != '\0')
 		{
-			case '\b':
+			if (c == '\\' || c == delimc)
+			{
 				DUMPSOFAR();
-				CopySendString(cstate, "\\b");
-				start = ++ptr;
-				break;
-			case '\f':
-				DUMPSOFAR();
-				CopySendString(cstate, "\\f");
-				start = ++ptr;
-				break;
-			case '\n':
-				DUMPSOFAR();
-				CopySendString(cstate, "\\n");
-				start = ++ptr;
-				break;
-			case '\r':
-				DUMPSOFAR();
-				CopySendString(cstate, "\\r");
-				start = ++ptr;
-				break;
-			case '\t':
-				DUMPSOFAR();
-				CopySendString(cstate, "\\t");
-				start = ++ptr;
-				break;
-			case '\v':
-				DUMPSOFAR();
-				CopySendString(cstate, "\\v");
-				start = ++ptr;
-				break;
-			case '\\':
-				DUMPSOFAR();
-				CopySendString(cstate, "\\\\");
-				start = ++ptr;
-				break;
-			default:
-				if (c == delimc)
+				CopySendChar(cstate, '\\');
+				start = ptr++;		/* we include char in next run */
+			}
+			else if ((unsigned char) c < (unsigned char) 0x20)
+			{
+				switch (c)
 				{
-					DUMPSOFAR();
-					CopySendChar(cstate, '\\');
-					start = ptr;	/* we include char in next run */
+					/* \r and \n must be escaped, the others are traditional */
+					case '\b':
+					case '\f':
+					case '\n':
+					case '\r':
+					case '\t':
+					case '\v':
+						DUMPSOFAR();
+						CopySendChar(cstate, '\\');
+						start = ptr++;	/* we include char in next run */
+						break;
+					default:
+						/* All ASCII control chars are length 1 */
+						ptr++;
+						break;
 				}
-
-				/*
-				 * We can skip pg_encoding_mblen() overhead when encoding is
-				 * safe, because in valid backend encodings, extra bytes of a
-				 * multibyte character never look like ASCII.
-				 */
-				if (IS_HIGHBIT_SET(c) && cstate->encoding_embeds_ascii)
-					ptr += pg_encoding_mblen(cstate->client_encoding, ptr);
-				else
-					ptr++;
-				break;
+			}
+			else if (IS_HIGHBIT_SET(c))
+				ptr += pg_encoding_mblen(cstate->client_encoding, ptr);
+			else
+				ptr++;
+		}
+	}
+	else
+	{
+		start = ptr;
+		while ((c = *ptr) != '\0')
+		{
+			if (c == '\\' || c == delimc)
+			{
+				DUMPSOFAR();
+				CopySendChar(cstate, '\\');
+				start = ptr++;		/* we include char in next run */
+			}
+			else if ((unsigned char) c < (unsigned char) 0x20)
+			{
+				switch (c)
+				{
+					/* \r and \n must be escaped, the others are traditional */
+					case '\b':
+					case '\f':
+					case '\n':
+					case '\r':
+					case '\t':
+					case '\v':
+						DUMPSOFAR();
+						CopySendChar(cstate, '\\');
+						start = ptr++;	/* we include char in next run */
+						break;
+					default:
+						/* All ASCII control chars are length 1 */
+						ptr++;
+						break;
+				}
+			}
+			else
+				ptr++;
 		}
 	}
 
