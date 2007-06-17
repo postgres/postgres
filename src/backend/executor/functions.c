@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.117 2007/06/06 23:00:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.118 2007/06/17 18:57:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -765,11 +765,21 @@ sql_exec_error_callback(void *arg)
 	 * If there is a syntax error position, convert to internal syntax error
 	 */
 	syntaxerrposition = geterrposition();
-	if (syntaxerrposition > 0 && fcache->src)
+	if (syntaxerrposition > 0)
 	{
+		bool		isnull;
+		Datum		tmp;
+		char	   *prosrc;
+
+		tmp = SysCacheGetAttr(PROCOID, func_tuple, Anum_pg_proc_prosrc,
+							  &isnull);
+		if (isnull)
+			elog(ERROR, "null prosrc");
+		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
 		errposition(0);
 		internalerrposition(syntaxerrposition);
-		internalerrquery(fcache->src);
+		internalerrquery(prosrc);
+		pfree(prosrc);
 	}
 
 	/*
