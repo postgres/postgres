@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.594 2007/06/15 20:56:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.595 2007/06/18 21:40:57 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -8787,12 +8787,16 @@ ColLabel:	IDENT									{ $$ = $1; }
 
 
 /*
- * Keyword classification lists.  Generally, every keyword present in
+ * Keyword category lists.  Generally, every keyword present in
  * the Postgres grammar should appear in exactly one of these lists.
  *
  * Put a new keyword into the first list that it can go into without causing
  * shift or reduce conflicts.  The earlier lists define "less reserved"
  * categories of keywords.
+ *
+ * Make sure that each keyword's category in keywords.c matches where
+ * it is listed here.  (Someday we may be able to generate these lists and
+ * keywords.c's table from a common master list.)
  */
 
 /* "Unreserved" keywords --- available for use as any kind of name.

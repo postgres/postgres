@@ -53,7 +53,7 @@ SELECT xmlconcat('hello', 'you');
 (1 row)
 
 SELECT xmlconcat(1, 2);
-ERROR:  argument of XMLCONCAT must be type "xml", not type integer
+ERROR:  argument of XMLCONCAT must be type xml, not type integer
 SELECT xmlconcat('bad', '<syntax');
 ERROR:  invalid XML content
 DETAIL:  Entity: line 1: parser error : Couldn't find end of Start Tag syntax line 1
@@ -388,17 +388,17 @@ CREATE VIEW xmlview8 AS SELECT xmlserialize(content 'good' as char(10));
 CREATE VIEW xmlview9 AS SELECT xmlserialize(content 'good' as text);
 SELECT table_name, view_definition FROM information_schema.views
   WHERE table_name LIKE 'xmlview%' ORDER BY 1;
- table_name |                                                        view_definition                                                         
-------------+--------------------------------------------------------------------------------------------------------------------------------
+ table_name |                                                      view_definition                                                       
+------------+----------------------------------------------------------------------------------------------------------------------------
  xmlview1   | SELECT xmlcomment('test'::text) AS xmlcomment;
- xmlview2   | SELECT XMLCONCAT('hello'::"xml", 'you'::"xml") AS "xmlconcat";
+ xmlview2   | SELECT XMLCONCAT('hello'::xml, 'you'::xml) AS "xmlconcat";
  xmlview3   | SELECT XMLELEMENT(NAME element, XMLATTRIBUTES(1 AS ":one:", 'deuce' AS two), 'content&') AS "xmlelement";
- xmlview4   | SELECT XMLELEMENT(NAME employee, XMLFOREST(emp."name" AS "name", emp.age AS age, emp.salary AS pay)) AS "xmlelement" FROM emp;
+ xmlview4   | SELECT XMLELEMENT(NAME employee, XMLFOREST(emp.name AS name, emp.age AS age, emp.salary AS pay)) AS "xmlelement" FROM emp;
  xmlview5   | SELECT XMLPARSE(CONTENT '<abc>x</abc>'::text STRIP WHITESPACE) AS "xmlparse";
  xmlview6   | SELECT XMLPI(NAME foo, 'bar'::text) AS "xmlpi";
- xmlview7   | SELECT XMLROOT('<foo/>'::"xml", VERSION NO VALUE, STANDALONE YES) AS "xmlroot";
- xmlview8   | SELECT (XMLSERIALIZE(CONTENT 'good'::"xml" AS character(10)))::character(10) AS "xmlserialize";
- xmlview9   | SELECT XMLSERIALIZE(CONTENT 'good'::"xml" AS text) AS "xmlserialize";
+ xmlview7   | SELECT XMLROOT('<foo/>'::xml, VERSION NO VALUE, STANDALONE YES) AS "xmlroot";
+ xmlview8   | SELECT (XMLSERIALIZE(CONTENT 'good'::xml AS character(10)))::character(10) AS "xmlserialize";
+ xmlview9   | SELECT XMLSERIALIZE(CONTENT 'good'::xml AS text) AS "xmlserialize";
 (9 rows)
 
 -- Text XPath expressions evaluation

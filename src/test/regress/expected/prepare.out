@@ -164,7 +164,7 @@ SELECT name, statement, parameter_types FROM pg_prepared_statements
  q5   | PREPARE q5(int, text) AS                                        | {integer,text}
       : \x09SELECT * FROM tenk1 WHERE unique1 = $1 OR stringu1 = $2       
       : \x09ORDER BY unique1;                                             
- q6   | PREPARE q6 AS                                                   | {integer,"\"name\""}
+ q6   | PREPARE q6 AS                                                   | {integer,name}
       :     SELECT * FROM tenk1 WHERE unique1 = $1 AND stringu1 = $2;     
  q7   | PREPARE q7(unknown) AS                                          | {path}
       :     SELECT * FROM road WHERE thepath = $1;                        

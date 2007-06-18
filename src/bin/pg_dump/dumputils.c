@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.35 2007/01/05 22:19:48 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.36 2007/06/18 21:40:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,11 +53,8 @@ fmtId(const char *rawid)
 	 * These checks need to match the identifier production in scan.l. Don't
 	 * use islower() etc.
 	 */
-
-	if (ScanKeywordLookup(rawid))
-		need_quotes = true;
 	/* slightly different rules for first character */
-	else if (!((rawid[0] >= 'a' && rawid[0] <= 'z') || rawid[0] == '_'))
+	if (!((rawid[0] >= 'a' && rawid[0] <= 'z') || rawid[0] == '_'))
 		need_quotes = true;
 	else
 	{
@@ -72,6 +69,22 @@ fmtId(const char *rawid)
 				break;
 			}
 		}
+	}
+
+	if (!need_quotes)
+	{
+		/*
+		 * Check for keyword.  We quote keywords except for unreserved ones.
+		 * (In some cases we could avoid quoting a col_name or type_func_name
+		 * keyword, but it seems much harder than it's worth to tell that.)
+		 *
+		 * Note: ScanKeywordLookup() does case-insensitive comparison, but
+		 * that's fine, since we already know we have all-lower-case.
+		 */
+		const ScanKeyword *keyword = ScanKeywordLookup(rawid);
+
+		if (keyword != NULL && keyword->category != UNRESERVED_KEYWORD)
+			need_quotes = true;
 	}
 
 	if (!need_quotes)

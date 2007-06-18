@@ -50,7 +50,7 @@ ERROR:  unsupported XML feature
 DETAIL:  This functionality requires libxml support.
 HINT:  You need to re-compile PostgreSQL using --with-libxml.
 SELECT xmlconcat(1, 2);
-ERROR:  argument of XMLCONCAT must be type "xml", not type integer
+ERROR:  argument of XMLCONCAT must be type xml, not type integer
 SELECT xmlconcat('bad', '<syntax');
 ERROR:  unsupported XML feature
 DETAIL:  This functionality requires libxml support.
