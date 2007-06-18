@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.397 2007/06/13 21:24:56 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.398 2007/06/18 10:02:57 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -417,11 +417,9 @@ const char *const config_type_names[] =
  * 5. Add it to src/backend/utils/misc/postgresql.conf.sample, if
  *	  appropriate
  *
- * 6. Add it to src/bin/psql/tab-complete.c, if it's a USERSET option.
+ * 6. Don't forget to document the option.
  *
- * 7. Don't forget to document the option.
- *
- * 8. If it's a new GUC_LIST option you must edit pg_dumpall.c to ensure
+ * 7. If it's a new GUC_LIST option you must edit pg_dumpall.c to ensure
  *	  it is not single quoted at dump time.
  */
 
