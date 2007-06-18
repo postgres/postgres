@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.198.2.3 2006/01/06 00:04:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.198.2.4 2007/06/18 01:14:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,9 +178,26 @@ ReadBuffer(Relation reln, BlockNumber blockNum)
 		/*
 		 * We get here only in the corner case where we are trying to extend
 		 * the relation but we found a pre-existing buffer marked BM_VALID.
-		 * (This can happen because mdread doesn't complain about reads
-		 * beyond EOF --- which is arguably bogus, but changing it seems
-		 * tricky.)  We *must* do smgrextend before succeeding, else the
+		 * This can happen because mdread doesn't complain about reads beyond
+		 * EOF --- which is arguably bogus, but changing it seems tricky ---
+		 * and so a previous attempt to read a block just beyond EOF could
+		 * have left a "valid" zero-filled buffer.  Unfortunately, we have
+		 * also seen this case occurring because of buggy Linux kernels that
+		 * sometimes return an lseek(SEEK_END) result that doesn't account for
+		 * a recent write.  In that situation, the pre-existing buffer would
+		 * contain valid data that we don't want to overwrite.  Since the
+		 * legitimate cases should always have left a zero-filled buffer,
+		 * complain if not PageIsNew.
+		 */
+		bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
+		if (!PageIsNew((PageHeader) bufBlock))
+			ereport(ERROR,
+					(errmsg("unexpected data beyond EOF in block %u of relation \"%s\"",
+							blockNum, RelationGetRelationName(reln)),
+					 errhint("This has been seen to occur with buggy kernels; consider updating your system.")));
+
+		/*
+		 * We *must* do smgrextend before succeeding, else the
 		 * page will not be reserved by the kernel, and the next P_NEW call
 		 * will decide to return the same page.  Clear the BM_VALID bit,
 		 * do the StartBufferIO call that BufferAlloc didn't, and proceed.
