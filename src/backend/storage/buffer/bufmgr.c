@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.220 2007/05/30 20:11:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.221 2007/06/18 00:47:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,15 +223,14 @@ ReadBuffer_common(Relation reln, BlockNumber blockNum, bool zeroPage,
 		 * We get here only in the corner case where we are trying to extend
 		 * the relation but we found a pre-existing buffer marked BM_VALID.
 		 * This can happen because mdread doesn't complain about reads beyond
-		 * EOF --- which is arguably bogus, but changing it seems tricky ---
-		 * and so a previous attempt to read a block just beyond EOF could
-		 * have left a "valid" zero-filled buffer.	Unfortunately, we have
-		 * also seen this case occurring because of buggy Linux kernels that
-		 * sometimes return an lseek(SEEK_END) result that doesn't account for
-		 * a recent write.	In that situation, the pre-existing buffer would
-		 * contain valid data that we don't want to overwrite.  Since the
-		 * legitimate cases should always have left a zero-filled buffer,
-		 * complain if not PageIsNew.
+		 * EOF (when zero_damaged_pages is ON) and so a previous attempt to
+		 * read a block beyond EOF could have left a "valid" zero-filled
+		 * buffer.  Unfortunately, we have also seen this case occurring
+		 * because of buggy Linux kernels that sometimes return an
+		 * lseek(SEEK_END) result that doesn't account for a recent write.
+		 * In that situation, the pre-existing buffer would contain valid data
+		 * that we don't want to overwrite.  Since the legitimate case should
+		 * always have left a zero-filled buffer, complain if not PageIsNew.
 		 */
 		bufBlock = isLocalBuf ? LocalBufHdrGetBlock(bufHdr) : BufHdrGetBlock(bufHdr);
 		if (!PageIsNew((PageHeader) bufBlock))
