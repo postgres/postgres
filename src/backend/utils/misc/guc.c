@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.398 2007/06/18 10:02:57 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.399 2007/06/19 20:13:22 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -825,13 +825,14 @@ static struct config_bool ConfigureNamesBool[] =
 #endif
 
 	{
-		{"log_lock_waits", PGC_SIGHUP, LOGGING_WHAT,
-			gettext_noop("Logs long lock wait events."),
+		{"log_lock_waits", PGC_SUSET, LOGGING_WHAT,
+			gettext_noop("Logs long lock waits."),
 			NULL
 		},
 		&log_lock_waits,
 		false, NULL, NULL
 	},
+
 	{
 		{"log_hostname", PGC_SIGHUP, LOGGING_WHAT,
 			gettext_noop("Logs the host name in the connection logs."),

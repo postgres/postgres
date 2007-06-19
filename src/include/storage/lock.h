@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.105 2007/05/30 16:16:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.106 2007/06/19 20:13:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,10 +397,12 @@ typedef enum
 /* Deadlock states identified by DeadLockCheck() */
 typedef enum
 {
-	DS_DEADLOCK_NOT_FOUND,		/* no deadlock found within database server */
-	DS_SOFT_DEADLOCK,			/* deadlock, but lock queues rearrangeable */
+	DS_NOT_YET_CHECKED,			/* no deadlock check has run yet */
+	DS_NO_DEADLOCK,				/* no deadlock detected */
+	DS_SOFT_DEADLOCK,			/* deadlock avoided by queue rearrangement */
 	DS_HARD_DEADLOCK			/* deadlock, no way out but ERROR */
-} DeadlockState;
+} DeadLockState;
+
 
 /*
  * The lockmgr's shared hash tables are partitioned to reduce contention.
@@ -449,7 +451,7 @@ extern void lock_twophase_postcommit(TransactionId xid, uint16 info,
 extern void lock_twophase_postabort(TransactionId xid, uint16 info,
 						void *recdata, uint32 len);
 
-extern DeadlockState DeadLockCheck(PGPROC *proc);
+extern DeadLockState DeadLockCheck(PGPROC *proc);
 extern void DeadLockReport(void);
 extern void RememberSimpleDeadLock(PGPROC *proc1,
 					   LOCKMODE lockmode,

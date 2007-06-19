@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.126 2007/06/07 19:19:56 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.127 2007/06/19 20:13:21 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2947,7 +2947,7 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        Controls whether a log message is produced when a statement waits
+        Controls whether a log message is produced when a session waits
         longer than <xref linkend="guc-deadlock-timeout"> to acquire a
         lock.  This is useful in determining if lock waits are causing
         poor performance.  The default is <literal>off</>.
@@ -4084,11 +4084,18 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         wasted in needless deadlock checks, but slows down reporting of
         real deadlock errors. The default is one second (<literal>1s</>),
         which is probably about the smallest value you would want in
-        practice.  Set <xref linkend="guc-log-lock-waits"> to log deadlock
-        checks.  On a heavily loaded server you might want to raise it.
+        practice. On a heavily loaded server you might want to raise it.
         Ideally the setting should exceed your typical transaction time,
-        so as to improve the odds that a lock will be released before the
-        waiter decides to check for deadlock.
+        so as to improve the odds that a lock will be released before
+        the waiter decides to check for deadlock.
+       </para>
+
+       <para>
+        When <xref linkend="guc-log-lock-waits"> is set,
+        this parameter also determines the length of time to wait before
+        a log message is issued about the lock wait.  If you are trying
+        to investigate locking delays you might want to set a shorter than
+        normal <varname>deadlock_timeout</varname>.
        </para>
       </listitem>
      </varlistentry>

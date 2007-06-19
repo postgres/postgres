@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.47 2007/04/20 20:15:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/deadlock.c,v 1.48 2007/06/19 20:13:21 tgl Exp $
  *
  *	Interface:
  *
@@ -25,8 +25,8 @@
  */
 #include "postgres.h"
 
-#include "lib/stringinfo.h"
 #include "miscadmin.h"
+#include "storage/lmgr.h"
 #include "storage/proc.h"
 #include "utils/memutils.h"
 
@@ -117,8 +117,9 @@ static int	nDeadlockDetails;
  * allocation of working memory for DeadLockCheck.	We do this per-backend
  * since there's no percentage in making the kernel do copy-on-write
  * inheritance of workspace from the postmaster.  We want to allocate the
- * space at startup because the deadlock checker might be invoked when there's
- * no free memory left.
+ * space at startup because (a) the deadlock checker might be invoked when
+ * there's no free memory left, and (b) the checker is normally run inside a
+ * signal handler, which is a very dangerous place to invoke palloc from.
  */
 void
 InitDeadLockChecking(void)
@@ -184,17 +185,17 @@ InitDeadLockChecking(void)
  *
  * This code looks for deadlocks involving the given process.  If any
  * are found, it tries to rearrange lock wait queues to resolve the
- * deadlock.  If resolution is impossible, return TRUE --- the caller
- * is then expected to abort the given proc's transaction.
+ * deadlock.  If resolution is impossible, return DS_HARD_DEADLOCK ---
+ * the caller is then expected to abort the given proc's transaction.
  *
- * Caller must already have locked all partitions of the lock tables,
- * so standard error logging/reporting code is handled by caller.
+ * Caller must already have locked all partitions of the lock tables.
  *
  * On failure, deadlock details are recorded in deadlockDetails[] for
  * subsequent printing by DeadLockReport().  That activity is separate
- * because we don't want to do it while holding all those LWLocks.
+ * because (a) we don't want to do it while holding all those LWLocks,
+ * and (b) we are typically invoked inside a signal handler.
  */
-DeadlockState
+DeadLockState
 DeadLockCheck(PGPROC *proc)
 {
 	int			i,
@@ -204,11 +205,6 @@ DeadLockCheck(PGPROC *proc)
 	nCurConstraints = 0;
 	nPossibleConstraints = 0;
 	nWaitOrders = 0;
-
-#ifdef LOCK_DEBUG
-	if (Debug_deadlocks)
-		DumpAllLocks();
-#endif
 
 	/* Search for deadlocks and possible fixes */
 	if (DeadLockCheckRecurse(proc))
@@ -256,10 +252,11 @@ DeadLockCheck(PGPROC *proc)
 		ProcLockWakeup(GetLocksMethodTable(lock), lock);
 	}
 
+	/* Return code tells caller if we had to escape a deadlock or not */
 	if (nWaitOrders > 0)
 		return DS_SOFT_DEADLOCK;
 	else
-		return DS_DEADLOCK_NOT_FOUND;
+		return DS_NO_DEADLOCK;
 }
 
 /*
@@ -833,82 +830,7 @@ PrintLockQueue(LOCK *lock, const char *info)
 #endif
 
 /*
- * Append a description of a lockable object to buf.
- *
- * XXX probably this should be exported from lmgr.c or some such place.
- * Ideally we would print names for the numeric values, but that requires
- * getting locks on system tables, which might cause problems.
- */
-static void
-DescribeLockTag(StringInfo buf, const LOCKTAG *lock)
-{
-	switch (lock->locktag_type)
-	{
-		case LOCKTAG_RELATION:
-			appendStringInfo(buf,
-							 _("relation %u of database %u"),
-							 lock->locktag_field2,
-							 lock->locktag_field1);
-			break;
-		case LOCKTAG_RELATION_EXTEND:
-			appendStringInfo(buf,
-							 _("extension of relation %u of database %u"),
-							 lock->locktag_field2,
-							 lock->locktag_field1);
-			break;
-		case LOCKTAG_PAGE:
-			appendStringInfo(buf,
-							 _("page %u of relation %u of database %u"),
-							 lock->locktag_field3,
-							 lock->locktag_field2,
-							 lock->locktag_field1);
-			break;
-		case LOCKTAG_TUPLE:
-			appendStringInfo(buf,
-							 _("tuple (%u,%u) of relation %u of database %u"),
-							 lock->locktag_field3,
-							 lock->locktag_field4,
-							 lock->locktag_field2,
-							 lock->locktag_field1);
-			break;
-		case LOCKTAG_TRANSACTION:
-			appendStringInfo(buf,
-							 _("transaction %u"),
-							 lock->locktag_field1);
-			break;
-		case LOCKTAG_OBJECT:
-			appendStringInfo(buf,
-							 _("object %u of class %u of database %u"),
-							 lock->locktag_field3,
-							 lock->locktag_field2,
-							 lock->locktag_field1);
-			break;
-		case LOCKTAG_USERLOCK:
-			/* reserved for old contrib code, now on pgfoundry */
-			appendStringInfo(buf,
-							 _("user lock [%u,%u,%u]"),
-							 lock->locktag_field1,
-							 lock->locktag_field2,
-							 lock->locktag_field3);
-			break;
-		case LOCKTAG_ADVISORY:
-			appendStringInfo(buf,
-							 _("advisory lock [%u,%u,%u,%u]"),
-							 lock->locktag_field1,
-							 lock->locktag_field2,
-							 lock->locktag_field3,
-							 lock->locktag_field4);
-			break;
-		default:
-			appendStringInfo(buf,
-							 _("unrecognized locktag type %d"),
-							 lock->locktag_type);
-			break;
-	}
-}
-
-/*
- * Report a detected DS_HARD_DEADLOCK, with available details.
+ * Report a detected deadlock, with available details.
  */
 void
 DeadLockReport(void)
