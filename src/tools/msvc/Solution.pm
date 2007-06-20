@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.26 2007/05/27 11:16:41 meskes Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.27 2007/06/20 17:19:00 adunstan Exp $
 #
 use Carp;
 use strict;
@@ -127,6 +127,8 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         }
 		if (my $port = $self->{options}->{"--with-pgport"})
 		{
+			print O "#undef DEF_PGPORT\n";
+			print O "#undef DEF_PGPORT_STR\n";
 			print O "#define DEF_PGPORT $port\n";
 			print O "#define DEF_PGPORT_STR \"$port\"\n";
 		}
