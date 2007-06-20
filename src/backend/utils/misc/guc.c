@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.399 2007/06/19 20:13:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.400 2007/06/20 18:31:39 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1173,7 +1173,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MS
 		},
 		&DeadlockTimeout,
-		1000, 0, INT_MAX, NULL, NULL
+		1000, 1, INT_MAX/1000, NULL, NULL
 	},
 
 	/*
