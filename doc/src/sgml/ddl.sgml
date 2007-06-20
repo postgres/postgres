@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.75 2007/05/15 19:43:50 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ddl.sgml,v 1.76 2007/06/20 23:11:38 tgl Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -2778,7 +2778,7 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
      <para>
       Constraint exclusion only works when the query's <literal>WHERE</>
       clause contains constants.  A parameterized query will not be
-      optimized, since the planner cannot know what partitions the
+      optimized, since the planner cannot know which partitions the
       parameter value might select at run time.  For the same reason,
       <quote>stable</> functions such as <function>CURRENT_DATE</function>
       must be avoided.
@@ -2787,9 +2787,21 @@ EXPLAIN SELECT count(*) FROM measurement WHERE logdate &gt;= DATE '2006-01-01';
 
     <listitem>
      <para>
-      All constraints on all partitions of the master table are considered for
-      constraint exclusion, so large numbers of partitions are likely to
-      increase query planning time considerably.
+      Keep the partitioning constraints simple, else the planner may not be
+      able to prove that partitions don't need to be visited.  Use simple
+      equality conditions for list partitioning, or simple
+      range tests for range partitioning, as illustrated in the preceding
+      examples.  A good rule of thumb is that partitioning constraints should
+      contain only comparisons of the partitioning column(s) to constants
+      using btree-indexable operators.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      All constraints on all partitions of the master table are examined
+      during constraint exclusion, so large numbers of partitions are likely
+      to increase query planning time considerably.
      </para>
     </listitem>
 
