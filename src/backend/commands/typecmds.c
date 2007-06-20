@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.65.4.1 2005/01/24 23:22:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.65.4.2 2007/06/20 18:16:10 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -497,9 +497,9 @@ DefineDomain(CreateDomainStmt *stmt)
 	char		typtype;
 	Datum		datum;
 	bool		isnull;
-	Node	   *defaultExpr = NULL;
 	char	   *defaultValue = NULL;
 	char	   *defaultValueBin = NULL;
+	bool		saw_default = false;
 	bool		typNotNull = false;
 	bool		nullDefined = false;
 	Oid			basetypelem;
@@ -608,7 +608,6 @@ DefineDomain(CreateDomainStmt *stmt)
 	{
 		Node	   *newConstraint = lfirst(listptr);
 		Constraint *constr;
-		ParseState *pstate;
 
 		/* Check for unsupported constraint types */
 		if (IsA(newConstraint, FkConstraint))
@@ -629,35 +628,49 @@ DefineDomain(CreateDomainStmt *stmt)
 
 				/*
 				 * The inherited default value may be overridden by the
-				 * user with the DEFAULT <expr> statement.
+				 * with the DEFAULT <expr> clause ... but only once.
 				 */
-				if (defaultExpr)
+				if (saw_default)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("multiple default expressions")));
+				saw_default = true;
 
-				/* Create a dummy ParseState for transformExpr */
-				pstate = make_parsestate(NULL);
+				if (constr->raw_expr)
+				{
+					ParseState *pstate;
+					Node	   *defaultExpr;
 
-				/*
-				 * Cook the constr->raw_expr into an expression. Note:
-				 * Name is strictly for error message
-				 */
-				defaultExpr = cookDefault(pstate, constr->raw_expr,
-										  basetypeoid,
-										  stmt->typename->typmod,
-										  domainName);
+					/* Create a dummy ParseState for transformExpr */
+					pstate = make_parsestate(NULL);
 
-				/*
-				 * Expression must be stored as a nodeToString result, but
-				 * we also require a valid textual representation (mainly
-				 * to make life easier for pg_dump).
-				 */
-				defaultValue = deparse_expression(defaultExpr,
-										  deparse_context_for(domainName,
-															  InvalidOid),
-												  false, false);
-				defaultValueBin = nodeToString(defaultExpr);
+					/*
+					 * Cook the constr->raw_expr into an expression.
+					 * Note: name is strictly for error message
+					 */
+					defaultExpr = cookDefault(pstate, constr->raw_expr,
+											  basetypeoid,
+											  stmt->typename->typmod,
+											  domainName);
+
+					/*
+					 * Expression must be stored as a nodeToString result, but
+					 * we also require a valid textual representation (mainly
+					 * to make life easier for pg_dump).
+					 */
+					defaultValue =
+						deparse_expression(defaultExpr,
+										   deparse_context_for(domainName,
+															   InvalidOid),
+										   false, false);
+					defaultValueBin = nodeToString(defaultExpr);
+				}
+				else
+				{
+					/* DEFAULT NULL is same as not having a default */
+					defaultValue = NULL;
+					defaultValueBin = NULL;
+				}
 				break;
 
 			case CONSTR_NOTNULL:
