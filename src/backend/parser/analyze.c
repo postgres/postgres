@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2005, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.326.2.3 2006/10/11 20:03:11 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.326.2.4 2007/06/20 18:21:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -820,6 +820,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 {
 	bool		is_serial;
 	bool		saw_nullable;
+	bool		saw_default;
 	Constraint *constraint;
 	ListCell   *clist;
 
@@ -938,6 +939,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 	transformConstraintAttrs(column->constraints);
 
 	saw_nullable = false;
+	saw_default = false;
 
 	foreach(clist, column->constraints)
 	{
@@ -982,13 +984,15 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 				break;
 
 			case CONSTR_DEFAULT:
-				if (column->raw_default != NULL)
+				if (saw_default)
 					ereport(ERROR,
 							(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("multiple default values specified for column \"%s\" of table \"%s\"",
 								  column->colname, cxt->relation->relname)));
+				/* Note: DEFAULT NULL maps to constraint->raw_expr == NULL */
 				column->raw_default = constraint->raw_expr;
 				Assert(constraint->cooked_expr == NULL);
+				saw_default = true;
 				break;
 
 			case CONSTR_PRIMARY:
