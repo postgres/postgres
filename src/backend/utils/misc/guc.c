@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.401 2007/06/21 18:14:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.402 2007/06/21 22:59:12 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3721,9 +3721,9 @@ ReportGUCOption(struct config_generic * record)
 
 /*
  * Try to interpret value as boolean value.  Valid values are: true,
- * false, yes, no, on, off, 1, 0.  If the string parses okay, return
- * true, else false.  If result is not NULL, return the parsing result
- * there.
+ * false, yes, no, on, off, 1, 0; as well as unique prefixes thereof.
+ * If the string parses okay, return true, else false.
+ * If okay and result is not NULL, return the value in *result.
  */
 static bool
 parse_bool(const char *value, bool *result)
@@ -3999,9 +3999,9 @@ parse_int(const char *value, int *result, int flags, const char **hintmsg)
 
 
 /*
- * Try to parse value as a floating point constant in the usual
- * format.	If the value parsed okay return true, else false.  If
- * result is not NULL, return the semantic value there.
+ * Try to parse value as a floating point number in the usual format.
+ * If the string parses okay, return true, else false.
+ * If okay and result is not NULL, return the value in *result.
  */
 static bool
 parse_real(const char *value, double *result)
@@ -4009,14 +4009,20 @@ parse_real(const char *value, double *result)
 	double		val;
 	char	   *endptr;
 
+	if (result)
+		*result = 0;			/* suppress compiler warning */
+
 	errno = 0;
 	val = strtod(value, &endptr);
-	if (endptr == value || *endptr != '\0' || errno == ERANGE)
-	{
-		if (result)
-			*result = 0;		/* suppress compiler warning */
+	if (endptr == value || errno == ERANGE)
 		return false;
-	}
+
+	/* allow whitespace after number */
+	while (isspace((unsigned char) *endptr))
+		endptr++;
+	if (*endptr != '\0')
+		return false;
+
 	if (result)
 		*result = val;
 	return true;
