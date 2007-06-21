@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.44 2007/01/31 20:56:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.45 2007/06/21 10:43:09 petere Exp $ -->
 
  <chapter id="tutorial-start">
   <title>Getting Started</title>
@@ -154,11 +154,7 @@
 <screen>
 <prompt>$</prompt> <userinput>createdb mydb</userinput>
 </screen>
-    This should produce as response:
-<screen>
-CREATE DATABASE
-</screen>
-    If so, this step was successful and you can skip over the
+    If this produces no response then this step was successful and you can skip over the
     remainder of this section.
    </para>
 

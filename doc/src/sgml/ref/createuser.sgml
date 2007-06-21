@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.48 2007/06/04 10:02:40 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.49 2007/06/21 10:43:09 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -358,7 +358,6 @@ PostgreSQL documentation
 <computeroutput>Shall the new role be a superuser? (y/n) </computeroutput><userinput>n</userinput>
 <computeroutput>Shall the new role be allowed to create databases? (y/n) </computeroutput><userinput>n</userinput>
 <computeroutput>Shall the new role be allowed to create more new roles? (y/n) </computeroutput><userinput>n</userinput>
-<computeroutput>CREATE USER</computeroutput>
 </screen>
    </para>
 
@@ -369,7 +368,6 @@ PostgreSQL documentation
 <screen>
 <prompt>$ </prompt><userinput>createuser -h eden -p 5000 -S -D -R -e joe</userinput>
 <computeroutput>CREATE ROLE joe NOSUPERUSER NOCREATEDB NOCREATEROLE INHERIT LOGIN;</computeroutput>
-<computeroutput>CREATE ROLE</computeroutput>
 </screen>
    </para>
 
@@ -381,7 +379,6 @@ PostgreSQL documentation
 <computeroutput>Enter password for new role: </computeroutput><userinput>xyzzy</userinput>
 <computeroutput>Enter it again: </computeroutput><userinput>xyzzy</userinput>
 <computeroutput>CREATE ROLE joe PASSWORD 'xyzzy' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN;</computeroutput>
-<computeroutput>CREATE ROLE</computeroutput>
 </screen>
     In the above example, the new password isn't actually echoed when typed,
     but we show what was typed for clarity.  However the password

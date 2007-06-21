@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.32 2007/06/04 10:02:40 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/dropdb.sgml,v 1.33 2007/06/21 10:43:09 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -192,7 +192,6 @@ PostgreSQL documentation
     database server:
 <screen>
 <prompt>$ </prompt><userinput>dropdb demo</userinput>
-<computeroutput>DROP DATABASE</computeroutput>
 </screen>
    </para>
 
@@ -204,8 +203,7 @@ PostgreSQL documentation
 <prompt>$ </prompt><userinput>dropdb -p 5000 -h eden -i -e demo</userinput>
 <computeroutput>Database "demo" will be permanently deleted.
 Are you sure? (y/n) </computeroutput><userinput>y</userinput>
-<computeroutput>DROP DATABASE "demo"
-DROP DATABASE</computeroutput>
+<computeroutput>DROP DATABASE demo;</computeroutput>
 </screen>
    </para>
  </refsect1>

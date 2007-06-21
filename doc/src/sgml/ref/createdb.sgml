@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.45 2007/06/04 10:02:40 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createdb.sgml,v 1.46 2007/06/21 10:43:09 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -265,10 +265,7 @@ PostgreSQL documentation
     database server:
 <screen>
 <prompt>$ </prompt><userinput>createdb demo</userinput>
-<computeroutput>CREATE DATABASE</computeroutput>
 </screen>
-    The response is the same as you would have gotten from running the
-    <command>CREATE DATABASE</command> <acronym>SQL</acronym> command.
    </para>
 
    <para>
@@ -278,8 +275,7 @@ PostgreSQL documentation
     underlying command:
 <screen>
 <prompt>$ </prompt><userinput>createdb -p 5000 -h eden -E LATIN1 -e demo</userinput>
-<computeroutput>CREATE DATABASE "demo" WITH ENCODING = 'LATIN1'</computeroutput>
-<computeroutput>CREATE DATABASE</computeroutput>
+<computeroutput>CREATE DATABASE demo ENCODING 'LATIN1';</computeroutput>
 </screen>
    </para>
  </refsect1>
