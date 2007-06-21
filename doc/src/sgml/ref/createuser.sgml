@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.49 2007/06/21 10:43:09 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/createuser.sgml,v 1.50 2007/06/21 12:20:10 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -378,12 +378,14 @@ PostgreSQL documentation
 <prompt>$ </prompt><userinput>createuser -P -s -e joe</userinput>
 <computeroutput>Enter password for new role: </computeroutput><userinput>xyzzy</userinput>
 <computeroutput>Enter it again: </computeroutput><userinput>xyzzy</userinput>
-<computeroutput>CREATE ROLE joe PASSWORD 'xyzzy' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN;</computeroutput>
+<computeroutput>CREATE ROLE joe PASSWORD 'md5b5f5ba1a423792b526f799ae4eb3d59e' SUPERUSER CREATEDB CREATEROLE INHERIT LOGIN;</computeroutput>
 </screen>
     In the above example, the new password isn't actually echoed when typed,
-    but we show what was typed for clarity.  However the password
-    <emphasis>will</> appear in the echoed command, as illustrated &mdash;
-    so you don't want to use <literal>-e</> when assigning a password, if
+    but we show what was typed for clarity.  As you see, the password is
+    encrypted before it is sent to the client.  If the option <option>--unencrypted</option>
+    is used, the password <emphasis>will</> appear in the echoed command
+    (and possibly also in the server log and elsewhere),
+    so you don't want to use <option>-e</> in that case, if
     anyone else can see your screen.
    </para>
  </refsect1>
