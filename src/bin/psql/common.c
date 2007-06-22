@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2006, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.130.2.1 2007/04/16 20:16:11 mha Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.130.2.2 2007/06/22 03:19:57 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -1099,6 +1099,12 @@ ExecQueryUsingCursor(const char *query, double *elapsed_msec)
 		}
 
 		printQuery(results, &my_popt, pset.queryFout, pset.logfile);
+
+		/*
+		 * Make sure to flush the output stream, so intermediate
+		 * results are visible to the client immediately.
+		 */
+		fflush(pset.queryFout);
 
 		/* after the first result set, disallow header decoration */
 		my_popt.topt.start_table = false;
