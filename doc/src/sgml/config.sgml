@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.127 2007/06/19 20:13:21 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.128 2007/06/22 16:15:23 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2774,17 +2774,15 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
          This is a <function>printf</>-style string that is output at the
-         beginning of each log line. The default is an empty string.
-         Each recognized escape is replaced as outlined 
-         below - anything else that looks like an escape is ignored. Other
+         beginning of each log line.
+         <literal>%</> characters begin <quote>escape sequences</>
+         that are replaced with status information as outlined below.
+         Unrecognized escapes are ignored. Other
          characters are copied straight to the log line. Some escapes are
          only recognized by session processes, and do not apply to
-         background processes such as the main server process. <application>Syslog</>
-         produces its own 
-         time stamp and process ID information, so you probably do not want to
-         use those escapes if you are using <application>syslog</>.
+         background processes such as the main server process.
          This parameter can only be set in the <filename>postgresql.conf</>
-         file or on the server command line.
+         file or on the server command line. The default is an empty string.
 
          <informaltable>
           <tgroup cols="3">
@@ -2823,7 +2821,7 @@ SELECT * FROM parent WHERE key = 2400;
             </row>
             <row>
              <entry><literal>%t</literal></entry>
-             <entry>Time stamp (no milliseconds, no timezone on Windows)</entry>
+             <entry>Time stamp without milliseconds (no timezone either on Windows)</entry>
              <entry>no</entry>
             </row>
             <row>
@@ -2833,16 +2831,12 @@ SELECT * FROM parent WHERE key = 2400;
             </row>
             <row>
              <entry><literal>%i</literal></entry>
-             <entry>Command tag: This is the command that generated the log line.</entry>
+             <entry>Command tag: type of session's current command</entry>
              <entry>yes</entry>
             </row>
             <row>
              <entry><literal>%c</literal></entry>
-             <entry>Session ID: A unique identifier for each session.
-             It is 2 4-byte hexadecimal numbers (without leading zeros) 
-             separated by a dot. The numbers
-             are the session start time and the process ID, so this can also
-             be used as a space saving way of printing these items.</entry>
+             <entry>Session ID: see below</entry>
              <entry>yes</entry>
             </row>
             <row>
@@ -2862,9 +2856,9 @@ SELECT * FROM parent WHERE key = 2400;
             </row>
             <row>
              <entry><literal>%q</literal></entry>
-             <entry>Does not produce any output, but tells non-session
-             processes to stop at this point in the string. Ignored by
-             session processes.</entry>
+             <entry>Produces no output, but tells non-session
+             processes to stop at this point in the string; ignored by
+             session processes</entry>
              <entry>no</entry>
             </row>
             <row>
@@ -2875,7 +2869,30 @@ SELECT * FROM parent WHERE key = 2400;
            </tbody>
           </tgroup>
          </informaltable>
+
+         The <literal>%c</> escape prints a quasi-unique session identifier,
+         consisting of two 4-byte hexadecimal numbers (without leading zeros)
+         separated by a dot.  The numbers are the session start time and the
+         process ID, so <literal>%c</> can also be used as a space saving way
+         of printing those items.
        </para>
+
+       <tip>
+        <para>
+         If you set a nonempty value for <varname>log_line_prefix</>,
+         you should usually make its last character be a space, to provide
+         visual separation from the rest of the log line.  A punctuation
+         character could be used too.
+        </para>
+       </tip>
+
+       <tip>
+        <para>
+         <application>Syslog</> produces its own 
+         time stamp and process ID information, so you probably do not want to
+         use those escapes if you are logging to <application>syslog</>.
+        </para>
+       </tip>
       </listitem>
      </varlistentry>
 
