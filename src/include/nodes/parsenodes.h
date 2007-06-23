@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.348 2007/04/27 22:05:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.349 2007/06/23 22:12:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@
 typedef enum QuerySource
 {
 	QSRC_ORIGINAL,				/* original parsetree (explicit query) */
-	QSRC_PARSER,				/* added by parse analysis */
+	QSRC_PARSER,				/* added by parse analysis (now unused) */
 	QSRC_INSTEAD_RULE,			/* added by unconditional INSTEAD rule */
 	QSRC_QUAL_INSTEAD_RULE,		/* added by conditional INSTEAD rule */
 	QSRC_NON_INSTEAD_RULE		/* added by non-INSTEAD rule */
@@ -799,10 +799,12 @@ typedef struct SetOperationStmt
 /*****************************************************************************
  *		Other Statements (no optimizations required)
  *
- *		Some of them require a little bit of transformation (which is also
- *		done by transformStmt). The whole structure is then passed on to
- *		ProcessUtility (by-passing the optimization step) as the utilityStmt
- *		field in Query.
+ *		These are not touched by parser/analyze.c except to put them into
+ *		the utilityStmt field of a Query.  This is eventually passed to
+ *		ProcessUtility (by-passing rewriting and planning).  Some of the
+ *		statements do need attention from parse analysis, and this is
+ *		done by routines in parser/parse_utilcmd.c after ProcessUtility
+ *		receives the command for execution.
  *****************************************************************************/
 
 /*
@@ -886,7 +888,7 @@ typedef enum AlterTableType
 	AT_ReAddIndex,				/* internal to commands/tablecmds.c */
 	AT_AddConstraint,			/* add constraint */
 	AT_ProcessedConstraint,		/* pre-processed add constraint (local in
-								 * parser/analyze.c) */
+								 * parser/parse_utilcmd.c) */
 	AT_DropConstraint,			/* drop constraint */
 	AT_DropConstraintQuietly,	/* drop constraint, no error/warning (local in
 								 * commands/tablecmds.c) */
@@ -1083,7 +1085,7 @@ typedef struct CreateStmt
  * relation).  We should never have both in the same node!
  *
  * Constraint attributes (DEFERRABLE etc) are initially represented as
- * separate Constraint nodes for simplicity of parsing.  analyze.c makes
+ * separate Constraint nodes for simplicity of parsing.  parse_utilcmd.c makes
  * a pass through the constraints list to attach the info to the appropriate
  * FkConstraint node (and, perhaps, someday to other kinds of constraints).
  * ----------

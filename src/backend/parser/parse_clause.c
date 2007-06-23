@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.165 2007/04/27 22:05:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.166 2007/06/23 22:12:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,8 +152,8 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
 	 * Open target rel and grab suitable lock (which we will hold till end of
 	 * transaction).
 	 *
-	 * analyze.c will eventually do the corresponding heap_close(), but *not*
-	 * release the lock.
+	 * free_parsestate() will eventually do the corresponding
+	 * heap_close(), but *not* release the lock.
 	 */
 	pstate->p_target_relation = heap_openrv(relation, RowExclusiveLock);
 
@@ -193,7 +193,7 @@ setTargetTable(ParseState *pstate, RangeVar *relation,
  * Simplify InhOption (yes/no/default) into boolean yes/no.
  *
  * The reason we do things this way is that we don't want to examine the
- * SQL_inheritance option flag until parse_analyze is run.	Otherwise,
+ * SQL_inheritance option flag until parse_analyze() is run.	Otherwise,
  * we'd do the wrong thing with query strings that intermix SET commands
  * with queries.
  */
@@ -417,7 +417,6 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 static RangeTblEntry *
 transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 {
-	List	   *parsetrees;
 	Query	   *query;
 	RangeTblEntry *rte;
 
@@ -434,19 +433,12 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	/*
 	 * Analyze and transform the subquery.
 	 */
-	parsetrees = parse_sub_analyze(r->subquery, pstate);
+	query = parse_sub_analyze(r->subquery, pstate);
 
 	/*
-	 * Check that we got something reasonable.	Most of these conditions are
-	 * probably impossible given restrictions of the grammar, but check 'em
-	 * anyway.
+	 * Check that we got something reasonable.	Many of these conditions are
+	 * impossible given restrictions of the grammar, but check 'em anyway.
 	 */
-	if (list_length(parsetrees) != 1)
-		elog(ERROR, "unexpected parse analysis result for subquery in FROM");
-	query = (Query *) linitial(parsetrees);
-	if (query == NULL || !IsA(query, Query))
-		elog(ERROR, "unexpected parse analysis result for subquery in FROM");
-
 	if (query->commandType != CMD_SELECT ||
 		query->utilityStmt != NULL)
 		elog(ERROR, "expected SELECT query from subquery in FROM");

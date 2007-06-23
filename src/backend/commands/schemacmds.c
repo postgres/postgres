@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.45 2007/03/23 19:53:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.46 2007/06/23 22:12:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include "commands/dbcommands.h"
 #include "commands/schemacmds.h"
 #include "miscadmin.h"
-#include "parser/analyze.h"
+#include "parser/parse_utilcmd.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -111,39 +111,31 @@ CreateSchemaCommand(CreateSchemaStmt *stmt, const char *queryString)
 	/*
 	 * Examine the list of commands embedded in the CREATE SCHEMA command, and
 	 * reorganize them into a sequentially executable order with no forward
-	 * references.	Note that the result is still a list of raw parsetrees in
-	 * need of parse analysis --- we cannot, in general, run analyze.c on one
-	 * statement until we have actually executed the prior ones.
+	 * references.	Note that the result is still a list of raw parsetrees
+	 * --- we cannot, in general, run parse analysis on one statement until
+	 * we have actually executed the prior ones.
 	 */
-	parsetree_list = analyzeCreateSchemaStmt(stmt);
+	parsetree_list = transformCreateSchemaStmt(stmt);
 
 	/*
-	 * Analyze and execute each command contained in the CREATE SCHEMA
+	 * Execute each command contained in the CREATE SCHEMA.  Since the
+	 * grammar allows only utility commands in CREATE SCHEMA, there is
+	 * no need to pass them through parse_analyze() or the rewriter;
+	 * we can just hand them straight to ProcessUtility.
 	 */
 	foreach(parsetree_item, parsetree_list)
 	{
-		Node	   *parsetree = (Node *) lfirst(parsetree_item);
-		List	   *querytree_list;
-		ListCell   *querytree_item;
+		Node	   *stmt = (Node *) lfirst(parsetree_item);
 
-		querytree_list = parse_analyze(parsetree, queryString, NULL, 0);
-
-		foreach(querytree_item, querytree_list)
-		{
-			Query	   *querytree = (Query *) lfirst(querytree_item);
-
-			/* schemas should contain only utility stmts */
-			Assert(querytree->commandType == CMD_UTILITY);
-			/* do this step */
-			ProcessUtility(querytree->utilityStmt,
-						   queryString,
-						   NULL,
-						   false,				/* not top level */
-						   None_Receiver,
-						   NULL);
-			/* make sure later steps can see the object created here */
-			CommandCounterIncrement();
-		}
+		/* do this step */
+		ProcessUtility(stmt,
+					   queryString,
+					   NULL,
+					   false,				/* not top level */
+					   None_Receiver,
+					   NULL);
+		/* make sure later steps can see the object created here */
+		CommandCounterIncrement();
 	}
 
 	/* Reset search path to normal state */

@@ -2,7 +2,7 @@
 #
 # Makefile for parser
 #
-# $PostgreSQL: pgsql/src/backend/parser/Makefile,v 1.44 2006/05/27 17:38:45 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/parser/Makefile,v 1.45 2007/06/23 22:12:51 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 
 OBJS= analyze.o gram.o keywords.o parser.o parse_agg.o parse_clause.o \
       parse_expr.o parse_func.o parse_node.o parse_oper.o parse_relation.o \
-      parse_type.o parse_coerce.o parse_target.o scansup.o
+      parse_type.o parse_coerce.o parse_target.o parse_utilcmd.o scansup.o
 
 FLEXFLAGS = -CF
 

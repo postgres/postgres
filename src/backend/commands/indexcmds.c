@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.159 2007/06/03 17:06:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.160 2007/06/23 22:12:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,7 +367,7 @@ DefineIndex(RangeVar *heapRelation,
 				/*
 				 * This shouldn't happen during CREATE TABLE, but can happen
 				 * during ALTER TABLE.	Keep message in sync with
-				 * transformIndexConstraints() in parser/analyze.c.
+				 * transformIndexConstraints() in parser/parse_utilcmd.c.
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_COLUMN),

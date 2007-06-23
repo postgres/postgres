@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.246 2007/06/11 01:16:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.247 2007/06/23 22:12:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2910,7 +2910,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	MemoryContext mycxt;
 	ErrorContextCallback sqlerrcontext;
 	List	   *raw_parsetree_list;
-	List	   *querytree_list;
 	Query	   *querytree;
 	Node	   *newexpr;
 	int		   *usecounts;
@@ -2986,13 +2985,8 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	if (list_length(raw_parsetree_list) != 1)
 		goto fail;
 
-	querytree_list = parse_analyze(linitial(raw_parsetree_list), src,
-								   argtypes, funcform->pronargs);
-
-	if (list_length(querytree_list) != 1)
-		goto fail;
-
-	querytree = (Query *) linitial(querytree_list);
+	querytree = parse_analyze(linitial(raw_parsetree_list), src,
+							  argtypes, funcform->pronargs);
 
 	/*
 	 * The single command must be a simple "SELECT expression".
@@ -3025,7 +3019,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	 * no rewriting was needed; that's probably not important, but let's be
 	 * careful.
 	 */
-	if (check_sql_fn_retval(funcid, result_type, querytree_list, NULL))
+	if (check_sql_fn_retval(funcid, result_type, list_make1(querytree), NULL))
 		goto fail;				/* reject whole-tuple-result cases */
 
 	/*

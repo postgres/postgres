@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.533 2007/04/30 16:37:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.534 2007/06/23 22:12:52 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -165,7 +165,7 @@ static int	UseNewLine = 0;		/* Use EOF as query delimiters */
 static int	InteractiveBackend(StringInfo inBuf);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
-static List *pg_rewrite_queries(List *querytree_list);
+static List *pg_rewrite_query(Query *query);
 static bool check_log_statement(List *stmt_list);
 static int	errdetail_execute(List *raw_parsetree_list);
 static int	errdetail_params(ParamListInfo params);
@@ -567,6 +567,7 @@ List *
 pg_analyze_and_rewrite(Node *parsetree, const char *query_string,
 					   Oid *paramTypes, int numParams)
 {
+	Query	   *query;
 	List	   *querytree_list;
 
 	/*
@@ -575,8 +576,7 @@ pg_analyze_and_rewrite(Node *parsetree, const char *query_string,
 	if (log_parser_stats)
 		ResetUsage();
 
-	querytree_list = parse_analyze(parsetree, query_string,
-								   paramTypes, numParams);
+	query = parse_analyze(parsetree, query_string, paramTypes, numParams);
 
 	if (log_parser_stats)
 		ShowUsage("PARSE ANALYSIS STATISTICS");
@@ -584,68 +584,55 @@ pg_analyze_and_rewrite(Node *parsetree, const char *query_string,
 	/*
 	 * (2) Rewrite the queries, as necessary
 	 */
-	querytree_list = pg_rewrite_queries(querytree_list);
+	querytree_list = pg_rewrite_query(query);
 
 	return querytree_list;
 }
 
 /*
- * Perform rewriting of a list of queries produced by parse analysis.
+ * Perform rewriting of a query produced by parse analysis.
  *
- * Note: queries must just have come from the parser, because we do not do
- * AcquireRewriteLocks() on them.
+ * Note: query must just have come from the parser, because we do not do
+ * AcquireRewriteLocks() on it.
  */
 static List *
-pg_rewrite_queries(List *querytree_list)
+pg_rewrite_query(Query *query)
 {
-	List	   *new_list = NIL;
-	ListCell   *list_item;
+	List	   *querytree_list;
 
 	if (log_parser_stats)
 		ResetUsage();
 
-	/*
-	 * rewritten queries are collected in new_list.  Note there may be more or
-	 * fewer than in the original list.
-	 */
-	foreach(list_item, querytree_list)
+	if (Debug_print_parse)
+		elog_node_display(DEBUG1, "parse tree", query,
+						  Debug_pretty_print);
+
+	if (query->commandType == CMD_UTILITY)
 	{
-		Query	   *querytree = (Query *) lfirst(list_item);
-
-		if (Debug_print_parse)
-			elog_node_display(DEBUG1, "parse tree", querytree,
-							  Debug_pretty_print);
-
-		if (querytree->commandType == CMD_UTILITY)
-		{
-			/* don't rewrite utilities, just dump 'em into new_list */
-			new_list = lappend(new_list, querytree);
-		}
-		else
-		{
-			/* rewrite regular queries */
-			List	   *rewritten = QueryRewrite(querytree);
-
-			new_list = list_concat(new_list, rewritten);
-		}
+		/* don't rewrite utilities, just dump 'em into result list */
+		querytree_list = list_make1(query);
 	}
-
-	querytree_list = new_list;
+	else
+	{
+		/* rewrite regular queries */
+		querytree_list = QueryRewrite(query);
+	}
 
 	if (log_parser_stats)
 		ShowUsage("REWRITER STATISTICS");
 
 #ifdef COPY_PARSE_PLAN_TREES
+	/* Optional debugging check: pass querytree output through copyObject() */
+	{
+		List	   *new_list;
 
-	/*
-	 * Optional debugging check: pass querytree output through copyObject()
-	 */
-	new_list = (List *) copyObject(querytree_list);
-	/* This checks both copyObject() and the equal() routines... */
-	if (!equal(new_list, querytree_list))
-		elog(WARNING, "copyObject() failed to produce an equal parse tree");
-	else
-		querytree_list = new_list;
+		new_list = (List *) copyObject(querytree_list);
+		/* This checks both copyObject() and the equal() routines... */
+		if (!equal(new_list, querytree_list))
+			elog(WARNING, "copyObject() failed to produce equal parse tree");
+		else
+			querytree_list = new_list;
+	}
 #endif
 
 	if (Debug_print_rewritten)
@@ -1139,6 +1126,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 
 	if (parsetree_list != NIL)
 	{
+		Query	   *query;
 		int			i;
 
 		raw_parse_tree = (Node *) linitial(parsetree_list);
@@ -1175,10 +1163,10 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		if (log_parser_stats)
 			ResetUsage();
 
-		querytree_list = parse_analyze_varparams(copyObject(raw_parse_tree),
-												 query_string,
-												 &paramTypes,
-												 &numParams);
+		query = parse_analyze_varparams(copyObject(raw_parse_tree),
+										query_string,
+										&paramTypes,
+										&numParams);
 
 		/*
 		 * Check all parameter types got determined.
@@ -1197,7 +1185,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 		if (log_parser_stats)
 			ShowUsage("PARSE ANALYSIS STATISTICS");
 
-		querytree_list = pg_rewrite_queries(querytree_list);
+		querytree_list = pg_rewrite_query(query);
 
 		/*
 		 * If this is the unnamed statement and it has parameters, defer query

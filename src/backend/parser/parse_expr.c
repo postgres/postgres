@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.220 2007/06/11 22:22:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.221 2007/06/23 22:12:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1120,19 +1120,15 @@ transformCaseExpr(ParseState *pstate, CaseExpr *c)
 static Node *
 transformSubLink(ParseState *pstate, SubLink *sublink)
 {
-	List	   *qtrees;
-	Query	   *qtree;
 	Node	   *result = (Node *) sublink;
+	Query	   *qtree;
 
 	/* If we already transformed this node, do nothing */
 	if (IsA(sublink->subselect, Query))
 		return result;
 
 	pstate->p_hasSubLinks = true;
-	qtrees = parse_sub_analyze(sublink->subselect, pstate);
-	if (list_length(qtrees) != 1)
-		elog(ERROR, "bad query in sub-select");
-	qtree = (Query *) linitial(qtrees);
+	qtree = parse_sub_analyze(sublink->subselect, pstate);
 	if (qtree->commandType != CMD_SELECT ||
 		qtree->utilityStmt != NULL ||
 		qtree->intoClause != NULL)

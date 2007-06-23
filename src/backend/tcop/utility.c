@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.280 2007/05/30 20:12:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.281 2007/06/23 22:12:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 #include "commands/vacuum.h"
 #include "commands/view.h"
 #include "miscadmin.h"
-#include "parser/analyze.h"
+#include "parser/parse_utilcmd.h"
 #include "postmaster/bgwriter.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteRemove.h"
@@ -544,17 +544,47 @@ ProcessUtility(Node *parsetree,
 
 		case T_CreateStmt:
 			{
+				List		*stmts;
+				ListCell	*l;
 				Oid			relOid;
 
-				relOid = DefineRelation((CreateStmt *) parsetree,
-										RELKIND_RELATION);
+				/* Run parse analysis ... */
+				stmts = transformCreateStmt((CreateStmt *) parsetree,
+											queryString);
 
-				/*
-				 * Let AlterTableCreateToastTable decide if this one needs a
-				 * secondary relation too.
-				 */
-				CommandCounterIncrement();
-				AlterTableCreateToastTable(relOid);
+				/* ... and do it */
+				foreach(l, stmts)
+				{
+					Node   *stmt = (Node *) lfirst(l);
+
+					if (IsA(stmt, CreateStmt))
+					{
+						/* Create the table itself */
+						relOid = DefineRelation((CreateStmt *) stmt,
+												RELKIND_RELATION);
+
+						/*
+						 * Let AlterTableCreateToastTable decide if this one
+						 * needs a secondary relation too.
+						 */
+						CommandCounterIncrement();
+						AlterTableCreateToastTable(relOid);
+					}
+					else
+					{
+						/* Recurse for anything else */
+						ProcessUtility(stmt,
+									   queryString,
+									   params,
+									   false,
+									   None_Receiver,
+									   NULL);
+					}
+
+					/* Need CCI between commands */
+					if (lnext(l) != NULL)
+						CommandCounterIncrement();
+				}
 			}
 			break;
 
@@ -693,7 +723,40 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_AlterTableStmt:
-			AlterTable((AlterTableStmt *) parsetree);
+			{
+				List		*stmts;
+				ListCell	*l;
+
+				/* Run parse analysis ... */
+				stmts = transformAlterTableStmt((AlterTableStmt *) parsetree,
+												queryString);
+
+				/* ... and do it */
+				foreach(l, stmts)
+				{
+					Node   *stmt = (Node *) lfirst(l);
+
+					if (IsA(stmt, AlterTableStmt))
+					{
+						/* Do the table alteration proper */
+						AlterTable((AlterTableStmt *) stmt);
+					}
+					else
+					{
+						/* Recurse for anything else */
+						ProcessUtility(stmt,
+									   queryString,
+									   params,
+									   false,
+									   None_Receiver,
+									   NULL);
+					}
+
+					/* Need CCI between commands */
+					if (lnext(l) != NULL)
+						CommandCounterIncrement();
+				}
+			}
 			break;
 
 		case T_AlterDomainStmt:
@@ -812,7 +875,7 @@ ProcessUtility(Node *parsetree,
 				CheckRelationOwnership(stmt->relation, true);
 
 				/* Run parse analysis ... */
-				stmt = analyzeIndexStmt(stmt, queryString);
+				stmt = transformIndexStmt(stmt, queryString);
 
 				/* ... and do it */
 				DefineIndex(stmt->relation,		/* relation */
@@ -1605,7 +1668,7 @@ CreateCommandTag(Node *parsetree)
 
 				/*
 				 * We might be supporting ALTER INDEX here, so set the
-				 * completion table appropriately. Catch all other
+				 * completion tag appropriately. Catch all other
 				 * possibilities with ALTER TABLE
 				 */
 

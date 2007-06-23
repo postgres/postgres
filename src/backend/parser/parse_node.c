@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.97 2007/03/17 00:11:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_node.c,v 1.98 2007/06/23 22:12:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "mb/pg_wchar.h"
 #include "nodes/makefuncs.h"
@@ -27,9 +28,11 @@
 #include "utils/varbit.h"
 
 
-/* make_parsestate()
- * Allocate and initialize a new ParseState.
- * The CALLER is responsible for freeing the ParseState* returned.
+/*
+ * make_parsestate
+ *		Allocate and initialize a new ParseState.
+ *
+ * Caller should eventually release the ParseState via free_parsestate().
  */
 ParseState *
 make_parsestate(ParseState *parentParseState)
@@ -50,6 +53,30 @@ make_parsestate(ParseState *parentParseState)
 	}
 
 	return pstate;
+}
+
+/*
+ * free_parsestate
+ *		Release a ParseState and any subsidiary resources.
+ */
+void
+free_parsestate(ParseState *pstate)
+{
+	/*
+	 * Check that we did not produce too many resnos; at the very least we
+	 * cannot allow more than 2^16, since that would exceed the range of a
+	 * AttrNumber. It seems safest to use MaxTupleAttributeNumber.
+	 */
+	if (pstate->p_next_resno - 1 > MaxTupleAttributeNumber)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("target lists can have at most %d entries",
+						MaxTupleAttributeNumber)));
+
+	if (pstate->p_target_relation != NULL)
+		heap_close(pstate->p_target_relation, NoLock);
+
+	pfree(pstate);
 }
 
 

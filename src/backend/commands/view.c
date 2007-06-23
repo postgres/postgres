@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.100 2007/03/13 00:33:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/view.c,v 1.101 2007/06/23 22:12:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -351,7 +351,6 @@ UpdateRangeTableOfViewParse(Oid viewOid, Query *viewParse)
 void
 DefineView(ViewStmt *stmt, const char *queryString)
 {
-	List	   *stmts;
 	Query	   *viewParse;
 	Oid			viewOid;
 	RangeVar   *view;
@@ -363,15 +362,12 @@ DefineView(ViewStmt *stmt, const char *queryString)
 	 * Since parse analysis scribbles on its input, copy the raw parse tree;
 	 * this ensures we don't corrupt a prepared statement, for example.
 	 */
-	stmts = parse_analyze((Node *) copyObject(stmt->query),
-						  queryString, NULL, 0);
+	viewParse = parse_analyze((Node *) copyObject(stmt->query),
+							  queryString, NULL, 0);
 
 	/*
 	 * The grammar should ensure that the result is a single SELECT Query.
 	 */
-	if (list_length(stmts) != 1)
-		elog(ERROR, "unexpected parse analysis result");
-	viewParse = (Query *) linitial(stmts);
 	if (!IsA(viewParse, Query) ||
 		viewParse->commandType != CMD_SELECT)
 		elog(ERROR, "unexpected parse analysis result");

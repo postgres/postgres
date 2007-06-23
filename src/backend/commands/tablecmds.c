@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.227 2007/06/03 22:16:03 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.228 2007/06/23 22:12:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,6 @@
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
 #include "optimizer/prep.h"
-#include "parser/analyze.h"
 #include "parser/gramparse.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
@@ -52,6 +51,7 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
+#include "parser/parse_utilcmd.h"
 #include "parser/parser.h"
 #include "rewrite/rewriteDefine.h"
 #include "rewrite/rewriteHandler.h"
@@ -394,7 +394,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 				add_nonduplicate_constraint(cdef, check, &ncheck);
 		}
 		/*
-		 * analyze.c might have passed some precooked constraints too,
+		 * parse_utilcmd.c might have passed some precooked constraints too,
 		 * due to LIKE tab INCLUDING CONSTRAINTS
 		 */
 		foreach(listptr, stmt->constraints)
@@ -2922,7 +2922,7 @@ find_composite_type_dependencies(Oid typeOid,
  *
  * Adds an additional attribute to a relation making the assumption that
  * CHECK, NOT NULL, and FOREIGN KEY constraints will be removed from the
- * AT_AddColumn AlterTableCmd by analyze.c and added as independent
+ * AT_AddColumn AlterTableCmd by parse_utilcmd.c and added as independent
  * AlterTableCmd's.
  */
 static void
@@ -3745,9 +3745,9 @@ ATExecDropColumn(Relation rel, const char *colName,
 /*
  * ALTER TABLE ADD INDEX
  *
- * There is no such command in the grammar, but the parser converts UNIQUE
- * and PRIMARY KEY constraints into AT_AddIndex subcommands.  This lets us
- * schedule creation of the index at the appropriate time during ALTER.
+ * There is no such command in the grammar, but parse_utilcmd.c converts
+ * UNIQUE and PRIMARY KEY constraints into AT_AddIndex subcommands.  This lets
+ * us schedule creation of the index at the appropriate time during ALTER.
  */
 static void
 ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
@@ -3766,13 +3766,8 @@ ATExecAddIndex(AlteredTableInfo *tab, Relation rel,
 	/* suppress notices when rebuilding existing index */
 	quiet = is_rebuild;
 
-	/*
-	 * Run parse analysis.  We don't have convenient access to the query text
-	 * here, but it's probably not worth worrying about.
-	 */
-	stmt = analyzeIndexStmt(stmt, NULL);
+	/* The IndexStmt has already been through transformIndexStmt */
 
-	/* ... and do it */
 	DefineIndex(stmt->relation, /* relation */
 				stmt->idxname,	/* index name */
 				InvalidOid,		/* no predefined OID */
@@ -3806,7 +3801,7 @@ ATExecAddConstraint(AlteredTableInfo *tab, Relation rel, Node *newConstraint)
 				/*
 				 * Currently, we only expect to see CONSTR_CHECK nodes
 				 * arriving here (see the preprocessing done in
-				 * parser/analyze.c).  Use a switch anyway to make it easier
+				 * parse_utilcmd.c).  Use a switch anyway to make it easier
 				 * to add more code later.
 				 */
 				switch (constr->contype)
@@ -5239,17 +5234,27 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 	ListCell   *list_item;
 
 	/*
-	 * We expect that we only have to do raw parsing and parse analysis, not
-	 * any rule rewriting, since these will all be utility statements.
+	 * We expect that we will get only ALTER TABLE and CREATE INDEX statements.
+	 * Hence, there is no need to pass them through parse_analyze() or the
+	 * rewriter, but instead we need to pass them through parse_utilcmd.c
+	 * to make them ready for execution.
 	 */
 	raw_parsetree_list = raw_parser(cmd);
 	querytree_list = NIL;
 	foreach(list_item, raw_parsetree_list)
 	{
-		Node	   *parsetree = (Node *) lfirst(list_item);
+		Node	   *stmt = (Node *) lfirst(list_item);
 
-		querytree_list = list_concat(querytree_list,
-									 parse_analyze(parsetree, cmd, NULL, 0));
+		if (IsA(stmt, IndexStmt))
+			querytree_list = lappend(querytree_list,
+									 transformIndexStmt((IndexStmt *) stmt,
+														cmd));
+		else if (IsA(stmt, AlterTableStmt))
+			querytree_list = list_concat(querytree_list,
+							transformAlterTableStmt((AlterTableStmt *) stmt,
+													cmd));
+		else
+			querytree_list = lappend(querytree_list, stmt);
 	}
 
 	/*
@@ -5258,17 +5263,15 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 	 */
 	foreach(list_item, querytree_list)
 	{
-		Query	   *query = (Query *) lfirst(list_item);
+		Node	   *stm = (Node *) lfirst(list_item);
 		Relation	rel;
 		AlteredTableInfo *tab;
 
-		Assert(IsA(query, Query));
-		Assert(query->commandType == CMD_UTILITY);
-		switch (nodeTag(query->utilityStmt))
+		switch (nodeTag(stm))
 		{
 			case T_IndexStmt:
 				{
-					IndexStmt  *stmt = (IndexStmt *) query->utilityStmt;
+					IndexStmt  *stmt = (IndexStmt *) stm;
 					AlterTableCmd *newcmd;
 
 					rel = relation_openrv(stmt->relation, AccessExclusiveLock);
@@ -5283,7 +5286,7 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 				}
 			case T_AlterTableStmt:
 				{
-					AlterTableStmt *stmt = (AlterTableStmt *) query->utilityStmt;
+					AlterTableStmt *stmt = (AlterTableStmt *) stm;
 					ListCell   *lcmd;
 
 					rel = relation_openrv(stmt->relation, AccessExclusiveLock);
@@ -5313,7 +5316,7 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 				}
 			default:
 				elog(ERROR, "unexpected statement type: %d",
-					 (int) nodeTag(query->utilityStmt));
+					 (int) nodeTag(stm));
 		}
 	}
 }
