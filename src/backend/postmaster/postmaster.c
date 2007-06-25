@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.527 2007/03/22 19:53:30 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.528 2007/06/25 16:09:03 alvherre Exp $
  *
  * NOTES
  *
@@ -3830,32 +3830,35 @@ StartAutovacuumWorker(void)
 		return;
 
 	bn = (Backend *) malloc(sizeof(Backend));
-	if (!bn)
+	if (bn)
 	{
-		ereport(LOG,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-		return;
-	}
+		bn->pid = StartAutoVacWorker();
+		bn->is_autovacuum = true;
+		/* we don't need a cancel key */
 
-	bn->pid = StartAutoVacWorker();
-	bn->is_autovacuum = true;
-	/* we don't need a cancel key */
-
-	if (bn->pid > 0)
-	{
-		DLAddHead(BackendList, DLNewElem(bn));
+		if (bn->pid > 0)
+		{
+			DLAddHead(BackendList, DLNewElem(bn));
 #ifdef EXEC_BACKEND
-		ShmemBackendArrayAdd(bn);
+			ShmemBackendArrayAdd(bn);
 #endif
-	}
-	else
-	{
-		/* not much we can do */
-		ereport(LOG,
-				(errmsg("could not fork new process for autovacuum: %m")));
+			/* all OK */
+			return;
+		}
+
+		/*
+		 * fork failed, fall through to report -- actual error message was
+		 * logged by StartAutoVacWorker
+		 */
 		free(bn);
 	}
+	else
+		elog(LOG, "out of memory");
+
+	/* report the failure to the launcher */
+	AutoVacWorkerFailed();
+	if (AutoVacPID != 0)
+		kill(AutoVacPID, SIGUSR1);
 }
 
 /*

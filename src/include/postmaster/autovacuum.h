@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.10 2007/04/18 16:44:18 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.11 2007/06/25 16:09:03 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,8 @@ extern bool IsAutoVacuumWorkerProcess(void);
 extern void autovac_init(void);
 extern int	StartAutoVacLauncher(void);
 extern int	StartAutoVacWorker(void);
+/* called from postmaster when a worker could not be forked */
+extern void AutoVacWorkerFailed(void);
 
 /* autovacuum cost-delay balancer */
 extern void AutoVacuumUpdateDelay(void);
