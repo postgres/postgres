@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.296 2007/06/06 23:00:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.297 2007/06/26 16:48:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -524,7 +524,7 @@ extern Datum regtypeout(PG_FUNCTION_ARGS);
 extern Datum regtyperecv(PG_FUNCTION_ARGS);
 extern Datum regtypesend(PG_FUNCTION_ARGS);
 extern Datum text_regclass(PG_FUNCTION_ARGS);
-extern List *stringToQualifiedNameList(const char *string, const char *caller);
+extern List *stringToQualifiedNameList(const char *string);
 extern char *format_procedure(Oid procedure_oid);
 extern char *format_operator(Oid operator_oid);
 

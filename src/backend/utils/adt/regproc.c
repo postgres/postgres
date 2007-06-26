@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.101 2007/06/05 21:31:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.102 2007/06/26 16:48:09 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,8 +35,7 @@
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-static void parseNameAndArgTypes(const char *string, const char *caller,
-					 bool allowNone,
+static void parseNameAndArgTypes(const char *string, bool allowNone,
 					 List **names, int *nargs, Oid *argtypes);
 
 
@@ -127,7 +126,7 @@ regprocin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_proc entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(pro_name_or_oid, "regprocin");
+	names = stringToQualifiedNameList(pro_name_or_oid);
 	clist = FuncnameGetCandidates(names, -1);
 
 	if (clist == NULL)
@@ -271,8 +270,7 @@ regprocedurein(PG_FUNCTION_ARGS)
 	 * datatype cannot be used for any system column that needs to receive
 	 * data during bootstrap.
 	 */
-	parseNameAndArgTypes(pro_name_or_oid, "regprocedurein", false,
-						 &names, &nargs, argtypes);
+	parseNameAndArgTypes(pro_name_or_oid, false, &names, &nargs, argtypes);
 
 	clist = FuncnameGetCandidates(names, nargs);
 
@@ -476,7 +474,7 @@ regoperin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_operator entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(opr_name_or_oid, "regoperin");
+	names = stringToQualifiedNameList(opr_name_or_oid);
 	clist = OpernameGetCandidates(names, '\0');
 
 	if (clist == NULL)
@@ -626,8 +624,7 @@ regoperatorin(PG_FUNCTION_ARGS)
 	 * datatype cannot be used for any system column that needs to receive
 	 * data during bootstrap.
 	 */
-	parseNameAndArgTypes(opr_name_or_oid, "regoperatorin", true,
-						 &names, &nargs, argtypes);
+	parseNameAndArgTypes(opr_name_or_oid, true, &names, &nargs, argtypes);
 	if (nargs == 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_PARAMETER),
@@ -827,7 +824,7 @@ regclassin(PG_FUNCTION_ARGS)
 	 * Normal case: parse the name into components and see if it matches any
 	 * pg_class entries in the current search path.
 	 */
-	names = stringToQualifiedNameList(class_name_or_oid, "regclassin");
+	names = stringToQualifiedNameList(class_name_or_oid);
 
 	result = RangeVarGetRelid(makeRangeVarFromNameList(names), false);
 
@@ -1093,7 +1090,7 @@ text_regclass(PG_FUNCTION_ARGS)
  * Given a C string, parse it into a qualified-name list.
  */
 List *
-stringToQualifiedNameList(const char *string, const char *caller)
+stringToQualifiedNameList(const char *string)
 {
 	char	   *rawname;
 	List	   *result = NIL;
@@ -1141,9 +1138,8 @@ stringToQualifiedNameList(const char *string, const char *caller)
  * for unary operators).
  */
 static void
-parseNameAndArgTypes(const char *string, const char *caller,
-					 bool allowNone,
-					 List **names, int *nargs, Oid *argtypes)
+parseNameAndArgTypes(const char *string, bool allowNone, List **names,
+					 int *nargs, Oid *argtypes)
 {
 	char	   *rawname;
 	char	   *ptr;
@@ -1174,7 +1170,7 @@ parseNameAndArgTypes(const char *string, const char *caller,
 
 	/* Separate the name and parse it into a list */
 	*ptr++ = '\0';
-	*names = stringToQualifiedNameList(rawname, caller);
+	*names = stringToQualifiedNameList(rawname);
 
 	/* Check for the trailing right parenthesis and remove it */
 	ptr2 = ptr + strlen(ptr);
