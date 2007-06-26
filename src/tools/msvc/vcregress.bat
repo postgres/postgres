@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.12 2007/06/12 11:07:34 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.13 2007/06/26 11:43:56 mha Exp $
 
 SETLOCAL
 SET STARTDIR=%CD%
@@ -32,6 +32,8 @@ IF NOT "%2"=="" SET SCHEDULE=%2
 IF "%what%"=="ECPGCHECK" (
    cd "%STARTDIR%"
    msbuild ecpg_regression.proj /p:config=%CONFIG%
+   REM exit fix for pre-2003 shell especially if used on buildfarm
+   if "%XP_EXIT_FIX%" == "yes" if errorlevel 1 exit 1
    if errorlevel 1 exit /b 1
    cd "%TOPDIR%"
    cd src\interfaces\ecpg\test
@@ -48,6 +50,8 @@ if "%what%"=="CONTRIBCHECK" call :contribcheck
 SET E=%ERRORLEVEL%
 
 cd "%STARTDIR%"
+REM exit fix for pre-2003 shell especially if used on buildfarm
+if "%XP_EXIT_FIX%" == "yes" exit %E%
 exit /b %E%
 
 :usage
@@ -61,8 +65,11 @@ REM Some workarounds due to inconsistently named directories
 cd ..\..\PL
 FOR /D %%d IN (*) do if exist %%d\sql if exist %%d\expected (
    if exist ..\..\%CONFIG%\%%d call :oneplcheck %%d
+   REM exit fix for pre-2003 shell especially if used on buildfarm
+   if "%XP_EXIT_FIX%" == "yes" if errorlevel 1 exit 1
    if errorlevel 1 exit /b 1
    if exist ..\..\%CONFIG%\pl%%d call :oneplcheck %%d
+   if "%XP_EXIT_FIX%" == "yes" if errorlevel 1 exit 1
    if errorlevel 1 exit /b 1
 )
 goto :eof
@@ -83,6 +90,8 @@ del regress.tmp.bat
 ..\..\..\%CONFIG%\pg_regress\pg_regress --psqldir=..\..\..\%CONFIG%\psql --no-locale --load-language=%PL% %TESTS%
 set E=%ERRORLEVEL%
 cd ..
+REM exit fix for pre-2003 shell especially if used on buildfarm
+if "%XP_EXIT_FIX%" == "yes" exit %E%
 exit /b %E%
 
 
@@ -94,6 +103,8 @@ for /d %%d IN (*) do if exist %%d\sql if exist %%d\expected if exist %%d\Makefil
    call :onecontribcheck %%d
    if errorlevel 1 set CONTRIBERROR=1
 )
+REM exit fix for pre-2003 shell especially if used on buildfarm
+if "%XP_EXIT_FIX%" == "yes" if %CONTRIBERROR%==1 exit 1
 if %CONTRIBERROR%==1 exit /b 1
 goto :eof
 
@@ -110,4 +121,6 @@ del regress.tmp.bat
 ..\..\%CONFIG%\pg_regress\pg_regress --psqldir=..\..\%CONFIG%\psql --no-locale --dbname=contrib_regression %TESTS%
 set E=%ERRORLEVEL%
 cd ..
+REM exit fix for pre-2003 shell especially if used on buildfarm
+if "%XP_EXIT_FIX%" == "yes" exit %E%
 exit /b %E%

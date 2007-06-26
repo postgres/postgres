@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/build.bat,v 1.8 2007/04/18 10:14:06 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/build.bat,v 1.9 2007/06/26 11:43:56 mha Exp $
 
 SETLOCAL
 SET STARTDIR=%CD%
@@ -32,4 +32,6 @@ SET E=%ERRORLEVEL%
 
 cd %STARTDIR%
 
+REM exit fix for pre-2003 shell especially if used on buildfarm
+if "%XP_EXIT_FIX%" == "yes" exit %E%
 exit /b %E%
