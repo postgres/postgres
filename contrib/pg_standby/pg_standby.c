@@ -19,7 +19,6 @@
  * Current maintainer: 	Simon Riggs
  */
 #include "postgres_fe.h"
-#include "pg_config_manual.h"
 
 #include <ctype.h>
 #include <dirent.h>

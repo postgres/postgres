@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/pg_freespacemap/Makefile,v 1.2 2006/09/30 18:15:48 tgl Exp $
+# $PostgreSQL: pgsql/contrib/pg_freespacemap/Makefile,v 1.3 2007/06/26 22:05:02 tgl Exp $
 
 MODULE_big = pg_freespacemap
 OBJS	= pg_freespacemap.o
@@ -8,7 +8,8 @@ DATA = uninstall_pg_freespacemap.sql
 DOCS = README.pg_freespacemap
 
 ifdef USE_PGXS
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
 subdir = contrib/pg_freespacemap

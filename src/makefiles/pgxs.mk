@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.9 2006/07/21 00:24:04 tgl Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.10 2007/06/26 22:05:04 tgl Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -11,7 +11,8 @@
 #   [variable assignments, see below]
 #   [custom rules, rarely necessary]
 #
-#   PGXS := $(shell pg_config --pgxs)
+#   PG_CONFIG = pg_config
+#   PGXS := $(shell $(PG_CONFIG) --pgxs)
 #   include $(PGXS)
 #
 # The following variables can be set:
@@ -38,6 +39,9 @@
 #   PG_CPPFLAGS -- will be added to CPPFLAGS
 #   PG_LIBS -- will be added to PROGRAM link line
 #   SHLIB_LINK -- will be added to MODULE_big link line
+#   PG_CONFIG -- path to pg_config program for the PostgreSQL installation
+#     to build against (typically just "pg_config" to use the first one in
+#     your PATH)
 #
 # Better look at some of the existing uses for examples...
 

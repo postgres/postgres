@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/tsearch2/wordparser/Makefile,v 1.9 2005/11/21 12:27:57 teodor Exp $
+# $PostgreSQL: pgsql/contrib/tsearch2/wordparser/Makefile,v 1.10 2007/06/26 22:05:03 tgl Exp $
 
 SUBOBJS =  parser.o deflex.o
 
@@ -7,7 +7,8 @@ EXTRA_CLEAN = SUBSYS.o $(SUBOBJS)
 PG_CPPFLAGS = -I$(srcdir)/..
 
 ifdef USE_PGXS
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
 subdir = contrib/tsearch2/wordparser

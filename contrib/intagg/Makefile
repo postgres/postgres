@@ -2,7 +2,7 @@
 # Makefile for integer aggregator
 # Copyright (C) 2001 Digital Music Network.
 # by Mark L. Woodward
-# $PostgreSQL: pgsql/contrib/intagg/Makefile,v 1.7 2006/02/27 12:54:39 petere Exp $
+# $PostgreSQL: pgsql/contrib/intagg/Makefile,v 1.8 2007/06/26 22:05:02 tgl Exp $
 
 MODULES = int_aggregate
 DATA_built = int_aggregate.sql
@@ -10,7 +10,8 @@ DATA = uninstall_int_aggregate.sql
 DOCS = README.int_aggregate
 
 ifdef USE_PGXS
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
 subdir = contrib/intagg

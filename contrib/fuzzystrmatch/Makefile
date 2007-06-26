@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/fuzzystrmatch/Makefile,v 1.8 2006/10/19 17:40:03 tgl Exp $
+# $PostgreSQL: pgsql/contrib/fuzzystrmatch/Makefile,v 1.9 2007/06/26 22:05:02 tgl Exp $
 
 MODULE_big = fuzzystrmatch
 OBJS = fuzzystrmatch.o dmetaphone.o
@@ -7,7 +7,8 @@ DATA = uninstall_fuzzystrmatch.sql
 DOCS = README.fuzzystrmatch README.soundex
 
 ifdef USE_PGXS
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
 subdir = contrib/fuzzystrmatch

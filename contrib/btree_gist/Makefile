@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/btree_gist/Makefile,v 1.10 2007/02/09 17:03:59 petere Exp $
+# $PostgreSQL: pgsql/contrib/btree_gist/Makefile,v 1.11 2007/06/26 22:05:01 tgl Exp $
 
 MODULE_big  = btree_gist
 
@@ -15,7 +15,8 @@ REGRESS     = init int2 int4 int8 float4 float8 cash oid timestamp timestamptz t
               date interval macaddr inet cidr text varchar char bytea bit varbit numeric
 
 ifdef USE_PGXS
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
 subdir = contrib/btree_gist

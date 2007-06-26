@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/chkpass/Makefile,v 1.8 2006/02/27 12:54:38 petere Exp $
+# $PostgreSQL: pgsql/contrib/chkpass/Makefile,v 1.9 2007/06/26 22:05:01 tgl Exp $
 
 MODULE_big = chkpass
 OBJS = chkpass.o
@@ -8,7 +8,8 @@ DATA = uninstall_chkpass.sql
 DOCS = README.chkpass
 
 ifdef USE_PGXS
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
 subdir = contrib/chkpass

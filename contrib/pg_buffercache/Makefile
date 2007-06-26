@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/pg_buffercache/Makefile,v 1.3 2006/02/27 12:54:39 petere Exp $
+# $PostgreSQL: pgsql/contrib/pg_buffercache/Makefile,v 1.4 2007/06/26 22:05:02 tgl Exp $
 
 MODULE_big = pg_buffercache
 OBJS	= pg_buffercache_pages.o
@@ -8,7 +8,8 @@ DATA = uninstall_pg_buffercache.sql
 DOCS = README.pg_buffercache
 
 ifdef USE_PGXS
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
 subdir = contrib/pg_buffercache

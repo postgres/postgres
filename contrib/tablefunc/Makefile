@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/tablefunc/Makefile,v 1.7 2007/02/09 17:04:00 petere Exp $
+# $PostgreSQL: pgsql/contrib/tablefunc/Makefile,v 1.8 2007/06/26 22:05:03 tgl Exp $
 
 MODULES = tablefunc
 DATA_built = tablefunc.sql
@@ -9,7 +9,8 @@ REGRESS = tablefunc
 SHLIB_LINK += $(filter -lm, $(LIBS))
 
 ifdef USE_PGXS
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
 subdir = contrib/tablefunc

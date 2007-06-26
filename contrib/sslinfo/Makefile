@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/sslinfo/Makefile,v 1.8 2007/02/09 17:04:00 petere Exp $
+# $PostgreSQL: pgsql/contrib/sslinfo/Makefile,v 1.9 2007/06/26 22:05:03 tgl Exp $
 
 MODULE_big = sslinfo
 OBJS = sslinfo.o
@@ -7,7 +7,8 @@ DATA = uninstall_sslinfo.sql
 DOCS = README.sslinfo
 
 ifdef USE_PGXS
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
 subdir = contrib/sslinfo

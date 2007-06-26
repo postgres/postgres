@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.128 2007/06/06 23:00:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.129 2007/06/26 22:05:04 tgl Exp $ -->
 
  <sect1 id="xfunc">
   <title>User-Defined Functions</title>
@@ -2071,10 +2071,11 @@ MODULES = isbn_issn
 DATA_built = isbn_issn.sql
 DOCS = README.isbn_issn
 
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 </programlisting>
-    The last two lines should always be the same.  Earlier in the
+    The last three lines should always be the same.  Earlier in the
     file, you assign variables or add custom
     <application>make</application> rules.
    </para>
@@ -2215,6 +2216,18 @@ include $(PGXS)
        </para>
       </listitem>
      </varlistentry>
+
+     <varlistentry>
+      <term><varname>PG_CONFIG</varname></term>
+      <listitem>
+       <para>
+        path to <application>pg_config</> program for the
+        <productname>PostgreSQL</productname> installation to build against
+        (typically just <literal>pg_config</> to use the first one in your
+        <varname>PATH</>)
+       </para>
+      </listitem>
+     </varlistentry>
     </variablelist>
    </para>
 
@@ -2222,12 +2235,25 @@ include $(PGXS)
     Put this makefile as <literal>Makefile</literal> in the directory
     which holds your extension. Then you can do
     <literal>make</literal> to compile, and later <literal>make
-    install</literal> to install your module.  The extension is
+    install</literal> to install your module.  By default, the extension is
     compiled and installed for the
     <productname>PostgreSQL</productname> installation that
-    corresponds to the first <command>pg_config</command> command
-    found in your path.
+    corresponds to the first <command>pg_config</command> program
+    found in your path.  You can use a different installation by
+    setting <varname>PG_CONFIG</varname> to point to its
+    <command>pg_config</command> program, either within the makefile
+    or on the <literal>make</literal> command line.
    </para>
+
+   <caution>
+    <para>
+     Changing <varname>PG_CONFIG</varname> only works when building
+     against <productname>PostgreSQL</productname> 8.3 or later.
+     With older releases it does not work to set it to anything except
+     <literal>pg_config</>; you must alter your <varname>PATH</>
+     to select the installation to build against.
+    </para>
+   </caution>
 
    <para>
     The scripts listed in the <varname>REGRESS</> variable are used for

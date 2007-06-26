@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.236 2007/04/21 17:26:18 petere Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.237 2007/06/26 22:05:04 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -118,7 +118,10 @@ localedir := @localedir@
 
 else # PGXS case
 
+# Extension makefiles should set PG_CONFIG, but older ones might not
+ifndef PG_CONFIG
 PG_CONFIG = pg_config
+endif
 
 bindir := $(shell $(PG_CONFIG) --bindir)
 datadir := $(shell $(PG_CONFIG) --sharedir)

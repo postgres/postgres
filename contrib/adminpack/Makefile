@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/adminpack/Makefile,v 1.4 2007/02/09 17:03:59 petere Exp $
+# $PostgreSQL: pgsql/contrib/adminpack/Makefile,v 1.5 2007/06/26 22:05:01 tgl Exp $
 
 MODULE_big = adminpack
 PG_CPPFLAGS = -I$(libpq_srcdir)
@@ -8,7 +8,8 @@ DOCS = README.adminpack
 OBJS = adminpack.o
 
 ifdef USE_PGXS
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
 subdir = contrib/adminpack

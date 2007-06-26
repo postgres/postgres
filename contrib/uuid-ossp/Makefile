@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/contrib/uuid-ossp/Makefile,v 1.1 2007/04/21 17:26:17 petere Exp $
+# $PostgreSQL: pgsql/contrib/uuid-ossp/Makefile,v 1.2 2007/06/26 22:05:03 tgl Exp $
 
 MODULE_big = uuid-ossp
 OBJS = uuid-ossp.o
@@ -9,7 +9,8 @@ DOCS = README.uuid-ossp
 SHLIB_LINK += -lossp-uuid
 
 ifdef USE_PGXS
-PGXS := $(shell pg_config --pgxs)
+PG_CONFIG = pg_config
+PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
 else
 subdir = contrib/uuid-ossp
