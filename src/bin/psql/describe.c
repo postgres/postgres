@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.155 2007/03/19 23:38:31 wieck Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.156 2007/06/28 06:40:16 neilc Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -205,11 +205,16 @@ describeFunctions(const char *pattern, bool verbose)
 
 	if (verbose)
 		appendPQExpBuffer(&buf,
+						  ",\n CASE\n"
+						  "  WHEN p.provolatile = 'i' THEN 'immutable'\n"
+						  "  WHEN p.provolatile = 's' THEN 'stable'\n"
+						  "  WHEN p.provolatile = 'v' THEN 'volatile'\n"
+						  "END as \"%s\""
 						  ",\n  r.rolname as \"%s\",\n"
 						  "  l.lanname as \"%s\",\n"
 						  "  p.prosrc as \"%s\",\n"
 				  "  pg_catalog.obj_description(p.oid, 'pg_proc') as \"%s\"",
-						  _("Owner"), _("Language"),
+						  _("Volatility"), _("Owner"), _("Language"),
 						  _("Source code"), _("Description"));
 
 	if (!verbose)

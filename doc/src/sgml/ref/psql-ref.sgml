@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.191 2007/05/03 15:47:48 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.192 2007/06/28 06:40:16 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -976,7 +976,7 @@ testdb=&gt;
         class="parameter">pattern</replaceable>
         is specified, only functions whose names match the pattern are shown.
         If the form <literal>\df+</literal> is used, additional information about
-        each function, including language and description, is shown.
+        each function, including volatility, language, source code and description, is shown.
         </para>
 
         <note>
