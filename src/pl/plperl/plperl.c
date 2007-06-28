@@ -1,7 +1,7 @@
 /**********************************************************************
  * plperl.c - perl as a procedural language for PostgreSQL
  *
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.123 2006/11/21 16:59:02 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.123.2.1 2007/06/28 17:50:12 tgl Exp $
  *
  **********************************************************************/
 
@@ -549,7 +549,7 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("Perl hash contains nonexistent column \"%s\"",
 							key)));
-		if (SvOK(val) && SvTYPE(val) != SVt_NULL)
+		if (SvOK(val))
 			values[attn - 1] = SvPV(val, PL_na);
 	}
 	hv_iterinit(perlhash);
@@ -745,7 +745,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 						 &typinput, &typioparam);
 		fmgr_info(typinput, &finfo);
 		atttypmod = tupdesc->attrs[attn - 1]->atttypmod;
-		if (SvOK(val) && SvTYPE(val) != SVt_NULL)
+		if (SvOK(val))
 		{
 			modvalues[slotsused] = InputFunctionCall(&finfo,
 													 SvPV(val, PL_na),
@@ -1199,9 +1199,10 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		 * If the Perl function returned an arrayref, we pretend that it
 		 * called return_next() for each element of the array, to handle old
 		 * SRFs that didn't know about return_next(). Any other sort of return
-		 * value is an error.
+		 * value is an error, except undef which means return an empty set.
 		 */
-		if (SvTYPE(perlret) == SVt_RV &&
+		if (SvOK(perlret) &&
+			SvTYPE(perlret) == SVt_RV &&
 			SvTYPE(SvRV(perlret)) == SVt_PVAV)
 		{
 			int			i = 0;
@@ -1214,7 +1215,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 				i++;
 			}
 		}
-		else if (SvTYPE(perlret) != SVt_NULL)
+		else if (SvOK(perlret))
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -1230,7 +1231,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		}
 		retval = (Datum) 0;
 	}
-	else if (SvTYPE(perlret) == SVt_NULL)
+	else if (!SvOK(perlret))
 	{
 		/* Return NULL if Perl code returned undef */
 		if (rsi && IsA(rsi, ReturnSetInfo))
@@ -1337,7 +1338,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed");
 
-	if (!(perlret && SvOK(perlret) && SvTYPE(perlret) != SVt_NULL))
+	if (perlret == NULL || !SvOK(perlret))
 	{
 		/* undef result means go ahead with original tuple */
 		TriggerData *trigdata = ((TriggerData *) fcinfo->context);
@@ -1902,7 +1903,7 @@ plperl_return_next(SV *sv)
 		Datum		ret;
 		bool		isNull;
 
-		if (SvOK(sv) && SvTYPE(sv) != SVt_NULL)
+		if (SvOK(sv))
 		{
 			char	   *val = SvPV(sv, PL_na);
 
@@ -2295,7 +2296,7 @@ plperl_spi_exec_prepared(char *query, HV *attr, int argc, SV **argv)
 
 		for (i = 0; i < argc; i++)
 		{
-			if (SvTYPE(argv[i]) != SVt_NULL)
+			if (SvOK(argv[i]))
 			{
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
 												 SvPV(argv[i], PL_na),
@@ -2426,7 +2427,7 @@ plperl_spi_query_prepared(char *query, int argc, SV **argv)
 
 		for (i = 0; i < argc; i++)
 		{
-			if (SvTYPE(argv[i]) != SVt_NULL)
+			if (SvOK(argv[i]))
 			{
 				argvalues[i] = InputFunctionCall(&qdesc->arginfuncs[i],
 												 SvPV(argv[i], PL_na),
