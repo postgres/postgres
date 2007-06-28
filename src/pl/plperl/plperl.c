@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.6 2006/01/28 16:22:49 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67.4.7 2007/06/28 17:50:24 tgl Exp $
  *
  **********************************************************************/
 
@@ -385,7 +385,7 @@ plperl_build_tuple_result(HV *perlhash, AttInMetadata *attinmeta)
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("Perl hash contains nonexistent column \"%s\"",
 							key)));
-		if (SvOK(val) && SvTYPE(val) != SVt_NULL)
+		if (SvOK(val))
 			values[attn - 1] = SvPV(val, PL_na);
 	}
 	hv_iterinit(perlhash);
@@ -561,7 +561,7 @@ plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup)
 					(errcode(ERRCODE_UNDEFINED_COLUMN),
 					 errmsg("Perl hash contains nonexistent column \"%s\"",
 							key)));
-		if (SvOK(val) && SvTYPE(val) != SVt_NULL)
+		if (SvOK(val))
 		{
 			Oid			typinput;
 			Oid			typioparam;
@@ -949,7 +949,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed");
 
-	if (!(perlret && SvOK(perlret) && SvTYPE(perlret) != SVt_NULL))
+	if (!(perlret && SvOK(perlret)))
 	{
 		/* return NULL if Perl code returned undef */
 		ReturnSetInfo *rsi = (ReturnSetInfo *) fcinfo->resultinfo;
@@ -1053,7 +1053,7 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			svp = av_fetch(ret_av, funcctx->call_cntr, FALSE);
 			Assert(svp != NULL);
 
-			if (SvOK(*svp) && SvTYPE(*svp) != SVt_NULL)
+			if (SvOK(*svp))
 			{
 				char	   *val = SvPV(*svp, PL_na);
 
@@ -1159,7 +1159,7 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "SPI_finish() failed");
 
-	if (!(perlret && SvOK(perlret) && SvTYPE(perlret) != SVt_NULL))
+	if (perlret == NULL || !SvOK(perlret))
 	{
 		/* undef result means go ahead with original tuple */
 		TriggerData *trigdata = ((TriggerData *) fcinfo->context);
