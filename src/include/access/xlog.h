@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.78 2007/05/30 20:12:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.79 2007/06/28 00:02:39 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -157,6 +157,14 @@ extern const char XLOG_sync_method_default[];
 extern bool XLOG_DEBUG;
 #endif
 
+/* OR-able flags for RequestCheckpoint, CreateCheckPoint and subsidiaries */
+#define CHECKPOINT_IS_SHUTDOWN	0x0001		/* Checkpoint is for shutdown */
+#define CHECKPOINT_IMMEDIATE	0x0002		/* Do it without delays */
+#define CHECKPOINT_FORCE		0x0004		/* Force even if no activity */
+#define CHECKPOINT_WARNONTIME	0x0008		/* Enable CheckPointWarning */
+#define CHECKPOINT_WAIT			0x0010		/* Wait for completion */
+
+
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern void XLogFlush(XLogRecPtr RecPtr);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
@@ -171,9 +179,10 @@ extern void BootStrapXLOG(void);
 extern void StartupXLOG(void);
 extern void ShutdownXLOG(int code, Datum arg);
 extern void InitXLOGAccess(void);
-extern void CreateCheckPoint(bool shutdown, bool force);
+extern void CreateCheckPoint(int flags);
 extern void XLogPutNextOid(Oid nextOid);
 extern XLogRecPtr GetRedoRecPtr(void);
+extern XLogRecPtr GetInsertRecPtr(void);
 extern void GetNextXidAndEpoch(TransactionId *xid, uint32 *epoch);
 
 #endif   /* XLOG_H */

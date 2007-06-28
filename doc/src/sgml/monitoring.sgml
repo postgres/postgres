@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.50 2007/04/27 20:08:43 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.51 2007/06/28 00:02:37 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -251,9 +251,9 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><structname>pg_stat_bgwriter</></entry>
       <entry>One row only, showing cluster-wide statistics from the
       background writer: number of scheduled checkpoints, requested
-      checkpoints, buffers written by checkpoints, lru-scans and all-scans,
-      and the number of times the bgwriter aborted a round because it had
-      written too many buffers during lru-scans and all-scans.
+      checkpoints, buffers written by checkpoints and cleaning scans,
+      and the number of times the bgwriter stopped a cleaning scan
+      because it had written too many buffers.
      </entry>
      </row>
 
@@ -777,40 +777,21 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
      </row>
 
      <row>
-      <entry><literal><function>pg_stat_get_bgwriter_buf_written_lru</function>()</literal></entry>
+      <entry><literal><function>pg_stat_get_bgwriter_buf_written_clean</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of buffers written by the bgwriter when performing a
-       LRU scan of the buffer cache
+       The number of buffers written by the bgwriter for routine cleaning of
+       dirty pages
       </entry>
      </row>
 
      <row>
-      <entry><literal><function>pg_stat_get_bgwriter_buf_written_all</function>()</literal></entry>
+      <entry><literal><function>pg_stat_get_bgwriter_maxwritten_clean</function>()</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       The number of buffers written by the bgwriter when performing a
-       scan of all the buffer cache
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_bgwriter_maxwritten_lru</function>()</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       The number of times the bgwriter has stopped its LRU round because
+       The number of times the bgwriter has stopped its cleaning scan because
        it has written more buffers than specified in the
        <varname>bgwriter_lru_maxpages</varname> parameter
-      </entry>
-     </row>
-
-     <row>
-      <entry><literal><function>pg_stat_get_bgwriter_maxwritten_all</function>()</literal></entry>
-      <entry><type>bigint</type></entry>
-      <entry>
-       The number of times the bgwriter has stopped its all-buffer round
-       because it has written more buffers than specified in the
-       <varname>bgwriter_all_maxpages</varname> parameter
       </entry>
      </row>
 

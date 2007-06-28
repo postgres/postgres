@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.195 2007/06/01 19:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.196 2007/06/28 00:02:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -401,10 +401,9 @@ createdb(const CreatedbStmt *stmt)
 
 	/*
 	 * Force dirty buffers out to disk, to ensure source database is
-	 * up-to-date for the copy.  (We really only need to flush buffers for the
-	 * source database, but bufmgr.c provides no API for that.)
+	 * up-to-date for the copy.
 	 */
-	BufferSync();
+	FlushDatabaseBuffers(src_dboid);
 
 	/*
 	 * Once we start copying subdirectories, we need to be able to clean 'em
@@ -507,7 +506,7 @@ createdb(const CreatedbStmt *stmt)
 		 * Perhaps if we ever implement CREATE DATABASE in a less cheesy way,
 		 * we can avoid this.
 		 */
-		RequestCheckpoint(true, false);
+		RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 		/*
 		 * Close pg_database, but keep lock till commit (this is important to
@@ -661,7 +660,7 @@ dropdb(const char *dbname, bool missing_ok)
 	 * open files, which would cause rmdir() to fail.
 	 */
 #ifdef WIN32
-	RequestCheckpoint(true, false);
+	RequestCheckpoint(CHECKPOINT_IMMEDIATE | CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 #endif
 
 	/*
@@ -1424,10 +1423,9 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		/*
 		 * Force dirty buffers out to disk, to ensure source database is
-		 * up-to-date for the copy.  (We really only need to flush buffers for
-		 * the source database, but bufmgr.c provides no API for that.)
+		 * up-to-date for the copy.
 		 */
-		BufferSync();
+		FlushDatabaseBuffers(xlrec->src_db_id);
 
 		/*
 		 * Copy this subdirectory to the new location

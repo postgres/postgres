@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.233 2007/03/07 13:35:02 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.234 2007/06/28 00:02:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -489,7 +489,7 @@ BootstrapModeMain(void)
 
 	/* Perform a checkpoint to ensure everything's down to disk */
 	SetProcessingMode(NormalProcessing);
-	CreateCheckPoint(true, true);
+	CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
 
 	/* Clean up and exit */
 	cleanup();

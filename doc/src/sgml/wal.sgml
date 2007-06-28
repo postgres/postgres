@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.43 2007/01/31 20:56:19 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.44 2007/06/28 00:02:37 tgl Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
@@ -217,15 +217,41 @@
   </para>
 
   <para>
-   There will be at least one WAL segment file, and will normally
-   not be more than 2 * <varname>checkpoint_segments</varname> + 1
+   To avoid flooding the I/O system with a burst of page writes,
+   writing dirty buffers during a checkpoint is spread over a period of time.
+   That period is controlled by
+   <xref linkend="guc-checkpoint-completion-target">, which is
+   given as a fraction of the checkpoint interval.
+   The I/O rate is adjusted so that the checkpoint finishes when the
+   given fraction of <varname>checkpoint_segments</varname> WAL segments
+   have been consumed since checkpoint start, or the given fraction of
+   <varname>checkpoint_timeout</varname> seconds have elapsed,
+   whichever is sooner.  With the default value of 0.5,
+   <productname>PostgreSQL</> can be expected to complete each checkpoint
+   in about half the time before the next checkpoint starts.  On a system
+   that's very close to maximum I/O throughput during normal operation,
+   you might want to increase <varname>checkpoint_completion_target</varname>
+   to reduce the I/O load from checkpoints.  The disadvantage of this is that
+   prolonging checkpoints affects recovery time, because more WAL segments
+   will need to be kept around for possible use in recovery.  Although
+   <varname>checkpoint_completion_target</varname> can be set as high as 1.0,
+   it is best to keep it less than that (perhaps 0.9 at most) since
+   checkpoints include some other activities besides writing dirty buffers.
+   A setting of 1.0 is quite likely to result in checkpoints not being
+   completed on time, which would result in performance loss due to
+   unexpected variation in the number of WAL segments needed.
+  </para>
+
+  <para>
+   There will always be at least one WAL segment file, and will normally
+   not be more than (2 + <varname>checkpoint_completion_target</varname>) * <varname>checkpoint_segments</varname> + 1
    files.  Each segment file is normally 16 MB (though this size can be
    altered when building the server).  You can use this to estimate space
    requirements for <acronym>WAL</acronym>.
    Ordinarily, when old log segment files are no longer needed, they
    are recycled (renamed to become the next segments in the numbered
    sequence). If, due to a short-term peak of log output rate, there
-   are more than 2 * <varname>checkpoint_segments</varname> + 1
+   are more than 3 * <varname>checkpoint_segments</varname> + 1
    segment files, the unneeded segment files will be deleted instead
    of recycled until the system gets back under this limit.
   </para>

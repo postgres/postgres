@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.128 2007/06/22 16:15:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.129 2007/06/28 00:02:37 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1168,21 +1168,17 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <para>
       Beginning in <productname>PostgreSQL</> 8.0, there is a separate server
-      process called the <firstterm>background writer</>, whose sole function
+      process called the <firstterm>background writer</>, whose function
       is to issue writes of <quote>dirty</> shared buffers.  The intent is
       that server processes handling user queries should seldom or never have
       to wait for a write to occur, because the background writer will do it.
-      This arrangement also reduces the performance penalty associated with
-      checkpoints.  The background writer will continuously trickle out dirty
-      pages to disk, so that only a few pages will need to be forced out when
-      checkpoint time arrives, instead of the storm of dirty-buffer writes that
-      formerly occurred at each checkpoint.  However there is a net overall
+      However there is a net overall
       increase in I/O load, because where a repeatedly-dirtied page might
       before have been written only once per checkpoint interval, the
       background writer might write it several times in the same interval.
       In most situations a continuous low load is preferable to periodic
-      spikes, but the parameters discussed in this subsection can be used to tune
-      the behavior for local needs.
+      spikes, but the parameters discussed in this subsection can be used to
+      tune the behavior for local needs.
      </para>
 
      <variablelist>
@@ -1242,62 +1238,14 @@ SET ENABLE_SEQSCAN TO OFF;
         </para>
        </listitem>
       </varlistentry>
-
-      <varlistentry id="guc-bgwriter-all-percent" xreflabel="bgwriter_all_percent">
-       <term><varname>bgwriter_all_percent</varname> (<type>floating point</type>)</term>
-       <indexterm>
-        <primary><varname>bgwriter_all_percent</> configuration parameter</primary>
-       </indexterm>
-       <listitem>
-        <para>
-         To reduce the amount of work that will be needed at checkpoint time,
-         the background writer also does a circular scan through the entire
-         buffer pool, writing buffers that are found to be dirty.
-         In each round, it examines up to
-         <varname>bgwriter_all_percent</> of the buffers for this purpose.
-         The default value is 0.333 (0.333% of the total number
-         of shared buffers).  With the default <varname>bgwriter_delay</>
-         setting, this will allow the entire shared buffer pool to be scanned
-         about once per minute.
-         This parameter can only be set in the <filename>postgresql.conf</>
-         file or on the server command line.
-        </para>
-       </listitem>
-      </varlistentry>
-
-      <varlistentry id="guc-bgwriter-all-maxpages" xreflabel="bgwriter_all_maxpages">
-       <term><varname>bgwriter_all_maxpages</varname> (<type>integer</type>)</term>
-       <indexterm>
-        <primary><varname>bgwriter_all_maxpages</> configuration parameter</primary>
-       </indexterm>
-       <listitem>
-        <para>
-         In each round, no more than this many buffers will be written
-         as a result of the scan of the entire buffer pool.  (If this
-         limit is reached, the scan stops, and resumes at the next buffer
-         during the next round.)
-         The default value is five buffers.
-         This parameter can only be set in the <filename>postgresql.conf</>
-         file or on the server command line.
-        </para>
-       </listitem>
-      </varlistentry>
      </variablelist>
 
      <para>
-      Smaller values of <varname>bgwriter_all_percent</varname> and
-      <varname>bgwriter_all_maxpages</varname> reduce the extra I/O load
-      caused by the background writer, but leave more work to be done
-      at checkpoint time.  To reduce load spikes at checkpoints,
-      increase these two values.
-      Similarly, smaller values of <varname>bgwriter_lru_percent</varname> and
+      Smaller values of <varname>bgwriter_lru_percent</varname> and
       <varname>bgwriter_lru_maxpages</varname> reduce the extra I/O load
       caused by the background writer, but make it more likely that server
       processes will have to issue writes for themselves, delaying interactive
       queries.
-      To disable background writing entirely,
-      set both <varname>maxpages</varname> values and/or both
-      <varname>percent</varname> values to zero.
      </para>
     </sect2>
    </sect1>
@@ -1307,7 +1255,7 @@ SET ENABLE_SEQSCAN TO OFF;
 
    <para>
     See also <xref linkend="wal-configuration"> for details on WAL
-    tuning.
+    and checkpoint tuning.
    </para>
 
     <sect2 id="runtime-config-wal-settings">
@@ -1559,6 +1507,22 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Maximum time between automatic WAL checkpoints, in
         seconds. The default is five minutes (<literal>5min</>).
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-checkpoint-completion-target" xreflabel="checkpoint_completion_target">
+      <term><varname>checkpoint_completion_target</varname> (<type>floating point</type>)</term>
+      <indexterm>
+       <primary><varname>checkpoint_completion_target</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies the target length of checkpoints, as a fraction of 
+        the checkpoint interval. The default is 0.5.
+
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>

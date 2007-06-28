@@ -140,8 +140,6 @@
 #bgwriter_delay = 200ms			# 10-10000ms between rounds
 #bgwriter_lru_percent = 1.0		# 0-100% of LRU buffers scanned/round
 #bgwriter_lru_maxpages = 5		# 0-1000 buffers max written/round
-#bgwriter_all_percent = 0.333		# 0-100% of all buffers scanned/round
-#bgwriter_all_maxpages = 5		# 0-1000 buffers max written/round
 
 
 #---------------------------------------------------------------------------
@@ -168,6 +166,7 @@
 
 #checkpoint_segments = 3		# in logfile segments, min 1, 16MB each
 #checkpoint_timeout = 5min		# range 30s-1h
+#checkpoint_completion_target = 0.5	# checkpoint target duration, 0.0 - 1.0
 #checkpoint_warning = 30s		# 0 is off
 
 # - Archiving -

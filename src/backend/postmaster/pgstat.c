@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.159 2007/06/07 18:53:17 alvherre Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.160 2007/06/28 00:02:38 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -3174,8 +3174,6 @@ pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 	globalStats.timed_checkpoints += msg->m_timed_checkpoints;
 	globalStats.requested_checkpoints += msg->m_requested_checkpoints;
 	globalStats.buf_written_checkpoints += msg->m_buf_written_checkpoints;
-	globalStats.buf_written_lru += msg->m_buf_written_lru;
-	globalStats.buf_written_all += msg->m_buf_written_all;
-	globalStats.maxwritten_lru += msg->m_maxwritten_lru;
-	globalStats.maxwritten_all += msg->m_maxwritten_all;
+	globalStats.buf_written_clean += msg->m_buf_written_clean;
+	globalStats.maxwritten_clean += msg->m_maxwritten_clean;
 }

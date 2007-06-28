@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.272 2007/05/31 15:13:01 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.273 2007/06/28 00:02:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,16 +72,16 @@ bool		XLOG_DEBUG = false;
 #endif
 
 /*
- * XLOGfileslop is used in the code as the allowed "fuzz" in the number of
- * preallocated XLOG segments --- we try to have at least XLOGfiles advance
- * segments but no more than XLOGfileslop segments.  This could
- * be made a separate GUC variable, but at present I think it's sufficient
- * to hardwire it as 2*CheckPointSegments+1.  Under normal conditions, a
- * checkpoint will free no more than 2*CheckPointSegments log segments, and
- * we want to recycle all of them; the +1 allows boundary cases to happen
- * without wasting a delete/create-segment cycle.
+ * XLOGfileslop is the maximum number of preallocated future XLOG segments.
+ * When we are done with an old XLOG segment file, we will recycle it as a
+ * future XLOG segment as long as there aren't already XLOGfileslop future
+ * segments; else we'll delete it.  This could be made a separate GUC
+ * variable, but at present I think it's sufficient to hardwire it as
+ * 2*CheckPointSegments+1.  Under normal conditions, a checkpoint will free
+ * no more than 2*CheckPointSegments log segments, and we want to recycle all
+ * of them; the +1 allows boundary cases to happen without wasting a
+ * delete/create-segment cycle.
  */
-
 #define XLOGfileslop	(2*CheckPointSegments + 1)
 
 
@@ -398,7 +398,7 @@ static void readRecoveryCommandFile(void);
 static void exitArchiveRecovery(TimeLineID endTLI,
 					uint32 endLogId, uint32 endLogSeg);
 static bool recoveryStopsHere(XLogRecord *record, bool *includeThis);
-static void CheckPointGuts(XLogRecPtr checkPointRedo);
+static void CheckPointGuts(XLogRecPtr checkPointRedo, int flags);
 
 static bool XLogCheckBuffer(XLogRecData *rdata, bool doPageWrites,
 				XLogRecPtr *lsn, BkpBlock *bkpb);
@@ -415,7 +415,7 @@ static void XLogFileClose(void);
 static bool RestoreArchivedFile(char *path, const char *xlogfname,
 					const char *recovername, off_t expectedSize);
 static int	PreallocXlogFiles(XLogRecPtr endptr);
-static void MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
+static void RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr,
 				int *nsegsremoved, int *nsegsrecycled);
 static void CleanupBackupHistory(void);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode);
@@ -1608,7 +1608,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 						if (XLOG_DEBUG)
 							elog(LOG, "time for a checkpoint, signaling bgwriter");
 #endif
-						RequestCheckpoint(false, true);
+						RequestCheckpoint(CHECKPOINT_WARNONTIME);
 					}
 				}
 			}
@@ -2516,8 +2516,14 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 }
 
 /*
- * Preallocate log files beyond the specified log endpoint, according to
- * the XLOGfile user parameter.
+ * Preallocate log files beyond the specified log endpoint.
+ *
+ * XXX this is currently extremely conservative, since it forces only one
+ * future log segment to exist, and even that only if we are 75% done with
+ * the current one.  This is only appropriate for very low-WAL-volume systems.
+ * High-volume systems will be OK once they've built up a sufficient set of
+ * recycled log segments, but the startup transient is likely to include
+ * a lot of segment creations by foreground processes, which is not so good.
  */
 static int
 PreallocXlogFiles(XLogRecPtr endptr)
@@ -2543,14 +2549,14 @@ PreallocXlogFiles(XLogRecPtr endptr)
 }
 
 /*
- * Remove or move offline all log files older or equal to passed log/seg#
+ * Recycle or remove all log files older or equal to passed log/seg#
  *
  * endptr is current (or recent) end of xlog; this is used to determine
  * whether we want to recycle rather than delete no-longer-wanted log files.
  */
 static void
-MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr,
-				int *nsegsremoved, int *nsegsrecycled)
+RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr,
+				   int *nsegsremoved, int *nsegsrecycled)
 {
 	uint32		endlogId;
 	uint32		endlogSeg;
@@ -5110,7 +5116,7 @@ StartupXLOG(void)
 		 * the rule that TLI only changes in shutdown checkpoints, which
 		 * allows some extra error checking in xlog_redo.
 		 */
-		CreateCheckPoint(true, true);
+		CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
 
 		/*
 		 * Close down recovery environment
@@ -5319,6 +5325,29 @@ GetRedoRecPtr(void)
 }
 
 /*
+ * GetInsertRecPtr -- Returns the current insert position.
+ *
+ * NOTE: The value *actually* returned is the position of the last full
+ * xlog page. It lags behind the real insert position by at most 1 page.
+ * For that, we don't need to acquire WALInsertLock which can be quite
+ * heavily contended, and an approximation is enough for the current
+ * usage of this function.
+ */
+XLogRecPtr
+GetInsertRecPtr(void)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+	XLogRecPtr recptr;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	recptr = xlogctl->LogwrtRqst.Write;
+	SpinLockRelease(&xlogctl->info_lck);
+
+	return recptr;
+}
+
+/*
  * Get the time of the last xlog segment switch
  */
 time_t
@@ -5383,7 +5412,7 @@ ShutdownXLOG(int code, Datum arg)
 	ereport(LOG,
 			(errmsg("shutting down")));
 
-	CreateCheckPoint(true, true);
+	CreateCheckPoint(CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_IMMEDIATE);
 	ShutdownCLOG();
 	ShutdownSUBTRANS();
 	ShutdownMultiXact();
@@ -5395,12 +5424,21 @@ ShutdownXLOG(int code, Datum arg)
 /*
  * Perform a checkpoint --- either during shutdown, or on-the-fly
  *
- * If force is true, we force a checkpoint regardless of whether any XLOG
- * activity has occurred since the last one.
+ * flags is a bitwise OR of the following:
+ *	CHECKPOINT_IS_SHUTDOWN: checkpoint is for database shutdown.
+ *	CHECKPOINT_IMMEDIATE: finish the checkpoint ASAP,
+ *		ignoring checkpoint_completion_target parameter. 
+ *	CHECKPOINT_FORCE: force a checkpoint even if no XLOG activity has occured
+ *		since the last one (implied by CHECKPOINT_IS_SHUTDOWN).
+ *
+ * Note: flags might contain other bits of interest to RequestCheckpoint.
+ * In particular note that this routine is synchronous and does not pay
+ * attention to CHECKPOINT_WAIT.
  */
 void
-CreateCheckPoint(bool shutdown, bool force)
+CreateCheckPoint(int flags)
 {
+	bool		shutdown = (flags & CHECKPOINT_IS_SHUTDOWN) != 0;
 	CheckPoint	checkPoint;
 	XLogRecPtr	recptr;
 	XLogCtlInsert *Insert = &XLogCtl->Insert;
@@ -5459,7 +5497,7 @@ CreateCheckPoint(bool shutdown, bool force)
 	 * the end of the last checkpoint record, and its redo pointer must point
 	 * to itself.
 	 */
-	if (!shutdown && !force)
+	if ((flags & (CHECKPOINT_IS_SHUTDOWN | CHECKPOINT_FORCE)) == 0)
 	{
 		XLogRecPtr	curInsert;
 
@@ -5591,7 +5629,7 @@ CreateCheckPoint(bool shutdown, bool force)
 	 */
 	END_CRIT_SECTION();
 
-	CheckPointGuts(checkPoint.redo);
+	CheckPointGuts(checkPoint.redo, flags);
 
 	START_CRIT_SECTION();
 
@@ -5650,24 +5688,24 @@ CreateCheckPoint(bool shutdown, bool force)
 
 	/*
 	 * We are now done with critical updates; no need for system panic if we
-	 * have trouble while fooling with offline log segments.
+	 * have trouble while fooling with old log segments.
 	 */
 	END_CRIT_SECTION();
 
 	/*
-	 * Delete offline log files (those no longer needed even for previous
+	 * Delete old log files (those no longer needed even for previous
 	 * checkpoint).
 	 */
 	if (_logId || _logSeg)
 	{
 		PrevLogSeg(_logId, _logSeg);
-		MoveOfflineLogs(_logId, _logSeg, recptr,
-						&nsegsremoved, &nsegsrecycled);
+		RemoveOldXlogFiles(_logId, _logSeg, recptr,
+						   &nsegsremoved, &nsegsrecycled);
 	}
 
 	/*
-	 * Make more log segments if needed.  (Do this after deleting offline log
-	 * segments, to avoid having peak disk space usage higher than necessary.)
+	 * Make more log segments if needed.  (Do this after recycling old log
+	 * segments, since that may supply some of the needed files.)
 	 */
 	if (!shutdown)
 		nsegsadded = PreallocXlogFiles(recptr);
@@ -5697,12 +5735,12 @@ CreateCheckPoint(bool shutdown, bool force)
  * recovery restartpoints.
  */
 static void
-CheckPointGuts(XLogRecPtr checkPointRedo)
+CheckPointGuts(XLogRecPtr checkPointRedo, int flags)
 {
 	CheckPointCLOG();
 	CheckPointSUBTRANS();
 	CheckPointMultiXact();
-	FlushBufferPool();			/* performs all required fsyncs */
+	CheckPointBuffers(flags);		/* performs all required fsyncs */
 	/* We deliberately delay 2PC checkpointing as long as possible */
 	CheckPointTwoPhase(checkPointRedo);
 }
@@ -5710,7 +5748,7 @@ CheckPointGuts(XLogRecPtr checkPointRedo)
 /*
  * Set a recovery restart point if appropriate
  *
- * This is similar to CreateCheckpoint, but is used during WAL recovery
+ * This is similar to CreateCheckPoint, but is used during WAL recovery
  * to establish a point from which recovery can roll forward without
  * replaying the entire recovery log.  This function is called each time
  * a checkpoint record is read from XLOG; it must determine whether a
@@ -5751,7 +5789,7 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	/*
 	 * OK, force data out to disk
 	 */
-	CheckPointGuts(checkPoint->redo);
+	CheckPointGuts(checkPoint->redo, CHECKPOINT_IMMEDIATE);
 
 	/*
 	 * Update pg_control so that any subsequent crash will restart from this
@@ -6176,8 +6214,10 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		 * page problems, this guarantees that two successive backup runs will
 		 * have different checkpoint positions and hence different history
 		 * file names, even if nothing happened in between.
+		 *
+		 * We don't use CHECKPOINT_IMMEDIATE, hence this can take awhile.
 		 */
-		RequestCheckpoint(true, false);
+		RequestCheckpoint(CHECKPOINT_FORCE | CHECKPOINT_WAIT);
 
 		/*
 		 * Now we need to fetch the checkpoint record location, and also its

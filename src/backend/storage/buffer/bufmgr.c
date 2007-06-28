@@ -8,35 +8,23 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.221 2007/06/18 00:47:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.222 2007/06/28 00:02:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
+ * Principal entry points:
+ *
  * ReadBuffer() -- find or create a buffer holding the requested page,
  *		and pin it so that no one can destroy it while this process
  *		is using it.
- *
- * ReadOrZeroBuffer() -- like ReadBuffer, but if the page is not already in
- *		cache we don't read it, but just return a zeroed-out buffer.  Useful
- *		when the caller intends to fill the page from scratch, since this
- *		saves I/O and avoids unnecessary failure if the page-on-disk has
- *		corrupt page headers.  Caution: do not use this to read a page that
- *		is beyond the relation's current physical EOF; that is likely to
- *		cause problems in md.c when the page is modified and written out.
  *
  * ReleaseBuffer() -- unpin a buffer
  *
  * MarkBufferDirty() -- mark a pinned buffer's contents as "dirty".
  *		The disk write is delayed until buffer replacement or checkpoint.
  *
- * BufferSync() -- flush all dirty buffers in the buffer pool.
- *
- * BgBufferSync() -- flush some dirty buffers in the buffer pool.
- *
- * InitBufferPool() -- Init the buffer module.
- *
- * See other files:
+ * See also these files:
  *		freelist.c -- chooses victim for buffer replacement
  *		buf_table.c -- manages the buffer lookup table
  */
@@ -64,16 +52,11 @@
 #define LocalBufHdrGetBlock(bufHdr) \
 	LocalBufferBlockPointers[-((bufHdr)->buf_id + 2)]
 
-/* interval for calling AbsorbFsyncRequests in BufferSync */
-#define WRITES_PER_ABSORB		1000
-
 
 /* GUC variables */
 bool		zero_damaged_pages = false;
 double		bgwriter_lru_percent = 1.0;
-double		bgwriter_all_percent = 0.333;
 int			bgwriter_lru_maxpages = 5;
-int			bgwriter_all_maxpages = 5;
 
 
 long		NDirectFileRead;	/* some I/O's are direct file access. bypass
@@ -95,6 +78,7 @@ static Buffer ReadBuffer_common(Relation reln, BlockNumber blockNum,
 static bool PinBuffer(volatile BufferDesc *buf, BufferAccessStrategy strategy);
 static void PinBuffer_Locked(volatile BufferDesc *buf);
 static void UnpinBuffer(volatile BufferDesc *buf, bool fixOwner);
+static void BufferSync(int flags);
 static bool SyncOneBuffer(int buf_id, bool skip_pinned);
 static void WaitIO(volatile BufferDesc *buf);
 static bool StartBufferIO(volatile BufferDesc *buf, bool forInput);
@@ -143,8 +127,10 @@ ReadBufferWithStrategy(Relation reln, BlockNumber blockNum,
 /*
  * ReadOrZeroBuffer -- like ReadBuffer, but if the page isn't in buffer
  *		cache already, it's filled with zeros instead of reading it from
- *		disk. The caller is expected to overwrite the whole buffer,
- *		so that the current page contents are not interesting.
+ *		disk.  Useful when the caller intends to fill the page from scratch,
+ *		since this saves I/O and avoids unnecessary failure if the
+ *		page-on-disk has corrupt page headers.
+ *
  *		Caution: do not use this to read a page that is beyond the relation's
  *		current physical EOF; that is likely to cause problems in md.c when
  *		the page is modified and written out.  P_NEW is OK, though.
@@ -644,7 +630,7 @@ BufferAlloc(Relation reln,
 	 * at 1 so that the buffer can survive one clock-sweep pass.)
 	 */
 	buf->tag = newTag;
-	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_IO_ERROR);
+	buf->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_CHECKPOINT_NEEDED | BM_IO_ERROR);
 	buf->flags |= BM_TAG_VALID;
 	buf->usage_count = 1;
 
@@ -999,45 +985,114 @@ UnpinBuffer(volatile BufferDesc *buf, bool fixOwner)
  * BufferSync -- Write out all dirty buffers in the pool.
  *
  * This is called at checkpoint time to write out all dirty shared buffers.
+ * The checkpoint request flags should be passed in; currently the only one
+ * examined is CHECKPOINT_IMMEDIATE, which disables delays between writes.
  */
-void
-BufferSync(void)
+static void
+BufferSync(int flags)
 {
 	int			buf_id;
 	int			num_to_scan;
-	int			absorb_counter;
-
-	/*
-	 * Find out where to start the circular scan.
-	 */
-	buf_id = StrategySyncStart();
+	int			num_to_write;
+	int			num_written;
 
 	/* Make sure we can handle the pin inside SyncOneBuffer */
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 
 	/*
-	 * Loop over all buffers.
+	 * Loop over all buffers, and mark the ones that need to be written with
+	 * BM_CHECKPOINT_NEEDED.  Count them as we go (num_to_write), so that we
+	 * can estimate how much work needs to be done.
+	 *
+	 * This allows us to write only those pages that were dirty when the
+	 * checkpoint began, and not those that get dirtied while it proceeds.
+	 * Whenever a page with BM_CHECKPOINT_NEEDED is written out, either by us
+	 * later in this function, or by normal backends or the bgwriter cleaning
+	 * scan, the flag is cleared.  Any buffer dirtied after this point won't
+	 * have the flag set.
+	 *
+	 * Note that if we fail to write some buffer, we may leave buffers with
+	 * BM_CHECKPOINT_NEEDED still set.  This is OK since any such buffer
+	 * would certainly need to be written for the next checkpoint attempt,
+	 * too.
 	 */
+	num_to_write = 0;
+	for (buf_id = 0; buf_id < NBuffers; buf_id++)
+	{
+		volatile BufferDesc *bufHdr = &BufferDescriptors[buf_id];
+
+		/*
+		 * Header spinlock is enough to examine BM_DIRTY, see comment in
+		 * SyncOneBuffer.
+		 */
+		LockBufHdr(bufHdr);
+
+		if (bufHdr->flags & BM_DIRTY)
+		{
+			bufHdr->flags |= BM_CHECKPOINT_NEEDED;
+			num_to_write++;
+		}
+
+		UnlockBufHdr(bufHdr);
+	}
+
+	if (num_to_write == 0)
+		return;					/* nothing to do */
+
+	/*
+	 * Loop over all buffers again, and write the ones (still) marked with
+	 * BM_CHECKPOINT_NEEDED.  In this loop, we start at the clock sweep
+	 * point since we might as well dump soon-to-be-recycled buffers first.
+	 */
+	buf_id = StrategySyncStart();
 	num_to_scan = NBuffers;
-	absorb_counter = WRITES_PER_ABSORB;
+	num_written = 0;
 	while (num_to_scan-- > 0)
 	{
-		if (SyncOneBuffer(buf_id, false))
-		{
-			BgWriterStats.m_buf_written_checkpoints++;
+		volatile BufferDesc *bufHdr = &BufferDescriptors[buf_id];
 
-			/*
-			 * If in bgwriter, absorb pending fsync requests after each
-			 * WRITES_PER_ABSORB write operations, to prevent overflow of the
-			 * fsync request queue.  If not in bgwriter process, this is a
-			 * no-op.
-			 */
-			if (--absorb_counter <= 0)
+		/*
+		 * We don't need to acquire the lock here, because we're only looking
+		 * at a single bit. It's possible that someone else writes the buffer
+		 * and clears the flag right after we check, but that doesn't matter
+		 * since SyncOneBuffer will then do nothing.  However, there is a
+		 * further race condition: it's conceivable that between the time we
+		 * examine the bit here and the time SyncOneBuffer acquires lock,
+		 * someone else not only wrote the buffer but replaced it with another
+		 * page and dirtied it.  In that improbable case, SyncOneBuffer will
+		 * write the buffer though we didn't need to.  It doesn't seem
+		 * worth guarding against this, though.
+		 */
+		if (bufHdr->flags & BM_CHECKPOINT_NEEDED)
+		{
+			if (SyncOneBuffer(buf_id, false))
 			{
-				AbsorbFsyncRequests();
-				absorb_counter = WRITES_PER_ABSORB;
+				BgWriterStats.m_buf_written_checkpoints++;
+				num_written++;
+
+				/*
+				 * We know there are at most num_to_write buffers with
+				 * BM_CHECKPOINT_NEEDED set; so we can stop scanning if
+				 * num_written reaches num_to_write.
+				 *
+				 * Note that num_written doesn't include buffers written by
+				 * other backends, or by the bgwriter cleaning scan. That
+				 * means that the estimate of how much progress we've made is
+				 * conservative, and also that this test will often fail to
+				 * trigger.  But it seems worth making anyway.
+				 */
+				if (num_written >= num_to_write)
+					break;
+
+				/*
+				 * Perform normal bgwriter duties and sleep to throttle
+				 * our I/O rate.
+				 */
+				CheckpointWriteDelay(flags,
+									 (double) num_written / num_to_write);
 			}
 		}
+
 		if (++buf_id >= NBuffers)
 			buf_id = 0;
 	}
@@ -1051,8 +1106,7 @@ BufferSync(void)
 void
 BgBufferSync(void)
 {
-	static int	buf_id1 = 0;
-	int			buf_id2;
+	int			buf_id;
 	int			num_to_scan;
 	int			num_written;
 
@@ -1060,45 +1114,10 @@ BgBufferSync(void)
 	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
 
 	/*
-	 * To minimize work at checkpoint time, we want to try to keep all the
-	 * buffers clean; this motivates a scan that proceeds sequentially through
-	 * all buffers.  But we are also charged with ensuring that buffers that
+	 * The purpose of this sweep is to ensure that buffers that
 	 * will be recycled soon are clean when needed; these buffers are the ones
-	 * just ahead of the StrategySyncStart point.  We make a separate scan
-	 * through those.
-	 */
-
-	/*
-	 * This loop runs over all buffers, including pinned ones.	The starting
-	 * point advances through the buffer pool on successive calls.
+	 * just ahead of the StrategySyncStart point. 
 	 *
-	 * Note that we advance the static counter *before* trying to write. This
-	 * ensures that, if we have a persistent write failure on a dirty buffer,
-	 * we'll still be able to make progress writing other buffers. (The
-	 * bgwriter will catch the error and just call us again later.)
-	 */
-	if (bgwriter_all_percent > 0.0 && bgwriter_all_maxpages > 0)
-	{
-		num_to_scan = (int) ((NBuffers * bgwriter_all_percent + 99) / 100);
-		num_written = 0;
-
-		while (num_to_scan-- > 0)
-		{
-			if (++buf_id1 >= NBuffers)
-				buf_id1 = 0;
-			if (SyncOneBuffer(buf_id1, false))
-			{
-				if (++num_written >= bgwriter_all_maxpages)
-				{
-					BgWriterStats.m_maxwritten_all++;
-					break;
-				}
-			}
-		}
-		BgWriterStats.m_buf_written_all += num_written;
-	}
-
-	/*
 	 * This loop considers only unpinned buffers close to the clock sweep
 	 * point.
 	 */
@@ -1107,22 +1126,22 @@ BgBufferSync(void)
 		num_to_scan = (int) ((NBuffers * bgwriter_lru_percent + 99) / 100);
 		num_written = 0;
 
-		buf_id2 = StrategySyncStart();
+		buf_id = StrategySyncStart();
 
 		while (num_to_scan-- > 0)
 		{
-			if (SyncOneBuffer(buf_id2, true))
+			if (SyncOneBuffer(buf_id, true))
 			{
 				if (++num_written >= bgwriter_lru_maxpages)
 				{
-					BgWriterStats.m_maxwritten_lru++;
+					BgWriterStats.m_maxwritten_clean++;
 					break;
 				}
 			}
-			if (++buf_id2 >= NBuffers)
-				buf_id2 = 0;
+			if (++buf_id >= NBuffers)
+				buf_id = 0;
 		}
-		BgWriterStats.m_buf_written_lru += num_written;
+		BgWriterStats.m_buf_written_clean += num_written;
 	}
 }
 
@@ -1333,16 +1352,17 @@ PrintBufferLeakWarning(Buffer buffer)
 }
 
 /*
- * FlushBufferPool
+ * CheckPointBuffers
  *
- * Flush all dirty blocks in buffer pool to disk at the checkpoint time.
- * Local relations do not participate in checkpoints, so they don't need to be
- * flushed.
+ * Flush all dirty blocks in buffer pool to disk at checkpoint time.
+ *
+ * Note: temporary relations do not participate in checkpoints, so they don't
+ * need to be flushed.
  */
 void
-FlushBufferPool(void)
+CheckPointBuffers(int flags)
 {
-	BufferSync();
+	BufferSync(flags);
 	smgrsync();
 }
 
@@ -1724,6 +1744,48 @@ FlushRelationBuffers(Relation rel)
 			PinBuffer_Locked(bufHdr);
 			LWLockAcquire(bufHdr->content_lock, LW_SHARED);
 			FlushBuffer(bufHdr, rel->rd_smgr);
+			LWLockRelease(bufHdr->content_lock);
+			UnpinBuffer(bufHdr, true);
+		}
+		else
+			UnlockBufHdr(bufHdr);
+	}
+}
+
+/* ---------------------------------------------------------------------
+ *		FlushDatabaseBuffers
+ *
+ *		This function writes all dirty pages of a database out to disk
+ *		(or more accurately, out to kernel disk buffers), ensuring that the
+ *		kernel has an up-to-date view of the database.
+ *
+ *		Generally, the caller should be holding an appropriate lock to ensure
+ *		no other backend is active in the target database; otherwise more
+ *		pages could get dirtied.
+ *
+ *		Note we don't worry about flushing any pages of temporary relations.
+ *		It's assumed these wouldn't be interesting.
+ * --------------------------------------------------------------------
+ */
+void
+FlushDatabaseBuffers(Oid dbid)
+{
+	int			i;
+	volatile BufferDesc *bufHdr;
+
+	/* Make sure we can handle the pin inside the loop */
+	ResourceOwnerEnlargeBuffers(CurrentResourceOwner);
+
+	for (i = 0; i < NBuffers; i++)
+	{
+		bufHdr = &BufferDescriptors[i];
+		LockBufHdr(bufHdr);
+		if (bufHdr->tag.rnode.dbNode == dbid &&
+			(bufHdr->flags & BM_VALID) && (bufHdr->flags & BM_DIRTY))
+		{
+			PinBuffer_Locked(bufHdr);
+			LWLockAcquire(bufHdr->content_lock, LW_SHARED);
+			FlushBuffer(bufHdr, NULL);
 			LWLockRelease(bufHdr->content_lock);
 			UnpinBuffer(bufHdr, true);
 		}
@@ -2131,7 +2193,7 @@ TerminateBufferIO(volatile BufferDesc *buf, bool clear_dirty,
 	Assert(buf->flags & BM_IO_IN_PROGRESS);
 	buf->flags &= ~(BM_IO_IN_PROGRESS | BM_IO_ERROR);
 	if (clear_dirty && !(buf->flags & BM_JUST_DIRTIED))
-		buf->flags &= ~BM_DIRTY;
+		buf->flags &= ~(BM_DIRTY | BM_CHECKPOINT_NEEDED);
 	buf->flags |= set_flag_bits;
 
 	UnlockBufHdr(buf);

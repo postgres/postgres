@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.402 2007/06/21 22:59:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.403 2007/06/28 00:02:39 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1574,15 +1574,6 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"bgwriter_all_maxpages", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer maximum number of all pages to flush per round."),
-			NULL
-		},
-		&bgwriter_all_maxpages,
-		5, 0, 1000, NULL, NULL
-	},
-
-	{
 		{"log_rotation_age", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Automatic log file rotation will occur after N minutes."),
 			NULL,
@@ -1835,15 +1826,6 @@ static struct config_real ConfigureNamesReal[] =
 	},
 
 	{
-		{"bgwriter_all_percent", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer percentage of all buffers to flush per round."),
-			NULL
-		},
-		&bgwriter_all_percent,
-		0.333, 0.0, 100.0, NULL, NULL
-	},
-
-	{
 		{"seed", PGC_USERSET, UNGROUPED,
 			gettext_noop("Sets the seed for random-number generation."),
 			NULL,
@@ -1868,6 +1850,15 @@ static struct config_real ConfigureNamesReal[] =
 		},
 		&autovacuum_anl_scale,
 		0.1, 0.0, 100.0, NULL, NULL
+	},
+
+	{
+		{"checkpoint_completion_target", PGC_SIGHUP, WAL_CHECKPOINTS,
+			gettext_noop("Time spent flushing dirty buffers during checkpoint, as fraction of checkpoint interval."),
+			NULL
+		},
+		&CheckPointCompletionTarget,
+		0.5, 0.0, 1.0, NULL, NULL
 	},
 
 	/* End-of-list marker */
