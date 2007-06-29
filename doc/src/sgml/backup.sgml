@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.97 2007/02/01 00:28:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.98 2007/06/29 15:46:21 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -673,6 +673,22 @@ SELECT pg_start_backup('label');
      It does not matter which database within the cluster you connect to to 
      issue this command.  You can ignore the result returned by the function;
      but if it reports an error, deal with that before proceeding.
+    </para>
+
+    <para>
+     <function>pg_start_backup</> can take a long time to finish.
+     This is because it performs a checkpoint, and the I/O
+     required for a checkpoint will be spread out over a significant
+     period of time, by default half your inter-checkpoint interval
+     (see the configuration parameter
+     <xref linkend="guc-checkpoint-completion-target">).  Usually
+     this is what you want because it minimizes the impact on query
+     processing.  If you just want to start the backup as soon as
+     possible, execute a <command>CHECKPOINT</> command
+     (which performs a checkpoint as quickly as possible) and then
+     immediately execute <function>pg_start_backup</>.  Then there
+     will be very little for <function>pg_start_backup</>'s checkpoint
+     to do, and it won't take long.
     </para>
    </listitem>
    <listitem>
