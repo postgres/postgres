@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.534 2007/06/23 22:12:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.535 2007/06/29 17:07:39 alvherre Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -51,6 +51,7 @@
 #include "optimizer/planner.h"
 #include "parser/analyze.h"
 #include "parser/parser.h"
+#include "postmaster/autovacuum.h"
 #include "rewrite/rewriteHandler.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
@@ -2540,9 +2541,14 @@ ProcessInterrupts(void)
 		ImmediateInterruptOK = false;	/* not idle anymore */
 		DisableNotifyInterrupt();
 		DisableCatchupInterrupt();
-		ereport(FATAL,
-				(errcode(ERRCODE_ADMIN_SHUTDOWN),
-			 errmsg("terminating connection due to administrator command")));
+		if (IsAutoVacuumWorkerProcess())
+			ereport(FATAL,
+					(errcode(ERRCODE_ADMIN_SHUTDOWN),
+					 errmsg("terminating autovacuum process due to administrator command")));
+		else
+			ereport(FATAL,
+					(errcode(ERRCODE_ADMIN_SHUTDOWN),
+					 errmsg("terminating connection due to administrator command")));
 	}
 	if (QueryCancelPending)
 	{

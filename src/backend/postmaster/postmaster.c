@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.528 2007/06/25 16:09:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.529 2007/06/29 17:07:39 alvherre Exp $
  *
  * NOTES
  *
@@ -1875,7 +1875,7 @@ pmdie(SIGNAL_ARGS)
 
 			/* autovacuum workers are shut down immediately */
 			if (DLGetHead(BackendList))
-				SignalSomeChildren(SIGINT, true);
+				SignalSomeChildren(SIGTERM, true);
 
 			if (DLGetHead(BackendList))
 				break;			/* let reaper() handle this */

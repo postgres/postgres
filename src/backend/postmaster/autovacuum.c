@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.51 2007/06/25 16:09:03 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.52 2007/06/29 17:07:39 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_autovacuum.h"
 #include "catalog/pg_database.h"
+#include "commands/dbcommands.h"
 #include "commands/vacuum.h"
 #include "libpq/hba.h"
 #include "libpq/pqsignal.h"
@@ -2025,12 +2026,53 @@ next_worker:
 		autovac_balance_cost();
 		LWLockRelease(AutovacuumLock);
 
-		/* have at it */
-		autovacuum_do_vac_analyze(tab->at_relid,
-								  tab->at_dovacuum,
-								  tab->at_doanalyze,
-								  tab->at_freeze_min_age,
-								  bstrategy);
+		/*
+		 * We will abort vacuuming the current table if we are interrupted, and
+		 * continue with the next one in schedule; but if anything else
+		 * happens, we will do our usual error handling which is to cause the
+		 * worker process to exit.
+		 */
+		PG_TRY();
+		{
+			/* have at it */
+			autovacuum_do_vac_analyze(tab->at_relid,
+									  tab->at_dovacuum,
+									  tab->at_doanalyze,
+									  tab->at_freeze_min_age,
+									  bstrategy);
+		}
+		PG_CATCH();
+		{
+			ErrorData	   *errdata;
+
+			MemoryContextSwitchTo(TopTransactionContext);
+			errdata = CopyErrorData();
+
+			/*
+			 * If we errored out due to a cancel request, abort and restart the
+			 * transaction and go to the next table.  Otherwise rethrow the
+			 * error so that the outermost handler deals with it.
+			 */
+			if (errdata->sqlerrcode == ERRCODE_QUERY_CANCELED)
+			{
+				HOLD_INTERRUPTS();
+				elog(LOG, "cancelling autovacuum of table \"%s.%s.%s\"",
+					 get_database_name(MyDatabaseId),
+					 get_namespace_name(get_rel_namespace(tab->at_relid)),
+					 get_rel_name(tab->at_relid));
+
+				AbortOutOfAnyTransaction();
+				FlushErrorState();
+
+				/* restart our transaction for the following operations */
+				StartTransactionCommand();
+				RESUME_INTERRUPTS();
+			}
+			else
+				PG_RE_THROW();
+		}
+		PG_END_TRY();
+
 		/* be tidy */
 		pfree(tab);
 	}
