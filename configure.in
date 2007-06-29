@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.490.2.6 2007/04/20 03:20:42 pgsql Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.490.2.7 2007/06/29 16:18:52 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -632,9 +632,9 @@ fi
 
 # Supply a numeric version string for use by 3rd party add-ons
 # awk -F is a regex on some platforms, and not on others, so make "." a tab
-PG_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
+[PG_VERSION_NUM="`echo "$PACKAGE_VERSION" | sed 's/[A-Za-z].*$//' |
 tr '.' '	' |
-$AWK '{printf \"%d%02d%02d\", $1, $2, (NF >= 3) ? $3 : 0}'`"
+$AWK '{printf "%d%02d%02d", $1, $2, (NF >= 3) ? $3 : 0}'`"]
 AC_DEFINE_UNQUOTED(PG_VERSION_NUM, $PG_VERSION_NUM, [PostgreSQL version as a number])
 
 ##
