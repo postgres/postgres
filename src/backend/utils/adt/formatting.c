@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.116.2.2 2007/02/08 20:33:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.116.2.3 2007/06/29 01:51:49 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2006, PostgreSQL Global Development Group
@@ -73,6 +73,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <float.h>
+#include <limits.h>
 #include <locale.h>
 
 #include "utils/builtins.h"
@@ -111,8 +112,8 @@
  * More is in float.c
  * ----------
  */
-#define MAXFLOATWIDTH	64
-#define MAXDOUBLEWIDTH	128
+#define MAXFLOATWIDTH	60
+#define MAXDOUBLEWIDTH	500
 
 
 /* ----------
@@ -948,13 +949,12 @@ static char *localize_month(int index);
 static char *localize_day_full(int index);
 static char *localize_day(int index);
 
-/*
- * External (defined in oracle_compat.c 
- */
 #if defined(HAVE_WCSTOMBS) && defined(HAVE_TOWLOWER)
 #define USE_WIDE_UPPER_LOWER
+/* externs are in oracle_compat.c */
 extern char *wstring_upper(char *str);
 extern char *wstring_lower(char *str);
+
 static char *localized_str_toupper(char *buff);
 static char *localized_str_tolower(char *buff);
 #else
@@ -1500,7 +1500,7 @@ str_numth(char *dest, char *num, int type)
 }
 
 /* ----------
- * Convert string to upper-string. Input string is modified in place.
+ * Convert string to upper case. Input string is modified in place.
  * ----------
  */
 static char *
@@ -1521,7 +1521,7 @@ str_toupper(char *buff)
 }
 
 /* ----------
- * Convert string to lower-string. Input string is modified in place.
+ * Convert string to lower case. Input string is modified in place.
  * ----------
  */
 static char *
@@ -1543,7 +1543,8 @@ str_tolower(char *buff)
 
 #ifdef USE_WIDE_UPPER_LOWER
 /* ----------
- * Convert localized string to upper string. Input string is modified in place.
+ * Convert localized string to upper case.
+ * Input string may be modified in place ... or we might make a copy.
  * ----------
  */
 static char *
@@ -1569,7 +1570,8 @@ localized_str_toupper(char *buff)
 }
 
 /* ----------
- * Convert localized string to upper string. Input string is modified in place.
+ * Convert localized string to lower case.
+ * Input string may be modified in place ... or we might make a copy.
  * ----------
  */
 static char *
@@ -2095,19 +2097,16 @@ dch_time(int arg, char *inout, int suf, bool is_to_char, bool is_interval,
 			INVALID_FOR_INTERVAL;
 			if (is_to_char && tmtcTzn(tmtc))
 			{
-				int			siz = strlen(tmtcTzn(tmtc));
-
 				if (arg == DCH_TZ)
 					strcpy(inout, tmtcTzn(tmtc));
 				else
 				{
-					char	   *p = palloc(siz);
+					char	   *p = pstrdup(tmtcTzn(tmtc));
 
-					strcpy(p, tmtcTzn(tmtc));
 					strcpy(inout, str_tolower(p));
 					pfree(p);
 				}
-				return siz;
+				return strlen(inout);
 			}
 			else if (!is_to_char)
 				ereport(ERROR,
@@ -3565,7 +3564,7 @@ static char *
 fill_str(char *str, int c, int max)
 {
 	memset(str, c, max);
-	*(str + max + 1) = '\0';
+	*(str + max) = '\0';
 	return str;
 }
 
@@ -4738,10 +4737,9 @@ NUM_processor(FormatNode *node, NUMDesc *Num, char *inout, char *number,
 #define NUM_TOCHAR_prepare \
 do { \
 	len = VARSIZE(fmt) - VARHDRSZ;					\
-	if (len <= 0)							\
+	if (len <= 0 || len >= (INT_MAX-VARHDRSZ)/NUM_MAX_ITEM_SIZ)		\
 		return DirectFunctionCall1(textin, CStringGetDatum(""));	\
-	result	= (text *) palloc( (len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ); \
-	memset(result, 0,  (len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ ); \
+	result	= (text *) palloc0((len * NUM_MAX_ITEM_SIZ) + 1 + VARHDRSZ);	\
 	format	= NUM_cache(len, &Num, VARDATA(fmt), &shouldFree);		\
 } while (0)
 
@@ -4751,30 +4749,19 @@ do { \
  */
 #define NUM_TOCHAR_finish \
 do { \
-	NUM_processor(format, &Num, VARDATA(result),			\
-		numstr, plen, sign, true);				\
-	pfree(orgnum);							\
+	NUM_processor(format, &Num, VARDATA(result), numstr, plen, sign, true);	\
 									\
-	if (shouldFree)							\
-		pfree(format);						\
+	if (shouldFree)					\
+		pfree(format);				\
 									\
-	/*
-	 * for result is allocated max memory, which current format-picture\
-	 * needs, now it must be re-allocate to result real size	\
+	/*								\
+	 * Convert null-terminated representation of result to standard text. \
+	 * The result is usually much bigger than it needs to be, but there \
+	 * seems little point in realloc'ing it smaller. \
 	 */								\
-	if (!(len = strlen(VARDATA(result))))				\
-	{								\
-		pfree(result);						\
-		PG_RETURN_NULL();					\
-	}								\
-									\
-	result_tmp	= result;					\
-	result		= (text *) palloc( len + 1 + VARHDRSZ);		\
-									\
-	strcpy( VARDATA(result), VARDATA(result_tmp));			\
-	VARATT_SIZEP(result) = len + VARHDRSZ;				\
-	pfree(result_tmp);						\
-} while(0)
+	len = strlen(VARDATA(result));	\
+	VARATT_SIZEP(result) = len + VARHDRSZ;	\
+} while (0)
 
 /* -------------------
  * NUMERIC to_number() (convert string to numeric)
@@ -4796,7 +4783,7 @@ numeric_to_number(PG_FUNCTION_ARGS)
 
 	len = VARSIZE(fmt) - VARHDRSZ;
 
-	if (len <= 0)
+	if (len <= 0 || len >= INT_MAX/NUM_MAX_ITEM_SIZ)
 		PG_RETURN_NULL();
 
 	format = NUM_cache(len, &Num, VARDATA(fmt), &shouldFree);
@@ -4831,8 +4818,7 @@ numeric_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_P(1);
 	NUMDesc		Num;
 	FormatNode *format;
-	text	   *result,
-			   *result_tmp;
+	text	   *result;
 	bool		shouldFree;
 	int			len = 0,
 				plen = 0,
@@ -4855,7 +4841,6 @@ numeric_to_char(PG_FUNCTION_ARGS)
 		numstr = orgnum =
 			int_to_roman(DatumGetInt32(DirectFunctionCall1(numeric_int4,
 													   NumericGetDatum(x))));
-		pfree(x);
 	}
 	else
 	{
@@ -4874,9 +4859,6 @@ numeric_to_char(PG_FUNCTION_ARGS)
 			val = DatumGetNumeric(DirectFunctionCall2(numeric_mul,
 													  NumericGetDatum(value),
 													  NumericGetDatum(x)));
-			pfree(x);
-			pfree(a);
-			pfree(b);
 			Num.pre += Num.multi;
 		}
 
@@ -4885,10 +4867,9 @@ numeric_to_char(PG_FUNCTION_ARGS)
 												Int32GetDatum(Num.post)));
 		orgnum = DatumGetCString(DirectFunctionCall1(numeric_out,
 													 NumericGetDatum(x)));
-		pfree(x);
 
 		if (*orgnum == '-')
-		{						/* < 0 */
+		{
 			sign = '-';
 			numstr = orgnum + 1;
 		}
@@ -4906,13 +4887,10 @@ numeric_to_char(PG_FUNCTION_ARGS)
 			plen = Num.pre - len;
 		else if (len > Num.pre)
 		{
-			fill_str(numstr, '#', Num.pre);
+			numstr = (char *) palloc(Num.pre + Num.post + 2);
+			fill_str(numstr, '#', Num.pre + Num.post + 1);
 			*(numstr + Num.pre) = '.';
-			fill_str(numstr + 1 + Num.pre, '#', Num.post);
 		}
-
-		if (IS_MULTI(&Num))
-			pfree(val);
 	}
 
 	NUM_TOCHAR_finish;
@@ -4930,8 +4908,7 @@ int4_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_P(1);
 	NUMDesc		Num;
 	FormatNode *format;
-	text	   *result,
-			   *result_tmp;
+	text	   *result;
 	bool		shouldFree;
 	int			len = 0,
 				plen = 0,
@@ -4959,40 +4936,34 @@ int4_to_char(PG_FUNCTION_ARGS)
 			orgnum = DatumGetCString(DirectFunctionCall1(int4out,
 													  Int32GetDatum(value)));
 		}
-		len = strlen(orgnum);
 
 		if (*orgnum == '-')
-		{						/* < 0 */
+		{
 			sign = '-';
-			--len;
+			orgnum++;
 		}
 		else
 			sign = '+';
+		len = strlen(orgnum);
 
 		if (Num.post)
 		{
-			int			i;
-
 			numstr = (char *) palloc(len + Num.post + 2);
-			strcpy(numstr, orgnum + (*orgnum == '-' ? 1 : 0));
+			strcpy(numstr, orgnum);
 			*(numstr + len) = '.';
-
-			for (i = len + 1; i <= len + Num.post; i++)
-				*(numstr + i) = '0';
+			memset(numstr + len + 1, '0', Num.post);
 			*(numstr + len + Num.post + 1) = '\0';
-			pfree(orgnum);
-			orgnum = numstr;
 		}
 		else
-			numstr = orgnum + (*orgnum == '-' ? 1 : 0);
+			numstr = orgnum;
 
 		if (Num.pre > len)
 			plen = Num.pre - len;
 		else if (len > Num.pre)
 		{
-			fill_str(numstr, '#', Num.pre);
+			numstr = (char *) palloc(Num.pre + Num.post + 2);
+			fill_str(numstr, '#', Num.pre + Num.post + 1);
 			*(numstr + Num.pre) = '.';
-			fill_str(numstr + 1 + Num.pre, '#', Num.post);
 		}
 	}
 
@@ -5011,8 +4982,7 @@ int8_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_P(1);
 	NUMDesc		Num;
 	FormatNode *format;
-	text	   *result,
-			   *result_tmp;
+	text	   *result;
 	bool		shouldFree;
 	int			len = 0,
 				plen = 0,
@@ -5046,40 +5016,34 @@ int8_to_char(PG_FUNCTION_ARGS)
 
 		orgnum = DatumGetCString(DirectFunctionCall1(int8out,
 													 Int64GetDatum(value)));
-		len = strlen(orgnum);
 
 		if (*orgnum == '-')
-		{						/* < 0 */
+		{
 			sign = '-';
-			--len;
+			orgnum++;
 		}
 		else
 			sign = '+';
+		len = strlen(orgnum);
 
 		if (Num.post)
 		{
-			int			i;
-
 			numstr = (char *) palloc(len + Num.post + 2);
-			strcpy(numstr, orgnum + (*orgnum == '-' ? 1 : 0));
+			strcpy(numstr, orgnum);
 			*(numstr + len) = '.';
-
-			for (i = len + 1; i <= len + Num.post; i++)
-				*(numstr + i) = '0';
+			memset(numstr + len + 1, '0', Num.post);
 			*(numstr + len + Num.post + 1) = '\0';
-			pfree(orgnum);
-			orgnum = numstr;
 		}
 		else
-			numstr = orgnum + (*orgnum == '-' ? 1 : 0);
+			numstr = orgnum;
 
 		if (Num.pre > len)
 			plen = Num.pre - len;
 		else if (len > Num.pre)
 		{
-			fill_str(numstr, '#', Num.pre);
+			numstr = (char *) palloc(Num.pre + Num.post + 2);
+			fill_str(numstr, '#', Num.pre + Num.post + 1);
 			*(numstr + Num.pre) = '.';
-			fill_str(numstr + 1 + Num.pre, '#', Num.post);
 		}
 	}
 
@@ -5098,8 +5062,7 @@ float4_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_P(1);
 	NUMDesc		Num;
 	FormatNode *format;
-	text	   *result,
-			   *result_tmp;
+	text	   *result;
 	bool		shouldFree;
 	int			len = 0,
 				plen = 0,
@@ -5154,9 +5117,9 @@ float4_to_char(PG_FUNCTION_ARGS)
 			plen = Num.pre - len;
 		else if (len > Num.pre)
 		{
-			fill_str(numstr, '#', Num.pre);
+			numstr = (char *) palloc(Num.pre + Num.post + 2);
+			fill_str(numstr, '#', Num.pre + Num.post + 1);
 			*(numstr + Num.pre) = '.';
-			fill_str(numstr + 1 + Num.pre, '#', Num.post);
 		}
 	}
 
@@ -5175,8 +5138,7 @@ float8_to_char(PG_FUNCTION_ARGS)
 	text	   *fmt = PG_GETARG_TEXT_P(1);
 	NUMDesc		Num;
 	FormatNode *format;
-	text	   *result,
-			   *result_tmp;
+	text	   *result;
 	bool		shouldFree;
 	int			len = 0,
 				plen = 0,
@@ -5229,9 +5191,9 @@ float8_to_char(PG_FUNCTION_ARGS)
 			plen = Num.pre - len;
 		else if (len > Num.pre)
 		{
-			fill_str(numstr, '#', Num.pre);
+			numstr = (char *) palloc(Num.pre + Num.post + 2);
+			fill_str(numstr, '#', Num.pre + Num.post + 1);
 			*(numstr + Num.pre) = '.';
-			fill_str(numstr + 1 + Num.pre, '#', Num.post);
 		}
 	}
 
