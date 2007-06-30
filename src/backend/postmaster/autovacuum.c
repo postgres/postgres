@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.52 2007/06/29 17:07:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.53 2007/06/30 04:08:05 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1427,8 +1427,8 @@ AutoVacWorkerMain(int argc, char *argv[])
 	pqsignal(SIGHUP, SIG_IGN);
 
 	/*
-	 * Presently, SIGINT will lead to autovacuum shutdown, because that's how
-	 * we handle ereport(ERROR).  It could be improved however.
+	 * SIGINT is used to signal cancelling the current table's vacuum;
+	 * SIGTERM means abort and exit cleanly, and SIGQUIT means abandon ship.
 	 */
 	pqsignal(SIGINT, StatementCancelHandler);
 	pqsignal(SIGTERM, die);
@@ -1513,6 +1513,7 @@ AutoVacWorkerMain(int argc, char *argv[])
 		/* insert into the running list */
 		SHMQueueInsertBefore(&AutoVacuumShmem->av_runningWorkers, 
 							 &MyWorkerInfo->wi_links);
+
 		/*
 		 * remove from the "starting" pointer, so that the launcher can start
 		 * a new worker if required
@@ -1559,13 +1560,6 @@ AutoVacWorkerMain(int argc, char *argv[])
 		set_ps_display(dbname, false);
 		ereport(DEBUG1,
 				(errmsg("autovacuum: processing database \"%s\"", dbname)));
-
-		/* Create the memory context where cross-transaction state is stored */
-		AutovacMemCxt = AllocSetContextCreate(TopMemoryContext,
-											  "AV worker",
-											  ALLOCSET_DEFAULT_MINSIZE,
-											  ALLOCSET_DEFAULT_INITSIZE,
-											  ALLOCSET_DEFAULT_MAXSIZE);
 
 		/* And do an appropriate amount of work */
 		recentXid = ReadNewTransactionId();
@@ -1788,6 +1782,18 @@ do_autovacuum(void)
 	BufferAccessStrategy bstrategy;
 
 	/*
+	 * StartTransactionCommand and CommitTransactionCommand will automatically
+	 * switch to other contexts.  We need this one to keep the list of
+	 * relations to vacuum/analyze across transactions.
+	 */
+	AutovacMemCxt = AllocSetContextCreate(TopMemoryContext,
+										  "AV worker",
+										  ALLOCSET_DEFAULT_MINSIZE,
+										  ALLOCSET_DEFAULT_INITSIZE,
+										  ALLOCSET_DEFAULT_MAXSIZE);
+	MemoryContextSwitchTo(AutovacMemCxt);
+
+	/*
 	 * may be NULL if we couldn't find an entry (only happens if we
 	 * are forcing a vacuum for anti-wrap purposes).
 	 */
@@ -1825,11 +1831,7 @@ do_autovacuum(void)
 
 	ReleaseSysCache(tuple);
 
-	/*
-	 * StartTransactionCommand and CommitTransactionCommand will automatically
-	 * switch to other contexts.  We need this one to keep the list of
-	 * relations to vacuum/analyze across transactions.
-	 */
+	/* StartTransactionCommand changed elsewhere */
 	MemoryContextSwitchTo(AutovacMemCxt);
 
 	/* The database hash where pgstat keeps shared relations */
@@ -1933,6 +1935,16 @@ do_autovacuum(void)
 	bstrategy = GetAccessStrategy(BAS_VACUUM);
 
 	/*
+	 * create a memory context to act as fake PortalContext, so that the
+	 * contexts created in the vacuum code are cleaned up for each table.
+	 */
+	PortalContext = AllocSetContextCreate(AutovacMemCxt,
+										  "Autovacuum Portal",
+										  ALLOCSET_DEFAULT_INITSIZE,
+										  ALLOCSET_DEFAULT_MINSIZE,
+										  ALLOCSET_DEFAULT_MAXSIZE);
+
+	/*
 	 * Perform operations on collected tables.
 	 */
 	foreach(cell, table_oids)
@@ -1996,6 +2008,7 @@ next_worker:
 		 * FIXME we ignore the possibility that the table was finished being
 		 * vacuumed in the last 500ms (PGSTAT_STAT_INTERVAL).  This is a bug.
 		 */
+		MemoryContextSwitchTo(AutovacMemCxt);
 		tab = table_recheck_autovac(relid);
 		if (tab == NULL)
 		{
@@ -2026,6 +2039,9 @@ next_worker:
 		autovac_balance_cost();
 		LWLockRelease(AutovacuumLock);
 
+		/* clean up memory before each iteration */
+		MemoryContextResetAndDeleteChildren(PortalContext);
+
 		/*
 		 * We will abort vacuuming the current table if we are interrupted, and
 		 * continue with the next one in schedule; but if anything else
@@ -2035,6 +2051,7 @@ next_worker:
 		PG_TRY();
 		{
 			/* have at it */
+			MemoryContextSwitchTo(TopTransactionContext);
 			autovacuum_do_vac_analyze(tab->at_relid,
 									  tab->at_dovacuum,
 									  tab->at_doanalyze,
@@ -2063,6 +2080,7 @@ next_worker:
 
 				AbortOutOfAnyTransaction();
 				FlushErrorState();
+				MemoryContextResetAndDeleteChildren(PortalContext);
 
 				/* restart our transaction for the following operations */
 				StartTransactionCommand();
