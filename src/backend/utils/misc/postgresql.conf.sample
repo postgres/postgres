@@ -317,9 +317,11 @@
 #debug_print_rewritten = off
 #debug_print_plan = off
 #debug_pretty_print = off
+#log_checkpoints = off
 #log_connections = off
 #log_disconnections = off
 #log_duration = off
+#log_hostname = off
 #log_line_prefix = ''			# Special values:
 					#   %u = user name
 					#   %d = database name
@@ -337,11 +339,10 @@
 					#        processes
 					#   %% = '%'
 					# e.g. '<%u%%%d> '
+#log_lock_waits = off			# Log lock waits >= deadlock_timeout
 #log_statement = 'none'			# none, ddl, mod, all
-#log_hostname = off
-#log_lock_waits = off			# Log lock waits longer than deadlock_timeout
 #log_temp_files = -1			# Log temporary files equal or larger
-					# than the specified number of kilobytes.
+					# than specified number of kilobytes.
 					# -1 disables;  0 logs all temp files
 
 #---------------------------------------------------------------------------

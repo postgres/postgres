@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.222 2007/06/28 00:02:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.223 2007/06/30 19:12:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1096,6 +1096,12 @@ BufferSync(int flags)
 		if (++buf_id >= NBuffers)
 			buf_id = 0;
 	}
+
+	/*
+	 * Update checkpoint statistics. As noted above, this doesn't
+	 * include buffers written by other backends or bgwriter scan.
+	 */
+	CheckpointStats.ckpt_bufs_written += num_written;
 }
 
 /*
@@ -1362,8 +1368,11 @@ PrintBufferLeakWarning(Buffer buffer)
 void
 CheckPointBuffers(int flags)
 {
+	CheckpointStats.ckpt_write_t = GetCurrentTimestamp();
 	BufferSync(flags);
+	CheckpointStats.ckpt_sync_t = GetCurrentTimestamp();
 	smgrsync();
+	CheckpointStats.ckpt_sync_end_t = GetCurrentTimestamp();
 }
 
 

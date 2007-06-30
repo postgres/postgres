@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.273 2007/06/28 00:02:37 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.274 2007/06/30 19:12:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,7 @@ char	   *XLogArchiveCommand = NULL;
 char	   *XLOG_sync_method = NULL;
 const char	XLOG_sync_method_default[] = DEFAULT_SYNC_METHOD_STR;
 bool		fullPageWrites = true;
+bool		log_checkpoints = false;
 
 #ifdef WAL_DEBUG
 bool		XLOG_DEBUG = false;
@@ -91,6 +92,13 @@ static int	open_sync_bit = DEFAULT_SYNC_FLAGBIT;
 
 #define XLOG_SYNC_BIT  (enableFsync ? open_sync_bit : 0)
 
+
+/*
+ * Statistics for current checkpoint are collected in this global struct.
+ * Because only the background writer or a stand-alone backend can perform
+ * checkpoints, this will be unused in normal backends.
+ */
+CheckpointStatsData CheckpointStats;
 
 /*
  * ThisTimeLineID will be same in all backends --- it identifies current
@@ -414,9 +422,8 @@ static int	XLogFileRead(uint32 log, uint32 seg, int emode);
 static void XLogFileClose(void);
 static bool RestoreArchivedFile(char *path, const char *xlogfname,
 					const char *recovername, off_t expectedSize);
-static int	PreallocXlogFiles(XLogRecPtr endptr);
-static void RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr,
-				int *nsegsremoved, int *nsegsrecycled);
+static void PreallocXlogFiles(XLogRecPtr endptr);
+static void RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr);
 static void CleanupBackupHistory(void);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode);
 static bool ValidXLOGHeader(XLogPageHeader hdr, int emode);
@@ -1578,10 +1585,10 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 				Write->lastSegSwitchTime = time(NULL);
 
 				/*
-				 * Signal bgwriter to start a checkpoint if it's been too long
-				 * since the last one.	(We look at local copy of RedoRecPtr
-				 * which might be a little out of date, but should be close
-				 * enough for this purpose.)
+				 * Signal bgwriter to start a checkpoint if we've consumed too
+				 * much xlog since the last one.  (We look at local copy of
+				 * RedoRecPtr which might be a little out of date, but should
+				 * be close enough for this purpose.)
 				 *
 				 * A straight computation of segment number could overflow 32
 				 * bits.  Rather than assuming we have working 64-bit
@@ -1603,13 +1610,7 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 					new_highbits = openLogId / XLogSegSize;
 					if (new_highbits != old_highbits ||
 						new_segno >= old_segno + (uint32) (CheckPointSegments-1))
-					{
-#ifdef WAL_DEBUG
-						if (XLOG_DEBUG)
-							elog(LOG, "time for a checkpoint, signaling bgwriter");
-#endif
-						RequestCheckpoint(CHECKPOINT_WARNONTIME);
-					}
+						RequestCheckpoint(CHECKPOINT_CAUSE_XLOG);
 				}
 			}
 		}
@@ -1855,7 +1856,7 @@ XLogFileInit(uint32 log, uint32 seg,
 {
 	char		path[MAXPGPATH];
 	char		tmppath[MAXPGPATH];
-	char		zbuffer[XLOG_BLCKSZ];
+	char	   *zbuffer;
 	uint32		installed_log;
 	uint32		installed_seg;
 	int			max_advance;
@@ -1889,6 +1890,8 @@ XLogFileInit(uint32 log, uint32 seg,
 	 * pre-creating an extra log segment.  That seems OK, and better than
 	 * holding the lock throughout this lengthy process.
 	 */
+	elog(DEBUG2, "creating and filling new WAL file");
+
 	snprintf(tmppath, MAXPGPATH, XLOGDIR "/xlogtemp.%d", (int) getpid());
 
 	unlink(tmppath);
@@ -1909,12 +1912,16 @@ XLogFileInit(uint32 log, uint32 seg,
 	 * fsync below) that all the indirect blocks are down on disk.	Therefore,
 	 * fdatasync(2) or O_DSYNC will be sufficient to sync future writes to the
 	 * log file.
+	 *
+	 * Note: palloc zbuffer, instead of just using a local char array, to
+	 * ensure it is reasonably well-aligned; this may save a few cycles
+	 * transferring data to the kernel.
 	 */
-	MemSet(zbuffer, 0, sizeof(zbuffer));
-	for (nbytes = 0; nbytes < XLogSegSize; nbytes += sizeof(zbuffer))
+	zbuffer = (char *) palloc0(XLOG_BLCKSZ);
+	for (nbytes = 0; nbytes < XLogSegSize; nbytes += XLOG_BLCKSZ)
 	{
 		errno = 0;
-		if ((int) write(fd, zbuffer, sizeof(zbuffer)) != (int) sizeof(zbuffer))
+		if ((int) write(fd, zbuffer, XLOG_BLCKSZ) != (int) XLOG_BLCKSZ)
 		{
 			int			save_errno = errno;
 
@@ -1930,6 +1937,7 @@ XLogFileInit(uint32 log, uint32 seg,
 					 errmsg("could not write to file \"%s\": %m", tmppath)));
 		}
 	}
+	pfree(zbuffer);
 
 	if (pg_fsync(fd) != 0)
 		ereport(ERROR,
@@ -1959,6 +1967,8 @@ XLogFileInit(uint32 log, uint32 seg,
 		/* No need for any more future segments... */
 		unlink(tmppath);
 	}
+
+	elog(DEBUG2, "done creating and filling new WAL file");
 
 	/* Set flag to tell caller there was no existent file */
 	*use_existent = false;
@@ -2525,10 +2535,9 @@ RestoreArchivedFile(char *path, const char *xlogfname,
  * recycled log segments, but the startup transient is likely to include
  * a lot of segment creations by foreground processes, which is not so good.
  */
-static int
+static void
 PreallocXlogFiles(XLogRecPtr endptr)
 {
-	int			nsegsadded = 0;
 	uint32		_logId;
 	uint32		_logSeg;
 	int			lf;
@@ -2543,9 +2552,8 @@ PreallocXlogFiles(XLogRecPtr endptr)
 		lf = XLogFileInit(_logId, _logSeg, &use_existent, true);
 		close(lf);
 		if (!use_existent)
-			nsegsadded++;
+			CheckpointStats.ckpt_segs_added++;
 	}
-	return nsegsadded;
 }
 
 /*
@@ -2555,8 +2563,7 @@ PreallocXlogFiles(XLogRecPtr endptr)
  * whether we want to recycle rather than delete no-longer-wanted log files.
  */
 static void
-RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr,
-				   int *nsegsremoved, int *nsegsrecycled)
+RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr)
 {
 	uint32		endlogId;
 	uint32		endlogSeg;
@@ -2565,9 +2572,6 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr,
 	struct dirent *xlde;
 	char		lastoff[MAXFNAMELEN];
 	char		path[MAXPGPATH];
-
-	*nsegsremoved = 0;
-	*nsegsrecycled = 0;
 
 	/*
 	 * Initialize info about where to try to recycle to.  We allow recycling
@@ -2617,7 +2621,7 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr,
 					ereport(DEBUG2,
 							(errmsg("recycled transaction log file \"%s\"",
 									xlde->d_name)));
-					(*nsegsrecycled)++;
+					CheckpointStats.ckpt_segs_recycled++;
 					/* Needn't recheck that slot on future iterations */
 					if (max_advance > 0)
 					{
@@ -2632,7 +2636,7 @@ RemoveOldXlogFiles(uint32 log, uint32 seg, XLogRecPtr endptr,
 							(errmsg("removing transaction log file \"%s\"",
 									xlde->d_name)));
 					unlink(path);
-					(*nsegsremoved)++;
+					CheckpointStats.ckpt_segs_removed++;
 				}
 
 				XLogArchiveCleanup(xlde->d_name);
@@ -5127,7 +5131,7 @@ StartupXLOG(void)
 	/*
 	 * Preallocate additional log files, if wanted.
 	 */
-	(void) PreallocXlogFiles(EndOfLog);
+	PreallocXlogFiles(EndOfLog);
 
 	/*
 	 * Okay, we're officially UP.
@@ -5421,6 +5425,57 @@ ShutdownXLOG(int code, Datum arg)
 			(errmsg("database system is shut down")));
 }
 
+/* 
+ * Log start of a checkpoint.
+ */
+static void
+LogCheckpointStart(int flags)
+{
+	elog(LOG, "checkpoint starting:%s%s%s%s%s%s",
+		 (flags & CHECKPOINT_IS_SHUTDOWN) ? " shutdown" : "",
+		 (flags & CHECKPOINT_IMMEDIATE) ? " immediate" : "",
+		 (flags & CHECKPOINT_FORCE) ? " force" : "",
+		 (flags & CHECKPOINT_WAIT) ? " wait" : "",
+		 (flags & CHECKPOINT_CAUSE_XLOG) ? " xlog" : "",
+		 (flags & CHECKPOINT_CAUSE_TIME) ? " time" : "");
+}
+
+/* 
+ * Log end of a checkpoint.
+ */
+static void
+LogCheckpointEnd(void)
+{
+	long	write_secs, sync_secs, total_secs;
+	int		write_usecs, sync_usecs, total_usecs;
+
+	CheckpointStats.ckpt_end_t = GetCurrentTimestamp();
+
+	TimestampDifference(CheckpointStats.ckpt_start_t,
+						CheckpointStats.ckpt_end_t,
+						&total_secs, &total_usecs);
+
+	TimestampDifference(CheckpointStats.ckpt_write_t,
+						CheckpointStats.ckpt_sync_t,
+						&write_secs, &write_usecs);
+
+	TimestampDifference(CheckpointStats.ckpt_sync_t,
+						CheckpointStats.ckpt_sync_end_t,
+						&sync_secs, &sync_usecs);
+
+	elog(LOG, "checkpoint complete: wrote %d buffers (%.1f%%); "
+		 "%d transaction log file(s) added, %d removed, %d recycled; "
+		 "write=%ld.%03d s, sync=%ld.%03d s, total=%ld.%03d s",
+		 CheckpointStats.ckpt_bufs_written,
+		 (double) CheckpointStats.ckpt_bufs_written * 100 / NBuffers,
+		 CheckpointStats.ckpt_segs_added,
+		 CheckpointStats.ckpt_segs_removed,
+		 CheckpointStats.ckpt_segs_recycled,
+		 write_secs, write_usecs/1000,
+		 sync_secs, sync_usecs/1000,
+		 total_secs, total_usecs/1000);
+}
+
 /*
  * Perform a checkpoint --- either during shutdown, or on-the-fly
  *
@@ -5431,7 +5486,7 @@ ShutdownXLOG(int code, Datum arg)
  *	CHECKPOINT_FORCE: force a checkpoint even if no XLOG activity has occured
  *		since the last one (implied by CHECKPOINT_IS_SHUTDOWN).
  *
- * Note: flags might contain other bits of interest to RequestCheckpoint.
+ * Note: flags contains other bits, of interest here only for logging purposes.
  * In particular note that this routine is synchronous and does not pay
  * attention to CHECKPOINT_WAIT.
  */
@@ -5446,9 +5501,6 @@ CreateCheckPoint(int flags)
 	uint32		freespace;
 	uint32		_logId;
 	uint32		_logSeg;
-	int			nsegsadded = 0;
-	int			nsegsremoved = 0;
-	int			nsegsrecycled = 0;
 	TransactionId *inCommitXids;
 	int			nInCommit;
 
@@ -5459,6 +5511,16 @@ CreateCheckPoint(int flags)
 	 * time.)
 	 */
 	LWLockAcquire(CheckpointLock, LW_EXCLUSIVE);
+
+	/*
+	 * Prepare to accumulate statistics.
+	 *
+	 * Note: because it is possible for log_checkpoints to change while a
+	 * checkpoint proceeds, we always accumulate stats, even if
+	 * log_checkpoints is currently off.
+	 */
+	MemSet(&CheckpointStats, 0, sizeof(CheckpointStats));
+	CheckpointStats.ckpt_start_t = GetCurrentTimestamp();
 
 	/*
 	 * Use a critical section to force system panic if we have trouble.
@@ -5560,9 +5622,12 @@ CreateCheckPoint(int flags)
 	 */
 	LWLockRelease(WALInsertLock);
 
-	if (!shutdown)
-		ereport(DEBUG2,
-				(errmsg("checkpoint starting")));
+	/*
+	 * If enabled, log checkpoint start.  We postpone this until now
+	 * so as not to log anything if we decided to skip the checkpoint.
+	 */
+	if (log_checkpoints)
+		LogCheckpointStart(flags);
 
 	/*
 	 * Before flushing data, we must wait for any transactions that are
@@ -5699,8 +5764,7 @@ CreateCheckPoint(int flags)
 	if (_logId || _logSeg)
 	{
 		PrevLogSeg(_logId, _logSeg);
-		RemoveOldXlogFiles(_logId, _logSeg, recptr,
-						   &nsegsremoved, &nsegsrecycled);
+		RemoveOldXlogFiles(_logId, _logSeg, recptr);
 	}
 
 	/*
@@ -5708,7 +5772,7 @@ CreateCheckPoint(int flags)
 	 * segments, since that may supply some of the needed files.)
 	 */
 	if (!shutdown)
-		nsegsadded = PreallocXlogFiles(recptr);
+		PreallocXlogFiles(recptr);
 
 	/*
 	 * Truncate pg_subtrans if possible.  We can throw away all data before
@@ -5720,10 +5784,9 @@ CreateCheckPoint(int flags)
 	if (!InRecovery)
 		TruncateSUBTRANS(GetOldestXmin(true, false));
 
-	if (!shutdown)
-		ereport(DEBUG2,
-				(errmsg("checkpoint complete; %d transaction log file(s) added, %d removed, %d recycled",
-						nsegsadded, nsegsremoved, nsegsrecycled)));
+	/* All real work is done, but log before releasing lock. */
+	if (log_checkpoints)
+		LogCheckpointEnd();
 
 	LWLockRelease(CheckpointLock);
 }

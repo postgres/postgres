@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.129 2007/06/28 00:02:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.130 2007/06/30 19:12:01 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2660,6 +2660,23 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-log-checkpoints" xreflabel="log_checkpoints">
+      <term><varname>log_checkpoints</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>log_checkpoints</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Causes checkpoints to be logged in the server log. Some
+        statistics about each checkpoint are included in the log messages,
+        including the number of buffers written and the time spent writing
+        them.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line. The default is off.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-log-connections" xreflabel="log_connections">
       <term><varname>log_connections</varname> (<type>boolean</type>)</term>
       <indexterm>
@@ -2667,15 +2684,20 @@ SELECT * FROM parent WHERE key = 2400;
       </indexterm>
       <listitem>
        <para>
-        This outputs a line to the server log detailing each successful
-        connection. This is off by default, although it is probably very
-        useful.  Some client programs, like <application>psql</>, attempt 
-        to connect twice while determining if a password is required, so 
-        duplicate <quote>connection received</> messages do not
-        necessarily indicate a problem.
+        Causes each attempted connection to the server to be logged,
+        as well as successful completion of client authentication.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
+        file or on the server command line.  The default is off.
        </para>
+
+       <note>
+        <para>
+         Some client programs, like <application>psql</>, attempt 
+         to connect twice while determining if a password is required, so 
+         duplicate <quote>connection received</> messages do not
+         necessarily indicate a problem.
+        </para>
+       </note>
       </listitem>
      </varlistentry>
 
@@ -2727,6 +2749,23 @@ SELECT * FROM parent WHERE key = 2400;
          gathering statistics in high-load installations.
         </para>
        </note>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-hostname" xreflabel="log_hostname">
+      <term><varname>log_hostname</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>log_hostname</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        By default, connection log messages only show the IP address of the
+        connecting host. Turning on this parameter causes logging of the
+        host name as well.  Note that depending on your host name resolution
+        setup this might impose a non-negligible performance penalty.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
+       </para>
       </listitem>
      </varlistentry>
      
@@ -2860,6 +2899,21 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-log-lock-waits" xreflabel="log_lock_waits">
+      <term><varname>log_lock_waits</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>log_lock_waits</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Controls whether a log message is produced when a session waits
+        longer than <xref linkend="guc-deadlock-timeout"> to acquire a
+        lock.  This is useful in determining if lock waits are causing
+        poor performance.  The default is <literal>off</>.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-log-statement" xreflabel="log_statement">
       <term><varname>log_statement</varname> (<type>string</type>)</term>
       <indexterm>
@@ -2904,38 +2958,6 @@ SELECT * FROM parent WHERE key = 2400;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-log-hostname" xreflabel="log_hostname">
-      <term><varname>log_hostname</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>log_hostname</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        By default, connection log messages only show the IP address of the
-        connecting host. Turning on this parameter causes logging of the
-        host name as well.  Note that depending on your host name resolution
-        setup this might impose a non-negligible performance penalty.
-        This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-log-lock-waits" xreflabel="log_lock_waits">
-      <term><varname>log_lock_waits</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>log_lock_waits</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Controls whether a log message is produced when a session waits
-        longer than <xref linkend="guc-deadlock-timeout"> to acquire a
-        lock.  This is useful in determining if lock waits are causing
-        poor performance.  The default is <literal>off</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
      <varlistentry id="guc-log-temp-files" xreflabel="log_temp_files">
       <term><varname>log_temp_files</varname> (<type>integer</type>)</term>
       <indexterm>
@@ -2944,11 +2966,12 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
         Controls whether temporary files are logged when deleted.
+        Temporary files can be
+        created for sorts, hashes, and temporary query results.
         A value of zero logs all temporary files, and positive
         values log only files whose size is equal or greater than
-        the specified number of kilobytes.  Temporary files can be
-        created for sorts, hashes, and temporary results.  The
-        default is <literal>-1</> (off).
+        the specified number of kilobytes.  The
+        default is <literal>-1</>, which disables this logging.
        </para>
       </listitem>
      </varlistentry>

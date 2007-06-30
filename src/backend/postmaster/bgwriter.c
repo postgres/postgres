@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.39 2007/06/28 00:02:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.40 2007/06/30 19:12:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,6 +352,7 @@ BackgroundWriterMain(void)
 	for (;;)
 	{
 		bool		do_checkpoint = false;
+		int			flags = 0;
 		time_t		now;
 		int			elapsed_secs;
 
@@ -393,15 +394,19 @@ BackgroundWriterMain(void)
 		}
 
 		/*
-		 * Do an unforced checkpoint if too much time has elapsed since the
-		 * last one.
+		 * Force a checkpoint if too much time has elapsed since the
+		 * last one.  Note that we count a timed checkpoint in stats only
+		 * when this occurs without an external request, but we set the
+		 * CAUSE_TIME flag bit even if there is also an external request.
 		 */
 		now = time(NULL);
 		elapsed_secs = now - last_checkpoint_time;
-		if (!do_checkpoint && elapsed_secs >= CheckPointTimeout)
+		if (elapsed_secs >= CheckPointTimeout)
 		{
+			if (!do_checkpoint)
+				BgWriterStats.m_timed_checkpoints++;
 			do_checkpoint = true;
-			BgWriterStats.m_timed_checkpoints++;
+			flags |= CHECKPOINT_CAUSE_TIME;
 		}
 
 		/*
@@ -412,7 +417,6 @@ BackgroundWriterMain(void)
 		{
 			/* use volatile pointer to prevent code rearrangement */
 			volatile BgWriterShmemStruct *bgs = BgWriterShmem;
-			int		flags;
 
 			/*
 			 * Atomically fetch the request flags to figure out what
@@ -421,19 +425,19 @@ BackgroundWriterMain(void)
 			 * a new checkpoint.
 			 */
 			SpinLockAcquire(&bgs->ckpt_lck);
-			flags = bgs->ckpt_flags;
+			flags |= bgs->ckpt_flags;
 			bgs->ckpt_flags = 0;
 			bgs->ckpt_started++;
 			SpinLockRelease(&bgs->ckpt_lck);
 
 			/*
 			 * We will warn if (a) too soon since last checkpoint (whatever
-			 * caused it) and (b) somebody set the CHECKPOINT_WARNONTIME flag
+			 * caused it) and (b) somebody set the CHECKPOINT_CAUSE_XLOG flag
 			 * since the last checkpoint start.  Note in particular that this
 			 * implementation will not generate warnings caused by
 			 * CheckPointTimeout < CheckPointWarning.
 			 */
-			if ((flags & CHECKPOINT_WARNONTIME) &&
+			if ((flags & CHECKPOINT_CAUSE_XLOG) &&
 				elapsed_secs < CheckPointWarning)
 				ereport(LOG,
 						(errmsg("checkpoints are occurring too frequently (%d seconds apart)",
@@ -843,12 +847,10 @@ BgWriterShmemInit(void)
  *		ignoring checkpoint_completion_target parameter. 
  *	CHECKPOINT_FORCE: force a checkpoint even if no XLOG activity has occured
  *		since the last one (implied by CHECKPOINT_IS_SHUTDOWN).
- *	CHECKPOINT_WARNONTIME: if it's "too soon" since the last checkpoint,
- *		the bgwriter will log a warning.  This should be true only for
- *		checkpoints requested due to xlog filling, else the warning will
- *		be misleading.
  *	CHECKPOINT_WAIT: wait for completion before returning (otherwise,
  *		just signal bgwriter to do it, and return).
+ *	CHECKPOINT_CAUSE_XLOG: checkpoint is requested due to xlog filling.
+ *		(This affects logging, and in particular enables CheckPointWarning.)
  */
 void
 RequestCheckpoint(int flags)
@@ -891,7 +893,7 @@ RequestCheckpoint(int flags)
 
 	old_failed = bgs->ckpt_failed;
 	old_started = bgs->ckpt_started;
-	bgs->ckpt_flags |= (flags & ~CHECKPOINT_WAIT);
+	bgs->ckpt_flags |= flags;
 
 	SpinLockRelease(&bgs->ckpt_lck);
 
