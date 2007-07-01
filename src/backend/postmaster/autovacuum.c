@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.53 2007/06/30 04:08:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.54 2007/07/01 02:20:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1776,7 +1776,7 @@ do_autovacuum(void)
 	List	   *table_oids = NIL;
 	List	   *toast_oids = NIL;
 	List	   *table_toast_list = NIL;
-	ListCell   *cell;
+	ListCell   * volatile cell;
 	PgStat_StatDBEntry *shared;
 	PgStat_StatDBEntry *dbentry;
 	BufferAccessStrategy bstrategy;
