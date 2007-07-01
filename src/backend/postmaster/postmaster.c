@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.529 2007/06/29 17:07:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.530 2007/07/01 18:28:41 tgl Exp $
  *
  * NOTES
  *
@@ -1242,7 +1242,8 @@ ServerLoop(void)
 		}
 
 		/* If we have lost the autovacuum launcher, try to start a new one */
-		if ((AutoVacuumingActive() || start_autovac_launcher) && AutoVacPID == 0 &&
+		if (AutoVacPID == 0 &&
+			(AutoVacuumingActive() || start_autovac_launcher) &&
 			StartupPID == 0 && !FatalError && Shutdown == NoShutdown)
 		{
 			AutoVacPID = StartAutoVacLauncher();
@@ -1873,11 +1874,14 @@ pmdie(SIGNAL_ARGS)
 			ereport(LOG,
 					(errmsg("received smart shutdown request")));
 
-			/* autovacuum workers are shut down immediately */
+			/* autovacuum workers are told to shut down immediately */
 			if (DLGetHead(BackendList))
 				SignalSomeChildren(SIGTERM, true);
+			/* and the autovac launcher too */
+			if (AutoVacPID != 0)
+				signal_child(AutoVacPID, SIGTERM);
 
-			if (DLGetHead(BackendList))
+			if (DLGetHead(BackendList) || AutoVacPID != 0)
 				break;			/* let reaper() handle this */
 
 			/*
@@ -1896,13 +1900,7 @@ pmdie(SIGNAL_ARGS)
 				signal_child(PgArchPID, SIGQUIT);
 			/* Tell pgstat to shut down too; nothing left for it to do */
 			if (PgStatPID != 0)
-			{
 				signal_child(PgStatPID, SIGQUIT);
-				allow_immediate_pgstat_restart();
-			}
-			/* Tell autovac launcher to shut down too */
-			if (AutoVacPID != 0)
-				signal_child(AutoVacPID, SIGTERM);
 			break;
 
 		case SIGINT:
@@ -1919,13 +1917,15 @@ pmdie(SIGNAL_ARGS)
 			ereport(LOG,
 					(errmsg("received fast shutdown request")));
 
-			if (DLGetHead(BackendList))
+			if (DLGetHead(BackendList) || AutoVacPID != 0)
 			{
 				if (!FatalError)
 				{
 					ereport(LOG,
 							(errmsg("aborting any active transactions")));
 					SignalChildren(SIGTERM);
+					if (AutoVacPID != 0)
+						signal_child(AutoVacPID, SIGTERM);
 					/* reaper() does the rest */
 				}
 				break;
@@ -1955,13 +1955,7 @@ pmdie(SIGNAL_ARGS)
 				signal_child(PgArchPID, SIGQUIT);
 			/* Tell pgstat to shut down too; nothing left for it to do */
 			if (PgStatPID != 0)
-			{
 				signal_child(PgStatPID, SIGQUIT);
-				allow_immediate_pgstat_restart();
-			}
-			/* Tell autovac launcher to shut down too */
-			if (AutoVacPID != 0)
-				signal_child(AutoVacPID, SIGTERM);
 			break;
 
 		case SIGQUIT:
@@ -1983,10 +1977,7 @@ pmdie(SIGNAL_ARGS)
 			if (PgArchPID != 0)
 				signal_child(PgArchPID, SIGQUIT);
 			if (PgStatPID != 0)
-			{
 				signal_child(PgStatPID, SIGQUIT);
-				allow_immediate_pgstat_restart();
-			}
 			if (DLGetHead(BackendList))
 				SignalChildren(SIGQUIT);
 			ExitPostmaster(0);
@@ -2237,7 +2228,7 @@ reaper(SIGNAL_ARGS)
 
 	if (Shutdown > NoShutdown)
 	{
-		if (DLGetHead(BackendList) || StartupPID != 0)
+		if (DLGetHead(BackendList) || StartupPID != 0 || AutoVacPID != 0)
 			goto reaper_done;
 		/* Start the bgwriter if not running */
 		if (BgWriterPID == 0)
@@ -2250,13 +2241,7 @@ reaper(SIGNAL_ARGS)
 			signal_child(PgArchPID, SIGQUIT);
 		/* Tell pgstat to shut down too; nothing left for it to do */
 		if (PgStatPID != 0)
-		{
 			signal_child(PgStatPID, SIGQUIT);
-			allow_immediate_pgstat_restart();
-		}
-		/* Tell autovac launcher to shut down too */
-		if (AutoVacPID != 0)
-			signal_child(AutoVacPID, SIGTERM);
 	}
 
 reaper_done:
