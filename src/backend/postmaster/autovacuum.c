@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.54 2007/07/01 02:20:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.55 2007/07/01 18:30:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,10 +99,6 @@
 #include "utils/syscache.h"
 
 
-static volatile sig_atomic_t got_SIGUSR1 = false;
-static volatile sig_atomic_t got_SIGHUP = false;
-static volatile sig_atomic_t avlauncher_shutdown_request = false;
-
 /*
  * GUC parameters
  */
@@ -121,12 +117,14 @@ int			autovacuum_vac_cost_limit;
 int			Log_autovacuum = -1;
 
 
-/* maximum sleep duration in the launcher, in seconds */
-#define AV_SLEEP_QUANTUM 10
-
 /* Flags to tell if we are in an autovacuum process */
 static bool am_autovacuum_launcher = false;
 static bool am_autovacuum_worker = false;
+
+/* Flags set by signal handlers */
+static volatile sig_atomic_t got_SIGHUP = false;
+static volatile sig_atomic_t got_SIGUSR1 = false;
+static volatile sig_atomic_t got_SIGTERM = false;
 
 /* Comparison point for determining whether freeze_max_age is exceeded */
 static TransactionId recentXid;
@@ -291,7 +289,7 @@ static PgStat_StatTabEntry *get_pgstat_tabentry_relid(Oid relid, bool isshared,
 static void autovac_report_activity(VacuumStmt *vacstmt, Oid relid);
 static void avl_sighup_handler(SIGNAL_ARGS);
 static void avl_sigusr1_handler(SIGNAL_ARGS);
-static void avlauncher_shutdown(SIGNAL_ARGS);
+static void avl_sigterm_handler(SIGNAL_ARGS);
 static void avl_quickdie(SIGNAL_ARGS);
 
 
@@ -411,7 +409,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	pqsignal(SIGHUP, avl_sighup_handler);
 
 	pqsignal(SIGINT, SIG_IGN);
-	pqsignal(SIGTERM, avlauncher_shutdown);
+	pqsignal(SIGTERM, avl_sigterm_handler);
 	pqsignal(SIGQUIT, avl_quickdie);
 	pqsignal(SIGALRM, SIG_IGN);
 
@@ -544,23 +542,27 @@ AutoVacLauncherMain(int argc, char *argv[])
   								 INVALID_OFFSET, false, &nap);
 
 		/*
-		 * Sleep for a while according to schedule.  We only sleep in
-		 * AV_SLEEP_QUANTUM second intervals, in order to promptly notice
-		 * postmaster death.
+		 * Sleep for a while according to schedule.
+		 *
+		 * On some platforms, signals won't interrupt the sleep.  To ensure we
+		 * respond reasonably promptly when someone signals us, break down the
+		 * sleep into 1-second increments, and check for interrupts after each
+		 * nap.
 		 */
 		while (nap.tv_sec > 0 || nap.tv_usec > 0)
 		{
 			uint32	sleeptime;
 
-			sleeptime = nap.tv_usec;
-			nap.tv_usec = 0;
-
 			if (nap.tv_sec > 0)
 			{
-				sleeptime += Min(nap.tv_sec, AV_SLEEP_QUANTUM) * 1000000;
-				nap.tv_sec -= Min(nap.tv_sec, AV_SLEEP_QUANTUM);
+				sleeptime = 1000000;
+				nap.tv_sec--;
 			}
-			
+			else
+			{
+				sleeptime = nap.tv_usec;
+				nap.tv_usec = 0;
+			}
 			pg_usleep(sleeptime);
 
 			/*
@@ -570,12 +572,12 @@ AutoVacLauncherMain(int argc, char *argv[])
 			if (!PostmasterIsAlive(true))
 				exit(1);
 
-			if (avlauncher_shutdown_request || got_SIGHUP || got_SIGUSR1)
+			if (got_SIGTERM || got_SIGHUP || got_SIGUSR1)
 				break;
 		}
 
 		/* the normal shutdown case */
-		if (avlauncher_shutdown_request)
+		if (got_SIGTERM)
 			break;
 
 		if (got_SIGHUP)
@@ -788,7 +790,7 @@ launcher_determine_sleep(bool canlaunch, bool recursing, struct timeval *nap)
 	 * We only recurse once.  rebuild_database_list should always return times
 	 * in the future, but it seems best not to trust too much on that.
 	 */
-	if (nap->tv_sec == 0L && nap->tv_usec == 0 && !recursing)
+	if (nap->tv_sec == 0 && nap->tv_usec == 0 && !recursing)
 	{
 		rebuild_database_list(InvalidOid);
 		launcher_determine_sleep(canlaunch, true, nap);
@@ -796,9 +798,9 @@ launcher_determine_sleep(bool canlaunch, bool recursing, struct timeval *nap)
 	}
 
 	/* 100ms is the smallest time we'll allow the launcher to sleep */
-	if (nap->tv_sec <= 0L && nap->tv_usec <= 100000)
+	if (nap->tv_sec <= 0 && nap->tv_usec <= 100000)
 	{
-		nap->tv_sec = 0L;
+		nap->tv_sec = 0;
 		nap->tv_usec = 100000;	/* 100 ms */
 	}
 }
@@ -1276,10 +1278,11 @@ avl_sigusr1_handler(SIGNAL_ARGS)
 	got_SIGUSR1 = true;
 }
 
+/* SIGTERM: time to die */
 static void
-avlauncher_shutdown(SIGNAL_ARGS)
+avl_sigterm_handler(SIGNAL_ARGS)
 {
-	avlauncher_shutdown_request = true;
+	got_SIGTERM = true;
 }
 
 /*
