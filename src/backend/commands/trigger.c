@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.214 2007/03/19 23:38:29 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.215 2007/07/01 17:45:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2814,6 +2814,24 @@ AfterTriggerEndSubXact(bool isCommit)
 		afterTriggers->state_stack[my_level] = NULL;
 		Assert(afterTriggers->query_depth ==
 			   afterTriggers->depth_stack[my_level]);
+		/*
+		 * It's entirely possible that the subxact created an event_cxt but
+		 * there is not anything left in it (because all the triggers were
+		 * fired at end-of-statement).  If so, we should release the context
+		 * to prevent memory leakage in a long sequence of subtransactions.
+		 * We can detect whether there's anything of use in the context by
+		 * seeing if anything was added to the global events list since
+		 * subxact start.  (This test doesn't catch every case where the
+		 * context is deletable; for instance maybe the only additions were
+		 * from a sub-sub-xact.  But it handles the common case.)
+		 */
+		if (afterTriggers->cxt_stack[my_level] &&
+			afterTriggers->events.tail == afterTriggers->events_stack[my_level].tail)
+		{
+			MemoryContextDelete(afterTriggers->cxt_stack[my_level]);
+			/* avoid double delete if abort later */
+			afterTriggers->cxt_stack[my_level] = NULL;
+		}
 	}
 	else
 	{
