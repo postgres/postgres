@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.27 2007/06/29 17:07:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.28 2007/07/01 02:22:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -953,7 +953,7 @@ CountUserBackends(Oid roleid)
  *
  * If there are other backends in the DB, we will wait a maximum of 5 seconds
  * for them to exit.  Autovacuum backends are encouraged to exit early by
- * sending them SIGINT, but normal user backends are just waited for.
+ * sending them SIGTERM, but normal user backends are just waited for.
  *
  * The current backend is always ignored; it is caller's responsibility to
  * check whether the current backend uses the given DB, if it's important.
@@ -998,7 +998,7 @@ CheckOtherDBBackends(Oid databaseId)
 
 			if (proc->isAutovacuum)
 			{
-				/* an autovacuum --- send it SIGINT before sleeping */
+				/* an autovacuum --- send it SIGTERM before sleeping */
 				int		autopid = proc->pid;
 
 				/*
