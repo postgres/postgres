@@ -10,3 +10,20 @@ If the perl code is modified, use perltidy on it since pgindent won't
 touch perl code. Use the following commandline:
 perltidy -b -bl -nsfs -naws -l=100 -ole=unix *.pl *.pm
 
+Notes about Visual Studio Express
+---------------------------------
+To build PostgreSQL using Visual Studio Express, the Platform SDK
+has to be installed. Since this is not included in the product 
+originally, extra steps are needed to make it work.
+
+First, download and install the latest Platform SDK from 
+www.microsoft.com. 
+
+Locate the files vcprojectengine.dll.express.config and 
+vcprojectengine.dll.config in the vc\vcpackages directory of
+the Visual C++ Express installation. In these files, add the paths
+to the Platform SDK to the Include, Library and Path tags. Be sure
+to add them to the beginning of the list.
+
+This should work for both GUI and commandline builds, but a restart
+may be necessary.
