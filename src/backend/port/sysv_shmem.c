@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.44 2005/10/15 02:49:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.44.2.1 2007/07/02 20:12:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -223,6 +223,18 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 		 */
 		if (errno == EACCES)
 			return false;
+
+		/*
+		 * Some Linux kernel versions (in fact, all of them as of July 2007)
+		 * sometimes return EIDRM when EINVAL is correct.  The Linux kernel
+		 * actually does not have any internal state that would justify
+		 * returning EIDRM, so we can get away with assuming that EIDRM is
+		 * equivalent to EINVAL on that platform.
+		 */
+#ifdef HAVE_LINUX_EIDRM_BUG
+		if (errno == EIDRM)
+			return false;
+#endif
 
 		/*
 		 * Otherwise, we had better assume that the segment is in use. The
