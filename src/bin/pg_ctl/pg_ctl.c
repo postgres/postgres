@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.80 2007/05/31 15:13:04 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.81 2007/07/02 21:58:31 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,11 +126,22 @@ static void WINAPI pgwin32_ServiceHandler(DWORD);
 static void WINAPI pgwin32_ServiceMain(DWORD, LPTSTR *);
 static void pgwin32_doRunAsService(void);
 static int	CreateRestrictedProcess(char *cmd, PROCESS_INFORMATION * processInfo);
+
+static SERVICE_STATUS status;
+static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
+static HANDLE shutdownHandles[2];
+static pid_t postmasterPID = -1;
+
+#define shutdownEvent	  shutdownHandles[0]
+#define postmasterProcess shutdownHandles[1]
 #endif
+
 static pgpid_t get_pgpid(void);
 static char **readfile(const char *path);
-static int	start_postmaster(void);
-static bool test_postmaster_connection(void);
+static int start_postmaster(void);
+static void read_post_opts(void);
+
+static bool test_postmaster_connection(bool);
 static bool postmaster_is_alive(pid_t pid);
 
 static char def_postopts_file[MAXPGPATH];
@@ -391,15 +402,20 @@ start_postmaster(void)
 
 
 
-/* Find the pgport and try a connection */
+/*
+ * Find the pgport and try a connection
+ * Note that the checkpoint parameter enables a Windows service control
+ * manager checkpoint, it's got nothing to do with database checkpoints!!
+ */
 static bool
-test_postmaster_connection(void)
+test_postmaster_connection(bool do_checkpoint)
 {
 	PGconn	   *conn;
 	bool		success = false;
 	int			i;
 	char		portstr[32];
 	char	   *p;
+	char		connstr[128]; /* Should be way more than enough! */
 
 	*portstr = '\0';
 
@@ -464,10 +480,12 @@ test_postmaster_connection(void)
 	if (!*portstr)
 		snprintf(portstr, sizeof(portstr), "%d", DEF_PGPORT);
 
+	/* We need to set a connect timeout otherwise on Windows the SCM will probably timeout first */
+	snprintf(connstr, sizeof(connstr), "dbname=postgres port=%s connect_timeout=5", portstr);
+
 	for (i = 0; i < wait_seconds; i++)
 	{
-		if ((conn = PQsetdbLogin(NULL, portstr, NULL, NULL,
-								 "postgres", NULL, NULL)) != NULL &&
+		if ((conn = PQconnectdb(connstr)) != NULL &&
 			(PQstatus(conn) == CONNECTION_OK ||
 			 (strcmp(PQerrorMessage(conn),
 					 PQnoPasswordSupplied) == 0)))
@@ -479,7 +497,25 @@ test_postmaster_connection(void)
 		else
 		{
 			PQfinish(conn);
-			print_msg(".");
+
+#if defined(WIN32)
+			if (do_checkpoint)
+			{
+				/*
+				 * Increment the wait hint by 6 secs (connection timeout + sleep)
+				 * We must do this to indicate to the SCM that our startup time is
+				 * changing, otherwise it'll usually send a stop signal after 20
+				 * seconds, despite incrementing the checkpoint counter.
+				 */
+				status.dwWaitHint += 6000;
+				status.dwCheckPoint++;
+				SetServiceStatus(hStatus, (LPSERVICE_STATUS) &status);
+			}
+
+			else
+#endif
+				print_msg(".");
+
 			pg_usleep(1000000); /* 1 sec */
 		}
 	}
@@ -508,24 +544,10 @@ unlimit_core_size(void)
 }
 #endif
 
-
-
 static void
-do_start(void)
+read_post_opts(void)
 {
-	pgpid_t		pid;
-	pgpid_t		old_pid = 0;
 	char	   *optline = NULL;
-	int			exitcode;
-
-	if (ctl_command != RESTART_COMMAND)
-	{
-		old_pid = get_pgpid();
-		if (old_pid != 0)
-			write_stderr(_("%s: another server might be running; "
-						   "trying to start server anyway\n"),
-						 progname);
-	}
 
 	if (post_opts == NULL)
 	{
@@ -536,7 +558,7 @@ do_start(void)
 							postopts_file : def_postopts_file);
 		if (optlines == NULL)
 		{
-			if (ctl_command == START_COMMAND)
+			if (ctl_command == START_COMMAND || ctl_command == RUN_AS_SERVICE_COMMAND)
 				post_opts = "";
 			else
 			{
@@ -576,6 +598,25 @@ do_start(void)
 				post_opts = optline;
 		}
 	}
+}
+
+static void
+do_start(void)
+{
+	pgpid_t		pid;
+	pgpid_t		old_pid = 0;
+	int			exitcode;
+
+	if (ctl_command != RESTART_COMMAND)
+	{
+		old_pid = get_pgpid();
+		if (old_pid != 0)
+			write_stderr(_("%s: another server might be running; "
+						   "trying to start server anyway\n"),
+						 progname);
+	}
+
+	read_post_opts();
 
 	/* No -D or -D already added during server start */
 	if (ctl_command == RESTART_COMMAND || pgdata_opt == NULL)
@@ -642,7 +683,7 @@ do_start(void)
 	{
 		print_msg(_("waiting for server to start..."));
 
-		if (test_postmaster_connection() == false)
+		if (test_postmaster_connection(false) == false)
 		{
 			printf(_("could not start server\n"));
 			exit(1);
@@ -982,7 +1023,7 @@ pgwin32_CommandLine(bool registration)
 		strcat(cmdLine, "\"");
 	}
 
-	if (do_wait)
+	if (registration && do_wait)
 		strcat(cmdLine, " -w");
 
 	if (post_opts)
@@ -1065,15 +1106,6 @@ pgwin32_doUnregister(void)
 	CloseServiceHandle(hSCM);
 }
 
-
-static SERVICE_STATUS status;
-static SERVICE_STATUS_HANDLE hStatus = (SERVICE_STATUS_HANDLE) 0;
-static HANDLE shutdownHandles[2];
-static pid_t postmasterPID = -1;
-
-#define shutdownEvent	  shutdownHandles[0]
-#define postmasterProcess shutdownHandles[1]
-
 static void
 pgwin32_SetServiceStatus(DWORD currentState)
 {
@@ -1118,6 +1150,7 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 {
 	PROCESS_INFORMATION pi;
 	DWORD		ret;
+	DWORD		check_point_start;
 
 	/* Initialize variables */
 	status.dwWin32ExitCode = S_OK;
@@ -1129,6 +1162,8 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 	status.dwCurrentState = SERVICE_START_PENDING;
 
 	memset(&pi, 0, sizeof(pi));
+
+        read_post_opts();
 
 	/* Register the control request handler */
 	if ((hStatus = RegisterServiceCtrlHandler(register_servicename, pgwin32_ServiceHandler)) == (SERVICE_STATUS_HANDLE) 0)
@@ -1147,10 +1182,27 @@ pgwin32_ServiceMain(DWORD argc, LPTSTR * argv)
 	postmasterPID = pi.dwProcessId;
 	postmasterProcess = pi.hProcess;
 	CloseHandle(pi.hThread);
+
+	if (do_wait)
+	{
+		write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Waiting for server startup...\n"));
+		if (test_postmaster_connection(true) == false)
+		{
+                	write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Timed out waiting for server startup\n"));
+ 			pgwin32_SetServiceStatus(SERVICE_STOPPED);
+			return;
+		}
+		write_eventlog(EVENTLOG_INFORMATION_TYPE, _("Server started and accepting connections\n"));
+	}
+
+        /* Save the checkpoint value as it might have been incremented in test_postmaster_connection */
+        check_point_start = status.dwCheckPoint;
+
 	pgwin32_SetServiceStatus(SERVICE_RUNNING);
 
 	/* Wait for quit... */
 	ret = WaitForMultipleObjects(2, shutdownHandles, FALSE, INFINITE);
+
 	pgwin32_SetServiceStatus(SERVICE_STOP_PENDING);
 	switch (ret)
 	{
