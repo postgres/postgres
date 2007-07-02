@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.4.2.1 2003/11/30 21:56:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/sysv_shmem.c,v 1.4.2.2 2007/07/02 20:12:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,10 +219,6 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 	/*
 	 * We detect whether a shared memory segment is in use by seeing
 	 * whether it (a) exists and (b) has any processes are attached to it.
-	 *
-	 * If we are unable to perform the stat operation for a reason other than
-	 * nonexistence of the segment (most likely, because it doesn't belong
-	 * to our userid), assume it is in use.
 	 */
 	if (shmctl(shmId, IPC_STAT, &shmStat) < 0)
 	{
@@ -233,7 +229,29 @@ PGSharedMemoryIsInUse(unsigned long id1, unsigned long id2)
 		 */
 		if (errno == EINVAL)
 			return false;
-		/* Else assume segment is in use */
+		/*
+		 * EACCES implies that the segment belongs to some other userid,
+		 * which means it is not a Postgres shmem segment (or at least,
+		 * not one that is relevant to our data directory).
+		 */
+		if (errno == EACCES)
+			return false;
+		/*
+		 * Some Linux kernel versions (in fact, all of them as of July 2007)
+		 * sometimes return EIDRM when EINVAL is correct.  The Linux kernel
+		 * actually does not have any internal state that would justify
+		 * returning EIDRM, so we can get away with assuming that EIDRM is
+		 * equivalent to EINVAL on that platform.
+		 */
+#ifdef HAVE_LINUX_EIDRM_BUG
+		if (errno == EIDRM)
+			return false;
+#endif
+		/*
+		 * Otherwise, we had better assume that the segment is in use.
+		 * The only likely case is EIDRM, which implies that the segment
+		 * has been IPC_RMID'd but there are still processes attached to it.
+		 */
 		return true;
 	}
 	/* If it has attached processes, it's in use */
