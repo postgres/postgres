@@ -1,0 +1,88 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_view.sgml,v 1.1 2007/07/03 01:30:35 neilc Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERVIEW">
+ <refmeta>
+  <refentrytitle id="SQL-ALTERVIEW-TITLE">ALTER VIEW</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER VIEW</refname>
+  <refpurpose>change the definition of a view</refpurpose>
+ </refnamediv>  
+  
+ <indexterm zone="sql-alterview">
+  <primary>ALTER VIEW</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER VIEW <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+  
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER VIEW</command> changes the definition of a
+   view. To execute this command you must be the owner of the view.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing view.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">newname</replaceable></term>
+    <listitem>
+     <para>
+      The new name of the view.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   To rename the view <literal>foo</literal> to
+   <literal>bar</literal>:
+<programlisting>
+ALTER VIEW foo RENAME TO bar;
+</programlisting>
+  </para>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   <command>ALTER VIEW</command> is a <productname>PostgreSQL</>
+   extension of the SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createview" endterm="sql-createview-title"></member>
+   <member><xref linkend="sql-dropview" endterm="sql-dropview-title"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

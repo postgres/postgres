@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.63 2007/04/26 16:13:08 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.64 2007/07/03 01:30:35 neilc Exp $ -->
 
 <part id="reference">
  <title>Reference</title>
@@ -53,6 +53,7 @@
    &alterTrigger;
    &alterType;
    &alterUser;
+   &alterView;
    &analyze;
    &begin;
    &checkpoint;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.228 2007/06/23 22:12:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.229 2007/07/03 01:30:36 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "nodes/parsenodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/plancat.h"
 #include "optimizer/prep.h"
@@ -1621,7 +1622,7 @@ renameatt(Oid myrelid,
  *			  sequence, AFAIK there's no need for it to be there.
  */
 void
-renamerel(Oid myrelid, const char *newrelname)
+renamerel(Oid myrelid, const char *newrelname, ObjectType reltype)
 {
 	Relation	targetrelation;
 	Relation	relrelation;	/* for RELATION relation */
@@ -1633,8 +1634,8 @@ renamerel(Oid myrelid, const char *newrelname)
 	bool		relhastriggers;
 
 	/*
-	 * Grab an exclusive lock on the target table or index, which we will NOT
-	 * release until end of transaction.
+	 * Grab an exclusive lock on the target table, index, sequence or
+	 * view, which we will NOT release until end of transaction.
 	 */
 	targetrelation = relation_open(myrelid, AccessExclusiveLock);
 
@@ -1647,7 +1648,24 @@ renamerel(Oid myrelid, const char *newrelname)
 				 errmsg("permission denied: \"%s\" is a system catalog",
 						RelationGetRelationName(targetrelation))));
 
+	/*
+	 * For compatibility with prior releases, we don't complain if
+	 * ALTER TABLE or ALTER INDEX is used to rename a sequence or
+	 * view.
+	 */
 	relkind = targetrelation->rd_rel->relkind;
+	if (reltype == OBJECT_SEQUENCE && relkind != 'S')
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a sequence",
+						RelationGetRelationName(targetrelation))));
+
+	if (reltype == OBJECT_VIEW && relkind != 'v')
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is not a view",
+						RelationGetRelationName(targetrelation))));
+
 	relhastriggers = (targetrelation->rd_rel->reltriggers > 0);
 
 	/*

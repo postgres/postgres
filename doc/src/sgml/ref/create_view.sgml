@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.35 2007/02/01 00:28:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_view.sgml,v 1.36 2007/07/03 01:30:35 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -226,6 +226,7 @@ CREATE VIEW <replaceable class="parameter">name</replaceable> [ ( <replaceable c
   <title>See Also</title>
 
   <simplelist type="inline">
+   <member><xref linkend="sql-alterview" endterm="sql-alterview-title"></member>
    <member><xref linkend="sql-dropview" endterm="sql-dropview-title"></member>
   </simplelist>
  </refsect1>

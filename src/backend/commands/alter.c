@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.23 2007/03/26 16:58:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.24 2007/07/03 01:30:36 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,6 +83,8 @@ ExecRenameStmt(RenameStmt *stmt)
 			break;
 
 		case OBJECT_TABLE:
+		case OBJECT_SEQUENCE:
+		case OBJECT_VIEW:
 		case OBJECT_INDEX:
 		case OBJECT_COLUMN:
 		case OBJECT_TRIGGER:
@@ -96,6 +98,8 @@ ExecRenameStmt(RenameStmt *stmt)
 				switch (stmt->renameType)
 				{
 					case OBJECT_TABLE:
+					case OBJECT_SEQUENCE:
+					case OBJECT_VIEW:
 					case OBJECT_INDEX:
 						{
 							/*
@@ -113,7 +117,7 @@ ExecRenameStmt(RenameStmt *stmt)
 								aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 											get_namespace_name(namespaceId));
 
-							renamerel(relid, stmt->newname);
+							renamerel(relid, stmt->newname, stmt->renameType);
 							break;
 						}
 					case OBJECT_COLUMN:

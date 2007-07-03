@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.70 2007/04/26 16:13:08 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.71 2007/07/03 01:30:35 neilc Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -25,6 +25,7 @@ Complete list of usable sgml source files in this directory.
 <!entity alterTrigger       system "alter_trigger.sgml">
 <!entity alterType          system "alter_type.sgml">
 <!entity alterUser          system "alter_user.sgml">
+<!entity alterView          system "alter_view.sgml">
 <!entity analyze            system "analyze.sgml">
 <!entity begin              system "begin.sgml">
 <!entity checkpoint         system "checkpoint.sgml">

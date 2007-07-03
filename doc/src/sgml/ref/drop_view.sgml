@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.23 2006/09/16 00:30:18 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.24 2007/07/03 01:30:35 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -104,6 +104,7 @@ DROP VIEW kinds;
   <title>See Also</title>
 
   <simplelist type="inline">
+   <member><xref linkend="sql-alterview" endterm="sql-alterview-title"></member>
    <member><xref linkend="sql-createview" endterm="sql-createview-title"></member>
   </simplelist>
  </refsect1>
