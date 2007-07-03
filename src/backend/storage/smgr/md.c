@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.128 2007/04/12 17:10:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.129 2007/07/03 14:51:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -880,9 +880,12 @@ mdsync(void)
 
 	/*
 	 * If we are in the bgwriter, the sync had better include all fsync
-	 * requests that were queued by backends before the checkpoint REDO
-	 * point was determined.  We go that a little better by accepting all
-	 * requests queued up to the point where we start fsync'ing.
+	 * requests that were queued by backends up to this point.  The tightest
+	 * race condition that could occur is that a buffer that must be written
+	 * and fsync'd for the checkpoint could have been dumped by a backend
+	 * just before it was visited by BufferSync().  We know the backend will
+	 * have queued an fsync request before clearing the buffer's dirtybit,
+	 * so we are safe as long as we do an Absorb after completing BufferSync().
 	 */
 	AbsorbFsyncRequests();
 

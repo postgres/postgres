@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.40 2007/06/30 19:12:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.41 2007/07/03 14:51:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1007,9 +1007,9 @@ ForwardFsyncRequest(RelFileNode rnode, BlockNumber segno)
  *		Retrieve queued fsync requests and pass them to local smgr.
  *
  * This is exported because it must be called during CreateCheckPoint;
- * we have to be sure we have accepted all pending requests *after* we
- * establish the checkpoint REDO pointer.  Since CreateCheckPoint
- * sometimes runs in non-bgwriter processes, do nothing if not bgwriter.
+ * we have to be sure we have accepted all pending requests just before
+ * we start fsync'ing.  Since CreateCheckPoint sometimes runs in
+ * non-bgwriter processes, do nothing if not bgwriter.
  */
 void
 AbsorbFsyncRequests(void)
