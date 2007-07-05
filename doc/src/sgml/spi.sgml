@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.57 2007/05/03 15:05:56 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.58 2007/07/05 19:15:12 tgl Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -1832,9 +1832,10 @@ void SPI_scroll_cursor_move(Portal <parameter>portal</parameter>, FetchDirection
   <title>Return Value</title>
 
   <para>
-   <varname>SPI_processed</varname> and
-   <varname>SPI_tuptable</varname> are set as in
+   <varname>SPI_processed</varname> is set as in
    <function>SPI_execute</function> if successful.
+   <varname>SPI_tuptable</varname> is set to <symbol>NULL</>, since
+   no rows are returned by this function.
   </para>
  </refsect1>
 
