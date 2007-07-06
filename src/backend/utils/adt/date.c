@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.133 2007/06/15 20:56:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.134 2007/07/06 04:15:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1198,6 +1198,17 @@ time_cmp(PG_FUNCTION_ARGS)
 }
 
 Datum
+time_hash(PG_FUNCTION_ARGS)
+{
+	/* We can use either hashint8 or hashfloat8 directly */
+#ifdef HAVE_INT64_TIMESTAMP
+	return hashint8(fcinfo);
+#else
+	return hashfloat8(fcinfo);
+#endif
+}
+
+Datum
 time_larger(PG_FUNCTION_ARGS)
 {
 	TimeADT		time1 = PG_GETARG_TIMEADT(0);
@@ -1960,20 +1971,27 @@ timetz_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(timetz_cmp_internal(time1, time2));
 }
 
-/*
- * timetz, being an unusual size, needs a specialized hash function.
- */
 Datum
 timetz_hash(PG_FUNCTION_ARGS)
 {
 	TimeTzADT  *key = PG_GETARG_TIMETZADT_P(0);
+	uint32		thash;
 
 	/*
-	 * Specify hash length as sizeof(double) + sizeof(int4), not as
-	 * sizeof(TimeTzADT), so that any garbage pad bytes in the structure won't
-	 * be included in the hash!
+	 * To avoid any problems with padding bytes in the struct,
+	 * we figure the field hashes separately and XOR them.  This also
+	 * provides a convenient framework for dealing with the fact that
+	 * the time field might be either double or int64.
 	 */
-	return hash_any((unsigned char *) key, sizeof(key->time) + sizeof(key->zone));
+#ifdef HAVE_INT64_TIMESTAMP
+	thash = DatumGetUInt32(DirectFunctionCall1(hashint8,
+											   Int64GetDatumFast(key->time)));
+#else
+	thash = DatumGetUInt32(DirectFunctionCall1(hashfloat8,
+											   Float8GetDatumFast(key->time)));
+#endif
+	thash ^= DatumGetUInt32(hash_uint32(key->zone));
+	PG_RETURN_UINT32(thash);
 }
 
 Datum

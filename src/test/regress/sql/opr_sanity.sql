@@ -790,11 +790,10 @@ WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'btree')
 -- For hash we can also do a little better: the support routines must be
 -- of the form hash(lefttype) returns int4.  There are several cases where
 -- we cheat and use a hash function that is physically compatible with the
--- datatype even though there's no cast, so for now we can't check that.
+-- datatype even though there's no cast, so this check does find a small
+-- number of entries.
 
-SELECT p1.amprocfamily, p1.amprocnum,
-	p2.oid, p2.proname,
-	p3.opfname
+SELECT p1.amprocfamily, p1.amprocnum, p2.proname, p3.opfname
 FROM pg_amproc AS p1, pg_proc AS p2, pg_opfamily AS p3
 WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'hash')
     AND p1.amprocfamily = p3.oid AND p1.amproc = p2.oid AND
@@ -802,8 +801,9 @@ WHERE p3.opfmethod = (SELECT oid FROM pg_am WHERE amname = 'hash')
      OR proretset
      OR prorettype != 'int4'::regtype
      OR pronargs != 1
---   OR NOT physically_coercible(amproclefttype, proargtypes[0])
-     OR amproclefttype != amprocrighttype);
+     OR NOT physically_coercible(amproclefttype, proargtypes[0])
+     OR amproclefttype != amprocrighttype)
+ORDER BY 1;
 
 -- Support routines that are primary members of opfamilies must be immutable
 -- (else it suggests that the index ordering isn't fixed).  But cross-type

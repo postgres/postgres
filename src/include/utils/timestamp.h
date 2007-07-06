@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.70 2007/06/05 21:31:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/timestamp.h,v 1.71 2007/07/06 04:16:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -211,6 +211,7 @@ extern Datum timestamp_ge(PG_FUNCTION_ARGS);
 extern Datum timestamp_gt(PG_FUNCTION_ARGS);
 extern Datum timestamp_finite(PG_FUNCTION_ARGS);
 extern Datum timestamp_cmp(PG_FUNCTION_ARGS);
+extern Datum timestamp_hash(PG_FUNCTION_ARGS);
 extern Datum timestamp_smaller(PG_FUNCTION_ARGS);
 extern Datum timestamp_larger(PG_FUNCTION_ARGS);
 

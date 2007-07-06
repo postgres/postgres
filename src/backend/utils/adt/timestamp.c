@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.178 2007/06/15 20:56:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.179 2007/07/06 04:15:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1839,6 +1839,17 @@ timestamp_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(timestamp_cmp_internal(dt1, dt2));
 }
 
+Datum
+timestamp_hash(PG_FUNCTION_ARGS)
+{
+	/* We can use either hashint8 or hashfloat8 directly */
+#ifdef HAVE_INT64_TIMESTAMP
+	return hashint8(fcinfo);
+#else
+	return hashfloat8(fcinfo);
+#endif
+}
+
 
 /*
  * Crosstype comparison functions for timestamp vs timestamptz
@@ -2110,21 +2121,32 @@ interval_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(interval_cmp_internal(interval1, interval2));
 }
 
-/*
- * interval, being an unusual size, needs a specialized hash function.
- */
 Datum
 interval_hash(PG_FUNCTION_ARGS)
 {
 	Interval   *key = PG_GETARG_INTERVAL_P(0);
+	uint32		thash;
+	uint32		mhash;
 
 	/*
-	 * Specify hash length as sizeof(double) + sizeof(int4), not as
-	 * sizeof(Interval), so that any garbage pad bytes in the structure won't
-	 * be included in the hash!
+	 * To avoid any problems with padding bytes in the struct,
+	 * we figure the field hashes separately and XOR them.  This also
+	 * provides a convenient framework for dealing with the fact that
+	 * the time field might be either double or int64.
 	 */
-	return hash_any((unsigned char *) key,
-				  sizeof(key->time) + sizeof(key->day) + sizeof(key->month));
+#ifdef HAVE_INT64_TIMESTAMP
+	thash = DatumGetUInt32(DirectFunctionCall1(hashint8,
+											   Int64GetDatumFast(key->time)));
+#else
+	thash = DatumGetUInt32(DirectFunctionCall1(hashfloat8,
+											   Float8GetDatumFast(key->time)));
+#endif
+	thash ^= DatumGetUInt32(hash_uint32(key->day));
+	/* Shift so "k days" and "k months" don't hash to the same thing */
+	mhash = DatumGetUInt32(hash_uint32(key->month));
+	thash ^= mhash << 24;
+	thash ^= mhash >> 8;
+	PG_RETURN_UINT32(thash);
 }
 
 /* overlaps_timestamp() --- implements the SQL92 OVERLAPS operator.
