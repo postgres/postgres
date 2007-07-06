@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.66 2007/05/24 18:54:10 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.67 2007/07/06 13:36:55 wieck Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -114,6 +114,8 @@ typedef struct
 	int			ecnt;			/* error count */
 	int			listen;			/* 0 indicates that an async query has been
 								 * sent */
+	int			sleeping;		/* 1 indicates that the client is napping */
+	struct timeval until;		/* napping until */
 	Variable   *variables;		/* array of variable definitions */
 	int			nvariables;
 	struct timeval txn_begin;	/* used for measuring latencies */
@@ -445,6 +447,20 @@ doCustom(CState * state, int n, int debug)
 top:
 	commands = sql_files[st->use_file];
 
+	if (st->sleeping)
+	{							/* are we sleeping? */
+		int				usec;
+		struct timeval	now;
+
+		gettimeofday(&now, NULL);
+		usec = (st->until.tv_sec - now.tv_sec) * 1000000 +
+				st->until.tv_usec - now.tv_usec;
+		if (usec <= 0)
+			st->sleeping = 0;	/* Done sleeping, go ahead with next command */
+		else
+			return;				/* Still sleeping, nothing to do here */
+	}
+
 	if (st->listen)
 	{							/* are we receiver? */
 		if (commands[st->state]->type == SQL_COMMAND)
@@ -711,6 +727,32 @@ top:
 
 			st->listen = 1;
 		}
+		else if (pg_strcasecmp(argv[0], "usleep") == 0)
+		{
+			char	   *var;
+			int			usec;
+			struct timeval now;
+
+			if (*argv[1] == ':')
+			{
+				if ((var = getVariable(st, argv[1] + 1)) == NULL)
+				{
+					fprintf(stderr, "%s: undefined variable %s\n", argv[0], argv[1]);
+					st->ecnt++;
+					return;
+				}
+				usec = atoi(var);
+			}
+			else
+				usec = atoi(argv[1]);
+
+			gettimeofday(&now, NULL);
+			st->until.tv_sec = now.tv_sec + (now.tv_usec + usec) / 1000000;
+			st->until.tv_usec = (now.tv_usec + usec) % 1000000;
+			st->sleeping = 1;
+
+			st->listen = 1;
+		}
 
 		goto top;
 	}
@@ -921,9 +963,21 @@ process_commands(char *buf)
 				fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
 						my_commands->argv[0], my_commands->argv[j]);
 		}
+		else if (pg_strcasecmp(my_commands->argv[0], "usleep") == 0)
+		{
+			if (my_commands->argc < 2)
+			{
+				fprintf(stderr, "%s: missing argument\n", my_commands->argv[0]);
+				return NULL;
+			}
+
+			for (j = 2; j < my_commands->argc; j++)
+				fprintf(stderr, "%s: extra argument \"%s\" ignored\n",
+						my_commands->argv[0], my_commands->argv[j]);
+		}
 		else
 		{
-			fprintf(stderr, "invalid command %s\n", my_commands->argv[0]);
+			fprintf(stderr, "Invalid command %s\n", my_commands->argv[0]);
 			return NULL;
 		}
 	}
@@ -1143,6 +1197,9 @@ main(int argc, char **argv)
 	fd_set		input_mask;
 	int			nsocks;			/* return from select(2) */
 	int			maxsock;		/* max socket number to be waited */
+	struct timeval now;
+	struct timeval timeout;
+	int			min_usec;
 
 #ifdef HAVE_GETRLIMIT
 	struct rlimit rlim;
@@ -1526,11 +1583,33 @@ main(int argc, char **argv)
 		FD_ZERO(&input_mask);
 
 		maxsock = -1;
+		min_usec = -1;
 		for (i = 0; i < nclients; i++)
 		{
 			Command   **commands = sql_files[state[i].use_file];
 
-			if (state[i].con && commands[state[i].state]->type != META_COMMAND)
+			if (state[i].sleeping)
+			{
+				int		this_usec;
+				int		sock = PQsocket(state[i].con);
+
+				if (min_usec < 0)
+				{
+					gettimeofday(&now, NULL);
+					min_usec = 0;
+				}
+
+				this_usec = (state[i].until.tv_sec - now.tv_sec) * 1000000 +
+							state[i].until.tv_usec - now.tv_usec;
+
+				if (this_usec > 0 && (min_usec == 0 || this_usec < min_usec))
+					min_usec = this_usec;
+
+				FD_SET(sock, &input_mask);
+				if (maxsock < sock)
+					maxsock = sock;
+			}
+			else if (state[i].con && commands[state[i].state]->type != META_COMMAND)
 			{
 				int			sock = PQsocket(state[i].con);
 
@@ -1547,8 +1626,18 @@ main(int argc, char **argv)
 
 		if (maxsock != -1)
 		{
-			if ((nsocks = select(maxsock + 1, &input_mask, (fd_set *) NULL,
-							  (fd_set *) NULL, (struct timeval *) NULL)) < 0)
+			if (min_usec >= 0)
+			{
+				timeout.tv_sec = min_usec / 1000000;
+				timeout.tv_usec = min_usec % 1000000;
+
+				nsocks = select(maxsock + 1, &input_mask, (fd_set *) NULL,
+							  (fd_set *) NULL, &timeout);
+			}
+			else
+				nsocks = select(maxsock + 1, &input_mask, (fd_set *) NULL,
+							  (fd_set *) NULL, (struct timeval *) NULL);
+			if (nsocks < 0)
 			{
 				if (errno == EINTR)
 					continue;
@@ -1557,6 +1646,7 @@ main(int argc, char **argv)
 				fprintf(stderr, "select failed: %s\n", strerror(errno));
 				exit(1);
 			}
+#ifdef NOT_USED
 			else if (nsocks == 0)
 			{					/* timeout */
 				fprintf(stderr, "select timeout\n");
@@ -1567,6 +1657,7 @@ main(int argc, char **argv)
 				}
 				exit(0);
 			}
+#endif
 		}
 
 		/* ok, backend returns reply */

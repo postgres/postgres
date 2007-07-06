@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/pgbench/README.pgbench,v 1.18 2007/04/08 01:15:07 ishii Exp $
+$PostgreSQL: pgsql/contrib/pgbench/README.pgbench,v 1.19 2007/07/06 13:36:55 wieck Exp $
 
 pgbench README
 
@@ -230,6 +230,16 @@ o -f option
   SELECT abalance FROM accounts WHERE aid = :aid
 
   Variables can also be defined by using -D option.
+
+  \usleep usec
+
+	causes script execution to sleep for the specified duration in
+	microseconds.
+
+  example:
+
+  \setrandom usec 1000000 3000000
+  \usleep :usec
 
   Example, TPC-B like benchmark can be defined as follows(scaling
   factor = 1):
