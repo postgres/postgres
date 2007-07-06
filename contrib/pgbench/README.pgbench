@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/pgbench/README.pgbench,v 1.19 2007/07/06 13:36:55 wieck Exp $
+$PostgreSQL: pgsql/contrib/pgbench/README.pgbench,v 1.20 2007/07/06 20:17:02 wieck Exp $
 
 pgbench README
 
@@ -231,15 +231,15 @@ o -f option
 
   Variables can also be defined by using -D option.
 
-  \usleep usec
+  \sleep num [us|ms|s]
 
-	causes script execution to sleep for the specified duration in
-	microseconds.
+	causes script execution to sleep for the specified duration of
+	microseconds (us), milliseconds (ms) or the default seconds (s).
 
   example:
 
-  \setrandom usec 1000000 3000000
-  \usleep :usec
+  \setrandom millisec 1000 2500
+  \sleep :millisec ms
 
   Example, TPC-B like benchmark can be defined as follows(scaling
   factor = 1):
