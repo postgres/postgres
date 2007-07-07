@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.5 2007/06/12 11:07:34 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.6 2007/07/07 07:43:21 mha Exp $
 
 set D=%CD%
 if exist ..\msvc if exist ..\..\..\src cd ..\..\..
@@ -16,7 +16,7 @@ call :del src\backend\win32ver.rc
 REM Delete files created with GenerateFiles() in Solution.pm
 call :del src\include\pg_config.h
 call :del src\include\pg_config_os.h
-call :del src\include\parser\parse.h
+call :del src\backend\parser\parse.h
 call :del src\include\utils\fmgroids.h
 
 call :del src\backend\utils\fmgrtab.c

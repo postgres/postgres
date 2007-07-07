@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.13 2007/06/12 18:31:28 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.14 2007/07/07 07:43:20 mha Exp $
 #
 use Carp;
 use Win32;
@@ -185,19 +185,23 @@ sub mkvcbuild
 
     my $psql = AddSimpleFrontend('psql', 1);
     $psql->AddIncludeDir('src\bin\pg_dump');
+    $psql->AddIncludeDir('src\backend');
     $psql->AddFile('src\bin\psql\psqlscan.l');
 
     my $pgdump = AddSimpleFrontend('pg_dump', 1);
+    $pgdump->AddIncludeDir('src\backend');
     $pgdump->AddFile('src\bin\pg_dump\pg_dump.c');
     $pgdump->AddFile('src\bin\pg_dump\common.c');
     $pgdump->AddFile('src\bin\pg_dump\pg_dump_sort.c');
 
     my $pgdumpall = AddSimpleFrontend('pg_dump', 1);
     $pgdumpall->{name} = 'pg_dumpall';
+    $pgdumpall->AddIncludeDir('src\backend');
     $pgdumpall->AddFile('src\bin\pg_dump\pg_dumpall.c');
 
     my $pgrestore = AddSimpleFrontend('pg_dump', 1);
     $pgrestore->{name} = 'pg_restore';
+    $pgrestore->AddIncludeDir('src\backend');
     $pgrestore->AddFile('src\bin\pg_dump\pg_restore.c');
 
     my $zic = $solution->AddProject('zic','exe','utils');
@@ -293,6 +297,7 @@ sub mkvcbuild
             if ($f =~ /\/keywords\.o$/)
             {
                 $proj->AddFile('src\backend\parser\keywords.c');
+                $proj->AddIncludeDir('src\backend');
             }
             else
             {
