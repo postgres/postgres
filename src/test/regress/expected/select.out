@@ -736,3 +736,35 @@ SELECT * FROM foo ORDER BY f1 DESC NULLS LAST;
    
 (7 rows)
 
+--
+-- Test some corner cases that have been known to confuse the planner
+--
+-- ORDER BY on a constant doesn't really need any sorting
+SELECT 1 AS x ORDER BY x;
+ x 
+---
+ 1
+(1 row)
+
+-- But ORDER BY on a set-valued expression does
+create function sillysrf(int) returns setof int as
+  'values (1),(10),(2),($1)' language sql immutable;
+select sillysrf(42);
+ sillysrf 
+----------
+        1
+       10
+        2
+       42
+(4 rows)
+
+select sillysrf(-1) order by 1;
+ sillysrf 
+----------
+       -1
+        1
+        2
+       10
+(4 rows)
+
+drop function sillysrf(int);
