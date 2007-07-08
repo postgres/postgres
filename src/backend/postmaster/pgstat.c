@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.160 2007/06/28 00:02:38 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.161 2007/07/08 22:23:16 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -964,8 +964,12 @@ pgstat_drop_database(Oid databaseid)
  *	Tell the collector that we just dropped a relation.
  *	(If the message gets lost, we will still clean the dead entry eventually
  *	via future invocations of pgstat_vacuum_tabstat().)
+ *
+ *	Currently not used for lack of any good place to call it; we rely
+ *	entirely on pgstat_vacuum_tabstat() to clean out stats for dead rels.
  * ----------
  */
+#ifdef NOT_USED
 void
 pgstat_drop_relation(Oid relid)
 {
@@ -984,6 +988,7 @@ pgstat_drop_relation(Oid relid)
 	msg.m_databaseid = MyDatabaseId;
 	pgstat_send(&msg, len);
 }
+#endif /* NOT_USED */
 
 
 /* ----------

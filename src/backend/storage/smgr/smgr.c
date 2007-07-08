@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.103 2007/01/05 22:19:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.104 2007/07/08 22:23:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,11 +20,11 @@
 #include "access/xact.h"
 #include "access/xlogutils.h"
 #include "commands/tablespace.h"
-#include "pgstat.h"
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/smgr.h"
+#include "utils/hsearch.h"
 #include "utils/memutils.h"
 
 
@@ -452,13 +452,11 @@ smgr_internal_unlink(RelFileNode rnode, int which, bool isTemp, bool isRedo)
 	FreeSpaceMapForgetRel(&rnode);
 
 	/*
-	 * Tell the stats collector to forget it immediately, too.	Skip this in
-	 * recovery mode, since the stats collector likely isn't running (and if
-	 * it is, pgstat.c will get confused because we aren't a real backend
-	 * process).
+	 * It'd be nice to tell the stats collector to forget it immediately, too.
+	 * But we can't because we don't know the OID (and in cases involving
+	 * relfilenode swaps, it's not always clear which table OID to forget,
+	 * anyway).
 	 */
-	if (!InRecovery)
-		pgstat_drop_relation(rnode.relNode);
 
 	/*
 	 * And delete the physical files.
