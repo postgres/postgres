@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.236 2007/07/08 17:11:50 joe Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.237 2007/07/08 18:28:55 tgl Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -1035,6 +1035,25 @@ int PQbackendPID(const PGconn *conn);
     </varlistentry>
 
     <varlistentry>
+     <term><function>PQconnectionUsedPassword</function><indexterm><primary>PQconnectionUsedPassword</></></term>
+     <listitem>
+      <para>
+       Returns true (1) if the connection authentication method
+       required a password to be supplied. Returns false (0) if not.
+<synopsis>
+int PQconnectionUsedPassword(const PGconn *conn);
+</synopsis>
+      </para>
+
+      <para>
+       This function can be applied after either successful or failed
+       connection attempts.  In the case of failure, it can for example
+       be used to decide whether to prompt the user for a password.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
      <term><function>PQgetssl</function><indexterm><primary>PQgetssl</></></term>
      <listitem>
       <para>
@@ -1055,20 +1074,6 @@ SSL *PQgetssl(const PGconn *conn);
        You must define <symbol>USE_SSL</symbol> in order to get the
        correct prototype for this function. Doing this will also 
        automatically include <filename>ssl.h</filename> from <productname>OpenSSL</productname>.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term><function>PQconnectionUsedPassword</function><indexterm><primary>PQconnectionUsedPassword</></></term>
-     <listitem>
-      <para>
-       Returns true (1) if the connection authentication method
-       required a password to be supplied. Returns false (0)
-       otherwise.
-       <synopsis>
-       bool PQconnectionUsedPassword(const PGconn *conn);
-       </synopsis>
       </para>
      </listitem>
     </varlistentry>
