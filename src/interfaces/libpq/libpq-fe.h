@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.136 2007/03/03 19:52:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.137 2007/07/08 17:11:51 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,10 +23,11 @@ extern		"C"
 #include <stdio.h>
 
 /*
- * postgres_ext.h defines the backend's externally visible types,
+ * defines the backend's externally visible types,
  * such as Oid.
  */
 #include "postgres_ext.h"
+#include "postgres_fe.h"
 
 /* Application-visible enum types */
 
@@ -265,6 +266,7 @@ extern int	PQsocket(const PGconn *conn);
 extern int	PQbackendPID(const PGconn *conn);
 extern int	PQclientEncoding(const PGconn *conn);
 extern int	PQsetClientEncoding(PGconn *conn, const char *encoding);
+extern bool	PQconnectionUsedPassword(const PGconn *conn);
 
 /* Get the OpenSSL structure associated with a connection. Returns NULL for
  * unencrypted connections or if any other TLS library is in use. */

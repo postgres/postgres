@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.235 2007/03/30 03:19:02 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.236 2007/07/08 17:11:50 joe Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -1055,6 +1055,20 @@ SSL *PQgetssl(const PGconn *conn);
        You must define <symbol>USE_SSL</symbol> in order to get the
        correct prototype for this function. Doing this will also 
        automatically include <filename>ssl.h</filename> from <productname>OpenSSL</productname>.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term><function>PQconnectionUsedPassword</function><indexterm><primary>PQconnectionUsedPassword</></></term>
+     <listitem>
+      <para>
+       Returns true (1) if the connection authentication method
+       required a password to be supplied. Returns false (0)
+       otherwise.
+       <synopsis>
+       bool PQconnectionUsedPassword(const PGconn *conn);
+       </synopsis>
       </para>
      </listitem>
     </varlistentry>
