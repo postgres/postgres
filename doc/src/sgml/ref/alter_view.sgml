@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_view.sgml,v 1.1 2007/07/03 01:30:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_view.sgml,v 1.2 2007/07/08 17:47:38 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -67,6 +67,7 @@ ALTER VIEW <replaceable>name</replaceable> RENAME TO <replaceable>newname</repla
 ALTER VIEW foo RENAME TO bar;
 </programlisting>
   </para>
+ </refsect1>
 
  <refsect1>
   <title>Compatibility</title>
