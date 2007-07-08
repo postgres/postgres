@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.179 2007/03/03 17:19:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.180 2007/07/08 19:07:38 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1110,11 +1110,11 @@ do_connect(char *dbname, char *user, char *host, char *port)
 	 * If the user asked to be prompted for a password, ask for one now. If
 	 * not, use the password from the old connection, provided the username
 	 * has not changed. Otherwise, try to connect without a password first,
-	 * and then ask for a password if we got the appropriate error message.
+	 * and then ask for a password if needed.
 	 *
-	 * XXX: this behavior is broken. It leads to spurious connection attempts
-	 * in the postmaster's log, and doing a string comparison against the
-	 * returned error message is pretty fragile.
+	 * XXX: this behavior leads to spurious connection attempts recorded
+	 * in the postmaster's log.  But libpq offers no API that would let us
+	 * obtain a password and then continue with the first connection attempt.
 	 */
 	if (pset.getPassword)
 	{
@@ -1141,7 +1141,7 @@ do_connect(char *dbname, char *user, char *host, char *port)
 		 * Connection attempt failed; either retry the connection attempt with
 		 * a new password, or give up.
 		 */
-		if (strcmp(PQerrorMessage(n_conn), PQnoPasswordSupplied) == 0)
+		if (!password && PQconnectionUsedPassword(n_conn))
 		{
 			PQfinish(n_conn);
 			password = prompt_for_password(user);

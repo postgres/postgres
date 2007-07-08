@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.91 2007/05/15 20:20:21 alvherre Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.92 2007/07/08 19:07:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1310,7 +1310,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 				const char *pguser, bool require_password, bool fail_on_error)
 {
 	PGconn	   *conn;
-	bool		need_pass = false;
+	bool		new_pass;
 	const char *remoteversion_str;
 	int			my_version;
 	static char *password = NULL;
@@ -1324,7 +1324,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	 */
 	do
 	{
-		need_pass = false;
+		new_pass = false;
 		conn = PQsetdbLogin(pghost, pgport, NULL, NULL, dbname, pguser, password);
 
 		if (!conn)
@@ -1335,17 +1335,15 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 		}
 
 		if (PQstatus(conn) == CONNECTION_BAD &&
-			strcmp(PQerrorMessage(conn), PQnoPasswordSupplied) == 0 &&
+			PQconnectionUsedPassword(conn) &&
+			password == NULL &&
 			!feof(stdin))
 		{
 			PQfinish(conn);
-			need_pass = true;
-			if (password)
-				free(password);
-			password = NULL;
 			password = simple_prompt("Password: ", 100, false);
+			new_pass = true;
 		}
-	} while (need_pass);
+	} while (new_pass);
 
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)

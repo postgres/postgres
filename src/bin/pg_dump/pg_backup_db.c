@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.75 2006/10/04 00:30:05 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.76 2007/07/08 19:07:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,13 +123,11 @@ ReconnectToServer(ArchiveHandle *AH, const char *dbname, const char *username)
 static PGconn *
 _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 {
-	int			need_pass;
 	PGconn	   *newConn;
-	char	   *password = NULL;
-	int			badPwd = 0;
-	int			noPwd = 0;
 	char	   *newdb;
 	char	   *newuser;
+	char	   *password = NULL;
+	bool		new_pass;
 
 	if (!reqdb)
 		newdb = PQdb(AH->connection);
@@ -152,7 +150,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 	do
 	{
-		need_pass = false;
+		new_pass = false;
 		newConn = PQsetdbLogin(PQhost(AH->connection), PQport(AH->connection),
 							   NULL, NULL, newdb,
 							   newuser, password);
@@ -161,30 +159,23 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 
 		if (PQstatus(newConn) == CONNECTION_BAD)
 		{
-			noPwd = (strcmp(PQerrorMessage(newConn),
-							PQnoPasswordSupplied) == 0);
-			badPwd = (strncmp(PQerrorMessage(newConn),
-						"Password authentication failed for user", 39) == 0);
-
-			if (noPwd || badPwd)
-			{
-				if (badPwd)
-					fprintf(stderr, "Password incorrect\n");
-
-				fprintf(stderr, "Connecting to %s as %s\n",
-						newdb, newuser);
-
-				need_pass = true;
-				if (password)
-					free(password);
-				password = simple_prompt("Password: ", 100, false);
-			}
-			else
+			if (!PQconnectionUsedPassword(newConn))
 				die_horribly(AH, modulename, "could not reconnect to database: %s",
 							 PQerrorMessage(newConn));
 			PQfinish(newConn);
+
+			if (password)
+				fprintf(stderr, "Password incorrect\n");
+
+			fprintf(stderr, "Connecting to %s as %s\n",
+					newdb, newuser);
+
+			if (password)
+				free(password);
+			password = simple_prompt("Password: ", 100, false);
+			new_pass = true;
 		}
-	} while (need_pass);
+	} while (new_pass);
 
 	if (password)
 		free(password);
@@ -214,7 +205,7 @@ ConnectDatabase(Archive *AHX,
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	char	   *password = NULL;
-	bool		need_pass = false;
+	bool		new_pass;
 
 	if (AH->connection)
 		die_horribly(AH, modulename, "already connected to a database\n");
@@ -235,7 +226,7 @@ ConnectDatabase(Archive *AHX,
 	 */
 	do
 	{
-		need_pass = false;
+		new_pass = false;
 		AH->connection = PQsetdbLogin(pghost, pgport, NULL, NULL,
 									  dbname, username, password);
 
@@ -243,16 +234,15 @@ ConnectDatabase(Archive *AHX,
 			die_horribly(AH, modulename, "failed to connect to database\n");
 
 		if (PQstatus(AH->connection) == CONNECTION_BAD &&
-		 strcmp(PQerrorMessage(AH->connection), PQnoPasswordSupplied) == 0 &&
+			PQconnectionUsedPassword(AH->connection) &&
+			password == NULL &&
 			!feof(stdin))
 		{
 			PQfinish(AH->connection);
-			need_pass = true;
-			free(password);
-			password = NULL;
 			password = simple_prompt("Password: ", 100, false);
+			new_pass = true;
 		}
-	} while (need_pass);
+	} while (new_pass);
 
 	if (password)
 		free(password);

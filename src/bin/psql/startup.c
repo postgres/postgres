@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.140 2007/02/01 19:10:29 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/startup.c,v 1.141 2007/07/08 19:07:38 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 	char	   *username = NULL;
 	char	   *password = NULL;
 	char	   *password_prompt = NULL;
-	bool		need_pass;
+	bool		new_pass;
 
 	set_pglocale_pgservice(argv[0], "psql");
 
@@ -204,23 +204,22 @@ main(int argc, char *argv[])
 	/* loop until we have a password if requested by backend */
 	do
 	{
-		need_pass = false;
+		new_pass = false;
 		pset.db = PQsetdbLogin(options.host, options.port, NULL, NULL,
 					options.action == ACT_LIST_DB && options.dbname == NULL ?
 							   "postgres" : options.dbname,
 							   username, password);
 
 		if (PQstatus(pset.db) == CONNECTION_BAD &&
-			strcmp(PQerrorMessage(pset.db), PQnoPasswordSupplied) == 0 &&
+			PQconnectionUsedPassword(pset.db) &&
+			password == NULL &&
 			!feof(stdin))
 		{
 			PQfinish(pset.db);
-			need_pass = true;
-			free(password);
-			password = NULL;
 			password = simple_prompt(password_prompt, 100, false);
+			new_pass = true;
 		}
-	} while (need_pass);
+	} while (new_pass);
 
 	free(username);
 	free(password);
