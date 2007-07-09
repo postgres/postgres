@@ -18,6 +18,12 @@ Outputs
 
   Returns status = "OK"
 
+Notes
+
+  Only superusers may use dblink_connect to create non-password
+  authenticated connections. If non-superusers need this capability,
+  use dblink_connect_u instead.
+
 Example usage
 
 test=# select dblink_connect('dbname=template1');
@@ -25,6 +31,38 @@ test=# select dblink_connect('dbname=template1');
 ----------------
  OK
 (1 row)
+
+==================================================================
+Name
+
+dblink_connect_u -- Opens a persistent connection to a remote database
+
+Synopsis
+
+dblink_connect_u(text connstr)
+
+Inputs
+
+  connstr
+
+    standard libpq format connection string, 
+    e.g. "hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd"
+
+Outputs
+
+  Returns status = "OK"
+
+Notes
+
+  With dblink_connect_u, a non-superuser may connect to any database server
+  using any authentication method. If the authentication method specified
+  for a particular user does not require a password, impersonation and
+  therefore escalation of privileges may occur. For this reason,
+  dblink_connect_u is initially installed with all privileges revoked from
+  public. Privilege to these functions should be granted with care.
+
+Example usage
+
 
 ==================================================================
 Name

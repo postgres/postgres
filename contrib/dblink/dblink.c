@@ -32,6 +32,7 @@
 
 #include "fmgr.h"
 #include "funcapi.h"
+#include "miscadmin.h"
 #include "access/tupdesc.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -71,6 +72,7 @@ static dblink_results *get_res_ptr(int32 res_id_index);
 static void append_res_ptr(dblink_results * results);
 static void remove_res_ptr(dblink_results * results);
 static char *generate_relation_name(Oid relid);
+static char *connstr_strip_password(const char *connstr);
 
 /* Global */
 List	   *res_id = NIL;
@@ -105,6 +107,22 @@ dblink_connect(PG_FUNCTION_ARGS)
 		PQfinish(persistent_conn);
 
 	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+
+	/* for non-superusers, check that server requires a password */
+	if (!superuser())
+	{
+		/* this attempt must fail */
+		persistent_conn = PQconnectdb(connstr_strip_password(connstr));
+
+		if (PQstatus(persistent_conn) == CONNECTION_OK)
+		{
+			PQfinish(persistent_conn);
+			persistent_conn = NULL;
+			elog(ERROR, "Non-superuser cannot connect if the server does not request a password.");
+		}
+		else
+			PQfinish(persistent_conn);
+	}
 	persistent_conn = PQconnectdb(connstr);
 	MemoryContextSwitchTo(oldcontext);
 
@@ -2031,4 +2049,130 @@ generate_relation_name(Oid relid)
 	ReleaseSysCache(tp);
 
 	return result;
+}
+
+/*
+ * Modified version of conninfo_parse() from fe-connect.c
+ * Used to remove any password from the connection string
+ * in order to test whether the server auth method will
+ * require it.
+ */
+static char *
+connstr_strip_password(const char *connstr)
+{
+	char		   *pname;
+	char		   *pval;
+	char		   *buf;
+	char		   *cp;
+	char		   *cp2;
+	StringInfoData	result;
+
+	/* initialize return value */
+	initStringInfo(&result);
+
+	/* Need a modifiable copy of the input string */
+	buf = pstrdup(connstr);
+	cp = buf;
+
+	while (*cp)
+	{
+		/* Skip blanks before the parameter name */
+		if (isspace((unsigned char) *cp))
+		{
+			cp++;
+			continue;
+		}
+
+		/* Get the parameter name */
+		pname = cp;
+		while (*cp)
+		{
+			if (*cp == '=')
+				break;
+			if (isspace((unsigned char) *cp))
+			{
+				*cp++ = '\0';
+				while (*cp)
+				{
+					if (!isspace((unsigned char) *cp))
+						break;
+					cp++;
+				}
+				break;
+			}
+			cp++;
+		}
+
+		/* Check that there is a following '=' */
+		if (*cp != '=')
+			elog(ERROR, "missing \"=\" after \"%s\" in connection string", pname);
+		*cp++ = '\0';
+
+		/* Skip blanks after the '=' */
+		while (*cp)
+		{
+			if (!isspace((unsigned char) *cp))
+				break;
+			cp++;
+		}
+
+		/* Get the parameter value */
+		pval = cp;
+
+		if (*cp != '\'')
+		{
+			cp2 = pval;
+			while (*cp)
+			{
+				if (isspace((unsigned char) *cp))
+				{
+					*cp++ = '\0';
+					break;
+				}
+				if (*cp == '\\')
+				{
+					cp++;
+					if (*cp != '\0')
+						*cp2++ = *cp++;
+				}
+				else
+					*cp2++ = *cp++;
+			}
+			*cp2 = '\0';
+		}
+		else
+		{
+			cp2 = pval;
+			cp++;
+			for (;;)
+			{
+				if (*cp == '\0')
+					elog(ERROR, "unterminated quoted string in connection string");
+				if (*cp == '\\')
+				{
+					cp++;
+					if (*cp != '\0')
+						*cp2++ = *cp++;
+					continue;
+				}
+				if (*cp == '\'')
+				{
+					*cp2 = '\0';
+					cp++;
+					break;
+				}
+				*cp2++ = *cp++;
+			}
+		}
+
+		/*
+		 * Now we have the name and the value. If it is not a password,
+		 * append to the return connstr.
+		 */
+		if (strcmp("password", pname) != 0)
+			/* append the value */
+			appendStringInfo(&result, " %s='%s'", pname, pval);
+	}
+
+	return result.data;
 }
