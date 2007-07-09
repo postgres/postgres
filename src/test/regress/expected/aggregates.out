@@ -102,7 +102,7 @@ SELECT var_samp(b) FROM aggtest;
 SELECT stddev_pop(b::numeric) FROM aggtest;
     stddev_pop    
 ------------------
- 151.389361431288
+ 131.107032862199
 (1 row)
 
 SELECT stddev_samp(b::numeric) FROM aggtest;
@@ -114,7 +114,7 @@ SELECT stddev_samp(b::numeric) FROM aggtest;
 SELECT var_pop(b::numeric) FROM aggtest;
       var_pop       
 --------------------
- 22918.738754573025
+ 17189.054065929769
 (1 row)
 
 SELECT var_samp(b::numeric) FROM aggtest;
