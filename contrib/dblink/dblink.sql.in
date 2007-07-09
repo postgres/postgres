@@ -1,3 +1,5 @@
+-- dblink_connect now restricts non-superusers to password
+-- authenticated connections
 CREATE OR REPLACE FUNCTION dblink_connect (text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_connect'
@@ -7,6 +9,22 @@ CREATE OR REPLACE FUNCTION dblink_connect (text, text)
 RETURNS text
 AS 'MODULE_PATHNAME','dblink_connect'
 LANGUAGE C STRICT;
+
+-- dblink_connect_u allows non-superusers to use
+-- non-password authenticated connections, but initially
+-- privileges are revoked from public
+CREATE OR REPLACE FUNCTION dblink_connect_u (text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_connect'
+LANGUAGE C STRICT SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION dblink_connect_u (text, text)
+RETURNS text
+AS 'MODULE_PATHNAME','dblink_connect'
+LANGUAGE C STRICT SECURITY DEFINER;
+
+REVOKE ALL ON FUNCTION dblink_connect_u (text) FROM public;
+REVOKE ALL ON FUNCTION dblink_connect_u (text, text) FROM public;
 
 CREATE OR REPLACE FUNCTION dblink_disconnect ()
 RETURNS text
