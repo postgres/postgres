@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2006, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.96.2.1 2007/06/09 15:52:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.96.2.2 2007/07/09 16:14:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2274,7 +2274,10 @@ numeric_stddev_internal(ArrayType *transarray,
 	}
 	else
 	{
-		mul_var(&vN, &vNminus1, &vNminus1, 0);	/* N * (N - 1) */
+		if (sample)
+			mul_var(&vN, &vNminus1, &vNminus1, 0);	/* N * (N - 1) */
+		else
+			mul_var(&vN, &vN, &vNminus1, 0);		/* N * N */
 		rscale = select_div_scale(&vsumX2, &vNminus1);
 		div_var(&vsumX2, &vNminus1, &vsumX, rscale, true);		/* variance */
 		if (!variance)
