@@ -34,6 +34,7 @@
 #include "libpq-fe.h"
 #include "fmgr.h"
 #include "funcapi.h"
+#include "miscadmin.h"
 #include "access/tupdesc.h"
 #include "access/heapam.h"
 #include "catalog/namespace.h"
@@ -82,6 +83,7 @@ static int16 get_attnum_pk_pos(int2vector *pkattnums, int16 pknumatts, int16 key
 static HeapTuple get_tuple_of_interest(Oid relid, int2vector *pkattnums, int16 pknumatts, char **src_pkattvals);
 static Oid	get_relid_from_relname(text *relname_text);
 static char *generate_relation_name(Oid relid);
+static char *connstr_strip_password(const char *connstr);
 
 /* Global */
 static remoteConn *pconn = NULL;
@@ -221,6 +223,28 @@ dblink_connect(PG_FUNCTION_ARGS)
 
 	if (connname)
 		rconn = (remoteConn *) palloc(sizeof(remoteConn));
+
+	/* for non-superusers, check that server requires a password */
+	if (!superuser())
+	{
+		/* this attempt must fail */
+		conn = PQconnectdb(connstr_strip_password(connstr));
+
+		if (PQstatus(conn) == CONNECTION_OK)
+		{
+			PQfinish(conn);
+			if (rconn)
+				pfree(rconn);
+
+			ereport(ERROR,
+					(errcode(ERRCODE_S_R_E_PROHIBITED_SQL_STATEMENT_ATTEMPTED),
+					 errmsg("password is required"),
+					 errdetail("Non-superuser cannot connect if the server does not request a password."),
+					 errhint("Target server's authentication method must be changed.")));
+		}
+		else
+			PQfinish(conn);
+	}
 	conn = PQconnectdb(connstr);
 
 	MemoryContextSwitchTo(oldcontext);
@@ -2141,4 +2165,134 @@ deleteConnection(const char *name)
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				 errmsg("undefined connection name")));
 
+}
+
+/*
+ * Modified version of conninfo_parse() from fe-connect.c
+ * Used to remove any password from the connection string
+ * in order to test whether the server auth method will
+ * require it.
+ */
+static char *
+connstr_strip_password(const char *connstr)
+{
+	char		   *pname;
+	char		   *pval;
+	char		   *buf;
+	char		   *cp;
+	char		   *cp2;
+	StringInfoData	result;
+
+	/* initialize return value */
+	initStringInfo(&result);
+
+	/* Need a modifiable copy of the input string */
+	buf = pstrdup(connstr);
+	cp = buf;
+
+	while (*cp)
+	{
+		/* Skip blanks before the parameter name */
+		if (isspace((unsigned char) *cp))
+		{
+			cp++;
+			continue;
+		}
+
+		/* Get the parameter name */
+		pname = cp;
+		while (*cp)
+		{
+			if (*cp == '=')
+				break;
+			if (isspace((unsigned char) *cp))
+			{
+				*cp++ = '\0';
+				while (*cp)
+				{
+					if (!isspace((unsigned char) *cp))
+						break;
+					cp++;
+				}
+				break;
+			}
+			cp++;
+		}
+
+		/* Check that there is a following '=' */
+		if (*cp != '=')
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("missing \"=\" after \"%s\" in connection string", pname)));
+		*cp++ = '\0';
+
+		/* Skip blanks after the '=' */
+		while (*cp)
+		{
+			if (!isspace((unsigned char) *cp))
+				break;
+			cp++;
+		}
+
+		/* Get the parameter value */
+		pval = cp;
+
+		if (*cp != '\'')
+		{
+			cp2 = pval;
+			while (*cp)
+			{
+				if (isspace((unsigned char) *cp))
+				{
+					*cp++ = '\0';
+					break;
+				}
+				if (*cp == '\\')
+				{
+					cp++;
+					if (*cp != '\0')
+						*cp2++ = *cp++;
+				}
+				else
+					*cp2++ = *cp++;
+			}
+			*cp2 = '\0';
+		}
+		else
+		{
+			cp2 = pval;
+			cp++;
+			for (;;)
+			{
+				if (*cp == '\0')
+					ereport(ERROR,
+							(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+							errmsg("unterminated quoted string in connection string")));
+				if (*cp == '\\')
+				{
+					cp++;
+					if (*cp != '\0')
+						*cp2++ = *cp++;
+					continue;
+				}
+				if (*cp == '\'')
+				{
+					*cp2 = '\0';
+					cp++;
+					break;
+				}
+				*cp2++ = *cp++;
+			}
+		}
+
+		/*
+		 * Now we have the name and the value. If it is not a password,
+		 * append to the return connstr.
+		 */
+		if (strcmp("password", pname) != 0)
+			/* append the value */
+			appendStringInfo(&result, " %s='%s'", pname, pval);
+	}
+
+	return result.data;
 }
