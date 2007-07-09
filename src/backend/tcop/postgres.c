@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.535 2007/06/29 17:07:39 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.536 2007/07/09 01:15:14 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -164,6 +164,7 @@ static int	UseNewLine = 0;		/* Use EOF as query delimiters */
  * ----------------------------------------------------------------
  */
 static int	InteractiveBackend(StringInfo inBuf);
+static int	interactive_getc(void);
 static int	SocketBackend(StringInfo inBuf);
 static int	ReadCommand(StringInfo inBuf);
 static List *pg_rewrite_query(Query *query);
@@ -210,63 +211,60 @@ InteractiveBackend(StringInfo inBuf)
 
 	resetStringInfo(inBuf);
 
-	for (;;)
+	if (UseNewLine)
 	{
-		if (UseNewLine)
-		{
-			/*
-			 * if we are using \n as a delimiter, then read characters until
-			 * the \n.
-			 */
-			while ((c = getc(stdin)) != EOF)
-			{
-				if (c == '\n')
-				{
-					if (backslashSeen)
-					{
-						/* discard backslash from inBuf */
-						inBuf->data[--inBuf->len] = '\0';
-						backslashSeen = false;
-						continue;
-					}
-					else
-					{
-						/* keep the newline character */
-						appendStringInfoChar(inBuf, '\n');
-						break;
-					}
-				}
-				else if (c == '\\')
-					backslashSeen = true;
-				else
-					backslashSeen = false;
-
-				appendStringInfoChar(inBuf, (char) c);
-			}
-
-			if (c == EOF)
-				end = true;
-		}
-		else
-		{
-			/*
-			 * otherwise read characters until EOF.
-			 */
-			while ((c = getc(stdin)) != EOF)
-				appendStringInfoChar(inBuf, (char) c);
-
-			if (inBuf->len == 0)
-				end = true;
-		}
-
-		if (end)
-			return EOF;
-
 		/*
-		 * otherwise we have a user query so process it.
+		 * if we are using \n as a delimiter, then read characters until
+		 * the \n.
 		 */
-		break;
+		while ((c = interactive_getc()) != EOF)
+		{
+			if (c == '\n')
+			{
+				if (backslashSeen)
+				{
+					/* discard backslash from inBuf */
+					inBuf->data[--inBuf->len] = '\0';
+					backslashSeen = false;
+					continue;
+				}
+				else
+				{
+					/* keep the newline character */
+					appendStringInfoChar(inBuf, '\n');
+					break;
+				}
+			}
+			else if (c == '\\')
+				backslashSeen = true;
+			else
+				backslashSeen = false;
+
+			appendStringInfoChar(inBuf, (char) c);
+		}
+
+		if (c == EOF)
+			end = true;
 	}
+	else
+	{
+		/*
+		 * otherwise read characters until EOF.
+		 */
+		while ((c = interactive_getc()) != EOF)
+			appendStringInfoChar(inBuf, (char) c);
+
+		/* No input before EOF signal means time to quit. */
+		if (inBuf->len == 0)
+			end = true;
+	}
+
+	if (end)
+		return EOF;
+
+	/*
+	 * otherwise we have a user query so process it.
+	 */
 
 	/* Add '\0' to make it look the same as message case. */
 	appendStringInfoChar(inBuf, (char) '\0');
@@ -279,6 +277,24 @@ InteractiveBackend(StringInfo inBuf)
 	fflush(stdout);
 
 	return 'Q';
+}
+
+/*
+ * interactive_getc -- collect one character from stdin
+ *
+ * Even though we are not reading from a "client" process, we still want to
+ * respond to signals, particularly SIGTERM/SIGQUIT.  Hence we must use
+ * prepare_for_client_read and client_read_ended.
+ */
+static int
+interactive_getc(void)
+{
+	int			c;
+
+	prepare_for_client_read();
+	c = getc(stdin);
+	client_read_ended();
+	return c;
 }
 
 /* ----------------
@@ -3092,7 +3108,16 @@ PostgresMain(int argc, char *argv[], const char *username)
 	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, StatementCancelHandler);	/* cancel current query */
 	pqsignal(SIGTERM, die);		/* cancel current query and exit */
-	pqsignal(SIGQUIT, quickdie);	/* hard crash time */
+
+	/*
+	 * In a standalone backend, SIGQUIT can be generated from the keyboard
+	 * easily, while SIGTERM cannot, so we make both signals do die() rather
+	 * than quickdie().
+	 */
+	if (IsUnderPostmaster)
+		pqsignal(SIGQUIT, quickdie);	/* hard crash time */
+	else
+		pqsignal(SIGQUIT, die);		/* cancel current query and exit */
 	pqsignal(SIGALRM, handle_sig_alarm);		/* timeout conditions */
 
 	/*
@@ -3113,12 +3138,15 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 	pqinitmask();
 
-	/* We allow SIGQUIT (quickdie) at all times */
+	if (IsUnderPostmaster)
+	{
+		/* We allow SIGQUIT (quickdie) at all times */
 #ifdef HAVE_SIGPROCMASK
-	sigdelset(&BlockSig, SIGQUIT);
+		sigdelset(&BlockSig, SIGQUIT);
 #else
-	BlockSig &= ~(sigmask(SIGQUIT));
+		BlockSig &= ~(sigmask(SIGQUIT));
 #endif
+	}
 
 	PG_SETMASK(&BlockSig);		/* block everything except SIGQUIT */
 
