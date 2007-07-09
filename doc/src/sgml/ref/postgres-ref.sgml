@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.50 2007/02/16 02:10:07 alvherre Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/postgres-ref.sgml,v 1.51 2007/07/09 01:08:09 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -33,17 +33,17 @@ PostgreSQL documentation
    <command>postgres</command> is the
    <productname>PostgreSQL</productname> database server.  In order
    for a client application to access a database it connects (over a
-   network or locally) to a running <command>postgres</command> process.
+   network or locally) to a running <command>postgres</command> instance.
    The <command>postgres</command> instance then starts a separate server
    process to handle the connection.
   </para>
 
   <para>
-   One <command>postgres</command> instance always manages the data from
+   One <command>postgres</command> instance always manages the data of
    exactly one database cluster.  A database cluster is a collection
    of databases that is stored at a common file system location (the
    <quote>data area</quote>).  More than one
-   <command>postgres</command> process can run on a system at one
+   <command>postgres</command> instance can run on a system at one
    time, so long as they use different data areas and different
    communication ports (see below).  When
    <command>postgres</command> starts it needs to know the location
@@ -119,8 +119,9 @@ PostgreSQL documentation
        <para>
         Sets the number of shared buffers for use by the server
         processes.  The default value of this parameter is chosen
-        automatically by <application>initdb</application>; refer to <xref
-        linkend="runtime-config-resource-memory"> for more information.
+        automatically by <application>initdb</application>.
+        Specifying this option is equivalent to setting the
+        <xref linkend="guc-shared-buffers"> configuration parameter.
        </para>
       </listitem>
      </varlistentry>
@@ -256,13 +257,9 @@ PostgreSQL documentation
       <listitem>
        <para>
         Sets the maximum number of client connections that this
-        server will accept.  By
-        default, this value is 32, but it can be set as high as your
-        system will support.  (Note that
-        <option>-B</option> is required to be at least twice
-        <option>-N</option>.  See <xref linkend="kernel-resources"> for a discussion of
-        system resource requirements for large numbers of client
-        connections.) Specifying this option is equivalent to setting the
+        server will accept.  The default value of this parameter is chosen
+        automatically by <application>initdb</application>.
+        Specifying this option is equivalent to setting the
         <xref linkend="guc-max-connections"> configuration parameter.
        </para>
       </listitem>
@@ -272,7 +269,7 @@ PostgreSQL documentation
       <term><option>-o <replaceable class="parameter">extra-options</replaceable></option></term>
       <listitem>
        <para>
-        The command line-style options specified in <replaceable
+        The command-line-style options specified in <replaceable
         class="parameter">extra-options</replaceable> are passed to
         all server processes started by this
         <command>postgres</command> process.  If the option string contains
@@ -354,11 +351,11 @@ PostgreSQL documentation
     <title>Semi-internal Options</title>
 
     <para>
-     There are several other options that can be specified, used
-     mainly for debugging purposes and in some cases to assist with
+     The options described here are used
+     mainly for debugging purposes, and in some cases to assist with
      recovery of severely damaged databases. There should be no reason
-     to use them in a production database setup.  These are listed
-     here only for the use by <productname>PostgreSQL</productname>
+     to use them in a production database setup.  They are listed
+     here only for use by <productname>PostgreSQL</productname>
      system developers.  Furthermore, these options might
      change or be removed in a future release without notice.
     </para>
@@ -500,8 +497,9 @@ PostgreSQL documentation
       <term><replaceable class="parameter">database</replaceable></term>
       <listitem>
        <para>
-        Specifies the name of the database to be accessed.  If it is
-        omitted it defaults to the user name.   
+        Specifies the name of the database to be accessed.  This must be
+        the last argument on the command line.  If it is
+        omitted it defaults to the user name.
        </para>
       </listitem>
      </varlistentry>
@@ -647,6 +645,12 @@ PostgreSQL documentation
 
  <refsect1>
   <title>Notes</title>
+
+  <para>
+   The utility command <xref linkend="app-pg-ctl"> can be used to
+   start and shut down the <command>postgres</command> server
+   safely and comfortably.
+  </para>
   
   <para>
    If at all possible, <emphasis>do not</emphasis> use
@@ -665,16 +669,14 @@ PostgreSQL documentation
    all clients to terminate before quitting, the second will
    forcefully disconnect all clients, and the third will quit
    immediately without proper shutdown, resulting in a recovery run
-   during restart.  The <literal>SIGHUP</literal> signal will reload
-   the server configuration files.  It is also possible to send
-   <literal>SIGHUP</literal> to an individual server process, but that
-   is usually not sensible.
+   during restart.
   </para>
 
   <para>
-   The utility command <xref linkend="app-pg-ctl"> can be used to
-   start and shut down the <command>postgres</command> server
-   safely and comfortably.
+   The <literal>SIGHUP</literal> signal will reload
+   the server configuration files.  It is also possible to send
+   <literal>SIGHUP</literal> to an individual server process, but that
+   is usually not sensible.
   </para>
 
   <para>
