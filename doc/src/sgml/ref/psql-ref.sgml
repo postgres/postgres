@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.192 2007/06/28 06:40:16 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.193 2007/07/10 00:21:31 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -1916,8 +1916,8 @@ lo_import 152801
   <para>
    A pattern that contains a dot (<literal>.</>) is interpreted as a schema
    name pattern followed by an object name pattern.  For example,
-   <literal>\dt foo*.bar*</> displays all tables whose table name
-   starts with <literal>bar</> that are in schemas whose schema name
+   <literal>\dt foo*.*bar*</> displays all tables whose table name
+   includes <literal>bar</> that are in schemas whose schema name
    starts with <literal>foo</>.  When no dot appears, then the pattern
    matches only objects that are visible in the current schema search path.
    Again, a dot within double quotes loses its special meaning and is matched
@@ -1930,17 +1930,20 @@ lo_import 152801
    expression special characters work as specified in
    <xref linkend="functions-posix-regexp">, except for <literal>.</> which
    is taken as a separator as mentioned above, <literal>*</> which is
-   translated to the regular-expression notation <literal>.*</>, and
-   <literal>?</> which is translated to <literal>.</>.  You can emulate
+   translated to the regular-expression notation <literal>.*</>,
+   <literal>?</> which is translated to <literal>.</>, and
+   <literal>$</> which is matched literally.  You can emulate
    these pattern characters at need by writing
    <literal>?</> for <literal>.</>,
    <literal>(<replaceable class="parameter">R</replaceable>+|)</literal> for
    <literal><replaceable class="parameter">R</replaceable>*</literal>, or
    <literal>(<replaceable class="parameter">R</replaceable>|)</literal> for
    <literal><replaceable class="parameter">R</replaceable>?</literal>.
-   Remember that the pattern must match the whole name, unlike the usual
-   interpretation of regular expressions; write <literal>*</> at the beginning
-   and/or end if you don't wish the pattern to be anchored.
+   <literal>$</> is not needed as a regular-expression character since
+   the pattern must match the whole name, unlike the usual
+   interpretation of regular expressions (in other words, <literal>$</>
+   is automatically appended to your pattern).  Write <literal>*</> at the
+   beginning and/or end if you don't wish the pattern to be anchored.
    Note that within double quotes, all regular expression special characters
    lose their special meanings and are matched literally.  Also, the regular
    expression special characters are matched literally in operator name

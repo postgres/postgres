@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.36 2007/06/18 21:40:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/dumputils.c,v 1.37 2007/07/10 00:21:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -870,6 +870,18 @@ processSQLNamePattern(PGconn *conn, PQExpBuffer buf, const char *pattern,
 			appendPQExpBufferStr(&schemabuf, namebuf.data);
 			resetPQExpBuffer(&namebuf);
 			appendPQExpBufferStr(&namebuf, "^(");
+			cp++;
+		}
+		else if (ch == '$')
+		{
+			/*
+			 * Dollar is always quoted, whether inside quotes or not.
+			 * The reason is that it's allowed in SQL identifiers, so
+			 * there's a significant use-case for treating it literally,
+			 * while because we anchor the pattern automatically there is
+			 * no use-case for having it possess its regexp meaning.
+			 */
+			appendPQExpBufferStr(&namebuf, "\\$");
 			cp++;
 		}
 		else
