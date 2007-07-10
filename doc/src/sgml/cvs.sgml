@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.44 2007/05/30 18:00:08 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.45 2007/07/10 23:03:18 tgl Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -157,10 +157,18 @@ cvs update
   <para>
    <productname>CVS</productname> has deficiencies.  For example,
    generating diffs that add or remove files requires write access to the
-   CVS repository.  To work around such difficiencies, use
+   CVS repository.  To work around that deficiency, use
    <productname>cvsutils</productname>, which is packaged in several
    operating systems, and is available in source form at <ulink
    url="http://www.red-bean.com/cvsutils/"></ulink>.
+  </para>
+
+  <para>
+   Note that building <productname>PostgreSQL</productname> from a CVS
+   pull requires reasonably up-to-date versions of <application>bison</>
+   and <application>flex</>, which are not needed to build from a distribution
+   tarball because the files made with them are pre-built in a tarball.
+   Otherwise the tool requirements are the same as building from source.
   </para>
  </sect1>
 
