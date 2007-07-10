@@ -3923,8 +3923,8 @@ echo "${ECHO_T}$with_python" >&6
 #
 # GSSAPI
 #
-echo "$as_me:$LINENO: checking wether to build with GSSAPI support" >&5
-echo $ECHO_N "checking wether to build with GSSAPI support... $ECHO_C" >&6
+echo "$as_me:$LINENO: checking whether to build with GSSAPI support" >&5
+echo $ECHO_N "checking whether to build with GSSAPI support... $ECHO_C" >&6
 
 pgac_args="$pgac_args with_gssapi"
 
@@ -3961,7 +3961,6 @@ fi;
 
 echo "$as_me:$LINENO: result: $with_gssapi" >&5
 echo "${ECHO_T}$with_gssapi" >&6
-
 
 
 #
@@ -6765,7 +6764,7 @@ fi
 
 if test "$with_gssapi" = yes ; then
   if test "$PORTNAME" != "win32"; then
-  	echo "$as_me:$LINENO: checking for library containing gss_init_sec_context" >&5
+    echo "$as_me:$LINENO: checking for library containing gss_init_sec_context" >&5
 echo $ECHO_N "checking for library containing gss_init_sec_context... $ECHO_C" >&6
 if test "${ac_cv_search_gss_init_sec_context+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6

@@ -39,6 +39,9 @@
 /* Define to 1 to enable DTrace support. (--enable-dtrace) */
 #undef ENABLE_DTRACE
 
+/* Define to build with GSSAPI support. (--with-gssapi) */
+#undef ENABLE_GSS
+
 /* Define to 1 if you want National Language Support. (--enable-nls) */
 #undef ENABLE_NLS
 
@@ -567,9 +570,6 @@
 
 /* Define to the appropriate snprintf format for 64-bit ints, if any. */
 #undef INT64_FORMAT
-
-/* Define to build with GSSAPI support. (--with-gssapi) */
-#undef ENABLE_GSS
 
 /* Define to build with Kerberos 5 support. (--with-krb5) */
 #undef KRB5

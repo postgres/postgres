@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.517 2007/07/10 13:14:20 mha Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.518 2007/07/10 16:41:01 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -465,7 +465,7 @@ AC_SUBST(with_python)
 #
 # GSSAPI
 #
-AC_MSG_CHECKING([wether to build with GSSAPI support])
+AC_MSG_CHECKING([whether to build with GSSAPI support])
 PGAC_ARG_BOOL(with, gssapi, no, [  --with-gssapi           build with GSSAPI support],
 [
   AC_DEFINE(ENABLE_GSS, 1, [Define to build with GSSAPI support. (--with-gssapi)])
@@ -473,7 +473,6 @@ PGAC_ARG_BOOL(with, gssapi, no, [  --with-gssapi           build with GSSAPI sup
 ])
 AC_MSG_RESULT([$with_gssapi])
 AC_SUBST(with_gssapi)
-
 
 #
 # Kerberos 5
@@ -768,8 +767,8 @@ fi
 
 if test "$with_gssapi" = yes ; then
   if test "$PORTNAME" != "win32"; then
-  	AC_SEARCH_LIBS(gss_init_sec_context, [gssapi_krb5], [],
-		 		  [AC_MSG_ERROR([could not find function 'gss_init_sec_context' required for GSSAPI])])
+    AC_SEARCH_LIBS(gss_init_sec_context, [gssapi_krb5], [],
+		   [AC_MSG_ERROR([could not find function 'gss_init_sec_context' required for GSSAPI])])
   else
     LIBS="$LIBS -lgssapi32"
   fi
