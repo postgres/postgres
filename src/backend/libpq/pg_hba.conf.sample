@@ -34,7 +34,7 @@
 # the number of significant bits in the mask.  Alternatively, you can write
 # an IP address and netmask in separate columns to specify the set of hosts.
 #
-# METHOD can be "trust", "reject", "md5", "crypt", "password",
+# METHOD can be "trust", "reject", "md5", "crypt", "password", "gss",
 # "krb5", "ident", "pam" or "ldap".  Note that "password" sends passwords
 # in clear text; "md5" is preferred since it sends encrypted passwords.
 #

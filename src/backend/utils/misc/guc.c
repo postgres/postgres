@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.404 2007/06/30 19:12:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.405 2007/07/10 13:14:21 mha Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1040,7 +1040,7 @@ static struct config_bool ConfigureNamesBool[] =
 
 	{
 		{"krb_caseins_users", PGC_POSTMASTER, CONN_AUTH_SECURITY,
-			gettext_noop("Sets whether Kerberos user names should be treated as case-insensitive."),
+			gettext_noop("Sets whether Kerberos and GSSAPI user names should be treated as case-insensitive."),
 			NULL
 		},
 		&pg_krb_caseins_users,

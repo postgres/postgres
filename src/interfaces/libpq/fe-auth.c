@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.123 2007/02/10 14:58:55 petere Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.124 2007/07/10 13:14:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,6 +313,182 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 }
 #endif   /* KRB5 */
 
+#ifdef ENABLE_GSS
+/*
+ * GSSAPI authentication system.
+ */
+#include <gssapi/gssapi.h>
+
+#ifdef WIN32
+/*
+ * MIT Kerberos GSSAPI DLL doesn't properly export the symbols
+ * that contain the OIDs required. Redefine here, values copied
+ * from src/athena/auth/krb5/src/lib/gssapi/generic/gssapi_generic.c
+ */
+static const gss_OID_desc GSS_C_NT_HOSTBASED_SERVICE_desc =
+ {10, (void *)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x04"};
+static GSS_DLLIMP gss_OID GSS_C_NT_HOSTBASED_SERVICE = &GSS_C_NT_HOSTBASED_SERVICE_desc;
+#endif
+
+/*
+ * Fetch all errors of a specific type that fit into a buffer
+ * and append them.
+ */
+static void
+pg_GSS_error_int(char *mprefix, char *msg, int msglen,
+                 OM_uint32 stat, int type)
+{
+	int				curlen = 0;
+	OM_uint32		lmaj_s, lmin_s;
+	gss_buffer_desc	lmsg;
+	OM_uint32		msg_ctx = 0;
+
+	do 
+	{
+		lmaj_s = gss_display_status(&lmin_s, stat, type, 
+				GSS_C_NO_OID, &msg_ctx, &lmsg);
+
+		if (curlen < msglen)
+		{
+			snprintf(msg + curlen, msglen - curlen, "%s: %s\n",
+					mprefix, (char *)lmsg.value);
+			curlen += lmsg.length;
+		}
+		gss_release_buffer(&lmin_s, &lmsg);
+	} while (msg_ctx);
+}
+
+/*
+ * GSSAPI errors contains two parts. Put as much as possible of
+ * both parts into the string.
+ */
+void
+pg_GSS_error(char *mprefix, char *msg, int msglen,
+	OM_uint32 maj_stat, OM_uint32 min_stat)
+{
+	int mlen;
+
+	/* Fetch major error codes */
+	pg_GSS_error_int(mprefix, msg, msglen, maj_stat, GSS_C_GSS_CODE);
+	mlen = strlen(msg);
+
+	/* If there is room left, try to add the minor codes as well */
+	if (mlen < msglen-1)
+		pg_GSS_error_int(mprefix, msg + mlen, msglen - mlen,
+				min_stat, GSS_C_MECH_CODE);
+}
+
+/* 
+ * Continue GSS authentication with next token as needed.
+ */
+static int
+pg_GSS_continue(char *PQerrormsg, PGconn *conn)
+{
+	OM_uint32	maj_stat, min_stat, lmin_s;
+
+	maj_stat = gss_init_sec_context(&min_stat,
+			GSS_C_NO_CREDENTIAL,
+			&conn->gctx,
+			conn->gtarg_nam,
+			GSS_C_NO_OID,
+			conn->gflags,
+			0,
+			GSS_C_NO_CHANNEL_BINDINGS,
+			(conn->gctx==GSS_C_NO_CONTEXT)?GSS_C_NO_BUFFER:&conn->ginbuf,
+			NULL,
+			&conn->goutbuf,
+			NULL,
+			NULL);
+
+	if (conn->gctx != GSS_C_NO_CONTEXT)
+	{
+		free(conn->ginbuf.value);
+		conn->ginbuf.value = NULL;
+		conn->ginbuf.length = 0;
+	}
+
+	if (conn->goutbuf.length != 0)
+	{
+		/*
+		 * GSS generated data to send to the server. We don't care if it's
+		 * the first or subsequent packet, just send the same kind of
+		 * password packet.
+		 */
+		if (pqPacketSend(conn, 'p',
+					conn->goutbuf.value, conn->goutbuf.length)
+				!= STATUS_OK)
+		{
+			gss_release_buffer(&lmin_s, &conn->goutbuf);
+			return STATUS_ERROR;
+		}
+	}
+	gss_release_buffer(&lmin_s, &conn->goutbuf);
+
+	if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
+	{
+		pg_GSS_error(libpq_gettext("GSSAPI continuation error"),
+				PQerrormsg, PQERRORMSG_LENGTH,
+				maj_stat, min_stat);
+		gss_release_name(&lmin_s, &conn->gtarg_nam);
+		if (conn->gctx)
+			gss_delete_sec_context(&lmin_s, &conn->gctx, GSS_C_NO_BUFFER);
+		return STATUS_ERROR;
+	}
+
+	if (maj_stat == GSS_S_COMPLETE)
+		gss_release_name(&lmin_s, &conn->gtarg_nam);
+
+	return STATUS_OK;
+}
+
+/* 
+ * Send initial GSS authentication token
+ */
+static int
+pg_GSS_startup(char *PQerrormsg, PGconn *conn)
+{
+	OM_uint32	maj_stat, min_stat;
+	int			maxlen;
+	gss_buffer_desc	temp_gbuf;
+
+	if (conn->gctx)
+	{
+		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				libpq_gettext("duplicate GSS auth request\n"));
+		return STATUS_ERROR;
+	}
+
+	/*
+	 * Import service principal name so the proper ticket can be
+	 * acquired by the GSSAPI system.
+	 */
+	maxlen = NI_MAXHOST + strlen(conn->krbsrvname) + 2;
+	temp_gbuf.value = (char*)malloc(maxlen);
+	snprintf(temp_gbuf.value, maxlen, "%s@%s", 
+			conn->krbsrvname, conn->pghost);
+	temp_gbuf.length = strlen(temp_gbuf.value);
+
+	maj_stat = gss_import_name(&min_stat, &temp_gbuf,
+			GSS_C_NT_HOSTBASED_SERVICE, &conn->gtarg_nam);
+	free(temp_gbuf.value);
+
+	if (maj_stat != GSS_S_COMPLETE)
+	{
+		pg_GSS_error(libpq_gettext("GSSAPI name import error"), 
+				PQerrormsg, PQERRORMSG_LENGTH,
+				maj_stat, min_stat);
+		return STATUS_ERROR;
+	}
+
+	/*
+	 * Initial packet is the same as a continuation packet with
+	 * no initial context.
+	 */
+	conn->gctx = GSS_C_NO_CONTEXT;
+
+	return pg_GSS_continue(PQerrormsg, conn);
+}
+#endif
 
 /*
  * Respond to AUTH_REQ_SCM_CREDS challenge.
@@ -476,6 +652,37 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 #else
 			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
 				 libpq_gettext("Kerberos 5 authentication not supported\n"));
+			return STATUS_ERROR;
+#endif
+
+#ifdef ENABLE_GSS
+		case AUTH_REQ_GSS:
+			pglock_thread();
+			if (pg_GSS_startup(PQerrormsg, conn) != STATUS_OK)
+			{
+				/* PQerrormsg already filled in. */
+				pgunlock_thread();
+				return STATUS_ERROR;
+			}
+			pgunlock_thread();
+			break;
+
+		case AUTH_REQ_GSS_CONT:
+			pglock_thread();
+			if (pg_GSS_continue(PQerrormsg, conn) != STATUS_OK)
+			{
+				/* PQerrormsg already filled in. */
+				pgunlock_thread();
+				return STATUS_ERROR;
+			}
+			pgunlock_thread();
+			break;
+
+#else
+		case AUTH_REQ_GSS:
+		case AUTH_REQ_GSS_CONT:
+			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+					libpq_gettext("GSSAPI authentication not supported\n"));
 			return STATUS_ERROR;
 #endif
 

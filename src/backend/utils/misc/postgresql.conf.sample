@@ -79,11 +79,11 @@
 #password_encryption = on
 #db_user_namespace = off
 
-# Kerberos
+# Kerberos and GSSAPI
 #krb_server_keyfile = ''		# (change requires restart)
-#krb_srvname = 'postgres'		# (change requires restart)
+#krb_srvname = 'postgres'		# (change requires restart, kerberos only)
 #krb_server_hostname = ''		# empty string matches any keytab entry
-					# (change requires restart)
+					# (change requires restart, kerberos only)
 #krb_caseins_users = off		# (change requires restart)
 
 # - TCP Keepalives -

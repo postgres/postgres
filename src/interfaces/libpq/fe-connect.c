@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.347 2007/07/08 18:28:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.348 2007/07/10 13:14:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,8 +181,8 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
 	"SSL-Mode", "", 8},			/* sizeof("disable") == 8 */
 
-#ifdef KRB5
-	/* Kerberos authentication supports specifying the service name */
+#if defined(KRB5) || defined(ENABLE_GSS)
+	/* Kerberos and GSSAPI authentication support specifying the service name */
 	{"krbsrvname", "PGKRBSRVNAME", PG_KRB_SRVNAM, NULL,
 	"Kerberos-service-name", "", 20},
 #endif
@@ -412,7 +412,7 @@ connectOptions1(PGconn *conn, const char *conninfo)
 		conn->sslmode = strdup("require");
 	}
 #endif
-#ifdef KRB5
+#if defined(KRB5) || defined(ENABLE_GSS)
 	tmp = conninfo_getval(connOptions, "krbsrvname");
 	conn->krbsrvname = tmp ? strdup(tmp) : NULL;
 #endif
@@ -1496,12 +1496,13 @@ keep_going:						/* We will come back to here until there is
 
 				/*
 				 * Try to validate message length before using it.
-				 * Authentication requests can't be very large.  Errors can be
+				 * Authentication requests can't be very large, although GSS
+				 * auth requests may not be that small.  Errors can be
 				 * a little larger, but not huge.  If we see a large apparent
 				 * length in an error, it means we're really talking to a
 				 * pre-3.0-protocol server; cope.
 				 */
-				if (beresp == 'R' && (msgLength < 8 || msgLength > 100))
+				if (beresp == 'R' && (msgLength < 8 || msgLength > 2000))
 				{
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
@@ -1660,6 +1661,43 @@ keep_going:						/* We will come back to here until there is
 						return PGRES_POLLING_READING;
 					}
 				}
+#ifdef ENABLE_GSS
+				/*
+				 * AUTH_REQ_GSS provides no input data
+				 * Just set the request flags 
+				 */
+				if (areq == AUTH_REQ_GSS)
+					conn->gflags = GSS_C_MUTUAL_FLAG;
+
+				/*
+				 * Read GSSAPI data packets
+				 */
+				if (areq == AUTH_REQ_GSS_CONT)
+				{
+					/* Continue GSSAPI authentication */
+					int llen = msgLength - 4;
+					
+					/*
+					 * We can be called repeatedly for the same buffer.
+					 * Avoid re-allocating the buffer in this case - 
+					 * just re-use the old buffer.
+					 */
+					if (llen != conn->ginbuf.length)
+					{
+						if (conn->ginbuf.value)
+							free(conn->ginbuf.value);
+
+						conn->ginbuf.length = llen;
+						conn->ginbuf.value = malloc(llen);
+					}
+
+					if (pqGetnchar(conn->ginbuf.value, llen, conn))
+					{
+						/* We'll come back when there is more data. */
+						return PGRES_POLLING_READING;
+					}
+				}
+#endif
 
 				/*
 				 * OK, we successfully read the message; mark data consumed
@@ -1957,7 +1995,7 @@ freePGconn(PGconn *conn)
 		free(conn->pgpass);
 	if (conn->sslmode)
 		free(conn->sslmode);
-#ifdef KRB5
+#if defined(KRB5) || defined(ENABLE_GSS)
 	if (conn->krbsrvname)
 		free(conn->krbsrvname);
 #endif
@@ -1973,6 +2011,19 @@ freePGconn(PGconn *conn)
 		notify = notify->next;
 		free(prev);
 	}
+#ifdef ENABLE_GSS
+	{
+		OM_uint32	min_s;
+		if (conn->gctx)
+			gss_delete_sec_context(&min_s, &conn->gctx, GSS_C_NO_BUFFER);
+		if (conn->gtarg_nam)
+			gss_release_name(&min_s, &conn->gtarg_nam);
+		if (conn->ginbuf.length)
+			gss_release_buffer(&min_s, &conn->ginbuf);
+		if (conn->goutbuf.length)
+			gss_release_buffer(&min_s, &conn->goutbuf);
+	}
+#endif
 	pstatus = conn->pstatus;
 	while (pstatus != NULL)
 	{

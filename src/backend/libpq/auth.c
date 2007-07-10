@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.148 2007/02/08 04:52:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.149 2007/07/10 13:14:20 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <unistd.h>
 
 #include "libpq/auth.h"
 #include "libpq/crypt.h"
@@ -295,6 +296,250 @@ pg_krb5_recvauth(Port *port)
 }
 #endif   /* KRB5 */
 
+#ifdef ENABLE_GSS
+/*----------------------------------------------------------------
+ * GSSAPI authentication system
+ *----------------------------------------------------------------
+ */
+
+#include <gssapi/gssapi.h>
+
+#ifdef WIN32
+/*
+ * MIT Kerberos GSSAPI DLL doesn't properly export the symbols
+ * that contain the OIDs required. Redefine here, values copied
+ * from src/athena/auth/krb5/src/lib/gssapi/generic/gssapi_generic.c
+ */
+static const gss_OID_desc GSS_C_NT_USER_NAME_desc =
+ {10, (void *)"\x2a\x86\x48\x86\xf7\x12\x01\x02\x01\x02"};
+static GSS_DLLIMP gss_OID GSS_C_NT_USER_NAME = &GSS_C_NT_USER_NAME_desc;
+#endif
+
+
+static void
+pg_GSS_error(int severity, char *text, OM_uint32 maj_stat, OM_uint32 min_stat)
+{
+	gss_buffer_desc	gmsg;
+	OM_uint32		lmaj_s, lmin_s, msg_ctx;
+	char			localmsg1[128],
+					localmsg2[128];
+
+	/* Fetch major status message */
+	msg_ctx = 0;
+	lmaj_s = gss_display_status(&lmin_s, maj_stat, GSS_C_GSS_CODE,
+			GSS_C_NO_OID, &msg_ctx, &gmsg);
+	strlcpy(localmsg1, gmsg.value, sizeof(localmsg1));
+	gss_release_buffer(&lmin_s, &gmsg);
+
+	if (msg_ctx)
+		/* More than one message available.
+		 * XXX: Should we loop and read all messages?
+		 * (same below)
+		 */
+		ereport(WARNING, 
+				(errmsg_internal("incomplete GSS error report")));
+
+	/* Fetch mechanism minor status message */
+	msg_ctx = 0;
+	lmaj_s = gss_display_status(&lmin_s, min_stat, GSS_C_MECH_CODE,
+			GSS_C_NO_OID, &msg_ctx, &gmsg);
+	strlcpy(localmsg2, gmsg.value, sizeof(localmsg2));
+	gss_release_buffer(&lmin_s, &gmsg);
+
+	if (msg_ctx)
+		ereport(WARNING,
+				(errmsg_internal("incomplete GSS minor error report")));
+
+	/* errmsg_internal, since translation of the first part must be
+	 * done before calling this function anyway. */
+	ereport(severity,
+			(errmsg_internal("%s:%s\n%s", text, localmsg1, localmsg2)));
+}
+
+static int
+pg_GSS_recvauth(Port *port)
+{
+	OM_uint32		maj_stat, min_stat, lmin_s, gflags;
+	char		   *kt_path;
+	int				mtype;
+	int				ret;
+	StringInfoData	buf;
+	gss_buffer_desc	gbuf;
+
+	if (pg_krb_server_keyfile && strlen(pg_krb_server_keyfile) > 0)
+	{
+		/*
+		 * Set default Kerberos keytab file for the Krb5 mechanism.
+		 *
+		 * setenv("KRB5_KTNAME", pg_krb_server_keyfile, 0);
+		 *		except setenv() not always available.
+		 */
+		if (!getenv("KRB5_KTNAME"))
+		{
+			kt_path = palloc(PATH_MAX + 13);
+			snprintf(kt_path, PATH_MAX + 13,
+					"KRB5_KTNAME=%s", pg_krb_server_keyfile);
+			putenv(kt_path);
+		}
+	}
+
+	/*
+	 * We accept any service principal that's present in our
+	 * keytab. This increases interoperability between kerberos
+	 * implementations that see for example case sensitivity
+	 * differently, while not really opening up any vector
+	 * of attack.
+	 */
+	port->gss->cred = GSS_C_NO_CREDENTIAL;
+
+	/*
+	 * Initialize sequence with an empty context
+	 */
+	port->gss->ctx = GSS_C_NO_CONTEXT;
+
+	/*
+	 * Loop through GSSAPI message exchange. This exchange can consist
+	 * of multiple messags sent in both directions. First message is always
+	 * from the client. All messages from client to server are password
+	 * packets (type 'p').
+	 */
+	do 
+	{
+		mtype = pq_getbyte();
+		if (mtype != 'p')
+		{
+			/* Only log error if client didn't disconnect. */
+			if (mtype != EOF)
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("expected GSS response, got message type %d",
+							 mtype)));
+			return STATUS_ERROR;
+		}
+
+		/* Get the actual GSS token */
+		initStringInfo(&buf);
+		if (pq_getmessage(&buf, 2000))
+		{
+			/* EOF - pq_getmessage already logged error */
+			pfree(buf.data);
+			return STATUS_ERROR;
+		}
+
+		/* Map to GSSAPI style buffer */
+		gbuf.length = buf.len;
+		gbuf.value = buf.data;
+
+		ereport(DEBUG4,
+				(errmsg_internal("Processing received GSS token of length: %u",
+								 gbuf.length)));
+
+		maj_stat = gss_accept_sec_context(
+				&min_stat,
+				&port->gss->ctx,
+				port->gss->cred,
+				&gbuf,
+				GSS_C_NO_CHANNEL_BINDINGS,
+				&port->gss->name,
+				NULL,
+				&port->gss->outbuf,
+				&gflags,
+				NULL,
+				NULL);
+
+		/* gbuf no longer used */
+		pfree(buf.data);
+
+		ereport(DEBUG5,
+				(errmsg_internal("gss_accept_sec_context major: %i, "
+								 "minor: %i, outlen: %u, outflags: %x",
+								 maj_stat, min_stat, 
+								 port->gss->outbuf.length, gflags)));
+
+		if (port->gss->outbuf.length != 0)
+		{
+			/*
+			 * Negotiation generated data to be sent to the client.
+			 */
+			ereport(DEBUG4,
+					(errmsg_internal("sending GSS response token of length %u",
+									 port->gss->outbuf.length)));
+			sendAuthRequest(port, AUTH_REQ_GSS_CONT);
+		}
+
+		if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
+		{
+			OM_uint32	lmin_s;
+			gss_delete_sec_context(&lmin_s, &port->gss->ctx, GSS_C_NO_BUFFER);
+			pg_GSS_error(ERROR, 
+					gettext_noop("accepting GSS security context failed"),
+					maj_stat, min_stat);
+		}
+
+		if (maj_stat == GSS_S_CONTINUE_NEEDED)
+			ereport(DEBUG4,
+					(errmsg_internal("GSS continue needed")));
+
+	} while (maj_stat == GSS_S_CONTINUE_NEEDED);
+
+	if (port->gss->cred != GSS_C_NO_CREDENTIAL)
+	{
+		/*
+		 * Release service principal credentials
+		 */
+		gss_release_cred(&min_stat, port->gss->cred);
+	}
+
+	/*
+	 * GSS_S_COMPLETE indicates that authentication is now complete.
+	 *
+	 * Get the name of the user that authenticated, and compare it to the
+	 * pg username that was specified for the connection.
+	 */
+	maj_stat = gss_display_name(&min_stat, port->gss->name, &gbuf, NULL);
+	ereport(DEBUG1,
+			(errmsg("GSSAPI authenticated name: %s", (char *)gbuf.value)));
+
+	/*
+	 * Compare the part of the username that comes before the @
+	 * sign only (ignore realm). The GSSAPI libraries won't have 
+	 * authenticated the user if he's from an invalid realm.
+	 */
+	if (strchr(gbuf.value, '@'))
+	{
+		char *cp = strchr(gbuf.value, '@');
+		*cp = '\0';
+	}
+
+	if (pg_krb_caseins_users)
+		ret = pg_strcasecmp(port->user_name, gbuf.value);
+	else
+		ret = strcmp(port->user_name, gbuf.value);
+
+	if (ret)
+		/* GSS name and PGUSER are not equivalent */
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
+				 errmsg("provided username and GSSAPI username don't match"),
+				 errdetail("provided: %s, GSSAPI: %s",
+					 port->user_name, (char *)gbuf.value)));
+	
+	gss_release_buffer(&lmin_s, &gbuf);
+
+	return STATUS_OK;
+}
+
+#else	/* no ENABLE_GSS */
+static int
+pg_GSS_recvauth(Port *port)
+{
+	ereport(LOG,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("GSSAPI not implemented on this server.")));
+	return STATUS_ERROR;
+}
+#endif	/* ENABLE_GSS */
+
 
 /*
  * Tell the user the authentication failed, but not (much about) why.
@@ -333,6 +578,9 @@ auth_failed(Port *port, int status)
 			break;
 		case uaKrb5:
 			errstr = gettext_noop("Kerberos 5 authentication failed for user \"%s\"");
+			break;
+		case uaGSS:
+			errstr = gettext_noop("GSSAPI authentication failed for user \"%s\"");
 			break;
 		case uaTrust:
 			errstr = gettext_noop("\"trust\" authentication failed for user \"%s\"");
@@ -429,6 +677,11 @@ ClientAuthentication(Port *port)
 			status = pg_krb5_recvauth(port);
 			break;
 
+		case uaGSS:
+			sendAuthRequest(port, AUTH_REQ_GSS);
+			status = pg_GSS_recvauth(port);
+			break;
+
 		case uaIdent:
 
 			/*
@@ -517,6 +770,24 @@ sendAuthRequest(Port *port, AuthRequest areq)
 		pq_sendbytes(&buf, port->md5Salt, 4);
 	else if (areq == AUTH_REQ_CRYPT)
 		pq_sendbytes(&buf, port->cryptSalt, 2);
+
+#ifdef ENABLE_GSS
+	/* Add the authentication data for the next step of
+	 * the GSSAPI negotiation. */
+	else if (areq == AUTH_REQ_GSS_CONT)
+	{
+		if (port->gss->outbuf.length > 0)
+		{
+			OM_uint32	lmin_s;
+
+			ereport(DEBUG4, 
+					(errmsg_internal("sending GSS token of length %u",
+									 port->gss->outbuf.length)));
+			pq_sendbytes(&buf, port->gss->outbuf.value, port->gss->outbuf.length);
+			gss_release_buffer(&lmin_s, &port->gss->outbuf);
+		}
+	}
+#endif
 
 	pq_endmessage(&buf);
 

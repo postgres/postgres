@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.58 2007/01/05 22:19:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.59 2007/07/10 13:14:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,10 @@
 #include <netinet/tcp.h>
 #endif
 
+#ifdef ENABLE_GSS
+#include <gssapi/gssapi.h>
+#endif
+
 #include "libpq/hba.h"
 #include "libpq/pqcomm.h"
 #include "utils/timestamp.h"
@@ -38,6 +42,20 @@ typedef enum CAC_state
 {
 	CAC_OK, CAC_STARTUP, CAC_SHUTDOWN, CAC_RECOVERY, CAC_TOOMANY
 } CAC_state;
+
+
+/*
+ * GSSAPI specific state information
+ */
+#ifdef ENABLE_GSS
+typedef struct
+{
+	gss_cred_id_t	cred;		/* GSSAPI connection cred's */
+	gss_ctx_id_t	ctx;		/* GSSAPI connection context */
+	gss_name_t		name;		/* GSSAPI client name */
+	gss_buffer_desc	outbuf;		/* GSSAPI output token buffer */
+} pg_gssinfo;
+#endif
 
 /*
  * This is used by the postmaster in its communication with frontends.	It
@@ -97,6 +115,17 @@ typedef struct Port
 	int			keepalives_idle;
 	int			keepalives_interval;
 	int			keepalives_count;
+
+#ifdef ENABLE_GSS
+	/*
+	 * If GSSAPI is supported, store GSSAPI information.
+	 * Oterwise, store a NULL pointer to make sure offsets
+	 * in the struct remain the same.
+	 */
+	pg_gssinfo *gss;
+#else
+	void	   *gss;
+#endif
 
 	/*
 	 * SSL structures (keep these last so that USE_SSL doesn't affect
