@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.149 2007/07/10 13:14:20 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.150 2007/07/11 08:27:33 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,18 +317,18 @@ static GSS_DLLIMP gss_OID GSS_C_NT_USER_NAME = &GSS_C_NT_USER_NAME_desc;
 
 
 static void
-pg_GSS_error(int severity, char *text, OM_uint32 maj_stat, OM_uint32 min_stat)
+pg_GSS_error(int severity, char *errmsg, OM_uint32 maj_stat, OM_uint32 min_stat)
 {
 	gss_buffer_desc	gmsg;
 	OM_uint32		lmaj_s, lmin_s, msg_ctx;
-	char			localmsg1[128],
-					localmsg2[128];
+	char			msg_major[128],
+					msg_minor[128];
 
 	/* Fetch major status message */
 	msg_ctx = 0;
 	lmaj_s = gss_display_status(&lmin_s, maj_stat, GSS_C_GSS_CODE,
 			GSS_C_NO_OID, &msg_ctx, &gmsg);
-	strlcpy(localmsg1, gmsg.value, sizeof(localmsg1));
+	strlcpy(msg_major, gmsg.value, sizeof(msg_major));
 	gss_release_buffer(&lmin_s, &gmsg);
 
 	if (msg_ctx)
@@ -343,7 +343,7 @@ pg_GSS_error(int severity, char *text, OM_uint32 maj_stat, OM_uint32 min_stat)
 	msg_ctx = 0;
 	lmaj_s = gss_display_status(&lmin_s, min_stat, GSS_C_MECH_CODE,
 			GSS_C_NO_OID, &msg_ctx, &gmsg);
-	strlcpy(localmsg2, gmsg.value, sizeof(localmsg2));
+	strlcpy(msg_minor, gmsg.value, sizeof(msg_minor));
 	gss_release_buffer(&lmin_s, &gmsg);
 
 	if (msg_ctx)
@@ -353,7 +353,8 @@ pg_GSS_error(int severity, char *text, OM_uint32 maj_stat, OM_uint32 min_stat)
 	/* errmsg_internal, since translation of the first part must be
 	 * done before calling this function anyway. */
 	ereport(severity,
-			(errmsg_internal("%s:%s\n%s", text, localmsg1, localmsg2)));
+			(errmsg_internal("%s", errmsg),
+			 errdetail("%s: %s", msg_major, msg_minor)));
 }
 
 static int
@@ -430,9 +431,8 @@ pg_GSS_recvauth(Port *port)
 		gbuf.length = buf.len;
 		gbuf.value = buf.data;
 
-		ereport(DEBUG4,
-				(errmsg_internal("Processing received GSS token of length: %u",
-								 gbuf.length)));
+		elog(DEBUG4, "Processing received GSS token of length %u", 
+			 gbuf.length);
 
 		maj_stat = gss_accept_sec_context(
 				&min_stat,
@@ -450,20 +450,19 @@ pg_GSS_recvauth(Port *port)
 		/* gbuf no longer used */
 		pfree(buf.data);
 
-		ereport(DEBUG5,
-				(errmsg_internal("gss_accept_sec_context major: %i, "
-								 "minor: %i, outlen: %u, outflags: %x",
-								 maj_stat, min_stat, 
-								 port->gss->outbuf.length, gflags)));
+		elog(DEBUG5, "gss_accept_sec_context major: %i, "
+			 		 "minor: %i, outlen: %u, outflags: %x",
+					 maj_stat, min_stat,
+					 port->gss->outbuf.length, gflags);
 
 		if (port->gss->outbuf.length != 0)
 		{
 			/*
 			 * Negotiation generated data to be sent to the client.
 			 */
-			ereport(DEBUG4,
-					(errmsg_internal("sending GSS response token of length %u",
-									 port->gss->outbuf.length)));
+			elog(DEBUG4, "sending GSS response token of length %u",
+				 port->gss->outbuf.length);
+
 			sendAuthRequest(port, AUTH_REQ_GSS_CONT);
 		}
 
@@ -477,8 +476,7 @@ pg_GSS_recvauth(Port *port)
 		}
 
 		if (maj_stat == GSS_S_CONTINUE_NEEDED)
-			ereport(DEBUG4,
-					(errmsg_internal("GSS continue needed")));
+			elog(DEBUG4, "GSS continue needed");
 
 	} while (maj_stat == GSS_S_CONTINUE_NEEDED);
 
@@ -497,8 +495,10 @@ pg_GSS_recvauth(Port *port)
 	 * pg username that was specified for the connection.
 	 */
 	maj_stat = gss_display_name(&min_stat, port->gss->name, &gbuf, NULL);
-	ereport(DEBUG1,
-			(errmsg("GSSAPI authenticated name: %s", (char *)gbuf.value)));
+	if (maj_stat != GSS_S_COMPLETE)
+		pg_GSS_error(ERROR,
+					 gettext_noop("retreiving GSS user name failed"),
+					 maj_stat, min_stat);
 
 	/*
 	 * Compare the part of the username that comes before the @
@@ -517,12 +517,15 @@ pg_GSS_recvauth(Port *port)
 		ret = strcmp(port->user_name, gbuf.value);
 
 	if (ret)
+	{
 		/* GSS name and PGUSER are not equivalent */
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_AUTHORIZATION_SPECIFICATION),
-				 errmsg("provided username and GSSAPI username don't match"),
-				 errdetail("provided: %s, GSSAPI: %s",
-					 port->user_name, (char *)gbuf.value)));
+		elog(DEBUG2, 
+			 "provided username (%s) and GSSAPI username (%s) don't match",
+			 port->user_name, (char *)gbuf.value);
+
+		gss_release_buffer(&lmin_s, &gbuf);
+		return STATUS_ERROR;
+	}
 	
 	gss_release_buffer(&lmin_s, &gbuf);
 
@@ -780,9 +783,9 @@ sendAuthRequest(Port *port, AuthRequest areq)
 		{
 			OM_uint32	lmin_s;
 
-			ereport(DEBUG4, 
-					(errmsg_internal("sending GSS token of length %u",
-									 port->gss->outbuf.length)));
+			elog(DEBUG4, "sending GSS token of length %u",
+				 port->gss->outbuf.length);
+
 			pq_sendbytes(&buf, port->gss->outbuf.value, port->gss->outbuf.length);
 			gss_release_buffer(&lmin_s, &port->gss->outbuf);
 		}

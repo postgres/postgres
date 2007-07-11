@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.348 2007/07/10 13:14:21 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.349 2007/07/11 08:27:33 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1689,6 +1689,13 @@ keep_going:						/* We will come back to here until there is
 
 						conn->ginbuf.length = llen;
 						conn->ginbuf.value = malloc(llen);
+						if (!conn->ginbuf.value)
+						{
+							printfPQExpBuffer(&conn->errorMessage,
+											  libpq_gettext("out of memory allocating GSSAPI buffer (%i)"),
+											  llen);
+							goto error_return;
+						}
 					}
 
 					if (pqGetnchar(conn->ginbuf.value, llen, conn))

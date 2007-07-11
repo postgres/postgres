@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.531 2007/07/10 13:14:21 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.532 2007/07/11 08:27:33 mha Exp $
  *
  * NOTES
  *
@@ -1732,6 +1732,13 @@ ConnCreate(int serverFd)
 	 */
 #ifdef ENABLE_GSS
 	port->gss = (pg_gssinfo *)calloc(1, sizeof(pg_gssinfo));
+	if (!port->gss)
+	{
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+		ExitPostmaster(1);
+	}
 #endif
 
 	return port;
