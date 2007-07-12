@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.62 2007/04/15 10:56:25 ishii Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.63 2007/07/12 21:17:09 tgl Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -280,7 +280,7 @@ static int	pg_euctw2wchar_with_len
 		if (*from == SS2 && len >= 4)	/* code set 2 */
 		{
 			from++;
-			*to = (SS2 << 24) | (*from++ << 16);
+			*to = (((uint32) SS2) << 24) | (*from++ << 16);
 			*to |= *from++ << 8;
 			*to |= *from++;
 			len -= 4;
