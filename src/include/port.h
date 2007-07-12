@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.111 2007/04/13 10:30:30 mha Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.112 2007/07/12 23:28:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,8 +241,7 @@ extern int	pclose_check(FILE *stream);
 
 #if defined(WIN32) || defined(__CYGWIN__)
 /*
- *	Win32 doesn't have reliable rename/unlink during concurrent access,
- *	and we need special code to do symlinks.
+ *	Win32 doesn't have reliable rename/unlink during concurrent access.
  */
 extern int	pgrename(const char *from, const char *to);
 extern int	pgunlink(const char *path);
@@ -255,9 +254,14 @@ extern int	pgunlink(const char *path);
 #define rename(from, to)		pgrename(from, to)
 #define unlink(path)			pgunlink(path)
 
+#endif   /* defined(WIN32) || defined(__CYGWIN__) */
+
 /*
+ *	Win32 also doesn't have symlinks, but we can emulate them with
+ *	junction points on newer Win32 versions.
+ *
  *	Cygwin has its own symlinks which work on Win95/98/ME where
- *	junction points don't, so use it instead.  We have no way of
+ *	junction points don't, so use those instead.  We have no way of
  *	knowing what type of system Cygwin binaries will be run on.
  *		Note: Some CYGWIN includes might #define WIN32.
  */
@@ -266,7 +270,6 @@ extern int	pgsymlink(const char *oldpath, const char *newpath);
 
 #define symlink(oldpath, newpath)	pgsymlink(oldpath, newpath)
 #endif
-#endif   /* defined(WIN32) || defined(__CYGWIN__) */
 
 extern void copydir(char *fromdir, char *todir, bool recurse);
 
