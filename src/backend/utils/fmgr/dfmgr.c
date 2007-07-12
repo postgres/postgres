@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.94 2007/02/07 00:52:35 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.95 2007/07/12 21:13:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ load_external_function(char *filename, char *funcname,
 		*filehandle = lib_handle;
 
 	/* Look up the function within the library */
-	retval = pg_dlsym(lib_handle, funcname);
+	retval = (PGFunction) pg_dlsym(lib_handle, funcname);
 
 	if (retval == NULL && signalNotFound)
 		ereport(ERROR,
@@ -162,7 +162,7 @@ load_file(const char *filename, bool restricted)
 PGFunction
 lookup_external_function(void *filehandle, char *funcname)
 {
-	return pg_dlsym(filehandle, funcname);
+	return (PGFunction) pg_dlsym(filehandle, funcname);
 }
 
 
