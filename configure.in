@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.518 2007/07/10 16:41:01 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.519 2007/07/12 14:10:39 mha Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -965,6 +965,15 @@ if test "$with_krb5" = yes; then
                                      [AC_MSG_ERROR([could not determine how to extract Kerberos 5 error messages])],
                                      [#include <krb5.h>])],
                    [#include <krb5.h>])
+
+# Win32 requires headers to be loaded for __stdcall, so can't use
+# AC_CHECK_FUNCS here.
+  AC_MSG_CHECKING(for krb5_free_unparsed_name)
+  AC_TRY_LINK([#include <krb5.h>],
+              [krb5_free_unparsed_name(NULL,NULL);],
+              [AC_DEFINE(HAVE_KRB5_FREE_UNPARSED_NAME, 1, [Define to 1 if you have krb5_free_unparsed_name]) 
+AC_MSG_RESULT(yes)],
+              [AC_MSG_RESULT(no)])
 fi
 
 

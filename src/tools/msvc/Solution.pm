@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.27 2007/06/20 17:19:00 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.28 2007/07/12 14:10:39 mha Exp $
 #
 use Carp;
 use strict;
@@ -123,6 +123,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
             print O "#define KRB5 1\n";
             print O "#define HAVE_KRB5_ERROR_TEXT_DATA 1\n";
             print O "#define HAVE_KRB5_TICKET_ENC_PART2 1\n";
+            print O "#define HAVE_KRB5_FREE_UNPARSED_NAME 1\n";
             print O "#define PG_KRB_SRVNAM \"postgres\"\n";
         }
 		if (my $port = $self->{options}->{"--with-pgport"})

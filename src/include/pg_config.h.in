@@ -214,6 +214,9 @@
 /* Define to 1 if `text.data' is member of `krb5_error'. */
 #undef HAVE_KRB5_ERROR_TEXT_DATA
 
+/* Define to 1 if you have krb5_free_unparsed_name */
+#undef HAVE_KRB5_FREE_UNPARSED_NAME
+
 /* Define to 1 if `client' is member of `krb5_ticket'. */
 #undef HAVE_KRB5_TICKET_CLIENT
 

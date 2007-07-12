@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.124 2007/07/10 13:14:21 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.125 2007/07/12 14:10:39 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,18 @@
 /* Some old versions of Kerberos do not include <com_err.h> in <krb5.h> */
 #if !defined(__COM_ERR_H) && !defined(__COM_ERR_H__)
 #include <com_err.h>
+#endif
+
+/*
+ * Heimdal doesn't have a free function for unparsed names. Just pass it to
+ * standard free() which should work in these cases.
+ */
+#ifndef HAVE_KRB5_FREE_UNPARSED_NAME
+static void
+krb5_free_unparsed_name(krb5_context context, char *val)
+{
+	free(val);
+}
 #endif
 
 /*
@@ -180,8 +192,8 @@ pg_krb5_destroy(struct krb5_info * info)
 {
 	krb5_free_principal(info->pg_krb5_context, info->pg_krb5_client);
 	krb5_cc_close(info->pg_krb5_context, info->pg_krb5_ccache);
+	krb5_free_unparsed_name(info->pg_krb5_context, info->pg_krb5_name);
 	krb5_free_context(info->pg_krb5_context);
-	free(info->pg_krb5_name);
 }
 
 
