@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.152 2007/07/12 14:43:20 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.153 2007/07/12 20:36:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -436,7 +436,7 @@ pg_GSS_recvauth(Port *port)
 		gbuf.value = buf.data;
 
 		elog(DEBUG4, "Processing received GSS token of length %u", 
-			 gbuf.length);
+			 (unsigned int) gbuf.length);
 
 		maj_stat = gss_accept_sec_context(
 				&min_stat,
@@ -454,10 +454,10 @@ pg_GSS_recvauth(Port *port)
 		/* gbuf no longer used */
 		pfree(buf.data);
 
-		elog(DEBUG5, "gss_accept_sec_context major: %i, "
-			 		 "minor: %i, outlen: %u, outflags: %x",
-					 maj_stat, min_stat,
-					 port->gss->outbuf.length, gflags);
+		elog(DEBUG5, "gss_accept_sec_context major: %d, "
+			 "minor: %d, outlen: %u, outflags: %x",
+			 maj_stat, min_stat,
+			 (unsigned int) port->gss->outbuf.length, gflags);
 
 		if (port->gss->outbuf.length != 0)
 		{
@@ -465,7 +465,7 @@ pg_GSS_recvauth(Port *port)
 			 * Negotiation generated data to be sent to the client.
 			 */
 			elog(DEBUG4, "sending GSS response token of length %u",
-				 port->gss->outbuf.length);
+				 (unsigned int) port->gss->outbuf.length);
 
 			sendAuthRequest(port, AUTH_REQ_GSS_CONT);
 		}
@@ -788,7 +788,7 @@ sendAuthRequest(Port *port, AuthRequest areq)
 			OM_uint32	lmin_s;
 
 			elog(DEBUG4, "sending GSS token of length %u",
-				 port->gss->outbuf.length);
+				 (unsigned int) port->gss->outbuf.length);
 
 			pq_sendbytes(&buf, port->gss->outbuf.value, port->gss->outbuf.length);
 			gss_release_buffer(&lmin_s, &port->gss->outbuf);
@@ -1022,13 +1022,13 @@ CheckLDAPAuth(Port *port)
 
 	/* ldap, including port number */
 	r = sscanf(port->auth_arg,
-			   "ldap://%127[^:]:%i/%127[^;];%127[^;];%127s",
+			   "ldap://%127[^:]:%d/%127[^;];%127[^;];%127s",
 			   server, &ldapport, basedn, prefix, suffix);
 	if (r < 3)
 	{
 		/* ldaps, including port number */
 		r = sscanf(port->auth_arg,
-				   "ldaps://%127[^:]:%i/%127[^;];%127[^;];%127s",
+				   "ldaps://%127[^:]:%d/%127[^;];%127[^;];%127s",
 				   server, &ldapport, basedn, prefix, suffix);
 		if (r >= 3)
 			ssl = true;
