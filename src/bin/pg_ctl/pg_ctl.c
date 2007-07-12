@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.82 2007/07/08 19:07:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_ctl/pg_ctl.c,v 1.83 2007/07/12 18:15:52 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ static char *post_opts = NULL;
 static const char *progname;
 static char *log_file = NULL;
 static char *postgres_path = NULL;
-static const char *register_servicename = "PostgreSQL";		/* FIXME: + version ID? */
+static char *register_servicename = "PostgreSQL";		/* FIXME: + version ID? */
 static char *register_username = NULL;
 static char *register_password = NULL;
 static char *argv0 = NULL;
