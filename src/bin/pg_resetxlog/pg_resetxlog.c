@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.59 2007/04/03 04:14:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.60 2007/07/12 21:27:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,11 +73,11 @@ main(int argc, char *argv[])
 	int			c;
 	bool		force = false;
 	bool		noupdate = false;
-	uint32		set_xid_epoch = -1;
+	uint32		set_xid_epoch = (uint32) -1;
 	TransactionId set_xid = 0;
 	Oid			set_oid = 0;
 	MultiXactId set_mxid = 0;
-	MultiXactOffset set_mxoff = -1;
+	MultiXactOffset set_mxoff = (MultiXactOffset) -1;
 	uint32		minXlogTli = 0,
 				minXlogId = 0,
 				minXlogSeg = 0;
