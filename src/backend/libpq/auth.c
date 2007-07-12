@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.150 2007/07/11 08:27:33 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.151 2007/07/12 14:36:52 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -302,7 +302,11 @@ pg_krb5_recvauth(Port *port)
  *----------------------------------------------------------------
  */
 
+#if defined(HAVE_GSSAPI_H)
+#include <gssapi.h>
+#else
 #include <gssapi/gssapi.h>
+#endif
 
 #ifdef WIN32
 /*

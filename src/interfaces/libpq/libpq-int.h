@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.122 2007/07/10 13:14:22 mha Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.123 2007/07/12 14:36:52 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,11 @@
 #include "pqexpbuffer.h"
 
 #ifdef ENABLE_GSS
+#if defined(HAVE_GSSAPI_H)
+#include <gssapi.h>
+#else
 #include <gssapi/gssapi.h>
+#endif
 #endif
 
 #ifdef USE_SSL

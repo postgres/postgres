@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.59 2007/07/10 13:14:21 mha Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.60 2007/07/12 14:36:52 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,11 @@
 #endif
 
 #ifdef ENABLE_GSS
+#if defined(HAVE_GSSAPI_H)
+#include <gssapi.h>
+#else
 #include <gssapi/gssapi.h>
+#endif
 #endif
 
 #include "libpq/hba.h"

@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.519 2007/07/12 14:10:39 mha Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.520 2007/07/12 14:36:52 mha Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -767,8 +767,8 @@ fi
 
 if test "$with_gssapi" = yes ; then
   if test "$PORTNAME" != "win32"; then
-    AC_SEARCH_LIBS(gss_init_sec_context, [gssapi_krb5], [],
-		   [AC_MSG_ERROR([could not find function 'gss_init_sec_context' required for GSSAPI])])
+    AC_SEARCH_LIBS(gss_init_sec_context, [gssapi_krb5 'gssapi -lkrb5 -lcrypto'], [],
+		 		  [AC_MSG_ERROR([could not find function 'gss_init_sec_context' required for GSSAPI])])
   else
     LIBS="$LIBS -lgssapi32"
   fi
@@ -870,7 +870,8 @@ Use --without-zlib to disable zlib support.])])
 fi
 
 if test "$with_gssapi" = yes ; then
-  AC_CHECK_HEADER(gssapi/gssapi.h, [], [AC_MSG_ERROR([header file <gssapi/gssapi.h> is required for GSSAPI])])
+  AC_CHECK_HEADERS(gssapi/gssapi.h, [],
+	[AC_CHECK_HEADERS(gssapi.h, [], [AC_MSG_ERROR([gssapi.h header file is required for GSSAPI])])])
 fi
 
 if test "$with_krb5" = yes ; then

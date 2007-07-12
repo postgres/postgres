@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.125 2007/07/12 14:10:39 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.126 2007/07/12 14:36:52 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,7 +329,11 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 /*
  * GSSAPI authentication system.
  */
+#if defined(HAVE_GSSAPI_H)
+#include <gssapi.h>
+#else
 #include <gssapi/gssapi.h>
+#endif
 
 #ifdef WIN32
 /*
