@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.28 2007/07/12 14:10:39 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.29 2007/07/12 14:43:21 mha Exp $
 #
 use Carp;
 use strict;
@@ -125,6 +125,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
             print O "#define HAVE_KRB5_TICKET_ENC_PART2 1\n";
             print O "#define HAVE_KRB5_FREE_UNPARSED_NAME 1\n";
             print O "#define PG_KRB_SRVNAM \"postgres\"\n";
+            print O "#define ENABLE_GSS\n";
         }
 		if (my $port = $self->{options}->{"--with-pgport"})
 		{
@@ -332,6 +333,7 @@ sub AddProject
         $proj->AddIncludeDir($self->{options}->{krb5} . '\inc\krb5');
         $proj->AddLibrary($self->{options}->{krb5} . '\lib\i386\krb5_32.lib');
         $proj->AddLibrary($self->{options}->{krb5} . '\lib\i386\comerr32.lib');
+        $proj->AddLibrary($self->{options}->{krb5} . '\lib\i386\gssapi32.lib');
     }
     if ($self->{options}->{xml})
     {

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.60 2007/07/12 14:36:52 mha Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.61 2007/07/12 14:43:21 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,16 @@
 #include <gssapi.h>
 #else
 #include <gssapi/gssapi.h>
+#endif /* HAVE_GSSAPI_H */
+/* 
+ * GSSAPI brings in headers that set a lot of things in the global namespace on win32,
+ * that doesn't match the msvc build. It gives a bunch of compiler warnings that we ignore,
+ * but also defines a symbol that simply does not exist. Undefine it again.
+ */
+#ifdef WIN32_ONLY_COMPILER
+#undef HAVE_GETADDRINFO
 #endif
-#endif
+#endif /* ENABLE_GSS */
 
 #include "libpq/hba.h"
 #include "libpq/pqcomm.h"
