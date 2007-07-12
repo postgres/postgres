@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.70 2007/02/27 23:48:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.71 2007/07/12 23:51:10 tgl Exp $
  */
 
 #include "postgres.h"
@@ -240,8 +240,9 @@ cash_in(PG_FUNCTION_ARGS)
 		}
 	}
 
-	/* should only be trailing digits followed by whitespace or closing paren */
-	while (isdigit(*s)) s++;
+	/* should only be trailing digits followed by whitespace or right paren */
+	while (isdigit((unsigned char) *s))
+		s++;
 	while (isspace((unsigned char) *s) || *s == ')')
 		s++;
 
