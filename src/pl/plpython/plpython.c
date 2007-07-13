@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.101 2007/05/31 15:13:05 petere Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.102 2007/07/13 04:57:59 tgl Exp $
  *
  *********************************************************************
  */
@@ -1714,7 +1714,7 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 	HeapTuple	tuple;
 	Datum	   *values;
 	char	   *nulls;
-	int			i;
+	volatile int i;
 
 	Assert(PyMapping_Check(mapping));
 
@@ -1729,8 +1729,8 @@ PLyMapping_ToTuple(PLyTypeInfo * info, PyObject * mapping)
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;
-		PyObject   *value,
-				   *so;
+		PyObject   * volatile value,
+				   * volatile so;
 
 		key = NameStr(desc->attrs[i]->attname);
 		value = so = NULL;
@@ -1794,7 +1794,7 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 	HeapTuple	tuple;
 	Datum	   *values;
 	char	   *nulls;
-	int			i;
+	volatile int i;
 
 	Assert(PySequence_Check(sequence));
 
@@ -1818,8 +1818,8 @@ PLySequence_ToTuple(PLyTypeInfo * info, PyObject * sequence)
 	nulls = palloc(sizeof(char) * desc->natts);
 	for (i = 0; i < desc->natts; ++i)
 	{
-		PyObject   *value,
-				   *so;
+		PyObject   * volatile value,
+				   * volatile so;
 
 		value = so = NULL;
 		PG_TRY();
@@ -1876,7 +1876,7 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 	HeapTuple	tuple;
 	Datum	   *values;
 	char	   *nulls;
-	int			i;
+	volatile int i;
 
 	desc = lookup_rowtype_tupdesc(info->out.d.typoid, -1);
 	if (info->is_rowtype == 2)
@@ -1889,8 +1889,8 @@ PLyObject_ToTuple(PLyTypeInfo * info, PyObject * object)
 	for (i = 0; i < desc->natts; ++i)
 	{
 		char	   *key;
-		PyObject   *value,
-				   *so;
+		PyObject   * volatile value,
+				   * volatile so;
 
 		key = NameStr(desc->attrs[i]->attname);
 		value = so = NULL;
@@ -2473,13 +2473,14 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	PG_TRY();
 	{
 		char	   *nulls = palloc(nargs * sizeof(char));
+		volatile int j;
 
-		for (i = 0; i < nargs; i++)
+		for (j = 0; j < nargs; j++)
 		{
 			PyObject   *elem,
 					   *so;
 
-			elem = PySequence_GetItem(list, i);
+			elem = PySequence_GetItem(list, j);
 			if (elem != Py_None)
 			{
 				so = PyObject_Str(elem);
@@ -2492,10 +2493,10 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 				{
 					char	   *sv = PyString_AsString(so);
 
-					plan->values[i] =
-						InputFunctionCall(&(plan->args[i].out.d.typfunc),
+					plan->values[j] =
+						InputFunctionCall(&(plan->args[j].out.d.typfunc),
 										  sv,
-										  plan->args[i].out.d.typioparam,
+										  plan->args[j].out.d.typioparam,
 										  -1);
 				}
 				PG_CATCH();
@@ -2506,17 +2507,17 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 				PG_END_TRY();
 
 				Py_DECREF(so);
-				nulls[i] = ' ';
+				nulls[j] = ' ';
 			}
 			else
 			{
 				Py_DECREF(elem);
-				plan->values[i] =
-					InputFunctionCall(&(plan->args[i].out.d.typfunc),
+				plan->values[j] =
+					InputFunctionCall(&(plan->args[j].out.d.typfunc),
 									  NULL,
-									  plan->args[i].out.d.typioparam,
+									  plan->args[j].out.d.typioparam,
 									  -1);
-				nulls[i] = 'n';
+				nulls[j] = 'n';
 			}
 		}
 
@@ -2527,6 +2528,8 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 	}
 	PG_CATCH();
 	{
+		int		k;
+
 		MemoryContextSwitchTo(oldcontext);
 		PLy_error_in_progress = CopyErrorData();
 		FlushErrorState();
@@ -2534,13 +2537,13 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, long limit)
 		/*
 		 * cleanup plan->values array
 		 */
-		for (i = 0; i < nargs; i++)
+		for (k = 0; k < nargs; k++)
 		{
-			if (!plan->args[i].out.d.typbyval &&
-				(plan->values[i] != PointerGetDatum(NULL)))
+			if (!plan->args[k].out.d.typbyval &&
+				(plan->values[k] != PointerGetDatum(NULL)))
 			{
-				pfree(DatumGetPointer(plan->values[i]));
-				plan->values[i] = PointerGetDatum(NULL);
+				pfree(DatumGetPointer(plan->values[k]));
+				plan->values[k] = PointerGetDatum(NULL);
 			}
 		}
 
