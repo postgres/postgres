@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.106 2007/04/06 04:21:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.107 2007/07/13 02:25:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,7 +38,8 @@
  * declare the function pointer to return int, so the compiler picks up the
  * return value from %d0. (Functions returning pointers put their value
  * *additionally* into %d0 for compatibility.) The price is that there are
- * some warnings about int->pointer conversions...
+ * some warnings about int->pointer conversions ... which we can suppress
+ * with suitably ugly casts in fmgr_oldstyle().
  */
 #if (defined(__mc68000__) || (defined(__m68k__))) && defined(__ELF__)
 typedef int32 (*func_ptr) ();
@@ -626,7 +627,7 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 	switch (n_arguments)
 	{
 		case 0:
-			returnValue = (*user_fn) ();
+			returnValue = (char *) (*user_fn) ();
 			break;
 		case 1:
 
@@ -635,108 +636,173 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 			 * there are other functions still out there that also rely on
 			 * this undocumented hack?
 			 */
-			returnValue = (*user_fn) (fcinfo->arg[0], &fcinfo->isnull);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   &fcinfo->isnull);
 			break;
 		case 2:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1]);
 			break;
 		case 3:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2]);
 			break;
 		case 4:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3]);
 			break;
 		case 5:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4]);
 			break;
 		case 6:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4], fcinfo->arg[5]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4],
+											   fcinfo->arg[5]);
 			break;
 		case 7:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4], fcinfo->arg[5],
-									  fcinfo->arg[6]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4],
+											   fcinfo->arg[5],
+											   fcinfo->arg[6]);
 			break;
 		case 8:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4], fcinfo->arg[5],
-									  fcinfo->arg[6], fcinfo->arg[7]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4],
+											   fcinfo->arg[5],
+											   fcinfo->arg[6],
+											   fcinfo->arg[7]);
 			break;
 		case 9:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4], fcinfo->arg[5],
-									  fcinfo->arg[6], fcinfo->arg[7],
-									  fcinfo->arg[8]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4],
+											   fcinfo->arg[5],
+											   fcinfo->arg[6],
+											   fcinfo->arg[7],
+											   fcinfo->arg[8]);
 			break;
 		case 10:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4], fcinfo->arg[5],
-									  fcinfo->arg[6], fcinfo->arg[7],
-									  fcinfo->arg[8], fcinfo->arg[9]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4],
+											   fcinfo->arg[5],
+											   fcinfo->arg[6],
+											   fcinfo->arg[7],
+											   fcinfo->arg[8],
+											   fcinfo->arg[9]);
 			break;
 		case 11:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4], fcinfo->arg[5],
-									  fcinfo->arg[6], fcinfo->arg[7],
-									  fcinfo->arg[8], fcinfo->arg[9],
-									  fcinfo->arg[10]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4],
+											   fcinfo->arg[5],
+											   fcinfo->arg[6],
+											   fcinfo->arg[7],
+											   fcinfo->arg[8],
+											   fcinfo->arg[9],
+											   fcinfo->arg[10]);
 			break;
 		case 12:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4], fcinfo->arg[5],
-									  fcinfo->arg[6], fcinfo->arg[7],
-									  fcinfo->arg[8], fcinfo->arg[9],
-									  fcinfo->arg[10], fcinfo->arg[11]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4],
+											   fcinfo->arg[5],
+											   fcinfo->arg[6],
+											   fcinfo->arg[7],
+											   fcinfo->arg[8],
+											   fcinfo->arg[9],
+											   fcinfo->arg[10],
+											   fcinfo->arg[11]);
 			break;
 		case 13:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4], fcinfo->arg[5],
-									  fcinfo->arg[6], fcinfo->arg[7],
-									  fcinfo->arg[8], fcinfo->arg[9],
-									  fcinfo->arg[10], fcinfo->arg[11],
-									  fcinfo->arg[12]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4],
+											   fcinfo->arg[5],
+											   fcinfo->arg[6],
+											   fcinfo->arg[7],
+											   fcinfo->arg[8],
+											   fcinfo->arg[9],
+											   fcinfo->arg[10],
+											   fcinfo->arg[11],
+											   fcinfo->arg[12]);
 			break;
 		case 14:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4], fcinfo->arg[5],
-									  fcinfo->arg[6], fcinfo->arg[7],
-									  fcinfo->arg[8], fcinfo->arg[9],
-									  fcinfo->arg[10], fcinfo->arg[11],
-									  fcinfo->arg[12], fcinfo->arg[13]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4],
+											   fcinfo->arg[5],
+											   fcinfo->arg[6],
+											   fcinfo->arg[7],
+											   fcinfo->arg[8],
+											   fcinfo->arg[9],
+											   fcinfo->arg[10],
+											   fcinfo->arg[11],
+											   fcinfo->arg[12],
+											   fcinfo->arg[13]);
 			break;
 		case 15:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4], fcinfo->arg[5],
-									  fcinfo->arg[6], fcinfo->arg[7],
-									  fcinfo->arg[8], fcinfo->arg[9],
-									  fcinfo->arg[10], fcinfo->arg[11],
-									  fcinfo->arg[12], fcinfo->arg[13],
-									  fcinfo->arg[14]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4],
+											   fcinfo->arg[5],
+											   fcinfo->arg[6],
+											   fcinfo->arg[7],
+											   fcinfo->arg[8],
+											   fcinfo->arg[9],
+											   fcinfo->arg[10],
+											   fcinfo->arg[11],
+											   fcinfo->arg[12],
+											   fcinfo->arg[13],
+											   fcinfo->arg[14]);
 			break;
 		case 16:
-			returnValue = (*user_fn) (fcinfo->arg[0], fcinfo->arg[1],
-									  fcinfo->arg[2], fcinfo->arg[3],
-									  fcinfo->arg[4], fcinfo->arg[5],
-									  fcinfo->arg[6], fcinfo->arg[7],
-									  fcinfo->arg[8], fcinfo->arg[9],
-									  fcinfo->arg[10], fcinfo->arg[11],
-									  fcinfo->arg[12], fcinfo->arg[13],
-									  fcinfo->arg[14], fcinfo->arg[15]);
+			returnValue = (char *) (*user_fn) (fcinfo->arg[0],
+											   fcinfo->arg[1],
+											   fcinfo->arg[2],
+											   fcinfo->arg[3],
+											   fcinfo->arg[4],
+											   fcinfo->arg[5],
+											   fcinfo->arg[6],
+											   fcinfo->arg[7],
+											   fcinfo->arg[8],
+											   fcinfo->arg[9],
+											   fcinfo->arg[10],
+											   fcinfo->arg[11],
+											   fcinfo->arg[12],
+											   fcinfo->arg[13],
+											   fcinfo->arg[14],
+											   fcinfo->arg[15]);
 			break;
 		default:
 
