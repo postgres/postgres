@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.45 2007/07/12 21:04:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.46 2007/07/13 03:43:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2673,50 +2673,41 @@ map_sql_typecoll_to_xmlschema_types(List *tupdesc_list)
 	List	   *uniquetypes = NIL;
 	int			i;
 	StringInfoData result;
-	ListCell   *cell0, *cell1, *cell2;
+	ListCell   *cell0;
 
-	foreach (cell0, tupdesc_list)
+	/* extract all column types used in the set of TupleDescs */
+	foreach(cell0, tupdesc_list)
 	{
-		TupleDesc tupdesc = lfirst(cell0);
+		TupleDesc tupdesc = (TupleDesc) lfirst(cell0);
 
-		for (i = 1; i <= tupdesc->natts; i++)
+		for (i = 0; i < tupdesc->natts; i++)
 		{
-			bool already_done = false;
-			Oid type = SPI_gettypeid(tupdesc, i);
-			foreach (cell1, uniquetypes)
-				if (type == lfirst_oid(cell1))
-				{
-					already_done = true;
-					break;
-				}
-			if (already_done)
+			if (tupdesc->attrs[i]->attisdropped)
 				continue;
-
-			uniquetypes = lappend_oid(uniquetypes, type);
+			uniquetypes = list_append_unique_oid(uniquetypes,
+												 tupdesc->attrs[i]->atttypid);
 		}
 	}
 
 	/* add base types of domains */
-	foreach (cell1, uniquetypes)
+	foreach(cell0, uniquetypes)
 	{
-		bool already_done = false;
-		Oid type = getBaseType(lfirst_oid(cell1));
-		foreach (cell2, uniquetypes)
-			if (type == lfirst_oid(cell2))
-			{
-				already_done = true;
-				break;
-			}
-		if (already_done)
-			continue;
+		Oid typid = lfirst_oid(cell0);
+		Oid basetypid = getBaseType(typid);
 
-		uniquetypes = lappend_oid(uniquetypes, type);
+		if (basetypid != typid)
+			uniquetypes = list_append_unique_oid(uniquetypes, basetypid);
 	}
 
+	/* Convert to textual form */
 	initStringInfo(&result);
 
-	foreach (cell1, uniquetypes)
-		appendStringInfo(&result, "%s\n", map_sql_type_to_xmlschema_type(lfirst_oid(cell1), -1));
+	foreach(cell0, uniquetypes)
+	{
+		appendStringInfo(&result, "%s\n",
+						 map_sql_type_to_xmlschema_type(lfirst_oid(cell0),
+														-1));
+	}
 
 	return result.data;
 }
