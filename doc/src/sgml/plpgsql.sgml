@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.112 2007/06/11 22:22:40 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.113 2007/07/14 23:02:25 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -6,6 +6,9 @@
  <indexterm zone="plpgsql">
   <primary>PL/pgSQL</primary>
  </indexterm>
+
+ <sect1 id="plpgsql-overview">
+  <title>Overview</title>
 
  <para>
   <application>PL/pgSQL</application> is a loadable procedural
@@ -48,100 +51,12 @@
    </para>
 
    <para>
-    Except for input/output conversion and calculation functions
-    for user-defined types, anything that can be defined in C language
-    functions can also be done with <application>PL/pgSQL</application>.
+    Functions created with <application>PL/pgSQL</application> can be
+    used anywhere that built-in functions could be used.
     For example, it is possible to
     create complex conditional computation functions and later use
     them to define operators or use them in index expressions.
    </para>
-
-  <sect1 id="plpgsql-overview">
-   <title>Overview</title>
-
-   <para>
-    The <application>PL/pgSQL</> call handler parses the function's source text and
-    produces an internal binary instruction tree the first time the
-    function is called (within each session).  The instruction tree
-    fully translates the 
-    <application>PL/pgSQL</> statement structure, but individual
-    <acronym>SQL</acronym> expressions and <acronym>SQL</acronym> commands
-    used in the function are not translated immediately.
-   </para>
-
-   <para>
-    As each expression and <acronym>SQL</acronym> command is first
-    used in the function, the <application>PL/pgSQL</> interpreter
-    creates a prepared execution plan (using the
-    <acronym>SPI</acronym> manager's <function>SPI_prepare</function>
-    and <function>SPI_saveplan</function>
-    functions).<indexterm><primary>preparing a query</><secondary>in
-    PL/pgSQL</></> Subsequent visits to that expression or command
-    reuse the prepared plan.  Thus, a function with conditional code
-    that contains many statements for which execution plans might be
-    required will only prepare and save those plans that are really
-    used during the lifetime of the database connection.  This can
-    substantially reduce the total amount of time required to parse
-    and generate execution plans for the statements in a
-    <application>PL/pgSQL</> function. A disadvantage is that errors
-    in a specific expression or command cannot be detected until that
-    part of the function is reached in execution.
-   </para>
-
-   <para>
-    Once <application>PL/pgSQL</> has made an execution plan for a particular
-    command in a function, it will reuse that plan for the life of the
-    database connection.  This is usually a win for performance, but it
-    can cause some problems if you dynamically
-    alter your database schema. For example:
-
-<programlisting>
-CREATE FUNCTION populate() RETURNS integer AS $$
-DECLARE
-    -- declarations
-BEGIN
-    PERFORM my_function();
-END;
-$$ LANGUAGE plpgsql;
-</programlisting>
-
-    If you execute the above function, it will reference the OID for
-    <function>my_function()</function> in the execution plan produced for
-    the <command>PERFORM</command> statement. Later, if you
-    drop and recreate <function>my_function()</function>, then
-    <function>populate()</function> will not be able to find
-    <function>my_function()</function> anymore. You would then have to
-    recreate <function>populate()</function>, or at least start a new
-    database session so that it will be compiled afresh. Another way
-    to avoid this problem is to use <command>CREATE OR REPLACE
-    FUNCTION</command> when updating the definition of
-    <function>my_function</function> (when a function is
-    <quote>replaced</quote>, its OID is not changed).
-   </para>
-
-   <para>
-    Because <application>PL/pgSQL</application> saves execution plans
-    in this way, SQL commands that appear directly in a
-    <application>PL/pgSQL</application> function must refer to the
-    same tables and columns on every execution; that is, you cannot use
-    a parameter as the name of a table or column in an SQL command.  To get
-    around this restriction, you can construct dynamic commands using
-    the <application>PL/pgSQL</application> <command>EXECUTE</command>
-    statement &mdash; at the price of constructing a new execution plan on
-    every execution.
-   </para>
-
-   <note>
-        <para>
-         The <application>PL/pgSQL</application>
-         <command>EXECUTE</command> statement is not related to the
-         <xref linkend="sql-execute" endterm="sql-execute-title"> SQL
-         statement supported by the
-         <productname>PostgreSQL</productname> server. The server's
-         <command>EXECUTE</command> statement cannot be used within
-         <application>PL/pgSQL</> functions (and is not needed).
-        </para>
-   </note>
 
   <sect2 id="plpgsql-advantages">
    <title>Advantages of Using <application>PL/pgSQL</application></title>
@@ -167,23 +82,22 @@ $$ LANGUAGE plpgsql;
      computation and a series of queries <emphasis>inside</emphasis>
      the database server, thus having the power of a procedural
      language and the ease of use of SQL, but with considerable
-     savings because you don't have the whole client/server
-     communication overhead.
+     savings of client/server communication overhead.
     </para>
     <itemizedlist>
 
-     <listitem><para> Elimination of additional round trips between
-     client and server </para></listitem>
+     <listitem><para> Extra round trips between
+     client and server are eliminated </para></listitem>
 
      <listitem><para> Intermediate results that the client does not
-     need do not need to be marshaled or transferred between server
+     need do not have to be marshaled or transferred between server
      and client </para></listitem>
 
-     <listitem><para> There is no need for additional rounds of query
-     parsing </para></listitem>
+     <listitem><para> Multiple rounds of query
+     parsing can be avoided </para></listitem>
 
     </itemizedlist>
-    <para> This can allow for a considerable performance increase as
+    <para> This can result in a considerable performance increase as
     compared to an application that does not use stored functions.
     </para>
 
@@ -244,201 +158,6 @@ $$ LANGUAGE plpgsql;
   </sect2>
  </sect1>
 
- <sect1 id="plpgsql-development-tips">
-  <title>Tips for Developing in <application>PL/pgSQL</application></title>
-
-   <para>
-    One good way to develop in
-    <application>PL/pgSQL</> is to use the text editor of your
-    choice to create your functions, and in another window, use
-    <application>psql</application> to load and test those functions.
-    If you are doing it this way, it
-    is a good idea to write the function using <command>CREATE OR
-    REPLACE FUNCTION</>. That way you can just reload the file to update
-    the function definition.  For example:
-<programlisting>
-CREATE OR REPLACE FUNCTION testfunc(integer) RETURNS integer AS $$
-          ....
-$$ LANGUAGE plpgsql;
-</programlisting>
-   </para>
-
-   <para>
-    While running <application>psql</application>, you can load or reload such
-    a function definition file with:
-<programlisting>
-\i filename.sql
-</programlisting>
-    and then immediately issue SQL commands to test the function.
-   </para>
-
-   <para>
-    Another good way to develop in <application>PL/pgSQL</> is with a
-    GUI database access tool that facilitates development in a
-    procedural language. One example of such as a tool is
-    <application>PgAccess</>, although others exist. These tools often
-    provide convenient features such as escaping single quotes and
-    making it easier to recreate and debug functions.
-   </para>
-
-  <sect2 id="plpgsql-quote-tips">
-   <title>Handling of Quotation Marks</title>
-
-   <para>
-    The code of a <application>PL/pgSQL</> function is specified in
-    <command>CREATE FUNCTION</command> as a string literal.  If you
-    write the string literal in the ordinary way with surrounding
-    single quotes, then any single quotes inside the function body
-    must be doubled; likewise any backslashes must be doubled (assuming
-    escape string syntax is used).
-    Doubling quotes is at best tedious, and in more complicated cases
-    the code can become downright incomprehensible, because you can
-    easily find yourself needing half a dozen or more adjacent quote marks.
-    It's recommended that you instead write the function body as a
-    <quote>dollar-quoted</> string literal (see <xref
-    linkend="sql-syntax-dollar-quoting">).  In the dollar-quoting
-    approach, you never double any quote marks, but instead take care to
-    choose a different dollar-quoting delimiter for each level of
-    nesting you need.  For example, you might write the <command>CREATE
-    FUNCTION</command> command as:
-<programlisting>
-CREATE OR REPLACE FUNCTION testfunc(integer) RETURNS integer AS $PROC$
-          ....
-$PROC$ LANGUAGE plpgsql;
-</programlisting>
-    Within this, you might use quote marks for simple literal strings in
-    SQL commands and <literal>$$</> to delimit fragments of SQL commands
-    that you are assembling as strings.  If you need to quote text that
-    includes <literal>$$</>, you could use <literal>$Q$</>, and so on.
-   </para>
-
-   <para>
-    The following chart shows what you have to do when writing quote
-    marks without dollar quoting.  It might be useful when translating
-    pre-dollar quoting code into something more comprehensible.
-  </para>
-
-  <variablelist>
-   <varlistentry>
-    <term>1 quotation mark</term>
-    <listitem>
-     <para>
-      To begin and end the function body, for example:
-<programlisting>
-CREATE FUNCTION foo() RETURNS integer AS '
-          ....
-' LANGUAGE plpgsql;
-</programlisting>
-      Anywhere within a single-quoted function body, quote marks
-      <emphasis>must</> appear in pairs.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>2 quotation marks</term>
-    <listitem>
-     <para>
-      For string literals inside the function body, for example:
-<programlisting>
-a_output := ''Blah'';
-SELECT * FROM users WHERE f_name=''foobar'';
-</programlisting>
-      In the dollar-quoting approach, you'd just write:
-<programlisting>
-a_output := 'Blah';
-SELECT * FROM users WHERE f_name='foobar';
-</programlisting>
-      which is exactly what the <application>PL/pgSQL</> parser would see
-      in either case.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>4 quotation marks</term>
-    <listitem>
-     <para>
-      When you need a single quotation mark in a string constant inside the
-      function body, for example:
-<programlisting>
-a_output := a_output || '' AND name LIKE ''''foobar'''' AND xyz''
-</programlisting>
-      The value actually appended to <literal>a_output</literal> would be:
-      <literal> AND name LIKE 'foobar' AND xyz</literal>.
-     </para>
-     <para>
-      In the dollar-quoting approach, you'd write:
-<programlisting>
-a_output := a_output || $$ AND name LIKE 'foobar' AND xyz$$
-</programlisting>
-      being careful that any dollar-quote delimiters around this are not
-      just <literal>$$</>.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>6 quotation marks</term>
-    <listitem>
-     <para>
-      When a single quotation mark in a string inside the function body is
-      adjacent to the end of that string constant, for example:
-<programlisting>
-a_output := a_output || '' AND name LIKE ''''foobar''''''
-</programlisting>
-      The value appended to <literal>a_output</literal> would then be:
-      <literal> AND name LIKE 'foobar'</literal>.
-     </para>
-     <para>
-      In the dollar-quoting approach, this becomes:
-<programlisting>
-a_output := a_output || $$ AND name LIKE 'foobar'$$
-</programlisting>
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term>10 quotation marks</term>
-    <listitem>
-     <para>
-      When you want two single quotation marks in a string constant (which
-      accounts for 8 quotation marks) and this is adjacent to the end of that
-      string constant (2 more).  You will probably only need that if
-      you are writing a function that generates other functions, as in
-      <xref linkend="plpgsql-porting-ex2">.
-      For example:
-<programlisting>
-a_output := a_output || '' if v_'' || 
-    referrer_keys.kind || '' like '''''''''' 
-    || referrer_keys.key_string || '''''''''' 
-    then return ''''''  || referrer_keys.referrer_type 
-    || ''''''; end if;''; 
-</programlisting>
-      The value of <literal>a_output</literal> would then be:
-<programlisting>
-if v_... like ''...'' then return ''...''; end if;
-</programlisting>
-     </para>
-     <para>
-      In the dollar-quoting approach, this becomes:
-<programlisting>
-a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
-    || referrer_keys.key_string || $$'
-    then return '$$  || referrer_keys.referrer_type 
-    || $$'; end if;$$; 
-</programlisting>
-      where we assume we only need to put single quote marks into
-      <literal>a_output</literal>, because it will be re-quoted before use.
-     </para>
-    </listitem>
-   </varlistentry>
-  </variablelist>
-
-  </sect2>
- </sect1>
-
  <sect1 id="plpgsql-structure">
   <title>Structure of <application>PL/pgSQL</application></title>
 
@@ -465,10 +184,25 @@ END <optional> <replaceable>label</replaceable> </optional>;
      concludes a function body does not require a semicolon.
     </para>
 
+    <tip>
+     <para>
+      A common mistake is to write a semicolon immediately after
+      <literal>BEGIN</>.  This is incorrect and will result in a syntax error.
+     </para>
+    </tip>
+
     <para>
-     All key words and identifiers can be written in mixed upper and
-     lower case.  Identifiers are implicitly converted to lowercase
-     unless double-quoted.
+     A <replaceable>label</replaceable> is only needed if you want to
+     identify the block for use 
+     in an <literal>EXIT</> statement, or to qualify the names of the
+     variables declared in the block.  If a label is given after
+     <literal>END</>, it must match the label at the block's beginning.
+    </para>
+
+    <para>
+     All key words are case-insensitive.
+     Identifiers are implicitly converted to lowercase
+     unless double-quoted, just as they are in ordinary SQL commands.
     </para>
 
     <para>
@@ -485,19 +219,17 @@ END <optional> <replaceable>label</replaceable> </optional>;
      Any statement in the statement section of a block
      can be a <firstterm>subblock</>.  Subblocks can be used for
      logical grouping or to localize variables to a small group
-     of statements.
-    </para>
-
-    <para>
-     The variables declared in the declarations section preceding a
-     block are initialized to their default values every time the
-     block is entered, not only once per function call. For example:
+     of statements.  Variables declared in a subblock mask any
+     similarly-named variables of outer blocks for the duration
+     of the subblock; but you can access the outer variables anyway
+     if you qualify their names with their block's label. For example:
 <programlisting>
 CREATE FUNCTION somefunc() RETURNS integer AS $$
+&lt;&lt; outerblock &gt;&gt;
 DECLARE
     quantity integer := 30;
 BEGIN
-    RAISE NOTICE 'Quantity here is %', quantity;  -- Quantity here is 30
+    RAISE NOTICE 'Quantity here is %', quantity;  -- Prints 30
     quantity := 50;
     --
     -- Create a subblock
@@ -505,10 +237,11 @@ BEGIN
     DECLARE
         quantity integer := 80;
     BEGIN
-        RAISE NOTICE 'Quantity here is %', quantity;  -- Quantity here is 80
+        RAISE NOTICE 'Quantity here is %', quantity;  -- Prints 80
+        RAISE NOTICE 'Outer quantity here is %', outerblock.quantity;  -- Prints 50
     END;
 
-    RAISE NOTICE 'Quantity here is %', quantity;  -- Quantity here is 50
+    RAISE NOTICE 'Quantity here is %', quantity;  -- Prints 50
 
     RETURN quantity;
 END;
@@ -579,8 +312,9 @@ arow RECORD;
      </para>
 
      <para>
-      The default value is evaluated every time the block is entered. So,
-      for example, assigning <literal>now()</literal> to a variable of type
+      A variable's default value is evaluated and assigned to the variable
+      each time the block is entered (not just once per function call).
+      So, for example, assigning <literal>now()</literal> to a variable of type
       <type>timestamp</type> causes the variable to have the
       time of the current function call, not the time when the function was
       precompiled.
@@ -916,88 +650,43 @@ RENAME this_var TO that_var;
 
     <para>
      All expressions used in <application>PL/pgSQL</application>
-     statements are processed using the server's regular
-     <acronym>SQL</acronym> executor.  In effect, a query like
+     statements are processed using the server's main
+     <acronym>SQL</acronym> executor.  For example, when you write
+     a <application>PL/pgSQL</application> statement like
+<synopsis>
+IF <replaceable>expression</replaceable> THEN ...
+</synopsis>
+     <application>PL/pgSQL</application> will evaluate the expression by
+     feeding a query like
 <synopsis>
 SELECT <replaceable>expression</replaceable>
 </synopsis>
-     is executed using the <acronym>SPI</acronym> manager. Before evaluation,
-     occurrences of <application>PL/pgSQL</application> variable
-     identifiers are replaced by parameters, and the actual values from
-     the variables are passed to the executor in the parameter array.
+     to the main SQL engine.  While forming the <command>SELECT</> command,
+     any occurrences of <application>PL/pgSQL</application> variable names
+     are replaced by parameters, as discussed in detail in
+     <xref linkend="plpgsql-var-subst">.
      This allows the query plan for the <command>SELECT</command> to
      be prepared just once and then reused for subsequent
-     evaluations.
-    </para>
-
-    <para>
-     The evaluation done by the <productname>PostgreSQL</productname>
-     main parser has some side
-     effects on the interpretation of constant values. In detail there
-     is a difference between what these two functions do:
-
+     evaluations with different values of the variables.  Thus, what
+     really happens on first use of an expression is essentially a
+     <command>PREPARE</> command.  For example, if we have declared
+     two integer variables <literal>x</> and <literal>y</>, and we write
 <programlisting>
-CREATE FUNCTION logfunc1(logtxt text) RETURNS timestamp AS $$
-    BEGIN
-        INSERT INTO logtable VALUES (logtxt, 'now');
-        RETURN 'now';
-    END;
-$$ LANGUAGE plpgsql;
+IF x &lt; y THEN ...
 </programlisting>
-
-     and:
-
+     what happens behind the scenes is
 <programlisting>
-CREATE FUNCTION logfunc2(logtxt text) RETURNS timestamp AS $$
-    DECLARE
-        curtime timestamp;
-    BEGIN
-        curtime := 'now';
-        INSERT INTO logtable VALUES (logtxt, curtime);
-        RETURN curtime;
-    END;
-$$ LANGUAGE plpgsql;
+PREPARE <replaceable>statement_name</>(integer, integer) AS SELECT $1 < $2;
 </programlisting>
-    </para>
-
-    <para>
-     In the case of <function>logfunc1</function>, the
-     <productname>PostgreSQL</productname> main parser knows when
-     preparing the plan for the <command>INSERT</command> that the
-     string <literal>'now'</literal> should be interpreted as
-     <type>timestamp</type> because the target column of
-     <classname>logtable</classname> is of that type. Thus,
-     <literal>'now'</literal> will be converted to a constant when the
-     <command>INSERT</command> is planned, and then used in all
-     invocations of <function>logfunc1</function> during the lifetime
-     of the session. Needless to say, this isn't what the programmer
-     wanted.
-    </para>
-
-    <para>
-     In the case of <function>logfunc2</function>, the 
-     <productname>PostgreSQL</productname> main parser does not know
-     what type <literal>'now'</literal> should become and therefore 
-     it returns a data value of type <type>text</type> containing the string 
-     <literal>now</literal>. During the ensuing assignment
-     to the local variable <varname>curtime</varname>, the
-     <application>PL/pgSQL</application> interpreter casts this
-     string to the <type>timestamp</type> type by calling the
-     <function>text_out</function> and <function>timestamp_in</function>
-     functions for the conversion.  So, the computed time stamp is updated
-     on each execution as the programmer expects.
-    </para>
-
-    <para>
-     The mutable nature of record variables presents a problem in this
-     connection.  When fields of a record variable are used in
-     expressions or statements, the data types of the fields must not
-     change between calls of one and the same expression, since the
-     expression will be planned using the data type that is present
-     when the expression is first reached.  Keep this in mind when
-     writing trigger procedures that handle events for more than one
-     table.  (<command>EXECUTE</command> can be used to get around
-     this problem when necessary.)
+     and then this prepared statement is <command>EXECUTE</>d for each
+     execution of the <command>IF</> statement, with the current values
+     of the <application>PL/pgSQL</application> variables supplied as
+     parameter values.
+     The query plan prepared in this way is saved for the life of the database
+     connection, as described in
+     <xref linkend="plpgsql-plan-caching">.  Normally these details are
+     not important to a <application>PL/pgSQL</application> user, but
+     they are useful to know when trying to diagnose a problem.
     </para>
   </sect1>
 
@@ -1021,7 +710,7 @@ $$ LANGUAGE plpgsql;
      An assignment of a value to a <application>PL/pgSQL</application>
      variable or row/record field is written as:
 <synopsis>
-<replaceable>identifier</replaceable> := <replaceable>expression</replaceable>;
+<replaceable>variable</replaceable> := <replaceable>expression</replaceable>;
 </synopsis>
      As explained above, the expression in such a statement is evaluated
      by means of an SQL <command>SELECT</> command sent to the main
@@ -1042,36 +731,29 @@ $$ LANGUAGE plpgsql;
     <para>
      Examples:
 <programlisting>
-user_id := 20;
 tax := subtotal * 0.06;
+my_record.user_id := 20;
 </programlisting>
     </para>
    </sect2>
 
    <sect2 id="plpgsql-statements-sql-noresult">
-    <title>Executing a Query With No Result</title>
+    <title>Executing a Command With No Result</title>
 
     <para>
-     For any SQL query that does not return rows, for example
+     For any SQL command that does not return rows, for example
      <command>INSERT</> without a <literal>RETURNING</> clause, you can
-     execute the query within a <application>PL/pgSQL</application> function
-     just by writing the query.
+     execute the command within a <application>PL/pgSQL</application> function
+     just by writing the command.
     </para>
 
     <para>
      Any <application>PL/pgSQL</application> variable name appearing
-     in the query text is replaced by a parameter symbol, and then the
+     in the command text is replaced by a parameter symbol, and then the
      current value of the variable is provided as the parameter value
-     at run time.  This allows the same textual query to do different
-     things in different calls of the function.
-    </para>
-
-    <note>
-     <para>
-      This two-step process allows
-      <application>PL/pgSQL</application> to plan the query just once
-      and re-use the plan on subsequent executions.  As an example,
-      if you write:
+     at run time.  This is exactly like the processing described earlier
+     for expressions; for details see <xref linkend="plpgsql-var-subst">.
+     As an example, if you write:
 <programlisting>
 DECLARE
     key TEXT;
@@ -1080,29 +762,32 @@ BEGIN
     ...
     UPDATE mytab SET val = val + delta WHERE id = key;
 </programlisting>
-      the query text seen by the main SQL engine will look like:
+      the command text seen by the main SQL engine will look like:
 <programlisting>
     UPDATE mytab SET val = val + $1 WHERE id = $2;
 </programlisting>
-      Although you don't normally have to think about this, it's helpful
-      to know it when you need to make sense of syntax-error messages.
-     </para>
-    </note>
+     Although you don't normally have to think about this, it's helpful
+     to know it when you need to make sense of syntax-error messages.
+    </para>
 
     <caution>
      <para>
       <application>PL/pgSQL</application> will substitute for any identifier
       matching one of the function's declared variables; it is not bright
       enough to know whether that's what you meant!  Thus, it is a bad idea
-      to use a variable name that is the same as any table or column name
-      that you need to reference in queries within the function.  Sometimes
-      you can work around this by using qualified names in the query:
-      <application>PL/pgSQL</application> will not substitute in a
-      qualified name <replaceable>foo</>.<replaceable>bar</>, even if
-      <replaceable>foo</> or <replaceable>bar</> is a declared variable
-      name.
+      to use a variable name that is the same as any table, column, or
+      function name that you need to reference in commands within the
+      function.  For more discussion see <xref linkend="plpgsql-var-subst">.
      </para>
     </caution>
+
+    <para>
+     When executing a SQL command in this way,
+     <application>PL/pgSQL</application> plans the command just once
+     and re-uses the plan on subsequent executions, for the life of
+     the database connection.  The implications of this are discussed
+     in detail in <xref linkend="plpgsql-plan-caching">.
+    </para>
 
     <para>
      Sometimes it is useful to evaluate an expression or <command>SELECT</>
@@ -1120,9 +805,11 @@ PERFORM <replaceable>query</replaceable>;
      way you would write an SQL <command>SELECT</> command, but replace the
      initial keyword <command>SELECT</> with <command>PERFORM</command>.
      <application>PL/pgSQL</application> variables will be
-     substituted into the query as usual.  Also, the special variable
+     substituted into the query just as for commands that return no result,
+     and the plan is cached in the same way.  Also, the special variable
      <literal>FOUND</literal> is set to true if the query produced at
-     least one row, or false if it produced no rows.
+     least one row, or false if it produced no rows (see
+     <xref linkend="plpgsql-statements-diagnostics">).
     </para>
 
     <note>
@@ -1175,7 +862,8 @@ DELETE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRIC
      variable, or a comma-separated list of simple variables and
      record/row fields.
      <application>PL/pgSQL</application> variables will be
-     substituted into the rest of the query as usual.
+     substituted into the rest of the query, and the plan is cached,
+     just as described above for commands that do not return rows.
      This works for <command>SELECT</>,
      <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> with
      <literal>RETURNING</>, and utility commands that return row-set
@@ -1215,9 +903,9 @@ DELETE ... RETURNING <replaceable>expressions</replaceable> INTO <optional>STRIC
     </para>
 
     <para>
-     If <literal>STRICT</literal> is not specified, then
-     <replaceable>target</replaceable> will be set to the first row
-     returned by the query, or to nulls if the query returned no rows.
+     If <literal>STRICT</literal> is not specified in the <literal>INTO</>
+     clause, then <replaceable>target</replaceable> will be set to the first
+     row returned by the query, or to nulls if the query returned no rows.
      (Note that <quote>the first row</> is not
      well-defined unless you've used <literal>ORDER BY</>.)  Any result rows
      after the first row are discarded.
@@ -1258,7 +946,7 @@ END;
      an error for more than one returned row, even when
      <literal>STRICT</literal> is not specified.  This is because there
      is no option such as <literal>ORDER BY</> with which to determine
-     which affected row would be returned.
+     which affected row should be returned.
     </para>
 
     <note>
@@ -1275,52 +963,6 @@ END;
 
    </sect2>
 
-   <sect2 id="plpgsql-statements-null">
-    <title>Doing Nothing At All</title>
-
-    <para>
-     Sometimes a placeholder statement that does nothing is useful.
-     For example, it can indicate that one arm of an if/then/else
-     chain is deliberately empty.  For this purpose, use the
-     <command>NULL</command> statement:
-
-<synopsis>
-NULL;
-</synopsis>
-    </para>
-
-    <para>
-     For example, the following two fragments of code are equivalent:
-<programlisting>
-    BEGIN
-        y := x / 0;
-    EXCEPTION
-        WHEN division_by_zero THEN
-            NULL;  -- ignore the error
-    END;
-</programlisting>
-
-<programlisting>
-    BEGIN
-        y := x / 0;
-    EXCEPTION
-        WHEN division_by_zero THEN  -- ignore the error
-    END;
-</programlisting>
-     Which is preferable is a matter of taste.
-    </para>
-
-    <note>
-     <para>
-      In Oracle's PL/SQL, empty statement lists are not allowed, and so
-      <command>NULL</> statements are <emphasis>required</> for situations
-      such as this.  <application>PL/pgSQL</application> allows you to
-      just write nothing, instead.
-     </para>
-    </note>
-
-   </sect2>
-
    <sect2 id="plpgsql-statements-executing-dyn">
     <title>Executing Dynamic Commands</title>
 
@@ -1329,7 +971,8 @@ NULL;
      <application>PL/pgSQL</application> functions, that is, commands
      that will involve different tables or different data types each
      time they are executed.  <application>PL/pgSQL</application>'s
-     normal attempts to cache plans for commands will not work in such
+     normal attempts to cache plans for commands (as discussed in
+     <xref linkend="plpgsql-plan-caching">) will not work in such
      scenarios.  To handle this sort of problem, the
      <command>EXECUTE</command> statement is provided:
 
@@ -1345,16 +988,15 @@ EXECUTE <replaceable class="command">command-string</replaceable> <optional> INT
     </para>
 
     <para>
-     Note in particular that no substitution of <application>PL/pgSQL</>
-     variables is done on the computed command string.  The values of
-     variables must be inserted in the command string as it is constructed.
+     No substitution of <application>PL/pgSQL</> variables is done on the
+     computed command string.  Any required variable values must be inserted
+     in the command string as it is constructed.
     </para>
 
     <para>
-     Unlike all other commands in <application>PL/pgSQL</>, a command
-     run by an <command>EXECUTE</command> statement is not prepared
-     and saved just once during the life of the session.  Instead, the
-     command is prepared each time the statement is run. The command
+     Also, there is no plan caching for commands executed via
+     <command>EXECUTE</command>.  Instead, the
+     command is prepared each time the statement is run. Thus the command
      string can be dynamically created within the function to perform
      actions on different tables and columns.
     </para>
@@ -1368,7 +1010,7 @@ EXECUTE <replaceable class="command">command-string</replaceable> <optional> INT
      result structure automatically). If multiple rows are returned,
      only the first will be assigned to the <literal>INTO</literal>
      variable. If no rows are returned, NULL is assigned to the
-     <literal>INTO</literal> variable. If no <literal>INTO</literal>
+     <literal>INTO</literal> variable(s). If no <literal>INTO</literal>
      clause is specified, the query results are discarded.
     </para>
 
@@ -1379,8 +1021,22 @@ EXECUTE <replaceable class="command">command-string</replaceable> <optional> INT
 
     <para>
      <command>SELECT INTO</command> is not currently supported within
-     <command>EXECUTE</command>.
+     <command>EXECUTE</command>; instead, execute a plain <command>SELECT</>
+     command and specify <literal>INTO</> as part of the <command>EXECUTE</>
+     itself.
     </para>
+
+   <note>
+    <para>
+     The <application>PL/pgSQL</application>
+     <command>EXECUTE</command> statement is not related to the
+     <xref linkend="sql-execute" endterm="sql-execute-title"> SQL
+     statement supported by the
+     <productname>PostgreSQL</productname> server. The server's
+     <command>EXECUTE</command> statement cannot be used directly within
+     <application>PL/pgSQL</> functions (and is not needed).
+    </para>
+   </note>
 
     <para>
      When working with dynamic commands you will often have to handle escaping
@@ -1393,7 +1049,7 @@ EXECUTE <replaceable class="command">command-string</replaceable> <optional> INT
 
     <para>
      Dynamic values that are to be inserted into the constructed
-     query require special handling since they might themselves contain
+     query require careful handling since they might themselves contain
      quote characters.
      An example (this assumes that you are using dollar quoting for the
      function as a whole, so the quote marks need not be doubled):
@@ -1505,8 +1161,8 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
           <listitem>
            <para>
                 A <command>PERFORM</> statement sets <literal>FOUND</literal>
-                true if it produces (and discards) a row, false if no row is
-                produced.
+                true if it produces (and discards) one or more rows, false if
+                no row is produced.
            </para>
           </listitem>
           <listitem>
@@ -1549,6 +1205,52 @@ GET DIAGNOSTICS integer_var = ROW_COUNT;
      <application>PL/pgSQL</application> function; any changes to it
      affect only the current function.
     </para>
+
+   </sect2>
+
+   <sect2 id="plpgsql-statements-null">
+    <title>Doing Nothing At All</title>
+
+    <para>
+     Sometimes a placeholder statement that does nothing is useful.
+     For example, it can indicate that one arm of an if/then/else
+     chain is deliberately empty.  For this purpose, use the
+     <command>NULL</command> statement:
+
+<synopsis>
+NULL;
+</synopsis>
+    </para>
+
+    <para>
+     For example, the following two fragments of code are equivalent:
+<programlisting>
+    BEGIN
+        y := x / 0;
+    EXCEPTION
+        WHEN division_by_zero THEN
+            NULL;  -- ignore the error
+    END;
+</programlisting>
+
+<programlisting>
+    BEGIN
+        y := x / 0;
+    EXCEPTION
+        WHEN division_by_zero THEN  -- ignore the error
+    END;
+</programlisting>
+     Which is preferable is a matter of taste.
+    </para>
+
+    <note>
+     <para>
+      In Oracle's PL/SQL, empty statement lists are not allowed, and so
+      <command>NULL</> statements are <emphasis>required</> for situations
+      such as this.  <application>PL/pgSQL</application> allows you to
+      just write nothing, instead.
+     </para>
+    </note>
 
    </sect2>
   </sect1>
@@ -1652,8 +1354,10 @@ RETURN NEXT <replaceable>expression</replaceable>;
 
      <para>
       If you declared the function with output parameters, write just
-      <command>RETURN NEXT</command> with no expression.  The current values
-      of the output parameter variable(s) will be saved for eventual return.
+      <command>RETURN NEXT</command> with no expression.  On each
+      execution, the current values
+      of the output parameter variable(s) will be saved for eventual return
+      as a row of the result.
       Note that you must declare the function as returning
       <literal>SETOF record</literal> when there are
       multiple output parameters, or
@@ -1840,7 +1544,7 @@ END IF;
        <para>
         <literal>IF-THEN-ELSIF-ELSE</> provides a more convenient
         method of checking many alternatives in one statement.
-        Formally it is equivalent to nested
+        Functionally it is equivalent to nested
         <literal>IF-THEN-ELSE-IF-THEN</> commands, but only one
         <literal>END IF</> is needed.
        </para>
@@ -1916,7 +1620,7 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
      </indexterm>
 
 <synopsis>
-EXIT <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <replaceable>expression</replaceable> </optional>;
+EXIT <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <replaceable>boolean-expression</replaceable> </optional>;
 </synopsis>
 
        <para>
@@ -1931,7 +1635,7 @@ EXIT <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <re
 
        <para>
         If <literal>WHEN</> is specified, the loop exit occurs only if
-        <replaceable>expression</> is true. Otherwise, control passes
+        <replaceable>boolean-expression</> is true. Otherwise, control passes
         to the statement after <literal>EXIT</>.
        </para>
 
@@ -1976,21 +1680,23 @@ END;
      </indexterm>
 
 <synopsis>
-CONTINUE <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <replaceable>expression</replaceable> </optional>;
+CONTINUE <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <replaceable>boolean-expression</replaceable> </optional>;
 </synopsis>
 
        <para>
         If no <replaceable>label</> is given, the next iteration of
-        the innermost loop is begun. That is, control is passed back
-        to the loop control expression (if any), and the body of the
-        loop is re-evaluated. If <replaceable>label</> is present, it
+        the innermost loop is begun. That is, all statements remaining
+        in the loop body are skipped, and control returns
+        to the loop control expression (if any) to determine whether
+        another loop iteration is needed.
+        If <replaceable>label</> is present, it
         specifies the label of the loop whose execution will be
         continued.
        </para>
 
        <para>
         If <literal>WHEN</> is specified, the next iteration of the
-        loop is begun only if <replaceable>expression</> is
+        loop is begun only if <replaceable>boolean-expression</> is
         true. Otherwise, control passes to the statement after
         <literal>CONTINUE</>.
        </para>
@@ -2024,15 +1730,16 @@ END LOOP;
 
 <synopsis>
 <optional> &lt;&lt;<replaceable>label</replaceable>&gt;&gt; </optional>
-WHILE <replaceable>expression</replaceable> LOOP
+WHILE <replaceable>boolean-expression</replaceable> LOOP
     <replaceable>statements</replaceable>
 END LOOP <optional> <replaceable>label</replaceable> </optional>;
 </synopsis>
 
        <para>
         The <literal>WHILE</> statement repeats a
-        sequence of statements so long as the condition expression
-        evaluates to true.  The condition is checked just before
+        sequence of statements so long as the
+        <replaceable>boolean-expression</replaceable>
+        evaluates to true.  The expression is checked just before
         each entry to the loop body.
        </para>
 
@@ -2043,7 +1750,7 @@ WHILE amount_owed &gt; 0 AND gift_certificate_balance &gt; 0 LOOP
     -- some computations here
 END LOOP;
 
-WHILE NOT boolean_expression LOOP
+WHILE NOT done LOOP
     -- some computations here
 END LOOP;
 </programlisting>
@@ -2069,9 +1776,9 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
         The two expressions giving
         the lower and upper bound of the range are evaluated once when entering
         the loop. If the <literal>BY</> clause isn't specified the iteration 
-        step is 1 otherwise it's the value specified in the <literal>BY</> 
+        step is 1, otherwise it's the value specified in the <literal>BY</> 
         clause. If <literal>REVERSE</> is specified then the step value is 
-        considered negative.
+        subtracted, rather than added, after each iteration.
        </para>
 
        <para>
@@ -2155,6 +1862,13 @@ $$ LANGUAGE plpgsql;
     </para>
 
     <para>
+     <application>PL/pgSQL</> variables are substituted into the query text,
+     and the query plan is cached for possible re-use, as discussed in
+     detail in <xref linkend="plpgsql-var-subst"> and
+     <xref linkend="plpgsql-plan-caching">.
+    </para>
+
+    <para>
      The <literal>FOR-IN-EXECUTE</> statement is another way to iterate over
      rows:
 <synopsis>
@@ -2169,20 +1883,6 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
      choose the speed of a preplanned query or the flexibility of a dynamic
      query, just as with a plain <command>EXECUTE</command> statement.
     </para>
-
-    <note>
-    <para>
-     The <application>PL/pgSQL</> parser presently distinguishes the
-     two kinds of <literal>FOR</> loops (integer or query result) by checking
-     whether <literal>..</> appears outside any parentheses between
-     <literal>IN</> and <literal>LOOP</>.  If <literal>..</> is not seen then
-     the loop is presumed to be a loop over rows.  Mistyping the <literal>..</>
-     is thus likely to lead to a complaint along the lines of
-     <quote>loop variable of loop over rows must be a record or row variable
-     or list of scalar variables</>,
-     rather than the simple syntax error one might expect to get.
-    </para>
-    </note>
    </sect2>
 
    <sect2 id="plpgsql-error-trapping">
@@ -2314,16 +2014,19 @@ CREATE FUNCTION merge_db(key INT, data TEXT) RETURNS VOID AS
 $$
 BEGIN
     LOOP
+        -- first try to update the key
         UPDATE db SET b = data WHERE a = key;
         IF found THEN
             RETURN;
         END IF;
-
+        -- not there, so try to insert the key
+        -- if someone else inserts the same key concurrently,
+        -- we could get a unique-key failure
         BEGIN
             INSERT INTO db(a,b) VALUES (key, data);
             RETURN;
         EXCEPTION WHEN unique_violation THEN
-            -- do nothing
+            -- do nothing, and loop to try the UPDATE again
         END;
     END LOOP;
 END;
@@ -2433,7 +2136,12 @@ OPEN <replaceable>unbound_cursor</replaceable> <optional> <optional> NO </option
         is treated in the same way as other SQL commands in
         <application>PL/pgSQL</>: <application>PL/pgSQL</>
         variable names are substituted, and the query plan is cached for
-        possible reuse.  The <literal>SCROLL</> and <literal>NO SCROLL</>
+        possible reuse.  When a <application>PL/pgSQL</>
+        variable is substituted into the cursor query, the value that is
+        substituted is the one it has at the time of the <command>OPEN</>;
+        subsequent changes to the variable will not affect the cursor's
+        behavior.
+        The <literal>SCROLL</> and <literal>NO SCROLL</>
         options have the same meanings as for a bound cursor.
        </para>
 
@@ -2458,8 +2166,11 @@ OPEN <replaceable>unbound_cursor</replaceable> <optional> <optional> NO </option
           declared as an unbound cursor (that is, as a simple
           <type>refcursor</> variable).  The query is specified as a string
           expression, in the same way as in the <command>EXECUTE</command>
-          command.  As usual, this gives flexibility so the query can vary
-          from one run to the next.  The <literal>SCROLL</> and
+          command.  As usual, this gives flexibility so the query plan can vary
+          from one run to the next (see <xref linkend="plpgsql-plan-caching">),
+          and it also means that variable substitution is not done on the
+          command string.
+          The <literal>SCROLL</> and
           <literal>NO SCROLL</> options have the same meanings as for a bound
           cursor.
          </para>
@@ -2490,6 +2201,17 @@ OPEN <replaceable>bound_cursor</replaceable> <optional> ( <replaceable>argument_
           Notice that <literal>SCROLL</> and
           <literal>NO SCROLL</> cannot be specified, as the cursor's scrolling
           behavior was already determined.
+         </para>
+
+         <para>
+          Note that because variable substitution is done on the bound
+          cursor's query, there are two ways to pass values into the cursor:
+          either with an explicit argument to <command>OPEN</>, or
+          implicitly by referencing a <application>PL/pgSQL</> variable
+          in the query.  However, only variables declared before the bound
+          cursor was declared will be substituted into it.  In either case
+          the value to be passed is determined at the time of the
+          <command>OPEN</>.
          </para>
 
     <para>
@@ -2537,7 +2259,8 @@ FETCH <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> 
      <command>FETCH</command> retrieves the next row from the
      cursor into a target, which might be a row variable, a record
      variable, or a comma-separated list of simple variables, just like
-     <command>SELECT INTO</command>.  As with <command>SELECT
+     <command>SELECT INTO</command>.  If there is no next row, the
+     target is set to NULL(s).  As with <command>SELECT
      INTO</command>, the special variable <literal>FOUND</literal> can
      be checked to see whether a row was obtained or not.
     </para>
@@ -2560,6 +2283,11 @@ FETCH <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> 
      <replaceable>direction</replaceable> values that require moving
      backward are likely to fail unless the cursor was declared or opened
      with the <literal>SCROLL</> option.
+    </para>
+
+    <para>
+     <replaceable>cursor</replaceable> must be the name of a <type>refcursor</>
+     variable that references an open cursor portal.
     </para>
 
     <para>
@@ -2586,8 +2314,7 @@ MOVE <optional> <replaceable>direction</replaceable> { FROM | IN } </optional> <
      <command>FETCH</command> command, except it only repositions the
      cursor and does not return the row moved to. As with <command>SELECT
      INTO</command>, the special variable <literal>FOUND</literal> can
-     be checked to see whether the cursor was successfully
-     repositioned or not.
+     be checked to see whether there was a next row to move to.
     </para>
 
     <para>
@@ -2817,7 +2544,7 @@ RAISE <replaceable class="parameter">level</replaceable> '<replaceable class="pa
     next optional argument's string representation. Write
     <literal>%%</literal> to emit a literal <literal>%</literal>. 
     Arguments can be simple variables or expressions, 
-    and the format must be a simple string literal.
+    but the format must be a simple string literal.
    </para>
 
    <!--
@@ -2859,14 +2586,14 @@ RAISE EXCEPTION 'Nonexistent ID --> %', user_id;
   </indexterm>
 
   <para>
-        <application>PL/pgSQL</application> can be used to define trigger
-        procedures. A trigger procedure is created with the
-        <command>CREATE FUNCTION</> command, declaring it as a function with
-        no arguments and a return type of <type>trigger</type>.  Note that
-        the function must be declared with no arguments even if it expects
-        to receive arguments specified in <command>CREATE TRIGGER</> &mdash;
-        trigger arguments are passed via <varname>TG_ARGV</>, as described
-        below.
+    <application>PL/pgSQL</application> can be used to define trigger
+    procedures. A trigger procedure is created with the
+    <command>CREATE FUNCTION</> command, declaring it as a function with
+    no arguments and a return type of <type>trigger</type>.  Note that
+    the function must be declared with no arguments even if it expects
+    to receive arguments specified in <command>CREATE TRIGGER</> &mdash;
+    trigger arguments are passed via <varname>TG_ARGV</>, as described
+    below.
   </para>
 
   <para>
@@ -2912,8 +2639,8 @@ RAISE EXCEPTION 'Nonexistent ID --> %', user_id;
      <listitem>
       <para>
        Data type <type>text</type>; a string of either 
-              <literal>BEFORE</literal> or <literal>AFTER</literal>
-              depending on the trigger's definition.
+       <literal>BEFORE</literal> or <literal>AFTER</literal>
+       depending on the trigger's definition.
       </para>
      </listitem>
     </varlistentry>
@@ -3297,6 +3024,547 @@ SELECT * FROM sales_summary_bytime;
 
   </sect1>
 
+  <sect1 id="plpgsql-implementation">
+   <title><application>PL/pgSQL</> Under the Hood</title>
+
+   <para>
+    This section discusses some implementation details that are
+    frequently important for <application>PL/pgSQL</> users to know.
+   </para>
+
+  <sect2 id="plpgsql-var-subst">
+   <title>Variable Substitution</title>
+
+   <para>
+    When <application>PL/pgSQL</> prepares a SQL statement or expression
+    for execution, any <application>PL/pgSQL</application> variable name
+    appearing in the statement or expression is replaced by a parameter symbol,
+    <literal>$<replaceable>n</replaceable></literal>.  The current value
+    of the variable is then provided as the value for the parameter whenever
+    the statement or expression is executed.  As an example, consider the
+    function
+<programlisting>
+CREATE FUNCTION logfunc(logtxt text) RETURNS void AS $$
+    DECLARE
+        curtime timestamp := now();
+    BEGIN
+        INSERT INTO logtable VALUES (logtxt, curtime);
+    END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+    The <command>INSERT</> statement will effectively be processed as
+<programlisting>
+PREPARE <replaceable>statement_name</>(text, timestamp) AS
+  INSERT INTO logtable VALUES ($1, $2);
+</programlisting>
+    followed on each execution by <command>EXECUTE</> with the current
+    actual values of the two variables.  (Note: here we are speaking of
+    the main SQL engine's
+    <xref linkend="sql-execute" endterm="sql-execute-title"> command,
+    not <application>PL/pgSQL</application>'s <command>EXECUTE</>.)
+   </para>
+
+   <para>
+    <emphasis>The substitution mechanism will replace any token that matches a
+    known variable's name.</>  This poses various traps for the unwary.
+    For example, it is a bad idea
+    to use a variable name that is the same as any table or column name
+    that you need to reference in queries within the function, because
+    what you think is a table or column name will still get replaced.
+    In the above example, suppose that <structname>logtable</> has
+    column names <structfield>logtxt</> and <structfield>logtime</>,
+    and we try to write the <command>INSERT</> as
+<programlisting>
+        INSERT INTO logtable (logtxt, logtime) VALUES (logtxt, curtime);
+</programlisting>
+    This will be fed to the main SQL parser as
+<programlisting>
+        INSERT INTO logtable ($1, logtime) VALUES ($1, $2);
+</programlisting>
+    resulting in a syntax error like this:
+<screen>
+ERROR:  syntax error at or near "$1"
+LINE 1: INSERT INTO logtable ( $1 , logtime) VALUES ( $1 ,  $2 )
+                               ^
+QUERY:  INSERT INTO logtable ( $1 , logtime) VALUES ( $1 ,  $2 )
+CONTEXT:  SQL statement in PL/PgSQL function "logfunc2" near line 5
+</screen>
+   </para>
+
+   <para>
+    This example is fairly easy to diagnose, since it leads to an
+    obvious syntax error.  Much nastier are cases where the substitution
+    is syntactically permissible, since the only symptom may be misbehavior
+    of the function.  In one case, a user wrote something like this:
+<programlisting>
+    DECLARE
+        val text;
+        search_key integer;
+    BEGIN
+        ...
+        FOR val IN SELECT val FROM table WHERE key = search_key LOOP ...
+</programlisting>
+    and wondered why all his table entries seemed to be NULL.  Of course
+    what happened here was that the query became
+<programlisting>
+        SELECT $1 FROM table WHERE key = $2
+</programlisting>
+    and thus it was just an expensive way of assigning <literal>val</>'s
+    current value back to itself for each row.
+   </para>
+
+   <para>
+    A commonly used coding rule for avoiding such traps is to use a
+    different naming convention for <application>PL/pgSQL</application>
+    variables than you use for table and column names.  For example,
+    if all your variables are named
+    <literal>v_<replaceable>something</></literal> while none of your
+    table or column names start with <literal>v_</>, you're pretty safe.
+   </para>
+
+   <para>
+    Another workaround is to use qualified (dotted) names for SQL entities.
+    For instance we could safely have written the above example as
+<programlisting>
+        FOR val IN SELECT table.val FROM table WHERE key = search_key LOOP ...
+</programlisting>
+    because <application>PL/pgSQL</application> will not substitute a
+    variable for a trailing component of a qualified name.
+    However this solution does not work in every case &mdash; you can't
+    qualify a name in an <command>INSERT</>'s column name list, for instance.
+    Another point is that record and row variable names will be matched to
+    the first components of qualified names, so a qualified SQL name is
+    still vulnerable in some cases.
+    In such cases choosing a non-conflicting variable name is the only way.
+   </para>
+
+   <para>
+    Another technique you can use is to attach a label to the block in
+    which your variables are declared, and then qualify the variable names
+    in your SQL commands (see <xref linkend="plpgsql-structure">).
+    For example,
+<programlisting>
+    &lt;&lt;pl&gt;&gt;
+    DECLARE
+        val text;
+    BEGIN
+        ...
+        UPDATE table SET col = pl.val WHERE ...
+</programlisting>
+    This is not in itself a solution to the problem of conflicts,
+    since an unqualified name in a SQL command is still at risk of being
+    interpreted the <quote>wrong</> way.  But it is useful for clarifying
+    the intent of potentially-ambiguous code.
+   </para>
+
+   <para>
+    Variable substitution does not happen in the command string given
+    to <command>EXECUTE</> or one of its variants.  If you need to
+    insert a varying value into such a command, do so as part of
+    constructing the string value, as illustrated in
+    <xref linkend="plpgsql-statements-executing-dyn">.
+   </para>
+
+   <para>
+    Variable substitution currently works only in <command>SELECT</>,
+    <command>INSERT</>, <command>UPDATE</>, and <command>DELETE</> commands,
+    because the main SQL engine allows parameter symbols only in these
+    commands.  To use a non-constant name or value in other statement
+    types (generically called utility statements), you must construct
+    the utility statement as a string and <command>EXECUTE</> it.
+   </para>
+
+  </sect2>
+
+  <sect2 id="plpgsql-plan-caching">
+   <title>Plan Caching</title>
+
+   <para>
+    The <application>PL/pgSQL</> interpreter parses the function's source
+    text and produces an internal binary instruction tree the first time the
+    function is called (within each session).  The instruction tree
+    fully translates the 
+    <application>PL/pgSQL</> statement structure, but individual
+    <acronym>SQL</acronym> expressions and <acronym>SQL</acronym> commands
+    used in the function are not translated immediately.
+   </para>
+
+   <para>
+    As each expression and <acronym>SQL</acronym> command is first
+    executed in the function, the <application>PL/pgSQL</> interpreter
+    creates a prepared execution plan (using the
+    <acronym>SPI</acronym> manager's <function>SPI_prepare</function>
+    and <function>SPI_saveplan</function>
+    functions).<indexterm><primary>preparing a query</><secondary>in
+    PL/pgSQL</></> Subsequent visits to that expression or command
+    reuse the prepared plan.  Thus, a function with conditional code
+    that contains many statements for which execution plans might be
+    required will only prepare and save those plans that are really
+    used during the lifetime of the database connection.  This can
+    substantially reduce the total amount of time required to parse
+    and generate execution plans for the statements in a
+    <application>PL/pgSQL</> function. A disadvantage is that errors
+    in a specific expression or command cannot be detected until that
+    part of the function is reached in execution.  (Trivial syntax
+    errors will be detected during the initial parsing pass, but
+    anything deeper will not be detected until execution.)
+   </para>
+
+   <para>
+    Once <application>PL/pgSQL</> has made an execution plan for a particular
+    command in a function, it will reuse that plan for the life of the
+    database connection.  This is usually a win for performance, but it
+    can cause some problems if you dynamically
+    alter your database schema. For example:
+
+<programlisting>
+CREATE FUNCTION populate() RETURNS integer AS $$
+DECLARE
+    -- declarations
+BEGIN
+    PERFORM my_function();
+END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+
+    If you execute the above function, it will reference the OID for
+    <function>my_function()</function> in the execution plan produced for
+    the <command>PERFORM</command> statement. Later, if you
+    drop and recreate <function>my_function()</function>, then
+    <function>populate()</function> will not be able to find
+    <function>my_function()</function> anymore. You would then have to
+    start a new database session so that <function>populate()</function>
+    will be compiled afresh, before it will work again. You can avoid
+    this problem by using <command>CREATE OR REPLACE FUNCTION</command>
+    when updating the definition of 
+    <function>my_function</function>, since when a function is
+    <quote>replaced</quote>, its OID is not changed.
+   </para>
+
+   <note>
+    <para>
+     In <productname>PostgreSQL</productname> 8.3 and later, saved plans
+     will be replaced whenever any schema changes have occurred to any
+     tables they reference.  This eliminates one of the major disadvantages
+     of saved plans.  However, there is no such mechanism for function
+     references, and thus the above example involving a reference to a
+     deleted function is still valid.
+    </para>
+   </note>
+
+   <para>
+    Because <application>PL/pgSQL</application> saves execution plans
+    in this way, SQL commands that appear directly in a
+    <application>PL/pgSQL</application> function must refer to the
+    same tables and columns on every execution; that is, you cannot use
+    a parameter as the name of a table or column in an SQL command.  To get
+    around this restriction, you can construct dynamic commands using
+    the <application>PL/pgSQL</application> <command>EXECUTE</command>
+    statement &mdash; at the price of constructing a new execution plan on
+    every execution.
+   </para>
+
+   <para>
+    Another important point is that the prepared plans are parameterized
+    to allow the values of <application>PL/pgSQL</application> variables
+    to change from one use to the next, as discussed in detail above.
+    Sometimes this means that a plan is less efficient than it would be
+    if generated for a specific variable value.  As an example, consider
+<programlisting>
+SELECT * INTO myrec FROM dictionary WHERE word LIKE search_term;
+</programlisting>
+    where <literal>search_term</> is a <application>PL/pgSQL</application>
+    variable.  The cached plan for this query will never use an index on
+    <structfield>word</>, since the planner cannot assume that the
+    <literal>LIKE</> pattern will be left-anchored at runtime.  To use
+    an index the query must be planned with a specific constant
+    <literal>LIKE</> pattern provided.  This is another situation where
+    <command>EXECUTE</command> can be used to force a new plan to be
+    generated for each execution.
+   </para>
+
+    <para>
+     The mutable nature of record variables presents another problem in this
+     connection.  When fields of a record variable are used in
+     expressions or statements, the data types of the fields must not
+     change from one call of the function to the next, since each
+     expression will be planned using the data type that is present
+     when the expression is first reached.  <command>EXECUTE</command> can be
+     used to get around this problem when necessary.
+    </para>
+
+    <para>
+     If the same function is used as a trigger for more than one table,
+     <application>PL/pgSQL</application> prepares and caches plans
+     independently for each such table &mdash; that is, there is a cache
+     for each trigger function and table combination, not just for each
+     function.  This alleviates some of the problems with varying
+     data types; for instance, a trigger function will be able to work
+     successfully with a column named <literal>key</> even if it happens
+     to have different types in different tables.
+    </para>
+
+    <para>
+     Likewise, functions having polymorphic argument types have a separate
+     plan cache for each combination of actual argument types they have been
+     invoked for, so that data type differences do not cause unexpected
+     failures.
+    </para>
+
+   <para>
+    Plan caching can sometimes have surprising effects on the interpretation
+    of time-sensitive values.  For example there
+    is a difference between what these two functions do:
+
+<programlisting>
+CREATE FUNCTION logfunc1(logtxt text) RETURNS void AS $$
+    BEGIN
+        INSERT INTO logtable VALUES (logtxt, 'now');
+    END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+
+     and:
+
+<programlisting>
+CREATE FUNCTION logfunc2(logtxt text) RETURNS void AS $$
+    DECLARE
+        curtime timestamp;
+    BEGIN
+        curtime := 'now';
+        INSERT INTO logtable VALUES (logtxt, curtime);
+    END;
+$$ LANGUAGE plpgsql;
+</programlisting>
+    </para>
+
+    <para>
+     In the case of <function>logfunc1</function>, the
+     <productname>PostgreSQL</productname> main parser knows when
+     preparing the plan for the <command>INSERT</command> that the
+     string <literal>'now'</literal> should be interpreted as
+     <type>timestamp</type>, because the target column of
+     <classname>logtable</classname> is of that type. Thus,
+     <literal>'now'</literal> will be converted to a constant when the
+     <command>INSERT</command> is planned, and then used in all
+     invocations of <function>logfunc1</function> during the lifetime
+     of the session. Needless to say, this isn't what the programmer
+     wanted.
+    </para>
+
+    <para>
+     In the case of <function>logfunc2</function>, the 
+     <productname>PostgreSQL</productname> main parser does not know
+     what type <literal>'now'</literal> should become and therefore 
+     it returns a data value of type <type>text</type> containing the string 
+     <literal>now</literal>. During the ensuing assignment
+     to the local variable <varname>curtime</varname>, the
+     <application>PL/pgSQL</application> interpreter casts this
+     string to the <type>timestamp</type> type by calling the
+     <function>text_out</function> and <function>timestamp_in</function>
+     functions for the conversion.  So, the computed time stamp is updated
+     on each execution as the programmer expects.
+    </para>
+
+  </sect2>
+
+  </sect1>
+
+ <sect1 id="plpgsql-development-tips">
+  <title>Tips for Developing in <application>PL/pgSQL</application></title>
+
+   <para>
+    One good way to develop in
+    <application>PL/pgSQL</> is to use the text editor of your
+    choice to create your functions, and in another window, use
+    <application>psql</application> to load and test those functions.
+    If you are doing it this way, it
+    is a good idea to write the function using <command>CREATE OR
+    REPLACE FUNCTION</>. That way you can just reload the file to update
+    the function definition.  For example:
+<programlisting>
+CREATE OR REPLACE FUNCTION testfunc(integer) RETURNS integer AS $$
+          ....
+$$ LANGUAGE plpgsql;
+</programlisting>
+   </para>
+
+   <para>
+    While running <application>psql</application>, you can load or reload such
+    a function definition file with:
+<programlisting>
+\i filename.sql
+</programlisting>
+    and then immediately issue SQL commands to test the function.
+   </para>
+
+   <para>
+    Another good way to develop in <application>PL/pgSQL</> is with a
+    GUI database access tool that facilitates development in a
+    procedural language. One example of such as a tool is
+    <application>PgAccess</>, although others exist. These tools often
+    provide convenient features such as escaping single quotes and
+    making it easier to recreate and debug functions.
+   </para>
+
+  <sect2 id="plpgsql-quote-tips">
+   <title>Handling of Quotation Marks</title>
+
+   <para>
+    The code of a <application>PL/pgSQL</> function is specified in
+    <command>CREATE FUNCTION</command> as a string literal.  If you
+    write the string literal in the ordinary way with surrounding
+    single quotes, then any single quotes inside the function body
+    must be doubled; likewise any backslashes must be doubled (assuming
+    escape string syntax is used).
+    Doubling quotes is at best tedious, and in more complicated cases
+    the code can become downright incomprehensible, because you can
+    easily find yourself needing half a dozen or more adjacent quote marks.
+    It's recommended that you instead write the function body as a
+    <quote>dollar-quoted</> string literal (see <xref
+    linkend="sql-syntax-dollar-quoting">).  In the dollar-quoting
+    approach, you never double any quote marks, but instead take care to
+    choose a different dollar-quoting delimiter for each level of
+    nesting you need.  For example, you might write the <command>CREATE
+    FUNCTION</command> command as:
+<programlisting>
+CREATE OR REPLACE FUNCTION testfunc(integer) RETURNS integer AS $PROC$
+          ....
+$PROC$ LANGUAGE plpgsql;
+</programlisting>
+    Within this, you might use quote marks for simple literal strings in
+    SQL commands and <literal>$$</> to delimit fragments of SQL commands
+    that you are assembling as strings.  If you need to quote text that
+    includes <literal>$$</>, you could use <literal>$Q$</>, and so on.
+   </para>
+
+   <para>
+    The following chart shows what you have to do when writing quote
+    marks without dollar quoting.  It might be useful when translating
+    pre-dollar quoting code into something more comprehensible.
+  </para>
+
+  <variablelist>
+   <varlistentry>
+    <term>1 quotation mark</term>
+    <listitem>
+     <para>
+      To begin and end the function body, for example:
+<programlisting>
+CREATE FUNCTION foo() RETURNS integer AS '
+          ....
+' LANGUAGE plpgsql;
+</programlisting>
+      Anywhere within a single-quoted function body, quote marks
+      <emphasis>must</> appear in pairs.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>2 quotation marks</term>
+    <listitem>
+     <para>
+      For string literals inside the function body, for example:
+<programlisting>
+a_output := ''Blah'';
+SELECT * FROM users WHERE f_name=''foobar'';
+</programlisting>
+      In the dollar-quoting approach, you'd just write:
+<programlisting>
+a_output := 'Blah';
+SELECT * FROM users WHERE f_name='foobar';
+</programlisting>
+      which is exactly what the <application>PL/pgSQL</> parser would see
+      in either case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>4 quotation marks</term>
+    <listitem>
+     <para>
+      When you need a single quotation mark in a string constant inside the
+      function body, for example:
+<programlisting>
+a_output := a_output || '' AND name LIKE ''''foobar'''' AND xyz''
+</programlisting>
+      The value actually appended to <literal>a_output</literal> would be:
+      <literal> AND name LIKE 'foobar' AND xyz</literal>.
+     </para>
+     <para>
+      In the dollar-quoting approach, you'd write:
+<programlisting>
+a_output := a_output || $$ AND name LIKE 'foobar' AND xyz$$
+</programlisting>
+      being careful that any dollar-quote delimiters around this are not
+      just <literal>$$</>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>6 quotation marks</term>
+    <listitem>
+     <para>
+      When a single quotation mark in a string inside the function body is
+      adjacent to the end of that string constant, for example:
+<programlisting>
+a_output := a_output || '' AND name LIKE ''''foobar''''''
+</programlisting>
+      The value appended to <literal>a_output</literal> would then be:
+      <literal> AND name LIKE 'foobar'</literal>.
+     </para>
+     <para>
+      In the dollar-quoting approach, this becomes:
+<programlisting>
+a_output := a_output || $$ AND name LIKE 'foobar'$$
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>10 quotation marks</term>
+    <listitem>
+     <para>
+      When you want two single quotation marks in a string constant (which
+      accounts for 8 quotation marks) and this is adjacent to the end of that
+      string constant (2 more).  You will probably only need that if
+      you are writing a function that generates other functions, as in
+      <xref linkend="plpgsql-porting-ex2">.
+      For example:
+<programlisting>
+a_output := a_output || '' if v_'' || 
+    referrer_keys.kind || '' like '''''''''' 
+    || referrer_keys.key_string || '''''''''' 
+    then return ''''''  || referrer_keys.referrer_type 
+    || ''''''; end if;''; 
+</programlisting>
+      The value of <literal>a_output</literal> would then be:
+<programlisting>
+if v_... like ''...'' then return ''...''; end if;
+</programlisting>
+     </para>
+     <para>
+      In the dollar-quoting approach, this becomes:
+<programlisting>
+a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
+    || referrer_keys.key_string || $$'
+    then return '$$  || referrer_keys.referrer_type 
+    || $$'; end if;$$; 
+</programlisting>
+      where we assume we only need to put single quote marks into
+      <literal>a_output</literal>, because it will be re-quoted before use.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  </sect2>
+ </sect1>
+
   <!-- **** Porting from Oracle PL/SQL **** -->
 
  <sect1 id="plpgsql-porting">
@@ -3350,6 +3618,7 @@ SELECT * FROM sales_summary_bytime;
        <literal>function_name.parameter_name</>.
        In <application>PL/pgSQL</>, you can instead avoid a conflict by
        qualifying the column or table name.
+       (See <xref linkend="plpgsql-var-subst">.)
       </para>
      </listitem>
 
@@ -3365,8 +3634,8 @@ SELECT * FROM sales_summary_bytime;
       <para>
        In <productname>PostgreSQL</> the function body must be written as
        a string literal.  Therefore you need to use dollar quoting or escape
-       single quotes in the function body. See <xref
-       linkend="plpgsql-quote-tips">.
+       single quotes in the function body. (See <xref
+       linkend="plpgsql-quote-tips">.)
       </para>
      </listitem>
 
