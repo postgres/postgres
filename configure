@@ -6824,7 +6824,7 @@ fi
 rm -f conftest.err conftest.$ac_objext \
       conftest$ac_exeext conftest.$ac_ext
 if test "$ac_cv_search_gss_init_sec_context" = no; then
-  for ac_lib in gssapi_krb5 'gssapi -lkrb5 -lcrypto'; do
+  for ac_lib in gssapi_krb5 gss 'gssapi -lkrb5 -lcrypto'; do
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
     cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
