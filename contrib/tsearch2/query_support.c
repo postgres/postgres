@@ -180,9 +180,8 @@ tsquery_cmp(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(res);
 }
 
-#define CMPFUNC( NAME, ACTION )										\
-PG_FUNCTION_INFO_V1(NAME);										\
-Datum	NAME(PG_FUNCTION_ARGS);										\
+#define CMPFUNC( NAME, ACTION )									\
+Datum	NAME(PG_FUNCTION_ARGS);									\
 													\
 Datum													\
 NAME(PG_FUNCTION_ARGS) {										\
@@ -194,7 +193,9 @@ NAME(PG_FUNCTION_ARGS) {										\
 	PG_FREE_IF_COPY(b,1);										\
 													\
 	PG_RETURN_BOOL( ACTION );									\
-}
+}													\
+													\
+PG_FUNCTION_INFO_V1(NAME)
 
 CMPFUNC(tsquery_lt, res < 0);
 CMPFUNC(tsquery_le, res <= 0);

@@ -173,6 +173,9 @@ clean_NOT_v2(ITEM * ptr, int4 *len)
 #ifdef V_UNKNOWN				/* exists in Windows headers */
 #undef V_UNKNOWN
 #endif
+#ifdef V_FALSE					/* exists in Solaris headers */
+#undef V_FALSE
+#endif
 
 #define V_UNKNOWN	0
 #define V_TRUE		1
