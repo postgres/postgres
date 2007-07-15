@@ -4,7 +4,7 @@
  *
  * Originally by
  * B. Palmer, bpalmer@crimelabs.net 1-17-2001
- * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.30 2006/10/19 20:38:48 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.31 2007/07/15 22:54:20 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -575,5 +575,5 @@ main(int argc, char **argv)
 	sql_exec_dumpalldbs(pgconn, my_opts);
 
 	PQfinish(pgconn);
-	exit(0);
+	return 0;
 }

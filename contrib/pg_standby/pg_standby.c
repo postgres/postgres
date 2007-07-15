@@ -605,18 +605,17 @@ main(int argc, char **argv)
 	 */
 	if (triggered)
 		exit(1);			/* Normal exit, with non-zero */
-	else
-	{
-		/* 
-		 * Once we have restored this file successfully we
-		 * can remove some prior WAL files.
-		 * If this restore fails we musn't remove any
-		 * file because some of them will be requested again
-		 * immediately after the failed restore, or when
-		 * we restart recovery.
-		 */
-		if (RestoreWALFileForRecovery())
-			CustomizableCleanupPriorWALFiles();
-		exit(0);
-	}
+
+	/* 
+	 * Once we have restored this file successfully we
+	 * can remove some prior WAL files.
+	 * If this restore fails we musn't remove any
+	 * file because some of them will be requested again
+	 * immediately after the failed restore, or when
+	 * we restart recovery.
+	 */
+	if (RestoreWALFileForRecovery())
+		CustomizableCleanupPriorWALFiles();
+
+	return 0;
 }
