@@ -57,12 +57,13 @@ extern Datum bt_page_stats(PG_FUNCTION_ARGS);
 #define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
 
 #define CHECK_PAGE_OFFSET_RANGE(pg, offnum) { \
-		if ( !(FirstOffsetNumber<=(offnum) && \
-						(offnum)<=PageGetMaxOffsetNumber(pg)) ) \
+		if ( !(FirstOffsetNumber <= (offnum) && \
+						(offnum) <= PageGetMaxOffsetNumber(pg)) ) \
 			 elog(ERROR, "page offset number out of range"); }
 
+/* note: BlockNumber is unsigned, hence can't be negative */
 #define CHECK_RELATION_BLOCK_RANGE(rel, blkno) { \
-		if ( (blkno)<0 && RelationGetNumberOfBlocks((rel))<=(blkno) ) \
+		if ( RelationGetNumberOfBlocks(rel) <= (BlockNumber) (blkno) ) \
 			 elog(ERROR, "block number out of range"); }
 
 /* ------------------------------------------------
