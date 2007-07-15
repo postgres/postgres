@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/mbuf.c,v 1.3 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/mbuf.c,v 1.4 2007/07/15 23:57:13 tgl Exp $
  */
 
 #include "postgres.h"
@@ -42,8 +42,8 @@ struct MBuf
 	uint8	   *data_end;
 	uint8	   *read_pos;
 	uint8	   *buf_end;
-	int			no_write:1;
-	int			own_data:1;
+	bool		no_write;
+	bool		own_data;
 };
 
 int
@@ -129,8 +129,8 @@ mbuf_create(int len)
 	mbuf->data_end = mbuf->data;
 	mbuf->read_pos = mbuf->data;
 
-	mbuf->no_write = 0;
-	mbuf->own_data = 1;
+	mbuf->no_write = false;
+	mbuf->own_data = true;
 
 	return mbuf;
 }
@@ -146,8 +146,8 @@ mbuf_create_from_data(const uint8 *data, int len)
 	mbuf->data_end = mbuf->data + len;
 	mbuf->read_pos = mbuf->data;
 
-	mbuf->no_write = 1;
-	mbuf->own_data = 0;
+	mbuf->no_write = true;
+	mbuf->own_data = false;
 
 	return mbuf;
 }
@@ -159,7 +159,7 @@ mbuf_grab(MBuf * mbuf, int len, uint8 **data_p)
 	if (len > mbuf_avail(mbuf))
 		len = mbuf_avail(mbuf);
 
-	mbuf->no_write = 1;
+	mbuf->no_write = true;
 
 	*data_p = mbuf->read_pos;
 	mbuf->read_pos += len;
@@ -178,8 +178,8 @@ mbuf_steal_data(MBuf * mbuf, uint8 **data_p)
 {
 	int			len = mbuf_size(mbuf);
 
-	mbuf->no_write = 1;
-	mbuf->own_data = 0;
+	mbuf->no_write = true;
+	mbuf->own_data = false;
 
 	*data_p = mbuf->data;
 
