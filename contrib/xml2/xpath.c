@@ -209,7 +209,7 @@ xml_encode_special_chars(PG_FUNCTION_ARGS)
 
 	pfree(ts);
 
-	ressize = strlen(tt);
+	ressize = strlen((char *) tt);
 	tout = (text *) palloc(ressize + VARHDRSZ);
 	memcpy(VARDATA(tout), tt, ressize);
 	SET_VARSIZE(tout, ressize + VARHDRSZ);
@@ -265,7 +265,7 @@ pgxmlNodeSetToText(xmlNodeSetPtr nodeset,
 
 				/* If this isn't the last entry, write the plain sep. */
 				if (i < (nodeset->nodeNr) - 1)
-					xmlBufferWriteChar(buf, plainsep);
+					xmlBufferWriteChar(buf, (char *) plainsep);
 			}
 			else
 			{
@@ -604,12 +604,12 @@ pgxml_result_to_text(xmlXPathObjectPtr res,
 
 		default:
 			elog(NOTICE, "unsupported XQuery result: %d", res->type);
-			xpresstr = xmlStrdup("<unsupported/>");
+			xpresstr = xmlStrdup((const xmlChar *) "<unsupported/>");
 	}
 
 
 	/* Now convert this result back to text */
-	ressize = strlen(xpresstr);
+	ressize = strlen((char *) xpresstr);
 	xpres = (text *) palloc(ressize + VARHDRSZ);
 	memcpy(VARDATA(xpres), xpresstr, ressize);
 	SET_VARSIZE(xpres, ressize + VARHDRSZ);
@@ -659,8 +659,8 @@ xpath_table(PG_FUNCTION_ARGS)
 
 	char	  **values;
 	xmlChar   **xpaths;
-	xmlChar    *pos;
-	xmlChar    *pathsep = "|";
+	char	   *pos;
+	const char *pathsep = "|";
 
 	int			numpaths;
 	int			ret;
@@ -738,7 +738,7 @@ xpath_table(PG_FUNCTION_ARGS)
 	pos = xpathset;
 	do
 	{
-		xpaths[numpaths] = pos;
+		xpaths[numpaths] = (xmlChar *) pos;
 		pos = strstr(pos, pathsep);
 		if (pos != NULL)
 		{
@@ -893,7 +893,7 @@ xpath_table(PG_FUNCTION_ARGS)
 
 							default:
 								elog(NOTICE, "unsupported XQuery result: %d", res->type);
-								resstr = xmlStrdup("<unsupported/>");
+								resstr = xmlStrdup((const xmlChar *) "<unsupported/>");
 						}
 
 
@@ -901,7 +901,7 @@ xpath_table(PG_FUNCTION_ARGS)
 						 * Insert this into the appropriate column in the
 						 * result tuple.
 						 */
-						values[j + 1] = resstr;
+						values[j + 1] = (char *) resstr;
 					}
 					xmlXPathFreeContext(ctxt);
 				}

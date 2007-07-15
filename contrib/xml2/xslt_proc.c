@@ -102,7 +102,7 @@ xslt_process(PG_FUNCTION_ARGS)
 		stylesheet = xsltParseStylesheetDoc(ssdoc);
 	}
 	else
-		stylesheet = xsltParseStylesheetFile(GET_STR(ssheet));
+		stylesheet = xsltParseStylesheetFile((xmlChar *) GET_STR(ssheet));
 
 
 	if (stylesheet == NULL)
