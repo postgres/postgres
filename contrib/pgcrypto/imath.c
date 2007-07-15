@@ -27,7 +27,7 @@
   CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
   SOFTWARE.
  */
-/* $PostgreSQL: pgsql/contrib/pgcrypto/imath.c,v 1.6 2006/10/04 00:29:46 momjian Exp $ */
+/* $PostgreSQL: pgsql/contrib/pgcrypto/imath.c,v 1.7 2007/07/15 22:43:40 tgl Exp $ */
 
 #include "postgres.h"
 #include "px.h"
@@ -3199,7 +3199,7 @@ s_norm(mp_int a, mp_int b)
 	mp_digit	d = b->digits[MP_USED(b) - 1];
 	int			k = 0;
 
-	while (d < (mp_digit) (1 << (MP_DIGIT_BIT - 1)))
+	while (d < (mp_digit) ((mp_digit) 1 << (MP_DIGIT_BIT - 1)))
 	{							/* d < (MP_RADIX / 2) */
 		d <<= 1;
 		++k;
