@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.197 2007/06/05 21:31:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.198 2007/07/15 02:15:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1517,8 +1517,7 @@ exec_stmt_while(PLpgSQL_execstate *estate, PLpgSQL_stmt_while *stmt)
 /* ----------
  * exec_stmt_fori			Iterate an integer variable
  *					from a lower to an upper value
- *					incrementing or decrementing in BY value
- *					Loop can be left with exit.
+ *					incrementing or decrementing by the BY value
  * ----------
  */
 static int
@@ -1526,16 +1525,18 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 {
 	PLpgSQL_var *var;
 	Datum		value;
-	Datum		by_value;
-	Oid			valtype;
 	bool		isnull;
+	Oid			valtype;
+	int32		loop_value;
+	int32		end_value;
+	int32		step_value;
 	bool		found = false;
 	int			rc = PLPGSQL_RC_OK;
 
 	var = (PLpgSQL_var *) (estate->datums[stmt->var->varno]);
 
 	/*
-	 * Get the value of the lower bound into the loop var
+	 * Get the value of the lower bound
 	 */
 	value = exec_eval_expr(estate, stmt->lower, &isnull, &valtype);
 	value = exec_cast_value(value, valtype, var->datatype->typoid,
@@ -1546,8 +1547,7 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("lower bound of FOR loop cannot be NULL")));
-	var->value = value;
-	var->isnull = false;
+	loop_value = DatumGetInt32(value);
 	exec_eval_cleanup(estate);
 
 	/*
@@ -1562,22 +1562,32 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("upper bound of FOR loop cannot be NULL")));
+	end_value = DatumGetInt32(value);
 	exec_eval_cleanup(estate);
 
 	/*
-	 * Get the by value
+	 * Get the step value
 	 */
-	by_value = exec_eval_expr(estate, stmt->by, &isnull, &valtype);
-	by_value = exec_cast_value(by_value, valtype, var->datatype->typoid,
-							   &(var->datatype->typinput),
-							   var->datatype->typioparam,
-							   var->datatype->atttypmod, isnull);
-
-	if (isnull)
-		ereport(ERROR,
-				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				 errmsg("by value of FOR loop cannot be NULL")));
-	exec_eval_cleanup(estate);
+	if (stmt->step)
+	{
+		value = exec_eval_expr(estate, stmt->step, &isnull, &valtype);
+		value = exec_cast_value(value, valtype, var->datatype->typoid,
+								&(var->datatype->typinput),
+								var->datatype->typioparam,
+								var->datatype->atttypmod, isnull);
+		if (isnull)
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("BY value of FOR loop cannot be NULL")));
+		step_value = DatumGetInt32(value);
+		exec_eval_cleanup(estate);
+		if (step_value <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("BY value of FOR loop must be greater than zero")));
+	}
+	else
+		step_value = 1;
 
 	/*
 	 * Now do the loop
@@ -1585,20 +1595,26 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 	for (;;)
 	{
 		/*
-		 * Check bounds
+		 * Check against upper bound
 		 */
 		if (stmt->reverse)
 		{
-			if ((int4) (var->value) < (int4) value)
+			if (loop_value < end_value)
 				break;
 		}
 		else
 		{
-			if ((int4) (var->value) > (int4) value)
+			if (loop_value > end_value)
 				break;
 		}
 
 		found = true;			/* looped at least once */
+
+		/*
+		 * Assign current value to loop var
+		 */
+		var->value = Int32GetDatum(loop_value);
+		var->isnull = false;
 
 		/*
 		 * Execute the statements
@@ -1625,13 +1641,12 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 			 * current statement's label, if any: return RC_EXIT so that the
 			 * EXIT continues to propagate up the stack.
 			 */
-
 			break;
 		}
 		else if (rc == PLPGSQL_RC_CONTINUE)
 		{
 			if (estate->exitlabel == NULL)
-				/* anonymous continue, so re-run the current loop */
+				/* unlabelled continue, so re-run the current loop */
 				rc = PLPGSQL_RC_OK;
 			else if (stmt->label != NULL &&
 					 strcmp(stmt->label, estate->exitlabel) == 0)
@@ -1652,12 +1667,21 @@ exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 		}
 
 		/*
-		 * Increase/decrease loop var
+		 * Increase/decrease loop value, unless it would overflow, in which
+		 * case exit the loop.
 		 */
 		if (stmt->reverse)
-			var->value -= by_value;
+		{
+			if ((int32) (loop_value - step_value) > loop_value)
+				break;
+			loop_value -= step_value;
+		}
 		else
-			var->value += by_value;
+		{
+			if ((int32) (loop_value + step_value) < loop_value)
+				break;
+			loop_value += step_value;
+		}
 	}
 
 	/*

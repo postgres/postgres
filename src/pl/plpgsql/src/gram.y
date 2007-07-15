@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.102 2007/04/29 01:21:09 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.103 2007/07/15 02:15:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -876,7 +876,7 @@ stmt_for		: opt_block_label K_FOR for_control loop_body
 						}
 
 						check_labels($1, $4.end_label);
-						/* close namespace started in opt_label */
+						/* close namespace started in opt_block_label */
 						plpgsql_ns_pop();
 					}
 				;
@@ -968,39 +968,25 @@ for_control		:
 								PLpgSQL_stmt_fori	*new;
 								char				*varname;
 
-								/* First expression is well-formed */
+								/* Check first expression is well-formed */
 								check_sql_expr(expr1->query);
 
-
-								expr2 = read_sql_construct(K_BY,
-														   K_LOOP,
+								/* Read and check the second one */
+								expr2 = read_sql_construct(K_LOOP,
+														   K_BY,
 														   "LOOP",
 														   "SELECT ",
 														   true,
-														   false,
+														   true,
 														   &tok);
 
+								/* Get the BY clause if any */
 								if (tok == K_BY)
 									expr_by = plpgsql_read_expression(K_LOOP, "LOOP");
 								else
-								{
-									/*
-									 * If there is no BY clause we will assume 1
-									 */
-									char buf[1024];
-									PLpgSQL_dstring		ds;
+									expr_by = NULL;
 
-									plpgsql_dstring_init(&ds);
-
-									expr_by = palloc0(sizeof(PLpgSQL_expr));
-									expr_by->dtype      		= PLPGSQL_DTYPE_EXPR;
-									strcpy(buf, "SELECT 1");
-									plpgsql_dstring_append(&ds, buf);
-									expr_by->query			    = pstrdup(plpgsql_dstring_get(&ds));
-									expr_by->plan				= NULL;
-								}
-
-								/* should have had a single variable name */
+								/* Should have had a single variable name */
 								plpgsql_error_lineno = $2.lineno;
 								if ($2.scalar && $2.row)
 									ereport(ERROR,
@@ -1023,7 +1009,7 @@ for_control		:
 								new->reverse  = reverse;
 								new->lower	  = expr1;
 								new->upper	  = expr2;
-								new->by		  = expr_by;
+								new->step	  = expr_by;
 
 								$$ = (PLpgSQL_stmt *) new;
 							}
