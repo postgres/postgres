@@ -56,14 +56,14 @@ extern Datum bt_page_stats(PG_FUNCTION_ARGS);
 #define IS_INDEX(r) ((r)->rd_rel->relkind == 'i')
 #define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
 
-#define CHECK_PAGE_OFFSET_RANGE(page, offset) { \
-		if ( !(FirstOffsetNumber<=(offset) && \
-						(offset)<=PageGetMaxOffsetNumber(page)) ) \
-			 elog(ERROR, "Page offset number out of range."); }
+#define CHECK_PAGE_OFFSET_RANGE(pg, offnum) { \
+		if ( !(FirstOffsetNumber<=(offnum) && \
+						(offnum)<=PageGetMaxOffsetNumber(pg)) ) \
+			 elog(ERROR, "page offset number out of range"); }
 
 #define CHECK_RELATION_BLOCK_RANGE(rel, blkno) { \
 		if ( (blkno)<0 && RelationGetNumberOfBlocks((rel))<=(blkno) ) \
-			 elog(ERROR, "Block number out of range."); }
+			 elog(ERROR, "block number out of range"); }
 
 /* ------------------------------------------------
  * structure for single btree page statistics
@@ -220,10 +220,10 @@ bt_page_stats(PG_FUNCTION_ARGS)
 	buffer = ReadBuffer(rel, blkno);
 
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
-		elog(ERROR, "bt_page_stats() can be used only on b-tree index.");
+		elog(ERROR, "bt_page_stats() can only be used on b-tree index");
 
 	if (blkno == 0)
-		elog(ERROR, "Block 0 is a meta page.");
+		elog(ERROR, "block 0 is a meta page");
 
 	{
 		HeapTuple	tuple;
@@ -323,7 +323,7 @@ bt_page_items(PG_FUNCTION_ARGS)
 	struct user_args *uargs = NULL;
 
 	if (blkno == 0)
-		elog(ERROR, "Block 0 is a meta page.");
+		elog(ERROR, "block 0 is a meta page");
 
 	if (SRF_IS_FIRSTCALL())
 	{
@@ -343,14 +343,14 @@ bt_page_items(PG_FUNCTION_ARGS)
 		uargs->buffer = ReadBuffer(uargs->rel, blkno);
 
 		if (!IS_INDEX(uargs->rel) || !IS_BTREE(uargs->rel))
-			elog(ERROR, "bt_page_items() can be used only on b-tree index.");
+			elog(ERROR, "bt_page_items() can only be used on b-tree index");
 
 		uargs->page = BufferGetPage(uargs->buffer);
 
 		opaque = (BTPageOpaque) PageGetSpecialPointer(uargs->page);
 
 		if (P_ISDELETED(opaque))
-			elog(NOTICE, "bt_page_items(): this page is deleted.");
+			elog(NOTICE, "page is deleted");
 
 		fctx->max_calls = PageGetMaxOffsetNumber(uargs->page);
 		fctx->user_fctx = uargs;
@@ -368,7 +368,7 @@ bt_page_items(PG_FUNCTION_ARGS)
 		id = PageGetItemId(uargs->page, uargs->offset);
 
 		if (!ItemIdIsValid(id))
-			elog(ERROR, "Invalid ItemId.");
+			elog(ERROR, "invalid ItemId");
 
 		itup = (IndexTuple) PageGetItem(uargs->page, id);
 
@@ -453,7 +453,7 @@ bt_metap(PG_FUNCTION_ARGS)
 	rel = relation_openrv(relrv, AccessShareLock);
 
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
-		elog(ERROR, "bt_metap() can be used only on b-tree index.");
+		elog(ERROR, "bt_metap() can only be used on b-tree index");
 
 	buffer = ReadBuffer(rel, 0);
 
