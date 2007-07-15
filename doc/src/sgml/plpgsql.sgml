@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.113 2007/07/14 23:02:25 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.114 2007/07/15 00:45:16 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -1757,7 +1757,7 @@ END LOOP;
        </para>
      </sect3>
 
-     <sect3>
+     <sect3 id="plpgsql-integer-for">
       <title><literal>FOR</> (integer variant)</title>
 
 <synopsis>
@@ -1777,7 +1777,8 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
         the lower and upper bound of the range are evaluated once when entering
         the loop. If the <literal>BY</> clause isn't specified the iteration 
         step is 1, otherwise it's the value specified in the <literal>BY</> 
-        clause. If <literal>REVERSE</> is specified then the step value is 
+        clause, which again is evaluated once on loop entry.
+        If <literal>REVERSE</> is specified then the step value is 
         subtracted, rather than added, after each iteration.
        </para>
 
@@ -1785,17 +1786,15 @@ END LOOP <optional> <replaceable>label</replaceable> </optional>;
         Some examples of integer <literal>FOR</> loops:
 <programlisting>
 FOR i IN 1..10 LOOP
-    -- some computations here
-    RAISE NOTICE 'i is %', i;
+    -- i will take on the values 1,2,3,4,5,6,7,8,9,10 within the loop
 END LOOP;
 
 FOR i IN REVERSE 10..1 LOOP
-    -- some computations here
+    -- i will take on the values 10,9,8,7,6,5,4,3,2,1 within the loop
 END LOOP;
 
 FOR i IN REVERSE 10..1 BY 2 LOOP
-    -- some computations here
-    RAISE NOTICE 'i is %', i;
+    -- i will take on the values 10,8,6,4,2 within the loop
 END LOOP;
 </programlisting>
        </para>
@@ -1804,6 +1803,13 @@ END LOOP;
         If the lower bound is greater than the upper bound (or less than,
         in the <literal>REVERSE</> case), the loop body is not
         executed at all.  No error is raised.
+       </para>
+
+       <para>
+        If a <replaceable>label</replaceable> is attached to the
+        <literal>FOR</> loop then the integer loop variable can be
+        referenced with a qualified name, using that
+        <replaceable>label</replaceable>.
        </para>
      </sect3>
    </sect2>
@@ -3651,6 +3657,18 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
        Since there are no packages, there are no package-level variables
        either. This is somewhat annoying.  You can keep per-session state 
        in temporary tables instead.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Integer <command>FOR</> loops with <literal>REVERSE</> work
+       differently: <application>PL/SQL</> counts down from the second
+       number to the first, while <application>PL/pgSQL</> counts down
+       from the first number to the second, requiring the loop bounds
+       to be swapped when porting.  This incompatibility is unfortunate
+       but is unlikely to be changed. (See <xref
+       linkend="plpgsql-integer-for">.)
       </para>
      </listitem>
 
