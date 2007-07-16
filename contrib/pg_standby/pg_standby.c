@@ -69,7 +69,7 @@ int restoreCommandType;
 int nextWALFileType;
 
 #define SET_RESTORE_COMMAND(cmd, arg1, arg2) \
-	snprintf(restoreCommand, MAXPGPATH, cmd " %s %s", arg1, arg2)
+	snprintf(restoreCommand, MAXPGPATH, cmd " \"%s\" \"%s\"", arg1, arg2)
 
 struct stat stat_buf;
 
