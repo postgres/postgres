@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.160 2007/07/16 02:03:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.161 2007/07/16 04:57:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -754,8 +754,8 @@ typedef abilock_t slock_t;
 
 typedef unsigned int slock_t;
 
-#define TAS(lock)			_check_lock(lock, 0, 1)
-#define S_UNLOCK(lock)		_clear_lock(lock, 0)
+#define TAS(lock)			_check_lock((slock_t *) (lock), 0, 1)
+#define S_UNLOCK(lock)		_clear_lock((slock_t *) (lock), 0)
 #endif	 /* _AIX */
 
 
