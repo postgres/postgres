@@ -12,10 +12,14 @@ void g(void){
 }
 __EOF__
 
+  # Debugging and optimization are mutually exclusive
+  if test "$enable_debug" != yes; then
+    CFLAGS="-O"
+  fi
   if $CC -c -O -Kinline conftest.c >conftest.err 2>&1; then
-    CFLAGS="-O -Kinline"
+    CFLAGS="$CFLAGS -Kinline"
   else
-    CFLAGS="-O -Kinline,no_host"
+    CFLAGS="$CFLAGS -Kinline,no_host"
   fi
   rm -f conftest.*
 
