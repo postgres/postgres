@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.60 2007/07/15 02:15:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.61 2007/07/16 17:01:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,15 +147,14 @@ plpgsql_ns_setlocal(bool flag)
  * ----------
  */
 void
-plpgsql_ns_push(char *label)
+plpgsql_ns_push(const char *label)
 {
 	PLpgSQL_ns *new;
 
 	if (label == NULL)
 		label = "";
 
-	new = palloc(sizeof(PLpgSQL_ns));
-	memset(new, 0, sizeof(PLpgSQL_ns));
+	new = palloc0(sizeof(PLpgSQL_ns));
 	new->upper = ns_current;
 	ns_current = new;
 
@@ -224,7 +223,7 @@ plpgsql_ns_additem(int itemtype, int itemno, const char *name)
  * ----------
  */
 PLpgSQL_nsitem *
-plpgsql_ns_lookup(char *name, char *label)
+plpgsql_ns_lookup(const char *name, const char *label)
 {
 	PLpgSQL_ns *ns;
 	int			i;
@@ -236,11 +235,11 @@ plpgsql_ns_lookup(char *name, char *label)
 	{
 		for (ns = ns_current; ns != NULL; ns = ns->upper)
 		{
-			if (!strcmp(ns->items[0]->name, label))
+			if (strcmp(ns->items[0]->name, label) == 0)
 			{
 				for (i = 1; i < ns->items_used; i++)
 				{
-					if (!strcmp(ns->items[i]->name, name))
+					if (strcmp(ns->items[i]->name, name) == 0)
 						return ns->items[i];
 				}
 				return NULL;	/* name not found in specified label */
@@ -254,7 +253,7 @@ plpgsql_ns_lookup(char *name, char *label)
 	 */
 	for (ns = ns_current; ns != NULL; ns = ns->upper)
 	{
-		if (!strcmp(ns->items[0]->name, name))
+		if (strcmp(ns->items[0]->name, name) == 0)
 			return ns->items[0];
 	}
 
@@ -265,7 +264,7 @@ plpgsql_ns_lookup(char *name, char *label)
 	{
 		for (i = 1; i < ns->items_used; i++)
 		{
-			if (!strcmp(ns->items[i]->name, name))
+			if (strcmp(ns->items[i]->name, name) == 0)
 				return ns->items[i];
 		}
 		if (ns_localmode)
@@ -288,14 +287,13 @@ plpgsql_ns_rename(char *oldname, char *newname)
 	int			i;
 
 	/*
-	 * Lookup name in the namestack; do the lookup in the current namespace
-	 * only.
+	 * Lookup name in the namestack
 	 */
 	for (ns = ns_current; ns != NULL; ns = ns->upper)
 	{
 		for (i = 1; i < ns->items_used; i++)
 		{
-			if (!strcmp(ns->items[i]->name, oldname))
+			if (strcmp(ns->items[i]->name, oldname) == 0)
 			{
 				newitem = palloc(sizeof(PLpgSQL_nsitem) + strlen(newname));
 				newitem->itemtype = ns->items[i]->itemtype;

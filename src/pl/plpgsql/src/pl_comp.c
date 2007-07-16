@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.116 2007/06/26 16:48:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.117 2007/07/16 17:01:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,10 +306,12 @@ do_compile(FunctionCallInfo fcinfo,
 	error_context_stack = &plerrcontext;
 
 	/*
-	 * Initialize the compiler
+	 * Initialize the compiler, particularly the namespace stack.  The
+	 * outermost namespace contains function parameters and other special
+	 * variables (such as FOUND), and is named after the function itself.
 	 */
 	plpgsql_ns_init();
-	plpgsql_ns_push(NULL);
+	plpgsql_ns_push(NameStr(procStruct->proname));
 	plpgsql_DumpExecTree = false;
 
 	datums_alloc = 128;

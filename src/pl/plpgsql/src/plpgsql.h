@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.89 2007/07/15 02:15:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.90 2007/07/16 17:01:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -770,10 +770,10 @@ extern char *plpgsql_dstring_get(PLpgSQL_dstring *ds);
  */
 extern void plpgsql_ns_init(void);
 extern bool plpgsql_ns_setlocal(bool flag);
-extern void plpgsql_ns_push(char *label);
+extern void plpgsql_ns_push(const char *label);
 extern void plpgsql_ns_pop(void);
 extern void plpgsql_ns_additem(int itemtype, int itemno, const char *name);
-extern PLpgSQL_nsitem *plpgsql_ns_lookup(char *name, char *nsname);
+extern PLpgSQL_nsitem *plpgsql_ns_lookup(const char *name, const char *nsname);
 extern void plpgsql_ns_rename(char *oldname, char *newname);
 
 /* ----------

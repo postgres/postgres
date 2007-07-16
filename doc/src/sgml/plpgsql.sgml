@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.114 2007/07/15 00:45:16 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.115 2007/07/16 17:01:10 tgl Exp $ -->
 
 <chapter id="plpgsql"> 
   <title><application>PL/pgSQL</application> - <acronym>SQL</acronym> Procedural Language</title>
@@ -249,10 +249,23 @@ $$ LANGUAGE plpgsql;
 </programlisting>
     </para>
 
+    <note>
+     <para>
+      There is actually a hidden <quote>outer block</> surrounding the body
+      of any <application>PL/pgSQL</> function.  This block provides the
+      declarations of the function's parameters (if any), as well as some
+      special variables such as <literal>FOUND</literal> (see
+      <xref linkend="plpgsql-statements-diagnostics">).  The outer block is
+      labeled with the function's name, meaning that parameters and special
+      variables can be qualified with the function's name.
+     </para>
+    </note>
+
     <para>
      It is important not to confuse the use of
      <command>BEGIN</>/<command>END</> for grouping statements in
-     <application>PL/pgSQL</> with the database commands for transaction
+     <application>PL/pgSQL</> with the similarly-named SQL commands
+     for transaction
      control.  <application>PL/pgSQL</>'s <command>BEGIN</>/<command>END</>
      are only for grouping; they do not start or end a transaction.
      Functions and trigger procedures are always executed within a transaction
@@ -370,6 +383,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 </programlisting>
+     </para>
+
+    <note>
+     <para>
+      These two examples are not perfectly equivalent.  In the first case,
+      <literal>subtotal</> could be referenced as
+      <literal>sales_tax.subtotal</>, but in the second case it could not.
+      (Had we attached a label to the block, <literal>subtotal</> could
+      be qualified with that label, instead.)
+     </para>
+    </note>
+
+     <para>
       Some more examples:
 <programlisting>
 CREATE FUNCTION instr(varchar, integer) RETURNS integer AS $$
@@ -3618,12 +3644,12 @@ a_output := a_output || $$ if v_$$ || referrer_keys.kind || $$ like '$$
 
      <listitem>
       <para>
-       You cannot use parameter names that are the same as columns
-       that are referenced in the function. Oracle allows you to do this
-       if you qualify the parameter name using
-       <literal>function_name.parameter_name</>.
-       In <application>PL/pgSQL</>, you can instead avoid a conflict by
-       qualifying the column or table name.
+       If a name used in a SQL command could be either a column name of a
+       table or a reference to a variable of the function,
+       <application>PL/SQL</> treats it as a column name, while
+       <application>PL/pgSQL</> treats it as a variable name.  It's best
+       to avoid such ambiguities in the first place, but if necessary you
+       can fix them by properly qualifying the ambiguous name.
        (See <xref linkend="plpgsql-var-subst">.)
       </para>
      </listitem>

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.103 2007/07/15 02:15:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.104 2007/07/16 17:01:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -366,7 +366,7 @@ decl_statement	: decl_varname decl_const decl_datatype decl_notnull decl_defval
 						plpgsql_ns_rename($2, $4);
 					}
 				| decl_varname opt_scrollable K_CURSOR
-					{ plpgsql_ns_push(NULL); }
+					{ plpgsql_ns_push($1.name); }
 				  decl_cursor_args decl_is_for decl_cursor_query
 					{
 						PLpgSQL_var *new;
