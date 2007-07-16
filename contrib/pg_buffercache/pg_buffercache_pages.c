@@ -3,7 +3,7 @@
  * pg_buffercache_pages.c
  *	  display some contents of the buffer cache
  *
- *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.12 2007/04/07 16:09:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pg_buffercache/pg_buffercache_pages.c,v 1.13 2007/07/16 21:20:36 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -110,7 +110,8 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 		/*
 		 * To get a consistent picture of the buffer state, we must lock all
 		 * partitions of the buffer map.  Needless to say, this is horrible
-		 * for concurrency...
+		 * for concurrency.  Must grab locks in increasing order to avoid
+		 * possible deadlocks.
 		 */
 		for (i = 0; i < NUM_BUFFER_PARTITIONS; i++)
 			LWLockAcquire(FirstBufMappingLock + i, LW_SHARED);
@@ -145,8 +146,14 @@ pg_buffercache_pages(PG_FUNCTION_ARGS)
 			UnlockBufHdr(bufHdr);
 		}
 
-		/* Release Buffer map. */
-		for (i = 0; i < NUM_BUFFER_PARTITIONS; i++)
+		/*
+		 * And release locks.  We do this in reverse order for two reasons:
+		 * (1) Anyone else who needs more than one of the locks will be trying
+		 * to lock them in increasing order; we don't want to release the other
+		 * process until it can get all the locks it needs.
+		 * (2) This avoids O(N^2) behavior inside LWLockRelease.
+		 */
+		for (i = NUM_BUFFER_PARTITIONS; --i >= 0;)
 			LWLockRelease(FirstBufMappingLock + i);
 	}
 
