@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.190 2007/06/19 22:01:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.191 2007/07/16 21:09:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1168,9 +1168,11 @@ CheckDeadLock(void)
 	}
 
 	/*
-	 * Release locks acquired at head of routine.  Order is not critical, so
-	 * do it back-to-front to avoid waking another CheckDeadLock instance
-	 * before it can get all the locks.
+	 * And release locks.  We do this in reverse order for two reasons:
+	 * (1) Anyone else who needs more than one of the locks will be trying
+	 * to lock them in increasing order; we don't want to release the other
+	 * process until it can get all the locks it needs.
+	 * (2) This avoids O(N^2) behavior inside LWLockRelease.
 	 */
 check_done:
 	for (i = NUM_LOCK_PARTITIONS; --i >= 0;)

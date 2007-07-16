@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.176 2007/02/01 19:10:28 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lock.c,v 1.177 2007/07/16 21:09:50 tgl Exp $
  *
  * NOTES
  *	  A lock table is a shared memory hash table.  When
@@ -2119,7 +2119,13 @@ GetLockStatusData(void)
 		el++;
 	}
 
-	/* And release locks */
+	/*
+	 * And release locks.  We do this in reverse order for two reasons:
+	 * (1) Anyone else who needs more than one of the locks will be trying
+	 * to lock them in increasing order; we don't want to release the other
+	 * process until it can get all the locks it needs.
+	 * (2) This avoids O(N^2) behavior inside LWLockRelease.
+	 */
 	for (i = NUM_LOCK_PARTITIONS; --i >= 0;)
 		LWLockRelease(FirstLockMgrLock + i);
 
