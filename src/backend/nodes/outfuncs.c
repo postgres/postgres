@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.176 2002/10/14 22:14:34 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.176.2.1 2007/07/17 01:22:25 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1320,6 +1320,10 @@ _outValue(StringInfo str, Value *value)
 			/* internal representation already has leading 'b' */
 			appendStringInfo(str, " %s ", value->val.str);
 			break;
+		case T_Null:
+			/* this is seen only within A_Const, not in transformed trees */
+			appendStringInfo(str, " NULL ");
+			break;
 		default:
 			elog(WARNING, "_outValue: don't know how to print type %d ",
 				 value->type);
@@ -1367,7 +1371,7 @@ _outParamRef(StringInfo str, ParamRef *node)
 static void
 _outAConst(StringInfo str, A_Const *node)
 {
-	appendStringInfo(str, "CONST ");
+	appendStringInfo(str, " A_CONST :val ");
 	_outValue(str, &(node->val));
 	appendStringInfo(str, " :typename ");
 	_outNode(str, node->typename);
