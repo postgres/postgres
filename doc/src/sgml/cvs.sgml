@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.45 2007/07/10 23:03:18 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.46 2007/07/17 01:52:34 momjian Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -34,7 +34,10 @@
   At least three methods, anonymous CVS, <productname>rsync</productname>,
   and <productname>CVSup</productname>,
   are available to pull the <productname>CVS</productname> code tree from the
-  <productname>PostgreSQL</productname> server to your local machine.
+  <productname>PostgreSQL</productname> server to your local machine. 
+  Our CVS Wiki, <ulink
+  url="http://developer.postgresql.org/index.php/Working_with_CVS"></ulink>,
+  has additional details on working with CVS.
  </para>
 
  <sect1 id="anoncvs">
