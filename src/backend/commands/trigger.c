@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.210.2.2 2007/07/01 17:45:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.210.2.3 2007/07/17 17:45:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3338,8 +3338,7 @@ AfterTriggerSaveEvent(ResultRelInfo *relinfo, int event, bool row_trigger,
 					 * anything, so we have to do the check for the UPDATE
 					 * anyway.
 					 */
-					if (HeapTupleHeaderGetXmin(oldtup->t_data) !=
-						GetCurrentTransactionId() &&
+					if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmin(oldtup->t_data)) &&
 						RI_FKey_keyequal_upd_fk(trigger, rel, oldtup, newtup))
 					{
 						continue;
