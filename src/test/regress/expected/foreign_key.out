@@ -1128,3 +1128,82 @@ WARNING:  foreign key constraint "fk_241_132" will require costly sequential sca
 DETAIL:  Key columns "x2" and "id1" are of different types: character varying and integer.
 WARNING:  foreign key constraint "fk_241_132" will require costly sequential scans
 DETAIL:  Key columns "x4" and "id3" are of different types: text and real.
+DROP TABLE pktable, fktable CASCADE;
+NOTICE:  drop cascades to constraint fk_241_132 on table fktable
+NOTICE:  drop cascades to constraint fk_123_231 on table fktable
+NOTICE:  drop cascades to constraint fk_253_213 on table fktable
+NOTICE:  drop cascades to constraint fk_213_213 on table fktable
+NOTICE:  drop cascades to constraint fk_123_123 on table fktable
+NOTICE:  drop cascades to constraint fk_5_1 on table fktable
+NOTICE:  drop cascades to constraint fk_3_1 on table fktable
+NOTICE:  drop cascades to constraint fk_2_1 on table fktable
+NOTICE:  drop cascades to constraint fktable_x1_fkey on table fktable
+NOTICE:  drop cascades to constraint fk_4_2 on table fktable
+NOTICE:  drop cascades to constraint fk_1_2 on table fktable
+NOTICE:  drop cascades to constraint fktable_x2_fkey on table fktable
+NOTICE:  drop cascades to constraint fk_1_3 on table fktable
+NOTICE:  drop cascades to constraint fk_2_3 on table fktable
+NOTICE:  drop cascades to constraint fktable_x3_fkey on table fktable
+-- test a tricky case: we can elide firing the FK check trigger during
+-- an UPDATE if the UPDATE did not change the foreign key
+-- field. However, we can't do this if our transaction was the one that
+-- created the updated row and the trigger is deferred, since our UPDATE
+-- will have invalidated the original newly-inserted tuple, and therefore
+-- cause the on-INSERT RI trigger not to be fired.
+CREATE TEMP TABLE pktable (
+    id int primary key,
+    other int
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "pktable_pkey" for table "pktable"
+CREATE TEMP TABLE fktable (
+    id int primary key,
+    fk int references pktable deferrable initially deferred
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "fktable_pkey" for table "fktable"
+INSERT INTO pktable VALUES (5, 10);
+BEGIN;
+-- doesn't match PK, but no error yet
+INSERT INTO fktable VALUES (0, 20);
+-- don't change FK
+UPDATE fktable SET id = id + 1;
+-- should catch error from initial INSERT
+COMMIT;
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_fk_fkey"
+DETAIL:  Key (fk)=(20) is not present in table "pktable".
+-- check same case when insert is in a different subtransaction than update
+BEGIN;
+-- doesn't match PK, but no error yet
+INSERT INTO fktable VALUES (0, 20);
+-- UPDATE will be in a subxact
+SAVEPOINT savept1;
+-- don't change FK
+UPDATE fktable SET id = id + 1;
+-- should catch error from initial INSERT
+COMMIT;
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_fk_fkey"
+DETAIL:  Key (fk)=(20) is not present in table "pktable".
+BEGIN;
+-- INSERT will be in a subxact
+SAVEPOINT savept1;
+-- doesn't match PK, but no error yet
+INSERT INTO fktable VALUES (0, 20);
+RELEASE SAVEPOINT savept1;
+-- don't change FK
+UPDATE fktable SET id = id + 1;
+-- should catch error from initial INSERT
+COMMIT;
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_fk_fkey"
+DETAIL:  Key (fk)=(20) is not present in table "pktable".
+BEGIN;
+-- doesn't match PK, but no error yet
+INSERT INTO fktable VALUES (0, 20);
+-- UPDATE will be in a subxact
+SAVEPOINT savept1;
+-- don't change FK
+UPDATE fktable SET id = id + 1;
+-- Roll back the UPDATE
+ROLLBACK TO savept1;
+-- should catch error from initial INSERT
+COMMIT;
+ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_fk_fkey"
+DETAIL:  Key (fk)=(20) is not present in table "pktable".
