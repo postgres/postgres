@@ -830,3 +830,52 @@ UPDATE fktable SET id = id + 1;
 
 -- should catch error from initial INSERT
 COMMIT;
+
+-- check same case when insert is in a different subtransaction than update
+
+BEGIN;
+
+-- doesn't match PK, but no error yet
+INSERT INTO fktable VALUES (0, 20);
+
+-- UPDATE will be in a subxact
+SAVEPOINT savept1;
+
+-- don't change FK
+UPDATE fktable SET id = id + 1;
+
+-- should catch error from initial INSERT
+COMMIT;
+
+BEGIN;
+
+-- INSERT will be in a subxact
+SAVEPOINT savept1;
+
+-- doesn't match PK, but no error yet
+INSERT INTO fktable VALUES (0, 20);
+
+RELEASE SAVEPOINT savept1;
+
+-- don't change FK
+UPDATE fktable SET id = id + 1;
+
+-- should catch error from initial INSERT
+COMMIT;
+
+BEGIN;
+
+-- doesn't match PK, but no error yet
+INSERT INTO fktable VALUES (0, 20);
+
+-- UPDATE will be in a subxact
+SAVEPOINT savept1;
+
+-- don't change FK
+UPDATE fktable SET id = id + 1;
+
+-- Roll back the UPDATE
+ROLLBACK TO savept1;
+
+-- should catch error from initial INSERT
+COMMIT;
