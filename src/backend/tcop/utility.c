@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.283 2007/07/03 01:30:37 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.284 2007/07/17 05:02:02 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -886,6 +886,7 @@ ProcessUtility(Node *parsetree,
 							stmt->indexParams,	/* parameters */
 							(Expr *) stmt->whereClause,
 							stmt->options,
+							stmt->src_options,
 							stmt->unique,
 							stmt->primary,
 							stmt->isconstraint,

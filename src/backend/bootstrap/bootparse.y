@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.88 2007/03/13 00:33:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.89 2007/07/17 05:02:00 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,7 +252,7 @@ Boot_DeclareIndexStmt:
 								LexIDStr($8),
 								NULL,
 								$10,
-								NULL, NIL,
+								NULL, NIL, NULL,
 								false, false, false,
 								false, false, true, false, false);
 					do_end();
@@ -270,7 +270,7 @@ Boot_DeclareUniqueIndexStmt:
 								LexIDStr($9),
 								NULL,
 								$11,
-								NULL, NIL,
+								NULL, NIL, NULL,
 								true, false, false,
 								false, false, true, false, false);
 					do_end();

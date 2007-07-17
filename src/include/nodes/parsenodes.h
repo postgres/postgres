@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.349 2007/06/23 22:12:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.350 2007/07/17 05:02:02 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1501,6 +1501,7 @@ typedef struct IndexStmt
 	char	   *tableSpace;		/* tablespace, or NULL to use parent's */
 	List	   *indexParams;	/* a list of IndexElem */
 	List	   *options;		/* options from WITH clause */
+	char	   *src_options;	/* relopts inherited from source index */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
 	bool		unique;			/* is index unique? */
 	bool		primary;		/* is index on primary key? */

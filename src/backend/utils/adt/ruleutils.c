@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.262 2007/06/18 21:40:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.263 2007/07/17 05:02:02 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,7 +193,6 @@ static char *generate_relation_name(Oid relid);
 static char *generate_function_name(Oid funcid, int nargs, Oid *argtypes);
 static char *generate_operator_name(Oid operid, Oid arg1, Oid arg2);
 static text *string_to_text(char *str);
-static char *flatten_reloptions(Oid relid);
 
 #define only_marker(rte)  ((rte)->inh ? "" : "ONLY ")
 
@@ -763,8 +762,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 
 		/* Add the operator class name */
 		if (!colno)
-			get_opclass_name(indclass->values[keyno], keycoltype,
-							 &buf);
+			get_opclass_name(indclass->values[keyno], keycoltype, &buf);
 
 		/* Add options if relevant */
 		if (amrec->amcanorder)
@@ -5417,7 +5415,7 @@ string_to_text(char *str)
 /*
  * Generate a C string representing a relation's reloptions, or NULL if none.
  */
-static char *
+char *
 flatten_reloptions(Oid relid)
 {
 	char	   *result = NULL;
@@ -5450,6 +5448,34 @@ flatten_reloptions(Oid relid)
 	}
 
 	ReleaseSysCache(tuple);
+
+	return result;
+}
+
+/*
+ * Generate an Array Datum representing a relation's reloptions using
+ * a C string
+ */
+Datum
+unflatten_reloptions(char *reloptstring)
+{
+	Datum		result = (Datum) 0;
+
+	if (reloptstring)
+	{
+		Datum		sep, relopts;
+
+		/*
+		 * We want to use text_to_array(reloptstring, ', ') --- but
+		 * DirectFunctionCall2(text_to_array) does not work, because
+		 * text_to_array() relies on fcinfo to be valid.  So use
+		 * OidFunctionCall2.
+		 */
+		sep = DirectFunctionCall1(textin, CStringGetDatum(", "));
+		relopts = DirectFunctionCall1(textin, CStringGetDatum(reloptstring));
+
+		result = OidFunctionCall2(F_TEXT_TO_ARRAY, relopts, sep);
+	}
 
 	return result;
 }
