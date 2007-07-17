@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Sat Jul  7 20:41:05 EDT 2007
+Last updated:		Mon Jul 16 20:07:17 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -34,6 +34,7 @@ Administration
   has been reported in 8.0.  A possible cause was fixed in 8.1, but
   it is unknown whether other problems exist.  This item mostly
   requires additional testing rather than of writing any new code.
+
   http://archives.postgresql.org/pgsql-hackers/2006-08/msg00174.php
 
 * Set proper permissions on non-system schemas during db creation
@@ -63,6 +64,7 @@ Administration
   creation of rules for INSERT/UPDATE/DELETE, and constraints for
   rapid partition selection.  Options could include range and hash
   partition selection.
+
   http://archives.postgresql.org/pgsql-hackers/2007-03/msg00375.php
   http://archives.postgresql.org/pgsql-hackers/2007-04/msg00151.php
 
@@ -154,6 +156,7 @@ Administration
 	    [pitr]
 
 	    This is useful for checking PITR recovery.
+
 	    http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php
 
 	  o %Create dump tool for write-ahead logs for use in determining
@@ -347,7 +350,7 @@ Functions
 
 * Add missing parameter handling in to_char()
 
-	http://archives.postgresql.org/pgsql-hackers/2005-12/msg00948.php
+  http://archives.postgresql.org/pgsql-hackers/2005-12/msg00948.php
 
 * Allow functions to have a schema search path specified at creation time
 * Allow substring/replace() to get/set bit values
@@ -414,6 +417,7 @@ Multi-Language Support
 * Allow encoding on a per-column basis optionally using the ICU library:
 
   Right now only one encoding is allowed per database.  [locale]
+
   http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php
   http://archives.postgresql.org/pgsql-patches/2005-08/msg00309.php
   http://archives.postgresql.org/pgsql-patches/2006-03/msg00233.php
@@ -439,6 +443,7 @@ Multi-Language Support
 
   Currently client_encoding is set in postgresql.conf, which
   defaults to the server encoding.
+
   http://archives.postgresql.org/pgsql-hackers/2006-08/msg01696.php
 
 * Fix cases where invalid byte encodings are accepted by the database,
@@ -454,6 +459,7 @@ Views / Rules
 
   We can only auto-create rules for simple views.  For more complex
   cases users will still have to write rules manually.
+
   http://archives.postgresql.org/pgsql-hackers/2006-03/msg00586.php
   http://archives.postgresql.org/pgsql-patches/2006-08/msg00255.php
 
@@ -516,6 +522,7 @@ SQL Commands
   so duplicate checking can be easily performed.  It is possible to
   do it without a unique index if we require the user to LOCK the table
   before the MERGE.
+
   http://archives.postgresql.org/pgsql-hackers/2005-11/msg00501.php
   http://archives.postgresql.org/pgsql-hackers/2005-11/msg00536.php
 
@@ -575,6 +582,7 @@ SQL Commands
 	  http://archives.postgresql.org/pgsql-hackers/2007-01/msg00133.php
 
 	o Have WITH CONSTRAINTS also create constraint indexes
+
 	  http://archives.postgresql.org/pgsql-patches/2007-04/msg00149.php
 
 * UPDATE
@@ -718,6 +726,7 @@ SQL Commands
 	  a unique index.  Currently, uniqueness checks are done while the
 	  command is being executed, rather than at the end of the statement
 	  or transaction.
+
 	  http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html
 	  http://archives.postgresql.org/pgsql-hackers/2006-09/msg01458.php
 
@@ -740,6 +749,7 @@ SQL Commands
 		  is also possible to implement these capabilities
 		  in all schemas and not use a separate "packages"
 		  syntax at all.
+
 		  http://archives.postgresql.org/pgsql-hackers/2006-08/msg00384.php
 
 		o Allow handling of %TYPE arrays, e.g. tab.col%TYPE[]
@@ -771,6 +781,7 @@ SQL Commands
 
 		  Because a row is not scalar, do not allow assignment
 		  from NULL-valued scalars.
+
 		  http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php
 
 	o Other
@@ -862,7 +873,7 @@ Clients
 	  code
 	o Allow selection of individual object(s) of all types, not just
 	  tables
-	o In a selective dump, allow dumping of an object and all its 
+	o In a selective dump, allow dumping of an object and all its
 	  dependencies
 	o Add options like pg_restore -l and -L to pg_dump
 	o Stop dumping CASCADE on DROP TYPE commands in clean mode
@@ -1012,6 +1023,11 @@ Indexes
   have this complication.  This would allow index compaction without
   downtime.
 
+* Allow multiple indexes to be created concurrently, ideally via a
+  single heap scan, and have a restore of a pg_dump somehow use it
+
+  http://archives.postgresql.org/pgsql-general/2007-05/msg01274.php
+
 
 * Inheritance
 
@@ -1142,6 +1158,7 @@ Vacuum
   For large table adjustments during VACUUM FULL, it is faster to cluster
   or reindex rather than update the index.  Also, index updates can bloat
   the index.
+
   http://archives.postgresql.org/pgsql-hackers/2007-03/msg00024.php
   http://archives.postgresql.org/pgsql-performance/2007-05/msg00296.php
 
@@ -1188,6 +1205,7 @@ Vacuum
   counters, are difficult for VACUUM to handle efficiently.  This method
   is possible for same-page updates because a single index row can be
   used to point to both old and new values.
+
   http://archives.postgresql.org/pgsql-hackers/2006-06/msg01305.php
   http://archives.postgresql.org/pgsql-hackers/2006-06/msg01534.php
 
@@ -1371,6 +1389,7 @@ Miscellaneous Performance
 
   Async I/O allows multiple I/O requests to be sent to the disk with
   results coming back asynchronously.
+
   http://archives.postgresql.org/pgsql-hackers/2006-10/msg00820.php
 
 * Use mmap() rather than SYSV shared memory or to write WAL files?
@@ -1408,6 +1427,7 @@ Miscellaneous Performance
 
   Though backend priorities make priority inversion during lock
   waits possible, research shows that this is not a huge problem.
+
   http://archives.postgresql.org/pgsql-general/2007-02/msg00493.php
 
 * Consider reducing memory used for shared buffer reference count
@@ -1563,6 +1583,7 @@ Features We Do _Not_ Want
 
   Optimizer hints are used to work around problems in the optimizer.  We
   would rather have the problems reported and fixed.
+
   http://archives.postgresql.org/pgsql-hackers/2006-08/msg00506.php
   http://archives.postgresql.org/pgsql-hackers/2006-10/msg00517.php
   http://archives.postgresql.org/pgsql-hackers/2006-10/msg00663.php
@@ -1571,6 +1592,7 @@ Features We Do _Not_ Want
 
   Because we support postfix operators, it isn't possible to make AS
   optional and continue to use bison.
+
   http://archives.postgresql.org/pgsql-sql/2006-08/msg00164.php
 
 * Embedded server (not wanted)

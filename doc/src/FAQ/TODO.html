@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Sat Jul  7 20:41:05 EDT 2007
+Last updated:           Mon Jul 16 20:07:17 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -38,7 +38,8 @@ first.  There is also a developer's wiki at<br/>
   has been reported in 8.0.  A possible cause was fixed in 8.1, but
   it is unknown whether other problems exist.  This item mostly
   requires additional testing rather than of writing any new code.
-  <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg00174.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg00174.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg00174.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg00174.php</a>
 </p>
   </li><li>Set proper permissions on non-system schemas during db creation
 <p>  Currently all schemas are owned by the super-user because they are copied
@@ -64,7 +65,8 @@ first.  There is also a developer's wiki at<br/>
   creation of rules for INSERT/UPDATE/DELETE, and constraints for
   rapid partition selection.  Options could include range and hash
   partition selection.
-  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00375.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00375.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00375.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00375.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2007-04/msg00151.php">http://archives.postgresql.org/pgsql-hackers/2007-04/msg00151.php</a>
 </p>
   </li><li>Allow auto-selection of partitioned tables for min/max() operations
@@ -142,7 +144,8 @@ first.  There is also a developer's wiki at<br/>
     <li>Allow a warm standby system to also allow read-only statements
             [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pitr">pitr</a>]
 <p>            This is useful for checking PITR recovery.
-            <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php</a>
+</p>
+<p>            <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00050.php</a>
 </p>
     </li><li>%Create dump tool for write-ahead logs for use in determining
             transaction id for point-in-time recovery
@@ -313,11 +316,9 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-02/msg00915.php">http://archives.postgresql.org/pgsql-hackers/2007-02/msg00915.php</a>
 </p>
   </li><li>Add missing parameter handling in to_char()
-</li></ul>
-<p>        <a href="http://archives.postgresql.org/pgsql-hackers/2005-12/msg00948.php">http://archives.postgresql.org/pgsql-hackers/2005-12/msg00948.php</a>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-12/msg00948.php">http://archives.postgresql.org/pgsql-hackers/2005-12/msg00948.php</a>
 </p>
-<ul>
-  <li>Allow functions to have a schema search path specified at creation time
+  </li><li>Allow functions to have a schema search path specified at creation time
   </li><li>Allow substring/replace() to get/set bit values
   </li><li>Allow to_char() on interval values to accumulate the highest unit
   requested
@@ -372,7 +373,8 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>Allow encoding on a per-column basis optionally using the ICU library:
 <p>  Right now only one encoding is allowed per database.  [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?locale">locale</a>]
-  <a href="http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php">http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php">http://archives.postgresql.org/pgsql-hackers/2005-03/msg00932.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2005-08/msg00309.php">http://archives.postgresql.org/pgsql-patches/2005-08/msg00309.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2006-03/msg00233.php">http://archives.postgresql.org/pgsql-patches/2006-03/msg00233.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg00662.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg00662.php</a>
@@ -394,7 +396,8 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Set client encoding based on the client operating system encoding
 <p>  Currently client_encoding is set in postgresql.conf, which
   defaults to the server encoding.
-  <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg01696.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg01696.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg01696.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg01696.php</a>
 </p>
   </li><li>Fix cases where invalid byte encodings are accepted by the database,
   but throw an error on SELECT
@@ -407,7 +410,8 @@ first.  There is also a developer's wiki at<br/>
   <li>Automatically create rules on views so they are updateable, per SQL99
 <p>  We can only auto-create rules for simple views.  For more complex
   cases users will still have to write rules manually.
-  <a href="http://archives.postgresql.org/pgsql-hackers/2006-03/msg00586.php">http://archives.postgresql.org/pgsql-hackers/2006-03/msg00586.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-03/msg00586.php">http://archives.postgresql.org/pgsql-hackers/2006-03/msg00586.php</a>
   <a href="http://archives.postgresql.org/pgsql-patches/2006-08/msg00255.php">http://archives.postgresql.org/pgsql-patches/2006-08/msg00255.php</a>
 </p>
   </li><li>Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
@@ -461,7 +465,8 @@ first.  There is also a developer's wiki at<br/>
   so duplicate checking can be easily performed.  It is possible to
   do it without a unique index if we require the user to LOCK the table
   before the MERGE.
-  <a href="http://archives.postgresql.org/pgsql-hackers/2005-11/msg00501.php">http://archives.postgresql.org/pgsql-hackers/2005-11/msg00501.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-11/msg00501.php">http://archives.postgresql.org/pgsql-hackers/2005-11/msg00501.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2005-11/msg00536.php">http://archives.postgresql.org/pgsql-hackers/2005-11/msg00536.php</a>
 </p>
   </li><li>Add NOVICE output level for helpful messages like automatic sequence/index
@@ -514,7 +519,8 @@ first.  There is also a developer's wiki at<br/>
 <p>          <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00133.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00133.php</a>
 </p>
     </li><li>Have WITH CONSTRAINTS also create constraint indexes
-          <a href="http://archives.postgresql.org/pgsql-patches/2007-04/msg00149.php">http://archives.postgresql.org/pgsql-patches/2007-04/msg00149.php</a>
+<p>          <a href="http://archives.postgresql.org/pgsql-patches/2007-04/msg00149.php">http://archives.postgresql.org/pgsql-patches/2007-04/msg00149.php</a>
+</p>
   </li></ul>
   </li><li>UPDATE
   <ul>
@@ -640,7 +646,8 @@ first.  There is also a developer's wiki at<br/>
           a unique index.  Currently, uniqueness checks are done while the
           command is being executed, rather than at the end of the statement
           or transaction.
-          <a href="http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html">http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html</a>
+</p>
+<p>          <a href="http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html">http://people.planetpostgresql.org/greg/index.php?/archives/2006/06/10.html</a>
           <a href="http://archives.postgresql.org/pgsql-hackers/2006-09/msg01458.php">http://archives.postgresql.org/pgsql-hackers/2006-09/msg01458.php</a>
 </p>
   </li></ul>
@@ -661,7 +668,8 @@ first.  There is also a developer's wiki at<br/>
                   is also possible to implement these capabilities
                   in all schemas and not use a separate "packages"
                   syntax at all.
-                  <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg00384.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg00384.php</a>
+</p>
+<p>                  <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg00384.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg00384.php</a>
 </p>
       </li><li>Allow handling of %TYPE arrays, e.g. tab.col%TYPE[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?"></a>]
       </li><li>Allow listing of record column names, and access to
@@ -688,7 +696,8 @@ first.  There is also a developer's wiki at<br/>
                   and allow NULL tests on such variables
 <p>                  Because a row is not scalar, do not allow assignment
                   from NULL-valued scalars.
-                  <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php</a>
+</p>
+<p>                  <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00070.php</a>
 </p>
     </li></ul>
     </li><li>Other
@@ -772,7 +781,7 @@ first.  There is also a developer's wiki at<br/>
           code
     </li><li>Allow selection of individual object(s) of all types, not just
           tables
-    </li><li>In a selective dump, allow dumping of an object and all its 
+    </li><li>In a selective dump, allow dumping of an object and all its
           dependencies
     </li><li>Add options like pg_restore -l and -L to pg_dump
     </li><li>Stop dumping CASCADE on DROP TYPE commands in clean mode
@@ -903,6 +912,10 @@ first.  There is also a developer's wiki at<br/>
   have this complication.  This would allow index compaction without
   downtime.
 </p>
+  </li><li>Allow multiple indexes to be created concurrently, ideally via a
+  single heap scan, and have a restore of a pg_dump somehow use it
+<p>  <a href="http://archives.postgresql.org/pgsql-general/2007-05/msg01274.php">http://archives.postgresql.org/pgsql-general/2007-05/msg01274.php</a>
+</p>
   </li><li>Inheritance
   <ul>
     <li>Allow inherited tables to inherit indexes, UNIQUE constraints,
@@ -1017,7 +1030,8 @@ first.  There is also a developer's wiki at<br/>
 <p>  For large table adjustments during VACUUM FULL, it is faster to cluster
   or reindex rather than update the index.  Also, index updates can bloat
   the index.
-  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00024.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00024.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-03/msg00024.php">http://archives.postgresql.org/pgsql-hackers/2007-03/msg00024.php</a>
   <a href="http://archives.postgresql.org/pgsql-performance/2007-05/msg00296.php">http://archives.postgresql.org/pgsql-performance/2007-05/msg00296.php</a>
 </p>
   </li><li>Reduce lock time during VACUUM FULL by moving tuples with read lock,
@@ -1058,7 +1072,8 @@ first.  There is also a developer's wiki at<br/>
   counters, are difficult for VACUUM to handle efficiently.  This method
   is possible for same-page updates because a single index row can be
   used to point to both old and new values.
-  <a href="http://archives.postgresql.org/pgsql-hackers/2006-06/msg01305.php">http://archives.postgresql.org/pgsql-hackers/2006-06/msg01305.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-06/msg01305.php">http://archives.postgresql.org/pgsql-hackers/2006-06/msg01305.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-06/msg01534.php">http://archives.postgresql.org/pgsql-hackers/2006-06/msg01534.php</a>
 </p>
   </li><li>Reuse index tuples that point to heap tuples that are not visible to 
@@ -1220,7 +1235,8 @@ first.  There is also a developer's wiki at<br/>
   <li>Do async I/O for faster random read-ahead of data
 <p>  Async I/O allows multiple I/O requests to be sent to the disk with
   results coming back asynchronously.
-  <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00820.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00820.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00820.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00820.php</a>
 </p>
   </li><li>Use mmap() rather than SYSV shared memory or to write WAL files?
 <p>  This would remove the requirement for SYSV SHM but would introduce
@@ -1253,7 +1269,8 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Allow configuration of backend priorities via the operating system
 <p>  Though backend priorities make priority inversion during lock
   waits possible, research shows that this is not a huge problem.
-  <a href="http://archives.postgresql.org/pgsql-general/2007-02/msg00493.php">http://archives.postgresql.org/pgsql-general/2007-02/msg00493.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-general/2007-02/msg00493.php">http://archives.postgresql.org/pgsql-general/2007-02/msg00493.php</a>
 </p>
   </li><li>Consider reducing memory used for shared buffer reference count
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00752.php</a>
@@ -1387,14 +1404,16 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Optimizer hints (not wanted)
 <p>  Optimizer hints are used to work around problems in the optimizer.  We
   would rather have the problems reported and fixed.
-  <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg00506.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg00506.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-08/msg00506.php">http://archives.postgresql.org/pgsql-hackers/2006-08/msg00506.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00517.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00517.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-10/msg00663.php">http://archives.postgresql.org/pgsql-hackers/2006-10/msg00663.php</a>
 </p>
   </li><li>Allow AS in "SELECT col AS label" to be optional (not wanted)
 <p>  Because we support postfix operators, it isn't possible to make AS
   optional and continue to use bison.
-  <a href="http://archives.postgresql.org/pgsql-sql/2006-08/msg00164.php">http://archives.postgresql.org/pgsql-sql/2006-08/msg00164.php</a>
+</p>
+<p>  <a href="http://archives.postgresql.org/pgsql-sql/2006-08/msg00164.php">http://archives.postgresql.org/pgsql-sql/2006-08/msg00164.php</a>
 </p>
   </li><li>Embedded server (not wanted)
 <p>  While PostgreSQL clients runs fine in limited-resource environments, the
