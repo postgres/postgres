@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Jun 1 00:11:39 EDT 2007
+   Last updated: Tue Jul 17 01:03:37 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -343,9 +343,6 @@ General Questions
    Date, Addison, Wesley, A Guide to the SQL Standard, by C.J. Date, et.
    al, Addison, Wesley, Fundamentals of Database Systems, by Elmasri and
    Navathe, and Transaction Processing, by Jim Gray, Morgan, Kaufmann
-   
-   There is also a database performance site, with a handbook on-line
-   written by Jim Gray at http://www.benchmarkresources.com..
    
   1.12) What is configure all about?
   
