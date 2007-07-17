@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.261.2.2 2007/05/22 01:40:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.261.2.3 2007/07/17 01:22:03 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -1632,6 +1632,10 @@ _outValue(StringInfo str, Value *value)
 			/* internal representation already has leading 'b' */
 			appendStringInfoString(str, value->val.str);
 			break;
+		case T_Null:
+			/* this is seen only within A_Const, not in transformed trees */
+			appendStringInfoString(str, "NULL");
+			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) value->type);
 			break;
@@ -1659,6 +1663,7 @@ _outAConst(StringInfo str, A_Const *node)
 {
 	WRITE_NODE_TYPE("A_CONST");
 
+	appendStringInfo(str, " :val ");
 	_outValue(str, &(node->val));
 	WRITE_NODE_FIELD(typename);
 }
