@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.112.2.1 2006/12/06 19:40:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.112.2.2 2007/07/18 21:41:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1306,10 +1306,14 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 	Param	   *prm;
 
 	/*
-	 * Set up for a new level of subquery.	This is just to keep
-	 * SS_finalize_plan from becoming confused.
+	 * We must run SS_finalize_plan(), since that's normally done before a
+	 * subplan gets put into the initplan list.  However it will try to attach
+	 * any pre-existing initplans to this one, which we don't want (they are
+	 * siblings not children of this initplan).  So, a quick kluge to hide
+	 * them.  (This is something else that could perhaps be cleaner if we did
+	 * extParam/allParam processing in setrefs.c instead of here?  See notes
+	 * for materialize_finished_plan.)
 	 */
-	PlannerQueryLevel++;
 	PlannerInitPlan = NIL;
 
 	/*
@@ -1317,8 +1321,7 @@ SS_make_initplan_from_plan(PlannerInfo *root, Plan *plan,
 	 */
 	SS_finalize_plan(plan, root->parse->rtable);
 
-	/* Return to outer subquery context */
-	PlannerQueryLevel--;
+	/* Restore outer initplan list */
 	PlannerInitPlan = saved_initplan;
 
 	/*

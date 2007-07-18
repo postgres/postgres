@@ -236,3 +236,18 @@ select * from shipped_view;
 select f1, ss1 as relabel from
     (select *, (select sum(f1) from int4_tbl b where f1 >= a.f1) as ss1
      from int4_tbl a) ss;
+
+--
+-- Test cases involving PARAM_EXEC parameters and min/max index optimizations.
+-- Per bug report from David Sanchez i Gregori.
+--
+
+select * from (
+  select max(unique1) from tenk1 as a
+  where exists (select 1 from tenk1 as b where b.thousand = a.unique2)
+) ss;
+
+select * from (
+  select min(unique1) from tenk1 as a
+  where not exists (select 1 from tenk1 as b where b.unique2 = 10000)
+) ss;
