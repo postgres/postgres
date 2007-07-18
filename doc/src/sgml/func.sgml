@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.382 2007/06/06 23:00:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.383 2007/07/18 03:12:42 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -5893,6 +5893,17 @@ SELECT (DATE '2001-02-16', INTERVAL '100 days') OVERLAPS
    <literal>timestamp with time zone '2005-04-03 13:00-06'</literal>, as there is
    a change in daylight saving time at <literal>2005-04-03 02:00</literal> in time zone 
    <literal>CST7CDT</literal>.
+  </para>
+
+  <para>
+   Note that when the <function>age</> function operates on multi-month
+   intervals, <productname>PostgreSQL</> adds days to the earlier date
+   until full months can be added.  This yields a different result than
+   adding full months first if the interval crosses from one month to the
+   next.  For example, <literal>age('2004-06-01', '2004-04-30')</> yeilds
+   <literal>1 mon 1 day</> using the <productname>PostgreSQL</> method,
+   while adding the month first would yield <literal>1 mon 2 days</>
+   because May has 31 days, while April has only 30.
   </para>
 
   <sect2 id="functions-datetime-extract">
