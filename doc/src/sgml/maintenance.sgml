@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.75 2007/05/30 19:45:00 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.76 2007/07/18 03:39:01 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -533,7 +533,7 @@ vacuum threshold = vacuum base threshold + vacuum scale factor * number of tuple
 <programlisting>
 analyze threshold = analyze base threshold + analyze scale factor * number of tuples
 </programlisting>
-    is compared to the total number of tuples inserted, updated, or deleted
+    is compared to the total number of tuples inserted or updated
     since the last <command>ANALYZE</command>.
    </para>
 
