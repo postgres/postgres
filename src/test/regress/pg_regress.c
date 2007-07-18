@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.35 2007/06/12 13:54:58 mha Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.36 2007/07/18 21:19:17 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -911,7 +911,7 @@ spawn_process(const char *cmdline)
 		char	   *cmdline2 = malloc(strlen(cmdline) + 6);
 
 		sprintf(cmdline2, "exec %s", cmdline);
-		execl(shellprog, shellprog, "-c", cmdline2, NULL);
+		execl(shellprog, shellprog, "-c", cmdline2, (char *) NULL);
 		fprintf(stderr, _("%s: could not exec \"%s\": %s\n"),
 				progname, shellprog, strerror(errno));
 		exit(1);				/* not exit_nicely here... */
