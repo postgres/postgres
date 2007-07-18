@@ -386,3 +386,25 @@ select f1, ss1 as relabel from
  -2147483647 |          0
 (5 rows)
 
+--
+-- Test cases involving PARAM_EXEC parameters and min/max index optimizations.
+-- Per bug report from David Sanchez i Gregori.
+--
+select * from (
+  select max(unique1) from tenk1 as a
+  where exists (select 1 from tenk1 as b where b.thousand = a.unique2)
+) ss;
+ max  
+------
+ 9997
+(1 row)
+
+select * from (
+  select min(unique1) from tenk1 as a
+  where not exists (select 1 from tenk1 as b where b.unique2 = 10000)
+) ss;
+ min 
+-----
+   0
+(1 row)
+
