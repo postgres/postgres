@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.289 2007/04/25 13:01:41 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.290 2007/07/18 12:00:47 mha Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -802,6 +802,23 @@ su - postgres
       </varlistentry>
 
       <varlistentry>
+       <term><option>--with-gssapi</option></term>
+       <listitem>
+        <para>
+         Build with support for GSSAPI authentication. On many
+         systems, the GSSAPI (usually a part of the Kerberos installation)
+         system is not installed in a location
+         that is searched by default (e.g., <filename>/usr/include</>,
+         <filename>/usr/lib</>), so you must use the options
+         <option>--with-includes</> and <option>--with-libraries</> in
+         addition to this option.  <filename>configure</> will check
+         for the required header files and libraries to make sure that
+         your GSSAPI installation is sufficient before proceeding.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
        <term><option>--with-krb5</option></term>
        <listitem>
         <para>
@@ -821,9 +838,12 @@ su - postgres
        <term><option>--with-krb-srvnam=<replaceable>NAME</></option></term>
        <listitem>
         <para>
-         The default name of the Kerberos service principal.
+         The default name of the Kerberos service principal (also used
+         by GSSAPI).
          <literal>postgres</literal> is the default. There's usually no
-         reason to change this.
+         reason to change this unless you have a Windows environment,
+         in which case it must be set to uppercase
+         <literal>POSTGRES</literal>.
         </para>
        </listitem>
       </varlistentry>

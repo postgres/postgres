@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.98 2007/03/24 21:46:23 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.99 2007/07/18 12:00:47 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -348,6 +348,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
+        <term><literal>gss</></term>
+        <listitem>
+         <para>
+          Use GSSAPI to authenticate the user. This is only 
+          available for TCP/IP connections. See <xref
+          linkend="gssapi-auth"> for details.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
         <term><literal>krb5</></term>
         <listitem>
          <para>
@@ -633,6 +644,37 @@ local   db1,db2,@demodbs  all                         md5
     is null and password authentication will always fail for that user.
    </para>
 
+  </sect2>
+
+  <sect2 id="gssapi-auth">
+   <title>GSSAPI authentication</title>
+
+   <indexterm zone="gssapi-auth">
+    <primary>GSSAPI</primary>
+   </indexterm>
+
+   <para>
+    <productname>GSSAPI</productname> is an industry-standard protocol
+    for secure authentication defined in RFC2743. 
+    <productname>PostgreSQL</productname> supports
+    <productname>GSSAPI</productname> with <productname>Kerberos</productname>
+    authentication according to RFC1964. <productname>GSSAPI</productname>
+    provides automatic authentication (single sign-on) for systems
+    that support it. The authentication itself is secure, but the
+    data sent over the connection will be in clear unless
+    <acronym>SSL</acronym> is used.
+   </para>
+
+   <para>
+    When <productname>GSSAPI</productname> uses
+    <productname>Kerberos</productname>, it uses a standard principal
+    in format
+    <literal><replaceable>servicename</>/<replaceable>hostname</>@<replaceable>realm</></literal>. For information about the parts of the principal, and
+    how to set up the required keys, see <xref linkend="kerberos-auth">.
+    GSSAPI support has to be enabled when <productname>PostgreSQL</> is built;
+    see <xref linkend="installation"> for more information.
+   </para>
+   
   </sect2>
 
   <sect2 id="kerberos-auth">

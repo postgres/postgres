@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.130 2007/06/30 19:12:01 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.131 2007/07/18 12:00:47 mha Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -609,8 +609,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the location of the Kerberos server key file. See
-        <xref linkend="kerberos-auth"> for details. This parameter
-        can only be set at server start.
+        <xref linkend="kerberos-auth"> or <xref linkend="gssapi-auth"> 
+        for details. This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -652,7 +652,8 @@ SET ENABLE_SEQSCAN TO OFF;
       </indexterm>
       <listitem>
        <para>
-        Sets whether Kerberos user names should be treated case-insensitively.
+        Sets whether Kerberos and GSSAPI user names should be treated
+        case-insensitively.
         The default is <literal>off</> (case sensitive). This parameter
         can only be set at server start.
        </para>

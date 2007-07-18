@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.237 2007/07/08 18:28:55 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.238 2007/07/18 12:00:47 mha Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -131,7 +131,7 @@ PGconn *PQconnectdb(const char *conninfo);
      <para>
       Using <literal>hostaddr</> instead of <literal>host</> allows the
       application to avoid a host name look-up, which might be important in
-      applications with time constraints. However, Kerberos authentication
+      applications with time constraints. However, Kerberos and GSSAPI authentication
       requires the host name. The following therefore applies: If
       <literal>host</> is specified without <literal>hostaddr</>, a host name
       lookup occurs. If <literal>hostaddr</> is specified without
@@ -281,10 +281,11 @@ PGconn *PQconnectdb(const char *conninfo);
      <term><literal>krbsrvname</literal></term>
      <listitem>
       <para>
-       Kerberos service name to use when authenticating with Kerberos 5.
+       Kerberos service name to use when authenticating with Kerberos 5
+       or GSSAPI.
        This must match the service name specified in the server
        configuration for Kerberos authentication to succeed. (See also
-       <xref linkend="kerberos-auth">.)
+       <xref linkend="kerberos-auth"> and <xref linkend="gssapi-auth">.)
       </para>
      </listitem>
     </varlistentry>
@@ -4214,7 +4215,7 @@ set, the secret key must be kept in a file.
  <primary><envar>PGKRBSRVNAME</envar></primary>
 </indexterm>
 <envar>PGKRBSRVNAME</envar> sets the Kerberos service name to use when
-authenticating with Kerberos 5.
+authenticating with Kerberos 5 or GSSAPI.
 </para>
 </listitem>
 <listitem>
