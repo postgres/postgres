@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.179 2007/07/06 04:15:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.180 2007/07/18 03:13:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3044,7 +3044,8 @@ timestamp_age(PG_FUNCTION_ARGS)
 	if (timestamp2tm(dt1, NULL, tm1, &fsec1, NULL, NULL) == 0 &&
 		timestamp2tm(dt2, NULL, tm2, &fsec2, NULL, NULL) == 0)
 	{
-		fsec = (fsec1 - fsec2);
+		/* form the symbolic difference */
+		fsec = fsec1 - fsec2;
 		tm->tm_sec = tm1->tm_sec - tm2->tm_sec;
 		tm->tm_min = tm1->tm_min - tm2->tm_min;
 		tm->tm_hour = tm1->tm_hour - tm2->tm_hour;
@@ -3062,6 +3063,17 @@ timestamp_age(PG_FUNCTION_ARGS)
 			tm->tm_mday = -tm->tm_mday;
 			tm->tm_mon = -tm->tm_mon;
 			tm->tm_year = -tm->tm_year;
+		}
+
+		/* propagate any negative fields into the next higher field */
+		while (fsec < 0)
+		{
+#ifdef HAVE_INT64_TIMESTAMP
+			fsec += USECS_PER_SEC;
+#else
+			fsec += 1.0;
+#endif
+			tm->tm_sec--;
 		}
 
 		while (tm->tm_sec < 0)
@@ -3158,6 +3170,7 @@ timestamptz_age(PG_FUNCTION_ARGS)
 	if (timestamp2tm(dt1, &tz1, tm1, &fsec1, &tzn, NULL) == 0 &&
 		timestamp2tm(dt2, &tz2, tm2, &fsec2, &tzn, NULL) == 0)
 	{
+		/* form the symbolic difference */
 		fsec = fsec1 - fsec2;
 		tm->tm_sec = tm1->tm_sec - tm2->tm_sec;
 		tm->tm_min = tm1->tm_min - tm2->tm_min;
@@ -3176,6 +3189,17 @@ timestamptz_age(PG_FUNCTION_ARGS)
 			tm->tm_mday = -tm->tm_mday;
 			tm->tm_mon = -tm->tm_mon;
 			tm->tm_year = -tm->tm_year;
+		}
+
+		/* propagate any negative fields into the next higher field */
+		while (fsec < 0)
+		{
+#ifdef HAVE_INT64_TIMESTAMP
+			fsec += USECS_PER_SEC;
+#else
+			fsec += 1.0;
+#endif
+			tm->tm_sec--;
 		}
 
 		while (tm->tm_sec < 0)
