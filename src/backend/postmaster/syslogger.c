@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.20.2.2 2007/06/14 01:50:14 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.20.2.3 2007/07/19 19:14:54 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,11 +79,12 @@ bool		Log_truncate_on_rotation = false;
  */
 bool		am_syslogger = false;
 
+extern bool redirection_done;
+
 /*
  * Private state
  */
 static pg_time_t next_rotation_time;
-static bool redirection_done = false;
 static bool pipe_eof_seen = false;
 static FILE *syslogFile = NULL;
 static char *last_file_name = NULL;
@@ -573,14 +574,12 @@ syslogger_forkexec(void)
 		snprintf(numbuf[bufc++], 32, "%d", fileno(syslogFile));
 	else
 		strcpy(numbuf[bufc++], "-1");
-	snprintf(numbuf[bufc++], 32, "%d", (int) redirection_done);
 #else							/* WIN32 */
 	if (syslogFile != NULL)
 		snprintf(numbuf[bufc++], 32, "%ld",
 				 _get_osfhandle(_fileno(syslogFile)));
 	else
 		strcpy(numbuf[bufc++], "0");
-	snprintf(numbuf[bufc++], 32, "%d", (int) redirection_done);
 #endif   /* WIN32 */
 
 	/* Add to the arg list */
@@ -614,7 +613,6 @@ syslogger_parseArgs(int argc, char *argv[])
 		syslogFile = fdopen(fd, "a");
 		setvbuf(syslogFile, NULL, LBF_MODE, 0);
 	}
-	redirection_done = (bool) atoi(*argv++);
 #else							/* WIN32 */
 	fd = atoi(*argv++);
 	if (fd != 0)
@@ -626,7 +624,6 @@ syslogger_parseArgs(int argc, char *argv[])
 			setvbuf(syslogFile, NULL, LBF_MODE, 0);
 		}
 	}
-	redirection_done = (bool) atoi(*argv++);
 #endif   /* WIN32 */
 }
 #endif   /* EXEC_BACKEND */
