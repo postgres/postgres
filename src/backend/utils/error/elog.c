@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.155.4.5 2007/06/14 01:50:34 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.155.4.6 2007/07/19 19:15:25 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,8 @@
 ErrorContextCallback *error_context_stack = NULL;
 
 sigjmp_buf *PG_exception_stack = NULL;
+
+extern bool redirection_done;
 
 /* GUC parameters */
 PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
@@ -1670,11 +1672,11 @@ send_message_to_server_log(ErrorData *edata)
 		 * If stderr redirection is active, it's ok to write to stderr
 		 * because that's really a pipe to the syslogger process.
 		 */
-		if ((!Redirect_stderr || am_syslogger) && pgwin32_is_service())
+		if (pgwin32_is_service() && (!redirection_done || am_syslogger) )
 			write_eventlog(edata->elevel, buf.data);
 		else
 #endif
-			if (Redirect_stderr)
+			if (redirection_done && !am_syslogger)
 				write_pipe_chunks(fileno(stderr), buf.data, buf.len);
 			else
 				write(fileno(stderr), buf.data, buf.len);
