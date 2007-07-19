@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.188 2007/07/19 19:13:43 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.189 2007/07/19 21:58:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1770,28 +1770,26 @@ send_message_to_server_log(ErrorData *edata)
 	/* Write to stderr, if enabled */
 	if ((Log_destination & LOG_DESTINATION_STDERR) || whereToSendOutput == DestDebug)
 	{
+		/*
+		 * Use the chunking protocol if we know the syslogger should
+		 * be catching stderr output, and we are not ourselves the
+		 * syslogger.  Otherwise, just do a vanilla write to stderr.
+		 */
+		if (redirection_done && !am_syslogger)
+			write_pipe_chunks(fileno(stderr), buf.data, buf.len);
 #ifdef WIN32
-
 		/*
 		 * In a win32 service environment, there is no usable stderr. Capture
 		 * anything going there and write it to the eventlog instead.
 		 *
-		 * If stderr redirection is active, it's ok to write to stderr because
-		 * that's really a pipe to the syslogger process. Unless we're in the
-		 * postmaster, and the syslogger process isn't started yet.
+		 * If stderr redirection is active, it was OK to write to stderr above
+		 * because that's really a pipe to the syslogger process.
 		 */
-		if (pgwin32_is_service() && (!redirection_done || am_syslogger) )
+		else if (pgwin32_is_service())
 			write_eventlog(edata->elevel, buf.data);
-		else
 #endif
-			/* only use the chunking protocol if we know the syslogger should
-			 * be catching stderr output, and we are not ourselves the
-			 * syslogger. Otherwise, go directly to stderr.
-			 */
-			if (redirection_done && !am_syslogger)
-				write_pipe_chunks(fileno(stderr), buf.data, buf.len);
-			else
-				write(fileno(stderr), buf.data, buf.len);
+		else
+			write(fileno(stderr), buf.data, buf.len);
 	}
 
 	/* If in the syslogger process, try to write messages direct to file */
