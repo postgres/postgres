@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.532 2007/07/11 08:27:33 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.533 2007/07/19 19:13:43 adunstan Exp $
  *
  * NOTES
  *
@@ -203,8 +203,8 @@ static pid_t StartupPID = 0,
 			BgWriterPID = 0,
 			AutoVacPID = 0,
 			PgArchPID = 0,
-			PgStatPID = 0;
-pid_t			SysLoggerPID = 0; /* Needs to be accessed from elog.c */
+        	PgStatPID = 0,
+    		SysLoggerPID = 0;
 
 /* Startup/shutdown state */
 #define			NoShutdown		0
@@ -217,6 +217,8 @@ static bool FatalError = false; /* T if recovering from backend crash */
 
 bool		ClientAuthInProgress = false;		/* T during new-client
 												 * authentication */
+
+bool redirection_done = false; 
 
 /* received START_AUTOVAC_LAUNCHER signal */
 static bool start_autovac_launcher = false;
@@ -332,6 +334,7 @@ typedef struct
 	InheritableSocket pgStatSock;
 	pid_t		PostmasterPid;
 	TimestampTz PgStartTime;
+	bool        redirection_done;
 #ifdef WIN32
 	HANDLE		PostmasterHandle;
 	HANDLE		initial_signal_pipe;
@@ -3953,6 +3956,8 @@ save_backend_variables(BackendParameters * param, Port *port,
 	param->PostmasterPid = PostmasterPid;
 	param->PgStartTime = PgStartTime;
 
+	param->redirection_done = redirection_done;
+
 #ifdef WIN32
 	param->PostmasterHandle = PostmasterHandle;
 	write_duplicated_handle(&param->initial_signal_pipe,
@@ -4155,6 +4160,8 @@ restore_backend_variables(BackendParameters * param, Port *port)
 
 	PostmasterPid = param->PostmasterPid;
 	PgStartTime = param->PgStartTime;
+
+	redirection_done = param->redirection_done;
 
 #ifdef WIN32
 	PostmasterHandle = param->PostmasterHandle;
