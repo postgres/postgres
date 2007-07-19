@@ -1,4 +1,44 @@
-# $PostgreSQL: pgsql/config/programs.m4,v 1.20 2006/05/23 19:28:45 momjian Exp $
+# $PostgreSQL: pgsql/config/programs.m4,v 1.21 2007/07/19 17:15:30 tgl Exp $
+
+
+# PGAC_PATH_YACC
+# --------------
+# Look for Bison, set the output variable YACC to its path if found.
+# Reject versions before 1.875 (they have bugs or capacity limits).
+# Note we do not accept other implementations of yacc.
+
+AC_DEFUN([PGAC_PATH_YACC],
+[# Let the user override the search
+if test -z "$YACC"; then
+  AC_CHECK_PROGS(YACC, ['bison -y'])
+fi
+
+if test "$YACC"; then
+  pgac_yacc_version=`$YACC --version 2>/dev/null | sed q`
+  AC_MSG_NOTICE([using $pgac_yacc_version])
+  if echo "$pgac_yacc_version" | $AWK '{ if ([$]4 < 1.875) exit 0; else exit 1;}'
+  then
+    AC_MSG_WARN([
+*** The installed version of Bison is too old to use with PostgreSQL.
+*** Bison version 1.875 or later is required.])
+    YACC=""
+  fi
+fi
+
+if test -z "$YACC"; then
+  AC_MSG_WARN([
+*** Without Bison you will not be able to build PostgreSQL from CVS nor
+*** change any of the parser definition files.  You can obtain Bison from
+*** a GNU mirror site.  (If you are using the official distribution of
+*** PostgreSQL then you do not need to worry about this, because the Bison
+*** output is pre-generated.)  To use a different yacc program (possible,
+*** but not recommended), set the environment variable YACC before running
+*** 'configure'.])
+fi
+# We don't need AC_SUBST(YACC) because AC_PATH_PROG did it
+AC_SUBST(YFLAGS)
+])# PGAC_PATH_YACC
+
 
 
 # PGAC_PATH_FLEX
@@ -56,12 +96,12 @@ if test x"$pgac_cv_path_flex" = x"no"; then
 *** a GNU mirror site.  (If you are using the official distribution of
 *** PostgreSQL then you do not need to worry about this because the Flex
 *** output is pre-generated.)])
-fi
 
-if test x"$pgac_cv_path_flex" = x"no"; then
   FLEX=
 else
   FLEX=$pgac_cv_path_flex
+  pgac_flex_version=`$FLEX -V 2>/dev/null`
+  AC_MSG_NOTICE([using $pgac_flex_version])
 fi
 
 AC_SUBST(FLEX)
