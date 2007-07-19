@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.118.4.3 2006/10/07 00:12:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.118.4.4 2007/07/19 20:34:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2024,8 +2024,8 @@ replace_text(PG_FUNCTION_ARGS)
 	text	   *src_text = PG_GETARG_TEXT_P(0);
 	text	   *from_sub_text = PG_GETARG_TEXT_P(1);
 	text	   *to_sub_text = PG_GETARG_TEXT_P(2);
-	int			src_text_len = TEXTLEN(src_text);
-	int			from_sub_text_len = TEXTLEN(from_sub_text);
+	int			src_text_len;
+	int			from_sub_text_len;
 	TextPositionState state;
 	text	   *chunk_text;
 	text	   *ret_text;
@@ -2033,10 +2033,21 @@ replace_text(PG_FUNCTION_ARGS)
 	int			curr_posn;
 	StringInfoData str;
 
-	if (src_text_len == 0 || from_sub_text_len == 0)
-		PG_RETURN_TEXT_P(src_text);
-
 	text_position_setup(src_text, from_sub_text, &state);
+
+	/*
+	 * Note: we check the converted string length, not the original, because
+	 * they could be different if the input contained invalid encoding.
+	 */
+	src_text_len = state.len1;
+	from_sub_text_len = state.len2;
+
+	/* Return unmodified source string if empty source or pattern */
+	if (src_text_len < 1 || from_sub_text_len < 1)
+	{
+		text_position_cleanup(&state);
+		PG_RETURN_TEXT_P(src_text);
+	}
 
 	start_posn = 1;
 	curr_posn = text_position_next(1, &state);
@@ -2052,6 +2063,9 @@ replace_text(PG_FUNCTION_ARGS)
 
 	do
 	{
+		CHECK_FOR_INTERRUPTS();
+
+		/* copy the data skipped over by last text_position_next() */
 		chunk_text = text_substring(PointerGetDatum(src_text),
 									start_posn,
 									curr_posn - start_posn,
@@ -2094,8 +2108,8 @@ split_text(PG_FUNCTION_ARGS)
 	text	   *inputstring = PG_GETARG_TEXT_P(0);
 	text	   *fldsep = PG_GETARG_TEXT_P(1);
 	int			fldnum = PG_GETARG_INT32(2);
-	int			inputstring_len = TEXTLEN(inputstring);
-	int			fldsep_len = TEXTLEN(fldsep);
+	int			inputstring_len;
+	int			fldsep_len;
 	TextPositionState state;
 	int			start_posn;
 	int			end_posn;
@@ -2107,21 +2121,32 @@ split_text(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("field position must be greater than zero")));
 
+	text_position_setup(inputstring, fldsep, &state);
+
+	/*
+	 * Note: we check the converted string length, not the original, because
+	 * they could be different if the input contained invalid encoding.
+	 */
+	inputstring_len = state.len1;
+	fldsep_len = state.len2;
+
 	/* return empty string for empty input string */
 	if (inputstring_len < 1)
+	{
+		text_position_cleanup(&state);
 		PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
+	}
 
 	/* empty field separator */
 	if (fldsep_len < 1)
 	{
+		text_position_cleanup(&state);
 		/* if first field, return input string, else empty string */
 		if (fldnum == 1)
 			PG_RETURN_TEXT_P(inputstring);
 		else
 			PG_RETURN_TEXT_P(PG_STR_GET_TEXT(""));
 	}
-
-	text_position_setup(inputstring, fldsep, &state);
 
 	/* identify bounds of first field */
 	start_posn = 1;
@@ -2182,8 +2207,8 @@ text_to_array(PG_FUNCTION_ARGS)
 {
 	text	   *inputstring = PG_GETARG_TEXT_P(0);
 	text	   *fldsep = PG_GETARG_TEXT_P(1);
-	int			inputstring_len = TEXTLEN(inputstring);
-	int			fldsep_len = TEXTLEN(fldsep);
+	int			inputstring_len;
+	int			fldsep_len;
 	TextPositionState state;
 	int			fldnum;
 	int			start_posn;
@@ -2191,23 +2216,38 @@ text_to_array(PG_FUNCTION_ARGS)
 	text	   *result_text;
 	ArrayBuildState *astate = NULL;
 
+	text_position_setup(inputstring, fldsep, &state);
+
+	/*
+	 * Note: we check the converted string length, not the original, because
+	 * they could be different if the input contained invalid encoding.
+	 */
+	inputstring_len = state.len1;
+	fldsep_len = state.len2;
+
 	/* return NULL for empty input string */
 	if (inputstring_len < 1)
+	{
+		text_position_cleanup(&state);
 		PG_RETURN_NULL();
+	}
 
 	/*
 	 * empty field separator return one element, 1D, array using the input
 	 * string
 	 */
 	if (fldsep_len < 1)
+	{
+		text_position_cleanup(&state);
 		PG_RETURN_ARRAYTYPE_P(create_singleton_array(fcinfo, TEXTOID,
 										   PointerGetDatum(inputstring), 1));
-
-	text_position_setup(inputstring, fldsep, &state);
+	}
 
 	start_posn = 1;
 	for (fldnum = 1;; fldnum++) /* field number is 1 based */
 	{
+		CHECK_FOR_INTERRUPTS();
+
 		end_posn = text_position_next(start_posn, &state);
 
 		if (end_posn == 0)
