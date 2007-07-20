@@ -2067,13 +2067,13 @@ end$$ language plpgsql;
 select test_variable_storage();
 NOTICE:  should see this
 CONTEXT:  SQL statement "SELECT  trap_zero_divide(-100)"
-PL/pgSQL function "test_variable_storage" line 7 at perform
+PL/pgSQL function "test_variable_storage" line 7 at PERFORM
 NOTICE:  should see this only if -100 <> 0
 CONTEXT:  SQL statement "SELECT  trap_zero_divide(-100)"
-PL/pgSQL function "test_variable_storage" line 7 at perform
+PL/pgSQL function "test_variable_storage" line 7 at PERFORM
 NOTICE:  should see this only if -100 fits in smallint
 CONTEXT:  SQL statement "SELECT  trap_zero_divide(-100)"
-PL/pgSQL function "test_variable_storage" line 7 at perform
+PL/pgSQL function "test_variable_storage" line 7 at PERFORM
  test_variable_storage 
 -----------------------
  123456789012
@@ -2302,7 +2302,7 @@ end;
 $$ language plpgsql;
 select raise_test1(5);
 ERROR:  too many parameters specified for RAISE
-CONTEXT:  PL/pgSQL function "raise_test1" line 2 at raise
+CONTEXT:  PL/pgSQL function "raise_test1" line 2 at RAISE
 create function raise_test2(int) returns int as $$
 begin
     raise notice 'This message has too few parameters: %, %, %', $1, $1;
@@ -2311,7 +2311,7 @@ end;
 $$ language plpgsql;
 select raise_test2(10);
 ERROR:  too few parameters specified for RAISE
-CONTEXT:  PL/pgSQL function "raise_test2" line 2 at raise
+CONTEXT:  PL/pgSQL function "raise_test2" line 2 at RAISE
 --
 -- reject function definitions that contain malformed SQL queries at
 -- compile-time, where possible
@@ -2430,7 +2430,7 @@ ERROR:  column "sqlstate" does not exist
 LINE 1: SELECT  sqlstate
                 ^
 QUERY:  SELECT  sqlstate
-CONTEXT:  PL/pgSQL function "excpt_test1" line 2 at raise
+CONTEXT:  PL/pgSQL function "excpt_test1" line 2 at RAISE
 create function excpt_test2() returns void as $$
 begin
     begin
@@ -2445,7 +2445,7 @@ ERROR:  column "sqlstate" does not exist
 LINE 1: SELECT  sqlstate
                 ^
 QUERY:  SELECT  sqlstate
-CONTEXT:  PL/pgSQL function "excpt_test2" line 4 at raise
+CONTEXT:  PL/pgSQL function "excpt_test2" line 4 at RAISE
 create function excpt_test3() returns void as $$
 begin
     begin
@@ -2922,7 +2922,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned no rows
-CONTEXT:  PL/pgSQL function "footest" line 4 at execute statement
+CONTEXT:  PL/pgSQL function "footest" line 4 at EXECUTE statement
 create or replace function footest() returns void as $$
 declare x record;
 begin
@@ -2932,7 +2932,7 @@ begin
 end$$ language plpgsql;
 select footest();
 ERROR:  query returned more than one row
-CONTEXT:  PL/pgSQL function "footest" line 4 at execute statement
+CONTEXT:  PL/pgSQL function "footest" line 4 at EXECUTE statement
 drop function footest();
 -- test scrollable cursor support
 create function sc_test() returns setof integer as $$
@@ -2976,7 +2976,7 @@ $$ language plpgsql;
 select * from sc_test();  -- fails because of NO SCROLL specification
 ERROR:  cursor can only scan forward
 HINT:  Declare it with SCROLL option to enable backward scan.
-CONTEXT:  PL/pgSQL function "sc_test" line 6 at fetch
+CONTEXT:  PL/pgSQL function "sc_test" line 6 at FETCH
 create or replace function sc_test() returns setof integer as $$
 declare 
   c refcursor;
