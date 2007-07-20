@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.101.2.1 2007/07/08 22:23:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.101.2.2 2007/07/20 16:29:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -911,6 +911,14 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 		BlockNumber newblks;
 
 		reln = smgropen(xlrec->rnode);
+
+		/*
+		 * Forcibly create relation if it doesn't exist (which suggests that
+		 * it was dropped somewhere later in the WAL sequence).  As in
+		 * XLogOpenRelation, we prefer to recreate the rel and replay the
+		 * log as best we can until the drop is seen.
+		 */
+		smgrcreate(reln, false, true);
 
 		/* Can't use smgrtruncate because it would try to xlog */
 
