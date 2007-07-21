@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.39 2007/02/16 03:50:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/geqo.sgml,v 1.40 2007/07/21 04:02:41 tgl Exp $ -->
 
  <chapter id="geqo">
   <chapterinfo>
@@ -187,11 +187,6 @@
    </para>
 
    <para>
-    Parts of the <acronym>GEQO</acronym> module are adapted from D. Whitley's Genitor
-    algorithm.
-   </para>
-
-   <para>
     Specific characteristics of the <acronym>GEQO</acronym>
     implementation in <productname>PostgreSQL</productname>
     are:
@@ -225,11 +220,52 @@
    </para>
 
    <para>
+    Parts of the <acronym>GEQO</acronym> module are adapted from D. Whitley's
+    Genitor algorithm.
+   </para>
+
+   <para>
     The <acronym>GEQO</acronym> module allows
     the <productname>PostgreSQL</productname> query optimizer to
     support large join queries effectively through
     non-exhaustive search.
    </para>
+
+  <sect2>
+   <title>Generating Possible Plans with <acronym>GEQO</acronym></title>
+
+   <para>
+    The <acronym>GEQO</acronym> planning process uses the standard planner
+    code to generate plans for scans of individual relations.  Then join
+    plans are developed using the genetic approach.  As shown above, each
+    candidate join plan is represented by a sequence in which to join
+    the base relations.  In the initial stage, the <acronym>GEQO</acronym>
+    code simply generates some possible join sequences at random.  For each
+    join sequence considered, the standard planner code is invoked to
+    estimate the cost of performing the query using that join sequence.
+    (For each step of the join sequence, all three possible join strategies
+    are considered; and all the initially-determined relation scan plans
+    are available.  The estimated cost is the cheapest of these
+    possibilities.)  Join sequences with lower estimated cost are considered
+    <quote>more fit</> than those with higher cost.  The genetic algorithm
+    discards the least fit candidates.  Then new candidates are generated
+    by combining genes of more-fit candidates &mdash; that is, by using
+    randomly-chosen portions of known low-cost join sequences to create
+    new sequences for consideration.  This process is repeated until a
+    preset number of join sequences have been considered; then the best
+    one found at any time during the search is used to generate the finished
+    plan.
+   </para>
+
+   <para>
+    This process is inherently nondeterministic, because of the randomized
+    choices made during both the initial population selection and subsequent
+    <quote>mutation</> of the best candidates.  Hence different plans may
+    be selected from one run to the next, resulting in varying run time
+    and varying output row order.
+   </para>
+
+  </sect2>
 
   <sect2 id="geqo-future">
    <title>Future Implementation Tasks for
@@ -255,6 +291,16 @@
         </para>
        </listitem>
       </itemizedlist>
+     </para>
+
+     <para>
+      In the current implementation, the fitness of each candidate join
+      sequence is estimated by running the standard planner's join selection
+      and cost estimation code from scratch.  To the extent that different
+      candidates use similar sub-sequences of joins, a great deal of work
+      will be repeated.  This could be made significantly faster by retaining
+      cost estimates for sub-joins.  The problem is to avoid expending
+      unreasonable amounts of memory on retaining that state.
      </para>
 
      <para>

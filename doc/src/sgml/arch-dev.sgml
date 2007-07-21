@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.29 2007/01/31 20:56:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/arch-dev.sgml,v 2.30 2007/07/21 04:02:41 tgl Exp $ -->
 
  <chapter id="overview">
   <title>Overview of PostgreSQL Internals</title>
@@ -345,9 +345,10 @@
      can be executed would take an excessive amount of time and memory
      space. In particular, this occurs when executing queries
      involving large numbers of join operations. In order to determine
-     a reasonable (not optimal) query plan in a reasonable amount of
-     time, <productname>PostgreSQL</productname> uses a <xref
-     linkend="geqo" endterm="geqo-title">.
+     a reasonable (not necessarily optimal) query plan in a reasonable amount
+     of time, <productname>PostgreSQL</productname> uses a <xref
+     linkend="geqo" endterm="geqo-title"> when the number of joins
+     exceeds a threshold (see <xref linkend="guc-geqo-threshold">).
     </para>
    </note>
 
@@ -380,20 +381,17 @@
      the index's <firstterm>operator class</>, another plan is created using
      the B-tree index to scan the relation. If there are further indexes
      present and the restrictions in the query happen to match a key of an
-     index further plans will be considered.
+     index, further plans will be considered.  Index scan plans are also
+     generated for indexes that have a sort ordering that can match the
+     query's <literal>ORDER BY</> clause (if any), or a sort ordering that
+     might be useful for merge joining (see below).
     </para>
 
     <para>
-     After all feasible plans have been found for scanning single relations,
-     plans for joining relations are created. The planner/optimizer
-     preferentially considers joins between any two relations for which there
-     exist a corresponding join clause in the <literal>WHERE</literal> qualification (i.e. for
-     which a restriction like <literal>where rel1.attr1=rel2.attr2</literal>
-     exists). Join pairs with no join clause are considered only when there
-     is no other choice, that is, a particular relation has no available
-     join clauses to any other relation. All possible plans are generated for
-     every join pair considered
-     by the planner/optimizer. The three possible join strategies are:
+     If the query requires joining two or more relations,
+     plans for joining relations are considered
+     after all feasible plans have been found for scanning single relations.
+     The three available join strategies are:
 
      <itemizedlist>
       <listitem>
@@ -437,6 +435,26 @@
      must be built up by a tree of join steps, each with two inputs.
      The planner examines different possible join sequences to find the
      cheapest one.
+    </para>
+
+    <para>
+     If the query uses fewer than <xref linkend="guc-geqo-threshold">
+     relations, a near-exhaustive search is conducted to find the best
+     join sequence.  The planner preferentially considers joins between any
+     two relations for which there exist a corresponding join clause in the
+     <literal>WHERE</literal> qualification (i.e. for
+     which a restriction like <literal>where rel1.attr1=rel2.attr2</literal>
+     exists). Join pairs with no join clause are considered only when there
+     is no other choice, that is, a particular relation has no available
+     join clauses to any other relation. All possible plans are generated for
+     every join pair considered by the planner, and the one that is
+     (estimated to be) the cheapest is chosen.
+    </para>
+
+    <para>
+     When <varname>geqo_threshold</varname> is exceeded, the join
+     sequences considered are determined by heuristics, as described
+     in <xref linkend="geqo">.  Otherwise the process is the same.
     </para>
 
     <para>
