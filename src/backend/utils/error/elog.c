@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.167.2.4 2007/07/19 19:14:54 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.167.2.5 2007/07/21 22:12:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -260,10 +260,15 @@ errstart(int elevel, const char *filename, int lineno,
 
 		/*
 		 * If we recurse more than once, the problem might be something broken
-		 * in a context traceback routine.	Abandon them too.
+		 * in a context traceback routine.  Abandon them too.  We also
+		 * abandon attempting to print the error statement (which, if long,
+		 * could itself be the source of the recursive failure).
 		 */
 		if (recursion_depth > 2)
+		{
 			error_context_stack = NULL;
+			debug_query_string = NULL;
+		}
 	}
 	if (++errordata_stack_depth >= ERRORDATA_STACK_SIZE)
 	{
