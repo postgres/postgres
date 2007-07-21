@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.104.2.1 2005/10/14 16:41:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.104.2.2 2007/07/21 22:12:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,13 +429,18 @@ elog(int lev, const char *fmt,...)
 		free(msg_buf);
 
 	/*
-	 * If the user wants this elog() generating query logged, do so. We
-	 * only want to log if the query has been written to
-	 * debug_query_string. Also, avoid infinite loops.
+	 * If the user wants this elog() generating query logged, do so.
+	 * To avoid possible infinite recursion, temporarily clear
+	 * debug_query_string while recursing.
 	 */
+	if (lev >= log_min_error_statement && debug_query_string)
+	{
+		char   *q_str = debug_query_string;
 
-	if (lev != LOG && lev >= log_min_error_statement && debug_query_string)
-		elog(LOG, "statement: %s", debug_query_string);
+		debug_query_string = NULL;
+		elog(LOG, "statement: %s", q_str);
+		debug_query_string = q_str;
+	}
 
 	/*
 	 * Perform error recovery action as specified by lev.
