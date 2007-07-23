@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.121.2.1 2007/07/12 14:13:06 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.121.2.2 2007/07/23 18:13:09 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,7 @@ pg_krb5_init(char *PQerrormsg, struct krb5_info * info)
 	retval = krb5_init_context(&(info->pg_krb5_context));
 	if (retval)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+		snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				 "pg_krb5_init: krb5_init_context: %s\n",
 				 error_message(retval));
 		return STATUS_ERROR;
@@ -150,7 +150,7 @@ pg_krb5_init(char *PQerrormsg, struct krb5_info * info)
 	retval = krb5_cc_default(info->pg_krb5_context, &(info->pg_krb5_ccache));
 	if (retval)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+		snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				 "pg_krb5_init: krb5_cc_default: %s\n",
 				 error_message(retval));
 		krb5_free_context(info->pg_krb5_context);
@@ -161,7 +161,7 @@ pg_krb5_init(char *PQerrormsg, struct krb5_info * info)
 								   &(info->pg_krb5_client));
 	if (retval)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+		snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				 "pg_krb5_init: krb5_cc_get_principal: %s\n",
 				 error_message(retval));
 		krb5_cc_close(info->pg_krb5_context, info->pg_krb5_ccache);
@@ -172,7 +172,7 @@ pg_krb5_init(char *PQerrormsg, struct krb5_info * info)
 	retval = krb5_unparse_name(info->pg_krb5_context, info->pg_krb5_client, &(info->pg_krb5_name));
 	if (retval)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+		snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				 "pg_krb5_init: krb5_unparse_name: %s\n",
 				 error_message(retval));
 		krb5_free_principal(info->pg_krb5_context, info->pg_krb5_client);
@@ -237,7 +237,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 
 	if (!hostname)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+		snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				 "pg_krb5_sendauth: hostname must be specified for Kerberos authentication\n");
 		return STATUS_ERROR;
 	}
@@ -250,7 +250,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 									 KRB5_NT_SRV_HST, &server);
 	if (retval)
 	{
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+		snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				 "pg_krb5_sendauth: krb5_sname_to_principal: %s\n",
 				 error_message(retval));
 		pg_krb5_destroy(&info);
@@ -266,7 +266,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 	{
 		char		sebuf[256];
 
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+		snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				 libpq_gettext("could not set socket to blocking mode: %s\n"), pqStrerror(errno, sebuf, sizeof(sebuf)));
 		krb5_free_principal(info.pg_krb5_context, server);
 		pg_krb5_destroy(&info);
@@ -284,11 +284,11 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 		if (retval == KRB5_SENDAUTH_REJECTED && err_ret)
 		{
 #if defined(HAVE_KRB5_ERROR_TEXT_DATA)
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
 					 (int) err_ret->text.length, err_ret->text.data);
 #elif defined(HAVE_KRB5_ERROR_E_DATA)
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				  libpq_gettext("Kerberos 5 authentication rejected: %*s\n"),
 					 (int) err_ret->e_data->length,
 					 (const char *) err_ret->e_data->data);
@@ -298,7 +298,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 		}
 		else
 		{
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 					 "krb5_sendauth: %s\n", error_message(retval));
 		}
 
@@ -314,7 +314,7 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 	{
 		char		sebuf[256];
 
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+		snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 		libpq_gettext("could not restore non-blocking mode on socket: %s\n"),
 				 pqStrerror(errno, sebuf, sizeof(sebuf)));
 		ret = STATUS_ERROR;
@@ -376,14 +376,14 @@ pg_local_sendauth(char *PQerrormsg, PGconn *conn)
 	{
 		char		sebuf[256];
 
-		snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+		snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				 "pg_local_sendauth: sendmsg: %s\n",
 				 pqStrerror(errno, sebuf, sizeof(sebuf)));
 		return STATUS_ERROR;
 	}
 	return STATUS_OK;
 #else
-	snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+	snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 			 libpq_gettext("SCM_CRED authentication method not supported\n"));
 	return STATUS_ERROR;
 #endif
@@ -469,7 +469,7 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			break;
 
 		case AUTH_REQ_KRB4:
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				 libpq_gettext("Kerberos 4 authentication not supported\n"));
 			return STATUS_ERROR;
 
@@ -486,7 +486,7 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			pgunlock_thread();
 			break;
 #else
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 				 libpq_gettext("Kerberos 5 authentication not supported\n"));
 			return STATUS_ERROR;
 #endif
@@ -496,13 +496,13 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 		case AUTH_REQ_PASSWORD:
 			if (password == NULL || *password == '\0')
 			{
-				(void) snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				(void) snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 								PQnoPasswordSupplied);
 				return STATUS_ERROR;
 			}
 			if (pg_password_sendauth(conn, password, areq) != STATUS_OK)
 			{
-				(void) snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+				(void) snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 					 "fe_sendauth: error sending password authentication\n");
 				return STATUS_ERROR;
 			}
@@ -514,7 +514,7 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			break;
 
 		default:
-			snprintf(PQerrormsg, PQERRORMSG_LENGTH,
+			snprintf(PQerrormsg, INITIAL_EXPBUFFER_SIZE,
 			libpq_gettext("authentication method %u not supported\n"), areq);
 			return STATUS_ERROR;
 	}
