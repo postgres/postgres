@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.125 2007/07/23 17:52:06 mha Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.126 2007/07/23 18:59:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ typedef struct {
 /*
  * POSTGRES backend dependent Constants.
  */
-#define CMDSTATUS_LEN 40
+#define CMDSTATUS_LEN 64		/* should match COMPLETION_TAG_BUFSIZE */
 
 /*
  * PGresult and the subsidiary types PGresAttDesc, PGresAttValue
