@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.76 2007/07/18 03:39:01 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.77 2007/07/23 17:22:00 alvherre Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -496,16 +496,16 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
    </para>
 
    <para>
-    There is a limit of <xref linkend="guc-autovacuum-max-workers"> worker
-    processes that may be running at any time, so if the <command>VACUUM</>
-    and <command>ANALYZE</> work to do takes too long to run, the deadline may
-    be failed to meet for other databases.  Also, if a particular database
-    takes a long time to process, more than one worker may be processing it
-    simultaneously.  The workers are smart enough to avoid repeating work that
-    other workers have done, so this is normally not a problem.  Note that the
-    number of running workers does not count towards the <xref
-    linkend="guc-max-connections"> nor the <xref
-    linkend="guc-superuser-reserved-connections"> limits.
+    The <xref linkend="guc-autovacuum-max-workers"> setting limits how many
+    workers may be running at any time. If several large tables all become
+    eligible for vacuuming in a short amount of time, all autovacuum workers
+    may end up vacuuming those tables for a very long time. This would result
+    in other tables and databases not being vacuumed until a worker became
+    available. There is also not a limit on how many workers might be in a
+    single database, but workers do try and avoid repeating work that has
+    already been done by other workers. Note that the number of running
+    workers does not count towards the <xref linkend="guc-max-connections"> nor
+    the <xref linkend="guc-superuser-reserved-connections"> limits.
    </para>
 
    <para>
