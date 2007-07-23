@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.14 2007/07/07 07:43:20 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.15 2007/07/23 10:16:54 mha Exp $
 #
 use Carp;
 use Win32;
@@ -66,7 +66,7 @@ sub mkvcbuild
     $postgres->AddFiles('src\backend\bootstrap','bootscanner.l','bootparse.y');
     $postgres->AddFiles('src\backend\utils\misc','guc-file.l');
     $postgres->AddDefine('BUILDING_DLL');
-    $postgres->AddLibrary('wsock32.lib ws2_32.lib');
+    $postgres->AddLibrary('wsock32.lib ws2_32.lib secur32.lib');
     $postgres->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
     $postgres->FullExportDLL('postgres.lib');
 
@@ -120,6 +120,7 @@ sub mkvcbuild
     $libpq->AddDefine('FRONTEND');
     $libpq->AddIncludeDir('src\port');
     $libpq->AddLibrary('wsock32.lib');
+    $libpq->AddLibrary('secur32.lib');
     $libpq->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
     $libpq->UseDef('src\interfaces\libpq\libpqdll.def');
     $libpq->ReplaceFile('src\interfaces\libpq\libpqrc.c','src\interfaces\libpq\libpq.rc');

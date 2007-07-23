@@ -10,7 +10,7 @@
  * exceed INITIAL_EXPBUFFER_SIZE (currently 256 bytes).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.127 2007/07/12 14:43:21 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.128 2007/07/23 10:16:54 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,11 +329,6 @@ pg_krb5_sendauth(char *PQerrormsg, int sock, const char *hostname, const char *s
 /*
  * GSSAPI authentication system.
  */
-#if defined(HAVE_GSSAPI_H)
-#include <gssapi.h>
-#else
-#include <gssapi/gssapi.h>
-#endif
 
 #if defined(WIN32) && !defined(WIN32_ONLY_COMPILER)
 /*
@@ -378,7 +373,7 @@ pg_GSS_error_int(char *mprefix, char *msg, int msglen,
  * GSSAPI errors contains two parts. Put as much as possible of
  * both parts into the string.
  */
-void
+static void
 pg_GSS_error(char *mprefix, char *msg, int msglen,
 	OM_uint32 maj_stat, OM_uint32 min_stat)
 {
@@ -407,7 +402,7 @@ pg_GSS_continue(char *PQerrormsg, PGconn *conn)
 			&conn->gctx,
 			conn->gtarg_nam,
 			GSS_C_NO_OID,
-			conn->gflags,
+			GSS_C_MUTUAL_FLAG,
 			0,
 			GSS_C_NO_CHANNEL_BINDINGS,
 			(conn->gctx==GSS_C_NO_CONTEXT)?GSS_C_NO_BUFFER:&conn->ginbuf,
@@ -504,7 +499,192 @@ pg_GSS_startup(char *PQerrormsg, PGconn *conn)
 
 	return pg_GSS_continue(PQerrormsg, conn);
 }
-#endif
+#endif /* ENABLE_GSS */
+
+
+#ifdef ENABLE_SSPI
+/*
+ * SSPI authentication system (Windows only)
+ */
+
+static void
+pg_SSPI_error(char *mprefix, char *msg, int msglen, SECURITY_STATUS r)
+{
+	char sysmsg[256];
+
+	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0, sysmsg, sizeof(sysmsg), NULL) == 0)
+		snprintf(msg, msglen, "%s: sspi error %x", mprefix, r);
+	else
+		snprintf(msg, msglen, "%s: %s (%x)", mprefix, sysmsg, r);
+}
+
+/* 
+ * Continue SSPI authentication with next token as needed.
+ */
+static int
+pg_SSPI_continue(char *PQerrormsg, PGconn *conn)
+{
+	SECURITY_STATUS	r;
+	CtxtHandle		newContext;
+	ULONG			contextAttr;
+	SecBufferDesc	inbuf;
+	SecBufferDesc	outbuf;
+	SecBuffer		OutBuffers[1];
+	SecBuffer		InBuffers[1];
+
+	if (conn->sspictx != NULL)
+	{
+		/*
+		 * On runs other than the first we have some data to send. Put this
+		 * data in a SecBuffer type structure.
+		 */
+		inbuf.ulVersion = SECBUFFER_VERSION;
+		inbuf.cBuffers = 1;
+		inbuf.pBuffers = InBuffers;
+		InBuffers[0].pvBuffer = conn->ginbuf.value;
+		InBuffers[0].cbBuffer = conn->ginbuf.length;
+		InBuffers[0].BufferType = SECBUFFER_TOKEN;
+	}
+
+	OutBuffers[0].pvBuffer = NULL;
+	OutBuffers[0].BufferType = SECBUFFER_TOKEN;
+	OutBuffers[0].cbBuffer = 0;
+	outbuf.cBuffers = 1;
+	outbuf.pBuffers = OutBuffers;
+	outbuf.ulVersion = SECBUFFER_VERSION;
+
+	r = InitializeSecurityContext(conn->sspicred,
+		conn->sspictx,
+		conn->sspitarget,
+		ISC_REQ_ALLOCATE_MEMORY,
+		0,
+		SECURITY_NETWORK_DREP,
+		(conn->sspictx == NULL)?NULL:&inbuf,
+		0,
+		&newContext,
+		&outbuf,
+		&contextAttr,
+		NULL);
+	
+	if (r != SEC_E_OK && r != SEC_I_CONTINUE_NEEDED)
+	{
+		pg_SSPI_error(libpq_gettext("SSPI continuation error"),
+			PQerrormsg, PQERRORMSG_LENGTH, r);
+
+		return STATUS_ERROR;
+	}
+
+	if (conn->sspictx == NULL)
+	{
+		/* On first run, transfer retreived context handle */
+		conn->sspictx = malloc(sizeof(CtxtHandle));
+		if (conn->sspictx == NULL)
+		{
+			strncpy(PQerrormsg, libpq_gettext("out of memory\n"), PQERRORMSG_LENGTH);
+			return STATUS_ERROR;
+		}
+		memcpy(conn->sspictx, &newContext, sizeof(CtxtHandle));
+	}
+	else
+	{
+		/*
+		 * On subsequent runs when we had data to send, free buffers that contained
+		 * this data.
+		 */
+		free(conn->ginbuf.value);
+		conn->ginbuf.value = NULL;
+		conn->ginbuf.length = 0;
+	}
+
+	/*
+	 * If SSPI returned any data to be sent to the server (as it normally would),
+	 * send this data as a password packet.
+	 */
+	if (outbuf.cBuffers > 0)
+	{
+		if (outbuf.cBuffers != 1)
+		{
+			/*
+			 * This should never happen, at least not for Kerberos authentication. Keep check
+			 * in case it shows up with other authentication methods later.
+			 */
+			strncpy(PQerrormsg, "SSPI returned invalid number of output buffers\n", PQERRORMSG_LENGTH);
+			return STATUS_ERROR;
+		}
+
+		if (pqPacketSend(conn, 'p',
+			outbuf.pBuffers[0].pvBuffer, outbuf.pBuffers[0].cbBuffer))
+		{
+			FreeContextBuffer(outbuf.pBuffers[0].pvBuffer);
+			return STATUS_ERROR;
+		}
+		FreeContextBuffer(outbuf.pBuffers[0].pvBuffer);
+	}
+
+	/* Cleanup is handled by the code in freePGconn() */
+	return STATUS_OK;
+}
+
+/* 
+ * Send initial SSPI authentication token.
+ * If use_negotiate is 0, use kerberos authentication package which is
+ * compatible with Unix. If use_negotiate is 1, use the negotiate package
+ * which supports both kerberos and NTLM, but is not compatible with Unix.
+ */
+static int
+pg_SSPI_startup(char *PQerrormsg, PGconn *conn, int use_negotiate)
+{
+	SECURITY_STATUS	r;
+	TimeStamp		expire;
+
+	conn->sspictx = NULL;
+
+	/*
+	 * Retreive credentials handle
+	 */
+	conn->sspicred = malloc(sizeof(CredHandle));
+	if (conn->sspicred == NULL)
+	{
+		strncpy(PQerrormsg, libpq_gettext("out of memory\n"), PQERRORMSG_LENGTH);
+		return STATUS_ERROR;
+	}
+
+	r = AcquireCredentialsHandle(NULL, use_negotiate?"negotiate":"kerberos", SECPKG_CRED_OUTBOUND, NULL, NULL, NULL, NULL, conn->sspicred, &expire);
+	if (r != SEC_E_OK)
+	{
+		pg_SSPI_error("acquire credentials failed", PQerrormsg, PQERRORMSG_LENGTH, r);
+		free(conn->sspicred);
+		conn->sspicred = NULL;
+		return STATUS_ERROR;
+	}
+
+	/*
+	 * Compute target principal name. SSPI has a different format from GSSAPI, but
+	 * not more complex. We can skip the @REALM part, because Windows will fill that
+	 * in for us automatically.
+	 */
+	if (conn->pghost == NULL)
+	{
+		strncpy(PQerrormsg, libpq_gettext("hostname must be specified\n"), PQERRORMSG_LENGTH);
+		return STATUS_ERROR;
+	}
+	conn->sspitarget = malloc(strlen(conn->krbsrvname)+strlen(conn->pghost)+2);
+	if (!conn->sspitarget)
+	{
+		strncpy(PQerrormsg, libpq_gettext("out of memory\n"), PQERRORMSG_LENGTH);
+		return STATUS_ERROR;
+	}
+	sprintf(conn->sspitarget, "%s/%s", conn->krbsrvname, conn->pghost);
+
+	/*
+	 * Indicate that we're in SSPI authentication mode to make sure that
+	 * pg_SSPI_continue is called next time in the negotiation.
+	 */
+	conn->usesspi = 1;
+
+	return pg_SSPI_continue(PQerrormsg, conn);
+}
+#endif /* ENABLE_SSPI */
 
 /*
  * Respond to AUTH_REQ_SCM_CREDS challenge.
@@ -671,27 +851,60 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			return STATUS_ERROR;
 #endif
 
-#ifdef ENABLE_GSS
+#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 		case AUTH_REQ_GSS:
-			pglock_thread();
-			if (pg_GSS_startup(PQerrormsg, conn) != STATUS_OK)
 			{
-				/* PQerrormsg already filled in. */
+				int r;
+				pglock_thread();
+				/*
+				 * If we have both GSS and SSPI support compiled in, use SSPI
+				 * support by default. This is overridable by a connection string parameter.
+				 * Note that when using SSPI we still leave the negotiate parameter off,
+				 * since we want SSPI to use the GSSAPI kerberos protocol. For actual
+				 * SSPI negotiate protocol, we use AUTH_REQ_SSPI.
+				 */
+#if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
+				if (conn->gsslib && (pg_strcasecmp(conn->gsslib, "gssapi") == 0))
+					r = pg_GSS_startup(PQerrormsg, conn);
+				else
+					r = pg_SSPI_startup(PQerrormsg, conn, 0);
+#elif defined(ENABLE_GSS) && !defined(ENABLE_SSPI)
+				r = pg_GSS_startup(PQerrormsg, conn);
+#elif !defined(ENABLE_GSS) && defined(ENABLE_SSPI)
+				r = pg_SSPI_startup(PQerrormsg, conn, 0);
+#endif
+				if (r != STATUS_OK)
+				{
+					/* PQerrormsg already filled in. */
+					pgunlock_thread();
+					return STATUS_ERROR;
+				}
 				pgunlock_thread();
-				return STATUS_ERROR;
 			}
-			pgunlock_thread();
 			break;
 
 		case AUTH_REQ_GSS_CONT:
-			pglock_thread();
-			if (pg_GSS_continue(PQerrormsg, conn) != STATUS_OK)
 			{
-				/* PQerrormsg already filled in. */
+				int r;
+				pglock_thread();
+#if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
+				if (conn->usesspi)
+					r = pg_SSPI_continue(PQerrormsg, conn);
+				else
+					r = pg_GSS_continue(PQerrormsg, conn);
+#elif defined(ENABLE_GSS) && !defined(ENABLE_SSPI)
+				r = pg_GSS_continue(PQerrormsg, conn);
+#elif !defined(ENABLE_GSS) && defined(ENABLE_SSPI)
+				r = pg_SSPI_continue(PQerrormsg, conn);
+#endif
+				if (r != STATUS_OK)
+				{
+					/* PQerrormsg already filled in. */
+					pgunlock_thread();
+					return STATUS_ERROR;
+				}
 				pgunlock_thread();
-				return STATUS_ERROR;
 			}
-			pgunlock_thread();
 			break;
 
 #else
@@ -701,6 +914,30 @@ pg_fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 					libpq_gettext("GSSAPI authentication not supported\n"));
 			return STATUS_ERROR;
 #endif
+
+#ifdef ENABLE_SSPI
+		case AUTH_REQ_SSPI:
+			/* 
+			 * SSPI has it's own startup message so libpq can decide which
+			 * method to use. Indicate to pg_SSPI_startup that we want
+			 * SSPI negotiation instead of Kerberos.
+			 */
+			pglock_thread();
+			if (pg_SSPI_startup(PQerrormsg, conn, 1) != STATUS_OK)
+			{
+				/* PQerrormsg already filled in. */
+				pgunlock_thread();
+				return STATUS_ERROR;
+			}
+			pgunlock_thread();
+			break;
+#else
+		case AUTH_REQ_SSPI:
+			snpritnf(PQerrormsg, PQERRORMSG_LENGTH,
+					libpq_gettext("SSPI authentication not supported\n"));
+			return STATUS_ERROR;
+#endif
+
 
 		case AUTH_REQ_MD5:
 		case AUTH_REQ_CRYPT:

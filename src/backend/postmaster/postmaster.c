@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.533 2007/07/19 19:13:43 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.534 2007/07/23 10:16:54 mha Exp $
  *
  * NOTES
  *
@@ -1733,7 +1733,8 @@ ConnCreate(int serverFd)
 	/*
      * Allocate GSSAPI specific state struct
 	 */
-#ifdef ENABLE_GSS
+#ifndef EXEC_BACKEND
+#if defined(ENABLE_GSS) || defined(ENABLE_SSPI) 
 	port->gss = (pg_gssinfo *)calloc(1, sizeof(pg_gssinfo));
 	if (!port->gss)
 	{
@@ -1742,6 +1743,7 @@ ConnCreate(int serverFd)
 				 errmsg("out of memory")));
 		ExitPostmaster(1);
 	}
+#endif
 #endif
 
 	return port;
@@ -3343,6 +3345,19 @@ SubPostmasterMain(int argc, char *argv[])
 	/* Read in the variables file */
 	memset(&port, 0, sizeof(Port));
 	read_backend_variables(argv[2], &port);
+
+	/* 
+	 * Set up memory area for GSS information. Mirrors the code in
+	 * ConnCreate for the non-exec case.
+	 */
+#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
+	port.gss = (pg_gssinfo *)calloc(1, sizeof(pg_gssinfo));
+	if (!port.gss)
+		ereport(FATAL,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
+#endif
+
 
 	/* Check we got appropriate args */
 	if (argc < 3)

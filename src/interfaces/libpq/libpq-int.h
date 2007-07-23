@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.123 2007/07/12 14:36:52 mha Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-int.h,v 1.124 2007/07/23 10:16:54 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,22 @@
 #include <gssapi/gssapi.h>
 #endif
 #endif
+
+#ifdef ENABLE_SSPI
+#define SECURITY_WIN32
+#include <security.h>
+#undef SECURITY_WIN32
+
+#ifndef ENABLE_GSS
+/*
+ * Define a fake structure compatible with GSSAPI on Unix.
+ */
+typedef struct {
+	void *value;
+	int length;
+} gss_buffer_desc;
+#endif
+#endif /* ENABLE_SSPI */
 
 #ifdef USE_SSL
 #include <openssl/ssl.h>
@@ -276,7 +292,7 @@ struct pg_conn
 	char	   *pguser;			/* Postgres username and password, if any */
 	char	   *pgpass;
 	char	   *sslmode;		/* SSL mode (require,prefer,allow,disable) */
-#if defined(KRB5) || defined(ENABLE_GSS)
+#if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	char	   *krbsrvname;		/* Kerberos service name */
 #endif
 
@@ -361,10 +377,22 @@ struct pg_conn
 #ifdef ENABLE_GSS
 	gss_ctx_id_t	gctx;		/* GSS context */
 	gss_name_t		gtarg_nam;	/* GSS target name */
-	OM_uint32		gflags;		/* GSS service request flags */
 	gss_buffer_desc	ginbuf;		/* GSS input token */
 	gss_buffer_desc	goutbuf;	/* GSS output token */
 #endif
+
+#ifdef ENABLE_SSPI
+#ifndef ENABLE_GSS
+	gss_buffer_desc	ginbuf;		/* GSS input token */
+#else
+	char			*gsslib;	/* What GSS librart to use ("gssapi" or "sspi") */
+#endif
+	CredHandle		*sspicred;	/* SSPI credentials handle */
+	CtxtHandle		*sspictx;	/* SSPI context */
+	char			*sspitarget;/* SSPI target name */
+	int				usesspi;	/* Indicate if SSPI is in use on the connection */
+#endif
+
 
 	/* Buffer for current error message */
 	PQExpBufferData errorMessage;		/* expansible string */
@@ -413,12 +441,6 @@ extern pgthreadlock_t pg_g_threadlock;
 #else
 #define pglock_thread()		((void) 0)
 #define pgunlock_thread()	((void) 0)
-#endif
-
-/* === in fe-auth.c === */
-#ifdef ENABLE_GSS
-extern void pg_GSS_error(char *mprefix, char *msg, int msglen,
-        OM_uint32 maj_stat, OM_uint32 min_stat);
 #endif
 
 /* === in fe-exec.c === */

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.61 2007/07/12 14:43:21 mha Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.62 2007/07/23 10:16:54 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,22 @@
 #endif
 #endif /* ENABLE_GSS */
 
+#ifdef ENABLE_SSPI
+#define SECURITY_WIN32
+#include <security.h>
+#undef SECURITY_WIN32
+
+#ifndef ENABLE_GSS
+/*
+ * Define a fake structure compatible with GSSAPI on Unix.
+ */
+typedef struct {
+	void *value;
+	int length;
+} gss_buffer_desc;
+#endif
+#endif /* ENABLE_SSPI */
+
 #include "libpq/hba.h"
 #include "libpq/pqcomm.h"
 #include "utils/timestamp.h"
@@ -59,13 +75,15 @@ typedef enum CAC_state
 /*
  * GSSAPI specific state information
  */
-#ifdef ENABLE_GSS
+#if defined(ENABLE_GSS) | defined(ENABLE_SSPI)
 typedef struct
 {
+	gss_buffer_desc	outbuf;		/* GSSAPI output token buffer */
+#ifdef ENABLE_GSS
 	gss_cred_id_t	cred;		/* GSSAPI connection cred's */
 	gss_ctx_id_t	ctx;		/* GSSAPI connection context */
 	gss_name_t		name;		/* GSSAPI client name */
-	gss_buffer_desc	outbuf;		/* GSSAPI output token buffer */
+#endif
 } pg_gssinfo;
 #endif
 
@@ -128,7 +146,7 @@ typedef struct Port
 	int			keepalives_interval;
 	int			keepalives_count;
 
-#ifdef ENABLE_GSS
+#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	/*
 	 * If GSSAPI is supported, store GSSAPI information.
 	 * Oterwise, store a NULL pointer to make sure offsets

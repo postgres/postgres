@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.349 2007/07/11 08:27:33 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.350 2007/07/23 10:16:54 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,10 +181,16 @@ static const PQconninfoOption PQconninfoOptions[] = {
 	{"sslmode", "PGSSLMODE", DefaultSSLMode, NULL,
 	"SSL-Mode", "", 8},			/* sizeof("disable") == 8 */
 
-#if defined(KRB5) || defined(ENABLE_GSS)
+#if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	/* Kerberos and GSSAPI authentication support specifying the service name */
 	{"krbsrvname", "PGKRBSRVNAME", PG_KRB_SRVNAM, NULL,
 	"Kerberos-service-name", "", 20},
+#endif
+
+#if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
+	/* GSSAPI and SSPI both enabled, give a way to override which is used by default */
+	{"gsslib", "PGGSSLIB", NULL, NULL,
+	"GSS-library", "", 7},		/* sizeof("gssapi") = 7 */
 #endif
 
 	/* Terminating entry --- MUST BE LAST */
@@ -412,9 +418,13 @@ connectOptions1(PGconn *conn, const char *conninfo)
 		conn->sslmode = strdup("require");
 	}
 #endif
-#if defined(KRB5) || defined(ENABLE_GSS)
+#if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	tmp = conninfo_getval(connOptions, "krbsrvname");
 	conn->krbsrvname = tmp ? strdup(tmp) : NULL;
+#endif
+#if defined(ENABLE_GSS) && defined(ENABLE_SSPI)
+	tmp = conninfo_getval(connOptions, "gsslib");
+	conn->gsslib = tmp ? strdup(tmp) : NULL;
 #endif
 
 	/*
@@ -1661,22 +1671,13 @@ keep_going:						/* We will come back to here until there is
 						return PGRES_POLLING_READING;
 					}
 				}
-#ifdef ENABLE_GSS
+#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 				/*
-				 * AUTH_REQ_GSS provides no input data
-				 * Just set the request flags 
-				 */
-				if (areq == AUTH_REQ_GSS)
-					conn->gflags = GSS_C_MUTUAL_FLAG;
-
-				/*
-				 * Read GSSAPI data packets
+				 * Continue GSSAPI/SSPI authentication
 				 */
 				if (areq == AUTH_REQ_GSS_CONT)
 				{
-					/* Continue GSSAPI authentication */
 					int llen = msgLength - 4;
-					
 					/*
 					 * We can be called repeatedly for the same buffer.
 					 * Avoid re-allocating the buffer in this case - 
@@ -2002,7 +2003,7 @@ freePGconn(PGconn *conn)
 		free(conn->pgpass);
 	if (conn->sslmode)
 		free(conn->sslmode);
-#if defined(KRB5) || defined(ENABLE_GSS)
+#if defined(KRB5) || defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	if (conn->krbsrvname)
 		free(conn->krbsrvname);
 #endif
@@ -2029,6 +2030,26 @@ freePGconn(PGconn *conn)
 			gss_release_buffer(&min_s, &conn->ginbuf);
 		if (conn->goutbuf.length)
 			gss_release_buffer(&min_s, &conn->goutbuf);
+	}
+#endif
+#ifdef ENABLE_SSPI
+	{
+		if (conn->ginbuf.length)
+			free(conn->ginbuf.value);
+
+		if (conn->sspitarget)
+			free(conn->sspitarget);
+
+		if (conn->sspicred)
+		{
+			FreeCredentialsHandle(conn->sspicred);
+			free(conn->sspicred);
+		}
+		if (conn->sspictx)
+		{
+			DeleteSecurityContext(conn->sspictx);
+			free(conn->sspictx);
+		}
 	}
 #endif
 	pstatus = conn->pstatus;

@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.193 2007/07/10 13:14:20 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.194 2007/07/23 10:16:54 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,15 +173,21 @@ pq_close(int code, Datum arg)
 {
 	if (MyProcPort != NULL)
 	{
+#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 #ifdef ENABLE_GSS
 		OM_uint32	min_s;
+
 		/* Shutdown GSSAPI layer */
 		if (MyProcPort->gss->ctx)
 			gss_delete_sec_context(&min_s, MyProcPort->gss->ctx, NULL);
 
 		if (MyProcPort->gss->cred)
 			gss_release_cred(&min_s, MyProcPort->gss->cred);
-#endif
+#endif /* ENABLE_GSS */
+		/* GSS and SSPI share the port->gss struct */
+
+		free(MyProcPort->gss);
+#endif /* ENABLE_GSS || ENABLE_SSPI */
 
 		/* Cleanly shut down SSL layer */
 		secure_close(MyProcPort);

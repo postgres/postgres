@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.153 2007/07/12 20:36:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.154 2007/07/23 10:16:53 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -464,10 +464,14 @@ pg_GSS_recvauth(Port *port)
 			/*
 			 * Negotiation generated data to be sent to the client.
 			 */
+			OM_uint32	lmin_s;
+
 			elog(DEBUG4, "sending GSS response token of length %u",
 				 (unsigned int) port->gss->outbuf.length);
 
 			sendAuthRequest(port, AUTH_REQ_GSS_CONT);
+
+			gss_release_buffer(&lmin_s, &port->gss->outbuf);
 		}
 
 		if (maj_stat != GSS_S_COMPLETE && maj_stat != GSS_S_CONTINUE_NEEDED)
@@ -536,7 +540,7 @@ pg_GSS_recvauth(Port *port)
 	return STATUS_OK;
 }
 
-#else	/* no ENABLE_GSS */
+#else /* no ENABLE_GSS */
 static int
 pg_GSS_recvauth(Port *port)
 {
@@ -546,6 +550,245 @@ pg_GSS_recvauth(Port *port)
 	return STATUS_ERROR;
 }
 #endif	/* ENABLE_GSS */
+
+#ifdef ENABLE_SSPI
+static void
+pg_SSPI_error(int severity, char *errmsg, SECURITY_STATUS r)
+{
+	char sysmsg[256];
+
+	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0, sysmsg, sizeof(sysmsg), NULL) == 0)
+		ereport(severity,
+		        (errmsg_internal("%s", errmsg),
+				errdetail("sspi error %x", r)));
+	else
+		ereport(severity,
+		        (errmsg_internal("%s", errmsg),
+				errdetail("%s (%x)", sysmsg, r)));
+}
+
+
+static int
+pg_SSPI_recvauth(Port *port)
+{
+	int				mtype;
+	StringInfoData	buf;
+	SECURITY_STATUS r;
+	CredHandle		sspicred;
+	CtxtHandle		*sspictx = NULL,
+		            newctx;
+	TimeStamp		expiry;
+	ULONG			contextattr;
+	SecBufferDesc	inbuf;
+	SecBufferDesc	outbuf;
+	SecBuffer		OutBuffers[1];
+	SecBuffer		InBuffers[1];
+	HANDLE			token;
+	TOKEN_USER		*tokenuser;
+	DWORD			retlen;
+	char			accountname[MAXPGPATH];
+	char			domainname[MAXPGPATH];
+	DWORD			accountnamesize = sizeof(accountname);
+	DWORD			domainnamesize = sizeof(domainname);
+	SID_NAME_USE	accountnameuse;
+
+
+	/*
+	 * Acquire a handle to the server credentials.
+	 */
+	r = AcquireCredentialsHandle(NULL,
+		"negotiate",
+		SECPKG_CRED_INBOUND,
+		NULL,
+		NULL,
+		NULL,
+		NULL,
+		&sspicred,
+		&expiry);
+	if (r != SEC_E_OK)
+		pg_SSPI_error(ERROR, 
+					gettext_noop("could not acquire SSPI credentials handle"), r);
+
+	/*
+	 * Loop through SSPI message exchange. This exchange can consist
+	 * of multiple messags sent in both directions. First message is always
+	 * from the client. All messages from client to server are password
+	 * packets (type 'p').
+	 */
+	do 
+	{
+		mtype = pq_getbyte();
+		if (mtype != 'p')
+		{
+			/* Only log error if client didn't disconnect. */
+			if (mtype != EOF)
+				ereport(COMMERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						 errmsg("expected SSPI response, got message type %d",
+							 mtype)));
+			return STATUS_ERROR;
+		}
+
+		/* Get the actual SSPI token */
+		initStringInfo(&buf);
+		if (pq_getmessage(&buf, 2000))
+		{
+			/* EOF - pq_getmessage already logged error */
+			pfree(buf.data);
+			return STATUS_ERROR;
+		}
+
+		/* Map to SSPI style buffer */
+		inbuf.ulVersion = SECBUFFER_VERSION;
+		inbuf.cBuffers = 1;
+		inbuf.pBuffers = InBuffers;
+		InBuffers[0].pvBuffer = buf.data;
+		InBuffers[0].cbBuffer = buf.len;
+		InBuffers[0].BufferType = SECBUFFER_TOKEN;
+
+		/* Prepare output buffer */
+		OutBuffers[0].pvBuffer = NULL;
+		OutBuffers[0].BufferType = SECBUFFER_TOKEN;
+		OutBuffers[0].cbBuffer = 0;
+		outbuf.cBuffers = 1;
+		outbuf.pBuffers = OutBuffers;
+		outbuf.ulVersion = SECBUFFER_VERSION;
+
+
+		elog(DEBUG4, "Processing received SSPI token of length %u", 
+			 (unsigned int) buf.len);
+
+		r = AcceptSecurityContext(&sspicred,
+			sspictx,
+			&inbuf,
+			ASC_REQ_ALLOCATE_MEMORY,
+			SECURITY_NETWORK_DREP,
+			&newctx,
+			&outbuf,
+			&contextattr,
+			NULL);
+
+		/* input buffer no longer used */
+		pfree(buf.data);
+
+		if (outbuf.cBuffers > 0 && outbuf.pBuffers[0].cbBuffer > 0)
+		{
+			/*
+			 * Negotiation generated data to be sent to the client.
+			 */
+			elog(DEBUG4, "sending SSPI response token of length %u",
+				 (unsigned int) outbuf.pBuffers[0].cbBuffer);
+
+			port->gss->outbuf.length = outbuf.pBuffers[0].cbBuffer;
+			port->gss->outbuf.value = outbuf.pBuffers[0].pvBuffer;
+
+			sendAuthRequest(port, AUTH_REQ_GSS_CONT);
+
+			FreeContextBuffer(outbuf.pBuffers[0].pvBuffer);
+		}
+
+		if (r != SEC_E_OK && r != SEC_I_CONTINUE_NEEDED)
+		{
+			if (sspictx != NULL)
+			{
+				DeleteSecurityContext(sspictx);
+				free(sspictx);
+			}
+			FreeCredentialsHandle(&sspicred);
+			pg_SSPI_error(ERROR, 
+					gettext_noop("could not accept SSPI security context"), r);
+		}
+
+		if (sspictx == NULL)
+		{
+			sspictx = malloc(sizeof(CtxtHandle));
+			if (sspictx == NULL)
+				ereport(ERROR,
+					(errmsg("out of memory")));
+
+			memcpy(sspictx, &newctx, sizeof(CtxtHandle));
+		}
+
+		if (r == SEC_I_CONTINUE_NEEDED)
+			elog(DEBUG4, "SSPI continue needed");
+
+	} while (r == SEC_I_CONTINUE_NEEDED);
+
+
+	/*
+	 * Release service principal credentials
+	 */
+	FreeCredentialsHandle(&sspicred);
+
+
+	/*
+	 * SEC_E_OK indicates that authentication is now complete.
+	 *
+	 * Get the name of the user that authenticated, and compare it to the
+	 * pg username that was specified for the connection.
+	 */
+
+	r = QuerySecurityContextToken(sspictx, &token);
+	if (r != SEC_E_OK)
+		pg_SSPI_error(ERROR,
+			gettext_noop("could not get security token from context"), r);
+
+	/*
+	 * No longer need the security context, everything from here on uses the
+	 * token instead.
+	 */
+	DeleteSecurityContext(sspictx);
+	free(sspictx);
+
+	if (!GetTokenInformation(token, TokenUser, NULL, 0, &retlen) && GetLastError() != 122)
+		ereport(ERROR,
+				(errmsg_internal("could not get token user size: error code %d",
+					(int) GetLastError())));
+
+	tokenuser = malloc(retlen);
+	if (tokenuser == NULL)
+		ereport(ERROR,
+				(errmsg("out of memory")));
+
+	if (!GetTokenInformation(token, TokenUser, tokenuser, retlen, &retlen))
+		ereport(ERROR,
+				(errmsg_internal("could not get user token: error code %d",
+					(int) GetLastError())));
+
+	if (!LookupAccountSid(NULL, tokenuser->User.Sid, accountname, &accountnamesize, 
+							domainname, &domainnamesize, &accountnameuse))
+		ereport(ERROR,
+				(errmsg_internal("could not lookup acconut sid: error code %d",
+					(int) GetLastError())));
+
+	free(tokenuser);
+
+	/*
+	 * We have the username (without domain/realm) in accountname, compare 
+	 * to the supplied value. In SSPI, always compare case insensitive.
+	 */
+	if (pg_strcasecmp(port->user_name, accountname))
+	{
+		/* GSS name and PGUSER are not equivalent */
+		elog(DEBUG2, 
+			 "provided username (%s) and SSPI username (%s) don't match",
+			 port->user_name, accountname);
+
+		return STATUS_ERROR;
+	}
+	
+	return STATUS_OK;
+}
+#else	/* no ENABLE_SSPI */
+static int
+pg_SSPI_recvauth(Port *port)
+{
+	ereport(LOG,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+			 errmsg("SSPI not implemented on this server.")));
+	return STATUS_ERROR;
+}
+#endif	/* ENABLE_SSPI */
 
 
 /*
@@ -588,6 +831,9 @@ auth_failed(Port *port, int status)
 			break;
 		case uaGSS:
 			errstr = gettext_noop("GSSAPI authentication failed for user \"%s\"");
+			break;
+		case uaSSPI:
+			errstr = gettext_noop("SSPI authentication failed for user \"%s\"");
 			break;
 		case uaTrust:
 			errstr = gettext_noop("\"trust\" authentication failed for user \"%s\"");
@@ -689,6 +935,11 @@ ClientAuthentication(Port *port)
 			status = pg_GSS_recvauth(port);
 			break;
 
+		case uaSSPI:
+			sendAuthRequest(port, AUTH_REQ_SSPI);
+			status = pg_SSPI_recvauth(port);
+			break;
+
 		case uaIdent:
 
 			/*
@@ -778,20 +1029,17 @@ sendAuthRequest(Port *port, AuthRequest areq)
 	else if (areq == AUTH_REQ_CRYPT)
 		pq_sendbytes(&buf, port->cryptSalt, 2);
 
-#ifdef ENABLE_GSS
+#if defined(ENABLE_GSS) || defined(ENABLE_SSPI)
 	/* Add the authentication data for the next step of
-	 * the GSSAPI negotiation. */
+	 * the GSSAPI or SSPI negotiation. */
 	else if (areq == AUTH_REQ_GSS_CONT)
 	{
 		if (port->gss->outbuf.length > 0)
 		{
-			OM_uint32	lmin_s;
-
 			elog(DEBUG4, "sending GSS token of length %u",
 				 (unsigned int) port->gss->outbuf.length);
 
 			pq_sendbytes(&buf, port->gss->outbuf.value, port->gss->outbuf.length);
-			gss_release_buffer(&lmin_s, &port->gss->outbuf);
 		}
 	}
 #endif

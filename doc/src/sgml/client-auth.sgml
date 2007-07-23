@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.99 2007/07/18 12:00:47 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.100 2007/07/23 10:16:53 mha Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -359,6 +359,17 @@ hostnossl  <replaceable>database</replaceable>  <replaceable>user</replaceable> 
        </varlistentry>
 
        <varlistentry>
+        <term><literal>sspi</></term>
+        <listitem>
+         <para>
+          Use SSPI to authenticate the user. This is only
+          available on Windows. See <xref
+          linkend="sspi-auth"> for details.
+         </para>
+        </listitem>
+       </varlistentry>
+
+       <varlistentry>
         <term><literal>krb5</></term>
         <listitem>
          <para>
@@ -675,6 +686,33 @@ local   db1,db2,@demodbs  all                         md5
     see <xref linkend="installation"> for more information.
    </para>
    
+  </sect2>
+
+  <sect2 id="sspi-auth">
+   <title>SSPI authentication</title>
+
+   <indexterm zone="sspi-auth">
+    <primary>SSPI</primary>
+   </indexterm>
+
+   <para>
+    <productname>SSPI</productname> is a <productname>Windows</productname>
+    technology for secure authentication with single sign-on. 
+    <productname>PostgreSQL</productname> will use SSPI in
+    <literal>negotiate</literal> mode, which will use
+    <productname>Kerberos</productname> when possible and automatically
+    fall back to <productname>NTLM</productname> in other cases.
+    <productname>SSPI</productname> authentication only works when both
+    server and client are running <productname>Windows</productname>.
+   </para>
+
+   <para>
+    When using <productname>Kerberos</productname> authentication, 
+    <productname>SSPI</productname> works the same way 
+    <productname>GSSAPI</productname> does. See <xref linkend="gssapi-auth">
+    for details.
+   </para>
+
   </sect2>
 
   <sect2 id="kerberos-auth">
