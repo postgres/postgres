@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.323.2.2 2006/05/21 20:19:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-connect.c,v 1.323.2.3 2007/07/23 18:13:02 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2495,7 +2495,7 @@ conninfo_parse(const char *conninfo, PQExpBuffer errorMessage)
 	char	   *cp2;
 	PQconninfoOption *options;
 	PQconninfoOption *option;
-	char		errortmp[PQERRORMSG_LENGTH];
+	char		errortmp[INITIAL_EXPBUFFER_SIZE];
 
 	/* Make a working copy of PQconninfoOptions */
 	options = malloc(sizeof(PQconninfoOptions));
