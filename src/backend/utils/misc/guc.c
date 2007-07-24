@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.405 2007/07/10 13:14:21 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.406 2007/07/24 01:53:56 alvherre Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1348,7 +1348,7 @@ static struct config_int ConfigureNamesInt[] =
 			GUC_UNIT_MS
 		},
 		&autovacuum_vac_cost_delay,
-		-1, -1, 1000, NULL, NULL
+		20, -1, 1000, NULL, NULL
 	},
 
 	{
@@ -1656,7 +1656,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&autovacuum_vac_thresh,
-		500, 0, INT_MAX, NULL, NULL
+		50, 0, INT_MAX, NULL, NULL
 	},
 	{
 		{"autovacuum_analyze_threshold", PGC_SIGHUP, AUTOVACUUM,
@@ -1664,7 +1664,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&autovacuum_anl_thresh,
-		250, 0, INT_MAX, NULL, NULL
+		50, 0, INT_MAX, NULL, NULL
 	},
 	{
 		/* see varsup.c for why this is PGC_POSTMASTER not PGC_SIGHUP */

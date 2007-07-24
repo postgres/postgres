@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.131 2007/07/18 12:00:47 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.132 2007/07/24 01:53:55 alvherre Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3247,7 +3247,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Specifies the minimum number of updated or deleted tuples needed
         to trigger a <command>VACUUM</> in any one table.
-        The default is 500 tuples.
+        The default is 50 tuples.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3265,7 +3265,7 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Specifies the minimum number of inserted, updated or deleted tuples
         needed to trigger an <command>ANALYZE</> in any one table.
-        The default is 250 tuples.
+        The default is 50 tuples.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
@@ -3343,8 +3343,9 @@ SELECT * FROM parent WHERE key = 2400;
        <para>
         Specifies the cost delay value that will be used in automatic
         <command>VACUUM</> operations.  If <literal>-1</> is
-        specified (which is the default), the regular
+        specified, the regular
         <xref linkend="guc-vacuum-cost-delay"> value will be used.
+        The default value is 20 milliseconds.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         This setting can be overridden for individual tables by entries in
