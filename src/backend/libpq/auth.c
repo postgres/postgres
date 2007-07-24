@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.154 2007/07/23 10:16:53 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.155 2007/07/24 09:00:27 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -560,13 +560,16 @@ pg_SSPI_error(int severity, char *errmsg, SECURITY_STATUS r)
 	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0, sysmsg, sizeof(sysmsg), NULL) == 0)
 		ereport(severity,
 		        (errmsg_internal("%s", errmsg),
-				errdetail("sspi error %x", r)));
+				errdetail("sspi error %x", (unsigned int)r)));
 	else
 		ereport(severity,
 		        (errmsg_internal("%s", errmsg),
-				errdetail("%s (%x)", sysmsg, r)));
+				errdetail("%s (%x)", sysmsg, (unsigned int)r)));
 }
 
+typedef SECURITY_STATUS
+(WINAPI * QUERY_SECURITY_CONTEXT_TOKEN_FN)(
+    PCtxtHandle, void **);
 
 static int
 pg_SSPI_recvauth(Port *port)
@@ -591,6 +594,8 @@ pg_SSPI_recvauth(Port *port)
 	DWORD			accountnamesize = sizeof(accountname);
 	DWORD			domainnamesize = sizeof(domainname);
 	SID_NAME_USE	accountnameuse;
+	HMODULE			secur32;
+	QUERY_SECURITY_CONTEXT_TOKEN_FN	_QuerySecurityContextToken;
 
 
 	/*
@@ -726,12 +731,36 @@ pg_SSPI_recvauth(Port *port)
 	 *
 	 * Get the name of the user that authenticated, and compare it to the
 	 * pg username that was specified for the connection.
+	 *
+	 * MingW is missing the export for QuerySecurityContextToken in
+	 * the secur32 library, so we have to load it dynamically.
 	 */
 
-	r = QuerySecurityContextToken(sspictx, &token);
+	secur32 = LoadLibrary("SECUR32.DLL");
+	if (secur32 == NULL)
+		ereport(ERROR,
+			(errmsg_internal("could not load secur32.dll: %d",
+			(int)GetLastError())));
+
+	_QuerySecurityContextToken = (QUERY_SECURITY_CONTEXT_TOKEN_FN)
+		GetProcAddress(secur32, "QuerySecurityContextToken");
+	if (_QuerySecurityContextToken == NULL)
+	{
+		FreeLibrary(secur32);
+		ereport(ERROR,
+			(errmsg_internal("could not locate QuerySecurityContextToken in secur32.dll: %d",
+			(int)GetLastError())));
+	}
+
+	r = (_QuerySecurityContextToken)(sspictx, &token);
 	if (r != SEC_E_OK)
+	{
+		FreeLibrary(secur32);
 		pg_SSPI_error(ERROR,
 			gettext_noop("could not get security token from context"), r);
+	}
+
+	FreeLibrary(secur32);
 
 	/*
 	 * No longer need the security context, everything from here on uses the

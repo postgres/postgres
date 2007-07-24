@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.130 2007/07/23 17:52:06 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.131 2007/07/24 09:00:27 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -511,10 +511,13 @@ pg_SSPI_error(PGconn *conn, char *mprefix, SECURITY_STATUS r)
 {
 	char sysmsg[256];
 
-	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0, sysmsg, sizeof(sysmsg), NULL) == 0)
-		printfPQExpBuffer(&conn->errorMessage, "%s: sspi error %x", mprefix, r);
+	if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, r, 0,
+					  sysmsg, sizeof(sysmsg), NULL) == 0)
+		printfPQExpBuffer(&conn->errorMessage, "%s: sspi error %x",
+						  mprefix, (unsigned int)r);
 	else
-		printfPQExpBuffer(&conn->errorMessage, "%s: %s (%x)", mprefix, sysmsg, r);
+		printfPQExpBuffer(&conn->errorMessage, "%s: %s (%x)",
+						  mprefix, sysmsg, (unsigned int)r);
 }
 
 /* 

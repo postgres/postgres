@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.122 2007/02/09 15:55:57 petere Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.123 2007/07/24 09:00:27 mha Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -64,6 +64,7 @@ libpostgres.a: postgres.def
 endif # cygwin
 
 ifeq ($(PORTNAME), win32)
+LIBS += -lsecur32
 
 postgres: $(OBJS) postgres.def libpostgres.a $(WIN32RES)
 	$(DLLTOOL) --dllname $@$(X) --output-exp $@.exp --def postgres.def
