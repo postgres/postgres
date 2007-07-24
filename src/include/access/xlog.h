@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.80 2007/06/30 19:12:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.81 2007/07/24 04:54:09 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -196,6 +196,7 @@ extern CheckpointStatsData CheckpointStats;
 
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata);
 extern void XLogFlush(XLogRecPtr RecPtr);
+extern void XLogBackgroundFlush(void);
 extern bool XLogNeedsFlush(XLogRecPtr RecPtr);
 
 extern void xlog_redo(XLogRecPtr lsn, XLogRecord *record);

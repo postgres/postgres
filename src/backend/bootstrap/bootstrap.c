@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.234 2007/06/28 00:02:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.235 2007/07/24 04:54:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "postmaster/bgwriter.h"
+#include "postmaster/walwriter.h"
 #include "storage/freespace.h"
 #include "storage/ipc.h"
 #include "storage/proc.h"
@@ -195,7 +196,7 @@ static IndexList *ILHead = NULL;
  *	 AuxiliaryProcessMain
  *
  *	 The main entry point for auxiliary processes, such as the bgwriter,
- *	 bootstrapper and the shared memory checker code.
+ *	 walwriter, bootstrapper and the shared memory checker code.
  *
  *	 This code is here just because of historical reasons.
  */
@@ -331,6 +332,9 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			case BgWriterProcess:
 				statmsg = "writer process";
 				break;
+			case WalWriterProcess:
+				statmsg = "wal writer process";
+				break;
 			default:
 				statmsg = "??? process";
 				break;
@@ -418,6 +422,12 @@ AuxiliaryProcessMain(int argc, char *argv[])
 			/* don't set signals, bgwriter has its own agenda */
 			InitXLOGAccess();
 			BackgroundWriterMain();
+			proc_exit(1);		/* should never return */
+
+		case WalWriterProcess:
+			/* don't set signals, walwriter has its own agenda */
+			InitXLOGAccess();
+			WalWriterMain();
 			proc_exit(1);		/* should never return */
 			
 		default:

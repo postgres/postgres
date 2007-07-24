@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.274 2007/06/30 19:12:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.275 2007/07/24 04:54:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -484,7 +484,6 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	uint32		len,
 				write_len;
 	unsigned	i;
-	XLogwrtRqst LogwrtRqst;
 	bool		updrqst;
 	bool		doPageWrites;
 	bool		isLogSwitch = (rmid == RM_XLOG_ID && info == XLOG_SWITCH);
@@ -642,43 +641,6 @@ begin:;
 		elog(PANIC, "invalid xlog record length %u", len);
 
 	START_CRIT_SECTION();
-
-	/* update LogwrtResult before doing cache fill check */
-	{
-		/* use volatile pointer to prevent code rearrangement */
-		volatile XLogCtlData *xlogctl = XLogCtl;
-
-		SpinLockAcquire(&xlogctl->info_lck);
-		LogwrtRqst = xlogctl->LogwrtRqst;
-		LogwrtResult = xlogctl->LogwrtResult;
-		SpinLockRelease(&xlogctl->info_lck);
-	}
-
-	/*
-	 * If cache is half filled then try to acquire write lock and do
-	 * XLogWrite. Ignore any fractional blocks in performing this check.
-	 */
-	LogwrtRqst.Write.xrecoff -= LogwrtRqst.Write.xrecoff % XLOG_BLCKSZ;
-	if (LogwrtRqst.Write.xlogid != LogwrtResult.Write.xlogid ||
-		(LogwrtRqst.Write.xrecoff >= LogwrtResult.Write.xrecoff +
-		 XLogCtl->XLogCacheByte / 2))
-	{
-		if (LWLockConditionalAcquire(WALWriteLock, LW_EXCLUSIVE))
-		{
-			/*
-			 * Since the amount of data we write here is completely optional
-			 * anyway, tell XLogWrite it can be "flexible" and stop at a
-			 * convenient boundary.  This allows writes triggered by this
-			 * mechanism to synchronize with the cache boundaries, so that in
-			 * a long transaction we'll basically dump alternating halves of
-			 * the buffer array.
-			 */
-			LogwrtResult = XLogCtl->Write.LogwrtResult;
-			if (XLByteLT(LogwrtResult.Write, LogwrtRqst.Write))
-				XLogWrite(LogwrtRqst, true, false);
-			LWLockRelease(WALWriteLock);
-		}
-	}
 
 	/* Now wait to get insert lock */
 	LWLockAcquire(WALInsertLock, LW_EXCLUSIVE);
@@ -1798,6 +1760,85 @@ XLogFlush(XLogRecPtr record)
 		"xlog flush request %X/%X is not satisfied --- flushed only to %X/%X",
 			 record.xlogid, record.xrecoff,
 			 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
+}
+
+/*
+ * Flush xlog, but without specifying exactly where to flush to.
+ *
+ * We normally flush only completed blocks; but if there is nothing to do on
+ * that basis, we check for unflushed async commits in the current incomplete
+ * block, and flush through the latest one of those.  Thus, if async commits
+ * are not being used, we will flush complete blocks only.  We can guarantee
+ * that async commits reach disk after at most three cycles; normally only
+ * one or two.  (We allow XLogWrite to write "flexibly", meaning it can stop
+ * at the end of the buffer ring; this makes a difference only with very high
+ * load or long wal_writer_delay, but imposes one extra cycle for the worst
+ * case for async commits.)
+ *
+ * This routine is invoked periodically by the background walwriter process.
+ */
+void
+XLogBackgroundFlush(void)
+{
+	XLogRecPtr	WriteRqstPtr;
+	bool		flexible = true;
+
+	/* read LogwrtResult and update local state */
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile XLogCtlData *xlogctl = XLogCtl;
+
+		SpinLockAcquire(&xlogctl->info_lck);
+		LogwrtResult = xlogctl->LogwrtResult;
+		WriteRqstPtr = xlogctl->LogwrtRqst.Write;
+		SpinLockRelease(&xlogctl->info_lck);
+	}
+
+	/* back off to last completed page boundary */
+	WriteRqstPtr.xrecoff -= WriteRqstPtr.xrecoff % XLOG_BLCKSZ;
+
+#ifdef NOT_YET					/* async commit patch is still to come */
+	/* if we have already flushed that far, consider async commit records */
+	if (XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
+	{
+		/* use volatile pointer to prevent code rearrangement */
+		volatile XLogCtlData *xlogctl = XLogCtl;
+
+		SpinLockAcquire(&xlogctl->async_commit_lck);
+		WriteRqstPtr = xlogctl->asyncCommitLSN;
+		SpinLockRelease(&xlogctl->async_commit_lck);
+		flexible = false;		/* ensure it all gets written */
+	}
+#endif
+
+	/* Done if already known flushed */
+	if (XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
+		return;
+
+#ifdef WAL_DEBUG
+	if (XLOG_DEBUG)
+		elog(LOG, "xlog bg flush request %X/%X; write %X/%X; flush %X/%X",
+			 WriteRqstPtr.xlogid, WriteRqstPtr.xrecoff,
+			 LogwrtResult.Write.xlogid, LogwrtResult.Write.xrecoff,
+			 LogwrtResult.Flush.xlogid, LogwrtResult.Flush.xrecoff);
+#endif
+
+	START_CRIT_SECTION();
+
+	/* now wait for the write lock */
+	LWLockAcquire(WALWriteLock, LW_EXCLUSIVE);
+	LogwrtResult = XLogCtl->Write.LogwrtResult;
+	if (!XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
+	{
+		XLogwrtRqst WriteRqst;
+
+		WriteRqst.Write = WriteRqstPtr;
+		WriteRqst.Flush = WriteRqstPtr;
+		XLogWrite(WriteRqst, flexible, false);
+	}
+	LWLockRelease(WALWriteLock);
+
+	END_CRIT_SECTION();
 }
 
 /*

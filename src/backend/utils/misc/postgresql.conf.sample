@@ -159,6 +159,8 @@
 #full_page_writes = on			# recover from partial page writes
 #wal_buffers = 64kB			# min 32kB
 					# (change requires restart)
+#wal_writer_delay = 200ms		# range 1-10000, in milliseconds
+
 #commit_delay = 0			# range 0-100000, in microseconds
 #commit_siblings = 5			# range 1-1000
 

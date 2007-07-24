@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.406 2007/07/24 01:53:56 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.407 2007/07/24 04:54:09 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -54,6 +54,7 @@
 #include "postmaster/bgwriter.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
+#include "postmaster/walwriter.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
 #include "tcop/tcopprot.h"
@@ -1507,6 +1508,16 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&XLOGbuffers,
 		8, 4, INT_MAX, NULL, NULL
+	},
+
+	{
+		{"wal_writer_delay", PGC_SIGHUP, WAL_SETTINGS,
+			gettext_noop("WAL writer sleep time between WAL flushes."),
+			NULL,
+			GUC_UNIT_MS
+		},
+		&WalWriterDelay,
+		200, 1, 10000, NULL, NULL
 	},
 
 	{
