@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.15 2007/05/12 19:22:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/predtest.c,v 1.16 2007/07/24 17:22:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,6 +84,7 @@ static bool predicate_implied_by_simple_clause(Expr *predicate, Node *clause);
 static bool predicate_refuted_by_simple_clause(Expr *predicate, Node *clause);
 static bool is_null_contradicts(NullTest *ntest, Node *clause);
 static Node *extract_not_arg(Node *clause);
+static bool list_member_strip(List *list, Expr *datum);
 static bool btree_predicate_proof(Expr *predicate, Node *clause,
 					  bool refute_it);
 
@@ -961,11 +962,11 @@ predicate_implied_by_simple_clause(Expr *predicate, Node *clause)
 		if (!type_is_rowtype(exprType((Node *) nonnullarg)))
 		{
 			if (is_opclause(clause) &&
-				list_member(((OpExpr *) clause)->args, nonnullarg) &&
+				list_member_strip(((OpExpr *) clause)->args, nonnullarg) &&
 				op_strict(((OpExpr *) clause)->opno))
 				return true;
 			if (is_funcclause(clause) &&
-				list_member(((FuncExpr *) clause)->args, nonnullarg) &&
+				list_member_strip(((FuncExpr *) clause)->args, nonnullarg) &&
 				func_strict(((FuncExpr *) clause)->funcid))
 				return true;
 		}
@@ -1044,11 +1045,11 @@ is_null_contradicts(NullTest *ntest, Node *clause)
 
 	/* foo IS NULL contradicts any strict op/func on foo */
 	if (is_opclause(clause) &&
-		list_member(((OpExpr *) clause)->args, isnullarg) &&
+		list_member_strip(((OpExpr *) clause)->args, isnullarg) &&
 		op_strict(((OpExpr *) clause)->opno))
 		return true;
 	if (is_funcclause(clause) &&
-		list_member(((FuncExpr *) clause)->args, isnullarg) &&
+		list_member_strip(((FuncExpr *) clause)->args, isnullarg) &&
 		func_strict(((FuncExpr *) clause)->funcid))
 		return true;
 
@@ -1088,6 +1089,36 @@ extract_not_arg(Node *clause)
 			return (Node *) btest->arg;
 	}
 	return NULL;
+}
+
+
+/*
+ * Check whether an Expr is equal() to any member of a list, ignoring
+ * any top-level RelabelType nodes.  This is legitimate for the purposes
+ * we use it for (matching IS [NOT] NULL arguments to arguments of strict
+ * functions) because RelabelType doesn't change null-ness.  It's helpful
+ * for cases such as a varchar argument of a strict function on text.
+ */
+static bool
+list_member_strip(List *list, Expr *datum)
+{
+	ListCell   *cell;
+
+	if (datum && IsA(datum, RelabelType))
+		datum = ((RelabelType *) datum)->arg;
+
+	foreach(cell, list)
+	{
+		Expr *elem = (Expr *) lfirst(cell);
+
+		if (elem && IsA(elem, RelabelType))
+			elem = ((RelabelType *) elem)->arg;
+
+		if (equal(elem, datum))
+			return true;
+	}
+
+	return false;
 }
 
 
