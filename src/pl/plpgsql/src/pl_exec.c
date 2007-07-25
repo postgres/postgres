@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.198 2007/07/15 02:15:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.199 2007/07/25 04:19:08 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,8 @@ static int exec_stmt_return(PLpgSQL_execstate *estate,
 				 PLpgSQL_stmt_return *stmt);
 static int exec_stmt_return_next(PLpgSQL_execstate *estate,
 					  PLpgSQL_stmt_return_next *stmt);
+static int exec_stmt_return_query(PLpgSQL_execstate *estate,
+					  PLpgSQL_stmt_return_query *stmt);
 static int exec_stmt_raise(PLpgSQL_execstate *estate,
 				PLpgSQL_stmt_raise *stmt);
 static int exec_stmt_execsql(PLpgSQL_execstate *estate,
@@ -1244,6 +1246,10 @@ exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 			rc = exec_stmt_return_next(estate, (PLpgSQL_stmt_return_next *) stmt);
 			break;
 
+		case PLPGSQL_STMT_RETURN_QUERY:
+			rc = exec_stmt_return_query(estate, (PLpgSQL_stmt_return_query *) stmt);
+			break;
+
 		case PLPGSQL_STMT_RAISE:
 			rc = exec_stmt_raise(estate, (PLpgSQL_stmt_raise *) stmt);
 			break;
@@ -2133,6 +2139,59 @@ exec_stmt_return_next(PLpgSQL_execstate *estate,
 		if (free_tuple)
 			heap_freetuple(tuple);
 	}
+
+	return PLPGSQL_RC_OK;
+}
+
+/* ----------
+ * exec_stmt_return_query		Evaluate a query and add it to the
+ *								list of tuples returned by the current
+ *								SRF.
+ * ----------
+ */
+static int
+exec_stmt_return_query(PLpgSQL_execstate *estate,
+					   PLpgSQL_stmt_return_query *stmt)
+{
+	Portal 		portal;
+
+	if (!estate->retisset)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("cannot use RETURN QUERY in a non-SETOF function")));
+
+	if (estate->tuple_store == NULL)
+		exec_init_tuple_store(estate);
+
+	exec_run_select(estate, stmt->query, 0, &portal);
+
+	if (!compatible_tupdesc(estate->rettupdesc, portal->tupDesc))
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("structure of query does not match function result type")));
+
+	while (true)
+	{
+		MemoryContext 	old_cxt;
+		int 			i;
+
+		SPI_cursor_fetch(portal, true, 50);
+		if (SPI_processed == 0)
+			break;
+
+		old_cxt = MemoryContextSwitchTo(estate->tuple_store_cxt);
+		for (i = 0; i < SPI_processed; i++)
+		{
+			HeapTuple tuple = SPI_tuptable->vals[i];
+			tuplestore_puttuple(estate->tuple_store, tuple);
+		}
+		MemoryContextSwitchTo(old_cxt);
+
+		SPI_freetuptable(SPI_tuptable);
+	}
+
+	SPI_freetuptable(SPI_tuptable);
+	SPI_cursor_close(portal);
 
 	return PLPGSQL_RC_OK;
 }

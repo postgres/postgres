@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.57 2007/04/29 01:21:09 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.58 2007/07/25 04:19:09 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,8 +124,8 @@ declare			{ return K_DECLARE;			}
 default			{ return K_DEFAULT;			}
 diagnostics		{ return K_DIAGNOSTICS;		}
 else			{ return K_ELSE;			}
-elseif          { return K_ELSIF;           }
-elsif           { return K_ELSIF;           }
+elseif			{ return K_ELSIF;			}
+elsif			{ return K_ELSIF;			}
 end				{ return K_END;				}
 exception		{ return K_EXCEPTION;		}
 execute			{ return K_EXECUTE;			}
@@ -151,6 +151,7 @@ null			{ return K_NULL;			}
 open			{ return K_OPEN;			}
 or				{ return K_OR;				}
 perform			{ return K_PERFORM;			}
+query			{ return K_QUERY;			}
 raise			{ return K_RAISE;			}
 rename			{ return K_RENAME;			}
 result_oid		{ return K_RESULT_OID;		}

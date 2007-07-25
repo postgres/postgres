@@ -3079,3 +3079,52 @@ NOTICE:  innerblock.param1 = 2
 (1 row)
 
 drop function pl_qual_names(int);
+-- tests for RETURN QUERY
+create function ret_query1(out int, out int) returns setof record as $$
+begin
+    $1 := -1;
+    $2 := -2;
+    return next;
+    return query select x + 1, x * 10 from generate_series(0, 10) s (x);
+    return next;
+end;
+$$ language plpgsql;
+select * from ret_query1();
+ column1 | column2 
+---------+---------
+      -1 |      -2
+       1 |       0
+       2 |      10
+       3 |      20
+       4 |      30
+       5 |      40
+       6 |      50
+       7 |      60
+       8 |      70
+       9 |      80
+      10 |      90
+      11 |     100
+      -1 |      -2
+(13 rows)
+
+create type record_type as (x text, y int, z boolean);
+create or replace function ret_query2(lim int) returns setof record_type as $$
+begin
+    return query select md5(s.x::text), s.x, s.x > 0
+                 from generate_series(-8, lim) s (x) where s.x % 2 = 0;
+end;
+$$ language plpgsql;
+select * from ret_query2(8);
+                x                 | y  | z 
+----------------------------------+----+---
+ a8d2ec85eaf98407310b72eb73dda247 | -8 | f
+ 596a3d04481816330f07e4f97510c28f | -6 | f
+ 0267aaf632e87a63288a08331f22c7c3 | -4 | f
+ 5d7b9adcbe1c629ec722529dd12e5129 | -2 | f
+ cfcd208495d565ef66e7dff9f98764da |  0 | f
+ c81e728d9d4c2f636f067f89cc14862c |  2 | t
+ a87ff679a2f3e71d9181a67b7542122c |  4 | t
+ 1679091c5a880faf6fb5e6087eb1b2dc |  6 | t
+ c9f0f895fb98ab9159f51fd0297e236d |  8 | t
+(9 rows)
+

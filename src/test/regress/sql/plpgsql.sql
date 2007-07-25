@@ -2557,3 +2557,27 @@ $$ language plpgsql;
 select pl_qual_names(42);
 
 drop function pl_qual_names(int);
+
+-- tests for RETURN QUERY
+create function ret_query1(out int, out int) returns setof record as $$
+begin
+    $1 := -1;
+    $2 := -2;
+    return next;
+    return query select x + 1, x * 10 from generate_series(0, 10) s (x);
+    return next;
+end;
+$$ language plpgsql;
+
+select * from ret_query1();
+
+create type record_type as (x text, y int, z boolean);
+
+create or replace function ret_query2(lim int) returns setof record_type as $$
+begin
+    return query select md5(s.x::text), s.x, s.x > 0
+                 from generate_series(-8, lim) s (x) where s.x % 2 = 0;
+end;
+$$ language plpgsql;
+
+select * from ret_query2(8);

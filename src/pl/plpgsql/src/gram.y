@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.104 2007/07/16 17:01:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.105 2007/07/25 04:19:08 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@ static	PLpgSQL_stmt	*make_execsql_stmt(const char *sqlstart, int lineno);
 static	PLpgSQL_stmt_fetch *read_fetch_direction(void);
 static	PLpgSQL_stmt	*make_return_stmt(int lineno);
 static	PLpgSQL_stmt	*make_return_next_stmt(int lineno);
+static	PLpgSQL_stmt	*make_return_query_stmt(int lineno);
 static	void			 check_assignable(PLpgSQL_datum *datum);
 static	void			 read_into_target(PLpgSQL_rec **rec, PLpgSQL_row **row,
 										  bool *strict);
@@ -187,6 +188,7 @@ static	void			 check_labels(const char *start_label,
 %token	K_NULL
 %token	K_OPEN
 %token	K_OR
+%token	K_QUERY
 %token	K_PERFORM
 %token	K_ROW_COUNT
 %token	K_RAISE
@@ -1171,6 +1173,10 @@ stmt_return		: K_RETURN lno
 						{
 							$$ = make_return_next_stmt($2);
 						}
+						else if (tok == K_QUERY)
+						{
+							$$ = make_return_query_stmt($2);
+						}
 						else
 						{
 							plpgsql_push_back_token(tok);
@@ -2104,7 +2110,8 @@ make_return_stmt(int lineno)
 	if (plpgsql_curr_compile->fn_retset)
 	{
 		if (yylex() != ';')
-			yyerror("RETURN cannot have a parameter in function returning set; use RETURN NEXT");
+			yyerror("RETURN cannot have a parameter in function "
+					"returning set; use RETURN NEXT or RETURN QUERY");
 	}
 	else if (plpgsql_curr_compile->out_param_varno >= 0)
 	{
@@ -2195,6 +2202,23 @@ make_return_next_stmt(int lineno)
 	}
 	else
 		new->expr = plpgsql_read_expression(';', ";");
+
+	return (PLpgSQL_stmt *) new;
+}
+
+
+static PLpgSQL_stmt *
+make_return_query_stmt(int lineno)
+{
+	PLpgSQL_stmt_return_query *new;
+
+	if (!plpgsql_curr_compile->fn_retset)
+		yyerror("cannot use RETURN QUERY in a non-SETOF function");
+
+	new = palloc0(sizeof(PLpgSQL_stmt_return_query));
+	new->cmd_type = PLPGSQL_STMT_RETURN_QUERY;
+	new->lineno = lineno;
+	new->query = read_sql_construct(';', 0, ")", "", false, true, NULL);
 
 	return (PLpgSQL_stmt *) new;
 }

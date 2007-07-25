@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.62 2007/07/20 16:23:34 petere Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_funcs.c,v 1.63 2007/07/25 04:19:08 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -443,6 +443,8 @@ plpgsql_stmt_typename(PLpgSQL_stmt *stmt)
 			return "RETURN";
 		case PLPGSQL_STMT_RETURN_NEXT:
 			return "RETURN NEXT";
+		case PLPGSQL_STMT_RETURN_QUERY:
+			return "RETURN QUERY";
 		case PLPGSQL_STMT_RAISE:
 			return "RAISE";
 		case PLPGSQL_STMT_EXECSQL:
@@ -484,6 +486,7 @@ static void dump_fors(PLpgSQL_stmt_fors *stmt);
 static void dump_exit(PLpgSQL_stmt_exit *stmt);
 static void dump_return(PLpgSQL_stmt_return *stmt);
 static void dump_return_next(PLpgSQL_stmt_return_next *stmt);
+static void dump_return_query(PLpgSQL_stmt_return_query *stmt);
 static void dump_raise(PLpgSQL_stmt_raise *stmt);
 static void dump_execsql(PLpgSQL_stmt_execsql *stmt);
 static void dump_dynexecute(PLpgSQL_stmt_dynexecute *stmt);
@@ -541,6 +544,9 @@ dump_stmt(PLpgSQL_stmt *stmt)
 			break;
 		case PLPGSQL_STMT_RETURN_NEXT:
 			dump_return_next((PLpgSQL_stmt_return_next *) stmt);
+			break;
+		case PLPGSQL_STMT_RETURN_QUERY:
+			dump_return_query((PLpgSQL_stmt_return_query *) stmt);
 			break;
 		case PLPGSQL_STMT_RAISE:
 			dump_raise((PLpgSQL_stmt_raise *) stmt);
@@ -875,6 +881,15 @@ dump_return_next(PLpgSQL_stmt_return_next *stmt)
 		dump_expr(stmt->expr);
 	else
 		printf("NULL");
+	printf("\n");
+}
+
+static void
+dump_return_query(PLpgSQL_stmt_return_query *stmt)
+{
+	dump_ind();
+	printf("RETURN QUERY ");
+	dump_expr(stmt->query);
 	printf("\n");
 }
 
