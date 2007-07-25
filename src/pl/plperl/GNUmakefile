@@ -1,5 +1,5 @@
 # Makefile for PL/Perl
-# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.30 2007/02/10 04:26:24 tgl Exp $
+# $PostgreSQL: pgsql/src/pl/plperl/GNUmakefile,v 1.31 2007/07/25 10:17:46 mha Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
@@ -21,6 +21,9 @@ perl_archlibexp := $(subst \,/,$(perl_archlibexp))
 perl_privlibexp := $(subst \,/,$(perl_privlibexp))
 perl_embed_ldflags = -L$(perl_archlibexp)/CORE -lperl58
 override CPPFLAGS += -DPLPERL_HAVE_UID_GID
+# Perl on win32 contains /* within comment all over the header file,
+# so disable this warning.
+override CFLAGS += -Wno-comment
 endif
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS) -I$(perl_archlibexp)/CORE
