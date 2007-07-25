@@ -2211,5 +2211,9 @@ Mon, 11 Jun 2007 13:59:57 +0200
 Tue, 12 Jun 2007 09:46:03 +0200
 
 	- Synced parser and keyword list.
+
+Wed, 25 Jul 2007 15:34:54 +0200
+
+	- Synced parser.
 	- Set ecpg library version to 5.3.
 	- Set ecpg version to 4.3.1.

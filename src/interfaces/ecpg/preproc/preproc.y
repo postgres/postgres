@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.347 2007/06/12 11:32:30 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.348 2007/07/25 16:10:41 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -2735,6 +2735,10 @@ RenameStmt:  ALTER AGGREGATE func_name aggr_args RENAME TO name
 			{ $$ = cat_str(4, make_str("alter schema"), $3, make_str("rename to"), $6); }
 		| ALTER TABLE relation_expr RENAME TO name
 			{ $$ = cat_str(4, make_str("alter table"), $3, make_str("rename to"), $6); }
+		| ALTER SEQUENCE relation_expr RENAME TO name
+			{ $$ = cat_str(4, make_str("alter sequence"), $3, make_str("rename to"), $6); }
+		| ALTER VIEW relation_expr RENAME TO name
+			{ $$ = cat_str(4, make_str("alter view"), $3, make_str("rename to"), $6); }
 		| ALTER INDEX relation_expr RENAME TO name
 			{ $$ = cat_str(4, make_str("alter index"), $3, make_str("rename to"), $6); }
 		| ALTER TABLE relation_expr RENAME opt_column name TO name
