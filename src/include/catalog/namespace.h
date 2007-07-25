@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.47 2007/04/12 22:34:45 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/namespace.h,v 1.48 2007/07/25 22:16:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,8 +79,11 @@ extern char *NameListToString(List *names);
 extern char *NameListToQuotedString(List *names);
 
 extern bool isTempNamespace(Oid namespaceId);
+extern bool isTempToastNamespace(Oid namespaceId);
+extern bool isTempOrToastNamespace(Oid namespaceId);
 extern bool isAnyTempNamespace(Oid namespaceId);
 extern bool isOtherTempNamespace(Oid namespaceId);
+extern Oid	GetTempToastNamespace(void);
 extern void ResetTempTableNamespace(void);
 
 extern OverrideSearchPath *GetOverrideSearchPath(MemoryContext context);

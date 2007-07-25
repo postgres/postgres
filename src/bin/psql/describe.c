@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.156 2007/06/28 06:40:16 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.157 2007/07/25 22:16:18 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -1688,9 +1688,12 @@ listTables(const char *tabtypes, const char *pattern, bool verbose)
 	 * pg_catalog and pg_toast.  (We don't want to hide temp tables though.)
 	 */
 	if (showSystem)
-		appendPQExpBuffer(&buf, "      AND n.nspname = 'pg_catalog'\n");
+		appendPQExpBuffer(&buf,
+						  "  AND n.nspname = 'pg_catalog'\n");
 	else
-		appendPQExpBuffer(&buf, "      AND n.nspname NOT IN ('pg_catalog', 'pg_toast')\n");
+		appendPQExpBuffer(&buf,
+						  "  AND n.nspname <> 'pg_catalog'\n"
+						  "  AND n.nspname !~ '^pg_toast'\n");
 
 	processSQLNamePattern(pset.db, &buf, pattern, true, false,
 						  "n.nspname", "c.relname", NULL,

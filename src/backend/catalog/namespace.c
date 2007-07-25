@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.96 2007/04/20 02:37:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.97 2007/07/25 22:16:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,6 +152,9 @@ static List *overrideStack = NIL;
  * in a particular backend session (this happens when a CREATE TEMP TABLE
  * command is first executed).	Thereafter it's the OID of the temp namespace.
  *
+ * myTempToastNamespace is the OID of the namespace for my temp tables' toast
+ * tables.  It is set when myTempNamespace is, and is InvalidOid before that.
+ *
  * myTempNamespaceSubID shows whether we've created the TEMP namespace in the
  * current subtransaction.	The flag propagates up the subtransaction tree,
  * so the main transaction will correctly recognize the flag if all
@@ -160,6 +163,8 @@ static List *overrideStack = NIL;
  * committed its creation, depending on whether myTempNamespace is valid.
  */
 static Oid	myTempNamespace = InvalidOid;
+
+static Oid	myTempToastNamespace = InvalidOid;
 
 static SubTransactionId myTempNamespaceSubID = InvalidSubTransactionId;
 
@@ -1600,8 +1605,34 @@ isTempNamespace(Oid namespaceId)
 }
 
 /*
+ * isTempToastNamespace - is the given namespace my temporary-toast-table
+ *		namespace?
+ */
+bool
+isTempToastNamespace(Oid namespaceId)
+{
+	if (OidIsValid(myTempToastNamespace) && myTempToastNamespace == namespaceId)
+		return true;
+	return false;
+}
+
+/*
+ * isTempOrToastNamespace - is the given namespace my temporary-table
+ *		namespace or my temporary-toast-table namespace?
+ */
+bool
+isTempOrToastNamespace(Oid namespaceId)
+{
+	if (OidIsValid(myTempNamespace) &&
+		(myTempNamespace == namespaceId || myTempToastNamespace == namespaceId))
+		return true;
+	return false;
+}
+
+/*
  * isAnyTempNamespace - is the given namespace a temporary-table namespace
- * (either my own, or another backend's)?
+ * (either my own, or another backend's)?  Temporary-toast-table namespaces
+ * are included, too.
  */
 bool
 isAnyTempNamespace(Oid namespaceId)
@@ -1609,27 +1640,40 @@ isAnyTempNamespace(Oid namespaceId)
 	bool		result;
 	char	   *nspname;
 
-	/* If the namespace name starts with "pg_temp_", say "true" */
+	/* True if the namespace name starts with "pg_temp_" or "pg_toast_temp_" */
 	nspname = get_namespace_name(namespaceId);
 	if (!nspname)
 		return false;			/* no such namespace? */
-	result = (strncmp(nspname, "pg_temp_", 8) == 0);
+	result = (strncmp(nspname, "pg_temp_", 8) == 0) ||
+		(strncmp(nspname, "pg_toast_temp_", 14) == 0);
 	pfree(nspname);
 	return result;
 }
 
 /*
  * isOtherTempNamespace - is the given namespace some other backend's
- * temporary-table namespace?
+ * temporary-table namespace (including temporary-toast-table namespaces)?
  */
 bool
 isOtherTempNamespace(Oid namespaceId)
 {
 	/* If it's my own temp namespace, say "false" */
-	if (isTempNamespace(namespaceId))
+	if (isTempOrToastNamespace(namespaceId))
 		return false;
-	/* Else, if the namespace name starts with "pg_temp_", say "true" */
+	/* Else, if it's any temp namespace, say "true" */
 	return isAnyTempNamespace(namespaceId);
+}
+
+/*
+ * GetTempToastNamespace - get the OID of my temporary-toast-table namespace,
+ * which must already be assigned.  (This is only used when creating a toast
+ * table for a temp table, so we must have already done InitTempTableNamespace)
+ */
+Oid
+GetTempToastNamespace(void)
+{
+	Assert(OidIsValid(myTempToastNamespace));
+	return myTempToastNamespace;
 }
 
 
@@ -2006,6 +2050,7 @@ InitTempTableNamespace(void)
 {
 	char		namespaceName[NAMEDATALEN];
 	Oid			namespaceId;
+	Oid			toastspaceId;
 
 	Assert(!OidIsValid(myTempNamespace));
 
@@ -2055,11 +2100,30 @@ InitTempTableNamespace(void)
 	}
 
 	/*
+	 * If the corresponding temp-table namespace doesn't exist yet, create it.
+	 * (We assume there is no need to clean it out if it does exist, since
+	 * dropping a parent table should make its toast table go away.)
+	 */
+	snprintf(namespaceName, sizeof(namespaceName), "pg_toast_temp_%d",
+			 MyBackendId);
+
+	toastspaceId = GetSysCacheOid(NAMESPACENAME,
+								  CStringGetDatum(namespaceName),
+								  0, 0, 0);
+	if (!OidIsValid(toastspaceId))
+	{
+		toastspaceId = NamespaceCreate(namespaceName, BOOTSTRAP_SUPERUSERID);
+		/* Advance command counter to make namespace visible */
+		CommandCounterIncrement();
+	}
+
+	/*
 	 * Okay, we've prepared the temp namespace ... but it's not committed yet,
 	 * so all our work could be undone by transaction rollback.  Set flag for
 	 * AtEOXact_Namespace to know what to do.
 	 */
 	myTempNamespace = namespaceId;
+	myTempToastNamespace = toastspaceId;
 
 	/* It should not be done already. */
 	AssertState(myTempNamespaceSubID == InvalidSubTransactionId);
@@ -2089,6 +2153,7 @@ AtEOXact_Namespace(bool isCommit)
 		else
 		{
 			myTempNamespace = InvalidOid;
+			myTempToastNamespace = InvalidOid;
 			baseSearchPathValid = false;	/* need to rebuild list */
 		}
 		myTempNamespaceSubID = InvalidSubTransactionId;
@@ -2140,6 +2205,7 @@ AtEOSubXact_Namespace(bool isCommit, SubTransactionId mySubid,
 			myTempNamespaceSubID = InvalidSubTransactionId;
 			/* TEMP namespace creation failed, so reset state */
 			myTempNamespace = InvalidOid;
+			myTempToastNamespace = InvalidOid;
 			baseSearchPathValid = false;	/* need to rebuild list */
 		}
 	}

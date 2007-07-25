@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.70 2007/03/25 19:45:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.71 2007/07/25 22:16:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "access/transam.h"
 #include "catalog/catalog.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_auth_members.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_database.h"
@@ -196,15 +197,17 @@ IsSystemNamespace(Oid namespaceId)
 
 /*
  * IsToastNamespace
- *		True iff namespace is pg_toast.
+ *		True iff namespace is pg_toast or my temporary-toast-table namespace.
  *
- * NOTE: the reason this isn't a macro is to avoid having to include
- * catalog/pg_namespace.h in a lot of places.
+ * Note: this will return false for temporary-toast-table namespaces belonging
+ * to other backends.  Those are treated the same as other backends' regular
+ * temp table namespaces, and access is prevented where appropriate.
  */
 bool
 IsToastNamespace(Oid namespaceId)
 {
-	return namespaceId == PG_TOAST_NAMESPACE;
+	return (namespaceId == PG_TOAST_NAMESPACE) ||
+		isTempToastNamespace(namespaceId);
 }
 
 

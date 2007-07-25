@@ -4,7 +4,7 @@
  *
  * Originally by
  * B. Palmer, bpalmer@crimelabs.net 1-17-2001
- * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.31 2007/07/15 22:54:20 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/oid2name/oid2name.c,v 1.32 2007/07/25 22:16:17 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -411,7 +411,7 @@ sql_exec_dumpalltables(PGconn *conn, struct options * opts)
 		   "	LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace "
 	"	LEFT JOIN pg_catalog.pg_database d ON d.datname = current_database(),"
 			 "	pg_catalog.pg_tablespace t "
-			 "WHERE relkind IN ('r'%s) AND "
+			 "WHERE relkind IN ('r'%s%s) AND "
 			 "	%s"
 			 "		t.oid = CASE"
 			 "			WHEN reltablespace <> 0 THEN reltablespace"
@@ -419,8 +419,9 @@ sql_exec_dumpalltables(PGconn *conn, struct options * opts)
 			 "		END "
 			 "ORDER BY relname",
 			 opts->extended ? addfields : "",
-			 opts->indexes ? ", 'i', 'S', 't'" : "",
-			 opts->systables ? "" : "n.nspname NOT IN ('pg_catalog', 'pg_toast', 'information_schema') AND");
+			 opts->indexes ? ", 'i', 'S'" : "",
+			 opts->systables ? ", 't'" : "",
+			 opts->systables ? "" : "n.nspname NOT IN ('pg_catalog', 'information_schema') AND n.nspname !~ '^pg_toast' AND");
 
 	sql_exec(conn, todo, opts->quiet);
 }

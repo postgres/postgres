@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.91 2007/06/19 20:13:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.92 2007/07/25 22:16:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -619,7 +619,7 @@ LockTagIsTemp(const LOCKTAG *tag)
 			/* field1 is dboid, field2 is reloid for all of these */
 			if ((Oid) tag->locktag_field1 == InvalidOid)
 				return false;	/* shared, so not temp */
-			if (isTempNamespace(get_rel_namespace((Oid) tag->locktag_field2)))
+			if (isTempOrToastNamespace(get_rel_namespace((Oid) tag->locktag_field2)))
 				return true;
 			break;
 		case LOCKTAG_TRANSACTION:

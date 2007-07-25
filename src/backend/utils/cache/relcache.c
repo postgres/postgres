@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.261 2007/05/27 03:50:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.262 2007/07/25 22:16:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -838,7 +838,7 @@ RelationBuildDesc(Oid targetRelId, Relation oldrelation)
 	relation->rd_isnailed = false;
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
-	relation->rd_istemp = isTempNamespace(relation->rd_rel->relnamespace);
+	relation->rd_istemp = isTempOrToastNamespace(relation->rd_rel->relnamespace);
 
 	/*
 	 * initialize the tuple descriptor (relation->rd_att).
@@ -2315,7 +2315,7 @@ RelationBuildLocalRelation(const char *relname,
 	need_eoxact_work = true;
 
 	/* is it a temporary relation? */
-	rel->rd_istemp = isTempNamespace(relnamespace);
+	rel->rd_istemp = isTempOrToastNamespace(relnamespace);
 
 	/*
 	 * create a new tuple descriptor from the one passed in.  We do this
