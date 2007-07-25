@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.72 2007/05/30 20:12:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.73 2007/07/25 12:22:53 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ typedef struct VacAttrStats
 
 
 /* GUC parameters */
-extern DLLIMPORT int default_statistics_target; /* DLLIMPORT for PostGIS */
+extern PGDLLIMPORT int default_statistics_target; /* PGDLLIMPORT for PostGIS */
 extern int	vacuum_freeze_min_age;
 
 

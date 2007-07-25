@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/resowner.h,v 1.11 2007/03/13 00:33:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/resowner.h,v 1.12 2007/07/25 12:22:54 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,9 +34,9 @@ typedef struct ResourceOwnerData *ResourceOwner;
 /*
  * Globally known ResourceOwners
  */
-extern DLLIMPORT ResourceOwner CurrentResourceOwner;
-extern DLLIMPORT ResourceOwner CurTransactionResourceOwner;
-extern DLLIMPORT ResourceOwner TopTransactionResourceOwner;
+extern PGDLLIMPORT ResourceOwner CurrentResourceOwner;
+extern PGDLLIMPORT ResourceOwner CurTransactionResourceOwner;
+extern PGDLLIMPORT ResourceOwner TopTransactionResourceOwner;
 
 /*
  * Resource releasing is done in three phases: pre-locks, locks, and

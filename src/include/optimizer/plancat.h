@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/plancat.h,v 1.44 2007/05/25 17:54:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/plancat.h,v 1.45 2007/07/25 12:22:53 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@ typedef void (*get_relation_info_hook_type) (PlannerInfo *root,
 											 Oid relationObjectId,
 											 bool inhparent,
 											 RelOptInfo *rel);
-extern DLLIMPORT get_relation_info_hook_type get_relation_info_hook;
+extern PGDLLIMPORT get_relation_info_hook_type get_relation_info_hook;
 
 
 extern void get_relation_info(PlannerInfo *root, Oid relationObjectId,

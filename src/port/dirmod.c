@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.48 2007/07/12 23:28:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.49 2007/07/25 12:22:54 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@
 
 /*
  *	On Windows, call non-macro versions of palloc; we can't reference
- *	CurrentMemoryContext in this file because of DLLIMPORT conflict.
+ *	CurrentMemoryContext in this file because of PGDLLIMPORT conflict.
  */
 #if defined(WIN32) || defined(__CYGWIN__)
 #undef palloc

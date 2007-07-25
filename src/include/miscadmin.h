@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.194 2007/04/16 18:29:56 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.195 2007/07/25 12:22:53 mha Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -64,14 +64,14 @@
 
 /* in globals.c */
 /* these are marked volatile because they are set by signal handlers: */
-extern DLLIMPORT volatile bool InterruptPending;
+extern PGDLLIMPORT volatile bool InterruptPending;
 extern volatile bool QueryCancelPending;
 extern volatile bool ProcDiePending;
 
 /* these are marked volatile because they are examined by signal handlers: */
 extern volatile bool ImmediateInterruptOK;
-extern DLLIMPORT volatile uint32 InterruptHoldoffCount;
-extern DLLIMPORT volatile uint32 CritSectionCount;
+extern PGDLLIMPORT volatile uint32 InterruptHoldoffCount;
+extern PGDLLIMPORT volatile uint32 CritSectionCount;
 
 /* in tcop/postgres.c */
 extern void ProcessInterrupts(void);
@@ -125,18 +125,18 @@ extern bool IsUnderPostmaster;
 
 extern bool ExitOnAnyError;
 
-extern DLLIMPORT char *DataDir;
+extern PGDLLIMPORT char *DataDir;
 
-extern DLLIMPORT int NBuffers;
+extern PGDLLIMPORT int NBuffers;
 extern int	MaxBackends;
 extern int	MaxConnections;
 
-extern DLLIMPORT int MyProcPid;
-extern DLLIMPORT struct Port *MyProcPort;
+extern PGDLLIMPORT int MyProcPid;
+extern PGDLLIMPORT struct Port *MyProcPort;
 extern long MyCancelKey;
 
 extern char OutputFileName[];
-extern DLLIMPORT char my_exec_path[];
+extern PGDLLIMPORT char my_exec_path[];
 extern char pkglib_path[];
 
 #ifdef EXEC_BACKEND
@@ -148,9 +148,9 @@ extern char postgres_exec_path[];
  *
  * extern BackendId    MyBackendId;
  */
-extern DLLIMPORT Oid MyDatabaseId;
+extern PGDLLIMPORT Oid MyDatabaseId;
 
-extern DLLIMPORT Oid MyDatabaseTableSpace;
+extern PGDLLIMPORT Oid MyDatabaseTableSpace;
 
 /*
  * Date/Time Configuration
@@ -202,8 +202,8 @@ extern int	CTimeZone;
 
 extern bool enableFsync;
 extern bool allowSystemTableMods;
-extern DLLIMPORT int work_mem;
-extern DLLIMPORT int maintenance_work_mem;
+extern PGDLLIMPORT int work_mem;
+extern PGDLLIMPORT int maintenance_work_mem;
 
 extern int	VacuumCostPageHit;
 extern int	VacuumCostPageMiss;

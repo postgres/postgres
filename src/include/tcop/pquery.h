@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/pquery.h,v 1.42 2007/03/13 00:33:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/pquery.h,v 1.43 2007/07/25 12:22:54 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include "utils/portal.h"
 
 
-extern DLLIMPORT Portal ActivePortal;
+extern PGDLLIMPORT Portal ActivePortal;
 
 
 extern PortalStrategy ChoosePortalStrategy(List *stmts);

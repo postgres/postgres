@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/planner.h,v 1.40 2007/05/25 17:54:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/planner.h,v 1.41 2007/07/25 12:22:53 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 typedef PlannedStmt * (*planner_hook_type) (Query *parse,
 											int cursorOptions,
 											ParamListInfo boundParams);
-extern DLLIMPORT planner_hook_type planner_hook;
+extern PGDLLIMPORT planner_hook_type planner_hook;
 
 
 extern PlannedStmt *planner(Query *parse, int cursorOptions,

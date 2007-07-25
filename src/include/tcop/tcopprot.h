@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.89 2007/04/16 01:14:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.90 2007/07/25 12:22:54 mha Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -28,7 +28,7 @@
 #define STACK_DEPTH_SLOP (512 * 1024L)
 
 extern CommandDest whereToSendOutput;
-extern DLLIMPORT const char *debug_query_string;
+extern PGDLLIMPORT const char *debug_query_string;
 extern int	max_stack_depth;
 extern int	PostAuthDelay;
 

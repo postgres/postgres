@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.61 2007/04/16 01:14:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/spi.h,v 1.62 2007/07/25 12:22:53 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,10 +84,10 @@ typedef struct _SPI_plan *SPIPlanPtr;
 #define SPI_OK_DELETE_RETURNING 12
 #define SPI_OK_UPDATE_RETURNING 13
 
-extern DLLIMPORT uint32 SPI_processed;
-extern DLLIMPORT Oid SPI_lastoid;
-extern DLLIMPORT SPITupleTable *SPI_tuptable;
-extern DLLIMPORT int SPI_result;
+extern PGDLLIMPORT uint32 SPI_processed;
+extern PGDLLIMPORT Oid SPI_lastoid;
+extern PGDLLIMPORT SPITupleTable *SPI_tuptable;
+extern PGDLLIMPORT int SPI_result;
 
 extern int	SPI_connect(void);
 extern int	SPI_finish(void);

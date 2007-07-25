@@ -3,7 +3,7 @@
  *	  header file for postgres inverted index access method implementation.
  *
  *	Copyright (c) 2006, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.11 2007/04/09 22:04:04 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.12 2007/07/25 12:22:53 mha Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -414,7 +414,7 @@ extern Datum ginrestrpos(PG_FUNCTION_ARGS);
 extern void newScanKey(IndexScanDesc scan);
 
 /* ginget.c */
-extern DLLIMPORT int GinFuzzySearchLimit;
+extern PGDLLIMPORT int GinFuzzySearchLimit;
 
 #define ItemPointerSetMax(p)	ItemPointerSet( (p), (BlockNumber)0xffffffff, (OffsetNumber)0xffff )
 #define ItemPointerIsMax(p) ( ItemPointerGetBlockNumber(p) == (BlockNumber)0xffffffff && ItemPointerGetOffsetNumber(p) == (OffsetNumber)0xffff )

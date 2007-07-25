@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/c.h,v 1.219 2007/02/27 23:48:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/c.h,v 1.220 2007/07/25 12:22:52 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -784,8 +784,8 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 #define memmove(d, s, c)		bcopy(s, d, c)
 #endif
 
-#ifndef DLLIMPORT
-#define DLLIMPORT				/* no special DLL markers on most ports */
+#ifndef PGDLLIMPORT
+#define PGDLLIMPORT				/* no special DLL markers on most ports */
 #endif
 
 /*

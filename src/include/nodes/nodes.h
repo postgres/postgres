@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.201 2007/06/11 01:16:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.202 2007/07/25 12:22:53 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,7 +386,7 @@ typedef struct Node
  *	Fortunately, this macro isn't recursive so we just define
  *	a global variable for this purpose.
  */
-extern DLLIMPORT Node *newNodeMacroHolder;
+extern PGDLLIMPORT Node *newNodeMacroHolder;
 
 #define newNode(size, tag) \
 ( \

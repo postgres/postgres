@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.105 2007/06/28 00:02:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.106 2007/07/25 12:22:53 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ typedef enum BufferAccessStrategyType
 } BufferAccessStrategyType;
 
 /* in globals.c ... this duplicates miscadmin.h */
-extern DLLIMPORT int NBuffers;
+extern PGDLLIMPORT int NBuffers;
 
 /* in bufmgr.c */
 extern bool zero_damaged_pages;
@@ -36,13 +36,13 @@ extern double bgwriter_lru_percent;
 extern int	bgwriter_lru_maxpages;
 
 /* in buf_init.c */
-extern DLLIMPORT char *BufferBlocks;
-extern DLLIMPORT int32 *PrivateRefCount;
+extern PGDLLIMPORT char *BufferBlocks;
+extern PGDLLIMPORT int32 *PrivateRefCount;
 
 /* in localbuf.c */
-extern DLLIMPORT int NLocBuffer;
-extern DLLIMPORT Block *LocalBufferBlockPointers;
-extern DLLIMPORT int32 *LocalRefCount;
+extern PGDLLIMPORT int NLocBuffer;
+extern PGDLLIMPORT Block *LocalBufferBlockPointers;
+extern PGDLLIMPORT int32 *LocalRefCount;
 
 /* special block number for ReadBuffer() */
 #define P_NEW	InvalidBlockNumber		/* grow the file to get a new page */

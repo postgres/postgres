@@ -21,7 +21,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.36 2007/01/05 22:19:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/palloc.h,v 1.37 2007/07/25 12:22:54 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ typedef struct MemoryContextData *MemoryContext;
  * We declare it here so that palloc() can be a macro.	Avoid accessing it
  * directly!  Instead, use MemoryContextSwitchTo() to change the setting.
  */
-extern DLLIMPORT MemoryContext CurrentMemoryContext;
+extern PGDLLIMPORT MemoryContext CurrentMemoryContext;
 
 /*
  * Fundamental memory-allocation operations (more are in utils/memutils.h)

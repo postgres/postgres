@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/shmem.h,v 1.51 2007/06/25 17:12:07 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/storage/shmem.h,v 1.52 2007/07/25 12:22:53 mha Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ typedef unsigned long SHMEM_OFFSET;
  * The macros in this header file can only cope with offsets into this
  * shared memory region!
  */
-extern DLLIMPORT SHMEM_OFFSET ShmemBase;
+extern PGDLLIMPORT SHMEM_OFFSET ShmemBase;
 
 
 /* coerce an offset into a pointer in this process's address space */

@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.75 2007/07/24 09:00:27 mha Exp $ */
+/* $PostgreSQL: pgsql/src/include/port/win32.h,v 1.76 2007/07/25 12:22:53 mha Exp $ */
 
 #if defined(_MSC_VER) || defined(__BORLANDC__)
 #define WIN32_ONLY_COMPILER
@@ -51,13 +51,13 @@
 #endif
 
 #ifdef BUILDING_DLL
-#define DLLIMPORT __declspec (dllexport)
+#define PGDLLIMPORT __declspec (dllexport)
 #else							/* not BUILDING_DLL */
-#define DLLIMPORT __declspec (dllimport)
+#define PGDLLIMPORT __declspec (dllimport)
 #endif
 #else							/* not CYGWIN, not MSVC, not MingW */
 
-#define DLLIMPORT
+#define PGDLLIMPORT
 #endif
 
 
@@ -230,8 +230,8 @@ typedef int pid_t;
 
 
 /* In backend/port/win32/signal.c */
-extern DLLIMPORT volatile int pg_signal_queue;
-extern DLLIMPORT int pg_signal_mask;
+extern PGDLLIMPORT volatile int pg_signal_queue;
+extern PGDLLIMPORT int pg_signal_mask;
 extern HANDLE pgwin32_signal_event;
 extern HANDLE pgwin32_initial_signal_pipe;
 
