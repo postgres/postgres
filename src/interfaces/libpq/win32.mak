@@ -1,4 +1,8 @@
+<<<<<<< win32.mak
+# Makefile for Microsoft Visual C++ 8.0
+=======
 # Makefile for Microsoft Visual C++ 6.0-8.0
+>>>>>>> 1.45
 
 # Will build a static library libpq(d).lib
 #        and a dynamic library libpq(d).dll with import library libpq(d)dll.lib
@@ -163,7 +167,7 @@ SSL_LIBS=ssleay32.lib libeay32.lib gdi32.lib
 
 !IFDEF USE_KFW
 CPP_PROJ=$(CPP_PROJ) /D KRB5
-KFW_LIBS=krb5_32.lib comerr32.lib
+KFW_LIBS=krb5_32.lib comerr32.lib gssapi32.lib
 !ENDIF
 
 !IFDEF ENABLE_THREAD_SAFETY
@@ -175,7 +179,7 @@ CPP_SBRS=.
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib advapi32.lib shfolder.lib wsock32.lib $(SSL_LIBS)  $(KFW_LIB) \
+LINK32_FLAGS=kernel32.lib user32.lib advapi32.lib shfolder.lib wsock32.lib secur32.lib $(SSL_LIBS)  $(KFW_LIB) \
  /nologo /subsystem:windows /dll $(LOPT) /incremental:no \
  /pdb:"$(OUTDIR)\libpqdll.pdb" /machine:$(CPU) \
  /out:"$(OUTDIR)\$(OUTFILENAME).dll"\
