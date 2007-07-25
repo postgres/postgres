@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.96 2007/02/21 15:12:39 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/ipc.c,v 1.97 2007/07/25 19:58:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 
 #include <signal.h>
 #include <unistd.h>
+#include <sys/stat.h>
 
 #include "miscadmin.h"
 #include "storage/ipc.h"
