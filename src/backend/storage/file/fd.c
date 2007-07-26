@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.139 2007/06/07 19:19:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/file/fd.c,v 1.140 2007/07/26 15:15:18 tgl Exp $
  *
  * NOTES:
  *
@@ -549,8 +549,7 @@ LruDelete(File file)
 
 	/* close the file */
 	if (close(vfdP->fd))
-		elog(ERROR, "failed to close \"%s\": %m",
-			 vfdP->fileName);
+		elog(ERROR, "could not close file \"%s\": %m", vfdP->fileName);
 
 	--nfile;
 	vfdP->fd = VFD_CLOSED;
@@ -985,8 +984,7 @@ FileClose(File file)
 
 		/* close the file */
 		if (close(vfdP->fd))
-			elog(ERROR, "failed to close \"%s\": %m",
-				 vfdP->fileName);
+			elog(ERROR, "could not close file \"%s\": %m", vfdP->fileName);
 
 		--nfile;
 		vfdP->fd = VFD_CLOSED;
@@ -1005,38 +1003,21 @@ FileClose(File file)
 			{
 				if (filestats.st_size >= log_temp_files)
 					ereport(LOG,
-						(errmsg("temp file: path \"%s\" size %lu",
-						 vfdP->fileName, (unsigned long)filestats.st_size)));
+							(errmsg("temp file: path \"%s\" size %lu",
+									vfdP->fileName,
+									(unsigned long) filestats.st_size)));
 			}
 			else
-				elog(LOG, "Could not stat \"%s\": %m", vfdP->fileName);
+				elog(LOG, "could not stat file \"%s\": %m", vfdP->fileName);
 		}
 		if (unlink(vfdP->fileName))
-			elog(LOG, "failed to unlink \"%s\": %m",
-				 vfdP->fileName);
+			elog(LOG, "could not unlink file \"%s\": %m", vfdP->fileName);
 	}
 
 	/*
 	 * Return the Vfd slot to the free list
 	 */
 	FreeVfd(file);
-}
-
-/*
- * close a file and forcibly delete the underlying Unix file
- */
-void
-FileUnlink(File file)
-{
-	Assert(FileIsValid(file));
-
-	DO_DB(elog(LOG, "FileUnlink: %d (%s)",
-			   file, VfdCache[file].fileName));
-
-	/* force FileClose to delete it */
-	VfdCache[file].fdstate |= FD_TEMPORARY;
-
-	FileClose(file);
 }
 
 int

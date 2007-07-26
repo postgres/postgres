@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.59 2007/06/07 19:19:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/fd.h,v 1.60 2007/07/26 15:15:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,6 @@ extern int	max_files_per_process;
 extern File PathNameOpenFile(FileName fileName, int fileFlags, int fileMode);
 extern File OpenTemporaryFile(bool interXact);
 extern void FileClose(File file);
-extern void FileUnlink(File file);
 extern int	FileRead(File file, char *buffer, int amount);
 extern int	FileWrite(File file, char *buffer, int amount);
 extern int	FileSync(File file);
