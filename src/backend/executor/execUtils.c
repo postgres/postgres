@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.147 2007/02/27 01:11:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.148 2007/07/27 19:09:04 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -814,24 +814,16 @@ ExecOpenScanRelation(EState *estate, Index scanrelid)
 {
 	Oid			reloid;
 	LOCKMODE	lockmode;
-	ResultRelInfo *resultRelInfos;
-	int			i;
 
 	/*
-	 * First determine the lock type we need.  Scan to see if target relation
-	 * is either a result relation or a FOR UPDATE/FOR SHARE relation.
+	 * Determine the lock type we need.  First, scan to see if target
+	 * relation is a result relation.
 	 */
 	lockmode = AccessShareLock;
-	resultRelInfos = estate->es_result_relations;
-	for (i = 0; i < estate->es_num_result_relations; i++)
-	{
-		if (resultRelInfos[i].ri_RangeTableIndex == scanrelid)
-		{
-			lockmode = NoLock;
-			break;
-		}
-	}
+	if (ExecRelationIsTargetRelation(estate, scanrelid))
+		lockmode = NoLock;
 
+	/* If not, check if it's a FOR UPDATE/FOR SHARE relation */
 	if (lockmode == AccessShareLock)
 	{
 		ListCell   *l;
@@ -850,7 +842,6 @@ ExecOpenScanRelation(EState *estate, Index scanrelid)
 
 	/* OK, open the relation and acquire lock as needed */
 	reloid = getrelid(scanrelid, estate->es_range_table);
-
 	return heap_open(reloid, lockmode);
 }
 
