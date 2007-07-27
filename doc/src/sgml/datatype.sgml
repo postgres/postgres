@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.204 2007/06/06 23:00:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.205 2007/07/27 10:37:52 petere Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -253,7 +253,7 @@
    <title>Compatibility</title>
    <para>
     The following types (or spellings thereof) are specified by
-    <acronym>SQL</acronym>: <type>bit</type>, <type>bit
+    <acronym>SQL</acronym>: <type>bigint</type>, <type>bit</type>, <type>bit
     varying</type>, <type>boolean</type>, <type>char</type>,
     <type>character varying</type>, <type>character</type>,
     <type>varchar</type>, <type>date</type>, <type>double
@@ -432,8 +432,8 @@
 
     <para>
      <acronym>SQL</acronym> only specifies the integer types
-     <type>integer</type> (or <type>int</type>) and
-     <type>smallint</type>.  The type <type>bigint</type>, and the
+     <type>integer</type> (or <type>int</type>),
+     <type>smallint</type>, and <type>bigint</type>.  The
      type names <type>int2</type>, <type>int4</type>, and
      <type>int8</type> are extensions, which are shared with various
      other <acronym>SQL</acronym> database systems.
