@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.217 2006/10/04 00:29:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.217.2.1 2007/07/31 19:53:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1398,7 +1398,9 @@ create_nestloop_plan(PlannerInfo *root,
 				select_nonredundant_join_clauses(root,
 												 joinrestrictclauses,
 												 innerpath->indexclauses,
-										 IS_OUTER_JOIN(best_path->jointype));
+									best_path->outerjoinpath->parent->relids,
+									best_path->innerjoinpath->parent->relids,
+									IS_OUTER_JOIN(best_path->jointype));
 		}
 	}
 	else if (IsA(best_path->innerjoinpath, BitmapHeapPath))
@@ -1430,7 +1432,9 @@ create_nestloop_plan(PlannerInfo *root,
 				select_nonredundant_join_clauses(root,
 												 joinrestrictclauses,
 												 bitmapclauses,
-										 IS_OUTER_JOIN(best_path->jointype));
+									best_path->outerjoinpath->parent->relids,
+									best_path->innerjoinpath->parent->relids,
+									IS_OUTER_JOIN(best_path->jointype));
 		}
 	}
 

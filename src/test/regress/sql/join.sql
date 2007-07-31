@@ -424,3 +424,19 @@ LEFT JOIN (
         WHERE c.f1 IS NULL
 ) AS d ON (a.f1 = d.f1)
 WHERE d.f1 IS NULL;
+
+--
+-- regression test for problems of the sort depicted in bug #3494
+--
+
+create temp table tt5(f1 int, f2 int);
+create temp table tt6(f1 int, f2 int);
+
+insert into tt5 values(1, 10);
+insert into tt5 values(1, 11);
+
+insert into tt6 values(1, 9);
+insert into tt6 values(1, 2);
+insert into tt6 values(2, 9);
+
+select * from tt5,tt6 where tt5.f1 = tt6.f1 and tt5.f1 = tt5.f2 - tt6.f2;
