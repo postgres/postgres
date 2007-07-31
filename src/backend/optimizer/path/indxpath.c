@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191.2.11 2007/05/22 01:40:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.191.2.12 2007/07/31 19:54:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1542,6 +1542,8 @@ find_clauses_for_join(PlannerInfo *root, RelOptInfo *rel,
 	{
 		clause_list = remove_redundant_join_clauses(root,
 													clause_list,
+													outer_relids,
+													rel->relids,
 													isouterjoin);
 	}
 

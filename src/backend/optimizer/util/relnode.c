@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.72.2.1 2005/11/22 18:23:12 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.72.2.2 2007/07/31 19:54:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -540,6 +540,8 @@ build_joinrel_restrictlist(PlannerInfo *root,
 	 * omit the redundant clause from the result list.
 	 */
 	result = remove_redundant_join_clauses(root, rlist,
+										   outer_rel->relids,
+										   inner_rel->relids,
 										   IS_OUTER_JOIN(jointype));
 
 	list_free(rlist);
