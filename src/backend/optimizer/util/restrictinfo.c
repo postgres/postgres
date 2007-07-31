@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.31 2004/12/31 22:00:23 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.31.4.1 2007/07/31 19:54:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,8 @@ static Expr *make_sub_restrictinfos(Expr *clause,
 static RestrictInfo *join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
+						 Relids outer_relids,
+						 Relids inner_relids,
 						 JoinType jointype);
 
 
@@ -314,6 +316,8 @@ get_actual_join_clauses(List *restrictinfo_list,
  */
 List *
 remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
+							  Relids outer_relids,
+							  Relids inner_relids,
 							  JoinType jointype)
 {
 	List	   *result = NIL;
@@ -341,7 +345,9 @@ remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
 		RestrictInfo *prevrinfo;
 
 		/* is it redundant with any prior clause? */
-		prevrinfo = join_clause_is_redundant(root, rinfo, result, jointype);
+		prevrinfo = join_clause_is_redundant(root, rinfo, result,
+											 outer_relids, inner_relids,
+											 jointype);
 		if (prevrinfo == NULL)
 		{
 			/* no, so add it to result list */
@@ -377,6 +383,8 @@ List *
 select_nonredundant_join_clauses(Query *root,
 								 List *restrictinfo_list,
 								 List *reference_list,
+								 Relids outer_relids,
+								 Relids inner_relids,
 								 JoinType jointype)
 {
 	List	   *result = NIL;
@@ -387,7 +395,9 @@ select_nonredundant_join_clauses(Query *root,
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
 
 		/* drop it if redundant with any reference clause */
-		if (join_clause_is_redundant(root, rinfo, reference_list, jointype) != NULL)
+		if (join_clause_is_redundant(root, rinfo, reference_list,
+									 outer_relids, inner_relids,
+									 jointype) != NULL)
 			continue;
 
 		/* otherwise, add it to result list */
@@ -420,6 +430,12 @@ select_nonredundant_join_clauses(Query *root,
  * of the latter, even though they might seem redundant by the pathkey
  * membership test.
  *
+ * Also, we cannot eliminate clauses wherein one side mentions vars from
+ * both relations, as in "WHERE t1.f1 = t2.f1 AND t1.f1 = t1.f2 - t2.f2".
+ * In this example, "t1.f2 - t2.f2" could not have been computed at all
+ * before forming the join of t1 and t2, so it certainly wasn't constrained
+ * earlier.
+ *
  * Weird special case: if we have two clauses that seem redundant
  * except one is pushed down into an outer join and the other isn't,
  * then they're not really redundant, because one constrains the
@@ -429,6 +445,8 @@ static RestrictInfo *
 join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
+						 Relids outer_relids,
+						 Relids inner_relids,
 						 JoinType jointype)
 {
 	ListCell   *refitem;
@@ -449,6 +467,14 @@ join_clause_is_redundant(Query *root,
 		if (bms_is_empty(rinfo->left_relids) ||
 			bms_is_empty(rinfo->right_relids))
 			return NULL;		/* var = const, so not redundant */
+
+		/* check for either side mentioning both rels */
+		if (bms_overlap(rinfo->left_relids, outer_relids) &&
+			bms_overlap(rinfo->left_relids, inner_relids))
+			return NULL;		/* clause LHS uses both, so not redundant */
+		if (bms_overlap(rinfo->right_relids, outer_relids) &&
+			bms_overlap(rinfo->right_relids, inner_relids))
+			return NULL;		/* clause RHS uses both, so not redundant */
 
 		cache_mergeclause_pathkeys(root, rinfo);
 

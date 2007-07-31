@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.64 2004/12/31 22:00:23 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.64.4.1 2007/07/31 19:54:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,7 +461,10 @@ build_joinrel_restrictlist(Query *root,
 	 * previous clauses (see optimizer/README for discussion).	We detect
 	 * that case and omit the redundant clause from the result list.
 	 */
-	result = remove_redundant_join_clauses(root, rlist, jointype);
+	result = remove_redundant_join_clauses(root, rlist,
+										   outer_rel->relids,
+										   inner_rel->relids,
+										   jointype);
 
 	list_free(rlist);
 

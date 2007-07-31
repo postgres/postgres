@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.167.4.3 2005/12/06 16:50:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.167.4.4 2007/07/31 19:54:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -386,6 +386,8 @@ group_clauses_by_indexkey_for_join(Query *root,
 		{
 			clausegroup = remove_redundant_join_clauses(root,
 														clausegroup,
+														outer_relids,
+														rel->relids,
 														jointype);
 		}
 

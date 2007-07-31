@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.175 2004/12/31 22:00:08 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.175.4.1 2007/07/31 19:54:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -955,6 +955,8 @@ create_nestloop_plan(Query *root,
 				select_nonredundant_join_clauses(root,
 												 joinrestrictclauses,
 												 linitial(indexclauses),
+									best_path->outerjoinpath->parent->relids,
+									best_path->innerjoinpath->parent->relids,
 												 best_path->jointype);
 		}
 	}
