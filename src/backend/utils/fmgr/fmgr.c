@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.88.4.1 2005/02/02 22:40:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.88.4.2 2007/07/31 15:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -800,6 +800,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 		fmgr_info_cxt_security(fcinfo->flinfo->fn_oid, &fcache->flinfo,
 							   fcinfo->flinfo->fn_mcxt, true);
+		fcache->flinfo.fn_expr = fcinfo->flinfo->fn_expr;
 
 		tuple = SearchSysCache(PROCOID,
 							   ObjectIdGetDatum(fcinfo->flinfo->fn_oid),
