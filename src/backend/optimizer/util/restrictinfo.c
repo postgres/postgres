@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.19 2003/08/04 02:40:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.19.4.1 2007/07/31 19:54:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,8 @@
 static bool join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
+						 Relids outer_relids,
+						 Relids inner_relids,
 						 JoinType jointype);
 
 
@@ -105,6 +107,8 @@ get_actual_join_clauses(List *restrictinfo_list,
  */
 List *
 remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
+							  Relids outer_relids,
+							  Relids inner_relids,
 							  JoinType jointype)
 {
 	List	   *result = NIL;
@@ -115,7 +119,9 @@ remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
 
 		/* drop it if redundant with any prior clause */
-		if (join_clause_is_redundant(root, rinfo, result, jointype))
+		if (join_clause_is_redundant(root, rinfo, result,
+									 outer_relids, inner_relids,
+									 jointype))
 			continue;
 
 		/* otherwise, add it to result list */
@@ -143,6 +149,8 @@ List *
 select_nonredundant_join_clauses(Query *root,
 								 List *restrictinfo_list,
 								 List *reference_list,
+								 Relids outer_relids,
+								 Relids inner_relids,
 								 JoinType jointype)
 {
 	List	   *result = NIL;
@@ -153,7 +161,9 @@ select_nonredundant_join_clauses(Query *root,
 		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
 
 		/* drop it if redundant with any reference clause */
-		if (join_clause_is_redundant(root, rinfo, reference_list, jointype))
+		if (join_clause_is_redundant(root, rinfo, reference_list,
+									 outer_relids, inner_relids,
+									 jointype))
 			continue;
 
 		/* otherwise, add it to result list */
@@ -185,6 +195,12 @@ select_nonredundant_join_clauses(Query *root,
  * of the latter, even though they might seem redundant by the pathkey
  * membership test.
  *
+ * Also, we cannot eliminate clauses wherein one side mentions vars from
+ * both relations, as in "WHERE t1.f1 = t2.f1 AND t1.f1 = t1.f2 - t2.f2".
+ * In this example, "t1.f2 - t2.f2" could not have been computed at all
+ * before forming the join of t1 and t2, so it certainly wasn't constrained
+ * earlier.
+ *
  * Weird special case: if we have two clauses that seem redundant
  * except one is pushed down into an outer join and the other isn't,
  * then they're not really redundant, because one constrains the
@@ -194,6 +210,8 @@ static bool
 join_clause_is_redundant(Query *root,
 						 RestrictInfo *rinfo,
 						 List *reference_list,
+						 Relids outer_relids,
+						 Relids inner_relids,
 						 JoinType jointype)
 {
 	/* always consider exact duplicates redundant */
@@ -228,16 +246,31 @@ join_clause_is_redundant(Query *root,
 		if (redundant)
 		{
 			/*
-			 * It looks redundant, now check for "var = const" case. If
-			 * left_relids/right_relids are set, then there are definitely
-			 * vars on both sides; else we must check the hard way.
+			 * It looks redundant, now check for special cases.  This is
+			 * ugly and slow because of the mistaken decision to not set
+			 * left_relids/right_relids all the time, as 8.0 and up do.
+			 * Not going to change that in 7.x though.
 			 */
-			if (rinfo->left_relids)
-				return true;	/* var = var, so redundant */
-			if (contain_var_clause(get_leftop(rinfo->clause)) &&
-				contain_var_clause(get_rightop(rinfo->clause)))
-				return true;	/* var = var, so redundant */
-			/* else var = const, not redundant */
+			Relids		left_relids = rinfo->left_relids;
+			Relids		right_relids = rinfo->right_relids;
+
+			if (left_relids == NULL)
+				left_relids = pull_varnos(get_leftop(rinfo->clause));
+			if (right_relids == NULL)
+				right_relids = pull_varnos(get_rightop(rinfo->clause));
+
+			if (bms_is_empty(left_relids) || bms_is_empty(right_relids))
+				return false;	/* var = const, so not redundant */
+
+			/* check for either side mentioning both rels */
+			if (bms_overlap(left_relids, outer_relids) &&
+				bms_overlap(left_relids, inner_relids))
+				return false;	/* clause LHS uses both, so not redundant */
+			if (bms_overlap(right_relids, outer_relids) &&
+				bms_overlap(right_relids, inner_relids))
+				return false;	/* clause RHS uses both, so not redundant */
+
+			return true;		/* else it really is redundant */
 		}
 	}
 

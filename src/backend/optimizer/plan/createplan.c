@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.157.2.3 2004/02/29 17:36:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.157.2.4 2007/07/31 19:54:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -927,6 +927,8 @@ create_nestloop_plan(Query *root,
 				select_nonredundant_join_clauses(root,
 												 joinrestrictclauses,
 												 lfirst(indexjoinclauses),
+									best_path->outerjoinpath->parent->relids,
+									best_path->innerjoinpath->parent->relids,
 												 best_path->jointype);
 		}
 	}

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.147.4.2 2005/12/06 16:59:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.147.4.3 2007/07/31 19:54:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -656,7 +656,9 @@ group_clauses_by_indexkey_for_join(Query *root,
 			List	   *nl;
 
 			nl = remove_redundant_join_clauses(root,
-											 FastListValue(&clausegroup),
+											   FastListValue(&clausegroup),
+											   outer_relids,
+											   rel->relids,
 											   jointype);
 			FastListFromList(&clausegroup, nl);
 		}
