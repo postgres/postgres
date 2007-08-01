@@ -1,5 +1,5 @@
 #!/bin/sh
-# $PostgreSQL: pgsql/src/test/bench/create.sh,v 1.5 2005/06/21 04:02:34 tgl Exp $
+# $PostgreSQL: pgsql/src/test/bench/create.sh,v 1.6 2007/08/01 22:23:01 momjian Exp $
 # 
 if [ ! -d $1 ]; then
 	echo " you must specify a valid data directory " >&2
@@ -10,10 +10,10 @@ if [ -d ./obj ]; then
 fi
 
 echo =============== destroying old bench database... =================
-echo "drop database bench" | postgres -D${1} postgres > /dev/null
+echo "drop database bench" | postgres -D"$1" postgres > /dev/null
 
 echo =============== creating new bench database... =================
-echo "create database bench" | postgres -D${1} postgres > /dev/null
+echo "create database bench" | postgres -D"$1" postgres > /dev/null
 if [ $? -ne 0 ]; then
 	echo createdb failed
 	exit 1
