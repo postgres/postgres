@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.87 2007/04/30 21:01:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.88 2007/08/01 22:45:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,9 @@ extern int	XactIsoLevel;
 /* Xact read-only state */
 extern bool DefaultXactReadOnly;
 extern bool XactReadOnly;
+
+/* Asynchronous commits */
+extern bool XactSyncCommit;
 
 /*
  *	start- and end-of-transaction callbacks for dynamically loaded modules
@@ -147,6 +150,7 @@ extern void SetCurrentStatementStartTimestamp(void);
 extern int	GetCurrentTransactionNestLevel(void);
 extern bool TransactionIdIsCurrentTransactionId(TransactionId xid);
 extern void CommandCounterIncrement(void);
+extern void ForceSyncCommit(void);
 extern void StartTransactionCommand(void);
 extern void CommitTransactionCommand(void);
 extern void AbortCurrentTransaction(void);

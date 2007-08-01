@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.48 2007/06/07 19:19:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.49 2007/08/01 22:45:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -354,6 +354,14 @@ CreateTableSpace(CreateTableSpaceStmt *stmt)
 		(void) XLogInsert(RM_TBLSPC_ID, XLOG_TBLSPC_CREATE, rdata);
 	}
 
+	/*
+	 * Force synchronous commit, to minimize the window between creating
+	 * the symlink on-disk and marking the transaction committed.  It's
+	 * not great that there is any window at all, but definitely we don't
+	 * want to make it larger than necessary.
+	 */
+	ForceSyncCommit();
+
 	pfree(linkloc);
 	pfree(location);
 
@@ -479,6 +487,14 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 	 * no need to worry about flushing shared buffers or free space map
 	 * entries for relations in the tablespace.
 	 */
+
+	/*
+	 * Force synchronous commit, to minimize the window between removing
+	 * the files on-disk and marking the transaction committed.  It's
+	 * not great that there is any window at all, but definitely we don't
+	 * want to make it larger than necessary.
+	 */
+	ForceSyncCommit();
 
 	/*
 	 * Allow TablespaceCreateDbspace again.

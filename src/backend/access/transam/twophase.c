@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.31 2007/05/27 03:50:39 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.32 2007/08/01 22:45:07 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -1706,7 +1706,11 @@ RecordTransactionCommitPrepared(TransactionId xid,
 						XLOG_XACT_COMMIT_PREPARED | XLOG_NO_TRAN,
 						rdata);
 
-	/* we don't currently try to sleep before flush here ... */
+	/*
+	 * We don't currently try to sleep before flush here ... nor is there
+	 * any support for async commit of a prepared xact (the very idea is
+	 * probably a contradiction)
+	 */
 
 	/* Flush XLOG to disk */
 	XLogFlush(recptr);

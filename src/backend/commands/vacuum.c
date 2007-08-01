@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.353 2007/06/14 13:53:14 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.354 2007/08/01 22:45:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "access/heapam.h"
 #include "access/transam.h"
 #include "access/xact.h"
+#include "access/xlog.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_database.h"
 #include "commands/dbcommands.h"
@@ -1161,6 +1162,16 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 
 	vacuum_set_xid_limits(vacstmt->freeze_min_age, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);
+
+	/* 
+	 * VACUUM FULL assumes that all tuple states are well-known prior to
+	 * moving tuples around --- see comment "known dead" in repair_frag(),
+	 * as well as simplifications in tqual.c.  So before we start we must
+	 * ensure that any asynchronously-committed transactions with changes
+	 * against this table have been flushed to disk.  It's sufficient to do
+	 * this once after we've acquired AccessExclusiveLock.
+	 */
+	XLogAsyncCommitFlush();
 
 	/*
 	 * Set up statistics-gathering machinery.
@@ -2373,8 +2384,15 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 * exclusive access to the relation.  However, that would require a
 		 * lot of extra code to close and re-open the relation, indexes, etc.
 		 * For now, a quick hack: record status of current transaction as
-		 * committed, and continue.
+		 * committed, and continue.  We force the commit to be synchronous
+		 * so that it's down to disk before we truncate.  (Note: tqual.c
+		 * knows that VACUUM FULL always uses sync commit, too.)
+		 *
+		 * XXX This desperately needs to be revisited.  Any failure after
+		 * this point will result in a PANIC "cannot abort transaction nnn,
+		 * it was already committed"!
 		 */
+		ForceSyncCommit();
 		RecordTransactionCommit();
 	}
 

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.5 2006/03/31 23:32:05 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.6 2007/08/01 22:45:07 tgl Exp $
 
 The Transaction System
 ----------------------
@@ -409,4 +409,113 @@ two separate WAL records.  The replay code has to remember "unfinished" split
 operations, and match them up to subsequent insertions in the parent level.
 If no matching insert has been found by the time the WAL replay ends, the
 replay code has to do the insertion on its own to restore the index to
-consistency.
+consistency.  Such insertions occur after WAL is operational, so they can
+and should write WAL records for the additional generated actions.
+
+
+Asynchronous Commit
+-------------------
+
+As of PostgreSQL 8.3 it is possible to perform asynchronous commits - i.e.,
+we don't wait while the WAL record for the commit is fsync'ed.
+We perform an asynchronous commit when synchronous_commit = off.  Instead
+of performing an XLogFlush() up to the LSN of the commit, we merely note
+the LSN in shared memory.  The backend then continues with other work.
+We record the LSN only for an asynchronous commit, not an abort; there's
+never any need to flush an abort record, since the presumption after a
+crash would be that the transaction aborted anyway.
+
+We always force synchronous commit when the transaction is deleting
+relations, to ensure the commit record is down to disk before the relations
+are removed from the filesystem.  Also, certain utility commands that have
+non-roll-backable side effects (such as filesystem changes) force sync
+commit to minimize the window in which the filesystem change has been made
+but the transaction isn't guaranteed committed.
+
+Every wal_writer_delay milliseconds, the walwriter process performs an
+XLogBackgroundFlush().  This checks the location of the last completely
+filled WAL page.  If that has moved forwards, then we write all the changed
+buffers up to that point, so that under full load we write only whole
+buffers.  If there has been a break in activity and the current WAL page is
+the same as before, then we find out the LSN of the most recent
+asynchronous commit, and flush up to that point, if required (i.e.,
+if it's in the current WAL page).  This arrangement in itself would
+guarantee that an async commit record reaches disk during at worst the
+second walwriter cycle after the transaction completes.  However, we also
+allow XLogFlush to flush full buffers "flexibly" (ie, not wrapping around
+at the end of the circular WAL buffer area), so as to minimize the number
+of writes issued under high load when multiple WAL pages are filled per
+walwriter cycle.  This makes the worst-case delay three walwriter cycles.
+
+There are some other subtle points to consider with asynchronous commits.
+First, for each page of CLOG we must remember the LSN of the latest commit
+affecting the page, so that we can enforce the same flush-WAL-before-write
+rule that we do for ordinary relation pages.  Otherwise the record of the
+commit might reach disk before the WAL record does.  Again, abort records
+need not factor into this consideration.
+
+In fact, we store more than one LSN for each clog page.  This relates to
+the way we set transaction status hint bits during visibility tests.
+We must not set a transaction-committed hint bit on a relation page and
+have that record make it to disk prior to the WAL record of the commit.
+Since visibility tests are normally made while holding buffer share locks,
+we do not have the option of changing the page's LSN to guarantee WAL
+synchronization.  Instead, we defer the setting of the hint bit if we have
+not yet flushed WAL as far as the LSN associated with the transaction.
+This requires tracking the LSN of each unflushed async commit.  It is
+convenient to associate this data with clog buffers: because we will flush
+WAL before writing a clog page, we know that we do not need to remember a
+transaction's LSN longer than the clog page holding its commit status
+remains in memory.  However, the naive approach of storing an LSN for each
+clog position is unattractive: the LSNs are 32x bigger than the two-bit
+commit status fields, and so we'd need 256K of additional shared memory for
+each 8K clog buffer page.  We choose instead to store a smaller number of
+LSNs per page, where each LSN is the highest LSN associated with any
+transaction commit in a contiguous range of transaction IDs on that page.
+This saves storage at the price of some possibly-unnecessary delay in
+setting transaction hint bits.
+
+How many transactions should share the same cached LSN (N)?  If the
+system's workload consists only of small async-commit transactions, then
+it's reasonable to have N similar to the number of transactions per
+walwriter cycle, since that is the granularity with which transactions will
+become truly committed (and thus hintable) anyway.  The worst case is where
+a sync-commit xact shares a cached LSN with an async-commit xact that
+commits a bit later; even though we paid to sync the first xact to disk,
+we won't be able to hint its outputs until the second xact is sync'd, up to
+three walwriter cycles later.  This argues for keeping N (the group size)
+as small as possible.  For the moment we are setting the group size to 32,
+which makes the LSN cache space the same size as the actual clog buffer
+space (independently of BLCKSZ).
+
+It is useful that we can run both synchronous and asynchronous commit
+transactions concurrently, but the safety of this is perhaps not
+immediately obvious.  Assume we have two transactions, T1 and T2.  The Log
+Sequence Number (LSN) is the point in the WAL sequence where a transaction
+commit is recorded, so LSN1 and LSN2 are the commit records of those
+transactions.  If T2 can see changes made by T1 then when T2 commits it
+must be true that LSN2 follows LSN1.  Thus when T2 commits it is certain
+that all of the changes made by T1 are also now recorded in the WAL.  This
+is true whether T1 was asynchronous or synchronous.  As a result, it is
+safe for asynchronous commits and synchronous commits to work concurrently
+without endangering data written by synchronous commits.  Sub-transactions
+are not important here since the final write to disk only occurs at the
+commit of the top level transaction.
+
+Changes to data blocks cannot reach disk unless WAL is flushed up to the
+point of the LSN of the data blocks.  Any attempt to write unsafe data to
+disk will trigger a write which ensures the safety of all data written by
+that and prior transactions.  Data blocks and clog pages are both protected
+by LSNs.
+
+Changes to a temp table are not WAL-logged, hence could reach disk in
+advance of T1's commit, but we don't care since temp table contents don't
+survive crashes anyway.
+
+Database writes made via any of the paths we have introduced to avoid WAL
+overhead for bulk updates are also safe.  In these cases it's entirely
+possible for the data to reach disk before T1's commit, because T1 will
+fsync it down to disk without any sort of interlock, as soon as it finishes
+the bulk update.  However, all these paths are designed to write data that
+no other transaction can see until after T1 commits.  The situation is thus
+not different from ordinary WAL-logged updates.

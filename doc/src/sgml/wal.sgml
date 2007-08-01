@@ -1,10 +1,10 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.44 2007/06/28 00:02:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/wal.sgml,v 1.45 2007/08/01 22:45:07 tgl Exp $ -->
 
 <chapter id="wal">
  <title>Reliability and the Write-Ahead Log</title>
 
  <para>
-  This chapter explain how the Write-Ahead Log is used to obtain
+  This chapter explains how the Write-Ahead Log is used to obtain
   efficient, reliable operation.
  </para>
 
@@ -71,7 +71,7 @@
    write caches.  At the drive level, disable write-back caching if the
    drive cannot guarantee the data will be written before shutdown.
   </para>
-  
+
   <para>
    Another risk of data loss is posed by the disk platter write
    operations themselves. Disk platters are divided into sectors,
@@ -86,11 +86,11 @@
    disk. By doing this, during crash recovery <productname>PostgreSQL</> can
    restore partially-written pages.  If you have a battery-backed disk
    controller or file-system software that prevents partial page writes
-   (e.g., ReiserFS 4),  you can turn off this page imaging by using the 
+   (e.g., ReiserFS 4),  you can turn off this page imaging by using the
    <xref linkend="guc-full-page-writes"> parameter.
   </para>
  </sect1>
- 
+
   <sect1 id="wal-intro">
    <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
 
@@ -105,12 +105,12 @@
 
    <para>
     <firstterm>Write-Ahead Logging</firstterm> (<acronym>WAL</acronym>)
-    is a standard approach to transaction logging.  Its detailed
+    is a standard method for ensuring data integrity.  A detailed
     description can be found in most (if not all) books about
     transaction processing. Briefly, <acronym>WAL</acronym>'s central
     concept is that changes to data files (where tables and indexes
     reside) must be written only after those changes have been logged,
-    that is, when log records describing the changes have been flushed
+    that is, after log records describing the changes have been flushed
     to permanent storage. If we follow this procedure, we do not need
     to flush data pages to disk on every transaction commit, because we
     know that in the event of a crash we will be able to recover the
@@ -120,17 +120,17 @@
    </para>
 
    <para>
-    A major benefit of using <acronym>WAL</acronym> is a
+    Using <acronym>WAL</acronym> results in a
     significantly reduced number of disk writes, because only the log
-    file needs to be flushed to disk at the time of transaction
-    commit, rather than every data file changed by the transaction.
-    In multiuser environments, commits of many transactions
-    can be accomplished with a single <function>fsync</function> of
-    the log file. Furthermore, the log file is written sequentially,
+    file needs to be flushed to disk to guarantee that a transaction is
+    committed, rather than every data file changed by the transaction.
+    The log file is written sequentially,
     and so the cost of syncing the log is much less than the cost of
-    flushing the data pages.   This is especially true for servers
+    flushing the data pages.  This is especially true for servers
     handling many small transactions touching different parts of the data
-    store.
+    store.  Furthermore, when the server is processing many small concurrent
+    transactions, one <function>fsync</function> of the log file may
+    suffice to commit many transactions.
    </para>
 
    <para>
@@ -146,6 +146,139 @@
     inconsistencies.
    </para>
   </sect1>
+
+ <sect1 id="wal-async-commit">
+  <title>Asynchronous Commit</title>
+
+   <indexterm>
+    <primary>synchronous commit</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>asynchronous commit</primary>
+   </indexterm>
+
+  <para>
+   <firstterm>Asynchronous commit</> is an option that allows transactions
+   to complete more quickly, at the cost that the most recent transactions may
+   be lost if the database should crash.  In many applications this is an
+   acceptable tradeoff.
+  </para>
+
+  <para>
+   As described in the previous section, transaction commit is normally
+   <firstterm>synchronous</>: the server waits for the transaction's
+   <acronym>WAL</acronym> records to be flushed to permanent storage
+   before returning a success indication to the client.  The client is
+   therefore guaranteed that a transaction reported to be committed will
+   be preserved, even in the event of a server crash immediately after.
+   However, for short transactions this delay is a major component of the
+   total transaction time.  Selecting asynchronous commit mode means that
+   the server returns success as soon as the transaction is logically
+   completed, before the <acronym>WAL</acronym> records it generated have
+   actually made their way to disk.  This can provide a significant boost
+   in throughput for small transactions.
+  </para>
+
+  <para>
+   Asynchronous commit introduces the risk of data loss. There is a short
+   time window between the report of transaction completion to the client
+   and the time that the transaction is truly committed (that is, it is
+   guaranteed not to be lost if the server crashes).  Thus asynchronous
+   commit should not be used if the client will take external actions
+   relying on the assumption that the transaction will be remembered.
+   As an example, a bank would certainly not use asynchronous commit for
+   a transaction recording an ATM's dispensing of cash.  But in many
+   scenarios, such as event logging, there is no need for a strong
+   guarantee of this kind.
+  </para>
+
+  <para>
+   The risk that is taken by using asynchronous commit is of data loss,
+   not data corruption.  If the database should crash, it will recover
+   by replaying <acronym>WAL</acronym> up to the last record that was
+   flushed.  The database will therefore be restored to a self-consistent
+   state, but any transactions that were not yet flushed to disk will
+   not be reflected in that state.  The net effect is therefore loss of
+   the last few transactions.  Because the transactions are replayed in
+   commit order, no inconsistency can be introduced &mdash; for example,
+   if transaction B made changes relying on the effects of a previous
+   transaction A, it is not possible for A's effects to be lost while B's
+   effects are preserved.
+  </para>
+
+  <para>
+   The user can select the commit mode of each transaction, so that
+   it is possible to have both synchronous and asynchronous commit
+   transactions running concurrently.  This allows flexible tradeoffs
+   between performance and certainty of transaction durability.
+   The commit mode is controlled by the user-settable parameter
+   <xref linkend="guc-synchronous-commit">, which can be changed in any of
+   the ways that a configuration parameter can be set.  The mode used for
+   any one transaction depends on the value of
+   <varname>synchronous_commit</varname> when transaction commit begins.
+  </para>
+
+  <para>
+   Certain utility commands, for instance <command>DROP TABLE</>, are
+   forced to commit synchronously regardless of the setting of
+   <varname>synchronous_commit</varname>.  This is to ensure consistency
+   between the server's filesystem and the logical state of the database.
+   The commands supporting two-phase commit, such as <command>PREPARE
+   TRANSACTION</>, are also always synchronous.
+  </para>
+
+  <para>
+   If the database crashes during the risk window between an
+   asynchronous commit and the writing of the transaction's
+   <acronym>WAL</acronym> records,
+   then changes made during that transaction <emphasis>will</> be lost.
+   The duration of the
+   risk window is limited because a background process (the <quote>wal
+   writer</>) flushes unwritten <acronym>WAL</acronym> records to disk
+   every <xref linkend="guc-wal-writer-delay"> milliseconds.
+   The actual maximum duration of the risk window is three times
+   <varname>wal_writer_delay</varname> because the wal writer is
+   designed to favor writing whole pages at a time during busy periods.
+  </para>
+
+  <caution>
+   <para>
+    An immediate-mode shutdown is equivalent to a server crash, and will
+    therefore cause loss of any unflushed asynchronous commits.
+   </para>
+  </caution>
+
+  <para>
+   Asynchronous commit provides behavior different from setting
+   <xref linkend="guc-fsync"> = off.
+   <varname>fsync</varname> is a server-wide
+   setting that will alter the behavior of all transactions.  It disables
+   all logic within <productname>PostgreSQL</> that attempts to synchronize
+   writes to different portions of the database, and therefore a system
+   crash (that is, a hardware or operating system crash, not a failure of
+   <productname>PostgreSQL</> itself) could result in arbitrarily bad
+   corruption of the database state.  In many scenarios, asynchronous
+   commit provides most of the performance improvement that could be
+   obtained by turning off <varname>fsync</varname>, but without the risk
+   of data corruption.
+  </para>
+
+  <para>
+   <xref linkend="guc-commit-delay"> also sounds very similar to
+   asynchronous commit, but it is actually a synchronous commit method
+   (in fact, <varname>commit_delay</varname> is ignored during an
+   asynchronous commit).  <varname>commit_delay</varname> causes a delay
+   just before a synchronous commit attempts to flush
+   <acronym>WAL</acronym> to disk, in the hope that a single flush
+   executed by one such transaction can also serve other transactions
+   committing at about the same time.  Setting <varname>commit_delay</varname>
+   can only help when there are many concurrently committing transactions,
+   and it is difficult to tune it to a value that actually helps rather
+   than hurting throughput.
+  </para>
+
+ </sect1>
 
  <sect1 id="wal-configuration">
   <title><acronym>WAL</acronym> Configuration</title>
@@ -188,13 +321,13 @@
    <varname>checkpoint_timeout</varname> causes checkpoints to be done
    more often. This allows faster after-crash recovery (since less work
    will need to be redone). However, one must balance this against the
-   increased cost of flushing dirty data pages more often. If 
-   <xref linkend="guc-full-page-writes"> is set (as is the default), there is 
-   another factor to consider. To ensure data page consistency, 
-   the first modification of a data page after each checkpoint results in 
+   increased cost of flushing dirty data pages more often. If
+   <xref linkend="guc-full-page-writes"> is set (as is the default), there is
+   another factor to consider. To ensure data page consistency,
+   the first modification of a data page after each checkpoint results in
    logging the entire page content. In that case,
    a smaller checkpoint interval increases the volume of output to the WAL log,
-   partially negating the goal of using a smaller interval, 
+   partially negating the goal of using a smaller interval,
    and in any case causing more disk I/O.
   </para>
 
@@ -206,8 +339,8 @@
    don't happen too often.  As a simple sanity check on your checkpointing
    parameters, you can set the <xref linkend="guc-checkpoint-warning">
    parameter.  If checkpoints happen closer together than
-   <varname>checkpoint_warning</> seconds, 
-   a message will be output to the server log recommending increasing 
+   <varname>checkpoint_warning</> seconds,
+   a message will be output to the server log recommending increasing
    <varname>checkpoint_segments</varname>.  Occasional appearance of such
    a message is not cause for alarm, but if it appears often then the
    checkpoint control parameters should be increased. Bulk operations such
@@ -280,9 +413,9 @@
    modifying the configuration parameter <xref
    linkend="guc-wal-buffers">.  The default number of <acronym>WAL</acronym>
    buffers is 8.  Increasing this value will
-   correspondingly increase shared memory usage.  When 
-   <xref linkend="guc-full-page-writes"> is set and the system is very busy, 
-   setting this value higher will help smooth response times during the 
+   correspondingly increase shared memory usage.  When
+   <xref linkend="guc-full-page-writes"> is set and the system is very busy,
+   setting this value higher will help smooth response times during the
    period immediately following each checkpoint.
   </para>
 
@@ -307,7 +440,7 @@
   <para>
    The <xref linkend="guc-wal-sync-method"> parameter determines how
    <productname>PostgreSQL</productname> will ask the kernel to force
-    <acronym>WAL</acronym> updates out to disk. 
+    <acronym>WAL</acronym> updates out to disk.
    All the options should be the same as far as reliability goes,
    but it's quite platform-specific which one will be the fastest.
    Note that this parameter is irrelevant if <varname>fsync</varname>
@@ -360,7 +493,7 @@
    The aim of <acronym>WAL</acronym>, to ensure that the log is
    written before database records are altered, can be subverted by
    disk drives<indexterm><primary>disk drive</></> that falsely report a
-   successful write to the kernel, 
+   successful write to the kernel,
    when in fact they have only cached the data and not yet stored it
    on the disk.  A power failure in such a situation might still lead to
    irrecoverable data corruption.  Administrators should try to ensure

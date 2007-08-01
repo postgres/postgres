@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.275 2007/07/24 04:54:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.276 2007/08/01 22:45:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,6 +305,7 @@ typedef struct XLogCtlData
 	XLogwrtResult LogwrtResult;
 	uint32		ckptXidEpoch;	/* nextXID & epoch of latest checkpoint */
 	TransactionId ckptXid;
+	XLogRecPtr	asyncCommitLSN;	/* LSN of newest async commit */
 
 	/* Protected by WALWriteLock: */
 	XLogCtlWrite Write;
@@ -1644,6 +1645,22 @@ XLogWrite(XLogwrtRqst WriteRqst, bool flexible, bool xlog_switch)
 }
 
 /*
+ * Record the LSN for an asynchronous transaction commit.
+ * (This should not be called for aborts, nor for synchronous commits.)
+ */
+void
+XLogSetAsyncCommitLSN(XLogRecPtr asyncCommitLSN)
+{
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	if (XLByteLT(xlogctl->asyncCommitLSN, asyncCommitLSN))
+		xlogctl->asyncCommitLSN = asyncCommitLSN;
+	SpinLockRelease(&xlogctl->info_lck);
+}
+
+/*
  * Ensure that all XLOG data through the given position is flushed to disk.
  *
  * NOTE: this differs from XLogWrite mainly in that the WALWriteLock is not
@@ -1797,19 +1814,17 @@ XLogBackgroundFlush(void)
 	/* back off to last completed page boundary */
 	WriteRqstPtr.xrecoff -= WriteRqstPtr.xrecoff % XLOG_BLCKSZ;
 
-#ifdef NOT_YET					/* async commit patch is still to come */
 	/* if we have already flushed that far, consider async commit records */
 	if (XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
 	{
 		/* use volatile pointer to prevent code rearrangement */
 		volatile XLogCtlData *xlogctl = XLogCtl;
 
-		SpinLockAcquire(&xlogctl->async_commit_lck);
+		SpinLockAcquire(&xlogctl->info_lck);
 		WriteRqstPtr = xlogctl->asyncCommitLSN;
-		SpinLockRelease(&xlogctl->async_commit_lck);
+		SpinLockRelease(&xlogctl->info_lck);
 		flexible = false;		/* ensure it all gets written */
 	}
-#endif
 
 	/* Done if already known flushed */
 	if (XLByteLE(WriteRqstPtr, LogwrtResult.Flush))
@@ -1839,6 +1854,23 @@ XLogBackgroundFlush(void)
 	LWLockRelease(WALWriteLock);
 
 	END_CRIT_SECTION();
+}
+
+/*
+ * Flush any previous asynchronously-committed transactions' commit records.
+ */
+void
+XLogAsyncCommitFlush(void)
+{
+	XLogRecPtr	WriteRqstPtr;
+	/* use volatile pointer to prevent code rearrangement */
+	volatile XLogCtlData *xlogctl = XLogCtl;
+
+	SpinLockAcquire(&xlogctl->info_lck);
+	WriteRqstPtr = xlogctl->asyncCommitLSN;
+	SpinLockRelease(&xlogctl->info_lck);
+
+	XLogFlush(WriteRqstPtr);
 }
 
 /*
@@ -5466,7 +5498,7 @@ ShutdownXLOG(int code, Datum arg)
 			(errmsg("database system is shut down")));
 }
 
-/* 
+/*
  * Log start of a checkpoint.
  */
 static void
@@ -5481,7 +5513,7 @@ LogCheckpointStart(int flags)
 		 (flags & CHECKPOINT_CAUSE_TIME) ? " time" : "");
 }
 
-/* 
+/*
  * Log end of a checkpoint.
  */
 static void
@@ -5523,7 +5555,7 @@ LogCheckpointEnd(void)
  * flags is a bitwise OR of the following:
  *	CHECKPOINT_IS_SHUTDOWN: checkpoint is for database shutdown.
  *	CHECKPOINT_IMMEDIATE: finish the checkpoint ASAP,
- *		ignoring checkpoint_completion_target parameter. 
+ *		ignoring checkpoint_completion_target parameter.
  *	CHECKPOINT_FORCE: force a checkpoint even if no XLOG activity has occured
  *		since the last one (implied by CHECKPOINT_IS_SHUTDOWN).
  *

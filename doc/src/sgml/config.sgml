@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.133 2007/07/24 04:54:08 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.134 2007/08/01 22:45:07 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1308,10 +1308,49 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
+        In many situations, turning off <xref linkend="guc-synchronous-commit">
+        for noncritical transactions can provide much of the potential
+        performance benefit of turning off <varname>fsync</varname>, without
+        the attendant risks of data corruption.
+       </para>
+
+       <para>
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
         If you turn this parameter off, also consider turning off 
         <xref linkend="guc-full-page-writes">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-synchronous-commit" xreflabel="synchronous_commit">
+      <term><varname>synchronous_commit</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>synchronous_commit</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Specifies whether transaction commit will wait for WAL records
+        to be written to disk before the command returns a <quote>success</>
+        indication to the client.  The default, and safe, setting is
+        <literal>on</>.  When <literal>off</>, there can be a delay between
+        when success is reported to the client and when the transaction is
+        really guaranteed to be safe against a server crash.  (The maximum
+        delay is three times <xref linkend="guc-wal-writer-delay">.)  Unlike
+        <xref linkend="guc-fsync">, setting this parameter to <literal>off</>
+        does not create any risk of database inconsistency: a crash might
+        result in some recent allegedly-committed transactions being lost, but
+        the database state will be just the same as if those transactions had
+        been aborted cleanly.  So, turning <varname>synchronous_commit</> off
+        can be a useful alternative when performance is more important than
+        exact certainty about the durability of a transaction.  For more
+        discussion see <xref linkend="wal-async-commit">.
+       </para>
+       <para>
+        This parameter can be changed at any time; the behavior for any
+        one transaction is determined by the setting in effect when it
+        commits.  It is therefore possible, and useful, to have some
+        transactions commit synchronously and others asynchronously.
        </para>
       </listitem>
      </varlistentry>

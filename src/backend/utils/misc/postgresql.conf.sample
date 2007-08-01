@@ -149,6 +149,7 @@
 # - Settings -
 
 #fsync = on				# turns forced synchronization on or off
+#synchronous_commit = on		# immediate fsync at commit
 #wal_sync_method = fsync		# the default is the first option 
 					# supported by the operating system:
 					#   open_datasync

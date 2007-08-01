@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.245 2007/06/07 21:45:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.246 2007/08/01 22:45:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,8 @@ int			XactIsoLevel;
 
 bool		DefaultXactReadOnly = false;
 bool		XactReadOnly;
+
+bool		XactSyncCommit = true;
 
 int			CommitDelay = 0;	/* precommit delay in microseconds */
 int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
@@ -173,6 +175,11 @@ static TimestampTz xactStopTimestamp;
  * global to a whole transaction, so we don't keep it in the state stack.
  */
 static char *prepareGID;
+
+/*
+ * Some commands want to force synchronous commit.
+ */
+static bool forceSyncCommit = false;
 
 /*
  * Private context for transaction-abort work --- we reserve space for this
@@ -554,6 +561,18 @@ CommandCounterIncrement(void)
 	AtStart_Cache();
 }
 
+/*
+ * ForceSyncCommit
+ *
+ * Interface routine to allow commands to force a synchronous commit of the
+ * current top-level transaction
+ */
+void
+ForceSyncCommit(void)
+{
+	forceSyncCommit = true;
+}
+
 
 /* ----------------------------------------------------------------
  *						StartTransaction stuff
@@ -724,6 +743,7 @@ RecordTransactionCommit(void)
 	{
 		TransactionId xid = GetCurrentTransactionId();
 		bool		madeTCentries;
+		bool		isAsyncCommit = false;
 		XLogRecPtr	recptr;
 
 		/* Tell bufmgr and smgr to prepare for commit */
@@ -810,21 +830,44 @@ RecordTransactionCommit(void)
 		if (MyXactMadeXLogEntry)
 		{
 			/*
-			 * Sleep before flush! So we can flush more than one commit
-			 * records per single fsync.  (The idea is some other backend may
-			 * do the XLogFlush while we're sleeping.  This needs work still,
-			 * because on most Unixen, the minimum select() delay is 10msec or
-			 * more, which is way too long.)
-			 *
-			 * We do not sleep if enableFsync is not turned on, nor if there
-			 * are fewer than CommitSiblings other backends with active
-			 * transactions.
+			 * If the user has set synchronous_commit = off, and we're
+			 * not doing cleanup of any rels nor committing any command
+			 * that wanted to force sync commit, then we can defer fsync.
 			 */
-			if (CommitDelay > 0 && enableFsync &&
-				CountActiveBackends() >= CommitSiblings)
-				pg_usleep(CommitDelay);
+			if (XactSyncCommit || forceSyncCommit || nrels > 0)
+			{
+				/*
+				 * Synchronous commit case.
+				 *
+				 * Sleep before flush! So we can flush more than one commit
+				 * records per single fsync.  (The idea is some other backend
+				 * may do the XLogFlush while we're sleeping.  This needs work
+				 * still, because on most Unixen, the minimum select() delay
+				 * is 10msec or more, which is way too long.)
+				 *
+				 * We do not sleep if enableFsync is not turned on, nor if
+				 * there are fewer than CommitSiblings other backends with
+				 * active transactions.
+				 */
+				if (CommitDelay > 0 && enableFsync &&
+					CountActiveBackends() >= CommitSiblings)
+					pg_usleep(CommitDelay);
 
-			XLogFlush(recptr);
+				XLogFlush(recptr);
+			}
+			else
+			{
+				/*
+				 * Asynchronous commit case.
+				 */
+				isAsyncCommit = true;
+
+				/*
+				 * Report the latest async commit LSN, so that
+				 * the WAL writer knows to flush this commit.
+				 */
+				XLogSetAsyncCommitLSN(recptr);
+			}
 		}
 
 		/*
@@ -835,12 +878,24 @@ RecordTransactionCommit(void)
 		 * emitted an XLOG record for our commit, and so in the event of a
 		 * crash the clog update might be lost.  This is okay because no one
 		 * else will ever care whether we committed.
+		 *
+		 * The recptr here refers to the last xlog entry by this transaction
+		 * so is the correct value to use for setting the clog.
 		 */
 		if (madeTCentries || MyXactMadeTempRelUpdate)
 		{
-			TransactionIdCommit(xid);
-			/* to avoid race conditions, the parent must commit first */
-			TransactionIdCommitTree(nchildren, children);
+			if (isAsyncCommit)
+			{
+				TransactionIdAsyncCommit(xid, recptr);
+				/* to avoid race conditions, the parent must commit first */
+				TransactionIdAsyncCommitTree(nchildren, children, recptr);
+			}
+			else
+			{
+				TransactionIdCommit(xid);
+				/* to avoid race conditions, the parent must commit first */
+				TransactionIdCommitTree(nchildren, children);
+			}
 		}
 
 		/* Checkpoint can proceed now */
@@ -1406,6 +1461,7 @@ StartTransaction(void)
 	FreeXactSnapshot();
 	XactIsoLevel = DefaultXactIsoLevel;
 	XactReadOnly = DefaultXactReadOnly;
+	forceSyncCommit = false;
 
 	/*
 	 * reinitialize within-transaction counters

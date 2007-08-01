@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.69 2007/01/05 22:19:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/transam.c,v 1.70 2007/08/01 22:45:07 tgl Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -27,14 +27,17 @@
 
 static XidStatus TransactionLogFetch(TransactionId transactionId);
 static void TransactionLogUpdate(TransactionId transactionId,
-					 XidStatus status);
+					 XidStatus status, XLogRecPtr lsn);
 
-/* ----------------
- *		Single-item cache for results of TransactionLogFetch.
- * ----------------
+/*
+ * Single-item cache for results of TransactionLogFetch.
  */
 static TransactionId cachedFetchXid = InvalidTransactionId;
 static XidStatus cachedFetchXidStatus;
+static XLogRecPtr cachedCommitLSN;
+
+/* Handy constant for an invalid xlog recptr */
+static const XLogRecPtr InvalidXLogRecPtr = {0, 0};
 
 
 /* ----------------------------------------------------------------
@@ -52,6 +55,7 @@ static XidStatus
 TransactionLogFetch(TransactionId transactionId)
 {
 	XidStatus	xidstatus;
+	XLogRecPtr	xidlsn;
 
 	/*
 	 * Before going to the commit log manager, check our single item cache to
@@ -73,9 +77,9 @@ TransactionLogFetch(TransactionId transactionId)
 	}
 
 	/*
-	 * Get the status.
+	 * Get the transaction status.
 	 */
-	xidstatus = TransactionIdGetStatus(transactionId);
+	xidstatus = TransactionIdGetStatus(transactionId, &xidlsn);
 
 	/*
 	 * DO NOT cache status for unfinished or sub-committed transactions! We
@@ -84,8 +88,9 @@ TransactionLogFetch(TransactionId transactionId)
 	if (xidstatus != TRANSACTION_STATUS_IN_PROGRESS &&
 		xidstatus != TRANSACTION_STATUS_SUB_COMMITTED)
 	{
-		TransactionIdStore(transactionId, &cachedFetchXid);
+		cachedFetchXid = transactionId;
 		cachedFetchXidStatus = xidstatus;
+		cachedCommitLSN = xidlsn;
 	}
 
 	return xidstatus;
@@ -93,16 +98,19 @@ TransactionLogFetch(TransactionId transactionId)
 
 /* --------------------------------
  *		TransactionLogUpdate
+ *
+ * Store the new status of a transaction.  The commit record LSN must be
+ * passed when recording an async commit; else it should be InvalidXLogRecPtr.
  * --------------------------------
  */
-static void
-TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
-					 XidStatus status)	/* new trans status */
+static inline void
+TransactionLogUpdate(TransactionId transactionId,
+					 XidStatus status, XLogRecPtr lsn)
 {
 	/*
 	 * update the commit log
 	 */
-	TransactionIdSetStatus(transactionId, status);
+	TransactionIdSetStatus(transactionId, status, lsn);
 }
 
 /*
@@ -111,15 +119,16 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
  * Update multiple transaction identifiers to a given status.
  * Don't depend on this being atomic; it's not.
  */
-static void
-TransactionLogMultiUpdate(int nxids, TransactionId *xids, XidStatus status)
+static inline void
+TransactionLogMultiUpdate(int nxids, TransactionId *xids,
+						  XidStatus status, XLogRecPtr lsn)
 {
 	int			i;
 
 	Assert(nxids != 0);
 
 	for (i = 0; i < nxids; i++)
-		TransactionIdSetStatus(xids[i], status);
+		TransactionIdSetStatus(xids[i], status, lsn);
 }
 
 /* ----------------------------------------------------------------
@@ -269,8 +278,20 @@ TransactionIdDidAbort(TransactionId transactionId)
 void
 TransactionIdCommit(TransactionId transactionId)
 {
-	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_COMMITTED);
+	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_COMMITTED,
+						 InvalidXLogRecPtr);
 }
+
+/*
+ * TransactionIdAsyncCommit
+ *		Same as above, but for async commits.  The commit record LSN is needed.
+ */
+void
+TransactionIdAsyncCommit(TransactionId transactionId, XLogRecPtr lsn)
+{
+	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_COMMITTED, lsn);
+}
+
 
 /*
  * TransactionIdAbort
@@ -278,22 +299,28 @@ TransactionIdCommit(TransactionId transactionId)
  *
  * Note:
  *		Assumes transaction identifier is valid.
+ *		No async version of this is needed.
  */
 void
 TransactionIdAbort(TransactionId transactionId)
 {
-	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_ABORTED);
+	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_ABORTED,
+						 InvalidXLogRecPtr);
 }
 
 /*
  * TransactionIdSubCommit
  *		Marks the subtransaction associated with the identifier as
  *		sub-committed.
+ *
+ * Note:
+ *		No async version of this is needed.
  */
 void
 TransactionIdSubCommit(TransactionId transactionId)
 {
-	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_SUB_COMMITTED);
+	TransactionLogUpdate(transactionId, TRANSACTION_STATUS_SUB_COMMITTED,
+						 InvalidXLogRecPtr);
 }
 
 /*
@@ -309,8 +336,22 @@ void
 TransactionIdCommitTree(int nxids, TransactionId *xids)
 {
 	if (nxids > 0)
-		TransactionLogMultiUpdate(nxids, xids, TRANSACTION_STATUS_COMMITTED);
+		TransactionLogMultiUpdate(nxids, xids, TRANSACTION_STATUS_COMMITTED,
+								  InvalidXLogRecPtr);
 }
+
+/*
+ * TransactionIdAsyncCommitTree
+ *		Same as above, but for async commits.  The commit record LSN is needed.
+ */
+void
+TransactionIdAsyncCommitTree(int nxids, TransactionId *xids, XLogRecPtr lsn)
+{
+	if (nxids > 0)
+		TransactionLogMultiUpdate(nxids, xids, TRANSACTION_STATUS_COMMITTED,
+								  lsn);
+}
+
 
 /*
  * TransactionIdAbortTree
@@ -323,7 +364,8 @@ void
 TransactionIdAbortTree(int nxids, TransactionId *xids)
 {
 	if (nxids > 0)
-		TransactionLogMultiUpdate(nxids, xids, TRANSACTION_STATUS_ABORTED);
+		TransactionLogMultiUpdate(nxids, xids, TRANSACTION_STATUS_ABORTED,
+								  InvalidXLogRecPtr);
 }
 
 /*
@@ -388,4 +430,44 @@ TransactionIdFollowsOrEquals(TransactionId id1, TransactionId id2)
 
 	diff = (int32) (id1 - id2);
 	return (diff >= 0);
+}
+
+/*
+ * TransactionIdGetCommitLSN
+ *
+ * This function returns an LSN that is late enough to be able
+ * to guarantee that if we flush up to the LSN returned then we
+ * will have flushed the transaction's commit record to disk.
+ *
+ * The result is not necessarily the exact LSN of the transaction's
+ * commit record!  For example, for long-past transactions (those whose
+ * clog pages already migrated to disk), we'll return InvalidXLogRecPtr.
+ * Also, because we group transactions on the same clog page to conserve
+ * storage, we might return the LSN of a later transaction that falls into
+ * the same group.
+ */
+XLogRecPtr
+TransactionIdGetCommitLSN(TransactionId xid)
+{
+	XLogRecPtr	result;
+
+	/*
+	 * Currently, all uses of this function are for xids that were just
+	 * reported to be committed by TransactionLogFetch, so we expect that
+	 * checking TransactionLogFetch's cache will usually succeed and avoid an
+	 * extra trip to shared memory.
+	 */
+	if (TransactionIdEquals(xid, cachedFetchXid))
+		return cachedCommitLSN;
+
+	/* Special XIDs are always known committed */
+	if (!TransactionIdIsNormal(xid))
+		return InvalidXLogRecPtr;
+
+	/*
+	 * Get the transaction status.
+	 */
+	(void) TransactionIdGetStatus(xid, &result);
+
+	return result;
 }

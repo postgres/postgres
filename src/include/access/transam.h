@@ -7,12 +7,14 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.60 2007/01/05 22:19:51 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.61 2007/08/01 22:45:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TRANSAM_H
 #define TRANSAM_H
+
+#include "access/xlogdefs.h"
 
 
 /* ----------------
@@ -115,14 +117,17 @@ extern VariableCache ShmemVariableCache;
 extern bool TransactionIdDidCommit(TransactionId transactionId);
 extern bool TransactionIdDidAbort(TransactionId transactionId);
 extern void TransactionIdCommit(TransactionId transactionId);
+extern void TransactionIdAsyncCommit(TransactionId transactionId, XLogRecPtr lsn);
 extern void TransactionIdAbort(TransactionId transactionId);
 extern void TransactionIdSubCommit(TransactionId transactionId);
 extern void TransactionIdCommitTree(int nxids, TransactionId *xids);
+extern void TransactionIdAsyncCommitTree(int nxids, TransactionId *xids, XLogRecPtr lsn);
 extern void TransactionIdAbortTree(int nxids, TransactionId *xids);
 extern bool TransactionIdPrecedes(TransactionId id1, TransactionId id2);
 extern bool TransactionIdPrecedesOrEquals(TransactionId id1, TransactionId id2);
 extern bool TransactionIdFollows(TransactionId id1, TransactionId id2);
 extern bool TransactionIdFollowsOrEquals(TransactionId id1, TransactionId id2);
+extern XLogRecPtr TransactionIdGetCommitLSN(TransactionId xid);
 
 /* in transam/varsup.c */
 extern TransactionId GetNewTransactionId(bool isSubXact);

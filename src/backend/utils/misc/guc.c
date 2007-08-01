@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.407 2007/07/24 04:54:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.408 2007/08/01 22:45:09 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -551,6 +551,14 @@ static struct config_bool ConfigureNamesBool[] =
 						 "an operating system or hardware crash.")
 		},
 		&enableFsync,
+		true, NULL, NULL
+	},
+	{
+		{"synchronous_commit", PGC_USERSET, WAL_SETTINGS,
+			gettext_noop("Sets immediate fsync at commit."),
+			NULL
+		},
+		&XactSyncCommit,
 		true, NULL, NULL
 	},
 	{
@@ -1521,7 +1529,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"commit_delay", PGC_USERSET, WAL_CHECKPOINTS,
+		{"commit_delay", PGC_USERSET, WAL_SETTINGS,
 			gettext_noop("Sets the delay in microseconds between transaction commit and "
 						 "flushing WAL to disk."),
 			NULL
@@ -1531,7 +1539,7 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"commit_siblings", PGC_USERSET, WAL_CHECKPOINTS,
+		{"commit_siblings", PGC_USERSET, WAL_SETTINGS,
 			gettext_noop("Sets the minimum concurrent open transactions before performing "
 						 "commit_delay."),
 			NULL

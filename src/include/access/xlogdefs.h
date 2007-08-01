@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.17 2007/02/14 05:00:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.18 2007/08/01 22:45:09 tgl Exp $
  */
 #ifndef XLOG_DEFS_H
 #define XLOG_DEFS_H
@@ -32,6 +32,8 @@ typedef struct XLogRecPtr
 	uint32		xlogid;			/* log file #, 0 based */
 	uint32		xrecoff;		/* byte offset of location in log file */
 } XLogRecPtr;
+
+#define XLogRecPtrIsInvalid(r)	((r).xrecoff == 0)
 
 
 /*
