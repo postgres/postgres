@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.505.2.4 2007/07/19 19:14:25 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.505.2.5 2007/08/02 23:17:20 adunstan Exp $
  *
  * NOTES
  *
@@ -3271,6 +3271,15 @@ SubPostmasterMain(int argc, char *argv[])
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
 	MyProcPid = getpid();		/* reset MyProcPid */
+
+	/* make sure stderr is in binary mode before anything can
+	 * possibly be written to it, in case it's actually the syslogger pipe,
+	 * so the pipe chunking protocol isn't disturbed. Non-logpipe data
+	 * gets translated on redirection (e.g. via pg_ctl -l) anyway.
+	 */
+#ifdef WIN32
+	_setmode(fileno(stderr),_O_BINARY);
+#endif
 
 	/* Lose the postmaster's on-exit routines (really a no-op) */
 	on_exit_reset();
