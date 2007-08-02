@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.195 2007/07/25 12:22:53 mha Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.196 2007/08/02 23:39:44 adunstan Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -22,6 +22,8 @@
  */
 #ifndef MISCADMIN_H
 #define MISCADMIN_H
+
+#include <time.h> /* for time_t */
 
 
 #define PG_VERSIONSTR "postgres (PostgreSQL) " PG_VERSION "\n"
@@ -132,6 +134,7 @@ extern int	MaxBackends;
 extern int	MaxConnections;
 
 extern PGDLLIMPORT int MyProcPid;
+extern PGDLLIMPORT time_t MyStartTime;
 extern PGDLLIMPORT struct Port *MyProcPort;
 extern long MyCancelKey;
 

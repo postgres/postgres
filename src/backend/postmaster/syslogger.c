@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.34 2007/08/02 23:15:27 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.35 2007/08/02 23:39:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -161,6 +161,8 @@ SysLoggerMain(int argc, char *argv[])
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
 	MyProcPid = getpid();		/* reset MyProcPid */
+
+	MyStartTime = time(NULL);   /* set our start time in case we call elog */
 
 #ifdef EXEC_BACKEND
 	syslogger_parseArgs(argc, argv);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.101 2007/04/16 18:29:54 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/globals.c,v 1.102 2007/08/02 23:39:44 adunstan Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -33,6 +33,7 @@ volatile uint32 InterruptHoldoffCount = 0;
 volatile uint32 CritSectionCount = 0;
 
 int			MyProcPid;
+time_t      MyStartTime;
 struct Port *MyProcPort;
 long		MyCancelKey;
 

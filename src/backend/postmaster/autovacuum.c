@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.55 2007/07/01 18:30:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.56 2007/08/02 23:39:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -384,6 +384,9 @@ AutoVacLauncherMain(int argc, char *argv[])
 
 	/* reset MyProcPid */
 	MyProcPid = getpid();
+
+	/* record Start Time for logging */
+	MyStartTime = time(NULL);
 
 	/* Identify myself via ps */
 	init_ps_display("autovacuum launcher process", "", "", "");
@@ -1402,6 +1405,9 @@ AutoVacWorkerMain(int argc, char *argv[])
 
 	/* reset MyProcPid */
 	MyProcPid = getpid();
+
+	/* record Start Time for logging */
+	MyStartTime = time(NULL);
 
 	/* Identify myself via ps */
 	init_ps_display("autovacuum worker process", "", "", "");

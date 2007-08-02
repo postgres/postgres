@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.62 2007/07/23 10:16:54 mha Exp $
+ * $PostgreSQL: pgsql/src/include/libpq/libpq-be.h,v 1.63 2007/08/02 23:39:45 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,6 @@ typedef struct Port
 	 * other members of this struct, we may as well keep it here.
 	 */
 	TimestampTz SessionStartTime;		/* backend start time */
-	time_t		session_start;	/* same, in time_t format */
 
 	/*
 	 * TCP keepalive settings.

@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.190 2007/07/21 22:12:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.191 2007/08/02 23:39:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1485,12 +1485,7 @@ log_line_prefix(StringInfo buf)
 				}
 				break;
 			case 'c':
-				if (MyProcPort)
-				{
-					appendStringInfo(buf, "%lx.%x",
-									 (long) (MyProcPort->session_start),
-									 MyProcPid);
-				}
+				appendStringInfo(buf, "%lx.%x", (long)(MyStartTime),MyProcPid);
 				break;
 			case 'p':
 				appendStringInfo(buf, "%d", MyProcPid);
@@ -1552,7 +1547,6 @@ log_line_prefix(StringInfo buf)
 				}
 				break;
 			case 's':
-				if (MyProcPort)
 				{
 					char		strfbuf[128];
 
@@ -1563,7 +1557,7 @@ log_line_prefix(StringInfo buf)
 #else
 							 "%Y-%m-%d %H:%M:%S",
 #endif
-							 localtime(&MyProcPort->session_start));
+							 localtime(&MyStartTime));
 					appendStringInfoString(buf, strfbuf);
 				}
 				break;

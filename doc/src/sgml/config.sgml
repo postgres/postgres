@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.134 2007/08/01 22:45:07 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.135 2007/08/02 23:39:43 adunstan Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2900,7 +2900,7 @@ SELECT * FROM parent WHERE key = 2400;
             <row>
              <entry><literal>%c</literal></entry>
              <entry>Session ID: see below</entry>
-             <entry>yes</entry>
+             <entry>no</entry>
             </row>
             <row>
              <entry><literal>%l</literal></entry>
@@ -2910,7 +2910,7 @@ SELECT * FROM parent WHERE key = 2400;
             <row>
              <entry><literal>%s</literal></entry>
              <entry>Session start time stamp</entry>
-             <entry>yes</entry>
+             <entry>no</entry>
             </row>
             <row>
              <entry><literal>%x</literal></entry>

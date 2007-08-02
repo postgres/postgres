@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.29 2007/02/10 14:58:54 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.30 2007/08/02 23:39:44 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,6 +222,8 @@ PgArchiverMain(int argc, char *argv[])
 	IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
 	MyProcPid = getpid();		/* reset MyProcPid */
+
+	MyStartTime = time(NULL);   /* record Start Time for logging */
 
 	/*
 	 * If possible, make this process a group leader, so that the postmaster
