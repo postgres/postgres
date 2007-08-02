@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.33 2007/07/19 19:13:43 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.34 2007/08/02 23:15:27 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,6 +193,15 @@ SysLoggerMain(int argc, char *argv[])
 		dup2(fd, fileno(stderr));
 		close(fd);
 	}
+
+	/* Syslogger's own stderr can't be the syslogPipe, so set it back to
+	 * text mode if we didn't just close it. 
+	 * (It was set to binary in SubPostmasterMain).
+	 */
+#ifdef WIN32
+	else
+		_setmode(_fileno(stderr),_O_TEXT);
+#endif
 
 	/*
 	 * Also close our copy of the write end of the pipe.  This is needed to
@@ -531,14 +540,20 @@ SysLogger_Start(void)
 #else
 				int			fd;
 
+				/*
+				 * open the pipe in binary mode and make sure
+				 * stderr is binary after it's been dup'ed into, to avoid
+				 * disturbing the pipe chunking protocol.
+				 */
 				fflush(stderr);
 				fd = _open_osfhandle((long) syslogPipe[1],
-									 _O_APPEND | _O_TEXT);
+									 _O_APPEND | _O_BINARY);
 				if (dup2(fd, _fileno(stderr)) < 0)
 					ereport(FATAL,
 							(errcode_for_file_access(),
 							 errmsg("could not redirect stderr: %m")));
 				close(fd);
+				_setmode(_fileno(stderr),_O_BINARY);
 				/* Now we are done with the write end of the pipe. */
 				CloseHandle(syslogPipe[1]);
 				syslogPipe[1] = 0;
@@ -626,7 +641,7 @@ syslogger_parseArgs(int argc, char *argv[])
 	fd = atoi(*argv++);
 	if (fd != 0)
 	{
-		fd = _open_osfhandle(fd, _O_APPEND);
+		fd = _open_osfhandle(fd, _O_APPEND | _O_TEXT);
 		if (fd > 0)
 		{
 			syslogFile = fdopen(fd, "a");
@@ -987,6 +1002,10 @@ logfile_rotate(bool time_based_rotation)
 	}
 
 	setvbuf(fh, NULL, LBF_MODE, 0);
+
+#ifdef WIN32
+	_setmode(_fileno(fh), _O_TEXT); /* use CRLF line endings on Windows */
+#endif
 
 	/* On Windows, need to interlock against data-transfer thread */
 #ifdef WIN32
