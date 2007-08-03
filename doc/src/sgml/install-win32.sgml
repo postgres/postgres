@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.40 2007/04/18 13:50:08 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/install-win32.sgml,v 1.41 2007/08/03 10:47:10 mha Exp $ -->
 
 <chapter id="install-win32">
  <title>Installation on <productname>Windows</productname></title>
@@ -24,7 +24,7 @@
   built for older versions of <productname>Windows</productname> using
   <productname>Cygwin</productname>. Finally, the client access library
   (<application>libpq</application>) can be built using
-  <productname>Visual C++ 6.0</productname> or 
+  <productname>Visual C++ 7.1</productname> or 
   <productname>Borland C++</productname> for compatibility with statically
   linked applications built using these tools.
  </para>
@@ -360,7 +360,7 @@
   <productname>Borland C++</productname></title>
 
  <para>
-  Using <productname>Visual C++ 6.0-8.0</productname> or
+  Using <productname>Visual C++ 7.1-8.0</productname> or
   <productname>Borland C++</productname> to build libpq is only recommended
   if you need a version with different debug/release flags, or if you need a
   static library to link into an application. For normal use the
@@ -370,7 +370,7 @@
 
  <para>
   To build the <application>libpq</application> client library using
-  <productname>Visual Studio 6.0 or later</productname>, change into the
+  <productname>Visual Studio 7.1 or later</productname>, change into the
   <filename>src</filename> directory and type the command
 <screen>
 <userinput>nmake /f win32.mak</userinput>

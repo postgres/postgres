@@ -1,8 +1,4 @@
-<<<<<<< win32.mak
-# Makefile for Microsoft Visual C++ 8.0
-=======
-# Makefile for Microsoft Visual C++ 6.0-8.0
->>>>>>> 1.45
+# Makefile for Microsoft Visual C++ 7.1-8.0
 
 # Will build a static library libpq(d).lib
 #        and a dynamic library libpq(d).dll with import library libpq(d)dll.lib
