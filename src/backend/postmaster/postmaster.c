@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.537 2007/08/02 23:39:44 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.538 2007/08/03 20:06:50 tgl Exp $
  *
  * NOTES
  *
@@ -130,7 +130,7 @@
  * children we have and send them appropriate signals when necessary.
  *
  * "Special" children such as the startup, bgwriter and autovacuum launcher
- * tasks are not in this list.  Autovacuum worker processes are on it.
+ * tasks are not in this list.  Autovacuum worker processes are in it.
  */
 typedef struct bkend
 {
@@ -2705,6 +2705,7 @@ BackendStartup(Port *port)
 	 */
 	bn->pid = pid;
 	bn->cancel_key = MyCancelKey;
+	bn->is_autovacuum = false;
 	DLAddHead(BackendList, DLNewElem(bn));
 #ifdef EXEC_BACKEND
 	ShmemBackendArrayAdd(bn);
@@ -3925,15 +3926,22 @@ StartAutovacuumWorker(void)
 	if (StartupPID != 0 || FatalError || Shutdown != NoShutdown)
 		return;
 
+	/*
+	 * Compute the cancel key that will be assigned to this session.
+	 * We probably don't need cancel keys for autovac workers, but we'd
+	 * better have something random in the field to prevent unfriendly
+	 * people from sending cancels to them.
+	 */
+	MyCancelKey = PostmasterRandom();
+
 	bn = (Backend *) malloc(sizeof(Backend));
 	if (bn)
 	{
 		bn->pid = StartAutoVacWorker();
-		bn->is_autovacuum = true;
-		/* we don't need a cancel key */
-
 		if (bn->pid > 0)
 		{
+			bn->cancel_key = MyCancelKey;
+			bn->is_autovacuum = true;
 			DLAddHead(BackendList, DLNewElem(bn));
 #ifdef EXEC_BACKEND
 			ShmemBackendArrayAdd(bn);
@@ -3949,7 +3957,9 @@ StartAutovacuumWorker(void)
 		free(bn);
 	}
 	else
-		elog(LOG, "out of memory");
+		ereport(LOG,
+				(errcode(ERRCODE_OUT_OF_MEMORY),
+				 errmsg("out of memory")));
 
 	/* report the failure to the launcher */
 	AutoVacWorkerFailed();
