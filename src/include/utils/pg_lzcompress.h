@@ -3,7 +3,7 @@
  *
  *	Definitions for the builtin LZ compressor
  *
- * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.14 2007/02/27 23:48:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/pg_lzcompress.h,v 1.15 2007/08/04 21:53:00 tgl Exp $
  * ----------
  */
 
@@ -50,15 +50,17 @@ typedef struct PGLZ_Header
  *
  *		min_input_size		Minimum input data size to start compression.
  *
- *		force_input_size	Input data size at which compressed storage is
- *							forced even if the compression rate drops below
- *							min_comp_rate (but not below 0).
- *
- *		min_comp_rate		Minimum compression rate (0-99%), the output
- *							must be smaller than the input. If that isn't
+ *		force_input_size	Minimum input data size to force compression
+ *							even if the compression rate drops below
+ *							min_comp_rate.  But in any case the output
+ *							must be smaller than the input.  If that isn't
  *							the case, the compressor will throw away its
  *							output and copy the original, uncompressed data
  *							to the output buffer.
+ *
+ *		min_comp_rate		Minimum compression rate (0-99%) to require for
+ *							inputs smaller than force_input_size.  If not
+ *							achieved, the output will be uncompressed.
  *
  *		match_size_good		The initial GOOD match size when starting history
  *							lookup. When looking up the history to find a
@@ -70,8 +72,8 @@ typedef struct PGLZ_Header
  *							longer the lookup takes, the smaller matches
  *							are considered good.
  *
- *		match_size_drop		The percentage, match_size_good is lowered
- *							at each history check. Allowed values are
+ *		match_size_drop		The percentage by which match_size_good is lowered
+ *							after each history check. Allowed values are
  *							0 (no change until end) to 100 (only check
  *							latest history entry at all).
  * ----------

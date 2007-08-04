@@ -166,7 +166,7 @@
  *
  * Copyright (c) 1999-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.26 2007/04/06 04:21:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_lzcompress.c,v 1.27 2007/08/04 21:53:00 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -211,29 +211,27 @@ typedef struct PGLZ_HistEntry
  * ----------
  */
 static const PGLZ_Strategy strategy_default_data = {
-	256,						/* Data chunks smaller 256 bytes are not
-								 * compressed			 */
-	6144,						/* Data chunks greater equal 6K force
-								 * compression				 */
-	/* except compressed result is greater uncompressed data		*/
-	20,							/* Compression rates below 20% mean fallback
-								 * to uncompressed	  */
-	/* storage except compression is forced by previous parameter	*/
+	256,						/* Data chunks less than 256 bytes are not
+								 * compressed */
+	6144,						/* Data chunks >= 6K force compression, unless
+								 * compressed output is larger than input */
+	20,							/* Below 6K, compression rates below 20% mean
+								 * fallback to uncompressed */
 	128,						/* Stop history lookup if a match of 128 bytes
-								 * is found			*/
+								 * is found */
 	10							/* Lower good match size by 10% at every
-								 * lookup loop iteration. */
+								 * lookup loop iteration */
 };
 const PGLZ_Strategy * const PGLZ_strategy_default = &strategy_default_data;
 
 
 static const PGLZ_Strategy strategy_always_data = {
-	0,							/* Chunks of any size are compressed							*/
-	0,							/* */
-	0,							/* We want to save at least one single byte						*/
+	0,							/* Chunks of any size are compressed */
+	0,
+	0,							/* It's enough to save one single byte */
 	128,						/* Stop history lookup if a match of 128 bytes
-								 * is found			*/
-	6							/* Look harder for a good match.								*/
+								 * is found */
+	6							/* Look harder for a good match */
 };
 const PGLZ_Strategy * const PGLZ_strategy_always = &strategy_always_data;
 
@@ -511,7 +509,7 @@ pglz_compress(const char *source, int32 slen, PGLZ_Header *dest,
 	 * If the strategy forbids compression (at all or if source chunk too
 	 * small), fail.
 	 */
-	if (strategy->match_size_good == 0 ||
+	if (strategy->match_size_good <= 0 ||
 		slen < strategy->min_input_size)
 		return false;
 
