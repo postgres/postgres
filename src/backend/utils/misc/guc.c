@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.409 2007/08/04 01:26:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.410 2007/08/04 19:29:25 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2925,6 +2925,12 @@ InitializeGUCOptions(void)
 	int			i;
 	char	   *env;
 	long		stack_rlimit;
+
+	/*
+	 * Before log_line_prefix could possibly receive a nonempty setting,
+	 * make sure that timezone processing is minimally alive (see elog.c).
+	 */
+	pg_timezone_pre_initialize();
 
 	/*
 	 * Build sorted array of all GUC variables.

@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.192 2007/08/04 01:26:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.193 2007/08/04 19:29:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1497,16 +1497,25 @@ log_line_prefix(StringInfo buf)
 				{
 					struct timeval tv;
 					pg_time_t	stamp_time;
+					pg_tz	   *tz;
 					char		strfbuf[128],
 								msbuf[8];
 
 					gettimeofday(&tv, NULL);
 					stamp_time = (pg_time_t) tv.tv_sec;
 
+					/*
+					 * Normally we print log timestamps in log_timezone, but
+					 * during startup we could get here before that's set.
+					 * If so, fall back to gmt_timezone (which guc.c ensures
+					 * is set up before Log_line_prefix can become nonempty).
+					 */
+					tz = log_timezone ? log_timezone : gmt_timezone;
+
 					pg_strftime(strfbuf, sizeof(strfbuf),
 								/* leave room for milliseconds... */
 								"%Y-%m-%d %H:%M:%S     %Z",
-								pg_localtime(&stamp_time, log_timezone));
+								pg_localtime(&stamp_time, tz));
 
 					/* 'paste' milliseconds into place... */
 					sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
@@ -1518,22 +1527,28 @@ log_line_prefix(StringInfo buf)
 			case 't':
 				{
 					pg_time_t	stamp_time = (pg_time_t) time(NULL);
+					pg_tz	   *tz;
 					char		strfbuf[128];
+
+					tz = log_timezone ? log_timezone : gmt_timezone;
 
 					pg_strftime(strfbuf, sizeof(strfbuf),
 								"%Y-%m-%d %H:%M:%S %Z",
-								pg_localtime(&stamp_time, log_timezone));
+								pg_localtime(&stamp_time, tz));
 					appendStringInfoString(buf, strfbuf);
 				}
 				break;
 			case 's':
 				{
 					pg_time_t	stamp_time = (pg_time_t) MyStartTime;
+					pg_tz	   *tz;
 					char		strfbuf[128];
+
+					tz = log_timezone ? log_timezone : gmt_timezone;
 
 					pg_strftime(strfbuf, sizeof(strfbuf),
 								"%Y-%m-%d %H:%M:%S %Z",
-								pg_localtime(&stamp_time, log_timezone));
+								pg_localtime(&stamp_time, tz));
 					appendStringInfoString(buf, strfbuf);
 				}
 				break;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.52 2007/08/04 01:26:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.53 2007/08/04 19:29:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,10 @@ pg_tz	   *session_timezone = NULL;
 
 /* Current log timezone (controlled by log_timezone GUC) */
 pg_tz	   *log_timezone = NULL;
+
+/* Fallback GMT timezone for last-ditch error message formatting */
+pg_tz	   *gmt_timezone = NULL;
+static pg_tz gmt_timezone_data;
 
 
 static char tzdir[MAXPGPATH];
@@ -1249,6 +1253,31 @@ select_default_timezone(void)
 			(errmsg("could not select a suitable default timezone"),
 			 errdetail("It appears that your GMT time zone uses leap seconds. PostgreSQL does not support leap seconds.")));
 	return NULL;				/* keep compiler quiet */
+}
+
+
+/*
+ * Pre-initialize timezone library
+ *
+ * This is called before GUC variable initialization begins.  Its purpose
+ * is to ensure that elog.c has a pgtz variable available to format timestamps
+ * with, in case log_line_prefix is set to a value requiring that.  We cannot
+ * set log_timezone yet.
+ */
+void
+pg_timezone_pre_initialize(void)
+{
+	/*
+	 * We can't use tzload() because we may not know where PGSHAREDIR
+	 * is (in particular this is true in an EXEC_BACKEND subprocess).
+	 * Since this timezone variable will only be used for emergency
+	 * fallback purposes, it seems OK to just use the "lastditch" case
+	 * provided by tzparse().
+	 */
+	if (tzparse("GMT", &gmt_timezone_data.state, TRUE) != 0)
+		elog(FATAL, "could not initialize GMT timezone");
+	strcpy(gmt_timezone_data.TZname, "GMT");
+	gmt_timezone = &gmt_timezone_data;
 }
 
 /*

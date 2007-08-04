@@ -3,7 +3,7 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.16 2006/10/18 16:43:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/localtime.c,v 1.17 2007/08/04 19:29:25 tgl Exp $
  */
 
 /*
@@ -88,7 +88,6 @@ static void timesub(const pg_time_t *timep, long offset,
 		const struct state * sp, struct pg_tm * tmp);
 static pg_time_t transtime(pg_time_t janfirst, int year,
 		  const struct rule * rulep, long offset);
-int			tzparse(const char *name, struct state * sp, int lastditch);
 
 /* GMT timezone */
 static struct state gmtmem;
@@ -549,6 +548,12 @@ tzparse(const char *name, struct state * sp, int lastditch)
 		if (stdlen >= sizeof sp->chars)
 			stdlen = (sizeof sp->chars) - 1;
 		stdoffset = 0;
+		/*
+		 * Unlike the original zic library, do NOT invoke tzload() here;
+		 * we can't assume pg_open_tzfile() is sane yet, and we don't
+		 * care about leap seconds anyway.
+		 */
+		load_result = -1;
 	}
 	else
 	{
@@ -561,8 +566,8 @@ tzparse(const char *name, struct state * sp, int lastditch)
 		name = getoffset(name, &stdoffset);
 		if (name == NULL)
 			return -1;
+		load_result = tzload(TZDEFRULES, NULL, sp);
 	}
-	load_result = tzload(TZDEFRULES, NULL, sp);
 	if (load_result != 0)
 		sp->leapcnt = 0;		/* so, we're off a little */
 	if (*name != '\0')
