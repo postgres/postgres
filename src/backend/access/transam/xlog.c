@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.258 2006/11/30 18:29:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.258.2.1 2007/08/04 01:42:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4221,7 +4221,12 @@ str_time(time_t tnow)
 	static char buf[128];
 
 	strftime(buf, sizeof(buf),
+			 /* Win32 timezone names are too long so don't print them */
+#ifndef WIN32
 			 "%Y-%m-%d %H:%M:%S %Z",
+#else
+			 "%Y-%m-%d %H:%M:%S",
+#endif
 			 localtime(&tnow));
 
 	return buf;
