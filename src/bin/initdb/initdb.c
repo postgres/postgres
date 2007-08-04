@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.138 2007/07/11 23:15:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.139 2007/08/04 21:01:09 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2583,6 +2583,7 @@ main(int argc, char *argv[])
 				progname, argv[optind + 1]);
 		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 				progname);
+		exit(1);
 	}
 
 	if (pwprompt && pwfilename)
