@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.276 2007/08/01 22:45:08 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.277 2007/08/04 01:26:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,7 +437,7 @@ static void writeTimeLineHistory(TimeLineID newTLI, TimeLineID parentTLI,
 					 uint32 endLogId, uint32 endLogSeg);
 static void WriteControlFile(void);
 static void ReadControlFile(void);
-static char *str_time(time_t tnow);
+static char *str_time(pg_time_t tnow);
 static void issue_xlog_fsync(void);
 
 #ifdef WAL_DEBUG
@@ -4266,13 +4266,13 @@ BootStrapXLOG(void)
 }
 
 static char *
-str_time(time_t tnow)
+str_time(pg_time_t tnow)
 {
 	static char buf[128];
 
-	strftime(buf, sizeof(buf),
-			 "%Y-%m-%d %H:%M:%S %Z",
-			 localtime(&tnow));
+	pg_strftime(buf, sizeof(buf),
+				"%Y-%m-%d %H:%M:%S %Z",
+				pg_localtime(&tnow, log_timezone));
 
 	return buf;
 }
@@ -6290,7 +6290,7 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	char	   *backupidstr;
 	XLogRecPtr	checkpointloc;
 	XLogRecPtr	startpoint;
-	time_t		stamp_time;
+	pg_time_t	stamp_time;
 	char		strfbuf[128];
 	char		xlogfilename[MAXFNAMELEN];
 	uint32		_logId;
@@ -6368,16 +6368,11 @@ pg_start_backup(PG_FUNCTION_ARGS)
 		XLByteToSeg(startpoint, _logId, _logSeg);
 		XLogFileName(xlogfilename, ThisTimeLineID, _logId, _logSeg);
 
-		/*
-		 * We deliberately use strftime/localtime not the src/timezone
-		 * functions, so that backup labels will consistently be recorded in
-		 * the same timezone regardless of TimeZone setting.  This matches
-		 * elog.c's practice.
-		 */
-		stamp_time = time(NULL);
-		strftime(strfbuf, sizeof(strfbuf),
-				 "%Y-%m-%d %H:%M:%S %Z",
-				 localtime(&stamp_time));
+		/* Use the log timezone here, not the session timezone */
+		stamp_time = (pg_time_t) time(NULL);
+		pg_strftime(strfbuf, sizeof(strfbuf),
+					"%Y-%m-%d %H:%M:%S %Z",
+					pg_localtime(&stamp_time, log_timezone));
 
 		/*
 		 * Check for existing backup label --- implies a backup is already
@@ -6455,7 +6450,7 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	text	   *result;
 	XLogRecPtr	startpoint;
 	XLogRecPtr	stoppoint;
-	time_t		stamp_time;
+	pg_time_t	stamp_time;
 	char		strfbuf[128];
 	char		histfilepath[MAXPGPATH];
 	char		startxlogfilename[MAXFNAMELEN];
@@ -6489,16 +6484,11 @@ pg_stop_backup(PG_FUNCTION_ARGS)
 	XLByteToSeg(stoppoint, _logId, _logSeg);
 	XLogFileName(stopxlogfilename, ThisTimeLineID, _logId, _logSeg);
 
-	/*
-	 * We deliberately use strftime/localtime not the src/timezone functions,
-	 * so that backup labels will consistently be recorded in the same
-	 * timezone regardless of TimeZone setting.  This matches elog.c's
-	 * practice.
-	 */
-	stamp_time = time(NULL);
-	strftime(strfbuf, sizeof(strfbuf),
-			 "%Y-%m-%d %H:%M:%S %Z",
-			 localtime(&stamp_time));
+	/* Use the log timezone here, not the session timezone */
+	stamp_time = (pg_time_t) time(NULL);
+	pg_strftime(strfbuf, sizeof(strfbuf),
+				"%Y-%m-%d %H:%M:%S %Z",
+				pg_localtime(&stamp_time, log_timezone));
 
 	/*
 	 * Open the existing label file

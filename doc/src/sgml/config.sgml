@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.135 2007/08/02 23:39:43 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.136 2007/08/04 01:26:53 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2311,13 +2311,15 @@ SELECT * FROM parent WHERE key = 2400;
         When <varname>redirect_stderr</varname> is enabled, this parameter
         sets the file names of the created log files.  The value
         is treated as a <systemitem>strftime</systemitem> pattern,
-        so <literal>%</literal>-escapes
-        can be used to specify time-varying file names.
+        so <literal>%</literal>-escapes can be used to specify time-varying
+        file names.  (Note that if there are
+        any time-zone-dependent <literal>%</literal>-escapes, the computation
+        is done in the zone specified by <xref linkend="guc-log-timezone">.)
         If no <literal>%</literal>-escapes are present,
-        <productname>PostgreSQL</productname> will
-        append the epoch of the new log file's open time.  For example,
-        if <varname>log_filename</varname> were <literal>server_log</literal>, then the
-        chosen file name would be <literal>server_log.1093827753</literal>
+        <productname>PostgreSQL</productname> will append the epoch of the new
+        log file's creation time.  For example, if
+        <varname>log_filename</varname> were <literal>server_log</literal>,
+        then the chosen file name would be <literal>server_log.1093827753</>
         for a log starting at Sun Aug 29 19:02:33 2004 MST.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
@@ -2884,7 +2886,7 @@ SELECT * FROM parent WHERE key = 2400;
             </row>
             <row>
              <entry><literal>%t</literal></entry>
-             <entry>Time stamp without milliseconds (no timezone either on Windows)</entry>
+             <entry>Time stamp without milliseconds</entry>
              <entry>no</entry>
             </row>
             <row>
@@ -2909,7 +2911,7 @@ SELECT * FROM parent WHERE key = 2400;
             </row>
             <row>
              <entry><literal>%s</literal></entry>
-             <entry>Session start time stamp</entry>
+             <entry>Process start time stamp</entry>
              <entry>no</entry>
             </row>
             <row>
@@ -2935,7 +2937,7 @@ SELECT * FROM parent WHERE key = 2400;
 
          The <literal>%c</> escape prints a quasi-unique session identifier,
          consisting of two 4-byte hexadecimal numbers (without leading zeros)
-         separated by a dot.  The numbers are the session start time and the
+         separated by a dot.  The numbers are the process start time and the
          process ID, so <literal>%c</> can also be used as a space saving way
          of printing those items.
        </para>
@@ -3032,6 +3034,25 @@ SELECT * FROM parent WHERE key = 2400;
         values log only files whose size is equal or greater than
         the specified number of kilobytes.  The
         default is <literal>-1</>, which disables this logging.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-timezone" xreflabel="log_timezone">
+      <term><varname>log_timezone</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>log_timezone</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Sets the time zone used for timestamps written in the log.
+        Unlike <xref linkend="guc-timezone">, this value is cluster-wide,
+        so that all sessions will report timestamps consistently.
+        The default is <literal>unknown</>, which means to use whatever
+        the system environment specifies as the time zone.  See <xref
+        linkend="datatype-timezones"> for more information.
+        This parameter can only be set in the <filename>postgresql.conf</>
+        file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -3822,9 +3843,9 @@ SET XML OPTION { DOCUMENT | CONTENT };
       <listitem>
        <para>
         Sets the time zone for displaying and interpreting time stamps.
-        The default is <literal>'unknown'</>, which means to use whatever
+        The default is <literal>unknown</>, which means to use whatever
         the system environment specifies as the time zone.  See <xref
-        linkend="datatype-datetime"> for more
+        linkend="datatype-timezones"> for more
         information.
        </para>
       </listitem>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.205 2007/07/27 10:37:52 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.206 2007/08/04 01:26:53 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -2234,7 +2234,8 @@ January 8 04:05:06 1999 PST
         savings transition-date rules as well.  The recognized abbreviations
         are listed in the <literal>pg_timezone_abbrevs</> view (see <xref
         linkend="view-pg-timezone-abbrevs">).  You cannot set the
-        configuration parameter <xref linkend="guc-timezone"> using a time
+        configuration parameters <xref linkend="guc-timezone"> or
+        <xref linkend="guc-log-timezone"> using a time
         zone abbreviation, but you can use abbreviations in
         date/time input values and with the <literal>AT TIME ZONE</>
         operator.
@@ -2316,6 +2317,8 @@ January 8 04:05:06 1999 PST
         behavior of the C library function <literal>localtime()</>.  The
         default time zone is selected as the closest match among
         <productname>PostgreSQL</productname>'s known time zones.
+        (These rules are also used to choose the default value of
+        <xref linkend="guc-log-timezone">, if it is not specified.)
        </para>
       </listitem>
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.120 2007/01/05 22:19:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.121 2007/08/04 01:26:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,7 +344,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			 */
 			if (doit)
 			{
-				const char *curzone = pg_get_timezone_name(global_timezone);
+				const char *curzone = pg_get_timezone_name(session_timezone);
 
 				if (curzone)
 					value = curzone;
@@ -381,7 +381,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 			if (doit)
 			{
 				/* Save the changed TZ */
-				global_timezone = new_tz;
+				session_timezone = new_tz;
 				HasCTZSet = false;
 			}
 		}
@@ -434,7 +434,112 @@ show_timezone(void)
 											  IntervalPGetDatum(&interval)));
 	}
 	else
-		tzn = pg_get_timezone_name(global_timezone);
+		tzn = pg_get_timezone_name(session_timezone);
+
+	if (tzn != NULL)
+		return tzn;
+
+	return "unknown";
+}
+
+
+/*
+ * LOG_TIMEZONE
+ *
+ * For log_timezone, we don't support the interval-based methods of setting a
+ * zone, which are only there for SQL spec compliance not because they're
+ * actually useful.
+ */
+
+/*
+ * assign_log_timezone: GUC assign_hook for log_timezone
+ */
+const char *
+assign_log_timezone(const char *value, bool doit, GucSource source)
+{
+	char	   *result;
+
+	if (pg_strcasecmp(value, "UNKNOWN") == 0)
+	{
+		/*
+		 * UNKNOWN is the value shown as the "default" for log_timezone in
+		 * guc.c.  We interpret it as being a complete no-op; we don't
+		 * change the timezone setting.  Note that if there is a known
+		 * timezone setting, we will return that name rather than UNKNOWN
+		 * as the canonical spelling.
+		 *
+		 * During GUC initialization, since the timezone library isn't set
+		 * up yet, pg_get_timezone_name will return NULL and we will leave
+		 * the setting as UNKNOWN.	If this isn't overridden from the
+		 * config file then pg_timezone_initialize() will eventually
+		 * select a default value from the environment.
+		 */
+		if (doit)
+		{
+			const char *curzone = pg_get_timezone_name(log_timezone);
+
+			if (curzone)
+				value = curzone;
+		}
+	}
+	else
+	{
+		/*
+		 * Otherwise assume it is a timezone name, and try to load it.
+		 */
+		pg_tz	   *new_tz;
+
+		new_tz = pg_tzset(value);
+
+		if (!new_tz)
+		{
+			ereport((source >= PGC_S_INTERACTIVE) ? ERROR : LOG,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized time zone name: \"%s\"",
+							value)));
+			return NULL;
+		}
+
+		if (!tz_acceptable(new_tz))
+		{
+			ereport((source >= PGC_S_INTERACTIVE) ? ERROR : LOG,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("time zone \"%s\" appears to use leap seconds",
+							value),
+					 errdetail("PostgreSQL does not support leap seconds.")));
+			return NULL;
+		}
+
+		if (doit)
+		{
+			/* Save the changed TZ */
+			log_timezone = new_tz;
+		}
+	}
+
+	/*
+	 * If we aren't going to do the assignment, just return OK indicator.
+	 */
+	if (!doit)
+		return value;
+
+	/*
+	 * Prepare the canonical string to return.	GUC wants it malloc'd.
+	 */
+	result = strdup(value);
+
+	return result;
+}
+
+/*
+ * show_log_timezone: GUC show_hook for log_timezone
+ */
+const char *
+show_log_timezone(void)
+{
+	const char *tzn;
+
+	tzn = pg_get_timezone_name(log_timezone);
 
 	if (tzn != NULL)
 		return tzn;

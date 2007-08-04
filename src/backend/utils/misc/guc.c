@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.408 2007/08/01 22:45:09 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.409 2007/08/04 01:26:54 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -255,6 +255,7 @@ static char *server_encoding_string;
 static char *server_version_string;
 static int	server_version_num;
 static char *timezone_string;
+static char *log_timezone_string;
 static char *timezone_abbreviations_string;
 static char *XactIsoLevel_string;
 static char *data_directory;
@@ -1984,6 +1985,14 @@ static struct config_string ConfigureNamesString[] =
 		"", NULL, NULL
 	},
 
+	{
+		{"log_timezone", PGC_SIGHUP, LOGGING_WHAT,
+			gettext_noop("Sets the time zone to use in log messages."),
+			NULL
+		},
+		&log_timezone_string,
+		"UNKNOWN", assign_log_timezone, show_log_timezone
+	},
 
 	{
 		{"DateStyle", PGC_USERSET, CLIENT_CONN_LOCALE,

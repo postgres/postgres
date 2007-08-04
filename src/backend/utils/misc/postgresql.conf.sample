@@ -347,6 +347,8 @@
 #log_temp_files = -1			# Log temporary files equal or larger
 					# than specified number of kilobytes.
 					# -1 disables;  0 logs all temp files
+#log_timezone = unknown			# actually, defaults to TZ 
+					# environment setting
 
 #---------------------------------------------------------------------------
 # RUNTIME STATISTICS

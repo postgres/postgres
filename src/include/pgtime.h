@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/include/pgtime.h,v 1.15 2007/01/05 22:19:50 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/include/pgtime.h,v 1.16 2007/08/04 01:26:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,8 @@ extern pg_tzenum *pg_tzenumerate_start(void);
 extern pg_tz *pg_tzenumerate_next(pg_tzenum *dir);
 extern void pg_tzenumerate_end(pg_tzenum *dir);
 
-extern pg_tz *global_timezone;
+extern pg_tz *session_timezone;
+extern pg_tz *log_timezone;
 
 /* Maximum length of a timezone name (not including trailing null) */
 #define TZ_STRLEN_MAX 255

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.134 2007/07/06 04:15:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.135 2007/08/04 01:26:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -360,7 +360,7 @@ date2timestamptz(DateADT dateVal)
 	tm->tm_hour = 0;
 	tm->tm_min = 0;
 	tm->tm_sec = 0;
-	tz = DetermineTimeZoneOffset(tm, global_timezone);
+	tz = DetermineTimeZoneOffset(tm, session_timezone);
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result = dateVal * USECS_PER_DAY + tz * USECS_PER_SEC;
@@ -2239,7 +2239,7 @@ time_timetz(PG_FUNCTION_ARGS)
 
 	GetCurrentDateTime(tm);
 	time2tm(time, tm, &fsec);
-	tz = DetermineTimeZoneOffset(tm, global_timezone);
+	tz = DetermineTimeZoneOffset(tm, session_timezone);
 
 	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 

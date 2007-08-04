@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.191 2007/08/02 23:39:44 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.192 2007/08/04 01:26:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1495,33 +1495,18 @@ log_line_prefix(StringInfo buf)
 				break;
 			case 'm':
 				{
-					/*
-					 * Note: for %m, %t, and %s we deliberately use the C
-					 * library's strftime/localtime, and not the equivalent
-					 * functions from src/timezone.  This ensures that all
-					 * backends will report log entries in the same timezone,
-					 * namely whatever C-library setting they inherit from the
-					 * postmaster.	If we used src/timezone then local
-					 * settings of the TimeZone GUC variable would confuse the
-					 * log.
-					 */
-					time_t		stamp_time;
+					struct timeval tv;
+					pg_time_t	stamp_time;
 					char		strfbuf[128],
 								msbuf[8];
-					struct timeval tv;
 
 					gettimeofday(&tv, NULL);
-					stamp_time = tv.tv_sec;
+					stamp_time = (pg_time_t) tv.tv_sec;
 
-					strftime(strfbuf, sizeof(strfbuf),
-					/* leave room for milliseconds... */
-					/* Win32 timezone names are too long so don't print them */
-#ifndef WIN32
-							 "%Y-%m-%d %H:%M:%S     %Z",
-#else
-							 "%Y-%m-%d %H:%M:%S     ",
-#endif
-							 localtime(&stamp_time));
+					pg_strftime(strfbuf, sizeof(strfbuf),
+								/* leave room for milliseconds... */
+								"%Y-%m-%d %H:%M:%S     %Z",
+								pg_localtime(&stamp_time, log_timezone));
 
 					/* 'paste' milliseconds into place... */
 					sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
@@ -1532,32 +1517,23 @@ log_line_prefix(StringInfo buf)
 				break;
 			case 't':
 				{
-					time_t		stamp_time = time(NULL);
+					pg_time_t	stamp_time = (pg_time_t) time(NULL);
 					char		strfbuf[128];
 
-					strftime(strfbuf, sizeof(strfbuf),
-					/* Win32 timezone names are too long so don't print them */
-#ifndef WIN32
-							 "%Y-%m-%d %H:%M:%S %Z",
-#else
-							 "%Y-%m-%d %H:%M:%S",
-#endif
-							 localtime(&stamp_time));
+					pg_strftime(strfbuf, sizeof(strfbuf),
+								"%Y-%m-%d %H:%M:%S %Z",
+								pg_localtime(&stamp_time, log_timezone));
 					appendStringInfoString(buf, strfbuf);
 				}
 				break;
 			case 's':
 				{
+					pg_time_t	stamp_time = (pg_time_t) MyStartTime;
 					char		strfbuf[128];
 
-					strftime(strfbuf, sizeof(strfbuf),
-					/* Win32 timezone names are too long so don't print them */
-#ifndef WIN32
-							 "%Y-%m-%d %H:%M:%S %Z",
-#else
-							 "%Y-%m-%d %H:%M:%S",
-#endif
-							 localtime(&MyStartTime));
+					pg_strftime(strfbuf, sizeof(strfbuf),
+								"%Y-%m-%d %H:%M:%S %Z",
+								pg_localtime(&stamp_time, log_timezone));
 					appendStringInfoString(buf, strfbuf);
 				}
 				break;

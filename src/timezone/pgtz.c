@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.51 2007/05/31 15:13:06 petere Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.52 2007/08/04 01:26:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,11 @@
 #include "utils/guc.h"
 #include "utils/hsearch.h"
 
-/* Current global timezone */
-pg_tz	   *global_timezone = NULL;
+/* Current session timezone (controlled by TimeZone GUC) */
+pg_tz	   *session_timezone = NULL;
+
+/* Current log timezone (controlled by log_timezone GUC) */
+pg_tz	   *log_timezone = NULL;
 
 
 static char tzdir[MAXPGPATH];
@@ -38,8 +41,8 @@ static bool scan_directory_ci(const char *dirname,
 							  const char *fname, int fnamelen,
 							  char *canonname, int canonnamelen);
 static const char *identify_system_timezone(void);
-static const char *select_default_timezone(void);
-static bool set_global_timezone(const char *tzname);
+static pg_tz *get_pg_tz_for_zone(const char *tzname);
+static pg_tz *select_default_timezone(void);
 
 
 /*
@@ -1196,51 +1199,51 @@ tz_acceptable(pg_tz *tz)
 
 
 /*
- * Set the global timezone. Verify that it's acceptable first.
+ * Get a pg_tz struct for the given timezone name.  Returns NULL if name
+ * is invalid or not an "acceptable" zone.
  */
-static bool
-set_global_timezone(const char *tzname)
+static pg_tz *
+get_pg_tz_for_zone(const char *tzname)
 {
-	pg_tz	   *tznew;
+	pg_tz	   *tz;
 
 	if (!tzname || !tzname[0])
-		return false;
+		return NULL;
 
-	tznew = pg_tzset(tzname);
-	if (!tznew)
-		return false;
+	tz = pg_tzset(tzname);
+	if (!tz)
+		return NULL;
 
-	if (!tz_acceptable(tznew))
-		return false;
+	if (!tz_acceptable(tz))
+		return NULL;
 
-	global_timezone = tznew;
-	return true;
+	return tz;
 }
 
 /*
- * Identify a suitable default timezone setting based on the environment,
- * and make it active.
+ * Identify a suitable default timezone setting based on the environment.
  *
  * We first look to the TZ environment variable.  If not found or not
  * recognized by our own code, we see if we can identify the timezone
  * from the behavior of the system timezone library.  When all else fails,
  * fall back to GMT.
  */
-static const char *
+static pg_tz *
 select_default_timezone(void)
 {
-	const char *def_tz;
+	pg_tz	   *def_tz;
 
-	def_tz = getenv("TZ");
-	if (set_global_timezone(def_tz))
+	def_tz = get_pg_tz_for_zone(getenv("TZ"));
+	if (def_tz)
 		return def_tz;
 
-	def_tz = identify_system_timezone();
-	if (set_global_timezone(def_tz))
+	def_tz = get_pg_tz_for_zone(identify_system_timezone());
+	if (def_tz)
 		return def_tz;
 
-	if (set_global_timezone("GMT"))
-		return "GMT";
+	def_tz = get_pg_tz_for_zone("GMT");
+	if (def_tz)
+		return def_tz;
 
 	ereport(FATAL,
 			(errmsg("could not select a suitable default timezone"),
@@ -1253,19 +1256,34 @@ select_default_timezone(void)
  *
  * This is called after initial loading of postgresql.conf.  If no TimeZone
  * setting was found therein, we try to derive one from the environment.
+ * Likewise for log_timezone.
  */
 void
 pg_timezone_initialize(void)
 {
-	/* Do we need to try to figure the timezone? */
+	pg_tz	   *def_tz = NULL;
+
+	/* Do we need to try to figure the session timezone? */
 	if (pg_strcasecmp(GetConfigOption("timezone"), "UNKNOWN") == 0)
 	{
-		const char *def_tz;
-
 		/* Select setting */
 		def_tz = select_default_timezone();
+		session_timezone = def_tz;
 		/* Tell GUC about the value. Will redundantly call pg_tzset() */
-		SetConfigOption("timezone", def_tz, PGC_POSTMASTER, PGC_S_ARGV);
+		SetConfigOption("timezone", pg_get_timezone_name(def_tz),
+						PGC_POSTMASTER, PGC_S_ARGV);
+	}
+
+	/* What about the log timezone? */
+	if (pg_strcasecmp(GetConfigOption("log_timezone"), "UNKNOWN") == 0)
+	{
+		/* Select setting, but don't duplicate work */
+		if (!def_tz)
+			def_tz = select_default_timezone();
+		log_timezone = def_tz;
+		/* Tell GUC about the value. Will redundantly call pg_tzset() */
+		SetConfigOption("log_timezone", pg_get_timezone_name(def_tz),
+						PGC_POSTMASTER, PGC_S_ARGV);
 	}
 }
 

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/variable.h,v 1.29 2007/01/05 22:19:54 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/commands/variable.h,v 1.30 2007/08/04 01:26:54 tgl Exp $
  */
 #ifndef VARIABLE_H
 #define VARIABLE_H
@@ -18,6 +18,9 @@ extern const char *assign_datestyle(const char *value,
 extern const char *assign_timezone(const char *value,
 				bool doit, GucSource source);
 extern const char *show_timezone(void);
+extern const char *assign_log_timezone(const char *value,
+				bool doit, GucSource source);
+extern const char *show_log_timezone(void);
 extern const char *assign_XactIsoLevel(const char *value,
 					bool doit, GucSource source);
 extern const char *show_XactIsoLevel(void);

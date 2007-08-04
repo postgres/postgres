@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.180 2007/07/18 03:13:13 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.181 2007/08/04 01:26:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1494,7 +1494,7 @@ recalc_t:
 	if ((Timestamp) utime == dt)
 	{
 		struct pg_tm *tx = pg_localtime(&utime,
-								  attimezone ? attimezone : global_timezone);
+								  attimezone ? attimezone : session_timezone);
 
 		tm->tm_year = tx->tm_year + 1900;
 		tm->tm_mon = tx->tm_mon + 1;
@@ -2675,7 +2675,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 			if (tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
 				tm->tm_mday = (day_tab[isleap(tm->tm_year)][tm->tm_mon - 1]);
 
-			tz = DetermineTimeZoneOffset(tm, global_timezone);
+			tz = DetermineTimeZoneOffset(tm, session_timezone);
 
 			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
 				ereport(ERROR,
@@ -2699,7 +2699,7 @@ timestamptz_pl_interval(PG_FUNCTION_ARGS)
 			julian = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + span->day;
 			j2date(julian, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 
-			tz = DetermineTimeZoneOffset(tm, global_timezone);
+			tz = DetermineTimeZoneOffset(tm, session_timezone);
 
 			if (tm2timestamp(tm, fsec, &tz, &timestamp) != 0)
 				ereport(ERROR,
@@ -3546,7 +3546,7 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 		}
 
 		if (redotz)
-			tz = DetermineTimeZoneOffset(tm, global_timezone);
+			tz = DetermineTimeZoneOffset(tm, session_timezone);
 
 		if (tm2timestamp(tm, fsec, &tz, &result) != 0)
 			ereport(ERROR,
@@ -4010,7 +4010,7 @@ timestamp_part(PG_FUNCTION_ARGS)
 								(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 								 errmsg("timestamp out of range")));
 
-					tz = DetermineTimeZoneOffset(tm, global_timezone);
+					tz = DetermineTimeZoneOffset(tm, session_timezone);
 
 					if (tm2timestamp(tm, fsec, &tz, &timestamptz) != 0)
 						ereport(ERROR,
@@ -4549,7 +4549,7 @@ timestamp2timestamptz(Timestamp timestamp)
 					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 					 errmsg("timestamp out of range")));
 
-		tz = DetermineTimeZoneOffset(tm, global_timezone);
+		tz = DetermineTimeZoneOffset(tm, session_timezone);
 
 		if (tm2timestamp(tm, fsec, &tz, &result) != 0)
 			ereport(ERROR,

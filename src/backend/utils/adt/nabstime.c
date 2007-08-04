@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.150 2007/02/27 23:48:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.151 2007/08/04 01:26:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@ abstime2tm(AbsoluteTime _time, int *tzp, struct pg_tm * tm, char **tzn)
 		time -= CTimeZone;
 
 	if (!HasCTZSet && tzp != NULL)
-		tx = pg_localtime(&time, global_timezone);
+		tx = pg_localtime(&time, session_timezone);
 	else
 		tx = pg_gmtime(&time);
 
@@ -474,7 +474,7 @@ timestamp_abstime(PG_FUNCTION_ARGS)
 		result = NOEND_ABSTIME;
 	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL, NULL) == 0)
 	{
-		tz = DetermineTimeZoneOffset(tm, global_timezone);
+		tz = DetermineTimeZoneOffset(tm, session_timezone);
 		result = tm2abstime(tm, tz);
 	}
 	else
@@ -1591,7 +1591,7 @@ timeofday(PG_FUNCTION_ARGS)
 	gettimeofday(&tp, NULL);
 	tt = (pg_time_t) tp.tv_sec;
 	pg_strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%06d %Y %Z",
-				pg_localtime(&tt, global_timezone));
+				pg_localtime(&tt, session_timezone));
 	snprintf(buf, sizeof(buf), templ, tp.tv_usec);
 
 	len = VARHDRSZ + strlen(buf);
