@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.522 2007/07/19 17:15:30 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.523 2007/08/05 15:43:00 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -243,6 +243,13 @@ esac
 
 AC_PROG_CC([$pgac_cc_list])
 
+# Check if it's Intel's compiler, which (usually) pretends to be gcc,
+# but has idiosyncrasies of its own.  We assume icc will define
+# __INTEL_COMPILER regardless of CFLAGS.
+AC_TRY_COMPILE([], [@%:@ifndef __INTEL_COMPILER
+choke me
+@%:@endif], [ICC=[yes]], [ICC=[no]])
+
 unset CFLAGS
 
 #
@@ -271,28 +278,20 @@ fi
 
 # Some versions of GCC support some additional useful warning flags.
 # Check whether they are supported, and add them to CFLAGS if so.
-
-if test "$GCC" = yes; then
-
 # ICC pretends to be GCC but it's lying; it doesn't support these options.
-# So we have to check if "GCC" is really ICC.
-AC_TRY_COMPILE([], [@%:@ifndef __INTEL_COMPILER
-choke me
-@%:@endif], [ICC=[yes]], [ICC=[no]])
 
-  if test "$ICC" = no; then
-    CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith -Winline"
-
-    PGAC_PROG_CC_CFLAGS_OPT([-Wdeclaration-after-statement])
-    PGAC_PROG_CC_CFLAGS_OPT([-Wendif-labels])
-  else
-    # Intel compiler has a bug/misoptimization in checking for
-    # division by NAN (NaN == 0), -mp1 fixes it, so add it to the
-    # CFLAGS.
-    PGAC_PROG_CC_CFLAGS_OPT([-mp1])
-  fi
-
+if test "$GCC" = yes -a "$ICC" = no; then
+  CFLAGS="$CFLAGS -Wall -Wmissing-prototypes -Wpointer-arith -Winline"
+  # These work in some but not all gcc versions
+  PGAC_PROG_CC_CFLAGS_OPT([-Wdeclaration-after-statement])
+  PGAC_PROG_CC_CFLAGS_OPT([-Wendif-labels])
   # Disable strict-aliasing rules; needed for gcc 3.3+
+  PGAC_PROG_CC_CFLAGS_OPT([-fno-strict-aliasing])
+elif test "$ICC" = yes; then
+  # Intel's compiler has a bug/misoptimization in checking for
+  # division by NAN (NaN == 0), -mp1 fixes it, so add it to the CFLAGS.
+  PGAC_PROG_CC_CFLAGS_OPT([-mp1])
+  # Not clear if this is needed, but seems like a good idea
   PGAC_PROG_CC_CFLAGS_OPT([-fno-strict-aliasing])
 elif test x"${CC}" = x"xlc"; then
   # AIX xlc has to have strict aliasing turned off too
