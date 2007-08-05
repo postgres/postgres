@@ -66,7 +66,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.162 2007/07/16 14:02:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/storage/s_lock.h,v 1.163 2007/08/05 15:11:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,7 @@
 #ifdef HAVE_SPINLOCKS	/* skip spinlocks if requested */
 
 
-#if defined(__GNUC__) || defined(__ICC)
+#if defined(__GNUC__) || defined(__INTEL_COMPILER)
 /*************************************************************************
  * All the gcc inlines
  * Gcc consistently defines the CPU as __cpu__.
