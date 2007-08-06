@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.25 2004/03/03 21:28:54 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.25.4.1 2007/08/06 01:38:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,9 +397,10 @@ _ReadByte(ArchiveHandle *AH)
 	lclContext *ctx = (lclContext *) AH->formatData;
 	int			res;
 
-	res = fgetc(AH->FH);
-	if (res != EOF)
-		ctx->filePos += 1;
+	res = getc(AH->FH);
+	if (res == EOF)
+		die_horribly(AH, modulename, "unexpected end of file\n");
+	ctx->filePos += 1;
 	return res;
 }
 
