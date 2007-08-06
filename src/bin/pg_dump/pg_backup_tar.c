@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.58 2007/03/18 16:50:44 neilc Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.59 2007/08/06 01:38:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -510,7 +510,7 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 			used = avail;
 
 		/* Copy, and adjust buffer pos */
-		memcpy(buf, AH->lookahead, used);
+		memcpy(buf, AH->lookahead + AH->lookaheadPos, used);
 		AH->lookaheadPos += used;
 
 		/* Adjust required length */
@@ -766,12 +766,13 @@ static int
 _ReadByte(ArchiveHandle *AH)
 {
 	lclContext *ctx = (lclContext *) AH->formatData;
-	int			res;
-	char		c = '\0';
+	size_t		res;
+	unsigned char c;
 
 	res = tarRead(&c, 1, ctx->FH);
-	if (res != EOF)
-		ctx->filePos += res;
+	if (res != 1)
+		die_horribly(AH, modulename, "unexpected end of file\n");
+	ctx->filePos += 1;
 	return c;
 }
 
