@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.26 2003/10/08 03:52:32 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.26.2.1 2007/08/06 01:38:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -713,7 +713,7 @@ _WriteByte(ArchiveHandle *AH, const int i)
  *
  * Called by the archiver to read bytes & integers from the archive.
  * These routines are only used to read & write headers & TOC.
- *
+ * EOF should be treated as a fatal error.
  */
 static int
 _ReadByte(ArchiveHandle *AH)
@@ -721,9 +721,10 @@ _ReadByte(ArchiveHandle *AH)
 	lclContext *ctx = (lclContext *) AH->formatData;
 	int			res;
 
-	res = fgetc(AH->FH);
-	if (res != EOF)
-		ctx->filePos += 1;
+	res = getc(AH->FH);
+	if (res == EOF)
+		die_horribly(AH, modulename, "unexpected end of file\n");
+	ctx->filePos += 1;
 	return res;
 }
 
