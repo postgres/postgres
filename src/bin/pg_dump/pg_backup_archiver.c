@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.7 2005/05/17 17:31:15 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.62.2.8 2007/08/06 01:38:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1545,7 +1545,7 @@ ReadStr(ArchiveHandle *AH)
 	int			l;
 
 	l = ReadInt(AH);
-	if (l == -1)
+	if (l < 0)
 		buf = NULL;
 	else
 	{
@@ -1553,7 +1553,9 @@ ReadStr(ArchiveHandle *AH)
 		if (!buf)
 			die_horribly(AH, modulename, "out of memory\n");
 
-		(*AH->ReadBufPtr) (AH, (void *) buf, l);
+		if ((*AH->ReadBufPtr) (AH, (void *) buf, l) != l)
+			die_horribly(AH, modulename, "unexpected end of file\n");
+
 		buf[l] = '\0';
 	}
 
@@ -2277,8 +2279,8 @@ ReadHead(ArchiveHandle *AH)
 	/* If we haven't already read the header... */
 	if (!AH->readHeader)
 	{
-
-		(*AH->ReadBufPtr) (AH, tmpMag, 5);
+		if ((*AH->ReadBufPtr) (AH, tmpMag, 5) != 5)
+			die_horribly(AH, modulename, "unexpected end of file\n");
 
 		if (strncmp(tmpMag, "PGDMP", 5) != 0)
 			die_horribly(AH, modulename, "did not find magic string in file header\n");
