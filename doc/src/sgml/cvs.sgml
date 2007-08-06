@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.46 2007/07/17 01:52:34 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/cvs.sgml,v 1.47 2007/08/06 07:58:06 mha Exp $ -->
 
 <appendix id="cvs">
  <appendixinfo>
@@ -313,7 +313,7 @@ cvs commit
   <para>
    You can download the CVS repository using this command:
 <programlisting>
-rsync -avzCH --delete rsync.postgresql.org::pgsql-cvs cvsroot/
+rsync -avzCH --delete anoncvs.postgresql.org::pgsql-cvs cvsroot/
 </programlisting>
    For full instructions, see the "rsync" section in the 
    <ulink url="http://pgfoundry.org/docman/view.php/1000040/4/PGBuildFarm-HOWTO.txt">
