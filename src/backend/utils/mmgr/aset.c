@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.72 2007/04/30 00:12:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.73 2007/08/07 06:25:14 neilc Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -214,7 +214,7 @@ static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
 static Size AllocSetGetChunkSpace(MemoryContext context, void *pointer);
 static bool AllocSetIsEmpty(MemoryContext context);
-static void AllocSetStats(MemoryContext context);
+static void AllocSetStats(MemoryContext context, int level);
 
 #ifdef MEMORY_CONTEXT_CHECKING
 static void AllocSetCheck(MemoryContext context);
@@ -1034,7 +1034,7 @@ AllocSetIsEmpty(MemoryContext context)
  *		Displays stats about memory consumption of an allocset.
  */
 static void
-AllocSetStats(MemoryContext context)
+AllocSetStats(MemoryContext context, int level)
 {
 	AllocSet	set = (AllocSet) context;
 	long		nblocks = 0;
@@ -1044,6 +1044,7 @@ AllocSetStats(MemoryContext context)
 	AllocBlock	block;
 	AllocChunk	chunk;
 	int			fidx;
+	int			i;
 
 	for (block = set->blocks; block != NULL; block = block->next)
 	{
@@ -1060,6 +1061,10 @@ AllocSetStats(MemoryContext context)
 			freespace += chunk->size + ALLOC_CHUNKHDRSZ;
 		}
 	}
+
+	for (i = 0; i < level; i++)
+		fprintf(stderr, "  ");
+
 	fprintf(stderr,
 			"%s: %lu total in %ld blocks; %lu free (%ld chunks); %lu used\n",
 			set->header.name, totalspace, nblocks, freespace, nchunks,

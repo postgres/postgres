@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/memnodes.h,v 1.32 2007/01/05 22:19:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/memnodes.h,v 1.33 2007/08/07 06:25:14 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ typedef struct MemoryContextMethods
 	void		(*delete) (MemoryContext context);
 	Size		(*get_chunk_space) (MemoryContext context, void *pointer);
 	bool		(*is_empty) (MemoryContext context);
-	void		(*stats) (MemoryContext context);
+	void		(*stats) (MemoryContext context, int level);
 #ifdef MEMORY_CONTEXT_CHECKING
 	void		(*check) (MemoryContext context);
 #endif

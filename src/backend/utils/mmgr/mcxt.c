@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.61 2007/07/25 12:22:52 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/mcxt.c,v 1.62 2007/08/07 06:25:14 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,8 @@ MemoryContext CurTransactionContext = NULL;
 
 /* This is a transient link to the active portal's memory context: */
 MemoryContext PortalContext = NULL;
+
+static void MemoryContextStatsInternal(MemoryContext context, int level);
 
 
 /*****************************************************************************
@@ -321,15 +323,20 @@ MemoryContextIsEmpty(MemoryContext context)
 void
 MemoryContextStats(MemoryContext context)
 {
+	MemoryContextStatsInternal(context, 0);
+}
+
+static void
+MemoryContextStatsInternal(MemoryContext context, int level)
+{
 	MemoryContext child;
 
 	AssertArg(MemoryContextIsValid(context));
 
-	(*context->methods->stats) (context);
+	(*context->methods->stats) (context, level);
 	for (child = context->firstchild; child != NULL; child = child->nextchild)
-		MemoryContextStats(child);
+		MemoryContextStatsInternal(child, level + 1);
 }
-
 
 /*
  * MemoryContextCheck
