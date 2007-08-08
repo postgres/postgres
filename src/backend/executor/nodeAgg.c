@@ -45,7 +45,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.116.2.3 2005/01/27 23:43:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAgg.c,v 1.116.2.4 2007/08/08 18:06:55 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1509,8 +1509,14 @@ ExecReScanAgg(AggState *node, ExprContext *exprCtxt)
 	MemSet(econtext->ecxt_aggvalues, 0, sizeof(Datum) * node->numaggs);
 	MemSet(econtext->ecxt_aggnulls, 0, sizeof(bool) * node->numaggs);
 
-	/* Release all temp storage */
-	MemoryContextReset(node->aggcontext);
+	/*
+	 * Release all temp storage. Note that with AGG_HASHED, the hash table
+	 * is allocated in a sub-context of the aggcontext. We're going to
+	 * rebuild the hash table from scratch, so we need to use
+	 * MemoryContextResetAndDeleteChildren() to avoid leaking the old hash
+	 * table's memory context header.
+	 */
+	MemoryContextResetAndDeleteChildren(node->aggcontext);
 
 	if (((Agg *) node->ss.ps.plan)->aggstrategy == AGG_HASHED)
 	{
