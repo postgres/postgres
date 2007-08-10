@@ -1,7 +1,7 @@
 /**********************************************************************
  * plpython.c - python as a procedural language for PostgreSQL
  *
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.102 2007/07/13 04:57:59 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.103 2007/08/10 03:16:04 tgl Exp $
  *
  *********************************************************************
  */
@@ -1259,6 +1259,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 						 "proargnames must have the same number of elements "
 						 "as the function has arguments");
 				proc->argnames = (char **) PLy_malloc(sizeof(char *) * proc->nargs);
+				memset(proc->argnames, 0, sizeof(char *) * proc->nargs);
 			}
 		}
 		for (i = 0; i < fcinfo->nargs; i++)
