@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.72 2007/08/11 03:56:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.73 2007/08/11 19:16:41 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -112,6 +112,7 @@ static regexp_matches_ctx *setup_regexp_matches(text *orig_str, text *pattern,
 												bool force_glob,
 												bool use_subpatterns,
 												bool ignore_degenerate);
+static void cleanup_regexp_matches(regexp_matches_ctx *matchctx);
 static ArrayType *build_regexp_matches_result(regexp_matches_ctx *matchctx);
 static Datum build_regexp_split_result(regexp_matches_ctx *splitctx);
 
@@ -815,6 +816,9 @@ regexp_matches(PG_FUNCTION_ARGS)
 		SRF_RETURN_NEXT(funcctx, PointerGetDatum(result_ary));
 	}
 
+	/* release space in multi-call ctx to avoid intraquery memory leak */
+	cleanup_regexp_matches(matchctx);
+
 	SRF_RETURN_DONE(funcctx);
 }
 
@@ -969,6 +973,21 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 }
 
 /*
+ * cleanup_regexp_matches - release memory of a regexp_matches_ctx
+ */
+static void
+cleanup_regexp_matches(regexp_matches_ctx *matchctx)
+{
+	pfree(matchctx->orig_str);
+	pfree(matchctx->match_locs);
+	if (matchctx->elems)
+		pfree(matchctx->elems);
+	if (matchctx->nulls)
+		pfree(matchctx->nulls);
+	pfree(matchctx);
+}
+
+/*
  * build_regexp_matches_result - build output array for current match
  */
 static ArrayType *
@@ -1050,6 +1069,9 @@ regexp_split_to_table(PG_FUNCTION_ARGS)
 		SRF_RETURN_NEXT(funcctx, result);
 	}
 
+	/* release space in multi-call ctx to avoid intraquery memory leak */
+	cleanup_regexp_matches(splitctx);
+
 	SRF_RETURN_DONE(funcctx);
 }
 
@@ -1083,6 +1105,12 @@ Datum regexp_split_to_array(PG_FUNCTION_ARGS)
 								  CurrentMemoryContext);
 		splitctx->next_match++;
 	}
+
+	/*
+	 * We don't call cleanup_regexp_matches here; it would try to pfree
+	 * the input string, which we didn't copy.  The space is not in a
+	 * long-lived memory context anyway.
+	 */
 
 	PG_RETURN_ARRAYTYPE_P(makeArrayResult(astate, CurrentMemoryContext));
 }
