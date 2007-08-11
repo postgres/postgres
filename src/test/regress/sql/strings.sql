@@ -111,7 +111,7 @@ SELECT regexp_matches('foobarbequebaz', $re$(bar)(.+)?(beque)$re$);
 SELECT regexp_matches('foobarbequebaz', $re$barbeque$re$);
 
 -- give me errors
-SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque)$re$, 'zipper');
+SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque)$re$, 'gz');
 SELECT regexp_matches('foobarbequebaz', $re$(barbeque$re$);
 SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque){2,1}$re$);
 
@@ -129,9 +129,13 @@ SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e'
 -- no match of pattern
 SELECT foo, length(foo) FROM regexp_split_to_table('the quick brown fox jumped over the lazy dog', 'nomatch') AS foo;
 SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', 'nomatch');
+-- some corner cases
+SELECT regexp_split_to_array('123456','1');
+SELECT regexp_split_to_array('123456','6');
+SELECT regexp_split_to_array('123456','.');
 -- errors
 SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'zippy') AS foo;
-SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'zippy');
+SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'iz');
 -- global option meaningless for regexp_split
 SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'g') AS foo;
 SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'g');

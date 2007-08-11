@@ -219,7 +219,7 @@ SELECT regexp_replace('AAA aaa', 'A+', 'Z', 'gi');
 
 -- invalid regexp option
 SELECT regexp_replace('AAA aaa', 'A+', 'Z', 'z');
-ERROR:  invalid regexp option: z
+ERROR:  invalid regexp option: "z"
 -- set so we can tell NULL from empty string
 \pset null '\\N'
 -- return all matches from regexp
@@ -272,8 +272,8 @@ SELECT regexp_matches('foobarbequebaz', $re$barbeque$re$);
 (1 row)
 
 -- give me errors
-SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque)$re$, 'zipper');
-ERROR:  invalid regexp option: z
+SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque)$re$, 'gz');
+ERROR:  invalid regexp option: "z"
 SELECT regexp_matches('foobarbequebaz', $re$(barbeque$re$);
 ERROR:  invalid regular expression: parentheses () not balanced
 SELECT regexp_matches('foobarbequebaz', $re$(bar)(beque){2,1}$re$);
@@ -431,11 +431,30 @@ SELECT regexp_split_to_array('the quick brown fox jumped over the lazy dog', 'no
  {"the quick brown fox jumped over the lazy dog"}
 (1 row)
 
+-- some corner cases
+SELECT regexp_split_to_array('123456','1');
+ regexp_split_to_array 
+-----------------------
+ {"",23456}
+(1 row)
+
+SELECT regexp_split_to_array('123456','6');
+ regexp_split_to_array 
+-----------------------
+ {12345,""}
+(1 row)
+
+SELECT regexp_split_to_array('123456','.');
+ regexp_split_to_array  
+------------------------
+ {"","","","","","",""}
+(1 row)
+
 -- errors
 SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'zippy') AS foo;
-ERROR:  invalid regexp option: z
-SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'zippy');
-ERROR:  invalid regexp option: z
+ERROR:  invalid regexp option: "z"
+SELECT regexp_split_to_array('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'iz');
+ERROR:  invalid regexp option: "z"
 -- global option meaningless for regexp_split
 SELECT foo, length(foo) FROM regexp_split_to_table('thE QUick bROWn FOx jUMPed ovEr THE lazy dOG', 'e', 'g') AS foo;
 ERROR:  regexp_split does not support the global option

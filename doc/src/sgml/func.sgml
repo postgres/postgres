@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.383 2007/07/18 03:12:42 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.384 2007/08/11 03:56:24 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1499,7 +1499,7 @@
        <entry><literal><function>regexp_matches</function>(<parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type>])</literal></entry>
        <entry><type>setof text[]</type></entry>
        <entry>
-        Return all capture groups resulting from matching POSIX regular
+        Return all captured substrings resulting from matching a POSIX regular
         expression against the <parameter>string</parameter>. See
         <xref linkend="functions-posix-regexp"> for more information.
        </entry>
@@ -1511,7 +1511,7 @@
        <entry><literal><function>regexp_replace</function>(<parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type>, <parameter>replacement</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type>])</literal></entry>
        <entry><type>text</type></entry>
        <entry>
-        Replace substring matching POSIX regular expression. See
+        Replace substring(s) matching a POSIX regular expression. See
         <xref linkend="functions-posix-regexp"> for more information.
        </entry>
        <entry><literal>regexp_replace('Thomas', '.[mN]a.', 'M')</literal></entry>
@@ -1522,7 +1522,7 @@
        <entry><literal><function>regexp_split_to_array</function>(<parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type> ])</literal></entry>
        <entry><type>text[]</type></entry>
        <entry>
-        Split <parameter>string</parameter> using POSIX regular expression as
+        Split <parameter>string</parameter> using a POSIX regular expression as
         the delimiter.  See <xref linkend="functions-posix-regexp"> for more
         information.
        </entry>
@@ -1534,7 +1534,7 @@
        <entry><literal><function>regexp_split_to_table</function>(<parameter>string</parameter> <type>text</type>, <parameter>pattern</parameter> <type>text</type> [, <parameter>flags</parameter> <type>text</type>])</literal></entry>
        <entry><type>setof text</type></entry>
        <entry>
-        Split <parameter>string</parameter> using POSIX regular expression as
+        Split <parameter>string</parameter> using a POSIX regular expression as
         the delimiter.  See <xref linkend="functions-posix-regexp"> for more
         information.
        </entry>
@@ -2856,11 +2856,9 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
     <acronym>SQL</acronym> <function>LIKE</function> operator, the
     more recent <function>SIMILAR TO</function> operator (added in
     SQL:1999), and <acronym>POSIX</acronym>-style regular
-    expressions.
-    Additionally, a pattern matching function,
-    <function>substring</function>, is available, using either
-    <function>SIMILAR TO</function>-style or POSIX-style regular
-    expressions.
+    expressions.  Aside from the basic <quote>does this string match
+    this pattern?</> operators, functions are available to extract
+    or replace matching substrings and to split a string at the matches.
    </para>
 
    <tip>
@@ -3186,15 +3184,20 @@ substring('foobar' from '#"o_b#"%' for '#')    <lineannotation>NULL</lineannotat
      end of the string.
     </para>
 
-   <para>
-    Some examples:
+    <para>
+     Some examples:
 <programlisting>
 'abc' ~ 'abc'    <lineannotation>true</lineannotation>
 'abc' ~ '^a'     <lineannotation>true</lineannotation>
 'abc' ~ '(b|d)'  <lineannotation>true</lineannotation>
 'abc' ~ '^(b|c)' <lineannotation>false</lineannotation>
 </programlisting>
-   </para>
+    </para>
+
+    <para>
+     The <acronym>POSIX</acronym> pattern language is described in much
+     greater detail below.
+    </para>
 
     <para>
      The <function>substring</> function with two parameters,
@@ -3246,9 +3249,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
      function's behavior.  Flag <literal>i</> specifies case-insensitive
      matching, while flag <literal>g</> specifies replacement of each matching
      substring rather than only the first one.  Other supported flags are
-     <literal>m</>, <literal>n</>, <literal>p</>, <literal>w</> and
-     <literal>x</>, whose meanings correspond to those shown in
-     <xref linkend="posix-embedded-options-table">.
+     described in <xref linkend="posix-embedded-options-table">.
     </para>
 
    <para>
@@ -3264,23 +3265,25 @@ regexp_replace('foobarbaz', 'b(..)', E'X\\1Y', 'g')
    </para>
 
     <para>
-     The <function>regexp_matches</> function returns all of the capture
-     groups resulting from matching a POSIX regular expression pattern.
+     The <function>regexp_matches</> function returns all of the captured
+     substrings resulting from matching a POSIX regular expression pattern.
      It has the syntax
      <function>regexp_matches</function>(<replaceable>string</>, <replaceable>pattern</>
      <optional>, <replaceable>flags</> </optional>).
-     If there is no match to the <replaceable>pattern</>, the function returns no rows.
-     If there is a match, the function returns the contents of all of the capture groups
-     in a text array, or if there were no capture groups in the pattern, it returns the
-     contents of the entire match as a single-element text array.
+     If there is no match to the <replaceable>pattern</>, the function returns
+     no rows.  If there is a match, the function returns a text array whose
+     <replaceable>n</>'th element is the substring matching the
+     <replaceable>n</>'th parenthesized subexpression of the pattern
+     (not counting <quote>non-capturing</> parentheses; see below for
+     details).  If the pattern does not contain any parenthesized
+     subexpressions, then the result is a single-element text array containing
+     the substring matching the whole pattern.
      The <replaceable>flags</> parameter is an optional text
      string containing zero or more single-letter flags that change the
-     function's behavior.  Flag <literal>i</> specifies case-insensitive
-     matching, while flag <literal>g</> causes the return of each matching
-     substring rather than only the first one.  Other supported
-     flags are <literal>m</>, <literal>n</>, <literal>p</>, <literal>w</> and
-     <literal>x</>, whose meanings are described in
-     <xref linkend="posix-embedded-options-table">.
+     function's behavior.  Flag <literal>g</> causes the function to find
+     each match in the string, not only the first one, and return a row for
+     each such match.  Other supported
+     flags are described in <xref linkend="posix-embedded-options-table">.
     </para>
 
    <para>
@@ -3319,16 +3322,14 @@ SELECT regexp_matches('foobarbequebaz', 'barbeque');
      returns the text from the end of the last match to the end of the string.
      The <replaceable>flags</> parameter is an optional text string containing
      zero or more single-letter flags that change the function's behavior.
-     <function>regexp_split_to_table</function> supports the flags <literal>i</>,
-     <literal>m</>, <literal>n</>, <literal>p</>, <literal>w</> and
-     <literal>x</>, whose meanings are described in
+     <function>regexp_split_to_table</function> supports the flags described in
      <xref linkend="posix-embedded-options-table">.
     </para>
 
     <para>
      The <function>regexp_split_to_array</> function behaves the same as
      <function>regexp_split_to_table</>, except that <function>regexp_split_to_array</>
-     returns its results as a <type>text[]</>.  It has the syntax
+     returns its result as an array of <type>text</>.  It has the syntax
      <function>regexp_split_to_array</function>(<replaceable>string</>, <replaceable>pattern</>
      <optional>, <replaceable>flags</> </optional>).
      The parameters are the same as for <function>regexp_split_to_table</>.
