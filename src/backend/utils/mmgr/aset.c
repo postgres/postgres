@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.73 2007/08/07 06:25:14 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mmgr/aset.c,v 1.74 2007/08/12 20:39:14 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -932,56 +932,17 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 	else
 	{
 		/*
-		 * Small-chunk case.  If the chunk is the last one in its block, there
-		 * might be enough free space after it that we can just enlarge the
-		 * chunk in-place.	It's relatively painful to find the containing
-		 * block in the general case, but we can detect last-ness quite
-		 * cheaply for the typical case where the chunk is in the active
-		 * (topmost) allocation block.	(At least with the regression tests
-		 * and code as of 1/2001, realloc'ing the last chunk of a non-topmost
-		 * block hardly ever happens, so it's not worth scanning the block
-		 * list to catch that case.)
-		 *
-		 * NOTE: must be careful not to create a chunk of a size that
-		 * AllocSetAlloc would not create, else we'll get confused later.
+		 * Small-chunk case.  We just do this by brute force, ie, allocate a
+		 * new chunk and copy the data.  Since we know the existing data isn't
+		 * huge, this won't involve any great memcpy expense, so it's not
+		 * worth being smarter.  (At one time we tried to avoid memcpy when
+		 * it was possible to enlarge the chunk in-place, but that turns out
+		 * to misbehave unpleasantly for repeated cycles of
+		 * palloc/repalloc/pfree: the eventually freed chunks go into the
+		 * wrong freelist for the next initial palloc request, and so we leak
+		 * memory indefinitely.  See pgsql-hackers archives for 2007-08-11.)
 		 */
 		AllocPointer newPointer;
-
-		if (size <= set->allocChunkLimit)
-		{
-			AllocBlock	block = set->blocks;
-			char	   *chunk_end;
-
-			chunk_end = (char *) chunk + (oldsize + ALLOC_CHUNKHDRSZ);
-			if (chunk_end == block->freeptr)
-			{
-				/* OK, it's last in block ... is there room? */
-				Size		freespace = block->endptr - block->freeptr;
-				int			fidx;
-				Size		newsize;
-				Size		delta;
-
-				fidx = AllocSetFreeIndex(size);
-				newsize = 1 << (fidx + ALLOC_MINBITS);
-				Assert(newsize >= oldsize);
-				delta = newsize - oldsize;
-				if (freespace >= delta)
-				{
-					/* Yes, so just enlarge the chunk. */
-					block->freeptr += delta;
-					chunk->size += delta;
-#ifdef MEMORY_CONTEXT_CHECKING
-					chunk->requested_size = size;
-					/* set mark to catch clobber of "unused" space */
-					if (size < chunk->size)
-						((char *) pointer)[size] = 0x7E;
-#endif
-					return pointer;
-				}
-			}
-		}
-
-		/* Normal small-chunk case: just do it by brute force. */
 
 		/* allocate new chunk */
 		newPointer = AllocSetAlloc((MemoryContext) set, size);
