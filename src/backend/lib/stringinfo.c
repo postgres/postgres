@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	  $PostgreSQL: pgsql/src/backend/lib/stringinfo.c,v 1.46 2007/05/28 16:43:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/lib/stringinfo.c,v 1.47 2007/08/12 20:18:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ makeStringInfo(void)
 void
 initStringInfo(StringInfo str)
 {
-	int			size = 256;		/* initial default buffer size */
+	int			size = 1024;		/* initial default buffer size */
 
 	str->data = (char *) palloc(size);
 	str->maxlen = size;

@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.139 2007/01/05 22:19:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.140 2007/08/12 20:18:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -820,7 +820,7 @@ scanner_init(const char *str)
 	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
 
 	/* initialize literal buffer to a reasonable but expansible size */
-	literalalloc = 128;
+	literalalloc = 1024;
 	literalbuf = (char *) palloc(literalalloc);
 	startlit();
 
