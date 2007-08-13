@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.354 2007/08/01 22:45:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.355 2007/08/13 19:08:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1163,13 +1163,11 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	vacuum_set_xid_limits(vacstmt->freeze_min_age, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);
 
-	/* 
-	 * VACUUM FULL assumes that all tuple states are well-known prior to
-	 * moving tuples around --- see comment "known dead" in repair_frag(),
-	 * as well as simplifications in tqual.c.  So before we start we must
-	 * ensure that any asynchronously-committed transactions with changes
-	 * against this table have been flushed to disk.  It's sufficient to do
-	 * this once after we've acquired AccessExclusiveLock.
+	/*
+	 * Flush any previous async-commit transactions.  This does not guarantee
+	 * that we will be able to set hint bits for tuples they inserted, but
+	 * it improves the probability, especially in simple sequential-commands
+	 * cases.  See scan_heap() and repair_frag() for more about this.
 	 */
 	XLogAsyncCommitFlush();
 
@@ -1386,15 +1384,38 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin, buf))
 			{
-				case HEAPTUPLE_DEAD:
-					tupgone = true;		/* we can delete the tuple */
-					break;
 				case HEAPTUPLE_LIVE:
 					/* Tuple is good --- but let's do some validity checks */
 					if (onerel->rd_rel->relhasoids &&
 						!OidIsValid(HeapTupleGetOid(&tuple)))
 						elog(WARNING, "relation \"%s\" TID %u/%u: OID is invalid",
 							 relname, blkno, offnum);
+					/*
+					 * The shrinkage phase of VACUUM FULL requires that all
+					 * live tuples have XMIN_COMMITTED set --- see comments in
+					 * repair_frag()'s walk-along-page loop.  Use of async
+					 * commit may prevent HeapTupleSatisfiesVacuum from
+					 * setting the bit for a recently committed tuple.  Rather
+					 * than trying to handle this corner case, we just give up
+					 * and don't shrink.
+					 */
+					if (do_shrinking &&
+						!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
+					{
+						ereport(LOG,
+								(errmsg("relation \"%s\" TID %u/%u: XMIN_COMMITTED not set for transaction %u --- cannot shrink relation",
+										relname, blkno, offnum,
+										HeapTupleHeaderGetXmin(tuple.t_data))));
+						do_shrinking = false;
+					}
+					break;
+				case HEAPTUPLE_DEAD:
+					tupgone = true;		/* we can delete the tuple */
+					/*
+					 * We need not require XMIN_COMMITTED or XMAX_COMMITTED to
+					 * be set, since we will remove the tuple without any
+					 * further examination of its hint bits.
+					 */
 					break;
 				case HEAPTUPLE_RECENTLY_DEAD:
 
@@ -1403,6 +1424,20 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					 * from relation.
 					 */
 					nkeep += 1;
+
+					/*
+					 * As with the LIVE case, shrinkage requires XMIN_COMMITTED
+					 * to be set.
+					 */
+					if (do_shrinking &&
+						!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
+					{
+						ereport(LOG,
+								(errmsg("relation \"%s\" TID %u/%u: XMIN_COMMITTED not set for transaction %u --- cannot shrink relation",
+										relname, blkno, offnum,
+										HeapTupleHeaderGetXmin(tuple.t_data))));
+						do_shrinking = false;
+					}
 
 					/*
 					 * If we do shrinking and this tuple is updated one then
@@ -1429,26 +1464,34 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 					/*
 					 * This should not happen, since we hold exclusive lock on
-					 * the relation; shouldn't we raise an error? (Actually,
+					 * the relation; shouldn't we raise an error?  (Actually,
 					 * it can happen in system catalogs, since we tend to
-					 * release write lock before commit there.)
+					 * release write lock before commit there.)  As above,
+					 * we can't apply repair_frag() if the tuple state is
+					 * uncertain.
 					 */
-					ereport(NOTICE,
-							(errmsg("relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- cannot shrink relation",
-									relname, blkno, offnum, HeapTupleHeaderGetXmin(tuple.t_data))));
+					if (do_shrinking)
+						ereport(LOG,
+								(errmsg("relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- cannot shrink relation",
+										relname, blkno, offnum,
+										HeapTupleHeaderGetXmin(tuple.t_data))));
 					do_shrinking = false;
 					break;
 				case HEAPTUPLE_DELETE_IN_PROGRESS:
 
 					/*
 					 * This should not happen, since we hold exclusive lock on
-					 * the relation; shouldn't we raise an error? (Actually,
+					 * the relation; shouldn't we raise an error?  (Actually,
 					 * it can happen in system catalogs, since we tend to
-					 * release write lock before commit there.)
+					 * release write lock before commit there.)  As above,
+					 * we can't apply repair_frag() if the tuple state is
+					 * uncertain.
 					 */
-					ereport(NOTICE,
-							(errmsg("relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- cannot shrink relation",
-									relname, blkno, offnum, HeapTupleHeaderGetXmax(tuple.t_data))));
+					if (do_shrinking)
+						ereport(LOG,
+								(errmsg("relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- cannot shrink relation",
+										relname, blkno, offnum,
+										HeapTupleHeaderGetXmax(tuple.t_data))));
 					do_shrinking = false;
 					break;
 				default:
@@ -1810,19 +1853,21 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 * VACUUM FULL has an exclusive lock on the relation.  So
 			 * normally no other transaction can have pending INSERTs or
 			 * DELETEs in this relation.  A tuple is either:
-			 *		(a) a tuple in a system catalog, inserted or deleted
-			 *			by a not yet committed transaction
+			 *		(a) live (XMIN_COMMITTED)
 			 *		(b) known dead (XMIN_INVALID, or XMAX_COMMITTED and xmax
 			 *			is visible to all active transactions)
-			 *		(c) inserted by a committed xact (XMIN_COMMITTED)
-			 *		(d) moved by the currently running VACUUM.
-			 *		(e) deleted (XMAX_COMMITTED) but at least one active
-			 *			transaction does not see the deleting transaction
-			 * In case (a) we wouldn't be in repair_frag() at all.
-			 * In case (b) we cannot be here, because scan_heap() has
-			 * already marked the item as unused, see continue above. Case
-			 * (c) is what normally is to be expected. Case (d) is only
-			 * possible, if a whole tuple chain has been moved while
+			 *		(c) inserted and deleted (XMIN_COMMITTED+XMAX_COMMITTED)
+			 *			but at least one active transaction does not see the
+			 *			deleting transaction (ie, it's RECENTLY_DEAD)
+			 *		(d) moved by the currently running VACUUM
+			 *		(e) inserted or deleted by a not yet committed transaction,
+			 *			or by a transaction we couldn't set XMIN_COMMITTED for.
+			 * In case (e) we wouldn't be in repair_frag() at all, because
+			 * scan_heap() detects those cases and shuts off shrinking.
+			 * We can't see case (b) here either, because such tuples were
+			 * already removed by vacuum_page().  Cases (a) and (c) are
+			 * normal and will have XMIN_COMMITTED set.  Case (d) is only
+			 * possible if a whole tuple chain has been moved while
 			 * processing this or a higher numbered block.
 			 * ---
 			 */
@@ -1997,16 +2042,22 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						ReleaseBuffer(nextBuf);
 						break;
 					}
-					/* must check for DEAD or MOVED_IN tuple, too */
+					/*
+					 * Must check for DEAD or MOVED_IN tuple, too.  This
+					 * could potentially update hint bits, so we'd better
+					 * hold the buffer content lock.
+					 */
+					LockBuffer(nextBuf, BUFFER_LOCK_SHARE);
 					nextTstatus = HeapTupleSatisfiesVacuum(nextTdata,
 														   OldestXmin,
 														   nextBuf);
 					if (nextTstatus == HEAPTUPLE_DEAD ||
 						nextTstatus == HEAPTUPLE_INSERT_IN_PROGRESS)
 					{
-						ReleaseBuffer(nextBuf);
+						UnlockReleaseBuffer(nextBuf);
 						break;
 					}
+					LockBuffer(nextBuf, BUFFER_LOCK_UNLOCK);
 					/* if it's MOVED_OFF we shoulda moved this one with it */
 					if (nextTstatus == HEAPTUPLE_DELETE_IN_PROGRESS)
 						elog(ERROR, "updated tuple is already HEAP_MOVED_OFF");

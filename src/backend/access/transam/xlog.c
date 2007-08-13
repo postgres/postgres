@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.277 2007/08/04 01:26:53 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.278 2007/08/13 19:08:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1858,6 +1858,10 @@ XLogBackgroundFlush(void)
 
 /*
  * Flush any previous asynchronously-committed transactions' commit records.
+ *
+ * NOTE: it is unwise to assume that this provides any strong guarantees.
+ * In particular, because of the inexact LSN bookkeeping used by clog.c,
+ * we cannot assume that hint bits will be settable for these transactions.
  */
 void
 XLogAsyncCommitFlush(void)
