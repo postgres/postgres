@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.384 2007/08/11 03:56:24 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.385 2007/08/13 01:18:47 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -3383,16 +3383,25 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
    </para>
 
    <para>
-    <productname>PostgreSQL</productname>'s regular expressions are implemented
-    using a package written by Henry Spencer.  Much of
-    the description of regular expressions below is copied verbatim from his
-    manual entry.
+    As the last example demonstrates, the regexp split functions ignore
+    zero-length matches that occur at the start or end of the string
+    or immediately after a previous match.  This is contrary to the strict
+    definition of regexp matching that is implemented by
+    <function>regexp_matches</>, but is usually the most convenient behavior
+    in practice.  Other software systems such as Perl use similar definitions.
    </para>
 
 <!-- derived from the re_syntax.n man page -->
 
    <sect3 id="posix-syntax-details">
     <title>Regular Expression Details</title>
+
+   <para>
+    <productname>PostgreSQL</productname>'s regular expressions are implemented
+    using a package written by Henry Spencer.  Much of
+    the description of regular expressions below is copied verbatim from his
+    manual entry.
+   </para>
 
    <para>
     Regular expressions (<acronym>RE</acronym>s), as defined in
