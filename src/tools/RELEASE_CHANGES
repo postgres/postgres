@@ -1,6 +1,10 @@
 For All Releases (major, minor, beta, RC)
 ================
 
+*** SPECIAL FOR 8.3: don't forget to revert patch of 2007-08-13 that
+made synchronous_commit default to OFF.  Affects this file, guc.c, and
+config.sgml.
+
 * Release version number changes
 	o doc/bug.template
 	o bump Win32 interface version numbers
