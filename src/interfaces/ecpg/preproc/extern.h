@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.67 2007/08/14 10:01:53 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/extern.h,v 1.68 2007/08/14 10:54:57 meskes Exp $ */
 
 #ifndef _ECPG_PREPROC_EXTERN_H
 #define _ECPG_PREPROC_EXTERN_H
@@ -6,6 +6,9 @@
 #include "type.h"
 
 #include <errno.h>
+#ifndef CHAR_BIT
+#include <limits.h>
+#endif
 
 /* defines */
 
