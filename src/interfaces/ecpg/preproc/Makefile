@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2007, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.126 2007/04/01 08:56:58 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.127 2007/08/14 10:01:53 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,8 +14,8 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 MAJOR_VERSION= 4
-MINOR_VERSION= 3
-PATCHLEVEL=1
+MINOR_VERSION= 4
+PATCHLEVEL=0
 
 override CPPFLAGS := -I../include -I$(top_srcdir)/src/interfaces/ecpg/include \
 	-I$(srcdir) -DMAJOR_VERSION=$(MAJOR_VERSION) \

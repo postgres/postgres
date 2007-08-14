@@ -1,0 +1,47 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* test automatic prepare for all statements */
+EXEC SQL INCLUDE ../regression;
+
+int main(int argc, char* argv[]) {
+  EXEC SQL BEGIN DECLARE SECTION;
+  	int item[4], ind[4], i = 1;
+  EXEC SQL END DECLARE SECTION;
+
+  ECPGdebug(1, stderr);
+  EXEC SQL CONNECT TO REGRESSDB1;
+
+  EXEC SQL WHENEVER SQLWARNING SQLPRINT;
+  EXEC SQL WHENEVER SQLERROR SQLPRINT;
+
+  EXEC SQL CREATE TABLE T ( Item1 int, Item2 int );
+
+  EXEC SQL INSERT INTO T VALUES ( 1, null );
+  EXEC SQL INSERT INTO T VALUES ( 1, :i );
+  i++;
+  EXEC SQL INSERT INTO T VALUES ( 1, :i );
+  EXEC SQL PREPARE I AS INSERT INTO T VALUES ( 1, 2 );
+  EXEC SQL EXECUTE I;
+
+  EXEC SQL SELECT Item2 INTO :item:ind FROM T ORDER BY Item2 NULLS LAST;
+
+  for (i=0; i<4; i++)
+  	printf("item[%d] = %d\n", i, ind[i] ? -1 : item[i]);
+
+  EXEC SQL DECLARE C CURSOR FOR SELECT Item1 FROM T;
+
+  EXEC SQL OPEN C;
+
+  EXEC SQL FETCH 1 IN C INTO :i;
+  printf("i = %d\n", i);
+
+  EXEC SQL CLOSE C;
+
+  EXEC SQL DROP TABLE T;
+
+  EXEC SQL DISCONNECT ALL;
+
+  return 0;
+}

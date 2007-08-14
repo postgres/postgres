@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.46 2007/01/20 17:16:17 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.47 2007/08/14 10:01:52 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,8 +13,8 @@ top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
 NAME= ecpg
-SO_MAJOR_VERSION= 5
-SO_MINOR_VERSION= 3
+SO_MAJOR_VERSION= 6
+SO_MINOR_VERSION= 0
 DLTYPE= library
 
 override CPPFLAGS := -DFRONTEND \

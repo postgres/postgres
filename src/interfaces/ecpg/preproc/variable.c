@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.41 2006/07/30 16:28:58 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/variable.c,v 1.42 2007/08/14 10:01:53 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -44,12 +44,12 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 				switch (members->type->type)
 				{
 					case ECPGt_array:
-						return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size), members->type->size), brace_level));
+						return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size, members->type->u.element->lineno), members->type->size), brace_level));
 					case ECPGt_struct:
 					case ECPGt_union:
 						return (new_variable(name, ECPGmake_struct_type(members->type->u.members, members->type->type, members->type->struct_sizeof), brace_level));
 					default:
-						return (new_variable(name, ECPGmake_simple_type(members->type->type, members->type->size), brace_level));
+						return (new_variable(name, ECPGmake_simple_type(members->type->type, members->type->size, members->type->lineno), brace_level));
 				}
 			}
 			else
@@ -91,12 +91,12 @@ find_struct_member(char *name, char *str, struct ECPGstruct_member * members, in
 						switch (members->type->u.element->type)
 						{
 							case ECPGt_array:
-								return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(members->type->u.element->u.element->type, members->type->u.element->u.element->size), members->type->u.element->size), brace_level));
+								return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(members->type->u.element->u.element->type, members->type->u.element->u.element->size, members->type->u.element->u.element->lineno), members->type->u.element->size), brace_level));
 							case ECPGt_struct:
 							case ECPGt_union:
 								return (new_variable(name, ECPGmake_struct_type(members->type->u.element->u.members, members->type->u.element->type, members->type->u.element->struct_sizeof), brace_level));
 							default:
-								return (new_variable(name, ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size), brace_level));
+								return (new_variable(name, ECPGmake_simple_type(members->type->u.element->type, members->type->u.element->size, members->type->u.element->lineno), brace_level));
 						}
 						break;
 					case '-':
@@ -232,12 +232,12 @@ find_variable(char *name)
 				switch (p->type->u.element->type)
 				{
 					case ECPGt_array:
-						return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(p->type->u.element->u.element->type, p->type->u.element->u.element->size), p->type->u.element->size), p->brace_level));
+						return (new_variable(name, ECPGmake_array_type(ECPGmake_simple_type(p->type->u.element->u.element->type, p->type->u.element->u.element->size, p->type->u.element->u.element->lineno), p->type->u.element->size), p->brace_level));
 					case ECPGt_struct:
 					case ECPGt_union:
 						return (new_variable(name, ECPGmake_struct_type(p->type->u.element->u.members, p->type->u.element->type, p->type->u.element->struct_sizeof), p->brace_level));
 					default:
-						return (new_variable(name, ECPGmake_simple_type(p->type->u.element->type, p->type->u.element->size), p->brace_level));
+						return (new_variable(name, ECPGmake_simple_type(p->type->u.element->type, p->type->u.element->size, p->type->u.element->u.element->lineno), p->brace_level));
 				}
 			}
 		}

@@ -89,7 +89,7 @@ int main(void)
 
 	intvl = PGTYPESinterval_from_asc("1 day 2 hours 24 minutes 65 seconds", NULL);
 	PGTYPEStimestamp_add_interval(&d, intvl, &e);
-
+	free(intvl);
 	c++;
 
 	EXEC SQL insert into history

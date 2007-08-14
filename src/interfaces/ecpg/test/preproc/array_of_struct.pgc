@@ -1,0 +1,87 @@
+#include <stdio.h>
+
+exec sql include ../regression;
+
+EXEC SQL WHENEVER sqlerror sqlprint;
+EXEC SQL WHENEVER sqlwarning sqlprint;
+EXEC SQL WHENEVER not found sqlprint;
+
+EXEC SQL TYPE customer IS
+    struct
+    {
+        varchar name[50];
+        int     phone;
+    };
+
+EXEC SQL TYPE cust_ind IS
+    struct ind
+    {
+        short   name_ind;
+        short   phone_ind;
+    };
+
+int main( int argc, char * argv[] )
+{
+    EXEC SQL begin declare section;
+      customer  custs1[10];
+      cust_ind  inds[10];
+      typedef struct
+      {
+        varchar name[50];
+        int     phone;
+      } customer2;
+      customer2  custs2[10];
+      struct customer3
+      {
+        varchar name[50];
+        int     phone;
+      } custs3[10];
+      struct customer4
+      {
+        varchar name[50];
+        int     phone;
+      } custs4;
+      int r;
+    EXEC SQL end declare section;
+
+    ECPGdebug(1, stderr);
+	  
+    EXEC SQL connect to REGRESSDB1;
+
+    EXEC SQL create table customers (c varchar(50), p int);
+    EXEC SQL insert into customers values ('John Doe', '12345');
+    EXEC SQL insert into customers values ('Jane Doe', '67890');
+
+    EXEC SQL select * INTO :custs1:inds from customers limit 2;
+    printf("custs1:\n");
+    for (r = 0; r < 2; r++)
+    {
+	    printf( "name  - %s\n", custs1[r].name.arr );
+	    printf( "phone - %d\n", custs1[r].phone );
+    }
+
+    EXEC SQL select * INTO :custs2:inds from customers limit 2;
+    printf("\ncusts2:\n");
+    for (r = 0; r < 2; r++)
+    {
+	    printf( "name  - %s\n", custs2[r].name.arr );
+	    printf( "phone - %d\n", custs2[r].phone );
+    }
+
+    EXEC SQL select * INTO :custs3:inds from customers limit 2;
+    printf("\ncusts3:\n");
+    for (r = 0; r < 2; r++)
+    {
+	    printf( "name  - %s\n", custs3[r].name.arr );
+	    printf( "phone - %d\n", custs3[r].phone );
+    }
+
+    EXEC SQL select * INTO :custs4:inds[0] from customers limit 1;
+    printf("\ncusts4:\n");
+    printf( "name  - %s\n", custs4.name.arr );
+    printf( "phone - %d\n", custs4.phone );
+
+    EXEC SQL disconnect all;
+
+    return( 0 );
+}

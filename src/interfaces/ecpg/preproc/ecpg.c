@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.99 2007/06/11 11:52:08 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.100 2007/08/14 10:01:53 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -17,10 +17,12 @@ int			ret_value = 0,
 			auto_create_c = false,
 			system_includes = false,
 			force_indicator = true,
+			questionmarks = false,
 			header_mode = false,
-			regression_mode = false;
+			regression_mode = false,
+			auto_prepare = false;
 
-char	   *output_filename;
+char      *output_filename;
 
 enum COMPAT_MODE compat = ECPG_COMPAT_PGSQL;
 
@@ -51,7 +53,10 @@ help(const char *progname)
 	printf("  -I DIRECTORY   search DIRECTORY for include files\n");
 	printf("  -o OUTFILE     write result to OUTFILE\n");
 	printf("  -r OPTION      specify runtime behaviour;\n"
-		   "                 OPTION can only be \"no_indicator\"\n");
+		   "                 OPTION can be:\n"
+		   "                  \"no_indicator\"\n"
+		   "                  \"prepare\"\n"
+		   "                  \"questionmarks\"\n");
 	printf("  -t             turn on autocommit of transactions\n");
 	printf("  --help         show this help, then exit\n");
 	printf("  --regression   run in regression testing mode\n");
@@ -225,6 +230,10 @@ main(int argc, char *const argv[])
 			case 'r':
 				if (strcmp(optarg, "no_indicator") == 0)
 					force_indicator = false;
+				else if (strcmp(optarg, "prepare") == 0)
+					auto_prepare = true;
+				else if (strcmp(optarg, "questionmarks") == 0)
+					questionmarks = true;
 				else
 				{
 					fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);

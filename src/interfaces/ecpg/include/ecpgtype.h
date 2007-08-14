@@ -5,7 +5,7 @@
  * All types that can be handled for host variable declarations has to
  * be handled eventually.
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpgtype.h,v 1.36 2006/03/11 04:38:39 momjian Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpgtype.h,v 1.37 2007/08/14 10:01:52 meskes Exp $
  */
 
 /*
@@ -87,6 +87,15 @@ enum ECPGdtype
 };
 
 #define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_interval)
+
+/* we also have to handle different statement types */
+enum ECPG_statement_type
+{
+	ECPGst_normal,
+	ECPGst_execute,
+	ECPGst_exec_immediate,
+	ECPGst_prepnormal
+};
 
 #ifdef __cplusplus
 }

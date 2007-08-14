@@ -35,7 +35,7 @@ EXEC SQL END DECLARE SECTION;
 	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(404.90,3,'{0,1,2,3,4,5,6,7,8,9}','abcdefghij');
 
 	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(140787.0,2,:a,:text);
-	
+
 	EXEC SQL INSERT INTO test(f,i,a,text) VALUES(14.07,:did,:a,:t);
 
 	EXEC SQL COMMIT;

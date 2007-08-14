@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.41 2007/03/29 12:02:24 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.42 2007/08/14 10:01:52 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -185,11 +185,9 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 	{
 		if (con->committed)
 		{
-			if ((results = PQexec(con->connection, "begin transaction")) == NULL)
-			{
-				ECPGraise(lineno, ECPG_TRANS, ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN, NULL);
+			results = PQexec(con->connection, "begin transaction");
+			if (!ECPGcheck_PQresult(results, lineno, con->connection, ECPG_COMPAT_PGSQL))
 				return false;
-			}
 			PQclear(results);
 			con->committed = false;
 		}
@@ -199,11 +197,9 @@ ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
 	{
 		if (!con->committed)
 		{
-			if ((results = PQexec(con->connection, "commit")) == NULL)
-			{
-				ECPGraise(lineno, ECPG_TRANS, ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN, NULL);
+			results = PQexec(con->connection, "commit");
+			if (!ECPGcheck_PQresult(results, lineno, con->connection, ECPG_COMPAT_PGSQL))
 				return false;
-			}
 			PQclear(results);
 			con->committed = true;
 		}
@@ -249,7 +245,7 @@ ECPGnoticeReceiver(void *arg, const PGresult *result)
 	if (strncmp(sqlstate, "00", 2) == 0)
 		return;
 
-	ECPGlog("%s", message);
+	ECPGlog("ECPGnoticeReceiver %s\n", message);
 
 	/* map to SQLCODE for backward compatibility */
 	if (strcmp(sqlstate, ECPG_SQLSTATE_INVALID_CURSOR_NAME) == 0)

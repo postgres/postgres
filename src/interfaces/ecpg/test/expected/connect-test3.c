@@ -55,7 +55,7 @@ main(void)
 
 
 	/* this selects from "second" which was opened last */
-	{ ECPGdo(__LINE__, 0, 1, NULL, "select  current_database ()     ", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "select  current_database ()     ", ECPGt_EOIT, 
 	ECPGt_char,(res),(long)200,(long)1,(200)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 27 "test3.pgc"
@@ -65,7 +65,7 @@ main(void)
 	{ ECPGdisconnect(__LINE__, "CURRENT");}
 #line 30 "test3.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, "select  current_database ()     ", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "select  current_database ()     ", ECPGt_EOIT, 
 	ECPGt_char,(res),(long)200,(long)1,(200)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 31 "test3.pgc"

@@ -2,7 +2,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database connectdb on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 23: QUERY: alter user connectuser  encrypted password 'connectpw' on connection main
+[NO_PID]: ECPGexecute line 23: QUERY: alter user connectuser  encrypted password 'connectpw' with 0 parameter on connection main 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 23: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 23 Ok: ALTER ROLE
 [NO_PID]: sqlca: code: 0, state: 00000

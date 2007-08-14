@@ -2,23 +2,31 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 36: QUERY: create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )     on connection regress1
+[NO_PID]: ECPGexecute line 36: QUERY: create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )     with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 36: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 36 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans line 37 action = commit connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 39: QUERY: insert into Test ( name  , amount  , letter  ) values ( 'false' , 1 , 'f' )  on connection regress1
+[NO_PID]: ECPGexecute line 39: QUERY: insert into Test ( name  , amount  , letter  ) values ( 'false' , 1 , 'f' )  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 39: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 39 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 40: QUERY: insert into test ( name  , amount  , letter  ) values ( 'true' , 2 , 't' )  on connection regress1
+[NO_PID]: ECPGexecute line 40: QUERY: insert into test ( name  , amount  , letter  ) values ( 'true' , 2 , 't' )  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 40: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 40 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans line 41 action = commit connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 43: QUERY: select  *  from test    on connection regress1
+[NO_PID]: ECPGexecute line 43: QUERY: select  *  from test    with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 43: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 43: Correctly got 2 tuples with 3 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -34,7 +42,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 43: RESULT: t offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 56: QUERY: drop table test  on connection regress1
+[NO_PID]: ECPGexecute line 56: QUERY: drop table test  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 56: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 56 Ok: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000

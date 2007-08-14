@@ -4,7 +4,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 27: QUERY: select  current_database ()      on connection second
+[NO_PID]: ECPGexecute line 27: QUERY: select  current_database ()      with 0 parameter on connection second 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 27: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 27: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -12,7 +14,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection second closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 31: QUERY: select  current_database ()      on connection first
+[NO_PID]: ECPGexecute line 31: QUERY: select  current_database ()      with 0 parameter on connection first 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 31: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 31: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000

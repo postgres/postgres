@@ -15,17 +15,17 @@ int main(int argc, char* argv[]) {
   EXEC SQL WHENEVER SQLWARNING SQLPRINT;
   EXEC SQL WHENEVER SQLERROR SQLPRINT;
 
-  EXEC SQL CREATE TABLE test(a int, b int);
+  EXEC SQL CREATE TABLE insupd_test(a int, b int);
 
-  EXEC SQL INSERT INTO test (a,b) values (1, 1);
-  EXEC SQL INSERT INTO test (a,b) values (2, 2);
-  EXEC SQL INSERT INTO test (a,b) values (3, 3);
+  EXEC SQL INSERT INTO insupd_test (a,b) values (1, 1);
+  EXEC SQL INSERT INTO insupd_test (a,b) values (2, 2);
+  EXEC SQL INSERT INTO insupd_test (a,b) values (3, 3);
 
-  EXEC SQL UPDATE test set a=a+1;
-  EXEC SQL UPDATE test set (a,b)=(5,5) where a = 4;
-  EXEC SQL UPDATE test set a=4 where a=3;;
+  EXEC SQL UPDATE insupd_test set a=a+1;
+  EXEC SQL UPDATE insupd_test set (a,b)=(5,5) where a = 4;
+  EXEC SQL UPDATE insupd_test set a=4 where a=3;;
 
-  EXEC SQL SELECT a,b into :i1,:i2 from test order by a;
+  EXEC SQL SELECT a,b into :i1,:i2 from insupd_test order by a;
 
   printf("test\na b\n%d %d\n%d %d\n%d %d\n", i1[0], i2[0], i1[1], i2[1], i1[2], i2[2]);
 

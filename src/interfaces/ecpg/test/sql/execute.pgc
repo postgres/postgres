@@ -36,7 +36,7 @@ exec sql end declare section;
 
 	printf("Inserted %ld tuples via execute immediate\n", sqlca.sqlerrd[2]);
 
-	sprintf(command, "insert into test (name, amount, letter) select name, amount+?, letter from test");
+	sprintf(command, "insert into test (name, amount, letter) select name, amount+$1, letter from test");
 	exec sql prepare I from :command;
 	exec sql execute I using :increment;
 
@@ -46,8 +46,8 @@ exec sql end declare section;
 
 	sprintf (command, "select * from test");
 
-	exec sql prepare F from :command;
-	exec sql declare CUR cursor for F;
+	exec sql prepare f from :command;
+	exec sql declare CUR cursor for f;
 
 	exec sql open CUR;
 	exec sql fetch 8 in CUR into :name, :amount, :letter;
@@ -64,11 +64,12 @@ exec sql end declare section;
 	}
 
 	exec sql close CUR;
+	exec sql deallocate f;
 
-	sprintf (command, "select * from test where amount = ?");
+	sprintf (command, "select * from test where amount = $1");
 
-	exec sql prepare F from :command;
-	exec sql declare CUR2 cursor for F;
+	exec sql prepare f from :command;
+	exec sql declare CUR2 cursor for f;
 
 	exec sql open CUR2 using 1;
 	exec sql fetch in CUR2 into :name, :amount, :letter;

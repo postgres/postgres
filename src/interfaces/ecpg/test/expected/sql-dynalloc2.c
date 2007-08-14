@@ -132,50 +132,50 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 20 "dynalloc2.pgc"
 
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "set datestyle to postgres", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "set datestyle to postgres", ECPGt_EOIT, ECPGt_EORT);
 #line 22 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 22 "dynalloc2.pgc"
 
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a int   , b text    )    ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "create  table test ( a int   , b text    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 24 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 24 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values ( 1 , 'one' ) ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into test values ( 1 , 'one' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 25 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 25 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values ( 2 , 'two' ) ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into test values ( 2 , 'two' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 26 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 26 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values ( null , 'three' ) ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into test values ( null , 'three' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 27 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 27 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values ( 4 , 'four' ) ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into test values ( 4 , 'four' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 28 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 28 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values ( 5 , null ) ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into test values ( 5 , null ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 29 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 29 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "insert into test values ( null , null ) ", ECPGt_EOIT, ECPGt_EORT);
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into test values ( null , null ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 30 "dynalloc2.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
@@ -188,7 +188,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 if (sqlca.sqlcode < 0) sqlprint (  );
 #line 32 "dynalloc2.pgc"
 
-   { ECPGdo(__LINE__, 0, 1, NULL, "select  *  from test   ", ECPGt_EOIT, 
+   { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "select  *  from test   ", ECPGt_EOIT, 
 	ECPGt_descriptor, "mydesc", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 33 "dynalloc2.pgc"

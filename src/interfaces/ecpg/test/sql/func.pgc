@@ -5,6 +5,7 @@
 EXEC SQL INCLUDE ../regression;
 
 int main(int argc, char* argv[]) {
+  EXEC SQL char text[25];
 
   ECPGdebug(1, stderr);
   EXEC SQL CONNECT TO REGRESSDB1;
@@ -14,11 +15,12 @@ int main(int argc, char* argv[]) {
   EXEC SQL WHENEVER SQLERROR SQLPRINT;
 
   EXEC SQL CREATE TABLE My_Table ( Item1 int, Item2 text );
+  EXEC SQL CREATE TABLE Log (name text, w text);
 
   EXEC SQL CREATE FUNCTION My_Table_Check() RETURNS trigger
     AS $test$
     BEGIN
-	RAISE WARNING 'Notice: TG_NAME=%, TG WHEN=%', TG_NAME, TG_WHEN;
+	INSERT INTO Log VALUES(TG_NAME, TG_WHEN);
 	RETURN NEW;
     END; $test$
     LANGUAGE plpgsql;
@@ -31,9 +33,12 @@ int main(int argc, char* argv[]) {
 
   EXEC SQL INSERT INTO My_Table VALUES (1234, 'Some random text');
   EXEC SQL INSERT INTO My_Table VALUES (5678, 'The Quick Brown');
+  EXEC SQL SELECT name INTO :text FROM Log LIMIT 1;
+  printf("Trigger %s fired.\n", text);
 
   EXEC SQL DROP TRIGGER My_Table_Check_Trigger ON My_Table;
   EXEC SQL DROP FUNCTION My_Table_Check();
+  EXEC SQL DROP TABLE Log;
   EXEC SQL DROP TABLE My_Table;
 
   EXEC SQL DISCONNECT ALL;

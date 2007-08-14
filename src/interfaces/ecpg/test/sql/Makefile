@@ -16,6 +16,7 @@ TESTS = array array.c \
         fetch fetch.c \
         func func.c \
         indicators indicators.c \
+	oldexec oldexec.c \
         parser parser.c \
         quote quote.c \
         show show.c \
@@ -23,7 +24,6 @@ TESTS = array array.c \
 
 all: $(TESTS)
 
-# bits needs the -c option for the "EXEC SQL TYPE" construct
-bits.c: bits.pgc ../regression.h
-	$(ECPG) -c -o $@ -I$(srcdir) $<
+oldexec.c:	oldexec.pgc ../regression.h
+	$(ECPG) -r questionmarks -o $@ -I$(srcdir) $<
 

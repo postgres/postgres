@@ -1,0 +1,11 @@
+Inserted 2 tuples via execute immediate
+Inserted 4 tuples via prepared execute
+name[0]=db: 'r1'	amount[0]=1	letter[0]=f
+name[1]=db: 'r1'	amount[1]=2	letter[1]=t
+name[2]=db: 'r1'	amount[2]=11	letter[2]=f
+name[3]=db: 'r1'	amount[3]=12	letter[3]=t
+name[4]=db: 'r1'	amount[4]=101	letter[4]=f
+name[5]=db: 'r1'	amount[5]=102	letter[5]=t
+name[6]=db: 'r1'	amount[6]=111	letter[6]=f
+name[7]=db: 'r1'	amount[7]=112	letter[7]=t
+name[0]=db: 'r1'	amount[0]=1	letter[0]=f

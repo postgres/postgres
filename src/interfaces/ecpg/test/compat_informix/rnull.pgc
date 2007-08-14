@@ -12,7 +12,7 @@ test_null(int type, char *ptr)
 
 int main(void)
 {
-	$char c[] = "abc       ";
+	$char c[] = "abc";
 	$short s = 17;
 	$int i = -74874;
 	$bool b = 1;

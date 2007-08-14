@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
 #line 16 "insupd.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "create  table test ( a int   , b int   )    ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "create  table insupd_test ( a int   , b int   )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 18 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -55,7 +55,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 18 "insupd.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( a  , b  ) values ( 1 , 1 ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into insupd_test ( a  , b  ) values ( 1 , 1 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 20 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -64,7 +64,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 20 "insupd.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( a  , b  ) values ( 2 , 2 ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into insupd_test ( a  , b  ) values ( 2 , 2 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 21 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -73,7 +73,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 21 "insupd.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into test ( a  , b  ) values ( 3 , 3 ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into insupd_test ( a  , b  ) values ( 3 , 3 ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 22 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -83,7 +83,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 22 "insupd.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "update test set a  = a + 1   ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "update insupd_test set a  = a + 1   ", ECPGt_EOIT, ECPGt_EORT);
 #line 24 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -92,7 +92,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 24 "insupd.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "update test set ( a  , b  )= ( 5 , 5 )  where a = 4 ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "update insupd_test set ( a  , b  )= ( 5 , 5 )  where a = 4 ", ECPGt_EOIT, ECPGt_EORT);
 #line 25 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -101,7 +101,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 25 "insupd.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "update test set a  = 4  where a = 3 ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "update insupd_test set a  = 4  where a = 3 ", ECPGt_EOIT, ECPGt_EORT);
 #line 26 "insupd.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -111,7 +111,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 26 "insupd.pgc"
 ;
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "select  a , b  from test    order by a  ", ECPGt_EOIT, 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "select  a , b  from insupd_test    order by a  ", ECPGt_EOIT, 
 	ECPGt_int,(i1),(long)1,(long)3,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,(i2),(long)1,(long)3,sizeof(int), 

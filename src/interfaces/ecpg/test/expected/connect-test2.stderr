@@ -4,25 +4,33 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 28: QUERY: select  current_database ()      on connection second
+[NO_PID]: ECPGexecute line 28: QUERY: select  current_database ()      with 0 parameter on connection second 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 28: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 28: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 28: RESULT: regress1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 29: QUERY: select  current_database ()      on connection first
+[NO_PID]: ECPGexecute line 29: QUERY: select  current_database ()      with 0 parameter on connection first 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 29: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 29: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 29: RESULT: connectdb offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 30: QUERY: select  current_database ()      on connection second
+[NO_PID]: ECPGexecute line 30: QUERY: select  current_database ()      with 0 parameter on connection second 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 30: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 30: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 30: RESULT: regress1 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 33: QUERY: select  current_database ()      on connection first
+[NO_PID]: ECPGexecute line 33: QUERY: select  current_database ()      with 0 parameter on connection first 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 33: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 33: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -30,7 +38,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection first closed.
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 37: QUERY: select  current_database ()      on connection second
+[NO_PID]: ECPGexecute line 37: QUERY: select  current_database ()      with 0 parameter on connection second 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 37: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 37: Correctly got 1 tuples with 1 fields
 [NO_PID]: sqlca: code: 0, state: 00000

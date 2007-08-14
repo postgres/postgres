@@ -13,6 +13,8 @@ test: pgtypeslib/dt_test
 test: pgtypeslib/dt_test2
 test: pgtypeslib/num_test
 test: pgtypeslib/num_test2
+test: preproc/array_of_struct
+test: preproc/autoprep
 test: preproc/comment
 test: preproc/define
 test: preproc/init
@@ -32,6 +34,7 @@ test: sql/execute
 test: sql/fetch
 test: sql/func
 test: sql/indicators
+test: sql/oldexec
 test: sql/quote
 test: sql/show
 test: sql/insupd

@@ -1,0 +1,76 @@
+[NO_PID]: ECPGdebug: set to 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 51: QUERY: create  table customers ( c varchar ( 50 )    , p int   )     with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 51: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 51 Ok: CREATE TABLE
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 52: QUERY: insert into customers values ( 'John Doe' , '12345' )  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 52: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 52 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 53: QUERY: insert into customers values ( 'Jane Doe' , '67890' )  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 53: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 53 Ok: INSERT 0 1
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 55: QUERY: select  *  from customers     limit 2  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 55: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 55: Correctly got 2 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 55: RESULT: John Doe offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 55: RESULT: Jane Doe offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 55: RESULT: 12345 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 55: RESULT: 67890 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 63: QUERY: select  *  from customers     limit 2  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 63: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 63: Correctly got 2 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 63: RESULT: John Doe offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 63: RESULT: Jane Doe offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 63: RESULT: 12345 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 63: RESULT: 67890 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 71: QUERY: select  *  from customers     limit 2  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 71: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 71: Correctly got 2 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 71: RESULT: John Doe offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 71: RESULT: Jane Doe offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 71: RESULT: 12345 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 71: RESULT: 67890 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 79: QUERY: select  *  from customers     limit 1  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 79: using PQexec
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 79: Correctly got 1 tuples with 2 fields
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 79: RESULT: John Doe offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGget_data line 79: RESULT: 12345 offset: -1 array: Yes
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ecpg_finish: Connection regress1 closed.
+[NO_PID]: sqlca: code: 0, state: 00000

@@ -1,17 +1,16 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.19 2006/10/04 00:30:12 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.20 2007/08/14 10:01:53 meskes Exp $ */
 
 #include "postgres_fe.h"
 
 #include "extern.h"
 
-static void output_escaped_str(char *cmd);
+static void output_escaped_str(char *cmd, bool quoted);
 
 void
 output_line_number(void)
 {
 	char	   *line = hashline_number();
 
-	/* output_escaped_str(line); */
 	fprintf(yyout, "%s", line);
 	free(line);
 }
@@ -19,10 +18,11 @@ output_line_number(void)
 void
 output_simple_statement(char *stmt)
 {
-	output_escaped_str(stmt);
+	output_escaped_str(stmt, false);
 	output_line_number();
 	free(stmt);
 }
+
 
 /*
  * store the whenever action here
@@ -95,7 +95,7 @@ hashline_number(void)
 #endif
 		)
 	{
-		char	   *line = mm_alloc(strlen("\n#line %d \"%s\"\n") + 21 + strlen(input_filename));
+		char	   *line = mm_alloc(strlen("\n#line %d \"%s\"\n") + sizeof(int) * CHAR_BIT * 10 / 3 + strlen(input_filename));
 
 		sprintf(line, "\n#line %d \"%s\"\n", yylineno, input_filename);
 
@@ -106,11 +106,22 @@ hashline_number(void)
 }
 
 void
-output_statement(char *stmt, int mode, char *con)
+output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
 {
-	fprintf(yyout, "{ ECPGdo(__LINE__, %d, %d, %s, \"", compat, force_indicator, con ? con : "NULL");
-	output_escaped_str(stmt);
-	fputs("\", ", yyout);
+
+	fprintf(yyout, "{ ECPGdo(__LINE__, %d, %d, %s, %d, ", compat, force_indicator, connection ? connection : "NULL", questionmarks);
+	if (st == ECPGst_normal)
+	{
+		if (auto_prepare)
+			fprintf(yyout, "%d, \"", ECPGst_prepnormal);
+		else
+			fprintf(yyout, "%d, \"", ECPGst_normal);
+
+		output_escaped_str(stmt, false);
+		fputs("\", ", yyout);
+	}
+	else
+		fprintf(yyout, "%d, %s, ", st, stmt);
 
 	/* dump variables to C file */
 	dump_variables(argsinsert, 1);
@@ -119,27 +130,66 @@ output_statement(char *stmt, int mode, char *con)
 	fputs("ECPGt_EORT);", yyout);
 	reset_variables();
 
-	mode |= 2;
-	whenever_action(mode);
+	whenever_action(whenever_mode|2);
 	free(stmt);
 	if (connection != NULL)
 		free(connection);
 }
 
+void
+output_prepare_statement(char *name, char *stmt)
+{
+	fprintf(yyout, "{ ECPGprepare(__LINE__, %s, %d, ", connection ? connection : "NULL", questionmarks);
+	output_escaped_str(name, true);
+	fputs(", ", yyout);
+	output_escaped_str(stmt, true);
+	fputs(");", yyout);
+	whenever_action(2);
+	free(name);
+	if (connection != NULL)
+		free(connection);
+}
+
+void
+output_deallocate_prepare_statement(char *name)
+{
+	if (strcmp(name, "all"))
+	{
+		fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, ", compat);
+		output_escaped_str(name, true);
+		fputs(");", yyout);
+	}
+	else
+		fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d);", compat);
+
+	whenever_action(2);
+	free(name);
+	if (connection != NULL)
+		free(connection);
+}
 
 static void
-output_escaped_str(char *str)
+output_escaped_str(char *str, bool quoted)
 {
-	int			i,
-				len = strlen(str);
+	int i = 0;
+	int len = strlen(str);
+	
+	if (quoted && str[0] == '\"' && str[len-1] == '\"') /* do not escape quotes at beginning and end if quoted string */
+	{
+		i = 1;
+		len--;
+		fputs("\"", yyout);
+	}
 
 	/* output this char by char as we have to filter " and \n */
-	for (i = 0; i < len; i++)
+	for (; i < len; i++)
 	{
 		if (str[i] == '"')
 			fputs("\\\"", yyout);
 		else if (str[i] == '\n')
 			fputs("\\\n", yyout);
+		else if (str[i] == '\\')
+			fputs("\\\\", yyout);
 		else if (str[i] == '\r' && str[i + 1] == '\n')
 		{
 			fputs("\\\r\n", yyout);
@@ -148,4 +198,7 @@ output_escaped_str(char *str)
 		else
 			fputc(str[i], yyout);
 	}
+
+	if (quoted && str[0] == '\"' && str[len] == '\"') 
+		fputs("\"", yyout);
 }

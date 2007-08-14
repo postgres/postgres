@@ -113,25 +113,25 @@ main ()
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 19 "copystdout.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "create  table foo ( a int   , b varchar    )    ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "create  table foo ( a int   , b varchar    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 20 "copystdout.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 20 "copystdout.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values ( 5 , 'abc' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into foo values ( 5 , 'abc' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 21 "copystdout.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 21 "copystdout.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values ( 6 , 'def' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into foo values ( 6 , 'def' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 22 "copystdout.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 22 "copystdout.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into foo values ( 7 , 'ghi' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into foo values ( 7 , 'ghi' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 23 "copystdout.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -142,7 +142,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
   /* EXEC SQL COPY foo TO:fname WITH DELIMITER ','; */
   /* printf ("copy to /tmp/foo : sqlca.sqlcode = %ld", sqlca.sqlcode); */
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "copy  foo  to stdout  with  delimiter  ','", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "copy  foo  to stdout  with  delimiter  ','", ECPGt_EOIT, ECPGt_EORT);
 #line 29 "copystdout.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

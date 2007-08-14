@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.35 2007/03/29 12:02:24 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.36 2007/08/14 10:01:52 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -213,20 +213,14 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		if (con->committed && !con->autocommit && strncmp(transaction, "begin", 5) != 0 && strncmp(transaction, "start", 5) != 0)
 		{
 			res = PQexec(con->connection, "begin transaction");
-			if (res == NULL || PQresultStatus(res) != PGRES_COMMAND_OK)
-			{
-				ECPGraise(lineno, ECPG_TRANS, ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN, NULL);
+			if (!ECPGcheck_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
 				return FALSE;
-			}
 			PQclear(res);
 		}
 
 		res = PQexec(con->connection, transaction);
-		if (res == NULL || PQresultStatus(res) != PGRES_COMMAND_OK)
-		{
-			ECPGraise(lineno, ECPG_TRANS, ECPG_SQLSTATE_TRANSACTION_RESOLUTION_UNKNOWN, NULL);
+		if (!ECPGcheck_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
 			return FALSE;
-		}
 		PQclear(res);
 	}
 

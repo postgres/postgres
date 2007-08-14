@@ -5,9 +5,9 @@ int
 main(void)
 {
 	EXEC SQL BEGIN DECLARE SECTION;
-	char *stmt1 = "INSERT INTO test1 VALUES (?, ?)";
-	char *stmt2 = "SELECT * from test1 where a = ? and b = ?";
-	char *stmt3 = "SELECT * from test1 where a = ?";
+	char *stmt1 = "INSERT INTO test1 VALUES ($1, $2)";
+	char *stmt2 = "SELECT * from test1 where a = $1 and b = $2";
+	char *stmt3 = "SELECT * from test1 where :var = a";
 
 	int val1 = 1;
 	char val2[4] = "one", val2output[] = "AAA";
@@ -28,6 +28,7 @@ main(void)
 
 	EXEC SQL CREATE TABLE test1 (a int, b text);
 	EXEC SQL PREPARE foo1 FROM :stmt1;
+	EXEC SQL PREPARE "Foo-1" FROM :stmt1;
 	EXEC SQL PREPARE foo2 FROM :stmt2;
 	EXEC SQL PREPARE foo3 FROM :stmt3;
 
@@ -41,7 +42,9 @@ main(void)
 	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = 3;
 	EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val1, DATA = 'this is a long test';
 
-	EXEC SQL EXECUTE foo1 USING DESCRIPTOR indesc;
+	EXEC SQL EXECUTE "Foo-1" USING DESCRIPTOR indesc;
+
+	EXEC SQL DEALLOCATE "Foo-1";
 
 	EXEC SQL SET DESCRIPTOR indesc VALUE 1 DATA = :val1;
 	EXEC SQL SET DESCRIPTOR indesc VALUE 2 INDICATOR = :val2i, DATA = :val2;
@@ -75,6 +78,7 @@ main(void)
 	printf("val1=%d val2=%c%c%c%c warn=%c truncate=%d\n", val1output, val2output[0], val2output[1], val2output[2], val2output[3], sqlca.sqlwarn[0], val2i);
 
 	EXEC SQL DROP TABLE test1;
+	EXEC SQL DEALLOCATE ALL;
 	EXEC SQL DISCONNECT;
 
 	EXEC SQL DEALLOCATE DESCRIPTOR indesc;

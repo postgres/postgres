@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.48 2006/10/04 00:30:11 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/informix.c,v 1.49 2007/08/14 10:01:52 meskes Exp $ */
 
 #include <stdlib.h>
 #include <string.h>
@@ -202,10 +202,11 @@ deccvasc(char *cp, int len, decimal *np)
 		}
 		else
 		{
-			if (PGTYPESnumeric_to_decimal(result, np) != 0)
-				ret = ECPG_INFORMIX_NUM_OVERFLOW;
+			int i = PGTYPESnumeric_to_decimal(result, np);
 
 			free(result);
+			if (i != 0)
+				ret = ECPG_INFORMIX_NUM_OVERFLOW;
 		}
 	}
 

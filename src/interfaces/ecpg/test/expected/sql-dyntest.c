@@ -226,44 +226,44 @@ if (sqlca.sqlcode < 0) error (  );}
 #line 47 "dyntest.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "set datestyle to german", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "set datestyle to german", ECPGt_EOIT, ECPGt_EORT);
 #line 49 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
 #line 49 "dyntest.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "create  table dyntest ( name char  ( 14 )    , d float8    , i int   , bignumber int8    , b boolean   , comment text    , day date    )    ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "create  table dyntest ( name char  ( 14 )    , d float8    , i int   , bignumber int8    , b boolean   , comment text    , day date    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 53 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
 #line 53 "dyntest.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into dyntest values ( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into dyntest values ( 'first entry' , 14.7 , 14 , 123045607890 , true , 'The world''s most advanced open source database.' , '1987-07-14' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 54 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
 #line 54 "dyntest.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "insert into dyntest values ( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into dyntest values ( 'second entry' , 1407.87 , 1407 , 987065403210 , false , 'The elephant never forgets.' , '1999-11-5' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 55 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
 #line 55 "dyntest.pgc"
 
 
-  { ECPGprepare(__LINE__, "MYQUERY" , QUERY);
+  { ECPGprepare(__LINE__, NULL, 0, "myquery", QUERY);
 #line 57 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}
 #line 57 "dyntest.pgc"
 
-  /* declare MYCURS  cursor  for ? */
+  /* declare MYCURS  cursor  for $1 */
 #line 58 "dyntest.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "declare MYCURS  cursor  for ?", 
-	ECPGt_char_variable,(ECPGprepared_statement("MYQUERY")),(long)1,(long)1,(1)*sizeof(char), 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "declare MYCURS  cursor  for $1", 
+	ECPGt_char_variable,(ECPGprepared_statement("myquery", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 60 "dyntest.pgc"
 
@@ -273,7 +273,7 @@ if (sqlca.sqlcode < 0) error (  );}
 
   while (1)
     {
-      { ECPGdo(__LINE__, 0, 1, NULL, "fetch in MYCURS", ECPGt_EOIT, 
+      { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "fetch in MYCURS", ECPGt_EOIT, 
 	ECPGt_descriptor, "MYDESC", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 64 "dyntest.pgc"
@@ -472,7 +472,7 @@ if (sqlca.sqlcode < 0) error (  );}
 	}
     }
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "close MYCURS", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "close MYCURS", ECPGt_EOIT, ECPGt_EORT);
 #line 197 "dyntest.pgc"
 
 if (sqlca.sqlcode < 0) error (  );}

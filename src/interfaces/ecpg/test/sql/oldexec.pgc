@@ -1,0 +1,93 @@
+#include <stdlib.h>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+exec sql include ../regression;
+
+exec sql whenever sqlerror sqlprint;
+
+int
+main(void)
+{
+exec sql begin declare section;
+	int amount[8];
+	int increment=100;
+	char name[8][8];
+	char letter[8][1];
+	char command[128];
+exec sql end declare section;
+	int i,j;
+
+	ECPGdebug(1, stderr);
+
+	exec sql connect to REGRESSDB1 as main;
+	exec sql create table test (name char(8), amount int, letter char(1));
+	exec sql commit;
+
+	sprintf(command, "insert into test (name, amount, letter) values ('db: ''r1''', 1, 'f')");
+	exec sql execute immediate :command;
+
+	sprintf(command, "insert into test (name, amount, letter) values ('db: ''r1''', 2, 't')");
+	exec sql execute immediate :command;
+
+	sprintf(command, "insert into test (name, amount, letter) select name, amount+10, letter from test");
+	exec sql execute immediate :command;
+
+	printf("Inserted %ld tuples via execute immediate\n", sqlca.sqlerrd[2]);
+
+	sprintf(command, "insert into test (name, amount, letter) select name, amount+$1, letter from test");
+	exec sql prepare I from :command;
+	exec sql execute I using :increment;
+
+	printf("Inserted %ld tuples via prepared execute\n", sqlca.sqlerrd[2]);
+
+	exec sql commit;
+
+	sprintf (command, "select * from test");
+
+	exec sql prepare F from :command;
+	exec sql declare CUR cursor for F;
+
+	exec sql open CUR;
+	exec sql fetch 8 in CUR into :name, :amount, :letter;
+
+	for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
+	{
+		exec sql begin declare section;
+		char n[8], l = letter[i][0];
+		int a = amount[i];
+		exec sql end declare section;
+
+		strncpy(n, name[i], 8);
+		printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
+	}
+
+	exec sql close CUR;
+
+	sprintf (command, "select * from test where ? = amount");
+
+	exec sql prepare F from :command;
+	exec sql declare CUR3 cursor for F;
+
+	exec sql open CUR3 using 1;
+	exec sql fetch in CUR3 into :name, :amount, :letter;
+
+	for (i=0, j=sqlca.sqlerrd[2]; i<j; i++)
+	{
+		exec sql begin declare section;
+		char n[8], l = letter[i][0];
+		int a = amount[i];
+		exec sql end declare section;
+
+		strncpy(n, name[i], 8);
+		printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
+	}
+
+	exec sql close CUR3;
+	exec sql drop table test;
+	exec sql commit;
+	exec sql disconnect;
+
+	return (0);
+}

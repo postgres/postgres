@@ -257,5 +257,4 @@ check_errno(void)
 			printf("(libc: (%s)) ", strerror(errno));
 			break;
 	}
-
 }

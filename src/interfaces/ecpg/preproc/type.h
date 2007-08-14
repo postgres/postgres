@@ -25,11 +25,12 @@ struct ECPGtype
 		struct ECPGstruct_member *members;		/* A pointer to a list of
 												 * members. */
 	}			u;
+	int	lineno;
 };
 
 /* Everything is malloced. */
 void		ECPGmake_struct_member(char *, struct ECPGtype *, struct ECPGstruct_member **);
-struct ECPGtype *ECPGmake_simple_type(enum ECPGttype, char *);
+struct ECPGtype *ECPGmake_simple_type(enum ECPGttype, char *, int);
 struct ECPGtype *ECPGmake_varchar_type(enum ECPGttype, long);
 struct ECPGtype *ECPGmake_array_type(struct ECPGtype *, char *);
 struct ECPGtype *ECPGmake_struct_type(struct ECPGstruct_member *, enum ECPGttype, char *);
@@ -92,6 +93,13 @@ struct su_symbol
 {
 	char	   *su;
 	char	   *symbol;
+};
+
+struct prep
+{
+	char	*name;
+	char 	*stmt;
+	char	*type;
 };
 
 struct this_type

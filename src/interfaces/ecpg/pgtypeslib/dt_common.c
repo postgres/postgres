@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.40 2007/05/21 07:07:48 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.41 2007/08/14 10:01:53 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -1816,7 +1816,7 @@ ParseDateTime(char *timestr, char *lowstr,
  */
 int
 DecodeDateTime(char **field, int *ftype, int nf,
-		  int *dtype, struct tm * tm, fsec_t *fsec, int *tzp, bool EuroDates)
+		  int *dtype, struct tm * tm, fsec_t *fsec, bool EuroDates)
 {
 	int			fmask = 0,
 				tmask,
@@ -1828,6 +1828,8 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			haveTextMonth = FALSE;
 	int			is2digits = FALSE;
 	int			bc = FALSE;
+	int			t = 0;
+	int			*tzp = &t;
 
 	/***
 	 * We'll insist on at least all of the date fields, but initialize the

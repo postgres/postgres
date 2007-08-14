@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.152 2007/03/17 19:25:23 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.153 2007/08/14 10:01:53 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@ extern YYSTYPE yylval;
 static int		xcdepth = 0;	/* depth of nesting in slash-star comments */
 static char	   *dolqstart;      /* current $foo$ quote start string */
 static bool		escape_string_warning;
-static bool		standard_conforming_strings;
 static bool 	warn_on_first_escape;
 static YY_BUFFER_STATE scanbufhandle;
 static char *scanbuf;
@@ -101,6 +100,7 @@ static struct _if_value
  *	<xh> hexadecimal numeric string - thomas 1997-11-16
  *	<xq> standard quoted strings - thomas 1997-07-30
  *	<xe> extended quoted strings (support backslash escape sequences)
+ *	<xn> national character quoted strings
  *  <xdolq> $foo$ quoted strings
  */
 
@@ -110,6 +110,7 @@ static struct _if_value
 %x xdc
 %x xh
 %x xe
+%x xn
 %x xq
 %x xdolq
 %x xcond
@@ -409,27 +410,21 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				warn_on_first_escape = true;
 		        token_start = yytext;
 				state_before = YYSTATE;
-				if (standard_conforming_strings)
-					BEGIN(xq);
-				else
-					BEGIN(xe);
+				BEGIN(xn);
 				startlit();
 			}
 <C>{xqstart}	{
 				warn_on_first_escape = false;
 				token_start = yytext;
 				state_before = YYSTATE;
-				BEGIN(xe);
+				BEGIN(xq);
 				startlit();
 			}
 <SQL>{xqstart}	{
 				warn_on_first_escape = true;
 				token_start = yytext;
 				state_before = YYSTATE;
-				if (standard_conforming_strings)
-					BEGIN(xq);
-				else
-					BEGIN(xe);
+				BEGIN(xq);
 				startlit();
 			}
 <SQL>{xestart}	{
@@ -439,15 +434,29 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				BEGIN(xe);
 				startlit();
 			}
-<xq,xe>{quotestop} |
-<xq,xe>{quotefail} {
+<xq>{quotestop} |
+<xq>{quotefail} {
 				yyless(1);
 				BEGIN(state_before);
 				yylval.str = mm_strdup(literalbuf);
 				return SCONST;
 			}
-<xq,xe>{xqdouble}		{ addlitchar('\''); }
-<xq>{xqinside}		{ addlit(yytext, yyleng); }
+<xe>{quotestop} |
+<xe>{quotefail} {
+				yyless(1);
+				BEGIN(state_before);
+				yylval.str = mm_strdup(literalbuf);
+				return ECONST;
+			}
+<xn>{quotestop} |
+<xn>{quotefail} {
+				yyless(1);
+				BEGIN(state_before);
+				yylval.str = mm_strdup(literalbuf);
+				return NCONST;
+			}
+<xq,xe,xn>{xqdouble}		{ addlitchar('\''); }
+<xq,xn>{xqinside}		{ addlit(yytext, yyleng); }
 <xe>{xeinside}		{ addlit(yytext, yyleng); }
 <xe>{xeescape}  	{ 
 				check_escape_warning();
@@ -461,12 +470,12 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 				check_escape_warning();
 				addlit(yytext, yyleng);
 			}
-<xq,xe>{quotecontinue}	{ /* ignore */ }
+<xq,xe,xn>{quotecontinue}	{ /* ignore */ }
 <xe>.                   {
 			   /* This is only needed for \ just before EOF */
 			   addlitchar(yytext[0]);
 			}
-<xq,xe><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated quoted string"); }
+<xq,xe,xn><<EOF>>		{ mmerror(PARSE_ERROR, ET_FATAL, "Unterminated quoted string"); }
 <SQL>{dolqfailed}	{
 				/* throw back all but the initial "$" */
 				yyless(1);

@@ -308,7 +308,6 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
-	int			tz;
 	int			dtype;
 	int			nf;
 	char	   *field[MAXDATEFIELDS];
@@ -324,7 +323,7 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 	}
 
 	if (ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf, ptr) != 0 ||
-		DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz, 0) != 0)
+		DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, 0) != 0)
 	{
 		errno = PGTYPES_TS_BAD_TIMESTAMP;
 		return (noresult);

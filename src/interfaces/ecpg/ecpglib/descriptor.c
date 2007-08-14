@@ -1,6 +1,6 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.22 2007/06/11 11:52:08 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.23 2007/08/14 10:01:52 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
@@ -495,6 +495,8 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 		if (!desc_item)
 			return false;
 		desc_item->num = index;
+		if (desc->count < index)
+			desc->count = index;
 		desc_item->next = desc->items;
 		desc->items = desc_item;
 	}
@@ -508,7 +510,6 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 	{
 		enum ECPGdtype itemtype;
 		const char *tobeinserted = NULL;
-		bool		malloced;
 
 		itemtype = va_arg(args, enum ECPGdtype);
 
@@ -542,11 +543,12 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 		{
 			case ECPGd_data:
 				{
-					if (!ECPGstore_input(lineno, true, var, &tobeinserted, &malloced, false))
+					if (!ECPGstore_input(lineno, true, var, &tobeinserted, false))
 					{
 						ECPGfree(var);
 						return false;
 					}
+
 					ECPGfree(desc_item->data); /* free() takes care of a potential NULL value */
 					desc_item->data = (char *) tobeinserted;
 					tobeinserted = NULL;
@@ -583,13 +585,7 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 					return false;
 				}
 		}
-
-		/*
-		 * if (itemtype == ECPGd_data) { free(desc_item->data);
-		 * desc_item->data = NULL; }
-		 */
-	}
-	while (true);
+	} while (true);
 	ECPGfree(var);
 
 	return true;
@@ -598,18 +594,18 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 bool
 ECPGdeallocate_desc(int line, const char *name)
 {
-	struct descriptor *i;
+	struct descriptor *desc;
 	struct descriptor **lastptr = &all_descriptors;
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
 	ECPGinit_sqlca(sqlca);
-	for (i = all_descriptors; i; lastptr = &i->next, i = i->next)
+	for (desc = all_descriptors; desc; lastptr = &desc->next, desc = desc->next)
 	{
-		if (!strcmp(name, i->name))
+		if (!strcmp(name, desc->name))
 		{
 			struct descriptor_item *desc_item;
 
-			for (desc_item = i->items; desc_item;)
+			for (desc_item = desc->items; desc_item;)
 			{
 				struct descriptor_item *di;
 
@@ -619,10 +615,10 @@ ECPGdeallocate_desc(int line, const char *name)
 				ECPGfree(di);
 			}
 
-			*lastptr = i->next;
-			ECPGfree(i->name);
-			PQclear(i->result);
-			ECPGfree(i);
+			*lastptr = desc->next;
+			ECPGfree(desc->name);
+			PQclear(desc->result);
+			ECPGfree(desc);
 			return true;
 		}
 	}

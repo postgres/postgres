@@ -69,7 +69,7 @@ int main(void)
 	deccvint(7, &j);
 	deccvint(14, &m);
 	decadd(&j, &m, &n);
-	$delete from test where i=:n;
+	$delete from test where i= :n::decimal;
 	printf("DELETE: %ld\n", sqlca.sqlcode);
 
 	$select 1 from test where i=14;

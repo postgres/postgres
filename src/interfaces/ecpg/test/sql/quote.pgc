@@ -7,6 +7,7 @@ EXEC SQL INCLUDE ../regression;
 int main(int argc, char* argv[]) {
   EXEC SQL BEGIN DECLARE SECTION;
     char var[25];
+    int i;
   EXEC SQL END DECLARE SECTION;
 
   ECPGdebug(1, stderr);
@@ -23,18 +24,30 @@ int main(int argc, char* argv[]) {
 
   /* this is a\\b actually */
   EXEC SQL INSERT INTO "My_Table" VALUES ( 1, 'a\\\\b' );
-  /* this is a\b */
+  /* this is a\\b */
   EXEC SQL INSERT INTO "My_Table" VALUES ( 1, E'a\\\\b' );
 
   EXEC SQL SET standard_conforming_strings TO on;
 
-  /* this is a\\b actually */
-  EXEC SQL INSERT INTO "My_Table" VALUES ( 1, 'a\\\\b' );
-  /* this is a\b */
-  EXEC SQL INSERT INTO "My_Table" VALUES ( 1, E'a\\\\b' );
+  /* this is a\\\\b actually */
+  EXEC SQL INSERT INTO "My_Table" VALUES ( 2, 'a\\\\b' );
+  /* this is a\\b */
+  EXEC SQL INSERT INTO "My_Table" VALUES ( 2, E'a\\\\b' );
 
-  EXEC SQL SELECT * FROM "My_Table";
+  EXEC SQL BEGIN;
+  EXEC SQL DECLARE C CURSOR FOR SELECT * FROM "My_Table";
 
+  EXEC SQL OPEN C;
+
+  EXEC SQL WHENEVER NOT FOUND DO BREAK;
+
+  while (true)
+  {
+  	EXEC SQL FETCH C INTO :i, :var;
+	printf("value: %d %s\n", i, var);
+  }
+
+  EXEC SQL ROLLBACK;
   EXEC SQL DROP TABLE "My_Table";
 
   EXEC SQL DISCONNECT ALL;

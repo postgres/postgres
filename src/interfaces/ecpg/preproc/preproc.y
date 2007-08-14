@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.348 2007/07/25 16:10:41 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.349 2007/08/14 10:01:53 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -33,6 +33,8 @@ char	*input_filename = NULL;
 
 static int	QueryIsRule = 0, FoundInto = 0;
 static int	initializer = 0;
+static int	pacounter = 1;
+static char     pacounter_buffer[sizeof(int) * CHAR_BIT * 10 / 3]; /* a rough guess at the size we need */
 static struct this_type actual_type[STRUCT_DEPTH];
 static char *actual_startline[STRUCT_DEPTH];
 
@@ -49,21 +51,6 @@ struct ECPGtype ecpg_no_indicator = {ECPGt_NO_INDICATOR, 0L, NULL, {NULL}};
 struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
 
 struct ECPGtype ecpg_query = {ECPGt_char_variable, 0L, NULL, {NULL}};
-
-/* INFORMIX workaround, no longer needed
-static struct inf_compat_col
-{
-	char *name;
-	char *indirection;
-	struct inf_compat_col *next;
-} *informix_col;
-
-static struct inf_compat_val
-{
-	char *val;
-	struct inf_compat_val *next;
-} *informix_val;
-*/
 
 /*
  * Handle parsing errors and warnings
@@ -103,7 +90,7 @@ mmerror(int error_code, enum errortype type, char * error, ...)
 			fclose(yyin);
 			fclose(yyout);
 			if (unlink(output_filename) != 0 && *output_filename != '-')
-				fprintf(stderr, "Could not remove output file %s!\n", output_filename);
+			        fprintf(stderr, "Could not remove output file %s!\n", output_filename);
 			exit(error_code);
 	}
 }
@@ -218,7 +205,10 @@ create_questionmarks(char *name, bool array)
 		count = 1;
 
 	for (; count > 0; count --)
-		result = cat2_str(result, make_str("? , "));
+	{
+		sprintf(pacounter_buffer, "$%d", pacounter++);
+		result = cat_str(3, result, strdup(pacounter_buffer), make_str(" , "));
+	}
 
 	/* removed the trailing " ," */
 
@@ -255,17 +245,17 @@ adjust_informix(struct arguments *list)
 
 		if ((ptr->variable->type->type != ECPGt_varchar && ptr->variable->type->type != ECPGt_char && ptr->variable->type->type != ECPGt_unsigned_char) && atoi(ptr->variable->type->size) > 1)
 		{
-			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->variable->type->u.element->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, make_str("1")), ptr->variable->type->size), 0);
+			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->variable->type->u.element->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, make_str("1"), ptr->variable->type->u.element->lineno), ptr->variable->type->size), 0);
 			sprintf(temp, "%d, (", ecpg_informix_var++);
 		}
 		else if ((ptr->variable->type->type == ECPGt_varchar || ptr->variable->type->type == ECPGt_char || ptr->variable->type->type == ECPGt_unsigned_char) && atoi(ptr->variable->type->size) > 1)
 		{
-			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size), 0);
+			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size, ptr->variable->type->lineno), 0);
 			sprintf(temp, "%d, (", ecpg_informix_var++);
 		}
 		else
 		{
-			ptr->variable = new_variable(cat_str(4, make_str("*("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size), 0);
+			ptr->variable = new_variable(cat_str(4, make_str("*("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size, ptr->variable->type->lineno), 0);
 			sprintf(temp, "%d, &(", ecpg_informix_var++);
 		}
 
@@ -282,12 +272,12 @@ adjust_informix(struct arguments *list)
 			/* create call to "ECPG_informix_set_var(<counter>, <pointer>. <linen number>)" */
 			if (atoi(ptr->indicator->type->size) > 1)
 			{
-				ptr->indicator = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->indicator->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size), 0);
+				ptr->indicator = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->indicator->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size, ptr->variable->type->lineno), 0);
 				sprintf(temp, "%d, (", ecpg_informix_var++);
 			}
 			else
 			{
-				ptr->indicator = new_variable(cat_str(4, make_str("*("), mm_strdup(ECPGtype_name(ptr->indicator->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size), 0);
+				ptr->indicator = new_variable(cat_str(4, make_str("*("), mm_strdup(ECPGtype_name(ptr->indicator->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size, ptr->variable->type->lineno), 0);
 				sprintf(temp, "%d, &(", ecpg_informix_var++);
 			}
 			result = cat_str(5, result, make_str("ECPG_informix_set_var("), mm_strdup(temp), mm_strdup(original_var), make_str("), __LINE__);\n"));
@@ -346,6 +336,7 @@ add_additional_variables(char *name, bool insert)
 	enum	ECPGdtype	dtype_enum;
 	struct	fetch_desc	descriptor;
 	struct  su_symbol	struct_union;
+	struct	prep		prep;
 }
 
 /* special embedded SQL token */
@@ -466,7 +457,8 @@ add_additional_variables(char *name, bool insert)
 %token           NULLS_FIRST NULLS_LAST WITH_CASCADED WITH_LOCAL WITH_CHECK
 
 /* Special token types, not actually keywords - see the "lex" file */
-%token <str>	IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP BCONST XCONST DOLCONST
+%token <str>	IDENT SCONST Op CSTRING CVARIABLE CPP_LINE IP BCONST
+%token <str>	XCONST DOLCONST ECONST NCONST
 %token <ival>	ICONST PARAM
 %token <dval>	FCONST
 
@@ -547,7 +539,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	RemoveOperStmt RenameStmt all_Op opt_trusted opt_lancompiler
 %type  <str>	VariableSetStmt var_value zone_value VariableShowStmt
 %type  <str>	VariableResetStmt AlterTableStmt from_list overlay_list
-%type  <str>	relation_name OptTableSpace LockStmt opt_lock
+%type  <str>	relation_name OptTableSpace LockStmt opt_lock 
 %type  <str>	CreateUserStmt AlterUserStmt CreateSeqStmt OptSeqList
 %type  <str>	OptSeqElem TriggerForSpec TriggerForOpt TriggerForType
 %type  <str>	DropTrigStmt TriggerOneEvent TriggerEvents RuleActionStmt
@@ -576,8 +568,8 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	select_limit CheckPointStmt ECPGColId old_aggr_list
 %type  <str>	OptSchemaName OptSchemaEltList schema_stmt opt_drop_behavior
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
-%type  <str>	columnref values_clause AllConstVar where_or_current_clause
-%type  <str>	insert_column_item DropRuleStmt ctext_expr 
+%type  <str>	columnref values_clause AllConstVar prep_type_clause ExecuteStmt
+%type  <str>	insert_column_item DropRuleStmt ctext_expr execute_param_clause 
 %type  <str>	createfunc_opt_item set_rest var_list_or_default alter_rel_cmd
 %type  <str>	CreateFunctionStmt createfunc_opt_list func_table
 %type  <str>	DropUserStmt copy_from copy_opt_list copy_opt_item
@@ -589,7 +581,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	ConstBit GenericType TableFuncElementList opt_analyze
 %type  <str>	opt_sort_clause subquery_Op transaction_mode_item
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
-%type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into
+%type  <str>	indicator ecpg_using ecpg_into DeallocateStmt
 %type  <str>	storage_declaration storage_clause opt_initializer c_anything
 %type  <str>	variable_list variable c_thing c_term ECPGKeywords_vanames
 %type  <str>	opt_pointer ECPGDisconnect dis_name storage_modifier
@@ -599,15 +591,15 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	var_type_declarations quoted_ident_stringvar ECPGKeywords_rest
 %type  <str>	db_prefix server opt_options opt_connection_name c_list
 %type  <str>	ECPGSetConnection ECPGTypedef c_args ECPGKeywords ECPGCKeywords
-%type  <str>	enum_type civar civarind ECPGCursorStmt ECPGDeallocate
-%type  <str>	ECPGFree ECPGDeclare ECPGVar opt_at enum_definition
+%type  <str>	enum_type civar civarind ECPGCursorStmt PreparableStmt
+%type  <str>	ECPGFree ECPGDeclare ECPGVar at enum_definition
 %type  <str>	struct_union_type s_struct_union vt_declarations execute_rest
 %type  <str>	var_declaration type_declaration single_vt_declaration
 %type  <str>	ECPGSetAutocommit on_off variable_declarations ECPGDescribe
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_output
 %type  <str>	ECPGGetDescriptorHeader ECPGColLabel single_var_declaration
 %type  <str>	reserved_keyword unreserved_keyword ecpg_interval opt_ecpg_using
-%type  <str>	col_name_keyword precision opt_scale
+%type  <str>	col_name_keyword precision opt_scale ECPGExecuteImmediateStmt
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst 
 %type  <str>	using_descriptor into_descriptor opt_nulls_order opt_asc_desc
 %type  <str>	prepared_name struct_union_type_with_symbol OptConsTableSpace
@@ -627,6 +619,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	CreateOpFamilyStmt AlterOpFamilyStmt create_as_target
 %type  <str>	xml_attributes xml_attribute_list document_or_content xml_whitespace_option
 %type  <str>	opt_xml_root_standalone xml_root_version xml_attribute_el 
+%type  <str>	where_or_current_clause
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -637,6 +630,8 @@ add_additional_variables(char *name, bool insert)
 %type  <dtype_enum> descriptor_item desc_header_item
 
 %type  <type>	var_type
+
+%type  <prep>	PrepareStmt
 
 %type  <action> action
 
@@ -649,7 +644,7 @@ statements: /*EMPTY*/
 		| statements statement
 		;
 
-statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
+statement: ecpgstart at stmt ';'	{ connection = NULL; }
 		| ecpgstart stmt ';'
 		| ecpgstart ECPGVarDeclaration
 		{
@@ -664,7 +659,7 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 		| '}'			{ remove_typedefs(braces_open); remove_variables(braces_open--); fputs("}", yyout); }
 		;
 
-opt_at: AT connection_object
+at: AT connection_object
 		{
 			connection = $2;
 			/*
@@ -674,22 +669,23 @@ opt_at: AT connection_object
 			 */
 			if (argsinsert != NULL)
 				argsinsert = NULL;
-		};
+		}
+	;
 
-stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
-		| AlterDatabaseSetStmt	{ output_statement($1, 0, connection); }
-		| AlterDomainStmt	{ output_statement($1, 0, connection); }
-		| AlterFunctionStmt	{ output_statement($1, 0, connection); }
-		| AlterGroupStmt	{ output_statement($1, 0, connection); }
-		| AlterObjectSchemaStmt	{ output_statement($1, 0, connection); }
-		| AlterOwnerStmt	{ output_statement($1, 0, connection); }
-		| AlterSeqStmt		{ output_statement($1, 0, connection); }
-		| AlterTableStmt	{ output_statement($1, 0, connection); }
-		| AlterRoleSetStmt	{ output_statement($1, 0, connection); }
-		| AlterRoleStmt		{ output_statement($1, 0, connection); }
-		| AlterUserStmt		{ output_statement($1, 0, connection); }
-		| AnalyzeStmt		{ output_statement($1, 0, connection); }
-		| CheckPointStmt	{ output_statement($1, 0, connection); }
+stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| AlterDatabaseSetStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| AlterDomainStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| AlterFunctionStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| AlterGroupStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| AlterObjectSchemaStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| AlterOwnerStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| AlterSeqStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| AlterTableStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| AlterRoleSetStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| AlterRoleStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| AlterUserStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| AnalyzeStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| CheckPointStmt	{ output_statement($1, 0, ECPGst_normal); }
 		| ClosePortalStmt
 		{
 			if (INFORMIX_MODE)
@@ -709,89 +705,103 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 					free($1);
 				}
 				else
-					output_statement($1, 0, connection);
+					output_statement($1, 0, ECPGst_normal);
 			}
 			else
-				output_statement($1, 0, connection);
+				output_statement($1, 0, ECPGst_normal);
 		}
-		| ClusterStmt		{ output_statement($1, 0, connection); }
-		| CommentStmt		{ output_statement($1, 0, connection); }
-		| ConstraintsSetStmt	{ output_statement($1, 0, connection); }
-		| CopyStmt		{ output_statement($1, 0, connection); }
-		| CreateAsStmt		{ output_statement($1, 0, connection); }
-		| CreateAssertStmt	{ output_statement($1, 0, connection); }
-		| CreateCastStmt	{ output_statement($1, 0, connection); }
-		| CreateConversionStmt	{ output_statement($1, 0, connection); }
-		| CreateDomainStmt	{ output_statement($1, 0, connection); }
-		| CreateFunctionStmt	{ output_statement($1, 0, connection); }
-		| CreateGroupStmt	{ output_statement($1, 0, connection); }
-		| CreatePLangStmt	{ output_statement($1, 0, connection); }
-		| CreateOpClassStmt	{ output_statement($1, 0, connection); }
-		| CreateOpFamilyStmt	{ output_statement($1, 0, connection); }
-		| AlterOpFamilyStmt	{ output_statement($1, 0, connection); }
-		| CreateRoleStmt	{ output_statement($1, 0, connection); }
-		| CreateSchemaStmt	{ output_statement($1, 0, connection); }
-		| CreateSeqStmt		{ output_statement($1, 0, connection); }
-		| CreateStmt		{ output_statement($1, 0, connection); }
-		| CreateTableSpaceStmt	{ output_statement($1, 0, connection); }
-		| CreateTrigStmt	{ output_statement($1, 0, connection); }
-		| CreateUserStmt	{ output_statement($1, 0, connection); }
-		| CreatedbStmt		{ output_statement($1, 0, connection); }
-		/*| DeallocateStmt	{ output_statement($1, 0, connection); }*/
+		| ClusterStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| CommentStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| ConstraintsSetStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CopyStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| CreateAsStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| CreateAssertStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateCastStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateConversionStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateDomainStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateFunctionStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateGroupStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreatePLangStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateOpClassStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateOpFamilyStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| AlterOpFamilyStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateRoleStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateSchemaStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateSeqStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| CreateStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| CreateTableSpaceStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateTrigStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreateUserStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| CreatedbStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| DeallocateStmt
+		{
+			if (connection)
+				mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement.\n");
+				
+			output_deallocate_prepare_statement($1);
+		}
 		| DeclareCursorStmt	{ output_simple_statement($1); }
-		| DefineStmt		{ output_statement($1, 0, connection); }
-		| DeleteStmt		{ output_statement($1, 1, connection); }
-		| DiscardStmt		{ output_statement($1, 1, connection); }
-		| DropAssertStmt	{ output_statement($1, 0, connection); }
-		| DropCastStmt		{ output_statement($1, 0, connection); }
-		| DropGroupStmt		{ output_statement($1, 0, connection); }
-		| DropOpClassStmt	{ output_statement($1, 0, connection); }
-		| DropOpFamilyStmt	{ output_statement($1, 0, connection); }
-		| DropOwnedStmt		{ output_statement($1, 0, connection); }
-		| DropPLangStmt		{ output_statement($1, 0, connection); }
-		| DropRoleStmt		{ output_statement($1, 0, connection); }
-		| DropRuleStmt		{ output_statement($1, 0, connection); }
-		| DropStmt		{ output_statement($1, 0, connection); }
-		| DropTableSpaceStmt	{ output_statement($1, 0, connection); }
-		| DropTrigStmt		{ output_statement($1, 0, connection); }
-		| DropUserStmt		{ output_statement($1, 0, connection); }
-		| DropdbStmt		{ output_statement($1, 0, connection); }
-		| ExplainStmt		{ output_statement($1, 0, connection); }
-/*		| ExecuteStmt		{ output_statement($1, 0, connection); }*/
-		| FetchStmt			{ output_statement($1, 1, connection); }
-		| GrantStmt			{ output_statement($1, 0, connection); }
-		| GrantRoleStmt		{ output_statement($1, 0, connection); }
-		| IndexStmt			{ output_statement($1, 0, connection); }
-		| InsertStmt		{ output_statement($1, 1, connection); }
-		| ListenStmt		{ output_statement($1, 0, connection); }
-		| LoadStmt			{ output_statement($1, 0, connection); }
-		| LockStmt			{ output_statement($1, 0, connection); }
-		| NotifyStmt		{ output_statement($1, 0, connection); }
-/*		| PrepareStmt		{ output_statement($1, 0, connection); }*/
-		| ReassignOwnedStmt	{ output_statement($1, 0, connection); }
-		| ReindexStmt		{ output_statement($1, 0, connection); }
-		| RemoveAggrStmt	{ output_statement($1, 0, connection); }
-		| RemoveOperStmt	{ output_statement($1, 0, connection); }
-		| RemoveFuncStmt	{ output_statement($1, 0, connection); }
-		| RenameStmt		{ output_statement($1, 0, connection); }
-		| RevokeStmt		{ output_statement($1, 0, connection); }
-		| RevokeRoleStmt	{ output_statement($1, 0, connection); }
-		| RuleStmt			{ output_statement($1, 0, connection); }
-		| SelectStmt		{ output_statement($1, 1, connection); }
+		| DefineStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| DeleteStmt		{ output_statement($1, 1, ECPGst_normal); }
+		| DiscardStmt		{ output_statement($1, 1, ECPGst_normal); }
+		| DropAssertStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| DropCastStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| DropGroupStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| DropOpClassStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| DropOpFamilyStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| DropOwnedStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| DropPLangStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| DropRoleStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| DropRuleStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| DropStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| DropTableSpaceStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| DropTrigStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| DropUserStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| DropdbStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| ExplainStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| ExecuteStmt		{ output_statement($1, 0, ECPGst_execute); }
+		| FetchStmt		{ output_statement($1, 1, ECPGst_normal); }
+		| GrantStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| GrantRoleStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| IndexStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| InsertStmt		{ output_statement($1, 1, ECPGst_normal); }
+		| ListenStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| LoadStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| LockStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| NotifyStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| PrepareStmt		{ 
+						if ($1.type == NULL || strlen($1.type) == 0) /* use PQprepare without type parameters */
+							output_prepare_statement($1.name, $1.stmt);  
+						else	/* use PQexec and let backend do its stuff */
+						{
+							char *txt = cat_str(5, make_str("prepare"), $1.name, $1.type, make_str("as"), $1.stmt);
+							output_statement(txt, 0, ECPGst_normal);
+						}
+					}		
+		| ReassignOwnedStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| ReindexStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| RemoveAggrStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| RemoveOperStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| RemoveFuncStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| RenameStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| RevokeStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| RevokeRoleStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| RuleStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| SelectStmt		{ output_statement($1, 1, ECPGst_normal); }
 		| TransactionStmt
 		{
 			fprintf(yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
 			whenever_action(2);
 			free($1);
 		}
-		| TruncateStmt		{ output_statement($1, 0, connection); }
-		| UnlistenStmt		{ output_statement($1, 0, connection); }
-		| UpdateStmt		{ output_statement($1, 1, connection); }
-		| VacuumStmt		{ output_statement($1, 0, connection); }
-		| VariableSetStmt	{ output_statement($1, 0, connection); }
-		| VariableShowStmt	{ output_statement($1, 0, connection); }
-		| VariableResetStmt	{ output_statement($1, 0, connection); }
-		| ViewStmt			{ output_statement($1, 0, connection); }
+		| TruncateStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| UnlistenStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| UpdateStmt		{ output_statement($1, 1, ECPGst_normal); }
+		| VacuumStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| VariableSetStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| VariableShowStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| VariableResetStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| ViewStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| ECPGAllocateDescr
 		{
 			fprintf(yyout,"ECPGallocate_desc(__LINE__, %s);",$1);
@@ -811,14 +821,6 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 		| ECPGCursorStmt
 		{
 			output_simple_statement($1);
-		}
-		| ECPGDeallocate
-		{
-			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for deallocate statement.\n");
-			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s);", compat, $1);
-			whenever_action(2);
-			free($1);
 		}
 		| ECPGDeallocateDescr
 		{
@@ -853,13 +855,13 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 			whenever_action(2);
 			free($1);
 		}
-		| ECPGExecute
-		{
-			output_statement($1, 0, connection);
-		}
+		| ECPGExecuteImmediateStmt	{ output_statement($1, 0, ECPGst_exec_immediate); }
 		| ECPGFree
 		{
-			fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, \"%s\");", compat, $1);
+			if (strcmp($1, "all"))
+				fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, \"%s\");", compat, $1);
+			else
+				fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d);", compat);
 
 			whenever_action(2);
 			free($1);
@@ -883,21 +885,11 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, connection); }
 
 			if ((ptr = add_additional_variables($1, true)) != NULL)
 			{
-				output_statement(mm_strdup(ptr->command), 0,
-								 ptr->connection ? mm_strdup(ptr->connection) : NULL);
+				connection = ptr->connection ? mm_strdup(ptr->connection) : NULL;
+				output_statement(mm_strdup(ptr->command), 0, 0);
 				ptr->opened = true;
 			}
 		}
-		| ECPGPrepare
-		{
-			if (connection)
-				mmerror(PARSE_ERROR, ET_ERROR, "no at option for prepare statement.\n");
-
-			fprintf(yyout, "{ ECPGprepare(__LINE__, %s);", $1);
-			whenever_action(2);
-			free($1);
-		}
-		/* | ECPGRelease		{ / * output already done * / } */
 		| ECPGSetAutocommit
 		{
 			fprintf(yyout, "{ ECPGsetcommit(__LINE__, \"%s\", %s);", $1, connection ? connection : "NULL");
@@ -2274,19 +2266,44 @@ FetchStmt: FETCH fetch_direction from_in name ecpg_into
 		;
 
 fetch_direction:  NEXT			{ $$ = make_str("next"); }
-		| PRIOR					{ $$ = make_str("prior"); }
-		| FIRST_P				{ $$ = make_str("first"); }
-		| LAST_P				{ $$ = make_str("last"); }
-		| ABSOLUTE_P IntConst	{ $$ = cat2_str(make_str("absolute"), $2); }
-		| RELATIVE_P IntConst	{ $$ = cat2_str(make_str("relative"), $2); }
-		| IntConst				{ $$ = $1; }
-		| ALL					{ $$ = make_str("all"); }
-		| FORWARD				{ $$ = make_str("forward"); }
-		| FORWARD IntConst		{ $$ = cat2_str(make_str("forward"), $2); }
-		| FORWARD ALL			{ $$ = make_str("forward all"); }
-		| BACKWARD				{ $$ = make_str("backward"); }
-		| BACKWARD IntConst		{ $$ = cat2_str(make_str("backward"), $2); }
-		| BACKWARD ALL			{ $$ = make_str("backward all"); }
+		| PRIOR			{ $$ = make_str("prior"); }
+		| FIRST_P		{ $$ = make_str("first"); }
+		| LAST_P		{ $$ = make_str("last"); }
+		| ABSOLUTE_P IntConst	{ 
+					  if ($2[1] == '$')
+					  	 mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable.\n");
+					  else
+					  	$$ = cat2_str(make_str("absolute"), $2);
+					}
+		| RELATIVE_P IntConst	{ 
+		                          if ($2[1] == '$')
+						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable.\n");
+					  else
+						$$ = cat2_str(make_str("relative"), $2);
+					}
+		| IntConst		{  
+		                          if ($1[1] == '$')
+						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable.\n");
+					  else
+						$$ = $1;
+					}
+		| ALL			{ $$ = make_str("all"); }
+		| FORWARD		{ $$ = make_str("forward"); }
+		| FORWARD IntConst	{  
+		                          if ($2[1] == '$')
+						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable.\n");
+					  else
+						$$ = cat2_str(make_str("forward"), $2);
+					}
+		| FORWARD ALL		{ $$ = make_str("forward all"); }
+		| BACKWARD		{ $$ = make_str("backward"); }
+		| BACKWARD IntConst	{  
+		                          if ($2[1] == '$')
+						mmerror(PARSE_ERROR, ET_ERROR, "fetch/move count must not be a variable.\n");
+					  else
+						$$ = cat2_str(make_str("backward"), $2);
+					}
+		| BACKWARD ALL		{ $$ = make_str("backward all"); }
 		;
 
 from_in: IN_P			{ $$ = make_str("in"); }
@@ -3193,19 +3210,25 @@ ExplainableStmt:
 		| UpdateStmt
 		| DeleteStmt
 		| DeclareCursorStmt
-		/* | ExecuteStmt */
+		| ExecuteStmt
 		;
 opt_analyze:
 		analyze_keyword                 { $$ = $1; }
 		| /* EMPTY */			{ $$ = EMPTY; }
 		;
 
-/*
-
-conflicts with ecpg
-
-PrepareStmt: PREPARE name prep_type_clause AS PreparableStmt
-		{ $$ = cat_str(5, make_str("prepare"), $2, $3, make_str("as"), $5); }
+PrepareStmt: PREPARE prepared_name prep_type_clause AS PreparableStmt
+		{
+			$$.name = $2;
+			$$.type = $3;
+			$$.stmt = cat_str(3, make_str("\""), $5, make_str("\""));
+		}
+		| PREPARE prepared_name FROM execstring /* ECPG addon */
+		{
+			$$.name = $2;
+			$$.type = NULL;
+			$$.stmt = $4;
+		}
 		;
 
 PreparableStmt:
@@ -3216,26 +3239,28 @@ PreparableStmt:
 		;
 
 prep_type_clause: '(' type_list ')'	{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
-		| /* EMPTY * /		{ $$ = EMPTY; }
+		| /* EMPTY */		{ $$ = EMPTY; }
 			;
 
-ExecuteStmt: EXECUTE name execute_param_clause
-			{ $$ = cat_str(3, make_str("execute"), $2, $3); }
+ExecuteStmt: EXECUTE prepared_name execute_param_clause execute_rest /* execute_rest is an ecpg addon */
+			{
+				/* $$ = cat_str(3, make_str("ECPGprepared_statement("), $2, make_str(", __LINE__)"));*/
+				$$ = $2;
+			}
 		| CREATE OptTemp TABLE create_as_target AS
-			EXECUTE name execute_param_clause
-			{ $$ = cat_str(11, make_str("create"), $2, make_str("table"), $4, $5, $6, $7, $8, make_str("as execute"), $11, $12); }
+			EXECUTE prepared_name execute_param_clause
+			{ $$ = cat_str(7, make_str("create"), $2, make_str("table"), $4,  make_str("as execute"), $7, $8); }
 		;
 
 execute_param_clause: '(' expr_list ')'	{ $$ = cat_str(3, make_str("("), $2, make_str(")")); }
-		| /* EMPTY * /		{ $$ = EMPTY; }
+		| /* EMPTY */		{ $$ = EMPTY; }
 		;
 
-DeallocateStmt: DEALLOCATE name		{ $$ = cat2_str(make_str("deallocate"), $2); }
-		| DEALLOCATE PREPARE name	{ $$ = cat2_str(make_str("deallocate prepare"), $3); }
-		| DEALLOCATE ALL		{ $$ = make_str("deallocate all"); }
-		| DEALLOCATE PREPARE ALL	{ $$ = make_str("deallocate prepare all"); }
+DeallocateStmt: DEALLOCATE prepared_name		{ $$ = $2; }
+		| DEALLOCATE PREPARE prepared_name	{ $$ = $3; }
+		| DEALLOCATE ALL			{ $$ = make_str("all"); }
+		| DEALLOCATE PREPARE ALL		{ $$ = make_str("all"); }
 		;
-*/
 
 /*****************************************************************************
  *
@@ -3733,11 +3758,11 @@ where_clause:  WHERE a_expr		{ $$ = cat2_str(make_str("where"), $2); }
 		| /*EMPTY*/				{ $$ = EMPTY;  /* no qualifiers */ }
 		;
 
-where_or_current_clause:  WHERE a_expr                  { $$ = cat2_str(make_str("where"), $2); }
-                | WHERE CURRENT_P OF name               { $$ = cat2_str(make_str("where current of"), $4); }
-                | WHERE CURRENT_P OF PARAM              { $$ = make_str("where current of param"); }
-                | /*EMPTY*/                             { $$ = EMPTY;  /* no qualifiers */ }
-                ;
+where_or_current_clause:  WHERE a_expr			{ $$ = cat2_str(make_str("where"), $2); }
+		| WHERE CURRENT_P OF name		{ $$ = cat2_str(make_str("where current of"), $4); }
+		| WHERE CURRENT_P OF PARAM		{ $$ = make_str("where current of param"); }
+		| /*EMPTY*/				{ $$ = EMPTY;  /* no qualifiers */ }
+		;
 
 TableFuncElementList: TableFuncElement
 			{ $$ = $1; }
@@ -4720,6 +4745,28 @@ Sconst:  SCONST
 			$$[strlen($1)+2]='\0';
 			free($1);
 		}
+	| ECONST
+		{
+			/* escaped quote starting with E */
+			$$ = (char *)mm_alloc(strlen($1) + 4);
+			$$[0]='E';
+			$$[1]='\'';
+			strcpy($$+2, $1);
+			$$[strlen($1)+2]='\'';
+			$$[strlen($1)+3]='\0';
+			free($1);
+		}
+	| NCONST
+		{
+			/* escaped quote starting with rNE */
+			$$ = (char *)mm_alloc(strlen($1) + 4);
+			$$[0]='N';
+			$$[1]='\'';
+			strcpy($$+2, $1);
+			$$[strlen($1)+2]='\'';
+			$$[strlen($1)+3]='\0';
+			free($1);
+		}
 	| DOLCONST
 		{
 			$$ = $1; 
@@ -4736,10 +4783,10 @@ IntConst:	PosIntConst		{ $$ = $1; }
 
 IntConstVar:	Iconst
 		{
-	        char *length = mm_alloc(32);
+	        	char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 
 			sprintf(length, "%d", (int) strlen($1));
-			new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0);
+			new_variable($1, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
 			$$ = $1;
 		}
 		| cvariable	{ $$ = $1; }
@@ -4747,39 +4794,39 @@ IntConstVar:	Iconst
 
 AllConstVar:	Fconst
 		{
-	        char *length = mm_alloc(32);
+		        char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 
 			sprintf(length, "%d", (int) strlen($1));
-			new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0);
+			new_variable($1, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
 			$$ = $1;
 		}
 		| IntConstVar		{ $$ = $1; }
 		| '-' Fconst
 		{
-	        char *length = mm_alloc(32);
+		        char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 			char *var = cat2_str(make_str("-"), $2);
 
 			sprintf(length, "%d", (int) strlen(var));
-			new_variable(var, ECPGmake_simple_type(ECPGt_const, length), 0);
+			new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
 			$$ = var;
 		}
 		| '-' Iconst
 		{
-	        char *length = mm_alloc(32);
+		        char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 			char *var = cat2_str(make_str("-"), $2);
 
 			sprintf(length, "%d", (int) strlen(var));
-			new_variable(var, ECPGmake_simple_type(ECPGt_const, length), 0);
+			new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
 			$$ = var;
 		}
 		| Sconst
 		{
-	        char *length = mm_alloc(32);
+		        char *length = mm_alloc(sizeof(int) * CHAR_BIT * 10 / 3);
 			char *var = $1 + 1;
 
 			var[strlen(var) - 1] = '\0';
 			sprintf(length, "%d", (int) strlen(var));
-			new_variable(var, ECPGmake_simple_type(ECPGt_const, length), 0);
+			new_variable(var, ECPGmake_simple_type(ECPGt_const, length, 0), 0);
 			$$ = var;
 		}
 		;
@@ -5047,14 +5094,14 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 			this->next = cur;
 			this->name = $2;
 			this->connection = connection;
-			this->command =  cat_str(6, make_str("declare"), mm_strdup($2), $3, make_str("cursor"), $5, make_str("for ?"));
+			this->command =  cat_str(6, make_str("declare"), mm_strdup($2), $3, make_str("cursor"), $5, make_str("for $1"));
 			this->argsresult = NULL;
 
 			thisquery->type = &ecpg_query;
 			thisquery->brace_level = 0;
 			thisquery->next = NULL;
-			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement()") + strlen($7));
-			sprintf(thisquery->name, "ECPGprepared_statement(%s)", $7);
+			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement(, __LINE__)") + strlen($7));
+			sprintf(thisquery->name, "ECPGprepared_statement(%s, __LINE__)", $7);
 
 			this->argsinsert = NULL;
 			add_variable_to_head(&(this->argsinsert), thisquery, &no_indicator);
@@ -5065,16 +5112,12 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 		}
 		;
 
-/*
- * the exec sql deallocate prepare command to deallocate a previously
- * prepared statement
- */
-ECPGDeallocate: DEALLOCATE PREPARE prepared_name
-			{ $$ = $3; }
-		| DEALLOCATE prepared_name
-			{ $$ = $2; }
-		;
-
+ECPGExecuteImmediateStmt: EXECUTE IMMEDIATE execstring
+			{ 
+			  /* execute immediate means prepare the statement and
+			   * immediately execute it */
+			  $$ = $3;
+			};
 /*
  * variable decalartion outside exec sql declare block
  */
@@ -5418,7 +5461,11 @@ var_type:	simple_type
 				$$.type_enum = this->type->type_enum;
 				$$.type_dimension = this->type->type_dimension;
 				$$.type_index = this->type->type_index;
-				$$.type_sizeof = this->type->type_sizeof;
+				if (this->type->type_sizeof && strlen(this->type->type_sizeof) != 0)
+					$$.type_sizeof = this->type->type_sizeof;
+				else 
+					$$.type_sizeof = cat_str(3, make_str("sizeof("), mm_strdup(this->name), make_str(")"));
+
 				struct_member_list[struct_level] = ECPGstruct_member_dup(this->struct_member_list);
 			}
 		}
@@ -5626,6 +5673,7 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 			char *dimension = $3.index1; /* dimension of array */
 			char *length = $3.index2;    /* length of string */
 			char dim[14L];
+			char *vcn;
 
 			adjust_array(actual_type[struct_level].type_enum, &dimension, &length, actual_type[struct_level].type_dimension, actual_type[struct_level].type_index, strlen($1), false);
 
@@ -5643,10 +5691,10 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 
 				case ECPGt_varchar:
 					if (atoi(dimension) < 0)
-						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
+						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length, yylineno);
 					else
-						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
-
+						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length, yylineno), dimension);
+					
 					if (strcmp(dimension, "0") == 0 || abs(atoi(dimension)) == 1)
 							*dim = '\0';
 					else
@@ -5655,10 +5703,13 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 					if (atoi(length) < 0 || strcmp(length, "0") == 0)
 						mmerror(PARSE_ERROR, ET_ERROR, "pointer to varchar are not implemented");
 
+					/* make sure varchar struct name is unique by adding linenumer of its definition */
+					vcn = (char *) mm_alloc(strlen($2) + sizeof(int) * CHAR_BIT * 10 / 3);
+					sprintf(vcn, "%s_%d", $2, yylineno);
 					if (strcmp(dimension, "0") == 0)
-						$$ = cat_str(7, make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } *"), mm_strdup($2), $4, $5);
+						$$ = cat_str(7, make2_str(make_str(" struct varchar_"), vcn), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } *"), mm_strdup($2), $4, $5);
 					else
-						$$ = cat_str(8, make2_str(make_str(" struct varchar_"), mm_strdup($2)), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } "), mm_strdup($2), mm_strdup(dim), $4, $5);
+						$$ = cat_str(8, make2_str(make_str(" struct varchar_"), vcn), make_str(" { int len; char arr["), mm_strdup(length), make_str("]; } "), mm_strdup($2), mm_strdup(dim), $4, $5);
 					break;
 
 				case ECPGt_char:
@@ -5674,19 +5725,19 @@ variable: opt_pointer ECPGColLabel opt_array_bounds opt_bit_field opt_initialize
 							length = mm_alloc(i+sizeof("sizeof()"));
 							sprintf(length, "sizeof(%s)", $5+2);
 						}
-						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length);
+						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, length, 0);
 					}
 					else
-						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length), dimension);
+						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, length, 0), dimension);
 
 					$$ = cat_str(5, $1, mm_strdup($2), $3.str, $4, $5);
 					break;
 
 				default:
 					if (atoi(dimension) < 0)
-						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, make_str("1"));
+						type = ECPGmake_simple_type(actual_type[struct_level].type_enum, make_str("1"), 0);
 					else
-						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, make_str("1")), dimension);
+						type = ECPGmake_array_type(ECPGmake_simple_type(actual_type[struct_level].type_enum, make_str("1"), 0), dimension);
 
 					$$ = cat_str(5, $1, mm_strdup($2), $3.str, $4, $5);
 					break;
@@ -5741,40 +5792,6 @@ connection_object: database_name		{ $$ = make3_str(make_str("\""), $1, make_str(
 		| char_variable			{ $$ = $1; }
 		;
 
-/*
- * execute a given string as sql command
- */
-ECPGExecute : EXECUTE IMMEDIATE execstring
-		{
-			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
-
-			thisquery->type = &ecpg_query;
-			thisquery->brace_level = 0;
-			thisquery->next = NULL;
-			thisquery->name = $3;
-
-			add_variable_to_head(&argsinsert, thisquery, &no_indicator);
-
-			$$ = make_str("?");
-		}
-		| EXECUTE prepared_name
-		{
-			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
-
-			thisquery->type = &ecpg_query;
-			thisquery->brace_level = 0;
-			thisquery->next = NULL;
-			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement()") + strlen($2));
-			sprintf(thisquery->name, "ECPGprepared_statement(%s)", $2);
-
-			add_variable_to_head(&argsinsert, thisquery, &no_indicator);
-		}
-		execute_rest
-		{
-			$$ = make_str("?");
-		}
-		;
-
 execute_rest:	ecpg_using ecpg_into	{ $$ = EMPTY; }
 		| ecpg_into ecpg_using	{ $$ = EMPTY; }
 		| ecpg_using		{ $$ = EMPTY; }
@@ -5788,7 +5805,19 @@ execstring: char_variable
 			{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
 		;
 
-prepared_name: name	 	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
+prepared_name: name	 	{ 
+					if ($1[0] == '\"' && $1[strlen($1)-1] == '\"') /* already quoted? */
+						$$ = $1;
+					else /* not quoted => convert to lowercase */
+					{
+						int i;
+
+						for (i = 0; i< strlen($1); i++)
+							$1[i] = tolower($1[i]);
+
+						$$ = make3_str(make_str("\""), $1, make_str("\""));
+					}
+				}
 		| char_variable	{ $$ = $1; }
 		;
 
@@ -5796,7 +5825,9 @@ prepared_name: name	 	{ $$ = make3_str(make_str("\""), $1, make_str("\"")); }
  * the exec sql free command to deallocate a previously
  * prepared statement
  */
-ECPGFree:	SQL_FREE name	{ $$ = $2; };
+ECPGFree:	SQL_FREE name	{ $$ = $2; }
+		| SQL_FREE ALL	{ $$ = make_str("all"); }
+		;
 
 /*
  * open is an open cursor, at the moment this has to be removed
@@ -5835,26 +5866,17 @@ using_list: UsingConst | UsingConst ',' using_list;
 
 UsingConst: AllConst
 		{
-			if ($1[1] != '?') /* found a constant */
+			if ($1[1] != '$') /* found a constant */
 			{
 				char *length = mm_alloc(32);
 
 				sprintf(length, "%d", (int) strlen($1));
-				add_variable_to_head(&argsinsert, new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0), &no_indicator);
+				add_variable_to_head(&argsinsert, new_variable($1, ECPGmake_simple_type(ECPGt_const, length, 0), 0), &no_indicator);
 			}
 		}
 		| civarind { $$ = EMPTY; }
 		;
 
-/*
- * As long as the prepare statement is not supported by the backend, we will
- * try to simulate it here so we get dynamic SQL
- *
- * It is supported now but not usable yet by ecpg.
- */
-ECPGPrepare: PREPARE prepared_name FROM execstring
-			{ $$ = cat_str(3, $2, make_str(","), $4); }
-		;
 
 /*
  * We accept descibe but do nothing with it so far.
@@ -5862,20 +5884,20 @@ ECPGPrepare: PREPARE prepared_name FROM execstring
 ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor
 	{
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
-		$$ = (char *) mm_alloc(sizeof("1, ECPGprepared_statement(\"\")") + strlen($3));
-		sprintf($$, "1, ECPGprepared_statement(\"%s\")", $3);
+		$$ = (char *) mm_alloc(sizeof("1, ECPGprepared_statement(\"\", __LINE__)") + strlen($3));
+		sprintf($$, "1, ECPGprepared_statement(\"%s\", __LINE__)", $3);
 	}
 	| SQL_DESCRIBE opt_output name using_descriptor
 	{
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
-		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(\"\")") + strlen($3));
-		sprintf($$, "0, ECPGprepared_statement(\"%s\")", $3);
+		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(\"\", __LINE__)") + strlen($3));
+		sprintf($$, "0, ECPGprepared_statement(\"%s\", __LINE__)", $3);
 	}
 	| SQL_DESCRIBE opt_output name into_descriptor
 	{
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
-		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(\"\")") + strlen($3));
-		sprintf($$, "0, ECPGprepared_statement(\"%s\")", $3);
+		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(\"\", __LINE__)") + strlen($3));
+		sprintf($$, "0, ECPGprepared_statement(\"%s\", __LINE__)", $3);
 	}
 	;
 
@@ -5991,29 +6013,6 @@ descriptor_item:	SQL_CARDINALITY			{ $$ = ECPGd_cardinality; }
 		| SQL_SCALE				{ $$ = ECPGd_scale; }
 		| TYPE_P				{ $$ = ECPGd_type; }
 		;
-
-
-/*
- * for compatibility with ORACLE we will also allow the keyword RELEASE
- * after a transaction statement to disconnect from the database.
- */
-
-/* We cannot do that anymore since it causes shift/reduce conflicts. 2004-09-27 Michael Meskes
-ECPGRelease: TransactionStmt RELEASE
-		{
-			if (strcmp($1, "begin") == 0)
-							mmerror(PARSE_ERROR, ET_ERROR, "RELEASE does not make sense when beginning a transaction");
-
-			fprintf(yyout, "ECPGtrans(__LINE__, %s, \"%s\");",
-					connection ? connection : "NULL", $1);
-			whenever_action(0);
-			fprintf(yyout, "ECPGdisconnect(__LINE__, %s);",
-					connection ? connection : "\"CURRENT\"");
-			whenever_action(0);
-			free($1);
-		}
-		;
-*/
 
 /*
  * set/reset the automatic transaction mode, this needs a differnet handling
@@ -6138,17 +6137,17 @@ ECPGVar: SQL_VAR
 
 					case ECPGt_varchar:
 						if (atoi(dimension) == -1)
-							type = ECPGmake_simple_type($5.type_enum, length);
+							type = ECPGmake_simple_type($5.type_enum, length, 0);
 						else
-							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, length), dimension);
+							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, length, 0), dimension);
 						break;
 
 					case ECPGt_char:
 					case ECPGt_unsigned_char:
 						if (atoi(dimension) == -1)
-							type = ECPGmake_simple_type($5.type_enum, length);
+							type = ECPGmake_simple_type($5.type_enum, length, 0);
 						else
-							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, length), dimension);
+							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, length, 0), dimension);
 						break;
 
 					default:
@@ -6156,9 +6155,9 @@ ECPGVar: SQL_VAR
 							mmerror(PARSE_ERROR, ET_ERROR, "No multidimensional array support for simple data types");
 
 						if (atoi(dimension) < 0)
-							type = ECPGmake_simple_type($5.type_enum, make_str("1"));
+							type = ECPGmake_simple_type($5.type_enum, make_str("1"), 0);
 						else
-							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, make_str("1")), dimension);
+							type = ECPGmake_array_type(ECPGmake_simple_type($5.type_enum, make_str("1"), 0), dimension);
 						break;
 				}
 
@@ -6820,7 +6819,10 @@ reserved_keyword:
 into_list : coutputvariable | into_list ',' coutputvariable
 		;
 
-ecpgstart: SQL_START	{ reset_variables(); }
+ecpgstart: SQL_START	{
+				reset_variables();
+				pacounter = 1;
+			}
 		;
 
 c_args: /*EMPTY*/		{ $$ = EMPTY; }

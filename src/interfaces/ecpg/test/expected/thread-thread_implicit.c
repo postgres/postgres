@@ -71,13 +71,13 @@ int main(int argc, char *argv[])
   { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
 #line 47 "thread_implicit.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "drop table test_thread ", ECPGt_EOIT, ECPGt_EORT);}
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "drop table test_thread ", ECPGt_EOIT, ECPGt_EORT);}
 #line 48 "thread_implicit.pgc"
  /* DROP might fail */
   { ECPGtrans(__LINE__, NULL, "commit");}
 #line 49 "thread_implicit.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "create  table test_thread ( tstamp timestamp    not null default cast( timeofday () as timestamp   ) , thread TEXT    not null , iteration integer   not null , primary key( thread , iteration )   )    ", ECPGt_EOIT, ECPGt_EORT);}
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "create  table test_thread ( tstamp timestamp    not null default cast( timeofday () as timestamp   ) , thread TEXT    not null , iteration integer   not null , primary key( thread , iteration )   )    ", ECPGt_EOIT, ECPGt_EORT);}
 #line 54 "thread_implicit.pgc"
 
   { ECPGtrans(__LINE__, NULL, "commit");}
@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
   { ECPGconnect(__LINE__, 0, "regress1" , NULL, NULL , NULL, 0); }
 #line 86 "thread_implicit.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, "select  count (*)  from test_thread   ", ECPGt_EOIT, 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "select  count (*)  from test_thread   ", ECPGt_EOIT, 
 	ECPGt_int,&(l_rows),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);}
 #line 87 "thread_implicit.pgc"
@@ -183,7 +183,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
   /* insert into test_thread table */
   for( l_i = 1; l_i <= iterations; l_i++ )
     {
-      { ECPGdo(__LINE__, 0, 1, NULL, "insert into test_thread ( thread  , iteration  ) values (  ? ,  ? ) ", 
+      { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into test_thread ( thread  , iteration  ) values (  $1  ,  $2  ) ", 
 	ECPGt_char,(l_connection),(long)128,(long)1,(128)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,&(l_i),(long)1,(long)1,sizeof(int), 

@@ -2,41 +2,59 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGconnect: opening database regress1 on <DEFAULT> port <DEFAULT> 
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 46: QUERY: set datestyle to iso on connection regress1
+[NO_PID]: ECPGexecute line 46: QUERY: set datestyle to iso with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 46: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 46 Ok: SET
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 49: QUERY: create  table family ( name char  ( 8 )    , born integer   , age smallint   , married date    , children integer   )     on connection regress1
+[NO_PID]: ECPGexecute line 49: QUERY: create  table family ( name char  ( 8 )    , born integer   , age smallint   , married date    , children integer   )     with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 49: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 49 Ok: CREATE TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 52: QUERY: insert into family ( name  , married  , children  ) values ( 'Mum' , '19870714' , 3 )  on connection regress1
+[NO_PID]: ECPGexecute line 52: QUERY: insert into family ( name  , married  , children  ) values ( 'Mum' , '19870714' , 3 )  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 52: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 52 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 53: QUERY: insert into family ( name  , born  , married  , children  ) values ( 'Dad' , '19610721' , '19870714' , 3 )  on connection regress1
+[NO_PID]: ECPGexecute line 53: QUERY: insert into family ( name  , born  , married  , children  ) values ( 'Dad' , '19610721' , '19870714' , 3 )  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 53: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 53 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 54: QUERY: insert into family ( name  , age  ) values ( 'Child 1' , 16 )  on connection regress1
+[NO_PID]: ECPGexecute line 54: QUERY: insert into family ( name  , age  ) values ( 'Child 1' , 16 )  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 54: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 54 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 55: QUERY: insert into family ( name  , age  ) values ( 'Child 2' , 14 )  on connection regress1
+[NO_PID]: ECPGexecute line 55: QUERY: insert into family ( name  , age  ) values ( 'Child 2' , 14 )  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 55: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 55 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 56: QUERY: insert into family ( name  , age  ) values ( 'Child 3' , 9 )  on connection regress1
+[NO_PID]: ECPGexecute line 56: QUERY: insert into family ( name  , age  ) values ( 'Child 3' , 9 )  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 56: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 56 Ok: INSERT 0 1
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans line 59 action = commit connection = regress1
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 62: QUERY: declare cur  cursor  for select  name , born , age , married , children  from family    on connection regress1
+[NO_PID]: ECPGexecute line 62: QUERY: declare cur  cursor  for select  name , born , age , married , children  from family    with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 62: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 62 Ok: DECLARE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 71: QUERY: fetch cur on connection regress1
+[NO_PID]: ECPGexecute line 71: QUERY: fetch cur with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 71: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 71: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -52,7 +70,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 71: RESULT: 3 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 71: QUERY: fetch cur on connection regress1
+[NO_PID]: ECPGexecute line 71: QUERY: fetch cur with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 71: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 71: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -68,7 +88,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 71: RESULT: 3 offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 71: QUERY: fetch cur on connection regress1
+[NO_PID]: ECPGexecute line 71: QUERY: fetch cur with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 71: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 71: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -84,7 +106,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 71: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 71: QUERY: fetch cur on connection regress1
+[NO_PID]: ECPGexecute line 71: QUERY: fetch cur with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 71: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 71: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -100,7 +124,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 71: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 71: QUERY: fetch cur on connection regress1
+[NO_PID]: ECPGexecute line 71: QUERY: fetch cur with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 71: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 71: Correctly got 1 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
@@ -116,17 +142,23 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGget_data line 71: RESULT:  offset: -1 array: Yes
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 71: QUERY: fetch cur on connection regress1
+[NO_PID]: ECPGexecute line 71: QUERY: fetch cur with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 71: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 71: Correctly got 0 tuples with 5 fields
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: raising sqlcode 100 in line 71, 'No data found in line 71.'.
 [NO_PID]: sqlca: code: 100, state: 02000
-[NO_PID]: ECPGexecute line 88: QUERY: close cur on connection regress1
+[NO_PID]: ECPGexecute line 88: QUERY: close cur with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 88: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 88 Ok: CLOSE CURSOR
 [NO_PID]: sqlca: code: 0, state: 00000
-[NO_PID]: ECPGexecute line 91: QUERY: drop table family  on connection regress1
+[NO_PID]: ECPGexecute line 91: QUERY: drop table family  with 0 parameter on connection regress1 
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGexecute line 91: using PQexec
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 91 Ok: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -2215,5 +2215,15 @@ Tue, 12 Jun 2007 09:46:03 +0200
 Wed, 25 Jul 2007 15:34:54 +0200
 
 	- Synced parser.
-	- Set ecpg library version to 5.3.
-	- Set ecpg version to 4.3.1.
+
+Tue, 14 Aug 2007 11:46:51 +0200
+
+	- Finished major rewrite to use new protocol version.
+	- Really prepare statements.
+	- Added more regression tests.
+	- Added auto-prepare mode.
+	- Use '$n' for positional variables, '?' is still possible via ecpg
+	  option.
+	- Cleaned up the sources a little bit.
+	- Set ecpg library version to 6.0.
+	- Set ecpg version to 4.4.
