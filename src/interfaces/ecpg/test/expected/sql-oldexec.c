@@ -65,7 +65,7 @@ main(void)
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 24 "oldexec.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 1, 0, "create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )    ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "create  table test ( name char  ( 8 )    , amount int   , letter char  ( 1 )    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 25 "oldexec.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -141,7 +141,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 50 "oldexec.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 1, 0, "declare CUR  cursor  for $1", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "declare CUR  cursor  for $1", 
 	ECPGt_char_variable,(ECPGprepared_statement("f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 52 "oldexec.pgc"
@@ -149,7 +149,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 52 "oldexec.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 1, 0, "fetch 8 in CUR", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "fetch 8 in CUR", ECPGt_EOIT, 
 	ECPGt_char,(name),(long)8,(long)8,(8)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,(amount),(long)1,(long)8,sizeof(int), 
@@ -181,7 +181,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
 	}
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 1, 0, "close CUR", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "close CUR", ECPGt_EOIT, ECPGt_EORT);
 #line 66 "oldexec.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -200,7 +200,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 71 "oldexec.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 1, 0, "declare CUR3  cursor  for $1", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "declare CUR3  cursor  for $1", 
 	ECPGt_char_variable,(ECPGprepared_statement("f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_const,"1",(long)1,(long)1,strlen("1"), 
@@ -210,7 +210,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 73 "oldexec.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 1, 0, "fetch in CUR3", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "fetch in CUR3", ECPGt_EOIT, 
 	ECPGt_char,(name),(long)8,(long)8,(8)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_int,(amount),(long)1,(long)8,sizeof(int), 
@@ -242,13 +242,13 @@ if (sqlca.sqlcode < 0) sqlprint();}
 		printf("name[%d]=%8.8s\tamount[%d]=%d\tletter[%d]=%c\n", i, n, i, a, i, l);
 	}
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 1, 0, "close CUR3", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "close CUR3", ECPGt_EOIT, ECPGt_EORT);
 #line 87 "oldexec.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 87 "oldexec.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 1, 0, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "drop table test ", ECPGt_EOIT, ECPGt_EORT);
 #line 88 "oldexec.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

@@ -68,7 +68,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 34 "num_test.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "create  table test ( text char  ( 5 )    , num numeric ( 14 , 7 )   )    ", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test ( text char  ( 5 )    , num numeric ( 14 , 7 )   )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 35 "num_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
@@ -98,7 +98,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 
 	des = PGTYPESnumeric_new();
 	PGTYPESnumeric_copy(res, des);
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into test ( text  , num  ) values ( 'test' ,  $1  ) ", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into test ( text  , num  ) values ( 'test' ,  $1  ) ", 
 	ECPGt_numeric,&(des),(long)1,(long)0,sizeof(numeric), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 60 "num_test.pgc"
@@ -111,7 +111,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	PGTYPESnumeric_mul(value1, value2, res);
 	PGTYPESnumeric_free(value2);
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "select  num  from test where text = 'test'  ", ECPGt_EOIT, 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  num  from test where text = 'test'  ", ECPGt_EOIT, 
 	ECPGt_numeric,&(des),(long)1,(long)0,sizeof(numeric), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 66 "num_test.pgc"

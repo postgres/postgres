@@ -52,7 +52,7 @@ int main(int argc, char* argv[]) {
 #line 18 "quote.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "create  table \"My_Table\" ( Item1 int   , Item2 text    )    ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table \"My_Table\" ( Item1 int   , Item2 text    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 20 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -62,7 +62,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 20 "quote.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "show standard_conforming_strings", ECPGt_EOIT, 
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "show standard_conforming_strings", ECPGt_EOIT, 
 	ECPGt_char,(var),(long)25,(long)1,(25)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EORT);
 #line 22 "quote.pgc"
@@ -76,7 +76,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
   printf("Standard conforming strings: %s\n", var);
 
   /* this is a\\b actually */
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into \"My_Table\" values ( 1 , 'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 1 , 'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 26 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -86,7 +86,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 26 "quote.pgc"
 
   /* this is a\\b */
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into \"My_Table\" values ( 1 , E'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 1 , E'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 28 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -96,7 +96,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 28 "quote.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "set standard_conforming_strings to on", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "set standard_conforming_strings to on", ECPGt_EOIT, ECPGt_EORT);
 #line 30 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -107,7 +107,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
   /* this is a\\\\b actually */
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into \"My_Table\" values ( 2 , 'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 2 , 'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 33 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -117,7 +117,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 33 "quote.pgc"
 
   /* this is a\\b */
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into \"My_Table\" values ( 2 , E'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into \"My_Table\" values ( 2 , E'a\\\\\\\\b' ) ", ECPGt_EOIT, ECPGt_EORT);
 #line 35 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -140,7 +140,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 38 "quote.pgc"
 
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "declare C  cursor  for select  *  from \"My_Table\"   ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare C  cursor  for select  *  from \"My_Table\"   ", ECPGt_EOIT, ECPGt_EORT);
 #line 40 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();
@@ -156,7 +156,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
   while (true)
   {
-  	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "fetch C", ECPGt_EOIT, 
+  	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "fetch C", ECPGt_EOIT, 
 	ECPGt_int,&(i),(long)1,(long)1,sizeof(int), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_char,(var),(long)25,(long)1,(25)*sizeof(char), 
@@ -184,7 +184,7 @@ if (sqlca.sqlwarn[0] == 'W') sqlprint();
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 50 "quote.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "drop table \"My_Table\" ", ECPGt_EOIT, ECPGt_EORT);
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "drop table \"My_Table\" ", ECPGt_EOIT, ECPGt_EORT);
 #line 51 "quote.pgc"
 
 if (sqlca.sqlwarn[0] == 'W') sqlprint();

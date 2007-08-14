@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.20 2007/08/14 10:01:53 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.21 2007/08/14 10:32:47 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -113,9 +113,9 @@ output_statement(char *stmt, int whenever_mode, enum ECPG_statement_type st)
 	if (st == ECPGst_normal)
 	{
 		if (auto_prepare)
-			fprintf(yyout, "%d, \"", ECPGst_prepnormal);
+			fputs("ECPGst_prepnormal, \"", yyout);
 		else
-			fprintf(yyout, "%d, \"", ECPGst_normal);
+			fputs("ECPGst_normal, \"", yyout);
 
 		output_escaped_str(stmt, false);
 		fputs("\", ", yyout);

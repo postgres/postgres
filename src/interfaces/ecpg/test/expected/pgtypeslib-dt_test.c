@@ -66,13 +66,13 @@ main(void)
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 28 "dt_test.pgc"
 
-        { ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "create  table date_test ( d date    , ts timestamp    )    ", ECPGt_EOIT, ECPGt_EORT);
+        { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table date_test ( d date    , ts timestamp    )    ", ECPGt_EOIT, ECPGt_EORT);
 #line 29 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 29 "dt_test.pgc"
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "set datestyle to iso", ECPGt_EOIT, ECPGt_EORT);
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "set datestyle to iso", ECPGt_EOIT, ECPGt_EORT);
 #line 30 "dt_test.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint (  );}
@@ -82,7 +82,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 	date1 = PGTYPESdate_from_asc(d1, NULL); 
 	ts1 = PGTYPEStimestamp_from_asc(t1, NULL); 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "insert into date_test ( d  , ts  ) values (  $1  ,  $2  ) ", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "insert into date_test ( d  , ts  ) values (  $1  ,  $2  ) ", 
 	ECPGt_date,&(date1),(long)1,(long)1,sizeof(date), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_timestamp,&(ts1),(long)1,(long)1,sizeof(timestamp), 
@@ -93,7 +93,7 @@ if (sqlca.sqlcode < 0) sqlprint (  );}
 #line 35 "dt_test.pgc"
 
 
-	{ ECPGdo(__LINE__, 0, 1, NULL, 0, 0, "select  *  from date_test where d =  $1   ", 
+	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "select  *  from date_test where d =  $1   ", 
 	ECPGt_date,&(date1),(long)1,(long)1,sizeof(date), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, 
 	ECPGt_date,&(date1),(long)1,(long)1,sizeof(date), 
