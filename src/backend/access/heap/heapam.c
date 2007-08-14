@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.236 2007/06/09 18:49:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.237 2007/08/14 17:35:18 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1509,6 +1509,34 @@ heap_get_latest_tid(Relation relation,
 	}							/* end of loop */
 }
 
+
+/*
+ * UpdateXmaxHintBits - update tuple hint bits after xmax transaction ends
+ *
+ * This is called after we have waited for the XMAX transaction to terminate.
+ * If the transaction aborted, we guarantee the XMAX_INVALID hint bit will
+ * be set on exit.  If the transaction committed, we set the XMAX_COMMITTED
+ * hint bit if possible --- but beware that that may not yet be possible,
+ * if the transaction committed asynchronously.  Hence callers should look
+ * only at XMAX_INVALID.
+ */
+static void
+UpdateXmaxHintBits(HeapTupleHeader tuple, Buffer buffer, TransactionId xid)
+{
+	Assert(TransactionIdEquals(HeapTupleHeaderGetXmax(tuple), xid));
+
+	if (!(tuple->t_infomask & (HEAP_XMAX_COMMITTED | HEAP_XMAX_INVALID)))
+	{
+		if (TransactionIdDidCommit(xid))
+			HeapTupleSetHintBits(tuple, buffer, HEAP_XMAX_COMMITTED,
+								 xid);
+		else
+			HeapTupleSetHintBits(tuple, buffer, HEAP_XMAX_INVALID,
+								 InvalidTransactionId);
+	}
+}
+
+
 /*
  *	heap_insert		- insert tuple into a heap
  *
@@ -1840,16 +1868,8 @@ l1:
 									 xwait))
 				goto l1;
 
-			/* Otherwise we can mark it committed or aborted */
-			if (!(tp.t_data->t_infomask & (HEAP_XMAX_COMMITTED |
-										   HEAP_XMAX_INVALID)))
-			{
-				if (TransactionIdDidCommit(xwait))
-					tp.t_data->t_infomask |= HEAP_XMAX_COMMITTED;
-				else
-					tp.t_data->t_infomask |= HEAP_XMAX_INVALID;
-				SetBufferCommitInfoNeedsSave(buffer);
-			}
+			/* Otherwise check if it committed or aborted */
+			UpdateXmaxHintBits(tp.t_data, buffer, xwait);
 		}
 
 		/*
@@ -2164,16 +2184,8 @@ l2:
 									 xwait))
 				goto l2;
 
-			/* Otherwise we can mark it committed or aborted */
-			if (!(oldtup.t_data->t_infomask & (HEAP_XMAX_COMMITTED |
-											   HEAP_XMAX_INVALID)))
-			{
-				if (TransactionIdDidCommit(xwait))
-					oldtup.t_data->t_infomask |= HEAP_XMAX_COMMITTED;
-				else
-					oldtup.t_data->t_infomask |= HEAP_XMAX_INVALID;
-				SetBufferCommitInfoNeedsSave(buffer);
-			}
+			/* Otherwise check if it committed or aborted */
+			UpdateXmaxHintBits(oldtup.t_data, buffer, xwait);
 		}
 
 		/*
@@ -2713,16 +2725,8 @@ l3:
 									 xwait))
 				goto l3;
 
-			/* Otherwise we can mark it committed or aborted */
-			if (!(tuple->t_data->t_infomask & (HEAP_XMAX_COMMITTED |
-											   HEAP_XMAX_INVALID)))
-			{
-				if (TransactionIdDidCommit(xwait))
-					tuple->t_data->t_infomask |= HEAP_XMAX_COMMITTED;
-				else
-					tuple->t_data->t_infomask |= HEAP_XMAX_INVALID;
-				SetBufferCommitInfoNeedsSave(*buffer);
-			}
+			/* Otherwise check if it committed or aborted */
+			UpdateXmaxHintBits(tuple->t_data, *buffer, xwait);
 		}
 
 		/*
