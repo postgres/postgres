@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Tue Aug 14 13:02:38 EDT 2007
+Last updated:           Wed Aug 15 11:36:16 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -26,14 +26,14 @@ first.  There is also a developer's wiki at<br/>
 <h1><a name="section_2">Administration</a></h1>
 
 <ul>
-  <li>Allow major upgrades without dump/reload, perhaps using pg_upgrade 
+  <li>Allow major upgrades without dump/reload, perhaps using pg_upgrade
   [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?pg_upgrade">pg_upgrade</a>]
   </li><li>Check for unreferenced table files created by transactions that were
   in-progress when the server terminated abruptly
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2006-06/msg00096.php">http://archives.postgresql.org/pgsql-patches/2006-06/msg00096.php</a>
 </p>
   </li><li>Allow administrators to safely terminate individual sessions either
-  via an SQL function or SIGTERM 
+  via an SQL function or SIGTERM
 <p>  Lock table corruption following SIGTERM of an individual backend
   has been reported in 8.0.  A possible cause was fixed in 8.1, but
   it is unknown whether other problems exist.  This item mostly
@@ -73,7 +73,7 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Allow more complex user/database default GUC settings
 <p>  Currently ALTER USER and ALTER DATABASE support per-user and
   per-database defaults.  Consider adding per-user-and-database
-  defaults so things like search_path can be defaulted for a 
+  defaults so things like search_path can be defaulted for a
   specific user connecting to a specific database.
 </p>
   </li><li>Allow custom variable classes that can restrict who can set the values
@@ -215,15 +215,15 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Dates and Times
   <ul>
     <li>Allow infinite dates and intervals just like infinite timestamps
-    </li><li>Merge hardwired timezone names with the TZ database; allow either 
+    </li><li>Merge hardwired timezone names with the TZ database; allow either
           kind everywhere a TZ name is currently taken
     </li><li>Allow TIMESTAMP WITH TIME ZONE to store the original timezone
           information, either zone name or offset from UTC [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?timezone">timezone</a>]
-<p>          If the TIMESTAMP value is stored with a time zone name, interval 
+<p>          If the TIMESTAMP value is stored with a time zone name, interval
           computations should adjust based on the time zone rules.
 </p>
     </li><li>Fix SELECT '0.01 years'::interval, '0.01 months'::interval
-    </li><li>Add a GUC variable to allow output of interval values in ISO8601 
+    </li><li>Add a GUC variable to allow output of interval values in ISO8601
           format
     </li><li>Have timestamp subtraction not call justify_hours()?
 <p>          <a href="http://archives.postgresql.org/pgsql-sql/2006-10/msg00059.php">http://archives.postgresql.org/pgsql-sql/2006-10/msg00059.php</a>
@@ -323,13 +323,13 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Allow to_char() on interval values to accumulate the highest unit
   requested
 <p>  Some special format flag would be required to request such
-  accumulation.  Such functionality could also be added to EXTRACT. 
+  accumulation.  Such functionality could also be added to EXTRACT.
   Prevent accumulation that crosses the month/day boundary because of
   the uneven number of days in a month.
 </p>
   <ul>
     <li>to_char(INTERVAL '1 hour 5 minutes', 'MI') =&gt; 65
-    </li><li>to_char(INTERVAL '43 hours 20 minutes', 'MI' ) =&gt; 2600 
+    </li><li>to_char(INTERVAL '43 hours 20 minutes', 'MI' ) =&gt; 2600
     </li><li>to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') =&gt; 0:1:19:20
     </li><li>to_char(INTERVAL '3 years 5 months','MM') =&gt; 41
   </li></ul>
@@ -473,7 +473,7 @@ first.  There is also a developer's wiki at<br/>
   creation
   </li><li>-<em>Add RESET SESSION command to reset all session state</em>
   </li><li>Add GUC to issue notice about statements that use unjoined tables
-  </li><li>Allow EXPLAIN to identify tables that were skipped because of 
+  </li><li>Allow EXPLAIN to identify tables that were skipped because of
   constraint_exclusion
   </li><li>Allow EXPLAIN output to be more easily processed by scripts, perhaps XML
   </li><li>Enable standard_conforming_strings
@@ -596,8 +596,8 @@ first.  There is also a developer's wiki at<br/>
     </li><li>Allow COPY on a newly-created table to skip WAL logging
 <p>          On crash recovery, the table involved in the COPY would
           be removed or have its heap and index files truncated.  One
-          issue is that no other backend should be able to add to 
-          the table at the same time, which is something that is 
+          issue is that no other backend should be able to add to
+          the table at the same time, which is something that is
           currently allowed.
 </p>
   </li></ul>
@@ -710,7 +710,7 @@ first.  There is also a developer's wiki at<br/>
       </li><li>Add support for polymorphic arguments and return types to
                   languages other than PL/PgSQL
       </li><li>Add capability to create and call PROCEDURES
-      </li><li>Add support for OUT and INOUT parameters to languages other 
+      </li><li>Add support for OUT and INOUT parameters to languages other
                   than PL/PgSQL
       </li><li>Add PL/PythonU tracebacks
 <p>                  <a href="http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php">http://archives.postgresql.org/pgsql-patches/2006-02/msg00288.php</a>
@@ -753,7 +753,7 @@ first.  There is also a developer's wiki at<br/>
           than toggle
     </li><li>Consistently display privilege information for all objects in psql
     </li><li>Add auto-expanded mode so expanded output is used if the row
-          length is wider than the screen width.  
+          length is wider than the screen width.
 <p>          Consider using auto-expanded mode for backslash commands like \df+.
 </p>
     </li><li>Prevent tab completion of SET TRANSACTION from querying the
@@ -802,7 +802,7 @@ first.  There is also a developer's wiki at<br/>
     </li><li>Solve cardinality &gt; 1 for input descriptors / variables?
     </li><li>Add a semantic check level, e.g. check if a table really exists
     </li><li>fix handling of DB attributes that are arrays
-    </li><li>-<em>Use backend PREPARE/EXECUTE facility for ecpg where possible</em>
+    </li><li>Use backend PREPARE/EXECUTE facility for ecpg where possible
     </li><li>Implement SQLDA
     </li><li>Fix nested C comments
     </li><li>%sqlwarn[<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?6">6</a>] should be 'W' if the PRECISION or SCALE value specified
@@ -815,12 +815,12 @@ first.  There is also a developer's wiki at<br/>
   <ul>
     <li>Add PQescapeIdentifierConn()
     </li><li>Prevent PQfnumber() from lowercasing unquoted the column name
-<p>          PQfnumber() should never have been doing lowercasing, but 
+<p>          PQfnumber() should never have been doing lowercasing, but
           historically it has so we need a way to prevent it
 </p>
     </li><li>Allow statement results to be automatically batched to the client
 <p>          Currently all statement results are transferred to the libpq
-          client before libpq makes the results available to the 
+          client before libpq makes the results available to the
           application.  This feature would allow the application to make
           use of the first result rows while the rest are transferred, or
           held on the server waiting for them to be requested by libpq.
@@ -997,15 +997,15 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2005-11/msg00943.php">http://archives.postgresql.org/pgsql-hackers/2005-11/msg00943.php</a>
 </p>
   </li><li>Allow data to be pulled directly from indexes
-<p>  Currently indexes do not have enough tuple visibility information 
-  to allow data to be pulled from the index without also accessing 
-  the heap.  One way to allow this is to set a bit on index tuples 
-  to indicate if a tuple is currently visible to all transactions 
-  when the first valid heap lookup happens.  This bit would have to 
-  be cleared when a heap tuple is expired.  
+<p>  Currently indexes do not have enough tuple visibility information
+  to allow data to be pulled from the index without also accessing
+  the heap.  One way to allow this is to set a bit on index tuples
+  to indicate if a tuple is currently visible to all transactions
+  when the first valid heap lookup happens.  This bit would have to
+  be cleared when a heap tuple is expired.
 </p>
 <p>  Another idea is to maintain a bitmap of heap pages where all rows
-  are visible to all backends, and allow index lookups to reference 
+  are visible to all backends, and allow index lookups to reference
   that bitmap to avoid heap lookups, perhaps the same bitmap we might
   add someday to determine which heap pages need vacuuming.  Frequently
   accessed bitmaps would have to be stored in shared memory.  One 8k
@@ -1080,7 +1080,7 @@ first.  There is also a developer's wiki at<br/>
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-06/msg01305.php">http://archives.postgresql.org/pgsql-hackers/2006-06/msg01305.php</a>
   <a href="http://archives.postgresql.org/pgsql-hackers/2006-06/msg01534.php">http://archives.postgresql.org/pgsql-hackers/2006-06/msg01534.php</a>
 </p>
-  </li><li>Reuse index tuples that point to heap tuples that are not visible to 
+  </li><li>Reuse index tuples that point to heap tuples that are not visible to
   anyone?
   </li><li>Improve dead row detection during multi-statement transactions usage
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php">http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php</a>
@@ -1186,18 +1186,18 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Allow WAL logging to be turned off for a table, but the table
   might be dropped or truncated during crash recovery [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?walcontrol">walcontrol</a>]
 <p>  Allow tables to bypass WAL writes and just fsync() dirty pages on
-  commit.  This should be implemented using ALTER TABLE, e.g. ALTER 
-  TABLE PERSISTENCE [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo? DROP | TRUNCATE | DEFAULT "> DROP | TRUNCATE | DEFAULT </a>].  Tables using 
-  non-default logging should not use referential integrity with 
+  commit.  This should be implemented using ALTER TABLE, e.g. ALTER
+  TABLE PERSISTENCE [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo? DROP | TRUNCATE | DEFAULT "> DROP | TRUNCATE | DEFAULT </a>].  Tables using
+  non-default logging should not use referential integrity with
   default-logging tables.  A table without dirty buffers during a
   crash could perhaps avoid the drop/truncate.
 </p>
   </li><li>Allow WAL logging to be turned off for a table, but the table would
   avoid being truncated/dropped [<a href="http://momjian.postgresql.org/cgi-bin/pgtodo?walcontrol">walcontrol</a>]
-<p>  To do this, only a single writer can modify the table, and writes 
+<p>  To do this, only a single writer can modify the table, and writes
   must happen only on new pages so the new pages can be removed during
-  crash recovery.  Readers can continue accessing the table.  Such 
-  tables probably cannot have indexes.  One complexity is the handling 
+  crash recovery.  Readers can continue accessing the table.  Such
+  tables probably cannot have indexes.  One complexity is the handling
   of indexes on TOAST tables.
 </p>
 </li></ul>
@@ -1221,7 +1221,7 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Consider compressed annealing to search for query plans
 <p>  This might replace GEQO, <a href="http://sixdemonbag.org/Djinni">http://sixdemonbag.org/Djinni</a>.
 </p>
-  </li><li>Improve merge join performance by allowing mark/restore of 
+  </li><li>Improve merge join performance by allowing mark/restore of
   tuple sources
 <p>  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg00096.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg00096.php</a>
 </p>
@@ -1254,7 +1254,7 @@ first.  There is also a developer's wiki at<br/>
   <ul>
     <li>-<em>Support a smaller header for short variable-length fields</em>
     </li><li>Reduce the row header size?
-    </li><li>Consider reducing on-disk varlena length from four bytes to 
+    </li><li>Consider reducing on-disk varlena length from four bytes to
           two because a heap row cannot be more than 64k in length
   </li></ul>
   </li><li>Consider increasing NUM_CLOG_BUFFERS
@@ -1319,7 +1319,7 @@ first.  There is also a developer's wiki at<br/>
 </p>
   </li><li>-<em>Move NAMEDATALEN from postgres_ext.h to pg_config_manual.h</em>
   </li><li>Consider making NAMEDATALEN more configurable in future releases
-  </li><li>Update our code to handle 64-bit timezone files to match the zic 
+  </li><li>Update our code to handle 64-bit timezone files to match the zic
   source code, which now uses them
   </li><li>Have configure choose integer datetimes by default
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2007-05/msg00046.php">http://archives.postgresql.org/pgsql-patches/2007-05/msg00046.php</a>
@@ -1415,8 +1415,8 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Embedded server (not wanted)
 <p>  While PostgreSQL clients runs fine in limited-resource environments, the
   server requires multiple processes and a stable pool of resources to
-  run reliabily and efficiently.  Stripping down the PostgreSQL server 
-  to run in the same process address space as the client application 
+  run reliabily and efficiently.  Stripping down the PostgreSQL server
+  to run in the same process address space as the client application
   would add too much complexity and failure cases.</p>
 </li></ul>
 </li></ul></li></ul>
