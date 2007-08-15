@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.177.4.3 2006/01/12 21:49:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.177.4.4 2007/08/15 19:16:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2340,10 +2340,12 @@ AfterTriggerEndQuery(void)
 	 * SET CONSTRAINTS ... IMMEDIATE: all events we have decided to defer
 	 * will be available for it to fire.
 	 *
+	 * We loop in case a trigger queues more events.
+	 *
 	 * If we find no firable events, we don't have to increment firing_counter.
 	 */
 	events = &afterTriggers->query_stack[afterTriggers->query_depth];
-	if (afterTriggerMarkEvents(events, &afterTriggers->events, true))
+	while (afterTriggerMarkEvents(events, &afterTriggers->events, true))
 	{
 		CommandId		firing_id = afterTriggers->firing_counter++;
 
@@ -2834,7 +2836,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 	{
 		AfterTriggerEventList *events = &afterTriggers->events;
 
-		if (afterTriggerMarkEvents(events, NULL, true))
+		while (afterTriggerMarkEvents(events, NULL, true))
 		{
 			CommandId		firing_id = afterTriggers->firing_counter++;
 

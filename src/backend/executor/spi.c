@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.133.4.2 2007/03/17 03:16:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.133.4.3 2007/08/15 19:16:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,9 +39,9 @@ static void _SPI_prepare_plan(const char *src, _SPI_plan *plan);
 static int _SPI_execute_plan(_SPI_plan *plan,
 							 Datum *Values, const char *Nulls,
 							 Snapshot snapshot, Snapshot crosscheck_snapshot,
-							 bool read_only, int tcount);
+							 bool read_only, bool fire_triggers, int tcount);
 
-static int _SPI_pquery(QueryDesc *queryDesc, int tcount);
+static int _SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int tcount);
 
 static void _SPI_error_callback(void *arg);
 
@@ -301,7 +301,7 @@ SPI_execute(const char *src, bool read_only, int tcount)
 
 	res = _SPI_execute_plan(&plan, NULL, NULL,
 							InvalidSnapshot, InvalidSnapshot,
-							read_only, tcount);
+							read_only, true, tcount);
 
 	_SPI_end_call(true);
 	return res;
@@ -334,7 +334,7 @@ SPI_execute_plan(void *plan, Datum *Values, const char *Nulls,
 	res = _SPI_execute_plan((_SPI_plan *) plan,
 							Values, Nulls,
 							InvalidSnapshot, InvalidSnapshot,
-							read_only, tcount);
+							read_only, true, tcount);
 
 	_SPI_end_call(true);
 	return res;
@@ -349,9 +349,12 @@ SPI_execp(void *plan, Datum *Values, const char *Nulls, int tcount)
 
 /*
  * SPI_execute_snapshot -- identical to SPI_execute_plan, except that we allow
- * the caller to specify exactly which snapshots to use.  This is currently
- * not documented in spi.sgml because it is only intended for use by RI
- * triggers.
+ * the caller to specify exactly which snapshots to use.  Also, the caller
+ * may specify that AFTER triggers should be queued as part of the outer
+ * query rather than being fired immediately at the end of the command.
+ *
+ * This is currently not documented in spi.sgml because it is only intended
+ * for use by RI triggers.
  *
  * Passing snapshot == InvalidSnapshot will select the normal behavior of
  * fetching a new snapshot for each query.
@@ -360,7 +363,7 @@ int
 SPI_execute_snapshot(void *plan,
 					 Datum *Values, const char *Nulls,
 					 Snapshot snapshot, Snapshot crosscheck_snapshot,
-					 bool read_only, int tcount)
+					 bool read_only, bool fire_triggers, int tcount)
 {
 	int			res;
 
@@ -377,7 +380,7 @@ SPI_execute_snapshot(void *plan,
 	res = _SPI_execute_plan((_SPI_plan *) plan,
 							Values, Nulls,
 							snapshot, crosscheck_snapshot,
-							read_only, tcount);
+							read_only, fire_triggers, tcount);
 
 	_SPI_end_call(true);
 	return res;
@@ -1317,12 +1320,14 @@ _SPI_prepare_plan(const char *src, _SPI_plan *plan)
  *		behavior of taking a new snapshot for each query.
  * crosscheck_snapshot: for RI use, all others pass InvalidSnapshot
  * read_only: TRUE for read-only execution (no CommandCounterIncrement)
+ * fire_triggers: TRUE to fire AFTER triggers at end of query (normal case);
+ *		FALSE means any AFTER triggers are postponed to end of outer query
  * tcount: execution tuple-count limit, or 0 for none
  */
 static int
 _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				  Snapshot snapshot, Snapshot crosscheck_snapshot,
-				  bool read_only, int tcount)
+				  bool read_only, bool fire_triggers, int tcount)
 {
 	volatile int res = 0;
 	Snapshot	saveActiveSnapshot;
@@ -1473,7 +1478,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 											crosscheck_snapshot,
 											dest,
 											paramLI, false);
-					res = _SPI_pquery(qdesc,
+					res = _SPI_pquery(qdesc, fire_triggers,
 									  queryTree->canSetTag ? tcount : 0);
 					FreeQueryDesc(qdesc);
 				}
@@ -1506,7 +1511,7 @@ fail:
 }
 
 static int
-_SPI_pquery(QueryDesc *queryDesc, int tcount)
+_SPI_pquery(QueryDesc *queryDesc, bool fire_triggers, int tcount)
 {
 	int			operation = queryDesc->operation;
 	int			res;
@@ -1540,7 +1545,8 @@ _SPI_pquery(QueryDesc *queryDesc, int tcount)
 		ResetUsage();
 #endif
 
-	AfterTriggerBeginQuery();
+	if (fire_triggers)
+		AfterTriggerBeginQuery();
 
 	ExecutorStart(queryDesc, false);
 
@@ -1558,7 +1564,8 @@ _SPI_pquery(QueryDesc *queryDesc, int tcount)
 	ExecutorEnd(queryDesc);
 
 	/* Take care of any queued AFTER triggers */
-	AfterTriggerEndQuery();
+	if (fire_triggers)
+		AfterTriggerEndQuery();
 
 	if (queryDesc->dest->mydest == SPI)
 	{
