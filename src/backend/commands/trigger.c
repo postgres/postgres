@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.216 2007/07/17 17:45:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.217 2007/08/15 19:15:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2332,6 +2332,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 	AfterTriggerEvent event,
 				prev_event;
 	MemoryContext per_tuple_context;
+	bool		locally_opened = false;
 	Relation	rel = NULL;
 	TriggerDesc *trigdesc = NULL;
 	FmgrInfo   *finfo = NULL;
@@ -2364,6 +2365,19 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 			 */
 			if (rel == NULL || rel->rd_id != event->ate_relid)
 			{
+				if (locally_opened)
+				{
+					/* close prior rel if any */
+					if (rel)
+						heap_close(rel, NoLock);
+					if (trigdesc)
+						FreeTriggerDesc(trigdesc);
+					if (finfo)
+						pfree(finfo);
+					Assert(instr == NULL);		/* never used in this case */
+				}
+				locally_opened = true;
+
 				if (estate)
 				{
 					/* Find target relation among estate's result rels */
@@ -2375,28 +2389,22 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 					while (nr > 0)
 					{
 						if (rInfo->ri_RelationDesc->rd_id == event->ate_relid)
+						{
+							rel = rInfo->ri_RelationDesc;
+							trigdesc = rInfo->ri_TrigDesc;
+							finfo = rInfo->ri_TrigFunctions;
+							instr = rInfo->ri_TrigInstrument;
+							locally_opened = false;
 							break;
+						}
 						rInfo++;
 						nr--;
 					}
-					if (nr <= 0)	/* should not happen */
-						elog(ERROR, "could not find relation %u among query result relations",
-							 event->ate_relid);
-					rel = rInfo->ri_RelationDesc;
-					trigdesc = rInfo->ri_TrigDesc;
-					finfo = rInfo->ri_TrigFunctions;
-					instr = rInfo->ri_TrigInstrument;
 				}
-				else
+
+				if (locally_opened)
 				{
-					/* Hard way: we manage the resources for ourselves */
-					if (rel)
-						heap_close(rel, NoLock);
-					if (trigdesc)
-						FreeTriggerDesc(trigdesc);
-					if (finfo)
-						pfree(finfo);
-					Assert(instr == NULL);		/* never used in this case */
+					/* Hard way: open target relation for ourselves */
 
 					/*
 					 * We assume that an appropriate lock is still held by the
@@ -2421,6 +2429,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 						palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
 
 					/* Never any EXPLAIN info in this case */
+					instr = NULL;
 				}
 			}
 
@@ -2471,7 +2480,7 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 	events->tail = prev_event;
 
 	/* Release working resources */
-	if (!estate)
+	if (locally_opened)
 	{
 		if (rel)
 			heap_close(rel, NoLock);
@@ -2600,11 +2609,13 @@ AfterTriggerEndQuery(EState *estate)
 	 * IMMEDIATE: all events we have decided to defer will be available for it
 	 * to fire.
 	 *
+	 * We loop in case a trigger queues more events.
+	 *
 	 * If we find no firable events, we don't have to increment
 	 * firing_counter.
 	 */
 	events = &afterTriggers->query_stack[afterTriggers->query_depth];
-	if (afterTriggerMarkEvents(events, &afterTriggers->events, true))
+	while (afterTriggerMarkEvents(events, &afterTriggers->events, true))
 	{
 		CommandId	firing_id = afterTriggers->firing_counter++;
 
@@ -2648,7 +2659,7 @@ AfterTriggerFireDeferred(void)
 		ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 
 	/*
-	 * Run all the remaining triggers.	Loop until they are all gone, just in
+	 * Run all the remaining triggers.	Loop until they are all gone, in
 	 * case some trigger queues more for us to do.
 	 */
 	while (afterTriggerMarkEvents(events, NULL, false))
@@ -3211,7 +3222,7 @@ AfterTriggerSetState(ConstraintsSetStmt *stmt)
 	{
 		AfterTriggerEventList *events = &afterTriggers->events;
 
-		if (afterTriggerMarkEvents(events, NULL, true))
+		while (afterTriggerMarkEvents(events, NULL, true))
 		{
 			CommandId	firing_id = afterTriggers->firing_counter++;
 

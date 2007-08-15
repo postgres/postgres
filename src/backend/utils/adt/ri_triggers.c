@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.95 2007/06/05 21:31:06 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.96 2007/08/15 19:15:46 tgl Exp $
  *
  * ----------
  */
@@ -2774,7 +2774,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 									  NULL, NULL,
 									  CopySnapshot(GetLatestSnapshot()),
 									  InvalidSnapshot,
-									  true, 1);
+									  true, false, 1);
 
 	/* Check result */
 	if (spi_result != SPI_OK_SELECT)
@@ -3308,7 +3308,7 @@ ri_PerformCheck(RI_QueryKey *qkey, SPIPlanPtr qplan,
 	spi_result = SPI_execute_snapshot(qplan,
 									  vals, nulls,
 									  test_snapshot, crosscheck_snapshot,
-									  false, limit);
+									  false, false, limit);
 
 	/* Restore UID */
 	SetUserId(save_uid);

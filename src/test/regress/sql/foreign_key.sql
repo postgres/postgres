@@ -879,3 +879,45 @@ ROLLBACK TO savept1;
 
 -- should catch error from initial INSERT
 COMMIT;
+
+-- test order of firing of FK triggers when several RI-induced changes need to
+-- be made to the same row.  This was broken by subtransaction-related
+-- changes in 8.0.
+
+CREATE TEMP TABLE users (
+  id INT PRIMARY KEY,
+  name VARCHAR NOT NULL
+);
+
+INSERT INTO users VALUES (1, 'Jozko');
+INSERT INTO users VALUES (2, 'Ferko');
+INSERT INTO users VALUES (3, 'Samko');
+
+CREATE TEMP TABLE tasks (
+  id INT PRIMARY KEY,
+  owner INT REFERENCES users ON UPDATE CASCADE ON DELETE SET NULL,
+  worker INT REFERENCES users ON UPDATE CASCADE ON DELETE SET NULL,
+  checked_by INT REFERENCES users ON UPDATE CASCADE ON DELETE SET NULL
+);
+
+INSERT INTO tasks VALUES (1,1,NULL,NULL);
+INSERT INTO tasks VALUES (2,2,2,NULL);
+INSERT INTO tasks VALUES (3,3,3,3);
+
+SELECT * FROM tasks;
+
+UPDATE users SET id = 4 WHERE id = 3;
+
+SELECT * FROM tasks;
+
+DELETE FROM users WHERE id = 4;
+
+SELECT * FROM tasks;
+
+-- could fail with only 2 changes to make, if row was already updated
+BEGIN;
+UPDATE tasks set id=id WHERE id=2;
+SELECT * FROM tasks;
+DELETE FROM users WHERE id = 2;
+SELECT * FROM tasks;
+COMMIT;

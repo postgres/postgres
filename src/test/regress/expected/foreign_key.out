@@ -646,7 +646,6 @@ SELECT * from FKTABLE;
 UPDATE PKTABLE set ptest2=5 where ptest2=2;
 ERROR:  insert or update on table "fktable" violates foreign key constraint "constrname3"
 DETAIL:  Key (ftest1,ftest2,ftest3)=(1,-1,3) is not present in table "pktable".
-CONTEXT:  SQL statement "UPDATE ONLY "public"."fktable" SET "ftest2" = DEFAULT WHERE $1 OPERATOR(pg_catalog.=) "ftest1" AND $2 OPERATOR(pg_catalog.=) "ftest2" AND $3 OPERATOR(pg_catalog.=) "ftest3""
 -- Try to update something that will set default
 UPDATE PKTABLE set ptest1=0, ptest2=5, ptest3=10 where ptest2=2;
 UPDATE PKTABLE set ptest2=10 where ptest2=4;
@@ -1230,3 +1229,71 @@ ROLLBACK TO savept1;
 COMMIT;
 ERROR:  insert or update on table "fktable" violates foreign key constraint "fktable_fk_fkey"
 DETAIL:  Key (fk)=(20) is not present in table "pktable".
+-- test order of firing of FK triggers when several RI-induced changes need to
+-- be made to the same row.  This was broken by subtransaction-related
+-- changes in 8.0.
+CREATE TEMP TABLE users (
+  id INT PRIMARY KEY,
+  name VARCHAR NOT NULL
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "users_pkey" for table "users"
+INSERT INTO users VALUES (1, 'Jozko');
+INSERT INTO users VALUES (2, 'Ferko');
+INSERT INTO users VALUES (3, 'Samko');
+CREATE TEMP TABLE tasks (
+  id INT PRIMARY KEY,
+  owner INT REFERENCES users ON UPDATE CASCADE ON DELETE SET NULL,
+  worker INT REFERENCES users ON UPDATE CASCADE ON DELETE SET NULL,
+  checked_by INT REFERENCES users ON UPDATE CASCADE ON DELETE SET NULL
+);
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index "tasks_pkey" for table "tasks"
+INSERT INTO tasks VALUES (1,1,NULL,NULL);
+INSERT INTO tasks VALUES (2,2,2,NULL);
+INSERT INTO tasks VALUES (3,3,3,3);
+SELECT * FROM tasks;
+ id | owner | worker | checked_by 
+----+-------+--------+------------
+  1 |     1 |        |           
+  2 |     2 |      2 |           
+  3 |     3 |      3 |          3
+(3 rows)
+
+UPDATE users SET id = 4 WHERE id = 3;
+SELECT * FROM tasks;
+ id | owner | worker | checked_by 
+----+-------+--------+------------
+  1 |     1 |        |           
+  2 |     2 |      2 |           
+  3 |     4 |      4 |          4
+(3 rows)
+
+DELETE FROM users WHERE id = 4;
+SELECT * FROM tasks;
+ id | owner | worker | checked_by 
+----+-------+--------+------------
+  1 |     1 |        |           
+  2 |     2 |      2 |           
+  3 |       |        |           
+(3 rows)
+
+-- could fail with only 2 changes to make, if row was already updated
+BEGIN;
+UPDATE tasks set id=id WHERE id=2;
+SELECT * FROM tasks;
+ id | owner | worker | checked_by 
+----+-------+--------+------------
+  1 |     1 |        |           
+  3 |       |        |           
+  2 |     2 |      2 |           
+(3 rows)
+
+DELETE FROM users WHERE id = 2;
+SELECT * FROM tasks;
+ id | owner | worker | checked_by 
+----+-------+--------+------------
+  1 |     1 |        |           
+  3 |       |        |           
+  2 |       |        |           
+(3 rows)
+
+COMMIT;
