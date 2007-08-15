@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Wed Aug 15 11:36:16 EDT 2007
+Last updated:           Wed Aug 15 11:48:07 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1010,6 +1010,13 @@ first.  There is also a developer's wiki at<br/>
   add someday to determine which heap pages need vacuuming.  Frequently
   accessed bitmaps would have to be stored in shared memory.  One 8k
   page of bitmaps could track 512MB of heap pages.
+</p>
+<p>  A third idea would be for a heap scan to check if all rows are visible
+  and if so set a per-table flag which can be checked by index scans. 
+  Any change to the table would have to clear the flag.  To detect
+  changes during the heap scan a counter could be set at the start and
+  checked at the end --- if it is the same, the table has not been
+  modified --- any table change would increment the counter.
 </p>
   </li><li>Consider automatic caching of statements at various levels:
   <ul>
