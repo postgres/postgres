@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.217 2007/08/15 19:15:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.218 2007/08/15 21:39:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2313,11 +2313,10 @@ afterTriggerMarkEvents(AfterTriggerEventList *events,
  *	Scan the given event list for events that are marked as to be fired
  *	in the current firing cycle, and fire them.
  *
- *	If estate isn't NULL, then we expect that all the firable events are
- *	for triggers of the relations included in the estate's result relation
- *	array.	This allows us to re-use the estate's open relations and
- *	trigger cache info.  When estate is NULL, we have to find the relations
- *	the hard way.
+ *	If estate isn't NULL, we use its result relation info to avoid repeated
+ *	openings and closing of trigger target relations.  If it is NULL, we
+ *	make one locally to cache the info in case there are multiple trigger
+ *	events per rel.
  *
  *	When delete_ok is TRUE, it's okay to delete fully-processed events.
  *	The events list pointers are updated.
@@ -2332,11 +2331,18 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 	AfterTriggerEvent event,
 				prev_event;
 	MemoryContext per_tuple_context;
-	bool		locally_opened = false;
+	bool		local_estate = false;
 	Relation	rel = NULL;
 	TriggerDesc *trigdesc = NULL;
 	FmgrInfo   *finfo = NULL;
 	Instrumentation *instr = NULL;
+
+	/* Make a local EState if need be */
+	if (estate == NULL)
+	{
+		estate = CreateExecutorState();
+		local_estate = true;
+	}
 
 	/* Make a per-tuple memory context for trigger function calls */
 	per_tuple_context =
@@ -2360,77 +2366,21 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 			event->ate_firing_id == firing_id)
 		{
 			/*
-			 * So let's fire it... but first, open the correct relation if
+			 * So let's fire it... but first, find the correct relation if
 			 * this is not the same relation as before.
 			 */
-			if (rel == NULL || rel->rd_id != event->ate_relid)
+			if (rel == NULL || RelationGetRelid(rel) != event->ate_relid)
 			{
-				if (locally_opened)
-				{
-					/* close prior rel if any */
-					if (rel)
-						heap_close(rel, NoLock);
-					if (trigdesc)
-						FreeTriggerDesc(trigdesc);
-					if (finfo)
-						pfree(finfo);
-					Assert(instr == NULL);		/* never used in this case */
-				}
-				locally_opened = true;
+				ResultRelInfo *rInfo;
 
-				if (estate)
-				{
-					/* Find target relation among estate's result rels */
-					ResultRelInfo *rInfo;
-					int			nr;
-
-					rInfo = estate->es_result_relations;
-					nr = estate->es_num_result_relations;
-					while (nr > 0)
-					{
-						if (rInfo->ri_RelationDesc->rd_id == event->ate_relid)
-						{
-							rel = rInfo->ri_RelationDesc;
-							trigdesc = rInfo->ri_TrigDesc;
-							finfo = rInfo->ri_TrigFunctions;
-							instr = rInfo->ri_TrigInstrument;
-							locally_opened = false;
-							break;
-						}
-						rInfo++;
-						nr--;
-					}
-				}
-
-				if (locally_opened)
-				{
-					/* Hard way: open target relation for ourselves */
-
-					/*
-					 * We assume that an appropriate lock is still held by the
-					 * executor, so grab no new lock here.
-					 */
-					rel = heap_open(event->ate_relid, NoLock);
-
-					/*
-					 * Copy relation's trigger info so that we have a stable
-					 * copy no matter what the called triggers do.
-					 */
-					trigdesc = CopyTriggerDesc(rel->trigdesc);
-
-					if (trigdesc == NULL)		/* should not happen */
-						elog(ERROR, "relation %u has no triggers",
-							 event->ate_relid);
-
-					/*
-					 * Allocate space to cache fmgr lookup info for triggers.
-					 */
-					finfo = (FmgrInfo *)
-						palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
-
-					/* Never any EXPLAIN info in this case */
-					instr = NULL;
-				}
+				rInfo = ExecGetTriggerResultRel(estate, event->ate_relid);
+				rel = rInfo->ri_RelationDesc;
+				trigdesc = rInfo->ri_TrigDesc;
+				finfo = rInfo->ri_TrigFunctions;
+				instr = rInfo->ri_TrigInstrument;
+				if (trigdesc == NULL)		/* should not happen */
+					elog(ERROR, "relation %u has no triggers",
+						 event->ate_relid);
 			}
 
 			/*
@@ -2480,17 +2430,22 @@ afterTriggerInvokeEvents(AfterTriggerEventList *events,
 	events->tail = prev_event;
 
 	/* Release working resources */
-	if (locally_opened)
-	{
-		if (rel)
-			heap_close(rel, NoLock);
-		if (trigdesc)
-			FreeTriggerDesc(trigdesc);
-		if (finfo)
-			pfree(finfo);
-		Assert(instr == NULL);	/* never used in this case */
-	}
 	MemoryContextDelete(per_tuple_context);
+
+	if (local_estate)
+	{
+		ListCell *l;
+
+		foreach(l, estate->es_trig_target_relations)
+		{
+			ResultRelInfo *resultRelInfo = (ResultRelInfo *) lfirst(l);
+
+			/* Close indices and then the relation itself */
+			ExecCloseIndices(resultRelInfo);
+			heap_close(resultRelInfo->ri_RelationDesc, NoLock);
+		}
+		FreeExecutorState(estate);
+	}
 }
 
 

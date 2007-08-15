@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.295 2007/06/11 01:16:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.296 2007/08/15 21:39:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,8 +66,8 @@ typedef struct evalPlanQual
 /* decls for local routines only used within this module */
 static void InitPlan(QueryDesc *queryDesc, int eflags);
 static void initResultRelInfo(ResultRelInfo *resultRelInfo,
+				  Relation resultRelationDesc,
 				  Index resultRelationIndex,
-				  List *rangeTable,
 				  CmdType operation,
 				  bool doInstrument);
 static void ExecEndPlan(PlanState *planstate, EState *estate);
@@ -494,9 +494,15 @@ InitPlan(QueryDesc *queryDesc, int eflags)
 		resultRelInfo = resultRelInfos;
 		foreach(l, resultRelations)
 		{
+			Index		resultRelationIndex = lfirst_int(l);
+			Oid			resultRelationOid;
+			Relation	resultRelation;
+
+			resultRelationOid = getrelid(resultRelationIndex, rangeTable);
+			resultRelation = heap_open(resultRelationOid, RowExclusiveLock);
 			initResultRelInfo(resultRelInfo,
-							  lfirst_int(l),
-							  rangeTable,
+							  resultRelation,
+							  resultRelationIndex,
 							  operation,
 							  estate->es_instrument);
 			resultRelInfo++;
@@ -831,19 +837,20 @@ InitPlan(QueryDesc *queryDesc, int eflags)
  */
 static void
 initResultRelInfo(ResultRelInfo *resultRelInfo,
+				  Relation resultRelationDesc,
 				  Index resultRelationIndex,
-				  List *rangeTable,
 				  CmdType operation,
 				  bool doInstrument)
 {
-	Oid			resultRelationOid;
-	Relation	resultRelationDesc;
-
-	resultRelationOid = getrelid(resultRelationIndex, rangeTable);
-	resultRelationDesc = heap_open(resultRelationOid, RowExclusiveLock);
-
+	/*
+	 * Check valid relkind ... parser and/or planner should have noticed
+	 * this already, but let's make sure.
+	 */
 	switch (resultRelationDesc->rd_rel->relkind)
 	{
+		case RELKIND_RELATION:
+			/* OK */
+			break;
 		case RELKIND_SEQUENCE:
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -862,8 +869,15 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 					 errmsg("cannot change view \"%s\"",
 							RelationGetRelationName(resultRelationDesc))));
 			break;
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("cannot change relation \"%s\"",
+							RelationGetRelationName(resultRelationDesc))));
+			break;
 	}
 
+	/* OK, fill in the node */
 	MemSet(resultRelInfo, 0, sizeof(ResultRelInfo));
 	resultRelInfo->type = T_ResultRelInfo;
 	resultRelInfo->ri_RangeTableIndex = resultRelationIndex;
@@ -902,6 +916,76 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
 	if (resultRelationDesc->rd_rel->relhasindex &&
 		operation != CMD_DELETE)
 		ExecOpenIndices(resultRelInfo);
+}
+
+/*
+ *		ExecGetTriggerResultRel
+ *
+ * Get a ResultRelInfo for a trigger target relation.  Most of the time,
+ * triggers are fired on one of the result relations of the query, and so
+ * we can just return a member of the es_result_relations array.  (Note: in
+ * self-join situations there might be multiple members with the same OID;
+ * if so it doesn't matter which one we pick.)  However, it is sometimes
+ * necessary to fire triggers on other relations; this happens mainly when an
+ * RI update trigger queues additional triggers on other relations, which will
+ * be processed in the context of the outer query.  For efficiency's sake,
+ * we want to have a ResultRelInfo for those triggers too; that can avoid
+ * repeated re-opening of the relation.  (It also provides a way for EXPLAIN
+ * ANALYZE to report the runtimes of such triggers.)  So we make additional
+ * ResultRelInfo's as needed, and save them in es_trig_target_relations.
+ */
+ResultRelInfo *
+ExecGetTriggerResultRel(EState *estate, Oid relid)
+{
+	ResultRelInfo *rInfo;
+	int			nr;
+	ListCell   *l;
+	Relation	rel;
+	MemoryContext oldcontext;
+
+	/* First, search through the query result relations */
+	rInfo = estate->es_result_relations;
+	nr = estate->es_num_result_relations;
+	while (nr > 0)
+	{
+		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid)
+			return rInfo;
+		rInfo++;
+		nr--;
+	}
+	/* Nope, but maybe we already made an extra ResultRelInfo for it */
+	foreach(l, estate->es_trig_target_relations)
+	{
+		rInfo = (ResultRelInfo *) lfirst(l);
+		if (RelationGetRelid(rInfo->ri_RelationDesc) == relid)
+			return rInfo;
+	}
+	/* Nope, so we need a new one */
+
+	/*
+	 * Open the target relation's relcache entry.  We assume that an
+	 * appropriate lock is still held by the backend from whenever the
+	 * trigger event got queued, so we need take no new lock here.
+	 */
+	rel = heap_open(relid, NoLock);
+
+	/*
+	 * Make the new entry in the right context.  Currently, we don't need
+	 * any index information in ResultRelInfos used only for triggers,
+	 * so tell initResultRelInfo it's a DELETE.
+	 */
+	oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+	rInfo = makeNode(ResultRelInfo);
+	initResultRelInfo(rInfo,
+					  rel,
+					  0,		/* dummy rangetable index */
+					  CMD_DELETE,
+					  estate->es_instrument);
+	estate->es_trig_target_relations =
+		lappend(estate->es_trig_target_relations, rInfo);
+	MemoryContextSwitchTo(oldcontext);
+
+	return rInfo;
 }
 
 /*
@@ -1017,6 +1101,17 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 		ExecCloseIndices(resultRelInfo);
 		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
 		resultRelInfo++;
+	}
+
+	/*
+	 * likewise close any trigger target relations
+	 */
+	foreach(l, estate->es_trig_target_relations)
+	{
+		resultRelInfo = (ResultRelInfo *) lfirst(l);
+		/* Close indices and then the relation itself */
+		ExecCloseIndices(resultRelInfo);
+		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
 	}
 
 	/*
@@ -2267,6 +2362,7 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
 	epqstate->es_num_result_relations = estate->es_num_result_relations;
 	epqstate->es_result_relation_info = estate->es_result_relation_info;
 	epqstate->es_junkFilter = estate->es_junkFilter;
+	/* es_trig_target_relations must NOT be copied */
 	epqstate->es_into_relation_descriptor = estate->es_into_relation_descriptor;
 	epqstate->es_into_relation_use_wal = estate->es_into_relation_use_wal;
 	epqstate->es_param_list_info = estate->es_param_list_info;
@@ -2331,7 +2427,8 @@ EvalPlanQualStart(evalPlanQual *epq, EState *estate, evalPlanQual *priorepq)
  *
  * This is a cut-down version of ExecutorEnd(); basically we want to do most
  * of the normal cleanup, but *not* close result relations (which we are
- * just sharing from the outer query).
+ * just sharing from the outer query).  We do, however, have to close any
+ * trigger target relations that got opened, since those are not shared.
  */
 static void
 EvalPlanQualStop(evalPlanQual *epq)
@@ -2358,6 +2455,15 @@ EvalPlanQualStop(evalPlanQual *epq)
 	{
 		heap_freetuple(epqstate->es_evTuple[epq->rti - 1]);
 		epqstate->es_evTuple[epq->rti - 1] = NULL;
+	}
+
+	foreach(l, epqstate->es_trig_target_relations)
+	{
+		ResultRelInfo *resultRelInfo = (ResultRelInfo *) lfirst(l);
+
+		/* Close indices and then the relation itself */
+		ExecCloseIndices(resultRelInfo);
+		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
 	}
 
 	MemoryContextSwitchTo(oldcontext);
