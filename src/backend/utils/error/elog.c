@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.193 2007/08/04 19:29:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.194 2007/08/19 01:41:25 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,6 +104,14 @@ static int	errordata_stack_depth = -1; /* index of topmost active frame */
 
 static int	recursion_depth = 0;	/* to detect actual recursion */
 
+/* buffers for formatted timestamps that might be used by both
+ * log_line_prefix and csv logs.
+ */
+
+#define FORMATTED_TS_LEN 128
+static char formatted_start_time[FORMATTED_TS_LEN];
+static char formatted_log_time[FORMATTED_TS_LEN];
+
 
 /* Macro for checking errordata_stack_depth is reasonable */
 #define CHECK_STACK_DEPTH() \
@@ -124,8 +132,8 @@ static const char *useful_strerror(int errnum);
 static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
-static void write_pipe_chunks(int fd, char *data, int len);
-
+static void write_pipe_chunks(char *data, int len, int dest);
+static void get_error_message(StringInfo buf, ErrorData *edata);
 
 /*
  * errstart --- begin an error-reporting cycle
@@ -1434,12 +1442,14 @@ log_line_prefix(StringInfo buf)
 	/*
 	 * This is one of the few places where we'd rather not inherit a static
 	 * variable's value from the postmaster.  But since we will, reset it when
-	 * MyProcPid changes.
+	 * MyProcPid changes. MyStartTime also changes when MyProcPid does, so
+	 * reset the formatted start timestamp too.
 	 */
 	if (log_my_pid != MyProcPid)
 	{
 		log_line_number = 0;
 		log_my_pid = MyProcPid;
+		formatted_start_time[0] = '\0';
 	}
 	log_line_number++;
 
@@ -1498,8 +1508,7 @@ log_line_prefix(StringInfo buf)
 					struct timeval tv;
 					pg_time_t	stamp_time;
 					pg_tz	   *tz;
-					char		strfbuf[128],
-								msbuf[8];
+					char		msbuf[8];
 
 					gettimeofday(&tv, NULL);
 					stamp_time = (pg_time_t) tv.tv_sec;
@@ -1512,16 +1521,16 @@ log_line_prefix(StringInfo buf)
 					 */
 					tz = log_timezone ? log_timezone : gmt_timezone;
 
-					pg_strftime(strfbuf, sizeof(strfbuf),
+					pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
 								/* leave room for milliseconds... */
 								"%Y-%m-%d %H:%M:%S     %Z",
 								pg_localtime(&stamp_time, tz));
 
 					/* 'paste' milliseconds into place... */
 					sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
-					strncpy(strfbuf + 19, msbuf, 4);
+					strncpy(formatted_log_time + 19, msbuf, 4);
 
-					appendStringInfoString(buf, strfbuf);
+					appendStringInfoString(buf, formatted_log_time);
 				}
 				break;
 			case 't':
@@ -1539,18 +1548,18 @@ log_line_prefix(StringInfo buf)
 				}
 				break;
 			case 's':
+				if (formatted_start_time[0] == '\0')
 				{
 					pg_time_t	stamp_time = (pg_time_t) MyStartTime;
 					pg_tz	   *tz;
-					char		strfbuf[128];
 
 					tz = log_timezone ? log_timezone : gmt_timezone;
 
-					pg_strftime(strfbuf, sizeof(strfbuf),
+					pg_strftime(formatted_start_time, FORMATTED_TS_LEN,
 								"%Y-%m-%d %H:%M:%S %Z",
 								pg_localtime(&stamp_time, tz));
-					appendStringInfoString(buf, strfbuf);
 				}
+				appendStringInfoString(buf, formatted_start_time);
 				break;
 			case 'i':
 				if (MyProcPort)
@@ -1596,6 +1605,245 @@ log_line_prefix(StringInfo buf)
 	}
 }
 
+
+/*
+ * append a CSV'd version of a string to a StringInfo
+ * We use the PostgreSQL defaults for CSV, i.e. quote = escape = '"'
+ */
+
+static inline void 
+appendCSVLiteral(StringInfo buf, const char* data)
+{
+  const char * p = data;
+  char c;
+
+  appendStringInfoCharMacro(buf, '"');
+  while ( (c = *p++) != '\0' )
+  {
+      if (c == '"')
+          appendStringInfoCharMacro(buf, '"');
+      appendStringInfoCharMacro(buf, c);
+  }
+  appendStringInfoCharMacro(buf, '"');
+}
+
+/* 
+ * Constructs the error message, depending on the Errordata it gets, 
+ * in CSV (comma seperated values) format. The COPY command 
+ * can then be used to load the messages into a table.
+ */
+
+static void
+write_csvlog(ErrorData *edata)
+{
+	StringInfoData msgbuf;
+	StringInfoData buf;
+
+    /* static counter for line numbers */
+    static long log_line_number = 0;
+
+    /* has counter been reset in current process? */
+    static int  log_my_pid = 0;
+
+    /*
+     * This is one of the few places where we'd rather not inherit a static
+     * variable's value from the postmaster.  But since we will, reset it when
+     * MyProcPid changes.
+     */
+    if (log_my_pid != MyProcPid)
+    {
+        log_line_number = 0;
+        log_my_pid = MyProcPid;
+		formatted_start_time[0] = '\0';
+    }
+    log_line_number++;
+
+	initStringInfo(&msgbuf);
+	initStringInfo(&buf);
+
+	/* 
+	 * The format of the log output in CSV format:
+	 * timestamp with milliseconds, username, databasename, session id,
+	 * host and port number, process id, process line number, command tag, 
+     * session start time, transaction id, error severity, sql state code, 
+     * statement or error message.
+	 */
+  
+	/* timestamp_with_milliseconds */
+	/* 
+	 * Check if the timestamp is already calculated for the syslog message,
+	 * if it is, then no need to calculate it again, will use the same,
+	 * else get the current timestamp. This is done to put same timestamp
+	 * in both syslog and csvlog messages.
+	 */
+	if (formatted_log_time[0] == '\0')
+	{
+		struct timeval tv;
+		pg_time_t	stamp_time;
+		pg_tz	   *tz;
+		char		msbuf[8];
+		
+		gettimeofday(&tv, NULL);
+		stamp_time = (pg_time_t) tv.tv_sec;
+		
+		/*
+		 * Normally we print log timestamps in log_timezone, but
+		 * during startup we could get here before that's set.
+		 * If so, fall back to gmt_timezone (which guc.c ensures
+		 * is set up before Log_line_prefix can become nonempty).
+		 */
+		tz = log_timezone ? log_timezone : gmt_timezone;
+		
+		pg_strftime(formatted_log_time, FORMATTED_TS_LEN,
+					/* leave room for milliseconds... */
+					"%Y-%m-%d %H:%M:%S     %Z",
+					pg_localtime(&stamp_time, tz));
+
+		/* 'paste' milliseconds into place... */
+		sprintf(msbuf, ".%03d", (int) (tv.tv_usec / 1000));
+		strncpy(formatted_log_time + 19, msbuf, 4);
+	}
+	appendStringInfoString(&buf, formatted_log_time);
+	appendStringInfoChar(&buf, ',');
+
+	/* username */
+	if (MyProcPort)
+	{
+		const char *username = MyProcPort->user_name;
+		if (username == NULL || *username == '\0')
+			username = _("[unknown]");
+
+		appendCSVLiteral(&buf, username);
+	}
+	appendStringInfoChar(&buf, ',');
+
+	/* databasename */
+	if (MyProcPort)
+	{
+		const char *dbname = MyProcPort->database_name;
+
+		if (dbname == NULL || *dbname == '\0')
+			dbname = _("[unknown]");
+		
+		appendCSVLiteral(&buf, dbname);
+	}
+	appendStringInfoChar(&buf, ',');
+
+	/* session id */
+	appendStringInfo(&buf, "%lx.%x",
+					 (long) MyStartTime, MyProcPid);
+	appendStringInfoChar(&buf, ',');
+
+	/* Remote host and port */
+	if (MyProcPort && MyProcPort->remote_host)
+	{
+		appendStringInfo(&buf, "%s", MyProcPort->remote_host);
+		if (MyProcPort->remote_port && MyProcPort->remote_port[0] != '\0')
+			appendStringInfo(&buf, ":%s", MyProcPort->remote_port);
+	}
+
+	appendStringInfoChar(&buf, ',');
+
+	/* Process id  */
+	if (MyProcPid != 0)
+		appendStringInfo(&buf, "%d", MyProcPid);
+
+	appendStringInfoChar(&buf, ',');
+
+	/* Line number */
+	appendStringInfo(&buf, "%ld", log_line_number);
+
+	appendStringInfoChar(&buf, ',');
+
+	/* PS display */
+	if (MyProcPort)
+	{
+		const char *psdisp;
+		int         displen;
+
+		psdisp = get_ps_display(&displen);
+		appendStringInfo(&msgbuf, "%.*s", displen, psdisp);
+		appendCSVLiteral(&buf, msgbuf.data);
+		resetStringInfo(&msgbuf);
+	}
+
+	appendStringInfoChar(&buf, ',');
+
+	/* session start timestamp */
+	if (formatted_start_time[0] == '\0')
+	{
+		pg_time_t	stamp_time = (pg_time_t) MyStartTime;
+		pg_tz	   *tz;
+					
+		tz = log_timezone ? log_timezone : gmt_timezone;
+
+		pg_strftime(formatted_start_time, FORMATTED_TS_LEN,
+					"%Y-%m-%d %H:%M:%S %Z",
+					pg_localtime(&stamp_time, tz));
+	}
+	appendStringInfoString(&buf, formatted_start_time);
+	appendStringInfoChar(&buf, ',');
+
+
+	/* Transaction id */
+	if (MyProcPort)
+	{
+		if (IsTransactionState())
+			appendStringInfo(&buf, "%u", GetTopTransactionId());
+		else
+			appendStringInfo(&buf, "%u", InvalidTransactionId);
+	}
+
+	appendStringInfoChar(&buf, ',');
+
+	/* Error severity */
+	if (error_severity(edata->elevel) != NULL)
+		appendStringInfo(&buf, "%s,", error_severity(edata->elevel));
+	else
+		appendStringInfoString(&buf, ",");
+  
+	/* SQL state code */
+	if (Log_error_verbosity >= PGERROR_VERBOSE)
+		appendStringInfo(&buf, "%s", 
+						 unpack_sql_state(edata->sqlerrcode));
+	appendStringInfoChar(&buf, ',');
+ 
+	/* Error message and cursor position if any */
+	get_error_message(&msgbuf, edata);
+
+	appendCSVLiteral(&buf, msgbuf.data);
+
+	appendStringInfoChar(&buf, '\n');
+
+	/* If in the syslogger process, try to write messages direct to file */
+	if (am_syslogger)
+		write_syslogger_file(buf.data, buf.len, LOG_DESTINATION_CSVLOG);
+	else
+		write_pipe_chunks(buf.data, buf.len, LOG_DESTINATION_CSVLOG); 
+	
+	pfree(msgbuf.data);
+	pfree(buf.data);
+}
+
+/*
+ * Appends the buffer with the error message and the cursor position.
+ */
+static void
+get_error_message(StringInfo buf, ErrorData *edata)
+{
+	if (edata->message)
+		appendStringInfo(buf, "%s", edata->message);
+	else
+		appendStringInfo(buf, "%s", _("missing error text"));
+
+	if (edata->cursorpos > 0)
+		appendStringInfo(buf, _(" at character %d"),
+						 edata->cursorpos);
+	else if (edata->internalpos > 0)
+		appendStringInfo(buf, _(" at character %d"),
+						 edata->internalpos);
+}
+
 /*
  * Unpack MAKE_SQLSTATE code. Note that this returns a pointer to a
  * static buffer.
@@ -1626,6 +1874,8 @@ send_message_to_server_log(ErrorData *edata)
 	StringInfoData buf;
 
 	initStringInfo(&buf);
+
+	formatted_log_time[0] = '\0';
 
 	log_line_prefix(&buf);
 	appendStringInfo(&buf, "%s:  ", error_severity(edata->elevel));
@@ -1766,7 +2016,7 @@ send_message_to_server_log(ErrorData *edata)
 		 * syslogger.  Otherwise, just do a vanilla write to stderr.
 		 */
 		if (redirection_done && !am_syslogger)
-			write_pipe_chunks(fileno(stderr), buf.data, buf.len);
+			write_pipe_chunks(buf.data, buf.len, LOG_DESTINATION_STDERR);
 #ifdef WIN32
 		/*
 		 * In a win32 service environment, there is no usable stderr. Capture
@@ -1782,9 +2032,31 @@ send_message_to_server_log(ErrorData *edata)
 			write(fileno(stderr), buf.data, buf.len);
 	}
 
+	if (Log_destination & LOG_DESTINATION_CSVLOG)
+	{
+		if (redirection_done || am_syslogger)
+		{
+			/* send CSV data if it's safe to do so (syslogger doesn't need
+			 * the pipe)
+			 */
+			write_csvlog(edata);
+		}
+		else
+		{
+			char * msg = _("Not safe to send CSV data\n");
+			write(fileno(stderr),msg,strlen(msg));
+			if ( ! (Log_destination & LOG_DESTINATION_STDERR) &&
+				 whereToSendOutput != DestDebug)
+			{
+				/* write message to stderr unless we just sent it above */
+				write(fileno(stderr), buf.data, buf.len);
+			}
+		}
+	}
+
 	/* If in the syslogger process, try to write messages direct to file */
 	if (am_syslogger)
-		write_syslogger_file(buf.data, buf.len);
+		write_syslogger_file(buf.data, buf.len, LOG_DESTINATION_STDERR);
 
 	pfree(buf.data);
 }
@@ -1793,9 +2065,11 @@ send_message_to_server_log(ErrorData *edata)
  * Send data to the syslogger using the chunked protocol
  */
 static void
-write_pipe_chunks(int fd, char *data, int len)
+write_pipe_chunks(char *data, int len, int dest)
 {
 	PipeProtoChunk p;
+
+	int fd = fileno(stderr);
 
 	Assert(len > 0);
 
@@ -1805,7 +2079,7 @@ write_pipe_chunks(int fd, char *data, int len)
 	/* write all but the last chunk */
 	while (len > PIPE_MAX_PAYLOAD)
 	{
-		p.proto.is_last = 'f';
+		p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'F' : 'f');
 		p.proto.len = PIPE_MAX_PAYLOAD;
 		memcpy(p.proto.data, data, PIPE_MAX_PAYLOAD);
 		write(fd, &p, PIPE_HEADER_SIZE + PIPE_MAX_PAYLOAD);
@@ -1814,7 +2088,7 @@ write_pipe_chunks(int fd, char *data, int len)
 	}
 
 	/* write the last chunk */
-	p.proto.is_last = 't';
+	p.proto.is_last = (dest == LOG_DESTINATION_CSVLOG ? 'T' : 't');
 	p.proto.len = len;
 	memcpy(p.proto.data, data, len);
 	write(fd, &p, PIPE_HEADER_SIZE + len);

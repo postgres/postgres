@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.412 2007/08/13 19:27:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.413 2007/08/19 01:41:25 adunstan Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -968,11 +968,11 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 	{
-		{"redirect_stderr", PGC_POSTMASTER, LOGGING_WHERE,
-			gettext_noop("Start a subprocess to capture stderr output into log files."),
+		{"logging_collector", PGC_POSTMASTER, LOGGING_WHERE,
+			gettext_noop("Start a subprocess to capture stderr output and/or csvlogs into log files."),
 			NULL
 		},
-		&Redirect_stderr,
+		&Logging_collector,
 		false, NULL, NULL
 	},
 	{
@@ -2241,7 +2241,7 @@ static struct config_string ConfigureNamesString[] =
 		{"log_destination", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the destination for server log output."),
 			gettext_noop("Valid values are combinations of \"stderr\", \"syslog\", "
-						 "and \"eventlog\", depending on the platform."),
+						 " \"csvlog\" and \"eventlog\", depending on the platform."),
 			GUC_LIST_INPUT
 		},
 		&log_destination_string,
@@ -6313,6 +6313,8 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 
 		if (pg_strcasecmp(tok, "stderr") == 0)
 			newlogdest |= LOG_DESTINATION_STDERR;
+		else if (pg_strcasecmp(tok, "csvlog") == 0)
+           newlogdest |= LOG_DESTINATION_CSVLOG;
 #ifdef HAVE_SYSLOG
 		else if (pg_strcasecmp(tok, "syslog") == 0)
 			newlogdest |= LOG_DESTINATION_SYSLOG;

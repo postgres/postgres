@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.77 2007/07/23 17:22:00 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.78 2007/08/19 01:41:24 adunstan Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -691,10 +691,11 @@ analyze threshold = analyze base threshold + analyze scale factor * number of tu
    A better approach is to send the server's
    <systemitem>stderr</> output to some type of log rotation program.
    There is a built-in log rotation program, which you can use by
-   setting the configuration parameter <literal>redirect_stderr</> to
+   setting the configuration parameter <literal>logging_collector</> to
    <literal>true</> in <filename>postgresql.conf</>.  The control
    parameters for this program are described in <xref
-   linkend="runtime-config-logging-where">.
+   linkend="runtime-config-logging-where">. You can also use this approach
+   to capture the log data in machine readable CSV format.
   </para>
 
   <para>

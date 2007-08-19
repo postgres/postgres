@@ -229,15 +229,16 @@
 # - Where to Log -
 
 #log_destination = 'stderr'		# Valid values are combinations of 
-					# stderr, syslog and eventlog, 
+					# stderr, csvlog, syslog and eventlog, 
 					# depending on platform.
+					# csvlog requires logging_collector to be on
 
 # This is used when logging to stderr:
-#redirect_stderr = off			# Enable capturing of stderr into log 
-					# files
+#logging_collector = off			# Enable capturing of stderr and csvlog 
+					# into log files. Required to be on for csvlogs.
 					# (change requires restart)
 
-# These are only used if redirect_stderr is on:
+# These are only used if logging_collector is on:
 #log_directory = 'pg_log'		# Directory where log files are written
 					# Can be absolute or relative to PGDATA
 #log_filename = 'postgresql-%Y-%m-%d_%H%M%S.log' # Log file name pattern.
