@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.386 2007/08/19 01:41:23 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.387 2007/08/19 03:23:30 adunstan Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -11255,7 +11255,7 @@ SELECT set_config('log_statement_stats', 'off', false);
    <para>
     <function>pg_rotate_logfile</> signals the log-file manager to switch
     to a new output file immediately.  This works only when the built-in
-	log collector if running, since otherwise there is no log-file manager 
+	log collector is running, since otherwise there is no log-file manager 
 	subprocess.
    </para>
 
