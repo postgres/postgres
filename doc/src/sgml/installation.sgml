@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.290 2007/07/18 12:00:47 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.291 2007/08/20 08:53:12 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1017,6 +1017,44 @@ su - postgres
          <application>ECPG</application> programs to safely control
          their private connection handles.  This option requires adequate
          threading support in your operating system.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term><option>--with-system-tzdata=<replaceable>DIRECTORY</replaceable></option></term>
+       <indexterm>
+        <primary>time zone data</primary>
+       </indexterm>
+       <listitem>
+        <para>
+         PostgreSQL includes its own time zone database, which it
+         requires for date and time operations.  This time zone
+         database is in fact compatible with the time zone database
+         provided by many operating systems such as FreeBSD, Linux,
+         and Solaris, so it would be redundant to install it again.
+         When this option is used, the operating system supplied time
+         zone database in <replaceable>DIRECTORY</replaceable> is used
+         instead of the one included in the PostgreSQL source
+         distribution.  <filename>/usr/share/zoneinfo/</filename> is a
+         likely directory on some operating systems.  Note that the
+         installation routine does not detect mismatching or erroneous
+         time zone data.  You are advised to run the regression tests
+         to verify that the time zone data you have pointed to works
+         correctly.
+        </para>
+
+        <para>
+         This option is mainly aimed at binary package distributors
+         who know their target operating system well.  The main
+         advantage of using this option is that the PostgreSQL package
+         won't need to be upgraded whenever any of the many local
+         daylight-saving time rules changes.  Another completely
+         incidental advantage is that PostgreSQL can be
+         cross-compiled<indexterm><primary>cross
+         compilation</primary></indexterm> straightforwardly if the
+         time-zone database does not need to be built during the
+         installation.
         </para>
        </listitem>
       </varlistentry>

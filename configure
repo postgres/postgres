@@ -314,7 +314,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS configure_args build build_cpu build_vendor build_os host host_cpu host_vendor host_os PORTNAME docdir enable_nls WANTED_LANGUAGES default_port enable_shared enable_rpath enable_debug enable_profiling DTRACE DTRACEFLAGS enable_dtrace CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP GCC TAS autodepend INCLUDES enable_thread_safety with_tcl with_perl with_python with_gssapi with_krb5 krb_srvtab with_pam with_ldap with_bonjour with_openssl with_ossp_uuid XML2_CONFIG with_libxml with_libxslt with_zlib EGREP ELF_SYS LDFLAGS_SL LD with_gnu_ld ld_R_works RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP STRIP_STATIC_LIB STRIP_SHARED_LIB TAR LN_S AWK YACC YFLAGS FLEX FLEXFLAGS PERL perl_archlibexp perl_privlibexp perl_useshrplib perl_embed_ldflags PYTHON python_version python_configdir python_includespec python_libdir python_libspec python_additional_libs HAVE_IPV6 LIBOBJS acx_pthread_config PTHREAD_CC PTHREAD_LIBS PTHREAD_CFLAGS LDAP_LIBS_FE LDAP_LIBS_BE HAVE_POSIX_SIGNALS MSGFMT MSGMERGE XGETTEXT localedir TCLSH TCL_CONFIG_SH TCL_INCLUDE_SPEC TCL_LIB_FILE TCL_LIBS TCL_LIB_SPEC TCL_SHARED_BUILD TCL_SHLIB_LD_LIBS NSGMLS JADE have_docbook DOCBOOKSTYLE COLLATEINDEX SGMLSPL vpath_build LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS configure_args build build_cpu build_vendor build_os host host_cpu host_vendor host_os PORTNAME docdir enable_nls WANTED_LANGUAGES default_port enable_shared enable_rpath enable_debug enable_profiling DTRACE DTRACEFLAGS enable_dtrace CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP GCC TAS autodepend INCLUDES enable_thread_safety with_tcl with_perl with_python with_gssapi with_krb5 krb_srvtab with_pam with_ldap with_bonjour with_openssl with_ossp_uuid XML2_CONFIG with_libxml with_libxslt with_system_tzdata with_zlib EGREP ELF_SYS LDFLAGS_SL LD with_gnu_ld ld_R_works RANLIB ac_ct_RANLIB STRIP ac_ct_STRIP STRIP_STATIC_LIB STRIP_SHARED_LIB TAR LN_S AWK YACC YFLAGS FLEX FLEXFLAGS PERL perl_archlibexp perl_privlibexp perl_useshrplib perl_embed_ldflags PYTHON python_version python_configdir python_includespec python_libdir python_libspec python_additional_libs HAVE_IPV6 LIBOBJS acx_pthread_config PTHREAD_CC PTHREAD_LIBS PTHREAD_CFLAGS LDAP_LIBS_FE LDAP_LIBS_BE HAVE_POSIX_SIGNALS MSGFMT MSGMERGE XGETTEXT localedir TCLSH TCL_CONFIG_SH TCL_INCLUDE_SPEC TCL_LIB_FILE TCL_LIBS TCL_LIB_SPEC TCL_SHARED_BUILD TCL_SHLIB_LD_LIBS NSGMLS JADE have_docbook DOCBOOKSTYLE COLLATEINDEX SGMLSPL vpath_build LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -899,6 +899,7 @@ Optional Packages:
   --with-ossp-uuid        build with OSSP UUID library for UUID generation
   --with-libxml           build with XML support
   --with-libxslt          build with XSLT support
+  --with-system-tzdata=DIR  use system time zone data in DIR
   --without-zlib          do not use Zlib
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
 
@@ -4497,6 +4498,37 @@ else
 fi;
 
 
+
+
+
+#
+# tzdata
+#
+
+pgac_args="$pgac_args with_system_tzdata"
+
+
+# Check whether --with-system-tzdata or --without-system-tzdata was given.
+if test "${with_system_tzdata+set}" = set; then
+  withval="$with_system_tzdata"
+
+  case $withval in
+    yes)
+      { { echo "$as_me:$LINENO: error: argument required for --with-system-tzdata option" >&5
+echo "$as_me: error: argument required for --with-system-tzdata option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+    no)
+      { { echo "$as_me:$LINENO: error: argument required for --with-system-tzdata option" >&5
+echo "$as_me: error: argument required for --with-system-tzdata option" >&2;}
+   { (exit 1); exit 1; }; }
+      ;;
+    *)
+
+      ;;
+  esac
+
+fi;
 
 
 
@@ -25237,6 +25269,7 @@ s,@with_ossp_uuid@,$with_ossp_uuid,;t t
 s,@XML2_CONFIG@,$XML2_CONFIG,;t t
 s,@with_libxml@,$with_libxml,;t t
 s,@with_libxslt@,$with_libxslt,;t t
+s,@with_system_tzdata@,$with_system_tzdata,;t t
 s,@with_zlib@,$with_zlib,;t t
 s,@EGREP@,$EGREP,;t t
 s,@ELF_SYS@,$ELF_SYS,;t t
