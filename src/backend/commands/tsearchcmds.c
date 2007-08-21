@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.1 2007/08/21 01:11:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.2 2007/08/21 21:24:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1192,10 +1192,9 @@ DefineTSConfiguration(List *names, List *parameters)
 	Oid			namespaceoid;
 	char	   *cfgname;
 	NameData	cname;
-	List	   *templateName = NIL;
-	Oid			templateOid = InvalidOid;
+	List	   *sourceName = NIL;
+	Oid			sourceOid = InvalidOid;
 	Oid			prsOid = InvalidOid;
-	bool		with_map = false;
 	Oid			cfgOid;
 	ListCell   *pl;
 
@@ -1217,10 +1216,8 @@ DefineTSConfiguration(List *names, List *parameters)
 
 		if (pg_strcasecmp(defel->defname, "parser") == 0)
 			prsOid = TSParserGetPrsid(defGetQualifiedName(defel), false);
-		else if (pg_strcasecmp(defel->defname, "template") == 0)
-			templateName = defGetQualifiedName(defel);
-		else if (pg_strcasecmp(defel->defname, "map") == 0)
-			with_map = defGetBoolean(defel);
+		else if (pg_strcasecmp(defel->defname, "copy") == 0)
+			sourceName = defGetQualifiedName(defel);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1229,26 +1226,24 @@ DefineTSConfiguration(List *names, List *parameters)
 	}
 
 	/*
-	 * Look up template if given.  XXX the "template" is an existing config
-	 * that we copy, not a pg_ts_template entry.  This seems confusing.
-	 * Maybe should use "source" or some other word?
+	 * Look up source config if given.
 	 */
-	if (templateName)
+	if (sourceName)
 	{
 		Form_pg_ts_config cfg;
 
-		templateOid = TSConfigGetCfgid(templateName, false);
+		sourceOid = TSConfigGetCfgid(sourceName, false);
 
 		tup = SearchSysCache(TSCONFIGOID,
-							 ObjectIdGetDatum(templateOid),
+							 ObjectIdGetDatum(sourceOid),
 							 0, 0, 0);
 		if (!HeapTupleIsValid(tup))
 			elog(ERROR, "cache lookup failed for text search configuration %u",
-				 templateOid);
+				 sourceOid);
 
 		cfg = (Form_pg_ts_config) GETSTRUCT(tup);
 
-		/* Use template's parser if no other was specified */
+		/* Use source's parser if no other was specified */
 		if (!OidIsValid(prsOid))
 			prsOid = cfg->cfgparser;
 
@@ -1283,10 +1278,10 @@ DefineTSConfiguration(List *names, List *parameters)
 
 	CatalogUpdateIndexes(cfgRel, tup);
 
-	if (OidIsValid(templateOid) && with_map)
+	if (OidIsValid(sourceOid))
 	{
 		/*
-		 * Copy token-dicts map from template
+		 * Copy token-dicts map from source config
 		 */
 		ScanKeyData skey;
 		SysScanDesc scan;
@@ -1297,7 +1292,7 @@ DefineTSConfiguration(List *names, List *parameters)
 		ScanKeyInit(&skey,
 					Anum_pg_ts_config_map_mapcfg,
 					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(templateOid));
+					ObjectIdGetDatum(sourceOid));
 
 		scan = systable_beginscan(mapRel, TSConfigMapIndexId, true,
 								  SnapshotNow, 1, &skey);
