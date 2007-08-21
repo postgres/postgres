@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.1 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.2 2007/08/21 01:45:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -434,8 +434,9 @@ tsvectorin(PG_FUNCTION_ARGS)
 		if (state.curpos - state.word >= MAXSTRLEN)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("word is too long (%d bytes, max %d bytes)",
-							state.curpos - state.word, MAXSTRLEN)));
+					 errmsg("word is too long (%ld bytes, max %ld bytes)",
+							(long) (state.curpos - state.word),
+							(long) MAXSTRLEN)));
 
 		arr[len].entry.len = state.curpos - state.word;
 		if (cur - tmpbuf > MAXSTRPOS)
