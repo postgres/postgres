@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.1 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.2 2007/08/21 06:34:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ typedef char *BITVECP;
 
 typedef struct
 {
-	int32		vl_len_; /* varlena header (do not touch directly!) */ ;
+	int32		vl_len_; /* varlena header (do not touch directly!) */
 	int4		flag;
 	char		data[1];
 } SignTSVector;
