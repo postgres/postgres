@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.153 2007/06/06 23:00:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.154 2007/08/21 01:11:25 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -914,6 +914,34 @@ DATA(insert OID = 3518 (  "<"	   PGNSP PGUID b f f 3500 3500 16 3519 3521 enum_l
 DATA(insert OID = 3519 (  ">"	   PGNSP PGUID b f f 3500 3500 16 3518 3520 enum_gt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 3520 (  "<="	   PGNSP PGUID b f f 3500 3500 16 3521 3519 enum_le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 3521 (  ">="	   PGNSP PGUID b f f 3500 3500 16 3520 3518 enum_ge scalargtsel scalargtjoinsel ));
+
+/*
+ * tsearch operations
+ */
+DATA(insert OID = 3627 (  "<"      PGNSP PGUID b f f 3614    3614    16 3632 3631    tsvector_lt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3628 (  "<="     PGNSP PGUID b f f 3614    3614    16 3631 3632    tsvector_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3629 (  "="      PGNSP PGUID b t f 3614    3614    16 3629 3630    tsvector_eq eqsel eqjoinsel ));
+DATA(insert OID = 3630 (  "<>"     PGNSP PGUID b f f 3614    3614    16 3630 3629    tsvector_ne neqsel neqjoinsel ));
+DATA(insert OID = 3631 (  ">="     PGNSP PGUID b f f 3614    3614    16 3628 3627    tsvector_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3632 (  ">"      PGNSP PGUID b f f 3614    3614    16 3627 3628    tsvector_gt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3633 (  "||"     PGNSP PGUID b f f 3614    3614    3614  0    0    tsvector_concat   -    -     ));
+DATA(insert OID = 3636 (  "@@"     PGNSP PGUID b f f 3614    3615    16 3637    0    ts_match_vq   contsel     contjoinsel   ));
+DATA(insert OID = 3637 (  "@@"     PGNSP PGUID b f f 3615    3614    16 3636    0    ts_match_qv   contsel     contjoinsel   ));
+DATA(insert OID = 3660 (  "@@@"    PGNSP PGUID b f f 3614    3615    16 3661    0    ts_match_vq   contsel     contjoinsel   ));
+DATA(insert OID = 3661 (  "@@@"    PGNSP PGUID b f f 3615    3614    16 3660    0    ts_match_qv   contsel     contjoinsel   ));
+DATA(insert OID = 3674 (  "<"      PGNSP PGUID b f f 3615    3615    16 3679 3678    tsquery_lt scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3675 (  "<="     PGNSP PGUID b f f 3615    3615    16 3678 3679    tsquery_le scalarltsel scalarltjoinsel ));
+DATA(insert OID = 3676 (  "="      PGNSP PGUID b t f 3615    3615    16 3676 3677    tsquery_eq eqsel eqjoinsel ));
+DATA(insert OID = 3677 (  "<>"     PGNSP PGUID b f f 3615    3615    16 3677 3676    tsquery_ne neqsel neqjoinsel ));
+DATA(insert OID = 3678 (  ">="     PGNSP PGUID b f f 3615    3615    16 3675 3674    tsquery_ge scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3679 (  ">"      PGNSP PGUID b f f 3615    3615    16 3674 3675    tsquery_gt scalargtsel scalargtjoinsel ));
+DATA(insert OID = 3680 (  "&&"     PGNSP PGUID b f f 3615    3615    3615  0    0    tsquery_and   -    -     ));
+DATA(insert OID = 3681 (  "||"     PGNSP PGUID b f f 3615    3615    3615  0    0    tsquery_or   -     -     ));
+DATA(insert OID = 3682 (  "!!"     PGNSP PGUID l f f 0       3615    3615  0    0    tsquery_not   -    -     ));
+DATA(insert OID = 3693 (  "@>"     PGNSP PGUID b f f 3615    3615    16 3694    0    tsq_mcontains  contsel    contjoinsel   ));
+DATA(insert OID = 3694 (  "<@"     PGNSP PGUID b f f 3615    3615    16 3693    0    tsq_mcontained contsel    contjoinsel   ));
+DATA(insert OID = 3762 (  "@@"     PGNSP PGUID b f f 25      25      16    0    0    ts_match_tt    contsel    contjoinsel   ));
+DATA(insert OID = 3763 (  "@@"     PGNSP PGUID b f f 25      3615    16    0    0    ts_match_tq    contsel    contjoinsel   ));
 
 
 /*

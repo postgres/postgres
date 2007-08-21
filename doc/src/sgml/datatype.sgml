@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.206 2007/08/04 01:26:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.207 2007/08/21 01:11:11 tgl Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3485,6 +3485,14 @@ SET xmloption TO { DOCUMENT | CONTENT };
    </indexterm>
 
    <indexterm zone="datatype-oid">
+    <primary>regconfig</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
+    <primary>regdictionary</primary>
+   </indexterm>
+
+   <indexterm zone="datatype-oid">
     <primary>xid</primary>
    </indexterm>
 
@@ -3505,9 +3513,9 @@ SET xmloption TO { DOCUMENT | CONTENT };
     configuration variable is enabled.  Type <type>oid</> represents
     an object identifier.  There are also several alias types for
     <type>oid</>: <type>regproc</>, <type>regprocedure</>,
-    <type>regoper</>, <type>regoperator</>, <type>regclass</>, and
-    <type>regtype</>. <xref linkend="datatype-oid-table"> shows an
-    overview.
+    <type>regoper</>, <type>regoperator</>, <type>regclass</>,
+    <type>regtype</>, <type>regconfig</>, and <type>regdictionary</>.
+    <xref linkend="datatype-oid-table"> shows an overview.
    </para>
 
    <para>
@@ -3613,6 +3621,20 @@ SELECT * FROM pg_attribute
         <entry><structname>pg_type</></entry>
         <entry>data type name</entry>
         <entry><literal>integer</></entry>
+       </row>
+
+       <row>
+        <entry><type>regconfig</></entry>
+        <entry><structname>pg_ts_config</></entry>
+        <entry>text search configuration</entry>
+        <entry><literal>english</></entry>
+       </row>
+
+       <row>
+        <entry><type>regdictionary</></entry>
+        <entry><structname>pg_ts_dict</></entry>
+        <entry>text search dictionary</entry>
+        <entry><literal>simple</></entry>
        </row>
       </tbody>
      </tgroup>

@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.81 2007/05/08 18:56:47 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amop.h,v 1.82 2007/08/21 01:11:25 tgl Exp $
  *
  * NOTES
  *	 the genbki.sh script reads this file and generates .bki
@@ -651,5 +651,40 @@ DATA(insert (   3522   3500 3500 5  f	3519	403 ));
  * hash enum_ops
  */
 DATA(insert (   3523   3500 3500 1  f	3516	405 ));
+
+/*
+ * btree tsvector_ops
+ */
+DATA(insert (	3626   3614 3614 1 f   3627 403 ));
+DATA(insert (	3626   3614 3614 2 f   3628 403 ));
+DATA(insert (	3626   3614 3614 3 f   3629 403 ));
+DATA(insert (	3626   3614 3614 4 f   3631 403 ));
+DATA(insert (	3626   3614 3614 5 f   3632 403 ));
+
+/*
+ * GiST tsvector_ops
+ */
+DATA(insert (	3655   3614 3615 1  t  3636 783 ));
+
+/*
+ * GIN tsvector_ops 
+ */
+DATA(insert (	3659   3614 3615 1  f  3636 2742 ));
+DATA(insert (	3659   3614 3615 2  t  3660 2742 ));
+
+/*
+ * btree tsquery_ops
+ */
+DATA(insert (	3683   3615 3615 1 f   3674 403 ));
+DATA(insert (	3683   3615 3615 2 f   3675 403 ));
+DATA(insert (	3683   3615 3615 3 f   3676 403 ));
+DATA(insert (	3683   3615 3615 4 f   3678 403 ));
+DATA(insert (	3683   3615 3615 5 f   3679 403 ));
+
+/*
+ * GiST tsquery_ops
+ */
+DATA(insert (	3702   3615 3615 7  t  3693 783 ));
+DATA(insert (	3702   3615 3615 8  t  3694 783 ));
 
 #endif   /* PG_AMOP_H */

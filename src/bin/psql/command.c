@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.180 2007/07/08 19:07:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.181 2007/08/21 01:11:22 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -404,6 +404,27 @@ exec_command(const char *cmd,
 				break;
 			case 'u':
 				success = describeRoles(pattern, show_verbose);
+				break;
+			case 'F':			/* text search subsystem */
+				switch (cmd[2])
+				{
+					case '\0':
+					case '+':
+						success = listTSConfigs(pattern, show_verbose);
+						break;
+					case 'p':
+						success = listTSParsers(pattern, show_verbose);
+						break;
+					case 'd':
+						success = listTSDictionaries(pattern, show_verbose);
+						break;
+					case 't':
+						success = listTSTemplates(pattern, show_verbose);
+						break;
+					default:
+						status = PSQL_CMD_UNKNOWN;
+						break;
+				}
 				break;
 
 			default:

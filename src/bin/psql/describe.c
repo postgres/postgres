@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.157 2007/07/25 22:16:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.158 2007/08/21 01:11:22 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -33,6 +33,14 @@ static bool describeOneTableDetails(const char *schemaname,
 						bool verbose);
 static bool add_tablespace_footer(char relkind, Oid tablespace, char **footers,
 					  int *count, PQExpBufferData buf, bool newline);
+static bool listTSParsersVerbose(const char *pattern);
+static bool describeOneTSParser(const char *oid, const char *nspname,
+								const char *prsname);
+static bool listTSConfigsVerbose(const char *pattern);
+static bool describeOneTSConfig(const char *oid, const char *nspname,
+								const char *cfgname,
+								const char *pnspname, const char *prsname);
+
 
 /*----------------
  * Handlers for various slash commands displaying some sort of list
@@ -323,7 +331,6 @@ describeTypes(const char *pattern, bool verbose)
 	PQclear(res);
 	return true;
 }
-
 
 
 /* \do
@@ -1926,6 +1933,515 @@ listSchemas(const char *pattern, bool verbose)
 	myopt.title = _("List of schemas");
 
 	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+
+/*
+ * \dFp
+ * list text search parsers
+ */
+bool
+listTSParsers(const char *pattern, bool verbose)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	if (verbose)
+		return listTSParsersVerbose(pattern);
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT \n"
+					  "  n.nspname as \"%s\",\n"
+					  "  p.prsname as \"%s\",\n"
+			"  pg_catalog.obj_description(p.oid, 'pg_ts_parser') as \"%s\"\n"
+					  "FROM pg_catalog.pg_ts_parser p \n"
+			"LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.prsnamespace\n",
+					  _("Schema"),
+					  _("Name"),
+					  _("Description")
+		);
+
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  "n.nspname", "p.prsname", NULL,
+						  "pg_catalog.pg_ts_parser_is_visible(p.oid)");
+
+	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of text search parsers");
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+/*
+ * full description of parsers
+ */
+static bool
+listTSParsersVerbose(const char *pattern)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	int			i;
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT p.oid, \n"
+					  "  n.nspname, \n"
+					  "  p.prsname \n"
+					  "FROM pg_catalog.pg_ts_parser p\n"
+			 "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = p.prsnamespace\n"
+		);
+
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  "n.nspname", "p.prsname", NULL,
+						  "pg_catalog.pg_ts_parser_is_visible(p.oid)");
+
+	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	if (PQntuples(res) == 0)
+	{
+		if (!pset.quiet)
+			fprintf(stderr, _("Did not find any text search parser named \"%s\".\n"),
+					pattern);
+		PQclear(res);
+		return false;
+	}
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		const char *oid;
+		const char *nspname = NULL;
+		const char *prsname;
+
+		oid = PQgetvalue(res, i, 0);
+		if (!PQgetisnull(res, i, 1))
+			nspname = PQgetvalue(res, i, 1);
+		prsname = PQgetvalue(res, i, 2);
+
+		if (!describeOneTSParser(oid, nspname, prsname))
+		{
+			PQclear(res);
+			return false;
+		}
+
+		if (cancel_pressed)
+		{
+			PQclear(res);
+			return false;
+		}
+	}
+
+	PQclear(res);
+	return true;
+}
+
+static bool
+describeOneTSParser(const char *oid, const char *nspname, const char *prsname)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	char		title[1024];
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT '%s' AS \"%s\", \n"
+					  "   p.prsstart::pg_catalog.regproc AS \"%s\", \n"
+					  "   pg_catalog.obj_description(p.prsstart, 'pg_proc') as \"%s\" \n"
+					  " FROM pg_catalog.pg_ts_parser p \n"
+					  " WHERE p.oid = '%s' \n"
+					  "UNION ALL \n"
+					  "SELECT '%s', \n"
+					  "   p.prstoken::pg_catalog.regproc, \n"
+					  "   pg_catalog.obj_description(p.prstoken, 'pg_proc') \n"
+					  " FROM pg_catalog.pg_ts_parser p \n"
+					  " WHERE p.oid = '%s' \n"
+					  "UNION ALL \n"
+					  "SELECT '%s', \n"
+					  "   p.prsend::pg_catalog.regproc, \n"
+					  "   pg_catalog.obj_description(p.prsend, 'pg_proc') \n"
+					  " FROM pg_catalog.pg_ts_parser p \n"
+					  " WHERE p.oid = '%s' \n"
+					  "UNION ALL \n"
+					  "SELECT '%s', \n"
+					  "   p.prsheadline::pg_catalog.regproc, \n"
+					  "   pg_catalog.obj_description(p.prsheadline, 'pg_proc') \n"
+					  " FROM pg_catalog.pg_ts_parser p \n"
+					  " WHERE p.oid = '%s' \n"
+					  "UNION ALL \n"
+					  "SELECT '%s', \n"
+					  "   p.prslextype::pg_catalog.regproc, \n"
+					  "   pg_catalog.obj_description(p.prslextype, 'pg_proc') \n"
+					  " FROM pg_catalog.pg_ts_parser p \n"
+					  " WHERE p.oid = '%s' \n",
+					  _("Start parse"),
+					  _("Method"), _("Function"), _("Description"),
+					  oid,
+					  _("Get next token"), oid,
+					  _("End parse"), oid,
+					  _("Get headline"), oid,
+					  _("Get lexeme types"), oid
+		);
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	if (nspname)
+		sprintf(title, _("Text search parser \"%s.%s\""), nspname, prsname);
+	else
+		sprintf(title, _("Text search parser \"%s\""), prsname);
+	myopt.title = title;
+	myopt.footers = NULL;
+	myopt.default_footer = false;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT t.alias as \"%s\", \n"
+					  "  t.description as \"%s\" \n"
+				   "FROM pg_catalog.ts_token_type( '%s'::pg_catalog.oid ) as t \n"
+					  "ORDER BY 1;",
+					  _("Token name"),
+					  _("Description"),
+					  oid);
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	if (nspname)
+		sprintf(title, _("Token types for parser \"%s.%s\""), nspname, prsname);
+	else
+		sprintf(title, _("Token types for parser \"%s\""), prsname);
+	myopt.title = title;
+	myopt.footers = NULL;
+	myopt.default_footer = true;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+
+/*
+ * \dFd
+ * list text search dictionaries
+ */
+bool
+listTSDictionaries(const char *pattern, bool verbose)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT \n"
+					  "  n.nspname as \"%s\",\n"
+					  "  d.dictname as \"%s\",\n",
+					  _("Schema"),
+					  _("Name"));
+
+	if (verbose)
+	{
+		appendPQExpBuffer(&buf,
+						  "  ( SELECT COALESCE(nt.nspname, '(null)')::pg_catalog.text || '.' || t.tmplname FROM \n"
+						  "    pg_catalog.pg_ts_template t \n"
+						  "			 LEFT JOIN pg_catalog.pg_namespace nt ON nt.oid = t.tmplnamespace \n"
+						  "			 WHERE d.dicttemplate = t.oid ) AS  \"%s\", \n"
+						  "  d.dictinitoption as \"%s\", \n",
+						  _("Template"),
+						  _("Init options"));
+	}
+
+	appendPQExpBuffer(&buf,
+			 "  pg_catalog.obj_description(d.oid, 'pg_ts_dict') as \"%s\"\n",
+					  _("Description"));
+
+	appendPQExpBuffer(&buf, "FROM pg_catalog.pg_ts_dict d\n"
+		"LEFT JOIN pg_catalog.pg_namespace n ON n.oid = d.dictnamespace\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  "n.nspname", "d.dictname", NULL,
+						  "pg_catalog.pg_ts_dict_is_visible(d.oid)");
+
+	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of text search dictionaries");
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+
+/*
+ * \dFt
+ * list text search templates
+ */
+bool
+listTSTemplates(const char *pattern, bool verbose)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT \n"
+					  "  n.nspname AS \"%s\",\n"
+					  "  t.tmplname AS \"%s\",\n"
+					  "  t.tmplinit::pg_catalog.regproc AS \"%s\",\n"
+					  "  t.tmpllexize::pg_catalog.regproc AS \"%s\",\n"
+					  "  pg_catalog.obj_description(t.oid, 'pg_ts_template') AS \"%s\"\n",
+					  _("Schema"),
+					  _("Name"),
+					  _("Init"),
+					  _("Lexize"),
+					  _("Description"));
+
+	appendPQExpBuffer(&buf, "FROM pg_catalog.pg_ts_template t\n"
+		"LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.tmplnamespace\n");
+
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  "n.nspname", "t.tmplname", NULL,
+						  "pg_catalog.pg_ts_template_is_visible(t.oid)");
+
+	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of text search templates");
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+
+/*
+ * \dF
+ * list text search configurations
+ */
+bool
+listTSConfigs(const char *pattern, bool verbose)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	if (verbose)
+		return listTSConfigsVerbose(pattern);
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT \n"
+					  "   n.nspname as \"%s\",\n"
+					  "   c.cfgname as \"%s\",\n"
+		   "   pg_catalog.obj_description(c.oid, 'pg_ts_config') as \"%s\"\n"
+					  "FROM pg_catalog.pg_ts_config c\n"
+		  "LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace \n",
+					  _("Schema"),
+					  _("Name"),
+					  _("Description")
+		);
+
+	processSQLNamePattern(pset.db, &buf, pattern, false, false,
+						  "n.nspname", "c.cfgname", NULL,
+						  "pg_catalog.pg_ts_config_is_visible(c.oid)");
+
+	appendPQExpBuffer(&buf, "ORDER BY 1, 2;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	myopt.nullPrint = NULL;
+	myopt.title = _("List of text search configurations");
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	PQclear(res);
+	return true;
+}
+
+static bool
+listTSConfigsVerbose(const char *pattern)
+{
+	PQExpBufferData buf;
+	PGresult   *res;
+	int			i;
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT c.oid, c.cfgname,\n"
+					  "   n.nspname, \n"
+					  "   p.prsname, \n"
+					  "   np.nspname as pnspname \n"
+					  "FROM pg_catalog.pg_ts_config c \n"
+	   "   LEFT JOIN pg_catalog.pg_namespace n ON n.oid = c.cfgnamespace, \n"
+					  " pg_catalog.pg_ts_parser p \n"
+	 "   LEFT JOIN pg_catalog.pg_namespace np ON np.oid = p.prsnamespace \n"
+					  "WHERE  p.oid = c.cfgparser\n"
+		);
+
+	processSQLNamePattern(pset.db, &buf, pattern, true, false,
+						  "n.nspname", "c.cfgname", NULL,
+						  "pg_catalog.pg_ts_config_is_visible(c.oid)");
+
+	appendPQExpBuffer(&buf, "ORDER BY 3, 2;");
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	if (PQntuples(res) == 0)
+	{
+		if (!pset.quiet)
+			fprintf(stderr, _("Did not find any text search configuration named \"%s\".\n"),
+					pattern);
+		PQclear(res);
+		return false;
+	}
+
+	for (i = 0; i < PQntuples(res); i++)
+	{
+		const char *oid;
+		const char *cfgname;
+		const char *nspname = NULL;
+		const char *prsname;
+		const char *pnspname = NULL;
+
+		oid = PQgetvalue(res, i, 0);
+		cfgname = PQgetvalue(res, i, 1);
+		if (!PQgetisnull(res, i, 2))
+			nspname = PQgetvalue(res, i, 2);
+		prsname = PQgetvalue(res, i, 3);
+		if (!PQgetisnull(res, i, 4))
+			pnspname = PQgetvalue(res, i, 4);
+
+		if (!describeOneTSConfig(oid, nspname, cfgname, pnspname, prsname))
+		{
+			PQclear(res);
+			return false;
+		}
+
+		if (cancel_pressed)
+		{
+			PQclear(res);
+			return false;
+		}
+	}
+
+	PQclear(res);
+	return true;
+}
+
+static bool
+describeOneTSConfig(const char *oid, const char *nspname, const char *cfgname,
+					const char *pnspname, const char *prsname)
+{
+	PQExpBufferData buf,
+				title;
+	PGresult   *res;
+	printQueryOpt myopt = pset.popt;
+
+	initPQExpBuffer(&buf);
+
+	printfPQExpBuffer(&buf,
+					  "SELECT \n"
+					  "  ( SELECT t.alias FROM \n"
+					  "    pg_catalog.ts_token_type(c.cfgparser) AS t \n"
+					  "    WHERE t.tokid = m.maptokentype ) AS \"%s\", \n"
+					  "  pg_catalog.btrim( \n"
+					  "    ARRAY( SELECT mm.mapdict::pg_catalog.regdictionary \n"
+					  "           FROM pg_catalog.pg_ts_config_map AS mm \n"
+					  "           WHERE mm.mapcfg = m.mapcfg AND mm.maptokentype = m.maptokentype \n"
+					  "           ORDER BY mapcfg, maptokentype, mapseqno \n"
+					  "    ) :: pg_catalog.text , \n"
+					  "  '{}') AS \"%s\" \n"
+					  "FROM pg_catalog.pg_ts_config AS c, pg_catalog.pg_ts_config_map AS m \n"
+					  "WHERE c.oid = '%s' AND m.mapcfg = c.oid \n"
+					  "GROUP BY m.mapcfg, m.maptokentype, c.cfgparser \n"
+					  "ORDER BY 1",
+					  _("Token"),
+					  _("Dictionaries"),
+					  oid);
+
+	res = PSQLexec(buf.data, false);
+	termPQExpBuffer(&buf);
+	if (!res)
+		return false;
+
+	initPQExpBuffer(&title);
+
+	if (nspname)
+		appendPQExpBuffer(&title, _("Text search configuration \"%s.%s\""), nspname, cfgname);
+	else
+		appendPQExpBuffer(&title, _("Text search configuration \"%s\""), cfgname);
+
+	if (pnspname)
+		appendPQExpBuffer(&title, _("\nParser: \"%s.%s\""), pnspname, prsname);
+	else
+		appendPQExpBuffer(&title, _("\nParser: \"%s\""), prsname);
+
+	myopt.nullPrint = NULL;
+	myopt.title = title.data;
+	myopt.footers = NULL;
+	myopt.default_footer = false;
+
+	printQuery(res, &myopt, pset.queryFout, pset.logfile);
+
+	termPQExpBuffer(&title);
 
 	PQclear(res);
 	return true;

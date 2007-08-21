@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.24 2007/07/03 01:30:36 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/alter.c,v 1.25 2007/08/21 01:11:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,6 +138,22 @@ ExecRenameStmt(RenameStmt *stmt)
 				break;
 			}
 
+		case OBJECT_TSPARSER:
+			RenameTSParser(stmt->object, stmt->newname);
+			break;
+
+		case OBJECT_TSDICTIONARY:
+			RenameTSDictionary(stmt->object, stmt->newname);
+			break;
+
+		case OBJECT_TSTEMPLATE:
+			RenameTSTemplate(stmt->object, stmt->newname);
+			break;
+
+		case OBJECT_TSCONFIGURATION:
+			RenameTSConfiguration(stmt->object, stmt->newname);
+			break;
+
 		default:
 			elog(ERROR, "unrecognized rename stmt type: %d",
 				 (int) stmt->renameType);
@@ -238,6 +254,14 @@ ExecAlterOwnerStmt(AlterOwnerStmt *stmt)
 		case OBJECT_TYPE:
 		case OBJECT_DOMAIN:		/* same as TYPE */
 			AlterTypeOwner(stmt->object, newowner);
+			break;
+
+		case OBJECT_TSDICTIONARY:
+			AlterTSDictionaryOwner(stmt->object, newowner);
+			break;
+
+		case OBJECT_TSCONFIGURATION:
+			AlterTSConfigurationOwner(stmt->object, newowner);
 			break;
 
 		default:

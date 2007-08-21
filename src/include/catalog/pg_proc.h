@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.462 2007/07/06 04:15:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.463 2007/08/21 01:11:25 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3124,6 +3124,15 @@ DATA(insert OID = 2083 (  pg_opclass_is_visible		PGNSP PGUID 12 1 0 f f t f s 1 
 DESCR("is opclass visible in search path?");
 DATA(insert OID = 2093 (  pg_conversion_is_visible	PGNSP PGUID 12 1 0 f f t f s 1 16 "26" _null_ _null_ _null_ pg_conversion_is_visible - _null_ ));
 DESCR("is conversion visible in search path?");
+DATA(insert OID = 3756 (  pg_ts_parser_is_visible	PGNSP PGUID 12 1 0 f f t f s 1 16 "26" _null_ _null_ _null_ pg_ts_parser_is_visible - _null_ ));
+DESCR("is text search parser visible in search path?");
+DATA(insert OID = 3757 (  pg_ts_dict_is_visible		PGNSP PGUID 12 1 0 f f t f s 1 16 "26" _null_ _null_ _null_ pg_ts_dict_is_visible - _null_ ));
+DESCR("is text search dictionary visible in search path?");
+DATA(insert OID = 3768 (  pg_ts_template_is_visible	PGNSP PGUID 12 1 0 f f t f s 1 16 "26" _null_ _null_ _null_ pg_ts_template_is_visible - _null_ ));
+DESCR("is text search template visible in search path?");
+DATA(insert OID = 3758 (  pg_ts_config_is_visible	PGNSP PGUID 12 1 0 f f t f s 1 16 "26" _null_ _null_ _null_ pg_ts_config_is_visible - _null_ ));
+DESCR("is text search configuration visible in search path?");
+
 DATA(insert OID = 2854 (  pg_my_temp_schema			PGNSP PGUID 12 1 0 f f t f s 0 26 "" _null_ _null_ _null_ pg_my_temp_schema - _null_ ));
 DESCR("get OID of current session's temp schema, if any");
 DATA(insert OID = 2855 (  pg_is_other_temp_schema	PGNSP PGUID 12 1 0 f f t f s 1 16 "26" _null_ _null_ _null_ pg_is_other_temp_schema - _null_ ));
@@ -3969,6 +3978,8 @@ DESCR("gin(internal)");
 /* GIN array support */
 DATA(insert OID = 2743 (  ginarrayextract	 PGNSP PGUID 12 1 0 f f t f i 2 2281 "2277 2281" _null_ _null_ _null_	ginarrayextract - _null_ ));
 DESCR("GIN array support");
+DATA(insert OID = 2774 (  ginqueryarrayextract	PGNSP PGUID 12 1 0 f f t f i 3 2281 "2277 2281 21" _null_ _null_ _null_	ginqueryarrayextract - _null_ ));
+DESCR("GIN array support");
 DATA(insert OID = 2744 (  ginarrayconsistent PGNSP PGUID 12 1 0 f f t f i 3 16 "2281 21 2281" _null_ _null_ _null_	ginarrayconsistent - _null_ ));
 DESCR("GIN array support");
 
@@ -4127,6 +4138,257 @@ DATA(insert OID = 3528 (  enum_first	PGNSP PGUID 12 1 0 f f f f s 1 3500 "3500" 
 DATA(insert OID = 3529 (  enum_last		PGNSP PGUID 12 1 0 f f f f s 1 3500 "3500" _null_ _null_ _null_ enum_last - _null_ ));
 DATA(insert OID = 3530 (  enum_range	PGNSP PGUID 12 1 0 f f f f s 2 2277 "3500 3500" _null_ _null_ _null_ enum_range_bounds - _null_ ));
 DATA(insert OID = 3531 (  enum_range	PGNSP PGUID 12 1 0 f f f f s 1 2277 "3500" _null_ _null_ _null_ enum_range_all - _null_ ));
+
+/* text search stuff */
+DATA(insert OID =  3610 (  tsvectorin			PGNSP PGUID 12 1 0 f f t f i 1 3614 "2275" _null_ _null_ _null_ tsvectorin - _null_ ));
+DESCR("I/O");
+DATA(insert OID =  3639 (  tsvectorrecv			PGNSP PGUID 12 1 0 f f t f i 1 3614 "2281" _null_ _null_ _null_	tsvectorrecv - _null_ ));
+DESCR("I/O");
+DATA(insert OID =  3611 (  tsvectorout			PGNSP PGUID 12 1 0 f f t f i 1 2275 "3614" _null_ _null_ _null_ tsvectorout - _null_ ));
+DESCR("I/O");
+DATA(insert OID =  3638 (  tsvectorsend			PGNSP PGUID 12 1 0 f f t f i 1 17 "3614" _null_ _null_ _null_	tsvectorsend - _null_ ));
+DESCR("I/O");
+DATA(insert OID =  3612 (  tsqueryin			PGNSP PGUID 12 1 0 f f t f i 1 3615 "2275" _null_ _null_ _null_ tsqueryin - _null_ ));
+DESCR("I/O");
+DATA(insert OID =  3641 (  tsqueryrecv			PGNSP PGUID 12 1 0 f f t f i 1 3615 "2281" _null_ _null_ _null_	tsqueryrecv - _null_ ));
+DESCR("I/O");
+DATA(insert OID =  3613 (  tsqueryout			PGNSP PGUID 12 1 0 f f t f i 1 2275 "3615" _null_ _null_ _null_ tsqueryout - _null_ ));
+DESCR("I/O");
+DATA(insert OID =  3640 (  tsquerysend			PGNSP PGUID 12 1 0 f f t f i 1 17 "3615" _null_ _null_ _null_	tsquerysend - _null_ ));
+DESCR("I/O");
+DATA(insert OID =  3646 (  gtsvectorin			PGNSP PGUID 12 1 0 f f t f i 1 3642 "2275" _null_ _null_ _null_ gtsvectorin - _null_ ));
+DESCR("I/O");
+DATA(insert OID =  3647 (  gtsvectorout			PGNSP PGUID 12 1 0 f f t f i 1 2275 "3642" _null_ _null_ _null_ gtsvectorout - _null_ ));
+DESCR("I/O");
+
+DATA(insert OID = 3616 (  tsvector_lt			PGNSP PGUID 12 1 0 f f t f i 2 16 "3614 3614" _null_ _null_ _null_ tsvector_lt - _null_ ));
+DESCR("less-than");
+DATA(insert OID = 3617 (  tsvector_le			PGNSP PGUID 12 1 0 f f t f i 2 16 "3614 3614" _null_ _null_ _null_ tsvector_le - _null_ ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 3618 (  tsvector_eq			PGNSP PGUID 12 1 0 f f t f i 2 16 "3614 3614" _null_ _null_ _null_ tsvector_eq - _null_ ));
+DESCR("equal");
+DATA(insert OID = 3619 (  tsvector_ne			PGNSP PGUID 12 1 0 f f t f i 2 16 "3614 3614" _null_ _null_ _null_ tsvector_ne - _null_ ));
+DESCR("not equal");
+DATA(insert OID = 3620 (  tsvector_ge			PGNSP PGUID 12 1 0 f f t f i 2 16 "3614 3614" _null_ _null_ _null_ tsvector_ge - _null_ ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 3621 (  tsvector_gt			PGNSP PGUID 12 1 0 f f t f i 2 16 "3614 3614" _null_ _null_ _null_ tsvector_gt - _null_ ));
+DESCR("greater-than");
+DATA(insert OID = 3622 (  tsvector_cmp			PGNSP PGUID 12 1 0 f f t f i 2 23 "3614 3614" _null_ _null_ _null_ tsvector_cmp - _null_ ));
+DESCR("btree less-equal-greater");
+
+DATA(insert OID = 3711 (  length				PGNSP PGUID 12 1 0 f f t f i 1 23 "3614" _null_ _null_ _null_ tsvector_length - _null_ ));
+DESCR("number of lexemes");
+DATA(insert OID = 3623 (  strip					PGNSP PGUID 12 1 0 f f t f i 1 3614 "3614" _null_ _null_ _null_ tsvector_strip - _null_ ));
+DESCR("strip position information");
+DATA(insert OID = 3624 (  setweight				PGNSP PGUID 12 1 0 f f t f i 2 3614 "3614 18" _null_ _null_ _null_ tsvector_setweight - _null_ ));
+DESCR("set weight of lexeme's entries");
+DATA(insert OID = 3625 (  tsvector_concat		PGNSP PGUID 12 1 0 f f t f i 2 3614 "3614 3614" _null_ _null_ _null_ tsvector_concat - _null_ ));
+DESCR("concatenate");
+
+DATA(insert OID = 3634 (  ts_match_vq			PGNSP PGUID 12 1 0 f f t f i 2 16 "3614 3615" _null_ _null_ _null_ ts_match_vq - _null_ ));
+DESCR("match tsvector to tsquery");
+DATA(insert OID = 3635 (  ts_match_qv			PGNSP PGUID 12 1 0 f f t f i 2 16 "3615 3614" _null_ _null_ _null_ ts_match_qv - _null_ ));
+DESCR("match tsquery to tsvector");
+DATA(insert OID = 3760 (  ts_match_tt			PGNSP PGUID 12 3 0 f f t f s 2 16 "25 25" _null_ _null_ _null_ ts_match_tt - _null_ ));
+DESCR("text search match");
+DATA(insert OID = 3761 (  ts_match_tq			PGNSP PGUID 12 2 0 f f t f s 2 16 "25 3615" _null_ _null_ _null_ ts_match_tq - _null_ ));
+DESCR("match text to tsquery");
+
+DATA(insert OID = 3648 (  gtsvector_compress	PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ gtsvector_compress - _null_ ));
+DESCR("GiST tsvector support");
+DATA(insert OID = 3649 (  gtsvector_decompress	PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ gtsvector_decompress - _null_ ));
+DESCR("GiST tsvector support");
+DATA(insert OID = 3650 (  gtsvector_picksplit	PGNSP PGUID 12 1 0 f f t f i 2 2281 "2281 2281" _null_ _null_ _null_ gtsvector_picksplit - _null_ ));
+DESCR("GiST tsvector support");
+DATA(insert OID = 3651 (  gtsvector_union		PGNSP PGUID 12 1 0 f f t f i 2 2281 "2281 2281" _null_ _null_ _null_ gtsvector_union - _null_ ));
+DESCR("GiST tsvector support");
+DATA(insert OID = 3652 (  gtsvector_same		PGNSP PGUID 12 1 0 f f t f i 3 2281 "3642 3642 2281" _null_ _null_ _null_ gtsvector_same - _null_ ));
+DESCR("GiST tsvector support");
+DATA(insert OID = 3653 (  gtsvector_penalty		PGNSP PGUID 12 1 0 f f t f i 3 2281 "2281 2281 2281" _null_ _null_ _null_ gtsvector_penalty - _null_ ));
+DESCR("GiST tsvector support");
+DATA(insert OID = 3654 (  gtsvector_consistent	PGNSP PGUID 12 1 0 f f t f i 3 16 "3642 2281 23" _null_ _null_ _null_ gtsvector_consistent - _null_ ));
+DESCR("GiST tsvector support");
+
+DATA(insert OID = 3656 (  gin_extract_tsvector	PGNSP PGUID 12 1 0 f f t f i 2 2281 "3614 2281" _null_ _null_ _null_	gin_extract_tsvector - _null_ ));
+DESCR("GIN tsvector support");
+DATA(insert OID = 3657 (  gin_extract_query		PGNSP PGUID 12 1 0 f f t f i 3 2281 "2281 2281 21" _null_ _null_ _null_	gin_extract_query - _null_ ));
+DESCR("GIN tsvector support");
+DATA(insert OID = 3658 (  gin_ts_consistent		PGNSP PGUID 12 1 0 f f t f i 3 16 "2281 21 2281" _null_ _null_ _null_	gin_ts_consistent - _null_ ));
+DESCR("GIN tsvector support");
+
+DATA(insert OID = 3662 (  tsquery_lt			PGNSP PGUID 12 1 0 f f t f i 2 16 "3615 3615" _null_ _null_ _null_ tsquery_lt - _null_ ));
+DESCR("less-than");
+DATA(insert OID = 3663 (  tsquery_le			PGNSP PGUID 12 1 0 f f t f i 2 16 "3615 3615" _null_ _null_ _null_ tsquery_le - _null_ ));
+DESCR("less-than-or-equal");
+DATA(insert OID = 3664 (  tsquery_eq			PGNSP PGUID 12 1 0 f f t f i 2 16 "3615 3615" _null_ _null_ _null_ tsquery_eq - _null_ ));
+DESCR("equal");
+DATA(insert OID = 3665 (  tsquery_ne			PGNSP PGUID 12 1 0 f f t f i 2 16 "3615 3615" _null_ _null_ _null_ tsquery_ne - _null_ ));
+DESCR("not equal");
+DATA(insert OID = 3666 (  tsquery_ge			PGNSP PGUID 12 1 0 f f t f i 2 16 "3615 3615" _null_ _null_ _null_ tsquery_ge - _null_ ));
+DESCR("greater-than-or-equal");
+DATA(insert OID = 3667 (  tsquery_gt			PGNSP PGUID 12 1 0 f f t f i 2 16 "3615 3615" _null_ _null_ _null_ tsquery_gt - _null_ ));
+DESCR("greater-than");
+DATA(insert OID = 3668 (  tsquery_cmp			PGNSP PGUID 12 1 0 f f t f i 2 23 "3615 3615" _null_ _null_ _null_ tsquery_cmp - _null_ ));
+DESCR("btree less-equal-greater");
+
+DATA(insert OID = 3669 (  tsquery_and		PGNSP PGUID 12 1 0 f f t f i 2 3615 "3615 3615" _null_ _null_ _null_ tsquery_and - _null_ ));
+DESCR("AND-concatenate");
+DATA(insert OID = 3670 (  tsquery_or		PGNSP PGUID 12 1 0 f f t f i 2 3615 "3615 3615" _null_ _null_ _null_ tsquery_or - _null_ ));
+DESCR("OR-concatenate");
+DATA(insert OID = 3671 (  tsquery_not		PGNSP PGUID 12 1 0 f f t f i 1 3615 "3615" _null_ _null_ _null_ tsquery_not - _null_ ));
+DESCR("NOT-tsquery");
+
+DATA(insert OID = 3691 (  tsq_mcontains		PGNSP PGUID 12 1 0 f f t f i 2 16 "3615 3615" _null_ _null_ _null_ tsq_mcontains - _null_ ));
+DESCR("contains");
+DATA(insert OID = 3692 (  tsq_mcontained	PGNSP PGUID 12 1 0 f f t f i 2 16 "3615 3615" _null_ _null_ _null_ tsq_mcontained - _null_ ));
+DESCR("contained");
+
+DATA(insert OID = 3672 (  numnode			PGNSP PGUID 12 1 0 f f t f i 1 23 "3615" _null_ _null_ _null_ tsquery_numnode - _null_ ));
+DESCR("number of nodes");
+DATA(insert OID = 3673 (  querytree			PGNSP PGUID 12 1 0 f f t f i 1 25 "3615" _null_ _null_ _null_ tsquerytree - _null_ ));
+DESCR("show real useful query for GiST index");
+
+DATA(insert OID = 3684 (  ts_rewrite		PGNSP PGUID 12 1 0 f f t f i 3 3615 "3615 3615 3615" _null_ _null_ _null_ tsquery_rewrite_query - _null_ ));
+DESCR("rewrite tsquery");
+DATA(insert OID = 3685 (  ts_rewrite		PGNSP PGUID 12 1 1000 f f t t v 2 3615 "3615 25" _null_ _null_ _null_ tsquery_rewrite - _null_ ));
+DESCR("rewrite tsquery");
+DATA(insert OID = 3686 (  ts_rewrite_accum	PGNSP PGUID 12 1 0 f f f f i 2 3615 "3615 3645" _null_ _null_ _null_ ts_rewrite_accum - _null_ ));
+DESCR("rewrite tsquery accumulator");
+DATA(insert OID = 3687 (  ts_rewrite_finish	PGNSP PGUID 12 1 0 f f t f i 1 3615 "3615" _null_ _null_ _null_ ts_rewrite_finish - _null_ ));
+DESCR("rewrite tsquery finish");
+DATA(insert OID = 3688 (  ts_rewrite		PGNSP PGUID 12 1 0 t f f f i 1 3615 "3645" _null_ _null_ _null_ aggregate_dummy - _null_ ));
+DESCR("rewrite tsquery");
+
+DATA(insert OID = 3695 (  gtsquery_compress				PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ gtsquery_compress - _null_ ));
+DESCR("GiST tsquery support");
+DATA(insert OID = 3696 (  gtsquery_decompress			PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ gtsquery_decompress - _null_ ));
+DESCR("GiST tsquery support");
+DATA(insert OID = 3697 (  gtsquery_picksplit			PGNSP PGUID 12 1 0 f f t f i 2 2281 "2281 2281" _null_ _null_ _null_ gtsquery_picksplit - _null_ ));
+DESCR("GiST tsquery support");
+DATA(insert OID = 3698 (  gtsquery_union				PGNSP PGUID 12 1 0 f f t f i 2 2281 "2281 2281" _null_ _null_ _null_ gtsquery_union - _null_ ));
+DESCR("GiST tsquery support");
+DATA(insert OID = 3699 (  gtsquery_same					PGNSP PGUID 12 1 0 f f t f i 3 2281 "20 20 2281" _null_ _null_ _null_ gtsquery_same - _null_ ));
+DESCR("GiST tsquery support");
+DATA(insert OID = 3700 (  gtsquery_penalty				PGNSP PGUID 12 1 0 f f t f i 3 2281 "2281 2281 2281" _null_ _null_ _null_ gtsquery_penalty - _null_ ));
+DESCR("GiST tsquery support");
+DATA(insert OID = 3701 (  gtsquery_consistent			PGNSP PGUID 12 1 0 f f t f i 3 16 "20 2281 23" _null_ _null_ _null_ gtsquery_consistent - _null_ ));
+DESCR("GiST tsquery support");
+
+DATA(insert OID = 3689 (  ts_stat		PGNSP PGUID 12 10 10000 f f t t v 1 2249 "25" "{25,25,23,23}" "{i,o,o,o}" "{query,word,ndoc,nentry}" ts_stat1 - _null_ ));
+DESCR("statistics of tsvector column");
+DATA(insert OID = 3690 (  ts_stat		PGNSP PGUID 12 10 10000 f f t t v 2 2249 "25 25" "{25,25,25,23,23}" "{i,i,o,o,o}" "{query,weights,word,ndoc,nentry}" ts_stat2 - _null_ ));
+DESCR("statistics of tsvector column");
+
+DATA(insert OID = 3703 (  ts_rank		PGNSP PGUID 12 1 0 f f t f i 4 700 "1021 3614 3615 23" _null_ _null_ _null_ ts_rank_wttf - _null_ ));
+DESCR("relevance");
+DATA(insert OID = 3704 (  ts_rank		PGNSP PGUID 12 1 0 f f t f i 3 700 "1021 3614 3615" _null_ _null_ _null_ ts_rank_wtt - _null_ ));
+DESCR("relevance");
+DATA(insert OID = 3705 (  ts_rank		PGNSP PGUID 12 1 0 f f t f i 3 700 "3614 3615 23" _null_ _null_ _null_ ts_rank_ttf - _null_ ));
+DESCR("relevance");
+DATA(insert OID = 3706 (  ts_rank		PGNSP PGUID 12 1 0 f f t f i 2 700 "3614 3615" _null_ _null_ _null_ ts_rank_tt - _null_ ));
+DESCR("relevance");
+DATA(insert OID = 3707 (  ts_rank_cd	PGNSP PGUID 12 1 0 f f t f i 4 700 "1021 3614 3615 23" _null_ _null_ _null_ ts_rankcd_wttf - _null_ ));
+DESCR("relevance");
+DATA(insert OID = 3708 (  ts_rank_cd	PGNSP PGUID 12 1 0 f f t f i 3 700 "1021 3614 3615" _null_ _null_ _null_ ts_rankcd_wtt - _null_ ));
+DESCR("relevance");
+DATA(insert OID = 3709 (  ts_rank_cd	PGNSP PGUID 12 1 0 f f t f i 3 700 "3614 3615 23" _null_ _null_ _null_ ts_rankcd_ttf - _null_ ));
+DESCR("relevance");
+DATA(insert OID = 3710 (  ts_rank_cd	PGNSP PGUID 12 1 0 f f t f i 2 700 "3614 3615" _null_ _null_ _null_ ts_rankcd_tt - _null_ ));
+DESCR("relevance");
+
+DATA(insert OID = 3713 (  ts_token_type	PGNSP PGUID 12 1 16 f f t t i 1 2249 "26" "{26,23,25,25}" "{i,o,o,o}" "{parser_oid,tokid,alias,description}" ts_token_type_byid - _null_ ));
+DESCR("get parser's token types");
+DATA(insert OID = 3714 (  ts_token_type	PGNSP PGUID 12 1 16 f f t t s 1 2249 "25" "{25,23,25,25}" "{i,o,o,o}" "{parser_name,tokid,alias,description}" ts_token_type_byname - _null_ ));
+DESCR("get parser's token types");
+DATA(insert OID = 3715 (  ts_parse		PGNSP PGUID 12 1 1000 f f t t i 2 2249 "26 25" "{26,25,23,25}" "{i,i,o,o}" "{parser_oid,txt,tokid,token}" ts_parse_byid - _null_ ));
+DESCR("parse text to tokens");
+DATA(insert OID = 3716 (  ts_parse		PGNSP PGUID 12 1 1000 f f t t s 2 2249 "25 25" "{25,25,23,25}" "{i,i,o,o}" "{parser_name,txt,tokid,token}" ts_parse_byname - _null_ ));
+DESCR("parse text to tokens");
+
+DATA(insert OID = 3717 (  prsd_start		PGNSP PGUID 12 1 0 f f t f i 2 2281 "2281 23" _null_ _null_ _null_ prsd_start - _null_ ));
+DESCR("");
+DATA(insert OID = 3718 (  prsd_nexttoken	PGNSP PGUID 12 1 0 f f t f i 3 2281 "2281 2281 2281" _null_ _null_ _null_ prsd_nexttoken - _null_ ));
+DESCR("");
+DATA(insert OID = 3719 (  prsd_end			PGNSP PGUID 12 1 0 f f t f i 1 2278 "2281" _null_ _null_ _null_ prsd_end - _null_ ));
+DESCR("");
+DATA(insert OID = 3720 (  prsd_headline		PGNSP PGUID 12 1 0 f f t f i 3 2281 "2281 25 3615" _null_ _null_ _null_ prsd_headline - _null_ ));
+DESCR("");
+DATA(insert OID = 3721 (  prsd_lextype		PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ prsd_lextype - _null_ ));
+DESCR("");
+
+DATA(insert OID = 3723 (  ts_lexize			PGNSP PGUID 12 1 0 f f t f i 2 1009 "26 25" _null_ _null_ _null_ ts_lexize_byid - _null_ ));
+DESCR("normalize one word by dictionary");
+DATA(insert OID = 3724 (  ts_lexize			PGNSP PGUID 12 1 0 f f t f s 2 1009 "25 25" _null_ _null_ _null_ ts_lexize_byname - _null_ ));
+DESCR("normalize one word by dictionary");
+
+DATA(insert OID = 3725 (  dsimple_init		PGNSP PGUID 12 1 0 f f f f i 1 2281 "2281" _null_ _null_ _null_ dsimple_init - _null_ ));
+DESCR("");
+DATA(insert OID = 3726 (  dsimple_lexize	PGNSP PGUID 12 1 0 f f t f i 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ dsimple_lexize - _null_ ));
+DESCR("");
+
+DATA(insert OID = 3728 (  dsynonym_init		PGNSP PGUID 12 1 0 f f f f i 1 2281 "2281" _null_ _null_ _null_ dsynonym_init - _null_ ));
+DESCR("");
+DATA(insert OID = 3729 (  dsynonym_lexize	PGNSP PGUID 12 1 0 f f t f i 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ dsynonym_lexize - _null_ ));
+DESCR("");
+
+DATA(insert OID = 3731 (  dispell_init		PGNSP PGUID 12 1 0 f f f f i 1 2281 "2281" _null_ _null_ _null_ dispell_init - _null_ ));
+DESCR("");
+DATA(insert OID = 3732 (  dispell_lexize	PGNSP PGUID 12 1 0 f f t f i 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ dispell_lexize - _null_ ));
+DESCR("");
+
+DATA(insert OID = 3740 (  thesaurus_init	PGNSP PGUID 12 1 0 f f f f i 1 2281 "2281" _null_ _null_ _null_ thesaurus_init - _null_ ));
+DESCR("");
+DATA(insert OID = 3741 (  thesaurus_lexize	PGNSP PGUID 12 1 0 f f t f i 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ thesaurus_lexize - _null_ ));
+DESCR("");
+
+DATA(insert OID = 3743 (  ts_headline	PGNSP PGUID 12 1 0 f f t f i 4 25 "3734 25 3615 25" _null_ _null_ _null_ ts_headline_byid_opt - _null_ ));
+DESCR("generate headline");
+DATA(insert OID = 3744 (  ts_headline	PGNSP PGUID 12 1 0 f f t f i 3 25 "3734 25 3615" _null_ _null_ _null_ ts_headline_byid - _null_ ));
+DESCR("generate headline");
+DATA(insert OID = 3754 (  ts_headline	PGNSP PGUID 12 1 0 f f t f s 3 25 "25 3615 25" _null_ _null_ _null_ ts_headline_opt - _null_ ));
+DESCR("generate headline");
+DATA(insert OID = 3755 (  ts_headline	PGNSP PGUID 12 1 0 f f t f s 2 25 "25 3615" _null_ _null_ _null_ ts_headline - _null_ ));
+DESCR("generate headline");
+
+DATA(insert OID = 3745 (  to_tsvector		PGNSP PGUID 12 1 0 f f t f i 2 3614 "3734 25" _null_ _null_ _null_ to_tsvector_byid - _null_ ));
+DESCR("transform to tsvector");
+DATA(insert OID = 3746 (  to_tsquery		PGNSP PGUID 12 1 0 f f t f i 2 3615 "3734 25" _null_ _null_ _null_ to_tsquery_byid - _null_ ));
+DESCR("make tsquery");
+DATA(insert OID = 3747 (  plainto_tsquery	PGNSP PGUID 12 1 0 f f t f i 2 3615 "3734 25" _null_ _null_ _null_ plainto_tsquery_byid - _null_ ));
+DESCR("transform to tsquery");
+DATA(insert OID = 3749 (  to_tsvector		PGNSP PGUID 12 1 0 f f t f s 1 3614 "25" _null_ _null_ _null_ to_tsvector - _null_ ));
+DESCR("transform to tsvector");
+DATA(insert OID = 3750 (  to_tsquery		PGNSP PGUID 12 1 0 f f t f s 1 3615 "25" _null_ _null_ _null_ to_tsquery - _null_ ));
+DESCR("make tsquery");
+DATA(insert OID = 3751 (  plainto_tsquery	PGNSP PGUID 12 1 0 f f t f s 1 3615 "25" _null_ _null_ _null_ plainto_tsquery - _null_ ));
+DESCR("transform to tsquery");
+
+DATA(insert OID = 3752 (  tsvector_update_trigger			PGNSP PGUID 12 1 0 f f f f v 0 2279 "" _null_ _null_ _null_ tsvector_update_trigger_byid - _null_ ));
+DESCR("trigger for automatic update of tsvector column");
+DATA(insert OID = 3753 (  tsvector_update_trigger_column	PGNSP PGUID 12 1 0 f f f f v 0 2279 "" _null_ _null_ _null_ tsvector_update_trigger_bycolumn - _null_ ));
+DESCR("trigger for automatic update of tsvector column");
+
+DATA(insert OID = 3759 (  get_current_ts_config	PGNSP PGUID 12 1 0 f f t f s 0 3734 "" _null_ _null_ _null_ get_current_ts_config - _null_ ));
+DESCR("get current tsearch configuration");
+
+DATA(insert OID = 3736 (  regconfigin		PGNSP PGUID 12 1 0 f f t f s 1 3734 "2275" _null_ _null_ _null_ regconfigin - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3737 (  regconfigout		PGNSP PGUID 12 1 0 f f t f s 1 2275 "3734" _null_ _null_ _null_ regconfigout - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3738 (  regconfigrecv		PGNSP PGUID 12 1 0 f f t f i 1 3734 "2281" _null_ _null_ _null_ regconfigrecv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3739 (  regconfigsend		PGNSP PGUID 12 1 0 f f t f i 1 17 "3734" _null_ _null_ _null_ regconfigsend - _null_ ));
+DESCR("I/O");
+
+DATA(insert OID = 3771 (  regdictionaryin	PGNSP PGUID 12 1 0 f f t f s 1 3769 "2275" _null_ _null_ _null_ regdictionaryin - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3772 (  regdictionaryout	PGNSP PGUID 12 1 0 f f t f s 1 2275 "3769" _null_ _null_ _null_ regdictionaryout - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3773 (  regdictionaryrecv	PGNSP PGUID 12 1 0 f f t f i 1 3769 "2281" _null_ _null_ _null_ regdictionaryrecv - _null_ ));
+DESCR("I/O");
+DATA(insert OID = 3774 (  regdictionarysend	PGNSP PGUID 12 1 0 f f t f i 1 17 "3769" _null_ _null_ _null_ regdictionarysend - _null_ ));
+DESCR("I/O");
+
 
 /*
  * Symbolic values for provolatile column: these indicate whether the result

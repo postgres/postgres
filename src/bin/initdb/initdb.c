@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.139 2007/08/04 21:01:09 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.140 2007/08/21 01:11:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,7 @@ static char *lc_monetary = "";
 static char *lc_numeric = "";
 static char *lc_time = "";
 static char *lc_messages = "";
+static const char *default_text_search_config = "";
 static char *username = "";
 static bool pwprompt = false;
 static char *pwfilename = NULL;
@@ -108,6 +109,7 @@ static char *hba_file;
 static char *ident_file;
 static char *conf_file;
 static char *conversion_file;
+static char *dictionary_file;
 static char *info_schema_file;
 static char *features_file;
 static char *system_views_file;
@@ -181,6 +183,7 @@ static void setup_depend(void);
 static void setup_sysviews(void);
 static void setup_description(void);
 static void setup_conversion(void);
+static void setup_dictionary(void);
 static void setup_privileges(void);
 static void set_info_version(void);
 static void setup_schema(void);
@@ -729,7 +732,7 @@ struct encoding_match
 	const char *system_enc_name;
 };
 
-struct encoding_match encoding_match_list[] = {
+static const struct encoding_match encoding_match_list[] = {
 	{PG_EUC_JP, "EUC-JP"},
 	{PG_EUC_JP, "eucJP"},
 	{PG_EUC_JP, "IBM-eucJP"},
@@ -906,6 +909,94 @@ find_matching_encoding(const char *ctype)
 	return -1;
 }
 #endif   /* HAVE_LANGINFO_H && CODESET */
+
+
+/*
+ * Support for determining the best default text search configuration.
+ * We key this off LC_CTYPE, after stripping its encoding indicator if any.
+ */
+struct tsearch_config_match
+{
+	const char   *tsconfname;
+	const char   *langname;
+};
+
+static const struct tsearch_config_match tsearch_config_languages[] =
+{
+	{"danish", "da_DK"},
+	{"danish", "Danish_Danmark"},
+	{"dutch", "nl_NL"},
+	{"dutch", "Dutch_Netherlands"},
+	{"english", "C"},
+	{"english", "POSIX"},
+	{"english", "en_US"},
+	{"english", "English_America"},
+	{"english", "en_UK"},
+	{"english", "English_Britain"},
+	{"finnish", "fi_FI"},
+	{"finnish", "Finnish_Finland"},
+	{"french", "fr_FR"},
+	{"french", "French_France"},
+	{"german", "de_DE"},
+	{"german", "German_Germany"},
+	{"hungarian", "hu_HU"},
+	{"hungarian", "Hungarian_Hungary"},
+	{"italian", "it_IT"},
+	{"italian", "Italian_Italy"},
+	{"norwegian", "no_NO"},
+	{"norwegian", "Norwegian_Norway"},
+	{"portuguese", "pt_PT"},
+	{"portuguese", "Portuguese_Portugal"},
+	{"romanian", "ro_RO"},
+	{"russian", "ru_RU"},
+	{"russian", "Russian_Russia"},
+	{"spanish", "es_ES"},
+	{"spanish", "Spanish_Spain"},
+	{"swedish", "sv_SE"},
+	{"swedish", "Swedish_Sweden"},
+	{"turkish", "tr_TR"},
+	{"turkish", "Turkish_Turkey"},
+	{NULL, NULL}				/* end marker */
+};
+
+/*
+ * Look for a text search configuration matching lc_ctype, and return its
+ * name; return NULL if no match.
+ */
+static const char *
+find_matching_ts_config(const char *lc_type)
+{
+	int			i;
+	char	   *langname,
+			   *ptr;
+
+	/*
+	 * Convert lc_ctype to a language name by stripping ".utf8" or
+	 * what-have-you
+	 */
+	if (lc_type == NULL)
+		langname = xstrdup("");
+	else
+	{
+		ptr = langname = xstrdup(lc_type);
+		while (*ptr && *ptr != '.')
+			ptr++;
+		*ptr = '\0';
+	}
+
+	for (i = 0; tsearch_config_languages[i].tsconfname; i++)
+	{
+		if (pg_strcasecmp(tsearch_config_languages[i].langname, langname) == 0)
+		{
+			free(langname);
+			return tsearch_config_languages[i].tsconfname;
+		}
+	}
+
+	free(langname);
+	return NULL;
+}
+
 
 /*
  * get short version of VERSION
@@ -1305,6 +1396,13 @@ setup_config(void)
 	}
 	conflines = replace_token(conflines, "#datestyle = 'iso, mdy'", repltok);
 
+	snprintf(repltok, sizeof(repltok),
+			 "default_text_search_config = 'pg_catalog.%s'",
+			 escape_quotes(default_text_search_config));
+	conflines = replace_token(conflines,
+						"#default_text_search_config = 'pg_catalog.simple'",
+							  repltok);
+
 	snprintf(path, sizeof(path), "%s/postgresql.conf", pg_data);
 
 	writefile(path, conflines);
@@ -1679,6 +1777,14 @@ setup_depend(void)
 		" FROM pg_namespace "
 		"    WHERE nspname LIKE 'pg%';\n",
 
+		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
+		" FROM pg_ts_parser;\n",
+		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
+		" FROM pg_ts_dict;\n",
+		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
+		" FROM pg_ts_template;\n",
+		"INSERT INTO pg_depend SELECT 0,0,0, tableoid,oid,0, 'p' "
+		" FROM pg_ts_config;\n",
 		"INSERT INTO pg_shdepend SELECT 0, 0, 0, tableoid, oid, 'p' "
 		" FROM pg_authid;\n",
 		NULL
@@ -1815,6 +1921,43 @@ setup_conversion(void)
 	{
 		if (strstr(*line, "DROP CONVERSION") != *line)
 			PG_CMD_PUTS(*line);
+		free(*line);
+	}
+
+	free(conv_lines);
+
+	PG_CMD_CLOSE;
+
+	check_ok();
+}
+
+/*
+ * load extra dictionaries (Snowball stemmers)
+ */
+static void
+setup_dictionary(void)
+{
+	PG_CMD_DECL;
+	char	  **line;
+	char	  **conv_lines;
+
+	fputs(_("creating dictionaries ... "), stdout);
+	fflush(stdout);
+
+	/*
+	 * We use -j here to avoid backslashing stuff
+	 */
+	snprintf(cmd, sizeof(cmd),
+			 "\"%s\" %s -j template1 >%s",
+			 backend_exec, backend_options,
+			 DEVNULL);
+
+	PG_CMD_OPEN;
+
+	conv_lines = readfile(dictionary_file);
+	for (line = conv_lines; *line != NULL; line++)
+	{
+		PG_CMD_PUTS(*line);
 		free(*line);
 	}
 
@@ -2403,6 +2546,8 @@ usage(const char *progname)
 			 "                            in the respective category (default taken from\n"
 			 "                            environment)\n"));
 	printf(_("  --no-locale               equivalent to --locale=C\n"));
+	printf(_("  -T, --text-search-config=CFG\n"));
+	printf(_("                            set default text search configuration\n"));
 	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
 	printf(_("  -A, --auth=METHOD         default authentication method for local connections\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
@@ -2438,6 +2583,7 @@ main(int argc, char *argv[])
 		{"lc-time", required_argument, NULL, 6},
 		{"lc-messages", required_argument, NULL, 7},
 		{"no-locale", no_argument, NULL, 8},
+		{"text-search-config", required_argument, NULL, 'T'},
 		{"auth", required_argument, NULL, 'A'},
 		{"pwprompt", no_argument, NULL, 'W'},
 		{"pwfile", required_argument, NULL, 9},
@@ -2498,7 +2644,7 @@ main(int argc, char *argv[])
 
 	/* process command-line options */
 
-	while ((c = getopt_long(argc, argv, "dD:E:L:nU:WA:sX:", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "dD:E:L:nU:WA:sT:X:", long_options, &option_index)) != -1)
 	{
 		switch (c)
 		{
@@ -2557,6 +2703,9 @@ main(int argc, char *argv[])
 				break;
 			case 's':
 				show_setting = true;
+				break;
+			case 'T':
+				default_text_search_config = xstrdup(optarg);
 				break;
 			case 'X':
 				xlog_dir = xstrdup(optarg);
@@ -2771,6 +2920,7 @@ main(int argc, char *argv[])
 	set_input(&ident_file, "pg_ident.conf.sample");
 	set_input(&conf_file, "postgresql.conf.sample");
 	set_input(&conversion_file, "conversion_create.sql");
+	set_input(&dictionary_file, "snowball_create.sql");
 	set_input(&info_schema_file, "information_schema.sql");
 	set_input(&features_file, "sql_features.txt");
 	set_input(&system_views_file, "system_views.sql");
@@ -2803,6 +2953,7 @@ main(int argc, char *argv[])
 	check_input(ident_file);
 	check_input(conf_file);
 	check_input(conversion_file);
+	check_input(dictionary_file);
 	check_input(info_schema_file);
 	check_input(features_file);
 	check_input(system_views_file);
@@ -2863,6 +3014,35 @@ main(int argc, char *argv[])
 			check_encodings_match(atoi(encodingid), lc_ctype);
 	}
 #endif   /* HAVE_LANGINFO_H && CODESET */
+
+	if (strlen(default_text_search_config) == 0)
+	{
+		default_text_search_config = find_matching_ts_config(lc_ctype);
+		if (default_text_search_config == NULL)
+		{
+			printf(_("%s: could not find suitable text search configuration for locale \"%s\"\n"),
+				   progname, lc_ctype);
+			default_text_search_config = "simple";
+		}
+	}
+	else
+	{
+		const char *checkmatch = find_matching_ts_config(lc_ctype);
+
+		if (checkmatch == NULL)
+		{
+			printf(_("%s: warning: suitable text search configuration for locale \"%s\" is unknown\n"),
+				   progname, lc_ctype);
+		}
+		else if (strcmp(checkmatch, default_text_search_config) != 0)
+		{
+			printf(_("%s: warning: specified text search configuration \"%s\" may not match locale \"%s\"\n"),
+				   progname, default_text_search_config, lc_ctype);
+		}
+	}
+
+	printf(_("The default text search configuration will be set to \"%s\".\n"),
+		   default_text_search_config);
 
 	printf("\n");
 
@@ -3061,6 +3241,8 @@ main(int argc, char *argv[])
 	setup_description();
 
 	setup_conversion();
+
+	setup_dictionary();
 
 	setup_privileges();
 

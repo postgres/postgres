@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.186 2007/06/15 20:56:52 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.187 2007/08/21 01:11:27 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -548,6 +548,29 @@ DATA(insert OID = 2211 ( _regtype	   PGNSP PGUID -1 f b t \054 0 2206 0 array_in
 DATA(insert OID = 2950 ( uuid			PGNSP PGUID 16 f b t \054 0 0 2951 uuid_in uuid_out uuid_recv uuid_send - - - c p f 0 -1 0 _null_ _null_ ));
 DESCR("UUID datatype");
 DATA(insert OID = 2951 ( _uuid			PGNSP PGUID -1 f b t \054 0 2950 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+
+/* text search */
+DATA(insert OID = 3614 ( tsvector		PGNSP PGUID -1 f b t \054 0	0 3643 tsvectorin tsvectorout tsvectorrecv tsvectorsend - - - i x f 0 -1 0 _null_ _null_ ));
+DESCR("text representation for text search");
+#define TSVECTOROID		3614
+DATA(insert OID = 3642 ( gtsvector		PGNSP PGUID -1 f b t \054 0	0 3644 gtsvectorin gtsvectorout - - - - - i p f 0 -1 0 _null_ _null_ ));
+DESCR("GiST index internal text representation for text search");
+#define GTSVECTOROID	3642
+DATA(insert OID = 3615 ( tsquery		PGNSP PGUID -1 f b t \054 0	0 3645 tsqueryin tsqueryout tsqueryrecv tsquerysend - - - i p f 0 -1 0 _null_ _null_ ));
+DESCR("query representation for text search");
+#define TSQUERYOID		3615
+DATA(insert OID = 3734 ( regconfig		PGNSP PGUID 4 t b t \054 0 0 3735 regconfigin regconfigout regconfigrecv regconfigsend - - - i p f 0 -1 0 _null_ _null_ ));
+DESCR("registered text search configuration");
+#define REGCONFIGOID	3734
+DATA(insert OID = 3769 ( regdictionary	PGNSP PGUID 4 t b t \054 0 0 3770 regdictionaryin regdictionaryout regdictionaryrecv regdictionarysend - - - i p f 0 -1 0 _null_ _null_ ));
+DESCR("registered text search dictionary");
+#define REGDICTIONARYOID	3769
+
+DATA(insert OID = 3643 ( _tsvector		PGNSP PGUID -1 f b t \054 0	3614 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3644 ( _gtsvector		PGNSP PGUID -1 f b t \054 0	3642 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3645 ( _tsquery		PGNSP PGUID -1 f b t \054 0	3615 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3735 ( _regconfig		PGNSP PGUID -1 f b t \054 0 3734 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 3770 ( _regdictionary	PGNSP PGUID -1 f b t \054 0 3769 0 array_in array_out array_recv array_send - - - i x f 0 -1 0 _null_ _null_ ));
 
 /*
  * pseudo-types

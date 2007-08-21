@@ -1,6 +1,12 @@
 # ----------
-# The first group of parallel test
-# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.42 2007/04/02 03:49:42 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/parallel_schedule,v 1.43 2007/08/21 01:11:30 tgl Exp $
+#
+# By convention, we put no more than twenty tests in any one parallel group;
+# this limits the number of connections needed to run the tests.
+# ----------
+
+# ----------
+# The first group of parallel tests
 # ----------
 test: boolean char name varchar text int2 int4 int8 oid float4 float8 bit numeric uuid enum
 
@@ -10,14 +16,16 @@ test: strings
 test: numerology
 
 # ----------
-# The second group of parallel test
+# The second group of parallel tests
 # ----------
-test: point lseg box path polygon circle date time timetz timestamp timestamptz interval abstime reltime tinterval inet comments oidjoins type_sanity opr_sanity
+test: point lseg box path polygon circle date time timetz timestamp timestamptz interval abstime reltime tinterval inet tstypes comments
 
-# Depends on point, lseg, box, path, polygon and circle
-test: geometry
-# Depends on interval, timetz, timestamp, timestamptz, reltime and abstime
-test: horology
+# ----------
+# Another group of parallel tests
+# geometry depends on point, lseg, box, path, polygon and circle
+# horology depends on interval, timetz, timestamp, timestamptz, reltime and abstime
+# ----------
+test: geometry horology oidjoins type_sanity opr_sanity
 
 # ----------
 # These four each depend on the previous one
@@ -37,7 +45,7 @@ test: create_function_2
 test: copy copyselect
 
 # ----------
-# The third group of parallel test
+# Another group of parallel tests
 # ----------
 test: constraints triggers create_misc create_aggregate create_operator inherit vacuum drop_if_exists
 
@@ -59,7 +67,7 @@ test: select
 ignore: random
 
 # ----------
-# The fourth group of parallel test
+# Another group of parallel tests
 # ----------
 test: select_into select_distinct select_distinct_on select_implicit select_having subselect union case join aggregates transactions random portals arrays btree_index hash_index update namespace prepared_xacts delete
 
@@ -67,12 +75,12 @@ test: privileges
 test: misc
 
 # ----------
-# The fifth group of parallel test
+# Another group of parallel tests
 # ----------
-test: select_views portals_p2 rules foreign_key cluster dependency guc combocid
+test: select_views portals_p2 rules foreign_key cluster dependency guc combocid tsearch
 
 # ----------
-# The sixth group of parallel test
+# Another group of parallel tests
 # ----------
 # "plpgsql" cannot run concurrently with "rules", nor can "plancache"
 test: plancache limit plpgsql copy2 temp domain rangefuncs prepare without_oid conversion truncate alter_table sequence polymorphism rowtypes returning largeobject xml

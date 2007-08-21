@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.413 2007/08/19 01:41:25 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.414 2007/08/21 01:11:19 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #ifdef HAVE_SYSLOG
 #include <syslog.h>
 #endif
-
 
 #include "access/gin.h"
 #include "access/transam.h"
@@ -58,6 +57,7 @@
 #include "storage/fd.h"
 #include "storage/freespace.h"
 #include "tcop/tcopprot.h"
+#include "tsearch/ts_cache.h"
 #include "utils/builtins.h"
 #include "utils/guc_tables.h"
 #include "utils/memutils.h"
@@ -2240,8 +2240,9 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"log_destination", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the destination for server log output."),
-			gettext_noop("Valid values are combinations of \"stderr\", \"syslog\", "
-						 " \"csvlog\" and \"eventlog\", depending on the platform."),
+			gettext_noop("Valid values are combinations of \"stderr\", "
+						 "\"syslog\", \"csvlog\", and \"eventlog\", "
+						 "depending on the platform."),
 			GUC_LIST_INPUT
 		},
 		&log_destination_string,
@@ -2432,6 +2433,15 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&xmloption_string,
 		"content", assign_xmloption, NULL
+	},
+
+	{
+		{"default_text_search_config", PGC_USERSET, CLIENT_CONN_LOCALE,
+			gettext_noop("Sets default text search configuration."),
+			NULL
+		},
+		&TSCurrentConfig,
+		"pg_catalog.simple", assignTSCurrentConfig, NULL
 	},
 
 #ifdef USE_SSL

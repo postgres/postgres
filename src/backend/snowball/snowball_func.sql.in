@@ -1,0 +1,18 @@
+-- $PostgreSQL: pgsql/src/backend/snowball/snowball_func.sql.in,v 1.1 2007/08/21 01:11:16 tgl Exp $$
+
+SET search_path = pg_catalog;
+
+CREATE FUNCTION dsnowball_init(INTERNAL)
+    RETURNS INTERNAL AS '$libdir/dict_snowball', 'dsnowball_init'
+LANGUAGE C STRICT;
+
+CREATE FUNCTION dsnowball_lexize(INTERNAL, INTERNAL, INTERNAL, INTERNAL)
+    RETURNS INTERNAL AS '$libdir/dict_snowball', 'dsnowball_lexize'
+LANGUAGE C STRICT;
+
+CREATE TEXT SEARCH TEMPLATE snowball
+	(INIT = dsnowball_init,
+	LEXIZE = dsnowball_lexize);
+
+COMMENT ON TEXT SEARCH TEMPLATE snowball IS 'Snowball stemmer';
+

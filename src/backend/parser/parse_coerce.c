@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.155 2007/06/06 23:00:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.156 2007/08/21 01:11:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1554,6 +1554,8 @@ TypeCategory(Oid inType)
 		case (REGOPERATOROID):
 		case (REGCLASSOID):
 		case (REGTYPEOID):
+		case (REGCONFIGOID):
+		case (REGDICTIONARYOID):
 		case (INT2OID):
 		case (INT4OID):
 		case (INT8OID):
@@ -1672,7 +1674,9 @@ IsPreferredType(CATEGORY category, Oid type)
 				type == REGOPEROID ||
 				type == REGOPERATOROID ||
 				type == REGCLASSOID ||
-				type == REGTYPEOID)
+				type == REGTYPEOID ||
+				type == REGCONFIGOID ||
+				type == REGDICTIONARYOID)
 				preftype = OIDOID;
 			else
 				preftype = FLOAT8OID;

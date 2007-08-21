@@ -448,6 +448,9 @@
 #lc_numeric = 'C'			# locale for number formatting
 #lc_time = 'C'				# locale for time formatting
 
+# default configuration for text search
+#default_text_search_config = 'pg_catalog.simple'
+
 # - Other Defaults -
 
 #explain_pretty_print = on

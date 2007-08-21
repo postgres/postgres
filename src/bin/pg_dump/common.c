@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.96 2007/01/23 17:54:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.97 2007/08/21 01:11:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,10 @@ getSchemaData(int *numTablesPtr)
 	OpclassInfo *opcinfo;
 	OpfamilyInfo *opfinfo;
 	ConvInfo   *convinfo;
+	TSParserInfo *prsinfo;
+	TSTemplateInfo *tmplinfo;
+	TSDictInfo *dictinfo;
+	TSConfigInfo *cfginfo;
 	int			numNamespaces;
 	int			numAggregates;
 	int			numInherits;
@@ -88,6 +92,10 @@ getSchemaData(int *numTablesPtr)
 	int			numOpclasses;
 	int			numOpfamilies;
 	int			numConversions;
+	int			numTSParsers;
+	int			numTSTemplates;
+	int			numTSDicts;
+	int			numTSConfigs;
 
 	if (g_verbose)
 		write_msg(NULL, "reading schemas\n");
@@ -118,6 +126,22 @@ getSchemaData(int *numTablesPtr)
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator classes\n");
 	opcinfo = getOpclasses(&numOpclasses);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined text search parsers\n");
+	prsinfo = getTSParsers(&numTSParsers);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined text search templates\n");
+	tmplinfo = getTSTemplates(&numTSTemplates);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined text search dictionaries\n");
+	dictinfo = getTSDictionaries(&numTSDicts);
+
+	if (g_verbose)
+		write_msg(NULL, "reading user-defined text search configurations\n");
+	cfginfo = getTSConfigurations(&numTSConfigs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined operator families\n");

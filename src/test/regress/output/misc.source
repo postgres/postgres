@@ -656,6 +656,7 @@ SELECT user_relns() AS user_relns
  subselect_tbl
  tenk1
  tenk2
+ test_tsvector
  text_tbl
  time_tbl
  timestamp_tbl
@@ -665,7 +666,7 @@ SELECT user_relns() AS user_relns
  toyemp
  varchar_tbl
  xacttest
-(99 rows)
+(100 rows)
 
 SELECT name(equipment(hobby_construct(text 'skywalking', text 'mer')));
  name 

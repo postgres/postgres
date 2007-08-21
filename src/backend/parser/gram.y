@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.597 2007/07/03 01:30:36 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.598 2007/08/21 01:11:15 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -173,6 +173,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 		ViewStmt CheckPointStmt CreateConversionStmt
 		DeallocateStmt PrepareStmt ExecuteStmt
 		DropOwnedStmt ReassignOwnedStmt
+		AlterTSConfigurationStmt AlterTSDictionaryStmt
 
 %type <node>	select_no_parens select_with_parens select_clause
 				simple_select values_clause
@@ -375,14 +376,14 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	CACHE CALLED CASCADE CASCADED CASE CAST CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
-	COMMITTED CONCURRENTLY CONNECTION CONSTRAINT CONSTRAINTS
+	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS
 	CONTENT_P CONVERSION_P CONVERT COPY COST CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_P CURRENT_DATE CURRENT_ROLE
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
 	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
-	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
-	DESC DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
+	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS DESC
+	DICTIONARY DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
 
 	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ENUM_P ESCAPE EXCEPT EXCLUDING
 	EXCLUSIVE EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
@@ -407,7 +408,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P LOGIN_P
 
-	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
+	MAPPING MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
 	NOCREATEROLE NOCREATEUSER NOINHERIT NOLOGIN_P NONE NOSUPERUSER
@@ -416,7 +417,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR
 	ORDER OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
 
-	PARTIAL PASSWORD PLACING PLANS POSITION
+	PARSER PARTIAL PASSWORD PLACING PLANS POSITION
 	PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
@@ -426,13 +427,13 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	REPEATABLE REPLACE REPLICA RESET RESTART RESTRICT RETURNING RETURNS REVOKE
 	RIGHT ROLE ROLLBACK ROW ROWS RULE
 
-	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
+	SAVEPOINT SCHEMA SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE
 	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE STANDALONE_P START STATEMENT
 	STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING SUPERUSER_P
 	SYMMETRIC SYSID SYSTEM_P
 
-	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP
+	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY TEXT THEN TIME TIMESTAMP
 	TO TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P
 
@@ -537,6 +538,8 @@ stmt :
 			| AlterTableStmt
 			| AlterRoleSetStmt
 			| AlterRoleStmt
+			| AlterTSConfigurationStmt
+			| AlterTSDictionaryStmt
 			| AlterUserSetStmt
 			| AlterUserStmt
 			| AnalyzeStmt
@@ -2972,6 +2975,42 @@ DefineStmt:
 					n->vals = $7;
 					$$ = (Node *)n;
 				}
+			| CREATE TEXT SEARCH PARSER any_name definition
+				{
+					DefineStmt *n = makeNode(DefineStmt);
+					n->kind = OBJECT_TSPARSER;
+					n->args = NIL;
+					n->defnames = $5;
+					n->definition = $6;
+					$$ = (Node *)n;
+				}
+			| CREATE TEXT SEARCH DICTIONARY any_name definition
+				{
+					DefineStmt *n = makeNode(DefineStmt);
+					n->kind = OBJECT_TSDICTIONARY;
+					n->args = NIL;
+					n->defnames = $5;
+					n->definition = $6;
+					$$ = (Node *)n;
+				}
+			| CREATE TEXT SEARCH TEMPLATE any_name definition
+				{
+					DefineStmt *n = makeNode(DefineStmt);
+					n->kind = OBJECT_TSTEMPLATE;
+					n->args = NIL;
+					n->defnames = $5;
+					n->definition = $6;
+					$$ = (Node *)n;
+				}
+			| CREATE TEXT SEARCH CONFIGURATION any_name definition
+				{
+					DefineStmt *n = makeNode(DefineStmt);
+					n->kind = OBJECT_TSCONFIGURATION;
+					n->args = NIL;
+					n->defnames = $5;
+					n->definition = $6;
+					$$ = (Node *)n;
+				}
 		;
 
 definition: '(' def_list ')'						{ $$ = $2; }
@@ -3281,6 +3320,10 @@ drop_type:	TABLE									{ $$ = OBJECT_TABLE; }
 			| DOMAIN_P								{ $$ = OBJECT_DOMAIN; }
 			| CONVERSION_P							{ $$ = OBJECT_CONVERSION; }
 			| SCHEMA								{ $$ = OBJECT_SCHEMA; }
+			| TEXT SEARCH PARSER					{ $$ = OBJECT_TSPARSER; }
+			| TEXT SEARCH DICTIONARY				{ $$ = OBJECT_TSDICTIONARY; }
+			| TEXT SEARCH TEMPLATE					{ $$ = OBJECT_TSTEMPLATE; }
+			| TEXT SEARCH CONFIGURATION				{ $$ = OBJECT_TSCONFIGURATION; }
 		;
 
 any_name_list:
@@ -3323,7 +3366,10 @@ TruncateStmt:
  *
  *	COMMENT ON [ [ DATABASE | DOMAIN | INDEX | SEQUENCE | TABLE | TYPE | VIEW |
  *				   CONVERSION | LANGUAGE | OPERATOR CLASS | LARGE OBJECT |
- *				   CAST | COLUMN | SCHEMA | TABLESPACE | ROLE ] <objname> |
+ *				   CAST | COLUMN | SCHEMA | TABLESPACE | ROLE | 
+ *				   TEXT SEARCH PARSER | TEXT SEARCH DICTIONARY |
+ *				   TEXT SEARCH TEMPLATE |
+ *				   TEXT SEARCH CONFIGURATION ] <objname> |
  *				 AGGREGATE <aggname> (arg1, ...) |
  *				 FUNCTION <funcname> (arg1, arg2, ...) |
  *				 OPERATOR <op> (leftoperand_typ, rightoperand_typ) |
@@ -3452,6 +3498,38 @@ CommentStmt:
 					n->objname = $5;
 					n->objargs = NIL;
 					n->comment = $7;
+					$$ = (Node *) n;
+				}
+			| COMMENT ON TEXT SEARCH PARSER any_name IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = OBJECT_TSPARSER;
+					n->objname = $6;
+					n->comment = $8;
+					$$ = (Node *) n;
+				}
+			| COMMENT ON TEXT SEARCH DICTIONARY any_name IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = OBJECT_TSDICTIONARY;
+					n->objname = $6;
+					n->comment = $8;
+					$$ = (Node *) n;
+				}
+			| COMMENT ON TEXT SEARCH TEMPLATE any_name IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = OBJECT_TSTEMPLATE;
+					n->objname = $6;
+					n->comment = $8;
+					$$ = (Node *) n;
+				}
+			| COMMENT ON TEXT SEARCH CONFIGURATION any_name IS comment_text
+				{
+					CommentStmt *n = makeNode(CommentStmt);
+					n->objtype = OBJECT_TSCONFIGURATION;
+					n->objname = $6;
+					n->comment = $8;
 					$$ = (Node *) n;
 				}
 		;
@@ -4615,6 +4693,38 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
+			| ALTER TEXT SEARCH PARSER any_name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_TSPARSER;
+					n->object = $5;
+					n->newname = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER TEXT SEARCH DICTIONARY any_name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_TSDICTIONARY;
+					n->object = $5;
+					n->newname = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER TEXT SEARCH TEMPLATE any_name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_TSTEMPLATE;
+					n->object = $5;
+					n->newname = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER TEXT SEARCH CONFIGURATION any_name RENAME TO name
+				{
+					RenameStmt *n = makeNode(RenameStmt);
+					n->renameType = OBJECT_TSCONFIGURATION;
+					n->object = $5;
+					n->newname = $8;
+					$$ = (Node *)n;
+				}
 		;
 
 opt_column: COLUMN									{ $$ = COLUMN; }
@@ -4785,6 +4895,22 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 					n->objectType = OBJECT_TABLESPACE;
 					n->object = list_make1($3);
 					n->newowner = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER TEXT SEARCH DICTIONARY any_name OWNER TO RoleId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_TSDICTIONARY;
+					n->object = $5;
+					n->newowner = $8;
+					$$ = (Node *)n;
+				}
+			| ALTER TEXT SEARCH CONFIGURATION any_name OWNER TO RoleId
+				{
+					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
+					n->objectType = OBJECT_TSCONFIGURATION;
+					n->object = $5;
+					n->newowner = $8;
 					$$ = (Node *)n;
 				}
 		;
@@ -5377,6 +5503,89 @@ AlterDomainStmt:
 
 opt_as:		AS										{}
 			| /* EMPTY */							{}
+		;
+
+
+/*****************************************************************************
+ *
+ * Manipulate a text search dictionary or configuration
+ *
+ *****************************************************************************/
+
+AlterTSDictionaryStmt:
+			ALTER TEXT SEARCH DICTIONARY any_name definition
+				{
+					AlterTSDictionaryStmt *n = makeNode(AlterTSDictionaryStmt);
+					n->dictname = $5;
+					n->options = $6;
+					$$ = (Node *)n;
+				}
+		;
+
+AlterTSConfigurationStmt:
+			ALTER TEXT SEARCH CONFIGURATION any_name definition
+				{
+					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
+					n->cfgname = $5;
+					n->options = $6;
+					$$ = (Node *)n;
+				}
+			| ALTER TEXT SEARCH CONFIGURATION any_name ADD_P MAPPING FOR name_list WITH any_name_list
+				{
+					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
+					n->cfgname = $5;
+					n->tokentype = $9;
+					n->dicts = $11;
+					n->override = false;
+					n->replace = false;
+					$$ = (Node*)n;
+				}
+			| ALTER TEXT SEARCH CONFIGURATION any_name ALTER MAPPING FOR name_list WITH any_name_list
+				{
+					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
+					n->cfgname = $5;
+					n->tokentype = $9;
+					n->dicts = $11;
+					n->override = true;
+					n->replace = false;
+					$$ = (Node*)n;
+				}
+			| ALTER TEXT SEARCH CONFIGURATION any_name ALTER MAPPING REPLACE any_name WITH any_name 
+				{
+					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
+					n->cfgname = $5;
+					n->tokentype = NIL;
+					n->dicts = list_make2($9,$11);
+					n->override = false;
+					n->replace = true;
+					$$ = (Node*)n;
+				}
+			| ALTER TEXT SEARCH CONFIGURATION any_name ALTER MAPPING FOR name_list REPLACE any_name WITH any_name 
+				{
+					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
+					n->cfgname = $5;
+					n->tokentype = $9;
+					n->dicts = list_make2($11,$13);
+					n->override = false;
+					n->replace = true;
+					$$ = (Node*)n;
+				}
+			| ALTER TEXT SEARCH CONFIGURATION any_name DROP MAPPING FOR name_list 
+				{
+					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
+					n->cfgname = $5;
+					n->tokentype = $9;
+					n->missing_ok = false;
+					$$ = (Node*)n;
+				}
+			| ALTER TEXT SEARCH CONFIGURATION any_name DROP MAPPING IF_P EXISTS FOR name_list 
+				{
+					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
+					n->cfgname = $5;
+					n->tokentype = $11;
+					n->missing_ok = true;
+					$$ = (Node*)n;
+				}
 		;
 
 
@@ -8853,6 +9062,7 @@ unreserved_keyword:
 			| COMMIT
 			| COMMITTED
 			| CONCURRENTLY
+			| CONFIGURATION
 			| CONNECTION
 			| CONSTRAINTS
 			| CONTENT_P
@@ -8876,6 +9086,7 @@ unreserved_keyword:
 			| DELETE_P
 			| DELIMITER
 			| DELIMITERS
+			| DICTIONARY
 			| DISABLE_P
 			| DISCARD
 			| DOCUMENT_P
@@ -8933,6 +9144,7 @@ unreserved_keyword:
 			| LOCATION
 			| LOCK_P
 			| LOGIN_P
+			| MAPPING
 			| MATCH
 			| MAXVALUE
 			| MINUTE_P
@@ -8961,6 +9173,7 @@ unreserved_keyword:
 			| OPTION
 			| OWNED
 			| OWNER
+			| PARSER
 			| PARTIAL
 			| PASSWORD
 			| PLANS
@@ -8994,6 +9207,7 @@ unreserved_keyword:
 			| SAVEPOINT
 			| SCHEMA
 			| SCROLL
+			| SEARCH
 			| SECOND_P
 			| SECURITY
 			| SEQUENCE
@@ -9020,6 +9234,7 @@ unreserved_keyword:
 			| TEMP
 			| TEMPLATE
 			| TEMPORARY
+			| TEXT
 			| TRANSACTION
 			| TRIGGER
 			| TRUNCATE

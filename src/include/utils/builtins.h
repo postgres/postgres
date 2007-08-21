@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.299 2007/07/25 12:22:54 mha Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.300 2007/08/21 01:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -523,6 +523,14 @@ extern Datum regtypein(PG_FUNCTION_ARGS);
 extern Datum regtypeout(PG_FUNCTION_ARGS);
 extern Datum regtyperecv(PG_FUNCTION_ARGS);
 extern Datum regtypesend(PG_FUNCTION_ARGS);
+extern Datum regconfigin(PG_FUNCTION_ARGS);
+extern Datum regconfigout(PG_FUNCTION_ARGS);
+extern Datum regconfigrecv(PG_FUNCTION_ARGS);
+extern Datum regconfigsend(PG_FUNCTION_ARGS);
+extern Datum regdictionaryin(PG_FUNCTION_ARGS);
+extern Datum regdictionaryout(PG_FUNCTION_ARGS);
+extern Datum regdictionaryrecv(PG_FUNCTION_ARGS);
+extern Datum regdictionarysend(PG_FUNCTION_ARGS);
 extern Datum text_regclass(PG_FUNCTION_ARGS);
 extern List *stringToQualifiedNameList(const char *string);
 extern char *format_procedure(Oid procedure_oid);

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.69 2007/04/02 03:49:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/syscache.h,v 1.70 2007/08/21 01:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,17 @@
 #define RELOID				34
 #define RULERELNAME			35
 #define STATRELATT			36
-#define TYPENAMENSP			37
-#define TYPEOID				38
+#define TSCONFIGMAP			37
+#define TSCONFIGNAMENSP		38
+#define TSCONFIGOID			39
+#define TSDICTNAMENSP		40
+#define TSDICTOID			41
+#define TSPARSERNAMENSP		42
+#define TSPARSEROID			43
+#define TSTEMPLATENAMENSP	44
+#define TSTEMPLATEOID		45
+#define TYPENAMENSP			46
+#define TYPEOID				47
 
 extern void InitCatalogCache(void);
 extern void InitCatalogCachePhase2(void);

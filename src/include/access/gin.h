@@ -2,8 +2,9 @@
  * gin.h
  *	  header file for postgres inverted index access method implementation.
  *
- *	Copyright (c) 2006, PostgreSQL Global Development Group
- *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.12 2007/07/25 12:22:53 mha Exp $
+ *	Copyright (c) 2006-2007, PostgreSQL Global Development Group
+ *
+ *	$PostgreSQL: pgsql/src/include/access/gin.h,v 1.13 2007/08/21 01:11:22 tgl Exp $
  *--------------------------------------------------------------------------
  */
 
@@ -430,6 +431,7 @@ extern Datum ginvacuumcleanup(PG_FUNCTION_ARGS);
 
 /* ginarrayproc.c */
 extern Datum ginarrayextract(PG_FUNCTION_ARGS);
+extern Datum ginqueryarrayextract(PG_FUNCTION_ARGS);
 extern Datum ginarrayconsistent(PG_FUNCTION_ARGS);
 
 /* ginbulk.c */

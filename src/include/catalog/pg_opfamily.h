@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_opfamily.h,v 1.5 2007/05/08 18:56:47 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_opfamily.h,v 1.6 2007/08/21 01:11:25 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -27,7 +27,7 @@
  */
 
 /* ----------------
- *		pg_opfamily definition.	cpp turns this into
+ *		pg_opfamily definition. cpp turns this into
  *		typedef struct FormData_pg_opfamily
  * ----------------
  */
@@ -139,6 +139,10 @@ DATA(insert OID = 2968 (	403		uuid_ops		PGNSP PGUID ));
 DATA(insert OID = 2969 (	405		uuid_ops		PGNSP PGUID ));
 DATA(insert OID = 3522 (	403		enum_ops		PGNSP PGUID ));
 DATA(insert OID = 3523 (	405		enum_ops		PGNSP PGUID ));
-
+DATA(insert OID = 3626 (	403		tsvector_ops	PGNSP PGUID ));
+DATA(insert OID = 3655 (	783		tsvector_ops	PGNSP PGUID ));
+DATA(insert OID = 3659 (	2742	tsvector_ops	PGNSP PGUID ));
+DATA(insert OID = 3683 (	403		tsquery_ops		PGNSP PGUID ));
+DATA(insert OID = 3702 (	783		tsquery_ops		PGNSP PGUID ));
 
 #endif   /* PG_OPFAMILY_H */

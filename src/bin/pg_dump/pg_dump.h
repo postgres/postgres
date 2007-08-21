@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.135 2007/05/11 17:57:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.h,v 1.136 2007/08/21 01:11:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,6 +127,10 @@ typedef enum
 	DO_CAST,
 	DO_TABLE_DATA,
 	DO_TABLE_TYPE,
+	DO_TSPARSER,
+	DO_TSDICT,
+	DO_TSTEMPLATE,
+	DO_TSCONFIG,
 	DO_BLOBS,
 	DO_BLOB_COMMENTS
 } DumpableObjectType;
@@ -379,6 +383,37 @@ typedef struct _inhInfo
 	Oid			inhparent;		/* OID of its parent */
 } InhInfo;
 
+typedef struct _prsInfo
+{
+	DumpableObject dobj;
+	Oid			prsstart;
+	Oid			prstoken;
+	Oid			prsend;
+	Oid			prsheadline;
+	Oid			prslextype;
+} TSParserInfo;
+
+typedef struct _dictInfo
+{
+	DumpableObject dobj;
+	char	   *rolname;
+	Oid			dicttemplate;
+	char		*dictinitoption;
+} TSDictInfo;
+
+typedef struct _tmplInfo
+{
+	DumpableObject dobj;
+	Oid			tmplinit;
+	Oid			tmpllexize;
+} TSTemplateInfo;
+
+typedef struct _cfgInfo
+{
+	DumpableObject dobj;
+	char	   *rolname;
+	Oid			cfgparser;
+} TSConfigInfo;
 
 /* global decls */
 extern bool force_quotes;		/* double-quotes for identifiers flag */
@@ -458,5 +493,9 @@ extern void getTriggers(TableInfo tblinfo[], int numTables);
 extern ProcLangInfo *getProcLangs(int *numProcLangs);
 extern CastInfo *getCasts(int *numCasts);
 extern void getTableAttrs(TableInfo *tbinfo, int numTables);
+extern TSParserInfo *getTSParsers(int *numTSParsers);
+extern TSDictInfo *getTSDictionaries(int *numTSDicts);
+extern TSTemplateInfo *getTSTemplates(int *numTSTemplates);
+extern TSConfigInfo *getTSConfigurations(int *numTSConfigs);
 
 #endif   /* PG_DUMP_H */

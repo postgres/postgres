@@ -231,3 +231,9 @@ CREATE TABLE array_index_op_test (
 	i			int4[],
 	t			text[]
 );
+
+CREATE TABLE test_tsvector( 
+	t text, 
+	a tsvector 
+);
+

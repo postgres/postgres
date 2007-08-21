@@ -1,0 +1,47 @@
+Snowball-based stemming
+-----------------------
+
+This module uses the word stemming code developed by the Snowball project,
+http://snowball.tartarus.org/
+which is released by them under a BSD-style license.
+
+The files under src/backend/snowball/libstemmer/ and
+src/include/snowball/libstemmer/ are taken directly from their libstemmer_c
+distribution, with only some minor adjustments of file inclusions.  Note
+that most of these files are in fact derived files, not master source.
+The master sources are in the Snowball language, and are available along
+with the Snowball-to-C compiler from the Snowball project.  We choose to
+include the derived files in the PostgreSQL distribution because most
+installations will not have the Snowball compiler available.
+
+To update the PostgreSQL sources from a new Snowball libstemmer_c
+distribution:
+
+1. Copy the *.c files in libstemmer_c/src_c/ to src/backend/snowball/libstemmer
+with replacement of "../runtime/header.h" by "header.h", for example
+
+for f in libstemmer_c/src_c/*.c
+do
+    sed 's|\.\./runtime/header\.h|header.h|' $f >libstemmer/`basename $f`
+done
+
+(Alternatively, if you rebuild the stemmer files from the master Snowball
+sources, just omit "-r ../runtime" from the Snowball compiler switches.)
+
+2. Copy the *.c files in libstemmer_c/runtime/ to
+src/backend/snowball/libstemmer, and edit them to remove direct inclusions
+of system headers such as <stdio.h> --- they should only include "header.h".
+(This removal avoids portability problems on some platforms where <stdio.h>
+is sensitive to largefile compilation options.)
+
+3. Copy the *.h files in libstemmer_c/src_c/ and libstemmer_c/runtime/
+to src/include/snowball/libstemmer.  At this writing the header files
+do not require any changes.
+
+4. Check whether any stemmer modules have been added or removed.  If so, edit
+the OBJS list in Makefile, the list of #include's in dict_snowball.c, and the
+stemmer_modules[] table in dict_snowball.c.
+
+5. The various stopword files in stopwords/ must be downloaded
+individually from pages on the snowball.tartarus.org website.
+Be careful that these files must be stored in UTF-8 encoding.

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.39 2007/07/25 22:16:18 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.40 2007/08/21 01:11:13 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -382,3 +382,74 @@ CREATE VIEW pg_stat_bgwriter AS
         pg_stat_get_bgwriter_buf_written_checkpoints() AS buffers_checkpoint,
         pg_stat_get_bgwriter_buf_written_clean() AS buffers_clean,
         pg_stat_get_bgwriter_maxwritten_clean() AS maxwritten_clean;
+
+-- Tsearch debug function. Defined here because it'd be pretty unwieldy
+-- to put it into pg_proc.h
+
+CREATE TYPE ts_debug AS (
+    "Alias" text,
+    "Description" text,
+    "Token" text,
+    "Dictionaries" regdictionary[],
+    "Lexized token" text
+);
+
+COMMENT ON TYPE ts_debug IS 'returned type from ts_debug() function';
+
+CREATE FUNCTION ts_debug(regconfig, text)
+RETURNS SETOF ts_debug AS
+$$
+SELECT 
+    (
+        SELECT 
+            tt.alias
+         FROM
+            pg_catalog.ts_token_type(
+                (SELECT cfgparser FROM pg_catalog.pg_ts_config WHERE oid = $1 )
+            ) AS tt
+         WHERE
+            tt.tokid = parse.tokid
+    ) AS "Alias",
+    (
+        SELECT 
+            tt.description
+         FROM
+            pg_catalog.ts_token_type(
+                (SELECT cfgparser FROM pg_catalog.pg_ts_config WHERE oid = $1 )
+            ) AS tt
+         WHERE
+            tt.tokid = parse.tokid
+    ) AS "Description",
+    parse.token AS "Token",
+    ARRAY ( SELECT m.mapdict::pg_catalog.regdictionary
+            FROM pg_catalog.pg_ts_config_map AS m
+            WHERE m.mapcfg = $1 AND m.maptokentype = parse.tokid
+            ORDER BY m.mapcfg, m.maptokentype, m.mapseqno )
+    AS "Dictionaries",
+    (     
+        SELECT
+            dl.mapdict::pg_catalog.regdictionary  || ': ' || dl.lex::pg_catalog.text
+        FROM
+            ( SELECT mapdict, pg_catalog.ts_lexize(mapdict, parse.token) AS lex
+              FROM pg_catalog.pg_ts_config_map AS m
+              WHERE m.mapcfg = $1 AND m.maptokentype = parse.tokid
+              ORDER BY m.mapcfg, m.maptokentype, m.mapseqno ) dl
+        WHERE dl.lex IS NOT NULL
+        LIMIT 1
+    ) AS "Lexized token"
+FROM pg_catalog.ts_parse(
+        (SELECT cfgparser FROM pg_catalog.pg_ts_config WHERE oid = $1 ), $2 
+    ) AS parse;
+$$
+LANGUAGE SQL RETURNS NULL ON NULL INPUT;
+
+COMMENT ON FUNCTION ts_debug(regconfig,text) IS 'debug function for text search configuration';
+
+CREATE FUNCTION ts_debug(text)
+RETURNS SETOF ts_debug AS
+$$
+    SELECT * FROM pg_catalog.ts_debug( pg_catalog.get_current_ts_config(), $1 );
+$$
+LANGUAGE SQL RETURNS NULL ON NULL INPUT;
+
+COMMENT ON FUNCTION ts_debug(text) IS 'debug function for current text search configuration';

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.66 2007/06/05 21:31:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.67 2007/08/21 01:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,10 @@
 #include "catalog/pg_rewrite.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_trigger.h"
+#include "catalog/pg_ts_config.h"
+#include "catalog/pg_ts_dict.h"
+#include "catalog/pg_ts_parser.h"
+#include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
 #include "commands/comment.h"
 #include "commands/dbcommands.h"
@@ -97,6 +101,10 @@ static const Oid object_classes[MAX_OCLASS] = {
 	RewriteRelationId,					/* OCLASS_REWRITE */
 	TriggerRelationId,					/* OCLASS_TRIGGER */
 	NamespaceRelationId,				/* OCLASS_SCHEMA */
+	TSParserRelationId,				 	/* OCLASS_TSPARSER */
+	TSDictionaryRelationId,				/* OCLASS_TSDICT */
+	TSTemplateRelationId,				/* OCLASS_TSTEMPLATE */
+	TSConfigRelationId,					/* OCLASS_TSCONFIG */
 	AuthIdRelationId,					/* OCLASS_ROLE */
 	DatabaseRelationId,					/* OCLASS_DATABASE */
 	TableSpaceRelationId				/* OCLASS_TBLSPACE */
@@ -988,6 +996,22 @@ doDeletion(const ObjectAddress *object)
 			RemoveSchemaById(object->objectId);
 			break;
 
+		case OCLASS_TSPARSER:
+			RemoveTSParserById(object->objectId);
+			break;
+
+		case OCLASS_TSDICT:
+			RemoveTSDictionaryById(object->objectId);
+			break;
+
+		case OCLASS_TSTEMPLATE:
+			RemoveTSTemplateById(object->objectId);
+			break;
+
+		case OCLASS_TSCONFIG:
+			RemoveTSConfigurationById(object->objectId);
+			break;
+
 		/* OCLASS_ROLE, OCLASS_DATABASE, OCLASS_TBLSPACE not handled */
 
 		default:
@@ -1201,8 +1225,8 @@ find_expr_references_walker(Node *node,
 		/*
 		 * If it's a regclass or similar literal referring to an existing
 		 * object, add a reference to that object.	(Currently, only the
-		 * regclass case has any likely use, but we may as well handle all the
-		 * OID-alias datatypes consistently.)
+		 * regclass and regconfig cases have any likely use, but we may as
+		 * well handle all the OID-alias datatypes consistently.)
 		 */
 		if (!con->constisnull)
 		{
@@ -1240,6 +1264,22 @@ find_expr_references_walker(Node *node,
 											 ObjectIdGetDatum(objoid),
 											 0, 0, 0))
 						add_object_address(OCLASS_TYPE, objoid, 0,
+										   context->addrs);
+					break;
+				case REGCONFIGOID:
+					objoid = DatumGetObjectId(con->constvalue);
+					if (SearchSysCacheExists(TSCONFIGOID,
+											 ObjectIdGetDatum(objoid),
+											 0, 0, 0))
+						add_object_address(OCLASS_TSCONFIG, objoid, 0,
+										   context->addrs);
+					break;
+				case REGDICTIONARYOID:
+					objoid = DatumGetObjectId(con->constvalue);
+					if (SearchSysCacheExists(TSDICTOID,
+											 ObjectIdGetDatum(objoid),
+											 0, 0, 0))
+						add_object_address(OCLASS_TSDICT, objoid, 0,
 										   context->addrs);
 					break;
 			}
@@ -1606,6 +1646,21 @@ object_address_present(const ObjectAddress *object,
 }
 
 /*
+ * Record multiple dependencies from an ObjectAddresses array, after first
+ * removing any duplicates.
+ */
+void
+record_object_address_dependencies(const ObjectAddress *depender,
+								   ObjectAddresses *referenced,
+								   DependencyType behavior)
+{
+	eliminate_duplicate_dependencies(referenced);
+	recordMultipleDependencies(depender,
+							   referenced->refs, referenced->numrefs,
+							   behavior);
+}
+
+/*
  * Clean up when done with an ObjectAddresses array.
  */
 void
@@ -1689,6 +1744,22 @@ getObjectClass(const ObjectAddress *object)
 		case NamespaceRelationId:
 			Assert(object->objectSubId == 0);
 			return OCLASS_SCHEMA;
+
+		case TSParserRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_TSPARSER;
+
+		case TSDictionaryRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_TSDICT;
+
+		case TSTemplateRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_TSTEMPLATE;
+
+		case TSConfigRelationId:
+			Assert(object->objectSubId == 0);
+			return OCLASS_TSCONFIG;
 
 		case AuthIdRelationId:
 			Assert(object->objectSubId == 0);
@@ -2077,6 +2148,70 @@ getObjectDescription(const ObjectAddress *object)
 					elog(ERROR, "cache lookup failed for namespace %u",
 						 object->objectId);
 				appendStringInfo(&buffer, _("schema %s"), nspname);
+				break;
+			}
+
+		case OCLASS_TSPARSER:
+			{
+				HeapTuple	tup;
+
+				tup = SearchSysCache(TSPARSEROID,
+									 ObjectIdGetDatum(object->objectId),
+									 0, 0, 0);
+				if (!HeapTupleIsValid(tup))
+					elog(ERROR, "cache lookup failed for text search parser %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("text search parser %s"),
+					NameStr(((Form_pg_ts_parser) GETSTRUCT(tup))->prsname));
+				ReleaseSysCache(tup);
+				break;
+			}
+
+		case OCLASS_TSDICT:
+			{
+				HeapTuple	tup;
+
+				tup = SearchSysCache(TSDICTOID,
+									 ObjectIdGetDatum(object->objectId),
+									 0, 0, 0);
+				if (!HeapTupleIsValid(tup))
+					elog(ERROR, "cache lookup failed for text search dictionary %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("text search dictionary %s"),
+					NameStr(((Form_pg_ts_dict) GETSTRUCT(tup))->dictname));
+				ReleaseSysCache(tup);
+				break;
+			}
+
+		case OCLASS_TSTEMPLATE:
+			{
+				HeapTuple	tup;
+
+				tup = SearchSysCache(TSTEMPLATEOID,
+									 ObjectIdGetDatum(object->objectId),
+									 0, 0, 0);
+				if (!HeapTupleIsValid(tup))
+					elog(ERROR, "cache lookup failed for text search template %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("text search template %s"),
+					NameStr(((Form_pg_ts_template) GETSTRUCT(tup))->tmplname));
+				ReleaseSysCache(tup);
+				break;
+			}
+
+		case OCLASS_TSCONFIG:
+			{
+				HeapTuple	tup;
+
+				tup = SearchSysCache(TSCONFIGOID,
+									 ObjectIdGetDatum(object->objectId),
+									 0, 0, 0);
+				if (!HeapTupleIsValid(tup))
+					elog(ERROR, "cache lookup failed for text search configuration %u",
+						 object->objectId);
+				appendStringInfo(&buffer, _("text search configuration %s"),
+					NameStr(((Form_pg_ts_config) GETSTRUCT(tup))->cfgname));
+				ReleaseSysCache(tup);
 				break;
 			}
 

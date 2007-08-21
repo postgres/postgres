@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.101 2007/03/26 16:58:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.102 2007/08/21 01:11:29 tgl Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -181,6 +181,8 @@ typedef enum AclObjectKind
 	ACL_KIND_OPFAMILY,			/* pg_opfamily */
 	ACL_KIND_CONVERSION,		/* pg_conversion */
 	ACL_KIND_TABLESPACE,		/* pg_tablespace */
+	ACL_KIND_TSDICTIONARY,		/* pg_ts_dict */
+	ACL_KIND_TSCONFIGURATION,	/* pg_ts_config */
 	MAX_ACL_KIND				/* MUST BE LAST */
 } AclObjectKind;
 
@@ -281,5 +283,7 @@ extern bool pg_opclass_ownercheck(Oid opc_oid, Oid roleid);
 extern bool pg_opfamily_ownercheck(Oid opf_oid, Oid roleid);
 extern bool pg_database_ownercheck(Oid db_oid, Oid roleid);
 extern bool pg_conversion_ownercheck(Oid conv_oid, Oid roleid);
+extern bool pg_ts_dict_ownercheck(Oid dict_oid, Oid roleid);
+extern bool pg_ts_config_ownercheck(Oid cfg_oid, Oid roleid);
 
 #endif   /* ACL_H */

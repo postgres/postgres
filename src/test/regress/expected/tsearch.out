@@ -1,0 +1,893 @@
+--
+-- Sanity checks for text search catalogs
+--
+-- NB: we assume the oidjoins test will have caught any dangling links,
+-- that is OID or REGPROC fields that are not zero and do not match some
+-- row in the linked-to table.  However, if we want to enforce that a link
+-- field can't be 0, we have to check it here.
+-- Find unexpected zero link entries
+SELECT oid, prsname
+FROM pg_ts_parser
+WHERE prsnamespace = 0 OR prsstart = 0 OR prstoken = 0 OR prsend = 0 OR
+      -- prsheadline is optional
+      prslextype = 0;
+ oid | prsname 
+-----+---------
+(0 rows)
+
+SELECT oid, dictname
+FROM pg_ts_dict
+WHERE dictnamespace = 0 OR dictowner = 0 OR dicttemplate = 0;
+ oid | dictname 
+-----+----------
+(0 rows)
+
+SELECT oid, tmplname
+FROM pg_ts_template
+WHERE tmplnamespace = 0 OR tmpllexize = 0;  -- tmplinit is optional
+ oid | tmplname 
+-----+----------
+(0 rows)
+
+SELECT oid, cfgname
+FROM pg_ts_config
+WHERE cfgnamespace = 0 OR cfgowner = 0 OR cfgparser = 0;
+ oid | cfgname 
+-----+---------
+(0 rows)
+
+SELECT mapcfg, maptokentype, mapseqno
+FROM pg_ts_config_map
+WHERE mapcfg = 0 OR mapdict = 0;
+ mapcfg | maptokentype | mapseqno 
+--------+--------------+----------
+(0 rows)
+
+-- Look for pg_ts_config_map entries that aren't one of parser's token types
+SELECT * FROM
+  ( SELECT oid AS cfgid, (ts_token_type(cfgparser)).tokid AS tokid
+    FROM pg_ts_config ) AS tt 
+RIGHT JOIN pg_ts_config_map AS m
+    ON (tt.cfgid=m.mapcfg AND tt.tokid=m.maptokentype)
+WHERE
+    tt.cfgid IS NULL OR tt.tokid IS NULL;
+ cfgid | tokid | mapcfg | maptokentype | mapseqno | mapdict 
+-------+-------+--------+--------------+----------+---------
+(0 rows)
+
+-- test basic text search behavior without indexes, then with
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
+ count 
+-------
+    17
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq&yt';
+ count 
+-------
+     6
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
+ count 
+-------
+    98
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
+ count 
+-------
+    23
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
+ count 
+-------
+    39
+(1 row)
+
+create index wowidx on test_tsvector using gist (a);
+SET enable_seqscan=OFF;
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
+ count 
+-------
+    17
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq&yt';
+ count 
+-------
+     6
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
+ count 
+-------
+    98
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
+ count 
+-------
+    23
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
+ count 
+-------
+    39
+(1 row)
+
+RESET enable_seqscan;
+drop index wowidx;
+create index wowidx on test_tsvector using gin (a);
+SET enable_seqscan=OFF;
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr|qh';
+ count 
+-------
+   158
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'wr&qh';
+ count 
+-------
+    17
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq&yt';
+ count 
+-------
+     6
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ 'eq|yt';
+ count 
+-------
+    98
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
+ count 
+-------
+    23
+(1 row)
+
+SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
+ count 
+-------
+    39
+(1 row)
+
+  
+RESET enable_seqscan;
+insert into test_tsvector values ('???', 'DFG:1A,2B,6C,10 FGH');
+select * from ts_stat('select a from test_tsvector') order by ndoc desc, nentry desc, word limit 10;
+ word | ndoc | nentry 
+------+------+--------
+ qq   |  108 |    108
+ qt   |  102 |    102
+ qe   |  100 |    100
+ qh   |   98 |     98
+ qw   |   98 |     98
+ qa   |   97 |     97
+ ql   |   94 |     94
+ qs   |   94 |     94
+ qi   |   92 |     92
+ qr   |   92 |     92
+(10 rows)
+
+select * from ts_stat('select a from test_tsvector', 'AB') order by ndoc desc, nentry desc, word;
+ word | ndoc | nentry 
+------+------+--------
+ DFG  |    1 |      2
+(1 row)
+
+--dictionaries and to_tsvector
+select ts_lexize('english', 'skies');
+ ts_lexize 
+-----------
+ {sky}
+(1 row)
+
+select ts_lexize('english', 'identity');
+ ts_lexize 
+-----------
+ {ident}
+(1 row)
+
+select * from ts_token_type('default');
+ tokid |    alias     |            description            
+-------+--------------+-----------------------------------
+     1 | lword        | Latin word
+     2 | nlword       | Non-latin word
+     3 | word         | Word
+     4 | email        | Email
+     5 | url          | URL
+     6 | host         | Host
+     7 | sfloat       | Scientific notation
+     8 | version      | VERSION
+     9 | part_hword   | Part of hyphenated word
+    10 | nlpart_hword | Non-latin part of hyphenated word
+    11 | lpart_hword  | Latin part of hyphenated word
+    12 | blank        | Space symbols
+    13 | tag          | HTML Tag
+    14 | protocol     | Protocol head
+    15 | hword        | Hyphenated word
+    16 | lhword       | Latin hyphenated word
+    17 | nlhword      | Non-latin hyphenated word
+    18 | uri          | URI
+    19 | file         | File or path name
+    20 | float        | Decimal notation
+    21 | int          | Signed integer
+    22 | uint         | Unsigned integer
+    23 | entity       | HTML Entity
+(23 rows)
+
+select * from ts_parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+/usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234
+<i <b> wow  < jqw <> qwerty');
+ tokid |                token                 
+-------+--------------------------------------
+    22 | 345
+    12 |  
+     1 | qwe
+    12 | @
+    19 | efd.r
+    12 |  ' 
+    14 | http://
+     6 | www.com
+    12 | / 
+    14 | http://
+     5 | aew.werc.ewr/?ad=qwe&dw
+     6 | aew.werc.ewr
+    18 | /?ad=qwe&dw
+    12 |  
+     5 | 1aew.werc.ewr/?ad=qwe&dw
+     6 | 1aew.werc.ewr
+    18 | /?ad=qwe&dw
+    12 |  
+     6 | 2aew.werc.ewr
+    12 |  
+    14 | http://
+     5 | 3aew.werc.ewr/?ad=qwe&dw
+     6 | 3aew.werc.ewr
+    18 | /?ad=qwe&dw
+    12 |  
+    14 | http://
+     6 | 4aew.werc.ewr
+    12 |  
+    14 | http://
+     6 | 5aew.werc.ewr:8100
+    12 | /?  
+     1 | ad
+    12 | =
+     1 | qwe
+    12 | &
+     1 | dw
+    12 |  
+     5 | 6aew.werc.ewr:8100/?ad=qwe&dw
+     6 | 6aew.werc.ewr:8100
+    18 | /?ad=qwe&dw
+    12 |  
+     5 | 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32
+     6 | 7aew.werc.ewr:8100
+    18 | /?ad=qwe&dw=%20%32
+    12 |  
+     7 | +4.0e-10
+    12 |  
+     1 | qwe
+    12 |  
+     1 | qwe
+    12 |  
+     1 | qwqwe
+    12 |  
+    20 | 234.435
+    12 |  
+    22 | 455
+    12 |  
+    20 | 5.005
+    12 |  
+     4 | teodor@stack.net
+    12 |  
+    16 | qwe-wer
+    11 | qwe
+    12 | -
+    11 | wer
+    12 |  
+     1 | asdf
+    12 |  
+    13 | <fr>
+     1 | qwer
+    12 |  
+     1 | jf
+    12 |  
+     1 | sdjk
+    12 | <
+     1 | we
+    12 |  
+     1 | hjwer
+    12 |  
+    13 | <werrwe>
+    12 |  
+     3 | ewr1
+    12 | > 
+     3 | ewri2
+    12 |  
+    13 | <a href="qwe<qwe>">
+    12 | 
+       : 
+    19 | /usr/local/fff
+    12 |  
+    19 | /awdf/dwqe/4325
+    12 |  
+    19 | rewt/ewr
+    12 |  
+     1 | wefjn
+    12 |  
+    19 | /wqe-324/ewr
+    12 |  
+    19 | gist.h
+    12 |  
+    19 | gist.h.c
+    12 |  
+    19 | gist.c
+    12 | . 
+     1 | readline
+    12 |  
+    20 | 4.2
+    12 |  
+    20 | 4.2
+    12 | . 
+    20 | 4.2
+    12 | , 
+    15 | readline-4.2
+    11 | readline
+    12 | -
+    20 | 4.2
+    12 |  
+    15 | readline-4.2
+    11 | readline
+    12 | -
+    20 | 4.2
+    12 | . 
+    22 | 234
+    12 | 
+       : 
+    12 | <
+     1 | i
+    12 |  
+    13 | <b>
+    12 |  
+     1 | wow
+    12 |   
+    12 | < 
+     1 | jqw
+    12 |  
+    12 | <> 
+     1 | qwerty
+(135 rows)
+
+select to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+/usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234
+<i <b> wow  < jqw <> qwerty');
+                                                                                                                                                                                                                                                                                                                                                                                                                             to_tsvector                                                                                                                                                                                                                                                                                                                                                                                                                              
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ 'ad':17 'dw':19 'jf':39 '234':63 '345':1 '4.2':54,55,56,59,62 '455':31 'jqw':66 'qwe':2,18,27,28,35 'wer':36 'wow':65 'asdf':37 'ewr1':43 'qwer':38 'sdjk':40 '5.005':32 'efd.r':3 'ewri2':44 'hjwer':42 'qwqwe':29 'wefjn':48 'gist.c':52 'gist.h':50 'qwerti':67 '234.435':30 'qwe-wer':34 'readlin':53,58,61 'www.com':4 '+4.0e-10':26 'gist.h.c':51 'rewt/ewr':47 '/?ad=qwe&dw':7,10,14,22 '/wqe-324/ewr':49 'aew.werc.ewr':6 'readline-4.2':57,60 '1aew.werc.ewr':9 '2aew.werc.ewr':11 '3aew.werc.ewr':13 '4aew.werc.ewr':15 '/usr/local/fff':45 '/awdf/dwqe/4325':46 'teodor@stack.net':33 '/?ad=qwe&dw=%20%32':25 '5aew.werc.ewr:8100':16 '6aew.werc.ewr:8100':21 '7aew.werc.ewr:8100':24 'aew.werc.ewr/?ad=qwe&dw':5 '1aew.werc.ewr/?ad=qwe&dw':8 '3aew.werc.ewr/?ad=qwe&dw':12 '6aew.werc.ewr:8100/?ad=qwe&dw':20 '7aew.werc.ewr:8100/?ad=qwe&dw=%20%32':23
+(1 row)
+
+select length(to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+/usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234
+<i <b> wow  < jqw <> qwerty'));
+ length 
+--------
+     51
+(1 row)
+
+-- to_tsquery
+select to_tsquery('english', 'qwe & sKies ');
+  to_tsquery   
+---------------
+ 'qwe' & 'sky'
+(1 row)
+
+select to_tsquery('simple', 'qwe & sKies ');
+   to_tsquery    
+-----------------
+ 'qwe' & 'skies'
+(1 row)
+
+select to_tsquery('english', '''the wether'':dc & ''           sKies '':BC ');
+       to_tsquery       
+------------------------
+ 'wether':CD & 'sky':BC
+(1 row)
+
+select to_tsquery('english', 'asd&(and|fghj)');
+   to_tsquery   
+----------------
+ 'asd' & 'fghj'
+(1 row)
+
+select to_tsquery('english', '(asd&and)|fghj');
+   to_tsquery   
+----------------
+ 'asd' | 'fghj'
+(1 row)
+
+select to_tsquery('english', '(asd&!and)|fghj');
+   to_tsquery   
+----------------
+ 'asd' | 'fghj'
+(1 row)
+
+select to_tsquery('english', '(the|and&(i&1))&fghj');
+  to_tsquery  
+--------------
+ '1' & 'fghj'
+(1 row)
+
+select plainto_tsquery('english', 'the and z 1))& fghj');
+  plainto_tsquery   
+--------------------
+ 'z' & '1' & 'fghj'
+(1 row)
+
+select plainto_tsquery('english', 'foo bar') && plainto_tsquery('english', 'asd');
+       ?column?        
+-----------------------
+ 'foo' & 'bar' & 'asd'
+(1 row)
+
+select plainto_tsquery('english', 'foo bar') || plainto_tsquery('english', 'asd fg');
+           ?column?           
+------------------------------
+ 'foo' & 'bar' | 'asd' & 'fg'
+(1 row)
+
+select plainto_tsquery('english', 'foo bar') || !!plainto_tsquery('english', 'asd fg');
+             ?column?              
+-----------------------------------
+ 'foo' & 'bar' | !( 'asd' & 'fg' )
+(1 row)
+
+select plainto_tsquery('english', 'foo bar') && 'asd | fg';
+             ?column?             
+----------------------------------
+ 'foo' & 'bar' & ( 'asd' | 'fg' )
+(1 row)
+
+select ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+'), to_tsquery('english', 'sea&thousand&years'));
+ ts_rank_cd 
+------------
+  0.0555556
+(1 row)
+
+select ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+'), to_tsquery('english', 'granite&sea'));
+ ts_rank_cd 
+------------
+  0.0238095
+(1 row)
+
+select ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+'), to_tsquery('english', 'sea'));
+ ts_rank_cd 
+------------
+        0.2
+(1 row)
+
+--headline tests
+select ts_headline('english', 'Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+', to_tsquery('english', 'sea&thousand&years'));
+                ts_headline                 
+--------------------------------------------
+ <b>sea</b> a <b>thousand</b> <b>years</b>,
+ A <b>thousand</b> <b>years</b> to trace
+ The granite features of this cliff
+(1 row)
+
+select ts_headline('english', 'Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+', to_tsquery('english', 'granite&sea'));
+                ts_headline                
+-------------------------------------------
+ <b>sea</b> a thousand years,
+ A thousand years to trace
+ The <b>granite</b> features of this cliff
+(1 row)
+
+select ts_headline('english', 'Erosion It took the sea a thousand years,
+A thousand years to trace
+The granite features of this cliff
+In crag and scarp and base.
+It took the sea an hour one night
+An hour of storm to place
+The sculpture of these granite seams,
+Upon a woman s face. E.  J.  Pratt  (1882 1964)
+', to_tsquery('english', 'sea'));
+            ts_headline             
+------------------------------------
+ <b>sea</b> a thousand years,
+ A thousand years to trace
+ The granite features of this cliff
+(1 row)
+
+select ts_headline('english', '
+<html>
+<!-- some comment -->
+<body>
+Sea view wow <u>foo bar</u> <i>qq</i>
+<a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>
+ff-bg
+<script>
+       document.write(15);
+</script>
+</body>
+</html>',
+to_tsquery('english', 'sea&foo'), 'HighlightAll=true');
+                                 ts_headline                                 
+-----------------------------------------------------------------------------
+ 
+ <html>
+ <!-- some comment -->
+ <body>
+ <b>Sea</b> view wow <u><b>foo</b> bar</u> <i>qq</i>
+ <a href="http://www.google.com/foo.bar.html" target="_blank">YES &nbsp;</a>
+  ff-bg
+ <script>
+        document.write(15);
+ </script>
+ </body>
+ </html>
+(1 row)
+
+--Rewrite sub system
+create table test_tsquery (txtkeyword text, txtsample text);
+\set ECHO none
+alter table test_tsquery add column keyword tsquery;
+update test_tsquery set keyword = to_tsquery('english', txtkeyword);
+alter table test_tsquery add column sample tsquery;
+update test_tsquery set sample = to_tsquery('english', txtsample::text);
+select count(*) from test_tsquery where keyword <  'new & york';
+ count 
+-------
+     1
+(1 row)
+
+select count(*) from test_tsquery where keyword <= 'new & york';
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from test_tsquery where keyword = 'new & york';
+ count 
+-------
+     1
+(1 row)
+
+select count(*) from test_tsquery where keyword >= 'new & york';
+ count 
+-------
+     3
+(1 row)
+
+select count(*) from test_tsquery where keyword >  'new & york';
+ count 
+-------
+     2
+(1 row)
+
+create unique index bt_tsq on test_tsquery (keyword);
+SET enable_seqscan=OFF;
+select count(*) from test_tsquery where keyword <  'new & york';
+ count 
+-------
+     1
+(1 row)
+
+select count(*) from test_tsquery where keyword <= 'new & york';
+ count 
+-------
+     2
+(1 row)
+
+select count(*) from test_tsquery where keyword = 'new & york';
+ count 
+-------
+     1
+(1 row)
+
+select count(*) from test_tsquery where keyword >= 'new & york';
+ count 
+-------
+     3
+(1 row)
+
+select count(*) from test_tsquery where keyword >  'new & york';
+ count 
+-------
+     2
+(1 row)
+
+RESET enable_seqscan;
+select ts_rewrite('foo & bar & qq & new & york',  'new & york'::tsquery, 'big & apple | nyc | new & york & city');
+                                    ts_rewrite                                    
+----------------------------------------------------------------------------------
+ 'foo' & 'bar' & 'qq' & ( 'city' & 'new' & 'york' | ( 'nyc' | 'big' & 'apple' ) )
+(1 row)
+
+select ts_rewrite('moscow', 'select keyword, sample from test_tsquery'::text );
+     ts_rewrite      
+---------------------
+ 'moskva' | 'moscow'
+(1 row)
+
+select ts_rewrite('moscow & hotel', 'select keyword, sample from test_tsquery'::text );
+            ts_rewrite             
+-----------------------------------
+ ( 'moskva' | 'moscow' ) & 'hotel'
+(1 row)
+
+select ts_rewrite('bar &  new & qq & foo & york', 'select keyword, sample from test_tsquery'::text );
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+(1 row)
+
+select ts_rewrite( ARRAY['moscow', keyword, sample] ) from test_tsquery;
+     ts_rewrite      
+---------------------
+ 'moskva' | 'moscow'
+(1 row)
+
+select ts_rewrite( ARRAY['moscow & hotel', keyword, sample] ) from test_tsquery;
+            ts_rewrite             
+-----------------------------------
+ ( 'moskva' | 'moscow' ) & 'hotel'
+(1 row)
+
+select ts_rewrite( ARRAY['bar &  new & qq & foo & york', keyword, sample] ) from test_tsquery;
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+(1 row)
+
+select keyword from test_tsquery where keyword @> 'new';
+    keyword     
+----------------
+ 'new' & 'york'
+(1 row)
+
+select keyword from test_tsquery where keyword @> 'moscow';
+ keyword  
+----------
+ 'moscow'
+(1 row)
+
+select keyword from test_tsquery where keyword <@ 'new';
+ keyword 
+---------
+(0 rows)
+
+select keyword from test_tsquery where keyword <@ 'moscow';
+ keyword  
+----------
+ 'moscow'
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow') as query where keyword <@ query;
+     ts_rewrite      
+---------------------
+ 'moskva' | 'moscow'
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow & hotel') as query where keyword <@ query;
+            ts_rewrite             
+-----------------------------------
+ ( 'moskva' | 'moscow' ) & 'hotel'
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where keyword <@ query;
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow') as query where query @> keyword;
+     ts_rewrite      
+---------------------
+ 'moskva' | 'moscow'
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow & hotel') as query where query @> keyword;
+            ts_rewrite             
+-----------------------------------
+ ( 'moskva' | 'moscow' ) & 'hotel'
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where query @> keyword;
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+(1 row)
+
+create index qq on test_tsquery using gist (keyword tsquery_ops);
+SET enable_seqscan=OFF;
+select keyword from test_tsquery where keyword @> 'new';
+    keyword     
+----------------
+ 'new' & 'york'
+(1 row)
+
+select keyword from test_tsquery where keyword @> 'moscow';
+ keyword  
+----------
+ 'moscow'
+(1 row)
+
+select keyword from test_tsquery where keyword <@ 'new';
+ keyword 
+---------
+(0 rows)
+
+select keyword from test_tsquery where keyword <@ 'moscow';
+ keyword  
+----------
+ 'moscow'
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow') as query where keyword <@ query;
+     ts_rewrite      
+---------------------
+ 'moskva' | 'moscow'
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow & hotel') as query where keyword <@ query;
+            ts_rewrite             
+-----------------------------------
+ ( 'moskva' | 'moscow' ) & 'hotel'
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where keyword <@ query;
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow') as query where query @> keyword;
+     ts_rewrite      
+---------------------
+ 'moskva' | 'moscow'
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow & hotel') as query where query @> keyword;
+            ts_rewrite             
+-----------------------------------
+ ( 'moskva' | 'moscow' ) & 'hotel'
+(1 row)
+
+select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where query @> keyword;
+                                     ts_rewrite                                      
+-------------------------------------------------------------------------------------
+ 'citi' & 'foo' & ( 'bar' | 'qq' ) & ( 'nyc' | ( 'big' & 'appl' | 'new' & 'york' ) )
+(1 row)
+
+RESET enable_seqscan;
+--test GUC
+set default_text_search_config=simple;
+select to_tsvector('SKIES My booKs');
+        to_tsvector         
+----------------------------
+ 'my':2 'books':3 'skies':1
+(1 row)
+
+select plainto_tsquery('SKIES My booKs');
+     plainto_tsquery      
+--------------------------
+ 'skies' & 'my' & 'books'
+(1 row)
+
+select to_tsquery('SKIES & My | booKs');
+        to_tsquery        
+--------------------------
+ 'skies' & 'my' | 'books'
+(1 row)
+
+set default_text_search_config=english;
+select to_tsvector('SKIES My booKs');
+   to_tsvector    
+------------------
+ 'sky':1 'book':3
+(1 row)
+
+select plainto_tsquery('SKIES My booKs');
+ plainto_tsquery 
+-----------------
+ 'sky' & 'book'
+(1 row)
+
+select to_tsquery('SKIES & My | booKs');
+   to_tsquery   
+----------------
+ 'sky' | 'book'
+(1 row)
+
+--trigger
+CREATE TRIGGER tsvectorupdate
+BEFORE UPDATE OR INSERT ON test_tsvector
+FOR EACH ROW EXECUTE PROCEDURE tsvector_update_trigger(a, 'pg_catalog.english', t);
+SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
+ count 
+-------
+     0
+(1 row)
+
+INSERT INTO test_tsvector (t) VALUES ('345 qwerty');
+SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
+ count 
+-------
+     1
+(1 row)
+
+UPDATE test_tsvector SET t = null WHERE t = '345 qwerty';
+SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
+ count 
+-------
+     0
+(1 row)
+
+insert into test_tsvector (t) values ('345 qwerty');
+select count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
+ count 
+-------
+     1
+(1 row)
+

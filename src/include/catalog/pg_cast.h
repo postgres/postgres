@@ -10,7 +10,7 @@
  *
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.34 2007/06/05 21:31:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_cast.h,v 1.35 2007/08/21 01:11:25 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -169,6 +169,20 @@ DATA(insert (	21 2206  313 i ));
 DATA(insert (	23 2206    0 i ));
 DATA(insert ( 2206	 20 1288 a ));
 DATA(insert ( 2206	 23    0 a ));
+DATA(insert (	26 3734    0 i ));
+DATA(insert ( 3734	 26    0 i ));
+DATA(insert (	20 3734 1287 i ));
+DATA(insert (	21 3734  313 i ));
+DATA(insert (	23 3734    0 i ));
+DATA(insert ( 3734	 20 1288 a ));
+DATA(insert ( 3734	 23    0 a ));
+DATA(insert (	26 3769    0 i ));
+DATA(insert ( 3769	 26    0 i ));
+DATA(insert (	20 3769 1287 i ));
+DATA(insert (	21 3769  313 i ));
+DATA(insert (	23 3769    0 i ));
+DATA(insert ( 3769	 20 1288 a ));
+DATA(insert ( 3769	 23    0 a ));
 DATA(insert (	25 2205 1079 i ));
 DATA(insert ( 1043 2205 1079 i ));
 

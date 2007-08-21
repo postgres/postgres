@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.102 2007/06/26 16:48:09 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.103 2007/08/21 01:11:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,8 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_ts_config.h"
+#include "catalog/pg_ts_dict.h"
 #include "catalog/pg_type.h"
 #include "miscadmin.h"
 #include "parser/parse_type.h"
@@ -1059,6 +1061,231 @@ regtyperecv(PG_FUNCTION_ARGS)
  */
 Datum
 regtypesend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
+}
+
+
+/*
+ * regconfigin		- converts "tsconfigname" to tsconfig OID
+ *
+ * We also accept a numeric OID, for symmetry with the output routine.
+ *
+ * '-' signifies unknown (OID 0).  In all other cases, the input must
+ * match an existing pg_ts_config entry.
+ *
+ * This function is not needed in bootstrap mode, so we don't worry about
+ * making it work then.
+ */
+Datum
+regconfigin(PG_FUNCTION_ARGS)
+{
+	char	   *cfg_name_or_oid = PG_GETARG_CSTRING(0);
+	Oid			result;
+	List	   *names;
+
+	/* '-' ? */
+	if (strcmp(cfg_name_or_oid, "-") == 0)
+		PG_RETURN_OID(InvalidOid);
+
+	/* Numeric OID? */
+	if (cfg_name_or_oid[0] >= '0' &&
+		cfg_name_or_oid[0] <= '9' &&
+		strspn(cfg_name_or_oid, "0123456789") == strlen(cfg_name_or_oid))
+	{
+		result = DatumGetObjectId(DirectFunctionCall1(oidin,
+										  CStringGetDatum(cfg_name_or_oid)));
+		PG_RETURN_OID(result);
+	}
+
+	/*
+	 * Normal case: parse the name into components and see if it matches any
+	 * pg_ts_config entries in the current search path.
+	 */
+	names = stringToQualifiedNameList(cfg_name_or_oid);
+
+	result = TSConfigGetCfgid(names, false);
+
+	PG_RETURN_OID(result);
+}
+
+/*
+ * regconfigout		- converts tsconfig OID to "tsconfigname"
+ */
+Datum
+regconfigout(PG_FUNCTION_ARGS)
+{
+	Oid			cfgid = PG_GETARG_OID(0);
+	char	   *result;
+	HeapTuple	cfgtup;
+
+	if (cfgid == InvalidOid)
+	{
+		result = pstrdup("-");
+		PG_RETURN_CSTRING(result);
+	}
+
+	cfgtup = SearchSysCache(TSCONFIGOID,
+							ObjectIdGetDatum(cfgid),
+							0, 0, 0);
+
+	if (HeapTupleIsValid(cfgtup))
+	{
+		Form_pg_ts_config cfgform = (Form_pg_ts_config) GETSTRUCT(cfgtup);
+		char	   *cfgname = NameStr(cfgform->cfgname);
+		char	   *nspname;
+
+		/*
+		 * Would this config be found by regconfigin? If not, qualify it.
+		 */
+		if (TSConfigIsVisible(cfgid))
+			nspname = NULL;
+		else
+			nspname = get_namespace_name(cfgform->cfgnamespace);
+
+		result = quote_qualified_identifier(nspname, cfgname);
+
+		ReleaseSysCache(cfgtup);
+	}
+	else
+	{
+		/* If OID doesn't match any pg_ts_config row, return it numerically */
+		result = (char *) palloc(NAMEDATALEN);
+		snprintf(result, NAMEDATALEN, "%u", cfgid);
+	}
+
+	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		regconfigrecv			- converts external binary format to regconfig
+ */
+Datum
+regconfigrecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ *		regconfigsend			- converts regconfig to binary format
+ */
+Datum
+regconfigsend(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidsend, so share code */
+	return oidsend(fcinfo);
+}
+
+
+/*
+ * regdictionaryin		- converts "tsdictionaryname" to tsdictionary OID
+ *
+ * We also accept a numeric OID, for symmetry with the output routine.
+ *
+ * '-' signifies unknown (OID 0).  In all other cases, the input must
+ * match an existing pg_ts_dict entry.
+ *
+ * This function is not needed in bootstrap mode, so we don't worry about
+ * making it work then.
+ */
+Datum
+regdictionaryin(PG_FUNCTION_ARGS)
+{
+	char	   *dict_name_or_oid = PG_GETARG_CSTRING(0);
+	Oid			result;
+	List	   *names;
+
+	/* '-' ? */
+	if (strcmp(dict_name_or_oid, "-") == 0)
+		PG_RETURN_OID(InvalidOid);
+
+	/* Numeric OID? */
+	if (dict_name_or_oid[0] >= '0' &&
+		dict_name_or_oid[0] <= '9' &&
+		strspn(dict_name_or_oid, "0123456789") == strlen(dict_name_or_oid))
+	{
+		result = DatumGetObjectId(DirectFunctionCall1(oidin,
+										  CStringGetDatum(dict_name_or_oid)));
+		PG_RETURN_OID(result);
+	}
+
+	/*
+	 * Normal case: parse the name into components and see if it matches any
+	 * pg_ts_dict entries in the current search path.
+	 */
+	names = stringToQualifiedNameList(dict_name_or_oid);
+
+	result = TSDictionaryGetDictid(names, false);
+
+	PG_RETURN_OID(result);
+}
+
+/*
+ * regdictionaryout		- converts tsdictionary OID to "tsdictionaryname"
+ */
+Datum
+regdictionaryout(PG_FUNCTION_ARGS)
+{
+	Oid			dictid = PG_GETARG_OID(0);
+	char	   *result;
+	HeapTuple	dicttup;
+
+	if (dictid == InvalidOid)
+	{
+		result = pstrdup("-");
+		PG_RETURN_CSTRING(result);
+	}
+
+	dicttup = SearchSysCache(TSDICTOID,
+							 ObjectIdGetDatum(dictid),
+							 0, 0, 0);
+
+	if (HeapTupleIsValid(dicttup))
+	{
+		Form_pg_ts_dict dictform = (Form_pg_ts_dict) GETSTRUCT(dicttup);
+		char	   *dictname = NameStr(dictform->dictname);
+		char	   *nspname;
+
+		/*
+		 * Would this dictionary be found by regdictionaryin?
+		 * If not, qualify it.
+		 */
+		if (TSDictionaryIsVisible(dictid))
+			nspname = NULL;
+		else
+			nspname = get_namespace_name(dictform->dictnamespace);
+
+		result = quote_qualified_identifier(nspname, dictname);
+
+		ReleaseSysCache(dicttup);
+	}
+	else
+	{
+		/* If OID doesn't match any pg_ts_dict row, return it numerically */
+		result = (char *) palloc(NAMEDATALEN);
+		snprintf(result, NAMEDATALEN, "%u", dictid);
+	}
+
+	PG_RETURN_CSTRING(result);
+}
+
+/*
+ *		regdictionaryrecv	- converts external binary format to regdictionary
+ */
+Datum
+regdictionaryrecv(PG_FUNCTION_ARGS)
+{
+	/* Exactly the same as oidrecv, so share code */
+	return oidrecv(fcinfo);
+}
+
+/*
+ *		regdictionarysend	- converts regdictionary to binary format
+ */
+Datum
+regdictionarysend(PG_FUNCTION_ARGS)
 {
 	/* Exactly the same as oidsend, so share code */
 	return oidsend(fcinfo);

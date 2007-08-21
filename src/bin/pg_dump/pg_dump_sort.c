@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.18 2007/03/18 16:50:44 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump_sort.c,v 1.19 2007/08/21 01:11:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,10 @@ static const int oldObjectTypePriority[] =
 	2,							/* DO_CAST */
 	9,							/* DO_TABLE_DATA */
 	7,							/* DO_TABLE_TYPE */
+	3,							/* DO_TSPARSER */
+	4,							/* DO_TSDICT */
+	3,							/* DO_TSTEMPLATE */
+	5,							/* DO_TSCONFIG */
 	10,							/* DO_BLOBS */
 	11							/* DO_BLOB_COMMENTS */
 };
@@ -76,6 +80,10 @@ static const int newObjectTypePriority[] =
 	8,							/* DO_CAST */
 	13,							/* DO_TABLE_DATA */
 	11,							/* DO_TABLE_TYPE */
+	5,							/* DO_TSPARSER */
+	6,							/* DO_TSDICT */
+	5,							/* DO_TSTEMPLATE */
+	7,							/* DO_TSCONFIG */
 	14,							/* DO_BLOBS */
 	15							/* DO_BLOB_COMMENTS */
 };
@@ -1065,6 +1073,26 @@ describeDumpableObject(DumpableObject *obj, char *buf, int bufsize)
 		case DO_TABLE_TYPE:
 			snprintf(buf, bufsize,
 					 "TABLE TYPE %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_TSPARSER:
+			snprintf(buf, bufsize,
+					 "TEXT SEARCH PARSER %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_TSDICT:
+			snprintf(buf, bufsize,
+					 "TEXT SEARCH DICTIONARY %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_TSTEMPLATE:
+			snprintf(buf, bufsize,
+					 "TEXT SEARCH TEMPLATE %s  (ID %d OID %u)",
+					 obj->name, obj->dumpId, obj->catId.oid);
+			return;
+		case DO_TSCONFIG:
+			snprintf(buf, bufsize,
+					 "TEXT SEARCH CONFIGURATION %s  (ID %d OID %u)",
 					 obj->name, obj->dumpId, obj->catId.oid);
 			return;
 		case DO_BLOBS:

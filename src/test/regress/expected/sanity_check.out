@@ -115,6 +115,11 @@ SELECT relname, relhasindex
  pg_statistic            | t
  pg_tablespace           | t
  pg_trigger              | t
+ pg_ts_config            | t
+ pg_ts_config_map        | t
+ pg_ts_dict              | t
+ pg_ts_parser            | t
+ pg_ts_template          | t
  pg_type                 | t
  point_tbl               | f
  polygon_tbl             | t
@@ -135,6 +140,7 @@ SELECT relname, relhasindex
  student                 | f
  tenk1                   | t
  tenk2                   | t
+ test_tsvector           | f
  text_tbl                | f
  time_tbl                | f
  timestamp_tbl           | f
@@ -142,7 +148,7 @@ SELECT relname, relhasindex
  timetz_tbl              | f
  tinterval_tbl           | f
  varchar_tbl             | f
-(131 rows)
+(137 rows)
 
 --
 -- another sanity check: every system catalog that has OIDs should have

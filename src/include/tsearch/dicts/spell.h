@@ -1,0 +1,153 @@
+/*-------------------------------------------------------------------------
+ *
+ * spell.h
+ *
+ * Declarations for ISpell dictionary
+ *
+ * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+ *
+ * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.1 2007/08/21 01:11:29 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
+
+#ifndef __SPELL_H__
+#define __SPELL_H__
+
+#include "regex/regex.h"
+#include "tsearch/dicts/regis.h"
+#include "tsearch/ts_public.h"
+
+struct SPNode;
+
+typedef struct
+{
+	uint32
+				val:8,
+				isword:1,
+				compoundflag:4,
+				affix:19;
+	struct SPNode *node;
+} SPNodeData;
+
+/*
+ * Names of FF_ are correlated with Hunspell options in affix file
+ * http://sourceforge.net/docman/display_doc.php?docid=29374&group_id=143754
+ */
+#define FF_COMPOUNDONLY		0x01
+#define FF_COMPOUNDBEGIN	0x02
+#define FF_COMPOUNDMIDDLE	0x04
+#define FF_COMPOUNDLAST		0x08
+#define FF_COMPOUNDFLAG		( FF_COMPOUNDBEGIN | FF_COMPOUNDMIDDLE | FF_COMPOUNDLAST )
+#define FF_DICTFLAGMASK		0x0f
+
+typedef struct SPNode
+{
+	uint32		length;
+	SPNodeData	data[1];
+} SPNode;
+
+#define SPNHRDSZ	(sizeof(uint32))
+
+
+typedef struct spell_struct
+{
+	union
+	{
+		char		flag[16];
+		struct
+		{
+			int			affix;
+			int			len;
+		}			d;
+	}			p;
+	char		word[1];
+} SPELL;
+
+#define SPELLHDRSZ	(offsetof(SPELL, word))
+
+typedef struct aff_struct
+{
+	uint32
+				flag:8,
+				type:1,
+				flagflags:7,
+				issimple:1,
+				isregis:1,
+				replen:14;
+	char	   *find;
+	char	   *repl;
+	union
+	{
+		regex_t		regex;
+		Regis		regis;
+	}			reg;
+} AFFIX;
+
+/*
+ * affixes use deictinary flags too
+ */
+#define FF_COMPOUNDPERMITFLAG	0x10
+#define FF_COMPOUNDFORBIDFLAG	0x20
+#define FF_CROSSPRODUCT			0x40
+#define FF_SUFFIX				1
+#define FF_PREFIX				0
+
+struct AffixNode;
+
+typedef struct
+{
+	uint32
+				val:8,
+				naff:24;
+	AFFIX	  **aff;
+	struct AffixNode *node;
+} AffixNodeData;
+
+typedef struct AffixNode
+{
+	uint32		isvoid:1,
+				length:31;
+	AffixNodeData data[1];
+} AffixNode;
+
+#define ANHRDSZ		   (sizeof(uint32))
+
+typedef struct
+{
+	char	   *affix;
+	int			len;
+	bool		issuffix;
+} CMPDAffix;
+
+typedef struct
+{
+	int			maffixes;
+	int			naffixes;
+	AFFIX	   *Affix;
+
+	int			nspell;
+	int			mspell;
+	SPELL	  **Spell;
+
+	AffixNode  *Suffix;
+	AffixNode  *Prefix;
+
+	SPNode	   *Dictionary;
+	char	  **AffixData;
+	int			lenAffixData;
+	int			nAffixData;
+
+	CMPDAffix  *CompoundAffix;
+
+	unsigned char flagval[256];
+	bool		usecompound;
+} IspellDict;
+
+extern TSLexeme *NINormalizeWord(IspellDict * Conf, char *word);
+extern void NIImportAffixes(IspellDict * Conf, const char *filename);
+extern void NIImportDictionary(IspellDict * Conf, const char *filename);
+extern void NISortDictionary(IspellDict * Conf);
+extern void NISortAffixes(IspellDict * Conf);
+
+#endif

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.97 2007/07/25 22:16:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.98 2007/08/21 01:11:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,10 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_opfamily.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_ts_config.h"
+#include "catalog/pg_ts_dict.h"
+#include "catalog/pg_ts_parser.h"
+#include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
@@ -189,6 +193,10 @@ Datum		pg_function_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_operator_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_opclass_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_conversion_is_visible(PG_FUNCTION_ARGS);
+Datum		pg_ts_parser_is_visible(PG_FUNCTION_ARGS);
+Datum		pg_ts_dict_is_visible(PG_FUNCTION_ARGS);
+Datum		pg_ts_template_is_visible(PG_FUNCTION_ARGS);
+Datum		pg_ts_config_is_visible(PG_FUNCTION_ARGS);
 Datum		pg_my_temp_schema(PG_FUNCTION_ARGS);
 Datum		pg_is_other_temp_schema(PG_FUNCTION_ARGS);
 
@@ -1313,6 +1321,521 @@ ConversionIsVisible(Oid conid)
 
 	return visible;
 }
+
+/*
+ * TSParserGetPrsid - find a TS parser by possibly qualified name
+ *
+ * If not found, returns InvalidOid if failOK, else throws error
+ */
+Oid
+TSParserGetPrsid(List *names, bool failOK)
+{
+	char	   *schemaname;
+	char	   *parser_name;
+	Oid			namespaceId;
+	Oid			prsoid = InvalidOid;
+	ListCell   *l;
+
+	/* deconstruct the name list */
+	DeconstructQualifiedName(names, &schemaname, &parser_name);
+
+	if (schemaname)
+	{
+		/* use exact schema given */
+		namespaceId = LookupExplicitNamespace(schemaname);
+		prsoid = GetSysCacheOid(TSPARSERNAMENSP,
+								PointerGetDatum(parser_name),
+								ObjectIdGetDatum(namespaceId),
+								0, 0);
+	}
+	else
+	{
+		/* search for it in search path */
+		recomputeNamespacePath();
+
+		foreach(l, activeSearchPath)
+		{
+			namespaceId = lfirst_oid(l);
+
+			if (namespaceId == myTempNamespace)
+				continue;			/* do not look in temp namespace */
+
+			prsoid = GetSysCacheOid(TSPARSERNAMENSP,
+									PointerGetDatum(parser_name),
+									ObjectIdGetDatum(namespaceId),
+									0, 0);
+			if (OidIsValid(prsoid))
+				break;
+		}
+	}
+
+	if (!OidIsValid(prsoid) && !failOK)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("text search parser \"%s\" does not exist",
+						NameListToString(names))));
+
+	return prsoid;
+}
+
+/*
+ * TSParserIsVisible
+ *		Determine whether a parser (identified by OID) is visible in the
+ *		current search path.  Visible means "would be found by searching
+ *		for the unqualified parser name".
+ */
+bool
+TSParserIsVisible(Oid prsId)
+{
+	HeapTuple	tup;
+	Form_pg_ts_parser form;
+	Oid			namespace;
+	bool		visible;
+
+	tup = SearchSysCache(TSPARSEROID,
+						 ObjectIdGetDatum(prsId),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for text search parser %u", prsId);
+	form = (Form_pg_ts_parser) GETSTRUCT(tup);
+
+	recomputeNamespacePath();
+
+	/*
+	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
+	 * the system namespace are surely in the path and so we needn't even do
+	 * list_member_oid() for them.
+	 */
+	namespace = form->prsnamespace;
+	if (namespace != PG_CATALOG_NAMESPACE &&
+		!list_member_oid(activeSearchPath, namespace))
+		visible = false;
+	else
+	{
+		/*
+		 * If it is in the path, it might still not be visible; it could be
+		 * hidden by another parser of the same name earlier in the path. So we
+		 * must do a slow check for conflicting parsers.
+		 */
+		char	   *name = NameStr(form->prsname);
+		ListCell   *l;
+
+		visible = false;
+		foreach(l, activeSearchPath)
+		{
+			Oid			namespaceId = lfirst_oid(l);
+
+			if (namespaceId == myTempNamespace)
+				continue;			/* do not look in temp namespace */
+
+			if (namespaceId == namespace)
+			{
+				/* Found it first in path */
+				visible = true;
+				break;
+			}
+			if (SearchSysCacheExists(TSPARSERNAMENSP,
+									 PointerGetDatum(name),
+									 ObjectIdGetDatum(namespaceId),
+									 0, 0))
+			{
+				/* Found something else first in path */
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCache(tup);
+
+	return visible;
+}
+
+/*
+ * TSDictionaryGetDictid - find a TS dictionary by possibly qualified name
+ *
+ * If not found, returns InvalidOid if failOK, else throws error
+ */
+Oid
+TSDictionaryGetDictid(List *names, bool failOK)
+{
+	char	   *schemaname;
+	char	   *dict_name;
+	Oid			namespaceId;
+	Oid			dictoid = InvalidOid;
+	ListCell   *l;
+
+	/* deconstruct the name list */
+	DeconstructQualifiedName(names, &schemaname, &dict_name);
+
+	if (schemaname)
+	{
+		/* use exact schema given */
+		namespaceId = LookupExplicitNamespace(schemaname);
+		dictoid = GetSysCacheOid(TSDICTNAMENSP,
+								 PointerGetDatum(dict_name),
+								 ObjectIdGetDatum(namespaceId),
+								 0, 0);
+	}
+	else
+	{
+		/* search for it in search path */
+		recomputeNamespacePath();
+
+		foreach(l, activeSearchPath)
+		{
+			namespaceId = lfirst_oid(l);
+
+			if (namespaceId == myTempNamespace)
+				continue;			/* do not look in temp namespace */
+
+			dictoid = GetSysCacheOid(TSDICTNAMENSP,
+									 PointerGetDatum(dict_name),
+									 ObjectIdGetDatum(namespaceId),
+									 0, 0);
+			if (OidIsValid(dictoid))
+				break;
+		}
+	}
+
+	if (!OidIsValid(dictoid) && !failOK)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("text search dictionary \"%s\" does not exist",
+						NameListToString(names))));
+
+	return dictoid;
+}
+
+/*
+ * TSDictionaryIsVisible
+ *		Determine whether a dictionary (identified by OID) is visible in the
+ *		current search path.  Visible means "would be found by searching
+ *		for the unqualified dictionary name".
+ */
+bool
+TSDictionaryIsVisible(Oid dictId)
+{
+	HeapTuple	tup;
+	Form_pg_ts_dict form;
+	Oid			namespace;
+	bool		visible;
+
+	tup = SearchSysCache(TSDICTOID,
+						 ObjectIdGetDatum(dictId),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for text search dictionary %u",
+			 dictId);
+	form = (Form_pg_ts_dict) GETSTRUCT(tup);
+
+	recomputeNamespacePath();
+
+	/*
+	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
+	 * the system namespace are surely in the path and so we needn't even do
+	 * list_member_oid() for them.
+	 */
+	namespace = form->dictnamespace;
+	if (namespace != PG_CATALOG_NAMESPACE &&
+		!list_member_oid(activeSearchPath, namespace))
+		visible = false;
+	else
+	{
+		/*
+		 * If it is in the path, it might still not be visible; it could be
+		 * hidden by another dictionary of the same name earlier in the
+		 * path. So we must do a slow check for conflicting dictionaries.
+		 */
+		char	   *name = NameStr(form->dictname);
+		ListCell   *l;
+
+		visible = false;
+		foreach(l, activeSearchPath)
+		{
+			Oid			namespaceId = lfirst_oid(l);
+
+			if (namespaceId == myTempNamespace)
+				continue;			/* do not look in temp namespace */
+
+			if (namespaceId == namespace)
+			{
+				/* Found it first in path */
+				visible = true;
+				break;
+			}
+			if (SearchSysCacheExists(TSDICTNAMENSP,
+									 PointerGetDatum(name),
+									 ObjectIdGetDatum(namespaceId),
+									 0, 0))
+			{
+				/* Found something else first in path */
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCache(tup);
+
+	return visible;
+}
+
+/*
+ * TSTemplateGetTmplid - find a TS template by possibly qualified name
+ *
+ * If not found, returns InvalidOid if failOK, else throws error
+ */
+Oid
+TSTemplateGetTmplid(List *names, bool failOK)
+{
+	char	   *schemaname;
+	char	   *template_name;
+	Oid			namespaceId;
+	Oid			tmploid = InvalidOid;
+	ListCell   *l;
+
+	/* deconstruct the name list */
+	DeconstructQualifiedName(names, &schemaname, &template_name);
+
+	if (schemaname)
+	{
+		/* use exact schema given */
+		namespaceId = LookupExplicitNamespace(schemaname);
+		tmploid = GetSysCacheOid(TSTEMPLATENAMENSP,
+								 PointerGetDatum(template_name),
+								 ObjectIdGetDatum(namespaceId),
+								 0, 0);
+	}
+	else
+	{
+		/* search for it in search path */
+		recomputeNamespacePath();
+
+		foreach(l, activeSearchPath)
+		{
+			namespaceId = lfirst_oid(l);
+
+			if (namespaceId == myTempNamespace)
+				continue;			/* do not look in temp namespace */
+
+			tmploid = GetSysCacheOid(TSTEMPLATENAMENSP,
+									 PointerGetDatum(template_name),
+									 ObjectIdGetDatum(namespaceId),
+									 0, 0);
+			if (OidIsValid(tmploid))
+				break;
+		}
+	}
+
+	if (!OidIsValid(tmploid) && !failOK)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("text search template \"%s\" does not exist",
+						NameListToString(names))));
+
+	return tmploid;
+}
+
+/*
+ * TSTemplateIsVisible
+ *		Determine whether a template (identified by OID) is visible in the
+ *		current search path.  Visible means "would be found by searching
+ *		for the unqualified template name".
+ */
+bool
+TSTemplateIsVisible(Oid tmplId)
+{
+	HeapTuple	tup;
+	Form_pg_ts_template form;
+	Oid			namespace;
+	bool		visible;
+
+	tup = SearchSysCache(TSTEMPLATEOID,
+						 ObjectIdGetDatum(tmplId),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for text search template %u", tmplId);
+	form = (Form_pg_ts_template) GETSTRUCT(tup);
+
+	recomputeNamespacePath();
+
+	/*
+	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
+	 * the system namespace are surely in the path and so we needn't even do
+	 * list_member_oid() for them.
+	 */
+	namespace = form->tmplnamespace;
+	if (namespace != PG_CATALOG_NAMESPACE &&
+		!list_member_oid(activeSearchPath, namespace))
+		visible = false;
+	else
+	{
+		/*
+		 * If it is in the path, it might still not be visible; it could be
+		 * hidden by another template of the same name earlier in the path.
+		 * So we must do a slow check for conflicting templates.
+		 */
+		char	   *name = NameStr(form->tmplname);
+		ListCell   *l;
+
+		visible = false;
+		foreach(l, activeSearchPath)
+		{
+			Oid			namespaceId = lfirst_oid(l);
+
+			if (namespaceId == myTempNamespace)
+				continue;			/* do not look in temp namespace */
+
+			if (namespaceId == namespace)
+			{
+				/* Found it first in path */
+				visible = true;
+				break;
+			}
+			if (SearchSysCacheExists(TSTEMPLATENAMENSP,
+									 PointerGetDatum(name),
+									 ObjectIdGetDatum(namespaceId),
+									 0, 0))
+			{
+				/* Found something else first in path */
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCache(tup);
+
+	return visible;
+}
+
+/*
+ * TSConfigGetCfgid - find a TS config by possibly qualified name
+ *
+ * If not found, returns InvalidOid if failOK, else throws error
+ */
+Oid
+TSConfigGetCfgid(List *names, bool failOK)
+{
+	char	   *schemaname;
+	char	   *config_name;
+	Oid			namespaceId;
+	Oid			cfgoid = InvalidOid;
+	ListCell   *l;
+
+	/* deconstruct the name list */
+	DeconstructQualifiedName(names, &schemaname, &config_name);
+
+	if (schemaname)
+	{
+		/* use exact schema given */
+		namespaceId = LookupExplicitNamespace(schemaname);
+		cfgoid = GetSysCacheOid(TSCONFIGNAMENSP,
+								PointerGetDatum(config_name),
+								ObjectIdGetDatum(namespaceId),
+								0, 0);
+	}
+	else
+	{
+		/* search for it in search path */
+		recomputeNamespacePath();
+
+		foreach(l, activeSearchPath)
+		{
+			namespaceId = lfirst_oid(l);
+
+			if (namespaceId == myTempNamespace)
+				continue;			/* do not look in temp namespace */
+
+			cfgoid = GetSysCacheOid(TSCONFIGNAMENSP,
+									PointerGetDatum(config_name),
+									ObjectIdGetDatum(namespaceId),
+									0, 0);
+			if (OidIsValid(cfgoid))
+				break;
+		}
+	}
+
+	if (!OidIsValid(cfgoid) && !failOK)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("text search configuration \"%s\" does not exist",
+						NameListToString(names))));
+
+	return cfgoid;
+}
+
+/*
+ * TSConfigIsVisible
+ *		Determine whether a text search configuration (identified by OID)
+ *		is visible in the current search path.  Visible means "would be found
+ *		by searching for the unqualified text search configuration name".
+ */
+bool
+TSConfigIsVisible(Oid cfgid)
+{
+	HeapTuple	tup;
+	Form_pg_ts_config form;
+	Oid			namespace;
+	bool		visible;
+
+	tup = SearchSysCache(TSCONFIGOID,
+						 ObjectIdGetDatum(cfgid),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		elog(ERROR, "cache lookup failed for text search configuration %u",
+			 cfgid);
+	form = (Form_pg_ts_config) GETSTRUCT(tup);
+
+	recomputeNamespacePath();
+
+	/*
+	 * Quick check: if it ain't in the path at all, it ain't visible. Items in
+	 * the system namespace are surely in the path and so we needn't even do
+	 * list_member_oid() for them.
+	 */
+	namespace = form->cfgnamespace;
+	if (namespace != PG_CATALOG_NAMESPACE &&
+		!list_member_oid(activeSearchPath, namespace))
+		visible = false;
+	else
+	{
+		/*
+		 * If it is in the path, it might still not be visible; it could be
+		 * hidden by another configuration of the same name earlier in the
+		 * path. So we must do a slow check for conflicting configurations.
+		 */
+		char	   *name = NameStr(form->cfgname);
+		ListCell   *l;
+
+		visible = false;
+		foreach(l, activeSearchPath)
+		{
+			Oid			namespaceId = lfirst_oid(l);
+
+			if (namespaceId == myTempNamespace)
+				continue;			/* do not look in temp namespace */
+
+			if (namespaceId == namespace)
+			{
+				/* Found it first in path */
+				visible = true;
+				break;
+			}
+			if (SearchSysCacheExists(TSCONFIGNAMENSP,
+									 PointerGetDatum(name),
+									 ObjectIdGetDatum(namespaceId),
+									 0, 0))
+			{
+				/* Found something else first in path */
+				break;
+			}
+		}
+	}
+
+	ReleaseSysCache(tup);
+
+	return visible;
+}
+
 
 /*
  * DeconstructQualifiedName
@@ -2513,6 +3036,38 @@ pg_conversion_is_visible(PG_FUNCTION_ARGS)
 	Oid			oid = PG_GETARG_OID(0);
 
 	PG_RETURN_BOOL(ConversionIsVisible(oid));
+}
+
+Datum
+pg_ts_parser_is_visible(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	PG_RETURN_BOOL(TSParserIsVisible(oid));
+}
+
+Datum
+pg_ts_dict_is_visible(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	PG_RETURN_BOOL(TSDictionaryIsVisible(oid));
+}
+
+Datum
+pg_ts_template_is_visible(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	PG_RETURN_BOOL(TSTemplateIsVisible(oid));
+}
+
+Datum
+pg_ts_config_is_visible(PG_FUNCTION_ARGS)
+{
+	Oid			oid = PG_GETARG_OID(0);
+
+	PG_RETURN_BOOL(TSConfigIsVisible(oid));
 }
 
 Datum

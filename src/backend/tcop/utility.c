@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.284 2007/07/17 05:02:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.285 2007/08/21 01:11:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -355,6 +355,8 @@ check_xact_readonly(Node *parsetree)
 		case T_TruncateStmt:
 		case T_DropOwnedStmt:
 		case T_ReassignOwnedStmt:
+		case T_AlterTSDictionaryStmt:
+		case T_AlterTSConfigurationStmt:
 			ereport(ERROR,
 					(errcode(ERRCODE_READ_ONLY_SQL_TRANSACTION),
 					 errmsg("transaction is read-only")));
@@ -661,6 +663,26 @@ ProcessUtility(Node *parsetree,
 										 stmt->missing_ok);
 							break;
 
+						case OBJECT_TSPARSER:
+							RemoveTSParser(names, stmt->behavior,
+										   stmt->missing_ok);
+							break;
+
+						case OBJECT_TSDICTIONARY:
+							RemoveTSDictionary(names, stmt->behavior,
+											   stmt->missing_ok);
+							break;
+
+						case OBJECT_TSTEMPLATE:
+							RemoveTSTemplate(names, stmt->behavior,
+											 stmt->missing_ok);
+							break;
+
+						case OBJECT_TSCONFIGURATION:
+							RemoveTSConfiguration(names, stmt->behavior,
+												  stmt->missing_ok);
+							break;
+
 						default:
 							elog(ERROR, "unrecognized drop object type: %d",
 								 (int) stmt->removeType);
@@ -831,6 +853,22 @@ ProcessUtility(Node *parsetree,
 					case OBJECT_TYPE:
 						Assert(stmt->args == NIL);
 						DefineType(stmt->defnames, stmt->definition);
+						break;
+					case OBJECT_TSPARSER:
+						Assert(stmt->args == NIL);
+						DefineTSParser(stmt->defnames, stmt->definition);
+						break;
+					case OBJECT_TSDICTIONARY:
+						Assert(stmt->args == NIL);
+						DefineTSDictionary(stmt->defnames, stmt->definition);
+						break;
+					case OBJECT_TSTEMPLATE:
+						Assert(stmt->args == NIL);
+						DefineTSTemplate(stmt->defnames, stmt->definition);
+						break;
+					case OBJECT_TSCONFIGURATION:
+						Assert(stmt->args == NIL);
+						DefineTSConfiguration(stmt->defnames, stmt->definition);
 						break;
 					default:
 						elog(ERROR, "unrecognized define stmt type: %d",
@@ -1221,6 +1259,14 @@ ProcessUtility(Node *parsetree,
 			RemoveOpFamily((RemoveOpFamilyStmt *) parsetree);
 			break;
 
+		case T_AlterTSDictionaryStmt:
+			AlterTSDictionary((AlterTSDictionaryStmt *) parsetree);
+			break;
+
+		case T_AlterTSConfigurationStmt:
+			AlterTSConfiguration((AlterTSConfigurationStmt *) parsetree);
+			break;
+
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(parsetree));
@@ -1525,6 +1571,18 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_SCHEMA:
 					tag = "DROP SCHEMA";
 					break;
+				case OBJECT_TSPARSER:
+					tag = "DROP TEXT SEARCH PARSER";
+					break;
+				case OBJECT_TSDICTIONARY:
+					tag = "DROP TEXT SEARCH DICTIONARY";
+					break;
+				case OBJECT_TSTEMPLATE:
+					tag = "DROP TEXT SEARCH TEMPLATE";
+					break;
+				case OBJECT_TSCONFIGURATION:
+					tag = "DROP TEXT SEARCH CONFIGURATION";
+					break;
 				default:
 					tag = "???";
 			}
@@ -1591,6 +1649,18 @@ CreateCommandTag(Node *parsetree)
 				case OBJECT_VIEW:
 					tag = "ALTER VIEW";
 					break;
+				case OBJECT_TSPARSER:
+					tag = "ALTER TEXT SEARCH PARSER";
+					break;
+				case OBJECT_TSDICTIONARY:
+					tag = "ALTER TEXT SEARCH DICTIONARY";
+					break;
+				case OBJECT_TSTEMPLATE:
+					tag = "ALTER TEXT SEARCH TEMPLATE";
+					break;
+				case OBJECT_TSCONFIGURATION:
+					tag = "ALTER TEXT SEARCH CONFIGURATION";
+					break;
 				default:
 					tag = "???";
 					break;
@@ -1617,6 +1687,18 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_TYPE:
 					tag = "ALTER TYPE";
+					break;
+				case OBJECT_TSPARSER:
+					tag = "ALTER TEXT SEARCH PARSER";
+					break;
+				case OBJECT_TSDICTIONARY:
+					tag = "ALTER TEXT SEARCH DICTIONARY";
+					break;
+				case OBJECT_TSTEMPLATE:
+					tag = "ALTER TEXT SEARCH TEMPLATE";
+					break;
+				case OBJECT_TSCONFIGURATION:
+					tag = "ALTER TEXT SEARCH CONFIGURATION";
 					break;
 				default:
 					tag = "???";
@@ -1662,6 +1744,12 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_TYPE:
 					tag = "ALTER TYPE";
+					break;
+				case OBJECT_TSCONFIGURATION:
+					tag = "ALTER TEXT SEARCH CONFIGURATION";
+					break;
+				case OBJECT_TSDICTIONARY:
+					tag = "ALTER TEXT SEARCH DICTIONARY";
 					break;
 				default:
 					tag = "???";
@@ -1721,6 +1809,18 @@ CreateCommandTag(Node *parsetree)
 					break;
 				case OBJECT_TYPE:
 					tag = "CREATE TYPE";
+					break;
+				case OBJECT_TSPARSER:
+					tag = "CREATE TEXT SEARCH PARSER";
+					break;
+				case OBJECT_TSDICTIONARY:
+					tag = "CREATE TEXT SEARCH DICTIONARY";
+					break;
+				case OBJECT_TSTEMPLATE:
+					tag = "CREATE TEXT SEARCH TEMPLATE";
+					break;
+				case OBJECT_TSCONFIGURATION:
+					tag = "CREATE TEXT SEARCH CONFIGURATION";
 					break;
 				default:
 					tag = "???";
@@ -1947,6 +2047,14 @@ CreateCommandTag(Node *parsetree)
 
 		case T_RemoveOpFamilyStmt:
 			tag = "DROP OPERATOR FAMILY";
+			break;
+
+		case T_AlterTSDictionaryStmt:
+			tag = "ALTER TEXT SEARCH DICTIONARY";
+			break;
+
+		case T_AlterTSConfigurationStmt:
+			tag = "ALTER TEXT SEARCH CONFIGURATION";
 			break;
 
 		case T_PrepareStmt:
@@ -2383,6 +2491,14 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_RemoveOpFamilyStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterTSDictionaryStmt:
+			lev = LOGSTMT_DDL;
+			break;
+
+		case T_AlterTSConfigurationStmt:
 			lev = LOGSTMT_DDL;
 			break;
 

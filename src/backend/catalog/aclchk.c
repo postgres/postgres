@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.139 2007/04/20 02:37:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.140 2007/08/21 01:11:13 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -34,6 +34,8 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_tablespace.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_ts_config.h"
+#include "catalog/pg_ts_dict.h"
 #include "commands/dbcommands.h"
 #include "miscadmin.h"
 #include "parser/parse_func.h"
@@ -1416,7 +1418,11 @@ static const char *const no_priv_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_CONVERSION */
 	gettext_noop("permission denied for conversion %s"),
 	/* ACL_KIND_TABLESPACE */
-	gettext_noop("permission denied for tablespace %s")
+	gettext_noop("permission denied for tablespace %s"),
+	/* ACL_KIND_TSDICTIONARY */
+	gettext_noop("permission denied for text search dictionary %s"),
+	/* ACL_KIND_TSCONFIGURATION */
+	gettext_noop("permission denied for text search configuration %s")
 };
 
 static const char *const not_owner_msg[MAX_ACL_KIND] =
@@ -1444,7 +1450,11 @@ static const char *const not_owner_msg[MAX_ACL_KIND] =
 	/* ACL_KIND_CONVERSION */
 	gettext_noop("must be owner of conversion %s"),
 	/* ACL_KIND_TABLESPACE */
-	gettext_noop("must be owner of tablespace %s")
+	gettext_noop("must be owner of tablespace %s"),
+	/* ACL_KIND_TSDICTIONARY */
+	gettext_noop("must be owner of text search dictionary %s"),
+	/* ACL_KIND_TSCONFIGURATION */
+	gettext_noop("must be owner of text search configuration %s")
 };
 
 
@@ -2296,6 +2306,65 @@ pg_opfamily_ownercheck(Oid opf_oid, Oid roleid)
 
 	return has_privs_of_role(roleid, ownerId);
 }
+
+/*
+ * Ownership check for a text search dictionary (specified by OID).
+ */
+bool
+pg_ts_dict_ownercheck(Oid dict_oid, Oid roleid)
+{
+	HeapTuple	tuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	tuple = SearchSysCache(TSDICTOID,
+						   ObjectIdGetDatum(dict_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("text search dictionary with OID %u does not exist",
+						dict_oid)));
+
+	ownerId = ((Form_pg_ts_dict) GETSTRUCT(tuple))->dictowner;
+
+	ReleaseSysCache(tuple);
+
+	return has_privs_of_role(roleid, ownerId);
+}
+
+/*
+ * Ownership check for a text search configuration (specified by OID).
+ */
+bool
+pg_ts_config_ownercheck(Oid cfg_oid, Oid roleid)
+{
+	HeapTuple	tuple;
+	Oid			ownerId;
+
+	/* Superusers bypass all permission checking. */
+	if (superuser_arg(roleid))
+		return true;
+
+	tuple = SearchSysCache(TSCONFIGOID,
+						   ObjectIdGetDatum(cfg_oid),
+						   0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("text search configuration with OID %u does not exist",
+						cfg_oid)));
+
+	ownerId = ((Form_pg_ts_config) GETSTRUCT(tuple))->cfgowner;
+
+	ReleaseSysCache(tuple);
+
+	return has_privs_of_role(roleid, ownerId);
+}
+
 
 /*
  * Ownership check for a database (specified by OID).

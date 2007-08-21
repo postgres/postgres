@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.387 2007/08/19 03:23:30 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.388 2007/08/21 01:11:11 tgl Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -10794,7 +10794,9 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
     All these functions require object OIDs to identify the object to be
     checked.  If you want to test an object by name, it is convenient to use
     the OID alias types (<type>regclass</>, <type>regtype</>,
-    <type>regprocedure</>, or <type>regoperator</>), for example:
+    <type>regprocedure</>, <type>regoperator</>, <type>regconfig</>,
+    or <type>regdictionary</>),
+    for example:
 <programlisting>
 SELECT pg_type_is_visible('myschema.widget'::regtype);
 </programlisting>
@@ -11255,8 +11257,8 @@ SELECT set_config('log_statement_stats', 'off', false);
    <para>
     <function>pg_rotate_logfile</> signals the log-file manager to switch
     to a new output file immediately.  This works only when the built-in
-	log collector is running, since otherwise there is no log-file manager 
-	subprocess.
+    log collector is running, since otherwise there is no log-file manager 
+    subprocess.
    </para>
 
    <indexterm zone="functions-admin">

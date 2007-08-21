@@ -2,9 +2,10 @@
 #
 # Makefile for the postgres backend
 #
-# Copyright (c) 1994, Regents of the University of California
+# Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
+# Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/backend/Makefile,v 1.123 2007/07/24 09:00:27 mha Exp $
+# $PostgreSQL: pgsql/src/backend/Makefile,v 1.124 2007/08/21 01:11:12 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +16,7 @@ include $(top_builddir)/src/Makefile.global
 
 DIRS = access bootstrap catalog parser commands executor lib libpq \
 	main nodes optimizer port postmaster regex rewrite \
-	storage tcop utils $(top_builddir)/src/timezone
+	storage tcop tsearch utils $(top_builddir)/src/timezone
 
 SUBSYSOBJS = $(DIRS:%=%/SUBSYS.o)
 
@@ -166,6 +167,7 @@ ifeq ($(MAKE_DLL), true)
 endif
 endif
 	$(MAKE) -C catalog install-data
+	$(MAKE) -C tsearch install-data
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample '$(DESTDIR)$(datadir)/pg_hba.conf.sample'
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample '$(DESTDIR)$(datadir)/pg_ident.conf.sample'
 	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample '$(DESTDIR)$(datadir)/postgresql.conf.sample'
@@ -220,6 +222,7 @@ ifeq ($(MAKE_DLL), true)
 endif
 endif
 	$(MAKE) -C catalog uninstall-data
+	$(MAKE) -C tsearch uninstall-data
 	rm -f '$(DESTDIR)$(datadir)/pg_hba.conf.sample' \
 	      '$(DESTDIR)$(datadir)/pg_ident.conf.sample' \
               '$(DESTDIR)$(datadir)/postgresql.conf.sample' \

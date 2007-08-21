@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.189 2007/06/18 21:40:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.190 2007/08/21 01:11:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,6 +87,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"commit", COMMIT, UNRESERVED_KEYWORD},
 	{"committed", COMMITTED, UNRESERVED_KEYWORD},
 	{"concurrently", CONCURRENTLY, UNRESERVED_KEYWORD},
+	{"configuration", CONFIGURATION, UNRESERVED_KEYWORD},
 	{"connection", CONNECTION, UNRESERVED_KEYWORD},
 	{"constraint", CONSTRAINT, RESERVED_KEYWORD},
 	{"constraints", CONSTRAINTS, UNRESERVED_KEYWORD},
@@ -124,6 +125,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"delimiter", DELIMITER, UNRESERVED_KEYWORD},
 	{"delimiters", DELIMITERS, UNRESERVED_KEYWORD},
 	{"desc", DESC, RESERVED_KEYWORD},
+	{"dictionary", DICTIONARY, UNRESERVED_KEYWORD},
 	{"disable", DISABLE_P, UNRESERVED_KEYWORD},
 	{"discard", DISCARD, UNRESERVED_KEYWORD},
 	{"distinct", DISTINCT, RESERVED_KEYWORD},
@@ -219,6 +221,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"location", LOCATION, UNRESERVED_KEYWORD},
 	{"lock", LOCK_P, UNRESERVED_KEYWORD},
 	{"login", LOGIN_P, UNRESERVED_KEYWORD},
+	{"mapping", MAPPING, UNRESERVED_KEYWORD},
 	{"match", MATCH, UNRESERVED_KEYWORD},
 	{"maxvalue", MAXVALUE, UNRESERVED_KEYWORD},
 	{"minute", MINUTE_P, UNRESERVED_KEYWORD},
@@ -268,6 +271,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"overlay", OVERLAY, COL_NAME_KEYWORD},
 	{"owned", OWNED, UNRESERVED_KEYWORD},
 	{"owner", OWNER, UNRESERVED_KEYWORD},
+	{"parser", PARSER, UNRESERVED_KEYWORD},
 	{"partial", PARTIAL, UNRESERVED_KEYWORD},
 	{"password", PASSWORD, UNRESERVED_KEYWORD},
 	{"placing", PLACING, RESERVED_KEYWORD},
@@ -310,6 +314,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"savepoint", SAVEPOINT, UNRESERVED_KEYWORD},
 	{"schema", SCHEMA, UNRESERVED_KEYWORD},
 	{"scroll", SCROLL, UNRESERVED_KEYWORD},
+	{"search", SEARCH, UNRESERVED_KEYWORD},
 	{"second", SECOND_P, UNRESERVED_KEYWORD},
 	{"security", SECURITY, UNRESERVED_KEYWORD},
 	{"select", SELECT, RESERVED_KEYWORD},
@@ -345,6 +350,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"temp", TEMP, UNRESERVED_KEYWORD},
 	{"template", TEMPLATE, UNRESERVED_KEYWORD},
 	{"temporary", TEMPORARY, UNRESERVED_KEYWORD},
+	{"text", TEXT, UNRESERVED_KEYWORD},
 	{"then", THEN, RESERVED_KEYWORD},
 	{"time", TIME, COL_NAME_KEYWORD},
 	{"timestamp", TIMESTAMP, COL_NAME_KEYWORD},

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/tools/findoidjoins/findoidjoins.c,v 1.4 2007/01/05 22:20:04 momjian Exp $
+ * $PostgreSQL: pgsql/src/tools/findoidjoins/findoidjoins.c,v 1.5 2007/08/21 01:11:32 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -83,7 +83,9 @@ main(int argc, char **argv)
 					  " 'pg_catalog.regoperator'::regtype, "
 					  " 'pg_catalog.regproc'::regtype, "
 					  " 'pg_catalog.regprocedure'::regtype, "
-					  " 'pg_catalog.regtype'::regtype) "
+					  " 'pg_catalog.regtype'::regtype, "
+					  " 'pg_catalog.regconfig'::regtype, "
+					  " 'pg_catalog.regdictionary'::regtype) "
 					  "ORDER BY nspname, c.relname, a.attnum"
 		);
 

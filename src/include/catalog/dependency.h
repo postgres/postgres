@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.29 2007/01/05 22:19:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/dependency.h,v 1.30 2007/08/21 01:11:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,6 +137,10 @@ typedef enum ObjectClass
 	OCLASS_REWRITE,				/* pg_rewrite */
 	OCLASS_TRIGGER,				/* pg_trigger */
 	OCLASS_SCHEMA,				/* pg_namespace */
+	OCLASS_TSPARSER,			/* pg_ts_parser */
+	OCLASS_TSDICT,				/* pg_ts_dict */
+	OCLASS_TSTEMPLATE,			/* pg_ts_template */
+	OCLASS_TSCONFIG,			/* pg_ts_config */
 	OCLASS_ROLE,				/* pg_authid */
 	OCLASS_DATABASE,			/* pg_database */
 	OCLASS_TBLSPACE,			/* pg_tablespace */
@@ -175,6 +179,10 @@ extern void add_exact_object_address(const ObjectAddress *object,
 
 extern bool object_address_present(const ObjectAddress *object,
 					   ObjectAddresses *addrs);
+
+extern void record_object_address_dependencies(const ObjectAddress *depender,
+											   ObjectAddresses *referenced,
+											   DependencyType behavior);
 
 extern void free_object_addresses(ObjectAddresses *addrs);
 
