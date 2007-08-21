@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.71 2007/07/03 01:30:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.72 2007/08/21 21:08:47 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -22,6 +22,10 @@ Complete list of usable sgml source files in this directory.
 <!entity alterSequence      system "alter_sequence.sgml">
 <!entity alterTable         system "alter_table.sgml">
 <!entity alterTableSpace    system "alter_tablespace.sgml">
+<!entity alterTSConfig      system "alter_tsconfig.sgml">
+<!entity alterTSDictionary  system "alter_tsdictionary.sgml">
+<!entity alterTSParser      system "alter_tsparser.sgml">
+<!entity alterTSTemplate    system "alter_tstemplate.sgml">
 <!entity alterTrigger       system "alter_trigger.sgml">
 <!entity alterType          system "alter_type.sgml">
 <!entity alterUser          system "alter_user.sgml">
@@ -56,6 +60,10 @@ Complete list of usable sgml source files in this directory.
 <!entity createTableAs      system "create_table_as.sgml">
 <!entity createTableSpace   system "create_tablespace.sgml">
 <!entity createTrigger      system "create_trigger.sgml">
+<!entity createTSConfig     system "create_tsconfig.sgml">
+<!entity createTSDictionary system "create_tsdictionary.sgml">
+<!entity createTSParser     system "create_tsparser.sgml">
+<!entity createTSTemplate   system "create_tstemplate.sgml">
 <!entity createType         system "create_type.sgml">
 <!entity createUser         system "create_user.sgml">
 <!entity createView         system "create_view.sgml">
@@ -83,6 +91,10 @@ Complete list of usable sgml source files in this directory.
 <!entity dropTable          system "drop_table.sgml">
 <!entity dropTableSpace     system "drop_tablespace.sgml">
 <!entity dropTrigger        system "drop_trigger.sgml">
+<!entity dropTSConfig       system "drop_tsconfig.sgml">
+<!entity dropTSDictionary   system "drop_tsdictionary.sgml">
+<!entity dropTSParser       system "drop_tsparser.sgml">
+<!entity dropTSTemplate     system "drop_tstemplate.sgml">
 <!entity dropType           system "drop_type.sgml">
 <!entity dropUser           system "drop_user.sgml">
 <!entity dropView           system "drop_view.sgml">

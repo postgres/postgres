@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.35 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/comment.sgml,v 1.36 2007/08/21 21:08:47 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -42,6 +42,10 @@ COMMENT ON
   SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
   SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
   TABLESPACE <replaceable class="PARAMETER">object_name</replaceable> |
+  TEXT SEARCH CONFIGURATION <replaceable class="PARAMETER">object_name</replaceable> |
+  TEXT SEARCH DICTIONARY <replaceable class="PARAMETER">object_name</replaceable> |
+  TEXT SEARCH PARSER <replaceable class="PARAMETER">object_name</replaceable> |
+  TEXT SEARCH TEMPLATE <replaceable class="PARAMETER">object_name</replaceable> |
   TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
   TYPE <replaceable class="PARAMETER">object_name</replaceable> |
   VIEW <replaceable class="PARAMETER">object_name</replaceable>
@@ -65,9 +69,8 @@ COMMENT ON
   </para>
 
   <para>
-    Comments can be
-    easily retrieved with the <application>psql</application> commands
-    <command>\dd</command>, <command>\d+</command>, and <command>\l+</command>.
+    Comments can be viewed using <application>psql</application>'s 
+    <command>\d</command> family of commands.
     Other user interfaces to retrieve comments can be built atop
     the same built-in functions that <application>psql</application> uses, namely
     <function>obj_description</>, <function>col_description</>,
@@ -93,7 +96,8 @@ COMMENT ON
      <para>
       The name of the object to be commented.  Names of tables,
       aggregates, domains, functions, indexes, operators, operator classes,
-      operator families, sequences, types, and views can be schema-qualified.
+      operator families, sequences, text search objects, types, and views can
+      be schema-qualified.
      </para>
     </listitem>
    </varlistentry>
@@ -255,6 +259,10 @@ COMMENT ON SCHEMA my_schema IS 'Departmental data';
 COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';
 COMMENT ON TABLE my_schema.my_table IS 'Employee Information';
 COMMENT ON TABLESPACE my_tablespace IS 'Tablespace for indexes';
+COMMENT ON TEXT SEARCH CONFIGURATION my_config IS 'Special word filtering';
+COMMENT ON TEXT SEARCH DICTIONARY swedish IS 'Snowball stemmer for swedish language';
+COMMENT ON TEXT SEARCH PARSER my_parser IS 'Splits text into words';
+COMMENT ON TEXT SEARCH TEMPLATE snowball IS 'Snowball stemmer';
 COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for RI';
 COMMENT ON TYPE complex IS 'Complex number data type';
 COMMENT ON VIEW my_view IS 'View of departmental costs';

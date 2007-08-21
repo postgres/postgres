@@ -1,0 +1,111 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tsdictionary.sgml,v 1.1 2007/08/21 21:08:47 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATETSDICTIONARY">
+ <refmeta>
+  <refentrytitle id="sql-createtsdictionary-title">CREATE TEXT SEARCH DICTIONARY</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE TEXT SEARCH DICTIONARY</refname>
+  <refpurpose>define a new text search dictionary</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createtsdictionary">
+  <primary>CREATE TEXT SEARCH DICTIONARY</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE TEXT SEARCH DICTIONARY <replaceable class="parameter">name</replaceable> (
+    TEMPLATE = <replaceable class="parameter">template</replaceable>
+    [, OPTION = <replaceable class="parameter">init_options</replaceable> ]
+)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE TEXT SEARCH DICTIONARY</command> creates a new text search
+   dictionary.  A text search dictionary specifies a way of recognizing
+   interesting or uninteresting words for searching.  A dictionary depends
+   on a text search template, which specifies the functions that actually
+   perform the work.  Typically the dictionary provides some options that
+   control the detailed behavior of the template's functions.
+  </para>
+
+  <para>
+   If a schema name is given then the text search dictionary is created in the
+   specified schema.  Otherwise it is created in the current schema.
+  </para>
+
+  <para>
+   The user who defines a text search dictionary becomes its owner.
+  </para>
+
+  <para>
+   Refer to <xref linkend="textsearch"> for further information.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the text search dictionary to be created.  The name can be
+      schema-qualified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">template</replaceable></term>
+    <listitem>
+     <para>
+      The name of the text search template that will define the basic
+      behavior of this dictionary.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">init_options</replaceable></term>
+    <listitem>
+     <para>
+      A list of initialization options for the template functions.
+      This is a string containing <replaceable>keyword</> <literal>=</>
+      <replaceable>value</> pairs.  The specific keywords allowed
+      vary depending on the text search template.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+ 
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>CREATE TEXT SEARCH DICTIONARY</command> statement in
+   the SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-altertsdictionary" endterm="sql-altertsdictionary-title"></member>
+   <member><xref linkend="sql-droptsdictionary" endterm="sql-droptsdictionary-title"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

@@ -1,0 +1,82 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tsparser.sgml,v 1.1 2007/08/21 21:08:47 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERTSPARSER">
+ <refmeta>
+  <refentrytitle id="SQL-ALTERTSPARSER-TITLE">ALTER TEXT SEARCH PARSER</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER TEXT SEARCH PARSER</refname>
+  <refpurpose>change the definition of a text search parser</refpurpose>
+ </refnamediv>  
+  
+ <indexterm zone="sql-altertsparser">
+  <primary>ALTER TEXT SEARCH PARSER</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER TEXT SEARCH PARSER <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+  
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER TEXT SEARCH PARSER</command> changes the definition of
+   a text search parser.  Currently, the only supported functionality
+   is to change the parser's name.
+  </para>
+
+  <para>
+   You must be a superuser to use <command>ALTER TEXT SEARCH PARSER</>.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing text search parser.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">newname</replaceable></term>
+    <listitem>
+     <para>
+      The new name of the text search parser.
+     </para>
+    </listitem>
+   </varlistentry>
+ </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>ALTER TEXT SEARCH PARSER</command> statement in
+   the SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createtsparser" endterm="sql-createtsparser-title"></member>
+   <member><xref linkend="sql-droptsparser" endterm="sql-droptsparser-title"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

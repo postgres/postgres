@@ -1,0 +1,152 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tsparser.sgml,v 1.1 2007/08/21 21:08:47 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATETSPARSER">
+ <refmeta>
+  <refentrytitle id="sql-createtsparser-title">CREATE TEXT SEARCH PARSER</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE TEXT SEARCH PARSER</refname>
+  <refpurpose>define a new text search parser</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createtsparser">
+  <primary>CREATE TEXT SEARCH PARSER</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE TEXT SEARCH PARSER <replaceable class="parameter">name</replaceable> (
+    START = <replaceable class="parameter">start_function</replaceable> ,
+    GETTOKEN = <replaceable class="parameter">gettoken_function</replaceable> ,
+    END = <replaceable class="parameter">end_function</replaceable> ,
+    LEXTYPES = <replaceable class="parameter">lextypes_function</replaceable>
+    [, HEADLINE = <replaceable class="parameter">headline_function</replaceable> ]
+)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE TEXT SEARCH PARSER</command> creates a new text search
+   parser.  A text search parser defines a method for splitting a text
+   string into tokens and assigning types (categories) to the tokens.
+   A parser is not particularly useful by itself, but must be bound into a
+   text search configuration along with some text search dictionaries
+   to be used for searching.
+  </para>
+
+  <para>
+   If a schema name is given then the text search parser is created in the
+   specified schema.  Otherwise it is created in the current schema.
+  </para>
+
+  <para>
+   You must be a superuser to use <command>CREATE TEXT SEARCH PARSER</command>.
+   (This restriction is made because an erroneous text search parser
+   definition could confuse or even crash the server.)
+  </para>
+
+  <para>
+   Refer to <xref linkend="textsearch"> for further information.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the text search parser to be created.  The name can be
+      schema-qualified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">start_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of the start function for the parser.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">gettoken_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of the get-next-token function for the parser.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">end_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of the end function for the parser.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">lextypes_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of the lextypes function for the parser (a function that
+      returns information about the set of token types it produces).
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">headline_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of the headline function for the parser (a function that
+      summarizes a set of tokens).
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   The function names can be schema-qualified if necessary.  Argument types
+   are not given, since the argument list for each type of function is
+   predetermined.  All except the headline function are required.
+  </para>
+
+  <para>
+   The arguments can appear in any order, not only the one shown above.
+  </para>
+ </refsect1>
+ 
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no
+   <command>CREATE TEXT SEARCH PARSER</command> statement in the SQL
+   standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-altertsparser" endterm="sql-altertsparser-title"></member>
+   <member><xref linkend="sql-droptsparser" endterm="sql-droptsparser-title"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

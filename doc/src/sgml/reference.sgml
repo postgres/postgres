@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.64 2007/07/03 01:30:35 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/reference.sgml,v 1.65 2007/08/21 21:08:47 tgl Exp $ -->
 
 <part id="reference">
  <title>Reference</title>
@@ -50,6 +50,10 @@
    &alterSequence;
    &alterTable;
    &alterTableSpace;
+   &alterTSConfig;
+   &alterTSDictionary;
+   &alterTSParser;
+   &alterTSTemplate;
    &alterTrigger;
    &alterType;
    &alterUser;
@@ -83,6 +87,10 @@
    &createTable;
    &createTableAs;
    &createTableSpace;
+   &createTSConfig;
+   &createTSDictionary;
+   &createTSParser;
+   &createTSTemplate;
    &createTrigger;
    &createType;
    &createUser;
@@ -110,6 +118,10 @@
    &dropSequence;
    &dropTable;
    &dropTableSpace;
+   &dropTSConfig;
+   &dropTSDictionary;
+   &dropTSParser;
+   &dropTSTemplate;
    &dropTrigger;
    &dropType;
    &dropUser;

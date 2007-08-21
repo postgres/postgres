@@ -1,0 +1,118 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tsconfig.sgml,v 1.1 2007/08/21 21:08:47 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-DROPTSCONFIG">
+ <refmeta>
+  <refentrytitle id="SQL-DROPTSCONFIG-TITLE">DROP TEXT SEARCH CONFIGURATION</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP TEXT SEARCH CONFIGURATION</refname>
+  <refpurpose>remove a text search configuration</refpurpose>
+ </refnamediv>
+  
+ <indexterm zone="sql-droptsconfig">
+  <primary>DROP TEXT SEARCH CONFIGURATION</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP TEXT SEARCH CONFIGURATION [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP TEXT SEARCH CONFIGURATION</command> drops an existing text
+   search configuration.  To execute this command you must be the owner of the
+   configuration.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the text search configuration does not exist.
+      A notice is issued in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing text search
+      configuration.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the text search configuration.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the text search configuration if any objects depend on it.
+      This is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Remove the text search configuration <literal>my_english</literal>:
+
+<programlisting>
+DROP TEXT SEARCH CONFIGURATION my_english;
+</programlisting>
+
+   This command will not succeed if there are any existing indexes
+   that reference the configuration in <function>to_tsvector</> calls.
+   Add <literal>CASCADE</> to
+   drop such indexes along with the text search configuration.
+  </para>
+ </refsect1>
+ 
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>DROP TEXT SEARCH CONFIGURATION</command> statement in
+   the SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-altertsconfig" endterm="sql-altertsconfig-title"></member>
+   <member><xref linkend="sql-createtsconfig" endterm="sql-createtsconfig-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

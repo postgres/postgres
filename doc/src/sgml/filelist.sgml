@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.49 2006/11/17 16:38:44 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/filelist.sgml,v 1.50 2007/08/21 21:08:47 tgl Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -17,7 +17,6 @@
 
 <!-- user's guide -->
 <!entity array      SYSTEM "array.sgml">
-<!entity rowtypes   SYSTEM "rowtypes.sgml">
 <!entity datatype   SYSTEM "datatype.sgml">
 <!entity ddl        SYSTEM "ddl.sgml">
 <!entity dml        SYSTEM "dml.sgml">
@@ -26,7 +25,9 @@
 <!entity mvcc       SYSTEM "mvcc.sgml">
 <!entity perform    SYSTEM "perform.sgml">
 <!entity queries    SYSTEM "queries.sgml">
+<!entity rowtypes   SYSTEM "rowtypes.sgml">
 <!entity syntax     SYSTEM "syntax.sgml">
+<!entity textsearch SYSTEM "textsearch.sgml">
 <!entity typeconv   SYSTEM "typeconv.sgml">
 
 <!-- administrator's guide -->

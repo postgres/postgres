@@ -1,0 +1,125 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tstemplate.sgml,v 1.1 2007/08/21 21:08:47 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-CREATETSTEMPLATE">
+ <refmeta>
+  <refentrytitle id="sql-createtstemplate-title">CREATE TEXT SEARCH TEMPLATE</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CREATE TEXT SEARCH TEMPLATE</refname>
+  <refpurpose>define a new text search template</refpurpose>
+ </refnamediv>
+
+ <indexterm zone="sql-createtstemplate">
+  <primary>CREATE TEXT SEARCH TEMPLATE</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+CREATE TEXT SEARCH TEMPLATE <replaceable class="parameter">name</replaceable> (
+    [ INIT = <replaceable class="parameter">init_function</replaceable> , ]
+    LEXIZE = <replaceable class="parameter">lexize_function</replaceable>
+)
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>CREATE TEXT SEARCH TEMPLATE</command> creates a new text search
+   template.  Text search templates define the functions that implement
+   text search dictionaries.  A template is not useful by itself, but must
+   be instantiated as a dictionary to be used.  The dictionary typically
+   specifies parameters to be given to the template functions.
+  </para>
+
+  <para>
+   If a schema name is given then the text search template is created in the
+   specified schema.  Otherwise it is created in the current schema.
+  </para>
+
+  <para>
+   You must be a superuser to use <command>CREATE TEXT SEARCH
+   TEMPLATE</command>.  This restriction is made because an erroneous text
+   search template definition could confuse or even crash the server.
+   The reason for separating templates from dictionaries is that a template
+   encapsulates the <quote>unsafe</> aspects of defining a dictionary.
+   The parameters that can be set when defining a dictionary are safe for
+   unprivileged users to set, and so creating a dictionary need not be a
+   privileged operation.
+  </para>
+
+  <para>
+   Refer to <xref linkend="textsearch"> for further information.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name of the text search template to be created.  The name can be
+      schema-qualified.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">init_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of the init function for the template.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">lexize_function</replaceable></term>
+    <listitem>
+     <para>
+      The name of the lexize function for the template.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+
+  <para>
+   The function names can be schema-qualified if necessary.  Argument types
+   are not given, since the argument list for each type of function is
+   predetermined.  The lexize function is required, but the init function
+   is optional.
+  </para>
+
+  <para>
+   The arguments can appear in any order, not only the one shown above.
+  </para>
+ </refsect1>
+ 
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no
+   <command>CREATE TEXT SEARCH TEMPLATE</command> statement in the SQL
+   standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-altertstemplate" endterm="sql-altertstemplate-title"></member>
+   <member><xref linkend="sql-droptstemplate" endterm="sql-droptstemplate-title"></member>
+  </simplelist>
+ </refsect1>
+</refentry>

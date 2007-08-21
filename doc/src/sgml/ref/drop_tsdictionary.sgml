@@ -1,0 +1,117 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/drop_tsdictionary.sgml,v 1.1 2007/08/21 21:08:47 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-DROPTSDICTIONARY">
+ <refmeta>
+  <refentrytitle id="SQL-DROPTSDICTIONARY-TITLE">DROP TEXT SEARCH DICTIONARY</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>DROP TEXT SEARCH DICTIONARY</refname>
+  <refpurpose>remove a text search dictionary</refpurpose>
+ </refnamediv>
+  
+ <indexterm zone="sql-droptsdictionary">
+  <primary>DROP TEXT SEARCH DICTIONARY</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+DROP TEXT SEARCH DICTIONARY [ IF EXISTS ] <replaceable class="PARAMETER">name</replaceable> [ CASCADE | RESTRICT ]
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>DROP TEXT SEARCH DICTIONARY</command> drops an existing text
+   search dictionary.  To execute this command you must be the owner of the
+   dictionary.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+
+   <varlistentry>
+    <term><literal>IF EXISTS</literal></term>
+    <listitem>
+     <para>
+      Do not throw an error if the text search dictionary does not exist.
+      A notice is issued in this case.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing text search
+      dictionary.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>CASCADE</literal></term>
+    <listitem>
+     <para>
+      Automatically drop objects that depend on the text search dictionary.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>RESTRICT</literal></term>
+    <listitem>
+     <para>
+      Refuse to drop the text search dictionary if any objects depend on it.
+      This is the default.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
+ </refsect1>
+
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Remove the text search dictionary <literal>english</literal>:
+
+<programlisting>
+DROP TEXT SEARCH DICTIONARY english;
+</programlisting>
+
+   This command will not succeed if there are any existing text search
+   configurations that use the dictionary.  Add <literal>CASCADE</> to
+   drop such configurations along with the dictionary.
+  </para>
+ </refsect1>
+ 
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>DROP TEXT SEARCH DICTIONARY</command> statement in the
+   SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-altertsdictionary" endterm="sql-altertsdictionary-title"></member>
+   <member><xref linkend="sql-createtsdictionary" endterm="sql-createtsdictionary-title"></member>
+  </simplelist>
+ </refsect1>
+
+</refentry>

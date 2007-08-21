@@ -1,0 +1,202 @@
+<!--
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tsconfig.sgml,v 1.1 2007/08/21 21:08:47 tgl Exp $
+PostgreSQL documentation
+-->
+
+<refentry id="SQL-ALTERTSCONFIG">
+ <refmeta>
+  <refentrytitle id="SQL-ALTERTSCONFIG-TITLE">ALTER TEXT SEARCH CONFIGURATION</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>ALTER TEXT SEARCH CONFIGURATION</refname>
+  <refpurpose>change the definition of a text search configuration</refpurpose>
+ </refnamediv>  
+  
+ <indexterm zone="sql-altertsconfig">
+  <primary>ALTER TEXT SEARCH CONFIGURATION</primary>
+ </indexterm>
+
+ <refsynopsisdiv>
+<synopsis>
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> (
+    PARSER = <replaceable class="parameter">parser_name</replaceable>
+)
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
+    ADD MAPPING FOR <replaceable class="parameter">token_type</replaceable> [, ... ] WITH <replaceable class="parameter">dictionary_name</replaceable> [, ... ]
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
+    ALTER MAPPING FOR <replaceable class="parameter">token_type</replaceable> [, ... ] WITH <replaceable class="parameter">dictionary_name</replaceable> [, ... ]
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
+    ALTER MAPPING REPLACE <replaceable class="parameter">old_dictionary</replaceable> WITH <replaceable class="parameter">new_dictionary</replaceable>
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
+    ALTER MAPPING FOR <replaceable class="parameter">token_type</replaceable> [, ... ] REPLACE <replaceable class="parameter">old_dictionary</replaceable> WITH <replaceable class="parameter">new_dictionary</replaceable>
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
+    DROP MAPPING [ IF EXISTS ] FOR <replaceable class="parameter">token_type</replaceable> [, ... ]
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
+ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replaceable>newowner</replaceable>
+</synopsis>
+ </refsynopsisdiv>
+  
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   <command>ALTER TEXT SEARCH CONFIGURATION</command> changes the definition of
+   a text search configuration.  You can change which parser it uses, modify
+   its mapping from token types to dictionaries,
+   or change the configuration's name or owner.
+  </para>
+
+  <para>
+   You must be the owner of the configuration to use
+   <command>ALTER TEXT SEARCH CONFIGURATION</>.
+  </para>
+ </refsect1>
+  
+ <refsect1>
+  <title>Parameters</title>
+
+  <variablelist>
+   <varlistentry>
+    <term><replaceable class="parameter">name</replaceable></term>
+    <listitem>
+     <para>
+      The name (optionally schema-qualified) of an existing text search
+      configuration.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">parser_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a new text search parser to use for this configuration.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">token_type</replaceable></term>
+    <listitem>
+     <para>
+      The name of a token type that is emitted by the configuration's
+      parser.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">dictionary_name</replaceable></term>
+    <listitem>
+     <para>
+      The name of a text search dictionary to be consulted for the
+      specified token type(s).  If multiple dictionaries are listed,
+      they are consulted in the specified order.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">old_dictionary</replaceable></term>
+    <listitem>
+     <para>
+      The name of a text search dictionary to be replaced in the mapping.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">old_dictionary</replaceable></term>
+    <listitem>
+     <para>
+      The name of a text search dictionary to be substituted for
+      <replaceable class="parameter">old_dictionary</replaceable>.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">newname</replaceable></term>
+    <listitem>
+     <para>
+      The new name of the text search configuration.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">newowner</replaceable></term>
+    <listitem>
+     <para>
+      The new owner of the text search configuration.
+     </para>
+    </listitem>
+   </varlistentry>
+ </variablelist>
+
+  <para>
+   The <literal>ADD MAPPING FOR</> form installs a list of dictionaries to be
+   consulted for the specified token type(s); it is an error if there is
+   already a mapping for any of the token types.
+   The <literal>ALTER MAPPING FOR</> form does the same, but first removing
+   any existing mapping for those token types.
+   The <literal>ALTER MAPPING REPLACE</> forms substitute <replaceable
+   class="parameter">new_dictionary</replaceable> for <replaceable
+   class="parameter">old_dictionary</replaceable> anywhere the latter appears.
+   This is done for only the specified token types when <literal>FOR</>
+   appears, or for all mappings of the configuration when it doesn't.
+   The <literal>DROP MAPPING</> form removes all dictionaries for the
+   specified token type(s), causing tokens of those types to be ignored
+   by the text search configuration.  It is an error if there is no mapping
+   for the token types, unless <literal>IF EXISTS</> appears.
+  </para>
+
+ </refsect1>
+  
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   While changing the text search parser used by a configuration is allowed,
+   this will only work nicely if old and new parsers use the same set of
+   token types.  It is advisable to drop the mappings for any incompatible
+   token types before changing parsers.
+  </para>
+
+ </refsect1>
+  
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   The following example replaces the <literal>english</> dictionary
+   with the <literal>swedish</> dictionary anywhere that <literal>english</>
+   is used within <literal>my_config</>.
+  </para>
+
+<programlisting>
+ALTER TEXT SEARCH CONFIGURATION my_config
+  ALTER MAPPING REPLACE english WITH swedish;
+</programlisting>  
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   There is no <command>ALTER TEXT SEARCH CONFIGURATION</command> statement in
+   the SQL standard.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <simplelist type="inline">
+   <member><xref linkend="sql-createtsconfig" endterm="sql-createtsconfig-title"></member>
+   <member><xref linkend="sql-droptsconfig" endterm="sql-droptsconfig-title"></member>
+  </simplelist>
+ </refsect1>
+</refentry>
