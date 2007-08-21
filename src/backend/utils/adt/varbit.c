@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.54 2007/06/15 20:56:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varbit.c,v 1.55 2007/08/21 02:40:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -537,8 +537,9 @@ varbit_out(PG_FUNCTION_ARGS)
 	result = (char *) palloc(len + 1);
 	sp = VARBITS(s);
 	r = result;
-	for (i = 0; i < len - BITS_PER_BYTE; i += BITS_PER_BYTE, sp++)
+	for (i = 0; i <= len - BITS_PER_BYTE; i += BITS_PER_BYTE, sp++)
 	{
+		/* print full bytes */
 		x = *sp;
 		for (k = 0; k < BITS_PER_BYTE; k++)
 		{
@@ -546,11 +547,15 @@ varbit_out(PG_FUNCTION_ARGS)
 			x <<= 1;
 		}
 	}
-	x = *sp;
-	for (k = i; k < len; k++)
+	if (i < len)
 	{
-		*r++ = IS_HIGHBIT_SET(x) ? '1' : '0';
-		x <<= 1;
+		/* print the last partial byte */
+		x = *sp;
+		for (k = i; k < len; k++)
+		{
+			*r++ = IS_HIGHBIT_SET(x) ? '1' : '0';
+			x <<= 1;
+		}
 	}
 	*r = '\0';
 
