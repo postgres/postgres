@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.190 2007/08/21 01:11:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.191 2007/08/21 15:13:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -350,7 +350,7 @@ static const ScanKeyword ScanKeywords[] = {
 	{"temp", TEMP, UNRESERVED_KEYWORD},
 	{"template", TEMPLATE, UNRESERVED_KEYWORD},
 	{"temporary", TEMPORARY, UNRESERVED_KEYWORD},
-	{"text", TEXT, UNRESERVED_KEYWORD},
+	{"text", TEXT_P, UNRESERVED_KEYWORD},
 	{"then", THEN, RESERVED_KEYWORD},
 	{"time", TIME, COL_NAME_KEYWORD},
 	{"timestamp", TIMESTAMP, COL_NAME_KEYWORD},

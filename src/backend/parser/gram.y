@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.598 2007/08/21 01:11:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.599 2007/08/21 15:13:42 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -433,7 +433,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING SUPERUSER_P
 	SYMMETRIC SYSID SYSTEM_P
 
-	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY TEXT THEN TIME TIMESTAMP
+	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN TIME TIMESTAMP
 	TO TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P
 	TRUNCATE TRUSTED TYPE_P
 
@@ -2975,7 +2975,7 @@ DefineStmt:
 					n->vals = $7;
 					$$ = (Node *)n;
 				}
-			| CREATE TEXT SEARCH PARSER any_name definition
+			| CREATE TEXT_P SEARCH PARSER any_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSPARSER;
@@ -2984,7 +2984,7 @@ DefineStmt:
 					n->definition = $6;
 					$$ = (Node *)n;
 				}
-			| CREATE TEXT SEARCH DICTIONARY any_name definition
+			| CREATE TEXT_P SEARCH DICTIONARY any_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSDICTIONARY;
@@ -2993,7 +2993,7 @@ DefineStmt:
 					n->definition = $6;
 					$$ = (Node *)n;
 				}
-			| CREATE TEXT SEARCH TEMPLATE any_name definition
+			| CREATE TEXT_P SEARCH TEMPLATE any_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSTEMPLATE;
@@ -3002,7 +3002,7 @@ DefineStmt:
 					n->definition = $6;
 					$$ = (Node *)n;
 				}
-			| CREATE TEXT SEARCH CONFIGURATION any_name definition
+			| CREATE TEXT_P SEARCH CONFIGURATION any_name definition
 				{
 					DefineStmt *n = makeNode(DefineStmt);
 					n->kind = OBJECT_TSCONFIGURATION;
@@ -3320,10 +3320,10 @@ drop_type:	TABLE									{ $$ = OBJECT_TABLE; }
 			| DOMAIN_P								{ $$ = OBJECT_DOMAIN; }
 			| CONVERSION_P							{ $$ = OBJECT_CONVERSION; }
 			| SCHEMA								{ $$ = OBJECT_SCHEMA; }
-			| TEXT SEARCH PARSER					{ $$ = OBJECT_TSPARSER; }
-			| TEXT SEARCH DICTIONARY				{ $$ = OBJECT_TSDICTIONARY; }
-			| TEXT SEARCH TEMPLATE					{ $$ = OBJECT_TSTEMPLATE; }
-			| TEXT SEARCH CONFIGURATION				{ $$ = OBJECT_TSCONFIGURATION; }
+			| TEXT_P SEARCH PARSER					{ $$ = OBJECT_TSPARSER; }
+			| TEXT_P SEARCH DICTIONARY				{ $$ = OBJECT_TSDICTIONARY; }
+			| TEXT_P SEARCH TEMPLATE				{ $$ = OBJECT_TSTEMPLATE; }
+			| TEXT_P SEARCH CONFIGURATION			{ $$ = OBJECT_TSCONFIGURATION; }
 		;
 
 any_name_list:
@@ -3500,7 +3500,7 @@ CommentStmt:
 					n->comment = $7;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON TEXT SEARCH PARSER any_name IS comment_text
+			| COMMENT ON TEXT_P SEARCH PARSER any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TSPARSER;
@@ -3508,7 +3508,7 @@ CommentStmt:
 					n->comment = $8;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON TEXT SEARCH DICTIONARY any_name IS comment_text
+			| COMMENT ON TEXT_P SEARCH DICTIONARY any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TSDICTIONARY;
@@ -3516,7 +3516,7 @@ CommentStmt:
 					n->comment = $8;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON TEXT SEARCH TEMPLATE any_name IS comment_text
+			| COMMENT ON TEXT_P SEARCH TEMPLATE any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TSTEMPLATE;
@@ -3524,7 +3524,7 @@ CommentStmt:
 					n->comment = $8;
 					$$ = (Node *) n;
 				}
-			| COMMENT ON TEXT SEARCH CONFIGURATION any_name IS comment_text
+			| COMMENT ON TEXT_P SEARCH CONFIGURATION any_name IS comment_text
 				{
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_TSCONFIGURATION;
@@ -4693,7 +4693,7 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->newname = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER TEXT SEARCH PARSER any_name RENAME TO name
+			| ALTER TEXT_P SEARCH PARSER any_name RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSPARSER;
@@ -4701,7 +4701,7 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->newname = $8;
 					$$ = (Node *)n;
 				}
-			| ALTER TEXT SEARCH DICTIONARY any_name RENAME TO name
+			| ALTER TEXT_P SEARCH DICTIONARY any_name RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSDICTIONARY;
@@ -4709,7 +4709,7 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->newname = $8;
 					$$ = (Node *)n;
 				}
-			| ALTER TEXT SEARCH TEMPLATE any_name RENAME TO name
+			| ALTER TEXT_P SEARCH TEMPLATE any_name RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSTEMPLATE;
@@ -4717,7 +4717,7 @@ RenameStmt: ALTER AGGREGATE func_name aggr_args RENAME TO name
 					n->newname = $8;
 					$$ = (Node *)n;
 				}
-			| ALTER TEXT SEARCH CONFIGURATION any_name RENAME TO name
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name RENAME TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_TSCONFIGURATION;
@@ -4897,7 +4897,7 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 					n->newowner = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER TEXT SEARCH DICTIONARY any_name OWNER TO RoleId
+			| ALTER TEXT_P SEARCH DICTIONARY any_name OWNER TO RoleId
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TSDICTIONARY;
@@ -4905,7 +4905,7 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 					n->newowner = $8;
 					$$ = (Node *)n;
 				}
-			| ALTER TEXT SEARCH CONFIGURATION any_name OWNER TO RoleId
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name OWNER TO RoleId
 				{
 					AlterOwnerStmt *n = makeNode(AlterOwnerStmt);
 					n->objectType = OBJECT_TSCONFIGURATION;
@@ -5513,7 +5513,7 @@ opt_as:		AS										{}
  *****************************************************************************/
 
 AlterTSDictionaryStmt:
-			ALTER TEXT SEARCH DICTIONARY any_name definition
+			ALTER TEXT_P SEARCH DICTIONARY any_name definition
 				{
 					AlterTSDictionaryStmt *n = makeNode(AlterTSDictionaryStmt);
 					n->dictname = $5;
@@ -5523,14 +5523,14 @@ AlterTSDictionaryStmt:
 		;
 
 AlterTSConfigurationStmt:
-			ALTER TEXT SEARCH CONFIGURATION any_name definition
+			ALTER TEXT_P SEARCH CONFIGURATION any_name definition
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;
 					n->options = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER TEXT SEARCH CONFIGURATION any_name ADD_P MAPPING FOR name_list WITH any_name_list
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name ADD_P MAPPING FOR name_list WITH any_name_list
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;
@@ -5540,7 +5540,7 @@ AlterTSConfigurationStmt:
 					n->replace = false;
 					$$ = (Node*)n;
 				}
-			| ALTER TEXT SEARCH CONFIGURATION any_name ALTER MAPPING FOR name_list WITH any_name_list
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name ALTER MAPPING FOR name_list WITH any_name_list
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;
@@ -5550,7 +5550,7 @@ AlterTSConfigurationStmt:
 					n->replace = false;
 					$$ = (Node*)n;
 				}
-			| ALTER TEXT SEARCH CONFIGURATION any_name ALTER MAPPING REPLACE any_name WITH any_name 
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name ALTER MAPPING REPLACE any_name WITH any_name 
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;
@@ -5560,7 +5560,7 @@ AlterTSConfigurationStmt:
 					n->replace = true;
 					$$ = (Node*)n;
 				}
-			| ALTER TEXT SEARCH CONFIGURATION any_name ALTER MAPPING FOR name_list REPLACE any_name WITH any_name 
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name ALTER MAPPING FOR name_list REPLACE any_name WITH any_name 
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;
@@ -5570,7 +5570,7 @@ AlterTSConfigurationStmt:
 					n->replace = true;
 					$$ = (Node*)n;
 				}
-			| ALTER TEXT SEARCH CONFIGURATION any_name DROP MAPPING FOR name_list 
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name DROP MAPPING FOR name_list 
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;
@@ -5578,7 +5578,7 @@ AlterTSConfigurationStmt:
 					n->missing_ok = false;
 					$$ = (Node*)n;
 				}
-			| ALTER TEXT SEARCH CONFIGURATION any_name DROP MAPPING IF_P EXISTS FOR name_list 
+			| ALTER TEXT_P SEARCH CONFIGURATION any_name DROP MAPPING IF_P EXISTS FOR name_list 
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;
@@ -8562,9 +8562,11 @@ substr_list:
 					/*
 					 * Since there are no cases where this syntax allows
 					 * a textual FOR value, we forcibly cast the argument
-					 * to int4.  This is a kluge to avoid surprising results
-					 * when the argument is, say, int8.  It'd be better if
-					 * there were not an implicit cast from int8 to text ...
+					 * to int4.  The possible matches in pg_proc are
+					 * substring(text,int4) and substring(text,text),
+					 * and we don't want the parser to choose the latter,
+					 * which it is likely to do if the second argument
+					 * is unknown or doesn't have an implicit cast to int4.
 					 */
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Integer;
@@ -9234,7 +9236,7 @@ unreserved_keyword:
 			| TEMP
 			| TEMPLATE
 			| TEMPORARY
-			| TEXT
+			| TEXT_P
 			| TRANSACTION
 			| TRIGGER
 			| TRUNCATE
