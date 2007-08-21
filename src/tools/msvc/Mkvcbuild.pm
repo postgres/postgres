@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.15 2007/07/23 10:16:54 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.16 2007/08/21 15:10:41 mha Exp $
 #
 use Carp;
 use Win32;
@@ -69,6 +69,13 @@ sub mkvcbuild
     $postgres->AddLibrary('wsock32.lib ws2_32.lib secur32.lib');
     $postgres->AddLibrary('wldap32.lib') if ($solution->{options}->{ldap});
     $postgres->FullExportDLL('postgres.lib');
+
+    my $snowball = $solution->AddProject('dict_snowball','dll','','src\backend\snowball');
+    $snowball->RelocateFiles('src\backend\snowball\libstemmer', sub {
+        return shift !~ /dict_snowball.c$/;
+    });
+    $snowball->AddIncludeDir('src\include\snowball');
+    $snowball->AddReference($postgres);
 
     my $plpgsql = $solution->AddProject('plpgsql','dll','PLs','src\pl\plpgsql\src');
     $plpgsql->AddFiles('src\pl\plpgsql\src','scan.l','gram.y');

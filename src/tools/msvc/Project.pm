@@ -3,11 +3,12 @@ package Project;
 #
 # Package that encapsulates a Visual C++ project file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.13 2007/07/25 10:51:03 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Project.pm,v 1.14 2007/08/21 15:10:41 mha Exp $
 #
 use Carp;
 use strict;
 use warnings;
+use File::Basename;
 
 sub new
 {
@@ -94,6 +95,18 @@ sub RemoveFile
         return;
     }
     confess("Could not find file $filename to remove\n");
+}
+
+sub RelocateFiles
+{
+    my ($self, $targetdir, $proc) = @_;
+    foreach my $f (keys %{$self->{files}}) {
+        my $r = &$proc($f);
+        if ($r) {
+           $self->RemoveFile($f);
+           $self->AddFile($targetdir . '\\' . basename($f));
+        }
+    }
 }
 
 sub AddReference
