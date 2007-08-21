@@ -61,9 +61,9 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
 
 RESET enable_seqscan;
 
-drop index wowidx;
+DROP INDEX wowidx;
 
-create index wowidx on test_tsvector using gin (a);
+CREATE INDEX wowidx ON test_tsvector USING gin (a);
 
 SET enable_seqscan=OFF;
 
@@ -75,46 +75,46 @@ SELECT count(*) FROM test_tsvector WHERE a @@ '(eq&yt)|(wr&qh)';
 SELECT count(*) FROM test_tsvector WHERE a @@ '(eq|yt)&(wr|qh)';
   
 RESET enable_seqscan;
-insert into test_tsvector values ('???', 'DFG:1A,2B,6C,10 FGH');
-select * from ts_stat('select a from test_tsvector') order by ndoc desc, nentry desc, word limit 10;
-select * from ts_stat('select a from test_tsvector', 'AB') order by ndoc desc, nentry desc, word;
+INSERT INTO test_tsvector VALUES ('???', 'DFG:1A,2B,6C,10 FGH');
+SELECT * FROM ts_stat('SELECT a FROM test_tsvector') ORDER BY ndoc DESC, nentry DESC, word LIMIT 10;
+SELECT * FROM ts_stat('SELECT a FROM test_tsvector', 'AB') ORDER BY ndoc DESC, nentry DESC, word;
 
 --dictionaries and to_tsvector
 
-select ts_lexize('english', 'skies');
-select ts_lexize('english', 'identity');
+SELECT ts_lexize('english', 'skies');
+SELECT ts_lexize('english', 'identity');
 
-select * from ts_token_type('default');
+SELECT * FROM ts_token_type('default');
 
-select * from ts_parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+SELECT * FROM ts_parse('default', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
 /usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234
 <i <b> wow  < jqw <> qwerty');
 
-select to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+SELECT to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
 /usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234
 <i <b> wow  < jqw <> qwerty');
 
-select length(to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
+SELECT length(to_tsvector('english', '345 qwe@efd.r '' http://www.com/ http://aew.werc.ewr/?ad=qwe&dw 1aew.werc.ewr/?ad=qwe&dw 2aew.werc.ewr http://3aew.werc.ewr/?ad=qwe&dw http://4aew.werc.ewr http://5aew.werc.ewr:8100/?  ad=qwe&dw 6aew.werc.ewr:8100/?ad=qwe&dw 7aew.werc.ewr:8100/?ad=qwe&dw=%20%32 +4.0e-10 qwe qwe qwqwe 234.435 455 5.005 teodor@stack.net qwe-wer asdf <fr>qwer jf sdjk<we hjwer <werrwe> ewr1> ewri2 <a href="qwe<qwe>">
 /usr/local/fff /awdf/dwqe/4325 rewt/ewr wefjn /wqe-324/ewr gist.h gist.h.c gist.c. readline 4.2 4.2. 4.2, readline-4.2 readline-4.2. 234
 <i <b> wow  < jqw <> qwerty'));
 
 -- to_tsquery
 
-select to_tsquery('english', 'qwe & sKies ');
-select to_tsquery('simple', 'qwe & sKies ');
-select to_tsquery('english', '''the wether'':dc & ''           sKies '':BC ');
-select to_tsquery('english', 'asd&(and|fghj)');
-select to_tsquery('english', '(asd&and)|fghj');
-select to_tsquery('english', '(asd&!and)|fghj');
-select to_tsquery('english', '(the|and&(i&1))&fghj');
+SELECT to_tsquery('english', 'qwe & sKies ');
+SELECT to_tsquery('simple', 'qwe & sKies ');
+SELECT to_tsquery('english', '''the wether'':dc & ''           sKies '':BC ');
+SELECT to_tsquery('english', 'asd&(and|fghj)');
+SELECT to_tsquery('english', '(asd&and)|fghj');
+SELECT to_tsquery('english', '(asd&!and)|fghj');
+SELECT to_tsquery('english', '(the|and&(i&1))&fghj');
 
-select plainto_tsquery('english', 'the and z 1))& fghj');
-select plainto_tsquery('english', 'foo bar') && plainto_tsquery('english', 'asd');
-select plainto_tsquery('english', 'foo bar') || plainto_tsquery('english', 'asd fg');
-select plainto_tsquery('english', 'foo bar') || !!plainto_tsquery('english', 'asd fg');
-select plainto_tsquery('english', 'foo bar') && 'asd | fg';
+SELECT plainto_tsquery('english', 'the and z 1))& fghj');
+SELECT plainto_tsquery('english', 'foo bar') && plainto_tsquery('english', 'asd');
+SELECT plainto_tsquery('english', 'foo bar') || plainto_tsquery('english', 'asd fg');
+SELECT plainto_tsquery('english', 'foo bar') || !!plainto_tsquery('english', 'asd fg');
+SELECT plainto_tsquery('english', 'foo bar') && 'asd | fg';
 
-select ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
+SELECT ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
 A thousand years to trace
 The granite features of this cliff
 In crag and scarp and base.
@@ -124,7 +124,7 @@ The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 '), to_tsquery('english', 'sea&thousand&years'));
 
-select ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
+SELECT ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
 A thousand years to trace
 The granite features of this cliff
 In crag and scarp and base.
@@ -134,7 +134,7 @@ The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 '), to_tsquery('english', 'granite&sea'));
 
-select ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
+SELECT ts_rank_cd(to_tsvector('english', 'Erosion It took the sea a thousand years,
 A thousand years to trace
 The granite features of this cliff
 In crag and scarp and base.
@@ -145,7 +145,7 @@ Upon a woman s face. E.  J.  Pratt  (1882 1964)
 '), to_tsquery('english', 'sea'));
 
 --headline tests
-select ts_headline('english', 'Erosion It took the sea a thousand years,
+SELECT ts_headline('english', 'Erosion It took the sea a thousand years,
 A thousand years to trace
 The granite features of this cliff
 In crag and scarp and base.
@@ -155,7 +155,7 @@ The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 ', to_tsquery('english', 'sea&thousand&years'));
 
-select ts_headline('english', 'Erosion It took the sea a thousand years,
+SELECT ts_headline('english', 'Erosion It took the sea a thousand years,
 A thousand years to trace
 The granite features of this cliff
 In crag and scarp and base.
@@ -165,7 +165,7 @@ The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 ', to_tsquery('english', 'granite&sea'));
 
-select ts_headline('english', 'Erosion It took the sea a thousand years,
+SELECT ts_headline('english', 'Erosion It took the sea a thousand years,
 A thousand years to trace
 The granite features of this cliff
 In crag and scarp and base.
@@ -175,7 +175,7 @@ The sculpture of these granite seams,
 Upon a woman s face. E.  J.  Pratt  (1882 1964)
 ', to_tsquery('english', 'sea'));
 
-select ts_headline('english', '
+SELECT ts_headline('english', '
 <html>
 <!-- some comment -->
 <body>
@@ -191,7 +191,7 @@ to_tsquery('english', 'sea&foo'), 'HighlightAll=true');
 
 --Rewrite sub system
 
-create table test_tsquery (txtkeyword text, txtsample text);
+CREATE TABLE test_tsquery (txtkeyword TEXT, txtsample TEXT);
 \set ECHO none
 \copy test_tsquery from stdin
 'New York'	new & york | big & apple | nyc
@@ -201,80 +201,80 @@ Moscow	moskva | moscow
 \.
 \set ECHO all
 
-alter table test_tsquery add column keyword tsquery;
-update test_tsquery set keyword = to_tsquery('english', txtkeyword);
-alter table test_tsquery add column sample tsquery;
-update test_tsquery set sample = to_tsquery('english', txtsample::text);
+ALTER TABLE test_tsquery ADD COLUMN keyword tsquery;
+UPDATE test_tsquery SET keyword = to_tsquery('english', txtkeyword);
+ALTER TABLE test_tsquery ADD COLUMN sample tsquery;
+UPDATE test_tsquery SET sample = to_tsquery('english', txtsample::text);
 
 
-select count(*) from test_tsquery where keyword <  'new & york';
-select count(*) from test_tsquery where keyword <= 'new & york';
-select count(*) from test_tsquery where keyword = 'new & york';
-select count(*) from test_tsquery where keyword >= 'new & york';
-select count(*) from test_tsquery where keyword >  'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword <  'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword <= 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword = 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword >= 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword >  'new & york';
 
-create unique index bt_tsq on test_tsquery (keyword);
+CREATE UNIQUE INDEX bt_tsq ON test_tsquery (keyword);
 
 SET enable_seqscan=OFF;
 
-select count(*) from test_tsquery where keyword <  'new & york';
-select count(*) from test_tsquery where keyword <= 'new & york';
-select count(*) from test_tsquery where keyword = 'new & york';
-select count(*) from test_tsquery where keyword >= 'new & york';
-select count(*) from test_tsquery where keyword >  'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword <  'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword <= 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword = 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword >= 'new & york';
+SELECT COUNT(*) FROM test_tsquery WHERE keyword >  'new & york';
 
 RESET enable_seqscan;
 
-select ts_rewrite('foo & bar & qq & new & york',  'new & york'::tsquery, 'big & apple | nyc | new & york & city');
+SELECT ts_rewrite('foo & bar & qq & new & york',  'new & york'::tsquery, 'big & apple | nyc | new & york & city');
 
-select ts_rewrite('moscow', 'select keyword, sample from test_tsquery'::text );
-select ts_rewrite('moscow & hotel', 'select keyword, sample from test_tsquery'::text );
-select ts_rewrite('bar &  new & qq & foo & york', 'select keyword, sample from test_tsquery'::text );
+SELECT ts_rewrite('moscow', 'SELECT keyword, sample FROM test_tsquery'::text );
+SELECT ts_rewrite('moscow & hotel', 'SELECT keyword, sample FROM test_tsquery'::text );
+SELECT ts_rewrite('bar &  new & qq & foo & york', 'SELECT keyword, sample FROM test_tsquery'::text );
 
-select ts_rewrite( ARRAY['moscow', keyword, sample] ) from test_tsquery;
-select ts_rewrite( ARRAY['moscow & hotel', keyword, sample] ) from test_tsquery;
-select ts_rewrite( ARRAY['bar &  new & qq & foo & york', keyword, sample] ) from test_tsquery;
+SELECT ts_rewrite( ARRAY['moscow', keyword, sample] ) FROM test_tsquery;
+SELECT ts_rewrite( ARRAY['moscow & hotel', keyword, sample] ) FROM test_tsquery;
+SELECT ts_rewrite( ARRAY['bar &  new & qq & foo & york', keyword, sample] ) FROM test_tsquery;
 
 
-select keyword from test_tsquery where keyword @> 'new';
-select keyword from test_tsquery where keyword @> 'moscow';
-select keyword from test_tsquery where keyword <@ 'new';
-select keyword from test_tsquery where keyword <@ 'moscow';
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow') as query where keyword <@ query;
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow & hotel') as query where keyword <@ query;
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where keyword <@ query;
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow') as query where query @> keyword;
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow & hotel') as query where query @> keyword;
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where query @> keyword;
+SELECT keyword FROM test_tsquery WHERE keyword @> 'new';
+SELECT keyword FROM test_tsquery WHERE keyword @> 'moscow';
+SELECT keyword FROM test_tsquery WHERE keyword <@ 'new';
+SELECT keyword FROM test_tsquery WHERE keyword <@ 'moscow';
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'moscow') AS query WHERE keyword <@ query;
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'moscow & hotel') AS query WHERE keyword <@ query;
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') AS query WHERE keyword <@ query;
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'moscow') AS query WHERE query @> keyword;
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'moscow & hotel') AS query WHERE query @> keyword;
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') AS query WHERE query @> keyword;
 
-create index qq on test_tsquery using gist (keyword tsquery_ops);
+CREATE INDEX qq ON test_tsquery USING gist (keyword tsquery_ops);
 SET enable_seqscan=OFF;
 
-select keyword from test_tsquery where keyword @> 'new';
-select keyword from test_tsquery where keyword @> 'moscow';
-select keyword from test_tsquery where keyword <@ 'new';
-select keyword from test_tsquery where keyword <@ 'moscow';
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow') as query where keyword <@ query;
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow & hotel') as query where keyword <@ query;
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where keyword <@ query;
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow') as query where query @> keyword;
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'moscow & hotel') as query where query @> keyword;
-select ts_rewrite( ARRAY[query, keyword, sample] ) from test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') as query where query @> keyword;
+SELECT keyword FROM test_tsquery WHERE keyword @> 'new';
+SELECT keyword FROM test_tsquery WHERE keyword @> 'moscow';
+SELECT keyword FROM test_tsquery WHERE keyword <@ 'new';
+SELECT keyword FROM test_tsquery WHERE keyword <@ 'moscow';
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'moscow') AS query WHERE keyword <@ query;
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'moscow & hotel') AS query WHERE keyword <@ query;
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') AS query WHERE keyword <@ query;
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'moscow') AS query WHERE query @> keyword;
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'moscow & hotel') AS query WHERE query @> keyword;
+SELECT ts_rewrite( ARRAY[query, keyword, sample] ) FROM test_tsquery, to_tsquery('english', 'bar &  new & qq & foo & york') AS query WHERE query @> keyword;
 
 RESET enable_seqscan;
 
 --test GUC
-set default_text_search_config=simple;
+SET default_text_search_config=simple;
 
-select to_tsvector('SKIES My booKs');
-select plainto_tsquery('SKIES My booKs');
-select to_tsquery('SKIES & My | booKs');
+SELECT to_tsvector('SKIES My booKs');
+SELECT plainto_tsquery('SKIES My booKs');
+SELECT to_tsquery('SKIES & My | booKs');
 
-set default_text_search_config=english;
+SET default_text_search_config=english;
 
-select to_tsvector('SKIES My booKs');
-select plainto_tsquery('SKIES My booKs');
-select to_tsquery('SKIES & My | booKs');
+SELECT to_tsvector('SKIES My booKs');
+SELECT plainto_tsquery('SKIES My booKs');
+SELECT to_tsquery('SKIES & My | booKs');
 
 --trigger
 CREATE TRIGGER tsvectorupdate
@@ -287,6 +287,6 @@ SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
 UPDATE test_tsvector SET t = null WHERE t = '345 qwerty';
 SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
 
-insert into test_tsvector (t) values ('345 qwerty');
+INSERT INTO test_tsvector (t) VALUES ('345 qwerty');
 
-select count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
+SELECT count(*) FROM test_tsvector WHERE a @@ to_tsquery('345&qwerty');
