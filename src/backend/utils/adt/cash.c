@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.72 2007/08/21 03:14:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.73 2007/08/21 03:56:07 tgl Exp $
  */
 
 #include "postgres.h"
@@ -652,7 +652,7 @@ Datum
 cash_mul_int4(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
-	int64		i = PG_GETARG_INT64(1);
+	int32		i = PG_GETARG_INT32(1);
 	Cash		result;
 
 	result = c * i;
@@ -683,7 +683,7 @@ Datum
 cash_div_int4(PG_FUNCTION_ARGS)
 {
 	Cash		c = PG_GETARG_CASH(0);
-	int64		i = PG_GETARG_INT64(1);
+	int32		i = PG_GETARG_INT32(1);
 	Cash		result;
 
 	if (i == 0)
