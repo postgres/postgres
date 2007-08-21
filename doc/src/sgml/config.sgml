@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.139 2007/08/19 03:23:30 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.140 2007/08/21 15:13:16 momjian Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2287,7 +2287,7 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
          This parameter allows messages sent to <application>stderr</>,
-		 and CSV logs, to be
+         and CSV logs, to be
          captured and redirected into log files.
          This method, in combination with logging to <application>stderr</>,
          is often more useful than
@@ -2295,8 +2295,8 @@ SELECT * FROM parent WHERE key = 2400;
          might not appear in <application>syslog</> output (a common example
          is dynamic-linker failure messages).
          This parameter can only be set at server start.
-		 <varname>logging_collector</varname> must be enabled to generate 
-		 CSV logs.
+         <varname>logging_collector</varname> must be enabled to generate 
+         CSV logs.
        </para>
       </listitem>
      </varlistentry>
@@ -2342,11 +2342,11 @@ SELECT * FROM parent WHERE key = 2400;
         file or on the server command line.
        </para>
        <para>
-	    If <varname>log_destination</> is set to <systemitem>csvlog</>,
-		<literal>.csv</> will be appended to the timestamped 
-		<varname>log_filename</> to create the final log file name. 
-		(If log_filename ends in <literal>.log</>, the suffix is overwritten.) 
-		In the case of the example above, the 
+        If <varname>log_destination</> is set to <systemitem>csvlog</>,
+        <literal>.csv</> will be appended to the timestamped 
+        <varname>log_filename</> to create the final log file name. 
+        (If log_filename ends in <literal>.log</>, the suffix is overwritten.) 
+        In the case of the example above, the 
         file name will be <literal>server_log.1093827753.csv</literal>
        </para>
       </listitem>
@@ -3088,9 +3088,9 @@ SELECT * FROM parent WHERE key = 2400;
      <title>Using the csvlog</title>
 
        <para>
-	    Including <literal>csvlog</> in the <varname>log_destination</> list 
-		provides a convenient way to import log files into a database table. 
-		Here is a sample table definition for storing csvlog output:
+        Including <literal>csvlog</> in the <varname>log_destination</> list 
+        provides a convenient way to import log files into a database table. 
+        Here is a sample table definition for storing csvlog output:
        </para>
 
 <programlisting>
@@ -3124,7 +3124,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 
        <para>
        There are a few things you need to import csvlog files easily and 
-	   automatically:
+       automatically:
 
        <orderedlist>
          <listitem>
@@ -3141,15 +3141,15 @@ guess what
         <listitem>
            <para>
             Set <varname>log_rotation_size</varname> to 0 to disable 
-			size-based log rotation, as it makes the log filename difficult 
-			to predict. 
+            size-based log rotation, as it makes the log filename difficult 
+            to predict. 
            </para>
         </listitem>
 
         <listitem>
           <para>
            Set <varname>log_truncate_on_rotate</varname> = on so that old 
-		   log data isn't mixed with the new in the same file.
+           log data isn't mixed with the new in the same file.
           </para>
         </listitem>
 
@@ -3160,12 +3160,12 @@ guess what
            the same information twice.  The COPY command commits all of
            the data it imports at one time, and any single error will
            cause the entire import to fail.  
-		   If you import a partial log file and later import the file again 
-		   when it is complete, the primary key violation will cause the 
-		   import to fail. Wait until the log is complete and closed before 
-		   import. This will also protect against accidently importing a 
-		   partial line that hasn't been completely written, which would 
-		   also cause the COPY to fail.
+           If you import a partial log file and later import the file again 
+           when it is complete, the primary key violation will cause the 
+           import to fail. Wait until the log is complete and closed before 
+           import. This will also protect against accidently importing a 
+           partial line that hasn't been completely written, which would 
+           also cause the COPY to fail.
           </para>
         </listitem>
         </orderedlist>
