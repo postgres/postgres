@@ -13,7 +13,7 @@
  * this version handles 64 bit numbers and so can hold values up to
  * $92,233,720,368,547,758.07.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.71 2007/07/12 23:51:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.72 2007/08/21 03:14:36 tgl Exp $
  */
 
 #include "postgres.h"
@@ -372,7 +372,7 @@ cash_recv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 
-	PG_RETURN_CASH((Cash) pq_getmsgint(buf, sizeof(Cash)));
+	PG_RETURN_CASH((Cash) pq_getmsgint64(buf));
 }
 
 /*
@@ -385,7 +385,7 @@ cash_send(PG_FUNCTION_ARGS)
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
-	pq_sendint(&buf, arg1, sizeof(Cash));
+	pq_sendint64(&buf, arg1);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
