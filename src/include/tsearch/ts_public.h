@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.1 2007/08/21 01:11:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.2 2007/08/22 01:39:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,16 +59,6 @@ typedef struct
 /*
  * Common useful things for tsearch subsystem
  */
-
-/* simple parser of cfg string looking like "key=val, key='val'" */
-typedef struct
-{
-	char	   *key;
-	char	   *value;
-} Map;
-
-extern void parse_keyvalpairs(text *in, Map ** m);
-
 extern char *get_tsearch_config_filename(const char *basename,
 										 const char *extension);
 

@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.1 2007/08/21 01:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.2 2007/08/22 01:39:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "commands/defrem.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
 #include "tsearch/ts_type.h"
@@ -1662,7 +1663,7 @@ Datum
 prsd_headline(PG_FUNCTION_ARGS)
 {
 	HeadlineParsedText *prs = (HeadlineParsedText *) PG_GETARG_POINTER(0);
-	text	   *opt = (text *) PG_GETARG_POINTER(1);	/* can't be toasted */
+	List	   *prsoptions = (List *) PG_GETARG_POINTER(1);
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 
 	/* from opt + start and and tag */
@@ -1682,66 +1683,55 @@ prsd_headline(PG_FUNCTION_ARGS)
 
 	int			i;
 	int			highlight = 0;
+	ListCell   *l;
 
 	/* config */
 	prs->startsel = NULL;
 	prs->stopsel = NULL;
-	if (opt)
+	foreach(l, prsoptions)
 	{
-		Map		   *map,
-				   *mptr;
+		DefElem    *defel = (DefElem *) lfirst(l);
+		char	   *val = defGetString(defel);
 
-		parse_keyvalpairs(opt, &map);
-		mptr = map;
-
-		while (mptr && mptr->key)
-		{
-			if (pg_strcasecmp(mptr->key, "MaxWords") == 0)
-				max_words = pg_atoi(mptr->value, 4, 1);
-			else if (pg_strcasecmp(mptr->key, "MinWords") == 0)
-				min_words = pg_atoi(mptr->value, 4, 1);
-			else if (pg_strcasecmp(mptr->key, "ShortWord") == 0)
-				shortword = pg_atoi(mptr->value, 4, 1);
-			else if (pg_strcasecmp(mptr->key, "StartSel") == 0)
-				prs->startsel = pstrdup(mptr->value);
-			else if (pg_strcasecmp(mptr->key, "StopSel") == 0)
-				prs->stopsel = pstrdup(mptr->value);
-			else if (pg_strcasecmp(mptr->key, "HighlightAll") == 0)
-				highlight = (
-							 pg_strcasecmp(mptr->value, "1") == 0 ||
-							 pg_strcasecmp(mptr->value, "on") == 0 ||
-							 pg_strcasecmp(mptr->value, "true") == 0 ||
-							 pg_strcasecmp(mptr->value, "t") == 0 ||
-							 pg_strcasecmp(mptr->value, "y") == 0 ||
-							 pg_strcasecmp(mptr->value, "yes") == 0) ?
-					1 : 0;
-
-			pfree(mptr->key);
-			pfree(mptr->value);
-
-			mptr++;
-		}
-		pfree(map);
-
-		if (highlight == 0)
-		{
-			if (min_words >= max_words)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("MinWords should be less than MaxWords")));
-			if (min_words <= 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("MinWords should be positive")));
-			if (shortword < 0)
-				ereport(ERROR,
-						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-						 errmsg("ShortWord should be >= 0")));
-		}
+		if (pg_strcasecmp(defel->defname, "MaxWords") == 0)
+			max_words = pg_atoi(val, sizeof(int32), 0);
+		else if (pg_strcasecmp(defel->defname, "MinWords") == 0)
+			min_words = pg_atoi(val, sizeof(int32), 0);
+		else if (pg_strcasecmp(defel->defname, "ShortWord") == 0)
+			shortword = pg_atoi(val, sizeof(int32), 0);
+		else if (pg_strcasecmp(defel->defname, "StartSel") == 0)
+			prs->startsel = pstrdup(val);
+		else if (pg_strcasecmp(defel->defname, "StopSel") == 0)
+			prs->stopsel = pstrdup(val);
+		else if (pg_strcasecmp(defel->defname, "HighlightAll") == 0)
+			highlight = (pg_strcasecmp(val, "1") == 0 ||
+						 pg_strcasecmp(val, "on") == 0 ||
+						 pg_strcasecmp(val, "true") == 0 ||
+						 pg_strcasecmp(val, "t") == 0 ||
+						 pg_strcasecmp(val, "y") == 0 ||
+						 pg_strcasecmp(val, "yes") == 0);
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized headline parameter: \"%s\"",
+							defel->defname)));
 	}
 
 	if (highlight == 0)
 	{
+		if (min_words >= max_words)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("MinWords should be less than MaxWords")));
+		if (min_words <= 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("MinWords should be positive")));
+		if (shortword < 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("ShortWord should be >= 0")));
+
 		while (hlCover(prs, query, &p, &q))
 		{
 			/* find cover len in words */

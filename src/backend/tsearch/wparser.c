@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser.c,v 1.1 2007/08/21 01:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser.c,v 1.2 2007/08/22 01:39:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "tsearch/ts_cache.h"
 #include "tsearch/ts_public.h"
 #include "tsearch/ts_utils.h"
@@ -300,6 +301,7 @@ ts_headline_byid_opt(PG_FUNCTION_ARGS)
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 	text	   *opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_P(3) : NULL;
 	HeadlineText prs;
+	List	   *prsoptions;
 	text	   *out;
 	TSConfigCacheEntry *cfg;
 	TSParserCacheEntry *prsobj;
@@ -313,9 +315,14 @@ ts_headline_byid_opt(PG_FUNCTION_ARGS)
 
 	hlparsetext(cfg->cfgId, &prs, query, VARDATA(in), VARSIZE(in) - VARHDRSZ);
 
+	if (opt)
+		prsoptions = deserialize_deflist(PointerGetDatum(opt));
+	else
+		prsoptions = NIL;
+
 	FunctionCall3(&(prsobj->prsheadline),
 				  PointerGetDatum(&prs),
-				  PointerGetDatum(opt),
+				  PointerGetDatum(prsoptions),
 				  PointerGetDatum(query));
 
 	out = generatHeadline(&prs);

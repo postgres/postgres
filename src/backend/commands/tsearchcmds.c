@@ -9,12 +9,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.2 2007/08/21 21:24:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.3 2007/08/22 01:39:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "miscadmin.h"
+
+#include <ctype.h>
 
 #include "access/heapam.h"
 #include "access/genam.h"
@@ -31,6 +32,8 @@
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
+#include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
 #include "tsearch/ts_cache.h"
 #include "tsearch/ts_public.h"
@@ -86,7 +89,7 @@ get_ts_parser_func(DefElem *defel, int attnum)
 			break;
 		case Anum_pg_ts_parser_prsheadline:
 			nargs = 3;
-			typeId[1] = TEXTOID;
+			typeId[1] = INTERNALOID;
 			typeId[2] = TSQUERYOID;
 			break;
 		case Anum_pg_ts_parser_prslextype:
@@ -408,6 +411,53 @@ makeDictionaryDependencies(HeapTuple tuple)
 }
 
 /*
+ * verify that a template's init method accepts a proposed option list
+ */
+static void
+verify_dictoptions(Oid tmplId, List *dictoptions)
+{
+	HeapTuple	tup;
+	Form_pg_ts_template tform;
+	Oid			initmethod;
+
+	tup = SearchSysCache(TSTEMPLATEOID,
+						 ObjectIdGetDatum(tmplId),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup)) /* should not happen */
+		elog(ERROR, "cache lookup failed for text search template %u",
+			 tmplId);
+	tform = (Form_pg_ts_template) GETSTRUCT(tup);
+
+	initmethod = tform->tmplinit;
+
+	if (!OidIsValid(initmethod))
+	{
+		/* If there is no init method, disallow any options */
+		if (dictoptions)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("text search template \"%s\" does not accept options",
+							NameStr(tform->tmplname))));
+	}
+	else
+	{
+		/*
+		 * Copy the options just in case init method thinks it can scribble
+		 * on them ...
+		 */
+		dictoptions = copyObject(dictoptions);
+
+		/*
+		 * Call the init method and see if it complains.  We don't worry about
+		 * it leaking memory, since our command will soon be over anyway.
+		 */
+		(void) OidFunctionCall1(initmethod, PointerGetDatum(dictoptions));
+	}
+
+	ReleaseSysCache(tup);
+}
+
+/*
  * CREATE TEXT SEARCH DICTIONARY
  */
 void
@@ -419,7 +469,8 @@ DefineTSDictionary(List *names, List *parameters)
 	Datum		values[Natts_pg_ts_dict];
 	char		nulls[Natts_pg_ts_dict];
 	NameData	dname;
-	int			i;
+	Oid			templId = InvalidOid;
+	List	   *dictoptions = NIL;
 	Oid			dictOid;
 	Oid			namespaceoid;
 	AclResult	aclresult;
@@ -434,18 +485,6 @@ DefineTSDictionary(List *names, List *parameters)
 		aclcheck_error(aclresult, ACL_KIND_NAMESPACE,
 					   get_namespace_name(namespaceoid));
 
-	for (i = 0; i < Natts_pg_ts_dict; i++)
-	{
-		nulls[i] = ' ';
-		values[i] = ObjectIdGetDatum(InvalidOid);
-	}
-
-	namestrcpy(&dname, dictname);
-	values[Anum_pg_ts_dict_dictname - 1] = NameGetDatum(&dname);
-	values[Anum_pg_ts_dict_dictnamespace - 1] = ObjectIdGetDatum(namespaceoid);
-	values[Anum_pg_ts_dict_dictowner - 1] = ObjectIdGetDatum(GetUserId());
-	nulls[Anum_pg_ts_dict_dictinitoption - 1] = 'n';
-
 	/*
 	 * loop over the definition list and extract the information we need.
 	 */
@@ -455,42 +494,41 @@ DefineTSDictionary(List *names, List *parameters)
 
 		if (pg_strcasecmp(defel->defname, "template") == 0)
 		{
-			Oid			templId;
-
 			templId = TSTemplateGetTmplid(defGetQualifiedName(defel), false);
-
-			values[Anum_pg_ts_dict_dicttemplate - 1] = ObjectIdGetDatum(templId);
-			nulls[Anum_pg_ts_dict_dicttemplate - 1] = ' ';
-		}
-		else if (pg_strcasecmp(defel->defname, "option") == 0)
-		{
-			char	   *opt = defGetString(defel);
-
-			if (pg_strcasecmp(opt, "null") != 0)
-			{
-				values[Anum_pg_ts_dict_dictinitoption - 1] =
-					DirectFunctionCall1(textin, CStringGetDatum(opt));
-				nulls[Anum_pg_ts_dict_dictinitoption - 1] = ' ';
-			}
 		}
 		else
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("text search dictionary parameter \"%s\" not recognized",
-							defel->defname)));
+		{
+			/* Assume it's an option for the dictionary itself */
+			dictoptions = lappend(dictoptions, defel);
+		}
 	}
 
 	/*
 	 * Validation
 	 */
-	if (!OidIsValid(DatumGetObjectId(values[Anum_pg_ts_dict_dicttemplate - 1])))
+	if (!OidIsValid(templId))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 				 errmsg("text search template is required")));
 
+	verify_dictoptions(templId, dictoptions);
+
 	/*
 	 * Looks good, insert
 	 */
+	memset(values, 0, sizeof(values));
+	memset(nulls, ' ', sizeof(nulls));
+
+	namestrcpy(&dname, dictname);
+	values[Anum_pg_ts_dict_dictname - 1] = NameGetDatum(&dname);
+	values[Anum_pg_ts_dict_dictnamespace - 1] = ObjectIdGetDatum(namespaceoid);
+	values[Anum_pg_ts_dict_dictowner - 1] = ObjectIdGetDatum(GetUserId());
+	values[Anum_pg_ts_dict_dicttemplate - 1] = ObjectIdGetDatum(templId);
+	if (dictoptions)
+		values[Anum_pg_ts_dict_dictinitoption - 1] =
+			PointerGetDatum(serialize_deflist(dictoptions));
+	else
+		nulls[Anum_pg_ts_dict_dictinitoption - 1] = 'n';
 
 	dictRel = heap_open(TSDictionaryRelationId, RowExclusiveLock);
 
@@ -652,6 +690,9 @@ AlterTSDictionary(AlterTSDictionaryStmt * stmt)
 	Relation	rel;
 	Oid			dictId;
 	ListCell   *pl;
+	List	   *dictoptions;
+	Datum		opt;
+	bool		isnull;
 	Datum		repl_val[Natts_pg_ts_dict];
 	char		repl_null[Natts_pg_ts_dict];
 	char		repl_repl[Natts_pg_ts_dict];
@@ -673,40 +714,66 @@ AlterTSDictionary(AlterTSDictionaryStmt * stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSDICTIONARY,
 					   NameListToString(stmt->dictname));
 
-	memset(repl_val, 0, sizeof(repl_val));
-	memset(repl_null, ' ', sizeof(repl_null));
-	memset(repl_repl, ' ', sizeof(repl_repl));
+	/* deserialize the existing set of options */
+	opt = SysCacheGetAttr(TSDICTOID, tup,
+						  Anum_pg_ts_dict_dictinitoption,
+						  &isnull);
+	if (isnull)
+		dictoptions = NIL;
+	else
+		dictoptions = deserialize_deflist(opt);
 
 	/*
-	 * NOTE: because we only support altering the option, not the template,
-	 * there is no need to update dependencies.
+	 * Modify the options list as per specified changes
 	 */
 	foreach(pl, stmt->options)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
+		ListCell   *cell;
+		ListCell   *prev;
+		ListCell   *next;
 
-		if (pg_strcasecmp(defel->defname, "option") == 0)
+		/*
+		 * Remove any matches ...
+		 */
+		prev = NULL;
+		for (cell = list_head(dictoptions); cell; cell = next)
 		{
-			char	   *opt = defGetString(defel);
+			DefElem    *oldel = (DefElem *) lfirst(cell);
 
-			if (pg_strcasecmp(opt, "null") == 0)
-			{
-				repl_null[Anum_pg_ts_dict_dictinitoption - 1] = 'n';
-			}
+			next = lnext(cell);
+			if (pg_strcasecmp(oldel->defname, defel->defname) == 0)
+				dictoptions = list_delete_cell(dictoptions, cell, prev);
 			else
-			{
-				repl_val[Anum_pg_ts_dict_dictinitoption - 1] =
-					DirectFunctionCall1(textin, CStringGetDatum(opt));
-				repl_null[Anum_pg_ts_dict_dictinitoption - 1] = ' ';
-			}
-			repl_repl[Anum_pg_ts_dict_dictinitoption - 1] = 'r';
+				prev = cell;
 		}
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("text search dictionary parameter \"%s\" not recognized",
-							defel->defname)));
+
+		/*
+		 * and add new value if it's got one
+		 */
+		if (defel->arg)
+			dictoptions = lappend(dictoptions, defel);
 	}
+
+	/*
+	 * Validate
+	 */
+	verify_dictoptions(((Form_pg_ts_dict) GETSTRUCT(tup))->dicttemplate,
+					   dictoptions);
+
+	/*
+	 * Looks good, update
+	 */
+	memset(repl_val, 0, sizeof(repl_val));
+	memset(repl_null, ' ', sizeof(repl_null));
+	memset(repl_repl, ' ', sizeof(repl_repl));
+
+	if (dictoptions)
+		repl_val[Anum_pg_ts_dict_dictinitoption - 1] =
+			PointerGetDatum(serialize_deflist(dictoptions));
+	else
+		repl_null[Anum_pg_ts_dict_dictinitoption - 1] = 'n';
+	repl_repl[Anum_pg_ts_dict_dictinitoption - 1] = 'r';
 
 	newtup = heap_modifytuple(tup, RelationGetDescr(rel),
 							  repl_val, repl_null, repl_repl);
@@ -714,6 +781,12 @@ AlterTSDictionary(AlterTSDictionaryStmt * stmt)
 	simple_heap_update(rel, &newtup->t_self, newtup);
 
 	CatalogUpdateIndexes(rel, newtup);
+
+	/*
+	 * NOTE: because we only support altering the options, not the template,
+	 * there is no need to update dependencies.  This might have to change
+	 * if the options ever reference inside-the-database objects.
+	 */
 
 	heap_freetuple(newtup);
 	ReleaseSysCache(tup);
@@ -1940,4 +2013,266 @@ DropConfigurationMapping(AlterTSConfigurationStmt *stmt, HeapTuple tup)
 	}
 
 	heap_close(relMap, RowExclusiveLock);
+}
+
+
+/*
+ * Serialize dictionary options, producing a TEXT datum from a List of DefElem
+ *
+ * This is used to form the value stored in pg_ts_dict.dictinitoption.
+ * For the convenience of pg_dump, the output is formatted exactly as it
+ * would need to appear in CREATE TEXT SEARCH DICTIONARY to reproduce the
+ * same options.
+ *
+ * Note that we assume that only the textual representation of an option's
+ * value is interesting --- hence, non-string DefElems get forced to strings.
+ */
+text *
+serialize_deflist(List *deflist)
+{
+	text	   *result;
+	StringInfoData buf;
+	ListCell   *l;
+
+	initStringInfo(&buf);
+
+	foreach(l, deflist)
+	{
+		DefElem    *defel = (DefElem *) lfirst(l);
+		char	   *val = defGetString(defel);
+
+		appendStringInfo(&buf, "%s = ",
+					 quote_identifier(defel->defname));
+		/* If backslashes appear, force E syntax to determine their handling */
+		if (strchr(val, '\\'))
+			appendStringInfoChar(&buf, ESCAPE_STRING_SYNTAX);
+		appendStringInfoChar(&buf, '\'');
+		while (*val)
+		{
+			char		ch = *val++;
+
+			if (SQL_STR_DOUBLE(ch, true))
+				appendStringInfoChar(&buf, ch);
+			appendStringInfoChar(&buf, ch);
+		}
+		appendStringInfoChar(&buf, '\'');
+		if (lnext(l) != NULL)
+			appendStringInfo(&buf, ", ");
+	}
+
+	result = CStringGetTextP(buf.data);
+	pfree(buf.data);
+	return result;
+}
+
+/*
+ * Deserialize dictionary options, reconstructing a List of DefElem from TEXT
+ *
+ * This is also used for prsheadline options, so for backward compatibility
+ * we need to accept a few things serialize_deflist() will never emit:
+ * in particular, unquoted and double-quoted values.
+ */
+List *
+deserialize_deflist(Datum txt)
+{
+	text	   *in = DatumGetTextP(txt); /* in case it's toasted */
+	List	   *result = NIL;
+	int			len = VARSIZE(in) - VARHDRSZ;
+	char	   *ptr,
+			   *endptr,
+			   *workspace,
+			   *wsptr = NULL,
+			   *startvalue = NULL;
+	typedef enum {
+		CS_WAITKEY,
+		CS_INKEY,
+		CS_INQKEY,
+		CS_WAITEQ,
+		CS_WAITVALUE,
+		CS_INSQVALUE,
+		CS_INDQVALUE,
+		CS_INWVALUE
+	} ds_state;
+	ds_state	state = CS_WAITKEY;
+
+	workspace = (char *) palloc(len + 1);		/* certainly enough room */
+	ptr = VARDATA(in);
+	endptr = ptr + len;
+	for (; ptr < endptr; ptr++)
+	{
+		switch (state)
+		{
+			case CS_WAITKEY:
+				if (isspace((unsigned char) *ptr) || *ptr == ',')
+					continue;
+				if (*ptr == '"')
+				{
+					wsptr = workspace;
+					state = CS_INQKEY;
+				}
+				else
+				{
+					wsptr = workspace;
+					*wsptr++ = *ptr;
+					state = CS_INKEY;
+				}
+				break;
+			case CS_INKEY:
+				if (isspace((unsigned char) *ptr))
+				{
+					*wsptr++ = '\0';
+					state = CS_WAITEQ;
+				}
+				else if (*ptr == '=')
+				{
+					*wsptr++ = '\0';
+					state = CS_WAITVALUE;
+				}
+				else
+				{
+					*wsptr++ = *ptr;
+				}
+				break;
+			case CS_INQKEY:
+				if (*ptr == '"')
+				{
+					if (ptr+1 < endptr && ptr[1] == '"')
+					{
+						/* copy only one of the two quotes */
+						*wsptr++ = *ptr++;
+					}
+					else
+					{
+						*wsptr++ = '\0';
+						state = CS_WAITEQ;
+					}
+				}
+				else
+				{
+					*wsptr++ = *ptr;
+				}
+				break;
+			case CS_WAITEQ:
+				if (*ptr == '=')
+					state = CS_WAITVALUE;
+				else if (!isspace((unsigned char) *ptr))
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("invalid parameter list format: \"%s\"",
+									TextPGetCString(in))));
+				break;
+			case CS_WAITVALUE:
+				if (*ptr == '\'')
+				{
+					startvalue = wsptr;
+					state = CS_INSQVALUE;
+				}
+				else if (*ptr == 'E' && ptr+1 < endptr && ptr[1] == '\'')
+				{
+					ptr++;
+					startvalue = wsptr;
+					state = CS_INSQVALUE;
+				}
+				else if (*ptr == '"')
+				{
+					startvalue = wsptr;
+					state = CS_INDQVALUE;
+				}
+				else if (!isspace((unsigned char) *ptr))
+				{
+					startvalue = wsptr;
+					*wsptr++ = *ptr;
+					state = CS_INWVALUE;
+				}
+				break;
+			case CS_INSQVALUE:
+				if (*ptr == '\'')
+				{
+					if (ptr+1 < endptr && ptr[1] == '\'')
+					{
+						/* copy only one of the two quotes */
+						*wsptr++ = *ptr++;
+					}
+					else
+					{
+						*wsptr++ = '\0';
+						result = lappend(result,
+										 makeDefElem(pstrdup(workspace),
+													 (Node *) makeString(pstrdup(startvalue))));
+						state = CS_WAITKEY;
+					}
+				}
+				else if (*ptr == '\\')
+				{
+					if (ptr+1 < endptr && ptr[1] == '\\')
+					{
+						/* copy only one of the two backslashes */
+						*wsptr++ = *ptr++;
+					}
+					else
+						*wsptr++ = *ptr;
+				}
+				else
+				{
+					*wsptr++ = *ptr;
+				}
+				break;
+			case CS_INDQVALUE:
+				if (*ptr == '"')
+				{
+					if (ptr+1 < endptr && ptr[1] == '"')
+					{
+						/* copy only one of the two quotes */
+						*wsptr++ = *ptr++;
+					}
+					else
+					{
+						*wsptr++ = '\0';
+						result = lappend(result,
+										 makeDefElem(pstrdup(workspace),
+													 (Node *) makeString(pstrdup(startvalue))));
+						state = CS_WAITKEY;
+					}
+				}
+				else
+				{
+					*wsptr++ = *ptr;
+				}
+				break;
+			case CS_INWVALUE:
+				if (*ptr == ',' || isspace((unsigned char) *ptr))
+				{
+					*wsptr++ = '\0';
+					result = lappend(result,
+									 makeDefElem(pstrdup(workspace),
+												 (Node *) makeString(pstrdup(startvalue))));
+					state = CS_WAITKEY;
+				}
+				else
+				{
+					*wsptr++ = *ptr;
+				}
+				break;
+			default:
+				elog(ERROR, "unrecognized deserialize_deflist state: %d",
+					 state);
+		}
+	}
+
+	if (state == CS_INWVALUE)
+	{
+		*wsptr++ = '\0';
+		result = lappend(result,
+						 makeDefElem(pstrdup(workspace),
+									 (Node *) makeString(pstrdup(startvalue))));
+	}
+	else if (state != CS_WAITKEY)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("invalid parameter list format: \"%s\"",
+						TextPGetCString(in))));
+
+	pfree(workspace);
+
+	return result;
 }

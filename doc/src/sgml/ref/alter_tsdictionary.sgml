@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tsdictionary.sgml,v 1.1 2007/08/21 21:08:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tsdictionary.sgml,v 1.2 2007/08/22 01:39:44 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,7 +20,9 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> ( OPTION = <replaceable class="parameter">init_options</replaceable> )
+ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> (
+    <replaceable class="parameter">option</replaceable> [ = <replaceable class="parameter">value</replaceable> ] [, ... ]
+)
 ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> RENAME TO <replaceable>newname</replaceable>
 ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> OWNER TO <replaceable>newowner</replaceable>
 </synopsis>
@@ -31,8 +33,8 @@ ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> OWNER TO <replaceab
 
   <para>
    <command>ALTER TEXT SEARCH DICTIONARY</command> changes the definition of
-   a text search dictionary.  You can change the dictionary's initialization
-   options, or change the dictionary's name or owner.
+   a text search dictionary.  You can change the dictionary's
+   template-specific options, or change the dictionary's name or owner.
   </para>
 
   <para>
@@ -56,11 +58,22 @@ ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> OWNER TO <replaceab
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">init_options</replaceable></term>
+    <term><replaceable class="parameter">option</replaceable></term>
     <listitem>
      <para>
-      A new list of initialization options, or <literal>NULL</> to
-      remove all options.
+      The name of a template-specific option to be set for this dictionary.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><replaceable class="parameter">value</replaceable></term>
+    <listitem>
+     <para>
+      The new value to use for a template-specific option.
+      If the equal sign and value are omitted, then any previous
+      setting for the option is removed from the dictionary,
+      allowing the default to be used.
      </para>
     </listitem>
    </varlistentry>
@@ -83,18 +96,31 @@ ALTER TEXT SEARCH DICTIONARY <replaceable>name</replaceable> OWNER TO <replaceab
     </listitem>
    </varlistentry>
  </variablelist>
+
+  <para>
+   Template-specific options can appear in any order.
+  </para>
  </refsect1>
   
  <refsect1>
   <title>Examples</title>
 
   <para>
-   The following example command sets the language and stopword list
-   for a Snowball-based dictionary.
+   The following example command changes the stopword list
+   for a Snowball-based dictionary.  Other parameters remain unchanged.
   </para>
 
 <programlisting>
-ALTER TEXT SEARCH DICTIONARY my_russian ( option = 'Language=russian, StopWords=my_russian' );
+ALTER TEXT SEARCH DICTIONARY my_dict ( StopWords = newrussian );
+</programlisting>  
+
+  <para>
+   The following example command changes the language option to dutch,
+   and removes the stopword option entirely.
+  </para>
+
+<programlisting>
+ALTER TEXT SEARCH DICTIONARY my_dict ( language = dutch, StopWords );
 </programlisting>  
  </refsect1>
 

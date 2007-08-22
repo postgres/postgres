@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_ispell.c,v 1.1 2007/08/21 01:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_ispell.c,v 1.2 2007/08/22 01:39:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "commands/defrem.h"
 #include "tsearch/dicts/spell.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
@@ -30,59 +31,49 @@ typedef struct
 Datum
 dispell_init(PG_FUNCTION_ARGS)
 {
+	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
 	DictISpell *d;
-	Map		   *cfg,
-			   *pcfg;
 	bool		affloaded = false,
 				dictloaded = false,
 				stoploaded = false;
-	text	   *in;
-
-	/* init functions must defend against NULLs for themselves */
-	if (PG_ARGISNULL(0) || PG_GETARG_POINTER(0) == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("NULL config not allowed for ISpell")));
-	in = PG_GETARG_TEXT_P(0);
-
-	parse_keyvalpairs(in, &cfg);
-	PG_FREE_IF_COPY(in, 0);
+	ListCell   *l;
 
 	d = (DictISpell *) palloc0(sizeof(DictISpell));
 	d->stoplist.wordop = recode_and_lowerstr;
 
-	pcfg = cfg;
-	while (pcfg->key)
+	foreach(l, dictoptions)
 	{
-		if (pg_strcasecmp("DictFile", pcfg->key) == 0)
+		DefElem    *defel = (DefElem *) lfirst(l);
+
+		if (pg_strcasecmp(defel->defname, "DictFile") == 0)
 		{
 			if (dictloaded)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple DictFile parameters")));
 			NIImportDictionary(&(d->obj),
-							   get_tsearch_config_filename(pcfg->value,
+							   get_tsearch_config_filename(defGetString(defel),
 														   "dict"));
 			dictloaded = true;
 		}
-		else if (pg_strcasecmp("AffFile", pcfg->key) == 0)
+		else if (pg_strcasecmp(defel->defname, "AffFile") == 0)
 		{
 			if (affloaded)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple AffFile parameters")));
 			NIImportAffixes(&(d->obj),
-							get_tsearch_config_filename(pcfg->value,
+							get_tsearch_config_filename(defGetString(defel),
 														"affix"));
 			affloaded = true;
 		}
-		else if (pg_strcasecmp("StopWords", pcfg->key) == 0)
+		else if (pg_strcasecmp(defel->defname, "StopWords") == 0)
 		{
 			if (stoploaded)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple StopWords parameters")));
-			readstoplist(pcfg->value, &(d->stoplist));
+			readstoplist(defGetString(defel), &(d->stoplist));
 			sortstoplist(&(d->stoplist));
 			stoploaded = true;
 		}
@@ -91,13 +82,9 @@ dispell_init(PG_FUNCTION_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("unrecognized ISpell parameter: \"%s\"",
-							pcfg->key)));
+							defel->defname)));
 		}
-		pfree(pcfg->key);
-		pfree(pcfg->value);
-		pcfg++;
 	}
-	pfree(cfg);
 
 	if (affloaded && dictloaded)
 	{

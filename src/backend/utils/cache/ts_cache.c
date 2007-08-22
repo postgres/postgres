@@ -20,7 +20,7 @@
  * Copyright (c) 2006-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.1 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.2 2007/08/22 01:39:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,9 +37,9 @@
 #include "catalog/pg_ts_parser.h"
 #include "catalog/pg_ts_template.h"
 #include "catalog/pg_type.h"
+#include "commands/defrem.h"
 #include "miscadmin.h"
 #include "tsearch/ts_cache.h"
-#include "tsearch/ts_utils.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
@@ -252,7 +252,7 @@ lookup_ts_dictionary_cache(Oid dictId)
 					tptmpl;
 		Form_pg_ts_dict dict;
 		Form_pg_ts_template template;
-		MemoryContext saveCtx = NULL;
+		MemoryContext saveCtx;
 
 		tpdict = SearchSysCache(TSDICTOID,
 								ObjectIdGetDatum(dictId),
@@ -319,21 +319,30 @@ lookup_ts_dictionary_cache(Oid dictId)
 
 		if (OidIsValid(template->tmplinit))
 		{
-			bool		isnull;
+			List	   *dictoptions;
 			Datum		opt;
+			bool		isnull;
+			MemoryContext oldcontext;
+
+			/*
+			 * Init method runs in dictionary's private memory context,
+			 * and we make sure the options are stored there too
+			 */
+			oldcontext = MemoryContextSwitchTo(entry->dictCtx);
 
 			opt = SysCacheGetAttr(TSDICTOID, tpdict,
 								  Anum_pg_ts_dict_dictinitoption,
 								  &isnull);
 			if (isnull)
-				opt = PointerGetDatum(NULL);
+				dictoptions = NIL;
+			else
+				dictoptions = deserialize_deflist(opt);
 
-			/*
-			 * Init method runs in dictionary's private memory context
-			 */
-			saveCtx = MemoryContextSwitchTo(entry->dictCtx);
-			entry->dictData = DatumGetPointer(OidFunctionCall1(template->tmplinit, opt));
-			MemoryContextSwitchTo(saveCtx);
+			entry->dictData =
+				DatumGetPointer(OidFunctionCall1(template->tmplinit,
+											PointerGetDatum(dictoptions)));
+
+			MemoryContextSwitchTo(oldcontext);
 		}
 
 		ReleaseSysCache(tptmpl);

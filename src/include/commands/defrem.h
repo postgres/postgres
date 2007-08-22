@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.83 2007/08/21 01:11:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/defrem.h,v 1.84 2007/08/22 01:39:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,6 +120,9 @@ extern void RemoveTSConfiguration(List *names, DropBehavior behavior,
 extern void RemoveTSConfigurationById(Oid cfgId);
 extern void AlterTSConfiguration(AlterTSConfigurationStmt *stmt);
 extern void AlterTSConfigurationOwner(List *name, Oid newOwnerId);
+
+extern text *serialize_deflist(List *deflist);
+extern List *deserialize_deflist(Datum txt);
 
 /* support routines in commands/define.c */
 

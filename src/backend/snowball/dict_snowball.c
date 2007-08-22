@@ -6,12 +6,13 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/snowball/dict_snowball.c,v 1.1 2007/08/21 01:11:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/snowball/dict_snowball.c,v 1.2 2007/08/22 01:39:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "commands/defrem.h"
 #include "fmgr.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
@@ -185,59 +186,44 @@ locate_stem_module(DictSnowball * d, char *lang)
 Datum
 dsnowball_init(PG_FUNCTION_ARGS)
 {
-	text	   *in;
+	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
 	DictSnowball *d;
-	Map		   *cfg,
-			   *pcfg;
 	bool		stoploaded = false;
-
-	/* init functions must defend against NULLs for themselves */
-	if (PG_ARGISNULL(0) || PG_GETARG_POINTER(0) == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("NULL config not allowed for Snowball")));
-	in = PG_GETARG_TEXT_P(0);
+	ListCell   *l;
 
 	d = (DictSnowball *) palloc0(sizeof(DictSnowball));
 	d->stoplist.wordop = recode_and_lowerstr;
 
-	parse_keyvalpairs(in, &cfg);
-	pcfg = cfg;
-	PG_FREE_IF_COPY(in, 0);
-
-	while (pcfg && pcfg->key)
+	foreach(l, dictoptions)
 	{
-		if (pg_strcasecmp("StopWords", pcfg->key) == 0)
+		DefElem    *defel = (DefElem *) lfirst(l);
+
+		if (pg_strcasecmp("StopWords", defel->defname) == 0)
 		{
 			if (stoploaded)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple StopWords parameters")));
-			readstoplist(pcfg->value, &d->stoplist);
+			readstoplist(defGetString(defel), &d->stoplist);
 			sortstoplist(&d->stoplist);
 			stoploaded = true;
 		}
-		else if (pg_strcasecmp("Language", pcfg->key) == 0)
+		else if (pg_strcasecmp("Language", defel->defname) == 0)
 		{
 			if (d->stem)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple Language parameters")));
-			locate_stem_module(d, pcfg->value);
+			locate_stem_module(d, defGetString(defel));
 		}
 		else
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("unrecognized Snowball parameter: \"%s\"",
-							pcfg->key)));
+							defel->defname)));
 		}
-
-		pfree(pcfg->key);
-		pfree(pcfg->value);
-		pcfg++;
 	}
-	pfree(cfg);
 
 	if (!d->stem)
 		ereport(ERROR,

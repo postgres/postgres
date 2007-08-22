@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.1 2007/08/21 01:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.2 2007/08/22 01:39:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "catalog/namespace.h"
+#include "commands/defrem.h"
 #include "storage/fd.h"
 #include "tsearch/ts_cache.h"
 #include "tsearch/ts_locale.h"
@@ -593,57 +594,43 @@ compileTheSubstitute(DictThesaurus * d)
 Datum
 thesaurus_init(PG_FUNCTION_ARGS)
 {
+	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
 	DictThesaurus *d;
-	Map		   *cfg,
-			   *pcfg;
-	text	   *in;
 	char	   *subdictname = NULL;
 	bool		fileloaded = false;
-
-	/* init functions must defend against NULLs for themselves */
-	if (PG_ARGISNULL(0) || PG_GETARG_POINTER(0) == NULL)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("NULL config not allowed for Thesaurus")));
-	in = PG_GETARG_TEXT_P(0);
-
-	parse_keyvalpairs(in, &cfg);
-	PG_FREE_IF_COPY(in, 0);
+	ListCell   *l;
 
 	d = (DictThesaurus *) palloc0(sizeof(DictThesaurus));
 
-	pcfg = cfg;
-	while (pcfg->key)
+	foreach(l, dictoptions)
 	{
-		if (pg_strcasecmp("DictFile", pcfg->key) == 0)
+		DefElem    *defel = (DefElem *) lfirst(l);
+
+		if (pg_strcasecmp("DictFile", defel->defname) == 0)
 		{
 			if (fileloaded)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple DictFile parameters")));
-			thesaurusRead(pcfg->value, d);
+			thesaurusRead(defGetString(defel), d);
 			fileloaded = true;
 		}
-		else if (pg_strcasecmp("Dictionary", pcfg->key) == 0)
+		else if (pg_strcasecmp("Dictionary", defel->defname) == 0)
 		{
 			if (subdictname)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple Dictionary parameters")));
-			subdictname = pstrdup(pcfg->value);
+			subdictname = pstrdup(defGetString(defel));
 		}
 		else
 		{
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("unrecognized Thesaurus parameter: \"%s\"",
-							pcfg->key)));
+							defel->defname)));
 		}
-		pfree(pcfg->key);
-		pfree(pcfg->value);
-		pcfg++;
 	}
-	pfree(cfg);
 
 	if (!fileloaded)
 		ereport(ERROR,

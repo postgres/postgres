@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.463 2007/08/21 01:11:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.464 2007/08/22 01:39:45 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4311,7 +4311,7 @@ DATA(insert OID = 3718 (  prsd_nexttoken	PGNSP PGUID 12 1 0 f f t f i 3 2281 "22
 DESCR("");
 DATA(insert OID = 3719 (  prsd_end			PGNSP PGUID 12 1 0 f f t f i 1 2278 "2281" _null_ _null_ _null_ prsd_end - _null_ ));
 DESCR("");
-DATA(insert OID = 3720 (  prsd_headline		PGNSP PGUID 12 1 0 f f t f i 3 2281 "2281 25 3615" _null_ _null_ _null_ prsd_headline - _null_ ));
+DATA(insert OID = 3720 (  prsd_headline		PGNSP PGUID 12 1 0 f f t f i 3 2281 "2281 2281 3615" _null_ _null_ _null_ prsd_headline - _null_ ));
 DESCR("");
 DATA(insert OID = 3721 (  prsd_lextype		PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ prsd_lextype - _null_ ));
 DESCR("");
@@ -4321,22 +4321,22 @@ DESCR("normalize one word by dictionary");
 DATA(insert OID = 3724 (  ts_lexize			PGNSP PGUID 12 1 0 f f t f s 2 1009 "25 25" _null_ _null_ _null_ ts_lexize_byname - _null_ ));
 DESCR("normalize one word by dictionary");
 
-DATA(insert OID = 3725 (  dsimple_init		PGNSP PGUID 12 1 0 f f f f i 1 2281 "2281" _null_ _null_ _null_ dsimple_init - _null_ ));
+DATA(insert OID = 3725 (  dsimple_init		PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ dsimple_init - _null_ ));
 DESCR("");
 DATA(insert OID = 3726 (  dsimple_lexize	PGNSP PGUID 12 1 0 f f t f i 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ dsimple_lexize - _null_ ));
 DESCR("");
 
-DATA(insert OID = 3728 (  dsynonym_init		PGNSP PGUID 12 1 0 f f f f i 1 2281 "2281" _null_ _null_ _null_ dsynonym_init - _null_ ));
+DATA(insert OID = 3728 (  dsynonym_init		PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ dsynonym_init - _null_ ));
 DESCR("");
 DATA(insert OID = 3729 (  dsynonym_lexize	PGNSP PGUID 12 1 0 f f t f i 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ dsynonym_lexize - _null_ ));
 DESCR("");
 
-DATA(insert OID = 3731 (  dispell_init		PGNSP PGUID 12 1 0 f f f f i 1 2281 "2281" _null_ _null_ _null_ dispell_init - _null_ ));
+DATA(insert OID = 3731 (  dispell_init		PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ dispell_init - _null_ ));
 DESCR("");
 DATA(insert OID = 3732 (  dispell_lexize	PGNSP PGUID 12 1 0 f f t f i 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ dispell_lexize - _null_ ));
 DESCR("");
 
-DATA(insert OID = 3740 (  thesaurus_init	PGNSP PGUID 12 1 0 f f f f i 1 2281 "2281" _null_ _null_ _null_ thesaurus_init - _null_ ));
+DATA(insert OID = 3740 (  thesaurus_init	PGNSP PGUID 12 1 0 f f t f i 1 2281 "2281" _null_ _null_ _null_ thesaurus_init - _null_ ));
 DESCR("");
 DATA(insert OID = 3741 (  thesaurus_lexize	PGNSP PGUID 12 1 0 f f t f i 4 2281 "2281 2281 2281 2281" _null_ _null_ _null_ thesaurus_lexize - _null_ ));
 DESCR("");
