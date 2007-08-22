@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.158 2007/08/21 01:11:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.159 2007/08/22 02:25:34 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -2227,18 +2227,28 @@ listTSTemplates(const char *pattern, bool verbose)
 
 	initPQExpBuffer(&buf);
 
-	printfPQExpBuffer(&buf,
-					  "SELECT \n"
-					  "  n.nspname AS \"%s\",\n"
-					  "  t.tmplname AS \"%s\",\n"
-					  "  t.tmplinit::pg_catalog.regproc AS \"%s\",\n"
-					  "  t.tmpllexize::pg_catalog.regproc AS \"%s\",\n"
-					  "  pg_catalog.obj_description(t.oid, 'pg_ts_template') AS \"%s\"\n",
-					  _("Schema"),
-					  _("Name"),
-					  _("Init"),
-					  _("Lexize"),
-					  _("Description"));
+	if (verbose)
+		printfPQExpBuffer(&buf,
+						  "SELECT \n"
+						  "  n.nspname AS \"%s\",\n"
+						  "  t.tmplname AS \"%s\",\n"
+						  "  t.tmplinit::pg_catalog.regproc AS \"%s\",\n"
+						  "  t.tmpllexize::pg_catalog.regproc AS \"%s\",\n"
+						  "  pg_catalog.obj_description(t.oid, 'pg_ts_template') AS \"%s\"\n",
+						  _("Schema"),
+						  _("Name"),
+						  _("Init"),
+						  _("Lexize"),
+						  _("Description"));
+	else
+		printfPQExpBuffer(&buf,
+						  "SELECT \n"
+						  "  n.nspname AS \"%s\",\n"
+						  "  t.tmplname AS \"%s\",\n"
+						  "  pg_catalog.obj_description(t.oid, 'pg_ts_template') AS \"%s\"\n",
+						  _("Schema"),
+						  _("Name"),
+						  _("Description"));
 
 	appendPQExpBuffer(&buf, "FROM pg_catalog.pg_ts_template t\n"
 		"LEFT JOIN pg_catalog.pg_namespace n ON n.oid = t.tmplnamespace\n");
