@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_tsconfig.sgml,v 1.1 2007/08/21 21:08:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_tsconfig.sgml,v 1.2 2007/08/22 05:13:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -98,10 +98,9 @@ CREATE TEXT SEARCH CONFIGURATION <replaceable class="parameter">name</replaceabl
   <title>Notes</title>
 
   <para>
-   It is allowed to specify both <literal>PARSER</> and <literal>COPY</>,
-   resulting in the specified parser being used with whatever mappings
-   are in the source configuration.  This is generally inadvisable,
-   unless you know that both parsers involved use the same token type set.
+   The <literal>PARSER</> and <literal>COPY</> options are mutually
+   exclusive, because when an existing configuration is copied, its
+   parser selection is copied too.
   </para>
 
  </refsect1>

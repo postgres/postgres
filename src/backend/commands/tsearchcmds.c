@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.3 2007/08/22 01:39:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.4 2007/08/22 05:13:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,12 +46,10 @@
 #include "utils/syscache.h"
 
 
-static HeapTuple UpdateTSConfiguration(AlterTSConfigurationStmt *stmt,
-									   HeapTuple tup);
 static void MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
-									 HeapTuple tup);
+									 HeapTuple tup, Relation relMap);
 static void DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
-									 HeapTuple tup);
+									 HeapTuple tup, Relation relMap);
 
 
 /* --------------------- TS Parser commands ------------------------ */
@@ -1265,7 +1263,6 @@ DefineTSConfiguration(List *names, List *parameters)
 	Oid			namespaceoid;
 	char	   *cfgname;
 	NameData	cname;
-	List	   *sourceName = NIL;
 	Oid			sourceOid = InvalidOid;
 	Oid			prsOid = InvalidOid;
 	Oid			cfgOid;
@@ -1290,7 +1287,7 @@ DefineTSConfiguration(List *names, List *parameters)
 		if (pg_strcasecmp(defel->defname, "parser") == 0)
 			prsOid = TSParserGetPrsid(defGetQualifiedName(defel), false);
 		else if (pg_strcasecmp(defel->defname, "copy") == 0)
-			sourceName = defGetQualifiedName(defel);
+			sourceOid = TSConfigGetCfgid(defGetQualifiedName(defel), false);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
@@ -1298,14 +1295,17 @@ DefineTSConfiguration(List *names, List *parameters)
 							defel->defname)));
 	}
 
+	if (OidIsValid(sourceOid) && OidIsValid(prsOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("cannot specify both PARSER and COPY options")));
+
 	/*
 	 * Look up source config if given.
 	 */
-	if (sourceName)
+	if (OidIsValid(sourceOid))
 	{
 		Form_pg_ts_config cfg;
-
-		sourceOid = TSConfigGetCfgid(sourceName, false);
 
 		tup = SearchSysCache(TSCONFIGOID,
 							 ObjectIdGetDatum(sourceOid),
@@ -1316,9 +1316,8 @@ DefineTSConfiguration(List *names, List *parameters)
 
 		cfg = (Form_pg_ts_config) GETSTRUCT(tup);
 
-		/* Use source's parser if no other was specified */
-		if (!OidIsValid(prsOid))
-			prsOid = cfg->cfgparser;
+		/* use source's parser */
+		prsOid = cfg->cfgparser;
 
 		ReleaseSysCache(tup);
 	}
@@ -1626,8 +1625,7 @@ void
 AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 {
 	HeapTuple	tup;
-	HeapTuple	newtup;
-	Relation	mapRel;
+	Relation	relMap;
 
 	/* Find the configuration */
 	tup = GetTSConfigTuple(stmt->cfgname);
@@ -1642,83 +1640,21 @@ AlterTSConfiguration(AlterTSConfigurationStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_TSCONFIGURATION,
 					   NameListToString(stmt->cfgname));
 
-	/* Update fields of config tuple? */
-	if (stmt->options)
-		newtup = UpdateTSConfiguration(stmt, tup);
-	else
-		newtup = tup;
+	relMap = heap_open(TSConfigMapRelationId, RowExclusiveLock);
 
-	/* Add or drop mappings? */
+	/* Add or drop mappings */
 	if (stmt->dicts)
-		MakeConfigurationMapping(stmt, newtup);
+		MakeConfigurationMapping(stmt, tup, relMap);
 	else if (stmt->tokentype)
-		DropConfigurationMapping(stmt, newtup);
-
-	/*
-	 * Even if we aren't changing mappings, there could already be some,
-	 * so makeConfigurationDependencies always has to look.
-	 */
-	mapRel = heap_open(TSConfigMapRelationId, AccessShareLock);
+		DropConfigurationMapping(stmt, tup, relMap);
 
 	/* Update dependencies */
-	makeConfigurationDependencies(newtup, true, mapRel);
+	makeConfigurationDependencies(tup, true, relMap);
 
-	heap_close(mapRel, AccessShareLock);
+	heap_close(relMap, RowExclusiveLock);
 
 	ReleaseSysCache(tup);
 }
-
-/*
- * ALTER TEXT SEARCH CONFIGURATION - update fields of pg_ts_config tuple
- */
-static HeapTuple
-UpdateTSConfiguration(AlterTSConfigurationStmt *stmt, HeapTuple tup)
-{
-	Relation	cfgRel;
-	ListCell   *pl;
-	Datum		repl_val[Natts_pg_ts_config];
-	char		repl_null[Natts_pg_ts_config];
-	char		repl_repl[Natts_pg_ts_config];
-	HeapTuple	newtup;
-
-	memset(repl_val, 0, sizeof(repl_val));
-	memset(repl_null, ' ', sizeof(repl_null));
-	memset(repl_repl, ' ', sizeof(repl_repl));
-
-	cfgRel = heap_open(TSConfigRelationId, RowExclusiveLock);
-
-	foreach(pl, stmt->options)
-	{
-		DefElem    *defel = (DefElem *) lfirst(pl);
-
-		if (pg_strcasecmp(defel->defname, "parser") == 0)
-		{
-			Oid			newPrs;
-
-			newPrs = TSParserGetPrsid(defGetQualifiedName(defel), false);
-			repl_val[Anum_pg_ts_config_cfgparser - 1] = ObjectIdGetDatum(newPrs);
-			repl_repl[Anum_pg_ts_config_cfgparser - 1] = 'r';
-		}
-		else
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("text search configuration parameter \"%s\" not recognized",
-							defel->defname)));
-	}
-
-	newtup = heap_modifytuple(tup, RelationGetDescr(cfgRel),
-							  repl_val, repl_null, repl_repl);
-
-	simple_heap_update(cfgRel, &newtup->t_self, newtup);
-
-	CatalogUpdateIndexes(cfgRel, newtup);
-
-	heap_close(cfgRel, RowExclusiveLock);
-
-	return newtup;
-}
-
-/*------------------- TS Configuration mapping stuff ----------------*/
 
 /*
  * Translate a list of token type names to an array of token type numbers
@@ -1780,10 +1716,10 @@ getTokenTypes(Oid prsId, List *tokennames)
  * ALTER TEXT SEARCH CONFIGURATION ADD/ALTER MAPPING
  */
 static void
-MakeConfigurationMapping(AlterTSConfigurationStmt *stmt, HeapTuple tup)
+MakeConfigurationMapping(AlterTSConfigurationStmt *stmt,
+						 HeapTuple tup, Relation relMap)
 {
 	Oid			cfgId = HeapTupleGetOid(tup);
-	Relation	relMap;
 	ScanKeyData skey[2];
 	SysScanDesc scan;
 	HeapTuple	maptup;
@@ -1800,8 +1736,6 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt, HeapTuple tup)
 
 	tokens = getTokenTypes(prsId, stmt->tokentype);
 	ntoken = list_length(stmt->tokentype);
-
-	relMap = heap_open(TSConfigMapRelationId, RowExclusiveLock);
 
 	if (stmt->override)
 	{
@@ -1938,18 +1872,16 @@ MakeConfigurationMapping(AlterTSConfigurationStmt *stmt, HeapTuple tup)
 			}
 		}
 	}
-
-	heap_close(relMap, RowExclusiveLock);
 }
 
 /*
  * ALTER TEXT SEARCH CONFIGURATION DROP MAPPING
  */
 static void
-DropConfigurationMapping(AlterTSConfigurationStmt *stmt, HeapTuple tup)
+DropConfigurationMapping(AlterTSConfigurationStmt *stmt,
+						 HeapTuple tup, Relation relMap)
 {
 	Oid			cfgId = HeapTupleGetOid(tup);
-	Relation	relMap;
 	ScanKeyData skey[2];
 	SysScanDesc scan;
 	HeapTuple	maptup;
@@ -1963,8 +1895,6 @@ DropConfigurationMapping(AlterTSConfigurationStmt *stmt, HeapTuple tup)
 
 	tokens = getTokenTypes(prsId, stmt->tokentype);
 	ntoken = list_length(stmt->tokentype);
-
-	relMap = heap_open(TSConfigMapRelationId, RowExclusiveLock);
 
 	i = 0;
 	foreach(c, stmt->tokentype)
@@ -2011,8 +1941,6 @@ DropConfigurationMapping(AlterTSConfigurationStmt *stmt, HeapTuple tup)
 
 		i++;
 	}
-
-	heap_close(relMap, RowExclusiveLock);
 }
 
 

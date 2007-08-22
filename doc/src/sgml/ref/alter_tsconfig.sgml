@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tsconfig.sgml,v 1.1 2007/08/21 21:08:47 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_tsconfig.sgml,v 1.2 2007/08/22 05:13:50 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,9 +20,6 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> (
-    PARSER = <replaceable class="parameter">parser_name</replaceable>
-)
 ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
     ADD MAPPING FOR <replaceable class="parameter">token_type</replaceable> [, ... ] WITH <replaceable class="parameter">dictionary_name</replaceable> [, ... ]
 ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable>
@@ -43,8 +40,8 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replac
 
   <para>
    <command>ALTER TEXT SEARCH CONFIGURATION</command> changes the definition of
-   a text search configuration.  You can change which parser it uses, modify
-   its mapping from token types to dictionaries,
+   a text search configuration.  You can modify
+   its mappings from token types to dictionaries,
    or change the configuration's name or owner.
   </para>
 
@@ -64,15 +61,6 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replac
      <para>
       The name (optionally schema-qualified) of an existing text search
       configuration.
-     </para>
-    </listitem>
-   </varlistentry>
-
-   <varlistentry>
-    <term><replaceable class="parameter">parser_name</replaceable></term>
-    <listitem>
-     <para>
-      The name of a new text search parser to use for this configuration.
      </para>
     </listitem>
    </varlistentry>
@@ -154,19 +142,7 @@ ALTER TEXT SEARCH CONFIGURATION <replaceable>name</replaceable> OWNER TO <replac
   </para>
 
  </refsect1>
-  
- <refsect1>
-  <title>Notes</title>
 
-  <para>
-   While changing the text search parser used by a configuration is allowed,
-   this will only work nicely if old and new parsers use the same set of
-   token types.  It is advisable to drop the mappings for any incompatible
-   token types before changing parsers.
-  </para>
-
- </refsect1>
-  
  <refsect1>
   <title>Examples</title>
 

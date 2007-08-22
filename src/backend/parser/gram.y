@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.599 2007/08/21 15:13:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.600 2007/08/22 05:13:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5523,14 +5523,7 @@ AlterTSDictionaryStmt:
 		;
 
 AlterTSConfigurationStmt:
-			ALTER TEXT_P SEARCH CONFIGURATION any_name definition
-				{
-					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
-					n->cfgname = $5;
-					n->options = $6;
-					$$ = (Node *)n;
-				}
-			| ALTER TEXT_P SEARCH CONFIGURATION any_name ADD_P MAPPING FOR name_list WITH any_name_list
+			ALTER TEXT_P SEARCH CONFIGURATION any_name ADD_P MAPPING FOR name_list WITH any_name_list
 				{
 					AlterTSConfigurationStmt *n = makeNode(AlterTSConfigurationStmt);
 					n->cfgname = $5;

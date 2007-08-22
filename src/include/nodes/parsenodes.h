@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.351 2007/08/21 01:11:28 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.352 2007/08/22 05:13:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2054,10 +2054,8 @@ typedef struct AlterTSConfigurationStmt
 {
 	NodeTag		type;
 	List	   *cfgname;		/* qualified name (list of Value strings) */
-	List	   *options;		/* List of DefElem nodes */
 
 	/*
-	 * These fields are used for ADD/ALTER/DROP MAPPING variants.
 	 * dicts will be non-NIL if ADD/ALTER MAPPING was specified.
 	 * If dicts is NIL, but tokentype isn't, DROP MAPPING was specified.
 	 */
