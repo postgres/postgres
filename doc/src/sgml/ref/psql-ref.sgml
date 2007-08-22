@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.193 2007/07/10 00:21:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.194 2007/08/22 04:45:20 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -993,6 +993,66 @@ testdb=&gt;
         </para>
         </note>
 
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\dF [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dF+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+         Lists available text search configurations.
+         If <replaceable class="parameter">pattern</replaceable> is specified,
+         only configurations whose names match the pattern are shown.
+         If the form <literal>\dF+</literal> is used, a full description of
+         each configuration is shown, including the underlying text search
+         parser and the dictionary list for each parser token type.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><literal>\dFd [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dFd+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+         Lists available text search dictionaries.
+         If <replaceable class="parameter">pattern</replaceable> is specified,
+         only dictionaries whose names match the pattern are shown.
+         If the form <literal>\dFd+</literal> is used, additional information
+         is shown about each selected dictionary, including the underlying
+         text search template and the option values.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><literal>\dFp [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dFp+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+         Lists available text search parsers.
+         If <replaceable class="parameter">pattern</replaceable> is specified,
+         only parsers whose names match the pattern are shown.
+         If the form <literal>\dFp+</literal> is used, a full description of
+         each parser is shown, including the underlying functions and the
+         list of recognized token types.
+        </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><literal>\dFt [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <term><literal>\dFt+ [ <replaceable class="parameter">pattern</replaceable> ]</literal></term>
+        <listitem>
+        <para>
+         Lists available text search templates.
+         If <replaceable class="parameter">pattern</replaceable> is specified,
+         only templates whose names match the pattern are shown.
+         If the form <literal>\dFt+</literal> is used, additional information
+         is shown about each template, including the underlying function names.
+        </para>
         </listitem>
       </varlistentry>
 

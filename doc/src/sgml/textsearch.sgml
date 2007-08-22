@@ -6,11 +6,11 @@
 <title>Introduction</title>
 
 <para>
-Full Text Searching (<firstterm>text search</firstterm>) allows the
-searching of documents that satisfy a <varname>query</varname>, and
-optionally returns them in some order. The most common search is to find
-all documents containing <varname>query terms</varname> and return them
-in order of their <varname>similarity</varname> to the
+Full Text Searching (or just <firstterm>text search</firstterm>) allows
+identifying documents that satisfy a <firstterm>query</firstterm>, and
+optionally sorting them by relevance to the query. The most common search
+is to find all documents containing given <firstterm>query terms</firstterm>
+and return them in order of their <firstterm>similarity</firstterm> to the
 <varname>query</varname>.  Notions of <varname>query</varname> and
 <varname>similarity</varname> are very flexible and depend on the specific
 application. The simplest search considers <varname>query</varname> as a
@@ -250,9 +250,9 @@ SELECT 'fat:1 rat:2'::tsvector || 'fat:1 cat:2'::tsvector;
 <listitem>
 
 <para>
-<type>Tsquery</type> is a data type for textual queries which supports
+<type>tsquery</type> is a data type for textual queries which supports
 the boolean operators <literal>&amp;</literal> (AND), <literal>|</literal> (OR),
-and parentheses.  A <type>Tsquery</type> consists of lexemes
+and parentheses.  A <type>tsquery</type> consists of lexemes
 (optionally labeled by letters) with boolean operators in between:
 
 <programlisting>
@@ -273,7 +273,7 @@ development of different search engines using the same full text index.
 <type>tsqueries</type> can be concatenated using <literal>&amp;&amp;</literal> (AND)
 and <literal>||</literal> (OR) operators:
 <programlisting>
-SELECT 'a &amp; b'::tsquery &amp;&amp; 'c|d'::tsquery;
+SELECT 'a &amp; b'::tsquery &amp;&amp; 'c | d'::tsquery;
          ?column?
 ---------------------------
  'a' &amp; 'b' &amp; ( 'c' | 'd' )
@@ -294,22 +294,24 @@ SELECT 'a &amp; b'::tsquery || 'c|d'::tsquery;
 <title>Performing Searches</title>
 
 <para>
-Full text searching in <productname>PostgreSQL</productname> provides the
-operator <type>@@</type> for two data types: <type>tsvector</type>
-(document) and <type>tsquery</type> (query).  Also, this operator
-supports <type>TEXT</type>, <type>VARCHAR</type>, and <type>CHAR</type>
-data types so simple full text searches can be done, but without ranking
-support:
+Full text searching in <productname>PostgreSQL</productname> is based on
+the operator <literal>@@</literal>, which tests whether a <type>tsvector</type>
+(document) matches a <type>tsquery</type> (query).  Also, this operator
+supports <type>text</type> input, allowing explicit conversion of a text
+string to <type>tsvector</type> to be skipped.  The variants available
+are:
 <programlisting>
 tsvector @@ tsquery
 tsquery  @@ tsvector
-TEXT | VARCHAR | CHAR @@ TEXT | tsquery
+text @@ tsquery
+text @@ text
 </programlisting>
 </para>
 
 <para>
-The full text operator <type>@@</type> returns <literal>true</literal> if
-<type>tsvector</type> contains <type>tsquery</type>:
+The match operator <literal>@@</literal> returns <literal>true</literal> if
+the <type>tsvector</type> matches the <type>tsquery</type>.  It doesn't
+matter which data type is written first:
 <programlisting>
 SELECT 'cat &amp; rat'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::tsvector;
  ?column?
@@ -320,12 +322,18 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
 ----------
  f
 </programlisting>
-
 </para>
 
+<para>
+The form <type>text</type> <literal>@@</literal> <type>tsquery</type>
+is equivalent to <literal>to_tsvector(x) @@ y</literal>.
+The form <type>text</type> <literal>@@</literal> <type>text</type>
+is equivalent to <literal>to_tsvector(x) @@ plainto_tsquery(y)</literal>.
+Note that the results of these forms will depend on the setting of <xref
+linkend="guc-default-text-search-config">.
+</para>
 
 </sect2>
-
 </sect1>
 
 <sect1 id="textsearch-tables">
@@ -358,11 +366,11 @@ or <literal>body</>:
 <programlisting>
 SELECT title
 FROM pgweb
-WHERE to_tsvector('english', textcat(title, body)) @@ to_tsquery('create &amp; table')
+WHERE to_tsvector('english', title || body) @@ to_tsquery('create &amp; table')
 ORDER BY dlm DESC LIMIT 10;
 </programlisting>
-<literal>dlm</> is the last-modified date in seconds since 1970 so we
-used <command>ORDER BY dlm LIMIT 10</> to get the most recent
+<literal>dlm</> is the last-modified date so we
+used <command>ORDER BY dlm LIMIT 10</> to get the ten most recent
 matches.  For clarity we omitted the <function>coalesce</function> function
 which prevents the unwanted effect of <literal>NULL</literal>
 concatenation.
@@ -382,13 +390,13 @@ CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', body));
 Notice that the 2-argument version of <function>to_tsvector</function> is
 used.  Only text search functions which specify a configuration name can
 be used in expression indexes (<xref linkend="indexes-expressional">).
-Casting to a text search data type (<literal>::</>) is also unsupported.
-This is because the index contents should be unaffected by
-<varname>default_text_search_config</>.  If they were affected, the index
-contents might be inconsistent because they could contain
-<type>tsvector</>s that were created with different default text search
-configurations.  Recovering a table from a <application>pg_dump</> would
-also not recreate index <type>tsvector</>s properly.
+This is because the index contents must be unaffected by
+<xref linkend="guc-default-text-search-config">.
+If they were affected, the index
+contents might be inconsistent because different entries could contain
+<type>tsvector</>s that were created with different text search
+configurations, and there would be no way to guess which was which.
+It would be impossible to dump and restore such an index correctly.
 </para>
 
 <para>
@@ -406,9 +414,9 @@ only with the same configuration used to create the index rows.
 It is possible to setup more complex expression indexes where the
 configuration name is specified by another column, e.g.:
 <programlisting>
-CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector(conf_name, body));
+CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector(config_name, body));
 </programlisting>
-where <literal>conf_name</> is a column in the <literal>pgweb</>
+where <literal>config_name</> is a column in the <literal>pgweb</>
 table.  This allows mixed configurations in the same index while
 recording which configuration was used for each index row.
 </para>
@@ -416,7 +424,7 @@ recording which configuration was used for each index row.
 <para>
 Indexes can even concatenate columns:
 <programlisting>
-CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', textcat(title, body)));
+CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', title || body));
 </programlisting>
 </para>
 
@@ -438,7 +446,7 @@ CREATE INDEX textsearch_idx ON pgweb USING gin(textsearch_index);
 </programlisting>
 After vacuuming, we are ready to perform a fast full text search:
 <programlisting>
-SELECT rank_cd(textsearch_index, q) AS rank, title
+SELECT ts_rank_cd(textsearch_index, q) AS rank, title
 FROM pgweb, to_tsquery('create &amp; table') q
 WHERE q @@ textsearch_index
 ORDER BY rank DESC LIMIT 10;
@@ -527,16 +535,14 @@ SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector @@ 'fat &amp; cow'::
 
 <term>
 <synopsis>
-TEXT @@ TSQUERY
-VARCHAR @@ TSQUERY
-CHAR @@ TSQUERY
+text @@ tsquery
 </synopsis>
 </term>
 
 <listitem>
 <para>
 Returns <literal>true</literal> if <literal>TSQUERY</literal> is contained
-in <literal>TEXT/VARCHAR</literal>, and <literal>false</literal> if not:
+in <literal>TEXT</literal>, and <literal>false</literal> if not:
 <programlisting>
 SELECT 'a fat cat sat on a mat and ate a fat rat'::text @@ 'cat &amp; rat'::tsquery;
  ?column?
@@ -562,9 +568,7 @@ SELECT 'a fat cat sat on a mat and ate a fat rat'::text @@ 'cat &amp; cow'::tsqu
 <synopsis>
 <!-- this is very confusing because there is no rule suggesting which is
 first. -->
-TEXT @@ TEXT
-VARCHAR @@ TEXT
-CHAR @@ TEXT
+text @@ text
 </synopsis>
 </term>
 
@@ -612,7 +616,7 @@ For index support of full text operators consult <xref linkend="textsearch-index
 
 <term>
 <synopsis>
-to_tsvector(<optional><replaceable class="PARAMETER">conf_name</replaceable></optional>,  <replaceable class="PARAMETER">document</replaceable> TEXT) returns TSVECTOR
+to_tsvector(<optional><replaceable class="PARAMETER">config_name</replaceable></optional>,  <replaceable class="PARAMETER">document</replaceable> TEXT) returns TSVECTOR
 </synopsis>
 </term>
 
@@ -685,7 +689,7 @@ document to be weighted differently by ranking functions.
 <term>
 <synopsis>
 <replaceable class="PARAMETER">vector1</replaceable> || <replaceable class="PARAMETER">vector2</replaceable>
-concat(<replaceable class="PARAMETER">vector1</replaceable> TSVECTOR, <replaceable class="PARAMETER">vector2</replaceable> TSVECTOR) returns TSVECTOR
+tsvector_concat(<replaceable class="PARAMETER">vector1</replaceable> TSVECTOR, <replaceable class="PARAMETER">vector2</replaceable> TSVECTOR) returns TSVECTOR
 </synopsis>
 </term>
 
@@ -701,7 +705,7 @@ weigh words from one section of your document differently than the others
 by parsing the sections into separate vectors and assigning each vector
 a different position label with the <function>setweight()</function>
 function.  You can then concatenate them into a single vector and provide
-a weights argument to the <function>rank()</function> function that assigns
+a weights argument to the <function>ts_rank()</function> function that assigns
 different weights to positions with different labels.
 </para>
 </listitem>
@@ -751,42 +755,51 @@ it yet) -->
 </listitem>
 </varlistentry>
 
-
 <varlistentry>
 <indexterm zone="textsearch-tsvector">
 <primary>trigger</primary>
+<secondary>for updating a derived tsvector column</secondary>
 </indexterm>
 
 <term>
 <synopsis>
-tsvector_update_trigger(<optional><replaceable class="PARAMETER">vector_column_name</replaceable></optional>, <optional><replaceable class="PARAMETER">filter_name</replaceable></optional>, <replaceable class="PARAMETER">text_column_name</replaceable> <optional>, ... </optional>)
+tsvector_update_trigger(<replaceable class="PARAMETER">tsvector_column_name</replaceable>, <replaceable class="PARAMETER">config_name</replaceable>, <replaceable class="PARAMETER">text_column_name</replaceable> <optional>, ... </optional>)
+tsvector_update_trigger_column(<replaceable class="PARAMETER">tsvector_column_name</replaceable>, <replaceable class="PARAMETER">config_column_name</replaceable>, <replaceable class="PARAMETER">text_column_name</replaceable> <optional>, ... </optional>)
 </synopsis>
 </term>
 
 <listitem>
 <para>
-The <function>tsvector_update_trigger()</function> trigger is used to
-automatically update vector_column_name.
-<replaceable>filter_name</replaceable> is the function name to preprocess
-<replaceable>text_column_name</replaceable>.  There can be many functions
-and text columns specified in a
-<function>tsvector_update_trigger()</function> trigger.  If multiple
-functions are specified, they apply to the following columns until the
-next function appears.  As an example of using a filter, function
-<function>dropatsymbol</function> replaces all entries of the
-<literal>@</literal> sign with a space:
+Two built-in trigger functions are available to automatically update a
+<type>tsvector</> column from one or more textual columns.  An example
+of their use is:
 
 <programlisting>
-CREATE FUNCTION dropatsymbol(text)
-RETURNS text 
-AS 'SELECT replace($1, ''@'', '' '');'
-LANGUAGE SQL;
+CREATE TABLE tblMessages (
+    strMessage  text,
+    tsv         tsvector
+);
 
-CREATE TRIGGER tsvectorupdate BEFORE UPDATE OR INSERT
+CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
 ON tblMessages FOR EACH ROW EXECUTE PROCEDURE
-tsvector_update_trigger(tsvector_column, dropatsymbol, strMessage);
+tsvector_update_trigger(tsv, 'pg_catalog.english', strMessage);
 </programlisting>
 
+Having created this trigger, any change in <structfield>strMessage</>
+will be automatically reflected into <structfield>tsv</>.
+</para>
+
+<para>
+Both triggers require you to specify the text search configuration to
+be used to perform the conversion.  For
+<function>tsvector_update_trigger</>, the configuration name is simply
+given as the second trigger argument.  It must be schema-qualified as
+shown above, so that the trigger behavior will not change with changes
+in <varname>search_path</>.  For
+<function>tsvector_update_trigger_column</>, the second trigger argument
+is the name of another table column, which must be of type
+<type>regconfig</>.  This allows a per-row selection of configuration
+to be made.
 </para>
 </listitem>
 </varlistentry>
@@ -882,7 +895,7 @@ All btree operations are defined for the <type>tsvector</type> type.
 
 <term>
 <synopsis>
-to_tsquery(<optional><replaceable class="PARAMETER">conf_name</replaceable></optional>, <replaceable class="PARAMETER">querytext</replaceable> text) returns TSQUERY
+to_tsquery(<optional><replaceable class="PARAMETER">config_name</replaceable></optional>, <replaceable class="PARAMETER">querytext</replaceable> text) returns TSQUERY
 </synopsis>
 </term>
 
@@ -925,7 +938,7 @@ Without quotes <function>to_tsquery</function> will generate a syntax error.
 
 <term>
 <synopsis>
-plainto_tsquery(<optional><replaceable class="PARAMETER">conf_name</replaceable></optional>,  <replaceable class="PARAMETER">querytext</replaceable> text) returns TSQUERY
+plainto_tsquery(<optional><replaceable class="PARAMETER">config_name</replaceable></optional>,  <replaceable class="PARAMETER">querytext</replaceable> text) returns TSQUERY
 </synopsis>
 </term>
 
@@ -1418,32 +1431,32 @@ function ( <xref linkend="textsearch-debugging"> ), which shows all details
 of the full text machinery:
 <programlisting>
 SELECT * FROM ts_debug('english','a fat  cat sat on a mat - it ate a fat rats');
- Alias |  Description  | Token |      Dicts list      |       Lexized token
--------+---------------+-------+----------------------+---------------------------
- lword | Latin word    | a     | {pg_catalog.en_stem} | pg_catalog.en_stem: {}
- blank | Space symbols |       |                      |
- lword | Latin word    | fat   | {pg_catalog.en_stem} | pg_catalog.en_stem: {fat}
- blank | Space symbols |       |                      |
- lword | Latin word    | cat   | {pg_catalog.en_stem} | pg_catalog.en_stem: {cat}
- blank | Space symbols |       |                      |
- lword | Latin word    | sat   | {pg_catalog.en_stem} | pg_catalog.en_stem: {sat}
- blank | Space symbols |       |                      |
- lword | Latin word    | on    | {pg_catalog.en_stem} | pg_catalog.en_stem: {}
- blank | Space symbols |       |                      |
- lword | Latin word    | a     | {pg_catalog.en_stem} | pg_catalog.en_stem: {}
- blank | Space symbols |       |                      |
- lword | Latin word    | mat   | {pg_catalog.en_stem} | pg_catalog.en_stem: {mat}
- blank | Space symbols |       |                      |
- blank | Space symbols | -     |                      |
- lword | Latin word    | it    | {pg_catalog.en_stem} | pg_catalog.en_stem: {}
- blank | Space symbols |       |                      |
- lword | Latin word    | ate   | {pg_catalog.en_stem} | pg_catalog.en_stem: {ate}
- blank | Space symbols |       |                      |
- lword | Latin word    | a     | {pg_catalog.en_stem} | pg_catalog.en_stem: {}
- blank | Space symbols |       |                      |
- lword | Latin word    | fat   | {pg_catalog.en_stem} | pg_catalog.en_stem: {fat}
- blank | Space symbols |       |                      |
- lword | Latin word    | rats  | {pg_catalog.en_stem} | pg_catalog.en_stem: {rat}
+ Alias |  Description  | Token | Dictionaries | Lexized token  
+-------+---------------+-------+--------------+----------------
+ lword | Latin word    | a     | {english}    | english: {}
+ blank | Space symbols |       |              | 
+ lword | Latin word    | fat   | {english}    | english: {fat}
+ blank | Space symbols |       |              | 
+ lword | Latin word    | cat   | {english}    | english: {cat}
+ blank | Space symbols |       |              | 
+ lword | Latin word    | sat   | {english}    | english: {sat}
+ blank | Space symbols |       |              | 
+ lword | Latin word    | on    | {english}    | english: {}
+ blank | Space symbols |       |              | 
+ lword | Latin word    | a     | {english}    | english: {}
+ blank | Space symbols |       |              | 
+ lword | Latin word    | mat   | {english}    | english: {mat}
+ blank | Space symbols |       |              | 
+ blank | Space symbols | -     |              | 
+ lword | Latin word    | it    | {english}    | english: {}
+ blank | Space symbols |       |              | 
+ lword | Latin word    | ate   | {english}    | english: {ate}
+ blank | Space symbols |       |              | 
+ lword | Latin word    | a     | {english}    | english: {}
+ blank | Space symbols |       |              | 
+ lword | Latin word    | fat   | {english}    | english: {fat}
+ blank | Space symbols |       |              | 
+ lword | Latin word    | rats  | {english}    | english: {rat}
 (24 rows)
 </programlisting>
 </para>
@@ -1485,7 +1498,7 @@ The following functions allow manual parsing control:
 
 <term>
 <synopsis>
-parse(<replaceable class="PARAMETER">parser</replaceable>,  <replaceable class="PARAMETER">document</replaceable> TEXT) returns SETOF <type>tokenout</type>
+ts_parse(<replaceable class="PARAMETER">parser</replaceable>,  <replaceable class="PARAMETER">document</replaceable> TEXT) returns SETOF <type>tokenout</type>
 </synopsis>
 </term>
 
@@ -1496,7 +1509,7 @@ of records, one for each token produced by parsing. Each record includes
 a <varname>tokid</varname> giving its type and a <varname>token</varname>
 which gives its content:
 <programlisting>
-SELECT * FROM parse('default','123 - a number');
+SELECT * FROM ts_parse('default','123 - a number');
  tokid | token
 -------+--------
     22 | 123
@@ -1517,7 +1530,7 @@ SELECT * FROM parse('default','123 - a number');
 
 <term>
 <synopsis>
-token_type(<replaceable class="PARAMETER">parser</replaceable> ) returns SETOF <type>tokentype</type>
+ts_token_type(<replaceable class="PARAMETER">parser</replaceable> ) returns SETOF <type>tokentype</type>
 </synopsis>
 </term>
 
@@ -1530,7 +1543,7 @@ type the table gives the <varname>tokid</varname> which the
 <varname>token</varname> of that type, the <varname>alias</varname> which
 names the token type, and a short <varname>description</varname>:
 <programlisting>
-SELECT * FROM token_type('default');
+SELECT * FROM ts_token_type('default');
  tokid |    alias     |            description
 -------+--------------+-----------------------------------
      1 | lword        | Latin word
@@ -1598,12 +1611,12 @@ The two ranking functions currently available are:
 <varlistentry>
 
 <indexterm zone="textsearch-ranking">
-<primary>rank</primary>
+<primary>ts_rank</primary>
 </indexterm>
 
 <term>
 <synopsis>
-rank(<optional> <replaceable class="PARAMETER">weights</replaceable> float4[]</optional>, <replaceable class="PARAMETER">vector</replaceable> TSVECTOR, <replaceable class="PARAMETER">query</replaceable> TSQUERY, <optional> <replaceable class="PARAMETER">normalization</replaceable> int4 </optional>) returns float4
+ts_rank(<optional> <replaceable class="PARAMETER">weights</replaceable> float4[]</optional>, <replaceable class="PARAMETER">vector</replaceable> TSVECTOR, <replaceable class="PARAMETER">query</replaceable> TSQUERY, <optional> <replaceable class="PARAMETER">normalization</replaceable> int4 </optional>) returns float4
 </synopsis>
 </term>
 
@@ -1630,12 +1643,12 @@ than words in the document body.
 <varlistentry>
 
 <indexterm zone="textsearch-ranking">
-<primary>rank_cd</primary>
+<primary>ts_rank_cd</primary>
 </indexterm>
 
 <term>
 <synopsis>
-rank_cd(<optional> <replaceable class="PARAMETER">weights</replaceable> float4[], </optional> <replaceable class="PARAMETER">vector</replaceable> TSVECTOR, <replaceable class="PARAMETER">query</replaceable> TSQUERY, <optional> <replaceable class="PARAMETER">normalization</replaceable> int4 </optional>) returns float4
+ts_rank_cd(<optional> <replaceable class="PARAMETER">weights</replaceable> float4[], </optional> <replaceable class="PARAMETER">vector</replaceable> TSVECTOR, <replaceable class="PARAMETER">query</replaceable> TSQUERY, <optional> <replaceable class="PARAMETER">normalization</replaceable> int4 </optional>) returns float4
 </synopsis>
 </term>
 
@@ -1699,7 +1712,7 @@ a cosmetic change, i.e., the ordering of the search results will not change.
 Several examples are shown below; note that the second example uses
 normalized ranking:
 <programlisting>
-SELECT title, rank_cd('{0.1, 0.2, 0.4, 1.0}',textsearch, query) AS rnk
+SELECT title, ts_rank_cd('{0.1, 0.2, 0.4, 1.0}',textsearch, query) AS rnk
 FROM apod, to_tsquery('neutrino|(dark &amp; matter)') query
 WHERE query @@ textsearch
 ORDER BY rnk DESC LIMIT 10;
@@ -1716,8 +1729,8 @@ ORDER BY rnk DESC LIMIT 10;
  Ice Fishing for Cosmic Neutrinos              |      1.6
  Weak Lensing Distorts the Universe            | 0.818218
 
-SELECT title, rank_cd('{0.1, 0.2, 0.4, 1.0}',textsearch, query)/
-(rank_cd('{0.1, 0.2, 0.4, 1.0}',textsearch, query) + 1) AS rnk
+SELECT title, ts_rank_cd('{0.1, 0.2, 0.4, 1.0}',textsearch, query)/
+(ts_rank_cd('{0.1, 0.2, 0.4, 1.0}',textsearch, query) + 1) AS rnk
 FROM apod, to_tsquery('neutrino|(dark &amp; matter)') query
 WHERE  query @@ textsearch
 ORDER BY rnk DESC LIMIT 10;
@@ -1737,7 +1750,7 @@ ORDER BY rnk DESC LIMIT 10;
 </para>
 
 <para>
-The first argument in <function>rank_cd</function> (<literal>'{0.1, 0.2,
+The first argument in <function>ts_rank_cd</function> (<literal>'{0.1, 0.2,
 0.4, 1.0}'</literal>) is an optional parameter which specifies the
 weights for labels <literal>D</literal>, <literal>C</literal>,
 <literal>B</literal>, and <literal>A</literal> used in function
@@ -1785,17 +1798,17 @@ implements such functionality.
 
 <term>
 <synopsis>
-headline(<optional> <replaceable class="PARAMETER">conf_name</replaceable> text</optional>, <replaceable class="PARAMETER">document</replaceable> text, <replaceable class="PARAMETER">query</replaceable> TSQUERY, <optional> <replaceable class="PARAMETER">options</replaceable> text </optional>) returns text
+ts_headline(<optional> <replaceable class="PARAMETER">config_name</replaceable> text</optional>, <replaceable class="PARAMETER">document</replaceable> text, <replaceable class="PARAMETER">query</replaceable> TSQUERY, <optional> <replaceable class="PARAMETER">options</replaceable> text </optional>) returns text
 </synopsis>
 </term>
 
 <listitem>
 <para>
-The <function>headline()</function> function accepts a document along with
+The <function>ts_headline</function> function accepts a document along with
 a query, and returns one or more ellipsis-separated excerpts from the
 document in which terms from the query are highlighted.  The configuration
 used to parse the document can be specified by its
-<replaceable>conf_name</replaceable>; if none is specified, the current
+<replaceable>config_name</replaceable>; if none is specified, the current
 configuration is used.
 </para>
 
@@ -1840,13 +1853,13 @@ StartSel=&lt;b&gt;, StopSel=&lt;/b&gt;, MaxWords=35, MinWords=15, ShortWord=3, H
 For example:
 
 <programlisting>
-SELECT headline('a b c', 'c'::tsquery);
+SELECT ts_headline('a b c', 'c'::tsquery);
    headline
 --------------
  a b &lt;b&gt;c&lt;/b&gt;
-SELECT headline('a b c', 'c'::tsquery, 'StartSel=&lt;,StopSel=&gt;');
- headline
-----------
+SELECT ts_headline('a b c', 'c'::tsquery, 'StartSel=&lt;,StopSel=&gt;');
+ ts_headline 
+-------------
  a b  &lt;c&gt;
 </programlisting>
 </para>
@@ -1860,8 +1873,8 @@ shown. <acronym>SQL</acronym> subselects can help here;  below is an
 example:
 
 <programlisting>
-SELECT id,headline(body,q), rank
-FROM (SELECT id,body,q, rank_cd (ti,q) AS rank FROM apod, to_tsquery('stars') q
+SELECT id,ts_headline(body,q), rank
+FROM (SELECT id,body,q, ts_rank_cd (ti,q) AS rank FROM apod, to_tsquery('stars') q
       WHERE ti @@ q
       ORDER BY rank DESC LIMIT 10) AS foo;
 </programlisting>
@@ -1869,8 +1882,8 @@ FROM (SELECT id,body,q, rank_cd (ti,q) AS rank FROM apod, to_tsquery('stars') q
 
 <para>
 Note that the cascade dropping of the <function>parser</function> function
-causes dropping of the <literal>headline</literal> used in the full text search
-configuration <replaceable>conf_name</replaceable><!-- TODO I don't get this -->.
+causes dropping of the <literal>ts_headline</literal> used in the full text search
+configuration <replaceable>config_name</replaceable><!-- TODO I don't get this -->.
 </para>
 
 </sect2>
@@ -1958,7 +1971,7 @@ linkend="textsearch-rule-dictionary-example">) as an example.
 </para>
 
 <para>
-The <literal>ALTER TEXT SEARCH CONFIGURATION public.pg ADD
+The <literal>ALTER TEXT SEARCH CONFIGURATION ADD
 MAPPING</literal> command binds specific types of lexemes and a set of
 dictionaries to process them. (Mappings can also be specified as part of
 configuration creation.) Lexemes are processed by a stack of dictionaries
@@ -1979,12 +1992,12 @@ ALTER TEXT SEARCH CONFIGURATION astro_en ADD MAPPING FOR lword WITH astrosyn, en
 </para>
 
 <para>
-Function <function>lexize</function> can be used to test dictionaries,
+Function <function>ts_lexize</function> can be used to test dictionaries,
 for example:
 <programlisting>
-SELECT lexize('en_stem', 'stars');
- lexize
---------
+SELECT ts_lexize('en_stem', 'stars');
+ ts_lexize
+-----------
  {star}
 (1 row)
 </programlisting>
@@ -2010,15 +2023,15 @@ SELECT to_tsvector('english','in the list of stop words');
 The gaps between positions 1-3 and 3-5 are because of stop words, so ranks
 calculated for documents with and without stop words are quite different:
 <programlisting>
-SELECT rank_cd ('{1,1,1,1}', to_tsvector('english','in the list of stop words'), to_tsquery('list &amp; stop'));
- rank_cd
----------
-     0.5
+SELECT ts_rank_cd ('{1,1,1,1}', to_tsvector('english','in the list of stop words'), to_tsquery('list &amp; stop'));
+ ts_rank_cd
+------------
+        0.5
 
-SELECT rank_cd ('{1,1,1,1}', to_tsvector('english','list stop words'), to_tsquery('list &amp; stop'));
- rank_cd
----------
-       1
+SELECT ts_rank_cd ('{1,1,1,1}', to_tsvector('english','list stop words'), to_tsquery('list &amp; stop'));
+ ts_rank_cd
+------------
+          1
 </programlisting>
 
 </para>
@@ -2033,26 +2046,24 @@ behaviour is an attempt to decrease possible noise.
 
 <para>
 Here is an example of a dictionary that returns the input word as lowercase
-or <literal>NULL</literal> if it is a stop word; it also specifies the location
-of the file of stop words.  It uses the <literal>simple</> dictionary as
+or <literal>NULL</literal> if it is a stop word; it also specifies the name
+of a file of stop words.  It uses the <literal>simple</> dictionary as
 a template:
 <programlisting>
-CREATE TEXT SEARCH DICTIONARY public.simple_dict
-    TEMPLATE pg_catalog.simple
-    OPTION 'english.stop';
+CREATE TEXT SEARCH DICTIONARY public.simple_dict (
+    TEMPLATE = pg_catalog.simple,
+    STOPWORDS = english
+);
 </programlisting>
-Relative paths in <literal>OPTION</literal> resolve relative to
-<filename>share/</><!-- TODO and "share/" is relative to what? such
-references occur elsewhere in this section -->.  Now we can test our
-dictionary:
+Now we can test our dictionary:
 <programlisting>
-SELECT lexize('public.simple_dict','YeS');
- lexize
---------
+SELECT ts_lexize('public.simple_dict','YeS');
+ ts_lexize
+-----------
  {yes}
-SELECT lexize('public.simple_dict','The');
- lexize
---------
+SELECT ts_lexize('public.simple_dict','The');
+ ts_lexize
+-----------
  {}
 </programlisting>
 </para>
@@ -2066,7 +2077,7 @@ SELECT lexize('public.simple_dict','The');
 <para>
 This dictionary template is used to create dictionaries which replace a
 word with a synonym. Phrases are not supported (use the thesaurus
-dictionary (<xref linkend="textsearch-thesaurus">) if you need them).  Synonym
+dictionary (<xref linkend="textsearch-thesaurus">) for that).  A synonym
 dictionary can be used to overcome linguistic problems, for example, to
 prevent an English stemmer dictionary from reducing the word 'Paris' to
 'pari'.  In that case, it is enough to have a <literal>Paris
@@ -2074,17 +2085,18 @@ paris</literal> line in the synonym dictionary and put it before the
 <literal>en_stem</> dictionary:
 <programlisting>
 SELECT * FROM ts_debug('english','Paris');
- Alias | Description | Token |      Dicts list      |       Lexized token
--------+-------------+-------+----------------------+----------------------------
- lword | Latin word  | Paris | {pg_catalog.en_stem} | pg_catalog.en_stem: {pari}
+ Alias | Description | Token | Dictionaries |  Lexized token  
+-------+-------------+-------+--------------+-----------------
+ lword | Latin word  | Paris | {english}    | english: {pari}
 (1 row)
-ALTER TEXT SEARCH CONFIGURATION ADD MAPPING ON english FOR lword WITH synonym, en_stem;
-ALTER TEXT SEARCH MAPPING
-Time: 340.867 ms
+
+ALTER TEXT SEARCH CONFIGURATION english
+    ADD MAPPING FOR lword WITH synonym, en_stem;
+
 SELECT * FROM ts_debug('english','Paris');
- Alias | Description | Token |               Dicts list                |        Lexized token
--------+-------------+-------+-----------------------------------------+-----------------------------
- lword | Latin word  | Paris | {pg_catalog.synonym,pg_catalog.en_stem} | pg_catalog.synonym: {paris}
+ Alias | Description | Token |    Dictionaries   |   Lexized token
+-------+-------------+-------+-------------------+------------------
+ lword | Latin word  | Paris | {synonym,en_stem} | synonym: {paris}
 (1 row)
 </programlisting>
 </para>
@@ -2171,9 +2183,11 @@ To define a new thesaurus dictionary one can use the thesaurus template.
 For example:
 
 <programlisting>
-CREATE TEXT SEARCH DICTIONARY thesaurus_simple
-    TEMPLATE thesaurus_template
-    OPTION 'DictFile="dicts_data/thesaurus.txt.sample", Dictionary="en_stem"';
+CREATE TEXT SEARCH DICTIONARY thesaurus_simple (
+    TEMPLATE = thesaurus,
+    DictFile = mythesaurus,
+    Dictionary = pg_catalog.en_stem
+);
 </programlisting>
 Here:
 <itemizedlist  spacing="compact" mark="bullet">
@@ -2181,12 +2195,15 @@ Here:
 <literal>thesaurus_simple</literal> is the thesaurus dictionary name
 </para></listitem>
 <listitem><para>
-<literal>DictFile="/path/to/thesaurus_simple.txt"</literal> is the location of the thesaurus file
+<literal>mythesaurus</literal> is the base name of the thesaurus file
+(its full name will be <filename>$SHAREDIR/tsearch_data/mythesaurus.ths</>,
+where <literal>$SHAREDIR</> means the installation shared-data directory,
+often <filename>/usr/local/share</>).
 </para></listitem>
 <listitem><para>
-<literal>Dictionary="en_stem"</literal> defines the dictionary (snowball
+<literal>pg_catalog.en_stem</literal> is the dictionary (snowball
 English stemmer) to use for thesaurus normalization. Notice that the
-<literal>en_stem</> dictionary has it is own configuration (for example,
+<literal>en_stem</> dictionary has its own configuration (for example,
 stop words).
 </para></listitem>
 </itemizedlist>
@@ -2195,7 +2212,8 @@ Now it is possible to bind the thesaurus dictionary <literal>thesaurus_simple</l
 and selected <literal>tokens</literal>, for example:
 
 <programlisting>
-ALTER TEXT SEARCH russian ADD MAPPING FOR lword, lhword, lpart_hword WITH thesaurus_simple;
+ALTER TEXT SEARCH CONFIGURATION russian
+    ADD MAPPING FOR lword, lhword, lpart_hword WITH thesaurus_simple;
 </programlisting>
 </para>
 
@@ -2214,15 +2232,17 @@ crab nebulae : crab
 Below we create a dictionary and bind some token types with
 an astronomical thesaurus and english stemmer:
 <programlisting>
-CREATE TEXT SEARCH DICTIONARY thesaurus_astro OPTION
-    TEMPLATE thesaurus_template
-    'DictFile="dicts_data/thesaurus_astro.txt", Dictionary="en_stem"';
-ALTER TEXT SEARCH CONFIGURATION russian ADD MAPPING FOR lword, lhword, lpart_hword
-    WITH thesaurus_astro, en_stem;
+CREATE TEXT SEARCH DICTIONARY thesaurus_astro (
+    TEMPLATE = thesaurus,
+    DictFile = thesaurus_astro,
+    Dictionary = en_stem
+);
+ALTER TEXT SEARCH CONFIGURATION russian
+    ADD MAPPING FOR lword, lhword, lpart_hword WITH thesaurus_astro, en_stem;
 </programlisting>
-Now we can see how it works. Note that <function>lexize</function> cannot
+Now we can see how it works. Note that <function>ts_lexize</function> cannot
 be used for testing the thesaurus (see description of
-<function>lexize</function>), but we can use
+<function>ts_lexize</function>), but we can use
 <function>plainto_tsquery</function> and <function>to_tsvector</function>
 which accept <literal>text</literal> arguments, not lexemes:
 
@@ -2288,17 +2308,17 @@ conjugations of the search term <literal>bank</literal>, e.g.
 <literal>banking</>, <literal>banked</>, <literal>banks</>,
 <literal>banks'</>, and <literal>bank's</>.
 <programlisting>
-SELECT lexize('en_ispell','banking');
- lexize
---------
+SELECT ts_lexize('en_ispell','banking');
+ ts_lexize
+-----------
  {bank}
-SELECT lexize('en_ispell','bank''s');
- lexize
---------
+SELECT ts_lexize('en_ispell','bank''s');
+ ts_lexize
+-----------
  {bank}
-SELECT lexize('en_ispell','banked');
- lexize
---------
+SELECT ts_lexize('en_ispell','banked');
+ ts_lexize
+-----------
  {bank}
 </programlisting>
 
@@ -2306,38 +2326,26 @@ SELECT lexize('en_ispell','banked');
 
 <para>
 To create an ispell dictionary one should use the built-in
-<literal>ispell_template</literal> dictionary and specify several
+<literal>ispell</literal> dictionary and specify several
 parameters.
 </para>
 <programlisting>
-CREATE TEXT SEARCH DICTIONARY en_ispell
-    TEMPLATE ispell_template
-    OPTION 'DictFile="/usr/local/share/dicts/ispell/english.dict",
-            AffFile="/usr/local/share/dicts/ispell/english.aff",
-            StopFile="/usr/local/share/dicts/ispell/english.stop"';
+CREATE TEXT SEARCH DICTIONARY en_ispell (
+    TEMPLATE = ispell,
+    DictFile = english,
+    AffFile = english,
+    StopWords = english
+);
 </programlisting>
 <para>
-Here, <literal>DictFile</>, <literal>AffFile</>, <literal>StopFile</>
-specify the location of the dictionary and stop words files.
+Here, <literal>DictFile</>, <literal>AffFile</>, and <literal>StopWords</>
+specify the names of the dictionary, affixes, and stop-words files.
 </para>
 
 <para>
-Relative paths in <literal>OPTION</literal> resolve relative to
-<filename>share/dicts_data</>:
-<programlisting>
-CREATE TEXT SEARCH DICTIONARY en_ispell
-    TEMPLATE ispell_template
-    OPTION 'DictFile="ispell/english.dict",
-            AffFile="ispell/english.aff",
-            StopFile="english.stop"';
-</programlisting>
-</para>
-
-<para>
-Ispell dictionaries  usually recognize a restricted set of words so it
+Ispell dictionaries usually recognize a restricted set of words so they
 should be used in conjunction with another broader dictionary; for
 example, a stemming dictionary, which recognizes everything.
-
 </para>
 
 <para>
@@ -2352,9 +2360,9 @@ compoundwords  controlled z
 </programlisting>
 Several examples for the Norwegian language:
 <programlisting>
-SELECT lexize('norwegian_ispell','overbuljongterningpakkmesterassistent');
+SELECT ts_lexize('norwegian_ispell','overbuljongterningpakkmesterassistent');
  {over,buljong,terning,pakk,mester,assistent}
-SELECT lexize('norwegian_ispell','sjokoladefabrikk');
+SELECT ts_lexize('norwegian_ispell','sjokoladefabrikk');
  {sjokoladefabrikk,sjokolade,fabrikk}
 </programlisting>
 </para>
@@ -2374,27 +2382,18 @@ operations of Hunspell.
 <title><application>Snowball</> Stemming Dictionary</title>
 
 <para>
-The <application>Snowball</> template dictionary is based on the project
-of Martin Porter, an inventor of the popular Porter's stemming algorithm
+The <application>Snowball</> dictionary template is based on the project
+of Martin Porter, inventor of the popular Porter's stemming algorithm
 for the English language and now supported in many languages (see the <ulink
 url="http://snowball.tartarus.org">Snowball site</ulink> for more
 information). Full text searching contains a large number of stemmers for
-many languages. The only option that is accepted by a snowball stemmer is the
-location of a file with stop words. It can be defined using the
-<literal>ALTER TEXT SEARCH DICTIONARY</literal> command.
-</para>
-<para>
+many languages. A Snowball dictionary requires a language parameter to
+identify which stemmer to use, and optionally can specify a stopword file name.
+For example,
 <programlisting>
-ALTER TEXT SEARCH DICTIONARY en_stem
-    SET OPTION 'StopFile=english-utf8.stop, Language=english';
-</programlisting>
-</para>
-
-<para>
-Relative paths in <literal>OPTION</literal> resolve relative
-<filename>share/dicts/data</>:
-<programlisting>
-ALTER TEXT SEARCH DICTIONARY en_stem OPTION 'english.stop';
+ALTER TEXT SEARCH DICTIONARY en_stem (
+    StopWords = english-utf8, Language = english
+);
 </programlisting>
 </para>
 
@@ -2410,18 +2409,18 @@ before any other dictionary because a lexeme will not pass through its stemmer.
 <title>Dictionary Testing</title>
 
 <para>
-The <function>lexize</> function facilitates dictionary testing:
+The <function>ts_lexize</> function facilitates dictionary testing:
 
 <variablelist>
 <varlistentry>
 
 <indexterm zone="textsearch-dictionaries">
-<primary>lexize</primary>
+<primary>ts_lexize</primary>
 </indexterm>
 
 <term>
 <synopsis>
-lexize(<optional> <replaceable class="PARAMETER">dict_name</replaceable> text</optional>, <replaceable class="PARAMETER">lexeme</replaceable> text) returns text[]
+ts_lexize(<optional> <replaceable class="PARAMETER">dict_name</replaceable> text</optional>, <replaceable class="PARAMETER">lexeme</replaceable> text) returns text[]
 </synopsis>
 </term>
 
@@ -2433,13 +2432,13 @@ array if the lexeme is known to the dictionary but it is a stop word, or
 <literal>NULL</literal> if it is an unknown word.
 </para>
 <programlisting>
-SELECT lexize('en_stem', 'stars');
- lexize
---------
+SELECT ts_lexize('en_stem', 'stars');
+ ts_lexize
+-----------
  {star}
-SELECT lexize('en_stem', 'a');
- lexize
---------
+SELECT ts_lexize('en_stem', 'a');
+ ts_lexize
+-----------
  {}
 </programlisting>
 </listitem>
@@ -2450,16 +2449,16 @@ SELECT lexize('en_stem', 'a');
 
 <note>
 <para>
-The <function>lexize</function> function expects a
+The <function>ts_lexize</function> function expects a
 <replaceable>lexeme</replaceable>, not text. Below is an example:
 <programlisting>
-SELECT lexize('thesaurus_astro','supernovae stars') is null;
+SELECT ts_lexize('thesaurus_astro','supernovae stars') is null;
  ?column?
 ----------
  t
 </programlisting>
 Thesaurus dictionary <literal>thesaurus_astro</literal> does know
-<literal>supernovae stars</literal>, but lexize fails since it does not
+<literal>supernovae stars</literal>, but ts_lexize fails since it does not
 parse the input text and considers it as a single lexeme. Use
 <function>plainto_tsquery</> and <function>to_tsvector</> to test thesaurus
 dictionaries:
@@ -2489,23 +2488,24 @@ about full text searching objects (<xref linkend="textsearch-psql">).
 </para>
 
 <para>
-The <acronym>GUC</acronym> variable <varname>default_text_search_config</varname>
-(optionally schema-qualified) defines the name of the <emphasis>current
-active</emphasis> configuration. It can be defined in
-<literal>postgresql.conf</literal> or using the <command>SET</> command.
+The configuration parameter
+<xref linkend="guc-default-text-search-config">
+specifies the name of the current default configuration, which is the
+one used by text search functions when an explicit configuration
+parameter is omitted.
+It can be set in <filename>postgresql.conf</filename>, or set for an
+individual session using the <command>SET</> command.
 </para>
 
 <para>
-Predefined full text searching objects are available in the
+Several predefined text searching configurations are available in the
 <literal>pg_catalog</literal> schema. If you need a custom configuration
-you can create a new full text searching object and modify it using SQL
+you can create a new text searching configuration and modify it using SQL
 commands.
 
-New full text searching objects are created in the current schema by default
+New text searching objects are created in the current schema by default
 (usually the <literal>public</literal> schema), but a schema-qualified
-name can be used to create objects in the specified schema. It is owned
-by the current user and can be changed using the <command>ALTER TEXT
-SEARCH OWNER</> command.
+name can be used to create objects in the specified schema.
 </para>
 
 <para>
@@ -2515,55 +2515,61 @@ As an example, we will create a configuration
 <programlisting>
 BEGIN;
 
-CREATE TEXT SEARCH CONFIGURATION public.pg LIKE english WITH MAP;
+CREATE TEXT SEARCH CONFIGURATION public.pg ( COPY = english );
 </programlisting>
 </para>
 
 <para>
-We will use a PostgreSQL-specific <literal>synonym</literal> dictionary
-and store it in the <literal>share/dicts_data</literal> directory. The
-dictionary looks like:
+We will use a PostgreSQL-specific synonym list
+and store it in <filename>share/tsearch_data/pg_dict.syn</filename>.
+The file contents look like:
 <Programlisting>
 postgres    pg
 pgsql       pg
 postgresql  pg
 </programlisting>
 
+We define the dictionary like this:
 <programlisting>
-CREATE TEXT SEARCH DICTIONARY pg_dict 
-    TEMPLATE synonym
-    OPTION  'pg_dict.txt';
+CREATE TEXT SEARCH DICTIONARY pg_dict (
+    TEMPLATE = synonym
+    SYNONYMS = pg_dict
+);
 </programlisting>
 
 </para>
 
 <para>
-Then register the <productname>ispell</> dictionary <literal>en_ispell</literal> using
-the <literal>ispell_template</literal> template:
+Then register the <productname>ispell</> dictionary
+<literal>en_ispell</literal> using the <literal>ispell</literal> template:
 
 <programlisting>
-CREATE TEXT SEARCH DICTIONARY en_ispell
-    TEMPLATE ispell_template
-    OPTION 'DictFile="english-utf8.dict",
-            AffFile="english-utf8.aff",
-            StopFile="english-utf8.stop"';
+CREATE TEXT SEARCH DICTIONARY en_ispell (
+    TEMPLATE = ispell,
+    DictFile = english-utf8,
+    AffFile = english-utf8,
+    StopWords = english-utf8
+);
 </programlisting>
 </para>
 
 <para>
-Use the same stop word list for the <application>Snowball</> stemmer <literal>en_stem</literal>,
-which is available by default:
+We can use the same stop word list for the <application>Snowball</> stemmer
+<literal>en_stem</literal>, which is available by default:
 
 <programlisting>
-ALTER TEXT SEARCH DICTIONARY en_stem SET OPTION 'english-utf8.stop';
+ALTER TEXT SEARCH DICTIONARY en_stem (
+    StopWords = english-utf8
+);
 </programlisting>
 </para>
 
 <para>
-Modify mappings for Latin words for configuration <literal>'pg'</>:
+Now modify mappings for Latin words for configuration <literal>pg</>:
 
 <programlisting>
-ALTER TEXT SEARCH CONFIGURATION pg ALTER MAPPING FOR lword, lhword, lpart_hword
+ALTER TEXT SEARCH CONFIGURATION pg
+    ALTER MAPPING FOR lword, lhword, lpart_hword
     WITH pg_dict, en_ispell, en_stem;
 </programlisting>
 </para>
@@ -2572,7 +2578,8 @@ ALTER TEXT SEARCH CONFIGURATION pg ALTER MAPPING FOR lword, lhword, lpart_hword
 We do not index or search some tokens:
 
 <programlisting>
-ALTER TEXT SEARCH CONFIGURATION pg DROP MAPPING FOR email, url, sfloat, uri, float;
+ALTER TEXT SEARCH CONFIGURATION pg
+    DROP MAPPING FOR email, url, sfloat, uri, float;
 </programlisting>
 </para>
 
@@ -2582,7 +2589,7 @@ Now, we can test our configuration:
 SELECT * FROM ts_debug('public.pg', '
 PostgreSQL, the highly scalable, SQL compliant, open source object-relational
 database management system, is now undergoing beta testing of the next
-version of our software: PostgreSQL 8.2.
+version of our software: PostgreSQL 8.3.
 ');
 
 COMMIT;
@@ -2603,7 +2610,7 @@ are shown:
  path      | character varying | not null
  body      | character varying |
  title     | character varying |
- dlm       | integer           |
+ dlm       | date              |
 </programlisting>
 </para>
 
@@ -2644,15 +2651,15 @@ DATABASE ... SET</>.
 However, if you need to use several text search configurations in the same
 database you must be careful to reference the proper text search
 configuration.  This can be done by either setting
-<varname>default_text_search_conf</> in each session or supplying the
-configuration name in every function call, e.g.  to_tsquery('pg',
-'friend'), to_tsvector('pg', col).  If you are using an expression index,
+<varname>default_text_search_config</> in each session or supplying the
+configuration name in every function call, e.g.  to_tsquery('french',
+'friend'), to_tsvector('english', col).  If you are using an expression index,
 you must also be sure to use the proper text search configuration every
 time an <command>INSERT</> or <command>UPDATE</> is executed because these
 will modify the index, or you can embed the configuration name into the
 expression index, e.g.:
 <programlisting>
-CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('pg', textcat(title, body)));
+CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('french', title || body));
 </programlisting>
 And if you do that, make sure you specify the configuration name in the
 <literal>WHERE</> clause as well so the expression index will be used.
@@ -2680,10 +2687,9 @@ Note that indexes are not mandatory for full text searching.
 
 <varlistentry>
 
-
 <indexterm zone="textsearch-indexes">
 <primary>index</primary>
-<secondary>GIST</secondary>
+<secondary>GIST, for text searching</secondary>
 </indexterm>
 
 <term>
@@ -2695,6 +2701,8 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 <listitem>
 <para>
 Creates a GiST (Generalized Search Tree)-based index.
+The <replaceable>column</replaceable> can be of <type>tsvector</> or
+<type>tsquery</> type.
 </para>
 
 </listitem>
@@ -2716,9 +2724,7 @@ CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable>
 <listitem>
 <para>
 Creates a GIN (Generalized Inverted Index)-based index.
-<replaceable class="PARAMETER">column</replaceable> is a
-<literal>TSVECTOR</literal>, <literal>TEXT</literal>,
-<literal>VARCHAR</literal>, or <literal>CHAR</literal>-type column.
+The <replaceable>column</replaceable> must be of <type>tsvector</> type.
 </para>
 
 </listitem>
@@ -2728,10 +2734,11 @@ Creates a GIN (Generalized Inverted Index)-based index.
 </para>
 
 <para>
-A GiST index is <literal>lossy</literal>, meaning it is necessary
-to consult the <literal>heap</literal> to check for false results.
-<productname>PostgreSQL</productname> does this automatically; see
-<literal>Filter:</literal> in the example below:
+A GiST index is <firstterm>lossy</firstterm>, meaning it is necessary
+to check the actual table row to eliminate false matches.
+<productname>PostgreSQL</productname> does this automatically; for
+example, in the query plan below, the <literal>Filter:</literal>
+line indicates the index output will be rechecked:
 <programlisting>
 EXPLAIN SELECT * FROM apod WHERE textsearch @@ to_tsquery('supernovae');
                                QUERY PLAN
@@ -2788,7 +2795,8 @@ the number of unique words.
 There is one side-effect of the non-lossiness of a GIN index when using
 query labels/weights, like <literal>'supernovae:a'</literal>.  A GIN index
 has all the information necessary to determine a match, so the heap is
-not accessed.  However, if the query has label information it must access
+not accessed.  However, label information is not stored in the index,
+so if the query involves label weights it must access
 the heap. Therefore, a special full text search operator <literal>@@@</literal>
 was created which forces the use of the heap to get information about
 labels.  GiST indexes are lossy so it always reads the  heap and there is
@@ -3073,24 +3081,25 @@ configuration.
 </para>
 
 <synopsis>
-ts_debug(<optional><replaceable class="PARAMETER">conf_name</replaceable></optional>, <replaceable class="PARAMETER">document</replaceable> TEXT) returns SETOF tsdebug
+ts_debug(<optional><replaceable class="PARAMETER">config_name</replaceable></optional>, <replaceable class="PARAMETER">document</replaceable> TEXT) returns SETOF ts_debug
 </synopsis>
 
 <para>
 <function>ts_debug</> displays information about every token of
 <replaceable class="PARAMETER">document</replaceable> as produced by the
 parser and processed by the configured dictionaries using the configuration
-specified by <replaceable class="PARAMETER">conf_name</replaceable>.
+specified by <replaceable class="PARAMETER">config_name</replaceable>.
 </para>
 <para>
-<replaceable class="PARAMETER">tsdebug</replaceable> type defined as:
+<replaceable class="PARAMETER">ts_debug</replaceable> type defined as:
 <programlisting>
-CREATE TYPE tsdebug AS (
-     "Alias" text,
-     "Description" text,
-     "Token" text,
-     "Dicts list"   text[],
-     "Lexized token" text
+CREATE TYPE ts_debug AS (
+    "Alias" text,
+    "Description" text,
+    "Token" text,
+    "Dictionaries" regdictionary[],
+    "Lexized token" text
+);
 </programlisting>
 </para>
 
@@ -3101,13 +3110,17 @@ ispell dictionary for the English language. You can skip the test step and
 play with the standard <literal>english</literal> configuration.
 </para>
 <programlisting>
-CREATE TEXT SEARCH CONFIGURATION public.english LIKE pg_catalog.english WITH MAP AS DEFAULT;
-CREATE TEXT SEARCH DICTIONARY en_ispell
-    TEMPLATE ispell_template
-    OPTION 'DictFile="/usr/local/share/dicts/ispell/english-utf8.dict",
-            AffFile="/usr/local/share/dicts/ispell/english-utf8.aff",
-            StopFile="/usr/local/share/dicts/english.stop"';
-ALTER TEXT SEARCH MAPPING ON public.english FOR lword WITH en_ispell,en_stem;
+CREATE TEXT SEARCH CONFIGURATION public.english ( COPY = pg_catalog.english );
+
+CREATE TEXT SEARCH DICTIONARY en_ispell (
+    TEMPLATE = ispell,
+    DictFile = english-utf8,
+    AffFile = english-utf8,
+    StopWords = english
+);
+
+ALTER TEXT SEARCH CONFIGURATION public.english
+    ALTER MAPPING FOR lword WITH en_ispell, en_stem;
 </programlisting>
 
 <programlisting>
@@ -3211,9 +3224,9 @@ shortened numbers.
 <para>
 Examples:
 <programlisting>
-SELECT lexize('intdict', 11234567890);
-  lexize
-----------
+SELECT ts_lexize('intdict', 11234567890);
+ ts_lexize
+-----------
  {112345}
 </programlisting>
 </para>
@@ -3221,10 +3234,12 @@ SELECT lexize('intdict', 11234567890);
 Now, we want to ignore long integers:
 <programlisting>
 
-ALTER TEXT SEARCH DICTIONARY intdict SET OPTION 'MAXLEN=6, REJECTLONG=TRUE';
-SELECT lexize('intdict', 11234567890);
- lexize
---------
+ALTER TEXT SEARCH DICTIONARY intdict (
+    MAXLEN = 6, REJECTLONG = TRUE
+);
+SELECT ts_lexize('intdict', 11234567890);
+ ts_lexize
+-----------
  {}
 </programlisting>
 </para>
@@ -3379,9 +3394,14 @@ AS 'MODULE_PATHNAME'
 LANGUAGE 'C'
 WITH (isstrict);
 
-CREATE TEXT SEARCH DICTIONARY intdict
-    LEXIZE  'dlexize_intdict' INIT  'dinit_intdict'
-    OPTION  'MAXLEN=6,REJECTLONG = false';
+CREATE TEXT SEARCH TEMPLATE intdict_template (
+    LEXIZE = dlexize_intdict, INIT = dinit_intdict
+);
+
+CREATE TEXT SEARCH DICTIONARY intdict (
+    TEMPLATE = intdict_template,
+    MAXLEN = 6, REJECTLONG = false
+);
 
 COMMENT ON TEXT SEARCH DICTIONARY intdict IS 'Dictionary for Integers';
 
@@ -3483,7 +3503,7 @@ Below is the source code of our test parser, organized as a <filename>contrib</>
 <para>
 Testing:
 <programlisting>
-SELECT * FROM parse('testparser','That''s my first own parser');
+SELECT * FROM ts_parse('testparser','That''s my first own parser');
  tokid | token
 -------+--------
      3 | That's
@@ -3499,7 +3519,7 @@ SELECT to_tsvector('testcfg','That''s my first own parser');
                    to_tsvector
 -------------------------------------------------
  'my':2 'own':4 'first':3 'parser':5 'that''s':1
-SELECT headline('testcfg','Supernovae stars are the brightest phenomena in galaxies', to_tsquery('testcfg', 'star'));
+SELECT ts_headline('testcfg','Supernovae stars are the brightest phenomena in galaxies', to_tsquery('testcfg', 'star'));
                             headline
 -----------------------------------------------------------------
  Supernovae &lt;b&gt;stars&lt;/b&gt; are the brightest phenomena in galaxies
@@ -3696,15 +3716,15 @@ AS 'MODULE_PATHNAME'
 LANGUAGE 'C' with (isstrict);
 
 
-CREATE TEXT SEARCH PARSER testparser
-        START     'testprs_start'
-        GETTOKEN  'testprs_getlexeme'
-        END       'testprs_end'
-        LEXTYPES  'testprs_lextype'
+CREATE TEXT SEARCH PARSER testparser (
+        START =    testprs_start,
+        GETTOKEN = testprs_getlexeme,
+        END =      testprs_end,
+        LEXTYPES = testprs_lextype
 ;
 
-CREATE TEXT SEARCH CONFIGURATION testcfg PARSER  'testparser';
-CREATE TEXT SEARCH CONFIGURATION testcfg ADD MAPPING FOR word WITH simple;
+CREATE TEXT SEARCH CONFIGURATION testcfg ( PARSER = testparser );
+ALTER TEXT SEARCH CONFIGURATION testcfg ADD MAPPING FOR word WITH simple;
 
 END;
 </programlisting>

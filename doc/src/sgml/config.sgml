@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.140 2007/08/21 15:13:16 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.141 2007/08/22 04:45:20 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -4102,6 +4102,26 @@ SET XML OPTION { DOCUMENT | CONTENT };
         set to the empty string (which is the default) then the value
         is inherited from the execution environment of the server in a
         system-dependent way.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-default-text-search-config" xreflabel="default_text_search_config">
+      <term><varname>default_text_search_config</varname> (<type>string</type>)</term>
+      <indexterm>
+       <primary><varname>default_text_search_config</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Selects the text search configuration that is used by those variants
+        of the text search functions that do not have an explicit argument
+        specifying the configuration.
+        See <xref linkend="textsearch"> for further information.
+        The built-in default is <literal>pg_catalog.simple</>, but
+        <application>initdb</application> will initialize the
+        configuration file with a setting that corresponds to the
+        chosen <varname>lc_ctype</varname> locale, if a configuration
+        matching that locale can be identified.
        </para>
       </listitem>
      </varlistentry>
