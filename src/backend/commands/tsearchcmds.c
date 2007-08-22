@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.4 2007/08/22 05:13:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tsearchcmds.c,v 1.5 2007/08/22 22:30:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -417,6 +417,17 @@ verify_dictoptions(Oid tmplId, List *dictoptions)
 	HeapTuple	tup;
 	Form_pg_ts_template tform;
 	Oid			initmethod;
+
+	/*
+	 * Suppress this test when running in a standalone backend.  This is a
+	 * hack to allow initdb to create prefab dictionaries that might not
+	 * actually be usable in template1's encoding (due to using external
+	 * files that can't be translated into template1's encoding).  We want
+	 * to create them anyway, since they might be usable later in other
+	 * databases.
+	 */
+	if (!IsUnderPostmaster)
+		return;
 
 	tup = SearchSysCache(TSTEMPLATEOID,
 						 ObjectIdGetDatum(tmplId),
