@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.1 2007/08/21 01:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.2 2007/08/22 04:13:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "commands/defrem.h"
 #include "storage/fd.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_public.h"
@@ -21,6 +22,7 @@
 
 
 #define SYNBUFLEN	4096
+
 typedef struct
 {
 	char	   *in;
@@ -63,27 +65,37 @@ compareSyn(const void *a, const void *b)
 Datum
 dsynonym_init(PG_FUNCTION_ARGS)
 {
-	text	   *in;
+	List	   *dictoptions = (List *) PG_GETARG_POINTER(0);
 	DictSyn    *d;
-	int			cur = 0;
+	ListCell   *l;
+	char	   *filename = NULL;
 	FILE	   *fin;
-	char	   *filename;
 	char		buf[SYNBUFLEN];
 	char	   *starti,
 			   *starto,
 			   *end = NULL;
+	int			cur = 0;
 	int			slen;
 
-	/* init functions must defend against NULLs for themselves */
-	if (PG_ARGISNULL(0) || PG_GETARG_POINTER(0) == NULL)
+	foreach(l, dictoptions)
+	{
+		DefElem    *defel = (DefElem *) lfirst(l);
+
+		if (pg_strcasecmp("Synonyms", defel->defname) == 0)
+			filename = defGetString(defel);
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("unrecognized synonym parameter: \"%s\"",
+							defel->defname)));
+	}
+
+	if (!filename)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("NULL config not allowed for Synonym")));
-	in = PG_GETARG_TEXT_P(0);
+				 errmsg("missing Synonyms parameter")));
 
-	filename = get_tsearch_config_filename(TextPGetCString(in), "syn");
-
-	PG_FREE_IF_COPY(in, 0);
+	filename = get_tsearch_config_filename(filename, "syn");
 
 	if ((fin = AllocateFile(filename, "r")) == NULL)
 		ereport(ERROR,
@@ -142,7 +154,6 @@ dsynonym_init(PG_FUNCTION_ARGS)
 	if (cur > 1)
 		qsort(d->syn, d->len, sizeof(Syn), compareSyn);
 
-	pfree(filename);
 	PG_RETURN_POINTER(d);
 }
 
