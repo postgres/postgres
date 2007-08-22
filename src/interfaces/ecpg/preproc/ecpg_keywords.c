@@ -4,17 +4,10 @@
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.35 2007/06/12 07:55:56 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.36 2007/08/22 08:20:58 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres_fe.h"
-
-#include <ctype.h>
-
-#include "extern.h"
-#include "preproc.h"
-
 
 /*
  * List of (keyword-name, keyword-token-value) pairs.
@@ -22,7 +15,7 @@
  * !!WARNING!!: This list must be sorted, because binary
  *		 search is used to locate entries.
  */
-static ScanKeyword ScanKeywords[] = {
+static const ScanKeyword ScanECPGKeywords[] = {
 	/* name					value			*/
 	{"allocate", SQL_ALLOCATE},
 	{"autocommit", SQL_AUTOCOMMIT},
@@ -71,69 +64,3 @@ static ScanKeyword ScanKeywords[] = {
 	{"whenever", SQL_WHENEVER},
 };
 
-/*
- * ScanECPGKeywordLookup - see if a given word is a keyword
- *
- * Returns a pointer to the ScanKeyword table entry, or NULL if no match.
- *
- * The match is done case-insensitively.  Note that we deliberately use a
- * dumbed-down case conversion that will only translate 'A'-'Z' into 'a'-'z',
- * even if we are in a locale where tolower() would produce more or different
- * translations.  This is to conform to the SQL99 spec, which says that
- * keywords are to be matched in this way even though non-keyword identifiers
- * receive a different case-normalization mapping.
- */
-ScanKeyword *
-ScanECPGKeywordLookup(char *text)
-{
-	int			len,
-				i;
-	char		word[NAMEDATALEN];
-	ScanKeyword *low;
-	ScanKeyword *high;
-
-	len = strlen(text);
-	/* We assume all keywords are shorter than NAMEDATALEN. */
-	if (len >= NAMEDATALEN)
-		return NULL;
-
-	/*
-	 * Apply an ASCII-only downcasing.	We must not use tolower() since it may
-	 * produce the wrong translation in some locales (eg, Turkish), and we
-	 * don't trust isupper() very much either.  In an ASCII-based encoding the
-	 * tests against A and Z are sufficient, but we also check isupper() so
-	 * that we will work correctly under EBCDIC.  The actual case conversion
-	 * step should work for either ASCII or EBCDIC.
-	 */
-	for (i = 0; i < len; i++)
-	{
-		char		ch = text[i];
-
-		if (ch >= 'A' && ch <= 'Z' && isupper((unsigned char) ch))
-			ch += 'a' - 'A';
-		word[i] = ch;
-	}
-	word[len] = '\0';
-
-	/*
-	 * Now do a binary search using plain strcmp() comparison.
-	 */
-	low = &ScanKeywords[0];
-	high = endof(ScanKeywords) - 1;
-	while (low <= high)
-	{
-		ScanKeyword *middle;
-		int			difference;
-
-		middle = low + (high - low) / 2;
-		difference = strcmp(middle->name, word);
-		if (difference == 0)
-			return middle;
-		else if (difference < 0)
-			low = middle + 1;
-		else
-			high = middle - 1;
-	}
-
-	return NULL;
-}

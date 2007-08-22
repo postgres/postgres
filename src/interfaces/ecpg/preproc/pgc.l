@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.153 2007/08/14 10:01:53 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.154 2007/08/22 08:20:58 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,6 +49,7 @@ static void addlitchar (unsigned char);
 static void parse_include (void);
 static void check_escape_warning(void);
 static bool ecpg_isspace(char ch);
+static bool isdefine(void);
 
 char *token_start;
 int state_before;
@@ -681,38 +682,12 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						return(CVARIABLE);
 					}
 <SQL>{identifier}	{
-						ScanKeyword    *keyword;
-						struct _defines *ptr;
+						const ScanKeyword    *keyword;
 						
-						/* How about a DEFINE? */
-						for (ptr = defines; ptr; ptr = ptr->next)
+						if (!isdefine())
 						{
-							if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
-							{
-								struct _yy_buffer *yb;
-
-								yb = mm_alloc(sizeof(struct _yy_buffer));
-
-								yb->buffer =  YY_CURRENT_BUFFER;
-								yb->lineno = yylineno;
-								yb->filename = mm_strdup(input_filename);
-								yb->next = yy_buffer;
-								
-								ptr->used = yy_buffer = yb;
-
-								yy_scan_string(ptr->new);
-								break;
-							}
-						}
-						if (ptr == NULL)
-						{
-							/* Is it an SQL keyword? */
+							/* Is it an SQL/ECPG keyword? */
 							keyword = ScanKeywordLookup(yytext);
-							if (keyword != NULL)
-								return keyword->value;
-
-							/* Is it an ECPG keyword? */
-							keyword = ScanECPGKeywordLookup( yytext);
 							if (keyword != NULL)
 								return keyword->value;
 
@@ -775,39 +750,9 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 						return(CPP_LINE);
 					}
 <C>{identifier} 	{
-						ScanKeyword		*keyword;
-						struct _defines *ptr;
+						const ScanKeyword		*keyword;
 
-						if (INFORMIX_MODE)
-						{
-							/* Informix uses SQL defines only in SQL space */
-							ptr = NULL;
-						}
-						else
-						{
-							/* is it a define? */
-							for (ptr = defines; ptr; ptr = ptr->next)
-							{
-								if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
-								{
-									struct _yy_buffer *yb;
-
-									yb = mm_alloc(sizeof(struct _yy_buffer));
-
-									yb->buffer =  YY_CURRENT_BUFFER;
-									yb->lineno = yylineno;
-									yb->filename = mm_strdup(input_filename);
-									yb->next = yy_buffer;
-
-									ptr->used = yy_buffer = yb;
-
-									yy_scan_string(ptr->new);
-									break;
-								}
-							}
-						}
-
-						if (ptr == NULL)
+						if (INFORMIX_MODE || !isdefine())
 						{
 							keyword = ScanCKeywordLookup(yytext);
 							if (keyword != NULL)
@@ -1359,6 +1304,33 @@ ecpg_isspace(char ch)
 	return false;
 }
 
+static bool isdefine(void)
+{
+	struct _defines *ptr;
+
+	/* is it a define? */
+	for (ptr = defines; ptr; ptr = ptr->next)
+	{
+		if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
+		{
+			struct _yy_buffer *yb;
+
+			yb = mm_alloc(sizeof(struct _yy_buffer));
+
+			yb->buffer =  YY_CURRENT_BUFFER;
+			yb->lineno = yylineno;
+			yb->filename = mm_strdup(input_filename);
+			yb->next = yy_buffer;
+
+			ptr->used = yy_buffer = yb;
+
+			yy_scan_string(ptr->new);
+			return true;
+		}
+	}
+
+	return false;
+}
 
 /*
  * Called before any actual parsing is done

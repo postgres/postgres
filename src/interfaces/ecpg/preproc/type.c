@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.73 2007/08/14 10:01:53 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.74 2007/08/22 08:20:58 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -80,7 +80,7 @@ ECPGmake_struct_member(char *name, struct ECPGtype * type, struct ECPGstruct_mem
 			   *ne =
 	(struct ECPGstruct_member *) mm_alloc(sizeof(struct ECPGstruct_member));
 
-	ne->name = strdup(name);
+	ne->name = mm_strdup(name);
 	ne->type = type;
 	ne->next = NULL;
 

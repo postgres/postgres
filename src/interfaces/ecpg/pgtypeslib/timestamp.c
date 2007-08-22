@@ -97,36 +97,6 @@ SetEpochTimestamp(void)
 	return dt;
 }	/* SetEpochTimestamp() */
 
-static void
-dt2time(timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
-{
-#ifdef HAVE_INT64_TIMESTAMP
-	int64		time;
-#else
-	double		time;
-#endif
-
-	time = jd;
-
-#ifdef HAVE_INT64_TIMESTAMP
-	*hour = time / USECS_PER_HOUR;
-	time -= (*hour) * USECS_PER_HOUR;
-	*min = time / USECS_PER_MINUTE;
-	time -= (*min) * USECS_PER_MINUTE;
-	*sec = time / USECS_PER_SEC;
-	*fsec = time - *sec * USECS_PER_SEC;
-	*sec = time / USECS_PER_SEC;
-	*fsec = time - *sec * USECS_PER_SEC;
-#else
-	*hour = time / SECS_PER_HOUR;
-	time -= (*hour) * SECS_PER_HOUR;
-	*min = time / SECS_PER_MINUTE;
-	time -= (*min) * SECS_PER_MINUTE;
-	*sec = time;
-	*fsec = time - *sec;
-#endif
-}	/* dt2time() */
-
 /* timestamp2tm()
  * Convert timestamp data type to POSIX time structure.
  * Note that year is _not_ 1900-based, but is an explicit full value.

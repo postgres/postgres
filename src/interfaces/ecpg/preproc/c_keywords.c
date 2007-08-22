@@ -3,7 +3,7 @@
  * keywords.c
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/c_keywords.c,v 1.20 2007/05/10 09:53:16 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/c_keywords.c,v 1.21 2007/08/22 08:20:58 meskes Exp $
  * §
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,7 @@
  * !!WARNING!!: This list must be sorted, because binary
  *		 search is used to locate entries.
  */
-static ScanKeyword ScanKeywords[] = {
+static const ScanKeyword ScanCKeywords[] = {
 	/* name					value			*/
 	{"VARCHAR", VARCHAR},
 	{"auto", S_AUTO},
@@ -50,25 +50,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"year", YEAR_P},
 };
 
-ScanKeyword *
+const ScanKeyword *
 ScanCKeywordLookup(char *text)
 {
-	ScanKeyword *low = &ScanKeywords[0];
-	ScanKeyword *high = endof(ScanKeywords) - 1;
-	ScanKeyword *middle;
-	int			difference;
-
-	while (low <= high)
-	{
-		middle = low + (high - low) / 2;
-		difference = strcmp(middle->name, text);
-		if (difference == 0)
-			return middle;
-		else if (difference < 0)
-			low = middle + 1;
-		else
-			high = middle - 1;
-	}
-
-	return NULL;
+	return DoLookup(text, &ScanCKeywords[0], endof(ScanCKeywords) - 1);
 }

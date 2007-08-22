@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2007, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.127 2007/08/14 10:01:53 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/Makefile,v 1.128 2007/08/22 08:20:58 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,7 +27,7 @@ override CFLAGS += -Wno-error
 endif
 override CFLAGS += $(PTHREAD_CFLAGS)
 
-OBJS=	preproc.o type.o ecpg.o ecpg_keywords.o output.o parser.o \
+OBJS=	preproc.o type.o ecpg.o output.o parser.o \
 	keywords.o c_keywords.o ../ecpglib/typename.o descriptor.o variable.o \
 	$(WIN32RES)
 
@@ -57,7 +57,7 @@ else
 	@$(missing) flex $< $@
 endif
 
-c_keywords.o ecpg_keywords.o keywords.o preproc.o parser.o: preproc.h
+c_keywords.o keywords.o preproc.o parser.o: preproc.h
 
 parser.c: $(top_srcdir)/src/backend/parser/parser.c
 	rm -f $@ && $(LN_S) $< .

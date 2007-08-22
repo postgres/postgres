@@ -2225,5 +2225,9 @@ Tue, 14 Aug 2007 11:46:51 +0200
 	- Use '$n' for positional variables, '?' is still possible via ecpg
 	  option.
 	- Cleaned up the sources a little bit.
+
+Wed, 22 Aug 2007 08:41:33 +0200
+
+	- More cleaning up and removed some duplicates.
 	- Set ecpg library version to 6.0.
 	- Set ecpg version to 4.4.

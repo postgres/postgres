@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.349 2007/08/14 10:01:53 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.350 2007/08/22 08:20:58 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -319,6 +319,51 @@ add_additional_variables(char *name, bool insert)
 
 	return ptr;
 }
+
+static void
+add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enum, char *type_dimension, char *type_index, int initializer, int array)
+{
+	/* add entry to list */
+	struct typedefs *ptr, *this;
+
+	if ((type_enum == ECPGt_struct ||
+	     type_enum == ECPGt_union) &&
+	    initializer == 1)
+		mmerror(PARSE_ERROR, ET_ERROR, "Initializer not allowed in typedef command");
+	else
+	{
+		for (ptr = types; ptr != NULL; ptr = ptr->next)
+		{
+			if (strcmp(name, ptr->name) == 0)
+				/* re-definition is a bug */
+				mmerror(PARSE_ERROR, ET_ERROR, "Type %s already defined", name);
+		}
+		adjust_array(type_enum, &dimension, &length, type_dimension, type_index, array, true);
+
+		this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
+
+		/* initial definition */
+		this->next = types;
+		this->name = name;
+		this->brace_level = braces_open;
+		this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
+		this->type->type_enum = type_enum;
+		this->type->type_str = mm_strdup(name);
+		this->type->type_dimension = dimension; /* dimension of array */
+		this->type->type_index = length;	/* length of string */
+		this->type->type_sizeof = ECPGstruct_sizeof;
+		this->struct_member_list = (type_enum == ECPGt_struct || type_enum == ECPGt_union) ?
+		ECPGstruct_member_dup(struct_member_list[struct_level]) : NULL;
+
+		if (type_enum != ECPGt_varchar &&
+			type_enum != ECPGt_char &&
+			type_enum != ECPGt_unsigned_char &&
+			atoi(this->type->type_index) >= 0)
+			mmerror(PARSE_ERROR, ET_ERROR, "No multidimensional array support for simple data types");
+
+		types = this;
+	}
+}
 %}
 
 %name-prefix="base_yy"
@@ -597,7 +642,7 @@ add_additional_variables(char *name, bool insert)
 %type  <str>	var_declaration type_declaration single_vt_declaration
 %type  <str>	ECPGSetAutocommit on_off variable_declarations ECPGDescribe
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_output
-%type  <str>	ECPGGetDescriptorHeader ECPGColLabel single_var_declaration
+%type  <str>	ECPGGetDescriptorHeader ECPGColLabel 
 %type  <str>	reserved_keyword unreserved_keyword ecpg_interval opt_ecpg_using
 %type  <str>	col_name_keyword precision opt_scale ECPGExecuteImmediateStmt
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst 
@@ -5124,40 +5169,7 @@ ECPGExecuteImmediateStmt: EXECUTE IMMEDIATE execstring
 ECPGVarDeclaration: single_vt_declaration;
 
 single_vt_declaration: type_declaration		{ $$ = $1; }
-		| single_var_declaration	{ $$ = $1; }
-		;
-
-single_var_declaration: storage_declaration
-		var_type
-		{
-			actual_type[struct_level].type_enum = $2.type_enum;
-			actual_type[struct_level].type_dimension = $2.type_dimension;
-			actual_type[struct_level].type_index = $2.type_index;
-			actual_type[struct_level].type_sizeof = $2.type_sizeof;
-
-			actual_startline[struct_level] = hashline_number();
-		}
-		variable_list ';'
-		{
-			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
-		}
-		| var_type
-		{
-			actual_type[struct_level].type_enum = $1.type_enum;
-			actual_type[struct_level].type_dimension = $1.type_dimension;
-			actual_type[struct_level].type_index = $1.type_index;
-			actual_type[struct_level].type_sizeof = $1.type_sizeof;
-
-			actual_startline[struct_level] = hashline_number();
-		}
-		variable_list ';'
-		{
-			$$ = cat_str(4, actual_startline[struct_level], $1.type_str, $3, make_str(";\n"));
-		}
-		| struct_union_type_with_symbol ';'
-		{
-			$$ = cat2_str($1, make_str(";"));
-		}
+		| var_declaration		{ $$ = $1; }
 		;
 
 precision:	NumConst	{ $$ = $1; };
@@ -5214,50 +5226,9 @@ type_declaration: S_TYPEDEF
 	}
 	var_type opt_pointer ECPGColLabelCommon opt_array_bounds ';'
 	{
-		/* add entry to list */
-		struct typedefs *ptr, *this;
-		char * dimension = $6.index1;
-		char * length = $6.index2;
+		add_typedef($5, $6.index1, $6.index2, $3.type_enum, $3.type_dimension, $3.type_index, initializer, *$4 ? 1 : 0);
 
-		if (($3.type_enum == ECPGt_struct ||
-		     $3.type_enum == ECPGt_union) &&
-		    initializer == 1)
-			mmerror(PARSE_ERROR, ET_ERROR, "Initializer not allowed in typedef command");
-		else
-		{
-			for (ptr = types; ptr != NULL; ptr = ptr->next)
-			{
-				if (strcmp($5, ptr->name) == 0)
-			        	/* re-definition is a bug */
-					mmerror(PARSE_ERROR, ET_ERROR, "Type %s already defined", $5);
-			}
-			adjust_array($3.type_enum, &dimension, &length, $3.type_dimension, $3.type_index, *$4?1:0, true);
-
-			this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
-
-			/* initial definition */
-			this->next = types;
-			this->name = $5;
-			this->brace_level = braces_open;
-			this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
-			this->type->type_enum = $3.type_enum;
-			this->type->type_str = mm_strdup($5);
-			this->type->type_dimension = dimension; /* dimension of array */
-			this->type->type_index = length;	/* length of string */
-			this->type->type_sizeof = ECPGstruct_sizeof;
-			this->struct_member_list = ($3.type_enum == ECPGt_struct || $3.type_enum == ECPGt_union) ?
-			ECPGstruct_member_dup(struct_member_list[struct_level]) : NULL;
-
-			if ($3.type_enum != ECPGt_varchar &&
-				$3.type_enum != ECPGt_char &&
-				$3.type_enum != ECPGt_unsigned_char &&
-				atoi(this->type->type_index) >= 0)
-				mmerror(PARSE_ERROR, ET_ERROR, "No multidimensional array support for simple data types");
-
-			types = this;
-		}
-
-		fprintf(yyout, "typedef %s %s %s %s;\n", $3.type_str, *$4?"*":"", $5, $6.str);
+		fprintf(yyout, "typedef %s %s %s %s;\n", $3.type_str, *$4 ? "*" : "", $5, $6.str);
 		output_line_number();
 		$$ = make_str("");
 	};
@@ -6046,49 +6017,7 @@ ECPGTypedef: TYPE_P
 		}
 		ECPGColLabelCommon IS var_type opt_array_bounds opt_reference
 		{
-			/* add entry to list */
-			struct typedefs *ptr, *this;
-			char *dimension = $6.index1;
-			char *length = $6.index2;
-
-			if (($5.type_enum == ECPGt_struct ||
-				 $5.type_enum == ECPGt_union) &&
-				initializer == 1)
-				mmerror(PARSE_ERROR, ET_ERROR, "Initializer not allowed in EXEC SQL TYPE command");
-			else
-			{
-				for (ptr = types; ptr != NULL; ptr = ptr->next)
-				{
-					if (strcmp($3, ptr->name) == 0)
-						/* re-definition is a bug */
-						mmerror(PARSE_ERROR, ET_ERROR, "Type %s already defined", $3);
-				}
-
-				adjust_array($5.type_enum, &dimension, &length, $5.type_dimension, $5.type_index, *$7?1:0, false);
-
-				this = (struct typedefs *) mm_alloc(sizeof(struct typedefs));
-
-				/* initial definition */
-				this->next = types;
-				this->name = $3;
-				this->brace_level = braces_open;
-				this->type = (struct this_type *) mm_alloc(sizeof(struct this_type));
-				this->type->type_enum = $5.type_enum;
-				this->type->type_str = mm_strdup($3);
-				this->type->type_dimension = dimension; /* dimension of array */
-				this->type->type_index = length;	/* length of string */
-				this->type->type_sizeof = ECPGstruct_sizeof;
-				this->struct_member_list = ($5.type_enum == ECPGt_struct || $5.type_enum == ECPGt_union) ?
-					ECPGstruct_member_dup(struct_member_list[struct_level]) : NULL;
-
-				if ($5.type_enum != ECPGt_varchar &&
-					$5.type_enum != ECPGt_char &&
-					$5.type_enum != ECPGt_unsigned_char &&
-					atoi(this->type->type_index) >= 0)
-					mmerror(PARSE_ERROR, ET_ERROR, "No multidimensional array support for simple data types");
-
-				types = this;
-			}
+			add_typedef($3, $6.index1, $6.index2, $5.type_enum, $5.type_dimension, $5.type_index, initializer, *$7 ? 1 : 0);
 
 			if (auto_create_c == false)
 				$$ = cat_str(7, make_str("/* exec sql type"), mm_strdup($3), make_str("is"), mm_strdup($5.type_str), mm_strdup($6.str), $7, make_str("*/"));
