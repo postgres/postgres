@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.69 2007/07/15 22:34:26 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgbench/pgbench.c,v 1.70 2007/08/22 23:03:27 tgl Exp $
  *
  * pgbench: a simple benchmark program for PostgreSQL
  * written by Tatsuo Ishii
@@ -87,7 +87,7 @@ int			remains;			/* number of remaining clients */
 int			is_connect;			/* establish connection  for each transaction */
 
 char	   *pghost = "";
-char	   *pgport = NULL;
+char	   *pgport = "";
 char	   *pgoptions = NULL;
 char	   *pgtty = NULL;
 char	   *login = NULL;
