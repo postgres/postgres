@@ -1,4 +1,4 @@
-# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.9 2006/06/22 23:50:35 tgl Exp $
+# $PostgreSQL: pgsql/src/makefiles/Makefile.cygwin,v 1.10 2007/08/22 06:34:18 tgl Exp $
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
 ifdef PGXS
@@ -22,7 +22,9 @@ CFLAGS_SL =
 
 ifneq (,$(findstring backend,$(subdir)))
 ifeq (,$(findstring conversion_procs,$(subdir)))
+ifeq (,$(findstring snowball,$(subdir)))
 override CPPFLAGS+= -DBUILDING_DLL
+endif
 endif
 endif
 
