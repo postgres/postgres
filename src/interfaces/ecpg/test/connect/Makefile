@@ -11,7 +11,7 @@ test1.pgc: test1.pgc.in
 	sed -e 's,@TEMP_PORT@,$(TEMP_PORT),g' \
 	  $< >$@
 	sed -e 's,@TEMP_PORT@,$(TEMP_PORT),g' \
-	  ../expected/connect-test1.c.in >../expected/connect-test1.c
+	  $(top_srcdir)/$(subdir)/../expected/connect-test1.c.in >../expected/connect-test1.c
 
 TESTS = test1 test1.c \
         test2 test2.c \
