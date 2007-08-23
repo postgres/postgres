@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.16 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.h,v 1.16.2.1 2007/08/23 16:16:05 tgl Exp $
  */
 
 #ifndef __PX_H
@@ -85,6 +85,7 @@ void		px_free(void *p);
 #define PXE_BAD_SALT_ROUNDS			-15
 #define PXE_MCRYPT_INTERNAL			-16
 #define PXE_NO_RANDOM				-17
+#define PXE_DECRYPT_FAILED			-18
 
 #define PXE_MBUF_SHORT_READ			-50
 
