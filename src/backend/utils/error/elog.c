@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.194 2007/08/19 01:41:25 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.195 2007/08/23 01:24:43 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,8 @@ static const char *error_severity(int elevel);
 static void append_with_tabs(StringInfo buf, const char *str);
 static bool is_log_level_output(int elevel, int log_min_level);
 static void write_pipe_chunks(char *data, int len, int dest);
-static void get_error_message(StringInfo buf, ErrorData *edata);
+static void get_csv_error_message(StringInfo buf, ErrorData *edata);
+static void write_csvlog(ErrorData *edata);
 
 /*
  * errstart --- begin an error-reporting cycle
@@ -1809,9 +1810,7 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
  
 	/* Error message and cursor position if any */
-	get_error_message(&msgbuf, edata);
-
-	appendCSVLiteral(&buf, msgbuf.data);
+	get_csv_error_message(&buf, edata);
 
 	appendStringInfoChar(&buf, '\n');
 
@@ -1826,15 +1825,23 @@ write_csvlog(ErrorData *edata)
 }
 
 /*
- * Appends the buffer with the error message and the cursor position.
+ * Appends the buffer with the error message and the cursor position, all
+ * CSV escaped.
  */
 static void
-get_error_message(StringInfo buf, ErrorData *edata)
+get_csv_error_message(StringInfo buf, ErrorData *edata)
 {
-	if (edata->message)
-		appendStringInfo(buf, "%s", edata->message);
-	else
-		appendStringInfo(buf, "%s", _("missing error text"));
+	char *msg = edata->message ? edata-> message : _("missing error text");
+	char c;
+
+	appendStringInfoCharMacro(buf, '"');
+
+	while ( (c = *msg++) != '\0' )
+	{
+      if (c == '"')
+          appendStringInfoCharMacro(buf, '"');
+      appendStringInfoCharMacro(buf, c);
+	}
 
 	if (edata->cursorpos > 0)
 		appendStringInfo(buf, _(" at character %d"),
@@ -1842,6 +1849,8 @@ get_error_message(StringInfo buf, ErrorData *edata)
 	else if (edata->internalpos > 0)
 		appendStringInfo(buf, _(" at character %d"),
 						 edata->internalpos);
+
+	appendStringInfoCharMacro(buf, '"');
 }
 
 /*
@@ -2032,13 +2041,19 @@ send_message_to_server_log(ErrorData *edata)
 			write(fileno(stderr), buf.data, buf.len);
 	}
 
+	/* If in the syslogger process, try to write messages direct to file */
+	if (am_syslogger)
+		write_syslogger_file(buf.data, buf.len, LOG_DESTINATION_STDERR);
+
+	/* Write to CSV log if enabled */
 	if (Log_destination & LOG_DESTINATION_CSVLOG)
 	{
 		if (redirection_done || am_syslogger)
 		{
 			/* send CSV data if it's safe to do so (syslogger doesn't need
-			 * the pipe)
+			 * the pipe). First get back the space in the message buffer.
 			 */
+			pfree(buf.data);
 			write_csvlog(edata);
 		}
 		else
@@ -2051,14 +2066,13 @@ send_message_to_server_log(ErrorData *edata)
 				/* write message to stderr unless we just sent it above */
 				write(fileno(stderr), buf.data, buf.len);
 			}
+			pfree(buf.data);
 		}
 	}
-
-	/* If in the syslogger process, try to write messages direct to file */
-	if (am_syslogger)
-		write_syslogger_file(buf.data, buf.len, LOG_DESTINATION_STDERR);
-
-	pfree(buf.data);
+	else
+	{
+		pfree(buf.data);
+	}
 }
 
 /*
