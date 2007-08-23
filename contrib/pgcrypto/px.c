@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.15 2005/10/15 02:49:06 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.16 2007/08/23 16:15:51 tgl Exp $
  */
 
 #include "postgres.h"
@@ -58,6 +58,7 @@ static const struct error_desc px_err_list[] = {
 	{PXE_BAD_SALT_ROUNDS, "Incorrect number of rounds"},
 	{PXE_MCRYPT_INTERNAL, "mcrypt internal error"},
 	{PXE_NO_RANDOM, "No strong random source"},
+	{PXE_DECRYPT_FAILED, "Decryption failed"},
 	{PXE_PGP_CORRUPT_DATA, "Wrong key or corrupt data"},
 	{PXE_PGP_CORRUPT_ARMOR, "Corrupt ascii-armor"},
 	{PXE_PGP_UNSUPPORTED_COMPR, "Unsupported compression algorithm"},
@@ -278,6 +279,18 @@ combo_decrypt(PX_Combo * cx, const uint8 *data, unsigned dlen,
 	unsigned	pad_ok;
 
 	PX_Cipher  *c = cx->cipher;
+
+	/* decide whether zero-length input is allowed */
+	if (dlen == 0)
+	{
+		/* with padding, empty ciphertext is not allowed */
+		if (cx->padding)
+			return PXE_DECRYPT_FAILED;
+		
+		/* without padding, report empty result */
+		*rlen = 0;
+		return 0;
+	}
 
 	bs = px_cipher_block_size(c);
 	if (bs > 1 && (dlen % bs) != 0)
