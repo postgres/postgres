@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Jul 17 01:03:37 EDT 2007
+   Last updated: Wed Aug 22 20:09:21 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -339,11 +339,13 @@ General Questions
    
   1.11) What books are good for developers?
   
-   I have four good books, An Introduction to Database Systems, by C.J.
-   Date, Addison, Wesley, A Guide to the SQL Standard, by C.J. Date, et.
-   al, Addison, Wesley, Fundamentals of Database Systems, by Elmasri and
-   Navathe, and Transaction Processing, by Jim Gray, Morgan, Kaufmann
-   
+   There are five good books:
+     * An Introduction to Database Systems, by C.J. Date, Addison, Wesley
+     * A Guide to the SQL Standard, by C.J. Date, et. al, Addison, Wesley
+     * Fundamentals of Database Systems, by Elmasri and Navathe
+     * Transaction Processing, by Jim Gray, Morgan, Kaufmann
+     * Transactional Information Systems by by Gerhard Weikum, Kaufmann
+       
   1.12) What is configure all about?
   
    The files configure and configure.in are part of the GNU autoconf
