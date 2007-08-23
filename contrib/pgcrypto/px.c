@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.9 2004/05/07 00:24:57 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.9.4.1 2007/08/23 16:16:11 tgl Exp $
  */
 
 #include <postgres.h>
@@ -184,6 +184,18 @@ combo_decrypt(PX_Combo * cx, const uint8 *data, unsigned dlen,
 	unsigned	pad_ok;
 
 	PX_Cipher  *c = cx->cipher;
+
+	/* decide whether zero-length input is allowed */
+	if (dlen == 0)
+	{
+		/* with padding, empty ciphertext is not allowed */
+		if (cx->padding)
+			return -1;
+		
+		/* without padding, report empty result */
+		*rlen = 0;
+		return 0;
+	}
 
 	bs = px_cipher_block_size(c);
 	if (bs > 1 && (dlen % bs) != 0)
