@@ -4,7 +4,7 @@
 #    Makefile for the timezone library
 
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.27 2007/08/20 08:53:12 petere Exp $
+#    $PostgreSQL: pgsql/src/timezone/Makefile,v 1.28 2007/08/25 20:29:25 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,21 +27,26 @@ TZDATAFILES = $(TZDATA:%=$(srcdir)/data/%)
 # for POSIX-style timezone specs
 POSIXRULES = US/Eastern
 
-all: SUBSYS.o submake-libpgport zic
+# use system timezone data?
+ifneq (,$(with_system_tzdata))
+override CPPFLAGS += '-DSYSTEMTZDIR="$(with_system_tzdata)"'
+endif
+
+all: SUBSYS.o
+
+ifeq (,$(with_system_tzdata))
+all: submake-libpgport zic
+endif
 
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
-ifeq (,$(with_system_tzdata))
 zic: $(ZICOBJS)
 	$(CC) $(CFLAGS) $(ZICOBJS) $(LDFLAGS) $(LIBS) -o $@$(X)
-endif
 
 install: all installdirs
 ifeq (,$(with_system_tzdata))
 	./zic -d '$(DESTDIR)$(datadir)/timezone' -p '$(POSIXRULES)' $(TZDATAFILES)
-else
-	ln -s '$(with_system_tzdata)' '$(DESTDIR)$(datadir)/timezone'
 endif
 	$(MAKE) -C tznames $@
 
@@ -49,7 +54,9 @@ installdirs:
 	$(mkinstalldirs) '$(DESTDIR)$(datadir)'
 
 uninstall:
+ifeq (,$(with_system_tzdata))
 	rm -rf '$(DESTDIR)$(datadir)/timezone'
+endif
 	$(MAKE) -C tznames $@
 
 clean distclean maintainer-clean:

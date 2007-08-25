@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.291 2007/08/20 08:53:12 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.292 2007/08/25 20:29:25 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1028,20 +1028,21 @@ su - postgres
        </indexterm>
        <listitem>
         <para>
-         PostgreSQL includes its own time zone database, which it
-         requires for date and time operations.  This time zone
-         database is in fact compatible with the time zone database
-         provided by many operating systems such as FreeBSD, Linux,
-         and Solaris, so it would be redundant to install it again.
-         When this option is used, the operating system supplied time
-         zone database in <replaceable>DIRECTORY</replaceable> is used
-         instead of the one included in the PostgreSQL source
-         distribution.  <filename>/usr/share/zoneinfo/</filename> is a
+         <productname>PostgreSQL</> includes its own time zone database,
+         which it requires for date and time operations.  This time zone
+         database is in fact compatible with the <quote>zic</> time zone
+         database provided by many operating systems such as FreeBSD,
+         Linux, and Solaris, so it would be redundant to install it again.
+         When this option is used, the system-supplied time zone database
+         in <replaceable>DIRECTORY</replaceable> is used instead of the one
+         included in the PostgreSQL source distribution.
+         <replaceable>DIRECTORY</replaceable> must be specified as an
+         absolute path.  <filename>/usr/share/zoneinfo</filename> is a
          likely directory on some operating systems.  Note that the
-         installation routine does not detect mismatching or erroneous
-         time zone data.  You are advised to run the regression tests
-         to verify that the time zone data you have pointed to works
-         correctly.
+         installation routine will not detect mismatching or erroneous time
+         zone data.  If you use this option, you are advised to run the
+         regression tests to verify that the time zone data you have
+         pointed to works correctly with <productname>PostgreSQL</>.
         </para>
 
         <para>
@@ -1049,11 +1050,10 @@ su - postgres
          who know their target operating system well.  The main
          advantage of using this option is that the PostgreSQL package
          won't need to be upgraded whenever any of the many local
-         daylight-saving time rules changes.  Another completely
-         incidental advantage is that PostgreSQL can be
-         cross-compiled<indexterm><primary>cross
-         compilation</primary></indexterm> straightforwardly if the
-         time-zone database does not need to be built during the
+         daylight-saving time rules change.  Another advantage is that
+         PostgreSQL can be cross-compiled<indexterm><primary>cross
+         compilation</primary></indexterm> more straightforwardly if the
+         time zone database files do not need to be built during the
          installation.
         </para>
        </listitem>
