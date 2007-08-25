@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.4 2007/08/25 02:29:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,30 +120,31 @@ dsynonym_init(PG_FUNCTION_ARGS)
 			/* Empty line */
 			goto skipline;
 		}
-		*end = '\0';
-		if (end >= line + strlen(line))
+		if (*end == '\0')
 		{
 			/* A line with only one word. Ignore silently. */
 			goto skipline;
 		}
+		*end = '\0';
 
 		starto = findwrd(end + 1, &end);
 		if (!starto)
 		{
-			/* A line with only one word. Ignore silently. */
+			/* A line with only one word (+whitespace). Ignore silently. */
 			goto skipline;
 		}
 		*end = '\0';
 
-		/* starti now points to the first word, and starto to the second
+		/*
+		 * starti now points to the first word, and starto to the second
 		 * word on the line, with a \0 terminator at the end of both words.
 		 */
 
-		if (cur == d->len)
+		if (cur >= d->len)
 		{
 			if (d->len == 0)
 			{
-				d->len = 16;
+				d->len = 64;
 				d->syn = (Syn *) palloc(sizeof(Syn) * d->len);
 			}
 			else
@@ -180,7 +181,8 @@ dsynonym_lexize(PG_FUNCTION_ARGS)
 			   *found;
 	TSLexeme   *res;
 
-	if (len <= 0)
+	/* note: d->len test protects against Solaris bsearch-of-no-items bug */
+	if (len <= 0 || d->len <= 0)
 		PG_RETURN_POINTER(NULL);
 
 	key.in = lowerstr_with_len(in, len);
