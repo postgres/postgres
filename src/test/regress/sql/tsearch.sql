@@ -81,8 +81,8 @@ SELECT * FROM ts_stat('SELECT a FROM test_tsvector', 'AB') ORDER BY ndoc DESC, n
 
 --dictionaries and to_tsvector
 
-SELECT ts_lexize('english', 'skies');
-SELECT ts_lexize('english', 'identity');
+SELECT ts_lexize('english_stem', 'skies');
+SELECT ts_lexize('english_stem', 'identity');
 
 SELECT * FROM ts_token_type('default');
 

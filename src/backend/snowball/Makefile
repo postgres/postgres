@@ -2,7 +2,7 @@
 #
 # Makefile for src/backend/snowball
 #
-# $PostgreSQL: pgsql/src/backend/snowball/Makefile,v 1.1 2007/08/21 01:11:15 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/snowball/Makefile,v 1.2 2007/08/25 01:06:24 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -47,6 +47,8 @@ OBJS= dict_snowball.o api.o utilities.o \
 	stem_UTF_8_turkish.o
 
 # second column is name of latin dictionary, if different
+# Note order dependency: use of some other language as latin dictionary
+# must come after creation of that language
 LANGUAGES=  \
 	danish		danish 		\
 	dutch 		dutch 		\
@@ -93,18 +95,19 @@ ifeq ($(enable_shared), yes)
 	while [ "$$#" -gt 0 ] ; \
 	do \
 		lang=$$1; shift; \
+		nonlatdictname=$$lang; \
+		latdictname=$$1; shift; \
 		if [ -s $(srcdir)/stopwords/$${lang}.stop ] ; then \
 			stop=", StopWords=$${lang}" ; \
 		else \
 			stop=""; \
 		fi; \
-		nonlatdictname=$$lang; \
-		latdictname=$$1; shift; \
 		cat $(srcdir)/snowball.sql.in | \
-			sed -e "s#_DICTNAME_#$$lang#g" | \
+			sed -e "s#_LANGNAME_#$$lang#g" | \
+			sed -e "s#_DICTNAME_#$${lang}_stem#g" | \
 			sed -e "s#_CFGNAME_#$$lang#g" | \
-			sed -e "s#_LATDICTNAME_#$$latdictname#g" | \
-			sed -e "s#_NONLATDICTNAME_#$$nonlatdictname#g" | \
+			sed -e "s#_LATDICTNAME_#$${latdictname}_stem#g" | \
+			sed -e "s#_NONLATDICTNAME_#$${nonlatdictname}_stem#g" | \
 			sed -e "s#_STOPWORDS_#$$stop#g" ; \
 	done >> $@
 else

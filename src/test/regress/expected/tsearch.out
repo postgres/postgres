@@ -195,13 +195,13 @@ SELECT * FROM ts_stat('SELECT a FROM test_tsvector', 'AB') ORDER BY ndoc DESC, n
 (1 row)
 
 --dictionaries and to_tsvector
-SELECT ts_lexize('english', 'skies');
+SELECT ts_lexize('english_stem', 'skies');
  ts_lexize 
 -----------
  {sky}
 (1 row)
 
-SELECT ts_lexize('english', 'identity');
+SELECT ts_lexize('english_stem', 'identity');
  ts_lexize 
 -----------
  {ident}
