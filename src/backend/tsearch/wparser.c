@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser.c,v 1.2 2007/08/22 01:39:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -300,7 +300,7 @@ ts_headline_byid_opt(PG_FUNCTION_ARGS)
 	text	   *in = PG_GETARG_TEXT_P(1);
 	TSQuery		query = PG_GETARG_TSQUERY(2);
 	text	   *opt = (PG_NARGS() > 3 && PG_GETARG_POINTER(3)) ? PG_GETARG_TEXT_P(3) : NULL;
-	HeadlineText prs;
+	HeadlineParsedText prs;
 	List	   *prsoptions;
 	text	   *out;
 	TSConfigCacheEntry *cfg;
@@ -309,9 +309,9 @@ ts_headline_byid_opt(PG_FUNCTION_ARGS)
 	cfg = lookup_ts_config_cache(PG_GETARG_OID(0));
 	prsobj = lookup_ts_parser_cache(cfg->prsId);
 
-	memset(&prs, 0, sizeof(HeadlineText));
+	memset(&prs, 0, sizeof(HeadlineParsedText));
 	prs.lenwords = 32;
-	prs.words = (HeadlineWord *) palloc(sizeof(HeadlineWord) * prs.lenwords);
+	prs.words = (HeadlineWordEntry *) palloc(sizeof(HeadlineWordEntry) * prs.lenwords);
 
 	hlparsetext(cfg->cfgId, &prs, query, VARDATA(in), VARSIZE(in) - VARHDRSZ);
 
@@ -325,7 +325,7 @@ ts_headline_byid_opt(PG_FUNCTION_ARGS)
 				  PointerGetDatum(prsoptions),
 				  PointerGetDatum(query));
 
-	out = generatHeadline(&prs);
+	out = generateHeadline(&prs);
 
 	PG_FREE_IF_COPY(in, 1);
 	PG_FREE_IF_COPY(query, 2);

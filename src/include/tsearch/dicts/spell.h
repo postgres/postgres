@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.1 2007/08/21 01:11:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.2 2007/08/25 00:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,12 +18,17 @@
 #include "tsearch/dicts/regis.h"
 #include "tsearch/ts_public.h"
 
+/*
+ * Max length of a flag name. Names longer than this will be truncated
+ * to the maximum. 
+ */
+#define MAXFLAGLEN 16
+
 struct SPNode;
 
 typedef struct
 {
-	uint32
-				val:8,
+	uint32		val:8,
 				isword:1,
 				compoundflag:4,
 				affix:19;
@@ -54,22 +59,25 @@ typedef struct spell_struct
 {
 	union
 	{
-		char		flag[16];
+		/*
+		 * flag is filled in by NIImportDictionary. After NISortDictionary,
+		 * d is valid and flag is invalid. 
+		 */
+		char		flag[MAXFLAGLEN];
 		struct
 		{
 			int			affix;
 			int			len;
 		}			d;
 	}			p;
-	char		word[1];
+	char		word[1]; /* variable length, null-terminated */
 } SPELL;
 
 #define SPELLHDRSZ	(offsetof(SPELL, word))
 
 typedef struct aff_struct
 {
-	uint32
-				flag:8,
+	uint32		flag:8,
 				type:1,
 				flagflags:7,
 				issimple:1,
@@ -85,11 +93,16 @@ typedef struct aff_struct
 } AFFIX;
 
 /*
- * affixes use deictinary flags too
+ * affixes use dictionary flags too
  */
 #define FF_COMPOUNDPERMITFLAG	0x10
 #define FF_COMPOUNDFORBIDFLAG	0x20
 #define FF_CROSSPRODUCT			0x40
+
+/*
+ * Don't change the order of these. Initialization sorts by these,
+ * and expects prefixes to come first after sorting.
+ */
 #define FF_SUFFIX				1
 #define FF_PREFIX				0
 
@@ -97,8 +110,7 @@ struct AffixNode;
 
 typedef struct
 {
-	uint32
-				val:8,
+	uint32		val:8,
 				naff:24;
 	AFFIX	  **aff;
 	struct AffixNode *node;
@@ -126,9 +138,13 @@ typedef struct
 	int			naffixes;
 	AFFIX	   *Affix;
 
-	int			nspell;
-	int			mspell;
+	/*
+	 * Temporary array of all words in the dict file. Only used during 
+	 * initialization
+	 */
 	SPELL	  **Spell;
+	int			nspell; /* number of valid entries in Spell array */
+	int			mspell; /* allocated length of Spell array */
 
 	AffixNode  *Suffix;
 	AffixNode  *Prefix;

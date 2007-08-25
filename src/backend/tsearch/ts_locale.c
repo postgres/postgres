@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.1 2007/08/21 01:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_locale.c,v 1.2 2007/08/25 00:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,28 +125,47 @@ _t_isprint(const char *ptr)
 }
 #endif   /* TS_USE_WIDE */
 
+
 /*
- * Convert C-string from UTF8 to server encoding and
- * lower it
+ * Read the next line from a tsearch data file (expected to be in UTF-8), and
+ * convert it to database encoding if needed. The returned string is palloc'd.
+ * NULL return means EOF.
  */
 char *
-recode_and_lowerstr(char *str)
+t_readline(FILE *fp)
 {
-	char	   *recoded;
-	char	   *ret;
+	int len;
+	char *recoded;
+	char buf[4096];		/* lines must not be longer than this */
+	
+	if (fgets(buf, sizeof(buf), fp) == NULL)
+		return NULL;
 
-	recoded = (char *) pg_do_encoding_conversion((unsigned char *) str, strlen(str),
-											 PG_UTF8, GetDatabaseEncoding());
+	len = strlen(buf);
 
-	if (recoded == NULL)
+	/* Make sure the input is valid UTF-8 */
+	(void) pg_verify_mbstr(PG_UTF8, buf, len, false);
+
+	/* And convert */
+	recoded = (char *) pg_do_encoding_conversion((unsigned char *) buf,
+												 len,
+												 PG_UTF8,
+												 GetDatabaseEncoding());
+
+	if (recoded == NULL)		/* should not happen */
 		elog(ERROR, "encoding conversion failed");
 
-	ret = lowerstr(recoded);
+	if (recoded == buf)
+	{
+		/*
+		 * conversion didn't pstrdup, so we must.
+		 * We can use the length of the original string, because
+		 * no conversion was done.
+		 */
+		recoded = pnstrdup(recoded, len);
+	}
 
-	if (recoded != str)
-		pfree(recoded);
-
-	return ret;
+	return recoded;
 }
 
 char *
@@ -155,6 +174,9 @@ lowerstr(char *str)
 	return lowerstr_with_len(str, strlen(str));
 }
 
+/*
+ * Returned string is palloc'd
+ */
 char *
 lowerstr_with_len(char *str, int len)
 {

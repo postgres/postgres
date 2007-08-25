@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.2 2007/08/22 01:39:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,10 +170,10 @@ static void
 thesaurusRead(char *filename, DictThesaurus * d)
 {
 	FILE	   *fh;
-	char		str[BUFSIZ];
 	int			lineno = 0;
 	uint16		idsubst = 0;
 	bool		useasis = false;
+	char	   *line;
 
 	filename = get_tsearch_config_filename(filename, "ths");
 	fh = AllocateFile(filename, "r");
@@ -183,27 +183,28 @@ thesaurusRead(char *filename, DictThesaurus * d)
 				 errmsg("could not open thesaurus file \"%s\": %m",
 						filename)));
 
-	while (fgets(str, sizeof(str), fh))
+	while ((line = t_readline(fh)) != NULL)
 	{
-		char	   *ptr,
-				   *recoded;
+		char	   *ptr;
 		int			state = TR_WAITLEX;
 		char	   *beginwrd = NULL;
 		uint16		posinsubst = 0;
 		uint16		nwrd = 0;
 
-		ptr = recoded = (char *) pg_do_encoding_conversion((unsigned char *) str, strlen(str),
-											 GetDatabaseEncoding(), PG_UTF8);
-		if (recoded == NULL)
-			elog(ERROR, "encoding conversion failed");
-
 		lineno++;
 
-		/* is it comment ? */
-		while (t_isspace(ptr))
+		ptr = line;
+
+		/* is it a comment? */
+		while (*ptr && t_isspace(ptr))
 			ptr += pg_mblen(ptr);
-		if (t_iseq(recoded, '#') || *recoded == '\0' || t_iseq(recoded, '\n') || t_iseq(recoded, '\r'))
+
+		if (t_iseq(ptr, '#') || *ptr == '\0' ||
+			t_iseq(ptr, '\n') || t_iseq(ptr, '\r'))
+		{
+			pfree(line);
 			continue;
+		}
 
 		while (*ptr)
 		{
@@ -301,8 +302,7 @@ thesaurusRead(char *filename, DictThesaurus * d)
 							lineno, filename)));
 		}
 
-		if (recoded != str)
-			pfree(recoded);
+		pfree(line);
 	}
 
 	d->nsubst = idsubst;

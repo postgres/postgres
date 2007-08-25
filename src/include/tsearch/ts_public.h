@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.2 2007/08/22 01:39:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.3 2007/08/25 00:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,12 +71,11 @@ typedef struct
 {
 	int			len;
 	char	  **stop;
-	char	   *(*wordop) (char *);
 } StopList;
 
-extern void sortstoplist(StopList * s);
-extern void readstoplist(char *in, StopList * s);
-extern bool searchstoplist(StopList * s, char *key);
+extern void readstoplist(const char *fname, StopList *s,
+						 char *(*wordop) (char *));
+extern bool searchstoplist(StopList *s, char *key);
 
 /*
  * Interface with dictionaries
@@ -102,9 +101,8 @@ typedef struct
 #define TSL_ADDPOS		0x01
 
 /*
- * Struct for supporting complex dictionaries like
- * thesaurus, pointer to is an 4-th argument for
- * dictlexize method
+ * Struct for supporting complex dictionaries like thesaurus.
+ * 4th argument for dictlexize method is a pointer to this
  */
 typedef struct
 {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_utils.c,v 1.2 2007/08/22 01:39:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_utils.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,21 +63,29 @@ get_tsearch_config_filename(const char *basename,
 	return result;
 }
 
-#define STOPBUFLEN	4096
+static int
+comparestr(const void *a, const void *b)
+{
+	return strcmp(*(char **) a, *(char **) b);
+}
 
+/*
+ * Reads a stopword file. Each word is run through 'wordop'
+ * function, if given.  wordop may either modify the input in-place,
+ * or palloc a new version.
+ */
 void
-readstoplist(char *in, StopList * s)
+readstoplist(const char *fname, StopList *s, char *(*wordop) (char *))
 {
 	char	  **stop = NULL;
 
 	s->len = 0;
-	if (in && *in)
+	if (fname && *fname)
 	{
-		char	   *filename = get_tsearch_config_filename(in, "stop");
+		char	   *filename = get_tsearch_config_filename(fname, "stop");
 		FILE	   *hin;
-		char		buf[STOPBUFLEN];
+		char	   *line;
 		int			reallen = 0;
-		int			line = 0;
 
 		if ((hin = AllocateFile(filename, "r")) == NULL)
 			ereport(ERROR,
@@ -85,65 +93,56 @@ readstoplist(char *in, StopList * s)
 					 errmsg("could not open stopword file \"%s\": %m",
 							filename)));
 
-		while (fgets(buf, STOPBUFLEN, hin))
+		while ((line = t_readline(hin)) != NULL)
 		{
-			char	   *pbuf = buf;
+			char *pbuf = line;
 
-			line++;
-			while (*pbuf && !isspace(*pbuf))
+			/* Trim trailing space */
+			while (*pbuf && !t_isspace(pbuf))
 				pbuf++;
 			*pbuf = '\0';
 
-			if (*buf == '\0')
-				continue;
-
-			if (!pg_verifymbstr(buf, strlen(buf), true))
+			/* Skip empty lines */
+			if (*line == '\0')
 			{
-				FreeFile(hin);
-				ereport(ERROR,
-						(errcode(ERRCODE_CHARACTER_NOT_IN_REPERTOIRE),
-						 errmsg("invalid multibyte encoding at line %d in file \"%s\"",
-								line, filename)));
+				pfree(line);
+				continue;
 			}
 
 			if (s->len >= reallen)
 			{
 				if (reallen == 0)
 				{
-					reallen = 16;
+					reallen = 64;
 					stop = (char **) palloc(sizeof(char *) * reallen);
 				}
 				else
 				{
 					reallen *= 2;
-					stop = (char **) repalloc((void *) stop, sizeof(char *) * reallen);
+					stop = (char **) repalloc((void *) stop,
+											  sizeof(char *) * reallen);
 				}
 			}
 
-
-			if (s->wordop)
-				stop[s->len] = s->wordop(buf);
+			if (wordop)
+			{
+				stop[s->len] = wordop(line);
+				if (stop[s->len] != line)
+					pfree(line);
+			}
 			else
-				stop[s->len] = pstrdup(buf);
+				stop[s->len] = line;
 
 			(s->len)++;
 		}
+
 		FreeFile(hin);
 		pfree(filename);
 	}
 
 	s->stop = stop;
-}
 
-static int
-comparestr(const void *a, const void *b)
-{
-	return strcmp(*(char **) a, *(char **) b);
-}
-
-void
-sortstoplist(StopList * s)
-{
+	/* Sort to allow binary searching */
 	if (s->stop && s->len > 0)
 		qsort(s->stop, s->len, sizeof(char *), comparestr);
 }

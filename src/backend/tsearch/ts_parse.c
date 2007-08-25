@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.1 2007/08/21 01:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.2 2007/08/25 00:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,7 +308,7 @@ LexizeExec(LexizeData * ld, ParsedLex ** correspondLexem)
 			{
 				/*
 				 * Dictionary normalizes lexemes, so we remove from stack all
-				 * used lexemes , return to basic mode and redo end of stack
+				 * used lexemes, return to basic mode and redo end of stack
 				 * (if it exists)
 				 */
 				if (res)
@@ -427,14 +427,14 @@ parsetext(Oid cfgId, ParsedText * prs, char *buf, int4 buflen)
  * Headline framework
  */
 static void
-hladdword(HeadlineText * prs, char *buf, int4 buflen, int type)
+hladdword(HeadlineParsedText * prs, char *buf, int4 buflen, int type)
 {
 	while (prs->curwords >= prs->lenwords)
 	{
 		prs->lenwords *= 2;
-		prs->words = (HeadlineWord *) repalloc((void *) prs->words, prs->lenwords * sizeof(HeadlineWord));
+		prs->words = (HeadlineWordEntry *) repalloc((void *) prs->words, prs->lenwords * sizeof(HeadlineWordEntry));
 	}
-	memset(&(prs->words[prs->curwords]), 0, sizeof(HeadlineWord));
+	memset(&(prs->words[prs->curwords]), 0, sizeof(HeadlineWordEntry));
 	prs->words[prs->curwords].type = (uint8) type;
 	prs->words[prs->curwords].len = buflen;
 	prs->words[prs->curwords].word = palloc(buflen);
@@ -443,16 +443,16 @@ hladdword(HeadlineText * prs, char *buf, int4 buflen, int type)
 }
 
 static void
-hlfinditem(HeadlineText * prs, TSQuery query, char *buf, int buflen)
+hlfinditem(HeadlineParsedText * prs, TSQuery query, char *buf, int buflen)
 {
 	int			i;
 	QueryItem  *item = GETQUERY(query);
-	HeadlineWord *word;
+	HeadlineWordEntry *word;
 
 	while (prs->curwords + query->size >= prs->lenwords)
 	{
 		prs->lenwords *= 2;
-		prs->words = (HeadlineWord *) repalloc((void *) prs->words, prs->lenwords * sizeof(HeadlineWord));
+		prs->words = (HeadlineWordEntry *) repalloc((void *) prs->words, prs->lenwords * sizeof(HeadlineWordEntry));
 	}
 
 	word = &(prs->words[prs->curwords - 1]);
@@ -462,7 +462,7 @@ hlfinditem(HeadlineText * prs, TSQuery query, char *buf, int buflen)
 		{
 			if (word->item)
 			{
-				memcpy(&(prs->words[prs->curwords]), word, sizeof(HeadlineWord));
+				memcpy(&(prs->words[prs->curwords]), word, sizeof(HeadlineWordEntry));
 				prs->words[prs->curwords].item = item;
 				prs->words[prs->curwords].repeated = 1;
 				prs->curwords++;
@@ -475,7 +475,7 @@ hlfinditem(HeadlineText * prs, TSQuery query, char *buf, int buflen)
 }
 
 static void
-addHLParsedLex(HeadlineText * prs, TSQuery query, ParsedLex * lexs, TSLexeme * norms)
+addHLParsedLex(HeadlineParsedText * prs, TSQuery query, ParsedLex * lexs, TSLexeme * norms)
 {
 	ParsedLex  *tmplexs;
 	TSLexeme   *ptr;
@@ -511,7 +511,7 @@ addHLParsedLex(HeadlineText * prs, TSQuery query, ParsedLex * lexs, TSLexeme * n
 }
 
 void
-hlparsetext(Oid cfgId, HeadlineText * prs, TSQuery query, char *buf, int4 buflen)
+hlparsetext(Oid cfgId, HeadlineParsedText * prs, TSQuery query, char *buf, int4 buflen)
 {
 	int			type,
 				lenlemm;
@@ -571,12 +571,12 @@ hlparsetext(Oid cfgId, HeadlineText * prs, TSQuery query, char *buf, int4 buflen
 }
 
 text *
-generatHeadline(HeadlineText * prs)
+generateHeadline(HeadlineParsedText * prs)
 {
 	text	   *out;
 	int			len = 128;
 	char	   *ptr;
-	HeadlineWord *wrd = prs->words;
+	HeadlineWordEntry *wrd = prs->words;
 
 	out = (text *) palloc(len);
 	ptr = ((char *) out) + VARHDRSZ;

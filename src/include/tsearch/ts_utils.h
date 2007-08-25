@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.1 2007/08/21 01:11:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.2 2007/08/25 00:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -13,6 +13,7 @@
 #define _PG_TS_UTILS_H_
 
 #include "tsearch/ts_type.h"
+#include "tsearch/ts_public.h"
 
 /*
  * Common parse definitions for tsvector and tsquery
@@ -38,7 +39,8 @@ typedef struct
 
 extern bool gettoken_tsvector(TSVectorParseState *state);
 
-struct ParseQueryNode;
+struct ParseQueryNode;			/* private in backend/utils/adt/tsquery.c */
+
 typedef struct
 {
 	char	   *buffer;			/* entire string we are scanning */
@@ -46,7 +48,7 @@ typedef struct
 	int4		state;
 	int4		count;
 
-	/* reverse polish notation in list (for temprorary usage) */
+	/* reverse polish notation in list (for temporary usage) */
 	struct ParseQueryNode *str;
 
 	/* number in str */
@@ -102,36 +104,12 @@ extern void parsetext(Oid cfgId, ParsedText * prs, char *buf, int4 buflen);
  * headline framework, flow in common to generate:
  *	1 parse text with hlparsetext
  *	2 parser-specific function to find part
- *	3 generatHeadline to generate result text
+ *	3 generateHeadline to generate result text
  */
 
-typedef struct
-{
-	uint32		selected:1,
-				in:1,
-				replace:1,
-				repeated:1,
-				unused:4,
-				type:8,
-				len:16;
-	char	   *word;
-	QueryItem  *item;
-} HeadlineWord;
-
-typedef struct
-{
-	HeadlineWord *words;
-	int4		lenwords;
-	int4		curwords;
-	char	   *startsel;
-	char	   *stopsel;
-	int2		startsellen;
-	int2		stopsellen;
-} HeadlineText;
-
-extern void hlparsetext(Oid cfgId, HeadlineText * prs, TSQuery query,
+extern void hlparsetext(Oid cfgId, HeadlineParsedText * prs, TSQuery query,
 			char *buf, int4 buflen);
-extern text *generatHeadline(HeadlineText * prs);
+extern text *generateHeadline(HeadlineParsedText * prs);
 
 /*
  * token/node types for parsing

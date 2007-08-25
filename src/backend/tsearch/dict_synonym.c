@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.2 2007/08/22 04:13:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_synonym.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,9 +20,6 @@
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
 
-
-#define SYNBUFLEN	4096
-
 typedef struct
 {
 	char	   *in;
@@ -31,23 +28,34 @@ typedef struct
 
 typedef struct
 {
-	int			len;
+	int			len;	/* length of syn array */
 	Syn		   *syn;
 } DictSyn;
 
+/*
+ * Finds the next whitespace-delimited word within the 'in' string.
+ * Returns a pointer to the first character of the word, and a pointer
+ * to the next byte after the last character in the word (in *end).
+ */
 static char *
 findwrd(char *in, char **end)
 {
 	char	   *start;
 
-	*end = NULL;
+	/* Skip leading spaces */
 	while (*in && t_isspace(in))
 		in += pg_mblen(in);
 
+	/* Return NULL on empty lines */
 	if (*in == '\0')
+	{
+		*end = NULL;
 		return NULL;
+	}
+
 	start = in;
 
+	/* Find end of word */
 	while (*in && !t_isspace(in))
 		in += pg_mblen(in);
 
@@ -70,12 +78,11 @@ dsynonym_init(PG_FUNCTION_ARGS)
 	ListCell   *l;
 	char	   *filename = NULL;
 	FILE	   *fin;
-	char		buf[SYNBUFLEN];
 	char	   *starti,
 			   *starto,
 			   *end = NULL;
 	int			cur = 0;
-	int			slen;
+	char	   *line = NULL;
 
 	foreach(l, dictoptions)
 	{
@@ -105,10 +112,33 @@ dsynonym_init(PG_FUNCTION_ARGS)
 
 	d = (DictSyn *) palloc0(sizeof(DictSyn));
 
-	while (fgets(buf, SYNBUFLEN, fin))
+	while ((line = t_readline(fin)) != NULL)
 	{
-		slen = strlen(buf);
-		pg_verifymbstr(buf, slen, false);
+		starti = findwrd(line, &end);
+		if (!starti)
+		{
+			/* Empty line */
+			goto skipline;
+		}
+		*end = '\0';
+		if (end >= line + strlen(line))
+		{
+			/* A line with only one word. Ignore silently. */
+			goto skipline;
+		}
+
+		starto = findwrd(end + 1, &end);
+		if (!starto)
+		{
+			/* A line with only one word. Ignore silently. */
+			goto skipline;
+		}
+		*end = '\0';
+
+		/* starti now points to the first word, and starto to the second
+		 * word on the line, with a \0 terminator at the end of both words.
+		 */
+
 		if (cur == d->len)
 		{
 			if (d->len == 0)
@@ -123,36 +153,19 @@ dsynonym_init(PG_FUNCTION_ARGS)
 			}
 		}
 
-		starti = findwrd(buf, &end);
-		if (!starti)
-			continue;
-		*end = '\0';
-		if (end >= buf + slen)
-			continue;
-
-		starto = findwrd(end + 1, &end);
-		if (!starto)
-			continue;
-		*end = '\0';
-
-		d->syn[cur].in = recode_and_lowerstr(starti);
-		d->syn[cur].out = recode_and_lowerstr(starto);
-		if (!(d->syn[cur].in && d->syn[cur].out))
-		{
-			FreeFile(fin);
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
-		}
+		d->syn[cur].in = lowerstr(starti);
+		d->syn[cur].out = lowerstr(starto);
 
 		cur++;
+
+	skipline:
+		pfree(line);
 	}
 
 	FreeFile(fin);
 
 	d->len = cur;
-	if (cur > 1)
-		qsort(d->syn, d->len, sizeof(Syn), compareSyn);
+	qsort(d->syn, d->len, sizeof(Syn), compareSyn);
 
 	PG_RETURN_POINTER(d);
 }
@@ -179,8 +192,7 @@ dsynonym_lexize(PG_FUNCTION_ARGS)
 	if (!found)
 		PG_RETURN_POINTER(NULL);
 
-	res = palloc(sizeof(TSLexeme) * 2);
-	memset(res, 0, sizeof(TSLexeme) * 2);
+	res = palloc0(sizeof(TSLexeme) * 2);
 	res[0].lexeme = pstrdup(found->out);
 
 	PG_RETURN_POINTER(res);

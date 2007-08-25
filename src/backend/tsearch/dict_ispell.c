@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_ispell.c,v 1.2 2007/08/22 01:39:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_ispell.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,6 @@ dispell_init(PG_FUNCTION_ARGS)
 	ListCell   *l;
 
 	d = (DictISpell *) palloc0(sizeof(DictISpell));
-	d->stoplist.wordop = recode_and_lowerstr;
 
 	foreach(l, dictoptions)
 	{
@@ -73,8 +72,7 @@ dispell_init(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple StopWords parameters")));
-			readstoplist(defGetString(defel), &(d->stoplist));
-			sortstoplist(&(d->stoplist));
+			readstoplist(defGetString(defel), &(d->stoplist), lowerstr);
 			stoploaded = true;
 		}
 		else

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/snowball/dict_snowball.c,v 1.2 2007/08/22 01:39:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/snowball/dict_snowball.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +192,6 @@ dsnowball_init(PG_FUNCTION_ARGS)
 	ListCell   *l;
 
 	d = (DictSnowball *) palloc0(sizeof(DictSnowball));
-	d->stoplist.wordop = recode_and_lowerstr;
 
 	foreach(l, dictoptions)
 	{
@@ -204,8 +203,7 @@ dsnowball_init(PG_FUNCTION_ARGS)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("multiple StopWords parameters")));
-			readstoplist(defGetString(defel), &d->stoplist);
-			sortstoplist(&d->stoplist);
+			readstoplist(defGetString(defel), &d->stoplist, lowerstr);
 			stoploaded = true;
 		}
 		else if (pg_strcasecmp("Language", defel->defname) == 0)
