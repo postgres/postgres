@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.134.2.2 2006/02/10 19:01:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.134.2.3 2007/08/25 19:08:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -365,8 +365,6 @@ DefineIndex(RangeVar *heapRelation,
 					  relationId, accessMethodName, accessMethodId,
 					  isconstraint);
 
-	heap_close(rel, NoLock);
-
 	/*
 	 * Report index creation if appropriate (delay this till after most of the
 	 * error checks)
@@ -377,6 +375,8 @@ DefineIndex(RangeVar *heapRelation,
 				  is_alter_table ? "ALTER TABLE / ADD" : "CREATE TABLE /",
 				  primary ? "PRIMARY KEY" : "UNIQUE",
 				  indexRelationName, RelationGetRelationName(rel))));
+
+	heap_close(rel, NoLock);
 
 	index_create(relationId, indexRelationName, indexRelationId,
 				 indexInfo, accessMethodId, tablespaceId, classObjectId,
