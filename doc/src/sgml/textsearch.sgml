@@ -210,9 +210,9 @@ SELECT 'a:1 fat:2 cat:3 sat:4 on:5 a:6 mat:7 and:8 ate:9 a:10 fat:11 rat:12'::ts
  'a':1,6,10 'on':5 'and':8 'ate':9 'cat':3 'fat':2,11 'mat':7 'rat':12 'sat':4
 </programlisting>
 
-Each lexeme position also can be labeled as <literal>'A'</literal>,
-<literal>'B'</literal>, <literal>'C'</literal>, <literal>'D'</literal>,
-where <literal>'D'</literal> is the default. These labels can be used to group
+Each lexeme position also can be labeled as <literal>A</literal>,
+<literal>B</literal>, <literal>C</literal>, <literal>D</literal>,
+where <literal>D</literal> is the default. These labels can be used to group
 lexemes into different <emphasis>importance</emphasis> or
 <emphasis>rankings</emphasis>, for example to reflect document structure.
 Actual values can be assigned at search time and used during the calculation
@@ -668,9 +668,9 @@ setweight(<replaceable class="PARAMETER">vector</replaceable> TSVECTOR, <replace
 <listitem>
 <para>
 This function returns a copy of the input vector in which every location
-has been labeled with either the letter <literal>'A'</literal>,
-<literal>'B'</literal>, or <literal>'C'</literal>, or the default label
-<literal>'D'</literal> (which is the default for new vectors
+has been labeled with either the letter <literal>A</literal>,
+<literal>B</literal>, or <literal>C</literal>, or the default label
+<literal>D</literal> (which is the default for new vectors
 and as such is usually not displayed). These labels are retained
 when vectors are concatenated, allowing words from different parts of a
 document to be weighted differently by ranking functions.
@@ -807,13 +807,12 @@ to be made.
 
 <varlistentry>
 <indexterm zone="textsearch-tsvector">
-<primary>stat</primary>
+<primary>ts_stat</primary>
 </indexterm>
 
 <term>
 <synopsis>
-stat(<optional><replaceable class="PARAMETER">sqlquery</replaceable> text </optional>, <optional>weight text </optional>) returns SETOF statinfo
-<!-- TODO I guess that not both of the arguments are optional? -->
+ts_stat(<replaceable class="PARAMETER">sqlquery</replaceable> text <optional>, <replaceable class="PARAMETER">weights</replaceable> text </optional>) returns SETOF statinfo
 </synopsis>
 </term>
 
@@ -821,27 +820,27 @@ stat(<optional><replaceable class="PARAMETER">sqlquery</replaceable> text </opti
 <para>
 Here <type>statinfo</type> is a type, defined as:
 <programlisting>
-CREATE TYPE statinfo AS (word text, ndoc int4, nentry int4);
+CREATE TYPE statinfo AS (word text, ndoc integer, nentry integer);
 </programlisting>
-and <replaceable>sqlquery</replaceable> is a query which returns a
-<type>tsvector</type> column's contents.  <function>stat</> returns
-statistics about a <type>tsvector</type> column, i.e., the number of
-documents, <literal>ndoc</>, and the total number of words in the
-collection, <literal>nentry</>.  It is useful for checking your
-configuration and to find stop word candidates.  For example, to find
-the ten most frequent words:
+and <replaceable>sqlquery</replaceable> is a text value containing a SQL query
+which returns a single <type>tsvector</type> column.  <function>ts_stat</>
+executes the query and returns statistics about the resulting
+<type>tsvector</type> data, i.e., the number of documents, <literal>ndoc</>,
+and the total number of words in the collection, <literal>nentry</>.  It is
+useful for checking your configuration and to find stop word candidates.  For
+example, to find the ten most frequent words:
 
 <programlisting>
-SELECT * FROM stat('SELECT vector from apod')
+SELECT * FROM ts_stat('SELECT vector from apod')
 ORDER BY ndoc DESC, nentry DESC, word
 LIMIT 10;
 </programlisting>
 
-Optionally, one can specify <replaceable>weight</replaceable> to obtain
+Optionally, one can specify <replaceable>weights</replaceable> to obtain
 statistics about words with a specific <replaceable>weight</replaceable>:
 
 <programlisting>
-SELECT * FROM stat('SELECT vector FROM apod','a')
+SELECT * FROM ts_stat('SELECT vector FROM apod','a')
 ORDER BY ndoc DESC, nentry DESC, word
 LIMIT 10;
 </programlisting>
@@ -1146,9 +1145,9 @@ topic.
 </para>
 
 <para>
-The <function>rewrite()</function> function changes the original query by
+The <function>ts_rewrite()</function> function changes the original query by
 replacing part of the query with some other string of type <type>tsquery</type>,
-as defined by the rewrite rule. Arguments to <function>rewrite()</function>
+as defined by the rewrite rule. Arguments to <function>ts_rewrite()</function>
 can be names of columns of type <type>tsquery</type>.
 </para>
 
@@ -1161,20 +1160,20 @@ INSERT INTO aliases VALUES('a', 'c');
 <varlistentry>
 
 <indexterm zone="textsearch-tsquery">
-<primary>rewrite - 1</primary>
+<primary>ts_rewrite</primary>
 </indexterm>
 
 <term>
 <synopsis>
-rewrite (<replaceable class="PARAMETER">query</replaceable> TSQUERY, <replaceable class="PARAMETER">target</replaceable> TSQUERY, <replaceable class="PARAMETER">sample</replaceable> TSQUERY) returns TSQUERY
+ts_rewrite (<replaceable class="PARAMETER">query</replaceable> TSQUERY, <replaceable class="PARAMETER">target</replaceable> TSQUERY, <replaceable class="PARAMETER">sample</replaceable> TSQUERY) returns TSQUERY
 </synopsis>
 </term>
 
 <listitem>
 <para>
 <programlisting>
-SELECT rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
-  rewrite
+SELECT ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
+  ts_rewrite
   -----------
    'b' &amp; 'c'
 </programlisting>
@@ -1184,21 +1183,17 @@ SELECT rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
 
 <varlistentry>
 
-<indexterm zone="textsearch-tsquery">
-<primary>rewrite - 2</primary>
-</indexterm>
-
 <term>
 <synopsis>
-rewrite(ARRAY[<replaceable class="PARAMETER">query</replaceable> TSQUERY, <replaceable class="PARAMETER">target</replaceable> TSQUERY, <replaceable class="PARAMETER">sample</replaceable> TSQUERY]) returns TSQUERY
+ts_rewrite(ARRAY[<replaceable class="PARAMETER">query</replaceable> TSQUERY, <replaceable class="PARAMETER">target</replaceable> TSQUERY, <replaceable class="PARAMETER">sample</replaceable> TSQUERY]) returns TSQUERY
 </synopsis>
 </term>
 
 <listitem>
 <para>
 <programlisting>
-SELECT rewrite(ARRAY['a &amp; b'::tsquery, t,s]) FROM aliases;
-  rewrite
+SELECT ts_rewrite(ARRAY['a &amp; b'::tsquery, t,s]) FROM aliases;
+  ts_rewrite
   -----------
    'b' &amp; 'c'
 </programlisting>
@@ -1208,21 +1203,17 @@ SELECT rewrite(ARRAY['a &amp; b'::tsquery, t,s]) FROM aliases;
 
 <varlistentry>
 
-<indexterm zone="textsearch-tsquery">
-<primary>rewrite - 3</primary>
-</indexterm>
-
 <term>
 <synopsis>
-rewrite (<replaceable class="PARAMETER">query</> TSQUERY,<literal>'SELECT target ,sample FROM test'</literal>::text) returns TSQUERY
+ts_rewrite (<replaceable class="PARAMETER">query</> TSQUERY,<literal>'SELECT target ,sample FROM test'</literal>::text) returns TSQUERY
 </synopsis>
 </term>
 
 <listitem>
 <para>
 <programlisting>
-SELECT rewrite('a &amp; b'::tsquery, 'SELECT t,s FROM aliases');
-  rewrite
+SELECT ts_rewrite('a &amp; b'::tsquery, 'SELECT t,s FROM aliases');
+  ts_rewrite
   -----------
    'b' &amp; 'c'
 </programlisting>
@@ -1246,12 +1237,12 @@ SELECT * FROM aliases;
 </programlisting>
 This ambiguity can be resolved by specifying a sort order:
 <programlisting>
-SELECT rewrite('a &amp; b', 'SELECT t, s FROM aliases ORDER BY t DESC');
- rewrite
+SELECT ts_rewrite('a &amp; b', 'SELECT t, s FROM aliases ORDER BY t DESC');
+ ts_rewrite
 ---------
  'cc'
-SELECT rewrite('a &amp; b', 'SELECT t, s FROM aliases ORDER BY t ASC');
-  rewrite
+SELECT ts_rewrite('a &amp; b', 'SELECT t, s FROM aliases ORDER BY t ASC');
+  ts_rewrite
 -----------
  'b' &amp; 'c'
 </programlisting>
@@ -1263,7 +1254,7 @@ Let's consider a real-life astronomical example. We'll expand query
 <programlisting>
 CREATE TABLE aliases (t tsquery primary key, s tsquery);
 INSERT INTO aliases VALUES(to_tsquery('supernovae'), to_tsquery('supernovae|sn'));
-SELECT rewrite(to_tsquery('supernovae'),  'SELECT * FROM aliases') &amp;&amp; to_tsquery('crab');
+SELECT ts_rewrite(to_tsquery('supernovae'),  'SELECT * FROM aliases') &amp;&amp; to_tsquery('crab');
             ?column?
 ---------------------------------
  ( 'supernova' | 'sn' ) &amp; 'crab'
@@ -1271,7 +1262,7 @@ SELECT rewrite(to_tsquery('supernovae'),  'SELECT * FROM aliases') &amp;&amp; to
 Notice, that we can change the rewriting rule online<!-- TODO maybe use another word for "online"? -->:
 <programlisting>
 UPDATE aliases SET s=to_tsquery('supernovae|sn &amp; !nebulae') WHERE t=to_tsquery('supernovae');
-SELECT rewrite(to_tsquery('supernovae'),  'SELECT * FROM aliases') &amp;&amp; to_tsquery('crab');
+SELECT ts_rewrite(to_tsquery('supernovae'),  'SELECT * FROM aliases') &amp;&amp; to_tsquery('crab');
                   ?column?
 ---------------------------------------------
  ( 'supernova' | 'sn' &amp; !'nebula' ) &amp; 'crab'
@@ -1288,10 +1279,10 @@ for a possible hit. To filter out obvious non-candidate rules there are containm
 operators for the <type>tsquery</type> type. In the example below, we select only those
 rules which might contain the original query:
 <programlisting>
-SELECT rewrite(ARRAY['a &amp; b'::tsquery, t,s])
+SELECT ts_rewrite(ARRAY['a &amp; b'::tsquery, t,s])
 FROM aliases
 WHERE 'a &amp; b' @> t;
-  rewrite
+  ts_rewrite
 -----------
  'b' &amp; 'c'
 </programlisting>
@@ -1525,7 +1516,7 @@ SELECT * FROM ts_parse('default','123 - a number');
 
 <varlistentry>
 <indexterm zone="textsearch-parser">
-<primary>token_type</primary>
+<primary>ts_token_type</primary>
 </indexterm>
 
 <term>
@@ -1894,11 +1885,13 @@ configuration <replaceable>config_name</replaceable><!-- TODO I don't get this -
 <title>Dictionaries</title>
 
 <para>
-Dictionaries are used to specify words that should not be considered in
-a search and for the normalization of words to allow the user to use any
-derived form of a word in a query. Also, normalization can reduce the size of
-<type>tsvector</type>. Normalization does not always have linguistic
-meaning and usually depends on application semantics.
+Dictionaries are used to eliminate words that should not be considered in a
+search (<firstterm>stop words</>), and to <firstterm>normalize</> words so
+that different derived forms of the same word will match.  Aside from
+improving search quality, normalization and removal of stop words reduce the
+size of the <type>tsvector</type> representation of a document, thereby
+improving performance.  Normalization does not always have linguistic meaning
+and usually depends on application semantics.
 </para>
 
 <para>
@@ -1954,10 +1947,6 @@ a void array if the dictionary knows the lexeme, but it is a stop word
 <literal>NULL</literal> if the dictionary does not recognize the input lexeme
 </para></listitem>
 </itemizedlist>
-
-<emphasis>WARNING:</emphasis>
-Data files used by dictionaries should be in the <varname>server_encoding</varname>
-so all encodings are consistent across databases.
 </para>
 
 <para>
@@ -1987,7 +1976,8 @@ recognizes everything.  For example, for an astronomy-specific search
 terms, a general English dictionary and a <application>snowball</> English
 stemmer:
 <programlisting>
-ALTER TEXT SEARCH CONFIGURATION astro_en ADD MAPPING FOR lword WITH astrosyn, en_ispell, en_stem;
+ALTER TEXT SEARCH CONFIGURATION astro_en
+    ADD MAPPING FOR lword WITH astrosyn, english_ispell, english_stem;
 </programlisting>
 </para>
 
@@ -1995,7 +1985,7 @@ ALTER TEXT SEARCH CONFIGURATION astro_en ADD MAPPING FOR lword WITH astrosyn, en
 Function <function>ts_lexize</function> can be used to test dictionaries,
 for example:
 <programlisting>
-SELECT ts_lexize('en_stem', 'stars');
+SELECT ts_lexize('english_stem', 'stars');
  ts_lexize
 -----------
  {star}
@@ -2068,6 +2058,15 @@ SELECT ts_lexize('public.simple_dict','The');
 </programlisting>
 </para>
 
+<caution>
+<para>
+Most types of dictionaries rely on configuration files, such as files of stop
+words.  These files <emphasis>must</> be stored in UTF-8 encoding.  They will
+be translated to the actual database encoding, if that is different, when they
+are read into the server.
+</para>
+</caution>
+
 </sect2>
 
 
@@ -2080,23 +2079,25 @@ word with a synonym. Phrases are not supported (use the thesaurus
 dictionary (<xref linkend="textsearch-thesaurus">) for that).  A synonym
 dictionary can be used to overcome linguistic problems, for example, to
 prevent an English stemmer dictionary from reducing the word 'Paris' to
-'pari'.  In that case, it is enough to have a <literal>Paris
-paris</literal> line in the synonym dictionary and put it before the
-<literal>en_stem</> dictionary:
+'pari'.  It is enough to have a <literal>Paris paris</literal> line in the
+synonym dictionary and put it before the <literal>english_stem</> dictionary:
 <programlisting>
 SELECT * FROM ts_debug('english','Paris');
- Alias | Description | Token | Dictionaries |  Lexized token  
--------+-------------+-------+--------------+-----------------
- lword | Latin word  | Paris | {english}    | english: {pari}
+ Alias | Description | Token |  Dictionaries  |    Lexized token     
+-------+-------------+-------+----------------+----------------------
+ lword | Latin word  | Paris | {english_stem} | english_stem: {pari}
 (1 row)
 
+CREATE TEXT SEARCH DICTIONARY synonym
+    (TEMPLATE = synonym, SYNONYMS = my_synonyms);
+
 ALTER TEXT SEARCH CONFIGURATION english
-    ADD MAPPING FOR lword WITH synonym, en_stem;
+    ALTER MAPPING FOR lword WITH synonym, english_stem;
 
 SELECT * FROM ts_debug('english','Paris');
- Alias | Description | Token |    Dictionaries   |   Lexized token
--------+-------------+-------+-------------------+------------------
- lword | Latin word  | Paris | {synonym,en_stem} | synonym: {paris}
+ Alias | Description | Token |      Dictionaries      |  Lexized token   
+-------+-------------+-------+------------------------+------------------
+ lword | Latin word  | Paris | {synonym,english_stem} | synonym: {paris}
 (1 row)
 </programlisting>
 </para>
@@ -2119,25 +2120,27 @@ preferred term and, optionally, preserves them for indexing.  Thesauruses
 are used during indexing so any change in the thesaurus <emphasis>requires</emphasis>
 reindexing.  The current implementation of the thesaurus
 dictionary is an extension of the synonym dictionary with added
-<emphasis>phrase</emphasis> support.  A thesaurus is a plain file of the
-following format:
+<emphasis>phrase</emphasis> support.  A thesaurus dictionary requires
+a configuration file of the following format:
 <programlisting>
 # this is a comment
 sample word(s) : indexed word(s)
-...............................
+more sample word(s) : more indexed word(s)
+...
 </programlisting>
-where  the colon (<symbol>:</symbol>) symbol acts as a delimiter.
+where  the colon (<symbol>:</symbol>) symbol acts as a delimiter between a
+a phrase and its replacement.
 </para>
 
 <para>
 A thesaurus dictionary uses a <emphasis>subdictionary</emphasis> (which
-should be defined in the full text configuration) to normalize the
-thesaurus text. It is only possible to define one dictionary.  Notice that
-the <emphasis>subdictionary</emphasis> will produce an error if it can
-not recognize a word. In that case, you should remove the definition of
-the word or teach the <emphasis>subdictionary</emphasis> to about it.
-Use an asterisk (<symbol>*</symbol>) at the beginning of an indexed word to
-skip the subdictionary. It is still required that sample words are known.
+is defined in the dictionary's configuration) to normalize the input text
+before checking for phrase matches. It is only possible to select one
+subdictionary.  An error is reported if the subdictionary fails to
+recognize a word. In that case, you should remove the use of the word or teach
+the subdictionary about it.  Use an asterisk (<symbol>*</symbol>) at the
+beginning of an indexed word to skip the subdictionary. It is still required
+that sample words are known.
 </para>
 
 <para>
@@ -2149,16 +2152,16 @@ Stop words recognized by the subdictionary are replaced by a 'stop word
 placeholder' to record their position. To break possible ties the thesaurus
 uses the last definition. To illustrate this, consider a thesaurus (with
 a <parameter>simple</parameter> subdictionary) with pattern
-<literal>'swsw'</>, where <literal>'s'</> designates any stop word and
-<literal>'w'</>, any known word:
+<replaceable>swsw</>, where <replaceable>s</> designates any stop word and
+<replaceable>w</>, any known word:
 <programlisting>
 a one the two : swsw
 the one a two : swsw2
 </programlisting>
-Words <literal>'a'</> and <literal>'the'</> are stop words defined in the
-configuration of a subdictionary. The thesaurus considers <literal>'the
-one the two'</literal> and <literal>'that one then two'</literal> as equal
-and will use definition 'swsw2'.
+Words <literal>a</> and <literal>the</> are stop words defined in the
+configuration of a subdictionary. The thesaurus considers <literal>the
+one the two</literal> and <literal>that one then two</literal> as equal
+and will use definition <replaceable>swsw2</>.
 </para>
 
 <para>
@@ -2186,7 +2189,7 @@ For example:
 CREATE TEXT SEARCH DICTIONARY thesaurus_simple (
     TEMPLATE = thesaurus,
     DictFile = mythesaurus,
-    Dictionary = pg_catalog.en_stem
+    Dictionary = pg_catalog.english_stem
 );
 </programlisting>
 Here:
@@ -2201,10 +2204,10 @@ where <literal>$SHAREDIR</> means the installation shared-data directory,
 often <filename>/usr/local/share</>).
 </para></listitem>
 <listitem><para>
-<literal>pg_catalog.en_stem</literal> is the dictionary (snowball
-English stemmer) to use for thesaurus normalization. Notice that the
-<literal>en_stem</> dictionary has its own configuration (for example,
-stop words).
+<literal>pg_catalog.english_stem</literal> is the dictionary (Snowball
+English stemmer) to use for thesaurus normalization.  Notice that the
+<literal>english_stem</> dictionary has its own configuration (for example,
+stop words), which is not shown here.
 </para></listitem>
 </itemizedlist>
 
@@ -2235,10 +2238,10 @@ an astronomical thesaurus and english stemmer:
 CREATE TEXT SEARCH DICTIONARY thesaurus_astro (
     TEMPLATE = thesaurus,
     DictFile = thesaurus_astro,
-    Dictionary = en_stem
+    Dictionary = english_stem
 );
 ALTER TEXT SEARCH CONFIGURATION russian
-    ADD MAPPING FOR lword, lhword, lpart_hword WITH thesaurus_astro, en_stem;
+    ADD MAPPING FOR lword, lhword, lpart_hword WITH thesaurus_astro, english_stem;
 </programlisting>
 Now we can see how it works. Note that <function>ts_lexize</function> cannot
 be used for testing the thesaurus (see description of
@@ -2266,7 +2269,7 @@ SELECT to_tsquery('''supernova star''');
 </programlisting>
 Notice that <literal>supernova star</literal> matches <literal>supernovae
 stars</literal> in <literal>thesaurus_astro</literal> because we specified the
-<literal>en_stem</literal> stemmer in the thesaurus definition.
+<literal>english_stem</literal> stemmer in the thesaurus definition.
 </para>
 <para>
 To keep an original phrase in full text indexing just add it to the right part
@@ -2308,15 +2311,15 @@ conjugations of the search term <literal>bank</literal>, e.g.
 <literal>banking</>, <literal>banked</>, <literal>banks</>,
 <literal>banks'</>, and <literal>bank's</>.
 <programlisting>
-SELECT ts_lexize('en_ispell','banking');
+SELECT ts_lexize('english_ispell','banking');
  ts_lexize
 -----------
  {bank}
-SELECT ts_lexize('en_ispell','bank''s');
+SELECT ts_lexize('english_ispell','bank''s');
  ts_lexize
 -----------
  {bank}
-SELECT ts_lexize('en_ispell','banked');
+SELECT ts_lexize('english_ispell','banked');
  ts_lexize
 -----------
  {bank}
@@ -2330,7 +2333,7 @@ To create an ispell dictionary one should use the built-in
 parameters.
 </para>
 <programlisting>
-CREATE TEXT SEARCH DICTIONARY en_ispell (
+CREATE TEXT SEARCH DICTIONARY english_ispell (
     TEMPLATE = ispell,
     DictFile = english,
     AffFile = english,
@@ -2386,13 +2389,13 @@ The <application>Snowball</> dictionary template is based on the project
 of Martin Porter, inventor of the popular Porter's stemming algorithm
 for the English language and now supported in many languages (see the <ulink
 url="http://snowball.tartarus.org">Snowball site</ulink> for more
-information). Full text searching contains a large number of stemmers for
+information).  The Snowball project supplies a large number of stemmers for
 many languages. A Snowball dictionary requires a language parameter to
 identify which stemmer to use, and optionally can specify a stopword file name.
-For example,
+For example, there is a built-in definition equivalent to
 <programlisting>
-ALTER TEXT SEARCH DICTIONARY en_stem (
-    StopWords = english-utf8, Language = english
+CREATE TEXT SEARCH DICTIONARY english_stem (
+    TEMPLATE = snowball, Language = english, StopWords = english
 );
 </programlisting>
 </para>
@@ -2400,7 +2403,8 @@ ALTER TEXT SEARCH DICTIONARY en_stem (
 <para>
 The <application>Snowball</> dictionary recognizes everything, so it is best
 to place it at the end of the dictionary stack. It it useless to have it
-before any other dictionary because a lexeme will not pass through its stemmer.
+before any other dictionary because a lexeme will never pass through it to
+the next dictionary.
 </para>
 
 </sect2>
@@ -2420,7 +2424,7 @@ The <function>ts_lexize</> function facilitates dictionary testing:
 
 <term>
 <synopsis>
-ts_lexize(<optional> <replaceable class="PARAMETER">dict_name</replaceable> text</optional>, <replaceable class="PARAMETER">lexeme</replaceable> text) returns text[]
+ts_lexize(<replaceable class="PARAMETER">dict_name</replaceable> text, <replaceable class="PARAMETER">lexeme</replaceable> text) returns text[]
 </synopsis>
 </term>
 
@@ -2432,11 +2436,11 @@ array if the lexeme is known to the dictionary but it is a stop word, or
 <literal>NULL</literal> if it is an unknown word.
 </para>
 <programlisting>
-SELECT ts_lexize('en_stem', 'stars');
+SELECT ts_lexize('english_stem', 'stars');
  ts_lexize
 -----------
  {star}
-SELECT ts_lexize('en_stem', 'a');
+SELECT ts_lexize('english_stem', 'a');
  ts_lexize
 -----------
  {}
@@ -2457,9 +2461,9 @@ SELECT ts_lexize('thesaurus_astro','supernovae stars') is null;
 ----------
  t
 </programlisting>
-Thesaurus dictionary <literal>thesaurus_astro</literal> does know
-<literal>supernovae stars</literal>, but ts_lexize fails since it does not
-parse the input text and considers it as a single lexeme. Use
+The thesaurus dictionary <literal>thesaurus_astro</literal> does know
+<literal>supernovae stars</literal>, but <function>ts_lexize</> fails since it
+does not parse the input text and considers it as a single lexeme. Use
 <function>plainto_tsquery</> and <function>to_tsvector</> to test thesaurus
 dictionaries:
 <programlisting>
@@ -2541,25 +2545,14 @@ CREATE TEXT SEARCH DICTIONARY pg_dict (
 
 <para>
 Then register the <productname>ispell</> dictionary
-<literal>en_ispell</literal> using the <literal>ispell</literal> template:
+<literal>english_ispell</literal> using the <literal>ispell</literal> template:
 
 <programlisting>
-CREATE TEXT SEARCH DICTIONARY en_ispell (
+CREATE TEXT SEARCH DICTIONARY english_ispell (
     TEMPLATE = ispell,
-    DictFile = english-utf8,
-    AffFile = english-utf8,
-    StopWords = english-utf8
-);
-</programlisting>
-</para>
-
-<para>
-We can use the same stop word list for the <application>Snowball</> stemmer
-<literal>en_stem</literal>, which is available by default:
-
-<programlisting>
-ALTER TEXT SEARCH DICTIONARY en_stem (
-    StopWords = english-utf8
+    DictFile = english,
+    AffFile = english,
+    StopWords = english
 );
 </programlisting>
 </para>
@@ -2570,7 +2563,7 @@ Now modify mappings for Latin words for configuration <literal>pg</>:
 <programlisting>
 ALTER TEXT SEARCH CONFIGURATION pg
     ALTER MAPPING FOR lword, lhword, lpart_hword
-    WITH pg_dict, en_ispell, en_stem;
+    WITH pg_dict, english_ispell, english_stem;
 </programlisting>
 </para>
 
@@ -2759,10 +2752,10 @@ the transitive containment relation <!-- huh --> is realized by
 superimposed coding (Knuth, 1973) of signatures, i.e., a parent is the
 result of 'OR'-ing the bit-strings of all children.  This is a second
 factor of lossiness.  It is clear that parents tend to be full of
-<literal>'1'</>s (degenerates) and become quite useless because of the
+<literal>1</>s (degenerates) and become quite useless because of the
 limited selectivity.  Searching is performed as a bit comparison of a
 signature representing the query and an <literal>RD-tree</literal> entry.
-If all <literal>'1'</>s of both signatures are in the same position we
+If all <literal>1</>s of both signatures are in the same position we
 say that this branch probably matches the query, but if there is even one
 discrepancy we can definitely reject this branch.
 </para>
@@ -2870,13 +2863,15 @@ The current limitations of Full Text Searching are:
 
 <para>
 For comparison, the <productname>PostgreSQL</productname> 8.1 documentation
-consists of 10,441 unique words, a total of 335,420 words, and the most frequent word
-'postgresql' is mentioned 6,127 times in 655 documents.
+contained 10,441 unique words, a total of 335,420 words, and the most frequent
+word <quote>postgresql</> was mentioned 6,127 times in 655 documents.
 </para>
 
+<!-- TODO we need to put a date on these numbers? -->
 <para>
-Another example - the <productname>PostgreSQL</productname> mailing list archives
-consists of 910,989  unique words with 57,491,343 lexemes in 461,020 messages.
+Another example &mdash; the <productname>PostgreSQL</productname> mailing list
+archives contained 910,989 unique words with 57,491,343 lexemes in 461,020
+messages.
 </para>
 
 </sect1>
@@ -2942,28 +2937,27 @@ names and object names.  The following examples illustrate this:
 =&gt; \dF+ russian
 Configuration "pg_catalog.russian"
 Parser name: "pg_catalog.default"
-Locale: 'ru_RU.UTF-8' (default)
     Token     |      Dictionaries
 --------------+-------------------------
  email        | pg_catalog.simple
  file         | pg_catalog.simple
  float        | pg_catalog.simple
  host         | pg_catalog.simple
- hword        | pg_catalog.ru_stem_utf8
+ hword        | pg_catalog.russian_stem
  int          | pg_catalog.simple
  lhword       | public.tz_simple
  lpart_hword  | public.tz_simple
  lword        | public.tz_simple
- nlhword      | pg_catalog.ru_stem_utf8
- nlpart_hword | pg_catalog.ru_stem_utf8
- nlword       | pg_catalog.ru_stem_utf8
+ nlhword      | pg_catalog.russian_stem
+ nlpart_hword | pg_catalog.russian_stem
+ nlword       | pg_catalog.russian_stem
  part_hword   | pg_catalog.simple
  sfloat       | pg_catalog.simple
  uint         | pg_catalog.simple
  uri          | pg_catalog.simple
  url          | pg_catalog.simple
  version      | pg_catalog.simple
- word         | pg_catalog.ru_stem_utf8
+ word         | pg_catalog.russian_stem
 </programlisting>
 </para>
     </listitem>
@@ -3112,43 +3106,43 @@ play with the standard <literal>english</literal> configuration.
 <programlisting>
 CREATE TEXT SEARCH CONFIGURATION public.english ( COPY = pg_catalog.english );
 
-CREATE TEXT SEARCH DICTIONARY en_ispell (
+CREATE TEXT SEARCH DICTIONARY english_ispell (
     TEMPLATE = ispell,
-    DictFile = english-utf8,
-    AffFile = english-utf8,
+    DictFile = english,
+    AffFile = english,
     StopWords = english
 );
 
 ALTER TEXT SEARCH CONFIGURATION public.english
-    ALTER MAPPING FOR lword WITH en_ispell, en_stem;
+    ALTER MAPPING FOR lword WITH english_ispell, english_stem;
 </programlisting>
 
 <programlisting>
 SELECT * FROM ts_debug('public.english','The Brightest supernovaes');
  Alias |  Description  |    Token    |              Dicts list               |          Lexized token
 -------+---------------+-------------+---------------------------------------+---------------------------------
- lword | Latin word    | The         | {public.en_ispell,pg_catalog.en_stem} | public.en_ispell: {}
+ lword | Latin word    | The         | {public.english_ispell,pg_catalog.english_stem} | public.english_ispell: {}
  blank | Space symbols |             |                                       |
- lword | Latin word    | Brightest   | {public.en_ispell,pg_catalog.en_stem} | public.en_ispell: {bright}
+ lword | Latin word    | Brightest   | {public.english_ispell,pg_catalog.english_stem} | public.english_ispell: {bright}
  blank | Space symbols |             |                                       |
- lword | Latin word    | supernovaes | {public.en_ispell,pg_catalog.en_stem} | pg_catalog.en_stem: {supernova}
+ lword | Latin word    | supernovaes | {public.english_ispell,pg_catalog.english_stem} | pg_catalog.english_stem: {supernova}
 (5 rows)
 </programlisting>
 <para>
-In this example, the word <literal>'Brightest'</> was recognized by a
+In this example, the word <literal>Brightest</> was recognized by a
 parser as a <literal>Latin word</literal> (alias <literal>lword</literal>)
-and came through the dictionaries <literal>public.en_ispell</> and
-<literal>pg_catalog.en_stem</literal>. It was recognized by
-<literal>public.en_ispell</literal>, which reduced it to the noun
+and came through the dictionaries <literal>public.english_ispell</> and
+<literal>pg_catalog.english_stem</literal>. It was recognized by
+<literal>public.english_ispell</literal>, which reduced it to the noun
 <literal>bright</literal>. The word <literal>supernovaes</literal> is unknown
-by the <literal>public.en_ispell</literal> dictionary so it was passed to
+by the <literal>public.english_ispell</literal> dictionary so it was passed to
 the next dictionary, and, fortunately, was recognized (in fact,
-<literal>public.en_stem</literal> is a stemming dictionary and recognizes
+<literal>public.english_stem</literal> is a stemming dictionary and recognizes
 everything; that is why it was placed at the end of the dictionary stack).
 </para>
 
 <para>
-The word <literal>The</literal> was recognized by <literal>public.en_ispell</literal>
+The word <literal>The</literal> was recognized by <literal>public.english_ispell</literal>
 dictionary as a stop word (<xref linkend="textsearch-stopwords">) and will not be indexed.
 </para>
 
@@ -3159,11 +3153,11 @@ SELECT "Alias", "Token", "Lexized token"
 FROM ts_debug('public.english','The Brightest supernovaes');
  Alias |    Token    |          Lexized token
 -------+-------------+---------------------------------
- lword | The         | public.en_ispell: {}
+ lword | The         | public.english_ispell: {}
  blank |             |
- lword | Brightest   | public.en_ispell: {bright}
+ lword | Brightest   | public.english_ispell: {bright}
  blank |             |
- lword | supernovaes | pg_catalog.en_stem: {supernova}
+ lword | supernovaes | pg_catalog.english_stem: {supernova}
 (5 rows)
 </programlisting>
 </para>
