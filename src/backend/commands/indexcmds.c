@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.114 2003/10/02 06:34:03 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.114.2.1 2007/08/25 19:08:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,8 +111,6 @@ DefineIndex(RangeVar *heapRelation,
 
 	relationId = RelationGetRelid(rel);
 	namespaceId = RelationGetNamespace(rel);
-
-	heap_close(rel, NoLock);
 
 	/*
 	 * Verify we (still) have CREATE rights in the rel's namespace.
@@ -250,6 +248,8 @@ DefineIndex(RangeVar *heapRelation,
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	ComputeIndexAttrs(indexInfo, classObjectId, attributeList,
 					  relationId, accessMethodName, accessMethodId);
+
+	heap_close(rel, NoLock);
 
 	index_create(relationId, indexRelationName,
 				 indexInfo, accessMethodId, classObjectId,
