@@ -1,5 +1,6 @@
 The functions in this module allow you to inspect the contents of data pages
-at a low level, for debugging purposes.
+at a low level, for debugging purposes.  All of these functions may be used
+only by superusers.
 
 1. Installation
 
@@ -13,12 +14,12 @@ at a low level, for debugging purposes.
     ------------
     get_raw_page reads one block of the named table and returns a copy as a
     bytea field. This allows a single time-consistent copy of the block to be
-    made. Use of this functions is restricted to superusers.
+    made.
 
     page_header
     -----------
     page_header shows fields which are common to all PostgreSQL heap and index
-    pages. Use of this function is restricted to superusers.
+    pages.
 
     A page image obtained with get_raw_page should be passed as argument:
 
@@ -36,8 +37,7 @@ at a low level, for debugging purposes.
     heap_page_items shows all line pointers on a heap page.  For those line
     pointers that are in use, tuple headers are also shown. All tuples are
     shown, whether or not the tuples were visible to an MVCC snapshot at the
-    time the raw page was copied. Use of this function is restricted to
-    superusers.
+    time the raw page was copied.
 
     A heap page image obtained with get_raw_page should be passed as argument:
 
@@ -48,7 +48,7 @@ at a low level, for debugging purposes.
 
     bt_metap
     --------
-    bt_metap() returns information about the btree index metapage:
+    bt_metap() returns information about a btree index's metapage:
 
         test=> SELECT * FROM bt_metap('pg_cast_oid_index');
         -[ RECORD 1 ]-----
