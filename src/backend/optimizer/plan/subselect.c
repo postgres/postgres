@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.123 2007/07/18 21:40:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.124 2007/08/26 21:44:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -208,10 +208,10 @@ generate_new_param(PlannerInfo *root, Oid paramtype, int32 paramtypmod)
 /*
  * Get the datatype of the first column of the plan's output.
  *
- * This is a hack to support exprType(), which doesn't have any way to get
- * at the plan associated with a SubPlan node.  We really only need the value
- * for EXPR_SUBLINK and ARRAY_SUBLINK subplans, but for consistency we set
- * it always.
+ * This is stored for ARRAY_SUBLINK and for exprType(), which doesn't have any
+ * way to get at the plan associated with a SubPlan node.  We really only need
+ * the value for EXPR_SUBLINK and ARRAY_SUBLINK subplans, but for consistency
+ * we set it always.
  */
 static Oid
 get_first_col_type(Plan *plan)

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.89 2007/05/17 19:35:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.90 2007/08/26 21:44:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,10 +259,14 @@ ExecScanSubPlan(SubPlanState *node,
 	 * ROWCOMPARE_SUBLINK.
 	 *
 	 * For EXPR_SUBLINK we require the subplan to produce no more than one
-	 * tuple, else an error is raised. For ARRAY_SUBLINK we allow the subplan
-	 * to produce more than one tuple. In either case, if zero tuples are
-	 * produced, we return NULL. Assuming we get a tuple, we just use its
-	 * first column (there can be only one non-junk column in this case).
+	 * tuple, else an error is raised.  If zero tuples are produced, we return
+	 * NULL.  Assuming we get a tuple, we just use its first column (there can
+	 * be only one non-junk column in this case).
+	 *
+	 * For ARRAY_SUBLINK we allow the subplan to produce any number of tuples,
+	 * and form an array of the first column's values.  Note in particular
+	 * that we produce a zero-element array if no tuples are produced (this
+	 * is a change from pre-8.3 behavior of returning NULL).
 	 */
 	result = BoolGetDatum(subLinkType == ALL_SUBLINK);
 	*isNull = false;
@@ -317,10 +321,10 @@ ExecScanSubPlan(SubPlanState *node,
 
 			found = true;
 			/* stash away current value */
+			Assert(subplan->firstColType == tdesc->attrs[0]->atttypid);
 			dvalue = slot_getattr(slot, 1, &disnull);
 			astate = accumArrayResult(astate, dvalue, disnull,
-									  tdesc->attrs[0]->atttypid,
-									  oldcontext);
+									  subplan->firstColType, oldcontext);
 			/* keep scanning subplan to collect all values */
 			continue;
 		}
@@ -385,29 +389,30 @@ ExecScanSubPlan(SubPlanState *node,
 		}
 	}
 
-	if (!found)
+	MemoryContextSwitchTo(oldcontext);
+
+	if (subLinkType == ARRAY_SUBLINK)
+	{
+		/* We return the result in the caller's context */
+		if (astate != NULL)
+			result = makeArrayResult(astate, oldcontext);
+		else
+			result = PointerGetDatum(construct_empty_array(subplan->firstColType));
+	}
+	else if (!found)
 	{
 		/*
 		 * deal with empty subplan result.	result/isNull were previously
-		 * initialized correctly for all sublink types except EXPR, ARRAY, and
+		 * initialized correctly for all sublink types except EXPR and
 		 * ROWCOMPARE; for those, return NULL.
 		 */
 		if (subLinkType == EXPR_SUBLINK ||
-			subLinkType == ARRAY_SUBLINK ||
 			subLinkType == ROWCOMPARE_SUBLINK)
 		{
 			result = (Datum) 0;
 			*isNull = true;
 		}
 	}
-	else if (subLinkType == ARRAY_SUBLINK)
-	{
-		Assert(astate != NULL);
-		/* We return the result in the caller's context */
-		result = makeArrayResult(astate, oldcontext);
-	}
-
-	MemoryContextSwitchTo(oldcontext);
 
 	return result;
 }
@@ -938,10 +943,10 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 
 			found = true;
 			/* stash away current value */
+			Assert(subplan->firstColType == tdesc->attrs[0]->atttypid);
 			dvalue = slot_getattr(slot, 1, &disnull);
 			astate = accumArrayResult(astate, dvalue, disnull,
-									  tdesc->attrs[0]->atttypid,
-									  oldcontext);
+									  subplan->firstColType, oldcontext);
 			/* keep scanning subplan to collect all values */
 			continue;
 		}
@@ -980,7 +985,25 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		}
 	}
 
-	if (!found)
+	if (subLinkType == ARRAY_SUBLINK)
+	{
+		/* There can be only one param... */
+		int			paramid = linitial_int(subplan->setParam);
+		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
+
+		prm->execPlan = NULL;
+		/* We build the result in query context so it won't disappear */
+		if (astate != NULL)
+			prm->value = makeArrayResult(astate,
+										 econtext->ecxt_per_query_memory);
+		else
+		{
+			MemoryContextSwitchTo(econtext->ecxt_per_query_memory);
+			prm->value = PointerGetDatum(construct_empty_array(subplan->firstColType));
+		}
+		prm->isnull = false;
+	}
+	else if (!found)
 	{
 		if (subLinkType == EXISTS_SUBLINK)
 		{
@@ -1004,18 +1027,6 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 				prm->isnull = true;
 			}
 		}
-	}
-	else if (subLinkType == ARRAY_SUBLINK)
-	{
-		/* There can be only one param... */
-		int			paramid = linitial_int(subplan->setParam);
-		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
-
-		Assert(astate != NULL);
-		prm->execPlan = NULL;
-		/* We build the result in query context so it won't disappear */
-		prm->value = makeArrayResult(astate, econtext->ecxt_per_query_memory);
-		prm->isnull = false;
 	}
 
 	MemoryContextSwitchTo(oldcontext);

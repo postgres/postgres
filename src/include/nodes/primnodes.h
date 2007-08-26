@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.132 2007/06/11 22:22:42 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.133 2007/08/26 21:44:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,7 +388,7 @@ typedef struct BoolExpr
  * results.  ALL and ANY combine the per-row results using AND and OR
  * semantics respectively.
  * ARRAY requires just one target column, and creates an array of the target
- * column's type using one or more rows resulting from the subselect.
+ * column's type using any number of rows resulting from the subselect.
  *
  * SubLink is classed as an Expr node, but it is not actually executable;
  * it must be replaced in the expression tree by a SubPlan node during
@@ -468,7 +468,7 @@ typedef struct SubPlan
 	List	   *paramIds;		/* IDs of Params embedded in the above */
 	/* Identification of the Plan tree to use: */
 	int			plan_id;		/* Index (from 1) in PlannedStmt.subplans */
-	/* Extra data saved for the convenience of exprType(): */
+	/* Extra data useful for determining subplan's output type: */
 	Oid			firstColType;	/* Type of first column of subplan result */
 	/* Information about execution strategy: */
 	bool		useHashTable;	/* TRUE to store subselect output in a hash
