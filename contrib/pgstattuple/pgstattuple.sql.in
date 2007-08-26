@@ -1,48 +1,48 @@
 -- Adjust this setting to control where the objects get created.
 SET search_path = public;
 
-CREATE TYPE pgstattuple_type AS (
-	table_len BIGINT,		-- physical table length in bytes
-	tuple_count BIGINT,		-- number of live tuples
-	tuple_len BIGINT,		-- total tuples length in bytes
-	tuple_percent FLOAT,		-- live tuples in %
-	dead_tuple_count BIGINT,	-- number of dead tuples
-	dead_tuple_len BIGINT,		-- total dead tuples length in bytes
-	dead_tuple_percent FLOAT,	-- dead tuples in %
-	free_space BIGINT,		-- free space in bytes
-	free_percent FLOAT		-- free space in %
-);
-
-CREATE OR REPLACE FUNCTION pgstattuple(text)
-RETURNS pgstattuple_type
+CREATE OR REPLACE FUNCTION pgstattuple(IN relname text,
+    OUT table_len BIGINT,		-- physical table length in bytes
+    OUT tuple_count BIGINT,		-- number of live tuples
+    OUT tuple_len BIGINT,		-- total tuples length in bytes
+    OUT tuple_percent FLOAT,		-- live tuples in %
+    OUT dead_tuple_count BIGINT,	-- number of dead tuples
+    OUT dead_tuple_len BIGINT,		-- total dead tuples length in bytes
+    OUT dead_tuple_percent FLOAT,	-- dead tuples in %
+    OUT free_space BIGINT,		-- free space in bytes
+    OUT free_percent FLOAT)		-- free space in %
 AS 'MODULE_PATHNAME', 'pgstattuple'
 LANGUAGE C STRICT;
 
-CREATE OR REPLACE FUNCTION pgstattuple(oid)
-RETURNS pgstattuple_type
+CREATE OR REPLACE FUNCTION pgstattuple(IN reloid oid,
+    OUT table_len BIGINT,		-- physical table length in bytes
+    OUT tuple_count BIGINT,		-- number of live tuples
+    OUT tuple_len BIGINT,		-- total tuples length in bytes
+    OUT tuple_percent FLOAT,		-- live tuples in %
+    OUT dead_tuple_count BIGINT,	-- number of dead tuples
+    OUT dead_tuple_len BIGINT,		-- total dead tuples length in bytes
+    OUT dead_tuple_percent FLOAT,	-- dead tuples in %
+    OUT free_space BIGINT,		-- free space in bytes
+    OUT free_percent FLOAT)		-- free space in %
 AS 'MODULE_PATHNAME', 'pgstattuplebyid'
 LANGUAGE C STRICT;
 
 --
 -- pgstatindex
 --
-CREATE TYPE pgstatindex_type AS (
-  version int4,
-  tree_level int4,
-  index_size int4,
-  root_block_no int4,
-  internal_pages int4,
-  leaf_pages int4,
-  empty_pages int4,
-  deleted_pages int4,
-  avg_leaf_density float8,
-  leaf_fragmentation float8
-);
-
-CREATE OR REPLACE FUNCTION pgstatindex(text)
-RETURNS pgstatindex_type
+CREATE OR REPLACE FUNCTION pgstatindex(IN relname text,
+    OUT version int4,
+    OUT tree_level int4,
+    OUT index_size int4,
+    OUT root_block_no int4,
+    OUT internal_pages int4,
+    OUT leaf_pages int4,
+    OUT empty_pages int4,
+    OUT deleted_pages int4,
+    OUT avg_leaf_density float8,
+    OUT leaf_fragmentation float8)
 AS 'MODULE_PATHNAME', 'pgstatindex'
-LANGUAGE 'C' STRICT;
+LANGUAGE C STRICT;
 
 --
 -- pg_relpages()
@@ -50,4 +50,4 @@ LANGUAGE 'C' STRICT;
 CREATE OR REPLACE FUNCTION pg_relpages(text)
 RETURNS int
 AS 'MODULE_PATHNAME', 'pg_relpages'
-LANGUAGE 'C' STRICT;
+LANGUAGE C STRICT;

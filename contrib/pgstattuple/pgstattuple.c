@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.27 2007/05/03 16:45:58 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.28 2007/08/26 23:59:50 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -24,14 +24,13 @@
 
 #include "postgres.h"
 
-#include "fmgr.h"
-#include "funcapi.h"
 #include "access/gist_private.h"
 #include "access/hash.h"
 #include "access/heapam.h"
 #include "access/nbtree.h"
-#include "access/transam.h"
 #include "catalog/namespace.h"
+#include "funcapi.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 
 
@@ -99,9 +98,6 @@ build_pgstattuple_type(pgstattuple_type * stat, FunctionCallInfo fcinfo)
 	if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
 		elog(ERROR, "return type must be a row type");
 
-	/* make sure we have a persistent copy of the tupdesc */
-	tupdesc = CreateTupleDescCopy(tupdesc);
-
 	/*
 	 * Generate attribute metadata needed later to produce tuples from raw C
 	 * strings
@@ -163,6 +159,11 @@ pgstattuple(PG_FUNCTION_ARGS)
 	RangeVar   *relrv;
 	Relation	rel;
 
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
 	/* open relation */
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
@@ -175,6 +176,11 @@ pgstattuplebyid(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	Relation	rel;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
 
 	/* open relation */
 	rel = relation_open(relid, AccessShareLock);

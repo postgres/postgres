@@ -24,27 +24,21 @@
 
 #include "postgres.h"
 
-#include "fmgr.h"
-#include "funcapi.h"
 #include "access/heapam.h"
-#include "access/itup.h"
 #include "access/nbtree.h"
-#include "access/transam.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_type.h"
+#include "funcapi.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
-#include "utils/inval.h"
 
-PG_FUNCTION_INFO_V1(pgstatindex);
-PG_FUNCTION_INFO_V1(pg_relpages);
 
 extern Datum pgstatindex(PG_FUNCTION_ARGS);
 extern Datum pg_relpages(PG_FUNCTION_ARGS);
 
-#define PGSTATINDEX_TYPE "public.pgstatindex_type"
-#define PGSTATINDEX_NCOLUMNS 10
+PG_FUNCTION_INFO_V1(pgstatindex);
+PG_FUNCTION_INFO_V1(pg_relpages);
 
-#define IS_INDEX(r) ((r)->rd_rel->relkind == 'i')
+#define IS_INDEX(r) ((r)->rd_rel->relkind == RELKIND_INDEX)
 #define IS_BTREE(r) ((r)->rd_rel->relam == BTREE_AM_OID)
 
 #define CHECK_PAGE_OFFSET_RANGE(pg, offnum) { \
@@ -97,15 +91,20 @@ pgstatindex(PG_FUNCTION_ARGS)
 	uint32		blkno;
 	BTIndexStat indexStat;
 
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
 
 	if (!IS_INDEX(rel) || !IS_BTREE(rel))
-		elog(ERROR, "pgstatindex() can only be used on b-tree index");
+		elog(ERROR, "relation \"%s\" is not a btree index",
+			 RelationGetRelationName(rel));
 
-	/*-------------------
-	 * Read a metapage
-	 *-------------------
+	/*
+	 * Read metapage
 	 */
 	{
 		Buffer		buffer = ReadBuffer(rel, 0);
@@ -194,11 +193,12 @@ pgstatindex(PG_FUNCTION_ARGS)
 	{
 		TupleDesc	tupleDesc;
 		int			j;
-		char	   *values[PGSTATINDEX_NCOLUMNS];
-
+		char	   *values[10];
 		HeapTuple	tuple;
 
-		tupleDesc = RelationNameGetTupleDesc(PGSTATINDEX_TYPE);
+		/* Build a tuple descriptor for our result type */
+		if (get_call_result_type(fcinfo, NULL, &tupleDesc) != TYPEFUNC_COMPOSITE)
+			elog(ERROR, "return type must be a row type");
 
 		j = 0;
 		values[j] = palloc(32);
@@ -229,7 +229,7 @@ pgstatindex(PG_FUNCTION_ARGS)
 		tuple = BuildTupleFromCStrings(TupleDescGetAttInMetadata(tupleDesc),
 									   values);
 
-		result = TupleGetDatum(TupleDescGetSlot(tupleDesc), tuple);
+		result = HeapTupleGetDatum(tuple);
 	}
 
 	PG_RETURN_DATUM(result);
@@ -238,7 +238,7 @@ pgstatindex(PG_FUNCTION_ARGS)
 /* --------------------------------------------------------
  * pg_relpages()
  *
- * Get a number of pages of the table/index.
+ * Get the number of pages of the table/index.
  *
  * Usage: SELECT pg_relpages('t1');
  *		  SELECT pg_relpages('t1_pkey');
@@ -248,10 +248,14 @@ Datum
 pg_relpages(PG_FUNCTION_ARGS)
 {
 	text	   *relname = PG_GETARG_TEXT_P(0);
-
 	Relation	rel;
 	RangeVar   *relrv;
 	int4		relpages;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
