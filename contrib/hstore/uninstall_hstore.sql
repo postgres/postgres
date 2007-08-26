@@ -40,7 +40,6 @@ DROP FUNCTION gin_extract_hstore(internal, internal);
 DROP FUNCTION gin_extract_hstore_query(internal, internal, smallint);
 
 DROP TYPE hstore CASCADE;
-DROP TYPE hs_each CASCADE;
 DROP TYPE ghstore CASCADE;
 
 COMMIT;

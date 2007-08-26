@@ -595,8 +595,10 @@ each(PG_FUNCTION_ARGS)
 		memcpy(st->hs, hs, VARSIZE(hs));
 		funcctx->user_fctx = (void *) st;
 
-		tupdesc = RelationNameGetTupleDesc("hs_each");
-		funcctx->slot = TupleDescGetSlot(tupdesc);
+		/* Build a tuple descriptor for our result type */
+		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+			elog(ERROR, "return type must be a row type");
+
 		funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
 		MemoryContextSwitchTo(oldcontext);
@@ -637,7 +639,7 @@ each(PG_FUNCTION_ARGS)
 		st->i++;
 
 		tuple = heap_formtuple(funcctx->attinmeta->tupdesc, dvalues, nulls);
-		res = TupleGetDatum(funcctx->slot, tuple);
+		res = HeapTupleGetDatum(tuple);
 
 		pfree(DatumGetPointer(dvalues[0]));
 		if (nulls[1] != 'n')

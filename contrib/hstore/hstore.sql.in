@@ -2,15 +2,17 @@ SET search_path = public;
 
 BEGIN;
 
+CREATE TYPE hstore;
+
 CREATE FUNCTION hstore_in(cstring)
 RETURNS hstore
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C STRICT;
 
 CREATE FUNCTION hstore_out(hstore)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C STRICT;
 
 CREATE TYPE hstore (
         INTERNALLENGTH = -1,
@@ -22,7 +24,7 @@ CREATE TYPE hstore (
 CREATE FUNCTION fetchval(hstore,text)
 RETURNS text
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE OPERATOR -> (
 	LEFTARG = hstore,
@@ -33,12 +35,12 @@ CREATE OPERATOR -> (
 CREATE FUNCTION isexists(hstore,text)
 RETURNS bool
 AS 'MODULE_PATHNAME','exists'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE FUNCTION exist(hstore,text)
 RETURNS bool
 AS 'MODULE_PATHNAME','exists'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE OPERATOR ? (
 	LEFTARG = hstore,
@@ -51,22 +53,22 @@ CREATE OPERATOR ? (
 CREATE FUNCTION isdefined(hstore,text)
 RETURNS bool
 AS 'MODULE_PATHNAME','defined'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE FUNCTION defined(hstore,text)
 RETURNS bool
 AS 'MODULE_PATHNAME','defined'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE FUNCTION delete(hstore,text)
 RETURNS hstore
 AS 'MODULE_PATHNAME','delete'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE FUNCTION hs_concat(hstore,hstore)
 RETURNS hstore
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE OPERATOR || (
 	LEFTARG = hstore,
@@ -77,12 +79,12 @@ CREATE OPERATOR || (
 CREATE FUNCTION hs_contains(hstore,hstore)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE FUNCTION hs_contained(hstore,hstore)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE OPERATOR @> (
 	LEFTARG = hstore,
@@ -124,7 +126,7 @@ CREATE OPERATOR ~ (
 CREATE FUNCTION tconvert(text,text)
 RETURNS hstore
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (iscachable);
+LANGUAGE C IMMUTABLE;
 
 CREATE OPERATOR => (
 	LEFTARG = text,
@@ -135,43 +137,45 @@ CREATE OPERATOR => (
 CREATE FUNCTION akeys(hstore)
 RETURNS _text
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE FUNCTION avals(hstore)
 RETURNS _text
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE FUNCTION skeys(hstore)
 RETURNS setof text
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE FUNCTION svals(hstore)
 RETURNS setof text
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
-create type hs_each as (key text, value text);
-
-CREATE FUNCTION each(hstore)
-RETURNS setof hs_each
+CREATE FUNCTION each(IN hs hstore,
+    OUT key text,
+    OUT value text)
+RETURNS SETOF record
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict,iscachable);
+LANGUAGE C STRICT IMMUTABLE;
 
 
 
 -- define the GiST support methods
 
+CREATE TYPE ghstore;
+
 CREATE FUNCTION ghstore_in(cstring)
 RETURNS ghstore
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C STRICT;
 
 CREATE FUNCTION ghstore_out(ghstore)
 RETURNS cstring
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' with (isstrict);
+LANGUAGE C STRICT;
 
 CREATE TYPE ghstore (
         INTERNALLENGTH = -1,
@@ -182,37 +186,37 @@ CREATE TYPE ghstore (
 CREATE FUNCTION ghstore_compress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION ghstore_decompress(internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION ghstore_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C' WITH (isstrict);
+LANGUAGE C STRICT;
 
 CREATE FUNCTION ghstore_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION ghstore_union(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION ghstore_same(internal, internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 CREATE FUNCTION ghstore_consistent(internal,internal,int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE 'C';
+LANGUAGE C;
 
 -- register the opclass for indexing (not as default)
 CREATE OPERATOR CLASS gist_hstore_ops
