@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.57 2007/01/05 22:19:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tid.c,v 1.58 2007/08/27 00:57:36 tgl Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -24,7 +24,9 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
+#include "miscadmin.h"
 #include "parser/parsetree.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 
 
@@ -326,6 +328,7 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 	ItemPointer tid = PG_GETARG_ITEMPOINTER(1);
 	ItemPointer result;
 	Relation	rel;
+	AclResult	aclresult;
 
 	result = (ItemPointer) palloc(sizeof(ItemPointerData));
 	if (!reloid)
@@ -335,6 +338,13 @@ currtid_byreloid(PG_FUNCTION_ARGS)
 	}
 
 	rel = heap_open(reloid, AccessShareLock);
+
+	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+								  ACL_SELECT);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
+
 	if (rel->rd_rel->relkind == RELKIND_VIEW)
 		return currtid_for_view(rel, tid);
 
@@ -354,9 +364,17 @@ currtid_byrelname(PG_FUNCTION_ARGS)
 	ItemPointer result;
 	RangeVar   *relrv;
 	Relation	rel;
+	AclResult	aclresult;
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = heap_openrv(relrv, AccessShareLock);
+
+	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+								  ACL_SELECT);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
+
 	if (rel->rd_rel->relkind == RELKIND_VIEW)
 		return currtid_for_view(rel, tid);
 
