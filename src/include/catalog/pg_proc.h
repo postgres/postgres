@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.464 2007/08/22 01:39:45 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.465 2007/08/27 01:39:24 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -902,10 +902,6 @@ DESCR("convert int8 to int2");
 DATA(insert OID = 754 (  int8			   PGNSP PGUID 12 1 0 f f t f i 1  20 "21" _null_ _null_ _null_ int28 - _null_ ));
 DESCR("convert int2 to int8");
 
-DATA(insert OID = 1285 (  int4notin		   PGNSP PGUID 12 1 0 f f t f s 2 16 "23 25" _null_ _null_ _null_ int4notin - _null_ ));
-DESCR("not in");
-DATA(insert OID = 1286 (  oidnotin		   PGNSP PGUID 12 1 0 f f t f s 2 16 "26 25" _null_ _null_ _null_ oidnotin - _null_ ));
-DESCR("not in");
 DATA(insert OID = 655 (  namelt			   PGNSP PGUID 12 1 0 f f t f i 2 16 "19 19" _null_ _null_ _null_ namelt - _null_ ));
 DESCR("less-than");
 DATA(insert OID = 656 (  namele			   PGNSP PGUID 12 1 0 f f t f i 2 16 "19 19" _null_ _null_ _null_ namele - _null_ ));

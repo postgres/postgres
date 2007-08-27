@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.154 2007/08/21 01:11:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_operator.h,v 1.155 2007/08/27 01:39:24 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -290,8 +290,6 @@ DATA(insert OID = 622 (  "<"	   PGNSP PGUID b f f	700  700	16 623 625 float4lt s
 DATA(insert OID = 623 (  ">"	   PGNSP PGUID b f f	700  700	16 622 624 float4gt scalargtsel scalargtjoinsel ));
 DATA(insert OID = 624 (  "<="	   PGNSP PGUID b f f	700  700	16 625 623 float4le scalarltsel scalarltjoinsel ));
 DATA(insert OID = 625 (  ">="	   PGNSP PGUID b f f	700  700	16 624 622 float4ge scalargtsel scalargtjoinsel ));
-DATA(insert OID = 626 (  "!!="	   PGNSP PGUID b f f	23	 25		16 0   0	int4notin - - ));
-DATA(insert OID = 627 (  "!!="	   PGNSP PGUID b f f	26	 25		16 0   0	oidnotin - - ));
 DATA(insert OID = 630 (  "<>"	   PGNSP PGUID b f f	18	18		16 630	92	charne neqsel neqjoinsel ));
 
 DATA(insert OID = 631 (  "<"	   PGNSP PGUID b f f	18	18	16 633 634 charlt scalarltsel scalarltjoinsel ));
