@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.98 2007/08/21 01:11:13 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/namespace.c,v 1.99 2007/08/27 03:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,7 +228,26 @@ RangeVarGetRelid(const RangeVar *relation, bool failOK)
 							relation->relname)));
 	}
 
-	if (relation->schemaname)
+	/*
+	 * If istemp is set, this is a reference to a temp relation.  The parser
+	 * never generates such a RangeVar in simple DML, but it can happen in
+	 * contexts such as "CREATE TEMP TABLE foo (f1 int PRIMARY KEY)".  Such a
+	 * command will generate an added CREATE INDEX operation, which must be
+	 * careful to find the temp table, even when pg_temp is not first in the
+	 * search path.
+	 */
+	if (relation->istemp)
+	{
+		if (relation->schemaname)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+					 errmsg("temporary tables cannot specify a schema name")));
+		if (OidIsValid(myTempNamespace))
+			relId = get_relname_relid(relation->relname, myTempNamespace);
+		else					/* this probably can't happen? */
+			relId = InvalidOid;
+	}
+	else if (relation->schemaname)
 	{
 		/* use exact schema given */
 		namespaceId = LookupExplicitNamespace(relation->schemaname);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.121 2007/06/23 22:12:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.122 2007/08/27 03:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "access/heapam.h"
 #include "catalog/dependency.h"
 #include "catalog/indexing.h"
+#include "catalog/namespace.h"
 #include "catalog/pg_rewrite.h"
 #include "miscadmin.h"
 #include "optimizer/clauses.h"
@@ -189,13 +190,17 @@ DefineRule(RuleStmt *stmt, const char *queryString)
 {
 	List	   *actions;
 	Node	   *whereClause;
+	Oid			relId;
 
 	/* Parse analysis ... */
 	transformRuleStmt(stmt, queryString, &actions, &whereClause);
 
-	/* ... and execution */
+	/* ... find the relation ... */
+	relId = RangeVarGetRelid(stmt->relation, false);
+
+	/* ... and execute */
 	DefineQueryRewrite(stmt->rulename,
-					   stmt->relation,
+					   relId,
 					   whereClause,
 					   stmt->event,
 					   stmt->instead,
@@ -213,7 +218,7 @@ DefineRule(RuleStmt *stmt, const char *queryString)
  */
 void
 DefineQueryRewrite(char *rulename,
-				   RangeVar *event_obj,
+				   Oid event_relid,
 				   Node *event_qual,
 				   CmdType event_type,
 				   bool is_instead,
@@ -221,7 +226,6 @@ DefineQueryRewrite(char *rulename,
 				   List *action)
 {
 	Relation	event_relation;
-	Oid			ev_relid;
 	Oid			ruleId;
 	int			event_attno;
 	ListCell   *l;
@@ -235,13 +239,12 @@ DefineQueryRewrite(char *rulename,
 	 * grab ShareLock to lock out insert/update/delete actions.  But for now,
 	 * let's just grab AccessExclusiveLock all the time.
 	 */
-	event_relation = heap_openrv(event_obj, AccessExclusiveLock);
-	ev_relid = RelationGetRelid(event_relation);
+	event_relation = heap_open(event_relid, AccessExclusiveLock);
 
 	/*
 	 * Check user has permission to apply rules to this relation.
 	 */
-	if (!pg_class_ownercheck(ev_relid, GetUserId()))
+	if (!pg_class_ownercheck(event_relid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 					   RelationGetRelationName(event_relation));
 
@@ -352,12 +355,13 @@ DefineQueryRewrite(char *rulename,
 			 * truncated.
 			 */
 			if (strncmp(rulename, "_RET", 4) != 0 ||
-				strncmp(rulename + 4, event_obj->relname,
+				strncmp(rulename + 4, RelationGetRelationName(event_relation),
 						NAMEDATALEN - 4 - 4) != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
 						 errmsg("view rule for \"%s\" must be named \"%s\"",
-								event_obj->relname, ViewSelectRuleName)));
+								RelationGetRelationName(event_relation),
+								ViewSelectRuleName)));
 			rulename = pstrdup(ViewSelectRuleName);
 		}
 
@@ -377,27 +381,27 @@ DefineQueryRewrite(char *rulename,
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("could not convert table \"%s\" to a view because it is not empty",
-								event_obj->relname)));
+								RelationGetRelationName(event_relation))));
 			heap_endscan(scanDesc);
 
 			if (event_relation->rd_rel->reltriggers != 0)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("could not convert table \"%s\" to a view because it has triggers",
-								event_obj->relname),
+								RelationGetRelationName(event_relation)),
 						 errhint("In particular, the table cannot be involved in any foreign key relationships.")));
 
 			if (event_relation->rd_rel->relhasindex)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("could not convert table \"%s\" to a view because it has indexes",
-								event_obj->relname)));
+								RelationGetRelationName(event_relation))));
 
 			if (event_relation->rd_rel->relhassubclass)
 				ereport(ERROR,
 						(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
 						 errmsg("could not convert table \"%s\" to a view because it has child tables",
-								event_obj->relname)));
+								RelationGetRelationName(event_relation))));
 
 			RelisBecomingView = true;
 		}
@@ -449,7 +453,7 @@ DefineQueryRewrite(char *rulename,
 	{
 		ruleId = InsertRule(rulename,
 							event_type,
-							ev_relid,
+							event_relid,
 							event_attno,
 							is_instead,
 							event_qual,
@@ -465,7 +469,7 @@ DefineQueryRewrite(char *rulename,
 		 * backends (including me!) to update relcache entries with the new
 		 * rule.
 		 */
-		SetRelationRuleStatus(ev_relid, true, RelisBecomingView);
+		SetRelationRuleStatus(event_relid, true, RelisBecomingView);
 	}
 
 	/*
@@ -701,7 +705,7 @@ EnableDisableRule(Relation rel, const char *rulename,
 /*
  * Rename an existing rewrite rule.
  *
- * This is unused code at the moment.
+ * This is unused code at the moment.  Note that it lacks a permissions check.
  */
 #ifdef NOT_USED
 void

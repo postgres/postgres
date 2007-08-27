@@ -19,7 +19,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.2 2007/07/17 05:02:02 neilc Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/parse_utilcmd.c,v 2.3 2007/08/27 03:36:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,6 +142,20 @@ transformCreateStmt(CreateStmt *stmt, const char *queryString)
 	 * is overkill, but easy.)
 	 */
 	stmt = (CreateStmt *) copyObject(stmt);
+
+	/*
+	 * If the target relation name isn't schema-qualified, make it so.  This
+	 * prevents some corner cases in which added-on rewritten commands might
+	 * think they should apply to other relations that have the same name
+	 * and are earlier in the search path.  "istemp" is equivalent to a
+	 * specification of pg_temp, so no need for anything extra in that case.
+	 */
+	if (stmt->relation->schemaname == NULL && !stmt->relation->istemp)
+	{
+		Oid		namespaceid = RangeVarGetCreationNamespace(stmt->relation);
+
+		stmt->relation->schemaname = get_namespace_name(namespaceid);
+	}
 
 	/* Set up pstate */
 	pstate = make_parsestate(NULL);
