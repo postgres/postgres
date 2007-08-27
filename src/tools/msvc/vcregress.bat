@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.13 2007/06/26 11:43:56 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/vcregress.bat,v 1.14 2007/08/27 12:10:47 mha Exp $
 
 SETLOCAL
 SET STARTDIR=%CD%
@@ -110,6 +110,8 @@ goto :eof
 
 REM Check a single contrib module
 :onecontribcheck
+REM Temporarily exclude tsearch2 tests
+if %1==tsearch2 goto :eof
 cd %1
 
 echo ==========================================================================
