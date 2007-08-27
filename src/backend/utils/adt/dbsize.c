@@ -5,7 +5,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.12 2007/03/11 05:22:00 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/dbsize.c,v 1.13 2007/08/27 01:19:14 tgl Exp $
  *
  */
 
@@ -22,6 +22,7 @@
 #include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "storage/fd.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 #include "utils/relcache.h"
@@ -121,6 +122,10 @@ pg_database_size_oid(PG_FUNCTION_ARGS)
 {
 	Oid			dbOid = PG_GETARG_OID(0);
 
+	if (!pg_database_ownercheck(dbOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+					   get_database_name(dbOid));
+
 	PG_RETURN_INT64(calculate_database_size(dbOid));
 }
 
@@ -135,6 +140,10 @@ pg_database_size_name(PG_FUNCTION_ARGS)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist",
 						NameStr(*dbName))));
+
+	if (!pg_database_ownercheck(dbOid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
+					   NameStr(*dbName));
 
 	PG_RETURN_INT64(calculate_database_size(dbOid));
 }
@@ -203,6 +212,11 @@ pg_tablespace_size_oid(PG_FUNCTION_ARGS)
 {
 	Oid			tblspcOid = PG_GETARG_OID(0);
 
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pg_tablespace_size"))));
+
 	PG_RETURN_INT64(calculate_tablespace_size(tblspcOid));
 }
 
@@ -211,6 +225,11 @@ pg_tablespace_size_name(PG_FUNCTION_ARGS)
 {
 	Name		tblspcName = PG_GETARG_NAME(0);
 	Oid			tblspcOid = get_tablespace_oid(NameStr(*tblspcName));
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pg_tablespace_size"))));
 
 	if (!OidIsValid(tblspcOid))
 		ereport(ERROR,
@@ -270,6 +289,10 @@ pg_relation_size_oid(PG_FUNCTION_ARGS)
 
 	rel = relation_open(relOid, AccessShareLock);
 
+	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
+
 	size = calculate_relation_size(&(rel->rd_node));
 
 	relation_close(rel, AccessShareLock);
@@ -287,6 +310,10 @@ pg_relation_size_name(PG_FUNCTION_ARGS)
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
+
+	if (!pg_class_ownercheck(RelationGetRelid(rel), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
 
 	size = calculate_relation_size(&(rel->rd_node));
 
@@ -309,6 +336,11 @@ calculate_total_relation_size(Oid Relid)
 	ListCell   *cell;
 
 	heapRel = relation_open(Relid, AccessShareLock);
+
+	if (!pg_class_ownercheck(RelationGetRelid(heapRel), GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
+					   RelationGetRelationName(heapRel));
+
 	toastOid = heapRel->rd_rel->reltoastrelid;
 
 	/* Get the heap size */
@@ -348,6 +380,8 @@ pg_total_relation_size_oid(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 
+	/* permission check is inside calculate_total_relation_size */
+
 	PG_RETURN_INT64(calculate_total_relation_size(relid));
 }
 
@@ -360,6 +394,8 @@ pg_total_relation_size_name(PG_FUNCTION_ARGS)
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	relid = RangeVarGetRelid(relrv, false);
+
+	/* permission check is inside calculate_total_relation_size */
 
 	PG_RETURN_INT64(calculate_total_relation_size(relid));
 }
