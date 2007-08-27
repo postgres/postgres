@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/contrib/pgrowlocks/README.pgrowlocks,v 1.1 2006/04/23 01:12:58 ishii Exp $
+$PostgreSQL: pgsql/contrib/pgrowlocks/README.pgrowlocks,v 1.2 2007/08/27 00:13:51 tgl Exp $
 
 pgrowlocks README			Tatsuo Ishii
 
@@ -6,16 +6,14 @@ pgrowlocks README			Tatsuo Ishii
 
    pgrowlocks shows row locking information for specified table.
 
-   pgrowlocks returns following data type:
+   pgrowlocks returns following columns:
 
-CREATE TYPE pgrowlocks_type AS (
 	locked_row TID,		-- row TID
 	lock_type TEXT,		-- lock type
 	locker XID,		-- locking XID
 	multi bool,		-- multi XID?
 	xids xid[],		-- multi XIDs
 	pids INTEGER[]		-- locker's process id
-);
 
   Here is a sample execution of pgrowlocks:
 
@@ -61,14 +59,6 @@ test=# SELECT * FROM pgrowlocks('t1');
       $ psql -e -f pgrowlocks.sql test
 
 3. How to use pgrowlocks
-
-   The calling sequence for pgrowlocks is as follows:
-
-   CREATE OR REPLACE FUNCTION pgrowlocks(text) RETURNS pgrowlocks_type
-     AS 'MODULE_PATHNAME', 'pgrowlocks'
-     LANGUAGE 'c' WITH (isstrict);
-
-   The parameter is a name of table. pgrowlocks returns type pgrowlocks_type.
 
    pgrowlocks grab AccessShareLock for the target table and read each
    row one by one to get the row locking information. You should

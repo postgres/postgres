@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.5 2006/10/04 00:29:46 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.6 2007/08/27 00:13:51 tgl Exp $
  *
  * Copyright (c) 2005-2006	Tatsuo Ishii
  *
@@ -24,19 +24,15 @@
 
 #include "postgres.h"
 
-#include "funcapi.h"
 #include "access/heapam.h"
-#include "access/transam.h"
+#include "access/multixact.h"
 #include "access/xact.h"
 #include "catalog/namespace.h"
-#include "catalog/pg_type.h"
-#include "storage/proc.h"
+#include "funcapi.h"
+#include "miscadmin.h"
+#include "storage/procarray.h"
 #include "utils/builtins.h"
 
-#ifdef HEAP_XMAX_SHARED_LOCK
-#include "access/multixact.h"
-#include "storage/procarray.h"
-#endif
 
 PG_MODULE_MAGIC;
 
@@ -47,21 +43,10 @@ extern Datum pgrowlocks(PG_FUNCTION_ARGS);
 /* ----------
  * pgrowlocks:
  * returns tids of rows being locked
- *
- * C FUNCTION definition
- * pgrowlocks(text) returns set of pgrowlocks_type
- * see pgrowlocks.sql for pgrowlocks_type
  * ----------
  */
 
-#define DUMMY_TUPLE "public.pgrowlocks_type"
 #define NCHARS 32
-
-/*
- * define this if makeRangeVarFromNameList() has two arguments. As far
- * as I know, this only happens in 8.0.x.
- */
-#undef MAKERANGEVARFROMNAMELIST_HAS_TWO_ARGS
 
 typedef struct
 {
@@ -82,6 +67,11 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	MyData	   *mydata;
 	Relation	rel;
 
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgrowlocks"))));
+
 	if (SRF_IS_FIRSTCALL())
 	{
 		text	   *relname;
@@ -91,17 +81,17 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 
-		tupdesc = RelationNameGetTupleDesc(DUMMY_TUPLE);
+		/* Build a tuple descriptor for our result type */
+		if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+			elog(ERROR, "return type must be a row type");
+
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
 		relname = PG_GETARG_TEXT_P(0);
-#ifdef MAKERANGEVARFROMNAMELIST_HAS_TWO_ARGS
-		relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname, "pgrowlocks"));
-#else
 		relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
-#endif
 		rel = heap_openrv(relrv, AccessShareLock);
+
 		scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 		mydata = palloc(sizeof(*mydata));
 		mydata->rel = rel;
@@ -135,17 +125,12 @@ pgrowlocks(PG_FUNCTION_ARGS)
 			i = 0;
 			values[i++] = (char *) DirectFunctionCall1(tidout, PointerGetDatum(&tuple->t_self));
 
-#ifdef HEAP_XMAX_SHARED_LOCK
 			if (tuple->t_data->t_infomask & HEAP_XMAX_SHARED_LOCK)
 				values[i++] = pstrdup("Shared");
 			else
 				values[i++] = pstrdup("Exclusive");
-#else
-			values[i++] = pstrdup("Exclusive");
-#endif
 			values[i] = palloc(NCHARS * sizeof(char));
 			snprintf(values[i++], NCHARS, "%d", HeapTupleHeaderGetXmax(tuple->t_data));
-#ifdef HEAP_XMAX_SHARED_LOCK
 			if (tuple->t_data->t_infomask & HEAP_XMAX_IS_MULTI)
 			{
 				TransactionId *xids;
@@ -198,11 +183,6 @@ pgrowlocks(PG_FUNCTION_ARGS)
 				values[i] = palloc(NCHARS * sizeof(char));
 				snprintf(values[i++], NCHARS, "{%d}", BackendXidGetPid(HeapTupleHeaderGetXmax(tuple->t_data)));
 			}
-#else
-			values[i++] = pstrdup("false");
-			values[i++] = pstrdup("{}");
-			values[i++] = pstrdup("{}");
-#endif
 
 			LockBuffer(scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 
