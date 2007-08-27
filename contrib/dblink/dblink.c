@@ -8,7 +8,7 @@
  * Darko Prenosil <Darko.Prenosil@finteh.hr>
  * Shridhar Daithankar <shridhar_daithankar@persistent.co.in>
  *
- * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.64 2007/07/08 17:12:38 joe Exp $
+ * $PostgreSQL: pgsql/contrib/dblink/dblink.c,v 1.65 2007/08/27 01:24:50 tgl Exp $
  * Copyright (c) 2001-2007, PostgreSQL Global Development Group
  * ALL RIGHTS RESERVED;
  *
@@ -51,6 +51,7 @@
 #include "nodes/pg_list.h"
 #include "parser/parse_type.h"
 #include "tcop/tcopprot.h"
+#include "utils/acl.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/dynahash.h"
@@ -1686,9 +1687,17 @@ get_pkey_attnames(Oid relid, int16 *numatts)
 	char	  **result = NULL;
 	Relation	rel;
 	TupleDesc	tupdesc;
+	AclResult	aclresult;
 
-	/* open relation using relid, get tupdesc */
+	/* open relation using relid, check permissions, get tupdesc */
 	rel = relation_open(relid, AccessShareLock);
+
+	aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+								  ACL_SELECT);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error(aclresult, ACL_KIND_CLASS,
+					   RelationGetRelationName(rel));
+
 	tupdesc = rel->rd_att;
 
 	/* initialize numatts to 0 in case no primary key exists */
