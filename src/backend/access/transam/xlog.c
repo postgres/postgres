@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.278 2007/08/13 19:08:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.279 2007/08/28 23:17:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5923,7 +5923,13 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	{
 		if (RmgrTable[rmid].rm_safe_restartpoint != NULL)
 			if (!(RmgrTable[rmid].rm_safe_restartpoint()))
+			{
+				elog(DEBUG2, "RM %d not safe to record restart point at %X/%X",
+					 rmid,
+					 checkPoint->redo.xlogid,
+					 checkPoint->redo.xrecoff);
 				return;
+			}
 	}
 
 	/*
