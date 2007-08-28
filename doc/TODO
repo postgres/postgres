@@ -1,7 +1,7 @@
 PostgreSQL TODO List
 ====================
 Current maintainer:	Bruce Momjian (bruce@momjian.us)
-Last updated:		Wed Aug  1 19:13:20 EDT 2007
+Last updated:		Mon Aug 27 22:56:24 EDT 2007
 
 The most recent version of this document can be viewed at
 http://www.postgresql.org/docs/faqs.TODO.html.
@@ -20,7 +20,7 @@ http://developer.postgresql.org.
 Administration
 ==============
 
-* Allow major upgrades without dump/reload, perhaps using pg_upgrade 
+* Allow major upgrades without dump/reload, perhaps using pg_upgrade
   [pg_upgrade]
 * Check for unreferenced table files created by transactions that were
   in-progress when the server terminated abruptly
@@ -28,7 +28,7 @@ Administration
   http://archives.postgresql.org/pgsql-patches/2006-06/msg00096.php
 
 * Allow administrators to safely terminate individual sessions either
-  via an SQL function or SIGTERM 
+  via an SQL function or SIGTERM
 
   Lock table corruption following SIGTERM of an individual backend
   has been reported in 8.0.  A possible cause was fixed in 8.1, but
@@ -73,7 +73,7 @@ Administration
 
   Currently ALTER USER and ALTER DATABASE support per-user and
   per-database defaults.  Consider adding per-user-and-database
-  defaults so things like search_path can be defaulted for a 
+  defaults so things like search_path can be defaulted for a
   specific user connecting to a specific database.
 
 * Allow custom variable classes that can restrict who can set the values
@@ -171,11 +171,7 @@ Administration
 Monitoring
 ==========
 
-* Allow server log information to be output as INSERT statements
-
-  This would allow server log information to be easily loaded into
-  a database for analysis.
-
+* -Allow server log information to be output as CSV format
 * -Add ability to monitor the use of temporary sort files
 
 
@@ -239,16 +235,16 @@ Data Types
 * Dates and Times
 
 	o Allow infinite dates and intervals just like infinite timestamps
-	o Merge hardwired timezone names with the TZ database; allow either 
+	o Merge hardwired timezone names with the TZ database; allow either
 	  kind everywhere a TZ name is currently taken
 	o Allow TIMESTAMP WITH TIME ZONE to store the original timezone
 	  information, either zone name or offset from UTC [timezone]
 
-	  If the TIMESTAMP value is stored with a time zone name, interval 
+	  If the TIMESTAMP value is stored with a time zone name, interval
 	  computations should adjust based on the time zone rules.
 
 	o Fix SELECT '0.01 years'::interval, '0.01 months'::interval
-	o Add a GUC variable to allow output of interval values in ISO8601 
+	o Add a GUC variable to allow output of interval values in ISO8601
 	  format
 	o Have timestamp subtraction not call justify_hours()?
 
@@ -358,12 +354,12 @@ Functions
   requested
 
   Some special format flag would be required to request such
-  accumulation.  Such functionality could also be added to EXTRACT. 
+  accumulation.  Such functionality could also be added to EXTRACT.
   Prevent accumulation that crosses the month/day boundary because of
   the uneven number of days in a month.
 
 	o to_char(INTERVAL '1 hour 5 minutes', 'MI') => 65
-	o to_char(INTERVAL '43 hours 20 minutes', 'MI' ) => 2600 
+	o to_char(INTERVAL '43 hours 20 minutes', 'MI' ) => 2600
 	o to_char(INTERVAL '43 hours 20 minutes', 'WK:DD:HR:MI') => 0:1:19:20
 	o to_char(INTERVAL '3 years 5 months','MM') => 41
 
@@ -531,7 +527,7 @@ SQL Commands
   creation
 * -Add RESET SESSION command to reset all session state
 * Add GUC to issue notice about statements that use unjoined tables
-* Allow EXPLAIN to identify tables that were skipped because of 
+* Allow EXPLAIN to identify tables that were skipped because of
   constraint_exclusion
 * Allow EXPLAIN output to be more easily processed by scripts, perhaps XML
 * Enable standard_conforming_strings
@@ -670,8 +666,8 @@ SQL Commands
 
 	  On crash recovery, the table involved in the COPY would
 	  be removed or have its heap and index files truncated.  One
-	  issue is that no other backend should be able to add to 
-	  the table at the same time, which is something that is 
+	  issue is that no other backend should be able to add to
+	  the table at the same time, which is something that is
 	  currently allowed.
 
 
@@ -795,7 +791,7 @@ SQL Commands
 		o Add support for polymorphic arguments and return types to
 		  languages other than PL/PgSQL
 		o Add capability to create and call PROCEDURES
-		o Add support for OUT and INOUT parameters to languages other 
+		o Add support for OUT and INOUT parameters to languages other
 		  than PL/PgSQL
 		o Add PL/PythonU tracebacks
 
@@ -843,7 +839,7 @@ Clients
 	  than toggle
 	o Consistently display privilege information for all objects in psql
 	o Add auto-expanded mode so expanded output is used if the row
-	  length is wider than the screen width.  
+	  length is wider than the screen width.
 
 	  Consider using auto-expanded mode for backslash commands like \df+.
 
@@ -913,13 +909,13 @@ Clients
 	o Add PQescapeIdentifierConn()
 	o Prevent PQfnumber() from lowercasing unquoted the column name
 
-	  PQfnumber() should never have been doing lowercasing, but 
+	  PQfnumber() should never have been doing lowercasing, but
 	  historically it has so we need a way to prevent it
 
 	o Allow statement results to be automatically batched to the client
 
 	  Currently all statement results are transferred to the libpq
-	  client before libpq makes the results available to the 
+	  client before libpq makes the results available to the
 	  application.  This feature would allow the application to make
 	  use of the first result rows while the rest are transferred, or
 	  held on the server waiting for them to be requested by libpq.
@@ -1123,19 +1119,26 @@ Cache Usage
 
 * Allow data to be pulled directly from indexes
 
-  Currently indexes do not have enough tuple visibility information 
-  to allow data to be pulled from the index without also accessing 
-  the heap.  One way to allow this is to set a bit on index tuples 
-  to indicate if a tuple is currently visible to all transactions 
-  when the first valid heap lookup happens.  This bit would have to 
-  be cleared when a heap tuple is expired.  
+  Currently indexes do not have enough tuple visibility information
+  to allow data to be pulled from the index without also accessing
+  the heap.  One way to allow this is to set a bit on index tuples
+  to indicate if a tuple is currently visible to all transactions
+  when the first valid heap lookup happens.  This bit would have to
+  be cleared when a heap tuple is expired.
 
   Another idea is to maintain a bitmap of heap pages where all rows
-  are visible to all backends, and allow index lookups to reference 
+  are visible to all backends, and allow index lookups to reference
   that bitmap to avoid heap lookups, perhaps the same bitmap we might
   add someday to determine which heap pages need vacuuming.  Frequently
   accessed bitmaps would have to be stored in shared memory.  One 8k
   page of bitmaps could track 512MB of heap pages.
+
+  A third idea would be for a heap scan to check if all rows are visible
+  and if so set a per-table flag which can be checked by index scans. 
+  Any change to the table would have to clear the flag.  To detect
+  changes during the heap scan a counter could be set at the start and
+  checked at the end --- if it is the same, the table has not been
+  modified --- any table change would increment the counter.
 
 * Consider automatic caching of statements at various levels:
 
@@ -1215,11 +1218,16 @@ Vacuum
   http://archives.postgresql.org/pgsql-hackers/2006-06/msg01305.php
   http://archives.postgresql.org/pgsql-hackers/2006-06/msg01534.php
 
-* Reuse index tuples that point to heap tuples that are not visible to 
+* Reuse index tuples that point to heap tuples that are not visible to
   anyone?
 * Improve dead row detection during multi-statement transactions usage
 
   http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php
+
+* Reduce XID consumption of read-only queries
+
+   http://archives.postgresql.org/pgsql-hackers/2007-08/msg00516.php
+
 
 * Auto-vacuum
 
@@ -1335,19 +1343,19 @@ Write-Ahead Log
   might be dropped or truncated during crash recovery [walcontrol]
 
   Allow tables to bypass WAL writes and just fsync() dirty pages on
-  commit.  This should be implemented using ALTER TABLE, e.g. ALTER 
-  TABLE PERSISTENCE [ DROP | TRUNCATE | DEFAULT ].  Tables using 
-  non-default logging should not use referential integrity with 
+  commit.  This should be implemented using ALTER TABLE, e.g. ALTER
+  TABLE PERSISTENCE [ DROP | TRUNCATE | DEFAULT ].  Tables using
+  non-default logging should not use referential integrity with
   default-logging tables.  A table without dirty buffers during a
   crash could perhaps avoid the drop/truncate.
 
 * Allow WAL logging to be turned off for a table, but the table would
   avoid being truncated/dropped [walcontrol]
 
-  To do this, only a single writer can modify the table, and writes 
+  To do this, only a single writer can modify the table, and writes
   must happen only on new pages so the new pages can be removed during
-  crash recovery.  Readers can continue accessing the table.  Such 
-  tables probably cannot have indexes.  One complexity is the handling 
+  crash recovery.  Readers can continue accessing the table.  Such
+  tables probably cannot have indexes.  One complexity is the handling
   of indexes on TOAST tables.
 
 
@@ -1373,7 +1381,7 @@ Optimizer / Executor
 
   This might replace GEQO, http://sixdemonbag.org/Djinni.
 
-* Improve merge join performance by allowing mark/restore of 
+* Improve merge join performance by allowing mark/restore of
   tuple sources
 
   http://archives.postgresql.org/pgsql-hackers/2007-01/msg00096.php
@@ -1411,7 +1419,7 @@ Miscellaneous Performance
 
 	o -Support a smaller header for short variable-length fields
 	o Reduce the row header size?
-	o Consider reducing on-disk varlena length from four bytes to 
+	o Consider reducing on-disk varlena length from four bytes to
 	  two because a heap row cannot be more than 64k in length
 
 * Consider increasing NUM_CLOG_BUFFERS
@@ -1486,7 +1494,7 @@ Source Code
 
 * -Move NAMEDATALEN from postgres_ext.h to pg_config_manual.h
 * Consider making NAMEDATALEN more configurable in future releases
-* Update our code to handle 64-bit timezone files to match the zic 
+* Update our code to handle 64-bit timezone files to match the zic
   source code, which now uses them
 * Have configure choose integer datetimes by default
 
@@ -1597,6 +1605,6 @@ Features We Do _Not_ Want
 
   While PostgreSQL clients runs fine in limited-resource environments, the
   server requires multiple processes and a stable pool of resources to
-  run reliabily and efficiently.  Stripping down the PostgreSQL server 
-  to run in the same process address space as the client application 
+  run reliabily and efficiently.  Stripping down the PostgreSQL server
+  to run in the same process address space as the client application
   would add too much complexity and failure cases.
