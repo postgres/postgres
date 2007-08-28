@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.6 2007/08/27 00:13:51 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgrowlocks/pgrowlocks.c,v 1.7 2007/08/28 22:59:30 tgl Exp $
  *
  * Copyright (c) 2005-2006	Tatsuo Ishii
  *
@@ -31,6 +31,7 @@
 #include "funcapi.h"
 #include "miscadmin.h"
 #include "storage/procarray.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 
 
@@ -67,16 +68,12 @@ pgrowlocks(PG_FUNCTION_ARGS)
 	MyData	   *mydata;
 	Relation	rel;
 
-	if (!superuser())
-		ereport(ERROR,
-				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to use pgrowlocks"))));
-
 	if (SRF_IS_FIRSTCALL())
 	{
 		text	   *relname;
 		RangeVar   *relrv;
 		MemoryContext oldcontext;
+		AclResult	aclresult;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -91,6 +88,13 @@ pgrowlocks(PG_FUNCTION_ARGS)
 		relname = PG_GETARG_TEXT_P(0);
 		relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 		rel = heap_openrv(relrv, AccessShareLock);
+
+		/* check permissions: must have SELECT on table */
+		aclresult = pg_class_aclcheck(RelationGetRelid(rel), GetUserId(),
+									  ACL_SELECT);
+		if (aclresult != ACLCHECK_OK)
+			aclcheck_error(aclresult, ACL_KIND_CLASS,
+						   RelationGetRelationName(rel));
 
 		scan = heap_beginscan(rel, SnapshotNow, 0, NULL);
 		mydata = palloc(sizeof(*mydata));
