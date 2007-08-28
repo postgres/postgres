@@ -329,8 +329,27 @@ The form <type>text</type> <literal>@@</literal> <type>tsquery</type>
 is equivalent to <literal>to_tsvector(x) @@ y</literal>.
 The form <type>text</type> <literal>@@</literal> <type>text</type>
 is equivalent to <literal>to_tsvector(x) @@ plainto_tsquery(y)</literal>.
-Note that the results of these forms will depend on the setting of <xref
-linkend="guc-default-text-search-config">.
+</para>
+
+<sect2 id="textsearch-configurations">
+<title>Configurations</title>
+
+<indexterm zone="textsearch-configurations">
+<primary>configurations</primary>
+</indexterm>
+
+<para>
+The above are all simple text search examples.  As mentioned before, full
+text search functionality includes the ability to do many more things:
+skip indexing certain words (stop words), process synonyms, and use
+sophisticated parsing, e.g. parse based on more than just white space.
+This functionality is controlled by <emphasis>configurations</>.
+Fortunately, <productname>PostgreSQL</> comes with predefined
+configurations for many languages.  (<application>psql</>'s <command>\dF</>
+shows all predefined configurations.)  During installation an appropriate
+configuration was selected and <xref
+linkend="guc-default-text-search-config"> was set accordingly.  If you
+need to change it, see <xref linkend="textsearch-tables-multiconfig">.
 </para>
 
 </sect2>
@@ -2646,15 +2665,12 @@ database you must be careful to reference the proper text search
 configuration.  This can be done by either setting
 <varname>default_text_search_config</> in each session or supplying the
 configuration name in every function call, e.g.  to_tsquery('french',
-'friend'), to_tsvector('english', col).  If you are using an expression index,
-you must also be sure to use the proper text search configuration every
-time an <command>INSERT</> or <command>UPDATE</> is executed because these
-will modify the index, or you can embed the configuration name into the
-expression index, e.g.:
+'friend'), to_tsvector('english', col).  If you are using an expression
+index you must embed the configuration name into the expression index, e.g.:
 <programlisting>
 CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('french', title || body));
 </programlisting>
-And if you do that, make sure you specify the configuration name in the
+And for an expression index, specify the configuration name in the
 <literal>WHERE</> clause as well so the expression index will be used.
 </para>
 
