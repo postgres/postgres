@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.191 2007/07/16 21:09:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.192 2007/08/28 03:23:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -727,6 +727,7 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	LOCKMASK	myHeldLocks = MyProc->heldLocks;
 	bool		early_deadlock = false;
+	int			myWaitStatus;
 	PGPROC	   *proc;
 	int			i;
 
@@ -879,60 +880,85 @@ ProcSleep(LOCALLOCK *locallock, LockMethod lockMethodTable)
 		PGSemaphoreLock(&MyProc->sem, true);
 
 		/*
+		 * waitStatus could change from STATUS_WAITING to something else
+		 * asynchronously.  Read it just once per loop to prevent surprising
+		 * behavior (such as missing log messages).
+		 */
+		myWaitStatus = MyProc->waitStatus;
+
+		/*
 		 * If awoken after the deadlock check interrupt has run, and
 		 * log_lock_waits is on, then report about the wait.
 		 */
-		if (log_lock_waits)
+		if (log_lock_waits && deadlock_state != DS_NOT_YET_CHECKED)
 		{
-			switch (deadlock_state)
+			StringInfoData buf;
+			const char *modename;
+			long		secs;
+			int			usecs;
+			long		msecs;
+
+			initStringInfo(&buf);
+			DescribeLockTag(&buf, &locallock->tag.lock);
+			modename = GetLockmodeName(locallock->tag.lock.locktag_lockmethodid,
+									   lockmode);
+			TimestampDifference(timeout_start_time, GetCurrentTimestamp(),
+								&secs, &usecs);
+			msecs = secs * 1000 + usecs / 1000;
+			usecs = usecs % 1000;
+
+			if (deadlock_state == DS_SOFT_DEADLOCK)
+				ereport(LOG,
+						(errmsg("process %d avoided deadlock for %s on %s by rearranging queue order after %ld.%03d ms",
+								MyProcPid, modename, buf.data, msecs, usecs)));
+			else if (deadlock_state == DS_HARD_DEADLOCK)
 			{
-				case DS_NOT_YET_CHECKED:
-					/* Lock granted, or spurious wakeup as described above */
-					break; 
-				case DS_NO_DEADLOCK:
-				case DS_SOFT_DEADLOCK:
-				{
-					StringInfoData buf;
-					const char *modename;
-					long		secs;
-					int			usecs;
-					long		msecs;
-
-					initStringInfo(&buf);
-					DescribeLockTag(&buf, &locallock->tag.lock);
-					modename = GetLockmodeName(locallock->tag.lock.locktag_lockmethodid,
-											   lockmode);
-					TimestampDifference(timeout_start_time,
-										GetCurrentTimestamp(),
-										&secs, &usecs);
-					msecs = secs * 1000 + usecs / 1000;
-					usecs = usecs % 1000;
-
-					if (deadlock_state == DS_SOFT_DEADLOCK)
-						ereport(LOG,
-								(errmsg("deadlock for %s on %s avoided by rearranging queue order after %ld.%03d ms",
-										modename, buf.data,
-										msecs, usecs)));
-					else if (MyProc->waitStatus == STATUS_WAITING)
-						ereport(LOG,
-								(errmsg("process %d still waiting for %s on %s after %ld.%03d ms",
-										MyProcPid, modename, buf.data,
-										msecs, usecs)));
-					else if (MyProc->waitStatus == STATUS_OK)
-						ereport(LOG,
-								(errmsg("process %d acquired %s on %s after %ld.%03d ms",
-										MyProcPid, modename, buf.data,
-										msecs, usecs)));
-					/* ERROR will be reported later, so no message here */
-					pfree(buf.data);
-					break;
-				}
-				case DS_HARD_DEADLOCK:
-					/* ERROR will be reported later, so no message here */
-					break; 
+				/*
+				 * This message is a bit redundant with the error that will
+				 * be reported subsequently, but in some cases the error
+				 * report might not make it to the log (eg, if it's caught by
+				 * an exception handler), and we want to ensure all long-wait
+				 * events get logged.
+				 */
+				ereport(LOG,
+						(errmsg("process %d detected deadlock while waiting for %s on %s after %ld.%03d ms",
+								MyProcPid, modename, buf.data, msecs, usecs)));
 			}
+
+			if (myWaitStatus == STATUS_WAITING)
+				ereport(LOG,
+						(errmsg("process %d still waiting for %s on %s after %ld.%03d ms",
+								MyProcPid, modename, buf.data, msecs, usecs)));
+			else if (myWaitStatus == STATUS_OK)
+				ereport(LOG,
+						(errmsg("process %d acquired %s on %s after %ld.%03d ms",
+								MyProcPid, modename, buf.data, msecs, usecs)));
+			else
+			{
+				Assert(myWaitStatus == STATUS_ERROR);
+				/*
+				 * Currently, the deadlock checker always kicks its own
+				 * process, which means that we'll only see STATUS_ERROR
+				 * when deadlock_state == DS_HARD_DEADLOCK, and there's no
+				 * need to print redundant messages.  But for completeness
+				 * and future-proofing, print a message if it looks like
+				 * someone else kicked us off the lock.
+				 */
+				if (deadlock_state != DS_HARD_DEADLOCK)
+					ereport(LOG,
+							(errmsg("process %d failed to acquire %s on %s after %ld.%03d ms",
+									MyProcPid, modename, buf.data, msecs, usecs)));
+			}
+
+			/*
+			 * At this point we might still need to wait for the lock.
+			 * Reset state so we don't print the above messages again.
+			 */
+			deadlock_state = DS_NO_DEADLOCK;
+
+			pfree(buf.data);
 		}
-	} while (MyProc->waitStatus == STATUS_WAITING);
+	} while (myWaitStatus == STATUS_WAITING);
 
 	/*
 	 * Disable the timer, if it's still running
