@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.25 2006/10/04 00:29:46 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.25.2.1 2007/08/28 23:11:12 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -32,6 +32,7 @@
 #include "access/nbtree.h"
 #include "access/transam.h"
 #include "catalog/namespace.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 
 
@@ -163,6 +164,11 @@ pgstattuple(PG_FUNCTION_ARGS)
 	RangeVar   *relrv;
 	Relation	rel;
 
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
 	/* open relation */
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
@@ -175,6 +181,11 @@ pgstattuplebyid(PG_FUNCTION_ARGS)
 {
 	Oid			relid = PG_GETARG_OID(0);
 	Relation	rel;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
 
 	/* open relation */
 	rel = relation_open(relid, AccessShareLock);

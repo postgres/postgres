@@ -32,6 +32,7 @@
 #include "access/transam.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/inval.h"
 
@@ -235,6 +236,11 @@ pgstatindex(PG_FUNCTION_ARGS)
 	uint32		blkno;
 	BTIndexStat indexStat;
 
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
 
@@ -391,6 +397,11 @@ bt_page_stats(PG_FUNCTION_ARGS)
 	RangeVar   *relrv;
 	Datum		result;
 
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
 
@@ -496,6 +507,11 @@ bt_page_items(PG_FUNCTION_ARGS)
 	FuncCallContext *fctx;
 	MemoryContext mctx;
 	struct user_args *uargs = NULL;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
 
 	if (blkno == 0)
 		elog(ERROR, "Block 0 is a meta page.");
@@ -624,6 +640,11 @@ bt_metap(PG_FUNCTION_ARGS)
 	RangeVar   *relrv;
 	Datum		result;
 
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
+
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
 
@@ -690,6 +711,11 @@ pg_relpages(PG_FUNCTION_ARGS)
 	Relation	rel;
 	RangeVar   *relrv;
 	int4		relpages;
+
+	if (!superuser())
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 (errmsg("must be superuser to use pgstattuple functions"))));
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname));
 	rel = relation_openrv(relrv, AccessShareLock);
