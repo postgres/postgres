@@ -2229,5 +2229,9 @@ Tue, 14 Aug 2007 11:46:51 +0200
 Wed, 22 Aug 2007 08:41:33 +0200
 
 	- More cleaning up and removed some duplicates.
+
+Wed, 29 Aug 2007 15:41:58 +0200
+
+	- Fixed bug in Informix define handling.
 	- Set ecpg library version to 6.0.
 	- Set ecpg version to 4.4.

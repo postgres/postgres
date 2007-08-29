@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.154 2007/08/22 08:20:58 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.155 2007/08/29 13:58:13 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@ static void parse_include (void);
 static void check_escape_warning(void);
 static bool ecpg_isspace(char ch);
 static bool isdefine(void);
+static bool isinformixdefine(void);
 
 char *token_start;
 int state_before;
@@ -751,8 +752,10 @@ cppline			{space}*#(.*\\{space})*.*{newline}
 					}
 <C>{identifier} 	{
 						const ScanKeyword		*keyword;
-
-						if (INFORMIX_MODE || !isdefine())
+							
+						/* Informix uses SQL defines only in SQL space */
+						/* however, some defines have to be taken care of for compatibility */
+						if ((!INFORMIX_MODE || !isinformixdefine()) && !isdefine())
 						{
 							keyword = ScanCKeywordLookup(yytext);
 							if (keyword != NULL)
@@ -1327,6 +1330,36 @@ static bool isdefine(void)
 			yy_scan_string(ptr->new);
 			return true;
 		}
+	}
+
+	return false;
+}
+
+static bool isinformixdefine(void)
+{
+	const char *new = NULL;
+
+	if (strcmp(yytext, "dec_t") == 0)
+		new = "decimal";
+	else if (strcmp(yytext, "intrvl_t") == 0)
+	        new = "interval";
+	else if (strcmp(yytext, "dtime_t") == 0)
+                new = "timestamp";
+
+	if (new)
+	{
+		struct _yy_buffer *yb;
+
+		yb = mm_alloc(sizeof(struct _yy_buffer));
+
+		yb->buffer =  YY_CURRENT_BUFFER;
+		yb->lineno = yylineno;
+		yb->filename = mm_strdup(input_filename);
+		yb->next = yy_buffer;
+		yy_buffer = yb;
+
+		yy_scan_string(new);
+		return true;
 	}
 
 	return false;

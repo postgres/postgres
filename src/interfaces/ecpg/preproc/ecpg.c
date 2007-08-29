@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.100 2007/08/14 10:01:53 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.101 2007/08/29 13:58:13 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -212,11 +212,6 @@ main(int argc, char *const argv[])
 					char		informix_path[MAXPGPATH];
 
 					compat = (strcmp(optarg, "INFORMIX") == 0) ? ECPG_COMPAT_INFORMIX : ECPG_COMPAT_INFORMIX_SE;
-					/* system_includes = true; */
-					add_preprocessor_define("dec_t=decimal");
-					add_preprocessor_define("intrvl_t=interval");
-					add_preprocessor_define("dtime_t=timestamp");
-
 					get_pkginclude_path(my_exec_path, pkginclude_path);
 					snprintf(informix_path, MAXPGPATH, "%s/informix/esql", pkginclude_path);
 					add_include_path(informix_path);
