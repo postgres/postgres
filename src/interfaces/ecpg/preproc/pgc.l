@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.134 2004/12/31 22:03:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.134.4.1 2007/08/29 13:59:04 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,8 @@ static int		literalalloc;			/* current allocated buffer size */
 static void addlit(char *ytext, int yleng);
 static void addlitchar (unsigned char);
 static void parse_include (void);
+static bool isdefine(void);
+static bool isinformixdefine(void);
 
 char *token_start;
 int state_before;
@@ -597,29 +599,8 @@ cppline			{space}*#(.*\\{space})+.*
 					}
 <SQL>{identifier}	{
 						ScanKeyword    *keyword;
-						struct _defines *ptr;
-						
-						/* How about a DEFINE? */
-						for (ptr = defines; ptr; ptr = ptr->next)
-						{
-							if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
-							{
-								struct _yy_buffer *yb;
 
-								yb = mm_alloc(sizeof(struct _yy_buffer));
-
-								yb->buffer =  YY_CURRENT_BUFFER;
-								yb->lineno = yylineno;
-								yb->filename = mm_strdup(input_filename);
-								yb->next = yy_buffer;
-								
-								ptr->used = yy_buffer = yb;
-
-								yy_scan_string(ptr->new);
-								break;
-							}
-						}
-						if (ptr == NULL)
+						if (!isdefine())
 						{
 							/* Is it an SQL keyword? */
 							keyword = ScanKeywordLookup(yytext);
@@ -691,38 +672,10 @@ cppline			{space}*#(.*\\{space})+.*
 					}
 <C>{identifier} 	{
 						ScanKeyword		*keyword;
-						struct _defines *ptr;
-
-                          			if (INFORMIX_MODE)
-						{
-							/* Informix uses SQL defines only in SQL space */
-							ptr = NULL;
-						}
-						else
-						{
-							/* is it a define? */
-							for (ptr = defines; ptr; ptr = ptr->next)
-							{
-								if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
-								{
-									struct _yy_buffer *yb;
-
-									yb = mm_alloc(sizeof(struct _yy_buffer));
-
-									yb->buffer =  YY_CURRENT_BUFFER;
-									yb->lineno = yylineno;
-									yb->filename = mm_strdup(input_filename);
-									yb->next = yy_buffer;
-
-									ptr->used = yy_buffer = yb;
-
-									yy_scan_string(ptr->new);
-									break;
-								}
-							}
-						}
-
-						if (ptr == NULL)
+						
+						/* Informix uses SQL defines only in SQL space */
+						/* however, some defines have to be taken care of for compatibility */
+						if ((!INFORMIX_MODE || !isinformixdefine()) && !isdefine())
 						{
 							keyword = ScanCKeywordLookup(yytext);
 							if (keyword != NULL)
@@ -1186,4 +1139,62 @@ parse_include(void)
 	output_line_number();
 
   	BEGIN C;
+}
+
+static bool isdefine(void)
+{
+	struct _defines *ptr;
+
+	/* is it a define? */
+	for (ptr = defines; ptr; ptr = ptr->next)
+	{
+		if (strcmp(yytext, ptr->old) == 0 && ptr->used == NULL)
+		{
+			struct _yy_buffer *yb;
+
+			yb = mm_alloc(sizeof(struct _yy_buffer));
+
+			yb->buffer =  YY_CURRENT_BUFFER;
+			yb->lineno = yylineno;
+			yb->filename = mm_strdup(input_filename);
+			yb->next = yy_buffer;
+
+			ptr->used = yy_buffer = yb;
+
+			yy_scan_string(ptr->new);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static bool isinformixdefine(void)
+{
+	const char *new = NULL;
+
+	if (strcmp(yytext, "dec_t") == 0)
+		new = "decimal";
+	else if (strcmp(yytext, "intrvl_t") == 0)
+	        new = "interval";
+	else if (strcmp(yytext, "dtime_t") == 0)
+                new = "timestamp";
+
+	if (new)
+	{
+		struct _yy_buffer *yb;
+
+		yb = mm_alloc(sizeof(struct _yy_buffer));
+
+		yb->buffer =  YY_CURRENT_BUFFER;
+		yb->lineno = yylineno;
+		yb->filename = mm_strdup(input_filename);
+		yb->next = yy_buffer;
+		yy_buffer = yb;
+
+		yy_scan_string(new);
+		return true;
+	}
+
+	return false;
 }
