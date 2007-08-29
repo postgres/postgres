@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.32.2.3 2007/08/06 01:38:57 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.32.2.4 2007/08/29 16:32:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1021,15 +1021,16 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	 */
 	fseeko(tmp, 0, SEEK_END);
 	th->fileLen = ftello(tmp);
+	fseeko(tmp, 0, SEEK_SET);
+
 	if (th->fileLen > MAX_TAR_MEMBER_FILELEN)
 		die_horribly(AH, modulename, "archive member too large for tar format\n");
-	fseeko(tmp, 0, SEEK_SET);
 
 	_tarWriteHeader(th);
 
-	while ((cnt = fread(&buf[0], 1, 32767, tmp)) > 0)
+	while ((cnt = fread(buf, 1, sizeof(buf), tmp)) > 0)
 	{
-		res = fwrite(&buf[0], 1, cnt, th->tarFH);
+		res = fwrite(buf, 1, cnt, th->tarFH);
 		if (res != cnt)
 			die_horribly(AH, modulename,
 						 "write error appending to tar archive (wrote %lu, attempted %lu)\n",
@@ -1038,15 +1039,16 @@ _tarAddFile(ArchiveHandle *AH, TAR_MEMBER *th)
 	}
 
 	if (fclose(tmp) != 0)		/* This *should* delete it... */
-		die_horribly(AH, modulename, "could not close tar member: %s\n", strerror(errno));
+		die_horribly(AH, modulename, "could not close tar member: %s\n",
+					 strerror(errno));
 
 	if (len != th->fileLen)
 	{
-		char		buf1[100],
-					buf2[100];
+		char		buf1[32],
+					buf2[32];
 
-		snprintf(buf1, 100, INT64_FORMAT, (int64) len);
-		snprintf(buf2, 100, INT64_FORMAT, (int64) th->pos);
+		snprintf(buf1, sizeof(buf1), INT64_FORMAT, (int64) len);
+		snprintf(buf2, sizeof(buf2), INT64_FORMAT, (int64) th->fileLen);
 		die_horribly(AH, modulename, "actual file length (%s) does not match expected (%s)\n",
 					 buf1, buf2);
 	}
