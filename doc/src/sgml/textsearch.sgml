@@ -4,7 +4,7 @@
 
 
  <sect1 id="textsearch-intro">
- <title>Introduction</title>
+  <title>Introduction</title>
 
   <para>
    Full Text Searching (or just <firstterm>text search</firstterm>) allows
@@ -85,12 +85,12 @@
 
    <listitem>
     <para>
-     <emphasis>Store</emphasis> preprocessed documents
-     optimized for searching.  For example, represent each document as a sorted array
+     <emphasis>Store</emphasis> preprocessed documents optimized for
+     searching.  For example, represent each document as a sorted array
      of lexemes. Along with lexemes it is desirable to store positional
-     information to use for <varname>proximity ranking</varname>, so that a
-     document which contains a more "dense" region of query words is assigned
-     a higher rank than one with scattered query words.
+     information to use for <varname>proximity ranking</varname>, so that
+     a document which contains a more "dense" region of query words is
+     assigned a higher rank than one with scattered query words.
     </para>
    </listitem>
   </itemizedlist>
@@ -135,7 +135,7 @@
   </itemizedlist>
 
   <para>
-   A data type (<xref linkend="textsearch-datatypes">), <type>tsvector</type>
+   A data type (<xref linkend="datatype-textsearch">), <type>tsvector</type>
    is provided, for storing preprocessed documents,
    along with a type <type>tsquery</type> for representing textual
    queries.  Also, a full text search operator <literal>@@</literal> is defined
@@ -146,11 +146,11 @@
 
 
   <sect2 id="textsearch-document">
-  <title>What Is a <firstterm>Document</firstterm>?</title>
+   <title>What Is a <firstterm>Document</firstterm>?</title>
 
-  <indexterm zone="textsearch-document">
-  <primary>document</primary>
-  </indexterm>
+   <indexterm zone="textsearch-document">
+   <primary>document</primary>
+   </indexterm>
 
    <para>
     A document can be a simple text file stored in the file system.  The full
@@ -189,139 +189,8 @@ WHERE mid = did AND mid = 12;
    </note>
   </sect2>
 
-  <sect2 id="textsearch-datatypes">
-  <title>Data Types</title>
-
-   <variablelist>
-
-   <indexterm zone="textsearch-datatypes">
-   <primary>tsvector</primary>
-   </indexterm>
-
-    <varlistentry>
-    <term><firstterm>tsvector</firstterm></term>
-     <listitem>
-
-      <para>
-       <type>tsvector</type> is a data type that represents a document and is
-       optimized for full text searching. In the simplest case,
-       <type>tsvector</type> is a sorted list of lexemes, so even without indexes
-       full text searches perform better than standard <literal>~</literal> and
-       <literal>LIKE</literal> operations:
-
-<programlisting>
-SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector;
-                      tsvector
-----------------------------------------------------
- 'a' 'on' 'and' 'ate' 'cat' 'fat' 'mat' 'rat' 'sat'
-</programlisting>
-
-       Notice, that <literal>space</literal> is also a lexeme:
-
-<programlisting>
-SELECT 'space ''    '' is a lexeme'::tsvector;
-             tsvector
-----------------------------------
- 'a' 'is' '    ' 'space' 'lexeme'
-</programlisting>
-
-       Each lexeme, optionally, can have positional information which is used for
-       <varname>proximity ranking</varname>:
-
-<programlisting>
-SELECT 'a:1 fat:2 cat:3 sat:4 on:5 a:6 mat:7 and:8 ate:9 a:10 fat:11 rat:12'::tsvector;
-                                  tsvector
--------------------------------------------------------------------------------
- 'a':1,6,10 'on':5 'and':8 'ate':9 'cat':3 'fat':2,11 'mat':7 'rat':12 'sat':4
-</programlisting>
-
-       Each lexeme position also can be labeled as <literal>A</literal>,
-       <literal>B</literal>, <literal>C</literal>, <literal>D</literal>,
-       where <literal>D</literal> is the default. These labels can be used to group
-       lexemes into different <emphasis>importance</emphasis> or
-       <emphasis>rankings</emphasis>, for example to reflect document structure.
-       Actual values can be assigned at search time and used during the calculation
-       of the document rank.  This is very useful for controlling search results.
-      </para>
-
-      <para>
-       The concatenation operator, e.g. <literal>tsvector || tsvector</literal>,
-       can "construct" a document from several parts. The order is important if
-       <type>tsvector</type> contains positional information. Of course,
-       it is also possible to build a document using different tables:
-
-<programlisting>
-SELECT 'fat:1 cat:2'::tsvector || 'fat:1 rat:2'::tsvector;
-         ?column?
----------------------------
- 'cat':2 'fat':1,3 'rat':4
-
-SELECT 'fat:1 rat:2'::tsvector || 'fat:1 cat:2'::tsvector;
-         ?column?
----------------------------
- 'cat':4 'fat':1,3 'rat':2
-</programlisting>
-
-      </para>
-
-     </listitem>
-
-    </varlistentry>
-
-    <indexterm zone="textsearch-datatypes">
-    <primary>tsquery</primary>
-    </indexterm>
-
-    <varlistentry>
-    <term><firstterm>tsquery</firstterm></term>
-     <listitem>
-
-      <para>
-       <type>tsquery</type> is a data type for textual queries which supports
-       the boolean operators <literal>&amp;</literal> (AND), <literal>|</literal> (OR),
-       and parentheses.  A <type>tsquery</type> consists of lexemes
-       (optionally labeled by letters) with boolean operators in between:
-
-<programlisting>
-SELECT 'fat &amp; cat'::tsquery;
-    tsquery
----------------
- 'fat' &amp; 'cat'
-SELECT 'fat:ab &amp; cat'::tsquery;
-    tsquery
-------------------
- 'fat':AB &amp; 'cat'
-</programlisting>
-
-       Labels can be used to restrict the search region, which allows the
-       development of different search engines using the same full text index.
-      </para>
-
-      <para>
-       <type>tsqueries</type> can be concatenated using <literal>&amp;&amp;</literal> (AND)
-       and <literal>||</literal> (OR) operators:
-
-<programlisting>
-SELECT 'a &amp; b'::tsquery &amp;&amp; 'c | d'::tsquery;
-         ?column?
----------------------------
- 'a' &amp; 'b' &amp; ( 'c' | 'd' )
-
-SELECT 'a &amp; b'::tsquery || 'c|d'::tsquery;
-         ?column?
----------------------------
- 'a' &amp; 'b' | ( 'c' | 'd' )
-</programlisting>
-
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-
-  </sect2>
-
   <sect2 id="textsearch-searches">
-  <title>Performing Searches</title>
+   <title>Performing Searches</title>
 
    <para>
     Full text searching in <productname>PostgreSQL</productname> is based on
@@ -362,10 +231,12 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
     is equivalent to <literal>to_tsvector(x) @@ y</literal>.
     The form <type>text</type> <literal>@@</literal> <type>text</type>
     is equivalent to <literal>to_tsvector(x) @@ plainto_tsquery(y)</literal>.
+    <xref linkend="functions-textsearch"> contains a full list of full text
+    search operators and functions.
    </para>
 
   <sect2 id="textsearch-configurations">
-  <title>Configurations</title>
+   <title>Configurations</title>
 
    <indexterm zone="textsearch-configurations">
    <primary>configurations</primary>
@@ -389,7 +260,7 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
  </sect1>
 
  <sect1 id="textsearch-tables">
- <title>Tables and Indexes</title>
+  <title>Tables and Indexes</title>
 
   <para>
    The previous section described how to perform full text searches using
@@ -398,7 +269,7 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
   </para>
 
   <sect2 id="textsearch-tables-search">
-  <title>Searching a Table</title>
+   <title>Searching a Table</title>
 
    <para>
     It is possible to do full text table search with no index.  A simple query
@@ -435,80 +306,80 @@ ORDER BY dlm DESC LIMIT 10;
   </sect2>
 
   <sect2 id="textsearch-tables-index">
-  <title>Creating Indexes</title>
+   <title>Creating Indexes</title>
 
-  <para>
-   We can create a <acronym>GIN</acronym> (<xref
-   linkend="textsearch-indexes">) index to speed up the search:
+   <para>
+    We can create a <acronym>GIN</acronym> (<xref
+    linkend="textsearch-indexes">) index to speed up the search:
 
 <programlisting>
 CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', body));
 </programlisting>
  
    Notice that the 2-argument version of <function>to_tsvector</function> is
-   used.  Only text search functions which specify a configuration name can
-   be used in expression indexes (<xref linkend="indexes-expressional">).
-   This is because the index contents must be unaffected by <xref
-   linkend="guc-default-text-search-config">.  If they were affected, the
-   index contents might be inconsistent because different entries could
-   contain <type>tsvector</>s that were created with different text search
-   configurations, and there would be no way to guess which was which.  It
-   would be impossible to dump and restore such an index correctly.
-  </para>
+    used.  Only text search functions which specify a configuration name can
+    be used in expression indexes (<xref linkend="indexes-expressional">).
+    This is because the index contents must be unaffected by <xref
+    linkend="guc-default-text-search-config">.  If they were affected, the
+    index contents might be inconsistent because different entries could
+    contain <type>tsvector</>s that were created with different text search
+    configurations, and there would be no way to guess which was which.  It
+    would be impossible to dump and restore such an index correctly.
+   </para>
+
+   <para>
+    Because the two-argument version of <function>to_tsvector</function> was
+    used in the index above, only a query reference that uses the 2-argument
+    version of <function>to_tsvector</function> with the same configuration
+    name will use that index, i.e. <literal>WHERE 'a &amp; b' @@
+    to_svector('english', body)</> will use the index, but <literal>WHERE
+    'a &amp; b' @@ to_svector(body))</> and <literal>WHERE 'a &amp; b' @@
+    body::tsvector</> will not.  This guarantees that an index will be used
+    only with the same configuration used to create the index rows.
+   </para>
 
   <para>
-   Because the two-argument version of <function>to_tsvector</function> was
-   used in the index above, only a query reference that uses the 2-argument
-   version of <function>to_tsvector</function> with the same configuration
-   name will use that index, i.e. <literal>WHERE 'a &amp; b' @@
-   to_svector('english', body)</> will use the index, but <literal>WHERE
-   'a &amp; b' @@ to_svector(body))</> and <literal>WHERE 'a &amp; b' @@
-   body::tsvector</> will not.  This guarantees that an index will be used
-   only with the same configuration used to create the index rows.
-  </para>
-
-  <para>
-   It is possible to setup more complex expression indexes where the
-   configuration name is specified by another column, e.g.:
+    It is possible to setup more complex expression indexes where the
+    configuration name is specified by another column, e.g.:
 
 <programlisting>
 CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector(config_name, body));
 </programlisting>
 
-   where <literal>config_name</> is a column in the <literal>pgweb</>
-   table.  This allows mixed configurations in the same index while
-   recording which configuration was used for each index row.
-  </para>
+    where <literal>config_name</> is a column in the <literal>pgweb</>
+    table.  This allows mixed configurations in the same index while
+    recording which configuration was used for each index row.
+   </para>
 
-  <para>
-   Indexes can even concatenate columns:
+   <para>
+    Indexes can even concatenate columns:
 
 <programlisting>
 CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', title || body));
 </programlisting>
-  </para>
+   </para>
 
-  <para>
-   A more complex case is to create a separate <type>tsvector</> column
-   to hold the output of <function>to_tsvector()</>.  This example is a
-   concatenation of <literal>title</literal> and <literal>body</literal>,
-   with ranking information.  We assign different labels to them to encode
-   information about the origin of each word:
+   <para>
+    A more complex case is to create a separate <type>tsvector</> column
+    to hold the output of <function>to_tsvector()</>.  This example is a
+    concatenation of <literal>title</literal> and <literal>body</literal>,
+    with ranking information.  We assign different labels to them to encode
+    information about the origin of each word:
 
 <programlisting>
 ALTER TABLE pgweb ADD COLUMN textsearch_index tsvector;
 UPDATE pgweb SET textsearch_index =
-    setweight(to_tsvector('english', coalesce(title,'')), 'A') || ' ' ||
-    setweight(to_tsvector('english', coalesce(body,'')),'D');
+     setweight(to_tsvector('english', coalesce(title,'')), 'A') || ' ' ||
+     setweight(to_tsvector('english', coalesce(body,'')),'D');
 </programlisting>
 
-   Then we create a <acronym>GIN</acronym> index to speed up the search:
+    Then we create a <acronym>GIN</acronym> index to speed up the search:
 
 <programlisting>
 CREATE INDEX textsearch_idx ON pgweb USING gin(textsearch_index);
 </programlisting>
 
-   After vacuuming, we are ready to perform a fast full text search:
+    After vacuuming, we are ready to perform a fast full text search:
 
 <programlisting>
 SELECT ts_rank_cd(textsearch_index, q) AS rank, title
@@ -517,935 +388,20 @@ WHERE q @@ textsearch_index
 ORDER BY rank DESC LIMIT 10;
 </programlisting>
 
-   It is necessary to create a trigger to keep the new <type>tsvector</>
-   column current anytime <literal>title</> or <literal>body</> changes.
-   Keep in mind that, just like with expression indexes, it is important to
-   specify the configuration name when creating text search data types
-   inside triggers so the column's contents are not affected by changes to 
-   <varname>default_text_search_config</>.
-  </para>
-
-  </sect2>
-
- </sect1>
-
- <sect1 id="textsearch-opfunc">
- <title>Operators and Functions</title>
-
-  <para>
-   This section outlines all the functions and operators that are available
-   for full text searching.
-  </para>
-
-  <para>
-   Full text search vectors and queries both use lexemes, but for different
-   purposes.  A <type>tsvector</type> represents the lexemes (tokens) parsed
-   out of a document, with an optional position. A <type>tsquery</type>
-   specifies a boolean condition using lexemes.
-  </para>
-
-  <para>
-   All of the following functions that accept a configuration argument can
-   use a textual configuration name to select a configuration.  If the option
-   is omitted the configuration specified by
-   <varname>default_text_search_config</> is used.  For more information on
-   configuration, see <xref linkend="textsearch-tables-configuration">.
-  </para>
-
-  <sect2 id="textsearch-search-operator">
-  <title>Search</title>
-
-   <para>The operator <literal>@@</> is used to perform full text
-    searches:
+    It is necessary to create a trigger to keep the new <type>tsvector</>
+    column current anytime <literal>title</> or <literal>body</> changes.
+    Keep in mind that, just like with expression indexes, it is important to
+    specify the configuration name when creating text search data types
+    inside triggers so the column's contents are not affected by changes to 
+    <varname>default_text_search_config</>.
    </para>
-
-   <variablelist>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-search-operator">
-     <primary>TSVECTOR @@ TSQUERY</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-      <!-- why allow such combinations? -->
-      TSVECTOR @@ TSQUERY
-      TSQUERY @@ TSVECTOR
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Returns <literal>true</literal> if <literal>TSQUERY</literal> is contained 
-       in <literal>TSVECTOR</literal>, and <literal>false</literal> if not:
-
-<programlisting>
-SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector @@ 'cat &amp; rat'::tsquery;
- ?column?
-----------
- t
-
-SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector @@ 'fat &amp; cow'::tsquery;
- ?column?
-----------
- f
-</programlisting>
-      </para>
-
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-search-operator">
-     <primary>TEXT @@ TSQUERY</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       text @@ tsquery
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Returns <literal>true</literal> if <literal>TSQUERY</literal> is contained
-       in <literal>TEXT</literal>, and <literal>false</literal> if not:
-
-<programlisting>
-SELECT 'a fat cat sat on a mat and ate a fat rat'::text @@ 'cat &amp; rat'::tsquery;
- ?column?
-----------
- t
-
-SELECT 'a fat cat sat on a mat and ate a fat rat'::text @@ 'cat &amp; cow'::tsquery;
- ?column?
-----------
- f
-</programlisting>
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-search-operator">
-     <primary>TEXT @@ TEXT</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       <!-- this is very confusing because there is no rule suggesting which is
-        first. -->
-       text @@ text
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Returns <literal>true</literal> if the right
-       argument (the query) is contained in the left argument, and
-       <literal>false</literal> otherwise:
-
-<programlisting>
-SELECT 'a fat cat sat on a mat and ate a fat rat' @@ 'cat rat';
- ?column?
-----------
- t
-
-SELECT 'a fat cat sat on a mat and ate a fat rat' @@ 'cat cow';
- ?column?
-----------
- f
-</programlisting>
-       </para>
-
-     </listitem>
-    </varlistentry>
-
-   </variablelist>
-
-   <para>
-    For index support of full text operators consult <xref linkend="textsearch-indexes">.
-   </para>
-
-  </sect2>
-
-
-
-  <sect2 id="textsearch-tsvector">
-  <title>tsvector</title>
-
-   <variablelist>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsvector">
-     <primary>to_tsvector</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       to_tsvector(<optional><replaceable class="PARAMETER">config_name</replaceable></optional>,  <replaceable class="PARAMETER">document</replaceable> TEXT) returns TSVECTOR
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Parses a document into tokens, reduces the tokens to lexemes, and returns a
-       <type>tsvector</type> which lists the lexemes together with their positions in the document
-       in lexicographic order.
-      </para>
-
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsvector">
-     <primary>strip</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       strip(<replaceable class="PARAMETER">vector</replaceable> TSVECTOR) returns TSVECTOR
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Returns a vector which lists the same lexemes as the given vector, but
-       which lacks any information about where in the document each lexeme
-       appeared. While the returned vector is useless for relevance ranking it
-       will usually be much smaller.
-      </para>
-     </listitem>
-
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsvector">
-     <primary>setweight</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       setweight(<replaceable class="PARAMETER">vector</replaceable> TSVECTOR, <replaceable class="PARAMETER">letter</replaceable>) returns TSVECTOR
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       This function returns a copy of the input vector in which every location
-       has been labeled with either the letter <literal>A</literal>,
-       <literal>B</literal>, or <literal>C</literal>, or the default label
-       <literal>D</literal> (which is the default for new vectors
-       and as such is usually not displayed). These labels are retained
-       when vectors are concatenated, allowing words from different parts of a
-       document to be weighted differently by ranking functions.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsvector">
-     <primary>tsvector concatenation</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       <replaceable class="PARAMETER">vector1</replaceable> || <replaceable class="PARAMETER">vector2</replaceable>
-       tsvector_concat(<replaceable class="PARAMETER">vector1</replaceable> TSVECTOR, <replaceable class="PARAMETER">vector2</replaceable> TSVECTOR) returns TSVECTOR
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Returns a vector which combines the lexemes and positional information of
-       the two vectors given as arguments. Positional weight labels (described
-       in the previous paragraph) are retained during the concatenation.  This
-       has at least two uses. First, if some sections of your document need to be
-       parsed with different configurations than others, you can parse them
-       separately and then concatenate the resulting vectors.  Second, you can
-       weigh words from one section of your document differently than the others
-       by parsing the sections into separate vectors and assigning each vector
-       a different position label with the <function>setweight()</function>
-       function.  You can then concatenate them into a single vector and provide
-       a weights argument to the <function>ts_rank()</function> function that assigns
-       different weights to positions with different labels.
-      </para>
-     </listitem>
-    </varlistentry>
-
-
-    <varlistentry>
-     <indexterm zone="textsearch-tsvector">
-     <primary>length(tsvector)</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       length(<replaceable class="PARAMETER">vector</replaceable> TSVECTOR) returns INT4
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Returns the number of lexemes stored in the vector.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsvector">
-     <primary>text::tsvector</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       <replaceable>text</replaceable>::TSVECTOR returns TSVECTOR
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Directly casting <type>text</type> to a <type>tsvector</type> allows you
-       to directly inject lexemes into a vector with whatever positions and
-       positional weights you choose to specify. The text should be formatted to
-       match the way a vector is displayed by <literal>SELECT</literal>.
-       <!-- TODO what a strange definition, I think something like
-       "input format" or so should be used (and defined somewhere, didn't see
-       it yet) -->
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsvector">
-     <primary>trigger</primary>
-     <secondary>for updating a derived tsvector column</secondary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       tsvector_update_trigger(<replaceable class="PARAMETER">tsvector_column_name</replaceable>, <replaceable class="PARAMETER">config_name</replaceable>, <replaceable class="PARAMETER">text_column_name</replaceable> <optional>, ... </optional>)
-       tsvector_update_trigger_column(<replaceable class="PARAMETER">tsvector_column_name</replaceable>, <replaceable class="PARAMETER">config_column_name</replaceable>, <replaceable class="PARAMETER">text_column_name</replaceable> <optional>, ... </optional>)
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Two built-in trigger functions are available to automatically update a
-       <type>tsvector</> column from one or more textual columns.  An example
-       of their use is:
-
-<programlisting>
-CREATE TABLE tblMessages (
-    strMessage  text,
-    tsv         tsvector
-);
-
-CREATE TRIGGER tsvectorupdate BEFORE INSERT OR UPDATE
-ON tblMessages FOR EACH ROW EXECUTE PROCEDURE
-tsvector_update_trigger(tsv, 'pg_catalog.english', strMessage);
-</programlisting>
-
-       Having created this trigger, any change in <structfield>strMessage</>
-       will be automatically reflected into <structfield>tsv</>.
-      </para>
-
-      <para>
-       Both triggers require you to specify the text search configuration to
-       be used to perform the conversion.  For
-       <function>tsvector_update_trigger</>, the configuration name is simply
-       given as the second trigger argument.  It must be schema-qualified as
-       shown above, so that the trigger behavior will not change with changes
-       in <varname>search_path</>.  For
-       <function>tsvector_update_trigger_column</>, the second trigger argument
-       is the name of another table column, which must be of type
-       <type>regconfig</>.  This allows a per-row selection of configuration
-       to be made.
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsvector">
-     <primary>ts_stat</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       ts_stat(<replaceable class="PARAMETER">sqlquery</replaceable> text <optional>, <replaceable class="PARAMETER">weights</replaceable> text </optional>) returns SETOF statinfo
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Here <type>statinfo</type> is a type, defined as:
-
-<programlisting>
-CREATE TYPE statinfo AS (word text, ndoc integer, nentry integer);
-</programlisting>
-
-       and <replaceable>sqlquery</replaceable> is a text value containing a SQL query
-       which returns a single <type>tsvector</type> column.  <function>ts_stat</>
-       executes the query and returns statistics about the resulting
-       <type>tsvector</type> data, i.e., the number of documents, <literal>ndoc</>,
-       and the total number of words in the collection, <literal>nentry</>.  It is
-       useful for checking your configuration and to find stop word candidates.  For
-       example, to find the ten most frequent words:
-
-<programlisting>
-SELECT * FROM ts_stat('SELECT vector from apod')
-ORDER BY ndoc DESC, nentry DESC, word
-LIMIT 10;
-</programlisting>
-
-       Optionally, one can specify <replaceable>weights</replaceable> to obtain
-       statistics about words with a specific <replaceable>weight</replaceable>:
-
-<programlisting>
-SELECT * FROM ts_stat('SELECT vector FROM apod','a')
-ORDER BY ndoc DESC, nentry DESC, word
-LIMIT 10;
-</programlisting>
-
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsvector">
-     <primary>Btree operations for tsvector</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       TSVECTOR &lt; TSVECTOR
-       TSVECTOR &lt;= TSVECTOR
-       TSVECTOR = TSVECTOR
-       TSVECTOR &gt;= TSVECTOR
-       TSVECTOR &gt; TSVECTOR
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       All btree operations are defined for the <type>tsvector</type> type.
-       <type>tsvector</>s are compared with each other using
-       <emphasis>lexicographical</emphasis> ordering.
-       <!-- TODO of the output representation or something else? -->
-      </para>
-     </listitem>
-    </varlistentry>
-
-   </variablelist>
-
-  </sect2>
-
-  <sect2 id="textsearch-tsquery">
-  <title>tsquery</title>
-
-
-   <variablelist>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsquery">
-     <primary>to_tsquery</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       to_tsquery(<optional><replaceable class="PARAMETER">config_name</replaceable></optional>, <replaceable class="PARAMETER">querytext</replaceable> text) returns TSQUERY
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Accepts <replaceable>querytext</replaceable>, which should consist of single tokens
-       separated by the boolean operators <literal>&amp;</literal> (and), <literal>|</literal>
-       (or) and <literal>!</literal> (not), which can be grouped using parentheses.
-       In other words, <function>to_tsquery</function> expects already parsed text.
-       Each token is reduced to a lexeme using the specified or current configuration.
-       A weight class can be assigned to each lexeme entry to restrict the search region
-       (see <function>setweight</function> for an explanation). For example:
-
-<programlisting>
-'fat:a &amp; rats'
-</programlisting>
-
-       The <function>to_tsquery</function> function can also accept a <literal>text
-       string</literal>. In this case <replaceable>querytext</replaceable> should
-       be quoted. This may be useful, for example, to use with a thesaurus
-       dictionary. In the example below, a thesaurus contains rule <literal>supernovae
-       stars : sn</literal>:
-
-<programlisting>
-SELECT to_tsquery('''supernovae stars'' &amp; !crab');
-  to_tsquery
----------------
- 'sn' &amp; !'crab'
-</programlisting>
-
-       Without quotes <function>to_tsquery</function> will generate a syntax error.
-      </para>
-
-     </listitem>
-    </varlistentry>
-
-
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsquery">
-     <primary>plainto_tsquery</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       plainto_tsquery(<optional><replaceable class="PARAMETER">config_name</replaceable></optional>,  <replaceable class="PARAMETER">querytext</replaceable> text) returns TSQUERY
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Transforms unformatted text <replaceable>querytext</replaceable> to <type>tsquery</type>.
-       It is the same as <function>to_tsquery</function> but accepts <literal>text</literal>
-       without quotes and will call the parser to break it into tokens.
-       <function>plainto_tsquery</function> assumes the <literal>&amp;</literal> boolean
-       operator between words and does not recognize weight classes.
-      </para>
-     </listitem>
-    </varlistentry>
-
-
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsquery">
-     <primary>querytree</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       querytree(<replaceable class="PARAMETER">query</replaceable> TSQUERY) returns TEXT
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       This returns the query used for searching an index. It can be used to test
-       for an empty query. The <command>SELECT</> below returns <literal>NULL</>,
-       which corresponds to an empty query since GIN indexes do not support queries with negation
-       <!-- TODO or "negated queries" (depending on what the correct rule is) -->
-       (a full index scan is inefficient):
-
-<programlisting>
-SELECT querytree(to_tsquery('!defined'));
- querytree
------------
-
-</programlisting>
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsquery">
-     <primary>text::tsquery casting</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       <replaceable class="PARAMETER">text</replaceable>::TSQUERY returns TSQUERY
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Directly casting <replaceable>text</replaceable> to a <type>tsquery</type>
-       allows you to directly inject lexemes into a query using whatever positions
-       and positional weight flags you choose to specify. The text should be
-       formatted  to match the way a vector is displayed by
-       <literal>SELECT</literal>.
-       <!-- TODO what a strange definition, I think something like
-       "input format" or so should be used (and defined somewhere, didn't see
-       it yet) -->
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsquery">
-     <primary>numnode</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       numnode(<replaceable class="PARAMETER">query</replaceable> TSQUERY) returns INTEGER
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       This returns the number of nodes in a query tree. This function can be
-       used to determine if <replaceable>query</replaceable> is meaningful
-       (returns &gt; 0), or contains only stop words (returns 0):
-
-<programlisting>
-SELECT numnode(plainto_tsquery('the any'));
-NOTICE:  query contains only stopword(s) or does not contain lexeme(s), ignored
- numnode
----------
-       0
-
-SELECT numnode(plainto_tsquery('the table'));
- numnode
----------
-       1
-
-SELECT numnode(plainto_tsquery('long table'));
- numnode
----------
-       3
-</programlisting>
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsquery">
-     <primary>TSQUERY &amp;&amp; TSQUERY</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       TSQUERY &amp;&amp; TSQUERY returns TSQUERY
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Returns <literal>AND</literal>-ed TSQUERY
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsquery">
-     <primary>TSQUERY || TSQUERY</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       TSQUERY || TSQUERY returns TSQUERY
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       Returns <literal>OR</literal>-ed TSQUERY
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsquery">
-     <primary>!! TSQUERY</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       !! TSQUERY returns TSQUERY
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       negation of TSQUERY
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-
-     <indexterm zone="textsearch-tsquery">
-     <primary>Btree operations for tsquery</primary>
-     </indexterm>
-
-     <term>
-      <synopsis>
-       TSQUERY &lt; TSQUERY
-       TSQUERY &lt;= TSQUERY
-       TSQUERY = TSQUERY
-       TSQUERY &gt;= TSQUERY
-       TSQUERY &gt; TSQUERY
-      </synopsis>
-     </term>
-
-     <listitem>
-      <para>
-       All btree operations are defined for the <type>tsquery</type> type.
-       tsqueries are compared to each other using <emphasis>lexicographical</emphasis>
-       ordering.
-      </para>
-     </listitem>
-    </varlistentry>
-
-   </variablelist>
-
-   <sect3 id="textsearch-queryrewriting">
-   <title>Query Rewriting</title>
-
-    <para>
-     Query rewriting is a set of functions and operators for the
-     <type>tsquery</type> data type.  It allows control at search
-     <emphasis>query time</emphasis> without reindexing (the opposite of the
-     thesaurus).  For example, you can expand the search using synonyms
-     (<literal>new york</>, <literal>big apple</>, <literal>nyc</>,
-     <literal>gotham</>) or narrow the search to direct the user to some hot
-     topic.
-    </para>
-
-    <para>
-     The <function>ts_rewrite()</function> function changes the original query by
-     replacing part of the query with some other string of type <type>tsquery</type>,
-     as defined by the rewrite rule. Arguments to <function>ts_rewrite()</function>
-     can be names of columns of type <type>tsquery</type>.
-    </para>
-
-<programlisting>
-CREATE TABLE aliases (t TSQUERY PRIMARY KEY, s TSQUERY);
-INSERT INTO aliases VALUES('a', 'c');
-</programlisting>
-
-    <variablelist>
-
-     <varlistentry>
-
-      <indexterm zone="textsearch-tsquery">
-      <primary>ts_rewrite</primary>
-      </indexterm>
-
-      <term>
-       <synopsis>
-        ts_rewrite (<replaceable class="PARAMETER">query</replaceable> TSQUERY, <replaceable class="PARAMETER">target</replaceable> TSQUERY, <replaceable class="PARAMETER">sample</replaceable> TSQUERY) returns TSQUERY
-       </synopsis>
-      </term>
-
-      <listitem>
-       <para>
-<programlisting>
-SELECT ts_rewrite('a &amp; b'::tsquery, 'a'::tsquery, 'c'::tsquery);
- ts_rewrite
-------------
- 'b' &amp; 'c'
-</programlisting>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-
-      <term>
-       <synopsis>
-        ts_rewrite(ARRAY[<replaceable class="PARAMETER">query</replaceable> TSQUERY, <replaceable class="PARAMETER">target</replaceable> TSQUERY, <replaceable class="PARAMETER">sample</replaceable> TSQUERY]) returns TSQUERY
-       </synopsis>
-      </term>
-
-      <listitem>
-       <para>
-<programlisting>
-SELECT ts_rewrite(ARRAY['a &amp; b'::tsquery, t,s]) FROM aliases;
- ts_rewrite
-------------
- 'b' &amp; 'c'
-</programlisting>
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-
-      <term>
-       <synopsis>
-        ts_rewrite (<replaceable class="PARAMETER">query</> TSQUERY,<literal>'SELECT target ,sample FROM test'</literal>::text) returns TSQUERY
-       </synopsis>
-      </term>
-
-      <listitem>
-       <para>
-<programlisting>
-SELECT ts_rewrite('a &amp; b'::tsquery, 'SELECT t,s FROM aliases');
- ts_rewrite
-------------
- 'b' &amp; 'c'
-</programlisting>
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-
-    <para>
-     What if there are several instances of rewriting? For example, query
-     <literal>'a &amp; b'</literal> can be rewritten as
-     <literal>'b &amp; c'</literal> and <literal>'cc'</literal>.
-
-<programlisting>
-SELECT * FROM aliases;
-     t     |  s
------------+------
- 'a'       | 'c'
- 'x'       | 'z'
- 'a' &amp; 'b' | 'cc'
-</programlisting>
-
-     This ambiguity can be resolved by specifying a sort order:
-
-<programlisting>
-SELECT ts_rewrite('a &amp; b', 'SELECT t, s FROM aliases ORDER BY t DESC');
- ts_rewrite
-   ---------
- 'cc'
-
-SELECT ts_rewrite('a &amp; b', 'SELECT t, s FROM aliases ORDER BY t ASC');
-  ts_rewrite
---------------
- 'b' &amp; 'c'
-</programlisting>
-    </para>
-
-    <para>
-     Let's consider a real-life astronomical example. We'll expand query
-     <literal>supernovae</literal> using table-driven rewriting rules:
-
-<programlisting>
-CREATE TABLE aliases (t tsquery primary key, s tsquery);
-INSERT INTO aliases VALUES(to_tsquery('supernovae'), to_tsquery('supernovae|sn'));
-
-SELECT ts_rewrite(to_tsquery('supernovae'),  'SELECT * FROM aliases') &amp;&amp; to_tsquery('crab');
-           ?column?
--------------------------------
-( 'supernova' | 'sn' ) &amp; 'crab'
-</programlisting>
-
-     Notice, that we can change the rewriting rule online<!-- TODO maybe use another word for "online"? -->:
-
-<programlisting>
-UPDATE aliases SET s=to_tsquery('supernovae|sn &amp; !nebulae') WHERE t=to_tsquery('supernovae');
-SELECT ts_rewrite(to_tsquery('supernovae'),  'SELECT * FROM aliases') &amp;&amp; to_tsquery('crab');
-                   ?column?
------------------------------------------------
- 'supernova' | 'sn' &amp; !'nebula' ) &amp; 'crab'
-</programlisting>
-    </para>
-   </sect3>
-
-   <sect3 id="textsearch-tsquery-ops">
-   <title>Operators For tsquery</title>
-
-    <para>
-     Rewriting can be slow for many rewriting rules since it checks every rule
-     for a possible hit. To filter out obvious non-candidate rules there are containment
-     operators for the <type>tsquery</type> type. In the example below, we select only those
-     rules which might contain the original query:
-
-<programlisting>
-SELECT ts_rewrite(ARRAY['a &amp; b'::tsquery, t,s])
-FROM aliases
-WHERE 'a &amp; b' @> t;
- ts_rewrite
-------------
- 'b' &amp; 'c'
-</programlisting>
-
-    </para>
-
-    <para>
-     Two operators are defined for <type>tsquery</type>:
-    </para>
-
-    <variablelist>
- 
-     <varlistentry>
-
-      <indexterm zone="textsearch-tsquery">
-      <primary>TSQUERY @&gt; TSQUERY</primary>
-      </indexterm>
-
-      <term>
-       <synopsis>
-        TSQUERY @&gt; TSQUERY
-       </synopsis>
-      </term>
-
-      <listitem>
-       <para>
-        Returns <literal>true</literal> if the right argument might be contained in left argument.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-
-      <indexterm zone="textsearch-tsquery">
-      <primary>tsquery &lt;@ tsquery</primary>
-      </indexterm>
-
-      <term>
-       <synopsis>
-        TSQUERY &lt;@ TSQUERY
-       </synopsis>
-      </term>
-
-      <listitem>
-       <para>
-        Returns <literal>true</literal> if the left argument might be contained in right argument.
-       </para>
-      </listitem>
-     </varlistentry>
-
-    </variablelist>
-
-
-   </sect3>
-
-   <sect3 id="textsearch-tsqueryindex">
-   <title>Index For tsquery</title>
-
-    <para>
-     To speed up operators <literal>&lt;@</> and <literal>@&gt;</literal> for
-     <type>tsquery</type> one can use a <acronym>GiST</acronym> index with
-     a <literal>tsquery_ops</literal> opclass:
-
-<programlisting>
-CREATE INDEX t_idx ON aliases USING gist (t tsquery_ops);
-</programlisting>
-    </para>
-
-   </sect3>
 
   </sect2>
 
  </sect1>
 
  <sect1 id="textsearch-controls">
- <title>Additional Controls</title>
+  <title>Additional Controls</title>
 
   <para>
    To implement full text searching there must be a function to create a
@@ -1458,13 +414,13 @@ CREATE INDEX t_idx ON aliases USING gist (t tsquery_ops);
   </para>
 
   <sect2 id="textsearch-parser">
-  <title>Parsing</title>
+   <title>Parsing</title>
 
    <para>
     Full text searching in <productname>PostgreSQL</productname> provides
     function <function>to_tsvector</function>, which converts a document to
     the <type>tsvector</type> data type. More details are available in <xref
-    linkend="textsearch-tsvector">, but for now consider a simple example:
+    linkend="functions-textsearch-tsvector">, but for now consider a simple example:
 
 <programlisting>
 SELECT to_tsvector('english', 'a fat  cat sat on a mat - it ate a fat rats');
@@ -1666,7 +622,7 @@ SELECT * FROM ts_token_type('default');
   </sect2>
 
   <sect2 id="textsearch-ranking">
-  <title>Ranking Search Results</title>
+   <title>Ranking Search Results</title>
 
    <para>
     Ranking attempts to measure how relevant documents are to a particular
@@ -1878,9 +834,8 @@ ORDER BY rnk DESC LIMIT 10;
 
   </sect2>
 
-
   <sect2 id="textsearch-headline">
-  <title>Highlighting Results</title>
+   <title>Highlighting Results</title>
 
    <indexterm zone="textsearch-headline">
    <primary>headline</primary>
@@ -2003,7 +958,7 @@ ORDER BY rank DESC LIMIT 10) AS foo;
  </sect1>
 
  <sect1 id="textsearch-dictionaries">
- <title>Dictionaries</title>
+  <title>Dictionaries</title>
 
   <para>
    Dictionaries are used to eliminate words that should not be considered in a
@@ -2139,7 +1094,7 @@ SELECT ts_lexize('english_stem', 'stars');
   </para>
 
   <sect2 id="textsearch-stopwords">
-  <title>Stop Words</title>
+   <title>Stop Words</title>
  
    <para>
     Stop words are words which are very common, appear in almost
@@ -2220,9 +1175,8 @@ SELECT ts_lexize('public.simple_dict','The');
 
   </sect2>
 
-
   <sect2 id="textsearch-synonym-dictionary">
-  <title>Synonym Dictionary</title>
+   <title>Synonym Dictionary</title>
 
    <para>
     This dictionary template is used to create dictionaries which replace a
@@ -2257,7 +1211,7 @@ SELECT * FROM ts_debug('english','Paris');
   </sect2>
 
   <sect2 id="textsearch-thesaurus">
-  <title>Thesaurus Dictionary</title>
+   <title>Thesaurus Dictionary</title>
 
    <para>
     A thesaurus dictionary (sometimes abbreviated as <acronym>TZ</acronym>) is
@@ -2336,7 +1290,7 @@ the one a two : swsw2
   </sect2>
 
   <sect2 id="textsearch-thesaurus-config">
-  <title>Thesaurus Configuration</title>
+   <title>Thesaurus Configuration</title>
 
    <para>
     To define a new thesaurus dictionary one can use the thesaurus template.
@@ -2387,7 +1341,7 @@ ALTER TEXT SEARCH CONFIGURATION russian
   </sect2>
 
   <sect2 id="textsearch-thesaurus-examples">
-  <title>Thesaurus Example</title>
+   <title>Thesaurus Example</title>
 
    <para>
     Consider a simple astronomical thesaurus <literal>thesaurus_astro</literal>,
@@ -2462,7 +1416,7 @@ SELECT plainto_tsquery('supernova star');
   </sect2>
 
   <sect2 id="textsearch-ispell-dictionary">
-  <title>Ispell Dictionary</title>
+   <title>Ispell Dictionary</title>
 
    <para>
     The <application>Ispell</> template dictionary for full text allows the
@@ -2565,7 +1519,7 @@ SELECT ts_lexize('norwegian_ispell','sjokoladefabrikk');
   </sect2>
 
   <sect2 id="textsearch-stemming-dictionary">
-  <title><application>Snowball</> Stemming Dictionary</title>
+   <title><application>Snowball</> Stemming Dictionary</title>
 
    <para>
     The <application>Snowball</> dictionary template is based on the project
@@ -2594,7 +1548,7 @@ CREATE TEXT SEARCH DICTIONARY english_stem (
   </sect2>
 
   <sect2 id="textsearch-dictionary-testing">
-  <title>Dictionary Testing</title>
+   <title>Dictionary Testing</title>
 
    <para>
     The <function>ts_lexize</> function facilitates dictionary testing:
@@ -2668,7 +1622,7 @@ SELECT plainto_tsquery('supernovae stars');
   </sect2>
 
   <sect2 id="textsearch-tables-configuration">
-  <title>Configuration Example</title>
+   <title>Configuration Example</title>
 
    <para>
     A full text configuration specifies all options necessary to transform a
@@ -2828,7 +1782,7 @@ SHOW default_text_search_config;
   </sect2>
 
   <sect2 id="textsearch-tables-multiconfig">
-  <title>Managing Multiple Configurations</title>
+   <title>Managing Multiple Configurations</title>
 
    <para>
     If you are using the same text search configuration for the entire cluster
@@ -2859,7 +1813,7 @@ CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('french', title || body));
  </sect1>
 
  <sect1 id="textsearch-indexes">
- <title>GiST and GIN Index Types</title>
+  <title>GiST and GIN Index Types</title>
 
   <indexterm zone="textsearch-indexes">
    <primary>index</primary>
@@ -3052,7 +2006,7 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
  </sect1>
 
  <sect1 id="textsearch-limitations">
- <title>Limitations</title>
+  <title>Limitations</title>
 
   <para>
    The current limitations of Full Text Searching are:
@@ -3094,7 +2048,7 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
  </sect1>
 
  <sect1 id="textsearch-psql">
- <title><application>psql</> Support</title>
+  <title><application>psql</> Support</title>
 
   <para>
    Information about full text searching objects can be obtained
@@ -3287,7 +2241,7 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
  </sect1>
 
  <sect1 id="textsearch-debugging">
- <title>Debugging</title>
+  <title>Debugging</title>
 
   <para>
    Function <function>ts_debug</function> allows easy testing of your full text searching
@@ -3390,7 +2344,7 @@ FROM ts_debug('public.english','The Brightest supernovaes');
  </sect1>
 
  <sect1 id="textsearch-rule-dictionary-example">
- <title>Example of Creating a Rule-Based Dictionary</title>
+  <title>Example of Creating a Rule-Based Dictionary</title>
 
   <para>
    The motivation for this example dictionary is to control the indexing of
@@ -3641,7 +2595,7 @@ END;
  </sect1>
 
  <sect1 id="textsearch-parser-example">
- <title>Example of Creating a Parser</title>
+  <title>Example of Creating a Parser</title>
 
   <para>
    <acronym>SQL</acronym> command <literal>CREATE TEXT SEARCH PARSER</literal> creates
