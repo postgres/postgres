@@ -260,9 +260,9 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
     configuration for the entire cluster you can use the value in
     <filename>postgresql.conf</>.  If using different configurations but
     the same text search configuration for an entire database,
-    use <command>ALTER DATABASE ... SET</>.  If not, you must set <xref
-    linkend="guc-default-text-search-config"> in each session.  Many
-    functions also take an optional configuration name.
+    use <command>ALTER DATABASE ... SET</>.  If not, you must set <varname>
+    default_text_search_config</varname> in each session.  Many functions
+    also take an optional configuration name.
    </para>
 
   </sect2>
