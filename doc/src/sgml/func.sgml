@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.389 2007/08/29 20:37:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.390 2007/08/29 21:51:45 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7552,7 +7552,7 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
 
  <sect1 id="functions-textsearch">
-  <title>Full Text Search Operators and Functions</title>
+  <title>Full Text Search Functions and Operators</title>
 
   <para>
    This section outlines all the functions and operators that are available

@@ -231,8 +231,8 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
     is equivalent to <literal>to_tsvector(x) @@ y</literal>.
     The form <type>text</type> <literal>@@</literal> <type>text</type>
     is equivalent to <literal>to_tsvector(x) @@ plainto_tsquery(y)</literal>.
-    <xref linkend="functions-textsearch"> contains a full list of full text
-    search operators and functions.
+    <xref linkend="functions-textsearch"> contains a complete list of full text
+    search functions and operators.
    </para>
 
   <sect2 id="textsearch-configurations">
@@ -250,13 +250,23 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
     This functionality is controlled by <emphasis>configurations</>.
     Fortunately, <productname>PostgreSQL</> comes with predefined
     configurations for many languages.  (<application>psql</>'s <command>\dF</>
-    shows all predefined configurations.)  During installation an appropriate
-    configuration was selected and <xref
-    linkend="guc-default-text-search-config"> was set accordingly.  If you
-    need to change it, see <xref linkend="textsearch-tables-multiconfig">.
+    shows all predefined configurations.)
+   </para>
+
+   <para>
+    During installation an appropriate configuration was selected and
+    <xref linkend="guc-default-text-search-config"> was set accordingly
+    in <filename>postgresql.conf</>.  If you are using the same text search
+    configuration for the entire cluster you can use the value in
+    <filename>postgresql.conf</>.  If using different configurations but
+    the same text search configuration for an entire database,
+    use <command>ALTER DATABASE ... SET</>.  If not, you must set <xref
+    linkend="guc-default-text-search-config"> in each session.  Many
+    functions also take an optional configuration name.
    </para>
 
   </sect2>
+
  </sect1>
 
  <sect1 id="textsearch-tables">
@@ -1777,35 +1787,6 @@ SHOW default_text_search_config;
 ----------------------------
  public.pg
 </programlisting>
-   </para>
-
-  </sect2>
-
-  <sect2 id="textsearch-tables-multiconfig">
-   <title>Managing Multiple Configurations</title>
-
-   <para>
-    If you are using the same text search configuration for the entire cluster
-    just set the value in <filename>postgresql.conf</>.  If using a single
-    text search configuration for an entire database, use <command>ALTER
-    DATABASE ... SET</>.
-   </para>
-
-   <para>
-    However, if you need to use several text search configurations in the same
-    database you must be careful to reference the proper text search
-    configuration.  This can be done by either setting
-    <varname>default_text_search_config</> in each session or supplying the
-    configuration name in every function call, e.g.  to_tsquery('french',
-    'friend'), to_tsvector('english', col).  If you are using an expression
-    index you must embed the configuration name into the expression index, e.g.:
-
-<programlisting>
-CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('french', title || body));
-</programlisting>
-
-    And for an expression index, specify the configuration name in the
-    <literal>WHERE</> clause as well so the expression index will be used.
    </para>
 
   </sect2>
