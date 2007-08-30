@@ -234,6 +234,7 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
     <xref linkend="functions-textsearch"> contains a complete list of full text
     search functions and operators.
    </para>
+  </sect2>
 
   <sect2 id="textsearch-configurations">
    <title>Configurations</title>
