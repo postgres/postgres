@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.66 2007/06/05 21:31:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.67 2007/08/30 05:27:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -575,15 +575,19 @@ int8mul(PG_FUNCTION_ARGS)
 	 * Since the division is likely much more expensive than the actual
 	 * multiplication, we'd like to skip it where possible.  The best bang for
 	 * the buck seems to be to check whether both inputs are in the int32
-	 * range; if so, no overflow is possible.
+	 * range; if so, no overflow is possible.  (But that only works if we
+	 * really have a 64-bit int64 datatype...)
 	 */
-	if (!(arg1 == (int64) ((int32) arg1) &&
-		  arg2 == (int64) ((int32) arg2)) &&
-		arg2 != 0 &&
-		(result / arg2 != arg1 || (arg2 == -1 && arg1 < 0 && result < 0)))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("bigint out of range")));
+#ifndef INT64_IS_BUSTED
+	if (arg1 != (int64) ((int32) arg1) || arg2 != (int64) ((int32) arg2))
+#endif
+	{
+		if (arg2 != 0 &&
+			(result / arg2 != arg1 || (arg2 == -1 && arg1 < 0 && result < 0)))
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					 errmsg("bigint out of range")));
+	}
 	PG_RETURN_INT64(result);
 }
 
