@@ -1822,13 +1822,14 @@ SHOW default_text_search_config;
 
      <indexterm zone="textsearch-indexes">
      <primary>text search</primary>
-     <secondary>GIST</secondary>
+     <secondary>GiST</secondary>
      </indexterm>
 
+<!--
      <indexterm zone="textsearch-indexes">
-     <primary>GIST</primary>
+     <primary>GiST</primary>
      </indexterm>
-
+-->
      <term>
       <synopsis>
        CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gist(<replaceable>column</replaceable>);
@@ -1851,10 +1852,11 @@ SHOW default_text_search_config;
      <secondary>GIN</secondary>
      </indexterm>
 
+<!--
      <indexterm zone="textsearch-indexes">
      <primary>GIN</primary>
      </indexterm>
-
+-->
      <term>
       <synopsis>
        CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gin(<replaceable>column</replaceable>);
