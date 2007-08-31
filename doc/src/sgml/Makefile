@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.98 2007/08/31 02:03:02 momjian Exp $
+# $PostgreSQL: pgsql/doc/src/sgml/Makefile,v 1.99 2007/08/31 16:41:52 momjian Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -59,6 +59,8 @@ override JADEFLAGS += -V draft-mode
 endif
 
 # Enable some extra warnings
+# -wfully-tagged needed to throw a warning on missing tags 
+# for older tool chains, 2007-08-31
 override SPFLAGS += -wall -wno-unused-param -wno-empty -wfully-tagged
 
 ##
