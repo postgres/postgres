@@ -328,7 +328,7 @@ ORDER BY dlm DESC LIMIT 10;
 <programlisting>
 CREATE INDEX pgweb_idx ON pgweb USING gin(to_tsvector('english', body));
 </programlisting>
- 
+
    Notice that the 2-argument version of <function>to_tsvector</function> is
     used.  Only text search functions which specify a configuration name can
     be used in expression indexes (<xref linkend="indexes-expressional">).
@@ -405,7 +405,7 @@ ORDER BY rank DESC LIMIT 10;
     column current anytime <literal>title</> or <literal>body</> changes.
     Keep in mind that, just like with expression indexes, it is important to
     specify the configuration name when creating text search data types
-    inside triggers so the column's contents are not affected by changes to 
+    inside triggers so the column's contents are not affected by changes to
     <varname>default_text_search_config</>.
    </para>
 
@@ -448,13 +448,13 @@ SELECT to_tsvector('english', 'a fat  cat sat on a mat - it ate a fat rats');
 </programlisting>
    </para>
 
-   <para> 
+   <para>
     In the example above we see that the resulting <type>tsvector</type> does not
     contain the words <literal>a</literal>, <literal>on</literal>, or
     <literal>it</literal>, the word <literal>rats</literal> became
     <literal>rat</literal>, and the punctuation sign <literal>-</literal> was
-    ignored. 
-   </para> 
+    ignored.
+   </para>
 
    <para>
     The <function>to_tsvector</function> function internally calls a parser
@@ -487,31 +487,31 @@ SELECT to_tsvector('english', 'a fat  cat sat on a mat - it ate a fat rats');
 
 <programlisting>
 SELECT * FROM ts_debug('english','a fat  cat sat on a mat - it ate a fat rats');
- Alias |  Description  | Token | Dictionaries | Lexized token  
+ Alias |  Description  | Token | Dictionaries | Lexized token
 -------+---------------+-------+--------------+----------------
  lword | Latin word    | a     | {english}    | english: {}
- blank | Space symbols |       |              | 
+ blank | Space symbols |       |              |
  lword | Latin word    | fat   | {english}    | english: {fat}
- blank | Space symbols |       |              | 
+ blank | Space symbols |       |              |
  lword | Latin word    | cat   | {english}    | english: {cat}
- blank | Space symbols |       |              | 
+ blank | Space symbols |       |              |
  lword | Latin word    | sat   | {english}    | english: {sat}
- blank | Space symbols |       |              | 
+ blank | Space symbols |       |              |
  lword | Latin word    | on    | {english}    | english: {}
- blank | Space symbols |       |              | 
+ blank | Space symbols |       |              |
  lword | Latin word    | a     | {english}    | english: {}
- blank | Space symbols |       |              | 
+ blank | Space symbols |       |              |
  lword | Latin word    | mat   | {english}    | english: {mat}
- blank | Space symbols |       |              | 
- blank | Space symbols | -     |              | 
+ blank | Space symbols |       |              |
+ blank | Space symbols | -     |              |
  lword | Latin word    | it    | {english}    | english: {}
- blank | Space symbols |       |              | 
+ blank | Space symbols |       |              |
  lword | Latin word    | ate   | {english}    | english: {ate}
- blank | Space symbols |       |              | 
+ blank | Space symbols |       |              |
  lword | Latin word    | a     | {english}    | english: {}
- blank | Space symbols |       |              | 
+ blank | Space symbols |       |              |
  lword | Latin word    | fat   | {english}    | english: {fat}
- blank | Space symbols |       |              | 
+ blank | Space symbols |       |              |
  lword | Latin word    | rats  | {english}    | english: {rat}
    (24 rows)
 </programlisting>
@@ -688,7 +688,7 @@ SELECT * FROM ts_token_type('default');
 <programlisting>
 {D-weight, C-weight, B-weight, A-weight}
 </programlisting>
- 
+
         If no weights are provided,
         then these defaults are used:
 
@@ -943,7 +943,7 @@ SELECT ts_headline('a b c', 'c'::tsquery);
  a b &lt;b&gt;c&lt;/b&gt;
 
 SELECT ts_headline('a b c', 'c'::tsquery, 'StartSel=&lt;,StopSel=&gt;');
- ts_headline 
+ ts_headline
 -------------
  a b  &lt;c&gt;
 </programlisting>
@@ -989,7 +989,7 @@ ORDER BY rank DESC LIMIT 10) AS foo;
   </para>
 
   <para>
-   Some examples of normalization:  
+   Some examples of normalization:
 
    <itemizedlist  spacing="compact" mark="bullet">
 
@@ -998,7 +998,7 @@ ORDER BY rank DESC LIMIT 10) AS foo;
       Linguistic - ispell dictionaries try to reduce input words to a
       normalized form; stemmer dictionaries remove word endings
      </para>
-    </listitem> 
+    </listitem>
     <listitem>
      <para>
       Identical <acronym>URL</acronym> locations are identified and canonicalized:
@@ -1113,7 +1113,7 @@ SELECT ts_lexize('english_stem', 'stars');
 
   <sect2 id="textsearch-stopwords">
    <title>Stop Words</title>
- 
+
    <para>
     Stop words are words which are very common, appear in almost
     every document, and have no discrimination value. Therefore, they can be ignored
@@ -1207,7 +1207,7 @@ SELECT ts_lexize('public.simple_dict','The');
 
 <programlisting>
 SELECT * FROM ts_debug('english','Paris');
- Alias | Description | Token |  Dictionaries  |    Lexized token     
+ Alias | Description | Token |  Dictionaries  |    Lexized token
 -------+-------------+-------+----------------+----------------------
  lword | Latin word  | Paris | {english_stem} | english_stem: {pari}
 (1 row)
@@ -1219,7 +1219,7 @@ ALTER TEXT SEARCH CONFIGURATION english
     ALTER MAPPING FOR lword WITH synonym, english_stem;
 
 SELECT * FROM ts_debug('english','Paris');
- Alias | Description | Token |      Dictionaries      |  Lexized token   
+ Alias | Description | Token |      Dictionaries      |  Lexized token
 -------+-------------+-------+------------------------+------------------
  lword | Latin word  | Paris | {synonym,english_stem} | synonym: {paris}
 (1 row)
@@ -1824,11 +1824,10 @@ SHOW default_text_search_config;
       <secondary>GiST</secondary>
      </indexterm>
 
-<!--
      <indexterm zone="textsearch-indexes">
       <primary>GiST</primary>
+      <secondary>text search</secondary>
      </indexterm>
--->
      <term>
       <synopsis>
        CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gist(<replaceable>column</replaceable>);
@@ -1851,11 +1850,11 @@ SHOW default_text_search_config;
       <secondary>GIN</secondary>
      </indexterm>
 
-<!--
      <indexterm zone="textsearch-indexes">
       <primary>GIN</primary>
+      <secondary>text search</secondary>
      </indexterm>
--->
+
      <term>
       <synopsis>
        CREATE INDEX <replaceable>name</replaceable> ON <replaceable>table</replaceable> USING gin(<replaceable>column</replaceable>);
@@ -2079,7 +2078,7 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
        List of fulltext configurations
  Schema   |  Name        | Description
 ----------+----------------------------
- fulltext | fulltext_cfg | 
+ fulltext | fulltext_cfg |
  public   | fulltext_cfg |
 </programlisting>
   </para>
@@ -2482,11 +2481,11 @@ dinit_intdict(PG_FUNCTION_ARGS) {
     PG_FREE_IF_COPY(in, 0);
     pcfg=cfg;
 
-    while (pcfg-&gt;key) 
+    while (pcfg-&gt;key)
     {
         if (strcasecmp("MAXLEN", pcfg-&gt;key) == 0)
                 d-&gt;maxlen=atoi(pcfg-&gt;value);
-        else if ( strcasecmp("REJECTLONG", pcfg-&gt;key) == 0) 
+        else if ( strcasecmp("REJECTLONG", pcfg-&gt;key) == 0)
         {
            if ( strcasecmp("true", pcfg-&gt;value) == 0 )
                d-&gt;rejectlong=true;
@@ -2522,7 +2521,7 @@ dlexize_intdict(PG_FUNCTION_ARGS)
 
     if  (PG_GETARG_INT32(2) &gt; d-&gt;maxlen)
     {
-       if (d-&gt;rejectlong) 
+       if (d-&gt;rejectlong)
        { /* stop, return void array */
            pfree(txt);
            res[0].lexeme = NULL;
@@ -2798,14 +2797,14 @@ Datum testprs_getlexeme(PG_FUNCTION_ARGS)
         /* blank type */
         type = 12;
         /* go to the next non-white-space character */
-        while ((pst-&gt;buffer)[pst-&gt;pos] == ' ' &amp;&amp; 
+        while ((pst-&gt;buffer)[pst-&gt;pos] == ' ' &amp;&amp;
                pst-&gt;pos &lt; pst-&gt;len)
           (pst-&gt;pos)++;
     } else {
         /* word type */
         type = 3;
         /* go to the next white-space character */
-        while ((pst-&gt;buffer)[pst-&gt;pos] != ' ' &amp;&amp; 
+        while ((pst-&gt;buffer)[pst-&gt;pos] != ' ' &amp;&amp;
                pst-&gt;pos &lt; pst-&gt;len)
             (pst-&gt;pos)++;
     }
