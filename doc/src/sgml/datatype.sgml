@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.208 2007/08/29 20:37:14 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/datatype.sgml,v 1.209 2007/08/31 04:52:29 momjian Exp $ -->
 
  <chapter id="datatype">
   <title id="datatype-title">Data Types</title>
@@ -3281,20 +3281,18 @@ a0eebc999c0b4ef8bb6d6bb9bd380a11
 
    <variablelist>
 
-   <indexterm zone="datatype-textsearch">
-   <primary>tsvector</primary>
-   </indexterm>
-
     <varlistentry>
     <term><firstterm>tsvector</firstterm></term>
      <listitem>
 
       <para>
-       <type>tsvector</type> is a data type that represents a document and is
-       optimized for full text searching. In the simplest case,
-       <type>tsvector</type> is a sorted list of lexemes, so even without indexes
-       full text searches perform better than standard <literal>~</literal> and
-       <literal>LIKE</literal> operations:
+       <type>tsvector</type>
+       <indexterm><primary>tsvector</primary></indexterm> is a data type
+       that represents a document and is optimized for full text searching.
+       In the simplest case, <type>tsvector</type> is a sorted list of
+       lexemes, so even without indexes full text searches perform better
+       than standard <literal>~</literal> and <literal>LIKE</literal>
+       operations:
 
 <programlisting>
 SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector;
@@ -3355,19 +3353,17 @@ SELECT 'fat:1 rat:2'::tsvector || 'fat:1 cat:2'::tsvector;
 
     </varlistentry>
 
-    <indexterm zone="datatype-textsearch">
-    <primary>tsquery</primary>
-    </indexterm>
-
     <varlistentry>
     <term><firstterm>tsquery</firstterm></term>
      <listitem>
 
       <para>
-       <type>tsquery</type> is a data type for textual queries which supports
-       the boolean operators <literal>&amp;</literal> (AND), <literal>|</literal> (OR),
-       and parentheses.  A <type>tsquery</type> consists of lexemes
-       (optionally labeled by letters) with boolean operators in between:
+       <type>tsquery</type>
+       <indexterm><primary>tsquery</primary></indexterm> is a data type
+       for textual queries which supports the boolean operators
+       <literal>&amp;</literal> (AND), <literal>|</literal> (OR), and
+       parentheses.  A <type>tsquery</type> consists of lexemes (optionally
+       labeled by letters) with boolean operators in between:
 
 <programlisting>
 SELECT 'fat &amp; cat'::tsquery;

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.390 2007/08/29 21:51:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.391 2007/08/31 04:52:29 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -7585,8 +7585,8 @@ CREATE TYPE rainbow AS ENUM ('red', 'orange', 'yellow', 'green', 'blue', 'purple
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-search-operator">
-     <primary>TSVECTOR @@ TSQUERY</primary>
+     <indexterm>
+      <primary>TSVECTOR @@ TSQUERY</primary>
      </indexterm>
 
      <term>
@@ -7620,8 +7620,8 @@ SELECT 'a fat cat sat on a mat and ate a fat rat'::tsvector @@ 'fat &amp; cow'::
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-search-operator">
-     <primary>TEXT @@ TSQUERY</primary>
+     <indexterm>
+      <primary>TEXT @@ TSQUERY</primary>
      </indexterm>
 
      <term>
@@ -7652,8 +7652,8 @@ SELECT 'a fat cat sat on a mat and ate a fat rat'::text @@ 'cat &amp; cow'::tsqu
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-search-operator">
-     <primary>TEXT @@ TEXT</primary>
+     <indexterm>
+      <primary>TEXT @@ TEXT</primary>
      </indexterm>
 
      <term>
@@ -7701,8 +7701,8 @@ SELECT 'a fat cat sat on a mat and ate a fat rat' @@ 'cat cow';
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsvector">
-     <primary>to_tsvector</primary>
+     <indexterm>
+      <primary>to_tsvector</primary>
      </indexterm>
 
      <term>
@@ -7723,8 +7723,8 @@ SELECT 'a fat cat sat on a mat and ate a fat rat' @@ 'cat cow';
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsvector">
-     <primary>strip</primary>
+     <indexterm>
+      <primary>strip</primary>
      </indexterm>
 
      <term>
@@ -7746,8 +7746,8 @@ SELECT 'a fat cat sat on a mat and ate a fat rat' @@ 'cat cow';
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsvector">
-     <primary>setweight</primary>
+     <indexterm>
+      <primary>setweight</primary>
      </indexterm>
 
      <term>
@@ -7771,8 +7771,8 @@ SELECT 'a fat cat sat on a mat and ate a fat rat' @@ 'cat cow';
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsvector">
-     <primary>tsvector concatenation</primary>
+     <indexterm>
+      <primary>tsvector concatenation</primary>
      </indexterm>
 
      <term>
@@ -7802,8 +7802,8 @@ SELECT 'a fat cat sat on a mat and ate a fat rat' @@ 'cat cow';
 
 
     <varlistentry>
-     <indexterm zone="functions-textsearch-tsvector">
-     <primary>length(tsvector)</primary>
+     <indexterm>
+      <primary>length(tsvector)</primary>
      </indexterm>
 
      <term>
@@ -7821,8 +7821,8 @@ SELECT 'a fat cat sat on a mat and ate a fat rat' @@ 'cat cow';
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsvector">
-     <primary>text::tsvector</primary>
+     <indexterm>
+      <primary>text::tsvector</primary>
      </indexterm>
 
      <term>
@@ -7846,9 +7846,9 @@ SELECT 'a fat cat sat on a mat and ate a fat rat' @@ 'cat cow';
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsvector">
-     <primary>trigger</primary>
-     <secondary>for updating a derived tsvector column</secondary>
+     <indexterm>
+      <primary>trigger</primary>
+      <secondary>for updating a derived tsvector column</secondary>
      </indexterm>
 
      <term>
@@ -7896,8 +7896,8 @@ tsvector_update_trigger(tsv, 'pg_catalog.english', strMessage);
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsvector">
-     <primary>ts_stat</primary>
+     <indexterm>
+      <primary>ts_stat</primary>
      </indexterm>
 
      <term>
@@ -7943,8 +7943,8 @@ LIMIT 10;
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsvector">
-     <primary>Btree operations for tsvector</primary>
+     <indexterm>
+      <primary>Btree operations for tsvector</primary>
      </indexterm>
 
      <term>
@@ -7979,8 +7979,8 @@ LIMIT 10;
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsquery">
-     <primary>to_tsquery</primary>
+     <indexterm>
+      <primary>to_tsquery</primary>
      </indexterm>
 
      <term>
@@ -8026,8 +8026,8 @@ SELECT to_tsquery('''supernovae stars'' &amp; !crab');
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsquery">
-     <primary>plainto_tsquery</primary>
+     <indexterm>
+      <primary>plainto_tsquery</primary>
      </indexterm>
 
      <term>
@@ -8051,8 +8051,8 @@ SELECT to_tsquery('''supernovae stars'' &amp; !crab');
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsquery">
-     <primary>querytree</primary>
+     <indexterm>
+      <primary>querytree</primary>
      </indexterm>
 
      <term>
@@ -8081,8 +8081,8 @@ SELECT querytree(to_tsquery('!defined'));
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsquery">
-     <primary>text::tsquery casting</primary>
+     <indexterm>
+      <primary>text::tsquery casting</primary>
      </indexterm>
 
      <term>
@@ -8107,8 +8107,8 @@ SELECT querytree(to_tsquery('!defined'));
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsquery">
-     <primary>numnode</primary>
+     <indexterm>
+      <primary>numnode</primary>
      </indexterm>
 
      <term>
@@ -8146,8 +8146,8 @@ SELECT numnode(plainto_tsquery('long table'));
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsquery">
-     <primary>TSQUERY &amp;&amp; TSQUERY</primary>
+     <indexterm>
+      <primary>TSQUERY &amp;&amp; TSQUERY</primary>
      </indexterm>
 
      <term>
@@ -8165,8 +8165,8 @@ SELECT numnode(plainto_tsquery('long table'));
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsquery">
-     <primary>TSQUERY || TSQUERY</primary>
+     <indexterm>
+      <primary>TSQUERY || TSQUERY</primary>
      </indexterm>
 
      <term>
@@ -8184,8 +8184,8 @@ SELECT numnode(plainto_tsquery('long table'));
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsquery">
-     <primary>!! TSQUERY</primary>
+     <indexterm>
+      <primary>!! TSQUERY</primary>
      </indexterm>
 
      <term>
@@ -8203,8 +8203,8 @@ SELECT numnode(plainto_tsquery('long table'));
 
     <varlistentry>
 
-     <indexterm zone="functions-textsearch-tsquery">
-     <primary>Btree operations for tsquery</primary>
+     <indexterm>
+      <primary>Btree operations for tsquery</primary>
      </indexterm>
 
      <term>
@@ -8257,8 +8257,8 @@ INSERT INTO aliases VALUES('a', 'c');
 
      <varlistentry>
 
-      <indexterm zone="functions-textsearch-tsquery">
-      <primary>ts_rewrite</primary>
+      <indexterm>
+       <primary>ts_rewrite</primary>
       </indexterm>
 
       <term>
@@ -8404,8 +8404,8 @@ WHERE 'a &amp; b' @> t;
  
      <varlistentry>
 
-      <indexterm zone="functions-textsearch-tsquery">
-      <primary>TSQUERY @&gt; TSQUERY</primary>
+      <indexterm>
+       <primary>TSQUERY @&gt; TSQUERY</primary>
       </indexterm>
 
       <term>
@@ -8423,8 +8423,8 @@ WHERE 'a &amp; b' @> t;
 
      <varlistentry>
 
-      <indexterm zone="functions-textsearch-tsquery">
-      <primary>tsquery &lt;@ tsquery</primary>
+      <indexterm>
+       <primary>tsquery &lt;@ tsquery</primary>
       </indexterm>
 
       <term>
