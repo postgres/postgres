@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.1 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.2 2007/08/31 02:26:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include "executor/spi.h"
 #include "funcapi.h"
 #include "mb/pg_wchar.h"
+#include "miscadmin.h"
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 #include "utils/builtins.h"
@@ -525,14 +526,18 @@ checkcondition_str(void *checkval, QueryItem * val)
  * check for boolean condition
  */
 bool
-TS_execute(QueryItem * curitem, void *checkval, bool calcnot, bool (*chkcond) (void *checkval, QueryItem * val))
+TS_execute(QueryItem * curitem, void *checkval, bool calcnot,
+		   bool (*chkcond) (void *checkval, QueryItem * val))
 {
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
+
 	if (curitem->type == VAL)
 		return chkcond(checkval, curitem);
 	else if (curitem->val == (int4) '!')
 	{
 		return (calcnot) ?
-			((TS_execute(curitem + 1, checkval, calcnot, chkcond)) ? false : true)
+			!TS_execute(curitem + 1, checkval, calcnot, chkcond)
 			: true;
 	}
 	else if (curitem->val == (int4) '&')

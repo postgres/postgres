@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.1 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.2 2007/08/31 02:26:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,11 +15,13 @@
 #include "postgres.h"
 
 #include "libpq/pqformat.h"
+#include "miscadmin.h"
 #include "tsearch/ts_locale.h"
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 #include "utils/memutils.h"
 #include "utils/pg_crc.h"
+
 
 /* parser's states */
 #define WAITOPERAND 1
@@ -234,11 +236,13 @@ pushval_asis(TSQueryParserState * state, int type, char *strval, int lenval, int
 }
 
 #define STACKDEPTH	32
+
 /*
  * make polish notation of query
  */
 static int4
-makepol(TSQueryParserState * state, void (*pushval) (TSQueryParserState *, int, char *, int, int2))
+makepol(TSQueryParserState * state,
+		void (*pushval) (TSQueryParserState *, int, char *, int, int2))
 {
 	int4		val = 0,
 				type;
@@ -247,6 +251,9 @@ makepol(TSQueryParserState * state, void (*pushval) (TSQueryParserState *, int, 
 	int4		stack[STACKDEPTH];
 	int4		lenstack = 0;
 	int2		weight = 0;
+
+	/* since this function recurses, it could be driven to stack overflow */
+	check_stack_depth();
 
 	while ((type = gettoken_query(state, &val, &lenval, &strval, &weight)) != END)
 	{
