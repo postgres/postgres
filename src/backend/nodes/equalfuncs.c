@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.311 2007/07/17 05:02:01 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.312 2007/08/31 01:44:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -706,6 +706,8 @@ _equalOuterJoinInfo(OuterJoinInfo *a, OuterJoinInfo *b)
 {
 	COMPARE_BITMAPSET_FIELD(min_lefthand);
 	COMPARE_BITMAPSET_FIELD(min_righthand);
+	COMPARE_BITMAPSET_FIELD(syn_lefthand);
+	COMPARE_BITMAPSET_FIELD(syn_righthand);
 	COMPARE_SCALAR_FIELD(is_full_join);
 	COMPARE_SCALAR_FIELD(lhs_strict);
 	COMPARE_SCALAR_FIELD(delay_upper_joins);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.132 2007/05/22 23:23:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.133 2007/08/31 01:44:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,11 @@ int			join_collapse_limit;
 
 
 static List *deconstruct_recurse(PlannerInfo *root, Node *jtnode,
-					bool below_outer_join, Relids *qualscope);
+					bool below_outer_join,
+					Relids *qualscope, Relids *inner_join_rels);
 static OuterJoinInfo *make_outerjoininfo(PlannerInfo *root,
 				   Relids left_rels, Relids right_rels,
+				   Relids inner_join_rels,
 				   bool is_full_join, Node *clause);
 static void distribute_qual_to_rels(PlannerInfo *root, Node *clause,
 						bool is_deduced,
@@ -204,13 +206,14 @@ List *
 deconstruct_jointree(PlannerInfo *root)
 {
 	Relids		qualscope;
+	Relids		inner_join_rels;
 
 	/* Start recursion at top of jointree */
 	Assert(root->parse->jointree != NULL &&
 		   IsA(root->parse->jointree, FromExpr));
 
 	return deconstruct_recurse(root, (Node *) root->parse->jointree, false,
-							   &qualscope);
+							   &qualscope, &inner_join_rels);
 }
 
 /*
@@ -224,20 +227,24 @@ deconstruct_jointree(PlannerInfo *root)
  * Outputs:
  *	*qualscope gets the set of base Relids syntactically included in this
  *		jointree node (do not modify or free this, as it may also be pointed
- *		to by RestrictInfo nodes)
+ *		to by RestrictInfo and OuterJoinInfo nodes)
+ *	*inner_join_rels gets the set of base Relids syntactically included in
+ *		inner joins appearing at or below this jointree node (do not modify
+ *		or free this, either)
  *	Return value is the appropriate joinlist for this jointree node
  *
  * In addition, entries will be added to root->oj_info_list for outer joins.
  */
 static List *
 deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
-					Relids *qualscope)
+					Relids *qualscope, Relids *inner_join_rels)
 {
 	List	   *joinlist;
 
 	if (jtnode == NULL)
 	{
 		*qualscope = NULL;
+		*inner_join_rels = NULL;
 		return NIL;
 	}
 	if (IsA(jtnode, RangeTblRef))
@@ -246,6 +253,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 
 		/* No quals to deal with, just return correct result */
 		*qualscope = bms_make_singleton(varno);
+		/* A single baserel does not create an inner join */
+		*inner_join_rels = NULL;
 		joinlist = list_make1(jtnode);
 	}
 	else if (IsA(jtnode, FromExpr))
@@ -261,6 +270,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		 * subproblems, since that won't lengthen the joinlist anyway.
 		 */
 		*qualscope = NULL;
+		*inner_join_rels = NULL;
 		joinlist = NIL;
 		remaining = list_length(f->fromlist);
 		foreach(l, f->fromlist)
@@ -271,7 +281,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 
 			sub_joinlist = deconstruct_recurse(root, lfirst(l),
 											   below_outer_join,
-											   &sub_qualscope);
+											   &sub_qualscope,
+											   inner_join_rels);
 			*qualscope = bms_add_members(*qualscope, sub_qualscope);
 			sub_members = list_length(sub_joinlist);
 			remaining--;
@@ -281,6 +292,16 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			else
 				joinlist = lappend(joinlist, sub_joinlist);
 		}
+
+		/*
+		 * A FROM with more than one list element is an inner join subsuming
+		 * all below it, so we should report inner_join_rels = qualscope.
+		 * If there was exactly one element, we should (and already did) report
+		 * whatever its inner_join_rels were.  If there were no elements
+		 * (is that possible?) the initialization before the loop fixed it.
+		 */
+		if (list_length(f->fromlist) > 1)
+			*inner_join_rels = *qualscope;
 
 		/*
 		 * Now process the top-level quals.
@@ -295,6 +316,8 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		JoinExpr   *j = (JoinExpr *) jtnode;
 		Relids		leftids,
 					rightids,
+					left_inners,
+					right_inners,
 					nonnullable_rels,
 					ojscope;
 		List	   *leftjoinlist,
@@ -319,32 +342,35 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 			case JOIN_INNER:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   below_outer_join,
-												   &leftids);
+												   &leftids, &left_inners);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
 													below_outer_join,
-													&rightids);
+													&rightids, &right_inners);
 				*qualscope = bms_union(leftids, rightids);
+				*inner_join_rels = *qualscope;
 				/* Inner join adds no restrictions for quals */
 				nonnullable_rels = NULL;
 				break;
 			case JOIN_LEFT:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   below_outer_join,
-												   &leftids);
+												   &leftids, &left_inners);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
 													true,
-													&rightids);
+													&rightids, &right_inners);
 				*qualscope = bms_union(leftids, rightids);
+				*inner_join_rels = bms_union(left_inners, right_inners);
 				nonnullable_rels = leftids;
 				break;
 			case JOIN_FULL:
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   true,
-												   &leftids);
+												   &leftids, &left_inners);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
 													true,
-													&rightids);
+													&rightids, &right_inners);
 				*qualscope = bms_union(leftids, rightids);
+				*inner_join_rels = bms_union(left_inners, right_inners);
 				/* each side is both outer and inner */
 				nonnullable_rels = *qualscope;
 				break;
@@ -352,11 +378,12 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 				/* notice we switch leftids and rightids */
 				leftjoinlist = deconstruct_recurse(root, j->larg,
 												   true,
-												   &rightids);
+												   &rightids, &right_inners);
 				rightjoinlist = deconstruct_recurse(root, j->rarg,
 													below_outer_join,
-													&leftids);
+													&leftids, &left_inners);
 				*qualscope = bms_union(leftids, rightids);
+				*inner_join_rels = bms_union(left_inners, right_inners);
 				nonnullable_rels = leftids;
 				break;
 			default:
@@ -375,8 +402,11 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
 		 */
 		if (j->jointype != JOIN_INNER)
 		{
-			ojinfo = make_outerjoininfo(root, leftids, rightids,
-										(j->jointype == JOIN_FULL), j->quals);
+			ojinfo = make_outerjoininfo(root,
+										leftids, rightids,
+										*inner_join_rels,
+										(j->jointype == JOIN_FULL),
+										j->quals);
 			ojscope = bms_union(ojinfo->min_lefthand, ojinfo->min_righthand);
 		}
 		else
@@ -445,6 +475,7 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
  * Inputs:
  *	left_rels: the base Relids syntactically on outer side of join
  *	right_rels: the base Relids syntactically on inner side of join
+ *	inner_join_rels: base Relids participating in inner joins below this one
  *	is_full_join: what it says
  *	clause: the outer join's join condition
  *
@@ -457,17 +488,19 @@ deconstruct_recurse(PlannerInfo *root, Node *jtnode, bool below_outer_join,
  *
  * Note: we assume that this function is invoked bottom-up, so that
  * root->oj_info_list already contains entries for all outer joins that are
- * syntactically below this one; and indeed that oj_info_list is ordered
- * with syntactically lower joins listed first.
+ * syntactically below this one.
  */
 static OuterJoinInfo *
 make_outerjoininfo(PlannerInfo *root,
 				   Relids left_rels, Relids right_rels,
+				   Relids inner_join_rels,
 				   bool is_full_join, Node *clause)
 {
 	OuterJoinInfo *ojinfo = makeNode(OuterJoinInfo);
 	Relids		clause_relids;
 	Relids		strict_relids;
+	Relids		min_lefthand;
+	Relids		min_righthand;
 	ListCell   *l;
 
 	/*
@@ -497,6 +530,8 @@ make_outerjoininfo(PlannerInfo *root,
 	ojinfo->delay_upper_joins = false;
 
 	/* If it's a full join, no need to be very smart */
+	ojinfo->syn_lefthand = left_rels;
+	ojinfo->syn_righthand = right_rels;
 	ojinfo->is_full_join = is_full_join;
 	if (is_full_join)
 	{
@@ -521,21 +556,17 @@ make_outerjoininfo(PlannerInfo *root,
 	ojinfo->lhs_strict = bms_overlap(strict_relids, left_rels);
 
 	/*
-	 * Required LHS is basically the LHS rels mentioned in the clause... but
-	 * if there aren't any, punt and make it the full LHS, to avoid having an
-	 * empty min_lefthand which will confuse later processing. (We don't try
-	 * to be smart about such cases, just correct.) We may have to add more
-	 * rels based on lower outer joins; see below.
+	 * Required LHS always includes the LHS rels mentioned in the clause.
+	 * We may have to add more rels based on lower outer joins; see below.
 	 */
-	ojinfo->min_lefthand = bms_intersect(clause_relids, left_rels);
-	if (bms_is_empty(ojinfo->min_lefthand))
-		ojinfo->min_lefthand = bms_copy(left_rels);
+	min_lefthand = bms_intersect(clause_relids, left_rels);
 
 	/*
-	 * Required RHS is normally the full set of RHS rels.  Sometimes we can
-	 * exclude some, see below.
+	 * Similarly for required RHS.  But here, we must also include any lower
+	 * inner joins, to ensure we don't try to commute with any of them.
 	 */
-	ojinfo->min_righthand = bms_copy(right_rels);
+	min_righthand = bms_int_members(bms_union(clause_relids, inner_join_rels),
+									right_rels);
 
 	foreach(l, root->oj_info_list)
 	{
@@ -548,23 +579,29 @@ make_outerjoininfo(PlannerInfo *root,
 		/*
 		 * For a lower OJ in our LHS, if our join condition uses the lower
 		 * join's RHS and is not strict for that rel, we must preserve the
-		 * ordering of the two OJs, so add lower OJ's full required relset to
-		 * min_lefthand.
+		 * ordering of the two OJs, so add lower OJ's full syntactic relset to
+		 * min_lefthand.  (We must use its full syntactic relset, not just
+		 * its min_lefthand + min_righthand.  This is because there might
+		 * be other OJs below this one that this one can commute with,
+		 * but we cannot commute with them if we don't with this one.)
+		 *
+		 * Note: I believe we have to insist on being strict for at least one
+		 * rel in the lower OJ's min_righthand, not its whole syn_righthand.
 		 */
-		if (bms_overlap(ojinfo->min_lefthand, otherinfo->min_righthand) &&
+		if (bms_overlap(left_rels, otherinfo->syn_righthand) &&
 			!bms_overlap(strict_relids, otherinfo->min_righthand))
 		{
-			ojinfo->min_lefthand = bms_add_members(ojinfo->min_lefthand,
-												   otherinfo->min_lefthand);
-			ojinfo->min_lefthand = bms_add_members(ojinfo->min_lefthand,
-												   otherinfo->min_righthand);
+			min_lefthand = bms_add_members(min_lefthand,
+										   otherinfo->syn_lefthand);
+			min_lefthand = bms_add_members(min_lefthand,
+										   otherinfo->syn_righthand);
 		}
 
 		/*
 		 * For a lower OJ in our RHS, if our join condition does not use the
 		 * lower join's RHS and the lower OJ's join condition is strict, we
-		 * can interchange the ordering of the two OJs, so exclude the lower
-		 * RHS from our min_righthand.
+		 * can interchange the ordering of the two OJs; otherwise we must
+		 * add lower OJ's full syntactic relset to min_righthand. 
 		 *
 		 * Here, we have to consider that "our join condition" includes
 		 * any clauses that syntactically appeared above the lower OJ and
@@ -577,20 +614,38 @@ make_outerjoininfo(PlannerInfo *root,
 		 * effect is therefore sufficiently represented by the
 		 * delay_upper_joins flag saved for us by check_outerjoin_delay.
 		 */
-		if (bms_overlap(ojinfo->min_righthand, otherinfo->min_righthand) &&
-			!bms_overlap(clause_relids, otherinfo->min_righthand) &&
-			otherinfo->lhs_strict && !otherinfo->delay_upper_joins)
+		if (bms_overlap(right_rels, otherinfo->syn_righthand))
 		{
-			ojinfo->min_righthand = bms_del_members(ojinfo->min_righthand,
-													otherinfo->min_righthand);
+			if (bms_overlap(clause_relids, otherinfo->syn_righthand) ||
+				!otherinfo->lhs_strict || otherinfo->delay_upper_joins)
+			{
+				min_righthand = bms_add_members(min_righthand,
+												otherinfo->syn_lefthand);
+				min_righthand = bms_add_members(min_righthand,
+												otherinfo->syn_righthand);
+			}
 		}
 	}
 
-	/* Neither set should be empty, else we might get confused later */
-	Assert(!bms_is_empty(ojinfo->min_lefthand));
-	Assert(!bms_is_empty(ojinfo->min_righthand));
+	/*
+	 * If we found nothing to put in min_lefthand, punt and make it the full
+	 * LHS, to avoid having an empty min_lefthand which will confuse later
+	 * processing. (We don't try to be smart about such cases, just correct.)
+	 * Likewise for min_righthand.
+	 */
+	if (bms_is_empty(min_lefthand))
+		min_lefthand = bms_copy(left_rels);
+	if (bms_is_empty(min_righthand))
+		min_righthand = bms_copy(right_rels);
+
+	/* Now they'd better be nonempty */
+	Assert(!bms_is_empty(min_lefthand));
+	Assert(!bms_is_empty(min_righthand));
 	/* Shouldn't overlap either */
-	Assert(!bms_overlap(ojinfo->min_lefthand, ojinfo->min_righthand));
+	Assert(!bms_overlap(min_lefthand, min_righthand));
+
+	ojinfo->min_lefthand = min_lefthand;
+	ojinfo->min_righthand = min_righthand;
 
 	return ojinfo;
 }
