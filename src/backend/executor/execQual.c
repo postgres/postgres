@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.220 2007/06/11 22:22:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.221 2007/08/31 18:33:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,8 @@ static Datum ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 static Datum ExecEvalScalarVar(ExprState *exprstate, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
+					bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalWholeRowSlow(ExprState *exprstate, ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalConst(ExprState *exprstate, ExprContext *econtext,
 			  bool *isNull, ExprDoneCond *isDone);
@@ -438,7 +440,8 @@ ExecEvalAggref(AggrefExprState *aggref, ExprContext *econtext,
  *
  * Note: ExecEvalVar is executed only the first time through in a given plan;
  * it changes the ExprState's function pointer to pass control directly to
- * ExecEvalScalarVar or ExecEvalWholeRowVar after making one-time checks.
+ * ExecEvalScalarVar, ExecEvalWholeRowVar, or ExecEvalWholeRowSlow after
+ * making one-time checks.
  * ----------------------------------------------------------------
  */
 static Datum
@@ -544,6 +547,7 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 		 * the actual tuple type is compatible with it.
 		 */
 		TupleDesc	slot_tupdesc = slot->tts_tupleDescriptor;
+		bool		needslow = false;
 
 		if (variable->vartype == RECORDOID)
 		{
@@ -561,16 +565,26 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 			 * Also, we can ignore type mismatch on columns that are dropped
 			 * in the destination type, so long as the physical storage
 			 * matches.  This is helpful in some cases involving out-of-date
-			 * cached plans.
+			 * cached plans.  Also, we have to allow the case that the slot
+			 * has more columns than the Var's type, because we might be
+			 * looking at the output of a subplan that includes resjunk
+			 * columns.  (XXX it would be nice to verify that the extra
+			 * columns are all marked resjunk, but we haven't got access to
+			 * the subplan targetlist here...)  Resjunk columns should always
+			 * be at the end of a targetlist, so it's sufficient to ignore
+			 * them here; but we need to use ExecEvalWholeRowSlow to get
+			 * rid of them in the eventual output tuples.
 			 */
 			var_tupdesc = lookup_rowtype_tupdesc(variable->vartype, -1);
 
-			if (var_tupdesc->natts != slot_tupdesc->natts)
+			if (var_tupdesc->natts > slot_tupdesc->natts)
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("table row type and query-specified row type do not match"),
 						 errdetail("Table row contains %d attributes, but query expects %d.",
 								   slot_tupdesc->natts, var_tupdesc->natts)));
+			else if (var_tupdesc->natts < slot_tupdesc->natts)
+				needslow = true;
 
 			for (i = 0; i < var_tupdesc->natts; i++)
 			{
@@ -601,7 +615,10 @@ ExecEvalVar(ExprState *exprstate, ExprContext *econtext,
 		}
 
 		/* Skip the checking on future executions of node */
-		exprstate->evalfunc = ExecEvalWholeRowVar;
+		if (needslow)
+			exprstate->evalfunc = ExecEvalWholeRowSlow;
+		else
+			exprstate->evalfunc = ExecEvalWholeRowVar;
 
 		/* Fetch the value */
 		return ExecEvalWholeRowVar(exprstate, econtext, isNull, isDone);
@@ -694,6 +711,60 @@ ExecEvalWholeRowVar(ExprState *exprstate, ExprContext *econtext,
 		HeapTupleHeaderSetTypeId(dtuple, tupleDesc->tdtypeid);
 		HeapTupleHeaderSetTypMod(dtuple, tupleDesc->tdtypmod);
 	}
+
+	return PointerGetDatum(dtuple);
+}
+
+/* ----------------------------------------------------------------
+ *		ExecEvalWholeRowSlow
+ *
+ *		Returns a Datum for a whole-row variable, in the "slow" case where
+ *		we can't just copy the subplan's output.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalWholeRowSlow(ExprState *exprstate, ExprContext *econtext,
+					 bool *isNull, ExprDoneCond *isDone)
+{
+	Var		   *variable = (Var *) exprstate->expr;
+	TupleTableSlot *slot = econtext->ecxt_scantuple;
+	HeapTuple	tuple;
+	TupleDesc	var_tupdesc;
+	HeapTupleHeader dtuple;
+
+	if (isDone)
+		*isDone = ExprSingleResult;
+	*isNull = false;
+
+	/*
+	 * Currently, the only case handled here is stripping of trailing
+	 * resjunk fields, which we do in a slightly chintzy way by just
+	 * adjusting the tuple's natts header field.  Possibly there will someday
+	 * be a need for more-extensive rearrangements, in which case it'd
+	 * be worth disassembling and reassembling the tuple (perhaps use a
+	 * JunkFilter for that?)
+	 */
+	Assert(variable->vartype != RECORDOID);
+	var_tupdesc = lookup_rowtype_tupdesc(variable->vartype, -1);
+
+	tuple = ExecFetchSlotTuple(slot);
+
+	/*
+	 * We have to make a copy of the tuple so we can safely insert the Datum
+	 * overhead fields, which are not set in on-disk tuples; not to mention
+	 * fooling with its natts field.
+	 */
+	dtuple = (HeapTupleHeader) palloc(tuple->t_len);
+	memcpy((char *) dtuple, (char *) tuple->t_data, tuple->t_len);
+
+	HeapTupleHeaderSetDatumLength(dtuple, tuple->t_len);
+	HeapTupleHeaderSetTypeId(dtuple, variable->vartype);
+	HeapTupleHeaderSetTypMod(dtuple, variable->vartypmod);
+
+	Assert(HeapTupleHeaderGetNatts(dtuple) >= var_tupdesc->natts);
+	HeapTupleHeaderSetNatts(dtuple, var_tupdesc->natts);
+
+	ReleaseTupleDesc(var_tupdesc);
 
 	return PointerGetDatum(dtuple);
 }
