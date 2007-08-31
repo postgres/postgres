@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.235 2007/08/21 01:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.236 2007/08/31 23:35:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1385,10 +1385,23 @@ booltestsel(PlannerInfo *root, BoolTestType booltesttype, Node *arg,
  */
 Selectivity
 nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
-			Node *arg, int varRelid)
+			Node *arg, int varRelid, JoinType jointype)
 {
 	VariableStatData vardata;
 	double		selec;
+
+	/*
+	 * Special hack: an IS NULL test being applied at an outer join should not
+	 * be taken at face value, since it's very likely being used to select the
+	 * outer-side rows that don't have a match, and thus its selectivity has
+	 * nothing whatever to do with the statistics of the original table
+	 * column.  We do not have nearly enough context here to determine its
+	 * true selectivity, so for the moment punt and guess at 0.5.  Eventually
+	 * the planner should be made to provide enough info about the clause's
+	 * context to let us do better.
+	 */
+	if (IS_OUTER_JOIN(jointype) && nulltesttype == IS_NULL)
+		return (Selectivity) 0.5;
 
 	examine_variable(root, arg, varRelid, &vardata);
 
