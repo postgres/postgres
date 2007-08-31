@@ -549,6 +549,10 @@ UPDATE tt SET ti=
 
      <varlistentry>
 
+      <indexterm>
+       <primary>ts_parse</primary>
+      </indexterm>
+
       <term>
        <synopsis>
         ts_parse(<replaceable class="PARAMETER">parser</replaceable>,  <replaceable class="PARAMETER">document</replaceable> TEXT) returns SETOF <type>tokenout</type>
@@ -578,9 +582,8 @@ SELECT * FROM ts_parse('default','123 - a number');
      </varlistentry>
 
      <varlistentry>
-      <indexterm zone="textsearch-parser">
-       <primary>text search</primary>
-       <secondary>ts_token_type</secondary>
+      <indexterm>
+       <primary>ts_token_type</primary>
       </indexterm>
 
       <term>
@@ -666,9 +669,8 @@ SELECT * FROM ts_token_type('default');
 
      <varlistentry>
 
-      <indexterm zone="textsearch-ranking">
-       <primary>text search</primary>
-       <secondary>ts_rank</secondary>
+      <indexterm>
+       <primary>ts_rank</primary>
       </indexterm>
 
       <term>
@@ -703,9 +705,8 @@ SELECT * FROM ts_token_type('default');
 
      <varlistentry>
 
-      <indexterm zone="textsearch-ranking">
-       <primary>text search</primary>
-       <secondary>ts_rank_cd</secondary>
+      <indexterm>
+       <primary>ts_rank_cd</primary>
       </indexterm>
 
       <term>
@@ -854,9 +855,8 @@ ORDER BY rnk DESC LIMIT 10;
   <sect2 id="textsearch-headline">
    <title>Highlighting Results</title>
 
-   <indexterm zone="textsearch-headline">
-    <primary>text search</primary>
-    <secondary>headline</secondary>
+   <indexterm>
+    <primary>headline</primary>
    </indexterm>
 
    <para>
@@ -1575,9 +1575,8 @@ CREATE TEXT SEARCH DICTIONARY english_stem (
 
      <varlistentry>
 
-      <indexterm zone="textsearch-dictionaries">
-       <primary>text search</primary>
-       <secondary>ts_lexize</secondary>
+      <indexterm>
+       <primary>ts_lexize</primary>
       </indexterm>
 
       <term>
