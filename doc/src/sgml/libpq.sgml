@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.239 2007/07/23 10:16:53 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.240 2007/08/31 21:33:48 momjian Exp $ -->
 
  <chapter id="libpq">
   <title><application>libpq</application> - C Library</title>
@@ -2399,12 +2399,16 @@ It is not thread-safe.
 <sect2 id="libpq-exec-escape-string">
   <title>Escaping Strings for Inclusion in SQL Commands</title>
 
-   <indexterm zone="libpq-exec-escape-string"><primary>PQescapeStringConn</></>
-   <indexterm zone="libpq-exec-escape-string"><primary>PQescapeString</></>
    <indexterm zone="libpq-exec-escape-string">
-     <primary>escaping strings</>
-     <secondary>in libpq</secondary>
-   </>
+    <primary>PQescapeStringConn</primary>
+   </indexterm>
+   <indexterm zone="libpq-exec-escape-string">
+    <primary>PQescapeString</primary>
+   </indexterm>
+   <indexterm zone="libpq-exec-escape-string">
+    <primary>escaping strings</primary>
+    <secondary>in libpq</secondary>
+   </indexterm>
 
 <para>
 <function>PQescapeStringConn</function> escapes a string for use within an SQL
@@ -2499,8 +2503,8 @@ in favor of <function>PQescapeStringConn</>.
   <title>Escaping Binary Strings for Inclusion in SQL Commands</title>
 
   <indexterm zone="libpq-exec-escape-bytea">
-   <primary>bytea</>
-   <secondary sortas="libpq">in libpq</>
+   <primary>bytea</primary>
+   <secondary sortas="libpq">in libpq</secondary>
   </indexterm>
 
   <variablelist>
@@ -2666,7 +2670,9 @@ void PQfreemem(void *ptr);
 <sect1 id="libpq-async">
 <title>Asynchronous Command Processing</title>
 
-  <indexterm zone="libpq-async"><primary>nonblocking connection</></>
+  <indexterm zone="libpq-async">
+   <primary>nonblocking connection</primary>
+  </indexterm>
 
 <para>
 The <function>PQexec</function> function is adequate for submitting commands in
@@ -3075,7 +3081,10 @@ and then read the response as described above.
 <sect1 id="libpq-cancel">
 <title>Cancelling Queries in Progress</title>
 
-<indexterm zone="libpq-cancel"><primary>canceling</><secondary>SQL command</></>
+<indexterm zone="libpq-cancel">
+ <primary>canceling</primary>
+ <secondary>SQL command</secondary>
+</indexterm>
 
 <para>
 A client application can request cancellation of
@@ -3194,7 +3203,9 @@ in progress on the connection.
 <sect1 id="libpq-fastpath">
 <title>The Fast-Path Interface</title>
 
-<indexterm zone="libpq-fastpath"><primary>fast path</></>
+<indexterm zone="libpq-fastpath">
+ <primary>fast path</primary>
+</indexterm>
 
 <para>
 <productname>PostgreSQL</productname> provides a fast-path interface to send

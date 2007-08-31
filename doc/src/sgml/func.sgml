@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.391 2007/08/31 04:52:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.392 2007/08/31 21:33:48 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -2986,76 +2986,76 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
 <replaceable>string</replaceable> NOT SIMILAR TO <replaceable>pattern</replaceable> <optional>ESCAPE <replaceable>escape-character</replaceable></optional>
 </synopsis>
 
-    <para>
-     The <function>SIMILAR TO</function> operator returns true or
-     false depending on whether its pattern matches the given string.
-     It is much like <function>LIKE</function>, except that it
-     interprets the pattern using the SQL standard's definition of a
-     regular expression.  SQL regular expressions are a curious cross
-     between <function>LIKE</function> notation and common regular
-     expression notation.
-    </para>
+   <para>
+    The <function>SIMILAR TO</function> operator returns true or
+    false depending on whether its pattern matches the given string.
+    It is much like <function>LIKE</function>, except that it
+    interprets the pattern using the SQL standard's definition of a
+    regular expression.  SQL regular expressions are a curious cross
+    between <function>LIKE</function> notation and common regular
+    expression notation.
+   </para>
 
-    <para>
-     Like <function>LIKE</function>, the  <function>SIMILAR TO</function>
-     operator succeeds only if its pattern matches the entire string;
-     this is unlike common regular expression practice, wherein the pattern
-     can match any part of the string.
-     Also like
-     <function>LIKE</function>, <function>SIMILAR TO</function> uses
-     <literal>_</> and <literal>%</> as wildcard characters denoting
-     any single character and any string, respectively (these are
-     comparable to <literal>.</> and <literal>.*</> in POSIX regular
-     expressions).
-    </para>
+   <para>
+    Like <function>LIKE</function>, the  <function>SIMILAR TO</function>
+    operator succeeds only if its pattern matches the entire string;
+    this is unlike common regular expression practice, wherein the pattern
+    can match any part of the string.
+    Also like
+    <function>LIKE</function>, <function>SIMILAR TO</function> uses
+    <literal>_</> and <literal>%</> as wildcard characters denoting
+    any single character and any string, respectively (these are
+    comparable to <literal>.</> and <literal>.*</> in POSIX regular
+    expressions).
+   </para>
 
-    <para>
-     In addition to these facilities borrowed from <function>LIKE</function>,
-     <function>SIMILAR TO</function> supports these pattern-matching
-     metacharacters borrowed from POSIX regular expressions:
+   <para>
+    In addition to these facilities borrowed from <function>LIKE</function>,
+    <function>SIMILAR TO</function> supports these pattern-matching
+    metacharacters borrowed from POSIX regular expressions:
 
-    <itemizedlist>
-     <listitem>
-      <para>
-       <literal>|</literal> denotes alternation (either of two alternatives).
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       <literal>*</literal> denotes repetition of the previous item zero
-       or more times.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       <literal>+</literal> denotes repetition of the previous item one
-       or more times.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       Parentheses <literal>()</literal> can be used to group items into
-       a single logical item.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       A bracket expression <literal>[...]</literal> specifies a character
-       class, just as in POSIX regular expressions.
-      </para>
-     </listitem>
-    </itemizedlist>
+   <itemizedlist>
+    <listitem>
+     <para>
+      <literal>|</literal> denotes alternation (either of two alternatives).
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>*</literal> denotes repetition of the previous item zero
+      or more times.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      <literal>+</literal> denotes repetition of the previous item one
+      or more times.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      Parentheses <literal>()</literal> can be used to group items into
+      a single logical item.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      A bracket expression <literal>[...]</literal> specifies a character
+      class, just as in POSIX regular expressions.
+     </para>
+    </listitem>
+   </itemizedlist>
 
-     Notice that bounded repetition (<literal>?</> and <literal>{...}</>)
-     are not provided, though they exist in POSIX.  Also, the dot (<literal>.</>)
-     is not a metacharacter.
-    </para>
+    Notice that bounded repetition (<literal>?</> and <literal>{...}</>)
+    are not provided, though they exist in POSIX.  Also, the dot (<literal>.</>)
+    is not a metacharacter.
+   </para>
 
-    <para>
-     As with <function>LIKE</>, a backslash disables the special meaning
-     of any of these metacharacters; or a different escape character can
-     be specified with <literal>ESCAPE</>.
-    </para>
+   <para>
+    As with <function>LIKE</>, a backslash disables the special meaning
+    of any of these metacharacters; or a different escape character can
+    be specified with <literal>ESCAPE</>.
+   </para>
 
    <para>
     Some examples:
@@ -3067,20 +3067,20 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
 </programlisting>
    </para>
 
-    <para>
-     The <function>substring</> function with three parameters,
-     <function>substring(<replaceable>string</replaceable> from
-     <replaceable>pattern</replaceable> for
-     <replaceable>escape-character</replaceable>)</function>, provides
-     extraction of a substring that matches an SQL
-     regular expression pattern.  As with <literal>SIMILAR TO</>, the
-     specified pattern must match to the entire data string, else the
-     function fails and returns null.  To indicate the part of the
-     pattern that should be returned on success, the pattern must contain
-     two occurrences of the escape character followed by a double quote
-     (<literal>"</>).  The text matching the portion of the pattern
-     between these markers is returned.
-    </para>
+   <para>
+    The <function>substring</> function with three parameters,
+    <function>substring(<replaceable>string</replaceable> from
+    <replaceable>pattern</replaceable> for
+    <replaceable>escape-character</replaceable>)</function>, provides
+    extraction of a substring that matches an SQL
+    regular expression pattern.  As with <literal>SIMILAR TO</>, the
+    specified pattern must match to the entire data string, else the
+    function fails and returns null.  To indicate the part of the
+    pattern that should be returned on success, the pattern must contain
+    two occurrences of the escape character followed by a double quote
+    (<literal>"</>).  The text matching the portion of the pattern
+    between these markers is returned.
+   </para>
 
    <para>
     Some examples:
@@ -11241,17 +11241,17 @@ select current_date + s.a as dates from generate_series(0,14,7) as s(a);
     </tgroup>
    </table>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>user</primary>
     <secondary>current</secondary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>schema</primary>
     <secondary>current</secondary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>search path</primary>
     <secondary>current</secondary>
    </indexterm>
@@ -11298,19 +11298,19 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
     </para>
    </note>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>inet_client_addr</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>inet_client_port</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>inet_server_addr</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>inet_server_port</primary>
    </indexterm>
 
@@ -11325,11 +11325,11 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
      Unix-domain socket.
    </para>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_my_temp_schema</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_is_other_temp_schema</primary>
    </indexterm>
 
@@ -11343,7 +11343,7 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
     tables from a catalog display.)
    </para>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_postmaster_start_time</primary>
    </indexterm>
 
@@ -11353,7 +11353,7 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
      server started.
    </para>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>version</primary>
    </indexterm>
 
@@ -11491,25 +11491,25 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
     </tgroup>
    </table>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>has_database_privilege</primary>
    </indexterm>
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>has_function_privilege</primary>
    </indexterm>
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>has_language_privilege</primary>
    </indexterm>
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>has_schema_privilege</primary>
    </indexterm>
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>has_table_privilege</primary>
    </indexterm>
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>has_tablespace_privilege</primary>
    </indexterm>
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_has_role</primary>
    </indexterm>
 
@@ -11669,22 +11669,22 @@ SELECT relname FROM pg_class WHERE pg_table_is_visible(oid);
     </tgroup>
    </table>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_conversion_is_visible</primary>
    </indexterm>
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_function_is_visible</primary>
    </indexterm>
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_operator_is_visible</primary>
    </indexterm>
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_opclass_is_visible</primary>
    </indexterm>
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_table_is_visible</primary>
    </indexterm>
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_type_is_visible</primary>
    </indexterm>
 
@@ -11718,43 +11718,43 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     this way &mdash; if the name can be recognized at all, it must be visible.
    </para>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>format_type</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_get_viewdef</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_get_ruledef</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_get_indexdef</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_get_triggerdef</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_get_constraintdef</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_get_expr</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_get_userbyid</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_get_serial_sequence</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>pg_tablespace_databases</primary>
    </indexterm>
 
@@ -11923,19 +11923,19 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    <structname>pg_class</> catalogs.
   </para>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>col_description</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>obj_description</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>shobj_description</primary>
    </indexterm>
 
-   <indexterm zone="functions-info">
+   <indexterm>
     <primary>comment</primary>
     <secondary sortas="database objects">about database objects</secondary>
    </indexterm>
@@ -12043,15 +12043,15 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
     </tgroup>
    </table>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>SET</primary>
    </indexterm>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>SHOW</primary>
    </indexterm>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>configuration</primary>
     <secondary sortas="server">of the server</secondary>
     <tertiary>functions</tertiary>
@@ -12091,17 +12091,17 @@ SELECT set_config('log_statement_stats', 'off', false);
 </programlisting>
    </para>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_cancel_backend</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_reload_conf</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_rotate_logfile</primary>
    </indexterm>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>signal</primary>
     <secondary sortas="backend">backend processes</secondary>
    </indexterm>
@@ -12175,28 +12175,28 @@ SELECT set_config('log_statement_stats', 'off', false);
     subprocess.
    </para>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_start_backup</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_stop_backup</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_switch_xlog</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_current_xlog_location</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_current_xlog_insert_location</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_xlogfile_name_offset</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_xlogfile_name</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>backup</primary>
    </indexterm>
 
@@ -12350,22 +12350,22 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
     the actual disk space usage of database objects.
    </para>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_column_size</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_database_size</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_relation_size</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_size_pretty</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_tablespace_size</primary>
    </indexterm>
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_total_relation_size</primary>
    </indexterm>
 
@@ -12532,7 +12532,7 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
     </tgroup>
    </table>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_ls_dir</primary>
    </indexterm>
    <para>
@@ -12541,7 +12541,7 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
     <quote><literal>..</></>.
    </para>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_read_file</primary>
    </indexterm>
    <para>
@@ -12551,7 +12551,7 @@ postgres=# select * from pg_xlogfile_name_offset(pg_stop_backup());
     is negative, it is relative to the end of the file.
    </para>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_stat_file</primary>
    </indexterm>
    <para>
@@ -12683,7 +12683,7 @@ SELECT (pg_stat_file('filename')).modification;
     </tgroup>
    </table>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_advisory_lock</primary>
    </indexterm>
    <para>
@@ -12697,7 +12697,7 @@ SELECT (pg_stat_file('filename')).modification;
     released for other sessions' use.
    </para>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_advisory_lock_shared</primary>
    </indexterm>
    <para>
@@ -12707,7 +12707,7 @@ SELECT (pg_stat_file('filename')).modification;
     Only would-be exclusive lockers are locked out.
    </para>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_try_advisory_lock</primary>
    </indexterm>
    <para>
@@ -12718,7 +12718,7 @@ SELECT (pg_stat_file('filename')).modification;
     acquired now.
    </para>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_try_advisory_lock_shared</primary>
    </indexterm>
    <para>
@@ -12727,7 +12727,7 @@ SELECT (pg_stat_file('filename')).modification;
     shared rather than exclusive lock.
    </para>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_advisory_unlock</primary>
    </indexterm>
    <para>
@@ -12738,7 +12738,7 @@ SELECT (pg_stat_file('filename')).modification;
     and in addition, an SQL warning will be raised by the server.
    </para>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_advisory_unlock_shared</primary>
    </indexterm>
    <para>
@@ -12747,7 +12747,7 @@ SELECT (pg_stat_file('filename')).modification;
     except to release a shared advisory lock.
    </para>
 
-   <indexterm zone="functions-admin">
+   <indexterm>
     <primary>pg_advisory_unlock_all</primary>
    </indexterm>
    <para>

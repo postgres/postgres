@@ -1,11 +1,11 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.35 2007/06/06 23:00:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/extend.sgml,v 1.36 2007/08/31 21:33:48 momjian Exp $ -->
 
  <chapter id="extend">
   <title>Extending <acronym>SQL</acronym></title>
 
-   <indexterm zone="extend">
-    <primary>extending SQL</primary>
-   </indexterm>
+  <indexterm zone="extend">
+   <primary>extending SQL</primary>
+  </indexterm>
 
   <para>
    In  the  sections  that follow, we will discuss how you
