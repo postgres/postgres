@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.36 2006/10/04 00:30:11 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/selfuncs.h,v 1.36.2.1 2007/08/31 23:35:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ extern Datum icnlikejoinsel(PG_FUNCTION_ARGS);
 extern Selectivity booltestsel(PlannerInfo *root, BoolTestType booltesttype,
 			Node *arg, int varRelid, JoinType jointype);
 extern Selectivity nulltestsel(PlannerInfo *root, NullTestType nulltesttype,
-			Node *arg, int varRelid);
+			Node *arg, int varRelid, JoinType jointype);
 extern Selectivity scalararraysel(PlannerInfo *root,
 			   ScalarArrayOpExpr *clause,
 			   bool is_join_clause,
