@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2006, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.128.2.3 2007/05/22 23:24:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.128.2.4 2007/08/31 01:44:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -852,6 +852,11 @@ typedef struct InnerIndexscanInfo
  * It is not valid for either min_lefthand or min_righthand to be empty sets;
  * if they were, this would break the logic that enforces join order.
  *
+ * syn_lefthand and syn_righthand are the sets of base relids that are
+ * syntactically below this outer join.  (These are needed to help compute
+ * min_lefthand and min_righthand for higher joins, but are not used
+ * thereafter.)
+ *
  * delay_upper_joins is set TRUE if we detect a pushed-down clause that has
  * to be evaluated after this join is formed (because it references the RHS).
  * Any outer joins that have such a clause and this join in their RHS cannot
@@ -869,6 +874,8 @@ typedef struct OuterJoinInfo
 	NodeTag		type;
 	Relids		min_lefthand;	/* base relids in minimum LHS for join */
 	Relids		min_righthand;	/* base relids in minimum RHS for join */
+	Relids		syn_lefthand;	/* base relids syntactically within LHS */
+	Relids		syn_righthand;	/* base relids syntactically within RHS */
 	bool		is_full_join;	/* it's a FULL OUTER JOIN */
 	bool		lhs_strict;		/* joinclause is strict for some LHS rel */
 	bool		delay_upper_joins;	/* can't commute with upper RHS */

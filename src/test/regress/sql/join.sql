@@ -440,3 +440,25 @@ insert into tt6 values(1, 2);
 insert into tt6 values(2, 9);
 
 select * from tt5,tt6 where tt5.f1 = tt6.f1 and tt5.f1 = tt5.f2 - tt6.f2;
+
+--
+-- regression test for problems of the sort depicted in bug #3588
+--
+
+create temp table xx (pkxx int);
+create temp table yy (pkyy int, pkxx int);
+
+insert into xx values (1);
+insert into xx values (2);
+insert into xx values (3);
+
+insert into yy values (101, 1);
+insert into yy values (201, 2);
+insert into yy values (301, NULL);
+
+select yy.pkyy as yy_pkyy, yy.pkxx as yy_pkxx, yya.pkyy as yya_pkyy,
+       xxa.pkxx as xxa_pkxx, xxb.pkxx as xxb_pkxx
+from yy
+     left join (SELECT * FROM yy where pkyy = 101) as yya ON yy.pkyy = yya.pkyy
+     left join xx xxa on yya.pkxx = xxa.pkxx
+     left join xx xxb on coalesce (xxa.pkxx, 1) = xxb.pkxx;
