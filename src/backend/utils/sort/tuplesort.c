@@ -91,7 +91,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.77 2007/06/07 19:19:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/sort/tuplesort.c,v 1.78 2007/09/01 18:47:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1068,8 +1068,7 @@ tuplesort_performsort(Tuplesortstate *state)
 			 * in memory, using a heap to eliminate excess tuples.  Now we have
 			 * to transform the heap to a properly-sorted array.
 			 */
-			if (state->memtupcount > 1)
-				sort_bounded_heap(state);
+			sort_bounded_heap(state);
 			state->current = 0;
 			state->eof_reached = false;
 			state->markpos_offset = 0;
