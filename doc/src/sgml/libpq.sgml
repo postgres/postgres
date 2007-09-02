@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.242 2007/09/01 23:06:29 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.243 2007/09/02 01:13:55 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -129,7 +129,7 @@
            TCP/IP communication is
            always used when a nonempty string is specified for this parameter.
           </para>
- 
+
           <para>
            Using <literal>hostaddr</> instead of <literal>host</> allows the
            application to avoid a host name look-up, which might be important in
@@ -150,7 +150,7 @@
            the connection in <filename>~/.pgpass</> (see
            <xref linkend="libpq-pgpass">).
           </para>
- 
+
           <para>
            Without either a host name or host address,
            <application>libpq</application> will connect using a
@@ -159,7 +159,7 @@
           </para>
           </listitem>
          </varlistentry>
- 
+
          <varlistentry>
           <term><literal>port</literal></term>
           <listitem>
@@ -386,16 +386,16 @@ PGconn *PQsetdb(char *pghost,
       <para>
        <indexterm><primary>nonblocking connection</primary></indexterm>
        Make a connection to the database server in a nonblocking manner.
- 
+
        <synopsis>
         PGconn *PQconnectStart(const char *conninfo);
        </synopsis>
- 
+
        <synopsis>
         PostgresPollingStatusType PQconnectPoll(PGconn *conn);
        </synopsis>
       </para>
- 
+
       <para>
        These two functions are used to open a connection to a database server such
        that your application's thread of execution is not blocked on remote I/O
@@ -405,7 +405,7 @@ PGconn *PQsetdb(char *pghost,
        <function>PQconnectdb</>, and so the application can manage this
        operation in parallel with other activities.
       </para>
- 
+
       <para>
        The database connection is made using the parameters taken from the string
        <literal>conninfo</literal>, passed to <function>PQconnectStart</function>. This string is in
@@ -422,14 +422,14 @@ PGconn *PQsetdb(char *pghost,
           these parameters under <function>PQconnectdb</function> above for details.
          </para>
         </listitem>
- 
+
         <listitem>
          <para>
           If you call <function>PQtrace</function>, ensure that the stream object
           into which you trace will not block.
          </para>
         </listitem>
- 
+
         <listitem>
          <para>
           You ensure that the socket is in the appropriate state
@@ -438,7 +438,7 @@ PGconn *PQsetdb(char *pghost,
         </listitem>
        </itemizedlist>
       </para>
- 
+
       <para>
        To begin a nonblocking connection request, call <literal>conn = PQconnectStart("<replaceable>connection_info_string</>")</literal>.
        If <varname>conn</varname> is null, then <application>libpq</> has been unable to allocate a new <structname>PGconn</>
@@ -447,7 +447,7 @@ PGconn *PQsetdb(char *pghost,
        <function>PQconnectStart</function>, call <literal>status = PQstatus(conn)</literal>. If <varname>status</varname> equals
        <symbol>CONNECTION_BAD</symbol>, <function>PQconnectStart</function> has failed.
       </para>
- 
+
       <para>
        If <function>PQconnectStart</> succeeds, the next stage is to poll
        <application>libpq</> so that it can proceed with the connection sequence.
@@ -470,7 +470,7 @@ PGconn *PQsetdb(char *pghost,
        has failed, or <symbol>PGRES_POLLING_OK</symbol>, indicating the connection
        has been successfully made.
       </para>
- 
+
       <para>
        At any time during connection, the status of the connection can be
        checked by calling <function>PQstatus</>. If this gives <symbol>CONNECTION_BAD</>, then the
@@ -480,7 +480,7 @@ PGconn *PQsetdb(char *pghost,
        during (and only during) an asynchronous connection procedure. These
        indicate the current stage of the connection procedure and might be useful
        to provide feedback to the user for example. These statuses are:
- 
+
        <variablelist>
         <varlistentry>
          <term><symbol>CONNECTION_STARTED</symbol></term>
@@ -490,7 +490,7 @@ PGconn *PQsetdb(char *pghost,
           </para>
          </listitem>
         </varlistentry>
- 
+
         <varlistentry>
          <term><symbol>CONNECTION_MADE</symbol></term>
          <listitem>
@@ -499,7 +499,7 @@ PGconn *PQsetdb(char *pghost,
           </para>
          </listitem>
         </varlistentry>
- 
+
         <varlistentry>
          <term><symbol>CONNECTION_AWAITING_RESPONSE</symbol></term>
          <listitem>
@@ -508,7 +508,7 @@ PGconn *PQsetdb(char *pghost,
           </para>
          </listitem>
         </varlistentry>
- 
+
         <varlistentry>
          <term><symbol>CONNECTION_AUTH_OK</symbol></term>
          <listitem>
@@ -517,7 +517,7 @@ PGconn *PQsetdb(char *pghost,
           </para>
          </listitem>
         </varlistentry>
- 
+
         <varlistentry>
          <term><symbol>CONNECTION_SSL_STARTUP</symbol></term>
          <listitem>
@@ -526,7 +526,7 @@ PGconn *PQsetdb(char *pghost,
           </para>
          </listitem>
         </varlistentry>
- 
+
         <varlistentry>
          <term><symbol>CONNECTION_SETENV</symbol></term>
          <listitem>
@@ -536,7 +536,7 @@ PGconn *PQsetdb(char *pghost,
          </listitem>
         </varlistentry>
        </variablelist>
- 
+
        Note that, although these constants will remain (in order to maintain
        compatibility), an application should never rely upon these occurring in a
        particular order, or at all, or on the status always being one of these
@@ -559,7 +559,7 @@ switch(PQstatus(conn))
 }
 </programlisting>
       </para>
- 
+
       <para>
        The <literal>connect_timeout</literal> connection parameter is ignored
        when using <function>PQconnectPoll</function>; it is the application's
@@ -568,7 +568,7 @@ switch(PQstatus(conn))
        <function>PQconnectPoll</function> loop is equivalent to
        <function>PQconnectdb</function>.
       </para>
- 
+
       <para>
        Note that if <function>PQconnectStart</function> returns a non-null pointer, you must call
        <function>PQfinish</function> when you are finished with it, in order to dispose of
@@ -577,7 +577,7 @@ switch(PQstatus(conn))
       </para>
      </listitem>
     </varlistentry>
- 
+
     <varlistentry>
      <term><function>PQconndefaults</function><indexterm><primary>PQconndefaults</></></term>
      <listitem>
@@ -602,7 +602,7 @@ typedef struct
 } PQconninfoOption;
 </synopsis>
       </para>
-  
+
       <para>
        Returns a connection options array.  This can be used to determine
        all possible <function>PQconnectdb</function> options and their
@@ -614,16 +614,16 @@ typedef struct
        will depend on environment variables and other context.  Callers
        must treat the connection options data as read-only.
       </para>
-  
+
       <para>
        After processing the options array, free it by passing it to
        <function>PQconninfoFree</function>.  If this is not done, a small amount of memory
        is leaked for each call to <function>PQconndefaults</function>.
       </para>
-  
+
      </listitem>
     </varlistentry>
-  
+
     <varlistentry>
      <term><function>PQfinish</function><indexterm><primary>PQfinish</></></term>
      <listitem>
@@ -634,7 +634,7 @@ typedef struct
         void PQfinish(PGconn *conn);
        </synopsis>
       </para>
-  
+
       <para>
        Note that even if the server connection attempt fails (as
        indicated by <function>PQstatus</function>), the application should call <function>PQfinish</function>
@@ -644,7 +644,7 @@ typedef struct
       </para>
      </listitem>
     </varlistentry>
- 
+
     <varlistentry>
      <term><function>PQreset</function><indexterm><primary>PQreset</></></term>
      <listitem>
@@ -654,7 +654,7 @@ typedef struct
         void PQreset(PGconn *conn);
        </synopsis>
       </para>
- 
+
       <para>
        This function will close the connection
        to the server and attempt to  reestablish  a  new
@@ -2390,7 +2390,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
       </para>
      </listitem>
     </varlistentry>
-  
+
     <varlistentry>
      <term>
       <function>PQgetvalue</function>
@@ -2398,7 +2398,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
         <primary>PQgetvalue</primary>
        </indexterm>
      </term>
-  
+
      <listitem>
       <para>
        Returns a single field value of one row of a
@@ -2412,7 +2412,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
                          int column_number);
        </synopsis>
       </para>
-  
+
       <para>
        For data in text format, the value returned by
        <function>PQgetvalue</function> is a null-terminated character
@@ -2423,13 +2423,13 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
        this case too, but that is not ordinarily useful, since the
        value is likely to contain embedded nulls.)
       </para>
-  
+
       <para>
        An empty string is returned if the field value is null.  See
        <function>PQgetisnull</> to distinguish null values from
        empty-string values.
       </para>
-  
+
       <para>
        The pointer returned  by  <function>PQgetvalue</function> points
        to storage that is part of the <structname>PGresult</structname>
@@ -2440,7 +2440,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
       </para>
      </listitem>
     </varlistentry>
-  
+
     <varlistentry>
      <term>
       <function>PQgetisnull</function>
@@ -2452,7 +2452,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
        <secondary sortas="libpq">in libpq</secondary>
       </indexterm>
      </term>
-  
+
      <listitem>
       <para>
        Tests a field for a null value.  Row and column numbers start
@@ -2463,7 +2463,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
                         int column_number);
        </synopsis>
       </para>
-  
+
       <para>
        This function returns  1 if the field is null and 0 if it
        contains a non-null value.  (Note that
@@ -2472,14 +2472,14 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
       </para>
      </listitem>
     </varlistentry>
-  
+
     <varlistentry>
      <term>
      <function>PQgetlength</function>
      <indexterm>
       <primary>PQgetlength</primary>
      </indexterm></term>
-  
+
      <listitem>
       <para>
        Returns the actual length of a field value in bytes.  Row and
@@ -2490,7 +2490,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
                         int column_number);
        </synopsis>
       </para>
-   
+
       <para>
        This is the actual data length for the particular data value,
        that is, the size of the object pointed to by
@@ -2502,7 +2502,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
       </para>
      </listitem>
     </varlistentry>
-   
+
     <varlistentry>
      <term>
       <function>PQnparams</function>
@@ -2510,7 +2510,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
        <primary>PQnparams</primary>
       </indexterm>
      </term>
-   
+
      <listitem>
       <para>
        Returns the number of parameters of a prepared statement.
@@ -2518,7 +2518,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
         int PQnparams(const PGresult *res);
        </synopsis>
       </para>
-   
+
       <para>
        This function is only useful when inspecting the result of
        <function>PQdescribePrepared</>.  For other types of queries it
@@ -2526,7 +2526,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
       </para>
      </listitem>
     </varlistentry>
-   
+
     <varlistentry>
      <term>
       <function>PQparamtype</function>
@@ -2534,7 +2534,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
        <primary>PQparamtype</primary>
       </indexterm>
      </term>
-  
+
      <listitem>
       <para>
        Returns the data type of the indicated statement parameter.
@@ -2543,7 +2543,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
         Oid PQparamtype(const PGresult *res, int param_number);
        </synopsis>
       </para>
-  
+
       <para>
        This function is only useful when inspecting the result of
        <function>PQdescribePrepared</>.  For other types of queries it
@@ -2551,7 +2551,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
       </para>
      </listitem>
     </varlistentry>
-  
+
     <varlistentry>
      <term>
       <function>PQprint</function>
@@ -2559,7 +2559,7 @@ PQfnumber(res, "\"BAR\"")    <lineannotation>1</lineannotation>
        <primary>PQprint</primary>
       </indexterm>
      </term>
-  
+
      <listitem>
       <para>
        Prints out all the rows and,  optionally,  the column names  to
@@ -4425,7 +4425,7 @@ typedef struct {
      </para>
     </listitem>
    </varlistentry>
-  
+
    <varlistentry>
     <term>
      <function>PQtrace</function>
@@ -4433,7 +4433,7 @@ typedef struct {
       <primary>PQtrace</primary>
      </indexterm>
     </term>
- 
+
     <listitem>
      <para>
       Enables  tracing of the client/server communication to a debugging file stream.
@@ -4441,7 +4441,7 @@ typedef struct {
        void PQtrace(PGconn *conn, FILE *stream);
       </synopsis>
      </para>
- 
+
      <note>
       <para>
        On Windows, if the <application>libpq</> library and an application are
@@ -4452,10 +4452,10 @@ typedef struct {
        library and all applications using that library.
       </para>
      </note>
- 
+
     </listitem>
    </varlistentry>
- 
+
    <varlistentry>
     <term>
      <function>PQuntrace</function>
@@ -4463,7 +4463,7 @@ typedef struct {
       <primary>PQuntrace</primary>
      </indexterm>
     </term>
- 
+
     <listitem>
      <para>
       Disables tracing started by <function>PQtrace</function>.
@@ -4474,9 +4474,9 @@ typedef struct {
     </listitem>
    </varlistentry>
   </variablelist>
- 
+
  </sect1>
-  
+
  <sect1 id="libpq-misc">
   <title>Miscellaneous Functions</title>
 
