@@ -73,7 +73,8 @@ SELECT a,b,c,substring(d for 30), length(d) from clstr_tst;
 -- Verify that foreign key link still works
 INSERT INTO clstr_tst (b, c) VALUES (1111, 'this should fail');
 
-SELECT conname FROM pg_constraint WHERE conrelid = 'clstr_tst'::regclass;
+SELECT conname FROM pg_constraint WHERE conrelid = 'clstr_tst'::regclass
+ORDER BY 1;
 
 
 SELECT relname, relkind,
