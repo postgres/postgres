@@ -162,3 +162,28 @@ SELECT relname from pg_class where relname = 'tmp_foo';
 SELECT current_user = 'temp_reset_user';
 DROP ROLE temp_reset_user;
 
+--
+-- Tests for function-local GUC settings
+--
+
+set regex_flavor = advanced;
+
+create function report_guc(text) returns text as
+$$ select current_setting($1) $$ language sql
+set regex_flavor = basic;
+
+select report_guc('regex_flavor'), current_setting('regex_flavor');
+
+-- this should draw only a warning
+alter function report_guc(text) set search_path = no_such_schema;
+
+-- with error occurring here
+select report_guc('regex_flavor'), current_setting('regex_flavor');
+
+alter function report_guc(text) reset search_path set regex_flavor = extended;
+
+select report_guc('regex_flavor'), current_setting('regex_flavor');
+
+alter function report_guc(text) reset all;
+
+select report_guc('regex_flavor'), current_setting('regex_flavor');

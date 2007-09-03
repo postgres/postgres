@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.36 2007/06/05 21:31:06 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/utils/Gen_fmgrtab.sh,v 1.37 2007/09/03 00:39:17 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -134,12 +134,12 @@ cat > "$$-$OIDSFILE" <<FuNkYfMgRsTuFf
  */
 FuNkYfMgRsTuFf
 
-# Note assumption here that prosrc == $(NF-2).
+# Note assumption here that prosrc == $(NF-3).
 
 tr 'abcdefghijklmnopqrstuvwxyz' 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' < $SORTEDFILE | \
 $AWK '
 BEGIN	{ OFS = ""; }
-	{ if (seenit[$(NF-2)]++ == 0) print "#define F_", $(NF-2), " ", $1; }' >> "$$-$OIDSFILE"
+	{ if (seenit[$(NF-3)]++ == 0) print "#define F_", $(NF-3), " ", $1; }' >> "$$-$OIDSFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -184,9 +184,9 @@ cat > "$$-$TABLEFILE" <<FuNkYfMgRtAbStUfF
 
 FuNkYfMgRtAbStUfF
 
-# Note assumption here that prosrc == $(NF-2).
+# Note assumption here that prosrc == $(NF-3).
 
-$AWK '{ print "extern Datum", $(NF-2), "(PG_FUNCTION_ARGS);"; }' $SORTEDFILE >> "$$-$TABLEFILE"
+$AWK '{ print "extern Datum", $(NF-3), "(PG_FUNCTION_ARGS);"; }' $SORTEDFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then
     cleanup
@@ -204,7 +204,7 @@ FuNkYfMgRtAbStUfF
 # may seem tedious, but avoid the temptation to write a quick x?y:z
 # conditional expression instead.  Not all awks have conditional expressions.
 #
-# Note assumptions here that prosrc == $(NF-2), pronargs == $13,
+# Note assumptions here that prosrc == $(NF-3), pronargs == $13,
 # proisstrict == $10, proretset == $11
 
 $AWK 'BEGIN {
@@ -212,7 +212,7 @@ $AWK 'BEGIN {
     Bool["f"] = "false"
 }
 { printf ("  { %d, \"%s\", %d, %s, %s, %s },\n"), \
-	$1, $(NF-2), $13, Bool[$10], Bool[$11], $(NF-2)
+	$1, $(NF-3), $13, Bool[$10], Bool[$11], $(NF-3)
 }' $SORTEDFILE >> "$$-$TABLEFILE"
 
 if [ $? -ne 0 ]; then

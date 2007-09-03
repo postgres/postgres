@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.471 2007/08/22 01:39:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.472 2007/09/03 00:39:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6420,6 +6420,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	   *provolatile;
 	char	   *proisstrict;
 	char	   *prosecdef;
+	char	   *proconfig;
 	char	   *procost;
 	char	   *prorows;
 	char	   *lanname;
@@ -6428,6 +6429,9 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	char	  **allargtypes = NULL;
 	char	  **argmodes = NULL;
 	char	  **argnames = NULL;
+	char	  **configitems = NULL;
+	int			nconfigitems = 0;
+	int			i;
 
 	/* Skip if not to be dumped */
 	if (!finfo->dobj.dump || dataOnly)
@@ -6448,7 +6452,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "SELECT proretset, prosrc, probin, "
 						  "proallargtypes, proargmodes, proargnames, "
 						  "provolatile, proisstrict, prosecdef, "
-						  "procost, prorows, "
+						  "proconfig, procost, prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
@@ -6460,7 +6464,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "SELECT proretset, prosrc, probin, "
 						  "proallargtypes, proargmodes, proargnames, "
 						  "provolatile, proisstrict, prosecdef, "
-						  "0 as procost, 0 as prorows, "
+						  "null as proconfig, 0 as procost, 0 as prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
@@ -6474,7 +6478,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "null as proargmodes, "
 						  "proargnames, "
 						  "provolatile, proisstrict, prosecdef, "
-						  "0 as procost, 0 as prorows, "
+						  "null as proconfig, 0 as procost, 0 as prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
@@ -6488,7 +6492,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 						  "null as proargmodes, "
 						  "null as proargnames, "
 						  "provolatile, proisstrict, prosecdef, "
-						  "0 as procost, 0 as prorows, "
+						  "null as proconfig, 0 as procost, 0 as prorows, "
 						  "(SELECT lanname FROM pg_catalog.pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_catalog.pg_proc "
 						  "WHERE oid = '%u'::pg_catalog.oid",
@@ -6504,7 +6508,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 			 "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "proisstrict, "
 						  "'f'::boolean as prosecdef, "
-						  "0 as procost, 0 as prorows, "
+						  "null as proconfig, 0 as procost, 0 as prorows, "
 		  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_proc "
 						  "WHERE oid = '%u'::oid",
@@ -6520,7 +6524,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 			 "case when proiscachable then 'i' else 'v' end as provolatile, "
 						  "'f'::boolean as proisstrict, "
 						  "'f'::boolean as prosecdef, "
-						  "0 as procost, 0 as prorows, "
+						  "null as proconfig, 0 as procost, 0 as prorows, "
 		  "(SELECT lanname FROM pg_language WHERE oid = prolang) as lanname "
 						  "FROM pg_proc "
 						  "WHERE oid = '%u'::oid",
@@ -6548,6 +6552,7 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 	provolatile = PQgetvalue(res, 0, PQfnumber(res, "provolatile"));
 	proisstrict = PQgetvalue(res, 0, PQfnumber(res, "proisstrict"));
 	prosecdef = PQgetvalue(res, 0, PQfnumber(res, "prosecdef"));
+	proconfig = PQgetvalue(res, 0, PQfnumber(res, "proconfig"));
 	procost = PQgetvalue(res, 0, PQfnumber(res, "procost"));
 	prorows = PQgetvalue(res, 0, PQfnumber(res, "prorows"));
 	lanname = PQgetvalue(res, 0, PQfnumber(res, "lanname"));
@@ -6634,6 +6639,18 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		}
 	}
 
+	if (proconfig && *proconfig)
+	{
+		if (!parsePGArray(proconfig, &configitems, &nconfigitems))
+		{
+			write_msg(NULL, "WARNING: could not parse proconfig array\n");
+			if (configitems)
+				free(configitems);
+			configitems = NULL;
+			nconfigitems = 0;
+		}
+	}
+
 	funcsig = format_function_arguments(finfo, nallargs, allargtypes,
 										argmodes, argnames);
 	funcsig_tag = format_function_signature(finfo, false);
@@ -6700,6 +6717,28 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		strcmp(prorows, "0") != 0 && strcmp(prorows, "1000") != 0)
 		appendPQExpBuffer(q, " ROWS %s", prorows);
 
+	for (i = 0; i < nconfigitems; i++)
+	{
+		/* we feel free to scribble on configitems[] here */
+		char	   *configitem = configitems[i];
+		char	   *pos;
+
+		pos = strchr(configitem, '=');
+		if (pos == NULL)
+			continue;
+		*pos++ = '\0';
+		appendPQExpBuffer(q, "\n    SET %s TO ", fmtId(configitem));
+
+		/*
+		 * Some GUC variable names are 'LIST' type and hence must not be quoted.
+		 */
+		if (pg_strcasecmp(configitem, "DateStyle") == 0
+			|| pg_strcasecmp(configitem, "search_path") == 0)
+			appendPQExpBuffer(q, "%s", pos);
+		else
+			appendStringLiteralAH(q, pos, fout);
+	}
+
 	appendPQExpBuffer(q, ";\n");
 
 	ArchiveEntry(fout, finfo->dobj.catId, finfo->dobj.dumpId,
@@ -6737,6 +6776,8 @@ dumpFunc(Archive *fout, FuncInfo *finfo)
 		free(argmodes);
 	if (argnames)
 		free(argnames);
+	if (configitems)
+		free(configitems);
 }
 
 

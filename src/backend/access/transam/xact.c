@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.246 2007/08/01 22:45:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.247 2007/09/03 00:39:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,8 @@ typedef struct TransactionStateData
 	int			savepointLevel; /* savepoint level */
 	TransState	state;			/* low-level state */
 	TBlockState blockState;		/* high-level state */
-	int			nestingLevel;	/* nest depth */
+	int			nestingLevel;	/* transaction nesting depth */
+	int			gucNestLevel;	/* GUC context nesting depth */
 	MemoryContext curTransactionContext;		/* my xact-lifetime context */
 	ResourceOwner curTransactionOwner;	/* my query resources */
 	List	   *childXids;		/* subcommitted child XIDs */
@@ -141,7 +142,8 @@ static TransactionStateData TopTransactionStateData = {
 	TRANS_DEFAULT,				/* transaction state */
 	TBLOCK_DEFAULT,				/* transaction block state from the client
 								 * perspective */
-	0,							/* nesting level */
+	0,							/* transaction nesting depth */
+	0,							/* GUC context nesting depth */
 	NULL,						/* cur transaction context */
 	NULL,						/* cur transaction resource owner */
 	NIL,						/* subcommitted child Xids */
@@ -1499,6 +1501,7 @@ StartTransaction(void)
 	 * initialize current transaction state fields
 	 */
 	s->nestingLevel = 1;
+	s->gucNestLevel = 1;
 	s->childXids = NIL;
 
 	/*
@@ -1513,6 +1516,7 @@ StartTransaction(void)
 	/*
 	 * initialize other subsystems for new transaction
 	 */
+	AtStart_GUC();
 	AtStart_Inval();
 	AtStart_Cache();
 	AfterTriggerBeginXact();
@@ -1699,7 +1703,7 @@ CommitTransaction(void)
 	/* Check we've released all catcache entries */
 	AtEOXact_CatCache(true);
 
-	AtEOXact_GUC(true, false);
+	AtEOXact_GUC(true, 1);
 	AtEOXact_SPI(true);
 	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true);
@@ -1721,6 +1725,7 @@ CommitTransaction(void)
 	s->transactionId = InvalidTransactionId;
 	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
+	s->gucNestLevel = 0;
 	s->childXids = NIL;
 
 	/*
@@ -1920,7 +1925,7 @@ PrepareTransaction(void)
 	AtEOXact_CatCache(true);
 
 	/* PREPARE acts the same as COMMIT as far as GUC is concerned */
-	AtEOXact_GUC(true, false);
+	AtEOXact_GUC(true, 1);
 	AtEOXact_SPI(true);
 	AtEOXact_on_commit_actions(true);
 	AtEOXact_Namespace(true);
@@ -1941,6 +1946,7 @@ PrepareTransaction(void)
 	s->transactionId = InvalidTransactionId;
 	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
+	s->gucNestLevel = 0;
 	s->childXids = NIL;
 
 	/*
@@ -2075,7 +2081,7 @@ AbortTransaction(void)
 						 false, true);
 	AtEOXact_CatCache(false);
 
-	AtEOXact_GUC(false, false);
+	AtEOXact_GUC(false, 1);
 	AtEOXact_SPI(false);
 	AtEOXact_on_commit_actions(false);
 	AtEOXact_Namespace(false);
@@ -2124,6 +2130,7 @@ CleanupTransaction(void)
 	s->transactionId = InvalidTransactionId;
 	s->subTransactionId = InvalidSubTransactionId;
 	s->nestingLevel = 0;
+	s->gucNestLevel = 0;
 	s->childXids = NIL;
 
 	/*
@@ -3788,7 +3795,7 @@ CommitSubTransaction(void)
 						 RESOURCE_RELEASE_AFTER_LOCKS,
 						 true, false);
 
-	AtEOXact_GUC(true, true);
+	AtEOXact_GUC(true, s->gucNestLevel);
 	AtEOSubXact_SPI(true, s->subTransactionId);
 	AtEOSubXact_on_commit_actions(true, s->subTransactionId,
 								  s->parent->subTransactionId);
@@ -3901,7 +3908,7 @@ AbortSubTransaction(void)
 							 RESOURCE_RELEASE_AFTER_LOCKS,
 							 false, false);
 
-		AtEOXact_GUC(false, true);
+		AtEOXact_GUC(false, s->gucNestLevel);
 		AtEOSubXact_SPI(false, s->subTransactionId);
 		AtEOSubXact_on_commit_actions(false, s->subTransactionId,
 									  s->parent->subTransactionId);
@@ -4017,6 +4024,7 @@ PushTransaction(void)
 	s->subTransactionId = currentSubTransactionId;
 	s->parent = p;
 	s->nestingLevel = p->nestingLevel + 1;
+	s->gucNestLevel = NewGUCNestLevel();
 	s->savepointLevel = p->savepointLevel;
 	s->state = TRANS_DEFAULT;
 	s->blockState = TBLOCK_SUBBEGIN;

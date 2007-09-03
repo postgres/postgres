@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.13 2007/01/22 01:35:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.14 2007/09/03 00:39:12 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -36,6 +36,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
     COST <replaceable class="parameter">execution_cost</replaceable>
     ROWS <replaceable class="parameter">result_rows</replaceable>
+    SET <replaceable class="parameter">parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | DEFAULT }
+    RESET <replaceable class="parameter">parameter</replaceable>
 </synopsis>
  </refsynopsisdiv>
   
@@ -212,6 +214,28 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
      </listitem>
    </varlistentry>
 
+     <varlistentry>
+      <term><replaceable>parameter</replaceable></term>
+      <term><replaceable>value</replaceable></term>
+      <listitem>
+       <para>
+        Add or change the assignment to be made to a configuration parameter
+        when the function is called.  If
+        <replaceable>value</replaceable> is <literal>DEFAULT</literal>
+        or, equivalently, <literal>RESET</literal> is used, the function-local
+        setting is removed, so that the function executes with the value
+        present in its environment.  Use <literal>RESET
+        ALL</literal> to clear all function-local settings.
+       </para>
+
+       <para>
+        See <xref linkend="sql-set" endterm="sql-set-title"> and
+        <xref linkend="runtime-config">
+        for more information about allowed parameter names and values.
+       </para>
+      </listitem>
+     </varlistentry>
+
    <varlistentry>
     <term><literal>RESTRICT</literal></term>
 
@@ -250,6 +274,22 @@ ALTER FUNCTION sqrt(integer) OWNER TO joe;
 ALTER FUNCTION sqrt(integer) SET SCHEMA maths;
 </programlisting>
   </para>
+
+  <para>
+   To adjust the search path that is automatically set for a function:
+<programlisting>
+ALTER FUNCTION check_password(text) SET search_path = admin, pg_temp;
+</programlisting>
+  </para>
+
+  <para>
+   To disable automatic setting of <varname>search_path</> for a function:
+<programlisting>
+ALTER FUNCTION check_password(text) RESET search_path;
+</programlisting>
+   The function will now execute with whatever search path is used by its
+   caller.
+  </para>
  </refsect1>
 
  <refsect1>
@@ -260,6 +300,7 @@ ALTER FUNCTION sqrt(integer) SET SCHEMA maths;
    FUNCTION</> statement in the SQL standard. The standard allows more
    properties of a function to be modified, but does not provide the
    ability to rename a function, make a function a security definer,
+   attach configuration parameter values to a function,
    or change the owner, schema, or volatility of a function. The standard also
    requires the <literal>RESTRICT</> key word, which is optional in
    <productname>PostgreSQL</>.

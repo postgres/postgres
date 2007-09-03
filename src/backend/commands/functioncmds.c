@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.83 2007/04/02 03:49:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.84 2007/09/03 00:39:15 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -50,10 +50,14 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 
-static void AlterFunctionOwner_internal(Relation rel, HeapTuple tup, Oid newOwnerId);
+
+static void AlterFunctionOwner_internal(Relation rel, HeapTuple tup,
+										Oid newOwnerId);
+
 
 /*
  *	 Examine the RETURNS clause of the CREATE FUNCTION statement
@@ -267,13 +271,15 @@ examine_parameter_list(List *parameters, Oid languageOid,
  * FUNCTION and ALTER FUNCTION and return it via one of the out
  * parameters. Returns true if the passed option was recognized. If
  * the out parameter we were going to assign to points to non-NULL,
- * raise a duplicate error.
+ * raise a duplicate-clause error.  (We don't try to detect duplicate
+ * SET parameters though --- if you're redundant, the last one wins.)
  */
 static bool
 compute_common_attribute(DefElem *defel,
 						 DefElem **volatility_item,
 						 DefElem **strict_item,
 						 DefElem **security_item,
+						 List **set_items,
 						 DefElem **cost_item,
 						 DefElem **rows_item)
 {
@@ -297,6 +303,10 @@ compute_common_attribute(DefElem *defel,
 			goto duplicate_error;
 
 		*security_item = defel;
+	}
+	else if (strcmp(defel->defname, "set") == 0)
+	{
+		*set_items = lappend(*set_items, defel->arg);
 	}
 	else if (strcmp(defel->defname, "cost") == 0)
 	{
@@ -344,6 +354,51 @@ interpret_func_volatility(DefElem *defel)
 }
 
 /*
+ * Update a proconfig value according to a list of SET and RESET items.
+ *
+ * The input and result may be NULL to signify a null entry.
+ */
+static ArrayType *
+update_proconfig_value(ArrayType *a, List *set_items)
+{
+	ListCell   *l;
+
+	foreach(l, set_items)
+	{
+		Node   *sitem = (Node *) lfirst(l);
+
+		if (IsA(sitem, VariableSetStmt))
+		{
+			VariableSetStmt *sstmt = (VariableSetStmt *) sitem;
+
+			if (sstmt->args)
+			{
+				char	   *valuestr;
+
+				valuestr = flatten_set_variable_args(sstmt->name, sstmt->args);
+				a = GUCArrayAdd(a, sstmt->name, valuestr);
+			}
+			else				/* SET TO DEFAULT */
+				a = GUCArrayDelete(a, sstmt->name);
+		}
+		else if (IsA(sitem, VariableResetStmt))
+		{
+			VariableResetStmt *rstmt = (VariableResetStmt *) sitem;
+
+			if (strcmp(rstmt->name, "all") == 0)
+				a = NULL;	/* RESET ALL */
+			else
+				a = GUCArrayDelete(a, rstmt->name);
+		}
+		else
+			elog(ERROR, "unexpected node type: %d", nodeTag(sitem));
+	}
+
+	return a;
+}
+
+
+/*
  * Dissect the list of options assembled in gram.y into function
  * attributes.
  */
@@ -354,6 +409,7 @@ compute_attributes_sql_style(List *options,
 							 char *volatility_p,
 							 bool *strict_p,
 							 bool *security_definer,
+							 ArrayType **proconfig,
 							 float4 *procost,
 							 float4 *prorows)
 {
@@ -363,6 +419,7 @@ compute_attributes_sql_style(List *options,
 	DefElem    *volatility_item = NULL;
 	DefElem    *strict_item = NULL;
 	DefElem    *security_item = NULL;
+	List	   *set_items = NIL;
 	DefElem    *cost_item = NULL;
 	DefElem    *rows_item = NULL;
 
@@ -390,6 +447,7 @@ compute_attributes_sql_style(List *options,
 										  &volatility_item,
 										  &strict_item,
 										  &security_item,
+										  &set_items,
 										  &cost_item,
 										  &rows_item))
 		{
@@ -429,6 +487,8 @@ compute_attributes_sql_style(List *options,
 		*strict_p = intVal(strict_item->arg);
 	if (security_item)
 		*security_definer = intVal(security_item->arg);
+	if (set_items)
+		*proconfig = update_proconfig_value(NULL, set_items);
 	if (cost_item)
 	{
 		*procost = defGetNumeric(cost_item);
@@ -557,6 +617,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 	bool		isStrict,
 				security;
 	char		volatility;
+	ArrayType  *proconfig;
 	float4		procost;
 	float4		prorows;
 	HeapTuple	languageTuple;
@@ -577,6 +638,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 	isStrict = false;
 	security = false;
 	volatility = PROVOLATILE_VOLATILE;
+	proconfig = NULL;
 	procost = -1;				/* indicates not set */
 	prorows = -1;				/* indicates not set */
 
@@ -584,7 +646,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 	compute_attributes_sql_style(stmt->options,
 								 &as_clause, &language,
 								 &volatility, &isStrict, &security,
-								 &procost, &prorows);
+								 &proconfig, &procost, &prorows);
 
 	/* Convert language name to canonical case */
 	languageName = case_translate_language_name(language);
@@ -736,6 +798,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 					PointerGetDatum(allParameterTypes),
 					PointerGetDatum(parameterModes),
 					PointerGetDatum(parameterNames),
+					PointerGetDatum(proconfig),
 					procost,
 					prorows);
 }
@@ -1084,6 +1147,7 @@ AlterFunction(AlterFunctionStmt *stmt)
 	DefElem    *volatility_item = NULL;
 	DefElem    *strict_item = NULL;
 	DefElem    *security_def_item = NULL;
+	List	   *set_items = NIL;
 	DefElem    *cost_item = NULL;
 	DefElem    *rows_item = NULL;
 
@@ -1121,6 +1185,7 @@ AlterFunction(AlterFunctionStmt *stmt)
 									 &volatility_item,
 									 &strict_item,
 									 &security_def_item,
+									 &set_items,
 									 &cost_item,
 									 &rows_item) == false)
 			elog(ERROR, "option \"%s\" not recognized", defel->defname);
@@ -1151,6 +1216,40 @@ AlterFunction(AlterFunctionStmt *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 					 errmsg("ROWS is not applicable when function does not return a set")));
+	}
+	if (set_items)
+	{
+		Datum		datum;
+		bool		isnull;
+		ArrayType  *a;
+		Datum		repl_val[Natts_pg_proc];
+		char		repl_null[Natts_pg_proc];
+		char		repl_repl[Natts_pg_proc];
+
+		/* extract existing proconfig setting */
+		datum = SysCacheGetAttr(PROCOID, tup, Anum_pg_proc_proconfig, &isnull);
+		a = isnull ? NULL : DatumGetArrayTypeP(datum);
+
+		/* update according to each SET or RESET item, left to right */
+		a = update_proconfig_value(a, set_items);
+
+		/* update the tuple */
+		memset(repl_repl, ' ', sizeof(repl_repl));
+		repl_repl[Anum_pg_proc_proconfig - 1] = 'r';
+
+		if (a == NULL)
+		{
+			repl_val[Anum_pg_proc_proconfig - 1] = (Datum) 0;
+			repl_null[Anum_pg_proc_proconfig - 1] = 'n';
+		}
+		else
+		{
+			repl_val[Anum_pg_proc_proconfig - 1] = PointerGetDatum(a);
+			repl_null[Anum_pg_proc_proconfig - 1] = ' ';
+		}
+
+		tup = heap_modifytuple(tup, RelationGetDescr(rel),
+							   repl_val, repl_null, repl_repl);
 	}
 
 	/* Do the update */

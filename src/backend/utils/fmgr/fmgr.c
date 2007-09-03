@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.108 2007/07/31 15:49:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.109 2007/09/03 00:39:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "access/tuptoaster.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
@@ -23,8 +24,10 @@
 #include "parser/parse_expr.h"
 #include "utils/builtins.h"
 #include "utils/fmgrtab.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
 
 /*
  * Declaration for old-style function pointer type.  This is now used only
@@ -212,7 +215,13 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	finfo->fn_strict = procedureStruct->proisstrict;
 	finfo->fn_retset = procedureStruct->proretset;
 
-	if (procedureStruct->prosecdef && !ignore_security)
+	/*
+	 * If it has prosecdef set, or non-null proconfig, use
+	 * fmgr_security_definer call handler.
+	 */
+	if (!ignore_security &&
+		(procedureStruct->prosecdef ||
+		 !heap_attisnull(procedureTuple, Anum_pg_proc_proconfig)))
 	{
 		finfo->fn_addr = fmgr_security_definer;
 		finfo->fn_oid = functionId;
@@ -826,34 +835,45 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 
 
 /*
- * Support for security definer functions
+ * Support for security-definer and proconfig-using functions.  We support
+ * both of these features using the same call handler, because they are
+ * often used together and it would be inefficient (as well as notationally
+ * messy) to have two levels of call handler involved.
  */
-
 struct fmgr_security_definer_cache
 {
-	FmgrInfo	flinfo;
-	Oid			userid;
+	FmgrInfo	flinfo;			/* lookup info for target function */
+	Oid			userid;			/* userid to set, or InvalidOid */
+	ArrayType  *proconfig;		/* GUC values to set, or NULL */
 };
 
 /*
- * Function handler for security definer functions.  We extract the
- * OID of the actual function and do a fmgr lookup again.  Then we
- * look up the owner of the function and cache both the fmgr info and
- * the owner ID.  During the call we temporarily replace the flinfo
- * with the cached/looked-up one, while keeping the outer fcinfo
- * (which contains all the actual arguments, etc.) intact.
+ * Function handler for security-definer/proconfig functions.  We extract the
+ * OID of the actual function and do a fmgr lookup again.  Then we fetch the
+ * pg_proc row and copy the owner ID and proconfig fields.  (All this info
+ * is cached for the duration of the current query.)  To execute a call,
+ * we temporarily replace the flinfo with the cached/looked-up one, while
+ * keeping the outer fcinfo (which contains all the actual arguments, etc.)
+ * intact.  This is not re-entrant, but then the fcinfo itself can't be used
+ * re-entrantly anyway.
  */
 static Datum
 fmgr_security_definer(PG_FUNCTION_ARGS)
 {
 	Datum		result;
-	FmgrInfo   *save_flinfo;
 	struct fmgr_security_definer_cache *volatile fcache;
+	FmgrInfo   *save_flinfo;
 	Oid			save_userid;
-	HeapTuple	tuple;
+	volatile int save_nestlevel;
 
 	if (!fcinfo->flinfo->fn_extra)
 	{
+		HeapTuple	tuple;
+		Form_pg_proc procedureStruct;
+		Datum		datum;
+		bool		isnull;
+		MemoryContext oldcxt;
+
 		fcache = MemoryContextAllocZero(fcinfo->flinfo->fn_mcxt,
 										sizeof(*fcache));
 
@@ -867,7 +887,20 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "cache lookup failed for function %u",
 				 fcinfo->flinfo->fn_oid);
-		fcache->userid = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
+		procedureStruct = (Form_pg_proc) GETSTRUCT(tuple);
+
+		if (procedureStruct->prosecdef)
+			fcache->userid = procedureStruct->proowner;
+
+		datum = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_proconfig,
+								&isnull);
+		if (!isnull)
+		{
+			oldcxt = MemoryContextSwitchTo(fcinfo->flinfo->fn_mcxt);
+			fcache->proconfig = DatumGetArrayTypePCopy(datum);
+			MemoryContextSwitchTo(oldcxt);
+		}
+
 		ReleaseSysCache(tuple);
 
 		fcinfo->flinfo->fn_extra = fcache;
@@ -876,25 +909,47 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 		fcache = fcinfo->flinfo->fn_extra;
 
 	save_flinfo = fcinfo->flinfo;
+	/* GetUserId is cheap enough that no harm in a wasted call */
 	save_userid = GetUserId();
+	if (fcache->proconfig)		/* Need a new GUC nesting level */
+		save_nestlevel = NewGUCNestLevel();
+	else
+		save_nestlevel = 0;		/* keep compiler quiet */
 
 	PG_TRY();
 	{
 		fcinfo->flinfo = &fcache->flinfo;
-		SetUserId(fcache->userid);
+
+		if (OidIsValid(fcache->userid))
+			SetUserId(fcache->userid);
+
+		if (fcache->proconfig)
+		{
+			/* The options are processed as if by SET LOCAL var = val */
+			ProcessGUCArray(fcache->proconfig,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION,
+							true);
+		}
 
 		result = FunctionCallInvoke(fcinfo);
 	}
 	PG_CATCH();
 	{
 		fcinfo->flinfo = save_flinfo;
-		SetUserId(save_userid);
+		if (fcache->proconfig)
+			AtEOXact_GUC(false, save_nestlevel);
+		if (OidIsValid(fcache->userid))
+			SetUserId(save_userid);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	fcinfo->flinfo = save_flinfo;
-	SetUserId(save_userid);
+	if (fcache->proconfig)
+		AtEOXact_GUC(true, save_nestlevel);
+	if (OidIsValid(fcache->userid))
+		SetUserId(save_userid);
 
 	return result;
 }

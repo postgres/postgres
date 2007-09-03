@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.414 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.415 2007/09/03 00:39:19 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2495,6 +2495,8 @@ static bool guc_dirty;			/* TRUE if need to do commit/abort work */
 
 static bool reporting_enabled;	/* TRUE to enable GUC_REPORT */
 
+static int	GUCNestLevel = 0;	/* 1 when in main transaction */
+
 
 static int	guc_var_compare(const void *a, const void *b);
 static int	guc_name_compare(const char *namea, const char *nameb);
@@ -3388,17 +3390,16 @@ ResetAllOptions(void)
 static void
 push_old_value(struct config_generic * gconf)
 {
-	int			my_level = GetCurrentTransactionNestLevel();
 	GucStack   *stack;
 
 	/* If we're not inside a transaction, do nothing */
-	if (my_level == 0)
+	if (GUCNestLevel == 0)
 		return;
 
 	for (;;)
 	{
 		/* Done if we already pushed it at this nesting depth */
-		if (gconf->stack && gconf->stack->nest_level >= my_level)
+		if (gconf->stack && gconf->stack->nest_level >= GUCNestLevel)
 			return;
 
 		/*
@@ -3457,20 +3458,53 @@ push_old_value(struct config_generic * gconf)
 }
 
 /*
- * Do GUC processing at transaction or subtransaction commit or abort.
+ * Do GUC processing at main transaction start.
  */
 void
-AtEOXact_GUC(bool isCommit, bool isSubXact)
+AtStart_GUC(void)
 {
-	int			my_level;
+	/*
+	 * The nest level should be 0 between transactions; if it isn't,
+	 * somebody didn't call AtEOXact_GUC, or called it with the wrong
+	 * nestLevel.  We throw a warning but make no other effort to clean up.
+	 */
+	if (GUCNestLevel != 0)
+		elog(WARNING, "GUC nest level = %d at transaction start",
+			 GUCNestLevel);
+	GUCNestLevel = 1;
+}
+
+/*
+ * Enter a new nesting level for GUC values.  This is called at subtransaction
+ * start and when entering a function that has proconfig settings.  NOTE that
+ * we must not risk error here, else subtransaction start will be unhappy.
+ */
+int
+NewGUCNestLevel(void)
+{
+	return ++GUCNestLevel;
+}
+
+/*
+ * Do GUC processing at transaction or subtransaction commit or abort, or
+ * when exiting a function that has proconfig settings.  (The name is thus
+ * a bit of a misnomer; perhaps it should be ExitGUCNestLevel or some such.)
+ * During abort, we discard all GUC settings that were applied at nesting
+ * levels >= nestLevel.  nestLevel == 1 corresponds to the main transaction.
+ */
+void
+AtEOXact_GUC(bool isCommit, int nestLevel)
+{
 	int			i;
+
+	Assert(nestLevel > 0 && nestLevel <= GUCNestLevel);
 
 	/* Quick exit if nothing's changed in this transaction */
 	if (!guc_dirty)
+	{
+		GUCNestLevel = nestLevel - 1;
 		return;
-
-	my_level = GetCurrentTransactionNestLevel();
-	Assert(isSubXact ? (my_level > 1) : (my_level == 1));
+	}
 
 	for (i = 0; i < num_guc_variables; i++)
 	{
@@ -3491,9 +3525,9 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 		/* Assert that we stacked old value before changing it */
 		Assert(stack != NULL && (my_status & GUC_HAVE_STACK));
 		/* However, the last change may have been at an outer xact level */
-		if (stack->nest_level < my_level)
+		if (stack->nest_level < nestLevel)
 			continue;
-		Assert(stack->nest_level == my_level);
+		Assert(stack->nest_level == nestLevel);
 
 		/*
 		 * We will pop the stack entry.  Start by restoring outer xact status
@@ -3677,7 +3711,7 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 					set_string_field(conf, &stack->tentative_val.stringval,
 									 NULL);
 					/* Don't store tentative value separately after commit */
-					if (!isSubXact)
+					if (nestLevel == 1)
 						set_string_field(conf, &conf->tentative_val, NULL);
 					break;
 				}
@@ -3691,7 +3725,7 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 		 * If we're now out of all xact levels, forget TENTATIVE status bit;
 		 * there's nothing tentative about the value anymore.
 		 */
-		if (!isSubXact)
+		if (nestLevel == 1)
 		{
 			Assert(gconf->stack == NULL);
 			gconf->status = 0;
@@ -3708,8 +3742,11 @@ AtEOXact_GUC(bool isCommit, bool isSubXact)
 	 * that all outer transaction levels will have stacked values to deal
 	 * with.)
 	 */
-	if (!isSubXact)
+	if (nestLevel == 1)
 		guc_dirty = false;
+
+	/* Update nesting level */
+	GUCNestLevel = nestLevel - 1;
 }
 
 
@@ -6078,11 +6115,14 @@ ParseLongOption(const char *string, char **name, char **value)
 
 
 /*
- * Handle options fetched from pg_database.datconfig or pg_authid.rolconfig.
+ * Handle options fetched from pg_database.datconfig, pg_authid.rolconfig,
+ * pg_proc.proconfig, etc.  Caller must specify proper context/source/local.
+ *
  * The array parameter must be an array of TEXT (it must not be NULL).
  */
 void
-ProcessGUCArray(ArrayType *array, GucSource source)
+ProcessGUCArray(ArrayType *array,
+				GucContext context, GucSource source, bool isLocal)
 {
 	int			i;
 
@@ -6090,7 +6130,6 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 	Assert(ARR_ELEMTYPE(array) == TEXTOID);
 	Assert(ARR_NDIM(array) == 1);
 	Assert(ARR_LBOUND(array)[0] == 1);
-	Assert(source == PGC_S_DATABASE || source == PGC_S_USER);
 
 	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
 	{
@@ -6117,17 +6156,13 @@ ProcessGUCArray(ArrayType *array, GucSource source)
 		{
 			ereport(WARNING,
 					(errcode(ERRCODE_SYNTAX_ERROR),
-			  errmsg("could not parse setting for parameter \"%s\"", name)));
+					 errmsg("could not parse setting for parameter \"%s\"",
+							name)));
 			free(name);
 			continue;
 		}
 
-		/*
-		 * We process all these options at SUSET level.  We assume that the
-		 * right to insert an option into pg_database or pg_authid was checked
-		 * when it was inserted.
-		 */
-		SetConfigOption(name, value, PGC_SUSET, source);
+		(void) set_config_option(name, value, context, source, isLocal, true);
 
 		free(name);
 		if (value)

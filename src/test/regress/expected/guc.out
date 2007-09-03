@@ -525,3 +525,36 @@ SELECT current_user = 'temp_reset_user';
 (1 row)
 
 DROP ROLE temp_reset_user;
+--
+-- Tests for function-local GUC settings
+--
+set regex_flavor = advanced;
+create function report_guc(text) returns text as
+$$ select current_setting($1) $$ language sql
+set regex_flavor = basic;
+select report_guc('regex_flavor'), current_setting('regex_flavor');
+ report_guc | current_setting 
+------------+-----------------
+ basic      | advanced
+(1 row)
+
+-- this should draw only a warning
+alter function report_guc(text) set search_path = no_such_schema;
+NOTICE:  schema "no_such_schema" does not exist
+-- with error occurring here
+select report_guc('regex_flavor'), current_setting('regex_flavor');
+ERROR:  schema "no_such_schema" does not exist
+alter function report_guc(text) reset search_path set regex_flavor = extended;
+select report_guc('regex_flavor'), current_setting('regex_flavor');
+ report_guc | current_setting 
+------------+-----------------
+ extended   | advanced
+(1 row)
+
+alter function report_guc(text) reset all;
+select report_guc('regex_flavor'), current_setting('regex_flavor');
+ report_guc | current_setting 
+------------+-----------------
+ advanced   | advanced
+(1 row)
+

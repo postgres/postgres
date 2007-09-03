@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.145 2007/06/06 23:00:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.146 2007/09/03 00:39:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,9 +49,9 @@ static bool match_prosrc_to_literal(const char *prosrc, const char *literal,
 /* ----------------------------------------------------------------
  *		ProcedureCreate
  *
- * Note: allParameterTypes, parameterModes, parameterNames are either arrays
- * of the proper types or NULL.  We declare them Datum, not "ArrayType *",
- * to avoid importing array.h into pg_proc.h.
+ * Note: allParameterTypes, parameterModes, parameterNames, and proconfig
+ * are either arrays of the proper types or NULL.  We declare them Datum,
+ * not "ArrayType *", to avoid importing array.h into pg_proc.h.
  * ----------------------------------------------------------------
  */
 Oid
@@ -72,6 +72,7 @@ ProcedureCreate(const char *procedureName,
 				Datum allParameterTypes,
 				Datum parameterModes,
 				Datum parameterNames,
+				Datum proconfig,
 				float4 procost,
 				float4 prorows)
 {
@@ -251,6 +252,10 @@ ProcedureCreate(const char *procedureName,
 													CStringGetDatum(prosrc));
 	values[Anum_pg_proc_probin - 1] = DirectFunctionCall1(textin,
 													CStringGetDatum(probin));
+	if (proconfig != PointerGetDatum(NULL))
+		values[Anum_pg_proc_proconfig - 1] = proconfig;
+	else
+		nulls[Anum_pg_proc_proconfig - 1] = 'n';
 	/* start out with empty permissions */
 	nulls[Anum_pg_proc_proacl - 1] = 'n';
 
