@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.31 2007/07/24 09:00:27 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.32 2007/09/03 02:51:47 tgl Exp $
 #
 use Carp;
 use strict;
@@ -173,7 +173,7 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
               {
                 oid     => $p[0],
                 proname => $p[1],
-                prosrc  => $p[$#p-2],
+                prosrc  => $p[$#p-3],
                 nargs   => $p[12],
                 strict  => $p[9],
                 retset  => $p[10],
