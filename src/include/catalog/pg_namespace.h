@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_namespace.h,v 1.21 2007/01/05 22:19:52 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_namespace.h,v 1.22 2007/09/03 02:30:43 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -69,13 +69,13 @@ typedef FormData_pg_namespace *Form_pg_namespace;
  */
 
 DATA(insert OID = 11 ( "pg_catalog" PGUID _null_ ));
-DESCR("System catalog schema");
+DESCR("system catalog schema");
 #define PG_CATALOG_NAMESPACE 11
 DATA(insert OID = 99 ( "pg_toast" PGUID _null_ ));
-DESCR("Reserved schema for TOAST tables");
+DESCR("reserved schema for TOAST tables");
 #define PG_TOAST_NAMESPACE 99
 DATA(insert OID = 2200 ( "public" PGUID _null_ ));
-DESCR("Standard public schema");
+DESCR("standard public schema");
 #define PG_PUBLIC_NAMESPACE 2200
 
 

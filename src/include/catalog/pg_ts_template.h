@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_ts_template.h,v 1.1 2007/08/21 01:11:27 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_ts_template.h,v 1.2 2007/09/03 02:30:45 tgl Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -65,7 +65,7 @@ DESCR("simple dictionary: just lower case and check for stopword");
 DATA(insert OID = 3730 ( "synonym" PGNSP dsynonym_init dsynonym_lexize ));
 DESCR("synonym dictionary: replace word by its synonym");
 DATA(insert OID = 3733 ( "ispell" PGNSP dispell_init dispell_lexize ));
-DESCR("Ispell dictionary");
+DESCR("ispell dictionary");
 DATA(insert OID = 3742 ( "thesaurus" PGNSP thesaurus_init thesaurus_lexize ));
 DESCR("thesaurus dictionary: phrase by phrase substitution");
 
