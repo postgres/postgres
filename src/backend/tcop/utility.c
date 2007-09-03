@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.285 2007/08/21 01:11:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.286 2007/09/03 18:46:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1041,48 +1041,7 @@ ProcessUtility(Node *parsetree,
 			break;
 
 		case T_VariableSetStmt:
-			{
-				VariableSetStmt *n = (VariableSetStmt *) parsetree;
-
-				/*
-				 * Special cases for special SQL syntax that effectively sets
-				 * more than one variable per statement.
-				 */
-				if (strcmp(n->name, "TRANSACTION") == 0)
-				{
-					ListCell   *head;
-
-					foreach(head, n->args)
-					{
-						DefElem    *item = (DefElem *) lfirst(head);
-
-						if (strcmp(item->defname, "transaction_isolation") == 0)
-							SetPGVariable("transaction_isolation",
-										  list_make1(item->arg), n->is_local);
-						else if (strcmp(item->defname, "transaction_read_only") == 0)
-							SetPGVariable("transaction_read_only",
-										  list_make1(item->arg), n->is_local);
-					}
-				}
-				else if (strcmp(n->name, "SESSION CHARACTERISTICS") == 0)
-				{
-					ListCell   *head;
-
-					foreach(head, n->args)
-					{
-						DefElem    *item = (DefElem *) lfirst(head);
-
-						if (strcmp(item->defname, "transaction_isolation") == 0)
-							SetPGVariable("default_transaction_isolation",
-										  list_make1(item->arg), n->is_local);
-						else if (strcmp(item->defname, "transaction_read_only") == 0)
-							SetPGVariable("default_transaction_read_only",
-										  list_make1(item->arg), n->is_local);
-					}
-				}
-				else
-					SetPGVariable(n->name, n->args, n->is_local);
-			}
+			ExecSetVariableStmt((VariableSetStmt *) parsetree);
 			break;
 
 		case T_VariableShowStmt:
@@ -1090,14 +1049,6 @@ ProcessUtility(Node *parsetree,
 				VariableShowStmt *n = (VariableShowStmt *) parsetree;
 
 				GetPGVariable(n->name, dest);
-			}
-			break;
-
-		case T_VariableResetStmt:
-			{
-				VariableResetStmt *n = (VariableResetStmt *) parsetree;
-
-				ResetPGVariable(n->name, isTopLevel);
 			}
 			break;
 
@@ -1924,19 +1875,30 @@ CreateCommandTag(Node *parsetree)
 			break;
 
 		case T_VariableSetStmt:
-			tag = "SET";
+			switch (((VariableSetStmt *) parsetree)->kind)
+			{
+				case VAR_SET_VALUE:
+				case VAR_SET_CURRENT:
+				case VAR_SET_DEFAULT:
+				case VAR_SET_MULTI:
+					tag = "SET";
+					break;
+				case VAR_RESET:
+				case VAR_RESET_ALL:
+					tag = "RESET";
+					break;
+				default:
+					tag = "???";
+			}
 			break;
 
 		case T_VariableShowStmt:
 			tag = "SHOW";
 			break;
 
-		case T_VariableResetStmt:
-			tag = "RESET";
-			break;
-
 		case T_DiscardStmt:
-			switch (((DiscardStmt *) parsetree)->target) {
+			switch (((DiscardStmt *) parsetree)->target)
+			{
 				case DISCARD_ALL:
 					tag = "DISCARD ALL";
 					break;
@@ -2399,10 +2361,6 @@ GetCommandLogLevel(Node *parsetree)
 			break;
 
 		case T_VariableShowStmt:
-			lev = LOGSTMT_ALL;
-			break;
-
-		case T_VariableResetStmt:
 			lev = LOGSTMT_ALL;
 			break;
 

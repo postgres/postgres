@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.197 2007/08/01 22:45:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.198 2007/09/03 18:46:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -886,7 +886,7 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 	char		repl_null[Natts_pg_database];
 	char		repl_repl[Natts_pg_database];
 
-	valuestr = flatten_set_variable_args(stmt->variable, stmt->value);
+	valuestr = ExtractSetVariableArgs(stmt->setstmt);
 
 	/*
 	 * Get the old tuple.  We don't need a lock on the database per se,
@@ -910,12 +910,12 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 		aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_DATABASE,
 					   stmt->dbname);
 
-	MemSet(repl_repl, ' ', sizeof(repl_repl));
+	memset(repl_repl, ' ', sizeof(repl_repl));
 	repl_repl[Anum_pg_database_datconfig - 1] = 'r';
 
-	if (strcmp(stmt->variable, "all") == 0 && valuestr == NULL)
+	if (stmt->setstmt->kind == VAR_RESET_ALL)
 	{
-		/* RESET ALL */
+		/* RESET ALL, so just set datconfig to null */
 		repl_null[Anum_pg_database_datconfig - 1] = 'n';
 		repl_val[Anum_pg_database_datconfig - 1] = (Datum) 0;
 	}
@@ -927,15 +927,16 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 
 		repl_null[Anum_pg_database_datconfig - 1] = ' ';
 
+		/* Extract old value of datconfig */
 		datum = heap_getattr(tuple, Anum_pg_database_datconfig,
 							 RelationGetDescr(rel), &isnull);
-
 		a = isnull ? NULL : DatumGetArrayTypeP(datum);
 
+		/* Update (valuestr is NULL in RESET cases) */
 		if (valuestr)
-			a = GUCArrayAdd(a, stmt->variable, valuestr);
+			a = GUCArrayAdd(a, stmt->setstmt->name, valuestr);
 		else
-			a = GUCArrayDelete(a, stmt->variable);
+			a = GUCArrayDelete(a, stmt->setstmt->name);
 
 		if (a)
 			repl_val[Anum_pg_database_datconfig - 1] = PointerGetDatum(a);
@@ -943,7 +944,8 @@ AlterDatabaseSet(AlterDatabaseSetStmt *stmt)
 			repl_null[Anum_pg_database_datconfig - 1] = 'n';
 	}
 
-	newtuple = heap_modifytuple(tuple, RelationGetDescr(rel), repl_val, repl_null, repl_repl);
+	newtuple = heap_modifytuple(tuple, RelationGetDescr(rel),
+								repl_val, repl_null, repl_repl);
 	simple_heap_update(rel, &tuple->t_self, newtuple);
 
 	/* Update indexes */

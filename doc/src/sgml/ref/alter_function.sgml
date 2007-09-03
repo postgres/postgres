@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.14 2007/09/03 00:39:12 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_function.sgml,v 1.15 2007/09/03 18:46:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -21,7 +21,7 @@ PostgreSQL documentation
  <refsynopsisdiv>
 <synopsis>
 ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
-    <replaceable class="PARAMETER">action</replaceable> [, ... ] [ RESTRICT ]
+    <replaceable class="PARAMETER">action</replaceable> [ ... ] [ RESTRICT ]
 ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
     RENAME TO <replaceable>new_name</replaceable>
 ALTER FUNCTION <replaceable>name</replaceable> ( [ [ <replaceable class="parameter">argmode</replaceable> ] [ <replaceable class="parameter">argname</replaceable> ] <replaceable class="parameter">argtype</replaceable> [, ...] ] )
@@ -36,8 +36,10 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
     [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
     COST <replaceable class="parameter">execution_cost</replaceable>
     ROWS <replaceable class="parameter">result_rows</replaceable>
-    SET <replaceable class="parameter">parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | DEFAULT }
-    RESET <replaceable class="parameter">parameter</replaceable>
+    SET <replaceable class="parameter">configuration_parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | DEFAULT }
+    SET <replaceable class="parameter">configuration_parameter</replaceable> FROM CURRENT
+    RESET <replaceable class="parameter">configuration_parameter</replaceable>
+    RESET ALL
 </synopsis>
  </refsynopsisdiv>
   
@@ -215,7 +217,7 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
    </varlistentry>
 
      <varlistentry>
-      <term><replaceable>parameter</replaceable></term>
+      <term><replaceable>configuration_parameter</replaceable></term>
       <term><replaceable>value</replaceable></term>
       <listitem>
        <para>
@@ -226,6 +228,8 @@ where <replaceable class="PARAMETER">action</replaceable> is one of:
         setting is removed, so that the function executes with the value
         present in its environment.  Use <literal>RESET
         ALL</literal> to clear all function-local settings.
+        <literal>SET FROM CURRENT</> saves the session's current value of
+        the parameter as the value to be applied when the function is entered.
        </para>
 
        <para>

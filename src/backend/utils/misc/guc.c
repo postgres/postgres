@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.415 2007/09/03 00:39:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.416 2007/09/03 18:46:30 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -4870,10 +4870,10 @@ IsSuperuserConfigOption(const char *name)
  * We need to be told the name of the variable the args are for, because
  * the flattening rules vary (ugh).
  *
- * The result is NULL if input is NIL (ie, SET ... TO DEFAULT), otherwise
+ * The result is NULL if args is NIL (ie, SET ... TO DEFAULT), otherwise
  * a palloc'd string.
  */
-char *
+static char *
 flatten_set_variable_args(const char *name, List *args)
 {
 	struct config_generic *record;
@@ -4881,10 +4881,7 @@ flatten_set_variable_args(const char *name, List *args)
 	StringInfoData buf;
 	ListCell   *l;
 
-	/*
-	 * Fast path if just DEFAULT.  We do not check the variable name in this
-	 * case --- necessary for RESET ALL to work correctly.
-	 */
+	/* Fast path if just DEFAULT */
 	if (args == NIL)
 		return NULL;
 
@@ -4979,6 +4976,108 @@ flatten_set_variable_args(const char *name, List *args)
  * SET command
  */
 void
+ExecSetVariableStmt(VariableSetStmt *stmt)
+{
+	switch (stmt->kind)
+	{
+		case VAR_SET_VALUE:
+		case VAR_SET_CURRENT:
+			set_config_option(stmt->name,
+							  ExtractSetVariableArgs(stmt),
+							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  PGC_S_SESSION,
+							  stmt->is_local,
+							  true);
+			break;
+		case VAR_SET_MULTI:
+			/*
+			 * Special case for special SQL syntax that effectively sets
+			 * more than one variable per statement.
+			 */
+			if (strcmp(stmt->name, "TRANSACTION") == 0)
+			{
+				ListCell   *head;
+
+				foreach(head, stmt->args)
+				{
+					DefElem    *item = (DefElem *) lfirst(head);
+
+					if (strcmp(item->defname, "transaction_isolation") == 0)
+						SetPGVariable("transaction_isolation",
+									  list_make1(item->arg), stmt->is_local);
+					else if (strcmp(item->defname, "transaction_read_only") == 0)
+						SetPGVariable("transaction_read_only",
+									  list_make1(item->arg), stmt->is_local);
+					else
+						elog(ERROR, "unexpected SET TRANSACTION element: %s",
+							 item->defname);
+				}
+			}
+			else if (strcmp(stmt->name, "SESSION CHARACTERISTICS") == 0)
+			{
+				ListCell   *head;
+
+				foreach(head, stmt->args)
+				{
+					DefElem    *item = (DefElem *) lfirst(head);
+
+					if (strcmp(item->defname, "transaction_isolation") == 0)
+						SetPGVariable("default_transaction_isolation",
+									  list_make1(item->arg), stmt->is_local);
+					else if (strcmp(item->defname, "transaction_read_only") == 0)
+						SetPGVariable("default_transaction_read_only",
+									  list_make1(item->arg), stmt->is_local);
+					else
+						elog(ERROR, "unexpected SET SESSION element: %s",
+							 item->defname);
+				}
+			}
+			else
+				elog(ERROR, "unexpected SET MULTI element: %s",
+					 stmt->name);
+			break;
+		case VAR_SET_DEFAULT:
+		case VAR_RESET:
+			set_config_option(stmt->name,
+							  NULL,
+							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  PGC_S_SESSION,
+							  stmt->is_local,
+							  true);
+			break;
+		case VAR_RESET_ALL:
+			ResetAllOptions();
+			break;
+	}
+}
+
+/*
+ * Get the value to assign for a VariableSetStmt, or NULL if it's RESET.
+ * The result is palloc'd.
+ *
+ * This is exported for use by actions such as ALTER ROLE SET.
+ */
+char *
+ExtractSetVariableArgs(VariableSetStmt *stmt)
+{
+	switch (stmt->kind)
+	{
+		case VAR_SET_VALUE:
+			return flatten_set_variable_args(stmt->name, stmt->args);
+		case VAR_SET_CURRENT:
+			return GetConfigOptionByName(stmt->name, NULL);
+		default:
+			return NULL;
+	}
+}
+
+/*
+ * SetPGVariable - SET command exported as an easily-C-callable function.
+ *
+ * This provides access to SET TO value, as well as SET TO DEFAULT (expressed
+ * by passing args == NIL), but not SET FROM CURRENT functionality.
+ */
+void
 SetPGVariable(const char *name, List *args, bool is_local)
 {
 	char	   *argstring = flatten_set_variable_args(name, args);
@@ -5044,6 +5143,7 @@ set_config_by_name(PG_FUNCTION_ARGS)
 	/* return it */
 	PG_RETURN_TEXT_P(result_text);
 }
+
 
 static void
 define_custom_variable(struct config_generic * variable)
@@ -5281,23 +5381,6 @@ GetPGVariableResultDesc(const char *name)
 						   TEXTOID, -1, 0);
 	}
 	return tupdesc;
-}
-
-/*
- * RESET command
- */
-void
-ResetPGVariable(const char *name, bool isTopLevel)
-{
-	if (pg_strcasecmp(name, "all") == 0)
-		ResetAllOptions();
-	else
-		set_config_option(name,
-						  NULL,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
-						  PGC_S_SESSION,
-						  false,
-						  true);
 }
 
 

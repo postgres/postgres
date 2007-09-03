@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.76 2007/09/03 00:39:13 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.77 2007/09/03 18:46:29 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -28,7 +28,7 @@ CREATE [ OR REPLACE ] FUNCTION
     | [ EXTERNAL ] SECURITY INVOKER | [ EXTERNAL ] SECURITY DEFINER
     | COST <replaceable class="parameter">execution_cost</replaceable>
     | ROWS <replaceable class="parameter">result_rows</replaceable>
-    | SET <replaceable class="parameter">parameter</replaceable> { TO | = } { <replaceable class="parameter">value</replaceable> | DEFAULT }
+    | SET <replaceable class="parameter">configuration_parameter</replaceable> { TO <replaceable class="parameter">value</replaceable> | = <replaceable class="parameter">value</replaceable> | FROM CURRENT }
     | AS '<replaceable class="parameter">definition</replaceable>'
     | AS '<replaceable class="parameter">obj_file</replaceable>', '<replaceable class="parameter">link_symbol</replaceable>'
   } ...
@@ -324,13 +324,15 @@ CREATE [ OR REPLACE ] FUNCTION
     </varlistentry>
 
     <varlistentry>
-     <term><replaceable>parameter</replaceable></term>
+     <term><replaceable>configuration_parameter</replaceable></term>
      <term><replaceable>value</replaceable></term>
      <listitem>
       <para>
        The <literal>SET</> clause causes the specified configuration
        parameter to be set to the specified value when the function is
        entered, and then restored to its prior value when the function exits.
+       <literal>SET FROM CURRENT</> saves the session's current value of
+       the parameter as the value to be applied when the function is entered.
       </para>
 
       <para>

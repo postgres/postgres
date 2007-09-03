@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.176 2007/02/01 19:10:26 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.177 2007/09/03 18:46:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -721,9 +721,8 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 	Datum		repl_val[Natts_pg_authid];
 	char		repl_null[Natts_pg_authid];
 	char		repl_repl[Natts_pg_authid];
-	int			i;
 
-	valuestr = flatten_set_variable_args(stmt->variable, stmt->value);
+	valuestr = ExtractSetVariableArgs(stmt->setstmt);
 
 	rel = heap_open(AuthIdRelationId, RowExclusiveLock);
 	oldtuple = SearchSysCache(AUTHNAME,
@@ -754,14 +753,14 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 					 errmsg("permission denied")));
 	}
 
-	for (i = 0; i < Natts_pg_authid; i++)
-		repl_repl[i] = ' ';
-
+	memset(repl_repl, ' ', sizeof(repl_repl));
 	repl_repl[Anum_pg_authid_rolconfig - 1] = 'r';
-	if (strcmp(stmt->variable, "all") == 0 && valuestr == NULL)
+
+	if (stmt->setstmt->kind == VAR_RESET_ALL)
 	{
-		/* RESET ALL */
+		/* RESET ALL, so just set rolconfig to null */
 		repl_null[Anum_pg_authid_rolconfig - 1] = 'n';
+		repl_val[Anum_pg_authid_rolconfig - 1] = (Datum) 0;
 	}
 	else
 	{
@@ -771,15 +770,16 @@ AlterRoleSet(AlterRoleSetStmt *stmt)
 
 		repl_null[Anum_pg_authid_rolconfig - 1] = ' ';
 
+		/* Extract old value of rolconfig */
 		datum = SysCacheGetAttr(AUTHNAME, oldtuple,
 								Anum_pg_authid_rolconfig, &isnull);
-
 		array = isnull ? NULL : DatumGetArrayTypeP(datum);
 
+		/* Update (valuestr is NULL in RESET cases) */
 		if (valuestr)
-			array = GUCArrayAdd(array, stmt->variable, valuestr);
+			array = GUCArrayAdd(array, stmt->setstmt->name, valuestr);
 		else
-			array = GUCArrayDelete(array, stmt->variable);
+			array = GUCArrayDelete(array, stmt->setstmt->name);
 
 		if (array)
 			repl_val[Anum_pg_authid_rolconfig - 1] = PointerGetDatum(array);

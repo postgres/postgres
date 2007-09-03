@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.43 2007/05/15 19:43:51 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_user.sgml,v 1.44 2007/09/03 18:46:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -37,7 +37,9 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
 ALTER USER <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
 
 ALTER USER <replaceable class="PARAMETER">name</replaceable> SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
+ALTER USER <replaceable class="PARAMETER">name</replaceable> SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
 ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>configuration_parameter</replaceable>
+ALTER USER <replaceable class="PARAMETER">name</replaceable> RESET ALL
 </synopsis>
  </refsynopsisdiv>
 

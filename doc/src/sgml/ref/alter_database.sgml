@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.19 2006/09/16 00:30:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_database.sgml,v 1.20 2007/09/03 18:46:29 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -26,12 +26,14 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
 
     CONNECTION LIMIT <replaceable class="PARAMETER">connlimit</replaceable>
 
-ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
-ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>parameter</replaceable>
-
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RENAME TO <replaceable>newname</replaceable>
 
 ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <replaceable>new_owner</replaceable>
+
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>configuration_parameter</replaceable> { TO | = } { <replaceable>value</replaceable> | DEFAULT }
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> SET <replaceable>configuration_parameter</replaceable> FROM CURRENT
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET <replaceable>configuration_parameter</replaceable>
+ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> RESET ALL
 </synopsis>
  </refsynopsisdiv>
 
@@ -49,7 +51,24 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
   </para> 
 
   <para>
-   The second and third forms change the session default for a run-time
+   The second form changes the name of the database.  Only the database
+   owner or a superuser can rename a database; non-superuser owners must
+   also have the
+   <literal>CREATEDB</literal> privilege.  The current database cannot
+   be renamed.  (Connect to a different database if you need to do
+   that.)
+  </para>
+
+  <para>
+   The third form changes the owner of the database.
+   To alter the owner, you must own the database and also be a direct or
+   indirect member of the new owning role, and you must have the
+   <literal>CREATEDB</literal> privilege.
+   (Note that superusers have all these privileges automatically.)
+  </para>
+
+  <para>
+   The remaining forms change the session default for a run-time
    configuration variable for a <productname>PostgreSQL</productname>
    database. Whenever a new session is subsequently started in that
    database, the specified value becomes the session default value.
@@ -59,23 +78,6 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
    owner or a superuser can change the session defaults for a
    database.  Certain variables cannot be set this way, or can only be
    set by a superuser.
-  </para>
-
-  <para>
-   The fourth form changes the name of the database.  Only the database
-   owner or a superuser can rename a database; non-superuser owners must
-   also have the
-   <literal>CREATEDB</literal> privilege.  The current database cannot
-   be renamed.  (Connect to a different database if you need to do
-   that.)
-  </para>
-
-  <para>
-   The fifth form changes the owner of the database.
-   To alter the owner, you must own the database and also be a direct or
-   indirect member of the new owning role, and you must have the
-   <literal>CREATEDB</literal> privilege.
-   (Note that superusers have all these privileges automatically.)
   </para>
  </refsect1>
 
@@ -102,28 +104,6 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
       </listitem>
      </varlistentry> 
 
-     <varlistentry>
-      <term><replaceable>parameter</replaceable></term>
-      <term><replaceable>value</replaceable></term>
-      <listitem>
-       <para>
-        Set this database's session default for the specified configuration
-        parameter to the given value.  If
-        <replaceable>value</replaceable> is <literal>DEFAULT</literal>
-        or, equivalently, <literal>RESET</literal> is used, the
-        database-specific setting is removed, so the system-wide default
-        setting will be inherited in new sessions.  Use <literal>RESET
-        ALL</literal> to clear all database-specific settings.
-       </para>
-
-       <para>
-        See <xref linkend="sql-set" endterm="sql-set-title"> and <xref linkend="runtime-config">
-        for more information about allowed parameter names
-        and values.
-       </para>
-      </listitem>
-     </varlistentry>
-
    <varlistentry>
     <term><replaceable>newname</replaceable></term>
     <listitem>
@@ -141,6 +121,30 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
      </para>
     </listitem>
    </varlistentry>
+
+     <varlistentry>
+      <term><replaceable>configuration_parameter</replaceable></term>
+      <term><replaceable>value</replaceable></term>
+      <listitem>
+       <para>
+        Set this database's session default for the specified configuration
+        parameter to the given value.  If
+        <replaceable>value</replaceable> is <literal>DEFAULT</literal>
+        or, equivalently, <literal>RESET</literal> is used, the
+        database-specific setting is removed, so the system-wide default
+        setting will be inherited in new sessions.  Use <literal>RESET
+        ALL</literal> to clear all database-specific settings.
+        <literal>SET FROM CURRENT</> saves the session's current value of
+        the parameter as the database-specific value.
+       </para>
+
+       <para>
+        See <xref linkend="sql-set" endterm="sql-set-title"> and <xref linkend="runtime-config">
+        for more information about allowed parameter names
+        and values.
+       </para>
+      </listitem>
+     </varlistentry>
   </variablelist>
  </refsect1>
 
@@ -148,10 +152,10 @@ ALTER DATABASE <replaceable class="PARAMETER">name</replaceable> OWNER TO <repla
   <title>Notes</title>
 
   <para>
-   It is also possible to tie a session default to a specific user
+   It is also possible to tie a session default to a specific role
    rather than to a database; see
-   <xref linkend="sql-alteruser" endterm="sql-alteruser-title">.
-   User-specific settings override database-specific
+   <xref linkend="sql-alterrole" endterm="sql-alterrole-title">.
+   Role-specific settings override database-specific
    ones if there is a conflict.
   </para>
  </refsect1>

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.312 2007/08/31 01:44:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.313 2007/09/03 18:46:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1325,8 +1325,7 @@ static bool
 _equalAlterDatabaseSetStmt(AlterDatabaseSetStmt *a, AlterDatabaseSetStmt *b)
 {
 	COMPARE_STRING_FIELD(dbname);
-	COMPARE_STRING_FIELD(variable);
-	COMPARE_NODE_FIELD(value);
+	COMPARE_NODE_FIELD(setstmt);
 
 	return true;
 }
@@ -1385,6 +1384,7 @@ _equalAlterSeqStmt(AlterSeqStmt *a, AlterSeqStmt *b)
 static bool
 _equalVariableSetStmt(VariableSetStmt *a, VariableSetStmt *b)
 {
+	COMPARE_SCALAR_FIELD(kind);
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(args);
 	COMPARE_SCALAR_FIELD(is_local);
@@ -1394,14 +1394,6 @@ _equalVariableSetStmt(VariableSetStmt *a, VariableSetStmt *b)
 
 static bool
 _equalVariableShowStmt(VariableShowStmt *a, VariableShowStmt *b)
-{
-	COMPARE_STRING_FIELD(name);
-
-	return true;
-}
-
-static bool
-_equalVariableResetStmt(VariableResetStmt *a, VariableResetStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
 
@@ -1511,8 +1503,7 @@ static bool
 _equalAlterRoleSetStmt(AlterRoleSetStmt *a, AlterRoleSetStmt *b)
 {
 	COMPARE_STRING_FIELD(role);
-	COMPARE_STRING_FIELD(variable);
-	COMPARE_NODE_FIELD(value);
+	COMPARE_NODE_FIELD(setstmt);
 
 	return true;
 }
@@ -2355,9 +2346,6 @@ equal(void *a, void *b)
 			break;
 		case T_VariableShowStmt:
 			retval = _equalVariableShowStmt(a, b);
-			break;
-		case T_VariableResetStmt:
-			retval = _equalVariableResetStmt(a, b);
 			break;
 		case T_DiscardStmt:
 			retval = _equalDiscardStmt(a, b);
