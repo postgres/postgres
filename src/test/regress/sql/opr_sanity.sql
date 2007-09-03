@@ -751,6 +751,16 @@ WHERE p2.opfmethod = p1.oid AND p3.amprocfamily = p2.oid AND
                            p4.amproclefttype = p3.amproclefttype AND
                            p4.amprocrighttype = p3.amprocrighttype);
 
+-- Also, check if there are any pg_opclass entries that don't seem to have
+-- pg_amproc support.
+
+SELECT amname, opcname, count(*)
+FROM pg_am am JOIN pg_opclass op ON opcmethod = am.oid
+     LEFT JOIN pg_amproc p ON amprocfamily = opcfamily AND
+         amproclefttype = amprocrighttype AND amproclefttype = opcintype
+GROUP BY amname, amsupport, opcname, amprocfamily
+HAVING count(*) != amsupport OR amprocfamily IS NULL;
+
 -- Unfortunately, we can't check the amproc link very well because the
 -- signature of the function may be different for different support routines
 -- or different base data types.

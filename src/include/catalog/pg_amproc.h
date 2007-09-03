@@ -22,7 +22,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_amproc.h,v 1.67 2007/08/21 01:11:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_amproc.h,v 1.68 2007/09/03 01:18:33 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -214,6 +214,10 @@ DATA(insert (	2745   1009 1009 1  360 ));
 DATA(insert (	2745   1009 1009 2 2743 ));
 DATA(insert (	2745   1009 1009 3 2774 ));
 DATA(insert (	2745   1009 1009 4 2744 ));
+DATA(insert (	2745   1015 1015 1  360 ));
+DATA(insert (	2745   1015 1015 2 2743 ));
+DATA(insert (	2745   1015 1015 3 2774 ));
+DATA(insert (	2745   1015 1015 4 2744 ));
 DATA(insert (	2745   1023 1023 1 357 ));
 DATA(insert (	2745   1023 1023 2 2743 ));
 DATA(insert (	2745   1023 1023 3 2774 ));
@@ -254,6 +258,10 @@ DATA(insert (	2745   1041 1041 1 926 ));
 DATA(insert (	2745   1041 1041 2 2743 ));
 DATA(insert (	2745   1041 1041 3 2774 ));
 DATA(insert (	2745   1041 1041 4 2744 ));
+DATA(insert (	2745   651 651 1 926 ));
+DATA(insert (	2745   651 651 2 2743 ));
+DATA(insert (	2745   651 651 3 2774 ));
+DATA(insert (	2745   651 651 4 2744 ));
 DATA(insert (	2745   1005 1005 1 350 ));
 DATA(insert (	2745   1005 1005 2 2743 ));
 DATA(insert (	2745   1005 1005 3 2774 ));
