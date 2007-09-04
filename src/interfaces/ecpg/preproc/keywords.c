@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.81 2007/08/22 08:20:58 meskes Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.82 2007/09/04 10:02:29 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@ static const ScanKeyword ScanPGSQLKeywords[] = {
 	{"commit", COMMIT},
 	{"committed", COMMITTED},
 	{"concurrently", CONCURRENTLY},
-	{"concurrently", CONCURRENTLY},
+	{"configuration", CONFIGURATION},
 	{"connection", CONNECTION},
 	{"constraint", CONSTRAINT},
 	{"constraints", CONSTRAINTS},
@@ -123,6 +123,7 @@ static const ScanKeyword ScanPGSQLKeywords[] = {
 	{"delimiter", DELIMITER},
 	{"delimiters", DELIMITERS},
 	{"desc", DESC},
+	{"dictionary", DICTIONARY},
 	{"disable", DISABLE_P},
 	{"discard", DISCARD},
 	{"distinct", DISTINCT},
@@ -217,6 +218,7 @@ static const ScanKeyword ScanPGSQLKeywords[] = {
 	{"location", LOCATION},
 	{"lock", LOCK_P},
 	{"login", LOGIN_P},
+	{"mapping", MAPPING},
 	{"match", MATCH},
 	{"maxvalue", MAXVALUE},
 	{"minute", MINUTE_P},
@@ -265,6 +267,7 @@ static const ScanKeyword ScanPGSQLKeywords[] = {
 	{"overlaps", OVERLAPS},
 	{"owned", OWNED},
 	{"owner", OWNER},
+	{"parser", PARSER},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
 	{"placing", PLACING},
@@ -307,6 +310,7 @@ static const ScanKeyword ScanPGSQLKeywords[] = {
 	{"savepoint", SAVEPOINT},
 	{"schema", SCHEMA},
 	{"scroll", SCROLL},
+	{"search", SEARCH},
 	{"second", SECOND_P},
 	{"security", SECURITY},
 	{"select", SELECT},
@@ -342,6 +346,7 @@ static const ScanKeyword ScanPGSQLKeywords[] = {
 	{"temp", TEMP},
 	{"template", TEMPLATE},
 	{"temporary", TEMPORARY},
+	{"text", TEXT_P},
 	{"then", THEN},
 	{"time", TIME},
 	{"timestamp", TIMESTAMP},

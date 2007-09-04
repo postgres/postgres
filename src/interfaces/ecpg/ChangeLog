@@ -2233,5 +2233,9 @@ Wed, 22 Aug 2007 08:41:33 +0200
 Wed, 29 Aug 2007 15:41:58 +0200
 
 	- Fixed bug in Informix define handling.
+
+Tue, 04 Sep 2007 11:13:55 +0200
+
+	- Synced parser and keyword list.
 	- Set ecpg library version to 6.0.
 	- Set ecpg version to 4.4.

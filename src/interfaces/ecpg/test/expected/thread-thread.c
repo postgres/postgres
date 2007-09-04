@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
   { ECPGtrans(__LINE__, NULL, "commit");}
 #line 48 "thread.pgc"
 
-  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test_thread ( tstamp timestamp    not null default cast( timeofday () as timestamp   ) , thread TEXT    not null , iteration integer   not null , primary key( thread , iteration )   )    ", ECPGt_EOIT, ECPGt_EORT);}
+  { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "create  table test_thread ( tstamp timestamp    not null default cast( timeofday () as timestamp   ) , thread text    not null , iteration integer   not null , primary key( thread , iteration )   )    ", ECPGt_EOIT, ECPGt_EORT);}
 #line 53 "thread.pgc"
 
   { ECPGtrans(__LINE__, NULL, "commit");}

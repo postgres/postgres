@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.350 2007/08/22 08:20:58 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.351 2007/09/04 10:02:29 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -421,14 +421,14 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	CACHE CALLED CASCADE CASCADED CASE CAST CHAIN CHAR_P
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
-	COMMITTED CONCURRENTLY CONNECTION CONSTRAINT CONSTRAINTS 
+	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS 
 	CONTENT_P CONVERSION_P CONVERT COPY COST CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_P CURRENT_DATE CURRENT_ROLE
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
 	DATABASE DAY_P DEALLOCATE DEC DECIMAL_P DECLARE DEFAULT DEFAULTS
-	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS
-	DESC DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
+	DEFERRABLE DEFERRED DEFINER DELETE_P DELIMITER DELIMITERS DESC
+	DICTIONARY DISABLE_P DISCARD DISTINCT DO DOCUMENT_P DOMAIN_P DOUBLE_P DROP
 
 	EACH ELSE ENABLE_P ENCODING ENCRYPTED END_P ENUM_P ESCAPE EXCEPT EXCLUSIVE EXCLUDING
 	EXECUTE EXISTS EXPLAIN EXTERNAL EXTRACT
@@ -453,7 +453,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	LIKE LIMIT LISTEN LOAD LOCAL LOCALTIME LOCALTIMESTAMP LOCATION
 	LOCK_P LOGIN_P
 
-	MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
+	MAPPING MATCH MAXVALUE MINUTE_P MINVALUE MODE MONTH_P MOVE
 
 	NAME_P NAMES NATIONAL NATURAL NCHAR NEW NEXT NO NOCREATEDB
 	NOCREATEROLE NOCREATEUSER NOINHERIT NOLOGIN_P NONE NOSUPERUSER
@@ -462,7 +462,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	OBJECT_P OF OFF OFFSET OIDS OLD ON ONLY OPERATOR OPTION OR ORDER
 	OUT_P OUTER_P OVERLAPS OVERLAY OWNED OWNER
 
-	PARTIAL PASSWORD PLACING PLANS POSITION
+	PARSER PARTIAL PASSWORD PLACING PLANS POSITION
 	PRECISION PRESERVE PREPARE PREPARED PRIMARY
 	PRIOR PRIVILEGES PROCEDURAL PROCEDURE
 
@@ -472,13 +472,13 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 	REPEATABLE REPLACE REPLICA RESET RESTART RESTRICT RETURNING RETURNS REVOKE
 	RIGHT ROLE ROLLBACK ROW ROWS RULE
 
-	SAVEPOINT SCHEMA SCROLL SECOND_P SECURITY SELECT SEQUENCE
+	SAVEPOINT SCHEMA SCROLL SEARCH SECOND_P SECURITY SELECT SEQUENCE
 	SERIALIZABLE SESSION SESSION_USER SET SETOF SHARE
 	SHOW SIMILAR SIMPLE SMALLINT SOME STABLE STANDALONE_P START STATEMENT
 	STATISTICS STDIN STDOUT STORAGE STRICT_P STRIP_P SUBSTRING SUPERUSER_P
 	SYMMETRIC SYSID SYSTEM_P
 
-	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY THEN TIME TIMESTAMP TO 
+	TABLE TABLESPACE TEMP TEMPLATE TEMPORARY TEXT_P THEN TIME TIMESTAMP TO 
 	TRAILING TRANSACTION TREAT TRIGGER TRIM TRUE_P TRUNCATE TRUSTED TYPE_P
 
 	UNCOMMITTED UNENCRYPTED UNION UNIQUE UNKNOWN UNLISTEN UNTIL
@@ -615,7 +615,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
 %type  <str>	columnref values_clause AllConstVar prep_type_clause ExecuteStmt
 %type  <str>	insert_column_item DropRuleStmt ctext_expr execute_param_clause 
-%type  <str>	createfunc_opt_item set_rest var_list_or_default alter_rel_cmd
+%type  <str>	createfunc_opt_item set_rest alter_rel_cmd
 %type  <str>	CreateFunctionStmt createfunc_opt_list func_table
 %type  <str>	DropUserStmt copy_from copy_opt_list copy_opt_item
 %type  <str>	opt_oids TableLikeClause key_action opt_definition
@@ -642,7 +642,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	var_declaration type_declaration single_vt_declaration
 %type  <str>	ECPGSetAutocommit on_off variable_declarations ECPGDescribe
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr symbol opt_output
-%type  <str>	ECPGGetDescriptorHeader ECPGColLabel 
+%type  <str>	ECPGGetDescriptorHeader ECPGColLabel SetResetClause AlterUserSetStmt
 %type  <str>	reserved_keyword unreserved_keyword ecpg_interval opt_ecpg_using
 %type  <str>	col_name_keyword precision opt_scale ECPGExecuteImmediateStmt
 %type  <str>	ECPGTypeName using_list ECPGColLabelCommon UsingConst 
@@ -664,7 +664,7 @@ add_typedef(char *name, char * dimension, char * length, enum ECPGttype type_enu
 %type  <str>	CreateOpFamilyStmt AlterOpFamilyStmt create_as_target
 %type  <str>	xml_attributes xml_attribute_list document_or_content xml_whitespace_option
 %type  <str>	opt_xml_root_standalone xml_root_version xml_attribute_el 
-%type  <str>	where_or_current_clause
+%type  <str>	where_or_current_clause AlterTSConfigurationStmt AlterTSDictionaryStmt
 
 %type  <struct_union> s_struct_union_symbol
 
@@ -728,7 +728,10 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| AlterTableStmt	{ output_statement($1, 0, ECPGst_normal); }
 		| AlterRoleSetStmt	{ output_statement($1, 0, ECPGst_normal); }
 		| AlterRoleStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| AlterTSConfigurationStmt	{ output_statement($1, 0, ECPGst_normal); }
+		| AlterTSDictionaryStmt	{ output_statement($1, 0, ECPGst_normal); }
 		| AlterUserStmt		{ output_statement($1, 0, ECPGst_normal); }
+		| AlterUserSetStmt	{ output_statement($1, 0, ECPGst_normal); }
 		| AnalyzeStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| CheckPointStmt	{ output_statement($1, 0, ECPGst_normal); }
 		| ClosePortalStmt
@@ -1060,9 +1063,7 @@ CreateUserStmt:
 			{ $$ = cat_str(4, make_str("alter role"), $3, $4, $5); }
 		;
 
-	AlterRoleSetStmt: ALTER ROLE RoleId SET set_rest
-			{ $$ = cat_str(4, make_str("alter role"), $3, make_str("set"), $5); }
-		| ALTER ROLE RoleId VariableResetStmt
+	AlterRoleSetStmt: ALTER ROLE RoleId SetResetClause
 			{ $$ = cat_str(3, make_str("alter role"), $3, $4); }
 		;
 
@@ -1075,9 +1076,7 @@ CreateUserStmt:
 	AlterUserStmt: ALTER USER RoleId opt_with OptRoleList
 		{ $$ = cat_str(4, make_str("alter user"), $3, $4, $5); };
 
-	AlterRoleSetStmt: ALTER USER RoleId SET set_rest
-			{ $$ = cat_str(4, make_str("alter user"), $3, make_str("set"), $5); }
-		| ALTER USER RoleId VariableResetStmt
+	AlterUserSetStmt: ALTER USER RoleId SetResetClause
 			{ $$ = cat_str(3, make_str("alter user"), $3, $4); }
 		;
 
@@ -1193,10 +1192,18 @@ VariableSetStmt:  SET set_rest
 			{ $$ = cat2_str(make_str("set session"), $3 ); }
 		;
 
-set_rest:	var_name TO var_list_or_default
+set_rest:	/* Generic SET syntaxes: */
+		var_name TO var_list
 			{ $$ = cat_str(3, $1, make_str("to"), $3); }
-		| var_name "=" var_list_or_default
+		| var_name "=" var_list
 			{ $$ = cat_str(3, $1, make_str("="), $3); }
+		| var_name TO DEFAULT
+			{ $$ = cat2_str($1, make_str("to default")); }
+		| var_name "=" DEFAULT
+			{ $$ = cat2_str($1, make_str("= default")); }
+		| var_name FROM CURRENT_P
+			{ $$ = cat2_str($1, make_str("from current")); }
+		/* Special syntaxes mandated by SQL standard: */
 		| TIME ZONE zone_value
 			{ $$ = cat2_str(make_str("time zone"), $3); }
 		| TRANSACTION transaction_mode_list
@@ -1219,12 +1226,6 @@ var_name:	ECPGColId		{ $$ = $1; }
 		| var_name '.' ColId	{ $$ = cat_str(3, $1, make_str("."), $3); }
 		;
 
-
-var_list_or_default:  var_list
-			{ $$ = $1; }
-		| DEFAULT
-			{ $$ = make_str("default"); }
-		;
 
 var_list:  var_value
 			{ $$ = $1; }
@@ -1299,6 +1300,12 @@ VariableResetStmt:	RESET var_name
 			{ $$ = make_str("reset session authorization"); }
 		| RESET ALL
 			{ $$ = make_str("reset all"); }
+		;
+
+/* SetResetClause allows SET or RESET without LOCAL */
+SetResetClause:
+		SET set_rest		{ $$ = cat2_str(make_str("set"), $2); }
+		| VariableResetStmt 	{ $$ = $1; }
 		;
 
 ConstraintsSetStmt:    SET CONSTRAINTS constraints_set_list constraints_set_mode
@@ -2080,6 +2087,14 @@ DefineStmt:  CREATE AGGREGATE func_name aggr_args definition
 			{ $$ = cat_str(5, make_str("create type"), $3, make_str("as ("), $6, make_str(")")); }
 		| CREATE TYPE_P any_name AS ENUM_P '(' enum_val_list ')'
 			{ $$ = cat_str(5, make_str("create type"), $3, make_str("as enum ("), $7, make_str(")")); }
+		| CREATE TEXT_P SEARCH PARSER any_name definition
+			{ $$ = cat_str(3, make_str("create text search parser"), $5, $6); }
+		| CREATE TEXT_P SEARCH DICTIONARY any_name definition
+			{ $$ = cat_str(3, make_str("create text search dictionary"), $5, $6); }
+		| CREATE TEXT_P SEARCH TEMPLATE any_name definition
+			{ $$ = cat_str(3, make_str("create text search template"), $5, $6); }
+		| CREATE TEXT_P SEARCH CONFIGURATION any_name definition
+			{ $$ = cat_str(3, make_str("create text search configuration"), $5, $6); }
 		;
 
 definition:  '(' def_list ')'
@@ -2219,14 +2234,18 @@ DropStmt:  DROP drop_type IF_P EXISTS any_name_list opt_drop_behavior
 			{ $$ = cat_str(4, make_str("drop"), $2, $3, $4); }
 		;
 
-drop_type:	TABLE		{ $$ = make_str("table"); }
-		| SEQUENCE		{ $$ = make_str("sequence"); }
-		| VIEW			{ $$ = make_str("view"); }
-		| INDEX			{ $$ = make_str("index"); }
-		| TYPE_P		{ $$ = make_str("type"); }
-		| DOMAIN_P		{ $$ = make_str("domain"); }
-		| CONVERSION_P	{ $$ = make_str("conversion"); }
-		| SCHEMA		{ $$ = make_str("schema"); }
+drop_type:	TABLE				{ $$ = make_str("table"); }
+		| SEQUENCE			{ $$ = make_str("sequence"); }
+		| VIEW				{ $$ = make_str("view"); }
+		| INDEX				{ $$ = make_str("index"); }
+		| TYPE_P			{ $$ = make_str("type"); }
+		| DOMAIN_P			{ $$ = make_str("domain"); }
+		| CONVERSION_P			{ $$ = make_str("conversion"); }
+		| SCHEMA			{ $$ = make_str("schema"); }
+		| TEXT_P SEARCH PARSER		{ $$ = make_str("text search parser"); }
+		| TEXT_P SEARCH DICTIONARY	{ $$ = make_str("text search dictionary"); }
+		| TEXT_P SEARCH TEMPLATE	{ $$ = make_str("text search template"); }
+		| TEXT_P SEARCH CONFIGURATION 	{ $$ = make_str("text search configuration"); }
 		;
 
 any_name_list:  any_name
@@ -2379,6 +2398,14 @@ CommentStmt:   COMMENT ON comment_type name IS comment_text
 			{ $$ = cat_str(6, make_str("comment on cast ("), $5, make_str("as"), $7, make_str(") is"), $10); }
 		| COMMENT ON opt_procedural LANGUAGE any_name IS comment_text
 			{ $$ = cat_str(6, make_str("comment on"), $3, make_str("language"), $5, make_str("is"), $7); }
+		| COMMENT ON TEXT_P SEARCH PARSER any_name IS comment_text
+			{ $$ = cat_str(4, make_str("comment on test search parser"), $6, make_str("is"), $8); }
+		| COMMENT ON TEXT_P SEARCH DICTIONARY any_name IS comment_text
+			{ $$ = cat_str(4, make_str("comment on test search dictionary"), $6, make_str("is"), $8); }
+		| COMMENT ON TEXT_P SEARCH TEMPLATE any_name IS comment_text
+			{ $$ = cat_str(4, make_str("comment on test search template"), $6, make_str("is"), $8); }
+		| COMMENT ON TEXT_P SEARCH CONFIGURATION any_name IS comment_text
+			{ $$ = cat_str(4, make_str("comment on test search configuration"), $6, make_str("is"), $8); }
 		;
 
 comment_type:  COLUMN		{ $$ = make_str("column"); }
@@ -2654,7 +2681,10 @@ common_func_opt_item:
 				{ $$ = cat2_str(make_str("cost"), $2); }
 		| ROWS NumConst
 				{ $$ = cat2_str(make_str("rows"), $2); }
+		| SetResetClause
+				{ $$ = $1; }
 		;
+
 createfunc_opt_item: AS func_as
 				{ $$ = cat2_str(make_str("as"), $2); }
 		| LANGUAGE ColId_or_Sconst
@@ -2783,8 +2813,8 @@ RenameStmt:  ALTER AGGREGATE func_name aggr_args RENAME TO name
 			{ $$ = cat_str(4, make_str("alter conversion"), $3, make_str("rename to"), $6); }
 		| ALTER DATABASE database_name RENAME TO database_name
 			{ $$ = cat_str(4, make_str("alter database"), $3, make_str("rename to"), $6); }
-		| ALTER FUNCTION func_name func_args RENAME TO name
-			{ $$ = cat_str(5, make_str("alter function"), $3, $4, make_str("rename to"), $7); }
+		| ALTER FUNCTION function_with_argtypes RENAME TO name
+			{ $$ = cat_str(4, make_str("alter function"), $3, make_str("rename to"), $6); }
 		| ALTER GROUP_P RoleId RENAME TO RoleId
 			{ $$ = cat_str(4, make_str("alter group"), $3, make_str("rename to"), $6); }
 		| ALTER opt_procedural LANGUAGE name RENAME TO name
@@ -2811,6 +2841,14 @@ RenameStmt:  ALTER AGGREGATE func_name aggr_args RENAME TO name
 			{ $$ = cat_str(4, make_str("alter user"), $3, make_str("rename to"), $6); }
 		| ALTER TABLESPACE name RENAME TO name
 			{ $$ = cat_str(4, make_str("alter tablespace"), $3, make_str("rename to"), $6); }
+		| ALTER TEXT_P SEARCH PARSER any_name RENAME TO name
+			{ $$ = cat_str(4, make_str("alter text search parser"), $5, make_str("rename to"), $8); }
+		| ALTER TEXT_P SEARCH DICTIONARY any_name RENAME TO name
+			{ $$ = cat_str(4, make_str("alter text search dictionary"), $5, make_str("rename to"), $8); }
+		| ALTER TEXT_P SEARCH TEMPLATE any_name RENAME TO name
+			{ $$ = cat_str(4, make_str("alter text search template"), $5, make_str("rename to"), $8); }
+		| ALTER TEXT_P SEARCH CONFIGURATION any_name RENAME TO name
+			{ $$ = cat_str(4, make_str("alter text search configuration"), $5, make_str("rename to"), $8); }
 		;
 
 opt_column:  COLUMN			{ $$ = make_str("column"); }
@@ -2828,8 +2866,8 @@ AlterObjectSchemaStmt:
 			{ $$ = cat_str(5, make_str("alter aggregate"), $3, $4, make_str("set schema"), $7); }
 		| ALTER DOMAIN_P any_name SET SCHEMA name
 			{ $$ = cat_str(4, make_str("alter domain"), $3, make_str("set schema"), $6); }
-		| ALTER FUNCTION func_name func_args SET SCHEMA name
-			{ $$ = cat_str(5, make_str("alter function"), $3, $4, make_str("set schema"), $7); }
+		| ALTER FUNCTION function_with_argtypes SET SCHEMA name
+			{ $$ = cat_str(4, make_str("alter function"), $3, make_str("set schema"), $6); }
 		| ALTER SEQUENCE relation_expr SET SCHEMA name
 			{ $$ = cat_str(4, make_str("alter sequence"), $3, make_str("set schema"), $6); }
 		| ALTER TABLE relation_expr SET SCHEMA name
@@ -2852,8 +2890,8 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 			{ $$ = cat_str(4, make_str("alter database"), $3, make_str("owner to"), $6); }
 		| ALTER DOMAIN_P database_name OWNER TO RoleId
 			{ $$ = cat_str(4, make_str("alter domain"), $3, make_str("owner to"), $6); }
-		| ALTER FUNCTION func_name func_args OWNER TO RoleId
-			{ $$ = cat_str(5, make_str("alter function"), $3, $4, make_str("owner to"), $7); }
+		| ALTER FUNCTION function_with_argtypes OWNER TO RoleId
+			{ $$ = cat_str(4, make_str("alter function"), $3, make_str("owner to"), $6); }
 		| ALTER opt_procedural LANGUAGE name OWNER TO RoleId
 			{ $$ = cat_str(6, make_str("alter"), $2, make_str("language"), $4, make_str("owner to"), $7); }
 		| ALTER OPERATOR any_operator '(' oper_argtypes ')' OWNER TO RoleId
@@ -2868,6 +2906,10 @@ AlterOwnerStmt: ALTER AGGREGATE func_name aggr_args OWNER TO RoleId
 			{ $$ = cat_str(4, make_str("alter type"), $3, make_str("owner to"), $6); }
 		| ALTER TABLESPACE name OWNER TO RoleId
 			{ $$ = cat_str(4, make_str("alter tablespace"), $3, make_str("owner to"), $6); }
+		| ALTER TEXT_P SEARCH DICTIONARY any_name OWNER TO RoleId
+			{ $$ = cat_str(4, make_str("alter text search dictionary"), $5, make_str("owner to"), $8); }
+		| ALTER TEXT_P SEARCH CONFIGURATION any_name OWNER TO RoleId
+			{ $$ = cat_str(4, make_str("alter text search configuration"), $5, make_str("owner to"), $8); }
 		;
 
 
@@ -3107,9 +3149,7 @@ AlterDatabaseStmt: ALTER DATABASE database_name opt_with alterdb_opt_list
 			{ $$ = cat_str(4, make_str("alter database"), $3, $4, $5); }
 		;
 
-AlterDatabaseSetStmt: ALTER DATABASE database_name SET set_rest
-			{ $$ = cat_str(4, make_str("alter database"), $3, make_str("set"), $5); }
-		| ALTER DATABASE database_name VariableResetStmt
+AlterDatabaseSetStmt: ALTER DATABASE database_name SetResetClause
 			{ $$ = cat_str(3, make_str("alter database"), $3, $4); }
 		;
 
@@ -3163,6 +3203,26 @@ AlterDomainStmt:
 
 opt_as:	AS	{$$ = make_str("as"); }
 		| /* EMPTY */	{$$ = EMPTY; }
+		;
+
+AlterTSDictionaryStmt:
+		ALTER TEXT_P SEARCH DICTIONARY any_name definition
+			{ $$ = cat_str(3, make_str("alter text search dictionary"), $5, $6); }
+		;
+
+AlterTSConfigurationStmt:
+		ALTER TEXT_P SEARCH CONFIGURATION any_name ADD_P MAPPING FOR name_list WITH any_name_list
+			{ $$ = cat_str(6, make_str("alter text search configuration"), $5, make_str("add mapping for"), $9, make_str("with"), $11); }
+		| ALTER TEXT_P SEARCH CONFIGURATION any_name ALTER MAPPING FOR name_list WITH any_name_list
+			{ $$ = cat_str(6, make_str("alter text search configuration"), $5, make_str("alter mapping for"), $9, make_str("with"), $11); }
+		| ALTER TEXT_P SEARCH CONFIGURATION any_name ALTER MAPPING REPLACE any_name WITH any_name
+			{ $$ = cat_str(6, make_str("alter text search configuration"), $5, make_str("alter mapping replace"), $9, make_str("with"), $11); }
+		| ALTER TEXT_P SEARCH CONFIGURATION any_name ALTER MAPPING FOR name_list REPLACE any_name WITH any_name
+			{ $$ = cat_str(8, make_str("alter text search configuration"), $5, make_str("alter mapping for"), $9, make_str("replace"), $11, make_str("with"), $13); }
+		| ALTER TEXT_P SEARCH CONFIGURATION any_name DROP MAPPING FOR name_list
+			{ $$ = cat_str(4, make_str("alter text search configuration"), $5, make_str("drop mapping for"), $9); }
+		| ALTER TEXT_P SEARCH CONFIGURATION any_name DROP MAPPING IF_P EXISTS FOR name_list
+			{ $$ = cat_str(4, make_str("alter text search configuration"), $5, make_str("drop mapping if exists for"), $11); }
 		;
 
 CreateConversionStmt:
@@ -6371,6 +6431,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| COMMIT			{ $$ = make_str("commit"); }
 		| COMMITTED			{ $$ = make_str("committed"); }
 		| CONCURRENTLY		{ $$ = make_str("concurrently"); }
+		| CONFIGURATION		{ $$ = make_str("configuration"); }
 /*		| CONNECTION		{ $$ = make_str("connection"); }*/
 		| CONSTRAINTS		{ $$ = make_str("constraints"); }
 		| CONTENT_P		{ $$ = make_str("content"); }
@@ -6392,6 +6453,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| DELETE_P			{ $$ = make_str("delete"); }
 		| DELIMITER			{ $$ = make_str("delimiter"); }
 		| DELIMITERS		{ $$ = make_str("delimiters"); }
+		| DICTIONARY		{ $$ = make_str("dictionary"); }
 		| DISABLE_P			{ $$ = make_str("disable"); }
 		| DISCARD			{ $$ = make_str("discard"); }
 		| DOCUMENT_P			{ $$ = make_str("document"); }
@@ -6447,6 +6509,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| LOCATION			{ $$ = make_str("location"); }
 		| LOCK_P			{ $$ = make_str("lock"); }
 		| LOGIN_P			{ $$ = make_str("login"); }
+		| MAPPING			{ $$ = make_str("mapping"); }
 		| MATCH				{ $$ = make_str("match"); }
 		| MAXVALUE			{ $$ = make_str("maxvalue"); }
 /*		| MINUTE_P			{ $$ = make_str("minute"); }*/
@@ -6475,6 +6538,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| OPTION			{ $$ = make_str("option"); }
 		| OWNED				{ $$ = make_str("owned"); }
 		| OWNER				{ $$ = make_str("owner"); }
+		| PARSER			{ $$ = make_str("parser"); }
 		| PARTIAL			{ $$ = make_str("partial"); }
 		| PASSWORD			{ $$ = make_str("password"); }
 		| PLANS				{ $$ = make_str("plans"); }
@@ -6508,6 +6572,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| SAVEPOINT			{ $$ = make_str("savepoint"); }
 		| SCHEMA			{ $$ = make_str("schema"); }
 		| SCROLL			{ $$ = make_str("scroll"); }
+		| SEARCH			{ $$ = make_str("search"); }
 /*		| SECOND_P			{ $$ = make_str("second"); }*/
 		| SEQUENCE			{ $$ = make_str("sequence"); }
 		| SERIALIZABLE		{ $$ = make_str("serializable"); }
@@ -6533,6 +6598,7 @@ ECPGunreserved_con:	  ABORT_P			{ $$ = make_str("abort"); }
 		| TEMP				{ $$ = make_str("temp"); }
 		| TEMPLATE			{ $$ = make_str("template"); }
 		| TEMPORARY			{ $$ = make_str("temporary"); }
+		| TEXT_P			{ $$ = make_str("text"); }
 		| TRANSACTION		{ $$ = make_str("transaction"); }
 		| TRIGGER			{ $$ = make_str("trigger"); }
 		| TRUNCATE			{ $$ = make_str("truncate"); }
