@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/backend/utils/adt/enum.c,v 1.3 2007/06/05 21:31:06 tgl Exp $
+ *    $PostgreSQL: pgsql/src/backend/utils/adt/enum.c,v 1.4 2007/09/04 16:41:42 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,8 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "libpq/pqformat.h"
+#include "miscadmin.h"
 
 
 static ArrayType *enum_range_internal(Oid enumtypoid, Oid lower, Oid upper);
@@ -84,6 +86,73 @@ enum_out(PG_FUNCTION_ARGS)
 	ReleaseSysCache(tup);
 
 	PG_RETURN_CSTRING(result);
+}
+
+/* Binary I/O support */
+Datum
+enum_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo  buf = (StringInfo) PG_GETARG_POINTER(0);
+	Oid enumtypoid = PG_GETARG_OID(1);
+	Oid enumoid;
+	HeapTuple tup;
+	char       *name;
+	int         nbytes;
+
+	name = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+
+	/* must check length to prevent Assert failure within SearchSysCache */
+	if (strlen(name) >= NAMEDATALEN)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input value for enum %s: \"%s\"",
+						format_type_be(enumtypoid),
+						name)));
+
+	tup = SearchSysCache(ENUMTYPOIDNAME,
+						 ObjectIdGetDatum(enumtypoid),
+						 CStringGetDatum(name),
+						 0, 0);
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input value for enum %s: \"%s\"",
+						format_type_be(enumtypoid),
+						name)));
+
+	enumoid = HeapTupleGetOid(tup);
+
+	ReleaseSysCache(tup);
+
+	pfree(name);
+
+	PG_RETURN_OID(enumoid);
+}
+
+Datum
+enum_send(PG_FUNCTION_ARGS)
+{
+	Oid enumval = PG_GETARG_OID(0);
+	StringInfoData buf;
+	HeapTuple tup;
+	Form_pg_enum en;
+
+	tup = SearchSysCache(ENUMOID,
+						 ObjectIdGetDatum(enumval),
+						 0, 0, 0);
+	if (!HeapTupleIsValid(tup))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
+				 errmsg("invalid internal value for enum: %u",
+						enumval)));
+	en = (Form_pg_enum) GETSTRUCT(tup);
+
+	pq_begintypsend(&buf);
+	pq_sendtext(&buf, NameStr(en->enumlabel), strlen(NameStr(en->enumlabel)));
+
+	ReleaseSysCache(tup);
+
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 /* Comparison functions and related */

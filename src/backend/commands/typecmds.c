@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.106 2007/06/20 18:15:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.107 2007/09/04 16:41:42 adunstan Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1039,8 +1039,8 @@ DefineEnum(CreateEnumStmt *stmt)
 				   DEFAULT_TYPDELIM,	/* array element delimiter */
 				   F_ENUM_IN,		/* input procedure */
 				   F_ENUM_OUT,		/* output procedure */
-				   InvalidOid,		/* receive procedure - none */
-				   InvalidOid,		/* send procedure - none */
+				   F_ENUM_RECV,		/* receive procedure */
+				   F_ENUM_SEND,		/* send procedure */
 				   InvalidOid,		/* typmodin procedure - none */
 				   InvalidOid,		/* typmodout procedure - none */
 				   InvalidOid,		/* analyze procedure - default */

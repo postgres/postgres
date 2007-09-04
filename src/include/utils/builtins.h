@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.301 2007/08/27 01:39:25 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.302 2007/09/04 16:41:43 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,6 +107,8 @@ extern Datum domain_recv(PG_FUNCTION_ARGS);
 /* enum.c */
 extern Datum enum_in(PG_FUNCTION_ARGS);
 extern Datum enum_out(PG_FUNCTION_ARGS);
+extern Datum enum_recv(PG_FUNCTION_ARGS);
+extern Datum enum_send(PG_FUNCTION_ARGS);
 extern Datum enum_lt(PG_FUNCTION_ARGS);
 extern Datum enum_le(PG_FUNCTION_ARGS);
 extern Datum enum_eq(PG_FUNCTION_ARGS);

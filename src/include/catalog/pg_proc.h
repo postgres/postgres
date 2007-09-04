@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.467 2007/09/03 02:30:43 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.468 2007/09/04 16:41:42 adunstan Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -4136,6 +4136,8 @@ DATA(insert OID = 3528 (  enum_first	PGNSP PGUID 12 1 0 f f f f s 1 3500 "3500" 
 DATA(insert OID = 3529 (  enum_last		PGNSP PGUID 12 1 0 f f f f s 1 3500 "3500" _null_ _null_ _null_ enum_last - _null_ _null_ ));
 DATA(insert OID = 3530 (  enum_range	PGNSP PGUID 12 1 0 f f f f s 2 2277 "3500 3500" _null_ _null_ _null_ enum_range_bounds - _null_ _null_ ));
 DATA(insert OID = 3531 (  enum_range	PGNSP PGUID 12 1 0 f f f f s 1 2277 "3500" _null_ _null_ _null_ enum_range_all - _null_ _null_ ));
+DATA(insert OID = 3532 (  enum_recv	    PGNSP PGUID 12 1 0 f f t f s 2 3500 "2275 26" _null_ _null_ _null_ enum_recv - _null_ _null_ ));
+DATA(insert OID = 3533 (  enum_send	    PGNSP PGUID 12 1 0 f f t f s 1 17   "3500" _null_ _null_ _null_ enum_send - _null_ _null_ ));
 
 /* text search stuff */
 DATA(insert OID =  3610 (  tsvectorin			PGNSP PGUID 12 1 0 f f t f i 1 3614 "2275" _null_ _null_ _null_ tsvectorin - _null_ _null_ ));
