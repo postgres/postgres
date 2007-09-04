@@ -1,7 +1,15 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.16 2007/09/04 03:46:36 tgl Exp $ -->
+
 <chapter id="textsearch">
+ <title id="textsearch-title">Full Text Search</title>
 
- <title>Full Text Search</title>
+  <indexterm zone="textsearch">
+   <primary>full text search</primary>
+  </indexterm>
 
+  <indexterm zone="textsearch">
+   <primary>text search</primary>
+  </indexterm>
 
  <sect1 id="textsearch-intro">
   <title>Introduction</title>
@@ -67,43 +75,52 @@
    <listitem>
     <para>
      <emphasis>Parsing documents into <firstterm>lexemes</></emphasis>. It is
-     useful to identify various lexemes, e.g. digits, words, complex words,
-     email addresses, so they can be processed differently.  In principle
-     lexemes depend on the specific application but for an ordinary search it
-     is useful to have a predefined list of lexemes.  <!-- add list of lexemes.
-     -->
+     useful to identify various classes of lexemes, e.g. digits, words,
+     complex words, email addresses, so that they can be processed
+     differently.  In principle lexeme classes depend on the specific
+     application but for an ordinary search it is useful to have a predefined
+     set of classes.
+     <productname>PostgreSQL</productname> uses a <firstterm>parser</> to
+     perform this step.  A standard parser is provided, and custom parsers
+     can be created for specific needs.
     </para>
    </listitem>
 
    <listitem>
     <para>
-     <emphasis>Dictionaries</emphasis> allow the conversion of lexemes into
-     a <emphasis>normalized form</emphasis> so it is not necessary to enter
-     search words in a specific form.
+     <emphasis>Converting lexemes into <firstterm>normalized
+     form</></emphasis>.  This allows searches to find variant forms of the
+     same word, without tediously entering all the possible variants.
+     Also, this step typically eliminates <firstterm>stop words</>, which
+     are words that are so common that they are useless for searching.
+     <productname>PostgreSQL</productname> uses <firstterm>dictionaries</> to
+     perform this step.  Various standard dictionaries are provided, and
+     custom ones can be created for specific needs.
     </para>
    </listitem>
 
    <listitem>
     <para>
-     <emphasis>Store</emphasis> preprocessed documents optimized for
-     searching.  For example, represent each document as a sorted array
-     of lexemes. Along with lexemes it is desirable to store positional
-     information to use for <varname>proximity ranking</varname>, so that
-     a document which contains a more "dense" region of query words is
+     <emphasis>Storing preprocessed documents optimized for
+     searching</emphasis>.  For example, each document can be represented
+     as a sorted array of normalized lexemes. Along with the lexemes it is
+     desirable to store positional information to use for <firstterm>proximity
+     ranking</firstterm>, so that a document which contains a more
+     <quote>dense</> region of query words is 
      assigned a higher rank than one with scattered query words.
     </para>
    </listitem>
   </itemizedlist>
 
   <para>
-    Dictionaries allow fine-grained control over how lexemes are created.  With
-    dictionaries you can:
+   Dictionaries allow fine-grained control over how lexemes are normalized.
+   With dictionaries you can:
   </para>
 
   <itemizedlist  spacing="compact" mark="bullet">
    <listitem>
     <para>
-     Define "stop words" that should not be indexed.
+     Define stop words that should not be indexed.
     </para>
    </listitem>
 
@@ -135,13 +152,12 @@
   </itemizedlist>
 
   <para>
-   A data type (<xref linkend="datatype-textsearch">), <type>tsvector</type>
-   is provided, for storing preprocessed documents,
-   along with a type <type>tsquery</type> for representing textual
-   queries.  Also, a full text search operator <literal>@@</literal> is defined
-   for these data types (<xref linkend="textsearch-searches">).  Full text
-   searches can be accelerated using indexes (<xref
-   linkend="textsearch-indexes">).
+   A data type <type>tsvector</type> is provided for storing preprocessed
+   documents, along with a type <type>tsquery</type> for representing processed
+   queries (<xref linkend="datatype-textsearch">).  Also, a full text search
+   operator <literal>@@</literal> is defined for these data types (<xref
+   linkend="textsearch-searches">).  Full text searches can be accelerated
+   using indexes (<xref linkend="textsearch-indexes">).
   </para>
 
 
@@ -154,20 +170,20 @@
    </indexterm>
 
    <para>
-    A document can be a simple text file stored in the file system.  The full
-    text indexing engine can parse text files and store associations of lexemes
-    (words) with their parent document. Later, these associations are used to
-    search for documents which contain query words.  In this case, the database
-    can be used to store the full text index and for executing searches, and
-    some unique identifier can be used to retrieve the document from the file
-    system.
+    A <firstterm>document</> is the unit of searching in a full text search
+    system; for example, a magazine article or email message.  The text search
+    engine must be able to parse documents and store associations of lexemes
+    (key words) with their parent document. Later, these associations are
+    used to search for documents which contain query words.
    </para>
 
    <para>
-    A document can also be any textual database attribute or a combination
-    (concatenation), which in turn can be stored in various tables or obtained
-    dynamically. In other words, a document can be constructed from different
-    parts for indexing and it might not exist as a whole. For example:
+    For searches within <productname>PostgreSQL</productname>,
+    a document is normally a textual field within a row of a database table,
+    or possibly a combination (concatenation) of such fields, perhaps stored
+    in several tables or obtained dynamically. In other words, a document can
+    be constructed from different parts for indexing and it might not be
+    stored anywhere as a whole. For example:
 
 <programlisting>
 SELECT title || ' ' ||  author || ' ' ||  abstract || ' ' || body AS document
@@ -184,10 +200,20 @@ WHERE mid = did AND mid = 12;
     <para>
      Actually, in the previous example queries, <literal>COALESCE</literal>
      <!-- TODO make this a link? -->
-     should be used to prevent a <literal>NULL</literal> attribute from causing
-     a <literal>NULL</literal> result.
+     should be used to prevent a simgle <literal>NULL</literal> attribute from
+     causing a <literal>NULL</literal> result for the whole document.
     </para>
    </note>
+
+   <para>
+    Another possibility is to store the documents as simple text files in the
+    file system. In this case, the database can be used to store the full text
+    index and to execute searches, and some unique identifier can be used to
+    retrieve the document from the file system.  However, retrieving files
+    from outside the database requires superuser permissions or special
+    function support, so this is usually less convenient than keeping all
+    the data inside <productname>PostgreSQL</productname>.
+   </para>
   </sect2>
 
   <sect2 id="textsearch-searches">
@@ -261,8 +287,9 @@ SELECT 'fat &amp; cow'::tsquery @@ 'a fat cat sat on a mat and ate a fat rat'::t
     <xref linkend="guc-default-text-search-config"> was set accordingly
     in <filename>postgresql.conf</>.  If you are using the same text search
     configuration for the entire cluster you can use the value in
-    <filename>postgresql.conf</>.  If using different configurations but
-    the same text search configuration for an entire database,
+    <filename>postgresql.conf</>.  If using different configurations
+    throughout the cluster but
+    the same text search configuration for any one database,
     use <command>ALTER DATABASE ... SET</>.  If not, you must set <varname>
     default_text_search_config</varname> in each session.  Many functions
     also take an optional configuration name.
@@ -555,7 +582,7 @@ UPDATE tt SET ti=
 
       <term>
        <synopsis>
-        ts_parse(<replaceable class="PARAMETER">parser</replaceable>,  <replaceable class="PARAMETER">document</replaceable> TEXT) returns SETOF <type>tokenout</type>
+        ts_parse(<replaceable class="PARAMETER">parser</replaceable>, <replaceable class="PARAMETER">document</replaceable> text, OUT <replaceable class="PARAMETER">tokid</> integer, OUT <replaceable class="PARAMETER">token</> text) returns SETOF RECORD
        </synopsis>
       </term>
 
@@ -588,7 +615,7 @@ SELECT * FROM ts_parse('default','123 - a number');
 
       <term>
        <synopsis>
-        ts_token_type(<replaceable class="PARAMETER">parser</replaceable> ) returns SETOF <type>tokentype</type>
+        ts_token_type(<replaceable class="PARAMETER">parser</>, OUT <replaceable class="PARAMETER">tokid</> integer, OUT <replaceable class="PARAMETER">alias</> text, OUT <replaceable class="PARAMETER">description</> text) returns SETOF RECORD
        </synopsis>
       </term>
 
@@ -1107,20 +1134,20 @@ SELECT ts_lexize('english_stem', 'stars');
 (1 row)
 </programlisting>
 
-   Also, the <function>ts_debug</function> function (<xref linkend="textsearch-debugging">)
-   can be used for this.
+   Also, the <function>ts_debug</function> function (<xref
+   linkend="textsearch-debugging">) is helpful for testing.
   </para>
 
   <sect2 id="textsearch-stopwords">
    <title>Stop Words</title>
 
    <para>
-    Stop words are words which are very common, appear in almost
-    every document, and have no discrimination value. Therefore, they can be ignored
-    in the context of full text searching. For example, every English text contains
-    words like <literal>a</literal> although it is useless to store them in an index.
-    However, stop words do affect the positions in <type>tsvector</type>,
-    which in turn, do affect ranking:
+    Stop words are words which are very common, appear in almost every
+    document, and have no discrimination value. Therefore, they can be ignored
+    in the context of full text searching. For example, every English text
+    contains words like <literal>a</literal> and <literal>the</>, so it is
+    useless to store them in an index.  However, stop words do affect the
+    positions in <type>tsvector</type>, which in turn affect ranking:
 
 <programlisting>
 SELECT to_tsvector('english','in the list of stop words');
@@ -1542,11 +1569,15 @@ SELECT ts_lexize('norwegian_ispell','sjokoladefabrikk');
    <para>
     The <application>Snowball</> dictionary template is based on the project
     of Martin Porter, inventor of the popular Porter's stemming algorithm
-    for the English language and now supported in many languages (see the <ulink
-    url="http://snowball.tartarus.org">Snowball site</ulink> for more
-    information).  The Snowball project supplies a large number of stemmers for
-    many languages. A Snowball dictionary requires a language parameter to
-    identify which stemmer to use, and optionally can specify a stopword file name.
+    for the English language.  Snowball now provides stemming algorithms for
+    many languages (see the <ulink url="http://snowball.tartarus.org">Snowball
+    site</ulink> for more information).  Each algorithm understands how to
+    reduce common variant forms of words to a base, or stem, spelling within
+    its language.  A Snowball dictionary requires a language parameter to
+    identify which stemmer to use, and optionally can specify a stopword file
+    name that gives a list of words to eliminate.
+    (<productname>PostgreSQL</productname>'s standard stopword lists are also
+    provided by the Snowball project.)
     For example, there is a built-in definition equivalent to
 
 <programlisting>
@@ -1782,7 +1813,7 @@ version of our software: PostgreSQL 8.3.
 
 <programlisting>
 =&gt; \dF
-   List of fulltext configurations
+   List of text search configurations
  Schema  | Name | Description
 ---------+------+-------------
  public  | pg   |
@@ -2053,24 +2084,24 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
 
   <para>
    Information about full text searching objects can be obtained
-   in <literal>psql</literal> using a set of commands:
+   in <application>psql</application> using a set of commands:
    <synopsis>
-   \dF{,d,p}<optional>+</optional> <optional>PATTERN</optional>
+   \dF{d,p,t}<optional>+</optional> <optional>PATTERN</optional>
    </synopsis>
    An optional <literal>+</literal> produces more details.
   </para>
 
   <para>
    The optional parameter <literal>PATTERN</literal> should be the name of
-   a full text searching object, optionally schema-qualified.  If
+   a text searching object, optionally schema-qualified.  If
    <literal>PATTERN</literal> is not specified then information about all
-   visible objects  will be displayed.  <literal>PATTERN</literal> can be a
-   regular expression and can apply <emphasis>separately</emphasis> to schema
-   names and object names.  The following examples illustrate this:
+   visible objects will be displayed.  <literal>PATTERN</literal> can be a
+   regular expression and can provide <emphasis>separate</emphasis> patterns
+   for the schema and object names.  The following examples illustrate this:
 
 <programlisting>
 =&gt; \dF *fulltext*
-       List of fulltext configurations
+       List of text search configurations
  Schema |  Name        | Description
 --------+--------------+-------------
  public | fulltext_cfg |
@@ -2078,7 +2109,7 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
 
 <programlisting>
 =&gt; \dF *.fulltext*
-       List of fulltext configurations
+       List of text search configurations
  Schema   |  Name        | Description
 ----------+----------------------------
  fulltext | fulltext_cfg |
@@ -2093,46 +2124,42 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
 
     <listitem>
      <para>
-      List full text searching configurations (add "+" for more detail)
+      List text searching configurations (add <literal>+</> for more detail).
      </para>
-     <para>
-      By default (without <literal>PATTERN</literal>), information about
-      all <emphasis>visible</emphasis> full text configurations will be
-      displayed.
-     </para>
+
      <para>
 
 <programlisting>
 =&gt; \dF russian
-                               List of fulltext configurations
-   Schema   |   Name  |             Description
-------------+---------+-----------------------------------
- pg_catalog | russian | default configuration for Russian
+            List of text search configurations
+   Schema   |  Name   |            Description             
+------------+---------+------------------------------------
+ pg_catalog | russian | configuration for russian language
 
 =&gt; \dF+ russian
-   Configuration "pg_catalog.russian"
-   Parser name: "pg_catalog.default"
-    Token     |      Dictionaries
---------------+-------------------------
- email        | pg_catalog.simple
- file         | pg_catalog.simple
- float        | pg_catalog.simple
- host         | pg_catalog.simple
- hword        | pg_catalog.russian_stem
- int          | pg_catalog.simple
- lhword       | public.tz_simple
- lpart_hword  | public.tz_simple
- lword        | public.tz_simple
- nlhword      | pg_catalog.russian_stem
- nlpart_hword | pg_catalog.russian_stem
- nlword       | pg_catalog.russian_stem
- part_hword   | pg_catalog.simple
- sfloat       | pg_catalog.simple
- uint         | pg_catalog.simple
- uri          | pg_catalog.simple
- url          | pg_catalog.simple
- version      | pg_catalog.simple
- word         | pg_catalog.russian_stem
+Text search configuration "pg_catalog.russian"
+Parser: "pg_catalog.default"
+    Token     | Dictionaries 
+--------------+--------------
+ email        | simple
+ file         | simple
+ float        | simple
+ host         | simple
+ hword        | russian_stem
+ int          | simple
+ lhword       | english_stem
+ lpart_hword  | english_stem
+ lword        | english_stem
+ nlhword      | russian_stem
+ nlpart_hword | russian_stem
+ nlword       | russian_stem
+ part_hword   | russian_stem
+ sfloat       | simple
+ uint         | simple
+ uri          | simple
+ url          | simple
+ version      | simple
+ word         | russian_stem
 </programlisting>
      </para>
     </listitem>
@@ -2142,35 +2169,31 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
     <term>\dFd[+] [PATTERN]</term>
     <listitem>
      <para>
-      List full text dictionaries (add "+" for more detail).
-     </para>
-     <para>
-      By default (without <literal>PATTERN</literal>), information about
-      all <emphasis>visible</emphasis> dictionaries will be displayed.
+      List text search dictionaries (add <literal>+</> for more detail).
      </para>
 
      <para>
 <programlisting>
 =&gt; \dFd
-                           List of fulltext dictionaries
-   Schema   |    Name    |                        Description
-------------+------------+-----------------------------------------------------------
- pg_catalog | danish     | Snowball stemmer for danish language
- pg_catalog | dutch      | Snowball stemmer for dutch language
- pg_catalog | english    | Snowball stemmer for english language
- pg_catalog | finnish    | Snowball stemmer for finnish language
- pg_catalog | french     | Snowball stemmer for french language
- pg_catalog | german     | Snowball stemmer for german language
- pg_catalog | hungarian  | Snowball stemmer for hungarian language
- pg_catalog | italian    | Snowball stemmer for italian language
- pg_catalog | norwegian  | Snowball stemmer for norwegian language
- pg_catalog | portuguese | Snowball stemmer for portuguese language
- pg_catalog | romanian   | Snowball stemmer for romanian language
- pg_catalog | russian    | Snowball stemmer for russian language
- pg_catalog | simple     | simple dictionary: just lower case and check for stopword
- pg_catalog | spanish    | Snowball stemmer for spanish language
- pg_catalog | swedish    | Snowball stemmer for swedish language
- pg_catalog | turkish    | Snowball stemmer for turkish language
+                            List of text search dictionaries
+   Schema   |      Name       |                        Description                        
+------------+-----------------+-----------------------------------------------------------
+ pg_catalog | danish_stem     | snowball stemmer for danish language
+ pg_catalog | dutch_stem      | snowball stemmer for dutch language
+ pg_catalog | english_stem    | snowball stemmer for english language
+ pg_catalog | finnish_stem    | snowball stemmer for finnish language
+ pg_catalog | french_stem     | snowball stemmer for french language
+ pg_catalog | german_stem     | snowball stemmer for german language
+ pg_catalog | hungarian_stem  | snowball stemmer for hungarian language
+ pg_catalog | italian_stem    | snowball stemmer for italian language
+ pg_catalog | norwegian_stem  | snowball stemmer for norwegian language
+ pg_catalog | portuguese_stem | snowball stemmer for portuguese language
+ pg_catalog | romanian_stem   | snowball stemmer for romanian language
+ pg_catalog | russian_stem    | snowball stemmer for russian language
+ pg_catalog | simple          | simple dictionary: just lower case and check for stopword
+ pg_catalog | spanish_stem    | snowball stemmer for spanish language
+ pg_catalog | swedish_stem    | snowball stemmer for swedish language
+ pg_catalog | turkish_stem    | snowball stemmer for turkish language
 </programlisting>
      </para>
     </listitem>
@@ -2181,32 +2204,28 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
    <term>\dFp[+] [PATTERN]</term>
     <listitem>
      <para>
-      List full text parsers (add "+" for more detail)
+      List text search parsers (add <literal>+</> for more detail).
      </para>
-     <para>
-      By default (without <literal>PATTERN</literal>), information about
-      all <emphasis>visible</emphasis> full text parsers will be displayed.
-     </para>
+
      <para>
 <programlisting>
-   =&gt; \dFp
-          List of fulltext parsers
-   Schema   |  Name   |     Description
+=&gt; \dFp
+        List of text search parsers
+   Schema   |  Name   |     Description     
 ------------+---------+---------------------
  pg_catalog | default | default word parser
-   (1 row)
 =&gt; \dFp+
-            Fulltext parser "pg_catalog.default"
-      Method       |         Function          | Description
--------------------+---------------------------+-------------
- Start parse       | pg_catalog.prsd_start     |
- Get next token    | pg_catalog.prsd_nexttoken |
- End parse         | pg_catalog.prsd_end       |
- Get headline      | pg_catalog.prsd_headline  |
- Get lexeme's type | pg_catalog.prsd_lextype   |
+     Text search parser "pg_catalog.default"
+      Method      |    Function    | Description 
+------------------+----------------+-------------
+ Start parse      | prsd_start     | 
+ Get next token   | prsd_nexttoken | 
+ End parse        | prsd_end       | 
+ Get headline     | prsd_headline  | 
+ Get lexeme types | prsd_lextype   | 
 
-  Token's types for parser "pg_catalog.default"
-  Token name  |            Description
+   Token types for parser "pg_catalog.default"
+  Token name  |            Description            
 --------------+-----------------------------------
  blank        | Space symbols
  email        | Email
@@ -2237,6 +2256,30 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
     </listitem>
    </varlistentry>
 
+   <varlistentry>
+
+   <term>\dFt[+] [PATTERN]</term>
+    <listitem>
+     <para>
+      List text search templates (add <literal>+</> for more detail).
+     </para>
+
+     <para>
+<programlisting>
+=&gt; \dFt
+                           List of text search templates
+   Schema   |   Name    |                        Description                        
+------------+-----------+-----------------------------------------------------------
+ pg_catalog | ispell    | ispell dictionary
+ pg_catalog | simple    | simple dictionary: just lower case and check for stopword
+ pg_catalog | snowball  | snowball stemmer
+ pg_catalog | synonym   | synonym dictionary: replace word by its synonym
+ pg_catalog | thesaurus | thesaurus dictionary: phrase by phrase substitution
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+
   </variablelist>
 
  </sect1>
@@ -2261,7 +2304,7 @@ EXPLAIN SELECT * FROM apod WHERE textsearch @@@ to_tsquery('supernovae:a');
   </para>
 
   <para>
-   <replaceable class="PARAMETER">ts_debug</replaceable> type defined as:
+   <replaceable class="PARAMETER">ts_debug</replaceable>'s result type is defined as:
 
 <programlisting>
 CREATE TYPE ts_debug AS (
@@ -2297,7 +2340,7 @@ ALTER TEXT SEARCH CONFIGURATION public.english
 
 <programlisting>
 SELECT * FROM ts_debug('public.english','The Brightest supernovaes');
- Alias |  Description  |    Token    |              Dicts list               |          Lexized token
+ Alias |  Description  |    Token    |              Dictionaries             |          Lexized token
 -------+---------------+-------------+---------------------------------------+---------------------------------
  lword | Latin word    | The         | {public.english_ispell,pg_catalog.english_stem} | public.english_ispell: {}
  blank | Space symbols |             |                                       |
