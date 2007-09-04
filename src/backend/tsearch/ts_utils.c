@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_utils.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_utils.c,v 1.4 2007/09/04 02:16:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,22 +38,22 @@ get_tsearch_config_filename(const char *basename,
 {
 	char		sharepath[MAXPGPATH];
 	char	   *result;
-	const char *p;
 
 	/*
-	 * We enforce that the basename is all alpha characters.  This may be
-	 * overly restrictive, but we don't want to allow access to anything
+	 * We limit the basename to contain a-z, 0-9, and underscores.  This may
+	 * be overly restrictive, but we don't want to allow access to anything
 	 * outside the tsearch_data directory, so for instance '/' *must* be
-	 * rejected.  This is the same test used for timezonesets names.
+	 * rejected, and on some platforms '\' and ':' are risky as well.
+	 * Allowing uppercase might result in incompatible behavior between
+	 * case-sensitive and case-insensitive filesystems, and non-ASCII
+	 * characters create other interesting risks, so on the whole a tight
+	 * policy seems best.
 	 */
-	for (p = basename; *p; p++)
-	{
-		if (!isalpha((unsigned char) *p))
-			ereport(ERROR,
-					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-					 errmsg("invalid text search configuration file name \"%s\"",
-							basename)));
-	}
+	if (strspn(basename, "abcdefghijklmnopqrstuvwxyz0123456789_") != strlen(basename))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid text search configuration file name \"%s\"",
+						basename)));
 
 	get_share_path(my_exec_path, sharepath);
 	result = palloc(MAXPGPATH);
