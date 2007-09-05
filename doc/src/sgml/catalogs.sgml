@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.156 2007/09/03 00:39:11 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.157 2007/09/05 18:10:47 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -5147,7 +5147,7 @@
    There are several distinct types of lockable objects:
    whole relations (e.g., tables), individual pages of relations,
    individual tuples of relations,
-   transaction IDs,
+   transaction IDs (both virtual and permanent IDs),
    and general database objects (identified by class OID and object OID,
    in the same way as in <structname>pg_description</structname> or
    <structname>pg_depend</structname>).  Also, the right to extend a
@@ -5178,6 +5178,7 @@
        <literal>page</>,
        <literal>tuple</>,
        <literal>transactionid</>,
+       <literal>virtualxid</>,
        <literal>object</>,
        <literal>userlock</>, or
        <literal>advisory</>
@@ -5220,6 +5221,15 @@
       </entry>
      </row>
      <row>
+      <entry><structfield>virtualxid</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>
+       Virtual ID of a transaction, or NULL if the object is not a
+       virtual transaction ID
+      </entry>
+     </row>
+     <row>
       <entry><structfield>transactionid</structfield></entry>
       <entry><type>xid</type></entry>
       <entry></entry>
@@ -5257,11 +5267,11 @@
       </entry>
      </row>
      <row>
-      <entry><structfield>transaction</structfield></entry>
-      <entry><type>xid</type></entry>
+      <entry><structfield>virtualtransaction</structfield></entry>
+      <entry><type>text</type></entry>
       <entry></entry>
       <entry>
-       ID of the transaction that is holding or awaiting this lock
+       Virtual ID of the transaction that is holding or awaiting this lock
       </entry>
      </row>
      <row>
@@ -5301,10 +5311,14 @@
   </para>
 
   <para>
-   Every transaction holds an exclusive lock on its transaction ID for its
-   entire duration. If one transaction finds it necessary to wait specifically
+   Every transaction holds an exclusive lock on its virtual transaction ID for
+   its entire duration.  If a permanent ID is assigned to the transaction
+   (which normally happens only if the transaction changes the state of the
+   database), it also holds an exclusive lock on its permanent transaction ID
+   until it ends.  When one transaction finds it necessary to wait specifically
    for another transaction, it does so by attempting to acquire share lock on
-   the other transaction ID. That will succeed only when the other transaction
+   the other transaction ID (either virtual or permanent ID depending on the
+   situation). That will succeed only when the other transaction
    terminates and releases its locks. 
   </para>
 
@@ -5314,7 +5328,7 @@
    and therefore row-level locks normally do not appear in this view.
    If a transaction is waiting for a
    row-level lock, it will usually appear in the view as waiting for the
-   transaction ID of the current holder of that row lock.
+   permanent transaction ID of the current holder of that row lock.
   </para>
 
   <para>
@@ -5350,11 +5364,10 @@
   </para>
 
   <para>
-   If you have enabled the statistics collector, the
-   <structfield>pid</structfield> column can be joined to the
+   The <structfield>pid</structfield> column can be joined to the
    <structfield>procpid</structfield> column of the
    <structname>pg_stat_activity</structname> view to get more
-   information on the session holding or waiting to hold the lock.
+   information on the session holding or waiting to hold each lock.
    Also, if you are using prepared transactions, the
    <structfield>transaction</> column can be joined to the
    <structfield>transaction</structfield> column of the

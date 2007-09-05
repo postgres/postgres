@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.58 2007/06/19 20:13:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lmgr.h,v 1.59 2007/09/05 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,6 +54,11 @@ extern void XactLockTableInsert(TransactionId xid);
 extern void XactLockTableDelete(TransactionId xid);
 extern void XactLockTableWait(TransactionId xid);
 extern bool ConditionalXactLockTableWait(TransactionId xid);
+
+/* Lock a VXID (used to wait for a transaction to finish) */
+extern void VirtualXactLockTableInsert(VirtualTransactionId vxid);
+extern void VirtualXactLockTableWait(VirtualTransactionId vxid);
+extern bool ConditionalVirtualXactLockTableWait(VirtualTransactionId vxid);
 
 /* Lock a general object (other than a relation) of the current database */
 extern void LockDatabaseObject(Oid classid, Oid objid, uint16 objsubid,

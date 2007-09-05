@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.82 2007/08/01 22:45:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.83 2007/09/05 18:10:48 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -85,12 +85,6 @@ typedef struct XLogRecord
  */
 #define XLR_BKP_REMOVABLE		0x01
 
-/*
- * Sometimes we log records which are out of transaction control.
- * Rmgr may "or" XLOG_NO_TRAN into info passed to XLogInsert to indicate this.
- */
-#define XLOG_NO_TRAN			XLR_INFO_MASK
-
 /* Sync methods */
 #define SYNC_METHOD_FSYNC		0
 #define SYNC_METHOD_FDATASYNC	1
@@ -139,10 +133,7 @@ typedef struct XLogRecData
 
 extern TimeLineID ThisTimeLineID;		/* current TLI */
 extern bool InRecovery;
-extern XLogRecPtr MyLastRecPtr;
-extern bool MyXactMadeXLogEntry;
-extern bool MyXactMadeTempRelUpdate;
-extern XLogRecPtr ProcLastRecEnd;
+extern XLogRecPtr XactLastRecEnd;
 
 /* these variables are GUC parameters related to XLOG */
 extern int	CheckPointSegments;

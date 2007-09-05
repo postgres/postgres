@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.237 2007/08/14 17:35:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.238 2007/09/05 18:10:47 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1632,12 +1632,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid,
 	MarkBufferDirty(buffer);
 
 	/* XLOG stuff */
-	if (relation->rd_istemp)
-	{
-		/* No XLOG record, but still need to flag that XID exists on disk */
-		MyXactMadeTempRelUpdate = true;
-	}
-	else if (use_wal)
+	if (use_wal && !relation->rd_istemp)
 	{
 		xl_heap_insert xlrec;
 		xl_heap_header xlhdr;
@@ -1946,11 +1941,6 @@ l1:
 
 		PageSetLSN(dp, recptr);
 		PageSetTLI(dp, ThisTimeLineID);
-	}
-	else
-	{
-		/* No XLOG record, but still need to flag that XID exists on disk */
-		MyXactMadeTempRelUpdate = true;
 	}
 
 	END_CRIT_SECTION();
@@ -2402,11 +2392,6 @@ l2:
 		}
 		PageSetLSN(BufferGetPage(buffer), recptr);
 		PageSetTLI(BufferGetPage(buffer), ThisTimeLineID);
-	}
-	else
-	{
-		/* No XLOG record, but still need to flag that XID exists on disk */
-		MyXactMadeTempRelUpdate = true;
 	}
 
 	END_CRIT_SECTION();
@@ -2923,11 +2908,6 @@ l3:
 
 		PageSetLSN(dp, recptr);
 		PageSetTLI(dp, ThisTimeLineID);
-	}
-	else
-	{
-		/* No XLOG record, but still need to flag that XID exists on disk */
-		MyXactMadeTempRelUpdate = true;
 	}
 
 	END_CRIT_SECTION();

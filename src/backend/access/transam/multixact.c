@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.24 2007/08/01 22:45:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/multixact.c,v 1.25 2007/09/05 18:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1842,9 +1842,6 @@ MultiXactOffsetPrecedes(MultiXactOffset offset1, MultiXactOffset offset2)
 /*
  * Write an xlog record reflecting the zeroing of either a MEMBERs or
  * OFFSETs page (info shows which)
- *
- * Note: xlog record is marked as outside transaction control, since we
- * want it to be redone whether the invoking transaction commits or not.
  */
 static void
 WriteMZeroPageXlogRec(int pageno, uint8 info)
@@ -1855,7 +1852,7 @@ WriteMZeroPageXlogRec(int pageno, uint8 info)
 	rdata.len = sizeof(int);
 	rdata.buffer = InvalidBuffer;
 	rdata.next = NULL;
-	(void) XLogInsert(RM_MULTIXACT_ID, info | XLOG_NO_TRAN, &rdata);
+	(void) XLogInsert(RM_MULTIXACT_ID, info, &rdata);
 }
 
 /*

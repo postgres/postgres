@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.90 2007/05/30 20:11:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.91 2007/09/05 18:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -657,11 +657,6 @@ lazy_vacuum_page(Relation onerel, BlockNumber blkno, Buffer buffer,
 		recptr = log_heap_clean(onerel, buffer, unused, uncnt);
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
-	}
-	else
-	{
-		/* No XLOG record, but still need to flag that XID exists on disk */
-		MyXactMadeTempRelUpdate = true;
 	}
 
 	END_CRIT_SECTION();

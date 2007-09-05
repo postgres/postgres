@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.105 2007/07/20 16:29:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.106 2007/09/05 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -347,9 +347,8 @@ smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
 		return;
 
 	/*
-	 * Make a non-transactional XLOG entry showing the file creation. It's
-	 * non-transactional because we should replay it whether the transaction
-	 * commits or not; if not, the file will be dropped at abort time.
+	 * Make an XLOG entry showing the file creation.  If we abort, the file
+	 * will be dropped at abort time.
 	 */
 	xlrec.rnode = reln->smgr_rnode;
 
@@ -358,7 +357,7 @@ smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
 	rdata.buffer = InvalidBuffer;
 	rdata.next = NULL;
 
-	lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_CREATE | XLOG_NO_TRAN, &rdata);
+	lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_CREATE, &rdata);
 
 	/* Add the relation to the list of stuff to delete at abort */
 	pending = (PendingRelDelete *)
@@ -554,10 +553,7 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 	if (!isTemp)
 	{
 		/*
-		 * Make a non-transactional XLOG entry showing the file truncation.
-		 * It's non-transactional because we should replay it whether the
-		 * transaction commits or not; the underlying file change is certainly
-		 * not reversible.
+		 * Make an XLOG entry showing the file truncation.
 		 */
 		XLogRecPtr	lsn;
 		XLogRecData rdata;
@@ -571,8 +567,7 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 		rdata.buffer = InvalidBuffer;
 		rdata.next = NULL;
 
-		lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_TRUNCATE | XLOG_NO_TRAN,
-						 &rdata);
+		lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_TRUNCATE, &rdata);
 	}
 }
 
@@ -679,11 +674,14 @@ smgrDoPendingDeletes(bool isCommit)
  * *ptr is set to point to a freshly-palloc'd array of RelFileNodes.
  * If there are no relations to be deleted, *ptr is set to NULL.
  *
+ * If haveNonTemp isn't NULL, the bool it points to gets set to true if
+ * there is any non-temp table pending to be deleted; false if not.
+ *
  * Note that the list does not include anything scheduled for termination
  * by upper-level transactions.
  */
 int
-smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
+smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr, bool *haveNonTemp)
 {
 	int			nestLevel = GetCurrentTransactionNestLevel();
 	int			nrels;
@@ -691,6 +689,8 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
 	PendingRelDelete *pending;
 
 	nrels = 0;
+	if (haveNonTemp)
+		*haveNonTemp = false;
 	for (pending = pendingDeletes; pending != NULL; pending = pending->next)
 	{
 		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit)
@@ -707,6 +707,8 @@ smgrGetPendingDeletes(bool forCommit, RelFileNode **ptr)
 	{
 		if (pending->nestLevel >= nestLevel && pending->atCommit == forCommit)
 			*rptr++ = pending->relnode;
+		if (haveNonTemp && !pending->isTemp)
+			*haveNonTemp = true;
 	}
 	return nrels;
 }

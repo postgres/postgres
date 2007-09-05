@@ -338,7 +338,8 @@
 					#   %c = session id
 					#   %l = session line number
 					#   %s = session start timestamp
-					#   %x = transaction id
+					#   %v = virtual transaction id
+					#   %x = transaction id (0 if none)
 					#   %q = stop here in non-session 
 					#        processes
 					#   %% = '%'

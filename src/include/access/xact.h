@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.88 2007/08/01 22:45:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.89 2007/09/05 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,6 +139,7 @@ typedef struct xl_xact_abort_prepared
 extern bool IsTransactionState(void);
 extern bool IsAbortedTransactionBlockState(void);
 extern TransactionId GetTopTransactionId(void);
+extern TransactionId GetTopTransactionIdIfAny(void);
 extern TransactionId GetCurrentTransactionId(void);
 extern TransactionId GetCurrentTransactionIdIfAny(void);
 extern SubTransactionId GetCurrentSubTransactionId(void);

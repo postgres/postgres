@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.106 2007/06/19 20:13:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/lock.h,v 1.107 2007/09/05 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define LOCK_H_
 
 #include "nodes/pg_list.h"
+#include "storage/backendid.h"
 #include "storage/itemptr.h"
 #include "storage/lwlock.h"
 #include "storage/shmem.h"
@@ -39,6 +40,37 @@ extern bool Trace_userlocks;
 extern int	Trace_lock_table;
 extern bool Debug_deadlocks;
 #endif   /* LOCK_DEBUG */
+
+
+/*
+ * Top-level transactions are identified by VirtualTransactionIDs comprising
+ * the BackendId of the backend running the xact, plus a locally-assigned
+ * LocalTransactionId.  These are guaranteed unique over the short term,
+ * but will be reused after a database restart; hence they should never
+ * be stored on disk.
+ *
+ * Note that struct VirtualTransactionId can not be assumed to be atomically
+ * assignable as a whole.  However, type LocalTransactionId is assumed to
+ * be atomically assignable, and the backend ID doesn't change often enough
+ * to be a problem, so we can fetch or assign the two fields separately.
+ * We deliberately refrain from using the struct within PGPROC, to prevent
+ * coding errors from trying to use struct assignment with it; instead use
+ * GET_VXID_FROM_PGPROC().
+ */
+typedef struct
+{
+	BackendId	backendId;		/* determined at backend startup */
+	LocalTransactionId localTransactionId;	/* backend-local transaction id */
+} VirtualTransactionId;
+
+#define InvalidLocalTransactionId		0
+#define LocalTransactionIdIsValid(lxid)	((lxid) != InvalidLocalTransactionId)
+#define VirtualTransactionIdIsValid(vxid) \
+	(((vxid).backendId != InvalidBackendId) && \
+	 LocalTransactionIdIsValid((vxid).localTransactionId))
+#define GET_VXID_FROM_PGPROC(vxid, proc) \
+	((vxid).backendId = (proc).backendId, \
+	 (vxid).localTransactionId = (proc).lxid)
 
 
 /*
@@ -139,6 +171,8 @@ typedef enum LockTagType
 	/* ID info for a tuple is PAGE info + OffsetNumber */
 	LOCKTAG_TRANSACTION,		/* transaction (for waiting for xact done) */
 	/* ID info for a transaction is its TransactionId */
+	LOCKTAG_VIRTUALTRANSACTION,	/* virtual transaction (ditto) */
+	/* ID info for a virtual transaction is its VirtualTransactionId */
 	LOCKTAG_OBJECT,				/* non-relation database object */
 	/* ID info for an object is DB OID + CLASS OID + OBJECT OID + SUBID */
 
@@ -212,6 +246,14 @@ typedef struct LOCKTAG
 	 (locktag).locktag_field3 = 0, \
 	 (locktag).locktag_field4 = 0, \
 	 (locktag).locktag_type = LOCKTAG_TRANSACTION, \
+	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
+
+#define SET_LOCKTAG_VIRTUALTRANSACTION(locktag,vxid) \
+	((locktag).locktag_field1 = (vxid).backendId, \
+	 (locktag).locktag_field2 = (vxid).localTransactionId, \
+	 (locktag).locktag_field3 = 0, \
+	 (locktag).locktag_field4 = 0, \
+	 (locktag).locktag_type = LOCKTAG_VIRTUALTRANSACTION, \
 	 (locktag).locktag_lockmethodid = DEFAULT_LOCKMETHOD)
 
 #define SET_LOCKTAG_OBJECT(locktag,dboid,classoid,objoid,objsubid) \
@@ -431,7 +473,8 @@ extern bool LockRelease(const LOCKTAG *locktag,
 extern void LockReleaseAll(LOCKMETHODID lockmethodid, bool allLocks);
 extern void LockReleaseCurrentOwner(void);
 extern void LockReassignCurrentOwner(void);
-extern List *GetLockConflicts(const LOCKTAG *locktag, LOCKMODE lockmode);
+extern VirtualTransactionId *GetLockConflicts(const LOCKTAG *locktag,
+											  LOCKMODE lockmode);
 extern void AtPrepare_Locks(void);
 extern void PostPrepare_Locks(TransactionId xid);
 extern int LockCheckConflicts(LockMethod lockMethodTable,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.143 2007/02/01 19:10:26 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.144 2007/09/05 18:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "commands/tablecmds.h"
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
+#include "storage/proc.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
@@ -63,7 +64,7 @@ typedef struct SeqTableData
 {
 	struct SeqTableData *next;	/* link to next SeqTable object */
 	Oid			relid;			/* pg_class OID of this sequence */
-	TransactionId xid;			/* xact in which we last did a seq op */
+	LocalTransactionId lxid;	/* xact in which we last did a seq op */
 	int64		last;			/* value last returned by nextval */
 	int64		cached;			/* last value already cached for nextval */
 	/* if last != cached, we have not used up all the cached values */
@@ -282,7 +283,7 @@ DefineSequence(CreateSeqStmt *seq)
 		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
 
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG, rdata);
 
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
@@ -366,7 +367,7 @@ AlterSequence(AlterSeqStmt *stmt)
 		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
 
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG, rdata);
 
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
@@ -594,7 +595,7 @@ nextval_internal(Oid relid)
 		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
 
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG, rdata);
 
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
@@ -764,7 +765,7 @@ do_setval(Oid relid, int64 next, bool iscalled)
 		rdata[1].buffer = InvalidBuffer;
 		rdata[1].next = NULL;
 
-		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG | XLOG_NO_TRAN, rdata);
+		recptr = XLogInsert(RM_SEQ_ID, XLOG_SEQ_LOG, rdata);
 
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
@@ -825,10 +826,10 @@ setval3_oid(PG_FUNCTION_ARGS)
 static Relation
 open_share_lock(SeqTable seq)
 {
-	TransactionId thisxid = GetTopTransactionId();
+	LocalTransactionId thislxid = MyProc->lxid;
 
 	/* Get the lock if not already held in this xact */
-	if (seq->xid != thisxid)
+	if (seq->lxid != thislxid)
 	{
 		ResourceOwner currentOwner;
 
@@ -848,7 +849,7 @@ open_share_lock(SeqTable seq)
 		CurrentResourceOwner = currentOwner;
 
 		/* Flag that we have a lock in the current xact */
-		seq->xid = thisxid;
+		seq->lxid = thislxid;
 	}
 
 	/* We now know we have AccessShareLock, and can safely open the rel */
@@ -891,7 +892,7 @@ init_sequence(Oid relid, SeqTable *p_elm, Relation *p_rel)
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 		elm->relid = relid;
-		elm->xid = InvalidTransactionId;
+		elm->lxid = InvalidLocalTransactionId;
 		/* increment is set to 0 until we do read_info (see currval) */
 		elm->last = elm->cached = elm->increment = 0;
 		elm->next = seqtab;

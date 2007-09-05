@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.6 2007/08/01 22:45:07 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.7 2007/09/05 18:10:47 tgl Exp $
 
 The Transaction System
 ----------------------
@@ -187,16 +187,29 @@ Another difference is that BeginInternalSubtransaction is allowed when no
 explicit transaction block has been established, while DefineSavepoint is not.
 
 
-Subtransaction numbering
-------------------------
+Transaction and subtransaction numbering
+----------------------------------------
 
-A top-level transaction is always given a TransactionId (XID) as soon as it is
-created.  This is necessary for a number of reasons, notably XMIN bookkeeping
-for VACUUM.  However, a subtransaction doesn't need its own XID unless it
-(or one of its child subxacts) writes tuples into the database.  Therefore,
-we postpone assigning XIDs to subxacts until and unless they call
-GetCurrentTransactionId.  The subsidiary actions of obtaining a lock on the
-XID and and entering it into pg_subtrans and PG_PROC are done at the same time.
+Transactions and subtransactions are assigned permanent XIDs only when/if
+they first do something that requires one --- typically, insert/update/delete
+a tuple, though there are a few other places that need an XID assigned.
+If a subtransaction requires an XID, we always first assign one to its
+parent.  This maintains the invariant that child transactions have XIDs later
+than their parents, which is assumed in a number of places.
+
+The subsidiary actions of obtaining a lock on the XID and and entering it into
+pg_subtrans and PG_PROC are done at the time it is assigned.
+
+A transaction that has no XID still needs to be identified for various
+purposes, notably holding locks.  For this purpose we assign a "virtual
+transaction ID" or VXID to each top-level transaction.  VXIDs are formed from
+two fields, the backendID and a backend-local counter; this arrangement allows
+assignment of a new VXID at transaction start without any contention for
+shared memory.  To ensure that a VXID isn't re-used too soon after backend
+exit, we store the last local counter value into shared memory at backend
+exit, and initialize it from the previous value for the same backendID slot
+at backend start.  All these counters go back to zero at shared memory
+re-initialization, but that's OK because VXIDs never appear anywhere on-disk.
 
 Internally, a backend needs a way to identify subtransactions whether or not
 they have XIDs; but this need only lasts as long as the parent top transaction
@@ -204,7 +217,8 @@ endures.  Therefore, we have SubTransactionId, which is somewhat like
 CommandId in that it's generated from a counter that we reset at the start of
 each top transaction.  The top-level transaction itself has SubTransactionId 1,
 and subtransactions have IDs 2 and up.  (Zero is reserved for
-InvalidSubTransactionId.)
+InvalidSubTransactionId.)  Note that subtransactions do not have their
+own VXIDs; they use the parent top transaction's VXID.
 
 
 pg_clog and pg_subtrans

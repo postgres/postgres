@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.92 2007/07/25 22:16:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/lmgr.c,v 1.93 2007/09/05 18:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -421,8 +421,8 @@ UnlockTuple(Relation relation, ItemPointer tid, LOCKMODE lockmode)
  *		XactLockTableInsert
  *
  * Insert a lock showing that the given transaction ID is running ---
- * this is done during xact startup.  The lock can then be used to wait
- * for the transaction to finish.
+ * this is done when an XID is acquired by a transaction or subtransaction.
+ * The lock can then be used to wait for the transaction to finish.
  */
 void
 XactLockTableInsert(TransactionId xid)
@@ -439,8 +439,7 @@ XactLockTableInsert(TransactionId xid)
  *
  * Delete the lock showing that the given transaction ID is running.
  * (This is never used for main transaction IDs; those locks are only
- * released implicitly at transaction end.	But we do use it for subtrans
- * IDs.)
+ * released implicitly at transaction end.	But we do use it for subtrans IDs.)
  */
 void
 XactLockTableDelete(TransactionId xid)
@@ -472,7 +471,7 @@ XactLockTableWait(TransactionId xid)
 	for (;;)
 	{
 		Assert(TransactionIdIsValid(xid));
-		Assert(!TransactionIdEquals(xid, GetTopTransactionId()));
+		Assert(!TransactionIdEquals(xid, GetTopTransactionIdIfAny()));
 
 		SET_LOCKTAG_TRANSACTION(tag, xid);
 
@@ -500,7 +499,7 @@ ConditionalXactLockTableWait(TransactionId xid)
 	for (;;)
 	{
 		Assert(TransactionIdIsValid(xid));
-		Assert(!TransactionIdEquals(xid, GetTopTransactionId()));
+		Assert(!TransactionIdEquals(xid, GetTopTransactionIdIfAny()));
 
 		SET_LOCKTAG_TRANSACTION(tag, xid);
 
@@ -516,6 +515,70 @@ ConditionalXactLockTableWait(TransactionId xid)
 
 	return true;
 }
+
+
+/*
+ * 		VirtualXactLockTableInsert
+ *
+ * Insert a lock showing that the given virtual transaction ID is running ---
+ * this is done at main transaction start when its VXID is assigned.
+ * The lock can then be used to wait for the transaction to finish.
+ */
+void
+VirtualXactLockTableInsert(VirtualTransactionId vxid)
+{
+	LOCKTAG		tag;
+
+	Assert(VirtualTransactionIdIsValid(vxid));
+
+	SET_LOCKTAG_VIRTUALTRANSACTION(tag, vxid);
+
+	(void) LockAcquire(&tag, ExclusiveLock, false, false);
+}
+
+/*
+ * 		VirtualXactLockTableWait
+ *
+ * Waits until the lock on the given VXID is released, which shows that
+ * the top-level transaction owning the VXID has ended.
+ */
+void
+VirtualXactLockTableWait(VirtualTransactionId vxid)
+{
+	LOCKTAG		tag;
+
+	Assert(VirtualTransactionIdIsValid(vxid));
+
+	SET_LOCKTAG_VIRTUALTRANSACTION(tag, vxid);
+
+	(void) LockAcquire(&tag, ShareLock, false, false);
+
+	LockRelease(&tag, ShareLock, false);
+}
+
+/*
+ * 		ConditionalVirtualXactLockTableWait
+ *
+ * As above, but only lock if we can get the lock without blocking.
+ * Returns TRUE if the lock was acquired.
+ */
+bool
+ConditionalVirtualXactLockTableWait(VirtualTransactionId vxid)
+{
+	LOCKTAG		tag;
+
+	Assert(VirtualTransactionIdIsValid(vxid));
+
+	SET_LOCKTAG_VIRTUALTRANSACTION(tag, vxid);
+
+	if (LockAcquire(&tag, ShareLock, false, true) == LOCKACQUIRE_NOT_AVAIL)
+		return false;
+
+	LockRelease(&tag, ShareLock, false);
+
+	return true;
+}
+
 
 /*
  *		LockDatabaseObject

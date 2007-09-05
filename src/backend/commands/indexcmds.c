@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.162 2007/08/25 19:08:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.163 2007/09/05 18:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parsetree.h"
+#include "storage/procarray.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -126,9 +127,8 @@ DefineIndex(RangeVar *heapRelation,
 	int16	   *coloptions;
 	IndexInfo  *indexInfo;
 	int			numberOfAttributes;
-	List	   *old_xact_list;
-	ListCell   *lc;
-	uint32		ixcnt;
+	VirtualTransactionId *old_lockholders;
+	VirtualTransactionId *old_snapshots;
 	LockRelId	heaprelid;
 	LOCKTAG		heaplocktag;
 	Snapshot	snapshot;
@@ -484,24 +484,36 @@ DefineIndex(RangeVar *heapRelation,
 	 * xacts that open the table for writing after this point; they will see
 	 * the new index when they open it.
 	 *
+	 * Note: the reason we use actual lock acquisition here, rather than
+	 * just checking the ProcArray and sleeping, is that deadlock is possible
+	 * if one of the transactions in question is blocked trying to acquire
+	 * an exclusive lock on our table.  The lock code will detect deadlock
+	 * and error out properly.
+	 *
 	 * Note: GetLockConflicts() never reports our own xid, hence we need not
-	 * check for that.
+	 * check for that.  Also, prepared xacts are not reported, which is
+	 * fine since they certainly aren't going to do anything more.
 	 */
 	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
-	old_xact_list = GetLockConflicts(&heaplocktag, ShareLock);
+	old_lockholders = GetLockConflicts(&heaplocktag, ShareLock);
 
-	foreach(lc, old_xact_list)
+	while (VirtualTransactionIdIsValid(*old_lockholders))
 	{
-		TransactionId xid = lfirst_xid(lc);
-
-		XactLockTableWait(xid);
+		VirtualXactLockTableWait(*old_lockholders);
+		old_lockholders++;
 	}
 
 	/*
 	 * Now take the "reference snapshot" that will be used by validate_index()
-	 * to filter candidate tuples.	All other transactions running at this
-	 * time will have to be out-waited before we can commit, because we can't
-	 * guarantee that tuples deleted just before this will be in the index.
+	 * to filter candidate tuples.  Beware!  There might be still snapshots
+	 * in use that treat some transaction as in-progress that our reference
+	 * snapshot treats as committed.  If such a recently-committed transaction
+	 * deleted tuples in the table, we will not include them in the index; yet
+	 * those transactions which see the deleting one as still-in-progress will
+	 * expect them to be there once we mark the index as valid.
+	 *
+	 * We solve this by waiting for all endangered transactions to exit before
+	 * we mark the index as valid.
 	 *
 	 * We also set ActiveSnapshot to this snap, since functions in indexes may
 	 * need a snapshot.
@@ -518,14 +530,21 @@ DefineIndex(RangeVar *heapRelation,
 	 * The index is now valid in the sense that it contains all currently
 	 * interesting tuples.	But since it might not contain tuples deleted just
 	 * before the reference snap was taken, we have to wait out any
-	 * transactions older than the reference snap.	We can do this by waiting
-	 * for each xact explicitly listed in the snap.
+	 * transactions that might have older snapshots.  Obtain a list of
+	 * VXIDs of such transactions, and wait for them individually.
 	 *
-	 * Note: GetSnapshotData() never stores our own xid into a snap, hence we
-	 * need not check for that.
+	 * We can exclude any running transactions that have xmin >= the xmax of
+	 * our reference snapshot, since they are clearly not interested in any
+	 * missing older tuples.  Also, GetCurrentVirtualXIDs never reports our
+	 * own vxid, so we need not check for that.
 	 */
-	for (ixcnt = 0; ixcnt < snapshot->xcnt; ixcnt++)
-		XactLockTableWait(snapshot->xip[ixcnt]);
+	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax);
+
+	while (VirtualTransactionIdIsValid(*old_snapshots))
+	{
+		VirtualXactLockTableWait(*old_snapshots);
+		old_snapshots++;
+	}
 
 	/*
 	 * Index can now be marked valid -- update its pg_index entry

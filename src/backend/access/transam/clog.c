@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.43 2007/08/01 22:45:07 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/clog.c,v 1.44 2007/09/05 18:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,10 +423,6 @@ CLOGPagePrecedes(int page1, int page2)
 
 /*
  * Write a ZEROPAGE xlog record
- *
- * Note: xlog record is marked as outside transaction control, since we
- * want it to be redone whether the invoking transaction commits or not.
- * (Besides which, this is normally done just before entering a transaction.)
  */
 static void
 WriteZeroPageXlogRec(int pageno)
@@ -437,7 +433,7 @@ WriteZeroPageXlogRec(int pageno)
 	rdata.len = sizeof(int);
 	rdata.buffer = InvalidBuffer;
 	rdata.next = NULL;
-	(void) XLogInsert(RM_CLOG_ID, CLOG_ZEROPAGE | XLOG_NO_TRAN, &rdata);
+	(void) XLogInsert(RM_CLOG_ID, CLOG_ZEROPAGE, &rdata);
 }
 
 /*
@@ -445,9 +441,6 @@ WriteZeroPageXlogRec(int pageno)
  *
  * We must flush the xlog record to disk before returning --- see notes
  * in TruncateCLOG().
- *
- * Note: xlog record is marked as outside transaction control, since we
- * want it to be redone whether the invoking transaction commits or not.
  */
 static void
 WriteTruncateXlogRec(int pageno)
@@ -459,7 +452,7 @@ WriteTruncateXlogRec(int pageno)
 	rdata.len = sizeof(int);
 	rdata.buffer = InvalidBuffer;
 	rdata.next = NULL;
-	recptr = XLogInsert(RM_CLOG_ID, CLOG_TRUNCATE | XLOG_NO_TRAN, &rdata);
+	recptr = XLogInsert(RM_CLOG_ID, CLOG_TRUNCATE, &rdata);
 	XLogFlush(recptr);
 }
 

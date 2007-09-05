@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.32 2007/08/01 22:45:07 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.33 2007/09/05 18:10:47 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -274,9 +274,11 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 	MemSet(&gxact->proc, 0, sizeof(PGPROC));
 	SHMQueueElemInit(&(gxact->proc.links));
 	gxact->proc.waitStatus = STATUS_OK;
+	gxact->proc.lxid = InvalidLocalTransactionId;
 	gxact->proc.xid = xid;
 	gxact->proc.xmin = InvalidTransactionId;
 	gxact->proc.pid = 0;
+	gxact->proc.backendId = InvalidBackendId;
 	gxact->proc.databaseId = databaseid;
 	gxact->proc.roleId = owner;
 	gxact->proc.inCommit = false;
@@ -813,8 +815,8 @@ StartPrepare(GlobalTransaction gxact)
 	hdr.prepared_at = gxact->prepared_at;
 	hdr.owner = gxact->owner;
 	hdr.nsubxacts = xactGetCommittedChildren(&children);
-	hdr.ncommitrels = smgrGetPendingDeletes(true, &commitrels);
-	hdr.nabortrels = smgrGetPendingDeletes(false, &abortrels);
+	hdr.ncommitrels = smgrGetPendingDeletes(true, &commitrels, NULL);
+	hdr.nabortrels = smgrGetPendingDeletes(false, &abortrels, NULL);
 	StrNCpy(hdr.gid, gxact->gid, GIDSIZE);
 
 	save_state_data(&hdr, sizeof(TwoPhaseFileHeader));
@@ -1702,9 +1704,7 @@ RecordTransactionCommitPrepared(TransactionId xid,
 	}
 	rdata[lastrdata].next = NULL;
 
-	recptr = XLogInsert(RM_XACT_ID,
-						XLOG_XACT_COMMIT_PREPARED | XLOG_NO_TRAN,
-						rdata);
+	recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT_PREPARED, rdata);
 
 	/*
 	 * We don't currently try to sleep before flush here ... nor is there
@@ -1784,9 +1784,7 @@ RecordTransactionAbortPrepared(TransactionId xid,
 	}
 	rdata[lastrdata].next = NULL;
 
-	recptr = XLogInsert(RM_XACT_ID,
-						XLOG_XACT_ABORT_PREPARED | XLOG_NO_TRAN,
-						rdata);
+	recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_ABORT_PREPARED, rdata);
 
 	/* Always flush, since we're about to remove the 2PC state file */
 	XLogFlush(recptr);

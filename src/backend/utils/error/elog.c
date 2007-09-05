@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.195 2007/08/23 01:24:43 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.196 2007/09/05 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,7 @@
 #include "postmaster/postmaster.h"
 #include "postmaster/syslogger.h"
 #include "storage/ipc.h"
+#include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
@@ -1592,9 +1593,14 @@ log_line_prefix(StringInfo buf)
 				if (MyProcPort == NULL)
 					i = format_len;
 				break;
+			case 'v':
+				/* keep VXID format in sync with lockfuncs.c */
+				if (MyProc != NULL)
+					appendStringInfo(buf, "%d/%u",
+									 MyProc->backendId, MyProc->lxid);
+				break;
 			case 'x':
-				if (MyProcPort)
-					appendStringInfo(buf, "%u", GetTopTransactionId());
+				appendStringInfo(buf, "%u", GetTopTransactionIdIfAny());
 				break;
 			case '%':
 				appendStringInfoChar(buf, '%');
@@ -1785,15 +1791,8 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoString(&buf, formatted_start_time);
 	appendStringInfoChar(&buf, ',');
 
-
 	/* Transaction id */
-	if (MyProcPort)
-	{
-		if (IsTransactionState())
-			appendStringInfo(&buf, "%u", GetTopTransactionId());
-		else
-			appendStringInfo(&buf, "%u", InvalidTransactionId);
-	}
+	appendStringInfo(&buf, "%u", GetTopTransactionIdIfAny());
 
 	appendStringInfoChar(&buf, ',');
 

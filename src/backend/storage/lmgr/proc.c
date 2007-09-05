@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.192 2007/08/28 03:23:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.193 2007/09/05 18:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,10 +282,12 @@ InitProcess(void)
 	 */
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
+	MyProc->lxid = InvalidLocalTransactionId;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->pid = MyProcPid;
-	/* databaseId and roleId will be filled in later */
+	/* backendId, databaseId and roleId will be filled in later */
+	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->inCommit = false;
@@ -359,7 +361,9 @@ InitProcessPhase2(void)
  *
  * Auxiliary processes are presently not expected to wait for real (lockmgr)
  * locks, so we need not set up the deadlock checker.  They are never added
- * to the ProcArray or the sinval messaging mechanism, either.
+ * to the ProcArray or the sinval messaging mechanism, either.  They also
+ * don't get a VXID assigned, since this is only useful when we actually
+ * hold lockmgr locks.
  */
 void
 InitAuxiliaryProcess(void)
@@ -418,8 +422,10 @@ InitAuxiliaryProcess(void)
 	 */
 	SHMQueueElemInit(&(MyProc->links));
 	MyProc->waitStatus = STATUS_OK;
+	MyProc->lxid = InvalidLocalTransactionId;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
+	MyProc->backendId = InvalidBackendId;
 	MyProc->databaseId = InvalidOid;
 	MyProc->roleId = InvalidOid;
 	MyProc->inCommit = false;

@@ -6,7 +6,7 @@
  * Copyright (c) 2002-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.28 2007/01/05 22:19:41 momjian Exp $
+ *		$PostgreSQL: pgsql/src/backend/utils/adt/lockfuncs.c,v 1.29 2007/09/05 18:10:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@ static const char *const LockTagTypeNames[] = {
 	"page",
 	"tuple",
 	"transactionid",
+	"virtualxid",
 	"object",
 	"userlock",
 	"advisory"
@@ -38,6 +39,27 @@ typedef struct
 	LockData   *lockData;		/* state data from lmgr */
 	int			currIdx;		/* current PROCLOCK index */
 } PG_Lock_Status;
+
+
+/*
+ * VXIDGetDatum - Construct a text representation of a VXID
+ *
+ * This is currently only used in pg_lock_status, so we put it here.
+ */
+static Datum
+VXIDGetDatum(BackendId bid, LocalTransactionId lxid)
+{
+	/*
+	 * The representation is "<bid>/<lxid>", decimal and unsigned decimal
+	 * respectively.  Note that elog.c also knows how to format a vxid.
+	 */
+	char vxidstr[32];
+
+	snprintf(vxidstr, sizeof(vxidstr), "%d/%u", bid, lxid);
+
+	return DirectFunctionCall1(textin, CStringGetDatum(vxidstr));
+}
+
 
 /*
  * pg_lock_status - produce a view with one row per held or awaited lock mode
@@ -64,7 +86,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 
 		/* build tupdesc for result tuples */
 		/* this had better match pg_locks view in system_views.sql */
-		tupdesc = CreateTemplateTupleDesc(13, false);
+		tupdesc = CreateTemplateTupleDesc(14, false);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "locktype",
 						   TEXTOID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "database",
@@ -75,21 +97,23 @@ pg_lock_status(PG_FUNCTION_ARGS)
 						   INT4OID, -1, 0);
 		TupleDescInitEntry(tupdesc, (AttrNumber) 5, "tuple",
 						   INT2OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "transactionid",
-						   XIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "classid",
-						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "objid",
-						   OIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "objsubid",
-						   INT2OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "transaction",
-						   XIDOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "pid",
-						   INT4OID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "mode",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 6, "virtualxid",
 						   TEXTOID, -1, 0);
-		TupleDescInitEntry(tupdesc, (AttrNumber) 13, "granted",
+		TupleDescInitEntry(tupdesc, (AttrNumber) 7, "transactionid",
+						   XIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 8, "classid",
+						   OIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 9, "objid",
+						   OIDOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 10, "objsubid",
+						   INT2OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 11, "virtualtransaction",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 12, "pid",
+						   INT4OID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 13, "mode",
+						   TEXTOID, -1, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 14, "granted",
 						   BOOLOID, -1, 0);
 
 		funcctx->tuple_desc = BlessTupleDesc(tupdesc);
@@ -120,8 +144,8 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		LOCKMODE	mode = 0;
 		const char *locktypename;
 		char		tnbuf[32];
-		Datum		values[13];
-		char		nulls[13];
+		Datum		values[14];
+		char		nulls[14];
 		HeapTuple	tuple;
 		Datum		result;
 
@@ -193,7 +217,6 @@ pg_lock_status(PG_FUNCTION_ARGS)
 		values[0] = DirectFunctionCall1(textin,
 										CStringGetDatum(locktypename));
 
-
 		switch (lock->tag.locktag_type)
 		{
 			case LOCKTAG_RELATION:
@@ -206,6 +229,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[6] = 'n';
 				nulls[7] = 'n';
 				nulls[8] = 'n';
+				nulls[9] = 'n';
 				break;
 			case LOCKTAG_PAGE:
 				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
@@ -216,6 +240,7 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[6] = 'n';
 				nulls[7] = 'n';
 				nulls[8] = 'n';
+				nulls[9] = 'n';
 				break;
 			case LOCKTAG_TUPLE:
 				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
@@ -226,9 +251,22 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[6] = 'n';
 				nulls[7] = 'n';
 				nulls[8] = 'n';
+				nulls[9] = 'n';
 				break;
 			case LOCKTAG_TRANSACTION:
-				values[5] = TransactionIdGetDatum(lock->tag.locktag_field1);
+				values[6] = TransactionIdGetDatum(lock->tag.locktag_field1);
+				nulls[1] = 'n';
+				nulls[2] = 'n';
+				nulls[3] = 'n';
+				nulls[4] = 'n';
+				nulls[5] = 'n';
+				nulls[7] = 'n';
+				nulls[8] = 'n';
+				nulls[9] = 'n';
+				break;
+			case LOCKTAG_VIRTUALTRANSACTION:
+				values[5] = VXIDGetDatum(lock->tag.locktag_field1,
+										 lock->tag.locktag_field2);
 				nulls[1] = 'n';
 				nulls[2] = 'n';
 				nulls[3] = 'n';
@@ -236,31 +274,33 @@ pg_lock_status(PG_FUNCTION_ARGS)
 				nulls[6] = 'n';
 				nulls[7] = 'n';
 				nulls[8] = 'n';
+				nulls[9] = 'n';
 				break;
 			case LOCKTAG_OBJECT:
 			case LOCKTAG_USERLOCK:
 			case LOCKTAG_ADVISORY:
 			default:			/* treat unknown locktags like OBJECT */
 				values[1] = ObjectIdGetDatum(lock->tag.locktag_field1);
-				values[6] = ObjectIdGetDatum(lock->tag.locktag_field2);
-				values[7] = ObjectIdGetDatum(lock->tag.locktag_field3);
-				values[8] = Int16GetDatum(lock->tag.locktag_field4);
+				values[7] = ObjectIdGetDatum(lock->tag.locktag_field2);
+				values[8] = ObjectIdGetDatum(lock->tag.locktag_field3);
+				values[9] = Int16GetDatum(lock->tag.locktag_field4);
 				nulls[2] = 'n';
 				nulls[3] = 'n';
 				nulls[4] = 'n';
 				nulls[5] = 'n';
+				nulls[6] = 'n';
 				break;
 		}
 
-		values[9] = TransactionIdGetDatum(proc->xid);
+		values[10] = VXIDGetDatum(proc->backendId, proc->lxid);
 		if (proc->pid != 0)
-			values[10] = Int32GetDatum(proc->pid);
+			values[11] = Int32GetDatum(proc->pid);
 		else
-			nulls[10] = 'n';
-		values[11] = DirectFunctionCall1(textin,
+			nulls[11] = 'n';
+		values[12] = DirectFunctionCall1(textin,
 					  CStringGetDatum(GetLockmodeName(LOCK_LOCKMETHOD(*lock),
 													  mode)));
-		values[12] = BoolGetDatum(granted);
+		values[13] = BoolGetDatum(granted);
 
 		tuple = heap_formtuple(funcctx->tuple_desc, values, nulls);
 		result = HeapTupleGetDatum(tuple);

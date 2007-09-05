@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.279 2007/08/28 23:17:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.280 2007/09/05 18:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,37 +155,15 @@ static List *expectedTLIs;
 static TimeLineID curFileTLI;
 
 /*
- * MyLastRecPtr points to the start of the last XLOG record inserted by the
- * current transaction.  If MyLastRecPtr.xrecoff == 0, then the current
- * xact hasn't yet inserted any transaction-controlled XLOG records.
- *
- * Note that XLOG records inserted outside transaction control are not
- * reflected into MyLastRecPtr.  They do, however, cause MyXactMadeXLogEntry
- * to be set true.	The latter can be used to test whether the current xact
- * made any loggable changes (including out-of-xact changes, such as
- * sequence updates).
- *
- * When we insert/update/delete a tuple in a temporary relation, we do not
- * make any XLOG record, since we don't care about recovering the state of
- * the temp rel after a crash.	However, we will still need to remember
- * whether our transaction committed or aborted in that case.  So, we must
- * set MyXactMadeTempRelUpdate true to indicate that the XID will be of
- * interest later.
- */
-XLogRecPtr	MyLastRecPtr = {0, 0};
-
-bool		MyXactMadeXLogEntry = false;
-
-bool		MyXactMadeTempRelUpdate = false;
-
-/*
  * ProcLastRecPtr points to the start of the last XLOG record inserted by the
- * current backend.  It is updated for all inserts, transaction-controlled
- * or not.	ProcLastRecEnd is similar but points to end+1 of last record.
+ * current backend.  It is updated for all inserts.  XactLastRecEnd points to
+ * end+1 of the last record, and is reset when we end a top-level transaction,
+ * or start a new one; so it can be used to tell if the current transaction has
+ * created any XLOG records.
  */
 static XLogRecPtr ProcLastRecPtr = {0, 0};
 
-XLogRecPtr	ProcLastRecEnd = {0, 0};
+XLogRecPtr	XactLastRecEnd = {0, 0};
 
 /*
  * RedoRecPtr is this backend's local copy of the REDO record pointer
@@ -488,15 +466,10 @@ XLogInsert(RmgrId rmid, uint8 info, XLogRecData *rdata)
 	bool		updrqst;
 	bool		doPageWrites;
 	bool		isLogSwitch = (rmid == RM_XLOG_ID && info == XLOG_SWITCH);
-	bool		no_tran = (rmid == RM_XLOG_ID);
 
+	/* info's high bits are reserved for use by me */
 	if (info & XLR_INFO_MASK)
-	{
-		if ((info & XLR_INFO_MASK) != XLOG_NO_TRAN)
-			elog(PANIC, "invalid xlog info mask %02X", (info & XLR_INFO_MASK));
-		no_tran = true;
-		info &= ~XLR_INFO_MASK;
-	}
+		elog(PANIC, "invalid xlog info mask %02X", info);
 
 	/*
 	 * In bootstrap mode, we don't actually log anything but XLOG resources;
@@ -856,11 +829,8 @@ begin:;
 #endif
 
 	/* Record begin of record in appropriate places */
-	if (!no_tran)
-		MyLastRecPtr = RecPtr;
 	ProcLastRecPtr = RecPtr;
 	Insert->PrevRecord = RecPtr;
-	MyXactMadeXLogEntry = true;
 
 	Insert->currpos += SizeOfXLogRecord;
 	freespace -= SizeOfXLogRecord;
@@ -1018,7 +988,7 @@ begin:;
 		SpinLockRelease(&xlogctl->info_lck);
 	}
 
-	ProcLastRecEnd = RecPtr;
+	XactLastRecEnd = RecPtr;
 
 	END_CRIT_SECTION();
 

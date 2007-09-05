@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.355 2007/08/13 19:08:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.356 2007/09/05 18:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2601,14 +2601,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				PageSetLSN(page, recptr);
 				PageSetTLI(page, ThisTimeLineID);
 			}
-			else
-			{
-				/*
-				 * No XLOG record, but still need to flag that XID exists on
-				 * disk
-				 */
-				MyXactMadeTempRelUpdate = true;
-			}
 
 			END_CRIT_SECTION();
 
@@ -2761,13 +2753,6 @@ move_chain_tuple(Relation rel,
 		PageSetLSN(dst_page, recptr);
 		PageSetTLI(dst_page, ThisTimeLineID);
 	}
-	else
-	{
-		/*
-		 * No XLOG record, but still need to flag that XID exists on disk
-		 */
-		MyXactMadeTempRelUpdate = true;
-	}
 
 	END_CRIT_SECTION();
 
@@ -2867,13 +2852,6 @@ move_plain_tuple(Relation rel,
 		PageSetTLI(old_page, ThisTimeLineID);
 		PageSetLSN(dst_page, recptr);
 		PageSetTLI(dst_page, ThisTimeLineID);
-	}
-	else
-	{
-		/*
-		 * No XLOG record, but still need to flag that XID exists on disk
-		 */
-		MyXactMadeTempRelUpdate = true;
 	}
 
 	END_CRIT_SECTION();
@@ -3069,11 +3047,6 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 		recptr = log_heap_clean(onerel, buffer, unused, uncnt);
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
-	}
-	else
-	{
-		/* No XLOG record, but still need to flag that XID exists on disk */
-		MyXactMadeTempRelUpdate = true;
 	}
 
 	END_CRIT_SECTION();

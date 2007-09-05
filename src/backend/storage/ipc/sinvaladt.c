@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.63 2007/01/05 22:19:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.64 2007/09/05 18:10:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,14 @@
 #include "storage/ipc.h"
 #include "storage/lwlock.h"
 #include "storage/pmsignal.h"
+#include "storage/proc.h"
 #include "storage/shmem.h"
 #include "storage/sinvaladt.h"
 
 
 SISeg	   *shmInvalBuffer;
+
+static LocalTransactionId nextLocalTransactionId;
 
 static void CleanupInvalidationState(int status, Datum arg);
 static void SISetProcStateInvalid(SISeg *segP);
@@ -40,6 +43,8 @@ SInvalShmemSize(void)
 	size = offsetof(SISeg, procState);
 	size = add_size(size, mul_size(sizeof(ProcState), MaxBackends));
 
+	size = add_size(size, mul_size(sizeof(LocalTransactionId), MaxBackends));
+
 	return size;
 }
 
@@ -51,14 +56,20 @@ void
 SIBufferInit(void)
 {
 	SISeg	   *segP;
+	Size		size;
 	int			i;
 	bool		found;
 
 	/* Allocate space in shared memory */
+	size = offsetof(SISeg, procState);
+	size = add_size(size, mul_size(sizeof(ProcState), MaxBackends));
+
 	shmInvalBuffer = segP = (SISeg *)
-		ShmemInitStruct("shmInvalBuffer", SInvalShmemSize(), &found);
+		ShmemInitStruct("shmInvalBuffer", size, &found);
 	if (found)
 		return;
+
+	segP->nextLXID = ShmemAlloc(sizeof(LocalTransactionId) * MaxBackends);
 
 	/* Clear message counters, save size of procState array */
 	segP->minMsgNum = 0;
@@ -69,11 +80,12 @@ SIBufferInit(void)
 
 	/* The buffer[] array is initially all unused, so we need not fill it */
 
-	/* Mark all backends inactive */
+	/* Mark all backends inactive, and initialize nextLXID */
 	for (i = 0; i < segP->maxBackends; i++)
 	{
 		segP->procState[i].nextMsgNum = -1;		/* inactive */
 		segP->procState[i].resetState = false;
+		segP->nextLXID[i] = InvalidLocalTransactionId;
 	}
 }
 
@@ -128,8 +140,14 @@ SIBackendInit(SISeg *segP)
 	elog(DEBUG2, "my backend id is %d", MyBackendId);
 #endif   /* INVALIDDEBUG */
 
+	/* Advertise assigned backend ID in MyProc */
+	MyProc->backendId = MyBackendId;
+
 	/* Reduce free slot count */
 	segP->freeBackends--;
+
+	/* Fetch next local transaction ID into local memory */
+	nextLocalTransactionId = segP->nextLXID[MyBackendId - 1];
 
 	/* mark myself active, with all extant messages already read */
 	stateP->nextMsgNum = segP->maxMsgNum;
@@ -159,6 +177,9 @@ CleanupInvalidationState(int status, Datum arg)
 	Assert(PointerIsValid(segP));
 
 	LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
+
+	/* Update next local transaction ID for next holder of this backendID */
+	segP->nextLXID[MyBackendId - 1] = nextLocalTransactionId;
 
 	/* Mark myself inactive */
 	segP->procState[MyBackendId - 1].nextMsgNum = -1;
@@ -351,4 +372,31 @@ SIDelExpiredDataEntries(SISeg *segP)
 				segP->procState[i].nextMsgNum -= MSGNUMWRAPAROUND;
 		}
 	}
+}
+
+
+/*
+ * GetNextLocalTransactionId --- allocate a new LocalTransactionId
+ *
+ * We split VirtualTransactionIds into two parts so that it is possible
+ * to allocate a new one without any contention for shared memory, except
+ * for a bit of additional overhead during backend startup/shutdown.
+ * The high-order part of a VirtualTransactionId is a BackendId, and the
+ * low-order part is a LocalTransactionId, which we assign from a local
+ * counter.  To avoid the risk of a VirtualTransactionId being reused
+ * within a short interval, successive procs occupying the same backend ID
+ * slot should use a consecutive sequence of local IDs, which is implemented
+ * by copying nextLocalTransactionId as seen above.
+ */
+LocalTransactionId
+GetNextLocalTransactionId(void)
+{
+	LocalTransactionId result;
+
+	/* loop to avoid returning InvalidLocalTransactionId at wraparound */
+	do {
+		result = nextLocalTransactionId++;
+	} while (!LocalTransactionIdIsValid(result));
+
+	return result;
 }
