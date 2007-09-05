@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.29 2007/09/05 18:10:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.30 2007/09/05 21:11:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,7 +233,7 @@ TransactionIdIsInProgress(TransactionId xid)
 
 	for (i = 0; i < arrayP->numProcs; i++)
 	{
-		PGPROC	   *proc = arrayP->procs[i];
+		volatile PGPROC	   *proc = arrayP->procs[i];
 
 		/* Fetch xid just once - see GetNewTransactionId */
 		TransactionId pxid = proc->xid;
@@ -361,7 +361,7 @@ TransactionIdIsActive(TransactionId xid)
 
 	for (i = 0; i < arrayP->numProcs; i++)
 	{
-		PGPROC	   *proc = arrayP->procs[i];
+		volatile PGPROC	   *proc = arrayP->procs[i];
 
 		/* Fetch xid just once - see GetNewTransactionId */
 		TransactionId pxid = proc->xid;
@@ -434,7 +434,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC	   *proc = arrayP->procs[index];
 
 		if (ignoreVacuum && proc->inVacuum)
 			continue;
@@ -613,7 +613,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC	   *proc = arrayP->procs[index];
 		TransactionId xid;
 
 		/* Ignore procs running LAZY VACUUM */
@@ -672,7 +672,7 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 				if (nxids > 0)
 				{
 					memcpy(snapshot->subxip + subcount,
-						   proc->subxids.xids,
+						   (void *) proc->subxids.xids,
 						   nxids * sizeof(TransactionId));
 					subcount += nxids;
 				}
@@ -739,7 +739,7 @@ GetTransactionsInCommit(TransactionId **xids_p)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC	   *proc = arrayP->procs[index];
 		/* Fetch xid just once - see GetNewTransactionId */
 		TransactionId pxid = proc->xid;
 
@@ -773,7 +773,7 @@ HaveTransactionsInCommit(TransactionId *xids, int nxids)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC	   *proc = arrayP->procs[index];
 		/* Fetch xid just once - see GetNewTransactionId */
 		TransactionId pxid = proc->xid;
 
@@ -861,7 +861,7 @@ BackendXidGetPid(TransactionId xid)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC	   *proc = arrayP->procs[index];
 
 		if (proc->xid == xid)
 		{
@@ -909,7 +909,7 @@ GetCurrentVirtualXIDs(TransactionId limitXmin)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC	   *proc = arrayP->procs[index];
 		/* Fetch xmin just once - might change on us? */
 		TransactionId pxmin = proc->xmin;
 
@@ -963,7 +963,7 @@ CountActiveBackends(void)
 	 */
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC	   *proc = arrayP->procs[index];
 
 		if (proc == MyProc)
 			continue;			/* do not count myself */
@@ -993,7 +993,7 @@ CountDBBackends(Oid databaseid)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC	   *proc = arrayP->procs[index];
 
 		if (proc->pid == 0)
 			continue;			/* do not count prepared xacts */
@@ -1020,7 +1020,7 @@ CountUserBackends(Oid roleid)
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
-		PGPROC	   *proc = arrayP->procs[index];
+		volatile PGPROC	   *proc = arrayP->procs[index];
 
 		if (proc->pid == 0)
 			continue;			/* do not count prepared xacts */
@@ -1072,7 +1072,7 @@ CheckOtherDBBackends(Oid databaseId)
 
 		for (index = 0; index < arrayP->numProcs; index++)
 		{
-			PGPROC	   *proc = arrayP->procs[index];
+			volatile PGPROC	   *proc = arrayP->procs[index];
 
 			if (proc->databaseId != databaseId)
 				continue;
