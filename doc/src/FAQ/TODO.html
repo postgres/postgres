@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Mon Aug 27 23:08:40 EDT 2007
+Last updated:           Wed Sep  5 17:58:44 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1089,12 +1089,8 @@ first.  There is also a developer's wiki at<br/>
   </li><li>Improve dead row detection during multi-statement transactions usage
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php">http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php</a>
 </p>
-  </li><li>Reduce XID consumption of read-only queries
-</li></ul>
-<p>   <a href="http://archives.postgresql.org/pgsql-hackers/2007-08/msg00516.php">http://archives.postgresql.org/pgsql-hackers/2007-08/msg00516.php</a>
-</p>
-<ul>
-  <li>Auto-vacuum
+  </li><li>-<em>Reduce XID consumption of read-only queries</em>
+  </li><li>Auto-vacuum
   <ul>
     <li>Use free-space map information to guide refilling
     </li><li>%Issue log message to suggest VACUUM FULL if a table is nearly
