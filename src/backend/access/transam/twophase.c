@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.33 2007/09/05 18:10:47 tgl Exp $
+ *		$PostgreSQL: pgsql/src/backend/access/transam/twophase.c,v 1.34 2007/09/05 20:53:17 tgl Exp $
  *
  * NOTES
  *		Each global transaction is associated with a global transaction
@@ -274,7 +274,8 @@ MarkAsPreparing(TransactionId xid, const char *gid,
 	MemSet(&gxact->proc, 0, sizeof(PGPROC));
 	SHMQueueElemInit(&(gxact->proc.links));
 	gxact->proc.waitStatus = STATUS_OK;
-	gxact->proc.lxid = InvalidLocalTransactionId;
+	/* We set up the gxact's VXID as InvalidBackendId/XID */
+	gxact->proc.lxid = (LocalTransactionId) xid;
 	gxact->proc.xid = xid;
 	gxact->proc.xmin = InvalidTransactionId;
 	gxact->proc.pid = 0;
