@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.231 2007/08/21 01:11:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.232 2007/09/06 17:31:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3179,12 +3179,15 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 
 	if (!defval && GetDomainConstraints(typeOid) != NIL)
 	{
-		Oid			basetype = getBaseType(typeOid);
+		Oid			baseTypeId;
+		int32		baseTypeMod;
 
-		defval = (Expr *) makeNullConst(basetype);
+		baseTypeMod = typmod;
+		baseTypeId = getBaseTypeAndTypmod(typeOid, &baseTypeMod);
+		defval = (Expr *) makeNullConst(baseTypeId, baseTypeMod);
 		defval = (Expr *) coerce_to_target_type(NULL,
 												(Node *) defval,
-												basetype,
+												baseTypeId,
 												typeOid,
 												typmod,
 												COERCION_ASSIGNMENT,

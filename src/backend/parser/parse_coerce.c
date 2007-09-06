@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.156 2007/08/21 01:11:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.157 2007/09/06 17:31:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -816,7 +816,7 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 			 * can't use atttypid here, but it doesn't really matter what type
 			 * the Const claims to be.
 			 */
-			newargs = lappend(newargs, makeNullConst(INT4OID));
+			newargs = lappend(newargs, makeNullConst(INT4OID, -1));
 			continue;
 		}
 

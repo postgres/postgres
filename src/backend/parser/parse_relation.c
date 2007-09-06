@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.127 2007/01/05 22:19:34 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.128 2007/09/06 17:31:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1448,7 +1448,7 @@ expandTupleDesc(TupleDesc tupdesc, Alias *eref,
 					 * can't use atttypid here, but it doesn't really matter
 					 * what type the Const claims to be.
 					 */
-					*colvars = lappend(*colvars, makeNullConst(INT4OID));
+					*colvars = lappend(*colvars, makeNullConst(INT4OID, -1));
 				}
 			}
 			continue;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.56 2007/06/23 22:12:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/makefuncs.c,v 1.57 2007/09/06 17:31:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,19 +174,20 @@ makeConst(Oid consttype,
 
 /*
  * makeNullConst -
- *	  creates a Const node representing a NULL of the specified type
+ *	  creates a Const node representing a NULL of the specified type/typmod
  *
- * Note: for all current uses, OK to set typmod of the Const to -1.
+ * This is a convenience routine that just saves a lookup of the type's
+ * storage properties.
  */
 Const *
-makeNullConst(Oid consttype)
+makeNullConst(Oid consttype, int32 consttypmod)
 {
 	int16		typLen;
 	bool		typByVal;
 
 	get_typlenbyval(consttype, &typLen, &typByVal);
 	return makeConst(consttype,
-					 -1,
+					 consttypmod,
 					 (int) typLen,
 					 (Datum) 0,
 					 true,

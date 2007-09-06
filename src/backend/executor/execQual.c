@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.221 2007/08/31 18:33:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.222 2007/09/06 17:31:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4159,7 +4159,7 @@ ExecInitExpr(Expr *node, PlanState *parent)
 						 * don't really care what type of NULL it is, so
 						 * always make an int4 NULL.
 						 */
-						e = (Expr *) makeNullConst(INT4OID);
+						e = (Expr *) makeNullConst(INT4OID, -1);
 					}
 					estate = ExecInitExpr(e, parent);
 					outlist = lappend(outlist, estate);

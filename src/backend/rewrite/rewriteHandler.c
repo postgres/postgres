@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.173 2007/03/19 23:38:29 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.174 2007/09/06 17:31:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,7 +193,7 @@ AcquireRewriteLocks(Query *parsetree)
 							 * now-dropped type OID, but it doesn't really
 							 * matter what type the Const claims to be.
 							 */
-							aliasvar = (Var *) makeNullConst(INT4OID);
+							aliasvar = (Var *) makeNullConst(INT4OID, -1);
 						}
 					}
 					newaliasvars = lappend(newaliasvars, aliasvar);

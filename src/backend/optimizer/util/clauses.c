@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.248 2007/09/03 00:39:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.249 2007/09/06 17:31:58 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2265,7 +2265,7 @@ eval_const_expressions_mutator(Node *node,
 
 		/* If all the arguments were constant null, the result is just null */
 		if (newargs == NIL)
-			return (Node *) makeNullConst(coalesceexpr->coalescetype);
+			return (Node *) makeNullConst(coalesceexpr->coalescetype, -1);
 
 		newcoalesce = makeNode(CoalesceExpr);
 		newcoalesce->coalescetype = coalesceexpr->coalescetype;
@@ -2833,7 +2833,7 @@ evaluate_function(Oid funcid, Oid result_type, int32 result_typmod, List *args,
 	 * function is not otherwise immutable.
 	 */
 	if (funcform->proisstrict && has_null_input)
-		return (Expr *) makeNullConst(result_type);
+		return (Expr *) makeNullConst(result_type, result_typmod);
 
 	/*
 	 * Otherwise, can simplify only if all inputs are constants. (For a
