@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.3 2007/09/07 15:35:11 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.4 2007/09/07 16:03:40 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,26 +62,33 @@ typedef uint16 WordEntryPos;
  *							bytes from end of WordEntry array to start of
  *							corresponding lexeme.
  * 4) Lexeme's storage:
- *	  SHORTALIGNED(lexeme) and position information if it exists
- *	  Position information: first int2 - is a number of positions and it
- *	  follows array of WordEntryPos
+ *	  lexeme (without null-terminator)
+ *    if haspos is true:
+ *		padding byte if necessary to make the number of positions 2-byte aligned
+ *		uint16		number of positions that follow.
+ *		uint16[]	positions
+ *
+ * The positions must be sorted.
  */
 
 typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	uint32		size;
-	char		data[1];
+	int32		size;
+	WordEntry	entries[1]; /* var size */
+	/* lexemes follow */
 } TSVectorData;
 
 typedef TSVectorData *TSVector;
 
-#define DATAHDRSIZE (VARHDRSZ + sizeof(int4))
-#define CALCDATASIZE(x, lenstr) ( (x) * sizeof(WordEntry) + DATAHDRSIZE + (lenstr) )
-#define ARRPTR(x)	( (WordEntry*) ( (char*)(x) + DATAHDRSIZE ) )
-#define STRPTR(x)	( (char*)(x) + DATAHDRSIZE + ( sizeof(WordEntry) * ((TSVector)(x))->size ) )
-#define STRSIZE(x)	( ((TSVector)(x))->len - DATAHDRSIZE - ( sizeof(WordEntry) * ((TSVector)(x))->size ) )
-#define _POSDATAPTR(x,e)	(STRPTR(x)+((WordEntry*)(e))->pos+SHORTALIGN(((WordEntry*)(e))->len))
+#define DATAHDRSIZE (offsetof(TSVectorData, entries))
+#define CALCDATASIZE(x, lenstr) (DATAHDRSIZE + (x) * sizeof(WordEntry) + (lenstr) )
+#define ARRPTR(x)	( (x)->entries )
+
+/* returns a pointer to the beginning of lexemes */
+#define STRPTR(x)	( (char *) &(x)->entries[x->size] )
+
+#define _POSDATAPTR(x,e)	(STRPTR(x) + SHORTALIGN((e)->pos + (e)->len))
 #define POSDATALEN(x,e) ( ( ((WordEntry*)(e))->haspos ) ? (*(uint16*)_POSDATAPTR(x,e)) : 0 )
 #define POSDATAPTR(x,e) ( (WordEntryPos*)( _POSDATAPTR(x,e)+sizeof(uint16) ) )
 
@@ -159,7 +166,7 @@ typedef int8 QueryItemType;
 typedef struct
 {
 	QueryItemType		type;	/* operand or kind of operator (ts_tokentype) */
-	int8		weight;			/* weights of operand to search. It's a bitmask of allowed weights.
+	uint8		weight;			/* weights of operand to search. It's a bitmask of allowed weights.
 								 * if it =0 then any weight are allowed.
 								 * Weights and bit map:
 								 * A: 1<<3

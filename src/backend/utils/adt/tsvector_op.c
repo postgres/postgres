@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.3 2007/09/07 15:09:56 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.4 2007/09/07 16:03:40 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,7 +165,7 @@ tsvector_strip(PG_FUNCTION_ARGS)
 	char	   *cur;
 
 	for (i = 0; i < in->size; i++)
-		len += SHORTALIGN(arrin[i].len);
+		len += arrin[i].len;
 
 	len = CALCDATASIZE(in->size, len);
 	out = (TSVector) palloc0(len);
@@ -179,7 +179,7 @@ tsvector_strip(PG_FUNCTION_ARGS)
 		arrout[i].haspos = 0;
 		arrout[i].len = arrin[i].len;
 		arrout[i].pos = cur - STRPTR(out);
-		cur += SHORTALIGN(arrout[i].len);
+		cur += arrout[i].len;
 	}
 
 	PG_FREE_IF_COPY(in, 0);
@@ -351,12 +351,15 @@ tsvector_concat(PG_FUNCTION_ARGS)
 			ptr->len = ptr1->len;
 			memcpy(cur, data1 + ptr1->pos, ptr1->len);
 			ptr->pos = cur - data;
-			cur += SHORTALIGN(ptr1->len);
 			if (ptr->haspos)
 			{
+				cur += SHORTALIGN(ptr1->len);
 				memcpy(cur, _POSDATAPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
 				cur += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
 			}
+			else
+				cur += ptr1->len;
+				
 			ptr++;
 			ptr1++;
 			i1--;
@@ -367,16 +370,20 @@ tsvector_concat(PG_FUNCTION_ARGS)
 			ptr->len = ptr2->len;
 			memcpy(cur, data2 + ptr2->pos, ptr2->len);
 			ptr->pos = cur - data;
-			cur += SHORTALIGN(ptr2->len);
 			if (ptr->haspos)
 			{
 				int			addlen = add_pos(in2, ptr2, out, ptr, maxpos);
+
+				cur += SHORTALIGN(ptr2->len);
 
 				if (addlen == 0)
 					ptr->haspos = 0;
 				else
 					cur += addlen * sizeof(WordEntryPos) + sizeof(uint16);
 			}
+			else
+				cur += ptr2->len;
+
 			ptr++;
 			ptr2++;
 			i2--;
@@ -387,9 +394,9 @@ tsvector_concat(PG_FUNCTION_ARGS)
 			ptr->len = ptr1->len;
 			memcpy(cur, data1 + ptr1->pos, ptr1->len);
 			ptr->pos = cur - data;
-			cur += SHORTALIGN(ptr1->len);
 			if (ptr->haspos)
 			{
+				cur += SHORTALIGN(ptr1->len);
 				if (ptr1->haspos)
 				{
 					memcpy(cur, _POSDATAPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
@@ -407,6 +414,9 @@ tsvector_concat(PG_FUNCTION_ARGS)
 						cur += addlen * sizeof(WordEntryPos) + sizeof(uint16);
 				}
 			}
+			else
+				cur += ptr1->len;
+
 			ptr++;
 			ptr1++;
 			ptr2++;
@@ -421,12 +431,15 @@ tsvector_concat(PG_FUNCTION_ARGS)
 		ptr->len = ptr1->len;
 		memcpy(cur, data1 + ptr1->pos, ptr1->len);
 		ptr->pos = cur - data;
-		cur += SHORTALIGN(ptr1->len);
 		if (ptr->haspos)
 		{
+			cur += SHORTALIGN(ptr1->len);
 			memcpy(cur, _POSDATAPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
 			cur += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
 		}
+		else
+			cur += ptr1->len;
+
 		ptr++;
 		ptr1++;
 		i1--;
@@ -438,16 +451,20 @@ tsvector_concat(PG_FUNCTION_ARGS)
 		ptr->len = ptr2->len;
 		memcpy(cur, data2 + ptr2->pos, ptr2->len);
 		ptr->pos = cur - data;
-		cur += SHORTALIGN(ptr2->len);
 		if (ptr->haspos)
 		{
 			int			addlen = add_pos(in2, ptr2, out, ptr, maxpos);
+
+			cur += SHORTALIGN(ptr2->len);
 
 			if (addlen == 0)
 				ptr->haspos = 0;
 			else
 				cur += addlen * sizeof(WordEntryPos) + sizeof(uint16);
 		}
+		else
+			cur += ptr2->len;
+
 		ptr++;
 		ptr2++;
 		i2--;
@@ -484,8 +501,8 @@ ValCompare(CHKVAL * chkval, WordEntry * ptr, QueryOperand * item)
 static bool
 checkclass_str(CHKVAL * chkval, WordEntry * val, QueryOperand * item)
 {
-	WordEntryPos *ptr = (WordEntryPos *) (chkval->values + val->pos + SHORTALIGN(val->len) + sizeof(uint16));
-	uint16		len = *((uint16 *) (chkval->values + val->pos + SHORTALIGN(val->len)));
+	WordEntryPos *ptr = (WordEntryPos *) (chkval->values + SHORTALIGN(val->pos + val->len) + sizeof(uint16));
+	uint16		len = *((uint16 *) (chkval->values + SHORTALIGN(val->pos + val->len)));
 
 	while (len--)
 	{

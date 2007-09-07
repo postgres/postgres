@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.3 2007/09/07 15:35:10 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.4 2007/09/07 16:03:40 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
+#include "miscadmin.h"
 
 QTNode *
 QT2QTN(QueryItem * in, char *operand)

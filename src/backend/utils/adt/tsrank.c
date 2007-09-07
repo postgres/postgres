@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.3 2007/09/07 15:35:10 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.4 2007/09/07 16:03:40 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 #include "utils/array.h"
+#include "miscadmin.h"
 
 
 static float weights[] = {0.1, 0.2, 0.4, 1.0};
@@ -176,8 +177,9 @@ SortAndUniqItems(TSQuery q, int *size)
 	return res;
 }
 
+/* A dummy WordEntryPos array to use when haspos is false */
 static WordEntryPos POSNULL[] = {
-	0,
+	1, /* Number of elements that follow */
 	0
 };
 
@@ -207,7 +209,6 @@ calc_rank_and(float *w, TSVector t, TSQuery q)
 	}
 	pos = (uint16 **) palloc(sizeof(uint16 *) * q->size);
 	memset(pos, 0, sizeof(uint16 *) * q->size);
-	*(uint16 *) POSNULL = lengthof(POSNULL) - 1;
 	WEP_SETPOS(POSNULL[1], MAXENTRYPOS - 1);
 
 	for (i = 0; i < size; i++)
@@ -265,7 +266,6 @@ calc_rank_or(float *w, TSVector t, TSQuery q)
 	QueryOperand **item;
 	int			size = q->size;
 
-	*(uint16 *) POSNULL = lengthof(POSNULL) - 1;
 	item = SortAndUniqItems(q, &size);
 
 	for (i = 0; i < size; i++)
@@ -593,7 +593,6 @@ get_docrep(TSVector txt, TSQuery query, int *doclen)
 	DocRepresentation *doc;
 	char	   *operand;
 
-	*(uint16 *) POSNULL = lengthof(POSNULL) - 1;
 	doc = (DocRepresentation *) palloc(sizeof(DocRepresentation) * len);
 	operand = GETOPERAND(query);
 	reset_istrue_flag(query);

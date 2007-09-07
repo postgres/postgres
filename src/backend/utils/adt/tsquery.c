@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.4 2007/09/07 15:35:10 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.5 2007/09/07 16:03:40 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,6 @@
 #include "tsearch/ts_utils.h"
 #include "utils/memutils.h"
 #include "utils/pg_crc.h"
-#include "nodes/bitmapset.h"
 
 
 struct TSQueryParserStateData
@@ -384,15 +383,14 @@ makepol(TSQueryParserState state,
 	}
 }
 
-/*
- * Fills in the left-fields previously left unfilled. The input
- * QueryItems must be in polish (prefix) notation. 
- */
 static void
-findoprnd(QueryItem *ptr, uint32 *pos)
+findoprnd_recurse(QueryItem *ptr, uint32 *pos, int nnodes)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
+
+	if (*pos >= nnodes)
+		elog(ERROR, "malformed tsquery; operand not found");
 
 	if (ptr[*pos].type == QI_VAL ||
 		ptr[*pos].type == QI_VALSTOP) /* need to handle VALSTOP here,
@@ -410,7 +408,7 @@ findoprnd(QueryItem *ptr, uint32 *pos)
 		{
 			ptr[*pos].operator.left = 1;
 			(*pos)++;
-			findoprnd(ptr, pos);
+			findoprnd_recurse(ptr, pos, nnodes);
 		}
 		else
 		{
@@ -420,12 +418,30 @@ findoprnd(QueryItem *ptr, uint32 *pos)
 			Assert(curitem->oper == OP_AND || curitem->oper == OP_OR);
 
 			(*pos)++;
-			findoprnd(ptr, pos);
+			findoprnd_recurse(ptr, pos, nnodes);
 			curitem->left = *pos - tmp;
-			findoprnd(ptr, pos);
+			findoprnd_recurse(ptr, pos, nnodes);
 		}
 	}
 }
+
+
+/*
+ * Fills in the left-fields previously left unfilled. The input
+ * QueryItems must be in polish (prefix) notation. 
+ */
+static void
+findoprnd(QueryItem *ptr, int size)
+{
+	uint32 pos;
+
+	pos = 0;
+	findoprnd_recurse(ptr, &pos, size);
+
+	if (pos != size)
+		elog(ERROR, "malformed tsquery; extra nodes");
+}
+
 
 /*
  * Each value (operand) in the query is be passed to pushval. pushval can
@@ -452,7 +468,6 @@ parse_tsquery(char *buf,
 	TSQuery		query;
 	int			commonlen;
 	QueryItem  *ptr;
-	uint32		pos = 0;
 	ListCell   *cell;
 
 	/* init state */
@@ -522,8 +537,7 @@ parse_tsquery(char *buf,
 	pfree(state.op);
 
 	/* Set left operand pointers for every operator. */
-	pos = 0;
-	findoprnd(ptr, &pos);
+	findoprnd(ptr, query->size);
 
 	return query;
 }
@@ -734,6 +748,22 @@ tsqueryout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(nrm.buf);
 }
 
+/*
+ * Binary Input / Output functions. The binary format is as follows:
+ *
+ * uint32	 number of operators/operands in the query
+ * 
+ * Followed by the operators and operands, in prefix notation. For each
+ * operand:
+ *
+ * uint8	type, QI_VAL
+ * uint8	weight
+ * 			operand text in client encoding, null-terminated
+ *
+ * For each operator:
+ * uint8	type, QI_OPR
+ * uint8	operator, one of OP_AND, OP_OR, OP_NOT.
+ */
 Datum
 tsquerysend(PG_FUNCTION_ARGS)
 {
@@ -744,7 +774,7 @@ tsquerysend(PG_FUNCTION_ARGS)
 
 	pq_begintypsend(&buf);
 
-	pq_sendint(&buf, query->size, sizeof(int32));
+	pq_sendint(&buf, query->size, sizeof(uint32));
 	for (i = 0; i < query->size; i++)
 	{
 		pq_sendint(&buf, item->type, sizeof(item->type));
@@ -752,28 +782,17 @@ tsquerysend(PG_FUNCTION_ARGS)
 		switch(item->type)
 		{
 			case QI_VAL:
-				pq_sendint(&buf, item->operand.weight, sizeof(item->operand.weight));
-				pq_sendint(&buf, item->operand.valcrc, sizeof(item->operand.valcrc));
-				pq_sendint(&buf, item->operand.length, sizeof(int16));
+				pq_sendint(&buf, item->operand.weight, sizeof(uint8));
+				pq_sendstring(&buf, GETOPERAND(query) + item->operand.distance);
 				/* istrue flag is just for temporary use in tsrank.c/Cover,
 				 * so we don't need to transfer that */
 				break;
 			case QI_OPR:
 				pq_sendint(&buf, item->operator.oper, sizeof(item->operator.oper));
-				if (item->operator.oper != OP_NOT)
-					pq_sendint(&buf, item->operator.left, sizeof(item->operator.left));
 				break;
 			default:
 				elog(ERROR, "unknown tsquery node type %d", item->type);
 		}
-		item++;
-	}
-
-	item = GETQUERY(query);
-	for (i = 0; i < query->size; i++)
-	{
-		if (item->type == QI_VAL)
-			pq_sendbytes(&buf, GETOPERAND(query) + item->operand.distance, item->operand.length);
 		item++;
 	}
 
@@ -788,140 +807,112 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	TSQuery		query;
 	int			i,
-				size,
 				len;
 	QueryItem  *item;
-	int			datalen = 0;
+	int			datalen;
 	char	   *ptr;
-	Bitmapset  *parentset = NULL;
+	uint32		size;
+	const char **operands;
 
 	size = pq_getmsgint(buf, sizeof(uint32));
-	if (size < 0 || size > (MaxAllocSize / sizeof(QueryItem)))
+	if (size > (MaxAllocSize / sizeof(QueryItem)))
 		elog(ERROR, "invalid size of tsquery");
 
-	len = HDRSIZETQ + sizeof(QueryItem) * size;
+	/* Allocate space to temporarily hold operand strings */
+	operands = palloc(size * sizeof(char *));
 
+	/* Allocate space for all the QueryItems. */
+	len = HDRSIZETQ + sizeof(QueryItem) * size;
 	query = (TSQuery) palloc0(len);
 	query->size = size;
 	item = GETQUERY(query);
 
+	datalen = 0;
 	for (i = 0; i < size; i++)
 	{
 		item->type = (int8) pq_getmsgint(buf, sizeof(int8));
 
-		switch(item->type)
+		if (item->type == QI_VAL)
 		{
-			case QI_VAL:
-				item->operand.weight = (int8) pq_getmsgint(buf, sizeof(int8));
-				item->operand.valcrc = (int32) pq_getmsgint(buf, sizeof(int32));
-				item->operand.length = pq_getmsgint(buf, sizeof(int16));
+			size_t val_len; /* length after recoding to server encoding */
+			uint8 weight;
+			const char *val;
+			pg_crc32 valcrc;
 
-				/* Check that the weight bitmap is valid */
-				if (item->operand.weight < 0 || item->operand.weight > 0xF)
-					elog(ERROR, "invalid weight bitmap");
+			weight 	 = (uint8) pq_getmsgint(buf, sizeof(uint8));
+			val = pq_getmsgstring(buf);
+			val_len = strlen(val);
 
-				/* XXX: We don't check that the CRC is valid. Actually, if we
-				 * bothered to calculate it to verify, there would be no need
-				 * to transfer it.
-				 */
+			/* Sanity checks */
 
-				/*
-				 * Check that datalen doesn't grow too large. Without the
-				 * check, a malicious client could induce a buffer overflow
-				 * by sending a tsquery whose size exceeds 2GB. datalen
-				 * would overflow, we would allocate a too small buffer below,
-				 * and overflow the buffer. Because operand.length is a 20-bit
-				 * field, adding one such value to datalen must exceed
-				 * MaxAllocSize before wrapping over the 32-bit datalen field,
-				 * so this check will protect from it.
-				 */
-				if (datalen > MAXSTRLEN)
-					elog(ERROR, "invalid tsquery; total operand length exceeded");
+			if (weight > 0xF)
+				elog(ERROR, "invalid tsquery; invalid weight bitmap");
 
-				/* We can calculate distance from datalen, no need to send it
-				 * across the wire. If we did, we would have to check that
-				 * it's valid anyway.
-				 */
-				item->operand.distance = datalen;
+			if (val_len > MAXSTRLEN)
+				elog(ERROR, "invalid tsquery; operand too long");
+				
+			if (datalen > MAXSTRPOS)
+				elog(ERROR, "invalid tsquery; total operand length exceeded");
 
-				datalen += item->operand.length + 1;		/* \0 */
+			/* Looks valid. */
 
-				break;
-			case QI_OPR:
-				item->operator.oper = (int8) pq_getmsgint(buf, sizeof(int8));
-				if (item->operator.oper != OP_NOT &&
-					item->operator.oper != OP_OR &&
-					item->operator.oper != OP_AND)
-					elog(ERROR, "unknown operator type %d", (int) item->operator.oper);
+			INIT_CRC32(valcrc);
+			COMP_CRC32(valcrc, val, val_len);
+			FIN_CRC32(valcrc);
 
-				/*
-				 * Check that no previous operator node points to the right
-				 * operand. That would mean that the operand node
-				 * has two parents.
-				 */
-				if (bms_is_member(i + 1, parentset))
-					elog(ERROR, "malformed query tree");
+			item->operand.weight = weight;
+			item->operand.valcrc = (int32) valcrc;
+			item->operand.length = val_len;
+			item->operand.distance = datalen;
 
-				parentset = bms_add_member(parentset, i + 1);
+			/* 
+			 * Operand strings are copied to the final struct after this loop;
+			 * here we just collect them to an array
+			 */
+			operands[i] = val;
 
-				if(item->operator.oper != OP_NOT)
-				{
-					uint32 left = (uint32) pq_getmsgint(buf, sizeof(uint32));
+			datalen += val_len + 1;		/* + 1 for the '\0' terminator */
+		} 
+		else if (item->type == QI_OPR)
+		{
+			int8 oper;
+			oper = (int8) pq_getmsgint(buf, sizeof(int8));
+			if (oper != OP_NOT && oper != OP_OR && oper != OP_AND)
+				elog(ERROR, "invalid tsquery; unknown operator type %d", (int) oper);
+			if (i == size - 1)
+				elog(ERROR, "invalid pointer to right operand");
 
-					/*
-					 * Right operand is implicitly at "this+1". Don't allow
-					 * left to point to the right operand, or to self.
-					 */
-					if (left <= 1 || i + left >= size)
-						elog(ERROR, "invalid pointer to left operand");
-
-					/*
-					 * Check that no previous operator node points to the left
-					 * operand.
-					 */
-					if (bms_is_member(i + left, parentset))
-						elog(ERROR, "malformed query tree");
-
-					parentset = bms_add_member(parentset, i + left);
-
-					item->operator.left = left;
-				}
-				else
-					item->operator.left = 1; /* do not leave uninitialized fields */
-
-				if (i == size - 1)
-					elog(ERROR, "invalid pointer to right operand");
-				break;
-			default:
-				elog(ERROR, "unknown tsquery node type %d", item->type);
+			item->operator.oper = oper;
 		}
+		else 
+			elog(ERROR, "unknown tsquery node type %d", item->type);
 
 		item++;
 	}
 
-	/* Now check that each node, except the root, has a parent. We
-	 * already checked above that no node has more than one parent. */
-	if (bms_num_members(parentset) != size - 1 && size != 0)
-		elog(ERROR, "malformed query tree");
-
-	bms_free( parentset );
-
+	/* Enlarge buffer to make room for the operand values. */
 	query = (TSQuery) repalloc(query, len + datalen);
-
 	item = GETQUERY(query);
 	ptr = GETOPERAND(query);
+
+	/* 
+	 * Fill in the left-pointers. Checks that the tree is well-formed
+	 * as a side-effect.
+	 */
+	findoprnd(item, size);
+
+	/* Copy operands to output struct */
 	for (i = 0; i < size; i++)
 	{
 		if (item->type == QI_VAL)
 		{
-			memcpy(ptr,
-				   pq_getmsgbytes(buf, item->operand.length),
-				   item->operand.length);
-			ptr += item->operand.length;
-			*ptr++ = '\0';
+			memcpy(ptr, operands[i], item->operand.length + 1);
+			ptr += item->operand.length + 1;
 		}
 		item++;
 	}
+
+	pfree(operands);
 
 	Assert(ptr - GETOPERAND(query) == datalen);
 

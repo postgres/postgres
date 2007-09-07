@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.3 2007/09/07 15:09:56 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.4 2007/09/07 16:03:40 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,18 +75,20 @@ uniquePos(WordEntryPos * a, int l)
 }
 
 static int
-compareentry(const void *a, const void *b, void *arg)
+compareentry(const void *va, const void *vb, void *arg)
 {
 	char	   *BufferStr = (char *) arg;
+	WordEntryIN *a = (WordEntryIN *) va;
+	WordEntryIN *b = (WordEntryIN *) vb;
 
-	if (((WordEntryIN *) a)->entry.len == ((WordEntryIN *) b)->entry.len)
+	if (a->entry.len == b->entry.len)
 	{
-		return strncmp(&BufferStr[((WordEntryIN *) a)->entry.pos],
-					   &BufferStr[((WordEntryIN *) b)->entry.pos],
-					   ((WordEntryIN *) a)->entry.len);
+		return strncmp(&BufferStr[a->entry.pos],
+					   &BufferStr[b->entry.pos],
+					   a->entry.len);
 	}
 
-	return (((WordEntryIN *) a)->entry.len > ((WordEntryIN *) b)->entry.len) ? 1 : -1;
+	return (a->entry.len > b->entry.len) ? 1 : -1;
 }
 
 static int
@@ -104,6 +106,9 @@ uniqueentry(WordEntryIN * a, int l, char *buf, int *outbuflen)
 			a->poslen = uniquePos(a->pos, a->poslen);
 			*outbuflen = SHORTALIGN(a->entry.len) + (a->poslen + 1) * sizeof(WordEntryPos);
 		}
+		else
+			*outbuflen = a->entry.len;
+
 		return l;
 	}
 	res = a;
@@ -118,10 +123,12 @@ uniqueentry(WordEntryIN * a, int l, char *buf, int *outbuflen)
 		{
 			if (res->entry.haspos)
 			{
+				*outbuflen += SHORTALIGN(res->entry.len);
 				res->poslen = uniquePos(res->pos, res->poslen);
 				*outbuflen += res->poslen * sizeof(WordEntryPos);
 			}
-			*outbuflen += SHORTALIGN(res->entry.len);
+			else
+				*outbuflen += res->entry.len;
 			res++;
 			memcpy(res, ptr, sizeof(WordEntryIN));
 		}
@@ -147,12 +154,18 @@ uniqueentry(WordEntryIN * a, int l, char *buf, int *outbuflen)
 		}
 		ptr++;
 	}
+
+	/* add last item */
+
 	if (res->entry.haspos)
 	{
+		*outbuflen += SHORTALIGN(res->entry.len);
+
 		res->poslen = uniquePos(res->pos, res->poslen);
 		*outbuflen += res->poslen * sizeof(WordEntryPos);
 	}
-	*outbuflen += SHORTALIGN(res->entry.len);
+	else
+		*outbuflen += res->entry.len;
 
 	return res + 1 - a;
 }
@@ -367,6 +380,18 @@ tsvectorout(PG_FUNCTION_ARGS)
 	PG_RETURN_CSTRING(outbuf);
 }
 
+/*
+ * Binary Input / Output functions. The binary format is as follows:
+ *
+ * uint32	number of lexemes
+ * 
+ * for each lexeme:
+ *		lexeme text in client encoding, null-terminated
+ * 		uint16	number of positions
+ * 		for each position:
+ *			uint16 WordEntryPos
+ */
+
 Datum
 tsvectorsend(PG_FUNCTION_ARGS)
 {
@@ -381,18 +406,22 @@ tsvectorsend(PG_FUNCTION_ARGS)
 	pq_sendint(&buf, vec->size, sizeof(int32));
 	for (i = 0; i < vec->size; i++)
 	{
-		/*
-		 * We are sure that sizeof(WordEntry) == sizeof(int32)
-		 */
-		pq_sendint(&buf, *(int32 *) weptr, sizeof(int32));
+		uint16 npos;
 
-		pq_sendbytes(&buf, STRPTR(vec) + weptr->pos, weptr->len);
-		if (weptr->haspos)
+		/* the strings in the TSVector array are not null-terminated, so 
+		 * we have to send the null-terminator separately
+		 */
+		pq_sendtext(&buf, STRPTR(vec) + weptr->pos, weptr->len);
+		pq_sendbyte(&buf, '\0');
+
+		npos = POSDATALEN(vec, weptr);
+		pq_sendint(&buf, npos, sizeof(uint16));
+
+		if(npos > 0)
 		{
 			WordEntryPos *wepptr = POSDATAPTR(vec, weptr);
 
-			pq_sendint(&buf, POSDATALEN(vec, weptr), sizeof(WordEntryPos));
-			for (j = 0; j < POSDATALEN(vec, weptr); j++)
+			for (j = 0; j < npos; j++)
 				pq_sendint(&buf, wepptr[j], sizeof(WordEntryPos));
 		}
 		weptr++;
@@ -407,71 +436,92 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	TSVector	vec;
 	int			i;
-	uint32		size;
-	WordEntry  *weptr;
-	int			datalen = 0;
-	Size		len;
+	int32		nentries;
+	int			datalen; /* number of bytes used in the variable size area
+						  * after fixed size TSVector header and WordEntries
+						  */
+	Size		hdrlen;
+	Size		len;  /* allocated size of vec */
 
-	size = pq_getmsgint(buf, sizeof(uint32));
-	if (size < 0 || size > (MaxAllocSize / sizeof(WordEntry)))
+	nentries = pq_getmsgint(buf, sizeof(int32));
+	if (nentries < 0 || nentries > (MaxAllocSize / sizeof(WordEntry)))
 		elog(ERROR, "invalid size of tsvector");
 
-	len = DATAHDRSIZE + sizeof(WordEntry) * size;
+	hdrlen = DATAHDRSIZE + sizeof(WordEntry) * nentries;
 
-	len = len * 2; /* times two to make room for lexemes */
+	len = hdrlen * 2; /* times two to make room for lexemes */
 	vec = (TSVector) palloc0(len);
-	vec->size = size;
+	vec->size = nentries;
 
-	weptr = ARRPTR(vec);
-	for (i = 0; i < size; i++)
+	datalen = 0;
+	for (i = 0; i < nentries; i++)
 	{
-		int32 tmp;
+		const char *lexeme;
+		uint16 npos;
+		size_t lex_len;
 
-		weptr = ARRPTR(vec) + i;
+		lexeme = pq_getmsgstring(buf);
+		npos = (uint16) pq_getmsgint(buf, sizeof(uint16));
+
+		/* sanity checks */
+
+		lex_len = strlen(lexeme);
+		if (lex_len < 0 || lex_len > MAXSTRLEN)
+			elog(ERROR, "invalid tsvector; lexeme too long");
+
+		if (datalen > MAXSTRPOS)
+			elog(ERROR, "invalid tsvector; maximum total lexeme length exceeded"); 
+
+		if (npos > MAXNUMPOS)
+			elog(ERROR, "unexpected number of positions");
 
 		/*
-		 * We are sure that sizeof(WordEntry) == sizeof(int32)
+		 * Looks valid. Fill the WordEntry struct, and copy lexeme.
+		 *
+		 * But make sure the buffer is large enough first.
 		 */
-		tmp = pq_getmsgint(buf, sizeof(int32));
-		*weptr = *(WordEntry *) & tmp;
-
-		while (CALCDATASIZE(size, datalen + SHORTALIGN(weptr->len)) >= len)
+		while (hdrlen + SHORTALIGN(datalen + lex_len) +
+			   (npos + 1) * sizeof(WordEntryPos) >= len)
 		{
 			len *= 2;
 			vec = (TSVector) repalloc(vec, len);
-			weptr = ARRPTR(vec) + i;
 		}
 
-		memcpy(STRPTR(vec) + weptr->pos,
-			   pq_getmsgbytes(buf, weptr->len),
-			   weptr->len);
-		datalen += SHORTALIGN(weptr->len);
+		vec->entries[i].haspos = (npos > 0) ? 1 : 0;
+		vec->entries[i].len = lex_len;
+		vec->entries[i].pos = datalen;
 
-		if (i > 0 && WordEntryCMP(weptr, weptr - 1, STRPTR(vec)) <= 0)
+		memcpy(STRPTR(vec) + datalen, lexeme, lex_len);
+
+		datalen += lex_len;
+
+		if (i > 0 && WordEntryCMP(&vec->entries[i], &vec->entries[i - 1], STRPTR(vec)) <= 0)
 			elog(ERROR, "lexemes are unordered");
 
-		if (weptr->haspos)
+		/* Receive positions */
+
+		if (npos > 0)
 		{
-			uint16		j,
-						npos;
+			uint16		j;
 			WordEntryPos *wepptr;
 
-			npos = (uint16) pq_getmsgint(buf, sizeof(uint16));
-			if (npos > MAXNUMPOS)
-				elog(ERROR, "unexpected number of positions");
-
-			while (CALCDATASIZE(size, datalen + (npos + 1) * sizeof(WordEntryPos)) >= len)
+			/*
+			 * Pad to 2-byte alignment if necessary. Though we used palloc0
+			 * for the initial allocation, subsequent repalloc'd memory
+			 * areas are not initialized to zero.
+			 */
+			if (datalen != SHORTALIGN(datalen))
 			{
-				len *= 2;
-				vec = (TSVector) repalloc(vec, len);
-				weptr = ARRPTR(vec) + i;
+				*(STRPTR(vec) + datalen) = '\0';
+				datalen = SHORTALIGN(datalen);
 			}
 
-			memcpy(_POSDATAPTR(vec, weptr), &npos, sizeof(int16));
-			wepptr = POSDATAPTR(vec, weptr);
+			memcpy(STRPTR(vec) + datalen, &npos, sizeof(uint16));
+
+			wepptr = POSDATAPTR(vec, &vec->entries[i]);
 			for (j = 0; j < npos; j++)
 			{
-				wepptr[j] = (WordEntryPos) pq_getmsgint(buf, sizeof(int16));
+				wepptr[j] = (WordEntryPos) pq_getmsgint(buf, sizeof(WordEntryPos));
 				if (j > 0 && WEP_GETPOS(wepptr[j]) <= WEP_GETPOS(wepptr[j - 1]))
 					elog(ERROR, "position information is unordered");
 			}
@@ -480,7 +530,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 		}
 	}
 
-	SET_VARSIZE(vec, CALCDATASIZE(vec->size, datalen));
+	SET_VARSIZE(vec, hdrlen + datalen);
 
 	PG_RETURN_TSVECTOR(vec);
 }
