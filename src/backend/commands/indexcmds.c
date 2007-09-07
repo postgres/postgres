@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.163 2007/09/05 18:10:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.164 2007/09/07 00:58:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -535,10 +535,12 @@ DefineIndex(RangeVar *heapRelation,
 	 *
 	 * We can exclude any running transactions that have xmin >= the xmax of
 	 * our reference snapshot, since they are clearly not interested in any
-	 * missing older tuples.  Also, GetCurrentVirtualXIDs never reports our
-	 * own vxid, so we need not check for that.
+	 * missing older tuples.  Transactions in other DBs aren't a problem
+	 * either, since they'll never even be able to see this index.
+	 * Also, GetCurrentVirtualXIDs never reports our own vxid, so we
+	 * need not check for that.
 	 */
-	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax);
+	old_snapshots = GetCurrentVirtualXIDs(ActiveSnapshot->xmax, false);
 
 	while (VirtualTransactionIdIsValid(*old_snapshots))
 	{

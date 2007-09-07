@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.63 2007/06/03 17:05:53 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.64 2007/09/07 00:58:56 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -308,7 +308,7 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
     table. Other transactions can still read the table, but if they try to
     insert, update, or delete rows in the table they will block until the
     index build is finished. This could have a severe effect if the system is
-    a live production database. Large tables can take many hours to be
+    a live production database.  Very large tables can take many hours to be
     indexed, and even for smaller tables, an index build can lock out writers
     for periods that are unacceptably long for a production system.
    </para>
@@ -319,7 +319,8 @@ CREATE [ UNIQUE ] INDEX [ CONCURRENTLY ] <replaceable class="parameter">name</re
     <literal>CONCURRENTLY</> option of <command>CREATE INDEX</>.
     When this option is used,
     <productname>PostgreSQL</> must perform two scans of the table, and in
-    addition it must wait for all existing transactions to terminate.  Thus
+    addition it must wait for all existing transactions that could potentially
+    use the index to terminate.  Thus
     this method requires more total work than a standard index build and takes
     significantly longer to complete.  However, since it allows normal
     operations to continue while the index is built, this method is useful for

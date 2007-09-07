@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.30 2007/09/05 21:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.31 2007/09/07 00:58:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -891,10 +891,11 @@ IsBackendPid(int pid)
  * The array is palloc'd and is terminated with an invalid VXID.
  *
  * If limitXmin is not InvalidTransactionId, we skip any backends
- * with xmin >= limitXmin.  Also, our own process is always skipped.
+ * with xmin >= limitXmin.  If allDbs is false, we skip backends attached
+ * to other databases.  Also, our own process is always skipped.
  */
 VirtualTransactionId *
-GetCurrentVirtualXIDs(TransactionId limitXmin)
+GetCurrentVirtualXIDs(TransactionId limitXmin, bool allDbs)
 {
 	VirtualTransactionId *vxids;
 	ProcArrayStruct *arrayP = procArray;
@@ -910,24 +911,28 @@ GetCurrentVirtualXIDs(TransactionId limitXmin)
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
 		volatile PGPROC	   *proc = arrayP->procs[index];
-		/* Fetch xmin just once - might change on us? */
-		TransactionId pxmin = proc->xmin;
 
 		if (proc == MyProc)
 			continue;
 
-		/*
-		 * Note that InvalidTransactionId precedes all other XIDs, so a
-		 * proc that hasn't set xmin yet will always be included.
-		 */
-		if (!TransactionIdIsValid(limitXmin) ||
-			TransactionIdPrecedes(pxmin, limitXmin))
+		if (allDbs || proc->databaseId == MyDatabaseId)
 		{
-			VirtualTransactionId vxid;
+			/* Fetch xmin just once - might change on us? */
+			TransactionId pxmin = proc->xmin;
 
-			GET_VXID_FROM_PGPROC(vxid, *proc);
-			if (VirtualTransactionIdIsValid(vxid))
-				vxids[count++] = vxid;
+			/*
+			 * Note that InvalidTransactionId precedes all other XIDs, so a
+			 * proc that hasn't set xmin yet will always be included.
+			 */
+			if (!TransactionIdIsValid(limitXmin) ||
+				TransactionIdPrecedes(pxmin, limitXmin))
+			{
+				VirtualTransactionId vxid;
+
+				GET_VXID_FROM_PGPROC(vxid, *proc);
+				if (VirtualTransactionIdIsValid(vxid))
+					vxids[count++] = vxid;
+			}
 		}
 	}
 
