@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.2 2007/09/07 15:09:56 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.3 2007/09/07 15:35:11 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,7 +160,13 @@ typedef struct
 {
 	QueryItemType		type;	/* operand or kind of operator (ts_tokentype) */
 	int8		weight;			/* weights of operand to search. It's a bitmask of allowed weights.
-								 * if it =0 then any weight are allowed */
+								 * if it =0 then any weight are allowed.
+								 * Weights and bit map:
+								 * A: 1<<3
+								 * B: 1<<2
+								 * C: 1<<1
+								 * D: 1<<0
+								 */
 	int32	valcrc;				/* XXX: pg_crc32 would be a more appropriate data type, 
 								 * but we use comparisons to signed integers in the code. 
 								 * They would need to be changed as well. */
@@ -182,7 +188,7 @@ typedef struct
 {
 	QueryItemType	type;
 	int8		oper;		/* see above */
-	int16		left;		/* pointer to left operand. Right operand is
+	uint32		left;		/* pointer to left operand. Right operand is
 							 * item + 1, left operand is placed
 							 * item+item->left */
 } QueryOperator;

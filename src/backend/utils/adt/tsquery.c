@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.3 2007/09/07 15:09:56 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.4 2007/09/07 15:35:10 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "tsearch/ts_utils.h"
 #include "utils/memutils.h"
 #include "utils/pg_crc.h"
+#include "nodes/bitmapset.h"
 
 
 struct TSQueryParserStateData
@@ -388,14 +389,14 @@ makepol(TSQueryParserState state,
  * QueryItems must be in polish (prefix) notation. 
  */
 static void
-findoprnd(QueryItem *ptr, int *pos)
+findoprnd(QueryItem *ptr, uint32 *pos)
 {
 	/* since this function recurses, it could be driven to stack overflow. */
 	check_stack_depth();
 
 	if (ptr[*pos].type == QI_VAL ||
 		ptr[*pos].type == QI_VALSTOP) /* need to handle VALSTOP here,
-									   * they haven't been cleansed
+									   * they haven't been cleaned
 									   * away yet.
 									   */
 	{
@@ -451,7 +452,7 @@ parse_tsquery(char *buf,
 	TSQuery		query;
 	int			commonlen;
 	QueryItem  *ptr;
-	int			pos = 0;
+	uint32		pos = 0;
 	ListCell   *cell;
 
 	/* init state */
@@ -792,6 +793,7 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 	QueryItem  *item;
 	int			datalen = 0;
 	char	   *ptr;
+	Bitmapset  *parentset = NULL;
 
 	size = pq_getmsgint(buf, sizeof(uint32));
 	if (size < 0 || size > (MaxAllocSize / sizeof(QueryItem)))
@@ -799,7 +801,7 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 
 	len = HDRSIZETQ + sizeof(QueryItem) * size;
 
-	query = (TSQuery) palloc(len);
+	query = (TSQuery) palloc0(len);
 	query->size = size;
 	item = GETQUERY(query);
 
@@ -813,6 +815,15 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 				item->operand.weight = (int8) pq_getmsgint(buf, sizeof(int8));
 				item->operand.valcrc = (int32) pq_getmsgint(buf, sizeof(int32));
 				item->operand.length = pq_getmsgint(buf, sizeof(int16));
+
+				/* Check that the weight bitmap is valid */
+				if (item->operand.weight < 0 || item->operand.weight > 0xF)
+					elog(ERROR, "invalid weight bitmap");
+
+				/* XXX: We don't check that the CRC is valid. Actually, if we
+				 * bothered to calculate it to verify, there would be no need
+				 * to transfer it.
+				 */
 
 				/*
 				 * Check that datalen doesn't grow too large. Without the
@@ -828,7 +839,7 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 					elog(ERROR, "invalid tsquery; total operand length exceeded");
 
 				/* We can calculate distance from datalen, no need to send it
-				 * through the wire. If we did, we would have to check that
+				 * across the wire. If we did, we would have to check that
 				 * it's valid anyway.
 				 */
 				item->operand.distance = datalen;
@@ -842,24 +853,41 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 					item->operator.oper != OP_OR &&
 					item->operator.oper != OP_AND)
 					elog(ERROR, "unknown operator type %d", (int) item->operator.oper);
+
+				/*
+				 * Check that no previous operator node points to the right
+				 * operand. That would mean that the operand node
+				 * has two parents.
+				 */
+				if (bms_is_member(i + 1, parentset))
+					elog(ERROR, "malformed query tree");
+
+				parentset = bms_add_member(parentset, i + 1);
+
 				if(item->operator.oper != OP_NOT)
 				{
-					item->operator.left = (int16) pq_getmsgint(buf, sizeof(int16));
+					uint32 left = (uint32) pq_getmsgint(buf, sizeof(uint32));
+
 					/*
-					 * Sanity checks
+					 * Right operand is implicitly at "this+1". Don't allow
+					 * left to point to the right operand, or to self.
 					 */
-					if (item->operator.left <= 0 || i + item->operator.left >= size)
+					if (left <= 1 || i + left >= size)
 						elog(ERROR, "invalid pointer to left operand");
 
-					/* XXX: Though there's no way to construct a TSQuery that's
-					 * not in polish notation, we don't enforce that for
-					 * queries received from client in binary mode. Is there
-					 * anything that relies on it?
-					 *
-					 * XXX: The tree could be malformed in other ways too,
-					 * a node could have two parents, for example.
+					/*
+					 * Check that no previous operator node points to the left
+					 * operand.
 					 */
+					if (bms_is_member(i + left, parentset))
+						elog(ERROR, "malformed query tree");
+
+					parentset = bms_add_member(parentset, i + left);
+
+					item->operator.left = left;
 				}
+				else
+					item->operator.left = 1; /* do not leave uninitialized fields */
 
 				if (i == size - 1)
 					elog(ERROR, "invalid pointer to right operand");
@@ -870,6 +898,13 @@ tsqueryrecv(PG_FUNCTION_ARGS)
 
 		item++;
 	}
+
+	/* Now check that each node, except the root, has a parent. We
+	 * already checked above that no node has more than one parent. */
+	if (bms_num_members(parentset) != size - 1 && size != 0)
+		elog(ERROR, "malformed query tree");
+
+	bms_free( parentset );
 
 	query = (TSQuery) repalloc(query, len + datalen);
 

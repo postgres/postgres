@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.2 2007/09/07 15:09:56 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.3 2007/09/07 15:35:10 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,9 @@ typedef struct
 static void
 plainnode(PLAINTREE * state, NODE * node)
 {
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (state->cur == state->len)
 	{
 		state->len *= 2;
@@ -107,6 +110,9 @@ plaintree(NODE * root, int *len)
 static void
 freetree(NODE * node)
 {
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (!node)
 		return;
 	if (node->left)
@@ -125,6 +131,9 @@ freetree(NODE * node)
 static NODE *
 clean_NOT_intree(NODE * node)
 {
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (node->valnode->type == QI_VAL)
 		return node;
 
@@ -202,6 +211,9 @@ clean_fakeval_intree(NODE * node, char *result)
 {
 	char		lresult = V_UNKNOWN,
 				rresult = V_UNKNOWN;
+
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
 
 	if (node->valnode->type == QI_VAL)
 		return node;

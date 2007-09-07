@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.2 2007/09/07 15:09:56 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.3 2007/09/07 15:35:10 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,9 @@ QTNode *
 QT2QTN(QueryItem * in, char *operand)
 {
 	QTNode	   *node = (QTNode *) palloc0(sizeof(QTNode));
+
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
 
 	node->valnode = in;
 
@@ -53,6 +56,9 @@ QTNFree(QTNode * in)
 	if (!in)
 		return;
 
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (in->valnode->type == QI_VAL && in->word && (in->flags & QTN_WORDFREE) != 0)
 		pfree(in->word);
 
@@ -79,6 +85,9 @@ QTNFree(QTNode * in)
 int
 QTNodeCompare(QTNode * an, QTNode * bn)
 {
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (an->valnode->type != bn->valnode->type)
 		return (an->valnode->type > bn->valnode->type) ? -1 : 1;
 	
@@ -133,6 +142,9 @@ QTNSort(QTNode * in)
 {
 	int			i;
 
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (in->valnode->type != QI_OPR)
 		return;
 
@@ -164,6 +176,9 @@ void
 QTNTernary(QTNode * in)
 {
 	int			i;
+
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
 
 	if (in->valnode->type != QI_OPR)
 		return;
@@ -205,6 +220,9 @@ QTNBinary(QTNode * in)
 {
 	int			i;
 
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (in->valnode->type != QI_OPR)
 		return;
 
@@ -244,6 +262,9 @@ QTNBinary(QTNode * in)
 static void
 cntsize(QTNode * in, int *sumlen, int *nnode)
 {
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	*nnode += 1;
 	if (in->valnode->type == QI_OPR)
 	{
@@ -268,6 +289,9 @@ typedef struct
 static void
 fillQT(QTN2QTState *state, QTNode *in)
 {
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
 	if (in->valnode->type == QI_VAL)
 	{
 		memcpy(state->curitem, in->valnode, sizeof(QueryOperand));
@@ -325,7 +349,12 @@ QTN2QT(QTNode *in)
 QTNode *
 QTNCopy(QTNode *in)
 {
-	QTNode	   *out = (QTNode *) palloc(sizeof(QTNode));
+	QTNode	   *out;
+
+	/* since this function recurses, it could be driven to stack overflow. */
+	check_stack_depth();
+
+	out = (QTNode *) palloc(sizeof(QTNode));
 
 	*out = *in;
 	out->valnode = (QueryItem *) palloc(sizeof(QueryItem));

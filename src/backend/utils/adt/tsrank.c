@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.2 2007/09/07 15:09:56 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.3 2007/09/07 15:35:10 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -507,6 +507,10 @@ Cover(DocRepresentation *doc, int len, TSQuery query, Extention *ext)
 	int			lastpos = ext->pos;
 	int			i;
 	bool		found = false;
+
+	/* since this function recurses, it could be driven to stack overflow.
+	 * (though any decent compiler will optimize away the tail-recursion.   */
+	check_stack_depth();
 
 	reset_istrue_flag(query);
 
