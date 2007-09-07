@@ -508,7 +508,7 @@ Cover(DocRepresentation * doc, int len, QUERYTYPE * query, Extention * ext)
 	ptr = doc + lastpos;
 
 	/* find lower bound of cover from founded upper bound, move down */
-	while (ptr >= doc)
+	while (ptr >= doc + ext->pos)
 	{
 		for (i = 0; i < ptr->nitem; i++)
 			ptr->item[i]->istrue = 1;
