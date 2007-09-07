@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.2 2007/08/25 00:03:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.3 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,65 +14,41 @@
 
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_public.h"
+#include "nodes/pg_list.h"
 
 /*
  * Common parse definitions for tsvector and tsquery
  */
 
-typedef struct
-{
-	WordEntry	entry;			/* should be first ! */
-	WordEntryPos *pos;
-} WordEntryIN;
+/* tsvector parser support. */
 
-typedef struct
-{
-	char	   *prsbuf;
-	char	   *word;
-	char	   *curpos;
-	int4		len;
-	int4		state;
-	int4		alen;
-	WordEntryPos *pos;
-	bool		oprisdelim;
-} TSVectorParseState;
+struct TSVectorParseStateData;
+typedef struct TSVectorParseStateData *TSVectorParseState;
 
-extern bool gettoken_tsvector(TSVectorParseState *state);
+extern TSVectorParseState init_tsvector_parser(char *input, bool oprisdelim);
+extern void reset_tsvector_parser(TSVectorParseState state, char *input);
+extern bool gettoken_tsvector(TSVectorParseState state, 
+							  char **token, int *len,
+							  WordEntryPos **pos, int *poslen,
+							  char **endptr);
+extern void close_tsvector_parser(TSVectorParseState state);
 
-struct ParseQueryNode;			/* private in backend/utils/adt/tsquery.c */
+/* parse_tsquery */
 
-typedef struct
-{
-	char	   *buffer;			/* entire string we are scanning */
-	char	   *buf;			/* current scan point */
-	int4		state;
-	int4		count;
+struct TSQueryParserStateData;	/* private in backend/utils/adt/tsquery.c */
+typedef struct TSQueryParserStateData *TSQueryParserState;
 
-	/* reverse polish notation in list (for temporary usage) */
-	struct ParseQueryNode *str;
-
-	/* number in str */
-	int4		num;
-
-	/* text-form operand */
-	int4		lenop;
-	int4		sumlen;
-	char	   *op;
-	char	   *curop;
-
-	/* state for value's parser */
-	TSVectorParseState valstate;
-	/* tscfg */
-	Oid			cfg_id;
-} TSQueryParserState;
+typedef void (*PushFunction)(void *opaque, TSQueryParserState state, char *, int, int2);
 
 extern TSQuery parse_tsquery(char *buf,
-			  void (*pushval) (TSQueryParserState *, int, char *, int, int2),
-			  Oid cfg_id, bool isplain);
-extern void pushval_asis(TSQueryParserState * state,
-			 int type, char *strval, int lenval, int2 weight);
-extern void pushquery(TSQueryParserState * state, int4 type, int4 val,
-		  int4 distance, int4 lenval, int2 weight);
+			  PushFunction pushval,
+			  void *opaque, bool isplain);
+
+/* Functions for use by PushFunction implementations */
+extern void pushValue(TSQueryParserState state,
+			 char *strval, int lenval, int2 weight);
+extern void pushStop(TSQueryParserState state);
+extern void pushOperator(TSQueryParserState state, int8 operator);
 
 /*
  * parse plain text and lexize words
@@ -84,6 +60,11 @@ typedef struct
 	union
 	{
 		uint16		pos;
+		/*
+		 * When apos array is used, apos[0] is the number of elements
+		 * in the array (excluding apos[0]), and alen is the allocated
+		 * size of the array.
+		 */
 		uint16	   *apos;
 	}			pos;
 	char	   *word;
@@ -112,22 +93,11 @@ extern void hlparsetext(Oid cfgId, HeadlineParsedText * prs, TSQuery query,
 extern text *generateHeadline(HeadlineParsedText * prs);
 
 /*
- * token/node types for parsing
- */
-#define END				0
-#define ERR				1
-#define VAL				2
-#define OPR				3
-#define OPEN			4
-#define CLOSE			5
-#define VALSTOP			6		/* for stop words */
-
-/*
  * Common check function for tsvector @@ tsquery
  */
 
 extern bool TS_execute(QueryItem * curitem, void *checkval, bool calcnot,
-		   bool (*chkcond) (void *checkval, QueryItem * val));
+		   bool (*chkcond) (void *checkval, QueryOperand * val));
 
 /*
  * Useful conversion macros

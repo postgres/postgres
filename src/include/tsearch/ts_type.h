@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.1 2007/08/21 01:11:29 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.2 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -13,6 +13,8 @@
 #define _PG_TSTYPE_H_
 
 #include "fmgr.h"
+#include "utils/pg_crc.h"
+
 
 /*
  * TSVector type.
@@ -27,8 +29,8 @@ typedef struct
 				pos:20;			/* MAX 1Mb */
 } WordEntry;
 
-#define MAXSTRLEN ( 1<<11 )
-#define MAXSTRPOS ( 1<<20 )
+#define MAXSTRLEN ( (1<<11) - 1)
+#define MAXSTRPOS ( (1<<20) - 1)
 
 /*
  * Equivalent to
@@ -68,7 +70,7 @@ typedef uint16 WordEntryPos;
 typedef struct
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	int4		size;
+	uint32		size;
 	char		data[1];
 } TSVectorData;
 
@@ -140,36 +142,65 @@ extern Datum ts_rankcd_wttf(PG_FUNCTION_ARGS);
 
 /*
  * TSQuery
+ *
+ *
  */
+
+typedef int8 QueryItemType;
+
+/* Valid values for QueryItemType: */
+#define QI_VAL 1
+#define QI_OPR 2
+#define QI_VALSTOP 3	/* This is only used in an intermediate stack representation in parse_tsquery. It's not a legal type elsewhere. */
 
 /*
  * QueryItem is one node in tsquery - operator or operand.
  */
-
-typedef struct QueryItem
+typedef struct
 {
-	int8		type;			/* operand or kind of operator */
-	int8		weight;			/* weights of operand to search */
-	int2		left;			/* pointer to left operand Right operand is
-								 * item + 1, left operand is placed
-								 * item+item->left */
-	int4		val;			/* crc32 value of operand's value */
+	QueryItemType		type;	/* operand or kind of operator (ts_tokentype) */
+	int8		weight;			/* weights of operand to search. It's a bitmask of allowed weights.
+								 * if it =0 then any weight are allowed */
+	int32	valcrc;				/* XXX: pg_crc32 would be a more appropriate data type, 
+								 * but we use comparisons to signed integers in the code. 
+								 * They would need to be changed as well. */
+
 	/* pointer to text value of operand, must correlate with WordEntry */
 	uint32
 				istrue:1,		/* use for ranking in Cover */
 				length:11,
 				distance:20;
+} QueryOperand;
+
+
+/* Legal values for QueryOperator.operator */
+#define	OP_NOT	1
+#define	OP_AND	2
+#define	OP_OR	3
+
+typedef struct 
+{
+	QueryItemType	type;
+	int8		oper;		/* see above */
+	int16		left;		/* pointer to left operand. Right operand is
+							 * item + 1, left operand is placed
+							 * item+item->left */
+} QueryOperator;
+
+/*
+ * Note: TSQuery is 4-bytes aligned, so make sure there's no fields
+ * inside QueryItem requiring 8-byte alignment, like int64.
+ */
+typedef union
+{
+	QueryItemType	type;
+	QueryOperator operator;
+	QueryOperand operand;
 } QueryItem;
 
 /*
- * It's impossible to use offsetof(QueryItem, istrue)
- */
-#define HDRSIZEQI	( sizeof(int8) + sizeof(int8) + sizeof(int2) +	sizeof(int4) )
-
-/*
  * Storage:
- *	(len)(size)(array of ITEM)(array of operand in text form)
- *	operands are always finished by '\0'
+ *	(len)(size)(array of QueryItem)(operands as '\0'-terminated c-strings)
  */
 
 typedef struct
@@ -182,13 +213,17 @@ typedef struct
 typedef TSQueryData *TSQuery;
 
 #define HDRSIZETQ	( VARHDRSZ + sizeof(int4) )
-#define COMPUTESIZE(size,lenofoperand)	( HDRSIZETQ + (size) * sizeof(QueryItem) + (lenofoperand) )
+
+/* Computes the size of header and all QueryItems. size is the number of
+ * QueryItems, and lenofoperand is the total length of all operands
+ */
+#define COMPUTESIZE(size, lenofoperand)	( HDRSIZETQ + (size) * sizeof(QueryItem) + (lenofoperand) )
+
+/* Returns a pointer to the first QueryItem in a TSVector */
 #define GETQUERY(x)  ((QueryItem*)( (char*)(x)+HDRSIZETQ ))
+
+/* Returns a pointer to the beginning of operands in a TSVector */
 #define GETOPERAND(x)	( (char*)GETQUERY(x) + ((TSQuery)(x))->size * sizeof(QueryItem) )
-#define OPERANDSSIZE(x)		( (x)->len - HDRSIZETQ - (x)->size * sizeof(QueryItem) )
-
-#define ISOPERATOR(x)	( pg_mblen(x)==1 && ( *(x)=='!' || *(x)=='&' || *(x)=='|' || *(x)=='(' || *(x)==')' ) )
-
 
 /*
  * fmgr interface macros

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.1 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_rewrite.c,v 1.2 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,18 +34,26 @@ addone(int *counters, int last, int total)
 	return 1;
 }
 
+/*
+ * If node is equal to ex, replace it with subs. Replacement is actually done
+ * by returning either node or a copy of subs.
+ */
 static QTNode *
 findeq(QTNode *node, QTNode *ex, QTNode *subs, bool *isfind)
 {
 
-	if ((node->sign & ex->sign) != ex->sign || node->valnode->type != ex->valnode->type || node->valnode->val != ex->valnode->val)
+	if ((node->sign & ex->sign) != ex->sign || 
+		node->valnode->type != ex->valnode->type)
 		return node;
 
 	if (node->flags & QTN_NOCHANGE)
 		return node;
-
-	if (node->valnode->type == OPR)
+	
+	if (node->valnode->type == QI_OPR)
 	{
+		if (node->valnode->operator.oper != ex->valnode->operator.oper)
+			return node;
+
 		if (node->nchild == ex->nchild)
 		{
 			if (QTNEq(node, ex))
@@ -63,6 +71,12 @@ findeq(QTNode *node, QTNode *ex, QTNode *subs, bool *isfind)
 		}
 		else if (node->nchild > ex->nchild)
 		{
+			/*
+			 * AND and NOT are commutative, so we check if a subset of the
+			 * children match. For example, if tnode is A | B | C, and 
+			 * ex is B | C, we have a match after we convert tnode to
+			 * A | (B | C).
+			 */
 			int		   *counters = (int *) palloc(sizeof(int) * node->nchild);
 			int			i;
 			QTNode	   *tnode = (QTNode *) palloc(sizeof(QTNode));
@@ -131,19 +145,26 @@ findeq(QTNode *node, QTNode *ex, QTNode *subs, bool *isfind)
 			pfree(counters);
 		}
 	}
-	else if (QTNEq(node, ex))
+	else 
 	{
-		QTNFree(node);
-		if (subs)
+		Assert(node->valnode->type == QI_VAL);
+
+		if (node->valnode->operand.valcrc != ex->valnode->operand.valcrc)
+			return node;
+		else if (QTNEq(node, ex))
 		{
-			node = QTNCopy(subs);
-			node->flags |= QTN_NOCHANGE;
+			QTNFree(node);
+			if (subs)
+			{
+				node = QTNCopy(subs);
+				node->flags |= QTN_NOCHANGE;
+			}
+			else
+			{
+				node = NULL;
+			}
+			*isfind = true;
 		}
-		else
-		{
-			node = NULL;
-		}
-		*isfind = true;
 	}
 
 	return node;
@@ -154,7 +175,7 @@ dofindsubquery(QTNode *root, QTNode *ex, QTNode *subs, bool *isfind)
 {
 	root = findeq(root, ex, subs, isfind);
 
-	if (root && (root->flags & QTN_NOCHANGE) == 0 && root->valnode->type == OPR)
+	if (root && (root->flags & QTN_NOCHANGE) == 0 && root->valnode->type == QI_OPR)
 	{
 		int			i;
 
@@ -172,7 +193,7 @@ dropvoidsubtree(QTNode * root)
 	if (!root)
 		return NULL;
 
-	if (root->valnode->type == OPR)
+	if (root->valnode->type == QI_OPR)
 	{
 		int			i,
 					j = 0;
@@ -188,7 +209,7 @@ dropvoidsubtree(QTNode * root)
 
 		root->nchild = j;
 
-		if (root->valnode->val == (int4) '!' && root->nchild == 0)
+		if (root->valnode->operator.oper == OP_NOT && root->nchild == 0)
 		{
 			QTNFree(root);
 			root = NULL;
@@ -256,9 +277,9 @@ ts_rewrite_accum(PG_FUNCTION_ARGS)
 		elog(ERROR, "array must be one-dimensional, not %d dimensions",
 			 ARR_NDIM(qa));
 	if (ArrayGetNItems(ARR_NDIM(qa), ARR_DIMS(qa)) != 3)
-		elog(ERROR, "array should have only three elements");
+		elog(ERROR, "array must have three elements");
 	if (ARR_ELEMTYPE(qa) != TSQUERYOID)
-		elog(ERROR, "array should contain tsquery type");
+		elog(ERROR, "array must contain tsquery elements");
 
 	deconstruct_array(qa, TSQUERYOID, -1, false, 'i', &elemsp, NULL, &nelemsp);
 
@@ -499,6 +520,7 @@ tsquery_rewrite_query(PG_FUNCTION_ARGS)
 		subs = QT2QTN(GETQUERY(subst), GETOPERAND(subst));
 
 	tree = findsubquery(tree, qex, subs, NULL);
+
 	QTNFree(qex);
 	QTNFree(subs);
 

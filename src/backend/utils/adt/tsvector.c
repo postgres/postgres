@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.2 2007/08/21 01:45:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector.c,v 1.3 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,22 +20,37 @@
 #include "tsearch/ts_utils.h"
 #include "utils/memutils.h"
 
+typedef struct
+{
+	WordEntry	entry;			/* should be first ! */
+	WordEntryPos *pos;
+	int			poslen;			/* number of elements in pos */
+} WordEntryIN;
 
 static int
 comparePos(const void *a, const void *b)
 {
-	if (WEP_GETPOS(*(WordEntryPos *) a) == WEP_GETPOS(*(WordEntryPos *) b))
+	int apos = WEP_GETPOS(*(WordEntryPos *) a);
+	int bpos = WEP_GETPOS(*(WordEntryPos *) b);
+
+	if (apos == bpos)
 		return 0;
-	return (WEP_GETPOS(*(WordEntryPos *) a) > WEP_GETPOS(*(WordEntryPos *) b)) ? 1 : -1;
+	return (apos > bpos) ? 1 : -1;
 }
 
+/*
+ * Removes duplicate pos entries. If there's two entries with same pos
+ * but different weight, the higher weight is retained.
+ *
+ * Returns new length.
+ */
 static int
-uniquePos(WordEntryPos * a, int4 l)
+uniquePos(WordEntryPos * a, int l)
 {
 	WordEntryPos *ptr,
 			   *res;
 
-	if (l == 1)
+	if (l <= 1)
 		return l;
 
 	res = a;
@@ -75,21 +90,23 @@ compareentry(const void *a, const void *b, void *arg)
 }
 
 static int
-uniqueentry(WordEntryIN * a, int4 l, char *buf, int4 *outbuflen)
+uniqueentry(WordEntryIN * a, int l, char *buf, int *outbuflen)
 {
 	WordEntryIN *ptr,
 			   *res;
 
-	res = a;
+	Assert(l >= 1);
+
 	if (l == 1)
 	{
 		if (a->entry.haspos)
 		{
-			*(uint16 *) (a->pos) = uniquePos(&(a->pos[1]), *(uint16 *) (a->pos));
-			*outbuflen = SHORTALIGN(res->entry.len) + (*(uint16 *) (a->pos) + 1) * sizeof(WordEntryPos);
+			a->poslen = uniquePos(a->pos, a->poslen);
+			*outbuflen = SHORTALIGN(a->entry.len) + (a->poslen + 1) * sizeof(WordEntryPos);
 		}
 		return l;
 	}
+	res = a;
 
 	ptr = a + 1;
 	qsort_arg((void *) a, l, sizeof(WordEntryIN), compareentry, (void *) buf);
@@ -101,8 +118,8 @@ uniqueentry(WordEntryIN * a, int4 l, char *buf, int4 *outbuflen)
 		{
 			if (res->entry.haspos)
 			{
-				*(uint16 *) (res->pos) = uniquePos(&(res->pos[1]), *(uint16 *) (res->pos));
-				*outbuflen += *(uint16 *) (res->pos) * sizeof(WordEntryPos);
+				res->poslen = uniquePos(res->pos, res->poslen);
+				*outbuflen += res->poslen * sizeof(WordEntryPos);
 			}
 			*outbuflen += SHORTALIGN(res->entry.len);
 			res++;
@@ -112,12 +129,14 @@ uniqueentry(WordEntryIN * a, int4 l, char *buf, int4 *outbuflen)
 		{
 			if (res->entry.haspos)
 			{
-				int4		len = *(uint16 *) (ptr->pos) + 1 + *(uint16 *) (res->pos);
+				int	newlen = ptr->poslen + res->poslen;
 
-				res->pos = (WordEntryPos *) repalloc(res->pos, len * sizeof(WordEntryPos));
-				memcpy(&(res->pos[*(uint16 *) (res->pos) + 1]),
-					   &(ptr->pos[1]), *(uint16 *) (ptr->pos) * sizeof(WordEntryPos));
-				*(uint16 *) (res->pos) += *(uint16 *) (ptr->pos);
+				/* Append res to pos */
+
+				res->pos = (WordEntryPos *) repalloc(res->pos, newlen * sizeof(WordEntryPos));
+				memcpy(&res->pos[res->poslen],
+					   ptr->pos, ptr->poslen * sizeof(WordEntryPos));
+				res->poslen = newlen;
 				pfree(ptr->pos);
 			}
 			else
@@ -130,8 +149,8 @@ uniqueentry(WordEntryIN * a, int4 l, char *buf, int4 *outbuflen)
 	}
 	if (res->entry.haspos)
 	{
-		*(uint16 *) (res->pos) = uniquePos(&(res->pos[1]), *(uint16 *) (res->pos));
-		*outbuflen += *(uint16 *) (res->pos) * sizeof(WordEntryPos);
+		res->poslen = uniquePos(res->pos, res->poslen);
+		*outbuflen += res->poslen * sizeof(WordEntryPos);
 	}
 	*outbuflen += SHORTALIGN(res->entry.len);
 
@@ -144,248 +163,6 @@ WordEntryCMP(WordEntry * a, WordEntry * b, char *buf)
 	return compareentry(a, b, buf);
 }
 
-#define WAITWORD		1
-#define WAITENDWORD		2
-#define WAITNEXTCHAR	3
-#define WAITENDCMPLX	4
-#define WAITPOSINFO		5
-#define INPOSINFO		6
-#define WAITPOSDELIM	7
-#define WAITCHARCMPLX	8
-
-#define RESIZEPRSBUF \
-do { \
-	if ( state->curpos - state->word + pg_database_encoding_max_length() >= state->len ) \
-	{ \
-		int4 clen = state->curpos - state->word; \
-		state->len *= 2; \
-		state->word = (char*)repalloc( (void*)state->word, state->len ); \
-		state->curpos = state->word + clen; \
-	} \
-} while (0)
-
-bool
-gettoken_tsvector(TSVectorParseState *state)
-{
-	int4		oldstate = 0;
-
-	state->curpos = state->word;
-	state->state = WAITWORD;
-	state->alen = 0;
-
-	while (1)
-	{
-		if (state->state == WAITWORD)
-		{
-			if (*(state->prsbuf) == '\0')
-				return false;
-			else if (t_iseq(state->prsbuf, '\''))
-				state->state = WAITENDCMPLX;
-			else if (t_iseq(state->prsbuf, '\\'))
-			{
-				state->state = WAITNEXTCHAR;
-				oldstate = WAITENDWORD;
-			}
-			else if (state->oprisdelim && ISOPERATOR(state->prsbuf))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("syntax error in tsvector")));
-			else if (!t_isspace(state->prsbuf))
-			{
-				COPYCHAR(state->curpos, state->prsbuf);
-				state->curpos += pg_mblen(state->prsbuf);
-				state->state = WAITENDWORD;
-			}
-		}
-		else if (state->state == WAITNEXTCHAR)
-		{
-			if (*(state->prsbuf) == '\0')
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("there is no escaped character")));
-			else
-			{
-				RESIZEPRSBUF;
-				COPYCHAR(state->curpos, state->prsbuf);
-				state->curpos += pg_mblen(state->prsbuf);
-				state->state = oldstate;
-			}
-		}
-		else if (state->state == WAITENDWORD)
-		{
-			if (t_iseq(state->prsbuf, '\\'))
-			{
-				state->state = WAITNEXTCHAR;
-				oldstate = WAITENDWORD;
-			}
-			else if (t_isspace(state->prsbuf) || *(state->prsbuf) == '\0' ||
-					 (state->oprisdelim && ISOPERATOR(state->prsbuf)))
-			{
-				RESIZEPRSBUF;
-				if (state->curpos == state->word)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
-				*(state->curpos) = '\0';
-				return true;
-			}
-			else if (t_iseq(state->prsbuf, ':'))
-			{
-				if (state->curpos == state->word)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
-				*(state->curpos) = '\0';
-				if (state->oprisdelim)
-					return true;
-				else
-					state->state = INPOSINFO;
-			}
-			else
-			{
-				RESIZEPRSBUF;
-				COPYCHAR(state->curpos, state->prsbuf);
-				state->curpos += pg_mblen(state->prsbuf);
-			}
-		}
-		else if (state->state == WAITENDCMPLX)
-		{
-			if (t_iseq(state->prsbuf, '\''))
-			{
-				state->state = WAITCHARCMPLX;
-			}
-			else if (t_iseq(state->prsbuf, '\\'))
-			{
-				state->state = WAITNEXTCHAR;
-				oldstate = WAITENDCMPLX;
-			}
-			else if (*(state->prsbuf) == '\0')
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("syntax error in tsvector")));
-			else
-			{
-				RESIZEPRSBUF;
-				COPYCHAR(state->curpos, state->prsbuf);
-				state->curpos += pg_mblen(state->prsbuf);
-			}
-		}
-		else if (state->state == WAITCHARCMPLX)
-		{
-			if (t_iseq(state->prsbuf, '\''))
-			{
-				RESIZEPRSBUF;
-				COPYCHAR(state->curpos, state->prsbuf);
-				state->curpos += pg_mblen(state->prsbuf);
-				state->state = WAITENDCMPLX;
-			}
-			else
-			{
-				RESIZEPRSBUF;
-				*(state->curpos) = '\0';
-				if (state->curpos == state->word)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
-				if (state->oprisdelim)
-				{
-					/* state->prsbuf+=pg_mblen(state->prsbuf); */
-					return true;
-				}
-				else
-					state->state = WAITPOSINFO;
-				continue;		/* recheck current character */
-			}
-		}
-		else if (state->state == WAITPOSINFO)
-		{
-			if (t_iseq(state->prsbuf, ':'))
-				state->state = INPOSINFO;
-			else
-				return true;
-		}
-		else if (state->state == INPOSINFO)
-		{
-			if (t_isdigit(state->prsbuf))
-			{
-				if (state->alen == 0)
-				{
-					state->alen = 4;
-					state->pos = (WordEntryPos *) palloc(sizeof(WordEntryPos) * state->alen);
-					*(uint16 *) (state->pos) = 0;
-				}
-				else if (*(uint16 *) (state->pos) + 1 >= state->alen)
-				{
-					state->alen *= 2;
-					state->pos = (WordEntryPos *) repalloc(state->pos, sizeof(WordEntryPos) * state->alen);
-				}
-				(*(uint16 *) (state->pos))++;
-				WEP_SETPOS(state->pos[*(uint16 *) (state->pos)], LIMITPOS(atoi(state->prsbuf)));
-				if (WEP_GETPOS(state->pos[*(uint16 *) (state->pos)]) == 0)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("wrong position info in tsvector")));
-				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 0);
-				state->state = WAITPOSDELIM;
-			}
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("syntax error in tsvector")));
-		}
-		else if (state->state == WAITPOSDELIM)
-		{
-			if (t_iseq(state->prsbuf, ','))
-				state->state = INPOSINFO;
-			else if (t_iseq(state->prsbuf, 'a') || t_iseq(state->prsbuf, 'A') || t_iseq(state->prsbuf, '*'))
-			{
-				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
-				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 3);
-			}
-			else if (t_iseq(state->prsbuf, 'b') || t_iseq(state->prsbuf, 'B'))
-			{
-				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
-				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 2);
-			}
-			else if (t_iseq(state->prsbuf, 'c') || t_iseq(state->prsbuf, 'C'))
-			{
-				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
-				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 1);
-			}
-			else if (t_iseq(state->prsbuf, 'd') || t_iseq(state->prsbuf, 'D'))
-			{
-				if (WEP_GETWEIGHT(state->pos[*(uint16 *) (state->pos)]))
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("syntax error in tsvector")));
-				WEP_SETWEIGHT(state->pos[*(uint16 *) (state->pos)], 0);
-			}
-			else if (t_isspace(state->prsbuf) ||
-					 *(state->prsbuf) == '\0')
-				return true;
-			else if (!t_isdigit(state->prsbuf))
-				ereport(ERROR,
-						(errcode(ERRCODE_SYNTAX_ERROR),
-						 errmsg("syntax error in tsvector")));
-		}
-		else					/* internal error */
-			elog(ERROR, "internal error in gettoken_tsvector");
-
-		/* get next char */
-		state->prsbuf += pg_mblen(state->prsbuf);
-	}
-
-	return false;
-}
 
 Datum
 tsvectorin(PG_FUNCTION_ARGS)
@@ -393,70 +170,82 @@ tsvectorin(PG_FUNCTION_ARGS)
 	char	   *buf = PG_GETARG_CSTRING(0);
 	TSVectorParseState state;
 	WordEntryIN *arr;
+	int			totallen;
+	int			arrlen;  /* allocated size of arr */
 	WordEntry  *inarr;
-	int4		len = 0,
-				totallen = 64;
+	int			len = 0;
 	TSVector	in;
-	char	   *tmpbuf,
-			   *cur;
-	int4		i,
-				buflen = 256;
+	int			i;
+	char	   *token;
+	int			toklen;
+	WordEntryPos *pos;
+	int			poslen;
+
+	/*
+	 * Tokens are appended to tmpbuf, cur is a pointer
+	 * to the end of used space in tmpbuf.
+	 */
+	char	   *tmpbuf;
+	char	   *cur;
+	int			buflen = 256; /* allocated size of tmpbuf */
 
 	pg_verifymbstr(buf, strlen(buf), false);
-	state.prsbuf = buf;
-	state.len = 32;
-	state.word = (char *) palloc(state.len);
-	state.oprisdelim = false;
 
-	arr = (WordEntryIN *) palloc(sizeof(WordEntryIN) * totallen);
+	state = init_tsvector_parser(buf, false);
+	
+	arrlen = 64;
+	arr = (WordEntryIN *) palloc(sizeof(WordEntryIN) * arrlen);
 	cur = tmpbuf = (char *) palloc(buflen);
 
-	while (gettoken_tsvector(&state))
+	while (gettoken_tsvector(state, &token, &toklen, &pos, &poslen, NULL))
 	{
-		/*
-		 * Realloc buffers if it's needed
-		 */
-		if (len >= totallen)
-		{
-			totallen *= 2;
-			arr = (WordEntryIN *) repalloc((void *) arr, sizeof(WordEntryIN) * totallen);
-		}
 
-		while ((cur - tmpbuf) + (state.curpos - state.word) >= buflen)
+		if (toklen >= MAXSTRLEN)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("word is too long (%ld bytes, max %ld bytes)",
+							(long) toklen,
+							(long) MAXSTRLEN)));
+
+
+		if (cur - tmpbuf > MAXSTRPOS)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("position value too large")));
+
+		/*
+		 * Enlarge buffers if needed
+		 */
+		if (len >= arrlen)
 		{
-			int4		dist = cur - tmpbuf;
+			arrlen *= 2;
+			arr = (WordEntryIN *) repalloc((void *) arr, sizeof(WordEntryIN) * arrlen);
+		}
+		while ((cur - tmpbuf) + toklen >= buflen)
+		{
+			int	dist = cur - tmpbuf;
 
 			buflen *= 2;
 			tmpbuf = (char *) repalloc((void *) tmpbuf, buflen);
 			cur = tmpbuf + dist;
 		}
-
-		if (state.curpos - state.word >= MAXSTRLEN)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("word is too long (%ld bytes, max %ld bytes)",
-							(long) (state.curpos - state.word),
-							(long) MAXSTRLEN)));
-
-		arr[len].entry.len = state.curpos - state.word;
-		if (cur - tmpbuf > MAXSTRPOS)
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("position value too large")));
+		arr[len].entry.len = toklen;
 		arr[len].entry.pos = cur - tmpbuf;
-		memcpy((void *) cur, (void *) state.word, arr[len].entry.len);
-		cur += arr[len].entry.len;
+		memcpy((void *) cur, (void *) token, toklen);
+		cur += toklen;
 
-		if (state.alen)
+		if (poslen != 0)
 		{
 			arr[len].entry.haspos = 1;
-			arr[len].pos = state.pos;
+			arr[len].pos = pos;
+			arr[len].poslen = poslen;
 		}
 		else
 			arr[len].entry.haspos = 0;
 		len++;
 	}
-	pfree(state.word);
+
+	close_tsvector_parser(state);
 
 	if (len > 0)
 		len = uniqueentry(arr, len, tmpbuf, &buflen);
@@ -476,8 +265,21 @@ tsvectorin(PG_FUNCTION_ARGS)
 		cur += SHORTALIGN(arr[i].entry.len);
 		if (arr[i].entry.haspos)
 		{
-			memcpy(cur, arr[i].pos, (*(uint16 *) arr[i].pos + 1) * sizeof(WordEntryPos));
-			cur += (*(uint16 *) arr[i].pos + 1) * sizeof(WordEntryPos);
+			uint16 tmplen;
+
+			if(arr[i].poslen > 0xFFFF)
+				elog(ERROR, "positions array too long");
+
+			tmplen = (uint16) arr[i].poslen;
+
+			/* Copy length to output struct */
+			memcpy(cur, &tmplen, sizeof(uint16));
+			cur += sizeof(uint16);
+
+			/* Copy positions */
+			memcpy(cur, arr[i].pos, (arr[i].poslen) * sizeof(WordEntryPos));
+			cur += arr[i].poslen * sizeof(WordEntryPos);
+
 			pfree(arr[i].pos);
 		}
 		inarr[i] = arr[i].entry;
@@ -604,26 +406,26 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 {
 	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
 	TSVector	vec;
-	int			i,
-				size,
-				len = DATAHDRSIZE;
+	int			i;
+	uint32		size;
 	WordEntry  *weptr;
 	int			datalen = 0;
+	Size		len;
 
 	size = pq_getmsgint(buf, sizeof(uint32));
 	if (size < 0 || size > (MaxAllocSize / sizeof(WordEntry)))
 		elog(ERROR, "invalid size of tsvector");
 
-	len += sizeof(WordEntry) * size;
+	len = DATAHDRSIZE + sizeof(WordEntry) * size;
 
-	len *= 2;
+	len = len * 2; /* times two to make room for lexemes */
 	vec = (TSVector) palloc0(len);
 	vec->size = size;
 
 	weptr = ARRPTR(vec);
 	for (i = 0; i < size; i++)
 	{
-		int			tmp;
+		int32 tmp;
 
 		weptr = ARRPTR(vec) + i;
 
@@ -654,7 +456,7 @@ tsvectorrecv(PG_FUNCTION_ARGS)
 						npos;
 			WordEntryPos *wepptr;
 
-			npos = (uint16) pq_getmsgint(buf, sizeof(int16));
+			npos = (uint16) pq_getmsgint(buf, sizeof(uint16));
 			if (npos > MAXNUMPOS)
 				elog(ERROR, "unexpected number of positions");
 

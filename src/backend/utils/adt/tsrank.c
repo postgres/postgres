@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.1 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.2 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ cnt_length(TSVector t)
 }
 
 static int4
-WordECompareQueryItem(char *eval, char *qval, WordEntry * ptr, QueryItem * item)
+WordECompareQueryItem(char *eval, char *qval, WordEntry *ptr, QueryOperand *item)
 {
 	if (ptr->len == item->length)
 		return strncmp(
@@ -80,7 +80,7 @@ WordECompareQueryItem(char *eval, char *qval, WordEntry * ptr, QueryItem * item)
 }
 
 static WordEntry *
-find_wordentry(TSVector t, TSQuery q, QueryItem * item)
+find_wordentry(TSVector t, TSQuery q, QueryOperand *item)
 {
 	WordEntry  *StopLow = ARRPTR(t);
 	WordEntry  *StopHigh = (WordEntry *) STRPTR(t);
@@ -105,33 +105,48 @@ find_wordentry(TSVector t, TSQuery q, QueryItem * item)
 }
 
 
+/*
+ * sort QueryOperands by (length, word)
+ */
 static int
-compareQueryItem(const void *a, const void *b, void *arg)
+compareQueryOperand(const void *a, const void *b, void *arg)
 {
 	char	   *operand = (char *) arg;
+	QueryOperand *qa = (*(QueryOperand **) a);
+	QueryOperand *qb = (*(QueryOperand **) b);
 
-	if ((*(QueryItem **) a)->length == (*(QueryItem **) b)->length)
-		return strncmp(operand + (*(QueryItem **) a)->distance,
-					   operand + (*(QueryItem **) b)->distance,
-					   (*(QueryItem **) b)->length);
+	if (qa->length == qb->length)
+		return strncmp(operand + qa->distance,
+					   operand + qb->distance,
+					   qb->length);
 
-	return ((*(QueryItem **) a)->length > (*(QueryItem **) b)->length) ? 1 : -1;
+	return (qa->length > qb->length) ? 1 : -1;
 }
 
-static QueryItem **
-SortAndUniqItems(char *operand, QueryItem * item, int *size)
+/*
+ * Returns a sorted, de-duplicated array of QueryOperands in a query.
+ * The returned QueryOperands are pointers to the original QueryOperands
+ * in the query.
+ *
+ * Length of the returned array is stored in *size
+ */
+static QueryOperand **
+SortAndUniqItems(TSQuery q, int *size)
 {
-	QueryItem **res,
+	char *operand = GETOPERAND(q);
+	QueryItem * item = GETQUERY(q);
+	QueryOperand **res,
 			  **ptr,
 			  **prevptr;
 
-	ptr = res = (QueryItem **) palloc(sizeof(QueryItem *) * *size);
+	ptr = res = (QueryOperand **) palloc(sizeof(QueryOperand *) * *size);
 
+	/* Collect all operands from the tree to res */
 	while ((*size)--)
 	{
-		if (item->type == VAL)
+		if (item->type == QI_VAL)
 		{
-			*ptr = item;
+			*ptr = (QueryOperand *) item;
 			ptr++;
 		}
 		item++;
@@ -141,14 +156,15 @@ SortAndUniqItems(char *operand, QueryItem * item, int *size)
 	if (*size < 2)
 		return res;
 
-	qsort_arg(res, *size, sizeof(QueryItem **), compareQueryItem, (void *) operand);
+	qsort_arg(res, *size, sizeof(QueryOperand **), compareQueryOperand, (void *) operand);
 
 	ptr = res + 1;
 	prevptr = res;
 
+	/* remove duplicates */
 	while (ptr - res < *size)
 	{
-		if (compareQueryItem((void *) ptr, (void *) prevptr, (void *) operand) != 0)
+		if (compareQueryOperand((void *) ptr, (void *) prevptr, (void *) operand) != 0)
 		{
 			prevptr++;
 			*prevptr = *ptr;
@@ -180,10 +196,10 @@ calc_rank_and(float *w, TSVector t, TSQuery q)
 				lenct,
 				dist;
 	float		res = -1.0;
-	QueryItem **item;
+	QueryOperand **item;
 	int			size = q->size;
 
-	item = SortAndUniqItems(GETOPERAND(q), GETQUERY(q), &size);
+	item = SortAndUniqItems(q, &size);
 	if (size < 2)
 	{
 		pfree(item);
@@ -246,11 +262,11 @@ calc_rank_or(float *w, TSVector t, TSQuery q)
 				j,
 				i;
 	float		res = 0.0;
-	QueryItem **item;
+	QueryOperand **item;
 	int			size = q->size;
 
 	*(uint16 *) POSNULL = lengthof(POSNULL) - 1;
-	item = SortAndUniqItems(GETOPERAND(q), GETQUERY(q), &size);
+	item = SortAndUniqItems(q, &size);
 
 	for (i = 0; i < size; i++)
 	{
@@ -310,7 +326,8 @@ calc_rank(float *w, TSVector t, TSQuery q, int4 method)
 	if (!t->size || !q->size)
 		return 0.0;
 
-	res = (item->type != VAL && item->val == (int4) '&') ?
+	/* XXX: What about NOT? */
+	res = (item->type == QI_OPR && item->operator.oper == OP_AND) ?
 		calc_rank_and(w, t, q) : calc_rank_or(w, t, q);
 
 	if (res < 0)
@@ -453,7 +470,7 @@ compareDocR(const void *a, const void *b)
 }
 
 static bool
-checkcondition_QueryItem(void *checkval, QueryItem * val)
+checkcondition_QueryOperand(void *checkval, QueryOperand *val)
 {
 	return (bool) (val->istrue);
 }
@@ -467,8 +484,8 @@ reset_istrue_flag(TSQuery query)
 	/* reset istrue flag */
 	for (i = 0; i < query->size; i++)
 	{
-		if (item->type == VAL)
-			item->istrue = 0;
+		if (item->type == QI_VAL)
+			item->operand.istrue = 0;
 		item++;
 	}
 }
@@ -484,7 +501,7 @@ typedef struct
 
 
 static bool
-Cover(DocRepresentation * doc, int len, TSQuery query, Extention * ext)
+Cover(DocRepresentation *doc, int len, TSQuery query, Extention *ext)
 {
 	DocRepresentation *ptr;
 	int			lastpos = ext->pos;
@@ -501,8 +518,11 @@ Cover(DocRepresentation * doc, int len, TSQuery query, Extention * ext)
 	while (ptr - doc < len)
 	{
 		for (i = 0; i < ptr->nitem; i++)
-			ptr->item[i]->istrue = 1;
-		if (TS_execute(GETQUERY(query), NULL, false, checkcondition_QueryItem))
+		{
+			if(ptr->item[i]->type == QI_VAL)
+				ptr->item[i]->operand.istrue = 1;
+		}
+		if (TS_execute(GETQUERY(query), NULL, false, checkcondition_QueryOperand))
 		{
 			if (ptr->pos > ext->q)
 			{
@@ -527,8 +547,9 @@ Cover(DocRepresentation * doc, int len, TSQuery query, Extention * ext)
 	while (ptr >= doc + ext->pos)
 	{
 		for (i = 0; i < ptr->nitem; i++)
-			ptr->item[i]->istrue = 1;
-		if (TS_execute(GETQUERY(query), NULL, true, checkcondition_QueryItem))
+			if(ptr->item[i]->type  == QI_VAL) /* XXX */
+				ptr->item[i]->operand.istrue = 1;
+		if (TS_execute(GETQUERY(query), NULL, true, checkcondition_QueryOperand))
 		{
 			if (ptr->pos < ext->p)
 			{
@@ -575,10 +596,17 @@ get_docrep(TSVector txt, TSQuery query, int *doclen)
 
 	for (i = 0; i < query->size; i++)
 	{
-		if (item[i].type != VAL || item[i].istrue)
+		QueryOperand *curoperand;
+
+		if (item[i].type != QI_VAL)
+			continue;
+		
+		curoperand = &item[i].operand;
+		
+		if(item[i].operand.istrue)
 			continue;
 
-		entry = find_wordentry(txt, query, &(item[i]));
+		entry = find_wordentry(txt, query, curoperand);
 		if (!entry)
 			continue;
 
@@ -603,8 +631,6 @@ get_docrep(TSVector txt, TSQuery query, int *doclen)
 		{
 			if (j == 0)
 			{
-				QueryItem  *kptr,
-						   *iptr = item + i;
 				int			k;
 
 				doc[cur].needfree = false;
@@ -613,14 +639,17 @@ get_docrep(TSVector txt, TSQuery query, int *doclen)
 
 				for (k = 0; k < query->size; k++)
 				{
-					kptr = item + k;
+					QueryOperand *kptr = &item[k].operand;
+					QueryOperand *iptr = &item[i].operand;
+
 					if (k == i ||
-						(item[k].type == VAL &&
-						 compareQueryItem(&kptr, &iptr, operand) == 0))
+						(item[k].type == QI_VAL &&
+						 compareQueryOperand(&kptr, &iptr, operand) == 0))
 					{
+						/* if k == i, we've already checked above that it's type == Q_VAL */
 						doc[cur].item[doc[cur].nitem] = item + k;
 						doc[cur].nitem++;
-						kptr->istrue = 1;
+						item[k].operand.istrue = 1;
 					}
 				}
 			}
@@ -640,8 +669,7 @@ get_docrep(TSVector txt, TSQuery query, int *doclen)
 
 	if (cur > 0)
 	{
-		if (cur > 1)
-			qsort((void *) doc, cur, sizeof(DocRepresentation), compareDocR);
+		qsort((void *) doc, cur, sizeof(DocRepresentation), compareDocR);
 		return doc;
 	}
 
@@ -746,7 +774,7 @@ ts_rankcd_wttf(PG_FUNCTION_ARGS)
 {
 	ArrayType  *win = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	TSVector	txt = PG_GETARG_TSVECTOR(1);
-	TSQuery		query = PG_GETARG_TSQUERY_COPY(2);
+	TSQuery		query = PG_GETARG_TSQUERY_COPY(2); /* copy because we modify the istrue-flag */
 	int			method = PG_GETARG_INT32(3);
 	float		res;
 
@@ -763,7 +791,7 @@ ts_rankcd_wtt(PG_FUNCTION_ARGS)
 {
 	ArrayType  *win = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	TSVector	txt = PG_GETARG_TSVECTOR(1);
-	TSQuery		query = PG_GETARG_TSQUERY_COPY(2);
+	TSQuery		query = PG_GETARG_TSQUERY_COPY(2); /* copy because we modify the istrue-flag */
 	float		res;
 
 	res = calc_rank_cd(getWeights(win), txt, query, DEF_NORM_METHOD);
@@ -778,7 +806,7 @@ Datum
 ts_rankcd_ttf(PG_FUNCTION_ARGS)
 {
 	TSVector	txt = PG_GETARG_TSVECTOR(0);
-	TSQuery		query = PG_GETARG_TSQUERY_COPY(1);
+	TSQuery		query = PG_GETARG_TSQUERY_COPY(1); /* copy because we modify the istrue-flag */
 	int			method = PG_GETARG_INT32(2);
 	float		res;
 
@@ -793,7 +821,7 @@ Datum
 ts_rankcd_tt(PG_FUNCTION_ARGS)
 {
 	TSVector	txt = PG_GETARG_TSVECTOR(0);
-	TSQuery		query = PG_GETARG_TSQUERY_COPY(1);
+	TSQuery		query = PG_GETARG_TSQUERY_COPY(1); /* copy because we modify the istrue-flag */
 	float		res;
 
 	res = calc_rank_cd(getWeights(NULL), txt, query, DEF_NORM_METHOD);

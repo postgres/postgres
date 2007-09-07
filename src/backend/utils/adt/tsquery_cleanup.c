@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.1 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.2 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,20 +35,23 @@ maketree(QueryItem * in)
 
 	node->valnode = in;
 	node->right = node->left = NULL;
-	if (in->type == OPR)
+	if (in->type == QI_OPR)
 	{
 		node->right = maketree(in + 1);
-		if (in->val != (int4) '!')
-			node->left = maketree(in + in->left);
+		if (in->operator.oper != OP_NOT)
+			node->left = maketree(in + in->operator.left);
 	}
 	return node;
 }
 
+/*
+ * Internal state for plaintree and plainnode
+ */
 typedef struct
 {
 	QueryItem  *ptr;
-	int4		len;
-	int4		cur;
+	int		len; /* allocated size of ptr */
+	int		cur; /* number of elements in ptr */
 } PLAINTREE;
 
 static void
@@ -60,37 +63,37 @@ plainnode(PLAINTREE * state, NODE * node)
 		state->ptr = (QueryItem *) repalloc((void *) state->ptr, state->len * sizeof(QueryItem));
 	}
 	memcpy((void *) &(state->ptr[state->cur]), (void *) node->valnode, sizeof(QueryItem));
-	if (node->valnode->type == VAL)
+	if (node->valnode->type == QI_VAL)
 		state->cur++;
-	else if (node->valnode->val == (int4) '!')
+	else if (node->valnode->operator.oper == OP_NOT)
 	{
-		state->ptr[state->cur].left = 1;
+		state->ptr[state->cur].operator.left = 1;
 		state->cur++;
 		plainnode(state, node->right);
 	}
 	else
 	{
-		int4		cur = state->cur;
+		int	cur = state->cur;
 
 		state->cur++;
 		plainnode(state, node->right);
-		state->ptr[cur].left = state->cur - cur;
+		state->ptr[cur].operator.left = state->cur - cur;
 		plainnode(state, node->left);
 	}
 	pfree(node);
 }
 
 /*
- * make plain view of tree from 'normal' view of tree
+ * make plain view of tree from a NODE-tree representation
  */
 static QueryItem *
-plaintree(NODE * root, int4 *len)
+plaintree(NODE * root, int *len)
 {
 	PLAINTREE	pl;
 
 	pl.cur = 0;
 	pl.len = 16;
-	if (root && (root->valnode->type == VAL || root->valnode->type == OPR))
+	if (root && (root->valnode->type == QI_VAL || root->valnode->type == QI_OPR))
 	{
 		pl.ptr = (QueryItem *) palloc(pl.len * sizeof(QueryItem));
 		plainnode(&pl, root);
@@ -122,17 +125,17 @@ freetree(NODE * node)
 static NODE *
 clean_NOT_intree(NODE * node)
 {
-	if (node->valnode->type == VAL)
+	if (node->valnode->type == QI_VAL)
 		return node;
 
-	if (node->valnode->val == (int4) '!')
+	if (node->valnode->operator.oper == OP_NOT)
 	{
 		freetree(node);
 		return NULL;
 	}
 
 	/* operator & or | */
-	if (node->valnode->val == (int4) '|')
+	if (node->valnode->operator.oper == OP_OR)
 	{
 		if ((node->left = clean_NOT_intree(node->left)) == NULL ||
 			(node->right = clean_NOT_intree(node->right)) == NULL)
@@ -144,6 +147,8 @@ clean_NOT_intree(NODE * node)
 	else
 	{
 		NODE	   *res = node;
+		
+		Assert(node->valnode->operator.oper == OP_AND);
 
 		node->left = clean_NOT_intree(node->left);
 		node->right = clean_NOT_intree(node->right);
@@ -168,7 +173,7 @@ clean_NOT_intree(NODE * node)
 }
 
 QueryItem *
-clean_NOT(QueryItem * ptr, int4 *len)
+clean_NOT(QueryItem * ptr, int *len)
 {
 	NODE	   *root = maketree(ptr);
 
@@ -180,10 +185,13 @@ clean_NOT(QueryItem * ptr, int4 *len)
 #undef V_UNKNOWN
 #endif
 
-#define V_UNKNOWN	0
-#define V_TRUE		1
-#define V_FALSE		2
-#define V_STOP		3
+/*
+ * output values for result output parameter of clean_fakeval_intree
+ */
+#define V_UNKNOWN	0 /* the expression can't be evaluated statically */
+#define V_TRUE		1 /* the expression is always true (not implemented) */
+#define V_FALSE		2 /* the expression is always false (not implemented) */
+#define V_STOP		3 /* the expression is a stop word */
 
 /*
  * Clean query tree from values which is always in
@@ -195,17 +203,19 @@ clean_fakeval_intree(NODE * node, char *result)
 	char		lresult = V_UNKNOWN,
 				rresult = V_UNKNOWN;
 
-	if (node->valnode->type == VAL)
+	if (node->valnode->type == QI_VAL)
 		return node;
-	else if (node->valnode->type == VALSTOP)
+	else 
+	if (node->valnode->type == QI_VALSTOP)
 	{
 		pfree(node);
 		*result = V_STOP;
 		return NULL;
 	}
 
+	Assert(node->valnode->type == QI_OPR);
 
-	if (node->valnode->val == (int4) '!')
+	if (node->valnode->operator.oper == OP_NOT)
 	{
 		node->right = clean_fakeval_intree(node->right, &rresult);
 		if (!node->right)
@@ -221,6 +231,7 @@ clean_fakeval_intree(NODE * node, char *result)
 
 		node->left = clean_fakeval_intree(node->left, &lresult);
 		node->right = clean_fakeval_intree(node->right, &rresult);
+
 		if (lresult == V_STOP && rresult == V_STOP)
 		{
 			freetree(node);
@@ -243,7 +254,7 @@ clean_fakeval_intree(NODE * node, char *result)
 }
 
 QueryItem *
-clean_fakeval(QueryItem * ptr, int4 *len)
+clean_fakeval(QueryItem * ptr, int *len)
 {
 	NODE	   *root = maketree(ptr);
 	char		result = V_UNKNOWN;

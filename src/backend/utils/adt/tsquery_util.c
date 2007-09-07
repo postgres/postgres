@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.1 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_util.c,v 1.2 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "tsearch/ts_type.h"
 #include "tsearch/ts_utils.h"
 
-
 QTNode *
 QT2QTN(QueryItem * in, char *operand)
 {
@@ -25,24 +24,24 @@ QT2QTN(QueryItem * in, char *operand)
 
 	node->valnode = in;
 
-	if (in->type == OPR)
+	if (in->type == QI_OPR)
 	{
 		node->child = (QTNode **) palloc0(sizeof(QTNode *) * 2);
 		node->child[0] = QT2QTN(in + 1, operand);
 		node->sign = node->child[0]->sign;
-		if (in->val == (int4) '!')
+		if (in->operator.oper == OP_NOT)
 			node->nchild = 1;
 		else
 		{
 			node->nchild = 2;
-			node->child[1] = QT2QTN(in + in->left, operand);
+			node->child[1] = QT2QTN(in + in->operator.left, operand);
 			node->sign |= node->child[1]->sign;
 		}
 	}
 	else if (operand)
 	{
-		node->word = operand + in->distance;
-		node->sign = 1 << (in->val % 32);
+		node->word = operand + in->operand.distance;
+		node->sign = 1 << (in->operand.valcrc % 32);
 	}
 
 	return node;
@@ -54,14 +53,14 @@ QTNFree(QTNode * in)
 	if (!in)
 		return;
 
-	if (in->valnode->type == VAL && in->word && (in->flags & QTN_WORDFREE) != 0)
+	if (in->valnode->type == QI_VAL && in->word && (in->flags & QTN_WORDFREE) != 0)
 		pfree(in->word);
 
 	if (in->child)
 	{
 		if (in->valnode)
 		{
-			if (in->valnode->type == OPR && in->nchild > 0)
+			if (in->valnode->type == QI_OPR && in->nchild > 0)
 			{
 				int			i;
 
@@ -82,30 +81,45 @@ QTNodeCompare(QTNode * an, QTNode * bn)
 {
 	if (an->valnode->type != bn->valnode->type)
 		return (an->valnode->type > bn->valnode->type) ? -1 : 1;
-	else if (an->valnode->val != bn->valnode->val)
-		return (an->valnode->val > bn->valnode->val) ? -1 : 1;
-	else if (an->valnode->type == VAL)
+	
+	if (an->valnode->type == QI_OPR)
 	{
-		if (an->valnode->length == bn->valnode->length)
-			return strncmp(an->word, bn->word, an->valnode->length);
-		else
-			return (an->valnode->length > bn->valnode->length) ? -1 : 1;
-	}
-	else if (an->nchild != bn->nchild)
-	{
-		return (an->nchild > bn->nchild) ? -1 : 1;
+		QueryOperator *ao = &an->valnode->operator;
+		QueryOperator *bo = &bn->valnode->operator;
+
+		if(ao->oper != bo->oper)
+			return (ao->oper > bo->oper) ? -1 : 1;
+
+		if (an->nchild != bn->nchild)
+			return (an->nchild > bn->nchild) ? -1 : 1;
+
+		{
+			int			i,
+						res;
+
+			for (i = 0; i < an->nchild; i++)
+				if ((res = QTNodeCompare(an->child[i], bn->child[i])) != 0)
+					return res;
+		}
+		return 0;
 	}
 	else
 	{
-		int			i,
-					res;
+		QueryOperand *ao = &an->valnode->operand;
+		QueryOperand *bo = &bn->valnode->operand;
 
-		for (i = 0; i < an->nchild; i++)
-			if ((res = QTNodeCompare(an->child[i], bn->child[i])) != 0)
-				return res;
+		Assert(an->valnode->type == QI_VAL);
+
+		if (ao->valcrc != bo->valcrc)
+		{
+			return (ao->valcrc > bo->valcrc) ? -1 : 1;
+		}
+
+		if (ao->length == bo->length)
+			return strncmp(an->word, bn->word, ao->length);
+		else
+			return (ao->length > bo->length) ? -1 : 1;
 	}
-
-	return 0;
 }
 
 static int
@@ -119,7 +133,7 @@ QTNSort(QTNode * in)
 {
 	int			i;
 
-	if (in->valnode->type != OPR)
+	if (in->valnode->type != QI_OPR)
 		return;
 
 	for (i = 0; i < in->nchild; i++)
@@ -139,12 +153,19 @@ QTNEq(QTNode * a, QTNode * b)
 	return (QTNodeCompare(a, b) == 0) ? true : false;
 }
 
+/*
+ * Remove unnecessary intermediate nodes. For example:
+ *
+ *  OR          OR
+ * a  OR    -> a b c
+ *   b  c      
+ */
 void
 QTNTernary(QTNode * in)
 {
 	int			i;
 
-	if (in->valnode->type != OPR)
+	if (in->valnode->type != QI_OPR)
 		return;
 
 	for (i = 0; i < in->nchild; i++)
@@ -152,9 +173,10 @@ QTNTernary(QTNode * in)
 
 	for (i = 0; i < in->nchild; i++)
 	{
-		if (in->valnode->type == in->child[i]->valnode->type && in->valnode->val == in->child[i]->valnode->val)
+		QTNode	   *cc = in->child[i];
+
+		if (cc->valnode->type == QI_OPR && in->valnode->operator.oper == cc->valnode->operator.oper)
 		{
-			QTNode	   *cc = in->child[i];
 			int			oldnchild = in->nchild;
 
 			in->nchild += cc->nchild - 1;
@@ -167,17 +189,23 @@ QTNTernary(QTNode * in)
 			memcpy(in->child + i, cc->child, cc->nchild * sizeof(QTNode *));
 			i += cc->nchild - 1;
 
+			if(cc->flags & QTN_NEEDFREE)
+				pfree(cc->valnode);
 			pfree(cc);
 		}
 	}
 }
 
+/*
+ * Convert a tree to binary tree by inserting intermediate nodes.
+ * (Opposite of QTNTernary)
+ */
 void
 QTNBinary(QTNode * in)
 {
 	int			i;
 
-	if (in->valnode->type != OPR)
+	if (in->valnode->type != QI_OPR)
 		return;
 
 	for (i = 0; i < in->nchild; i++)
@@ -201,7 +229,7 @@ QTNBinary(QTNode * in)
 		nn->sign = nn->child[0]->sign | nn->child[1]->sign;
 
 		nn->valnode->type = in->valnode->type;
-		nn->valnode->val = in->valnode->val;
+		nn->valnode->operator.oper = in->valnode->operator.oper;
 
 		in->child[0] = nn;
 		in->child[1] = in->child[in->nchild - 1];
@@ -209,11 +237,15 @@ QTNBinary(QTNode * in)
 	}
 }
 
+/*
+ * Count the total length of operand string in tree, including '\0'-
+ * terminators.
+ */
 static void
-cntsize(QTNode * in, int4 *sumlen, int4 *nnode)
+cntsize(QTNode * in, int *sumlen, int *nnode)
 {
 	*nnode += 1;
-	if (in->valnode->type == OPR)
+	if (in->valnode->type == QI_OPR)
 	{
 		int			i;
 
@@ -222,7 +254,7 @@ cntsize(QTNode * in, int4 *sumlen, int4 *nnode)
 	}
 	else
 	{
-		*sumlen += in->valnode->length + 1;
+		*sumlen += in->valnode->operand.length + 1;
 	}
 }
 
@@ -234,21 +266,25 @@ typedef struct
 } QTN2QTState;
 
 static void
-fillQT(QTN2QTState * state, QTNode * in)
+fillQT(QTN2QTState *state, QTNode *in)
 {
-	*(state->curitem) = *(in->valnode);
-
-	if (in->valnode->type == VAL)
+	if (in->valnode->type == QI_VAL)
 	{
-		memcpy(state->curoperand, in->word, in->valnode->length);
-		state->curitem->distance = state->curoperand - state->operand;
-		state->curoperand[in->valnode->length] = '\0';
-		state->curoperand += in->valnode->length + 1;
+		memcpy(state->curitem, in->valnode, sizeof(QueryOperand));
+
+		memcpy(state->curoperand, in->word, in->valnode->operand.length);
+		state->curitem->operand.distance = state->curoperand - state->operand;
+		state->curoperand[in->valnode->operand.length] = '\0';
+		state->curoperand += in->valnode->operand.length + 1;
 		state->curitem++;
 	}
 	else
 	{
 		QueryItem  *curitem = state->curitem;
+
+		Assert(in->valnode->type == QI_OPR);
+
+		memcpy(state->curitem, in->valnode, sizeof(QueryOperator));
 
 		Assert(in->nchild <= 2);
 		state->curitem++;
@@ -257,7 +293,7 @@ fillQT(QTN2QTState * state, QTNode * in)
 
 		if (in->nchild == 2)
 		{
-			curitem->left = state->curitem - curitem;
+			curitem->operator.left = state->curitem - curitem;
 			fillQT(state, in->child[1]);
 		}
 	}
@@ -296,11 +332,11 @@ QTNCopy(QTNode *in)
 	*(out->valnode) = *(in->valnode);
 	out->flags |= QTN_NEEDFREE;
 
-	if (in->valnode->type == VAL)
+	if (in->valnode->type == QI_VAL)
 	{
-		out->word = palloc(in->valnode->length + 1);
-		memcpy(out->word, in->word, in->valnode->length);
-		out->word[in->valnode->length] = '\0';
+		out->word = palloc(in->valnode->operand.length + 1);
+		memcpy(out->word, in->word, in->valnode->operand.length);
+		out->word[in->valnode->operand.length] = '\0';
 		out->flags |= QTN_WORDFREE;
 	}
 	else

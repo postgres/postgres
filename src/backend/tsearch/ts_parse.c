@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.2 2007/08/25 00:03:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/ts_parse.c,v 1.3 2007/09/07 15:09:55 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,10 +344,12 @@ LexizeExec(LexizeData * ld, ParsedLex ** correspondLexem)
 }
 
 /*
- * Parse string and lexize words
+ * Parse string and lexize words.
+ *
+ * prs will be filled in.
  */
 void
-parsetext(Oid cfgId, ParsedText * prs, char *buf, int4 buflen)
+parsetext(Oid cfgId, ParsedText * prs, char *buf, int buflen)
 {
 	int			type,
 				lenlemm;
@@ -427,7 +429,7 @@ parsetext(Oid cfgId, ParsedText * prs, char *buf, int4 buflen)
  * Headline framework
  */
 static void
-hladdword(HeadlineParsedText * prs, char *buf, int4 buflen, int type)
+hladdword(HeadlineParsedText * prs, char *buf, int buflen, int type)
 {
 	while (prs->curwords >= prs->lenwords)
 	{
@@ -458,17 +460,19 @@ hlfinditem(HeadlineParsedText * prs, TSQuery query, char *buf, int buflen)
 	word = &(prs->words[prs->curwords - 1]);
 	for (i = 0; i < query->size; i++)
 	{
-		if (item->type == VAL && item->length == buflen && strncmp(GETOPERAND(query) + item->distance, buf, buflen) == 0)
+		if (item->type == QI_VAL &&
+			item->operand.length == buflen &&
+			strncmp(GETOPERAND(query) + item->operand.distance, buf, buflen) == 0)
 		{
 			if (word->item)
 			{
 				memcpy(&(prs->words[prs->curwords]), word, sizeof(HeadlineWordEntry));
-				prs->words[prs->curwords].item = item;
+				prs->words[prs->curwords].item = &item->operand;
 				prs->words[prs->curwords].repeated = 1;
 				prs->curwords++;
 			}
 			else
-				word->item = item;
+				word->item = &item->operand;
 		}
 		item++;
 	}
@@ -511,7 +515,7 @@ addHLParsedLex(HeadlineParsedText * prs, TSQuery query, ParsedLex * lexs, TSLexe
 }
 
 void
-hlparsetext(Oid cfgId, HeadlineParsedText * prs, TSQuery query, char *buf, int4 buflen)
+hlparsetext(Oid cfgId, HeadlineParsedText * prs, TSQuery query, char *buf, int buflen)
 {
 	int			type,
 				lenlemm;

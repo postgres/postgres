@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.2 2007/08/31 02:26:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.3 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,6 +66,9 @@ typedef struct
 static Datum tsvector_update_trigger(PG_FUNCTION_ARGS, bool config_column);
 
 
+/*
+ * Order: haspos, len, word, for all positions (pos, weight)
+ */
 static int
 silly_cmp_tsvector(const TSVector a, const TSVector b)
 {
@@ -464,7 +467,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
  * compare 2 string values
  */
 static int4
-ValCompare(CHKVAL * chkval, WordEntry * ptr, QueryItem * item)
+ValCompare(CHKVAL * chkval, WordEntry * ptr, QueryOperand * item)
 {
 	if (ptr->len == item->length)
 		return strncmp(
@@ -479,7 +482,7 @@ ValCompare(CHKVAL * chkval, WordEntry * ptr, QueryItem * item)
  * check weight info
  */
 static bool
-checkclass_str(CHKVAL * chkval, WordEntry * val, QueryItem * item)
+checkclass_str(CHKVAL * chkval, WordEntry * val, QueryOperand * item)
 {
 	WordEntryPos *ptr = (WordEntryPos *) (chkval->values + val->pos + SHORTALIGN(val->len) + sizeof(uint16));
 	uint16		len = *((uint16 *) (chkval->values + val->pos + SHORTALIGN(val->len)));
@@ -497,10 +500,11 @@ checkclass_str(CHKVAL * chkval, WordEntry * val, QueryItem * item)
  * is there value 'val' in array or not ?
  */
 static bool
-checkcondition_str(void *checkval, QueryItem * val)
+checkcondition_str(void *checkval, QueryOperand * val)
 {
-	WordEntry  *StopLow = ((CHKVAL *) checkval)->arrb;
-	WordEntry  *StopHigh = ((CHKVAL *) checkval)->arre;
+	CHKVAL *chkval = (CHKVAL *) checkval;
+	WordEntry  *StopLow = chkval->arrb;
+	WordEntry  *StopHigh = chkval->arre;
 	WordEntry  *StopMiddle;
 	int			difference;
 
@@ -509,10 +513,10 @@ checkcondition_str(void *checkval, QueryItem * val)
 	while (StopLow < StopHigh)
 	{
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
-		difference = ValCompare((CHKVAL *) checkval, StopMiddle, val);
+		difference = ValCompare(chkval, StopMiddle, val);
 		if (difference == 0)
 			return (val->weight && StopMiddle->haspos) ?
-				checkclass_str((CHKVAL *) checkval, StopMiddle, val) : true;
+				checkclass_str(chkval, StopMiddle, val) : true;
 		else if (difference < 0)
 			StopLow = StopMiddle + 1;
 		else
@@ -523,37 +527,48 @@ checkcondition_str(void *checkval, QueryItem * val)
 }
 
 /*
- * check for boolean condition
+ * check for boolean condition.
+ *
+ * if calcnot is false, NOT expressions are always evaluated to be true. This is used in ranking.
+ * checkval can be used to pass information to the callback. TS_execute doesn't
+ * do anything with it.
+ * chkcond is a callback function used to evaluate each VAL node in the query.
+ *
  */
 bool
 TS_execute(QueryItem * curitem, void *checkval, bool calcnot,
-		   bool (*chkcond) (void *checkval, QueryItem * val))
+		   bool (*chkcond) (void *checkval, QueryOperand * val))
 {
 	/* since this function recurses, it could be driven to stack overflow */
 	check_stack_depth();
 
-	if (curitem->type == VAL)
-		return chkcond(checkval, curitem);
-	else if (curitem->val == (int4) '!')
+	if (curitem->type == QI_VAL)
+		return chkcond(checkval, (QueryOperand *) curitem);
+
+	switch(curitem->operator.oper)
 	{
-		return (calcnot) ?
-			!TS_execute(curitem + 1, checkval, calcnot, chkcond)
-			: true;
+		case OP_NOT:
+			if (calcnot)
+				return !TS_execute(curitem + 1, checkval, calcnot, chkcond);
+			else
+				return true;
+		case OP_AND:
+			if (TS_execute(curitem + curitem->operator.left, checkval, calcnot, chkcond))
+				return TS_execute(curitem + 1, checkval, calcnot, chkcond);
+			else
+				return false;
+
+		case OP_OR:
+			if (TS_execute(curitem + curitem->operator.left, checkval, calcnot, chkcond))
+				return true;
+			else
+				return TS_execute(curitem + 1, checkval, calcnot, chkcond);
+
+		default:
+			elog(ERROR, "unknown operator %d", curitem->operator.oper);
 	}
-	else if (curitem->val == (int4) '&')
-	{
-		if (TS_execute(curitem + curitem->left, checkval, calcnot, chkcond))
-			return TS_execute(curitem + 1, checkval, calcnot, chkcond);
-		else
-			return false;
-	}
-	else
-	{							/* |-operator */
-		if (TS_execute(curitem + curitem->left, checkval, calcnot, chkcond))
-			return true;
-		else
-			return TS_execute(curitem + 1, checkval, calcnot, chkcond);
-	}
+
+	/* not reachable, but keep compiler quiet */
 	return false;
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.1 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.2 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,24 +77,25 @@ gin_extract_query(PG_FUNCTION_ARGS)
 		item = GETQUERY(query);
 
 		for (i = 0; i < query->size; i++)
-			if (item[i].type == VAL)
+			if (item[i].type == QI_VAL)
 				(*nentries)++;
 
 		entries = (Datum *) palloc(sizeof(Datum) * (*nentries));
 
 		for (i = 0; i < query->size; i++)
-			if (item[i].type == VAL)
+			if (item[i].type == QI_VAL)
 			{
 				text	   *txt;
+				QueryOperand *val = &item[i].operand;
 
-				txt = (text *) palloc(VARHDRSZ + item[i].length);
+				txt = (text *) palloc(VARHDRSZ + val->length);
 
-				SET_VARSIZE(txt, VARHDRSZ + item[i].length);
-				memcpy(VARDATA(txt), GETOPERAND(query) + item[i].distance, item[i].length);
+				SET_VARSIZE(txt, VARHDRSZ + val->length);
+				memcpy(VARDATA(txt), GETOPERAND(query) + val->distance, val->length);
 
 				entries[j++] = PointerGetDatum(txt);
 
-				if (strategy != TSearchWithClassStrategyNumber && item[i].weight != 0)
+				if (strategy != TSearchWithClassStrategyNumber && val->weight != 0)
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("@@ operator does not support lexeme class restrictions"),
@@ -116,11 +117,11 @@ typedef struct
 } GinChkVal;
 
 static bool
-checkcondition_gin(void *checkval, QueryItem * val)
+checkcondition_gin(void *checkval, QueryOperand * val)
 {
 	GinChkVal  *gcv = (GinChkVal *) checkval;
 
-	return gcv->mapped_check[val - gcv->frst];
+	return gcv->mapped_check[((QueryItem *) val) - gcv->frst];
 }
 
 Datum
@@ -142,7 +143,7 @@ gin_ts_consistent(PG_FUNCTION_ARGS)
 		gcv.mapped_check = (bool *) palloc(sizeof(bool) * query->size);
 
 		for (i = 0; i < query->size; i++)
-			if (item[i].type == VAL)
+			if (item[i].type == QI_VAL)
 				gcv.mapped_check[i] = check[j++];
 
 		res = TS_execute(

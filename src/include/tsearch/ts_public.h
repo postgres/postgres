@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.3 2007/08/25 00:03:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_public.h,v 1.4 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ typedef struct
 				type:8,
 				len:16;
 	char	   *word;
-	QueryItem  *item;
+	QueryOperand  *item;
 } HeadlineWordEntry;
 
 typedef struct

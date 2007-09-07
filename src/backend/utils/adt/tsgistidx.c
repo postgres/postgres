@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.2 2007/08/21 06:34:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.3 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -293,7 +293,7 @@ typedef struct
  * is there value 'val' in array or not ?
  */
 static bool
-checkcondition_arr(void *checkval, QueryItem * val)
+checkcondition_arr(void *checkval, QueryOperand * val)
 {
 	int4	   *StopLow = ((CHKVAL *) checkval)->arrb;
 	int4	   *StopHigh = ((CHKVAL *) checkval)->arre;
@@ -304,9 +304,9 @@ checkcondition_arr(void *checkval, QueryItem * val)
 	while (StopLow < StopHigh)
 	{
 		StopMiddle = StopLow + (StopHigh - StopLow) / 2;
-		if (*StopMiddle == val->val)
+		if (*StopMiddle == val->valcrc)
 			return (true);
-		else if (*StopMiddle < val->val)
+		else if (*StopMiddle < val->valcrc)
 			StopLow = StopMiddle + 1;
 		else
 			StopHigh = StopMiddle;
@@ -316,9 +316,9 @@ checkcondition_arr(void *checkval, QueryItem * val)
 }
 
 static bool
-checkcondition_bit(void *checkval, QueryItem * val)
+checkcondition_bit(void *checkval, QueryOperand * val)
 {
-	return GETBIT(checkval, HASHVAL(val->val));
+	return GETBIT(checkval, HASHVAL(val->valcrc));
 }
 
 Datum

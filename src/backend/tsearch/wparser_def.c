@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.2 2007/08/22 01:39:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/wparser_def.c,v 1.3 2007/09/07 15:09:55 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1575,7 +1575,7 @@ typedef struct
 } hlCheck;
 
 static bool
-checkcondition_HL(void *checkval, QueryItem * val)
+checkcondition_HL(void *checkval, QueryOperand * val)
 {
 	int			i;
 
@@ -1601,14 +1601,14 @@ hlCover(HeadlineParsedText * prs, TSQuery query, int *p, int *q)
 
 	for (j = 0; j < query->size; j++)
 	{
-		if (item->type != VAL)
+		if (item->type != QI_VAL)
 		{
 			item++;
 			continue;
 		}
 		for (i = pos; i < prs->curwords; i++)
 		{
-			if (prs->words[i].item == item)
+			if (prs->words[i].item == &item->operand)
 			{
 				if (i > *q)
 					*q = i;
@@ -1624,14 +1624,14 @@ hlCover(HeadlineParsedText * prs, TSQuery query, int *p, int *q)
 	item = GETQUERY(query);
 	for (j = 0; j < query->size; j++)
 	{
-		if (item->type != VAL)
+		if (item->type != QI_VAL)
 		{
 			item++;
 			continue;
 		}
 		for (i = *q; i >= pos; i--)
 		{
-			if (prs->words[i].item == item)
+			if (prs->words[i].item == &item->operand)
 			{
 				if (i < *p)
 					*p = i;

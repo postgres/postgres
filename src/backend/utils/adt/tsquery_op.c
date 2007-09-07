@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_op.c,v 1.1 2007/08/21 01:11:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_op.c,v 1.2 2007/09/07 15:09:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,14 +30,15 @@ tsquery_numnode(PG_FUNCTION_ARGS)
 }
 
 static QTNode *
-join_tsqueries(TSQuery a, TSQuery b)
+join_tsqueries(TSQuery a, TSQuery b, int8 operator)
 {
 	QTNode	   *res = (QTNode *) palloc0(sizeof(QTNode));
 
 	res->flags |= QTN_NEEDFREE;
 
 	res->valnode = (QueryItem *) palloc0(sizeof(QueryItem));
-	res->valnode->type = OPR;
+	res->valnode->type = QI_OPR;
+	res->valnode->operator.oper = operator;
 
 	res->child = (QTNode **) palloc0(sizeof(QTNode *) * 2);
 	res->child[0] = QT2QTN(GETQUERY(b), GETOPERAND(b));
@@ -66,9 +67,7 @@ tsquery_and(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(a);
 	}
 
-	res = join_tsqueries(a, b);
-
-	res->valnode->val = '&';
+	res = join_tsqueries(a, b, OP_AND);
 
 	query = QTN2QT(res);
 
@@ -98,9 +97,7 @@ tsquery_or(PG_FUNCTION_ARGS)
 		PG_RETURN_POINTER(a);
 	}
 
-	res = join_tsqueries(a, b);
-
-	res->valnode->val = '|';
+	res = join_tsqueries(a, b, OP_OR);
 
 	query = QTN2QT(res);
 
@@ -126,8 +123,8 @@ tsquery_not(PG_FUNCTION_ARGS)
 	res->flags |= QTN_NEEDFREE;
 
 	res->valnode = (QueryItem *) palloc0(sizeof(QueryItem));
-	res->valnode->type = OPR;
-	res->valnode->val = '!';
+	res->valnode->type = QI_OPR;
+	res->valnode->operator.oper = OP_NOT;
 
 	res->child = (QTNode **) palloc0(sizeof(QTNode *));
 	res->child[0] = QT2QTN(GETQUERY(a), GETOPERAND(a));
@@ -209,8 +206,8 @@ makeTSQuerySign(TSQuery a)
 
 	for (i = 0; i < a->size; i++)
 	{
-		if (ptr->type == VAL)
-			sign |= ((TSQuerySign) 1) << (ptr->val % TSQS_SIGLEN);
+		if (ptr->type == QI_VAL)
+			sign |= ((TSQuerySign) 1) << (ptr->operand.valcrc % TSQS_SIGLEN);
 		ptr++;
 	}
 
@@ -253,10 +250,10 @@ tsq_mcontains(PG_FUNCTION_ARGS)
 	for (i = 0; i < ex->size; i++)
 	{
 		iq = GETQUERY(query);
-		if (ie[i].type != VAL)
+		if (ie[i].type != QI_VAL)
 			continue;
 		for (j = 0; j < query->size; j++)
-			if (iq[j].type == VAL && ie[i].val == iq[j].val)
+			if (iq[j].type == QI_VAL && ie[i].operand.valcrc == iq[j].operand.valcrc)
 			{
 				j = query->size + 1;
 				break;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.1 2007/08/21 01:11:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.2 2007/09/07 15:09:55 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -225,10 +225,17 @@ to_tsvector(PG_FUNCTION_ARGS)
 
 
 /*
- * This function is used for morph parsing
+ * This function is used for morph parsing.
+ *
+ * The value is passed to parsetext which will call the right dictionary to
+ * lexize the word. If it turns out to be a stopword, we push a QI_VALSTOP
+ * to the stack.
+ *
+ * All words belonging to the same variant are pushed as an ANDed list,
+ * and different variants are ORred together. 
  */
 static void
-pushval_morph(TSQueryParserState * state, int typeval, char *strval, int lenval, int2 weight)
+pushval_morph(void *opaque, TSQueryParserState state, char *strval, int lenval, int2 weight)
 {
 	int4		count = 0;
 	ParsedText	prs;
@@ -237,13 +244,14 @@ pushval_morph(TSQueryParserState * state, int typeval, char *strval, int lenval,
 				cntvar = 0,
 				cntpos = 0,
 				cnt = 0;
+	Oid cfg_id = (Oid) opaque; /* the input is actually an Oid, not a pointer */
 
 	prs.lenwords = 4;
 	prs.curwords = 0;
 	prs.pos = 0;
 	prs.words = (ParsedWord *) palloc(sizeof(ParsedWord) * prs.lenwords);
 
-	parsetext(state->cfg_id, &prs, strval, lenval);
+	parsetext(cfg_id, &prs, strval, lenval);
 
 	if (prs.curwords > 0)
 	{
@@ -260,21 +268,21 @@ pushval_morph(TSQueryParserState * state, int typeval, char *strval, int lenval,
 				while (count < prs.curwords && pos == prs.words[count].pos.pos && variant == prs.words[count].nvariant)
 				{
 
-					pushval_asis(state, VAL, prs.words[count].word, prs.words[count].len, weight);
+					pushValue(state, prs.words[count].word, prs.words[count].len, weight);
 					pfree(prs.words[count].word);
 					if (cnt)
-						pushquery(state, OPR, (int4) '&', 0, 0, 0);
+						pushOperator(state, OP_AND);
 					cnt++;
 					count++;
 				}
 
 				if (cntvar)
-					pushquery(state, OPR, (int4) '|', 0, 0, 0);
+					pushOperator(state, OP_OR);
 				cntvar++;
 			}
 
 			if (cntpos)
-				pushquery(state, OPR, (int4) '&', 0, 0, 0);
+				pushOperator(state, OP_AND);
 
 			cntpos++;
 		}
@@ -283,7 +291,7 @@ pushval_morph(TSQueryParserState * state, int typeval, char *strval, int lenval,
 
 	}
 	else
-		pushval_asis(state, VALSTOP, NULL, 0, 0);
+		pushStop(state);
 }
 
 Datum
@@ -295,7 +303,7 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 	QueryItem  *res;
 	int4		len;
 
-	query = parse_tsquery(TextPGetCString(in), pushval_morph, cfgid, false);
+	query = parse_tsquery(TextPGetCString(in), pushval_morph, (void *) cfgid, false);
 
 	if (query->size == 0)
 		PG_RETURN_TSQUERY(query);
@@ -333,7 +341,7 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 	QueryItem  *res;
 	int4		len;
 
-	query = parse_tsquery(TextPGetCString(in), pushval_morph, cfgid, true);
+	query = parse_tsquery(TextPGetCString(in), pushval_morph, (void *)cfgid, true);
 
 	if (query->size == 0)
 		PG_RETURN_TSQUERY(query);
