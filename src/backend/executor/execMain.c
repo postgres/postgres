@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.296 2007/08/15 21:39:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.297 2007/09/07 20:59:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2635,12 +2635,6 @@ OpenIntoRel(QueryDesc *queryDesc)
 
 	/*
 	 * We can skip WAL-logging the insertions, unless PITR is in use.
-	 *
-	 * Note that for a non-temp INTO table, this is safe only because we know
-	 * that the catalog changes above will have been WAL-logged, and so
-	 * RecordTransactionCommit will think it needs to WAL-log the eventual
-	 * transaction commit.	Else the commit might be lost, even though all the
-	 * data is safely fsync'd ...
 	 */
 	estate->es_into_relation_use_wal = XLogArchivingActive();
 	estate->es_into_relation_descriptor = intoRelationDesc;

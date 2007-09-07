@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.7 2007/09/05 18:10:47 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/transam/README,v 1.8 2007/09/07 20:59:26 tgl Exp $
 
 The Transaction System
 ----------------------
@@ -219,6 +219,110 @@ each top transaction.  The top-level transaction itself has SubTransactionId 1,
 and subtransactions have IDs 2 and up.  (Zero is reserved for
 InvalidSubTransactionId.)  Note that subtransactions do not have their
 own VXIDs; they use the parent top transaction's VXID.
+
+
+Interlocking transaction begin, transaction end, and snapshots
+--------------------------------------------------------------
+
+We try hard to minimize the amount of overhead and lock contention involved
+in the frequent activities of beginning/ending a transaction and taking a
+snapshot.  Unfortunately, we must have some interlocking for this, because
+we must ensure consistency about the commit order of transactions.
+For example, suppose an UPDATE in xact A is blocked by xact B's prior
+update of the same row, and xact B is doing commit while xact C gets a
+snapshot.  Xact A can complete and commit as soon as B releases its locks.
+If xact C's GetSnapshotData sees xact B as still running, then it had
+better see xact A as still running as well, or it will be able to see two
+tuple versions - one deleted by xact B and one inserted by xact A.  Another
+reason why this would be bad is that C would see (in the row inserted by A)
+earlier changes by B, and it would be inconsistent for C not to see any
+of B's changes elsewhere in the database.
+
+Formally, the correctness requirement is "if A sees B as committed,
+and B sees C as committed, then A must see C as committed".
+
+What we actually enforce is strict serialization of commits and rollbacks
+with snapshot-taking: we do not allow any transaction to exit the set of
+running transactions while a snapshot is being taken.  (This rule is
+stronger than necessary for consistency, but is relatively simple to
+enforce, and it assists with some other issues as explained below.)  The
+implementation of this is that GetSnapshotData takes the ProcArrayLock in
+shared mode (so that multiple backends can take snapshots in parallel),
+but xact.c must take the ProcArrayLock in exclusive mode while clearing
+MyProc->xid at transaction end (either commit or abort).
+
+GetSnapshotData must in fact acquire ProcArrayLock before it calls
+ReadNewTransactionId.  Otherwise it would be possible for a transaction A
+postdating the xmax to commit, and then an existing transaction B that saw
+A as committed to commit, before GetSnapshotData is able to acquire
+ProcArrayLock and finish taking its snapshot.  This would violate the
+consistency requirement, because A would be still running and B not
+according to this snapshot.
+
+In short, then, the rule is that no transaction may exit the set of
+currently-running transactions between the time we fetch xmax and the time
+we finish building our snapshot.  However, this restriction only applies
+to transactions that have an XID --- read-only transactions can end without
+acquiring ProcArrayLock, since they don't affect anyone else's snapshot.
+
+Transaction start, per se, doesn't have any interlocking with these
+considerations, since we no longer assign an XID immediately at transaction
+start.  But when we do decide to allocate an XID, we must require
+GetNewTransactionId to store the new XID into the shared ProcArray before
+releasing XidGenLock.  This ensures that when GetSnapshotData calls
+ReadNewTransactionId (which also takes XidGenLock), all active XIDs before
+the returned value of nextXid are already present in the ProcArray and
+can't be missed by GetSnapshotData.  Unfortunately, we can't have
+GetNewTransactionId take ProcArrayLock to do this, else it could deadlock
+against GetSnapshotData.  Therefore, we simply let GetNewTransactionId
+store into MyProc->xid without any lock.  We are thereby relying on
+fetch/store of an XID to be atomic, else other backends might see a
+partially-set XID.  (NOTE: for multiprocessors that need explicit memory
+access fence instructions, this means that acquiring/releasing XidGenLock
+is just as necessary as acquiring/releasing ProcArrayLock for
+GetSnapshotData to ensure it sees up-to-date xid fields.)  This also means
+that readers of the ProcArray xid fields must be careful to fetch a value
+only once, rather than assume they can read it multiple times and get the
+same answer each time.
+
+Another important activity that uses the shared ProcArray is GetOldestXmin,
+which must determine a lower bound for the oldest xmin of any active MVCC
+snapshot, system-wide.  Each individual backend advertises the smallest
+xmin of its own snapshots in MyProc->xmin, or zero if it currently has no
+live snapshots (eg, if it's between transactions or hasn't yet set a
+snapshot for a new transaction).  GetOldestXmin takes the MIN() of the
+valid xmin fields.  It does this with only shared lock on ProcArrayLock,
+which means there is a potential race condition against other backends
+doing GetSnapshotData concurrently: we must be certain that a concurrent
+backend that is about to set its xmin does not compute an xmin less than
+what GetOldestXmin returns.  We ensure that by including all the active
+XIDs into the MIN() calculation, along with the valid xmins.  The rule that
+transactions can't exit without taking exclusive ProcArrayLock ensures that
+concurrent holders of shared ProcArrayLock will compute the same minimum of
+currently-active XIDs: no xact, in particular not the oldest, can exit
+while we hold shared ProcArrayLock.  So GetOldestXmin's view of the minimum
+active XID will be the same as that of any concurrent GetSnapshotData, and
+so it can't produce an overestimate.  If there is no active transaction at
+all, GetOldestXmin returns the result of ReadNewTransactionId.  Note that
+two concurrent executions of GetOldestXmin might not see the same result
+from ReadNewTransactionId --- but if there is a difference, the intervening
+execution(s) of GetNewTransactionId must have stored their XIDs into the
+ProcArray, so the later execution of GetOldestXmin will see them and
+compute the same global xmin anyway.
+
+GetSnapshotData also performs an oldest-xmin calculation (which had better
+match GetOldestXmin's) and stores that into RecentGlobalXmin, which is used
+for some tuple age cutoff checks where a fresh call of GetOldestXmin seems
+too expensive.  Note that while it is certain that two concurrent
+executions of GetSnapshotData will compute the same xmin for their own
+snapshots, as argued above, it is not certain that they will arrive at the
+same estimate of RecentGlobalXmin.  This is because we allow XID-less
+transactions to clear their MyProc->xmin asynchronously (without taking
+ProcArrayLock), so one execution might see what had been the oldest xmin,
+and another not.  This is OK since RecentGlobalXmin need only be a valid
+lower bound.  As noted above, we are already assuming that fetch/store
+of the xid fields is atomic, so assuming it for xmin as well is no extra
+risk.
 
 
 pg_clog and pg_subtrans

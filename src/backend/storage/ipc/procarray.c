@@ -10,7 +10,7 @@
  *
  * Because of various subtle race conditions it is critical that a backend
  * hold the correct locks while setting or clearing its MyProc->xid field.
- * See notes in GetSnapshotData.
+ * See notes in src/backend/access/transam/README.
  *
  * The process array now also includes PGPROC structures representing
  * prepared transactions.  The xid and subxids fields of these are valid,
@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.31 2007/09/07 00:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.32 2007/09/07 20:59:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -407,6 +407,7 @@ TransactionIdIsActive(TransactionId xid)
  * Note: we include all currently running xids in the set of considered xids.
  * This ensures that if a just-started xact has not yet set its snapshot,
  * when it does set the snapshot it cannot set xmin less than what we compute.
+ * See notes in src/backend/access/transam/README.
  */
 TransactionId
 GetOldestXmin(bool allDbs, bool ignoreVacuum)
@@ -468,7 +469,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 	return result;
 }
 
-/*----------
+/*
  * GetSnapshotData -- returns information about running transactions.
  *
  * The returned snapshot includes xmin (lowest still-running xact ID),
@@ -481,12 +482,13 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
  * This ensures that the set of transactions seen as "running" by the
  * current xact will not change after it takes the snapshot.
  *
- * All running top-level XIDs are included in the snapshot.  We also try
- * to include running subtransaction XIDs, but since PGPROC has only a
- * limited cache area for subxact XIDs, full information may not be
- * available.  If we find any overflowed subxid arrays, we have to mark
- * the snapshot's subxid data as overflowed, and extra work will need to
- * be done to determine what's running (see XidInMVCCSnapshot() in tqual.c).
+ * All running top-level XIDs are included in the snapshot, except for lazy
+ * VACUUM processes.  We also try to include running subtransaction XIDs,
+ * but since PGPROC has only a limited cache area for subxact XIDs, full
+ * information may not be available.  If we find any overflowed subxid arrays,
+ * we have to mark the snapshot's subxid data as overflowed, and extra work
+ * will need to be done to determine what's running (see XidInMVCCSnapshot()
+ * in tqual.c).
  *
  * We also update the following backend-global variables:
  *		TransactionXmin: the oldest xmin of any snapshot in use in the
@@ -497,7 +499,6 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
  *		RecentGlobalXmin: the global xmin (oldest TransactionXmin across all
  *			running transactions, except those running LAZY VACUUM).  This is
  *			the same computation done by GetOldestXmin(true, true).
- *----------
  */
 Snapshot
 GetSnapshotData(Snapshot snapshot, bool serializable)
@@ -550,57 +551,16 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 
 	/*
 	 * It is sufficient to get shared lock on ProcArrayLock, even if we are
-	 * computing a serializable snapshot and therefore will be setting
-	 * MyProc->xmin.  This is because any two backends that have overlapping
-	 * shared holds on ProcArrayLock will certainly compute the same xmin
-	 * (since no xact, in particular not the oldest, can exit the set of
-	 * running transactions while we hold ProcArrayLock --- see further
-	 * discussion just below).	So it doesn't matter whether another backend
-	 * concurrently doing GetSnapshotData or GetOldestXmin sees our xmin as
-	 * set or not; he'd compute the same xmin for himself either way.
-	 * (We are assuming here that xmin can be set and read atomically,
-	 * just like xid.)
-	 *
-	 * There is a corner case in which the above argument doesn't work: if
-	 * there isn't any oldest xact, ie, all xids in the array are invalid.
-	 * In that case we will compute xmin as the result of ReadNewTransactionId,
-	 * and since GetNewTransactionId doesn't take the ProcArrayLock, it's not
-	 * so obvious that two backends with overlapping shared locks will get
-	 * the same answer.  But GetNewTransactionId is required to store the XID
-	 * it assigned into the ProcArray before releasing XidGenLock.  Therefore
-	 * the backend that did ReadNewTransactionId later will see that XID in
-	 * the array, and will compute the same xmin as the earlier one that saw
-	 * no XIDs in the array.
+	 * going to set MyProc->xmin.
 	 */
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
-	/*--------------------
+	/*
 	 * Unfortunately, we have to call ReadNewTransactionId() after acquiring
-	 * ProcArrayLock above.  It's not good because ReadNewTransactionId() does
-	 * LWLockAcquire(XidGenLock), but *necessary*.	We need to be sure that
-	 * no transactions exit the set of currently-running transactions
-	 * between the time we fetch xmax and the time we finish building our
-	 * snapshot.  Otherwise we could have a situation like this:
-	 *
-	 *		1. Tx Old is running (in Read Committed mode).
-	 *		2. Tx S reads new transaction ID into xmax, then
-	 *		   is swapped out before acquiring ProcArrayLock.
-	 *		3. Tx New gets new transaction ID (>= S' xmax),
-	 *		   makes changes and commits.
-	 *		4. Tx Old changes some row R changed by Tx New and commits.
-	 *		5. Tx S finishes getting its snapshot data.  It sees Tx Old as
-	 *		   done, but sees Tx New as still running (since New >= xmax).
-	 *
-	 * Now S will see R changed by both Tx Old and Tx New, *but* does not
-	 * see other changes made by Tx New.  If S is supposed to be in
-	 * Serializable mode, this is wrong.
-	 *
-	 * By locking ProcArrayLock before we read xmax, we ensure that TX Old
-	 * cannot exit the set of running transactions seen by Tx S.  Therefore
-	 * both Old and New will be seen as still running => no inconsistency.
-	 *--------------------
+	 * ProcArrayLock.  It's not good because ReadNewTransactionId() does
+	 * LWLockAcquire(XidGenLock), but *necessary*.  See discussion in
+	 * src/backend/access/transam/README.
 	 */
-
 	xmax = ReadNewTransactionId();
 
 	/* initialize xmin calculation with xmax */
@@ -1147,9 +1107,10 @@ XidCacheRemoveRunningXids(TransactionId xid, int nxids, TransactionId *xids)
 
 	/*
 	 * We must hold ProcArrayLock exclusively in order to remove transactions
-	 * from the PGPROC array.  (See notes in GetSnapshotData.)	It's possible
-	 * this could be relaxed since we know this routine is only used to abort
-	 * subtransactions, but pending closer analysis we'd best be conservative.
+	 * from the PGPROC array.  (See src/backend/access/transam/README.)  It's
+	 * possible this could be relaxed since we know this routine is only used
+	 * to abort subtransactions, but pending closer analysis we'd best be
+	 * conservative.
 	 */
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.248 2007/09/05 18:10:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.249 2007/09/07 20:59:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -747,6 +747,8 @@ AtSubStart_ResourceOwner(void)
 
 /*
  *	RecordTransactionCommit
+ *
+ * This is exported only to support an ugly hack in VACUUM FULL.
  */
 void
 RecordTransactionCommit(void)
@@ -1552,46 +1554,53 @@ CommitTransaction(void)
 	 */
 	RecordTransactionCommit();
 
-	/*----------
+	PG_TRACE1(transaction__commit, MyProc->lxid);
+
+	/*
 	 * Let others know about no transaction in progress by me. Note that
 	 * this must be done _before_ releasing locks we hold and _after_
 	 * RecordTransactionCommit.
 	 *
-	 * LWLockAcquire(ProcArrayLock) is required; consider this example:
-	 *		UPDATE with xid 0 is blocked by xid 1's UPDATE.
-	 *		xid 1 is doing commit while xid 2 gets snapshot.
-	 * If xid 2's GetSnapshotData sees xid 1 as running then it must see
-	 * xid 0 as running as well, or it will be able to see two tuple versions
-	 * - one deleted by xid 1 and one inserted by xid 0.  See notes in
-	 * GetSnapshotData.
-	 *
 	 * Note: MyProc may be null during bootstrap.
-	 *----------
 	 */
 	if (MyProc != NULL)
 	{
-		/*
-		 * Lock ProcArrayLock because that's what GetSnapshotData uses.
-		 * You might assume that we can skip this step if we had no
-		 * transaction id assigned, because the failure case outlined
-		 * in GetSnapshotData cannot happen in that case. This is true,
-		 * but we *still* need the lock guarantee that two concurrent
-		 * computations of the *oldest* xmin will get the same result.
-		 */
-		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-		MyProc->xid = InvalidTransactionId;
-		MyProc->lxid = InvalidLocalTransactionId;
-		MyProc->xmin = InvalidTransactionId;
-		MyProc->inVacuum = false;		/* must be cleared with xid/xmin */
+		if (TransactionIdIsValid(MyProc->xid))
+		{
+			/*
+			 * We must lock ProcArrayLock while clearing MyProc->xid, so
+			 * that we do not exit the set of "running" transactions while
+			 * someone else is taking a snapshot.  See discussion in
+			 * src/backend/access/transam/README.
+			 */
+			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
-		/* Clear the subtransaction-XID cache too while holding the lock */
-		MyProc->subxids.nxids = 0;
-		MyProc->subxids.overflowed = false;
+			MyProc->xid = InvalidTransactionId;
+			MyProc->lxid = InvalidLocalTransactionId;
+			MyProc->xmin = InvalidTransactionId;
+			MyProc->inVacuum = false;	/* must be cleared with xid/xmin */
 
-		LWLockRelease(ProcArrayLock);
+			/* Clear the subtransaction-XID cache too while holding the lock */
+			MyProc->subxids.nxids = 0;
+			MyProc->subxids.overflowed = false;
+
+			LWLockRelease(ProcArrayLock);
+		}
+		else
+		{
+			/*
+			 * If we have no XID, we don't need to lock, since we won't
+			 * affect anyone else's calculation of a snapshot.  We might
+			 * change their estimate of global xmin, but that's OK.
+			 */
+			MyProc->lxid = InvalidLocalTransactionId;
+			MyProc->xmin = InvalidTransactionId;
+			MyProc->inVacuum = false;	/* must be cleared with xid/xmin */
+
+			Assert(MyProc->subxids.nxids == 0);
+			Assert(MyProc->subxids.overflowed == false);
+		}
 	}
-
-	PG_TRACE1(transaction__commit, s->transactionId);
 
 	/*
 	 * This is all post-commit cleanup.  Note that if an error is raised here,
@@ -1815,27 +1824,20 @@ PrepareTransaction(void)
 	 * Let others know about no transaction in progress by me.	This has to be
 	 * done *after* the prepared transaction has been marked valid, else
 	 * someone may think it is unlocked and recyclable.
+	 *
+	 * We can skip locking ProcArrayLock here, because this action does not
+	 * actually change anyone's view of the set of running XIDs: our entry
+	 * is duplicate with the gxact that has already been inserted into the
+	 * ProcArray.
 	 */
-
-	/*
-	 * Lock ProcArrayLock because that's what GetSnapshotData uses.
-	 * You might assume that we can skip this step if we have no
-	 * transaction id assigned, because the failure case outlined
-	 * in GetSnapshotData cannot happen in that case. This is true,
-	 * but we *still* need the lock guarantee that two concurrent
-	 * computations of the *oldest* xmin will get the same result.
-	 */
-	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 	MyProc->xid = InvalidTransactionId;
 	MyProc->lxid = InvalidLocalTransactionId;
 	MyProc->xmin = InvalidTransactionId;
 	MyProc->inVacuum = false;	/* must be cleared with xid/xmin */
 
-	/* Clear the subtransaction-XID cache too while holding the lock */
+	/* Clear the subtransaction-XID cache too */
 	MyProc->subxids.nxids = 0;
 	MyProc->subxids.overflowed = false;
-
-	LWLockRelease(ProcArrayLock);
 
 	/*
 	 * This is all post-transaction cleanup.  Note that if an error is raised
@@ -1987,36 +1989,55 @@ AbortTransaction(void)
 	 */
 	RecordTransactionAbort(false);
 
+	PG_TRACE1(transaction__abort, MyProc->lxid);
+
 	/*
 	 * Let others know about no transaction in progress by me. Note that this
 	 * must be done _before_ releasing locks we hold and _after_
 	 * RecordTransactionAbort.
+	 *
+	 * Note: MyProc may be null during bootstrap.
 	 */
 	if (MyProc != NULL)
 	{
-		/*
-		 * Lock ProcArrayLock because that's what GetSnapshotData uses.
-		 * You might assume that we can skip this step if we have no
-		 * transaction id assigned, because the failure case outlined
-		 * in GetSnapshotData cannot happen in that case. This is true,
-		 * but we *still* need the lock guarantee that two concurrent
-		 * computations of the *oldest* xmin will get the same result.
-		 */
-		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
-		MyProc->xid = InvalidTransactionId;
-		MyProc->lxid = InvalidLocalTransactionId;
-		MyProc->xmin = InvalidTransactionId;
-		MyProc->inVacuum = false;		/* must be cleared with xid/xmin */
-		MyProc->inCommit = false;		/* be sure this gets cleared */
+		if (TransactionIdIsValid(MyProc->xid))
+		{
+			/*
+			 * We must lock ProcArrayLock while clearing MyProc->xid, so
+			 * that we do not exit the set of "running" transactions while
+			 * someone else is taking a snapshot.  See discussion in
+			 * src/backend/access/transam/README.
+			 */
+			LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
 
-		/* Clear the subtransaction-XID cache too while holding the lock */
-		MyProc->subxids.nxids = 0;
-		MyProc->subxids.overflowed = false;
+			MyProc->xid = InvalidTransactionId;
+			MyProc->lxid = InvalidLocalTransactionId;
+			MyProc->xmin = InvalidTransactionId;
+			MyProc->inVacuum = false;	/* must be cleared with xid/xmin */
+			MyProc->inCommit = false;	/* be sure this gets cleared */
 
-		LWLockRelease(ProcArrayLock);
+			/* Clear the subtransaction-XID cache too while holding the lock */
+			MyProc->subxids.nxids = 0;
+			MyProc->subxids.overflowed = false;
+
+			LWLockRelease(ProcArrayLock);
+		}
+		else
+		{
+			/*
+			 * If we have no XID, we don't need to lock, since we won't
+			 * affect anyone else's calculation of a snapshot.  We might
+			 * change their estimate of global xmin, but that's OK.
+			 */
+			MyProc->lxid = InvalidLocalTransactionId;
+			MyProc->xmin = InvalidTransactionId;
+			MyProc->inVacuum = false;	/* must be cleared with xid/xmin */
+			MyProc->inCommit = false;	/* be sure this gets cleared */
+
+			Assert(MyProc->subxids.nxids == 0);
+			Assert(MyProc->subxids.overflowed == false);
+		}
 	}
-
-	PG_TRACE1(transaction__abort, s->transactionId);
 
 	/*
 	 * Post-abort cleanup.	See notes in CommitTransaction() concerning

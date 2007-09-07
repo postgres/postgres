@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.285 2007/06/20 02:02:49 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.286 2007/09/07 20:59:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1677,13 +1677,6 @@ CopyFrom(CopyState cstate)
 	 * is not completely reliable, since in rare cases rd_createSubid or
 	 * rd_newRelfilenodeSubid can be cleared before the end of the transaction.
 	 * However this is OK since at worst we will fail to make the optimization.
-	 *
-	 * When skipping WAL it's entirely possible that COPY itself will write no
-	 * WAL records at all.  This is of concern because RecordTransactionCommit
-	 * might decide it doesn't need to log our eventual commit, which we
-	 * certainly need it to do.  However, we need no special action here for
-	 * that, because if we have a new table or new relfilenode then there
-	 * must have been a WAL-logged pg_class update earlier in the transaction.
 	 *
 	 * Also, if the target file is new-in-transaction, we assume that checking
 	 * FSM for free space is a waste of time, even if we must use WAL because

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.238 2007/09/05 18:10:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.239 2007/09/07 20:59:26 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1546,9 +1546,8 @@ UpdateXmaxHintBits(HeapTupleHeader tuple, Buffer buffer, TransactionId xid)
  * If use_wal is false, the new tuple is not logged in WAL, even for a
  * non-temp relation.  Safe usage of this behavior requires that we arrange
  * that all new tuples go into new pages not containing any tuples from other
- * transactions, that the relation gets fsync'd before commit, and that the
- * transaction emits at least one WAL record to ensure RecordTransactionCommit
- * will decide to WAL-log the commit.  (See also heap_sync() comments)
+ * transactions, and that the relation gets fsync'd before commit.
+ * (See also heap_sync() comments)
  *
  * use_fsm is passed directly to RelationGetBufferForTuple, which see for
  * more info.
