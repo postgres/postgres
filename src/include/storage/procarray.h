@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.16 2007/09/07 00:58:57 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/procarray.h,v 1.17 2007/09/08 20:31:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,10 @@
 extern Size ProcArrayShmemSize(void);
 extern void CreateSharedProcArray(void);
 extern void ProcArrayAdd(PGPROC *proc);
-extern void ProcArrayRemove(PGPROC *proc);
+extern void ProcArrayRemove(PGPROC *proc, TransactionId latestXid);
+
+extern void ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid);
+extern void ProcArrayClearTransaction(PGPROC *proc);
 
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern bool TransactionIdIsActive(TransactionId xid);
@@ -41,6 +44,7 @@ extern int	CountUserBackends(Oid roleid);
 extern bool CheckOtherDBBackends(Oid databaseId);
 
 extern void XidCacheRemoveRunningXids(TransactionId xid,
-						  int nxids, TransactionId *xids);
+									  int nxids, const TransactionId *xids,
+									  TransactionId latestXid);
 
 #endif   /* PROCARRAY_H */

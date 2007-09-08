@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.322 2007/06/03 22:16:02 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.323 2007/09/08 20:31:14 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -704,10 +704,7 @@ AddNewRelationTuple(Relation pg_class_desc,
 		 * We know that no xacts older than RecentXmin are still running,
 		 * so that will do.
 		 */
-		if (!IsBootstrapProcessingMode())
-			new_rel_reltup->relfrozenxid = RecentXmin;
-		else
-			new_rel_reltup->relfrozenxid = FirstNormalTransactionId;
+		new_rel_reltup->relfrozenxid = RecentXmin;
 	}
 	else
 	{

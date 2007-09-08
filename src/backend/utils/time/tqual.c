@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.104 2007/08/14 17:35:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.105 2007/09/08 20:31:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,10 +71,14 @@ Snapshot	LatestSnapshot = NULL;
  */
 Snapshot	ActiveSnapshot = NULL;
 
-/* These are updated by GetSnapshotData: */
-TransactionId TransactionXmin = InvalidTransactionId;
-TransactionId RecentXmin = InvalidTransactionId;
-TransactionId RecentGlobalXmin = InvalidTransactionId;
+/*
+ * These are updated by GetSnapshotData.  We initialize them this way
+ * for the convenience of TransactionIdIsInProgress: even in bootstrap
+ * mode, we don't want it to say that BootstrapTransactionId is in progress.
+ */
+TransactionId TransactionXmin = FirstNormalTransactionId;
+TransactionId RecentXmin = FirstNormalTransactionId;
+TransactionId RecentGlobalXmin = FirstNormalTransactionId;
 
 /* local functions */
 static bool XidInMVCCSnapshot(TransactionId xid, Snapshot snapshot);

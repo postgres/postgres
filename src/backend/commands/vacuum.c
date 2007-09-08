@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.356 2007/09/05 18:10:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.357 2007/09/08 20:31:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2437,14 +2437,15 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 		 * For now, a quick hack: record status of current transaction as
 		 * committed, and continue.  We force the commit to be synchronous
 		 * so that it's down to disk before we truncate.  (Note: tqual.c
-		 * knows that VACUUM FULL always uses sync commit, too.)
+		 * knows that VACUUM FULL always uses sync commit, too.)  The
+		 * transaction continues to be shown as running in the ProcArray.
 		 *
 		 * XXX This desperately needs to be revisited.  Any failure after
 		 * this point will result in a PANIC "cannot abort transaction nnn,
 		 * it was already committed"!
 		 */
 		ForceSyncCommit();
-		RecordTransactionCommit();
+		(void) RecordTransactionCommit();
 	}
 
 	/*

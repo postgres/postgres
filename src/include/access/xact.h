@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.89 2007/09/05 18:10:48 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xact.h,v 1.90 2007/09/08 20:31:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,7 +178,7 @@ extern void UnregisterXactCallback(XactCallback callback, void *arg);
 extern void RegisterSubXactCallback(SubXactCallback callback, void *arg);
 extern void UnregisterSubXactCallback(SubXactCallback callback, void *arg);
 
-extern void RecordTransactionCommit(void);
+extern TransactionId RecordTransactionCommit(void);
 
 extern int	xactGetCommittedChildren(TransactionId **ptr);
 

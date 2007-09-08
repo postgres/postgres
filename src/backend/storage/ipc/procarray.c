@@ -23,7 +23,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.32 2007/09/07 20:59:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/procarray.c,v 1.33 2007/09/08 20:31:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,9 +147,16 @@ ProcArrayAdd(PGPROC *proc)
 
 /*
  * Remove the specified PGPROC from the shared array.
+ *
+ * When latestXid is a valid XID, we are removing a live 2PC gxact from the
+ * array, and thus causing it to appear as "not running" anymore.  In this
+ * case we must advance latestCompletedXid.  (This is essentially the same
+ * as ProcArrayEndTransaction followed by removal of the PGPROC, but we take
+ * the ProcArrayLock only once, and don't damage the content of the PGPROC;
+ * twophase.c depends on the latter.)
  */
 void
-ProcArrayRemove(PGPROC *proc)
+ProcArrayRemove(PGPROC *proc, TransactionId latestXid)
 {
 	ProcArrayStruct *arrayP = procArray;
 	int			index;
@@ -161,6 +168,21 @@ ProcArrayRemove(PGPROC *proc)
 #endif
 
 	LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+
+	if (TransactionIdIsValid(latestXid))
+	{
+		Assert(TransactionIdIsValid(proc->xid));
+
+		/* Advance global latestCompletedXid while holding the lock */
+		if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
+								  latestXid))
+			ShmemVariableCache->latestCompletedXid = latestXid;
+	}
+	else
+	{
+		/* Shouldn't be trying to remove a live transaction here */
+		Assert(!TransactionIdIsValid(proc->xid));
+	}
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
@@ -177,6 +199,100 @@ ProcArrayRemove(PGPROC *proc)
 	LWLockRelease(ProcArrayLock);
 
 	elog(LOG, "failed to find proc %p in ProcArray", proc);
+}
+
+
+/*
+ * ProcArrayEndTransaction -- mark a transaction as no longer running
+ *
+ * This is used interchangeably for commit and abort cases.  The transaction
+ * commit/abort must already be reported to WAL and pg_clog.
+ *
+ * proc is currently always MyProc, but we pass it explicitly for flexibility.
+ * latestXid is the latest Xid among the transaction's main XID and
+ * subtransactions, or InvalidTransactionId if it has no XID.  (We must ask
+ * the caller to pass latestXid, instead of computing it from the PGPROC's
+ * contents, because the subxid information in the PGPROC might be
+ * incomplete.)
+ */
+void
+ProcArrayEndTransaction(PGPROC *proc, TransactionId latestXid)
+{
+	if (TransactionIdIsValid(latestXid))
+	{
+		/*
+		 * We must lock ProcArrayLock while clearing proc->xid, so
+		 * that we do not exit the set of "running" transactions while
+		 * someone else is taking a snapshot.  See discussion in
+		 * src/backend/access/transam/README.
+		 */
+		Assert(TransactionIdIsValid(proc->xid));
+
+		LWLockAcquire(ProcArrayLock, LW_EXCLUSIVE);
+
+		proc->xid = InvalidTransactionId;
+		proc->lxid = InvalidLocalTransactionId;
+		proc->xmin = InvalidTransactionId;
+		proc->inVacuum = false;			/* must be cleared with xid/xmin */
+		proc->inCommit = false;			/* be sure this is cleared in abort */
+
+		/* Clear the subtransaction-XID cache too while holding the lock */
+		proc->subxids.nxids = 0;
+		proc->subxids.overflowed = false;
+
+		/* Also advance global latestCompletedXid while holding the lock */
+		if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
+								  latestXid))
+			ShmemVariableCache->latestCompletedXid = latestXid;
+
+		LWLockRelease(ProcArrayLock);
+	}
+	else
+	{
+		/*
+		 * If we have no XID, we don't need to lock, since we won't
+		 * affect anyone else's calculation of a snapshot.  We might
+		 * change their estimate of global xmin, but that's OK.
+		 */
+		Assert(!TransactionIdIsValid(proc->xid));
+
+		proc->lxid = InvalidLocalTransactionId;
+		proc->xmin = InvalidTransactionId;
+		proc->inVacuum = false;			/* must be cleared with xid/xmin */
+		proc->inCommit = false;			/* be sure this is cleared in abort */
+
+		Assert(proc->subxids.nxids == 0);
+		Assert(proc->subxids.overflowed == false);
+	}
+}
+
+
+/*
+ * ProcArrayClearTransaction -- clear the transaction fields
+ *
+ * This is used after successfully preparing a 2-phase transaction.  We are
+ * not actually reporting the transaction's XID as no longer running --- it
+ * will still appear as running because the 2PC's gxact is in the ProcArray
+ * too.  We just have to clear out our own PGPROC.
+ */
+void
+ProcArrayClearTransaction(PGPROC *proc)
+{
+	/*
+	 * We can skip locking ProcArrayLock here, because this action does not
+	 * actually change anyone's view of the set of running XIDs: our entry
+	 * is duplicate with the gxact that has already been inserted into the
+	 * ProcArray.
+	 */
+	proc->xid = InvalidTransactionId;
+	proc->lxid = InvalidLocalTransactionId;
+	proc->xmin = InvalidTransactionId;
+	proc->inVacuum = false;			/* redundant, but just in case */
+	proc->inCommit = false;			/* ditto */
+
+	/* Clear the subtransaction-XID cache too */
+	proc->subxids.nxids = 0;
+	proc->subxids.overflowed = false;
 }
 
 
@@ -416,22 +532,17 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
 	TransactionId result;
 	int			index;
 
-	/*
-	 * We need to initialize the MIN() calculation with something.
-	 * ReadNewTransactionId() is guaranteed to work, but is relatively
-	 * expensive due to locking; so first we try a couple of shortcuts.
-	 * If we have a valid xmin in our own PGPROC entry, that will do;
-	 * or if we have assigned ourselves an XID, that will do.
-	 */
-	result = MyProc ? MyProc->xmin : InvalidTransactionId;
-	if (!TransactionIdIsValid(result))
-	{
-		result = GetTopTransactionIdIfAny();
-		if (!TransactionIdIsValid(result))
-			result = ReadNewTransactionId();
-	}
-
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
+
+	/*
+	 * We initialize the MIN() calculation with latestCompletedXid + 1.
+	 * This is a lower bound for the XIDs that might appear in the ProcArray
+	 * later, and so protects us against overestimating the result due to
+	 * future additions.
+	 */
+	result = ShmemVariableCache->latestCompletedXid;
+	Assert(TransactionIdIsNormal(result));
+	TransactionIdAdvance(result);
 
 	for (index = 0; index < arrayP->numProcs; index++)
 	{
@@ -473,7 +584,7 @@ GetOldestXmin(bool allDbs, bool ignoreVacuum)
  * GetSnapshotData -- returns information about running transactions.
  *
  * The returned snapshot includes xmin (lowest still-running xact ID),
- * xmax (next xact ID to be assigned), and a list of running xact IDs
+ * xmax (highest completed xact ID + 1), and a list of running xact IDs
  * in the range xmin <= xid < xmax.  It is used as follows:
  *		All xact IDs < xmin are considered finished.
  *		All xact IDs >= xmax are considered still running.
@@ -555,13 +666,10 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 	 */
 	LWLockAcquire(ProcArrayLock, LW_SHARED);
 
-	/*
-	 * Unfortunately, we have to call ReadNewTransactionId() after acquiring
-	 * ProcArrayLock.  It's not good because ReadNewTransactionId() does
-	 * LWLockAcquire(XidGenLock), but *necessary*.  See discussion in
-	 * src/backend/access/transam/README.
-	 */
-	xmax = ReadNewTransactionId();
+	/* xmax is always latestCompletedXid + 1 */
+	xmax = ShmemVariableCache->latestCompletedXid;
+	Assert(TransactionIdIsNormal(xmax));
+	TransactionIdAdvance(xmax);
 
 	/* initialize xmin calculation with xmax */
 	globalxmin = xmin = xmax;
@@ -592,9 +700,8 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		/*
 		 * If the transaction has been assigned an xid < xmax we add it to the
 		 * snapshot, and update xmin if necessary.  There's no need to store
-		 * XIDs above what we got from ReadNewTransactionId, since we'll treat
-		 * them as running anyway.  We don't bother to examine their subxids
-		 * either.
+		 * XIDs >= xmax, since we'll treat them as running anyway.  We don't
+		 * bother to examine their subxids either.
 		 *
 		 * We don't include our own XID (if any) in the snapshot, but we must
 		 * include it into xmin.
@@ -612,7 +719,9 @@ GetSnapshotData(Snapshot snapshot, bool serializable)
 		/*
 		 * Save subtransaction XIDs if possible (if we've already overflowed,
 		 * there's no point).  Note that the subxact XIDs must be later than
-		 * their parent, so no need to check them against xmin.
+		 * their parent, so no need to check them against xmin.  We could
+		 * filter against xmax, but it seems better not to do that much work
+		 * while holding the ProcArrayLock.
 		 *
 		 * The other backend can add more subxids concurrently, but cannot
 		 * remove any.	Hence it's important to fetch nxids just once. Should
@@ -1096,9 +1205,12 @@ CheckOtherDBBackends(Oid databaseId)
  * Remove a bunch of TransactionIds from the list of known-running
  * subtransactions for my backend.	Both the specified xid and those in
  * the xids[] array (of length nxids) are removed from the subxids cache.
+ * latestXid must be the latest XID among the group.
  */
 void
-XidCacheRemoveRunningXids(TransactionId xid, int nxids, TransactionId *xids)
+XidCacheRemoveRunningXids(TransactionId xid,
+						  int nxids, const TransactionId *xids,
+						  TransactionId latestXid)
 {
 	int			i,
 				j;
@@ -1154,6 +1266,11 @@ XidCacheRemoveRunningXids(TransactionId xid, int nxids, TransactionId *xids)
 	/* Ordinarily we should have found it, unless the cache has overflowed */
 	if (j < 0 && !MyProc->subxids.overflowed)
 		elog(WARNING, "did not find subXID %u in MyProc", xid);
+
+	/* Also advance global latestCompletedXid while holding the lock */
+	if (TransactionIdPrecedes(ShmemVariableCache->latestCompletedXid,
+							  latestXid))
+		ShmemVariableCache->latestCompletedXid = latestXid;
 
 	LWLockRelease(ProcArrayLock);
 }

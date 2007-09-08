@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.61 2007/08/01 22:45:09 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/transam.h,v 1.62 2007/09/08 20:31:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,6 +43,7 @@
 #define TransactionIdEquals(id1, id2)	((id1) == (id2))
 #define TransactionIdStore(xid, dest)	(*(dest) = (xid))
 #define StoreInvalidTransactionId(dest) (*(dest) = InvalidTransactionId)
+
 /* advance a transaction ID variable, handling wraparound correctly */
 #define TransactionIdAdvance(dest)	\
 	do { \
@@ -50,6 +51,12 @@
 		if ((dest) < FirstNormalTransactionId) \
 			(dest) = FirstNormalTransactionId; \
 	} while(0)
+
+/* back up a transaction ID variable, handling wraparound correctly */
+#define TransactionIdRetreat(dest)	\
+	do { \
+		(dest)--; \
+	} while ((dest) < FirstNormalTransactionId)
 
 
 /* ----------
@@ -78,8 +85,10 @@
 #define FirstNormalObjectId		16384
 
 /*
- * VariableCache is placed in shmem and used by
- * backends to get next available OID & XID.
+ * VariableCache is a data structure in shared memory that is used to track
+ * OID and XID assignment state.  For largely historical reasons, there is
+ * just one struct with different fields that are protected by different
+ * LWLocks.
  *
  * Note: xidWrapLimit and limit_datname are not "active" values, but are
  * used just to generate useful messages when xidWarnLimit or xidStopLimit
@@ -87,8 +96,15 @@
  */
 typedef struct VariableCacheData
 {
+	/*
+	 * These fields are protected by OidGenLock.
+	 */
 	Oid			nextOid;		/* next OID to assign */
 	uint32		oidCount;		/* OIDs available before must do XLOG work */
+
+	/*
+	 * These fields are protected by XidGenLock.
+	 */
 	TransactionId nextXid;		/* next XID to assign */
 
 	TransactionId oldestXid;	/* cluster-wide minimum datfrozenxid */
@@ -97,6 +113,12 @@ typedef struct VariableCacheData
 	TransactionId xidStopLimit; /* refuse to advance nextXid beyond here */
 	TransactionId xidWrapLimit; /* where the world ends */
 	NameData	limit_datname;	/* database that needs vacuumed first */
+
+	/*
+	 * These fields are protected by ProcArrayLock.
+	 */
+	TransactionId latestCompletedXid;	/* newest XID that has committed or
+										 * aborted */
 } VariableCacheData;
 
 typedef VariableCacheData *VariableCache;
@@ -127,6 +149,8 @@ extern bool TransactionIdPrecedes(TransactionId id1, TransactionId id2);
 extern bool TransactionIdPrecedesOrEquals(TransactionId id1, TransactionId id2);
 extern bool TransactionIdFollows(TransactionId id1, TransactionId id2);
 extern bool TransactionIdFollowsOrEquals(TransactionId id1, TransactionId id2);
+extern TransactionId TransactionIdLatest(TransactionId mainxid,
+										 int nxids, const TransactionId *xids);
 extern XLogRecPtr TransactionIdGetCommitLSN(TransactionId xid);
 
 /* in transam/varsup.c */
