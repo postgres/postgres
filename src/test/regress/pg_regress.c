@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.36 2007/07/18 21:19:17 alvherre Exp $
+ * $PostgreSQL: pgsql/src/test/regress/pg_regress.c,v 1.37 2007/09/09 20:40:54 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,6 +76,7 @@ static char *encoding = NULL;
 static _stringlist *schedulelist = NULL;
 static _stringlist *extra_tests = NULL;
 static char *temp_install = NULL;
+static char *temp_config = NULL;
 static char *top_builddir = NULL;
 static int	temp_port = 65432;
 static bool nolocale = false;
@@ -1718,11 +1719,12 @@ help(void)
 	printf(_("                            (can be used multiple times to concatenate)\n"));
 	printf(_("  --srcdir=DIR              absolute path to source directory (for VPATH builds)\n"));
 	printf(_("  --temp-install=DIR        create a temporary installation in DIR\n"));
-	printf(_("  --no-locale               use C locale\n"));
 	printf(_("\n"));
 	printf(_("Options for \"temp-install\" mode:\n"));
+	printf(_("  --no-locale               use C locale\n"));
 	printf(_("  --top-builddir=DIR        (relative) path to top level build directory\n"));
 	printf(_("  --temp-port=PORT          port number to start temp postmaster on\n"));
+	printf(_("  --temp-config=PATH        append contents of PATH to temporary config\n"));
 	printf(_("\n"));
 	printf(_("Options for using an existing installation:\n"));
 	printf(_("  --host=HOST               use postmaster running on HOST\n"));
@@ -1766,6 +1768,7 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{"psqldir", required_argument, NULL, 16},
 		{"srcdir", required_argument, NULL, 17},
 		{"create-role", required_argument, NULL, 18},
+		{"temp-config", required_argument, NULL, 19},
 		{NULL, 0, NULL, 0}
 	};
 
@@ -1874,6 +1877,9 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 			case 18:
 				split_to_stringlist(strdup(optarg), ", ", &extraroles);
 				break;
+			case 19:
+				temp_config = strdup(optarg);
+				break;
 			default:
 				/* getopt_long already emitted a complaint */
 				fprintf(stderr, _("\nTry \"%s -h\" for more information.\n"),
@@ -1960,6 +1966,32 @@ regression_main(int argc, char *argv[], init_function ifunc, test_function tfunc
 		{
 			fprintf(stderr, _("\n%s: initdb failed\nExamine %s/log/initdb.log for the reason.\nCommand was: %s\n"), progname, outputdir, buf);
 			exit_nicely(2);
+		}
+
+		/* add any extra config specified to the postgresql.conf */
+		if (temp_config != NULL)
+		{
+			FILE * extra_conf;
+			FILE * pg_conf;
+			char line_buf[1024];
+
+			snprintf(buf, sizeof(buf),"%s/data/postgresql.conf", temp_install);
+			pg_conf = fopen(buf,"a");
+			if (pg_conf == NULL)
+			{
+				fprintf(stderr, _("\n%s: could not open %s for adding extra config:\nError was %s\n"), progname, buf, strerror(errno));
+				exit_nicely(2);				
+			}
+			extra_conf = fopen(temp_config,"r");
+			if (extra_conf == NULL)
+			{
+				fprintf(stderr, _("\n%s: could not open %s to read extra config:\nError was %s\n"), progname, buf, strerror(errno));
+				exit_nicely(2);				
+			}
+			while(fgets(line_buf, sizeof(line_buf),extra_conf) != NULL)
+				fputs(line_buf, pg_conf);
+			fclose(extra_conf);
+			fclose(pg_conf);
 		}
 
 		/*

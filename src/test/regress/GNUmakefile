@@ -6,7 +6,7 @@
 # Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.68 2007/06/12 11:07:32 mha Exp $
+# $PostgreSQL: pgsql/src/test/regress/GNUmakefile,v 1.69 2007/09/09 20:40:54 adunstan Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,6 +18,12 @@ contribdir = $(top_builddir)/contrib
 
 # port number for temp-installation test postmaster
 TEMP_PORT = 5$(DEF_PGPORT)
+
+# file with extra config for temp build
+TEMP_CONF =
+ifdef TEMP_CONFIG
+TEMP_CONF += --temp-config=S(TEMP_CONFIG)
+endif
 
 # where to find psql for testing an existing installation
 PSQLDIR = $(bindir)
@@ -135,7 +141,7 @@ tablespace-setup:
 ##
 
 check: all
-	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --srcdir=$(abs_srcdir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE)
+	./pg_regress --temp-install=./tmp_check --top-builddir=$(top_builddir) --srcdir=$(abs_srcdir) --temp-port=$(TEMP_PORT) --schedule=$(srcdir)/parallel_schedule --multibyte=$(MULTIBYTE) --load-language=plpgsql $(MAXCONNOPT) $(NOLOCALE) $(TEMP_CONF)
 
 installcheck: all
 	./pg_regress --psqldir=$(PSQLDIR) --schedule=$(srcdir)/serial_schedule --srcdir=$(abs_srcdir) --multibyte=$(MULTIBYTE) --load-language=plpgsql $(NOLOCALE)
