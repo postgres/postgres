@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.3 2007/09/07 15:09:56 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_utils.h,v 1.4 2007/09/10 12:36:41 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,11 +38,13 @@ extern void close_tsvector_parser(TSVectorParseState state);
 struct TSQueryParserStateData;	/* private in backend/utils/adt/tsquery.c */
 typedef struct TSQueryParserStateData *TSQueryParserState;
 
-typedef void (*PushFunction)(void *opaque, TSQueryParserState state, char *, int, int2);
+typedef void (*PushFunction)(Datum opaque, TSQueryParserState state, 
+				char *token, int tokenlen, 
+				int2 tokenweights /* bitmap as described in QueryOperand struct */ );
 
 extern TSQuery parse_tsquery(char *buf,
 			  PushFunction pushval,
-			  void *opaque, bool isplain);
+			  Datum opaque, bool isplain);
 
 /* Functions for use by PushFunction implementations */
 extern void pushValue(TSQueryParserState state,

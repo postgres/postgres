@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.5 2007/09/07 16:03:40 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery.c,v 1.6 2007/09/10 12:36:40 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,7 +314,7 @@ pushStop(TSQueryParserState state)
 static void
 makepol(TSQueryParserState state, 
 		PushFunction pushval,
-		void *opaque)
+		Datum opaque)
 {
 	int8		operator = 0;
 	ts_tokentype type;
@@ -460,7 +460,7 @@ findoprnd(QueryItem *ptr, int size)
 TSQuery
 parse_tsquery(char *buf, 
 			  PushFunction pushval,
-			  void *opaque,
+			  Datum opaque,
 			  bool isplain)
 {
 	struct TSQueryParserStateData state;
@@ -543,7 +543,7 @@ parse_tsquery(char *buf,
 }
 
 static void
-pushval_asis(void *opaque, TSQueryParserState state, char *strval, int lenval,
+pushval_asis(Datum opaque, TSQueryParserState state, char *strval, int lenval,
 			 int16 weight)
 {
 	pushValue(state, strval, lenval, weight);
@@ -559,7 +559,7 @@ tsqueryin(PG_FUNCTION_ARGS)
 
 	pg_verifymbstr(in, strlen(in), false);
 
-	PG_RETURN_TSQUERY(parse_tsquery(in, pushval_asis, NULL, false));
+	PG_RETURN_TSQUERY(parse_tsquery(in, pushval_asis, PointerGetDatum(NULL), false));
 }
 
 /*

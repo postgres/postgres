@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.2 2007/09/07 15:09:55 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.3 2007/09/10 12:36:40 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,7 +235,7 @@ to_tsvector(PG_FUNCTION_ARGS)
  * and different variants are ORred together. 
  */
 static void
-pushval_morph(void *opaque, TSQueryParserState state, char *strval, int lenval, int2 weight)
+pushval_morph(Datum opaque, TSQueryParserState state, char *strval, int lenval, int2 weight)
 {
 	int4		count = 0;
 	ParsedText	prs;
@@ -244,7 +244,7 @@ pushval_morph(void *opaque, TSQueryParserState state, char *strval, int lenval, 
 				cntvar = 0,
 				cntpos = 0,
 				cnt = 0;
-	Oid cfg_id = (Oid) opaque; /* the input is actually an Oid, not a pointer */
+	Oid cfg_id = DatumGetObjectId(opaque); /* the input is actually an Oid, not a pointer */
 
 	prs.lenwords = 4;
 	prs.curwords = 0;
@@ -303,7 +303,7 @@ to_tsquery_byid(PG_FUNCTION_ARGS)
 	QueryItem  *res;
 	int4		len;
 
-	query = parse_tsquery(TextPGetCString(in), pushval_morph, (void *) cfgid, false);
+	query = parse_tsquery(TextPGetCString(in), pushval_morph, ObjectIdGetDatum(cfgid), false);
 
 	if (query->size == 0)
 		PG_RETURN_TSQUERY(query);
@@ -341,7 +341,7 @@ plainto_tsquery_byid(PG_FUNCTION_ARGS)
 	QueryItem  *res;
 	int4		len;
 
-	query = parse_tsquery(TextPGetCString(in), pushval_morph, (void *)cfgid, true);
+	query = parse_tsquery(TextPGetCString(in), pushval_morph, ObjectIdGetDatum(cfgid), true);
 
 	if (query->size == 0)
 		PG_RETURN_TSQUERY(query);
