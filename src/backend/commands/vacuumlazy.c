@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.61.2.2 2006/03/04 19:09:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.61.2.3 2007/09/10 17:58:56 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -854,7 +854,11 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 		bool		tupgone,
 					hastup;
 
-		vacuum_delay_point();
+		/*
+		 * We don't insert a vacuum delay point here, because we have an
+		 * exclusive lock on the table which we want to hold for as short
+		 * a time as possible.
+		 */
 
 		blkno--;
 
