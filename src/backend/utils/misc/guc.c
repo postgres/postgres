@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.418 2007/09/10 01:39:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.419 2007/09/10 02:01:19 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -560,8 +560,7 @@ static struct config_bool ConfigureNamesBool[] =
 			NULL
 		},
 		&XactSyncCommit,
-		/* XXX TEMPORARY FOR TESTING: sync commit should default to TRUE! */
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 	{
 		{"zero_damaged_pages", PGC_SUSET, DEVELOPER_OPTIONS,
