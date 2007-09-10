@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.164 2007/09/07 00:58:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.165 2007/09/10 21:59:37 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1311,6 +1311,10 @@ ReindexDatabase(const char *databaseName, bool do_system, bool do_user)
 		Form_pg_class classtuple = (Form_pg_class) GETSTRUCT(tuple);
 
 		if (classtuple->relkind != RELKIND_RELATION)
+			continue;
+
+		/* Skip temp tables of other backends; we can't reindex them at all */
+		if (isOtherTempNamespace(classtuple->relnamespace))
 			continue;
 
 		/* Check user/system classification, and optionally skip */

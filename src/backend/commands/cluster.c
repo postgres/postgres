@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.162 2007/05/19 01:02:34 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.163 2007/09/10 21:59:37 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,6 +105,15 @@ cluster(ClusterStmt *stmt, bool isTopLevel)
 		if (!pg_class_ownercheck(tableOid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 						   RelationGetRelationName(rel));
+
+		/*
+		 * Reject clustering a remote temp table ... their local buffer manager
+		 * is not going to cope.
+		 */
+		if (isOtherTempNamespace(RelationGetNamespace(rel)))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot cluster temporary tables of other sessions")));
 
 		if (stmt->indexname == NULL)
 		{
@@ -270,6 +279,21 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 
 		/* Check that the user still owns the relation */
 		if (!pg_class_ownercheck(rvtc->tableOid, GetUserId()))
+		{
+			relation_close(OldHeap, AccessExclusiveLock);
+			return;
+		}
+
+		/*
+		 * Silently skip a temp table for a remote session.  Only doing this
+		 * check in the "recheck" case is appropriate (which currently means
+		 * somebody is executing a database-wide CLUSTER), because there is
+		 * another check in cluster() which will stop any attempt to cluster
+		 * remote temp tables by name.  There is another check in
+		 * check_index_is_clusterable which is redundant, but we leave it for
+		 * extra safety.
+		 */
+		if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
 		{
 			relation_close(OldHeap, AccessExclusiveLock);
 			return;
