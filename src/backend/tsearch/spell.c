@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.2 2007/08/25 00:03:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.3 2007/09/10 10:39:56 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -733,7 +733,6 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 	while ((recoded = t_readline(affix)) != NULL)
 	{
 		pstr = lowerstr(recoded);
-		pfree(recoded);
 
 		lineno++;
 
@@ -813,8 +812,8 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 			flag = (unsigned char) *s;
 			goto nextline;
 		}
-		if (STRNCMP(str, "COMPOUNDFLAG") == 0 || STRNCMP(str, "COMPOUNDMIN") == 0 ||
-			STRNCMP(str, "PFX") == 0 || STRNCMP(str, "SFX") == 0)
+		if (STRNCMP(recoded, "COMPOUNDFLAG") == 0 || STRNCMP(recoded, "COMPOUNDMIN") == 0 ||
+			STRNCMP(recoded, "PFX") == 0 || STRNCMP(recoded, "SFX") == 0)
 		{
 			if (oldformat)
 				ereport(ERROR,
@@ -834,6 +833,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 		NIAddAffix(Conf, flag, flagflags, mask, find, repl, suffixes ? FF_SUFFIX : FF_PREFIX);
 
 	nextline:
+		pfree(recoded);
 		pfree(pstr);
 	}
 	FreeFile(affix);
