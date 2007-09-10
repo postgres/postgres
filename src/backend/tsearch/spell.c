@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.3 2007/09/10 10:39:56 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.4 2007/09/10 20:27:12 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -647,12 +647,10 @@ NIImportOOAffixes(IspellDict * Conf, const char *filename)
 				goto nextline;
 			flag = *sflag;
 			isSuffix = (STRNCMP(ptype, "sfx") == 0) ? true : false;
-			pfind = lowerstr_ctx(find);
-			if (t_iseq(find, 'y'))
+			if (t_iseq(find, 'y') || t_iseq(find, 'Y'))
 				flagflags = FF_CROSSPRODUCT;
 			else
 				flagflags = 0;
-			pfree(pfind);
 		}
 		else
 		{
@@ -666,7 +664,7 @@ NIImportOOAffixes(IspellDict * Conf, const char *filename)
 			if ((ptr = strchr(prepl, '/')) != NULL)
 			{
 				*ptr = '\0';
-				ptr++;
+				ptr = repl + (ptr-prepl) + 1;
 				while (*ptr)
 				{
 					aflg |= Conf->flagval[(unsigned int) *ptr];
@@ -704,8 +702,7 @@ NIImportOOAffixes(IspellDict * Conf, const char *filename)
 void
 NIImportAffixes(IspellDict * Conf, const char *filename)
 {
-	char		str[BUFSIZ],
-			   *pstr = NULL;
+	char	   *pstr = NULL;
 	char		mask[BUFSIZ];
 	char		find[BUFSIZ];
 	char		repl[BUFSIZ];
@@ -742,13 +739,15 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 
 		if (STRNCMP(pstr, "compoundwords") == 0)
 		{
-			s = findchar(str, 'l');
+			s = findchar(pstr, 'l');
 			if (s)
 			{
+				s = recoded + ( s-pstr ); /* we need non-lowercased string */
 				while (*s && !t_isspace(s))
 					s++;
 				while (*s && t_isspace(s))
 					s++;
+
 				if (*s && pg_mblen(s) == 1)
 				{
 					Conf->flagval[(unsigned int) *s] = FF_COMPOUNDFLAG;
@@ -774,7 +773,7 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 		}
 		if (STRNCMP(pstr, "flag") == 0)
 		{
-			s = str + 4;
+			s = recoded + 4; /* we need non-lowercased string */
 			flagflags = 0;
 
 			while (*s && t_isspace(s))
@@ -1333,7 +1332,7 @@ addToResult(char **forms, char **cur, char *word)
 }
 
 static char **
-NormalizeSubWord(IspellDict * Conf, char *word, char flag)
+NormalizeSubWord(IspellDict * Conf, char *word, int flag)
 {
 	AffixNodeData *suffix = NULL,
 			   *prefix = NULL;
