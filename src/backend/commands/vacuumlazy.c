@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.92 2007/09/10 17:58:45 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.93 2007/09/10 21:40:03 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -802,6 +802,9 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 */
 	RelationTruncate(onerel, new_rel_pages);
 
+	/* Now we're OK to release the lock. */
+	UnlockRelation(onerel, AccessExclusiveLock);
+
 	/*
 	 * Drop free-space info for removed blocks; these must not get entered
 	 * into the FSM!
@@ -833,10 +836,6 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	/* update statistics */
 	vacrelstats->rel_pages = new_rel_pages;
 	vacrelstats->pages_removed = old_rel_pages - new_rel_pages;
-
-	/*
-	 * We keep the exclusive lock until commit (perhaps not necessary)?
-	 */
 
 	ereport(elevel,
 			(errmsg("\"%s\": truncated %u to %u pages",
