@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.50 2007/04/21 20:02:40 petere Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.51 2007/09/10 00:57:21 tgl Exp $
  */
 
 %{
@@ -116,9 +116,10 @@ ProcessConfigFile(GucContext context)
 {
 	int			elevel;
 	struct name_value_pair *item, *head, *tail;
+	char	   *cvc = NULL;
+	struct config_string *cvc_struct;
+	const char *envvar;
 	int			i;
-	bool	   *in_conffile = NULL;
-	const char *var;
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
 
@@ -133,6 +134,7 @@ ProcessConfigFile(GucContext context)
 	else
 		elevel = ERROR;
 
+	/* Parse the file into a list of option names and values */
 	head = tail = NULL;
 
 	if (!ParseConfigFile(ConfigFileName, NULL,
@@ -140,17 +142,92 @@ ProcessConfigFile(GucContext context)
 						 &head, &tail))
 		goto cleanup_list;
 
-	/* Check if all options are valid */
+	/*
+	 * We need the proposed new value of custom_variable_classes to check
+	 * custom variables with.  ParseConfigFile ensured that if it's in
+	 * the file, it's first in the list.  But first check to see if we
+	 * have an active value from the command line, which should override
+	 * the file in any case.  (Since there's no relevant env var, the
+	 * only possible nondefault sources are the file and ARGV.)
+	 */
+	cvc_struct = (struct config_string *)
+		find_option("custom_variable_classes", false, elevel);
+	if (cvc_struct && cvc_struct->gen.reset_source > PGC_S_FILE)
+	{
+		cvc = guc_strdup(elevel, cvc_struct->reset_val);
+		if (cvc == NULL)
+			goto cleanup_list;
+	}
+	else if (head != NULL &&
+			 guc_name_compare(head->name, "custom_variable_classes") == 0)
+	{
+		/*
+		 * Need to canonicalize the value via the assign hook.  Casting away
+		 * const is a bit ugly, but we know the result is malloc'd.
+		 */
+		cvc = (char *) assign_custom_variable_classes(head->value,
+													  false, PGC_S_FILE);
+		if (cvc == NULL)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("invalid value for parameter \"%s\": \"%s\"",
+							head->name, head->value)));
+			goto cleanup_list;
+		}
+	}
+
+	/*
+	 * Mark all extant GUC variables as not present in the config file.
+	 * We need this so that we can tell below which ones have been removed
+	 * from the file since we last processed it.
+	 */
+	for (i = 0; i < num_guc_variables; i++)
+	{
+		struct config_generic *gconf = guc_variables[i];
+
+		gconf->status &= ~GUC_IS_IN_FILE;
+	}
+
+	/*
+	 * Check if all options are valid.  As a side-effect, the GUC_IS_IN_FILE
+	 * flag is set on each GUC variable mentioned in the list.
+	 */
 	for (item = head; item; item = item->next)
 	{
 		char *sep = strchr(item->name, GUC_QUALIFIER_SEPARATOR);
-		if (sep && !is_custom_class(item->name, sep - item->name))
+
+		if (sep)
 		{
-			ereport(elevel,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("unrecognized configuration parameter \"%s\"",
-						item->name)));
-			goto cleanup_list;
+			/*
+			 * We have to consider three cases for custom variables:
+			 *
+			 * 1. The class name is not valid according to the (new) setting
+			 * of custom_variable_classes.  If so, reject.  We don't care
+			 * which side is at fault.
+			 */
+			if (!is_custom_class(item->name, sep - item->name, cvc))
+			{
+				ereport(elevel,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("unrecognized configuration parameter \"%s\"",
+								item->name)));
+				goto cleanup_list;
+			}
+			/*
+			 * 2. There is no GUC entry.  If we called set_config_option then
+			 * it would make a placeholder, which we don't want to do yet,
+			 * since we could still fail further down the list.  Do nothing
+			 * (assuming that making the placeholder will succeed later).
+			 */
+			if (find_option(item->name, false, elevel) == NULL)
+				continue;
+			/*
+			 * 3. There is already a GUC entry (either real or placeholder) for
+			 * the variable.  In this case we should let set_config_option
+			 * check it, since the assignment could well fail if it's a real
+			 * entry.
+			 */
 		}
 
 		if (!set_config_option(item->name, item->value, context,
@@ -158,144 +235,85 @@ ProcessConfigFile(GucContext context)
 			goto cleanup_list;
 	}
 
-
 	/*
-	 * Mark all variables as not showing up in the config file.  The
-	 * allocation has to take place after ParseConfigFile() since this
-	 * function can change num_guc_variables due to custom variables.
-	 * It would be easier to add a new field or status bit to struct
-	 * conf_generic, but that way we would expose internal information
-	 * that is just needed here in the following few lines.  The price
-	 * to pay for this separation are a few more loops over the set of
-	 * configuration options, but those are expected to be rather few
-	 * and we only have to pay the cost at SIGHUP.  We initialize
-	 * in_conffile only here because set_config_option() makes
-	 * guc_variables grow with custom variables.
+	 * Check for variables having been removed from the config file, and
+	 * revert their reset values (and perhaps also effective values) to the
+	 * boot-time defaults.  If such a variable can't be changed after startup,
+	 * just throw a warning and continue.  (This is analogous to the fact that
+	 * set_config_option only throws a warning for a new but different value.
+	 * If we wanted to make it a hard error, we'd need an extra pass over the
+	 * list so that we could throw the error before starting to apply
+	 * changes.)
 	 */
-	in_conffile = guc_malloc(elevel, num_guc_variables * sizeof(bool));
-	if (!in_conffile)
-		goto cleanup_list;
-	for (i = 0; i < num_guc_variables; i++)
-		in_conffile[i] = false;
-
-	for (item = head; item; item = item->next)
-	{
-		/*
-		 * After set_config_option() the variable name item->name is
-		 * known to exist.
-		 */
-		Assert(guc_get_index(item->name) >= 0);
-		in_conffile[guc_get_index(item->name)] = true;
-	}
-
 	for (i = 0; i < num_guc_variables; i++)
 	{
 		struct config_generic *gconf = guc_variables[i];
-		if (!in_conffile[i] && gconf->source == PGC_S_FILE)
-		{
-			if (gconf->context < PGC_SIGHUP)
-				ereport(elevel,
-					(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
-							 errmsg("parameter \"%s\" cannot be changed after server start; configuration file change ignored",
-									gconf->name)));
-			else
-			{
-					/* prepare */
-					GucStack   *stack;
-					if (gconf->reset_source == PGC_S_FILE)
-						gconf->reset_source = PGC_S_DEFAULT;
-					for (stack = gconf->stack; stack; stack = stack->prev)
-						if (stack->source == PGC_S_FILE)
-							stack->source = PGC_S_DEFAULT;
-					/* apply the default */
-					set_config_option(gconf->name, NULL, context,
-									  PGC_S_DEFAULT, false, true);
-			}
-		}
-		else if (!in_conffile[i] && gconf->reset_source == PGC_S_FILE)
-		{
-			/*------
-			 * Change the reset_val to default_val.  Here's an
-			 * example: In the configuration file we have
-			 *
-			 * seq_page_cost = 3.00
-			 *
-			 * Now we execute in a session
-			 *
-			 * SET seq_page_cost TO 4.00;
-			 *
-			 * Then we remove this option from the configuration file
-			 * and send SIGHUP. Now when you execute
-			 *
-			 * RESET seq_page_cost;
-			 *
-			 * it should fall back to 1.00 (the default value for
-			 * seq_page_cost) and not to 3.00 (which is the current
-			 * reset_val).
-			 */
+		GucStack   *stack;
 
-			switch (gconf->vartype)
-			{
-				case PGC_BOOL:
-					{
-						struct config_bool *conf;
-						conf = (struct config_bool *) gconf;
-						conf->reset_val = conf->boot_val;
-						break;
-					}
-				case PGC_INT:
-					{
-						struct config_int *conf;
-						conf = (struct config_int *) gconf;
-						conf->reset_val = conf->boot_val;
-						break;
-					}
-				case PGC_REAL:
-					{
-						struct config_real *conf;
-						conf = (struct config_real *) gconf;
-						conf->reset_val = conf->boot_val;
-						break;
-					}
-				case PGC_STRING:
-					{
-						struct config_string   *conf;
-						conf = (struct config_string *) gconf;
-						/*
-						 * We can cast away the const here because we
-						 * won't free the address.  It is protected by
-						 * set_string_field() and string_field_used().
-						 */
-						conf->reset_val = (char *) conf->boot_val;
-						break;
-					}
-			}
+		if (gconf->reset_source != PGC_S_FILE ||
+			(gconf->status & GUC_IS_IN_FILE))
+			continue;
+		if (gconf->context < PGC_SIGHUP)
+		{
+			ereport(elevel,
+					(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
+					 errmsg("parameter \"%s\" cannot be changed after server start; configuration file change ignored",
+							gconf->name)));
+			continue;
 		}
+
+		/*
+		 * Reset any "file" sources to "default", else set_config_option
+		 * will not override those settings.  tentative_source should
+		 * never be "file".
+		 */
+		if (gconf->reset_source == PGC_S_FILE)
+			gconf->reset_source = PGC_S_DEFAULT;
+		Assert(gconf->tentative_source != PGC_S_FILE);
+		if (gconf->source == PGC_S_FILE)
+			gconf->source = PGC_S_DEFAULT;
+		for (stack = gconf->stack; stack; stack = stack->prev)
+		{
+			Assert(stack->tentative_source != PGC_S_FILE);
+			if (stack->source == PGC_S_FILE)
+				stack->source = PGC_S_DEFAULT;
+		}
+
+		/* Now we can re-apply the wired-in default */
+		set_config_option(gconf->name, NULL, context, PGC_S_DEFAULT,
+						  false, true);
 	}
+
+	/*
+	 * Restore any variables determined by environment variables.  This
+	 * is a no-op except in the case where one of these had been in the
+	 * config file and is now removed.  PGC_S_ENV_VAR will override the
+	 * wired-in default we just applied, but cannot override any other source.
+	 * PGPORT can be ignored, because it cannot be changed without restart.
+	 * Keep this list in sync with InitializeGUCOptions()!
+	 */
+	envvar = getenv("PGDATESTYLE");
+	if (envvar != NULL)
+		set_config_option("datestyle", envvar, PGC_POSTMASTER,
+						  PGC_S_ENV_VAR, false, true);
+
+	envvar = getenv("PGCLIENTENCODING");
+	if (envvar != NULL)
+		set_config_option("client_encoding", envvar, PGC_POSTMASTER,
+						  PGC_S_ENV_VAR, false, true);
+
 
 	/* If we got here all the options checked out okay, so apply them. */
 	for (item = head; item; item = item->next)
+	{
 		set_config_option(item->name, item->value, context,
 						  PGC_S_FILE, false, true);
-
-	/*
-	 * Reset variables to the value of environment variables
-	 * (PGC_S_ENV_VAR overrules PGC_S_FILE).  PGPORT is ignored,
-	 * because it cannot be changed without restart.
-	 */
-	var = getenv("PGDATESTYLE");
-	if (var != NULL)
-		set_config_option("datestyle", var, context,
-						  PGC_S_ENV_VAR, false, true);
-
-	var = getenv("PGCLIENTENCODING");
-	if (var != NULL)
-		set_config_option("client_encoding", var, context,
-						  PGC_S_ENV_VAR, false, true);
+	}
 
  cleanup_list:
-	free(in_conffile);
 	free_name_value_list(head);
+	if (cvc)
+		free(cvc);
 }
 
 
@@ -389,6 +407,7 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 	while ((token = yylex()))
 	{
 		char	   *opt_name, *opt_value;
+		struct name_value_pair *item;
 
 		if (token == GUC_EOL)	/* empty or comment line */
 			continue;
@@ -421,7 +440,7 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 			goto parse_error;
 
 		/* OK, process the option name and value */
-		if (pg_strcasecmp(opt_name, "include") == 0)
+		if (guc_name_compare(opt_name, "include") == 0)
 		{
 			/*
 			 * An include directive isn't a variable and should be processed
@@ -443,29 +462,39 @@ ParseConfigFile(const char *config_file, const char *calling_file,
 			pfree(opt_name);
 			pfree(opt_value);
 		}
-		else if (pg_strcasecmp(opt_name, "custom_variable_classes") == 0)
+		else if (guc_name_compare(opt_name, "custom_variable_classes") == 0)
 		{
 			/*
 			 * This variable must be processed first as it controls
-			 * the validity of other variables; so apply immediately.
+			 * the validity of other variables; so it goes at the head
+			 * of the result list.  If we already found a value for it,
+			 * replace with this one.
 			 */
-			if (!set_config_option(opt_name, opt_value, context,
-								   PGC_S_FILE, false, true))
+			item = *head_p;
+			if (item != NULL &&
+				guc_name_compare(item->name, "custom_variable_classes") == 0)
 			{
-				pfree(opt_name);
-				pfree(opt_value);
-
-				/* We assume the error message was logged already. */
-				OK = false;
-				goto cleanup_exit;
+				/* replace existing head item */
+				pfree(item->name);
+				pfree(item->value);
+				item->name = opt_name;
+				item->value = opt_value;
+			}
+			else
+			{
+				/* prepend to list */
+				item = palloc(sizeof *item);
+				item->name = opt_name;
+				item->value = opt_value;
+				item->next = *head_p;
+				*head_p = item;
+				if (*tail_p == NULL)
+					*tail_p = item;
 			}
 		}
-
-		if (pg_strcasecmp(opt_name, "include") != 0)
+		else
 		{
-			/* append to list */
-			struct name_value_pair *item;
-
+			/* ordinary variable, append to list */
 			item = palloc(sizeof *item);
 			item->name = opt_name;
 			item->value = opt_value;

@@ -20,7 +20,7 @@
  * Copyright (c) 2006-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.2 2007/08/22 01:39:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/ts_cache.c,v 1.3 2007/09/10 00:57:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -592,14 +592,6 @@ getTSCurrentConfig(bool emitError)
 const char *
 assignTSCurrentConfig(const char *newval, bool doit, GucSource source)
 {
-	/* do nothing during initial GUC setup */
-	if (newval == NULL)
-	{
-		if (doit)
-			TSCurrentConfigCache = InvalidOid;
-		return newval;
-	}
-
 	/*
 	 * If we aren't inside a transaction, we cannot do database access so
 	 * cannot verify the config name.  Must accept it on faith.
@@ -637,7 +629,7 @@ assignTSCurrentConfig(const char *newval, bool doit, GucSource source)
 		newval = strdup(buf);
 		pfree(buf);
 
-		if (doit)
+		if (doit && newval)
 			TSCurrentConfigCache = cfgId;
 	}
 	else

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.416 2007/09/03 18:46:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.417 2007/09/10 00:57:21 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2505,7 +2505,7 @@ static void ReportGUCOption(struct config_generic * record);
 static void ShowGUCConfigOption(const char *name, DestReceiver *dest);
 static void ShowAllGUCConfig(DestReceiver *dest);
 static char *_ShowOption(struct config_generic * record, bool use_units);
-static bool is_newvalue_equal(struct config_generic * record, const char *newvalue);
+static bool is_newvalue_equal(struct config_generic *record, const char *newvalue);
 
 
 /*
@@ -2690,40 +2690,6 @@ build_guc_variables(void)
 		  sizeof(struct config_generic *), guc_var_compare);
 }
 
-static bool
-is_custom_class(const char *name, int dotPos)
-{
-	/*
-	 * assign_custom_variable_classes() has made sure no empty identifiers or
-	 * whitespace exists in the variable
-	 */
-	bool		result = false;
-	const char *ccs = GetConfigOption("custom_variable_classes");
-
-	if (ccs != NULL)
-	{
-		const char *start = ccs;
-
-		for (;; ++ccs)
-		{
-			int			c = *ccs;
-
-			if (c == 0 || c == ',')
-			{
-				if (dotPos == ccs - start && strncmp(start, name, dotPos) == 0)
-				{
-					result = true;
-					break;
-				}
-				if (c == 0)
-					break;
-				start = ccs + 1;
-			}
-		}
-	}
-	return result;
-}
-
 /*
  * Add a new GUC variable to the list of known variables. The
  * list is expanded if needed.
@@ -2767,7 +2733,7 @@ add_guc_variable(struct config_generic * var, int elevel)
  * Create and add a placeholder variable. It's presumed to belong
  * to a valid custom variable class at this point.
  */
-static struct config_string *
+static struct config_generic *
 add_placeholder_variable(const char *name, int elevel)
 {
 	size_t		sz = sizeof(struct config_string) + sizeof(char *);
@@ -2777,9 +2743,8 @@ add_placeholder_variable(const char *name, int elevel)
 	var = (struct config_string *) guc_malloc(elevel, sz);
 	if (var == NULL)
 		return NULL;
-
-	gen = &var->gen;
 	memset(var, 0, sz);
+	gen = &var->gen;
 
 	gen->name = guc_strdup(elevel, name);
 	if (gen->name == NULL)
@@ -2796,7 +2761,8 @@ add_placeholder_variable(const char *name, int elevel)
 
 	/*
 	 * The char* is allocated at the end of the struct since we have no
-	 * 'static' place to point to.
+	 * 'static' place to point to.  Note that the current value, as well
+	 * as the boot and reset values, start out NULL.
 	 */
 	var->variable = (char **) (var + 1);
 
@@ -2807,17 +2773,53 @@ add_placeholder_variable(const char *name, int elevel)
 		return NULL;
 	}
 
-	return var;
+	return gen;
 }
 
 /*
- * Look up option NAME. If it exists, return a pointer to its record,
- * else return NULL.
+ * Detect whether the portion of "name" before dotPos matches any custom
+ * variable class name listed in custom_var_classes.  The latter must be
+ * formatted the way that assign_custom_variable_classes does it, ie,
+ * no whitespace.  NULL is valid for custom_var_classes.
+ */
+static bool
+is_custom_class(const char *name, int dotPos, const char *custom_var_classes)
+{
+	bool		result = false;
+	const char *ccs = custom_var_classes;
+
+	if (ccs != NULL)
+	{
+		const char *start = ccs;
+
+		for (;; ++ccs)
+		{
+			char		c = *ccs;
+
+			if (c == '\0' || c == ',')
+			{
+				if (dotPos == ccs - start && strncmp(start, name, dotPos) == 0)
+				{
+					result = true;
+					break;
+				}
+				if (c == '\0')
+					break;
+				start = ccs + 1;
+			}
+		}
+	}
+	return result;
+}
+
+/*
+ * Look up option NAME.  If it exists, return a pointer to its record,
+ * else return NULL.  If create_placeholders is TRUE, we'll create a
+ * placeholder record for a valid-looking custom variable name.
  */
 static struct config_generic *
-find_option(const char *name, int elevel)
+find_option(const char *name, bool create_placeholders, int elevel)
 {
-	const char *dot;
 	const char **key = &name;
 	struct config_generic **res;
 	int			i;
@@ -2844,17 +2846,21 @@ find_option(const char *name, int elevel)
 	for (i = 0; map_old_guc_names[i] != NULL; i += 2)
 	{
 		if (guc_name_compare(name, map_old_guc_names[i]) == 0)
-			return find_option(map_old_guc_names[i + 1], elevel);
+			return find_option(map_old_guc_names[i + 1], false, elevel);
 	}
 
-	/*
-	 * Check if the name is qualified, and if so, check if the qualifier maps
-	 * to a custom variable class.
-	 */
-	dot = strchr(name, GUC_QUALIFIER_SEPARATOR);
-	if (dot != NULL && is_custom_class(name, dot - name))
-		/* Add a placeholder variable for this name */
-		return (struct config_generic *) add_placeholder_variable(name, elevel);
+	if (create_placeholders)
+	{
+		/*
+		 * Check if the name is qualified, and if so, check if the qualifier
+		 * matches any custom variable class.  If so, add a placeholder.
+		 */
+		const char *dot = strchr(name, GUC_QUALIFIER_SEPARATOR);
+
+		if (dot != NULL &&
+			is_custom_class(name, dot - name, custom_variable_classes))
+			return add_placeholder_variable(name, elevel);
+	}
 
 	/* Unknown name */
 	return NULL;
@@ -2899,30 +2905,6 @@ guc_name_compare(const char *namea, const char *nameb)
 	if (*nameb)
 		return -1;				/* b is longer */
 	return 0;
-}
-
-
-static int
-guc_get_index(const char *name)
-{
-	const char **key = &name;
-	struct config_generic **res;
-
-	Assert(name);
-
-	/*
-	 * By equating const char ** with struct config_generic *, we are assuming
-	 * the name field is first in config_generic.
-	 */
-	res = (struct config_generic **) bsearch((void *) &key,
-											 (void *) guc_variables,
-											 num_guc_variables,
-											 sizeof(struct config_generic *),
-											 guc_var_compare);
-	if (!res)
-		return -1;
-
-	return res - guc_variables;
 }
 
 
@@ -3017,7 +2999,7 @@ InitializeGUCOptions(void)
 
 					if (conf->boot_val == NULL)
 					{
-						/* Cannot set value yet */
+						/* leave the value NULL, do not call assign hook */
 						break;
 					}
 
@@ -3067,7 +3049,8 @@ InitializeGUCOptions(void)
 
 	/*
 	 * For historical reasons, some GUC parameters can receive defaults from
-	 * environment variables.  Process those settings.
+	 * environment variables.  Process those settings.  NB: if you add or
+	 * remove anything here, see also ProcessConfigFile().
 	 */
 
 	env = getenv("PGPORT");
@@ -3335,16 +3318,10 @@ ResetAllOptions(void)
 					struct config_string *conf = (struct config_string *) gconf;
 					char	   *str;
 
-					if (conf->reset_val == NULL)
-					{
-						/* Nothing to reset to, as yet; so do nothing */
-						break;
-					}
-
 					/* We need not strdup here */
 					str = conf->reset_val;
 
-					if (conf->assign_hook)
+					if (conf->assign_hook && str)
 					{
 						const char *newstr;
 
@@ -3517,7 +3494,9 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 		/*
 		 * Skip if nothing's happened to this var in this transaction
 		 */
-		if (my_status == 0)
+		if ((my_status & (GUC_HAVE_TENTATIVE |
+						  GUC_HAVE_LOCAL |
+						  GUC_HAVE_STACK)) == 0)
 		{
 			Assert(stack == NULL);
 			continue;
@@ -3679,7 +3658,7 @@ AtEOXact_GUC(bool isCommit, int nestLevel)
 
 					if (*conf->variable != newval)
 					{
-						if (conf->assign_hook)
+						if (conf->assign_hook && newval)
 						{
 							const char *newstr;
 
@@ -4182,7 +4161,7 @@ set_config_option(const char *name, const char *value,
 	else
 		elevel = ERROR;
 
-	record = find_option(name, elevel);
+	record = find_option(name, true, elevel);
 	if (record == NULL)
 	{
 		ereport(elevel,
@@ -4192,11 +4171,13 @@ set_config_option(const char *name, const char *value,
 	}
 
 	/*
-	 * Do not replace a value that has been set on the command line by a SIGHUP
-	 * reload
+	 * If source is postgresql.conf, mark the found record with GUC_IS_IN_FILE.
+	 * This is for the convenience of ProcessConfigFile.  Note that we do it
+	 * even if changeVal is false, since ProcessConfigFile wants the marking
+	 * to occur during its testing pass.
 	 */
-	if (context == PGC_SIGHUP && record->source == PGC_S_ARGV)
-		return true;
+	if (source == PGC_S_FILE)
+		record->status |= GUC_IS_IN_FILE;
 
 	/*
 	 * Check if the option can be set at this time. See guc.h for the precise
@@ -4220,12 +4201,17 @@ set_config_option(const char *name, const char *value,
 		case PGC_POSTMASTER:
 			if (context == PGC_SIGHUP)
 			{
+				/*
+				 * We are reading a PGC_POSTMASTER var from postgresql.conf.
+				 * We can't change the setting, so give a warning if the DBA
+				 * tries to change it.  (Throwing an error would be more
+				 * consistent, but seems overly rigid.)
+				 */
 				if (changeVal && !is_newvalue_equal(record, value))
 					ereport(elevel,
 							(errcode(ERRCODE_CANT_CHANGE_RUNTIME_PARAM),
 							 errmsg("parameter \"%s\" cannot be changed after server start; configuration file change ignored",
 									name)));
-
 				return true;
 			}
 			if (context != PGC_POSTMASTER)
@@ -4298,22 +4284,17 @@ set_config_option(const char *name, const char *value,
 	 * value from the database's/user's/client's default settings or
 	 * when we reset a value to its default.
 	 */
-	makeDefault = changeVal && (source <= PGC_S_OVERRIDE)
-					&& ((value != NULL) || source == PGC_S_DEFAULT);
+	makeDefault = changeVal && (source <= PGC_S_OVERRIDE) &&
+		((value != NULL) || source == PGC_S_DEFAULT);
 
 	/*
-	 * Ignore attempted set if overridden by previously processed
-	 * setting.  However, if changeVal is false then plow ahead anyway
-	 * since we are trying to find out if the value is potentially
-	 * good, not actually use it.  Also keep going if makeDefault is
-	 * true, since we may want to set the reset/stacked values even if
-	 * we can't set the variable itself.  There's one exception to
-	 * this rule: if we want to apply the default value to variables
-	 * that were removed from the configuration file.  This is
-	 * indicated by source == PGC_S_DEFAULT and context == PGC_SIGHUP.
+	 * Ignore attempted set if overridden by previously processed setting.
+	 * However, if changeVal is false then plow ahead anyway since we are
+	 * trying to find out if the value is potentially good, not actually use
+	 * it. Also keep going if makeDefault is true, since we may want to set
+	 * the reset/stacked values even if we can't set the variable itself.
 	 */
-	if (record->source > source
-		&& !(source == PGC_S_DEFAULT && context == PGC_SIGHUP))
+	if (record->source > source)
 	{
 		if (changeVal && !makeDefault)
 		{
@@ -4326,6 +4307,9 @@ set_config_option(const char *name, const char *value,
 
 	/*
 	 * Evaluate value and set variable.
+	 *
+	 * Note: if value == NULL then we are supposed to set to the reset_val,
+	 * except when source == PGC_S_DEFAULT; then we set to the boot_val.
 	 */
 	switch (record->vartype)
 	{
@@ -4345,14 +4329,8 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 				}
-				/*
-				 * If value == NULL and source == PGC_S_DEFAULT then
-				 * we reset some value to its default (removed from
-				 * configuration file).
-				 */
 				else if (source == PGC_S_DEFAULT)
 					newval = conf->boot_val;
-				/* else we handle a "RESET varname" command */
 				else
 				{
 					newval = conf->reset_val;
@@ -4440,14 +4418,8 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 				}
-				/*
-				 * If value == NULL and source == PGC_S_DEFAULT then
-				 * we reset some value to its default (removed from
-				 * configuration file).
-				 */
 				else if (source == PGC_S_DEFAULT)
 					newval = conf->boot_val;
-				/* else we handle a "RESET varname" command */
 				else
 				{
 					newval = conf->reset_val;
@@ -4532,14 +4504,8 @@ set_config_option(const char *name, const char *value,
 						return false;
 					}
 				}
-				/*
-				 * If value == NULL and source == PGC_S_DEFAULT then
-				 * we reset some value to its default (removed from
-				 * configuration file).
-				 */
 				else if (source == PGC_S_DEFAULT)
 					newval = conf->boot_val;
-				/* else we handle a "RESET varname" command */
 				else
 				{
 					newval = conf->reset_val;
@@ -4618,11 +4584,6 @@ set_config_option(const char *name, const char *value,
 					if (conf->gen.flags & GUC_IS_NAME)
 						truncate_identifier(newval, strlen(newval), true);
 				}
-				/*
-				 * If value == NULL and source == PGC_S_DEFAULT then
-				 * we reset some value to its default (removed from
-				 * configuration file).
-				 */
 				else if (source == PGC_S_DEFAULT)
 				{
 					if (conf->boot_val == NULL)
@@ -4634,25 +4595,25 @@ set_config_option(const char *name, const char *value,
 							return false;
 					}
 				}
-				/* else we handle a "RESET varname" command */
-				else if (conf->reset_val)
+				else
 				{
 					/*
 					 * We could possibly avoid strdup here, but easier to make
-					 * this case work the same as the normal assignment case.
+					 * this case work the same as the normal assignment case;
+					 * note the possible free of newval below.
 					 */
-					newval = guc_strdup(elevel, conf->reset_val);
-					if (newval == NULL)
-						return false;
+					if (conf->reset_val == NULL)
+						newval = NULL;
+					else
+					{
+						newval = guc_strdup(elevel, conf->reset_val);
+						if (newval == NULL)
+							return false;
+					}
 					source = conf->gen.reset_source;
 				}
-				else
-				{
-					/* Nothing to reset to, as yet; so do nothing */
-					break;
-				}
 
-				if (conf->assign_hook)
+				if (conf->assign_hook && newval)
 				{
 					const char *hookresult;
 
@@ -4718,7 +4679,7 @@ set_config_option(const char *name, const char *value,
 							}
 						}
 						/* Perhaps we didn't install newval anywhere */
-						if (!string_field_used(conf, newval))
+						if (newval && !string_field_used(conf, newval))
 							free(newval);
 					}
 					else if (isLocal)
@@ -4734,7 +4695,7 @@ set_config_option(const char *name, const char *value,
 						guc_dirty = true;
 					}
 				}
-				else
+				else if (newval)
 					free(newval);
 				break;
 			}
@@ -4774,7 +4735,7 @@ GetConfigOption(const char *name)
 	struct config_generic *record;
 	static char buffer[256];
 
-	record = find_option(name, ERROR);
+	record = find_option(name, false, ERROR);
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4807,6 +4768,10 @@ GetConfigOption(const char *name)
 
 /*
  * Get the RESET value associated with the given option.
+ *
+ * Note: this is not re-entrant, due to use of static result buffer;
+ * not to mention that a string variable could have its reset_val changed.
+ * Beware of assuming the result value is good for very long.
  */
 const char *
 GetConfigOptionResetString(const char *name)
@@ -4814,7 +4779,7 @@ GetConfigOptionResetString(const char *name)
 	struct config_generic *record;
 	static char buffer[256];
 
-	record = find_option(name, ERROR);
+	record = find_option(name, false, ERROR);
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -4854,7 +4819,7 @@ IsSuperuserConfigOption(const char *name)
 {
 	struct config_generic *record;
 
-	record = find_option(name, ERROR);
+	record = find_option(name, false, ERROR);
 	/* On an unrecognized name, don't error, just return false. */
 	if (record == NULL)
 		return false;
@@ -4886,7 +4851,7 @@ flatten_set_variable_args(const char *name, List *args)
 		return NULL;
 
 	/* Else get flags for the variable */
-	record = find_option(name, ERROR);
+	record = find_option(name, true, ERROR);
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -5145,22 +5110,54 @@ set_config_by_name(PG_FUNCTION_ARGS)
 }
 
 
+/*
+ * Common code for DefineCustomXXXVariable subroutines: allocate the
+ * new variable's config struct and fill in generic fields.
+ */
+static struct config_generic *
+init_custom_variable(const char *name,
+					 const char *short_desc,
+					 const char *long_desc,
+					 GucContext context,
+					 enum config_type type,
+					 size_t sz)
+{
+	struct config_generic *gen;
+
+	gen = (struct config_generic *) guc_malloc(ERROR, sz);
+	memset(gen, 0, sz);
+
+	gen->name = guc_strdup(ERROR, name);
+	gen->context = context;
+	gen->group = CUSTOM_OPTIONS;
+	gen->short_desc = short_desc;
+	gen->long_desc = long_desc;
+	gen->vartype = type;
+
+	return gen;
+}
+
+/*
+ * Common code for DefineCustomXXXVariable subroutines: insert the new
+ * variable into the GUC variable array, replacing any placeholder.
+ */
 static void
-define_custom_variable(struct config_generic * variable)
+define_custom_variable(struct config_generic *variable)
 {
 	const char *name = variable->name;
 	const char **nameAddr = &name;
 	const char *value;
 	struct config_string *pHolder;
-	struct config_generic **res = (struct config_generic **) bsearch(
-														  (void *) &nameAddr,
-													  (void *) guc_variables,
-														   num_guc_variables,
-											 sizeof(struct config_generic *),
-															guc_var_compare);
+	struct config_generic **res;
 
+	res = (struct config_generic **) bsearch((void *) &nameAddr,
+											 (void *) guc_variables,
+											 num_guc_variables,
+											 sizeof(struct config_generic *),
+											 guc_var_compare);
 	if (res == NULL)
 	{
+		/* No placeholder to replace, so just add it */
 		add_guc_variable(variable, ERROR);
 		return;
 	}
@@ -5174,12 +5171,13 @@ define_custom_variable(struct config_generic * variable)
 				 errmsg("attempt to redefine parameter \"%s\"", name)));
 
 	Assert((*res)->vartype == PGC_STRING);
-	pHolder = (struct config_string *) * res;
+	pHolder = (struct config_string *) (*res);
 
-	/* We have the same name, no sorting is necessary */
+	/*
+	 * Replace the placeholder.
+	 * We aren't changing the name, so no re-sorting is necessary
+	 */
 	*res = variable;
-
-	value = *pHolder->variable;
 
 	/*
 	 * Assign the string value stored in the placeholder to the real variable.
@@ -5188,9 +5186,12 @@ define_custom_variable(struct config_generic * variable)
 	 * assignment, since we don't want it to roll back if the current xact
 	 * fails later.
 	 */
-	set_config_option(name, value,
-					  pHolder->gen.context, pHolder->gen.source,
-					  false, true);
+	value = *pHolder->variable;
+
+	if (value)
+		set_config_option(name, value,
+						  pHolder->gen.context, pHolder->gen.source,
+						  false, true);
 
 	/*
 	 * Free up as much as we conveniently can of the placeholder structure
@@ -5203,22 +5204,6 @@ define_custom_variable(struct config_generic * variable)
 	free(pHolder);
 }
 
-static void
-init_custom_variable(struct config_generic * gen,
-					 const char *name,
-					 const char *short_desc,
-					 const char *long_desc,
-					 GucContext context,
-					 enum config_type type)
-{
-	gen->name = guc_strdup(ERROR, name);
-	gen->context = context;
-	gen->group = CUSTOM_OPTIONS;
-	gen->short_desc = short_desc;
-	gen->long_desc = long_desc;
-	gen->vartype = type;
-}
-
 void
 DefineCustomBoolVariable(const char *name,
 						 const char *short_desc,
@@ -5228,13 +5213,13 @@ DefineCustomBoolVariable(const char *name,
 						 GucBoolAssignHook assign_hook,
 						 GucShowHook show_hook)
 {
-	size_t		sz = sizeof(struct config_bool);
-	struct config_bool *var = (struct config_bool *) guc_malloc(ERROR, sz);
+	struct config_bool *var;
 
-	memset(var, 0, sz);
-	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_BOOL);
-
+	var = (struct config_bool *)
+		init_custom_variable(name, short_desc, long_desc, context,
+							 PGC_BOOL, sizeof(struct config_bool));
 	var->variable = valueAddr;
+	var->boot_val = *valueAddr;
 	var->reset_val = *valueAddr;
 	var->assign_hook = assign_hook;
 	var->show_hook = show_hook;
@@ -5252,13 +5237,13 @@ DefineCustomIntVariable(const char *name,
 						GucIntAssignHook assign_hook,
 						GucShowHook show_hook)
 {
-	size_t		sz = sizeof(struct config_int);
-	struct config_int *var = (struct config_int *) guc_malloc(ERROR, sz);
+	struct config_int *var;
 
-	memset(var, 0, sz);
-	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_INT);
-
+	var = (struct config_int *)
+		init_custom_variable(name, short_desc, long_desc, context,
+							 PGC_INT, sizeof(struct config_int));
 	var->variable = valueAddr;
+	var->boot_val = *valueAddr;
 	var->reset_val = *valueAddr;
 	var->min = minValue;
 	var->max = maxValue;
@@ -5278,13 +5263,13 @@ DefineCustomRealVariable(const char *name,
 						 GucRealAssignHook assign_hook,
 						 GucShowHook show_hook)
 {
-	size_t		sz = sizeof(struct config_real);
-	struct config_real *var = (struct config_real *) guc_malloc(ERROR, sz);
+	struct config_real *var;
 
-	memset(var, 0, sz);
-	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_REAL);
-
+	var = (struct config_real *)
+		init_custom_variable(name, short_desc, long_desc, context,
+							 PGC_REAL, sizeof(struct config_real));
 	var->variable = valueAddr;
+	var->boot_val = *valueAddr;
 	var->reset_val = *valueAddr;
 	var->min = minValue;
 	var->max = maxValue;
@@ -5302,14 +5287,16 @@ DefineCustomStringVariable(const char *name,
 						   GucStringAssignHook assign_hook,
 						   GucShowHook show_hook)
 {
-	size_t		sz = sizeof(struct config_string);
-	struct config_string *var = (struct config_string *) guc_malloc(ERROR, sz);
+	struct config_string *var;
 
-	memset(var, 0, sz);
-	init_custom_variable(&var->gen, name, short_desc, long_desc, context, PGC_STRING);
-
+	var = (struct config_string *)
+		init_custom_variable(name, short_desc, long_desc, context,
+							 PGC_STRING, sizeof(struct config_string));
 	var->variable = valueAddr;
-	var->reset_val = *valueAddr;
+	var->boot_val = *valueAddr;
+	/* we could probably do without strdup, but keep it like normal case */
+	if (var->boot_val)
+		var->reset_val = guc_strdup(ERROR, var->boot_val);
 	var->assign_hook = assign_hook;
 	var->show_hook = show_hook;
 	define_custom_variable(&var->gen);
@@ -5345,7 +5332,7 @@ EmitWarningsOnPlaceholders(const char *className)
 void
 GetPGVariable(const char *name, DestReceiver *dest)
 {
-	if (pg_strcasecmp(name, "all") == 0)
+	if (guc_name_compare(name, "all") == 0)
 		ShowAllGUCConfig(dest);
 	else
 		ShowGUCConfigOption(name, dest);
@@ -5356,7 +5343,7 @@ GetPGVariableResultDesc(const char *name)
 {
 	TupleDesc	tupdesc;
 
-	if (pg_strcasecmp(name, "all") == 0)
+	if (guc_name_compare(name, "all") == 0)
 	{
 		/* need a tuple descriptor representing three TEXT columns */
 		tupdesc = CreateTemplateTupleDesc(3, false);
@@ -5470,7 +5457,7 @@ GetConfigOptionByName(const char *name, const char **varname)
 {
 	struct config_generic *record;
 
-	record = find_option(name, ERROR);
+	record = find_option(name, false, ERROR);
 	if (record == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -5927,9 +5914,19 @@ _ShowOption(struct config_generic * record, bool use_units)
 }
 
 
+/*
+ * Attempt (badly) to detect if a proposed new GUC setting is the same
+ * as the current value.
+ *
+ * XXX this does not really work because it doesn't account for the
+ * effects of canonicalization of string values by assign_hooks.
+ */
 static bool
-is_newvalue_equal(struct config_generic * record, const char *newvalue)
+is_newvalue_equal(struct config_generic *record, const char *newvalue)
 {
+	/* newvalue == NULL isn't supported */
+	Assert(newvalue != NULL);
+
 	switch (record->vartype)
 	{
 		case PGC_BOOL:
@@ -5960,7 +5957,8 @@ is_newvalue_equal(struct config_generic * record, const char *newvalue)
 			{
 				struct config_string *conf = (struct config_string *) record;
 
-				return strcmp(*conf->variable, newvalue) == 0;
+				return *conf->variable != NULL &&
+					strcmp(*conf->variable, newvalue) == 0;
 			}
 	}
 
@@ -6140,7 +6138,7 @@ read_nondefault_variables(void)
 		if ((varname = read_string_with_null(fp)) == NULL)
 			break;
 
-		if ((record = find_option(varname, FATAL)) == NULL)
+		if ((record = find_option(varname, true, FATAL)) == NULL)
 			elog(FATAL, "failed to locate variable %s in exec config params file", varname);
 		if ((varvalue = read_string_with_null(fp)) == NULL)
 			elog(FATAL, "invalid format of exec config params file");
@@ -6576,8 +6574,7 @@ assign_session_replication_role(const char *newval, bool doit, GucSource source)
 }
 
 static const char *
-assign_log_min_messages(const char *newval,
-						bool doit, GucSource source)
+assign_log_min_messages(const char *newval, bool doit, GucSource source)
 {
 	return (assign_msglvl(&log_min_messages, newval, doit, source));
 }
@@ -6756,23 +6753,16 @@ assign_custom_variable_classes(const char *newval, bool doit, GucSource source)
 {
 	/*
 	 * Check syntax. newval must be a comma separated list of identifiers.
-	 * Whitespace is allowed but skipped.
+	 * Whitespace is allowed but removed from the result.
 	 */
 	bool		hasSpaceAfterToken = false;
 	const char *cp = newval;
 	int			symLen = 0;
-	int			c;
+	char		c;
 	StringInfoData buf;
 
-	/*
-	 * Resetting custom_variable_classes by removing it from the
-	 * configuration file will lead to newval = NULL
-	 */
-	if (newval == NULL)
-		return guc_strdup(ERROR, "");
-
 	initStringInfo(&buf);
-	while ((c = *cp++) != 0)
+	while ((c = *cp++) != '\0')
 	{
 		if (isspace((unsigned char) c))
 		{
@@ -6783,12 +6773,12 @@ assign_custom_variable_classes(const char *newval, bool doit, GucSource source)
 
 		if (c == ',')
 		{
-			hasSpaceAfterToken = false;
-			if (symLen > 0)
+			if (symLen > 0)		/* terminate identifier */
 			{
-				symLen = 0;
 				appendStringInfoChar(&buf, ',');
+				symLen = 0;
 			}
+			hasSpaceAfterToken = false;
 			continue;
 		}
 
@@ -6798,24 +6788,19 @@ assign_custom_variable_classes(const char *newval, bool doit, GucSource source)
 			 * Syntax error due to token following space after token or non
 			 * alpha numeric character
 			 */
-			ereport(LOG,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("invalid syntax for \"custom_variable_classes\": \"%s\"", newval)));
 			pfree(buf.data);
 			return NULL;
 		}
+		appendStringInfoChar(&buf, c);
 		symLen++;
-		appendStringInfoChar(&buf, (char) c);
 	}
 
 	/* Remove stray ',' at end */
 	if (symLen == 0 && buf.len > 0)
 		buf.data[--buf.len] = '\0';
 
-	if (buf.len == 0)
-		newval = NULL;
-	else if (doit)
-		newval = guc_strdup(ERROR, buf.data);
+	/* GUC wants the result malloc'd */
+	newval = guc_strdup(LOG, buf.data);
 
 	pfree(buf.data);
 	return newval;

@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.5 2004/07/01 00:51:24 tgl Exp $
+$PostgreSQL: pgsql/src/backend/utils/misc/README,v 1.6 2007/09/10 00:57:21 tgl Exp $
 
 
 GUC IMPLEMENTATION NOTES
@@ -52,6 +52,14 @@ The third choice is allowed in case the assign_hook wants to return a
 "canonical" version of the new value.  For example, the assign_hook for
 datestyle always returns a string that includes both output and input
 datestyle options, although the input might have specified only one.
+
+Note that a string variable's assign_hook will NEVER be called with a NULL
+value for newvalue, since there would be no way to distinguish success
+and failure returns.  If the boot_val or reset_val for a string variable
+is NULL, it will just be assigned without calling the assign_hook.
+Therefore, a NULL boot_val should never be used in combination with an
+assign_hook that has side-effects, as the side-effects wouldn't happen
+during a RESET that re-institutes the boot-time setting.
 
 If a show_hook is provided, it points to a function of the signature
 	const char *show_hook(void)
