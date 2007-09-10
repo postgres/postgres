@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.142 2007/09/05 18:10:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.143 2007/09/10 01:39:19 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3406,10 +3406,10 @@ guess what
       </indexterm>
       <listitem>
        <para>
-        Causes actions executed by autovacuum to be logged if it ran for at
-        least the specified number of milliseconds.  Setting this to zero prints
-        all action durations. Minus-one (the default) disables logging
-        autovacuum action durations.  For example, if you set it to
+        Causes each action executed by autovacuum to be logged if it ran for at
+        least the specified number of milliseconds.  Setting this to zero logs
+        all autovacuum actions. Minus-one (the default) disables logging
+        autovacuum actions.  For example, if you set this to
         <literal>250ms</literal> then all vacuums and analyzes that run
         250ms or longer will be logged.  Enabling this parameter can be helpful
         in tracking autovacuum activity.  This setting can only be set in

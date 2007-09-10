@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.417 2007/09/10 00:57:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.418 2007/09/10 01:39:19 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1573,10 +1573,10 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"log_autovacuum", PGC_BACKEND, LOGGING_WHAT,
+		{"log_autovacuum", PGC_SIGHUP, LOGGING_WHAT,
 			gettext_noop("Sets the minimum execution time above which autovacuum actions "
 						 "will be logged."),
-			gettext_noop("Zero prints all actions.  The default is -1 (turning this feature off)."),
+			gettext_noop("Zero prints all actions.  The default is -1 (disabling autovacuum logging)."),
 			GUC_UNIT_MS
 		},
 		&Log_autovacuum,
