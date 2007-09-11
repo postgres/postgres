@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.5 2007/09/11 08:46:29 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.6 2007/09/11 16:01:40 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -476,25 +476,20 @@ compareDocR(const void *va, const void *vb)
 	return (a->pos > b->pos) ? 1 : -1;
 }
 
+typedef struct 
+{
+	TSQuery		query;
+	bool	   *operandexist;
+} QueryRepresentation;
+
+#define	QR_GET_OPERAND_EXISTS(q, v)     ( (q)->operandexist[ ((QueryItem*)(v)) - GETQUERY((q)->query) ] )
+#define QR_SET_OPERAND_EXISTS(q, v)	 QR_GET_OPERAND_EXISTS(q,v) = true
+
 static bool
 checkcondition_QueryOperand(void *checkval, QueryOperand *val)
 {
-	return (bool) (val->istrue);
-}
-
-static void
-reset_istrue_flag(TSQuery query)
-{
-	QueryItem  *item = GETQUERY(query);
-	int			i;
-
-	/* reset istrue flag */
-	for (i = 0; i < query->size; i++)
-	{
-		if (item->type == QI_VAL)
-			item->operand.istrue = 0;
-		item++;
-	}
+	QueryRepresentation *qr = (QueryRepresentation*)checkval;
+	return QR_GET_OPERAND_EXISTS(qr, val);
 }
 
 typedef struct
@@ -508,7 +503,7 @@ typedef struct
 
 
 static bool
-Cover(DocRepresentation *doc, int len, TSQuery query, Extention *ext)
+Cover(DocRepresentation *doc, int len, QueryRepresentation  *qr, Extention *ext)
 {
 	DocRepresentation *ptr;
 	int			lastpos = ext->pos;
@@ -519,7 +514,7 @@ Cover(DocRepresentation *doc, int len, TSQuery query, Extention *ext)
 	 * (though any decent compiler will optimize away the tail-recursion.   */
 	check_stack_depth();
 
-	reset_istrue_flag(query);
+	memset( qr->operandexist, 0, sizeof(bool)*qr->query->size );
 
 	ext->p = 0x7fffffff;
 	ext->q = 0;
@@ -531,9 +526,9 @@ Cover(DocRepresentation *doc, int len, TSQuery query, Extention *ext)
 		for (i = 0; i < ptr->nitem; i++)
 		{
 			if(ptr->item[i]->type == QI_VAL)
-				ptr->item[i]->operand.istrue = 1;
+				QR_SET_OPERAND_EXISTS(qr, ptr->item[i]);
 		}
-		if (TS_execute(GETQUERY(query), NULL, false, checkcondition_QueryOperand))
+		if (TS_execute(GETQUERY(qr->query), (void*)qr, false, checkcondition_QueryOperand))
 		{
 			if (ptr->pos > ext->q)
 			{
@@ -550,7 +545,7 @@ Cover(DocRepresentation *doc, int len, TSQuery query, Extention *ext)
 	if (!found)
 		return false;
 
-	reset_istrue_flag(query);
+	memset( qr->operandexist, 0, sizeof(bool)*qr->query->size );
 
 	ptr = doc + lastpos;
 
@@ -559,8 +554,8 @@ Cover(DocRepresentation *doc, int len, TSQuery query, Extention *ext)
 	{
 		for (i = 0; i < ptr->nitem; i++)
 			if(ptr->item[i]->type  == QI_VAL)
-				ptr->item[i]->operand.istrue = 1;
-		if (TS_execute(GETQUERY(query), NULL, true, checkcondition_QueryOperand))
+				QR_SET_OPERAND_EXISTS(qr, ptr->item[i]);
+		if (TS_execute(GETQUERY(qr->query), (void*)qr, true, checkcondition_QueryOperand))
 		{
 			if (ptr->pos < ext->p)
 			{
@@ -583,28 +578,27 @@ Cover(DocRepresentation *doc, int len, TSQuery query, Extention *ext)
 	}
 
 	ext->pos++;
-	return Cover(doc, len, query, ext);
+	return Cover(doc, len, qr, ext);
 }
 
 static DocRepresentation *
-get_docrep(TSVector txt, TSQuery query, int *doclen)
+get_docrep(TSVector txt, QueryRepresentation *qr, int *doclen)
 {
-	QueryItem  *item = GETQUERY(query);
+	QueryItem  *item = GETQUERY(qr->query);
 	WordEntry  *entry;
 	WordEntryPos *post;
 	int4		dimt,
 				j,
 				i;
-	int			len = query->size * 4,
+	int			len = qr->query->size * 4,
 				cur = 0;
 	DocRepresentation *doc;
 	char	   *operand;
 
 	doc = (DocRepresentation *) palloc(sizeof(DocRepresentation) * len);
-	operand = GETOPERAND(query);
-	reset_istrue_flag(query);
+	operand = GETOPERAND(qr->query);
 
-	for (i = 0; i < query->size; i++)
+	for (i = 0; i < qr->query->size; i++)
 	{
 		QueryOperand *curoperand;
 
@@ -613,10 +607,10 @@ get_docrep(TSVector txt, TSQuery query, int *doclen)
 		
 		curoperand = &item[i].operand;
 		
-		if(item[i].operand.istrue)
+		if(QR_GET_OPERAND_EXISTS(qr, &item[i]))
 			continue;
 
-		entry = find_wordentry(txt, query, curoperand);
+		entry = find_wordentry(txt, qr->query, curoperand);
 		if (!entry)
 			continue;
 
@@ -644,9 +638,9 @@ get_docrep(TSVector txt, TSQuery query, int *doclen)
 				int			k;
 
 				doc[cur].nitem = 0;
-				doc[cur].item = (QueryItem **) palloc(sizeof(QueryItem *) * query->size);
+				doc[cur].item = (QueryItem **) palloc(sizeof(QueryItem *) * qr->query->size);
 
-				for (k = 0; k < query->size; k++)
+				for (k = 0; k < qr->query->size; k++)
 				{
 					QueryOperand *kptr = &item[k].operand;
 					QueryOperand *iptr = &item[i].operand;
@@ -658,7 +652,7 @@ get_docrep(TSVector txt, TSQuery query, int *doclen)
 						/* if k == i, we've already checked above that it's type == Q_VAL */
 						doc[cur].item[doc[cur].nitem] = item + k;
 						doc[cur].nitem++;
-						item[k].operand.istrue = 1;
+						QR_SET_OPERAND_EXISTS( qr, item+k );
 					}
 				}
 			}
@@ -699,6 +693,8 @@ calc_rank_cd(float4 *arrdata, TSVector txt, TSQuery query, int method)
 				PrevExtPos = 0.0,
 				CurExtPos = 0.0;
 	int			NExtent = 0;
+	QueryRepresentation	qr;
+
 
 	for (i = 0; i < lengthof(weights); i++)
 	{
@@ -710,12 +706,18 @@ calc_rank_cd(float4 *arrdata, TSVector txt, TSQuery query, int method)
 		invws[i] = 1.0 / invws[i];
 	}
 
-	doc = get_docrep(txt, query, &doclen);
+	qr.query = query;
+	qr.operandexist = (int*)palloc0(sizeof(bool) * query->size);
+
+	doc = get_docrep(txt, &qr, &doclen);
 	if (!doc)
+	{
+		pfree( qr.operandexist );
 		return 0.0;
+	}
 
 	MemSet(&ext, 0, sizeof(Extention));
-	while (Cover(doc, doclen, query, &ext))
+	while (Cover(doc, doclen, &qr, &ext))
 	{
 		double		Cpos = 0.0;
 		double		InvSum = 0.0;
@@ -771,6 +773,8 @@ calc_rank_cd(float4 *arrdata, TSVector txt, TSQuery query, int method)
 
 	pfree(doc);
 
+	pfree( qr.operandexist );
+
 	return (float4) Wdoc;
 }
 
@@ -779,7 +783,7 @@ ts_rankcd_wttf(PG_FUNCTION_ARGS)
 {
 	ArrayType  *win = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	TSVector	txt = PG_GETARG_TSVECTOR(1);
-	TSQuery		query = PG_GETARG_TSQUERY_COPY(2); /* copy because we modify the istrue-flag */
+	TSQuery		query = PG_GETARG_TSQUERY(2);
 	int			method = PG_GETARG_INT32(3);
 	float		res;
 
@@ -796,7 +800,7 @@ ts_rankcd_wtt(PG_FUNCTION_ARGS)
 {
 	ArrayType  *win = (ArrayType *) PG_DETOAST_DATUM(PG_GETARG_DATUM(0));
 	TSVector	txt = PG_GETARG_TSVECTOR(1);
-	TSQuery		query = PG_GETARG_TSQUERY_COPY(2); /* copy because we modify the istrue-flag */
+	TSQuery		query = PG_GETARG_TSQUERY(2);
 	float		res;
 
 	res = calc_rank_cd(getWeights(win), txt, query, DEF_NORM_METHOD);
@@ -811,7 +815,7 @@ Datum
 ts_rankcd_ttf(PG_FUNCTION_ARGS)
 {
 	TSVector	txt = PG_GETARG_TSVECTOR(0);
-	TSQuery		query = PG_GETARG_TSQUERY_COPY(1); /* copy because we modify the istrue-flag */
+	TSQuery		query = PG_GETARG_TSQUERY(1);
 	int			method = PG_GETARG_INT32(2);
 	float		res;
 
@@ -826,7 +830,7 @@ Datum
 ts_rankcd_tt(PG_FUNCTION_ARGS)
 {
 	TSVector	txt = PG_GETARG_TSVECTOR(0);
-	TSQuery		query = PG_GETARG_TSQUERY_COPY(1); /* copy because we modify the istrue-flag */
+	TSQuery		query = PG_GETARG_TSQUERY(1);
 	float		res;
 
 	res = calc_rank_cd(getWeights(NULL), txt, query, DEF_NORM_METHOD);

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.5 2007/09/11 08:46:29 teodor Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/ts_type.h,v 1.6 2007/09/11 16:01:40 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,8 +187,7 @@ typedef struct
 
 	/* pointer to text value of operand, must correlate with WordEntry */
 	uint32
-				istrue:1,		/* use for ranking in Cover */
-				length:11,
+				length:12,
 				distance:20;
 } QueryOperand;
 
