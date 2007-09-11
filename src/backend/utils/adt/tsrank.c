@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.4 2007/09/07 16:03:40 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsrank.c,v 1.5 2007/09/11 08:46:29 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,22 +53,24 @@ cnt_length(TSVector t)
 {
 	WordEntry  *ptr = ARRPTR(t),
 			   *end = (WordEntry *) STRPTR(t);
-	int			len = 0,
-				clen;
+	int			len = 0;
 
 	while (ptr < end)
 	{
-		if ((clen = POSDATALEN(t, ptr)) == 0)
+		int clen = POSDATALEN(t, ptr);
+
+		if (clen == 0)
 			len += 1;
 		else
 			len += clen;
+
 		ptr++;
 	}
 
 	return len;
 }
 
-static int4
+static int
 WordECompareQueryItem(char *eval, char *qval, WordEntry *ptr, QueryOperand *item)
 {
 	if (ptr->len == item->length)
@@ -80,6 +82,10 @@ WordECompareQueryItem(char *eval, char *qval, WordEntry *ptr, QueryOperand *item
 	return (ptr->len > item->length) ? 1 : -1;
 }
 
+/*
+ * Returns a pointer to a WordEntry corresponding 'item' from tsvector 't'. 'q'
+ * is the TSQuery containing 'item'. Returns NULL if not found.
+ */
 static WordEntry *
 find_wordentry(TSVector t, TSQuery q, QueryOperand *item)
 {
@@ -178,15 +184,15 @@ SortAndUniqItems(TSQuery q, int *size)
 }
 
 /* A dummy WordEntryPos array to use when haspos is false */
-static WordEntryPos POSNULL[] = {
+static WordEntryPosVector POSNULL = {
 	1, /* Number of elements that follow */
-	0
+	{ 0 }
 };
 
 static float
 calc_rank_and(float *w, TSVector t, TSQuery q)
 {
-	uint16	  **pos;
+	WordEntryPosVector	 **pos;
 	int			i,
 				k,
 				l,
@@ -207,9 +213,8 @@ calc_rank_and(float *w, TSVector t, TSQuery q)
 		pfree(item);
 		return calc_rank_or(w, t, q);
 	}
-	pos = (uint16 **) palloc(sizeof(uint16 *) * q->size);
-	memset(pos, 0, sizeof(uint16 *) * q->size);
-	WEP_SETPOS(POSNULL[1], MAXENTRYPOS - 1);
+	pos = (WordEntryPosVector **) palloc0(sizeof(WordEntryPosVector *) * q->size);
+	WEP_SETPOS(POSNULL.pos[0], MAXENTRYPOS - 1);
 
 	for (i = 0; i < size; i++)
 	{
@@ -218,25 +223,25 @@ calc_rank_and(float *w, TSVector t, TSQuery q)
 			continue;
 
 		if (entry->haspos)
-			pos[i] = (uint16 *) _POSDATAPTR(t, entry);
+			pos[i] = _POSVECPTR(t, entry);
 		else
-			pos[i] = (uint16 *) POSNULL;
+			pos[i] = &POSNULL;
 
 
-		dimt = *(uint16 *) (pos[i]);
-		post = (WordEntryPos *) (pos[i] + 1);
+		dimt = pos[i]->npos;
+		post = pos[i]->pos;
 		for (k = 0; k < i; k++)
 		{
 			if (!pos[k])
 				continue;
-			lenct = *(uint16 *) (pos[k]);
-			ct = (WordEntryPos *) (pos[k] + 1);
+			lenct = pos[k]->npos;
+			ct = pos[k]->pos;
 			for (l = 0; l < dimt; l++)
 			{
 				for (p = 0; p < lenct; p++)
 				{
 					dist = Abs((int) WEP_GETPOS(post[l]) - (int) WEP_GETPOS(ct[p]));
-					if (dist || (dist == 0 && (pos[i] == (uint16 *) POSNULL || pos[k] == (uint16 *) POSNULL)))
+					if (dist || (dist == 0 && (pos[i] == &POSNULL || pos[k] == &POSNULL)))
 					{
 						float		curw;
 
@@ -285,8 +290,8 @@ calc_rank_or(float *w, TSVector t, TSQuery q)
 		}
 		else
 		{
-			dimt = *(uint16 *) POSNULL;
-			post = POSNULL + 1;
+			dimt = POSNULL.npos;
+			post = POSNULL.pos;
 		}
 
 		resj = 0.0;
@@ -456,17 +461,19 @@ typedef struct
 {
 	QueryItem **item;
 	int16		nitem;
-	bool		needfree;
 	uint8		wclass;
 	int32		pos;
 } DocRepresentation;
 
 static int
-compareDocR(const void *a, const void *b)
+compareDocR(const void *va, const void *vb)
 {
-	if (((DocRepresentation *) a)->pos == ((DocRepresentation *) b)->pos)
+	DocRepresentation *a = (DocRepresentation *) va;
+	DocRepresentation *b = (DocRepresentation *) vb;
+
+	if (a->pos == b->pos)
 		return 0;
-	return (((DocRepresentation *) a)->pos > ((DocRepresentation *) b)->pos) ? 1 : -1;
+	return (a->pos > b->pos) ? 1 : -1;
 }
 
 static bool
@@ -547,11 +554,11 @@ Cover(DocRepresentation *doc, int len, TSQuery query, Extention *ext)
 
 	ptr = doc + lastpos;
 
-	/* find lower bound of cover from founded upper bound, move down */
+	/* find lower bound of cover from found upper bound, move down */
 	while (ptr >= doc + ext->pos)
 	{
 		for (i = 0; i < ptr->nitem; i++)
-			if(ptr->item[i]->type  == QI_VAL) /* XXX */
+			if(ptr->item[i]->type  == QI_VAL)
 				ptr->item[i]->operand.istrue = 1;
 		if (TS_execute(GETQUERY(query), NULL, true, checkcondition_QueryOperand))
 		{
@@ -620,8 +627,8 @@ get_docrep(TSVector txt, TSQuery query, int *doclen)
 		}
 		else
 		{
-			dimt = *(uint16 *) POSNULL;
-			post = POSNULL + 1;
+			dimt = POSNULL.npos;
+			post = POSNULL.pos;
 		}
 
 		while (cur + dimt >= len)
@@ -636,7 +643,6 @@ get_docrep(TSVector txt, TSQuery query, int *doclen)
 			{
 				int			k;
 
-				doc[cur].needfree = false;
 				doc[cur].nitem = 0;
 				doc[cur].item = (QueryItem **) palloc(sizeof(QueryItem *) * query->size);
 
@@ -658,7 +664,6 @@ get_docrep(TSVector txt, TSQuery query, int *doclen)
 			}
 			else
 			{
-				doc[cur].needfree = false;
 				doc[cur].nitem = doc[cur - 1].nitem;
 				doc[cur].item = doc[cur - 1].item;
 			}
@@ -764,9 +769,6 @@ calc_rank_cd(float4 *arrdata, TSVector txt, TSQuery query, int method)
 	if ((method & RANK_NORM_LOGUNIQ) && txt->size > 0)
 		Wdoc /= log((double) (txt->size + 1)) / log(2.0);
 
-	for (i = 0; i < doclen; i++)
-		if (doc[i].needfree)
-			pfree(doc[i].item);
 	pfree(doc);
 
 	return (float4) Wdoc;

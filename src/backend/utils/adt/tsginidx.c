@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.3 2007/09/07 16:03:40 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsginidx.c,v 1.4 2007/09/11 08:46:29 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,13 +25,12 @@ gin_extract_tsvector(PG_FUNCTION_ARGS)
 	int32	   *nentries = (int32 *) PG_GETARG_POINTER(1);
 	Datum	   *entries = NULL;
 
-	*nentries = 0;
+	*nentries = vector->size;
 	if (vector->size > 0)
 	{
 		int			i;
 		WordEntry  *we = ARRPTR(vector);
 
-		*nentries = (uint32) vector->size;
 		entries = (Datum *) palloc(sizeof(Datum) * vector->size);
 
 		for (i = 0; i < vector->size; i++)
@@ -134,10 +133,18 @@ gin_ts_consistent(PG_FUNCTION_ARGS)
 
 	if (query->size > 0)
 	{
-		int4		i,
+		int			i,
 					j = 0;
 		QueryItem  *item;
 		GinChkVal	gcv;
+
+		/*
+		 * check-parameter array has one entry for each value (operand) in the
+		 * query. We expand that array into mapped_check, so that there's one
+		 * entry in mapped_check for every node in the query, including 
+		 * operators, to allow quick lookups in checkcondition_gin. Only the 
+		 * entries corresponding operands are actually used.
+		 */
 
 		gcv.frst = item = GETQUERY(query);
 		gcv.mapped_check = (bool *) palloc(sizeof(bool) * query->size);

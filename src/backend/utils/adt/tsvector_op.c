@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.4 2007/09/07 16:03:40 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsvector_op.c,v 1.5 2007/09/11 08:46:29 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,7 +269,7 @@ compareEntry(char *ptra, WordEntry * a, char *ptrb, WordEntry * b)
 static int4
 add_pos(TSVector src, WordEntry * srcptr, TSVector dest, WordEntry * destptr, int4 maxpos)
 {
-	uint16	   *clen = (uint16 *) _POSDATAPTR(dest, destptr);
+	uint16	   *clen = &_POSVECPTR(dest, destptr)->npos;
 	int			i;
 	uint16		slen = POSDATALEN(src, srcptr),
 				startlen;
@@ -354,7 +354,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
 			if (ptr->haspos)
 			{
 				cur += SHORTALIGN(ptr1->len);
-				memcpy(cur, _POSDATAPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
+				memcpy(cur, _POSVECPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
 				cur += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
 			}
 			else
@@ -399,7 +399,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
 				cur += SHORTALIGN(ptr1->len);
 				if (ptr1->haspos)
 				{
-					memcpy(cur, _POSDATAPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
+					memcpy(cur, _POSVECPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
 					cur += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
 					if (ptr2->haspos)
 						cur += add_pos(in2, ptr2, out, ptr, maxpos) * sizeof(WordEntryPos);
@@ -434,7 +434,7 @@ tsvector_concat(PG_FUNCTION_ARGS)
 		if (ptr->haspos)
 		{
 			cur += SHORTALIGN(ptr1->len);
-			memcpy(cur, _POSDATAPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
+			memcpy(cur, _POSVECPTR(in1, ptr1), POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16));
 			cur += POSDATALEN(in1, ptr1) * sizeof(WordEntryPos) + sizeof(uint16);
 		}
 		else
@@ -499,10 +499,17 @@ ValCompare(CHKVAL * chkval, WordEntry * ptr, QueryOperand * item)
  * check weight info
  */
 static bool
-checkclass_str(CHKVAL * chkval, WordEntry * val, QueryOperand * item)
+checkclass_str(CHKVAL *chkval, WordEntry *val, QueryOperand *item)
 {
-	WordEntryPos *ptr = (WordEntryPos *) (chkval->values + SHORTALIGN(val->pos + val->len) + sizeof(uint16));
-	uint16		len = *((uint16 *) (chkval->values + SHORTALIGN(val->pos + val->len)));
+	WordEntryPosVector *posvec;
+	WordEntryPos *ptr;
+	uint16		len;
+
+	posvec = (WordEntryPosVector *) 
+		(chkval->values + SHORTALIGN(val->pos + val->len));
+
+	len = posvec->npos;
+	ptr = posvec->pos;
 
 	while (len--)
 	{
@@ -674,7 +681,13 @@ ts_match_tq(PG_FUNCTION_ARGS)
 }
 
 /*
- * Statistics of tsvector
+ * ts_stat statistic function support
+ */
+
+
+/*
+ * Returns the number of positions in value 'wptr' within tsvector 'txt',
+ * that have a weight equal to one of the weights in 'weight' bitmask.
  */
 static int
 check_weight(TSVector txt, WordEntry * wptr, int8 weight)
@@ -823,6 +836,18 @@ formstat(tsstat * stat, TSVector txt, WordEntry ** entry, uint32 len)
 
 	return newstat;
 }
+
+/*
+ * This is written like a custom aggregate function, because the
+ * original plan was to do just that. Unfortunately, an aggregate function
+ * can't return a set, so that plan was abandoned. If that limitation is
+ * lifted in the future, ts_stat could be a real aggregate function so that 
+ * you could use it like this:
+ *
+ *   SELECT ts_stat(vector_column) FROM vector_table;
+ *
+ *  where vector_column is a tsvector-type column in vector_table.
+ */
 
 static tsstat *
 ts_accum(tsstat * stat, Datum data)

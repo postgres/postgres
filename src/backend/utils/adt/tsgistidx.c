@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.3 2007/09/07 15:09:56 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsgistidx.c,v 1.4 2007/09/11 08:46:29 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,20 +133,27 @@ gtsvectorout(PG_FUNCTION_ARGS)
 }
 
 static int
-compareint(const void *a, const void *b)
+compareint(const void *va, const void *vb)
 {
-	if (*((int4 *) a) == *((int4 *) b))
+	int4 a = *((int4 *) va);
+	int4 b = *((int4 *) vb);
+
+	if (a == b)
 		return 0;
-	return (*((int4 *) a) > *((int4 *) b)) ? 1 : -1;
+	return (a > b) ? 1 : -1;
 }
 
+/*
+ * Removes duplicates from an array of int4. 'l' is
+ * size of the input array. Returns the new size of the array.
+ */
 static int
 uniqueint(int4 *a, int4 l)
 {
 	int4	   *ptr,
 			   *res;
 
-	if (l == 1)
+	if (l <= 1)
 		return l;
 
 	ptr = res = a;
@@ -570,12 +577,15 @@ typedef struct
 } SPLITCOST;
 
 static int
-comparecost(const void *a, const void *b)
+comparecost(const void *va, const void *vb)
 {
-	if (((SPLITCOST *) a)->cost == ((SPLITCOST *) b)->cost)
+	SPLITCOST *a = (SPLITCOST *) va;
+	SPLITCOST *b = (SPLITCOST *) vb;
+
+	if (a->cost == b->cost)
 		return 0;
 	else
-		return (((SPLITCOST *) a)->cost > ((SPLITCOST *) b)->cost) ? 1 : -1;
+		return (a->cost > b->cost) ? 1 : -1;
 }
 
 
