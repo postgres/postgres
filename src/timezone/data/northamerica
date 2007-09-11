@@ -1,4 +1,4 @@
-# @(#)northamerica	8.16
+# @(#)northamerica	8.18
 # <pre>
 
 # also includes Central America and the Caribbean
@@ -348,7 +348,7 @@ Zone America/North_Dakota/New_Salem -6:45:39 - LMT 1883 Nov 18 12:14:21
 #
 # Colorado, far western Kansas, Montana, western
 # Nebraska, Nevada border (Jackpot, Owyhee, and Mountain City),
-# New Mexico, southwestern North Dakota, far eastern Oregon,
+# New Mexico, southwestern North Dakota,
 # western South Dakota, far western Texas (El Paso County, Hudspeth County,
 # and Pine Springs and Nickel Creek in Culberson County), Utah, Wyoming
 #
@@ -369,7 +369,8 @@ Zone America/Denver	-6:59:56 -	LMT	1883 Nov 18 12:00:04
 # US Pacific time, represented by Los Angeles
 #
 # California, northern Idaho (Benewah, Bonner, Boundary, Clearwater,
-# Idaho, Kootenai, Latah, Lewis, Nez Perce, and Shoshone counties),
+# Idaho, Kootenai, Latah, Lewis, Nez Perce, and Shoshone counties,
+# and the northern three-quarters of Idaho county),
 # most of Nevada, most of Oregon, and Washington
 #
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
@@ -527,7 +528,8 @@ Link America/Denver America/Shiprock
 # Boise, Bonneville, Butte, Camas, Canyon, Caribou, Cassia, Clark,
 # Custer, Elmore, Franklin, Fremont, Gem, Gooding, Jefferson, Jerome,
 # Lemhi, Lincoln, Madison, Minidoka, Oneida, Owyhee, Payette, Power,
-# Teton, Twin Falls, Valley, Washington counties) and eastern Oregon
+# Teton, Twin Falls, Valley, Washington counties, and the southern
+# quarter of Idaho county) and eastern Oregon (most of Malheur County)
 # switched four weeks late in 1974.
 #
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
@@ -544,7 +546,7 @@ Zone America/Boise	-7:44:49 -	LMT	1883 Nov 18 12:15:11
 # What time is it in Indiana?
 # </a> (2006-03-01)
 #
-# From Paul Eggert (2006-03-22):
+# From Paul Eggert (2007-08-17):
 # Since 1970, most of Indiana has been like America/Indiana/Indianapolis,
 # with the following exceptions:
 #
@@ -556,11 +558,8 @@ Zone America/Boise	-7:44:49 -	LMT	1883 Nov 18 12:15:11
 # - Clark, Floyd, and Harrison counties have been like
 #   America/Kentucky/Louisville.
 #
-# - Daviess, Dubois, Knox, Martin, Perry, and Pulaski counties
-#   have been like America/Indiana/Vincennes.
-#
-# - Crawford, Pike, Starke, and Switzerland counties have their own time zone
-#   histories as noted below.
+# - Crawford, Daviess, Dubois, Knox, Martin, Perry, Pike, Pulaski, Starke,
+#   and Switzerland counties have their own time zone histories as noted below.
 #
 # Shanks partitioned Indiana into 345 regions, each with its own time history,
 # and wrote ``Even newspaper reports present contradictory information.''
@@ -628,8 +627,9 @@ Zone America/Indiana/Marengo -5:45:23 -	LMT	1883 Nov 18 12:14:37
 			-5:00	-	EST	2006
 			-5:00	US	E%sT
 #
-# Daviess, Dubois, Knox, Martin, and Perry Counties, Indiana,
-# switched from eastern to central time in April 2006.
+# Daviess, Dubois, Knox, and Martin Counties, Indiana,
+# switched from eastern to central time in April 2006, then switched back
+# in November 2007.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
 Rule Vincennes	1946	only	-	Apr	lastSun	2:00	1:00	D
 Rule Vincennes	1946	only	-	Sep	lastSun	2:00	0	S
@@ -647,10 +647,31 @@ Zone America/Indiana/Vincennes -5:50:07 - LMT	1883 Nov 18 12:09:53
 			-5:00	-	EST	1969
 			-5:00	US	E%sT	1971
 			-5:00	-	EST	2006 Apr  2 2:00
+			-6:00	US	C%sT	2007 Nov  4 2:00
+			-5:00	US	E%sT
+#
+# Perry County, Indiana, switched from eastern to central time in April 2006.
+# Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
+Rule Perry	1946	only	-	Apr	lastSun	2:00	1:00	D
+Rule Perry	1946	only	-	Sep	lastSun	2:00	0	S
+Rule Perry	1953	1954	-	Apr	lastSun	2:00	1:00	D
+Rule Perry	1953	1959	-	Sep	lastSun	2:00	0	S
+Rule Perry	1955	only	-	May	 1	0:00	1:00	D
+Rule Perry	1956	1963	-	Apr	lastSun	2:00	1:00	D
+Rule Perry	1960	only	-	Oct	lastSun	2:00	0	S
+Rule Perry	1961	only	-	Sep	lastSun	2:00	0	S
+Rule Perry	1962	1963	-	Oct	lastSun	2:00	0	S
+# Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
+Zone America/Indiana/Tell_City -5:47:03 - LMT	1883 Nov 18 12:12:57
+			-6:00	US	C%sT	1946
+			-6:00 Perry	C%sT	1964 Apr 26 2:00
+			-5:00	-	EST	1969
+			-5:00	US	E%sT	1971
+			-5:00	-	EST	2006 Apr  2 2:00
 			-6:00	US	C%sT
 #
 # Pike County, Indiana moved from central to eastern time in 1977,
-# then switched back in 2006.
+# then switched back in 2006, then switched back again in 2007.
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER
 Rule	Pike	1955	only	-	May	 1	0:00	1:00	D
 Rule	Pike	1955	1960	-	Sep	lastSun	2:00	0	S
@@ -663,7 +684,8 @@ Zone America/Indiana/Petersburg -5:49:07 - LMT	1883 Nov 18 12:10:53
 			-5:00	-	EST	1966 Oct 30 2:00
 			-6:00	US	C%sT	1977 Oct 30 2:00
 			-5:00	-	EST	2006 Apr  2 2:00
-			-6:00	US	C%sT
+			-6:00	US	C%sT	2007 Nov  4 2:00
+			-5:00	US	E%sT
 #
 # Starke County, Indiana moved from central to eastern time in 1991,
 # then switched back in 2006.
@@ -2325,6 +2347,9 @@ Zone America/Guatemala	-6:02:04 -	LMT	1918 Oct 5
 #
 # The reason seems to be an energy crisis.
 
+# From Stephen Colebourne (2007-02-22):
+# Some IATA info: Haiti won't be having DST in 2007.
+
 
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	Haiti	1983	only	-	May	8	0:00	1:00	D
@@ -2334,8 +2359,8 @@ Rule	Haiti	1983	1987	-	Oct	lastSun	0:00	0	S
 # Go with IATA.
 Rule	Haiti	1988	1997	-	Apr	Sun>=1	1:00s	1:00	D
 Rule	Haiti	1988	1997	-	Oct	lastSun	1:00s	0	S
-Rule	Haiti	2005	max	-	Apr	Sun>=1	0:00	1:00	D
-Rule	Haiti	2005	max	-	Oct	lastSun	0:00	0	S
+Rule	Haiti	2005	2006	-	Apr	Sun>=1	0:00	1:00	D
+Rule	Haiti	2005	2006	-	Oct	lastSun	0:00	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Port-au-Prince -4:49:20 -	LMT	1890
 			-4:49	-	PPMT	1917 Jan 24 12:00 # P-a-P MT
@@ -2518,13 +2543,31 @@ Zone America/St_Vincent	-4:04:56 -	LMT	1890		# Kingstown
 			-4:00	-	AST
 
 # Turks and Caicos
-# From Paul Eggert (2006-03-22):
+#
+# From Chris Dunn in
+# <http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=415007>
+# (2007-03-15): In the Turks & Caicos Islands (America/Grand_Turk) the
+# daylight saving dates for time changes have been adjusted to match
+# the recent U.S. change of dates.
+#
+# From Brian Inglis (2007-04-28):
+# http://www.turksandcaicos.tc/calendar/index.htm [2007-04-26]
+# there is an entry for Nov 4 "Daylight Savings Time Ends 2007" and three
+# rows before that there is an out of date entry for Oct:
+# "Eastern Standard Times Begins 2007
+# Clocks are set back one hour at 2:00 a.m. local Daylight Saving Time"
+# indicating that the normal ET rules are followed.
+#
+# From Paul Eggert (2006-05-01):
 # Shanks & Pottenger say they use US DST rules, but IATA SSIM (1991/1998)
-# says they switch at midnight.  Go with IATA SSIM.
+# says they switch at midnight.  Go with Shanks & Pottenger.
+#
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
-Rule	TC	1979	1986	-	Apr	lastSun	0:00	1:00	D
-Rule	TC	1979	max	-	Oct	lastSun	0:00	0	S
-Rule	TC	1987	max	-	Apr	Sun>=1	0:00	1:00	D
+Rule	TC	1979	1986	-	Apr	lastSun	2:00	1:00	D
+Rule	TC	1979	2006	-	Oct	lastSun	2:00	0	S
+Rule	TC	1987	2006	-	Apr	Sun>=1	2:00	1:00	D
+Rule	TC	2007	max	-	Mar	Sun>=8	2:00	1:00	D
+Rule	TC	2007	max	-	Nov	Sun>=1	2:00	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone America/Grand_Turk	-4:44:32 -	LMT	1890
 			-5:07:12 -	KMT	1912 Feb    # Kingston Mean Time

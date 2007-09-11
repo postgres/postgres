@@ -1,4 +1,4 @@
-# @(#)australasia	8.6
+# @(#)australasia	8.8
 # <pre>
 
 # This file also includes Pacific islands.
@@ -79,7 +79,7 @@ Zone Australia/Lindeman  9:55:56 -	LMT	1895
 # Rule	NAME	FROM	TO	TYPE	IN	ON	AT	SAVE	LETTER/S
 Rule	AS	1971	1985	-	Oct	lastSun	2:00s	1:00	-
 Rule	AS	1986	only	-	Oct	19	2:00s	1:00	-
-Rule	AS	1987	max	-	Oct	lastSun	2:00s	1:00	-
+Rule	AS	1987	2007	-	Oct	lastSun	2:00s	1:00	-
 Rule	AS	1972	only	-	Feb	27	2:00s	0	-
 Rule	AS	1973	1985	-	Mar	Sun>=1	2:00s	0	-
 Rule	AS	1986	1989	-	Mar	Sun>=15	2:00s	0	-
@@ -90,7 +90,9 @@ Rule	AS	1993	only	-	Mar	Sun>=1	2:00s	0	-
 Rule	AS	1994	only	-	Mar	Sun>=18	2:00s	0	-
 Rule	AS	1995	2005	-	Mar	lastSun	2:00s	0	-
 Rule	AS	2006	only	-	Apr	Sun>=1	2:00s	0	-
-Rule	AS	2007	max	-	Mar	lastSun	2:00s	0	-
+Rule	AS	2007	only	-	Mar	lastSun	2:00s	0	-
+Rule	AS	2008	max	-	Apr	Sun>=1	2:00s	0	-
+Rule	AS	2008	max	-	Oct	Sun>=1	2:00s	1:00	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Australia/Adelaide	9:14:20 -	LMT	1895 Feb
 			9:00	-	CST	1899 May
@@ -121,7 +123,8 @@ Rule	AT	1991	2005	-	Mar	lastSun	2:00s	0	-
 Rule	AT	2000	only	-	Aug	lastSun	2:00s	1:00	-
 Rule	AT	2001	max	-	Oct	Sun>=1	2:00s	1:00	-
 Rule	AT	2006	only	-	Apr	Sun>=1	2:00s	0	-
-Rule	AT	2007	max	-	Mar	lastSun	2:00s	0	-
+Rule	AT	2007	only	-	Mar	lastSun	2:00s	0	-
+Rule	AT	2008	max	-	Apr	Sun>=1	2:00s	0	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Australia/Hobart	9:49:16	-	LMT	1895 Sep
 			10:00	-	EST	1916 Oct 1 2:00
@@ -145,9 +148,11 @@ Rule	AV	1988	1999	-	Oct	lastSun	2:00s	1:00	-
 Rule	AV	1991	1994	-	Mar	Sun>=1	2:00s	0	-
 Rule	AV	1995	2005	-	Mar	lastSun	2:00s	0	-
 Rule	AV	2000	only	-	Aug	lastSun	2:00s	1:00	-
-Rule	AV	2001	max	-	Oct	lastSun	2:00s	1:00	-
+Rule	AV	2001	2007	-	Oct	lastSun	2:00s	1:00	-
 Rule	AV	2006	only	-	Apr	Sun>=1	2:00s	0	-
-Rule	AV	2007	max	-	Mar	lastSun	2:00s	0	-
+Rule	AV	2007	only	-	Mar	lastSun	2:00s	0	-
+Rule	AV	2008	max	-	Apr	Sun>=1	2:00s	0	-
+Rule	AV	2008	max	-	Oct	Sun>=1	2:00s	1:00	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Australia/Melbourne 9:39:52 -	LMT	1895 Feb
 			10:00	Aus	EST	1971
@@ -166,9 +171,11 @@ Rule	AN	1987	1999	-	Oct	lastSun	2:00s	1:00	-
 Rule	AN	1990	1995	-	Mar	Sun>=1	2:00s	0	-
 Rule	AN	1996	2005	-	Mar	lastSun	2:00s	0	-
 Rule	AN	2000	only	-	Aug	lastSun	2:00s	1:00	-
-Rule	AN	2001	max	-	Oct	lastSun	2:00s	1:00	-
+Rule	AN	2001	2007	-	Oct	lastSun	2:00s	1:00	-
 Rule	AN	2006	only	-	Apr	Sun>=1	2:00s	0	-
-Rule	AN	2007	max	-	Mar	lastSun	2:00s	0	-
+Rule	AN	2007	only	-	Mar	lastSun	2:00s	0	-
+Rule	AN	2008	max	-	Apr	Sun>=1	2:00s	0	-
+Rule	AN	2008	max	-	Oct	Sun>=1	2:00s	1:00	-
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Australia/Sydney	10:04:52 -	LMT	1895 Feb
 			10:00	Aus	EST	1971
@@ -191,9 +198,11 @@ Rule	LH	1987	1999	-	Oct	lastSun	2:00	0:30	-
 Rule	LH	1990	1995	-	Mar	Sun>=1	2:00	0	-
 Rule	LH	1996	2005	-	Mar	lastSun	2:00	0	-
 Rule	LH	2000	only	-	Aug	lastSun	2:00	0:30	-
-Rule	LH	2001	max	-	Oct	lastSun	2:00	0:30	-
+Rule	LH	2001	2007	-	Oct	lastSun	2:00	0:30	-
 Rule	LH	2006	only	-	Apr	Sun>=1	2:00	0	-
-Rule	LH	2007	max	-	Mar	lastSun	2:00	0	-
+Rule	LH	2007	only	-	Mar	lastSun	2:00	0	-
+Rule	LH	2008	max	-	Apr	Sun>=1	2:00	0	-
+Rule	LH	2008	max	-	Oct	Sun>=1	2:00	0:30	-
 Zone Australia/Lord_Howe 10:36:20 -	LMT	1895 Feb
 			10:00	-	EST	1981 Mar
 			10:30	LH	LHST
@@ -348,10 +357,14 @@ Rule	NZ	1976	1989	-	Mar	Sun>=1	2:00s	0	S
 Rule	Chatham	1976	1989	-	Mar	Sun>=1	2:45s	0	S
 Rule	NZ	1989	only	-	Oct	Sun>=8	2:00s	1:00	D
 Rule	Chatham	1989	only	-	Oct	Sun>=8	2:45s	1:00	D
-Rule	NZ	1990	max	-	Oct	Sun>=1	2:00s	1:00	D
-Rule	Chatham	1990	max	-	Oct	Sun>=1	2:45s	1:00	D
-Rule	NZ	1990	max	-	Mar	Sun>=15	2:00s	0	S
-Rule	Chatham	1990	max	-	Mar	Sun>=15	2:45s	0	S
+Rule	NZ	1990	2006	-	Oct	Sun>=1	2:00s	1:00	D
+Rule	Chatham	1990	2006	-	Oct	Sun>=1	2:45s	1:00	D
+Rule	NZ	1990	2007	-	Mar	Sun>=15	2:00s	0	S
+Rule	Chatham	1990	2007	-	Mar	Sun>=15	2:45s	0	S
+Rule	NZ	2007	max	-	Sep	lastSun	2:00s	1:00	D
+Rule	Chatham	2007	max	-	Sep	lastSun	2:45s	1:00	D
+Rule	NZ	2008	max	-	Apr	Sun>=1	2:00s	0	S
+Rule	Chatham	2008	max	-	Apr	Sun>=1	2:45s	0	S
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone Pacific/Auckland	11:39:04 -	LMT	1868 Nov  2
 			11:30	NZ	NZ%sT	1946 Jan  1
@@ -449,11 +462,20 @@ Zone Pacific/Funafuti	11:56:52 -	LMT	1901
 # US minor outlying islands
 
 # Howland, Baker
-# uninhabited since World War II
-# no information; was probably like Pacific/Pago_Pago
+# Howland was mined for guano by American companies 1857-1878 and British
+# 1886-1891; Baker was similar but exact dates are not known.
+# Inhabited by civilians 1935-1942; U.S. military bases 1943-1944;
+# uninhabited thereafter.
+# Howland observed Hawaii Standard Time (UTC-10:30) in 1937;
+# see page 206 of Elgen M. Long and Marie K. Long,
+# Amelia Earhart: the Mystery Solved, Simon & Schuster (2000).
+# So most likely Howland and Baker observed Hawaii Time from 1935
+# until they were abandoned after the war.
 
 # Jarvis
-# uninhabited since 1958
+# Mined for guano by American companies 1857-1879 and British 1883?-1891?.
+# Inhabited by civilians 1935-1942; IGY scientific base 1957-1958;
+# uninhabited thereafter.
 # no information; was probably like Pacific/Kiritimati
 
 # Johnston
@@ -862,33 +884,13 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # introduction of standard time in 1895.
 
 
-# South Australia, Tasmania, Victoria
-
-# From Arthur David Olson (1992-03-08):
-# The rules from version 7.1 follow.
-# There are lots of differences between these rules and
-# the Shepherd et al. rules.  Since the Shepherd et al. rules
-# and Bradley White's newspaper article are in agreement on
-# current DST ending dates, no worries.
+# southeast Australia
 #
-# Rule	Oz	1971	1985	-	Oct	lastSun	2:00	1:00	-
-# Rule	Oz	1986	max	-	Oct	Sun>=18	2:00	1:00	-
-# Rule	Oz	1972	only	-	Feb	27	3:00	0	-
-# Rule	Oz	1973	1986	-	Mar	Sun>=1	3:00	0	-
-# Rule	Oz	1987	max	-	Mar	Sun>=15	3:00	0	-
-# Zone	Australia/Tasmania	10:00	Oz	EST
-# Zone	Australia/South		9:30	Oz	CST
-# Zone	Australia/Victoria	10:00	Oz	EST	1985 Oct lastSun 2:00
-#				10:00	1:00	EST	1986 Mar Sun>=15 3:00
-#				10:00	Oz	EST
+# From Paul Eggert (2007-07-23):
+# Starting autumn 2008 Victoria, NSW, South Australia, Tasmania and the ACT
+# end DST the first Sunday in April and start DST the first Sunday in October.
+# http://www.theage.com.au/news/national/daylight-savings-to-span-six-months/2007/06/27/1182623966703.html
 
-# From Robert Elz (1991-03-06):
-# I believe that the current start date for DST is "lastSun" in Oct...
-# that changed Oct 89.  That is, we're back to the
-# original rule, and that rule currently applies in all the states
-# that have dst, incl Qld.  (Certainly it was true in Vic).
-# The file I'm including says that happened in 1988, I think
-# that's incorrect, but I'm not 100% certain.
 
 # South Australia
 
@@ -934,6 +936,9 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # was gazetted in the Government Hansard on Sep 26 1994....
 # start on last Sunday in October and end in last sunday in March.
 
+# From Paul Eggert (2007-07-23):
+# See "southeast Australia" above for 2008 and later.
+
 # Tasmania
 
 # The rules for 1967 through 1991 were reported by George Shepherd
@@ -955,6 +960,9 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 
 # Sim Alam (2000-07-03) reported a legal citation for the 2000/2001 rules:
 # http://www.thelaw.tas.gov.au/fragview/42++1968+GS3A@EN+2000070300
+
+# From Paul Eggert (2007-07-23):
+# See "southeast Australia" above for 2008 and later.
 
 # Victoria
 
@@ -984,6 +992,9 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 #
 # [1] http://www.hup.harvard.edu/catalog/HEISUN.html
 # [2] http://www.shrine.org.au
+
+# From Paul Eggert (2007-07-23):
+# See "southeast Australia" above for 2008 and later.
 
 # New South Wales
 
@@ -1051,6 +1062,9 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # The Queensland Premier Peter Beattie is encouraging northern NSW
 # towns to use Queensland time.
 
+# From Paul Eggert (2007-07-23):
+# See "southeast Australia" above for 2008 and later.
+
 # Yancowinna
 
 # From John Mackin (1989-01-04):
@@ -1102,6 +1116,9 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # For Lord Howe dates we use Shanks & Pottenger through 1989, and
 # Lonergan thereafter.  For times we use Lonergan.
 
+# From Paul Eggert (2007-07-23):
+# See "southeast Australia" above for 2008 and later.
+
 ###############################################################################
 
 # New Zealand
@@ -1145,6 +1162,12 @@ Zone	Pacific/Wallis	12:15:20 -	LMT	1901
 # For Chatham, IATA SSIM (1991/1999) gives the NZ rules but with
 # transitions at 2:45 local standard time; this confirms that Chatham
 # is always exactly 45 minutes ahead of Auckland.
+
+# From Colin Sharples (2007-04-30):
+# DST will now start on the last Sunday in September, and end on the
+# first Sunday in April.  The changes take effect this year, meaning
+# that DST will begin on 2007-09-30 2008-04-06.
+# http://www.dia.govt.nz/diawebsite.nsf/wpg_URL/Services-Daylight-Saving-Daylight-saving-to-be-extended
 
 ###############################################################################
 
