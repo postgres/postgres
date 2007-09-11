@@ -6,7 +6,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.2 2007/08/25 00:03:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tsearch/dicts/spell.h,v 1.3 2007/09/11 12:57:05 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ typedef struct SPNode
 	SPNodeData	data[1];
 } SPNode;
 
-#define SPNHRDSZ	(sizeof(uint32))
+#define SPNHDRSZ	(offsetof(SPNode,data))
 
 
 typedef struct spell_struct
@@ -123,7 +123,7 @@ typedef struct AffixNode
 	AffixNodeData data[1];
 } AffixNode;
 
-#define ANHRDSZ		   (sizeof(uint32))
+#define ANHRDSZ		   (offsetof(AffixNode, data))
 
 typedef struct
 {

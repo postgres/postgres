@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.4 2007/09/10 20:27:12 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/spell.c,v 1.5 2007/09/11 12:57:05 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -896,7 +896,7 @@ mkSPNode(IspellDict * Conf, int low, int high, int level)
 	if (!nchar)
 		return NULL;
 
-	rs = (SPNode *) palloc0(SPNHRDSZ + nchar * sizeof(SPNodeData));
+	rs = (SPNode *) palloc0(SPNHDRSZ + nchar * sizeof(SPNodeData));
 	rs->length = nchar;
 	data = rs->data;
 
