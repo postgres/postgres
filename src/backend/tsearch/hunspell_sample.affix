@@ -1,0 +1,24 @@
+COMPOUNDFLAG Z
+ONLYINCOMPOUND L
+
+PFX B Y 1
+PFX B   0	re	.
+
+PFX U N 1
+PFX U   0	un	.
+
+SFX J Y 1
+SFX J   0	INGS	[^E]
+
+SFX G Y 1
+SFX G   0	ING		[^E]
+
+SFX S Y 1
+SFX S   0	S	[^SXZHY]
+
+SFX A Y 1
+SFX A   Y	IES	[^AEIOU]Y
+
+SFX \ N 1
+SFX \   0	Y/L	[^Y]
+

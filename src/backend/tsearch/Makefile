@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2006-2007, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/backend/tsearch/Makefile,v 1.2 2007/08/22 06:11:56 tgl Exp $
+# $PostgreSQL: pgsql/src/backend/tsearch/Makefile,v 1.3 2007/09/11 11:54:42 teodor Exp $
 #
 #-------------------------------------------------------------------------
 subdir = src/backend/tsearch
@@ -13,7 +13,8 @@ include $(top_builddir)/src/Makefile.global
 
 DICTDIR=tsearch_data
 
-DICTFILES=synonym.syn.sample thesaurus.ths.sample 
+DICTFILES=synonym_sample.syn thesaurus_sample.ths hunspell_sample.affix \
+	ispell_sample.affix ispell_sample.dict
 
 OBJS = ts_locale.o ts_parse.o wparser.o wparser_def.o dict.o \
 	dict_simple.o dict_synonym.o dict_thesaurus.o \

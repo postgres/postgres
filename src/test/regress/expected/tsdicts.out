@@ -1,0 +1,320 @@
+--Test text search dictionaries and configurations
+-- Test ISpell dictionary with ispell affix file
+CREATE TEXT SEARCH DICTIONARY ispell (
+                        Template=ispell,
+                        DictFile=ispell_sample,
+                        AffFile=ispell_sample
+);
+SELECT ts_lexize('ispell', 'skies');
+ ts_lexize 
+-----------
+ {sky}
+(1 row)
+
+SELECT ts_lexize('ispell', 'bookings');
+   ts_lexize    
+----------------
+ {booking,book}
+(1 row)
+
+SELECT ts_lexize('ispell', 'booking');
+   ts_lexize    
+----------------
+ {booking,book}
+(1 row)
+
+SELECT ts_lexize('ispell', 'foot');
+ ts_lexize 
+-----------
+ {foot}
+(1 row)
+
+SELECT ts_lexize('ispell', 'foots');
+ ts_lexize 
+-----------
+ {foot}
+(1 row)
+
+SELECT ts_lexize('ispell', 'rebookings');
+   ts_lexize    
+----------------
+ {booking,book}
+(1 row)
+
+SELECT ts_lexize('ispell', 'rebooking');
+   ts_lexize    
+----------------
+ {booking,book}
+(1 row)
+
+SELECT ts_lexize('ispell', 'rebook');
+ ts_lexize 
+-----------
+ 
+(1 row)
+
+SELECT ts_lexize('ispell', 'unbookings');
+ ts_lexize 
+-----------
+ {book}
+(1 row)
+
+SELECT ts_lexize('ispell', 'unbooking');
+ ts_lexize 
+-----------
+ {book}
+(1 row)
+
+SELECT ts_lexize('ispell', 'unbook');
+ ts_lexize 
+-----------
+ {book}
+(1 row)
+
+SELECT ts_lexize('ispell', 'footklubber');
+   ts_lexize    
+----------------
+ {foot,klubber}
+(1 row)
+
+SELECT ts_lexize('ispell', 'footballklubber');
+                      ts_lexize                       
+------------------------------------------------------
+ {footballklubber,foot,ball,klubber,football,klubber}
+(1 row)
+
+SELECT ts_lexize('ispell', 'ballyklubber');
+   ts_lexize    
+----------------
+ {ball,klubber}
+(1 row)
+
+SELECT ts_lexize('ispell', 'footballyklubber');
+      ts_lexize      
+---------------------
+ {foot,ball,klubber}
+(1 row)
+
+-- Test ISpell dictionary with hunspell affix file
+CREATE TEXT SEARCH DICTIONARY hunspell (
+                        Template=ispell,
+                        DictFile=ispell_sample,
+                        AffFile=hunspell_sample
+);
+SELECT ts_lexize('hunspell', 'skies');
+ ts_lexize 
+-----------
+ {sky}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'bookings');
+   ts_lexize    
+----------------
+ {booking,book}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'booking');
+   ts_lexize    
+----------------
+ {booking,book}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'foot');
+ ts_lexize 
+-----------
+ {foot}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'foots');
+ ts_lexize 
+-----------
+ {foot}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'rebookings');
+   ts_lexize    
+----------------
+ {booking,book}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'rebooking');
+   ts_lexize    
+----------------
+ {booking,book}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'rebook');
+ ts_lexize 
+-----------
+ 
+(1 row)
+
+SELECT ts_lexize('hunspell', 'unbookings');
+ ts_lexize 
+-----------
+ {book}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'unbooking');
+ ts_lexize 
+-----------
+ {book}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'unbook');
+ ts_lexize 
+-----------
+ {book}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'footklubber');
+   ts_lexize    
+----------------
+ {foot,klubber}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'footballklubber');
+                      ts_lexize                       
+------------------------------------------------------
+ {footballklubber,foot,ball,klubber,football,klubber}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'ballyklubber');
+   ts_lexize    
+----------------
+ {ball,klubber}
+(1 row)
+
+SELECT ts_lexize('hunspell', 'footballyklubber');
+      ts_lexize      
+---------------------
+ {foot,ball,klubber}
+(1 row)
+
+-- Synonim dictionary
+CREATE TEXT SEARCH DICTIONARY synonym (
+						Template=synonym, 
+						Synonyms=synonym_sample
+);
+SELECT ts_lexize('synonym', 'PoStGrEs');
+ ts_lexize 
+-----------
+ {pgsql}
+(1 row)
+
+SELECT ts_lexize('synonym', 'Gogle');
+ ts_lexize 
+-----------
+ {googl}
+(1 row)
+
+-- Create and simple test thesaurus dictionary
+-- More test in configuration checks because of ts_lexize
+-- can not give more tat one word as it may wish thesaurus.
+CREATE TEXT SEARCH DICTIONARY thesaurus (
+                        Template=thesaurus,
+						DictFile=thesaurus_sample, 
+						Dictionary=english_stem
+);
+NOTICE:  thesaurus word-sample "the" is recognized as stop-word, assign any stop-word (rule 8)
+SELECT ts_lexize('thesaurus', 'one');
+NOTICE:  thesaurus word-sample "the" is recognized as stop-word, assign any stop-word (rule 8)
+ ts_lexize 
+-----------
+ {1}
+(1 row)
+
+-- Test ispell dictionary in configuration
+CREATE TEXT SEARCH CONFIGURATION ispell_tst (
+						COPY=english
+);
+ALTER TEXT SEARCH CONFIGURATION ispell_tst ALTER MAPPING FOR
+	hword, lhword, lpart_hword, lword, nlhword, nlpart_hword, nlword, part_hword, word 
+	WITH ispell, english_stem;
+SELECT to_tsvector('ispell_tst', 'Booking the skies after rebookings for footballklubber from a foot');
+                                            to_tsvector                                             
+----------------------------------------------------------------------------------------------------
+ 'sky':3 'ball':7 'book':1,5 'foot':7,10 'booking':1,5 'klubber':7 'football':7 'footballklubber':7
+(1 row)
+
+SELECT to_tsquery('ispell_tst', 'footballklubber');
+                                  to_tsquery                                  
+------------------------------------------------------------------------------
+ ( 'footballklubber' | 'foot' & 'ball' & 'klubber' ) | 'football' & 'klubber'
+(1 row)
+
+SELECT to_tsquery('ispell_tst', 'footballyklubber:b & rebookings:A & sky');
+                               to_tsquery                               
+------------------------------------------------------------------------
+ 'foot':B & 'ball':B & 'klubber':B & ( 'booking':A | 'book':A ) & 'sky'
+(1 row)
+
+-- Test ispell dictionary with hunspell affix in configuration
+CREATE TEXT SEARCH CONFIGURATION hunspell_tst (
+						COPY=ispell_tst
+);
+ALTER TEXT SEARCH CONFIGURATION hunspell_tst ALTER MAPPING
+	REPLACE ispell WITH hunspell;
+SELECT to_tsvector('hunspell_tst', 'Booking the skies after rebookings for footballklubber from a foot');
+                                            to_tsvector                                             
+----------------------------------------------------------------------------------------------------
+ 'sky':3 'ball':7 'book':1,5 'foot':7,10 'booking':1,5 'klubber':7 'football':7 'footballklubber':7
+(1 row)
+
+SELECT to_tsquery('hunspell_tst', 'footballklubber');
+                                  to_tsquery                                  
+------------------------------------------------------------------------------
+ ( 'footballklubber' | 'foot' & 'ball' & 'klubber' ) | 'football' & 'klubber'
+(1 row)
+
+SELECT to_tsquery('hunspell_tst', 'footballyklubber:b & rebookings:A & sky');
+                               to_tsquery                               
+------------------------------------------------------------------------
+ 'foot':B & 'ball':B & 'klubber':B & ( 'booking':A | 'book':A ) & 'sky'
+(1 row)
+
+-- Test synonym dictionary in configuration
+CREATE TEXT SEARCH CONFIGURATION synonym_tst (
+						COPY=english
+);
+ALTER TEXT SEARCH CONFIGURATION synonym_tst ALTER MAPPING FOR 
+	lword, lpart_hword, lhword 
+	WITH synonym, english_stem;
+SELECT to_tsvector('synonym_tst', 'Postgresql is often called as postgres or pgsql and pronounced as postgre');
+                    to_tsvector                    
+---------------------------------------------------
+ 'call':4 'often':3 'pgsql':1,6,8,12 'pronounc':10
+(1 row)
+
+SELECT to_tsvector('synonym_tst', 'Most common mistake is to write Gogle instead of Google');
+                       to_tsvector                        
+----------------------------------------------------------
+ 'googl':7,10 'write':6 'common':2 'mistak':3 'instead':8
+(1 row)
+
+-- test thesaurus in configuration
+-- see thesaurus_sample.ths to understand 'odd' resulting tsvector
+CREATE TEXT SEARCH CONFIGURATION thesaurus_tst (
+						COPY=synonym_tst
+);
+ALTER TEXT SEARCH CONFIGURATION thesaurus_tst ALTER MAPPING FOR 
+	lword, lpart_hword, lhword 
+	WITH synonym, thesaurus, english_stem;
+SELECT to_tsvector('thesaurus_tst', 'one postgres one two one two three one');
+           to_tsvector            
+----------------------------------
+ '1':1,5 '12':3 '123':4 'pgsql':2
+(1 row)
+
+SELECT to_tsvector('thesaurus_tst', 'Supernovae star is very new star and usually called supernovae (abbrevation SN)');
+                         to_tsvector                         
+-------------------------------------------------------------
+ 'sn':1,9,11 'new':4 'call':8 'star':5 'usual':7 'abbrev':10
+(1 row)
+
+SELECT to_tsvector('thesaurus_tst', 'Booking tickets is looking like a booking a tickets');
+                      to_tsvector                      
+-------------------------------------------------------
+ 'card':3,10 'like':6 'look':5 'invit':2,9 'order':1,8
+(1 row)
+

@@ -1,0 +1,26 @@
+compoundwords controlled Z
+
+prefixes
+
+flag *B:
+	.       >   RE      # As in enter > reenter
+
+flag U:
+    .       >   UN      # As in natural > unnatural
+
+suffixes
+
+flag *J:
+	[^E]    >   INGS        # As in cross > crossings
+
+flag *G:
+	[^E]    >   ING     # As in cross > crossing
+
+flag *S:
+	[^SXZHY]    >   S       # As in bat > bats
+
+flag *A:
+	[^AEIOU]Y   >   -Y,IES      # As in imply > implies
+
+flag ~\\:
+	[^Y]        >   Y              #~ advarsel > advarsely-

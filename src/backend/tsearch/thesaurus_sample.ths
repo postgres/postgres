@@ -11,10 +11,8 @@ one two : *12
 one : *1
 two : *2
 
-#foo bar : blah blah
-#f   bar : fbar
-#e   bar : ebar
-#g   bar bar : gbarbar
-#asd:sdffff
-#qwerty:qwer wert erty
+supernovae stars : *sn
+supernovae : *sn
+booking tickets : order invitation cards
+booking the tickets : order invitation Cards
 
