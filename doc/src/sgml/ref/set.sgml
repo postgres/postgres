@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.90 2006/09/22 16:20:00 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/set.sgml,v 1.91 2007/09/11 00:06:41 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -40,13 +40,10 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
   </para>
 
   <para>
-   If <command>SET</command> or <command>SET SESSION</command> is issued
-   within a transaction that is later aborted, the effects of the
+   If <command>SET</command> (or equivalently <command>SET SESSION</command>)
+   is issued within a transaction that is later aborted, the effects of the
    <command>SET</command> command disappear when the transaction is rolled
-   back.  (This behavior represents a change from
-   <productname>PostgreSQL</productname> versions prior to 7.3, where
-   the effects of <command>SET</command> would not roll back after a later
-   error.)  Once the surrounding transaction is committed, the effects
+   back.  Once the surrounding transaction is committed, the effects
    will persist until the end of the session, unless overridden by another
    <command>SET</command>.
   </para>
@@ -59,6 +56,36 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
    seen until the end of the transaction, but afterwards (if the transaction
    is committed) the <command>SET</command> value will take effect.
   </para>
+
+  <para>
+   The effects of <command>SET</command> or <command>SET LOCAL</command> are
+   also canceled by rolling back to a savepoint that is earlier than the
+   command.
+  </para>
+
+  <para>
+   If <command>SET LOCAL</command> is used within a function that has a
+   <literal>SET</> option for the same variable (see
+   <xref linkend="sql-createfunction" endterm="sql-createfunction-title">),
+   the effects of the <command>SET LOCAL</command> command disappear at
+   function exit; that is, the value in effect when the function was called is
+   restored anyway.  This allows <command>SET LOCAL</command> to be used for
+   dynamic or repeated changes of a parameter within a function, while still
+   having the convenience of using the <literal>SET</> option to save and
+   restore the caller's value.  However, a regular <command>SET</> command
+   overrides any surrounding function's <literal>SET</> option; its effects
+   will persist unless rolled back.
+  </para>
+
+  <note>
+   <para>
+    In <productname>PostgreSQL</productname> versions 8.0 through 8.2,
+    the effects of a <command>SET LOCAL</command> would be canceled by
+    releasing an earlier savepoint, or by successful exit from a
+    <application>PL/pgSQL</application> exception block.  This behavior
+    has been changed because it was deemed unintuitive.
+   </para>
+  </note>
  </refsect1>
 
  <refsect1>
@@ -106,8 +133,11 @@ SET [ SESSION | LOCAL ] TIME ZONE { <replaceable class="PARAMETER">timezone</rep
      <para>
       New value of parameter.  Values can be specified as string
       constants, identifiers, numbers, or comma-separated lists of
-      these.  <literal>DEFAULT</literal> can be used to specify
-      resetting the parameter to its default value.
+      these, as appropriate for the particular parameter.
+      <literal>DEFAULT</literal> can be written to specify
+      resetting the parameter to its default value (that is, whatever
+      value it would have had if no <command>SET</> had been executed
+      in the current session).
      </para>
     </listitem>
    </varlistentry>
@@ -200,7 +230,9 @@ SELECT setseed(<replaceable>value</replaceable>);
          <term><literal>DEFAULT</literal></term>
          <listitem>
           <para>
-           Set the time zone to your local time zone (the one that
+           Set the time zone to your local time zone (that is, the
+           server's default value of <varname>timezone</>; if this
+           has not been explicitly set anywhere, it will be the zone that
            the server's operating system defaults to).
           </para>
          </listitem>
@@ -221,7 +253,10 @@ SELECT setseed(<replaceable>value</replaceable>);
 
   <para>
    The function <function>set_config</function> provides equivalent
-   functionality. See <xref linkend="functions-admin">.
+   functionality; see <xref linkend="functions-admin">.
+   Also, it is possible to UPDATE the
+   <link linkend="view-pg-settings"><structname>pg_settings</structname></link>
+   system view to perform the equivalent of <command>SET</>.
   </para>
  </refsect1>
  

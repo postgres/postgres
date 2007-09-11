@@ -15,7 +15,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.96 2007/08/15 19:15:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.97 2007/09/11 00:06:42 tgl Exp $
  *
  * ----------
  */
@@ -2749,7 +2749,7 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 	snprintf(workmembuf, sizeof(workmembuf), "%d", maintenance_work_mem);
 	(void) set_config_option("work_mem", workmembuf,
 							 PGC_USERSET, PGC_S_SESSION,
-							 true, true);
+							 GUC_ACTION_LOCAL, true);
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "SPI_connect failed");
@@ -2832,13 +2832,12 @@ RI_Initial_Check(Trigger *trigger, Relation fk_rel, Relation pk_rel)
 
 	/*
 	 * Restore work_mem for the remainder of the current transaction. This is
-	 * another SET LOCAL, so it won't affect the session value, nor any
-	 * tentative value if there is one.
+	 * another SET LOCAL, so it won't affect the session value.
 	 */
 	snprintf(workmembuf, sizeof(workmembuf), "%d", old_work_mem);
 	(void) set_config_option("work_mem", workmembuf,
 							 PGC_USERSET, PGC_S_SESSION,
-							 true, true);
+							 GUC_ACTION_LOCAL, true);
 
 	return true;
 }

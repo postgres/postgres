@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.77 2007/09/03 18:46:29 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.78 2007/09/11 00:06:41 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -475,11 +475,11 @@ CREATE FUNCTION foo(int, out text) ...
    </para>
 
    <para>
-    If any <literal>SET</> clauses are attached to a function, then
+    If a <literal>SET</> clause is attached to a function, then
     the effects of a <command>SET LOCAL</> command executed inside the
-    function are restricted to the function: the configuration parameter's
-    value is restored at function exit.  This is true even for parameters
-    not mentioned in the <literal>SET</> clause(s).  However, an ordinary
+    function for the same variable are restricted to the function: the
+    configuration parameter's prior value is still restored at function exit.
+    However, an ordinary
     <command>SET</> command (without <literal>LOCAL</>) overrides the
     <literal>SET</> clause, much as it would do for a previous <command>SET
     LOCAL</> command: the effects of such a command will persist after

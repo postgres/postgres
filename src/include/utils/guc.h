@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.85 2007/09/03 18:46:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.86 2007/09/11 00:06:42 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -99,6 +99,14 @@ typedef bool (*GucIntAssignHook) (int newval, bool doit, GucSource source);
 typedef bool (*GucRealAssignHook) (double newval, bool doit, GucSource source);
 
 typedef const char *(*GucShowHook) (void);
+
+typedef enum
+{
+	/* Types of set_config_option actions */
+	GUC_ACTION_SET,				/* regular SET command */
+	GUC_ACTION_LOCAL,			/* SET LOCAL command */
+	GUC_ACTION_SAVE				/* function SET option */
+} GucAction;
 
 #define GUC_QUALIFIER_SEPARATOR '.'
 
@@ -196,7 +204,7 @@ extern void BeginReportingGUCOptions(void);
 extern void ParseLongOption(const char *string, char **name, char **value);
 extern bool set_config_option(const char *name, const char *value,
 				  GucContext context, GucSource source,
-				  bool isLocal, bool changeVal);
+				  GucAction action, bool changeVal);
 extern char *GetConfigOptionByName(const char *name, const char **varname);
 extern void GetConfigOptionByNum(int varnum, const char **values, bool *noshow);
 extern int	GetNumConfigOptions(void);
@@ -209,7 +217,7 @@ extern void ExecSetVariableStmt(VariableSetStmt *stmt);
 extern char *ExtractSetVariableArgs(VariableSetStmt *stmt);
 
 extern void ProcessGUCArray(ArrayType *array,
-						GucContext context, GucSource source, bool isLocal);
+				GucContext context, GucSource source, GucAction action);
 extern ArrayType *GUCArrayAdd(ArrayType *array, const char *name, const char *value);
 extern ArrayType *GUCArrayDelete(ArrayType *array, const char *name);
 

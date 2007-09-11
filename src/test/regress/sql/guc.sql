@@ -99,6 +99,26 @@ SHOW vacuum_cost_delay;
 SHOW datestyle;
 SELECT '2006-08-13 12:34:56'::timestamptz;
 
+-- SET LOCAL persists through RELEASE (which was not true in 8.0-8.2)
+BEGIN;
+SHOW vacuum_cost_delay;
+SHOW datestyle;
+SELECT '2006-08-13 12:34:56'::timestamptz;
+SAVEPOINT sp;
+SET LOCAL vacuum_cost_delay TO 300;
+SHOW vacuum_cost_delay;
+SET LOCAL datestyle = 'Postgres, MDY';
+SHOW datestyle;
+SELECT '2006-08-13 12:34:56'::timestamptz;
+RELEASE SAVEPOINT sp;
+SHOW vacuum_cost_delay;
+SHOW datestyle;
+SELECT '2006-08-13 12:34:56'::timestamptz;
+ROLLBACK;
+SHOW vacuum_cost_delay;
+SHOW datestyle;
+SELECT '2006-08-13 12:34:56'::timestamptz;
+
 -- SET followed by SET LOCAL
 BEGIN;
 SET vacuum_cost_delay TO 400;
@@ -187,3 +207,47 @@ select report_guc('regex_flavor'), current_setting('regex_flavor');
 alter function report_guc(text) reset all;
 
 select report_guc('regex_flavor'), current_setting('regex_flavor');
+
+-- SET LOCAL is restricted by a function SET option
+create or replace function myfunc(int) returns text as $$
+begin
+  set local regex_flavor = extended;
+  return current_setting('regex_flavor');
+end $$
+language plpgsql
+set regex_flavor = basic;
+
+select myfunc(0), current_setting('regex_flavor');
+
+alter function myfunc(int) reset all;
+
+select myfunc(0), current_setting('regex_flavor');
+
+set regex_flavor = advanced;
+
+-- but SET isn't
+create or replace function myfunc(int) returns text as $$
+begin
+  set regex_flavor = extended;
+  return current_setting('regex_flavor');
+end $$
+language plpgsql
+set regex_flavor = basic;
+
+select myfunc(0), current_setting('regex_flavor');
+
+set regex_flavor = advanced;
+
+-- it should roll back on error, though
+create or replace function myfunc(int) returns text as $$
+begin
+  set regex_flavor = extended;
+  perform 1/$1;
+  return current_setting('regex_flavor');
+end $$
+language plpgsql
+set regex_flavor = basic;
+
+select myfunc(0);
+select current_setting('regex_flavor');
+select myfunc(1), current_setting('regex_flavor');

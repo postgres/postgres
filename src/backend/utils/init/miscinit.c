@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.163 2007/09/03 00:39:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.164 2007/09/11 00:06:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -453,7 +453,7 @@ InitializeSessionUserId(const char *rolename)
 		 * right to insert an option into pg_authid was checked when it was
 		 * inserted.
 		 */
-		ProcessGUCArray(a, PGC_SUSET, PGC_S_USER, false);
+		ProcessGUCArray(a, PGC_SUSET, PGC_S_USER, GUC_ACTION_SET);
 	}
 
 	ReleaseSysCache(roleTup);

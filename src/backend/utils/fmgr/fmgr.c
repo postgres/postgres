@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.109 2007/09/03 00:39:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.110 2007/09/11 00:06:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -925,11 +925,10 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 
 		if (fcache->proconfig)
 		{
-			/* The options are processed as if by SET LOCAL var = val */
 			ProcessGUCArray(fcache->proconfig,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION,
-							true);
+							GUC_ACTION_SAVE);
 		}
 
 		result = FunctionCallInvoke(fcinfo);
@@ -937,8 +936,7 @@ fmgr_security_definer(PG_FUNCTION_ARGS)
 	PG_CATCH();
 	{
 		fcinfo->flinfo = save_flinfo;
-		if (fcache->proconfig)
-			AtEOXact_GUC(false, save_nestlevel);
+		/* We don't need to restore GUC settings, outer xact abort will */
 		if (OidIsValid(fcache->userid))
 			SetUserId(save_userid);
 		PG_RE_THROW();

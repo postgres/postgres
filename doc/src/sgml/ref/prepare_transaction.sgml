@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.5 2006/09/16 00:30:19 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/prepare_transaction.sgml,v 1.6 2007/09/11 00:06:41 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -94,7 +94,8 @@ PREPARE TRANSACTION <replaceable class="PARAMETER">transaction_id</replaceable>
   </para>
 
   <para>
-   If the transaction modified any run-time parameters with <command>SET</>,
+   If the transaction modified any run-time parameters with <command>SET</>
+   (without the <literal>LOCAL</> option),
    those effects persist after <command>PREPARE TRANSACTION</>, and will not
    be affected by any later <command>COMMIT PREPARED</command> or 
    <command>ROLLBACK PREPARED</command>.  Thus, in this one respect

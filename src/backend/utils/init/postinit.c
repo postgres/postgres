@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.177 2007/09/03 00:39:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/postinit.c,v 1.178 2007/09/11 00:06:42 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -255,7 +255,7 @@ CheckMyDatabase(const char *name, bool am_superuser)
 			 * right to insert an option into pg_database was checked when it
 			 * was inserted.
 			 */
-			ProcessGUCArray(a, PGC_SUSET, PGC_S_DATABASE, false);
+			ProcessGUCArray(a, PGC_SUSET, PGC_S_DATABASE, GUC_ACTION_SET);
 		}
 	}
 

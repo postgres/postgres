@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.51 2007/09/10 00:57:21 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.52 2007/09/11 00:06:42 tgl Exp $
  */
 
 %{
@@ -231,7 +231,7 @@ ProcessConfigFile(GucContext context)
 		}
 
 		if (!set_config_option(item->name, item->value, context,
-							   PGC_S_FILE, false, false))
+							   PGC_S_FILE, GUC_ACTION_SET, false))
 			goto cleanup_list;
 	}
 
@@ -264,24 +264,21 @@ ProcessConfigFile(GucContext context)
 
 		/*
 		 * Reset any "file" sources to "default", else set_config_option
-		 * will not override those settings.  tentative_source should
-		 * never be "file".
+		 * will not override those settings.
 		 */
 		if (gconf->reset_source == PGC_S_FILE)
 			gconf->reset_source = PGC_S_DEFAULT;
-		Assert(gconf->tentative_source != PGC_S_FILE);
 		if (gconf->source == PGC_S_FILE)
 			gconf->source = PGC_S_DEFAULT;
 		for (stack = gconf->stack; stack; stack = stack->prev)
 		{
-			Assert(stack->tentative_source != PGC_S_FILE);
 			if (stack->source == PGC_S_FILE)
 				stack->source = PGC_S_DEFAULT;
 		}
 
 		/* Now we can re-apply the wired-in default */
 		set_config_option(gconf->name, NULL, context, PGC_S_DEFAULT,
-						  false, true);
+						  GUC_ACTION_SET, true);
 	}
 
 	/*
@@ -289,25 +286,27 @@ ProcessConfigFile(GucContext context)
 	 * is a no-op except in the case where one of these had been in the
 	 * config file and is now removed.  PGC_S_ENV_VAR will override the
 	 * wired-in default we just applied, but cannot override any other source.
-	 * PGPORT can be ignored, because it cannot be changed without restart.
+	 *
 	 * Keep this list in sync with InitializeGUCOptions()!
+	 * PGPORT can be ignored, because it cannot be changed without restart.
+	 * We assume rlimit hasn't changed, either.
 	 */
 	envvar = getenv("PGDATESTYLE");
 	if (envvar != NULL)
 		set_config_option("datestyle", envvar, PGC_POSTMASTER,
-						  PGC_S_ENV_VAR, false, true);
+						  PGC_S_ENV_VAR, GUC_ACTION_SET, true);
 
 	envvar = getenv("PGCLIENTENCODING");
 	if (envvar != NULL)
 		set_config_option("client_encoding", envvar, PGC_POSTMASTER,
-						  PGC_S_ENV_VAR, false, true);
+						  PGC_S_ENV_VAR, GUC_ACTION_SET, true);
 
 
 	/* If we got here all the options checked out okay, so apply them. */
 	for (item = head; item; item = item->next)
 	{
 		set_config_option(item->name, item->value, context,
-						  PGC_S_FILE, false, true);
+						  PGC_S_FILE, GUC_ACTION_SET, true);
 	}
 
  cleanup_list:

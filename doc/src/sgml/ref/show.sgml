@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.42 2006/09/16 00:30:20 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.43 2007/09/11 00:06:41 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -36,7 +36,7 @@ SHOW ALL
    the <envar>PGOPTIONS</envar> environmental variable (when using
    <application>libpq</> or a <application>libpq</>-based
    application), or through command-line flags when starting the
-   <command>postgres</command>.  See <xref
+   <command>postgres</command> server.  See <xref
    linkend="runtime-config"> for details.
   </para>
  </refsect1>
@@ -130,7 +130,11 @@ SHOW ALL
 
   <para>
    The function <function>current_setting</function> produces
-   equivalent output. See <xref linkend="functions-admin">.
+   equivalent output; see <xref linkend="functions-admin">.
+   Also, the
+   <link linkend="view-pg-settings"><structname>pg_settings</structname></link>
+   system view produces the same information.
+
   </para>
  </refsect1>
 

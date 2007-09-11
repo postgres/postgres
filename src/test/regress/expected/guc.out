@@ -352,6 +352,85 @@ SELECT '2006-08-13 12:34:56'::timestamptz;
  2006-08-13 12:34:56-07
 (1 row)
 
+-- SET LOCAL persists through RELEASE (which was not true in 8.0-8.2)
+BEGIN;
+SHOW vacuum_cost_delay;
+ vacuum_cost_delay 
+-------------------
+ 400ms
+(1 row)
+
+SHOW datestyle;
+ DateStyle 
+-----------
+ ISO, YMD
+(1 row)
+
+SELECT '2006-08-13 12:34:56'::timestamptz;
+      timestamptz       
+------------------------
+ 2006-08-13 12:34:56-07
+(1 row)
+
+SAVEPOINT sp;
+SET LOCAL vacuum_cost_delay TO 300;
+SHOW vacuum_cost_delay;
+ vacuum_cost_delay 
+-------------------
+ 300ms
+(1 row)
+
+SET LOCAL datestyle = 'Postgres, MDY';
+SHOW datestyle;
+   DateStyle   
+---------------
+ Postgres, MDY
+(1 row)
+
+SELECT '2006-08-13 12:34:56'::timestamptz;
+         timestamptz          
+------------------------------
+ Sun Aug 13 12:34:56 2006 PDT
+(1 row)
+
+RELEASE SAVEPOINT sp;
+SHOW vacuum_cost_delay;
+ vacuum_cost_delay 
+-------------------
+ 300ms
+(1 row)
+
+SHOW datestyle;
+   DateStyle   
+---------------
+ Postgres, MDY
+(1 row)
+
+SELECT '2006-08-13 12:34:56'::timestamptz;
+         timestamptz          
+------------------------------
+ Sun Aug 13 12:34:56 2006 PDT
+(1 row)
+
+ROLLBACK;
+SHOW vacuum_cost_delay;
+ vacuum_cost_delay 
+-------------------
+ 400ms
+(1 row)
+
+SHOW datestyle;
+ DateStyle 
+-----------
+ ISO, YMD
+(1 row)
+
+SELECT '2006-08-13 12:34:56'::timestamptz;
+      timestamptz       
+------------------------
+ 2006-08-13 12:34:56-07
+(1 row)
+
 -- SET followed by SET LOCAL
 BEGIN;
 SET vacuum_cost_delay TO 400;
@@ -556,5 +635,67 @@ select report_guc('regex_flavor'), current_setting('regex_flavor');
  report_guc | current_setting 
 ------------+-----------------
  advanced   | advanced
+(1 row)
+
+-- SET LOCAL is restricted by a function SET option
+create or replace function myfunc(int) returns text as $$
+begin
+  set local regex_flavor = extended;
+  return current_setting('regex_flavor');
+end $$
+language plpgsql
+set regex_flavor = basic;
+select myfunc(0), current_setting('regex_flavor');
+  myfunc  | current_setting 
+----------+-----------------
+ extended | advanced
+(1 row)
+
+alter function myfunc(int) reset all;
+select myfunc(0), current_setting('regex_flavor');
+  myfunc  | current_setting 
+----------+-----------------
+ extended | extended
+(1 row)
+
+set regex_flavor = advanced;
+-- but SET isn't
+create or replace function myfunc(int) returns text as $$
+begin
+  set regex_flavor = extended;
+  return current_setting('regex_flavor');
+end $$
+language plpgsql
+set regex_flavor = basic;
+select myfunc(0), current_setting('regex_flavor');
+  myfunc  | current_setting 
+----------+-----------------
+ extended | extended
+(1 row)
+
+set regex_flavor = advanced;
+-- it should roll back on error, though
+create or replace function myfunc(int) returns text as $$
+begin
+  set regex_flavor = extended;
+  perform 1/$1;
+  return current_setting('regex_flavor');
+end $$
+language plpgsql
+set regex_flavor = basic;
+select myfunc(0);
+ERROR:  division by zero
+CONTEXT:  SQL statement "SELECT  1/ $1 "
+PL/pgSQL function "myfunc" line 3 at PERFORM
+select current_setting('regex_flavor');
+ current_setting 
+-----------------
+ advanced
+(1 row)
+
+select myfunc(1), current_setting('regex_flavor');
+  myfunc  | current_setting 
+----------+-----------------
+ extended | extended
 (1 row)
 

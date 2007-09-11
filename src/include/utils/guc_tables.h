@@ -7,7 +7,7 @@
  *
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.34 2007/09/10 00:57:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/include/utils/guc_tables.h,v 1.35 2007/09/11 00:06:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,18 +79,27 @@ enum config_group
 };
 
 /*
- * Stack entry for saving the state of a variable prior to the current
- * transaction
+ * Stack entry for saving the state a variable had prior to an uncommitted
+ * transactional change
  */
+typedef enum
+{
+	/* This is almost GucAction, but we need a fourth state for SET+LOCAL */
+	GUC_SAVE,					/* entry caused by function SET option */
+	GUC_SET,					/* entry caused by plain SET command */
+	GUC_LOCAL,					/* entry caused by SET LOCAL command */
+	GUC_SET_LOCAL				/* entry caused by SET then SET LOCAL */
+} GucStackState;
+
 typedef struct guc_stack
 {
 	struct guc_stack *prev;		/* previous stack item, if any */
-	int			nest_level;		/* nesting depth of cur transaction */
-	int			status;			/* previous status bits, see below */
-	GucSource	tentative_source;		/* source of the tentative_value */
-	GucSource	source;			/* source of the actual value */
-	union config_var_value tentative_val;		/* previous tentative val */
-	union config_var_value value;		/* previous actual value */
+	int			nest_level;		/* nesting depth at which we made entry */
+	GucStackState state;		/* see enum above */
+	GucSource	source;			/* source of the prior value */
+	union config_var_value prior;	/* previous value of variable */
+	union config_var_value masked;	/* SET value in a GUC_SET_LOCAL entry */
+	/* masked value's source must be PGC_S_SESSION, so no need to store it */
 } GucStack;
 
 /*
@@ -113,9 +122,8 @@ struct config_generic
 	enum config_type vartype;	/* type of variable (set only at startup) */
 	int			status;			/* status bits, see below */
 	GucSource	reset_source;	/* source of the reset_value */
-	GucSource	tentative_source;		/* source of the tentative_value */
 	GucSource	source;			/* source of the current actual value */
-	GucStack   *stack;			/* stacked outside-of-transaction states */
+	GucStack   *stack;			/* stacked prior values */
 };
 
 /* bit values in flags field */
@@ -141,10 +149,7 @@ struct config_generic
 #define GUC_UNIT_TIME			0x7000	/* mask for MS, S, MIN */
 
 /* bit values in status field */
-#define GUC_HAVE_TENTATIVE	0x0001		/* tentative value is defined */
-#define GUC_HAVE_LOCAL		0x0002		/* a SET LOCAL has been executed */
-#define GUC_HAVE_STACK		0x0004		/* we have stacked prior value(s) */
-#define GUC_IS_IN_FILE		0x0008		/* found it in config file */
+#define GUC_IS_IN_FILE		0x0001		/* found it in config file */
 /*
  * Caution: the GUC_IS_IN_FILE bit is transient state for ProcessConfigFile.
  * Do not assume that its value represents useful information elsewhere.
@@ -163,7 +168,6 @@ struct config_bool
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	bool		reset_val;
-	bool		tentative_val;
 };
 
 struct config_int
@@ -178,7 +182,6 @@ struct config_int
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	int			reset_val;
-	int			tentative_val;
 };
 
 struct config_real
@@ -193,7 +196,6 @@ struct config_real
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	double		reset_val;
-	double		tentative_val;
 };
 
 struct config_string
@@ -206,7 +208,6 @@ struct config_string
 	GucShowHook show_hook;
 	/* variable fields, initialized at runtime: */
 	char	   *reset_val;
-	char	   *tentative_val;
 };
 
 /* constant tables corresponding to enums above and in guc.h */
