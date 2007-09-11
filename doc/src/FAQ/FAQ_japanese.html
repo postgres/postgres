@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Tue Mar 20 13:43:40 EDT 2007</p>
+<p>原文最終更新日:		Last updated: Tue Apr 24 17:29:38 EDT 2007</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -261,7 +261,7 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 
 <h4 id="item1.6">1.6</a>) 最新のリリースはどれですか？</h4>
 
-    <p>PostgreSQL の最新版はバージョン 8.2.3 です。</p>
+    <p>PostgreSQL の最新版はバージョン 8.2.4 です。</p>
     <p>我々は、1年毎にメジャーリリースを、数ヵ月ごとのマイナーリリースを
     行なうことを計画しています。</p>
 
@@ -704,8 +704,12 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 
 <h4 id="item3.6">3.6</a>)  PostgreSQLのアップグレードの手順はどうなりますか？</h4>
 
-    <p>バージョン番号付けの方針については、<a
-    href="http://www.postgresql.org/support/versioning">http://www.postgresql.org/support/versioning</a>
+    <p>バージョン番号付けの方針について、更新全般についての解説は<a
+    href="http://www.postgresql.org/support/versioning">
+    http://www.postgresql.org/support/versioning</a> を、
+    そして、詳細についての説明は <a 
+    href="http://www.postgresql.org/docs/current/static/install-upgrading.html">
+    http://www.postgresql.org/docs/current/static/install-upgrading.html</a>
     をご覧ください。
     </p>
 
@@ -740,9 +744,9 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     れは間違いです。ECC RAM、SCSI、および、高品質マザーボードは、安いハー
     ドウェアに比べると、より信頼性が高く、より性能も良いのです。
     PostgreSQL はほとんどのハードウェアで稼働しますが、信頼性や性能が重
-    要な場合は、ハードウェアのオプションを研究することが賢明です。メーリ
-    ングリストでもハードウェアオプションとトレードオフについて議論するこ
-    とができます。</p>
+    要な場合は、使用中のハードウェアのオプションについて調査することが
+    賢明です。我々のメーリングリスト上でもハードウェアオプションのトレー
+    ドオフについて議論することができます。</p>
 
 <hr />
 
@@ -1289,13 +1293,13 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2007年03月25日
+  最終更新日:	2007年04月25日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
 
 		田仲 稔(<a href="mailto:Tanaka.Minoru at keiken.co.jp">Minoru TANAKA &lt;Tanaka.Minoru at keiken.co.jp&gt;</a>)
-		石井 達夫(<a href="mailto:t-ishii at sra.co.jp">Tatsuo ISHII &lt;t-ishii at sra.co.jp&gt;</a>)
+		石井 達夫(<a href="mailto:ishii at sraoss.co.jp">Tatsuo ISHII &lt;ishii at sraoss.co.jp&gt;</a>)
 		齊藤 知人(<a href="mailto:tomos at elelab.nsc.co.jp">Tomohito SAITOH &lt;tomos at elelab.nsc.co.jp&gt;</a>)
 		馬場  肇(<a href="mailto:baba at kusastro.kyoto-u.ac.jp">Hajime BABA &lt;baba at kusastro.kyoto-u.ac.jp&gt;</a>)
 		岡本 一幸(<a href="mailto:kaz-okamoto at hitachi-system.co.jp">Kazuyuki OKAMOTO &lt;kaz-okamoto at hitachi-system.co.jp&gt;</a>)
@@ -1309,7 +1313,6 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 		神谷 英孝(<a href="mailto:hkamiya at catvmics.ne.jp">Hidetaka KAMIYA &lt;hkamiya at catvmics.ne.jp&gt;</a>)
 		菅原 敦(<a href="mailto:asugawar at f3.dion.ne.jp">Atsushi SUGAWARA &lt;asugawar at f3.dion.ne.jp&gt;</a>)
 		稲葉 香理(<a href="mailto:i-kaori at sra.co.jp">Kaori Inaba &lt;i-kaori at sra.co.jp&gt;</a>)
-		石井 達夫(<a href="mailto:t-ishii at sra.co.jp">Tatsuo Ishii &lt;t-ishii at sra.co.jp&gt;</a>)
 
   をはじめ、ポストグレスに関する話題豊富な日本語PostgreSQLメーリングリスト、
   和訳のきっかけを作ってくれたり、いつもチェックをしてくれる
@@ -1325,7 +1328,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 	<a
   href="http://www.PostgreSQL.jp/wg/jpugdoc/">http://www.PostgreSQL.jp/wg/jpugdoc/</a> 「JPUG文書・書籍関連分科会」
 	<a href="http://www.linux.or.jp/JF/JFdocs/INDEX-database.html">http://www.linux.or.jp/JF/JFdocs/INDEX-database.html</a> 「Linux JFプロジェクト」
-	<a   href="http://www.rccm.co.jp/~juk/pgsql/">http://www.rccm.co.jp/~juk/pgsql/</a> 「PostgreSQL Notes for Japanese」（翻訳者ページ）
+	<a   href="http://www.linet.gr.jp/~juk/pgsql/">http://www.linet.gr.jp/~juk/pgsql/</a> 「PostgreSQL Notes for Japanese」（翻訳者ページ）
 
   なお、この和訳に関するご意見・ご質問は(<a href="mailto:juk at
   PostgreSQL.jp">juk at PostgreSQL.jp</a>)までお寄せください。

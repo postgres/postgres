@@ -49,10 +49,7 @@ Resources
 
    There are several resources that helped us complete this port:
      * PeerDirect port of PostgreSQL 7.2 to Win32
-       (ftp://momjian.postgresql.org/pub/postgresql/win32/PeerDirect)
      * CONNX Win32 signal
-       code(ftp://momjian.postgresql.org/pub/postgresql/win32/CONNX)
      * SRA port of PostgreSQL to Win32 (unfortunately, this is not
-       publically available because the threaded portion is proprietary)
-     * CHM help files
-       (http://www.pgadmin.org/snapshots/help/en_US/pgadmin3.chm)
+     * pgAdmin3 CHM help files
+
