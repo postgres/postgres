@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.43 2007/09/11 03:28:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.44 2007/09/11 08:51:22 teodor Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -415,8 +415,7 @@ SELECT
             ( SELECT mapdict, pg_catalog.ts_lexize(mapdict, parse.token) AS lex
               FROM pg_catalog.pg_ts_config_map AS m
               WHERE m.mapcfg = $1 AND m.maptokentype = parse.tokid
-              ORDER BY m.mapseqno ) dl
-        WHERE dl.lex IS NOT NULL
+              ORDER BY pg_catalog.ts_lexize(mapdict, parse.token) IS NULL, m.mapseqno ) dl
         LIMIT 1
     ) AS "Lexized token"
 FROM pg_catalog.ts_parse(
