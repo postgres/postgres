@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.503 2007/05/03 15:47:48 alvherre Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.504 2007/09/11 17:19:49 momjian Exp $ -->
 <!--
 
 Typical markup:
@@ -34,6 +34,149 @@ do it for earlier branch release files.
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-8-2-5">
+   <title>Release 8.2.5</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-09-17</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.2.4.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.2.5</title>
+
+    <para>
+     A dump/restore is not required for those running 8.2.X.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Fix for domains of domains (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix excessively <acronym>SSL</> log error messages (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix error where rare <literal>OUTER JOIN</> cases produced incorrect results (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow the <type>interval</> data type to accept values consisting only of
+       milliseconds or microseconds (Neil)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Win32 socket and semaphore improvements (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fixes for <acronym>GIN</> indexes used by <filename>/contrib/tsearch2</> (Teodor)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow timzone names to appear before the year in <type>timestamp</> values (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix <application>syslog</> so log messages are never partially written (Tom, Andrew)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <command>pg_ctl -w</> to work on Win32 service mode (Dave Page)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only password
+       authentication, as a security measure (Joe)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix <function>stddev_pop(numeric)</> and <function>var_pop(numeric)</> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix memory allocation bug when using <application>MIT Kerberos</> on Win32 (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Suppress timezone name (<literal>%Z</>) in log timestamps on Win32 because of
+       possible improperly encoded names (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Restrict <filename>/contrib/pgstattuple</> functions to superusers, for security reasons (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Speed up rtree index additions (Teodor)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Prevent <command>REINDEX</> and <command>CLUSTER</> from hanging dues to avoid temporary tables
+       from other sessions (Alvaro)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Update the time zone database rules, particularly New Zealand's upcoming changes (Tom)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-8-2-4">
    <title>Release 8.2.4</title>
@@ -3061,6 +3204,96 @@ do it for earlier branch release files.
      </itemizedlist>
 
     </sect3>
+
+   </sect2>
+  </sect1>
+
+  <sect1 id="release-8-1-10">
+   <title>Release 8.1.10</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-09-17</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.1.9.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.1.10</title>
+
+    <para>
+     A dump/restore is not required for those running 8.1.X.
+     However, if you are upgrading from a version earlier than 8.1.2,
+     see the release notes for 8.1.2.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Fix excessively <acronym>SSL</> log error messages (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow the <type>interval</> data type to accept values consisting only of
+       milliseconds or microseconds (Neil)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Win32 socket improvements (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix <application>syslog</> so log messages are never partially written (Tom, Andrew)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only password
+       authentication, as a security measure (Joe)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Suppress timezone name (<literal>%Z</>) in log timestamps on Win32 because of
+       possible improperly encoded names (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Speed up rtree index additions (Teodor)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Update the time zone database rules, particularly New Zealand's upcoming changes (Tom)
+      </para>
+     </listitem>
+
+    </itemizedlist>
 
    </sect2>
   </sect1>
@@ -6100,6 +6333,83 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
      </itemizedlist>
     </sect3>
+
+   </sect2>
+  </sect1>
+
+  <sect1 id="release-8-0-14">
+   <title>Release 8.0.14</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-09-17</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.13.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.14</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.6, see the release
+     notes for 8.0.6.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Fix excessively <acronym>SSL</> log error messages (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Win32 socket improvements (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix <application>syslog</> so log messages are never partially written (Tom, Andrew)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only password
+       authentication, as a security measure (Joe)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Suppress timezone name (<literal>%Z</>) in log timestamps on Win32 because of
+       possible improperly encoded names (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Update the time zone database rules, particularly New Zealand's upcoming changes (Tom)
+      </para>
+     </listitem>
+
+    </itemizedlist>
 
    </sect2>
   </sect1>
@@ -9613,6 +9923,58 @@ typedefs (Michael)</para></listitem>
    </sect2>
   </sect1>
 
+  <sect1 id="release-7-4-18">
+   <title>Release 7.4.18</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-09-17</simpara>
+   </note>
+
+   <para>
+    This release contains fixes from 7.4.17.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.18</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.11, see the release
+     notes for 7.4.11.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Fix excessively <acronym>SSL</> log error messages (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only password
+       authentication, as a security measure (Joe)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-4-17">
    <title>Release 7.4.17</title>
 
@@ -12798,6 +13160,52 @@ DROP SCHEMA information_schema CASCADE;
   </sect3>
   </sect2>
  </sect1>
+
+  <sect1 id="release-7-3-20">
+   <title>Release 7.3.20</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-09-17</simpara>
+   </note>
+
+   <para>
+    This release contains fixes from 7.3.19.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.20</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only password
+       authentication, as a security measure (Joe)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-7-3-19">
    <title>Release 7.3.19</title>
