@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.42 2007/09/05 18:10:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.43 2007/09/11 03:28:05 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -347,7 +347,7 @@ CREATE VIEW pg_stat_activity AS
             U.rolname AS usename, 
             pg_stat_get_backend_activity(S.backendid) AS current_query,
             pg_stat_get_backend_waiting(S.backendid) AS waiting,
-            pg_stat_get_backend_txn_start(S.backendid) AS txn_start,
+            pg_stat_get_backend_xact_start(S.backendid) AS xact_start,
             pg_stat_get_backend_activity_start(S.backendid) AS query_start,
             pg_stat_get_backend_start(S.backendid) AS backend_start,
             pg_stat_get_backend_client_addr(S.backendid) AS client_addr,

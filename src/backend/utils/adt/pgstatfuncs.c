@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.43 2007/06/28 00:02:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.44 2007/09/11 03:28:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ extern Datum pg_stat_get_backend_userid(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_activity(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_waiting(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS);
-extern Datum pg_stat_get_backend_txn_start(PG_FUNCTION_ARGS);
+extern Datum pg_stat_get_backend_xact_start(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_start(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_client_addr(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_backend_client_port(PG_FUNCTION_ARGS);
@@ -464,7 +464,7 @@ pg_stat_get_backend_activity_start(PG_FUNCTION_ARGS)
 
 
 Datum
-pg_stat_get_backend_txn_start(PG_FUNCTION_ARGS)
+pg_stat_get_backend_xact_start(PG_FUNCTION_ARGS)
 {
 	int32		beid = PG_GETARG_INT32(0);
 	TimestampTz result;
@@ -476,7 +476,7 @@ pg_stat_get_backend_txn_start(PG_FUNCTION_ARGS)
 	if (!superuser() && beentry->st_userid != GetUserId())
 		PG_RETURN_NULL();
 
-	result = beentry->st_txn_start_timestamp;
+	result = beentry->st_xact_start_timestamp;
 
 	if (result == 0)			/* not in a transaction */
 		PG_RETURN_NULL();
