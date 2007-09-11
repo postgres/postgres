@@ -29,7 +29,7 @@ typedef struct SPNode
 	SPNodeData	data[1];
 }	SPNode;
 
-#define SPNHRDSZ	(sizeof(uint32))
+#define SPNHDRSZ	(offsetof(SPNode,data))
 
 
 typedef struct spell_struct
@@ -93,7 +93,7 @@ typedef struct AffixNode
 	AffixNodeData data[1];
 }	AffixNode;
 
-#define ANHRDSZ		   (sizeof(uint32))
+#define ANHRDSZ		   (offsetof(AffixNode, data))
 
 typedef struct
 {
