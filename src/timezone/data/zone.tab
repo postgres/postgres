@@ -1,4 +1,4 @@
-# @(#)zone.tab	8.10
+# @(#)zone.tab	8.11
 #
 # TZ zone descriptions
 #
@@ -39,7 +39,7 @@ AQ	-6736+06253	Antarctica/Mawson	Mawson Station, Holme Bay
 AQ	-6835+07758	Antarctica/Davis	Davis Station, Vestfold Hills
 AQ	-6617+11031	Antarctica/Casey	Casey Station, Bailey Peninsula
 AQ	-7824+10654	Antarctica/Vostok	Vostok Station, S Magnetic Pole
-AQ	-6640+14001	Antarctica/DumontDUrville	Dumont-d'Urville Base, Terre Adelie
+AQ	-6640+14001	Antarctica/DumontDUrville	Dumont-d'Urville Station, Terre Adelie
 AQ	-690022+0393524	Antarctica/Syowa	Syowa Station, E Ongul I
 AR	-3436-05827	America/Argentina/Buenos_Aires	Buenos Aires (BA, CF)
 AR	-3124-06411	America/Argentina/Cordoba	most locations (CB, CC, CN, ER, FM, LP, MN, NQ, RN, SA, SE, SF, SL)
@@ -65,7 +65,7 @@ AU	-3455+13835	Australia/Adelaide	South Australia
 AU	-1228+13050	Australia/Darwin	Northern Territory
 AU	-3157+11551	Australia/Perth	Western Australia - most locations
 AU	-3143+12852	Australia/Eucla	Western Australia - Eucla area
-AW	+1230-06858	America/Aruba
+AW	+1230-06958	America/Aruba
 AX	+6006+01957	Europe/Mariehamn
 AZ	+4023+04951	Asia/Baku
 BA	+4352+01825	Europe/Sarajevo
@@ -117,10 +117,10 @@ CA	+484531-0913718	America/Atikokan	Eastern Standard Time - Atikokan, Ontario an
 CA	+624900-0920459	America/Rankin_Inlet	Central Time - central Nunavut
 CA	+4953-09709	America/Winnipeg	Central Time - Manitoba & west Ontario
 CA	+4843-09434	America/Rainy_River	Central Time - Rainy River & Fort Frances, Ontario
-CA	+6903-10505	America/Cambridge_Bay	Central Time - west Nunavut
 CA	+5024-10439	America/Regina	Central Standard Time - Saskatchewan - most locations
 CA	+5017-10750	America/Swift_Current	Central Standard Time - Saskatchewan - midwest
 CA	+5333-11328	America/Edmonton	Mountain Time - Alberta, east British Columbia & west Saskatchewan
+CA	+690650-1050310	America/Cambridge_Bay	Mountain Time - west Nunavut
 CA	+6227-11421	America/Yellowknife	Mountain Time - central Northwest Territories
 CA	+682059-1334300	America/Inuvik	Mountain Time - west Northwest Territories
 CA	+5946-12014	America/Dawson_Creek	Mountain Standard Time - Dawson Creek & Fort Saint John, British Columbia
@@ -175,7 +175,7 @@ FM	+0519+16259	Pacific/Kosrae	Kosrae
 FO	+6201-00646	Atlantic/Faroe
 FR	+4852+00220	Europe/Paris
 GA	+0023+00927	Africa/Libreville
-GB	+512830-0001845	Europe/London
+GB	+513030-0000731	Europe/London
 GD	+1203-06145	America/Grenada
 GE	+4143+04449	Asia/Tbilisi
 GF	+0456-05220	America/Cayenne
@@ -369,10 +369,10 @@ TW	+2503+12130	Asia/Taipei
 TZ	-0648+03917	Africa/Dar_es_Salaam
 UA	+5026+03031	Europe/Kiev	most locations
 UA	+4837+02218	Europe/Uzhgorod	Ruthenia
-UA	+4750+03510	Europe/Zaporozhye	Zaporozh'ye, E Lugansk
+UA	+4750+03510	Europe/Zaporozhye	Zaporozh'ye, E Lugansk / Zaporizhia, E Luhansk
 UA	+4457+03406	Europe/Simferopol	central Crimea
 UG	+0019+03225	Africa/Kampala
-UM	+1700-16830	Pacific/Johnston	Johnston Atoll
+UM	+1645-16931	Pacific/Johnston	Johnston Atoll
 UM	+2813-17722	Pacific/Midway	Midway Islands
 UM	+1917+16637	Pacific/Wake	Wake Island
 US	+404251-0740023	America/New_York	Eastern Time
@@ -380,12 +380,13 @@ US	+421953-0830245	America/Detroit	Eastern Time - Michigan - most locations
 US	+381515-0854534	America/Kentucky/Louisville	Eastern Time - Kentucky - Louisville area
 US	+364947-0845057	America/Kentucky/Monticello	Eastern Time - Kentucky - Wayne County
 US	+394606-0860929	America/Indiana/Indianapolis	Eastern Time - Indiana - most locations
+US	+384038-0873143	America/Indiana/Vincennes	Eastern Time - Indiana - Daviess, Dubois, Knox & Martin Counties
 US	+411745-0863730	America/Indiana/Knox	Eastern Time - Indiana - Starke County
 US	+410305-0863611	America/Indiana/Winamac	Eastern Time - Indiana - Pulaski County
 US	+382232-0862041	America/Indiana/Marengo	Eastern Time - Indiana - Crawford County
 US	+384452-0850402	America/Indiana/Vevay	Eastern Time - Indiana - Switzerland County
 US	+415100-0873900	America/Chicago	Central Time
-US	+384038-0873143	America/Indiana/Vincennes	Central Time - Indiana - Daviess, Dubois, Knox, Martin & Perry Counties
+US	+375711-0864541	America/Indiana/Tell_City	Central Time - Indiana - Perry County
 US	+382931-0871643	America/Indiana/Petersburg	Central Time - Indiana - Pike County
 US	+450628-0873651	America/Menominee	Central Time - Michigan - Dickinson, Gogebic, Iron & Menominee Counties
 US	+470659-1011757	America/North_Dakota/Center	Central Time - North Dakota - Oliver County

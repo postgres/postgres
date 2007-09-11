@@ -1,4 +1,4 @@
-# @(#)antarctica	8.3
+# @(#)antarctica	8.4
 # <pre>
 
 # From Paul Eggert (1999-11-15):
@@ -191,10 +191,12 @@ Zone Antarctica/Syowa	0	-	zzz	1957 Jan 29
 Rule	NZAQ	1974	only	-	Nov	 3	2:00s	1:00	D
 Rule	NZAQ	1975	1988	-	Oct	lastSun	2:00s	1:00	D
 Rule	NZAQ	1989	only	-	Oct	 8	2:00s	1:00	D
-Rule	NZAQ	1990	max	-	Oct	Sun>=1	2:00s	1:00	D
+Rule	NZAQ	1990	2006	-	Oct	Sun>=1	2:00s	1:00	D
 Rule	NZAQ	1975	only	-	Feb	23	2:00s	0	S
 Rule	NZAQ	1976	1989	-	Mar	Sun>=1	2:00s	0	S
-Rule	NZAQ	1990	max	-	Mar	Sun>=15	2:00s	0	S
+Rule	NZAQ	1990	2007	-	Mar	Sun>=15	2:00s	0	S
+Rule	NZAQ	2007	max	-	Sep	lastSun	2:00s	1:00	D
+Rule	NZAQ	2008	max	-	Apr	Sun>=1	2:00s	0	S
 
 # Norway - territories
 # Bouvet (never inhabited)
