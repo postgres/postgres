@@ -1,9 +1,116 @@
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.37 2007/09/11 17:19:25 momjian Exp $ -->
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.36 2007/04/20 03:27:54 tgl Exp $
+
+Typical markup:
+
+&<>                             use & escapes
+[A-Z][A-Z ]+[A-Z]               <command>
+[A-Za-z_][A-Za-z0-9_]+()        <function>
+[A-Za-z_]/[A-Za-z_]+            <filename>
+PostgreSQL                      <productname>
+pg_[A-Za-z0-9_]                 <application>
+[A-Z][A-Z]                      <type>, <envar>, <literal>
+
+non-ASCII characters            convert to HTML4 entity (&) escapes
+
+        official:      http://www.w3.org/TR/html4/sgml/entities.html
+        one page:      http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
+        other lists:   http://www.zipcon.net/~swhite/docs/computers/browsers/entities.html
+                       http://www.zipcon.net/~swhite/docs/computers/browsers/entities_page.html
+                       http://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references
+
+        we cannot use UTF8 because SGML Docbook
+        does not support it
+          http://www.pemberley.com/janeinfo/latin1.html#latexta
+
+wrap long lines
+
+For new features, add links to the documentation sections.  Use </link>
+so that perl can remove it so HISTORY.html can be created with no
+links to the main documentation.  This was added only in 8.2, so don't
+do it for earlier branch release files.
+
 -->
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-8-0-14">
+   <title>Release 8.0.14</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-09-17</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 8.0.13.
+   </para>
+
+   <sect2>
+    <title>Migration to version 8.0.14</title>
+
+    <para>
+     A dump/restore is not required for those running 8.0.X.  However,
+     if you are upgrading from a version earlier than 8.0.6, see the release
+     notes for 8.0.6.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Fix excessively <acronym>SSL</> log error messages (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Win32 socket improvements (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix <application>syslog</> so log messages are never partially written (Tom, Andrew)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only password
+       authentication, as a security measure (Joe)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Suppress timezone name (<literal>%Z</>) in log timestamps on Win32 because of
+       possible improperly encoded names (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Update the time zone database rules, particularly New Zealand's upcoming changes (Tom)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-8-0-13">
    <title>Release 8.0.13</title>
@@ -188,7 +295,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.36 2007/04/20 03:27:54 tg
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-8-0-10">
    <title>Release 8.0.10</title>
 
@@ -271,11 +378,13 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.36 2007/04/20 03:27:54 tg
       <para>
        <function>to_number()</> and <function>to_char(numeric)</>
        are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
-       new <application>initdb</> installs (Tom)
+       new <link linkend="APP-INITDB"><application>initdb</></link>
+       installs (Tom)
       </para>
 
       <para>
-       This is because <varname>lc_numeric</> can potentially
+       This is because <link
+       linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
        change the output of these functions.
       </para>
      </listitem>
@@ -305,7 +414,7 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.36 2007/04/20 03:27:54 tg
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-8-0-9">
    <title>Release 8.0.9</title>
 
@@ -359,7 +468,7 @@ Wieland)</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-8-0-8">
    <title>Release 8.0.8</title>
 
@@ -384,7 +493,7 @@ Wieland)</para></listitem>
 
     <para>
      Full security against the SQL-injection attacks described in
-     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     CVE-2006-2313 and CVE-2006-2314 might require changes in application
      code.  If you have applications that embed untrustworthy strings
      into SQL commands, you should examine them as soon as possible to
      ensure that they are using recommended escaping techniques.  In
@@ -416,7 +525,7 @@ literals.  By default, <literal>\'</> is rejected only when
 GB18030, or UHC), which is the scenario in which SQL injection is possible.
 A new configuration parameter <varname>backslash_quote</> is available to
 adjust this behavior when needed.  Note that full security against
-CVE-2006-2314 may require client-side changes; the purpose of
+CVE-2006-2314 might require client-side changes; the purpose of
 <varname>backslash_quote</> is in part to make it obvious that insecure
 clients are insecure.
 </para></listitem>
@@ -471,7 +580,7 @@ Fuhr)</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-8-0-7">
    <title>Release 8.0.7</title>
 
@@ -496,7 +605,7 @@ Fuhr)</para></listitem>
 
    <sect2>
     <title>Changes</title>
-  
+
 <itemizedlist>
 
 <listitem><para>Fix potential crash in <command>SET
@@ -533,7 +642,7 @@ constraints in the proper order (Nakano Yoshihisa)</para></listitem>
 references to custom operators or operator classes (Tom)</para></listitem>
 
 <listitem><para>Allow <application>pg_restore</> to continue properly after a
-<command>COPY</> failure; formerly it tried to treat the remaining 
+<command>COPY</> failure; formerly it tried to treat the remaining
 <command>COPY</> data as SQL commands (Stephen Frost)</para></listitem>
 
 <listitem><para>Fix <application>pg_ctl</> <literal>unregister</> crash
@@ -568,7 +677,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-8-0-6">
    <title>Release 8.0.6</title>
 
@@ -596,7 +705,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
    <sect2>
     <title>Changes</title>
-  
+
 <itemizedlist>
 
 <listitem><para>Fix Windows code so that postmaster will continue rather
@@ -622,7 +731,7 @@ to ensure that <application>plperl</> won't change the locale later</para>
 <para>This fixes a problem that occurred if the <application>postmaster</> was
 started with environment variables specifying a different locale than what
 <application>initdb</> had been told.  Under these conditions, any use of
-<application>plperl</> was likely to lead to corrupt indexes.  You may need
+<application>plperl</> was likely to lead to corrupt indexes.  You might need
 <command>REINDEX</> to fix existing indexes on
 textual columns if this has happened to you.</para></listitem>
 
@@ -651,7 +760,7 @@ what's actually returned by the query (Joe)</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-8-0-5">
    <title>Release 8.0.5</title>
 
@@ -676,7 +785,7 @@ what's actually returned by the query (Joe)</para></listitem>
 
    <sect2>
     <title>Changes</title>
-  
+
 <itemizedlist>
 
 <listitem><para>Fix race condition in transaction log management</para>
@@ -731,7 +840,7 @@ to subquery results</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-8-0-4">
    <title>Release 8.0.4</title>
 
@@ -826,7 +935,7 @@ code</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-8-0-3">
    <title>Release 8.0.3</title>
 
@@ -873,7 +982,7 @@ code</para></listitem>
      It is strongly recommended that all installations repair these errors,
      either by initdb or by following the manual repair procedure given
      below.  The errors at least allow unprivileged database users to crash
-     their server process, and may allow unprivileged users to gain the
+     their server process, and might allow unprivileged users to gain the
      privileges of a database superuser.
     </para>
 
@@ -973,12 +1082,12 @@ data types</para></listitem>
     <title>Changes</title>
 
 <itemizedlist>
-<listitem><para>Increment the major version number of all interface 
+<listitem><para>Increment the major version number of all interface
  libraries (Bruce)</para>
 <para>
- This should have been done in 8.0.0.  It is required so 7.4.X versions 
+ This should have been done in 8.0.0.  It is required so 7.4.X versions
  of PostgreSQL client applications, like <application>psql</>,
- can be used on the same machine as 8.0.X applications.  This might require 
+ can be used on the same machine as 8.0.X applications.  This might require
  re-linking user applications that use these libraries.
 </para></listitem>
 <listitem><para>Add Windows-only <varname>wal_sync_method</> setting of
@@ -992,21 +1101,21 @@ data types</para></listitem>
 </para>
 </listitem>
 <listitem><para>Enable the <varname>wal_sync_method</> setting of
- <option>open_datasync</> on Windows, and make it the default for that 
+ <option>open_datasync</> on Windows, and make it the default for that
   platform (Magnus, Bruce)</para>
 <para>
  Because the default is no longer <option>fsync_writethrough</>,
  data loss is possible during a power failure if the disk drive has
- write caching enabled. To turn off the write cache on Windows, 
- from the <application>Device Manager</>, choose the drive properties, 
+ write caching enabled. To turn off the write cache on Windows,
+ from the <application>Device Manager</>, choose the drive properties,
  then <literal>Policies</>.
 </para>
 </listitem>
-<listitem><para>New cache management algorithm <acronym>2Q</> replaces 
+<listitem><para>New cache management algorithm <acronym>2Q</> replaces
  <acronym>ARC</> (Tom)</para>
 <para>
- This was done to avoid a pending US patent on <acronym>ARC</>.  The 
- <acronym>2Q</> code might be a few percentage points slower than 
+ This was done to avoid a pending US patent on <acronym>ARC</>.  The
+ <acronym>2Q</> code might be a few percentage points slower than
  <acronym>ARC</> for some work loads.  A better cache management algorithm
  will appear in 8.1.
 </para></listitem>
@@ -1030,9 +1139,9 @@ in plpython function bodies (Michael Fuhr)</para>
 </listitem>
 <listitem><para>Allow SPI cursors to handle utility commands that return rows,
 such as <command>EXPLAIN</> (Tom)</para></listitem>
-<listitem><para>Fix <command>CLUSTER</> failure after <command>ALTER TABLE 
+<listitem><para>Fix <command>CLUSTER</> failure after <command>ALTER TABLE
  SET WITHOUT OIDS</> (Tom)</para></listitem>
-<listitem><para>Reduce memory usage of <command>ALTER TABLE ADD COLUMN</> 
+<listitem><para>Reduce memory usage of <command>ALTER TABLE ADD COLUMN</>
  (Neil)</para></listitem>
 <listitem><para>Fix <command>ALTER LANGUAGE RENAME</> (Tom)</para></listitem>
 <listitem><para>Document the Windows-only <literal>register</> and
@@ -1052,7 +1161,7 @@ statistics collector</para>
  Windows event logger rather than standard error.
 </para></listitem>
 <listitem><para>Make Kerberos authentication work on Windows (Magnus)</para></listitem>
-<listitem><para>Allow <command>ALTER DATABASE RENAME</> by superusers 
+<listitem><para>Allow <command>ALTER DATABASE RENAME</> by superusers
  who aren't flagged as having CREATEDB privilege (Tom)</para></listitem>
 <listitem><para>Modify WAL log entries for <command>CREATE</> and
 <command>DROP DATABASE</> to not specify absolute paths (Tom)</para>
@@ -1060,22 +1169,22 @@ statistics collector</para>
  different database location.  Note that <command>CREATE TABLESPACE</> still
  poses a hazard in such situations.
 </para></listitem>
-<listitem><para>Fix crash from a backend exiting with an open transaction 
+<listitem><para>Fix crash from a backend exiting with an open transaction
  that created a table and opened a cursor on it (Tom)</para></listitem>
-<listitem><para>Fix <function>array_map()</> so it can call PL functions 
+<listitem><para>Fix <function>array_map()</> so it can call PL functions
  (Tom)</para></listitem>
 <listitem><para>Several <filename>contrib/tsearch2</> and
 <filename>contrib/btree_gist</> fixes (Teodor)
  </para></listitem>
-<listitem><para>Fix crash of some <filename>contrib/pgcrypto</> 
+<listitem><para>Fix crash of some <filename>contrib/pgcrypto</>
  functions on some platforms (Marko Kreen)</para></listitem>
-<listitem><para>Fix <filename>contrib/intagg</> for 64-bit platforms 
+<listitem><para>Fix <filename>contrib/intagg</> for 64-bit platforms
  (Tom)</para></listitem>
-<listitem><para>Fix ecpg bugs in parsing of <command>CREATE</> statement 
+<listitem><para>Fix ecpg bugs in parsing of <command>CREATE</> statement
  (Michael)</para></listitem>
-<listitem><para>Work around gcc bug on powerpc and amd64 causing problems in 
+<listitem><para>Work around gcc bug on powerpc and amd64 causing problems in
  ecpg (Christof Petig)</para></listitem>
-<listitem><para>Do not use locale-aware versions of <function>upper()</>, 
+<listitem><para>Do not use locale-aware versions of <function>upper()</>,
  <function>lower()</>, and <function>initcap()</> when the locale is
  <literal>C</> (Bruce)</para>
 <para>
@@ -1083,9 +1192,9 @@ statistics collector</para>
   for non-7-bit data when the locale is <literal>C</>.
 </para></listitem>
 <listitem><para>Fix <function>quote_ident()</> to quote names that match keywords (Tom)</para></listitem>
-<listitem><para>Fix <function>to_date()</> to behave reasonably when 
+<listitem><para>Fix <function>to_date()</> to behave reasonably when
  <literal>CC</> and <literal>YY</> fields are both used (Karel)</para></listitem>
-<listitem><para>Prevent <function>to_char(interval)</> from failing 
+<listitem><para>Prevent <function>to_char(interval)</> from failing
  when given a zero-month interval (Tom)</para></listitem>
 <listitem><para>Fix wrong week returned by <function>date_trunc('week')</>
 (Bruce)</para>
@@ -1174,10 +1283,10 @@ typedefs (Michael)</para></listitem>
     <title>Release date</title>
     <simpara>2005-01-19</simpara>
    </note>
- 
+
    <sect2>
     <title>Overview</title>
- 
+
     <para>
      Major changes in this release:
     </para>
@@ -1324,27 +1433,27 @@ typedefs (Michael)</para></listitem>
        <para>
         <command>COPY</command> can now read and write
         comma-separated-value files. It has the flexibility to
-        interpret non-standard quoting and separation characters too.
+        interpret nonstandard quoting and separation characters too.
        </para>
       </listitem>
      </varlistentry>
 
     </variablelist>
    </sect2>
- 
+
    <sect2>
     <title>Migration to version 8.0</title>
-                                       
+
     <para>
      A dump/restore using <application>pg_dump</application> is
      required for those wishing to migrate data from any previous
      release.
     </para>
-    
+
     <para>
      Observe the following incompatibilities:
     </para>
-    
+
     <itemizedlist>
 
      <listitem>
@@ -1369,7 +1478,7 @@ typedefs (Michael)</para></listitem>
 
      <listitem>
       <para>
-       Non-deferred <option>AFTER</> triggers are now fired immediately
+       Nondeferred <option>AFTER</> triggers are now fired immediately
        after completion of the triggering query, rather than upon
        finishing the current interactive command. This makes a
        difference when the triggering query occurred within a function:
@@ -1451,7 +1560,7 @@ typedefs (Michael)</para></listitem>
     <listitem>
      <para>
       Updating an element or slice of a NULL array value now produces
-      a non-NULL array result, namely an array containing
+      a nonnull array result, namely an array containing
       just the assigned-to positions.
      </para>
     </listitem>
@@ -1494,7 +1603,7 @@ typedefs (Michael)</para></listitem>
 
     <listitem>
      <para>
-      <type>CIDR</> values now must have their non-masked bits be zero.
+      <type>CIDR</> values now must have their nonmasked bits be zero.
       For example, we no longer allow
       <literal>204.248.199.1/31</literal> as a <type>CIDR</> value. Such
       values should never have been accepted by
@@ -1542,8 +1651,7 @@ typedefs (Michael)</para></listitem>
        behavior across all platforms.  In most cases, there should be
        little noticeable difference in time zone behavior, except that
        the time zone names used by <command>SET</>/<command>SHOW</>
-       <varname>TimeZone</> may
-       be different from what your platform provides.
+       <varname>TimeZone</> might be different from what your platform provides.
       </para>
      </listitem>
 
@@ -1584,7 +1692,7 @@ typedefs (Michael)</para></listitem>
      considered deprecated and will be removed in the next major
      release.
      </para>
- 
+
     <itemizedlist>
      <listitem>
       <para>
@@ -1592,7 +1700,7 @@ typedefs (Michael)</para></listitem>
        for intervals.
       </para>
      </listitem>
- 
+
       <listitem>
        <para>
         The server now warns of empty strings passed to
@@ -1602,7 +1710,7 @@ typedefs (Michael)</para></listitem>
         invalid input for these data types.
        </para>
       </listitem>
- 
+
      <listitem>
       <para>
        By default, tables in <productname>PostgreSQL</productname> 8.0
@@ -1619,19 +1727,19 @@ typedefs (Michael)</para></listitem>
 
     </itemizedlist>
    </sect2>
- 
+
    <sect2>
     <title>Changes</title>
- 
+
     <para>
      Below you will find a detailed account of the changes between
      release 8.0 and the previous major release.
     </para>
- 
+
     <sect3>
      <title>Performance Improvements</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Support cross-data-type index usage (Tom)
@@ -1642,7 +1750,7 @@ typedefs (Michael)</para></listitem>
         intuitive and consistent.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New buffer replacement strategy that improves caching (Jan)
@@ -1653,14 +1761,14 @@ typedefs (Michael)</para></listitem>
         did not consider the number of times a specific cache entry was
         accessed, so large table scans could force out useful cache pages.
         The new cache algorithm uses four separate lists to track most
-        recently used and most frequently used cache pages and dynamically 
+        recently used and most frequently used cache pages and dynamically
         optimize their replacement based on the work load. This should
         lead to much more efficient use of the shared buffer cache.
         Administrators who have tested shared buffer sizes in the past
         should retest with this new cache replacement policy.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add subprocess to write dirty buffers periodically to reduce
@@ -1679,7 +1787,7 @@ typedefs (Michael)</para></listitem>
         performance and minimize degradation during checkpoints.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add ability to prolong vacuum to reduce performance impact (Jan)
@@ -1692,7 +1800,7 @@ typedefs (Michael)</para></listitem>
         total duration of <command>VACUUM</command>.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Improve B-tree index performance for duplicate keys (Dmitry Tkach, Tom)
@@ -1702,7 +1810,7 @@ typedefs (Michael)</para></listitem>
         values exist in the index.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Use dynamically-generated table size estimates while planning (Tom)
@@ -1719,7 +1827,7 @@ typedefs (Michael)</para></listitem>
         changed significantly since the last housekeeping command.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Improved index usage with <literal>OR</> clauses (Tom)
@@ -1731,7 +1839,7 @@ typedefs (Michael)</para></listitem>
         column is part of an <literal>OR</> clause.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Improve matching of partial index clauses (Tom)
@@ -1741,7 +1849,7 @@ typedefs (Michael)</para></listitem>
         involving complex <option>WHERE</> clauses.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Improve performance of the GEQO optimizer (Tom)
@@ -1752,7 +1860,7 @@ typedefs (Michael)</para></listitem>
         analyzed to decrease time spent in optimization.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Miscellaneous optimizer improvements
@@ -1762,7 +1870,7 @@ typedefs (Michael)</para></listitem>
         numerous special cases work better than in prior releases.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Improve lookup speed for C functions (Tom)
@@ -1773,7 +1881,7 @@ typedefs (Michael)</para></listitem>
         quickly as functions that are built into the server executable.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add type-specific <command>ANALYZE</command> statistics
@@ -1781,10 +1889,10 @@ typedefs (Michael)</para></listitem>
        </para>
        <para>
         This feature allows more flexibility in generating statistics
-        for non-standard data types.
+        for nonstandard data types.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         <command>ANALYZE</command> now collects statistics for
@@ -1799,7 +1907,7 @@ typedefs (Michael)</para></listitem>
         relevant.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New two-stage sampling method for <command>ANALYZE</command>
@@ -1810,7 +1918,7 @@ typedefs (Michael)</para></listitem>
         different in different regions of a table.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Speed up <command>TRUNCATE</command> (Tom)
@@ -1820,27 +1928,27 @@ typedefs (Michael)</para></listitem>
         keeping <command>TRUNCATE</command> transaction-safe.
        </para>
       </listitem>
-  
+
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title>Server Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Add WAL file archiving and point-in-time recovery (Simon Riggs)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add tablespaces so admins can control disk layout (Gavin)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add a built-in log rotation program (Andreas Pflug)
@@ -1851,7 +1959,7 @@ typedefs (Michael)</para></listitem>
         rotation program.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add new read-only server configuration parameters to show server
@@ -1860,7 +1968,7 @@ typedefs (Michael)</para></listitem>
         <varname>max_identifier_length</>, <varname>max_index_keys</>  (Joe)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Make quoting of <literal>sameuser</>, <literal>samegroup</>, and
@@ -1868,20 +1976,20 @@ typedefs (Michael)</para></listitem>
         <filename>pg_hba.conf</> (Andrew)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Use clearer IPv6 name <literal>::1/128</> for
         <literal>localhost</> in default <filename>pg_hba.conf</> (Andrew)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Use CIDR format in <filename>pg_hba.conf</> examples (Andrew)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Rename server configuration parameters <varname>SortMem</> and
@@ -1894,14 +2002,14 @@ typedefs (Michael)</para></listitem>
         <varname>work_mem</> is for workspaces used during query execution.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow logging of session disconnections using server configuration
         <varname>log_disconnections</> (Andrew)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add new server configuration parameter <varname>log_line_prefix</> to
@@ -1912,7 +2020,7 @@ typedefs (Michael)</para></listitem>
         address, and session start time.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Remove server configuration parameters <varname>log_pid</>,
@@ -1920,7 +2028,7 @@ typedefs (Michael)</para></listitem>
         superseded by <varname>log_line_prefix</> (Andrew)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Replace the <varname>virtual_host</> and <varname>tcpip_socket</>
@@ -1933,7 +2041,7 @@ typedefs (Michael)</para></listitem>
         to be specified.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Listen on localhost by default, which eliminates the need for the
@@ -1946,7 +2054,7 @@ typedefs (Michael)</para></listitem>
         adjustments.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Remove <varname>syslog</> server configuration parameter, and add more
@@ -1954,7 +2062,7 @@ typedefs (Michael)</para></listitem>
         location (Magnus)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Change server configuration parameter <varname>log_statement</> to take
@@ -1966,19 +2074,19 @@ typedefs (Michael)</para></listitem>
         only data modification statements.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Some logging-related configuration parameters could formerly be adjusted
         by ordinary users, but only in the <quote>more verbose</> direction.
         They are now treated more strictly: only superusers can set them.
-        However, a superuser may use <command>ALTER USER</> to provide per-user
+        However, a superuser can use <command>ALTER USER</> to provide per-user
         settings of these values for non-superusers.  Also, it is now possible
         for superusers to set values of superuser-only configuration parameters
         via <literal>PGOPTIONS</>.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow configuration files to be placed outside the data directory (mlw)
@@ -1989,7 +2097,7 @@ typedefs (Michael)</para></listitem>
         data directory, easing administration.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Plan prepared queries only when first executed so constants can be
@@ -2006,7 +2114,7 @@ typedefs (Michael)</para></listitem>
         without incurring a performance penalty.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <command>DECLARE CURSOR</command> to take parameters
@@ -2019,7 +2127,7 @@ typedefs (Michael)</para></listitem>
         execution of the cursor's query.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Fix hash joins and aggregates of <type>inet</type> and
@@ -2032,28 +2140,28 @@ typedefs (Michael)</para></listitem>
         data type.)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Make <varname>log_duration</> print only when <varname>log_statement</>
         prints the query (Ed L.)
        </para>
       </listitem>
-  
+
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title>Query Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Add savepoints (nested transactions) (Alvaro)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Unsupported isolation levels are now accepted and promoted to the
@@ -2065,7 +2173,7 @@ typedefs (Michael)</para></listitem>
         This change complies with that recommendation.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <command>BEGIN WORK</command> to specify transaction
@@ -2073,17 +2181,17 @@ typedefs (Michael)</para></listitem>
         (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Fix table permission checking for cases in which rules generate
         a query type different from the originally submitted query (Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
-        Implement dollar quoting to simplify single-quote usage (Andrew, Tom, 
+        Implement dollar quoting to simplify single-quote usage (Andrew, Tom,
         David Fetter)
        </para>
        <para>
@@ -2097,7 +2205,7 @@ typedefs (Michael)</para></listitem>
         Dollar quoting can be used anywhere quoted text is needed.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Make <literal>CASE val WHEN compval1 THEN ...</> evaluate <literal>val</> only once (Tom)
@@ -2108,7 +2216,7 @@ typedefs (Michael)</para></listitem>
         volatile.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Test <option>HAVING</> before computing target list of an
@@ -2120,7 +2228,7 @@ typedefs (Michael)</para></listitem>
         could fail with divide-by-zero.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Replace <varname>max_expr_depth</> parameter with
@@ -2128,12 +2236,12 @@ typedefs (Michael)</para></listitem>
         size (Tom)
        </para>
        <para>
-       This gives us a fairly bulletproof defense against crashing due to 
+       This gives us a fairly bulletproof defense against crashing due to
        runaway recursive functions. Instead of measuring the depth of expression
        nesting, we now directly measure the size of the execution stack.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow arbitrary row expressions (Tom)
@@ -2144,14 +2252,14 @@ typedefs (Michael)</para></listitem>
         take rows as arguments and return row values.
        </para>
       </listitem>
-        
+
       <listitem>
        <para>
         Allow <option>LIKE</>/<option>ILIKE</> to be used as the operator
         in row and subselect comparisons (Fabien Coelho)
        </para>
       </listitem>
-        
+
       <listitem>
        <para>
         Avoid locale-specific case conversion of basic ASCII letters in
@@ -2163,7 +2271,7 @@ typedefs (Michael)</para></listitem>
         outside the 7-bit-ASCII set is still locale-aware.
        </para>
       </listitem>
-        
+
       <listitem>
        <para>
         Improve syntax error reporting (Fabien, Tom)
@@ -2172,7 +2280,7 @@ typedefs (Michael)</para></listitem>
         Syntax error reports are more useful than before.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Change <command>EXECUTE</command> to return a completion tag
@@ -2184,7 +2292,7 @@ typedefs (Michael)</para></listitem>
         returned will reflect the command executed.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Avoid emitting <option>NATURAL CROSS JOIN</> in rule listings (Tom)
@@ -2194,22 +2302,22 @@ typedefs (Michael)</para></listitem>
         decompiler formerly produced this syntax.
        </para>
       </listitem>
-  
+
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title>Object Manipulation Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Add <command>COMMENT ON</> for casts, conversions, languages,
         operator classes, and large objects (Christopher)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add new server configuration parameter <varname>default_with_oids</> to
@@ -2223,14 +2331,14 @@ typedefs (Michael)</para></listitem>
         will become <literal>FALSE</> in future releases.)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <option>WITH</> / <option>WITHOUT OIDS</> clause to
         <command>CREATE TABLE AS</command> (Neil)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <command>ALTER TABLE DROP COLUMN</> to drop an <type>OID</>
@@ -2238,13 +2346,13 @@ typedefs (Michael)</para></listitem>
         (Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow composite types as table columns (Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <command>ALTER ... ADD COLUMN</> with defaults and
@@ -2256,7 +2364,7 @@ typedefs (Michael)</para></listitem>
         default value.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <command>ALTER COLUMN TYPE</> to change column's type (Rod)
@@ -2266,7 +2374,7 @@ typedefs (Michael)</para></listitem>
         and re-adding the column.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow multiple <command>ALTER</> actions in a single <command>ALTER
@@ -2280,7 +2388,7 @@ typedefs (Michael)</para></listitem>
         only once.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <command>ALTER TABLE</command> to add <type>SERIAL</type>
@@ -2291,7 +2399,7 @@ typedefs (Michael)</para></listitem>
         columns.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow changing the owners of aggregates, conversions, databases,
@@ -2302,14 +2410,14 @@ typedefs (Michael)</para></listitem>
         Previously this required modifying the system tables directly.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow temporary object creation to be limited to <option>SECURITY
         DEFINER</> functions (Sean Chittenden)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <option>ALTER TABLE ... SET WITHOUT CLUSTER</> (Christopher)
@@ -2319,7 +2427,7 @@ typedefs (Michael)</para></listitem>
         specification except to modify the system tables.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Constraint/Index/<type>SERIAL</> names are now
@@ -2332,7 +2440,7 @@ typedefs (Michael)</para></listitem>
         within a schema.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <function>pg_get_serial_sequence()</> to return a
@@ -2343,43 +2451,43 @@ typedefs (Michael)</para></listitem>
         sequence name.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Warn when primary/foreign key data type mismatch requires costly lookup
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New <command>ALTER INDEX</> command to allow moving of indexes
         between tablespaces (Gavin)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Make <command>ALTER TABLE OWNER</> change dependent sequence
         ownership too (Alvaro)
        </para>
       </listitem>
-  
-  
+
+
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title>Utility Command Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Allow <command>CREATE SCHEMA</command> to create triggers,
         indexes, and sequences (Neil)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <option>ALSO</> keyword to <command>CREATE RULE</command> (Fabien
@@ -2390,7 +2498,7 @@ typedefs (Michael)</para></listitem>
         <option>INSTEAD</> rules.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <option>NOWAIT</> option to <command>LOCK</command> (Tatsuo)
@@ -2400,28 +2508,28 @@ typedefs (Michael)</para></listitem>
         would have to wait for the requested lock.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <command>COPY</command> to read and write
         comma-separated-value (CSV) files (Andrew, Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Generate error if the <command>COPY</command> delimiter and NULL
         string conflict (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         <command>GRANT</command>/<command>REVOKE</command> behavior
         follows the SQL spec more closely
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Avoid locking conflict between <command>CREATE INDEX</command>
@@ -2433,7 +2541,7 @@ typedefs (Michael)</para></listitem>
         WAL log could not be recycled.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Database-wide <command>ANALYZE</command> does not hold locks
@@ -2448,7 +2556,7 @@ typedefs (Michael)</para></listitem>
         table.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         <command>REINDEX</command> does not exclusively lock the index's
@@ -2460,7 +2568,7 @@ typedefs (Michael)</para></listitem>
         being rebuilt.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Erase MD5 user passwords when a user is renamed (Bruce)
@@ -2474,7 +2582,7 @@ typedefs (Michael)</para></listitem>
         be assigned if the user is to be able to log in with a password.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New <application>pg_ctl</> <option>kill</> option for Windows (Andrew)
@@ -2484,13 +2592,13 @@ typedefs (Michael)</para></listitem>
         backends so this capability was added to <application>pg_ctl</>.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Information schema improvements
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <option>--pwfile</> option to
@@ -2498,29 +2606,29 @@ typedefs (Michael)</para></listitem>
         set by GUI tools (Magnus)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Detect locale/encoding mismatch in
         <application>initdb</application> (Peter)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <option>register</> command to <application>pg_ctl</> to
         register Windows operating system service (Dave Page)
        </para>
       </listitem>
-  
+
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title>Data Type and Function Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         More complete support for composite types (row types)  (Tom)
@@ -2530,23 +2638,23 @@ typedefs (Michael)</para></listitem>
         worked before.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
-        Reject non-rectangular array values as erroneous (Joe)
+        Reject nonrectangular array values as erroneous (Joe)
        </para>
        <para>
         Formerly, <function>array_in</> would silently build a
         surprising result.
        </para>
       </listitem>
-  
+
        <listitem>
         <para>
          Overflow in integer arithmetic operations is now detected (Tom)
         </para>
        </listitem>
-  
+
        <listitem>
         <para>
          The arithmetic operators associated with the single-byte
@@ -2560,7 +2668,7 @@ typedefs (Michael)</para></listitem>
          integer explicitly.
         </para>
        </listitem>
-  
+
       <listitem>
         <para>
          Syntax checking of array input values considerably tightened up (Joe)
@@ -2571,7 +2679,7 @@ typedefs (Michael)</para></listitem>
          after the closing right brace.
         </para>
       </listitem>
-  
+
       <listitem>
         <para>
          Empty-string array element values must now be written as
@@ -2584,7 +2692,7 @@ typedefs (Michael)</para></listitem>
          element value in some future release.
         </para>
       </listitem>
-  
+
       <listitem>
         <para>
          Array element trailing whitespace is now ignored (Joe)
@@ -2595,27 +2703,27 @@ typedefs (Michael)</para></listitem>
          significant.  Now trailing whitespace is also ignored.
         </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Emit array values with explicit array bounds when lower bound is not one
         (Joe)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Accept <literal>YYYY-monthname-DD</> as a date string (Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Make <function>netmask</> and <function>hostmask</> functions
         return maximum-length mask length (Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Change factorial function to return <type>numeric</type> (Gavin)
@@ -2625,14 +2733,14 @@ typedefs (Michael)</para></listitem>
         work for a wider range of input values.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         <function>to_char</>/<function>to_date()</> date conversion
         improvements (Kurt Roeckx, Fabien Coelho)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Make <function>length()</> disregard trailing spaces in
@@ -2644,7 +2752,7 @@ typedefs (Michael)</para></listitem>
         should not be counted by <function>length()</>.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Warn about empty string being passed to
@@ -2654,7 +2762,7 @@ typedefs (Michael)</para></listitem>
         8.1 will throw an error instead.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow leading or trailing whitespace in
@@ -2663,7 +2771,7 @@ typedefs (Michael)</para></listitem>
         (Neil)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Better support for IEEE <literal>Infinity</> and <literal>NaN</>
@@ -2674,27 +2782,27 @@ typedefs (Michael)</para></listitem>
         floating point arithmetic.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <option>week</> option to <function>date_trunc()</> (Robert Creager)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Fix <function>to_char</function> for <literal>1 BC</>
         (previously it returned <literal>1 AD</>) (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Fix <function>date_part(year)</> for BC dates (previously it
         returned one less than the correct year) (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Fix <function>date_part()</> to return the proper millennium and
@@ -2706,7 +2814,7 @@ typedefs (Michael)</para></listitem>
         reckoning of such things.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <function>ceiling()</> as an alias for <function>ceil()</>,
@@ -2714,7 +2822,7 @@ typedefs (Michael)</para></listitem>
         standards compliance (Neil)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Change <function>ln()</>, <function>log()</>,
@@ -2723,53 +2831,53 @@ typedefs (Michael)</para></listitem>
         specified by SQL:2003 (Neil)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <function>width_bucket()</> function as defined by SQL:2003 (Neil)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <function>generate_series()</> functions to simplify working
         with numeric sets (Joe)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Fix <function>upper/lower/initcap()</> functions to work with
         multibyte encodings (Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add boolean and bitwise integer <option>AND</>/<option>OR</>
         aggregates (Fabien Coelho)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New session information functions to return network addresses for client
         and server (Sean Chittenden)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add function to determine the area of a closed path (Sean Chittenden)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add function to send cancel request to other backends (Magnus)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <type>interval</> plus <type>datetime</> operators (Tom)
@@ -2779,7 +2887,7 @@ typedefs (Michael)</para></listitem>
         was already supported, but both are required by the SQL standard.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Casting an integer to <type>BIT(N)</> selects the rightmost N bits
@@ -2792,22 +2900,22 @@ typedefs (Michael)</para></listitem>
         to int.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
-        Require <type>CIDR</> values to have all non-masked bits be zero
+        Require <type>CIDR</> values to have all nonmasked bits be zero
         (Kevin Brintnall)
        </para>
       </listitem>
-  
+
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title>Server-Side Language Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         In <literal>READ COMMITTED</> serialization mode, volatile functions
@@ -2816,7 +2924,7 @@ typedefs (Michael)</para></listitem>
         beginning of the interactive command that called the function.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Functions declared <literal>STABLE</> or <literal>IMMUTABLE</> always
@@ -2829,23 +2937,23 @@ typedefs (Michael)</para></listitem>
         rather than <literal>VOLATILE</>.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
-        Non-deferred <option>AFTER</> triggers are now fired immediately
+        Nondeferred <option>AFTER</> triggers are now fired immediately
         after completion of the triggering query, rather than upon
         finishing the current interactive command. This makes a difference
         when the triggering query occurred within a function: the trigger
         is invoked before the function proceeds to its next operation. For
         example, if a function inserts a new row into a table, any
-        non-deferred foreign key checks occur before proceeding with the
+        nondeferred foreign key checks occur before proceeding with the
         function.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
-        Allow function parameters to be declared with names (Dennis Bjorklund)
+        Allow function parameters to be declared with names (Dennis Bj&ouml;rklund)
        </para>
        <para>
         This allows better documentation of functions.  Whether the names
@@ -2853,16 +2961,16 @@ typedefs (Michael)</para></listitem>
         being used.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
-        Allow PL/pgSQL parameter names to be referenced in the function (Dennis Bjorklund)
+        Allow PL/pgSQL parameter names to be referenced in the function (Dennis Bj&ouml;rklund)
        </para>
        <para>
         This basically creates an automatic alias for each named parameter.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Do minimal syntax checking of PL/pgSQL functions at creation time (Tom)
@@ -2871,7 +2979,7 @@ typedefs (Michael)</para></listitem>
         This allows us to catch simple syntax errors sooner.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         More support for composite types (row and record variables) in PL/pgSQL
@@ -2881,14 +2989,14 @@ typedefs (Michael)</para></listitem>
         as a single variable.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Default values for PL/pgSQL variables can now reference previously
         declared variables
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Improve parsing of PL/pgSQL FOR loops (Tom)
@@ -2900,13 +3008,13 @@ typedefs (Michael)</para></listitem>
         messages when a mistake is made.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Major overhaul of PL/Perl server-side language (Command Prompt, Andrew Dunstan)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         In PL/Tcl, SPI commands are now run in subtransactions.  If an error
@@ -2915,7 +3023,7 @@ typedefs (Michael)</para></listitem>
         Formerly, it was not possible to catch such errors.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Accept <command>ELSEIF</> in PL/pgSQL (Neil)
@@ -2925,63 +3033,63 @@ typedefs (Michael)</para></listitem>
         are accustomed to spelling this keyword <command>ELSEIF</>.
        </para>
       </listitem>
-  
+
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title><application>psql</> Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Improve <application>psql</> information display about database
         objects (Christopher)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <application>psql</> to display group membership in
         <command>\du</> and <command>\dg</> (Markus Bertheau)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Prevent <application>psql</> <command>\dn</command> from showing
         temporary schemas (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <application>psql</> to handle tilde user expansion for file
         names (Zach Irmen)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <application>psql</> to display fancy prompts, including
         color, via <application>readline</> (Reece Hart, Chet Ramey)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Make <application>psql</> <command>\copy</> match <command>COPY</command> command syntax
         fully (Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Show the location of syntax errors (Fabien Coelho, Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <command>CLUSTER</command> information to <application>psql</>
@@ -2989,14 +3097,14 @@ typedefs (Michael)</para></listitem>
         (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Change <application>psql</> <command>\copy stdin/stdout</> to read
         from command input/output (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <option>pstdin</>/<option>pstdout</> to read from
@@ -3004,7 +3112,7 @@ typedefs (Michael)</para></listitem>
         Feit)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add global <application>psql</> configuration file, <filename>psqlrc.sample</filename>
@@ -3015,48 +3123,48 @@ typedefs (Michael)</para></listitem>
         be stored.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Have <application>psql</> <command>\d+</> indicate if the table
         has an <type>OID</> column (Neil)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         On Windows, use binary mode in <application>psql</> when reading files so control-Z
         is not seen as end-of-file
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Have <command>\dn+</> show permissions and description for schemas (Dennis
-        Bjorklund)
+        Bj&ouml;rklund)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Improve tab completion support (Stefan Kaltenbrunn, Greg Sabino Mullane)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow boolean settings to be set using upper or lower case (Michael Paesold)
        </para>
       </listitem>
-  
+
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title><application>pg_dump</> Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Use dependency information to improve the reliability of
@@ -3067,7 +3175,7 @@ typedefs (Michael)</para></listitem>
         sometimes being dumped in the wrong order.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Have <application>pg_dump</> output objects in alphabetical order if possible (Tom)
@@ -3077,7 +3185,7 @@ typedefs (Michael)</para></listitem>
         dump files.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <application>pg_restore</> to ignore some SQL errors (Fabien Coelho)
@@ -3090,20 +3198,20 @@ typedefs (Michael)</para></listitem>
         option to give the old behavior of exiting on an error.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         <application>pg_restore</> <option>-l</> display now includes
         objects' schema names
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New begin/end markers in <application>pg_dump</> text output (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add start/stop times for
@@ -3111,14 +3219,14 @@ typedefs (Michael)</para></listitem>
         (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow most <application>pg_dump</> options in
         <application>pg_dumpall</> (Christopher)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Have <application>pg_dump</> use <command>ALTER OWNER</> rather
@@ -3126,35 +3234,35 @@ typedefs (Michael)</para></listitem>
         (Christopher)
        </para>
       </listitem>
-  
+
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title>libpq Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Make libpq's <option>SIGPIPE</> handling thread-safe (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <function>PQmbdsplen()</> which returns the display length
         of a character (Tatsuo)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add thread locking to <application>SSL</> and
         <application>Kerberos</> connections (Manfred Spraul)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <function>PQoidValue()</>, <function>PQcmdTuples()</>, and
@@ -3162,14 +3270,14 @@ typedefs (Michael)</para></listitem>
         commands (Neil)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <function>PQserverVersion()</> to provide more convenient
         access to the server version number (Greg Sabino Mullane)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <function>PQprepare/PQsendPrepared()</> functions to support
@@ -3177,33 +3285,33 @@ typedefs (Michael)</para></listitem>
         of their parameters (Abhijit Menon-Sen)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Many ECPG improvements, including <command>SET DESCRIPTOR</> (Michael)
        </para>
       </listitem>
-  
+
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title>Source Code Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Allow the database server to run natively on Windows (Claudio, Magnus, Andrew)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Shell script commands converted to C versions for Windows support (Andrew)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Create an extension makefile framework (Fabien Coelho, Peter)
@@ -3213,7 +3321,7 @@ typedefs (Michael)</para></listitem>
         source tree.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Support relocatable installations (Bruce)
@@ -3226,26 +3334,26 @@ typedefs (Michael)</para></listitem>
         rebuilding.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Use <option>--with-docdir</> to choose installation location of documentation; also
         allow <option>--infodir</> (Peter)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add <option>--without-docdir</> to prevent installation of documentation (Peter)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Upgrade to <application>DocBook</> V4.2 SGML (Peter)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New <literal>PostgreSQL</> <application>CVS</> tag (Marc)
@@ -3258,131 +3366,131 @@ typedefs (Michael)</para></listitem>
         repository.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Clarify locking code (Manfred Koizar)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Buffer manager cleanup (Neil)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Decouple platform tests from CPU spinlock code (Bruce, Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add inlined test-and-set code on PA-RISC for <application>gcc</>
         (ViSolve, Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Improve i386 spinlock code (Manfred Spraul)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Clean up spinlock assembly code to avoid warnings from newer
         <application>gcc</> releases (Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Remove JDBC from source tree; now a separate project
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Remove the libpgtcl client interface; now a separate project
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         More accurately estimate memory and file descriptor usage (Tom)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Improvements to the Mac OS X startup scripts (Ray A.)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New <function>fsync()</> test program (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Major documentation improvements (Neil, Peter)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Remove <application>pg_encoding</application>; not needed
         anymore
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Remove <application>pg_id</application>; not needed anymore
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Remove <application>initlocation</application>; not needed
         anymore
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Auto-detect thread flags (no more manual testing) (Bruce)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Use Olson's public domain <application>timezone</> library (Magnus)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
-        With threading enabled, use thread flags on Unixware for 
+        With threading enabled, use thread flags on Unixware for
         backend executables too (Bruce)
        </para>
        <para>
-        Unixware cannot mix threaded and non-threaded object files in the
+        Unixware cannot mix threaded and nonthreaded object files in the
         same executable, so everything must be compiled as threaded.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         <application>psql</> now uses a <application>flex</>-generated
         lexical analyzer to process command strings
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Reimplement the linked list data structure used throughout the
@@ -3393,126 +3501,178 @@ typedefs (Michael)</para></listitem>
         operations to be more efficient.
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow dynamically loaded modules to create their own server configuration
         parameters (Thomas Hallgren)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New Brazilian version of FAQ (Euler Taveira de Oliveira)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add French FAQ (Guillaume Lelarge)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New <application>pgevent</> for Windows logging
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Make libpq and ECPG build as proper shared libraries on OS X (Tom)
        </para>
       </listitem>
-  
+
      </itemizedlist>
     </sect3>
-  
-  
+
+
     <sect3>
      <title>Contrib Changes</title>
      <itemizedlist>
-  
+
       <listitem>
        <para>
         Overhaul of <filename>contrib/dblink</> (Joe)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         <filename>contrib/dbmirror</> improvements (Steven Singer)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New <filename>contrib/xml2</> (John Gray, Torchbox)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Updated <filename>contrib/mysql</filename>
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New version of <filename>contrib/btree_gist</> (Teodor)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         New <filename>contrib/trgm</>, trigram matching for
         <productname>PostgreSQL</productname> (Teodor)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Many <filename>contrib/tsearch2</> improvements (Teodor)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add double metaphone to <filename>contrib/fuzzystrmatch</> (Andrew)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Allow <filename>contrib/pg_autovacuum</> to run as a Windows service (Dave Page)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Add functions to <filename>contrib/dbsize</> (Andreas Pflug)
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Removed <filename>contrib/pg_logger</>: obsoleted by integrated logging
         subprocess
        </para>
       </listitem>
-  
+
       <listitem>
        <para>
         Removed <filename>contrib/rserv</>: obsoleted by various separate projects
        </para>
       </listitem>
-  
+
      </itemizedlist>
     </sect3>
-  
+
    </sect2>
   </sect1>
 
+  <sect1 id="release-7-4-18">
+   <title>Release 7.4.18</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-09-17</simpara>
+   </note>
+
+   <para>
+    This release contains fixes from 7.4.17.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.4.18</title>
+
+    <para>
+     A dump/restore is not required for those running 7.4.X.  However,
+     if you are upgrading from a version earlier than 7.4.11, see the release
+     notes for 7.4.11.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Fix excessively <acronym>SSL</> log error messages (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only password
+       authentication, as a security measure (Joe)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
+ 
   <sect1 id="release-7-4-17">
    <title>Release 7.4.17</title>
 
@@ -3714,11 +3874,13 @@ typedefs (Michael)</para></listitem>
       <para>
        <function>to_number()</> and <function>to_char(numeric)</>
        are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
-       new <application>initdb</> installs (Tom)
+       new <link linkend="APP-INITDB"><application>initdb</></link>
+       installs (Tom)
       </para>
 
       <para>
-       This is because <varname>lc_numeric</> can potentially
+       This is because <link
+       linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
        change the output of these functions.
       </para>
      </listitem>
@@ -3737,7 +3899,7 @@ typedefs (Michael)</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-4-14">
    <title>Release 7.4.14</title>
 
@@ -3782,7 +3944,7 @@ ANYARRAY</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-4-13">
    <title>Release 7.4.13</title>
 
@@ -3807,7 +3969,7 @@ ANYARRAY</para></listitem>
 
     <para>
      Full security against the SQL-injection attacks described in
-     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     CVE-2006-2313 and CVE-2006-2314 might require changes in application
      code.  If you have applications that embed untrustworthy strings
      into SQL commands, you should examine them as soon as possible to
      ensure that they are using recommended escaping techniques.  In
@@ -3839,7 +4001,7 @@ literals.  By default, <literal>\'</> is rejected only when
 GB18030, or UHC), which is the scenario in which SQL injection is possible.
 A new configuration parameter <varname>backslash_quote</> is available to
 adjust this behavior when needed.  Note that full security against
-CVE-2006-2314 may require client-side changes; the purpose of
+CVE-2006-2314 might require client-side changes; the purpose of
 <varname>backslash_quote</> is in part to make it obvious that insecure
 clients are insecure.
 </para></listitem>
@@ -3887,7 +4049,7 @@ Fuhr)</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-4-12">
    <title>Release 7.4.12</title>
 
@@ -3912,7 +4074,7 @@ Fuhr)</para></listitem>
 
    <sect2>
     <title>Changes</title>
-  
+
 <itemizedlist>
 
 <listitem><para>Fix potential crash in <command>SET
@@ -3948,7 +4110,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-4-11">
    <title>Release 7.4.11</title>
 
@@ -3976,7 +4138,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
    <sect2>
     <title>Changes</title>
-  
+
 <itemizedlist>
 
 <listitem><para>Fix for protocol-level Describe messages issued
@@ -3992,7 +4154,7 @@ to ensure that <application>plperl</> won't change the locale later</para>
 <para>This fixes a problem that occurred if the <application>postmaster</> was
 started with environment variables specifying a different locale than what
 <application>initdb</> had been told.  Under these conditions, any use of
-<application>plperl</> was likely to lead to corrupt indexes.  You may need
+<application>plperl</> was likely to lead to corrupt indexes.  You might need
 <command>REINDEX</> to fix existing indexes on
 textual columns if this has happened to you.</para></listitem>
 
@@ -4013,7 +4175,7 @@ what's actually returned by the query (Joe)</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-4-10">
    <title>Release 7.4.10</title>
 
@@ -4038,7 +4200,7 @@ what's actually returned by the query (Joe)</para></listitem>
 
    <sect2>
     <title>Changes</title>
-  
+
 <itemizedlist>
 
 <listitem><para>Fix race condition in transaction log management</para>
@@ -4064,7 +4226,7 @@ table has been dropped</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-4-9">
    <title>Release 7.4.9</title>
 
@@ -4131,7 +4293,7 @@ code</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-4-8">
    <title>Release 7.4.8</title>
 
@@ -4178,7 +4340,7 @@ code</para></listitem>
      It is strongly recommended that all installations repair these errors,
      either by initdb or by following the manual repair procedures given
      below.  The errors at least allow unprivileged database users to crash
-     their server process, and may allow unprivileged users to gain the
+     their server process, and might allow unprivileged users to gain the
      privileges of a database superuser.
     </para>
 
@@ -4196,7 +4358,7 @@ WHERE pronamespace = 11 AND pronargs = 5
 COMMIT;
 </programlisting>
 
-     Next, if you have installed <filename>contrib/tsearch2</>, do
+     Next, if you have installed <filename>contrib/tsearch2</>, do:
 
 <programlisting>
 BEGIN;
@@ -4225,12 +4387,12 @@ COMMIT;
      template databases then any subsequently created databases will contain
      the same errors.  <literal>template1</> can be fixed in the same way
      as any other database, but fixing <literal>template0</> requires
-     additional steps.  First, from any database issue
+     additional steps.  First, from any database issue:
 <programlisting>
 UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
 </programlisting>
       Next connect to <literal>template0</> and perform the above repair
-      procedures.  Finally, do
+      procedures.  Finally, do:
 <programlisting>
 -- re-freeze template0:
 VACUUM FREEZE;
@@ -4399,7 +4561,7 @@ GMT</para></listitem>
 <itemizedlist>
 <listitem><para>Repair possible failure to update hint bits on disk</para>
 <para>
-Under rare circumstances this oversight could lead to 
+Under rare circumstances this oversight could lead to
 <quote>could not access transaction status</> failures, which qualifies
 it as a potential-data-loss bug.
 </para></listitem>
@@ -4559,7 +4721,7 @@ aggregate plan</para></listitem>
 <listitem><para>Fix error in COPY IN termination when using the old network protocol (ljb)</para></listitem>
 <listitem><para>Several important fixes in pg_autovacuum, including fixes for
 large tables, unsigned oids, stability, temp tables, and debug mode
-(Matthew T. O'Connor)</para></listitem> 
+(Matthew T. O'Connor)</para></listitem>
 <listitem><para>Fix problem with reading tar-format dumps on NetBSD and BSD/OS (Bruce)</para></listitem>
 <listitem><para>Several JDBC fixes</para></listitem>
 <listitem><para>Fix ALTER SEQUENCE RESTART where last_value equals the restart value (Tom)</para></listitem>
@@ -4602,7 +4764,7 @@ names from outer query levels.
 
     <para>
      A dump/restore is not required for those running 7.4.X.  However,
-     it may be advisable as the easiest method of incorporating fixes for
+     it might be advisable as the easiest method of incorporating fixes for
      two errors that have been found in the initial contents of 7.4.X system
      catalogs.  A dump/initdb/reload sequence using 7.4.2's initdb will
      automatically correct these problems.
@@ -4642,7 +4804,7 @@ VACUUM pg_statistic;
 UPDATE pg_type SET typalign = 'd' WHERE oid = 2277;
 -- this should update 6 rows:
 UPDATE pg_attribute SET attalign = 'd' WHERE atttypid = 2277;
---     
+--
 -- At this point you MUST start a fresh backend to avoid a crash!
 --
 -- repopulate pg_statistic:
@@ -4668,12 +4830,12 @@ GRANT SELECT, UPDATE ON pg_settings TO PUBLIC;
      template databases then any subsequently created databases will contain
      the same errors.  <literal>template1</> can be fixed in the same way
      as any other database, but fixing <literal>template0</> requires
-     additional steps.  First, from any database issue
+     additional steps.  First, from any database issue:
 <programlisting>
 UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
 </programlisting>
       Next connect to <literal>template0</> and perform the above repair
-      procedures.  Finally, do
+      procedures.  Finally, do:
 <programlisting>
 -- re-freeze template0:
 VACUUM FREEZE;
@@ -4713,7 +4875,7 @@ inconveniences associated with the <literal>i/I</> problem.</para></listitem>
 <listitem><para>Other minor pg_dump fixes</para></listitem>
 <listitem><para>Allow ecpg to again use C keywords as column names (Michael)</para></listitem>
 <listitem><para>Added ecpg <literal>WHENEVER NOT_FOUND</> to
-<literal>SELECT/INSERT/UPDATE/DELETE</> (Michael)</para></listitem> 
+<literal>SELECT/INSERT/UPDATE/DELETE</> (Michael)</para></listitem>
 <listitem><para>Fix ecpg crash for queries calling set-returning functions (Michael)</para></listitem>
 <listitem><para>Various other ecpg fixes (Michael)</para></listitem>
 <listitem><para>Fixes for Borland compiler</para></listitem>
@@ -5120,13 +5282,13 @@ DROP SCHEMA information_schema CASCADE;
 
   <sect2>
    <title>Migration to version 7.4</title>
-                                      
+
    <para>
     A dump/restore using <application>pg_dump</application> is
     required for those wishing to migrate data from any previous
     release.
    </para>
-   
+
    <para>
     Observe the following incompatibilities:
    </para>
@@ -5156,7 +5318,7 @@ DROP SCHEMA information_schema CASCADE;
     <listitem>
      <para>
       Inner joins using the explicit <literal>JOIN</literal> syntax
-      may behave differently because they are now better
+      might behave differently because they are now better
       optimized.
      </para>
     </listitem>
@@ -6123,7 +6285,7 @@ DROP SCHEMA information_schema CASCADE;
 
     <listitem>
      <para>
-      Arrays may now be specified as <literal>ARRAY[1,2,3]</literal>,
+      Arrays can now be specified as <literal>ARRAY[1,2,3]</literal>,
       <literal>ARRAY[['a','b'],['c','d']]</literal>, or
       <literal>ARRAY[ARRAY[ARRAY[2]]]</literal> (Joe)
      </para>
@@ -6449,7 +6611,7 @@ DROP SCHEMA information_schema CASCADE;
 
     <listitem>
      <para>
-      Have pg_dumpall use <command>GRANT</>/<command>REVOKE</> to dump database-level privleges (Tom)
+      Have pg_dumpall use <command>GRANT</>/<command>REVOKE</> to dump database-level privileges (Tom)
      </para>
     </listitem>
 
@@ -6697,6 +6859,52 @@ DROP SCHEMA information_schema CASCADE;
   </sect2>
  </sect1>
 
+  <sect1 id="release-7-3-20">
+   <title>Release 7.3.20</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2007-09-17</simpara>
+   </note>
+
+   <para>
+    This release contains fixes from 7.3.19.
+   </para>
+
+   <sect2>
+    <title>Migration to version 7.3.20</title>
+
+    <para>
+     A dump/restore is not required for those running 7.3.X.  However,
+     if you are upgrading from a version earlier than 7.3.13, see the release
+     notes for 7.3.13.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <itemizedlist>
+
+     <listitem>
+      <para>
+       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only password
+       authentication, as a security measure (Joe)
+      </para>
+     </listitem>
+
+    </itemizedlist>
+
+   </sect2>
+  </sect1>
+
   <sect1 id="release-7-3-19">
    <title>Release 7.3.19</title>
 
@@ -6847,11 +7055,13 @@ DROP SCHEMA information_schema CASCADE;
       <para>
        <function>to_number()</> and <function>to_char(numeric)</>
        are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
-       new <application>initdb</> installs (Tom)
+       new <link linkend="APP-INITDB"><application>initdb</></link>
+       installs (Tom)
       </para>
 
       <para>
-       This is because <varname>lc_numeric</> can potentially
+       This is because <link
+       linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
        change the output of these functions.
       </para>
      </listitem>
@@ -6870,7 +7080,7 @@ DROP SCHEMA information_schema CASCADE;
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-3-16">
    <title>Release 7.3.16</title>
 
@@ -6897,7 +7107,7 @@ DROP SCHEMA information_schema CASCADE;
    <sect2>
     <title>Changes</title>
 
-<itemizedlist> 
+<itemizedlist>
 <listitem><para>Fix corner cases in pattern matching for
   <application>psql</>'s <literal>\d</> commands</para></listitem>
 <listitem><para>Fix index-corrupting bugs in /contrib/ltree
@@ -6912,7 +7122,7 @@ DROP SCHEMA information_schema CASCADE;
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-3-15">
    <title>Release 7.3.15</title>
 
@@ -6937,7 +7147,7 @@ DROP SCHEMA information_schema CASCADE;
 
     <para>
      Full security against the SQL-injection attacks described in
-     CVE-2006-2313 and CVE-2006-2314 may require changes in application
+     CVE-2006-2313 and CVE-2006-2314 might require changes in application
      code.  If you have applications that embed untrustworthy strings
      into SQL commands, you should examine them as soon as possible to
      ensure that they are using recommended escaping techniques.  In
@@ -6969,7 +7179,7 @@ literals.  By default, <literal>\'</> is rejected only when
 GB18030, or UHC), which is the scenario in which SQL injection is possible.
 A new configuration parameter <varname>backslash_quote</> is available to
 adjust this behavior when needed.  Note that full security against
-CVE-2006-2314 may require client-side changes; the purpose of
+CVE-2006-2314 might require client-side changes; the purpose of
 <varname>backslash_quote</> is in part to make it obvious that insecure
 clients are insecure.
 </para></listitem>
@@ -7004,7 +7214,7 @@ Fuhr)</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-3-14">
    <title>Release 7.3.14</title>
 
@@ -7029,7 +7239,7 @@ Fuhr)</para></listitem>
 
    <sect2>
     <title>Changes</title>
-  
+
 <itemizedlist>
 
 <listitem><para>Fix potential crash in <command>SET
@@ -7061,7 +7271,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-3-13">
    <title>Release 7.3.13</title>
 
@@ -7089,7 +7299,7 @@ and <function>isinf</> during configure (Tom)</para></listitem>
 
    <sect2>
     <title>Changes</title>
-  
+
 <itemizedlist>
 
 <listitem><para>Fix character string comparison for locales that consider
@@ -7102,7 +7312,7 @@ to ensure that <application>plperl</> won't change the locale later</para>
 <para>This fixes a problem that occurred if the <application>postmaster</> was
 started with environment variables specifying a different locale than what
 <application>initdb</> had been told.  Under these conditions, any use of
-<application>plperl</> was likely to lead to corrupt indexes.  You may need
+<application>plperl</> was likely to lead to corrupt indexes.  You might need
 <command>REINDEX</> to fix existing indexes on
 textual columns if this has happened to you.</para></listitem>
 
@@ -7123,7 +7333,7 @@ what's actually returned by the query (Joe)</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-3-12">
    <title>Release 7.3.12</title>
 
@@ -7148,7 +7358,7 @@ what's actually returned by the query (Joe)</para></listitem>
 
    <sect2>
     <title>Changes</title>
-  
+
 <itemizedlist>
 
 <listitem><para>Fix race condition in transaction log management</para>
@@ -7170,7 +7380,7 @@ table has been dropped</para></listitem>
 
    </sect2>
   </sect1>
- 
+
   <sect1 id="release-7-3-11">
    <title>Release 7.3.11</title>
 
@@ -7257,7 +7467,7 @@ the variable is of pass-by-reference type</para></listitem>
      It is strongly recommended that all installations repair this error,
      either by initdb or by following the manual repair procedure given
      below.  The error at least allows unprivileged database users to crash
-     their server process, and may allow unprivileged users to gain the
+     their server process, and might allow unprivileged users to gain the
      privileges of a database superuser.
     </para>
 
@@ -7283,12 +7493,12 @@ COMMIT;
      template databases then any subsequently created databases will contain
      the same error.  <literal>template1</> can be fixed in the same way
      as any other database, but fixing <literal>template0</> requires
-     additional steps.  First, from any database issue
+     additional steps.  First, from any database issue:
 <programlisting>
 UPDATE pg_database SET datallowconn = true WHERE datname = 'template0';
 </programlisting>
       Next connect to <literal>template0</> and perform the above repair
-      procedure.  Finally, do
+      procedure.  Finally, do:
 <programlisting>
 -- re-freeze template0:
 VACUUM FREEZE;
@@ -7431,7 +7641,7 @@ datestyles</para></listitem>
 <itemizedlist>
 <listitem><para>Repair possible failure to update hint bits on disk</para>
 <para>
-Under rare circumstances this oversight could lead to 
+Under rare circumstances this oversight could lead to
 <quote>could not access transaction status</> failures, which qualifies
 it as a potential-data-loss bug.
 </para></listitem>
@@ -7541,7 +7751,7 @@ On some platforms, building with -fstrict-aliasing causes bugs.
 </para></listitem>
 <listitem><para>Make pg_restore handle 64-bit off_t correctly</para>
 <para>
-This bug prevented proper restoration from archive files exceeding 4Gb.
+This bug prevented proper restoration from archive files exceeding 4 GB.
 </para></listitem>
 <listitem><para>Make contrib/dblink not assume that local and remote type OIDs
 match (Joe)</para></listitem>
@@ -7841,7 +8051,7 @@ operations on bytea columns (Joe)</para></listitem>
     A dump/restore is <emphasis>not</emphasis> required for those
     running version 7.3. However, it should be noted that the main
     <productname>PostgreSQL</productname> interface library, libpq,
-    has a new major version number for this release, which may require
+    has a new major version number for this release, which might require
     recompilation of client code in certain cases.
    </para>
   </sect2>
@@ -7869,8 +8079,8 @@ operations on bytea columns (Joe)</para></listitem>
 </itemizedlist>
   </sect2>
  </sect1>
-  
-  
+
+
  <sect1 id="release-7-3">
   <title>Release 7.3</title>
 
@@ -8077,7 +8287,7 @@ operations on bytea columns (Joe)</para></listitem>
      <para>
       <command>COPY</command> no longer considers missing trailing
       columns to be null.  All columns need to be specified.
-      (However, one may achieve a similar effect by specifying a
+      (However, one can achieve a similar effect by specifying a
       column list in the <command>COPY</command> command.)
      </para>
     </listitem>
@@ -8633,7 +8843,7 @@ datestyles</para></listitem>
 <itemizedlist>
 <listitem><para>Repair possible failure to update hint bits on disk</para>
 <para>
-Under rare circumstances this oversight could lead to 
+Under rare circumstances this oversight could lead to
 <quote>could not access transaction status</> failures, which qualifies
 it as a potential-data-loss bug.
 </para></listitem>
@@ -8774,8 +8984,8 @@ since <productname>PostgreSQL</productname> 7.1.
 </itemizedlist>
   </sect2>
  </sect1>
-  
-  
+
+
  <sect1 id="release-7-2-2">
   <title>Release 7.2.2</title>
 
@@ -8817,8 +9027,8 @@ since <productname>PostgreSQL</productname> 7.1.
 </itemizedlist>
   </sect2>
  </sect1>
-  
-  
+
+
  <sect1 id="release-7-2-1">
   <title>Release 7.2.1</title>
 
@@ -8978,7 +9188,7 @@ since <productname>PostgreSQL</productname> 7.1.
     <listitem>
      <para>
       The semantics of the <command>VACUUM</command> command have
-      changed in this release.  You may wish to update your
+      changed in this release.  You might wish to update your
       maintenance procedures accordingly.
      </para>
     </listitem>
@@ -9018,7 +9228,7 @@ since <productname>PostgreSQL</productname> 7.1.
      <para>
       The <literal>timestamp()</literal>, <literal>time()</literal>,
       and <literal>interval()</literal> functions are no longer
-      available.  Instead of <literal>timestamp()</literal>, use 
+      available.  Instead of <literal>timestamp()</literal>, use
       <literal>timestamp 'string'</literal> or <literal>CAST</literal>.
      </para>
     </listitem>
@@ -9443,7 +9653,7 @@ since <productname>PostgreSQL</productname> 7.1.
 
     <para>
      <programlisting>
-Remove unused WAL segements of large transactions (Tom)
+Remove unused WAL segments of large transactions (Tom)
 Multiaction rule fix (Tom)
 PL/pgSQL memory allocation fix (Jan)
 VACUUM buffer fix (Tom)
@@ -9490,7 +9700,7 @@ Fix PL/pgSQL SELECTs when returning no rows
 Fix for psql backslash core dump
 Referential integrity privilege fix
 Optimizer fixes
-pg_dump cleanups 
+pg_dump cleanups
      </programlisting>
     </para>
    </sect2>
@@ -9573,7 +9783,7 @@ previous releases of <productname>PostgreSQL</productname> have forced
 all data modifications to disk before each transaction commit.  With
 WAL, only one log file must be flushed to disk, greatly improving
 performance.  If you have been using -F in previous releases to
-disable disk flushes, you may want to consider discontinuing its use.
+disable disk flushes, you might want to consider discontinuing its use.
       </para>
      </listitem>
     </varlistentry>
@@ -9614,7 +9824,7 @@ outer join syntax.
 The previous C function manager did not
 handle null values properly, nor did it support 64-bit <acronym>CPU</acronym>'s (Alpha).  The new
 function manager does.  You can continue using your old custom
-functions, but you may want to rewrite them in the future to use the new
+functions, but you might want to rewrite them in the future to use the new
 function manager call interface.
       </para>
      </listitem>
@@ -9629,7 +9839,7 @@ function manager call interface.
 A large number of complex queries that were
 unsupported in previous releases now work.  Many combinations of views,
 aggregates, UNION, LIMIT, cursors, subqueries, and inherited tables
-now work properly. Inherited tables are now accessed by default. 
+now work properly. Inherited tables are now accessed by default.
 Subqueries in FROM are now supported.
       </para>
      </listitem>
@@ -9659,7 +9869,7 @@ Kerberos V fixes (David Wragg)
 Fix for INSERT INTO...SELECT where targetlist has subqueries (Tom)
 Prompt username/password on standard error (Bruce)
 Large objects inv_read/inv_write fixes (Tom)
-Fixes for to_char(), to_date(), to_ascii(), and to_timestamp() (Karel, 
+Fixes for to_char(), to_date(), to_ascii(), and to_timestamp() (Karel,
     Daniel Baldoni)
 Prevent query expressions from leaking memory (Tom)
 Allow UPDATE of arrays elements (Tom)
@@ -9675,7 +9885,7 @@ Disallow DROP RULE, CREATE INDEX, TRUNCATE on views (Mark Hollomon)
 Allow PL/pgSQL accept non-ASCII identifiers (Tatsuo)
 Allow views to proper handle GROUP BY, aggregates, DISTINCT (Tom)
 Fix rare failure with TRUNCATE command (Tom)
-Allow UNION/INTERSECT/EXCEPT to be used with ALL, subqueries, views, 
+Allow UNION/INTERSECT/EXCEPT to be used with ALL, subqueries, views,
     DISTINCT, ORDER BY, SELECT...INTO (Tom)
 Fix parser failures during aborted transactions (Tom)
 Allow temporary relations to properly clean up indexes (Bruce)
@@ -9711,14 +9921,14 @@ Improve ps status display for more platforms (Peter E, Marc)
 Improve CREATE FUNCTION failure message (Ross)
 JDBC improvements (Peter, Travis Bauer, Christopher Cain, William Webber,
     Gunnar)
-Grand Unified Configuration scheme/GUC.  Many options can now be set in 
+Grand Unified Configuration scheme/GUC.  Many options can now be set in
     data/postgresql.conf, postmaster/postgres flags, or SET commands (Peter E)
 Improved handling of file descriptor cache (Tom)
 New warning code about auto-created table alias entries (Bruce)
 Overhaul initdb process (Tom, Peter E)
 Overhaul of inherited tables; inherited tables now accessed by default;
    new ONLY key word prevents it (Chris Bitmead, Tom)
-ODBC cleanups/improvements (Nick Gorham, Stephan Szabo, Zoltan Kovacs, 
+ODBC cleanups/improvements (Nick Gorham, Stephan Szabo, Zoltan Kovacs,
     Michael Fork)
 Allow renaming of temp tables (Tom)
 Overhaul memory manager contexts (Tom)
@@ -9789,7 +9999,7 @@ New CIDR abbrev() function (Tom)
 
 Performance
 -----------
-Write-Ahead Log (WAL) to provide crash recovery with less performance 
+Write-Ahead Log (WAL) to provide crash recovery with less performance
     overhead (Vadim)
 ANALYZE stage of VACUUM no longer exclusively locks table (Bruce)
 Reduced file seeks (Denis Perchine)
@@ -9880,7 +10090,7 @@ Fix for psql \l+ when multibyte enabled (Tatsuo)
 Allow PL/pgSQL to accept non ascii identifiers (Tatsuo)
 Make vacuum always flush buffers (Tom)
 Fix to allow cancel while waiting for a lock (Hiroshi)
-Fix for memory aloocation problem in user authentication code (Tom)
+Fix for memory allocation problem in user authentication code (Tom)
 Remove bogus use of int4out() (Tom)
 Fixes for multiple subqueries in COALESCE or BETWEEN (Tom)
 Fix for failure of triggers on heap open in certain cases (Jeroen van
@@ -10011,7 +10221,7 @@ ecpg changes (Michael)
    <simpara>2000-05-08</simpara>
    </note>
 
-   <para> 
+   <para>
     This release contains improvements in many areas, demonstrating
     the continued growth of <productname>PostgreSQL</productname>.
     There are more improvements and fixes in 7.0 than in any previous
@@ -10087,7 +10297,7 @@ ecpg changes (Michael)
      A dump/restore using <application>pg_dump</application>
      is required for those wishing to migrate data from any
      previous release of <productname>PostgreSQL</productname>.
-     For those upgrading from 6.5.*, you may instead use 
+     For those upgrading from 6.5.*, you can instead use
      <application>pg_upgrade</application> to upgrade to this
      release; however, a full dump/reload installation is always the
      most robust method for upgrades.
@@ -10108,7 +10318,7 @@ ecpg changes (Michael)
        ease the transition by allowing
        <productname>PostgreSQL</productname> to recognize
        the deprecated type names and translate them to the new type
-       names, this mechanism may not be completely transparent to
+       names, this mechanism cannot be completely transparent to
        your existing application.
       </para>
      </listitem>
@@ -10120,8 +10330,8 @@ ecpg changes (Michael)
        decreased query times as the optimizer makes a better choice
        for the preferred plan. However, in a small number of cases,
        usually involving pathological distributions of data, your
-       query times may go up. If you are dealing with large amounts
-       of data, you may want to check your queries to verify
+       query times might go up. If you are dealing with large amounts
+       of data, you might want to check your queries to verify
        performance.
       </para>
      </listitem>
@@ -10264,8 +10474,8 @@ Force permissions on PGDATA directory to be secure, even if it exists (Tom)
 Added psql LASTOID variable to return last inserted oid (Peter E)
 Allow concurrent vacuum and remove pg_vlock vacuum lock file (Tom)
 Add privilege check for vacuum (Peter E)
-New libpq functions to allow asynchronous connections: PQconnectStart(), 
-   PQconnectPoll(), PQresetStart(), PQresetPoll(), PQsetenvStart(), 
+New libpq functions to allow asynchronous connections: PQconnectStart(),
+   PQconnectPoll(), PQresetStart(), PQresetPoll(), PQsetenvStart(),
    PQsetenvPoll(), PQsetenvAbort (Ewan Mellor)
 New libpq PQsetenv() function (Ewan Mellor)
 create/alter user extension (Peter E)
@@ -10283,7 +10493,7 @@ Add CREATE/ALTER/DROP GROUP (Peter E)
 All administration scripts now support --long options (Peter E, Karel)
 Vacuumdb script now supports --all option (Peter E)
 ecpg new portable FETCH syntax
-Add ecpg EXEC SQL IFDEF, EXEC SQL IFNDEF, EXEC SQL ELSE, EXEC SQL ELIF 
+Add ecpg EXEC SQL IFDEF, EXEC SQL IFNDEF, EXEC SQL ELSE, EXEC SQL ELIF
         and EXEC SQL ENDIF directives
 Add pg_ctl script to control backend start-up (Tatsuo)
 Add postmaster.opts.default file to store start-up flags (Tatsuo)
@@ -10358,8 +10568,8 @@ Cleanups for int8 inputs, range checking, and type conversion (Tom)
 Fix for SELECT timespan('21:11:26'::time) (Tom)
 netmask('x.x.x.x/0') is 255.255.255.255 instead of 0.0.0.0 (Oleg Sharoiko)
 Add btree index on NUMERIC (Jan)
-Perl fix for large objects containing NUL characters (Douglas Thomson) 
-ODBC fix for for large objects (free)
+Perl fix for large objects containing NUL characters (Douglas Thomson)
+ODBC fix for large objects (free)
 Fix indexing of cidr data type
 Fix for Ethernet MAC addresses (macaddr type) comparisons
 Fix for date/time types when overflows happened in computations (Tom)
@@ -10599,13 +10809,13 @@ Fix for EXPLAIN on inheritance(Tom)
 Patch to allow vacuum on multisegment tables(Hiroshi)
 R-Tree optimizer selectivity fix(Tom)
 ACL file descriptor leak fix(Atsushi Ogawa)
-New expresssion subtree code(Tom)
+New expression subtree code(Tom)
 Avoid disk writes for read-only transactions(Vadim)
 Fix for removal of temp tables if last transaction was aborted(Bruce)
 Fix to prevent too large row from being created(Bruce)
 plpgsql fixes
 Allow port numbers 32k - 64k(Bruce)
-Add ^ precidence(Bruce)
+Add ^ precedence(Bruce)
 Rename sort files called pg_temp to pg_sorttemp(Bruce)
 Fix for microseconds in time values(Tom)
 Tutorial source cleanup
@@ -10767,10 +10977,10 @@ Add Win1250 (Czech) support (Pavel Behal)
         The <citetitle>Administrator's Guide</citetitle> has a new
         chapter on troubleshooting from Tom Lane.
         And the <citetitle>Programmer's Guide</citetitle> has a
-        description of query processing, also from Stefan, and details 
+        description of query processing, also from Stefan, and details
         on obtaining the <productname>PostgreSQL</productname> source
         tree via anonymous <productname>CVS</productname> and
-        <productname>CVSup</productname>. 
+        <productname>CVSup</productname>.
        </para>
       </listitem>
      </varlistentry>
@@ -10792,7 +11002,7 @@ Add Win1250 (Czech) support (Pavel Behal)
     <para>
      The new Multiversion Concurrency Control (MVCC) features can
      give somewhat different behaviors in multiuser
-     environments. <emphasis>Read and understand the following section 
+     environments. <emphasis>Read and understand the following section
       to ensure that your existing applications will give you the
       behavior you need.</emphasis>
     </para>
@@ -10972,7 +11182,7 @@ JDBC fixes/features, see src/interfaces/jdbc/CHANGELOG(Peter)
 Make % operator have precedence like /(Bruce)
 Add new postgres -O option to allow system table structure changes(Bruce)
 Update contrib/pginterface/findoidjoins script(Tom)
-Major speedup in vacuum of deleted rows with indexes(Vadim) 
+Major speedup in vacuum of deleted rows with indexes(Vadim)
 Allow non-SQL functions to run different versions based on arguments(Tom)
 Add -E option that shows actual queries sent by \dt and friends(Masaaki Sakaida)
 Add version number in start-up banners for psql(Masaaki Sakaida)
@@ -10987,7 +11197,7 @@ New pg_options: pretty_plan, pretty_parse, pretty_rewritten(Jan)
 Better optimization statistics for system table access(Tom)
 Better handling of non-default block sizes(Massimo)
 Improve GEQO optimizer memory consumption(Tom)
-UNION now suppports ORDER BY of columns not in target list(Jan)
+UNION now supports ORDER BY of columns not in target list(Jan)
 Major libpq++ improvements(Vince Vielhaber)
 pg_dump now uses -z(ACL's) as default(Bruce)
 backend cache, memory speedups(Tom)
@@ -11136,7 +11346,7 @@ Here is a brief, incomplete summary:
 <itemizedlist>
 <listitem>
 <para>
-Views and rules are now functional thanks to extensive new code in the 
+Views and rules are now functional thanks to extensive new code in the
 rewrite rules system from Jan Wieck. He also wrote a chapter on it
 for the <citetitle>Programmer's Guide</citetitle>.
 </para>
@@ -11175,7 +11385,7 @@ which covers this topic.
 
 <listitem>
 <para>
-Three new data types have been added. 
+Three new data types have been added.
 Two types, <type>inet</type> and <type>cidr</type>, support various forms
 of IP network, subnet, and machine addressing. There is now an 8-byte integer
 type available on some platforms. See the chapter on data types
@@ -11207,7 +11417,7 @@ been.
 <title>Migration to version 6.4</title>
 
 <para>
-A dump/restore using <application>pg_dump</application> 
+A dump/restore using <application>pg_dump</application>
 or <application>pg_dumpall</application>
 is required for those wishing to migrate data from any
 previous release of <productname>PostgreSQL</productname>.
@@ -11277,7 +11487,7 @@ Readline cleanups(Tom)
 Allow psql  \f \ to make spaces as delimiter(Bruce)
 Pass pg_attribute.atttypmod to the frontend for column field lengths(Tom,Bruce)
 Msql compatibility library in /contrib(Aldrin)
-Remove the requirement that ORDER/GROUP BY clause identifiers be 
+Remove the requirement that ORDER/GROUP BY clause identifiers be
 included in the target list(David)
 Convert columns to match columns in UNION clauses(Thomas)
 Remove fork()/exec() and only do fork()(Bruce)
@@ -11285,7 +11495,7 @@ Jdbc cleanups(Peter)
 Show backend status on ps command line(only works on some platforms)(Bruce)
 Pg_hba.conf now has a sameuser option in the database field
 Make lo_unlink take oid param, not int4
-New DISABLE_COMPLEX_MACRO for compilers that can't handle our macros(Bruce)
+New DISABLE_COMPLEX_MACRO for compilers that cannot handle our macros(Bruce)
 Libpgtcl now handles NOTIFY as a Tcl event, need not send dummy queries(Tom)
 libpgtcl cleanups(Tom)
 Add -error option to libpgtcl's pg_result command(Tom)
@@ -11361,7 +11571,7 @@ New UNLISTEN command(Massimo)
 psql and libpq now compile under Windows using win32.mak(Magnus)
 Lo_read no longer stores trailing NULL(Bruce)
 Identifiers are now truncated to 31 characters internally(Bruce)
-Createuser options now availble on the command line
+Createuser options now available on the command line
 Code for 64-bit integer supported added, configure tested, int8 type(Thomas)
 Prevent file descriptor leaf from failed COPY(Bruce)
 New pg_upgrade command(Bruce)
@@ -11372,7 +11582,7 @@ New DECLARE and FETCH feature(Thomas)
 libpq's internal structures now not exported(Tom)
 Allow up to 8 key indexes(Bruce)
 Remove ARCHIVE key word, that is no longer used(Thomas)
-pg_dump -n flag to supress quotes around indentifiers
+pg_dump -n flag to suppress quotes around indentifiers
 disable system columns for views(Jan)
 new INET and CIDR types for network addresses(TomH, Paul)
 no more double quotes in psql output
@@ -11401,7 +11611,7 @@ NS32K platform fixes(Phil Nelson, John Buller)
 SCO 7/UnixWare 2.x fixes(Billy,others)
 Sparc/Solaris 2.5 fixes(Ryan)
 Pgbuiltin.3 is obsolete, move to doc files(Thomas)
-Even more documention(Thomas)
+Even more documentation(Thomas)
 Nextstep support(Jacek)
 Aix support(David)
 pginterface manual page(Bruce)
@@ -11448,7 +11658,7 @@ Correctly handles function calls on the left side of BETWEEN and LIKE clauses.
 </itemizedlist>
 </para>
 <para>
-A dump/restore is NOT required for those running 6.3 or 6.3.1.  A 
+A dump/restore is NOT required for those running 6.3 or 6.3.1.  A
 <literal>make distclean</>, <literal>make</>, and <literal>make install</> is all that is required.
 This last step should be performed while the postmaster is not running.
 You should re-link any custom applications that use <productname>PostgreSQL</productname> libraries.
@@ -11525,7 +11735,7 @@ Improvements to the configuration autodetection for installation.
 </itemizedlist>
 </para>
 <para>
-A dump/restore is NOT required for those running 6.3.  A 
+A dump/restore is NOT required for those running 6.3.  A
 <literal>make distclean</>, <literal>make</>, and <literal>make install</> is all that is required.
 This last step should be performed while the postmaster is not running.
 You should re-link any custom applications that use <productname>PostgreSQL</productname> libraries.
@@ -11602,7 +11812,7 @@ Better identify tcl and tk libs and includes(Bruce)
      <listitem>
       <para>
        Socket interface for client/server connection. This is the default now
-       so you may need to start <application>postmaster</application> with the
+       so you might need to start <application>postmaster</application> with the
        <option>-i</option> flag.
       </para>
      </listitem>
@@ -11638,9 +11848,9 @@ Better identify tcl and tk libs and includes(Bruce)
     mention that without subselects, SQL is a very limited language.
     Subselects are a major feature, and you should review your code for
     places where subselects provide a better solution for your queries.  I
-    think you will find that there are more uses for subselects than you may
+    think you will find that there are more uses for subselects than you might
     think.  Vadim has put us on the big SQL map with subselects, and fully
-    functional ones too.  The only thing you can't do with subselects is to
+    functional ones too.  The only thing you cannot do with subselects is to
     use them in the target list.
    </para>
    <para>
@@ -11653,7 +11863,7 @@ Better identify tcl and tk libs and includes(Bruce)
     Third, <type>char()</type> fields will now allow faster access than <type>varchar()</type> or
     <type>text</type>. Specifically, the <type>text</> and <type>varchar()</type> have a penalty for access to
     any columns after the first column of this type.  <type>char()</type> used to also
-    have this access penalty, but it no longer does.  This may suggest that
+    have this access penalty, but it no longer does.  This might suggest that
     you redesign some of your tables, especially if you have short character
     columns that you have defined as <type>varchar()</type> or <type>text</type>.  This and other
     changes make 6.3 even faster than earlier releases.
@@ -11671,7 +11881,7 @@ Better identify tcl and tk libs and includes(Bruce)
    <para>
     User-created tables now no longer have SELECT privilege to PUBLIC by
     default.  This was done because the ANSI standard requires it.  You can
-    of course GRANT any privileges you want after the table is created. 
+    of course GRANT any privileges you want after the table is created.
     System tables continue to be SELECT-able by PUBLIC.
    </para>
    <para>
@@ -11703,7 +11913,7 @@ Better identify tcl and tk libs and includes(Bruce)
     <title>Migration to version 6.3</title>
 
     <para>
-     A dump/restore using <application>pg_dump</application> 
+     A dump/restore using <application>pg_dump</application>
      or <application>pg_dumpall</application>
      is required for those wishing to migrate data from any
      previous release of <productname>PostgreSQL</productname>.
@@ -11749,7 +11959,7 @@ Check boolean input literals for 'true','false','yes','no','1','0'
         and throw elog(ERROR) if unrecognized(Thomas)
 Major large objects fix
 Fix for GROUP BY showing duplicates(Vadim)
-Fix for index scans in MergeJion(Vadim)
+Fix for index scans in MergeJoin(Vadim)
 
 Enhancements
 ------------
@@ -11757,7 +11967,7 @@ Subselects with EXISTS, IN, ALL, ANY key words (Vadim, Bruce, Thomas)
 New User Manual(Thomas, others)
 Speedup by inlining some frequently-called functions
 Real deadlock detection, no more timeouts(Bruce)
-Add SQL92 "constants" CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, 
+Add SQL92 "constants" CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP,
         CURRENT_USER(Thomas)
 Modify constraint syntax to be SQL92-compliant(Thomas)
 Implement SQL92 PRIMARY KEY and UNIQUE clauses using indexes(Thomas)
@@ -11837,7 +12047,7 @@ Reduce system column overhead(Vadmin)
 Remove pg_time table(Vadim)
 Add pg_type attribute to identify types that need length (bpchar, varchar)
 Add report of offending line when COPY command fails
-Allow VIEW privileges to be set separately from the underlying tables. 
+Allow VIEW privileges to be set separately from the underlying tables.
         For security, use GRANT/REVOKE on views as appropriate(Jan)
 Tables now have no default GRANT SELECT TO PUBLIC.  You must
         explicitly grant such privileges.
@@ -11914,8 +12124,8 @@ Include example trigger function for inserting user names on table updates.
 </itemizedlist>
 </para>
 <para>
-This is a minor bug-fix release on 6.2. 
-For upgrades from pre-6.2 systems, a full dump/reload is required. 
+This is a minor bug-fix release on 6.2.
+For upgrades from pre-6.2 systems, a full dump/reload is required.
 Refer to the 6.2 release notes for instructions.
 </para>
 
@@ -12017,14 +12227,14 @@ Catch non-functional delete attempts(Vadim)
 Change time function names to be more consistent(Michael Reifenberg)
 Check for zero divides(Michael Reifenberg)
 Fix very old bug which made rows changed/inserted by a command
-        visible to the command itself (so we had multiple update of 
+        visible to the command itself (so we had multiple update of
         updated rows, etc.)(Vadim)
 Fix for SELECT null, 'fail' FROM pg_am (Patrick)
 SELECT NULL as EMPTY_FIELD now allowed(Patrick)
 Remove un-needed signal stuff from contrib/pginterface
 Fix OR (where x != 1 or x isnull didn't return rows with x NULL) (Vadim)
 Fix time_cmp function (Vadim)
-Fix handling of functions with non-attribute first argument in 
+Fix handling of functions with non-attribute first argument in
         WHERE clauses (Vadim)
 Fix GROUP BY when order of entries is different from order
         in target list (Vadim)
@@ -12038,7 +12248,7 @@ Added JDBC driver as an interface(Adrian & Peter)
 pg_password utility
 Return number of rows inserted/affected by INSERT/UPDATE/DELETE etc.(Vadim)
 Triggers implemented with CREATE TRIGGER (SQL3)(Vadim)
-SPI (Server Programming Interface) allows execution of queries inside 
+SPI (Server Programming Interface) allows execution of queries inside
         C-functions (Vadim)
 NOT NULL implemented (SQL92)(Robson Paniago de Miranda)
 Include reserved words for string handling, outer joins, and unions(Thomas)
@@ -12202,7 +12412,7 @@ optimizer which uses <firstterm>genetic</firstterm>
   The interpretation of array specifiers (the curly braces around atomic
   values) appears to have changed sometime after the original regression
   tests were generated. The current <filename>./expected/*.out</filename> files reflect this
-  new interpretation, which may not be correct!
+  new interpretation, which might not be correct!
 </para>
 
 <para>
@@ -12271,7 +12481,7 @@ Enhancements
 ------------
 attribute optimization statistics(Bruce)
 much faster new btree bulk load code(Paul)
-BTREE UNIQUE added to bulk load code(Vadim) 
+BTREE UNIQUE added to bulk load code(Vadim)
 new lock debug code(Massimo)
 massive changes to libpg++(Leo)
 new GEQO optimizer speeds table multitable optimization(Martin)
@@ -12374,7 +12584,7 @@ because the COPY output format was improved from the 1.02 release.
      <programlisting>
 Bug Fixes
 ---------
-ALTER TABLE bug - running postgress process needs to re-read table definition
+ALTER TABLE bug - running postgres process needs to re-read table definition
 Allow vacuum to be run on one table or entire database(Bruce)
 Array fixes
 Fix array over-runs of memory writes(Kurt)
@@ -12382,7 +12592,7 @@ Fix elusive btree range/non-range bug(Dan)
 Fix for hash indexes on some types like time and date
 Fix for pg_log size explosion
 Fix permissions on lo_export()(Bruce)
-Fix unitialized reads of memory(Kurt)
+Fix uninitialized reads of memory(Kurt)
 Fixed ALTER TABLE ... char(3) bug(Bruce)
 Fixed a few small memory leaks
 Fixed EXPLAIN handling of options and changed full_path option name
@@ -12426,7 +12636,7 @@ Change default decimal constant representation from float4 to float8(Bruce)
 European date format now set when postmaster is started
 Execute lowercase function names if not found with exact case
 Fixes for aggregate/GROUP processing, allow 'select sum(func(x),sum(x+y) from z'
-Gist now included in the distrubution(Marc)
+Gist now included in the distribution(Marc)
 Idend authentication of local users(Bryan)
 Implement BETWEEN qualifier(Bruce)
 Implement IN qualifier(Bruce)
@@ -12455,7 +12665,7 @@ Vacuum now had VERBOSE option(Bruce)
 Source tree changes
 -------------------
 All functions now have prototypes that are compared against the calls
-Allow asserts to be disabled easly from Makefile.global(Bruce)
+Allow asserts to be disabled easily from Makefile.global(Bruce)
 Change oid constants used in code to #define names
 Decoupled sparc and solaris defines(Kurt)
 Gcc -Wall compiles cleanly with warnings only from unfixable constructs
@@ -12468,13 +12678,13 @@ Name change from Postgres95 to PostgreSQL
 New config.h file(Marc, Bryan)
 PG_VERSION now set to 6.0 and used by postmaster
 Portability additions, including Ultrix, DG/UX, AIX, and Solaris
-Reduced the number of #define's, centeralized #define's
+Reduced the number of #define's, centralized #define's
 Remove duplicate OIDS in system tables(Dan)
 Remove duplicate system catalog info or report mismatches(Dan)
 Removed many os-specific #define's
 Restructured object file generation/location(Bryan, Marc)
 Restructured port-specific file locations(Bryan, Marc)
-Unused/uninialized variables corrected
+Unused/uninitialized variables corrected
 </programlisting>
 </para>
 </sect2>
@@ -12614,8 +12824,8 @@ New Ports
 </programlisting>
 </para>
 <!--
-Contributors (appologies to any missed)
- * Kurt J. Lidl &lt;lidl@va.pubnix.com&gt; 
+Contributors (apologies to any missed)
+ * Kurt J. Lidl &lt;lidl@va.pubnix.com&gt;
         (missed in first run, but no less important)
  * Erich Stamberger &lt;eberger@gewi.kfunigraz.ac.at&gt;
  * Jason Wright &lt;jason@shiloh.vnet.net&gt;
@@ -12658,7 +12868,7 @@ Contributors (appologies to any missed)
 
 <para>
 The following notes are for the benefit of users who want to migrate
-databases from <productname>Postgres95</> 1.0 to <productname>Postgres95</> 1.01.  
+databases from <productname>Postgres95</> 1.0 to <productname>Postgres95</> 1.01.
 </para>
 <para>
 If you are starting afresh with <productname>Postgres95</> 1.01 and do not need
@@ -12666,7 +12876,7 @@ to migrate old databases, you do not need to read any further.
 </para>
 <para>
 In order to <productname>Postgres95</> version 1.01 with databases created with
-<productname>Postgres95</> version 1.0, the following steps are required:  
+<productname>Postgres95</> version 1.0, the following steps are required:
 </para>
 <procedure>
 <step>
@@ -12677,7 +12887,7 @@ Set the definition of <symbol>NAMEDATALEN</symbol> in <filename>src/Makefile.glo
 </step>
 <step>
 <para>
-Decide whether you want to use Host based authentication.  
+Decide whether you want to use Host based authentication.
 </para>
 <substeps>
 <step>
@@ -12690,7 +12900,7 @@ If you do, you must create a file name <literal>pg_hba</literal> in your top-lev
 <step>
 <para>
 If you do not want host-based authentication, you can comment out
-   the line
+   the line:
 <programlisting>
         HBA = 1
 </programlisting>
@@ -12713,7 +12923,7 @@ Compile and install 1.01, but DO NOT do the <command>initdb</command> step.
 <step>
 <para>
 Before doing anything else, terminate your 1.0 postmaster, and
-   backup your existing <envar>$PGDATA</envar> directory.   
+   backup your existing <envar>$PGDATA</envar> directory.
 </para>
 </step>
 <step>
@@ -12736,7 +12946,7 @@ Start up a new 1.01 postmaster
 <para>
 Add the new built-in functions and operators of 1.01 to 1.0
    databases.  This is done by running the new 1.01 server against
-   your own 1.0 database and applying the queries attached and saving 
+   your own 1.0 database and applying the queries attached and saving
    in the file 1.0_to_1.01.sql.   This can be done easily through <command>psql</command>.
    If your 1.0 database is name <literal>testdb</literal>:
 
@@ -12821,12 +13031,12 @@ Enhancements:
    is not desired, comment out HBA=1 in src/Makefile.global.
  * changed regex handling to be uniform use of Henry Spencer's regex code
    regardless of platform.  The regex code is included in the distribution
- * added functions and operators for case-insensitive regular expressions. 
+ * added functions and operators for case-insensitive regular expressions.
    The operators are ~* and !~*.
  * pg_dump uses COPY instead of SELECT loop for better performance
 
 Bug fixes:
- * fixed an optimizer bug that was causing core dumps when 
+ * fixed an optimizer bug that was causing core dumps when
    functions calls were used in comparisons in the WHERE clause
  * changed all uses of getuid to geteuid so that effective uids are used
  * psql now returns non-zero status on errors when using -c
@@ -12862,11 +13072,11 @@ Incompatibilities:
 Enhancements:
  *  sql LIKE syntax has been added
  *  copy command now takes an optional USING DELIMITER specification.
-   delimiters can be any single-character string. 
+   delimiters can be any single-character string.
  *  IRIX 5.3 port has been added.
    Thanks to Paul Walmsley and others.
  *  updated pg_dump to work with new libpq
- *  \d has been added psql 
+ *  \d has been added psql
    Thanks to Keith Parks
  *  regexp performance for architectures that use POSIX regex has been
    improved due to caching of precompiled patterns.
@@ -12916,7 +13126,7 @@ Incompatible changes:
  * float literals (eg. 3.14) are now of type float4 (instead of float8 in
    previous releases); you might have to do typecasting if you depend on it
    being of type float8.  If you neglect to do the typecasting and you assign
-   a float literal to a field of type float8, you may get incorrect values
+   a float literal to a field of type float8, you might get incorrect values
    stored!
  * LIBPQ has been totally revamped so that frontend applications
    can connect to multiple backends
@@ -12935,34 +13145,34 @@ more compliant to the SQL-92 standard):
                 integer, int -&gt; int4
                 float, real  -&gt; float4
    char(N) and varchar(N) are implemented as truncated text types. In
-   addition, char(N) does blank-padding. 
+   addition, char(N) does blank-padding.
  * single-quote (') is used for quoting string literals; '' (in addition to
    \') is supported as means of inserting a single quote in a string
  * SQL standard aggregate names (MAX, MIN, AVG, SUM, COUNT) are used
    (Also, aggregates can now be overloaded, i.e. you can define your
    own MAX aggregate to take in a user-defined type.)
- * CHANGE ACL removed. GRANT/REVOKE syntax added.  
+ * CHANGE ACL removed. GRANT/REVOKE syntax added.
    - Privileges can be given to a group using the "GROUP" key word.
         For example:
                 GRANT SELECT ON foobar TO GROUP my_group;
-        The key word 'PUBLIC' is also supported to mean all users.      
+        The key word 'PUBLIC' is also supported to mean all users.
 
         Privileges can only be granted or revoked to one user or group
-        at a time.  
+        at a time.
 
         "WITH GRANT OPTION" is not supported.  Only class owners can change
         access control
-   - The default access control is to to grant users readonly access.
+   - The default access control is to grant users readonly access.
      You must explicitly grant insert/update access to users.  To change
-     this, modify the line in 
-                src/backend/utils/acl.h 
-     that defines ACL_WORLD_DEFAULT 
+     this, modify the line in
+                src/backend/utils/acl.h
+     that defines ACL_WORLD_DEFAULT
 
 Bug fixes:
  * the bug where aggregates of empty tables were not run has been fixed. Now,
    aggregates run on empty tables will return the initial conditions of the
    aggregates. Thus, COUNT of an empty  table will now properly return 0.
-   MAX/MIN of an empty table will return a row of value NULL. 
+   MAX/MIN of an empty table will return a row of value NULL.
  * allow the use of \; inside the monitor
  * the LISTEN/NOTIFY asynchronous notification mechanism now work
  * NOTIFY in rule action bodies now work
@@ -12977,7 +13187,7 @@ Other changes and enhancements:
  * WARN and NOTICE messages no longer have timestamps on them. To turn on
    timestamps of error messages, uncomment the line in
    src/backend/utils/elog.h:
-        /* define ELOG_TIMESTAMPS */ 
+        /* define ELOG_TIMESTAMPS */
  * On an access control violation, the message
         "Either no such class or insufficient privilege"
    will be given.  This is the same message that is returned when
@@ -12996,8 +13206,8 @@ libpgtcl changes:
 Portability enhancements and New Ports:
  * flex/lex problems have been cleared up.  Now, you should be able to use
    flex instead of lex on any platforms.  We no longer make assumptions of
-   what lexer you use based on the platform you use. 
- * The Linux-ELF port is now supported.  Various configuration have been 
+   what lexer you use based on the platform you use.
+ * The Linux-ELF port is now supported.  Various configuration have been
    tested:  The following configuration is known to work:
         kernel 1.2.10, gcc 2.6.3, libc 4.7.2, flex 2.5.2, bison 1.24
    with everything in ELF format,
@@ -13031,9 +13241,9 @@ New documentation:
 Incompatible changes:
  * The SQL statement for creating a database is 'CREATE DATABASE' instead
    of 'CREATEDB'. Similarly, dropping a database is 'DROP DATABASE' instead
-   of 'DESTROYDB'. However, the names of the executables 'createdb' and 
+   of 'DESTROYDB'. However, the names of the executables 'createdb' and
    'destroydb' remain the same.
- 
+
 New tools:
  * pgperl - a Perl (4.036) interface to Postgres95
  * pg_dump - a utility for dumping out a postgres database into a
@@ -13050,7 +13260,7 @@ The following ports have been incorporated into postgres95-beta-0.02:
 
 The following bugs have been fixed in postgres95-beta-0.02:
  * new lines not escaped in COPY OUT and problem with COPY OUT when first
-   attribute is a '.' 
+   attribute is a '.'
  * cannot type return to use the default user id in createuser
  * SELECT DISTINCT on big tables crashes
  * Linux installation problems
@@ -13179,20 +13389,3 @@ In general, however, 6.3 is substantially faster than previous releases (thanks,
 </sect1>
 ]]>
 </appendix>
-
-<!-- Keep this comment at the end of the file
-Local variables:
-mode:sgml
-sgml-omittag:nil
-sgml-shorttag:t
-sgml-minimize-attributes:nil
-sgml-always-quote-attributes:t
-sgml-indent-step:1
-sgml-indent-data:t
-sgml-parent-document:nil
-sgml-default-dtd-file:"./reference.ced"
-sgml-exposed-tags:nil
-sgml-local-catalogs:("/usr/lib/sgml/catalog")
-sgml-local-ecat-files:nil
-End:
--->
