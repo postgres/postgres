@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.75 2007/04/26 23:24:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/hash/dynahash.c,v 1.76 2007/09/11 16:17:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,7 +416,7 @@ hash_create(const char *tabname, long nelem, HASHCTL *info, int flags)
 
 	/* Build the hash directory structure */
 	if (!init_htab(hashp, nelem))
-		elog(ERROR, "failed to initialize hash table");
+		elog(ERROR, "failed to initialize hash table \"%s\"", hashp->tabname);
 
 	/*
 	 * For a shared hash table, preallocate the requested number of elements.
@@ -909,7 +909,8 @@ hash_search_with_hash_value(HTAB *hashp,
 
 			/* disallow inserts if frozen */
 			if (hashp->frozen)
-				elog(ERROR, "cannot insert into a frozen hashtable");
+				elog(ERROR, "cannot insert into frozen hashtable \"%s\"",
+					 hashp->tabname);
 
 			currBucket = get_hash_entry(hashp);
 			if (currBucket == NULL)
@@ -1154,9 +1155,10 @@ void
 hash_freeze(HTAB *hashp)
 {
 	if (hashp->isshared)
-		elog(ERROR, "cannot freeze shared hashtable");
+		elog(ERROR, "cannot freeze shared hashtable \"%s\"", hashp->tabname);
 	if (!hashp->frozen && has_seq_scans(hashp))
-		elog(ERROR, "cannot freeze hashtable with active scans");
+		elog(ERROR, "cannot freeze hashtable \"%s\" because it has active scans",
+			 hashp->tabname);
 	hashp->frozen = true;
 }
 
@@ -1432,7 +1434,8 @@ static void
 register_seq_scan(HTAB *hashp)
 {
 	if (num_seq_scans >= MAX_SEQ_SCANS)
-		elog(ERROR, "too many active hash_seq_search scans");
+		elog(ERROR, "too many active hash_seq_search scans, cannot start one on \"%s\"",
+			 hashp->tabname);
 	seq_scan_tables[num_seq_scans] = hashp;
 	seq_scan_level[num_seq_scans] = GetCurrentTransactionNestLevel();
 	num_seq_scans++;
