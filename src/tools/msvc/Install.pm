@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.18 2007/08/27 10:51:15 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.19 2007/09/12 13:58:23 mha Exp $
 #
 use strict;
 use warnings;
@@ -66,6 +66,7 @@ sub Install
     GenerateTimezoneFiles($target,$conf);
     GenerateTsearchFiles($target);
     CopySetOfFiles('Stopword files', "src\\backend\\snowball\\stopwords\\*.stop", $target . '/share/tsearch_data/');
+    CopySetOfFiles('Dictionaries sample files', "src\\backend\\tsearch\\\*_sample.*", $target . '/share/tsearch_data/');
     CopyContribFiles($config,$target);
     CopyIncludeFiles($target);
 
