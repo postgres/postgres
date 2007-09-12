@@ -60,6 +60,21 @@ For Major Releases
 * Update inet/cidr data types with newest Bind patches
 
 
+Creating Back-Branch Release Notes
+==================================
+* Do 'cvs log' on each back-branch and run pgcvslog
+
+* Edit and create SGML markup for the most recent branch
+
+* Make copies of the SGML for each branch, then remove items
+  that do not apply based on cvs logs for that branch
+
+* Copy the SGML for each branch into release.sgml in CVS HEAD
+
+* Copy CVS HEAD release.sgml to each branch and trim off the top
+  part that doesn't apply for each branch
+
+
 ---------------------------------------------------------------------------
 
                        Library Version Changes
