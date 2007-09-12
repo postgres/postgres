@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.286 2007/09/07 20:59:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.287 2007/09/12 20:49:27 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2685,6 +2685,7 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 		char	   *start_ptr;
 		char	   *end_ptr;
 		int			input_len;
+		bool        saw_high_bit = false;
 
 		/* Make sure space remains in fieldvals[] */
 		if (fieldno >= maxfields)
@@ -2749,6 +2750,8 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 								}
 							}
 							c = val & 0377;
+							if (IS_HIGHBIT_SET(c))
+								saw_high_bit = true;
 						}
 						break;
 					case 'x':
@@ -2772,6 +2775,8 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 									}
 								}
 								c = val & 0xff;
+								if (IS_HIGHBIT_SET(c))
+									saw_high_bit = true;							
 							}
 						}
 						break;
@@ -2799,7 +2804,7 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 						 * literally
 						 */
 				}
-			}
+			}			
 
 			/* Add c to output string */
 			*output_ptr++ = c;
@@ -2807,6 +2812,16 @@ CopyReadAttributesText(CopyState cstate, int maxfields, char **fieldvals)
 
 		/* Terminate attribute value in output area */
 		*output_ptr++ = '\0';
+
+		/* If we de-escaped a char with the high bit set, make sure
+		 * we still have valid data for the db encoding. Avoid calling strlen 
+		 * here for the sake of efficiency.
+		 */
+		if (saw_high_bit)
+		{
+			char *fld = fieldvals[fieldno];
+			pg_verifymbstr(fld, output_ptr - (fld + 1), false);
+		}
 
 		/* Check whether raw input matched null marker */
 		input_len = end_ptr - start_ptr;

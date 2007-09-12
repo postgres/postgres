@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.140 2007/08/12 20:18:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/scan.l,v 1.141 2007/09/12 20:49:27 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,6 +60,7 @@ bool			escape_string_warning = true;
 bool			standard_conforming_strings = false;
 
 static bool		warn_on_first_escape;
+static bool     saw_high_bit = false;
 
 /*
  * literalbuf is used to accumulate literal values when multiple rules
@@ -426,6 +427,7 @@ other			.
 
 {xqstart}		{
 					warn_on_first_escape = true;
+					saw_high_bit = false;
 					SET_YYLLOC();
 					if (standard_conforming_strings)
 						BEGIN(xq);
@@ -435,6 +437,7 @@ other			.
 				}
 {xestart}		{
 					warn_on_first_escape = false;
+					saw_high_bit = false;
 					SET_YYLLOC();
 					BEGIN(xe);
 					startlit();
@@ -443,6 +446,11 @@ other			.
 <xq,xe>{quotefail} {
 					yyless(1);
 					BEGIN(INITIAL);
+					/* check that the data remains valid if it might have been
+					 * made invalid by unescaping any chars.
+					 */
+					if (saw_high_bit)
+						pg_verifymbstr(literalbuf, literallen, false);
 					yylval.str = litbufdup();
 					return SCONST;
 				}
@@ -475,12 +483,16 @@ other			.
 
 					check_escape_warning();
 					addlitchar(c);
+					if (IS_HIGHBIT_SET(c))
+						saw_high_bit = true;
 				}
 <xe>{xehexesc}  {
 					unsigned char c = strtoul(yytext+2, NULL, 16);
 
 					check_escape_warning();
 					addlitchar(c);
+					if (IS_HIGHBIT_SET(c))
+						saw_high_bit = true;
 				}
 <xq,xe>{quotecontinue} {
 					/* ignore */
@@ -892,6 +904,14 @@ litbufdup(void)
 static unsigned char
 unescape_single_char(unsigned char c)
 {
+	/* Normally we wouldn't expect to see \n where n has its high bit set
+	 * but we set the flag to check the string if we do get it, so
+	 * that this doesn't become a way of getting around the coding validity
+	 * checks.
+	 */
+	if (IS_HIGHBIT_SET(c))
+		saw_high_bit = true;
+
 	switch (c)
 	{
 		case 'b':
