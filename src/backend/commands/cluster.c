@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.141.2.1 2005/11/22 18:23:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.141.2.2 2007/09/12 15:16:20 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,6 +100,15 @@ cluster(ClusterStmt *stmt)
 		if (!pg_class_ownercheck(tableOid, GetUserId()))
 			aclcheck_error(ACLCHECK_NOT_OWNER, ACL_KIND_CLASS,
 						   RelationGetRelationName(rel));
+
+		/*
+		 * Reject clustering a remote temp table ... their local buffer manager
+		 * is not going to cope.
+		 */
+		if (isOtherTempNamespace(RelationGetNamespace(rel)))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot cluster temporary tables of other sessions")));
 
 		if (stmt->indexname == NULL)
 		{
@@ -290,6 +299,18 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	 * check_index_is_clusterable.
 	 */
 	OldHeap = heap_open(rvtc->tableOid, AccessExclusiveLock);
+
+	/*
+	 * Don't allow cluster on temp tables of other backends ... their
+	 * local buffer manager is not going to cope.  In the recheck case,
+	 * silently skip it.  Otherwise continue -- there is a hard error
+	 * in check_index_is_clusterable.
+	 */
+	if (recheck && isOtherTempNamespace(RelationGetNamespace(OldHeap)))
+	{
+		heap_close(OldHeap, AccessExclusiveLock);
+		return;
+	}
 
 	/* Check index is valid to cluster on */
 	check_index_is_clusterable(OldHeap, rvtc->indexOid, recheck);
