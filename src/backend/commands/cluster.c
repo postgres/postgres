@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.116.2.2 2005/02/06 20:19:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.116.2.3 2007/09/12 15:16:24 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -308,6 +308,25 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 	 */
 	OldHeap = heap_open(rvtc->tableOid, AccessExclusiveLock);
 
+	/*
+	 * Don't allow cluster on temp tables of other backends ... their local
+	 * buffer manager is not going to cope.  We silently skip it in the
+	 * "recheck" case, because it means somebody is executing a database-wide
+	 * CLUSTER.  In the single relation case, we must cause a hard error.
+	 */
+	if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
+	{
+		if (recheck)
+		{
+			heap_close(OldHeap, AccessExclusiveLock);
+			return;
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("cannot cluster temporary tables of other sessions")));
+	}
+
 	OldIndex = index_open(rvtc->indexOid);
 	LockRelation(OldIndex, AccessExclusiveLock);
 
@@ -378,15 +397,6 @@ cluster_rel(RelToCluster *rvtc, bool recheck)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("\"%s\" is a system catalog",
 						RelationGetRelationName(OldHeap))));
-
-	/*
-	 * Don't allow cluster on temp tables of other backends ... their
-	 * local buffer manager is not going to cope.
-	 */
-	if (isOtherTempNamespace(RelationGetNamespace(OldHeap)))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-			   errmsg("cannot cluster temporary tables of other sessions")));
 
 	/* Drop relcache refcnt on OldIndex, but keep lock */
 	index_close(OldIndex);
