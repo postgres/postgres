@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.72 2007/03/02 00:48:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.73 2007/09/12 22:10:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ typedef PageHeaderData *PageHeader;
  * pd_flags contains the following flag bits.  Undefined bits are initialized
  * to zero and may be used in the future.
  *
- * PD_HAS_FREE_LINES is set if there are any not-LP_USED line pointers before
+ * PD_HAS_FREE_LINES is set if there are any LP_UNUSED line pointers before
  * pd_lower.  This should be considered a hint rather than the truth, since
  * changes to it are not WAL-logged.
  */
@@ -274,7 +274,7 @@ typedef PageHeaderData *PageHeader;
 #define PageGetItem(page, itemId) \
 ( \
 	AssertMacro(PageIsValid(page)), \
-	AssertMacro(ItemIdIsUsed(itemId)), \
+	AssertMacro(ItemIdHasStorage(itemId)), \
 	(Item)(((char *)(page)) + ItemIdGetOffset(itemId)) \
 )
 
@@ -346,7 +346,7 @@ typedef PageHeaderData *PageHeader;
 extern void PageInit(Page page, Size pageSize, Size specialSize);
 extern bool PageHeaderIsValid(PageHeader page);
 extern OffsetNumber PageAddItem(Page page, Item item, Size size,
-			OffsetNumber offsetNumber, ItemIdFlags flags);
+			OffsetNumber offsetNumber, bool overwrite);
 extern Page PageGetTempPage(Page page, Size specialSize);
 extern void PageRestoreTempPage(Page tempPage, Page oldPage);
 extern int	PageRepairFragmentation(Page page, OffsetNumber *unused);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.158 2007/06/03 22:16:02 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.159 2007/09/12 22:10:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,7 +221,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 			 * we can. We only apply _bt_isequal() when we get to a non-killed
 			 * item or the end of the page.
 			 */
-			if (!ItemIdDeleted(curitemid))
+			if (!ItemIdIsDead(curitemid))
 			{
 				/*
 				 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's
@@ -301,7 +301,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					if (HeapTupleSatisfiesVacuum(htup.t_data, RecentGlobalXmin,
 												 hbuffer) == HEAPTUPLE_DEAD)
 					{
-						curitemid->lp_flags |= LP_DELETE;
+						ItemIdMarkDead(curitemid);
 						opaque->btpo_flags |= BTP_HAS_GARBAGE;
 						/* be sure to mark the proper buffer dirty... */
 						if (nbuf != InvalidBuffer)
@@ -368,7 +368,7 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
  *		any existing equal keys because of the way _bt_binsrch() works.
  *
  *		If there's not enough room in the space, we try to make room by
- *		removing any LP_DELETEd tuples.
+ *		removing any LP_DEAD tuples.
  *
  *		On entry, *buf and *offsetptr point to the first legal position
  *		where the new tuple could be inserted. The caller should hold an
@@ -449,7 +449,7 @@ _bt_findinsertloc(Relation rel,
 
 		/*
 		 * before considering moving right, see if we can obtain enough
-		 * space by erasing LP_DELETE items
+		 * space by erasing LP_DEAD items
 		 */
 		if (P_ISLEAF(lpageop) && P_HAS_GARBAGE(lpageop))
 		{
@@ -840,7 +840,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		itemsz = ItemIdGetLength(itemid);
 		item = (IndexTuple) PageGetItem(origpage, itemid);
 		if (PageAddItem(rightpage, (Item) item, itemsz, rightoff,
-						LP_USED) == InvalidOffsetNumber)
+						false) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add hikey to the right sibling");
 		rightoff = OffsetNumberNext(rightoff);
 	}
@@ -865,7 +865,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		item = (IndexTuple) PageGetItem(origpage, itemid);
 	}
 	if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
-					LP_USED) == InvalidOffsetNumber)
+					false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add hikey to the left sibling");
 	leftoff = OffsetNumberNext(leftoff);
 
@@ -1699,7 +1699,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 * Note: we *must* insert the two items in item-number order, for the
 	 * benefit of _bt_restore_page().
 	 */
-	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY, LP_USED) == InvalidOffsetNumber)
+	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY,
+					false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add leftkey to new root page");
 	pfree(new_item);
 
@@ -1716,7 +1717,8 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	/*
 	 * insert the right page pointer into the new root page.
 	 */
-	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY, LP_USED) == InvalidOffsetNumber)
+	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY,
+					false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add rightkey to new root page");
 	pfree(new_item);
 
@@ -1803,7 +1805,7 @@ _bt_pgaddtup(Relation rel,
 	}
 
 	if (PageAddItem(page, (Item) itup, itemsize, itup_off,
-					LP_USED) == InvalidOffsetNumber)
+					false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add item to the %s for \"%s\"",
 			 where, RelationGetRelationName(rel));
 }
@@ -1858,7 +1860,7 @@ _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 /*
  * _bt_vacuum_one_page - vacuum just one index page.
  *
- * Try to remove LP_DELETE items from the given page.  The passed buffer
+ * Try to remove LP_DEAD items from the given page.  The passed buffer
  * must be exclusive-locked, but unlike a real VACUUM, we don't need a
  * super-exclusive "cleanup" lock (see nbtree/README).
  */
@@ -1875,7 +1877,7 @@ _bt_vacuum_one_page(Relation rel, Buffer buffer)
 
 	/*
 	 * Scan over all items to see which ones need to be deleted
-	 * according to LP_DELETE flags.
+	 * according to LP_DEAD flags.
 	 */
 	minoff = P_FIRSTDATAKEY(opaque);
 	maxoff = PageGetMaxOffsetNumber(page);
@@ -1885,7 +1887,7 @@ _bt_vacuum_one_page(Relation rel, Buffer buffer)
 	{
 		ItemId		itemId = PageGetItemId(page, offnum);
 
-		if (ItemIdDeleted(itemId))
+		if (ItemIdIsDead(itemId))
 			deletable[ndeletable++] = offnum;
 	}
 
@@ -1893,7 +1895,7 @@ _bt_vacuum_one_page(Relation rel, Buffer buffer)
 		_bt_delitems(rel, buffer, deletable, ndeletable);
 
 	/*
-	 * Note: if we didn't find any LP_DELETE items, then the page's
+	 * Note: if we didn't find any LP_DEAD items, then the page's
 	 * BTP_HAS_GARBAGE hint bit is falsely set.  We do not bother expending a
 	 * separate write to clear it, however.  We will clear it when we split
 	 * the page.

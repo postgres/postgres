@@ -96,7 +96,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.5 2007/05/17 15:28:29 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/rewriteheap.c,v 1.6 2007/09/12 22:10:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -628,7 +628,7 @@ raw_heap_insert(RewriteState state, HeapTuple tup)
 
 	/* And now we can insert the tuple into the page */
 	newoff = PageAddItem(page, (Item) heaptup->t_data, len,
-						 InvalidOffsetNumber, LP_USED);
+						 InvalidOffsetNumber, false);
 	if (newoff == InvalidOffsetNumber)
 		elog(ERROR, "failed to add tuple");
 

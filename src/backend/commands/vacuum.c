@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.357 2007/09/08 20:31:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.358 2007/09/12 22:10:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1522,7 +1522,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 				/* mark it unused on the temp page */
 				lpp = PageGetItemId(tempPage, offnum);
-				lpp->lp_flags &= ~LP_USED;
+				ItemIdSetUnused(lpp);
 
 				vacpage->offsets[vacpage->offsets_free++] = offnum;
 				tups_vacuumed += 1;
@@ -1558,7 +1558,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		{
 			/* Just use current available space */
 			vacpage->free = PageGetFreeSpaceWithFillFactor(onerel, page);
-			/* Need to reap the page if it has ~LP_USED line pointers */
+			/* Need to reap the page if it has LP_UNUSED line pointers */
 			do_reap = (vacpage->offsets_free > 0);
 		}
 
@@ -2582,7 +2582,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				if (HeapTupleHeaderGetXvac(htup) != myXID)
 					elog(ERROR, "invalid XVAC in tuple header");
 
-				itemid->lp_flags &= ~LP_USED;
+				ItemIdSetUnused(itemid);
 				num_tuples++;
 			}
 			Assert(vacpage->offsets_free == num_tuples);
@@ -2714,7 +2714,7 @@ move_chain_tuple(Relation rel,
 	newtup.t_data->t_infomask |= HEAP_MOVED_IN;
 	HeapTupleHeaderSetXvac(newtup.t_data, myXID);
 	newoff = PageAddItem(dst_page, (Item) newtup.t_data, tuple_len,
-						 InvalidOffsetNumber, LP_USED);
+						 InvalidOffsetNumber, false);
 	if (newoff == InvalidOffsetNumber)
 		elog(PANIC, "failed to add item with len = %lu to page %u while moving tuple chain",
 			 (unsigned long) tuple_len, dst_vacpage->blkno);
@@ -2819,7 +2819,7 @@ move_plain_tuple(Relation rel,
 
 	/* add tuple to the page */
 	newoff = PageAddItem(dst_page, (Item) newtup.t_data, tuple_len,
-						 InvalidOffsetNumber, LP_USED);
+						 InvalidOffsetNumber, false);
 	if (newoff == InvalidOffsetNumber)
 		elog(PANIC, "failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)",
 			 (unsigned long) tuple_len,
@@ -3033,7 +3033,7 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 	for (i = 0; i < vacpage->offsets_free; i++)
 	{
 		itemid = PageGetItemId(page, vacpage->offsets[i]);
-		itemid->lp_flags &= ~LP_USED;
+		ItemIdSetUnused(itemid);
 	}
 
 	uncnt = PageRepairFragmentation(page, unused);

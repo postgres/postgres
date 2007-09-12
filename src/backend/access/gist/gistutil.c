@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.22 2007/04/09 22:03:57 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gist/gistutil.c,v 1.23 2007/09/12 22:10:25 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -42,7 +42,7 @@ gistfillbuffer(Relation r, Page page, IndexTuple *itup,
 	for (i = 0; i < len; i++)
 	{
 		l = PageAddItem(page, (Item) itup[i], IndexTupleSize(itup[i]),
-						off, LP_USED);
+						off, false);
 		if (l == InvalidOffsetNumber)
 			elog(ERROR, "failed to add item to index page in \"%s\"",
 				 RelationGetRelationName(r));

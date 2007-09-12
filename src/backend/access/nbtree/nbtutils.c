@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.85 2007/04/09 22:04:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtutils.c,v 1.86 2007/09/12 22:10:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -789,7 +789,7 @@ _bt_checkkeys(IndexScanDesc scan,
 	 * However, if this is the last tuple on the page, we should check the
 	 * index keys to prevent uselessly advancing to the next page.
 	 */
-	if (scan->ignore_killed_tuples && ItemIdDeleted(iid))
+	if (scan->ignore_killed_tuples && ItemIdIsDead(iid))
 	{
 		/* return immediately if there are more tuples on the page */
 		if (ScanDirectionIsForward(dir))
@@ -1088,7 +1088,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
 }
 
 /*
- * _bt_killitems - set LP_DELETE bit for items an indexscan caller has
+ * _bt_killitems - set LP_DEAD state for items an indexscan caller has
  * told us were killed
  *
  * scan->so contains information about the current page and killed tuples
@@ -1096,7 +1096,7 @@ _bt_check_rowcompare(ScanKey skey, IndexTuple tuple, TupleDesc tupdesc,
  *
  * The caller must have pin on so->currPos.buf, but may or may not have
  * read-lock, as indicated by haveLock.  Note that we assume read-lock
- * is sufficient for setting LP_DELETE hint bits.
+ * is sufficient for setting LP_DEAD status (which is only a hint).
  *
  * We match items by heap TID before assuming they are the right ones to
  * delete.	We cope with cases where items have moved right due to insertions.
@@ -1149,7 +1149,7 @@ _bt_killitems(IndexScanDesc scan, bool haveLock)
 			if (ItemPointerEquals(&ituple->t_tid, &kitem->heapTid))
 			{
 				/* found the item */
-				iid->lp_flags |= LP_DELETE;
+				ItemIdMarkDead(iid);
 				killedsomething = true;
 				break;			/* out of inner search loop */
 			}
@@ -1162,7 +1162,7 @@ _bt_killitems(IndexScanDesc scan, bool haveLock)
 	 * commit-hint-bit status update for heap tuples: we mark the buffer dirty
 	 * but don't make a WAL log entry.
 	 *
-	 * Whenever we mark anything LP_DELETEd, we also set the page's
+	 * Whenever we mark anything LP_DEAD, we also set the page's
 	 * BTP_HAS_GARBAGE flag, which is likewise just a hint.
 	 */
 	if (killedsomething)

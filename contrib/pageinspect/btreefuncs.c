@@ -140,7 +140,7 @@ GetBTPageStatistics(BlockNumber blkno, Buffer buffer, BTPageStat * stat)
 
 		item_size += IndexTupleSize(itup);
 
-		if (!ItemIdDeleted(id))
+		if (!ItemIdIsDead(id))
 			stat->live_items++;
 		else
 			stat->dead_items++;

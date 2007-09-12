@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.66 2007/05/27 03:50:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/gist/gistget.c,v 1.67 2007/09/12 22:10:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 		{
 			/* page unchanged, so all is simple */
 			offset = ItemPointerGetOffsetNumber(iptr);
-			PageGetItemId(p, offset)->lp_flags |= LP_DELETE;
+			ItemIdMarkDead(PageGetItemId(p, offset));
 			SetBufferCommitInfoNeedsSave(buffer);
 			LockBuffer(buffer, GIST_UNLOCK);
 			break;
@@ -61,7 +61,7 @@ killtuple(Relation r, GISTScanOpaque so, ItemPointer iptr)
 			if (ItemPointerEquals(&(ituple->t_tid), iptr))
 			{
 				/* found */
-				PageGetItemId(p, offset)->lp_flags |= LP_DELETE;
+				ItemIdMarkDead(PageGetItemId(p, offset));
 				SetBufferCommitInfoNeedsSave(buffer);
 				LockBuffer(buffer, GIST_UNLOCK);
 				if (buffer != so->curbuf)
@@ -289,7 +289,7 @@ gistnext(IndexScanDesc scan, ScanDirection dir, ItemPointer tids,
 				ItemPointerSet(&(so->curpos),
 							   BufferGetBlockNumber(so->curbuf), n);
 
-				if (!(ignore_killed_tuples && ItemIdDeleted(PageGetItemId(p, n))))
+				if (!(ignore_killed_tuples && ItemIdIsDead(PageGetItemId(p, n))))
 				{
 					it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
 					tids[ntids] = scan->xs_ctup.t_self = it->t_tid;

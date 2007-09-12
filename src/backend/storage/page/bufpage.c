@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.72 2007/03/02 00:48:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.73 2007/09/12 22:10:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,10 @@ PageHeaderIsValid(PageHeader page)
  *	Add an item to a page.	Return value is offset at which it was
  *	inserted, or InvalidOffsetNumber if there's not room to insert.
  *
- *	If offsetNumber is valid and <= current max offset in the page,
+ *	If overwrite is true, we just store the item at the specified
+ *	offsetNumber (which must be either a currently-unused item pointer,
+ *	or one past the last existing item).  Otherwise,
+ *	if offsetNumber is valid and <= current max offset in the page,
  *	insert item into the array at that position by shuffling ItemId's
  *	down to make room.
  *	If offsetNumber is not valid, then assign one by finding the first
@@ -112,7 +115,7 @@ PageAddItem(Page page,
 			Item item,
 			Size size,
 			OffsetNumber offsetNumber,
-			ItemIdFlags flags)
+			bool overwrite)
 {
 	PageHeader	phdr = (PageHeader) page;
 	Size		alignedSize;
@@ -121,9 +124,6 @@ PageAddItem(Page page,
 	ItemId		itemId;
 	OffsetNumber limit;
 	bool		needshuffle = false;
-	bool		overwritemode = (flags & OverwritePageMode) != 0;
-
-	flags &= ~OverwritePageMode;
 
 	/*
 	 * Be wary about corrupted page pointers
@@ -146,12 +146,12 @@ PageAddItem(Page page,
 	if (OffsetNumberIsValid(offsetNumber))
 	{
 		/* yes, check it */
-		if (overwritemode)
+		if (overwrite)
 		{
 			if (offsetNumber < limit)
 			{
 				itemId = PageGetItemId(phdr, offsetNumber);
-				if (ItemIdIsUsed(itemId) || ItemIdGetLength(itemId) != 0)
+				if (ItemIdIsUsed(itemId) || ItemIdHasStorage(itemId))
 				{
 					elog(WARNING, "will not overwrite a used ItemId");
 					return InvalidOffsetNumber;
@@ -170,11 +170,15 @@ PageAddItem(Page page,
 		/* if no free slot, we'll put it at limit (1st open slot) */
 		if (PageHasFreeLinePointers(phdr))
 		{
-			/* look for "recyclable" (unused & deallocated) ItemId */
+			/*
+			 * Look for "recyclable" (unused) ItemId.  We check for no
+			 * storage as well, just to be paranoid --- unused items
+			 * should never have storage.
+			 */
 			for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
 			{
 				itemId = PageGetItemId(phdr, offsetNumber);
-				if (!ItemIdIsUsed(itemId) && ItemIdGetLength(itemId) == 0)
+				if (!ItemIdIsUsed(itemId) && !ItemIdHasStorage(itemId))
 					break;
 			}
 			if (offsetNumber >= limit)
@@ -224,9 +228,7 @@ PageAddItem(Page page,
 				(limit - offsetNumber) * sizeof(ItemIdData));
 
 	/* set the item pointer */
-	itemId->lp_off = upper;
-	itemId->lp_len = size;
-	itemId->lp_flags = flags;
+	ItemIdSetNormal(itemId, upper, size);
 
 	/* copy the item's data onto the page */
 	memcpy((char *) page + upper, item, size);
@@ -326,6 +328,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 				itemidptr;
 	ItemId		lp;
 	int			nline,
+				nstorage,
 				nused;
 	int			i;
 	Size		totallen;
@@ -349,38 +352,41 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 						pd_lower, pd_upper, pd_special)));
 
 	nline = PageGetMaxOffsetNumber(page);
-	nused = 0;
+	nused = nstorage = 0;
 	for (i = 0; i < nline; i++)
 	{
 		lp = PageGetItemId(page, i + 1);
-		if (ItemIdDeleted(lp))	/* marked for deletion */
-			lp->lp_flags &= ~(LP_USED | LP_DELETE);
 		if (ItemIdIsUsed(lp))
+		{
 			nused++;
-		else if (unused)
-			unused[i - nused] = (OffsetNumber) i;
+			if (ItemIdHasStorage(lp))
+				nstorage++;
+		}
+		else
+		{
+			/* Unused entries should have lp_len = 0, but make sure */
+			ItemIdSetUnused(lp);
+			/* Report to caller if asked for */
+			if (unused)
+				unused[i - nused] = (OffsetNumber) i;
+		}
 	}
 
-	if (nused == 0)
+	if (nstorage == 0)
 	{
 		/* Page is completely empty, so just reset it quickly */
-		for (i = 0; i < nline; i++)
-		{
-			lp = PageGetItemId(page, i + 1);
-			lp->lp_len = 0;		/* indicate unused & deallocated */
-		}
 		((PageHeader) page)->pd_upper = pd_special;
 	}
 	else
-	{							/* nused != 0 */
+	{							/* nstorage != 0 */
 		/* Need to compact the page the hard way */
-		itemidbase = (itemIdSort) palloc(sizeof(itemIdSortData) * nused);
+		itemidbase = (itemIdSort) palloc(sizeof(itemIdSortData) * nstorage);
 		itemidptr = itemidbase;
 		totallen = 0;
 		for (i = 0; i < nline; i++)
 		{
 			lp = PageGetItemId(page, i + 1);
-			if (ItemIdIsUsed(lp))
+			if (ItemIdHasStorage(lp))
 			{
 				itemidptr->offsetindex = i;
 				itemidptr->itemoff = ItemIdGetOffset(lp);
@@ -394,10 +400,6 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 				totallen += itemidptr->alignedlen;
 				itemidptr++;
 			}
-			else
-			{
-				lp->lp_len = 0; /* indicate unused & deallocated */
-			}
 		}
 
 		if (totallen > (Size) (pd_special - pd_lower))
@@ -407,13 +409,13 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 					  (unsigned int) totallen, pd_special - pd_lower)));
 
 		/* sort itemIdSortData array into decreasing itemoff order */
-		qsort((char *) itemidbase, nused, sizeof(itemIdSortData),
+		qsort((char *) itemidbase, nstorage, sizeof(itemIdSortData),
 			  itemoffcompare);
 
 		/* compactify page */
 		upper = pd_special;
 
-		for (i = 0, itemidptr = itemidbase; i < nused; i++, itemidptr++)
+		for (i = 0, itemidptr = itemidbase; i < nstorage; i++, itemidptr++)
 		{
 			lp = PageGetItemId(page, itemidptr->offsetindex + 1);
 			upper -= itemidptr->alignedlen;
@@ -520,6 +522,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	offidx = offnum - 1;
 
 	tup = PageGetItemId(page, offnum);
+	Assert(ItemIdHasStorage(tup));
 	size = ItemIdGetLength(tup);
 	offset = ItemIdGetOffset(tup);
 
@@ -577,6 +580,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 		{
 			ItemId		ii = PageGetItemId(phdr, i);
 
+			Assert(ItemIdHasStorage(ii));
 			if (ItemIdGetOffset(ii) <= offset)
 				ii->lp_off += size;
 		}
@@ -654,6 +658,7 @@ PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems)
 	for (offnum = 1; offnum <= nline; offnum++)
 	{
 		lp = PageGetItemId(page, offnum);
+		Assert(ItemIdHasStorage(lp));
 		size = ItemIdGetLength(lp);
 		offset = ItemIdGetOffset(lp);
 		if (offset < pd_upper ||

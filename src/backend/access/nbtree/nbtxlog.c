@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.44 2007/05/20 21:08:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.45 2007/09/12 22:10:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ _bt_restore_page(Page page, char *from, int len)
 		itemsz = IndexTupleDSize(itupdata);
 		itemsz = MAXALIGN(itemsz);
 		if (PageAddItem(page, (Item) from, itemsz,
-						FirstOffsetNumber, LP_USED) == InvalidOffsetNumber)
+						FirstOffsetNumber, false) == InvalidOffsetNumber)
 			elog(PANIC, "_bt_restore_page: cannot add item to page");
 		from += itemsz;
 	}
@@ -238,7 +238,7 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 			{
 				if (PageAddItem(page, (Item) datapos, datalen,
 							ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
-								LP_USED) == InvalidOffsetNumber)
+								false) == InvalidOffsetNumber)
 					elog(PANIC, "btree_insert_redo: failed to add item");
 
 				PageSetLSN(page, lsn);
@@ -389,7 +389,7 @@ btree_xlog_split(bool onleft, bool isroot,
 				if (onleft)
 				{
 					if (PageAddItem(lpage, newitem, newitemsz, newitemoff,
-									LP_USED) == InvalidOffsetNumber)
+									false) == InvalidOffsetNumber)
 						elog(PANIC, "failed to add new item to left page after split");
 				}
 
@@ -398,7 +398,7 @@ btree_xlog_split(bool onleft, bool isroot,
 				hiItem = PageGetItem(rpage, hiItemId);
 
 				if (PageAddItem(lpage, hiItem, ItemIdGetLength(hiItemId),
-								P_HIKEY, LP_USED) == InvalidOffsetNumber)
+								P_HIKEY, false) == InvalidOffsetNumber)
 					elog(PANIC, "failed to add high key to left page after split");
 
 				/* Fix opaque fields */
@@ -483,7 +483,7 @@ btree_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/*
-	 * Mark the page as not containing any LP_DELETE items --- see comments in
+	 * Mark the page as not containing any LP_DEAD items --- see comments in
 	 * _bt_delitems().
 	 */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);

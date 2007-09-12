@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.28 2007/08/26 23:59:50 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.29 2007/09/12 22:10:25 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -477,7 +477,7 @@ pgstat_index_page(pgstattuple_type * stat, Page page,
 	{
 		ItemId		itemid = PageGetItemId(page, i);
 
-		if (ItemIdDeleted(itemid))
+		if (ItemIdIsDead(itemid))
 		{
 			stat->dead_tuple_count++;
 			stat->dead_tuple_len += ItemIdGetLength(itemid);

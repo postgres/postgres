@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.17 2007/01/12 17:04:54 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/nbtree/README,v 1.18 2007/09/12 22:10:26 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -327,17 +327,17 @@ If a process visits a heap tuple and finds that it's dead and removable
 (ie, dead to all open transactions, not only that process), then we can
 return to the index and mark the corresponding index entry "known dead",
 allowing subsequent index scans to skip visiting the heap tuple.  The
-"known dead" marking uses the LP_DELETE bit in ItemIds.  This is currently
-only done in plain indexscans, not bitmap scans, because only plain scans
-visit the heap and index "in sync" and so there's not a convenient way
-to do it for bitmap scans.
+"known dead" marking works by setting the index item's lp_flags state
+to LP_DEAD.  This is currently only done in plain indexscans, not bitmap
+scans, because only plain scans visit the heap and index "in sync" and so
+there's not a convenient way to do it for bitmap scans.
 
-Once an index tuple has been marked LP_DELETE it can actually be removed
+Once an index tuple has been marked LP_DEAD it can actually be removed
 from the index immediately; since index scans only stop "between" pages,
 no scan can lose its place from such a deletion.  We separate the steps
-because we allow LP_DELETE to be set with only a share lock (it's exactly
+because we allow LP_DEAD to be set with only a share lock (it's exactly
 like a hint bit for a heap tuple), but physically removing tuples requires
-exclusive lock.  In the current code we try to remove LP_DELETE tuples when
+exclusive lock.  In the current code we try to remove LP_DEAD tuples when
 we are otherwise faced with having to split a page to do an insertion (and
 hence have exclusive lock on it already).
 
@@ -349,7 +349,7 @@ same situation is created by REINDEX, since it doesn't enter dead
 tuples into the index.)
 
 It's sufficient to have an exclusive lock on the index page, not a
-super-exclusive lock, to do deletion of LP_DELETE items.  It might seem
+super-exclusive lock, to do deletion of LP_DEAD items.  It might seem
 that this breaks the interlock between VACUUM and indexscans, but that is
 not so: as long as an indexscanning process has a pin on the page where
 the index item used to be, VACUUM cannot complete its btbulkdelete scan

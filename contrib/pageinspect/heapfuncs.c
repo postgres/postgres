@@ -18,7 +18,7 @@
  * Copyright (c) 2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.1 2007/05/17 19:11:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/pageinspect/heapfuncs.c,v 1.2 2007/09/12 22:10:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -156,15 +156,15 @@ heap_page_items(PG_FUNCTION_ARGS)
 		 * could be corrupt in many other ways, but at least we won't 
 		 * crash.
 		 */
-		if ((lp_len >= sizeof(HeapTupleHeader)) &&
-			(lp_offset == MAXALIGN(lp_offset)) &&
-			(lp_offset + lp_len <= raw_page_size) &&
-			ItemIdIsUsed(id))
+		if (ItemIdHasStorage(id) &&
+			lp_len >= sizeof(HeapTupleHeader) &&
+			lp_offset == MAXALIGN(lp_offset) &&
+			lp_offset + lp_len <= raw_page_size)
 		{
 			HeapTupleHeader	tuphdr;
 			int				bits_len;
 
-			/* Extract infromation from the tuple header */
+			/* Extract information from the tuple header */
 
 			tuphdr = (HeapTupleHeader) PageGetItem(page, id);
 		

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.239 2007/09/07 20:59:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.240 2007/09/12 22:10:26 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -198,7 +198,7 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 		 lineoff <= lines;
 		 lineoff++, lpp++)
 	{
-		if (ItemIdIsUsed(lpp))
+		if (ItemIdIsNormal(lpp))
 		{
 			HeapTupleData loctup;
 			bool		valid;
@@ -384,7 +384,7 @@ heapgettup(HeapScanDesc scan,
 	{
 		while (linesleft > 0)
 		{
-			if (ItemIdIsUsed(lpp))
+			if (ItemIdIsNormal(lpp))
 			{
 				bool		valid;
 
@@ -653,7 +653,7 @@ heapgettup_pagemode(HeapScanDesc scan,
 		{
 			lineoff = scan->rs_vistuples[lineindex];
 			lpp = PageGetItemId(dp, lineoff);
-			Assert(ItemIdIsUsed(lpp));
+			Assert(ItemIdIsNormal(lpp));
 
 			tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lpp);
 			tuple->t_len = ItemIdGetLength(lpp);
@@ -1334,7 +1334,7 @@ heap_release_fetch(Relation relation,
 	/*
 	 * Must check for deleted tuple.
 	 */
-	if (!ItemIdIsUsed(lp))
+	if (!ItemIdIsNormal(lp))
 	{
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		if (keep_buf)
@@ -1463,7 +1463,7 @@ heap_get_latest_tid(Relation relation,
 			break;
 		}
 		lp = PageGetItemId(dp, offnum);
-		if (!ItemIdIsUsed(lp))
+		if (!ItemIdIsNormal(lp))
 		{
 			UnlockReleaseBuffer(buffer);
 			break;
@@ -1775,6 +1775,7 @@ heap_delete(Relation relation, ItemPointer tid,
 
 	dp = (PageHeader) BufferGetPage(buffer);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
+	Assert(ItemIdIsNormal(lp));
 
 	tp.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 	tp.t_len = ItemIdGetLength(lp);
@@ -2079,6 +2080,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 
 	dp = (PageHeader) BufferGetPage(buffer);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(otid));
+	Assert(ItemIdIsNormal(lp));
 
 	oldtup.t_data = (HeapTupleHeader) PageGetItem(dp, lp);
 	oldtup.t_len = ItemIdGetLength(lp);
@@ -2565,7 +2567,7 @@ heap_lock_tuple(Relation relation, HeapTuple tuple, Buffer *buffer,
 
 	dp = (PageHeader) BufferGetPage(*buffer);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
-	Assert(ItemIdIsUsed(lp));
+	Assert(ItemIdIsNormal(lp));
 
 	tuple->t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 	tuple->t_len = ItemIdGetLength(lp);
@@ -2958,7 +2960,7 @@ heap_inplace_update(Relation relation, HeapTuple tuple)
 	if (PageGetMaxOffsetNumber(page) >= offnum)
 		lp = PageGetItemId(page, offnum);
 
-	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
+	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsNormal(lp))
 		elog(ERROR, "heap_inplace_update: invalid lp");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
@@ -3523,7 +3525,7 @@ heap_xlog_clean(XLogRecPtr lsn, XLogRecord *record)
 		{
 			/* unused[] entries are zero-based */
 			lp = PageGetItemId(page, *unused + 1);
-			lp->lp_flags &= ~LP_USED;
+			ItemIdSetUnused(lp);
 			unused++;
 		}
 	}
@@ -3643,7 +3645,7 @@ heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	if (PageGetMaxOffsetNumber(page) >= offnum)
 		lp = PageGetItemId(page, offnum);
 
-	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
+	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsNormal(lp))
 		elog(PANIC, "heap_delete_redo: invalid lp");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
@@ -3734,8 +3736,7 @@ heap_xlog_insert(XLogRecPtr lsn, XLogRecord *record)
 	HeapTupleHeaderSetCmin(htup, FirstCommandId);
 	htup->t_ctid = xlrec->target.tid;
 
-	offnum = PageAddItem(page, (Item) htup, newlen, offnum,
-						 LP_USED | OverwritePageMode);
+	offnum = PageAddItem(page, (Item) htup, newlen, offnum, true);
 	if (offnum == InvalidOffsetNumber)
 		elog(PANIC, "heap_insert_redo: failed to add tuple");
 	PageSetLSN(page, lsn);
@@ -3796,7 +3797,7 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move)
 	if (PageGetMaxOffsetNumber(page) >= offnum)
 		lp = PageGetItemId(page, offnum);
 
-	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
+	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsNormal(lp))
 		elog(PANIC, "heap_update_redo: invalid lp");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
@@ -3913,8 +3914,7 @@ newsame:;
 	/* Make sure there is no forward chain link in t_ctid */
 	htup->t_ctid = xlrec->newtid;
 
-	offnum = PageAddItem(page, (Item) htup, newlen, offnum,
-						 LP_USED | OverwritePageMode);
+	offnum = PageAddItem(page, (Item) htup, newlen, offnum, true);
 	if (offnum == InvalidOffsetNumber)
 		elog(PANIC, "heap_update_redo: failed to add tuple");
 	PageSetLSN(page, lsn);
@@ -3955,7 +3955,7 @@ heap_xlog_lock(XLogRecPtr lsn, XLogRecord *record)
 	if (PageGetMaxOffsetNumber(page) >= offnum)
 		lp = PageGetItemId(page, offnum);
 
-	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
+	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsNormal(lp))
 		elog(PANIC, "heap_lock_redo: invalid lp");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);
@@ -4014,7 +4014,7 @@ heap_xlog_inplace(XLogRecPtr lsn, XLogRecord *record)
 	if (PageGetMaxOffsetNumber(page) >= offnum)
 		lp = PageGetItemId(page, offnum);
 
-	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsUsed(lp))
+	if (PageGetMaxOffsetNumber(page) < offnum || !ItemIdIsNormal(lp))
 		elog(PANIC, "heap_inplace_redo: invalid lp");
 
 	htup = (HeapTupleHeader) PageGetItem(page, lp);

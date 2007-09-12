@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.18 2007/06/09 18:49:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.19 2007/09/12 22:10:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,7 +183,7 @@ BitmapHeapNext(BitmapHeapScanState *node)
 		targoffset = scan->rs_vistuples[scan->rs_cindex];
 		dp = (Page) BufferGetPage(scan->rs_cbuf);
 		lp = PageGetItemId(dp, targoffset);
-		Assert(ItemIdIsUsed(lp));
+		Assert(ItemIdIsNormal(lp));
 
 		scan->rs_ctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
 		scan->rs_ctup.t_len = ItemIdGetLength(lp);
@@ -317,7 +317,7 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 		/*
 		 * Must check for deleted tuple.
 		 */
-		if (!ItemIdIsUsed(lp))
+		if (!ItemIdIsNormal(lp))
 			continue;
 
 		/*

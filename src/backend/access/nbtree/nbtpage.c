@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.102 2007/01/05 22:19:23 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.103 2007/09/12 22:10:26 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -669,7 +669,7 @@ _bt_delitems(Relation rel, Buffer buf,
 	opaque->btpo_cycleid = 0;
 
 	/*
-	 * Mark the page as not containing any LP_DELETE items.  This is not
+	 * Mark the page as not containing any LP_DEAD items.  This is not
 	 * certainly true (there might be some that have recently been marked, but
 	 * weren't included in our target-item list), but it will almost always be
 	 * true and it doesn't seem worth an additional page scan to check it.

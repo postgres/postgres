@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.7 2007/06/04 15:56:28 teodor Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginentrypage.c,v 1.8 2007/09/12 22:10:25 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -359,7 +359,7 @@ entryPlaceToPage(GinBtree btree, Buffer buf, OffsetNumber off, XLogRecData **prd
 	*prdata = rdata;
 	data.updateBlkno = entryPreparePage(btree, page, off);
 
-	placed = PageAddItem(page, (Item) btree->entry, IndexTupleSize(btree->entry), off, LP_USED);
+	placed = PageAddItem(page, (Item) btree->entry, IndexTupleSize(btree->entry), off, false);
 	if (placed != off)
 		elog(ERROR, "failed to add item to index page in \"%s\"",
 			 RelationGetRelationName(btree->index));
@@ -488,7 +488,7 @@ entrySplitPage(GinBtree btree, Buffer lbuf, Buffer rbuf, OffsetNumber off, XLogR
 			lsize += MAXALIGN(IndexTupleSize(itup)) + sizeof(ItemIdData);
 		}
 
-		if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, LP_USED) == InvalidOffsetNumber)
+		if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false) == InvalidOffsetNumber)
 			elog(ERROR, "failed to add item to index page in \"%s\"",
 				 RelationGetRelationName(btree->index));
 		ptr += MAXALIGN(IndexTupleSize(itup));
@@ -563,11 +563,11 @@ entryFillRoot(GinBtree btree, Buffer root, Buffer lbuf, Buffer rbuf)
 	page = BufferGetPage(root);
 
 	itup = ginPageGetLinkItup(lbuf);
-	if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, LP_USED) == InvalidOffsetNumber)
+	if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false) == InvalidOffsetNumber)
 		elog(ERROR, "failed to add item to index root page");
 
 	itup = ginPageGetLinkItup(rbuf);
-	if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, LP_USED) == InvalidOffsetNumber)
+	if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false) == InvalidOffsetNumber)
 		elog(ERROR, "failed to add item to index root page");
 }
 
