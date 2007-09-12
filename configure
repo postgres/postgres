@@ -3120,11 +3120,11 @@ echo "${ECHO_T}no" >&6
 fi
 rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
 
-  # ICC prefers to spell the no-strict-aliasing switch like this
-  echo "$as_me:$LINENO: checking if $CC supports -fno-alias" >&5
-echo $ECHO_N "checking if $CC supports -fno-alias... $ECHO_C" >&6
+  # Make sure strict aliasing is off (though this is said to be the default)
+  echo "$as_me:$LINENO: checking if $CC supports -fno-strict-aliasing" >&5
+echo $ECHO_N "checking if $CC supports -fno-strict-aliasing... $ECHO_C" >&6
 pgac_save_CFLAGS=$CFLAGS
-CFLAGS="$pgac_save_CFLAGS -fno-alias"
+CFLAGS="$pgac_save_CFLAGS -fno-strict-aliasing"
 cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
