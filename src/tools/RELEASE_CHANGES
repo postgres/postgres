@@ -62,6 +62,7 @@ For Major Releases
 
 Creating Back-Branch Release Notes
 ==================================
+
 * Do 'cvs log' on each back-branch and run pgcvslog
 
 * Edit and create SGML markup for the most recent branch
