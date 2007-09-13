@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Last updated: Tue Apr 24 17:29:38 EDT 2007
+原文最終更新日: Last updated: Tue Mar 20 13:43:40 EDT 2007
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
@@ -546,9 +546,10 @@ postgresql.conf の中の max_connections の値を変更して postmasterを再起動するこ
 
 3.6) PostgreSQLのアップグレードの手順はどうなりますか？
 
-バージョン番号付けの方針について、更新全般についての解説は http://
-www.postgresql.org/support/versioning を、そして、詳細についての説明は http://
-www.postgresql.org/docs/current/static/install-upgrading.html をご覧ください。
+バージョン番号付けの方針について、更新全般についての解説はhttp://
+www.postgresql.org/support/versioning を、そして、アップグレードについての一般
+的な説明は http://www.postgresql.org/docs/current/static/install-upgrading.html
+をご覧ください。
 
 新しい機能を盛り込むPostgreSQLのメジャーリリースはだいたい年に1回程度行ないます
 。メジャーリリースは、たとえば、8.1から8.2へのように、バージョン番号の1番目か2
@@ -1038,7 +1039,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2007年04月25日
+  最終更新日:   2007年09月13日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
