@@ -1,7 +1,7 @@
 # German message translation file for "scripts".
 # Peter Eisentraut <peter_e@gmx.net>, 2003 - 2006.
 #
-# pgtranslation Id: pgscripts.po,v 1.3 2006/10/21 11:48:36 petere Exp $
+# pgtranslation Id: pgscripts.po,v 1.4 2007/04/20 11:46:07 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -634,17 +634,17 @@ msgstr "%s: kann nicht eine bestimmte Tabelle in allen Datenbanken vacuumen\n"
 #: vacuumdb.c:205
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: Vacuuming der Tabelle »%s« in Datenbank »%s« fehlgeschlagen: %s"
+msgstr "%s: Vacuum der Tabelle »%s« in Datenbank »%s« fehlgeschlagen: %s"
 
 #: vacuumdb.c:208
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
-msgstr "%s: Vacuuming der Datenbank »%s« fehlgeschlagen: %s"
+msgstr "%s: Vacuum der Datenbank »%s« fehlgeschlagen: %s"
 
 #: vacuumdb.c:245
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
-msgstr "%s: führe Vacuuming in Datenbank »%s« aus\n"
+msgstr "%s: führe Vacuum in Datenbank »%s« aus\n"
 
 #: vacuumdb.c:259
 #, c-format

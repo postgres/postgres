@@ -2,9 +2,9 @@
 # translation of pgscripts-fr.po to
 # French message translation file for pgscripts
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.12.2.1 2007/01/31 08:33:34 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.12.2.2 2007/09/13 21:15:36 petere Exp $
 #
-# Use these quotes: «%s»
+# Use these quotes: « %s »
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
 #
 msgid ""
@@ -381,7 +381,7 @@ msgstr "Les mots de passe ne sont pas identiques.\n"
 
 #: createuser.c:197
 msgid "Shall the new role be a superuser?"
-msgstr "Le nouvel rôle est-il superutilisateur ?"
+msgstr "Le nouvel rôle est-il super-utilisateur ?"
 
 #: createuser.c:212
 msgid "Shall the new role be allowed to create databases?"
@@ -419,12 +419,12 @@ msgstr "  %s [OPTION]... [NOMROLE]\n"
 #: createuser.c:316
 #, c-format
 msgid "  -s, --superuser           role will be superuser\n"
-msgstr "  -s, --superuser           le rôle est superutilisateur\n"
+msgstr "  -s, --superuser           le rôle est super-utilisateur\n"
 
 #: createuser.c:317
 #, c-format
 msgid "  -S, --no-superuser        role will not be superuser\n"
-msgstr "  -S, --no-superuser        le rôle n'est pas superutilisateur\n"
+msgstr "  -S, --no-superuser        le rôle n'est pas super-utilisateur\n"
 
 #: createuser.c:318
 #, c-format

@@ -2,9 +2,9 @@
 # translation of initdb-fr.po to FR_fr
 # French message translation file for initdb
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.11.2.1 2007/01/31 08:33:33 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.11.2.2 2007/09/13 21:15:36 petere Exp $
 #
-# Use these quotes: «%s»
+# Use these quotes: « %s »
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
 #
 msgid ""
@@ -163,7 +163,7 @@ msgstr "initialisation de pg_authid... "
 
 #: initdb.c:1501
 msgid "Enter new superuser password: "
-msgstr "Saisissez le nouveau mot de passe du superutilisateur : "
+msgstr "Saisissez le nouveau mot de passe du super-utilisateur : "
 
 #: initdb.c:1502
 msgid "Enter it again: "
@@ -243,7 +243,7 @@ msgstr "ok\n"
 #: initdb.c:2186
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
-msgstr "%s : nom de locale invalide («%s»)\n"
+msgstr "%s : nom de locale invalide (« %s »)\n"
 
 #: initdb.c:2337
 #, c-format
@@ -318,20 +318,20 @@ msgstr "  -A, --auth=MÉTHODE        méthode d'authentification par défaut pour l
 #: initdb.c:2351
 #, c-format
 msgid "  -U, --username=NAME       database superuser name\n"
-msgstr "  -U, --username=NOM        nom du superutilisateur de la base de données\n"
+msgstr "  -U, --username=NOM        nom du super-utilisateur de la base de données\n"
 
 #: initdb.c:2352
 #, c-format
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr ""
 "  -W, --pwprompt            demande un mot de passe pour le nouveau\n"
-"                            superutilisateur\n"
+"                            super-utilisateur\n"
 
 #: initdb.c:2353
 #, c-format
 msgid "  --pwfile=FILE             read password for the new superuser from file\n"
 msgstr ""
-"  --pwfile=nomfichier       lit le mot de passe du nouveau superutilisateur\n"
+"  --pwfile=nomfichier       lit le mot de passe du nouveau super-utilisateur\n"
 "                            à partir d'un fichier\n"
 
 #: initdb.c:2354
@@ -439,7 +439,7 @@ msgstr "%s : méthode d'authentification « %s » inconnue.\n"
 #: initdb.c:2568
 #, c-format
 msgid "%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr "%s : vous devez indiquer un mot de passe pour le superutilisateur pour activer l'authentification %s\n"
+msgstr "%s : vous devez indiquer un mot de passe pour le super-utilisateur pour activer l'authentification %s\n"
 
 #: initdb.c:2583
 #, c-format

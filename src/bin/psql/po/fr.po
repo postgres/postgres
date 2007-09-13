@@ -3,9 +3,9 @@
 # translation of psql-fr.po to
 # French message translation file for psql
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.18.2.1 2007/01/31 08:33:33 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/fr.po,v 1.18.2.2 2007/09/13 21:15:36 petere Exp $
 #
-# Use these quotes: «%s»
+# Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2003, 2004, 2005.
 #
@@ -1161,7 +1161,7 @@ msgstr "%s : Attention : l'option -u est obsolète. Utilisez -U.\n"
 
 #: startup.c:712
 msgid "contains support for command-line editing"
-msgstr "contient le support pour l'édition de la ligne de commande"
+msgstr "contient une gestion avancée de la ligne de commande"
 
 #: startup.c:735
 #, c-format
@@ -1365,7 +1365,7 @@ msgstr "règle"
 
 #: describe.c:607
 msgid "trigger"
-msgstr "déclencheur"
+msgstr "trigger"
 
 #: describe.c:625
 msgid "Object descriptions"
@@ -1494,7 +1494,7 @@ msgstr "Contraintes de clés étrangères :"
 
 #: describe.c:1289
 msgid "Triggers:"
-msgstr "Déclencheurs :"
+msgstr "Triggers :"
 
 #: describe.c:1311
 msgid "Inherits"
@@ -1976,8 +1976,8 @@ msgstr ""
 "    ALTER [ COLUMN ] colonne SET STORAGE { PLAIN | EXTERNAL | EXTENDED | MAIN }\n"
 "    ADD contrainte_table\n"
 "    DROP CONSTRAINT nom_contrainte [ RESTRICT | CASCADE ]\n"
-"    DISABLE TRIGGER [ nom_déclencheur | ALL | USER ]\n"
-"    ENABLE TRIGGER [ nom_déclencheur | ALL | USER ]\n"
+"    DISABLE TRIGGER [ nom_trigger | ALL | USER ]\n"
+"    ENABLE TRIGGER [ nom_trigger | ALL | USER ]\n"
 "    CLUSTER ON nom_index\n"
 "    SET WITHOUT CLUSTER\n"
 "    SET WITHOUT OIDS\n"
@@ -2002,7 +2002,7 @@ msgstr ""
 
 #: sql_help.h:89
 msgid "change the definition of a trigger"
-msgstr "modifier la définition d'un déclencheur"
+msgstr "modifier la définition d'un trigger"
 
 #: sql_help.h:90
 msgid "ALTER TRIGGER name ON table RENAME TO newname"
@@ -2172,7 +2172,7 @@ msgstr ""
 "  SCHEMA nom_objet |\n"
 "  SEQUENCE nom_objet |\n"
 "  TABLESPACE nom_objet |\n"
-"  TRIGGER nom_déclencheur ON nom_table |\n"
+"  TRIGGER nom_trigger ON nom_table |\n"
 "  TYPE nom_objet |\n"
 "  VIEW nom_objet\n"
 "} IS 'texte'"
@@ -2743,7 +2743,7 @@ msgstr "CREATE TABLESPACE nom_espacelogique [ OWNER nom_utilisateur ] LOCATION '
 
 #: sql_help.h:213
 msgid "define a new trigger"
-msgstr "définir un nouveau déclencheur"
+msgstr "définir un nouveau trigger"
 
 #: sql_help.h:214
 msgid ""
@@ -3041,7 +3041,7 @@ msgstr "DROP TABLESPACE [IF EXISTS ] nom_tablespace"
 
 #: sql_help.h:313
 msgid "remove a trigger"
-msgstr "supprimer un déclencheur"
+msgstr "supprimer un trigger"
 
 #: sql_help.h:314
 msgid "DROP TRIGGER [ IF EXISTS ] name ON table [ CASCADE | RESTRICT ]"

@@ -6,7 +6,7 @@ msgstr ""
 "Project-Id-Version: psql-tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2006-01-06 01:27-0400\n"
-"PO-Revision-Date: 2007-04-12 14:15+0200\n"
+"PO-Revision-Date: 2007-05-02 09:29+0200\n"
 "Last-Translator: Nicolai Tufar <ntufar@gmail.com>\n"
 "Language-Team: Turkish <ceviri@postgresql.org.tr>\n"
 "MIME-Version: 1.0\n"
@@ -1667,7 +1667,7 @@ msgid "List of schemas"
 msgstr "Şemaların listesi"
 
 #: sql_help.h:25
-#: sql_help.h:413
+#: sql_help.h:417
 msgid "abort the current transaction"
 msgstr "aktif transcation'ı iptal et"
 
@@ -2137,7 +2137,7 @@ msgid "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
 msgstr "ANALYZE [ VERBOSE ] [ tablo_adı [ (kolon [, ...] ) ] ]"
 
 #: sql_help.h:109
-#: sql_help.h:461
+#: sql_help.h:465
 msgid "start a transaction block"
 msgstr "transaction bloğunu başlat"
 
@@ -2246,7 +2246,7 @@ msgstr ""
 "} IS 'text'"
 
 #: sql_help.h:129
-#: sql_help.h:341
+#: sql_help.h:345
 msgid "commit the current transaction"
 msgstr "geçerli transaction'u commit et"
 
@@ -2791,7 +2791,7 @@ msgstr ""
 "[ USING INDEX TABLESPACE tablespace ]"
 
 #: sql_help.h:213
-#: sql_help.h:433
+#: sql_help.h:437
 msgid "define a new table from the results of a query"
 msgstr "sorgu sonuçlarından yeni tablo tanımla"
 
@@ -2982,50 +2982,58 @@ msgstr ""
 "    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 
 #: sql_help.h:249
+msgid "discard session state"
+msgstr "oturum bilgileri unut"
+
+#: sql_help.h:250
+msgid "DISCARD { ALL | PLANS | TEMPORARY | TEMP }"
+msgstr "DISCARD { ALL | PLANS | TEMPORARY | TEMP }"
+
+#: sql_help.h:253
 msgid "remove an aggregate function"
 msgstr "aggregate function'u kaldır"
 
-#: sql_help.h:250
+#: sql_help.h:254
 msgid "DROP AGGREGATE [ IF EXISTS ] name ( type [ , ... ] ) [ CASCADE | RESTRICT ]"
 msgstr "DROP AGGREGATE [ IF EXISTS ] name ( type [ , ... ] ) [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:253
+#: sql_help.h:257
 msgid "remove a cast"
 msgstr "cast kaldır"
 
-#: sql_help.h:254
+#: sql_help.h:258
 msgid "DROP CAST [ IF EXISTS ] (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
 msgstr "DROP CAST [ IF EXISTS ] (sourcetype AS targettype) [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:257
+#: sql_help.h:261
 msgid "remove a conversion"
 msgstr "conversion kaldır"
 
-#: sql_help.h:258
+#: sql_help.h:262
 msgid "DROP CONVERSION [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
 msgstr "DROP CONVERSION [ IF EXISTS ] conversion_adı [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:261
+#: sql_help.h:265
 msgid "remove a database"
 msgstr "veritabanını kaldır"
 
-#: sql_help.h:262
+#: sql_help.h:266
 msgid "DROP DATABASE [ IF EXISTS ] name"
 msgstr "DROP DATABASE [ IF EXISTS ] veritabanı_adı"
 
-#: sql_help.h:265
+#: sql_help.h:269
 msgid "remove a domain"
 msgstr "domain kaldır"
 
-#: sql_help.h:266
+#: sql_help.h:270
 msgid "DROP DOMAIN [IF EXISTS ] name [, ...]  [ CASCADE | RESTRICT ]"
 msgstr "DROP DOMAIN [IF EXISTS ] domain_adı [, ...]  [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:269
+#: sql_help.h:273
 msgid "remove a function"
 msgstr "function kaldır"
 
-#: sql_help.h:270
+#: sql_help.h:274
 msgid ""
 "DROP FUNCTION [ IF EXISTS ] name ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
 "    [ CASCADE | RESTRICT ]"
@@ -3033,161 +3041,161 @@ msgstr ""
 "DROP FUNCTION [ IF EXISTS ] fonksiyon_adı ( [ [ argmode ] [ argname ] argtype [, ...] ] )\n"
 "    [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:273
-#: sql_help.h:301
-#: sql_help.h:333
+#: sql_help.h:277
+#: sql_help.h:305
+#: sql_help.h:337
 msgid "remove a database role"
 msgstr "veritabanı rolünü kaldır"
 
-#: sql_help.h:274
+#: sql_help.h:278
 msgid "DROP GROUP [ IF EXISTS ] name [, ...]"
 msgstr "DROP GROUP [ IF EXISTS ] name [, ...]"
 
-#: sql_help.h:277
+#: sql_help.h:281
 msgid "remove an index"
 msgstr "indeks kaldır"
 
-#: sql_help.h:278
+#: sql_help.h:282
 msgid "DROP INDEX [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP INDEX [ IF EXISTS ] index_adı [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:281
+#: sql_help.h:285
 msgid "remove a procedural language"
 msgstr "yordamsal dili kaldır"
 
-#: sql_help.h:282
+#: sql_help.h:286
 msgid "DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] name [ CASCADE | RESTRICT ]"
 msgstr "DROP [ PROCEDURAL ] LANGUAGE [ IF EXISTS ] dil_adı [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:285
+#: sql_help.h:289
 msgid "remove an operator class"
 msgstr "operator class kaldır"
 
-#: sql_help.h:286
+#: sql_help.h:290
 msgid "DROP OPERATOR CLASS [ IF EXISTS ] name USING index_method [ CASCADE | RESTRICT ]"
 msgstr "DROP OPERATOR CLASS [ IF EXISTS ] ad USING index_method [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:289
+#: sql_help.h:293
 msgid "remove an operator"
 msgstr "opeartor kaldır"
 
-#: sql_help.h:290
+#: sql_help.h:294
 msgid "DROP OPERATOR [ IF EXISTS ] name ( { lefttype | NONE } , { righttype | NONE } ) [ CASCADE | RESTRICT ]"
 msgstr "DROP OPERATOR [ IF EXISTS ] name ( { lefttype | NONE } , { righttype | NONE } ) [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:293
+#: sql_help.h:297
 msgid "remove an operator family"
 msgstr "opeartör ailesini kaldır"
 
-#: sql_help.h:294
+#: sql_help.h:298
 msgid "DROP OPERATOR FAMILY [ IF EXISTS ] name USING index_method [ CASCADE | RESTRICT ]"
 msgstr "DROP OPERATOR FAMILY [ IF EXISTS ] name USING index_method [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:297
+#: sql_help.h:301
 msgid "remove database objects owned by a database role"
 msgstr "veritabanı rolüne ait veritabanı nesneleri kaldır"
 
-#: sql_help.h:298
+#: sql_help.h:302
 msgid "DROP OWNED BY name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP OWNED BY name [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:302
+#: sql_help.h:306
 msgid "DROP ROLE [ IF EXISTS ] name [, ...]"
 msgstr "DROP ROLE [ IF EXISTS ] name [, ...]"
 
-#: sql_help.h:305
+#: sql_help.h:309
 msgid "remove a rewrite rule"
 msgstr "rewrite rule kaldır"
 
-#: sql_help.h:306
+#: sql_help.h:310
 msgid "DROP RULE [ IF EXISTS ] name ON relation [ CASCADE | RESTRICT ]"
 msgstr "DROP RULE [ IF EXISTS ] rule_adı ON relation [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:309
+#: sql_help.h:313
 msgid "remove a schema"
 msgstr "şema kaldır"
 
-#: sql_help.h:310
+#: sql_help.h:314
 msgid "DROP SCHEMA [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP SCHEMA [ IF EXISTS ] şema_adı [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:313
+#: sql_help.h:317
 msgid "remove a sequence"
 msgstr "sequence kaldır"
 
-#: sql_help.h:314
+#: sql_help.h:318
 msgid "DROP SEQUENCE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP SEQUENCE [ IF EXISTS ] sequence_adı [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:317
+#: sql_help.h:321
 msgid "remove a table"
 msgstr "tablo kaldır"
 
-#: sql_help.h:318
+#: sql_help.h:322
 msgid "DROP TABLE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP TABLE [ IF EXISTS ] tablo_adı [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:321
+#: sql_help.h:325
 msgid "remove a tablespace"
 msgstr "tablespace kaldır"
 
-#: sql_help.h:322
+#: sql_help.h:326
 msgid "DROP TABLESPACE [ IF EXISTS ] tablespacename"
 msgstr "DROP TABLESPACE [ IF EXISTS ] tablespace_adı"
 
-#: sql_help.h:325
+#: sql_help.h:329
 msgid "remove a trigger"
 msgstr "trigger kaldır"
 
-#: sql_help.h:326
+#: sql_help.h:330
 msgid "DROP TRIGGER [ IF EXISTS ] name ON table [ CASCADE | RESTRICT ]"
 msgstr "DROP TRIGGER [ IF EXISTS ] trigger_adı ON tablo_adı [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:329
+#: sql_help.h:333
 msgid "remove a data type"
 msgstr "veri tipi kaldır"
 
-#: sql_help.h:330
+#: sql_help.h:334
 msgid "DROP TYPE [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP TYPE [ IF EXISTS ] tip_adı [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:334
+#: sql_help.h:338
 msgid "DROP USER [ IF EXISTS ] name [, ...]"
 msgstr "DROP USER [ IF EXISTS ] name [, ...]"
 
-#: sql_help.h:337
+#: sql_help.h:341
 msgid "remove a view"
 msgstr "view kaldır"
 
-#: sql_help.h:338
+#: sql_help.h:342
 msgid "DROP VIEW [ IF EXISTS ] name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "DROP VIEW [ IF EXISTS ] view_adı [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:342
+#: sql_help.h:346
 msgid "END [ WORK | TRANSACTION ]"
 msgstr "END [ WORK | TRANSACTION ]"
 
-#: sql_help.h:345
+#: sql_help.h:349
 msgid "execute a prepared statement"
 msgstr "hazırlanmış komutu çalıştır"
 
-#: sql_help.h:346
+#: sql_help.h:350
 msgid "EXECUTE name [ (parameter [, ...] ) ]"
 msgstr "EXECUTE name [ (parameter [, ...] ) ]"
 
-#: sql_help.h:349
+#: sql_help.h:353
 msgid "show the execution plan of a statement"
 msgstr "sorgunun execution planını göster"
 
-#: sql_help.h:350
+#: sql_help.h:354
 msgid "EXPLAIN [ ANALYZE ] [ VERBOSE ] statement"
 msgstr "EXPLAIN [ ANALYZE ] [ VERBOSE ] ifade"
 
-#: sql_help.h:353
+#: sql_help.h:357
 msgid "retrieve rows from a query using a cursor"
 msgstr "cursor kullanarak sorgunun sonucundan satırları getir"
 
-#: sql_help.h:354
+#: sql_help.h:358
 msgid ""
 "FETCH [ direction { FROM | IN } ] cursorname\n"
 "\n"
@@ -3227,11 +3235,11 @@ msgstr ""
 "    BACKWARD count\n"
 "    BACKWARD ALL"
 
-#: sql_help.h:357
+#: sql_help.h:361
 msgid "define access privileges"
 msgstr "erişim haklarını tanımla"
 
-#: sql_help.h:358
+#: sql_help.h:362
 msgid ""
 "GRANT { { SELECT | INSERT | UPDATE | DELETE | REFERENCES | TRIGGER }\n"
 "    [,...] | ALL [ PRIVILEGES ] }\n"
@@ -3297,11 +3305,11 @@ msgstr ""
 "\n"
 "GRANT role [, ...] TO username [, ...] [ WITH ADMIN OPTION ]"
 
-#: sql_help.h:361
+#: sql_help.h:365
 msgid "create new rows in a table"
 msgstr "tabloda yeni satırları ekliyor"
 
-#: sql_help.h:362
+#: sql_help.h:366
 msgid ""
 "INSERT INTO table [ ( column [, ...] ) ]\n"
 "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | query }\n"
@@ -3311,27 +3319,27 @@ msgstr ""
 "    { DEFAULT VALUES | VALUES ( { expression | DEFAULT } [, ...] ) [, ...] | query }\n"
 "    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 
-#: sql_help.h:365
+#: sql_help.h:369
 msgid "listen for a notification"
 msgstr "bildiri bekleme durumuna geç"
 
-#: sql_help.h:366
+#: sql_help.h:370
 msgid "LISTEN name"
 msgstr "LISTEN ad"
 
-#: sql_help.h:369
+#: sql_help.h:373
 msgid "load or reload a shared library file"
 msgstr "shared library yükle"
 
-#: sql_help.h:370
+#: sql_help.h:374
 msgid "LOAD 'filename'"
 msgstr "LOAD 'dosya adı'"
 
-#: sql_help.h:373
+#: sql_help.h:377
 msgid "lock a table"
 msgstr "tabloyu kilitle"
 
-#: sql_help.h:374
+#: sql_help.h:378
 msgid ""
 "LOCK [ TABLE ] name [, ...] [ IN lockmode MODE ] [ NOWAIT ]\n"
 "\n"
@@ -3347,81 +3355,79 @@ msgstr ""
 "    ACCESS SHARE | ROW SHARE | ROW EXCLUSIVE | SHARE UPDATE EXCLUSIVE\n"
 "    | SHARE | SHARE ROW EXCLUSIVE | EXCLUSIVE | ACCESS EXCLUSIVE"
 
-#: sql_help.h:377
+#: sql_help.h:381
 msgid "position a cursor"
 msgstr "cursor'u yereştir"
 
-#: sql_help.h:378
+#: sql_help.h:382
 msgid "MOVE [ direction { FROM | IN } ] cursorname"
 msgstr "MOVE [ direction { FROM | IN } ] cursor_adı"
 
-#: sql_help.h:381
+#: sql_help.h:385
 msgid "generate a notification"
 msgstr "bildiri üret"
 
-#: sql_help.h:382
+#: sql_help.h:386
 msgid "NOTIFY name"
 msgstr "NOTIFY ad"
 
-#: sql_help.h:385
+#: sql_help.h:389
 msgid "prepare a statement for execution"
 msgstr "çalıştırmak için sorguyu hazırla"
 
-#: sql_help.h:386
+#: sql_help.h:390
 msgid "PREPARE name [ (datatype [, ...] ) ] AS statement"
 msgstr "PREPARE name [ (datatype [, ...] ) ] AS statement"
 
-#: sql_help.h:389
+#: sql_help.h:393
 msgid "prepare the current transaction for two-phase commit"
 msgstr "geçerli transaction'u two-phase commit için hazırla"
 
-#: sql_help.h:390
+#: sql_help.h:394
 msgid "PREPARE TRANSACTION transaction_id"
 msgstr "PREPARE TRANSACTION transaction_id"
 
-#: sql_help.h:393
+#: sql_help.h:397
 msgid "change the ownership of database objects owned by a database role"
 msgstr "veritabanı rolünün sahip olduğu nesnelerinin sahipliğini değiştir"
 
-#: sql_help.h:394
+#: sql_help.h:398
 msgid "REASSIGN OWNED BY old_role [, ...] TO new_role"
 msgstr "REASSIGN OWNED BY eski_rol [, ...] TO yeni_rol"
 
-#: sql_help.h:397
+#: sql_help.h:401
 msgid "rebuild indexes"
 msgstr "indeksleri yeniden oluştur"
 
-#: sql_help.h:398
+#: sql_help.h:402
 msgid "REINDEX { INDEX | TABLE | DATABASE | SYSTEM } name [ FORCE ]"
 msgstr "REINDEX { INDEX | TABLE | DATABASE | SYSTEM } adı [ FORCE ]"
 
-#: sql_help.h:401
+#: sql_help.h:405
 msgid "destroy a previously defined savepoint"
 msgstr "önceki tanımlanmış savepoint'i kaldır"
 
-#: sql_help.h:402
+#: sql_help.h:406
 msgid "RELEASE [ SAVEPOINT ] savepoint_name"
 msgstr "RELEASE [ SAVEPOINT ] savepoint_adı"
 
-#: sql_help.h:405
+#: sql_help.h:409
 msgid "restore the value of a run-time parameter to the default value"
 msgstr "çalıştırma zamanı parametresini öntanımlı değerine getir"
 
-#: sql_help.h:406
+#: sql_help.h:410
 msgid ""
 "RESET configuration_parameter\n"
-"RESET ALL\n"
-"RESET { PLANS | SESSION | TEMP | TEMPORARY }"
+"RESET ALL"
 msgstr ""
 "RESET configuration_parameter\n"
-"RESET ALL\n"
-"RESET { PLANS | SESSION | TEMP | TEMPORARY }"
+"RESET ALL"
 
-#: sql_help.h:409
+#: sql_help.h:413
 msgid "remove access privileges"
 msgstr "erişim hakkını kaldır"
 
-#: sql_help.h:410
+#: sql_help.h:414
 msgid ""
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { { SELECT | INSERT | UPDATE | DELETE | REFERENCES | TRIGGER }\n"
@@ -3519,84 +3525,84 @@ msgstr ""
 "    role [, ...] FROM username [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:414
+#: sql_help.h:418
 msgid "ROLLBACK [ WORK | TRANSACTION ]"
 msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
-#: sql_help.h:417
+#: sql_help.h:421
 msgid "cancel a transaction that was earlier prepared for two-phase commit"
 msgstr "daha önce two-phase commit için hazırlanmış transaction'u iptal et"
 
-#: sql_help.h:418
+#: sql_help.h:422
 msgid "ROLLBACK PREPARED transaction_id"
 msgstr "ROLLBACK PREPARED transaction_id"
 
-#: sql_help.h:421
+#: sql_help.h:425
 msgid "roll back to a savepoint"
 msgstr "savepoint'a rollback"
 
-#: sql_help.h:422
+#: sql_help.h:426
 msgid "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] savepoint_name"
 msgstr "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] savepoint_adı"
 
-#: sql_help.h:425
+#: sql_help.h:429
 msgid "define a new savepoint within the current transaction"
 msgstr "geerli transaction içinde savepoint tanımla"
 
-#: sql_help.h:426
+#: sql_help.h:430
 msgid "SAVEPOINT savepoint_name"
 msgstr "SAVEPOINT savepoint_name"
 
-#: sql_help.h:429
+#: sql_help.h:433
 msgid "retrieve rows from a table or view"
 msgstr "tablo ya da  view'dan satırları getir"
-
-#: sql_help.h:430
-msgid ""
-"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ AS output_name ] [, ...]\n"
-"    [ FROM from_item [, ...] ]\n"
-"    [ WHERE condition ]\n"
-"    [ GROUP BY expression [, ...] ]\n"
-"    [ HAVING condition [, ...] ]\n"
-"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
-"    [ LIMIT { count | ALL } ]\n"
-"    [ OFFSET start ]\n"
-"    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]\n"
-"\n"
-"where from_item can be one of:\n"
-"\n"
-"    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
-"    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
-"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias [, ...] | column_definition [, ...] ) ]\n"
-"    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
-"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING ( join_column [, ...] ) ]"
-msgstr ""
-"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
-"    * | expression [ AS output_name ] [, ...]\n"
-"    [ FROM from_item [, ...] ]\n"
-"    [ WHERE condition ]\n"
-"    [ GROUP BY expression [, ...] ]\n"
-"    [ HAVING condition [, ...] ]\n"
-"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
-"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
-"    [ LIMIT { count | ALL } ]\n"
-"    [ OFFSET start ]\n"
-"    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]\n"
-"\n"
-"where from_item can be one of:\n"
-"\n"
-"    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
-"    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
-"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias [, ...] | column_definition [, ...] ) ]\n"
-"    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
-"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING ( join_column [, ...] ) ]"
 
 #: sql_help.h:434
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start ]\n"
+"    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]\n"
+"\n"
+"where from_item can be one of:\n"
+"\n"
+"    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
+"    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias [, ...] | column_definition [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
+"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING ( join_column [, ...] ) ]"
+msgstr ""
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
+"    [ FROM from_item [, ...] ]\n"
+"    [ WHERE condition ]\n"
+"    [ GROUP BY expression [, ...] ]\n"
+"    [ HAVING condition [, ...] ]\n"
+"    [ { UNION | INTERSECT | EXCEPT } [ ALL ] select ]\n"
+"    [ ORDER BY expression [ ASC | DESC | USING operator ] [ NULLS { FIRST | LAST } ] [, ...] ]\n"
+"    [ LIMIT { count | ALL } ]\n"
+"    [ OFFSET start ]\n"
+"    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]\n"
+"\n"
+"where from_item can be one of:\n"
+"\n"
+"    [ ONLY ] table_name [ * ] [ [ AS ] alias [ ( column_alias [, ...] ) ] ]\n"
+"    ( select ) [ AS ] alias [ ( column_alias [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) [ AS ] alias [ ( column_alias [, ...] | column_definition [, ...] ) ]\n"
+"    function_name ( [ argument [, ...] ] ) AS ( column_definition [, ...] )\n"
+"    from_item [ NATURAL ] join_type from_item [ ON join_condition | USING ( join_column [, ...] ) ]"
+
+#: sql_help.h:438
+msgid ""
+"SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
+"    * | expression [ AS output_name ] [, ...]\n"
 "    INTO [ TEMPORARY | TEMP ] [ TABLE ] new_table\n"
 "    [ FROM from_item [, ...] ]\n"
 "    [ WHERE condition ]\n"
@@ -3621,11 +3627,11 @@ msgstr ""
 "    [ OFFSET start ]\n"
 "    [ FOR { UPDATE | SHARE } [ OF table_name [, ...] ] [ NOWAIT ] [...] ]"
 
-#: sql_help.h:437
+#: sql_help.h:441
 msgid "change a run-time parameter"
 msgstr "çalışma zamanı parametresini değiştir"
 
-#: sql_help.h:438
+#: sql_help.h:442
 msgid ""
 "SET [ SESSION | LOCAL ] configuration_parameter { TO | = } { value | 'value' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
@@ -3633,19 +3639,19 @@ msgstr ""
 "SET [ SESSION | LOCAL ] configuration_parameter { TO | = } { value | 'value' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
 
-#: sql_help.h:441
+#: sql_help.h:445
 msgid "set constraint checking modes for the current transaction"
 msgstr "geçerli transaction için constraint doğrulama biçimini belirle"
 
-#: sql_help.h:442
+#: sql_help.h:446
 msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
 msgstr "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
 
-#: sql_help.h:445
+#: sql_help.h:449
 msgid "set the current user identifier of the current session"
 msgstr "geçerli oturumun geçerli kullanıcısını tanımla"
 
-#: sql_help.h:446
+#: sql_help.h:450
 msgid ""
 "SET [ SESSION | LOCAL ] ROLE rolename\n"
 "SET [ SESSION | LOCAL ] ROLE NONE\n"
@@ -3655,11 +3661,11 @@ msgstr ""
 "SET [ SESSION | LOCAL ] ROLE NONE\n"
 "RESET ROLE"
 
-#: sql_help.h:449
+#: sql_help.h:453
 msgid "set the session user identifier and the current user identifier of the current session"
 msgstr "ilk oturum ve geçerli oturum için kullanıcı tanımla"
 
-#: sql_help.h:450
+#: sql_help.h:454
 msgid ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
@@ -3669,11 +3675,11 @@ msgstr ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
 "RESET SESSION AUTHORIZATION"
 
-#: sql_help.h:453
+#: sql_help.h:457
 msgid "set the characteristics of the current transaction"
 msgstr "geçerli transcation'ın karakteristiklerini ayarla"
 
-#: sql_help.h:454
+#: sql_help.h:458
 msgid ""
 "SET TRANSACTION transaction_mode [, ...]\n"
 "SET SESSION CHARACTERISTICS AS TRANSACTION transaction_mode [, ...]\n"
@@ -3691,11 +3697,11 @@ msgstr ""
 "    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 
-#: sql_help.h:457
+#: sql_help.h:461
 msgid "show the value of a run-time parameter"
 msgstr "çalıştırma zaman parametresinın değerini göster"
 
-#: sql_help.h:458
+#: sql_help.h:462
 msgid ""
 "SHOW name\n"
 "SHOW ALL"
@@ -3703,7 +3709,7 @@ msgstr ""
 "SHOW name\n"
 "SHOW ALL"
 
-#: sql_help.h:462
+#: sql_help.h:466
 msgid ""
 "START TRANSACTION [ transaction_mode [, ...] ]\n"
 "\n"
@@ -3719,27 +3725,27 @@ msgstr ""
 "    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
 "    READ WRITE | READ ONLY"
 
-#: sql_help.h:465
+#: sql_help.h:469
 msgid "empty a table or set of tables"
 msgstr "bir veya birden fazla tabloyu kısalt"
 
-#: sql_help.h:466
+#: sql_help.h:470
 msgid "TRUNCATE [ TABLE ] name [, ...] [ CASCADE | RESTRICT ]"
 msgstr "TRUNCATE [ TABLE ] tablo_adı [, ...] [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:469
+#: sql_help.h:473
 msgid "stop listening for a notification"
 msgstr "bildiriyi beklemeyi durdur"
 
-#: sql_help.h:470
+#: sql_help.h:474
 msgid "UNLISTEN { name | * }"
 msgstr "UNLISTEN { name | * }"
 
-#: sql_help.h:473
+#: sql_help.h:477
 msgid "update rows of a table"
 msgstr "tablodaki satırları güncelle"
 
-#: sql_help.h:474
+#: sql_help.h:478
 msgid ""
 "UPDATE [ ONLY ] table [ [ AS ] alias ]\n"
 "    SET { column = { expression | DEFAULT } |\n"
@@ -3755,11 +3761,11 @@ msgstr ""
 "    [ WHERE condition ]\n"
 "    [ RETURNING * | output_expression [ AS output_name ] [, ...] ]"
 
-#: sql_help.h:477
+#: sql_help.h:481
 msgid "garbage-collect and optionally analyze a database"
 msgstr "Veritabanındaki çöpleri-toparla ve veritabanını (tercihe başlı) analiz et"
 
-#: sql_help.h:478
+#: sql_help.h:482
 msgid ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
@@ -3767,11 +3773,11 @@ msgstr ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
 
-#: sql_help.h:481
+#: sql_help.h:485
 msgid "compute a set of rows"
 msgstr "compute a set of rows"
 
-#: sql_help.h:482
+#: sql_help.h:486
 msgid ""
 "VALUES ( expression [, ...] ) [, ...]\n"
 "    [ ORDER BY sort_expression [ ASC | DESC | USING operator ] [, ...] ]\n"
