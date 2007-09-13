@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL
 HP-UX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2007/09/12 03:11:49 $
+last updated:           $Date: 2007/09/13 03:34:23 $
 
 current maintainer:     Tom Lane (tgl@sss.pgh.pa.us)
 original author:        Tom Lane (tgl@sss.pgh.pa.us)
