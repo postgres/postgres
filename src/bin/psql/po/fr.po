@@ -1,9 +1,9 @@
 # translation of psql-fr.po to FR_fr
 # French message translation file for psql
 #
-# $Header: /cvsroot/pgsql/src/bin/psql/po/fr.po,v 1.4.2.6 2007/01/31 08:12:55 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/psql/po/fr.po,v 1.4.2.7 2007/09/13 20:56:32 petere Exp $
 #
-# Use these quotes: «%s»
+# Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2003
 #
@@ -41,7 +41,7 @@ msgstr "n'a pas pu obtenir le répertoire de l'utilisateur : %s\n"
 #: command.c:306
 #, c-format
 msgid "\\%s: could not change directory to \"%s\": %s\n"
-msgstr "\\%s : n'a pas pu changer le répertoire courant en «%s» : %s\n"
+msgstr "\\%s : n'a pas pu changer le répertoire courant en « %s » : %s\n"
 
 #: command.c:411 command.c:769
 msgid "no query buffer\n"
@@ -69,7 +69,7 @@ msgstr "Le tampon de requête a été effacé."
 #: command.c:660
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
-msgstr "Historique sauvegardé dans «%s».\n"
+msgstr "Historique sauvegardé dans « %s ».\n"
 
 #: command.c:692 command.c:1149 command.c:1246 command.c:1964 common.c:86
 #: copy.c:88 copy.c:116 describe.c:51 mainloop.c:78 mainloop.c:338
@@ -99,7 +99,7 @@ msgstr "%s : %s\n"
 #: command.c:879
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
-msgstr "\\%s : argument supplémentaire «%s» ignoré\n"
+msgstr "\\%s : argument supplémentaire « %s » ignoré\n"
 
 #: command.c:972 command.c:1000 command.c:1122
 msgid "parse error at the end of line\n"
@@ -126,22 +126,22 @@ msgstr "\\connect: %s"
 #: command.c:1417
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
-msgstr "Vous êtes maintenant connecté à la base de données «%s».\n"
+msgstr "Vous êtes maintenant connecté à la base de données « %s ».\n"
 
 #: command.c:1419
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
-msgstr "Vous êtes maintenant connecté en tant qu'utilisateur «%s».\n"
+msgstr "Vous êtes maintenant connecté en tant qu'utilisateur « %s ».\n"
 
 #: command.c:1422
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
-msgstr "Vous êtes maintenant connecté à la base de données «%s» en tant qu'utilisateur «%s».\n"
+msgstr "Vous êtes maintenant connecté à la base de données « %s » en tant qu'utilisateur « %s ».\n"
 
 #: command.c:1544
 #, c-format
 msgid "could not start editor \"%s\"\n"
-msgstr "n'a pas pu exécuter l'éditeur «%s»\n"
+msgstr "n'a pas pu exécuter l'éditeur « %s »\n"
 
 #: command.c:1546
 msgid "could not start /bin/sh\n"
@@ -150,7 +150,7 @@ msgstr "n'a pas pu exécuter /bin/sh\n"
 #: command.c:1591
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
-msgstr "n'a pas pu ouvrir le fichier temporaire «%s»: %s\n"
+msgstr "n'a pas pu ouvrir le fichier temporaire « %s »: %s\n"
 
 #: command.c:1783
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
@@ -177,12 +177,12 @@ msgstr "Affichage étendu désactivé.\n"
 #: command.c:1820
 #, c-format
 msgid "Null display is \"%s\".\n"
-msgstr "L'affichage de null est «%s».\n"
+msgstr "L'affichage de null est « %s ».\n"
 
 #: command.c:1832
 #, c-format
 msgid "Field separator is \"%s\".\n"
-msgstr "Le séparateur de champs est «%s».\n"
+msgstr "Le séparateur de champs est « %s ».\n"
 
 #: command.c:1846
 msgid "Record separator is <newline>."
@@ -191,7 +191,7 @@ msgstr "Le séparateur d'enregistrements est <saut de ligne>."
 #: command.c:1848
 #, c-format
 msgid "Record separator is \"%s\".\n"
-msgstr "Le séparateur d'enregistrements est «%s».\n"
+msgstr "Le séparateur d'enregistrements est « %s ».\n"
 
 #: command.c:1859
 msgid "Showing only tuples."
@@ -204,7 +204,7 @@ msgstr "L'affichage des tuples seuls est désactivé."
 #: command.c:1877
 #, c-format
 msgid "Title is \"%s\".\n"
-msgstr "Le titre est «%s».\n"
+msgstr "Le titre est « %s ».\n"
 
 #: command.c:1879
 msgid "Title is unset.\n"
@@ -213,7 +213,7 @@ msgstr "Le titre n'est pas défini.\n"
 #: command.c:1895
 #, c-format
 msgid "Table attribute is \"%s\".\n"
-msgstr "L'attribut de la table est «%s».\n"
+msgstr "L'attribut de la table est « %s ».\n"
 
 #: command.c:1897
 msgid "Table attributes unset.\n"
@@ -277,7 +277,7 @@ msgstr "Vous n'êtes pas connecté à une base de données.\n"
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
-msgstr "Notification asynchrone «%s» reçue, provenant du processus serveur de PID %d.\n"
+msgstr "Notification asynchrone « %s » reçue, provenant du processus serveur de PID %d.\n"
 
 #: common.c:517
 msgid ""
@@ -313,7 +313,7 @@ msgstr "\\copy : arguments requis\n"
 #: copy.c:289
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
-msgstr "\\copy : erreur de syntaxe sur «%s»\n"
+msgstr "\\copy : erreur de syntaxe sur « %s »\n"
 
 #: copy.c:291
 msgid "\\copy: parse error at end of line\n"
@@ -482,7 +482,7 @@ msgstr ""
 #, c-format
 msgid ""
 "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
-msgstr "  -F CHAINE       initialise le séparateur de champs (par défaut: «%s») (-P fieldsep=)\n"
+msgstr "  -F CHAINE       initialise le séparateur de champs (par défaut: « %s ») (-P fieldsep=)\n"
 
 #: help.c:121
 msgid ""
@@ -515,12 +515,12 @@ msgstr "socket local"
 #: help.c:130
 #, c-format
 msgid "  -p PORT         database server port (default: \"%s\")\n"
-msgstr "  -p PORT         port du serveur de la base de données (par défaut: «%s»)\n"
+msgstr "  -p PORT         port du serveur de la base de données (par défaut: « %s »)\n"
 
 #: help.c:136
 #, c-format
 msgid "  -U NAME         database user name (default: \"%s\")\n"
-msgstr "  -U NOM          nom d'utilisateur de la base de données (par défaut: «%s»)\n"
+msgstr "  -U NOM          nom d'utilisateur de la base de données (par défaut: « %s »)\n"
 
 #: help.c:137
 msgid "  -W              prompt for password (should happen automatically)"
@@ -537,8 +537,8 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr ""
 "\n"
-"Pour en savoir davantage, tapez «\\?» (pour des commandes internes) ou\n"
-"«\\help» (pour des commandes SQL) une fois dans psql, ou consultez la\n"
+"Pour en savoir davantage, tapez « \\? » (pour des commandes internes) ou\n"
+"« \\help » (pour des commandes SQL) une fois dans psql, ou consultez la\n"
 "section de psql dans la documentation de PostgreSQL.\n"
 "\n"
 "Rapporter les bogues à <pgsql-bugs@postgresql.org>."
@@ -554,7 +554,7 @@ msgid ""
 "                 connect to new database (currently \"%s\")\n"
 msgstr ""
 " \\c[onnect] [NOM_BASE|- [NOM_UTILISATEUR]]\n"
-"                 connecte à une autre base de données (actuellement «%s»)\n"
+"                 connecte à une autre base de données (actuellement « %s »)\n"
 
 #: help.c:178
 msgid "  \\cd [DIR]      change the current working directory\n"
@@ -701,7 +701,7 @@ msgstr "  \\dD [MODELE]   afficher la liste des domaines\n"
 
 #: help.c:218
 msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
-msgstr "  \\df [MODELE]   affiche la liste des fonctions (ajoutez «+» pour plus de détails)\n"
+msgstr "  \\df [MODELE]   affiche la liste des fonctions (ajoutez « + » pour plus de détails)\n"
 
 #: help.c:219
 msgid "  \\dn [PATTERN]  list schemas\n"
@@ -722,7 +722,7 @@ msgstr "  \\dp [MODELE]   affiche la liste des privilèges d'accès aux tables\n"
 #: help.c:223
 msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
 msgstr ""
-"  \\dT [MODELE]   affiche la liste des types de données (ajoutez «+» \n"
+"  \\dT [MODELE]   affiche la liste des types de données (ajoutez « + » \n"
 "                          pour plus de détails)\n"
 
 #: help.c:224
@@ -731,7 +731,7 @@ msgstr "  \\du [MODELE]   affiche la liste des utilisateurs\n"
 
 #: help.c:225
 msgid "  \\l             list all databases (add \"+\" for more detail)\n"
-msgstr " \\l              affiche toutes les bases de données (ajoutez «+» pour plus de détails)\n"
+msgstr " \\l              affiche toutes les bases de données (ajoutez « + » pour plus de détails)\n"
 
 #: help.c:226
 msgid "  \\z [PATTERN]   list table access privileges (same as \\dp)\n"
@@ -837,7 +837,7 @@ msgid ""
 "No help available for \"%-.*s\".\n"
 "Try \\h with no arguments to see available help.\n"
 msgstr ""
-"Aucun aide-mémoire disponible pour «%-.*s».\n"
+"Aucun aide-mémoire disponible pour « %-.*s ».\n"
 "Tapez \\h sans arguments pour afficher l'aide-mémoire disponible.\n"
 
 #: input.c:217
@@ -872,7 +872,7 @@ msgstr "Gros objets"
 #: mainloop.c:203
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
-msgstr "Tapez «\\q» pour quitter %s.\n"
+msgstr "Tapez « \\q » pour quitter %s.\n"
 
 #: print.c:421
 msgid "(No rows)\n"
@@ -920,27 +920,27 @@ msgstr ""
 #: startup.c:428
 #, c-format
 msgid "%s: couldn't set printing parameter \"%s\"\n"
-msgstr "%s : impossible d'initialiser le paramètre d'impression «%s»\n"
+msgstr "%s : impossible d'initialiser le paramètre d'impression « %s »\n"
 
 #: startup.c:474
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
-msgstr "%s : impossible d'effacer la variable «%s»\n"
+msgstr "%s : impossible d'effacer la variable « %s »\n"
 
 #: startup.c:484
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
-msgstr "%s : impossible d'initialiser la variable «%s»\n"
+msgstr "%s : impossible d'initialiser la variable « %s »\n"
 
 #: startup.c:515 startup.c:521
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez l'option «%s --help» pour plus d'informations.\n"
+msgstr "Essayez l'option « %s --help » pour plus d'informations.\n"
 
 #: startup.c:539
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
-msgstr "%s : Attention: option supplémentaire «%s» ignorée\n"
+msgstr "%s : Attention: option supplémentaire « %s » ignorée\n"
 
 #: startup.c:546
 #, c-format
@@ -949,7 +949,7 @@ msgstr "%s : Attention : l'option -u est obsolète. Utilisez -U.\n"
 
 #: startup.c:603
 msgid "contains support for command-line editing"
-msgstr "contient le support pour l'édition de la ligne de commande"
+msgstr "contient une gestion avancée de la ligne de commande"
 
 #: startup.c:626
 #, c-format
@@ -1054,7 +1054,7 @@ msgstr "Privilèges d'accès"
 #: describe.c:406
 #, c-format
 msgid "Access privileges for database \"%s\""
-msgstr "Privilèges d'accès de la base de données «%s»"
+msgstr "Privilèges d'accès de la base de données « %s »"
 
 #: describe.c:438
 msgid "Object"
@@ -1098,7 +1098,7 @@ msgstr "règle"
 
 #: describe.c:544
 msgid "trigger"
-msgstr "déclencheur"
+msgstr "trigger"
 
 #: describe.c:562
 msgid "Object descriptions"
@@ -1107,12 +1107,12 @@ msgstr "Descriptions des objets"
 #: describe.c:608
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
-msgstr "Aucune relation nommée «%s» n'a été trouvée.\n"
+msgstr "Aucune relation nommée « %s » n'a été trouvée.\n"
 
 #: describe.c:691
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
-msgstr "Aucune relation avec l'OID «%s» n'a été trouvée.\n"
+msgstr "Aucune relation avec l'OID « %s » n'a été trouvée.\n"
 
 #: describe.c:704
 msgid "Column"
@@ -1129,42 +1129,42 @@ msgstr "Modificateurs"
 #: describe.c:819
 #, c-format
 msgid "Table \"%s.%s\""
-msgstr "Table «%s.%s»"
+msgstr "Table « %s.%s »"
 
 #: describe.c:823
 #, c-format
 msgid "View \"%s.%s\""
-msgstr "Vue «%s.%s»"
+msgstr "Vue « %s.%s »"
 
 #: describe.c:827
 #, c-format
 msgid "Sequence \"%s.%s\""
-msgstr "Séquence «%s.%s»"
+msgstr "Séquence « %s.%s »"
 
 #: describe.c:831
 #, c-format
 msgid "Index \"%s.%s\""
-msgstr "Index «%s.%s»"
+msgstr "Index « %s.%s »"
 
 #: describe.c:835
 #, c-format
 msgid "Special relation \"%s.%s\""
-msgstr "Relation spéciale «%s.%s»"
+msgstr "Relation spéciale « %s.%s »"
 
 #: describe.c:839
 #, c-format
 msgid "TOAST table \"%s.%s\""
-msgstr "Table TOAST «%s.%s»"
+msgstr "Table TOAST « %s.%s »"
 
 #: describe.c:843
 #, c-format
 msgid "Composite type \"%s.%s\""
-msgstr "Type composé «%s.%s»"
+msgstr "Type composé « %s.%s »"
 
 #: describe.c:847
 #, c-format
 msgid "?%c? \"%s.%s\""
-msgstr "?%c? «%s.%s»"
+msgstr "?%c? « %s.%s »"
 
 #: describe.c:883
 msgid "primary key, "
@@ -1177,7 +1177,7 @@ msgstr "unique, "
 #: describe.c:891
 #, c-format
 msgid "for table \"%s.%s\""
-msgstr "pour la table «%s.%s»"
+msgstr "pour la table « %s.%s »"
 
 #: describe.c:895
 #, c-format
@@ -1204,7 +1204,7 @@ msgstr "Index :"
 #: describe.c:1094
 #, c-format
 msgid "    \"%s\""
-msgstr "    «%s»"
+msgstr "    « %s »"
 
 #: describe.c:1100
 msgid " primary key,"
@@ -1221,7 +1221,7 @@ msgstr "Contraintes :"
 #: describe.c:1124 describe.c:1139
 #, c-format
 msgid "    \"%s\" %s"
-msgstr "    «%s» %s"
+msgstr "    « %s » %s"
 
 #: describe.c:1135
 msgid "Foreign-key constraints:"
@@ -1233,7 +1233,7 @@ msgstr "Règles :"
 
 #: describe.c:1169
 msgid "Triggers:"
-msgstr "Déclencheurs :"
+msgstr "Triggers :"
 
 #: describe.c:1191
 msgid "Inherits"
@@ -1249,11 +1249,11 @@ msgstr "Identifiant utilisateur"
 
 #: describe.c:1278
 msgid "superuser, create database"
-msgstr "superutilisateur, création des bases de données"
+msgstr "super-utilisateur, création des bases de données"
 
 #: describe.c:1279
 msgid "superuser"
-msgstr "superutilisateur"
+msgstr "super-utilisateur"
 
 #: describe.c:1279
 msgid "create database"
@@ -1542,7 +1542,7 @@ msgstr ""
 
 #: sql_help.h:73
 msgid "change the definition of a trigger"
-msgstr "modifie la définition d'un déclencheur"
+msgstr "modifie la définition d'un trigger"
 
 #: sql_help.h:74
 msgid "ALTER TRIGGER name ON table RENAME TO newname"
@@ -1667,7 +1667,7 @@ msgstr ""
 "  RULE nom_règle ON nom_table |\n"
 "  SCHEMA nom_objet |\n"
 "  SEQUENCE nom_objet |\n"
-"  TRIGGER nom_déclencheur ON nom_table |\n"
+"  TRIGGER nom_trigger ON nom_table |\n"
 "  TYPE nom_objet |\n"
 "  VIEW nom_objet\n"
 "} IS 'commentaires'"
@@ -2079,7 +2079,7 @@ msgstr ""
 
 #: sql_help.h:181
 msgid "define a new trigger"
-msgstr "définit un nouveau déclencheur"
+msgstr "définit un nouveau trigger"
 
 #: sql_help.h:182
 msgid ""
@@ -2323,7 +2323,7 @@ msgstr "DROP TABLE nom [, ...] [ CASCADE | RESTRICT ]"
 
 #: sql_help.h:269
 msgid "remove a trigger"
-msgstr "supprime un déclencheur"
+msgstr "supprime un trigger"
 
 #: sql_help.h:270
 msgid "DROP TRIGGER name ON table [ CASCADE | RESTRICT ]"

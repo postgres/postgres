@@ -1,7 +1,7 @@
 # German message translation file for pg_dump and friends
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003.
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/po/de.po,v 1.7.2.2 2007/01/31 08:12:55 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/po/de.po,v 1.7.2.3 2007/09/13 20:56:32 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -9,8 +9,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2007-01-08 11:28-0400\n"
-"PO-Revision-Date: 2007-01-10 10:55+0100\n"
+"POT-Creation-Date: 2007-09-09 09:09-0300\n"
+"PO-Revision-Date: 2007-09-12 11:53+0200\n"
 "Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
 "Language-Team: German <peter_e@gmx.net>\n"
 "MIME-Version: 1.0\n"
@@ -1101,10 +1101,10 @@ msgstr ""
 
 #: pg_backup_archiver.c:558 pg_backup_archiver.c:1032
 #: pg_backup_archiver.c:1146 pg_backup_archiver.c:1535
-#: pg_backup_archiver.c:1685 pg_backup_archiver.c:1718 pg_backup_custom.c:141
+#: pg_backup_archiver.c:1687 pg_backup_archiver.c:1720 pg_backup_custom.c:141
 #: pg_backup_custom.c:146 pg_backup_custom.c:152 pg_backup_custom.c:167
 #: pg_backup_custom.c:545 pg_backup_db.c:152 pg_backup_db.c:228
-#: pg_backup_files.c:112 pg_backup_tar.c:170 pg_backup_tar.c:962
+#: pg_backup_files.c:112 pg_backup_tar.c:170 pg_backup_tar.c:963
 msgid "out of memory\n"
 msgstr "Speicher aufgebraucht\n"
 
@@ -1166,7 +1166,7 @@ msgstr "WARNUNG: Zeile ignoriert: %s\n"
 msgid "could not find entry for ID %d\n"
 msgstr "konnte Eintrag für ID %d nicht finden\n"
 
-#: pg_backup_archiver.c:985 pg_backup_files.c:156 pg_backup_files.c:438
+#: pg_backup_archiver.c:985 pg_backup_files.c:156 pg_backup_files.c:439
 #, c-format
 msgid "could not close TOC file: %s\n"
 msgstr "konnte Inhaltsverzeichnisdatei nicht finden: %s\n"
@@ -1208,86 +1208,91 @@ msgstr "Unerwartete Datenoffsetmarkierung %d\n"
 msgid "file offset in dump file is too large\n"
 msgstr "Dateioffset in Dumpdatei ist zu groß\n"
 
-#: pg_backup_archiver.c:1553
+#: pg_backup_archiver.c:1538 pg_backup_archiver.c:2329 pg_backup_custom.c:726
+#: pg_backup_files.c:401 pg_backup_tar.c:737
+msgid "unexpected end of file\n"
+msgstr "unerwartetes Dateiende\n"
+
+#: pg_backup_archiver.c:1555
 msgid "attempting to ascertain archive format\n"
 msgstr "versuche Archivformat zu ermitteln\n"
 
-#: pg_backup_archiver.c:1573 pg_backup_files.c:148
+#: pg_backup_archiver.c:1575 pg_backup_files.c:148
 #, c-format
 msgid "could not open input file: %s\n"
 msgstr "konnte Eingabedatei nicht öffnen: %s\n"
 
-#: pg_backup_archiver.c:1580
+#: pg_backup_archiver.c:1582
 #, c-format
 msgid "could not read input file: %s\n"
 msgstr "konnte nicht aus Eingabedatei lesen: %s\n"
 
-#: pg_backup_archiver.c:1582
+#: pg_backup_archiver.c:1584
 #, c-format
 msgid "input file is too short (read %lu, expected 5)\n"
 msgstr "Eingabedatei ist zu kurz (gelesen: %lu, erwartet: 5)\n"
 
-#: pg_backup_archiver.c:1635
+#: pg_backup_archiver.c:1637
 msgid "input file does not appear to be a valid archive (too short?)\n"
 msgstr "Eingabedatei scheint kein gültiges Archiv zu sein (zu kurz?)\n"
 
-#: pg_backup_archiver.c:1638
+#: pg_backup_archiver.c:1640
 msgid "input file does not appear to be a valid archive\n"
 msgstr "Eingabedatei scheint kein gültiges Archiv zu sein\n"
 
-#: pg_backup_archiver.c:1656
+#: pg_backup_archiver.c:1658
 #, c-format
 msgid "read %lu bytes into lookahead buffer\n"
 msgstr "%lu Bytes in Puffer gelesen\n"
 
-#: pg_backup_archiver.c:1663
+#: pg_backup_archiver.c:1665
 #, c-format
 msgid "could not close the input file after reading header: %s\n"
 msgstr "konnte Ausgabedatei nach dem Lesen des Kopfes nicht schließen: %s\n"
 
-#: pg_backup_archiver.c:1680
+#: pg_backup_archiver.c:1682
 #, c-format
 msgid "allocating AH for %s, format %d\n"
 msgstr "erstelle AH für %s, Format %d\n"
 
-#: pg_backup_archiver.c:1734
+#: pg_backup_archiver.c:1736
 #, c-format
 msgid "archive format is %d\n"
 msgstr "Archivformat ist %d\n"
 
-#: pg_backup_archiver.c:1762
+#: pg_backup_archiver.c:1764
 #, c-format
 msgid "unrecognized file format \"%d\"\n"
 msgstr "nicht erkanntes Dateiformat »%d«\n"
 
-#: pg_backup_archiver.c:1875
+#: pg_backup_archiver.c:1877
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
 msgstr ""
 "ID %d des Eintrags außerhalb des gültigen Bereichs -- vielleicht ein "
 "verfälschtes Inhaltsverzeichnis\n"
 
-#: pg_backup_archiver.c:1910
+#: pg_backup_archiver.c:1912
 #, c-format
 msgid "read dependency for %s -> %s\n"
 msgstr "Abhängigkeit %s -> %s gelesen\n"
 
-#: pg_backup_archiver.c:1932
+#: pg_backup_archiver.c:1934
 #, c-format
 msgid "read TOC entry %d (ID %d) for %s %s\n"
 msgstr "Inhaltsverzeichniseintrag %d (ID %d) von %s %s gelesen\n"
 
-#: pg_backup_archiver.c:2089
+#: pg_backup_archiver.c:2091
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "konnte Sitzungsbenutzer nicht auf »%s« setzen: %s"
 
-#: pg_backup_archiver.c:2213
+#: pg_backup_archiver.c:2215
 #, c-format
 msgid "could not set search_path to \"%s\": %s"
 msgstr "konnte search_path nicht auf »%s« setzen: %s"
 
-#: pg_backup_archiver.c:2297
+#: pg_backup_archiver.c:2299
 msgid ""
 "WARNING: requested compression not available in this installation -- archive "
 "will be uncompressed\n"
@@ -1295,21 +1300,21 @@ msgstr ""
 "WARNUNG: Komprimierung ist in dieser Installation nicht verfügbar -- Archiv "
 "wird nicht komprimiert\n"
 
-#: pg_backup_archiver.c:2330
+#: pg_backup_archiver.c:2332
 msgid "did not find magic string in file header\n"
 msgstr "magische Zeichenkette im Dateikopf nicht gefunden\n"
 
-#: pg_backup_archiver.c:2344
+#: pg_backup_archiver.c:2346
 #, c-format
 msgid "unsupported version (%d.%d) in file header\n"
 msgstr "nicht unterstützte Version (%d.%d) im Dateikopf\n"
 
-#: pg_backup_archiver.c:2349
+#: pg_backup_archiver.c:2351
 #, c-format
 msgid "sanity check on integer size (%lu) failed\n"
 msgstr "Prüfung der Integer-Größe (%lu) fehlgeschlagen\n"
 
-#: pg_backup_archiver.c:2353
+#: pg_backup_archiver.c:2355
 msgid ""
 "WARNING: archive was made on a machine with larger integers, some operations "
 "may fail\n"
@@ -1317,14 +1322,14 @@ msgstr ""
 "WARNUNG: Archiv wurde auf einer Maschine mit größeren Integers erstellt; "
 "einige Operationen könnten fehlschlagen\n"
 
-#: pg_backup_archiver.c:2363
+#: pg_backup_archiver.c:2365
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)\n"
 msgstr ""
 "erwartetes Format (%d) ist nicht das gleiche wie das in der Datei gefundene "
 "(%d)\n"
 
-#: pg_backup_archiver.c:2379
+#: pg_backup_archiver.c:2381
 msgid ""
 "WARNING: archive is compressed, but this installation does not support "
 "compression -- no data will be available\n"
@@ -1332,7 +1337,7 @@ msgstr ""
 "WARNUNG: Archiv ist komprimiert, aber diese Installation unterstützt keine "
 "Komprimierung -- keine Daten verfügbar\n"
 
-#: pg_backup_archiver.c:2397
+#: pg_backup_archiver.c:2399
 msgid "WARNING: invalid creation date in header\n"
 msgstr "WARNUNG: ungültiges Erstellungsdatum im Kopf\n"
 
@@ -1384,7 +1389,7 @@ msgid "unrecognized data block type %d while restoring archive\n"
 msgstr ""
 "unerkannter Datenblocktyp %d beim Wiederherstellen des Archivs gefunden\n"
 
-#: pg_backup_custom.c:532 pg_backup_custom.c:894
+#: pg_backup_custom.c:532 pg_backup_custom.c:895
 #, c-format
 msgid "could not initialize compression library: %s\n"
 msgstr "konnte Komprimierungsbibliothek nicht initialisieren: %s\n"
@@ -1409,36 +1414,36 @@ msgstr "konnte Komprimierungsbibliothek nicht schließen: %s\n"
 msgid "could not write byte: %s\n"
 msgstr "konnte Byte nicht schreiben: %s\n"
 
-#: pg_backup_custom.c:749 pg_backup_files.c:413
+#: pg_backup_custom.c:750 pg_backup_files.c:414
 #, c-format
 msgid "write error in _WriteBuf (%lu != %lu)\n"
 msgstr "Schreibfehler in _WriteBuf (%lu != %lu)\n"
 
-#: pg_backup_custom.c:820
+#: pg_backup_custom.c:821
 #, c-format
 msgid "could not close archive file: %s\n"
 msgstr "konnte Archivdatei nicht schließen: %s\n"
 
-#: pg_backup_custom.c:843
+#: pg_backup_custom.c:844
 msgid "WARNING: ftell mismatch with expected position -- ftell used\n"
 msgstr ""
 "WARNUNG: erwartete Dateiposition stimmt nicht mit ftell überein -- benutze "
 "ftell\n"
 
-#: pg_backup_custom.c:926
+#: pg_backup_custom.c:927
 #, c-format
 msgid "could not compress data: %s\n"
 msgstr "konnte Daten nicht komprimieren: %s\n"
 
-#: pg_backup_custom.c:946
+#: pg_backup_custom.c:947
 msgid "could not write compressed chunk\n"
 msgstr "konnte komprimiertes Stück nicht schreiben\n"
 
-#: pg_backup_custom.c:960
+#: pg_backup_custom.c:961
 msgid "could not write uncompressed chunk\n"
 msgstr "konnte unkomprimiertes Stück nicht schreiben\n"
 
-#: pg_backup_custom.c:1006
+#: pg_backup_custom.c:1007
 #, c-format
 msgid "could not close compression stream: %s\n"
 msgstr "konnte Komprimierungsstrom nicht schließen: %s\n"
@@ -1631,7 +1636,7 @@ msgstr "konnte Datendatei nach dem Lesen nicht schließen\n"
 msgid "could not open large object TOC for input: %s\n"
 msgstr "konnte Large-Object-Inhaltsverzeichnis nicht zur Eingabe öffnen: %s\n"
 
-#: pg_backup_files.c:374 pg_backup_files.c:544
+#: pg_backup_files.c:374 pg_backup_files.c:545
 #, c-format
 msgid "could not close large object TOC file: %s\n"
 msgstr "konnte Large-Object-Inhaltsverzeichnisdatei nicht schließen: %s\n"
@@ -1640,21 +1645,21 @@ msgstr "konnte Large-Object-Inhaltsverzeichnisdatei nicht schließen: %s\n"
 msgid "could not write byte\n"
 msgstr "konnte Byte nicht schreiben\n"
 
-#: pg_backup_files.c:472
+#: pg_backup_files.c:473
 #, c-format
 msgid "could not open large object TOC for output: %s\n"
 msgstr "konnte Large-Object-Inhaltsverzeichnis nicht zur Ausgabe öffnen: %s\n"
 
-#: pg_backup_files.c:492 pg_backup_tar.c:886
+#: pg_backup_files.c:493 pg_backup_tar.c:887
 #, c-format
 msgid "invalid OID for large object (%u)\n"
 msgstr "Large Object hat ungültige Oid (%u)\n"
 
-#: pg_backup_files.c:511
+#: pg_backup_files.c:512
 msgid "could not open large object file\n"
 msgstr "konnte Large-Object-Datei nicht öffnen\n"
 
-#: pg_backup_files.c:526
+#: pg_backup_files.c:527
 msgid "could not close large object file\n"
 msgstr "konnte Large-Object-Datei nicht schließen\n"
 
@@ -1736,56 +1741,56 @@ msgstr ""
 msgid "restoring large object OID %u\n"
 msgstr "Wiederherstellung von Large Object OID %u\n"
 
-#: pg_backup_tar.c:831
+#: pg_backup_tar.c:832
 msgid "could not write null block at end of tar archive\n"
 msgstr "konnte Nullblock am Ende des Tar-Archivs nicht schreiben\n"
 
-#: pg_backup_tar.c:1025
+#: pg_backup_tar.c:1028
 msgid "archive member too large for tar format\n"
 msgstr "Archivmitglied zu groß für Tar-Format\n"
 
-#: pg_backup_tar.c:1035
+#: pg_backup_tar.c:1037
 #, c-format
 msgid "write error appending to tar archive (wrote %lu, attempted %lu)\n"
 msgstr ""
 "Schreibfehler beim Anhängen an Tar-Archiv (%lu geschrieben, %lu versucht)\n"
 
-#: pg_backup_tar.c:1041
+#: pg_backup_tar.c:1043
 #, c-format
 msgid "could not close tar member: %s\n"
 msgstr "konnte Tar-Mitglied nicht schließen: %s\n"
 
-#: pg_backup_tar.c:1050
+#: pg_backup_tar.c:1053
 #, c-format
 msgid "actual file length (%s) does not match expected (%s)\n"
 msgstr ""
 "tatsächliche Dateilänge (%s) stimmt nicht mit erwarteter Länge (%s) überein\n"
 
-#: pg_backup_tar.c:1058
+#: pg_backup_tar.c:1061
 msgid "could not output padding at end of tar member\n"
 msgstr "konnte Tar-Mitglied am Ende nicht auffüllen\n"
 
-#: pg_backup_tar.c:1087
+#: pg_backup_tar.c:1090
 #, c-format
 msgid "moving from position %s to next member at file position %s\n"
 msgstr "bewege Position von %s auf nächstes Mitglied bei Position %s\n"
 
-#: pg_backup_tar.c:1098
+#: pg_backup_tar.c:1101
 #, c-format
 msgid "now at file position %s\n"
 msgstr "jetzt bei Dateiposition %s\n"
 
-#: pg_backup_tar.c:1107 pg_backup_tar.c:1134
+#: pg_backup_tar.c:1110 pg_backup_tar.c:1137
 #, c-format
 msgid "could not find header for file %s in tar archive\n"
 msgstr "konnte Kopf für Datei %s im Tar-Archiv nicht finden\n"
 
-#: pg_backup_tar.c:1118
+#: pg_backup_tar.c:1121
 #, c-format
 msgid "skipping tar member %s\n"
 msgstr "Tar-Mitglied %s übersprungen\n"
 
-#: pg_backup_tar.c:1122
+#: pg_backup_tar.c:1125
 #, c-format
 msgid ""
 "dumping data out of order is not supported in this archive format: %s is "
@@ -1794,23 +1799,23 @@ msgstr ""
 "Ausgabe der Daten in anderer Reihenfolge wird in diesem Archivformat nicht "
 "unterstützt: %s wird benötigt, aber es kommt vor %s in der Archivdatei.\n"
 
-#: pg_backup_tar.c:1169
+#: pg_backup_tar.c:1172
 #, c-format
 msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
 msgstr ""
 "tatsächliche Dateiposition stimmt nicht mit erwarteter überein (%s und %s)\n"
 
-#: pg_backup_tar.c:1184
+#: pg_backup_tar.c:1187
 #, c-format
 msgid "incomplete tar header found (%lu bytes)\n"
 msgstr "unvollständiger Tar-Dateikopf gefunden (%lu Bytes)\n"
 
-#: pg_backup_tar.c:1220
+#: pg_backup_tar.c:1223
 #, c-format
 msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
 msgstr "Inhaltsverzeichniseintrag %s bei %s (Länge %lu, Prüfsumme %d)\n"
 
-#: pg_backup_tar.c:1230
+#: pg_backup_tar.c:1233
 #, c-format
 msgid ""
 "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
@@ -1818,7 +1823,7 @@ msgstr ""
 "beschädigter Tar-Kopf in %s gefunden (%d erwartet, %d berechnet), "
 "Dateiposition %s\n"
 
-#: pg_backup_tar.c:1323
+#: pg_backup_tar.c:1326
 msgid "could not write tar header\n"
 msgstr "konnte Tar-Kopf nicht schreiben\n"
 
