@@ -2,9 +2,9 @@
 # translation of pg_controldata-fr.po to FR_fr
 # French message translation file for pg_controldata
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.11 2005/11/04 23:31:10 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/po/fr.po,v 1.11.2.1 2007/09/13 21:10:01 petere Exp $
 #
-# Use these quotes: «%s»
+# Use these quotes: « %s »
 # Loïc Hennequin <loic.hennequin@wanadoo.fr>, 2002.
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2003, 2004, 2005.
 #
@@ -95,17 +95,17 @@ msgstr "%s : aucun répertoire de données n'a été spécifié\n"
 #: pg_controldata.c:101
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez «%s --help» pour plus d'informations.\n"
+msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
 #: pg_controldata.c:109
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s : n'a pas pu ouvrir le fichier «%s» en lecture : %s\n"
+msgstr "%s : n'a pas pu ouvrir le fichier « %s » en lecture : %s\n"
 
 #: pg_controldata.c:116
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s : n'a pas pu lire le fichier «%s» : %s\n"
+msgstr "%s : n'a pas pu lire le fichier « %s » : %s\n"
 
 #: pg_controldata.c:130
 msgid ""

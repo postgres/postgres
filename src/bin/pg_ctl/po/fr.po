@@ -3,7 +3,7 @@
 # translation of pg_ctl.po to FR_fr
 # French message translation file for pg_ctl
 #
-# Use these quotes: «%s»
+# Use these quotes: « %s »
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
 #
 msgid ""
@@ -26,12 +26,12 @@ msgstr "%s : mémoire épuisée\n"
 #: pg_ctl.c:250
 #, c-format
 msgid "%s: could not open PID file \"%s\": %s\n"
-msgstr "%s : impossible d'ouvrir le fichier PID «%s» : %s\n"
+msgstr "%s : impossible d'ouvrir le fichier PID « %s » : %s\n"
 
 #: pg_ctl.c:257
 #, c-format
 msgid "%s: invalid data in PID file \"%s\"\n"
-msgstr "%s: données invalides dans le fichier PID «%s»\n"
+msgstr "%s: données invalides dans le fichier PID « %s »\n"
 
 #: pg_ctl.c:478
 #, c-format
@@ -41,12 +41,12 @@ msgstr "%s : un autre postmaster pourrait être en cours d'exécution ; néanmoins,
 #: pg_ctl.c:496
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
-msgstr "%s : impossible de lire le fichier «%s»\n"
+msgstr "%s : impossible de lire le fichier « %s »\n"
 
 #: pg_ctl.c:502
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
-msgstr "%s : le fichier d'option «%s» doit avoir exactement une ligne\n"
+msgstr "%s : le fichier d'option « %s » doit avoir exactement une ligne\n"
 
 #: pg_ctl.c:553
 #, c-format
@@ -55,8 +55,8 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"Le programme «postmaster» est nécessaire pour %s mais n'a pas été trouvé dans\n"
-"le même répertoire que «%s».\n"
+"Le programme « postmaster » est nécessaire pour %s mais n'a pas été trouvé dans\n"
+"le même répertoire que « %s ».\n"
 "Vérifiez votre installation.\n"
 
 #: pg_ctl.c:559
@@ -66,7 +66,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Le programme «postmaster» a été trouvé par «%s»\n"
+"Le programme « postmaster » a été trouvé par « %s »\n"
 "mais n'était pas de la même version que %s.\n"
 "Vérifiez votre installation.\n"
 
@@ -107,7 +107,7 @@ msgstr "postmaster en cours de démarrage\n"
 #: pg_ctl.c:619 pg_ctl.c:687 pg_ctl.c:761
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
-msgstr "%s : le fichier PID «%s» n'existe pas\n"
+msgstr "%s : le fichier PID « %s » n'existe pas\n"
 
 #: pg_ctl.c:620 pg_ctl.c:689 pg_ctl.c:762
 msgid "Is postmaster running?\n"
@@ -179,7 +179,7 @@ msgstr "envoi d'un signal à postmaster\n"
 #: pg_ctl.c:826
 #, c-format
 msgid "%s: a standalone backend \"postgres\" is running (PID: %ld)\n"
-msgstr "%s : un moteur «postgres» est en cours d'exécution (PID : %ld)\n"
+msgstr "%s : un moteur « postgres » est en cours d'exécution (PID : %ld)\n"
 
 #: pg_ctl.c:837
 #, c-format
@@ -214,37 +214,37 @@ msgstr "%s : impossible d'ouvrir le gestionnaire de services\n"
 #: pg_ctl.c:961
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
-msgstr "%s : le service «%s» est déjà enregistré\n"
+msgstr "%s : le service « %s » est déjà enregistré\n"
 
 #: pg_ctl.c:972
 #, c-format
 msgid "%s: could not register service \"%s\": error code %d\n"
-msgstr "%s : impossible d'enregistrer le service «%s» : code d'erreur %d\n"
+msgstr "%s : impossible d'enregistrer le service « %s » : code d'erreur %d\n"
 
 #: pg_ctl.c:993
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
-msgstr "%s : le service «%s» n'est pas enregistré\n"
+msgstr "%s : le service « %s » n'est pas enregistré\n"
 
 #: pg_ctl.c:1000
 #, c-format
 msgid "%s: could not open service \"%s\": error code %d\n"
-msgstr "%s : impossible d'ouvrir le service «%s» : code d'erreur %d\n"
+msgstr "%s : impossible d'ouvrir le service « %s » : code d'erreur %d\n"
 
 #: pg_ctl.c:1007
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %d\n"
-msgstr "%s : impossible de supprimer le service «%s» : code d'erreur %d\n"
+msgstr "%s : impossible de supprimer le service « %s » : code d'erreur %d\n"
 
 #: pg_ctl.c:1139
 #, c-format
 msgid "%s: could not start service \"%s\": error code %d\n"
-msgstr "%s : impossible de démarrer le service «%s» : code d'erreur %d\n"
+msgstr "%s : impossible de démarrer le service « %s » : code d'erreur %d\n"
 
 #: pg_ctl.c:1148
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez «%s --help» pour plus d'informations.\n"
+msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
 #: pg_ctl.c:1156
 #, c-format
@@ -386,7 +386,7 @@ msgstr ""
 
 #: pg_ctl.c:1188
 msgid "  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr "  -m MODE_ARRET      soit «smart», soit «fast», soit «immediate»\n"
+msgstr "  -m MODE_ARRET      soit « smart », soit « fast », soit « immediate »\n"
 
 #: pg_ctl.c:1190
 msgid ""
@@ -453,12 +453,12 @@ msgstr ""
 #: pg_ctl.c:1230
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
-msgstr "%s : mode d'arrêt non reconnu «%s»\n"
+msgstr "%s : mode d'arrêt non reconnu « %s »\n"
 
 #: pg_ctl.c:1263
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
-msgstr "%s : signal non reconnu «%s»\n"
+msgstr "%s : signal non reconnu « %s »\n"
 
 #: pg_ctl.c:1328
 #, c-format
@@ -468,7 +468,7 @@ msgid ""
 "own the server process.\n"
 msgstr ""
 "%s : ne peut être lancé en tant que root\n"
-"Merci de vous connecter (avec l'aide de «su») comme utilisateur (non privilégié)\n"
+"Merci de vous connecter (avec l'aide de « su ») comme utilisateur (non privilégié)\n"
 "qui sera le propriétaire du processus serveur.\n"
 
 #: pg_ctl.c:1421
@@ -479,7 +479,7 @@ msgstr "%s : option invalide %s\n"
 #: pg_ctl.c:1432
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s : trop d'arguments en ligne de commande (le premier est «%s»)\n"
+msgstr "%s : trop d'arguments en ligne de commande (le premier est « %s »)\n"
 
 #: pg_ctl.c:1451
 #, c-format
@@ -489,7 +489,7 @@ msgstr "%s : arguments manquants pour le mode kill\n"
 #: pg_ctl.c:1469
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
-msgstr "%s : mode d'opération non reconnu «%s»\n"
+msgstr "%s : mode d'opération non reconnu « %s »\n"
 
 #: pg_ctl.c:1479
 #, c-format
@@ -509,27 +509,27 @@ msgstr "n'a pas pu identifier le répertoire courant : %s"
 #: ../../port/exec.c:213
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "binaire invalide «%s»"
+msgstr "binaire invalide « %s »"
 
 #: ../../port/exec.c:262
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "n'a pas pu lire le binaire «%s»"
+msgstr "n'a pas pu lire le binaire « %s »"
 
 #: ../../port/exec.c:269
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "impossible de trouver un «%s» pour exécuter"
+msgstr "impossible de trouver un « %s » pour exécuter"
 
 #: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
-msgstr "n'a pas pu accéder au répertoire «%s»"
+msgstr "n'a pas pu accéder au répertoire « %s »"
 
 #: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "n'a pas pu lire le lien symbolique «%s»"
+msgstr "n'a pas pu lire le lien symbolique « %s »"
 
 #: ../../port/exec.c:587
 #, c-format
