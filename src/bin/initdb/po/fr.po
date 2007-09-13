@@ -3,9 +3,9 @@
 # translation of initdb-fr.po to FR_fr
 # French message translation file for initdb
 #
-# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.6.4.1 2005/02/11 11:53:30 petere Exp $
+# $PostgreSQL: pgsql/src/bin/initdb/po/fr.po,v 1.6.4.2 2007/09/13 21:04:11 petere Exp $
 #
-# Use these quotes: «%s»
+# Use these quotes: « %s »
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
 #
 msgid ""
@@ -28,27 +28,27 @@ msgstr "%s : espace mémoire insuffisant\n"
 #: initdb.c:372 initdb.c:1403
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s : impossible d'ouvrir le fichier «%s» en lecture : %s\n"
+msgstr "%s : impossible d'ouvrir le fichier « %s » en lecture : %s\n"
 
 #: initdb.c:433 initdb.c:1030 initdb.c:1057
 #, c-format
 msgid "%s: could not open file \"%s\" for writing: %s\n"
-msgstr "%s : impossible d'ouvrir le fichier «%s» en écriture : %s\n"
+msgstr "%s : impossible d'ouvrir le fichier « %s » en écriture : %s\n"
 
 #: initdb.c:441 initdb.c:449 initdb.c:1037 initdb.c:1063
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
-msgstr "%s : n'a pas pu écrire le fichier «%s» : %s\n"
+msgstr "%s : n'a pas pu écrire le fichier « %s » : %s\n"
 
 #: initdb.c:468
 #, c-format
 msgid "%s: could not execute command \"%s\": %s\n"
-msgstr "%s : n'a pas pu exécuter la commande «%s» : %s\n"
+msgstr "%s : n'a pas pu exécuter la commande « %s » : %s\n"
 
 #: initdb.c:588
 #, c-format
 msgid "%s: removing data directory \"%s\"\n"
-msgstr "%s : suppression du répertoire des données «%s»\n"
+msgstr "%s : suppression du répertoire des données « %s »\n"
 
 #: initdb.c:591
 #, c-format
@@ -58,7 +58,7 @@ msgstr "%s : a échoué lors de la suppression du répertoire data\n"
 #: initdb.c:597
 #, c-format
 msgid "%s: removing contents of data directory \"%s\"\n"
-msgstr "%s : suppression du contenu du répertoire des données «%s»\n"
+msgstr "%s : suppression du contenu du répertoire des données « %s »\n"
 
 #: initdb.c:600
 #, c-format
@@ -68,7 +68,7 @@ msgstr "%s : a échoué lors de la suppression du contenu du répertoire data\n"
 #: initdb.c:609
 #, c-format
 msgid "%s: data directory \"%s\" not removed at user's request\n"
-msgstr "%s : répertoire des données «%s» non supprimé à la demande de l'utilisateur\n"
+msgstr "%s : répertoire des données « %s » non supprimé à la demande de l'utilisateur\n"
 
 #: initdb.c:635
 #, c-format
@@ -78,12 +78,12 @@ msgid ""
 "own the server process.\n"
 msgstr ""
 "%s : impossible de se lancer en tant qu'utilisateur root\n"
-"Merci de vous connecter (en utilisant, par exemple, «su») en tant qu'utilisateur non privilégié et propriétaire du processus serveur.\n"
+"Merci de vous connecter (en utilisant, par exemple, « su ») en tant qu'utilisateur non privilégié et propriétaire du processus serveur.\n"
 
 #: initdb.c:684
 #, c-format
 msgid "%s: \"%s\" is not a valid server encoding name\n"
-msgstr "%s : «%s» n'est pas un nom de codage valide pour le serveur\n"
+msgstr "%s : « %s » n'est pas un nom de codage valide pour le serveur\n"
 
 #: initdb.c:839
 #, c-format
@@ -109,7 +109,7 @@ msgstr ""
 #: initdb.c:971
 #, c-format
 msgid "%s: could not create directory \"%s\": %s\n"
-msgstr "%s : n'a pas pu créer le répertoire «%s» : %s\n"
+msgstr "%s : n'a pas pu créer le répertoire « %s » : %s\n"
 
 #: initdb.c:999
 #, c-format
@@ -118,7 +118,7 @@ msgid ""
 "This means you have a corrupted installation or identified\n"
 "the wrong directory with the invocation option -L.\n"
 msgstr ""
-"%s : le fichier «%s» n'existe pas\n"
+"%s : le fichier « %s » n'existe pas\n"
 "Cela signifie que vous avez une installation corrompue ou que vous avez\n"
 "identifié le mauvais répertoire avec l'option -L.\n"
 
@@ -145,7 +145,7 @@ msgid ""
 "%s: input file \"%s\" does not belong to PostgreSQL %s\n"
 "Check your installation or specify the correct path using the option -L.\n"
 msgstr ""
-"%s : Le fichier d'entrées «%s» n'appartient pas à PostgreSQL %s\n"
+"%s : Le fichier d'entrées « %s » n'appartient pas à PostgreSQL %s\n"
 "Vérifiez votre installation ou spécifiez le bon chemin en utilisant l'option -L.\n"
 
 #: initdb.c:1342
@@ -154,7 +154,7 @@ msgstr "initialisation de pg_shadow... "
 
 #: initdb.c:1378
 msgid "Enter new superuser password: "
-msgstr "Saisissez le nouveau mot de passe du superutilisateur : "
+msgstr "Saisissez le nouveau mot de passe du super-utilisateur : "
 
 #: initdb.c:1379
 msgid "Enter it again: "
@@ -167,7 +167,7 @@ msgstr "Les mots de passe ne correspondent pas.\n"
 #: initdb.c:1409
 #, c-format
 msgid "%s: could not read password from file \"%s\": %s\n"
-msgstr "%s : impossible de lire le mot de passe à partir du fichier «%s» : %s\n"
+msgstr "%s : impossible de lire le mot de passe à partir du fichier « %s » : %s\n"
 
 #: initdb.c:1422
 msgid "setting password ... "
@@ -230,7 +230,7 @@ msgstr "ok\n"
 #: initdb.c:1989
 #, c-format
 msgid "%s: invalid locale name \"%s\"\n"
-msgstr "%s : nom de locale invalide «%s»\n"
+msgstr "%s : nom de locale invalide « %s »\n"
 
 #: initdb.c:2056
 #, c-format
@@ -300,18 +300,18 @@ msgstr "  -A, --auth=MÉTHODE        méthode d'authentification par défaut pour l
 
 #: initdb.c:2070
 msgid "  -U, --username=NAME       database superuser name\n"
-msgstr "  -U, --username=NOM        nom du superutilisateur de la base de données\n"
+msgstr "  -U, --username=NOM        nom du super-utilisateur de la base de données\n"
 
 #: initdb.c:2071
 msgid "  -W, --pwprompt            prompt for a password for the new superuser\n"
 msgstr ""
 "  -W, --pwprompt            demande un mot de passe pour le nouveau\n"
-"                            superutilisateur\n"
+"                            super-utilisateur\n"
 
 #: initdb.c:2072
 msgid "  --pwfile=FILE             read password for the new superuser from file\n"
 msgstr ""
-"  --pwfile=nomfichier       lit le mot de passe du nouveau superutilisateur\n"
+"  --pwfile=nomfichier       lit le mot de passe du nouveau super-utilisateur\n"
 "                            à partir d'un fichier\n"
 
 #: initdb.c:2073
@@ -370,17 +370,17 @@ msgstr "Lancé en mode déboguage.\n"
 
 #: initdb.c:2179
 msgid "Running in noclean mode.  Mistakes will not be cleaned up.\n"
-msgstr "Lancé en mode «sans nettoyage» Les erreurs ne seront pas nettoyées.\n"
+msgstr "Lancé en mode « sans nettoyage » Les erreurs ne seront pas nettoyées.\n"
 
 #: initdb.c:2216 initdb.c:2233 initdb.c:2453
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez «%s --help» pour plus d'informations.\n"
+msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
 #: initdb.c:2231
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s : trop d'arguments en ligne de commande (le premier étant «%s»)\n"
+msgstr "%s : trop d'arguments en ligne de commande (le premier étant « %s »)\n"
 
 #: initdb.c:2239
 #, c-format
@@ -395,18 +395,18 @@ msgid ""
 "next time you run initdb.\n"
 msgstr ""
 "\n"
-"ATTENTION : active l'authentification «trust» pour les connexions locales.\n"
+"ATTENTION : active l'authentification « trust » pour les connexions locales.\n"
 "Vous pouvez modifier ceci en éditant pg_hba.conf ou en utilisant l'option -A la prochaine fois que vous lancez initdb.\n"
 
 #: initdb.c:2269
 #, c-format
 msgid "%s: unrecognized authentication method \"%s\"\n"
-msgstr "%s : méthode d'authentification inconnue «%s».\n"
+msgstr "%s : méthode d'authentification inconnue « %s ».\n"
 
 #: initdb.c:2279
 #, c-format
 msgid "%s: must specify a password for the superuser to enable %s authentication\n"
-msgstr "%s : vous devez spécifier un mot de passe pour que le superutilisateur active l'authentification pour %s\n"
+msgstr "%s : vous devez spécifier un mot de passe pour que le super-utilisateur active l'authentification pour %s\n"
 
 #: initdb.c:2294
 #, c-format
@@ -428,8 +428,8 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"Le programme «postgres» est nécessaire à %s mais n'a pas été trouvé dans\n"
-"le même répertoire que «%s».\n"
+"Le programme « postgres » est nécessaire à %s mais n'a pas été trouvé dans\n"
+"le même répertoire que « %s ».\n"
 "Vérifiez votre installation.\n"
 
 #: initdb.c:2333
@@ -439,7 +439,7 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"Le programme «postgres» a été trouvé par «%s» mais n'est pas de la même version que «%s».\n"
+"Le programme « postgres » a été trouvé par « %s » mais n'est pas de la même version que « %s ».\n"
 "Vérifiez votre installation.\n"
 
 #: initdb.c:2352
@@ -459,7 +459,7 @@ msgid ""
 "This user must also own the server process.\n"
 "\n"
 msgstr ""
-"Les fichiers appartenant à ce système de bases de données doivent appartenir à l'utilisateur «%s».\n"
+"Les fichiers appartenant à ce système de bases de données doivent appartenir à l'utilisateur « %s ».\n"
 "Cet utilisateur doit aussi posséder le processus serveur.\n"
 "\n"
 
@@ -490,7 +490,7 @@ msgstr ""
 #: initdb.c:2451
 #, c-format
 msgid "%s: could not find suitable encoding for locale \"%s\"\n"
-msgstr "%s : impossible de trouver le codage adéquat pour la locale «%s»\n"
+msgstr "%s : impossible de trouver le codage adéquat pour la locale « %s »\n"
 
 #: initdb.c:2452
 #, c-format
@@ -515,7 +515,7 @@ msgstr "correction des droits sur le répertoire existant %s ... "
 #: initdb.c:2520
 #, c-format
 msgid "%s: could not change permissions of directory \"%s\": %s\n"
-msgstr "%s : impossible de modifier les droits du répertoire «%s» : %s\n"
+msgstr "%s : impossible de modifier les droits du répertoire « %s » : %s\n"
 
 #: initdb.c:2533
 #, c-format
@@ -525,15 +525,15 @@ msgid ""
 "the directory \"%s\" or run %s\n"
 "with an argument other than \"%s\".\n"
 msgstr ""
-"%s: le répertoire «%s» existe mais n'est pas vide\n"
+"%s: le répertoire « %s » existe mais n'est pas vide\n"
 "Si vous voulez créer un nouveau système de bases de données,\n"
-"soit vous supprimez ou videz le répertoire «%s»\n"
-"soit vous lancez %s avec un argument autre que «%s».\n"
+"soit vous supprimez ou videz le répertoire « %s »\n"
+"soit vous lancez %s avec un argument autre que « %s ».\n"
 
 #: initdb.c:2542
 #, c-format
 msgid "%s: could not access directory \"%s\": %s\n"
-msgstr "%s : impossible d'accéder au répertoire «%s» : %s\n"
+msgstr "%s : impossible d'accéder au répertoire « %s » : %s\n"
 
 #: initdb.c:2551
 #, c-format
@@ -571,27 +571,27 @@ msgstr "n'a pas pu identifier le répertoire courant : %s"
 #: ../../port/exec.c:213
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "binaire invalide «%s»"
+msgstr "binaire invalide « %s »"
 
 #: ../../port/exec.c:262
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "n'a pas pu lire le binaire «%s»"
+msgstr "n'a pas pu lire le binaire « %s »"
 
 #: ../../port/exec.c:269
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "n'a pas pu trouver un «%s» à exécuter"
+msgstr "n'a pas pu trouver un « %s » à exécuter"
 
 #: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
-msgstr "impossible d'accéder au répertoire «%s»"
+msgstr "impossible d'accéder au répertoire « %s »"
 
 #: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "n'a pas pu lire le lien symbolique «%s»"
+msgstr "n'a pas pu lire le lien symbolique « %s »"
 
 #: ../../port/exec.c:587
 #, c-format

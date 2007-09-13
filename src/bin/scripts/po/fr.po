@@ -1,9 +1,9 @@
 # translation of pgscripts-fr.po to FR_fr
 # French message translation file for pgscripts
 #
-# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.7.4.1 2007/01/31 08:20:42 petere Exp $
+# $PostgreSQL: pgsql/src/bin/scripts/po/fr.po,v 1.7.4.2 2007/09/13 21:04:12 petere Exp $
 #
-# Use these quotes: «%s»
+# Use these quotes: « %s »
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004.
 #
 msgid ""
@@ -39,7 +39,7 @@ msgstr ""
 #: vacuumdb.c:127
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez «%s --help» pour plus d'informations.\n"
+msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
 #: clusterdb.c:108
 #: createdb.c:119
@@ -51,12 +51,12 @@ msgstr "Essayez «%s --help» pour plus d'informations.\n"
 #: vacuumdb.c:125
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: trop d'arguments en ligne de commande (le premier étant «%s»)\n"
+msgstr "%s: trop d'arguments en ligne de commande (le premier étant « %s »)\n"
 
 #: createdb.c:129
 #, c-format
 msgid "%s: \"%s\" is not a valid encoding name\n"
-msgstr "%s: «%s» n'est pas un nom de codage valide\n"
+msgstr "%s: « %s » n'est pas un nom de codage valide\n"
 
 #: createdb.c:168
 #, c-format
@@ -111,7 +111,7 @@ msgstr ""
 #: createdb.c:221
 msgid "  -D, --tablespace=TABLESPACE  default tablespace for the database\n"
 msgstr ""
-"  -D, --tablespace=ESPACELOGIQUE  espace logique par défaut\n"
+"  -D, --tablespace=ESPACELOGIQUE  tablespace par défaut\n"
 "                                  pour la base de données\n"
 
 #: createdb.c:222
@@ -232,7 +232,7 @@ msgstr "%s: argument du nom du langage requis et manquant\n"
 #: createlang.c:210
 #, c-format
 msgid "%s: unsupported language \"%s\"\n"
-msgstr "%s: langage non supporté «%s»\n"
+msgstr "%s: langage non supporté « %s »\n"
 
 #: createlang.c:211
 msgid "Supported languages are plpgsql, pltcl, pltclu, plperl, plperlu, and plpythonu.\n"
@@ -241,7 +241,7 @@ msgstr "Les langages supportés sont plpgsql, pltcl, pltclu, plperl, plperlu etpl
 #: createlang.c:226
 #, c-format
 msgid "%s: language \"%s\" is already installed in database \"%s\"\n"
-msgstr "%s : le langage «%s» est déjà installé pour la base de données «%s»\n"
+msgstr "%s : le langage « %s » est déjà installé pour la base de données « %s »\n"
 
 #: createlang.c:283
 #, c-format
@@ -454,7 +454,7 @@ msgstr "%s: argument requis du nom de la base de données manquant\n"
 #: dropdb.c:109
 #, c-format
 msgid "Database \"%s\" will be permanently removed.\n"
-msgstr "La base de données «%s» sera supprimée sans retour en arrière possible.\n"
+msgstr "La base de données « %s » sera supprimée sans retour en arrière possible.\n"
 
 #: dropdb.c:110
 #: dropuser.c:111
@@ -488,12 +488,12 @@ msgstr "  -i, --interactive         demande une confirmation avant de supprimer 
 #: droplang.c:176
 #, c-format
 msgid "%s: language \"%s\" is not installed in database \"%s\"\n"
-msgstr "%s: le langage «%s» n'est pas installé dans la base de données «%s»\n"
+msgstr "%s: le langage « %s » n'est pas installé dans la base de données « %s »\n"
 
 #: droplang.c:193
 #, c-format
 msgid "%s: still %s functions declared in language \"%s\"; language not removed\n"
-msgstr "%s: il existe encore les fonctions %s déclarées avec le langage «%s»; langage non supprimé\n"
+msgstr "%s: il existe encore les fonctions %s déclarées avec le langage « %s »; langage non supprimé\n"
 
 #: droplang.c:265
 #, c-format
@@ -520,12 +520,12 @@ msgstr "Entrez le nom de l'utilisateur à supprimer : "
 #: dropuser.c:110
 #, c-format
 msgid "User \"%s\" will be permanently removed.\n"
-msgstr "L'utilisateur «%s» sera supprimé sans retour en arrière possible.\n"
+msgstr "L'utilisateur « %s » sera supprimé sans retour en arrière possible.\n"
 
 #: dropuser.c:127
 #, c-format
 msgid "%s: removal of user \"%s\" failed: %s"
-msgstr "%s: échec lors de la suppression de l'utilisateur «%s» : %s"
+msgstr "%s: échec lors de la suppression de l'utilisateur « %s » : %s"
 
 #: dropuser.c:146
 #, c-format
@@ -553,17 +553,17 @@ msgstr "%s: ne peut pas mettre en cluster une table spécifique dans toutes les b
 #: clusterdb.c:180
 #, c-format
 msgid "%s: clustering of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: échec lors de la création du cluster de la table «%s» dans la base de données «%s» : %s"
+msgstr "%s: échec lors de la création du cluster de la table « %s » dans la base de données « %s » : %s"
 
 #: clusterdb.c:183
 #, c-format
 msgid "%s: clustering of database \"%s\" failed: %s"
-msgstr "%s: échec lors de la création du cluster de la base de données «%s» : %s"
+msgstr "%s: échec lors de la création du cluster de la base de données « %s » : %s"
 
 #: clusterdb.c:219
 #, c-format
 msgid "%s: clustering database \"%s\"\n"
-msgstr "%s: création du cluster de la base de données «%s»\n"
+msgstr "%s: création du cluster de la base de données « %s »\n"
 
 #: clusterdb.c:233
 #, c-format
@@ -617,17 +617,17 @@ msgstr ""
 #: vacuumdb.c:205
 #, c-format
 msgid "%s: vacuuming of table \"%s\" in database \"%s\" failed: %s"
-msgstr "%s: échec lors du nettoyage (vacuum) de la table «%s» dans la base de données «%s» : %s"
+msgstr "%s: échec lors du nettoyage (vacuum) de la table « %s » dans la base de données « %s » : %s"
 
 #: vacuumdb.c:208
 #, c-format
 msgid "%s: vacuuming of database \"%s\" failed: %s"
-msgstr "%s: échec lors du nettoyage (vacuum) de la base de données «%s» : %s"
+msgstr "%s: échec lors du nettoyage (vacuum) de la base de données « %s » : %s"
 
 #: vacuumdb.c:245
 #, c-format
 msgid "%s: vacuuming database \"%s\"\n"
-msgstr "%s: nettoyage (vacuum) de la base de données «%s»\n"
+msgstr "%s: nettoyage (vacuum) de la base de données « %s »\n"
 
 #: vacuumdb.c:259
 #, c-format

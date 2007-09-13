@@ -1,7 +1,7 @@
 # German message translation file for psql
 # Peter Eisentraut <peter_e@gmx.net>, 2001, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.15.4.1 2007/01/31 08:20:42 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/de.po,v 1.15.4.2 2007/09/13 21:04:12 petere Exp $
 #
 # Use these quotes: »%s«
 #
@@ -607,7 +607,7 @@ msgid ""
 "  \\encoding [ENCODING]\n"
 "                 show or set client encoding\n"
 msgstr ""
-" \\encoding [KODIERUNG]\n"
+"  \\encoding [KODIERUNG]\n"
 "                 zeige oder setze Client-Kodierung\n"
 
 #: help.c:183
@@ -715,7 +715,7 @@ msgid ""
 "  \\qecho [STRING]\n"
 "                 write string to query output stream (see \\o)\n"
 msgstr ""
-" \\qecho [TEXT]   schreibe Text auf Ausgabestrom für Anfrageergebnisse "
+"  \\qecho [TEXT]  schreibe Text auf Ausgabestrom für Anfrageergebnisse "
 "(siehe \\o)\n"
 
 #: help.c:212

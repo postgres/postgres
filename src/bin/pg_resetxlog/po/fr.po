@@ -2,7 +2,7 @@
 # translation of pg_resetxlog-fr.po to FR_fr
 # French message translation file for pg_resetxlog
 #
-# Use these quotes: «%s»
+# Use these quotes: « %s »
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004.
 #
 msgid ""
@@ -26,7 +26,7 @@ msgstr "%s : argument invalide pour l'option -x\n"
 #: pg_resetxlog.c:170 pg_resetxlog.c:176 pg_resetxlog.c:184
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Essayez «%s --help» pour plus d'informations.\n"
+msgstr "Essayez « %s --help » pour plus d'informations.\n"
 
 #: pg_resetxlog.c:131
 #, c-format
@@ -56,17 +56,17 @@ msgstr "%s : aucun répertoire de données spécifié\n"
 #: pg_resetxlog.c:198
 #, c-format
 msgid "%s: cannot be executed by \"root\"\n"
-msgstr "%s : n'a pas pu être exécuté par «root»\n"
+msgstr "%s : n'a pas pu être exécuté par « root »\n"
 
 #: pg_resetxlog.c:200
 #, c-format
 msgid "You must run %s as the PostgreSQL superuser.\n"
-msgstr "Vous devez lancer %s en tant que superutilisateur PostgreSQL.\n"
+msgstr "Vous devez lancer %s en tant que super-utilisateur PostgreSQL.\n"
 
 #: pg_resetxlog.c:222 pg_resetxlog.c:321
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
-msgstr "%s : ne peut ouvrir le fichier «%s» en lecture : %s\n"
+msgstr "%s : ne peut ouvrir le fichier « %s » en lecture : %s\n"
 
 #: pg_resetxlog.c:228
 #, c-format
@@ -74,7 +74,7 @@ msgid ""
 "%s: lock file \"%s\" exists\n"
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
-"%s : le fichier de verrouillage «%s» existe\n"
+"%s : le fichier de verrouillage « %s » existe\n"
 "Le serveur est-il lancé ? Sinon, supprimez le fichier de verrouillage et réessayez.\n"
 
 #: pg_resetxlog.c:270
@@ -113,7 +113,7 @@ msgstr ""
 #: pg_resetxlog.c:337
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
-msgstr "%s : ne peut pas lire le fichier «%s» : %s\n"
+msgstr "%s : ne peut pas lire le fichier « %s » : %s\n"
 
 #: pg_resetxlog.c:360
 #, c-format
@@ -264,27 +264,27 @@ msgstr "%s : erreur fsync : %s\n"
 #: pg_resetxlog.c:604
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
-msgstr "%s : impossible d'ouvrir le répertoire «%s» : %s\n"
+msgstr "%s : impossible d'ouvrir le répertoire « %s » : %s\n"
 
 #: pg_resetxlog.c:618
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
-msgstr "%s : impossible de supprimer le fichier «%s» : %s\n"
+msgstr "%s : impossible de supprimer le fichier « %s » : %s\n"
 
 #: pg_resetxlog.c:637
 #, c-format
 msgid "%s: could not read from directory \"%s\": %s\n"
-msgstr "%s : impossible de lire à partir du répertoire «%s» : %s\n"
+msgstr "%s : impossible de lire à partir du répertoire « %s » : %s\n"
 
 #: pg_resetxlog.c:706
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
-msgstr "%s : impossible d'ouvrir le fichier «%s» : %s\n"
+msgstr "%s : impossible d'ouvrir le fichier « %s » : %s\n"
 
 #: pg_resetxlog.c:717 pg_resetxlog.c:731
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
-msgstr "%s : impossible d'écrire le fichier «%s» : %s\n"
+msgstr "%s : impossible d'écrire le fichier « %s » : %s\n"
 
 #: pg_resetxlog.c:750
 #, c-format

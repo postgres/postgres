@@ -3,9 +3,9 @@
 # translation of pg_config.po to FR_fr
 # French message translation file for pg_config
 #
-# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.3.4.1 2005/02/11 11:53:30 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_config/po/fr.po,v 1.3.4.2 2007/09/13 21:04:11 petere Exp $
 #
-# Use these quotes: «%s»
+# Use these quotes: « %s »
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2004, 2005.
 #
 msgid ""
@@ -83,7 +83,7 @@ msgid ""
 "  --configure           show options given to \"configure\" script when\n"
 "                        PostgreSQL was built\n"
 msgstr ""
-"  --configure           affiche les options données au script «configure»\n"
+"  --configure           affiche les options données au script « configure »\n"
 "                        lorsque PostgreSQL a été construit\n"
 
 #: pg_config.c:49
@@ -109,7 +109,7 @@ msgid ""
 "Try \"%s --help\" for more information\n"
 msgstr ""
 "\n"
-"Essayez «%s --help» pour plus informations\n"
+"Essayez « %s --help » pour plus informations\n"
 
 #: pg_config.c:75
 #, c-format
@@ -134,27 +134,27 @@ msgstr "n'a pas pu identifier le répertoire courant : %s"
 #: ../../port/exec.c:213
 #, c-format
 msgid "invalid binary \"%s\""
-msgstr "binaire invalide «%s»"
+msgstr "binaire invalide « %s »"
 
 #: ../../port/exec.c:262
 #, c-format
 msgid "could not read binary \"%s\""
-msgstr "n'a pas pu lire le binaire «%s»"
+msgstr "n'a pas pu lire le binaire « %s »"
 
 #: ../../port/exec.c:269
 #, c-format
 msgid "could not find a \"%s\" to execute"
-msgstr "n'a pas pu trouver un «%s» à exécuter"
+msgstr "n'a pas pu trouver un « %s » à exécuter"
 
 #: ../../port/exec.c:324 ../../port/exec.c:360
 #, c-format
 msgid "could not change directory to \"%s\""
-msgstr "n'a pas pu accéder au répertoire «%s»"
+msgstr "n'a pas pu accéder au répertoire « %s »"
 
 #: ../../port/exec.c:339
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "n'a pas pu lire le lien symbolique «%s»"
+msgstr "n'a pas pu lire le lien symbolique « %s »"
 
 #: ../../port/exec.c:587
 #, c-format

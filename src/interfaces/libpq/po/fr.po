@@ -1,9 +1,9 @@
 # translation of libpq-fr.po to FR_fr
 # French message translation file for libpq
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.11.4.1 2007/01/31 08:20:42 petere Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/po/fr.po,v 1.11.4.2 2007/09/13 21:04:12 petere Exp $
 #
-# Use these quotes: «%s»
+# Use these quotes: « %s »
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Loïc Hennequin <loic.hennequin@wanadoo.fr>, 2002.
 # Guillaume Lelarge <gleu@wanadoo.fr>, 2003, 2004.
@@ -73,7 +73,7 @@ msgstr "méthode d'authentification %u non-supportée\n"
 #: fe-auth.c:698
 #, c-format
 msgid "invalid authentication service name \"%s\", ignored\n"
-msgstr "nom invalide de service d'authentification «%s», ignoré\n"
+msgstr "nom invalide de service d'authentification « %s », ignoré\n"
 
 #: fe-auth.c:771
 #, c-format
@@ -83,12 +83,12 @@ msgstr "fe_getauthname: système invalide d'authentification: %d\n"
 #: fe-connect.c:476
 #, c-format
 msgid "invalid sslmode value: \"%s\"\n"
-msgstr "valeur sslmode non-valide: «%s»\n"
+msgstr "valeur sslmode non-valide: « %s »\n"
 
 #: fe-connect.c:496
 #, c-format
 msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
-msgstr "valeur sslmode «%s» incorrecte car le support SSL n'est pas été compilé initialement\n"
+msgstr "valeur sslmode « %s » incorrecte car le support SSL n'est pas été compilé initialement\n"
 
 #: fe-connect.c:812
 #, c-format
@@ -104,7 +104,7 @@ msgid ""
 msgstr ""
 "impossible de se connecter au serveur: %s\n"
 "\tEst-ce que le serveur tourne sur l'hôte local\n"
-"\tet accepte des connexions au socket Unix «%s»?\n"
+"\tet accepte des connexions au socket Unix « %s »?\n"
 
 #: fe-connect.c:855
 #, c-format
@@ -114,7 +114,7 @@ msgid ""
 "\tTCP/IP connections on port %s?\n"
 msgstr ""
 "impossible de se connecter au serveur: %s\n"
-"\tEst-ce que le serveur tourne sur l'hôte «%s»\n"
+"\tEst-ce que le serveur tourne sur l'hôte « %s »\n"
 "\tet accepte des connexions TCP/IP sur le port %s?\n"
 
 #: fe-connect.c:943
@@ -125,7 +125,7 @@ msgstr "impossible de traduire le nom d'hôte %s en adresse: %s\n"
 #: fe-connect.c:947
 #, c-format
 msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
-msgstr "impossible de traduire le chemin de socket du domaine Unix «%s» vers l'adresse : %s\n"
+msgstr "impossible de traduire le chemin de socket du domaine Unix « %s » vers l'adresse : %s\n"
 
 #: fe-connect.c:1151
 msgid "invalid connection state, probably indicative of memory corruption\n"
@@ -194,7 +194,7 @@ msgstr "état non-valable de connexion (%c), probablement une indication de mémoi
 #: fe-connect.c:2719
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
-msgstr "«=» manquant après «%s» dans la chaîne de paramètres de connexion\n"
+msgstr "« = » manquant après « %s » dans la chaîne de paramètres de connexion\n"
 
 #: fe-connect.c:2768
 msgid "unterminated quoted string in connection info string\n"
@@ -203,7 +203,7 @@ msgstr "guillemets non refermés dans la chaîne de paramètres de connexion\n"
 #: fe-connect.c:2802
 #, c-format
 msgid "invalid connection option \"%s\"\n"
-msgstr "option de connexion non-valable «%s»\n"
+msgstr "option de connexion non-valable « %s »\n"
 
 #: fe-connect.c:3024
 msgid "connection pointer is NULL\n"
@@ -300,12 +300,12 @@ msgstr "caractère multioctet incomplet\n"
 #: fe-lobj.c:495
 #, c-format
 msgid "could not open file \"%s\": %s\n"
-msgstr "impossible d'ouvrir le fichier «%s» : %s\n"
+msgstr "impossible d'ouvrir le fichier « %s » : %s\n"
 
 #: fe-lobj.c:422
 #, c-format
 msgid "could not create large object for file \"%s\"\n"
-msgstr "impossible de créer le grand objet du fichier «%s»\n"
+msgstr "impossible de créer le grand objet du fichier « %s »\n"
 
 #: fe-lobj.c:432
 #: fe-lobj.c:482
@@ -316,13 +316,13 @@ msgstr "impossible d'ouvrir le grand objet %u\n"
 #: fe-lobj.c:447
 #, c-format
 msgid "error while reading file \"%s\"\n"
-msgstr "erreur durant la lecture du fichier «%s»\n"
+msgstr "erreur durant la lecture du fichier « %s »\n"
 
 #: fe-lobj.c:510
 #: fe-lobj.c:523
 #, c-format
 msgid "error while writing to file \"%s\"\n"
-msgstr "erreur durant l'écriture du fichier «%s»\n"
+msgstr "erreur durant l'écriture du fichier « %s »\n"
 
 #: fe-lobj.c:601
 msgid "query to initialize large object functions did not return data\n"
@@ -429,21 +429,21 @@ msgstr "Le message de type 0x%02x est arrivé alors que le serveur était en atten
 #: fe-protocol2.c:462
 #, c-format
 msgid "unexpected character %c following empty query response (\"I\" message)"
-msgstr "Caractère %c inattendue suivant une réponse de requête vide (message «I»)"
+msgstr "Caractère %c inattendue suivant une réponse de requête vide (message « I »)"
 
 #: fe-protocol2.c:517
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)"
-msgstr "le serveur a envoyé des données (message «D») sans description préalable de la ligne (message «T»)"
+msgstr "le serveur a envoyé des données (message « D ») sans description préalable de la ligne (message « T »)"
 
 #: fe-protocol2.c:533
 msgid "server sent binary data (\"B\" message) without prior row description (\"T\" message)"
-msgstr "le serveur a envoyé des données binaires (message «B») sans description préalable de la ligne (message «T»)"
+msgstr "le serveur a envoyé des données binaires (message « B ») sans description préalable de la ligne (message « T »)"
 
 #: fe-protocol2.c:548
 #: fe-protocol3.c:344
 #, c-format
 msgid "unexpected response from server; first received character was \"%c\"\n"
-msgstr "réponse inattendue du serveur, le premier caractère reçu étant «%c»\n"
+msgstr "réponse inattendue du serveur, le premier caractère reçu étant « %c »\n"
 
 #: fe-protocol2.c:760
 #: fe-protocol3.c:577
@@ -469,21 +469,21 @@ msgstr "erreur de protocole : id=0x%x\n"
 
 #: fe-protocol3.c:306
 msgid "server sent data (\"D\" message) without prior row description (\"T\" message)\n"
-msgstr "le serveur a envoyé des données (message «D») sans description préalable de la ligne (message «T»)\n"
+msgstr "le serveur a envoyé des données (message « D ») sans description préalable de la ligne (message « T »)\n"
 
 #: fe-protocol3.c:365
 #, c-format
 msgid "message contents do not agree with length in message type \"%c\"\n"
-msgstr "Le contenu du message ne correspond pas avec la longueur du type de message «%c»\n"
+msgstr "Le contenu du message ne correspond pas avec la longueur du type de message « %c »\n"
 
 #: fe-protocol3.c:386
 #, c-format
 msgid "lost synchronization with server: got message type \"%c\", length %d\n"
-msgstr "synchronisation perdue avec le serveur : a reçu le type de message «%c», longueur %d\n"
+msgstr "synchronisation perdue avec le serveur : a reçu le type de message « %c », longueur %d\n"
 
 #: fe-protocol3.c:522
 msgid "unexpected field count in \"D\" message\n"
-msgstr "nombre de champs inattendus dans le message «D»\n"
+msgstr "nombre de champs inattendus dans le message « D »\n"
 
 #. translator: %s represents a digit string
 #: fe-protocol3.c:651
@@ -565,12 +565,12 @@ msgstr "code d'erreur SSL inconnu : %d\n"
 #: fe-secure.c:536
 #, c-format
 msgid "error querying socket: %s\n"
-msgstr "erreur durant l'appel au socket : «%s»\n"
+msgstr "erreur durant l'appel au socket : « %s »\n"
 
 #: fe-secure.c:564
 #, c-format
 msgid "could not get information about host \"%s\": %s\n"
-msgstr "impossible d'obtenir les informations concernant l'hôte «%s» : %s\n"
+msgstr "impossible d'obtenir les informations concernant l'hôte « %s » : %s\n"
 
 #: fe-secure.c:583
 msgid "unsupported protocol\n"
@@ -579,12 +579,12 @@ msgstr "protocole non-supporté\n"
 #: fe-secure.c:605
 #, c-format
 msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
-msgstr "impossible de traduire le nom courant «%s» vers %ld.%ld.%ld.%ld\n"
+msgstr "impossible de traduire le nom courant « %s » vers %ld.%ld.%ld.%ld\n"
 
 #: fe-secure.c:612
 #, c-format
 msgid "server common name \"%s\" does not resolve to peer address\n"
-msgstr "le nom courant du serveur «%s» n'a pas pu être traduit en une adresse de pair\n"
+msgstr "le nom courant du serveur « %s » n'a pas pu être traduit en une adresse de pair\n"
 
 #: fe-secure.c:784
 msgid "could not get user information\n"
@@ -593,42 +593,42 @@ msgstr "impossible d'obtenir les informations utilisateur\n"
 #: fe-secure.c:793
 #, c-format
 msgid "could not open certificate file \"%s\": %s\n"
-msgstr "impossible d'ouvrir le certificat «%s» : %s\n"
+msgstr "impossible d'ouvrir le certificat « %s » : %s\n"
 
 #: fe-secure.c:802
 #, c-format
 msgid "could not read certificate file \"%s\": %s\n"
-msgstr "impossible de lire le certificat «%s» : %s\n"
+msgstr "impossible de lire le certificat « %s » : %s\n"
 
 #: fe-secure.c:815
 #, c-format
 msgid "certificate present, but not private key file \"%s\"\n"
-msgstr "le certificat est présent, mais la clé privée «%s» est absente\n"
+msgstr "le certificat est présent, mais la clé privée « %s » est absente\n"
 
 #: fe-secure.c:824
 #, c-format
 msgid "private key file \"%s\" has wrong permissions\n"
-msgstr "les droits de la clé privée «%s» ne sont pas corrects\n"
+msgstr "les droits de la clé privée « %s » ne sont pas corrects\n"
 
 #: fe-secure.c:832
 #, c-format
 msgid "could not open private key file \"%s\": %s\n"
-msgstr "n'a pas pu ouvrir le fichier de clé privée «%s» : %s\n"
+msgstr "n'a pas pu ouvrir le fichier de clé privée « %s » : %s\n"
 
 #: fe-secure.c:841
 #, c-format
 msgid "private key file \"%s\" changed during execution\n"
-msgstr "la clé privée «%s» a été modifiée durant l'exécution\n"
+msgstr "la clé privée « %s » a été modifiée durant l'exécution\n"
 
 #: fe-secure.c:850
 #, c-format
 msgid "could not read private key file \"%s\": %s\n"
-msgstr "impossible de lire la clé privée «%s» : %s\n"
+msgstr "impossible de lire la clé privée « %s » : %s\n"
 
 #: fe-secure.c:864
 #, c-format
 msgid "certificate does not match private key file \"%s\": %s\n"
-msgstr "le certificat ne correspond pas à la clé privée «%s» : %s\n"
+msgstr "le certificat ne correspond pas à la clé privée « %s » : %s\n"
 
 #: fe-secure.c:947
 #, c-format
@@ -638,7 +638,7 @@ msgstr "impossible de créer le contexte SSL : %s\n"
 #: fe-secure.c:986
 #, c-format
 msgid "could not read root certificate file \"%s\": %s\n"
-msgstr "impossible de lire le certificat racine «%s» : %s\n"
+msgstr "impossible de lire le certificat racine « %s » : %s\n"
 
 #: fe-secure.c:1099
 #, c-format
