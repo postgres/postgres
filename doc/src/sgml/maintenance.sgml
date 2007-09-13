@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.78 2007/08/19 01:41:24 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.79 2007/09/13 23:43:35 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -59,8 +59,9 @@
   </indexterm>
 
   <para>
-   <productname>PostgreSQL</productname>'s <command>VACUUM</> command
-   <emphasis>must</emphasis> be run on a regular basis for several reasons:
+   <productname>PostgreSQL</productname>'s <command>VACUUM</> (<xref
+   linkend="sql-vacuum"> command has to run on a regular basis for several
+   reasons:
 
     <orderedlist>
      <listitem>
@@ -78,14 +79,6 @@
       <firstterm>transaction ID wraparound</>.</simpara>
      </listitem>
     </orderedlist>
-
-   The frequency and scope of the <command>VACUUM</> operations
-   performed for each of these reasons will vary depending on the
-   needs of each site.  Therefore, database administrators must
-   understand these issues and develop an appropriate maintenance
-   strategy.  This section concentrates on explaining the high-level
-   issues; for details about command syntax and so on, see the <xref
-   linkend="sql-vacuum" endterm="sql-vacuum-title"> reference page.
   </para>
 
   <para>
@@ -103,13 +96,14 @@
   </para>
 
   <para>
-   An automated mechanism for performing the necessary <command>VACUUM</>
-   operations has been added in <productname>PostgreSQL</productname> 8.1.
-   See <xref linkend="autovacuum">.
+   Fortunately, autovacuum (<xref linkend="autovacuum">) monitors table
+   activity and performs <command>VACUUM</command>s when necessary.
+   Autovacuum works dynamically so it is often better
+   administration-scheduled vacuuming.
   </para>
 
   <sect2 id="vacuum-for-space-recovery">
-   <title>Recovering disk space</title>
+   <title>Recovering Disk Space</title>
 
    <indexterm zone="vacuum-for-space-recovery">
     <primary>disk space</primary>
@@ -126,17 +120,6 @@
     longer of interest to any transaction. The space it occupies must be
     reclaimed for reuse by new rows, to avoid infinite growth of disk
     space requirements. This is done by running <command>VACUUM</>.
-   </para>
-
-   <para>
-    Clearly, a table that receives frequent updates or deletes will need
-    to be vacuumed more often than tables that are seldom updated. It
-    might be useful to set up periodic <application>cron</> tasks that
-    <command>VACUUM</command> only selected tables, skipping tables that are known not to
-    change often. This is only likely to be helpful if you have both
-    large heavily-updated tables and large seldom-updated tables &mdash; the
-    extra cost of vacuuming a small table isn't enough to be worth
-    worrying about.
    </para>
 
    <para>
@@ -167,30 +150,36 @@
    </para>
 
    <para>
-    The standard form of <command>VACUUM</> is best used with the goal
-    of maintaining a fairly level steady-state usage of disk space. If
-    you need to return disk space to the operating system, you can use
-    <command>VACUUM FULL</> &mdash; but what's the point of releasing disk
-    space that will only have to be allocated again soon?  Moderately
-    frequent standard <command>VACUUM</> runs are a better approach
-    than infrequent <command>VACUUM FULL</> runs for maintaining
-    heavily-updated tables. However, if some heavily-updated tables
-    have gone too long with infrequent <command>VACUUM</>, you can
+    Fortunately, autovacuum (<xref linkend="autovacuum">) monitors table
+    activity and performs <command>VACUUM</command>s when necessary.  This
+    eliminates the need for administrators to worry about disk space
+    recovery in all but the most unusual cases.
+   </para>
+
+   <para>
+    For administrators who want to control <command>VACUUM</command>
+    themselves, the standard form of <command>VACUUM</> is best used to
+    maintain a steady-state usage of disk space. If you need to return
+    disk space to the operating system, you can use <command>VACUUM
+    FULL</>, but this is unwise if the table will just grow again in the
+    future.  Moderately-frequent standard <command>VACUUM</> runs are a
+    better approach than infrequent <command>VACUUM FULL</> runs for
+    maintaining heavily-updated tables.  However, if some heavily-updated
+    tables have gone too long with infrequent <command>VACUUM</>, you can
     use <command>VACUUM FULL</> or <command>CLUSTER</> to get performance
     back (it is much slower to scan a table containing almost only dead
     rows).
    </para>
 
    <para>
-    Recommended practice for most sites is to schedule a database-wide
-    <command>VACUUM</> once a day at a low-usage time of day,
-    supplemented by more frequent vacuuming of heavily-updated tables
-    if necessary. (Some installations with extremely high update rates
-    vacuum their busiest tables as often as once every few minutes.)
-    If you have multiple databases
-    in a cluster, don't forget to <command>VACUUM</command> each one;
-    the program <xref linkend="app-vacuumdb" endterm="app-vacuumdb-title">
-    might be helpful.
+    For those not using autovacuum, one approach is to schedule a
+    database-wide <command>VACUUM</> once a day during low-usage period,
+    supplemented by more frequent vacuuming of heavily-updated tables if
+    necessary. (Some installations with extremely high update rates vacuum
+    their busiest tables as often as once every few minutes.) If you have
+    multiple databases in a cluster, don't forget to
+    <command>VACUUM</command> each one; the program <xref
+    linkend="app-vacuumdb" endterm="app-vacuumdb-title"> might be helpful.
    </para>
 
    <para>
