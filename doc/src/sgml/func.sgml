@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.394 2007/09/14 14:54:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.395 2007/09/14 15:53:48 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -948,10 +948,10 @@
       </row>
 
       <row>
-       <entry><literal><function>atan2</function>(<replaceable>x</replaceable>,
-        <replaceable>y</replaceable>)</literal></entry>
+       <entry><literal><function>atan2</function>(<replaceable>y</replaceable>,
+        <replaceable>x</replaceable>)</literal></entry>
        <entry>inverse tangent of
-        <literal><replaceable>x</replaceable>/<replaceable>y</replaceable></literal></entry>
+        <literal><replaceable>y</replaceable>/<replaceable>x</replaceable></literal></entry>
       </row>
 
       <row>
