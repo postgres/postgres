@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.58 2007/07/05 19:15:12 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/spi.sgml,v 1.59 2007/09/14 04:18:27 momjian Exp $ -->
 
 <chapter id="spi">
  <title>Server Programming Interface</title>
@@ -3326,6 +3326,10 @@ INSERT INTO a SELECT * FROM a;
 <programlisting>
 #include "executor/spi.h"
 
+#ifdef PG_MODULE_MAGIC
+PG_MODULE_MAGIC;
+#endif
+
 int execq(text *sql, int cnt);
 
 int
@@ -3381,7 +3385,7 @@ execq(text *sql, int cnt)
 
   <para>
    This is how you declare the function after having compiled it into
-   a shared library:
+   a shared library (details are in <xref linkend="dfunc">.):
 
 <programlisting>
 CREATE FUNCTION execq(text, integer) RETURNS integer
