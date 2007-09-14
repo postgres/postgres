@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.37 2007/09/11 17:19:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.38 2007/09/14 15:51:31 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -65,45 +65,66 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Fix excessively <acronym>SSL</> log error messages (Tom)
+       Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Win32 socket improvements (Magnus)
+       Fix excessive logging of <acronym>SSL</> error messages (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Fix <application>syslog</> so log messages are never partially written (Tom, Andrew)
+       Fix logging so that log messages are never interleaved when using
+       the syslogger process (Andrew)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+       Fix crash when <varname>log_min_error_statement</> logging runs out
+       of memory (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require non-superusers who use <filename>/contrib/dblink</> to use only password
-       authentication, as a security measure (Joe)
+       Fix incorrect handling of some foreign-key corner cases (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Suppress timezone name (<literal>%Z</>) in log timestamps on Win32 because of
-       possible improperly encoded names (Tom)
+       Prevent <command>CLUSTER</> from failing
+       due to attempting to process temporary tables of other sessions (Alvaro)
       </para>
      </listitem>
 
      <listitem>
       <para>
        Update the time zone database rules, particularly New Zealand's upcoming changes (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Windows socket improvements (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Suppress timezone name (<literal>%Z</>) in log timestamps on Windows
+       because of possible encoding mismatches (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only
+       password authentication, as a security measure (Joe)
       </para>
      </listitem>
 
@@ -3651,20 +3672,34 @@ typedefs (Michael)</para></listitem>
 
      <listitem>
       <para>
-       Fix excessively <acronym>SSL</> log error messages (Tom)
+       Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+       Fix excessive logging of <acronym>SSL</> error messages (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require non-superusers who use <filename>/contrib/dblink</> to use only password
-       authentication, as a security measure (Joe)
+       Fix crash when <varname>log_min_error_statement</> logging runs out
+       of memory (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Prevent <command>CLUSTER</> from failing
+       due to attempting to process temporary tables of other sessions (Alvaro)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only
+       password authentication, as a security measure (Joe)
       </para>
      </listitem>
 
@@ -6889,14 +6924,21 @@ DROP SCHEMA information_schema CASCADE;
 
      <listitem>
       <para>
-       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+       Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require non-superusers who use <filename>/contrib/dblink</> to use only password
-       authentication, as a security measure (Joe)
+       Fix crash when <varname>log_min_error_statement</> logging runs out
+       of memory (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only
+       password authentication, as a security measure (Joe)
       </para>
      </listitem>
 
