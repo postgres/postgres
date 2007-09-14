@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.100 2007/09/14 04:15:50 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.101 2007/09/14 13:26:22 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -735,11 +735,11 @@ SELECT pg_stop_backup();
     of <application>rsync</> return a separate exit code for
     <quote>vanished source files</>, and you can write a driver script to
     accept this exit code as a non-error case.  Also, some versions of
-    GNU <application>tar</> consider it an error if a file was truncated
-    while <application>tar</> is copying it.  Fortunately, GNU
-    <application>tar</> versions 1.16 and later exits with <literal>1</>
-    if a file was changed during the backup, and <literal>2</> for other
-    errors.
+    GNU <application>tar</> return an error code indistinguishable from
+    a fatal error if a file was truncated while <application>tar</> was
+    copying it.  Fortunately, GNU <application>tar</> versions 1.16 and
+    later exits with <literal>1</> if a file was changed during the backup,
+    and <literal>2</> for other errors.
    </para>
 
    <para>
