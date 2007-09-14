@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.100 2007/07/23 10:16:53 mha Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/client-auth.sgml,v 1.101 2007/09/14 03:53:54 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -1067,6 +1067,16 @@ ldap[<replaceable>s</>]://<replaceable>servername</>[:<replaceable>port</>]/<rep
     and the <ulink url="http://www.sun.com/software/solaris/pam/">
     <systemitem class="osname">Solaris</> PAM Page</ulink>.
    </para>
+
+   <note>
+    <para>
+     PAM does work authenticating against Unix system authentication
+     because the postgres server is started by a non-root user.  In order
+     to enable this functionality, the root user must provide additional
+     permissions to the postgres user (for reading
+     <filename>/etc/shadow</>).
+    </para>
+   </note>
   </sect2>
  </sect1>
 
