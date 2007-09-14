@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.243 2007/09/02 01:13:55 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.244 2007/09/14 14:31:22 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -5085,6 +5085,19 @@ defaultNoticeProcessor(void *arg, const char *message)
     ldap://ldap.mycompany.com/dc=mycompany,dc=com?uniqueMember?one?(cn=mydatabase)
    </synopsis>
   </para>
+
+  <para>
+   You can also mix regular service file entries with LDAP lookups.
+   A complete example for a stanza in <filename>pg_service.conf</filename>
+   would be:
+   <synopsis>
+    # only host and port are stored in LDAP, specify dbname and user explicitly
+    [customerdb]
+    dbname=customer
+    user=appuser
+    ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
+   </synopsis>
+  <para>
  </sect1>
 
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.194 2007/08/22 04:45:20 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.195 2007/09/14 14:31:22 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -567,6 +567,8 @@ PostgreSQL documentation
 <programlisting>
 $ <userinput>psql "service=myservice sslmode=require"</userinput>
 </programlisting>
+     This way you can also use LDAP for connection parameter lookup as
+     described in <xref linkend="libpq-ldap">.
      See <xref linkend="libpq-connect"> for more information on all the
      available connection options.
     </para>
