@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.163.2.44 2007/09/11 17:19:07 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.163.2.45 2007/09/14 15:51:59 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -65,14 +65,21 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+       Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require non-superusers who use <filename>/contrib/dblink</> to use only password
-       authentication, as a security measure (Joe)
+       Fix crash when <varname>log_min_error_statement</> logging runs out
+       of memory (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only
+       password authentication, as a security measure (Joe)
       </para>
      </listitem>
 
