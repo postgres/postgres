@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.16 2007/09/04 03:46:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/textsearch.sgml,v 1.17 2007/09/14 13:21:30 momjian Exp $ -->
 
 <chapter id="textsearch">
  <title id="textsearch-title">Full Text Search</title>
@@ -2491,9 +2491,9 @@ $ psql DBNAME < dict_intdict.sql
 PG_MODULE_MAGIC;
 #endif
 
-#include "utils/ts_locale.h"
-#include "utils/ts_public.h"
-#include "utils/ts_utils.h"
+#include "tsearch/ts_locale.h"
+#include "tsearch/ts_public.h"
+#include "tsearch/ts_utils.h"
 
 typedef struct {
   int     maxlen;
