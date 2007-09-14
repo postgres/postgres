@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.80 2007/09/14 02:43:18 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.81 2007/09/14 13:43:03 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -262,12 +262,19 @@
    </tip>
 
    <para>
-    Recommended practice for most sites is to schedule a database-wide
-    <command>ANALYZE</> once a day at a low-usage time of day; this can
-    usefully be combined with a nightly <command>VACUUM</>.  However,
-    sites with relatively slowly changing table statistics might find that
-    this is overkill, and that less-frequent <command>ANALYZE</> runs
-    are sufficient.
+    Fortunately, autovacuum (<xref linkend="autovacuum">) monitors table
+    activity and performs <command>ANALYZE</command>s when necessary.  This
+    eliminates the need for administrators to manually schedule
+    <command>ANALYZE</command>.
+   </para>
+
+   <para>
+    For those not using autovacuum, one approach is to schedule a
+    database-wide <command>ANALYZE</> once a day at a low-usage time of
+    day; this can usefully be combined with a nightly <command>VACUUM</>.
+    However, sites with relatively slowly changing table statistics might
+    find that this is overkill, and that less-frequent <command>ANALYZE</>
+    runs are sufficient.
    </para>
   </sect2>
 
