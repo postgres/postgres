@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.95 2006/12/01 03:29:15 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.95.2.1 2007/09/14 04:16:44 momjian Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -718,13 +718,12 @@ SELECT pg_stop_backup();
     complaints of this sort from real errors.  For example, some versions
     of <application>rsync</> return a separate exit code for <quote>vanished
     source files</>, and you can write a driver script to accept this exit
-    code as a non-error case.  Also,
-    some versions of GNU <application>tar</> consider it an error if a file
-    is changed while <application>tar</> is copying it.  There does not seem
-    to be any very convenient way to distinguish this error from other types
-    of errors, other than manual inspection of <application>tar</>'s messages.
-    GNU <application>tar</> is therefore not the best tool for making base
-    backups.
+    code as a non-error case.  Also, some versions of GNU
+    <application>tar</> consider it an error if a file was truncated while
+    <application>tar</> is copying it.  Fortunately, GNU
+    <application>tar</> versions 1.16 and later exits with <literal>1</>
+    if a file was changed during the backup, and <literal>2</> for other
+    errors.
    </para>
 
    <para>
