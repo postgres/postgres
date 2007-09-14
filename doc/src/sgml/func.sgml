@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.392 2007/08/31 21:33:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.393 2007/09/14 00:52:45 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -5906,14 +5906,13 @@ SELECT (DATE '2001-02-16', INTERVAL '100 days') OVERLAPS
   </para>
 
   <para>
-   Note that when the <function>age</> function operates on multi-month
-   intervals, <productname>PostgreSQL</> adds days to the earlier date
-   until full months can be added.  This yields a different result than
-   adding full months first if the interval crosses from one month to the
-   next.  For example, <literal>age('2004-06-01', '2004-04-30')</> yeilds
-   <literal>1 mon 1 day</> using the <productname>PostgreSQL</> method,
-   while adding the month first would yield <literal>1 mon 2 days</>
-   because May has 31 days, while April has only 30.
+   Note there can be ambiguity in the <literal>months</> returned by
+   <function>age</> because different months have a different number of
+   days.  <productname>PostgreSQL</>'s approach uses the month from the
+   earlier of the two dates when calculating partial months.  For example,
+   <literal>age('2004-06-01', '2004-04-30')</> uses April to yield
+   <literal>1 mon 1 day</>, while using May would yield <literal>1 mon 2
+   days</> because May has 31 days, while April has only 30.
   </para>
 
   <sect2 id="functions-datetime-extract">
