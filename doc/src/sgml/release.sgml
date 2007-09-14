@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.38 2007/09/14 15:51:31 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.321.4.39 2007/09/14 16:04:35 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -399,13 +399,11 @@ do it for earlier branch release files.
       <para>
        <function>to_number()</> and <function>to_char(numeric)</>
        are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
-       new <link linkend="APP-INITDB"><application>initdb</></link>
-       installs (Tom)
+       new <application>initdb</> installs (Tom)
       </para>
 
       <para>
-       This is because <link
-       linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
+       This is because <varname>lc_numeric</> can potentially
        change the output of these functions.
       </para>
      </listitem>
@@ -3909,13 +3907,11 @@ typedefs (Michael)</para></listitem>
       <para>
        <function>to_number()</> and <function>to_char(numeric)</>
        are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
-       new <link linkend="APP-INITDB"><application>initdb</></link>
-       installs (Tom)
+       new <application>initdb</> installs (Tom)
       </para>
 
       <para>
-       This is because <link
-       linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
+       This is because <varname>lc_numeric</> can potentially
        change the output of these functions.
       </para>
      </listitem>
@@ -7097,13 +7093,11 @@ DROP SCHEMA information_schema CASCADE;
       <para>
        <function>to_number()</> and <function>to_char(numeric)</>
        are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
-       new <link linkend="APP-INITDB"><application>initdb</></link>
-       installs (Tom)
+       new <application>initdb</> installs (Tom)
       </para>
 
       <para>
-       This is because <link
-       linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
+       This is because <varname>lc_numeric</> can potentially
        change the output of these functions.
       </para>
      </listitem>
