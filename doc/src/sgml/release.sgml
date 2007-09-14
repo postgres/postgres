@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.55 2007/09/11 17:19:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.56 2007/09/14 15:51:47 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -65,20 +65,34 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Fix excessively <acronym>SSL</> log error messages (Tom)
+       Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+       Fix excessive logging of <acronym>SSL</> error messages (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require non-superusers who use <filename>/contrib/dblink</> to use only password
-       authentication, as a security measure (Joe)
+       Fix crash when <varname>log_min_error_statement</> logging runs out
+       of memory (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Prevent <command>CLUSTER</> from failing
+       due to attempting to process temporary tables of other sessions (Alvaro)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only
+       password authentication, as a security measure (Joe)
       </para>
      </listitem>
 
@@ -3303,14 +3317,21 @@ DROP SCHEMA information_schema CASCADE;
 
      <listitem>
       <para>
-       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+       Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require non-superusers who use <filename>/contrib/dblink</> to use only password
-       authentication, as a security measure (Joe)
+       Fix crash when <varname>log_min_error_statement</> logging runs out
+       of memory (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only
+       password authentication, as a security measure (Joe)
       </para>
      </listitem>
 
