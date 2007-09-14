@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.163.2.45 2007/09/14 15:51:59 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.163.2.46 2007/09/14 15:57:27 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -238,13 +238,11 @@ do it for earlier branch release files.
       <para>
        <function>to_number()</> and <function>to_char(numeric)</>
        are now <literal>STABLE</>, not <literal>IMMUTABLE</>, for
-       new <link linkend="APP-INITDB"><application>initdb</></link>
-       installs (Tom)
+       new <application>initdb</> installs (Tom)
       </para>
 
       <para>
-       This is because <link
-       linkend="guc-lc-numeric"><varname>lc_numeric</></link> can potentially
+       This is because <varname>lc_numeric</> can potentially
        change the output of these functions.
       </para>
      </listitem>
