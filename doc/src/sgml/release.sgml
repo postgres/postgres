@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.504 2007/09/11 17:19:49 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.505 2007/09/14 15:50:51 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -63,32 +63,35 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Fix for domains of domains (Tom)
+       Fix <literal>ALTER DOMAIN ADD CONSTRAINT</> for cases involving
+       domains over domains (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Fix excessively <acronym>SSL</> log error messages (Tom)
+       Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Fix error where rare <literal>OUTER JOIN</> cases produced incorrect results (Tom)
+       Fix some planner problems with outer joins, notably poor
+       size estimation for <literal>t1 LEFT JOIN t2 WHERE t2.col IS NULL</>
+       (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow the <type>interval</> data type to accept values consisting only of
+       Allow the <type>interval</> data type to accept input consisting only of
        milliseconds or microseconds (Neil)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Win32 socket and semaphore improvements (Magnus)
+       Allow timezone name to appear before the year in <type>timestamp</> input (Tom)
       </para>
      </listitem>
 
@@ -100,32 +103,33 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Allow timzone names to appear before the year in <type>timestamp</> values (Tom)
+       Speed up rtree index insertion (Teodor)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Fix <application>syslog</> so log messages are never partially written (Tom, Andrew)
+       Fix excessive logging of <acronym>SSL</> error messages (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+       Fix logging so that log messages are never interleaved when using
+       the syslogger process (Andrew)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <command>pg_ctl -w</> to work on Win32 service mode (Dave Page)
+       Fix crash when <varname>log_min_error_statement</> logging runs out
+       of memory (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require non-superusers who use <filename>/contrib/dblink</> to use only password
-       authentication, as a security measure (Joe)
+       Fix incorrect handling of some foreign-key corner cases (Tom)
       </para>
      </listitem>
 
@@ -137,14 +141,46 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Fix memory allocation bug when using <application>MIT Kerberos</> on Win32 (Magnus)
+       Prevent <command>REINDEX</> and <command>CLUSTER</> from failing
+       due to attempting to process temporary tables of other sessions (Alvaro)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Suppress timezone name (<literal>%Z</>) in log timestamps on Win32 because of
-       possible improperly encoded names (Tom)
+       Update the time zone database rules, particularly New Zealand's upcoming changes (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Windows socket and semaphore improvements (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Make <command>pg_ctl -w</> work properly in Windows service mode (Dave Page)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Fix memory allocation bug when using <application>MIT Kerberos</> on Windows (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Suppress timezone name (<literal>%Z</>) in log timestamps on Windows
+       because of possible encoding mismatches (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only
+       password authentication, as a security measure (Joe)
       </para>
      </listitem>
 
@@ -156,20 +192,8 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Speed up rtree index additions (Teodor)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Prevent <command>REINDEX</> and <command>CLUSTER</> from hanging dues to avoid temporary tables
-       from other sessions (Alvaro)
-      </para>
-     </listitem>
-
-     <listitem>
-      <para>
-       Update the time zone database rules, particularly New Zealand's upcoming changes (Tom)
+       Do not let <filename>/contrib/intarray</> try to make its GIN opclass
+       the default (this caused problems at dump/restore) (Tom)
       </para>
      </listitem>
 
@@ -1366,7 +1390,7 @@ do it for earlier branch release files.
 
        <para>
         This is particularly useful for platforms that do not
-        support <acronym>PAM</>, such as Win32.
+        support <acronym>PAM</>, such as Windows.
        </para>
       </listitem>
 
@@ -2568,7 +2592,7 @@ do it for earlier branch release files.
 
        <para>
         This makes up-arrow recall of queries easier.  (This is
-        not available on Win32, because that platform uses the native
+        not available on Windows, because that platform uses the native
         command-line editing present in the operating system.)
        </para>
       </listitem>
@@ -2743,7 +2767,7 @@ do it for earlier branch release files.
     </sect3>
 
     <sect3>
-     <title><application>Win32</> Port</title>
+     <title><application>Windows</> Port</title>
      <itemizedlist>
 
       <listitem>
@@ -3238,58 +3262,79 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
-       Fix excessively <acronym>SSL</> log error messages (Tom)
+       Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow the <type>interval</> data type to accept values consisting only of
+       Allow the <type>interval</> data type to accept input consisting only of
        milliseconds or microseconds (Neil)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Win32 socket improvements (Magnus)
+       Speed up rtree index insertion (Teodor)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Fix <application>syslog</> so log messages are never partially written (Tom, Andrew)
+       Fix excessive logging of <acronym>SSL</> error messages (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+       Fix logging so that log messages are never interleaved when using
+       the syslogger process (Andrew)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require non-superusers who use <filename>/contrib/dblink</> to use only password
-       authentication, as a security measure (Joe)
+       Fix crash when <varname>log_min_error_statement</> logging runs out
+       of memory (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Suppress timezone name (<literal>%Z</>) in log timestamps on Win32 because of
-       possible improperly encoded names (Tom)
+       Fix incorrect handling of some foreign-key corner cases (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Speed up rtree index additions (Teodor)
+       Prevent <command>REINDEX</> and <command>CLUSTER</> from failing
+       due to attempting to process temporary tables of other sessions (Alvaro)
       </para>
      </listitem>
 
      <listitem>
       <para>
        Update the time zone database rules, particularly New Zealand's upcoming changes (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Windows socket improvements (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Suppress timezone name (<literal>%Z</>) in log timestamps on Windows
+       because of possible encoding mismatches (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only
+       password authentication, as a security measure (Joe)
       </para>
      </listitem>
 
@@ -3737,7 +3782,7 @@ Wieland)</para></listitem>
 </listitem>
 <listitem><para>Efficiency improvements in hash tables and bitmap index scans
 (Tom)</para></listitem>
-<listitem><para>Fix instability of statistics collection on Win32 (Tom, Andrew)</para></listitem>
+<listitem><para>Fix instability of statistics collection on Windows (Tom, Andrew)</para></listitem>
 <listitem><para>Fix <varname>statement_timeout</> to use the proper
 units on Win32 (Bruce)</para>
 <para>In previous Win32 8.1.X versions, the delay was off by a factor of
@@ -6367,45 +6412,66 @@ psql -t -f fixseq.sql db1 | psql -e db1
 
      <listitem>
       <para>
-       Fix excessively <acronym>SSL</> log error messages (Tom)
+       Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Win32 socket improvements (Magnus)
+       Fix excessive logging of <acronym>SSL</> error messages (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Fix <application>syslog</> so log messages are never partially written (Tom, Andrew)
+       Fix logging so that log messages are never interleaved when using
+       the syslogger process (Andrew)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+       Fix crash when <varname>log_min_error_statement</> logging runs out
+       of memory (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require non-superusers who use <filename>/contrib/dblink</> to use only password
-       authentication, as a security measure (Joe)
+       Fix incorrect handling of some foreign-key corner cases (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Suppress timezone name (<literal>%Z</>) in log timestamps on Win32 because of
-       possible improperly encoded names (Tom)
+       Prevent <command>CLUSTER</> from failing
+       due to attempting to process temporary tables of other sessions (Alvaro)
       </para>
      </listitem>
 
      <listitem>
       <para>
        Update the time zone database rules, particularly New Zealand's upcoming changes (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Windows socket improvements (Magnus)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Suppress timezone name (<literal>%Z</>) in log timestamps on Windows
+       because of possible encoding mismatches (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only
+       password authentication, as a security measure (Joe)
       </para>
      </listitem>
 
@@ -9953,20 +10019,34 @@ typedefs (Michael)</para></listitem>
 
      <listitem>
       <para>
-       Fix excessively <acronym>SSL</> log error messages (Tom)
+       Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+       Fix excessive logging of <acronym>SSL</> error messages (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require non-superusers who use <filename>/contrib/dblink</> to use only password
-       authentication, as a security measure (Joe)
+       Fix crash when <varname>log_min_error_statement</> logging runs out
+       of memory (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Prevent <command>CLUSTER</> from failing
+       due to attempting to process temporary tables of other sessions (Alvaro)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only
+       password authentication, as a security measure (Joe)
       </para>
      </listitem>
 
@@ -13191,14 +13271,21 @@ DROP SCHEMA information_schema CASCADE;
 
      <listitem>
       <para>
-       Allow <command>CREATE DOMAIN ... DEFAULT NULL</> (Tom)
+       Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
 
      <listitem>
       <para>
-       Require non-superusers who use <filename>/contrib/dblink</> to use only password
-       authentication, as a security measure (Joe)
+       Fix crash when <varname>log_min_error_statement</> logging runs out
+       of memory (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Require non-superusers who use <filename>/contrib/dblink</> to use only
+       password authentication, as a security measure (Joe)
       </para>
      </listitem>
 
