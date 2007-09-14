@@ -123,8 +123,3 @@ DROP FUNCTION boolop(_int4, query_int);
 DROP FUNCTION querytree(query_int);
 
 DROP TYPE query_int CASCADE;
-
---mark built-in gin's _int4_ops as default again
-update pg_catalog.pg_opclass set opcdefault = 't'
-where opcmethod = (select oid from pg_catalog.pg_am where amname='gin') and
-      opcname = '_int4_ops';

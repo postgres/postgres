@@ -458,10 +458,6 @@ AS
 	STORAGE		intbig_gkey;
 
 --GIN
---mark built-in gin's _int4_ops as non default
-update pg_catalog.pg_opclass set opcdefault = 'f'
-where opcmethod = (select oid from pg_catalog.pg_am where amname='gin') and
-      opcname = '_int4_ops';
 
 CREATE FUNCTION ginint4_queryextract(internal, internal, int2)
 RETURNS internal
@@ -474,7 +470,7 @@ AS 'MODULE_PATHNAME'
 LANGUAGE C;
 
 CREATE OPERATOR CLASS gin__int_ops
-DEFAULT FOR TYPE _int4 USING gin
+FOR TYPE _int4 USING gin
 AS
 	OPERATOR	3	&&,
 	OPERATOR	6	= (anyarray, anyarray)	RECHECK,

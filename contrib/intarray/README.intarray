@@ -2,9 +2,10 @@ This is an implementation of RD-tree data structure using GiST interface
 of PostgreSQL. It has built-in lossy compression.
 
 Current implementation provides index support for one-dimensional array of
-int4's - gist__int_ops, suitable for small and medium size of arrays (used on
+integers: gist__int_ops, suitable for small and medium size of arrays (used by
 default), and gist__intbig_ops for indexing large arrays (we use superimposed
-signature with length of 4096 bits to represent sets).
+signature with length of 4096 bits to represent sets).  There is also a
+non-default gin__int_ops for GIN indexes on integer arrays.
 
 All work was done by Teodor Sigaev (teodor@stack.net) and Oleg Bartunov
 (oleg@sai.msu.su). See http://www.sai.msu.su/~megera/postgres/gist
