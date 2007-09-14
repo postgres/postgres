@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.79 2007/09/13 23:43:35 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.80 2007/09/14 02:43:18 momjian Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -436,7 +436,7 @@ HINT:  To avoid a database shutdown, execute a full-database VACUUM in "mydb".
     until wraparound:
 
 <programlisting>
-ERROR:  database is shut down to avoid wraparound data loss in database "mydb"
+ERROR:  database is not accepting commands to avoid wraparound data loss in database "mydb"
 HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
 </programlisting>
 
