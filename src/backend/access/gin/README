@@ -88,35 +88,6 @@ Limitations
   * Gin doesn't support full scans of indices.
   * Gin doesn't index NULL values.
 
-Gin Interface
--------------
-
-Opclass interface pseudocode. An example for a Gin opclass can be found in
-ginarayproc.c.
-
-Datum* extractValue(Datum inputValue, uint32* nentries)
-
-    Returns an array of Datum of entries of the value to be indexed.  nentries 
-    should contain the number of returned entries.
-    
-int compareEntry(Datum a, Datum b)
-
-    Compares two entries (not the indexing values)
-    
-Datum* extractQuery(Datum query, uint32* nentries, StrategyNumber n)
-
-    Returns an array of Datum of entries of the query to be executed.
-    n contains the strategy number of the operation.
-    
-bool consistent(bool[] check, StrategyNumber n, Datum query)
-
-    The size of the check array is the same as sizeof of the array returned by
-    extractQuery. Each element of the check array is true if the indexed value
-    has a corresponding entry in the query.  i.e. if (check[i] == TRUE) then 
-    the i-th entry of the query is present in the indexed value.  The Function
-    should return true if the indexed value matches by StrategyNumber and
-    the query.
-
 Open Items
 ----------
 
