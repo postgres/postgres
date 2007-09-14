@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.393 2007/09/14 00:52:45 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.394 2007/09/14 14:54:25 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -2929,14 +2929,14 @@ cast(-44 as bit(12))           <lineannotation>111111010100</lineannotation>
    </para>
 
    <para>
-    Note that the backslash already has a special meaning in string
-    literals, so to write a pattern constant that contains a backslash
-    you must write two backslashes in an SQL statement (assuming escape
-    string syntax is used).  Thus, writing a pattern
-    that actually matches a literal backslash means writing four backslashes
-    in the statement.  You can avoid this by selecting a different escape
-    character with <literal>ESCAPE</literal>; then a backslash is not special
-    to <function>LIKE</function> anymore. (But it is still special to the string
+    Note that the backslash already has a special meaning in string literals,
+    so to write a pattern constant that contains a backslash you must write two
+    backslashes in an SQL statement (assuming escape string syntax is used, see
+    <xref linkend="sql-syntax-strings">).  Thus, writing a pattern that
+    actually matches a literal backslash means writing four backslashes in the
+    statement.  You can avoid this by selecting a different escape character
+    with <literal>ESCAPE</literal>; then a backslash is not special to
+    <function>LIKE</function> anymore. (But it is still special to the string
     literal parser, so you still need two of them.)
    </para>
 
@@ -3549,7 +3549,7 @@ SELECT foo FROM regexp_split_to_table('the quick brown fox', E'\\s*') AS foo;
      meaning in <productname>PostgreSQL</> string literals.
      To write a pattern constant that contains a backslash,
      you must write two backslashes in the statement, assuming escape
-     string syntax is used.
+     string syntax is used (see <xref linkend="sql-syntax-strings">).
     </para>
    </note>
 

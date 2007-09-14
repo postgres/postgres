@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.244 2007/09/14 14:31:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.245 2007/09/14 14:54:25 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -5097,7 +5097,8 @@ defaultNoticeProcessor(void *arg, const char *message)
     user=appuser
     ldap://ldap.acme.com/cn=dbserver,cn=hosts?pgconnectinfo?base?(objectclass=*)
    </synopsis>
-  <para>
+  </para>
+
  </sect1>
 
 
