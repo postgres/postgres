@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.155 2007/07/24 09:00:27 mha Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/auth.c,v 1.156 2007/09/14 15:58:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -493,7 +493,7 @@ pg_GSS_recvauth(Port *port)
 		/*
 		 * Release service principal credentials
 		 */
-		gss_release_cred(&min_stat, port->gss->cred);
+		gss_release_cred(&min_stat, &port->gss->cred);
 	}
 
 	/*

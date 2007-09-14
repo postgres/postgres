@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.195 2007/07/24 11:16:36 mha Exp $
+ *	$PostgreSQL: pgsql/src/backend/libpq/pqcomm.c,v 1.196 2007/09/14 15:58:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -178,11 +178,11 @@ pq_close(int code, Datum arg)
 		OM_uint32	min_s;
 
 		/* Shutdown GSSAPI layer */
-		if (MyProcPort->gss->ctx)
-			gss_delete_sec_context(&min_s, MyProcPort->gss->ctx, NULL);
+		if (MyProcPort->gss->ctx != GSS_C_NO_CONTEXT)
+			gss_delete_sec_context(&min_s, &MyProcPort->gss->ctx, NULL);
 
-		if (MyProcPort->gss->cred)
-			gss_release_cred(&min_s, MyProcPort->gss->cred);
+		if (MyProcPort->gss->cred != GSS_C_NO_CREDENTIAL)
+			gss_release_cred(&min_s, &MyProcPort->gss->cred);
 #endif /* ENABLE_GSS */
 		/* GSS and SSPI share the port->gss struct */
 
