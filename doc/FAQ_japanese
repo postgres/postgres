@@ -1,6 +1,6 @@
 PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)
 
-原文最終更新日: Last updated: Tue Mar 20 13:43:40 EDT 2007
+原文最終更新日: Last updated: Fri Sep 14 14:39:54 EDT 2007
 
 現在の維持管理者: Bruce Momjian (bruce@momjian.us)
 Maintainer of Japanese Translation: Jun Kuwamura (juk at PostgreSQL.jp)
@@ -105,10 +105,9 @@ with OID ##### does not exist" というエラーを受け取るのでしょうか？
 
 1.1) PostgreSQLとは何ですか？その呼び方は？
 
-PostgreSQLはPost-Gres-Q-L(ポスト・グレス・キュー・エル) と発音します。
-
-また、ときによっては単純に Postgres として参照されます。この発音を聞きたい人の
-ために、 MP3フォーマットの音声ファイルがあります。
+PostgreSQLはPost-Gres-Q-L(ポスト・グレス・キュー・エル) と発音しますが、会話の
+中では単純に Postgres と呼ばれることもあります。（"PostgreSQL"をどう発音するか
+気になる人のために、音声ファイルを用意してあります。
 
 PostgreSQL はオブジェクト-リレーショナルデータベースシステムで、伝統的な商用デ
 ータベースシステムに、次世代DBMSシステムに見られるような改良が施された特徴を有
@@ -551,6 +550,14 @@ www.postgresql.org/support/versioning を、そして、アップグレードについての一般
 的な説明は http://www.postgresql.org/docs/current/static/install-upgrading.html
 をご覧ください。
 
+[訳注：
+   アップグレードについての和訳版は下記にあります。
+  http://www.postgresql.jp/document/current/html/install-upgrading.html
+]
+
+[訳注：
+   原文では、下記の内容は独立したページに移され、削除されています。
+
 新しい機能を盛り込むPostgreSQLのメジャーリリースはだいたい年に1回程度行ないます
 。メジャーリリースは、たとえば、8.1から8.2へのように、バージョン番号の1番目か2
 番目の部分を増やしてゆきます。
@@ -572,6 +579,8 @@ PostgreSQLのメジャーリリースは通常、システムテーブルとデータの内部フォーマット
 マイナーリリースのアップグレードにはダンプとリストアの必要はなく、データベース
 サーバを停止して、アップデートされたバイナリをインストールし、サーバをリスター
 トします。
+
+]
 
 3.7) ハードウェアにはどのようなコンピュータを使えばよいですか？
 
@@ -1039,7 +1048,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:   2007年09月13日
+  最終更新日:   2007年09月15日
   翻訳者:       桑村 潤 (Jun Kuwamura <juk at PostgreSQL.jp>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1072,8 +1081,7 @@ client_encodingを設定しておかないと、日本語を表示する際に文字化けがおきます。
 
   また、最新版は以下のサイトにあります。
         http://www.PostgreSQL.jp/wg/jpugdoc/ 「JPUG文書・書籍関連分科会」
-        http://www.linux.or.jp/JF/JFdocs/INDEX-database.html 「Linux JFプロジェクト」
-        http://www.linet.gr.jp/~juk/pgsql/ 「PostgreSQL Notes for Japanese」（翻訳者ページ）
+        http://www.linux.or.jp/JF/JFdocs/INDEX-database.html 「Linux JFプロジェクト」   http://www.linet.gr.jp/~juk/pgsql/ 「PostgreSQL Notes for Japanese」（翻訳者ページ）
 
   なお、この和訳に関するご意見・ご質問は(juk at PostgreSQL.jp)までお寄せください。
   （※ メールアドレスの " at " は適切に直してください。半角の "@" です。）

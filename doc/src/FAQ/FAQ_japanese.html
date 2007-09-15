@@ -9,7 +9,7 @@
 <div id="pgContentWrap">
 
 <h1>PostgreSQL(ポストグレス・キュー・エル)についてよくある質問とその解答(FAQ)</h1>
-<p>原文最終更新日:		Last updated: Tue Mar 20 13:43:40 EDT 2007</p>
+<p>原文最終更新日:		Last updated: Fri Sep 14 14:39:54 EDT 2007</p>
 <p>現在の維持管理者:	Bruce Momjian (<A
 href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br />
 Maintainer of Japanese Translation:	Jun Kuwamura (<A
@@ -117,10 +117,10 @@ href="mailto:juk at PostgreSQL.jp">juk at PostgreSQL.jp</a>)<br /></p>
 <h4 id="item1.1">1.1</a>) PostgreSQLとは何ですか？ その呼び方は？</h4>
 
     <p>PostgreSQLは<i>Post-Gres-Q-L</i>(ポスト・グレス・キュー・エル) 
-    と発音します。</p>また、ときによっては単純に <i>Postgres</i> として
-    参照されます。この発音を聞きたい人のために、
-     <a href="http://www.postgresql.org/files/postgresql.mp3">MP3フォー
-    マット</a>の音声ファイルがあります。</p>
+    と発音しますが、会話の中では単純に <i>Postgres</i> と呼ばれることも
+    あります。（"PostgreSQL"をどう発音するか気になる人のために、
+     <a href="http://www.postgresql.org/files/postgresql.mp3">
+    音声ファイル</a>を用意してあります。</p>
 
     <p>PostgreSQL はオブジェクト-リレーショナルデータベースシステムで、
     伝統的な商用データベースシステムに、次世代<small>DBMS</small>システ
@@ -711,6 +711,18 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     http://www.postgresql.org/docs/current/static/install-upgrading.html</a>
     をご覧ください。
     </p>
+<p><small><pre>
+[訳注：
+   アップグレードについての和訳版は下記にあります。
+  <a href="http://www.postgresql.jp/document/current/html/install-upgrading.html">http://www.postgresql.jp/document/current/html/install-upgrading.html</a>
+]
+</pre></small></p>
+
+
+<small><pre>
+[訳注：
+   原文では、下記の内容は<a href="http://www.postgresql.org/support/versioning">独立したページに移され</a>、削除されています。
+</pre>
 
     <p>新しい機能を盛り込むPostgreSQLのメジャーリリースはだいたい年に1回
     程度行ないます。メジャーリリースは、たとえば、8.1から8.2へのように、
@@ -726,7 +738,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     に対しては、バグフィクスしか行ないません。すべてのユーザは、できるだ
     け最新のマイナーリリースに更新すべきです。アップグレードには、常にリ
     スクがつきものですから、PostgreSQLのマイナー修正リリースでは、頻繁に
-    発生したり、セキュリティに関係したり、データがつぶれるバグだけを修正
+    発生したり、<a href="http://www.postgresql.org/support/security">セキュリティ</a>に関係したり、データがつぶれるバグだけを修正
     し、アップグレードのリスクを最小限にとどめます。我々のコミュニティで
     は、アップグレードするリスクよりも、アップグレード<i>しないリスク</i>
     のほうが高いと考えています。</p>
@@ -734,6 +746,9 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
     <p>マイナーリリースのアップグレードにはダンプとリストアの必要はなく、
     データベースサーバを停止して、アップデートされたバイナリをインストー
     ルし、サーバをリスタートします。</p>
+<pre>
+]
+</pre></small>
 
 
 <h4 id="item3.7">3.7</a>) ハードウェアにはどのようなコンピュータを使えばよいですか？</h4>
@@ -1292,7 +1307,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
 [訳注：
   日本語版の製作については以下の通りです。
 
-  最終更新日:	2007年09月13日
+  最終更新日:	2007年09月15日
   翻訳者:	桑村 潤 (<a href="mailto:juk at PostgreSQL.jp">Jun Kuwamura &lt;juk at PostgreSQL.jp&gt;</a>)
 
   このFAQの和訳の作成にあたり協力をしてくださった方々(敬称は略させていただきます):
@@ -1326,8 +1341,7 @@ http://www.postgresql.jp/PostgreSQL/references.html</a>
   また、最新版は以下のサイトにあります。
 	<a
   href="http://www.PostgreSQL.jp/wg/jpugdoc/">http://www.PostgreSQL.jp/wg/jpugdoc/</a> 「JPUG文書・書籍関連分科会」
-	<a href="http://www.linux.or.jp/JF/JFdocs/INDEX-database.html">http://www.linux.or.jp/JF/JFdocs/INDEX-database.html</a> 「Linux JFプロジェクト」
-	<a   href="http://www.linet.gr.jp/~juk/pgsql/">http://www.linet.gr.jp/~juk/pgsql/</a> 「PostgreSQL Notes for Japanese」（翻訳者ページ）
+	<a href="http://www.linux.or.jp/JF/JFdocs/INDEX-database.html">http://www.linux.or.jp/JF/JFdocs/INDEX-database.html</a> 「Linux JFプロジェクト」	<a   href="http://www.linet.gr.jp/~juk/pgsql/">http://www.linet.gr.jp/~juk/pgsql/</a> 「PostgreSQL Notes for Japanese」（翻訳者ページ）
 
   なお、この和訳に関するご意見・ご質問は(<a href="mailto:juk at
   PostgreSQL.jp">juk at PostgreSQL.jp</a>)までお寄せください。
