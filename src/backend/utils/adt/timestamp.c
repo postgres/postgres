@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.169 2006/11/11 01:14:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.169.2.1 2007/09/16 15:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4190,9 +4190,9 @@ interval_part(PG_FUNCTION_ARGS)
 #else
 		result = interval->time;
 #endif
-		result += (DAYS_PER_YEAR * SECS_PER_DAY) * (interval->month / MONTHS_PER_YEAR);
+		result += ((double) DAYS_PER_YEAR * SECS_PER_DAY) * (interval->month / MONTHS_PER_YEAR);
 		result += ((double) DAYS_PER_MONTH * SECS_PER_DAY) * (interval->month % MONTHS_PER_YEAR);
-		result += interval->day * SECS_PER_DAY;
+		result += ((double) SECS_PER_DAY) * interval->day;
 	}
 	else
 	{
