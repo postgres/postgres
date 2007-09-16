@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.57 2007/09/14 16:01:03 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.235.2.58 2007/09/16 03:03:55 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -62,6 +62,14 @@ do it for earlier branch release files.
     <title>Changes</title>
 
     <itemizedlist>
+
+     <listitem>
+      <para>
+       Prevent index corruption when a transaction inserts rows and
+       then aborts close to the end of a concurrent <command>VACUUM</>
+       on the same table (Tom)
+      </para>
+     </listitem>
 
      <listitem>
       <para>
@@ -3312,6 +3320,14 @@ DROP SCHEMA information_schema CASCADE;
     <title>Changes</title>
 
     <itemizedlist>
+
+     <listitem>
+      <para>
+       Prevent index corruption when a transaction inserts rows and
+       then aborts close to the end of a concurrent <command>VACUUM</>
+       on the same table (Tom)
+      </para>
+     </listitem>
 
      <listitem>
       <para>
