@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.506 2007/09/14 16:15:35 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.507 2007/09/16 03:03:00 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -60,6 +60,14 @@ do it for earlier branch release files.
     <title>Changes</title>
 
     <itemizedlist>
+
+     <listitem>
+      <para>
+       Prevent index corruption when a transaction inserts rows and
+       then aborts close to the end of a concurrent <command>VACUUM</>
+       on the same table (Tom)
+      </para>
+     </listitem>
 
      <listitem>
       <para>
@@ -3262,6 +3270,14 @@ do it for earlier branch release files.
 
      <listitem>
       <para>
+       Prevent index corruption when a transaction inserts rows and
+       then aborts close to the end of a concurrent <command>VACUUM</>
+       on the same table (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
@@ -6407,6 +6423,14 @@ psql -t -f fixseq.sql db1 | psql -e db1
     <title>Changes</title>
 
     <itemizedlist>
+
+     <listitem>
+      <para>
+       Prevent index corruption when a transaction inserts rows and
+       then aborts close to the end of a concurrent <command>VACUUM</>
+       on the same table (Tom)
+      </para>
+     </listitem>
 
      <listitem>
       <para>
@@ -10015,6 +10039,14 @@ typedefs (Michael)</para></listitem>
 
      <listitem>
       <para>
+       Prevent index corruption when a transaction inserts rows and
+       then aborts close to the end of a concurrent <command>VACUUM</>
+       on the same table (Tom)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
        Make <command>CREATE DOMAIN ... DEFAULT NULL</> work properly (Tom)
       </para>
      </listitem>
@@ -13262,6 +13294,14 @@ DROP SCHEMA information_schema CASCADE;
     <title>Changes</title>
 
     <itemizedlist>
+
+     <listitem>
+      <para>
+       Prevent index corruption when a transaction inserts rows and
+       then aborts close to the end of a concurrent <command>VACUUM</>
+       on the same table (Tom)
+      </para>
+     </listitem>
 
      <listitem>
       <para>
