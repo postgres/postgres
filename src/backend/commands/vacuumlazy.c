@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.32.2.1 2005/05/07 21:33:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.32.2.2 2007/09/16 02:38:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -798,7 +798,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 }
 
 /*
- * Rescan end pages to verify that they are (still) empty of needed tuples.
+ * Rescan end pages to verify that they are (still) empty of tuples.
  *
  * Returns number of nondeletable pages (last nonempty page + 1).
  */
@@ -806,7 +806,6 @@ static BlockNumber
 count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 {
 	BlockNumber blkno;
-	HeapTupleData tuple;
 
 	/* Strange coding of loop control is needed because blkno is unsigned */
 	blkno = vacrelstats->rel_pages;
@@ -816,9 +815,7 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 		Page		page;
 		OffsetNumber offnum,
 					maxoff;
-		bool		pgchanged,
-					tupgone,
-					hastup;
+		bool		hastup;
 
 		CHECK_FOR_INTERRUPTS();
 
@@ -833,13 +830,12 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 
 		if (PageIsNew(page) || PageIsEmpty(page))
 		{
-			/* PageIsNew robably shouldn't happen... */
+			/* PageIsNew probably shouldn't happen... */
 			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 			ReleaseBuffer(buf);
 			continue;
 		}
 
-		pgchanged = false;
 		hastup = false;
 		maxoff = PageGetMaxOffsetNumber(page);
 		for (offnum = FirstOffsetNumber;
@@ -847,52 +843,16 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 			 offnum = OffsetNumberNext(offnum))
 		{
 			ItemId		itemid;
-			uint16		sv_infomask;
 
 			itemid = PageGetItemId(page, offnum);
 
-			if (!ItemIdIsUsed(itemid))
-				continue;
-
-			tuple.t_datamcxt = NULL;
-			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
-			tuple.t_len = ItemIdGetLength(itemid);
-			ItemPointerSet(&(tuple.t_self), blkno, offnum);
-
-			tupgone = false;
-			sv_infomask = tuple.t_data->t_infomask;
-
-			switch (HeapTupleSatisfiesVacuum(tuple.t_data, OldestXmin))
-			{
-				case HEAPTUPLE_DEAD:
-					tupgone = true;		/* we can delete the tuple */
-					break;
-				case HEAPTUPLE_LIVE:
-					/* Shouldn't be necessary to re-freeze anything */
-					break;
-				case HEAPTUPLE_RECENTLY_DEAD:
-
-					/*
-					 * If tuple is recently deleted then we must not
-					 * remove it from relation.
-					 */
-					break;
-				case HEAPTUPLE_INSERT_IN_PROGRESS:
-					/* This is an expected case during concurrent vacuum */
-					break;
-				case HEAPTUPLE_DELETE_IN_PROGRESS:
-					/* This is an expected case during concurrent vacuum */
-					break;
-				default:
-					elog(ERROR, "unexpected HeapTupleSatisfiesVacuum result");
-					break;
-			}
-
-			/* check for hint-bit update by HeapTupleSatisfiesVacuum */
-			if (sv_infomask != tuple.t_data->t_infomask)
-				pgchanged = true;
-
-			if (!tupgone)
+			/*
+			 * Note: any non-unused item should be taken as a reason to keep
+			 * this page.  We formerly thought that DEAD tuples could be
+			 * thrown away, but that's not so, because we'd not have cleaned
+			 * out their index entries.
+			 */
+			if (ItemIdIsUsed(itemid))
 			{
 				hastup = true;
 				break;			/* can stop scanning */
@@ -900,11 +860,7 @@ count_nondeletable_pages(Relation onerel, LVRelStats *vacrelstats)
 		}						/* scan along page */
 
 		LockBuffer(buf, BUFFER_LOCK_UNLOCK);
-
-		if (pgchanged)
-			WriteBuffer(buf);
-		else
-			ReleaseBuffer(buf);
+		ReleaseBuffer(buf);
 
 		/* Done scanning if we found a tuple here */
 		if (hastup)
