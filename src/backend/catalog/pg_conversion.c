@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.36 2007/02/27 23:48:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_conversion.c,v 1.37 2007/09/18 17:41:17 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,7 +282,10 @@ FindConversion(const char *conname, Oid connamespace)
  * CONVERT <left paren> <character value expression>
  * USING <form-of-use conversion name> <right paren>
  *
- * TEXT convert_using(TEXT string, TEXT conversion_name)
+ * BYTEA convert_using(TEXT string, TEXT conversion_name)
+ *
+ * bytea is returned so we don't give a value that is
+ * not valid in the database encoding.
  */
 Datum
 pg_convert_using(PG_FUNCTION_ARGS)
@@ -344,5 +347,5 @@ pg_convert_using(PG_FUNCTION_ARGS)
 	pfree(result);
 	pfree(str);
 
-	PG_RETURN_TEXT_P(retval);
+	PG_RETURN_BYTEA_P(retval);
 }

@@ -1,9 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.63 2007/07/12 21:17:09 tgl Exp $
- *
- * WIN1250 client encoding updated by Pavel Behal
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.64 2007/09/18 17:41:17 adunstan Exp $
  *
  */
 /* can be used in either frontend or backend */
@@ -1435,23 +1433,37 @@ pg_database_encoding_max_length(void)
 bool
 pg_verifymbstr(const char *mbstr, int len, bool noError)
 {
-	return pg_verify_mbstr(GetDatabaseEncoding(), mbstr, len, noError);
+	return 
+		pg_verify_mbstr_len(GetDatabaseEncoding(), mbstr, len, noError) >= 0;
 }
 
 /*
  * Verify mbstr to make sure that it is validly encoded in the specified
  * encoding.
  *
- * mbstr is not necessarily zero terminated; length of mbstr is
- * specified by len.
- *
- * If OK, return TRUE.	If a problem is found, return FALSE when noError is
- * true; when noError is false, ereport() a descriptive message.
  */
 bool
 pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
 {
+	return pg_verify_mbstr_len(encoding, mbstr, len, noError) >= 0;
+}
+
+/* 
+ * Verify mbstr to make sure that it is validly encoded in the specified
+ * encoding.
+ *
+ * mbstr is not necessarily zero terminated; length of mbstr is
+ * specified by len.
+ *
+ * If OK, return length of string in the encoding.	
+ * If a problem is found, return -1 when noError is
+ * true; when noError is false, ereport() a descriptive message.
+ */ 
+int
+pg_verify_mbstr_len(int encoding, const char *mbstr, int len, bool noError)
+{
 	mbverifier	mbverify;
+	int mb_len;
 
 	Assert(PG_VALID_ENCODING(encoding));
 
@@ -1463,14 +1475,16 @@ pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
 		const char *nullpos = memchr(mbstr, 0, len);
 
 		if (nullpos == NULL)
-			return true;
+			return len;
 		if (noError)
-			return false;
+			return -1;
 		report_invalid_encoding(encoding, nullpos, 1);
 	}
 
 	/* fetch function pointer just once */
 	mbverify = pg_wchar_table[encoding].mbverify;
+	
+	mb_len = 0;
 
 	while (len > 0)
 	{
@@ -1481,12 +1495,13 @@ pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
 		{
 			if (*mbstr != '\0')
 			{
+				mb_len++;
 				mbstr++;
 				len--;
 				continue;
 			}
 			if (noError)
-				return false;
+				return -1;
 			report_invalid_encoding(encoding, mbstr, len);
 		}
 
@@ -1495,14 +1510,15 @@ pg_verify_mbstr(int encoding, const char *mbstr, int len, bool noError)
 		if (l < 0)
 		{
 			if (noError)
-				return false;
+				return -1;
 			report_invalid_encoding(encoding, mbstr, len);
 		}
 
 		mbstr += l;
 		len -= l;
+		mb_len++;
 	}
-	return true;
+	return mb_len;
 }
 
 /*

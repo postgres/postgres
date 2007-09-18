@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.395 2007/09/14 15:53:48 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.396 2007/09/18 17:41:16 adunstan Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1122,13 +1122,14 @@
       <row>
        <entry><literal><function>convert</function>(<parameter>string</parameter>
        using <parameter>conversion_name</parameter>)</literal></entry>
-       <entry><type>text</type></entry>
+       <entry><type>bytea</type></entry>
        <entry>
         Change encoding using specified conversion name.  Conversions
         can be defined by <command>CREATE CONVERSION</command>.  Also
         there are some pre-defined conversion names. See <xref
         linkend="conversion-names"> for available conversion
-        names.
+        names. The <parameter>string</parameter> must be valid in the
+		source encoding.
        </entry>
        <entry><literal>convert('PostgreSQL' using iso_8859_1_to_utf8)</literal></entry>
        <entry><literal>'PostgreSQL'</literal> in UTF8 (Unicode, 8-bit) encoding</entry>
@@ -1245,6 +1246,12 @@
     <primary>chr</primary>
    </indexterm>
    <indexterm>
+    <primary>convert_from</primary>
+   </indexterm>
+   <indexterm>
+    <primary>convert_to</primary>
+   </indexterm>
+   <indexterm>
     <primary>decode</primary>
    </indexterm>
    <indexterm>
@@ -1319,7 +1326,12 @@
       <row>
        <entry><literal><function>ascii</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>int</type></entry>
-       <entry><acronym>ASCII</acronym> code of the first byte of the argument</entry>
+       <entry>
+	     <acronym>ASCII</acronym> code of the first character of the argument. 
+		 For <acronym>UTF8</acronym> returns the Unicode code point of the character. 
+		 For other multi-byte encodings. the argument must be a strictly 
+		 <acronym>ASCII</acronym> character.
+	   </entry>
        <entry><literal>ascii('x')</literal></entry>
        <entry><literal>120</literal></entry>
       </row>
@@ -1340,27 +1352,59 @@
       <row>
        <entry><literal><function>chr</function>(<type>int</type>)</literal></entry>
        <entry><type>text</type></entry>
-       <entry>Character with the given <acronym>ASCII</acronym> code</entry>
+       <entry>
+	     Character with the given code. For <acronym>UTF8</acronym> the argument is
+		 treated as a Unicode code point. For other multi-byte encodings the argument
+		 must designate a strictly <acronym>ASCII</acronym> character.
+	   </entry>
        <entry><literal>chr(65)</literal></entry>
        <entry><literal>A</literal></entry>
       </row>
 
       <row>
        <entry>
-        <literal><function>convert</function>(<parameter>string</parameter> <type>text</type>,
-        <optional><parameter>src_encoding</parameter> <type>name</type>,</optional>
+        <literal><function>convert</function>(<parameter>string</parameter> <type>bytea</type>,
+        <parameter>src_encoding</parameter> <type>name</type>,
+        <parameter>dest_encoding</parameter> <type>name</type>)</literal>
+       </entry>
+       <entry><type>bytea</type></entry>
+       <entry>
+        Convert string to <parameter>dest_encoding</parameter>.
+        The original encoding is specified by
+		<parameter>src_encoding</parameter>. The <parameter>string</parameter>
+		must be valid in this encoding.
+       </entry>
+       <entry><literal>convert( 'text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
+       <entry><literal>text_in_utf8</literal> represented in ISO 8859-1 encoding</entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>convert_from</function>(<parameter>string</parameter> <type>bytea</type>,
+        <parameter>src_encoding</parameter> <type>name</type>)</literal>
+       </entry>
+       <entry><type>text</type></entry>
+       <entry>
+        Convert string to the database encoding.
+        The original encoding is specified by
+		<parameter>src_encoding</parameter>. The <parameter>string</parameter>
+		must be valid in this encoding.
+       </entry>
+       <entry><literal>convert_from( 'text_in_utf8', 'UTF8')</literal></entry>
+       <entry><literal>text_in_utf8</literal> represented in the current database encoding</entry>
+      </row>
+
+      <row>
+       <entry>
+        <literal><function>convert_to</function>(<parameter>string</parameter> <type>text</type>,
         <parameter>dest_encoding</parameter> <type>name</type>)</literal>
        </entry>
        <entry><type>text</type></entry>
        <entry>
         Convert string to <parameter>dest_encoding</parameter>.
-        The original encoding is specified by
-        <parameter>src_encoding</parameter>.  If
-        <parameter>src_encoding</parameter> is omitted, database
-        encoding is assumed.
        </entry>
-       <entry><literal>convert( 'text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
-       <entry><literal>text_in_utf8</literal> represented in ISO 8859-1 encoding</entry>
+       <entry><literal>convert_to( 'some text', 'UTF8')</literal></entry>
+       <entry><literal>some text</literal> represented in the UTF8 encoding</entry>
       </row>
 
       <row>
@@ -1412,6 +1456,19 @@
         Number of characters in <parameter>string</parameter>
        </entry>
        <entry><literal>length('jose')</literal></entry>
+       <entry><literal>4</literal></entry>
+      </row>
+
+      <row>
+       <entry><literal><function>length</function>(<parameter>string</parameter><type>bytea</type>,
+        <parameter>encoding</parameter> <type>name</type> )</literal></entry>
+       <entry><type>int</type></entry>
+       <entry>
+        Number of characters in <parameter>string</parameter> in the 
+		given <parameter>encoding</parameter>. The 
+		<parameter>string</parameter> must be valid in this encoding.
+       </entry>
+       <entry><literal>length('jose', 'UTF8')</literal></entry>
        <entry><literal>4</literal></entry>
       </row>
 

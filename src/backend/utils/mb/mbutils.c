@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.63 2007/05/28 16:43:24 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.64 2007/09/18 17:41:17 adunstan Exp $
  */
 #include "postgres.h"
 
@@ -292,12 +292,12 @@ pg_do_encoding_conversion(unsigned char *src, int len,
 }
 
 /*
- * Convert string using encoding_nanme. We assume that string's
- * encoding is same as DB encoding.
+ * Convert string using encoding_name. The source
+ * encoding is the DB encoding.
  *
- * TEXT convert(TEXT string, NAME encoding_name) */
+ * BYTEA convert_to(TEXT string, NAME encoding_name) */
 Datum
-pg_convert(PG_FUNCTION_ARGS)
+pg_convert_to(PG_FUNCTION_ARGS)
 {
 	Datum		string = PG_GETARG_DATUM(0);
 	Datum		dest_encoding_name = PG_GETARG_DATUM(1);
@@ -306,7 +306,30 @@ pg_convert(PG_FUNCTION_ARGS)
 	Datum		result;
 
 	result = DirectFunctionCall3(
-				 pg_convert2, string, src_encoding_name, dest_encoding_name);
+				 pg_convert, string, src_encoding_name, dest_encoding_name);
+
+	/* free memory allocated by namein */
+	pfree((void *) src_encoding_name);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+/*
+ * Convert string using encoding_name. The destination
+ * encoding is the DB encoding.
+ *
+ * TEXT convert_from(BYTEA string, NAME encoding_name) */
+Datum
+pg_convert_from(PG_FUNCTION_ARGS)
+{
+	Datum		string = PG_GETARG_DATUM(0);
+	Datum		src_encoding_name = PG_GETARG_DATUM(1);
+	Datum		dest_encoding_name = DirectFunctionCall1(
+							namein, CStringGetDatum(DatabaseEncoding->name));
+	Datum		result;
+
+	result = DirectFunctionCall3(
+				 pg_convert, string, src_encoding_name, dest_encoding_name);
 
 	/* free memory allocated by namein */
 	pfree((void *) src_encoding_name);
@@ -315,20 +338,20 @@ pg_convert(PG_FUNCTION_ARGS)
 }
 
 /*
- * Convert string using encoding_name.
+ * Convert string using encoding_names.
  *
- * TEXT convert2(TEXT string, NAME src_encoding_name, NAME dest_encoding_name)
+ * BYTEA convert(BYTEA string, NAME src_encoding_name, NAME dest_encoding_name)
  */
 Datum
-pg_convert2(PG_FUNCTION_ARGS)
+pg_convert(PG_FUNCTION_ARGS)
 {
-	text	   *string = PG_GETARG_TEXT_P(0);
+	bytea	   *string = PG_GETARG_TEXT_P(0);
 	char	   *src_encoding_name = NameStr(*PG_GETARG_NAME(1));
 	int			src_encoding = pg_char_to_encoding(src_encoding_name);
 	char	   *dest_encoding_name = NameStr(*PG_GETARG_NAME(2));
 	int			dest_encoding = pg_char_to_encoding(dest_encoding_name);
 	unsigned char *result;
-	text	   *retval;
+	bytea	   *retval;
 	unsigned char *str;
 	int			len;
 
@@ -343,8 +366,9 @@ pg_convert2(PG_FUNCTION_ARGS)
 				 errmsg("invalid destination encoding name \"%s\"",
 						dest_encoding_name)));
 
-	/* make sure that source string is null terminated */
+	/* make sure that source string is valid and null terminated */
 	len = VARSIZE(string) - VARHDRSZ;
+	pg_verify_mbstr(src_encoding,VARDATA(string),len,false);
 	str = palloc(len + 1);
 	memcpy(str, VARDATA(string), len);
 	*(str + len) = '\0';
@@ -354,8 +378,7 @@ pg_convert2(PG_FUNCTION_ARGS)
 		elog(ERROR, "encoding conversion failed");
 
 	/*
-	 * build text data type structure. we cannot use textin() here, since
-	 * textin assumes that input string encoding is same as database encoding.
+	 * build bytea data type structure.
 	 */
 	len = strlen((char *) result) + VARHDRSZ;
 	retval = palloc(len);
@@ -369,7 +392,28 @@ pg_convert2(PG_FUNCTION_ARGS)
 	/* free memory if allocated by the toaster */
 	PG_FREE_IF_COPY(string, 0);
 
-	PG_RETURN_TEXT_P(retval);
+	PG_RETURN_BYTEA_P(retval);
+}
+
+/*
+ * get the length of the string considered as text in the specified
+ * encoding. Raises an error if the data is not valid in that
+ * encoding.
+ *
+ * INT4 length (BYTEA string, NAME src_encoding_name)
+ */
+Datum
+length_in_encoding(PG_FUNCTION_ARGS)
+{
+	bytea      *string = PG_GETARG_BYTEA_P(0);
+	char	   *src_encoding_name = NameStr(*PG_GETARG_NAME(1));
+	int			src_encoding = pg_char_to_encoding(src_encoding_name);
+	int         len = VARSIZE(string) - VARHDRSZ;
+	int         retval;
+
+	retval = pg_verify_mbstr_len(src_encoding, VARDATA(string), len, false);
+	PG_RETURN_INT32(retval);
+	
 }
 
 /*
