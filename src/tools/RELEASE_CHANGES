@@ -4,7 +4,7 @@ For All Releases (major, minor, beta, RC)
 * Release version number changes
 	o doc/bug.template
 	o bump Win32 interface version numbers
-		- src/include/pg_config.h.win32
+		- src/include/pg_config.h.win32 (string and integer versions)
 		- src/interfaces/libpq/libpq.rc.in
 		  (pre-8.0 had just libpq.rc)
 		- src/port/win32ver.rc
