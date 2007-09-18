@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.3 2007/08/25 00:03:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/dict_thesaurus.c,v 1.4 2007/09/18 15:03:23 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -653,10 +653,13 @@ thesaurus_init(PG_FUNCTION_ARGS)
 static LexemeInfo *
 findTheLexeme(DictThesaurus * d, char *lexeme)
 {
-	TheLexeme	key = {lexeme, NULL}, *res;
+	TheLexeme	key, *res;
 
 	if (d->nwrds == 0)
 		return NULL;
+
+	key.lexeme = lexeme;
+	key.entries = NULL;
 
 	res = bsearch(&key, d->wrds, d->nwrds, sizeof(TheLexeme), cmpLexemeQ);
 
