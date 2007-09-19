@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.396 2007/09/18 17:41:16 adunstan Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.397 2007/09/19 03:13:57 momjian Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1129,7 +1129,7 @@
         there are some pre-defined conversion names. See <xref
         linkend="conversion-names"> for available conversion
         names. The <parameter>string</parameter> must be valid in the
-		source encoding.
+        source encoding.
        </entry>
        <entry><literal>convert('PostgreSQL' using iso_8859_1_to_utf8)</literal></entry>
        <entry><literal>'PostgreSQL'</literal> in UTF8 (Unicode, 8-bit) encoding</entry>
@@ -1327,11 +1327,11 @@
        <entry><literal><function>ascii</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>int</type></entry>
        <entry>
-	     <acronym>ASCII</acronym> code of the first character of the argument. 
-		 For <acronym>UTF8</acronym> returns the Unicode code point of the character. 
-		 For other multi-byte encodings. the argument must be a strictly 
-		 <acronym>ASCII</acronym> character.
-	   </entry>
+        <acronym>ASCII</acronym> code of the first character of the
+        argument.  For <acronym>UTF8</acronym> returns the Unicode code
+        point of the character.  For other multi-byte encodings. the
+        argument must be a strictly <acronym>ASCII</acronym> character.
+       </entry>
        <entry><literal>ascii('x')</literal></entry>
        <entry><literal>120</literal></entry>
       </row>
@@ -1353,10 +1353,11 @@
        <entry><literal><function>chr</function>(<type>int</type>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
-	     Character with the given code. For <acronym>UTF8</acronym> the argument is
-		 treated as a Unicode code point. For other multi-byte encodings the argument
-		 must designate a strictly <acronym>ASCII</acronym> character.
-	   </entry>
+        Character with the given code. For <acronym>UTF8</acronym> the
+        argument is treated as a Unicode code point. For other multi-byte
+        encodings the argument must designate a strictly
+        <acronym>ASCII</acronym> character.
+       </entry>
        <entry><literal>chr(65)</literal></entry>
        <entry><literal>A</literal></entry>
       </row>
@@ -1369,10 +1370,10 @@
        </entry>
        <entry><type>bytea</type></entry>
        <entry>
-        Convert string to <parameter>dest_encoding</parameter>.
-        The original encoding is specified by
-		<parameter>src_encoding</parameter>. The <parameter>string</parameter>
-		must be valid in this encoding.
+        Convert string to <parameter>dest_encoding</parameter>.  The
+        original encoding is specified by
+        <parameter>src_encoding</parameter>. The
+        <parameter>string</parameter> must be valid in this encoding.
        </entry>
        <entry><literal>convert( 'text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
        <entry><literal>text_in_utf8</literal> represented in ISO 8859-1 encoding</entry>
@@ -1385,10 +1386,9 @@
        </entry>
        <entry><type>text</type></entry>
        <entry>
-        Convert string to the database encoding.
-        The original encoding is specified by
-		<parameter>src_encoding</parameter>. The <parameter>string</parameter>
-		must be valid in this encoding.
+        Convert string to the database encoding.  The original encoding
+        is specified by <parameter>src_encoding</parameter>. The
+        <parameter>string</parameter> must be valid in this encoding.
        </entry>
        <entry><literal>convert_from( 'text_in_utf8', 'UTF8')</literal></entry>
        <entry><literal>text_in_utf8</literal> represented in the current database encoding</entry>
@@ -1464,9 +1464,9 @@
         <parameter>encoding</parameter> <type>name</type> )</literal></entry>
        <entry><type>int</type></entry>
        <entry>
-        Number of characters in <parameter>string</parameter> in the 
-		given <parameter>encoding</parameter>. The 
-		<parameter>string</parameter> must be valid in this encoding.
+        Number of characters in <parameter>string</parameter> in the given
+        <parameter>encoding</parameter>. The <parameter>string</parameter>
+        must be valid in this encoding.
        </entry>
        <entry><literal>length('jose', 'UTF8')</literal></entry>
        <entry><literal>4</literal></entry>
