@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.4 2007/09/07 16:03:40 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/tsquery_cleanup.c,v 1.5 2007/09/20 23:27:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,6 +193,9 @@ clean_NOT(QueryItem * ptr, int *len)
 
 #ifdef V_UNKNOWN				/* exists in Windows headers */
 #undef V_UNKNOWN
+#endif
+#ifdef V_FALSE					/* exists in Solaris headers */
+#undef V_FALSE
 #endif
 
 /*
