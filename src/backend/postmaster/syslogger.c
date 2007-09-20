@@ -18,7 +18,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.38 2007/08/21 01:47:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/syslogger.c,v 1.39 2007/09/20 18:19:08 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,7 +352,15 @@ SysLoggerMain(int argc, char *argv[])
 		}
 
 		if (rotation_requested)
+		{
+			/*
+			 * Force rotation when both values are zero.
+			 * It means the request was sent by pg_rotate_logfile.
+			 */
+			if (!time_based_rotation && size_rotation_for == 0)
+				size_rotation_for = LOG_DESTINATION_STDERR | LOG_DESTINATION_CSVLOG;
 			logfile_rotate(time_based_rotation, size_rotation_for);
+		}
 
 #ifndef WIN32
 
@@ -1154,7 +1162,7 @@ logfile_rotate(bool time_based_rotation, int size_rotation_for)
 		EnterCriticalSection(&sysfileSection);
 #endif
 		fclose(csvlogFile);
-		syslogFile = fh;
+		csvlogFile = fh;
 #ifdef WIN32
 		LeaveCriticalSection(&sysfileSection);
 #endif

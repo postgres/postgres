@@ -312,7 +312,7 @@
 
 
 #silent_mode = off			# DO NOT USE without syslog or 
-					# redirect_stderr
+					# logging_collector
 					# (change requires restart)
 
 # - What to Log -
