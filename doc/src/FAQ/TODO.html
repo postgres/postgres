@@ -8,7 +8,7 @@
 <body bgcolor="#FFFFFF" text="#000000" link="#FF0000" vlink="#A00000" alink="#0000FF">
 <h1><a name="section_1">PostgreSQL TODO List</a></h1>
 <p>Current maintainer:     Bruce Momjian (<a href="mailto:bruce@momjian.us">bruce@momjian.us</a>)<br/>
-Last updated:           Fri Sep 14 15:02:41 EDT 2007
+Last updated:           Thu Sep 20 14:53:32 EDT 2007
 </p>
 <p>The most recent version of this document can be viewed at<br/>
 <a href="http://www.postgresql.org/docs/faqs.TODO.html">http://www.postgresql.org/docs/faqs.TODO.html</a>.
@@ -1075,22 +1075,9 @@ first.  There is also a developer's wiki at<br/>
   in hopes that empty pages at the end can be truncated by VACUUM
   </li><li>Allow FSM page return free space based on table clustering, to assist
   in maintaining clustering?
-  </li><li>Consider shrinking expired tuples to just their headers
-<p>  <a href="http://archives.postgresql.org/pgsql-patches/2006-03/msg00142.php">http://archives.postgresql.org/pgsql-patches/2006-03/msg00142.php</a>
-  <a href="http://archives.postgresql.org/pgsql-hackers/2007-01/msg01025.php">http://archives.postgresql.org/pgsql-hackers/2007-01/msg01025.php</a>
-</p>
-  </li><li>Allow heap reuse of UPDATEd rows if no indexed columns are changed,
-  and old and new versions are on the same heap page?
-<p>  While vacuum handles DELETEs fine, updating of non-indexed columns, like
-  counters, are difficult for VACUUM to handle efficiently.  This method
-  is possible for same-page updates because a single index row can be
-  used to point to both old and new values.
-</p>
-<p>  <a href="http://archives.postgresql.org/pgsql-hackers/2006-06/msg01305.php">http://archives.postgresql.org/pgsql-hackers/2006-06/msg01305.php</a>
-  <a href="http://archives.postgresql.org/pgsql-hackers/2006-06/msg01534.php">http://archives.postgresql.org/pgsql-hackers/2006-06/msg01534.php</a>
-</p>
-  </li><li>Reuse index tuples that point to heap tuples that are not visible to
-  anyone?
+  </li><li>-<em>Consider shrinking expired tuples to just their headers</em>
+  </li><li>-<em>Allow heap reuse of UPDATEd rows if no indexed columns are changed,</em>
+  and old and new versions are on the same heap page
   </li><li>Improve dead row detection during multi-statement transactions usage
 <p>  <a href="http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php">http://archives.postgresql.org/pgsql-patches/2007-03/msg00358.php</a>
 </p>
