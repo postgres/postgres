@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.97 2007/09/20 17:56:31 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.98 2007/09/20 21:43:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -855,8 +855,13 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	 */
 	RelationTruncate(onerel, new_rel_pages);
 
-	/* Now we're OK to release the lock. */
-	UnlockRelation(onerel, AccessExclusiveLock);
+	/*
+	 * Note: once we have truncated, we *must* keep the exclusive lock
+	 * until commit.  The sinval message that will be sent at commit
+	 * (as a result of vac_update_relstats()) must be received by other
+	 * backends, to cause them to reset their rd_targblock values, before
+	 * they can safely access the table again.
+	 */
 
 	/*
 	 * Drop free-space info for removed blocks; these must not get entered
