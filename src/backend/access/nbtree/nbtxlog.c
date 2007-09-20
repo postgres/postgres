@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.45 2007/09/12 22:10:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.46 2007/09/20 17:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,8 +141,8 @@ _bt_restore_page(Page page, char *from, int len)
 		memcpy(&itupdata, from, sizeof(IndexTupleData));
 		itemsz = IndexTupleDSize(itupdata);
 		itemsz = MAXALIGN(itemsz);
-		if (PageAddItem(page, (Item) from, itemsz,
-						FirstOffsetNumber, false) == InvalidOffsetNumber)
+		if (PageAddItem(page, (Item) from, itemsz, FirstOffsetNumber,
+						false, false) == InvalidOffsetNumber)
 			elog(PANIC, "_bt_restore_page: cannot add item to page");
 		from += itemsz;
 	}
@@ -238,7 +238,7 @@ btree_xlog_insert(bool isleaf, bool ismeta,
 			{
 				if (PageAddItem(page, (Item) datapos, datalen,
 							ItemPointerGetOffsetNumber(&(xlrec->target.tid)),
-								false) == InvalidOffsetNumber)
+								false, false) == InvalidOffsetNumber)
 					elog(PANIC, "btree_insert_redo: failed to add item");
 
 				PageSetLSN(page, lsn);
@@ -389,7 +389,7 @@ btree_xlog_split(bool onleft, bool isroot,
 				if (onleft)
 				{
 					if (PageAddItem(lpage, newitem, newitemsz, newitemoff,
-									false) == InvalidOffsetNumber)
+									false, false) == InvalidOffsetNumber)
 						elog(PANIC, "failed to add new item to left page after split");
 				}
 
@@ -398,7 +398,7 @@ btree_xlog_split(bool onleft, bool isroot,
 				hiItem = PageGetItem(rpage, hiItemId);
 
 				if (PageAddItem(lpage, hiItem, ItemIdGetLength(hiItemId),
-								P_HIKEY, false) == InvalidOffsetNumber)
+								P_HIKEY, false, false) == InvalidOffsetNumber)
 					elog(PANIC, "failed to add high key to left page after split");
 
 				/* Fix opaque fields */

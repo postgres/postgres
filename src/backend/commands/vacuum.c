@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.358 2007/09/12 22:10:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.359 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,10 +124,11 @@ typedef VTupleMoveData *VTupleMove;
 typedef struct VRelStats
 {
 	/* miscellaneous statistics */
-	BlockNumber rel_pages;
-	double		rel_tuples;
-	Size		min_tlen;
-	Size		max_tlen;
+	BlockNumber rel_pages;		/* pages in relation */
+	double		rel_tuples;		/* tuples that remain after vacuuming */
+	double		rel_indexed_tuples;		/* indexed tuples that remain */
+	Size		min_tlen;		/* min surviving tuple size */
+	Size		max_tlen;		/* max surviving tuple size */
 	bool		hasindex;
 	/* vtlinks array for tuple chain following - sorted by new_tid */
 	int			num_vtlinks;
@@ -1177,6 +1178,7 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	vacrelstats = (VRelStats *) palloc(sizeof(VRelStats));
 	vacrelstats->rel_pages = 0;
 	vacrelstats->rel_tuples = 0;
+	vacrelstats->rel_indexed_tuples = 0;
 	vacrelstats->hasindex = false;
 
 	/* scan the heap */
@@ -1195,13 +1197,13 @@ full_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 		{
 			for (i = 0; i < nindexes; i++)
 				vacuum_index(&vacuum_pages, Irel[i],
-							 vacrelstats->rel_tuples, 0);
+							 vacrelstats->rel_indexed_tuples, 0);
 		}
 		else
 		{
 			/* just scan indexes to update statistic */
 			for (i = 0; i < nindexes; i++)
-				scan_index(Irel[i], vacrelstats->rel_tuples);
+				scan_index(Irel[i], vacrelstats->rel_indexed_tuples);
 		}
 	}
 
@@ -1256,6 +1258,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 	BlockNumber empty_pages,
 				empty_end_pages;
 	double		num_tuples,
+				num_indexed_tuples,
 				tups_vacuumed,
 				nkeep,
 				nunused;
@@ -1278,7 +1281,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					relname)));
 
 	empty_pages = empty_end_pages = 0;
-	num_tuples = tups_vacuumed = nkeep = nunused = 0;
+	num_tuples = num_indexed_tuples = tups_vacuumed = nkeep = nunused = 0;
 	free_space = 0;
 
 	nblocks = RelationGetNumberOfBlocks(onerel);
@@ -1313,9 +1316,13 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		 * background writer will try to write the page if it's already marked
 		 * dirty.  To ensure that invalid data doesn't get written to disk, we
 		 * must take exclusive buffer lock wherever we potentially modify
-		 * pages.
+		 * pages.  In fact, we insist on cleanup lock so that we can safely
+		 * call heap_page_prune().  (This might be overkill, since the bgwriter
+		 * pays no attention to individual tuples, but on the other hand it's
+		 * unlikely that the bgwriter has this particular page pinned at this
+		 * instant.  So violating the coding rule would buy us little anyway.)
 		 */
-		LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
+		LockBufferForCleanup(buf);
 
 		vacpage->blkno = blkno;
 		vacpage->offsets_used = 0;
@@ -1356,6 +1363,21 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			continue;
 		}
 
+		/* 
+		 * Prune all HOT-update chains in this page.
+		 *
+		 * We use the redirect_move option so that redirecting line pointers
+		 * get collapsed out; this allows us to not worry about them below.
+		 *
+		 * We count tuples removed by the pruning step as removed by VACUUM.
+		 */
+		tups_vacuumed += heap_page_prune(onerel, buf, OldestXmin,
+										 true, false);
+
+		/*
+		 * Now scan the page to collect vacuumable items and check for
+		 * tuples requiring freezing.
+		 */
 		nfrozen = 0;
 		notup = true;
 		maxoff = PageGetMaxOffsetNumber(page);
@@ -1369,7 +1391,9 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 			/*
 			 * Collect un-used items too - it's possible to have indexes
-			 * pointing here after crash.
+			 * pointing here after crash.  (That's an ancient comment and
+			 * is likely obsolete with WAL, but we might as well continue
+			 * to check for such problems.)
 			 */
 			if (!ItemIdIsUsed(itemid))
 			{
@@ -1377,6 +1401,23 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 				nunused += 1;
 				continue;
 			}
+
+			/*
+			 * DEAD item pointers are to be vacuumed normally; but we don't
+			 * count them in tups_vacuumed, else we'd be double-counting
+			 * (at least in the common case where heap_page_prune() just
+			 * freed up a non-HOT tuple).
+			 */
+			if (ItemIdIsDead(itemid))
+			{
+				vacpage->offsets[vacpage->offsets_free++] = offnum;
+				continue;
+			}
+
+			/* Shouldn't have any redirected items anymore */
+			if (!ItemIdIsNormal(itemid))
+				elog(ERROR, "relation \"%s\" TID %u/%u: unexpected redirect item",
+					 relname, blkno, offnum);
 
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple.t_len = ItemIdGetLength(itemid);
@@ -1410,12 +1451,45 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 					}
 					break;
 				case HEAPTUPLE_DEAD:
-					tupgone = true;		/* we can delete the tuple */
 					/*
-					 * We need not require XMIN_COMMITTED or XMAX_COMMITTED to
-					 * be set, since we will remove the tuple without any
-					 * further examination of its hint bits.
+					 * Ordinarily, DEAD tuples would have been removed by
+					 * heap_page_prune(), but it's possible that the tuple
+					 * state changed since heap_page_prune() looked.  In
+					 * particular an INSERT_IN_PROGRESS tuple could have
+					 * changed to DEAD if the inserter aborted.  So this
+					 * cannot be considered an error condition, though it
+					 * does suggest that someone released a lock early.
+					 *
+					 * If the tuple is HOT-updated then it must only be
+					 * removed by a prune operation; so we keep it as if it
+					 * were RECENTLY_DEAD, and abandon shrinking. (XXX is it
+					 * worth trying to make the shrinking code smart enough
+					 * to handle this?  It's an unusual corner case.)
+					 *
+					 * DEAD heap-only tuples can safely be removed if they
+					 * aren't themselves HOT-updated, although this is a bit
+					 * inefficient since we'll uselessly try to remove
+					 * index entries for them.
 					 */
+					if (HeapTupleIsHotUpdated(&tuple))
+					{
+						nkeep += 1;
+						if (do_shrinking)
+							ereport(LOG,
+									(errmsg("relation \"%s\" TID %u/%u: dead HOT-updated tuple --- cannot shrink relation",
+											relname, blkno, offnum)));
+						do_shrinking = false;
+					}
+					else
+					{
+						tupgone = true;		/* we can delete the tuple */
+						/*
+						 * We need not require XMIN_COMMITTED or
+						 * XMAX_COMMITTED to be set, since we will remove the
+						 * tuple without any further examination of its hint
+						 * bits.
+						 */
+					}
 					break;
 				case HEAPTUPLE_RECENTLY_DEAD:
 
@@ -1530,6 +1604,8 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 			else
 			{
 				num_tuples += 1;
+				if (!HeapTupleIsHeapOnly(&tuple))
+					num_indexed_tuples += 1;
 				notup = false;
 				if (tuple.t_len < min_tlen)
 					min_tlen = tuple.t_len;
@@ -1549,7 +1625,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		if (tempPage != NULL)
 		{
 			/* Some tuples are removable; figure free space after removal */
-			PageRepairFragmentation(tempPage, NULL);
+			PageRepairFragmentation(tempPage);
 			vacpage->free = PageGetFreeSpaceWithFillFactor(onerel, tempPage);
 			pfree(tempPage);
 			do_reap = true;
@@ -1558,7 +1634,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 		{
 			/* Just use current available space */
 			vacpage->free = PageGetFreeSpaceWithFillFactor(onerel, page);
-			/* Need to reap the page if it has LP_UNUSED line pointers */
+			/* Need to reap the page if it has UNUSED or DEAD line pointers */
 			do_reap = (vacpage->offsets_free > 0);
 		}
 
@@ -1621,6 +1697,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 	/* save stats in the rel list for use later */
 	vacrelstats->rel_tuples = num_tuples;
+	vacrelstats->rel_indexed_tuples = num_indexed_tuples;
 	vacrelstats->rel_pages = nblocks;
 	if (num_tuples == 0)
 		min_tlen = max_tlen = 0;
@@ -1720,6 +1797,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				num_fraged_pages,
 				vacuumed_pages;
 	int			keep_tuples = 0;
+	int			keep_indexed_tuples = 0;
 	PGRUsage	ru0;
 
 	pg_rusage_init(&ru0);
@@ -1845,6 +1923,16 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			if (!ItemIdIsUsed(itemid))
 				continue;
 
+			if (ItemIdIsDead(itemid))
+			{
+				/* just remember it for vacuum_page() */
+				vacpage->offsets[vacpage->offsets_free++] = offnum;
+				continue;
+			}
+
+			/* Shouldn't have any redirected items now */
+			Assert(ItemIdIsNormal(itemid));
+
 			tuple.t_data = (HeapTupleHeader) PageGetItem(page, itemid);
 			tuple_len = tuple.t_len = ItemIdGetLength(itemid);
 			ItemPointerSet(&(tuple.t_self), blkno, offnum);
@@ -1906,12 +1994,28 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					if (i >= vacpage->offsets_free)		/* not found */
 					{
 						vacpage->offsets[vacpage->offsets_free++] = offnum;
+						/*
+						 * If this is not a heap-only tuple, there must be an
+						 * index entry for this item which will be removed in
+						 * the index cleanup. Decrement the keep_indexed_tuples
+						 * count to remember this.
+						 */
+						if (!HeapTupleHeaderIsHeapOnly(tuple.t_data))
+							keep_indexed_tuples--;
 						keep_tuples--;
 					}
 				}
 				else
 				{
 					vacpage->offsets[vacpage->offsets_free++] = offnum;
+					/*
+					 * If this is not a heap-only tuple, there must be an
+					 * index entry for this item which will be removed in
+					 * the index cleanup. Decrement the keep_indexed_tuples
+					 * count to remember this.
+					 */
+					if (!HeapTupleHeaderIsHeapOnly(tuple.t_data))
+						keep_indexed_tuples--;
 					keep_tuples--;
 				}
 				continue;
@@ -2028,7 +2132,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						break;
 					}
 					nextItemid = PageGetItemId(nextPage, nextOffnum);
-					if (!ItemIdIsUsed(nextItemid))
+					if (!ItemIdIsNormal(nextItemid))
 					{
 						ReleaseBuffer(nextBuf);
 						break;
@@ -2166,7 +2270,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					Pitemid = PageGetItemId(Ppage,
 								   ItemPointerGetOffsetNumber(&(tp.t_self)));
 					/* this can't happen since we saw tuple earlier: */
-					if (!ItemIdIsUsed(Pitemid))
+					if (!ItemIdIsNormal(Pitemid))
 						elog(ERROR, "parent itemid marked as unused");
 					PTdata = (HeapTupleHeader) PageGetItem(Ppage, Pitemid);
 
@@ -2268,6 +2372,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 									 dst_buffer, dst_page, destvacpage,
 									 &ec, &Ctid, vtmove[ti].cleanVpd);
 
+					/*
+					 * If the tuple we are moving is a heap-only tuple,
+					 * this move will generate an additional index entry,
+					 * so increment the rel_indexed_tuples count.
+					 */ 
+					if (HeapTupleHeaderIsHeapOnly(tuple.t_data))
+						vacrelstats->rel_indexed_tuples++;
+
 					num_moved++;
 					if (destvacpage->blkno > last_move_dest_block)
 						last_move_dest_block = destvacpage->blkno;
@@ -2280,7 +2392,31 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 						vacpage->offsets[vacpage->offsets_free++] =
 							ItemPointerGetOffsetNumber(&(tuple.t_self));
 					else
+					{
+						/*
+						 * When we move tuple chains, we may need to move
+						 * tuples from a block that we haven't yet scanned in
+						 * the outer walk-along-the-relation loop. Note that we
+						 * can't be moving a tuple from a block that we have
+						 * already scanned because if such a tuple exists, then
+						 * we must have moved the chain along with that tuple
+						 * when we scanned that block. IOW the test of
+						 * (Cbuf != buf) guarantees that the tuple we are
+						 * looking at right now is in a block which is yet to
+						 * be scanned.
+						 *
+						 * We maintain two counters to correctly count the
+						 * moved-off tuples from blocks that are not yet
+						 * scanned (keep_tuples) and how many of them have
+						 * index pointers (keep_indexed_tuples).  The main
+						 * reason to track the latter is to help verify
+						 * that indexes have the expected number of entries
+						 * when all the dust settles.
+						 */
+						if (!HeapTupleHeaderIsHeapOnly(tuple.t_data))
+							keep_indexed_tuples++;
 						keep_tuples++;
+					}
 
 					ReleaseBuffer(dst_buffer);
 					ReleaseBuffer(Cbuf);
@@ -2328,6 +2464,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			move_plain_tuple(onerel, buf, page, &tuple,
 							 dst_buffer, dst_page, dst_vacpage, &ec);
 
+			/*
+			 * If the tuple we are moving is a heap-only tuple,
+			 * this move will generate an additional index entry,
+			 * so increment the rel_indexed_tuples count.
+			 */
+			if (HeapTupleHeaderIsHeapOnly(tuple.t_data))
+				vacrelstats->rel_indexed_tuples++;
+
 			num_moved++;
 			if (dst_vacpage->blkno > last_move_dest_block)
 				last_move_dest_block = dst_vacpage->blkno;
@@ -2361,6 +2505,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 				if (!ItemIdIsUsed(itemid))
 					continue;
+				/* Shouldn't be any DEAD or REDIRECT items anymore */
+				Assert(ItemIdIsNormal(itemid));
+
 				htup = (HeapTupleHeader) PageGetItem(page, itemid);
 				if (htup->t_infomask & HEAP_XMIN_COMMITTED)
 					continue;
@@ -2389,6 +2536,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					{
 						vacpage->offsets[vacpage->offsets_free++] = off;
 						Assert(keep_tuples > 0);
+						/*
+						 * If this is not a heap-only tuple, there must be an
+						 * index entry for this item which will be removed in
+						 * the index cleanup. Decrement the keep_indexed_tuples
+						 * count to remember this.
+						 */
+						if (!HeapTupleHeaderIsHeapOnly(htup))
+							keep_indexed_tuples--;
 						keep_tuples--;
 					}
 				}
@@ -2396,6 +2551,8 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				{
 					vacpage->offsets[vacpage->offsets_free++] = off;
 					Assert(keep_tuples > 0);
+					if (!HeapTupleHeaderIsHeapOnly(htup))
+						keep_indexed_tuples--;
 					keep_tuples--;
 				}
 			}
@@ -2529,11 +2686,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			 * page during chain moves but not been scanned over subsequently.
 			 * The tuple ids of these tuples are not recorded as free offsets
 			 * for any VacPage, so they will not be cleared from the indexes.
+			 * keep_indexed_tuples is the portion of these that are expected
+			 * to have index entries.
 			 */
 			Assert(keep_tuples >= 0);
 			for (i = 0; i < nindexes; i++)
 				vacuum_index(&Nvacpagelist, Irel[i],
-							 vacrelstats->rel_tuples, keep_tuples);
+							 vacrelstats->rel_indexed_tuples,
+							 keep_indexed_tuples);
 		}
 
 		/*
@@ -2551,7 +2711,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			OffsetNumber unused[MaxOffsetNumber];
 			OffsetNumber offnum,
 						maxoff;
-			int			uncnt;
+			int			uncnt = 0;
 			int			num_tuples = 0;
 
 			buf = ReadBufferWithStrategy(onerel, vacpage->blkno, vac_strategy);
@@ -2567,6 +2727,9 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 				if (!ItemIdIsUsed(itemid))
 					continue;
+				/* Shouldn't be any DEAD or REDIRECT items anymore */
+				Assert(ItemIdIsNormal(itemid));
+
 				htup = (HeapTupleHeader) PageGetItem(page, itemid);
 				if (htup->t_infomask & HEAP_XMIN_COMMITTED)
 					continue;
@@ -2584,12 +2747,14 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 
 				ItemIdSetUnused(itemid);
 				num_tuples++;
+
+				unused[uncnt++] = offnum;
 			}
 			Assert(vacpage->offsets_free == num_tuples);
 
 			START_CRIT_SECTION();
 
-			uncnt = PageRepairFragmentation(page, unused);
+			PageRepairFragmentation(page);
 
 			MarkBufferDirty(buf);
 
@@ -2598,7 +2763,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			{
 				XLogRecPtr	recptr;
 
-				recptr = log_heap_clean(onerel, buf, unused, uncnt);
+				recptr = log_heap_clean(onerel, buf,
+										NULL, 0, NULL, 0,
+										unused, uncnt,
+										false);
 				PageSetLSN(page, recptr);
 				PageSetTLI(page, ThisTimeLineID);
 			}
@@ -2706,15 +2874,17 @@ move_chain_tuple(Relation rel,
 
 	/*
 	 * Update the state of the copied tuple, and store it on the destination
-	 * page.
+	 * page.  The copied tuple is never part of a HOT chain.
 	 */
 	newtup.t_data->t_infomask &= ~(HEAP_XMIN_COMMITTED |
 								   HEAP_XMIN_INVALID |
 								   HEAP_MOVED_OFF);
 	newtup.t_data->t_infomask |= HEAP_MOVED_IN;
+	HeapTupleHeaderClearHotUpdated(newtup.t_data);
+	HeapTupleHeaderClearHeapOnly(newtup.t_data);
 	HeapTupleHeaderSetXvac(newtup.t_data, myXID);
 	newoff = PageAddItem(dst_page, (Item) newtup.t_data, tuple_len,
-						 InvalidOffsetNumber, false);
+						 InvalidOffsetNumber, false, true);
 	if (newoff == InvalidOffsetNumber)
 		elog(PANIC, "failed to add item with len = %lu to page %u while moving tuple chain",
 			 (unsigned long) tuple_len, dst_vacpage->blkno);
@@ -2809,17 +2979,19 @@ move_plain_tuple(Relation rel,
 	START_CRIT_SECTION();
 
 	/*
-	 * Mark new tuple as MOVED_IN by me.
+	 * Mark new tuple as MOVED_IN by me; also mark it not HOT.
 	 */
 	newtup.t_data->t_infomask &= ~(HEAP_XMIN_COMMITTED |
 								   HEAP_XMIN_INVALID |
 								   HEAP_MOVED_OFF);
 	newtup.t_data->t_infomask |= HEAP_MOVED_IN;
+	HeapTupleHeaderClearHotUpdated(newtup.t_data);
+	HeapTupleHeaderClearHeapOnly(newtup.t_data);
 	HeapTupleHeaderSetXvac(newtup.t_data, myXID);
 
 	/* add tuple to the page */
 	newoff = PageAddItem(dst_page, (Item) newtup.t_data, tuple_len,
-						 InvalidOffsetNumber, false);
+						 InvalidOffsetNumber, false, true);
 	if (newoff == InvalidOffsetNumber)
 		elog(PANIC, "failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)",
 			 (unsigned long) tuple_len,
@@ -2934,6 +3106,9 @@ update_hint_bits(Relation rel, VacPageList fraged_pages, int num_fraged_pages,
 
 			if (!ItemIdIsUsed(itemid))
 				continue;
+			/* Shouldn't be any DEAD or REDIRECT items anymore */
+			Assert(ItemIdIsNormal(itemid));
+
 			htup = (HeapTupleHeader) PageGetItem(page, itemid);
 			if (htup->t_infomask & HEAP_XMIN_COMMITTED)
 				continue;
@@ -3019,10 +3194,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 static void
 vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 {
-	OffsetNumber unused[MaxOffsetNumber];
-	int			uncnt;
 	Page		page = BufferGetPage(buffer);
-	ItemId		itemid;
 	int			i;
 
 	/* There shouldn't be any tuples moved onto the page yet! */
@@ -3032,11 +3204,12 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 
 	for (i = 0; i < vacpage->offsets_free; i++)
 	{
-		itemid = PageGetItemId(page, vacpage->offsets[i]);
+		ItemId		itemid = PageGetItemId(page, vacpage->offsets[i]);
+
 		ItemIdSetUnused(itemid);
 	}
 
-	uncnt = PageRepairFragmentation(page, unused);
+	PageRepairFragmentation(page);
 
 	MarkBufferDirty(buffer);
 
@@ -3045,7 +3218,10 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 	{
 		XLogRecPtr	recptr;
 
-		recptr = log_heap_clean(onerel, buffer, unused, uncnt);
+		recptr = log_heap_clean(onerel, buffer,
+								NULL, 0, NULL, 0,
+								vacpage->offsets, vacpage->offsets_free,
+								false);
 		PageSetLSN(page, recptr);
 		PageSetTLI(page, ThisTimeLineID);
 	}
@@ -3527,8 +3703,7 @@ enough_space(VacPage vacpage, Size len)
 static Size
 PageGetFreeSpaceWithFillFactor(Relation relation, Page page)
 {
-	PageHeader	pd = (PageHeader) page;
-	Size		freespace = pd->pd_upper - pd->pd_lower;
+	Size		freespace = PageGetHeapFreeSpace(page);
 	Size		targetfree;
 
 	targetfree = RelationGetTargetPageFreeSpace(relation,

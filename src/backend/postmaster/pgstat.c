@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.163 2007/09/11 03:28:05 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.164 2007/09/20 17:56:31 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -1294,7 +1294,7 @@ pgstat_count_heap_insert(Relation rel)
  * pgstat_count_heap_update - count a tuple update
  */
 void
-pgstat_count_heap_update(Relation rel)
+pgstat_count_heap_update(Relation rel, bool hot)
 {
 	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
@@ -1304,6 +1304,9 @@ pgstat_count_heap_update(Relation rel)
 
 		/* t_tuples_updated is nontransactional, so just advance it */
 		pgstat_info->t_counts.t_tuples_updated++;
+		/* ditto for the hot_update counter */
+		if (hot)
+			pgstat_info->t_counts.t_tuples_hot_updated++;
 
 		/* We have to log the transactional effect at the proper level */
 		if (pgstat_info->trans == NULL ||
@@ -1338,6 +1341,23 @@ pgstat_count_heap_delete(Relation rel)
 
 		pgstat_info->trans->tuples_deleted++;
 	}
+}
+
+/*
+ * pgstat_update_heap_dead_tuples - update dead-tuples count
+ *
+ * The semantics of this are that we are reporting the nontransactional
+ * recovery of "delta" dead tuples; so t_new_dead_tuples decreases
+ * rather than increasing, and the change goes straight into the per-table
+ * counter, not into transactional state.
+ */
+void
+pgstat_update_heap_dead_tuples(Relation rel, int delta)
+{
+	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
+
+	if (pgstat_collect_tuplelevel && pgstat_info != NULL)
+		pgstat_info->t_counts.t_new_dead_tuples -= delta;
 }
 
 
@@ -2901,6 +2921,7 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_inserted = tabmsg[i].t_counts.t_tuples_inserted;
 			tabentry->tuples_updated = tabmsg[i].t_counts.t_tuples_updated;
 			tabentry->tuples_deleted = tabmsg[i].t_counts.t_tuples_deleted;
+			tabentry->tuples_hot_updated = tabmsg[i].t_counts.t_tuples_hot_updated;
 			tabentry->n_live_tuples = tabmsg[i].t_counts.t_new_live_tuples;
 			tabentry->n_dead_tuples = tabmsg[i].t_counts.t_new_dead_tuples;
 			tabentry->blocks_fetched = tabmsg[i].t_counts.t_blocks_fetched;
@@ -2923,6 +2944,7 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 			tabentry->tuples_inserted += tabmsg[i].t_counts.t_tuples_inserted;
 			tabentry->tuples_updated += tabmsg[i].t_counts.t_tuples_updated;
 			tabentry->tuples_deleted += tabmsg[i].t_counts.t_tuples_deleted;
+			tabentry->tuples_hot_updated += tabmsg[i].t_counts.t_tuples_hot_updated;
 			tabentry->n_live_tuples += tabmsg[i].t_counts.t_new_live_tuples;
 			tabentry->n_dead_tuples += tabmsg[i].t_counts.t_new_dead_tuples;
 			tabentry->blocks_fetched += tabmsg[i].t_counts.t_blocks_fetched;
@@ -2931,6 +2953,8 @@ pgstat_recv_tabstat(PgStat_MsgTabstat *msg, int len)
 
 		/* Clamp n_live_tuples in case of negative new_live_tuples */
 		tabentry->n_live_tuples = Max(tabentry->n_live_tuples, 0);
+		/* Likewise for n_dead_tuples */
+		tabentry->n_dead_tuples = Max(tabentry->n_dead_tuples, 0);
 
 		/*
 		 * Add per-table stats to the per-database entry, too.
@@ -3115,6 +3139,7 @@ pgstat_recv_vacuum(PgStat_MsgVacuum *msg, int len)
 	else
 		tabentry->vacuum_timestamp = msg->m_vacuumtime;
 	tabentry->n_live_tuples = msg->m_tuples;
+	/* Resetting dead_tuples to 0 is an approximation ... */
 	tabentry->n_dead_tuples = 0;
 	if (msg->m_analyze)
 	{

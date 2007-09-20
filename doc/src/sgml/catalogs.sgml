@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.157 2007/09/05 18:10:47 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.158 2007/09/20 17:56:30 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -2562,6 +2562,29 @@
        <command>INSERT</>/<command>UPDATE</> operations, but it cannot safely
        be used for queries. If it is unique, the uniqueness property is not
        true either
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>indcheckxmin</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       If true, queries must not use the index until the <structfield>xmin</>
+       of this <structname>pg_index</> row is below their TransactionXmin
+       event horizon, because the table may contain broken HOT chains with
+       incompatible rows that they can see
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>indisready</structfield></entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       If true, the index is currently ready for inserts.  False means the
+       index must be ignored by <command>INSERT</>/<command>UPDATE</>
+       operations
       </entry>
      </row>
 

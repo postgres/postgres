@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.51 2007/06/28 00:02:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.52 2007/09/20 17:56:30 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -276,6 +276,8 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       scans, number of index scans initiated (over all indexes
       belonging to the table), number of live rows fetched by index
       scans, numbers of row insertions, updates, and deletions,
+      number of row updates that were HOT (i.e., no separate index update),
+      numbers of live and dead rows,
       the last time the table was vacuumed manually,
       the last time it was vacuumed by the autovacuum daemon,
       the last time it was analyzed manually,
@@ -580,7 +582,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><literal><function>pg_stat_get_tuples_updated</function>(<type>oid</type>)</literal></entry>
       <entry><type>bigint</type></entry>
       <entry>
-       Number of rows updated in table
+       Number of rows updated in table (includes HOT updates)
       </entry>
      </row>
 
@@ -589,6 +591,30 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry><type>bigint</type></entry>
       <entry>
        Number of rows deleted from table
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_tuples_hot_updated</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of rows HOT-updated in table
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_live_tuples</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of live rows in table
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_dead_tuples</function>(<type>oid</type>)</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       Number of dead rows in table
       </entry>
      </row>
 
@@ -710,6 +736,18 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       <entry>
        The time at which the given server process' currently
        executing query was started, but only if the
+       current user is a superuser or the same user as that of
+       the session being queried (and
+       <varname>stats_command_string</varname> is on)
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_backend_xact_start</function>(<type>integer</type>)</literal></entry>
+      <entry><type>timestamp with time zone</type></entry>
+      <entry>
+       The time at which the given server process' currently
+       executing transaction was started, but only if the
        current user is a superuser or the same user as that of
        the session being queried (and
        <varname>stats_command_string</varname> is on)

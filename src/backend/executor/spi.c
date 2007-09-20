@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.180 2007/08/15 19:15:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.181 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1407,6 +1407,7 @@ _SPI_prepare_plan(const char *src, SPIPlanPtr plan)
 		plansource->num_params = nargs;
 		plansource->fully_planned = true;
 		plansource->fixed_result = false;
+		/* no need to set search_path, generation or saved_xmin */
 		plansource->resultDesc = PlanCacheComputeResultDesc(stmt_list);
 		plansource->plan = cplan;
 
@@ -1973,6 +1974,7 @@ _SPI_copy_plan(SPIPlanPtr plan, MemoryContext parentcxt)
 		newsource->num_params = newplan->nargs;
 		newsource->fully_planned = plansource->fully_planned;
 		newsource->fixed_result = plansource->fixed_result;
+		/* no need to worry about seach_path, generation or saved_xmin */
 		if (plansource->resultDesc)
 			newsource->resultDesc = CreateTupleDescCopy(plansource->resultDesc);
 		newsource->plan = newcplan;

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/indexing.c,v 1.114 2007/01/05 22:19:24 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/indexing.c,v 1.115 2007/09/20 17:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,6 +78,10 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 	Datum		values[INDEX_MAX_KEYS];
 	bool		isnull[INDEX_MAX_KEYS];
 
+	/* HOT update does not require index inserts */
+	if (HeapTupleIsHeapOnly(heapTuple))
+		return;
+
 	/*
 	 * Get information from the state structure.  Fall out if nothing to do.
 	 */
@@ -100,6 +104,10 @@ CatalogIndexInsert(CatalogIndexState indstate, HeapTuple heapTuple)
 		IndexInfo  *indexInfo;
 
 		indexInfo = indexInfoArray[i];
+
+		/* If the index is marked as read-only, ignore it */
+		if (!indexInfo->ii_ReadyForInserts)
+			continue;
 
 		/*
 		 * Expressional and partial indexes on system catalogs are not

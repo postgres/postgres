@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.66 2007/09/12 22:10:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/hio.c,v 1.67 2007/09/20 17:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ RelationPutHeapTuple(Relation relation,
 	pageHeader = BufferGetPage(buffer);
 
 	offnum = PageAddItem(pageHeader, (Item) tuple->t_data,
-						 tuple->t_len, InvalidOffsetNumber, false);
+						 tuple->t_len, InvalidOffsetNumber, false, true);
 
 	if (offnum == InvalidOffsetNumber)
 		elog(PANIC, "failed to add tuple to page");
@@ -218,7 +218,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 		 * we're done.
 		 */
 		pageHeader = (Page) BufferGetPage(buffer);
-		pageFreeSpace = PageGetFreeSpace(pageHeader);
+		pageFreeSpace = PageGetHeapFreeSpace(pageHeader);
 		if (len + saveFreeSpace <= pageFreeSpace)
 		{
 			/* use this page as future insert target, too */
@@ -311,7 +311,7 @@ RelationGetBufferForTuple(Relation relation, Size len,
 
 	PageInit(pageHeader, BufferGetPageSize(buffer), 0);
 
-	if (len > PageGetFreeSpace(pageHeader))
+	if (len > PageGetHeapFreeSpace(pageHeader))
 	{
 		/* We should not get here given the test at the top */
 		elog(PANIC, "tuple is too big: size %lu", (unsigned long) len);

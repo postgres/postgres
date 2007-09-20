@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.16 2007/09/12 22:10:25 tgl Exp $
+ *			$PostgreSQL: pgsql/src/backend/access/gin/ginvacuum.c,v 1.17 2007/09/20 17:56:30 tgl Exp $
  *-------------------------------------------------------------------------
  */
 
@@ -544,7 +544,7 @@ ginVacuumEntryPage(GinVacuumState *gvs, Buffer buffer, BlockNumber *roots, uint3
 				itup = GinFormTuple(&gvs->ginstate, value, GinGetPosting(itup), newN);
 				PageIndexTupleDelete(tmppage, i);
 
-				if (PageAddItem(tmppage, (Item) itup, IndexTupleSize(itup), i, false) != i)
+				if (PageAddItem(tmppage, (Item) itup, IndexTupleSize(itup), i, false, false) != i)
 					elog(ERROR, "failed to add item to index page in \"%s\"",
 						 RelationGetRelationName(gvs->index));
 

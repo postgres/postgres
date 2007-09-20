@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.19 2007/09/12 22:10:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeBitmapHeapscan.c,v 1.20 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,12 +240,7 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	BlockNumber page = tbmres->blockno;
 	Buffer		buffer;
 	Snapshot	snapshot;
-	Page		dp;
 	int			ntup;
-	int			curslot;
-	int			minslot;
-	int			maxslot;
-	int			maxoff;
 
 	/*
 	 * Acquire pin on the target heap page, trading in any pin we held before.
@@ -258,6 +253,13 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	buffer = scan->rs_cbuf;
 	snapshot = scan->rs_snapshot;
 
+	ntup = 0;
+
+	/*
+	 * Prune and repair fragmentation for the whole page, if possible.
+	 */
+	heap_page_prune_opt(scan->rs_rd, buffer, RecentGlobalXmin);
+
 	/*
 	 * We must hold share lock on the buffer content while examining tuple
 	 * visibility.	Afterwards, however, the tuples we have found to be
@@ -265,71 +267,51 @@ bitgetpage(HeapScanDesc scan, TBMIterateResult *tbmres)
 	 */
 	LockBuffer(buffer, BUFFER_LOCK_SHARE);
 
-	dp = (Page) BufferGetPage(buffer);
-	maxoff = PageGetMaxOffsetNumber(dp);
-
 	/*
-	 * Determine how many entries we need to look at on this page. If the
-	 * bitmap is lossy then we need to look at each physical item pointer;
-	 * otherwise we just look through the offsets listed in tbmres.
+	 * We need two separate strategies for lossy and non-lossy cases.
 	 */
 	if (tbmres->ntuples >= 0)
 	{
-		/* non-lossy case */
-		minslot = 0;
-		maxslot = tbmres->ntuples - 1;
+		/*
+		 * Bitmap is non-lossy, so we just look through the offsets listed in
+		 * tbmres; but we have to follow any HOT chain starting at each such
+		 * offset.
+		 */
+		int curslot;
+
+		for (curslot = 0; curslot < tbmres->ntuples; curslot++)
+		{
+			OffsetNumber offnum = tbmres->offsets[curslot];
+			ItemPointerData tid;
+
+			ItemPointerSet(&tid, page, offnum);
+			if (heap_hot_search_buffer(&tid, buffer, snapshot, NULL))
+				scan->rs_vistuples[ntup++] = ItemPointerGetOffsetNumber(&tid);
+		}
 	}
 	else
 	{
-		/* lossy case */
-		minslot = FirstOffsetNumber;
-		maxslot = maxoff;
-	}
+		/*
+		 * Bitmap is lossy, so we must examine each item pointer on the page.
+		 * But we can ignore HOT chains, since we'll check each tuple anyway.
+		 */
+		Page		dp = (Page) BufferGetPage(buffer);
+		OffsetNumber maxoff = PageGetMaxOffsetNumber(dp);
+		OffsetNumber offnum;
 
-	ntup = 0;
-	for (curslot = minslot; curslot <= maxslot; curslot++)
-	{
-		OffsetNumber targoffset;
-		ItemId		lp;
-		HeapTupleData loctup;
-		bool		valid;
-
-		if (tbmres->ntuples >= 0)
+		for (offnum = FirstOffsetNumber; offnum <= maxoff; offnum++)
 		{
-			/* non-lossy case */
-			targoffset = tbmres->offsets[curslot];
+			ItemId		lp;
+			HeapTupleData loctup;
+
+			lp = PageGetItemId(dp, offnum);
+			if (!ItemIdIsNormal(lp))
+				continue;
+			loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
+			loctup.t_len = ItemIdGetLength(lp);
+			if (HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer))
+				scan->rs_vistuples[ntup++] = offnum;
 		}
-		else
-		{
-			/* lossy case */
-			targoffset = (OffsetNumber) curslot;
-		}
-
-		/*
-		 * We'd better check for out-of-range offnum in case of VACUUM since
-		 * the TID was obtained.
-		 */
-		if (targoffset < FirstOffsetNumber || targoffset > maxoff)
-			continue;
-
-		lp = PageGetItemId(dp, targoffset);
-
-		/*
-		 * Must check for deleted tuple.
-		 */
-		if (!ItemIdIsNormal(lp))
-			continue;
-
-		/*
-		 * check time qualification of tuple, remember it if valid
-		 */
-		loctup.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
-		loctup.t_len = ItemIdGetLength(lp);
-		ItemPointerSet(&(loctup.t_self), page, targoffset);
-
-		valid = HeapTupleSatisfiesVisibility(&loctup, snapshot, buffer);
-		if (valid)
-			scan->rs_vistuples[ntup++] = targoffset;
 	}
 
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);

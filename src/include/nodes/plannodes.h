@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.94 2007/04/27 22:05:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/plannodes.h,v 1.95 2007/09/20 17:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,8 @@ typedef struct PlannedStmt
 	CmdType		commandType;	/* select|insert|update|delete */
 
 	bool		canSetTag;		/* do I set the command result tag? */
+
+	bool		transientPlan;	/* redo plan when TransactionXmin changes? */
 
 	struct Plan *planTree;		/* tree of Plan nodes */
 

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.297 2007/09/07 20:59:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.298 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1813,8 +1813,10 @@ lreplace:;
 	 *
 	 * Note: heap_update returns the tid (location) of the new tuple in the
 	 * t_self field.
+	 *
+	 * If it's a HOT update, we mustn't insert new index entries.
 	 */
-	if (resultRelInfo->ri_NumIndices > 0)
+	if (resultRelInfo->ri_NumIndices > 0 && !HeapTupleIsHeapOnly(tuple))
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 	/* AFTER ROW UPDATE Triggers */

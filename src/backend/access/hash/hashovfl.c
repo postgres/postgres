@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.59 2007/09/12 22:10:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashovfl.c,v 1.60 2007/09/20 17:56:30 tgl Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -684,7 +684,7 @@ _hash_squeezebucket(Relation rel,
 			 * we have found room so insert on the "write" page.
 			 */
 			woffnum = OffsetNumberNext(PageGetMaxOffsetNumber(wpage));
-			if (PageAddItem(wpage, (Item) itup, itemsz, woffnum, false)
+			if (PageAddItem(wpage, (Item) itup, itemsz, woffnum, false, false)
 				== InvalidOffsetNumber)
 				elog(ERROR, "failed to add index item to \"%s\"",
 					 RelationGetRelationName(rel));

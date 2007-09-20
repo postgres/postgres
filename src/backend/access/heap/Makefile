@@ -4,7 +4,7 @@
 #    Makefile for access/heap
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/access/heap/Makefile,v 1.16 2007/06/08 18:23:52 tgl Exp $
+#    $PostgreSQL: pgsql/src/backend/access/heap/Makefile,v 1.17 2007/09/20 17:56:30 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/access/heap
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = heapam.o hio.o rewriteheap.o syncscan.o tuptoaster.o
+OBJS = heapam.o hio.o pruneheap.o rewriteheap.o syncscan.o tuptoaster.o
 
 all: SUBSYS.o
 

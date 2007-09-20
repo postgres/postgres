@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.73 2007/09/12 22:10:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/page/bufpage.c,v 1.74 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/htup.h"
 #include "storage/bufpage.h"
 
 
@@ -108,6 +109,9 @@ PageHeaderIsValid(PageHeader page)
  *	If offsetNumber is not valid, then assign one by finding the first
  *	one that is both unused and deallocated.
  *
+ *	If is_heap is true, we enforce that there can't be more than
+ *	MaxHeapTuplesPerPage line pointers on the page.
+ *
  *	!!! EREPORT(ERROR) IS DISALLOWED HERE !!!
  */
 OffsetNumber
@@ -115,7 +119,8 @@ PageAddItem(Page page,
 			Item item,
 			Size size,
 			OffsetNumber offsetNumber,
-			bool overwrite)
+			bool overwrite,
+			bool is_heap)
 {
 	PageHeader	phdr = (PageHeader) page;
 	Size		alignedSize;
@@ -197,6 +202,12 @@ PageAddItem(Page page,
 	if (offsetNumber > limit)
 	{
 		elog(WARNING, "specified item offset is too large");
+		return InvalidOffsetNumber;
+	}
+
+	if (is_heap && offsetNumber > MaxHeapTuplesPerPage)
+	{
+		elog(WARNING, "can't put more than MaxHeapTuplesPerPage items in a heap page");
 		return InvalidOffsetNumber;
 	}
 
@@ -315,11 +326,10 @@ itemoffcompare(const void *itemidp1, const void *itemidp2)
  *
  * This routine is usable for heap pages only, but see PageIndexMultiDelete.
  *
- * Returns number of unused line pointers on page.	If "unused" is not NULL
- * then the unused[] array is filled with indexes of unused line pointers.
+ * As a side effect, the page's PD_HAS_FREE_LINES hint bit is updated.
  */
-int
-PageRepairFragmentation(Page page, OffsetNumber *unused)
+void
+PageRepairFragmentation(Page page)
 {
 	Offset		pd_lower = ((PageHeader) page)->pd_lower;
 	Offset		pd_upper = ((PageHeader) page)->pd_upper;
@@ -329,7 +339,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 	ItemId		lp;
 	int			nline,
 				nstorage,
-				nused;
+				nunused;
 	int			i;
 	Size		totallen;
 	Offset		upper;
@@ -352,13 +362,12 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 						pd_lower, pd_upper, pd_special)));
 
 	nline = PageGetMaxOffsetNumber(page);
-	nused = nstorage = 0;
-	for (i = 0; i < nline; i++)
+	nunused = nstorage = 0;
+	for (i = FirstOffsetNumber; i <= nline; i++)
 	{
-		lp = PageGetItemId(page, i + 1);
+		lp = PageGetItemId(page, i);
 		if (ItemIdIsUsed(lp))
 		{
-			nused++;
 			if (ItemIdHasStorage(lp))
 				nstorage++;
 		}
@@ -366,9 +375,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 		{
 			/* Unused entries should have lp_len = 0, but make sure */
 			ItemIdSetUnused(lp);
-			/* Report to caller if asked for */
-			if (unused)
-				unused[i - nused] = (OffsetNumber) i;
+			nunused++;
 		}
 	}
 
@@ -431,18 +438,19 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 	}
 
 	/* Set hint bit for PageAddItem */
-	if (nused < nline)
+	if (nunused > 0)
 		PageSetHasFreeLinePointers(page);
 	else
 		PageClearHasFreeLinePointers(page);
-
-	return (nline - nused);
 }
 
 /*
  * PageGetFreeSpace
  *		Returns the size of the free (allocatable) space on a page,
  *		reduced by the space needed for a new line pointer.
+ *
+ * Note: this should usually only be used on index pages.  Use
+ * PageGetHeapFreeSpace on heap pages.
  */
 Size
 PageGetFreeSpace(Page page)
@@ -465,7 +473,8 @@ PageGetFreeSpace(Page page)
 
 /*
  * PageGetExactFreeSpace
- *		Returns the size of the free (allocatable) space on a page.
+ *		Returns the size of the free (allocatable) space on a page,
+ *		without any consideration for adding/removing line pointers.
  */
 Size
 PageGetExactFreeSpace(Page page)
@@ -480,6 +489,73 @@ PageGetExactFreeSpace(Page page)
 		(int) ((PageHeader) page)->pd_lower;
 
 	return (Size) space;
+}
+
+
+/*
+ * PageGetHeapFreeSpace
+ *		Returns the size of the free (allocatable) space on a page,
+ *		reduced by the space needed for a new line pointer.
+ *
+ * The difference between this and PageGetFreeSpace is that this will return
+ * zero if there are already MaxHeapTuplesPerPage line pointers in the page
+ * and none are free.  We use this to enforce that no more than
+ * MaxHeapTuplesPerPage line pointers are created on a heap page.  (Although
+ * no more tuples than that could fit anyway, in the presence of redirected
+ * or dead line pointers it'd be possible to have too many line pointers.
+ * To avoid breaking code that assumes MaxHeapTuplesPerPage is a hard limit
+ * on the number of line pointers, we make this extra check.)
+ */
+Size
+PageGetHeapFreeSpace(Page page)
+{
+	Size			space;
+
+	space = PageGetFreeSpace(page);
+	if (space > 0)
+	{
+		OffsetNumber	offnum, nline;
+
+		/*
+		 * Are there already MaxHeapTuplesPerPage line pointers in the page?
+		 */
+		nline = PageGetMaxOffsetNumber(page);
+		if (nline >= MaxHeapTuplesPerPage)
+		{
+			if (PageHasFreeLinePointers((PageHeader) page))
+			{
+				/*
+				 * Since this is just a hint, we must confirm that there is
+				 * indeed a free line pointer
+				 */
+				for (offnum = FirstOffsetNumber; offnum <= nline; offnum++)
+				{
+					ItemId	lp = PageGetItemId(page, offnum);
+
+					if (!ItemIdIsUsed(lp))
+						break;
+				}
+
+				if (offnum > nline)
+				{
+					/*
+					 * The hint is wrong, but we can't clear it here since
+					 * we don't have the ability to mark the page dirty.
+					 */
+					space = 0;
+				}
+			}
+			else
+			{
+				/*
+				 * Although the hint might be wrong, PageAddItem will believe
+				 * it anyway, so we must believe it too.
+				 */
+				space = 0;
+			}
+		}
+	}
+	return space;
 }
 
 

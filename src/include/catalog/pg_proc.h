@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.470 2007/09/18 17:41:17 adunstan Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_proc.h,v 1.471 2007/09/20 17:56:32 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2873,6 +2873,8 @@ DATA(insert OID = 1932 (  pg_stat_get_tuples_updated	PGNSP PGUID 12 1 0 f f t f 
 DESCR("statistics: number of tuples updated");
 DATA(insert OID = 1933 (  pg_stat_get_tuples_deleted	PGNSP PGUID 12 1 0 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_tuples_deleted - _null_ _null_ ));
 DESCR("statistics: number of tuples deleted");
+DATA(insert OID = 1972 (  pg_stat_get_tuples_hot_updated PGNSP PGUID 12 1 0 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_tuples_hot_updated - _null_ _null_ ));
+DESCR("statistics: number of tuples hot updated");
 DATA(insert OID = 2878 (  pg_stat_get_live_tuples	PGNSP PGUID 12 1 0 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_live_tuples - _null_ _null_ ));
 DESCR("statistics: number of live tuples");
 DATA(insert OID = 2879 (  pg_stat_get_dead_tuples	PGNSP PGUID 12 1 0 f f t f s 1 20 "26" _null_ _null_ _null_ pg_stat_get_dead_tuples - _null_ _null_ ));

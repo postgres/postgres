@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_index.h,v 1.43 2007/01/09 02:14:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_index.h,v 1.44 2007/09/20 17:56:32 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -42,6 +42,8 @@ CATALOG(pg_index,2610) BKI_WITHOUT_OIDS
 	bool		indisprimary;	/* is this index for primary key? */
 	bool		indisclustered; /* is this the index last clustered by? */
 	bool		indisvalid;		/* is this index valid for use by queries? */
+	bool		indcheckxmin;	/* must we wait for xmin to be old? */
+	bool		indisready;		/* is this index ready for inserts? */
 
 	/* VARIABLE LENGTH FIELDS: */
 	int2vector	indkey;			/* column numbers of indexed cols, or 0 */
@@ -65,7 +67,7 @@ typedef FormData_pg_index *Form_pg_index;
  *		compiler constants for pg_index
  * ----------------
  */
-#define Natts_pg_index					12
+#define Natts_pg_index					14
 #define Anum_pg_index_indexrelid		1
 #define Anum_pg_index_indrelid			2
 #define Anum_pg_index_indnatts			3
@@ -73,11 +75,13 @@ typedef FormData_pg_index *Form_pg_index;
 #define Anum_pg_index_indisprimary		5
 #define Anum_pg_index_indisclustered	6
 #define Anum_pg_index_indisvalid		7
-#define Anum_pg_index_indkey			8
-#define Anum_pg_index_indclass			9
-#define Anum_pg_index_indoption			10
-#define Anum_pg_index_indexprs			11
-#define Anum_pg_index_indpred			12
+#define Anum_pg_index_indcheckxmin		8
+#define Anum_pg_index_indisready		9
+#define Anum_pg_index_indkey			10
+#define Anum_pg_index_indclass			11
+#define Anum_pg_index_indoption			12
+#define Anum_pg_index_indexprs			13
+#define Anum_pg_index_indpred			14
 
 /*
  * Index AMs that support ordered scans must support these two indoption

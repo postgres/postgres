@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hashinsert.c,v 1.46 2007/09/12 22:10:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hashinsert.c,v 1.47 2007/09/20 17:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +200,7 @@ _hash_pgaddtup(Relation rel,
 	page = BufferGetPage(buf);
 
 	itup_off = OffsetNumberNext(PageGetMaxOffsetNumber(page));
-	if (PageAddItem(page, (Item) itup, itemsize, itup_off, false)
+	if (PageAddItem(page, (Item) itup, itemsize, itup_off, false, false)
 		== InvalidOffsetNumber)
 		elog(ERROR, "failed to add index item to \"%s\"",
 			 RelationGetRelationName(rel));

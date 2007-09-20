@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.150 2007/08/15 21:39:50 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execUtils.c,v 1.151 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -981,6 +981,10 @@ ExecCloseIndices(ResultRelInfo *resultRelInfo)
  *		stuff as it only exists here because the genam stuff
  *		doesn't provide the functionality needed by the
  *		executor.. -cim 9/27/89
+ *
+ *		CAUTION: this must not be called for a HOT update.
+ *		We can't defend against that here for lack of info.
+ *		Should we change the API to make it safer?
  * ----------------------------------------------------------------
  */
 void
@@ -1028,6 +1032,10 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 			continue;
 
 		indexInfo = indexInfoArray[i];
+
+		/* If the index is marked as read-only, ignore it */
+		if (!indexInfo->ii_ReadyForInserts)
+			continue;
 
 		/* Check for partial index */
 		if (indexInfo->ii_Predicate != NIL)

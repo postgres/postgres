@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.136 2007/05/31 16:57:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/plancat.c,v 1.137 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "access/transam.h"
 #include "catalog/pg_inherits.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
@@ -160,6 +161,20 @@ get_relation_info(PlannerInfo *root, Oid relationObjectId, bool inhparent,
 			 */
 			if (!index->indisvalid)
 			{
+				index_close(indexRelation, NoLock);
+				continue;
+			}
+
+			/*
+			 * If the index is valid, but cannot yet be used, ignore it;
+			 * but mark the plan we are generating as transient.
+			 * See src/backend/access/heap/README.HOT for discussion.
+			 */
+			if (index->indcheckxmin &&
+				!TransactionIdPrecedes(HeapTupleHeaderGetXmin(indexRelation->rd_indextuple->t_data),
+									   TransactionXmin))
+			{
+				root->glob->transientPlan = true;
 				index_close(indexRelation, NoLock);
 				continue;
 			}

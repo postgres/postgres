@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.56 2007/06/09 18:49:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/relscan.h,v 1.57 2007/09/20 17:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,9 @@ typedef struct IndexScanDescData
 	HeapTupleData xs_ctup;		/* current heap tuple, if any */
 	Buffer		xs_cbuf;		/* current heap buffer in scan, if any */
 	/* NB: if xs_cbuf is not InvalidBuffer, we hold a pin on that buffer */
+	TransactionId xs_prev_xmax;	/* previous HOT chain member's XMAX, if any */
+	OffsetNumber xs_next_hot;	/* next member of HOT chain, if any */
+	bool		xs_hot_dead;	/* T if all members of HOT chain are dead */
 } IndexScanDescData;
 
 typedef IndexScanDescData *IndexScanDesc;

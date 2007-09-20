@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.165 2007/09/10 21:59:37 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.166 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,6 +119,7 @@ DefineIndex(RangeVar *heapRelation,
 	Oid			namespaceId;
 	Oid			tablespaceId;
 	Relation	rel;
+	Relation	indexRelation;
 	HeapTuple	tuple;
 	Form_pg_am	accessMethodForm;
 	bool		amcanorder;
@@ -420,7 +421,10 @@ DefineIndex(RangeVar *heapRelation,
 	indexInfo->ii_Predicate = make_ands_implicit(predicate);
 	indexInfo->ii_PredicateState = NIL;
 	indexInfo->ii_Unique = unique;
+	/* In a concurrent build, mark it not-ready-for-inserts */
+	indexInfo->ii_ReadyForInserts = !concurrent;
 	indexInfo->ii_Concurrent = concurrent;
+	indexInfo->ii_BrokenHotChain = false;
 
 	classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 	coloptions = (int16 *) palloc(numberOfAttributes * sizeof(int16));
@@ -439,23 +443,38 @@ DefineIndex(RangeVar *heapRelation,
 				  primary ? "PRIMARY KEY" : "UNIQUE",
 				  indexRelationName, RelationGetRelationName(rel))));
 
-	/* save lockrelid for below, then close rel */
+	/* save lockrelid and locktag for below, then close rel */
 	heaprelid = rel->rd_lockInfo.lockRelId;
+	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
 	heap_close(rel, NoLock);
 
+	if (!concurrent)
+	{
+		indexRelationId =
+			index_create(relationId, indexRelationName, indexRelationId,
+						 indexInfo, accessMethodId, tablespaceId, classObjectId,
+						 coloptions, reloptions, primary, isconstraint,
+						 allowSystemTableMods, skip_build, concurrent);
+
+		return;					/* We're done, in the standard case */
+	}
+
+	/*
+	 * For a concurrent build, we next insert the catalog entry and add
+	 * constraints.  We don't build the index just yet; we must first make
+	 * the catalog entry so that the new index is visible to updating
+	 * transactions.  That will prevent them from making incompatible HOT
+	 * updates.  The new index will be marked not indisready and not
+	 * indisvalid, so that no one else tries to either insert into it or use
+	 * it for queries.  We pass skip_build = true to prevent the build.
+	 */
 	indexRelationId =
 		index_create(relationId, indexRelationName, indexRelationId,
 					 indexInfo, accessMethodId, tablespaceId, classObjectId,
 					 coloptions, reloptions, primary, isconstraint,
-					 allowSystemTableMods, skip_build, concurrent);
-
-	if (!concurrent)
-		return;					/* We're done, in the standard case */
+				 	 allowSystemTableMods, true, concurrent);
 
 	/*
-	 * Phase 2 of concurrent index build (see comments for validate_index()
-	 * for an overview of how this works)
-	 *
 	 * We must commit our current transaction so that the index becomes
 	 * visible; then start another.  Note that all the data structures we just
 	 * built are lost in the commit.  The only data we keep past here are the
@@ -476,6 +495,9 @@ DefineIndex(RangeVar *heapRelation,
 	StartTransactionCommand();
 
 	/*
+	 * Phase 2 of concurrent index build (see comments for validate_index()
+	 * for an overview of how this works)
+	 *
 	 * Now we must wait until no running transaction could have the table open
 	 * with the old list of indexes.  To do this, inquire which xacts
 	 * currently would conflict with ShareLock on the table -- ie, which ones
@@ -494,7 +516,91 @@ DefineIndex(RangeVar *heapRelation,
 	 * check for that.  Also, prepared xacts are not reported, which is
 	 * fine since they certainly aren't going to do anything more.
 	 */
-	SET_LOCKTAG_RELATION(heaplocktag, heaprelid.dbId, heaprelid.relId);
+	old_lockholders = GetLockConflicts(&heaplocktag, ShareLock);
+
+	while (VirtualTransactionIdIsValid(*old_lockholders))
+	{
+		VirtualXactLockTableWait(*old_lockholders);
+		old_lockholders++;
+	}
+
+	/*
+	 * At this moment we are sure that there are no transactions with the
+	 * table open for write that don't have this new index in their list of
+	 * indexes.  We have waited out all the existing transactions and any new
+	 * transaction will have the new index in its list, but the index is still
+	 * marked as "not-ready-for-inserts".  The index is consulted while
+	 * deciding HOT-safety though.  This arrangement ensures that no new HOT
+	 * chains can be created where the new tuple and the old tuple in the
+	 * chain have different index keys.
+	 *
+	 * We now take a new snapshot, and build the index using all tuples that
+	 * are visible in this snapshot.  We can be sure that any HOT updates
+	 * to these tuples will be compatible with the index, since any updates
+	 * made by transactions that didn't know about the index are now committed
+	 * or rolled back.  Thus, each visible tuple is either the end of its
+	 * HOT-chain or the extension of the chain is HOT-safe for this index.
+	 */
+
+	/* Open and lock the parent heap relation */
+	rel = heap_openrv(heapRelation, ShareUpdateExclusiveLock);
+
+	/* And the target index relation */
+	indexRelation = index_open(indexRelationId, RowExclusiveLock);
+
+	/* Set ActiveSnapshot since functions in the indexes may need it */
+	ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
+
+	/* We have to re-build the IndexInfo struct, since it was lost in commit */
+	indexInfo = BuildIndexInfo(indexRelation);
+	Assert(!indexInfo->ii_ReadyForInserts);
+	indexInfo->ii_Concurrent = true;
+	indexInfo->ii_BrokenHotChain = false;
+
+	/* Now build the index */
+	index_build(rel, indexRelation, indexInfo, primary);
+
+	/* Close both the relations, but keep the locks */
+	heap_close(rel, NoLock);
+	index_close(indexRelation, NoLock);
+
+	/*
+	 * Update the pg_index row to mark the index as ready for inserts.
+	 * Once we commit this transaction, any new transactions that
+	 * open the table must insert new entries into the index for insertions
+	 * and non-HOT updates.
+	 */
+	pg_index = heap_open(IndexRelationId, RowExclusiveLock);
+
+	indexTuple = SearchSysCacheCopy(INDEXRELID,
+									ObjectIdGetDatum(indexRelationId),
+									0, 0, 0);
+	if (!HeapTupleIsValid(indexTuple))
+		elog(ERROR, "cache lookup failed for index %u", indexRelationId);
+	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
+
+	Assert(!indexForm->indisready);
+	Assert(!indexForm->indisvalid);
+
+	indexForm->indisready = true;
+
+	simple_heap_update(pg_index, &indexTuple->t_self, indexTuple);
+	CatalogUpdateIndexes(pg_index, indexTuple);
+
+	heap_close(pg_index, RowExclusiveLock);
+
+	/*
+	 * Commit this transaction to make the indisready update visible.
+	 */
+	CommitTransactionCommand();
+	StartTransactionCommand();
+
+	/*
+	 * Phase 3 of concurrent index build
+	 *
+	 * We once again wait until no transaction can have the table open with
+	 * the index marked as read-only for updates.
+	 */
 	old_lockholders = GetLockConflicts(&heaplocktag, ShareLock);
 
 	while (VirtualTransactionIdIsValid(*old_lockholders))
@@ -505,7 +611,7 @@ DefineIndex(RangeVar *heapRelation,
 
 	/*
 	 * Now take the "reference snapshot" that will be used by validate_index()
-	 * to filter candidate tuples.  Beware!  There might be still snapshots
+	 * to filter candidate tuples.  Beware!  There might still be snapshots
 	 * in use that treat some transaction as in-progress that our reference
 	 * snapshot treats as committed.  If such a recently-committed transaction
 	 * deleted tuples in the table, we will not include them in the index; yet
@@ -560,7 +666,7 @@ DefineIndex(RangeVar *heapRelation,
 		elog(ERROR, "cache lookup failed for index %u", indexRelationId);
 	indexForm = (Form_pg_index) GETSTRUCT(indexTuple);
 
-	Assert(indexForm->indexrelid = indexRelationId);
+	Assert(indexForm->indisready);
 	Assert(!indexForm->indisvalid);
 
 	indexForm->indisvalid = true;
@@ -575,7 +681,8 @@ DefineIndex(RangeVar *heapRelation,
 	 * relcache entries for the index itself, but we should also send a
 	 * relcache inval on the parent table to force replanning of cached plans.
 	 * Otherwise existing sessions might fail to use the new index where it
-	 * would be useful.
+	 * would be useful.  (Note that our earlier commits did not create
+	 * reasons to replan; relcache flush on the index itself was sufficient.)
 	 */
 	CacheInvalidateRelcacheByRelid(heaprelid.relId);
 

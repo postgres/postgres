@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.262 2007/07/25 22:16:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.263 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #include "access/reloptions.h"
 #include "access/xact.h"
 #include "catalog/catalog.h"
+#include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_amop.h"
@@ -51,6 +52,7 @@
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
+#include "optimizer/var.h"
 #include "rewrite/rewriteDefine.h"
 #include "storage/fd.h"
 #include "storage/smgr.h"
@@ -1658,6 +1660,10 @@ RelationReloadIndexInfo(Relation relation)
 		index = (Form_pg_index) GETSTRUCT(tuple);
 
 		relation->rd_index->indisvalid = index->indisvalid;
+		relation->rd_index->indcheckxmin = index->indcheckxmin;
+		relation->rd_index->indisready = index->indisready;
+		HeapTupleHeaderSetXmin(relation->rd_indextuple->t_data,
+							   HeapTupleHeaderGetXmin(tuple->t_data));
 
 		ReleaseSysCache(tuple);
 	}
@@ -1762,6 +1768,7 @@ RelationClearRelation(Relation relation, bool rebuild)
 	if (relation->rd_options)
 		pfree(relation->rd_options);
 	list_free(relation->rd_indexlist);
+	bms_free(relation->rd_indexattr);
 	if (relation->rd_indexcxt)
 		MemoryContextDelete(relation->rd_indexcxt);
 
@@ -2969,6 +2976,7 @@ RelationSetIndexList(Relation relation, List *indexIds, Oid oidIndex)
 	relation->rd_indexvalid = 2;	/* mark list as forced */
 	/* must flag that we have a forced index list */
 	need_eoxact_work = true;
+	/* we deliberately do not change rd_indexattr */
 }
 
 /*
@@ -3138,6 +3146,91 @@ RelationGetIndexPredicate(Relation relation)
 	MemoryContextSwitchTo(oldcxt);
 
 	return result;
+}
+
+/*
+ * RelationGetIndexAttrBitmap -- get a bitmap of index attribute numbers
+ *
+ * The result has a bit set for each attribute used anywhere in the index
+ * definitions of all the indexes on this relation.  (This includes not only
+ * simple index keys, but attributes used in expressions and partial-index
+ * predicates.)
+ *
+ * Attribute numbers are offset by FirstLowInvalidHeapAttributeNumber so that
+ * we can include system attributes (e.g., OID) in the bitmap representation.
+ *
+ * The returned result is palloc'd in the caller's memory context and should
+ * be bms_free'd when not needed anymore.
+ */
+Bitmapset *
+RelationGetIndexAttrBitmap(Relation relation)
+{
+	Bitmapset	*indexattrs;
+	List		*indexoidlist;
+	ListCell	*l;
+	MemoryContext oldcxt;
+
+	/* Quick exit if we already computed the result. */
+	if (relation->rd_indexattr != NULL)
+		return bms_copy(relation->rd_indexattr);
+
+	/* Fast path if definitely no indexes */
+	if (!RelationGetForm(relation)->relhasindex)
+		return NULL;
+
+	/*
+	 * Get cached list of index OIDs
+	 */
+	indexoidlist = RelationGetIndexList(relation);
+
+	/* Fall out if no indexes (but relhasindex was set) */
+	if (indexoidlist == NIL)
+		return NULL;
+
+	/*
+	 * For each index, add referenced attributes to indexattrs.
+	 */
+	indexattrs = NULL;
+	foreach(l, indexoidlist)
+	{
+		Oid			indexOid = lfirst_oid(l);
+		Relation	indexDesc;
+		IndexInfo  *indexInfo;
+		int 		i;
+
+		indexDesc = index_open(indexOid, AccessShareLock);
+
+		/* Extract index key information from the index's pg_index row */
+		indexInfo = BuildIndexInfo(indexDesc);
+
+		/* Collect simple attribute references */
+		for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
+		{
+			int attrnum = indexInfo->ii_KeyAttrNumbers[i];
+
+			if (attrnum != 0)
+				indexattrs = bms_add_member(indexattrs,
+						attrnum - FirstLowInvalidHeapAttributeNumber);
+		}
+
+		/* Collect all attributes used in expressions, too */
+		pull_varattnos((Node *) indexInfo->ii_Expressions, &indexattrs);
+
+		/* Collect all attributes in the index predicate, too */
+		pull_varattnos((Node *) indexInfo->ii_Predicate, &indexattrs);
+
+		index_close(indexDesc, AccessShareLock);
+	}
+
+	list_free(indexoidlist);
+
+	/* Now save a copy of the bitmap in the relcache entry. */
+	oldcxt = MemoryContextSwitchTo(CacheMemoryContext);
+	relation->rd_indexattr = bms_copy(indexattrs);
+	MemoryContextSwitchTo(oldcxt);
+
+	/* We return our original working copy for caller to play with */
+	return indexattrs;
 }
 
 
@@ -3465,6 +3558,7 @@ load_relcache_init_file(void)
 			rel->rd_refcnt = 0;
 		rel->rd_indexvalid = 0;
 		rel->rd_indexlist = NIL;
+		rel->rd_indexattr = NULL;
 		rel->rd_oidindex = InvalidOid;
 		rel->rd_createSubid = InvalidSubTransactionId;
 		rel->rd_newRelfilenodeSubid = InvalidSubTransactionId;

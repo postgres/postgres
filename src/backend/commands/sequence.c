@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.145 2007/09/12 22:10:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.146 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1281,7 +1281,7 @@ seq_redo(XLogRecPtr lsn, XLogRecord *record)
 	itemsz = record->xl_len - sizeof(xl_seq_rec);
 	itemsz = MAXALIGN(itemsz);
 	if (PageAddItem(page, (Item) item, itemsz,
-					FirstOffsetNumber, false) == InvalidOffsetNumber)
+					FirstOffsetNumber, false, false) == InvalidOffsetNumber)
 		elog(PANIC, "seq_redo: failed to add item to page");
 
 	PageSetLSN(page, lsn);

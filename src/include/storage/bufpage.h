@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.73 2007/09/12 22:10:26 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.74 2007/09/20 17:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,10 +140,21 @@ typedef PageHeaderData *PageHeader;
  * PD_HAS_FREE_LINES is set if there are any LP_UNUSED line pointers before
  * pd_lower.  This should be considered a hint rather than the truth, since
  * changes to it are not WAL-logged.
+ *
+ * PD_PRUNABLE is set if there are any prunable tuples in the page.
+ * This should be considered a hint rather than the truth, since
+ * the transaction which generates a prunable tuple may or may not commit.
+ * Also there is a lag before a tuple is declared dead.
+ *
+ * PD_PAGE_FULL is set if an UPDATE doesn't find enough free space in the
+ * page for its new tuple version; this suggests that a prune is needed.
+ * Again, this is just a hint.
  */
 #define PD_HAS_FREE_LINES	0x0001	/* are there any unused line pointers? */
+#define PD_PRUNABLE			0x0002	/* are there any prunable tuples? */
+#define PD_PAGE_FULL		0x0004	/* not enough free space for new tuple? */
 
-#define PD_VALID_FLAG_BITS	0x0001	/* OR of all valid pd_flags bits */
+#define PD_VALID_FLAG_BITS	0x0007	/* OR of all valid pd_flags bits */
 
 /*
  * Page layout version number 0 is for pre-7.3 Postgres releases.
@@ -337,6 +348,20 @@ typedef PageHeaderData *PageHeader;
 #define PageClearHasFreeLinePointers(page) \
 	(((PageHeader) (page))->pd_flags &= ~PD_HAS_FREE_LINES)
 
+#define PageIsPrunable(page) \
+	(((PageHeader) (page))->pd_flags & PD_PRUNABLE)
+#define PageSetPrunable(page) \
+	(((PageHeader) (page))->pd_flags |= PD_PRUNABLE)
+#define PageClearPrunable(page) \
+	(((PageHeader) (page))->pd_flags &= ~PD_PRUNABLE)
+
+#define PageIsFull(page) \
+	(((PageHeader) (page))->pd_flags & PD_PAGE_FULL)
+#define PageSetFull(page) \
+	(((PageHeader) (page))->pd_flags |= PD_PAGE_FULL)
+#define PageClearFull(page) \
+	(((PageHeader) (page))->pd_flags &= ~PD_PAGE_FULL)
+
 
 /* ----------------------------------------------------------------
  *		extern declarations
@@ -346,12 +371,13 @@ typedef PageHeaderData *PageHeader;
 extern void PageInit(Page page, Size pageSize, Size specialSize);
 extern bool PageHeaderIsValid(PageHeader page);
 extern OffsetNumber PageAddItem(Page page, Item item, Size size,
-			OffsetNumber offsetNumber, bool overwrite);
+			OffsetNumber offsetNumber, bool overwrite, bool is_heap);
 extern Page PageGetTempPage(Page page, Size specialSize);
 extern void PageRestoreTempPage(Page tempPage, Page oldPage);
-extern int	PageRepairFragmentation(Page page, OffsetNumber *unused);
+extern void PageRepairFragmentation(Page page);
 extern Size PageGetFreeSpace(Page page);
 extern Size PageGetExactFreeSpace(Page page);
+extern Size PageGetHeapFreeSpace(Page page);
 extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
 extern void PageIndexMultiDelete(Page page, OffsetNumber *itemnos, int nitems);
 

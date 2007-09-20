@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.7 2007/06/05 20:00:41 wieck Exp $
+ * $PostgreSQL: pgsql/src/include/utils/plancache.h,v 1.8 2007/09/20 17:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,8 @@ typedef struct CachedPlan
 	List	   *stmt_list;		/* list of statement or Query nodes */
 	bool		fully_planned;	/* do we cache planner or rewriter output? */
 	bool		dead;			/* if true, do not use */
+	TransactionId saved_xmin;	/* if valid, replan when TransactionXmin
+								 * changes from this value */
 	int			refcount;		/* count of live references to this struct */
 	int			generation;		/* counter, starting at 1, for replans */
 	MemoryContext context;		/* context containing this CachedPlan */

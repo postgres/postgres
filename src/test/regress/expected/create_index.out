@@ -415,6 +415,7 @@ Table "public.concur_heap"
  f2     | text | 
 Indexes:
     "concur_index2" UNIQUE, btree (f1)
+    "concur_index3" UNIQUE, btree (f2) INVALID
     "concur_index1" btree (f2, f1)
     "concur_index4" btree (f2) WHERE f1 = 'a'::text
     "concur_index5" btree (f2) WHERE f1 = 'x'::text

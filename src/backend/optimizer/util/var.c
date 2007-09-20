@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.70 2007/06/11 01:16:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.71 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/htup.h"
 #include "optimizer/clauses.h"
 #include "optimizer/prep.h"
 #include "optimizer/var.h"
@@ -54,6 +55,7 @@ typedef struct
 
 static bool pull_varnos_walker(Node *node,
 				   pull_varnos_context *context);
+static bool pull_varattnos_walker(Node *node, Bitmapset **varattnos);
 static bool contain_var_reference_walker(Node *node,
 							 contain_var_reference_context *context);
 static bool contain_var_clause_walker(Node *node, void *context);
@@ -132,6 +134,47 @@ pull_varnos_walker(Node *node, pull_varnos_context *context)
 	}
 	return expression_tree_walker(node, pull_varnos_walker,
 								  (void *) context);
+}
+
+/*
+ * pull_varattnos
+ *		Find all the distinct attribute numbers present in an expression tree,
+ *		and add them to the initial contents of *varattnos.
+ *		Only Vars that reference RTE 1 of rtable level zero are considered.
+ *
+ * Attribute numbers are offset by FirstLowInvalidHeapAttributeNumber so that
+ * we can include system attributes (e.g., OID) in the bitmap representation.
+ *
+ * Currently, this does not support subqueries nor expressions containing
+ * references to multiple tables; not needed since it's only applied to
+ * index expressions and predicates.
+ */
+void
+pull_varattnos(Node *node, Bitmapset **varattnos)
+{
+	(void) pull_varattnos_walker(node, varattnos);
+}
+
+static bool
+pull_varattnos_walker(Node *node, Bitmapset **varattnos)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		Assert(var->varno == 1);
+		*varattnos = bms_add_member(*varattnos,
+						var->varattno - FirstLowInvalidHeapAttributeNumber);
+		return false;
+	}
+	/* Should not find a subquery or subplan */
+	Assert(!IsA(node, Query));
+	Assert(!is_subplan(node));
+
+	return expression_tree_walker(node, pull_varattnos_walker,
+								  (void *) varattnos);
 }
 
 

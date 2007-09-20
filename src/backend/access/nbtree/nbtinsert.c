@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.159 2007/09/12 22:10:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.160 2007/09/20 17:56:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -193,8 +193,6 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 	 */
 	for (;;)
 	{
-		HeapTupleData htup;
-		Buffer		hbuffer;
 		ItemId		curitemid;
 		IndexTuple	curitup;
 		BlockNumber nblkno;
@@ -223,6 +221,9 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 			 */
 			if (!ItemIdIsDead(curitemid))
 			{
+				ItemPointerData htid;
+				bool all_dead;
+
 				/*
 				 * _bt_compare returns 0 for (1,NULL) and (1,NULL) - this's
 				 * how we handling NULLs - and so we must not use _bt_compare
@@ -234,16 +235,19 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 
 				/* okay, we gotta fetch the heap tuple ... */
 				curitup = (IndexTuple) PageGetItem(page, curitemid);
-				htup.t_self = curitup->t_tid;
-				if (heap_fetch(heapRel, &SnapshotDirty, &htup, &hbuffer,
-							   true, NULL))
+				htid = curitup->t_tid;
+
+				/*
+				 * We check the whole HOT-chain to see if there is any tuple
+				 * that satisfies SnapshotDirty.  This is necessary because
+				 * we have just a single index entry for the entire chain.
+				 */
+				if (heap_hot_search(&htid, heapRel, &SnapshotDirty, &all_dead))
 				{
 					/* it is a duplicate */
 					TransactionId xwait =
 					(TransactionIdIsValid(SnapshotDirty.xmin)) ?
 					SnapshotDirty.xmin : SnapshotDirty.xmax;
-
-					ReleaseBuffer(hbuffer);
 
 					/*
 					 * If this tuple is being updated by other transaction
@@ -263,15 +267,22 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 					 * is itself now committed dead --- if so, don't complain.
 					 * This is a waste of time in normal scenarios but we must
 					 * do it to support CREATE INDEX CONCURRENTLY.
+					 * 
+					 * We must follow HOT-chains here because during
+					 * concurrent index build, we insert the root TID though
+					 * the actual tuple may be somewhere in the HOT-chain.
+					 * While following the chain we might not stop at the exact
+					 * tuple which triggered the insert, but that's OK because
+					 * if we find a live tuple anywhere in this chain, we have
+					 * a unique key conflict.  The other live tuple is not part
+					 * of this chain because it had a different index entry.
 					 */
-					htup.t_self = itup->t_tid;
-					if (heap_fetch(heapRel, SnapshotSelf, &htup, &hbuffer,
-								   false, NULL))
+					htid = itup->t_tid;
+					if (heap_hot_search(&htid, heapRel, SnapshotSelf, NULL))
 					{
 						/* Normal case --- it's still live */
-						ReleaseBuffer(hbuffer);
 					}
-					else if (htup.t_data != NULL)
+					else
 					{
 						/*
 						 * It's been deleted, so no error, and no need to
@@ -279,39 +290,27 @@ _bt_check_unique(Relation rel, IndexTuple itup, Relation heapRel,
 						 */
 						break;
 					}
-					else
-					{
-						/* couldn't find the tuple?? */
-						elog(ERROR, "failed to fetch tuple being inserted");
-					}
 
 					ereport(ERROR,
 							(errcode(ERRCODE_UNIQUE_VIOLATION),
 					errmsg("duplicate key value violates unique constraint \"%s\"",
 						   RelationGetRelationName(rel))));
 				}
-				else if (htup.t_data != NULL)
+				else if (all_dead)
 				{
 					/*
-					 * Hmm, if we can't see the tuple, maybe it can be marked
-					 * killed.	This logic should match index_getnext and
-					 * btgettuple.
+					 * The conflicting tuple (or whole HOT chain) is dead to
+					 * everyone, so we may as well mark the index entry
+					 * killed.
 					 */
-					LockBuffer(hbuffer, BUFFER_LOCK_SHARE);
-					if (HeapTupleSatisfiesVacuum(htup.t_data, RecentGlobalXmin,
-												 hbuffer) == HEAPTUPLE_DEAD)
-					{
-						ItemIdMarkDead(curitemid);
-						opaque->btpo_flags |= BTP_HAS_GARBAGE;
-						/* be sure to mark the proper buffer dirty... */
-						if (nbuf != InvalidBuffer)
-							SetBufferCommitInfoNeedsSave(nbuf);
-						else
-							SetBufferCommitInfoNeedsSave(buf);
-					}
-					LockBuffer(hbuffer, BUFFER_LOCK_UNLOCK);
+					ItemIdMarkDead(curitemid);
+					opaque->btpo_flags |= BTP_HAS_GARBAGE;
+					/* be sure to mark the proper buffer dirty... */
+					if (nbuf != InvalidBuffer)
+						SetBufferCommitInfoNeedsSave(nbuf);
+					else
+						SetBufferCommitInfoNeedsSave(buf);
 				}
-				ReleaseBuffer(hbuffer);
 			}
 		}
 
@@ -840,7 +839,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		itemsz = ItemIdGetLength(itemid);
 		item = (IndexTuple) PageGetItem(origpage, itemid);
 		if (PageAddItem(rightpage, (Item) item, itemsz, rightoff,
-						false) == InvalidOffsetNumber)
+						false, false) == InvalidOffsetNumber)
 			elog(PANIC, "failed to add hikey to the right sibling");
 		rightoff = OffsetNumberNext(rightoff);
 	}
@@ -865,7 +864,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		item = (IndexTuple) PageGetItem(origpage, itemid);
 	}
 	if (PageAddItem(leftpage, (Item) item, itemsz, leftoff,
-					false) == InvalidOffsetNumber)
+					false, false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add hikey to the left sibling");
 	leftoff = OffsetNumberNext(leftoff);
 
@@ -1700,7 +1699,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 * benefit of _bt_restore_page().
 	 */
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_HIKEY,
-					false) == InvalidOffsetNumber)
+					false, false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add leftkey to new root page");
 	pfree(new_item);
 
@@ -1718,7 +1717,7 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 	 * insert the right page pointer into the new root page.
 	 */
 	if (PageAddItem(rootpage, (Item) new_item, itemsz, P_FIRSTKEY,
-					false) == InvalidOffsetNumber)
+					false, false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add rightkey to new root page");
 	pfree(new_item);
 
@@ -1805,7 +1804,7 @@ _bt_pgaddtup(Relation rel,
 	}
 
 	if (PageAddItem(page, (Item) itup, itemsize, itup_off,
-					false) == InvalidOffsetNumber)
+					false, false) == InvalidOffsetNumber)
 		elog(PANIC, "failed to add item to the %s for \"%s\"",
 			 where, RelationGetRelationName(rel));
 }

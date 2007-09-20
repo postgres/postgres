@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.177 2007/08/15 21:39:50 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.178 2007/09/20 17:56:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,12 @@
  *		Predicate			partial-index predicate, or NIL if none
  *		PredicateState		exec state for predicate, or NIL if none
  *		Unique				is it a unique index?
+ *		ReadyForInserts		is it valid for inserts?
  *		Concurrent			are we doing a concurrent index build?
+ *		BrokenHotChain		did we detect any broken HOT chains?
+ *
+ * ii_Concurrent and ii_BrokenHotChain are used only during index build;
+ * they're conventionally set to false otherwise.
  * ----------------
  */
 typedef struct IndexInfo
@@ -50,7 +55,9 @@ typedef struct IndexInfo
 	List	   *ii_Predicate;	/* list of Expr */
 	List	   *ii_PredicateState;		/* list of ExprState */
 	bool		ii_Unique;
+	bool		ii_ReadyForInserts;
 	bool		ii_Concurrent;
+	bool		ii_BrokenHotChain;
 } IndexInfo;
 
 /* ----------------

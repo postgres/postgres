@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.8 2007/09/12 22:10:25 tgl Exp $
+ *			 $PostgreSQL: pgsql/src/backend/access/gin/ginxlog.c,v 1.9 2007/09/20 17:56:30 tgl Exp $
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
@@ -199,7 +199,7 @@ ginRedoInsert(XLogRecPtr lsn, XLogRecord *record)
 
 		itup = (IndexTuple) (XLogRecGetData(record) + sizeof(ginxlogInsert));
 
-		if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), data->offset, false) == InvalidOffsetNumber)
+		if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), data->offset, false, false) == InvalidOffsetNumber)
 			elog(ERROR, "failed to add item to index page in %u/%u/%u",
 				 data->node.spcNode, data->node.dbNode, data->node.relNode);
 
@@ -281,7 +281,7 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 
 		for (i = 0; i < data->separator; i++)
 		{
-			if (PageAddItem(lpage, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false) == InvalidOffsetNumber)
+			if (PageAddItem(lpage, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add item to index page in %u/%u/%u",
 				  data->node.spcNode, data->node.dbNode, data->node.relNode);
 			itup = (IndexTuple) (((char *) itup) + MAXALIGN(IndexTupleSize(itup)));
@@ -289,7 +289,7 @@ ginRedoSplit(XLogRecPtr lsn, XLogRecord *record)
 
 		for (i = data->separator; i < data->nitem; i++)
 		{
-			if (PageAddItem(rpage, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false) == InvalidOffsetNumber)
+			if (PageAddItem(rpage, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add item to index page in %u/%u/%u",
 				  data->node.spcNode, data->node.dbNode, data->node.relNode);
 			itup = (IndexTuple) (((char *) itup) + MAXALIGN(IndexTupleSize(itup)));
@@ -375,7 +375,7 @@ ginRedoVacuumPage(XLogRecPtr lsn, XLogRecord *record)
 
 		for (i = 0; i < data->nitem; i++)
 		{
-			if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false) == InvalidOffsetNumber)
+			if (PageAddItem(page, (Item) itup, IndexTupleSize(itup), InvalidOffsetNumber, false, false) == InvalidOffsetNumber)
 				elog(ERROR, "failed to add item to index page in %u/%u/%u",
 				  data->node.spcNode, data->node.dbNode, data->node.relNode);
 			itup = (IndexTuple) (((char *) itup) + MAXALIGN(IndexTupleSize(itup)));

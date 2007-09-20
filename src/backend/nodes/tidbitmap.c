@@ -23,7 +23,7 @@
  * Copyright (c) 2003-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.12 2007/04/26 23:24:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/tidbitmap.c,v 1.13 2007/09/20 17:56:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,7 @@
 #include <limits.h>
 
 #include "access/htup.h"
+#include "nodes/bitmapset.h"
 #include "nodes/tidbitmap.h"
 #include "storage/bufpage.h"
 #include "utils/hsearch.h"
@@ -61,9 +62,7 @@
  */
 #define PAGES_PER_CHUNK  (BLCKSZ / 32)
 
-/* The bitmap unit size can be adjusted by changing these declarations: */
-#define BITS_PER_BITMAPWORD 32
-typedef uint32 bitmapword;		/* must be an unsigned type */
+/* We use BITS_PER_BITMAPWORD and typedef bitmapword from nodes/bitmapset.h */
 
 #define WORDNUM(x)	((x) / BITS_PER_BITMAPWORD)
 #define BITNUM(x)	((x) % BITS_PER_BITMAPWORD)

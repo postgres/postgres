@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.44 2007/09/11 08:51:22 teodor Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.45 2007/09/20 17:56:30 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -207,6 +207,7 @@ CREATE VIEW pg_stat_all_tables AS
             pg_stat_get_tuples_inserted(C.oid) AS n_tup_ins, 
             pg_stat_get_tuples_updated(C.oid) AS n_tup_upd, 
             pg_stat_get_tuples_deleted(C.oid) AS n_tup_del,
+            pg_stat_get_tuples_hot_updated(C.oid) AS n_tup_hot_upd,
             pg_stat_get_live_tuples(C.oid) AS n_live_tup, 
             pg_stat_get_dead_tuples(C.oid) AS n_dead_tup,
             pg_stat_get_last_vacuum_time(C.oid) as last_vacuum,

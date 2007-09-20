@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.65 2007/09/11 03:28:05 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.66 2007/09/20 17:56:32 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -55,10 +55,10 @@ typedef int64 PgStat_Counter;
  * the index AM, while tuples_fetched is the number of tuples successfully
  * fetched by heap_fetch under the control of simple indexscans for this index.
  *
- * tuples_inserted/tuples_updated/tuples_deleted count attempted actions,
+ * tuples_inserted/updated/deleted/hot_updated count attempted actions,
  * regardless of whether the transaction committed.  new_live_tuples and
  * new_dead_tuples are properly adjusted depending on commit or abort.
- * Note that new_live_tuples can be negative!
+ * Note that new_live_tuples and new_dead_tuples can be negative!
  * ----------
  */
 typedef struct PgStat_TableCounts
@@ -71,6 +71,7 @@ typedef struct PgStat_TableCounts
 	PgStat_Counter t_tuples_inserted;
 	PgStat_Counter t_tuples_updated;
 	PgStat_Counter t_tuples_deleted;
+	PgStat_Counter t_tuples_hot_updated;
 
 	PgStat_Counter t_new_live_tuples;
 	PgStat_Counter t_new_dead_tuples;
@@ -323,7 +324,7 @@ typedef union PgStat_Msg
  * ------------------------------------------------------------
  */
 
-#define PGSTAT_FILE_FORMAT_ID	0x01A5BC96
+#define PGSTAT_FILE_FORMAT_ID	0x01A5BC97
 
 /* ----------
  * PgStat_StatDBEntry			The collector's data per database
@@ -367,6 +368,7 @@ typedef struct PgStat_StatTabEntry
 	PgStat_Counter tuples_inserted;
 	PgStat_Counter tuples_updated;
 	PgStat_Counter tuples_deleted;
+	PgStat_Counter tuples_hot_updated;
 
 	PgStat_Counter n_live_tuples;
 	PgStat_Counter n_dead_tuples;
@@ -545,8 +547,9 @@ extern void pgstat_initstats(Relation rel);
 	} while (0)
 
 extern void pgstat_count_heap_insert(Relation rel);
-extern void pgstat_count_heap_update(Relation rel);
+extern void pgstat_count_heap_update(Relation rel, bool hot);
 extern void pgstat_count_heap_delete(Relation rel);
+extern void pgstat_update_heap_dead_tuples(Relation rel, int delta);
 
 extern void AtEOXact_PgStat(bool isCommit);
 extern void AtEOSubXact_PgStat(bool isCommit, int nestDepth);
