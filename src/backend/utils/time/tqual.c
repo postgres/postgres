@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.105 2007/09/08 20:31:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.106 2007/09/21 18:24:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,15 +219,13 @@ HeapTupleSatisfiesSelf(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
 
 			Assert(!(tuple->t_infomask & HEAP_XMAX_IS_MULTI));
 
-			/* deleting subtransaction aborted? */
-			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)))
 			{
+				/* deleting subtransaction must have aborted */
 				SetHintBits(tuple, buffer, HEAP_XMAX_INVALID,
 							InvalidTransactionId);
 				return true;
 			}
-
-			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
 			return false;
 		}
@@ -395,15 +393,13 @@ HeapTupleSatisfiesNow(HeapTupleHeader tuple, Snapshot snapshot, Buffer buffer)
 
 			Assert(!(tuple->t_infomask & HEAP_XMAX_IS_MULTI));
 
-			/* deleting subtransaction aborted? */
-			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)))
 			{
+				/* deleting subtransaction must have aborted */
 				SetHintBits(tuple, buffer, HEAP_XMAX_INVALID,
 							InvalidTransactionId);
 				return true;
 			}
-
-			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
 			if (HeapTupleHeaderGetCmax(tuple) >= GetCurrentCommandId())
 				return true;	/* deleted after scan started */
@@ -640,15 +636,13 @@ HeapTupleSatisfiesUpdate(HeapTupleHeader tuple, CommandId curcid,
 
 			Assert(!(tuple->t_infomask & HEAP_XMAX_IS_MULTI));
 
-			/* deleting subtransaction aborted? */
-			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)))
 			{
+				/* deleting subtransaction must have aborted */
 				SetHintBits(tuple, buffer, HEAP_XMAX_INVALID,
 							InvalidTransactionId);
 				return HeapTupleMayBeUpdated;
 			}
-
-			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
 			if (HeapTupleHeaderGetCmax(tuple) >= curcid)
 				return HeapTupleSelfUpdated;	/* updated after scan started */
@@ -806,15 +800,13 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple, Snapshot snapshot,
 
 			Assert(!(tuple->t_infomask & HEAP_XMAX_IS_MULTI));
 
-			/* deleting subtransaction aborted? */
-			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)))
 			{
+				/* deleting subtransaction must have aborted */
 				SetHintBits(tuple, buffer, HEAP_XMAX_INVALID,
 							InvalidTransactionId);
 				return true;
 			}
-
-			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
 			return false;
 		}
@@ -970,16 +962,13 @@ HeapTupleSatisfiesMVCC(HeapTupleHeader tuple, Snapshot snapshot,
 
 			Assert(!(tuple->t_infomask & HEAP_XMAX_IS_MULTI));
 
-			/* deleting subtransaction aborted? */
-			/* FIXME -- is this correct w.r.t. the cmax of the tuple? */
-			if (TransactionIdDidAbort(HeapTupleHeaderGetXmax(tuple)))
+			if (!TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)))
 			{
+				/* deleting subtransaction must have aborted */
 				SetHintBits(tuple, buffer, HEAP_XMAX_INVALID,
 							InvalidTransactionId);
 				return true;
 			}
-
-			Assert(TransactionIdIsCurrentTransactionId(HeapTupleHeaderGetXmax(tuple)));
 
 			if (HeapTupleHeaderGetCmax(tuple) >= snapshot->curcid)
 				return true;	/* deleted after scan started */
