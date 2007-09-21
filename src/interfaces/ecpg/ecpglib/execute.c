@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.68 2007/08/14 10:01:52 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.69 2007/09/21 10:59:27 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1492,7 +1492,6 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 	{
 		setlocale(LC_NUMERIC, oldlocale);
 		ECPGfree(oldlocale);
-		ECPGfree(prepname);
 		va_end(args);
 		return false;
 	}
