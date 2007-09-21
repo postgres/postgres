@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.52 2007/07/25 12:22:52 mha Exp $
+ * $PostgreSQL: pgsql/src/include/fmgr.h,v 1.53 2007/09/21 22:52:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,6 +220,8 @@ extern struct varlena *pg_detoast_datum_packed(struct varlena * datum);
 #define PG_GETARG_RAW_VARLENA_P(n)	((struct varlena *) PG_GETARG_POINTER(n))
 /* use this if you want the input datum de-toasted: */
 #define PG_GETARG_VARLENA_P(n) PG_DETOAST_DATUM(PG_GETARG_DATUM(n))
+/* and this if you can handle 1-byte-header datums: */
+#define PG_GETARG_VARLENA_PP(n) PG_DETOAST_DATUM_PACKED(PG_GETARG_DATUM(n))
 /* DatumGetFoo macros for varlena types will typically look like this: */
 #define DatumGetByteaP(X)			((bytea *) PG_DETOAST_DATUM(X))
 #define DatumGetByteaPP(X)			((bytea *) PG_DETOAST_DATUM_PACKED(X))

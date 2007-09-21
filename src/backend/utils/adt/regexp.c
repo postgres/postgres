@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.73 2007/08/11 19:16:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.74 2007/09/21 22:52:52 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -35,8 +35,8 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 
-#define PG_GETARG_TEXT_P_IF_EXISTS(_n) \
-	(PG_NARGS() > (_n) ? PG_GETARG_TEXT_P(_n) : NULL)
+#define PG_GETARG_TEXT_PP_IF_EXISTS(_n) \
+	(PG_NARGS() > (_n) ? PG_GETARG_TEXT_PP(_n) : NULL)
 
 
 /* GUC-settable flavor parameter */
@@ -97,7 +97,8 @@ typedef struct regexp_matches_ctx
 /* this structure describes one cached regular expression */
 typedef struct cached_re_str
 {
-	text	   *cre_pat;		/* original RE (untoasted TEXT form) */
+	char	   *cre_pat;		/* original RE (not null terminated!) */
+	int			cre_pat_len;	/* length of original RE, in bytes */
 	int			cre_flags;		/* compile flags: extended,icase etc */
 	regex_t		cre_re;			/* the compiled regular expression */
 } cached_re_str;
@@ -122,7 +123,7 @@ static Datum build_regexp_split_result(regexp_matches_ctx *splitctx);
  *
  * Returns regex_t *
  *
- *	text_re --- the pattern, expressed as an *untoasted* TEXT object
+ *	text_re --- the pattern, expressed as a TEXT object
  *	cflags --- compile options for the pattern
  *
  * Pattern is given in the database encoding.  We internally convert to
@@ -131,7 +132,8 @@ static Datum build_regexp_split_result(regexp_matches_ctx *splitctx);
 static regex_t *
 RE_compile_and_cache(text *text_re, int cflags)
 {
-	int			text_re_len = VARSIZE(text_re);
+	int			text_re_len = VARSIZE_ANY_EXHDR(text_re);
+	char	   *text_re_val = VARDATA_ANY(text_re);
 	pg_wchar   *pattern;
 	int			pattern_len;
 	int			i;
@@ -146,9 +148,9 @@ RE_compile_and_cache(text *text_re, int cflags)
 	 */
 	for (i = 0; i < num_res; i++)
 	{
-		if (VARSIZE(re_array[i].cre_pat) == text_re_len &&
-			memcmp(re_array[i].cre_pat, text_re, text_re_len) == 0 &&
-			re_array[i].cre_flags == cflags)
+		if (re_array[i].cre_pat_len == text_re_len &&
+			re_array[i].cre_flags == cflags &&
+			memcmp(re_array[i].cre_pat, text_re_val, text_re_len) == 0)
 		{
 			/*
 			 * Found a match; move it to front if not there already.
@@ -170,10 +172,10 @@ RE_compile_and_cache(text *text_re, int cflags)
 	 */
 
 	/* Convert pattern string to wide characters */
-	pattern = (pg_wchar *) palloc((text_re_len - VARHDRSZ + 1) * sizeof(pg_wchar));
-	pattern_len = pg_mb2wchar_with_len(VARDATA(text_re),
+	pattern = (pg_wchar *) palloc((text_re_len + 1) * sizeof(pg_wchar));
+	pattern_len = pg_mb2wchar_with_len(text_re_val,
 									   pattern,
-									   text_re_len - VARHDRSZ);
+									   text_re_len);
 
 	regcomp_result = pg_regcomp(&re_temp.cre_re,
 								pattern,
@@ -204,7 +206,8 @@ RE_compile_and_cache(text *text_re, int cflags)
 				(errcode(ERRCODE_OUT_OF_MEMORY),
 				 errmsg("out of memory")));
 	}
-	memcpy(re_temp.cre_pat, text_re, text_re_len);
+	memcpy(re_temp.cre_pat, text_re_val, text_re_len);
+	re_temp.cre_pat_len = text_re_len;
 	re_temp.cre_flags = cflags;
 
 	/*
@@ -308,7 +311,7 @@ RE_execute(regex_t *re, char *dat, int dat_len,
  *
  * Returns TRUE on match, FALSE on no match
  *
- *	text_re --- the pattern, expressed as an *untoasted* TEXT object
+ *	text_re --- the pattern, expressed as a TEXT object
  *	dat --- the data to match against (need not be null-terminated)
  *	dat_len --- the length of the data string
  *	cflags --- compile options for the pattern
@@ -334,7 +337,7 @@ RE_compile_and_execute(text *text_re, char *dat, int dat_len,
  * parse_re_flags - parse the options argument of regexp_matches and friends
  *
  *	flags --- output argument, filled with desired options
- *	opts --- *untoasted* TEXT object, or NULL for defaults
+ *	opts --- TEXT object, or NULL for defaults
  *
  * This accepts all the options allowed by any of the callers; callers that
  * don't want some have to reject them after the fact.
@@ -348,8 +351,8 @@ parse_re_flags(pg_re_flags *flags, text *opts)
 
 	if (opts)
 	{
-		char   *opt_p = VARDATA(opts);
-		int		opt_len = VARSIZE(opts) - VARHDRSZ;
+		char   *opt_p = VARDATA_ANY(opts);
+		int		opt_len = VARSIZE_ANY_EXHDR(opts);
 		int		i;
 
 		for (i = 0; i < opt_len; i++)
@@ -454,7 +457,7 @@ Datum
 nameregexeq(PG_FUNCTION_ARGS)
 {
 	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	text	   *p = PG_GETARG_TEXT_PP(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
 										  NameStr(*n),
@@ -467,7 +470,7 @@ Datum
 nameregexne(PG_FUNCTION_ARGS)
 {
 	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	text	   *p = PG_GETARG_TEXT_PP(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
 										   NameStr(*n),
@@ -479,12 +482,12 @@ nameregexne(PG_FUNCTION_ARGS)
 Datum
 textregexeq(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	text	   *s = PG_GETARG_TEXT_PP(0);
+	text	   *p = PG_GETARG_TEXT_PP(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
-										  VARDATA(s),
-										  VARSIZE(s) - VARHDRSZ,
+										  VARDATA_ANY(s),
+										  VARSIZE_ANY_EXHDR(s),
 										  regex_flavor,
 										  0, NULL));
 }
@@ -492,12 +495,12 @@ textregexeq(PG_FUNCTION_ARGS)
 Datum
 textregexne(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	text	   *s = PG_GETARG_TEXT_PP(0);
+	text	   *p = PG_GETARG_TEXT_PP(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
-										   VARDATA(s),
-										   VARSIZE(s) - VARHDRSZ,
+										   VARDATA_ANY(s),
+										   VARSIZE_ANY_EXHDR(s),
 										   regex_flavor,
 										   0, NULL));
 }
@@ -513,7 +516,7 @@ Datum
 nameicregexeq(PG_FUNCTION_ARGS)
 {
 	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	text	   *p = PG_GETARG_TEXT_PP(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
 										  NameStr(*n),
@@ -526,7 +529,7 @@ Datum
 nameicregexne(PG_FUNCTION_ARGS)
 {
 	Name		n = PG_GETARG_NAME(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	text	   *p = PG_GETARG_TEXT_PP(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
 										   NameStr(*n),
@@ -538,12 +541,12 @@ nameicregexne(PG_FUNCTION_ARGS)
 Datum
 texticregexeq(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	text	   *s = PG_GETARG_TEXT_PP(0);
+	text	   *p = PG_GETARG_TEXT_PP(1);
 
 	PG_RETURN_BOOL(RE_compile_and_execute(p,
-										  VARDATA(s),
-										  VARSIZE(s) - VARHDRSZ,
+										  VARDATA_ANY(s),
+										  VARSIZE_ANY_EXHDR(s),
 										  regex_flavor | REG_ICASE,
 										  0, NULL));
 }
@@ -551,12 +554,12 @@ texticregexeq(PG_FUNCTION_ARGS)
 Datum
 texticregexne(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	text	   *s = PG_GETARG_TEXT_PP(0);
+	text	   *p = PG_GETARG_TEXT_PP(1);
 
 	PG_RETURN_BOOL(!RE_compile_and_execute(p,
-										   VARDATA(s),
-										   VARSIZE(s) - VARHDRSZ,
+										   VARDATA_ANY(s),
+										   VARSIZE_ANY_EXHDR(s),
 										   regex_flavor | REG_ICASE,
 										   0, NULL));
 }
@@ -569,8 +572,8 @@ texticregexne(PG_FUNCTION_ARGS)
 Datum
 textregexsubstr(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
+	text	   *s = PG_GETARG_TEXT_PP(0);
+	text	   *p = PG_GETARG_TEXT_PP(1);
 	bool		match;
 	regmatch_t	pmatch[2];
 
@@ -581,8 +584,8 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	 * return what the whole regexp matched.
 	 */
 	match = RE_compile_and_execute(p,
-								   VARDATA(s),
-								   VARSIZE(s) - VARHDRSZ,
+								   VARDATA_ANY(s),
+								   VARSIZE_ANY_EXHDR(s),
 								   regex_flavor,
 								   2, pmatch);
 
@@ -620,9 +623,9 @@ textregexsubstr(PG_FUNCTION_ARGS)
 Datum
 textregexreplace_noopt(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *r = PG_GETARG_TEXT_P(2);
+	text	   *s = PG_GETARG_TEXT_PP(0);
+	text	   *p = PG_GETARG_TEXT_PP(1);
+	text	   *r = PG_GETARG_TEXT_PP(2);
 	regex_t    *re;
 
 	re = RE_compile_and_cache(p, regex_flavor);
@@ -637,10 +640,10 @@ textregexreplace_noopt(PG_FUNCTION_ARGS)
 Datum
 textregexreplace(PG_FUNCTION_ARGS)
 {
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-	text	   *r = PG_GETARG_TEXT_P(2);
-	text	   *opt = PG_GETARG_TEXT_P(3);
+	text	   *s = PG_GETARG_TEXT_PP(0);
+	text	   *p = PG_GETARG_TEXT_PP(1);
+	text	   *r = PG_GETARG_TEXT_PP(2);
+	text	   *opt = PG_GETARG_TEXT_PP(3);
 	regex_t    *re;
 	pg_re_flags flags;
 
@@ -673,9 +676,9 @@ similar_escape(PG_FUNCTION_ARGS)
 	/* This function is not strict, so must test explicitly */
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
-	pat_text = PG_GETARG_TEXT_P(0);
-	p = VARDATA(pat_text);
-	plen = (VARSIZE(pat_text) - VARHDRSZ);
+	pat_text = PG_GETARG_TEXT_PP(0);
+	p = VARDATA_ANY(pat_text);
+	plen = VARSIZE_ANY_EXHDR(pat_text);
 	if (PG_ARGISNULL(1))
 	{
 		/* No ESCAPE clause provided; default to backslash as escape */
@@ -684,9 +687,9 @@ similar_escape(PG_FUNCTION_ARGS)
 	}
 	else
 	{
-		esc_text = PG_GETARG_TEXT_P(1);
-		e = VARDATA(esc_text);
-		elen = (VARSIZE(esc_text) - VARHDRSZ);
+		esc_text = PG_GETARG_TEXT_PP(1);
+		e = VARDATA_ANY(esc_text);
+		elen = VARSIZE_ANY_EXHDR(esc_text);
 		if (elen == 0)
 			e = NULL;			/* no escape character */
 		else if (elen != 1)
@@ -785,8 +788,8 @@ regexp_matches(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		text *pattern = PG_GETARG_TEXT_P(1);
-		text *flags   = PG_GETARG_TEXT_P_IF_EXISTS(2);
+		text *pattern = PG_GETARG_TEXT_PP(1);
+		text *flags   = PG_GETARG_TEXT_PP_IF_EXISTS(2);
 		MemoryContext		 oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -863,9 +866,9 @@ setup_regexp_matches(text *orig_str, text *pattern, text *flags,
 	matchctx->orig_str = orig_str;
 
 	/* convert string to pg_wchar form for matching */
-	orig_len = VARSIZE(orig_str) - VARHDRSZ;
+	orig_len = VARSIZE_ANY_EXHDR(orig_str);
 	wide_str = (pg_wchar *) palloc(sizeof(pg_wchar) * (orig_len + 1));
-	wide_len = pg_mb2wchar_with_len(VARDATA(orig_str), wide_str, orig_len);
+	wide_len = pg_mb2wchar_with_len(VARDATA_ANY(orig_str), wide_str, orig_len);
 
 	/* determine options */
 	parse_re_flags(&re_flags, flags);
@@ -1043,8 +1046,8 @@ regexp_split_to_table(PG_FUNCTION_ARGS)
 
 	if (SRF_IS_FIRSTCALL())
 	{
-		text 			*pattern = PG_GETARG_TEXT_P(1);
-		text 			*flags   = PG_GETARG_TEXT_P_IF_EXISTS(2);
+		text 			*pattern = PG_GETARG_TEXT_PP(1);
+		text 			*flags   = PG_GETARG_TEXT_PP_IF_EXISTS(2);
 		MemoryContext    oldcontext;
 
 		funcctx = SRF_FIRSTCALL_INIT();
@@ -1091,9 +1094,9 @@ Datum regexp_split_to_array(PG_FUNCTION_ARGS)
 	ArrayBuildState 	*astate = NULL;
 	regexp_matches_ctx 	*splitctx;
 
-	splitctx = setup_regexp_matches(PG_GETARG_TEXT_P(0),
-									PG_GETARG_TEXT_P(1),
-									PG_GETARG_TEXT_P_IF_EXISTS(2),
+	splitctx = setup_regexp_matches(PG_GETARG_TEXT_PP(0),
+									PG_GETARG_TEXT_PP(1),
+									PG_GETARG_TEXT_PP_IF_EXISTS(2),
 									true, false, true);
 
 	while (splitctx->next_match <= splitctx->nmatches)

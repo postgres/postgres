@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.69 2007/06/02 02:03:42 adunstan Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like.c,v 1.70 2007/09/21 22:52:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,6 +135,7 @@ Generic_Text_IC_like(text *str, text *pat)
 	/* Force inputs to lower case to achieve case insensitivity */
 	str = DatumGetTextP(DirectFunctionCall1(lower, PointerGetDatum(str)));
 	pat = DatumGetTextP(DirectFunctionCall1(lower, PointerGetDatum(pat)));
+	/* lower's result is never packed, so OK to use old macros here */
 	s = VARDATA(str);
 	slen = (VARSIZE(str) - VARHDRSZ);
 	p = VARDATA(pat);
@@ -151,7 +152,7 @@ Datum
 namelike(PG_FUNCTION_ARGS)
 {
 	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *pat = PG_GETARG_TEXT_PP(1);
 	bool		result;
 	char	   *s,
 			   *p;
@@ -160,8 +161,8 @@ namelike(PG_FUNCTION_ARGS)
 
 	s = NameStr(*str);
 	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat) - VARHDRSZ);
+	p = VARDATA_ANY(pat);
+	plen = VARSIZE_ANY_EXHDR(pat);
 
 	result = (GenericMatchText(s, slen, p, plen) == LIKE_TRUE);
 
@@ -172,7 +173,7 @@ Datum
 namenlike(PG_FUNCTION_ARGS)
 {
 	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *pat = PG_GETARG_TEXT_PP(1);
 	bool		result;
 	char	   *s,
 			   *p;
@@ -181,8 +182,8 @@ namenlike(PG_FUNCTION_ARGS)
 
 	s = NameStr(*str);
 	slen = strlen(s);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat) - VARHDRSZ);
+	p = VARDATA_ANY(pat);
+	plen = VARSIZE_ANY_EXHDR(pat);
 
 	result = (GenericMatchText(s, slen, p, plen) != LIKE_TRUE);
 
@@ -192,18 +193,18 @@ namenlike(PG_FUNCTION_ARGS)
 Datum
 textlike(PG_FUNCTION_ARGS)
 {
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	text	   *pat = PG_GETARG_TEXT_PP(1);
 	bool		result;
 	char	   *s,
 			   *p;
 	int			slen,
 				plen;
 
-	s = VARDATA(str);
-	slen = (VARSIZE(str) - VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat) - VARHDRSZ);
+	s = VARDATA_ANY(str);
+	slen = VARSIZE_ANY_EXHDR(str);
+	p = VARDATA_ANY(pat);
+	plen = VARSIZE_ANY_EXHDR(pat);
 
 	result = (GenericMatchText(s, slen, p, plen) == LIKE_TRUE);
 
@@ -213,18 +214,18 @@ textlike(PG_FUNCTION_ARGS)
 Datum
 textnlike(PG_FUNCTION_ARGS)
 {
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	text	   *pat = PG_GETARG_TEXT_PP(1);
 	bool		result;
 	char	   *s,
 			   *p;
 	int			slen,
 				plen;
 
-	s = VARDATA(str);
-	slen = (VARSIZE(str) - VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat) - VARHDRSZ);
+	s = VARDATA_ANY(str);
+	slen = VARSIZE_ANY_EXHDR(str);
+	p = VARDATA_ANY(pat);
+	plen = VARSIZE_ANY_EXHDR(pat);
 
 	result = (GenericMatchText(s, slen, p, plen) != LIKE_TRUE);
 
@@ -234,18 +235,18 @@ textnlike(PG_FUNCTION_ARGS)
 Datum
 bytealike(PG_FUNCTION_ARGS)
 {
-	bytea	   *str = PG_GETARG_BYTEA_P(0);
-	bytea	   *pat = PG_GETARG_BYTEA_P(1);
+	bytea	   *str = PG_GETARG_BYTEA_PP(0);
+	bytea	   *pat = PG_GETARG_BYTEA_PP(1);
 	bool		result;
 	char	   *s,
 			   *p;
 	int			slen,
 				plen;
 
-	s = VARDATA(str);
-	slen = (VARSIZE(str) - VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat) - VARHDRSZ);
+	s = VARDATA_ANY(str);
+	slen = VARSIZE_ANY_EXHDR(str);
+	p = VARDATA_ANY(pat);
+	plen = VARSIZE_ANY_EXHDR(pat);
 
 	result = (SB_MatchText(s, slen, p, plen) == LIKE_TRUE);
 
@@ -255,18 +256,18 @@ bytealike(PG_FUNCTION_ARGS)
 Datum
 byteanlike(PG_FUNCTION_ARGS)
 {
-	bytea	   *str = PG_GETARG_BYTEA_P(0);
-	bytea	   *pat = PG_GETARG_BYTEA_P(1);
+	bytea	   *str = PG_GETARG_BYTEA_PP(0);
+	bytea	   *pat = PG_GETARG_BYTEA_PP(1);
 	bool		result;
 	char	   *s,
 			   *p;
 	int			slen,
 				plen;
 
-	s = VARDATA(str);
-	slen = (VARSIZE(str) - VARHDRSZ);
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat) - VARHDRSZ);
+	s = VARDATA_ANY(str);
+	slen = VARSIZE_ANY_EXHDR(str);
+	p = VARDATA_ANY(pat);
+	plen = VARSIZE_ANY_EXHDR(pat);
 
 	result = (SB_MatchText(s, slen, p, plen) != LIKE_TRUE);
 
@@ -281,7 +282,7 @@ Datum
 nameiclike(PG_FUNCTION_ARGS)
 {
 	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *pat = PG_GETARG_TEXT_PP(1);
 	bool		result;
 	text	   *strtext;
 
@@ -296,7 +297,7 @@ Datum
 nameicnlike(PG_FUNCTION_ARGS)
 {
 	Name		str = PG_GETARG_NAME(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *pat = PG_GETARG_TEXT_PP(1);
 	bool		result;
 	text	   *strtext;
 
@@ -310,8 +311,8 @@ nameicnlike(PG_FUNCTION_ARGS)
 Datum
 texticlike(PG_FUNCTION_ARGS)
 {
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	text	   *pat = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
 	result = (Generic_Text_IC_like(str, pat) == LIKE_TRUE);
@@ -322,8 +323,8 @@ texticlike(PG_FUNCTION_ARGS)
 Datum
 texticnlike(PG_FUNCTION_ARGS)
 {
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *pat = PG_GETARG_TEXT_P(1);
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	text	   *pat = PG_GETARG_TEXT_PP(1);
 	bool		result;
 
 	result = (Generic_Text_IC_like(str, pat) != LIKE_TRUE);
@@ -338,8 +339,8 @@ texticnlike(PG_FUNCTION_ARGS)
 Datum
 like_escape(PG_FUNCTION_ARGS)
 {
-	text	   *pat = PG_GETARG_TEXT_P(0);
-	text	   *esc = PG_GETARG_TEXT_P(1);
+	text	   *pat = PG_GETARG_TEXT_PP(0);
+	text	   *esc = PG_GETARG_TEXT_PP(1);
 	text	   *result;
 
 	if (pg_database_encoding_max_length() == 1)
@@ -357,8 +358,8 @@ like_escape(PG_FUNCTION_ARGS)
 Datum
 like_escape_bytea(PG_FUNCTION_ARGS)
 {
-	bytea	   *pat = PG_GETARG_BYTEA_P(0);
-	bytea	   *esc = PG_GETARG_BYTEA_P(1);
+	bytea	   *pat = PG_GETARG_BYTEA_PP(0);
+	bytea	   *esc = PG_GETARG_BYTEA_PP(1);
 	bytea	   *result = SB_do_like_escape((text *)pat, (text *)esc);
 
 	PG_RETURN_BYTEA_P((bytea *)result);

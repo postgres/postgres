@@ -17,7 +17,7 @@
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.16 2007/06/02 02:03:42 adunstan Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.17 2007/09/21 22:52:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,10 +242,10 @@ do_like_escape(text *pat, text *esc)
 				elen;
 	bool		afterescape;
 
-	p = VARDATA(pat);
-	plen = (VARSIZE(pat) - VARHDRSZ);
-	e = VARDATA(esc);
-	elen = (VARSIZE(esc) - VARHDRSZ);
+	p = VARDATA_ANY(pat);
+	plen = VARSIZE_ANY_EXHDR(pat);
+	e = VARDATA_ANY(esc);
+	elen = VARSIZE_ANY_EXHDR(esc);
 
 	/*
 	 * Worst-case pattern growth is 2x --- unlikely, but it's hardly worth
@@ -279,14 +279,14 @@ do_like_escape(text *pat, text *esc)
 					 errmsg("invalid escape string"),
 				  errhint("Escape string must be empty or one character.")));
 
-		e = VARDATA(esc);
+		e = VARDATA_ANY(esc);
 
 		/*
 		 * If specified escape is '\', just copy the pattern as-is.
 		 */
 		if (*e == '\\')
 		{
-			memcpy(result, pat, VARSIZE(pat));
+			memcpy(result, pat, VARSIZE_ANY(pat));
 			return result;
 		}
 
