@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.18 2007/06/03 17:05:53 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.19 2007/09/21 21:25:42 tgl Exp $ -->
 
 <chapter id="storage">
 
@@ -416,7 +416,7 @@ Item
 
 <row>
  <entry>PageHeaderData</entry>
- <entry>20 bytes long. Contains general information about the page, including
+ <entry>24 bytes long. Contains general information about the page, including
 free space pointers.</entry>
 </row>
 
@@ -449,7 +449,7 @@ data. Empty in ordinary tables.</entry>
 
  <para>
 
-  The first 20 bytes of each page consists of a page header
+  The first 24 bytes of each page consists of a page header
   (PageHeaderData). Its format is detailed in <xref
   linkend="pageheaderdata-table">. The first two fields track the most
   recent WAL entry related to this page. Next is a 2-byte field
@@ -459,7 +459,7 @@ data. Empty in ordinary tables.</entry>
   from the page start to the start
   of unallocated space, to the end of unallocated space, and to the start of
   the special space. 
-  The last 2 bytes of the page header,
+  The next 2 bytes of the page header,
   <structfield>pd_pagesize_version</structfield>, store both the page size
   and a version indicator.  Beginning with
   <productname>PostgreSQL</productname> 8.3 the version number is 4;
@@ -471,6 +471,8 @@ data. Empty in ordinary tables.</entry>
   versions, but the layout of heap row headers has.)  The page size
   is basically only present as a cross-check; there is no support for having
   more than one page size in an installation.
+  The last field is a hint that shows whether pruning the page is likely
+  to be profitable: it tracks the oldest un-pruned XMAX on the page.
   
  </para>
  
@@ -529,6 +531,12 @@ data. Empty in ordinary tables.</entry>
    <entry>uint16</entry>
    <entry>2 bytes</entry>
    <entry>Page size and layout version number information</entry>
+  </row>
+  <row>
+   <entry>pd_prune_xid</entry>
+   <entry>TransactionId</entry>
+   <entry>4 bytes</entry>
+   <entry>Oldest unpruned XMAX on page, or zero if none</entry>
   </row>
  </tbody>
  </tgroup>

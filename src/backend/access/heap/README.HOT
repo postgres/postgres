@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.1 2007/09/20 17:56:30 tgl Exp $
+$PostgreSQL: pgsql/src/backend/access/heap/README.HOT,v 1.2 2007/09/21 21:25:42 tgl Exp $
 
                            Heap Only Tuples (HOT)
 
@@ -233,8 +233,8 @@ subsequent index searches.  However it is unclear that this gain is
 large enough to accept any extra maintenance burden for.
 
 The currently planned heuristic is to prune and defrag when first accessing
-a page that potentially has prunable tuples (flagged by the PD_PRUNABLE
-page hint bit) and that either has free space less than MAX(fillfactor
+a page that potentially has prunable tuples (as flagged by the pd_prune_xid
+page hint field) and that either has free space less than MAX(fillfactor
 target free space, BLCKSZ/10) *or* has recently had an UPDATE fail to
 find enough free space to store an updated tuple version.  (These rules
 are subject to change.)

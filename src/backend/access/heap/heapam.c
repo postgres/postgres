@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.241 2007/09/20 17:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.242 2007/09/21 21:25:42 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2068,11 +2068,12 @@ l1:
 
 	/*
 	 * If this transaction commits, the tuple will become DEAD sooner or
-	 * later. Set hint bit that this page is a candidate for pruning.  If
-	 * the transaction finally aborts, the subsequent page pruning will be
-	 * a no-op and the hint will be cleared.
+	 * later.  Set flag that this page is a candidate for pruning once our xid
+	 * falls below the OldestXmin horizon.  If the transaction finally aborts,
+	 * the subsequent page pruning will be a no-op and the hint will be
+	 * cleared.
 	 */
-	PageSetPrunable((Page) dp);
+	PageSetPrunable(dp, xid);
 
 	/* store transaction information of xact deleting the tuple */
 	tp.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
@@ -2571,16 +2572,17 @@ l2:
 
 	/*
 	 * If this transaction commits, the old tuple will become DEAD sooner or
-	 * later. Set hint bit that this page is a candidate for pruning.  If
-	 * the transaction finally aborts, the subsequent page pruning will be
-	 * a no-op and the hint will be cleared.
+	 * later.  Set flag that this page is a candidate for pruning once our xid
+	 * falls below the OldestXmin horizon.  If the transaction finally aborts,
+	 * the subsequent page pruning will be a no-op and the hint will be
+	 * cleared.
 	 *
 	 * XXX Should we set hint on newbuf as well?  If the transaction
 	 * aborts, there would be a prunable tuple in the newbuf; but for now
 	 * we choose not to optimize for aborts.  Note that heap_xlog_update
-	 * must be kept in sync if this changes.
+	 * must be kept in sync if this decision changes.
 	 */
-	PageSetPrunable(dp);
+	PageSetPrunable(dp, xid);
 
 	if (use_hot_update)
 	{
@@ -4108,7 +4110,7 @@ heap_xlog_delete(XLogRecPtr lsn, XLogRecord *record)
 	HeapTupleHeaderSetCmax(htup, FirstCommandId, false);
 
 	/* Mark the page as a candidate for pruning */
-	PageSetPrunable(page);
+	PageSetPrunable(page, record->xl_xid);
 
 	/* Make sure there is no forward chain link in t_ctid */
 	htup->t_ctid = xlrec->target.tid;
@@ -4284,7 +4286,7 @@ heap_xlog_update(XLogRecPtr lsn, XLogRecord *record, bool move, bool hot_update)
 	}
 
 	/* Mark the page as a candidate for pruning */
-	PageSetPrunable(page);
+	PageSetPrunable(page, record->xl_xid);
 
 	/*
 	 * this test is ugly, but necessary to avoid thinking that insert change

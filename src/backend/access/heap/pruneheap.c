@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.1 2007/09/20 17:56:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/pruneheap.c,v 1.2 2007/09/21 21:25:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,9 +63,10 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
 	/*
 	 * Let's see if we really need pruning.
 	 *
-	 * Forget it if page is not hinted to contain something prunable
+	 * Forget it if page is not hinted to contain something prunable that's
+	 * older than OldestXmin.
 	 */
-	if (!PageIsPrunable(dp))
+	if (!PageIsPrunable(dp, OldestXmin))
 		return;
 
 	/*
@@ -93,6 +94,8 @@ heap_page_prune_opt(Relation relation, Buffer buffer, TransactionId OldestXmin)
 		/*
 		 * Now that we have buffer lock, get accurate information about the
 		 * page's free space, and recheck the heuristic about whether to prune.
+		 * (We needn't recheck PageIsPrunable, since no one else could have
+		 * pruned while we hold pin.)
 		 */
 		if (PageIsFull(dp) || PageGetHeapFreeSpace((Page) dp) < minfree)
 		{
@@ -147,7 +150,7 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 	START_CRIT_SECTION();
 
 	/*
-	 * Mark the page as clear of prunable tuples. If we find a tuple which
+	 * Mark the page as clear of prunable tuples.  If we find a tuple which
 	 * may soon become prunable, we shall set the hint again.  Also clear
 	 * the "page is full" flag, since there's no point in repeating the
 	 * prune/defrag process until something else happens to the page.
@@ -202,6 +205,14 @@ heap_page_prune(Relation relation, Buffer buffer, TransactionId OldestXmin,
 			PageSetTLI(BufferGetPage(buffer), ThisTimeLineID);
 			PageSetLSN(BufferGetPage(buffer), recptr);
 		}
+	}
+	else
+	{
+		/*
+		 * If we didn't prune anything, we have nonetheless updated the
+		 * pd_prune_xid field; treat this as a non-WAL-logged hint.
+		 */
+		SetBufferCommitInfoNeedsSave(buffer);
 	}
 
 	END_CRIT_SECTION();
@@ -392,18 +403,18 @@ heap_prune_chain(Relation relation, Buffer buffer, OffsetNumber rootoffnum,
 			case HEAPTUPLE_RECENTLY_DEAD:
 				recent_dead = true;
 				/*
-				 * This tuple may soon become DEAD. Re-set the hint bit so
+				 * This tuple may soon become DEAD.  Update the hint field so
 				 * that the page is reconsidered for pruning in future.
 				 */
-				PageSetPrunable(dp);
+				PageSetPrunable(dp, HeapTupleHeaderGetXmax(htup));
 				break;
 
 			case HEAPTUPLE_DELETE_IN_PROGRESS:
 				/*
-				 * This tuple may soon become DEAD. Re-set the hint bit so
+				 * This tuple may soon become DEAD.  Update the hint field so
 				 * that the page is reconsidered for pruning in future.
 				 */
-				PageSetPrunable(dp);
+				PageSetPrunable(dp, HeapTupleHeaderGetXmax(htup));
 				break;
 
 			case HEAPTUPLE_LIVE:

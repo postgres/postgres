@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.74 2007/09/20 17:56:32 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufpage.h,v 1.75 2007/09/21 21:25:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
  *
  * EXCEPTIONS:
  *
- * obviously, a page is not formatted before it is initialized with by
+ * obviously, a page is not formatted before it is initialized by
  * a call to PageInit.
  *
  * NOTES:
@@ -95,6 +95,7 @@ typedef uint16 LocationIndex;
  *		pd_upper	- offset to end of free space.
  *		pd_special	- offset to start of special space.
  *		pd_pagesize_version - size in bytes and page layout version number.
+ *		pd_prune_xid - oldest XID among potentially prunable tuples on page.
  *
  * The LSN is used by the buffer manager to enforce the basic rule of WAL:
  * "thou shalt write xlog before data".  A dirty buffer cannot be dumped
@@ -102,6 +103,9 @@ typedef uint16 LocationIndex;
  * We also store the 16 least significant bits of the TLI for identification
  * purposes (it is not clear that this is actually necessary, but it seems
  * like a good idea).
+ *
+ * pd_prune_xid is a hint field that helps determine whether pruning will be
+ * useful.  It is currently unused in index pages.
  *
  * The page version number and page size are packed together into a single
  * uint16 field.  This is for historical reasons: before PostgreSQL 7.3,
@@ -128,6 +132,7 @@ typedef struct PageHeaderData
 	LocationIndex pd_upper;		/* offset to end of free space */
 	LocationIndex pd_special;	/* offset to start of special space */
 	uint16		pd_pagesize_version;
+	TransactionId pd_prune_xid;	/* oldest prunable XID, or zero if none */
 	ItemIdData	pd_linp[1];		/* beginning of line pointer array */
 } PageHeaderData;
 
@@ -141,20 +146,14 @@ typedef PageHeaderData *PageHeader;
  * pd_lower.  This should be considered a hint rather than the truth, since
  * changes to it are not WAL-logged.
  *
- * PD_PRUNABLE is set if there are any prunable tuples in the page.
- * This should be considered a hint rather than the truth, since
- * the transaction which generates a prunable tuple may or may not commit.
- * Also there is a lag before a tuple is declared dead.
- *
  * PD_PAGE_FULL is set if an UPDATE doesn't find enough free space in the
  * page for its new tuple version; this suggests that a prune is needed.
  * Again, this is just a hint.
  */
 #define PD_HAS_FREE_LINES	0x0001	/* are there any unused line pointers? */
-#define PD_PRUNABLE			0x0002	/* are there any prunable tuples? */
-#define PD_PAGE_FULL		0x0004	/* not enough free space for new tuple? */
+#define PD_PAGE_FULL		0x0002	/* not enough free space for new tuple? */
 
-#define PD_VALID_FLAG_BITS	0x0007	/* OR of all valid pd_flags bits */
+#define PD_VALID_FLAG_BITS	0x0003	/* OR of all valid pd_flags bits */
 
 /*
  * Page layout version number 0 is for pre-7.3 Postgres releases.
@@ -162,7 +161,8 @@ typedef PageHeaderData *PageHeader;
  * Release 8.0 uses 2; it changed the HeapTupleHeader layout again.
  * Release 8.1 uses 3; it redefined HeapTupleHeader infomask bits.
  * Release 8.3 uses 4; it changed the HeapTupleHeader layout again, and
- * added the pd_flags field (by stealing some bits from pd_tli).
+ *		added the pd_flags field (by stealing some bits from pd_tli),
+ *		as well as adding the pd_prune_xid field (which enlarges the header).
  */
 #define PG_PAGE_LAYOUT_VERSION		4
 
@@ -348,19 +348,28 @@ typedef PageHeaderData *PageHeader;
 #define PageClearHasFreeLinePointers(page) \
 	(((PageHeader) (page))->pd_flags &= ~PD_HAS_FREE_LINES)
 
-#define PageIsPrunable(page) \
-	(((PageHeader) (page))->pd_flags & PD_PRUNABLE)
-#define PageSetPrunable(page) \
-	(((PageHeader) (page))->pd_flags |= PD_PRUNABLE)
-#define PageClearPrunable(page) \
-	(((PageHeader) (page))->pd_flags &= ~PD_PRUNABLE)
-
 #define PageIsFull(page) \
 	(((PageHeader) (page))->pd_flags & PD_PAGE_FULL)
 #define PageSetFull(page) \
 	(((PageHeader) (page))->pd_flags |= PD_PAGE_FULL)
 #define PageClearFull(page) \
 	(((PageHeader) (page))->pd_flags &= ~PD_PAGE_FULL)
+
+#define PageIsPrunable(page, oldestxmin) \
+( \
+	AssertMacro(TransactionIdIsNormal(oldestxmin)), \
+	TransactionIdIsValid(((PageHeader) (page))->pd_prune_xid) && \
+	TransactionIdPrecedes(((PageHeader) (page))->pd_prune_xid, oldestxmin) \
+)
+#define PageSetPrunable(page, xid) \
+do { \
+	Assert(TransactionIdIsNormal(xid)); \
+	if (!TransactionIdIsValid(((PageHeader) (page))->pd_prune_xid) || \
+		TransactionIdPrecedes(xid, ((PageHeader) (page))->pd_prune_xid)) \
+		((PageHeader) (page))->pd_prune_xid = (xid); \
+} while (0)
+#define PageClearPrunable(page) \
+	(((PageHeader) (page))->pd_prune_xid = InvalidTransactionId)
 
 
 /* ----------------------------------------------------------------
