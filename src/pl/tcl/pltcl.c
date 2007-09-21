@@ -2,7 +2,7 @@
  * pltcl.c		- PostgreSQL support for Tcl as
  *				  procedural language (PL)
  *
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.112 2007/04/02 03:49:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.113 2007/09/21 00:30:49 tgl Exp $
  *
  **********************************************************************/
 
@@ -33,9 +33,11 @@
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
+#define HAVE_TCL_VERSION(maj,min) \
+	((TCL_MAJOR_VERSION > maj) || \
+	 (TCL_MAJOR_VERSION == maj && TCL_MINOR_VERSION >= min))
 
-#if defined(UNICODE_CONVERSION) && TCL_MAJOR_VERSION == 8 \
-	&& TCL_MINOR_VERSION > 0
+#if defined(UNICODE_CONVERSION) && HAVE_TCL_VERSION(8,1)
 
 #include "mb/pg_wchar.h"
 
@@ -165,6 +167,68 @@ static void pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 
 
 /*
+ * Hack to override Tcl's builtin Notifier subsystem.  This prevents the
+ * backend from becoming multithreaded, which breaks all sorts of things.
+ * That happens in the default version of Tcl_InitNotifier if the TCL library
+ * has been compiled with multithreading support (i.e. when TCL_THREADS is
+ * defined under Unix, and in all cases under Windows).
+ * It's okay to disable the notifier because we never enter the Tcl event loop
+ * from Postgres, so the notifier capabilities are initialized, but never
+ * used.  Only InitNotifier and DeleteFileHandler ever seem to get called
+ * within Postgres, but we implement all the functions for completeness.
+ * We can only fix this with Tcl >= 8.2, when Tcl_SetNotifier() appeared.
+ */
+#if HAVE_TCL_VERSION(8,2)
+
+static ClientData
+pltcl_InitNotifier(void)
+{
+	static int fakeThreadKey;	/* To give valid address for ClientData */
+
+	return (ClientData) &(fakeThreadKey);
+}
+
+static void
+pltcl_FinalizeNotifier(ClientData clientData)
+{
+}
+
+static void
+pltcl_SetTimer(Tcl_Time *timePtr)
+{
+}
+
+static void
+pltcl_AlertNotifier(ClientData clientData)
+{
+}
+
+static void
+pltcl_CreateFileHandler(int fd, int mask,
+						Tcl_FileProc *proc, ClientData clientData)
+{
+}
+
+static void
+pltcl_DeleteFileHandler(int fd)
+{
+}
+
+static void
+pltcl_ServiceModeHook(int mode)
+{
+}
+
+static int
+pltcl_WaitForEvent(Tcl_Time *timePtr)
+{
+	return 0;
+}
+
+#endif /* HAVE_TCL_VERSION(8,2) */
+
+
+/*
  * This routine is a crock, and so is everyplace that calls it.  The problem
  * is that the cached form of pltcl functions/queries is allocated permanently
  * (mostly via malloc()) and never released until backend exit.  Subsidiary
@@ -196,6 +260,25 @@ _PG_init(void)
 #ifdef WIN32
 	/* Required on win32 to prevent error loading init.tcl */
 	Tcl_FindExecutable("");
+#endif
+
+#if HAVE_TCL_VERSION(8,2)
+	/*
+	 * Override the functions in the Notifier subsystem.  See comments above.
+	 */
+	{
+		Tcl_NotifierProcs notifier;
+
+		notifier.setTimerProc          = pltcl_SetTimer;
+		notifier.waitForEventProc      = pltcl_WaitForEvent;
+		notifier.createFileHandlerProc = pltcl_CreateFileHandler;
+		notifier.deleteFileHandlerProc = pltcl_DeleteFileHandler;
+		notifier.initNotifierProc      = pltcl_InitNotifier;
+		notifier.finalizeNotifierProc  = pltcl_FinalizeNotifier;
+		notifier.alertNotifierProc     = pltcl_AlertNotifier;
+		notifier.serviceModeHookProc   = pltcl_ServiceModeHook;
+		Tcl_SetNotifier(&notifier);
+	}
 #endif
 
 	/************************************************************
@@ -1808,9 +1891,9 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	PG_TRY();
 	{
 		/************************************************************
-		 * Resolve argument type names and then look them up by oid 
-         * in the system cache, and remember the required information 
-         * for input conversion.
+		 * Resolve argument type names and then look them up by oid
+		 * in the system cache, and remember the required information
+		 * for input conversion.
 		 ************************************************************/
 		for (i = 0; i < nargs; i++)
 		{
