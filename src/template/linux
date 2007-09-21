@@ -1,4 +1,7 @@
-# $PostgreSQL: pgsql/src/template/linux,v 1.29 2006/12/12 19:43:19 petere Exp $
+# $PostgreSQL: pgsql/src/template/linux,v 1.30 2007/09/21 02:33:46 tgl Exp $
 
 # Force _GNU_SOURCE on; plperl is broken with Perl 5.8.0 otherwise
 CPPFLAGS="$CPPFLAGS -D_GNU_SOURCE"
+
+# If --enable-profiling is specified, we need -DLINUX_PROFILE
+PLATFORM_PROFILE_FLAGS="-DLINUX_PROFILE"

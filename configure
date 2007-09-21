@@ -3244,7 +3244,7 @@ cat >>confdefs.h <<\_ACEOF
 #define PROFILE_PID_DIR 1
 _ACEOF
 
-    CFLAGS="$CFLAGS -pg"
+    CFLAGS="$CFLAGS -pg $PLATFORM_PROFILE_FLAGS"
   else
     { { echo "$as_me:$LINENO: error: --enable-profiling is supported only when using GCC" >&5
 echo "$as_me: error: --enable-profiling is supported only when using GCC" >&2;}
