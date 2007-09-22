@@ -3,8 +3,9 @@
  * like_match.c
  *	  like expression handling internal code.
  *
- * This file is included by like.c three times, to provide natching code for
- * single-byte encodings, UTF8, and for other multi-byte encodings.
+ * This file is included by like.c four times, to provide natching code for
+ * single-byte encodings, UTF8, and for other multi-byte encodings,
+ * and case insensitive matches for single byte encodings.
  * UTF8 is a special case because we can use a much more efficient version
  * of NextChar than can be used for other multi-byte encodings.
  *
@@ -13,11 +14,12 @@
  * NextChar 
  * MatchText - to name of function wanted
  * do_like_escape - name of function if wanted - needs CHAREQ and CopyAdvChar
+ * MATCH_LOWER - define iff using to_lower on text chars
  *
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.17 2007/09/21 22:52:52 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/like_match.c,v 1.18 2007/09/22 03:58:34 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +69,12 @@
  * pattern either, so an upper-level % scan can stop scanning now.
  *--------------------
  */
+
+#ifdef MATCH_LOWER
+#define TCHAR(t) tolower((t))
+#else
+#define TCHAR(t) (t)
+#endif
 
 static int
 MatchText(char *t, int tlen, char *p, int plen)
@@ -143,13 +151,13 @@ MatchText(char *t, int tlen, char *p, int plen)
 			else
 			{
 
-				char firstpat = *p ;
+				char firstpat = TCHAR(*p) ;
 
 				if (*p == '\\')
 				{
 					if (plen < 2)
 						return LIKE_FALSE;
-					firstpat = p[1];
+					firstpat = TCHAR(p[1]);
 				}
 
 				while (tlen > 0)
@@ -158,7 +166,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 					 * Optimization to prevent most recursion: don't recurse
 					 * unless first pattern byte matches first text byte.
 					 */
-					if (*t == firstpat)
+					if (TCHAR(*t) == firstpat)
 					{
 						int			matched = MatchText(t, tlen, p, plen);
 						
@@ -183,7 +191,7 @@ MatchText(char *t, int tlen, char *p, int plen)
 			NextByte(p, plen);
 			continue;
 		}
-		else if (*t != *p)
+		else if (TCHAR(*t) != TCHAR(*p))
 		{
 			/*
 			 * Not the single-character wildcard and no explicit match? Then
@@ -338,3 +346,8 @@ do_like_escape(text *pat, text *esc)
 #undef do_like_escape
 #endif
 
+#undef TCHAR
+
+#ifdef MATCH_LOWER
+#undef MATCH_LOWER
+#endif
