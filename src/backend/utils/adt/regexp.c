@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.74 2007/09/21 22:52:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.75 2007/09/22 04:37:53 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -195,10 +195,12 @@ RE_compile_and_cache(text *text_re, int cflags)
 	}
 
 	/*
-	 * use malloc/free for the cre_pat field because the storage has to
-	 * persist across transactions
+	 * We use malloc/free for the cre_pat field because the storage has to
+	 * persist across transactions, and because we want to get control back
+	 * on out-of-memory.  The Max() is because some malloc implementations
+	 * return NULL for malloc(0).
 	 */
-	re_temp.cre_pat = malloc(text_re_len);
+	re_temp.cre_pat = malloc(Max(text_re_len, 1));
 	if (re_temp.cre_pat == NULL)
 	{
 		pg_regfree(&re_temp.cre_re);
