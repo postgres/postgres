@@ -54,7 +54,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.185 2007/06/11 01:16:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.186 2007/09/22 21:36:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2049,9 +2049,10 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 		{
 			/*
 			 * Otherwise we will be rescanning the subplan output on each
-			 * evaluation.	We need to estimate how much of the output we will
-			 * actually need to scan.  NOTE: this logic should agree with the
-			 * estimates used by make_subplan() in plan/subselect.c.
+			 * evaluation.  We need to estimate how much of the output we will
+			 * actually need to scan.  NOTE: this logic should agree with
+			 * get_initplan_cost, below, and with the estimates used by
+			 * make_subplan() in plan/subselect.c.
 			 */
 			Cost		plan_run_cost = plan->total_cost - plan->startup_cost;
 
@@ -2094,6 +2095,43 @@ cost_qual_eval_walker(Node *node, cost_qual_eval_context *context)
 	/* recurse into children */
 	return expression_tree_walker(node, cost_qual_eval_walker,
 								  (void *) context);
+}
+
+
+/*
+ * get_initplan_cost
+ *		Get the expected cost of evaluating an initPlan.
+ *
+ * Keep this in sync with cost_qual_eval_walker's handling of subplans, above,
+ * and with the estimates used by make_subplan() in plan/subselect.c.
+ */
+Cost
+get_initplan_cost(PlannerInfo *root, SubPlan *subplan)
+{
+	Cost		result;
+	Plan	   *plan = planner_subplan_get_plan(root, subplan);
+
+	/* initPlans never use hashtables */
+	Assert(!subplan->useHashTable);
+	/* they are never ALL or ANY, either */
+	Assert(!(subplan->subLinkType == ALL_SUBLINK ||
+			 subplan->subLinkType == ANY_SUBLINK));
+
+	if (subplan->subLinkType == EXISTS_SUBLINK)
+	{
+		/* we only need to fetch 1 tuple */
+		Cost		plan_run_cost = plan->total_cost - plan->startup_cost;
+
+		result = plan->startup_cost;
+		result += plan_run_cost / plan->plan_rows;
+	}
+	else
+	{
+		/* assume we need all tuples */
+		result = plan->total_cost;
+	}
+
+	return result;
 }
 
 

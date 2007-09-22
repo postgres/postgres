@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.88 2007/07/25 12:22:53 mha Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/cost.h,v 1.89 2007/09/22 21:36:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,6 +92,7 @@ extern void cost_mergejoin(MergePath *path, PlannerInfo *root);
 extern void cost_hashjoin(HashPath *path, PlannerInfo *root);
 extern void cost_qual_eval(QualCost *cost, List *quals, PlannerInfo *root);
 extern void cost_qual_eval_node(QualCost *cost, Node *qual, PlannerInfo *root);
+extern Cost get_initplan_cost(PlannerInfo *root, SubPlan *subplan);
 extern void set_baserel_size_estimates(PlannerInfo *root, RelOptInfo *rel);
 extern void set_joinrel_size_estimates(PlannerInfo *root, RelOptInfo *rel,
 						   RelOptInfo *outer_rel,

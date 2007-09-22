@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.124 2007/08/26 21:44:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.125 2007/09/22 21:36:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
+#include "optimizer/cost.h"
 #include "optimizer/planmain.h"
 #include "optimizer/planner.h"
 #include "optimizer/subselect.h"
@@ -266,7 +267,7 @@ make_subplan(PlannerInfo *root, SubLink *slink, Node *testexpr, bool isTopQual)
 	 * (we're only expecting one row out, anyway).
 	 *
 	 * NOTE: if you change these numbers, also change cost_qual_eval_walker()
-	 * in path/costsize.c.
+	 * and get_initplan_cost() in path/costsize.c.
 	 *
 	 * XXX If an ALL/ANY subplan is uncorrelated, we may decide to hash or
 	 * materialize its result below.  In that case it would've been better to
@@ -1021,7 +1022,7 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
 	 * have extParams that are setParams of other initPlans, so we have to
 	 * take care of this situation explicitly.)
 	 *
-	 * We also add the total_cost of each initPlan to the startup cost of the
+	 * We also add the eval cost of each initPlan to the startup cost of the
 	 * top node.  This is a conservative overestimate, since in fact each
 	 * initPlan might be executed later than plan startup, or even not at all.
 	 */
@@ -1041,7 +1042,7 @@ SS_finalize_plan(PlannerInfo *root, Plan *plan)
 		{
 			initSetParam = bms_add_member(initSetParam, lfirst_int(l2));
 		}
-		initplan_cost += initplan->total_cost;
+		initplan_cost += get_initplan_cost(root, initsubplan);
 	}
 	/* allParam must include all these params */
 	plan->allParam = bms_add_members(plan->allParam, initExtParam);
