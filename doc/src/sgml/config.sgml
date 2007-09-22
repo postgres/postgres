@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.144 2007/09/10 02:01:19 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.145 2007/09/22 19:10:44 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -2262,11 +2262,13 @@ SELECT * FROM parent WHERE key = 2400;
          This parameter can only be set in the <filename>postgresql.conf</>
          file or on the server command line.
        </para>
-       <para> If <varname>log_destination</> is set to <systemitem>csvlog</systemitem>, 
-         the log is output as comma seperated values. The format is:
-         timestamp with milliseconds, username, database name, session id, host:port number,
-         process id, per process line number, command tag, session start time, transaction id, 
-         error severity, SQL state code, statement/error message. 
+       <para>
+        If <systemitem>csvlog</> is included in <varname>log_destination</>,
+        log entries are output in <quote>comma separated
+        value</> format, which is convenient for loading them into programs.
+        See <xref linkend="runtime-config-logging-csvlog"> for details.
+        <varname>logging_collector</varname> must be enabled to generate 
+        CSV-format log output.
        </para>
       </listitem>
      </varlistentry>
@@ -2279,16 +2281,13 @@ SELECT * FROM parent WHERE key = 2400;
       <listitem>
        <para>
          This parameter allows messages sent to <application>stderr</>,
-         and CSV logs, to be
+         and CSV-format log output, to be
          captured and redirected into log files.
-         This method, in combination with logging to <application>stderr</>,
-         is often more useful than
+         This approach is often more useful than
          logging to <application>syslog</>, since some types of messages
          might not appear in <application>syslog</> output (a common example
          is dynamic-linker failure messages).
          This parameter can only be set at server start.
-         <varname>logging_collector</varname> must be enabled to generate 
-         CSV logs.
        </para>
       </listitem>
      </varlistentry>
@@ -2334,12 +2333,13 @@ SELECT * FROM parent WHERE key = 2400;
         file or on the server command line.
        </para>
        <para>
-        If <varname>log_destination</> is set to <systemitem>csvlog</>,
+        If CSV-format output is enabled in <varname>log_destination</>,
         <literal>.csv</> will be appended to the timestamped 
-        <varname>log_filename</> to create the final log file name. 
-        (If log_filename ends in <literal>.log</>, the suffix is overwritten.) 
-        In the case of the example above, the 
-        file name will be <literal>server_log.1093827753.csv</literal>
+        log file name to create the file name for CSV-format output.
+        (If <varname>log_filename</> ends in <literal>.log</>, the suffix is
+        replaced instead.)
+        In the case of the example above, the CSV
+        file name will be <literal>server_log.1093827753.csv</literal>.
        </para>
       </listitem>
      </varlistentry>
@@ -2617,88 +2617,92 @@ SELECT * FROM parent WHERE key = 2400;
 
      </variablelist>
 
-       <para>
-        Here is a list of the various message severity levels used in
-        these settings:
-        <variablelist>
-         <varlistentry>
-          <term><literal>DEBUG[1-5]</literal></term>
-          <listitem>
-           <para>
-            Provides information for use by developers.
-           </para>
-          </listitem>
-         </varlistentry>
+    <para>
+     <xref linkend="runtime-config-severity-levels"> explains the message
+     severity levels used by <productname>PostgreSQL</>.  If logging output
+     is sent to <systemitem>syslog</systemitem> or Windows'
+     <systemitem>eventlog</systemitem>, the severity levels are translated
+     as shown in the table.
+    </para>
 
-         <varlistentry>
-          <term><literal>INFO</literal></term>
-          <listitem>
-           <para>
-            Provides information implicitly requested by the user,
-            e.g., during <command>VACUUM VERBOSE</>.
-           </para>
-          </listitem>
-         </varlistentry>
+    <table id="runtime-config-severity-levels">
+     <title>Message severity levels</title>
+     <tgroup cols="4">
+      <thead>
+       <row>
+        <entry>Severity</entry>
+        <entry>Usage</entry>
+        <entry><systemitem>syslog</></entry>
+        <entry><systemitem>eventlog</></entry>
+       </row>
+      </thead>
 
-         <varlistentry>
-          <term><literal>NOTICE</literal></term>
-          <listitem>
-           <para>
-            Provides information that might be helpful to users, e.g.,
-            truncation of long identifiers and the creation of indexes as part
-            of primary keys.
-           </para>
-          </listitem>
-         </varlistentry>
+      <tbody>
+       <row>
+        <entry><literal>DEBUG1..DEBUG5</></entry>
+        <entry>Provides successively-more-detailed information for use by
+         developers.</entry>
+        <entry><literal>DEBUG</></entry>
+        <entry><literal>INFORMATION</></entry>
+       </row>
 
-         <varlistentry>
-          <term><literal>WARNING</literal></term>
-          <listitem>
-           <para>
-            Provides warnings to the user, e.g., <command>COMMIT</>
-            outside a transaction block.
-           </para>
-          </listitem>
-         </varlistentry>
+       <row>
+        <entry><literal>INFO</></entry>
+        <entry>Provides information implicitly requested by the user,
+         e.g., output from <command>VACUUM VERBOSE</>.</entry>
+        <entry><literal>INFO</></entry>
+        <entry><literal>INFORMATION</></entry>
+       </row>
 
-         <varlistentry>
-          <term><literal>ERROR</literal></term>
-          <listitem>
-           <para>
-            Reports an error that caused the current command to abort.
-           </para>
-          </listitem>
-         </varlistentry>
+       <row>
+        <entry><literal>NOTICE</></entry>
+        <entry>Provides information that might be helpful to users, e.g.,
+         notice of truncation of long identifiers.</entry>
+        <entry><literal>NOTICE</></entry>
+        <entry><literal>INFORMATION</></entry>
+       </row>
 
-         <varlistentry>
-          <term><literal>LOG</literal></term>
-          <listitem>
-           <para>
-            Reports information of interest to administrators, e.g.,
-            checkpoint activity.
-           </para>
-          </listitem>
-         </varlistentry>
+       <row>
+        <entry><literal>WARNING</></entry>
+        <entry>Provides warnings of likely problems, e.g., <command>COMMIT</>
+         outside a transaction block.</entry>
+        <entry><literal>NOTICE</></entry>
+        <entry><literal>WARNING</></entry>
+       </row>
 
-         <varlistentry>
-          <term><literal>FATAL</literal></term>
-          <listitem>
-           <para>
-            Reports an error that caused the current session to abort.
-           </para>
-          </listitem>
-         </varlistentry>
+       <row>
+        <entry><literal>ERROR</></entry>
+        <entry>Reports an error that caused the current command to
+         abort.</entry>
+        <entry><literal>WARNING</></entry>
+        <entry><literal>ERROR</></entry>
+       </row>
 
-         <varlistentry>
-          <term><literal>PANIC</literal></term>
-          <listitem>
-           <para>
-            Reports an error that caused all sessions to abort.
-           </para>
-          </listitem>
-         </varlistentry>
-        </variablelist>
-       </para>
+       <row>
+        <entry><literal>LOG</></entry>
+        <entry>Reports information of interest to administrators, e.g.,
+         checkpoint activity.</entry>
+        <entry><literal>INFO</></entry>
+        <entry><literal>INFORMATION</></entry>
+       </row>
+
+       <row>
+        <entry><literal>FATAL</></entry>
+        <entry>Reports an error that caused the current session to
+         abort.</entry>
+        <entry><literal>ERR</></entry>
+        <entry><literal>ERROR</></entry>
+       </row>
+
+       <row>
+        <entry><literal>PANIC</></entry>
+        <entry>Reports an error that caused all database sessions to abort.</entry>
+        <entry><literal>CRIT</></entry>
+        <entry><literal>ERROR</></entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
 
     </sect2>
      <sect2 id="runtime-config-logging-what">
@@ -3082,27 +3086,32 @@ SELECT * FROM parent WHERE key = 2400;
      </variablelist>
     </sect2>
      <sect2 id="runtime-config-logging-csvlog">
-     <title>Using the csvlog</title>
+     <title>Using CSV-Format Log Output</title>
 
        <para>
         Including <literal>csvlog</> in the <varname>log_destination</> list 
         provides a convenient way to import log files into a database table. 
-        Here is a sample table definition for storing csvlog output:
+        This option emits log lines in comma-separated-value format,
+        with these columns: timestamp with milliseconds, username, database
+        name, session id, host:port number, process id, per-process line
+        number, command tag, session start time, transaction id, error
+        severity, SQL state code, statement/error message.
+        Here is a sample table definition for storing CSV-format log output:
        </para>
 
 <programlisting>
 CREATE TABLE postgres_log
 (
-  log_time timestamp,
+  log_time timestamp with time zone,
   username text,
   database_name text,
-  sessionid text not null,
+  sessionid text,
   connection_from text,
-  process_id text,
-  process_line_num int not null,
+  process_id integer,
+  process_line_num bigint,
   command_tag text,
-  session_start_time timestamp,
-  transaction_id int,
+  session_start_time timestamp with time zone,
+  transaction_id bigint,
   error_severity text,
   sql_state_code text,
   statement text,
@@ -3112,7 +3121,8 @@ CREATE TABLE postgres_log
 
 
        <para>
-       In order to import into this table, use the COPY FROM command:
+        To import a log file into this table, use the <command>COPY FROM</>
+        command:
        </para>
 
 <programlisting>
@@ -3120,18 +3130,17 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
 </programlisting>
 
        <para>
-       There are a few things you need to import csvlog files easily and 
-       automatically:
+       There are a few things you need to do to simplify importing CSV log
+       files easily and automatically:
 
        <orderedlist>
          <listitem>
            <para>
-            Use a consistant, predictable naming scheme for your log files 
-            with <varname>log_filename</varname>.  This lets you predict what 
-the file name will be when it is ready to be imported.
-guess what 
-            the file name will be and know when an individual log file is 
-            complete and therefore ready to be imported.
+            Set <varname>log_filename</varname> and
+            <varname>log_rotation_age</> to provide a consistent,
+            predictable naming scheme for your log files.  This lets you
+            predict what the file name will be and know when an individual log
+            file is complete and therefore ready to be imported.
          </para>
         </listitem>
 
@@ -3145,24 +3154,23 @@ guess what
 
         <listitem>
           <para>
-           Set <varname>log_truncate_on_rotate</varname> = on so that old 
-           log data isn't mixed with the new in the same file.
+           Set <varname>log_truncate_on_rotation</varname> to <literal>on</> so
+           that old log data isn't mixed with the new in the same file.
           </para>
         </listitem>
 
         <listitem>
           <para>
-           The example above includes a useful primary key on the log
-           file data, which will protect against accidentally importing
-           the same information twice.  The COPY command commits all of
-           the data it imports at one time, and any single error will
-           cause the entire import to fail.  
-           If you import a partial log file and later import the file again 
-           when it is complete, the primary key violation will cause the 
-           import to fail. Wait until the log is complete and closed before 
-           import. This will also protect against accidently importing a 
-           partial line that hasn't been completely written, which would 
-           also cause the COPY to fail.
+           The table definition above includes a primary key specification.
+           This is useful to protect against accidentally importing the same
+           information twice.  The <command>COPY</> command commits all of the
+           data it imports at one time, so any error will cause the entire
+           import to fail.  If you import a partial log file and later import
+           the file again when it is complete, the primary key violation will
+           cause the import to fail.  Wait until the log is complete and
+           closed before importing.  This procedure will also protect against
+           accidentally importing a partial line that hasn't been completely
+           written, which would also cause <command>COPY</> to fail.
           </para>
         </listitem>
         </orderedlist>
