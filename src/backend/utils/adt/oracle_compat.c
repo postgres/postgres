@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.72 2007/09/21 22:52:52 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.73 2007/09/22 05:35:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1162,30 +1162,34 @@ translate(PG_FUNCTION_ARGS)
 				tolen,
 				retlen,
 				i;
-
-	int			str_len;
-	int			estimate_len;
+	int			worst_len;
 	int			len;
 	int			source_len;
 	int			from_index;
 
 	m = VARSIZE_ANY_EXHDR(string);
-	
 	if (m <= 0)
 		PG_RETURN_TEXT_P(string);
+	source = VARDATA_ANY(string);
 
 	fromlen = VARSIZE_ANY_EXHDR(from);
 	from_ptr = VARDATA_ANY(from);
 	tolen = VARSIZE_ANY_EXHDR(to);
 	to_ptr = VARDATA_ANY(to);
 
-	str_len = VARSIZE_ANY_EXHDR(string);
-	source = VARDATA_ANY(string);
+	/*
+	 * The worst-case expansion is to substitute a max-length character for
+	 * a single-byte character at each position of the string.
+	 */
+	worst_len = pg_database_encoding_max_length() * m;
 
-	estimate_len = (tolen * 1.0 / fromlen + 0.5) * str_len;
-	estimate_len = estimate_len > str_len ? estimate_len : str_len;
+	/* check for integer overflow */
+	if (worst_len / pg_database_encoding_max_length() != m)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("requested length too large")));
 
-	result = (text *) palloc(estimate_len + VARHDRSZ);
+	result = (text *) palloc(worst_len + VARHDRSZ);
 	target = VARDATA(result);
 	retlen = 0;
 
@@ -1238,9 +1242,9 @@ translate(PG_FUNCTION_ARGS)
 	SET_VARSIZE(result, retlen + VARHDRSZ);
 
 	/*
-	 * There may be some wasted space in the result if deletions occurred, but
-	 * it's not worth reallocating it; the function result probably won't live
-	 * long anyway.
+	 * The function result is probably much bigger than needed, if we're
+	 * using a multibyte encoding, but it's not worth reallocating it;
+	 * the result probably won't live long anyway.
 	 */
 
 	PG_RETURN_TEXT_P(result);
