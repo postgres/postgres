@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.57.4.2 2005/03/16 01:49:20 momjian Exp $
+ *	$PostgreSQL: pgsql/src/backend/utils/adt/oracle_compat.c,v 1.57.4.3 2007/09/22 05:36:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -956,27 +956,34 @@ translate(PG_FUNCTION_ARGS)
 				tolen,
 				retlen,
 				i;
-
-	int			str_len;
-	int			estimate_len;
+	int			worst_len;
 	int			len;
 	int			source_len;
 	int			from_index;
 
-	if ((m = VARSIZE(string) - VARHDRSZ) <= 0)
+	m = VARSIZE(string) - VARHDRSZ;
+	if (m <= 0)
 		PG_RETURN_TEXT_P(string);
+	source = VARDATA(string);
 
 	fromlen = VARSIZE(from) - VARHDRSZ;
 	from_ptr = VARDATA(from);
 	tolen = VARSIZE(to) - VARHDRSZ;
 	to_ptr = VARDATA(to);
 
-	str_len = VARSIZE(string);
-	estimate_len = (tolen * 1.0 / fromlen + 0.5) * str_len;
-	estimate_len = estimate_len > str_len ? estimate_len : str_len;
-	result = (text *) palloc(estimate_len);
+	/*
+	 * The worst-case expansion is to substitute a max-length character for
+	 * a single-byte character at each position of the string.
+	 */
+	worst_len = pg_database_encoding_max_length() * m;
 
-	source = VARDATA(string);
+	/* check for integer overflow */
+	if (worst_len / pg_database_encoding_max_length() != m)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
+				 errmsg("requested length too large")));
+
+	result = (text *) palloc(worst_len + VARHDRSZ);
 	target = VARDATA(result);
 	retlen = 0;
 
