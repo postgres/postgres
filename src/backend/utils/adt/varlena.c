@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.157 2007/07/19 20:34:20 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.158 2007/09/22 00:36:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -689,7 +689,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 			slice = (text *) DatumGetPointer(str);
 
 		/* see if we got back an empty string */
-		if ((VARSIZE(slice) - VARHDRSZ) == 0)
+		if (VARSIZE_ANY_EXHDR(slice) == 0)
 		{
 			if (slice != (text *) DatumGetPointer(str))
 				pfree(slice);
@@ -697,7 +697,8 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		}
 
 		/* Now we can get the actual length of the slice in MB characters */
-		slice_strlen = pg_mbstrlen_with_len(VARDATA(slice), VARSIZE(slice) - VARHDRSZ);
+		slice_strlen = pg_mbstrlen_with_len(VARDATA_ANY(slice),
+											VARSIZE_ANY_EXHDR(slice));
 
 		/*
 		 * Check that the start position wasn't > slice_strlen. If so, SQL99
@@ -722,7 +723,7 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 		/*
 		 * Find the start position in the slice; remember S1 is not zero based
 		 */
-		p = VARDATA(slice);
+		p = VARDATA_ANY(slice);
 		for (i = 0; i < S1 - 1; i++)
 			p += pg_mblen(p);
 
@@ -762,8 +763,8 @@ text_substring(Datum str, int32 start, int32 length, bool length_not_specified)
 Datum
 textpos(PG_FUNCTION_ARGS)
 {
-	text	   *str = PG_GETARG_TEXT_P(0);
-	text	   *search_str = PG_GETARG_TEXT_P(1);
+	text	   *str = PG_GETARG_TEXT_PP(0);
+	text	   *search_str = PG_GETARG_TEXT_PP(1);
 
 	PG_RETURN_INT32((int32) text_position(str, search_str));
 }
@@ -808,15 +809,15 @@ text_position(text *t1, text *t2)
 static void
 text_position_setup(text *t1, text *t2, TextPositionState *state)
 {
-	int			len1 = VARSIZE(t1) - VARHDRSZ;
-	int			len2 = VARSIZE(t2) - VARHDRSZ;
+	int			len1 = VARSIZE_ANY_EXHDR(t1);
+	int			len2 = VARSIZE_ANY_EXHDR(t2);
 
 	if (pg_database_encoding_max_length() == 1)
 	{
 		/* simple case - single byte encoding */
 		state->use_wchar = false;
-		state->str1 = VARDATA(t1);
-		state->str2 = VARDATA(t2);
+		state->str1 = VARDATA_ANY(t1);
+		state->str2 = VARDATA_ANY(t2);
 		state->len1 = len1;
 		state->len2 = len2;
 	}
@@ -827,9 +828,9 @@ text_position_setup(text *t1, text *t2, TextPositionState *state)
 				   *p2;
 
 		p1 = (pg_wchar *) palloc((len1 + 1) * sizeof(pg_wchar));
-		len1 = pg_mb2wchar_with_len(VARDATA(t1), p1, len1);
+		len1 = pg_mb2wchar_with_len(VARDATA_ANY(t1), p1, len1);
 		p2 = (pg_wchar *) palloc((len2 + 1) * sizeof(pg_wchar));
-		len2 = pg_mb2wchar_with_len(VARDATA(t2), p2, len2);
+		len2 = pg_mb2wchar_with_len(VARDATA_ANY(t2), p2, len2);
 
 		state->use_wchar = true;
 		state->wstr1 = p1;
@@ -2094,7 +2095,7 @@ byteacmp(PG_FUNCTION_ARGS)
 static void
 appendStringInfoText(StringInfo str, const text *t)
 {
-	appendBinaryStringInfo(str, VARDATA(t), VARSIZE(t) - VARHDRSZ);
+	appendBinaryStringInfo(str, VARDATA_ANY(t), VARSIZE_ANY_EXHDR(t));
 }
 
 /*
@@ -2108,9 +2109,9 @@ appendStringInfoText(StringInfo str, const text *t)
 Datum
 replace_text(PG_FUNCTION_ARGS)
 {
-	text	   *src_text = PG_GETARG_TEXT_P(0);
-	text	   *from_sub_text = PG_GETARG_TEXT_P(1);
-	text	   *to_sub_text = PG_GETARG_TEXT_P(2);
+	text	   *src_text = PG_GETARG_TEXT_PP(0);
+	text	   *from_sub_text = PG_GETARG_TEXT_PP(1);
+	text	   *to_sub_text = PG_GETARG_TEXT_PP(2);
 	int			src_text_len;
 	int			from_sub_text_len;
 	TextPositionState state;
@@ -2148,7 +2149,7 @@ replace_text(PG_FUNCTION_ARGS)
 	}
 
 	/* start_ptr points to the start_posn'th character of src_text */
-	start_ptr = (char *) VARDATA(src_text);
+	start_ptr = VARDATA_ANY(src_text);
 
 	initStringInfo(&str);
 
@@ -2172,7 +2173,7 @@ replace_text(PG_FUNCTION_ARGS)
 	while (curr_posn > 0);
 
 	/* copy trailing data */
-	chunk_len = ((char *) src_text + VARSIZE(src_text)) - start_ptr;
+	chunk_len = ((char *) src_text + VARSIZE_ANY(src_text)) - start_ptr;
 	appendBinaryStringInfo(&str, start_ptr, chunk_len);
 
 	text_position_cleanup(&state);
@@ -2191,8 +2192,8 @@ replace_text(PG_FUNCTION_ARGS)
 static bool
 check_replace_text_has_escape_char(const text *replace_text)
 {
-	const char *p = VARDATA(replace_text);
-	const char *p_end = p + (VARSIZE(replace_text) - VARHDRSZ);
+	const char *p = VARDATA_ANY(replace_text);
+	const char *p_end = p + VARSIZE_ANY_EXHDR(replace_text);
 
 	if (pg_database_encoding_max_length() == 1)
 	{
@@ -2226,8 +2227,8 @@ appendStringInfoRegexpSubstr(StringInfo str, text *replace_text,
 							 regmatch_t *pmatch,
 							 char *start_ptr, int data_pos)
 {
-	const char *p = VARDATA(replace_text);
-	const char *p_end = p + (VARSIZE(replace_text) - VARHDRSZ);
+	const char *p = VARDATA_ANY(replace_text);
+	const char *p_end = p + VARSIZE_ANY_EXHDR(replace_text);
 	int			eml = pg_database_encoding_max_length();
 
 	for (;;)
@@ -2332,7 +2333,7 @@ replace_text_regexp(text *src_text, void *regexp,
 {
 	text	   *ret_text;
 	regex_t    *re = (regex_t *) regexp;
-	int			src_text_len = VARSIZE(src_text) - VARHDRSZ;
+	int			src_text_len = VARSIZE_ANY_EXHDR(src_text);
 	StringInfoData buf;
 	regmatch_t	pmatch[REGEXP_REPLACE_BACKREF_CNT];
 	pg_wchar   *data;
@@ -2346,13 +2347,13 @@ replace_text_regexp(text *src_text, void *regexp,
 
 	/* Convert data string to wide characters. */
 	data = (pg_wchar *) palloc((src_text_len + 1) * sizeof(pg_wchar));
-	data_len = pg_mb2wchar_with_len(VARDATA(src_text), data, src_text_len);
+	data_len = pg_mb2wchar_with_len(VARDATA_ANY(src_text), data, src_text_len);
 
 	/* Check whether replace_text has escape char. */
 	have_escape = check_replace_text_has_escape_char(replace_text);
 
 	/* start_ptr points to the data_pos'th character of src_text */
-	start_ptr = (char *) VARDATA(src_text);
+	start_ptr = (char *) VARDATA_ANY(src_text);
 	data_pos = 0;
 
 	search_start = 0;
@@ -2439,7 +2440,7 @@ replace_text_regexp(text *src_text, void *regexp,
 	{
 		int			chunk_len;
 
-		chunk_len = ((char *) src_text + VARSIZE(src_text)) - start_ptr;
+		chunk_len = ((char *) src_text + VARSIZE_ANY(src_text)) - start_ptr;
 		appendBinaryStringInfo(&buf, start_ptr, chunk_len);
 	}
 
@@ -2459,8 +2460,8 @@ replace_text_regexp(text *src_text, void *regexp,
 Datum
 split_text(PG_FUNCTION_ARGS)
 {
-	text	   *inputstring = PG_GETARG_TEXT_P(0);
-	text	   *fldsep = PG_GETARG_TEXT_P(1);
+	text	   *inputstring = PG_GETARG_TEXT_PP(0);
+	text	   *fldsep = PG_GETARG_TEXT_PP(1);
 	int			fldnum = PG_GETARG_INT32(2);
 	int			inputstring_len;
 	int			fldsep_len;
@@ -2559,8 +2560,8 @@ split_text(PG_FUNCTION_ARGS)
 Datum
 text_to_array(PG_FUNCTION_ARGS)
 {
-	text	   *inputstring = PG_GETARG_TEXT_P(0);
-	text	   *fldsep = PG_GETARG_TEXT_P(1);
+	text	   *inputstring = PG_GETARG_TEXT_PP(0);
+	text	   *fldsep = PG_GETARG_TEXT_PP(1);
 	int			inputstring_len;
 	int			fldsep_len;
 	TextPositionState state;
@@ -2601,7 +2602,7 @@ text_to_array(PG_FUNCTION_ARGS)
 
 	start_posn = 1;
 	/* start_ptr points to the start_posn'th character of inputstring */
-	start_ptr = (char *) VARDATA(inputstring);
+	start_ptr = VARDATA_ANY(inputstring);
 
 	for (fldnum = 1;; fldnum++) /* field number is 1 based */
 	{
@@ -2612,7 +2613,7 @@ text_to_array(PG_FUNCTION_ARGS)
 		if (end_posn == 0)
 		{
 			/* fetch last field */
-			chunk_len = ((char *) inputstring + VARSIZE(inputstring)) - start_ptr;
+			chunk_len = ((char *) inputstring + VARSIZE_ANY(inputstring)) - start_ptr;
 		}
 		else
 		{
