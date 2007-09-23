@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.20 2007/09/22 20:38:10 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.21 2007/09/23 20:32:40 adunstan Exp $
 #
 use strict;
 use warnings;
@@ -50,7 +50,7 @@ sub Install
 									push(@$sample_files, $File::Find::name); 
 							} 
 				  }, 
-					 "../.." );
+					 "src" );
     CopySetOfFiles('config files', $sample_files , $target . '/share/');
     CopyFiles(
         'Import libraries',
@@ -81,7 +81,7 @@ sub Install
 				   [ glob ("src\\backend\\snowball\\stopwords\\*.stop") ], 
 				   $target . '/share/tsearch_data/');
     CopySetOfFiles('Dictionaries sample files', 
-				   [ glob ("src\\backend\\tsearch\\\*_sample.*" ) ], 
+				   [ glob ("src\\backend\\tsearch\\*_sample.*" ) ], 
 				   $target . '/share/tsearch_data/');
     CopyContribFiles($config,$target);
     CopyIncludeFiles($target);
@@ -424,7 +424,6 @@ sub GenerateNLSFiles
 {
     my $target = shift;
     my $nlspath = shift;
-    my $D;
 
     print "Installing NLS files...";
     EnsureDirectories($target, "share/locale");
@@ -433,7 +432,7 @@ sub GenerateNLSFiles
 						  sub { /^nls\.mk\z/s && 
 									!                                                                       push(@flist, $File::Find::name); 	
 							} 
-				  }, ".");
+				  }, "src");
     foreach (@flist)
     {
         s/nls.mk/po/;
