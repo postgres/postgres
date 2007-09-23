@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.58 2007/09/12 22:14:59 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.59 2007/09/23 20:07:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2576,7 +2576,7 @@ autovacuum_do_vac_analyze(Oid relid, bool dovacuum, bool doanalyze,
  * equivalent command was to be issued manually.
  *
  * Note we assume that we are going to report the next command as soon as we're
- * done with the current one, and exiting right after the last one, so we don't
+ * done with the current one, and exit right after the last one, so we don't
  * bother to report "<IDLE>" or some such.
  */
 static void
@@ -2610,6 +2610,9 @@ autovac_report_activity(VacuumStmt *vacstmt, Oid relid)
 		snprintf(activity + len, MAX_AUTOVAC_ACTIV_LEN - len,
 				 " %s.%s", nspname, relname);
 	}
+
+	/* Set statement_timestamp() to current time for pg_stat_activity */
+	SetCurrentStatementStartTimestamp();
 
 	pgstat_report_activity(activity);
 }
