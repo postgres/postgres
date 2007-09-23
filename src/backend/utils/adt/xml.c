@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.46 2007/07/13 03:43:23 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/xml.c,v 1.47 2007/09/23 21:36:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,37 +232,51 @@ xml_recv(PG_FUNCTION_ARGS)
 	xmlDocPtr	doc;
 	xmlChar	   *encoding = NULL;
 
-	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	/*
+	 * Read the data in raw format. We don't know yet what the encoding
+	 * is, as that information is embedded in the xml declaration; so we
+	 * have to parse that before converting to server encoding.
+	 */
+	nbytes = buf->len - buf->cursor;
+	str = (char *) pq_getmsgbytes(buf, nbytes);
 
-	result = palloc(nbytes + VARHDRSZ);
+	/*
+	 * We need a null-terminated string to pass to parse_xml_decl().  Rather
+	 * than make a separate copy, make the temporary result one byte bigger
+	 * than it needs to be.
+	 */
+	result = palloc(nbytes + 1 + VARHDRSZ);
 	SET_VARSIZE(result, nbytes + VARHDRSZ);
 	memcpy(VARDATA(result), str, nbytes);
+	str = VARDATA(result);
+	str[nbytes] = '\0';
 
 	parse_xml_decl((xmlChar *) str, NULL, NULL, &encoding, NULL);
 
 	/*
 	 * Parse the data to check if it is well-formed XML data.  Assume
-	 * that ERROR occurred if parsing failed.
+	 * that xml_parse will throw ERROR if not.
 	 */
 	doc = xml_parse(result, xmloption, true, encoding);
 	xmlFreeDoc(doc);
 
+	/* Now that we know what we're dealing with, convert to server encoding */
 	newstr = (char *) pg_do_encoding_conversion((unsigned char *) str,
 												nbytes,
 												encoding ? pg_char_to_encoding((char *) encoding) : PG_UTF8,
 												GetDatabaseEncoding());
 
-	pfree(str);
-
 	if (newstr != str)
 	{
-		free(result);
+		pfree(result);
 
 		nbytes = strlen(newstr);
 
 		result = palloc(nbytes + VARHDRSZ);
 		SET_VARSIZE(result, nbytes + VARHDRSZ);
 		memcpy(VARDATA(result), newstr, nbytes);
+
+		pfree(newstr);
 	}
 
 	PG_RETURN_XML_P(result);
@@ -277,11 +291,18 @@ Datum
 xml_send(PG_FUNCTION_ARGS)
 {
 	xmltype	   *x = PG_GETARG_XML_P(0);
-	char	   *outval = xml_out_internal(x, pg_get_client_encoding());
+	char	   *outval;
 	StringInfoData buf;
+	
+	/*
+	 * xml_out_internal doesn't convert the encoding, it just prints
+	 * the right declaration. pq_sendtext will do the conversion.
+	 */
+	outval = xml_out_internal(x, pg_get_client_encoding());
 
 	pq_begintypsend(&buf);
-	pq_sendstring(&buf, outval);
+	pq_sendtext(&buf, outval, strlen(outval));
+	pfree(outval);
 	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
