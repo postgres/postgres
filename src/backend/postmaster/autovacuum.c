@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.60 2007/09/24 03:12:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.61 2007/09/24 04:12:01 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,9 @@ int			autovacuum_vac_cost_delay;
 int			autovacuum_vac_cost_limit;
 
 int			Log_autovacuum_min_duration = -1;
+
+/* how long to keep pgstat data in the launcher, in milliseconds */
+#define STATS_READ_DELAY 1000
 
 
 /* Flags to tell if we are in an autovacuum process */
@@ -291,6 +294,7 @@ static void avl_sighup_handler(SIGNAL_ARGS);
 static void avl_sigusr1_handler(SIGNAL_ARGS);
 static void avl_sigterm_handler(SIGNAL_ARGS);
 static void avl_quickdie(SIGNAL_ARGS);
+static void autovac_refresh_stats(void);
 
 
 
@@ -488,7 +492,10 @@ AutoVacLauncherMain(int argc, char *argv[])
 		DatabaseListCxt = NULL;
 		DatabaseList = NULL;
 
-		/* Make sure pgstat also considers our stat data as gone */
+		/*
+		 * Make sure pgstat also considers our stat data as gone.  Note: we
+		 * mustn't use autovac_refresh_stats here.
+		 */
 		pgstat_clear_snapshot();
 
 		/* Now we can allow interrupts again */
@@ -836,7 +843,7 @@ rebuild_database_list(Oid newdb)
 	HTAB	   *dbhash;
 
 	/* use fresh stats */
-	pgstat_clear_snapshot();
+	autovac_refresh_stats();
 
 	newcxt = AllocSetContextCreate(AutovacMemCxt,
 								   "AV dblist",
@@ -1063,7 +1070,7 @@ do_start_worker(void)
 	oldcxt = MemoryContextSwitchTo(tmpcxt);
 
 	/* use fresh stats */
-	pgstat_clear_snapshot();
+	autovac_refresh_stats();
 
 	/* Get a list of databases */
 	dblist = get_database_list();
@@ -1106,9 +1113,6 @@ do_start_worker(void)
 		avw_dbase  *tmp = lfirst(cell);
 		Dlelem	   *elem;
 
-		/* Find pgstat entry if any */
-		tmp->adw_entry = pgstat_fetch_stat_dbentry(tmp->adw_datid);
-
 		/* Check to see if this one is at risk of wraparound */
 		if (TransactionIdPrecedes(tmp->adw_frozenxid, xidForceLimit))
 		{
@@ -1121,9 +1125,12 @@ do_start_worker(void)
 		else if (for_xid_wrap)
 			continue;			/* ignore not-at-risk DBs */
 
+		/* Find pgstat entry if any */
+		tmp->adw_entry = pgstat_fetch_stat_dbentry(tmp->adw_datid);
+
 		/*
-		 * Otherwise, skip a database with no pgstat entry; it means it
-		 * hasn't seen any activity.
+		 * Skip a database with no pgstat entry; it means it hasn't seen any
+		 * activity.
 		 */
 		if (!tmp->adw_entry)
 			continue;
@@ -2258,7 +2265,7 @@ table_recheck_autovac(Oid relid)
 	PgStat_StatDBEntry *dbentry;
 
 	/* use fresh stats */
-	pgstat_clear_snapshot();
+	autovac_refresh_stats();
 
 	shared = pgstat_fetch_stat_dbentry(InvalidOid);
 	dbentry = pgstat_fetch_stat_dbentry(MyDatabaseId);
@@ -2724,4 +2731,36 @@ AutoVacuumShmemInit(void)
 	}
 	else
 		Assert(found);
+}
+
+/*
+ * autovac_refresh_stats
+ * 		Refresh pgstats data for an autovacuum process
+ *
+ * Cause the next pgstats read operation to obtain fresh data, but throttle
+ * such refreshing in the autovacuum launcher.  This is mostly to avoid
+ * rereading the pgstats files too many times in quick succession when there
+ * are many databases.
+ *
+ * Note: we avoid throttling in the autovac worker, as it would be
+ * counterproductive in the recheck logic.
+ */
+static void
+autovac_refresh_stats(void)
+{
+	if (IsAutoVacuumLauncherProcess())
+	{
+		static TimestampTz	last_read = 0;
+		TimestampTz			current_time;
+
+		current_time = GetCurrentTimestamp();
+
+		if (!TimestampDifferenceExceeds(last_read, current_time,
+										STATS_READ_DELAY))
+			return;
+
+		last_read = current_time;
+	}
+
+	pgstat_clear_snapshot();
 }
