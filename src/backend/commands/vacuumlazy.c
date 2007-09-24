@@ -11,10 +11,12 @@
  * on the number of tuples and pages we will keep track of at once.
  *
  * We are willing to use at most maintenance_work_mem memory space to keep
- * track of dead tuples.  We initially allocate an array of TIDs of that size.
- * If the array threatens to overflow, we suspend the heap scan phase and
- * perform a pass of index cleanup and page compaction, then resume the heap
- * scan with an empty TID array.
+ * track of dead tuples.  We initially allocate an array of TIDs of that size,
+ * with an upper limit that depends on table size (this limit ensures we don't
+ * allocate a huge area uselessly for vacuuming small tables).  If the array
+ * threatens to overflow, we suspend the heap scan phase and perform a pass of
+ * index cleanup and page compaction, then resume the heap scan with an empty
+ * TID array.
  *
  * We can limit the storage for page free space to MaxFSMPages entries,
  * since that's the most the free space map will be willing to remember
@@ -31,7 +33,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.50.4.5 2007/09/16 02:38:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.50.4.6 2007/09/24 03:53:12 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +65,12 @@
 /* MAX_TUPLES_PER_PAGE can be a conservative upper limit */
 #define MAX_TUPLES_PER_PAGE		((int) (BLCKSZ / sizeof(HeapTupleHeaderData)))
 
+/*
+ * Guesstimation of number of dead tuples per page.  This is used to
+ * provide an upper limit to memory allocated when vacuuming small
+ * tables.
+ */
+#define LAZY_ALLOC_TUPLES		200
 
 typedef struct LVRelStats
 {
@@ -941,6 +949,10 @@ lazy_space_alloc(LVRelStats *vacrelstats, BlockNumber relblocks)
 	/* stay sane if small maintenance_work_mem */
 	if (maxtuples < MAX_TUPLES_PER_PAGE)
 		maxtuples = MAX_TUPLES_PER_PAGE;
+
+	/* curious coding here to ensure the multiplication can't overflow */
+	if ((BlockNumber) (maxtuples / LAZY_ALLOC_TUPLES) > relblocks)
+		maxtuples = relblocks * LAZY_ALLOC_TUPLES;
 
 	vacrelstats->num_dead_tuples = 0;
 	vacrelstats->max_dead_tuples = maxtuples;
