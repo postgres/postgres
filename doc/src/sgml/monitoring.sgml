@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.52 2007/09/20 17:56:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.53 2007/09/24 03:12:23 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -117,14 +117,15 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
    <productname>PostgreSQL</productname>'s <firstterm>statistics collector</>
    is a subsystem that supports collection and reporting of information about
    server activity.  Presently, the collector can count accesses to tables
-   and indexes in both disk-block and individual-row terms.
+   and indexes in both disk-block and individual-row terms.  It also tracks
+   total numbers of rows in each table, and the last vacuum and analyze times
+   for each table.
   </para>
 
   <para>
    <productname>PostgreSQL</productname> also supports determining the exact
    command currently being executed by other server processes.  This is an
-   independent facility that can be enabled or disabled whether or not
-   block-level and row-level statistics are being collected.
+   independent facility that does not depend on the collector process.
   </para>
 
  <sect2 id="monitoring-stats-setup">
@@ -139,31 +140,14 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   </para>
 
   <para>
-   The parameter <xref linkend="guc-stats-start-collector"> must be
-   set to <literal>true</> for the statistics collector to be launched
-   at all.  This is the default and recommended setting, but it can be
-   turned off if you have no interest in statistics and want to
-   squeeze out every last drop of overhead.  (The savings is likely to
-   be small, however.)  Note that this option cannot be changed while
-   the server is running.
+   The parameter <xref linkend="guc-track-counts"> controls whether
+   information is actually sent to the collector process and thus determines
+   whether any run-time overhead occurs for event counting.
   </para>
 
   <para>
-   The parameters <xref linkend="guc-stats-block-level"> and <xref
-   linkend="guc-stats-row-level"> control how much information is
-   actually sent to the collector and thus determine how much run-time
-   overhead occurs.  These respectively determine whether a server
-   process tracks disk-block-level access
-   statistics and row-level access statistics and sends these to the collector.
-   Additionally, per-database transaction commit and abort statistics
-   are collected if either of these parameters are set.
-  </para>
-
-  <para>
-   The parameter <xref linkend="guc-stats-command-string"> enables monitoring
+   The parameter <xref linkend="guc-track-activities"> enables monitoring
    of the current command being executed by any server process.
-   The statistics collector subprocess need not be running to enable this
-   feature.
   </para>
   
   <para>
@@ -190,13 +174,13 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
   <para>
    When using the statistics to monitor current activity, it is important
    to realize that the information does not update instantaneously.
-   Each individual server process transmits new block and row access counts to
+   Each individual server process transmits new statistical counts to
    the collector just before going idle; so a query or transaction still in
    progress does not affect the displayed totals.  Also, the collector itself
    emits a new report at most once per <varname>PGSTAT_STAT_INTERVAL</varname>
    milliseconds (500 unless altered while building the server).  So the
    displayed information lags behind actual activity.  However, current-query
-   information collected by <varname>stats_command_string</varname> is
+   information collected by <varname>track_activities</varname> is
    always up-to-date.
   </para>
 
@@ -240,7 +224,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       current query began execution, time at which the process was
       started, and client's address and port number.  The columns that
       report data on the current query are available unless the parameter
-      <varname>stats_command_string</varname> has been turned off.
+      <varname>track_activities</varname> has been turned off.
       Furthermore, these columns are only visible if the user examining
       the view is a superuser or the same as the user owning the process
       being reported on.
@@ -715,7 +699,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        Active command of the given server process, but only if the
        current user is a superuser or the same user as that of
        the session being queried (and
-       <varname>stats_command_string</varname> is on)
+       <varname>track_activities</varname> is on)
       </entry>
      </row>
 
@@ -726,7 +710,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        True if the given server process is waiting for a lock,
        but only if the current user is a superuser or the same user as that of
        the session being queried (and
-       <varname>stats_command_string</varname> is on)
+       <varname>track_activities</varname> is on)
       </entry>
      </row>
 
@@ -738,7 +722,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        executing query was started, but only if the
        current user is a superuser or the same user as that of
        the session being queried (and
-       <varname>stats_command_string</varname> is on)
+       <varname>track_activities</varname> is on)
       </entry>
      </row>
 
@@ -750,7 +734,7 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        executing transaction was started, but only if the
        current user is a superuser or the same user as that of
        the session being queried (and
-       <varname>stats_command_string</varname> is on)
+       <varname>track_activities</varname> is on)
       </entry>
      </row>
 

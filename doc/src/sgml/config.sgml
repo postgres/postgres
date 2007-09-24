@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.145 2007/09/22 19:10:44 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.146 2007/09/24 03:12:23 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3186,30 +3186,19 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
      <title>Query and Index Statistics Collector</title>
 
      <para>
-      These parameters control a server-wide statistics collection feature.
+      These parameters control server-wide statistics collection features.
       When statistics collection is enabled, the data that is produced can be
       accessed via the <structname>pg_stat</structname> and
       <structname>pg_statio</structname> family of system views.
       Refer to <xref linkend="monitoring"> for more information.
      </para>
 
-     <note>
-     <para>
-      As of <productname>PostgreSQL</productname> 8.2,
-      <varname>stats_command_string</varname> controls a separate data
-      collection mechanism that can be turned on or off independently
-      of whether the statistics-collection subprocess is running.
-      The subprocess is only needed to support collection of
-      block-level or row-level statistics.
-     </para>
-     </note>
-
      <variablelist>
 
-     <varlistentry id="guc-stats-command-string" xreflabel="stats_command_string">
-      <term><varname>stats_command_string</varname> (<type>boolean</type>)</term>
+     <varlistentry id="guc-track-activities" xreflabel="track_activities">
+      <term><varname>track_activities</varname> (<type>boolean</type>)</term>
       <indexterm>
-       <primary><varname>stats_command_string</> configuration parameter</primary>
+       <primary><varname>track_activities</> configuration parameter</primary>
       </indexterm>
       <listitem>
        <para>
@@ -3225,6 +3214,21 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       </listitem>
      </varlistentry>
 
+     <varlistentry id="guc-track-counts" xreflabel="track_counts">
+      <term><varname>track_counts</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>track_counts</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Enables collection of statistics on database activity.
+        This parameter is on by default, because the autovacuum
+        daemon needs the collected information.
+        Only superusers can change this setting.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-update-process-title" xreflabel="update_process_title">
       <term><varname>update_process_title</varname> (<type>boolean</type>)</term>
       <indexterm>
@@ -3234,71 +3238,9 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         Enables updating of the process title every time a new SQL command
         is received by the server.  The process title is typically viewed
-        by the <command>ps</> command or in Windows using the <application>Process
-        Explorer</>.   Only superusers can change this setting.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-stats-start-collector" xreflabel="stats_start_collector">
-      <term><varname>stats_start_collector</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>stats_start_collector</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Controls whether the server should start the
-        statistics-collection subprocess.  This is on by default, but
-        can be turned off if you know you have no interest in
-        collecting statistics or running autovacuum.
-        This parameter can only be set at server start, because the collection
-        subprocess cannot be started or stopped on-the-fly.  (However, the
-        extent to which statistics are actually gathered can be changed while
-        the server is running, so long as the subprocess exists.)
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-stats-block-level" xreflabel="stats_block_level">
-      <term><varname>stats_block_level</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>stats_block_level</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Enables the collection of block-level statistics on database
-        activity. This parameter is off by default.
+        by the <command>ps</> command,
+        or in Windows by using the <application>Process Explorer</>.
         Only superusers can change this setting.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-stats-row-level" xreflabel="stats_row_level">
-      <term><varname>stats_row_level</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>stats_row_level</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Enables the collection of row-level statistics on database
-        activity. This parameter is on by default, because the autovacuum
-        daemon needs the collected information.
-        Only superusers can change this setting.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-stats-reset-on-server-start" xreflabel="stats_reset_on_server_start">
-      <term><varname>stats_reset_on_server_start</varname> (<type>boolean</type>)</term>
-      <indexterm>
-       <primary><varname>stats_reset_on_server_start</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        If on, collected block-level and row-level statistics are zeroed out
-        whenever the server is restarted. If off, statistics are accumulated
-        across server restarts. This parameter is off by default.
-        This parameter can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
@@ -3369,17 +3311,36 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
       <listitem>
        <para>
         Controls whether the server should run the
-        autovacuum launcher daemon.  This is on by default.
-        <varname>stats_start_collector</> and <varname>stats_row_level</>
-        must also be turned on for autovacuum to work.
+        autovacuum launcher daemon.  This is on by default; however,
+        <xref linkend="guc-track-counts"> must also be turned on for
+        autovacuum to work.
         This parameter can only be set in the <filename>postgresql.conf</>
         file or on the server command line.
        </para>
        <para>
         Note that even when this parameter is disabled, the system
-        will periodically launch autovacuum processes in order to
+        will launch autovacuum processes if necessary to
         prevent transaction ID wraparound.  See <xref
         linkend="vacuum-for-wraparound"> for more information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-autovacuum-min-duration" xreflabel="log_autovacuum_min_duration">
+      <term><varname>log_autovacuum_min_duration</varname> (<type>integer</type>)</term>
+      <indexterm>
+       <primary><varname>log_autovacuum_min_duration</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        Causes each action executed by autovacuum to be logged if it ran for at
+        least the specified number of milliseconds.  Setting this to zero logs
+        all autovacuum actions. Minus-one (the default) disables logging
+        autovacuum actions.  For example, if you set this to
+        <literal>250ms</literal> then all automatic vacuums and analyzes that run
+        250ms or longer will be logged.  Enabling this parameter can be helpful
+        in tracking autovacuum activity.  This setting can only be set in
+        the <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>
      </varlistentry>
@@ -3393,26 +3354,7 @@ COPY postgres_log FROM '/full/path/to/logfile.csv' WITH csv;
        <para>
         Specifies the maximum number of autovacuum processes (other than the
         autovacuum launcher) which may be running at any one time.  The default
-        is three (<literal>3</literal>).  This parameter can only be set in
-        the <filename>postgresql.conf</> file or on the server command line.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry id="guc-log-autovacuum" xreflabel="log_autovacuum">
-      <term><varname>log_autovacuum</varname> (<type>integer</type>)</term>
-      <indexterm>
-       <primary><varname>log_autovacuum</> configuration parameter</primary>
-      </indexterm>
-      <listitem>
-       <para>
-        Causes each action executed by autovacuum to be logged if it ran for at
-        least the specified number of milliseconds.  Setting this to zero logs
-        all autovacuum actions. Minus-one (the default) disables logging
-        autovacuum actions.  For example, if you set this to
-        <literal>250ms</literal> then all vacuums and analyzes that run
-        250ms or longer will be logged.  Enabling this parameter can be helpful
-        in tracking autovacuum activity.  This setting can only be set in
+        is three.  This parameter can only be set in
         the <filename>postgresql.conf</> file or on the server command line.
        </para>
       </listitem>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.108 2007/05/30 20:11:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.109 2007/09/24 03:12:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,10 +202,10 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	}
 
 	/* measure elapsed time iff autovacuum logging requires it */
-	if (IsAutoVacuumWorkerProcess() && Log_autovacuum >= 0)
+	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
 	{
 		pg_rusage_init(&ru0);
-		if (Log_autovacuum > 0)
+		if (Log_autovacuum_min_duration > 0)
 			starttime = GetCurrentTimestamp();
 	}
 
@@ -472,11 +472,11 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt,
 	relation_close(onerel, NoLock);
 
 	/* Log the action if appropriate */
-	if (IsAutoVacuumWorkerProcess() && Log_autovacuum >= 0)
+	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
 	{
-		if (Log_autovacuum == 0 ||
+		if (Log_autovacuum_min_duration == 0 ||
 			TimestampDifferenceExceeds(starttime, GetCurrentTimestamp(),
-									   Log_autovacuum))
+									   Log_autovacuum_min_duration))
 			ereport(LOG,
 					(errmsg("automatic analyze of table \"%s.%s.%s\" system usage: %s",
 							get_database_name(MyDatabaseId),

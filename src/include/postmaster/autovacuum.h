@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.11 2007/06/25 16:09:03 alvherre Exp $
+ * $PostgreSQL: pgsql/src/include/postmaster/autovacuum.h,v 1.12 2007/09/24 03:12:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@ extern int	autovacuum_vac_cost_limit;
 /* autovacuum launcher PID, only valid when worker is shutting down */
 extern int	AutovacuumLauncherPid;
 
-extern int	Log_autovacuum;
+extern int	Log_autovacuum_min_duration;
 
 /* Status inquiry functions */
 extern bool AutoVacuumingActive(void);

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.507 2007/09/16 03:03:00 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.508 2007/09/24 03:12:23 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -1475,8 +1475,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Improve performance of statistics monitoring, especially
-        <link
-        linkend="guc-stats-command-string"><varname>stats_command_string</></link>
+        <varname>stats_command_string</>
         (Tom, Bruce)
        </para>
 

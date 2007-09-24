@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.81 2007/09/14 13:43:03 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.82 2007/09/24 03:12:23 tgl Exp $ -->
 
 <chapter id="maintenance">
  <title>Routine Database Maintenance Tasks</title>
@@ -203,7 +203,7 @@
   </sect2>
 
   <sect2 id="vacuum-for-statistics">
-   <title>Updating planner statistics</title>
+   <title>Updating Planner Statistics</title>
 
    <indexterm zone="vacuum-for-statistics">
     <primary>statistics</primary>
@@ -279,7 +279,7 @@
   </sect2>
 
   <sect2 id="vacuum-for-wraparound">
-   <title>Preventing transaction ID wraparound failures</title>
+   <title>Preventing Transaction ID Wraparound Failures</title>
 
    <indexterm zone="vacuum-for-wraparound">
     <primary>transaction ID</primary>
@@ -460,7 +460,7 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
   </sect2>
 
   <sect2 id="autovacuum">
-   <title id="autovacuum-title">The auto-vacuum daemon</title>
+   <title id="autovacuum-title">The Auto-Vacuum Daemon</title>
 
    <indexterm>
     <primary>autovacuum</primary>
@@ -473,10 +473,9 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     <command>VACUUM</command> and <command>ANALYZE </command> commands.
     When enabled, autovacuum checks for
     tables that have had a large number of inserted, updated or deleted
-    tuples.  These checks use the row-level statistics collection facility;
+    tuples.  These checks use the statistics collection facility;
     therefore, autovacuum cannot be used unless <xref
-    linkend="guc-stats-start-collector"> and <xref
-    linkend="guc-stats-row-level"> are set to <literal>true</literal>.
+    linkend="guc-track-counts"> is set to <literal>true</literal>.
     In the default configuration, autovacuuming is enabled and the related
     configuration parameters are appropriately set.
    </para>
@@ -497,8 +496,8 @@ HINT:  Stop the postmaster and use a standalone backend to VACUUM in "mydb".
     eligible for vacuuming in a short amount of time, all autovacuum workers
     may end up vacuuming those tables for a very long time. This would result
     in other tables and databases not being vacuumed until a worker became
-    available. There is also not a limit on how many workers might be in a
-    single database, but workers do try and avoid repeating work that has
+    available. There is not a limit on how many workers might be in a
+    single database, but workers do try to avoid repeating work that has
     already been done by other workers. Note that the number of running
     workers does not count towards the <xref linkend="guc-max-connections"> nor
     the <xref linkend="guc-superuser-reserved-connections"> limits.

@@ -55,7 +55,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.59 2007/09/23 20:07:33 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/autovacuum.c,v 1.60 2007/09/24 03:12:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,7 +114,7 @@ int			autovacuum_freeze_max_age;
 int			autovacuum_vac_cost_delay;
 int			autovacuum_vac_cost_limit;
 
-int			Log_autovacuum = -1;
+int			Log_autovacuum_min_duration = -1;
 
 
 /* Flags to tell if we are in an autovacuum process */
@@ -511,7 +511,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 	PG_SETMASK(&UnBlockSig);
 
 	/* in emergency mode, just start a worker and go away */
-	if (!autovacuum_start_daemon)
+	if (!AutoVacuumingActive())
 	{
 		do_start_worker();
 		proc_exit(0);		/* done */
@@ -590,7 +590,7 @@ AutoVacLauncherMain(int argc, char *argv[])
 			ProcessConfigFile(PGC_SIGHUP);
 
 			/* shutdown requested in config file */
-			if (!autovacuum_start_daemon)
+			if (!AutoVacuumingActive())
 				break;
 
 			/* rebalance in case the default cost parameters changed */
@@ -2625,8 +2625,7 @@ autovac_report_activity(VacuumStmt *vacstmt, Oid relid)
 bool
 AutoVacuumingActive(void)
 {
-	if (!autovacuum_start_daemon || !pgstat_collect_startcollector ||
-		!pgstat_collect_tuplelevel)
+	if (!autovacuum_start_daemon || !pgstat_track_counts)
 		return false;
 	return true;
 }
@@ -2635,26 +2634,15 @@ AutoVacuumingActive(void)
  * autovac_init
  *		This is called at postmaster initialization.
  *
- * Annoy the user if he got it wrong.
+ * All we do here is annoy the user if he got it wrong.
  */
 void
 autovac_init(void)
 {
-	if (!autovacuum_start_daemon)
-		return;
-
-	if (!pgstat_collect_startcollector || !pgstat_collect_tuplelevel)
-	{
+	if (autovacuum_start_daemon && !pgstat_track_counts)
 		ereport(WARNING,
 				(errmsg("autovacuum not started because of misconfiguration"),
-				 errhint("Enable options \"stats_start_collector\" and \"stats_row_level\".")));
-
-		/*
-		 * Set the GUC var so we don't fork autovacuum uselessly, and also to
-		 * help debugging.
-		 */
-		autovacuum_start_daemon = false;
-	}
+				 errhint("Enable the \"track_counts\" option.")));
 }
 
 /*

@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.164 2007/09/20 17:56:31 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.165 2007/09/24 03:12:23 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -55,6 +55,7 @@
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
+#include "utils/guc.h"
 #include "utils/memutils.h"
 #include "utils/ps_status.h"
 
@@ -93,11 +94,8 @@
  * GUC parameters
  * ----------
  */
-bool		pgstat_collect_startcollector = true;
-bool		pgstat_collect_resetonpmstart = false;
-bool		pgstat_collect_tuplelevel = false;
-bool		pgstat_collect_blocklevel = false;
-bool		pgstat_collect_querystring = false;
+bool		pgstat_track_activities = false;
+bool		pgstat_track_counts = false;
 
 /*
  * BgWriter global statistics counters (unused in other processes).
@@ -255,28 +253,6 @@ pgstat_init(void)
 	int			tries = 0;
 
 #define TESTBYTEVAL ((char) 199)
-
-	/*
-	 * Force start of collector daemon if something to collect.  Note that
-	 * pgstat_collect_querystring is now an independent facility that does not
-	 * require the collector daemon.
-	 */
-	if (pgstat_collect_tuplelevel ||
-		pgstat_collect_blocklevel)
-		pgstat_collect_startcollector = true;
-
-	/*
-	 * If we don't have to start a collector or should reset the collected
-	 * statistics on postmaster start, simply remove the stats file.
-	 */
-	if (!pgstat_collect_startcollector || pgstat_collect_resetonpmstart)
-		pgstat_reset_all();
-
-	/*
-	 * Nothing else required if collector will not get started
-	 */
-	if (!pgstat_collect_startcollector)
-		return;
 
 	/*
 	 * Create the UDP socket for sending and receiving statistic messages
@@ -492,17 +468,19 @@ startup_failed:
 		closesocket(pgStatSock);
 	pgStatSock = -1;
 
-	/* Adjust GUC variables to suppress useless activity */
-	pgstat_collect_startcollector = false;
-	pgstat_collect_tuplelevel = false;
-	pgstat_collect_blocklevel = false;
+	/*
+	 * Adjust GUC variables to suppress useless activity, and for debugging
+	 * purposes (seeing track_counts off is a clue that we failed here).
+	 * We use PGC_S_OVERRIDE because there is no point in trying to turn it
+	 * back on from postgresql.conf without a restart.
+	 */
+	SetConfigOption("track_counts", "off", PGC_INTERNAL, PGC_S_OVERRIDE);
 }
 
 /*
  * pgstat_reset_all() -
  *
- * Remove the stats file.  This is used on server start if the
- * stats_reset_on_server_start feature is enabled, or if WAL
+ * Remove the stats file.  This is currently used only if WAL
  * recovery is needed after a crash.
  */
 void
@@ -536,7 +514,7 @@ pgstat_forkexec(void)
 #endif   /* EXEC_BACKEND */
 
 
-/* ----------
+/*
  * pgstat_start() -
  *
  *	Called from postmaster at startup or after an existing collector
@@ -545,7 +523,6 @@ pgstat_forkexec(void)
  *	Returns PID of child process, or 0 if fail.
  *
  *	Note: if fail, we will be called again from the postmaster main loop.
- * ----------
  */
 int
 pgstat_start(void)
@@ -554,9 +531,10 @@ pgstat_start(void)
 	pid_t		pgStatPid;
 
 	/*
-	 * Do nothing if no collector needed
+	 * Check that the socket is there, else pgstat_init failed and we can
+	 * do nothing useful.
 	 */
-	if (!pgstat_collect_startcollector)
+	if (pgStatSock < 0)
 		return 0;
 
 	/*
@@ -570,22 +548,6 @@ pgstat_start(void)
 		(unsigned int) PGSTAT_RESTART_INTERVAL)
 		return 0;
 	last_pgstat_start_time = curtime;
-
-	/*
-	 * Check that the socket is there, else pgstat_init failed.
-	 */
-	if (pgStatSock < 0)
-	{
-		ereport(LOG,
-				(errmsg("statistics collector startup skipped")));
-
-		/*
-		 * We can only get here if someone tries to manually turn
-		 * pgstat_collect_startcollector on after it had been off.
-		 */
-		pgstat_collect_startcollector = false;
-		return 0;
-	}
 
 	/*
 	 * Okay, fork off the collector.
@@ -1052,8 +1014,7 @@ pgstat_report_vacuum(Oid tableoid, bool shared,
 {
 	PgStat_MsgVacuum msg;
 
-	if (pgStatSock < 0 ||
-		!pgstat_collect_tuplelevel)
+	if (pgStatSock < 0 || !pgstat_track_counts)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_VACUUM);
@@ -1078,8 +1039,7 @@ pgstat_report_analyze(Oid tableoid, bool shared, PgStat_Counter livetuples,
 {
 	PgStat_MsgAnalyze msg;
 
-	if (pgStatSock < 0 ||
-		!pgstat_collect_tuplelevel)
+	if (pgStatSock < 0 || !pgstat_track_counts)
 		return;
 
 	pgstat_setheader(&msg.m_hdr, PGSTAT_MTYPE_ANALYZE);
@@ -1139,9 +1099,7 @@ pgstat_initstats(Relation rel)
 		return;
 	}
 
-	if (pgStatSock < 0 ||
-		!(pgstat_collect_tuplelevel ||
-		  pgstat_collect_blocklevel))
+	if (pgStatSock < 0 || !pgstat_track_counts)
 	{
 		/* We're not counting at all */
 		rel->pgstat_info = NULL;
@@ -1274,7 +1232,7 @@ pgstat_count_heap_insert(Relation rel)
 {
 	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
-	if (pgstat_collect_tuplelevel && pgstat_info != NULL)
+	if (pgstat_track_counts && pgstat_info != NULL)
 	{
 		int		nest_level = GetCurrentTransactionNestLevel();
 
@@ -1298,7 +1256,7 @@ pgstat_count_heap_update(Relation rel, bool hot)
 {
 	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
-	if (pgstat_collect_tuplelevel && pgstat_info != NULL)
+	if (pgstat_track_counts && pgstat_info != NULL)
 	{
 		int		nest_level = GetCurrentTransactionNestLevel();
 
@@ -1327,7 +1285,7 @@ pgstat_count_heap_delete(Relation rel)
 {
 	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
-	if (pgstat_collect_tuplelevel && pgstat_info != NULL)
+	if (pgstat_track_counts && pgstat_info != NULL)
 	{
 		int		nest_level = GetCurrentTransactionNestLevel();
 
@@ -1356,7 +1314,7 @@ pgstat_update_heap_dead_tuples(Relation rel, int delta)
 {
 	PgStat_TableStatus *pgstat_info = rel->pgstat_info;
 
-	if (pgstat_collect_tuplelevel && pgstat_info != NULL)
+	if (pgstat_track_counts && pgstat_info != NULL)
 		pgstat_info->t_counts.t_new_dead_tuples -= delta;
 }
 
@@ -1931,7 +1889,7 @@ pgstat_report_activity(const char *cmd_str)
 	TimestampTz start_timestamp;
 	int			len;
 
-	if (!pgstat_collect_querystring || !beentry)
+	if (!pgstat_track_activities || !beentry)
 		return;
 
 	/*
@@ -1967,7 +1925,7 @@ pgstat_report_xact_timestamp(TimestampTz tstamp)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
-	if (!pgstat_collect_querystring || !beentry)
+	if (!pgstat_track_activities || !beentry)
 		return;
 
 	/*
@@ -1995,7 +1953,7 @@ pgstat_report_waiting(bool waiting)
 {
 	volatile PgBackendStatus *beentry = MyBEEntry;
 
-	if (!pgstat_collect_querystring || !beentry)
+	if (!pgstat_track_activities || !beentry)
 		return;
 
 	/*

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.420 2007/09/11 00:06:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.421 2007/09/24 03:12:23 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -736,47 +736,23 @@ static struct config_bool ConfigureNamesBool[] =
 		&Explain_pretty_print,
 		true, NULL, NULL
 	},
-	{
-		{"stats_start_collector", PGC_POSTMASTER, STATS_COLLECTOR,
-			gettext_noop("Starts the server statistics-collection subprocess."),
-			NULL
-		},
-		&pgstat_collect_startcollector,
-		true, NULL, NULL
-	},
-	{
-		{"stats_reset_on_server_start", PGC_POSTMASTER, STATS_COLLECTOR,
-			gettext_noop("Zeroes collected statistics on server restart."),
-			NULL
-		},
-		&pgstat_collect_resetonpmstart,
-		false, NULL, NULL
-	},
-	{
-		{"stats_row_level", PGC_SUSET, STATS_COLLECTOR,
-			gettext_noop("Collects row-level statistics on database activity."),
-			NULL
-		},
-		&pgstat_collect_tuplelevel,
-		true, NULL, NULL
-	},
-	{
-		{"stats_block_level", PGC_SUSET, STATS_COLLECTOR,
-			gettext_noop("Collects block-level statistics on database activity."),
-			NULL
-		},
-		&pgstat_collect_blocklevel,
-		false, NULL, NULL
-	},
 
 	{
-		{"stats_command_string", PGC_SUSET, STATS_COLLECTOR,
+		{"track_activities", PGC_SUSET, STATS_COLLECTOR,
 			gettext_noop("Collects information about executing commands."),
 			gettext_noop("Enables the collection of information on the currently "
-					"executing command of each session, along with the time "
-						 "at which that command began execution.")
+						 "executing command of each session, along with "
+						 "the time at which that command began execution.")
 		},
-		&pgstat_collect_querystring,
+		&pgstat_track_activities,
+		true, NULL, NULL
+	},
+	{
+		{"track_counts", PGC_SUSET, STATS_COLLECTOR,
+			gettext_noop("Collects statistics on database activity."),
+			NULL
+		},
+		&pgstat_track_counts,
 		true, NULL, NULL
 	},
 
@@ -1562,9 +1538,9 @@ static struct config_int ConfigureNamesInt[] =
 
 	{
 		{"log_min_duration_statement", PGC_SUSET, LOGGING_WHEN,
-			gettext_noop("Sets the minimum execution time above which statements will "
-						 "be logged."),
-			gettext_noop("Zero prints all queries. The default is -1 (turning this feature off)."),
+			gettext_noop("Sets the minimum execution time above which "
+						 "statements will be logged."),
+			gettext_noop("Zero prints all queries. -1 turns this feature off."),
 			GUC_UNIT_MS
 		},
 		&log_min_duration_statement,
@@ -1572,13 +1548,13 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
-		{"log_autovacuum", PGC_SIGHUP, LOGGING_WHAT,
-			gettext_noop("Sets the minimum execution time above which autovacuum actions "
-						 "will be logged."),
-			gettext_noop("Zero prints all actions.  The default is -1 (disabling autovacuum logging)."),
+		{"log_autovacuum_min_duration", PGC_SIGHUP, LOGGING_WHAT,
+			gettext_noop("Sets the minimum execution time above which "
+						 "autovacuum actions will be logged."),
+			gettext_noop("Zero prints all actions. -1 turns autovacuum logging off."),
 			GUC_UNIT_MS
 		},
-		&Log_autovacuum,
+		&Log_autovacuum_min_duration,
 		-1, -1, INT_MAX / 1000, NULL, NULL
 	},
 

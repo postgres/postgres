@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.66 2007/09/20 17:56:32 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.67 2007/09/24 03:12:23 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -452,11 +452,8 @@ typedef struct PgBackendStatus
  * GUC parameters
  * ----------
  */
-extern bool pgstat_collect_startcollector;
-extern bool pgstat_collect_resetonpmstart;
-extern bool pgstat_collect_tuplelevel;
-extern bool pgstat_collect_blocklevel;
-extern bool pgstat_collect_querystring;
+extern bool pgstat_track_activities;
+extern bool pgstat_track_counts;
 
 /*
  * BgWriter statistics counters are updated directly by bgwriter and bufmgr
@@ -510,40 +507,40 @@ extern void pgstat_initstats(Relation rel);
 
 /* nontransactional event counts are simple enough to inline */
 
-#define pgstat_count_heap_scan(rel)										\
-	do {																\
-		if (pgstat_collect_tuplelevel && (rel)->pgstat_info != NULL)	\
-			(rel)->pgstat_info->t_counts.t_numscans++;					\
+#define pgstat_count_heap_scan(rel)									\
+	do {															\
+		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+			(rel)->pgstat_info->t_counts.t_numscans++;				\
 	} while (0)
-#define pgstat_count_heap_getnext(rel)									\
-	do {																\
-		if (pgstat_collect_tuplelevel && (rel)->pgstat_info != NULL)	\
-			(rel)->pgstat_info->t_counts.t_tuples_returned++;			\
+#define pgstat_count_heap_getnext(rel)								\
+	do {															\
+		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+			(rel)->pgstat_info->t_counts.t_tuples_returned++;		\
 	} while (0)
-#define pgstat_count_heap_fetch(rel)									\
-	do {																\
-		if (pgstat_collect_tuplelevel && (rel)->pgstat_info != NULL)	\
-			(rel)->pgstat_info->t_counts.t_tuples_fetched++;			\
+#define pgstat_count_heap_fetch(rel)								\
+	do {															\
+		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+			(rel)->pgstat_info->t_counts.t_tuples_fetched++;		\
 	} while (0)
-#define pgstat_count_index_scan(rel)									\
-	do {																\
-		if (pgstat_collect_tuplelevel && (rel)->pgstat_info != NULL)	\
-			(rel)->pgstat_info->t_counts.t_numscans++;					\
+#define pgstat_count_index_scan(rel)								\
+	do {															\
+		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+			(rel)->pgstat_info->t_counts.t_numscans++;				\
 	} while (0)
-#define pgstat_count_index_tuples(rel, n)								\
-	do {																\
-		if (pgstat_collect_tuplelevel && (rel)->pgstat_info != NULL)	\
-			(rel)->pgstat_info->t_counts.t_tuples_returned += (n);		\
+#define pgstat_count_index_tuples(rel, n)							\
+	do {															\
+		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+			(rel)->pgstat_info->t_counts.t_tuples_returned += (n);	\
 	} while (0)
-#define pgstat_count_buffer_read(rel)									\
-	do {																\
-		if (pgstat_collect_blocklevel && (rel)->pgstat_info != NULL)	\
-			(rel)->pgstat_info->t_counts.t_blocks_fetched++;			\
+#define pgstat_count_buffer_read(rel)								\
+	do {															\
+		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+			(rel)->pgstat_info->t_counts.t_blocks_fetched++;		\
 	} while (0)
-#define pgstat_count_buffer_hit(rel)									\
-	do {																\
-		if (pgstat_collect_blocklevel && (rel)->pgstat_info != NULL)	\
-			(rel)->pgstat_info->t_counts.t_blocks_hit++;				\
+#define pgstat_count_buffer_hit(rel)								\
+	do {															\
+		if (pgstat_track_counts && (rel)->pgstat_info != NULL)		\
+			(rel)->pgstat_info->t_counts.t_blocks_hit++;			\
 	} while (0)
 
 extern void pgstat_count_heap_insert(Relation rel);

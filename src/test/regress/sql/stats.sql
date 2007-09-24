@@ -6,7 +6,7 @@
 --
 
 -- conditio sine qua non
-SHOW stats_start_collector;  -- must be on
+SHOW track_counts;  -- must be on
 
 -- wait to let any prior tests finish dumping out stats;
 -- else our messages might get lost due to contention
@@ -50,10 +50,6 @@ begin
     extract(epoch from clock_timestamp() - start_time);
 end
 $$ language plpgsql;
-
--- enable statistics
-SET stats_block_level = on;
-SET stats_row_level = on;
 
 -- do a seqscan
 SELECT count(*) FROM tenk2;

@@ -36,7 +36,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.98 2007/09/20 21:43:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.99 2007/09/24 03:12:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 	pg_rusage_init(&ru0);
 
 	/* measure elapsed time iff autovacuum logging requires it */
-	if (IsAutoVacuumWorkerProcess() && Log_autovacuum > 0)
+	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration > 0)
 		starttime = GetCurrentTimestamp();
 
 	if (vacstmt->verbose)
@@ -221,11 +221,11 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt,
 						 vacstmt->analyze, vacrelstats->rel_tuples);
 
 	/* and log the action if appropriate */
-	if (IsAutoVacuumWorkerProcess() && Log_autovacuum >= 0)
+	if (IsAutoVacuumWorkerProcess() && Log_autovacuum_min_duration >= 0)
 	{
-		if (Log_autovacuum == 0 ||
+		if (Log_autovacuum_min_duration == 0 ||
 			TimestampDifferenceExceeds(starttime, GetCurrentTimestamp(),
-									   Log_autovacuum))
+									   Log_autovacuum_min_duration))
 			ereport(LOG,
 					(errmsg("automatic vacuum of table \"%s.%s.%s\": index scans: %d\n"
 							"pages: %d removed, %d remain\n"
