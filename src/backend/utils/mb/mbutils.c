@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.64 2007/09/18 17:41:17 adunstan Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.65 2007/09/24 14:59:37 adunstan Exp $
  */
 #include "postgres.h"
 
@@ -345,7 +345,7 @@ pg_convert_from(PG_FUNCTION_ARGS)
 Datum
 pg_convert(PG_FUNCTION_ARGS)
 {
-	bytea	   *string = PG_GETARG_TEXT_P(0);
+	bytea	   *string = PG_GETARG_BYTEA_P(0);
 	char	   *src_encoding_name = NameStr(*PG_GETARG_NAME(1));
 	int			src_encoding = pg_char_to_encoding(src_encoding_name);
 	char	   *dest_encoding_name = NameStr(*PG_GETARG_NAME(2));
