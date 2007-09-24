@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.1 2007/09/23 21:52:56 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.2 2007/09/24 21:14:54 adunstan Exp $
 
 use strict;
 
@@ -36,7 +36,7 @@ else
 # use a capital C here because config.pl has $config
 my $Config = -e "release/postgres/postgres.exe" ? "Release" : "Debug";
 
-copy("$Config/refint/defint.dll","contrib/spi");
+copy("$Config/refint/refint.dll","contrib/spi");
 copy("$Config/autoinc/autoinc.dll","contrib/spi");
 copy("$Config/regress/regress.dll","src/test/regress");
 
