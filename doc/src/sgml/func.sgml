@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.397 2007/09/19 03:13:57 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.398 2007/09/24 01:29:27 adunstan Exp $ -->
 
  <chapter id="functions">
   <title>Functions and Operators</title>
@@ -1023,9 +1023,6 @@
     <primary>char_length</primary>
    </indexterm>
    <indexterm>
-    <primary>convert</primary>
-   </indexterm>
-   <indexterm>
     <primary>lower</primary>
    </indexterm>
    <indexterm>
@@ -1117,22 +1114,6 @@
        </entry>
        <entry><literal>char_length('jose')</literal></entry>
        <entry><literal>4</literal></entry>
-      </row>
-
-      <row>
-       <entry><literal><function>convert</function>(<parameter>string</parameter>
-       using <parameter>conversion_name</parameter>)</literal></entry>
-       <entry><type>bytea</type></entry>
-       <entry>
-        Change encoding using specified conversion name.  Conversions
-        can be defined by <command>CREATE CONVERSION</command>.  Also
-        there are some pre-defined conversion names. See <xref
-        linkend="conversion-names"> for available conversion
-        names. The <parameter>string</parameter> must be valid in the
-        source encoding.
-       </entry>
-       <entry><literal>convert('PostgreSQL' using iso_8859_1_to_utf8)</literal></entry>
-       <entry><literal>'PostgreSQL'</literal> in UTF8 (Unicode, 8-bit) encoding</entry>
       </row>
 
       <row>
@@ -1244,6 +1225,9 @@
    </indexterm>
    <indexterm>
     <primary>chr</primary>
+   </indexterm>
+   <indexterm>
+    <primary>convert</primary>
    </indexterm>
    <indexterm>
     <primary>convert_from</primary>
@@ -1374,6 +1358,9 @@
         original encoding is specified by
         <parameter>src_encoding</parameter>. The
         <parameter>string</parameter> must be valid in this encoding.
+        Conversions can be defined by <command>CREATE CONVERSION</command>.  
+        Also there are some pre-defined conversions. See <xref
+        linkend="conversion-names"> for available conversions.
        </entry>
        <entry><literal>convert( 'text_in_utf8', 'UTF8', 'LATIN1')</literal></entry>
        <entry><literal>text_in_utf8</literal> represented in ISO 8859-1 encoding</entry>

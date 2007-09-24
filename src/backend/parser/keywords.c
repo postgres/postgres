@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.191 2007/08/21 15:13:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/keywords.c,v 1.192 2007/09/24 01:29:29 adunstan Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,6 @@ static const ScanKeyword ScanKeywords[] = {
 	{"constraints", CONSTRAINTS, UNRESERVED_KEYWORD},
 	{"content", CONTENT_P, UNRESERVED_KEYWORD},
 	{"conversion", CONVERSION_P, UNRESERVED_KEYWORD},
-	{"convert", CONVERT, COL_NAME_KEYWORD},
 	{"copy", COPY, UNRESERVED_KEYWORD},
 	{"cost", COST, UNRESERVED_KEYWORD},
 	{"create", CREATE, RESERVED_KEYWORD},

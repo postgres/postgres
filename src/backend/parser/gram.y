@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.602 2007/09/03 18:46:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.603 2007/09/24 01:29:28 adunstan Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -377,7 +377,7 @@ static Node *makeXmlExpr(XmlExprOp op, char *name, List *named_args, List *args)
 	CHARACTER CHARACTERISTICS CHECK CHECKPOINT CLASS CLOSE
 	CLUSTER COALESCE COLLATE COLUMN COMMENT COMMIT
 	COMMITTED CONCURRENTLY CONFIGURATION CONNECTION CONSTRAINT CONSTRAINTS
-	CONTENT_P CONVERSION_P CONVERT COPY COST CREATE CREATEDB
+	CONTENT_P CONVERSION_P COPY COST CREATE CREATEDB
 	CREATEROLE CREATEUSER CROSS CSV CURRENT_P CURRENT_DATE CURRENT_ROLE
 	CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR CYCLE
 
@@ -8218,31 +8218,6 @@ func_expr:	func_name '(' ')'
 					n->location = @1;
 					$$ = (Node *)n;
 				}
-			| CONVERT '(' a_expr USING any_name ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					A_Const *c = makeNode(A_Const);
-
-					c->val.type = T_String;
-					c->val.val.str = NameListToQuotedString($5);
-
-					n->funcname = SystemFuncName("convert_using");
-					n->args = list_make2($3, c);
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->location = @1;
-					$$ = (Node *)n;
-				}
-			| CONVERT '(' expr_list ')'
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = SystemFuncName("convert");
-					n->args = $3;
-					n->agg_star = FALSE;
-					n->agg_distinct = FALSE;
-					n->location = @1;
-					$$ = (Node *)n;
-				}
 			| NULLIF '(' a_expr ',' a_expr ')'
 				{
 					$$ = (Node *) makeSimpleA_Expr(AEXPR_NULLIF, "=", $3, $5, @1);
@@ -9291,7 +9266,6 @@ col_name_keyword:
 			| CHAR_P
 			| CHARACTER
 			| COALESCE
-			| CONVERT
 			| DEC
 			| DECIMAL_P
 			| EXISTS
