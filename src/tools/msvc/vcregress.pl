@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.2 2007/09/24 21:14:54 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.3 2007/09/24 21:42:34 adunstan Exp $
 
 use strict;
 
@@ -188,7 +188,9 @@ sub contribcheck
     my $mstat = 0;
     foreach my $module (glob("*"))
     {
-        next unless -d "$module/sql" && -d "$module/expected" && -f "Makefile";
+        next unless -d "$module/sql" && 
+			-d "$module/expected" && 
+			(-f "$module/Makefile" || -f "$module/GNUmakefile");
         chdir $module;
 		print "============================================================\n";
         print "Checking $module\n";
@@ -211,7 +213,7 @@ sub fetchTests
 
     my $handle;
     open($handle,"<Makefile")
-      || open($handle,"<GNUMakefile")
+      || open($handle,"<GNUmakefile")
       || die "Could not open Makefile";
     local($/) = undef;
     my $m = <$handle>;
