@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.225 2007/09/25 20:03:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.226 2007/09/25 22:11:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1324,9 +1324,16 @@ BgBufferSync(void)
 	reusable_buffers = reusable_buffers_est;
 
 	/* Execute the LRU scan */
-	while (num_to_scan-- > 0 && reusable_buffers < upcoming_alloc_est)
+	while (num_to_scan > 0 && reusable_buffers < upcoming_alloc_est)
 	{
 		int		buffer_state = SyncOneBuffer(next_to_clean, true);
+
+		if (++next_to_clean >= NBuffers)
+		{
+			next_to_clean = 0;
+			next_passes++;
+		}
+		num_to_scan--;
 
 		if (buffer_state & BUF_WRITTEN)
 		{
@@ -1339,12 +1346,6 @@ BgBufferSync(void)
 		}
 		else if (buffer_state & BUF_REUSABLE)
 			reusable_buffers++;
-
-		if (++next_to_clean >= NBuffers)
-		{
-			next_to_clean = 0;
-			next_passes++;
-		}
 	}
 
 	BgWriterStats.m_buf_written_clean += num_written;
@@ -1353,7 +1354,7 @@ BgBufferSync(void)
 	elog(DEBUG1, "bgwriter: recent_alloc=%u smoothed=%.2f delta=%ld ahead=%d density=%.2f reusable_est=%d upcoming_est=%d scanned=%d wrote=%d reusable=%d",
 		 recent_alloc, smoothed_alloc, strategy_delta, bufs_ahead,
 		 smoothed_density, reusable_buffers_est, upcoming_alloc_est,
-		 bufs_to_lap - num_to_scan - 1,
+		 bufs_to_lap - num_to_scan,
 		 num_written,
 		 reusable_buffers - reusable_buffers_est);
 #endif
@@ -1366,7 +1367,7 @@ BgBufferSync(void)
 	 * scanning, which is helpful because a long memory isn't as desirable
 	 * on the density estimates.
 	 */
-	strategy_delta = bufs_to_lap - num_to_scan - 1;
+	strategy_delta = bufs_to_lap - num_to_scan;
 	recent_alloc = reusable_buffers - reusable_buffers_est;
 	if (strategy_delta > 0 && recent_alloc > 0)
 	{
