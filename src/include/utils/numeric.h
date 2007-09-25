@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1998-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/utils/numeric.h,v 1.24 2007/02/27 23:48:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/numeric.h,v 1.25 2007/09/25 22:21:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,14 +63,14 @@
 typedef struct NumericData
 {
 	int32		vl_len_;		/* varlena header (do not touch directly!) */
-	int16		n_weight;		/* Weight of 1st digit	*/
 	uint16		n_sign_dscale;	/* Sign + display scale */
+	int16		n_weight;		/* Weight of 1st digit	*/
 	char		n_data[1];		/* Digits (really array of NumericDigit) */
 } NumericData;
 
 typedef NumericData *Numeric;
 
-#define NUMERIC_HDRSZ	(VARHDRSZ + sizeof(int16) + sizeof(uint16))
+#define NUMERIC_HDRSZ	(VARHDRSZ + sizeof(uint16) + sizeof(int16))
 
 
 /*
