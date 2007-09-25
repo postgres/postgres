@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.43 2007/09/16 16:33:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.44 2007/09/25 20:03:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,8 +98,14 @@
  * requesting backends since the last checkpoint start.  The flags are
  * chosen so that OR'ing is the correct way to combine multiple requests.
  *
+ * num_backend_writes is used to count the number of buffer writes performed
+ * by non-bgwriter processes.  This counter should be wide enough that it
+ * can't overflow during a single bgwriter cycle.
+ *
  * The requests array holds fsync requests sent by backends and not yet
- * absorbed by the bgwriter.  Unlike the checkpoint fields, the requests
+ * absorbed by the bgwriter.
+ *
+ * Unlike the checkpoint fields, num_backend_writes and the requests
  * fields are protected by BgWriterCommLock.
  *----------
  */
@@ -121,6 +127,8 @@ typedef struct
 	int			ckpt_failed;	/* advances when checkpoint fails */
 
 	int			ckpt_flags;		/* checkpoint flags, as defined in xlog.h */
+
+	uint32		num_backend_writes;	/* counts non-bgwriter buffer writes */
 
 	int			num_requests;	/* current # of requests */
 	int			max_requests;	/* allocated array size */
@@ -566,8 +574,7 @@ BgWriterNap(void)
 	 *
 	 * We absorb pending requests after each short sleep.
 	 */
-	if ((bgwriter_lru_percent > 0.0 && bgwriter_lru_maxpages > 0) ||
-		ckpt_active)
+	if (bgwriter_lru_maxpages > 0 || ckpt_active)
 		udelay = BgWriterDelay * 1000L;
 	else if (XLogArchiveTimeout > 0)
 		udelay = 1000000L;	/* One second */
@@ -648,12 +655,13 @@ CheckpointWriteDelay(int flags, double progress)
 			got_SIGHUP = false;
 			ProcessConfigFile(PGC_SIGHUP);
 		}
-		BgBufferSync();
-		CheckArchiveTimeout();
-		BgWriterNap();
 
 		AbsorbFsyncRequests();
 		absorb_counter = WRITES_PER_ABSORB;
+
+		BgBufferSync();
+		CheckArchiveTimeout();
+		BgWriterNap();
 	}
 	else if (--absorb_counter <= 0)
 	{
@@ -963,7 +971,8 @@ RequestCheckpoint(int flags)
  * Whenever a backend is compelled to write directly to a relation
  * (which should be seldom, if the bgwriter is getting its job done),
  * the backend calls this routine to pass over knowledge that the relation
- * is dirty and must be fsync'd before next checkpoint.
+ * is dirty and must be fsync'd before next checkpoint.  We also use this
+ * opportunity to count such writes for statistical purposes.
  *
  * segno specifies which segment (not block!) of the relation needs to be
  * fsync'd.  (Since the valid range is much less than BlockNumber, we can
@@ -987,7 +996,13 @@ ForwardFsyncRequest(RelFileNode rnode, BlockNumber segno)
 	if (!IsUnderPostmaster)
 		return false;			/* probably shouldn't even get here */
 
+	Assert(!am_bg_writer);
+
 	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
+
+	/* we count non-bgwriter writes even when the request queue overflows */
+	BgWriterShmem->num_backend_writes++;
+
 	if (BgWriterShmem->bgwriter_pid == 0 ||
 		BgWriterShmem->num_requests >= BgWriterShmem->max_requests)
 	{
@@ -1034,6 +1049,10 @@ AbsorbFsyncRequests(void)
 	 * array.
 	 */
 	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
+
+	/* Transfer write count into pending pgstats message */
+	BgWriterStats.m_buf_written_backend += BgWriterShmem->num_backend_writes;
+	BgWriterShmem->num_backend_writes = 0;
 
 	n = BgWriterShmem->num_requests;
 	if (n > 0)

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.53 2007/09/24 03:12:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/monitoring.sgml,v 1.54 2007/09/25 20:03:37 tgl Exp $ -->
 
 <chapter id="monitoring">
  <title>Monitoring Database Activity</title>
@@ -237,7 +237,10 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
       background writer: number of scheduled checkpoints, requested
       checkpoints, buffers written by checkpoints and cleaning scans,
       and the number of times the bgwriter stopped a cleaning scan
-      because it had written too many buffers.
+      because it had written too many buffers.  Also includes
+      statistics about the shared buffer pool, including buffers written
+      by backends (that is, not by the background writer) and total buffers
+      allocated.
      </entry>
      </row>
 
@@ -814,6 +817,23 @@ postgres: <replaceable>user</> <replaceable>database</> <replaceable>host</> <re
        The number of times the bgwriter has stopped its cleaning scan because
        it has written more buffers than specified in the
        <varname>bgwriter_lru_maxpages</varname> parameter
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_buf_written_backend</function>()</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       The number of buffers written by backends because they needed
+       to allocate a new buffer
+      </entry>
+     </row>
+
+     <row>
+      <entry><literal><function>pg_stat_get_buf_alloc</function>()</literal></entry>
+      <entry><type>bigint</type></entry>
+      <entry>
+       The total number of buffer allocations
       </entry>
      </row>
 

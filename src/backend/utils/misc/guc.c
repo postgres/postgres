@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.421 2007/09/24 03:12:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.422 2007/09/25 20:03:38 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -1574,7 +1574,7 @@ static struct config_int ConfigureNamesInt[] =
 			NULL
 		},
 		&bgwriter_lru_maxpages,
-		5, 0, 1000, NULL, NULL
+		100, 0, 1000, NULL, NULL
 	},
 
 	{
@@ -1821,12 +1821,12 @@ static struct config_real ConfigureNamesReal[] =
 	},
 
 	{
-		{"bgwriter_lru_percent", PGC_SIGHUP, RESOURCES,
-			gettext_noop("Background writer percentage of LRU buffers to flush per round."),
+		{"bgwriter_lru_multiplier", PGC_SIGHUP, RESOURCES,
+			gettext_noop("Background writer multiplier on average buffers to scan per round."),
 			NULL
 		},
-		&bgwriter_lru_percent,
-		1.0, 0.0, 100.0, NULL, NULL
+		&bgwriter_lru_multiplier,
+		2.0, 0.0, 10.0, NULL, NULL
 	},
 
 	{

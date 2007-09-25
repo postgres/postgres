@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.60 2007/06/08 18:23:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.61 2007/09/25 20:03:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,13 @@ typedef struct
 	 * NOTE: lastFreeBuffer is undefined when firstFreeBuffer is -1 (that is,
 	 * when the list is empty)
 	 */
+
+	/*
+	 * Statistics.  These counters should be wide enough that they can't
+	 * overflow during a single bgwriter cycle.
+	 */
+	uint32		completePasses;		/* Complete cycles of the clock sweep */
+	uint32		numBufferAllocs;	/* Buffers allocated since last reset */
 } BufferStrategyControl;
 
 /* Pointers to shared state */
@@ -119,6 +126,13 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 	LWLockAcquire(BufFreelistLock, LW_EXCLUSIVE);
 
 	/*
+	 * We count buffer allocation requests so that the bgwriter can estimate
+	 * the rate of buffer consumption.  Note that buffers recycled by a
+	 * strategy object are intentionally not counted here.
+	 */
+	StrategyControl->numBufferAllocs++;
+
+	/*
 	 * Try to get a buffer from the freelist.  Note that the freeNext fields
 	 * are considered to be protected by the BufFreelistLock not the
 	 * individual buffer spinlocks, so it's OK to manipulate them without
@@ -157,7 +171,10 @@ StrategyGetBuffer(BufferAccessStrategy strategy, bool *lock_held)
 		buf = &BufferDescriptors[StrategyControl->nextVictimBuffer];
 
 		if (++StrategyControl->nextVictimBuffer >= NBuffers)
+		{
 			StrategyControl->nextVictimBuffer = 0;
+			StrategyControl->completePasses++;
+		}
 
 		/*
 		 * If the buffer is pinned or has a nonzero usage_count, we cannot use
@@ -226,18 +243,26 @@ StrategyFreeBuffer(volatile BufferDesc *buf)
  *
  * The result is the buffer index of the best buffer to sync first.
  * BufferSync() will proceed circularly around the buffer array from there.
+ *
+ * In addition, we return the completed-pass count (which is effectively
+ * the higher-order bits of nextVictimBuffer) and the count of recent buffer
+ * allocs if non-NULL pointers are passed.  The alloc count is reset after
+ * being read.
  */
 int
-StrategySyncStart(void)
+StrategySyncStart(uint32 *complete_passes, uint32 *num_buf_alloc)
 {
 	int			result;
 
-	/*
-	 * We could probably dispense with the locking here, but just to be safe
-	 * ...
-	 */
 	LWLockAcquire(BufFreelistLock, LW_EXCLUSIVE);
 	result = StrategyControl->nextVictimBuffer;
+	if (complete_passes)
+		*complete_passes = StrategyControl->completePasses;
+	if (num_buf_alloc)
+	{
+		*num_buf_alloc = StrategyControl->numBufferAllocs;
+		StrategyControl->numBufferAllocs = 0;
+	}
 	LWLockRelease(BufFreelistLock);
 	return result;
 }
@@ -313,6 +338,10 @@ StrategyInitialize(bool init)
 
 		/* Initialize the clock sweep pointer */
 		StrategyControl->nextVictimBuffer = 0;
+
+		/* Clear statistics */
+		StrategyControl->completePasses = 0;
+		StrategyControl->numBufferAllocs = 0;
 	}
 	else
 		Assert(!init);

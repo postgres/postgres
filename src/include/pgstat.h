@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.67 2007/09/24 03:12:23 tgl Exp $
+ *	$PostgreSQL: pgsql/src/include/pgstat.h,v 1.68 2007/09/25 20:03:38 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -294,6 +294,8 @@ typedef struct PgStat_MsgBgWriter
 	PgStat_Counter	m_buf_written_checkpoints;
 	PgStat_Counter	m_buf_written_clean;
 	PgStat_Counter	m_maxwritten_clean;
+	PgStat_Counter  m_buf_written_backend;
+	PgStat_Counter  m_buf_alloc;
 } PgStat_MsgBgWriter;
 
 
@@ -394,6 +396,8 @@ typedef struct PgStat_GlobalStats
 	PgStat_Counter  buf_written_checkpoints;
 	PgStat_Counter  buf_written_clean;
 	PgStat_Counter  maxwritten_clean;
+	PgStat_Counter  buf_written_backend;
+	PgStat_Counter  buf_alloc;
 } PgStat_GlobalStats;
 
 

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 1996-2007, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.45 2007/09/20 17:56:30 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/system_views.sql,v 1.46 2007/09/25 20:03:37 tgl Exp $
  */
 
 CREATE VIEW pg_roles AS 
@@ -382,7 +382,9 @@ CREATE VIEW pg_stat_bgwriter AS
         pg_stat_get_bgwriter_requested_checkpoints() AS checkpoints_req,
         pg_stat_get_bgwriter_buf_written_checkpoints() AS buffers_checkpoint,
         pg_stat_get_bgwriter_buf_written_clean() AS buffers_clean,
-        pg_stat_get_bgwriter_maxwritten_clean() AS maxwritten_clean;
+        pg_stat_get_bgwriter_maxwritten_clean() AS maxwritten_clean,
+        pg_stat_get_buf_written_backend() AS buffers_backend,
+        pg_stat_get_buf_alloc() AS buffers_alloc;
 
 -- Tsearch debug function. Defined here because it'd be pretty unwieldy
 -- to put it into pg_proc.h

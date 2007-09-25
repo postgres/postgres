@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.146 2007/09/24 03:12:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.147 2007/09/25 20:03:37 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1205,25 +1205,6 @@ SET ENABLE_SEQSCAN TO OFF;
        </listitem>
       </varlistentry>
 
-      <varlistentry id="guc-bgwriter-lru-percent" xreflabel="bgwriter_lru_percent">
-       <term><varname>bgwriter_lru_percent</varname> (<type>floating point</type>)</term>
-       <indexterm>
-        <primary><varname>bgwriter_lru_percent</> configuration parameter</primary>
-       </indexterm>
-       <listitem>
-        <para>
-         To reduce the probability that server processes will need to issue
-         their own writes, the background writer tries to write buffers that
-         are likely to be recycled soon.  In each round, it examines up to
-         <varname>bgwriter_lru_percent</> of the buffers that are nearest to
-         being recycled, and writes any that are dirty.
-         The default value is 1.0 (1% of the total number of shared buffers).
-         This parameter can only be set in the <filename>postgresql.conf</>
-         file or on the server command line.
-        </para>
-       </listitem>
-      </varlistentry>
-
       <varlistentry id="guc-bgwriter-lru-maxpages" xreflabel="bgwriter_lru_maxpages">
        <term><varname>bgwriter_lru_maxpages</varname> (<type>integer</type>)</term>
        <indexterm>
@@ -1232,8 +1213,34 @@ SET ENABLE_SEQSCAN TO OFF;
        <listitem>
         <para>
          In each round, no more than this many buffers will be written
-         as a result of scanning soon-to-be-recycled buffers.
-         The default value is five buffers.
+         by the background writer.  Setting this to zero disables
+         background writing (except for checkpoint activity).
+         The default value is 100 buffers.
+         This parameter can only be set in the <filename>postgresql.conf</>
+         file or on the server command line.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry id="guc-bgwriter-lru-multiplier" xreflabel="bgwriter_lru_multiplier">
+       <term><varname>bgwriter_lru_multiplier</varname> (<type>floating point</type>)</term>
+       <indexterm>
+        <primary><varname>bgwriter_lru_multiplier</> configuration parameter</primary>
+       </indexterm>
+       <listitem>
+        <para>
+         Unless limited by <varname>bgwriter_lru_maxpages</>, the number
+         of dirty buffers written in each round is determined by reference
+         to the number of new buffers that have been needed by server
+         processes during recent rounds.  This number is multiplied by
+         <varname>bgwriter_lru_multiplier</> to arrive at the estimate
+         of the number of buffers that will be needed during the next round.
+         Thus, a setting of 1.0 represents a <quote>just in time</> policy
+         of writing exactly the number of buffers predicted to be needed.
+         Larger values provide some cushion against spikes in demand,
+         while smaller values intentionally leave writes to be done by
+         server processes.
+         The default is 2.0.
          This parameter can only be set in the <filename>postgresql.conf</>
          file or on the server command line.
         </para>
@@ -1242,8 +1249,8 @@ SET ENABLE_SEQSCAN TO OFF;
      </variablelist>
 
      <para>
-      Smaller values of <varname>bgwriter_lru_percent</varname> and
-      <varname>bgwriter_lru_maxpages</varname> reduce the extra I/O load
+      Smaller values of <varname>bgwriter_lru_maxpages</varname> and
+      <varname>bgwriter_lru_multiplier</varname> reduce the extra I/O load
       caused by the background writer, but make it more likely that server
       processes will have to issue writes for themselves, delaying interactive
       queries.

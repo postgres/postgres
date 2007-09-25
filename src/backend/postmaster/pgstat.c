@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2007, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.165 2007/09/24 03:12:23 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.166 2007/09/25 20:03:37 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -3165,4 +3165,6 @@ pgstat_recv_bgwriter(PgStat_MsgBgWriter *msg, int len)
 	globalStats.buf_written_checkpoints += msg->m_buf_written_checkpoints;
 	globalStats.buf_written_clean += msg->m_buf_written_clean;
 	globalStats.maxwritten_clean += msg->m_maxwritten_clean;
+	globalStats.buf_written_backend += msg->m_buf_written_backend;
+	globalStats.buf_alloc += msg->m_buf_alloc;
 }
