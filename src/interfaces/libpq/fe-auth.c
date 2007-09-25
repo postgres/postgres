@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.131 2007/07/24 09:00:27 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-auth.c,v 1.132 2007/09/25 16:29:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -464,7 +464,7 @@ pg_GSS_startup(PGconn *conn)
 	if (conn->gctx)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
-				libpq_gettext("duplicate GSS auth request\n"));
+				libpq_gettext("duplicate GSS authentication request\n"));
 		return STATUS_ERROR;
 	}
 
@@ -666,7 +666,7 @@ pg_SSPI_startup(PGconn *conn, int use_negotiate)
 	 */
 	if (conn->pghost == NULL)
 	{
-		printfPQExpBuffer(&conn->errorMessage, libpq_gettext("hostname must be specified\n"));
+		printfPQExpBuffer(&conn->errorMessage, libpq_gettext("host name must be specified\n"));
 		return STATUS_ERROR;
 	}
 	conn->sspitarget = malloc(strlen(conn->krbsrvname)+strlen(conn->pghost)+2);

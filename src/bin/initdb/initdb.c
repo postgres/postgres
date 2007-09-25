@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.140 2007/08/21 01:11:20 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.141 2007/09/25 16:29:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2546,8 +2546,8 @@ usage(const char *progname)
 			 "                            in the respective category (default taken from\n"
 			 "                            environment)\n"));
 	printf(_("  --no-locale               equivalent to --locale=C\n"));
-	printf(_("  -T, --text-search-config=CFG\n"));
-	printf(_("                            set default text search configuration\n"));
+	printf(_("  -T, --text-search-config=CFG\n"
+			 "                            default text search configuration\n"));
 	printf(_("  -X, --xlogdir=XLOGDIR     location for the transaction log directory\n"));
 	printf(_("  -A, --auth=METHOD         default authentication method for local connections\n"));
 	printf(_("  -U, --username=NAME       database superuser name\n"));
@@ -3036,7 +3036,7 @@ main(int argc, char *argv[])
 		}
 		else if (strcmp(checkmatch, default_text_search_config) != 0)
 		{
-			printf(_("%s: warning: specified text search configuration \"%s\" may not match locale \"%s\"\n"),
+			printf(_("%s: warning: specified text search configuration \"%s\" might not match locale \"%s\"\n"),
 				   progname, default_text_search_config, lc_ctype);
 		}
 	}

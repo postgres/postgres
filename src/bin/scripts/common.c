@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.27 2007/07/08 19:07:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/scripts/common.c,v 1.28 2007/09/25 16:29:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,7 +349,7 @@ handle_sigint(SIGNAL_ARGS)
 		if (PQcancel(cancelConn, errbuf, sizeof(errbuf)))
 			fprintf(stderr, _("Cancel request sent\n"));
 		else
-			fprintf(stderr, _("Could not send cancel request: %s\n"), errbuf);
+			fprintf(stderr, _("Could not send cancel request: %s"), errbuf);
 	}
 
 	errno = save_errno;			/* just in case the write changed it */
