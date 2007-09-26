@@ -2237,5 +2237,10 @@ Wed, 29 Aug 2007 15:41:58 +0200
 Tue, 04 Sep 2007 11:13:55 +0200
 
 	- Synced parser and keyword list.
+
+Mi 26. Sep 12:45:51 CEST 2007
+
+	- Applied patch by ITAGAKI Takahiro <itagaki.takahiro@oss.ntt.co.jp>
+	  to get prepare thread-safe.
 	- Set ecpg library version to 6.0.
 	- Set ecpg version to 4.4.

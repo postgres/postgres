@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.42 2007/08/14 10:01:52 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.43 2007/09/26 10:57:00 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -460,6 +460,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 		this->name = ECPGstrdup(realname, lineno);
 
 	this->cache_head = NULL;
+	this->prep_stmts = NULL;
 
 	if (all_connections == NULL)
 		this->next = NULL;

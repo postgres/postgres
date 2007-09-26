@@ -41,5 +41,6 @@ test: sql/insupd
 test: sql/parser
 test: thread/thread
 test: thread/thread_implicit
+test: thread/prep
 test: connect/test1
 

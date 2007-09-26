@@ -197,7 +197,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 45 "desc.pgc"
 
 
-	{ ECPGdeallocate(__LINE__, 0, "Foo-1");
+	{ ECPGdeallocate(__LINE__, 0, NULL, "Foo-1");
 #line 47 "desc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -247,7 +247,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 57 "desc.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c1  cursor  for $1", 
-	ECPGt_char_variable,(ECPGprepared_statement("foo2", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
+	ECPGt_char_variable,(ECPGprepared_statement(NULL, "foo2", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
@@ -297,7 +297,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 #line 69 "desc.pgc"
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare c2  cursor  for $1", 
-	ECPGt_char_variable,(ECPGprepared_statement("foo3", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
+	ECPGt_char_variable,(ECPGprepared_statement(NULL, "foo3", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_descriptor, "indesc", 0L, 0L, 0L, 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
@@ -344,7 +344,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 80 "desc.pgc"
 
-	{ ECPGdeallocate_all(__LINE__, 0);
+	{ ECPGdeallocate_all(__LINE__, 0, NULL);
 #line 81 "desc.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}

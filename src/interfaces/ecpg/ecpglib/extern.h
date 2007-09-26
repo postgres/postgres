@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.26 2007/08/14 10:54:57 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.27 2007/09/26 10:57:00 meskes Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -91,6 +91,7 @@ struct connection
 	bool		committed;
 	int			autocommit;
 	struct ECPGtype_information_cache *cache_head;
+	struct prepared_statement *prep_stmts;
 	struct connection *next;
 };
 
@@ -144,7 +145,7 @@ bool		ECPGstore_input(const int, const bool, const struct variable *, const char
 bool ECPGcheck_PQresult(PGresult *, int, PGconn *, enum COMPAT_MODE);
 void ECPGraise(int line, int code, const char *sqlstate, const char *str);
 void ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat);
-char *ECPGprepared(const char *, int);
+char *ECPGprepared(const char *, struct connection *, int);
 
 /* SQLSTATE values generated or processed by ecpglib (intentionally
  * not exported -- users should refer to the codes directly) */

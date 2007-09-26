@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.69 2007/09/21 10:59:27 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.70 2007/09/26 10:57:00 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1515,7 +1515,7 @@ ECPGdo(const int lineno, const int compat, const int force_indicator, const char
 	if (statement_type == ECPGst_execute)
 	{
 		/* if we have an EXECUTE command, only the name is send */
-		char *command = ECPGprepared(stmt->command, lineno);
+		char *command = ECPGprepared(stmt->command, con, lineno);
 
 		if (command)
 		{

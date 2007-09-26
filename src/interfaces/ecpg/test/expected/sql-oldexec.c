@@ -142,7 +142,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "declare CUR  cursor  for $1", 
-	ECPGt_char_variable,(ECPGprepared_statement("f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
+	ECPGt_char_variable,(ECPGprepared_statement(NULL, "f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 52 "oldexec.pgc"
 
@@ -201,7 +201,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 1, ECPGst_normal, "declare CUR3  cursor  for $1", 
-	ECPGt_char_variable,(ECPGprepared_statement("f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
+	ECPGt_char_variable,(ECPGprepared_statement(NULL, "f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_const,"1",(long)1,(long)1,strlen("1"), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);

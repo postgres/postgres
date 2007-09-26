@@ -263,7 +263,7 @@ if (sqlca.sqlcode < 0) error (  );}
 
 
   { ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare MYCURS  cursor  for $1", 
-	ECPGt_char_variable,(ECPGprepared_statement("myquery", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
+	ECPGt_char_variable,(ECPGprepared_statement(NULL, "myquery", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 60 "dyntest.pgc"
 

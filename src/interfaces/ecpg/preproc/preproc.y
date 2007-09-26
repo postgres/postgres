@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.351 2007/09/04 10:02:29 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.352 2007/09/26 10:57:00 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -906,10 +906,11 @@ stmt:  AlterDatabaseStmt		{ output_statement($1, 0, ECPGst_normal); }
 		| ECPGExecuteImmediateStmt	{ output_statement($1, 0, ECPGst_exec_immediate); }
 		| ECPGFree
 		{
+			const char *con = connection ? connection : "NULL";
 			if (strcmp($1, "all"))
-				fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, \"%s\");", compat, $1);
+				fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, \"%s\");", compat, con, $1);
 			else
-				fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d);", compat);
+				fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d, %s);", compat, con);
 
 			whenever_action(2);
 			free($1);
@@ -3349,7 +3350,7 @@ prep_type_clause: '(' type_list ')'	{ $$ = cat_str(3, make_str("("), $2, make_st
 
 ExecuteStmt: EXECUTE prepared_name execute_param_clause execute_rest /* execute_rest is an ecpg addon */
 			{
-				/* $$ = cat_str(3, make_str("ECPGprepared_statement("), $2, make_str(", __LINE__)"));*/
+				/* $$ = cat_str(3, make_str("ECPGprepared_statement("), connection, $2, make_str("__LINE__)"));*/
 				$$ = $2;
 			}
 		| CREATE OptTemp TABLE create_as_target AS
@@ -5185,6 +5186,7 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 		{
 			struct cursor *ptr, *this;
 			struct variable *thisquery = (struct variable *)mm_alloc(sizeof(struct variable));
+			const char *con = connection ? connection : "NULL";
 
 			for (ptr = cur; ptr != NULL; ptr = ptr->next)
 			{
@@ -5205,8 +5207,8 @@ ECPGCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR prepared_name
 			thisquery->type = &ecpg_query;
 			thisquery->brace_level = 0;
 			thisquery->next = NULL;
-			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement(, __LINE__)") + strlen($7));
-			sprintf(thisquery->name, "ECPGprepared_statement(%s, __LINE__)", $7);
+			thisquery->name = (char *) mm_alloc(sizeof("ECPGprepared_statement(, , __LINE__)") + strlen(con) + strlen($7));
+			sprintf(thisquery->name, "ECPGprepared_statement(%s, %s, __LINE__)", con, $7);
 
 			this->argsinsert = NULL;
 			add_variable_to_head(&(this->argsinsert), thisquery, &no_indicator);
@@ -5914,21 +5916,24 @@ UsingConst: AllConst
  */
 ECPGDescribe: SQL_DESCRIBE INPUT_P name using_descriptor
 	{
+		const char *con = connection ? connection : "NULL";
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
-		$$ = (char *) mm_alloc(sizeof("1, ECPGprepared_statement(\"\", __LINE__)") + strlen($3));
-		sprintf($$, "1, ECPGprepared_statement(\"%s\", __LINE__)", $3);
+		$$ = (char *) mm_alloc(sizeof("1, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
+		sprintf($$, "1, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}
 	| SQL_DESCRIBE opt_output name using_descriptor
 	{
+		const char *con = connection ? connection : "NULL";
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
-		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(\"\", __LINE__)") + strlen($3));
-		sprintf($$, "0, ECPGprepared_statement(\"%s\", __LINE__)", $3);
+		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
+		sprintf($$, "0, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}
 	| SQL_DESCRIBE opt_output name into_descriptor
 	{
+		const char *con = connection ? connection : "NULL";
 		mmerror(PARSE_ERROR, ET_WARNING, "using unsupported describe statement.\n");
-		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(\"\", __LINE__)") + strlen($3));
-		sprintf($$, "0, ECPGprepared_statement(\"%s\", __LINE__)", $3);
+		$$ = (char *) mm_alloc(sizeof("0, ECPGprepared_statement(, \"\", __LINE__)") + strlen(con) + strlen($3));
+		sprintf($$, "0, ECPGprepared_statement(%s, \"%s\", __LINE__)", con, $3);
 	}
 	;
 

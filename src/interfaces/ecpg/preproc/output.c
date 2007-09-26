@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.21 2007/08/14 10:32:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/output.c,v 1.22 2007/09/26 10:57:00 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -153,14 +153,15 @@ output_prepare_statement(char *name, char *stmt)
 void
 output_deallocate_prepare_statement(char *name)
 {
+	const char* con = connection ? connection : "NULL";
 	if (strcmp(name, "all"))
 	{
-		fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, ", compat);
+		fprintf(yyout, "{ ECPGdeallocate(__LINE__, %d, %s, ", compat, con);
 		output_escaped_str(name, true);
 		fputs(");", yyout);
 	}
 	else
-		fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d);", compat);
+		fprintf(yyout, "{ ECPGdeallocate_all(__LINE__, %d, %s);", compat, con);
 
 	whenever_action(2);
 	free(name);

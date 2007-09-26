@@ -142,7 +142,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare CUR  cursor  for $1", 
-	ECPGt_char_variable,(ECPGprepared_statement("f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
+	ECPGt_char_variable,(ECPGprepared_statement(NULL, "f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
 #line 52 "execute.pgc"
 
@@ -187,7 +187,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 if (sqlca.sqlcode < 0) sqlprint();}
 #line 66 "execute.pgc"
 
-	{ ECPGdeallocate(__LINE__, 0, "f");
+	{ ECPGdeallocate(__LINE__, 0, NULL, "f");
 #line 67 "execute.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();}
@@ -207,7 +207,7 @@ if (sqlca.sqlcode < 0) sqlprint();}
 
 
 	{ ECPGdo(__LINE__, 0, 1, NULL, 0, ECPGst_normal, "declare CUR2  cursor  for $1", 
-	ECPGt_char_variable,(ECPGprepared_statement("f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
+	ECPGt_char_variable,(ECPGprepared_statement(NULL, "f", __LINE__)),(long)1,(long)1,(1)*sizeof(char), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, 
 	ECPGt_const,"1",(long)1,(long)1,strlen("1"), 
 	ECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ECPGt_EOIT, ECPGt_EORT);
