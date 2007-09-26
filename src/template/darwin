@@ -1,8 +1,18 @@
-# $PostgreSQL: pgsql/src/template/darwin,v 1.10 2006/03/11 04:38:40 momjian Exp $
+# $PostgreSQL: pgsql/src/template/darwin,v 1.11 2007/09/26 00:32:46 tgl Exp $
 
 # Apple's cpp-precomp seems a tad broken, so don't use it
 # (Note: on OS X before 10.2, you might need -traditional-cpp instead)
 CC="$CC -no-cpp-precomp"
 
-# Select appropriate semaphore support
-USE_NAMED_POSIX_SEMAPHORES=1
+# Select appropriate semaphore support.  Darwin 6.0 (Mac OS X 10.2) and up
+# support System V semaphores; before that we have to use POSIX semaphores,
+# which are less good for our purposes because they eat a file descriptor
+# per backend per max_connection slot.
+case $host_os in
+  darwin[015].*)
+    USE_NAMED_POSIX_SEMAPHORES=1
+    ;;
+  *)
+    USE_SYSV_SEMAPHORES=1
+    ;;
+esac
