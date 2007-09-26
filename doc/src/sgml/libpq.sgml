@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.245 2007/09/14 14:54:25 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.246 2007/09/26 08:45:50 momjian Exp $ -->
 
 <chapter id="libpq">
  <title><application>libpq</application> - C Library</title>
@@ -2092,7 +2092,9 @@ PGresult *PQdescribePortal(PGconn *conn, const char *portalName);
 
      <listitem>
       <para>
-       Returns the number of rows (tuples) in the query result.
+       Returns the number of rows (tuples) in the query result.  Because
+       it returns an integer result, large result sets might overflow the
+       return value on 32-bit operating systems.
 
        <synopsis>
         int PQntuples(const PGresult *res);
