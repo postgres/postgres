@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Sep 14 14:39:54 EDT 2007
+   Last updated: Wed Sep 26 16:36:22 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -113,7 +113,7 @@
    community of developers and users, which anyone can join. All you need
    to do is subscribe to the mailing lists and participate in the
    discussions. (See the Developer's FAQ for information on how to get
-   involved in PostgreSQL development.)
+   involved in Postgres development.)
    
   1.3) What is the copyright of PostgreSQL?
   
@@ -158,7 +158,7 @@
    PostgreSQL also runs natively on Microsoft Windows NT-based operating
    systems like Win2000 SP4, WinXP, and Win2003. A prepackaged installer
    is available at http://pgfoundry.org/projects/pginstaller. MSDOS-based
-   versions of Windows (Win95, Win98, WinMe) can run PostgreSQL using
+   versions of Windows (Win95, Win98, WinMe) can run Postgres using
    Cygwin.
    
    There is also a Novell Netware 6 port at http://forge.novell.com, and
@@ -200,7 +200,7 @@
    Visit the PostgreSQL bug form at
    http://www.postgresql.org/support/submitbug. Also check out our ftp
    site ftp://ftp.PostgreSQL.org/pub/ to see if there is a more recent
-   PostgreSQL version.
+   Postgres version.
    
    Bugs submitted using the bug form or posted to any PostgreSQL mailing
    list typically generates one of the following replies:
@@ -240,9 +240,9 @@
    efficient to respond directly to email and keep the TODO list
    up-to-date. In practice, bugs don't last very long in the software,
    and bugs that affect a large number of users are fixed rapidly. The
-   only place to find all changes, improvements, and fixes in a
-   PostgreSQL release is to read the CVS log messages. Even the release
-   notes do not list every change made to the software.
+   only place to find all changes, improvements, and fixes in a Postgres
+   release is to read the CVS log messages. Even the release notes do not
+   list every change made to the software.
    
   1.10) What documentation is available?
   
@@ -537,7 +537,7 @@
    As an example, consider a file of 100,000 lines with an integer and
    text description on each line. Suppose the text string avergages
    twenty bytes in length. The flat file would be 2.8 MB. The size of the
-   PostgreSQL database file containing this data can be estimated as 5.2
+   Postgres database file containing this data can be estimated as 5.2
    MB:
     24 bytes: each row header (approximate)
     24 bytes: one int field and one text field
@@ -545,7 +545,7 @@
    ----------------------------------------
     52 bytes per row
 
-   The data page size in PostgreSQL is 8192 bytes (8 KB), so:
+   The data page size in Postgres is 8192 bytes (8 KB), so:
 
    8192 bytes per page
    -------------------   =  158 rows per database page (rounded down)
