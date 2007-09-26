@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.3 2007/09/10 12:36:40 teodor Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tsearch/to_tsany.c,v 1.4 2007/09/26 10:09:57 teodor Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,12 @@ compareWORD(const void *a, const void *b)
 								  ((ParsedWord *) b)->len);
 
 		if (res == 0)
+		{	
+			if ( ((ParsedWord *) a)->pos.pos == ((ParsedWord *) b)->pos.pos )
+				return 0;
+
 			return (((ParsedWord *) a)->pos.pos > ((ParsedWord *) b)->pos.pos) ? 1 : -1;
+		}
 		return res;
 	}
 	return (((ParsedWord *) a)->len > ((ParsedWord *) b)->len) ? 1 : -1;
@@ -66,18 +71,31 @@ uniqueWORD(ParsedWord * a, int4 l)
 	res = a;
 	ptr = a + 1;
 
+	/*
+	 * Sort words with its positions 
+	 */
 	qsort((void *) a, l, sizeof(ParsedWord), compareWORD);
+
+	/*
+	 * Initialize first word and its first position
+	 */
 	tmppos = LIMITPOS(a->pos.pos);
 	a->alen = 2;
 	a->pos.apos = (uint16 *) palloc(sizeof(uint16) * a->alen);
 	a->pos.apos[0] = 1;
 	a->pos.apos[1] = tmppos;
 
+	/*
+	 * Summarize position information for each word
+	 */
 	while (ptr - a < l)
 	{
 		if (!(ptr->len == res->len &&
 			  strncmp(ptr->word, res->word, res->len) == 0))
 		{
+			/*
+			 * Got a new word, so put it in result
+			 */
 			res++;
 			res->len = ptr->len;
 			res->word = ptr->word;
@@ -89,8 +107,14 @@ uniqueWORD(ParsedWord * a, int4 l)
 		}
 		else
 		{
+			/*
+			 * The word already exists, so adjust position information.
+			 * But before we should check size of position's array, 
+			 * max allowed value for position and uniqueness of position 
+			 */
 			pfree(ptr->word);
-			if (res->pos.apos[0] < MAXNUMPOS - 1 && res->pos.apos[res->pos.apos[0]] != MAXENTRYPOS - 1)
+			if (res->pos.apos[0] < MAXNUMPOS - 1 && res->pos.apos[res->pos.apos[0]] != MAXENTRYPOS - 1 &&
+					res->pos.apos[res->pos.apos[0]] != LIMITPOS(ptr->pos.pos))
 			{
 				if (res->pos.apos[0] + 1 >= res->alen)
 				{
