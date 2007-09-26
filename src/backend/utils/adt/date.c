@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.135 2007/08/04 01:26:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.136 2007/09/26 01:10:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -336,15 +336,26 @@ date_mii(PG_FUNCTION_ARGS)
  * time zone
  */
 
+static Timestamp
+date2timestamp(DateADT dateVal)
+{
+	Timestamp result;
+
 #ifdef HAVE_INT64_TIMESTAMP
-/* date is days since 2000, timestamp is microseconds since same... */
-#define date2timestamp(dateVal) \
-	((Timestamp) ((dateVal) * USECS_PER_DAY))
+	/* date is days since 2000, timestamp is microseconds since same... */
+	result = dateVal * USECS_PER_DAY;
+	/* Date's range is wider than timestamp's, so must check for overflow */
+	if (result / USECS_PER_DAY != dateVal)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range for timestamp")));
 #else
-/* date is days since 2000, timestamp is seconds since same... */
-#define date2timestamp(dateVal) \
-	((Timestamp) ((dateVal) * (double)SECS_PER_DAY))
+	/* date is days since 2000, timestamp is seconds since same... */
+	result = dateVal * (double) SECS_PER_DAY;
 #endif
+
+	return result;
+}
 
 static TimestampTz
 date2timestamptz(DateADT dateVal)
@@ -364,6 +375,11 @@ date2timestamptz(DateADT dateVal)
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result = dateVal * USECS_PER_DAY + tz * USECS_PER_SEC;
+	/* Date's range is wider than timestamp's, so must check for overflow */
+	if ((result - tz * USECS_PER_SEC) / USECS_PER_DAY != dateVal)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
+				 errmsg("date out of range for timestamp")));
 #else
 	result = dateVal * (double) SECS_PER_DAY + tz;
 #endif
