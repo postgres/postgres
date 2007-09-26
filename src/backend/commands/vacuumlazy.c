@@ -38,7 +38,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.100 2007/09/24 03:52:55 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.101 2007/09/26 20:16:28 alvherre Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@
  * provide an upper limit to memory allocated when vacuuming small
  * tables.
  */
-#define LAZY_ALLOC_TUPLES		200
+#define LAZY_ALLOC_TUPLES		MaxHeapTuplesPerPage
 
 typedef struct LVRelStats
 {
