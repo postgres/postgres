@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Sep 23 14:06:36 EDT 2007
+   Last updated: Wed Sep 26 16:38:09 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -137,9 +137,9 @@ General Questions
        preferable if the file changes are single-line changes and do not
        rely on surrounding lines.)
     4. PostgreSQL is licensed under a BSD license. By posting a patch to
-       the public PostgreSQL mailling lists, you are giving the
-       PostgreSQL Global Development Group the non-revokable right to
-       distribute your patch under the BSD license.
+       the public Postgres mailling lists, you are giving the PostgreSQL
+       Global Development Group the non-revokable right to distribute
+       your patch under the BSD license.
     5. Confirm that your changes can pass the regression tests. If your
        changes are port specific, please list the ports you have tested
        it on.
@@ -180,8 +180,8 @@ General Questions
      * Contains no reliability risks
      * Does not overly complicate the source code
      * If performance-related, has a measureable performance benefit
-     * Is of sufficient usefulness to the average PostgreSQL user
-     * Follows existing PostgreSQL coding standards
+     * Is of sufficient usefulness to the average Postgres user
+     * Follows existing Postgres coding standards
        
   1.7) Where can I learn more about the code?
   
