@@ -580,7 +580,12 @@ compareWORD(const void *a, const void *b)
 								  ((WORD *) b)->len);
 
 		if (res == 0)
+		{
+			if ( ((WORD *) a)->pos.pos == ((WORD *) b)->pos.pos )
+				return 0;
+
 			return (((WORD *) a)->pos.pos > ((WORD *) b)->pos.pos) ? 1 : -1;
+		}
 		return res;
 	}
 	return (((WORD *) a)->len > ((WORD *) b)->len) ? 1 : -1;
@@ -630,7 +635,8 @@ uniqueWORD(WORD * a, int4 l)
 		else
 		{
 			pfree(ptr->word);
-			if (res->pos.apos[0] < MAXNUMPOS - 1 && res->pos.apos[res->pos.apos[0]] != MAXENTRYPOS - 1)
+			if (res->pos.apos[0] < MAXNUMPOS - 1 && res->pos.apos[res->pos.apos[0]] != MAXENTRYPOS - 1 &&
+				res->pos.apos[res->pos.apos[0]] != LIMITPOS(ptr->pos.pos) )
 			{
 				if (res->pos.apos[0] + 1 >= res->alen)
 				{
