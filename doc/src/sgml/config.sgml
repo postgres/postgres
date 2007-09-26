@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.147 2007/09/25 20:03:37 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.148 2007/09/26 22:36:30 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -1620,6 +1620,24 @@ SET ENABLE_SEQSCAN TO OFF;
      <title>Archiving</title>
 
     <variablelist>
+     <varlistentry id="guc-archive-mode" xreflabel="archive_mode">
+      <term><varname>archive_mode</varname> (<type>boolean</type>)</term>
+      <indexterm>
+       <primary><varname>archive_mode</> configuration parameter</primary>
+      </indexterm>
+      <listitem>
+       <para>
+        When <varname>archive_mode</> is enabled, completed WAL segments
+        can be sent to archive storage by setting
+        <xref linkend="guc-archive-command">.
+        <varname>archive_mode</> and <varname>archive_command</> are
+        separate variables so that <varname>archive_command</> can be
+        changed without leaving archiving mode.
+        This parameter can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
      <varlistentry id="guc-archive-command" xreflabel="archive_command">
       <term><varname>archive_command</varname> (<type>string</type>)</term>
       <indexterm>
@@ -1628,8 +1646,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         The shell command to execute to archive a completed segment of
-        the WAL file series. If this is an empty string (the default),
-        WAL archiving is disabled. Any <literal>%p</> in the string is
+        the WAL file series.  Any <literal>%p</> in the string is
         replaced by the path name of the file to archive, and any
         <literal>%f</> is replaced by the file name only.
         (The path name is relative to the working directory of the server,
@@ -1638,7 +1655,12 @@ SET ENABLE_SEQSCAN TO OFF;
         command. For more information see <xref
         linkend="backup-archiving-wal">.
         This parameter can only be set in the <filename>postgresql.conf</>
-        file or on the server command line.
+        file or on the server command line.  It is ignored unless
+        <varname>archive_mode</> was enabled at server start.
+        If <varname>archive_command</> is an empty string (the default) while
+        <varname>archive_mode</> is enabled, then WAL archiving is temporarily
+        disabled, but the server continues to accumulate WAL segment files in
+        the expectation that a command will soon be provided.
        </para>
        <para>
         It is important for the command to return a zero exit status if

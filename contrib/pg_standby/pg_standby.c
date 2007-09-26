@@ -47,17 +47,20 @@ int maxwaittime = 0;		  	/* how long are we prepared to wait for? */
 int keepfiles = 0;				/* number of WAL files to keep, 0 keep all */
 int maxretries = 3;				/* number of retries on restore command */
 bool debug = false;			 	/* are we debugging? */
-bool triggered = false;
-bool signaled = false;
+bool triggered = false;			/* have we been triggered? */
+bool need_cleanup = false;		/* do we need to remove files from archive? */
+
+static volatile sig_atomic_t signaled = false;
 
 char *archiveLocation;		  /* where to find the archive? */
 char *triggerPath;			  /* where to find the trigger file? */
-char *xlogFilePath;			 /* where we are going to restore to */
+char *xlogFilePath;			  /* where we are going to restore to */
 char *nextWALFileName;		  /* the file we need to get from archive */
+char *restartWALFileName;	  /* the file from which we can restart restore */
 char *priorWALFileName;		  /* the file we need to get from archive */
 char WALFilePath[MAXPGPATH];/* the file path including archive */
 char restoreCommand[MAXPGPATH]; /* run this to restore */
-char inclusiveCleanupFileName[MAXPGPATH];		  /* the file we need to get from archive */
+char exclusiveCleanupFileName[MAXPGPATH];		  /* the file we need to get from archive */
 
 #define RESTORE_COMMAND_COPY 0
 #define RESTORE_COMMAND_LINK 1
@@ -204,35 +207,14 @@ CustomizableNextWALFileReady()
 static void
 CustomizableCleanupPriorWALFiles(void)
 {
-	uint32			tli,
-					log,
-					seg;
-	int				signed_log = 0;
-
-	if (keepfiles > 0)
-	{
-		sscanf(nextWALFileName, "%08X%08X%08X", &tli, &log, &seg);
-		signed_log = log - (keepfiles / MaxSegmentsPerLogFile);
-		if (keepfiles <= seg)
-			seg -= keepfiles;
-		else
-		{
-			seg = MaxSegmentsPerLogFile - (keepfiles % MaxSegmentsPerLogFile);			
-			signed_log--;	
-		}
-		log = (uint32) signed_log;
-	}
-
 	/*
 	 * Work out name of prior file from current filename
 	 */
-	if (keepfiles > 0 && signed_log >= 0 && nextWALFileType == XLOG_DATA)
+	if (nextWALFileType == XLOG_DATA)
 	{
 		int 			rc;
 		DIR				*xldir;
 		struct dirent	*xlde;
-
-		XLogFileName(inclusiveCleanupFileName, tli, log, seg);
 
 		/*
 		 * Assume its OK to keep failing. The failure situation may change over
@@ -252,11 +234,13 @@ CustomizableCleanupPriorWALFiles(void)
 				 * complicated.
 				 *
 				 * We use the alphanumeric sorting property of the filenames to decide
-				 * which ones are earlier than the inclusiveCleanupFileName file.
+				 * which ones are earlier than the exclusiveCleanupFileName file.
+				 * Note that this means files are not removed in the order they were 
+				 * originally written, in case this worries you.
 				 */
 				if (strlen(xlde->d_name) == XLOG_DATA_FNAME_LEN &&
 					strspn(xlde->d_name, "0123456789ABCDEF") == XLOG_DATA_FNAME_LEN &&
-					strcmp(xlde->d_name + 8, inclusiveCleanupFileName + 8) <= 0)
+					strcmp(xlde->d_name + 8, exclusiveCleanupFileName + 8) < 0)
 				{
 #ifdef WIN32
 					snprintf(WALFilePath, MAXPGPATH, "%s\\%s", archiveLocation, xlde->d_name);
@@ -265,28 +249,87 @@ CustomizableCleanupPriorWALFiles(void)
 #endif
 
 					if (debug)
-					   	fprintf(stderr, "\npg_standby: removing \"%s\"\n", WALFilePath);
+					   	fprintf(stderr, "\nremoving \"%s\"", WALFilePath);
 
 					rc = unlink(WALFilePath);
-					if (rc !=0 )
-						fprintf(stderr, "\npg_standby: ERROR failed to remove \"%s\": %s\n", WALFilePath,  strerror(errno));
-
-
+					if (rc != 0)
+					{
+						fprintf(stderr, "\npg_standby: ERROR failed to remove \"%s\": %s",
+								WALFilePath, strerror(errno));
+						break;
+					}
 				}
 			}
+			if (debug)
+				fprintf(stderr, "\n");
 		}
 		else
 		   	fprintf(stderr, "pg_standby: archiveLocation \"%s\" open error\n", archiveLocation);
 
 		closedir(xldir);
+		fflush(stderr);
 	}
-	fflush(stderr);
 }
 
 /* =====================================================================
  *		  End of Customizable section
  * =====================================================================
  */
+
+/*
+ * SetWALFileNameForCleanup()
+ * 
+ *	  Set the earliest WAL filename that we want to keep on the archive
+ *    and decide whether we need_cleanup
+ */
+static bool
+SetWALFileNameForCleanup(void)
+{
+	uint32			tli = 1,
+					log = 0,
+					seg = 0;
+	uint32			log_diff = 0,
+					seg_diff = 0;
+	bool			cleanup = false;
+
+	if (restartWALFileName)
+	{
+		strcpy(exclusiveCleanupFileName, restartWALFileName);
+		return true;
+	}
+
+	if (keepfiles > 0)
+	{
+		sscanf(nextWALFileName, "%08X%08X%08X", &tli, &log, &seg);
+		if (tli > 0 && log >= 0 && seg > 0)
+		{
+			log_diff = keepfiles / MaxSegmentsPerLogFile;
+			seg_diff = keepfiles % MaxSegmentsPerLogFile;
+				if (seg_diff > seg)
+			{
+				log_diff++;
+				seg = MaxSegmentsPerLogFile - seg_diff;
+			}
+			else
+				seg -= seg_diff;
+
+			if (log >= log_diff)
+			{
+				log -= log_diff;
+				cleanup = true;
+			}
+			else
+			{
+				log = 0;
+				seg = 0;
+			}
+		}
+	}
+
+	XLogFileName(exclusiveCleanupFileName, tli, log, seg);
+
+	return cleanup;
+}
 
 /*
  * CheckForExternalTrigger()
@@ -353,7 +396,7 @@ RestoreWALFileForRecovery(void)
 		{
 			if (debug)
 			{
-				fprintf(stderr, " success\n");
+				fprintf(stderr, " OK");
 				fflush(stderr);
 			}
 			return true;
@@ -370,31 +413,30 @@ RestoreWALFileForRecovery(void)
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr, "\npg_standby allows Warm Standby servers to be configured\n");
 	fprintf(stderr, "Usage:\n");
-	fprintf(stderr, "  pg_standby [OPTION]... [ARCHIVELOCATION] [NEXTWALFILE] [XLOGFILEPATH]\n");
-	fprintf(stderr, "						  note space between [ARCHIVELOCATION] and [NEXTWALFILE]\n");
-	fprintf(stderr, "with main intended use via restore_command in the recovery.conf\n");
-	fprintf(stderr, "	 restore_command = 'pg_standby [OPTION]... [ARCHIVELOCATION] %%f %%p'\n");
-	fprintf(stderr, "e.g. restore_command = 'pg_standby -l /mnt/server/archiverdir %%f %%p'\n");
+	fprintf(stderr, "  pg_standby [OPTION]... ARCHIVELOCATION NEXTWALFILE XLOGFILEPATH [RESTARTWALFILE]\n");
+	fprintf(stderr, "				note space between ARCHIVELOCATION and NEXTWALFILE\n");
+	fprintf(stderr, "with main intended use as a restore_command in the recovery.conf\n");
+	fprintf(stderr, "	 restore_command = 'pg_standby [OPTION]... ARCHIVELOCATION %%f %%p %%r'\n");
+	fprintf(stderr, "e.g. restore_command = 'pg_standby -l /mnt/server/archiverdir %%f %%p %%r'\n");
 	fprintf(stderr, "\nOptions:\n");
 	fprintf(stderr, "  -c			copies file from archive (default)\n");
 	fprintf(stderr, "  -d			generate lots of debugging output (testing only)\n");
-	fprintf(stderr, "  -k [NUMFILESTOKEEP]	keeps history of # files in archives; unlinks/removes files beyond that\n");
+	fprintf(stderr, "  -k NUMFILESTOKEEP	if RESTARTWALFILE not used, removes files prior to limit (0 keeps all)\n");
 	fprintf(stderr, "  -l			links into archive (leaves file in archive)\n");
-	fprintf(stderr, "  -t [TRIGGERFILE]	defines a trigger file to initiate failover (no default)\n");
-	fprintf(stderr, "  -r [MAXRETRIES]	maximum number of times to retry, with progressive wait (default=3)\n");
-	fprintf(stderr, "  -s [SLEEPTIME]	number of seconds to wait between file checks (default=5)\n");
-	fprintf(stderr, "  -w [MAXWAITTIME]	max number of seconds to wait for a file (0 disables)(default=0)\n");
+	fprintf(stderr, "  -r MAXRETRIES		max number of times to retry, with progressive wait (default=3)\n");
+	fprintf(stderr, "  -s SLEEPTIME		seconds to wait between file checks (min=1, max=60, default=5)\n");
+	fprintf(stderr, "  -t TRIGGERFILE	defines a trigger file to initiate failover (no default)\n");
+	fprintf(stderr, "  -w MAXWAITTIME	max seconds to wait for a file (0=no limit)(default=0)\n");
 	fflush(stderr);
 }
 
 static void
 sighandler(int sig)
 {
-	triggered = true;
 	signaled = true;
 }
 
@@ -419,9 +461,9 @@ main(int argc, char **argv)
 				break;
 			case 'k':			/* keepfiles */
 				keepfiles = atoi(optarg);
-				if (keepfiles <= 0)
+				if (keepfiles < 0)
 				{
-					fprintf(stderr, "usage: pg_standby -k keepfiles must be > 0\n");
+					fprintf(stderr, "usage: pg_standby -k keepfiles must be >= 0\n");
 					usage();
 					exit(2);
 				}
@@ -433,7 +475,7 @@ main(int argc, char **argv)
 				maxretries = atoi(optarg);
 				if (maxretries < 0)
 				{
-					fprintf(stderr, "usage: pg_standby -r maxretries must be > 0\n");
+					fprintf(stderr, "usage: pg_standby -r maxretries must be >= 0\n");
 					usage();
 					exit(2);
 				}
@@ -519,23 +561,28 @@ main(int argc, char **argv)
 		exit(2);
 	}
 
+	if (optind < argc)
+	{
+		restartWALFileName = argv[optind];
+		optind++;
+	}
+
 	CustomizableInitialize();
+
+	need_cleanup = SetWALFileNameForCleanup();
 
 	if (debug)
 	{
         fprintf(stderr, "\nTrigger file 		: %s", triggerPath ? triggerPath : "<not set>");
-	   	fprintf(stderr, "\nWaiting for WAL file	: %s", WALFilePath);
-	   	fprintf(stderr, "\nWAL file path		: %s", nextWALFileName);
+	   	fprintf(stderr, "\nWaiting for WAL file	: %s", nextWALFileName);
+	   	fprintf(stderr, "\nWAL file path		: %s", WALFilePath);
 	   	fprintf(stderr, "\nRestoring to...		: %s", xlogFilePath);
 	   	fprintf(stderr, "\nSleep interval		: %d second%s", 
 					sleeptime, (sleeptime > 1 ? "s" : " "));
 	   	fprintf(stderr, "\nMax wait interval	: %d %s", 
 					maxwaittime, (maxwaittime > 0 ? "seconds" : "forever"));
 		fprintf(stderr, "\nCommand for restore	: %s", restoreCommand);
-		if (keepfiles > 0)
-			fprintf(stderr, "\nNum archived files kept	: last %d files", keepfiles);
-		else
-			fprintf(stderr, "\nNum archived files kept	: all files");
+		fprintf(stderr, "\nKeep archive history	: %s and later", exclusiveCleanupFileName);
 		fflush(stderr);
 	}
 
@@ -572,6 +619,7 @@ main(int argc, char **argv)
 
 		if (signaled)
 		{
+			triggered = true;
 			if (debug)
 			{
 			   	fprintf(stderr, "\nsignaled to exit\n");
@@ -614,7 +662,7 @@ main(int argc, char **argv)
 	 * immediately after the failed restore, or when
 	 * we restart recovery.
 	 */
-	if (RestoreWALFileForRecovery())
+	if (RestoreWALFileForRecovery() && need_cleanup)
 		CustomizableCleanupPriorWALFiles();
 
 	return 0;

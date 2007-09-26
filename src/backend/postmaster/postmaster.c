@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.541 2007/08/19 01:41:24 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.542 2007/09/26 22:36:30 tgl Exp $
  *
  * NOTES
  *
@@ -1311,8 +1311,12 @@ ServerLoop(void)
 				start_autovac_launcher = false;	/* signal processed */
 		}
 
-		/* If we have lost the archiver, try to start a new one */
-		if (XLogArchivingActive() && PgArchPID == 0 && pmState == PM_RUN)
+		/* 
+		 * If we have lost the archiver, try to start a new one.
+		 * We do this even if we are shutting down, to allow archiver to
+		 * take care of any remaining WAL files.
+		 */
+		if (XLogArchivingActive() && PgArchPID == 0 && pmState >= PM_RUN)
 			PgArchPID = pgarch_start();
 
 		/* If we have lost the stats collector, try to start a new one */
@@ -2232,7 +2236,7 @@ reaper(SIGNAL_ARGS)
 			if (!EXIT_STATUS_0(exitstatus))
 				LogChildExit(LOG, _("archiver process"),
 							 pid, exitstatus);
-			if (XLogArchivingActive() && pmState == PM_RUN)
+			if (XLogArchivingActive() && pmState >= PM_RUN)
 				PgArchPID = pgarch_start();
 			continue;
 		}

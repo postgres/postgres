@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.101 2007/09/14 13:26:22 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.102 2007/09/26 22:36:30 tgl Exp $ -->
 
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -518,10 +518,13 @@ tar -cf backup.tar /usr/local/pgsql/data
    </para>
 
    <para>
-    The shell command to use is specified by the <xref
-    linkend="guc-archive-command"> configuration parameter, which in practice
-    will always be placed in the <filename>postgresql.conf</filename> file.
-    In this string,
+    To enable WAL archiving, set the <xref
+    linkend="guc-archive-mode"> configuration parameter to <literal>on</>,
+    and specify the shell command to use in the <xref
+    linkend="guc-archive-command"> configuration parameter.  In practice
+    these settings will always be placed in the
+    <filename>postgresql.conf</filename> file.
+    In <varname>archive_command</>,
     any <literal>%p</> is replaced by the path name of the file to
     archive, while any <literal>%f</> is replaced by the file name only.
     (The path name is relative to the working directory of the server,
@@ -1030,8 +1033,15 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
         it to on the server.
         (The path name is relative to the working directory of the server,
         i.e., the cluster's data directory.)
+        Any <literal>%r</> is replaced by the name of the file containing the
+        last valid restartpoint. That is the earliest file that must be kept
+        to allow a restore to be restartable, so this information can be used
+        to truncate the archive to just the minimum required to support
+        restart of the current restore. <literal>%r</> would only be used in a
+        warm-standby configuration (see <xref
+        linkend="warm-standby-planning">).
         Write <literal>%%</> to embed an actual <literal>%</> character
-        in the command. 
+        in the command.
        </para>
        <para>
         It is important for the command to return a zero exit status if and
@@ -1114,6 +1124,20 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
         in complex re-recovery situations, where you need to return to
         a state that itself was reached after a point-in-time recovery.
         See <xref linkend="backup-timelines"> for discussion.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="log-restartpoints" 
+                   xreflabel="log_restartpoints">
+      <term><varname>log_restartpoints</varname> 
+        (<type>boolean</type>)
+      </term>
+      <listitem>
+       <para>
+        Specifies whether to log each restart point as it occurs. This 
+        can be helpful to track the progress of a long recovery.
+        Default is <literal>false</>.
        </para>
       </listitem>
      </varlistentry>
@@ -1389,7 +1413,8 @@ restore_command = 'copy /mnt/server/archivedir/%f "%p"'  # Windows
     contact between the two database servers is the archive of WAL files
     that both share: primary writing to the archive, standby reading from
     the archive. Care must be taken to ensure that WAL archives for separate
-    primary servers do not become mixed together or confused.
+    primary servers do not become mixed together or confused. The archive
+    need not be large, if it is only required for the standby operation.
    </para>
 
    <para>
@@ -1427,6 +1452,12 @@ if (!triggered)
    </para>
 
    <para>
+    A working example of a waiting <varname>restore_command</> is provided
+    as a contrib module, named <application>pg_standby</>. This can be
+    extended as needed to support specific configurations or environments.
+   </para>
+
+   <para>
     <productname>PostgreSQL</productname> does not provide the system
     software required to identify a failure on the primary and notify
     the standby system and then the standby database server. Many such
@@ -1449,6 +1480,15 @@ if (!triggered)
     as the explicit creation of a trigger file is less error prone, if
     this can be arranged.
    </para>
+
+   <para>
+    The size of the WAL archive can be minimized by using the <literal>%r</>
+    option of the <varname>restore_command</>. This option specifies the
+    last archive filename that needs to be kept to allow the recovery to
+    restart correctly. This can be used to truncate the archive once
+    files are no longer required, if the archive is writable from the
+    standby server.
+   </para>
   </sect2>
 
   <sect2 id="warm-standby-config">
@@ -1468,8 +1508,10 @@ if (!triggered)
      <listitem>
       <para>
        Set up continuous archiving from the primary to a WAL archive located
-       in a directory on the standby server. Ensure that <xref
-       linkend="guc-archive-command"> and <xref linkend="guc-archive-timeout">
+       in a directory on the standby server. Ensure that
+       <xref linkend="guc-archive-mode">,
+       <xref linkend="guc-archive-command"> and
+       <xref linkend="guc-archive-timeout">
        are set appropriately on the primary
        (see <xref linkend="backup-archiving-wal">).
       </para>
@@ -1631,7 +1673,8 @@ if (!triggered)
     far back you need to keep WAL segment files to have a recoverable
     backup.  You can do this by running <application>pg_controldata</>
     on the standby server to inspect the control file and determine the
-    current checkpoint WAL location.
+    current checkpoint WAL location, or by using the 
+    <varname>log_restartpoints</> option to print values to the server log.
    </para>
   </sect2>
  </sect1>

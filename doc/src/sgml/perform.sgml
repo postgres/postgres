@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.64 2007/03/29 00:15:36 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.65 2007/09/26 22:36:30 tgl Exp $ -->
 
  <chapter id="performance-tips">
   <title>Performance Tips</title>
@@ -819,7 +819,7 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
     needs to be written, because in case of an error, the files
     containing the newly loaded data will be removed anyway.
     However, this consideration does not apply when
-    <xref linkend="guc-archive-command"> is set, as all commands
+    <xref linkend="guc-archive-mode"> is set, as all commands
     must write WAL in that case.
    </para>
 
@@ -892,22 +892,24 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
   </sect2>
 
   <sect2 id="populate-pitr">
-   <title>Turn off <varname>archive_command</varname></title>
+   <title>Turn off <varname>archive_mode</varname></title>
 
    <para>
     When loading large amounts of data into an installation that uses
-    WAL archiving, you might want to disable archiving (unset the
-    <xref linkend="guc-archive-command"> configuration variable)
+    WAL archiving, you might want to disable archiving (turn off the
+    <xref linkend="guc-archive-mode"> configuration variable)
     while loading.  It might be
     faster to take a new base backup after the load has completed
     than to process a large amount of incremental WAL data.
+    But note that turning <varname>archive_mode</varname> on or off
+    requires a server restart.
    </para>
 
    <para>
     Aside from avoiding the time for the archiver to process the WAL data,
     doing this will actually make certain commands faster, because they
-    are designed not to write WAL at all if <varname>archive_command</varname>
-    is unset.  (They can guarantee crash safety more cheaply by doing an
+    are designed not to write WAL at all if <varname>archive_mode</varname>
+    is off.  (They can guarantee crash safety more cheaply by doing an
     <function>fsync</> at the end than by writing WAL.)
     This applies to the following commands: 
     <itemizedlist>
@@ -989,8 +991,8 @@ SELECT * FROM x, y, a, b, c WHERE something AND somethingelse;
      <listitem>
       <para>
        If using WAL archiving, consider disabling it during the restore.
-       To do that, unset <varname>archive_command</varname> before loading the
-       dump script, and afterwards restore <varname>archive_command</varname>
+       To do that, turn off <varname>archive_mode</varname> before loading the
+       dump script, and afterwards turn it back on
        and take a fresh base backup.
       </para>
      </listitem>

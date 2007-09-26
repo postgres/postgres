@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.422 2007/09/25 20:03:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.423 2007/09/26 22:36:30 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -169,7 +169,7 @@ static const char *assign_backslash_quote(const char *newval, bool doit, GucSour
 static const char *assign_timezone_abbreviations(const char *newval, bool doit, GucSource source);
 static const char *assign_xmlbinary(const char *newval, bool doit, GucSource source);
 static const char *assign_xmloption(const char *newval, bool doit, GucSource source);
-
+static const char *show_archive_command(void);
 static bool assign_tcp_keepalives_idle(int newval, bool doit, GucSource source);
 static bool assign_tcp_keepalives_interval(int newval, bool doit, GucSource source);
 static bool assign_tcp_keepalives_count(int newval, bool doit, GucSource source);
@@ -1052,6 +1052,15 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 	},
 
+    {
+        {"archive_mode", PGC_POSTMASTER, WAL_SETTINGS,
+            gettext_noop("Allows archiving of WAL files using archive_command."),
+            NULL
+        },
+        &XLogArchiveMode,
+        false, NULL, NULL
+    },
+
 	{
 		{"allow_system_table_mods", PGC_POSTMASTER, DEVELOPER_OPTIONS,
 			gettext_noop("Allows modifications of the structure of system tables."),
@@ -1880,7 +1889,7 @@ static struct config_string ConfigureNamesString[] =
 			NULL
 		},
 		&XLogArchiveCommand,
-		"", NULL, NULL
+		"", NULL, show_archive_command
 	},
 
 	{
@@ -6363,7 +6372,7 @@ GUCArrayDelete(ArrayType *array, const char *name)
 
 
 /*
- * assign_hook subroutines
+ * assign_hook and show_hook subroutines
  */
 
 static const char *
@@ -6970,6 +6979,15 @@ assign_xmloption(const char *newval, bool doit, GucSource source)
 		xmloption = xo;
 
 	return newval;
+}
+
+static const char *
+show_archive_command(void)
+{
+	if (XLogArchiveMode)
+		return XLogArchiveCommand;
+	else
+		return "(disabled)";
 }
 
 static bool

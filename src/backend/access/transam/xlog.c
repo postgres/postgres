@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.281 2007/09/08 20:31:14 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.282 2007/09/26 22:36:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,7 @@
 int			CheckPointSegments = 3;
 int			XLOGbuffers = 8;
 int			XLogArchiveTimeout = 0;
+bool		XLogArchiveMode = false;
 char	   *XLogArchiveCommand = NULL;
 char	   *XLOG_sync_method = NULL;
 const char	XLOG_sync_method_default[] = DEFAULT_SYNC_METHOD_STR;
@@ -120,8 +121,10 @@ static char *recoveryRestoreCommand = NULL;
 static bool recoveryTarget = false;
 static bool recoveryTargetExact = false;
 static bool recoveryTargetInclusive = true;
+static bool recoveryLogRestartpoints = false;
 static TransactionId recoveryTargetXid;
 static TimestampTz recoveryTargetTime;
+static TimestampTz recoveryLastXTime = 0;
 
 /* if recoveryStopsHere returns true, it saves actual stop xid/time here */
 static TransactionId recoveryStopXid;
@@ -2388,12 +2391,15 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 {
 	char		xlogpath[MAXPGPATH];
 	char		xlogRestoreCmd[MAXPGPATH];
+	char		lastRestartPointFname[MAXPGPATH];
 	char	   *dp;
 	char	   *endp;
 	const char *sp;
 	int			rc;
 	bool		signaled;
 	struct stat stat_buf;
+	uint32 		restartLog;
+	uint32 		restartSeg;
 
 	/*
 	 * When doing archive recovery, we always prefer an archived log file even
@@ -2464,6 +2470,17 @@ RestoreArchivedFile(char *path, const char *xlogfname,
 					/* %f: filename of desired file */
 					sp++;
 					StrNCpy(dp, xlogfname, endp - dp);
+					dp += strlen(dp);
+					break;
+				case 'r':
+					/* %r: filename of last restartpoint */
+					sp++;
+					XLByteToSeg(ControlFile->checkPointCopy.redo,
+								restartLog, restartSeg);
+					XLogFileName(lastRestartPointFname, 
+								 ControlFile->checkPointCopy.ThisTimeLineID, 
+								 restartLog, restartSeg);
+					StrNCpy(dp, lastRestartPointFname, endp - dp);
 					dp += strlen(dp);
 					break;
 				case '%':
@@ -4401,6 +4418,21 @@ readRecoveryCommandFile(void)
 			ereport(LOG,
 					(errmsg("recovery_target_inclusive = %s", tok2)));
 		}
+		else if (strcmp(tok1, "log_restartpoints") == 0)
+		{
+			/*
+			 * does nothing if a recovery_target is not also set
+			 */
+			if (strcmp(tok2, "true") == 0)
+				recoveryLogRestartpoints = true;
+			else
+			{
+				recoveryLogRestartpoints = false;
+				tok2 = "false";
+			}
+			ereport(LOG,
+					(errmsg("log_restartpoints = %s", tok2)));
+		}
 		else
 			ereport(FATAL,
 					(errmsg("unrecognized recovery parameter \"%s\"",
@@ -4564,10 +4596,6 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 	uint8		record_info;
 	TimestampTz	recordXtime;
 
-	/* Do we have a PITR target at all? */
-	if (!recoveryTarget)
-		return false;
-
 	/* We only consider stopping at COMMIT or ABORT records */
 	if (record->xl_rmid != RM_XACT_ID)
 		return false;
@@ -4587,6 +4615,13 @@ recoveryStopsHere(XLogRecord *record, bool *includeThis)
 		recordXtime = recordXactAbortData->xact_time;
 	}
 	else
+		return false;
+
+	/* Remember the most recent COMMIT/ABORT time for logging purposes */
+	recoveryLastXTime = recordXtime;
+
+	/* Do we have a PITR target at all? */
+	if (!recoveryTarget)
 		return false;
 
 	if (recoveryTargetExact)
@@ -5015,6 +5050,10 @@ StartupXLOG(void)
 			ereport(LOG,
 					(errmsg("redo done at %X/%X",
 							ReadRecPtr.xlogid, ReadRecPtr.xrecoff)));
+			if (recoveryLastXTime)
+				ereport(LOG,
+						(errmsg("last completed transaction was at log time %s",
+								timestamptz_to_str(recoveryLastXTime))));
 			InRedo = false;
 		}
 		else
@@ -5922,9 +5961,13 @@ RecoveryRestartPoint(const CheckPoint *checkPoint)
 	ControlFile->time = time(NULL);
 	UpdateControlFile();
 
-	ereport(DEBUG2,
+	ereport((recoveryLogRestartpoints ? LOG : DEBUG2),
 			(errmsg("recovery restart point at %X/%X",
 					checkPoint->redo.xlogid, checkPoint->redo.xrecoff)));
+	if (recoveryLastXTime)
+		ereport((recoveryLogRestartpoints ? LOG : DEBUG2),
+				(errmsg("last completed transaction was at log time %s",
+						timestamptz_to_str(recoveryLastXTime))));
 }
 
 /*
@@ -6285,14 +6328,20 @@ pg_start_backup(PG_FUNCTION_ARGS)
 	if (!superuser())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 (errmsg("must be superuser to run a backup"))));
+				 errmsg("must be superuser to run a backup")));
 
 	if (!XLogArchivingActive())
 		ereport(ERROR,
 				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
-				 (errmsg("WAL archiving is not active"),
-				  (errhint("archive_command must be defined before "
-						   "online backups can be made safely.")))));
+				 errmsg("WAL archiving is not active"),
+				 errhint("archive_mode must be enabled at server start.")));
+
+	if (!XLogArchiveCommandSet())
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_NOT_IN_PREREQUISITE_STATE),
+				 errmsg("WAL archiving is not active"),
+				 errhint("archive_command must be defined before "
+						 "online backups can be made safely.")));
 
 	backupidstr = DatumGetCString(DirectFunctionCall1(textout,
 												 PointerGetDatum(backupid)));

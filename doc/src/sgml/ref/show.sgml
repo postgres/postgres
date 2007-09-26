@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.43 2007/09/11 00:06:41 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/show.sgml,v 1.44 2007/09/26 22:36:30 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -171,7 +171,7 @@ SHOW ALL;
               name              |            setting             |                                         description                                          
 --------------------------------+--------------------------------+----------------------------------------------------------------------------------------------
  add_missing_from               | off                            | Automatically adds missing table references to FROM clauses.
- archive_command                | unset                          | WAL archiving command.
+ allow_system_table_mods        | off                            | Allows modifications of the structure of system tables.
     .
     .
     .
