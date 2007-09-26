@@ -292,16 +292,17 @@ planner()
    find qual clauses that enable merge and hash joins
 ----make_one_rel()
      set_base_rel_pathlist()
-      find scan and all index paths for each base relation
+      find seqscan and all index paths for each base relation
       find selectivity of columns used in joins
------make_one_rel_by_joins()
-      jump to geqo if needed
-      else call make_rels_by_joins() for each level of join tree needed
-      make_rels_by_joins():
+     make_rel_from_joinlist()
+      hand off join subproblems to a plugin, GEQO, or standard_join_search()
+-----standard_join_search()
+      call join_search_one_level() for each level of join tree needed
+      join_search_one_level():
         For each joinrel of the prior level, do make_rels_by_clause_joins()
         if it has join clauses, or make_rels_by_clauseless_joins() if not.
         Also generate "bushy plan" joins between joinrels of lower levels.
-      Back at make_one_rel_by_joins(), apply set_cheapest() to extract the
+      Back at standard_join_search(), apply set_cheapest() to extract the
       cheapest path for each newly constructed joinrel.
       Loop back if this wasn't the top join level.
    Back at query_planner:

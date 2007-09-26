@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.164 2007/05/26 18:23:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.165 2007/09/26 18:51:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,9 @@
 bool		enable_geqo = false;	/* just in case GUC doesn't set it */
 int			geqo_threshold;
 
+/* Hook for plugins to replace standard_join_search() */
+join_search_hook_type join_search_hook = NULL;
+
 
 static void set_base_rel_pathlists(PlannerInfo *root);
 static void set_rel_pathlist(PlannerInfo *root, RelOptInfo *rel,
@@ -53,8 +56,6 @@ static void set_function_pathlist(PlannerInfo *root, RelOptInfo *rel,
 static void set_values_pathlist(PlannerInfo *root, RelOptInfo *rel,
 					RangeTblEntry *rte);
 static RelOptInfo *make_rel_from_joinlist(PlannerInfo *root, List *joinlist);
-static RelOptInfo *make_one_rel_by_joins(PlannerInfo *root, int levels_needed,
-					  List *initial_rels);
 static bool subquery_is_pushdown_safe(Query *subquery, Query *topquery,
 						  bool *differentTypes);
 static bool recurse_pushdown_safe(Node *setOp, Query *topquery,
@@ -672,18 +673,20 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
 	{
 		/*
 		 * Consider the different orders in which we could join the rels,
-		 * using either GEQO or regular optimizer.
+		 * using a plugin, GEQO, or the regular join search code.
 		 */
-		if (enable_geqo && levels_needed >= geqo_threshold)
+		if (join_search_hook)
+			return (*join_search_hook) (root, levels_needed, initial_rels);
+		else if (enable_geqo && levels_needed >= geqo_threshold)
 			return geqo(root, levels_needed, initial_rels);
 		else
-			return make_one_rel_by_joins(root, levels_needed, initial_rels);
+			return standard_join_search(root, levels_needed, initial_rels);
 	}
 }
 
 /*
- * make_one_rel_by_joins
- *	  Find all possible joinpaths for a query by successively finding ways
+ * standard_join_search
+ *	  Find possible joinpaths for a query by successively finding ways
  *	  to join component relations into join relations.
  *
  * 'levels_needed' is the number of iterations needed, ie, the number of
@@ -691,12 +694,27 @@ make_rel_from_joinlist(PlannerInfo *root, List *joinlist)
  *
  * 'initial_rels' is a list of RelOptInfo nodes for each independent
  *		jointree item.	These are the components to be joined together.
+ *		Note that levels_needed == list_length(initial_rels).
  *
  * Returns the final level of join relations, i.e., the relation that is
  * the result of joining all the original relations together.
+ * At least one implementation path must be provided for this relation and
+ * all required sub-relations.
+ *
+ * To support loadable plugins that modify planner behavior by changing the
+ * join searching algorithm, we provide a hook variable that lets a plugin
+ * replace or supplement this function.  Any such hook must return the same
+ * final join relation as the standard code would, but it might have a
+ * different set of implementation paths attached, and only the sub-joinrels
+ * needed for these paths need have been instantiated.
+ *
+ * Note to plugin authors: the functions invoked during standard_join_search()
+ * modify root->join_rel_list and root->join_rel_hash.  If you want to do more
+ * than one join-order search, you'll probably need to save and restore the
+ * original states of those data structures.  See geqo_eval() for an example.
  */
-static RelOptInfo *
-make_one_rel_by_joins(PlannerInfo *root, int levels_needed, List *initial_rels)
+RelOptInfo *
+standard_join_search(PlannerInfo *root, int levels_needed, List *initial_rels)
 {
 	List	  **joinitems;
 	int			lev;
@@ -725,7 +743,7 @@ make_one_rel_by_joins(PlannerInfo *root, int levels_needed, List *initial_rels)
 		 * level, and build paths for making each one from every available
 		 * pair of lower-level relations.
 		 */
-		joinitems[lev] = make_rels_by_joins(root, lev, joinitems);
+		joinitems[lev] = join_search_one_level(root, lev, joinitems);
 
 		/*
 		 * Do cleanup work on each just-processed rel.

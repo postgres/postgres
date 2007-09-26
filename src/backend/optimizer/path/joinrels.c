@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.86 2007/02/16 00:14:01 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.87 2007/09/26 18:51:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,10 +29,10 @@ static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
 
 
 /*
- * make_rels_by_joins
+ * join_search_one_level
  *	  Consider ways to produce join relations containing exactly 'level'
  *	  jointree items.  (This is one step of the dynamic-programming method
- *	  embodied in make_one_rel_by_joins.)  Join rel nodes for each feasible
+ *	  embodied in standard_join_search.)  Join rel nodes for each feasible
  *	  combination of lower-level rels are created and returned in a list.
  *	  Implementation paths are created for each such joinrel, too.
  *
@@ -40,7 +40,7 @@ static bool has_join_restriction(PlannerInfo *root, RelOptInfo *rel);
  * joinrels[j], 1 <= j < level, is a list of rels containing j items.
  */
 List *
-make_rels_by_joins(PlannerInfo *root, int level, List **joinrels)
+join_search_one_level(PlannerInfo *root, int level, List **joinrels)
 {
 	List	   *result_rels = NIL;
 	List	   *new_rels;
@@ -638,9 +638,9 @@ make_join_rel(PlannerInfo *root, RelOptInfo *rel1, RelOptInfo *rel2)
  * Note: this is only a problem if one side of a degenerate outer join
  * contains multiple rels, or a clauseless join is required within an IN's
  * RHS; else we will find a join path via the "last ditch" case in
- * make_rels_by_joins().  We could dispense with this test if we were willing
- * to try bushy plans in the "last ditch" case, but that seems much less
- * efficient.
+ * join_search_one_level().  We could dispense with this test if we were
+ * willing to try bushy plans in the "last ditch" case, but that seems much
+ * less efficient.
  */
 bool
 have_join_order_restriction(PlannerInfo *root,
