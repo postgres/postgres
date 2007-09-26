@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.74 2007/04/06 04:21:41 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.75 2007/09/26 23:29:10 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -525,11 +525,16 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			/*
 			 * We took care of UPDATE above, so any external value we find
 			 * still in the tuple must be someone else's we cannot reuse.
-			 * Expand it to plain (and, probably, toast it again below).
+			 * Fetch it back (without decompression, unless we are forcing
+			 * PLAIN storage).  If necessary, we'll push it out as a new
+			 * external value below.
 			 */
 			if (VARATT_IS_EXTERNAL(new_value))
 			{
-				new_value = heap_tuple_untoast_attr(new_value);
+				if (att[i]->attstorage == 'p')
+					new_value = heap_tuple_untoast_attr(new_value);
+				else
+					new_value = heap_tuple_fetch_attr(new_value);
 				toast_values[i] = PointerGetDatum(new_value);
 				toast_free[i] = true;
 				need_change = true;
@@ -590,7 +595,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			if (toast_action[i] != ' ')
 				continue;
 			if (VARATT_IS_EXTERNAL(toast_values[i]))
-				continue;
+				continue;		/* can't happen, toast_action would be 'p' */
 			if (VARATT_IS_COMPRESSED(toast_values[i]))
 				continue;
 			if (att[i]->attstorage != 'x')
@@ -654,7 +659,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			if (toast_action[i] == 'p')
 				continue;
 			if (VARATT_IS_EXTERNAL(toast_values[i]))
-				continue;
+				continue;		/* can't happen, toast_action would be 'p' */
 			if (att[i]->attstorage != 'x' && att[i]->attstorage != 'e')
 				continue;
 			if (toast_sizes[i] > biggest_size)
@@ -703,7 +708,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			if (toast_action[i] != ' ')
 				continue;
 			if (VARATT_IS_EXTERNAL(toast_values[i]))
-				continue;
+				continue;		/* can't happen, toast_action would be 'p' */
 			if (VARATT_IS_COMPRESSED(toast_values[i]))
 				continue;
 			if (att[i]->attstorage != 'm')
@@ -766,7 +771,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 			if (toast_action[i] == 'p')
 				continue;
 			if (VARATT_IS_EXTERNAL(toast_values[i]))
-				continue;
+				continue;		/* can't happen, toast_action would be 'p' */
 			if (att[i]->attstorage != 'm')
 				continue;
 			if (toast_sizes[i] > biggest_size)
@@ -1024,6 +1029,12 @@ toast_compress_datum(Datum value)
 
 	Assert(!VARATT_IS_EXTERNAL(value));
 	Assert(!VARATT_IS_COMPRESSED(value));
+
+	/*
+	 * No point in wasting a palloc cycle if value is too short for compression
+	 */
+	if (valsize < PGLZ_strategy_default->min_input_size)
+		return PointerGetDatum(NULL);
 
 	tmp = (struct varlena *) palloc(PGLZ_MAX_OUTPUT(valsize));
 	if (pglz_compress(VARDATA_ANY(value), valsize,
@@ -1438,9 +1449,17 @@ toast_fetch_datum_slice(struct varlena *attr, int32 sliceoffset, int32 length)
 	int32		chcpystrt;
 	int32		chcpyend;
 
+	Assert(VARATT_IS_EXTERNAL(attr));
+
 	/* Must copy to access aligned fields */
 	memcpy(&toast_pointer, VARDATA_SHORT(attr),
 		   sizeof(struct varatt_external));
+
+	/*
+	 * It's nonsense to fetch slices of a compressed datum -- this isn't lo_*
+	 * we can't return a compressed datum which is meaningful to toast later
+	 */
+	Assert(!VARATT_EXTERNAL_IS_COMPRESSED(toast_pointer));
 
 	attrsize = toast_pointer.va_extsize;
 	totalchunks = ((attrsize - 1) / TOAST_MAX_CHUNK_SIZE) + 1;
