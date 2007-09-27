@@ -42,7 +42,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.196 2007/09/05 18:10:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.197 2007/09/27 18:15:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1636,10 +1636,9 @@ appendCSVLiteral(StringInfo buf, const char* data)
 
 /* 
  * Constructs the error message, depending on the Errordata it gets, 
- * in CSV (comma seperated values) format. The COPY command 
+ * in CSV (comma separated values) format. The COPY command 
  * can then be used to load the messages into a table.
  */
-
 static void
 write_csvlog(ErrorData *edata)
 {
@@ -1672,8 +1671,8 @@ write_csvlog(ErrorData *edata)
 	 * The format of the log output in CSV format:
 	 * timestamp with milliseconds, username, databasename, session id,
 	 * host and port number, process id, process line number, command tag, 
-     * session start time, transaction id, error severity, sql state code, 
-     * statement or error message.
+	 * session start time, virtual transaction id, regular transaction id,
+	 * error severity, sql state code, error message.
 	 */
   
 	/* timestamp_with_milliseconds */
@@ -1737,29 +1736,25 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoChar(&buf, ',');
 
 	/* session id */
-	appendStringInfo(&buf, "%lx.%x",
-					 (long) MyStartTime, MyProcPid);
+	appendStringInfo(&buf, "%lx.%x", (long) MyStartTime, MyProcPid);
 	appendStringInfoChar(&buf, ',');
 
-	/* Remote host and port */
+	/* Remote host and port (is it safe to not quote this?) */
 	if (MyProcPort && MyProcPort->remote_host)
 	{
 		appendStringInfo(&buf, "%s", MyProcPort->remote_host);
 		if (MyProcPort->remote_port && MyProcPort->remote_port[0] != '\0')
 			appendStringInfo(&buf, ":%s", MyProcPort->remote_port);
 	}
-
 	appendStringInfoChar(&buf, ',');
 
 	/* Process id  */
 	if (MyProcPid != 0)
 		appendStringInfo(&buf, "%d", MyProcPid);
-
 	appendStringInfoChar(&buf, ',');
 
 	/* Line number */
 	appendStringInfo(&buf, "%ld", log_line_number);
-
 	appendStringInfoChar(&buf, ',');
 
 	/* PS display */
@@ -1773,16 +1768,13 @@ write_csvlog(ErrorData *edata)
 		appendCSVLiteral(&buf, msgbuf.data);
 		resetStringInfo(&msgbuf);
 	}
-
 	appendStringInfoChar(&buf, ',');
 
 	/* session start timestamp */
 	if (formatted_start_time[0] == '\0')
 	{
 		pg_time_t	stamp_time = (pg_time_t) MyStartTime;
-		pg_tz	   *tz;
-					
-		tz = log_timezone ? log_timezone : gmt_timezone;
+		pg_tz	   *tz = log_timezone ? log_timezone : gmt_timezone;
 
 		pg_strftime(formatted_start_time, FORMATTED_TS_LEN,
 					"%Y-%m-%d %H:%M:%S %Z",
@@ -1791,22 +1783,21 @@ write_csvlog(ErrorData *edata)
 	appendStringInfoString(&buf, formatted_start_time);
 	appendStringInfoChar(&buf, ',');
 
+	/* Virtual transaction id */
+	/* keep VXID format in sync with lockfuncs.c */
+	if (MyProc != NULL)
+		appendStringInfo(&buf, "%d/%u", MyProc->backendId, MyProc->lxid);
+	appendStringInfoChar(&buf, ',');
+
 	/* Transaction id */
 	appendStringInfo(&buf, "%u", GetTopTransactionIdIfAny());
-
 	appendStringInfoChar(&buf, ',');
 
 	/* Error severity */
-	if (error_severity(edata->elevel) != NULL)
-		appendStringInfo(&buf, "%s,", error_severity(edata->elevel));
-	else
-		appendStringInfoString(&buf, ",");
-  
+	appendStringInfo(&buf, "%s,", error_severity(edata->elevel));
+
 	/* SQL state code */
-	if (Log_error_verbosity >= PGERROR_VERBOSE)
-		appendStringInfo(&buf, "%s", 
-						 unpack_sql_state(edata->sqlerrcode));
-	appendStringInfoChar(&buf, ',');
+	appendStringInfo(&buf, "%s,", unpack_sql_state(edata->sqlerrcode));
  
 	/* Error message and cursor position if any */
 	get_csv_error_message(&buf, edata);
@@ -1830,7 +1821,7 @@ write_csvlog(ErrorData *edata)
 static void
 get_csv_error_message(StringInfo buf, ErrorData *edata)
 {
-	char *msg = edata->message ? edata-> message : _("missing error text");
+	char *msg = edata->message ? edata->message : _("missing error text");
 	char c;
 
 	appendStringInfoCharMacro(buf, '"');

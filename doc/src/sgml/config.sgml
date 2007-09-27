@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.148 2007/09/26 22:36:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/config.sgml,v 1.149 2007/09/27 18:15:36 tgl Exp $ -->
 
 <chapter Id="runtime-config">
   <title>Server Configuration</title>
@@ -3123,8 +3123,8 @@ SELECT * FROM parent WHERE key = 2400;
         This option emits log lines in comma-separated-value format,
         with these columns: timestamp with milliseconds, username, database
         name, session id, host:port number, process id, per-process line
-        number, command tag, session start time, transaction id, error
-        severity, SQL state code, statement/error message.
+        number, command tag, session start time, virtual transaction id,
+        regular transaction id, error severity, SQL state code, error message.
         Here is a sample table definition for storing CSV-format log output:
        </para>
 
@@ -3132,22 +3132,22 @@ SELECT * FROM parent WHERE key = 2400;
 CREATE TABLE postgres_log
 (
   log_time timestamp with time zone,
-  username text,
+  user_name text,
   database_name text,
-  sessionid text,
+  session_id text,
   connection_from text,
   process_id integer,
   process_line_num bigint,
   command_tag text,
   session_start_time timestamp with time zone,
+  virtual_transaction_id text,
   transaction_id bigint,
   error_severity text,
   sql_state_code text,
-  statement text,
-  PRIMARY KEY (sessionid, process_line_num)
+  message text,
+  PRIMARY KEY (session_id, process_line_num)
 );
 </programlisting>
-
 
        <para>
         To import a log file into this table, use the <command>COPY FROM</>
