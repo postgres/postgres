@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Sep 26 16:36:22 EDT 2007
+   Last updated: Thu Sep 27 02:14:24 EDT 2007
    
    Current maintainer: Bruce Momjian (bruce@momjian.us)
    
@@ -169,7 +169,7 @@
   1.5) Where can I get PostgreSQL?
   
    Via web browser, use http://www.postgresql.org/ftp/, and via ftp, use
-   ftp://ftp.PostgreSQL.org/pub/.
+   ftp://ftp.postgresql.org/pub/.
    
   1.6) What is the most recent release?
   
@@ -199,7 +199,7 @@
   
    Visit the PostgreSQL bug form at
    http://www.postgresql.org/support/submitbug. Also check out our ftp
-   site ftp://ftp.PostgreSQL.org/pub/ to see if there is a more recent
+   site ftp://ftp.postgresql.org/pub/ to see if there is a more recent
    Postgres version.
    
    Bugs submitted using the bug form or posted to any PostgreSQL mailing
@@ -248,16 +248,16 @@
   
    PostgreSQL includes extensive documentation, including a large manual,
    manual pages, and some test examples. See the /doc directory. You can
-   also browse the manuals online at http://www.PostgreSQL.org/docs.
+   also browse the manuals online at http://www.postgresql.org/docs.
    
    There are two PostgreSQL books available online at
    http://www.postgresql.org/docs/books/awbook.html and
    http://www.commandprompt.com/ppbook/. There are a number of PostgreSQL
    books available for purchase. One of the most popular ones is by Korry
    Douglas. A list of book reviews can be found at
-   http://techdocs.PostgreSQL.org/techdocs/bookreviews.php. There is also
+   http://techdocs.postgresql.org/techdocs/bookreviews.php. There is also
    a collection of PostgreSQL technical articles at
-   http://techdocs.PostgreSQL.org/.
+   http://techdocs.postgresql.org/.
    
    The command line client program psql has some \d commands to show
    information about types, operators, functions, aggregates, etc. - use
