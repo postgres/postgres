@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.149 2006/10/04 00:29:56 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.149.2.1 2007/09/27 17:42:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -826,9 +826,12 @@ ExpandColumnRefStar(ParseState *pstate, ColumnRef *cref,
 		 * (e.g., SELECT * FROM emp, dept)
 		 *
 		 * Since the grammar only accepts bare '*' at top level of SELECT, we
-		 * need not handle the targetlist==false case here.
+		 * need not handle the targetlist==false case here.  However, we must
+		 * test for it because the grammar currently fails to distinguish
+		 * a quoted name "*" from a real asterisk.
 		 */
-		Assert(targetlist);
+		if (!targetlist)
+			elog(ERROR, "invalid use of *");
 
 		return ExpandAllTables(pstate);
 	}
