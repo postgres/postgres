@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.16 2007/08/21 15:10:41 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.17 2007/09/27 19:53:44 tgl Exp $
 #
 use Carp;
 use Win32;
@@ -341,7 +341,6 @@ sub mkvcbuild
     $pgregress->AddFile('src\test\regress\pg_regress_main.c');
     $pgregress->AddIncludeDir('src\port');
     $pgregress->AddDefine('HOST_TUPLE="i686-pc-win32vc"');
-    $pgregress->AddDefine('FRONTEND');
     $pgregress->AddReference($libpgport);
 
     $solution->Save();
@@ -359,7 +358,6 @@ sub AddSimpleFrontend
 
     my $p = $solution->AddProject($n,'exe','bin');
     $p->AddDir('src\bin\\' . $n);
-    $p->AddDefine('FRONTEND');
     $p->AddReference($libpgport);
     if ($uselibpq)
     {

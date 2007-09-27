@@ -4,7 +4,7 @@
 #
 # Copyright (c) 2003-2007, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/tools/findoidjoins/Makefile,v 1.3 2007/01/05 22:20:04 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/findoidjoins/Makefile,v 1.4 2007/09/27 19:53:44 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/tools/findoidjoins
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-override CPPFLAGS := -DFRONTEND -I$(libpq_srcdir) $(CPPFLAGS)
+override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS)
 
 OBJS= findoidjoins.o
 

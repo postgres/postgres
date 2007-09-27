@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1998-2007, PostgreSQL Global Development Group
 #
-# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.15 2007/01/05 22:19:48 momjian Exp $
+# $PostgreSQL: pgsql/src/bin/pg_controldata/Makefile,v 1.16 2007/09/27 19:53:43 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,8 +12,6 @@ PGFILEDESC = "pg_controldata - reads the data from pg_control"
 subdir = src/bin/pg_controldata
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
-
-override CPPFLAGS += -DFRONTEND
 
 OBJS= pg_controldata.o pg_crc.o $(WIN32RES)
 
