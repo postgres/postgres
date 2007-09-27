@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.21 2007/09/23 20:32:40 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.22 2007/09/27 21:13:11 adunstan Exp $
 #
 use strict;
 use warnings;
@@ -16,6 +16,16 @@ use Exporter;
 our (@ISA,@EXPORT_OK);
 @ISA = qw(Exporter);
 @EXPORT_OK = qw(Install);
+
+sub lcopy
+{
+	my $src = shift;
+	my $target = shift;
+
+	unlink $target if -f $target;
+
+	copy($src,$target);
+}
 
 sub Install
 {
@@ -43,7 +53,7 @@ sub Install
         'doc/contrib', 'symbols', 'share/tsearch_data');
 
     CopySolutionOutput($conf, $target);
-    copy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
+    lcopy($target . '/lib/libpq.dll', $target . '/bin/libpq.dll');
 	my $sample_files = [];
 	File::Find::find({wanted => 
 						  sub { /^.*\.sample\z/s && 
@@ -113,7 +123,7 @@ sub CopyFiles
         print ".";
         $f = $basedir . $f;
         die "No file $f\n" if (!-f $f);
-        copy($f, $target . basename($f))
+        lcopy($f, $target . basename($f))
           || croak "Could not copy $f to $target". basename($f). " to $target". basename($f) . "\n";
     }
     print "\n";
@@ -131,7 +141,7 @@ sub CopySetOfFiles
         next if /ecpg.test/; # Skip temporary install in regression subdir
         my $tgt = $target . basename($_);
         print ".";
-        copy($_, $tgt) || croak "Could not copy $_: $!\n";
+        lcopy($_, $tgt) || croak "Could not copy $_: $!\n";
     }
     print "\n";
 }
@@ -173,8 +183,8 @@ sub CopySolutionOutput
             # Static lib, such as libpgport, only used internally during build, don't install
             next;
         }
-        copy("$conf\\$pf\\$pf.$ext","$target\\$dir\\$pf.$ext") || croak "Could not copy $pf.$ext\n";
-        copy("$conf\\$pf\\$pf.pdb","$target\\symbols\\$pf.pdb") || croak "Could not copy $pf.pdb\n";
+        lcopy("$conf\\$pf\\$pf.$ext","$target\\$dir\\$pf.$ext") || croak "Could not copy $pf.$ext\n";
+        lcopy("$conf\\$pf\\$pf.pdb","$target\\symbols\\$pf.pdb") || croak "Could not copy $pf.pdb\n";
         print ".";
     }
     print "\n";
@@ -297,7 +307,7 @@ sub CopyContribFiles
               if ($d eq 'spi');
             foreach my $f (split /\s+/,$flist)
             {
-                copy('contrib/' . $d . '/' . $f,$target . '/share/contrib/' . basename($f))
+                lcopy('contrib/' . $d . '/' . $f,$target . '/share/contrib/' . basename($f))
                   || croak("Could not copy file $f in contrib $d");
                 print '.';
             }
@@ -315,7 +325,7 @@ sub CopyContribFiles
               if ($d eq 'spi');
             foreach my $f (split /\s+/,$flist)
             {
-                copy('contrib/' . $d . '/' . $f, $target . '/doc/contrib/' . $f)
+                lcopy('contrib/' . $d . '/' . $f, $target . '/doc/contrib/' . $f)
                   || croak("Could not copy file $f in contrib $d");
                 print '.';
             }
@@ -359,7 +369,7 @@ sub CopyIncludeFiles
         $target . '/include/',
         'src/include/', 'postgres_ext.h', 'pg_config.h', 'pg_config_os.h', 'pg_config_manual.h'
     );
-    copy('src/include/libpq/libpq-fs.h', $target . '/include/libpq/')
+    lcopy('src/include/libpq/libpq-fs.h', $target . '/include/libpq/')
       || croak 'Could not copy libpq-fs.h';
 
     CopyFiles('Libpq headers', $target . '/include/', 'src/interfaces/libpq/', 'libpq-fe.h');
@@ -374,7 +384,7 @@ sub CopyIncludeFiles
         $target . '/include/internal/',
         'src/include/', 'c.h', 'port.h', 'postgres_fe.h'
     );
-    copy('src/include/libpq/pqcomm.h', $target . '/include/internal/libpq/')
+    lcopy('src/include/libpq/pqcomm.h', $target . '/include/internal/libpq/')
       || croak 'Could not copy pqcomm.h';
 
     CopyFiles(
