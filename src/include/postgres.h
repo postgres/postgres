@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.82 2007/07/25 12:22:53 mha Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.83 2007/09/27 21:01:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,7 +237,7 @@ typedef struct
  * code that specifically wants to work with still-toasted Datums.
  *
  * WARNING: It is only safe to use VARDATA_ANY() -- typically with
- * PG_DETOAST_DATUM_UNPACKED() -- if you really don't care about the alignment.
+ * PG_DETOAST_DATUM_PACKED() -- if you really don't care about the alignment.
  * Either because you're working with something like text where the alignment
  * doesn't matter or because you're not going to access its constituent parts
  * and just use things like memcpy on it anyways.
