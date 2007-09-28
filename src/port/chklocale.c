@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.1 2007/09/28 22:25:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.2 2007/09/28 23:36:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,6 +158,7 @@ pg_get_encoding_from_locale(const char *ctype)
 	char	   *sys;
 	int			i;
 
+	/* Get the CODESET property, and also LC_CTYPE if not passed in */
 	if (ctype)
 	{
 		char	   *save;
@@ -197,12 +198,14 @@ pg_get_encoding_from_locale(const char *ctype)
 	if (!sys)
 		return PG_SQL_ASCII;		/* out of memory; unlikely */
 
+	/* If locale is C or POSIX, we can allow all encodings */
 	if (pg_strcasecmp(ctype, "C") == 0 || pg_strcasecmp(ctype, "POSIX") == 0)
 	{
 		free(sys);
 		return PG_SQL_ASCII;
 	}
 
+	/* Check the table */
 	for (i = 0; encoding_match_list[i].system_enc_name; i++)
 	{
 		if (pg_strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
@@ -211,6 +214,20 @@ pg_get_encoding_from_locale(const char *ctype)
 			return encoding_match_list[i].pg_enc_code;
 		}
 	}
+
+	/* Special-case kluges for particular platforms go here */
+
+#ifdef __darwin__
+	/*
+	 * Current OS X has many locales that report an empty string for CODESET,
+	 * but they all seem to actually use UTF-8.
+	 */
+	if (strlen(sys) == 0)
+	{
+		free(sys);
+		return PG_UTF8;
+	}
+#endif
 
 	/*
 	 * We print a warning if we got a CODESET string but couldn't recognize
