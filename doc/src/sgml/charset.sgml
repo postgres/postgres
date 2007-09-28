@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.83 2007/04/15 10:56:25 ishii Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/charset.sgml,v 2.84 2007/09/28 22:25:49 tgl Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -249,7 +249,7 @@ initdb --locale=sv_SE
    <title>Problems</>
 
    <para>
-    If locale support doesn't work in spite of the explanation above,
+    If locale support doesn't work according to the explanation above,
     check that the locale support in your operating system is
     correctly configured.  To check what locales are installed on your
     system, you can use the command <literal>locale -a</literal> if
@@ -301,7 +301,8 @@ initdb --locale=sv_SE
 
   <para>
    The character set support in <productname>PostgreSQL</productname>
-   allows you to store text in a variety of character sets, including
+   allows you to store text in a variety of character sets (also called
+   encodings), including
    single-byte character sets such as the ISO 8859 series and
    multiple-byte character sets such as <acronym>EUC</> (Extended Unix
    Code), UTF-8, and Mule internal code.  All supported character sets
@@ -312,6 +313,20 @@ initdb --locale=sv_SE
    cluster using <command>initdb</>.  It can be overridden when you
    create a database, so you can have multiple
    databases each with a different character set.
+  </para>
+
+  <para>
+   An important restriction, however, is that each database character set
+   must be compatible with the server's <envar>LC_CTYPE</> setting.
+   When <envar>LC_CTYPE</> is <literal>C</> or <literal>POSIX</>, any
+   character set is allowed, but for other settings of <envar>LC_CTYPE</>
+   there is only one character set that will work correctly.
+   Since the <envar>LC_CTYPE</> setting is frozen by <command>initdb</>, the
+   apparent flexibility to use different encodings in different databases
+   of a cluster is more theoretical than real, except when you select
+   <literal>C</> or <literal>POSIX</> locale (thus disabling any real locale
+   awareness).  It is likely that these mechanisms will be revisited in future
+   versions of <productname>PostgreSQL</productname>.
   </para>
 
    <sect2 id="multibyte-charset-supported">
@@ -716,7 +731,8 @@ initdb -E EUC_JP
     </para>
 
     <para>
-     You can create a database with a different character set:
+     If you have selected <literal>C</> or <literal>POSIX</> locale,
+     you can create a database with a different character set:
 
 <screen>
 createdb -E EUC_KR korean
@@ -731,7 +747,7 @@ CREATE DATABASE korean WITH ENCODING 'EUC_KR';
 </programlisting>
 
      The encoding for a database is stored in the system catalog
-     <literal>pg_database</literal>.  You can see that by using the
+     <literal>pg_database</literal>.  You can see it by using the
      <option>-l</option> option or the <command>\l</command> command
      of <command>psql</command>.
 
@@ -756,26 +772,23 @@ $ <userinput>psql -l</userinput>
 
     <important>
      <para>
-      Although you can specify any encoding you want for a database, it is
-      unwise to choose an encoding that is not what is expected by the locale
-      you have selected.  The <literal>LC_COLLATE</literal> and
-      <literal>LC_CTYPE</literal> settings imply a particular encoding,
-      and locale-dependent operations (such as sorting) are likely to
-      misinterpret data that is in an incompatible encoding.
+      On most modern operating systems, <productname>PostgreSQL</productname>
+      can determine which character set is implied by an <envar>LC_CTYPE</>
+      setting, and it will enforce that only the correct database encoding is
+      used.  On older systems it is your responsibility to ensure that you use
+      the encoding expected by the locale you have selected.  A mistake in
+      this area is likely to lead to strange misbehavior of locale-dependent
+      operations such as sorting.
      </para>
 
      <para>
-      Since these locale settings are frozen by <command>initdb</>, the
-      apparent flexibility to use different encodings in different databases
-      of a cluster is more theoretical than real.  It is likely that these
-      mechanisms will be revisited in future versions of
-      <productname>PostgreSQL</productname>.
-     </para>
-
-     <para>
-      One way to use multiple encodings safely is to set the locale to
-      <literal>C</> or <literal>POSIX</> during <command>initdb</>, thus
-      disabling any real locale awareness.
+      <productname>PostgreSQL</productname> will allow superusers to create
+      databases with <literal>SQL_ASCII</> encoding even when
+      <envar>LC_CTYPE</> is not <literal>C</> or <literal>POSIX</>.  As noted
+      above, <literal>SQL_ASCII</> does not enforce that the data stored in
+      the database has any particular encoding, and so this choice poses risks
+      of locale-dependent misbehavior.  Using this combination of settings is
+      deprecated and may someday be forbidden altogether.
      </para>
     </important>
    </sect2>

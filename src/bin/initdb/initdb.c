@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.142 2007/09/28 15:25:44 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.143 2007/09/28 22:25:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,9 +54,6 @@
 #include <unistd.h>
 #include <locale.h>
 #include <signal.h>
-#ifdef HAVE_LANGINFO_H
-#include <langinfo.h>
-#endif
 #include <time.h>
 
 #include "libpq/pqsignal.h"
@@ -719,197 +716,6 @@ get_encoding_id(char *encoding_name)
 			progname, encoding_name ? encoding_name : "(null)");
 	exit(1);
 }
-
-#if defined(HAVE_LANGINFO_H) && defined(CODESET)
-/*
- * Checks whether the encoding selected for PostgreSQL and the
- * encoding used by the system locale match.
- */
-
-struct encoding_match
-{
-	enum pg_enc pg_enc_code;
-	const char *system_enc_name;
-};
-
-static const struct encoding_match encoding_match_list[] = {
-	{PG_EUC_JP, "EUC-JP"},
-	{PG_EUC_JP, "eucJP"},
-	{PG_EUC_JP, "IBM-eucJP"},
-	{PG_EUC_JP, "sdeckanji"},
-
-	{PG_EUC_CN, "EUC-CN"},
-	{PG_EUC_CN, "eucCN"},
-	{PG_EUC_CN, "IBM-eucCN"},
-	{PG_EUC_CN, "GB2312"},
-	{PG_EUC_CN, "dechanzi"},
-
-	{PG_EUC_KR, "EUC-KR"},
-	{PG_EUC_KR, "eucKR"},
-	{PG_EUC_KR, "IBM-eucKR"},
-	{PG_EUC_KR, "deckorean"},
-	{PG_EUC_KR, "5601"},
-
-	{PG_EUC_TW, "EUC-TW"},
-	{PG_EUC_TW, "eucTW"},
-	{PG_EUC_TW, "IBM-eucTW"},
-	{PG_EUC_TW, "cns11643"},
-
-#ifdef NOT_VERIFIED
-	{PG_JOHAB, "???"},
-#endif
-
-	{PG_UTF8, "UTF-8"},
-	{PG_UTF8, "utf8"},
-
-	{PG_LATIN1, "ISO-8859-1"},
-	{PG_LATIN1, "ISO8859-1"},
-	{PG_LATIN1, "iso88591"},
-
-	{PG_LATIN2, "ISO-8859-2"},
-	{PG_LATIN2, "ISO8859-2"},
-	{PG_LATIN2, "iso88592"},
-
-	{PG_LATIN3, "ISO-8859-3"},
-	{PG_LATIN3, "ISO8859-3"},
-	{PG_LATIN3, "iso88593"},
-
-	{PG_LATIN4, "ISO-8859-4"},
-	{PG_LATIN4, "ISO8859-4"},
-	{PG_LATIN4, "iso88594"},
-
-	{PG_LATIN5, "ISO-8859-9"},
-	{PG_LATIN5, "ISO8859-9"},
-	{PG_LATIN5, "iso88599"},
-
-	{PG_LATIN6, "ISO-8859-10"},
-	{PG_LATIN6, "ISO8859-10"},
-	{PG_LATIN6, "iso885910"},
-
-	{PG_LATIN7, "ISO-8859-13"},
-	{PG_LATIN7, "ISO8859-13"},
-	{PG_LATIN7, "iso885913"},
-
-	{PG_LATIN8, "ISO-8859-14"},
-	{PG_LATIN8, "ISO8859-14"},
-	{PG_LATIN8, "iso885914"},
-
-	{PG_LATIN9, "ISO-8859-15"},
-	{PG_LATIN9, "ISO8859-15"},
-	{PG_LATIN9, "iso885915"},
-
-	{PG_LATIN10, "ISO-8859-16"},
-	{PG_LATIN10, "ISO8859-16"},
-	{PG_LATIN10, "iso885916"},
-
-	{PG_WIN1252, "CP1252"},
-	{PG_WIN1253, "CP1253"},
-	{PG_WIN1254, "CP1254"},
-	{PG_WIN1255, "CP1255"},
-	{PG_WIN1256, "CP1256"},
-	{PG_WIN1257, "CP1257"},
-	{PG_WIN1258, "CP1258"},
-#ifdef NOT_VERIFIED
-	{PG_WIN874, "???"},
-#endif
-	{PG_KOI8R, "KOI8-R"},
-	{PG_WIN1251, "CP1251"},
-	{PG_WIN866, "CP866"},
-
-	{PG_ISO_8859_5, "ISO-8859-5"},
-	{PG_ISO_8859_5, "ISO8859-5"},
-	{PG_ISO_8859_5, "iso88595"},
-
-	{PG_ISO_8859_6, "ISO-8859-6"},
-	{PG_ISO_8859_6, "ISO8859-6"},
-	{PG_ISO_8859_6, "iso88596"},
-
-	{PG_ISO_8859_7, "ISO-8859-7"},
-	{PG_ISO_8859_7, "ISO8859-7"},
-	{PG_ISO_8859_7, "iso88597"},
-
-	{PG_ISO_8859_8, "ISO-8859-8"},
-	{PG_ISO_8859_8, "ISO8859-8"},
-	{PG_ISO_8859_8, "iso88598"},
-
-	{PG_SQL_ASCII, NULL}		/* end marker */
-};
-
-static char *
-get_encoding_from_locale(const char *ctype)
-{
-	char	   *save;
-	char	   *sys;
-
-	save = setlocale(LC_CTYPE, NULL);
-	if (!save)
-		return NULL;
-	save = xstrdup(save);
-
-	setlocale(LC_CTYPE, ctype);
-	sys = nl_langinfo(CODESET);
-	sys = xstrdup(sys);
-
-	setlocale(LC_CTYPE, save);
-	free(save);
-
-	return sys;
-}
-
-static void
-check_encodings_match(int pg_enc, const char *ctype)
-{
-	char	   *sys;
-	int			i;
-
-	sys = get_encoding_from_locale(ctype);
-
-	for (i = 0; encoding_match_list[i].system_enc_name; i++)
-	{
-		if (pg_enc == encoding_match_list[i].pg_enc_code
-		  && pg_strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
-		{
-			free(sys);
-			return;
-		}
-	}
-
-	fprintf(stderr,
-			_("%s: warning: encoding mismatch\n"), progname);
-	fprintf(stderr,
-	  _("The encoding you selected (%s) and the encoding that the selected\n"
-		"locale uses (%s) are not known to match.  This might lead to\n"
-	"misbehavior in various character string processing functions.  To fix\n"
-		"this situation, rerun %s and either do not specify an encoding\n"
-		"explicitly, or choose a matching combination.\n"),
-			pg_encoding_to_char(pg_enc), sys, progname);
-
-	free(sys);
-	return;
-}
-
-static int
-find_matching_encoding(const char *ctype)
-{
-	char	   *sys;
-	int			i;
-
-	sys = get_encoding_from_locale(ctype);
-
-	for (i = 0; encoding_match_list[i].system_enc_name; i++)
-	{
-		if (pg_strcasecmp(sys, encoding_match_list[i].system_enc_name) == 0)
-		{
-			free(sys);
-			return encoding_match_list[i].pg_enc_code;
-		}
-	}
-
-	free(sys);
-	return -1;
-}
-#endif   /* HAVE_LANGINFO_H && CODESET */
-
 
 /*
  * Support for determining the best default text search configuration.
@@ -2909,10 +2715,6 @@ main(int argc, char *argv[])
 	if (strlen(username) == 0)
 		username = effective_user;
 
-
-	if (strlen(encoding))
-		encodingid = get_encoding_id(encoding);
-
 	set_input(&bki_file, "postgres.bki");
 	set_input(&desc_file, "postgres.description");
 	set_input(&shdesc_file, "postgres.shdescription");
@@ -2988,32 +2790,58 @@ main(int argc, char *argv[])
 			   lc_time);
 	}
 
-#if defined(HAVE_LANGINFO_H) && defined(CODESET)
-	if (strcmp(lc_ctype, "C") != 0 && strcmp(lc_ctype, "POSIX") != 0)
+	if (strlen(encoding) == 0)
 	{
-		if (strlen(encoding) == 0)
-		{
-			int			tmp;
+		int		ctype_enc;
 
-			tmp = find_matching_encoding(lc_ctype);
-			if (tmp == -1)
-			{
-				fprintf(stderr, _("%s: could not find suitable encoding for locale \"%s\"\n"), progname, lc_ctype);
-				fprintf(stderr, _("Rerun %s with the -E option.\n"), progname);
-				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
-				exit(1);
-			}
-			else
-			{
-				encodingid = encodingid_to_string(tmp);
-				printf(_("The default database encoding has accordingly been set to %s.\n"),
-					   pg_encoding_to_char(tmp));
-			}
+		ctype_enc = pg_get_encoding_from_locale(lc_ctype);
+
+		if (ctype_enc == PG_SQL_ASCII &&
+			!(pg_strcasecmp(lc_ctype, "C") == 0 ||
+			  pg_strcasecmp(lc_ctype, "POSIX") == 0))
+		{
+			fprintf(stderr, _("%s: could not find suitable encoding for locale \"%s\"\n"),
+					progname, lc_ctype);
+			fprintf(stderr, _("Rerun %s with the -E option.\n"), progname);
+			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+					progname);
+			exit(1);
 		}
 		else
-			check_encodings_match(atoi(encodingid), lc_ctype);
+		{
+			encodingid = encodingid_to_string(ctype_enc);
+			printf(_("The default database encoding has accordingly been set to %s.\n"),
+				   pg_encoding_to_char(ctype_enc));
+		}
 	}
-#endif   /* HAVE_LANGINFO_H && CODESET */
+	else
+	{
+		int		user_enc;
+		int		ctype_enc;
+
+		encodingid = get_encoding_id(encoding);
+		user_enc = atoi(encodingid);
+
+		ctype_enc = pg_get_encoding_from_locale(lc_ctype);
+
+		/* We allow selection of SQL_ASCII --- see notes in createdb() */
+		if (!(ctype_enc == user_enc ||
+			  ctype_enc == PG_SQL_ASCII ||
+			  user_enc == PG_SQL_ASCII))
+		{
+			fprintf(stderr, _("%s: encoding mismatch\n"), progname);
+			fprintf(stderr,
+			_("The encoding you selected (%s) and the encoding that the\n"
+			  "selected locale uses (%s) do not match.  This would lead to\n"
+			  "misbehavior in various character string processing functions.\n"
+			  "Rerun %s and either do not specify an encoding explicitly,\n"
+			  "or choose a matching combination.\n"),
+					pg_encoding_to_char(user_enc),
+					pg_encoding_to_char(ctype_enc),
+					progname);
+			exit(1);
+		}
+	}
 
 	if (strlen(default_text_search_config) == 0)
 	{

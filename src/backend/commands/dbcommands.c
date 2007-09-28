@@ -13,13 +13,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.198 2007/09/03 18:46:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.199 2007/09/28 22:25:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <fcntl.h>
+#include <locale.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -96,6 +97,7 @@ createdb(const CreatedbStmt *stmt)
 	const char *dbtemplate = NULL;
 	int			encoding = -1;
 	int			dbconnlimit = -1;
+	int			ctype_encoding;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -253,6 +255,32 @@ createdb(const CreatedbStmt *stmt)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("invalid server encoding %d", encoding)));
+
+	/*
+	 * Check whether encoding matches server locale settings.  We allow
+	 * mismatch in two cases:
+	 *
+	 * 1. ctype_encoding = SQL_ASCII, which means either that the locale
+	 * is C/POSIX which works with any encoding, or that we couldn't determine
+	 * the locale's encoding and have to trust the user to get it right.
+	 *
+	 * 2. selected encoding is SQL_ASCII, but only if you're a superuser.
+	 * This is risky but we have historically allowed it --- notably, the
+	 * regression tests require it.
+	 *
+	 * Note: if you change this policy, fix initdb to match.
+	 */
+	ctype_encoding = pg_get_encoding_from_locale(NULL);
+
+	if (!(ctype_encoding == encoding ||
+		  ctype_encoding == PG_SQL_ASCII ||
+		  (encoding == PG_SQL_ASCII && superuser())))
+		ereport(ERROR,
+				(errmsg("encoding %s does not match server's locale %s",
+						pg_encoding_to_char(encoding),
+						setlocale(LC_CTYPE, NULL)),
+				 errdetail("The server's LC_CTYPE setting requires encoding %s.",
+						   pg_encoding_to_char(ctype_encoding))));
 
 	/* Resolve default tablespace for new database */
 	if (dtablespacename && dtablespacename->arg)

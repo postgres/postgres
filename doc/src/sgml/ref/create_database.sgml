@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.47 2007/01/31 23:26:03 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_database.sgml,v 1.48 2007/09/28 22:25:49 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -107,7 +107,8 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
         to use the default encoding (namely, the encoding of the
         template database). The character sets supported by the
         <productname>PostgreSQL</productname> server are described in
-        <xref linkend="multibyte-charset-supported">.
+        <xref linkend="multibyte-charset-supported">. See below for
+        additional restrictions.
        </para>
       </listitem>
      </varlistentry>
@@ -176,6 +177,21 @@ CREATE DATABASE <replaceable class="PARAMETER">name</replaceable>
    otherwise, new connections to the template database are locked out
    until <command>CREATE DATABASE</> completes.
    See <xref linkend="manage-ag-templatedbs"> for more information.
+  </para>
+
+  <para>
+   Any character set encoding specified for the new database must be
+   compatible with the server's <envar>LC_CTYPE</> locale setting.
+   If <envar>LC_CTYPE</> is <literal>C</> (or equivalently
+   <literal>POSIX</>), then all encodings are allowed, but for other
+   locale settings there is only one encoding that will work properly,
+   and so the apparent freedom to specify an encoding is illusory if
+   you didn't initialize the database cluster in <literal>C</> locale.
+   <command>CREATE DATABASE</> will allow superusers to specify
+   <literal>SQL_ASCII</> encoding regardless of the locale setting,
+   but this choice is deprecated and may result in misbehavior of
+   character-string functions if data that is not encoding-compatible
+   with the locale is stored in the database.
   </para>
 
   <para>

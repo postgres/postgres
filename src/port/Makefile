@@ -14,8 +14,12 @@
 #	libpgport_srv.a - contains object files without FRONTEND defined,
 #		for use only by the backend binaries
 #
+# LIBOBJS is set by configure (via Makefile.global) to be the list of
+# object files that are conditionally needed depending on platform.
+# OBJS adds additional object files that are always compiled.
+#
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/port/Makefile,v 1.34 2007/02/09 15:56:00 petere Exp $
+#    $PostgreSQL: pgsql/src/port/Makefile,v 1.35 2007/09/28 22:25:49 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -26,8 +30,10 @@ include $(top_builddir)/src/Makefile.global
 override CPPFLAGS := -I$(top_builddir)/src/port -DFRONTEND $(CPPFLAGS)
 LIBS += $(PTHREAD_LIBS)
 
-# Replace all object files so they use FRONTEND define
-LIBOBJS_SRV = $(LIBOBJS:%.o=%_srv.o)
+OBJS = $(LIBOBJS) chklocale.o copydir.o dirmod.o exec.o noblock.o path.o pipe.o pgsleep.o pgstrcasecmp.o qsort.o qsort_arg.o sprompt.o thread.o
+
+# foo_srv.o and foo.o are both built from foo.c, but only foo.o has -DFRONTEND
+OBJS_SRV = $(OBJS:%.o=%_srv.o)
 
 all: libpgport.a libpgport_srv.a
 
@@ -41,32 +47,29 @@ installdirs:
 uninstall:
 	rm -f '$(DESTDIR)$(libdir)/libpgport.a'
 
-libpgport.a: $(LIBOBJS)
+libpgport.a: $(OBJS)
 	$(AR) $(AROPT) $@ $^
 
+# thread.o needs PTHREAD_CFLAGS (but thread_srv.o does not)
 thread.o: thread.c
 	$(CC) $(CFLAGS) $(CPPFLAGS) $(PTHREAD_CFLAGS) -c $<
-
-path.o: path.c pg_config_paths.h
-
-path_srv.o: path.c pg_config_paths.h
 
 #
 # Server versions of object files
 #
 
-libpgport_srv.a: $(LIBOBJS_SRV)
+libpgport_srv.a: $(OBJS_SRV)
 	$(AR) $(AROPT) $@ $^
 
 %_srv.o: %.c
 	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
 
-# No thread flags for server version
-thread_srv.o: thread.c
-	$(CC) $(CFLAGS) $(subst -DFRONTEND,, $(CPPFLAGS)) -c $< -o $@
-
 # Dependency is to ensure that path changes propagate
-#
+
+path.o: path.c pg_config_paths.h
+
+path_srv.o: path.c pg_config_paths.h
+
 # We create a separate file rather than put these in pg_config.h
 # because many of these values come from makefiles and are not
 # available to configure.
@@ -84,4 +87,4 @@ pg_config_paths.h: $(top_builddir)/src/Makefile.global
 	echo "#define MANDIR \"$(mandir)\"" >>$@
 
 clean distclean maintainer-clean:
-	rm -f libpgport.a libpgport_srv.a $(LIBOBJS) $(LIBOBJS_SRV) pg_config_paths.h
+	rm -f libpgport.a libpgport_srv.a $(OBJS) $(OBJS_SRV) pg_config_paths.h

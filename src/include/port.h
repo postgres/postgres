@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.112 2007/07/12 23:28:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.113 2007/09/28 22:25:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,5 +390,8 @@ typedef int (*qsort_arg_comparator) (const void *a, const void *b, void *arg);
 
 extern void qsort_arg(void *base, size_t nel, size_t elsize,
 		  qsort_arg_comparator cmp, void *arg);
+
+/* port/chklocale.c */
+extern int	pg_get_encoding_from_locale(const char *ctype);
 
 #endif   /* PG_PORT_H */
