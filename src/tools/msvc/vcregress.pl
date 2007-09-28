@@ -1,7 +1,7 @@
 
 # -*-perl-*- hey - emacs - this is a perl file
 
-# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.3 2007/09/24 21:42:34 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/vcregress.pl,v 1.4 2007/09/28 00:14:58 adunstan Exp $
 
 use strict;
 
@@ -188,6 +188,7 @@ sub contribcheck
     my $mstat = 0;
     foreach my $module (glob("*"))
     {
+		next if $module eq 'tsearch2';
         next unless -d "$module/sql" && 
 			-d "$module/expected" && 
 			(-f "$module/Makefile" || -f "$module/GNUmakefile");
