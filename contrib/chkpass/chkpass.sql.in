@@ -4,7 +4,7 @@
 --  darcy@druid.net
 --  http://www.druid.net/darcy/
 -- 
---  $PostgreSQL: pgsql/contrib/chkpass/chkpass.sql.in,v 1.6 2005/01/29 22:35:01 tgl Exp $
+--  $PostgreSQL: pgsql/contrib/chkpass/chkpass.sql.in,v 1.7 2007/09/29 23:32:42 tgl Exp $
 --
 --  best viewed with tabs set to 4
 --
@@ -53,17 +53,13 @@ CREATE FUNCTION ne(chkpass, text)
 	LANGUAGE C STRICT;
 
 --
---	Now the operators.  Note how some of the parameters to some
---	of the 'create operator' commands are commented out.  This
---	is because they reference as yet undefined operators, and
---	will be implicitly defined when those are, further down.
+--	Now the operators.
 --
 
 CREATE OPERATOR = (
 	leftarg = chkpass,
 	rightarg = text,
-	commutator = =,
---	negator = <>,
+	negator = <>,
 	procedure = eq
 );
 

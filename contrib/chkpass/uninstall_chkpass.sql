@@ -4,8 +4,6 @@ DROP OPERATOR <>(chkpass, text);
 
 DROP OPERATOR =(chkpass, text);
 
-DROP OPERATOR =(text, chkpass);
-
 DROP FUNCTION ne(chkpass, text);
 
 DROP FUNCTION eq(chkpass, text);
