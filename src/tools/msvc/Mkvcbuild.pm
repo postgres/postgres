@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.17 2007/09/27 19:53:44 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.18 2007/09/29 07:15:33 mha Exp $
 #
 use Carp;
 use Win32;
@@ -43,7 +43,7 @@ sub mkvcbuild
     $solution = new Solution($config);
 
     our @pgportfiles = qw(
-      crypt.c fseeko.c getrusage.c inet_aton.c random.c srandom.c
+      chklocale.c crypt.c fseeko.c getrusage.c inet_aton.c random.c srandom.c
       unsetenv.c getaddrinfo.c gettimeofday.c kill.c open.c rand.c
       snprintf.c strlcat.c strlcpy.c copydir.c dirmod.c exec.c noblock.c path.c pipe.c
       pgsleep.c pgstrcasecmp.c qsort.c qsort_arg.c sprompt.c thread.c
