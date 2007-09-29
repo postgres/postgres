@@ -99,18 +99,19 @@ previously taken to shield users from such a change, for example by
 such structures only ever being allocated/instantiated by a library
 function which would give the new field a suitable default value.
 
-Adding a new function would NOT force an increase in the major version
-number. When the major version is increased all applications which
-link to the library MUST be recompiled - this is not desirable. When
+Adding a new function should NOT force an increase in the major version
+number. (Packagers will see the standard minor number update and install
+the new library.)  When the major version is increased all applications
+which link to the library MUST be recompiled - this is not desirable. When
 the major version is updated the minor version gets reset.
 
 Minor Version
 =============
 
-The minor version number should be updated whenever the functionality
-of the library has changed, typically and change in source code
-between releases would mean an increase in the minor version number so
-long as it does not require a major version increase.
+The minor version number should be updated whenever the functionality of
+the library has changed, typically a change in source code between releases
+would mean an increase in the minor version number so long as it does not
+require a major version increase.
 
 Minimizing Changes
 ==================
