@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.30 2006/10/04 00:29:46 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/openssl.c,v 1.31 2007/09/29 02:18:15 tgl Exp $
  */
 
 #include "postgres.h"
@@ -70,32 +70,42 @@
 #define AES_DECRYPT 0
 #define AES_KEY		rijndael_ctx
 
-#define AES_set_encrypt_key(key, kbits, ctx) \
-		aes_set_key((ctx), (key), (kbits), 1)
+static int
+AES_set_encrypt_key(const uint8 *key, int kbits, AES_KEY *ctx)
+{
+	aes_set_key(ctx, key, kbits, 1);
+	return 0;
+}
 
-#define AES_set_decrypt_key(key, kbits, ctx) \
-		aes_set_key((ctx), (key), (kbits), 0)
+static int
+AES_set_decrypt_key(const uint8 *key, int kbits, AES_KEY *ctx)
+{
+	aes_set_key(ctx, key, kbits, 0);
+	return 0;
+}
 
-#define AES_ecb_encrypt(src, dst, ctx, enc) \
-	do { \
-		memcpy((dst), (src), 16); \
-		if (enc) \
-			aes_ecb_encrypt((ctx), (dst), 16); \
-		else \
-			aes_ecb_decrypt((ctx), (dst), 16); \
-	} while (0)
+static void
+AES_ecb_encrypt(const uint8 *src, uint8 *dst, AES_KEY *ctx, int enc)
+{
+	memcpy(dst, src, 16);
+	if (enc)
+		aes_ecb_encrypt(ctx, dst, 16);
+	else
+		aes_ecb_decrypt(ctx, dst, 16);
+}
 
-#define AES_cbc_encrypt(src, dst, len, ctx, iv, enc) \
-	do { \
-		memcpy((dst), (src), (len)); \
-		if (enc) { \
-			aes_cbc_encrypt((ctx), (iv), (dst), (len)); \
-			memcpy((iv), (dst) + (len) - 16, 16); \
-		} else { \
-			aes_cbc_decrypt((ctx), (iv), (dst), (len)); \
-			memcpy(iv, (src) + (len) - 16, 16); \
-		} \
-	} while (0)
+static void
+AES_cbc_encrypt(const uint8 *src, uint8 *dst, int len, AES_KEY *ctx, uint8 *iv, int enc)
+{
+	memcpy(dst, src, len);
+	if (enc) {
+		aes_cbc_encrypt(ctx, iv, dst, len);
+		memcpy(iv, dst + len - 16, 16);
+	} else {
+		aes_cbc_decrypt(ctx, iv, dst, len);
+		memcpy(iv, src + len - 16, 16);
+	}
+}
 
 /*
  * Emulate DES_* API
@@ -375,11 +385,56 @@ gen_ossl_free(PX_Cipher * c)
 
 /* Blowfish */
 
+/*
+ * Check if strong crypto is supported. Some openssl installations
+ * support only short keys and unfortunately BF_set_key does not return any
+ * error value. This function tests if is possible to use strong key.
+ */
+static int
+bf_check_supported_key_len(void)
+{
+	static const uint8 key[56] = {
+		0xf0,0xe1,0xd2,0xc3,0xb4,0xa5,0x96,0x87,0x78,0x69,
+		0x5a,0x4b,0x3c,0x2d,0x1e,0x0f,0x00,0x11,0x22,0x33,
+		0x44,0x55,0x66,0x77,0x04,0x68,0x91,0x04,0xc2,0xfd,
+		0x3b,0x2f,0x58,0x40,0x23,0x64,0x1a,0xba,0x61,0x76,
+		0x1f,0x1f,0x1f,0x1f,0x0e,0x0e,0x0e,0x0e,0xff,0xff,
+		0xff,0xff,0xff,0xff,0xff,0xff
+	};
+
+	static const uint8 data[8] = {0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10};
+	static const uint8 res[8] = {0xc0,0x45,0x04,0x01,0x2e,0x4e,0x1f,0x53};
+	static uint8 out[8];
+
+	BF_KEY bf_key;
+
+	/* encrypt with 448bits key and verify output */
+	BF_set_key(&bf_key, 56, key);
+	BF_ecb_encrypt(data, out, &bf_key, BF_ENCRYPT);
+
+	if (memcmp(out, res, 8) != 0)	
+		return 0;	/* Output does not match -> strong cipher is not supported */ 
+	return 1;
+}
+
 static int
 bf_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 {
 	ossldata   *od = c->ptr;
+	static int bf_is_strong = -1;
 
+	/*
+	 * Test if key len is supported. BF_set_key silently cut large keys and it could be
+	 * be a problem when user transfer crypted data from one server to another.
+	 */
+	
+	if( bf_is_strong == -1)
+		bf_is_strong = bf_check_supported_key_len();
+
+	if( !bf_is_strong && klen>16 )
+		return PXE_KEY_TOO_BIG; 
+
+	/* Key len is supported. We can use it. */
 	BF_set_key(&od->u.bf.key, klen, key);
 	if (iv)
 		memcpy(od->iv, iv, BF_BLOCK);
@@ -692,14 +747,26 @@ ossl_aes_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 	return 0;
 }
 
-static void
+static int
 ossl_aes_key_init(ossldata * od, int type)
 {
+	int err;
+	/*
+	 * Strong key support could be missing on some openssl installations.
+	 * We must check return value from set key function.
+	 */ 
 	if (type == AES_ENCRYPT)
-		AES_set_encrypt_key(od->key, od->klen * 8, &od->u.aes_key);
+	    err = AES_set_encrypt_key(od->key, od->klen * 8, &od->u.aes_key);
 	else
-		AES_set_decrypt_key(od->key, od->klen * 8, &od->u.aes_key);
-	od->init = 1;
+		err = AES_set_decrypt_key(od->key, od->klen * 8, &od->u.aes_key);
+
+	if (err == 0)
+	{
+		od->init = 1;
+		return 0;
+	}
+	od->init = 0;
+	return PXE_KEY_TOO_BIG;
 }
 
 static int
@@ -709,9 +776,11 @@ ossl_aes_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 	unsigned	bs = gen_ossl_block_size(c);
 	ossldata   *od = c->ptr;
 	const uint8 *end = data + dlen - bs;
+	int err;
 
 	if (!od->init)
-		ossl_aes_key_init(od, AES_ENCRYPT);
+		if ((err = ossl_aes_key_init(od, AES_ENCRYPT)) != 0)
+			return err;
 
 	for (; data <= end; data += bs, res += bs)
 		AES_ecb_encrypt(data, res, &od->u.aes_key, AES_ENCRYPT);
@@ -725,9 +794,11 @@ ossl_aes_ecb_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 	unsigned	bs = gen_ossl_block_size(c);
 	ossldata   *od = c->ptr;
 	const uint8 *end = data + dlen - bs;
+	int err;
 
 	if (!od->init)
-		ossl_aes_key_init(od, AES_DECRYPT);
+		if ((err = ossl_aes_key_init(od, AES_DECRYPT)) != 0)
+			return err;
 
 	for (; data <= end; data += bs, res += bs)
 		AES_ecb_encrypt(data, res, &od->u.aes_key, AES_DECRYPT);
@@ -739,10 +810,12 @@ ossl_aes_cbc_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 					 uint8 *res)
 {
 	ossldata   *od = c->ptr;
+	int err;
 
 	if (!od->init)
-		ossl_aes_key_init(od, AES_ENCRYPT);
-
+		if ((err = ossl_aes_key_init(od, AES_ENCRYPT)) != 0)
+			return err;
+	
 	AES_cbc_encrypt(data, res, dlen, &od->u.aes_key, od->iv, AES_ENCRYPT);
 	return 0;
 }
@@ -752,9 +825,11 @@ ossl_aes_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
 					 uint8 *res)
 {
 	ossldata   *od = c->ptr;
+	int err;
 
 	if (!od->init)
-		ossl_aes_key_init(od, AES_DECRYPT);
+		if ((err = ossl_aes_key_init(od, AES_DECRYPT)) != 0)
+			return err;
 
 	AES_cbc_encrypt(data, res, dlen, &od->u.aes_key, od->iv, AES_DECRYPT);
 	return 0;
