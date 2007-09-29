@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.154.2.1 2007/09/10 22:02:05 alvherre Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.154.2.2 2007/09/29 18:05:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -416,6 +416,16 @@ check_index_is_clusterable(Relation OldHeap, Oid indexOid, bool recheck)
 					 errmsg("cannot cluster on expressional index \"%s\" because its index access method does not handle null values",
 							RelationGetRelationName(OldIndex))));
 	}
+
+	/*
+	 * Disallow if index is left over from a failed CREATE INDEX CONCURRENTLY;
+	 * it might well not contain entries for every heap row.
+	 */
+	if (!OldIndex->rd_index->indisvalid)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("cannot cluster on invalid index \"%s\"",
+						RelationGetRelationName(OldIndex))));
 
 	/*
 	 * Disallow clustering system relations.  This will definitely NOT work
