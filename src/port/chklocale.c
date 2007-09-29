@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.2 2007/09/28 23:36:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.3 2007/09/29 00:01:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,10 @@
 
 /*
  * This table needs to recognize all the CODESET spellings for supported
- * backend encodings.  We don't need to handle frontend-only encodings.
+ * backend encodings, as well as frontend-only encodings where possible
+ * (the latter case is currently only needed for initdb to recognize
+ * error situations).
+ *
  * Note that we search the table with pg_strcasecmp(), so variant
  * capitalizations don't need their own entries.
  */
@@ -137,6 +140,22 @@ static const struct encoding_match encoding_match_list[] = {
 	{PG_ISO_8859_8, "ISO-8859-8"},
 	{PG_ISO_8859_8, "ISO8859-8"},
 	{PG_ISO_8859_8, "iso88598"},
+
+	{PG_SJIS, "SJIS"},
+	{PG_SJIS, "PCK"},
+
+	{PG_BIG5, "BIG5"},
+	{PG_BIG5, "BIG5HKSCS"},
+
+	{PG_GBK, "GBK"},
+
+	{PG_UHC, "UHC"},
+
+	{PG_JOHAB, "JOHAB"},
+
+	{PG_GB18030, "GB18030"},
+
+	{PG_SHIFT_JIS_2004, "SJIS_2004"},
 
 	{PG_SQL_ASCII, NULL}		/* end marker */
 };
