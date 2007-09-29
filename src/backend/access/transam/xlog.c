@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.283 2007/09/29 01:36:10 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.284 2007/09/29 18:32:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@
 #include "storage/spin.h"
 #include "utils/builtins.h"
 #include "utils/pg_locale.h"
-
+#include "utils/ps_status.h"
 
 
 /* File path names (all relative to $PGDATA) */
@@ -2276,6 +2276,7 @@ XLogFileRead(uint32 log, uint32 seg, int emode)
 {
 	char		path[MAXPGPATH];
 	char		xlogfname[MAXFNAMELEN];
+	char		activitymsg[MAXFNAMELEN + 16];
 	ListCell   *cell;
 	int			fd;
 
@@ -2311,6 +2312,12 @@ XLogFileRead(uint32 log, uint32 seg, int emode)
 		{
 			/* Success! */
 			curFileTLI = tli;
+
+			/* Report recovery progress in PS display */
+			strcpy(activitymsg, "recovering ");
+			XLogFileName(activitymsg + 11, tli, log, seg);
+			set_ps_display(activitymsg, false);
+
 			return fd;
 		}
 		if (errno != ENOENT)	/* unexpected failure? */
