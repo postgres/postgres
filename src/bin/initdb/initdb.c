@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.143 2007/09/28 22:25:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.144 2007/09/29 00:14:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2800,11 +2800,24 @@ main(int argc, char *argv[])
 			!(pg_strcasecmp(lc_ctype, "C") == 0 ||
 			  pg_strcasecmp(lc_ctype, "POSIX") == 0))
 		{
+			/* Hmm, couldn't recognize the locale's codeset */
 			fprintf(stderr, _("%s: could not find suitable encoding for locale \"%s\"\n"),
 					progname, lc_ctype);
 			fprintf(stderr, _("Rerun %s with the -E option.\n"), progname);
 			fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
 					progname);
+			exit(1);
+		}
+		else if (!PG_VALID_BE_ENCODING(ctype_enc))
+		{
+			/* We recognized it, but it's not a legal server encoding */
+			fprintf(stderr,
+					_("%s: locale %s requires unsupported encoding %s\n"),
+					progname, lc_ctype, pg_encoding_to_char(ctype_enc));
+			fprintf(stderr,
+					_("Encoding %s is not allowed as a server-side encoding.\n"
+					  "Rerun %s with a different locale selection.\n"),
+					pg_encoding_to_char(ctype_enc), progname);
 			exit(1);
 		}
 		else
