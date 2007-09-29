@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.232 2007/09/06 17:31:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.233 2007/09/29 17:18:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -5430,8 +5430,16 @@ ATExecChangeOwner(Oid relationOid, Oid newOwnerId, bool recursing)
 								get_rel_name(tableId))));
 			}
 			break;
-		case RELKIND_TOASTVALUE:
 		case RELKIND_COMPOSITE_TYPE:
+			if (recursing)
+				break;
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is a composite type",
+							NameStr(tuple_class->relname)),
+					 errhint("Use ALTER TYPE instead.")));
+			break;
+		case RELKIND_TOASTVALUE:
 			if (recursing)
 				break;
 			/* FALL THRU */
@@ -6478,31 +6486,48 @@ AlterTableNamespace(RangeVar *relation, const char *newschema)
 	Oid			nspOid;
 	Relation	classRel;
 
-	rel = heap_openrv(relation, AccessExclusiveLock);
+	rel = relation_openrv(relation, AccessExclusiveLock);
 
 	relid = RelationGetRelid(rel);
 	oldNspOid = RelationGetNamespace(rel);
 
-	/* heap_openrv allows TOAST, but we don't want to */
-	if (rel->rd_rel->relkind == RELKIND_TOASTVALUE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is a TOAST relation",
-						RelationGetRelationName(rel))));
-
-	/* if it's an owned sequence, disallow moving it by itself */
-	if (rel->rd_rel->relkind == RELKIND_SEQUENCE)
+	/* Can we change the schema of this tuple? */
+	switch (rel->rd_rel->relkind)
 	{
-		Oid			tableId;
-		int32		colId;
+		case RELKIND_RELATION:
+		case RELKIND_VIEW:
+			/* ok to change schema */
+			break;
+		case RELKIND_SEQUENCE:
+			{
+				/* if it's an owned sequence, disallow moving it by itself */
+				Oid			tableId;
+				int32		colId;
 
-		if (sequenceIsOwned(relid, &tableId, &colId))
+				if (sequenceIsOwned(relid, &tableId, &colId))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("cannot move an owned sequence into another schema"),
+							 errdetail("Sequence \"%s\" is linked to table \"%s\".",
+									   RelationGetRelationName(rel),
+									   get_rel_name(tableId))));
+			}
+			break;
+		case RELKIND_COMPOSITE_TYPE:
 			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("cannot move an owned sequence into another schema"),
-					 errdetail("Sequence \"%s\" is linked to table \"%s\".",
-							   RelationGetRelationName(rel),
-							   get_rel_name(tableId))));
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is a composite type",
+							RelationGetRelationName(rel)),
+					 errhint("Use ALTER TYPE instead.")));
+			break;
+		case RELKIND_INDEX:
+		case RELKIND_TOASTVALUE:
+			/* FALL THRU */
+		default:
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("\"%s\" is not a table, view, or sequence",
+							RelationGetRelationName(rel))));
 	}
 
 	/* get schema OID and check its permissions */

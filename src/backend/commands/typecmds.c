@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.107 2007/09/04 16:41:42 adunstan Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.108 2007/09/29 17:18:58 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -2355,8 +2355,9 @@ AlterTypeOwner(List *names, Oid newOwnerId)
 		get_rel_relkind(typTup->typrelid) != RELKIND_COMPOSITE_TYPE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is a table's row type",
-						TypeNameToString(typename))));
+				 errmsg("%s is a table's row type",
+						format_type_be(typeOid)),
+				 errhint("Use ALTER TABLE instead.")));
 
 	/* don't allow direct alteration of array types, either */
 	if (OidIsValid(typTup->typelem) &&
@@ -2592,7 +2593,7 @@ AlterTypeNamespaceInternal(Oid typeOid, Oid nspOid,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 				 errmsg("%s is a table's row type",
 						format_type_be(typeOid)),
-				 errhint("Use ALTER TABLE SET SCHEMA instead.")));
+				 errhint("Use ALTER TABLE instead.")));
 
 	/* OK, modify the pg_type row */
 
