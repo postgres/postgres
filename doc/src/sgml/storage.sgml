@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.19 2007/09/21 21:25:42 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/storage.sgml,v 1.20 2007/09/30 19:54:57 tgl Exp $ -->
 
 <chapter id="storage">
 
@@ -233,8 +233,8 @@ header, and the remaining bits give the total datum size (including length
 byte) in bytes.  As a special case, if the remaining bits are all zero
 (which would be impossible for a self-inclusive length), the value is a
 pointer to out-of-line data stored in a separate TOAST table.  (The size of
-a TOAST pointer is known a priori, so it doesn't need to be represented in
-the header.)  Values with single-byte headers aren't aligned on any particular
+a TOAST pointer is given in the second byte of the datum.)
+Values with single-byte headers aren't aligned on any particular
 boundary, either.  Lastly, when the highest-order or lowest-order bit is
 clear but the adjacent bit is set, the content of the datum has been
 compressed and must be decompressed before use.  In this case the remaining
@@ -274,8 +274,8 @@ retrieval of the values.  A pointer datum representing an out-of-line
 <acronym>TOAST</> table in which to look and the OID of the specific value
 (its <structfield>chunk_id</>).  For convenience, pointer datums also store the
 logical datum size (original uncompressed data length) and actual stored size
-(different if compression was applied).  Allowing for the varlena header byte,
-the total size of a <acronym>TOAST</> pointer datum is therefore 17 bytes
+(different if compression was applied).  Allowing for the varlena header bytes,
+the total size of a <acronym>TOAST</> pointer datum is therefore 18 bytes
 regardless of the actual size of the represented value.
 </para>
 

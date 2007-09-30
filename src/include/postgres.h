@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.83 2007/09/27 21:01:59 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.84 2007/09/30 19:54:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,12 +100,20 @@ typedef union
 typedef struct
 {
 	uint8		va_header;
-	char		va_data[1];			/* Data or TOAST pointer */
+	char		va_data[1];			/* Data begins here */
 } varattrib_1b;
 
 typedef struct
 {
-	uint8		va_header;
+	uint8		va_header;			/* Always 0x80 or 0x01 */
+	uint8		va_len_1be;			/* Physical length of datum */
+	char		va_data[1];			/* Data (for now always a TOAST pointer) */
+} varattrib_1b_e;
+
+typedef struct
+{
+	uint8		va_header;			/* Always 0x80 or 0x01 */
+	uint8		va_len_1be;			/* Physical length of datum */
 	char		va_data[sizeof(struct varatt_external)];
 } varattrib_pointer;
 
@@ -161,9 +169,8 @@ typedef struct
 	(((varattrib_4b *) (PTR))->va_4byte.va_header & 0x3FFFFFFF)
 #define VARSIZE_1B(PTR) \
 	(((varattrib_1b *) (PTR))->va_header & 0x7F)
-/* Currently there is only one size of toast pointer, but someday maybe not */
 #define VARSIZE_1B_E(PTR) \
-	(sizeof(varattrib_pointer))
+	(((varattrib_1b_e *) (PTR))->va_len_1be)
 
 #define SET_VARSIZE_4B(PTR,len) \
 	(((varattrib_4b *) (PTR))->va_4byte.va_header = (len) & 0x3FFFFFFF)
@@ -171,8 +178,9 @@ typedef struct
 	(((varattrib_4b *) (PTR))->va_4byte.va_header = ((len) & 0x3FFFFFFF) | 0x40000000)
 #define SET_VARSIZE_1B(PTR,len) \
 	(((varattrib_1b *) (PTR))->va_header = (len) | 0x80)
-#define SET_VARSIZE_1B_E(PTR) \
-	(((varattrib_1b *) (PTR))->va_header = 0x80)
+#define SET_VARSIZE_1B_E(PTR,len) \
+	(((varattrib_1b_e *) (PTR))->va_header = 0x80, \
+	 ((varattrib_1b_e *) (PTR))->va_len_1be = (len))
 
 #else  /* !WORDS_BIGENDIAN */
 
@@ -194,9 +202,8 @@ typedef struct
 	((((varattrib_4b *) (PTR))->va_4byte.va_header >> 2) & 0x3FFFFFFF)
 #define VARSIZE_1B(PTR) \
 	((((varattrib_1b *) (PTR))->va_header >> 1) & 0x7F)
-/* Currently there is only one size of toast pointer, but someday maybe not */
 #define VARSIZE_1B_E(PTR) \
-	(sizeof(varattrib_pointer))
+	(((varattrib_1b_e *) (PTR))->va_len_1be)
 
 #define SET_VARSIZE_4B(PTR,len) \
 	(((varattrib_4b *) (PTR))->va_4byte.va_header = (((uint32) (len)) << 2))
@@ -204,8 +211,9 @@ typedef struct
 	(((varattrib_4b *) (PTR))->va_4byte.va_header = (((uint32) (len)) << 2) | 0x02)
 #define SET_VARSIZE_1B(PTR,len) \
 	(((varattrib_1b *) (PTR))->va_header = (((uint8) (len)) << 1) | 0x01)
-#define SET_VARSIZE_1B_E(PTR) \
-	(((varattrib_1b *) (PTR))->va_header = 0x01)
+#define SET_VARSIZE_1B_E(PTR,len) \
+	(((varattrib_1b_e *) (PTR))->va_header = 0x01, \
+	 ((varattrib_1b_e *) (PTR))->va_len_1be = (len))
 
 #endif /* WORDS_BIGENDIAN */
 
@@ -220,6 +228,7 @@ typedef struct
 #define VARDATA_4B(PTR)		(((varattrib_4b *) (PTR))->va_4byte.va_data)
 #define VARDATA_4B_C(PTR)	(((varattrib_4b *) (PTR))->va_compressed.va_data)
 #define VARDATA_1B(PTR)		(((varattrib_1b *) (PTR))->va_data)
+#define VARDATA_1B_E(PTR)	(((varattrib_1b_e *) (PTR))->va_data)
 
 #define VARRAWSIZE_4B_C(PTR) \
 	(((varattrib_4b *) (PTR))->va_compressed.va_rawsize)
@@ -249,6 +258,7 @@ typedef struct
 #define VARDATA_SHORT(PTR)					VARDATA_1B(PTR)
 
 #define VARSIZE_EXTERNAL(PTR)				VARSIZE_1B_E(PTR)
+#define VARDATA_EXTERNAL(PTR)				VARDATA_1B_E(PTR)
 
 #define VARATT_IS_COMPRESSED(PTR)			VARATT_IS_4B_C(PTR)
 #define VARATT_IS_EXTERNAL(PTR)				VARATT_IS_1B_E(PTR)
@@ -258,7 +268,7 @@ typedef struct
 #define SET_VARSIZE(PTR, len)				SET_VARSIZE_4B(PTR, len)
 #define SET_VARSIZE_SHORT(PTR, len)			SET_VARSIZE_1B(PTR, len)
 #define SET_VARSIZE_COMPRESSED(PTR, len)	SET_VARSIZE_4B_C(PTR, len)
-#define SET_VARSIZE_EXTERNAL(PTR)			SET_VARSIZE_1B_E(PTR)
+#define SET_VARSIZE_EXTERNAL(PTR, len)		SET_VARSIZE_1B_E(PTR, len)
 
 #define VARSIZE_ANY(PTR) \
 	(VARATT_IS_1B_E(PTR) ? VARSIZE_1B_E(PTR) : \
@@ -266,7 +276,7 @@ typedef struct
 	  VARSIZE_4B(PTR)))
 
 #define VARSIZE_ANY_EXHDR(PTR) \
-	(VARATT_IS_1B_E(PTR) ? VARSIZE_1B_E(PTR)-1 : \
+	(VARATT_IS_1B_E(PTR) ? VARSIZE_1B_E(PTR)-2 : \
 	 (VARATT_IS_1B(PTR) ? VARSIZE_1B(PTR)-1 : \
 	  VARSIZE_4B(PTR)-4))
 
