@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.284 2007/09/29 18:32:56 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.285 2007/09/30 17:28:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2297,9 +2297,15 @@ XLogFileRead(uint32 log, uint32 seg, int emode)
 		if (tli < curFileTLI)
 			break;				/* don't bother looking at too-old TLIs */
 
+		XLogFileName(xlogfname, tli, log, seg);
+
 		if (InArchiveRecovery)
 		{
-			XLogFileName(xlogfname, tli, log, seg);
+			/* Report recovery progress in PS display */
+			snprintf(activitymsg, sizeof(activitymsg), "waiting for %s",
+					 xlogfname);
+			set_ps_display(activitymsg, false);
+
 			restoredFromArchive = RestoreArchivedFile(path, xlogfname,
 													  "RECOVERYXLOG",
 													  XLogSegSize);
@@ -2314,8 +2320,8 @@ XLogFileRead(uint32 log, uint32 seg, int emode)
 			curFileTLI = tli;
 
 			/* Report recovery progress in PS display */
-			strcpy(activitymsg, "recovering ");
-			XLogFileName(activitymsg + 11, tli, log, seg);
+			snprintf(activitymsg, sizeof(activitymsg), "recovering %s",
+					 xlogfname);
 			set_ps_display(activitymsg, false);
 
 			return fd;
