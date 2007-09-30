@@ -323,37 +323,37 @@ CREATE OPERATOR ~ (
 CREATE FUNCTION gseg_consistent(internal,seg,int4)
 RETURNS bool
 AS 'MODULE_PATHNAME'
-LANGUAGE C;
+LANGUAGE C IMMUTABLE;
 
 CREATE FUNCTION gseg_compress(internal)
 RETURNS internal 
 AS 'MODULE_PATHNAME'
-LANGUAGE C;
+LANGUAGE C IMMUTABLE;
 
 CREATE FUNCTION gseg_decompress(internal)
 RETURNS internal 
 AS 'MODULE_PATHNAME'
-LANGUAGE C;
+LANGUAGE C IMMUTABLE;
 
 CREATE FUNCTION gseg_penalty(internal,internal,internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C STRICT;
+LANGUAGE C STRICT IMMUTABLE;
 
 CREATE FUNCTION gseg_picksplit(internal, internal)
 RETURNS internal
 AS 'MODULE_PATHNAME'
-LANGUAGE C;
+LANGUAGE C IMMUTABLE;
 
 CREATE FUNCTION gseg_union(internal, internal)
 RETURNS seg 
 AS 'MODULE_PATHNAME'
-LANGUAGE C;
+LANGUAGE C IMMUTABLE;
 
 CREATE FUNCTION gseg_same(seg, seg, internal)
 RETURNS internal 
 AS 'MODULE_PATHNAME'
-LANGUAGE C;
+LANGUAGE C IMMUTABLE;
 
 
 -- Create the operator classes for indexing
