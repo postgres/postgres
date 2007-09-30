@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.27 2007/09/26 10:57:00 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.28 2007/09/30 11:38:48 meskes Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -146,6 +146,7 @@ bool ECPGcheck_PQresult(PGresult *, int, PGconn *, enum COMPAT_MODE);
 void ECPGraise(int line, int code, const char *sqlstate, const char *str);
 void ECPGraise_backend(int line, PGresult *result, PGconn *conn, int compat);
 char *ECPGprepared(const char *, struct connection *, int);
+bool ECPGdeallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *conn);
 
 /* SQLSTATE values generated or processed by ecpglib (intentionally
  * not exported -- users should refer to the codes directly) */

@@ -112,5 +112,23 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGexecute line 42 Ok: DROP TABLE
 [NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGdeallocate line 0: NAME: ecpg8
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGdeallocate line 0: NAME: ecpg7
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGdeallocate line 0: NAME: ecpg6
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGdeallocate line 0: NAME: ecpg5
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGdeallocate line 0: NAME: ecpg4
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGdeallocate line 0: NAME: i
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGdeallocate line 0: NAME: ecpg3
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGdeallocate line 0: NAME: ecpg2
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGdeallocate line 0: NAME: ecpg1
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection regress1 closed.
 [NO_PID]: sqlca: code: 0, state: 00000

@@ -1,8 +1,9 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.8 2006/11/08 10:46:47 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.9 2007/09/30 11:38:48 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
+#include "ecpg-pthread-win32.h"
 #include "ecpgtype.h"
 #include "ecpglib.h"
 #include "ecpgerrno.h"
@@ -25,7 +26,6 @@ ECPGalloc(long size, int lineno)
 		return NULL;
 	}
 
-	memset(new, '\0', size);
 	return (new);
 }
 
@@ -62,11 +62,48 @@ ECPGstrdup(const char *string, int lineno)
 }
 
 /* keep a list of memory we allocated for the user */
-static struct auto_mem
+struct auto_mem
 {
 	void	   *pointer;
 	struct auto_mem *next;
-}	*auto_allocs = NULL;
+};
+
+#ifdef ENABLE_THREAD_SAFETY
+static pthread_key_t	auto_mem_key;
+#ifndef WIN32
+static pthread_once_t	auto_mem_once = PTHREAD_ONCE_INIT;
+#endif
+
+static void
+auto_mem_destructor(void *arg)
+{
+	ECPGfree_auto_mem();
+}
+
+NON_EXEC_STATIC void
+auto_mem_key_init(void)
+{
+	pthread_key_create(&auto_mem_key, auto_mem_destructor);
+}
+
+static struct auto_mem *
+get_auto_allocs(void)
+{
+	pthread_once(&auto_mem_once, auto_mem_key_init);
+	return (struct auto_mem *) pthread_getspecific(auto_mem_key);
+}
+
+static void
+set_auto_allocs(struct auto_mem *am)
+{
+	pthread_setspecific(auto_mem_key, am);
+}
+
+#else
+static struct auto_mem	*auto_allocs = NULL;
+#define get_auto_allocs()		(auto_allocs)
+#define set_auto_allocs(am)		do { auto_allocs = (am); } while(0)
+#endif
 
 void
 ECPGadd_mem(void *ptr, int lineno)
@@ -74,41 +111,43 @@ ECPGadd_mem(void *ptr, int lineno)
 	struct auto_mem *am = (struct auto_mem *) ECPGalloc(sizeof(struct auto_mem), lineno);
 
 	am->pointer = ptr;
-	am->next = auto_allocs;
-	auto_allocs = am;
+	am->next = get_auto_allocs();
+	set_auto_allocs(am);
 }
 
 void
 ECPGfree_auto_mem(void)
 {
-	struct auto_mem *am;
+	struct auto_mem *am = get_auto_allocs();
 
 	/* free all memory we have allocated for the user */
-	for (am = auto_allocs; am;)
+	if (am)
 	{
-		struct auto_mem *act = am;
-
-		am = am->next;
-		ECPGfree(act->pointer);
-		ECPGfree(act);
+		do
+		{
+			struct auto_mem *act = am;
+			am = am->next;
+			ECPGfree(act->pointer);
+			ECPGfree(act);
+		} while(am);
+		set_auto_allocs(NULL);
 	}
-
-	auto_allocs = NULL;
 }
 
 void
 ECPGclear_auto_mem(void)
 {
-	struct auto_mem *am;
+	struct auto_mem *am = get_auto_allocs();
 
 	/* only free our own structure */
-	for (am = auto_allocs; am;)
+	if (am)
 	{
-		struct auto_mem *act = am;
-
-		am = am->next;
-		ECPGfree(act);
+		do
+		{
+			struct auto_mem *act = am;
+			am = am->next;
+			ECPGfree(act);
+		} while(am);
+		set_auto_allocs(NULL);
 	}
-
-	auto_allocs = NULL;
 }

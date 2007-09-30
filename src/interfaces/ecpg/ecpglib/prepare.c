@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.20 2007/09/26 10:57:00 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.21 2007/09/30 11:38:48 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -31,8 +31,8 @@ typedef struct
 } stmtCacheEntry;
 
 static int             nextStmtID               = 1;
-static int             stmtCacheNBuckets        = 2039;     /* # buckets - a prime # */
-static int             stmtCacheEntPerBucket    = 8;        /* # entries/bucket     */
+const static int       stmtCacheNBuckets        = 2039;     /* # buckets - a prime # */
+const static int       stmtCacheEntPerBucket    = 8;        /* # entries/bucket     */
 static stmtCacheEntry  stmtCacheEntries[16384] = {{0,{0},0,0,0}};
 
 static struct prepared_statement *find_prepared_statement(const char *name,
@@ -263,20 +263,22 @@ ECPGdeallocate(int lineno, int c, const char *connection_name, const char *name)
 }
 
 bool
-ECPGdeallocate_all(int lineno, int compat, const char *connection_name)
+ECPGdeallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *con)
 {
-	struct connection		   *con;
-
-	con = ECPGget_connection(connection_name);
-
 	/* deallocate all prepared statements */
 	while (con->prep_stmts)
 	{
-		if (!deallocate_one(lineno, compat, con, NULL, con->prep_stmts))
+		if (!deallocate_one(lineno, c, con, NULL, con->prep_stmts))
 			return false;
 	}
 
 	return true;
+}
+
+bool
+ECPGdeallocate_all(int lineno, int compat, const char *connection_name)
+{
+	return ECPGdeallocate_all_conn(lineno, compat, ECPGget_connection(connection_name));
 }
 
 char *

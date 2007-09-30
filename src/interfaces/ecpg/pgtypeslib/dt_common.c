@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.42 2007/08/22 08:20:58 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/dt_common.c,v 1.43 2007/09/30 11:38:48 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -496,8 +496,8 @@ static datetkn deltatktbl[] = {
 	{"yrs", UNITS, DTK_YEAR},	/* "years" relative */
 };
 
-static unsigned int szdatetktbl = sizeof datetktbl / sizeof datetktbl[0];
-static unsigned int szdeltatktbl = sizeof deltatktbl / sizeof deltatktbl[0];
+static const unsigned int szdatetktbl = lengthof(datetktbl);
+static const unsigned int szdeltatktbl = lengthof(deltatktbl);
 
 static datetkn *datecache[MAXDATEFIELDS] = {NULL};
 

@@ -1,15 +1,9 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.43 2007/09/26 10:57:00 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.44 2007/09/30 11:38:48 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
-#ifdef ENABLE_THREAD_SAFETY
-#ifndef WIN32
-#include <pthread.h>
-#else
 #include "ecpg-pthread-win32.h"
-#endif
-#endif
 #include "ecpgtype.h"
 #include "ecpglib.h"
 #include "ecpgerrno.h"
@@ -17,20 +11,17 @@
 #include "sqlca.h"
 
 #ifdef ENABLE_THREAD_SAFETY
+NON_EXEC_STATIC pthread_mutex_t	connections_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_key_t	actual_connection_key;
 #ifndef WIN32
-static pthread_mutex_t connections_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_key_t actual_connection_key;
-static pthread_once_t actual_connection_key_once = PTHREAD_ONCE_INIT;
-#else
-static HANDLE connections_mutex = INVALID_HANDLE_VALUE;
-static DWORD actual_connection_key;
-#endif /* WIN32 */
+static pthread_once_t	actual_connection_key_once = PTHREAD_ONCE_INIT;
+#endif
 #endif
 static struct connection *actual_connection = NULL;
 static struct connection *all_connections = NULL;
 
 #ifdef ENABLE_THREAD_SAFETY
-static void
+NON_EXEC_STATIC void
 ecpg_actual_connection_init(void)
 {
 	pthread_key_create(&actual_connection_key, NULL);
@@ -39,13 +30,7 @@ ecpg_actual_connection_init(void)
 void
 ecpg_pthreads_init(void)
 {
-#ifndef WIN32
 	pthread_once(&actual_connection_key_once, ecpg_actual_connection_init);
-#else
-	static long has_run = 0;
-	if (InterlockedCompareExchange(&has_run, 1, 0) == 0)
-		ecpg_actual_connection_init();
-#endif
 }
 #endif
 
@@ -134,6 +119,7 @@ ecpg_finish(struct connection * act)
 		struct ECPGtype_information_cache *cache,
 				   *ptr;
 
+		ECPGdeallocate_all_conn(0, ECPG_COMPAT_PGSQL, act);
 		PQfinish(act->connection);
 
 		/*

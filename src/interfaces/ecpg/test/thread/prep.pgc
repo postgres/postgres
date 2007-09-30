@@ -5,7 +5,7 @@
 int
 main(void)
 {
-        printf("No threading enabled.\n");
+	printf("No threading enabled.\n");
 	return 0;
 }
 #else
@@ -30,7 +30,7 @@ exec sql whenever not found sqlprint;
 #ifdef WIN32
 static unsigned STDCALL fn(void* arg)
 #else
-void* fn(void* arg)
+static void* fn(void* arg)
 #endif
 {
 	int i;

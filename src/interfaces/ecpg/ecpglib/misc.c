@@ -1,17 +1,11 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.36 2007/08/14 10:01:52 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.37 2007/09/30 11:38:48 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 
 #include <limits.h>
 #include <unistd.h>
-#ifdef ENABLE_THREAD_SAFETY
-#ifndef WIN32
-#include <pthread.h>
-#else
 #include "ecpg-pthread-win32.h"
-#endif
-#endif
 #include "ecpgtype.h"
 #include "ecpglib.h"
 #include "ecpgerrno.h"
@@ -62,11 +56,9 @@ static struct sqlca_t sqlca_init =
 };
 
 #ifdef ENABLE_THREAD_SAFETY
-#ifndef WIN32
 static pthread_key_t sqlca_key;
+#ifndef WIN32
 static pthread_once_t sqlca_key_once = PTHREAD_ONCE_INIT;
-#else
-static DWORD sqlca_key;
 #endif
 #else
 static struct sqlca_t sqlca =
@@ -98,13 +90,8 @@ static struct sqlca_t sqlca =
 #endif
 
 #ifdef ENABLE_THREAD_SAFETY
-#ifndef WIN32
-static pthread_mutex_t debug_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_mutex_t debug_init_mutex = PTHREAD_MUTEX_INITIALIZER;
-#else
-static HANDLE debug_mutex = INVALID_HANDLE_VALUE;
-static HANDLE debug_init_mutex = INVALID_HANDLE_VALUE;
-#endif /* WIN32 */
+NON_EXEC_STATIC pthread_mutex_t debug_mutex = PTHREAD_MUTEX_INITIALIZER;
+NON_EXEC_STATIC pthread_mutex_t debug_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 static int	simple_debug = 0;
 static FILE *debugstream = NULL;
@@ -135,11 +122,10 @@ ECPGinit(const struct connection * con, const char *connection_name, const int l
 static void
 ecpg_sqlca_key_destructor(void *arg)
 {
-	if (arg != NULL)
-		free(arg);				/* sqlca structure allocated in ECPGget_sqlca */
+	free(arg);				/* sqlca structure allocated in ECPGget_sqlca */
 }
 
-static void
+NON_EXEC_STATIC void
 ecpg_sqlca_key_init(void)
 {
 	pthread_key_create(&sqlca_key, ecpg_sqlca_key_destructor);
@@ -151,13 +137,8 @@ ECPGget_sqlca(void)
 {
 #ifdef ENABLE_THREAD_SAFETY
 	struct sqlca_t *sqlca;
-#ifdef WIN32
-	static long has_run = 0;
-	if (InterlockedCompareExchange(&has_run, 1, 0) == 0)
-		ecpg_sqlca_key_init();
-#else
+
 	pthread_once(&sqlca_key_once, ecpg_sqlca_key_init);
-#endif
 
 	sqlca = pthread_getspecific(sqlca_key);
 	if (sqlca == NULL)
@@ -263,22 +244,13 @@ ECPGlog(const char *format,...)
 	va_list		ap;
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
-#ifdef ENABLE_THREAD_SAFETY
-	pthread_mutex_lock(&debug_mutex);
-#endif
-
 	if (simple_debug)
 	{
 		int			bufsize = strlen(format) + 100;
 		char	   *f = (char *) malloc(bufsize);
 
 		if (f == NULL)
-		{
-#ifdef ENABLE_THREAD_SAFETY
-			pthread_mutex_unlock(&debug_mutex);
-#endif
 			return;
-		}
 
 		/*
 		 * regression tests set this environment variable to get the same
@@ -288,6 +260,10 @@ ECPGlog(const char *format,...)
 			snprintf(f, bufsize, "[NO_PID]: %s", format);
 		else
 			snprintf(f, bufsize, "[%d]: %s", (int) getpid(), format);
+
+#ifdef ENABLE_THREAD_SAFETY
+		pthread_mutex_lock(&debug_mutex);
+#endif
 
 		va_start(ap, format);
 		vfprintf(debugstream, f, ap);
@@ -300,12 +276,12 @@ ECPGlog(const char *format,...)
 
 		fflush(debugstream);
 
-		ECPGfree(f);
-	}
-
 #ifdef ENABLE_THREAD_SAFETY
-	pthread_mutex_unlock(&debug_mutex);
+		pthread_mutex_unlock(&debug_mutex);
 #endif
+
+		free(f);
+	}
 }
 
 void
@@ -437,3 +413,25 @@ ECPGis_noind_null(enum ECPGttype type, void *ptr)
 
 	return false;
 }
+
+#ifdef WIN32
+
+/*
+ * Initialize mutexes and call init-once functions on loading.
+ */
+
+BOOL WINAPI
+DllMain(HANDLE module, DWORD reason, LPVOID reserved)
+{
+	if (reason == DLL_PROCESS_ATTACH)
+	{
+		connections_mutex = CreateMutex(NULL, FALSE, NULL);
+		debug_mutex = CreateMutex(NULL, FALSE, NULL);
+		debug_init_mutex = CreateMutex(NULL, FALSE, NULL);
+		auto_mem_key_init();
+		ecpg_actual_connection_init();
+		ecpg_sqlca_key_init();
+	}
+	return TRUE;
+}
+#endif

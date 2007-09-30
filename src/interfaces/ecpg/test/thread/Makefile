@@ -6,7 +6,8 @@ include $(top_srcdir)/$(subdir)/../Makefile.regress
 
 TESTS = thread_implicit thread_implicit.c \
         thread thread.c \
-	prep prep.c
+        prep prep.c \
+        alloc alloc.c
 
 all: $(TESTS)
 

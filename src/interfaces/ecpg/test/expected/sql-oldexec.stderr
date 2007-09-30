@@ -146,5 +146,9 @@
 [NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ECPGtrans line 89 action = commit connection = main
 [NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGdeallocate line 0: NAME: f
+[NO_PID]: sqlca: code: 0, state: 00000
+[NO_PID]: ECPGdeallocate line 0: NAME: i
+[NO_PID]: sqlca: code: 0, state: 00000
 [NO_PID]: ecpg_finish: Connection main closed.
 [NO_PID]: sqlca: code: 0, state: 00000
