@@ -2,7 +2,7 @@
 --	PostgreSQL code for ISNs (ISBN, ISMN, ISSN, EAN13, UPC)
 --  Copyright (c) 2004-2006, German Mendez Bravo (Kronuz)
 --
---	$PostgreSQL: pgsql/contrib/isn/isn.sql.in,v 1.5 2007/06/05 21:31:03 tgl Exp $
+--	$PostgreSQL: pgsql/contrib/isn/isn.sql.in,v 1.6 2007/09/30 17:13:19 tgl Exp $
 --
 -- Example:
 --   create table test ( id isbn );
@@ -102,7 +102,7 @@ COMMENT ON TYPE issn13
 	IS 'International Standard Serial Number 13 (ISSN13)';
 
 -- Short format:
-	
+
 CREATE FUNCTION isbn_in(cstring)
 	RETURNS isbn
 	AS 'MODULE_PATHNAME'
@@ -191,249 +191,249 @@ COMMENT ON TYPE upc
 CREATE FUNCTION isnlt(ean13, ean13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ean13, ean13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ean13, ean13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ean13, ean13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ean13, ean13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ean13, ean13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ean13, isbn13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ean13, ismn13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(ean13, issn13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ean13, issn13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ean13, issn13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ean13, issn13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ean13, issn13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ean13, issn13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(ean13, isbn)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ean13, isbn)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ean13, isbn)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ean13, isbn)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ean13, isbn)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ean13, isbn)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(ean13, ismn)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ean13, ismn)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ean13, ismn)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ean13, ismn)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ean13, ismn)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ean13, ismn)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(ean13, issn)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ean13, issn)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ean13, issn)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ean13, issn)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ean13, issn)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ean13, issn)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(ean13, upc)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ean13, upc)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ean13, upc)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ean13, upc)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ean13, upc)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ean13, upc)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 ---------------------------------------------------
@@ -441,94 +441,94 @@ CREATE FUNCTION isnne(ean13, upc)
 CREATE FUNCTION isnlt(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(isbn13, isbn13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(isbn13, isbn)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(isbn13, ean13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 ---------------------------------------------------
@@ -536,94 +536,94 @@ CREATE FUNCTION isnne(isbn13, ean13)
 CREATE FUNCTION isnlt(isbn, isbn)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(isbn, isbn)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(isbn, isbn)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(isbn, isbn)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(isbn, isbn)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(isbn, isbn)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(isbn, isbn13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(isbn, ean13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(isbn, ean13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(isbn, ean13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(isbn, ean13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(isbn, ean13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(isbn, ean13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 ---------------------------------------------------
@@ -631,94 +631,94 @@ CREATE FUNCTION isnne(isbn, ean13)
 CREATE FUNCTION isnlt(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ismn13, ismn13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ismn13, ismn)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ismn13, ean13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 ---------------------------------------------------
@@ -726,94 +726,94 @@ CREATE FUNCTION isnne(ismn13, ean13)
 CREATE FUNCTION isnlt(ismn, ismn)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ismn, ismn)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ismn, ismn)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ismn, ismn)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ismn, ismn)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ismn, ismn)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ismn, ismn13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(ismn, ean13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(ismn, ean13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(ismn, ean13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(ismn, ean13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(ismn, ean13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(ismn, ean13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 ---------------------------------------------------
@@ -821,94 +821,94 @@ CREATE FUNCTION isnne(ismn, ean13)
 CREATE FUNCTION isnlt(issn13, issn13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(issn13, issn13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(issn13, issn13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(issn13, issn13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(issn13, issn13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(issn13, issn13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(issn13, issn)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(issn13, issn)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(issn13, issn)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(issn13, issn)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(issn13, issn)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(issn13, issn)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(issn13, ean13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(issn13, ean13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(issn13, ean13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(issn13, ean13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(issn13, ean13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(issn13, ean13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 ---------------------------------------------------
@@ -916,94 +916,94 @@ CREATE FUNCTION isnne(issn13, ean13)
 CREATE FUNCTION isnlt(issn, issn)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(issn, issn)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(issn, issn)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(issn, issn)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(issn, issn)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(issn, issn)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(issn, issn13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(issn, issn13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(issn, issn13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(issn, issn13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(issn, issn13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(issn, issn13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(issn, ean13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(issn, ean13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(issn, ean13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(issn, ean13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(issn, ean13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(issn, ean13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 ---------------------------------------------------
@@ -1011,63 +1011,63 @@ CREATE FUNCTION isnne(issn, ean13)
 CREATE FUNCTION isnlt(upc, upc)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(upc, upc)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(upc, upc)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(upc, upc)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(upc, upc)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(upc, upc)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 CREATE FUNCTION isnlt(upc, ean13)
 	RETURNS boolean
 	AS 'int8lt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnle(upc, ean13)
 	RETURNS boolean
 	AS 'int8le'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isneq(upc, ean13)
 	RETURNS boolean
 	AS 'int8eq'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnge(upc, ean13)
 	RETURNS boolean
 	AS 'int8ge'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isngt(upc, ean13)
 	RETURNS boolean
 	AS 'int8gt'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 CREATE FUNCTION isnne(upc, ean13)
 	RETURNS boolean
 	AS 'int8ne'
-	LANGUAGE 'internal' 
+	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
 --
@@ -1102,6 +1102,7 @@ CREATE OPERATOR = (
 	NEGATOR = <>,
 	RESTRICT = eqsel,
 	JOIN = eqjoinsel,
+	MERGES,
 	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
@@ -1151,7 +1152,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ean13,
@@ -1200,7 +1203,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = isbn13,
@@ -1249,7 +1254,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ean13,
@@ -1298,7 +1305,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ismn13,
@@ -1347,7 +1356,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ean13,
@@ -1396,7 +1407,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ean13,
@@ -1445,7 +1458,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ean13,
@@ -1494,7 +1509,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ean13,
@@ -1543,7 +1560,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ean13,
@@ -1597,6 +1616,7 @@ CREATE OPERATOR = (
 	NEGATOR = <>,
 	RESTRICT = eqsel,
 	JOIN = eqjoinsel,
+	MERGES,
 	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
@@ -1646,7 +1666,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = isbn13,
@@ -1700,6 +1722,7 @@ CREATE OPERATOR = (
 	NEGATOR = <>,
 	RESTRICT = eqsel,
 	JOIN = eqjoinsel,
+	MERGES,
 	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
@@ -1749,7 +1772,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = isbn,
@@ -1798,7 +1823,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = isbn,
@@ -1852,6 +1879,7 @@ CREATE OPERATOR = (
 	NEGATOR = <>,
 	RESTRICT = eqsel,
 	JOIN = eqjoinsel,
+	MERGES,
 	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
@@ -1901,7 +1929,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ismn13,
@@ -1955,6 +1985,7 @@ CREATE OPERATOR = (
 	NEGATOR = <>,
 	RESTRICT = eqsel,
 	JOIN = eqjoinsel,
+	MERGES,
 	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
@@ -2004,7 +2035,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ismn,
@@ -2053,7 +2086,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = ismn,
@@ -2107,6 +2142,7 @@ CREATE OPERATOR = (
 	NEGATOR = <>,
 	RESTRICT = eqsel,
 	JOIN = eqjoinsel,
+	MERGES,
 	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
@@ -2156,7 +2192,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = issn13,
@@ -2205,7 +2243,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = issn13,
@@ -2259,6 +2299,7 @@ CREATE OPERATOR = (
 	NEGATOR = <>,
 	RESTRICT = eqsel,
 	JOIN = eqjoinsel,
+	MERGES,
 	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
@@ -2308,7 +2349,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = issn,
@@ -2357,7 +2400,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = issn,
@@ -2411,6 +2456,7 @@ CREATE OPERATOR = (
 	NEGATOR = <>,
 	RESTRICT = eqsel,
 	JOIN = eqjoinsel,
+	MERGES,
 	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
@@ -2460,7 +2506,9 @@ CREATE OPERATOR = (
 	COMMUTATOR = =,
 	NEGATOR = <>,
 	RESTRICT = eqsel,
-	JOIN = eqjoinsel);
+	JOIN = eqjoinsel,
+	MERGES,
+	HASHES);
 CREATE OPERATOR >= (
 	PROCEDURE = isnge,
 	LEFTARG = upc,
@@ -2487,6 +2535,14 @@ CREATE OPERATOR <> (
 	JOIN = neqjoinsel);
 
 --
+-- Operator families for the various operator classes:
+--
+---------------------------------------------------
+
+CREATE OPERATOR FAMILY isn_ops USING btree;
+CREATE OPERATOR FAMILY isn_ops USING hash;
+
+--
 -- Operator classes:
 --
 ---------------------------------------------------
@@ -2496,6 +2552,27 @@ CREATE FUNCTION btean13cmp(ean13, ean13)
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS ean13_ops DEFAULT
+	FOR TYPE ean13 USING btree FAMILY isn_ops AS
+	OPERATOR 1  <,
+	OPERATOR 2  <=,
+	OPERATOR 3  =,
+	OPERATOR 4  >=,
+	OPERATOR 5  >,
+	FUNCTION 1  btean13cmp(ean13, ean13);
+
+CREATE FUNCTION hashean13(ean13)
+	RETURNS int4
+	AS 'hashint8'
+	LANGUAGE 'internal' IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS ean13_ops DEFAULT
+	FOR TYPE ean13 USING hash FAMILY isn_ops AS
+	OPERATOR 1  =,
+	FUNCTION 1  hashean13(ean13);
+
+-- EAN13 vs other types:
 CREATE FUNCTION btean13cmp(ean13, isbn13)
 	RETURNS int4
 	AS 'btint8cmp'
@@ -2532,8 +2609,7 @@ CREATE FUNCTION btean13cmp(ean13, upc)
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OPERATOR CLASS ean13_ops DEFAULT
-	FOR TYPE ean13 USING btree AS
+ALTER OPERATOR FAMILY isn_ops USING btree ADD
 	OPERATOR 1  < (ean13, isbn13),
 	OPERATOR 1  < (ean13, ismn13),
 	OPERATOR 1  < (ean13, issn13),
@@ -2541,7 +2617,6 @@ CREATE OPERATOR CLASS ean13_ops DEFAULT
 	OPERATOR 1  < (ean13, ismn),
 	OPERATOR 1  < (ean13, issn),
 	OPERATOR 1  < (ean13, upc),
-	OPERATOR 1  <,
 	OPERATOR 2  <= (ean13, isbn13),
 	OPERATOR 2  <= (ean13, ismn13),
 	OPERATOR 2  <= (ean13, issn13),
@@ -2549,7 +2624,6 @@ CREATE OPERATOR CLASS ean13_ops DEFAULT
 	OPERATOR 2  <= (ean13, ismn),
 	OPERATOR 2  <= (ean13, issn),
 	OPERATOR 2  <= (ean13, upc),
-	OPERATOR 2  <=,
 	OPERATOR 3  = (ean13, isbn13),
 	OPERATOR 3  = (ean13, ismn13),
 	OPERATOR 3  = (ean13, issn13),
@@ -2557,7 +2631,6 @@ CREATE OPERATOR CLASS ean13_ops DEFAULT
 	OPERATOR 3  = (ean13, ismn),
 	OPERATOR 3  = (ean13, issn),
 	OPERATOR 3  = (ean13, upc),
-	OPERATOR 3  =,
 	OPERATOR 4  >= (ean13, isbn13),
 	OPERATOR 4  >= (ean13, ismn13),
 	OPERATOR 4  >= (ean13, issn13),
@@ -2565,7 +2638,6 @@ CREATE OPERATOR CLASS ean13_ops DEFAULT
 	OPERATOR 4  >= (ean13, ismn),
 	OPERATOR 4  >= (ean13, issn),
 	OPERATOR 4  >= (ean13, upc),
-	OPERATOR 4  >=,
 	OPERATOR 5  > (ean13, isbn13),
 	OPERATOR 5  > (ean13, ismn13),
 	OPERATOR 5  > (ean13, issn13),
@@ -2573,25 +2645,22 @@ CREATE OPERATOR CLASS ean13_ops DEFAULT
 	OPERATOR 5  > (ean13, ismn),
 	OPERATOR 5  > (ean13, issn),
 	OPERATOR 5  > (ean13, upc),
-	OPERATOR 5  >,
 	FUNCTION 1  btean13cmp(ean13, isbn13),
 	FUNCTION 1  btean13cmp(ean13, ismn13),
 	FUNCTION 1  btean13cmp(ean13, issn13),
 	FUNCTION 1  btean13cmp(ean13, isbn),
 	FUNCTION 1  btean13cmp(ean13, ismn),
 	FUNCTION 1  btean13cmp(ean13, issn),
-	FUNCTION 1  btean13cmp(ean13, upc),
-	FUNCTION 1  btean13cmp(ean13, ean13);
+	FUNCTION 1  btean13cmp(ean13, upc);
 
-CREATE FUNCTION hashean13(ean13)
-	RETURNS int4
-	AS 'hashint8'
-	LANGUAGE 'internal' IMMUTABLE STRICT;
-
-CREATE OPERATOR CLASS ean13_ops DEFAULT
-   FOR TYPE ean13 USING hash AS
-   OPERATOR 1  =,
-   FUNCTION 1  hashean13(ean13);
+ALTER OPERATOR FAMILY isn_ops USING hash ADD
+	OPERATOR 1  = (ean13, isbn13),
+	OPERATOR 1  = (ean13, ismn13),
+	OPERATOR 1  = (ean13, issn13),
+	OPERATOR 1  = (ean13, isbn),
+	OPERATOR 1  = (ean13, ismn),
+	OPERATOR 1  = (ean13, issn),
+	OPERATOR 1  = (ean13, upc);
 
 ---------------------------------------------------
 -- ISBN13:
@@ -2600,6 +2669,28 @@ CREATE FUNCTION btisbn13cmp(isbn13, isbn13)
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS isbn13_ops DEFAULT
+	FOR TYPE isbn13 USING btree FAMILY isn_ops AS
+	OPERATOR 1  <,
+	OPERATOR 2  <=,
+	OPERATOR 3  =,
+	OPERATOR 4  >=,
+	OPERATOR 5  >,
+	FUNCTION 1  btisbn13cmp(isbn13, isbn13);
+
+CREATE FUNCTION hashisbn13(isbn13)
+	RETURNS int4
+	AS 'hashint8'
+	LANGUAGE 'internal'
+	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS isbn13_ops DEFAULT
+	FOR TYPE isbn13 USING hash FAMILY isn_ops AS
+	OPERATOR 1  =,
+	FUNCTION 1  hashisbn13(isbn13);
+
+-- ISBN13 vs other types:
 CREATE FUNCTION btisbn13cmp(isbn13, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
@@ -2611,37 +2702,23 @@ CREATE FUNCTION btisbn13cmp(isbn13, isbn)
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OPERATOR CLASS isbn13_ops DEFAULT
-	FOR TYPE isbn13 USING btree AS
+ALTER OPERATOR FAMILY isn_ops USING btree ADD
 	OPERATOR 1  < (isbn13, ean13),
 	OPERATOR 1  < (isbn13, isbn),
-	OPERATOR 1  <,
 	OPERATOR 2  <= (isbn13, ean13),
 	OPERATOR 2  <= (isbn13, isbn),
-	OPERATOR 2  <=,
-	OPERATOR 3  = (isbn13, ean13), 
-	OPERATOR 3  = (isbn13, isbn),  
-	OPERATOR 3  =,
-	OPERATOR 4  >= (isbn13, ean13), 
-	OPERATOR 4  >= (isbn13, isbn),  
-	OPERATOR 4  >=,
-	OPERATOR 5  > (isbn13, ean13), 
-	OPERATOR 5  > (isbn13, isbn),  
-	OPERATOR 5  >,
+	OPERATOR 3  = (isbn13, ean13),
+	OPERATOR 3  = (isbn13, isbn),
+	OPERATOR 4  >= (isbn13, ean13),
+	OPERATOR 4  >= (isbn13, isbn),
+	OPERATOR 5  > (isbn13, ean13),
+	OPERATOR 5  > (isbn13, isbn),
 	FUNCTION 1  btisbn13cmp(isbn13, ean13),
-	FUNCTION 1  btisbn13cmp(isbn13, isbn),
-	FUNCTION 1  btisbn13cmp(isbn13, isbn13);
+	FUNCTION 1  btisbn13cmp(isbn13, isbn);
 
-CREATE FUNCTION hashisbn13(isbn13)
-	RETURNS int4
-	AS 'hashint8'
-	LANGUAGE 'internal' 
-	IMMUTABLE STRICT;
-
-CREATE OPERATOR CLASS isbn13_ops DEFAULT
-   FOR TYPE isbn13 USING hash AS
-   OPERATOR 1  =,
-   FUNCTION 1  hashisbn13(isbn13);
+ALTER OPERATOR FAMILY isn_ops USING hash ADD
+	OPERATOR 1  = (isbn13, ean13),
+	OPERATOR 1  = (isbn13, isbn);
 
 ---------------------------------------------------
 -- ISBN:
@@ -2650,6 +2727,28 @@ CREATE FUNCTION btisbncmp(isbn, isbn)
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS isbn_ops DEFAULT
+	FOR TYPE isbn USING btree FAMILY isn_ops AS
+	OPERATOR 1  <,
+	OPERATOR 2  <=,
+	OPERATOR 3  =,
+	OPERATOR 4  >=,
+	OPERATOR 5  >,
+	FUNCTION 1  btisbncmp(isbn, isbn);
+
+CREATE FUNCTION hashisbn(isbn)
+	RETURNS int4
+	AS 'hashint8'
+	LANGUAGE 'internal'
+	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS isbn_ops DEFAULT
+	FOR TYPE isbn USING hash FAMILY isn_ops AS
+	OPERATOR 1  =,
+	FUNCTION 1  hashisbn(isbn);
+
+-- ISBN vs other types:
 CREATE FUNCTION btisbncmp(isbn, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
@@ -2661,37 +2760,23 @@ CREATE FUNCTION btisbncmp(isbn, isbn13)
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OPERATOR CLASS isbn_ops DEFAULT
-	FOR TYPE isbn USING btree AS
+ALTER OPERATOR FAMILY isn_ops USING btree ADD
 	OPERATOR 1  < (isbn, ean13),
 	OPERATOR 1  < (isbn, isbn13),
-	OPERATOR 1  <,
-	OPERATOR 2  <= (isbn, ean13),  
-	OPERATOR 2  <= (isbn, isbn13), 
-	OPERATOR 2  <=,
-	OPERATOR 3  = (isbn, ean13),  
-	OPERATOR 3  = (isbn, isbn13), 
-	OPERATOR 3  =,
-	OPERATOR 4  >= (isbn, ean13),  
-	OPERATOR 4  >= (isbn, isbn13), 
-	OPERATOR 4  >=,
-	OPERATOR 5  > (isbn, ean13),  
-	OPERATOR 5  > (isbn, isbn13), 
-	OPERATOR 5  >,
+	OPERATOR 2  <= (isbn, ean13),
+	OPERATOR 2  <= (isbn, isbn13),
+	OPERATOR 3  = (isbn, ean13),
+	OPERATOR 3  = (isbn, isbn13),
+	OPERATOR 4  >= (isbn, ean13),
+	OPERATOR 4  >= (isbn, isbn13),
+	OPERATOR 5  > (isbn, ean13),
+	OPERATOR 5  > (isbn, isbn13),
 	FUNCTION 1  btisbncmp(isbn, ean13),
-	FUNCTION 1  btisbncmp(isbn, isbn13),
-	FUNCTION 1  btisbncmp(isbn, isbn);
+	FUNCTION 1  btisbncmp(isbn, isbn13);
 
-CREATE FUNCTION hashisbn(isbn)
-	RETURNS int4
-	AS 'hashint8'
-	LANGUAGE 'internal' 
-	IMMUTABLE STRICT;
-
-CREATE OPERATOR CLASS isbn_ops DEFAULT
-   FOR TYPE isbn USING hash AS
-   OPERATOR 1  =,
-   FUNCTION 1  hashisbn(isbn);
+ALTER OPERATOR FAMILY isn_ops USING hash ADD
+	OPERATOR 1  = (isbn, ean13),
+	OPERATOR 1  = (isbn, isbn13);
 
 ---------------------------------------------------
 -- ISMN13:
@@ -2700,6 +2785,28 @@ CREATE FUNCTION btismn13cmp(ismn13, ismn13)
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS ismn13_ops DEFAULT
+	FOR TYPE ismn13 USING btree FAMILY isn_ops AS
+	OPERATOR 1  <,
+	OPERATOR 2  <=,
+	OPERATOR 3  =,
+	OPERATOR 4  >=,
+	OPERATOR 5  >,
+	FUNCTION 1  btismn13cmp(ismn13, ismn13);
+
+CREATE FUNCTION hashismn13(ismn13)
+	RETURNS int4
+	AS 'hashint8'
+	LANGUAGE 'internal'
+	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS ismn13_ops DEFAULT
+	FOR TYPE ismn13 USING hash FAMILY isn_ops AS
+	OPERATOR 1  =,
+	FUNCTION 1  hashismn13(ismn13);
+
+-- ISMN13 vs other types:
 CREATE FUNCTION btismn13cmp(ismn13, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
@@ -2711,37 +2818,23 @@ CREATE FUNCTION btismn13cmp(ismn13, ismn)
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OPERATOR CLASS ismn13_ops DEFAULT
-	FOR TYPE ismn13 USING btree AS
+ALTER OPERATOR FAMILY isn_ops USING btree ADD
 	OPERATOR 1  < (ismn13, ean13),
 	OPERATOR 1  < (ismn13, ismn),
-	OPERATOR 1  <,
 	OPERATOR 2  <= (ismn13, ean13),
 	OPERATOR 2  <= (ismn13, ismn),
-	OPERATOR 2  <=,
-	OPERATOR 3  = (ismn13, ean13), 
-	OPERATOR 3  = (ismn13, ismn),  
-	OPERATOR 3  =,
-	OPERATOR 4  >= (ismn13, ean13), 
-	OPERATOR 4  >= (ismn13, ismn),  
-	OPERATOR 4  >=,
-	OPERATOR 5  > (ismn13, ean13), 
-	OPERATOR 5  > (ismn13, ismn),  
-	OPERATOR 5  >,
+	OPERATOR 3  = (ismn13, ean13),
+	OPERATOR 3  = (ismn13, ismn),
+	OPERATOR 4  >= (ismn13, ean13),
+	OPERATOR 4  >= (ismn13, ismn),
+	OPERATOR 5  > (ismn13, ean13),
+	OPERATOR 5  > (ismn13, ismn),
 	FUNCTION 1  btismn13cmp(ismn13, ean13),
-	FUNCTION 1  btismn13cmp(ismn13, ismn),
-	FUNCTION 1  btismn13cmp(ismn13, ismn13);
+	FUNCTION 1  btismn13cmp(ismn13, ismn);
 
-CREATE FUNCTION hashismn13(ismn13)
-	RETURNS int4
-	AS 'hashint8'
-	LANGUAGE 'internal' 
-	IMMUTABLE STRICT;
-
-CREATE OPERATOR CLASS ismn13_ops DEFAULT
-   FOR TYPE ismn13 USING hash AS
-   OPERATOR 1  =,
-   FUNCTION 1  hashismn13(ismn13);
+ALTER OPERATOR FAMILY isn_ops USING hash ADD
+	OPERATOR 1  = (ismn13, ean13),
+	OPERATOR 1  = (ismn13, ismn);
 
 ---------------------------------------------------
 -- ISMN:
@@ -2750,6 +2843,28 @@ CREATE FUNCTION btismncmp(ismn, ismn)
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS ismn_ops DEFAULT
+	FOR TYPE ismn USING btree FAMILY isn_ops AS
+	OPERATOR 1  <,
+	OPERATOR 2  <=,
+	OPERATOR 3  =,
+	OPERATOR 4  >=,
+	OPERATOR 5  >,
+	FUNCTION 1  btismncmp(ismn, ismn);
+
+CREATE FUNCTION hashismn(ismn)
+	RETURNS int4
+	AS 'hashint8'
+	LANGUAGE 'internal'
+	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS ismn_ops DEFAULT
+	FOR TYPE ismn USING hash FAMILY isn_ops AS
+	OPERATOR 1  =,
+	FUNCTION 1  hashismn(ismn);
+
+-- ISMN vs other types:
 CREATE FUNCTION btismncmp(ismn, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
@@ -2761,37 +2876,23 @@ CREATE FUNCTION btismncmp(ismn, ismn13)
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OPERATOR CLASS ismn_ops DEFAULT
-	FOR TYPE ismn USING btree AS
+ALTER OPERATOR FAMILY isn_ops USING btree ADD
 	OPERATOR 1  < (ismn, ean13),
 	OPERATOR 1  < (ismn, ismn13),
-	OPERATOR 1  <,
-	OPERATOR 2  <= (ismn, ean13),  
-	OPERATOR 2  <= (ismn, ismn13), 
-	OPERATOR 2  <=,
-	OPERATOR 3  = (ismn, ean13),  
-	OPERATOR 3  = (ismn, ismn13), 
-	OPERATOR 3  =,
-	OPERATOR 4  >= (ismn, ean13),  
-	OPERATOR 4  >= (ismn, ismn13), 
-	OPERATOR 4  >=,
-	OPERATOR 5  > (ismn, ean13),  
-	OPERATOR 5  > (ismn, ismn13), 
-	OPERATOR 5  >,
+	OPERATOR 2  <= (ismn, ean13),
+	OPERATOR 2  <= (ismn, ismn13),
+	OPERATOR 3  = (ismn, ean13),
+	OPERATOR 3  = (ismn, ismn13),
+	OPERATOR 4  >= (ismn, ean13),
+	OPERATOR 4  >= (ismn, ismn13),
+	OPERATOR 5  > (ismn, ean13),
+	OPERATOR 5  > (ismn, ismn13),
 	FUNCTION 1  btismncmp(ismn, ean13),
-	FUNCTION 1  btismncmp(ismn, ismn13),
-	FUNCTION 1  btismncmp(ismn, ismn);
+	FUNCTION 1  btismncmp(ismn, ismn13);
 
-CREATE FUNCTION hashismn(ismn)
-	RETURNS int4
-	AS 'hashint8'
-	LANGUAGE 'internal' 
-	IMMUTABLE STRICT;
-
-CREATE OPERATOR CLASS ismn_ops DEFAULT
-   FOR TYPE ismn USING hash AS
-   OPERATOR 1  =,
-   FUNCTION 1  hashismn(ismn);
+ALTER OPERATOR FAMILY isn_ops USING hash ADD
+	OPERATOR 1  = (ismn, ean13),
+	OPERATOR 1  = (ismn, ismn13);
 
 ---------------------------------------------------
 -- ISSN13:
@@ -2800,6 +2901,28 @@ CREATE FUNCTION btissn13cmp(issn13, issn13)
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS issn13_ops DEFAULT
+	FOR TYPE issn13 USING btree FAMILY isn_ops AS
+	OPERATOR 1  <,
+	OPERATOR 2  <=,
+	OPERATOR 3  =,
+	OPERATOR 4  >=,
+	OPERATOR 5  >,
+	FUNCTION 1  btissn13cmp(issn13, issn13);
+
+CREATE FUNCTION hashissn13(issn13)
+	RETURNS int4
+	AS 'hashint8'
+	LANGUAGE 'internal'
+	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS issn13_ops DEFAULT
+	FOR TYPE issn13 USING hash FAMILY isn_ops AS
+	OPERATOR 1  =,
+	FUNCTION 1  hashissn13(issn13);
+
+-- ISSN13 vs other types:
 CREATE FUNCTION btissn13cmp(issn13, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
@@ -2811,37 +2934,23 @@ CREATE FUNCTION btissn13cmp(issn13, issn)
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OPERATOR CLASS issn13_ops DEFAULT
-	FOR TYPE issn13 USING btree AS
+ALTER OPERATOR FAMILY isn_ops USING btree ADD
 	OPERATOR 1  < (issn13, ean13),
 	OPERATOR 1  < (issn13, issn),
-	OPERATOR 1  <,
 	OPERATOR 2  <= (issn13, ean13),
 	OPERATOR 2  <= (issn13, issn),
-	OPERATOR 2  <=,
-	OPERATOR 3  = (issn13, ean13), 
-	OPERATOR 3  = (issn13, issn),  
-	OPERATOR 3  =,
-	OPERATOR 4  >= (issn13, ean13), 
-	OPERATOR 4  >= (issn13, issn),  
-	OPERATOR 4  >=,
-	OPERATOR 5  > (issn13, ean13), 
-	OPERATOR 5  > (issn13, issn),  
-	OPERATOR 5  >,
+	OPERATOR 3  = (issn13, ean13),
+	OPERATOR 3  = (issn13, issn),
+	OPERATOR 4  >= (issn13, ean13),
+	OPERATOR 4  >= (issn13, issn),
+	OPERATOR 5  > (issn13, ean13),
+	OPERATOR 5  > (issn13, issn),
 	FUNCTION 1  btissn13cmp(issn13, ean13),
-	FUNCTION 1  btissn13cmp(issn13, issn),
-	FUNCTION 1  btissn13cmp(issn13, issn13);
+	FUNCTION 1  btissn13cmp(issn13, issn);
 
-CREATE FUNCTION hashissn13(issn13)
-	RETURNS int4
-	AS 'hashint8'
-	LANGUAGE 'internal' 
-	IMMUTABLE STRICT;
-
-CREATE OPERATOR CLASS issn13_ops DEFAULT
-   FOR TYPE issn13 USING hash AS
-   OPERATOR 1  =,
-   FUNCTION 1  hashissn13(issn13);
+ALTER OPERATOR FAMILY isn_ops USING hash ADD
+	OPERATOR 1  = (issn13, ean13),
+	OPERATOR 1  = (issn13, issn);
 
 ---------------------------------------------------
 -- ISSN:
@@ -2850,6 +2959,28 @@ CREATE FUNCTION btissncmp(issn, issn)
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS issn_ops DEFAULT
+	FOR TYPE issn USING btree FAMILY isn_ops AS
+	OPERATOR 1  <,
+	OPERATOR 2  <=,
+	OPERATOR 3  =,
+	OPERATOR 4  >=,
+	OPERATOR 5  >,
+	FUNCTION 1  btissncmp(issn, issn);
+
+CREATE FUNCTION hashissn(issn)
+	RETURNS int4
+	AS 'hashint8'
+	LANGUAGE 'internal'
+	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS issn_ops DEFAULT
+	FOR TYPE issn USING hash FAMILY isn_ops AS
+	OPERATOR 1  =,
+	FUNCTION 1  hashissn(issn);
+
+-- ISSN vs other types:
 CREATE FUNCTION btissncmp(issn, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
@@ -2861,37 +2992,23 @@ CREATE FUNCTION btissncmp(issn, issn13)
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OPERATOR CLASS issn_ops DEFAULT
-	FOR TYPE issn USING btree AS
+ALTER OPERATOR FAMILY isn_ops USING btree ADD
 	OPERATOR 1  < (issn, ean13),
 	OPERATOR 1  < (issn, issn13),
-	OPERATOR 1  <,
-	OPERATOR 2  <= (issn, ean13),  
-	OPERATOR 2  <= (issn, issn13), 
-	OPERATOR 2  <=,
-	OPERATOR 3  = (issn, ean13),  
-	OPERATOR 3  = (issn, issn13), 
-	OPERATOR 3  =,
-	OPERATOR 4  >= (issn, ean13),  
-	OPERATOR 4  >= (issn, issn13), 
-	OPERATOR 4  >=,
-	OPERATOR 5  > (issn, ean13),  
-	OPERATOR 5  > (issn, issn13), 
-	OPERATOR 5  >,
+	OPERATOR 2  <= (issn, ean13),
+	OPERATOR 2  <= (issn, issn13),
+	OPERATOR 3  = (issn, ean13),
+	OPERATOR 3  = (issn, issn13),
+	OPERATOR 4  >= (issn, ean13),
+	OPERATOR 4  >= (issn, issn13),
+	OPERATOR 5  > (issn, ean13),
+	OPERATOR 5  > (issn, issn13),
 	FUNCTION 1  btissncmp(issn, ean13),
-	FUNCTION 1  btissncmp(issn, issn13),
-	FUNCTION 1  btissncmp(issn, issn);
+	FUNCTION 1  btissncmp(issn, issn13);
 
-CREATE FUNCTION hashissn(issn)
-	RETURNS int4
-	AS 'hashint8'
-	LANGUAGE 'internal' 
-	IMMUTABLE STRICT;
-
-CREATE OPERATOR CLASS issn_ops DEFAULT
-   FOR TYPE issn USING hash AS
-   OPERATOR 1  =,
-   FUNCTION 1  hashissn(issn);
+ALTER OPERATOR FAMILY isn_ops USING hash ADD
+	OPERATOR 1  = (issn, ean13),
+	OPERATOR 1  = (issn, issn13);
 
 ---------------------------------------------------
 -- UPC:
@@ -2900,37 +3017,44 @@ CREATE FUNCTION btupccmp(upc, upc)
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS upc_ops DEFAULT
+	FOR TYPE upc USING btree FAMILY isn_ops AS
+	OPERATOR 1  <,
+	OPERATOR 2  <=,
+	OPERATOR 3  =,
+	OPERATOR 4  >=,
+	OPERATOR 5  >,
+	FUNCTION 1  btupccmp(upc, upc);
+
+CREATE FUNCTION hashupc(upc)
+	RETURNS int4
+	AS 'hashint8'
+	LANGUAGE 'internal'
+	IMMUTABLE STRICT;
+
+CREATE OPERATOR CLASS upc_ops DEFAULT
+	FOR TYPE upc USING hash FAMILY isn_ops AS
+	OPERATOR 1  =,
+	FUNCTION 1  hashupc(upc);
+
+-- UPC vs other types:
 CREATE FUNCTION btupccmp(upc, ean13)
 	RETURNS int4
 	AS 'btint8cmp'
 	LANGUAGE 'internal'
 	IMMUTABLE STRICT;
 
-CREATE OPERATOR CLASS upc_ops DEFAULT
-	FOR TYPE upc USING btree AS
+ALTER OPERATOR FAMILY isn_ops USING btree ADD
 	OPERATOR 1  < (upc, ean13),
-	OPERATOR 1  <,
-	OPERATOR 2  <= (upc, ean13),  
-	OPERATOR 2  <=,
-	OPERATOR 3  = (upc, ean13),  
-	OPERATOR 3  =,
-	OPERATOR 4  >= (upc, ean13),  
-	OPERATOR 4  >=,
-	OPERATOR 5  > (upc, ean13),  
-	OPERATOR 5  >,
-	FUNCTION 1  btupccmp(upc, ean13),
-	FUNCTION 1  btupccmp(upc, upc);
+	OPERATOR 2  <= (upc, ean13),
+	OPERATOR 3  = (upc, ean13),
+	OPERATOR 4  >= (upc, ean13),
+	OPERATOR 5  > (upc, ean13),
+	FUNCTION 1  btupccmp(upc, ean13);
 
-CREATE FUNCTION hashupc(upc)
-	RETURNS int4
-	AS 'hashint8'
-	LANGUAGE 'internal' 
-	IMMUTABLE STRICT;
-
-CREATE OPERATOR CLASS upc_ops DEFAULT
-   FOR TYPE upc USING hash AS
-   OPERATOR 1  =,
-   FUNCTION 1  hashupc(upc);
+ALTER OPERATOR FAMILY isn_ops USING hash ADD
+	OPERATOR 1  = (upc, ean13);
 
 --
 -- Type casts:
@@ -3075,7 +3199,7 @@ CREATE FUNCTION is_valid(upc)
 	IMMUTABLE STRICT;
 
 --
--- isn_weak(boolean) - Sets the weak input mode. 
+-- isn_weak(boolean) - Sets the weak input mode.
 -- This function is intended for testing use only!
 --
 CREATE FUNCTION isn_weak(boolean)
