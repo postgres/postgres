@@ -4,9 +4,9 @@
 /* This file is generated from MingW ./configure, and with the following
  * changes to be valid for Visual C++ (and compatible):
  *
- * HAVE_CBRT, HAVE_FUNCNAME_FUNC, HAVE_FUNCNAME_FUNCTION, HAVE_GETOPT,
- * HAVE_GETOPT_H, HAVE_GETOPT_LONG, HAVE_RINT, HAVE_STRINGS_H, 
- * HAVE_STRTOLL, HAVE_STRTOULL, HAVE_STRUCT_OPTION, ENABLE_THREAD_SAFETY
+ * HAVE_CBRT, HAVE_FUNCNAME_FUNC, HAVE_GETOPT, HAVE_GETOPT_H,
+ * HAVE_GETOPT_LONG, HAVE_RINT, HAVE_STRINGS_H, HAVE_STRTOLL,
+ * HAVE_STRTOULL, HAVE_STRUCT_OPTION, ENABLE_THREAD_SAFETY
  *
  */
 
@@ -134,7 +134,7 @@
 //#define HAVE_FUNCNAME__FUNC 1
 
 /* Define to 1 if your compiler understands __FUNCTION__. */
-#undef HAVE_FUNCNAME__FUNCTION
+#define HAVE_FUNCNAME__FUNCTION 1
 
 /* Define to 1 if you have getaddrinfo(). */
 /* #undef HAVE_GETADDRINFO */
