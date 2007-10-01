@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.158 2007/09/20 17:56:30 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.159 2007/10/01 21:10:40 tgl Exp $ -->
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
  -->
@@ -216,6 +216,31 @@
      <row>
       <entry><link linkend="catalog-pg-trigger"><structname>pg_trigger</structname></link></entry>
       <entry>triggers</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-ts-config"><structname>pg_ts_config</structname></link></entry>
+      <entry>text search configurations</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-ts-config-map"><structname>pg_ts_config_map</structname></link></entry>
+      <entry>text search configurations' token mappings</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-ts-dict"><structname>pg_ts_dict</structname></link></entry>
+      <entry>text search dictionaries</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-ts-parser"><structname>pg_ts_parser</structname></link></entry>
+      <entry>text search parsers</entry>
+     </row>
+
+     <row>
+      <entry><link linkend="catalog-pg-ts-template"><structname>pg_ts_template</structname></link></entry>
+      <entry>text search templates</entry>
      </row>
 
      <row>
@@ -2481,6 +2506,7 @@
   </table>
  </sect1>
 
+
  <sect1 id="catalog-pg-index">
   <title><structname>pg_index</structname></title>
 
@@ -3269,7 +3295,7 @@
    Each operator family is a collection of operators and associated
    support routines that implement the semantics specified for a particular
    index access method.  Furthermore, the operators in a family are all
-   <quote>compatible</>, in a way that depends on the access method.
+   <quote>compatible</>, in a way that is specified by the access method.
    The operator family concept allows cross-data-type operators to be used
    with indexes and to be reasoned about using knowledge of access method
    semantics.
@@ -4401,6 +4427,382 @@
    </para>
   </note>
 
+ </sect1>
+
+
+ <sect1 id="catalog-pg-ts-config">
+  <title><structname>pg_ts_config</structname></title>
+
+  <indexterm zone="catalog-pg-ts-config">
+   <primary>pg_ts_config</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_ts_config</structname> catalog contains entries
+   representing text search configurations.  A configuration specifies
+   a particular text search parser and a list of dictionaries to use
+   for each of the parser's output token types.  The parser is shown
+   in the <structname>pg_ts_config</structname> entry, but the
+   token-to-dictionary mapping is defined by subsidiary entries in <link
+   linkend="catalog-pg-ts-config-map"><structname>pg_ts_config_map</structname></link>.
+  </para>
+
+  <para>
+   <productname>PostgreSQL</productname>'s text search features are
+   described at length in <xref linkend="textsearch">.
+  </para>
+
+  <table>
+   <title><structname>pg_ts_config</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>cfgname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Text search configuration name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>cfgnamespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the namespace that contains this configuration
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>cfgowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the configuration</entry>
+     </row>
+
+     <row>
+      <entry><structfield>cfgparser</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-ts-parser"><structname>pg_ts_parser</structname></link>.oid</literal></entry>
+      <entry>The OID of the text search parser for this configuration</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-ts-config-map">
+  <title><structname>pg_ts_config_map</structname></title>
+
+  <indexterm zone="catalog-pg-ts-config-map">
+   <primary>pg_ts_config_map</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_ts_config_map</structname> catalog contains entries
+   showing which text search dictionaries should be consulted, and in
+   what order, for each output token type of each text search configuration's
+   parser.
+  </para>
+
+  <para>
+   <productname>PostgreSQL</productname>'s text search features are
+   described at length in <xref linkend="textsearch">.
+  </para>
+
+  <table>
+   <title><structname>pg_ts_config_map</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>mapcfg</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-ts-config"><structname>pg_ts_config</structname></link>.oid</literal></entry>
+      <entry>The OID of the <structname>pg_ts_config</> entry owning this map entry</entry>
+     </row>
+
+     <row>
+      <entry><structfield>maptokentype</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>A token type emitted by the configuration's parser</entry>
+     </row>
+
+     <row>
+      <entry><structfield>mapseqno</structfield></entry>
+      <entry><type>integer</type></entry>
+      <entry></entry>
+      <entry>Order in which to consult this entry (lower
+       <structfield>mapseqno</>s first)</entry>
+     </row>
+
+     <row>
+      <entry><structfield>mapdict</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-ts-dict"><structname>pg_ts_dict</structname></link>.oid</literal></entry>
+      <entry>The OID of the text search dictionary to consult</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-ts-dict">
+  <title><structname>pg_ts_dict</structname></title>
+
+  <indexterm zone="catalog-pg-ts-dict">
+   <primary>pg_ts_dict</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_ts_dict</structname> catalog contains entries
+   defining text search dictionaries.  A dictionary depends on a text
+   search template, which specifies all the implementation functions
+   needed; the dictionary itself provides values for the user-settable
+   parameters supported by the template.  This division of labor allows
+   dictionaries to be created by unprivileged users.  The parameters
+   are specified by a text string <structfield>dictinitoption</>,
+   whose format and meaning vary depending on the template.
+  </para>
+
+  <para>
+   <productname>PostgreSQL</productname>'s text search features are
+   described at length in <xref linkend="textsearch">.
+  </para>
+
+  <table>
+   <title><structname>pg_ts_dict</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>dictname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Text search dictionary name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>dictnamespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the namespace that contains this dictionary
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>dictowner</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-authid"><structname>pg_authid</structname></link>.oid</literal></entry>
+      <entry>Owner of the dictionary</entry>
+     </row>
+
+     <row>
+      <entry><structfield>dicttemplate</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-ts-template"><structname>pg_ts_template</structname></link>.oid</literal></entry>
+      <entry>The OID of the text search template for this dictionary</entry>
+     </row>
+
+     <row>
+      <entry><structfield>dictinitoption</structfield></entry>
+      <entry><type>text</type></entry>
+      <entry></entry>
+      <entry>Initialization option string for the template</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-ts-parser">
+  <title><structname>pg_ts_parser</structname></title>
+
+  <indexterm zone="catalog-pg-ts-parser">
+   <primary>pg_ts_parser</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_ts_parser</structname> catalog contains entries
+   defining text search parsers.  A parser is responsible for splitting
+   input text into lexemes and assigning a token type to each lexeme.
+   Since a parser must be implemented by C-language-level functions,
+   creation of new parsers is restricted to database superusers.
+  </para>
+
+  <para>
+   <productname>PostgreSQL</productname>'s text search features are
+   described at length in <xref linkend="textsearch">.
+  </para>
+
+  <table>
+   <title><structname>pg_ts_parser</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>prsname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Text search parser name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>prsnamespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the namespace that contains this parser
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>prsstart</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>OID of the parser's startup function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>prstoken</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>OID of the parser's next-token function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>prsend</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>OID of the parser's shutdown function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>prsheadline</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>OID of the parser's headline function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>prslextype</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>OID of the parser's lextype function</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+ </sect1>
+
+
+ <sect1 id="catalog-pg-ts-template">
+  <title><structname>pg_ts_template</structname></title>
+
+  <indexterm zone="catalog-pg-ts-template">
+   <primary>pg_ts_template</primary>
+  </indexterm>
+
+  <para>
+   The <structname>pg_ts_template</structname> catalog contains entries
+   defining text search templates.  A template is the implementation
+   skeleton for a class of text search dictionaries.
+   Since a template must be implemented by C-language-level functions,
+   creation of new templates is restricted to database superusers.
+  </para>
+
+  <para>
+   <productname>PostgreSQL</productname>'s text search features are
+   described at length in <xref linkend="textsearch">.
+  </para>
+
+  <table>
+   <title><structname>pg_ts_template</> Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry><structfield>tmplname</structfield></entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Text search template name</entry>
+     </row>
+
+     <row>
+      <entry><structfield>tmplnamespace</structfield></entry>
+      <entry><type>oid</type></entry>
+      <entry><literal><link linkend="catalog-pg-namespace"><structname>pg_namespace</structname></link>.oid</literal></entry>
+      <entry>
+       The OID of the namespace that contains this template
+      </entry>
+     </row>
+
+     <row>
+      <entry><structfield>tmplinit</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>OID of the template's initialization function</entry>
+     </row>
+
+     <row>
+      <entry><structfield>tmpllexize</structfield></entry>
+      <entry><type>regproc</type></entry>
+      <entry><literal><link linkend="catalog-pg-proc"><structname>pg_proc</structname></link>.oid</literal></entry>
+      <entry>OID of the template's lexize function</entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
  </sect1>
 
 
