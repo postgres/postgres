@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.76 2007/09/30 19:54:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.77 2007/10/01 16:25:56 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -41,6 +41,9 @@
 
 
 #undef TOAST_DEBUG
+
+/* Size of an EXTERNAL datum that contains a standard TOAST pointer */
+#define TOAST_POINTER_SIZE (VARHDRSZ_EXTERNAL + sizeof(struct varatt_external))
 
 /*
  * Testing whether an externally-stored value is compressed now requires
@@ -597,7 +600,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 								  toast_values, toast_isnull) > maxDataLen)
 	{
 		int			biggest_attno = -1;
-		int32		biggest_size = MAXALIGN(sizeof(varattrib_pointer));
+		int32		biggest_size = MAXALIGN(TOAST_POINTER_SIZE);
 		Datum		old_value;
 		Datum		new_value;
 
@@ -660,7 +663,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno = -1;
-		int32		biggest_size = MAXALIGN(sizeof(varattrib_pointer));
+		int32		biggest_size = MAXALIGN(TOAST_POINTER_SIZE);
 		Datum		old_value;
 
 		/*------
@@ -710,7 +713,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 								  toast_values, toast_isnull) > maxDataLen)
 	{
 		int			biggest_attno = -1;
-		int32		biggest_size = MAXALIGN(sizeof(varattrib_pointer));
+		int32		biggest_size = MAXALIGN(TOAST_POINTER_SIZE);
 		Datum		old_value;
 		Datum		new_value;
 
@@ -772,7 +775,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup,
 		   rel->rd_rel->reltoastrelid != InvalidOid)
 	{
 		int			biggest_attno = -1;
-		int32		biggest_size = MAXALIGN(sizeof(varattrib_pointer));
+		int32		biggest_size = MAXALIGN(TOAST_POINTER_SIZE);
 		Datum		old_value;
 
 		/*--------
@@ -1085,7 +1088,7 @@ toast_save_datum(Relation rel, Datum value,
 	Datum		t_values[3];
 	bool		t_isnull[3];
 	CommandId	mycid = GetCurrentCommandId();
-	varattrib_pointer *result;
+	struct varlena *result;
 	struct varatt_external toast_pointer;
 	struct
 	{
@@ -1206,8 +1209,8 @@ toast_save_datum(Relation rel, Datum value,
 	/*
 	 * Create the TOAST pointer value that we'll return
 	 */
-	result = (varattrib_pointer *) palloc(sizeof(varattrib_pointer));
-	SET_VARSIZE_EXTERNAL(result, sizeof(varattrib_pointer));
+	result = (struct varlena *) palloc(TOAST_POINTER_SIZE);
+	SET_VARSIZE_EXTERNAL(result, TOAST_POINTER_SIZE);
 	memcpy(VARDATA_EXTERNAL(result), &toast_pointer, sizeof(toast_pointer));
 
 	return PointerGetDatum(result);

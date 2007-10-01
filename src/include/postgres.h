@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2007, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/postgres.h,v 1.84 2007/09/30 19:54:58 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/postgres.h,v 1.85 2007/10/01 16:25:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,13 +109,6 @@ typedef struct
 	uint8		va_len_1be;			/* Physical length of datum */
 	char		va_data[1];			/* Data (for now always a TOAST pointer) */
 } varattrib_1b_e;
-
-typedef struct
-{
-	uint8		va_header;			/* Always 0x80 or 0x01 */
-	uint8		va_len_1be;			/* Physical length of datum */
-	char		va_data[sizeof(struct varatt_external)];
-} varattrib_pointer;
 
 /*
  * Bit layouts for varlena headers on big-endian machines:
@@ -225,6 +218,8 @@ typedef struct
 #define VARATT_CONVERTED_SHORT_SIZE(PTR) \
 	(VARSIZE(PTR) - VARHDRSZ + VARHDRSZ_SHORT)
 
+#define VARHDRSZ_EXTERNAL		2
+
 #define VARDATA_4B(PTR)		(((varattrib_4b *) (PTR))->va_4byte.va_data)
 #define VARDATA_4B_C(PTR)	(((varattrib_4b *) (PTR))->va_compressed.va_data)
 #define VARDATA_1B(PTR)		(((varattrib_1b *) (PTR))->va_data)
@@ -276,9 +271,9 @@ typedef struct
 	  VARSIZE_4B(PTR)))
 
 #define VARSIZE_ANY_EXHDR(PTR) \
-	(VARATT_IS_1B_E(PTR) ? VARSIZE_1B_E(PTR)-2 : \
-	 (VARATT_IS_1B(PTR) ? VARSIZE_1B(PTR)-1 : \
-	  VARSIZE_4B(PTR)-4))
+	(VARATT_IS_1B_E(PTR) ? VARSIZE_1B_E(PTR)-VARHDRSZ_EXTERNAL : \
+	 (VARATT_IS_1B(PTR) ? VARSIZE_1B(PTR)-VARHDRSZ_SHORT : \
+	  VARSIZE_4B(PTR)-VARHDRSZ))
 
 /* caution: this will not work on an external or compressed-in-line Datum */
 /* caution: this will return a possibly unaligned pointer */
