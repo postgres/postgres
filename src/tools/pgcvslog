@@ -1,11 +1,12 @@
 #!/bin/sh
 
-# $PostgreSQL: pgsql/src/tools/pgcvslog,v 1.33 2007/01/31 22:17:03 momjian Exp $
+# $PostgreSQL: pgsql/src/tools/pgcvslog,v 1.34 2007/10/01 02:59:03 momjian Exp $
 
 # This utility is used to generate a compact list of changes
 # for each release, bjm 2000-02-22
 
-# Usage $0 file
+# Usage:  pgcvslog [-h]
+# -h is HTML output
 
 # All branches:	
 # cvs log -d'>1999-06-14 00:00:00 GMT' . > log
@@ -49,6 +50,7 @@ else	cat
 fi |
 
 # mark each line with a datetime and line number, for sorting and merging
+# we are just pre-processing the file at this point
 # We don't print anything from the -- or == line and the date:
 
 awk '	BEGIN	{html="'"$HTML"'"; lineno = 0;}
@@ -87,8 +89,8 @@ awk '	BEGIN	{html="'"$HTML"'"; lineno = 0;}
 		{
 			printf ("%s| %10d|", datetime, lineno++);
 			if (html != "Y")
-				printf ("%s\n", workingfile);
-			else	printf ("<SMALL><FONT COLOR=\"red\">%s</FONT></SMALL>\n", workingfile);
+				printf ("%s%s\n", workingfile, back_branch);
+			else	printf ("<SMALL><FONT COLOR=\"red\">%s%s</FONT></SMALL>\n", workingfile, back_branch);
 
 			# output name of committer
 			# remove semicolon from committers name
@@ -102,27 +104,39 @@ awk '	BEGIN	{html="'"$HTML"'"; lineno = 0;}
 		}
 	}
 
+	# mark back branches
+	$1 == "revision" \
+	{
+		if ($2 ~ /\..*\./ && del == "Y")
+			back_branch=" <back-patch>"
+		else	back_branch = ""
+	}
+
 	/* clear working file */
 	$0 ~ /^====*$/	{workingfile=""}' |
 
 sort | cut -d'|' -f3 |
 
 # collect duplicate narratives
+# print file names as we get them, then print narrative when a new 
+# narrative appears
+# have to save two narratives to compare them
 
-awk '   BEGIN   { slot = 0; oldslot=0; save_working = ""; html="'"$HTML"'"}
+awk '   BEGIN   { narr_slot = 0; oldnarr_slot=0; save_working = ""; 
+		  html="'"$HTML"'"}
 	{
 		# We have a filename, so we look at the previous
 		# narrative to see if it is new narrative text.
-		if ($0 ~ /^\// || $0 ~ />\//)
+		if ($0 ~ "^/" || $0 ~ ">/")
 		{
 			# If there are a different number of narrative
-			# lines, they can not possibly be the same.
-			if (slot != oldslot)
+			# lines, they cannot possibly be the same.
+			if (narr_slot != oldnarr_slot)
 				same = "N";
 			else
 			{
 				same = "Y";
-				for (i=1; i <= slot; i++)
+				for (i=1; i <= narr_slot; i++)
 				{
 					if (oldnarr[i] != narr[i])
 					{
@@ -135,8 +149,8 @@ awk '   BEGIN   { slot = 0; oldslot=0; save_working = ""; html="'"$HTML"'"}
 			# dump out the old narrative if it is new
 			if (same == "N")
 			{
-				if (oldslot)
-					for (i=1; i <= oldslot; i++)
+				if (oldnarr_slot)
+					for (i=1; i <= oldnarr_slot; i++)
 					{
 						print oldnarr[i];
 						if (html == "Y" && 
@@ -146,14 +160,15 @@ awk '   BEGIN   { slot = 0; oldslot=0; save_working = ""; html="'"$HTML"'"}
 					}
 
 				# save the current narrative
-				for (i=1; i <= slot; i++)
+				for (i=1; i <= narr_slot; i++)
 					oldnarr[i] = narr[i];
-				oldslot = slot;
+				oldnarr_slot = narr_slot;
 			}
-			slot = 0;
+			narr_slot = 0;
 
 			# dump out the previous filename
 			print save_working;
+
 			if (html == "Y")
 				print "<BR>";
 
@@ -164,57 +179,58 @@ awk '   BEGIN   { slot = 0; oldslot=0; save_working = ""; html="'"$HTML"'"}
 		# we have a narrative line
 		{
 			# accumulate narrative
-			narr[++slot] = $0;
+			narr[++narr_slot] = $0;
 		}
 	}
-	END	{
-			# If there are a different number of narrative
-			# lines, they can not possibly be the same.
-			if (slot != oldslot)
-				same = "N";
-			else
+	END \
+	{
+		# If there are a different number of narrative
+		# lines, they can not possibly be the same.
+		if (narr_slot != oldnarr_slot)
+			same = "N";
+		else
+		{
+			same = "Y";
+			for (i=1; i <= narr_slot; i++)
 			{
-				same = "Y";
-				for (i=1; i <= slot; i++)
+				if (oldnarr[i] != narr[i])
 				{
-					if (oldnarr[i] != narr[i])
-					{
-						same = "N";
-						break;
-					}
+					same = "N";
+					break;
 				}
 			}
+		}
 
-			# dump out the old narrative if it is new
-			if (same == "N")
-			{
-				if (oldslot)
-					for (i=1; i <= oldslot; i++)
-					{
-						print oldnarr[i];
-						if (html == "Y" && 
-						    oldnarr[i] != "<HR>" &&
-						    oldnarr[i] !~ "^<DIV ")
-							print "<BR>";
-					}
-			}
+		# dump out the old narrative if it is new
+		if (same == "N")
+		{
+			if (oldnarr_slot)
+				for (i=1; i <= oldnarr_slot; i++)
+				{
+					print oldnarr[i];
+					if (html == "Y" && 
+					    oldnarr[i] != "<HR>" &&
+					    oldnarr[i] !~ "^<DIV ")
+						print "<BR>";
+				}
+		}
 
-			# dump out the last filename
-			print save_working;
+		# dump out the last filename
+		print save_working;
 
-			if (html == "Y")
+		if (html == "Y")
+			print "<BR>";
+
+		# dump out the last narrative
+		for (i=1; i <= narr_slot; i++)
+		{
+			print narr[i];
+			if (html == "Y" && 
+			    narr[i] != "<HR>" &&
+			    narr[i] !~ "^<DIV ")
 				print "<BR>";
-
-			# dump out the last narrative
-			for (i=1; i <= slot; i++)
-			{
-				print narr[i];
-				if (html == "Y" && 
-				    narr[i] != "<HR>" &&
-				    narr[i] !~ "^<DIV ")
-					print "<BR>";
-			}
-		}' |
+		}
+	}' |
 
 # add HTML wrapper
 if [ "$HTML" = "Y" ]
