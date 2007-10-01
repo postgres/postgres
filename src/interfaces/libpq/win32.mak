@@ -13,7 +13,8 @@ CPU=i386
 !MESSAGE Building the Win32 static library...
 !MESSAGE
 !ELSE
-ADD_DEFINES=/D "WIN64" /Wp64
+ADD_DEFINES=/D "WIN64" /Wp64 /GS
+ADD_SECLIB=bufferoverflowU.lib
 !MESSAGE Building the Win64 static library...
 !MESSAGE
 !ENDIF
@@ -175,7 +176,7 @@ CPP_SBRS=.
 RSC_PROJ=/l 0x409 /fo"$(INTDIR)\libpq.res"
 
 LINK32=link.exe
-LINK32_FLAGS=kernel32.lib user32.lib advapi32.lib shfolder.lib wsock32.lib secur32.lib $(SSL_LIBS)  $(KFW_LIB) \
+LINK32_FLAGS=kernel32.lib user32.lib advapi32.lib shfolder.lib wsock32.lib secur32.lib $(SSL_LIBS)  $(KFW_LIB) $(ADD_SECLIB) \
  /nologo /subsystem:windows /dll $(LOPT) /incremental:no \
  /pdb:"$(OUTDIR)\libpqdll.pdb" /machine:$(CPU) \
  /out:"$(OUTDIR)\$(OUTFILENAME).dll"\
