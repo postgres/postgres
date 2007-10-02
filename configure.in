@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.527 2007/09/21 02:33:46 tgl Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.528 2007/10/02 00:25:20 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -865,6 +865,7 @@ fi
 if test "$with_openssl" = yes ; then
   AC_CHECK_HEADER(openssl/ssl.h, [], [AC_MSG_ERROR([header file <openssl/ssl.h> is required for OpenSSL])])
   AC_CHECK_HEADER(openssl/err.h, [], [AC_MSG_ERROR([header file <openssl/err.h> is required for OpenSSL])])
+  AC_CHECK_FUNCS([ERR_set_mark])
 fi
 
 if test "$with_pam" = yes ; then

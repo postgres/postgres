@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.95 2007/10/01 20:30:06 mha Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.96 2007/10/02 00:25:20 tgl Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -134,6 +134,12 @@
 #define USER_KEY_FILE		"postgresql.key"
 #define ROOT_CERT_FILE		"root.crt"
 #define ROOT_CRL_FILE		"root.crl"
+#endif
+
+#ifndef HAVE_ERR_SET_MARK
+/* These don't exist in OpenSSL before 0.9.8 */
+#define ERR_set_mark()		((void) 0)
+#define ERR_pop_to_mark()	((void) 0)
 #endif
 
 #ifdef NOT_USED
