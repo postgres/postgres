@@ -6,17 +6,24 @@
 # USE_KFW=1 will compile with kfw(kerberos for Windows)
 # DEBUG=1 compiles with debugging symbols
 # ENABLE_THREAD_SAFETY=1 compiles with threading enabled
+
+ENABLE_THREAD_SAFETY=1
+
 # CPU="i386" or CPU environment of nmake.exe (AMD64 or IA64)
 
-!IF "$(CPU)" == ""
+!IF ("$(CPU)" == "")||("$(CPU)" == "i386")
 CPU=i386
 !MESSAGE Building the Win32 static library...
 !MESSAGE
-!ELSE
+!ELSEIF ("$(CPU)" == "IA64")||("$(CPU)" == "AMD64")
 ADD_DEFINES=/D "WIN64" /Wp64 /GS
 ADD_SECLIB=bufferoverflowU.lib
 !MESSAGE Building the Win64 static library...
 !MESSAGE
+!ELSE
+!MESSAGE Please check a CPU=$(CPU) ?
+!MESSAGE CPU=i386 or AMD64 or IA64
+!ERROR Make aborted.
 !ENDIF
 
 !IFDEF DEBUG
