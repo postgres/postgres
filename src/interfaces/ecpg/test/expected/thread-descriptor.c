@@ -8,12 +8,14 @@
 #define ECPGdebug(X,Y) ECPGdebug((X)+100,(Y))
 
 #line 1 "descriptor.pgc"
+#ifdef ENABLE_THREAD_SAFETY
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <process.h>
 #else
 #include <pthread.h>
+#endif
 #endif
 #include <stdio.h>
 
@@ -89,19 +91,19 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 #endif
 
-#line 13 "descriptor.pgc"
+#line 15 "descriptor.pgc"
 
 /* exec sql whenever sqlerror  sqlprint ; */
-#line 14 "descriptor.pgc"
+#line 16 "descriptor.pgc"
 
 /* exec sql whenever not found  sqlprint ; */
-#line 15 "descriptor.pgc"
+#line 17 "descriptor.pgc"
 
 
 #ifdef WIN32
 static unsigned STDCALL fn(void* arg)
 #else
-void* fn(void* arg)
+static void* fn(void* arg)
 #endif
 {
 	int i;
@@ -109,16 +111,16 @@ void* fn(void* arg)
 	for (i = 1; i <= REPEATS; ++i)
 	{
 		ECPGallocate_desc(__LINE__, "mydesc");
-#line 27 "descriptor.pgc"
+#line 29 "descriptor.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();
-#line 27 "descriptor.pgc"
+#line 29 "descriptor.pgc"
 
 		ECPGdeallocate_desc(__LINE__, "mydesc");
-#line 28 "descriptor.pgc"
+#line 30 "descriptor.pgc"
 
 if (sqlca.sqlcode < 0) sqlprint();
-#line 28 "descriptor.pgc"
+#line 30 "descriptor.pgc"
 
 	}
 
@@ -127,6 +129,7 @@ if (sqlca.sqlcode < 0) sqlprint();
 
 int main (int argc, char** argv)
 {
+#ifdef ENABLE_THREAD_SAFETY
 	int i;
 #ifdef WIN32
 	HANDLE threads[THREADS];
@@ -149,6 +152,9 @@ int main (int argc, char** argv)
 		pthread_create(&threads[i], NULL, fn, NULL);
 	for (i = 0; i < THREADS; ++i)
 		pthread_join(threads[i], NULL);
+#endif
+#else
+	fn(NULL);
 #endif
 
 	return 0;
