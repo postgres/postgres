@@ -1,0 +1,61 @@
+#ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <process.h>
+#else
+#include <pthread.h>
+#endif
+#include <stdio.h>
+
+#define THREADS		16
+#define REPEATS		50000
+
+EXEC SQL include sqlca;
+EXEC SQL whenever sqlerror sqlprint;
+EXEC SQL whenever not found sqlprint;
+
+#ifdef WIN32
+static unsigned STDCALL fn(void* arg)
+#else
+void* fn(void* arg)
+#endif
+{
+	int i;
+
+	for (i = 1; i <= REPEATS; ++i)
+	{
+		EXEC SQL ALLOCATE DESCRIPTOR mydesc;
+		EXEC SQL DEALLOCATE DESCRIPTOR mydesc;
+	}
+
+	return 0;
+}
+
+int main (int argc, char** argv)
+{
+	int i;
+#ifdef WIN32
+	HANDLE threads[THREADS];
+#else
+	pthread_t threads[THREADS];
+#endif
+
+#ifdef WIN32
+	for (i = 0; i < THREADS; ++i)
+	{
+		unsigned id;
+		threads[i] = (HANDLE)_beginthreadex(NULL, 0, fn, NULL, 0, &id);
+	}
+
+	WaitForMultipleObjects(THREADS, threads, TRUE, INFINITE);
+	for (i = 0; i < THREADS; ++i)
+		CloseHandle(threads[i]);
+#else
+	for (i = 0; i < THREADS; ++i)
+		pthread_create(&threads[i], NULL, fn, NULL);
+	for (i = 0; i < THREADS; ++i)
+		pthread_join(threads[i], NULL);
+#endif
+
+	return 0;
+}

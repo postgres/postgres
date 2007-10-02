@@ -2247,5 +2247,10 @@ Sun, 30 Sep 2007 13:37:31 +0200
 
 	- Applied another patch by ITAGAKI Takahiro <itagaki.takahiro@oss.ntt.co.jp>
 	  to get memory allocation thread-safe. He also did some cleaning up.
+
+Tue, 02 Oct 2007 11:32:25 +0200
+
+	- ITAGAKI Takahiro <itagaki.takahiro@oss.ntt.co.jp> added thread-safe
+	  descriptor handling
 	- Set ecpg library version to 6.0.
 	- Set ecpg version to 4.4.

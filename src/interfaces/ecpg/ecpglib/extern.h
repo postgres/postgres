@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.28 2007/09/30 11:38:48 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/extern.h,v 1.29 2007/10/02 09:49:59 meskes Exp $ */
 
 #ifndef _ECPG_LIB_EXTERN_H
 #define _ECPG_LIB_EXTERN_H
@@ -36,6 +36,8 @@ bool ECPGget_data(const PGresult *, int, int, int, enum ECPGttype type,
 
 #ifdef ENABLE_THREAD_SAFETY
 void		ecpg_pthreads_init(void);
+#else
+#define		ecpg_pthreads_init()		((void)0)
 #endif
 struct connection *ECPGget_connection(const char *);
 char	   *ECPGalloc(long, int);
@@ -92,6 +94,7 @@ struct connection
 	int			autocommit;
 	struct ECPGtype_information_cache *cache_head;
 	struct prepared_statement *prep_stmts;
+	struct descriptor *descriptors;
 	struct connection *next;
 };
 
@@ -104,8 +107,6 @@ struct descriptor
 	int			count;
 	struct descriptor_item *items;
 };
-
-extern struct descriptor *all_descriptors;
 
 struct descriptor_item
 {
@@ -136,7 +137,7 @@ struct variable
 	struct variable *next;
 };
 
-PGresult  **ECPGdescriptor_lvalue(int line, const char *descriptor);
+struct descriptor *ECPGfind_desc(int line, const char *name);
 
 bool ECPGstore_result(const PGresult *results, int act_field,
 				 const struct statement * stmt, struct variable * var);

@@ -1,12 +1,13 @@
 /* dynamic SQL support routines
  *
- * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.23 2007/08/14 10:01:52 meskes Exp $
+ * $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/descriptor.c,v 1.24 2007/10/02 09:49:59 meskes Exp $
  */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
 #include "pg_type.h"
 
+#include "ecpg-pthread-win32.h"
 #include "ecpgtype.h"
 #include "ecpglib.h"
 #include "ecpgerrno.h"
@@ -14,18 +15,55 @@
 #include "sqlca.h"
 #include "sql3types.h"
 
-struct descriptor *all_descriptors = NULL;
+static void descriptor_free(struct descriptor *desc);
+static void descriptor_deallocate_all(struct descriptor *list);
+
+/* We manage descriptors separately for each thread. */
+#ifdef ENABLE_THREAD_SAFETY
+static pthread_key_t	descriptor_key;
+#ifndef WIN32
+static pthread_once_t	descriptor_once = PTHREAD_ONCE_INIT;
+#endif
+
+static void
+descriptor_destructor(void *arg)
+{
+	descriptor_deallocate_all(arg);
+}
+
+NON_EXEC_STATIC void
+descriptor_key_init(void)
+{
+	pthread_key_create(&descriptor_key, descriptor_destructor);
+}
+
+static struct descriptor *
+get_descriptors(void)
+{
+	pthread_once(&descriptor_once, descriptor_key_init);
+	return (struct descriptor *) pthread_getspecific(descriptor_key);
+}
+
+static void
+set_descriptors(struct descriptor *value)
+{
+	pthread_setspecific(descriptor_key, value);
+}
+
+#else
+static struct descriptor		*all_descriptors = NULL;
+#define get_descriptors()		(all_descriptors)
+#define set_descriptors(value)	do { all_descriptors = (value); } while(0)
+#endif
 
 /* old internal convenience function that might go away later */
-static PGresult
-		   *
+static PGresult *
 ECPGresultByDescriptor(int line, const char *name)
 {
-	PGresult  **resultpp = ECPGdescriptor_lvalue(line, name);
-
-	if (resultpp)
-		return *resultpp;
-	return NULL;
+	struct descriptor *desc = ECPGfind_desc(line, name);
+	if (desc == NULL)
+		return NULL;
+	return desc->result;
 }
 
 static unsigned int
@@ -445,20 +483,9 @@ ECPGget_desc(int lineno, const char *desc_name, int index,...)
 bool
 ECPGset_desc_header(int lineno, const char *desc_name, int count)
 {
-	struct descriptor *desc;
-
-	for (desc = all_descriptors; desc; desc = desc->next)
-	{
-		if (strcmp(desc_name, desc->name) == 0)
-			break;
-	}
-
+	struct descriptor *desc = ECPGfind_desc(lineno, desc_name);
 	if (desc == NULL)
-	{
-		ECPGraise(lineno, ECPG_UNKNOWN_DESCRIPTOR, ECPG_SQLSTATE_INVALID_SQL_DESCRIPTOR_NAME, desc_name);
 		return false;
-	}
-
 	desc->count = count;
 	return true;
 }
@@ -471,17 +498,9 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 	struct descriptor_item *desc_item;
 	struct variable *var;
 
-	for (desc = all_descriptors; desc; desc = desc->next)
-	{
-		if (strcmp(desc_name, desc->name) == 0)
-			break;
-	}
-
+	desc = ECPGfind_desc(lineno, desc_name);
 	if (desc == NULL)
-	{
-		ECPGraise(lineno, ECPG_UNKNOWN_DESCRIPTOR, ECPG_SQLSTATE_INVALID_SQL_DESCRIPTOR_NAME, desc_name);
 		return false;
-	}
 
 	for (desc_item = desc->items; desc_item; desc_item = desc_item->next)
 	{
@@ -506,7 +525,7 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 
 	va_start(args, index);
 
-	do
+	for (;;)
 	{
 		enum ECPGdtype itemtype;
 		const char *tobeinserted = NULL;
@@ -585,45 +604,67 @@ ECPGset_desc(int lineno, const char *desc_name, int index,...)
 					return false;
 				}
 		}
-	} while (true);
+	}
 	ECPGfree(var);
 
 	return true;
+}
+
+/* Free the descriptor and items in it. */
+static void
+descriptor_free(struct descriptor *desc)
+{
+	struct descriptor_item *desc_item;
+
+	for (desc_item = desc->items; desc_item;)
+	{
+		struct descriptor_item *di;
+
+		ECPGfree(desc_item->data);
+		di = desc_item;
+		desc_item = desc_item->next;
+		ECPGfree(di);
+	}
+
+	ECPGfree(desc->name);
+	PQclear(desc->result);
+	ECPGfree(desc);
 }
 
 bool
 ECPGdeallocate_desc(int line, const char *name)
 {
 	struct descriptor *desc;
-	struct descriptor **lastptr = &all_descriptors;
+	struct descriptor *prev;
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
 	ECPGinit_sqlca(sqlca);
-	for (desc = all_descriptors; desc; lastptr = &desc->next, desc = desc->next)
+	for (desc = get_descriptors(), prev = NULL; desc; prev = desc, desc = desc->next)
 	{
 		if (!strcmp(name, desc->name))
 		{
-			struct descriptor_item *desc_item;
-
-			for (desc_item = desc->items; desc_item;)
-			{
-				struct descriptor_item *di;
-
-				ECPGfree(desc_item->data);
-				di = desc_item;
-				desc_item = desc_item->next;
-				ECPGfree(di);
-			}
-
-			*lastptr = desc->next;
-			ECPGfree(desc->name);
-			PQclear(desc->result);
-			ECPGfree(desc);
+			if (prev)
+				prev->next = desc->next;
+			else
+				set_descriptors(desc->next);
+			descriptor_free(desc);
 			return true;
 		}
 	}
 	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, ECPG_SQLSTATE_INVALID_SQL_DESCRIPTOR_NAME, name);
 	return false;
+}
+
+/* Deallocate all descriptors in the list */
+static void
+descriptor_deallocate_all(struct descriptor *list)
+{
+	while (list)
+	{
+		struct descriptor *next = list->next;
+		descriptor_free(list);
+		list = next;
+	}
 }
 
 bool
@@ -636,7 +677,7 @@ ECPGallocate_desc(int line, const char *name)
 	new = (struct descriptor *) ECPGalloc(sizeof(struct descriptor), line);
 	if (!new)
 		return false;
-	new->next = all_descriptors;
+	new->next = get_descriptors();
 	new->name = ECPGalloc(strlen(name) + 1, line);
 	if (!new->name)
 	{
@@ -654,23 +695,24 @@ ECPGallocate_desc(int line, const char *name)
 		return false;
 	}
 	strcpy(new->name, name);
-	all_descriptors = new;
+	set_descriptors(new);
 	return true;
 }
 
-PGresult  **
-ECPGdescriptor_lvalue(int line, const char *descriptor)
+/* Find descriptor with name in the connection. */
+struct descriptor *
+ECPGfind_desc(int line, const char *name)
 {
-	struct descriptor *i;
+	struct descriptor *desc;
 
-	for (i = all_descriptors; i != NULL; i = i->next)
+	for (desc = get_descriptors(); desc; desc = desc->next)
 	{
-		if (!strcmp(descriptor, i->name))
-			return &i->result;
+		if (strcmp(name, desc->name) == 0)
+			return desc;
 	}
 
-	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, ECPG_SQLSTATE_INVALID_SQL_DESCRIPTOR_NAME, (char *) descriptor);
-	return NULL;
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, ECPG_SQLSTATE_INVALID_SQL_DESCRIPTOR_NAME, name);
+	return NULL;	/* not found */
 }
 
 bool

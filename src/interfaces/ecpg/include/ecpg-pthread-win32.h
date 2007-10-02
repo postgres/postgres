@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpg-pthread-win32.h,v 1.2 2007/09/30 11:38:48 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/include/ecpg-pthread-win32.h,v 1.3 2007/10/02 09:49:59 meskes Exp $ */
 /*
  * pthread mapping macros for win32 native thread implementation
  */
@@ -47,6 +47,7 @@ extern pthread_mutex_t	debug_init_mutex;
 extern void auto_mem_key_init(void);
 extern void ecpg_actual_connection_init(void);
 extern void ecpg_sqlca_key_init(void);
+extern void descriptor_key_init(void);
 extern BOOL WINAPI DllMain(HANDLE module, DWORD reason, LPVOID reserved);
 
 #endif	/* WIN32 */

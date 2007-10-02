@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.70 2007/09/26 10:57:00 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.71 2007/10/02 09:49:59 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -1088,17 +1088,9 @@ ECPGexecute(struct statement * stmt)
 			struct descriptor *desc;
 			struct descriptor_item *desc_item;
 
-			for (desc = all_descriptors; desc; desc = desc->next)
-			{
-				if (strcmp(var->pointer, desc->name) == 0)
-					break;
-			}
-
+			desc = ECPGfind_desc(stmt->lineno, var->pointer);
 			if (desc == NULL)
-			{
-				ECPGraise(stmt->lineno, ECPG_UNKNOWN_DESCRIPTOR, ECPG_SQLSTATE_INVALID_SQL_DESCRIPTOR_NAME, var->pointer);
 				return false;
-			}
 
 			desc_counter++;
 			for (desc_item = desc->items; desc_item; desc_item = desc_item->next)
@@ -1334,16 +1326,15 @@ ECPGexecute(struct statement * stmt)
 
 			if (var != NULL && var->type == ECPGt_descriptor)
 			{
-				PGresult  **resultpp = ECPGdescriptor_lvalue(stmt->lineno, (const char *) var->pointer);
-
-				if (resultpp == NULL)
+				struct descriptor *desc = ECPGfind_desc(stmt->lineno, var->pointer);
+				if (desc == NULL)
 					status = false;
 				else
 				{
-					if (*resultpp)
-						PQclear(*resultpp);
-					*resultpp = results;
-					clear_result = FALSE;
+					if (desc->result)
+						PQclear(desc->result);
+					desc->result = results;
+					clear_result = false;
 					ECPGlog("ECPGexecute putting result (%d tuples) into descriptor '%s'\n", PQntuples(results), (const char *) var->pointer);
 				}
 				var = var->next;
