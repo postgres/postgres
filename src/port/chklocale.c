@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.3 2007/09/29 00:01:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/chklocale.c,v 1.4 2007/10/03 17:16:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,13 +27,12 @@
 #include "mb/pg_wchar.h"
 
 
-#if defined(HAVE_LANGINFO_H) && defined(CODESET)
-
 /*
  * This table needs to recognize all the CODESET spellings for supported
  * backend encodings, as well as frontend-only encodings where possible
  * (the latter case is currently only needed for initdb to recognize
- * error situations).
+ * error situations).  On Windows, we rely on entries for codepage
+ * numbers (CPnnn).
  *
  * Note that we search the table with pg_strcasecmp(), so variant
  * capitalizations don't need their own entries.
@@ -49,23 +48,27 @@ static const struct encoding_match encoding_match_list[] = {
 	{PG_EUC_JP, "eucJP"},
 	{PG_EUC_JP, "IBM-eucJP"},
 	{PG_EUC_JP, "sdeckanji"},
+	{PG_EUC_JP, "CP20932"},
 
 	{PG_EUC_CN, "EUC-CN"},
 	{PG_EUC_CN, "eucCN"},
 	{PG_EUC_CN, "IBM-eucCN"},
 	{PG_EUC_CN, "GB2312"},
 	{PG_EUC_CN, "dechanzi"},
+	{PG_EUC_CN, "CP20936"},
 
 	{PG_EUC_KR, "EUC-KR"},
 	{PG_EUC_KR, "eucKR"},
 	{PG_EUC_KR, "IBM-eucKR"},
 	{PG_EUC_KR, "deckorean"},
 	{PG_EUC_KR, "5601"},
+	{PG_EUC_KR, "CP51949"},	/* or 20949 ? */
 
 	{PG_EUC_TW, "EUC-TW"},
 	{PG_EUC_TW, "eucTW"},
 	{PG_EUC_TW, "IBM-eucTW"},
 	{PG_EUC_TW, "cns11643"},
+	/* No codepage for EUC-TW ? */
 
 	{PG_UTF8, "UTF-8"},
 	{PG_UTF8, "utf8"},
@@ -111,6 +114,7 @@ static const struct encoding_match encoding_match_list[] = {
 	{PG_LATIN10, "iso885916"},
 
 	{PG_KOI8R, "KOI8-R"},
+	{PG_KOI8R, "CP20866"},
 
 	{PG_WIN1252, "CP1252"},
 	{PG_WIN1253, "CP1253"},
@@ -143,23 +147,56 @@ static const struct encoding_match encoding_match_list[] = {
 
 	{PG_SJIS, "SJIS"},
 	{PG_SJIS, "PCK"},
+	{PG_SJIS, "CP932"},
 
 	{PG_BIG5, "BIG5"},
 	{PG_BIG5, "BIG5HKSCS"},
+	{PG_BIG5, "CP950"},
 
 	{PG_GBK, "GBK"},
+	{PG_GBK, "CP936"},
 
 	{PG_UHC, "UHC"},
 
 	{PG_JOHAB, "JOHAB"},
+	{PG_JOHAB, "CP1361"},
 
 	{PG_GB18030, "GB18030"},
+	{PG_GB18030, "CP54936"},
 
 	{PG_SHIFT_JIS_2004, "SJIS_2004"},
 
 	{PG_SQL_ASCII, NULL}		/* end marker */
 };
 
+#ifdef WIN32
+/*
+ * On Windows, use CP<codepage number> instead of the nl_langinfo() result
+ */
+static char *
+win32_langinfo(const char *ctype)
+{
+	char	   *r;
+	char	   *codepage;
+	int			ln;
+
+	/*
+	 * Locale format on Win32 is <Language>_<Country>.<CodePage> .
+	 * For example, English_USA.1252.
+	 */
+	codepage = strrchr(ctype, '.');
+	if (!codepage)
+		return NULL;
+	codepage++;
+	ln = strlen(codepage);
+	r = malloc(ln + 3);
+	sprintf(r, "CP%s", codepage);
+
+	return r;
+}
+#endif /* WIN32 */
+
+#if (defined(HAVE_LANGINFO_H) && defined(CODESET)) || defined(WIN32)
 
 /*
  * Given a setting for LC_CTYPE, return the Postgres ID of the associated
@@ -181,6 +218,7 @@ pg_get_encoding_from_locale(const char *ctype)
 	if (ctype)
 	{
 		char	   *save;
+		char	   *name;
 
 		save = setlocale(LC_CTYPE, NULL);
 		if (!save)
@@ -190,15 +228,20 @@ pg_get_encoding_from_locale(const char *ctype)
 		if (!save)
 			return PG_SQL_ASCII;		/* out of memory; unlikely */
 
-		if (!setlocale(LC_CTYPE, ctype))
+		name = setlocale(LC_CTYPE, ctype);
+		if (!name)
 		{
 			free(save);
 			return PG_SQL_ASCII;		/* bogus ctype passed in? */
 		}
 
+#ifndef WIN32
 		sys = nl_langinfo(CODESET);
 		if (sys)
 			sys = strdup(sys);
+#else
+		sys = win32_langinfo(name);
+#endif
 
 		setlocale(LC_CTYPE, save);
 		free(save);
@@ -209,9 +252,13 @@ pg_get_encoding_from_locale(const char *ctype)
 		ctype = setlocale(LC_CTYPE, NULL);
 		if (!ctype)
 			return PG_SQL_ASCII;		/* setlocale() broken? */
+#ifndef WIN32
 		sys = nl_langinfo(CODESET);
 		if (sys)
 			sys = strdup(sys);
+#else
+		sys = win32_langinfo(ctype);
+#endif
 	}
 
 	if (!sys)
@@ -268,7 +315,7 @@ pg_get_encoding_from_locale(const char *ctype)
 	return PG_SQL_ASCII;
 }
 
-#else /* !(HAVE_LANGINFO_H && CODESET) */
+#else /* (HAVE_LANGINFO_H && CODESET) || WIN32 */
 
 /*
  * stub if no platform support
@@ -279,4 +326,4 @@ pg_get_encoding_from_locale(const char *ctype)
 	return PG_SQL_ASCII;
 }
 
-#endif /* HAVE_LANGINFO_H && CODESET */
+#endif /* (HAVE_LANGINFO_H && CODESET) || WIN32 */
