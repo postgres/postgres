@@ -16,7 +16,7 @@ EXEC SQL include sqlca;
 EXEC SQL whenever sqlerror sqlprint;
 EXEC SQL whenever not found sqlprint;
 
-#ifdef WIN32
+#if defined(ENABLE_THREAD_SAFETY) && defined(WIN32)
 static unsigned STDCALL fn(void* arg)
 #else
 static void* fn(void* arg)

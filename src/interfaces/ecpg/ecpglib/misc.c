@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.38 2007/10/02 09:49:59 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.39 2007/10/03 08:55:22 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -57,9 +57,7 @@ static struct sqlca_t sqlca_init =
 
 #ifdef ENABLE_THREAD_SAFETY
 static pthread_key_t sqlca_key;
-#ifndef WIN32
 static pthread_once_t sqlca_key_once = PTHREAD_ONCE_INIT;
-#endif
 #else
 static struct sqlca_t sqlca =
 {
@@ -90,8 +88,8 @@ static struct sqlca_t sqlca =
 #endif
 
 #ifdef ENABLE_THREAD_SAFETY
-NON_EXEC_STATIC pthread_mutex_t debug_mutex = PTHREAD_MUTEX_INITIALIZER;
-NON_EXEC_STATIC pthread_mutex_t debug_init_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t debug_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t debug_init_mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 static int	simple_debug = 0;
 static FILE *debugstream = NULL;
@@ -125,7 +123,7 @@ ecpg_sqlca_key_destructor(void *arg)
 	free(arg);				/* sqlca structure allocated in ECPGget_sqlca */
 }
 
-NON_EXEC_STATIC void
+static void
 ecpg_sqlca_key_init(void)
 {
 	pthread_key_create(&sqlca_key, ecpg_sqlca_key_destructor);
@@ -415,24 +413,37 @@ ECPGis_noind_null(enum ECPGttype type, void *ptr)
 }
 
 #ifdef WIN32
+#ifdef ENABLE_THREAD_SAFETY
 
-/*
- * Initialize mutexes and call init-once functions on loading.
- */
-
-BOOL WINAPI
-DllMain(HANDLE module, DWORD reason, LPVOID reserved)
+void
+win32_pthread_mutex(volatile pthread_mutex_t *mutex)
 {
-	if (reason == DLL_PROCESS_ATTACH)
+	if (mutex->handle == NULL)
 	{
-		connections_mutex = CreateMutex(NULL, FALSE, NULL);
-		debug_mutex = CreateMutex(NULL, FALSE, NULL);
-		debug_init_mutex = CreateMutex(NULL, FALSE, NULL);
-		auto_mem_key_init();
-		ecpg_actual_connection_init();
-		ecpg_sqlca_key_init();
-		descriptor_key_init();
+		while (InterlockedExchange((LONG *)&mutex->initlock, 1) == 1)
+			Sleep(0);
+		if (mutex->handle == NULL)
+			mutex->handle = CreateMutex(NULL, FALSE, NULL);
+		InterlockedExchange((LONG *)&mutex->initlock, 0);
 	}
-	return TRUE;
 }
-#endif
+
+static pthread_mutex_t	win32_pthread_once_lock = PTHREAD_MUTEX_INITIALIZER;
+
+void
+win32_pthread_once(volatile pthread_once_t *once, void (*fn)(void))
+{
+	if (!*once)
+	{
+		pthread_mutex_lock(&win32_pthread_once_lock);
+		if (!*once)
+		{
+			*once = true;
+			fn();
+		}
+		pthread_mutex_unlock(&win32_pthread_once_lock);
+	}
+}
+
+#endif	/* ENABLE_THREAD_SAFETY */
+#endif	/* WIN32 */

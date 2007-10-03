@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.45 2007/10/02 09:49:59 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.46 2007/10/03 08:55:22 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -11,17 +11,15 @@
 #include "sqlca.h"
 
 #ifdef ENABLE_THREAD_SAFETY
-NON_EXEC_STATIC pthread_mutex_t	connections_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t	connections_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t	actual_connection_key;
-#ifndef WIN32
 static pthread_once_t	actual_connection_key_once = PTHREAD_ONCE_INIT;
-#endif
 #endif
 static struct connection *actual_connection = NULL;
 static struct connection *all_connections = NULL;
 
 #ifdef ENABLE_THREAD_SAFETY
-NON_EXEC_STATIC void
+static void
 ecpg_actual_connection_init(void)
 {
 	pthread_key_create(&actual_connection_key, NULL);
@@ -447,7 +445,6 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 
 	this->cache_head = NULL;
 	this->prep_stmts = NULL;
-	this->descriptors = NULL;
 
 	if (all_connections == NULL)
 		this->next = NULL;

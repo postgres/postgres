@@ -100,7 +100,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 #line 17 "descriptor.pgc"
 
 
-#ifdef WIN32
+#if defined(ENABLE_THREAD_SAFETY) && defined(WIN32)
 static unsigned STDCALL fn(void* arg)
 #else
 static void* fn(void* arg)

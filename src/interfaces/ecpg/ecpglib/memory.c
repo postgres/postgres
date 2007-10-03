@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.9 2007/09/30 11:38:48 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.10 2007/10/03 08:55:22 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -70,9 +70,7 @@ struct auto_mem
 
 #ifdef ENABLE_THREAD_SAFETY
 static pthread_key_t	auto_mem_key;
-#ifndef WIN32
 static pthread_once_t	auto_mem_once = PTHREAD_ONCE_INIT;
-#endif
 
 static void
 auto_mem_destructor(void *arg)
@@ -80,7 +78,7 @@ auto_mem_destructor(void *arg)
 	ECPGfree_auto_mem();
 }
 
-NON_EXEC_STATIC void
+static void
 auto_mem_key_init(void)
 {
 	pthread_key_create(&auto_mem_key, auto_mem_destructor);

@@ -2252,5 +2252,9 @@ Tue, 02 Oct 2007 11:32:25 +0200
 
 	- ITAGAKI Takahiro <itagaki.takahiro@oss.ntt.co.jp> added thread-safe
 	  descriptor handling
+	
+Wed, 03 Oct 2007 10:48:39 +0200
+
+	- Hopefully fixed some stuff that causes Windows builds to fail.
 	- Set ecpg library version to 6.0.
 	- Set ecpg version to 4.4.
