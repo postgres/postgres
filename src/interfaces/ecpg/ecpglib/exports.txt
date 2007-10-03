@@ -1,5 +1,5 @@
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/exports.txt,v 1.1 2007/10/03 11:11:12 meskes Exp $
-# Functions to be exported by libpq DLLs
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/exports.txt,v 1.2 2007/10/03 12:11:37 mha Exp $
+# Functions to be exported by ecpglib DLL
 ECPGallocate_desc		1
 ECPGconnect			2
 ECPGdeallocate			3
