@@ -3,7 +3,7 @@ package Solution;
 #
 # Package that encapsulates a Visual C++ solution file generation
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.32 2007/09/03 02:51:47 tgl Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Solution.pm,v 1.33 2007/10/03 12:11:00 mha Exp $
 #
 use Carp;
 use strict;
@@ -139,21 +139,8 @@ s{PG_VERSION_STR "[^"]+"}{__STRINGIFY(x) #x\n#define __STRINGIFY2(z) __STRINGIFY
         close(I);
     }
 
-    if (IsNewer("src\\interfaces\\libpq\\libpqdll.def","src\\interfaces\\libpq\\exports.txt"))
-    {
-        print "Generating libpqdll.def...\n";
-        open(I,"src\\interfaces\\libpq\\exports.txt") || confess("Could not open exports.txt\n");
-        open(O,">src\\interfaces\\libpq\\libpqdll.def") || confess("Could not open libpqdll.def\n");
-        print O "LIBRARY LIBPQ\nEXPORTS\n";
-        while (<I>)
-        {
-            next if (/^#/);
-            my ($f, $o) = split;
-            print O " $f @ $o\n";
-        }
-        close(O);
-        close(I);
-    }
+    $self->GenerateDefFile("src\\interfaces\\libpq\\libpqdll.def","src\\interfaces\\libpq\\exports.txt","LIBPQ");
+    $self->GenerateDefFile("src\\interfaces\\ecpg\\ecpglib\\ecpglib.def","src\\interfaces\\ecpg\\ecpglib\\exports.txt","LIBECPG");
 
     if (IsNewer("src\\backend\\utils\\fmgrtab.c","src\\include\\catalog\\pg_proc.h"))
     {
@@ -302,6 +289,28 @@ EOF
 <!entity majorversion "$self->{majorver}">
 EOF
     close(O);
+}
+
+sub GenerateDefFile
+{
+    my ($self, $deffile, $txtfile, $libname)  = @_;
+
+    if (IsNewer($deffile,$txtfile))
+    {
+        print "Generating $deffile...\n";
+        open(I,$txtfile) || confess("Could not open $txtfile\n");
+        open(O,">$deffile") || confess("Could not open $deffile\n");
+        print O "LIBRARY $libname\nEXPORTS\n";
+        while (<I>)
+        {
+            next if (/^#/);
+            next if (/^\s*$/);
+            my ($f, $o) = split;
+            print O " $f @ $o\n";
+        }
+        close(O);
+        close(I);
+    }
 }
 
 sub AddProject

@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.18 2007/09/29 07:15:33 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.19 2007/10/03 12:11:00 mha Exp $
 #
 use Carp;
 use Win32;
@@ -144,6 +144,7 @@ sub mkvcbuild
     $libecpg->AddIncludeDir('src\interfaces\ecpg\include');
     $libecpg->AddIncludeDir('src\interfaces\libpq');
     $libecpg->AddIncludeDir('src\port');
+    $libecpg->UseDef('src\interfaces\ecpg\ecpglib\ecpglib.def');
     $libecpg->AddLibrary('wsock32.lib');
     $libecpg->AddReference($libpq,$pgtypes,$libpgport);
 
