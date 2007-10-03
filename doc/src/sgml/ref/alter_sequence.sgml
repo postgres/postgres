@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.17 2007/07/03 01:30:35 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/alter_sequence.sgml,v 1.18 2007/10/03 16:48:43 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -28,8 +28,8 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> [ INCREMENT [ B
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> | NO MINVALUE ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> | NO MAXVALUE ]
     [ RESTART [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
     [ OWNED BY { <replaceable class="parameter">table</replaceable>.<replaceable class="parameter">column</replaceable> | NONE } ]
-ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
 ALTER SEQUENCE <replaceable class="parameter">name</replaceable> RENAME TO <replaceable class="parameter">new_name</replaceable>
+ALTER SEQUENCE <replaceable class="parameter">name</replaceable> SET SCHEMA <replaceable class="parameter">new_schema</replaceable>
   </synopsis>
  </refsynopsisdiv>
 
@@ -184,19 +184,19 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> RENAME TO <repl
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">new_schema</replaceable></term>
+    <term><replaceable class="parameter">new_name</replaceable></term>
     <listitem>
      <para>
-      The new schema for the sequence.
+      The new name for the sequence.
      </para>
     </listitem>
    </varlistentry>
 
    <varlistentry>
-    <term><replaceable class="parameter">new_name</replaceable></term>
+    <term><replaceable class="parameter">new_schema</replaceable></term>
     <listitem>
      <para>
-      The new name for the sequence.
+      The new schema for the sequence.
      </para>
     </listitem>
    </varlistentry>
@@ -206,17 +206,6 @@ ALTER SEQUENCE <replaceable class="parameter">name</replaceable> RENAME TO <repl
   </refsect1>
 
  <refsect1>
-  <title>Examples</title>
-
-  <para>
-   Restart a sequence called <literal>serial</literal>, at 105:
-<programlisting>
-ALTER SEQUENCE serial RESTART WITH 105;
-</programlisting>
-  </para>
- </refsect1>
-
- <refsect1>
   <title>Notes</title>
 
   <para>
@@ -224,8 +213,8 @@ ALTER SEQUENCE serial RESTART WITH 105;
    same sequence, <command>ALTER SEQUENCE</command>'s effects on the sequence
    generation parameters are never rolled back;
    those changes take effect immediately and are not reversible.  However,
-   the <literal>OWNED BY</> and <literal>SET SCHEMA</> clauses are ordinary
-   catalog updates and can be rolled back.
+   the <literal>OWNED BY</>, <literal>RENAME</>, and <literal>SET SCHEMA</>
+   clauses cause ordinary catalog updates that can be rolled back.
   </para>
 
   <para>
@@ -239,20 +228,30 @@ ALTER SEQUENCE serial RESTART WITH 105;
 
   <para>
    Some variants of <command>ALTER TABLE</command> can be used with
-   sequences as well; for example, to rename a sequence use <command>ALTER
-   TABLE RENAME</command>.
+   sequences as well; for example, to rename a sequence it is also
+   possible to use <command>ALTER TABLE RENAME</command>.
   </para>
  </refsect1>
 
+ <refsect1>
+  <title>Examples</title>
+
+  <para>
+   Restart a sequence called <literal>serial</literal>, at 105:
+<programlisting>
+ALTER SEQUENCE serial RESTART WITH 105;
+</programlisting>
+  </para>
+ </refsect1>
 
  <refsect1>
   <title>Compatibility</title>
 
   <para>
    <command>ALTER SEQUENCE</command> conforms to the <acronym>SQL</acronym>
-   standard,
-   except for the <literal>OWNED BY</> and <literal>SET SCHEMA</literal>
-   clauses, which are <productname>PostgreSQL</productname> extensions.
+   standard, except for the <literal>OWNED BY</>, <literal>RENAME</>, and
+   <literal>SET SCHEMA</literal> clauses, which are
+   <productname>PostgreSQL</productname> extensions.
   </para>
  </refsect1>
 
