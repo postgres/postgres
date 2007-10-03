@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
   for( n = 0; n < nthreads; n++ )
     {
 #ifndef WIN32
-      pthread_create(&threads[n], NULL, test_thread, (void *) (n + 1));
+      pthread_create(&threads[n], NULL, test_thread, (void *) (long) (n + 1));
 #else
       threads[n] = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE) test_thread, (void *) (n+1), 0, NULL);
 #endif

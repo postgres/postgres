@@ -41,7 +41,7 @@ static void* fn(void* arg)
 	char query[256] = "INSERT INTO T VALUES ( ? )";
 	EXEC SQL END DECLARE SECTION;
 
-	value = (int)arg;
+	value = (long)arg;
 	sprintf(name, "Connection: %d", value);
 
 	EXEC SQL CONNECT TO REGRESSDB1 AS :name;
@@ -84,7 +84,7 @@ int main (int argc, char** argv)
 		CloseHandle(threads[i]);
 #else
 	for (i = 0; i < THREADS; ++i)
-		pthread_create(&threads[i], NULL, fn, (void*)i);
+		pthread_create(&threads[i], NULL, fn, (void *) (long) i);
 	for (i = 0; i < THREADS; ++i)
 		pthread_join(threads[i], NULL);
 #endif
