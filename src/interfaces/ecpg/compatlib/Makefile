@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.28 2007/10/03 13:20:19 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.29 2007/10/03 13:24:54 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -87,4 +87,4 @@ installdirs:
 uninstall: uninstall-lib
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) snprintf.c
+	rm -f $(OBJS) snprintf.c exports.list
