@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.10 2007/10/03 08:55:22 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/memory.c,v 1.11 2007/10/03 11:11:12 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -10,19 +10,19 @@
 #include "extern.h"
 
 void
-ECPGfree(void *ptr)
+ecpg_free(void *ptr)
 {
 	free(ptr);
 }
 
 char *
-ECPGalloc(long size, int lineno)
+ecpg_alloc(long size, int lineno)
 {
 	char	   *new = (char *) calloc(1L, size);
 
 	if (!new)
 	{
-		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
+		ecpg_raise(lineno, ECPG_OUT_OF_MEMORY, ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
 		return NULL;
 	}
 
@@ -30,13 +30,13 @@ ECPGalloc(long size, int lineno)
 }
 
 char *
-ECPGrealloc(void *ptr, long size, int lineno)
+ecpg_realloc(void *ptr, long size, int lineno)
 {
 	char	   *new = (char *) realloc(ptr, size);
 
 	if (!new)
 	{
-		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
+		ecpg_raise(lineno, ECPG_OUT_OF_MEMORY, ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
 		return NULL;
 	}
 
@@ -44,7 +44,7 @@ ECPGrealloc(void *ptr, long size, int lineno)
 }
 
 char *
-ECPGstrdup(const char *string, int lineno)
+ecpg_strdup(const char *string, int lineno)
 {
 	char	   *new;
 
@@ -54,7 +54,7 @@ ECPGstrdup(const char *string, int lineno)
 	new = strdup(string);
 	if (!new)
 	{
-		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
+		ecpg_raise(lineno, ECPG_OUT_OF_MEMORY, ECPG_SQLSTATE_ECPG_OUT_OF_MEMORY, NULL);
 		return NULL;
 	}
 
@@ -104,9 +104,9 @@ static struct auto_mem	*auto_allocs = NULL;
 #endif
 
 void
-ECPGadd_mem(void *ptr, int lineno)
+ecpg_add_mem(void *ptr, int lineno)
 {
-	struct auto_mem *am = (struct auto_mem *) ECPGalloc(sizeof(struct auto_mem), lineno);
+	struct auto_mem *am = (struct auto_mem *) ecpg_alloc(sizeof(struct auto_mem), lineno);
 
 	am->pointer = ptr;
 	am->next = get_auto_allocs();
@@ -125,15 +125,15 @@ ECPGfree_auto_mem(void)
 		{
 			struct auto_mem *act = am;
 			am = am->next;
-			ECPGfree(act->pointer);
-			ECPGfree(act);
+			ecpg_free(act->pointer);
+			ecpg_free(act);
 		} while(am);
 		set_auto_allocs(NULL);
 	}
 }
 
 void
-ECPGclear_auto_mem(void)
+ecpg_clear_auto_mem(void)
 {
 	struct auto_mem *am = get_auto_allocs();
 
@@ -144,7 +144,7 @@ ECPGclear_auto_mem(void)
 		{
 			struct auto_mem *act = am;
 			am = am->next;
-			ECPGfree(act);
+			ecpg_free(act);
 		} while(am);
 		set_auto_allocs(NULL);
 	}

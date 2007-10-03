@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.74 2007/08/22 08:20:58 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/type.c,v 1.75 2007/10/03 11:11:12 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -427,7 +427,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				else
 					sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
 
-				sprintf(offset, "sizeof(%s)", ECPGtype_name(type));
+				sprintf(offset, "sizeof(%s)", ecpg_type_name(type));
 				break;
 		}
 

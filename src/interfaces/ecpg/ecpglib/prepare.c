@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.21 2007/09/30 11:38:48 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.22 2007/10/03 11:11:12 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -77,15 +77,15 @@ replace_variables(char **text, int lineno, bool questionmarks)
 			int buffersize = sizeof(int) * CHAR_BIT * 10 / 3; /* a rough guess of the size we need */
 			char *buffer, *newcopy;
 
-			if (!(buffer = (char *) ECPGalloc(buffersize, lineno)))
+			if (!(buffer = (char *) ecpg_alloc(buffersize, lineno)))
 				return false;
 
 			snprintf(buffer, buffersize, "$%d", counter++);
 
 			for (len=1; (*text)[ptr+len] && isvarchar((*text)[ptr+len]); len++);
-			if (!(newcopy = (char *) ECPGalloc(strlen(*text) - len + strlen(buffer) + 1, lineno)))
+			if (!(newcopy = (char *) ecpg_alloc(strlen(*text) - len + strlen(buffer) + 1, lineno)))
 			{
-				ECPGfree(buffer);
+				ecpg_free(buffer);
 				return false;
 			}
 
@@ -93,8 +93,8 @@ replace_variables(char **text, int lineno, bool questionmarks)
 			strcpy(newcopy + ptr, buffer);
 			strcat(newcopy, (*text) + ptr + len);
 
-			ECPGfree(*text);
-			ECPGfree(buffer);
+			ecpg_free(*text);
+			ecpg_free(buffer);
 
 			*text = newcopy;
 
@@ -117,9 +117,9 @@ ECPGprepare(int lineno, const char *connection_name, const int questionmarks, co
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 	PGresult   *query;
 
-	ECPGinit_sqlca(sqlca);
+	ecpg_init_sqlca(sqlca);
 
-	con = ECPGget_connection(connection_name);
+	con = ecpg_get_connection(connection_name);
 
 	/* check if we already have prepared this statement */
 	this = find_prepared_statement(name, con, &prev);
@@ -127,21 +127,21 @@ ECPGprepare(int lineno, const char *connection_name, const int questionmarks, co
 		return false;
 
 	/* allocate new statement */
-	this = (struct prepared_statement *) ECPGalloc(sizeof(struct prepared_statement), lineno);
+	this = (struct prepared_statement *) ecpg_alloc(sizeof(struct prepared_statement), lineno);
 	if (!this)
 		return false;
 
-	stmt = (struct statement *) ECPGalloc(sizeof(struct statement), lineno);
+	stmt = (struct statement *) ecpg_alloc(sizeof(struct statement), lineno);
 	if (!stmt)
 	{
-		ECPGfree(this);
+		ecpg_free(this);
 		return false;
 	}
 
 	/* create statement */
 	stmt->lineno = lineno;
 	stmt->connection = con;
-	stmt->command = ECPGstrdup(variable, lineno);
+	stmt->command = ecpg_strdup(variable, lineno);
 	stmt->inlist = stmt->outlist = NULL;
 
 	/* if we have C variables in our statment replace them with '?' */
@@ -153,15 +153,15 @@ ECPGprepare(int lineno, const char *connection_name, const int questionmarks, co
 
 	/* and finally really prepare the statement */
 	query = PQprepare(stmt->connection->connection, name, stmt->command, 0, NULL);
-	if (!ECPGcheck_PQresult(query, stmt->lineno, stmt->connection->connection, stmt->compat))
+	if (!ecpg_check_PQresult(query, stmt->lineno, stmt->connection->connection, stmt->compat))
 	{
-		ECPGfree(stmt->command);
-		ECPGfree(this);
-		ECPGfree(stmt);
+		ecpg_free(stmt->command);
+		ecpg_free(this);
+		ecpg_free(stmt);
 		return false;
 	}
 
-	ECPGlog("ECPGprepare line %d: NAME: %s QUERY: %s\n", stmt->lineno, name, stmt->command);
+	ecpg_log("ECPGprepare line %d: NAME: %s QUERY: %s\n", stmt->lineno, name, stmt->command);
 	PQclear(query);
 	this->prepared = true;
 
@@ -197,7 +197,7 @@ deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con, struct pr
 {
 	bool	r = false;
 
-	ECPGlog("ECPGdeallocate line %d: NAME: %s\n", lineno, this->name);
+	ecpg_log("ECPGdeallocate line %d: NAME: %s\n", lineno, this->name);
 
 	/* first deallocate the statement in the backend */
 	if (this->prepared)
@@ -205,13 +205,13 @@ deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con, struct pr
 		char *text;
 		PGresult *query;
 		
-		text = (char *) ECPGalloc(strlen("deallocate \"\" ") + strlen(this->name), this->stmt->lineno);
+		text = (char *) ecpg_alloc(strlen("deallocate \"\" ") + strlen(this->name), this->stmt->lineno);
 		if (text)
 		{
 			sprintf(text, "deallocate \"%s\"", this->name);
 			query = PQexec(this->stmt->connection->connection, text);
-			ECPGfree(text);
-			if (ECPGcheck_PQresult(query, lineno, this->stmt->connection->connection, this->stmt->compat))
+			ecpg_free(text);
+			if (ecpg_check_PQresult(query, lineno, this->stmt->connection->connection, this->stmt->compat))
 			{
 				PQclear(query);
 				r = true;
@@ -225,19 +225,19 @@ deallocate_one(int lineno, enum COMPAT_MODE c, struct connection *con, struct pr
 	 */
 	if (!r && !INFORMIX_MODE(c))
 	{
-		ECPGraise(lineno, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, this->name);
+		ecpg_raise(lineno, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, this->name);
 		return false;
 	}
 	
 	/* okay, free all the resources */
-	ECPGfree(this->stmt->command);
-	ECPGfree(this->stmt);
+	ecpg_free(this->stmt->command);
+	ecpg_free(this->stmt);
 	if (prev != NULL)
 		prev->next = this->next;
 	else
 		con->prep_stmts = this->next;
 
-	ECPGfree(this);
+	ecpg_free(this);
 	return true;
 }
 
@@ -249,7 +249,7 @@ ECPGdeallocate(int lineno, int c, const char *connection_name, const char *name)
 	struct prepared_statement  *this,
 							   *prev;
 
-	con = ECPGget_connection(connection_name);
+	con = ecpg_get_connection(connection_name);
 
 	this = find_prepared_statement(name, con, &prev);
 	if (this)
@@ -258,12 +258,12 @@ ECPGdeallocate(int lineno, int c, const char *connection_name, const char *name)
 	/* prepared statement is not found */
 	if (INFORMIX_MODE(c))
 		return true;
-	ECPGraise(lineno, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, name);
+	ecpg_raise(lineno, ECPG_INVALID_STMT, ECPG_SQLSTATE_INVALID_SQL_STATEMENT_NAME, name);
 	return false;
 }
 
 bool
-ECPGdeallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *con)
+ecpg_deallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *con)
 {
 	/* deallocate all prepared statements */
 	while (con->prep_stmts)
@@ -278,11 +278,11 @@ ECPGdeallocate_all_conn(int lineno, enum COMPAT_MODE c, struct connection *con)
 bool
 ECPGdeallocate_all(int lineno, int compat, const char *connection_name)
 {
-	return ECPGdeallocate_all_conn(lineno, compat, ECPGget_connection(connection_name));
+	return ecpg_deallocate_all_conn(lineno, compat, ecpg_get_connection(connection_name));
 }
 
 char *
-ECPGprepared(const char *name, struct connection *con, int lineno)
+ecpg_prepared(const char *name, struct connection *con, int lineno)
 {
 	struct prepared_statement  *this;
 	this = find_prepared_statement(name, con, NULL);
@@ -293,7 +293,7 @@ ECPGprepared(const char *name, struct connection *con, int lineno)
 char *
 ECPGprepared_statement(const char *connection_name, const char *name, int lineno)
 {
-	return ECPGprepared(name, ECPGget_connection(connection_name), lineno);
+	return ecpg_prepared(name, ecpg_get_connection(connection_name), lineno);
 }
 
 /*
@@ -362,7 +362,7 @@ SearchStmtCache(const char *ecpgQuery)
  *   OR  negative error code
  */
 static int
-ECPGfreeStmtCacheEntry(int      entNo)          /* entry # to free          */
+ecpg_freeStmtCacheEntry(int      entNo)          /* entry # to free          */
 {
     stmtCacheEntry  *entry;
     PGresult        *results;
@@ -373,13 +373,13 @@ ECPGfreeStmtCacheEntry(int      entNo)          /* entry # to free          */
     if(!entry->stmtID[0])                       /* return if the entry isn't in use     */
         return(0);
 
-    con = ECPGget_connection(entry->connection);
+    con = ecpg_get_connection(entry->connection);
 /* free the server resources for the statement                                          */
-    ECPGlog("ECPGfreeStmtCacheEntry line %d: deallocate %s, cache entry #%d\n", entry->lineno, entry->stmtID, entNo);
+    ecpg_log("ecpg_freeStmtCacheEntry line %d: deallocate %s, cache entry #%d\n", entry->lineno, entry->stmtID, entNo);
     sprintf(deallocText, "DEALLOCATE PREPARE %s", entry->stmtID);
     results = PQexec(con->connection, deallocText);
 
-    if (!ECPGcheck_PQresult(results, entry->lineno, con->connection, ECPG_COMPAT_PGSQL))
+    if (!ecpg_check_PQresult(results, entry->lineno, con->connection, ECPG_COMPAT_PGSQL))
     	return(-1);
     PQclear(results);
 
@@ -388,7 +388,7 @@ ECPGfreeStmtCacheEntry(int      entNo)          /* entry # to free          */
 /* free the memory used by the cache entry      */
     if(entry->ecpgQuery)
     {
-	ECPGfree(entry->ecpgQuery);
+	ecpg_free(entry->ecpgQuery);
         entry->ecpgQuery = 0;
     }
 
@@ -429,13 +429,13 @@ AddStmtToCache(int      	lineno,         /* line # of statement      */
         entNo = luEntNo;                            /* re-use the 'least used' entry    */
 
 /* 'entNo' is the entry to use - make sure its free                                     */
-    if (ECPGfreeStmtCacheEntry(entNo) < 0)
+    if (ecpg_freeStmtCacheEntry(entNo) < 0)
     	return (-1);
 
 /* add the query to the entry                                                           */
     entry = &stmtCacheEntries[entNo];
     entry->lineno = lineno;
-    entry->ecpgQuery = ECPGstrdup(ecpgQuery, lineno);
+    entry->ecpgQuery = ecpg_strdup(ecpgQuery, lineno);
     entry->connection = (char *)connection;
     entry->execs = 0;
     memcpy(entry->stmtID, stmtID, sizeof(entry->stmtID));
@@ -445,7 +445,7 @@ AddStmtToCache(int      	lineno,         /* line # of statement      */
 
 /* handle cache and preparation of statments in auto-prepare mode */
 bool
-ECPGauto_prepare(int lineno, const char *connection_name, const int questionmarks, char **name, const char *query)
+ecpg_auto_prepare(int lineno, const char *connection_name, const int questionmarks, char **name, const char *query)
 {
 	int entNo;
 
@@ -455,18 +455,18 @@ ECPGauto_prepare(int lineno, const char *connection_name, const int questionmark
 	/* if not found - add the statement to the cache    */
 	if(entNo)
 	{
-		ECPGlog("ECPGauto_prepare line %d: stmt found in cache, entry %d\n", lineno, entNo);
-		*name = ECPGstrdup(stmtCacheEntries[entNo].stmtID, lineno); 
+		ecpg_log("ecpg_auto_prepare line %d: stmt found in cache, entry %d\n", lineno, entNo);
+		*name = ecpg_strdup(stmtCacheEntries[entNo].stmtID, lineno); 
 	}
 	else
 	{
-		ECPGlog("ECPGauto_prepare line %d: stmt not in cache; inserting\n", lineno);
+		ecpg_log("ecpg_auto_prepare line %d: stmt not in cache; inserting\n", lineno);
 
 		/* generate a statement ID */
-		*name = (char *) ECPGalloc(STMTID_SIZE, lineno);
+		*name = (char *) ecpg_alloc(STMTID_SIZE, lineno);
 		sprintf(*name, "ecpg%d", nextStmtID++);
 
-		if (!ECPGprepare(lineno, connection_name, questionmarks, ECPGstrdup(*name, lineno), query))
+		if (!ECPGprepare(lineno, connection_name, questionmarks, ecpg_strdup(*name, lineno), query))
 			return(false);
 		if (AddStmtToCache(lineno, *name, connection_name, query) < 0)
 			return(false);

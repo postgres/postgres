@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.39 2007/10/03 08:55:22 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.40 2007/10/03 11:11:12 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -95,20 +95,20 @@ static int	simple_debug = 0;
 static FILE *debugstream = NULL;
 
 void
-ECPGinit_sqlca(struct sqlca_t * sqlca)
+ecpg_init_sqlca(struct sqlca_t * sqlca)
 {
 	memcpy((char *) sqlca, (char *) &sqlca_init, sizeof(struct sqlca_t));
 }
 
 bool
-ECPGinit(const struct connection * con, const char *connection_name, const int lineno)
+ecpg_init(const struct connection * con, const char *connection_name, const int lineno)
 {
 	struct sqlca_t *sqlca = ECPGget_sqlca();
 
-	ECPGinit_sqlca(sqlca);
+	ecpg_init_sqlca(sqlca);
 	if (con == NULL)
 	{
-		ECPGraise(lineno, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
+		ecpg_raise(lineno, ECPG_NO_CONN, ECPG_SQLSTATE_CONNECTION_DOES_NOT_EXIST,
 				  connection_name ? connection_name : "NULL");
 		return (false);
 	}
@@ -142,7 +142,7 @@ ECPGget_sqlca(void)
 	if (sqlca == NULL)
 	{
 		sqlca = malloc(sizeof(struct sqlca_t));
-		ECPGinit_sqlca(sqlca);
+		ecpg_init_sqlca(sqlca);
 		pthread_setspecific(sqlca_key, sqlca);
 	}
 	return (sqlca);
@@ -154,15 +154,15 @@ ECPGget_sqlca(void)
 bool
 ECPGstatus(int lineno, const char *connection_name)
 {
-	struct connection *con = ECPGget_connection(connection_name);
+	struct connection *con = ecpg_get_connection(connection_name);
 
-	if (!ECPGinit(con, connection_name, lineno))
+	if (!ecpg_init(con, connection_name, lineno))
 		return (false);
 
 	/* are we connected? */
 	if (con->connection == NULL)
 	{
-		ECPGraise(lineno, ECPG_NOT_CONN, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, con->name);
+		ecpg_raise(lineno, ECPG_NOT_CONN, ECPG_SQLSTATE_ECPG_INTERNAL_ERROR, con->name);
 		return false;
 	}
 
@@ -173,12 +173,12 @@ bool
 ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 {
 	PGresult   *res;
-	struct connection *con = ECPGget_connection(connection_name);
+	struct connection *con = ecpg_get_connection(connection_name);
 
-	if (!ECPGinit(con, connection_name, lineno))
+	if (!ecpg_init(con, connection_name, lineno))
 		return (false);
 
-	ECPGlog("ECPGtrans line %d action = %s connection = %s\n", lineno, transaction, con ? con->name : "(nil)");
+	ecpg_log("ECPGtrans line %d action = %s connection = %s\n", lineno, transaction, con ? con->name : "(nil)");
 
 	/* if we have no connection we just simulate the command */
 	if (con && con->connection)
@@ -192,13 +192,13 @@ ECPGtrans(int lineno, const char *connection_name, const char *transaction)
 		if (con->committed && !con->autocommit && strncmp(transaction, "begin", 5) != 0 && strncmp(transaction, "start", 5) != 0)
 		{
 			res = PQexec(con->connection, "begin transaction");
-			if (!ECPGcheck_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
+			if (!ecpg_check_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
 				return FALSE;
 			PQclear(res);
 		}
 
 		res = PQexec(con->connection, transaction);
-		if (!ECPGcheck_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
+		if (!ecpg_check_PQresult(res, lineno, con->connection, ECPG_COMPAT_PGSQL))
 			return FALSE;
 		PQclear(res);
 	}
@@ -229,7 +229,7 @@ ECPGdebug(int n, FILE *dbgs)
 
 	debugstream = dbgs;
 
-	ECPGlog("ECPGdebug: set to %d\n", simple_debug);
+	ecpg_log("ECPGdebug: set to %d\n", simple_debug);
 
 #ifdef ENABLE_THREAD_SAFETY
 	pthread_mutex_unlock(&debug_init_mutex);
@@ -237,7 +237,7 @@ ECPGdebug(int n, FILE *dbgs)
 }
 
 void
-ECPGlog(const char *format,...)
+ecpg_log(const char *format,...)
 {
 	va_list		ap;
 	struct sqlca_t *sqlca = ECPGget_sqlca();

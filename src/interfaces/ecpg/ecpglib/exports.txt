@@ -1,0 +1,28 @@
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/exports.txt,v 1.1 2007/10/03 11:11:12 meskes Exp $
+# Functions to be exported by libpq DLLs
+ECPGallocate_desc		1
+ECPGconnect			2
+ECPGdeallocate			3
+ECPGdeallocate_all		4
+ECPGdeallocate_desc		5
+ECPGdebug			6
+ECPGdescribe			7
+ECPGdisconnect			8
+ECPGdo				9
+ECPGdo_descriptor		10
+ECPGfree_auto_mem		11
+ECPGget_desc			12
+ECPGget_desc_header		13
+ECPGget_sqlca			14
+ECPGis_noind_null		15
+ECPGprepare			16
+ECPGprepared_statement		17
+ECPGset_desc			18
+ECPGset_desc_header		19
+ECPGset_noind_null		20
+ECPGsetcommit			21
+ECPGsetconn			22
+ECPGstatus			23
+ECPGtrans			24
+sqlprint			25
+

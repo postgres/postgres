@@ -2256,5 +2256,8 @@ Tue, 02 Oct 2007 11:32:25 +0200
 Wed, 03 Oct 2007 10:48:39 +0200
 
 	- Hopefully fixed some stuff that causes Windows builds to fail.
+	- Cleaned up ecpglib and renamed functions that do not need to be
+	  exported.
+	- Created export list for ecpglib.
 	- Set ecpg library version to 6.0.
 	- Set ecpg version to 4.4.

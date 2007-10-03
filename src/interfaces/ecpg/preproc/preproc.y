@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.352 2007/09/26 10:57:00 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.353 2007/10/03 11:11:12 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -245,17 +245,17 @@ adjust_informix(struct arguments *list)
 
 		if ((ptr->variable->type->type != ECPGt_varchar && ptr->variable->type->type != ECPGt_char && ptr->variable->type->type != ECPGt_unsigned_char) && atoi(ptr->variable->type->size) > 1)
 		{
-			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->variable->type->u.element->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, make_str("1"), ptr->variable->type->u.element->lineno), ptr->variable->type->size), 0);
+			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->variable->type->u.element->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_array_type(ECPGmake_simple_type(ptr->variable->type->u.element->type, make_str("1"), ptr->variable->type->u.element->lineno), ptr->variable->type->size), 0);
 			sprintf(temp, "%d, (", ecpg_informix_var++);
 		}
 		else if ((ptr->variable->type->type == ECPGt_varchar || ptr->variable->type->type == ECPGt_char || ptr->variable->type->type == ECPGt_unsigned_char) && atoi(ptr->variable->type->size) > 1)
 		{
-			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size, ptr->variable->type->lineno), 0);
+			ptr->variable = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size, ptr->variable->type->lineno), 0);
 			sprintf(temp, "%d, (", ecpg_informix_var++);
 		}
 		else
 		{
-			ptr->variable = new_variable(cat_str(4, make_str("*("), mm_strdup(ECPGtype_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size, ptr->variable->type->lineno), 0);
+			ptr->variable = new_variable(cat_str(4, make_str("*("), mm_strdup(ecpg_type_name(ptr->variable->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->variable->type->type, ptr->variable->type->size, ptr->variable->type->lineno), 0);
 			sprintf(temp, "%d, &(", ecpg_informix_var++);
 		}
 
@@ -272,12 +272,12 @@ adjust_informix(struct arguments *list)
 			/* create call to "ECPG_informix_set_var(<counter>, <pointer>. <linen number>)" */
 			if (atoi(ptr->indicator->type->size) > 1)
 			{
-				ptr->indicator = new_variable(cat_str(4, make_str("("), mm_strdup(ECPGtype_name(ptr->indicator->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size, ptr->variable->type->lineno), 0);
+				ptr->indicator = new_variable(cat_str(4, make_str("("), mm_strdup(ecpg_type_name(ptr->indicator->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size, ptr->variable->type->lineno), 0);
 				sprintf(temp, "%d, (", ecpg_informix_var++);
 			}
 			else
 			{
-				ptr->indicator = new_variable(cat_str(4, make_str("*("), mm_strdup(ECPGtype_name(ptr->indicator->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size, ptr->variable->type->lineno), 0);
+				ptr->indicator = new_variable(cat_str(4, make_str("*("), mm_strdup(ecpg_type_name(ptr->indicator->type->type)), make_str(" *)(ECPG_informix_get_var("), mm_strdup(temp)), ECPGmake_simple_type(ptr->indicator->type->type, ptr->indicator->type->size, ptr->variable->type->lineno), 0);
 				sprintf(temp, "%d, &(", ecpg_informix_var++);
 			}
 			result = cat_str(5, result, make_str("ECPG_informix_set_var("), mm_strdup(temp), mm_strdup(original_var), make_str("), __LINE__);\n"));
@@ -5351,7 +5351,7 @@ storage_modifier : S_CONST	{ $$ = make_str("const"); }
 var_type:	simple_type
 		{
 			$$.type_enum = $1;
-			$$.type_str = mm_strdup(ECPGtype_name($1));
+			$$.type_str = mm_strdup(ecpg_type_name($1));
 			$$.type_dimension = make_str("-1");
 			$$.type_index = make_str("-1");
 			$$.type_sizeof = NULL;

@@ -61,7 +61,7 @@ struct ECPGtemp_type
 	const char *name;
 };
 
-extern const char *ECPGtype_name(enum ECPGttype type);
+extern const char *ecpg_type_name(enum ECPGttype type);
 
 /* some stuff for whenever statements */
 enum WHEN_TYPE
