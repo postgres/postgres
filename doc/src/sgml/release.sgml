@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.509 2007/10/03 03:32:31 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.510 2007/10/03 22:06:13 neilc Exp $ -->
 <!--
 
 Typical markup:
@@ -125,8 +125,7 @@ do it for earlier branch release files.
         The I/O needed for a checkpoint is now spread over a fairly long
         period of time, rather than being spat out in a burst.  This happens
         only for background checkpoints carried out by the bgwriter; other
-        cases, such as a shutdown checkpoint, are still
-        done at full speed.
+        cases, such as a shutdown checkpoint, are still done at full speed.
        </para>
       </listitem>
 
@@ -196,8 +195,8 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        This change allows a significant percentage reduction in the on-disk
-        size of short character-string fields.
+        This significantly reduces the on-disk size of short
+        character-string fields.
        </para>
       </listitem>
 
@@ -226,7 +225,7 @@ do it for earlier branch release files.
         We keep a heap of the current best N tuples and sift-up new tuples
         into it as we scan the input.  For M input tuples this means only
         about M*log(N) comparisons instead of M*log(M), not to mention a lot
-        less workspace when N is small --- avoiding spill-to-disk for large
+        less workspace when N is small &mdash; avoiding spill-to-disk for large
         M is actually the most attractive thing about it.
        </para>
       </listitem>
@@ -595,7 +594,7 @@ do it for earlier branch release files.
        <para>
         This provides full gettimeofday() resolution for the timestamps,
         which might be useful when attempting to do point-in-time recovery
-        --- previously it was not possible to specify the stop point with
+        &mdash; previously it was not possible to specify the stop point with
         sub-second resolution.
        </para>
       </listitem>
@@ -626,7 +625,7 @@ do it for earlier branch release files.
         This is a list to allow spreading the load across multiple
         tablespaces; a random list element is chosen each time a temp object
         is to be created.  Temp files are not stored in per-database
-        pgsql_tmp/ directories anymore, but per-tablespace directories.
+        pgsql_tmp/ directories anymore, but in per-tablespace directories.
        </para>
       </listitem>
 
@@ -1026,7 +1025,7 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        While it's (still) possible to perform these operations using ALTER
+        While it has long been possible to perform these operations using ALTER
         TABLE, users were often surprised that they couldn't say ALTER VIEW
         or ALTER SEQUENCE as appropriate.
        </para>
@@ -1091,7 +1090,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Make NOTIFY/LISTEN/UNLISTEN only accept simple relation names
+        Make NOTIFY/LISTEN/UNLISTEN only accept identifiers without a schema
+        qualifier
         (Bruce)
        </para>
 
@@ -1127,7 +1127,7 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        These commands simplify resetting a database session to initial
+        These commands simplify resetting a database session to its initial
         state, and are particularly handy for connection-pooling software.
        </para>
       </listitem>
@@ -1190,7 +1190,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Add a "uuid" data type similar to that defined in RFC 4122 (Gevik
-        Babakhani)
+        Babakhani, Neil)
        </para>
       </listitem>
 
@@ -1303,7 +1303,7 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        This enables use of hash indexes and hash-based plans with
+        This allows hash indexes and hash-based plans to be used with
         the numeric datatype.
        </para>
       </listitem>
@@ -1317,8 +1317,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Allow leading and trailing
-        whitespace in the input to the boolean type (Neil)
+        Allow leading and trailing whitespace in the input to the boolean
+        type (Neil)
        </para>
       </listitem>
 
@@ -1440,7 +1440,7 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Implement RETURN QUERY for PL/PgSQL (Pavel Stehule, Tom)
+        Implement RETURN QUERY for PL/PgSQL (Pavel Stehule, Neil)
        </para>
 
        <para>
@@ -2213,7 +2213,8 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        Use configure option --with-ossp-uuid to activate.
+        Use configure option --with-ossp-uuid to activate. This takes
+        advantage of the new UUID builtin type.
        </para>
       </listitem>
 
