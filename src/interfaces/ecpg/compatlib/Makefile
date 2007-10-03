@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.32 2007/10/03 15:04:23 tgl Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.33 2007/10/03 15:24:19 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -47,8 +47,8 @@ snprintf.c: % : $(top_srcdir)/src/port/%
 # always built and included in distribution tarballs.
 
 .PHONY: def-files
-def-files: $(srcdir)/libecpg_compat.def $(srcdir)/blibecpg_compatdll.def
-$(srcdir)/libecpg_compat.def: exports.txt
+def-files: $(srcdir)/libecpg_compatdll.def $(srcdir)/blibecpg_compatdll.def
+$(srcdir)/libecpg_compatdll.def: exports.txt
 	echo '; DEF file for MS VC++' > $@
 	echo 'LIBRARY LIBECPG_COMPAT' >> $@
 	echo 'EXPORTS' >> $@

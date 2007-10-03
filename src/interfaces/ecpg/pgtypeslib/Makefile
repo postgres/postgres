@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.34 2007/10/03 13:20:19 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.35 2007/10/03 15:24:19 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -45,8 +45,9 @@ include $(top_srcdir)/src/Makefile.shlib
 # always built and included in distribution tarballs.
 
 .PHONY: def-files
-def-files: $(srcdir)/libpgtypes.def $(srcdir)/blibpgtypesdll.def
-$(srcdir)/libpgtypes.def: exports.txt
+def-files: $(srcdir)/libpgtypesdll.def $(srcdir)/blibpgtypesdll.def
+
+$(srcdir)/libpgtypesdll.def: exports.txt
 	echo '; DEF file for MS VC++' > $@
 	echo 'LIBRARY LIBPGTYPES' >> $@
 	echo 'EXPORTS' >> $@
