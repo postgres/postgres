@@ -3,7 +3,7 @@ package Mkvcbuild;
 #
 # Package that generates build files for msvc build
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.20 2007/10/03 12:34:29 mha Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Mkvcbuild.pm,v 1.21 2007/10/03 13:43:24 mha Exp $
 #
 use Carp;
 use Win32;
@@ -137,6 +137,7 @@ sub mkvcbuild
       $solution->AddProject('libpgtypes','dll','interfaces','src\interfaces\ecpg\pgtypeslib');
     $pgtypes->AddDefine('FRONTEND');
     $pgtypes->AddReference($libpgport);
+    $pgtypes->UseDef('src\interfaces\ecpg\pgtypeslib\pgtypeslib.def');
     $pgtypes->AddIncludeDir('src\interfaces\ecpg\include');
 
     my $libecpg =$solution->AddProject('libecpg','dll','interfaces','src\interfaces\ecpg\ecpglib');
@@ -152,6 +153,7 @@ sub mkvcbuild
       $solution->AddProject('libecpg_compat','dll','interfaces','src\interfaces\ecpg\compatlib');
     $libecpgcompat->AddIncludeDir('src\interfaces\ecpg\include');
     $libecpgcompat->AddIncludeDir('src\interfaces\libpq');
+    $libecpgcompat->UseDef('src\interfaces\ecpg\compatlib\compatlib.def');
     $libecpgcompat->AddReference($pgtypes,$libecpg,$libpgport);
 
     my $ecpg = $solution->AddProject('ecpg','exe','interfaces','src\interfaces\ecpg\preproc');

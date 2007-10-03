@@ -1,5 +1,5 @@
 @echo off
-REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.6 2007/07/07 07:43:21 mha Exp $
+REM $PostgreSQL: pgsql/src/tools/msvc/clean.bat,v 1.7 2007/10/03 13:43:24 mha Exp $
 
 set D=%CD%
 if exist ..\msvc if exist ..\..\..\src cd ..\..\..
@@ -31,7 +31,10 @@ call :del src\bin\psql\sql_help.h
 
 call :del src\interfaces\libpq\libpq.rc
 call :del src\interfaces\libpq\libpqdll.def
+call :del src\interfaces\ecpg\compatlib\compatlib.def
+call :del src\interfaces\ecpg\ecpglib\ecpglib.def
 call :del src\interfaces\ecpg\include\ecpg_config.h
+call :del src\interfaces\ecpg\pgtypeslib\pgtypeslib.def
 call :del src\interfaces\ecpg\preproc\preproc.c
 call :del src\interfaces\ecpg\preproc\preproc.h
 
