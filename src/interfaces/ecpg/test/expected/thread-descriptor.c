@@ -101,7 +101,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 
 #if defined(ENABLE_THREAD_SAFETY) && defined(WIN32)
-static unsigned STDCALL fn(void* arg)
+static unsigned __stdcall fn(void* arg)
 #else
 static void* fn(void* arg)
 #endif

@@ -28,7 +28,7 @@ exec sql whenever sqlerror sqlprint;
 exec sql whenever not found sqlprint;
 
 #ifdef WIN32
-static unsigned STDCALL fn(void* arg)
+static unsigned __stdcall fn(void* arg)
 #else
 static void* fn(void* arg)
 #endif

@@ -121,7 +121,7 @@ struct sqlca_t *ECPGget_sqlca(void);
 
 
 #ifdef WIN32
-static unsigned STDCALL fn(void* arg)
+static unsigned __stdcall fn(void* arg)
 #else
 static void* fn(void* arg)
 #endif

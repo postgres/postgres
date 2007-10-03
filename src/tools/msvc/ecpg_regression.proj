@@ -33,9 +33,12 @@
   <CreateProperty Value="-C INFORMIX -r no_indicator" Condition="'%(Pgc.FileName)'=='rnull'">
    <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
   </CreateProperty>
+  <CreateProperty Value="-c" Condition="'%(Pgc.FileName)'=='array_of_struct'">
+   <Output TaskParameter="Value" PropertyName="ECPGPARAM" />
+  </CreateProperty>
 
   <!-- Run ECPG and the Visual C++ compiler on the files. Don't bother with dependency check between the steps -->
-  <Exec WorkingDirectory="%(Pgc.RelativeDir)" Command="$(OUTDIR)ecpg\ecpg -c -I ../../include --regression $(ECPGPARAM) -o %(Pgc.Filename).c %(Pgc.Filename).pgc" />
+  <Exec WorkingDirectory="%(Pgc.RelativeDir)" Command="$(OUTDIR)ecpg\ecpg -I ../../include --regression $(ECPGPARAM) -o %(Pgc.Filename).c %(Pgc.Filename).pgc" />
   <Exec WorkingDirectorY="%(Pgc.RelativeDir)" Command="cl /nologo %(Pgc.FileName).c /TC /MD$(DEBUGLIB) /DENABLE_THREAD_SAFETY /DWIN32 /DWIN32_ONLY_COMPILER /I. /I..\..\include /I..\..\..\libpq /I..\..\..\..\include /link /defaultlib:$(OUTDIR)libecpg\libecpg.lib /defaultlib:$(OUTDIR)libecpg_compat\libecpg_compat.lib /defaultlib:$(OUTDIR)libpgtypes\libpgtypes.lib" />
  </Target>
 
