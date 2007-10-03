@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.508 2007/09/24 03:12:23 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.509 2007/10/03 03:32:31 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -34,6 +34,2256 @@ do it for earlier branch release files.
 
 <appendix id="release">
  <title>Release Notes</title>
+
+  <sect1 id="release-8-3">
+   <title>Release 8.3</title>
+
+   <note>
+    <title>Release date</title>
+    <simpara>2007-??-??</simpara>
+   </note>
+
+   <sect2>
+    <title>Overview</title>
+
+    <para>
+     This release adds many functionality and performance improvements that
+     were requested by users, including:
+
+    <itemizedlist>
+
+      <listitem>
+       <para>
+        ... to be filled in ...
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Migration to version 8.3</title>
+
+    <para>
+     A dump/restore using <application>pg_dump</application> is
+     required for those wishing to migrate data from any previous
+     release.
+    </para>
+
+    <para>
+     Observe the following incompatibilities:
+    </para>
+
+    <itemizedlist>
+
+      <listitem>
+       <para>
+        ... to be filled in ...
+       </para>
+      </listitem>
+
+    </itemizedlist>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <para>
+     Below you will find a detailed account of the
+     changes between <productname>PostgreSQL</productname> 8.3 and
+     the previous major release.
+    </para>
+
+    <sect3>
+     <title>Performance Improvements</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Implement an optional asynchronous commit mode (Simon)
+       </para>
+
+       <para>
+        When synchronous_commit is off, we don't flush WAL before reporting
+        a transaction committed.  Data consistency is still guaranteed
+        (unlike turning fsync off), but a crash may lose the effects of the
+        last few transactions.  In many applications this is an acceptable
+        tradeoff for improved performance.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Implement "distributed" checkpoints (Itagaki Takahiro and Heikki
+        Linnakangas)
+       </para>
+
+       <para>
+        The I/O needed for a checkpoint is now spread over a fairly long
+        period of time, rather than being spat out in a burst.  This happens
+        only for background checkpoints carried out by the bgwriter; other
+        cases, such as a shutdown checkpoint, are still
+        done at full speed.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Heap-Only Tuples (Pavan Deolasee, with ideas from many others)
+       </para>
+
+       <para>
+        When we update a tuple without changing any of its indexed columns,
+        and the new version can be stored on the same heap page, we no
+        longer generate extra index entries for the new version.  Instead,
+        index searches follow the HOT-chain links to ensure they find the
+        correct tuple version.  In addition, this patch introduces the
+        ability to "prune" dead tuples on a per-page basis, without having
+        to do a complete VACUUM pass to recover space. VACUUM is still
+        needed to clean up dead index entries, however.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Lazy XID allocation (Florian Pflug)
+       </para>
+
+       <para>
+        Formerly, every transaction obtained a transaction ID (XID).  Now,
+        transactions that do not modify any database rows will typically
+        never obtain an XID at all.  We already did things this way for
+        subtransactions, but this patch extends the concept to top-level
+        transactions.  In applications where there are lots of short
+        read-only transactions, this should improve performance noticeably;
+        not so much from removal of the actual XID-assignments, as from
+        reduction of overhead that's driven by the rate of XID consumption.
+        We add a concept of a "virtual transaction ID" so that active
+        transactions can be uniquely identified even if they don't have a
+        regular XID.  This is a much lighter-weight concept: uniqueness of
+        VXIDs is only guaranteed over the short term, and no on-disk record
+        is made about them.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Reduce contention for the ProcArrayLock (Florian Pflug, Heikki)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Just-in-time background writing strategy (Greg Smith, Itagaki
+        Takahiro)
+       </para>
+
+       <para>
+        This patch avoids re-scanning buffers that cannot possibly need to
+        be cleaned, and estimates how many buffers it should try to clean
+        based on moving averages of recent allocation requests and density
+        of reusable buffers.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support varlena fields with single-byte headers and unaligned
+        storage (Greg Stark)
+       </para>
+
+       <para>
+        This change allows a significant percentage reduction in the on-disk
+        size of short character-string fields.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Combine cmin and cmax fields of HeapTupleHeaders into a single field
+        (Heikki)
+       </para>
+
+       <para>
+        We do this by keeping private state in each backend that has
+        inserted and deleted the same tuple during its current top-level
+        transaction.  This is sufficient since there is no need to be able
+        to determine the cmin/cmax from any other transaction. This gets us
+        back down to 23-byte tuple headers, removing a space penalty paid in
+        8.0 to support subtransactions.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Implement "top N" sorting in ORDER BY ... LIMIT queries (Greg Stark)
+       </para>
+
+       <para>
+        We keep a heap of the current best N tuples and sift-up new tuples
+        into it as we scan the input.  For M input tuples this means only
+        about M*log(N) comparisons instead of M*log(M), not to mention a lot
+        less workspace when N is small --- avoiding spill-to-disk for large
+        M is actually the most attractive thing about it.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Skip writing WAL in CLUSTER and COPY in cases where it's not needed
+        (Simon)
+       </para>
+
+       <para>
+        If WAL archiving is not enabled, it's possible to ensure
+        transactional safety by fsync'ing the destination table before
+        commit, rather than emitting WAL records for all inserted tuples.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Avoid rewriting pg_control at every WAL segment switch (Simon)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Reduce WAL output size for page splits in btree indexes (Heikki)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve hash join for cases with many input NULLs (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Avoid computing X^2 at each row in avg(bigint) and avg(numeric)
+        (Mark Kirkwood)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Suppress useless searches for unused line pointers in PageAddItem
+        (Heikki, improving on an idea from Hiroki Kataoka)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve interlocking between checkpoint start and transaction commit
+        (Heikki)
+       </para>
+
+       <para>
+        The new method both speeds up commit (less for it to do) and
+        prevents the problem of checkpoint being delayed indefinitely when
+        there's a constant flow of commits.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Put a rate limit on messages sent by backends to the stats collector
+        (Tom)
+       </para>
+
+       <para>
+        This reduces the overhead for short transactions by combining
+        reports for successive short transactions.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Avoid unnecessary disk reads during WAL recovery (Heikki)
+       </para>
+
+       <para>
+        Aside from speeding up recovery, this change eliminates a potential
+        data loss risk when restoring a WAL log that was written with
+        full_page_writes off.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve performance of mergejoin with a large sort operation as
+        inner input (Greg Stark)
+       </para>
+
+       <para>
+        This change uses a Materialize node between the mergejoin and the
+        sort to prevent the sort from having to "back up", which allows a
+        more efficient sort.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make large sequential scans and VACUUMs work in a limited-size
+        "ring" of buffers (Simon, Heikki, Tom)
+       </para>
+
+       <para>
+        Aside from avoiding cache spoliation, this fixes the problem that
+        VACUUM formerly tended to cause a WAL flush for every page it
+        modified, because we had it hacked to use only a single buffer.
+        Those flushes will now occur only once per ring-ful.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Synchronize sequential scans (Jeff Davis)
+       </para>
+
+       <para>
+        Large sequential scans now synchronize with each other, so that when
+        multiple backends are scanning the same relation concurrently, each
+        page is (ideally) read only once.  Note that a backend joining such
+        a scan starts in the middle of the relation and "wraps around" to
+        cover all blocks; this may affect the order in which rows are
+        returned.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Create a dedicated "wal writer" process to offload WAL-writing work
+        from backends (Simon)
+       </para>
+
+       <para>
+        This process is also responsible for guaranteeing a maximum delay
+        before asynchronously-committed transactions will be flushed to
+        disk.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>Server Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Autovacuum is now enabled by default (Alvaro)
+       </para>
+
+       <para>
+        Considerable work was done to make autovacuum less intrusive,
+        allowing this to become a reasonable default.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support multiple concurrent autovacuum processes (Alvaro, Itagaki
+        Takahiro)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Set the default autovacuum vacuum_cost_delay value to 20ms, and
+        reduce the default autovacuum vacuum and analyze threshold values to
+        50 tuples (Alvaro)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make autovacuum report the start time of its current activity in
+        pg_stat_activity (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Provide for logfiles in machine readable CSV format (Arul Shaji,
+        Greg Smith, Andrew Dunstan)
+       </para>
+
+       <para>
+        In consequence, rename redirect_stderr to logging_collector.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add log_autovacuum_min_duration parameter to support configurable
+        logging of autovacuum actions (Simon, Alvaro)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add log_lock_waits parameter to log long wait times (Simon)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add log_temp_files parameter to log usage of temporary files (Bill
+        Moran)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add log_checkpoints parameter to improve logging of checkpoints
+        (Greg Smith, Heikki)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Use our own timezone support for formatting timestamps displayed in
+        the server log (Tom)
+       </para>
+
+       <para>
+        This avoids Windows-specific problems with localized time zone names
+        that are in the wrong encoding.  There is a new log_timezone
+        parameter that controls the timezone used in log messages,
+        separately from the client-visible timezone parameter.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        %s and %c escapes in log_line_prefix can now be used in all
+        processes (Andrew)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support a global SSL configuration file (Victor Wagner)
+       </para>
+
+       <para>
+        Add ssl_ciphers parameter to control allowed ciphers (Victor Wagner)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Invalidate and rebuild cached plans whenever there is a schema
+        change or statistics update to referenced relations (Tom)
+       </para>
+
+       <para>
+        Aside from improving performance (for example, by being able to make
+        use of newly-added indexes), this finally fixes the ancient gotcha
+        that you can't drop and recreate a temp table that's used by a
+        PL/PgSQL function, unless you use EXECUTE for all references to it.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Split the archive_command parameter into separate archive_mode and
+        archive_command parameters (Simon)
+       </para>
+
+       <para>
+        This avoids some problems that occur if the user wishes to stop
+        archiving temporarily.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add a %r option in recovery.conf to provide last restartpoint to
+        recovery_command (Simon)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add log_restartpoints recovery option to emit LOG message at each
+        restartpoint (Simon)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Last transaction end time is now logged at end of recovery and at
+        each logged restartpoint (Simon)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        New system view pg_stat_bgwriter displays statistics about the
+        background writer process's performance (Magnus)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add new columns for database-wide tuple statistics to
+        pg_stat_database (Magnus)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add an xact_start column to pg_stat_activity (Neil)
+       </para>
+
+       <para>
+        This makes it easier to identify long-running transactions.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add n_live_tuples and n_dead_tuples columns to pg_stat_all_tables
+        and related views (Glen Parker)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add new encoding EUC_JIS_2004 and SHIFT_JIS_2004, along with new
+        conversions among EUC_JIS_2004, SHIFT_JIS_2004 and UTF-8 (Tatsuo)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make JOHAB encoding client-only (Tatsuo)
+       </para>
+
+       <para>
+        It was found that JOHAB does not meet the assumptions needed to be
+        used safely as a server-side encoding.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make configuration parameters fall back to their default values when
+        they are removed from the configuration file (Joachim Wieland)
+       </para>
+
+       <para>
+        This fixes an ancient gotcha that returning a configuration file
+        line to its original commented-out state did not undo the change.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Change the timestamps recorded in transaction commit/abort xlog
+        records from time_t to TimestampTz representation (Tom)
+       </para>
+
+       <para>
+        This provides full gettimeofday() resolution for the timestamps,
+        which might be useful when attempting to do point-in-time recovery
+        --- previously it was not possible to specify the stop point with
+        sub-second resolution.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Limit the amount of information reported when a user is dropped
+        (Alvaro)
+       </para>
+
+       <para>
+        Previously, dropping (or attempting to drop) a user who owned many
+        objects could result in extremely large NOTICE or ERROR messages
+        listing all these objects; this caused problems for some client
+        applications.  The length of the list is now limited, although a
+        full list is still sent to the server log.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Create a temp_tablespaces parameter to allow selection of the
+        tablespace(s) in which to store temp tables and temporary files
+        (Jaime Casanova, Albert Cervera, Bernd Helmle)
+       </para>
+
+       <para>
+        This is a list to allow spreading the load across multiple
+        tablespaces; a random list element is chosen each time a temp object
+        is to be created.  Temp files are not stored in per-database
+        pgsql_tmp/ directories anymore, but per-tablespace directories.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Arrange to put TOAST tables belonging to temporary tables into
+        special schemas named pg_toast_temp_nnn (Tom)
+       </para>
+
+       <para>
+        This allows low-level code such as the relcache to recognize that
+        these tables are indeed temporary, which enables various
+        optimizations such as not WAL-logging changes and using local rather
+        than shared buffers for access.  Aside from obvious performance
+        benefits, this provides a solution to bug #3483, in which other
+        backends unexpectedly held open file references to temporary tables.
+        The scheme preserves the property that TOAST tables are not in any
+        schema that's normally in the search path, so they don't conflict
+        with user table names.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add support for GSSAPI authentication (Henry Hotz, Magnus)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support SSPI authentication on Windows (Magnus)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix problem that a constant flow of new connection requests could
+        indefinitely delay the postmaster from completing a shutdown or
+        crash restart (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow CREATE INDEX CONCURRENTLY to disregard transactions in other
+        databases (Simon)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove stats_start_collector parameter (Tom)
+       </para>
+
+       <para>
+        We now always start the collector process, unless prevented by a
+        problem with setting up the stats UDP socket.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove stats_reset_on_server_start parameter (Tom)
+       </para>
+
+       <para>
+        This seemed useless in view of the availability of pg_stat_reset().
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Merge stats_block_level and stats_row_level parameters into a single
+        parameter track_counts, which controls all reports sent to the
+        collector process (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Rename stats_command_string parameter to track_activities (Tom)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>Query Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Text search capability is now in core Postgres (Teodor, Oleg)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support ORDER BY ... NULLS FIRST/LAST, and add ASC/DESC/NULLS
+        FIRST/NULLS LAST per-column options for btree indexes (Tom, Teodor)
+       </para>
+
+       <para>
+        Note incompatible change from prior behavior: ORDER BY ... USING
+        will now be rejected if the operator is not a less-than or
+        greater-than member of some btree opclass.  This prevents
+        less-than-sane behavior if an operator that doesn't actually define
+        a proper sort ordering is selected.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support UPDATE/DELETE WHERE CURRENT OF cursor_name (Arul Shaji, Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow FOR UPDATE in cursors (Arul Shaji, Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add support for cross-type hashing (Tom)
+       </para>
+
+       <para>
+        This allows hash joins, hash indexes, hashed subplans, and hash
+        aggregation to be used in situations involving cross-data-type
+        comparisons, if the data types have compatible hash functions.  That
+        is currently the case for smallint/integer/bigint, and also for
+        float4/float8.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make 'col IS NULL' clauses be btree-indexable conditions (Teodor)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Downgrade implicit casts to text to be assignment-only, except for
+        the ones from the other string-category types (Peter, Tom)
+       </para>
+
+       <para>
+        This change eliminates a lot of surprising interpretations that the
+        parser could formerly make in cases when there was no directly
+        applicable operator.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Create a general mechanism that supports casts to and from the
+        standard string types (text,varchar,bpchar) for *every* datatype, by
+        invoking the datatype's I/O functions (Tom)
+       </para>
+
+       <para>
+        These new casts are assignment-only in the to-string direction,
+        explicit-only in the other, and therefore should create no
+        surprising behavior.  Remove a bunch of thereby-obsoleted
+        datatype-specific casting functions.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make ARRAY(SELECT ...) return an empty array, rather than a NULL,
+        when the sub-select returns zero rows (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix some issues with user tables and views that are named similarly
+        to system catalogs (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove the undocumented "not in" operator (!!=) (Tom)
+       </para>
+
+       <para>
+        This operator was obsoleted long ago by IN (sub-SELECT) queries.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>Planner Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Improve handling of "equivalence classes" of variables that are
+        constrained to be equal within a query's WHERE clause (Tom)
+       </para>
+
+       <para>
+        Among other things, this change allows mergejoins to work with
+        descending sort orders, and improves recognition of redundant sort
+        columns.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix problems with selectivity estimation for partial indexes (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve performance for planning large inheritance trees that are
+        mostly excluded by constraints (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix cost estimates for EXISTS subqueries that are evaluated as
+        initPlans (Tom)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>Object Manipulation Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Support arrays of composite types, including the rowtypes of regular
+        tables and views (but not system catalogs, nor sequences or toast
+        tables) (David Fetter, Andrew, Tom)
+       </para>
+
+       <para>
+        This change also removes the hardwired convention that a type's
+        array type is named exactly "_type", instead using a new column
+        pg_type.typarray to provide the linkage.  (It still will be named
+        "_type", though, except in odd corner cases such as maximum-length
+        type names or collisions with a pre-existing type named with a
+        leading underscore.)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support per-function GUC parameter settings (Tom)
+       </para>
+
+       <para>
+        This provides a simple solution for functions that need local
+        settings for parameters; in particular, security definer functions
+        that must set search_path to avoid security loopholes.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add COST and ROWS options to CREATE/ALTER FUNCTION (Tom)
+       </para>
+
+       <para>
+        This change allows simple user adjustment of the estimated cost of a
+        function call, as well as control of the estimated number of rows
+        returned by a set-returning function.  We might eventually wish to
+        extend this to allow function-specific estimation routines, but
+        there seems to be consensus that we should try a simple constant
+        estimate first.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow triggers and rules to be defined with different, per session
+        controllable, behaviors for replication purposes (Jan)
+       </para>
+
+       <para>
+        This will allow replication systems to control the firing mechanism
+        of triggers and rewrite rules without modifying the system catalogs
+        directly.  The behavior is controlled by a new superuser-only
+        parameter session_replication_role.
+
+        psql's \d command as well as pg_dump are extended in a backward
+        compatible fashion.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Invent "operator families" to allow improved handling of
+        cross-data-type operators (Tom)
+       </para>
+
+       <para>
+        This change allows significantly better planning of queries
+        involving cross-data-type comparisons.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support type modifiers for user-defined types (Teodor, Tom)
+       </para>
+
+       <para>
+        User-defined types can now use parameters, similar to the maximum
+        length and precision parameters used by some built-in types.  Any
+        simple constant (numeric or string) or identifier can be used as a
+        parameter value.  A type-specific function must be provided to
+        validate this information and pack it into a 32-bit "typmod" value
+        for storage.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Clean up semantic assumptions for foreign keys (Tom)
+       </para>
+
+       <para>
+        There is now a sound semantic basis for the equality checks applied
+        by foreign-key constraints; formerly the system tended to assume
+        that any operator named "=" was the right thing.  The equality
+        operators will now be selected from the opfamily of the unique index
+        that the FK constraint depends on to enforce uniqueness of the
+        referenced columns; therefore they are certain to be consistent with
+        that index's notion of equality.  Among other things this should fix
+        the problem noted awhile back that pg_dump may fail for foreign-key
+        constraints on user-defined types when the required operators aren't
+        in the search path.  This also means that the former warning
+        condition about "foreign key constraint will require costly
+        sequential scans" is gone: if the comparison condition isn't
+        indexable then we'll reject the constraint entirely.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>Utility Command Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Support SET FROM CURRENT in CREATE/ALTER FUNCTION, ALTER DATABASE,
+        ALTER ROLE (Tom)
+       </para>
+
+       <para>
+        This provides a convenient way of applying a session's current
+        parameter setting as the default for future sessions or function
+        calls.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Arrange for SET LOCAL's effects to persist until the end of the
+        current top transaction, unless rolled back or overridden by a SET
+        clause for the same variable attached to a surrounding function call
+        (Tom)
+       </para>
+
+       <para>
+        This is an INCOMPATIBLE CHANGE: in 8.0 through 8.2, SET LOCAL's
+        effects disappeared at subtransaction commit (leading to behavior
+        that made little sense at the SQL level).
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add ALTER VIEW ... RENAME TO and ALTER SEQUENCE ... RENAME TO (David
+        Fetter, Neil)
+       </para>
+
+       <para>
+        While it's (still) possible to perform these operations using ALTER
+        TABLE, users were often surprised that they couldn't say ALTER VIEW
+        or ALTER SEQUENCE as appropriate.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Implement CREATE TABLE LIKE ...  INCLUDING INDEXES (Trevor
+        Hardcastle, Nikhil S, Neil)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix EXPLAIN so it can always print the correct referent of an upper
+        plan level expression (Tom)
+       </para>
+
+       <para>
+        This fix banishes the old hack of showing "?columnN?" when things
+        got too complicated.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make EXPLAIN ANALYZE show which sort method was used by a Sort node
+        (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make PreventTransactionChain reject commands submitted as part of a
+        multi-statement simple-Query message (Tom)
+       </para>
+
+       <para>
+        For example, "BEGIN; DROP DATABASE; COMMIT" will now be rejected
+        even if submitted as a single Query message.  This is a potential
+        incompatibility since some clients expected such strings to work;
+        but it was always unsafe.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow non-superuser database owners to create procedural languages
+        (Jeremy Drake)
+       </para>
+
+       <para>
+        A database owner is now allowed to create a language in his database
+        if it's marked "tmpldbacreate" in pg_pltemplate.  The factory
+        default is that this is set for all standard trusted languages, but
+        of course a superuser may adjust the settings.  In service of this,
+        add the long-foreseen owner column to pg_language; renaming,
+        dropping, and altering owner of a PL now follow normal ownership
+        rules instead of being superuser-only.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make NOTIFY/LISTEN/UNLISTEN only accept simple relation names
+        (Bruce)
+       </para>
+
+       <para>
+        Formerly, these commands accepted "schema.relation" but then ignored
+        the schema part, leading to confusion.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support syntax "CLUSTER table USING index", which is more logical
+        than the old CLUSTER syntax (Holger Schurig)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make CLUSTER MVCC-safe (Heikki Linnakangas)
+       </para>
+
+       <para>
+        Formerly, a CLUSTER command would discard all tuples that were
+        committed dead, even if there were still transactions that should be
+        able to see them under the MVCC snapshot rules.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Implement new commands DISCARD ALL, DISCARD PLANS, DISCARD TEMP,
+        CLOSE ALL, and DEALLOCATE ALL (Marko Kreen, Neil)
+       </para>
+
+       <para>
+        These commands simplify resetting a database session to initial
+        state, and are particularly handy for connection-pooling software.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make CLUSTER freeze tuples where possible (Heikki, Alvaro)
+       </para>
+
+       <para>
+        This is nearly free and may avoid the need for a subsequent VACUUM
+        of the table.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make CLUSTER and TRUNCATE advance the table's relfrozenxid to
+        RecentXmin (Alvaro)
+       </para>
+
+       <para>
+        This may avoid the need for a subsequent VACUUM of the table.  The
+        table-rewriting variants of ALTER TABLE do it too.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make CREATE/DROP/RENAME DATABASE wait a little bit to see if other
+        backends will exit before failing because of conflicting DB usage
+        (Tom)
+       </para>
+
+       <para>
+        This helps mask the fact that backend exit takes nonzero time.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>Data Type and Function Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        SQL/XML support (Nikolay Samokhvalov, Peter)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support enum data types (Tom Dunstan)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add a "uuid" data type similar to that defined in RFC 4122 (Gevik
+        Babakhani)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Widen the money data type to 64 bits (D'Arcy Cain)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add "isodow" option to EXTRACT() and date_part() (Bruce)
+       </para>
+
+       <para>
+        This is day of the week, with Sunday = 7.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Check for overflow when converting far-future date values to
+        timestamp (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make to_timestamp() and to_date() assume "TM" for potentially
+        variable-width fields (Bruce)
+       </para>
+
+       <para>
+        This matches Oracle behavior.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix off-by-one conversion in to_date()/to_timestamp() 'D' fields
+        (Bruce)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add ID (ISO day of week) and IDDD (ISO day of year) format types for
+        to_char(), to_date() and to_timestamp() (Brendan Jurd)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add lo_truncate() function for large object truncation (Kris Jurka)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix float4/float8 to handle Infinity and Nan consistently (Bruce)
+       </para>
+
+       <para>
+        The code formerly was not consistent about distinguishing Infinity
+        symbols from overflow conditions.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Implement width_bucket() for the float8 data type (Neil)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make setseed() return void, rather than a useless integer value
+        (Neil)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add a function pg_stat_clear_snapshot() that discards any statistics
+        snapshot already collected in the current transaction (Tom)
+       </para>
+
+       <para>
+        This allows plpgsql functions to watch for stats updates even though
+        they are confined to a single transaction.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add new regexp functions regexp_matches(), regexp_split_to_array(),
+        and regexp_split_to_table() (Jeremy Drake, Neil)
+       </para>
+
+       <para>
+        These functions provide access to the capture groups resulting from
+        a POSIX regular expression match, and provide the ability to split a
+        string on a POSIX regular expression.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add a hash function for "numeric" (Neil)
+       </para>
+
+       <para>
+        This enables use of hash indexes and hash-based plans with
+        the numeric datatype.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve efficiency of LIKE/ILIKE code, especially for multi-byte
+        charsets, and most especially for UTF8 (Andrew, Itagaki Takahiro)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow leading and trailing
+        whitespace in the input to the boolean type (Neil)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add explicit casts between boolean and text/varchar (Neil)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add additional checks for invalidly-encoded data (Andrew)
+       </para>
+
+       <para>
+        This change plugs some holes that formerly existed in SQL literal
+        backslash escape processing and COPY escape processing: the
+        de-escaped string is rechecked if it might have resulted in creating
+        invalid multi-byte characters.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Ensure that chr() cannot create invalidly encoded text (Andrew)
+       </para>
+
+       <para>
+        In UTF8-encoded databases the argument is treated as a Unicode code
+        point.  In other multi-byte encodings the argument must designate a
+        7-bit ASCII character, or an error is raised, as is also the case if
+        the argument is 0.
+
+        ascii() is adjusted so that it remains the inverse of chr().
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Adjust convert() behavior to ensure encoding validity (Andrew)
+       </para>
+
+       <para>
+        The two argument form of convert() is gone, and the three argument
+        form now takes a bytea first argument and returns a bytea. To cover
+        this loss three new functions are introduced: . convert_from(bytea,
+        name) returns text - converts the first argument from the named
+        encoding to the database encoding . convert_to(text, name) returns
+        bytea - converts the first argument from the database encoding to
+        the named encoding . length(bytea, name) returns int - gives the
+        length of the first argument in characters in the named encoding.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove CONVERT(argument USING conversion_name) (Andrew)
+       </para>
+
+       <para>
+        Although this syntax is required by the SQL standard, it's not clear
+        what the standard expects it to do, except that it's most likely not
+        what we were doing.  The former behavior was an encoding security
+        hole, too.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Put some security restrictions on the dbsize functions (Tom)
+       </para>
+
+       <para>
+        Restrict pg_database_size() to users who can connect to the target
+        database (note that CONNECT privilege is granted by default, so this
+        does not change the default behavior).  Restrict
+        pg_tablespace_size() to users who have CREATE privilege on the
+        tablespace (which is *not* granted by default), except when the
+        tablespace is the default tablespace for the current database (since
+        we treat that as implicitly allowing use of the tablespace).
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Make currtid() functions require SELECT privileges on the target
+        table (Tom)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>PL/PgSQL Server-Side Language Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Support scrollable cursors (ie, add a "direction" clause in FETCH)
+        in plpgsql (Pavel Stehule)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add support for IN as alternative to FROM in PL/PgSQL's FETCH
+        statement, for consistency with the backend's FETCH command (Pavel
+        Stehule)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support MOVE in PL/PgSQL (Magnus, Pavel Stehule, Neil)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Implement RETURN QUERY for PL/PgSQL (Pavel Stehule, Tom)
+       </para>
+
+       <para>
+        This provides some convenient syntax sugar for PL/PgSQL
+        set-returning functions that want to return the result of evaluating
+        a query; it should also be more efficient than repeated RETURN NEXT
+        statements.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow plpgsql function parameter names to be qualified with the
+        function's name (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Reject zero or negative BY step in plpgsql integer FOR-loops, and
+        behave sanely if the loop value overflows int32 on the way to the
+        end value (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve accuracy of error locations in PL/PgSQL syntax errors (Tom)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>PL/Perl Server-Side Language Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Allow type-name arguments to spi_prepare() to be standard type
+        aliases as well as the names given in pg_type (Andrew)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>PL/Python Server-Side Language Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Enable PL/PythonU to compile on Python 2.5 (Marko Kreen)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow type-name arguments to plpy.prepare() to be standard type
+        aliases as well as the names given in pg_type (Andrew)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support true boolean type in Python versions that have it, i.e.,
+        version 2.3 and later (Marko Kreen)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>PL/Tcl Server-Side Language Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Allow type-name arguments to spi_prepare to be standard type aliases
+        as well as the names given in pg_type (Andrew)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix problems with thread-enabled libtcl spawning multiple threads
+        within the backend (Steve Marshall, Paul Bayer, Doug Knight)
+       </para>
+
+       <para>
+        This caused all sorts of unpleasantness.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title><link linkend="APP-PSQL"><application>psql</></link> Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        List disabled triggers separately in "\d" output
+        (Brendan Jurd)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Identify schema of inherited table in "\d" output (Bernd Helmle)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Show aggregate return types in "\da" output (Greg Sabino Mullane)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add the function's volatility to the output of \df+ (Neil)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        In \d patterns, always match $ literally, whether quoted or not
+        (Tom)
+       </para>
+
+       <para>
+        Since we allow $ as a character within identifiers, this behavior is
+        useful, whereas the previous behavior of treating it as the regexp
+        ending anchor was nearly useless given that the pattern is
+        automatically anchored anyway.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add \prompt command (Chad Wagner)
+       </para>
+
+       <para>
+        This lets a psql script prompt the user for input.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow \pset and \x, \t to use boolean constants on/off, rather than
+        always toggling (Chad Wagner)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add \sleep command to allow delays in psql scripts (Jan)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Enable \timing output for \copy commands (Andrew)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow \timing to have better resolution than ~15ms on Windows
+        (Itagaki Takahiro)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Flush the \o file, if any, after each backslash command (Tom)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title><link linkend="APP-PGDUMP"><application>pg_dump</></link> Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Add output-file option for pg_dumpall (Dave Page)
+       </para>
+
+       <para>
+        This is primarily useful on Windows, where output redirection of
+        child pg_dump processes doesn't work.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow pg_dumpall to accept an initial-connection database name
+        rather than the default "template1" (Dave Page)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add --tablespaces-only and --roles-only options to pg_dumpall (Dave
+        Page)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        In -n and -t switches, always match $ literally, whether quoted or
+        not (Tom)
+       </para>
+
+       <para>
+        Since we allow $ as a character within identifiers, this behavior is
+        useful, whereas the previous behavior of treating it as the regexp
+        ending anchor was nearly useless given that the pattern is
+        automatically anchored anyway.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Replace linear searches with binary searches in pg_dump's code to
+        lookup objects by OID (Tom)
+       </para>
+
+       <para>
+        This can improve speed materially in databases with thousands of
+        objects of the same kind (for instances, thousands of functions).
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>Other Client Application Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Allow a nondefault pg_xlog directory location to be specified to
+        initdb (Euler Taveira de Oliveira)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Call setrlimit if possible in pg_regress to allow core file
+        generation, and provide a switch for similar behavior in pg_ctl
+        (Andrew)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add cancel handlers so it's possible to Ctrl-C clusterdb, reindexdb
+        and vacuumdb (Itagaki Takahiro, Magnus)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove gratuitous response messages from utility programs (Peter)
+       </para>
+
+       <para>
+        The --quiet option is now obsolete and without effect in createdb,
+        createuser, dropdb, dropuser; kept for compatibility but marked for
+        removal in 8.4.
+
+        Progress messages when acting on all databases now go to stdout
+        instead of stderr, since they are not in fact errors.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title><link linkend="libpq"><application>libpq</></link> Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Support a global SSL configuration file (Victor Wagner)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add libpq environment variable PGSSLKEY to control SSL hardware keys
+        (Victor Wagner)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Interpret the dbName parameter of PQsetdbLogin as a conninfo string
+        if it contains an = sign (Andrew)
+       </para>
+
+       <para>
+        This allows use of all the options of conninfo strings through
+        client programs that still use PQsetdbLogin.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add lo_truncate() function for large object truncation (Kris Jurka)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Provide PQconnectionUsedPassword() function that returns true if the
+        server demanded a password during authentication (Joe Conway)
+       </para>
+
+       <para>
+        If this is true after a failed connection, and the user did not give
+        a password, clients may choose to prompt for a password and retry.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Get rid of client-code dependencies on the exact text of the
+        no-password error message, by using PQconnectionUsedPassword()
+        instead (Tom)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title><link linkend="ecpg"><application>ecpg</></link> Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Major rewrite to use V3 frontend/backend protocol (Michael)
+       </para>
+
+       <para>
+        Among other things, prepared statements can now be prepared on the
+        server side.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Use native threads, instead of pthreads, on Windows (Magnus)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Improve thread-safety of ecpglib (Itagaki Takahiro)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title><application>Windows</> Port</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Support building the entire Postgres system with Visual C++ (Magnus
+        and others)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove old-style client-only Visual C++ build infrastructure for
+        everything except libpq (Magnus)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow regression tests to be started by an admin user (Magnus)
+       </para>
+
+       <para>
+        This uses the same privilege-dropping method that's used by pg_ctl
+        and initdb.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Native shared memory implementation for Windows (Magnus)
+       </para>
+
+       <para>
+        Same underlying tech as before, but removes the useless SysV
+        emulation layer.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>Source Code Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Improve smgr/md API (Tom)
+       </para>
+
+       <para>
+        This improves error detection and reporting, both for external
+        problems and for coding errors inside the backend.  Notably,
+        disallow mdread() beyond EOF, and enforce that mdwrite() is to be
+        used for rewriting existing blocks while mdextend() is to be used
+        for extending the relation EOF.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Support "gmake draft" in doc/src/sgml/Makefile (Bruce)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Allow GIN's extractQuery method to signal that nothing can satisfy
+        the query (Teodor)
+       </para>
+
+       <para>
+        This changes prototype of extractQuery method to use int32* instead
+        of uint32* for nentries argument.  A -1 result means that no search
+        is needed.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Rename MaxTupleSize to MaxHeapTupleSize to clarify that it's not
+        meant to describe the maximum size of index tuples (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove the xlog-centric "database system is ready" message and
+        replace it with "database system is ready to accept connections"
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Provide strlcpy() and strlcat() on all platforms, and replace
+        error-prone uses of strncpy(), strncat(), etc (Peter)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Move NAMEDATALEN definition from postgres_ext.h to
+        pg_config_manual.h (Peter)
+       </para>
+
+       <para>
+        It used to be part of libpq's exported interface many releases ago,
+        but now it's no longer necessary to make it accessible to clients.
+        We may eventually make it configurable via a configure switch, but
+        we should first flush out any client-side code that thinks it needs
+        to know the value.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Restructure planner-to-executor API (Tom)
+       </para>
+
+       <para>
+        Notably, the executor no longer sees the Query structure at all, but
+        gets a new node type called PlannedStmt that is more suitable as
+        executor input.  This allows us to stop storing mostly-redundant
+        Query trees in prepared statements, portals, etc.  Also, the
+        rangetable used by the executor is now a flat list with no
+        unnecessary substructure --- this simplifies many things.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add configure --enable-profiling switch to enable code profiling
+        (works with gcc only, for now) (Korry Douglas and Nikhil S)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Replace direct assignments to VARATT_SIZEP(x) with SET_VARSIZE(x,
+        len) (Greg Stark, Tom)
+       </para>
+
+       <para>
+        Third-party code that manipulates varlena datums *must* convert to
+        this convention, since the varvarlena patch changes the
+        representation of length words on some architectures.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Preserve typmod information in Const, Param, ArrayRef, ArrayExpr,
+        and EXPR and ARRAY SubLink nodes (Tom)
+       </para>
+
+       <para>
+        This seems like a good idea in view of the expected increase in
+        typmod usage from Teodor's work to allow user-defined types to have
+        typmods.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove advertising clause from Berkeley BSD-licensed files, per
+        instructions from Berkeley (Bruce)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Replace 4-clause licensed blf.[ch] in contrib/pgcrypto with blowfish
+        implementation from PuTTY which is under minimal BSD/MIT license
+        (Marko Kreen)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Decouple the values of TOAST_TUPLE_THRESHOLD and
+        TOAST_MAX_CHUNK_SIZE, and adjust them to avoid wasting two bytes per
+        toast chunk (Tom)
+       </para>
+
+       <para>
+        This forces initdb because the value of TOAST_MAX_CHUNK_SIZE
+        determines the content of toast tables.  Add TOAST_MAX_CHUNK_SIZE to
+        the values checked in pg_control, since it can't be changed without
+        invalidating toast table content.
+
+        Note: while TOAST_TUPLE_THRESHOLD can now be changed without
+        initdb, some thought still needs to be given to needs_toast_table()
+        in toasting.c before unleashing random changes.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Remove the prohibition on executing cursor commands through
+        SPI_execute (Tom)
+       </para>
+
+       <para>
+        The macro definition of SPI_ERROR_CURSOR still exists, so as not to
+        needlessly break any SPI callers that are checking for it, but that
+        code will never actually be returned anymore.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Clean up SPI's API a little bit by declaring SPI plan pointers as
+        "SPIPlanPtr" instead of "void *" (Tom)
+       </para>
+
+       <para>
+        This does not break any existing code, but switching is recommended
+        to help catch simple programming mistakes.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Expose more cursor-related functionality in SPI (Pavel Stehule)
+       </para>
+
+       <para>
+        Allow access to the planner's cursor-related planning options, and
+        provide new FETCH/MOVE routines that allow access to the full power
+        of those commands.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add tas() support for Renesas' M32R processor (Kazuhiro Inaoka)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add a flag bit to WAL records that shows whether it is safe to
+        remove full-page images (Koichi Suzuki)
+       </para>
+
+       <para>
+        This supports implementation of external WAL-compression filters
+        that remove such images.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix pgstats counting of live and dead tuples to recognize that
+        committed and aborted transactions have different effects (Tom)
+       </para>
+
+       <para>
+        This should result in noticeably more accurate tracking of
+        n_live_tuples and n_dead_tuples.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Create hooks to let a loadable plugin monitor (or even replace) the
+        planner and/or create plans for hypothetical situations (Gurjeet
+        Singh, Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Create a function variable "join_search_hook" to let plugins
+        override the join search order portion of the planner (Julius
+        Stroffek)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Downgrade some low-level startup messages to DEBUG1 (Peter)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix several hash functions that were taking chintzy shortcuts
+        instead of delivering a well-randomized hash value (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Redefine IsTransactionState() to only return true for
+        TRANS_INPROGRESS state (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Arrange for quote_identifier() and pg_dump to not quote keywords
+        that are unreserved according to the grammar (Tom)
+       </para>
+
+       <para>
+        Should this be flagged as a potential incompatibility?
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Fix PGXS conventions so that extensions can be built against
+        Postgres installations whose pg_config program does not appear first
+        in the PATH (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Rename DLLIMPORT macro to PGDLLIMPORT to avoid conflict with third
+        party includes (like tcl) that define DLLIMPORT (Magnus)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Adjust the output of MemoryContextStats() so that the line for a
+        child memory context is indented two spaces to the right of its
+        parent context (Neil)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add configure option --with-system-tzdata to use operating system
+        time zone database (Peter)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Change on-disk representation of NUMERIC datatype so that the
+        sign_dscale word comes before the weight instead of after (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Use SYSV semaphores rather than POSIX on Darwin &gt;= 6.0, i.e., OS X
+        10.2 and up (Chris Marcellino)
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+    <sect3>
+     <title>Contrib Changes</title>
+     <itemizedlist>
+
+      <listitem>
+       <para>
+        Add /contrib/pageinspect module for low-level page inspection
+        (Simon, Heikki)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add /contrib/pg_standby module for warm standby operation (Simon)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add /contrib/uuid-ossp module for generating UUID values using the OSSP
+        UUID library (Peter)
+       </para>
+
+       <para>
+        Use configure option --with-ossp-uuid to activate.
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add pgbench option to set fillfactor (Pavan Deolasee)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Enhance pgbench -l option to add timestamp (Greg Smith)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add usage count statistics to the information available from
+        contrib/pgbuffercache (Greg Smith)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add GIN support for hstore (Guillaume Smet, Teodor)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Add GIN support for pg_trgm (Guillaume Smet, Teodor0
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Update /contrib/start-scripts OS/X startup files, and move to a
+        separate OS/X directory (Mark Cotner, David Fetter)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Restrict pgrowlocks() and dblink_get_pkey() to users who have SELECT
+        privilege on the target table (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        Restrict contrib/pgstattuple functions to superusers (Tom)
+       </para>
+      </listitem>
+
+      <listitem>
+       <para>
+        contrib/xml2 is deprecated and planned for removal in 8.4 (Peter)
+       </para>
+
+       <para>
+        The new XML support in core Postgres supersedes this module.
+       </para>
+      </listitem>
+
+     </itemizedlist>
+
+    </sect3>
+
+   </sect2>
+  </sect1>
 
   <sect1 id="release-8-2-5">
    <title>Release 8.2.5</title>
