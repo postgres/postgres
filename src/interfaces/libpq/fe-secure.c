@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.97 2007/10/02 22:01:02 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.98 2007/10/03 13:57:52 mha Exp $
  *
  * NOTES
  *	  [ Most of these notes are wrong/obsolete, but perhaps not all ]
@@ -588,8 +588,8 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 
 #ifndef WIN32
 	struct stat buf2;
-	FILE		*fp;
 #endif
+	FILE		*fp;
 	char		fnbuf[MAXPGPATH];
 	BIO			*bio;
 	PGconn		*conn = (PGconn *) SSL_get_app_data(ssl);
@@ -607,6 +607,23 @@ client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
 
 	/* read the user certificate */
 	snprintf(fnbuf, sizeof(fnbuf), "%s/%s", homedir, USER_CERT_FILE);
+
+	/* 
+	 * OpenSSL <= 0.8.2 lacks error stack handling. Do a separate check
+	 * for the existance of the file without using BIO functions to make
+	 * it pick up the majority of the cases with the old versions.
+	 */
+#ifndef HAVE_ERR_SET_MARK
+	if ((fp = fopen(fnbuf, "r")) == NULL)
+	{
+		printfPQExpBuffer(&conn->errorMessage,
+			   libpq_gettext("could not open certificate file \"%s\": %s\n"),
+						  fnbuf, pqStrerror(errno, sebuf, sizeof(sebuf)));
+		return 0;
+	}
+	fclose(fp);
+#endif
+	
 	if ((bio = BIO_new_file(fnbuf, "r")) == NULL)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
