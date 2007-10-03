@@ -3,7 +3,7 @@ package Install;
 #
 # Package that provides 'make install' functionality for msvc builds
 #
-# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.22 2007/09/27 21:13:11 adunstan Exp $
+# $PostgreSQL: pgsql/src/tools/msvc/Install.pm,v 1.23 2007/10/03 13:20:40 mha Exp $
 #
 use strict;
 use warnings;
@@ -22,9 +22,14 @@ sub lcopy
 	my $src = shift;
 	my $target = shift;
 
-	unlink $target if -f $target;
+        if (-f $target)
+        {
+           unlink $target || confess "Could not delete $target\n";
+        }
 
-	copy($src,$target);
+	copy($src,$target)
+          || confess "Could not copy $src to $target\n";
+
 }
 
 sub Install
@@ -123,8 +128,7 @@ sub CopyFiles
         print ".";
         $f = $basedir . $f;
         die "No file $f\n" if (!-f $f);
-        lcopy($f, $target . basename($f))
-          || croak "Could not copy $f to $target". basename($f). " to $target". basename($f) . "\n";
+        lcopy($f, $target . basename($f));
     }
     print "\n";
 }
