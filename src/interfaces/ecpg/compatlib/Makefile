@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.30 2007/10/03 13:40:52 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.31 2007/10/03 14:42:16 meskes Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -36,6 +36,9 @@ all: all-lib
 
 # Shared library stuff
 include $(top_srcdir)/src/Makefile.shlib
+
+snprintf.c: $(top_srcdir)/src/port/%
+	rm -f $@ && $(LN_S) $< .
 
 # We need several not-quite-identical variants of .DEF files to build libecpg
 # DLLs for Windows.  These are made from the single source file exports.txt.
