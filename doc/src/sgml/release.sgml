@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.512 2007/10/04 03:53:58 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.513 2007/10/04 07:53:07 neilc Exp $ -->
 <!--
 
 Typical markup:
@@ -2675,19 +2675,19 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Add usage count statistics to the information available from
-        contrib/pgbuffercache (Greg Smith)
+        <filename>contrib/pgbuffercache</filename> (Greg Smith)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add GIN support for hstore (Guillaume Smet, Teodor)
+        Add GIN support for hstore (Teodor)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Add GIN support for pg_trgm (Guillaume Smet, Teodor0
+        Add GIN support for pg_trgm (Guillaume Smet, Teodor)
        </para>
       </listitem>
 
