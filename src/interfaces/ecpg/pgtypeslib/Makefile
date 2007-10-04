@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.36 2007/10/04 07:58:15 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/pgtypeslib/Makefile,v 1.37 2007/10/04 18:32:07 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,7 +30,7 @@ OBJS= numeric.o datetime.o common.o dt_common.o timestamp.o interval.o \
 	pgstrcasecmp.o \
 	$(filter rint.o snprintf.o, $(LIBOBJS))
 
-ifneq ($(PORTNAME), win32)
+ifeq ($(PORTNAME), win32)
 DLL_DEFFILE=libpgtypesdll.def
 endif
 

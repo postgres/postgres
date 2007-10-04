@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.50 2007/10/04 07:58:15 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/ecpglib/Makefile,v 1.51 2007/10/04 18:32:07 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -31,7 +31,6 @@ OBJS= execute.o typename.o descriptor.o data.o error.o prepare.o memory.o \
 # thread.c is needed only for non-WIN32 implementation of path.c
 ifneq ($(PORTNAME), win32)
 OBJS += thread.o
-DLL_DEFFILE=libecpgdll.def
 endif
 
 SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) -lm $(PTHREAD_LIBS)
@@ -39,6 +38,7 @@ SHLIB_LINK = -L../pgtypeslib -lpgtypes $(libpq) -lm $(PTHREAD_LIBS)
 ifeq ($(PORTNAME), win32)
 # Link to shfolder.dll instead of shell32.dll
 SHLIB_LINK += -lshfolder
+DLL_DEFFILE=libecpgdll.def
 endif
 
 all: def-files all-lib

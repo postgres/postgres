@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.34 2007/10/04 07:58:15 meskes Exp $
+# $PostgreSQL: pgsql/src/interfaces/ecpg/compatlib/Makefile,v 1.35 2007/10/04 18:32:07 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,7 +29,7 @@ LIBS := $(filter-out -lpgport, $(LIBS))
 
 OBJS= informix.o $(filter snprintf.o, $(LIBOBJS))
 
-ifneq ($(PORTNAME), win32)
+ifeq ($(PORTNAME), win32)
 DLL_DEFFILE=libecpg_compatdll.def
 endif
 
