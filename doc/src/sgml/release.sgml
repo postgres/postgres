@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.513 2007/10/04 07:53:07 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.514 2007/10/04 22:55:49 tgl Exp $ -->
 <!--
 
 Typical markup:
@@ -86,13 +86,15 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        ORDER BY ... NULLS FIRST/LAST
+        <literal>ORDER BY ... NULLS FIRST/LAST</>
        </para>
       </listitem>
 
       <listitem>
        <para>
         Updatable cursors
+        (<literal>UPDATE/DELETE WHERE CURRENT OF</>
+        <replaceable>cursor_name</>)
        </para>
       </listitem>
 
@@ -189,7 +191,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        "Distributed" checkpoints to spread out the I/O load of a checkpoint
+        <quote>Distributed</> checkpoints to spread out the I/O load of a
+        checkpoint
        </para>
       </listitem>
 
@@ -331,7 +334,7 @@ do it for earlier branch release files.
        <para>
         <literal>ORDER BY ... USING</> <replaceable>operator</>
         will now be rejected if the <replaceable>operator</> is not a
-        less-than or greater-than member of some btree opclass
+        less-than or greater-than member of some btree operator class
        </para>
 
        <para>
@@ -372,7 +375,7 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        In 8.0 through 8.2, SET LOCAL's
+        In 8.0 through 8.2, <command>SET LOCAL</command>'s
         effects disappeared at subtransaction commit, leading to behavior
         that made little sense at the SQL level (one would not normally
         expect <command>RELEASE</> to do such a thing).
@@ -386,9 +389,9 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        For example, "BEGIN; DROP DATABASE; COMMIT" will now be rejected
-        even if submitted as a single Query message.  This was always quite
-        unsafe, but the <function>PreventTransactionChain</function>
+        For example, <literal>BEGIN; DROP DATABASE; COMMIT</> will now be
+        rejected even if submitted as a single Query message.  This was always
+        quite unsafe, but the <function>PreventTransactionChain</function>
         test failed to detect it.
        </para>
       </listitem>
@@ -412,7 +415,7 @@ do it for earlier branch release files.
 
        <para>
         Strings that are not in the database's native encoding are now
-        represented as type bytea rather than type text.
+        represented as type <type>bytea</> rather than type <type>text</>.
        </para>
       </listitem>
 
@@ -469,8 +472,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Implement "distributed" checkpoints (Itagaki Takahiro and Heikki
-        Linnakangas)
+        Implement <quote>distributed</> checkpoints (Itagaki Takahiro and
+        Heikki Linnakangas)
        </para>
 
        <para>
@@ -489,11 +492,11 @@ do it for earlier branch release files.
 
        <para>
         When we update a tuple without changing any of its indexed columns,
-        and the new version can be stored on the same heap page, we no
-        longer generate extra index entries for the new version.  Instead,
-        index searches follow the HOT-chain links to ensure they find the
-        correct tuple version.  In addition, this patch introduces the
-        ability to "prune" dead tuples on a per-page basis, without having
+        and the new version can be stored on the same heap page, we no longer
+        generate extra index entries for the new version.  Instead, index
+        searches follow the HOT-chain links to ensure they find the correct
+        tuple version.  In addition, this patch introduces the ability to
+        <quote>prune</quote> dead tuples on a per-page basis, without having
         to do a complete <command>VACUUM</command> pass to recover space.
         <command>VACUUM</command> is still needed to clean up dead index
         entries, however.
@@ -556,7 +559,7 @@ do it for earlier branch release files.
         read-only transactions, this should improve performance noticeably;
         not so much from removal of the actual XID-assignments, as from
         reduction of overhead that's driven by the rate of XID consumption.
-        We add a concept of a "virtual transaction ID" so that active
+        We add a concept of a <quote>virtual transaction ID</> so that active
         transactions can be uniquely identified even if they don't have a
         regular XID.  This is a much lighter-weight concept: uniqueness of
         VXIDs is only guaranteed over the short term, and no on-disk record
@@ -585,8 +588,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Create a dedicated "wal writer" process to offload WAL-writing work
-        from backends (Simon)
+        Create a dedicated <quote>wal writer</quote> process to offload
+        WAL-writing work from backends (Simon)
        </para>
 
        <para>
@@ -657,9 +660,9 @@ do it for earlier branch release files.
         Large sequential scans now synchronize with each other, so that when
         multiple backends are scanning the same relation concurrently, each
         page is (ideally) read only once.  Note that a backend joining such
-        a scan starts in the middle of the relation and "wraps around" to
-        cover all blocks; this may affect the order in which rows are
-        returned.
+        a scan starts in the middle of the relation and <quote>wraps
+        around</quote> to cover all blocks; this may affect the order in which
+        rows are returned.
        </para>
       </listitem>
 
@@ -711,8 +714,8 @@ do it for earlier branch release files.
 
        <para>
         This change uses a Materialize node between the mergejoin and the
-        sort to prevent the sort from having to "back up", which allows a
-        more efficient sort.  The Materialize node keeps a circular
+        sort to prevent the sort from having to <quote>back up</>, which
+        allows a more efficient sort.  The Materialize node keeps a circular
         buffer of only the prior tuples that the mergejoin may actually
         need again, so it usually won't need to spill to disk, resulting
         in net I/O savings.
@@ -815,7 +818,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Add ssl_ciphers parameter to control allowed ciphers (Victor Wagner)
+        Add <varname>ssl_ciphers</> parameter to control allowed ciphers
+        (Victor Wagner)
        </para>
       </listitem>
 
@@ -890,8 +894,8 @@ do it for earlier branch release files.
         This avoids Windows-specific problems with localized time zone names
         that are in the wrong encoding.  There is a new
         <varname>log_timezone</> parameter that controls the timezone used
-        in log messages, separately from the client-visible timezone
-        parameter.
+        in log messages, separately from the client-visible
+        <varname>timezone</> parameter.
        </para>
       </listitem>
 
@@ -1019,8 +1023,8 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Merge <varname>stats_block_level</> and <varname>stats_row_level</>
-        parameters into a single parameter track_counts, which controls all
-        reports sent to the collector process (Tom)
+        parameters into a single parameter <varname>track_counts</>,
+        which controls all reports sent to the collector process (Tom)
        </para>
       </listitem>
 
@@ -1050,7 +1054,8 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Arrange to put TOAST tables belonging to temporary tables into
-        special schemas named pg_toast_temp_nnn (Tom)
+        special schemas named
+        <literal>pg_toast_temp_<replaceable>nnn</></literal> (Tom)
        </para>
 
        <para>
@@ -1122,7 +1127,9 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Support UPDATE/DELETE WHERE CURRENT OF cursor_name (Arul Shaji, Tom)
+        Support <literal>UPDATE/DELETE WHERE CURRENT OF</>
+        <replaceable>cursor_name</>
+        (Arul Shaji, Tom)
        </para>
       </listitem>
 
@@ -1355,7 +1362,7 @@ do it for earlier branch release files.
        <para>
         There is now a sound semantic basis for the equality checks applied
         by foreign-key constraints; formerly the system tended to assume
-        that any operator named "=" was the right thing.  The equality
+        that any operator named <literal>=</> was the right thing.  The equality
         operators will now be selected from the opfamily of the unique index
         that the FK constraint depends on to enforce uniqueness of the
         referenced columns; therefore they are certain to be consistent with
@@ -1363,8 +1370,8 @@ do it for earlier branch release files.
         the problem noted awhile back that pg_dump may fail for foreign-key
         constraints on user-defined types when the required operators aren't
         in the search path.  This also means that the former warning
-        condition about "foreign key constraint will require costly
-        sequential scans" is gone: if the comparison condition isn't
+        condition about <quote>foreign key constraint will require costly
+        sequential scans</quote> is gone: if the comparison condition isn't
         indexable then we'll reject the constraint entirely.
        </para>
       </listitem>
@@ -1385,34 +1392,35 @@ do it for earlier branch release files.
 
        <para>
         A database owner is now allowed to create a language in his database
-        if it's marked "tmpldbacreate" in pg_pltemplate.  The factory
-        default is that this is set for all standard trusted languages, but
-        of course a superuser may adjust the settings.  In service of this,
-        add the long-foreseen owner column to pg_language; renaming,
-        dropping, and altering owner of a PL now follow normal ownership
-        rules instead of being superuser-only.
+        if it's marked <structfield>tmpldbacreate</> in
+        <structname>pg_pltemplate</>.  The factory default is that this is set
+        for all standard trusted languages, but of course a superuser may
+        adjust the settings.  In service of this, add the long-foreseen owner
+        column to <structname>pg_language</>; renaming, dropping, and altering
+        owner of a PL now follow normal ownership rules instead of being
+        superuser-only.
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Arrange for SET LOCAL's effects to persist until the end of the
-        current top transaction, unless rolled back or overridden by a SET
-        clause for the same variable attached to a surrounding function call
-        (Tom)
+        Arrange for <command>SET LOCAL</command>'s effects to persist until
+        the end of the current top transaction, unless rolled back or
+        overridden by a SET clause for the same variable attached to a
+        surrounding function call (Tom)
        </para>
 
        <para>
-        This is an incompatible change: in 8.0 through 8.2, SET LOCAL's
-        effects disappeared at subtransaction commit (leading to behavior
-        that made little sense at the SQL level).
+        This is an incompatible change: in 8.0 through 8.2, <command>SET
+        LOCAL</command>'s effects disappeared at subtransaction commit
+        (leading to behavior that made little sense at the SQL level).
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Support <literal>SET FROM CURRENT</literal> in <command>CREATE/ALTER
-        FUNCTION</command>, <command>ALTER DATABASE</command>,
+        Support <literal>SET ... FROM CURRENT</literal> in
+        <command>CREATE/ALTER FUNCTION</command>, <command>ALTER DATABASE</command>,
         <command>ALTER ROLE</command> (Tom)
        </para>
 
@@ -1474,7 +1482,8 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Support new syntax for <command>CLUSTER</command>: <literal>CLUSTER
-        <replaceable>table</> USING <replaceable>index</></literal> (Holger Schurig)
+        <replaceable>table</> USING <replaceable>index</></literal>
+        (Holger Schurig)
       </para>
 
        <para>
@@ -1516,7 +1525,8 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        This fix banishes the old hack of showing <quote>?columnN?</quote>
+        This fix banishes the old hack of showing
+        <literal>?column<replaceable>N</>?</literal>
         when things got too complicated.
        </para>
       </listitem>
@@ -1528,10 +1538,10 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        For example, "BEGIN; DROP DATABASE; COMMIT" will now be rejected
-        even if submitted as a single Query message.  This is a potential
-        incompatibility since some clients expected such strings to work;
-        but it was always unsafe.
+        For example, <literal>BEGIN; DROP DATABASE; COMMIT</> will now be
+        rejected even if submitted as a single Query message.  This is a
+        potential incompatibility since some clients expected such strings to
+        work; but it was always unsafe.
        </para>
       </listitem>
 
@@ -1555,8 +1565,8 @@ do it for earlier branch release files.
        </para>
 
        <para>
-        Formerly, these commands accepted "schema.relation" but then ignored
-        the schema part, leading to confusion.
+        Formerly, these commands accepted <quote>schema.relation</> but then
+        ignored the schema part, leading to confusion.
        </para>
       </listitem>
 
@@ -1642,7 +1652,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Add "isodow" option to EXTRACT() and date_part() (Bruce)
+        Add <literal>isodow</> option to <function>EXTRACT()</> and
+        <function>date_part()</> (Bruce)
        </para>
 
        <para>
@@ -1667,7 +1678,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Make <function>to_timestamp()</> and <function>to_date()</> assume
-        "TM" for potentially variable-width fields (Bruce)
+        <quote>TM</quote> for potentially variable-width fields (Bruce)
        </para>
 
        <para>
@@ -1770,13 +1781,34 @@ do it for earlier branch release files.
         The two argument form of <function>convert()</function> is gone, and
         the three argument form now takes a <type>bytea</type> first
         argument and returns a <type>bytea</type>. To cover this loss three
-        new functions are introduced: . convert_from(bytea, name) returns
-        text - converts the first argument from the named encoding to the
-        database encoding . convert_to(text, name) returns bytea - converts
-        the first argument from the database encoding to the named encoding
-        . length(bytea, name) returns int - gives the length of the first
-        argument in characters in the named encoding.
+        new functions are introduced:
        </para>
+
+       <itemizedlist>
+        <listitem>
+         <para>
+          <function>convert_from(bytea, name)</function> returning
+          <type>text</> &mdash; converts the first argument from the named
+          encoding to the database encoding.
+         </para>
+        </listitem>
+
+        <listitem>
+         <para>
+          <function>convert_to(text, name)</function> returning <type>bytea</>
+          &mdash; converts the first argument from the database encoding to
+          the named encoding.
+         </para>
+        </listitem>
+
+        <listitem>
+         <para>
+          <function>length(bytea, name)</function> returning <type>int</>
+          &mdash; gives the length of the first argument in characters in the
+          named encoding.
+         </para>
+        </listitem>
+       </itemizedlist>
       </listitem>
 
       <listitem>
@@ -1827,7 +1859,7 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Support scrollable cursors (ie, add a "direction" clause in
+        Support scrollable cursors (ie, add a direction clause in
         <command>FETCH</command>) in PL/PgSQL (Pavel Stehule)
        </para>
       </listitem>
@@ -1964,20 +1996,22 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        List disabled triggers separately in "\d" output
+        List disabled triggers separately in <literal>\d</literal> output
         (Brendan Jurd)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Identify schema of inherited table in "\d" output (Bernd Helmle)
+        Identify schema of inherited table in <literal>\d</literal> output
+        (Bernd Helmle)
        </para>
       </listitem>
 
       <listitem>
        <para>
-        Show aggregate return types in "\da" output (Greg Sabino Mullane)
+        Show aggregate return types in <literal>\da</literal> output
+        (Greg Sabino Mullane)
        </para>
       </listitem>
 
@@ -2043,7 +2077,8 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Flush the \o file, if any, after each backslash command (Tom)
+        Flush the <literal>\o</> file, if any, after each backslash command
+        (Tom)
        </para>
       </listitem>
 
@@ -2077,7 +2112,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Allow pg_dumpall to accept an initial-connection database name
-        rather than the default "template1" (Dave Page)
+        rather than the default <literal>template1</literal> (Dave Page)
        </para>
       </listitem>
 
@@ -2333,7 +2368,7 @@ do it for earlier branch release files.
       <listitem>
        <para>
         Clean up SPI's API a little bit by declaring SPI plan pointers as
-        "SPIPlanPtr" instead of "void *" (Tom)
+        <literal>SPIPlanPtr</> instead of <literal>void *</> (Tom)
        </para>
 
        <para>
@@ -2370,7 +2405,7 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Support "gmake draft" in doc/src/sgml/Makefile (Bruce)
+        Support <literal>gmake draft</literal> in doc/src/sgml/Makefile (Bruce)
        </para>
       </listitem>
 
@@ -2549,7 +2584,7 @@ do it for earlier branch release files.
 
       <listitem>
        <para>
-        Create a function variable "join_search_hook" to let plugins
+        Create a function variable <literal>join_search_hook</> to let plugins
         override the join search order portion of the planner (Julius
         Stroffek)
        </para>
