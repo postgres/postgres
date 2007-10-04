@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.44 2007/09/25 20:03:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.45 2007/10/04 15:37:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -996,7 +996,8 @@ ForwardFsyncRequest(RelFileNode rnode, BlockNumber segno)
 	if (!IsUnderPostmaster)
 		return false;			/* probably shouldn't even get here */
 
-	Assert(!am_bg_writer);
+	if (am_bg_writer)
+		elog(ERROR, "ForwardFsyncRequest must not be called in bgwriter");
 
 	LWLockAcquire(BgWriterCommLock, LW_EXCLUSIVE);
 
