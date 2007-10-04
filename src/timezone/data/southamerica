@@ -1,4 +1,4 @@
-# @(#)southamerica	8.11
+# @(#)southamerica	8.12
 # <pre>
 
 # This data is by no means authoritative; if you think you know better,
@@ -424,6 +424,10 @@ Zone	America/La_Paz	-4:32:36 -	LMT	1890
 # modern Brazilian eletronic voting machines which, apparently, can't deal
 # with a time change between the first and the second rounds of the elections.
 
+# From Steffen Thorsen (2007-09-20):
+# Brazil will start DST on 2007-10-14 00:00 and end on 2008-02-17 00:00:
+# http://www.mme.gov.br/site/news/detail.do;jsessionid=BBA06811AFCAAC28F0285210913513DA?newsId=13975
+
 # From Paul Eggert (2002-10-10):
 # The official decrees referenced below are mostly taken from
 # <a href="http://pcdsh01.on.br/DecHV.html">
@@ -557,13 +561,18 @@ Rule	Brazil	2004	only	-	Nov	 2	 0:00	1:00	S
 # Decree <a href="http://pcdsh01.on.br/DecHV5539.gif">5,539</a> (2005-09-19),
 # adopted by the same states as before.
 Rule	Brazil	2005	only	-	Oct	16	 0:00	1:00	S
-# Decree <a href="http://www.planalto.gov.br/ccivil_03/_Ato2004-2006/2006/Decreto/D5920.htm">5,920</a>
-# (2006-10-03), adopted by the same states as before.
-Rule	Brazil	2006	max	-	Nov	Sun>=1	 0:00	1:00	S
-Rule	Brazil	2007	max	-	Feb	lastSun	 0:00	0	-
+# Decree <a href="http://pcdsh01.on.br/DecHV5920.gif">5,920</a> (2006-10-03),
+# adopted by the same states as before.
+Rule	Brazil	2006	only	-	Nov	 5	 0:00	1:00	S
+Rule	Brazil	2007	only	-	Feb	25	 0:00	0	-
+# (Decree number not yet known)
+# http://www.brasil.gov.br/noticias/ultimas_noticias/horario_verao070920/
+# (2007-09-20) after a heads-up from Steffen Thorsen:
+Rule	Brazil	2007	max	-	Oct	Sun>=8	 0:00	1:00	S
+Rule	Brazil	2008	max	-	Feb	Sun>=15	 0:00	0	-
 # The latest ruleset listed above says that the following states observe DST:
 # DF, ES, GO, MG, MS, MT, PR, RJ, RS, SC, SP.
-# For dates after mid-2007, the above rules with TO="max" are guesses
+# For dates after mid-2008, the above rules with TO="max" are guesses
 # and are quite possibly wrong, but are more likely than no DST at all.
 
 
@@ -1097,8 +1106,20 @@ Zone America/Montevideo	-3:44:44 -	LMT	1898 Jun 28
 			-3:00	Uruguay	UY%sT
 
 # Venezuela
+#
+# From Kiraz Janicke (2007-09-25), in
+# http://www.venezuelanalysis.com/analysis/2645:
+# The proposal ... involves turning the clock back half an hour from
+# +4.00 Greenwich Mean Time (GMT), to +4.30GMT, the time zone
+# Venezuela had until December 31, 1964, when the current time zone
+# was adopted. The change was due to take place on September 17 and
+# then on September 24, but has since been postponed until December
+# 31, to allow for compliance with international organizations, such
+# as the International Office of Weights and Measures.
+
 # Zone	NAME		GMTOFF	RULES	FORMAT	[UNTIL]
 Zone	America/Caracas	-4:27:44 -	LMT	1890
 			-4:27:40 -	CMT	1912 Feb 12 # Caracas Mean Time?
 			-4:30	-	VET	1965	     # Venezuela Time
-			-4:00	-	VET
+			-4:00	-	VET	2008
+			-4:30	-	VET
